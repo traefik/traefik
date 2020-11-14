@@ -3,7 +3,7 @@ version: "3.3"
 services:
 
   traefik:
-    image: "traefik:v2.2"
+    image: "traefik:v2.3"
     container_name: "traefik"
     command:
       #- "--log.level=DEBUG"
@@ -31,7 +31,7 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
   whoami:
-    image: "containous/whoami"
+    image: "traefik/whoami"
     container_name: "simple-service"
     labels:
       - "traefik.enable=true"

@@ -10,13 +10,13 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/containous/traefik/v2/integration/try"
-	"github.com/containous/traefik/v2/pkg/config/static"
-	"github.com/containous/traefik/v2/pkg/provider/acme"
-	"github.com/containous/traefik/v2/pkg/testhelpers"
-	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/go-check/check"
 	"github.com/miekg/dns"
+	"github.com/traefik/traefik/v2/integration/try"
+	"github.com/traefik/traefik/v2/pkg/config/static"
+	"github.com/traefik/traefik/v2/pkg/provider/acme"
+	"github.com/traefik/traefik/v2/pkg/testhelpers"
+	"github.com/traefik/traefik/v2/pkg/types"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -410,7 +410,7 @@ func (s *AcmeSuite) TestNoValidLetsEncryptServer(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// Expected traefik works
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -440,11 +440,11 @@ func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase acmeTestCase) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 	// A real file is needed to have the right mode on acme.json file
 	defer os.Remove("/tmp/acme.json")
 
-	backend := startTestServer("9010", http.StatusOK)
+	backend := startTestServer("9010", http.StatusOK, "")
 	defer backend.Close()
 
 	for _, sub := range testCase.subCases {

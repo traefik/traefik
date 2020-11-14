@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
-	"github.com/containous/traefik/v2/integration/try"
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	traefiktls "github.com/containous/traefik/v2/pkg/tls"
 	"github.com/go-check/check"
+	"github.com/traefik/traefik/v2/integration/try"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -31,7 +31,7 @@ func (s *HTTPSSuite) TestWithSNIConfigHandshake(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.org`)"))
@@ -67,14 +67,14 @@ func (s *HTTPSSuite) TestWithSNIConfigRoute(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.org`)"))
 	c.Assert(err, checker.IsNil)
 
-	backend1 := startTestServer("9010", http.StatusNoContent)
-	backend2 := startTestServer("9020", http.StatusResetContent)
+	backend1 := startTestServer("9010", http.StatusNoContent, "")
+	backend2 := startTestServer("9020", http.StatusResetContent, "")
 	defer backend1.Close()
 	defer backend2.Close()
 
@@ -123,14 +123,14 @@ func (s *HTTPSSuite) TestWithTLSOptions(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.org`)"))
 	c.Assert(err, checker.IsNil)
 
-	backend1 := startTestServer("9010", http.StatusNoContent)
-	backend2 := startTestServer("9020", http.StatusResetContent)
+	backend1 := startTestServer("9010", http.StatusNoContent, "")
+	backend2 := startTestServer("9020", http.StatusResetContent, "")
 	defer backend1.Close()
 	defer backend2.Close()
 
@@ -209,14 +209,14 @@ func (s *HTTPSSuite) TestWithConflictingTLSOptions(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.net`)"))
 	c.Assert(err, checker.IsNil)
 
-	backend1 := startTestServer("9010", http.StatusNoContent)
-	backend2 := startTestServer("9020", http.StatusResetContent)
+	backend1 := startTestServer("9010", http.StatusNoContent, "")
+	backend2 := startTestServer("9020", http.StatusResetContent, "")
 	defer backend1.Close()
 	defer backend2.Close()
 
@@ -279,7 +279,7 @@ func (s *HTTPSSuite) TestWithSNIStrictNotMatchedRequest(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.com`)"))
@@ -305,7 +305,7 @@ func (s *HTTPSSuite) TestWithDefaultCertificate(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.com`)"))
@@ -341,7 +341,7 @@ func (s *HTTPSSuite) TestWithDefaultCertificateNoSNI(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.com`)"))
@@ -377,7 +377,7 @@ func (s *HTTPSSuite) TestWithOverlappingStaticCertificate(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.com`)"))
@@ -414,7 +414,7 @@ func (s *HTTPSSuite) TestWithOverlappingDynamicCertificate(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.com`)"))
@@ -449,7 +449,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.org`)"))
@@ -521,7 +521,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAs(c *check
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.org`)"))
@@ -617,7 +617,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipleCAsMultipleF
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`snitest.org`)"))
@@ -701,7 +701,7 @@ func (s *HTTPSSuite) TestWithRootCAsContentForHTTPSOnBackend(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains(backend.URL))
@@ -723,7 +723,7 @@ func (s *HTTPSSuite) TestWithRootCAsFileForHTTPSOnBackend(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains(backend.URL))
@@ -733,9 +733,12 @@ func (s *HTTPSSuite) TestWithRootCAsFileForHTTPSOnBackend(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func startTestServer(port string, statusCode int) (ts *httptest.Server) {
+func startTestServer(port string, statusCode int, textContent string) (ts *httptest.Server) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(statusCode)
+		if textContent != "" {
+			_, _ = w.Write([]byte(textContent))
+		}
 	})
 	listener, err := net.Listen("tcp", "127.0.0.1:"+port)
 	if err != nil {
@@ -767,7 +770,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithNoChange(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	tr1 := &http.Transport{
 		TLSClientConfig: &tls.Config{
@@ -787,8 +790,8 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithNoChange(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`"+tr1.TLSClientConfig.ServerName+"`)"))
 	c.Assert(err, checker.IsNil)
 
-	backend1 := startTestServer("9010", http.StatusNoContent)
-	backend2 := startTestServer("9020", http.StatusResetContent)
+	backend1 := startTestServer("9010", http.StatusNoContent, "")
+	backend2 := startTestServer("9020", http.StatusResetContent, "")
 	defer backend1.Close()
 	defer backend2.Close()
 
@@ -836,7 +839,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithChange(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	tr1 := &http.Transport{
 		TLSClientConfig: &tls.Config{
@@ -856,8 +859,8 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithChange(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`"+tr2.TLSClientConfig.ServerName+"`)"))
 	c.Assert(err, checker.IsNil)
 
-	backend1 := startTestServer("9010", http.StatusNoContent)
-	backend2 := startTestServer("9020", http.StatusResetContent)
+	backend1 := startTestServer("9010", http.StatusNoContent, "")
+	backend2 := startTestServer("9020", http.StatusResetContent, "")
 	defer backend1.Close()
 	defer backend2.Close()
 
@@ -906,7 +909,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion(c
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	tr2 := &http.Transport{
 		TLSClientConfig: &tls.Config{
@@ -919,7 +922,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion(c
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`"+tr2.TLSClientConfig.ServerName+"`)"))
 	c.Assert(err, checker.IsNil)
 
-	backend2 := startTestServer("9020", http.StatusResetContent)
+	backend2 := startTestServer("9020", http.StatusResetContent, "")
 
 	defer backend2.Close()
 
@@ -983,7 +986,7 @@ func (s *HTTPSSuite) TestEntryPointHttpsRedirectAndPathModification(c *check.C) 
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.BodyContains("Host(`example.com`)"))
@@ -1086,7 +1089,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicCaseInsensitive(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for Traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("HostRegexp(`{subdomain:[a-z1-9-]+}.www.snitest.com`)"))
@@ -1110,4 +1113,116 @@ func (s *HTTPSSuite) TestWithSNIDynamicCaseInsensitive(c *check.C) {
 
 	proto := conn.ConnectionState().NegotiatedProtocol
 	c.Assert(proto, checker.Equals, "h2")
+}
+
+// TestWithDomainFronting verify the domain fronting behavior
+func (s *HTTPSSuite) TestWithDomainFronting(c *check.C) {
+	backend := startTestServer("9010", http.StatusOK, "server1")
+	defer backend.Close()
+	backend2 := startTestServer("9020", http.StatusOK, "server2")
+	defer backend2.Close()
+	backend3 := startTestServer("9030", http.StatusOK, "server3")
+	defer backend3.Close()
+
+	file := s.adaptFile(c, "fixtures/https/https_domain_fronting.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`site1.www.snitest.com`)"))
+	c.Assert(err, checker.IsNil)
+
+	testCases := []struct {
+		desc               string
+		hostHeader         string
+		serverName         string
+		expectedContent    string
+		expectedStatusCode int
+	}{
+		{
+			desc:               "SimpleCase",
+			hostHeader:         "site1.www.snitest.com",
+			serverName:         "site1.www.snitest.com",
+			expectedContent:    "server1",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "Simple case with port in the Host Header",
+			hostHeader:         "site3.www.snitest.com:4443",
+			serverName:         "site3.www.snitest.com",
+			expectedContent:    "server3",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "Spaces after the host header",
+			hostHeader:         "site3.www.snitest.com ",
+			serverName:         "site3.www.snitest.com",
+			expectedContent:    "server3",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "Spaces after the servername",
+			hostHeader:         "site3.www.snitest.com",
+			serverName:         "site3.www.snitest.com ",
+			expectedContent:    "server3",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "Spaces after the servername and host header",
+			hostHeader:         "site3.www.snitest.com ",
+			serverName:         "site3.www.snitest.com ",
+			expectedContent:    "server3",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "Domain Fronting with same tlsOptions should follow header",
+			hostHeader:         "site1.www.snitest.com",
+			serverName:         "site2.www.snitest.com",
+			expectedContent:    "server1",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "Domain Fronting with same tlsOptions should follow header (2)",
+			hostHeader:         "site2.www.snitest.com",
+			serverName:         "site1.www.snitest.com",
+			expectedContent:    "server2",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "Domain Fronting with different tlsOptions should produce a 421",
+			hostHeader:         "site2.www.snitest.com",
+			serverName:         "site3.www.snitest.com",
+			expectedContent:    "",
+			expectedStatusCode: http.StatusMisdirectedRequest,
+		},
+		{
+			desc:               "Domain Fronting with different tlsOptions should produce a 421 (2)",
+			hostHeader:         "site3.www.snitest.com",
+			serverName:         "site1.www.snitest.com",
+			expectedContent:    "",
+			expectedStatusCode: http.StatusMisdirectedRequest,
+		},
+		{
+			desc:               "Case insensitive",
+			hostHeader:         "sIte1.www.snitest.com",
+			serverName:         "sitE1.www.snitest.com",
+			expectedContent:    "server1",
+			expectedStatusCode: http.StatusOK,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443", nil)
+		c.Assert(err, checker.IsNil)
+		req.Host = test.hostHeader
+
+		err = try.RequestWithTransport(req, 500*time.Millisecond, &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true, ServerName: test.serverName}}, try.StatusCodeIs(test.expectedStatusCode), try.BodyContains(test.expectedContent))
+		c.Assert(err, checker.IsNil)
+	}
 }

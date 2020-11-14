@@ -5,9 +5,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containous/traefik/v2/pkg/config/file"
-	"github.com/containous/traefik/v2/pkg/config/flag"
-	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/traefik/paerser/cli"
+	"github.com/traefik/paerser/file"
+	"github.com/traefik/paerser/flag"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 // FileLoader loads a configuration from a file.
@@ -22,7 +23,7 @@ func (f *FileLoader) GetFilename() string {
 }
 
 // Load loads the command's configuration from a file either specified with the -traefik.configfile flag, or from default locations.
-func (f *FileLoader) Load(args []string, cmd *Command) (bool, error) {
+func (f *FileLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 	ref, err := flag.Parse(args, cmd.Configuration)
 	if err != nil {
 		_ = cmd.PrintHelp(os.Stdout)
@@ -64,7 +65,7 @@ func (f *FileLoader) Load(args []string, cmd *Command) (bool, error) {
 // loadConfigFiles tries to decode the given configuration file and all default locations for the configuration file.
 // It stops as soon as decoding one of them is successful.
 func loadConfigFiles(configFile string, element interface{}) (string, error) {
-	finder := Finder{
+	finder := cli.Finder{
 		BasePaths:  []string{"/etc/traefik/traefik", "$XDG_CONFIG_HOME/traefik", "$HOME/.config/traefik", "./traefik"},
 		Extensions: []string{"toml", "yaml", "yml"},
 	}

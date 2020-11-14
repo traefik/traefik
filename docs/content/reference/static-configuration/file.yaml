@@ -269,6 +269,8 @@ metrics:
     password: foobar
     addEntryPointsLabels: true
     addServicesLabels: true
+pilot:
+  token: foobar
 ping:
   entryPoint: foobar
   manualRouting: true
@@ -308,6 +310,7 @@ tracing:
     gen128Bit: true
     propagation: foobar
     traceContextHeaderName: foobar
+    disableAttemptReconnecting: true
     collector:
       endpoint: foobar
       user: foobar
@@ -351,6 +354,7 @@ certificatesResolvers:
     acme:
       email: foobar
       caServer: foobar
+      preferredChain: foobar
       storage: foobar
       keyType: foobar
       dnsChallenge:
@@ -367,6 +371,7 @@ certificatesResolvers:
     acme:
       email: foobar
       caServer: foobar
+      preferredChain: foobar
       storage: foobar
       keyType: foobar
       dnsChallenge:
@@ -380,8 +385,6 @@ certificatesResolvers:
         entryPoint: foobar
       tlsChallenge: {}
 experimental:
-  pilot:
-    token: foobar
   plugins:
     Descriptor0:
       moduleName: foobar

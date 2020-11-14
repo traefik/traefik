@@ -1,5 +1,5 @@
 whoami:
-    image: containous/whoami
+    image: traefik/whoami
     labels:
       - traefik.http.routers.route1.rule=PathPrefix(`/`)
       - traefik.http.routers.route1.middlewares=passtls

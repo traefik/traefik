@@ -10,7 +10,7 @@ Let's see how.
 
 ### General
 
-This [documentation](https://docs.traefik.io/) is built with [mkdocs](https://mkdocs.org/).
+This [documentation](https://doc.traefik.io/traefik/) is built with [mkdocs](https://mkdocs.org/).
 
 ### Method 1: `Docker` and `make`
 
@@ -20,7 +20,7 @@ You can build the documentation and test it locally (with live reloading), using
 $ make docs
 docker build -t traefik-docs -f docs.Dockerfile .
 # […]
-docker run  --rm -v /home/user/go/github/containous/traefik:/mkdocs -p 8000:8000 traefik-docs mkdocs serve
+docker run  --rm -v /home/user/go/github/traefik/traefik:/mkdocs -p 8000:8000 traefik-docs mkdocs serve
 # […]
 [I 170828 20:47:48 server:283] Serving on http://0.0.0.0:8000
 [I 170828 20:47:48 handlers:60] Start watching changes
@@ -75,7 +75,7 @@ To check that the documentation meets standard expectations (no dead links, html
 $ make docs-verify
 docker build -t traefik-docs-verify ./script/docs-verify-docker-image ## Build Validator image
 ...
-docker run --rm -v /home/travis/build/containous/traefik:/app traefik-docs-verify ## Check for dead links and w3c compliance
+docker run --rm -v /home/travis/build/traefik/traefik:/app traefik-docs-verify ## Check for dead links and w3c compliance
 === Checking HTML content...
 Running ["HtmlCheck", "ImageCheck", "ScriptCheck", "LinkCheck"] on /app/site/basics/index.html on *.html...
 ```

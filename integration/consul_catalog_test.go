@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/containous/traefik/v2/integration/try"
 	"github.com/go-check/check"
 	"github.com/hashicorp/consul/api"
+	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -122,7 +122,7 @@ func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings(c *c
 	defer display(c)
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	c.Assert(err, checker.IsNil)
@@ -181,7 +181,7 @@ func (s *ConsulCatalogSuite) TestByLabels(c *check.C) {
 	defer display(c)
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 2*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContainsOr("Hostname: whoami1", "Hostname: whoami2", "Hostname: whoami3"))
 	c.Assert(err, checker.IsNil)
@@ -216,7 +216,7 @@ func (s *ConsulCatalogSuite) TestSimpleConfiguration(c *check.C) {
 	defer display(c)
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	c.Assert(err, checker.IsNil)
@@ -255,7 +255,7 @@ func (s *ConsulCatalogSuite) TestRegisterServiceWithoutIP(c *check.C) {
 	defer display(c)
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/api/http/services", nil)
 	c.Assert(err, checker.IsNil)
@@ -294,7 +294,7 @@ func (s *ConsulCatalogSuite) TestDefaultConsulService(c *check.C) {
 	defer display(c)
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	c.Assert(err, checker.IsNil)
@@ -340,7 +340,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithTCPLabels(c *check.C) {
 	defer display(c)
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`my.super.host`)"))
 	c.Assert(err, checker.IsNil)
@@ -398,7 +398,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithLabels(c *check.C) {
 	defer display(c)
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	c.Assert(err, checker.IsNil)
@@ -465,7 +465,7 @@ func (s *ConsulCatalogSuite) TestSameServiceIDOnDifferentConsulAgent(c *check.C)
 	defer display(c)
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	c.Assert(err, checker.IsNil)
@@ -520,7 +520,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithOneMissingLabels(c *check.C) {
 	defer display(c)
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
 	c.Assert(err, checker.IsNil)
@@ -572,7 +572,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithHealthCheck(c *check.C) {
 	defer display(c)
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)

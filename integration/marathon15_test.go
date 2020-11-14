@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/containous/traefik/v2/integration/try"
 	"github.com/gambol99/go-marathon"
 	"github.com/go-check/check"
+	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -79,7 +79,7 @@ func (s *MarathonSuite15) TestConfigurationUpdate(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// Wait for Traefik to turn ready.
 	err = try.GetRequest("http://127.0.0.1:8000/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
@@ -101,7 +101,7 @@ func (s *MarathonSuite15) TestConfigurationUpdate(c *check.C) {
 	app.Container.
 		Expose(80).
 		Docker.
-		Container("containous/whoami")
+		Container("traefik/whoami")
 	*app.Networks = append(*app.Networks, *marathon.NewBridgePodNetwork())
 
 	// Deploy the test application.
@@ -121,7 +121,7 @@ func (s *MarathonSuite15) TestConfigurationUpdate(c *check.C) {
 	app.Container.
 		Expose(80).
 		Docker.
-		Container("containous/whoami")
+		Container("traefik/whoami")
 	*app.Networks = append(*app.Networks, *marathon.NewBridgePodNetwork())
 
 	// Deploy the test application.

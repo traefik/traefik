@@ -4,9 +4,9 @@ import (
 	"io"
 	"net/url"
 
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/version"
 	"github.com/opentracing/opentracing-go"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/version"
 	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmot"
 	"go.elastic.co/apm/transport"
@@ -26,7 +26,7 @@ func init() {
 type Config struct {
 	ServerURL          string `description:"Set the URL of the Elastic APM server." json:"serverURL,omitempty" toml:"serverURL,omitempty" yaml:"serverURL,omitempty"`
 	SecretToken        string `description:"Set the token used to connect to Elastic APM Server." json:"secretToken,omitempty" toml:"secretToken,omitempty" yaml:"secretToken,omitempty"`
-	ServiceEnvironment string `description:"Set the name of the environment Traefik is deployed in, e.g. 'production' or 'staging'." json:"serviceEnvironment,omitempty" toml:"serviceEnvironment,omitempty" yaml:"serviceEnvironment,omitempty"`
+	ServiceEnvironment string `description:"Set the name of the environment Traefik is deployed in, e.g. 'production' or 'staging'." json:"serviceEnvironment,omitempty" toml:"serviceEnvironment,omitempty" yaml:"serviceEnvironment,omitempty" export:"true"`
 }
 
 // Setup sets up the tracer.

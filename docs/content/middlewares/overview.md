@@ -11,13 +11,18 @@ There are several available middleware in Traefik, some can modify the request, 
 
 Pieces of middleware can be combined in chains to fit every scenario.
 
+!!! warning "Provider Namespace"
+
+    Be aware of the concept of Providers Namespace described in the [Configuration Discovery](../providers/overview.md#provider-namespace) section. 
+    It also applies to Middlewares.
+
 ## Configuration Example
 
 ```yaml tab="Docker"
 # As a Docker Label
 whoami:
   #  A container that exposes an API to show its IP address
-  image: containous/whoami
+  image: traefik/whoami
   labels:
     # Create a middleware named `foo-add-prefix`
     - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
@@ -25,7 +30,7 @@ whoami:
     - "traefik.http.routers.router1.middlewares=foo-add-prefix@docker"
 ```
 
-```yaml tab="Kubernetes"
+```yaml tab="Kubernetes IngressRoute"
 # As a Kubernetes Traefik IngressRoute
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -127,78 +132,6 @@ http:
         servers:
           - url: "http://127.0.0.1:80"
 ```
-
-## Provider Namespace
-
-When you declare a middleware, it lives in its provider's namespace.
-For example, if you declare a middleware using a Docker label, under the hoods, it will reside in the docker provider namespace.
-
-If you use multiple providers and wish to reference a middleware declared in another provider
-(aka referencing a cross-provider middleware),
-then you'll have to append to the middleware name, the `@` separator, followed by the provider name.
-
-```text
-<resource-name>@<provider-name>
-```
-
-!!! important "Kubernetes Namespace"
-
-    As Kubernetes also has its own notion of namespace, one should not confuse the "provider namespace"
-    with the "kubernetes namespace" of a resource when in the context of a cross-provider usage.
-    In this case, since the definition of the middleware is not in kubernetes,
-    specifying a "kubernetes namespace" when referring to the resource does not make any sense,
-    and therefore this specification would be ignored even if present.
-
-!!! abstract "Referencing a Middleware from Another Provider"
-
-    Declaring the add-foo-prefix in the file provider.
-
-    ```toml tab="File (TOML)"
-    [http.middlewares]
-      [http.middlewares.add-foo-prefix.addPrefix]
-        prefix = "/foo"
-    ```
-    
-    ```yaml tab="File (YAML)"
-    http:
-      middlewares:
-        add-foo-prefix:
-          addPrefix:
-            prefix: "/foo"
-    ```
-
-    Using the add-foo-prefix middleware from other providers:
-
-    ```yaml tab="Docker"
-    your-container: #
-      image: your-docker-image
-
-      labels:
-        # Attach add-foo-prefix@file middleware (declared in file)
-        - "traefik.http.routers.my-container.middlewares=add-foo-prefix@file"
-    ```
-
-    ```yaml tab="Kubernetes"
-    apiVersion: traefik.containo.us/v1alpha1
-    kind: IngressRoute
-    metadata:
-      name: ingressroutestripprefix
-
-    spec:
-      entryPoints:
-        - web
-      routes:
-        - match: Host(`example.com`)
-          kind: Rule
-          services:
-            - name: whoami
-              port: 80
-          middlewares:
-            - name: add-foo-prefix@file
-            # namespace: bar
-            # A namespace specification such as above is ignored
-            # when the cross-provider syntax is used.
-    ```
 
 ## Available Middlewares
 

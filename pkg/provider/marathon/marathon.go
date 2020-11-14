@@ -10,14 +10,15 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/job"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/provider"
-	"github.com/containous/traefik/v2/pkg/safe"
-	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/gambol99/go-marathon"
 	"github.com/sirupsen/logrus"
+	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/job"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/provider"
+	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 const (
@@ -48,15 +49,15 @@ type Provider struct {
 	Constraints            string           `description:"Constraints is an expression that Traefik matches against the application's labels to determine whether to create any route for that application." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
 	Trace                  bool             `description:"Display additional provider logs." json:"trace,omitempty" toml:"trace,omitempty" yaml:"trace,omitempty" export:"true"`
 	Watch                  bool             `description:"Watch provider." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
-	Endpoint               string           `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
+	Endpoint               string           `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
 	DefaultRule            string           `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 	ExposedByDefault       bool             `description:"Expose Marathon apps by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
-	DCOSToken              string           `description:"DCOSToken for DCOS environment, This will override the Authorization header." json:"dcosToken,omitempty" toml:"dcosToken,omitempty" yaml:"dcosToken,omitempty" export:"true"`
+	DCOSToken              string           `description:"DCOSToken for DCOS environment, This will override the Authorization header." json:"dcosToken,omitempty" toml:"dcosToken,omitempty" yaml:"dcosToken,omitempty"`
 	TLS                    *types.ClientTLS `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
-	DialerTimeout          types.Duration   `description:"Set a dialer timeout for Marathon." json:"dialerTimeout,omitempty" toml:"dialerTimeout,omitempty" yaml:"dialerTimeout,omitempty" export:"true"`
-	ResponseHeaderTimeout  types.Duration   `description:"Set a response header timeout for Marathon." json:"responseHeaderTimeout,omitempty" toml:"responseHeaderTimeout,omitempty" yaml:"responseHeaderTimeout,omitempty" export:"true"`
-	TLSHandshakeTimeout    types.Duration   `description:"Set a TLS handshake timeout for Marathon." json:"tlsHandshakeTimeout,omitempty" toml:"tlsHandshakeTimeout,omitempty" yaml:"tlsHandshakeTimeout,omitempty" export:"true"`
-	KeepAlive              types.Duration   `description:"Set a TCP Keep Alive time." json:"keepAlive,omitempty" toml:"keepAlive,omitempty" yaml:"keepAlive,omitempty" export:"true"`
+	DialerTimeout          ptypes.Duration  `description:"Set a dialer timeout for Marathon." json:"dialerTimeout,omitempty" toml:"dialerTimeout,omitempty" yaml:"dialerTimeout,omitempty" export:"true"`
+	ResponseHeaderTimeout  ptypes.Duration  `description:"Set a response header timeout for Marathon." json:"responseHeaderTimeout,omitempty" toml:"responseHeaderTimeout,omitempty" yaml:"responseHeaderTimeout,omitempty" export:"true"`
+	TLSHandshakeTimeout    ptypes.Duration  `description:"Set a TLS handshake timeout for Marathon." json:"tlsHandshakeTimeout,omitempty" toml:"tlsHandshakeTimeout,omitempty" yaml:"tlsHandshakeTimeout,omitempty" export:"true"`
+	KeepAlive              ptypes.Duration  `description:"Set a TCP Keep Alive time." json:"keepAlive,omitempty" toml:"keepAlive,omitempty" yaml:"keepAlive,omitempty" export:"true"`
 	ForceTaskHostname      bool             `description:"Force to use the task's hostname." json:"forceTaskHostname,omitempty" toml:"forceTaskHostname,omitempty" yaml:"forceTaskHostname,omitempty" export:"true"`
 	Basic                  *Basic           `description:"Enable basic authentication." json:"basic,omitempty" toml:"basic,omitempty" yaml:"basic,omitempty" export:"true"`
 	RespectReadinessChecks bool             `description:"Filter out tasks with non-successful readiness checks during deployments." json:"respectReadinessChecks,omitempty" toml:"respectReadinessChecks,omitempty" yaml:"respectReadinessChecks,omitempty" export:"true"`
@@ -70,10 +71,10 @@ func (p *Provider) SetDefaults() {
 	p.Watch = true
 	p.Endpoint = "http://127.0.0.1:8080"
 	p.ExposedByDefault = true
-	p.DialerTimeout = types.Duration(5 * time.Second)
-	p.ResponseHeaderTimeout = types.Duration(60 * time.Second)
-	p.TLSHandshakeTimeout = types.Duration(5 * time.Second)
-	p.KeepAlive = types.Duration(10 * time.Second)
+	p.DialerTimeout = ptypes.Duration(5 * time.Second)
+	p.ResponseHeaderTimeout = ptypes.Duration(60 * time.Second)
+	p.TLSHandshakeTimeout = ptypes.Duration(5 * time.Second)
+	p.KeepAlive = ptypes.Duration(10 * time.Second)
 	p.DefaultRule = DefaultTemplateRule
 }
 

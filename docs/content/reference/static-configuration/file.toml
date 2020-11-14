@@ -250,6 +250,9 @@
     addEntryPointsLabels = true
     addServicesLabels = true
 
+[pilot]
+  token = "foobar"
+
 [ping]
   entryPoint = "foobar"
   manualRouting = true
@@ -290,6 +293,7 @@
     gen128Bit = true
     propagation = "foobar"
     traceContextHeaderName = "foobar"
+    disableAttemptReconnecting = true
     [tracing.jaeger.collector]
       endpoint = "foobar"
       user = "foobar"
@@ -335,6 +339,7 @@
     [certificatesResolvers.CertificateResolver0.acme]
       email = "foobar"
       caServer = "foobar"
+      preferredChain = "foobar"
       storage = "foobar"
       keyType = "foobar"
       [certificatesResolvers.CertificateResolver0.acme.dnsChallenge]
@@ -349,6 +354,7 @@
     [certificatesResolvers.CertificateResolver1.acme]
       email = "foobar"
       caServer = "foobar"
+      preferredChain = "foobar"
       storage = "foobar"
       keyType = "foobar"
       [certificatesResolvers.CertificateResolver1.acme.dnsChallenge]
@@ -361,8 +367,6 @@
       [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]
 
 [experimental]
-  [experimental.pilot]
-    token = "foobar"
   [experimental.plugins]
     [experimental.plugins.Descriptor0]
       moduleName = "foobar"

@@ -11,8 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/stvp/go-udp-testing"
+	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 func TestInfluxDB(t *testing.T) {
@@ -20,7 +21,7 @@ func TestInfluxDB(t *testing.T) {
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
-	influxDBRegistry := RegisterInfluxDB(context.Background(), &types.InfluxDB{Address: ":8089", PushInterval: types.Duration(time.Second), AddEntryPointsLabels: true, AddServicesLabels: true})
+	influxDBRegistry := RegisterInfluxDB(context.Background(), &types.InfluxDB{Address: ":8089", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddServicesLabels: true})
 	defer StopInfluxDB()
 
 	if !influxDBRegistry.IsEpEnabled() || !influxDBRegistry.IsSvcEnabled() {
@@ -79,7 +80,7 @@ func TestInfluxDBHTTP(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	influxDBRegistry := RegisterInfluxDB(context.Background(), &types.InfluxDB{Address: ts.URL, Protocol: "http", PushInterval: types.Duration(time.Second), Database: "test", RetentionPolicy: "autogen", AddEntryPointsLabels: true, AddServicesLabels: true})
+	influxDBRegistry := RegisterInfluxDB(context.Background(), &types.InfluxDB{Address: ts.URL, Protocol: "http", PushInterval: ptypes.Duration(time.Second), Database: "test", RetentionPolicy: "autogen", AddEntryPointsLabels: true, AddServicesLabels: true})
 	defer StopInfluxDB()
 
 	if !influxDBRegistry.IsEpEnabled() || !influxDBRegistry.IsSvcEnabled() {

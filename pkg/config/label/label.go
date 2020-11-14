@@ -2,8 +2,8 @@
 package label
 
 import (
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/config/parser"
+	"github.com/traefik/paerser/parser"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 )
 
 // DecodeConfiguration converts the labels to a configuration.

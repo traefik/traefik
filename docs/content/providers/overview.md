@@ -22,6 +22,106 @@ Even if each provider is different, we can categorize them in four groups:
 - Annotation based (a separate object, with annotations, defines the characteristics of the container)
 - File based (the good old configuration file)
 
+## Provider Namespace
+
+When you declare certain objects, in Traefik dynamic configuration,
+such as middleware, service, TLS options or servers transport, they live in its provider's namespace.
+For example, if you declare a middleware using a Docker label, under the hoods, it will reside in the docker provider namespace.
+
+If you use multiple providers and wish to reference such an object declared in another provider 
+(aka referencing a cross-provider object, e.g. middleware), then you'll have to append the `@` separator, 
+followed by the provider name to the object name.
+
+```text
+<resource-name>@<provider-name>
+```
+
+!!! important "Kubernetes Namespace"
+
+    As Kubernetes also has its own notion of namespace,
+    one should not confuse the "provider namespace" with the "kubernetes namespace" of a resource when in the context of a cross-provider usage.  
+    In this case, since the definition of a traefik dynamic configuration object is not in kubernetes,
+    specifying a "kubernetes namespace" when referring to the resource does not make any sense,
+    and therefore this specification would be ignored even if present.  
+    On the other hand, if you, say, declare a middleware as a Custom Resource in Kubernetes and use the non-crd Ingress objects,
+    you'll have to add the Kubernetes namespace of the middleware to the annotation like this `<middleware-namespace>-<middleware-name>@kubernetescrd`.
+
+!!! abstract "Referencing a Traefik dynamic configuration object from Another Provider"
+
+    Declaring the add-foo-prefix in the file provider.
+
+    ```toml tab="File (TOML)"
+    [http.middlewares]
+      [http.middlewares.add-foo-prefix.addPrefix]
+        prefix = "/foo"
+    ```
+    
+    ```yaml tab="File (YAML)"
+    http:
+      middlewares:
+        add-foo-prefix:
+          addPrefix:
+            prefix: "/foo"
+    ```
+
+    Using the add-foo-prefix middleware from other providers:
+
+    ```yaml tab="Docker"
+    your-container: #
+      image: your-docker-image
+
+      labels:
+        # Attach add-foo-prefix@file middleware (declared in file)
+        - "traefik.http.routers.my-container.middlewares=add-foo-prefix@file"
+    ```
+
+    ```yaml tab="Kubernetes Ingress Route"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: ingressroutestripprefix
+
+    spec:
+      entryPoints:
+        - web
+      routes:
+        - match: Host(`example.com`)
+          kind: Rule
+          services:
+            - name: whoami
+              port: 80
+          middlewares:
+            - name: add-foo-prefix@file
+            # namespace: bar
+            # A namespace specification such as above is ignored
+            # when the cross-provider syntax is used.
+    ```
+    
+    ```yaml tab="Kubernetes Ingress"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: Middleware
+    metadata:
+      name: stripprefix
+      namespace: appspace
+    spec:
+      stripPrefix:
+        prefixes:
+          - /stripit
+    
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: ingress
+      namespace: appspace
+      annotations:
+        # referencing a middleware from Kubernetes CRD provider: 
+        # <middleware-namespace>-<middleware-name>@kubernetescrd
+        "traefik.ingress.kubernetes.io/router.middlewares": appspace-stripprefix@kubernetescrd
+    spec:
+      # ... regular ingress definition
+    ```
+
 ## Supported Providers 
 
 Below is the list of the currently supported providers in Traefik. 
@@ -43,7 +143,7 @@ Below is the list of the currently supported providers in Traefik.
 !!! info "More Providers"
 
     The current version of Traefik doesn't support (yet) every provider.
-    See the [previous version (v1.7)](https://docs.traefik.io/v1.7/) for more providers.
+    See the [previous version (v1.7)](https://doc.traefik.io/traefik/v1.7/) for more providers.
 
 ### Configuration reload frequency
 

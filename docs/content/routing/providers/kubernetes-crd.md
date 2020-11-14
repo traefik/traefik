@@ -43,7 +43,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v2.2
+              image: traefik:v2.3
               args:
                 - --log.level=DEBUG
                 - --api
@@ -108,16 +108,16 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       name: myingressroute
       namespace: default
     
-      spec:
-        entryPoints:
-          - web
+    spec:
+      entryPoints:
+        - web
     
-        routes:
-          - match: Host(`foo`) && PathPrefix(`/bar`)
-            kind: Rule
-            services:
-            - name: whoami
-              port: 80
+      routes:
+      - match: Host(`foo`) && PathPrefix(`/bar`)
+        kind: Rule
+        services:
+        - name: whoami
+          port: 80
     
     ---
     apiVersion: traefik.containo.us/v1alpha1
@@ -126,15 +126,15 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       name: ingressroute.tcp
       namespace: default
     
-      spec:
-        entryPoints:
-          - tcpep
-        routes:
-          - match: HostSNI(`bar`)
-            kind: Rule
-            services:
-              - name: whoamitcp
-                port: 8080
+    spec:
+      entryPoints:
+        - tcpep
+      routes:
+      - match: HostSNI(`bar`)
+        kind: Rule
+        services:
+          - name: whoamitcp
+            port: 8080
     
     ---
     apiVersion: traefik.containo.us/v1alpha1
@@ -143,14 +143,14 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       name: ingressroute.udp
       namespace: default
     
-      spec:
-        entryPoints:
-          - fooudp
-        routes:
-          - kind: Rule
-            services:
-              - name: whoamiudp
-                port: 8080
+    spec:
+      entryPoints:
+        - fooudp
+      routes:
+      - kind: Rule
+        services:
+          - name: whoamiudp
+            port: 8080
     ```
     
     ```yaml tab="Whoami"
@@ -160,24 +160,24 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       name: whoami
       namespace: default
       labels:
-        app: containous
+        app: traefiklabs
         name: whoami
     
     spec:
       replicas: 2
       selector:
         matchLabels:
-          app: containous
+          app: traefiklabs
           task: whoami
       template:
         metadata:
           labels:
-            app: containous
+            app: traefiklabs
             task: whoami
         spec:
           containers:
-            - name: containouswhoami
-              image: containous/whoami
+            - name: whoami
+              image: traefik/whoami
               ports:
                 - containerPort: 80
     
@@ -193,7 +193,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
         - name: http
           port: 80
       selector:
-        app: containous
+        app: traefiklabs
         task: whoami
     
     ---
@@ -203,24 +203,24 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       name: whoamitcp
       namespace: default
       labels:
-        app: containous
+        app: traefiklabs
         name: whoamitcp
     
     spec:
       replicas: 2
       selector:
         matchLabels:
-          app: containous
+          app: traefiklabs
           task: whoamitcp
       template:
         metadata:
           labels:
-            app: containous
+            app: traefiklabs
             task: whoamitcp
         spec:
           containers:
-            - name: containouswhoamitcp
-              image: containous/whoamitcp
+            - name: whoamitcp
+              image: traefik/whoamitcp
               ports:
                 - containerPort: 8080
     
@@ -236,7 +236,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
         - protocol: TCP
           port: 8080
       selector:
-        app: containous
+        app: traefiklabs
         task: whoamitcp
     
     ---
@@ -246,24 +246,24 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       name: whoamiudp
       namespace: default
       labels:
-        app: containous
+        app: traefiklabs
         name: whoamiudp
     
     spec:
       replicas: 2
       selector:
         matchLabels:
-          app: containous
+          app: traefiklabs
           task: whoamiudp
       template:
         metadata:
           labels:
-            app: containous
+            app: traefiklabs
             task: whoamiudp
         spec:
           containers:
-            - name: containouswhoamiudp
-              image: containous/whoamiudp:dev
+            - name: whoamiudp
+              image: traefik/whoamiudp:latest
               ports:
                 - containerPort: 8080
     
@@ -278,7 +278,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       ports:
         - port: 8080
       selector:
-        app: containous
+        app: traefiklabs
         task: whoamiudp
     ```
 
@@ -619,7 +619,7 @@ Register the `Middleware` [kind](../../reference/dynamic-configuration/kubernete
 !!! important "Cross-provider namespace"
 
     As Kubernetes also has its own notion of namespace, one should not confuse the kubernetes namespace of a resource
-    (in the reference to the middleware) with the [provider namespace](../../middlewares/overview.md#provider-namespace),
+    (in the reference to the middleware) with the [provider namespace](../../providers/overview.md#provider-namespace),
     when the definition of the middleware comes from another provider.
     In this context, specifying a namespace when referring to the resource does not make any sense, and will be ignored.
     Additionally, when you want to reference a Middleware from the CRD Provider,
@@ -687,7 +687,7 @@ More information in the dedicated server [load balancing](../services/index.md#l
         - name: http
           port: 80
       selector:
-        app: containous
+        app: traefiklabs
         task: app1
     ---
     apiVersion: v1
@@ -701,7 +701,7 @@ More information in the dedicated server [load balancing](../services/index.md#l
         - name: http
           port: 80
       selector:
-        app: containous
+        app: traefiklabs
         task: app2
     ```
 
@@ -780,7 +780,7 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
         - name: http
           port: 80
       selector:
-        app: containous
+        app: traefiklabs
         task: app1
     ---
     apiVersion: v1
@@ -794,7 +794,7 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
         - name: http
           port: 80
       selector:
-        app: containous
+        app: traefiklabs
         task: app2
     ---
     apiVersion: v1
@@ -808,7 +808,7 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
         - name: http
           port: 80
       selector:
-        app: containous
+        app: traefiklabs
         task: app3
     ```
 
@@ -891,7 +891,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
         - name: http
           port: 80
       selector:
-        app: containous
+        app: traefiklabs
         task: app1
     ---
     apiVersion: v1
@@ -905,7 +905,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
         - name: http
           port: 80
       selector:
-        app: containous
+        app: traefiklabs
         task: app2
     ```
 
@@ -1026,7 +1026,7 @@ and there is a second level because each whoami service is a `replicaset` and is
         spec:
           containers:
             - name: whoami1
-              image: containous/whoami
+              image: traefik/whoami
               ports:
                 - name: web
                   containerPort: 80
@@ -1052,7 +1052,7 @@ and there is a second level because each whoami service is a `replicaset` and is
         spec:
           containers:
             - name: whoami2
-              image: containous/whoami
+              image: traefik/whoami
               ports:
                 - name: web
                   containerPort: 80
@@ -1456,8 +1456,7 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
     If the optional `namespace` attribute is not set, the configuration will be applied with the namespace of the IngressRoute.
 
 	Additionally, when the definition of the TLS option is from another provider,
-	the cross-provider syntax (`middlewarename@provider`) should be used to refer to the TLS option,
-	just as in the [middleware case](../../middlewares/overview.md#provider-namespace).
+	the cross-provider [syntax](../../providers/overview.md#provider-namespace) (`middlewarename@provider`) should be used to refer to the TLS option.
 	Specifying a namespace attribute in this case would not make any sense, and will be ignored.
 
 ### Kind: `TLSStore`
@@ -1490,7 +1489,7 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
 
 | Ref | Attribute                   | Purpose                                                                                                                                                                    |
 |-----|-----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1] | `secretName`                | The name of the referenced Kubernetes [Secret](https://kubernetes.io/docs/concepts/configuration/secret/) that holds the default certificate for the store.                                                                             |
+| [1] | `secretName`                | The name of the referenced Kubernetes [Secret](https://kubernetes.io/docs/concepts/configuration/secret/) that holds the default certificate for the store.                |
 
 ??? example "Declaring and referencing a TLSStore"
    

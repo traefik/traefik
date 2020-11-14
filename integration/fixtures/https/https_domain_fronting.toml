@@ -1,0 +1,53 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints.websecure]
+  address = ":4443"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers.router1]
+  rule = "Host(`site1.www.snitest.com`)"
+  service = "service1"
+  [http.routers.router1.tls]
+
+[http.routers.router2]
+  rule = "Host(`site2.www.snitest.com`)"
+  service = "service2"
+  [http.routers.router2.tls]
+
+[http.routers.router3]
+  rule = "Host(`site3.www.snitest.com`)"
+  service = "service3"
+  [http.routers.router3.tls]
+    options = "mytls"
+
+[http.services.service1]
+  [[http.services.service1.loadBalancer.servers]]
+    url = "http://127.0.0.1:9010"
+
+[http.services.service2]
+  [[http.services.service2.loadBalancer.servers]]
+    url = "http://127.0.0.1:9020"
+
+[http.services.service3]
+  [[http.services.service3.loadBalancer.servers]]
+    url = "http://127.0.0.1:9030"
+
+[[tls.certificates]]
+  certFile = "fixtures/https/wildcard.www.snitest.com.cert"
+  keyFile = "fixtures/https/wildcard.www.snitest.com.key"
+
+[tls.options]
+  [tls.options.mytls]
+    maxVersion = "VersionTLS12"

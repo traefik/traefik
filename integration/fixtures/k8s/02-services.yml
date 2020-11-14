@@ -4,24 +4,24 @@ metadata:
   name: whoami
   namespace: default
   labels:
-    app: containous
+    app: traefiklabs
     name: whoami
 
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: containous
+      app: traefiklabs
       task: whoami
   template:
     metadata:
       labels:
-        app: containous
+        app: traefiklabs
         task: whoami
     spec:
       containers:
-        - name: containouswhoami
-          image: containous/whoami
+        - name: whoami
+          image: traefik/whoami
           ports:
             - containerPort: 80
 
@@ -37,7 +37,7 @@ spec:
     - name: http
       port: 80
   selector:
-    app: containous
+    app: traefiklabs
     task: whoami
 
 ---
@@ -47,24 +47,24 @@ metadata:
   name: whoamitcp
   namespace: default
   labels:
-    app: containous
+    app: traefiklabs
     name: whoamitcp
 
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: containous
+      app: traefiklabs
       task: whoamitcp
   template:
     metadata:
       labels:
-        app: containous
+        app: traefiklabs
         task: whoamitcp
     spec:
       containers:
-        - name: containouswhoamitcp
-          image: containous/whoamitcp
+        - name: whoamitcp
+          image: traefik/whoamitcp
           ports:
             - containerPort: 8080
 
@@ -80,7 +80,7 @@ spec:
     - name: footcp
       port: 8080
   selector:
-    app: containous
+    app: traefiklabs
     task: whoamitcp
 
 ---
@@ -90,24 +90,24 @@ metadata:
   name: whoamiudp
   namespace: default
   labels:
-    app: containous
+    app: traefiklabs
     name: whoamiudp
 
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: containous
+      app: traefiklabs
       task: whoamiudp
   template:
     metadata:
       labels:
-        app: containous
+        app: traefiklabs
         task: whoamiudp
     spec:
       containers:
-        - name: containouswhoamiudp
-          image: containous/whoamiudp:dev
+        - name: whoamiudp
+          image: traefik/whoamiudp:latest
           ports:
             - containerPort: 8090
 
@@ -124,7 +124,7 @@ spec:
       name: fooudp
       port: 8090
   selector:
-    app: containous
+    app: traefiklabs
     task: whoamiudp
 
 ---

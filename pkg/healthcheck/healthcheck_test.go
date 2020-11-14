@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/config/runtime"
-	"github.com/containous/traefik/v2/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v2/pkg/config/runtime"
+	"github.com/traefik/traefik/v2/pkg/testhelpers"
 	"github.com/vulcand/oxy/roundrobin"
 )
 
@@ -448,9 +448,9 @@ func TestLBStatusUpdater(t *testing.T) {
 	svInfo := &runtime.ServiceInfo{}
 	lbsu := NewLBStatusUpdater(lb, svInfo)
 	newServer, err := url.Parse("http://foo.com")
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	err = lbsu.UpsertServer(newServer, roundrobin.Weight(1))
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(lbsu.Servers()), 1)
 	assert.Equal(t, len(lbsu.BalancerHandler.(*testLoadBalancer).Options()), 1)
 	statuses := svInfo.GetAllStatus()
@@ -461,7 +461,7 @@ func TestLBStatusUpdater(t *testing.T) {
 		break
 	}
 	err = lbsu.RemoveServer(newServer)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(lbsu.Servers()), 0)
 	statuses = svInfo.GetAllStatus()
 	assert.Equal(t, len(statuses), 1)

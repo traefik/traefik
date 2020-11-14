@@ -3,7 +3,7 @@ package dynamic
 import (
 	"reflect"
 
-	"github.com/containous/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 // +k8s:deepcopy-gen=true
@@ -178,9 +178,9 @@ type HealthCheck struct {
 	Scheme string `json:"scheme,omitempty" toml:"scheme,omitempty" yaml:"scheme,omitempty"`
 	Path   string `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty"`
 	Port   int    `json:"port,omitempty" toml:"port,omitempty,omitzero" yaml:"port,omitempty"`
-	// FIXME change string to types.Duration
+	// FIXME change string to ptypes.Duration
 	Interval string `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty"`
-	// FIXME change string to types.Duration
+	// FIXME change string to ptypes.Duration
 	Timeout         string            `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty"`
 	Hostname        string            `json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
 	FollowRedirects *bool             `json:"followRedirects" toml:"followRedirects" yaml:"followRedirects"`

@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -14,9 +15,10 @@ import (
 	"time"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/sirupsen/logrus"
+	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 type key string
@@ -98,6 +100,17 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 		Formatter: formatter,
 		Hooks:     make(logrus.LevelHooks),
 		Level:     logrus.InfoLevel,
+	}
+
+	// Transform headers names in config to a canonical form, to be used as is without further transformations.
+	if config.Fields != nil && config.Fields.Headers != nil && len(config.Fields.Headers.Names) > 0 {
+		fields := map[string]string{}
+
+		for h, v := range config.Fields.Headers.Names {
+			fields[textproto.CanonicalMIMEHeaderKey(h)] = v
+		}
+
+		config.Fields.Headers.Names = fields
 	}
 
 	logHandler := &Handler{
@@ -357,7 +370,7 @@ func (h *Handler) keepAccessLog(statusCode, retryAttempts int, duration time.Dur
 		return true
 	}
 
-	if h.config.Filters.MinDuration > 0 && (types.Duration(duration) > h.config.Filters.MinDuration) {
+	if h.config.Filters.MinDuration > 0 && (ptypes.Duration(duration) > h.config.Filters.MinDuration) {
 		return true
 	}
 

@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/v2/integration/try"
-	"github.com/containous/traefik/v2/pkg/api"
-	"github.com/containous/traefik/v2/pkg/testhelpers"
 	"github.com/go-check/check"
+	"github.com/traefik/traefik/v2/integration/try"
+	"github.com/traefik/traefik/v2/pkg/api"
+	"github.com/traefik/traefik/v2/pkg/testhelpers"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -55,7 +55,7 @@ func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
 	req.Host = "my.super.host"

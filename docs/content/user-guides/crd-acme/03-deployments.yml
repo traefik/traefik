@@ -26,7 +26,7 @@ spec:
       serviceAccountName: traefik-ingress-controller
       containers:
         - name: traefik
-          image: traefik:v2.2
+          image: traefik:v2.3
           args:
             - --api.insecure
             - --accesslog
@@ -68,7 +68,7 @@ spec:
     spec:
       containers:
         - name: whoami
-          image: containous/whoami
+          image: traefik/whoami
           ports:
             - name: web
               containerPort: 80

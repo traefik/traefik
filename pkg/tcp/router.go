@@ -4,13 +4,15 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/tls"
+	"errors"
 	"io"
 	"net"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 // Router is a TCP router.
@@ -65,7 +67,7 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 	}
 
 	// FIXME Optimize and test the routing table before helloServerName
-	serverName = strings.ToLower(serverName)
+	serverName = types.CanonicalDomain(serverName)
 	if r.routingTable != nil && serverName != "" {
 		if target, ok := r.routingTable[serverName]; ok {
 			target.ServeTCP(r.GetConn(conn, peeked))
@@ -196,10 +198,11 @@ func (c *Conn) Read(p []byte) (n int, err error) {
 func clientHelloServerName(br *bufio.Reader) (string, bool, string, error) {
 	hdr, err := br.Peek(1)
 	if err != nil {
-		opErr, ok := err.(*net.OpError)
-		if err != io.EOF && (!ok || !opErr.Timeout()) {
+		var opErr *net.OpError
+		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || opErr.Timeout()) {
 			log.WithoutContext().Debugf("Error while Peeking first byte: %s", err)
 		}
+
 		return "", false, "", err
 	}
 

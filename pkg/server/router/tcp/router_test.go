@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/config/runtime"
-	"github.com/containous/traefik/v2/pkg/server/service/tcp"
-	"github.com/containous/traefik/v2/pkg/tls"
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/config/runtime"
+	"github.com/traefik/traefik/v2/pkg/server/service/tcp"
+	"github.com/traefik/traefik/v2/pkg/tls"
 )
 
 func TestRuntimeConfiguration(t *testing.T) {

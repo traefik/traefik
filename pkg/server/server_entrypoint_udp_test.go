@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/config/static"
-	"github.com/containous/traefik/v2/pkg/types"
-	"github.com/containous/traefik/v2/pkg/udp"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v2/pkg/config/static"
+	"github.com/traefik/traefik/v2/pkg/udp"
 )
 
 func TestShutdownUDPConn(t *testing.T) {
@@ -18,7 +18,7 @@ func TestShutdownUDPConn(t *testing.T) {
 		Address: ":0",
 		Transport: &static.EntryPointsTransport{
 			LifeCycle: &static.LifeCycle{
-				GraceTimeOut: types.Duration(5 * time.Second),
+				GraceTimeOut: ptypes.Duration(5 * time.Second),
 			},
 		},
 	})

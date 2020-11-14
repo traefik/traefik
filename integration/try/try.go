@@ -7,11 +7,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 const (
-	// CITimeoutMultiplier is the multiplier for all timeout in the CI
+	// CITimeoutMultiplier is the multiplier for all timeout in the CI.
 	CITimeoutMultiplier = 3
 	maxInterval         = 5 * time.Second
 )

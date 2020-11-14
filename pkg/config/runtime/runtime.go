@@ -4,8 +4,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 // Status of the router/service.
@@ -23,7 +23,7 @@ type Configuration struct {
 	TCPRouters  map[string]*TCPRouterInfo  `json:"tcpRouters,omitempty"`
 	TCPServices map[string]*TCPServiceInfo `json:"tcpServices,omitempty"`
 	UDPRouters  map[string]*UDPRouterInfo  `json:"udpRouters,omitempty"`
-	UDPServices map[string]*UDPServiceInfo `json:"updServices,omitempty"`
+	UDPServices map[string]*UDPServiceInfo `json:"udpServices,omitempty"`
 }
 
 // NewConfig returns a Configuration initialized with the given conf. It never returns nil.

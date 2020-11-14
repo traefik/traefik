@@ -9,9 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/config/runtime"
-	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v2/pkg/config/runtime"
+	"github.com/traefik/traefik/v2/pkg/metrics"
+	"github.com/traefik/traefik/v2/pkg/safe"
 )
 
 func TestTick(t *testing.T) {
@@ -43,7 +44,7 @@ func TestTick(t *testing.T) {
 		receivedConfig <- true
 	})
 
-	pilot := New("token", safe.NewPool(context.Background()))
+	pilot := New("token", metrics.RegisterPilot(), safe.NewPool(context.Background()))
 	pilot.client.baseURL = server.URL
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -118,6 +119,6 @@ func TestClient_SendConfiguration(t *testing.T) {
 		token:      myToken,
 	}
 
-	err := client.SendData(context.Background(), RunTimeRepresentation{})
+	err := client.SendData(context.Background(), RunTimeRepresentation{}, []metrics.PilotMetric{})
 	require.NoError(t, err)
 }

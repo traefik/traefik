@@ -7,12 +7,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/config/runtime"
-	"github.com/containous/traefik/v2/pkg/server/provider"
-	"github.com/containous/traefik/v2/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/config/runtime"
+	"github.com/traefik/traefik/v2/pkg/server/provider"
+	"github.com/traefik/traefik/v2/pkg/testhelpers"
 )
 
 type MockForwarder struct{}
@@ -259,7 +259,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
-			handler, err := sm.getLoadBalancerServiceHandler(context.Background(), test.serviceName, test.service, test.responseModifier)
+			handler, err := sm.getLoadBalancerServiceHandler(context.Background(), test.serviceName, test.service)
 
 			assert.NoError(t, err)
 			assert.NotNil(t, handler)
@@ -339,7 +339,7 @@ func TestManager_Build(t *testing.T) {
 				ctx = provider.AddInContext(ctx, "foobar@"+test.providerName)
 			}
 
-			_, err := manager.BuildHTTP(ctx, test.serviceName, nil)
+			_, err := manager.BuildHTTP(ctx, test.serviceName)
 			require.NoError(t, err)
 		})
 	}
@@ -357,7 +357,7 @@ func TestMultipleTypeOnBuildHTTP(t *testing.T) {
 
 	manager := NewManager(services, http.DefaultTransport, nil, nil)
 
-	_, err := manager.BuildHTTP(context.Background(), "test@file", nil)
+	_, err := manager.BuildHTTP(context.Background(), "test@file")
 	assert.Error(t, err, "cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
 }
 

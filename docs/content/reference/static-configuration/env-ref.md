@@ -81,6 +81,9 @@ HTTP challenge EntryPoint
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_KEYTYPE`:  
 KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. (Default: ```RSA4096```)
 
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_PREFERREDCHAIN`:  
+Preferred chain to use.
+
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_STORAGE`:  
 Storage to use. (Default: ```acme.json```)
 
@@ -164,9 +167,6 @@ plugin's GOPATH.
 
 `TRAEFIK_EXPERIMENTAL_DEVPLUGIN_MODULENAME`:  
 plugin's module name.
-
-`TRAEFIK_EXPERIMENTAL_PILOT_TOKEN`:  
-Traefik Pilot token.
 
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_MODULENAME`:  
 plugin's module name.
@@ -285,6 +285,9 @@ Prefix to use for metrics collection. (Default: ```traefik```)
 `TRAEFIK_METRICS_STATSD_PUSHINTERVAL`:  
 StatsD push interval. (Default: ```10```)
 
+`TRAEFIK_PILOT_TOKEN`:  
+Traefik Pilot token.
+
 `TRAEFIK_PING`:  
 Enable ping. (Default: ```false```)
 
@@ -310,7 +313,7 @@ Constraints is an expression that Traefik matches against the container's labels
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_ADDRESS`:  
-The address of the Consul server (Default: ```http://127.0.0.1:8500```)
+The address of the Consul server (Default: ```127.0.0.1:8500```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_DATACENTER`:  
 Data center to use. If not provided, the default agent data center is used
@@ -893,6 +896,9 @@ Password for basic http authentication when sending spans to jaeger-collector.
 
 `TRAEFIK_TRACING_JAEGER_COLLECTOR_USER`:  
 User for basic http authentication when sending spans to jaeger-collector.
+
+`TRAEFIK_TRACING_JAEGER_DISABLEATTEMPTRECONNECTING`:  
+Disable the periodic re-resolution of the agent's hostname and reconnection if there was a change. (Default: ```true```)
 
 `TRAEFIK_TRACING_JAEGER_GEN128BIT`:  
 Generate 128 bit span IDs. (Default: ```false```)

@@ -60,14 +60,17 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
     providers:
       docker:
         # swarm classic (1.12-)
-        # endpoint = "tcp://127.0.0.1:2375"
+        # endpoint: "tcp://127.0.0.1:2375"
         # docker swarm mode (1.12+)
-        endpoint: "tcp://127.0.0.1:2375"
+        endpoint: "tcp://127.0.0.1:2377"
         swarmMode: true
     ```
     
     ```bash tab="CLI"
-    --providers.docker.endpoint=tcp://127.0.0.1:2375
+    # swarm classic (1.12-)
+    # --providers.docker.endpoint=tcp://127.0.0.1:2375
+    # docker swarm mode (1.12+)
+    --providers.docker.endpoint=tcp://127.0.0.1:2377
     --providers.docker.swarmMode=true
     ```
 
@@ -141,8 +144,8 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
     Accessing the Docker API without any restriction is a security concern:
     If Traefik is attacked, then the attacker might get access to the underlying host.
     {: #security-note }
-    
-    As explained in the Docker documentation: ([Docker Daemon Attack Surface page](https://docs.docker.com/engine/security/security/#docker-daemon-attack-surface)):
+
+    As explained in the Docker documentation: ([Docker Daemon Attack Surface page](https://docs.docker.com/engine/security/#docker-daemon-attack-surface)):
 
     !!! quote
         [...] only **trusted** users should be allowed to control your Docker daemon [...]
@@ -163,12 +166,12 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
 
     ??? info "More Resources and Examples"
         - ["Paranoid about mounting /var/run/docker.sock?"](https://medium.com/@containeroo/traefik-2-0-paranoid-about-mounting-var-run-docker-sock-22da9cb3e78c)
-        - [Traefik and Docker: A Discussion with Docker Captain, Bret Fisher](https://blog.containo.us/traefik-and-docker-a-discussion-with-docker-captain-bret-fisher-7f0b9a54ff88)
+        - [Traefik and Docker: A Discussion with Docker Captain, Bret Fisher](https://blog.traefik.io/traefik-and-docker-a-discussion-with-docker-captain-bret-fisher-7f0b9a54ff88)
         - [KubeCon EU 2018 Keynote, Running with Scissors, from Liz Rice](https://www.youtube.com/watch?v=ltrV-Qmh3oY)
         - [Don't expose the Docker socket (not even to a container)](https://www.lvh.io/posts/dont-expose-the-docker-socket-not-even-to-a-container/)
         - [A thread on Stack Overflow about sharing the `/var/run/docker.sock` file](https://news.ycombinator.com/item?id=17983623)
         - [To DinD or not to DinD](https://blog.loof.fr/2018/01/to-dind-or-not-do-dind.html)
-        - [Traefik issue GH-4174 about security with Docker socket](https://github.com/containous/traefik/issues/4174)
+        - [Traefik issue GH-4174 about security with Docker socket](https://github.com/traefik/traefik/issues/4174)
         - [Inspecting Docker Activity with Socat](https://developers.redhat.com/blog/2015/02/25/inspecting-docker-activity-with-socat/)
         - [Letting Traefik run on Worker Nodes](https://blog.mikesir87.io/2018/07/letting-traefik-run-on-worker-nodes/)
         - [Docker Socket Proxy from Tecnativa](https://github.com/Tecnativa/docker-socket-proxy)
@@ -199,7 +202,7 @@ Therefore you **must** specify the port to use for communication by using the la
 Docker Swarm Mode follows the same rules as Docker [API Access](#docker-api-access).
 
 As the Swarm API is only exposed on the [manager nodes](https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/#manager-nodes), you should schedule Traefik on the Swarm manager nodes by default,
-by deploying Traefik with a [constraint](https://success.docker.com/article/using-contraints-and-labels-to-control-the-placement-of-containers) on the node's "role":
+by deploying Traefik with a constraint on the node's "role":
 
 ```shell tab="With Docker CLI"
 docker service create \
@@ -261,7 +264,7 @@ See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API A
 
     services:
       traefik:
-         image: traefik:v2.2 # The official v2 Traefik docker image
+         image: traefik:v2.3 # The official v2 Traefik docker image
          ports:
            - "80:80"
          volumes:

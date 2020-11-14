@@ -2,33 +2,34 @@ package metrics
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sort"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/safe"
-	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/go-kit/kit/metrics"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 const (
-	// MetricNamePrefix prefix of all metric names
+	// MetricNamePrefix prefix of all metric names.
 	MetricNamePrefix = "traefik_"
 
-	// server meta information
+	// server meta information.
 	metricConfigPrefix             = MetricNamePrefix + "config_"
 	configReloadsTotalName         = metricConfigPrefix + "reloads_total"
 	configReloadsFailuresTotalName = metricConfigPrefix + "reloads_failure_total"
 	configLastReloadSuccessName    = metricConfigPrefix + "last_reload_success"
 	configLastReloadFailureName    = metricConfigPrefix + "last_reload_failure"
 
-	// entry point
+	// entry point.
 	metricEntryPointPrefix     = MetricNamePrefix + "entrypoint_"
 	entryPointReqsTotalName    = metricEntryPointPrefix + "requests_total"
 	entryPointReqsTLSTotalName = metricEntryPointPrefix + "requests_tls_total"
@@ -37,7 +38,7 @@ const (
 
 	// service level.
 
-	// MetricServicePrefix prefix of all service metric names
+	// MetricServicePrefix prefix of all service metric names.
 	MetricServicePrefix     = MetricNamePrefix + "service_"
 	serviceReqsTotalName    = MetricServicePrefix + "requests_total"
 	serviceReqsTLSTotalName = MetricServicePrefix + "requests_tls_total"
@@ -74,12 +75,15 @@ func RegisterPrometheus(ctx context.Context, config *types.Prometheus) Registry 
 	standardRegistry := initStandardRegistry(config)
 
 	if err := promRegistry.Register(stdprometheus.NewProcessCollector(stdprometheus.ProcessCollectorOpts{})); err != nil {
-		if _, ok := err.(stdprometheus.AlreadyRegisteredError); !ok {
+		var arErr stdprometheus.AlreadyRegisteredError
+		if !errors.As(err, &arErr) {
 			log.FromContext(ctx).Warn("ProcessCollector is already registered")
 		}
 	}
+
 	if err := promRegistry.Register(stdprometheus.NewGoCollector()); err != nil {
-		if _, ok := err.(stdprometheus.AlreadyRegisteredError); !ok {
+		var arErr stdprometheus.AlreadyRegisteredError
+		if !errors.As(err, &arErr) {
 			log.FromContext(ctx).Warn("GoCollector is already registered")
 		}
 	}
@@ -212,15 +216,21 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 }
 
 func registerPromState(ctx context.Context) bool {
-	if err := promRegistry.Register(promState); err != nil {
-		logger := log.FromContext(ctx)
-		if _, ok := err.(stdprometheus.AlreadyRegisteredError); !ok {
-			logger.Errorf("Unable to register Traefik to Prometheus: %v", err)
-			return false
-		}
-		logger.Debug("Prometheus collector already registered.")
+	err := promRegistry.Register(promState)
+	if err == nil {
+		return true
 	}
-	return true
+
+	logger := log.FromContext(ctx)
+
+	var arErr stdprometheus.AlreadyRegisteredError
+	if errors.As(err, &arErr) {
+		logger.Debug("Prometheus collector already registered.")
+		return true
+	}
+
+	logger.Errorf("Unable to register Traefik to Prometheus: %v", err)
+	return false
 }
 
 // OnConfigurationUpdate receives the current configuration from Traefik.

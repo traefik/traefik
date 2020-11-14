@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/middlewares/requestdecorator"
 	"github.com/gorilla/mux"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
 	"github.com/vulcand/predicate"
 )
 

@@ -317,7 +317,7 @@ Below are the available options for the health check mechanism:
 
 - `path` is appended to the server URL to set the health check endpoint.
 - `scheme`, if defined, will replace the server URL `scheme` for the health check endpoint
-- `hostname`, if defined, will replace the server URL `hostname` for the health check endpoint.
+- `hostname`, if defined, will apply `Host` header `hostname` to the health check request.
 - `port`, if defined, will replace the server URL `port` for the health check endpoint.
 - `interval` defines the frequency of the health check calls.
 - `timeout` defines the maximum duration Traefik will wait for a health check request before considering the server failed (unhealthy).
@@ -592,7 +592,7 @@ http:
         # maxBodySize is the maximum size allowed for the body of the request.
         # If the body is larger, the request is not mirrored.
         # Default value is -1, which means unlimited size.
-        maxBodySize = 1024
+        maxBodySize: 1024
         mirrors:
         - name: appv2
           percent: 10

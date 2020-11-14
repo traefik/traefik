@@ -9,7 +9,7 @@ spec:
     - name: web
       port: 80
   selector:
-    app: containous
+    app: traefiklabs
     task: whoami
 
 ---
@@ -39,7 +39,7 @@ spec:
     - name: web
       port: 8080
   selector:
-    app: containous
+    app: traefiklabs
     task: whoami2
 
 ---
@@ -70,7 +70,7 @@ spec:
       port: 443
       targetPort: 8443
   selector:
-    app: containous
+    app: traefiklabs
     task: whoami2
 
 ---
@@ -101,7 +101,7 @@ spec:
       port: 8443
       scheme: https
   selector:
-    app: containous
+    app: traefiklabs
     task: whoami3
 
 ---

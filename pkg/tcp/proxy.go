@@ -5,13 +5,15 @@ import (
 	"net"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 // Proxy forwards a TCP request to a TCP service.
 type Proxy struct {
+	address          string
 	target           *net.TCPAddr
 	terminationDelay time.Duration
+	refreshTarget    bool
 }
 
 // NewProxy creates a new Proxy.
@@ -21,7 +23,18 @@ func NewProxy(address string, terminationDelay time.Duration) (*Proxy, error) {
 		return nil, err
 	}
 
-	return &Proxy{target: tcpAddr, terminationDelay: terminationDelay}, nil
+	// enable the refresh of the target only if the address in an IP
+	refreshTarget := false
+	if host, _, err := net.SplitHostPort(address); err == nil && net.ParseIP(host) == nil {
+		refreshTarget = true
+	}
+
+	return &Proxy{
+		address:          address,
+		target:           tcpAddr,
+		refreshTarget:    refreshTarget,
+		terminationDelay: terminationDelay,
+	}, nil
 }
 
 // ServeTCP forwards the connection to a service.
@@ -30,6 +43,15 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 
 	// needed because of e.g. server.trackedConnection
 	defer conn.Close()
+
+	if p.refreshTarget {
+		tcpAddr, err := net.ResolveTCPAddr("tcp", p.address)
+		if err != nil {
+			log.Errorf("Error resolving tcp address: %v", err)
+			return
+		}
+		p.target = tcpAddr
+	}
 
 	connBackend, err := net.DialTCP("tcp", nil, p.target)
 	if err != nil {

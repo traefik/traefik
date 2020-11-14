@@ -83,8 +83,8 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 		},
 	}
 
-	// Set timezone to Alaska to have a constant behavior
-	os.Setenv("TZ", "US/Alaska")
+	// Set timezone to Etc/GMT+9 to have a constant behavior
+	os.Setenv("TZ", "Etc/GMT+9")
 
 	for _, test := range testCases {
 		test := test

@@ -6,39 +6,40 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/ping"
-	acmeprovider "github.com/containous/traefik/v2/pkg/provider/acme"
-	"github.com/containous/traefik/v2/pkg/provider/consulcatalog"
-	"github.com/containous/traefik/v2/pkg/provider/docker"
-	"github.com/containous/traefik/v2/pkg/provider/ecs"
-	"github.com/containous/traefik/v2/pkg/provider/file"
-	"github.com/containous/traefik/v2/pkg/provider/http"
 	knative "github.com/containous/traefik/v2/pkg/provider/knative/crd"
-	"github.com/containous/traefik/v2/pkg/provider/kubernetes/crd"
-	"github.com/containous/traefik/v2/pkg/provider/kubernetes/ingress"
-	"github.com/containous/traefik/v2/pkg/provider/kv/consul"
-	"github.com/containous/traefik/v2/pkg/provider/kv/etcd"
-	"github.com/containous/traefik/v2/pkg/provider/kv/redis"
-	"github.com/containous/traefik/v2/pkg/provider/kv/zk"
-	"github.com/containous/traefik/v2/pkg/provider/marathon"
-	"github.com/containous/traefik/v2/pkg/provider/rancher"
-	"github.com/containous/traefik/v2/pkg/provider/rest"
-	"github.com/containous/traefik/v2/pkg/tls"
-	"github.com/containous/traefik/v2/pkg/tracing/datadog"
-	"github.com/containous/traefik/v2/pkg/tracing/elastic"
-	"github.com/containous/traefik/v2/pkg/tracing/haystack"
-	"github.com/containous/traefik/v2/pkg/tracing/instana"
-	"github.com/containous/traefik/v2/pkg/tracing/jaeger"
-	"github.com/containous/traefik/v2/pkg/tracing/zipkin"
-	"github.com/containous/traefik/v2/pkg/types"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
-	legolog "github.com/go-acme/lego/v3/log"
+	legolog "github.com/go-acme/lego/v4/log"
 	"github.com/sirupsen/logrus"
+	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/ping"
+	acmeprovider "github.com/traefik/traefik/v2/pkg/provider/acme"
+	"github.com/traefik/traefik/v2/pkg/provider/consulcatalog"
+	"github.com/traefik/traefik/v2/pkg/provider/docker"
+	"github.com/traefik/traefik/v2/pkg/provider/ecs"
+	"github.com/traefik/traefik/v2/pkg/provider/file"
+	"github.com/traefik/traefik/v2/pkg/provider/http"
+	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd"
+	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/ingress"
+	"github.com/traefik/traefik/v2/pkg/provider/kv/consul"
+	"github.com/traefik/traefik/v2/pkg/provider/kv/etcd"
+	"github.com/traefik/traefik/v2/pkg/provider/kv/redis"
+	"github.com/traefik/traefik/v2/pkg/provider/kv/zk"
+	"github.com/traefik/traefik/v2/pkg/provider/marathon"
+	"github.com/traefik/traefik/v2/pkg/provider/rancher"
+	"github.com/traefik/traefik/v2/pkg/provider/rest"
+	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v2/pkg/tracing/datadog"
+	"github.com/traefik/traefik/v2/pkg/tracing/elastic"
+	"github.com/traefik/traefik/v2/pkg/tracing/haystack"
+	"github.com/traefik/traefik/v2/pkg/tracing/instana"
+	"github.com/traefik/traefik/v2/pkg/tracing/jaeger"
+	"github.com/traefik/traefik/v2/pkg/tracing/zipkin"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 const (
-	// DefaultInternalEntryPointName the name of the default internal entry point
+	// DefaultInternalEntryPointName the name of the default internal entry point.
 	DefaultInternalEntryPointName = "traefik"
 
 	// DefaultGraceTimeout controls how long Traefik serves pending requests
@@ -48,7 +49,7 @@ const (
 	// DefaultIdleTimeout before closing an idle connection.
 	DefaultIdleTimeout = 180 * time.Second
 
-	// DefaultAcmeCAServer is the default ACME API endpoint
+	// DefaultAcmeCAServer is the default ACME API endpoint.
 	DefaultAcmeCAServer = "https://acme-v02.api.letsencrypt.org/directory"
 )
 
@@ -72,7 +73,9 @@ type Configuration struct {
 
 	CertificatesResolvers map[string]CertificateResolver `description:"Certificates resolvers configuration." json:"certificatesResolvers,omitempty" toml:"certificatesResolvers,omitempty" yaml:"certificatesResolvers,omitempty" export:"true"`
 
-	Experimental *Experimental `description:"experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty"`
+	Pilot *Pilot `description:"Traefik Pilot configuration." json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty" export:"true"`
+
+	Experimental *Experimental `description:"experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty" export:"true"`
 }
 
 // CertificateResolver contains the configuration for the different types of certificates resolver.
@@ -111,38 +114,38 @@ func (a *API) SetDefaults() {
 
 // RespondingTimeouts contains timeout configurations for incoming requests to the Traefik instance.
 type RespondingTimeouts struct {
-	ReadTimeout  types.Duration `description:"ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set." json:"readTimeout,omitempty" toml:"readTimeout,omitempty" yaml:"readTimeout,omitempty" export:"true"`
-	WriteTimeout types.Duration `description:"WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set." json:"writeTimeout,omitempty" toml:"writeTimeout,omitempty" yaml:"writeTimeout,omitempty" export:"true"`
-	IdleTimeout  types.Duration `description:"IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout is set." json:"idleTimeout,omitempty" toml:"idleTimeout,omitempty" yaml:"idleTimeout,omitempty" export:"true"`
+	ReadTimeout  ptypes.Duration `description:"ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set." json:"readTimeout,omitempty" toml:"readTimeout,omitempty" yaml:"readTimeout,omitempty" export:"true"`
+	WriteTimeout ptypes.Duration `description:"WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set." json:"writeTimeout,omitempty" toml:"writeTimeout,omitempty" yaml:"writeTimeout,omitempty" export:"true"`
+	IdleTimeout  ptypes.Duration `description:"IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout is set." json:"idleTimeout,omitempty" toml:"idleTimeout,omitempty" yaml:"idleTimeout,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (a *RespondingTimeouts) SetDefaults() {
-	a.IdleTimeout = types.Duration(DefaultIdleTimeout)
+	a.IdleTimeout = ptypes.Duration(DefaultIdleTimeout)
 }
 
 // ForwardingTimeouts contains timeout configurations for forwarding requests to the backend servers.
 type ForwardingTimeouts struct {
-	DialTimeout           types.Duration `description:"The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists." json:"dialTimeout,omitempty" toml:"dialTimeout,omitempty" yaml:"dialTimeout,omitempty" export:"true"`
-	ResponseHeaderTimeout types.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists." json:"responseHeaderTimeout,omitempty" toml:"responseHeaderTimeout,omitempty" yaml:"responseHeaderTimeout,omitempty" export:"true"`
-	IdleConnTimeout       types.Duration `description:"The maximum period for which an idle HTTP keep-alive connection will remain open before closing itself" json:"idleConnTimeout,omitempty" toml:"idleConnTimeout,omitempty" yaml:"idleConnTimeout,omitempty" export:"true"`
+	DialTimeout           ptypes.Duration `description:"The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists." json:"dialTimeout,omitempty" toml:"dialTimeout,omitempty" yaml:"dialTimeout,omitempty" export:"true"`
+	ResponseHeaderTimeout ptypes.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists." json:"responseHeaderTimeout,omitempty" toml:"responseHeaderTimeout,omitempty" yaml:"responseHeaderTimeout,omitempty" export:"true"`
+	IdleConnTimeout       ptypes.Duration `description:"The maximum period for which an idle HTTP keep-alive connection will remain open before closing itself" json:"idleConnTimeout,omitempty" toml:"idleConnTimeout,omitempty" yaml:"idleConnTimeout,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (f *ForwardingTimeouts) SetDefaults() {
-	f.DialTimeout = types.Duration(30 * time.Second)
-	f.IdleConnTimeout = types.Duration(90 * time.Second)
+	f.DialTimeout = ptypes.Duration(30 * time.Second)
+	f.IdleConnTimeout = ptypes.Duration(90 * time.Second)
 }
 
 // LifeCycle contains configurations relevant to the lifecycle (such as the shutdown phase) of Traefik.
 type LifeCycle struct {
-	RequestAcceptGraceTimeout types.Duration `description:"Duration to keep accepting requests before Traefik initiates the graceful shutdown procedure." json:"requestAcceptGraceTimeout,omitempty" toml:"requestAcceptGraceTimeout,omitempty" yaml:"requestAcceptGraceTimeout,omitempty" export:"true"`
-	GraceTimeOut              types.Duration `description:"Duration to give active requests a chance to finish before Traefik stops." json:"graceTimeOut,omitempty" toml:"graceTimeOut,omitempty" yaml:"graceTimeOut,omitempty" export:"true"`
+	RequestAcceptGraceTimeout ptypes.Duration `description:"Duration to keep accepting requests before Traefik initiates the graceful shutdown procedure." json:"requestAcceptGraceTimeout,omitempty" toml:"requestAcceptGraceTimeout,omitempty" yaml:"requestAcceptGraceTimeout,omitempty" export:"true"`
+	GraceTimeOut              ptypes.Duration `description:"Duration to give active requests a chance to finish before Traefik stops." json:"graceTimeOut,omitempty" toml:"graceTimeOut,omitempty" yaml:"graceTimeOut,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (a *LifeCycle) SetDefaults() {
-	a.GraceTimeOut = types.Duration(DefaultGraceTimeout)
+	a.GraceTimeOut = ptypes.Duration(DefaultGraceTimeout)
 }
 
 // Tracing holds the tracing configuration.
@@ -165,7 +168,7 @@ func (t *Tracing) SetDefaults() {
 
 // Providers contains providers configuration.
 type Providers struct {
-	ProvidersThrottleDuration types.Duration `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." json:"providersThrottleDuration,omitempty" toml:"providersThrottleDuration,omitempty" yaml:"providersThrottleDuration,omitempty" export:"true"`
+	ProvidersThrottleDuration ptypes.Duration `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." json:"providersThrottleDuration,omitempty" toml:"providersThrottleDuration,omitempty" yaml:"providersThrottleDuration,omitempty" export:"true"`
 
 	Docker            *docker.Provider        `description:"Enable Docker backend with default settings." json:"docker,omitempty" toml:"docker,omitempty" yaml:"docker,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	File              *file.Provider          `description:"Enable File backend with default settings." json:"file,omitempty" toml:"file,omitempty" yaml:"file,omitempty" export:"true"`
@@ -175,14 +178,14 @@ type Providers struct {
 	Knative           *knative.Provider       `description:"Enable Knative backend with default settings." json:"knative,omitempty" toml:"knative,omitempty" yaml:"knative,omitempty" export:"true" label:"allowEmpty"`
 	Rest              *rest.Provider          `description:"Enable Rest backend with default settings." json:"rest,omitempty" toml:"rest,omitempty" yaml:"rest,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	Rancher           *rancher.Provider       `description:"Enable Rancher backend with default settings." json:"rancher,omitempty" toml:"rancher,omitempty" yaml:"rancher,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	ConsulCatalog     *consulcatalog.Provider `description:"Enable ConsulCatalog backend with default settings." json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty"`
-	Ecs               *ecs.Provider           `description:"Enable AWS ECS backend with default settings." json:"ecs,omitempty" toml:"ecs,omitempty" yaml:"ecs,omitempty"`
+	ConsulCatalog     *consulcatalog.Provider `description:"Enable ConsulCatalog backend with default settings." json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty" export:"true"`
+	Ecs               *ecs.Provider           `description:"Enable AWS ECS backend with default settings." json:"ecs,omitempty" toml:"ecs,omitempty" yaml:"ecs,omitempty" export:"true"`
 
-	Consul    *consul.Provider `description:"Enable Consul backend with default settings." json:"consul,omitempty" toml:"consul,omitempty" yaml:"consul,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	Etcd      *etcd.Provider   `description:"Enable Etcd backend with default settings." json:"etcd,omitempty" toml:"etcd,omitempty" yaml:"etcd,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	ZooKeeper *zk.Provider     `description:"Enable ZooKeeper backend with default settings." json:"zooKeeper,omitempty" toml:"zooKeeper,omitempty" yaml:"zooKeeper,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	Redis     *redis.Provider  `description:"Enable Redis backend with default settings." json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	HTTP      *http.Provider   `description:"Enable HTTP backend with default settings." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
+	Consul    *consul.Provider `description:"Enable Consul backend with default settings." json:"consul,omitempty" toml:"consul,omitempty" yaml:"consul,omitempty" label:"allowEmpty" file:"allowEmpty"  export:"true"`
+	Etcd      *etcd.Provider   `description:"Enable Etcd backend with default settings." json:"etcd,omitempty" toml:"etcd,omitempty" yaml:"etcd,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	ZooKeeper *zk.Provider     `description:"Enable ZooKeeper backend with default settings." json:"zooKeeper,omitempty" toml:"zooKeeper,omitempty" yaml:"zooKeeper,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Redis     *redis.Provider  `description:"Enable Redis backend with default settings." json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	HTTP      *http.Provider   `description:"Enable HTTP backend with default settings." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.
@@ -209,7 +212,7 @@ func (c *Configuration) SetEffectiveConfiguration() {
 
 	if c.Providers.Docker != nil {
 		if c.Providers.Docker.SwarmModeRefreshSeconds <= 0 {
-			c.Providers.Docker.SwarmModeRefreshSeconds = types.Duration(15 * time.Second)
+			c.Providers.Docker.SwarmModeRefreshSeconds = ptypes.Duration(15 * time.Second)
 		}
 	}
 

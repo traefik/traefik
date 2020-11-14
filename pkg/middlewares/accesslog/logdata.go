@@ -19,7 +19,7 @@ const (
 	ServiceName = "ServiceName"
 	// ServiceURL is the map key used for the URL of the Traefik backend.
 	ServiceURL = "ServiceURL"
-	// ServiceAddr is the map key used for the IP:port of the Traefik backend (extracted from BackendURL)
+	// ServiceAddr is the map key used for the IP:port of the Traefik backend (extracted from BackendURL).
 	ServiceAddr = "ServiceAddr"
 
 	// ClientAddr is the map key used for the remote address in its original form (usually IP:port).
@@ -46,9 +46,9 @@ const (
 	RequestScheme = "RequestScheme"
 	// RequestContentSize is the map key used for the number of bytes in the request entity (a.k.a. body) sent by the client.
 	RequestContentSize = "RequestContentSize"
-	// RequestRefererHeader is the Referer header in the request
+	// RequestRefererHeader is the Referer header in the request.
 	RequestRefererHeader = "request_Referer"
-	// RequestUserAgentHeader is the User-Agent header in the request
+	// RequestUserAgentHeader is the User-Agent header in the request.
 	RequestUserAgentHeader = "request_User-Agent"
 	// OriginDuration is the map key used for the time taken by the origin server ('upstream') to return its response.
 	OriginDuration = "OriginDuration"

@@ -61,6 +61,18 @@ http:
         address: "https://example.com/auth"
 ```
 
+## Forward-Request Headers
+
+The following request properties are provided to the forward-auth target endpoint as `X-Forwarded-` headers.
+
+| Property          | Forward-Request Header |
+|-------------------|------------------------|
+| HTTP Method       | X-Forwarded-Method     |
+| Protocol          | X-Forwarded-Proto      |
+| Host              | X-Forwarded-Host       |
+| Request URI       | X-Forwarded-Uri        |
+| Source IP-Address | X-Forwarded-For        |
+
 ## Configuration Options
 
 ### `address`

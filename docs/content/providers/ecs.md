@@ -79,9 +79,35 @@ providers:
 # ...
 ```
 
-Search for services in all clusters.
-If set to true the configured clusters will be ignored and the clusters will be discovered.
-If set to false the services will be discovered only in configured clusters.
+Search for services in clusters list.
+
+- If set to `true` the configured clusters will be ignored and the clusters will be discovered.
+- If set to `false` the services will be discovered only in configured clusters.
+
+### `clusters`
+
+_Optional, Default=["default"]_
+
+```toml tab="File (TOML)"
+[providers.ecs]
+  cluster = ["default"]
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  ecs:
+    clusters:
+      - default
+    # ...
+```
+
+```bash tab="CLI"
+--providers.ecs.clusters=default
+# ...
+```
+
+Search for services in clusters list.
 
 ### `exposedByDefault`
 
@@ -187,7 +213,10 @@ providers:
 # ...
 ```
 
-If `accessKeyID` / `secretAccessKey` is not provided credentials will be resolved in the following order:
+If `region` is not provided, it will be resolved from the EC2 metadata endpoint for EC2 tasks. 
+In a FARGATE context it will be resolved from the `AWS_REGION` env variable.
+
+If `accessKeyID` / `secretAccessKey` are not provided, credentials will be resolved in the following order:
 
 - From environment variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN`.
 - Shared credentials, determined by `AWS_PROFILE` and `AWS_SHARED_CREDENTIALS_FILE`, defaults to default and `~/.aws/credentials`.

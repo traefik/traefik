@@ -8,19 +8,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/safe"
 	"github.com/patrickmn/go-cache"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/safe"
 )
 
-// CertificateStore store for dynamic and static certificates.
+// CertificateStore store for dynamic certificates.
 type CertificateStore struct {
 	DynamicCerts       *safe.Safe
 	DefaultCertificate *tls.Certificate
 	CertCache          *cache.Cache
 }
 
-// NewCertificateStore create a store for dynamic and static certificates.
+// NewCertificateStore create a store for dynamic certificates.
 func NewCertificateStore() *CertificateStore {
 	return &CertificateStore{
 		DynamicCerts: &safe.Safe{},
@@ -37,7 +37,7 @@ func (c CertificateStore) getDefaultCertificateDomains() []string {
 
 	x509Cert, err := x509.ParseCertificate(c.DefaultCertificate.Certificate[0])
 	if err != nil {
-		log.WithoutContext().Errorf("Could not parse default certicate: %v", err)
+		log.WithoutContext().Errorf("Could not parse default certificate: %v", err)
 		return allCerts
 	}
 

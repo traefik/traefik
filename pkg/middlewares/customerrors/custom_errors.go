@@ -11,13 +11,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/middlewares"
-	"github.com/containous/traefik/v2/pkg/tracing"
-	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/sirupsen/logrus"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/middlewares"
+	"github.com/traefik/traefik/v2/pkg/tracing"
+	"github.com/traefik/traefik/v2/pkg/types"
 	"github.com/vulcand/oxy/utils"
 )
 
@@ -33,7 +33,7 @@ const (
 )
 
 type serviceBuilder interface {
-	BuildHTTP(ctx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error)
+	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
 }
 
 // customErrors is a middleware that provides the custom error pages..
@@ -54,7 +54,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		return nil, err
 	}
 
-	backend, err := serviceBuilder.BuildHTTP(ctx, config.Service, nil)
+	backend, err := serviceBuilder.BuildHTTP(ctx, config.Service)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			var query string
 			if len(c.backendQuery) > 0 {
 				query = "/" + strings.TrimPrefix(c.backendQuery, "/")
-				query = strings.Replace(query, "{status}", strconv.Itoa(code), -1)
+				query = strings.ReplaceAll(query, "{status}", strconv.Itoa(code))
 			}
 
 			pageReq, err := newRequest(backendURL + query)

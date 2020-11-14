@@ -10,16 +10,18 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/containous/traefik/v2/pkg/config/env"
-	"github.com/containous/traefik/v2/pkg/config/flag"
-	"github.com/containous/traefik/v2/pkg/config/generator"
-	"github.com/containous/traefik/v2/pkg/config/parser"
-	"github.com/containous/traefik/v2/pkg/config/static"
-	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/traefik/paerser/env"
+	"github.com/traefik/paerser/flag"
+	"github.com/traefik/paerser/generator"
+	"github.com/traefik/paerser/parser"
+	"github.com/traefik/traefik/v2/pkg/config/static"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 func main() {
-	genStaticConfDoc("./docs/content/reference/static-configuration/env-ref.md", "", env.Encode)
+	genStaticConfDoc("./docs/content/reference/static-configuration/env-ref.md", "", func(i interface{}) ([]parser.Flat, error) {
+		return env.Encode(env.DefaultNamePrefix, i)
+	})
 	genStaticConfDoc("./docs/content/reference/static-configuration/cli-ref.md", "--", flag.Encode)
 	genKVDynConfDoc("./docs/content/reference/dynamic-configuration/kv-ref.md")
 }

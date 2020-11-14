@@ -1,0 +1,70 @@
+.md-container {
+  padding-top: 0;
+}
+
+.md-content h1 {
+  color: var(--dark) !important;
+  font-weight: bold !important;
+}
+
+.md-content a {
+  color: var(--blue) !important;
+}
+
+.md-content a:hover {
+  font-weight: bold !important;
+}
+
+.md-typeset p code,
+.md-typeset .codehilite,
+.md-typeset .highlight {
+  background-color: var(--light-blue) !important;
+}
+
+.md-typeset table:not([class]) th {
+  background: var(--dark) !important;
+  color: white !important;
+}
+
+/* Front page image size */
+img[src$='#small'] {
+  width: 150px;
+}
+img[src$='#medium'] {
+  width: 300px;
+}
+
+/* Center table and objects */
+.center,
+img,
+.md-typeset__table {
+  display: block !important;
+  margin: 0 auto;
+}
+
+.md-typeset table:not([class]) tr td:first-child {
+  text-align: left;
+}
+.md-typeset table:not([class]) th:not([align]),
+.md-typeset table:not([class]) td:not([align]) {
+  text-align: center;
+}
+article p:not([class]),
+article ul:not([class]),
+article ol:not([class]) {
+  padding-left: 0.8em !important;
+}
+
+/* Fix for Chrome */
+.md-typeset__table td code {
+  word-break: unset;
+}
+
+.md-typeset__table tr :nth-child(1) {
+  word-wrap: break-word;
+  max-width: 30em;
+}
+
+p {
+  text-align: justify;
+}

@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/config/static"
-	"github.com/containous/traefik/v2/pkg/tcp"
-	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v2/pkg/config/static"
+	"github.com/traefik/traefik/v2/pkg/tcp"
 )
 
 func TestShutdownHijacked(t *testing.T) {
@@ -46,7 +46,7 @@ func TestShutdownTCP(t *testing.T) {
 		for {
 			_, err := http.ReadRequest(bufio.NewReader(conn))
 
-			if err == io.EOF || (err != nil && strings.HasSuffix(err.Error(), "use of closed network connection")) {
+			if errors.Is(err, io.EOF) || (err != nil && strings.HasSuffix(err.Error(), "use of closed network connection")) {
 				return
 			}
 			require.NoError(t, err)
@@ -65,7 +65,7 @@ func testShutdown(t *testing.T, router *tcp.Router) {
 	epConfig.SetDefaults()
 
 	epConfig.LifeCycle.RequestAcceptGraceTimeout = 0
-	epConfig.LifeCycle.GraceTimeOut = types.Duration(5 * time.Second)
+	epConfig.LifeCycle.GraceTimeOut = ptypes.Duration(5 * time.Second)
 
 	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
 		// We explicitly use an IPV4 address because on Alpine, with an IPV6 address
@@ -150,7 +150,7 @@ func startEntrypoint(entryPoint *TCPEntryPoint, router *tcp.Router) (net.Conn, e
 func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 	epConfig := &static.EntryPointsTransport{}
 	epConfig.SetDefaults()
-	epConfig.RespondingTimeouts.ReadTimeout = types.Duration(2 * time.Second)
+	epConfig.RespondingTimeouts.ReadTimeout = ptypes.Duration(2 * time.Second)
 
 	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
 		Address:          ":0",
@@ -186,7 +186,7 @@ func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 func TestReadTimeoutWithFirstByte(t *testing.T) {
 	epConfig := &static.EntryPointsTransport{}
 	epConfig.SetDefaults()
-	epConfig.RespondingTimeouts.ReadTimeout = types.Duration(2 * time.Second)
+	epConfig.RespondingTimeouts.ReadTimeout = ptypes.Duration(2 * time.Second)
 
 	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
 		Address:          ":0",

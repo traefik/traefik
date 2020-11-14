@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/tls/generate"
-	"github.com/containous/traefik/v2/pkg/types"
-	"github.com/go-acme/lego/v3/challenge/tlsalpn01"
+	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/sirupsen/logrus"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/tls/generate"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 // DefaultTLSOptions the default TLS options.
@@ -106,7 +106,7 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 	tlsConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 		domainToCheck := types.CanonicalDomain(clientHello.ServerName)
 
-		if m.TLSAlpnGetter != nil {
+		if m.TLSAlpnGetter != nil && isACMETLS(clientHello) {
 			cert, err := m.TLSAlpnGetter(domainToCheck)
 			if err != nil {
 				return nil, err
@@ -281,4 +281,14 @@ func buildDefaultCertificate(defaultCertificate *Certificate) (*tls.Certificate,
 		return nil, fmt.Errorf("failed to load X509 key pair: %w", err)
 	}
 	return &cert, nil
+}
+
+func isACMETLS(clientHello *tls.ClientHelloInfo) bool {
+	for _, proto := range clientHello.SupportedProtos {
+		if proto == tlsalpn01.ACMETLS1Protocol {
+			return true
+		}
+	}
+
+	return false
 }

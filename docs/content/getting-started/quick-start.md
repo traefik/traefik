@@ -15,7 +15,7 @@ version: '3'
 services:
   reverse-proxy:
     # The official v2 Traefik docker image
-    image: traefik:v2.2
+    image: traefik:v2.3
     # Enables the web UI and tells Traefik to listen to docker
     command: --api.insecure=true --providers.docker
     ports:
@@ -48,7 +48,7 @@ Edit your `docker-compose.yml` file and add the following at the end of your fil
 # ...
   whoami:
     # A container that exposes an API to show its IP address
-    image: containous/whoami
+    image: traefik/whoami
     labels:
       - "traefik.http.routers.whoami.rule=Host(`whoami.docker.localhost`)"
 ```

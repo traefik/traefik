@@ -8,12 +8,15 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/containous/yaegi/interp"
-	"github.com/containous/yaegi/stdlib"
 	"github.com/mitchellh/mapstructure"
+	"github.com/traefik/yaegi/interp"
+	"github.com/traefik/yaegi/stdlib"
 )
 
 const devPluginName = "dev"
+
+// Constructor creates a plugin handler.
+type Constructor func(context.Context, http.Handler) (http.Handler, error)
 
 // pluginContext The static part of a plugin configuration.
 type pluginContext struct {
@@ -89,7 +92,7 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, devPlugin *DevPlu
 }
 
 // Build builds a plugin.
-func (b Builder) Build(pName string, config map[string]interface{}, middlewareName string) (*Middleware, error) {
+func (b Builder) Build(pName string, config map[string]interface{}, middlewareName string) (Constructor, error) {
 	if b.descriptors == nil {
 		return nil, fmt.Errorf("plugin: no plugin definition in the static configuration: %s", pName)
 	}
@@ -99,7 +102,12 @@ func (b Builder) Build(pName string, config map[string]interface{}, middlewareNa
 		return nil, fmt.Errorf("plugin: unknown plugin type: %s", pName)
 	}
 
-	return newMiddleware(descriptor, config, middlewareName)
+	m, err := newMiddleware(descriptor, config, middlewareName)
+	if err != nil {
+		return nil, err
+	}
+
+	return m.NewHandler, err
 }
 
 // Middleware is a HTTP handler plugin wrapper.

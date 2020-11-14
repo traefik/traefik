@@ -5,12 +5,12 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	docker "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/go-connections/nat"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 )
 
 func Int(v int) *int    { return &v }

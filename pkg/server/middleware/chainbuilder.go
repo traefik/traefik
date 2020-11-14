@@ -4,15 +4,15 @@ import (
 	"context"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/v2/pkg/config/static"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/metrics"
-	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
-	metricsmiddleware "github.com/containous/traefik/v2/pkg/middlewares/metrics"
-	"github.com/containous/traefik/v2/pkg/middlewares/requestdecorator"
-	mTracing "github.com/containous/traefik/v2/pkg/middlewares/tracing"
-	"github.com/containous/traefik/v2/pkg/tracing"
-	"github.com/containous/traefik/v2/pkg/tracing/jaeger"
+	"github.com/traefik/traefik/v2/pkg/config/static"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/metrics"
+	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
+	metricsmiddleware "github.com/traefik/traefik/v2/pkg/middlewares/metrics"
+	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
+	mTracing "github.com/traefik/traefik/v2/pkg/middlewares/tracing"
+	"github.com/traefik/traefik/v2/pkg/tracing"
+	"github.com/traefik/traefik/v2/pkg/tracing/jaeger"
 )
 
 // ChainBuilder Creates a middleware chain by entry point. It is used for middlewares that are created almost systematically and that need to be created before all others.

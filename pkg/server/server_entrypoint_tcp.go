@@ -2,23 +2,25 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	stdlog "log"
 	"net"
 	"net/http"
 	"sync"
+	"syscall"
 	"time"
 
 	proxyprotocol "github.com/c0va23/go-proxyprotocol"
-	"github.com/containous/traefik/v2/pkg/config/static"
-	"github.com/containous/traefik/v2/pkg/ip"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/middlewares"
-	"github.com/containous/traefik/v2/pkg/middlewares/forwardedheaders"
-	"github.com/containous/traefik/v2/pkg/safe"
-	"github.com/containous/traefik/v2/pkg/server/router"
-	"github.com/containous/traefik/v2/pkg/tcp"
 	"github.com/sirupsen/logrus"
+	"github.com/traefik/traefik/v2/pkg/config/static"
+	"github.com/traefik/traefik/v2/pkg/ip"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/middlewares"
+	"github.com/traefik/traefik/v2/pkg/middlewares/forwardedheaders"
+	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/traefik/traefik/v2/pkg/server/router"
+	"github.com/traefik/traefik/v2/pkg/tcp"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -28,12 +30,14 @@ var httpServerLogger = stdlog.New(log.WithoutContext().WriterLevel(logrus.DebugL
 type httpForwarder struct {
 	net.Listener
 	connChan chan net.Conn
+	errChan  chan error
 }
 
 func newHTTPForwarder(ln net.Listener) *httpForwarder {
 	return &httpForwarder{
 		Listener: ln,
 		connChan: make(chan net.Conn),
+		errChan:  make(chan error),
 	}
 }
 
@@ -44,8 +48,12 @@ func (h *httpForwarder) ServeTCP(conn tcp.WriteCloser) {
 
 // Accept retrieves a served connection in ServeTCP.
 func (h *httpForwarder) Accept() (net.Conn, error) {
-	conn := <-h.connChan
-	return conn, nil
+	select {
+	case conn := <-h.connChan:
+		return conn, nil
+	case err := <-h.errChan:
+		return nil, err
+	}
 }
 
 // TCPEntryPoints holds a map of TCPEntryPoint (the entrypoint names being the keys).
@@ -166,9 +174,14 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 		conn, err := e.listener.Accept()
 		if err != nil {
 			logger.Error(err)
-			if netErr, ok := err.(net.Error); ok && netErr.Temporary() {
+
+			var netErr net.Error
+			if errors.As(err, &netErr) && netErr.Temporary() {
 				continue
 			}
+
+			e.httpServer.Forwarder.errChan <- err
+			e.httpsServer.Forwarder.errChan <- err
 
 			return
 		}
@@ -223,7 +236,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 		if err == nil {
 			return
 		}
-		if ctx.Err() == context.DeadlineExceeded {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			logger.Debugf("Server failed to shutdown within deadline because: %s", err)
 			if err = server.Close(); err != nil {
 				logger.Error(err)
@@ -254,7 +267,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 			if err == nil {
 				return
 			}
-			if ctx.Err() == context.DeadlineExceeded {
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 				logger.Debugf("Server failed to shutdown before deadline because: %s", err)
 			}
 			e.tracker.Close()
@@ -333,7 +346,11 @@ func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
 	}
 
 	if err = tc.SetKeepAlivePeriod(3 * time.Minute); err != nil {
-		return nil, err
+		// Some systems, such as OpenBSD, have no user-settable per-socket TCP
+		// keepalive options.
+		if !errors.Is(err, syscall.ENOPROTOOPT) {
+			return nil, err
+		}
 	}
 
 	return tc, nil

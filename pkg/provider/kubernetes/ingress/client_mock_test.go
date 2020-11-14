@@ -4,24 +4,23 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/containous/traefik/v2/pkg/provider/kubernetes/k8s"
+	"github.com/hashicorp/go-version"
+	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
-	"k8s.io/api/networking/v1beta1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 )
 
 var _ Client = (*clientMock)(nil)
 
 type clientMock struct {
-	ingresses    []*v1beta1.Ingress
+	ingresses    []*networkingv1beta1.Ingress
 	services     []*corev1.Service
 	secrets      []*corev1.Secret
 	endpoints    []*corev1.Endpoints
 	ingressClass *networkingv1beta1.IngressClass
 
-	serverMajor int
-	serverMinor int
+	serverVersion *version.Version
 
 	apiServiceError       error
 	apiSecretError        error
@@ -31,11 +30,10 @@ type clientMock struct {
 	watchChan chan interface{}
 }
 
-func newClientMock(major, minor int, paths ...string) clientMock {
-	c := clientMock{
-		serverMajor: major,
-		serverMinor: minor,
-	}
+func newClientMock(serverVersion string, paths ...string) clientMock {
+	c := clientMock{}
+
+	c.serverVersion = version.Must(version.NewVersion(serverVersion))
 
 	for _, path := range paths {
 		yamlContent, err := ioutil.ReadFile(path)
@@ -52,7 +50,7 @@ func newClientMock(major, minor int, paths ...string) clientMock {
 				c.secrets = append(c.secrets, o)
 			case *corev1.Endpoints:
 				c.endpoints = append(c.endpoints, o)
-			case *v1beta1.Ingress:
+			case *networkingv1beta1.Ingress:
 				c.ingresses = append(c.ingresses, o)
 			case *extensionsv1beta1.Ingress:
 				ing, err := extensionsToNetworking(o)
@@ -71,12 +69,12 @@ func newClientMock(major, minor int, paths ...string) clientMock {
 	return c
 }
 
-func (c clientMock) GetIngresses() []*v1beta1.Ingress {
+func (c clientMock) GetIngresses() []*networkingv1beta1.Ingress {
 	return c.ingresses
 }
 
-func (c clientMock) GetServerVersion() (major, minor int, err error) {
-	return c.serverMajor, c.serverMinor, nil
+func (c clientMock) GetServerVersion() (*version.Version, error) {
+	return c.serverVersion, nil
 }
 
 func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, error) {
@@ -127,6 +125,6 @@ func (c clientMock) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-cha
 	return c.watchChan, nil
 }
 
-func (c clientMock) UpdateIngressStatus(_ *v1beta1.Ingress, _, _ string) error {
+func (c clientMock) UpdateIngressStatus(_ *networkingv1beta1.Ingress, _, _ string) error {
 	return c.apiIngressStatusError
 }

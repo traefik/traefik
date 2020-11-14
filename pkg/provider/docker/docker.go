@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -12,13 +13,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/job"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/provider"
-	"github.com/containous/traefik/v2/pkg/safe"
-	"github.com/containous/traefik/v2/pkg/types"
-	"github.com/containous/traefik/v2/pkg/version"
 	"github.com/docker/cli/cli/connhelper"
 	dockertypes "github.com/docker/docker/api/types"
 	dockercontainertypes "github.com/docker/docker/api/types/container"
@@ -29,10 +23,18 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-connections/sockets"
+	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/job"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/provider"
+	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v2/pkg/version"
 )
 
 const (
-	// DockerAPIVersion is a constant holding the version of the Provider API traefik will use
+	// DockerAPIVersion is a constant holding the version of the Provider API traefik will use.
 	DockerAPIVersion = "1.24"
 
 	// SwarmAPIVersion is a constant holding the version of the Provider API traefik will use.
@@ -55,7 +57,7 @@ type Provider struct {
 	UseBindPortIP           bool             `description:"Use the ip address from the bound port, rather than from the inner network." json:"useBindPortIP,omitempty" toml:"useBindPortIP,omitempty" yaml:"useBindPortIP,omitempty" export:"true"`
 	SwarmMode               bool             `description:"Use Docker on Swarm Mode." json:"swarmMode,omitempty" toml:"swarmMode,omitempty" yaml:"swarmMode,omitempty" export:"true"`
 	Network                 string           `description:"Default Docker network used." json:"network,omitempty" toml:"network,omitempty" yaml:"network,omitempty" export:"true"`
-	SwarmModeRefreshSeconds types.Duration   `description:"Polling interval for swarm mode." json:"swarmModeRefreshSeconds,omitempty" toml:"swarmModeRefreshSeconds,omitempty" yaml:"swarmModeRefreshSeconds,omitempty" export:"true"`
+	SwarmModeRefreshSeconds ptypes.Duration  `description:"Polling interval for swarm mode." json:"swarmModeRefreshSeconds,omitempty" toml:"swarmModeRefreshSeconds,omitempty" yaml:"swarmModeRefreshSeconds,omitempty" export:"true"`
 	defaultRuleTpl          *template.Template
 }
 
@@ -65,7 +67,7 @@ func (p *Provider) SetDefaults() {
 	p.ExposedByDefault = true
 	p.Endpoint = "unix:///var/run/docker.sock"
 	p.SwarmMode = false
-	p.SwarmModeRefreshSeconds = types.Duration(15 * time.Second)
+	p.SwarmModeRefreshSeconds = ptypes.Duration(15 * time.Second)
 	p.DefaultRule = DefaultTemplateRule
 }
 
@@ -306,7 +308,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 								startStopHandle(event)
 							}
 						case err := <-errc:
-							if err == io.EOF {
+							if errors.Is(err, io.EOF) {
 								logger.Debug("Provider event stream closed")
 							}
 							return err
@@ -364,7 +366,7 @@ func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClie
 		return dockerData{}
 	}
 
-	// This condition is here to avoid to have empty IP https://github.com/containous/traefik/issues/2459
+	// This condition is here to avoid to have empty IP https://github.com/traefik/traefik/issues/2459
 	// We register only container which are running
 	if containerInspected.ContainerJSONBase != nil && containerInspected.ContainerJSONBase.State != nil && containerInspected.ContainerJSONBase.State.Running {
 		return parseContainer(containerInspected)

@@ -6,10 +6,10 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/google/go-github/v28/github"
 	"github.com/gorilla/mux"
 	goversion "github.com/hashicorp/go-version"
+	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/unrolled/render"
 )
 
@@ -41,7 +41,7 @@ func (v Handler) Append(router *mux.Router) {
 				Version   string
 				Codename  string
 				StartDate time.Time `json:"startDate"`
-				UUID      string    `json:"uuid"`
+				UUID      string    `json:"uuid,omitempty"`
 			}{
 				Version:   Version,
 				Codename:  Codename,
@@ -72,7 +72,7 @@ func CheckNewVersion() {
 	}
 	client.BaseURL = updateURL
 
-	releases, resp, err := client.Repositories.ListReleases(context.Background(), "containous", "traefik", nil)
+	releases, resp, err := client.Repositories.ListReleases(context.Background(), "traefik", "traefik", nil)
 	if err != nil {
 		logger.Warnf("Error checking new version: %s", err)
 		return

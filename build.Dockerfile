@@ -1,4 +1,4 @@
-FROM golang:1.14-alpine
+FROM golang:1.15-alpine
 
 RUN apk --update upgrade \
     && apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar ca-certificates tzdata \
@@ -19,7 +19,7 @@ RUN mkdir -p /usr/local/bin \
     && chmod +x /usr/local/bin/go-bindata
 
 # Download golangci-lint binary to bin folder in $GOPATH
-RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.28.0
+RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.32.2
 
 # Download misspell binary to bin folder in $GOPATH
 RUN  curl -sfL https://raw.githubusercontent.com/client9/misspell/master/install-misspell.sh | bash -s -- -b $GOPATH/bin v0.3.4
@@ -27,11 +27,11 @@ RUN  curl -sfL https://raw.githubusercontent.com/client9/misspell/master/install
 # Download goreleaser binary to bin folder in $GOPATH
 RUN curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh
 
-WORKDIR /go/src/github.com/containous/traefik
+WORKDIR /go/src/github.com/traefik/traefik
 
 # Download go modules
 COPY go.mod .
 COPY go.sum .
 RUN GO111MODULE=on GOPROXY=https://proxy.golang.org go mod download
 
-COPY . /go/src/github.com/containous/traefik
+COPY . /go/src/github.com/traefik/traefik

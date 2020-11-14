@@ -8,8 +8,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/ip"
-	"github.com/containous/traefik/v2/pkg/types"
+	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v2/pkg/ip"
 )
 
 // +k8s:deepcopy-gen=true
@@ -302,7 +302,7 @@ type PassTLSClientCert struct {
 // If none are set, the default is to use the request's remote address field.
 // All fields are mutually exclusive.
 type SourceCriterion struct {
-	IPStrategy        *IPStrategy `json:"ipStrategy" toml:"ipStrategy, omitempty"`
+	IPStrategy        *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty"`
 	RequestHeaderName string      `json:"requestHeaderName,omitempty" toml:"requestHeaderName,omitempty" yaml:"requestHeaderName,omitempty"`
 	RequestHost       bool        `json:"requestHost,omitempty" toml:"requestHost,omitempty" yaml:"requestHost,omitempty"`
 }
@@ -319,7 +319,7 @@ type RateLimit struct {
 
 	// Period, in combination with Average, defines the actual maximum rate, such as:
 	// r = Average / Period. It defaults to a second.
-	Period types.Duration `json:"period,omitempty" toml:"period,omitempty" yaml:"period,omitempty"`
+	Period ptypes.Duration `json:"period,omitempty" toml:"period,omitempty" yaml:"period,omitempty"`
 
 	// Burst is the maximum number of requests allowed to arrive in the same arbitrarily small period of time.
 	// It defaults to 1.
@@ -331,7 +331,7 @@ type RateLimit struct {
 // SetDefaults sets the default values on a RateLimit.
 func (r *RateLimit) SetDefaults() {
 	r.Burst = 1
-	r.Period = types.Duration(time.Second)
+	r.Period = ptypes.Duration(time.Second)
 }
 
 // +k8s:deepcopy-gen=true

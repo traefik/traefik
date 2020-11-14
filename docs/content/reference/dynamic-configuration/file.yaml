@@ -222,7 +222,7 @@ http:
       inFlightReq:
         amount: 42
         sourceCriterion:
-          ipstrategy:
+          ipStrategy:
             depth: 42
             excludedIPs:
             - foobar
@@ -256,14 +256,14 @@ http:
     Middleware14:
       plugin:
         PluginConf:
-          foo = "bar"
+          foo: bar
     Middleware15:
       rateLimit:
         average: 42
         period: 42
         burst: 42
         sourceCriterion:
-          ipstrategy:
+          ipStrategy:
             depth: 42
             excludedIPs:
             - foobar

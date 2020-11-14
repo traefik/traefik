@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 // GetUDPRoutersByEntryPoints returns all the UDP routers by entry points name and routers name.

@@ -8,28 +8,27 @@ import (
 	"strings"
 
 	"github.com/containous/alice"
-	"github.com/containous/traefik/v2/pkg/config/runtime"
-	"github.com/containous/traefik/v2/pkg/middlewares/addprefix"
-	"github.com/containous/traefik/v2/pkg/middlewares/auth"
-	"github.com/containous/traefik/v2/pkg/middlewares/buffering"
-	"github.com/containous/traefik/v2/pkg/middlewares/chain"
-	"github.com/containous/traefik/v2/pkg/middlewares/circuitbreaker"
-	"github.com/containous/traefik/v2/pkg/middlewares/compress"
-	"github.com/containous/traefik/v2/pkg/middlewares/customerrors"
-	"github.com/containous/traefik/v2/pkg/middlewares/headers"
-	"github.com/containous/traefik/v2/pkg/middlewares/inflightreq"
-	"github.com/containous/traefik/v2/pkg/middlewares/ipwhitelist"
-	"github.com/containous/traefik/v2/pkg/middlewares/passtlsclientcert"
-	"github.com/containous/traefik/v2/pkg/middlewares/ratelimiter"
-	"github.com/containous/traefik/v2/pkg/middlewares/redirect"
-	"github.com/containous/traefik/v2/pkg/middlewares/replacepath"
-	"github.com/containous/traefik/v2/pkg/middlewares/replacepathregex"
-	"github.com/containous/traefik/v2/pkg/middlewares/retry"
-	"github.com/containous/traefik/v2/pkg/middlewares/stripprefix"
-	"github.com/containous/traefik/v2/pkg/middlewares/stripprefixregex"
-	"github.com/containous/traefik/v2/pkg/middlewares/tracing"
-	"github.com/containous/traefik/v2/pkg/plugins"
-	"github.com/containous/traefik/v2/pkg/server/provider"
+	"github.com/traefik/traefik/v2/pkg/config/runtime"
+	"github.com/traefik/traefik/v2/pkg/middlewares/addprefix"
+	"github.com/traefik/traefik/v2/pkg/middlewares/auth"
+	"github.com/traefik/traefik/v2/pkg/middlewares/buffering"
+	"github.com/traefik/traefik/v2/pkg/middlewares/chain"
+	"github.com/traefik/traefik/v2/pkg/middlewares/circuitbreaker"
+	"github.com/traefik/traefik/v2/pkg/middlewares/compress"
+	"github.com/traefik/traefik/v2/pkg/middlewares/customerrors"
+	"github.com/traefik/traefik/v2/pkg/middlewares/headers"
+	"github.com/traefik/traefik/v2/pkg/middlewares/inflightreq"
+	"github.com/traefik/traefik/v2/pkg/middlewares/ipwhitelist"
+	"github.com/traefik/traefik/v2/pkg/middlewares/passtlsclientcert"
+	"github.com/traefik/traefik/v2/pkg/middlewares/ratelimiter"
+	"github.com/traefik/traefik/v2/pkg/middlewares/redirect"
+	"github.com/traefik/traefik/v2/pkg/middlewares/replacepath"
+	"github.com/traefik/traefik/v2/pkg/middlewares/replacepathregex"
+	"github.com/traefik/traefik/v2/pkg/middlewares/retry"
+	"github.com/traefik/traefik/v2/pkg/middlewares/stripprefix"
+	"github.com/traefik/traefik/v2/pkg/middlewares/stripprefixregex"
+	"github.com/traefik/traefik/v2/pkg/middlewares/tracing"
+	"github.com/traefik/traefik/v2/pkg/server/provider"
 )
 
 type middlewareStackType int
@@ -41,16 +40,16 @@ const (
 // Builder the middleware builder.
 type Builder struct {
 	configs        map[string]*runtime.MiddlewareInfo
-	pluginBuilder  *plugins.Builder
+	pluginBuilder  PluginsBuilder
 	serviceBuilder serviceBuilder
 }
 
 type serviceBuilder interface {
-	BuildHTTP(ctx context.Context, serviceName string, responseModifier func(*http.Response) error) (http.Handler, error)
+	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
 }
 
 // NewBuilder creates a new Builder.
-func NewBuilder(configs map[string]*runtime.MiddlewareInfo, serviceBuilder serviceBuilder, pluginBuilder *plugins.Builder) *Builder {
+func NewBuilder(configs map[string]*runtime.MiddlewareInfo, serviceBuilder serviceBuilder, pluginBuilder PluginsBuilder) *Builder {
 	return &Builder{configs: configs, serviceBuilder: serviceBuilder, pluginBuilder: pluginBuilder}
 }
 
@@ -351,13 +350,13 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, err
 		}
 
-		m, err := b.pluginBuilder.Build(pluginType, rawPluginConfig, middlewareName)
+		plug, err := b.pluginBuilder.Build(pluginType, rawPluginConfig, middlewareName)
 		if err != nil {
 			return nil, err
 		}
 
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return m.NewHandler(ctx, next)
+			return plug(ctx, next)
 		}
 	}
 

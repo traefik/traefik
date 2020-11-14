@@ -13,11 +13,12 @@ import (
 	"strings"
 	"testing"
 	"text/template"
+	"time"
 
-	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/fatih/structs"
 	"github.com/go-check/check"
 	compose "github.com/libkermit/compose/check"
+	"github.com/traefik/traefik/v2/pkg/log"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -118,6 +119,15 @@ func (s *BaseSuite) cmdTraefik(args ...string) (*exec.Cmd, *bytes.Buffer) {
 	cmd.Stdout = &out
 	cmd.Stderr = &out
 	return cmd, &out
+}
+
+func (s *BaseSuite) killCmd(cmd *exec.Cmd) {
+	err := cmd.Process.Kill()
+	if err != nil {
+		log.WithoutContext().Errorf("Kill: %v", err)
+	}
+
+	time.Sleep(100 * time.Millisecond)
 }
 
 func (s *BaseSuite) traefikCmd(args ...string) (*exec.Cmd, func(*check.C)) {

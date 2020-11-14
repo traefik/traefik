@@ -12,10 +12,10 @@ import (
 	"github.com/abronan/valkeyrie"
 	"github.com/abronan/valkeyrie/store"
 	etcdv3 "github.com/abronan/valkeyrie/store/etcd/v3"
-	"github.com/containous/traefik/v2/integration/try"
-	"github.com/containous/traefik/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
+	"github.com/traefik/traefik/v2/integration/try"
+	"github.com/traefik/traefik/v2/pkg/api"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -118,7 +118,7 @@ func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,

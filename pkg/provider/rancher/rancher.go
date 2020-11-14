@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/containous/traefik/v2/pkg/config/dynamic"
-	"github.com/containous/traefik/v2/pkg/job"
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/provider"
-	"github.com/containous/traefik/v2/pkg/safe"
 	rancher "github.com/rancher/go-rancher-metadata/metadata"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/job"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/provider"
+	"github.com/traefik/traefik/v2/pkg/safe"
 )
 
 const (
@@ -46,7 +46,7 @@ type Provider struct {
 	ExposedByDefault          bool   `description:"Expose containers by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
 	EnableServiceHealthFilter bool   `description:"Filter services with unhealthy states and inactive states." json:"enableServiceHealthFilter,omitempty" toml:"enableServiceHealthFilter,omitempty" yaml:"enableServiceHealthFilter,omitempty" export:"true"`
 	RefreshSeconds            int    `description:"Defines the polling interval in seconds." json:"refreshSeconds,omitempty" toml:"refreshSeconds,omitempty" yaml:"refreshSeconds,omitempty" export:"true"`
-	IntervalPoll              bool   `description:"Poll the Rancher metadata service every 'rancher.refreshseconds' (less accurate)." json:"intervalPoll,omitempty" toml:"intervalPoll,omitempty" yaml:"intervalPoll,omitempty"`
+	IntervalPoll              bool   `description:"Poll the Rancher metadata service every 'rancher.refreshseconds' (less accurate)." json:"intervalPoll,omitempty" toml:"intervalPoll,omitempty" yaml:"intervalPoll,omitempty" export:"true"`
 	Prefix                    string `description:"Prefix used for accessing the Rancher metadata service." json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty"`
 	defaultRuleTpl            *template.Template
 }

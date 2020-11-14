@@ -2,15 +2,16 @@ package server
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/signal"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/log"
-	"github.com/containous/traefik/v2/pkg/metrics"
-	"github.com/containous/traefik/v2/pkg/middlewares/accesslog"
-	"github.com/containous/traefik/v2/pkg/safe"
-	"github.com/containous/traefik/v2/pkg/server/middleware"
+	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/metrics"
+	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
+	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/traefik/traefik/v2/pkg/server/middleware"
 )
 
 // Server is the reverse-proxy/load-balancer engine.
@@ -85,9 +86,9 @@ func (s *Server) Close() {
 
 	go func(ctx context.Context) {
 		<-ctx.Done()
-		if ctx.Err() == context.Canceled {
+		if errors.Is(ctx.Err(), context.Canceled) {
 			return
-		} else if ctx.Err() == context.DeadlineExceeded {
+		} else if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			panic("Timeout while stopping traefik, killing instance ✝")
 		}
 	}(ctx)

@@ -185,6 +185,29 @@ tracing:
 --tracing.jaeger.traceContextHeaderName=uber-trace-id
 ```
 
+### disableAttemptReconnecting
+
+_Optional, Default=true_
+
+Disable the UDP connection helper that periodically re-resolves the agent's hostname and reconnects if there was a change.
+Enabling the re-resolving of UDP address make the client more robust in Kubernetes deployments.
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.jaeger]
+    disableAttemptReconnecting = false
+```
+
+```yaml tab="File (YAML)"
+tracing:
+  jaeger:
+    disableAttemptReconnecting: false
+```
+
+```bash tab="CLI"
+--tracing.jaeger.disableAttemptReconnecting=false
+```
+
 ### `collector`
 #### `endpoint`
 

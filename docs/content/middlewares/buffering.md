@@ -165,7 +165,7 @@ http:
 
 ### `maxResponseBodyBytes`
 
-With the `maxReesponseBodyBytes` option, you can configure the maximum allowed response size from the service (in Bytes).
+With the `maxResponseBodyBytes` option, you can configure the maximum allowed response size from the service (in Bytes).
 
 If the response exceeds the allowed size, it is not forwarded to the client. The client gets a `413 (Request Entity Too Large) response` instead.
 

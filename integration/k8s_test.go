@@ -14,11 +14,11 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/containous/traefik/v2/integration/try"
-	"github.com/containous/traefik/v2/pkg/api"
-	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
+	"github.com/traefik/traefik/v2/integration/try"
+	"github.com/traefik/traefik/v2/pkg/api"
+	"github.com/traefik/traefik/v2/pkg/log"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -69,7 +69,7 @@ func (s *K8sSuite) TestIngressConfiguration(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	testConfiguration(c, "testdata/rawdata-ingress.json", "8080")
 }
@@ -80,7 +80,7 @@ func (s *K8sSuite) TestCRDConfiguration(c *check.C) {
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
-	defer cmd.Process.Kill()
+	defer s.killCmd(cmd)
 
 	testConfiguration(c, "testdata/rawdata-crd.json", "8000")
 }
