@@ -51,6 +51,20 @@ func Test_addRoute(t *testing.T) {
 			},
 		},
 		{
+			desc: "Host starting with unicode",
+			rule: "Host(`punycöde.example.com`)",
+			expected: map[string]int{
+				"http://xn--punycde-e1a.example.com": http.StatusOK,
+			},
+		},
+		{
+			desc: "Host with unicode in domain",
+			rule: "Host(`test.punycöde.example.com`)",
+			expected: map[string]int{
+				"http://test.xn--punycde-e1a.example.com": http.StatusOK,
+			},
+		},
+		{
 			desc: "HostHeader equivalent to Host",
 			rule: "HostHeader(`localhost`)",
 			expected: map[string]int{

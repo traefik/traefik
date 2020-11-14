@@ -9,6 +9,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
 	"github.com/vulcand/predicate"
+	"golang.org/x/net/idna"
 )
 
 var funcs = map[string]func(*mux.Route, ...string) error{
@@ -95,7 +96,12 @@ func pathPrefix(route *mux.Route, paths ...string) error {
 
 func host(route *mux.Route, hosts ...string) error {
 	for i, host := range hosts {
-		hosts[i] = strings.ToLower(host)
+		// Convert unicode strings into punycode.
+		parsed, err := idna.ToASCII(host)
+		if err != nil {
+			return err
+		}
+		hosts[i] = strings.ToLower(parsed)
 	}
 
 	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
