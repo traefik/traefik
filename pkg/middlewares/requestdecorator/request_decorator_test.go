@@ -130,6 +130,21 @@ func TestRequestHostParseHost(t *testing.T) {
 			host:     "127.0.0.1:",
 			expected: "127.0.0.1",
 		},
+		{
+			desc:     "host with punycode",
+			host:     "xn--punycded-r4a.example.com",
+			expected: "punycöded.example.com",
+		},
+		{
+			desc:     "host with xn-- but not punycode",
+			host:     "notxn--puny.example.com",
+			expected: "notxn--puny.example.com",
+		},
+		{
+			desc:     "host with punycode in parent",
+			host:     "test.xn--punycded-r4a.example.com",
+			expected: "test.punycöded.example.com",
+		},
 	}
 
 	for _, test := range testCases {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/containous/alice"
 	"github.com/traefik/traefik/v2/pkg/types"
+	"golang.org/x/net/idna"
 )
 
 const (
@@ -48,6 +49,14 @@ func (r *RequestDecorator) ServeHTTP(rw http.ResponseWriter, req *http.Request, 
 }
 
 func parseHost(addr string) string {
+	// Converts punycode hostname back to unicode.
+	if strings.Contains(addr, "xn--") {
+		parsed, err := idna.ToUnicode(addr)
+		if err == nil {
+			addr = parsed
+		}
+	}
+
 	if !strings.Contains(addr, ":") {
 		return addr
 	}
