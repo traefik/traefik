@@ -11,7 +11,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/traefik/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
-	knativenetworking "knative.dev/networking/pkg/apis/networking"
 	knativenetworkingv1alpha1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
 )
 
@@ -243,5 +242,5 @@ func makeID(namespace, name string) string {
 
 func shouldProcessIngress(ingressClass, ingressClassAnnotation string) bool {
 	return ingressClass == ingressClassAnnotation ||
-		(len(ingressClass) == 0 && ingressClassAnnotation == knativenetworking.IngressClassAnnotationKey)
+		(len(ingressClass) == 0 && ingressClassAnnotation == traefikDefaultIngressClass)
 }

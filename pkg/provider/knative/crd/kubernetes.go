@@ -15,10 +15,12 @@ import (
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/tls"
 	"k8s.io/apimachinery/pkg/labels"
+	knativenetworking "knative.dev/networking/pkg/apis/networking"
 )
 
 const (
-	annotationKubernetesIngressClass = "kubernetes.io/ingress.class"
+	annotationKubernetesIngressClass = knativenetworking.IngressClassAnnotationKey
+	traefikDefaultIngressClass       = "traefik.ingress.networking.knative.dev"
 )
 
 const (
@@ -36,7 +38,7 @@ type Provider struct {
 	LoadBalancerDomain         string          `description:"set for load-balancer ingress points that are DNS based." json:"loadBalancerDomain,omitempty" toml:"loadBalancerDomain,omitempty" yaml:"loadBalancerDomain,omitempty"`
 	LoadBalancerDomainInternal string          `description:"set if there is a cluster-local DNS name to access the Ingress." json:"loadBalancerDomainInternal,omitempty" toml:"loadBalancerDomainInternal,omitempty" yaml:"loadBalancerDomainInternal,omitempty"`
 	LabelSelector              string          `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
-	IngressClass               string          `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
+	IngressClass               string          `description:"Value of networking.knative.dev/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
 	ThrottleDuration           ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty"`
 	lastConfiguration          safe.Safe
 }
