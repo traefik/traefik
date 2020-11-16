@@ -175,10 +175,15 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 			return nil, err
 		}
 
-		for i, consulService := range consulServices {
+		for _, consulService := range consulServices {
 			address := consulService.ServiceAddress
 			if address == "" {
 				address = consulService.Address
+			}
+
+			status := api.HealthAny
+			if health, exists := healthServices[consulService.ID+consulService.ServiceID]; exists {
+				status = health.Checks.AggregatedStatus()
 			}
 
 			item := itemData{
@@ -189,7 +194,7 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 				Port:    strconv.Itoa(consulService.ServicePort),
 				Labels:  tagsToNeutralLabels(consulService.ServiceTags, p.Prefix),
 				Tags:    consulService.ServiceTags,
-				Status:  healthServices[i].Checks.AggregatedStatus(),
+				Status:  status,
 			}
 
 			extraConf, err := p.getConfiguration(item)
@@ -205,13 +210,14 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 	return data, nil
 }
 
-func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.CatalogService, []*api.ServiceEntry, error) {
+func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.CatalogService, map[string]api.ServiceEntry, error) {
 	var tagFilter string
 	if !p.ExposedByDefault {
 		tagFilter = p.Prefix + ".enable=true"
 	}
 
 	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache}
+	opts = opts.WithContext(ctx)
 
 	consulServices, _, err := p.client.Catalog().Service(name, tagFilter, opts)
 	if err != nil {
@@ -219,7 +225,22 @@ func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.Catalo
 	}
 
 	healthServices, _, err := p.client.Health().Service(name, tagFilter, false, opts)
-	return consulServices, healthServices, err
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Index health info by service and node so it can be retrieved from a CatalogService even if the health and
+	// services are not in sync.
+	healths := make(map[string]api.ServiceEntry)
+	for _, health := range healthServices {
+		if health.Service == nil || health.Node == nil {
+			continue
+		}
+
+		healths[health.Node.ID+health.Service.ID] = *health
+	}
+
+	return consulServices, healths, err
 }
 
 func (p *Provider) fetchServices(ctx context.Context) ([]string, error) {
