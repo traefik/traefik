@@ -111,9 +111,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				return fmt.Errorf("unable to create consul client: %w", err)
 			}
 
-			// Initial refresh.
+			// get services at startup.
 			if err = p.refreshServices(routineCtx, configurationChan); err != nil {
-				return err
+				return fmt.Errorf("failed to get consul catalog data: %w", err)
 			}
 
 			// Periodic refreshes.
@@ -124,7 +124,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				select {
 				case <-ticker.C:
 					if err := p.refreshServices(routineCtx, configurationChan); err != nil {
-						return err
+						return fmt.Errorf("failed to refresh consul catalog data: %w", err)
 					}
 
 				case <-routineCtx.Done():
@@ -149,7 +149,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 func (p *Provider) refreshServices(ctx context.Context, configurationChan chan<- dynamic.Message) error {
 	data, err := p.getConsulServicesData(ctx)
 	if err != nil {
-		return fmt.Errorf("unable to get consul catalog data: %w", err)
+		return err
 	}
 
 	configuration := p.buildConfiguration(ctx, data)
