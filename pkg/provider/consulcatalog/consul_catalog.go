@@ -108,26 +108,22 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 			p.client, err = createClient(p.Endpoint)
 			if err != nil {
-				return fmt.Errorf("error create consul client, %w", err)
+				return fmt.Errorf("unable to create consul client: %w", err)
 			}
 
-			// Initial refresh
-			err = p.refreshServices(routineCtx, configurationChan)
-			if err != nil {
-				logger.Errorf("error get initial consul catalog data, %v", err)
+			// Initial refresh.
+			if err = p.refreshServices(routineCtx, configurationChan); err != nil {
 				return err
 			}
 
-			// Periodic refreshes
+			// Periodic refreshes.
 			ticker := time.NewTicker(time.Duration(p.RefreshInterval))
 			defer ticker.Stop()
 
 			for {
 				select {
 				case <-ticker.C:
-					err := p.refreshServices(routineCtx, configurationChan)
-					if err != nil {
-						logger.Errorf("error get consul catalog data, %v", err)
+					if err := p.refreshServices(routineCtx, configurationChan); err != nil {
 						return err
 					}
 
@@ -141,11 +137,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			logger.Errorf("Provider connection error %+v, retrying in %s", err, time)
 		}
 
-		err := backoff.RetryNotify(
-			safe.OperationWithRecover(operation),
-			backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxLog),
-			notify,
-		)
+		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxLog), notify)
 		if err != nil {
 			logger.Errorf("Cannot connect to consul catalog server %+v", err)
 		}
@@ -157,7 +149,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 func (p *Provider) refreshServices(ctx context.Context, configurationChan chan<- dynamic.Message) error {
 	data, err := p.getConsulServicesData(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get consul catalog data: %w", err)
 	}
 
 	configuration := p.buildConfiguration(ctx, data)
