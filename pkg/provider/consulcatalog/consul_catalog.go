@@ -108,27 +108,28 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 			p.client, err = createClient(p.Endpoint)
 			if err != nil {
-				return fmt.Errorf("error create consul client, %w", err)
+				return fmt.Errorf("unable to create consul client: %w", err)
 			}
 
+			// get configuration at the provider's startup.
+			err = p.loadConfiguration(routineCtx, configurationChan)
+			if err != nil {
+				return fmt.Errorf("failed to get consul catalog data: %w", err)
+			}
+
+			// Periodic refreshes.
 			ticker := time.NewTicker(time.Duration(p.RefreshInterval))
+			defer ticker.Stop()
 
 			for {
 				select {
 				case <-ticker.C:
-					data, err := p.getConsulServicesData(routineCtx)
+					err = p.loadConfiguration(routineCtx, configurationChan)
 					if err != nil {
-						logger.Errorf("error get consul catalog data, %v", err)
-						return err
+						return fmt.Errorf("failed to refresh consul catalog data: %w", err)
 					}
 
-					configuration := p.buildConfiguration(routineCtx, data)
-					configurationChan <- dynamic.Message{
-						ProviderName:  "consulcatalog",
-						Configuration: configuration,
-					}
 				case <-routineCtx.Done():
-					ticker.Stop()
 					return nil
 				}
 			}
@@ -143,6 +144,20 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			logger.Errorf("Cannot connect to consul catalog server %+v", err)
 		}
 	})
+
+	return nil
+}
+
+func (p *Provider) loadConfiguration(ctx context.Context, configurationChan chan<- dynamic.Message) error {
+	data, err := p.getConsulServicesData(ctx)
+	if err != nil {
+		return err
+	}
+
+	configurationChan <- dynamic.Message{
+		ProviderName:  "consulcatalog",
+		Configuration: p.buildConfiguration(ctx, data),
+	}
 
 	return nil
 }
