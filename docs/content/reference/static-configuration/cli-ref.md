@@ -330,6 +330,9 @@ TLS key
 `--providers.consul.username`:  
 KV Username
 
+`--providers.consulcatalog`:  
+Enable ConsulCatalog backend with default settings. (Default: ```false```)
+
 `--providers.consulcatalog.cache`:  
 Use local agent caching for catalog reads. (Default: ```false```)
 

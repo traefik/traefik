@@ -303,6 +303,9 @@ Terminating status code (Default: ```503```)
 `TRAEFIK_PROVIDERS_CONSUL`:  
 Enable Consul backend with default settings. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_CONSULCATALOG`:  
+Enable ConsulCatalog backend with default settings. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_CONSULCATALOG_CACHE`:  
 Use local agent caching for catalog reads. (Default: ```false```)
 
