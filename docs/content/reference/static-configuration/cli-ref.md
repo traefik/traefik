@@ -438,6 +438,9 @@ Use the ip address from the bound port, rather than from the inner network. (Def
 `--providers.docker.watch`:  
 Watch Docker Swarm events. (Default: ```true```)
 
+`--providers.ecs`:  
+Enable AWS ECS backend with default settings. (Default: ```false```)
+
 `--providers.ecs.accesskeyid`:  
 The AWS credentials access key to use for making requests
 
