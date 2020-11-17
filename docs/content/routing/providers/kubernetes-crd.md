@@ -1091,7 +1091,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
           weight: 10                # [7]
           terminationDelay: 400     # [8]
           proxyProtocol:            # [9]
-            version: "1"            # [10]
+            version: 1              # [10]
       tls:                          # [11]
         secretName: supersecret     # [12]
         options:                    # [13]

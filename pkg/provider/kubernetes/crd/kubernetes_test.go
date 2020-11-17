@@ -2908,7 +2908,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										Port:    "",
 									},
 								},
-								ProxyProtocol: &dynamic.ProxyProtocol{Version: "2"},
+								ProxyProtocol: &dynamic.ProxyProtocol{Version: 2},
 							},
 						},
 					},

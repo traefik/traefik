@@ -998,7 +998,7 @@ It can be enabled by setting `proxyProtocol` on the load balancer.
 
 Below are the available options for the PROXY protocol:
 
-- `version` specifies the version of the protocol to be used. Either `"1"` or `"2"`.
+- `version` specifies the version of the protocol to be used. Either `1` or `2`.
 
 !!! info "Version"
 
@@ -1011,7 +1011,7 @@ Below are the available options for the PROXY protocol:
     [tcp.services]
       [tcp.services.my-service.loadBalancer]
         [tcp.services.my-service.loadBalancer.proxyProtocol]
-          version = "1"
+          version = 1
     ```
 
     ```yaml tab="YAML"
@@ -1021,7 +1021,7 @@ Below are the available options for the PROXY protocol:
         my-service:
           loadBalancer:
             proxyProtocol:
-              version: "1"
+              version: 1
     ```
 
 #### Termination Delay

@@ -247,7 +247,7 @@
 | `traefik/tcp/routers/TCPRouter1/tls/domains/1/sans/1` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/tls/options` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/tls/passthrough` | `true` |
-| `traefik/tcp/services/TCPService01/loadBalancer/proxyProtocol/version` | `foobar` |
+| `traefik/tcp/services/TCPService01/loadBalancer/proxyProtocol/version` | `42` |
 | `traefik/tcp/services/TCPService01/loadBalancer/servers/0/address` | `foobar` |
 | `traefik/tcp/services/TCPService01/loadBalancer/servers/1/address` | `foobar` |
 | `traefik/tcp/services/TCPService01/loadBalancer/terminationDelay` | `42` |

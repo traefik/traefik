@@ -1,9 +1,9 @@
 package tcp
 
 import (
+	"fmt"
 	"io"
 	"net"
-	"strconv"
 	"time"
 
 	"github.com/pires/go-proxyproto"
@@ -23,6 +23,10 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 	tcpAddr, err := net.ResolveTCPAddr("tcp", address)
 	if err != nil {
 		return nil, err
+	}
+
+	if proxyProtocol != nil && (proxyProtocol.Version < 1 || proxyProtocol.Version > 2) {
+		return nil, fmt.Errorf("ProxyProtocol disabled: unknown proxyProtocol.version value: %d", proxyProtocol.Version)
 	}
 
 	return &Proxy{target: tcpAddr, terminationDelay: terminationDelay, proxyProtocol: proxyProtocol}, nil
@@ -45,17 +49,14 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	defer connBackend.Close()
 	errChan := make(chan error)
 
-	if p.proxyProtocol != nil {
-		switch p.proxyProtocol.Version {
-		case "1", "2":
-			version, _ := strconv.Atoi(p.proxyProtocol.Version)
-			header := proxyproto.HeaderProxyFromAddrs(byte(version), conn.RemoteAddr(), conn.LocalAddr())
-			if _, err := header.WriteTo(connBackend); err != nil {
-				log.Errorf("Error while writing proxy protocol headers to backend connection: %v", err)
-				return
-			}
+	if p.proxyProtocol != nil && p.proxyProtocol.Version > 0 && p.proxyProtocol.Version < 3 {
+		header := proxyproto.HeaderProxyFromAddrs(byte(p.proxyProtocol.Version), conn.RemoteAddr(), conn.LocalAddr())
+		if _, err := header.WriteTo(connBackend); err != nil {
+			log.WithoutContext().Errorf("Error while writing proxy protocol headers to backend connection: %v", err)
+			return
 		}
 	}
+
 	go p.connCopy(conn, connBackend, errChan)
 	go p.connCopy(connBackend, conn, errChan)
 

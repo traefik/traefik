@@ -235,7 +235,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							},
 						},
 						TerminationDelay: func(i int) *int { return &i }(42),
-						ProxyProtocol:    &dynamic.ProxyProtocol{Version: "1"},
+						ProxyProtocol:    &dynamic.ProxyProtocol{Version: 1},
 					},
 				},
 				"Service1": {
@@ -246,7 +246,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							},
 						},
 						TerminationDelay: func(i int) *int { return &i }(42),
-						ProxyProtocol:    &dynamic.ProxyProtocol{Version: "2"},
+						ProxyProtocol:    &dynamic.ProxyProtocol{Version: 2},
 					},
 				},
 			},

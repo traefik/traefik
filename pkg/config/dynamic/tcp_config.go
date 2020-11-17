@@ -67,12 +67,12 @@ type RouterTCPTLSConfig struct {
 
 // ProxyProtocol holds the ProxyProtocol configuration.
 type ProxyProtocol struct {
-	Version string `json:"version,omitempty" toml:"version,omitempty" yaml:"version,omitempty"`
+	Version int `json:"version,omitempty" toml:"version,omitempty" yaml:"version,omitempty"`
 }
 
 // SetDefaults Default values for a ProxyProtocol.
 func (p *ProxyProtocol) SetDefaults() {
-	p.Version = "2"
+	p.Version = 2
 }
 
 // +k8s:deepcopy-gen=true

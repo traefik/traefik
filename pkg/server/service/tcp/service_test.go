@@ -171,25 +171,6 @@ func TestManager_BuildTCP(t *testing.T) {
 			},
 			providerName: "provider-1",
 		},
-		{
-			desc:        "Server with unknown ProxyProtocol version",
-			serviceName: "serviceName",
-			configs: map[string]*runtime.TCPServiceInfo{
-				"serviceName@provider-1": {
-					TCPService: &dynamic.TCPService{
-						LoadBalancer: &dynamic.TCPServersLoadBalancer{
-							Servers: []dynamic.TCPServer{
-								{
-									Address: "192.168.0.12:80",
-								},
-							},
-							ProxyProtocol: &dynamic.ProxyProtocol{Version: "unknown"},
-						},
-					},
-				},
-			},
-			providerName: "provider-1",
-		},
 	}
 
 	for _, test := range testCases {

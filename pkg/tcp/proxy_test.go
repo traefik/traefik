@@ -2,14 +2,15 @@ package tcp
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"net"
-	"strconv"
 	"testing"
 	"time"
 
 	"github.com/pires/go-proxyproto"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 )
@@ -19,6 +20,7 @@ func fakeRedis(t *testing.T, listener net.Listener) {
 		conn, err := listener.Accept()
 		fmt.Println("Accept on server")
 		require.NoError(t, err)
+
 		for {
 			withErr := false
 			buf := make([]byte, 64)
@@ -29,12 +31,13 @@ func fakeRedis(t *testing.T, listener net.Listener) {
 			if string(buf[:4]) == "ping" {
 				time.Sleep(1 * time.Millisecond)
 				if _, err := conn.Write([]byte("PONG")); err != nil {
-					conn.Close()
+					_ = conn.Close()
 					return
 				}
 			}
+
 			if withErr {
-				conn.Close()
+				_ = conn.Close()
 				return
 			}
 		}
@@ -84,39 +87,51 @@ func TestCloseWrite(t *testing.T) {
 }
 
 func TestProxyProtocol(t *testing.T) {
-	testCases := []string{"", "1", "2"}
-	for _, proxyversion := range testCases {
-		func(proxyprotocolversion string) {
+	testCases := []struct {
+		desc    string
+		version int
+	}{
+		{
+			desc:    "PROXY protocol v1",
+			version: 1,
+		},
+		{
+			desc:    "PROXY protocol v2",
+			version: 2,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
 			backendListener, err := net.Listen("tcp", ":0")
 			require.NoError(t, err)
-			proxybackendListener := proxyproto.Listener{
+
+			var version int
+			proxyBackendListener := proxyproto.Listener{
 				Listener: backendListener,
 				ValidateHeader: func(h *proxyproto.Header) error {
-					versionFromHeader := int(h.Version)
-					expectVersion, _ := strconv.Atoi(proxyprotocolversion)
-					if versionFromHeader != expectVersion {
-						t.Fatalf("Expected version %s got: %d", proxyprotocolversion, versionFromHeader)
-					}
+					version = int(h.Version)
 					return nil
 				},
 				Policy: func(upstream net.Addr) (proxyproto.Policy, error) {
-					switch proxyprotocolversion {
-					case "1", "2":
+					switch test.version {
+					case 1, 2:
 						return proxyproto.USE, nil
-					case "":
-						return proxyproto.IGNORE, nil
 					default:
-						return proxyproto.REQUIRE, fmt.Errorf("fail")
+						return proxyproto.REQUIRE, errors.New("unsupported version")
 					}
 				},
 			}
-			defer proxybackendListener.Close()
+			defer proxyBackendListener.Close()
 
-			go fakeRedis(t, &proxybackendListener)
-			_, port, err := net.SplitHostPort(proxybackendListener.Addr().String())
+			go fakeRedis(t, &proxyBackendListener)
+
+			_, port, err := net.SplitHostPort(proxyBackendListener.Addr().String())
 			require.NoError(t, err)
 
-			proxy, err := NewProxy(":"+port, 10*time.Millisecond, &dynamic.ProxyProtocol{Version: proxyprotocolversion})
+			proxy, err := NewProxy(":"+port, 10*time.Millisecond, &dynamic.ProxyProtocol{Version: test.version})
 			require.NoError(t, err)
 
 			proxyListener, err := net.Listen("tcp", ":0")
@@ -146,8 +161,11 @@ func TestProxyProtocol(t *testing.T) {
 			buffer := bytes.NewBuffer(buf)
 			n, err := io.Copy(buffer, conn)
 			require.NoError(t, err)
-			require.Equal(t, int64(4), n)
-			require.Equal(t, "PONG", buffer.String())
-		}(proxyversion)
+
+			assert.Equal(t, int64(4), n)
+			assert.Equal(t, "PONG", buffer.String())
+
+			assert.Equal(t, test.version, version)
+		})
 	}
 }
