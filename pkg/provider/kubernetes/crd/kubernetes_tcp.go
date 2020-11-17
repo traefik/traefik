@@ -140,6 +140,15 @@ func createLoadBalancerServerTCP(client Client, namespace string, service v1alph
 		},
 	}
 
+	if service.ProxyProtocol != nil {
+		tcpService.LoadBalancer.ProxyProtocol = &dynamic.ProxyProtocol{}
+		tcpService.LoadBalancer.ProxyProtocol.SetDefaults()
+
+		if service.ProxyProtocol.Version != 0 {
+			tcpService.LoadBalancer.ProxyProtocol.Version = service.ProxyProtocol.Version
+		}
+	}
+
 	if service.TerminationDelay != nil {
 		tcpService.LoadBalancer.TerminationDelay = service.TerminationDelay
 	}

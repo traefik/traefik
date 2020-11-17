@@ -343,6 +343,8 @@
     [tcp.services.TCPService01]
       [tcp.services.TCPService01.loadBalancer]
         terminationDelay = 42
+        [tcp.services.TCPService01.loadBalancer.proxyProtocol]
+          version = 42
 
         [[tcp.services.TCPService01.loadBalancer.servers]]
           address = "foobar"
