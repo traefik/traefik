@@ -1002,17 +1002,16 @@ Below are the available options for the PROXY protocol:
 
 !!! info "Version"
 
-   Specifying a version is optional. By default the version 2 will be used. 
+    Specifying a version is optional. By default the version 2 will be used. 
 
-??? example "A Service with Proxy Protocol v2 -- Using the [File Provider](../../providers/file.md)"
+??? example "A Service with Proxy Protocol v1 -- Using the [File Provider](../../providers/file.md)"
 
     ```toml tab="TOML"
     ## Dynamic configuration
     [tcp.services]
       [tcp.services.my-service.loadBalancer]
-        [[tcp.services.my-service.loadBalancer]]
-          [tcp.services.TCPService01.loadBalancer.proxyProtocol]
-            version = "2"
+        [tcp.services.my-service.loadBalancer.proxyProtocol]
+          version = "1"
     ```
 
     ```yaml tab="YAML"
@@ -1022,7 +1021,7 @@ Below are the available options for the PROXY protocol:
         my-service:
           loadBalancer:
             proxyProtocol:
-              version: "2"
+              version: "1"
     ```
 
 #### Termination Delay

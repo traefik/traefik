@@ -49,7 +49,7 @@ func TestCloseWrite(t *testing.T) {
 	_, port, err := net.SplitHostPort(backendListener.Addr().String())
 	require.NoError(t, err)
 
-	proxy, err := NewProxy(":"+port, 10*time.Millisecond, &dynamic.ProxyProtocol{Version: ""})
+	proxy, err := NewProxy(":"+port, 10*time.Millisecond, nil)
 	require.NoError(t, err)
 
 	proxyListener, err := net.Listen("tcp", ":0")

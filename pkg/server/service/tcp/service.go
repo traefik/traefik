@@ -55,7 +55,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 
 		if conf.LoadBalancer.ProxyProtocol != nil {
 			switch conf.LoadBalancer.ProxyProtocol.Version {
-			case "", "1", "2":
+			case "1", "2":
 			default:
 				logger.Errorf("ProxyProtocol disabled: unknown proxyProtocol.version value: %s", conf.LoadBalancer.ProxyProtocol.Version)
 			}
