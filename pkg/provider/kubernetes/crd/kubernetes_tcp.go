@@ -144,7 +144,7 @@ func createLoadBalancerServerTCP(client Client, namespace string, service v1alph
 		tcpService.LoadBalancer.ProxyProtocol = &dynamic.ProxyProtocol{}
 		tcpService.LoadBalancer.ProxyProtocol.SetDefaults()
 
-		if service.ProxyProtocol.Version != "" {
+		if service.ProxyProtocol.Version != 0 {
 			tcpService.LoadBalancer.ProxyProtocol.Version = service.ProxyProtocol.Version
 		}
 	}

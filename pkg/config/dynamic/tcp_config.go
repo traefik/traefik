@@ -65,18 +65,6 @@ type RouterTCPTLSConfig struct {
 
 // +k8s:deepcopy-gen=true
 
-// ProxyProtocol holds the ProxyProtocol configuration.
-type ProxyProtocol struct {
-	Version int `json:"version,omitempty" toml:"version,omitempty" yaml:"version,omitempty"`
-}
-
-// SetDefaults Default values for a ProxyProtocol.
-func (p *ProxyProtocol) SetDefaults() {
-	p.Version = 2
-}
-
-// +k8s:deepcopy-gen=true
-
 // TCPServersLoadBalancer holds the LoadBalancerService configuration.
 type TCPServersLoadBalancer struct {
 	// TerminationDelay, corresponds to the deadline that the proxy sets, after one
@@ -118,4 +106,16 @@ func (l *TCPServersLoadBalancer) Mergeable(loadBalancer *TCPServersLoadBalancer)
 type TCPServer struct {
 	Address string `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty" label:"-"`
 	Port    string `toml:"-" json:"-" yaml:"-"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// ProxyProtocol holds the ProxyProtocol configuration.
+type ProxyProtocol struct {
+	Version int `json:"version,omitempty" toml:"version,omitempty" yaml:"version,omitempty"`
+}
+
+// SetDefaults Default values for a ProxyProtocol.
+func (p *ProxyProtocol) SetDefaults() {
+	p.Version = 2
 }
