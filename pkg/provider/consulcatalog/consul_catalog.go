@@ -170,7 +170,7 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 
 	var data []itemData
 	for _, name := range consulServiceNames {
-		consulServices, healthServices, err := p.fetchService(ctx, name)
+		consulServices, statuses, err := p.fetchService(ctx, name)
 		if err != nil {
 			return nil, err
 		}
@@ -181,9 +181,9 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 				address = consulService.Address
 			}
 
-			status := api.HealthAny
-			if health, exists := healthServices[consulService.ID+consulService.ServiceID]; exists {
-				status = health.Checks.AggregatedStatus()
+			status, exists := statuses[consulService.ID+consulService.ServiceID]
+			if !exists {
+				status = api.HealthAny
 			}
 
 			item := itemData{
@@ -210,7 +210,7 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 	return data, nil
 }
 
-func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.CatalogService, map[string]api.ServiceEntry, error) {
+func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.CatalogService, map[string]string, error) {
 	var tagFilter string
 	if !p.ExposedByDefault {
 		tagFilter = p.Prefix + ".enable=true"
@@ -229,18 +229,18 @@ func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.Catalo
 		return nil, nil, err
 	}
 
-	// Index health info by service and node so it can be retrieved from a CatalogService even if the health and
-	// services are not in sync.
-	healths := make(map[string]api.ServiceEntry)
+	// Index status by service and node so it can be retrieved from a CatalogService even if the health and services
+	// are not in sync.
+	statuses := make(map[string]string)
 	for _, health := range healthServices {
 		if health.Service == nil || health.Node == nil {
 			continue
 		}
 
-		healths[health.Node.ID+health.Service.ID] = *health
+		statuses[health.Node.ID+health.Service.ID] = health.Checks.AggregatedStatus()
 	}
 
-	return consulServices, healths, err
+	return consulServices, statuses, err
 }
 
 func (p *Provider) fetchServices(ctx context.Context) ([]string, error) {
