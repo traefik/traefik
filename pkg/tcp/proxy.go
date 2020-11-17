@@ -26,7 +26,7 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 	}
 
 	if proxyProtocol != nil && (proxyProtocol.Version < 1 || proxyProtocol.Version > 2) {
-		return nil, fmt.Errorf("ProxyProtocol disabled: unknown proxyProtocol.version value: %d", proxyProtocol.Version)
+		return nil, fmt.Errorf("unknown proxyProtocol version: %d", proxyProtocol.Version)
 	}
 
 	return &Proxy{target: tcpAddr, terminationDelay: terminationDelay, proxyProtocol: proxyProtocol}, nil
