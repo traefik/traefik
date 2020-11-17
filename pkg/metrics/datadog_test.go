@@ -36,6 +36,7 @@ func TestDatadog(t *testing.T) {
 		"traefik.entrypoint.request.duration:10000.000000|h|#entrypoint:test\n",
 		"traefik.entrypoint.connections.open:1.000000|g|#entrypoint:test\n",
 		"traefik.service.server.up:1.000000|g|#service:test,url:http://127.0.0.1,one:two\n",
+		"traefik.tls.certs.notAfterTimestamp:1.000000|g|#key:value\n",
 	}
 
 	udp.ShouldReceiveAll(t, expected, func() {
@@ -50,5 +51,6 @@ func TestDatadog(t *testing.T) {
 		datadogRegistry.EntryPointReqDurationHistogram().With("entrypoint", "test").Observe(10000)
 		datadogRegistry.EntryPointOpenConnsGauge().With("entrypoint", "test").Set(1)
 		datadogRegistry.ServiceServerUpGauge().With("service", "test", "url", "http://127.0.0.1", "one", "two").Set(1)
+		datadogRegistry.TLSCertsNotAfterTimestampGauge().With("key", "value").Set(1)
 	})
 }

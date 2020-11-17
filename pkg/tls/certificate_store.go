@@ -56,15 +56,16 @@ func (c CertificateStore) getDefaultCertificateDomains() []string {
 
 // GetAllDomains return a slice with all the certificate domain.
 func (c CertificateStore) GetAllDomains() []string {
-	allCerts := c.getDefaultCertificateDomains()
+	allDomains := c.getDefaultCertificateDomains()
 
 	// Get dynamic certificates
 	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
-		for domains := range c.DynamicCerts.Get().(map[string]*tls.Certificate) {
-			allCerts = append(allCerts, domains)
+		for domain := range c.DynamicCerts.Get().(map[string]*tls.Certificate) {
+			allDomains = append(allDomains, domain)
 		}
 	}
-	return allCerts
+
+	return allDomains
 }
 
 // GetBestCertificate returns the best match certificate, and caches the response.

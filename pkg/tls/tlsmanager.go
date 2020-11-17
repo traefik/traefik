@@ -6,12 +6,9 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"sort"
-	"strings"
 	"sync"
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
-	"github.com/go-kit/kit/metrics"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/tls/generate"
@@ -28,23 +25,15 @@ type Manager struct {
 	configs      map[string]Options
 	certs        []*CertAndStores
 	lock         sync.RWMutex
-
-	metricsRegistry Registry
-}
-
-// Registry interface which defines the subset of methods needed in this package
-type Registry interface {
-	TLSCertsNotAfterTimestampGauge() metrics.Gauge
 }
 
 // NewManager creates a new Manager.
-func NewManager(metricsRegistry Registry) *Manager {
+func NewManager() *Manager {
 	return &Manager{
 		stores: map[string]*CertificateStore{},
 		configs: map[string]Options{
 			"default": DefaultTLSOptions,
 		},
-		metricsRegistry: metricsRegistry,
 	}
 }
 
@@ -87,7 +76,6 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 
 	for storeName, certs := range storesCertificates {
 		m.getStore(storeName).DynamicCerts.Set(certs)
-		m.updateMetrics(&certs)
 	}
 }
 
@@ -128,7 +116,6 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 		}
 
 		bestCertificate := store.GetBestCertificate(clientHello)
-
 		if bestCertificate != nil {
 			return bestCertificate, nil
 		}
@@ -144,34 +131,25 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 	return tlsConfig, err
 }
 
-// updateMetrics produce metrics for a given *map[string]*tls.Certificate which must not be nil.
-func (m *Manager) updateMetrics(certs *map[string]*tls.Certificate) {
-	tlsNotAfter := m.metricsRegistry.TLSCertsNotAfterTimestampGauge()
-	if tlsNotAfter != nil {
-		for _, cert := range *certs {
-			// We iterate over all the certificates, even the ones for the CA chain
-			for i := range cert.Certificate {
-				x509Cert, err := x509.ParseCertificate(cert.Certificate[i])
+// GetCertificates returns all stored certificates.
+func (m *Manager) GetCertificates() []*x509.Certificate {
+	var certificates []*x509.Certificate
 
+	// We iterate over all the certificates.
+	for _, store := range m.stores {
+		if store.DynamicCerts != nil && store.DynamicCerts.Get() != nil {
+			for _, cert := range store.DynamicCerts.Get().(map[string]*tls.Certificate) {
+				x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
 				if err != nil {
 					continue
 				}
 
-				DNSNames := make([]string, 0, len(x509Cert.DNSNames))
-				DNSNames = append(DNSNames, x509Cert.DNSNames...)
-				sort.Strings(DNSNames)
-				SANs := strings.Join(DNSNames, ",")
-
-				labels := []string{
-					"cn", x509Cert.Subject.CommonName,
-					"serial", x509Cert.SerialNumber.String(),
-					"sans", SANs,
-				}
-
-				tlsNotAfter.With(labels...).Set(float64(x509Cert.NotAfter.Unix()))
+				certificates = append(certificates, x509Cert)
 			}
 		}
 	}
+
+	return certificates
 }
 
 func (m *Manager) getStore(storeName string) *CertificateStore {
