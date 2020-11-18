@@ -303,6 +303,9 @@ Terminating status code (Default: ```503```)
 `TRAEFIK_PROVIDERS_CONSUL`:  
 Enable Consul backend with default settings. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_CONSULCATALOG`:  
+Enable ConsulCatalog backend with default settings. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_CONSULCATALOG_CACHE`:  
 Use local agent caching for catalog reads. (Default: ```false```)
 
@@ -434,6 +437,9 @@ Use the ip address from the bound port, rather than from the inner network. (Def
 
 `TRAEFIK_PROVIDERS_DOCKER_WATCH`:  
 Watch Docker Swarm events. (Default: ```true```)
+
+`TRAEFIK_PROVIDERS_ECS`:  
+Enable AWS ECS backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ECS_ACCESSKEYID`:  
 The AWS credentials access key to use for making requests
