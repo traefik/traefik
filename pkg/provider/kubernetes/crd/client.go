@@ -61,11 +61,12 @@ type Client interface {
 
 // TODO: add tests for the clientWrapper (and its methods) itself.
 type clientWrapper struct {
-	csCrd  *versioned.Clientset
-	csKube *kubernetes.Clientset
+	csCrd  versioned.Interface
+	csKube kubernetes.Interface
 
-	factoriesCrd  map[string]externalversions.SharedInformerFactory
-	factoriesKube map[string]informers.SharedInformerFactory
+	factoriesCrd    map[string]externalversions.SharedInformerFactory
+	factoriesKube   map[string]informers.SharedInformerFactory
+	factoriesSecret map[string]informers.SharedInformerFactory
 
 	labelSelector labels.Selector
 
@@ -87,12 +88,13 @@ func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
 	return newClientImpl(csKube, csCrd), nil
 }
 
-func newClientImpl(csKube *kubernetes.Clientset, csCrd *versioned.Clientset) *clientWrapper {
+func newClientImpl(csKube kubernetes.Interface, csCrd versioned.Interface) *clientWrapper {
 	return &clientWrapper{
-		csCrd:         csCrd,
-		csKube:        csKube,
-		factoriesCrd:  make(map[string]externalversions.SharedInformerFactory),
-		factoriesKube: make(map[string]informers.SharedInformerFactory),
+		csCrd:           csCrd,
+		csKube:          csKube,
+		factoriesCrd:    make(map[string]externalversions.SharedInformerFactory),
+		factoriesKube:   make(map[string]informers.SharedInformerFactory),
+		factoriesSecret: make(map[string]informers.SharedInformerFactory),
 	}
 }
 
@@ -155,6 +157,10 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 	c.watchedNamespaces = namespaces
 
+	notOwnedByHelm := func(opts *metav1.ListOptions) {
+		opts.LabelSelector = "owner!=helm"
+	}
+
 	for _, ns := range namespaces {
 		factoryCrd := externalversions.NewSharedInformerFactoryWithOptions(c.csCrd, resyncPeriod, externalversions.WithNamespace(ns))
 		factoryCrd.Traefik().V1alpha1().IngressRoutes().Informer().AddEventHandler(eventHandler)
@@ -169,15 +175,19 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		factoryKube.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
 		factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
-		factoryKube.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
+
+		factorySecret := informers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, informers.WithNamespace(ns), informers.WithTweakListOptions(notOwnedByHelm))
+		factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 
 		c.factoriesCrd[ns] = factoryCrd
 		c.factoriesKube[ns] = factoryKube
+		c.factoriesSecret[ns] = factorySecret
 	}
 
 	for _, ns := range namespaces {
 		c.factoriesCrd[ns].Start(stopCh)
 		c.factoriesKube[ns].Start(stopCh)
+		c.factoriesSecret[ns].Start(stopCh)
 	}
 
 	for _, ns := range namespaces {
@@ -188,6 +198,12 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		}
 
 		for t, ok := range c.factoriesKube[ns].WaitForCacheSync(stopCh) {
+			if !ok {
+				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
+			}
+		}
+
+		for t, ok := range c.factoriesSecret[ns].WaitForCacheSync(stopCh) {
 			if !ok {
 				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
 			}
@@ -337,7 +353,7 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 		return nil, false, fmt.Errorf("failed to get secret %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
 
-	secret, err := c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
+	secret, err := c.factoriesSecret[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
 	return secret, exist, err
 }
