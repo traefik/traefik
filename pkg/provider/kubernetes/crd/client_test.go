@@ -1,57 +1,16 @@
-package ingress
+package crd
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	crdfake "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
 	corev1 "k8s.io/api/core/v1"
-	kubeerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 )
-
-func TestTranslateNotFoundError(t *testing.T) {
-	testCases := []struct {
-		desc           string
-		err            error
-		expectedExists bool
-		expectedError  error
-	}{
-		{
-			desc:           "kubernetes not found error",
-			err:            kubeerror.NewNotFound(schema.GroupResource{}, "foo"),
-			expectedExists: false,
-			expectedError:  nil,
-		},
-		{
-			desc:           "nil error",
-			err:            nil,
-			expectedExists: true,
-			expectedError:  nil,
-		},
-		{
-			desc:           "not a kubernetes not found error",
-			err:            fmt.Errorf("bar error"),
-			expectedExists: false,
-			expectedError:  fmt.Errorf("bar error"),
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			exists, err := translateNotFoundError(test.err)
-			assert.Equal(t, test.expectedExists, exists)
-			assert.Equal(t, test.expectedError, err)
-		})
-	}
-}
 
 func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 	secret := &corev1.Secret{
@@ -71,12 +30,11 @@ func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 	}
 
 	kubeClient := kubefake.NewSimpleClientset(helmSecret, secret)
+	crdClient := crdfake.NewSimpleClientset()
 
-	client := newClientImpl(kubeClient)
+	client := newClientImpl(kubeClient, crdClient)
 
-	stopCh := make(chan struct{})
-
-	eventCh, err := client.WatchAll(nil, stopCh)
+	eventCh, err := client.WatchAll(nil, nil)
 	require.NoError(t, err)
 
 	select {
