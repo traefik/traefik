@@ -1,3 +1,35 @@
+## [v2.3.3](https://github.com/traefik/traefik/tree/v2.3.3) (2020-11-19)
+[All Commits](https://github.com/traefik/traefik/compare/v2.3.2...v2.3.3)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.1.0 ([#7526](https://github.com/traefik/traefik/pull/7526) by [ldez](https://github.com/ldez))
+- **[consulcatalog,ecs]** Fix missing allow-empty tag on ECS and Consul Catalog providers ([#7561](https://github.com/traefik/traefik/pull/7561) by [jspdown](https://github.com/jspdown))
+- **[consulcatalog]** consulcatalog to update before the first interval ([#7514](https://github.com/traefik/traefik/pull/7514) by [greut](https://github.com/greut))
+- **[consulcatalog]** Fix consul catalog panic when health and services are not in sync ([#7558](https://github.com/traefik/traefik/pull/7558) by [jspdown](https://github.com/jspdown))
+- **[ecs]** Translate configured server port into correct mapped host port ([#7480](https://github.com/traefik/traefik/pull/7480) by [alekitto](https://github.com/alekitto))
+- **[k8s,k8s/crd,k8s/ingress]** Filter out Helm secrets from informer caches ([#7562](https://github.com/traefik/traefik/pull/7562) by [jspdown](https://github.com/jspdown))
+- **[plugins]** Update Yaegi to v0.9.5 ([#7527](https://github.com/traefik/traefik/pull/7527) by [ldez](https://github.com/ldez))
+- **[plugins]** Update Yaegi to v0.9.7 ([#7569](https://github.com/traefik/traefik/pull/7569) by [kevinpollet](https://github.com/kevinpollet))
+- **[plugins]** Update Yaegi to v0.9.4 ([#7451](https://github.com/traefik/traefik/pull/7451) by [ldez](https://github.com/ldez))
+- **[tcp]** Ignore errors when setting keepalive period is not supported by the system ([#7410](https://github.com/traefik/traefik/pull/7410) by [tristan-weil](https://github.com/tristan-weil))
+- **[tcp]** Improve service name lookup on TCP routers ([#7370](https://github.com/traefik/traefik/pull/7370) by [ddtmachado](https://github.com/ddtmachado))
+- Improve anonymize configuration ([#7482](https://github.com/traefik/traefik/pull/7482) by [mmatur](https://github.com/mmatur))
+
+**Documentation:**
+- **[ecs]** Add ECS menu to dynamic config reference ([#7501](https://github.com/traefik/traefik/pull/7501) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s,k8s/ingress]** Fix ingress documentation ([#7424](https://github.com/traefik/traefik/pull/7424) by [rtribotte](https://github.com/rtribotte))
+- **[k8s]** fix documentation ([#7469](https://github.com/traefik/traefik/pull/7469) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[k8s]** Fix grammar in kubernetes ingress controller documentation ([#7565](https://github.com/traefik/traefik/pull/7565) by [ivorscott](https://github.com/ivorscott))
+- **[logs]** Clarify time-based field units ([#7447](https://github.com/traefik/traefik/pull/7447) by [tomtastic](https://github.com/tomtastic))
+- **[middleware]** Forwardauth headers ([#7506](https://github.com/traefik/traefik/pull/7506) by [w4tsn](https://github.com/w4tsn))
+- **[provider]** fix typo in providers overview documentation ([#7441](https://github.com/traefik/traefik/pull/7441) by [pirey](https://github.com/pirey))
+- **[tls]** Fix docs for TLS ([#7541](https://github.com/traefik/traefik/pull/7541) by [james426759](https://github.com/james426759))
+- fix: exclude protected link from doc verify ([#7477](https://github.com/traefik/traefik/pull/7477) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Add missed tls config for yaml example ([#7450](https://github.com/traefik/traefik/pull/7450) by [andrew-demb](https://github.com/andrew-demb))
+- Resolve broken URLs causing make docs to fail ([#7444](https://github.com/traefik/traefik/pull/7444) by [tomtastic](https://github.com/tomtastic))
+- Fix Traefik Proxy product nav in docs ([#7523](https://github.com/traefik/traefik/pull/7523) by [PCM2](https://github.com/PCM2))
+- add links to contributors guide ([#7435](https://github.com/traefik/traefik/pull/7435) by [notsureifkevin](https://github.com/notsureifkevin))
+
 ## [v2.3.2](https://github.com/traefik/traefik/tree/v2.3.2) (2020-10-19)
 [All Commits](https://github.com/traefik/traefik/compare/v2.3.1...v2.3.2)
 
