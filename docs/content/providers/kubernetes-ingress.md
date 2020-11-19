@@ -212,23 +212,23 @@ _Optional,Default: empty (process all Ingresses)_
 
 ```toml tab="File (TOML)"
 [providers.kubernetesIngress]
-  labelSelector = "A and not B"
+  labelSelector = "app=traefik"
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   kubernetesIngress:
-    labelselector: "A and not B"
+    labelselector: "app=traefik"
     # ...
 ```
 
 ```bash tab="CLI"
---providers.kubernetesingress.labelselector="A and not B"
+--providers.kubernetesingress.labelselector="app=traefik"
 ```
 
-By default, Traefik processes all Ingress objects in the configured namespaces.
-A label selector can be defined to filter on specific Ingress objects only.
+By default, Traefik processes all `Ingress` objects in the configured namespaces.
+A label selector can be defined to filter on specific `Ingress` objects only.
 
 See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
 

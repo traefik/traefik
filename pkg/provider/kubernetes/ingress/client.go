@@ -19,7 +19,6 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -62,8 +61,9 @@ type clientWrapper struct {
 	clientset            kubernetes.Interface
 	factoriesKube        map[string]informers.SharedInformerFactory
 	factoriesSecret      map[string]informers.SharedInformerFactory
+	factoriesIngress     map[string]informers.SharedInformerFactory
 	clusterFactory       informers.SharedInformerFactory
-	ingressLabelSelector labels.Selector
+	ingressLabelSelector string
 	isNamespaceAll       bool
 	watchedNamespaces    []string
 }
@@ -126,16 +126,17 @@ func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
 
 func newClientImpl(clientset kubernetes.Interface) *clientWrapper {
 	return &clientWrapper{
-		clientset:       clientset,
-		factoriesKube:   make(map[string]informers.SharedInformerFactory),
-		factoriesSecret: make(map[string]informers.SharedInformerFactory),
+		clientset:        clientset,
+		factoriesSecret:  make(map[string]informers.SharedInformerFactory),
+		factoriesIngress: make(map[string]informers.SharedInformerFactory),
+		factoriesKube:    make(map[string]informers.SharedInformerFactory),
 	}
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
 func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	eventCh := make(chan interface{}, 1)
-	eventHandler := c.newResourceEventHandler(eventCh)
+	eventHandler := &resourceEventHandler{eventCh}
 
 	if len(namespaces) == 0 {
 		namespaces = []string{metav1.NamespaceAll}
@@ -148,25 +149,38 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		opts.LabelSelector = "owner!=helm"
 	}
 
+	matchesLabelSelector := func(opts *metav1.ListOptions) {
+		opts.LabelSelector = c.ingressLabelSelector
+	}
+
 	for _, ns := range namespaces {
+		factoryIngress := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns), informers.WithTweakListOptions(matchesLabelSelector))
+		factoryIngress.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
+		c.factoriesIngress[ns] = factoryIngress
+
 		factoryKube := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns))
-		factoryKube.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
 		factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
+		c.factoriesKube[ns] = factoryKube
 
 		factorySecret := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns), informers.WithTweakListOptions(notOwnedByHelm))
 		factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
-
-		c.factoriesKube[ns] = factoryKube
 		c.factoriesSecret[ns] = factorySecret
 	}
 
 	for _, ns := range namespaces {
+		c.factoriesIngress[ns].Start(stopCh)
 		c.factoriesKube[ns].Start(stopCh)
 		c.factoriesSecret[ns].Start(stopCh)
 	}
 
 	for _, ns := range namespaces {
+		for typ, ok := range c.factoriesIngress[ns].WaitForCacheSync(stopCh) {
+			if !ok {
+				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", typ, ns)
+			}
+		}
+
 		for typ, ok := range c.factoriesKube[ns].WaitForCacheSync(stopCh) {
 			if !ok {
 				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", typ, ns)
@@ -205,9 +219,9 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 func (c *clientWrapper) GetIngresses() []*networkingv1beta1.Ingress {
 	var results []*networkingv1beta1.Ingress
 
-	for ns, factory := range c.factoriesKube {
+	for ns, factory := range c.factoriesIngress {
 		// extensions
-		ings, err := factory.Extensions().V1beta1().Ingresses().Lister().List(c.ingressLabelSelector)
+		ings, err := factory.Extensions().V1beta1().Ingresses().Lister().List(labels.Everything())
 		if err != nil {
 			log.Errorf("Failed to list ingresses in namespace %s: %v", ns, err)
 		}
@@ -222,7 +236,7 @@ func (c *clientWrapper) GetIngresses() []*networkingv1beta1.Ingress {
 		}
 
 		// networking
-		list, err := factory.Networking().V1beta1().Ingresses().Lister().List(c.ingressLabelSelector)
+		list, err := factory.Networking().V1beta1().Ingresses().Lister().List(labels.Everything())
 		if err != nil {
 			log.Errorf("Failed to list ingresses in namespace %s: %v", ns, err)
 		}
@@ -256,7 +270,7 @@ func (c *clientWrapper) UpdateIngressStatus(src *networkingv1beta1.Ingress, ip, 
 		return c.updateIngressStatusOld(src, ip, hostname)
 	}
 
-	ing, err := c.factoriesKube[c.lookupNamespace(src.Namespace)].Networking().V1beta1().Ingresses().Lister().Ingresses(src.Namespace).Get(src.Name)
+	ing, err := c.factoriesIngress[c.lookupNamespace(src.Namespace)].Networking().V1beta1().Ingresses().Lister().Ingresses(src.Namespace).Get(src.Name)
 	if err != nil {
 		return fmt.Errorf("failed to get ingress %s/%s: %w", src.Namespace, src.Name, err)
 	}
@@ -285,7 +299,7 @@ func (c *clientWrapper) UpdateIngressStatus(src *networkingv1beta1.Ingress, ip, 
 }
 
 func (c *clientWrapper) updateIngressStatusOld(src *networkingv1beta1.Ingress, ip, hostname string) error {
-	ing, err := c.factoriesKube[c.lookupNamespace(src.Namespace)].Extensions().V1beta1().Ingresses().Lister().Ingresses(src.Namespace).Get(src.Name)
+	ing, err := c.factoriesIngress[c.lookupNamespace(src.Namespace)].Extensions().V1beta1().Ingresses().Lister().Ingresses(src.Namespace).Get(src.Name)
 	if err != nil {
 		return fmt.Errorf("failed to get ingress %s/%s: %w", src.Namespace, src.Name, err)
 	}
@@ -376,25 +390,6 @@ func (c *clientWrapper) lookupNamespace(ns string) string {
 		return metav1.NamespaceAll
 	}
 	return ns
-}
-
-func (c *clientWrapper) newResourceEventHandler(events chan<- interface{}) cache.ResourceEventHandler {
-	return &cache.FilteringResourceEventHandler{
-		FilterFunc: func(obj interface{}) bool {
-			// Ignore Ingresses that do not match our custom label selector.
-			switch v := obj.(type) {
-			case *extensionsv1beta1.Ingress:
-				lbls := labels.Set(v.GetLabels())
-				return c.ingressLabelSelector.Matches(lbls)
-			case *networkingv1beta1.Ingress:
-				lbls := labels.Set(v.GetLabels())
-				return c.ingressLabelSelector.Matches(lbls)
-			default:
-				return true
-			}
-		},
-		Handler: &resourceEventHandler{ev: events},
-	}
 }
 
 // GetServerVersion returns the cluster server version, or an error.

@@ -3,6 +3,8 @@ kind: TLSStore
 metadata:
   name: mytlsstore
   namespace: default
+  labels:
+    app: traefik
 
 spec:
   defaultCertificate:
