@@ -149,8 +149,8 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		opts.LabelSelector = "owner!=helm"
 	}
 
-	matchesLabelSelector := func(options *metav1.ListOptions) {
-		options.LabelSelector = c.ingressLabelSelector
+	matchesLabelSelector := func(opts *metav1.ListOptions) {
+		opts.LabelSelector = c.ingressLabelSelector
 	}
 
 	for _, ns := range namespaces {
@@ -161,7 +161,6 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		factoryKube := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns))
 		factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
-		factoryKube.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 		c.factoriesKube[ns] = factoryKube
 
 		factorySecret := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns), informers.WithTweakListOptions(notOwnedByHelm))

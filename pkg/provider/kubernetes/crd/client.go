@@ -161,8 +161,8 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		opts.LabelSelector = "owner!=helm"
 	}
 
-	matchesLabelSelector := func(options *metav1.ListOptions) {
-		options.LabelSelector = c.labelSelector
+	matchesLabelSelector := func(opts *metav1.ListOptions) {
+		opts.LabelSelector = c.labelSelector
 	}
 
 	for _, ns := range namespaces {

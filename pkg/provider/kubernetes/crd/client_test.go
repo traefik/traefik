@@ -34,7 +34,9 @@ func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 
 	client := newClientImpl(kubeClient, crdClient)
 
-	eventCh, err := client.WatchAll(nil, nil)
+	stopCh := make(chan struct{})
+
+	eventCh, err := client.WatchAll(nil, stopCh)
 	require.NoError(t, err)
 
 	select {
