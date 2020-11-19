@@ -149,12 +149,12 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		opts.LabelSelector = "owner!=helm"
 	}
 
-	listOptions := func(options *metav1.ListOptions) {
+	matchesLabelSelector := func(options *metav1.ListOptions) {
 		options.LabelSelector = c.ingressLabelSelector
 	}
 
 	for _, ns := range namespaces {
-		factoryIngress := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns), informers.WithTweakListOptions(listOptions))
+		factoryIngress := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns), informers.WithTweakListOptions(matchesLabelSelector))
 		factoryIngress.Extensions().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
 		c.factoriesIngress[ns] = factoryIngress
 
