@@ -59,7 +59,7 @@ func (r *redirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	// Apply request data on the replacement.
 	replacement := &bytes.Buffer{}
-	replacementData := struct{Request *http.Request}{Request: req}
+	replacementData := struct{ Request *http.Request }{Request: req}
 	if err := r.replacement.Execute(replacement, replacementData); err != nil {
 		r.errHandler.ServeHTTP(rw, req, err)
 		return

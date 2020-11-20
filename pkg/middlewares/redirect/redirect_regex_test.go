@@ -56,12 +56,12 @@ func TestRedirectRegexHandler(t *testing.T) {
 		{
 			desc: "Template actions not interpreted in URL",
 			config: dynamic.RedirectRegex{
-				Regex: `^(.*)$`,
+				Regex:       `^(.*)$`,
 				Replacement: `${1}foo{{ .Request.Header.Get "X-Foo" }}`,
 			},
-			url: `http://foo.com:80?bar={{.Request.Host}}`,
+			url:            `http://foo.com:80?bar={{.Request.Host}}`,
 			expectedStatus: http.StatusFound,
-			expectedURL: `http://foo.com:80?bar={{.Request.Host}}foobar`,
+			expectedURL:    `http://foo.com:80?bar={{.Request.Host}}foobar`,
 		},
 		{
 			desc: "invalid rewritten URL",
