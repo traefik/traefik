@@ -108,27 +108,28 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 			p.client, err = createClient(p.Endpoint)
 			if err != nil {
-				return fmt.Errorf("error create consul client, %w", err)
+				return fmt.Errorf("unable to create consul client: %w", err)
 			}
 
+			// get configuration at the provider's startup.
+			err = p.loadConfiguration(routineCtx, configurationChan)
+			if err != nil {
+				return fmt.Errorf("failed to get consul catalog data: %w", err)
+			}
+
+			// Periodic refreshes.
 			ticker := time.NewTicker(time.Duration(p.RefreshInterval))
+			defer ticker.Stop()
 
 			for {
 				select {
 				case <-ticker.C:
-					data, err := p.getConsulServicesData(routineCtx)
+					err = p.loadConfiguration(routineCtx, configurationChan)
 					if err != nil {
-						logger.Errorf("error get consul catalog data, %v", err)
-						return err
+						return fmt.Errorf("failed to refresh consul catalog data: %w", err)
 					}
 
-					configuration := p.buildConfiguration(routineCtx, data)
-					configurationChan <- dynamic.Message{
-						ProviderName:  "consulcatalog",
-						Configuration: configuration,
-					}
 				case <-routineCtx.Done():
-					ticker.Stop()
 					return nil
 				}
 			}
@@ -147,6 +148,20 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	return nil
 }
 
+func (p *Provider) loadConfiguration(ctx context.Context, configurationChan chan<- dynamic.Message) error {
+	data, err := p.getConsulServicesData(ctx)
+	if err != nil {
+		return err
+	}
+
+	configurationChan <- dynamic.Message{
+		ProviderName:  "consulcatalog",
+		Configuration: p.buildConfiguration(ctx, data),
+	}
+
+	return nil
+}
+
 func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error) {
 	consulServiceNames, err := p.fetchServices(ctx)
 	if err != nil {
@@ -155,15 +170,20 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 
 	var data []itemData
 	for _, name := range consulServiceNames {
-		consulServices, healthServices, err := p.fetchService(ctx, name)
+		consulServices, statuses, err := p.fetchService(ctx, name)
 		if err != nil {
 			return nil, err
 		}
 
-		for i, consulService := range consulServices {
+		for _, consulService := range consulServices {
 			address := consulService.ServiceAddress
 			if address == "" {
 				address = consulService.Address
+			}
+
+			status, exists := statuses[consulService.ID+consulService.ServiceID]
+			if !exists {
+				status = api.HealthAny
 			}
 
 			item := itemData{
@@ -174,7 +194,7 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 				Port:    strconv.Itoa(consulService.ServicePort),
 				Labels:  tagsToNeutralLabels(consulService.ServiceTags, p.Prefix),
 				Tags:    consulService.ServiceTags,
-				Status:  healthServices[i].Checks.AggregatedStatus(),
+				Status:  status,
 			}
 
 			extraConf, err := p.getConfiguration(item)
@@ -190,13 +210,14 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 	return data, nil
 }
 
-func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.CatalogService, []*api.ServiceEntry, error) {
+func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.CatalogService, map[string]string, error) {
 	var tagFilter string
 	if !p.ExposedByDefault {
 		tagFilter = p.Prefix + ".enable=true"
 	}
 
 	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache}
+	opts = opts.WithContext(ctx)
 
 	consulServices, _, err := p.client.Catalog().Service(name, tagFilter, opts)
 	if err != nil {
@@ -204,7 +225,22 @@ func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.Catalo
 	}
 
 	healthServices, _, err := p.client.Health().Service(name, tagFilter, false, opts)
-	return consulServices, healthServices, err
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Index status by service and node so it can be retrieved from a CatalogService even if the health and services
+	// are not in sync.
+	statuses := make(map[string]string)
+	for _, health := range healthServices {
+		if health.Service == nil || health.Node == nil {
+			continue
+		}
+
+		statuses[health.Node.ID+health.Service.ID] = health.Checks.AggregatedStatus()
+	}
+
+	return consulServices, statuses, err
 }
 
 func (p *Provider) fetchServices(ctx context.Context) ([]string, error) {

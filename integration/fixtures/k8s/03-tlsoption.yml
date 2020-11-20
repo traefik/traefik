@@ -3,6 +3,8 @@ kind: TLSOption
 metadata:
   name: mytlsoption
   namespace: default
+  labels:
+    app: traefik
 
 spec:
   minVersion: VersionTLS12

@@ -151,35 +151,25 @@ func (p Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.P
 		operation := func() error {
 			awsClient, err := p.createClient(logger)
 			if err != nil {
-				return err
+				return fmt.Errorf("unable to create AWS client: %w", err)
 			}
 
-			configuration, err := p.loadECSConfig(ctxLog, awsClient)
+			err = p.loadConfiguration(ctxLog, awsClient, configurationChan)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get ECS configuration: %w", err)
 			}
 
-			configurationChan <- dynamic.Message{
-				ProviderName:  "ecs",
-				Configuration: configuration,
-			}
-
-			reload := time.NewTicker(time.Second * time.Duration(p.RefreshSeconds))
-			defer reload.Stop()
+			ticker := time.NewTicker(time.Second * time.Duration(p.RefreshSeconds))
+			defer ticker.Stop()
 
 			for {
 				select {
-				case <-reload.C:
-					configuration, err := p.loadECSConfig(ctxLog, awsClient)
+				case <-ticker.C:
+					err = p.loadConfiguration(ctxLog, awsClient, configurationChan)
 					if err != nil {
-						logger.Errorf("Failed to load ECS configuration, error %s", err)
-						return err
+						return fmt.Errorf("failed to refresh ECS configuration: %w", err)
 					}
 
-					configurationChan <- dynamic.Message{
-						ProviderName:  "ecs",
-						Configuration: configuration,
-					}
 				case <-routineCtx.Done():
 					return nil
 				}
@@ -194,6 +184,20 @@ func (p Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.P
 			logger.Errorf("Cannot connect to Provider api %+v", err)
 		}
 	})
+
+	return nil
+}
+
+func (p *Provider) loadConfiguration(ctx context.Context, client *awsClient, configurationChan chan<- dynamic.Message) error {
+	instances, err := p.listInstances(ctx, client)
+	if err != nil {
+		return err
+	}
+
+	configurationChan <- dynamic.Message{
+		ProviderName:  "ecs",
+		Configuration: p.buildConfiguration(ctx, instances),
+	}
 
 	return nil
 }
@@ -363,15 +367,6 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 	}
 
 	return instances, nil
-}
-
-func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*dynamic.Configuration, error) {
-	instances, err := p.listInstances(ctx, client)
-	if err != nil {
-		return nil, err
-	}
-
-	return p.buildConfiguration(ctx, instances), nil
 }
 
 func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, clusterName *string, ecsDatas map[string]*ecs.Task) (map[string]*ec2.Instance, error) {

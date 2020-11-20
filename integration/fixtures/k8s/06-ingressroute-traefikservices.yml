@@ -50,6 +50,8 @@ kind: IngressRoute
 metadata:
   name: api.route
   namespace: default
+  labels:
+    app: traefik
 
 spec:
   entryPoints:

@@ -53,15 +53,15 @@ type EndpointIngress struct {
 	PublishedService string `description:"Published Kubernetes Service to copy status from." json:"publishedService,omitempty" toml:"publishedService,omitempty" yaml:"publishedService,omitempty"`
 }
 
-func (p *Provider) newK8sClient(ctx context.Context, ingressLabelSelector string) (*clientWrapper, error) {
-	ingLabelSel, err := labels.Parse(ingressLabelSelector)
+func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
+	_, err := labels.Parse(p.LabelSelector)
 	if err != nil {
-		return nil, fmt.Errorf("invalid ingress label selector: %q", ingressLabelSelector)
+		return nil, fmt.Errorf("invalid ingress label selector: %q", p.LabelSelector)
 	}
 
 	logger := log.FromContext(ctx)
 
-	logger.Infof("ingress label selector is: %q", ingLabelSel)
+	logger.Infof("ingress label selector is: %q", p.LabelSelector)
 
 	withEndpoint := ""
 	if p.Endpoint != "" {
@@ -81,11 +81,12 @@ func (p *Provider) newK8sClient(ctx context.Context, ingressLabelSelector string
 		cl, err = newExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
 	}
 
-	if err == nil {
-		cl.ingressLabelSelector = ingLabelSel
+	if err != nil {
+		return nil, err
 	}
 
-	return cl, err
+	cl.ingressLabelSelector = p.LabelSelector
+	return cl, nil
 }
 
 // Init the provider.
@@ -99,8 +100,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	ctxLog := log.With(context.Background(), log.Str(log.ProviderName, "kubernetes"))
 	logger := log.FromContext(ctxLog)
 
-	logger.Debugf("Using Ingress label selector: %q", p.LabelSelector)
-	k8sClient, err := p.newK8sClient(ctxLog, p.LabelSelector)
+	k8sClient, err := p.newK8sClient(ctxLog)
 	if err != nil {
 		return err
 	}

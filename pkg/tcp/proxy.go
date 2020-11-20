@@ -13,9 +13,11 @@ import (
 
 // Proxy forwards a TCP request to a TCP service.
 type Proxy struct {
+	address          string
 	target           *net.TCPAddr
 	terminationDelay time.Duration
 	proxyProtocol    *dynamic.ProxyProtocol
+	refreshTarget    bool
 }
 
 // NewProxy creates a new Proxy.
@@ -29,7 +31,19 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 		return nil, fmt.Errorf("unknown proxyProtocol version: %d", proxyProtocol.Version)
 	}
 
-	return &Proxy{target: tcpAddr, terminationDelay: terminationDelay, proxyProtocol: proxyProtocol}, nil
+	// enable the refresh of the target only if the address in an IP
+	refreshTarget := false
+	if host, _, err := net.SplitHostPort(address); err == nil && net.ParseIP(host) == nil {
+		refreshTarget = true
+	}
+
+	return &Proxy{
+		address:          address,
+		target:           tcpAddr,
+		refreshTarget:    refreshTarget,
+		terminationDelay: terminationDelay,
+		proxyProtocol:    proxyProtocol,
+	}, nil
 }
 
 // ServeTCP forwards the connection to a service.
@@ -38,6 +52,15 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 
 	// needed because of e.g. server.trackedConnection
 	defer conn.Close()
+
+	if p.refreshTarget {
+		tcpAddr, err := net.ResolveTCPAddr("tcp", p.address)
+		if err != nil {
+			log.Errorf("Error resolving tcp address: %v", err)
+			return
+		}
+		p.target = tcpAddr
+	}
 
 	connBackend, err := net.DialTCP("tcp", nil, p.target)
 	if err != nil {

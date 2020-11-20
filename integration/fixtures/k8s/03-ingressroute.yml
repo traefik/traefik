@@ -3,6 +3,8 @@ kind: IngressRoute
 metadata:
   name: test.route
   namespace: default
+  labels:
+    app: traefik
 
 spec:
   entryPoints:

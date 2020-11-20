@@ -72,7 +72,7 @@ require (
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
 	github.com/tinylib/msgp v1.0.2 // indirect
 	github.com/traefik/paerser v0.1.0
-	github.com/traefik/yaegi v0.9.5
+	github.com/traefik/yaegi v0.9.7
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/unrolled/render v1.0.2
