@@ -35,7 +35,7 @@ require (
 	github.com/fatih/structs v1.1.0
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
 	github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2
-	github.com/go-acme/lego/v4 v4.1.0
+	github.com/go-acme/lego/v4 v4.1.2
 	github.com/go-check/check v0.0.0-00010101000000-000000000000
 	github.com/go-kit/kit v0.10.1-0.20200915143503-439c4d2ed3ea
 	github.com/golang/protobuf v1.3.4
