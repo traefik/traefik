@@ -1,3 +1,15 @@
+## [v2.3.4](https://github.com/traefik/traefik/tree/v2.3.4) (2020-11-24)
+[All Commits](https://github.com/traefik/traefik/compare/v2.3.3...v2.3.4)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.1.2 ([#7577](https://github.com/traefik/traefik/pull/7577) by [ldez](https://github.com/ldez))
+- **[k8s,k8s/crd,k8s/ingress]** Apply labelSelector as a TweakListOptions for Kubernetes informers ([#7521](https://github.com/traefik/traefik/pull/7521) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Do not evaluate templated URL in redirectRegex middleware ([#7573](https://github.com/traefik/traefik/pull/7573) by [jspdown](https://github.com/jspdown))
+- **[provider]** fix: invalid slice parsing. ([#7583](https://github.com/traefik/traefik/pull/7583) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[ecs]** Fix clusters option in ECS provider documentation ([#7586](https://github.com/traefik/traefik/pull/7586) by [skapin](https://github.com/skapin))
+
 ## [v2.3.3](https://github.com/traefik/traefik/tree/v2.3.3) (2020-11-19)
 [All Commits](https://github.com/traefik/traefik/compare/v2.3.2...v2.3.3)
 
