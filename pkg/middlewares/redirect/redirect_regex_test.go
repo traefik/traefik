@@ -35,16 +35,6 @@ func TestRedirectRegexHandler(t *testing.T) {
 			expectedStatus: http.StatusFound,
 		},
 		{
-			desc: "use request header",
-			config: dynamic.RedirectRegex{
-				Regex:       `^(?:http?:\/\/)(foo)(\.com)(:\d+)(.*)$`,
-				Replacement: `https://${1}{{ .Request.Header.Get "X-Foo" }}$2:443$4`,
-			},
-			url:            "http://foo.com:80",
-			expectedURL:    "https://foobar.com:443",
-			expectedStatus: http.StatusFound,
-		},
-		{
 			desc: "URL doesn't match regex",
 			config: dynamic.RedirectRegex{
 				Regex:       `^(?:http?:\/\/)(foo)(\.com)(:\d+)(.*)$`,
@@ -52,16 +42,6 @@ func TestRedirectRegexHandler(t *testing.T) {
 			},
 			url:            "http://bar.com:80",
 			expectedStatus: http.StatusOK,
-		},
-		{
-			desc: "Template actions not interpreted in URL",
-			config: dynamic.RedirectRegex{
-				Regex:       `^(.*)$`,
-				Replacement: `${1}foo{{ .Request.Header.Get "X-Foo" }}`,
-			},
-			url:            `http://foo.com:80?bar={{.Request.Host}}`,
-			expectedStatus: http.StatusFound,
-			expectedURL:    `http://foo.com:80?bar={{.Request.Host}}foobar`,
 		},
 		{
 			desc: "invalid rewritten URL",

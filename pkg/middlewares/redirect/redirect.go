@@ -1,8 +1,6 @@
 package redirect
 
 import (
-	"bytes"
-	"html/template"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -16,7 +14,7 @@ import (
 type redirect struct {
 	next        http.Handler
 	regex       *regexp.Regexp
-	replacement *template.Template
+	replacement string
 	permanent   bool
 	errHandler  utils.ErrorHandler
 	name        string
@@ -29,14 +27,9 @@ func newRedirect(next http.Handler, regex, replacement string, permanent bool, n
 		return nil, err
 	}
 
-	replacementTmpl, err := template.New("t").Parse(replacement)
-	if err != nil {
-		return nil, err
-	}
-
 	return &redirect{
 		regex:       re,
-		replacement: replacementTmpl,
+		replacement: replacement,
 		permanent:   permanent,
 		errHandler:  utils.DefaultHandler,
 		next:        next,
@@ -57,16 +50,8 @@ func (r *redirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Apply request data on the replacement.
-	replacement := &bytes.Buffer{}
-	replacementData := struct{ Request *http.Request }{Request: req}
-	if err := r.replacement.Execute(replacement, replacementData); err != nil {
-		r.errHandler.ServeHTTP(rw, req, err)
-		return
-	}
-
 	// Apply a rewrite regexp to the URL.
-	newURL := r.regex.ReplaceAllString(oldURL, replacement.String())
+	newURL := r.regex.ReplaceAllString(oldURL, r.replacement)
 
 	// Parse the rewritten URL and replace request URL with it.
 	parsedURL, err := url.Parse(newURL)
