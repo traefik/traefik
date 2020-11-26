@@ -113,6 +113,7 @@
     certAuthFilePath = "foobar"
     disablePassHostHeaders = true
     namespaces = ["foobar", "foobar"]
+    enableCrossNamespaces = true
     labelSelector = "foobar"
     ingressClass = "foobar"
     throttleDuration = 42

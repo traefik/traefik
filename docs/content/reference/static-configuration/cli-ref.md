@@ -546,6 +546,9 @@ Kubernetes certificate authority file path (not needed for in-cluster client).
 `--providers.kubernetescrd.disablepasshostheaders`:  
 Kubernetes disable PassHost Headers. (Default: ```false```)
 
+`--providers.kubernetescrd.enablecrossnamespaces`:  
+Kubernetes enable cross namespaces capacity. (Default: ```true```)
+
 `--providers.kubernetescrd.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).
 

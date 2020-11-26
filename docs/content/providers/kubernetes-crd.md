@@ -250,6 +250,34 @@ providers:
 --providers.kubernetescrd.throttleDuration=10s
 ```
 
+### `enableCrossNamespace`
+
+_Optional, Default: true_
+
+```toml tab="File (TOML)"
+[providers.kubernetesCRD]
+  enableCrossNamespace = false
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesCRD:
+    enableCrossNamespace: false
+    # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetescrd.enableCrossNamespace=false
+```
+
+If the parameter is set to `false`, an IngressRoute will not be able to reference any service
+in another namespace than the IngressRoute namespace.
+
+!!! warning "Deprecation"
+    
+    Please notice that the default value for this option will be set to `false` in the next minor version (v2.4).
+
 ## Further
 
 Also see the [full example](../user-guides/crd-acme/index.md) with Let's Encrypt.
