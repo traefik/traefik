@@ -2,13 +2,21 @@ package crd
 
 import (
 	"context"
+	"io/ioutil"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/provider"
+	crdfake "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
+	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
+	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	kubefake "k8s.io/client-go/kubernetes/fake"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -3711,6 +3719,424 @@ func TestGetServicePort(t *testing.T) {
 			} else {
 				assert.Equal(t, test.expected, actual)
 			}
+		})
+	}
+}
+
+func TestCrossNamespace(t *testing.T) {
+	testCases := []struct {
+		desc                 string
+		enableCrossNamespace bool
+		ingressClass         string
+		paths                []string
+		expected             *dynamic.Configuration
+	}{
+		{
+			desc: "Empty",
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                 "HTTP cross namespace allowed",
+			paths:                []string{"services.yml", "with_cross_namespace.yml"},
+			enableCrossNamespace: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-cross-ns-route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-cross-ns-route-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-cross-ns-route-6b204d94623b3df4370c": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "cross-ns-whoami-svc-80",
+										Weight: func(i int) *int { return &i }(1),
+									},
+									{
+										Name:   "default-tr-svc-wrr1",
+										Weight: func(i int) *int { return &i }(1),
+									},
+									{
+										Name:   "cross-ns-tr-svc-wrr2",
+										Weight: func(i int) *int { return &i }(1),
+									},
+									{
+										Name:   "default-tr-svc-mirror1",
+										Weight: func(i int) *int { return &i }(1),
+									},
+									{
+										Name:   "cross-ns-tr-svc-mirror2",
+										Weight: func(i int) *int { return &i }(1),
+									},
+								},
+							},
+						},
+						"cross-ns-whoami-svc-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+						"default-tr-svc-wrr1": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "cross-ns-whoami-svc-80",
+										Weight: func(i int) *int { return &i }(1),
+									},
+								},
+							},
+						},
+						"cross-ns-tr-svc-wrr2": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "cross-ns-whoami-svc-80",
+										Weight: func(i int) *int { return &i }(1),
+									},
+								},
+							},
+						},
+						"default-tr-svc-mirror1": {
+							Mirroring: &dynamic.Mirroring{
+								Service: "default-whoami-80",
+								Mirrors: []dynamic.MirrorService{
+									{
+										Name:    "cross-ns-whoami-svc-80",
+										Percent: 20,
+									},
+								},
+							},
+						},
+						"cross-ns-tr-svc-mirror2": {
+							Mirroring: &dynamic.Mirroring{
+								Service: "cross-ns-whoami-svc-80",
+								Mirrors: []dynamic.MirrorService{
+									{
+										Name:    "cross-ns-whoami-svc-80",
+										Percent: 20,
+									},
+								},
+							},
+						},
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "HTTP cross namespace disallowed",
+			paths: []string{"services.yml", "with_cross_namespace.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"cross-ns-tr-svc-wrr2": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "cross-ns-whoami-svc-80",
+										Weight: func(i int) *int { return &i }(1),
+									},
+								},
+							},
+						},
+						"cross-ns-whoami-svc-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+						"cross-ns-tr-svc-mirror2": {
+							Mirroring: &dynamic.Mirroring{
+								Service: "cross-ns-whoami-svc-80",
+								Mirrors: []dynamic.MirrorService{
+									{
+										Name:    "cross-ns-whoami-svc-80",
+										Percent: 20,
+									},
+								},
+							},
+						},
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                 "TCP cross namespace allowed",
+			paths:                []string{"tcp/services.yml", "tcp/with_cross_namespace.yml"},
+			enableCrossNamespace: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+						},
+					},
+					Services: map[string]*dynamic.TCPService{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.1:8000",
+										Port:    "",
+									},
+									{
+										Address: "10.10.0.2:8000",
+										Port:    "",
+									},
+								},
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                 "TCP cross namespace disallowed",
+			paths:                []string{"tcp/services.yml", "tcp/with_cross_namespace.yml"},
+			enableCrossNamespace: false,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					// The router that reference the invalid service will be discarded upper in the process
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+						},
+					},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                 "UDP cross namespace allowed",
+			paths:                []string{"udp/services.yml", "udp/with_cross_namespace.yml"},
+			enableCrossNamespace: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-test.route-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-0",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"default-test.route-0": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "10.10.0.1:8000",
+										Port:    "",
+									},
+									{
+										Address: "10.10.0.2:8000",
+										Port:    "",
+									},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "UDP cross namespace disallowed",
+			paths: []string{"udp/services.yml", "udp/with_cross_namespace.yml"},
+			expected: &dynamic.Configuration{
+				// The router that reference the invalid service will be discarded upper in the process
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-test.route-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-0",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var k8sObjects []runtime.Object
+			var crdObjects []runtime.Object
+			for _, path := range test.paths {
+				yamlContent, err := ioutil.ReadFile(filepath.FromSlash("./fixtures/" + path))
+				if err != nil {
+					panic(err)
+				}
+
+				objects := k8s.MustParseYaml(yamlContent)
+				for _, obj := range objects {
+					switch o := obj.(type) {
+					case *corev1.Service, *corev1.Endpoints, *corev1.Secret:
+						k8sObjects = append(k8sObjects, o)
+					case *v1alpha1.IngressRoute:
+						crdObjects = append(crdObjects, o)
+					case *v1alpha1.IngressRouteTCP:
+						crdObjects = append(crdObjects, o)
+					case *v1alpha1.IngressRouteUDP:
+						crdObjects = append(crdObjects, o)
+					case *v1alpha1.Middleware:
+						crdObjects = append(crdObjects, o)
+					case *v1alpha1.TraefikService:
+						crdObjects = append(crdObjects, o)
+					case *v1alpha1.TLSOption:
+						crdObjects = append(crdObjects, o)
+					case *v1alpha1.TLSStore:
+						crdObjects = append(crdObjects, o)
+					default:
+					}
+				}
+			}
+
+			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			crdClient := crdfake.NewSimpleClientset(crdObjects...)
+
+			client := newClientImpl(kubeClient, crdClient)
+			client.enableCrossNamespaces = test.enableCrossNamespace
+
+			stopCh := make(chan struct{})
+
+			eventCh, err := client.WatchAll([]string{"default", "cross-ns"}, stopCh)
+			require.NoError(t, err)
+
+			if k8sObjects != nil || crdObjects != nil {
+				// just wait for the first event
+				<-eventCh
+			}
+
+			p := Provider{}
+			conf := p.loadConfigurationFromCRD(context.Background(), client)
+			assert.Equal(t, test.expected, conf)
 		})
 	}
 }

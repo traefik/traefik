@@ -199,3 +199,33 @@ spec:
     - name: http
       protocol: TCP
       port: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami-svc
+  namespace: cross-ns
+
+spec:
+  ports:
+    - name: web
+      port: 80
+  selector:
+    app: traefiklabs
+    task: whoami
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoami-svc
+  namespace: cross-ns
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.1
+      - ip: 10.10.0.2
+    ports:
+      - name: web
+        port: 80

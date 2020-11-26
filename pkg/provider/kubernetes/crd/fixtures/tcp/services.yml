@@ -208,3 +208,33 @@ metadata:
 spec:
   externalName: "fe80::200:5aee:feaa:20a2"
   type: ExternalName
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamitcp-cross-ns
+  namespace: cross-ns
+
+spec:
+  ports:
+    - name: myapp
+      port: 8000
+  selector:
+    app: traefiklabs
+    task: whoamitcp
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoamitcp-cross-ns
+  namespace: cross-ns
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.1
+      - ip: 10.10.0.2
+    ports:
+      - name: myapp
+        port: 8000
