@@ -385,7 +385,7 @@ To apply a redirection:
     
     entryPoints:
       web:
-        address: 80
+        address: ":80"
         http:
           redirections:
             entrypoint:
@@ -393,7 +393,7 @@ To apply a redirection:
               scheme: https
     
       websecure:
-        address: 443
+        address: ":443"
     ```
 
 !!! example "HTTP to HTTPS redirection per domain"
