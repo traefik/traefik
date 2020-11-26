@@ -279,7 +279,7 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 		return nil, fmt.Errorf("load balancing strategy %s is not supported", strategy)
 	}
 
-	namespace := namespaceOrFallback(svc, fallbackNamespace)
+	namespace := c.client.NamespaceOrFallback(svc.Namespace, fallbackNamespace)
 
 	// If the service uses explicitly the provider suffix
 	sanitizedName := strings.TrimSuffix(svc.Name, providerNamespaceSeparator+providerName)
@@ -358,7 +358,7 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 func (c configBuilder) nameAndService(ctx context.Context, namespaceService string, service v1alpha1.LoadBalancerSpec) (string, *dynamic.Service, error) {
 	svcCtx := log.With(ctx, log.Str(log.ServiceName, service.Name))
 
-	namespace := namespaceOrFallback(service, namespaceService)
+	namespace := c.client.NamespaceOrFallback(service.Namespace, namespaceService)
 
 	switch {
 	case service.Kind == "" || service.Kind == "Service":
@@ -405,13 +405,6 @@ func fullServiceName(ctx context.Context, namespace string, service v1alpha1.Loa
 	}
 
 	return provider.Normalize(name) + providerNamespaceSeparator + pName
-}
-
-func namespaceOrFallback(lb v1alpha1.LoadBalancerSpec, fallback string) string {
-	if lb.Namespace != "" {
-		return lb.Namespace
-	}
-	return fallback
 }
 
 func getTLSHTTP(ctx context.Context, ingressRoute *v1alpha1.IngressRoute, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {

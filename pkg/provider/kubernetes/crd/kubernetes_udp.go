@@ -78,10 +78,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 }
 
 func createLoadBalancerServerUDP(client Client, namespace string, service v1alpha1.ServiceUDP) (*dynamic.UDPService, error) {
-	ns := namespace
-	if len(service.Namespace) > 0 {
-		ns = service.Namespace
-	}
+	ns := client.NamespaceOrFallback(service.Namespace, namespace)
 
 	servers, err := loadUDPServers(client, ns, service)
 	if err != nil {
