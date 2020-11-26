@@ -7,6 +7,15 @@ import (
 
 const outputDir = "./plugins-storage/"
 
+func createPluginBuilder(staticConfiguration *static.Configuration) (*plugins.Builder, error) {
+	client, plgs, devPlugin, err := initPlugins(staticConfiguration)
+	if err != nil {
+		return nil, err
+	}
+
+	return plugins.NewBuilder(client, plgs, devPlugin)
+}
+
 func initPlugins(staticCfg *static.Configuration) (*plugins.Client, map[string]plugins.Descriptor, *plugins.DevPlugin, error) {
 	if !isPilotEnabled(staticCfg) || !hasPlugins(staticCfg) {
 		return nil, map[string]plugins.Descriptor{}, nil, nil
