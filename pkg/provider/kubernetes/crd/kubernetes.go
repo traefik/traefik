@@ -43,7 +43,7 @@ type Provider struct {
 	CertAuthFilePath       string          `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
 	DisablePassHostHeaders bool            `description:"Kubernetes disable PassHost Headers." json:"disablePassHostHeaders,omitempty" toml:"disablePassHostHeaders,omitempty" yaml:"disablePassHostHeaders,omitempty" export:"true"`
 	Namespaces             []string        `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
-	EnableCrossNamespaces  *bool           `description:"Kubernetes enable cross namespaces capacity." json:"enableCrossNamespaces,omitempty" toml:"enableCrossNamespaces,omitempty" yaml:"enableCrossNamespaces,omitempty" export:"true"`
+	EnableCrossNamespaces  *bool           `description:"Kubernetes enable cross namespaces capability." json:"enableCrossNamespaces,omitempty" toml:"enableCrossNamespaces,omitempty" yaml:"enableCrossNamespaces,omitempty" export:"true"`
 	LabelSelector          string          `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
 	IngressClass           string          `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
 	ThrottleDuration       ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
@@ -106,7 +106,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	}
 
 	if k8sClient.enableCrossNamespaces {
-		logger.Warn("Cross-namespace referencing between Ingresses and Services is enabled, please ensure that is expected (see EnableCrossNamespaces option).")
+		logger.Warn("Cross-namespace referencing between Ingresses and Services is enabled, please ensure that this is expected (see EnableCrossNamespaces option).")
 	}
 
 	pool.GoCtx(func(ctxPool context.Context) {
