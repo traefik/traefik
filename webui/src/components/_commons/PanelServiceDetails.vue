@@ -67,6 +67,19 @@
         </div>
       </q-card-section>
 
+      <q-card-section v-if="data.loadBalancer && data.loadBalancer.proxyProtocol">
+        <div class="row items-start no-wrap">
+          <div class="col">
+            <div class="text-subtitle2">Proxy Protocol</div>
+            <q-chip
+              dense
+              class="app-chip app-chip-name">
+              Version {{ data.loadBalancer.proxyProtocol.version }}
+            </q-chip>
+          </div>
+        </div>
+      </q-card-section>
+
       <q-separator v-if="sticky" />
       <StickyServiceDetails v-if="sticky" :sticky="sticky" :dense="dense"/>
     </q-scroll-area>
