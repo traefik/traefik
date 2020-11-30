@@ -103,7 +103,7 @@
     namespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
     ingressClass = "foobar"
-    throttleDuration = "10s"
+    throttleDuration = "42s"
     [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
       hostname = "foobar"
@@ -251,9 +251,6 @@
     addEntryPointsLabels = true
     addServicesLabels = true
 
-[pilot]
-  token = "foobar"
-
 [ping]
   entryPoint = "foobar"
   manualRouting = true
@@ -343,6 +340,9 @@
       preferredChain = "foobar"
       storage = "foobar"
       keyType = "foobar"
+      [certificatesResolvers.CertificateResolver0.acme.eab]
+        kid = "foobar"
+        hmacEncoded = "foobar"
       [certificatesResolvers.CertificateResolver0.acme.dnsChallenge]
         provider = "foobar"
         delayBeforeCheck = 42
@@ -358,6 +358,9 @@
       preferredChain = "foobar"
       storage = "foobar"
       keyType = "foobar"
+      [certificatesResolvers.CertificateResolver1.acme.eab]
+        kid = "foobar"
+        hmacEncoded = "foobar"
       [certificatesResolvers.CertificateResolver1.acme.dnsChallenge]
         provider = "foobar"
         delayBeforeCheck = 42
@@ -366,6 +369,9 @@
       [certificatesResolvers.CertificateResolver1.acme.httpChallenge]
         entryPoint = "foobar"
       [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]
+
+[pilot]
+  token = "foobar"
 
 [experimental]
   [experimental.plugins]
