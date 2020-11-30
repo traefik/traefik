@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/safe"
 )
@@ -44,16 +45,18 @@ func TestTick(t *testing.T) {
 		receivedConfig <- true
 	})
 
-	pilot := New("token", metrics.RegisterPilot(), safe.NewPool(context.Background()))
-	pilot.client.baseURL = server.URL
+	pilot, err := New("token", metrics.RegisterPilot(), safe.NewPool(context.Background()))
+	require.NoError(t, err)
+
+	pilot.client.baseInstanceInfoURL = server.URL
 
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
 	go pilot.Tick(ctx)
 
-	pilot.SetRuntimeConfiguration(&runtime.Configuration{})
-	pilot.SetRuntimeConfiguration(&runtime.Configuration{})
+	pilot.SetDynamicConfiguration(dynamic.Configuration{})
+	pilot.SetDynamicConfiguration(dynamic.Configuration{})
 
 	select {
 	case <-time.Tick(10 * time.Second):
@@ -63,8 +66,11 @@ func TestTick(t *testing.T) {
 	}
 }
 
-func TestClient_SendConfiguration(t *testing.T) {
+func TestClient_SendInstanceInfo(t *testing.T) {
 	myToken := "myToken"
+
+	myTokenHash, err := hashToken(myToken)
+	require.NoError(t, err)
 
 	mux := http.NewServeMux()
 	server := httptest.NewServer(mux)
@@ -99,6 +105,11 @@ func TestClient_SendConfiguration(t *testing.T) {
 			http.Error(rw, fmt.Sprintf("invalid token: %s", tk), http.StatusUnauthorized)
 		}
 
+		tkh := req.Header.Get(tokenHashHeader)
+		if tkh != myTokenHash {
+			http.Error(rw, fmt.Sprintf("invalid token hash: %s", tkh), http.StatusBadRequest)
+		}
+
 		defer req.Body.Close()
 
 		info := &instanceInfo{}
@@ -114,11 +125,91 @@ func TestClient_SendConfiguration(t *testing.T) {
 	})
 
 	client := client{
-		baseURL:    server.URL,
-		httpClient: http.DefaultClient,
-		token:      myToken,
+		baseInstanceInfoURL: server.URL,
+		httpClient:          http.DefaultClient,
+		token:               myToken,
+		tokenHash:           myTokenHash,
 	}
 
-	err := client.SendData(context.Background(), RunTimeRepresentation{}, []metrics.PilotMetric{})
+	err = client.SendInstanceInfo(context.Background(), []metrics.PilotMetric{})
 	require.NoError(t, err)
+}
+
+func TestClient_SendTelemetry(t *testing.T) {
+	myToken := "myToken"
+
+	myTokenHash, err := hashToken(myToken)
+	require.NoError(t, err)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/collect", func(rw http.ResponseWriter, req *http.Request) {
+		if req.Method != http.MethodPost {
+			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
+			return
+		}
+
+		tk := req.Header.Get(tokenHeader)
+		if tk != myToken {
+			http.Error(rw, fmt.Sprintf("invalid token: %s", tk), http.StatusUnauthorized)
+		}
+
+		tkh := req.Header.Get(tokenHashHeader)
+		if tkh != myTokenHash {
+			http.Error(rw, fmt.Sprintf("invalid token hash: %s", tkh), http.StatusBadRequest)
+		}
+
+		defer req.Body.Close()
+
+		config := &dynamic.Configuration{}
+		err := json.NewDecoder(req.Body).Decode(config)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		router, exists := config.HTTP.Routers["foo"]
+		if !exists {
+			http.Error(rw, "router configuration is missing", http.StatusBadRequest)
+			return
+		}
+
+		if router.Rule != "xxxx" {
+			http.Error(rw, fmt.Sprintf("configuration is not anonymized, got router rule %s", router.Rule), http.StatusBadRequest)
+		}
+	})
+
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+
+	client := client{
+		baseTelemetryURL: server.URL,
+		httpClient:       http.DefaultClient,
+		token:            myToken,
+		tokenHash:        myTokenHash,
+	}
+
+	config := dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers: map[string]*dynamic.Router{
+				"foo": {
+					Service: "foo",
+					Rule:    "foo.com",
+				},
+			},
+		},
+	}
+
+	err = client.SendTelemetry(context.Background(), config)
+	require.NoError(t, err)
+}
+
+func hashToken(token string) (string, error) {
+	tokenHash := fnv.New64a()
+
+	_, err := tokenHash.Write([]byte(token))
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", tokenHash.Sum64()), nil
 }
