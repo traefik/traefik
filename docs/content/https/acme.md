@@ -408,7 +408,7 @@ certificatesResolvers:
 [ACME V2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) supports wildcard certificates.
 As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605) wildcard certificates can only be generated through a [`DNS-01` challenge](#dnschallenge).
 
-## External account binding.
+## External Account Binding
 
 - `kid`: Key identifier from External CA
 - `hmacEncoded`: HMAC key from External CA, should be in Base64 URL Encoding without padding format
