@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type Courgette struct {
@@ -39,7 +40,6 @@ func Test_doOnStruct(t *testing.T) {
 		name     string
 		base     *Carotte
 		expected *Carotte
-		hasError bool
 	}{
 		{
 			name: "primitive",
@@ -145,7 +145,7 @@ func Test_doOnStruct(t *testing.T) {
 			},
 		},
 		{
-			name: "export map string/struct (UNSAFE)",
+			name: "export map string/struct",
 			base: &Carotte{
 				Name: "koko",
 				ESAubergine: map[string]Tomate{
@@ -158,11 +158,10 @@ func Test_doOnStruct(t *testing.T) {
 				Name: "xxxx",
 				ESAubergine: map[string]Tomate{
 					"foo": {
-						Ji: "JiJiJi",
+						Ji: "xxxx",
 					},
 				},
 			},
-			hasError: true,
 		},
 	}
 
@@ -170,12 +169,7 @@ func Test_doOnStruct(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			val := reflect.ValueOf(test.base).Elem()
 			err := doOnStruct(val)
-			if !test.hasError && err != nil {
-				t.Fatal(err)
-			}
-			if test.hasError && err == nil {
-				t.Fatal("Got no error but want an error.")
-			}
+			require.NoError(t, err)
 
 			assert.EqualValues(t, test.expected, test.base)
 		})
