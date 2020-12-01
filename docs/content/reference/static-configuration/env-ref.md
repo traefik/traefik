@@ -69,6 +69,12 @@ Use a DNS-01 based challenge provider rather than HTTPS.
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE_RESOLVERS`:  
 Use following DNS servers to resolve the FQDN authority.
 
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_EAB_HMACENCODED`:  
+Base64 encoded HMAC key from External CA.
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_EAB_KID`:  
+Key identifier from External CA.
+
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_EMAIL`:  
 Email address used for registration.
 

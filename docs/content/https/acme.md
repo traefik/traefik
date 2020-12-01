@@ -10,7 +10,7 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
 
     Use Let's Encrypt staging server with the [`caServer`](#caserver) configuration option
     when experimenting to avoid hitting this limit too fast.
-    
+
 ## Certificate Resolvers
 
 Traefik requires you to define "Certificate Resolvers" in the [static configuration](../getting-started/configuration-overview.md#the-static-configuration), 
@@ -407,6 +407,35 @@ certificatesResolvers:
 
 [ACME V2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) supports wildcard certificates.
 As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605) wildcard certificates can only be generated through a [`DNS-01` challenge](#dnschallenge).
+
+## External Account Binding
+
+- `kid`: Key identifier from External CA
+- `hmacEncoded`: HMAC key from External CA, should be in Base64 URL Encoding without padding format
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  [certificatesResolvers.myresolver.acme.eab]
+    kid = "abc-keyID-xyz"
+    hmacEncoded = "abc-hmac-xyz"
+```
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      eab:
+        kid: abc-keyID-xyz
+        hmacEncoded: abc-hmac-xyz
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.eab.kid=abc-keyID-xyz
+--certificatesresolvers.myresolver.acme.eab.hmacencoded=abc-hmac-xyz
+```
 
 ## More Configuration
 
