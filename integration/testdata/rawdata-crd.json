@@ -50,6 +50,20 @@
 			"using": [
 				"web"
 			]
+		},
+		"other-ns-test6-route-482e4988e134701d8cc8@kubernetescrd": {
+			"entryPoints": [
+				"web"
+			],
+			"service": "other-ns-wrr3",
+			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/c`)",
+			"error": [
+				"the service \"other-ns-wrr3@kubernetescrd\" does not exist"
+			],
+			"status": "disabled",
+			"using": [
+				"web"
+			]
 		}
 	},
 	"middlewares": {
@@ -63,6 +77,14 @@
 			"usedBy": [
 				"default-test2-route-23c7f4c450289ee29016@kubernetescrd"
 			]
+		},
+		"default-stripprefix2@kubernetescrd": {
+			"stripPrefix": {
+				"prefixes": [
+					"/tobestripped"
+				]
+			},
+			"status": "enabled"
 		},
 		"default-stripprefix@kubernetescrd": {
 			"stripPrefix": {
@@ -171,6 +193,17 @@
 			"usedBy": [
 				"default-test3-route-7d0ac22d3d8db4b82618@kubernetescrd"
 			]
+		},
+		"default-wrr2@kubernetescrd": {
+			"weighted": {
+				"services": [
+					{
+						"name": "default-whoami-80",
+						"weight": 1
+					}
+				]
+			},
+			"status": "enabled"
 		},
 		"noop@internal": {
 			"status": "enabled"

@@ -53,6 +53,7 @@ func (s *K8sSuite) TearDownSuite(c *check.C) {
 		"./fixtures/k8s/coredns.yaml",
 		"./fixtures/k8s/rolebindings.yaml",
 		"./fixtures/k8s/traefik.yaml",
+		"./fixtures/k8s/ccm.yaml",
 	}
 
 	for _, filename := range generatedFiles {
