@@ -276,7 +276,7 @@ in another namespace than the IngressRoute namespace.
 
 !!! warning "Deprecation"
     
-    Please notice that the default value for this option will be set to `false` in the next minor version (v2.4).
+    Please notice that the default value for this option will be set to `false` in a future version.
 
 ## Further
 
