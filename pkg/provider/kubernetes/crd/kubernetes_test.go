@@ -1130,7 +1130,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			}
 
 			p := Provider{IngressClass: test.ingressClass}
-			conf := p.loadConfigurationFromCRD(context.Background(), newClientMock(test.paths...))
+			clientMock := newClientMock(test.paths...)
+			clientMock.allowCrossNamespace = true
+			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -3187,6 +3189,10 @@ func TestLoadIngressRoutes(t *testing.T) {
 	for _, test := range testCases {
 		test := test
 
+		if test.desc != "Simple Ingress Route with middleware" {
+			continue
+		}
+
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -3195,7 +3201,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			}
 
 			p := Provider{IngressClass: test.ingressClass}
-			conf := p.loadConfigurationFromCRD(context.Background(), newClientMock(test.paths...))
+			clientMock := newClientMock(test.paths...)
+			clientMock.allowCrossNamespace = true
+			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -3503,7 +3511,9 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			}
 
 			p := Provider{IngressClass: test.ingressClass}
-			conf := p.loadConfigurationFromCRD(context.Background(), newClientMock(test.paths...))
+			clientMock := newClientMock(test.paths...)
+			clientMock.allowCrossNamespace = true
+			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -3746,6 +3756,85 @@ func TestCrossNamespace(t *testing.T) {
 					Routers:     map[string]*dynamic.Router{},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services:    map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "HTTP middleware cross namespace disallowed",
+			paths: []string{"services.yml", "with_middleware_cross_namespace.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"cross-ns-stripprefix": {
+							StripPrefix: &dynamic.StripPrefix{
+								Prefixes:   []string{"/stripit"},
+								ForceSlash: false,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                 "HTTP middleware cross namespace allowed",
+			paths:                []string{"services.yml", "with_middleware_cross_namespace.yml"},
+			enableCrossNamespace: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-crossnamespace-route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-crossnamespace-route-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+							Middlewares: []string{
+								"cross-ns-stripprefix",
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"cross-ns-stripprefix": {
+							StripPrefix: &dynamic.StripPrefix{
+								Prefixes:   []string{"/stripit"},
+								ForceSlash: false,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-test-crossnamespace-route-6b204d94623b3df4370c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -4122,7 +4211,7 @@ func TestCrossNamespace(t *testing.T) {
 			crdClient := crdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
-			client.enableCrossNamespaces = test.enableCrossNamespace
+			client.allowCrossNamespace = test.enableCrossNamespace
 
 			stopCh := make(chan struct{})
 
@@ -4135,6 +4224,7 @@ func TestCrossNamespace(t *testing.T) {
 			}
 
 			p := Provider{}
+			p.AllowCrossNamespace = func(b bool) *bool { return &b }(test.enableCrossNamespace)
 			conf := p.loadConfigurationFromCRD(context.Background(), client)
 			assert.Equal(t, test.expected, conf)
 		})

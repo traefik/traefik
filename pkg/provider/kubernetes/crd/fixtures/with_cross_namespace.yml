@@ -17,13 +17,11 @@ spec:
       namespace: cross-ns
       port: 80
     - name: tr-svc-wrr1
-      namespace: default
       kind: TraefikService
     - name: tr-svc-wrr2
       namespace: cross-ns
       kind: TraefikService
     - name: tr-svc-mirror1
-      namespace: default
       kind: TraefikService
     - name: tr-svc-mirror2
       namespace: cross-ns
@@ -55,7 +53,6 @@ spec:
   weighted:
     services:
       - name: whoami-svc
-        namespace: cross-ns
         weight: 1
         port: 80
 

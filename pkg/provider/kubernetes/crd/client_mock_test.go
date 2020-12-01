@@ -38,7 +38,7 @@ type clientMock struct {
 	tlsStores        []*v1alpha1.TLSStore
 	traefikServices  []*v1alpha1.TraefikService
 
-	enableCrossNamespaces bool
+	allowCrossNamespace bool
 
 	watchChan chan interface{}
 }
@@ -176,9 +176,6 @@ func (c clientMock) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-cha
 	return c.watchChan, nil
 }
 
-func (c clientMock) NamespaceOrFallback(ns, fallback string) string {
-	if c.enableCrossNamespaces && ns != "" {
-		return ns
-	}
-	return fallback
+func (c clientMock) NamespacesAllowed(ns1, ns2 string) bool {
+	return c.allowCrossNamespace || ns1 == ns2
 }

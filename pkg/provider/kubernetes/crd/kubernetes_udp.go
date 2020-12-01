@@ -78,7 +78,14 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 }
 
 func createLoadBalancerServerUDP(client Client, namespace string, service v1alpha1.ServiceUDP) (*dynamic.UDPService, error) {
-	ns := client.NamespaceOrFallback(service.Namespace, namespace)
+	ns := namespace
+	if len(service.Namespace) > 0 {
+		if !client.NamespacesAllowed(service.Namespace, namespace) {
+			return nil, fmt.Errorf("udp service %s/%s not in the parent resource namespace %s", service.Namespace, service.Name, ns)
+		}
+
+		ns = service.Namespace
+	}
 
 	servers, err := loadUDPServers(client, ns, service)
 	if err != nil {

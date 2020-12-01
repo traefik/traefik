@@ -125,8 +125,15 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 	return conf
 }
 
-func createLoadBalancerServerTCP(client Client, namespace string, service v1alpha1.ServiceTCP) (*dynamic.TCPService, error) {
-	ns := client.NamespaceOrFallback(service.Namespace, namespace)
+func createLoadBalancerServerTCP(client Client, parentNamespace string, service v1alpha1.ServiceTCP) (*dynamic.TCPService, error) {
+	ns := parentNamespace
+	if len(service.Namespace) > 0 {
+		if !client.NamespacesAllowed(service.Namespace, parentNamespace) {
+			return nil, fmt.Errorf("tcp service %s/%s not in the parent resource namespace %s", service.Namespace, service.Name, parentNamespace)
+		}
+
+		ns = service.Namespace
+	}
 
 	servers, err := loadTCPServers(client, ns, service)
 	if err != nil {

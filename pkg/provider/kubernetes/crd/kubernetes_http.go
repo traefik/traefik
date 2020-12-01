@@ -49,6 +49,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 		}
 
 		cb := configBuilder{client}
+	routes:
 		for _, route := range ingressRoute.Spec.Routes {
 			if route.Kind != "Rule" {
 				logger.Errorf("Unsupported match kind: %s. Only \"Rule\" is supported for now.", route.Kind)
@@ -78,10 +79,16 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					continue
 				}
 
-				ns := mi.Namespace
-				if len(ns) == 0 {
-					ns = ingressRoute.Namespace
+				ns := ingressRoute.Namespace
+				if len(mi.Namespace) > 0 {
+					if !client.NamespacesAllowed(mi.Namespace, ingressRoute.Namespace) {
+						logger.Errorf("Middleware %s/%s is not in the same namespace of the IngressRoute %s/%s", mi.Namespace, mi.Name, ingressRoute.Namespace, ingressRoute.Name)
+						continue routes
+					}
+
+					ns = mi.Namespace
 				}
+
 				mds = append(mds, makeID(ns, mi.Name))
 			}
 
@@ -270,7 +277,7 @@ func (c configBuilder) buildServersLB(namespace string, svc v1alpha1.LoadBalance
 	return &dynamic.Service{LoadBalancer: lb}, nil
 }
 
-func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBalancerSpec) ([]dynamic.Server, error) {
+func (c configBuilder) loadServers(parentNamespace string, svc v1alpha1.LoadBalancerSpec) ([]dynamic.Server, error) {
 	strategy := svc.Strategy
 	if strategy == "" {
 		strategy = roundRobinStrategy
@@ -279,7 +286,11 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 		return nil, fmt.Errorf("load balancing strategy %s is not supported", strategy)
 	}
 
-	namespace := c.client.NamespaceOrFallback(svc.Namespace, fallbackNamespace)
+	namespace := namespaceOrFallback(svc, parentNamespace)
+
+	if !c.client.NamespacesAllowed(namespace, parentNamespace) {
+		return nil, fmt.Errorf("load balancer service %s/%s not in the parent resource namespace %s", svc.Namespace, svc.Name, parentNamespace)
+	}
 
 	// If the service uses explicitly the provider suffix
 	sanitizedName := strings.TrimSuffix(svc.Name, providerNamespaceSeparator+providerName)
@@ -355,10 +366,14 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 // In addition, if the service is a Kubernetes one,
 // it generates and returns the configuration part for such a service,
 // so that the caller can add it to the global config map.
-func (c configBuilder) nameAndService(ctx context.Context, namespaceService string, service v1alpha1.LoadBalancerSpec) (string, *dynamic.Service, error) {
+func (c configBuilder) nameAndService(ctx context.Context, parentNamespace string, service v1alpha1.LoadBalancerSpec) (string, *dynamic.Service, error) {
 	svcCtx := log.With(ctx, log.Str(log.ServiceName, service.Name))
 
-	namespace := c.client.NamespaceOrFallback(service.Namespace, namespaceService)
+	namespace := namespaceOrFallback(service, parentNamespace)
+
+	if !c.client.NamespacesAllowed(namespace, parentNamespace) {
+		return "", nil, fmt.Errorf("service %s/%s not in the parent resource namespace %s", service.Namespace, service.Name, parentNamespace)
+	}
 
 	switch {
 	case service.Kind == "" || service.Kind == "Service":
@@ -405,6 +420,13 @@ func fullServiceName(ctx context.Context, namespace string, service v1alpha1.Loa
 	}
 
 	return provider.Normalize(name) + providerNamespaceSeparator + pName
+}
+
+func namespaceOrFallback(lb v1alpha1.LoadBalancerSpec, fallback string) string {
+	if lb.Namespace != "" {
+		return lb.Namespace
+	}
+	return fallback
 }
 
 func getTLSHTTP(ctx context.Context, ingressRoute *v1alpha1.IngressRoute, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
