@@ -123,7 +123,7 @@ providers:
     namespaces:
     - foobar
     - foobar
-    enableCrossNamespaces: true
+    allowCrossNamespace: true
     labelSelector: foobar
     ingressClass: foobar
     throttleDuration: 42s

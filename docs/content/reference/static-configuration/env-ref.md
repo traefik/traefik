@@ -540,14 +540,14 @@ TLS key
 `TRAEFIK_PROVIDERS_KUBERNETESCRD`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_KUBERNETESCRD_ALLOWCROSSNAMESPACE`:  
+Allow cross namespace resource reference. (Default: ```true```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_CERTAUTHFILEPATH`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_DISABLEPASSHOSTHEADERS`:  
 Kubernetes disable PassHost Headers. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_KUBERNETESCRD_ENABLECROSSNAMESPACES`:  
-Kubernetes enable cross namespaces capacity. (Default: ```true```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
