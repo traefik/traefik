@@ -17,14 +17,16 @@ import (
 
 func TestRuntimeConfiguration(t *testing.T) {
 	testCases := []struct {
-		desc          string
-		serviceConfig map[string]*runtime.TCPServiceInfo
-		routerConfig  map[string]*runtime.TCPRouterInfo
-		expectedError int
+		desc              string
+		httpServiceConfig map[string]*runtime.ServiceInfo
+		httpRouterConfig  map[string]*runtime.RouterInfo
+		tcpServiceConfig  map[string]*runtime.TCPServiceInfo
+		tcpRouterConfig   map[string]*runtime.TCPRouterInfo
+		expectedError     int
 	}{
 		{
 			desc: "No error",
-			serviceConfig: map[string]*runtime.TCPServiceInfo{
+			tcpServiceConfig: map[string]*runtime.TCPServiceInfo{
 				"foo-service": {
 					TCPService: &dynamic.TCPService{
 						LoadBalancer: &dynamic.TCPServersLoadBalancer{
@@ -42,7 +44,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			routerConfig: map[string]*runtime.TCPRouterInfo{
+			tcpRouterConfig: map[string]*runtime.TCPRouterInfo{
 				"foo": {
 					TCPRouter: &dynamic.TCPRouter{
 						EntryPoints: []string{"web"},
@@ -70,8 +72,53 @@ func TestRuntimeConfiguration(t *testing.T) {
 			expectedError: 0,
 		},
 		{
+			desc: "HTTP routers with same domain but different TLS options",
+			httpServiceConfig: map[string]*runtime.ServiceInfo{
+				"foo-service": {
+					Service: &dynamic.Service{
+						LoadBalancer: &dynamic.ServersLoadBalancer{
+							Servers: []dynamic.Server{
+								{
+									Port: "8085",
+									URL:  "127.0.0.1:8085",
+								},
+								{
+									URL:  "127.0.0.1:8086",
+									Port: "8086",
+								},
+							},
+						},
+					},
+				},
+			},
+			httpRouterConfig: map[string]*runtime.RouterInfo{
+				"foo": {
+					Router: &dynamic.Router{
+						EntryPoints: []string{"web"},
+						Service:     "foo-service",
+						Rule:        "Host(`bar.foo`)",
+						TLS: &dynamic.RouterTLSConfig{
+							Options: "foo",
+						},
+					},
+				},
+				"bar": {
+					Router: &dynamic.Router{
+
+						EntryPoints: []string{"web"},
+						Service:     "foo-service",
+						Rule:        "Host(`bar.foo`) && PathPrefix(`/path`)",
+						TLS: &dynamic.RouterTLSConfig{
+							Options: "bar",
+						},
+					},
+				},
+			},
+			expectedError: 2,
+		},
+		{
 			desc: "One router with wrong rule",
-			serviceConfig: map[string]*runtime.TCPServiceInfo{
+			tcpServiceConfig: map[string]*runtime.TCPServiceInfo{
 				"foo-service": {
 					TCPService: &dynamic.TCPService{
 						LoadBalancer: &dynamic.TCPServersLoadBalancer{
@@ -84,7 +131,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			routerConfig: map[string]*runtime.TCPRouterInfo{
+			tcpRouterConfig: map[string]*runtime.TCPRouterInfo{
 				"foo": {
 					TCPRouter: &dynamic.TCPRouter{
 						EntryPoints: []string{"web"},
@@ -105,7 +152,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 		},
 		{
 			desc: "All router with wrong rule",
-			serviceConfig: map[string]*runtime.TCPServiceInfo{
+			tcpServiceConfig: map[string]*runtime.TCPServiceInfo{
 				"foo-service": {
 					TCPService: &dynamic.TCPService{
 						LoadBalancer: &dynamic.TCPServersLoadBalancer{
@@ -118,7 +165,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			routerConfig: map[string]*runtime.TCPRouterInfo{
+			tcpRouterConfig: map[string]*runtime.TCPRouterInfo{
 				"foo": {
 					TCPRouter: &dynamic.TCPRouter{
 						EntryPoints: []string{"web"},
@@ -138,7 +185,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 		},
 		{
 			desc: "Router with unknown service",
-			serviceConfig: map[string]*runtime.TCPServiceInfo{
+			tcpServiceConfig: map[string]*runtime.TCPServiceInfo{
 				"foo-service": {
 					TCPService: &dynamic.TCPService{
 						LoadBalancer: &dynamic.TCPServersLoadBalancer{
@@ -151,7 +198,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 					},
 				},
 			},
-			routerConfig: map[string]*runtime.TCPRouterInfo{
+			tcpRouterConfig: map[string]*runtime.TCPRouterInfo{
 				"foo": {
 					TCPRouter: &dynamic.TCPRouter{
 						EntryPoints: []string{"web"},
@@ -172,14 +219,14 @@ func TestRuntimeConfiguration(t *testing.T) {
 		},
 		{
 			desc: "Router with broken service",
-			serviceConfig: map[string]*runtime.TCPServiceInfo{
+			tcpServiceConfig: map[string]*runtime.TCPServiceInfo{
 				"foo-service": {
 					TCPService: &dynamic.TCPService{
 						LoadBalancer: nil,
 					},
 				},
 			},
-			routerConfig: map[string]*runtime.TCPRouterInfo{
+			tcpRouterConfig: map[string]*runtime.TCPRouterInfo{
 				"bar": {
 					TCPRouter: &dynamic.TCPRouter{
 						EntryPoints: []string{"web"},
@@ -201,8 +248,10 @@ func TestRuntimeConfiguration(t *testing.T) {
 			entryPoints := []string{"web"}
 
 			conf := &runtime.Configuration{
-				TCPServices: test.serviceConfig,
-				TCPRouters:  test.routerConfig,
+				Services:    test.httpServiceConfig,
+				Routers:     test.httpRouterConfig,
+				TCPServices: test.tcpServiceConfig,
+				TCPRouters:  test.tcpRouterConfig,
 			}
 			serviceManager := tcp.NewManager(conf)
 			tlsManager := traefiktls.NewManager()
@@ -237,6 +286,16 @@ func TestRuntimeConfiguration(t *testing.T) {
 				}
 			}
 			for _, v := range conf.TCPRouters {
+				if len(v.Err) > 0 {
+					allErrors++
+				}
+			}
+			for _, v := range conf.Services {
+				if v.Err != nil {
+					allErrors++
+				}
+			}
+			for _, v := range conf.Routers {
 				if len(v.Err) > 0 {
 					allErrors++
 				}
