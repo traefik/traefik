@@ -2,13 +2,17 @@ package tcp
 
 import (
 	"context"
+	"crypto/tls"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/server/service/tcp"
-	"github.com/traefik/traefik/v2/pkg/tls"
+	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 )
 
 func TestRuntimeConfiguration(t *testing.T) {
@@ -201,11 +205,11 @@ func TestRuntimeConfiguration(t *testing.T) {
 				TCPRouters:  test.routerConfig,
 			}
 			serviceManager := tcp.NewManager(conf)
-			tlsManager := tls.NewManager()
+			tlsManager := traefiktls.NewManager()
 			tlsManager.UpdateConfigs(
 				context.Background(),
-				map[string]tls.Store{},
-				map[string]tls.Options{
+				map[string]traefiktls.Store{},
+				map[string]traefiktls.Options{
 					"default": {
 						MinVersion: "VersionTLS10",
 					},
@@ -216,7 +220,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 						MinVersion: "VersionTLS11",
 					},
 				},
-				[]*tls.CertAndStores{})
+				[]*traefiktls.CertAndStores{})
 
 			routerManager := NewManager(conf, serviceManager,
 				nil, nil, tlsManager)
@@ -238,6 +242,175 @@ func TestRuntimeConfiguration(t *testing.T) {
 				}
 			}
 			assert.Equal(t, test.expectedError, allErrors)
+		})
+	}
+}
+
+func TestDomainFronting(t *testing.T) {
+	tests := []struct {
+		desc           string
+		routers        map[string]*runtime.RouterInfo
+		expectedStatus int
+	}{
+		{
+			desc: "Request is misdirected when TLS options are different",
+			routers: map[string]*runtime.RouterInfo{
+				"router-1": {
+					Router: &dynamic.Router{
+						EntryPoints: []string{"web"},
+						Rule:        "Host(`host1.local`)",
+						TLS: &dynamic.RouterTLSConfig{
+							Options: "host1",
+						},
+					},
+				},
+				"router-2": {
+					Router: &dynamic.Router{
+						EntryPoints: []string{"web"},
+						Rule:        "Host(`host2.local`)",
+						TLS: &dynamic.RouterTLSConfig{
+							Options: "default",
+						},
+					},
+				},
+			},
+			expectedStatus: http.StatusMisdirectedRequest,
+		},
+		{
+			desc: "Request is OK when TLS options are the same",
+			routers: map[string]*runtime.RouterInfo{
+				"router-1": {
+					Router: &dynamic.Router{
+						EntryPoints: []string{"web"},
+						Rule:        "Host(`host1.local`)",
+						TLS: &dynamic.RouterTLSConfig{
+							Options: "host1",
+						},
+					},
+				},
+				"router-2": {
+					Router: &dynamic.Router{
+						EntryPoints: []string{"web"},
+						Rule:        "Host(`host2.local`)",
+						TLS: &dynamic.RouterTLSConfig{
+							Options: "host1",
+						},
+					},
+				},
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			desc: "Default TLS options is used when options are ambiguous for the same host",
+			routers: map[string]*runtime.RouterInfo{
+				"router-1": {
+					Router: &dynamic.Router{
+						EntryPoints: []string{"web"},
+						Rule:        "Host(`host1.local`)",
+						TLS: &dynamic.RouterTLSConfig{
+							Options: "host1",
+						},
+					},
+				},
+				"router-2": {
+					Router: &dynamic.Router{
+						EntryPoints: []string{"web"},
+						Rule:        "Host(`host1.local`) && PathPrefix(`/foo`)",
+						TLS: &dynamic.RouterTLSConfig{
+							Options: "default",
+						},
+					},
+				},
+				"router-3": {
+					Router: &dynamic.Router{
+						EntryPoints: []string{"web"},
+						Rule:        "Host(`host2.local`)",
+						TLS: &dynamic.RouterTLSConfig{
+							Options: "host1",
+						},
+					},
+				},
+			},
+			expectedStatus: http.StatusMisdirectedRequest,
+		},
+		{
+			desc: "Default TLS options should not be used when options are the same for the same host",
+			routers: map[string]*runtime.RouterInfo{
+				"router-1": {
+					Router: &dynamic.Router{
+						EntryPoints: []string{"web"},
+						Rule:        "Host(`host1.local`)",
+						TLS: &dynamic.RouterTLSConfig{
+							Options: "host1",
+						},
+					},
+				},
+				"router-2": {
+					Router: &dynamic.Router{
+						EntryPoints: []string{"web"},
+						Rule:        "Host(`host1.local`) && PathPrefix(`/bar`)",
+						TLS: &dynamic.RouterTLSConfig{
+							Options: "host1",
+						},
+					},
+				},
+				"router-3": {
+					Router: &dynamic.Router{
+						EntryPoints: []string{"web"},
+						Rule:        "Host(`host2.local`)",
+						TLS: &dynamic.RouterTLSConfig{
+							Options: "host1",
+						},
+					},
+				},
+			},
+			expectedStatus: http.StatusOK,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			entryPoints := []string{"web"}
+			tlsOptions := map[string]traefiktls.Options{
+				"default": {
+					MinVersion: "VersionTLS10",
+				},
+				"host1": {
+					MinVersion: "VersionTLS12",
+				},
+			}
+
+			conf := &runtime.Configuration{
+				Routers: test.routers,
+			}
+
+			serviceManager := tcp.NewManager(conf)
+
+			tlsManager := traefiktls.NewManager()
+			tlsManager.UpdateConfigs(context.Background(), map[string]traefiktls.Store{}, tlsOptions, []*traefiktls.CertAndStores{})
+
+			httpsHandler := map[string]http.Handler{
+				"web": http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {}),
+			}
+
+			routerManager := NewManager(conf, serviceManager, nil, httpsHandler, tlsManager)
+
+			routers := routerManager.BuildHandlers(context.Background(), entryPoints)
+
+			router, ok := routers["web"]
+			require.True(t, ok)
+
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req.Host = "host1.local"
+			req.TLS = &tls.ConnectionState{
+				ServerName: "host2.local",
+			}
+
+			rw := httptest.NewRecorder()
+
+			router.GetHTTPSHandler().ServeHTTP(rw, req)
+
+			assert.Equal(t, test.expectedStatus, rw.Code)
 		})
 	}
 }

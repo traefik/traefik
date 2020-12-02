@@ -151,8 +151,8 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 					TLSConfig:  tlsConf,
 				}
 
-				if _, ok := tlsOptionsForHost[domain]; ok {
-					// Multiple tlsOptions fallback to default
+				if name, ok := tlsOptionsForHost[domain]; ok && name != routerHTTPConfig.TLS.Options {
+					// Different tlsOptions on the same domain fallback to default
 					tlsOptionsForHost[domain] = "default"
 				} else {
 					tlsOptionsForHost[domain] = routerHTTPConfig.TLS.Options
