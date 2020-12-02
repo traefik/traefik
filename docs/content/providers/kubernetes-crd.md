@@ -250,25 +250,25 @@ providers:
 --providers.kubernetescrd.throttleDuration=10s
 ```
 
-### `enableCrossNamespace`
+### `allowCrossNamespace`
 
 _Optional, Default: true_
 
 ```toml tab="File (TOML)"
 [providers.kubernetesCRD]
-  enableCrossNamespace = false
+  allowCrossNamespace = false
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   kubernetesCRD:
-    enableCrossNamespace: false
+    allowCrossNamespace: false
     # ...
 ```
 
 ```bash tab="CLI"
---providers.kubernetescrd.enableCrossNamespace=false
+--providers.kubernetescrd.allowCrossNamespace=false
 ```
 
 If the parameter is set to `false`, an IngressRoute will not be able to reference any service

@@ -56,6 +56,13 @@ spec:
     middlewares:
     - name: stripprefix2
       namespace: default
+  - match: Host(`foo.com`) && PathPrefix(`/e`)
+    kind: Rule
+    services:
+    - name: whoami
+      port: 80
+    middlewares:
+    - name: test-errorpage
 
 ---
 apiVersion: traefik.containo.us/v1alpha1
@@ -95,3 +102,19 @@ spec:
   stripPrefix:
     prefixes:
       - /tobestripped
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-errorpage
+
+spec:
+  errors:
+    status:
+      - 500-599
+    query: /{status}.html
+    service:
+      name: whoami
+      namespace: other-ns
+      port: 80

@@ -3735,11 +3735,11 @@ func TestGetServicePort(t *testing.T) {
 
 func TestCrossNamespace(t *testing.T) {
 	testCases := []struct {
-		desc                 string
-		enableCrossNamespace bool
-		ingressClass         string
-		paths                []string
-		expected             *dynamic.Configuration
+		desc                string
+		allowCrossNamespace bool
+		ingressClass        string
+		paths               []string
+		expected            *dynamic.Configuration
 	}{
 		{
 			desc: "Empty",
@@ -3773,7 +3773,15 @@ func TestCrossNamespace(t *testing.T) {
 					Services: map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{},
+					Routers: map[string]*dynamic.Router{
+						"default-test-crossnamespace-route-9313b71dbe6a649d5049": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-crossnamespace-route-9313b71dbe6a649d5049",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bir`)",
+							Priority:    12,
+							Middlewares: []string{"default-test-errorpage"},
+						},
+					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"cross-ns-stripprefix": {
 							StripPrefix: &dynamic.StripPrefix{
@@ -3782,15 +3790,29 @@ func TestCrossNamespace(t *testing.T) {
 							},
 						},
 					},
-					Services: map[string]*dynamic.Service{},
+					Services: map[string]*dynamic.Service{
+						"default-test-crossnamespace-route-9313b71dbe6a649d5049": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
-			desc:                 "HTTP middleware cross namespace allowed",
-			paths:                []string{"services.yml", "with_middleware_cross_namespace.yml"},
-			enableCrossNamespace: true,
+			desc:                "HTTP middleware cross namespace allowed",
+			paths:               []string{"services.yml", "with_middleware_cross_namespace.yml"},
+			allowCrossNamespace: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -3811,6 +3833,13 @@ func TestCrossNamespace(t *testing.T) {
 								"cross-ns-stripprefix",
 							},
 						},
+						"default-test-crossnamespace-route-9313b71dbe6a649d5049": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-crossnamespace-route-9313b71dbe6a649d5049",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bir`)",
+							Priority:    12,
+							Middlewares: []string{"default-test-errorpage"},
+						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"cross-ns-stripprefix": {
@@ -3819,9 +3848,42 @@ func TestCrossNamespace(t *testing.T) {
 								ForceSlash: false,
 							},
 						},
+						"default-test-errorpage": {
+							Errors: &dynamic.ErrorPage{
+								Status:  []string{"500-599"},
+								Service: "default-test-errorpage-errorpage-service",
+								Query:   "/{status}.html",
+							},
+						},
 					},
 					Services: map[string]*dynamic.Service{
 						"default-test-crossnamespace-route-6b204d94623b3df4370c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+						"default-test-crossnamespace-route-9313b71dbe6a649d5049": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+						"default-test-errorpage-errorpage-service": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -3840,9 +3902,9 @@ func TestCrossNamespace(t *testing.T) {
 			},
 		},
 		{
-			desc:                 "HTTP cross namespace allowed",
-			paths:                []string{"services.yml", "with_cross_namespace.yml"},
-			enableCrossNamespace: true,
+			desc:                "HTTP cross namespace allowed",
+			paths:               []string{"services.yml", "with_cross_namespace.yml"},
+			allowCrossNamespace: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -4031,9 +4093,9 @@ func TestCrossNamespace(t *testing.T) {
 			},
 		},
 		{
-			desc:                 "TCP cross namespace allowed",
-			paths:                []string{"tcp/services.yml", "tcp/with_cross_namespace.yml"},
-			enableCrossNamespace: true,
+			desc:                "TCP cross namespace allowed",
+			paths:               []string{"tcp/services.yml", "tcp/with_cross_namespace.yml"},
+			allowCrossNamespace: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -4073,9 +4135,8 @@ func TestCrossNamespace(t *testing.T) {
 			},
 		},
 		{
-			desc:                 "TCP cross namespace disallowed",
-			paths:                []string{"tcp/services.yml", "tcp/with_cross_namespace.yml"},
-			enableCrossNamespace: false,
+			desc:  "TCP cross namespace disallowed",
+			paths: []string{"tcp/services.yml", "tcp/with_cross_namespace.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -4101,9 +4162,9 @@ func TestCrossNamespace(t *testing.T) {
 			},
 		},
 		{
-			desc:                 "UDP cross namespace allowed",
-			paths:                []string{"udp/services.yml", "udp/with_cross_namespace.yml"},
-			enableCrossNamespace: true,
+			desc:                "UDP cross namespace allowed",
+			paths:               []string{"udp/services.yml", "udp/with_cross_namespace.yml"},
+			allowCrossNamespace: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
@@ -4211,7 +4272,7 @@ func TestCrossNamespace(t *testing.T) {
 			crdClient := crdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
-			client.allowCrossNamespace = test.enableCrossNamespace
+			client.allowCrossNamespace = test.allowCrossNamespace
 
 			stopCh := make(chan struct{})
 
@@ -4224,7 +4285,7 @@ func TestCrossNamespace(t *testing.T) {
 			}
 
 			p := Provider{}
-			p.AllowCrossNamespace = func(b bool) *bool { return &b }(test.enableCrossNamespace)
+			p.AllowCrossNamespace = func(b bool) *bool { return &b }(test.allowCrossNamespace)
 			conf := p.loadConfigurationFromCRD(context.Background(), client)
 			assert.Equal(t, test.expected, conf)
 		})
