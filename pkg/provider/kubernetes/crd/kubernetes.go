@@ -617,8 +617,9 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 			CipherSuites:     tlsOption.Spec.CipherSuites,
 			CurvePreferences: tlsOption.Spec.CurvePreferences,
 			ClientAuth: tls.ClientAuth{
-				CAFiles:        clientCAs,
-				ClientAuthType: tlsOption.Spec.ClientAuth.ClientAuthType,
+				CAFiles:               clientCAs,
+				ClientAuthType:        tlsOption.Spec.ClientAuth.ClientAuthType,
+				RevocationCheckStrict: tlsOption.Spec.ClientAuth.RevocationCheckStrict,
 			},
 			SniStrict:                tlsOption.Spec.SniStrict,
 			PreferServerCipherSuites: tlsOption.Spec.PreferServerCipherSuites,

@@ -192,6 +192,36 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 		}
 		conf.ClientCAs = pool
 		conf.ClientAuth = tls.RequireAndVerifyClientCert
+
+		// Set VerifyPeerCertificate func
+		crm := newCertificateRevocationManager()
+		conf.VerifyPeerCertificate = func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+			// Quoting the Go docs:
+			//
+			// If normal verification is disabled by setting InsecureSkipVerify,
+			// or (for a server) when ClientAuth is RequestClientCert or
+			// RequireAnyClientCert, then this callback (i.e. VerifyPeerCertificate)
+			// will be considered but the verifiedChains argument will always be nil.
+			//
+			// Note: a `len(verifiedChains) == 0` check was made internally already.
+			if verifiedChains == nil {
+				return nil
+			}
+
+			for _, chain := range verifiedChains {
+				for _, cert := range chain {
+					softErr, hardErr := crm.Verify(cert)
+					if hardErr != nil {
+						return hardErr
+					}
+					if tlsOption.ClientAuth.RevocationCheckStrict && softErr != nil {
+						return fmt.Errorf("certificate might be revoked (soft-fail): %w", softErr)
+					}
+				}
+			}
+
+			return nil
+		}
 	}
 
 	clientAuthType := tlsOption.ClientAuth.ClientAuthType

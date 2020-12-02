@@ -10,6 +10,9 @@ type ClientAuth struct {
 	// ClientAuthType defines the client authentication type to apply.
 	// The available values are: "NoClientCert", "RequestClientCert", "VerifyClientCertIfGiven" and "RequireAndVerifyClientCert".
 	ClientAuthType string `json:"clientAuthType,omitempty" toml:"clientAuthType,omitempty" yaml:"clientAuthType,omitempty" export:"true"`
+	// RevocationCheckStrict defines whether to strictly validate a client certificate's revocation status (currently only CRL) in a fail-hard manner.
+	// When set to true and client authentication is enforced, abort the handshake when any attempts to validate the client certificate's revocation status fail. Such a faillure might occur for instance when fetching one of the client certificate's CRL (when provided).
+	RevocationCheckStrict bool `json:"revocationCheckStrict,omitempty" toml:"revocationCheckStrict,omitempty" yaml:"revocationCheckStrict,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
