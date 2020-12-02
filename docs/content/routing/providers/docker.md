@@ -58,7 +58,7 @@ Attach labels to your containers and let Traefik do the rest!
         Setting the label `traefik.http.services.xxx.loadbalancer.server.port`
         overrides that behavior.
 
-??? example "Specifying more than one router per container"
+??? example "Specifying more than one router and service per container"
 
     Forwarding requests to more than one port on a container requires referencing the service loadbalancer port definition using the service parameter on the router.
 
