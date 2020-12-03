@@ -44,10 +44,6 @@ import (
 
 var updateExpected = flag.Bool("update_expected", false, "Update expected files in fixtures")
 
-type plugin struct {
-	Answer int
-}
-
 func TestDo_dynamicConfiguration(t *testing.T) {
 	config := &dynamic.Configuration{}
 	config.HTTP = &dynamic.HTTPConfiguration{
@@ -349,7 +345,7 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 				},
 				Plugin: map[string]dynamic.PluginConf{
 					"foo": {
-						"answer": plugin{
+						"answer": struct{ Answer int }{
 							Answer: 42,
 						},
 					},
