@@ -451,6 +451,7 @@ tls:
         - foobar
         - foobar
         clientAuthType: foobar
+        revocationCheckStrict: true
       sniStrict: true
       preferServerCipherSuites: true
     Options1:
@@ -467,6 +468,7 @@ tls:
         - foobar
         - foobar
         clientAuthType: foobar
+        revocationCheckStrict: true
       sniStrict: true
       preferServerCipherSuites: true
   stores:

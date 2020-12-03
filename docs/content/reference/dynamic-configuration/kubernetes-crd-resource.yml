@@ -184,6 +184,7 @@ spec:
       - foobar
       - foobar
     clientAuthType: foobar
+    revocationCheckStrict: true
   sniStrict: true
   preferServerCipherSuites: true
 

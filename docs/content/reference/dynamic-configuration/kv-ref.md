@@ -268,6 +268,7 @@
 | `traefik/tls/options/Options0/clientAuth/caFiles/0` | `foobar` |
 | `traefik/tls/options/Options0/clientAuth/caFiles/1` | `foobar` |
 | `traefik/tls/options/Options0/clientAuth/clientAuthType` | `foobar` |
+| `traefik/tls/options/Options0/clientAuth/revocationCheckStrict` | `true` |
 | `traefik/tls/options/Options0/curvePreferences/0` | `foobar` |
 | `traefik/tls/options/Options0/curvePreferences/1` | `foobar` |
 | `traefik/tls/options/Options0/maxVersion` | `foobar` |
@@ -279,6 +280,7 @@
 | `traefik/tls/options/Options1/clientAuth/caFiles/0` | `foobar` |
 | `traefik/tls/options/Options1/clientAuth/caFiles/1` | `foobar` |
 | `traefik/tls/options/Options1/clientAuth/clientAuthType` | `foobar` |
+| `traefik/tls/options/Options1/clientAuth/revocationCheckStrict` | `true` |
 | `traefik/tls/options/Options1/curvePreferences/0` | `foobar` |
 | `traefik/tls/options/Options1/curvePreferences/1` | `foobar` |
 | `traefik/tls/options/Options1/maxVersion` | `foobar` |

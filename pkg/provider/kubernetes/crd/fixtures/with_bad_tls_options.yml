@@ -36,6 +36,7 @@ spec:
       - secretUnknown
       - emptySecret
     clientAuthType: VerifyClientCertIfGiven
+    revocationCheckStrict: true
 
 ---
 apiVersion: traefik.containo.us/v1alpha1

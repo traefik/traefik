@@ -35,6 +35,7 @@ spec:
       - secretCA1
       - secretCA2
     clientAuthType: VerifyClientCertIfGiven
+    revocationCheckStrict: true
   preferServerCipherSuites: true
 ---
 apiVersion: v1

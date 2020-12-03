@@ -1377,19 +1377,21 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
           - secretCA1
           - secretCA2
         clientAuthType: VerifyClientCertIfGiven     # [7]
-      sniStrict: true                               # [8]
+        revocationCheckStrict: true                 # [8]
+      sniStrict: true                               # [9]
     ```
 
 | Ref | Attribute                   | Purpose                                                                                                                                                                    |
 |-----|-----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1] | `minVersion`                | Defines the [minimum TLS version](../../https/tls.md#minimum-tls-version) that is acceptable                                                                               |
-| [2] | `maxVersion`                | Defines the [maximum TLS version](../../https/tls.md#maximum-tls-version) that is acceptable                                                                               |
-| [3] | `cipherSuites`              | list of supported [cipher suites](../../https/tls.md#cipher-suites) for TLS versions up to TLS 1.2                                                                         |
-| [4] | `curvePreferences`          | List of the [elliptic curves references](../../https/tls.md#curve-preferences) that will be used in an ECDHE handshake, in preference order                                |
-| [5] | `clientAuth`                | determines the server's policy for TLS [Client Authentication](../../https/tls.md#client-authentication-mtls)                                                              |
-| [6] | `clientAuth.secretNames`    | list of names of the referenced Kubernetes [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/) (in TLSOption namespace)                                   |
-| [7] | `clientAuth.clientAuthType` | defines the client authentication type to apply. The available values are: `NoClientCert`, `RequestClientCert`, `VerifyClientCertIfGiven` and `RequireAndVerifyClientCert` |
-| [8] | `sniStrict`                 | if `true`, Traefik won't allow connections from clients connections that do not specify a server_name extension                                                            |
+| [1] | `minVersion`                       | Defines the [minimum TLS version](../../https/tls.md#minimum-tls-version) that is acceptable                                                                               |
+| [2] | `maxVersion`                       | Defines the [maximum TLS version](../../https/tls.md#maximum-tls-version) that is acceptable                                                                               |
+| [3] | `cipherSuites`                     | list of supported [cipher suites](../../https/tls.md#cipher-suites) for TLS versions up to TLS 1.2                                                                         |
+| [4] | `curvePreferences`                 | List of the [elliptic curves references](../../https/tls.md#curve-preferences) that will be used in an ECDHE handshake, in preference order                                |
+| [5] | `clientAuth`                       | determines the server's policy for TLS [Client Authentication](../../https/tls.md#client-authentication-mtls)                                                              |
+| [6] | `clientAuth.secretNames`           | list of names of the referenced Kubernetes [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/) (in TLSOption namespace)                                   |
+| [7] | `clientAuth.clientAuthType`        | defines the client authentication type to apply. The available values are: `NoClientCert`, `RequestClientCert`, `VerifyClientCertIfGiven` and `RequireAndVerifyClientCert` |
+| [8] | `clientAuth.revocationCheckStrict` | if `true`, Traefik won't allow connections from clients connections without successfully performing required revocation checks                                                            |
+| [9] | `sniStrict`                        | if `true`, Traefik won't allow connections from clients connections that do not specify a server_name extension                                                            |
 
 ??? example "Declaring and referencing a TLSOption"
    
@@ -1411,6 +1413,7 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
           - secretCA1
           - secretCA2
         clientAuthType: VerifyClientCertIfGiven
+        revocationCheckStrict: true
     ```
     
     ```yaml tab="IngressRoute"
