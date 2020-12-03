@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+	"strconv"
 	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -165,7 +167,7 @@ func loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([
 	var servers []dynamic.TCPServer
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		servers = append(servers, dynamic.TCPServer{
-			Address: fmt.Sprintf("%s:%d", service.Spec.ExternalName, svcPort.Port),
+			Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(svcPort.Port))),
 		})
 	} else {
 		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, svc.Name)
@@ -196,7 +198,7 @@ func loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([
 
 			for _, addr := range subset.Addresses {
 				servers = append(servers, dynamic.TCPServer{
-					Address: fmt.Sprintf("%s:%d", addr.IP, port),
+					Address: net.JoinHostPort(addr.IP, strconv.Itoa(int(port))),
 				})
 			}
 		}

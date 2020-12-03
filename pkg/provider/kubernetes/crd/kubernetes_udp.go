@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+	"strconv"
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -121,7 +123,7 @@ func loadUDPServers(client Client, namespace string, svc v1alpha1.ServiceUDP) ([
 	var servers []dynamic.UDPServer
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		servers = append(servers, dynamic.UDPServer{
-			Address: fmt.Sprintf("%s:%d", service.Spec.ExternalName, portSpec.Port),
+			Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(portSpec.Port))),
 		})
 	} else {
 		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, svc.Name)
@@ -152,7 +154,7 @@ func loadUDPServers(client Client, namespace string, svc v1alpha1.ServiceUDP) ([
 
 			for _, addr := range subset.Addresses {
 				servers = append(servers, dynamic.UDPServer{
-					Address: fmt.Sprintf("%s:%d", addr.IP, port),
+					Address: net.JoinHostPort(addr.IP, strconv.Itoa(int(port))),
 				})
 			}
 		}
