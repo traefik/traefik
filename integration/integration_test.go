@@ -62,6 +62,7 @@ func Test(t *testing.T) {
 		check.Suite(&RetrySuite{})
 		check.Suite(&SimpleSuite{})
 		check.Suite(&TimeoutSuite{})
+		check.Suite(&TLSClientAuthSuite{})
 		check.Suite(&TLSClientHeadersSuite{})
 		check.Suite(&TracingSuite{})
 		check.Suite(&UDPSuite{})

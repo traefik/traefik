@@ -1,0 +1,7 @@
+whoami:
+    image: traefik/whoami
+    labels:
+      - traefik.http.routers.route1.rule=PathPrefix(`/`)
+      - traefik.http.routers.route1.middlewares=passtls
+      - traefik.http.routers.route1.tls=true
+      - traefik.http.middlewares.passtls.passtlsclientcert.pem=true
