@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	stdlog "log"
 	"net/http"
 	"os"
@@ -214,10 +213,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	if isPilotEnabled(staticConfiguration) {
 		pilotRegistry = metrics.RegisterPilot()
 
-		aviator, err = pilot.New(staticConfiguration.Pilot.Token, pilotRegistry, routinesPool)
-		if err != nil {
-			return nil, fmt.Errorf("unable to create pilot client: %w", err)
-		}
+		aviator = pilot.New(staticConfiguration.Pilot.Token, pilotRegistry, routinesPool)
 
 		routinesPool.GoCtx(func(ctx context.Context) {
 			aviator.Tick(ctx)

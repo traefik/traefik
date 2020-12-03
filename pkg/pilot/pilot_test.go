@@ -7,9 +7,11 @@ import (
 	"hash/fnv"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/metrics"
@@ -45,8 +47,7 @@ func TestTick(t *testing.T) {
 		receivedConfig <- true
 	})
 
-	pilot, err := New("token", metrics.RegisterPilot(), safe.NewPool(context.Background()))
-	require.NoError(t, err)
+	pilot := New("token", metrics.RegisterPilot(), safe.NewPool(context.Background()))
 
 	pilot.client.baseInstanceInfoURL = server.URL
 
@@ -85,6 +86,7 @@ func TestClient_SendInstanceInfo(t *testing.T) {
 		tk := req.Header.Get(tokenHeader)
 		if tk != myToken {
 			http.Error(rw, fmt.Sprintf("invalid token: %s", tk), http.StatusUnauthorized)
+			return
 		}
 
 		err := json.NewEncoder(rw).Encode(instanceInfo{ID: "123"})
@@ -103,14 +105,16 @@ func TestClient_SendInstanceInfo(t *testing.T) {
 		tk := req.Header.Get(tokenHeader)
 		if tk != myToken {
 			http.Error(rw, fmt.Sprintf("invalid token: %s", tk), http.StatusUnauthorized)
+			return
 		}
 
 		tkh := req.Header.Get(tokenHashHeader)
 		if tkh != myTokenHash {
 			http.Error(rw, fmt.Sprintf("invalid token hash: %s", tkh), http.StatusBadRequest)
+			return
 		}
 
-		defer req.Body.Close()
+		defer func() { _ = req.Body.Close() }()
 
 		info := &instanceInfo{}
 		err := json.NewDecoder(req.Body).Decode(info)
@@ -135,30 +139,33 @@ func TestClient_SendInstanceInfo(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestClient_SendTelemetry(t *testing.T) {
+func TestClient_SendAnonDynConf(t *testing.T) {
 	myToken := "myToken"
 
 	myTokenHash, err := hashToken(myToken)
 	require.NoError(t, err)
 
+	var count int
 	mux := http.NewServeMux()
 	mux.HandleFunc("/collect", func(rw http.ResponseWriter, req *http.Request) {
+		count++
+		if count == 1 {
+			http.Error(rw, "OOPS", http.StatusBadRequest)
+			return
+		}
+
 		if req.Method != http.MethodPost {
 			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
 			return
 		}
 
-		tk := req.Header.Get(tokenHeader)
-		if tk != myToken {
-			http.Error(rw, fmt.Sprintf("invalid token: %s", tk), http.StatusUnauthorized)
-		}
-
 		tkh := req.Header.Get(tokenHashHeader)
 		if tkh != myTokenHash {
 			http.Error(rw, fmt.Sprintf("invalid token hash: %s", tkh), http.StatusBadRequest)
+			return
 		}
 
-		defer req.Body.Close()
+		defer func() { _ = req.Body.Close() }()
 
 		config := &dynamic.Configuration{}
 		err := json.NewDecoder(req.Body).Decode(config)
@@ -173,8 +180,9 @@ func TestClient_SendTelemetry(t *testing.T) {
 			return
 		}
 
-		if router.Rule != "xxxx" {
-			http.Error(rw, fmt.Sprintf("configuration is not anonymized, got router rule %s", router.Rule), http.StatusBadRequest)
+		if !reflect.DeepEqual(router, &dynamic.Router{Service: "foo", Rule: "xxxx"}) {
+			http.Error(rw, fmt.Sprintf("configuration is not anonymized: %+v", router), http.StatusBadRequest)
+			return
 		}
 	})
 
@@ -182,10 +190,10 @@ func TestClient_SendTelemetry(t *testing.T) {
 	t.Cleanup(server.Close)
 
 	client := client{
-		baseTelemetryURL: server.URL,
-		httpClient:       http.DefaultClient,
-		token:            myToken,
-		tokenHash:        myTokenHash,
+		baseGatewayURL: server.URL,
+		httpClient:     http.DefaultClient,
+		token:          myToken,
+		tokenHash:      myTokenHash,
 	}
 
 	config := dynamic.Configuration{
@@ -199,8 +207,10 @@ func TestClient_SendTelemetry(t *testing.T) {
 		},
 	}
 
-	err = client.SendTelemetry(context.Background(), config)
+	err = client.SendAnonDynConf(context.Background(), config)
 	require.NoError(t, err)
+
+	assert.Equal(t, 2, count)
 }
 
 func hashToken(token string) (string, error) {

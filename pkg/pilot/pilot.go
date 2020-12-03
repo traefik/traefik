@@ -21,12 +21,17 @@ import (
 
 const (
 	baseInstanceInfoURL = "https://instance-info.pilot.traefik.io/public"
-	baseTelemetryURL    = "https://gateway.pilot.traefik.io"
-	tokenHeader         = "X-Token"
-	tokenHashHeader     = "X-Token-Hash"
+	baseGatewayURL      = "https://gateway.pilot.traefik.io"
+)
 
+const (
+	tokenHeader     = "X-Token"
+	tokenHashHeader = "X-Token-Hash"
+)
+
+const (
 	pilotInstanceInfoTimer = 5 * time.Minute
-	pilotTelemetryTimer    = 12 * time.Hour
+	pilotDynConfTimer      = 12 * time.Hour
 	maxElapsedTime         = 4 * time.Minute
 )
 
@@ -36,12 +41,11 @@ type instanceInfo struct {
 }
 
 // New creates a new Pilot.
-func New(token string, metricsRegistry *metrics.PilotRegistry, pool *safe.Pool) (*Pilot, error) {
+func New(token string, metricsRegistry *metrics.PilotRegistry, pool *safe.Pool) *Pilot {
 	tokenHash := fnv.New64a()
 
-	if _, err := tokenHash.Write([]byte(token)); err != nil {
-		return nil, fmt.Errorf("unable to hash token: %w", err)
-	}
+	// the `sum64a` implementation of the `Write` method never returns an error.
+	_, _ = tokenHash.Write([]byte(token))
 
 	return &Pilot{
 		dynamicConfigCh: make(chan dynamic.Configuration),
@@ -50,11 +54,11 @@ func New(token string, metricsRegistry *metrics.PilotRegistry, pool *safe.Pool) 
 			tokenHash:           fmt.Sprintf("%x", tokenHash.Sum64()),
 			httpClient:          &http.Client{Timeout: 5 * time.Second},
 			baseInstanceInfoURL: baseInstanceInfoURL,
-			baseTelemetryURL:    baseTelemetryURL,
+			baseGatewayURL:      baseGatewayURL,
 		},
 		routinesPool:    pool,
 		metricsRegistry: metricsRegistry,
-	}, nil
+	}
 }
 
 // Pilot connector with Pilot.
@@ -72,8 +76,8 @@ func (p *Pilot) SetDynamicConfiguration(dynamicConfig dynamic.Configuration) {
 	p.dynamicConfigCh <- dynamicConfig
 }
 
-func (p *Pilot) sendTelemetry(ctx context.Context, config dynamic.Configuration) {
-	err := p.client.SendTelemetry(ctx, config)
+func (p *Pilot) sendAnonDynConf(ctx context.Context, config dynamic.Configuration) {
+	err := p.client.SendAnonDynConf(ctx, config)
 	if err != nil {
 		log.WithoutContext().Error(err)
 	}
@@ -95,7 +99,7 @@ func (p *Pilot) Tick(ctx context.Context) {
 	})
 
 	instanceInfoTicker := time.NewTicker(pilotInstanceInfoTimer)
-	telemetryTicker := time.NewTicker(pilotTelemetryTimer)
+	dynConfTicker := time.NewTicker(pilotDynConfTimer)
 
 	for {
 		select {
@@ -107,11 +111,11 @@ func (p *Pilot) Tick(ctx context.Context) {
 			p.routinesPool.GoCtx(func(ctxRt context.Context) {
 				p.sendInstanceInfo(ctxRt, pilotMetrics)
 			})
-		case tick := <-telemetryTicker.C:
-			log.WithoutContext().Debugf("Send telemetry to pilot: %s", tick)
+		case tick := <-dynConfTicker.C:
+			log.WithoutContext().Debugf("Send anonymized dynamic configuration to pilot: %s", tick)
 
 			p.routinesPool.GoCtx(func(ctxRt context.Context) {
-				p.sendTelemetry(ctxRt, p.dynamicConfig)
+				p.sendAnonDynConf(ctxRt, p.dynamicConfig)
 			})
 		case dynamicConfig := <-p.dynamicConfigCh:
 			p.dynamicConfig = dynamicConfig
@@ -124,7 +128,7 @@ func (p *Pilot) Tick(ctx context.Context) {
 type client struct {
 	httpClient          *http.Client
 	baseInstanceInfoURL string
-	baseTelemetryURL    string
+	baseGatewayURL      string
 	token               string
 	tokenHash           string
 	uuid                string
@@ -165,47 +169,23 @@ func (c *client) createUUID() (string, error) {
 	return created.ID, nil
 }
 
-// SendTelemetry sends telemetry to Pilot.
-func (c *client) SendTelemetry(ctx context.Context, config dynamic.Configuration) error {
-	exponentialBackOff := backoff.NewExponentialBackOff()
-	exponentialBackOff.MaxElapsedTime = maxElapsedTime
-
+// SendAnonDynConf sends anonymized dynamic configuration to Pilot.
+func (c *client) SendAnonDynConf(ctx context.Context, config dynamic.Configuration) error {
 	anonConfig, err := anonymize.Do(&config, false)
 	if err != nil {
 		return fmt.Errorf("unable to anonymize dynamic configuration: %w", err)
 	}
 
-	return backoff.RetryNotify(
-		func() error {
-			req, err := http.NewRequest(http.MethodPost, c.baseTelemetryURL+"/collect", bytes.NewReader([]byte(anonConfig)))
-			if err != nil {
-				return fmt.Errorf("failed to create telemetry request: %w", err)
-			}
+	req, err := http.NewRequest(http.MethodPost, c.baseGatewayURL+"/collect", bytes.NewReader([]byte(anonConfig)))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
 
-			return c.sendData(req)
-		},
-		backoff.WithContext(exponentialBackOff, ctx),
-		func(err error, duration time.Duration) {
-			log.WithoutContext().Errorf("retry in %s due to: %v ", duration, err)
-		})
+	return c.sendDataRetryable(ctx, req)
 }
 
 // SendInstanceInfo sends instance information to Pilot.
 func (c *client) SendInstanceInfo(ctx context.Context, pilotMetrics []metrics.PilotMetric) error {
-	exponentialBackOff := backoff.NewExponentialBackOff()
-	exponentialBackOff.MaxElapsedTime = maxElapsedTime
-
-	return backoff.RetryNotify(
-		func() error {
-			return c.sendInstanceInfo(pilotMetrics)
-		},
-		backoff.WithContext(exponentialBackOff, ctx),
-		func(err error, duration time.Duration) {
-			log.WithoutContext().Errorf("retry in %s due to: %v ", duration, err)
-		})
-}
-
-func (c *client) sendInstanceInfo(pilotMetrics []metrics.PilotMetric) error {
 	if len(c.uuid) == 0 {
 		var err error
 		c.uuid, err = c.createUUID()
@@ -231,29 +211,40 @@ func (c *client) sendInstanceInfo(pilotMetrics []metrics.PilotMetric) error {
 		return fmt.Errorf("failed to create instance info request: %w", err)
 	}
 
-	return c.sendData(req)
+	req.Header.Set(tokenHeader, c.token)
+
+	return c.sendDataRetryable(ctx, req)
 }
 
-func (c *client) sendData(req *http.Request) error {
+func (c *client) sendDataRetryable(ctx context.Context, req *http.Request) error {
+	exponentialBackOff := backoff.NewExponentialBackOff()
+	exponentialBackOff.MaxElapsedTime = maxElapsedTime
+
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set(tokenHeader, c.token)
 	req.Header.Set(tokenHashHeader, c.tokenHash)
 
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to call Pilot: %w", err)
-	}
+	return backoff.RetryNotify(
+		func() error {
+			resp, err := c.httpClient.Do(req)
+			if err != nil {
+				return fmt.Errorf("failed to call Pilot: %w", err)
+			}
 
-	defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
-	}
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return fmt.Errorf("failed to read response body: %w", err)
+			}
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("wrong status code while sending configuration: %d: %s", resp.StatusCode, body)
-	}
+			if resp.StatusCode != http.StatusOK {
+				return fmt.Errorf("wrong status code while sending configuration: %d: %s", resp.StatusCode, body)
+			}
 
-	return nil
+			return nil
+		},
+		backoff.WithContext(exponentialBackOff, ctx),
+		func(err error, duration time.Duration) {
+			log.WithoutContext().Errorf("retry in %s due to: %v ", duration, err)
+		})
 }

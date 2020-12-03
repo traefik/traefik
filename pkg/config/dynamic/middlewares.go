@@ -414,7 +414,7 @@ type TLSClientCertificateInfo struct {
 
 // +k8s:deepcopy-gen=true
 
-// TLSCLientCertificateDNInfo holds the client TLS certificate distinguished name info configuration
+// TLSCLientCertificateDNInfo holds the client TLS certificate distinguished name info configuration.
 // cf https://tools.ietf.org/html/rfc3739
 type TLSCLientCertificateDNInfo struct {
 	Country         bool `json:"country,omitempty" toml:"country,omitempty" yaml:"country,omitempty" export:"true"`
