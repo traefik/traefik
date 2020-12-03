@@ -7,6 +7,8 @@ import (
 	"regexp"
 
 	"github.com/mitchellh/copystructure"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/tls"
 	"mvdan.cc/xurls/v2"
 )
 
@@ -43,6 +45,11 @@ func doOnJSON(input string) string {
 }
 
 func doOnStruct(field reflect.Value) error {
+	if field.Type().AssignableTo(reflect.TypeOf(dynamic.PluginConf{})) {
+		resetPlugin(field)
+		return nil
+	}
+
 	switch field.Kind() {
 	case reflect.Ptr:
 		if !field.IsNil() {
@@ -57,19 +64,48 @@ func doOnStruct(field reflect.Value) error {
 			if !isExported(stField) {
 				continue
 			}
+
 			if stField.Tag.Get("export") == "true" {
+				// A struct field cannot be set it must be filled as pointer.
+				if fld.Kind() == reflect.Struct {
+					fldPtr := reflect.New(fld.Type())
+					fldPtr.Elem().Set(fld)
+
+					if err := doOnStruct(fldPtr); err != nil {
+						return err
+					}
+
+					fld.Set(fldPtr.Elem())
+
+					continue
+				}
+
 				if err := doOnStruct(fld); err != nil {
 					return err
 				}
-			} else {
-				if err := reset(fld, stField.Name); err != nil {
-					return err
-				}
+			} else if err := reset(fld, stField.Name); err != nil {
+				return err
 			}
 		}
 	case reflect.Map:
 		for _, key := range field.MapKeys() {
-			if err := doOnStruct(field.MapIndex(key)); err != nil {
+			val := field.MapIndex(key)
+
+			// A struct value cannot be set it must be filled as pointer.
+			if val.Kind() == reflect.Struct {
+				valPtr := reflect.New(val.Type())
+				valPtr.Elem().Set(val)
+
+				if err := doOnStruct(valPtr); err != nil {
+					return err
+				}
+
+				field.SetMapIndex(key, valPtr.Elem())
+
+				continue
+			}
+
+			if err := doOnStruct(val); err != nil {
 				return err
 			}
 		}
@@ -100,7 +136,11 @@ func reset(field reflect.Value, name string) error {
 		}
 	case reflect.String:
 		if field.String() != "" {
-			field.Set(reflect.ValueOf(maskShort))
+			if field.Type().AssignableTo(reflect.TypeOf(tls.FileOrContent(""))) {
+				field.Set(reflect.ValueOf(tls.FileOrContent(maskShort)))
+			} else {
+				field.Set(reflect.ValueOf(maskShort))
+			}
 		}
 	case reflect.Map:
 		if field.Len() > 0 {
@@ -128,6 +168,13 @@ func reset(field reflect.Value, name string) error {
 		field.Set(reflect.Zero(field.Type()))
 	}
 	return nil
+}
+
+// resetPlugin resets the plugin configuration so it keep the plugin name but not its configuration.
+func resetPlugin(field reflect.Value) {
+	for _, key := range field.MapKeys() {
+		field.SetMapIndex(key, reflect.ValueOf(struct{}{}))
+	}
 }
 
 // isExported return true is a struct field is exported, else false.
