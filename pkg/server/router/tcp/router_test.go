@@ -328,7 +328,6 @@ func TestDomainFronting(t *testing.T) {
 						EntryPoints: []string{"web"},
 						Rule:        "Host(`host2.local`)",
 						TLS: &dynamic.RouterTLSConfig{
-							Options: "default",
 						},
 					},
 				},
