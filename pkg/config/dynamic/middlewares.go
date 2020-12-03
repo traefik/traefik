@@ -66,15 +66,6 @@ type AddPrefix struct {
 
 // +k8s:deepcopy-gen=true
 
-// Auth holds the authentication configuration (BASIC, DIGEST, users).
-type Auth struct {
-	Basic   *BasicAuth   `json:"basic,omitempty" toml:"basic,omitempty" yaml:"basic,omitempty"`
-	Digest  *DigestAuth  `json:"digest,omitempty" toml:"digest,omitempty" yaml:"digest,omitempty"`
-	Forward *ForwardAuth `json:"forward,omitempty" toml:"forward,omitempty" yaml:"forward,omitempty"`
-}
-
-// +k8s:deepcopy-gen=true
-
 // BasicAuth holds the HTTP basic authentication configuration.
 type BasicAuth struct {
 	Users        Users  `json:"users,omitempty" toml:"users,omitempty" yaml:"users,omitempty"`
