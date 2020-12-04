@@ -987,6 +987,128 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc: "Ingress Route with IPv6 backends",
+			paths: []string{
+				"services.yml", "with_ipv6.yml",
+				"tcp/services.yml", "tcp/with_ipv6.yml",
+				"udp/services.yml", "udp/with_ipv6.yml",
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-test.route-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-0",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"default-test.route-0": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "[fd00:10:244:0:1::3]:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-test.route-673acf455cb2dab0b43a": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-673acf455cb2dab0b43a",
+							Rule:        "HostSNI(`*`)",
+						},
+					},
+					Services: map[string]*dynamic.TCPService{
+						"default-test.route-673acf455cb2dab0b43a": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "default-test.route-673acf455cb2dab0b43a-whoamitcp-ipv6-8080",
+										Weight: func(i int) *int { return &i }(1),
+									},
+									{
+										Name:   "default-test.route-673acf455cb2dab0b43a-external.service.with.ipv6-8080",
+										Weight: func(i int) *int { return &i }(1),
+									},
+								},
+							},
+						},
+						"default-test.route-673acf455cb2dab0b43a-whoamitcp-ipv6-8080": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "[fd00:10:244:0:1::3]:8080",
+									},
+									{
+										Address: "[2001:db8:85a3:8d3:1319:8a2e:370:7348]:8080",
+									},
+								},
+							},
+						},
+						"default-test.route-673acf455cb2dab0b43a-external.service.with.ipv6-8080": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "[fe80::200:5aee:feaa:20a2]:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-route-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-whoami-ipv6-8080": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://[2001:db8:85a3:8d3:1319:8a2e:370:7348]:8080",
+									},
+								},
+								PassHostHeader: func(i bool) *bool { return &i }(true),
+							},
+						},
+						"default-external-svc-with-ipv6-8080": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://[2001:db8:85a3:8d3:1319:8a2e:370:7347]:8080",
+									},
+								},
+								PassHostHeader: func(i bool) *bool { return &i }(true),
+							},
+						},
+						"default-test-route-6b204d94623b3df4370c": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-ipv6-8080",
+										Weight: func(i int) *int { return &i }(1),
+									},
+									{
+										Name:   "default-external-svc-with-ipv6-8080",
+										Weight: func(i int) *int { return &i }(1),
+									},
+								},
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {

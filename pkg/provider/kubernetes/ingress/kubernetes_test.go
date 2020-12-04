@@ -662,6 +662,47 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Ingress with IPv6 endpoints",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"example-com-testing-bar": {
+							Rule:    "PathPrefix(`/bar`)",
+							Service: "testing-service-bar-8080",
+						},
+						"example-com-testing-foo": {
+							Rule:    "PathPrefix(`/foo`)",
+							Service: "testing-service-foo-8080",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service-bar-8080": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://[2001:0db8:3c4d:0015:0000:0000:1a2f:1a2b]:8080",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+						"testing-service-foo-8080": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://[2001:0db8:3c4d:0015:0000:0000:1a2f:2a3b]:8080",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc: "TLS support",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},

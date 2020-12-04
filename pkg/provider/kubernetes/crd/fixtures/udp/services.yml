@@ -101,3 +101,32 @@ subsets:
     ports:
       - name: myapp4
         port: 8084
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamiudp-ipv6
+  namespace: default
+
+spec:
+  ports:
+    - name: myapp-ipv6
+      port: 8080
+  selector:
+    app: traefiklabs
+    task: whoamiudp-ipv6
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoamiudp-ipv6
+  namespace: default
+
+subsets:
+  - addresses:
+      - ip: "fd00:10:244:0:1::3"
+    ports:
+      - name: myapp-ipv6
+        port: 8080
