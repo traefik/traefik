@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -479,9 +481,10 @@ func loadService(client Client, namespace string, backend networkingv1beta1.Ingr
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		protocol := getProtocol(portSpec, portSpec.Name, svcConfig)
+		hostPort := net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(portSpec.Port)))
 
 		svc.LoadBalancer.Servers = []dynamic.Server{
-			{URL: fmt.Sprintf("%s://%s:%d", protocol, service.Spec.ExternalName, portSpec.Port)},
+			{URL: fmt.Sprintf("%s://%s", protocol, hostPort)},
 		}
 
 		return svc, nil
@@ -516,8 +519,10 @@ func loadService(client Client, namespace string, backend networkingv1beta1.Ingr
 		protocol := getProtocol(portSpec, portName, svcConfig)
 
 		for _, addr := range subset.Addresses {
+			hostPort := net.JoinHostPort(addr.IP, strconv.Itoa(int(port)))
+
 			svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
-				URL: fmt.Sprintf("%s://%s:%d", protocol, addr.IP, port),
+				URL: fmt.Sprintf("%s://%s", protocol, hostPort),
 			})
 		}
 	}
