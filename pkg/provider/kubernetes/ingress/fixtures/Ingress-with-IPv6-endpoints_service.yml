@@ -22,6 +22,5 @@ spec:
   ports:
   - name: http
     port: 8080
-  clusterIp: "fc00:f853:ccd:e793::2"
   type: ExternalName
   externalName: "2001:0db8:3c4d:0015:0000:0000:1a2f:2a3b"
