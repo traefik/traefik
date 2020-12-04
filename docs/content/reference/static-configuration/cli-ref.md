@@ -582,6 +582,9 @@ Kubernetes server endpoint (required for external cluster client).
 `--providers.kubernetesingress.ingressclass`:  
 Value of kubernetes.io/ingress.class annotation to watch for.
 
+`--providers.kubernetesingress.ingressclasscontroller`:  
+Value for controller attribute of IngressClass to watch for.
+
 `--providers.kubernetesingress.ingressendpoint.hostname`:  
 Hostname used for Kubernetes Ingress endpoints.
 

@@ -311,8 +311,10 @@ providers:
 
 ```bash tab="CLI"
 --providers.kubernetesingress.ingressclasscontroller=internal.traefik.io/ingress-controller
+
 ```
-Identifies IngressClass objects with matching controller attribute to be processed.
+Value for controller attribute of IngressClass to watch for.
+
 ### `ingressEndpoint`
 
 #### `hostname`
