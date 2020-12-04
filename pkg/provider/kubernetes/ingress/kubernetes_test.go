@@ -24,10 +24,11 @@ func Bool(v bool) *bool { return &v }
 
 func TestLoadConfigurationFromIngresses(t *testing.T) {
 	testCases := []struct {
-		desc          string
-		ingressClass  string
-		serverVersion string
-		expected      *dynamic.Configuration
+		desc                   string
+		ingressClass           string
+		ingressClassController string
+		serverVersion          string
+		expected               *dynamic.Configuration
 	}{
 		{
 			desc: "Empty ingresses",
@@ -953,6 +954,61 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc:                   "v18 Ingress with ingressClass",
+			serverVersion:          "v1.18",
+			ingressClassController: "not-exists.traefik.io/ingress-controller",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers:     map[string]*dynamic.Router{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
+			desc:                   "v18 Ingress with ingressClass different ingressClassController",
+			serverVersion:          "v1.18",
+			ingressClassController: "private.traefik.io/ingress-controller",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-bar": {
+							Rule:    "PathPrefix(`/bar`)",
+							Service: "testing-service1-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:                   "v18 Ingress with ingressClass different ingressClassController",
+			serverVersion:          "v1.18",
+			ingressClassController: "not-exists.traefik.io/ingress-controller",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers:     map[string]*dynamic.Router{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
 			desc:          "v18 Ingress with no pathType",
 			serverVersion: "v1.18",
 			expected: &dynamic.Configuration{
@@ -1065,8 +1121,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:          "v18 Ingress with exact pathType",
-			serverVersion: "v1.18",
+			desc:                   "v18 Ingress with exact pathType",
+			serverVersion:          "v1.18",
+			ingressClassController: "false",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1169,7 +1226,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 
 			clientMock := newClientMock(serverVersion, paths...)
 
-			p := Provider{IngressClass: test.ingressClass}
+			p := Provider{IngressClass: test.ingressClass, IngressClassController: test.ingressClassController}
 			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
 
 			assert.Equal(t, test.expected, conf)

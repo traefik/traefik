@@ -56,7 +56,7 @@ func (reh *resourceEventHandler) OnDelete(obj interface{}) {
 type Client interface {
 	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
 	GetIngresses() []*networkingv1beta1.Ingress
-	GetIngressClass() (*networkingv1beta1.IngressClass, error)
+	GetIngressClass(ingressClassController string) (*networkingv1beta1.IngressClass, error)
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
@@ -393,7 +393,7 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 	return secret, exist, err
 }
 
-func (c *clientWrapper) GetIngressClass() (*networkingv1beta1.IngressClass, error) {
+func (c *clientWrapper) GetIngressClass(ingressClassController string) (*networkingv1beta1.IngressClass, error) {
 	if c.clusterFactory == nil {
 		return nil, errors.New("failed to find ingressClass: factory not loaded")
 	}
@@ -402,14 +402,14 @@ func (c *clientWrapper) GetIngressClass() (*networkingv1beta1.IngressClass, erro
 	if err != nil {
 		return nil, err
 	}
-
 	for _, ic := range ingressClasses {
-		if ic.Spec.Controller == traefikDefaultIngressClassController {
+		if ic.Spec.Controller == ingressClassController ||
+			(len(ingressClassController) == 0 && ic.Spec.Controller == traefikDefaultIngressClassController) {
 			return ic, nil
 		}
 	}
 
-	return nil, nil
+	return nil, errors.New(ingressClassController)
 }
 
 // lookupNamespace returns the lookup namespace key for the given namespace.

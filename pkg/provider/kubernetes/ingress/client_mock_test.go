@@ -1,6 +1,7 @@
 package ingress
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 
@@ -117,8 +118,14 @@ func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, err
 	return nil, false, nil
 }
 
-func (c clientMock) GetIngressClass() (*networkingv1beta1.IngressClass, error) {
-	return c.ingressClass, nil
+func (c clientMock) GetIngressClass(ingressClassController string) (*networkingv1beta1.IngressClass, error) {
+	if c.ingressClass != nil {
+		if c.ingressClass.Spec.Controller == ingressClassController ||
+			(len(ingressClassController) == 0 && c.ingressClass.Spec.Controller == traefikDefaultIngressClassController) {
+			return c.ingressClass, nil
+		}
+	}
+	return nil, errors.New(ingressClassController)
 }
 
 func (c clientMock) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
