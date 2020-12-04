@@ -117,7 +117,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		logger := log.FromContext(ctxRouter)
 
 		tlsOptionsName := defaultTLSConfigName
-		if len(routerHTTPConfig.TLS.Options) > 0 {
+		if len(routerHTTPConfig.TLS.Options) > 0 && routerHTTPConfig.TLS.Options != defaultTLSConfigName {
 			tlsOptionsName = provider.GetQualifiedName(ctxRouter, routerHTTPConfig.TLS.Options)
 		}
 

@@ -314,7 +314,7 @@ func TestDomainFronting(t *testing.T) {
 		{
 			desc: "Request is misdirected when TLS options are different",
 			routers: map[string]*runtime.RouterInfo{
-				"router-1": {
+				"router-1@file": {
 					Router: &dynamic.Router{
 						EntryPoints: []string{"web"},
 						Rule:        "Host(`host1.local`)",
@@ -323,7 +323,7 @@ func TestDomainFronting(t *testing.T) {
 						},
 					},
 				},
-				"router-2": {
+				"router-2@file": {
 					Router: &dynamic.Router{
 						EntryPoints: []string{"web"},
 						Rule:        "Host(`host2.local`)",
@@ -336,7 +336,7 @@ func TestDomainFronting(t *testing.T) {
 		{
 			desc: "Request is OK when TLS options are the same",
 			routers: map[string]*runtime.RouterInfo{
-				"router-1": {
+				"router-1@file": {
 					Router: &dynamic.Router{
 						EntryPoints: []string{"web"},
 						Rule:        "Host(`host1.local`)",
@@ -345,7 +345,7 @@ func TestDomainFronting(t *testing.T) {
 						},
 					},
 				},
-				"router-2": {
+				"router-2@file": {
 					Router: &dynamic.Router{
 						EntryPoints: []string{"web"},
 						Rule:        "Host(`host2.local`)",
@@ -360,7 +360,7 @@ func TestDomainFronting(t *testing.T) {
 		{
 			desc: "Default TLS options is used when options are ambiguous for the same host",
 			routers: map[string]*runtime.RouterInfo{
-				"router-1": {
+				"router-1@file": {
 					Router: &dynamic.Router{
 						EntryPoints: []string{"web"},
 						Rule:        "Host(`host1.local`)",
@@ -369,7 +369,7 @@ func TestDomainFronting(t *testing.T) {
 						},
 					},
 				},
-				"router-2": {
+				"router-2@file": {
 					Router: &dynamic.Router{
 						EntryPoints: []string{"web"},
 						Rule:        "Host(`host1.local`) && PathPrefix(`/foo`)",
@@ -378,7 +378,7 @@ func TestDomainFronting(t *testing.T) {
 						},
 					},
 				},
-				"router-3": {
+				"router-3@file": {
 					Router: &dynamic.Router{
 						EntryPoints: []string{"web"},
 						Rule:        "Host(`host2.local`)",
@@ -393,7 +393,7 @@ func TestDomainFronting(t *testing.T) {
 		{
 			desc: "Default TLS options should not be used when options are the same for the same host",
 			routers: map[string]*runtime.RouterInfo{
-				"router-1": {
+				"router-1@file": {
 					Router: &dynamic.Router{
 						EntryPoints: []string{"web"},
 						Rule:        "Host(`host1.local`)",
@@ -402,7 +402,7 @@ func TestDomainFronting(t *testing.T) {
 						},
 					},
 				},
-				"router-2": {
+				"router-2@file": {
 					Router: &dynamic.Router{
 						EntryPoints: []string{"web"},
 						Rule:        "Host(`host1.local`) && PathPrefix(`/bar`)",
@@ -411,7 +411,7 @@ func TestDomainFronting(t *testing.T) {
 						},
 					},
 				},
-				"router-3": {
+				"router-3@file": {
 					Router: &dynamic.Router{
 						EntryPoints: []string{"web"},
 						Rule:        "Host(`host2.local`)",
@@ -423,6 +423,30 @@ func TestDomainFronting(t *testing.T) {
 			},
 			expectedStatus: http.StatusOK,
 		},
+		{
+			desc: "Request is misdirected when TLS options have the same name but from different providers",
+			routers: map[string]*runtime.RouterInfo{
+				"router-1@file": {
+					Router: &dynamic.Router{
+						EntryPoints: []string{"web"},
+						Rule:        "Host(`host1.local`)",
+						TLS: &dynamic.RouterTLSConfig{
+							Options: "host1",
+						},
+					},
+				},
+				"router-2@crd": {
+					Router: &dynamic.Router{
+						EntryPoints: []string{"web"},
+						Rule:        "Host(`host2.local`)",
+						TLS: &dynamic.RouterTLSConfig{
+							Options: "host1",
+						},
+					},
+				},
+			},
+			expectedStatus: http.StatusMisdirectedRequest,
+		},
 	}
 
 	for _, test := range tests {
@@ -432,7 +456,10 @@ func TestDomainFronting(t *testing.T) {
 				"default": {
 					MinVersion: "VersionTLS10",
 				},
-				"host1": {
+				"host1@file": {
+					MinVersion: "VersionTLS12",
+				},
+				"host1@crd": {
 					MinVersion: "VersionTLS12",
 				},
 			}
