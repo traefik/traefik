@@ -270,8 +270,6 @@ metrics:
     password: foobar
     addEntryPointsLabels: true
     addServicesLabels: true
-pilot:
-  token: foobar
 ping:
   entryPoint: foobar
   manualRouting: true
@@ -358,6 +356,9 @@ certificatesResolvers:
       preferredChain: foobar
       storage: foobar
       keyType: foobar
+      eab:
+        kid: foobar
+        hmacEncoded: foobar
       dnsChallenge:
         provider: foobar
         delayBeforeCheck: 42
@@ -375,6 +376,9 @@ certificatesResolvers:
       preferredChain: foobar
       storage: foobar
       keyType: foobar
+      eab:
+        kid: foobar
+        hmacEncoded: foobar
       dnsChallenge:
         provider: foobar
         delayBeforeCheck: 42
@@ -385,6 +389,8 @@ certificatesResolvers:
       httpChallenge:
         entryPoint: foobar
       tlsChallenge: {}
+pilot:
+  token: foobar
 experimental:
   plugins:
     Descriptor0:

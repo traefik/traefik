@@ -69,6 +69,12 @@ Use a DNS-01 based challenge provider rather than HTTPS.
 `--certificatesresolvers.<name>.acme.dnschallenge.resolvers`:  
 Use following DNS servers to resolve the FQDN authority.
 
+`--certificatesresolvers.<name>.acme.eab.hmacencoded`:  
+Base64 encoded HMAC key from External CA.
+
+`--certificatesresolvers.<name>.acme.eab.kid`:  
+Key identifier from External CA.
+
 `--certificatesresolvers.<name>.acme.email`:  
 Email address used for registration.
 

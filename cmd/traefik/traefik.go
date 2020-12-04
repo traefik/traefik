@@ -29,7 +29,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v2/pkg/pilot"
-	"github.com/traefik/traefik/v2/pkg/plugins"
 	"github.com/traefik/traefik/v2/pkg/provider/acme"
 	"github.com/traefik/traefik/v2/pkg/provider/aggregator"
 	"github.com/traefik/traefik/v2/pkg/provider/traefik"
@@ -174,24 +173,28 @@ func runCmd(staticConfiguration *static.Configuration) error {
 func setupServer(staticConfiguration *static.Configuration) (*server.Server, error) {
 	providerAggregator := aggregator.NewProviderAggregator(*staticConfiguration.Providers)
 
+	ctx := context.Background()
+	routinesPool := safe.NewPool(ctx)
+
 	// adds internal provider
 	err := providerAggregator.AddProvider(traefik.New(*staticConfiguration))
 	if err != nil {
 		return nil, err
 	}
 
+	// ACME
+
 	tlsManager := traefiktls.NewManager()
-
 	httpChallengeProvider := acme.NewChallengeHTTP()
-
 	tlsChallengeProvider := acme.NewChallengeTLSALPN(time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration))
-
 	err = providerAggregator.AddProvider(tlsChallengeProvider)
 	if err != nil {
 		return nil, err
 	}
 
 	acmeProviders := initACMEProvider(staticConfiguration, &providerAggregator, tlsManager, httpChallengeProvider, tlsChallengeProvider)
+
+	// Entrypoints
 
 	serverEntryPointsTCP, err := server.NewTCPEntryPoints(staticConfiguration.EntryPoints)
 	if err != nil {
@@ -203,107 +206,98 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		return nil, err
 	}
 
-	ctx := context.Background()
-	routinesPool := safe.NewPool(ctx)
-
-	metricRegistries := registerMetricClients(staticConfiguration.Metrics)
+	// Pilot
 
 	var aviator *pilot.Pilot
+	var pilotRegistry *metrics.PilotRegistry
 	if isPilotEnabled(staticConfiguration) {
-		pilotRegistry := metrics.RegisterPilot()
+		pilotRegistry = metrics.RegisterPilot()
 
 		aviator = pilot.New(staticConfiguration.Pilot.Token, pilotRegistry, routinesPool)
+
 		routinesPool.GoCtx(func(ctx context.Context) {
 			aviator.Tick(ctx)
 		})
+	}
 
+	// Plugins
+
+	pluginBuilder, err := createPluginBuilder(staticConfiguration)
+	if err != nil {
+		return nil, err
+	}
+
+	// Metrics
+
+	metricRegistries := registerMetricClients(staticConfiguration.Metrics)
+	if pilotRegistry != nil {
 		metricRegistries = append(metricRegistries, pilotRegistry)
 	}
-
 	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
-	accessLog := setupAccessLog(staticConfiguration.AccessLog)
-	chainBuilder := middleware.NewChainBuilder(*staticConfiguration, metricsRegistry, accessLog)
+
+	// Service manager factory
+
 	roundTripperManager := service.NewRoundTripperManager()
-
-	var acmeHTTPHandler http.Handler
-	for _, p := range acmeProviders {
-		if p != nil && p.HTTPChallenge != nil {
-			acmeHTTPHandler = httpChallengeProvider
-			break
-		}
-	}
-
+	acmeHTTPHandler := getHTTPChallengeHandler(acmeProviders, httpChallengeProvider)
 	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, roundTripperManager, acmeHTTPHandler)
 
-	client, plgs, devPlugin, err := initPlugins(staticConfiguration)
-	if err != nil {
-		return nil, err
-	}
+	// Router factory
 
-	pluginBuilder, err := plugins.NewBuilder(client, plgs, devPlugin)
-	if err != nil {
-		return nil, err
-	}
-
+	accessLog := setupAccessLog(staticConfiguration.AccessLog)
+	chainBuilder := middleware.NewChainBuilder(*staticConfiguration, metricsRegistry, accessLog)
 	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder)
 
-	var defaultEntryPoints []string
-	for name, cfg := range staticConfiguration.EntryPoints {
-		protocol, err := cfg.GetProtocol()
-		if err != nil {
-			// Should never happen because Traefik should not start if protocol is invalid.
-			log.WithoutContext().Errorf("Invalid protocol: %v", err)
-		}
-
-		if protocol != "udp" && name != static.DefaultInternalEntryPointName {
-			defaultEntryPoints = append(defaultEntryPoints, name)
-		}
-	}
-
-	sort.Strings(defaultEntryPoints)
+	// Watcher
 
 	watcher := server.NewConfigurationWatcher(
 		routinesPool,
 		providerAggregator,
 		time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration),
-		defaultEntryPoints,
+		getDefaultsEntrypoints(staticConfiguration),
 	)
 
+	// TLS
 	watcher.AddListener(func(conf dynamic.Configuration) {
 		ctx := context.Background()
 		tlsManager.UpdateConfigs(ctx, conf.TLS.Stores, conf.TLS.Options, conf.TLS.Certificates)
 	})
 
+	// Metrics
 	watcher.AddListener(func(_ dynamic.Configuration) {
 		metricsRegistry.ConfigReloadsCounter().Add(1)
 		metricsRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
 	})
 
+	// Server Transports
 	watcher.AddListener(func(conf dynamic.Configuration) {
 		roundTripperManager.Update(conf.HTTP.ServersTransports)
 	})
 
+	// Switch router
 	watcher.AddListener(switchRouter(routerFactory, serverEntryPointsTCP, serverEntryPointsUDP, aviator))
 
-	watcher.AddListener(func(conf dynamic.Configuration) {
-		if metricsRegistry.IsEpEnabled() || metricsRegistry.IsSvcEnabled() {
-			var eps []string
-			for key := range serverEntryPointsTCP {
-				eps = append(eps, key)
-			}
-
-			metrics.OnConfigurationUpdate(conf, eps)
+	// Metrics
+	if metricsRegistry.IsEpEnabled() || metricsRegistry.IsSvcEnabled() {
+		var eps []string
+		for key := range serverEntryPointsTCP {
+			eps = append(eps, key)
 		}
-	})
+		watcher.AddListener(func(conf dynamic.Configuration) {
+			metrics.OnConfigurationUpdate(conf, eps)
+		})
+	}
 
+	// TLS challenge
 	watcher.AddListener(tlsChallengeProvider.ListenConfiguration)
 
+	// ACME
 	resolverNames := map[string]struct{}{}
 	for _, p := range acmeProviders {
 		resolverNames[p.ResolverName] = struct{}{}
 		watcher.AddListener(p.ListenConfiguration)
 	}
 
+	// Certificate resolver logs
 	watcher.AddListener(func(config dynamic.Configuration) {
 		for rtName, rt := range config.HTTP.Routers {
 			if rt.TLS == nil || rt.TLS.CertResolver == "" {
@@ -319,6 +313,35 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	return server.NewServer(routinesPool, serverEntryPointsTCP, serverEntryPointsUDP, watcher, chainBuilder, accessLog), nil
 }
 
+func getHTTPChallengeHandler(acmeProviders []*acme.Provider, httpChallengeProvider http.Handler) http.Handler {
+	var acmeHTTPHandler http.Handler
+	for _, p := range acmeProviders {
+		if p != nil && p.HTTPChallenge != nil {
+			acmeHTTPHandler = httpChallengeProvider
+			break
+		}
+	}
+	return acmeHTTPHandler
+}
+
+func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string {
+	var defaultEntryPoints []string
+	for name, cfg := range staticConfiguration.EntryPoints {
+		protocol, err := cfg.GetProtocol()
+		if err != nil {
+			// Should never happen because Traefik should not start if protocol is invalid.
+			log.WithoutContext().Errorf("Invalid protocol: %v", err)
+		}
+
+		if protocol != "udp" && name != static.DefaultInternalEntryPointName {
+			defaultEntryPoints = append(defaultEntryPoints, name)
+		}
+	}
+
+	sort.Strings(defaultEntryPoints)
+	return defaultEntryPoints
+}
+
 func switchRouter(routerFactory *server.RouterFactory, serverEntryPointsTCP server.TCPEntryPoints, serverEntryPointsUDP server.UDPEntryPoints, aviator *pilot.Pilot) func(conf dynamic.Configuration) {
 	return func(conf dynamic.Configuration) {
 		rtConf := runtime.NewConfig(conf)
@@ -326,7 +349,7 @@ func switchRouter(routerFactory *server.RouterFactory, serverEntryPointsTCP serv
 		routers, udpRouters := routerFactory.CreateRouters(rtConf)
 
 		if aviator != nil {
-			aviator.SetRuntimeConfiguration(rtConf)
+			aviator.SetDynamicConfiguration(conf)
 		}
 
 		serverEntryPointsTCP.Switch(routers)
