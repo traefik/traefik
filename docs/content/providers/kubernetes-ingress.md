@@ -292,6 +292,27 @@ Otherwise, Ingresses missing the annotation, having an empty value, or with the 
               servicePort: 80
     ```
 
+### `ingressClassController`
+
+_Optional, Default: traefik.io/ingress-controller_
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  ingressClassController = "internal.traefik.io/ingress-controller"
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    ingressClassController: "internal.traefik.io/ingress-controller"
+    # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.ingressclasscontroller=internal.traefik.io/ingress-controller
+```
+Identifies IngressClass objects with matching controller attribute to be processed.
 ### `ingressEndpoint`
 
 #### `hostname`
