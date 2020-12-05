@@ -1121,9 +1121,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:                   "v18 Ingress with exact pathType",
-			serverVersion:          "v1.18",
-			ingressClassController: "false",
+			desc:          "v18 Ingress with exact pathType",
+			serverVersion: "v1.18",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
