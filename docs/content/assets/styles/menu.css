@@ -36,7 +36,7 @@
 }
 
 .md-sidebar__scrollwrap {
-  height: calc(100% - 50px);
+  max-height: calc(100% - 50px);
 }
 
 .md-sidebar--secondary .md-sidebar__scrollwrap {
