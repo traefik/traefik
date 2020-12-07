@@ -69,7 +69,7 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 	// FIXME Optimize and test the routing table before helloServerName
 	serverName = types.CanonicalDomain(serverName)
 	if r.routingTable != nil && serverName != "" {
-		if target, ok := r.routingTable[serverName]; ok {
+		if target, ok := r.GetTarget(serverName); ok {
 			target.ServeTCP(r.GetConn(conn, peeked))
 			return
 		}
@@ -86,6 +86,21 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 	} else {
 		conn.Close()
 	}
+}
+
+// GetTarget finds a matching target allowing for wildcard domains.
+func (r *Router) GetTarget(serverName string) (Handler, bool) {
+	if target, ok := r.routingTable[serverName]; ok {
+		return target, true
+	}
+
+	for targetName, target := range r.routingTable {
+		if strings.HasPrefix(targetName, "*.") && strings.HasSuffix(serverName, targetName[1:]) {
+			return target, true
+		}
+	}
+
+	return nil, false
 }
 
 // AddRoute defines a handler for a given sniHost (* is the only valid option).

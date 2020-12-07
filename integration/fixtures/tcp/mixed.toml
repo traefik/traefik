@@ -56,6 +56,13 @@
       entryPoints = [ "tcp" ]
       [tcp.routers.to-whoami-no-cert.tls]
 
+    [tcp.routers.to-whoami-wildcard]
+      rule = "HostSNI(`*.whoami-a.test`)"
+      service = "whoami-a"
+      entryPoints = [ "tcp" ]
+      [tcp.routers.to-whoami-wildcard.tls]
+        passthrough = true
+
     [tcp.services.whoami-a.loadBalancer]
       [[tcp.services.whoami-a.loadBalancer.servers]]
         address = "localhost:8081"

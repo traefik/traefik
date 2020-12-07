@@ -50,6 +50,11 @@ func (s *TCPSuite) TestMixed(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(out, checker.Contains, "whoami-no-cert")
 
+	// Traefik passes through, termination of wildcard match handled by whoami-a
+	out, err = guessWho("127.0.0.1:8093", "wildcard.whoami-a.test", true)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, "whoami-a")
+
 	tr1 := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
