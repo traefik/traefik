@@ -447,6 +447,30 @@ func TestDomainFronting(t *testing.T) {
 			},
 			expectedStatus: http.StatusMisdirectedRequest,
 		},
+		{
+			desc: "Request is OK when TLS options reference from a different provider is the same",
+			routers: map[string]*runtime.RouterInfo{
+				"router-1@file": {
+					Router: &dynamic.Router{
+						EntryPoints: []string{"web"},
+						Rule:        "Host(`host1.local`)",
+						TLS: &dynamic.RouterTLSConfig{
+							Options: "host1@crd",
+						},
+					},
+				},
+				"router-2@crd": {
+					Router: &dynamic.Router{
+						EntryPoints: []string{"web"},
+						Rule:        "Host(`host2.local`)",
+						TLS: &dynamic.RouterTLSConfig{
+							Options: "host1@crd",
+						},
+					},
+				},
+			},
+			expectedStatus: http.StatusOK,
+		},
 	}
 
 	for _, test := range tests {

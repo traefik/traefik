@@ -152,7 +152,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 			if name, ok := tlsOptionsForHost[domain]; ok && name != tlsOptionsName {
 				// Different tlsOptions on the same domain fallback to default
-				tlsOptionsForHost[domain] = "default"
+				tlsOptionsForHost[domain] = defaultTLSConfigName
 			} else {
 				tlsOptionsForHost[domain] = tlsOptionsName
 			}
@@ -302,5 +302,5 @@ func findTLSOptionName(tlsOptionsForHost map[string]string, host string) string 
 		return tlsOptions
 	}
 
-	return "default"
+	return defaultTLSConfigName
 }
