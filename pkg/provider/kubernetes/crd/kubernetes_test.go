@@ -3188,10 +3188,6 @@ func TestLoadIngressRoutes(t *testing.T) {
 	for _, test := range testCases {
 		test := test
 
-		if test.desc != "Simple Ingress Route with middleware" {
-			continue
-		}
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
