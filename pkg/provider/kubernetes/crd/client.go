@@ -56,8 +56,6 @@ type Client interface {
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
-
-	NamespacesAllowed(ns1, ns2 string) bool
 }
 
 // TODO: add tests for the clientWrapper (and its methods) itself.
@@ -71,9 +69,8 @@ type clientWrapper struct {
 
 	labelSelector string
 
-	isNamespaceAll      bool
-	allowCrossNamespace bool
-	watchedNamespaces   []string
+	isNamespaceAll    bool
+	watchedNamespaces []string
 }
 
 func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
@@ -408,8 +405,4 @@ func (c *clientWrapper) isWatchedNamespace(ns string) bool {
 		}
 	}
 	return false
-}
-
-func (c *clientWrapper) NamespacesAllowed(ns1, ns2 string) bool {
-	return c.allowCrossNamespace || ns1 == ns2
 }

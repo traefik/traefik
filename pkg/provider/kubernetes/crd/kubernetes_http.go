@@ -48,8 +48,8 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			ingressName = ingressRoute.GenerateName
 		}
 
-		cb := configBuilder{client}
-	routes:
+		cb := configBuilder{client, p.AllowCrossNamespace}
+
 		for _, route := range ingressRoute.Spec.Routes {
 			if route.Kind != "Rule" {
 				logger.Errorf("Unsupported match kind: %s. Only \"Rule\" is supported for now.", route.Kind)
@@ -67,29 +67,10 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				continue
 			}
 
-			var mds []string
-			for _, mi := range route.Middlewares {
-				if strings.Contains(mi.Name, providerNamespaceSeparator) {
-					if len(mi.Namespace) > 0 {
-						logger.
-							WithField(log.MiddlewareName, mi.Name).
-							Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
-					}
-					mds = append(mds, mi.Name)
-					continue
-				}
-
-				ns := ingressRoute.Namespace
-				if len(mi.Namespace) > 0 {
-					if !client.NamespacesAllowed(mi.Namespace, ingressRoute.Namespace) {
-						logger.Errorf("Middleware %s/%s is not in the same namespace of the IngressRoute %s/%s", mi.Namespace, mi.Name, ingressRoute.Namespace, ingressRoute.Name)
-						continue routes
-					}
-
-					ns = mi.Namespace
-				}
-
-				mds = append(mds, makeID(ns, mi.Name))
+			mds, err := p.makeMiddlewareKeys(ctx, ingressRoute.Namespace, route.Middlewares)
+			if err != nil {
+				logger.Errorf("Failed to create middleware keys: %v", err)
+				continue
 			}
 
 			normalized := provider.Normalize(makeID(ingressRoute.Namespace, serviceKey))
@@ -160,8 +141,38 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 	return conf
 }
 
+func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace string, middlewares []v1alpha1.MiddlewareRef) ([]string, error) {
+	var mds []string
+
+	for _, mi := range middlewares {
+		if strings.Contains(mi.Name, providerNamespaceSeparator) {
+			if len(mi.Namespace) > 0 {
+				log.FromContext(ctx).
+					WithField(log.MiddlewareName, mi.Name).
+					Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
+			}
+			mds = append(mds, mi.Name)
+			continue
+		}
+
+		ns := ingRouteNamespace
+		if len(mi.Namespace) > 0 {
+			if !isNamespaceAllowed(p.AllowCrossNamespace, ingRouteNamespace, mi.Namespace) {
+				return nil, fmt.Errorf("middleware %s/%s is not in the IngressRoute namespace %s", mi.Namespace, mi.Name, ingRouteNamespace)
+			}
+
+			ns = mi.Namespace
+		}
+
+		mds = append(mds, makeID(ns, mi.Name))
+	}
+
+	return mds, nil
+}
+
 type configBuilder struct {
-	client Client
+	client              Client
+	allowCrossNamespace *bool
 }
 
 // buildTraefikService creates the configuration for the traefik service defined in tService,
@@ -288,8 +299,8 @@ func (c configBuilder) loadServers(parentNamespace string, svc v1alpha1.LoadBala
 
 	namespace := namespaceOrFallback(svc, parentNamespace)
 
-	if !c.client.NamespacesAllowed(namespace, parentNamespace) {
-		return nil, fmt.Errorf("load balancer service %s/%s not in the parent resource namespace %s", svc.Namespace, svc.Name, parentNamespace)
+	if !isNamespaceAllowed(c.allowCrossNamespace, parentNamespace, namespace) {
+		return nil, fmt.Errorf("load balancer service %s/%s is not in the parent resource namespace %s", svc.Namespace, svc.Name, parentNamespace)
 	}
 
 	// If the service uses explicitly the provider suffix
@@ -371,7 +382,7 @@ func (c configBuilder) nameAndService(ctx context.Context, parentNamespace strin
 
 	namespace := namespaceOrFallback(service, parentNamespace)
 
-	if !c.client.NamespacesAllowed(namespace, parentNamespace) {
+	if !isNamespaceAllowed(c.allowCrossNamespace, parentNamespace, namespace) {
 		return "", nil, fmt.Errorf("service %s/%s not in the parent resource namespace %s", service.Namespace, service.Name, parentNamespace)
 	}
 

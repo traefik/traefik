@@ -1131,7 +1131,6 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 
 			p := Provider{IngressClass: test.ingressClass}
 			clientMock := newClientMock(test.paths...)
-			clientMock.allowCrossNamespace = true
 			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)
 			assert.Equal(t, test.expected, conf)
 		})
@@ -3202,7 +3201,6 @@ func TestLoadIngressRoutes(t *testing.T) {
 
 			p := Provider{IngressClass: test.ingressClass}
 			clientMock := newClientMock(test.paths...)
-			clientMock.allowCrossNamespace = true
 			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)
 			assert.Equal(t, test.expected, conf)
 		})
@@ -3512,7 +3510,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 
 			p := Provider{IngressClass: test.ingressClass}
 			clientMock := newClientMock(test.paths...)
-			clientMock.allowCrossNamespace = true
 			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)
 			assert.Equal(t, test.expected, conf)
 		})
@@ -4143,7 +4140,7 @@ func TestCrossNamespace(t *testing.T) {
 					Services: map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
-					// The router that reference the invalid service will be discarded upper in the process
+					// The router that references the invalid service will be discarded.
 					Routers: map[string]*dynamic.TCPRouter{
 						"default-test.route-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
@@ -4206,7 +4203,7 @@ func TestCrossNamespace(t *testing.T) {
 			desc:  "UDP cross namespace disallowed",
 			paths: []string{"udp/services.yml", "udp/with_cross_namespace.yml"},
 			expected: &dynamic.Configuration{
-				// The router that reference the invalid service will be discarded upper in the process
+				// The router that references the invalid service will be discarded.
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
 						"default-test.route-0": {
@@ -4272,7 +4269,6 @@ func TestCrossNamespace(t *testing.T) {
 			crdClient := crdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
-			client.allowCrossNamespace = test.allowCrossNamespace
 
 			stopCh := make(chan struct{})
 

@@ -271,7 +271,7 @@ providers:
 --providers.kubernetescrd.allowCrossNamespace=false
 ```
 
-If the parameter is set to `false`, an IngressRoute will not be able to reference any service
+If the parameter is set to `false`, an IngressRoute will not be able to reference any resources
 in another namespace than the IngressRoute namespace.
 
 !!! warning "Deprecation"

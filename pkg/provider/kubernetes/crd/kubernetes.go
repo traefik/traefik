@@ -80,7 +80,6 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	}
 
 	client.labelSelector = p.LabelSelector
-	client.allowCrossNamespace = *p.AllowCrossNamespace
 	return client, nil
 }
 
@@ -105,8 +104,8 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		return err
 	}
 
-	if k8sClient.allowCrossNamespace {
-		logger.Warn("Cross-namespace reference between IngresseRoutes and resources is enabled, please ensure that this is expected (see AllowCrossNamespace option).")
+	if p.AllowCrossNamespace == nil || *p.AllowCrossNamespace {
+		logger.Warn("Cross-namespace reference between IngressRoutes and resources is enabled, please ensure that this is expected (see AllowCrossNamespace option)")
 	}
 
 	pool.GoCtx(func(ctxPool context.Context) {
@@ -208,7 +207,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
-		errorPage, errorPageService, err := createErrorPageMiddleware(client, middleware.Namespace, middleware.Spec.Errors)
+		errorPage, errorPageService, err := p.createErrorPageMiddleware(client, middleware.Namespace, middleware.Spec.Errors)
 		if err != nil {
 			log.FromContext(ctxMid).Errorf("Error while reading error page middleware: %v", err)
 			continue
@@ -247,7 +246,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		}
 	}
 
-	cb := configBuilder{client}
+	cb := configBuilder{client, p.AllowCrossNamespace}
 	for _, service := range client.GetTraefikServices() {
 		err := cb.buildTraefikService(ctx, service, conf.HTTP.Services)
 		if err != nil {
@@ -292,7 +291,7 @@ func getServicePort(svc *corev1.Service, port int32) (*corev1.ServicePort, error
 	return &corev1.ServicePort{Port: port}, nil
 }
 
-func createErrorPageMiddleware(client Client, namespace string, errorPage *v1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
+func (p *Provider) createErrorPageMiddleware(client Client, namespace string, errorPage *v1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
 	if errorPage == nil {
 		return nil, nil, nil
 	}
@@ -302,7 +301,7 @@ func createErrorPageMiddleware(client Client, namespace string, errorPage *v1alp
 		Query:  errorPage.Query,
 	}
 
-	balancerServerHTTP, err := configBuilder{client}.buildServersLB(namespace, errorPage.Service.LoadBalancerSpec)
+	balancerServerHTTP, err := configBuilder{client, p.AllowCrossNamespace}.buildServersLB(namespace, errorPage.Service.LoadBalancerSpec)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -759,4 +758,9 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	})
 
 	return eventsChanBuffered
+}
+
+func isNamespaceAllowed(allowCrossNamespace *bool, parentNamespace, namespace string) bool {
+	// If allowCrossNamespace option is not defined the default behavior is to allow cross namespace references.
+	return allowCrossNamespace == nil || *allowCrossNamespace || parentNamespace == namespace
 }
