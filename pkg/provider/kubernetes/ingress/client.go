@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
 	"time"
+
+	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
 
 	"github.com/hashicorp/go-version"
 	"github.com/traefik/traefik/v2/pkg/log"

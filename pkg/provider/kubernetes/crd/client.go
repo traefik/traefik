@@ -3,12 +3,13 @@ package crd
 import (
 	"errors"
 	"fmt"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
 	"time"
+
+	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
 
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned"
