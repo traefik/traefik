@@ -33,6 +33,7 @@ type ServersTransportSpec struct {
 	MaxIdleConnsPerHost int `json:"maxIdleConnsPerHost,omitempty"`
 	// Timeouts for requests forwarded to the backend servers.
 	ForwardingTimeouts *ForwardingTimeouts `json:"forwardingTimeouts,omitempty"`
+	DisableHTTP2       bool                `description:"Disable usage of HTTP/2. Only do this if you have a very good reason to do so (e.g. NTLM)." json:"disableHTTP2,omitempty" toml:"disableHTTP2,omitempty" yaml:"disableHTTP2,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
