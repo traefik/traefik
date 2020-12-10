@@ -20,8 +20,11 @@ tracing:
 
 _Required, Default="127.0.0.1:8126"_
 
-Local Agent Host Port instructs reporter to send spans to datadog-tracing-agent at this address.
-
+Local Agent Host Port instructs reporter to send spans to datadog-tracing-agent at this address. 
+This configuration checks for  `DD_AGENT_HOST` and `DD_TRACE_AGENT_PORT` environment variables and sets the 
+`localAgentHostPort` value based on that. These environment variables can be set independent of each other. 
+_Setting this configuration via YAML, TOML, or CLI will overwrite the 
+environment variable_
 ```toml tab="File (TOML)"
 [tracing]
   [tracing.datadog]
@@ -36,6 +39,14 @@ tracing:
 
 ```bash tab="CLI"
 --tracing.datadog.localAgentHostPort=127.0.0.1:8126
+```
+
+```yaml tab="Environment Variable"
+env:
+  - name: DD_AGENT_HOST
+    valueFrom:
+      fieldRef:
+        fieldPath: status.hostIP
 ```
 
 #### `debug`

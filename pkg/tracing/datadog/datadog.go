@@ -2,6 +2,8 @@ package datadog
 
 import (
 	"io"
+	"net"
+	"os"
 	"strings"
 
 	"github.com/opentracing/opentracing-go"
@@ -25,9 +27,24 @@ type Config struct {
 	BagagePrefixHeaderName     string `description:"Specifies the header name prefix that will be used to store baggage items in a map." json:"bagagePrefixHeaderName,omitempty" toml:"bagagePrefixHeaderName,omitempty" yaml:"bagagePrefixHeaderName,omitempty" export:"true"`
 }
 
-// SetDefaults sets the default values.
+// SetDefaults sets the default values. It looks for Datadog environment variables but defaults to localhost
 func (c *Config) SetDefaults() {
-	c.LocalAgentHostPort = "localhost:8126"
+	var host string
+	var port string
+	ddAgentHost := os.Getenv("DD_AGENT_HOST")
+	if ddAgentHost == "" {
+		host = "localhost"
+	} else {
+		host = ddAgentHost
+	}
+
+	ddAgentPort := os.Getenv("DD_TRACE_AGENT_PORT")
+	if ddAgentPort == "" {
+		port = "8126"
+	} else {
+		port = ddAgentPort
+	}
+	c.LocalAgentHostPort = net.JoinHostPort(host,port)
 	c.GlobalTag = ""
 	c.Debug = false
 	c.PrioritySampling = false
