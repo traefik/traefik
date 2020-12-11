@@ -109,12 +109,17 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	tlsOptionsForHostSNI := map[string]map[string]nameAndConfig{}
 	tlsOptionsForHost := map[string]string{}
 	for routerHTTPName, routerHTTPConfig := range configsHTTP {
-		if len(routerHTTPConfig.TLS.Options) == 0 || routerHTTPConfig.TLS.Options == defaultTLSConfigName {
+		if routerHTTPConfig.TLS == nil {
 			continue
 		}
 
 		ctxRouter := log.With(provider.AddInContext(ctx, routerHTTPName), log.Str(log.RouterName, routerHTTPName))
 		logger := log.FromContext(ctxRouter)
+
+		tlsOptionsName := defaultTLSConfigName
+		if len(routerHTTPConfig.TLS.Options) > 0 && routerHTTPConfig.TLS.Options != defaultTLSConfigName {
+			tlsOptionsName = provider.GetQualifiedName(ctxRouter, routerHTTPConfig.TLS.Options)
+		}
 
 		domains, err := rules.ParseDomains(routerHTTPConfig.Rule)
 		if err != nil {
@@ -129,34 +134,27 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		}
 
 		for _, domain := range domains {
-			if routerHTTPConfig.TLS != nil {
-				tlsOptionsName := routerHTTPConfig.TLS.Options
-				if tlsOptionsName != defaultTLSConfigName {
-					tlsOptionsName = provider.GetQualifiedName(ctxRouter, routerHTTPConfig.TLS.Options)
-				}
+			tlsConf, err := m.tlsManager.Get(defaultTLSStoreName, tlsOptionsName)
+			if err != nil {
+				routerHTTPConfig.AddError(err, true)
+				logger.Debug(err)
+				continue
+			}
 
-				tlsConf, err := m.tlsManager.Get(defaultTLSStoreName, tlsOptionsName)
-				if err != nil {
-					routerHTTPConfig.AddError(err, true)
-					logger.Debug(err)
-					continue
-				}
+			// domain is already in lower case thanks to the domain parsing
+			if tlsOptionsForHostSNI[domain] == nil {
+				tlsOptionsForHostSNI[domain] = make(map[string]nameAndConfig)
+			}
+			tlsOptionsForHostSNI[domain][tlsOptionsName] = nameAndConfig{
+				routerName: routerHTTPName,
+				TLSConfig:  tlsConf,
+			}
 
-				// domain is already in lower case thanks to the domain parsing
-				if tlsOptionsForHostSNI[domain] == nil {
-					tlsOptionsForHostSNI[domain] = make(map[string]nameAndConfig)
-				}
-				tlsOptionsForHostSNI[domain][routerHTTPConfig.TLS.Options] = nameAndConfig{
-					routerName: routerHTTPName,
-					TLSConfig:  tlsConf,
-				}
-
-				if _, ok := tlsOptionsForHost[domain]; ok {
-					// Multiple tlsOptions fallback to default
-					tlsOptionsForHost[domain] = "default"
-				} else {
-					tlsOptionsForHost[domain] = routerHTTPConfig.TLS.Options
-				}
+			if name, ok := tlsOptionsForHost[domain]; ok && name != tlsOptionsName {
+				// Different tlsOptions on the same domain fallback to default
+				tlsOptionsForHost[domain] = defaultTLSConfigName
+			} else {
+				tlsOptionsForHost[domain] = tlsOptionsName
 			}
 		}
 	}
@@ -304,5 +302,5 @@ func findTLSOptionName(tlsOptionsForHost map[string]string, host string) string 
 		return tlsOptions
 	}
 
-	return "default"
+	return defaultTLSConfigName
 }

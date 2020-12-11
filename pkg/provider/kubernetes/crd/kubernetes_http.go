@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+	"strconv"
 	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -47,7 +49,8 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			ingressName = ingressRoute.GenerateName
 		}
 
-		cb := configBuilder{client}
+		cb := configBuilder{client, p.AllowCrossNamespace}
+
 		for _, route := range ingressRoute.Spec.Routes {
 			if route.Kind != "Rule" {
 				logger.Errorf("Unsupported match kind: %s. Only \"Rule\" is supported for now.", route.Kind)
@@ -65,23 +68,10 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				continue
 			}
 
-			var mds []string
-			for _, mi := range route.Middlewares {
-				if strings.Contains(mi.Name, providerNamespaceSeparator) {
-					if len(mi.Namespace) > 0 {
-						logger.
-							WithField(log.MiddlewareName, mi.Name).
-							Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
-					}
-					mds = append(mds, mi.Name)
-					continue
-				}
-
-				ns := mi.Namespace
-				if len(ns) == 0 {
-					ns = ingressRoute.Namespace
-				}
-				mds = append(mds, makeID(ns, mi.Name))
+			mds, err := p.makeMiddlewareKeys(ctx, ingressRoute.Namespace, route.Middlewares)
+			if err != nil {
+				logger.Errorf("Failed to create middleware keys: %v", err)
+				continue
 			}
 
 			normalized := provider.Normalize(makeID(ingressRoute.Namespace, serviceKey))
@@ -152,8 +142,38 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 	return conf
 }
 
+func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace string, middlewares []v1alpha1.MiddlewareRef) ([]string, error) {
+	var mds []string
+
+	for _, mi := range middlewares {
+		if strings.Contains(mi.Name, providerNamespaceSeparator) {
+			if len(mi.Namespace) > 0 {
+				log.FromContext(ctx).
+					WithField(log.MiddlewareName, mi.Name).
+					Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
+			}
+			mds = append(mds, mi.Name)
+			continue
+		}
+
+		ns := ingRouteNamespace
+		if len(mi.Namespace) > 0 {
+			if !isNamespaceAllowed(p.AllowCrossNamespace, ingRouteNamespace, mi.Namespace) {
+				return nil, fmt.Errorf("middleware %s/%s is not in the IngressRoute namespace %s", mi.Namespace, mi.Name, ingRouteNamespace)
+			}
+
+			ns = mi.Namespace
+		}
+
+		mds = append(mds, makeID(ns, mi.Name))
+	}
+
+	return mds, nil
+}
+
 type configBuilder struct {
-	client Client
+	client              Client
+	allowCrossNamespace *bool
 }
 
 // buildTraefikService creates the configuration for the traefik service defined in tService,
@@ -270,7 +290,7 @@ func (c configBuilder) buildServersLB(namespace string, svc v1alpha1.LoadBalance
 	return &dynamic.Service{LoadBalancer: lb}, nil
 }
 
-func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBalancerSpec) ([]dynamic.Server, error) {
+func (c configBuilder) loadServers(parentNamespace string, svc v1alpha1.LoadBalancerSpec) ([]dynamic.Server, error) {
 	strategy := svc.Strategy
 	if strategy == "" {
 		strategy = roundRobinStrategy
@@ -279,7 +299,11 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 		return nil, fmt.Errorf("load balancing strategy %s is not supported", strategy)
 	}
 
-	namespace := namespaceOrFallback(svc, fallbackNamespace)
+	namespace := namespaceOrFallback(svc, parentNamespace)
+
+	if !isNamespaceAllowed(c.allowCrossNamespace, parentNamespace, namespace) {
+		return nil, fmt.Errorf("load balancer service %s/%s is not in the parent resource namespace %s", svc.Namespace, svc.Name, parentNamespace)
+	}
 
 	// If the service uses explicitly the provider suffix
 	sanitizedName := strings.TrimSuffix(svc.Name, providerNamespaceSeparator+providerName)
@@ -303,8 +327,10 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 			return nil, err
 		}
 
+		hostPort := net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(svcPort.Port)))
+
 		return append(servers, dynamic.Server{
-			URL: fmt.Sprintf("%s://%s:%d", protocol, service.Spec.ExternalName, svcPort.Port),
+			URL: fmt.Sprintf("%s://%s", protocol, hostPort),
 		}), nil
 	}
 
@@ -338,8 +364,10 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 		}
 
 		for _, addr := range subset.Addresses {
+			hostPort := net.JoinHostPort(addr.IP, strconv.Itoa(int(port)))
+
 			servers = append(servers, dynamic.Server{
-				URL: fmt.Sprintf("%s://%s:%d", protocol, addr.IP, port),
+				URL: fmt.Sprintf("%s://%s", protocol, hostPort),
 			})
 		}
 	}
@@ -351,10 +379,14 @@ func (c configBuilder) loadServers(fallbackNamespace string, svc v1alpha1.LoadBa
 // In addition, if the service is a Kubernetes one,
 // it generates and returns the configuration part for such a service,
 // so that the caller can add it to the global config map.
-func (c configBuilder) nameAndService(ctx context.Context, namespaceService string, service v1alpha1.LoadBalancerSpec) (string, *dynamic.Service, error) {
+func (c configBuilder) nameAndService(ctx context.Context, parentNamespace string, service v1alpha1.LoadBalancerSpec) (string, *dynamic.Service, error) {
 	svcCtx := log.With(ctx, log.Str(log.ServiceName, service.Name))
 
-	namespace := namespaceOrFallback(service, namespaceService)
+	namespace := namespaceOrFallback(service, parentNamespace)
+
+	if !isNamespaceAllowed(c.allowCrossNamespace, parentNamespace, namespace) {
+		return "", nil, fmt.Errorf("service %s/%s not in the parent resource namespace %s", service.Namespace, service.Name, parentNamespace)
+	}
 
 	switch {
 	case service.Kind == "" || service.Kind == "Service":

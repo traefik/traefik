@@ -231,8 +231,9 @@
               <div class="text-subtitle2">Service</div>
               <q-chip
                 dense
-                class="app-chip app-chip-green">
+                class="app-chip app-chip-green app-chip-overflow">
                 {{ exData(middleware).service }}
+                <q-tooltip>{{ exData(middleware).service }}</q-tooltip>
               </q-chip>
             </div>
           </div>

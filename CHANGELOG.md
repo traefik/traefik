@@ -1,3 +1,30 @@
+## [v2.3.5](https://github.com/traefik/traefik/tree/v2.3.5) (2020-12-10)
+[All Commits](https://github.com/traefik/traefik/compare/v2.3.4...v2.3.5)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.1.3 ([#7625](https://github.com/traefik/traefik/pull/7625) by [ldez](https://github.com/ldez))
+- **[k8s,k8s/crd]** IngressRoute: add an option to disable cross-namespace routing ([#7595](https://github.com/traefik/traefik/pull/7595) by [rtribotte](https://github.com/rtribotte))
+- **[k8s/crd,k8s/ingress]** Fix concatenation of IPv6 addresses and ports ([#7620](https://github.com/traefik/traefik/pull/7620) by [jspdown](https://github.com/jspdown))
+- **[tcp,tls]** Fix TLS options fallback when domain and options are the same  ([#7609](https://github.com/traefik/traefik/pull/7609) by [jspdown](https://github.com/jspdown))
+- **[webui]** Fix UI bug on long service name ([#7535](https://github.com/traefik/traefik/pull/7535) by [ipinak](https://github.com/ipinak))
+
+**Documentation:**
+- **[docker]** Add example for multiple service per container ([#7610](https://github.com/traefik/traefik/pull/7610) by [notsureifkevin](https://github.com/notsureifkevin))
+- Documentation: Add spacing to sidebars so the last item is always visible ([#7616](https://github.com/traefik/traefik/pull/7616) by [paulocfjunior](https://github.com/paulocfjunior))
+- Fix typos in migration guide  ([#7596](https://github.com/traefik/traefik/pull/7596) by [marsavela](https://github.com/marsavela))
+
+## [v2.3.4](https://github.com/traefik/traefik/tree/v2.3.4) (2020-11-24)
+[All Commits](https://github.com/traefik/traefik/compare/v2.3.3...v2.3.4)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.1.2 ([#7577](https://github.com/traefik/traefik/pull/7577) by [ldez](https://github.com/ldez))
+- **[k8s,k8s/crd,k8s/ingress]** Apply labelSelector as a TweakListOptions for Kubernetes informers ([#7521](https://github.com/traefik/traefik/pull/7521) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Do not evaluate templated URL in redirectRegex middleware ([#7573](https://github.com/traefik/traefik/pull/7573) by [jspdown](https://github.com/jspdown))
+- **[provider]** fix: invalid slice parsing. ([#7583](https://github.com/traefik/traefik/pull/7583) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[ecs]** Fix clusters option in ECS provider documentation ([#7586](https://github.com/traefik/traefik/pull/7586) by [skapin](https://github.com/skapin))
+
 ## [v2.3.3](https://github.com/traefik/traefik/tree/v2.3.3) (2020-11-19)
 [All Commits](https://github.com/traefik/traefik/compare/v2.3.2...v2.3.3)
 

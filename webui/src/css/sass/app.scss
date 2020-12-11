@@ -131,6 +131,16 @@ body {
       white-space: normal;
     }
   }
+  &-overflow {
+    max-width: 90%;
+
+    .q-chip__content{
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
   &-accent, &-rule {
     color: $accent;
     background-color: rgba($accent, 0.1);

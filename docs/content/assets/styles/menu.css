@@ -35,6 +35,10 @@
   padding: 0;
 }
 
+.md-sidebar__scrollwrap {
+  max-height: calc(100% - 50px);
+}
+
 .md-sidebar--secondary .md-sidebar__scrollwrap {
   border-radius: 8px;
   background-color: var(--light-blue) !important;
