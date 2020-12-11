@@ -174,6 +174,57 @@ http:
         trustForwardHeader: true
 ```
 
+### `appendURIToAddress`
+
+Set the `appendURIToAddress` option to `true` to append the original request URI to the authentication server address. This could help using out-of-the-box authentication server expecting resource path to protect in the url.
+
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.appendURIToAddress=true"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-auth
+spec:
+  forwardAuth:
+    address: https://example.com/auth
+    appendURIToAddress: true
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.appendURIToAddress=true"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-auth.forwardauth.appendURIToAddress": "true"
+}
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.appendURIToAddress=true"
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-auth.forwardAuth]
+    address = "https://example.com/auth"
+    appendURIToAddress = true
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-auth:
+      forwardAuth:
+        address: "https://example.com/auth"
+        appendURIToAddress: true
+```
+
 ### `authResponseHeaders`
 
 The `authResponseHeaders` option is the list of the headers to copy from the authentication server to the request. All incoming request's headers in this list are deleted from the request before any copy happens.

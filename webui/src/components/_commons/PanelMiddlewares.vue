@@ -292,6 +292,15 @@
             </div>
           </div>
         </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [forwardAuth] - appendURIToAddress -->
+        <q-card-section v-if="middleware.forwardAuth">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Append URI to address</div>
+              <boolean-state :value="exData(middleware).appendURIToAddress"/>
+            </div>
+          </div>
+        </q-card-section>
         <!-- EXTRA FIELDS FROM MIDDLEWARES - [forwardAuth] - authResponseHeaders -->
         <q-card-section v-if="middleware.forwardAuth">
           <div class="row items-start no-wrap">

@@ -241,6 +241,7 @@
             "insecureSkipVerify": true
           },
           "trustForwardHeader": true,
+          "appendURIToAddress": true,
           "authResponseHeaders": [
             "foo"
           ],

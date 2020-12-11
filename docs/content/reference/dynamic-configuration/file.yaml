@@ -155,6 +155,7 @@ http:
           key: foobar
           insecureSkipVerify: true
         trustForwardHeader: true
+        appendURIToAddress: true
         authResponseHeaders:
         - foobar
         - foobar

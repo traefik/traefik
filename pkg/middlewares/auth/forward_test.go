@@ -447,6 +447,29 @@ func Test_writeHeader(t *testing.T) {
 	}
 }
 
+func TestAppendURIToAddress(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/path?q=1", r.URL.RequestURI())
+	}))
+	t.Cleanup(server.Close)
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	auth := dynamic.ForwardAuth{
+		Address:            server.URL,
+		AppendURIToAddress: true,
+	}
+	middleware, err := NewForward(context.Background(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(middleware)
+	t.Cleanup(ts.Close)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL+"/path?q=1", nil)
+	_, err = http.DefaultClient.Do(req)
+	require.NoError(t, err)
+}
+
 func TestForwardAuthUsesTracing(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Mockpfx-Ids-Traceid") == "" {

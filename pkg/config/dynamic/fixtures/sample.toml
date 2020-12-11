@@ -287,6 +287,7 @@
       [http.middlewares.Middleware15.forwardAuth]
         address = "foobar"
         trustForwardHeader = true
+        appendUriToAdrress = true
         authResponseHeaders = ["foobar", "foobar"]
         authResponseHeadersRegex = "foobar"
         authRequestHeaders = ["foobar", "foobar"]

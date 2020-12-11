@@ -91,6 +91,7 @@ type ForwardAuth struct {
 	AuthResponseHeadersRegex string     `json:"authResponseHeadersRegex,omitempty"`
 	AuthRequestHeaders       []string   `json:"authRequestHeaders,omitempty"`
 	TLS                      *ClientTLS `json:"tls,omitempty"`
+	AppendURIToAddress       bool       `json:"appendURIToAddress,omitempty"`
 }
 
 // ClientTLS holds TLS specific configurations as client.

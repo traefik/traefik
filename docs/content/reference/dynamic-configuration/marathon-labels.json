@@ -32,6 +32,7 @@
 "traefik.http.middlewares.middleware09.forwardauth.tls.insecureskipverify": "true",
 "traefik.http.middlewares.middleware09.forwardauth.tls.key": "foobar",
 "traefik.http.middlewares.middleware09.forwardauth.trustforwardheader": "true",
+"traefik.http.middlewares.middleware09.forwardauth.appendURIToAddress": "true",
 "traefik.http.middlewares.middleware10.headers.accesscontrolallowcredentials": "true",
 "traefik.http.middlewares.middleware10.headers.accesscontrolallowheaders": "foobar, foobar",
 "traefik.http.middlewares.middleware10.headers.accesscontrolallowmethods": "foobar, foobar",

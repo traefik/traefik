@@ -281,6 +281,7 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 						InsecureSkipVerify: true,
 					},
 					TrustForwardHeader:       true,
+					AppendURIToAddress:       true,
 					AuthResponseHeaders:      []string{"foo"},
 					AuthResponseHeadersRegex: "foo",
 					AuthRequestHeaders:       []string{"foo"},

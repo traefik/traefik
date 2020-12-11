@@ -38,6 +38,7 @@
 | `traefik/http/middlewares/Middleware09/forwardAuth/tls/insecureSkipVerify` | `true` |
 | `traefik/http/middlewares/Middleware09/forwardAuth/tls/key` | `foobar` |
 | `traefik/http/middlewares/Middleware09/forwardAuth/trustForwardHeader` | `true` |
+| `traefik/http/middlewares/Middleware09/forwardAuth/appendURIToAddress` | `true` |
 | `traefik/http/middlewares/Middleware10/headers/accessControlAllowCredentials` | `true` |
 | `traefik/http/middlewares/Middleware10/headers/accessControlAllowHeaders/0` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/accessControlAllowHeaders/1` | `foobar` |

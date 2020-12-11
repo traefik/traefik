@@ -80,6 +80,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware08/forwardAuth/tls/cert":                                 "foobar",
 		"traefik/http/middlewares/Middleware08/forwardAuth/address":                                  "foobar",
 		"traefik/http/middlewares/Middleware08/forwardAuth/trustForwardHeader":                       "true",
+		"traefik/http/middlewares/Middleware08/forwardAuth/appendURIToAddress":                       "true",
 		"traefik/http/middlewares/Middleware15/redirectScheme/scheme":                                "foobar",
 		"traefik/http/middlewares/Middleware15/redirectScheme/port":                                  "foobar",
 		"traefik/http/middlewares/Middleware15/redirectScheme/permanent":                             "true",
@@ -407,6 +408,7 @@ func Test_buildConfiguration(t *testing.T) {
 							InsecureSkipVerify: true,
 						},
 						TrustForwardHeader: true,
+						AppendURIToAddress: true,
 						AuthResponseHeaders: []string{
 							"foobar",
 							"foobar",
