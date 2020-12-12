@@ -26,6 +26,21 @@ accessLog: {}
 By default access logs are written to the standard output.
 To write the logs into a log file, use the `filePath` option.
 
+```toml tab="File (TOML)"
+[accessLog]
+  filePath = "/path/to/access.log"
+```
+
+```yaml tab="File (YAML)"
+accessLog:
+  filePath: "/path/to/access.log"
+```
+
+```bash tab="CLI"
+--accesslog=true
+--accesslog.filepath=/path/to/access.log
+```
+
 ### `format`
  
 By default, logs are written using the Common Log Format (CLF).
