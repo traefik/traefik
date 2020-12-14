@@ -25,6 +25,7 @@ const (
 	httpPort = "8081"
 )
 
+// SimpleCA is a simple CA.
 type SimpleCA struct {
 	now      time.Time
 	validity time.Time
@@ -41,6 +42,7 @@ type SimpleCA struct {
 	rsaKeyLength int
 }
 
+// SimpleCAClient is a client as created by a SimpleCA.
 type SimpleCAClient struct {
 	name string
 
@@ -112,6 +114,7 @@ func (sca *SimpleCA) init() error {
 	return nil
 }
 
+// NewClient creates a new client.
 func (sca *SimpleCA) NewClient(name string, serial int64) (*SimpleCAClient, error) {
 	cert := &x509.Certificate{
 		SerialNumber: big.NewInt(serial),
@@ -188,6 +191,7 @@ func (sca *SimpleCA) signClient(client *SimpleCAClient) error {
 	return nil
 }
 
+// RevokeClient revokes a client certificate.
 func (sca *SimpleCA) RevokeClient(client *SimpleCAClient) error {
 	sca.revokedClients = append(sca.revokedClients, client)
 
@@ -210,6 +214,8 @@ func (sca *SimpleCA) RevokeClient(client *SimpleCAClient) error {
 	return nil
 }
 
+// WriteFiles writes out all files.
+// This includes certificates, private keys and a CRL.
 func (sca *SimpleCA) WriteFiles() error {
 	const (
 		readOnly  = 0600
@@ -237,6 +243,7 @@ func (sca *SimpleCA) WriteFiles() error {
 	return nil
 }
 
+// NewCA creates a new CA.
 func NewCA() (*SimpleCA, error) {
 	now := time.Now()
 	ca := &SimpleCA{

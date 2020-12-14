@@ -38,9 +38,7 @@ const (
 	requestTimeout = 2 * time.Second
 )
 
-var (
-	errBadCertificateStr = "bad certificate"
-)
+var errBadCertificateStr = "bad certificate"
 
 type TLSClientAuthSuite struct{ BaseSuite }
 
