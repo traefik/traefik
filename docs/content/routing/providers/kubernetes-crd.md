@@ -117,7 +117,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
         kind: Rule
         services:
         - name: whoami
-          port: 80
+          port: http
     
     ---
     apiVersion: traefik.containo.us/v1alpha1

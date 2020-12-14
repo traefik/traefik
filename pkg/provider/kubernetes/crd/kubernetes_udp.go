@@ -11,6 +11,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client Client) *dynamic.UDPConfiguration {
@@ -52,7 +53,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 					break
 				}
 
-				serviceKey := fmt.Sprintf("%s-%s-%d", serviceName, service.Name, service.Port)
+				serviceKey := fmt.Sprintf("%s-%s-%s", serviceName, service.Name, &service.Port)
 				conf.Services[serviceKey] = balancerServerUDP
 
 				srv := dynamic.UDPWRRService{Name: serviceKey}
@@ -113,10 +114,19 @@ func loadUDPServers(client Client, namespace string, svc v1alpha1.ServiceUDP) ([
 
 	var portSpec *corev1.ServicePort
 	for _, p := range service.Spec.Ports {
-		p := p
-		if svc.Port == p.Port {
-			portSpec = &p
-			break
+		switch svc.Port.Type {
+		case intstr.Int:
+			if svc.Port.IntVal == p.Port {
+				portSpec = &p
+				break
+			}
+		case intstr.String:
+			if svc.Port.StrVal == p.Name {
+				portSpec = &p
+				break
+			}
+		default:
+			return nil, errors.New("service port is unknown type")
 		}
 	}
 

@@ -18,6 +18,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 )
 
@@ -3738,7 +3739,7 @@ func TestGetServicePort(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		svc         *corev1.Service
-		port        int32
+		port        intstr.IntOrString
 		expected    *corev1.ServicePort
 		expectError bool
 	}{
@@ -3757,7 +3758,7 @@ func TestGetServicePort(t *testing.T) {
 					},
 				},
 			},
-			port: 80,
+			port: intstr.FromInt(80),
 			expected: &corev1.ServicePort{
 				Port: 80,
 			},
@@ -3786,11 +3787,45 @@ func TestGetServicePort(t *testing.T) {
 			expectError: true,
 		},
 		{
+			desc: "Matching port names",
+			svc: &corev1.Service{
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{
+						{
+							Name: "http",
+						},
+					},
+				},
+			},
+			port: intstr.FromString("http"),
+			expected: &corev1.ServicePort{
+				Name: "http",
+			},
+		},
+		{
+			desc: "Both port and name",
+			svc: &corev1.Service{
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{
+						{
+							Name: "http",
+							Port: 80,
+						},
+					},
+				},
+			},
+			port: intstr.FromString("http"),
+			expected: &corev1.ServicePort{
+				Name: "http",
+				Port: 80,
+			},
+		},
+		{
 			desc: "Mismatching, only port(Ingress) defined",
 			svc: &corev1.Service{
 				Spec: corev1.ServiceSpec{},
 			},
-			port:        80,
+			port:        intstr.FromInt(80),
 			expectError: true,
 		},
 		{
@@ -3800,7 +3835,7 @@ func TestGetServicePort(t *testing.T) {
 					Type: corev1.ServiceTypeExternalName,
 				},
 			},
-			port: 80,
+			port: intstr.FromInt(80),
 			expected: &corev1.ServicePort{
 				Port: 80,
 			},
@@ -3843,7 +3878,21 @@ func TestGetServicePort(t *testing.T) {
 					},
 				},
 			},
-			port:        443,
+			port:        intstr.FromInt(443),
+			expectError: true,
+		},
+		{
+			desc: "Mismatching, port and name",
+			svc: &corev1.Service{
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{
+						{
+							Port: 80,
+						},
+					},
+				},
+			},
+			port:        intstr.FromString("http"),
 			expectError: true,
 		},
 		{
@@ -3858,7 +3907,7 @@ func TestGetServicePort(t *testing.T) {
 					},
 				},
 			},
-			port: 443,
+			port: intstr.FromInt(443),
 			expected: &corev1.ServicePort{
 				Port: 443,
 			},

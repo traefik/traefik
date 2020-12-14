@@ -24,6 +24,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
@@ -323,28 +324,47 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	return conf
 }
 
-func getServicePort(svc *corev1.Service, port int32) (*corev1.ServicePort, error) {
+func getServicePort(svc *corev1.Service, port intstr.IntOrString) (*corev1.ServicePort, error) {
 	if svc == nil {
 		return nil, errors.New("service is not defined")
 	}
 
-	if port == 0 {
-		return nil, errors.New("ingressRoute service port not defined")
-	}
-
 	hasValidPort := false
-	for _, p := range svc.Spec.Ports {
-		if p.Port == port {
-			return &p, nil
+	switch port.Type {
+	case intstr.Int:
+		if port.IntVal == 0 {
+			return nil, errors.New("ingressRoute service port not defined")
 		}
 
-		if p.Port != 0 {
-			hasValidPort = true
+		for _, p := range svc.Spec.Ports {
+			if p.Port == port.IntVal {
+				return &p, nil
+			}
+
+			if p.Port != 0 {
+				hasValidPort = true
+			}
 		}
+	case intstr.String:
+		if port.StrVal == "" {
+			return nil, errors.New("ingressRoute service port name not defined")
+		}
+
+		for _, p := range svc.Spec.Ports {
+			if p.Name == port.StrVal {
+				return &p, nil
+			}
+
+			if p.Port != 0 {
+				hasValidPort = true
+			}
+		}
+	default:
+		return nil, errors.New("ingressRoute service port is unknown type")
 	}
 
 	if svc.Spec.Type != corev1.ServiceTypeExternalName {
-		return nil, fmt.Errorf("service port not found: %d", port)
+		return nil, fmt.Errorf("service port not found: %s", &port)
 	}
 
 	if hasValidPort {
@@ -352,7 +372,14 @@ func getServicePort(svc *corev1.Service, port int32) (*corev1.ServicePort, error
 			Warning("The port %d from IngressRoute doesn't match with ports defined in the ExternalName service %s/%s.", port, svc.Namespace, svc.Name)
 	}
 
-	return &corev1.ServicePort{Port: port}, nil
+	switch port.Type {
+	case intstr.Int:
+		return &corev1.ServicePort{Port: port.IntVal}, nil
+	case intstr.String:
+		return &corev1.ServicePort{Name: port.StrVal}, nil
+	default:
+		return nil, errors.New("ingressRoute service port is unknown type")
+	}
 }
 
 func (p *Provider) createErrorPageMiddleware(client Client, namespace string, errorPage *v1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {

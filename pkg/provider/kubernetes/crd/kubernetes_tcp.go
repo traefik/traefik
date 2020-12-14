@@ -71,7 +71,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 					break
 				}
 
-				serviceKey := fmt.Sprintf("%s-%s-%d", serviceName, service.Name, service.Port)
+				serviceKey := fmt.Sprintf("%s-%s-%s", serviceName, service.Name, &service.Port)
 				conf.Services[serviceKey] = balancerServerTCP
 
 				srv := dynamic.TCPWRRService{Name: serviceKey}

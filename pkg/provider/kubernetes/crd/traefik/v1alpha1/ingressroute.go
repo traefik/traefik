@@ -4,6 +4,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // IngressRouteSpec is a specification for a IngressRouteSpec resource.
@@ -67,7 +68,7 @@ type LoadBalancerSpec struct {
 
 	// Port and all the fields below are related to a servers load-balancer,
 	// and therefore should only be specified when Name references a Kubernetes Service.
-	Port               int32                       `json:"port"`
+	Port               intstr.IntOrString          `json:"port"`
 	Scheme             string                      `json:"scheme,omitempty"`
 	Strategy           string                      `json:"strategy,omitempty"`
 	PassHostHeader     *bool                       `json:"passHostHeader,omitempty"`
