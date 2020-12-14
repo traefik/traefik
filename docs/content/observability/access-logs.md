@@ -37,7 +37,6 @@ accessLog:
 ```
 
 ```bash tab="CLI"
---accesslog=true
 --accesslog.filepath=/path/to/access.log
 ```
 
@@ -75,7 +74,6 @@ accessLog:
 
 ```bash tab="CLI"
 # Configuring a buffer of 100 lines
---accesslog=true
 --accesslog.filepath=/path/to/access.log
 --accesslog.bufferingsize=100
 ```
@@ -118,7 +116,6 @@ accessLog:
 
 ```bash tab="CLI"
 # Configuring Multiple Filters
---accesslog=true
 --accesslog.filepath=/path/to/access.log
 --accesslog.format=json
 --accesslog.filters.statuscodes=200,300-302
@@ -178,7 +175,6 @@ accessLog:
 
 ```bash tab="CLI"
 # Limiting the Logs to Specific Fields
---accesslog=true
 --accesslog.filepath=/path/to/access.log
 --accesslog.format=json
 --accesslog.fields.defaultmode=keep
@@ -253,7 +249,6 @@ services:
     environment:
       - TZ=US/Alaska
     command:
-      - --accesslog
       - --accesslog.fields.names.StartUTC=drop
       - --providers.docker
     ports:
