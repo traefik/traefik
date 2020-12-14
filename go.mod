@@ -82,6 +82,7 @@ require (
 	github.com/vulcand/predicate v1.1.0
 	go.elastic.co/apm v1.7.0
 	go.elastic.co/apm/module/apmot v1.7.0
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/mod v0.3.0
 	golang.org/x/net v0.0.0-20200822124328-c89045814202
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e

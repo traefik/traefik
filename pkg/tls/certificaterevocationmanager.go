@@ -7,7 +7,8 @@ import (
 )
 
 type certificateRevocationManager struct {
-	crlManager *crlManager
+	crlManager  *crlManager
+	ocspManager *ocspManager
 }
 
 // Verify returns two errors. The first one being a soft-fail, the second one being a hard-fail error.
@@ -33,12 +34,15 @@ func (crm *certificateRevocationManager) validateBeforeAfter(cert *x509.Certific
 }
 
 func (crm *certificateRevocationManager) validateRevocation(cert *x509.Certificate) (error, error) {
-	// Add other checks (e.g. OCSP) here.
-	return crm.crlManager.RevocationCheck(cert)
+	if softErr, hardErr := crm.crlManager.RevocationCheck(cert); softErr != nil || hardErr != nil {
+		return softErr, hardErr
+	}
+	return crm.ocspManager.RevocationCheck(cert)
 }
 
 func newCertificateRevocationManager() *certificateRevocationManager {
 	return &certificateRevocationManager{
-		crlManager: newCRLManager(),
+		crlManager:  newCRLManager(),
+		ocspManager: newOCSPManager(),
 	}
 }
