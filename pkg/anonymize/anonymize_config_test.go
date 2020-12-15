@@ -23,6 +23,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/file"
 	"github.com/traefik/traefik/v2/pkg/provider/http"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd"
+	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/gateway"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/ingress"
 	"github.com/traefik/traefik/v2/pkg/provider/kv"
 	"github.com/traefik/traefik/v2/pkg/provider/kv/consul"
@@ -607,13 +608,12 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.Providers.KubernetesIngress = &ingress.Provider{
-		Endpoint:               "MyEndpoint",
-		Token:                  "MyToken",
-		CertAuthFilePath:       "MyCertAuthPath",
-		DisablePassHostHeaders: true,
-		Namespaces:             []string{"a", "b"},
-		LabelSelector:          "myLabelSelector",
-		IngressClass:           "MyIngressClass",
+		Endpoint:         "MyEndpoint",
+		Token:            "MyToken",
+		CertAuthFilePath: "MyCertAuthPath",
+		Namespaces:       []string{"a", "b"},
+		LabelSelector:    "myLabelSelector",
+		IngressClass:     "MyIngressClass",
 		IngressEndpoint: &ingress.EndpointIngress{
 			IP:               "IP",
 			Hostname:         "Hostname",
@@ -623,14 +623,22 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.Providers.KubernetesCRD = &crd.Provider{
-		Endpoint:               "MyEndpoint",
-		Token:                  "MyToken",
-		CertAuthFilePath:       "MyCertAuthPath",
-		DisablePassHostHeaders: true,
-		Namespaces:             []string{"a", "b"},
-		LabelSelector:          "myLabelSelector",
-		IngressClass:           "MyIngressClass",
-		ThrottleDuration:       ptypes.Duration(111 * time.Second),
+		Endpoint:         "MyEndpoint",
+		Token:            "MyToken",
+		CertAuthFilePath: "MyCertAuthPath",
+		Namespaces:       []string{"a", "b"},
+		LabelSelector:    "myLabelSelector",
+		IngressClass:     "MyIngressClass",
+		ThrottleDuration: ptypes.Duration(111 * time.Second),
+	}
+
+	config.Providers.KubernetesGateway = &gateway.Provider{
+		Endpoint:         "MyEndpoint",
+		Token:            "MyToken",
+		CertAuthFilePath: "MyCertAuthPath",
+		Namespaces:       []string{"a", "b"},
+		LabelSelector:    "myLabelSelector",
+		ThrottleDuration: ptypes.Duration(111 * time.Second),
 	}
 
 	config.Providers.Rest = &rest.Provider{

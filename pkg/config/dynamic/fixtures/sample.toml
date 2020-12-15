@@ -80,7 +80,6 @@
     endpoint = "foobar"
     token = "foobar"
     certAuthFilePath = "foobar"
-    disablePassHostHeaders = true
     namespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
     ingressClass = "foobar"
@@ -92,7 +91,6 @@
     endpoint = "foobar"
     token = "foobar"
     certAuthFilePath = "foobar"
-    disablePassHostHeaders = true
     namespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
     ingressClass = "foobar"
