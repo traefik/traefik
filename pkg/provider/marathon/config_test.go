@@ -868,9 +868,6 @@ func TestBuildConfiguration(t *testing.T) {
 									{
 										URL: "http://localhost:80",
 									},
-									{
-										URL: "http://localhost:80",
-									},
 								},
 								PassHostHeader: Bool(true),
 							},

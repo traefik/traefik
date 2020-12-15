@@ -158,29 +158,6 @@ providers:
 Path to the certificate authority file.
 Used for the Kubernetes client configuration.
 
-### `disablePassHostHeaders`
-
-_Optional, Default=false_
-
-```toml tab="File (TOML)"
-[providers.kubernetesIngress]
-  disablePassHostHeaders = true
-  # ...
-```
-
-```yaml tab="File (YAML)"
-providers:
-  kubernetesIngress:
-    disablePassHostHeaders: true
-    # ...
-```
-
-```bash tab="CLI"
---providers.kubernetesingress.disablepasshostheaders=true
-```
-
-Whether to disable PassHost Headers.
-
 ### `namespaces`
 
 _Optional, Default: all namespaces (empty array)_

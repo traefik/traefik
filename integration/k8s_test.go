@@ -108,6 +108,17 @@ func (s *K8sSuite) TestCRDLabelSelector(c *check.C) {
 	testConfiguration(c, "testdata/rawdata-crd-label-selector.json", "8000")
 }
 
+func (s *K8sSuite) TestGatewayConfiguration(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_gateway.toml"))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	testConfiguration(c, "testdata/rawdata-gateway.json", "8080")
+}
+
 func testConfiguration(c *check.C, path, apiPort string) {
 	err := try.GetRequest("http://127.0.0.1:"+apiPort+"/api/entrypoints", 20*time.Second, try.BodyContains(`"name":"web"`))
 	c.Assert(err, checker.IsNil)
