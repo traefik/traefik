@@ -386,6 +386,17 @@ func processPorts(app marathon.Application, task marathon.Task, serverPort strin
 		}
 	}
 
+	if strings.HasPrefix(serverPort, "name:") {
+		name := strings.TrimPrefix(serverPort, "name:")
+		port := retrieveNamedPort(app, name)
+
+		if port == 0 {
+			return 0, fmt.Errorf("no port with name %s", name)
+		}
+
+		return port, nil
+	}
+
 	ports := retrieveAvailablePorts(app, task)
 	if len(ports) == 0 {
 		return 0, errors.New("no port found")
@@ -404,52 +415,58 @@ func processPorts(app marathon.Application, task marathon.Task, serverPort strin
 		}
 
 		portIndex = index
-	} else if strings.HasPrefix(serverPort, "name:") {
-		name := strings.TrimPrefix(serverPort, "name:")
-		for index, def := range ports {
-			if def.Name == name {
-				portIndex = index
-				break
-			}
-		}
 	}
 
-	return ports[portIndex].Port, nil
+	return ports[portIndex], nil
 }
 
-type portWithName struct {
-	Port int
-	Name string
-}
-
-func retrieveAvailablePorts(app marathon.Application, task marathon.Task) []portWithName {
-	// Using default port configuration
-	var ports []portWithName
-	if len(task.Ports) > 0 {
-		for _, port := range task.Ports {
-			ports = append(ports, portWithName{port, ""})
-		}
-		return ports
-	}
-
+func retrieveNamedPort(app marathon.Application, name string) int {
 	// Using port definition if available
 	if app.PortDefinitions != nil && len(*app.PortDefinitions) > 0 {
 		for _, def := range *app.PortDefinitions {
-			if def.Port != nil {
-				ports = append(ports, portWithName{*def.Port, def.Name})
+			if def.Port != nil && *def.Port > 0 && def.Name == name {
+				return *def.Port
 			}
 		}
-
-		return ports
 	}
 
 	// If using IP-per-task using this port definition
 	if app.IPAddressPerTask != nil && app.IPAddressPerTask.Discovery != nil && len(*(app.IPAddressPerTask.Discovery.Ports)) > 0 {
 		for _, def := range *(app.IPAddressPerTask.Discovery.Ports) {
-			ports = append(ports, portWithName{def.Number, def.Name})
+			if def.Number > 0 && def.Name == name {
+				return def.Number
+			}
+		}
+	}
+
+	return 0
+}
+
+func retrieveAvailablePorts(app marathon.Application, task marathon.Task) []int {
+	// Using default port configuration
+	if len(task.Ports) > 0 {
+		return task.Ports
+	}
+
+	// Using port definition if available
+	if app.PortDefinitions != nil && len(*app.PortDefinitions) > 0 {
+		var ports []int
+		for _, def := range *app.PortDefinitions {
+			if def.Port != nil {
+				ports = append(ports, *def.Port)
+			}
 		}
 		return ports
 	}
 
-	return []portWithName{}
+	// If using IP-per-task using this port definition
+	if app.IPAddressPerTask != nil && app.IPAddressPerTask.Discovery != nil && len(*(app.IPAddressPerTask.Discovery.Ports)) > 0 {
+		var ports []int
+		for _, def := range *(app.IPAddressPerTask.Discovery.Ports) {
+			ports = append(ports, def.Number)
+		}
+		return ports
+	}
+
+	return []int{}
 }

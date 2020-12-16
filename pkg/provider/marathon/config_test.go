@@ -1978,9 +1978,7 @@ func TestGetServer(t *testing.T) {
 				Port:   "name:other-name",
 			},
 			expected: expected{
-				server: dynamic.Server{
-					URL: "http://localhost:80",
-				},
+				error: `unable to process ports for /app taskID: no port with name other-name`,
 			},
 		},
 		{

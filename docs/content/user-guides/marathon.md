@@ -14,10 +14,9 @@ Traefik tries to detect the configured mode and route traffic to the right IP ad
 
 ## Port detection
 
-Traefik also attempts to determine the right port (which is a [non-trivial matter in Marathon](https://mesosphere.github.io/marathon/docs/ports.html)).
-Following is the order by which Traefik tries to identify the port (the first one that yields a positive result will be used):
+Traefik also attempts to determine the right port (which is a [non-trivial matter in Marathon](https://mesosphere.github.io/marathon/docs/ports.html)) from the following sources:
 
-1. A arbitrary port specified through label `traefik.http.services.serviceName.loadbalancer.server.port=8080`
+1. An arbitrary port specified through label `traefik.http.services.serviceName.loadbalancer.server.port=8080`
 1. The task port.
 1. The port from the application's `portDefinitions` field.
 1. The port from the application's `ipAddressPerTask` field.
