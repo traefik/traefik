@@ -10,7 +10,7 @@ else
   export VERSION=''
 fi
 
-export CODENAME=picodon
+export CODENAME=livarot
 
 export N_MAKE_JOBS=2
 
