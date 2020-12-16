@@ -1942,12 +1942,52 @@ func TestGetServer(t *testing.T) {
 			},
 		},
 		{
+			desc:     "with port name",
+			provider: Provider{},
+			app: application(
+				appID("/app"),
+				portDefinition(80, "fist-port"),
+				portDefinition(81, "second-port"),
+				portDefinition(82, "third-port"),
+				withTasks(localhostTask()),
+			),
+			extraConf: configuration{},
+			defaultServer: dynamic.Server{
+				Scheme: "http",
+				Port:   "name:third-port",
+			},
+			expected: expected{
+				server: dynamic.Server{
+					URL: "http://localhost:82",
+				},
+			},
+		},
+		{
+			desc:     "with port name not found",
+			provider: Provider{},
+			app: application(
+				appID("/app"),
+				portDefinition(80, "fist-port"),
+				portDefinition(81, "second-port"),
+				portDefinition(82, "third-port"),
+				withTasks(localhostTask()),
+			),
+			extraConf: configuration{},
+			defaultServer: dynamic.Server{
+				Scheme: "http",
+				Port:   "name:other-name",
+			},
+			expected: expected{
+				error: `unable to process ports for /app taskID: no port with name other-name`,
+			},
+		},
+		{
 			desc:     "with application port and no task port",
 			provider: Provider{},
 			app: application(
 				appID("/app"),
 				appPorts(80),
-				portDefinition(80),
+				portDefinition(80, "http"),
 				withTasks(localhostTask()),
 			),
 			extraConf: configuration{},

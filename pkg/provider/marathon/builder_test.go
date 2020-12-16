@@ -53,10 +53,11 @@ func constraint(value string) func(*marathon.Application) {
 	}
 }
 
-func portDefinition(port int) func(*marathon.Application) {
+func portDefinition(port int, name string) func(*marathon.Application) {
 	return func(app *marathon.Application) {
 		app.AddPortDefinition(marathon.PortDefinition{
 			Port: &port,
+			Name: name,
 		})
 	}
 }
