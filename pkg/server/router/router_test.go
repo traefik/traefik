@@ -63,6 +63,29 @@ func TestRouterManager_Get(t *testing.T) {
 			expected:    expectedResult{StatusCode: http.StatusOK},
 		},
 		{
+			desc: "empty host",
+			routersConfig: map[string]*dynamic.Router{
+				"foo": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "Host(``)",
+				},
+			},
+			serviceConfig: map[string]*dynamic.Service{
+				"foo-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
+							{
+								URL: server.URL,
+							},
+						},
+					},
+				},
+			},
+			entryPoints: []string{"web"},
+			expected:    expectedResult{StatusCode: http.StatusNotFound},
+		},
+		{
 			desc: "no load balancer",
 			routersConfig: map[string]*dynamic.Router{
 				"foo": {

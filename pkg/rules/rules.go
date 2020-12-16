@@ -59,7 +59,14 @@ func (r *Router) AddRoute(rule string, priority int, handler http.Handler) error
 	}
 
 	route := r.NewRoute().Handler(handler).Priority(priority)
-	return addRuleOnRoute(route, buildTree())
+
+	err = addRuleOnRoute(route, buildTree())
+	if err != nil {
+		route.BuildOnly()
+		return err
+	}
+
+	return nil
 }
 
 type tree struct {
