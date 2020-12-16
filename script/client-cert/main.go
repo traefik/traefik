@@ -218,24 +218,24 @@ func (sca *SimpleCA) RevokeClient(client *SimpleCAClient) error {
 // This includes certificates, private keys and a CRL.
 func (sca *SimpleCA) WriteFiles() error {
 	const (
-		readOnly  = 0600
-		readWrite = 0644
+		uRW    = 0600
+		uRWgoR = 0644
 	)
 
-	if err := ioutil.WriteFile(caPrivPath, sca.privPEM.Bytes(), readOnly); err != nil {
+	if err := ioutil.WriteFile(caPrivPath, sca.privPEM.Bytes(), uRW); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(caCertPath, sca.certPEM.Bytes(), readWrite); err != nil {
+	if err := ioutil.WriteFile(caCertPath, sca.certPEM.Bytes(), uRWgoR); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(caCRLPath, sca.crl, readWrite); err != nil {
+	if err := ioutil.WriteFile(caCRLPath, sca.crl, uRWgoR); err != nil {
 		return err
 	}
 	for _, c := range sca.clients {
-		if err := ioutil.WriteFile(c.name+".key", c.privPEM.Bytes(), readOnly); err != nil {
+		if err := ioutil.WriteFile(c.name+".key", c.privPEM.Bytes(), uRW); err != nil {
 			return err
 		}
-		if err := ioutil.WriteFile(c.name+".pem", c.signedPEM.Bytes(), readWrite); err != nil {
+		if err := ioutil.WriteFile(c.name+".pem", c.signedPEM.Bytes(), uRWgoR); err != nil {
 			return err
 		}
 	}
