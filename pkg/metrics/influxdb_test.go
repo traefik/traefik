@@ -64,6 +64,16 @@ func TestInfluxDB(t *testing.T) {
 	})
 
 	assertMessage(t, msgEntrypoint, expectedEntrypoint)
+
+	expectedTLS := []string{
+		`(traefik\.tls\.certs\.notAfterTimestamp,key=value value=1) [\d]{19}`,
+	}
+
+	msgTLS := udp.ReceiveString(t, func() {
+		influxDBRegistry.TLSCertsNotAfterTimestampGauge().With("key", "value").Set(1)
+	})
+
+	assertMessage(t, msgTLS, expectedTLS)
 }
 
 func TestInfluxDBHTTP(t *testing.T) {
@@ -121,6 +131,15 @@ func TestInfluxDBHTTP(t *testing.T) {
 	msgEntrypoint := <-c
 
 	assertMessage(t, *msgEntrypoint, expectedEntrypoint)
+
+	expectedTLS := []string{
+		`(traefik\.tls\.certs\.notAfterTimestamp,key=value value=1) [\d]{19}`,
+	}
+
+	influxDBRegistry.TLSCertsNotAfterTimestampGauge().With("key", "value").Set(1)
+	msgTLS := <-c
+
+	assertMessage(t, *msgTLS, expectedTLS)
 }
 
 func assertMessage(t *testing.T, msg string, patterns []string) {
