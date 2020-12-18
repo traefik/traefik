@@ -1,3 +1,15 @@
+## [v2.3.6](https://github.com/traefik/traefik/tree/v2.3.6) (2020-12-17)
+[All Commits](https://github.com/traefik/traefik/compare/v2.3.5...v2.3.6)
+
+**Bug fixes:**
+- **[logs]** Update Logrus to v1.7.0 ([#7663](https://github.com/traefik/traefik/pull/7663) by [jspdown](https://github.com/jspdown))
+- **[plugins]** Update Yaegi to v0.9.8 ([#7659](https://github.com/traefik/traefik/pull/7659) by [ldez](https://github.com/ldez))
+- **[rules]** Disable router when a rule has an error ([#7680](https://github.com/traefik/traefik/pull/7680) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[logs]** Add configuration example for access log filePath ([#7655](https://github.com/traefik/traefik/pull/7655) by [wernerfred](https://github.com/wernerfred))
+- **[middleware]** Add missing quotes in errorpages k8s example yaml ([#7675](https://github.com/traefik/traefik/pull/7675) by [icelynjennings](https://github.com/icelynjennings))
+
 ## [v2.4.0-rc1](https://github.com/traefik/traefik/tree/v2.4.0-rc1) (2020-12-16)
 [All Commits](https://github.com/traefik/traefik/compare/v2.3.0-rc1...v2.4.0-rc1)
 

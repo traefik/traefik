@@ -30,6 +30,16 @@ func Test_addRoute(t *testing.T) {
 			expectedError: true,
 		},
 		{
+			desc:          "Host empty",
+			rule:          "Host(``)",
+			expectedError: true,
+		},
+		{
+			desc:          "PathPrefix empty",
+			rule:          "PathPrefix(``)",
+			expectedError: true,
+		},
+		{
 			desc: "PathPrefix",
 			rule: "PathPrefix(`/foo`)",
 			expected: map[string]int{
