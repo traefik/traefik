@@ -35,7 +35,7 @@ Step 1/10 : FROM golang:1.14-alpine
 [...]
 Successfully built 5c3c1a911277
 Successfully tagged traefik-dev:4475--feature-documentation
-docker run  -e "TEST_CONTAINER=1" -v "/var/run/docker.sock:/var/run/docker.sock" -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -e VERBOSE -e VERSION -e CODENAME -e TESTDIRS -e CI -e CONTAINER=DOCKER		 -v "/home/ldez/sources/go/src/github.com/traefik/traefik/"dist":/go/src/github.com/traefik/traefik/"dist"" "traefik-dev:4475--feature-documentation" ./script/make.sh generate binary
+docker run  -e "TEST_CONTAINER=1" -v "/var/run/docker.sock:/var/run/docker.sock" -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -e VERBOSE -e VERSION -e CODENAME -e TESTDIRS -e CI -e CONTAINER=DOCKER		 -v "$GOPATH/src/github.com/traefik/traefik/"dist":/go/src/github.com/traefik/traefik/"dist"" "traefik-dev:4475--feature-documentation" ./script/make.sh generate binary
 ---> Making bundle: generate (in .)
 removed 'autogen/genstatic/gen.go'
 
