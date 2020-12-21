@@ -45,7 +45,7 @@ type Provider struct {
 	IngressClass        string           `description:"Value of kubernetes.io/ingress.class annotation or IngressClass name to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
 	IngressEndpoint     *EndpointIngress `description:"Kubernetes Ingress Endpoint." json:"ingressEndpoint,omitempty" toml:"ingressEndpoint,omitempty" yaml:"ingressEndpoint,omitempty" export:"true"`
 	ThrottleDuration    ptypes.Duration  `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
-	CreateEmptyServices bool             `description:"Kubernetes create services without endpoints." json:"createEmptyServices,omitempty" toml:"createEmptyServices,omitempty" yaml:"createEmptyServices,omitempty" export:"true"`
+	IgnoreEmptyServices bool             `description:"Prevent creation of services without endpoints." json:"ignoreEmptyServices,omitempty" toml:"ignoreEmptyServices,omitempty" yaml:"ignoreEmptyServices,omitempty" export:"true"`
 	lastConfiguration   safe.Safe
 }
 
@@ -241,7 +241,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					Errorf("Cannot create service: %v", err)
 				continue
 			}
-			if len(service.LoadBalancer.Servers) == 0 && !p.CreateEmptyServices {
+			if len(service.LoadBalancer.Servers) == 0 && p.IgnoreEmptyServices {
 				log.FromContext(ctx).
 					WithField("serviceName", ingress.Spec.DefaultBackend.Service.Name).
 					WithField("servicePort", ingress.Spec.DefaultBackend.Service.Port.String()).
@@ -285,7 +285,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 						Errorf("Cannot create service: %v", err)
 					continue
 				}
-				if len(service.LoadBalancer.Servers) == 0 && !p.CreateEmptyServices {
+				if len(service.LoadBalancer.Servers) == 0 && p.IgnoreEmptyServices {
 					log.FromContext(ctx).
 						WithField("serviceName", pa.Backend.Service.Name).
 						WithField("servicePort", pa.Backend.Service.Port.String()).

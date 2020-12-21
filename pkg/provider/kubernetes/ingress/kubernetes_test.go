@@ -449,19 +449,19 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
-					Routers:     map[string]*dynamic.Router{},
-					Services:    map[string]*dynamic.Service{},
-				},
-			},
-		},
-		{
-			desc: "Ingress with one service without endpoint",
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{},
-				HTTP: &dynamic.HTTPConfiguration{
-					Middlewares: map[string]*dynamic.Middleware{},
-					Routers:     map[string]*dynamic.Router{},
-					Services:    map[string]*dynamic.Service{},
+					Routers: map[string]*dynamic.Router{
+						"testing-traefik-tchouk-bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "testing-service1-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
 				},
 			},
 		},
