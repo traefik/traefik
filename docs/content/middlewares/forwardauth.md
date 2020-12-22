@@ -285,7 +285,7 @@ http:
 ### `authRequestHeaders`
 
 The `authRequestHeaders` option is the list of the headers to copy from the request to the authentication server.
-It allows to prevent passing headers that have not to be passed to the authentication server.
+It allows filtering headers that should not be passed to the authentication server.
 If not set or empty then all request headers will be passed.
 
 ```yaml tab="Docker"
