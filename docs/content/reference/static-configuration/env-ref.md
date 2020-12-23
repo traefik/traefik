@@ -69,6 +69,12 @@ Use a DNS-01 based challenge provider rather than HTTPS.
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE_RESOLVERS`:  
 Use following DNS servers to resolve the FQDN authority.
 
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_EAB_HMACENCODED`:  
+Base64 encoded HMAC key from External CA.
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_EAB_KID`:  
+Key identifier from External CA.
+
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_EMAIL`:  
 Email address used for registration.
 
@@ -167,6 +173,9 @@ plugin's GOPATH.
 
 `TRAEFIK_EXPERIMENTAL_DEVPLUGIN_MODULENAME`:  
 plugin's module name.
+
+`TRAEFIK_EXPERIMENTAL_KUBERNETESGATEWAY`:  
+Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_MODULENAME`:  
 plugin's module name.
@@ -303,6 +312,9 @@ Terminating status code (Default: ```503```)
 `TRAEFIK_PROVIDERS_CONSUL`:  
 Enable Consul backend with default settings. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_CONSULCATALOG`:  
+Enable ConsulCatalog backend with default settings. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_CONSULCATALOG_CACHE`:  
 Use local agent caching for catalog reads. (Default: ```false```)
 
@@ -438,6 +450,9 @@ Use the ip address from the bound port, rather than from the inner network. (Def
 `TRAEFIK_PROVIDERS_DOCKER_WATCH`:  
 Watch Docker Swarm events. (Default: ```true```)
 
+`TRAEFIK_PROVIDERS_ECS`:  
+Enable AWS ECS backend with default settings. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_ECS_ACCESSKEYID`:  
 The AWS credentials access key to use for making requests
 
@@ -537,11 +552,11 @@ TLS key
 `TRAEFIK_PROVIDERS_KUBERNETESCRD`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_KUBERNETESCRD_ALLOWCROSSNAMESPACE`:  
+Allow cross namespace resource reference. (Default: ```true```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_CERTAUTHFILEPATH`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
-
-`TRAEFIK_PROVIDERS_KUBERNETESCRD_DISABLEPASSHOSTHEADERS`:  
-Kubernetes disable PassHost Headers. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
@@ -561,14 +576,32 @@ Ingress refresh throttle duration (Default: ```0```)
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_TOKEN`:  
 Kubernetes bearer token (not needed for in-cluster client).
 
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY`:  
+Enable Kubernetes gateway api provider with default settings. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_CERTAUTHFILEPATH`:  
+Kubernetes certificate authority file path (not needed for in-cluster client).
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_ENDPOINT`:  
+Kubernetes server endpoint (required for external cluster client).
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_LABELSELECTOR`:  
+Kubernetes label selector to select specific GatewayClasses.
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_NAMESPACES`:  
+Kubernetes namespaces.
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_THROTTLEDURATION`:  
+Kubernetes refresh throttle duration (Default: ```0```)
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_TOKEN`:  
+Kubernetes bearer token (not needed for in-cluster client).
+
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_CERTAUTHFILEPATH`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
-
-`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_DISABLEPASSHOSTHEADERS`:  
-Kubernetes disable PassHost Headers. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).

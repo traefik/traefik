@@ -17,6 +17,8 @@
 * Jean-Baptiste Doumenjou [@jbdoumenjou](https://github.com/jbdoumenjou)
 * Mathieu Lonjaret [@mpl](https://github.com/mpl)
 * Romain Tribotté [@rtribotte](https://github.com/rtribotte)
+* Kevin Pollet [@kevinpollet](https://github.com/kevinpollet)
+* Harold Ozouf [@jspdown](https://github.com/jspdown)
 
 ## Issue Triage
 

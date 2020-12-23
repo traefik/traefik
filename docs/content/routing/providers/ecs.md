@@ -10,7 +10,7 @@ Attach labels to your containers and let Traefik do the rest!
 !!! info "labels"
     
     - labels are case insensitive.
-    - The complete list of labels can be found [the reference page](../../reference/dynamic-configuration/ecs.md)
+    - The complete list of labels can be found in [the reference page](../../reference/dynamic-configuration/ecs.md).
 
 ### General
 
@@ -386,6 +386,14 @@ You can declare TCP Routers and/or Services using labels.
     
     ```yaml
     traefik.tcp.services.mytcpservice.loadbalancer.terminationdelay=100
+    ```
+
+??? info "`traefik.tcp.services.<service_name>.loadbalancer.proxyprotocol.version`"
+        
+    See [PROXY protocol](../services/index.md#proxy-protocol) for more information.
+    
+    ```yaml
+    traefik.tcp.services.mytcpservice.loadbalancer.proxyprotocol.version=1
     ```
 
 ### UDP

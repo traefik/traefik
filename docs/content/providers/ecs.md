@@ -13,18 +13,15 @@ Attach labels to your ECS containers and let Traefik do the rest!
     
     ```toml tab="File (TOML)"
     [providers.ecs]
-      clusters = ["default"]
     ```
     
     ```yaml tab="File (YAML)"
     providers:
-      ecs:
-        clusters:
-          - default
+      ecs: {}
     ```
     
     ```bash tab="CLI"
-    --providers.ecs.clusters=default
+    --providers.ecs=true
     ```
 
 ## Policy
@@ -90,7 +87,7 @@ _Optional, Default=["default"]_
 
 ```toml tab="File (TOML)"
 [providers.ecs]
-  cluster = ["default"]
+  clusters = ["default"]
   # ...
 ```
 

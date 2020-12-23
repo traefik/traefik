@@ -1,22 +1,45 @@
 package acme
 
 import (
-	"crypto/tls"
+	"fmt"
+	"sync"
+	"time"
 
-	"github.com/go-acme/lego/v4/challenge"
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/safe"
+	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
-var _ challenge.Provider = (*challengeTLSALPN)(nil)
+const providerNameALPN = "tlsalpn.acme"
 
-type challengeTLSALPN struct {
-	Store ChallengeStore
+// ChallengeTLSALPN TLSALPN challenge provider implements challenge.Provider.
+type ChallengeTLSALPN struct {
+	Timeout time.Duration
+
+	chans   map[string]chan struct{}
+	muChans sync.Mutex
+
+	certs   map[string]*Certificate
+	muCerts sync.Mutex
+
+	configurationChan chan<- dynamic.Message
 }
 
-func (c *challengeTLSALPN) Present(domain, token, keyAuth string) error {
-	log.WithoutContext().WithField(log.ProviderName, "acme").
+// NewChallengeTLSALPN creates a new ChallengeTLSALPN.
+func NewChallengeTLSALPN(timeout time.Duration) *ChallengeTLSALPN {
+	return &ChallengeTLSALPN{
+		Timeout: timeout,
+		chans:   make(map[string]chan struct{}),
+		certs:   make(map[string]*Certificate),
+	}
+}
+
+// Present presents a challenge to obtain new ACME certificate.
+func (c *ChallengeTLSALPN) Present(domain, _, keyAuth string) error {
+	log.WithoutContext().WithField(log.ProviderName, providerNameALPN).
 		Debugf("TLS Challenge Present temp certificate for %s", domain)
 
 	certPEMBlock, keyPEMBlock, err := tlsalpn01.ChallengeBlocks(domain, keyAuth)
@@ -25,31 +48,113 @@ func (c *challengeTLSALPN) Present(domain, token, keyAuth string) error {
 	}
 
 	cert := &Certificate{Certificate: certPEMBlock, Key: keyPEMBlock, Domain: types.Domain{Main: "TEMP-" + domain}}
-	return c.Store.AddTLSChallenge(domain, cert)
+
+	c.muChans.Lock()
+	ch := make(chan struct{})
+	c.chans[string(certPEMBlock)] = ch
+	c.muChans.Unlock()
+
+	c.muCerts.Lock()
+	c.certs[keyAuth] = cert
+	conf := createMessage(c.certs)
+	c.muCerts.Unlock()
+
+	c.configurationChan <- conf
+
+	timer := time.NewTimer(c.Timeout)
+
+	var errC error
+	select {
+	case t := <-timer.C:
+		timer.Stop()
+		close(c.chans[string(certPEMBlock)])
+		errC = fmt.Errorf("timeout %s", t)
+	case <-ch:
+		// noop
+	}
+
+	c.muChans.Lock()
+	delete(c.chans, string(certPEMBlock))
+	c.muChans.Unlock()
+
+	return errC
 }
 
-func (c *challengeTLSALPN) CleanUp(domain, token, keyAuth string) error {
-	log.WithoutContext().WithField(log.ProviderName, "acme").
+// CleanUp cleans the challenges when certificate is obtained.
+func (c *ChallengeTLSALPN) CleanUp(domain, _, keyAuth string) error {
+	log.WithoutContext().WithField(log.ProviderName, providerNameALPN).
 		Debugf("TLS Challenge CleanUp temp certificate for %s", domain)
 
-	return c.Store.RemoveTLSChallenge(domain)
+	c.muCerts.Lock()
+	delete(c.certs, keyAuth)
+	conf := createMessage(c.certs)
+	c.muCerts.Unlock()
+
+	c.configurationChan <- conf
+
+	return nil
 }
 
-// GetTLSALPNCertificate Get the temp certificate for ACME TLS-ALPN-O1 challenge.
-func (p *Provider) GetTLSALPNCertificate(domain string) (*tls.Certificate, error) {
-	cert, err := p.ChallengeStore.GetTLSChallenge(domain)
-	if err != nil {
-		return nil, err
+// Init the provider.
+func (c *ChallengeTLSALPN) Init() error {
+	return nil
+}
+
+// Provide allows the provider to provide configurations to traefik using the given configuration channel.
+func (c *ChallengeTLSALPN) Provide(configurationChan chan<- dynamic.Message, _ *safe.Pool) error {
+	c.configurationChan = configurationChan
+
+	return nil
+}
+
+// ListenConfiguration sets a new Configuration into the configurationChan.
+func (c *ChallengeTLSALPN) ListenConfiguration(conf dynamic.Configuration) {
+	for _, certificate := range conf.TLS.Certificates {
+		if !containsACMETLS1(certificate.Stores) {
+			continue
+		}
+
+		c.muChans.Lock()
+		if _, ok := c.chans[certificate.CertFile.String()]; ok {
+			close(c.chans[certificate.CertFile.String()])
+		}
+		c.muChans.Unlock()
+	}
+}
+
+func createMessage(certs map[string]*Certificate) dynamic.Message {
+	conf := dynamic.Message{
+		ProviderName: providerNameALPN,
+		Configuration: &dynamic.Configuration{
+			HTTP: &dynamic.HTTPConfiguration{
+				Routers:     map[string]*dynamic.Router{},
+				Middlewares: map[string]*dynamic.Middleware{},
+				Services:    map[string]*dynamic.Service{},
+			},
+			TLS: &dynamic.TLSConfiguration{},
+		},
 	}
 
-	if cert == nil {
-		return nil, nil
+	for _, cert := range certs {
+		certConf := &traefiktls.CertAndStores{
+			Certificate: traefiktls.Certificate{
+				CertFile: traefiktls.FileOrContent(cert.Certificate),
+				KeyFile:  traefiktls.FileOrContent(cert.Key),
+			},
+			Stores: []string{tlsalpn01.ACMETLS1Protocol},
+		}
+		conf.Configuration.TLS.Certificates = append(conf.Configuration.TLS.Certificates, certConf)
 	}
 
-	certificate, err := tls.X509KeyPair(cert.Certificate, cert.Key)
-	if err != nil {
-		return nil, err
+	return conf
+}
+
+func containsACMETLS1(stores []string) bool {
+	for _, store := range stores {
+		if store == tlsalpn01.ACMETLS1Protocol {
+			return true
+		}
 	}
 
-	return &certificate, nil
+	return false
 }

@@ -33,14 +33,16 @@ var oscpMustStaple = false
 
 // Configuration holds ACME configuration provided by users.
 type Configuration struct {
-	Email          string         `description:"Email address used for registration." json:"email,omitempty" toml:"email,omitempty" yaml:"email,omitempty"`
-	CAServer       string         `description:"CA server to use." json:"caServer,omitempty" toml:"caServer,omitempty" yaml:"caServer,omitempty"`
-	PreferredChain string         `description:"Preferred chain to use." json:"preferredChain,omitempty" toml:"preferredChain,omitempty" yaml:"preferredChain,omitempty"`
-	Storage        string         `description:"Storage to use." json:"storage,omitempty" toml:"storage,omitempty" yaml:"storage,omitempty"`
-	KeyType        string         `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty"`
-	DNSChallenge   *DNSChallenge  `description:"Activate DNS-01 Challenge." json:"dnsChallenge,omitempty" toml:"dnsChallenge,omitempty" yaml:"dnsChallenge,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	HTTPChallenge  *HTTPChallenge `description:"Activate HTTP-01 Challenge." json:"httpChallenge,omitempty" toml:"httpChallenge,omitempty" yaml:"httpChallenge,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	TLSChallenge   *TLSChallenge  `description:"Activate TLS-ALPN-01 Challenge." json:"tlsChallenge,omitempty" toml:"tlsChallenge,omitempty" yaml:"tlsChallenge,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	Email          string `description:"Email address used for registration." json:"email,omitempty" toml:"email,omitempty" yaml:"email,omitempty"`
+	CAServer       string `description:"CA server to use." json:"caServer,omitempty" toml:"caServer,omitempty" yaml:"caServer,omitempty"`
+	PreferredChain string `description:"Preferred chain to use." json:"preferredChain,omitempty" toml:"preferredChain,omitempty" yaml:"preferredChain,omitempty" export:"true"`
+	Storage        string `description:"Storage to use." json:"storage,omitempty" toml:"storage,omitempty" yaml:"storage,omitempty" export:"true"`
+	KeyType        string `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
+	EAB            *EAB   `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
+
+	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge." json:"dnsChallenge,omitempty" toml:"dnsChallenge,omitempty" yaml:"dnsChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge." json:"httpChallenge,omitempty" toml:"httpChallenge,omitempty" yaml:"httpChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	TLSChallenge  *TLSChallenge  `description:"Activate TLS-ALPN-01 Challenge." json:"tlsChallenge,omitempty" toml:"tlsChallenge,omitempty" yaml:"tlsChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -63,28 +65,37 @@ type Certificate struct {
 	Key         []byte       `json:"key,omitempty" toml:"key,omitempty" yaml:"key,omitempty"`
 }
 
-// DNSChallenge contains DNS challenge Configuration.
+// EAB contains External Account Binding configuration.
+type EAB struct {
+	Kid         string `description:"Key identifier from External CA." json:"kid,omitempty" toml:"kid,omitempty" yaml:"kid,omitempty"`
+	HmacEncoded string `description:"Base64 encoded HMAC key from External CA." json:"hmacEncoded,omitempty" toml:"hmacEncoded,omitempty" yaml:"hmacEncoded,omitempty"`
+}
+
+// DNSChallenge contains DNS challenge configuration.
 type DNSChallenge struct {
-	Provider                string          `description:"Use a DNS-01 based challenge provider rather than HTTPS." json:"provider,omitempty" toml:"provider,omitempty" yaml:"provider,omitempty"`
-	DelayBeforeCheck        ptypes.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers." json:"delayBeforeCheck,omitempty" toml:"delayBeforeCheck,omitempty" yaml:"delayBeforeCheck,omitempty"`
+	Provider                string          `description:"Use a DNS-01 based challenge provider rather than HTTPS." json:"provider,omitempty" toml:"provider,omitempty" yaml:"provider,omitempty" export:"true"`
+	DelayBeforeCheck        ptypes.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers." json:"delayBeforeCheck,omitempty" toml:"delayBeforeCheck,omitempty" yaml:"delayBeforeCheck,omitempty" export:"true"`
 	Resolvers               []string        `description:"Use following DNS servers to resolve the FQDN authority." json:"resolvers,omitempty" toml:"resolvers,omitempty" yaml:"resolvers,omitempty"`
-	DisablePropagationCheck bool            `description:"Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]" json:"disablePropagationCheck,omitempty" toml:"disablePropagationCheck,omitempty" yaml:"disablePropagationCheck,omitempty"`
+	DisablePropagationCheck bool            `description:"Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]" json:"disablePropagationCheck,omitempty" toml:"disablePropagationCheck,omitempty" yaml:"disablePropagationCheck,omitempty" export:"true"`
 }
 
-// HTTPChallenge contains HTTP challenge Configuration.
+// HTTPChallenge contains HTTP challenge configuration.
 type HTTPChallenge struct {
-	EntryPoint string `description:"HTTP challenge EntryPoint" json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"`
+	EntryPoint string `description:"HTTP challenge EntryPoint" json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"  export:"true"`
 }
 
-// TLSChallenge contains TLS challenge Configuration.
+// TLSChallenge contains TLS challenge configuration.
 type TLSChallenge struct{}
 
 // Provider holds configurations of the provider.
 type Provider struct {
 	*Configuration
-	ResolverName           string
-	Store                  Store `json:"store,omitempty" toml:"store,omitempty" yaml:"store,omitempty"`
-	ChallengeStore         ChallengeStore
+	ResolverName string
+	Store        Store `json:"store,omitempty" toml:"store,omitempty" yaml:"store,omitempty"`
+
+	TLSChallengeProvider  challenge.Provider
+	HTTPChallengeProvider challenge.Provider
+
 	certificates           []*CertAndStore
 	account                *Account
 	client                 *lego.Client
@@ -230,9 +241,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 
 	// New users will need to register; be sure to save it
 	if account.GetRegistration() == nil {
-		logger.Info("Register...")
-
-		reg, errR := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
+		reg, errR := p.register(ctx, client)
 		if errR != nil {
 			return nil, errR
 		}
@@ -285,7 +294,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	if p.HTTPChallenge != nil && len(p.HTTPChallenge.EntryPoint) > 0 {
 		logger.Debug("Using HTTP Challenge provider.")
 
-		err = client.Challenge.SetHTTP01Provider(&challengeHTTP{Store: p.ChallengeStore})
+		err = client.Challenge.SetHTTP01Provider(p.HTTPChallengeProvider)
 		if err != nil {
 			return nil, err
 		}
@@ -294,7 +303,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	if p.TLSChallenge != nil {
 		logger.Debug("Using TLS Challenge provider.")
 
-		err = client.Challenge.SetTLSALPN01Provider(&challengeTLSALPN{Store: p.ChallengeStore})
+		err = client.Challenge.SetTLSALPN01Provider(p.TLSChallengeProvider)
 		if err != nil {
 			return nil, err
 		}
@@ -319,6 +328,22 @@ func (p *Provider) initAccount(ctx context.Context) (*Account, error) {
 	}
 
 	return p.account, nil
+}
+
+func (p *Provider) register(ctx context.Context, client *lego.Client) (*registration.Resource, error) {
+	logger := log.FromContext(ctx)
+
+	if p.EAB != nil {
+		logger.Info("Register with external account binding...")
+
+		eabOptions := registration.RegisterEABOptions{TermsOfServiceAgreed: true, Kid: p.EAB.Kid, HmacEncoded: p.EAB.HmacEncoded}
+
+		return client.Registration.RegisterWithExternalAccountBinding(eabOptions)
+	}
+
+	logger.Info("Register...")
+
+	return client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
 }
 
 func (p *Provider) resolveDomains(ctx context.Context, domains []string, tlsStore string) {

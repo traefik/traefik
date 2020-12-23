@@ -158,6 +158,7 @@ http:
         authResponseHeaders:
         - foobar
         - foobar
+        authResponseHeadersRegex: foobar
         authRequestHeaders:
         - foobar
         - foobar
@@ -178,6 +179,9 @@ http:
         - foobar
         accessControlAllowOrigin: foobar
         accessControlAllowOriginList:
+        - foobar
+        - foobar
+        accessControlAllowOriginListRegex:
         - foobar
         - foobar
         accessControlExposeHeaders:
@@ -295,6 +299,7 @@ http:
     Middleware20:
       retry:
         attempts: 42
+        initialInterval: 42
     Middleware21:
       stripPrefix:
         prefixes:
@@ -383,6 +388,8 @@ tcp:
     TCPService01:
       loadBalancer:
         terminationDelay: 42
+        proxyProtocol:
+          version: 42
         servers:
         - address: foobar
         - address: foobar

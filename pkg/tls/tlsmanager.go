@@ -20,12 +20,11 @@ var DefaultTLSOptions = Options{}
 
 // Manager is the TLS option/store/configuration factory.
 type Manager struct {
-	storesConfig  map[string]Store
-	stores        map[string]*CertificateStore
-	configs       map[string]Options
-	certs         []*CertAndStores
-	TLSAlpnGetter func(string) (*tls.Certificate, error)
-	lock          sync.RWMutex
+	storesConfig map[string]Store
+	stores       map[string]*CertificateStore
+	configs      map[string]Options
+	certs        []*CertAndStores
+	lock         sync.RWMutex
 }
 
 // NewManager creates a new Manager.
@@ -95,6 +94,7 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 	}
 
 	store := m.getStore(storeName)
+	acmeTLSStore := m.getStore(tlsalpn01.ACMETLS1Protocol)
 
 	if err == nil {
 		tlsConfig, err = buildTLSConfig(config)
@@ -106,15 +106,13 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 	tlsConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 		domainToCheck := types.CanonicalDomain(clientHello.ServerName)
 
-		if m.TLSAlpnGetter != nil && isACMETLS(clientHello) {
-			cert, err := m.TLSAlpnGetter(domainToCheck)
-			if err != nil {
-				return nil, err
+		if isACMETLS(clientHello) {
+			certificate := acmeTLSStore.GetBestCertificate(clientHello)
+			if certificate == nil {
+				return nil, fmt.Errorf("no certificate for TLSALPN challenge: %s", domainToCheck)
 			}
 
-			if cert != nil {
-				return cert, nil
-			}
+			return certificate, nil
 		}
 
 		bestCertificate := store.GetBestCertificate(clientHello)
@@ -131,6 +129,27 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 	}
 
 	return tlsConfig, err
+}
+
+// GetCertificates returns all stored certificates.
+func (m *Manager) GetCertificates() []*x509.Certificate {
+	var certificates []*x509.Certificate
+
+	// We iterate over all the certificates.
+	for _, store := range m.stores {
+		if store.DynamicCerts != nil && store.DynamicCerts.Get() != nil {
+			for _, cert := range store.DynamicCerts.Get().(map[string]*tls.Certificate) {
+				x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
+				if err != nil {
+					continue
+				}
+
+				certificates = append(certificates, x509Cert)
+			}
+		}
+	}
+
+	return certificates
 }
 
 func (m *Manager) getStore(storeName string) *CertificateStore {

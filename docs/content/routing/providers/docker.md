@@ -58,6 +58,26 @@ Attach labels to your containers and let Traefik do the rest!
         Setting the label `traefik.http.services.xxx.loadbalancer.server.port`
         overrides that behavior.
 
+??? example "Specifying more than one router and service per container"
+
+    Forwarding requests to more than one port on a container requires referencing the service loadbalancer port definition using the service parameter on the router.
+
+    In this example, requests are forwarded for `http://example-a.com` to `http://<private IP of container>:8000` in addition to `http://example-b.com` forwarding to `http://<private IP of container>:9000`:
+
+    ```yaml
+    version: "3"
+    services:
+      my-container:
+        # ...
+        labels:
+          - traefik.http.routers.www-router.rule=Host(`example-a.com`)
+          - traefik.http.routers.www-router.service=www-service
+          - traefik.http.services.www-service.loadbalancer.server.port=8000
+          - traefik.http.routers.admin-router.rule=Host(`example-b.com`)
+          - traefik.http.routers.admin-router.service=admin-service
+          - traefik.http.services.admin-service.loadbalancer.server.port=9000
+    ```
+
 ??? example "Configuring Docker Swarm & Deploying / Exposing Services"
 
     Enabling the docker provider (Swarm Mode)
@@ -104,7 +124,7 @@ Attach labels to your containers and let Traefik do the rest!
     !!! important "Labels in Docker Swarm Mode"
         While in Swarm Mode, Traefik uses labels found on services, not on individual containers.
         Therefore, if you use a compose file with Swarm Mode, labels should be defined in the `deploy` part of your service.
-        This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/#labels-1)).
+        This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/compose-file-v3/#labels-1)).
 
 ## Routing Configuration
 
@@ -525,6 +545,14 @@ You can declare TCP Routers and/or Services using labels.
 
     ```yaml
     - "traefik.tcp.services.mytcpservice.loadbalancer.terminationdelay=100"
+    ```
+
+??? info "`traefik.tcp.services.<service_name>.loadbalancer.proxyprotocol.version`"
+
+    See [PROXY protocol](../services/index.md#proxy-protocol) for more information.
+
+    ```yaml
+    - "traefik.tcp.services.mytcpservice.loadbalancer.proxyprotocol.version=1"
     ```
 
 ### UDP

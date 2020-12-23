@@ -177,25 +177,31 @@ _Optional,Default: empty (process all resources)_
 
 ```toml tab="File (TOML)"
 [providers.kubernetesCRD]
-  labelselector = "A and not B"
+  labelselector = "app=traefik"
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   kubernetesCRD:
-    labelselector: "A and not B"
+    labelselector: "app=traefik"
     # ...
 ```
 
 ```bash tab="CLI"
---providers.kubernetescrd.labelselector="A and not B"
+--providers.kubernetescrd.labelselector="app=traefik"
 ```
 
 By default, Traefik processes all resource objects in the configured namespaces.
-A label selector can be defined to filter on specific resource objects only.
+A label selector can be defined to filter on specific resource objects only,
+this will apply only on Traefik [Custom Resources](../routing/providers/kubernetes-crd.md#custom-resource-definition-crd)
+and has no effect on Kubernetes `Secrets`, `Endpoints` and `Services`.
 
 See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
+
+!!! warning
+
+    As the LabelSelector is applied to all Traefik Custom Resources, they all must match the filter. 
 
 ### `ingressClass`
 
@@ -243,6 +249,34 @@ providers:
 ```bash tab="CLI"
 --providers.kubernetescrd.throttleDuration=10s
 ```
+
+### `allowCrossNamespace`
+
+_Optional, Default: true_
+
+```toml tab="File (TOML)"
+[providers.kubernetesCRD]
+  allowCrossNamespace = false
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesCRD:
+    allowCrossNamespace: false
+    # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetescrd.allowCrossNamespace=false
+```
+
+If the parameter is set to `false`, an IngressRoute will not be able to reference any resources
+in another namespace than the IngressRoute namespace.
+
+!!! warning "Deprecation"
+    
+    Please notice that the default value for this option will be set to `false` in a future version.
 
 ## Further
 

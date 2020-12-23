@@ -38,23 +38,28 @@ const (
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	Endpoint               string          `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-	Token                  string          `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
-	CertAuthFilePath       string          `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
-	DisablePassHostHeaders bool            `description:"Kubernetes disable PassHost Headers." json:"disablePassHostHeaders,omitempty" toml:"disablePassHostHeaders,omitempty" yaml:"disablePassHostHeaders,omitempty" export:"true"`
-	Namespaces             []string        `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
-	LabelSelector          string          `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
-	IngressClass           string          `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
-	ThrottleDuration       ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty"`
-	lastConfiguration      safe.Safe
+	Endpoint            string          `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Token               string          `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
+	CertAuthFilePath    string          `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
+	Namespaces          []string        `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
+	AllowCrossNamespace *bool           `description:"Allow cross namespace resource reference." json:"allowCrossNamespace,omitempty" toml:"allowCrossNamespace,omitempty" yaml:"allowCrossNamespace,omitempty" export:"true"`
+	LabelSelector       string          `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
+	IngressClass        string          `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
+	ThrottleDuration    ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
+	lastConfiguration   safe.Safe
 }
 
-func (p *Provider) newK8sClient(ctx context.Context, labelSelector string) (*clientWrapper, error) {
-	labelSel, err := labels.Parse(labelSelector)
+// SetDefaults sets the default values.
+func (p *Provider) SetDefaults() {
+	p.AllowCrossNamespace = func(b bool) *bool { return &b }(true)
+}
+
+func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
+	_, err := labels.Parse(p.LabelSelector)
 	if err != nil {
-		return nil, fmt.Errorf("invalid label selector: %q", labelSelector)
+		return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
 	}
-	log.FromContext(ctx).Infof("label selector is: %q", labelSel)
+	log.FromContext(ctx).Infof("label selector is: %q", p.LabelSelector)
 
 	withEndpoint := ""
 	if p.Endpoint != "" {
@@ -74,11 +79,12 @@ func (p *Provider) newK8sClient(ctx context.Context, labelSelector string) (*cli
 		client, err = newExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
 	}
 
-	if err == nil {
-		client.labelSelector = labelSel
+	if err != nil {
+		return nil, err
 	}
 
-	return client, err
+	client.labelSelector = p.LabelSelector
+	return client, nil
 }
 
 // Init the provider.
@@ -92,10 +98,13 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	ctxLog := log.With(context.Background(), log.Str(log.ProviderName, providerName))
 	logger := log.FromContext(ctxLog)
 
-	logger.Debugf("Using label selector: %q", p.LabelSelector)
-	k8sClient, err := p.newK8sClient(ctxLog, p.LabelSelector)
+	k8sClient, err := p.newK8sClient(ctxLog)
 	if err != nil {
 		return err
+	}
+
+	if p.AllowCrossNamespace == nil || *p.AllowCrossNamespace {
+		logger.Warn("Cross-namespace reference between IngressRoutes and resources is enabled, please ensure that this is expected (see AllowCrossNamespace option)")
 	}
 
 	pool.GoCtx(func(ctxPool context.Context) {
@@ -197,7 +206,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
-		errorPage, errorPageService, err := createErrorPageMiddleware(client, middleware.Namespace, middleware.Spec.Errors)
+		errorPage, errorPageService, err := p.createErrorPageMiddleware(client, middleware.Namespace, middleware.Spec.Errors)
 		if err != nil {
 			log.FromContext(ctxMid).Errorf("Error while reading error page middleware: %v", err)
 			continue
@@ -236,7 +245,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		}
 	}
 
-	cb := configBuilder{client}
+	cb := configBuilder{client, p.AllowCrossNamespace}
 
 	for _, service := range client.GetTraefikServices() {
 		err := cb.buildTraefikService(ctx, service, conf.HTTP.Services)
@@ -346,7 +355,7 @@ func getServicePort(svc *corev1.Service, port int32) (*corev1.ServicePort, error
 	return &corev1.ServicePort{Port: port}, nil
 }
 
-func createErrorPageMiddleware(client Client, namespace string, errorPage *v1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
+func (p *Provider) createErrorPageMiddleware(client Client, namespace string, errorPage *v1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
 	if errorPage == nil {
 		return nil, nil, nil
 	}
@@ -356,7 +365,7 @@ func createErrorPageMiddleware(client Client, namespace string, errorPage *v1alp
 		Query:  errorPage.Query,
 	}
 
-	balancerServerHTTP, err := configBuilder{client}.buildServersLB(namespace, errorPage.Service.LoadBalancerSpec)
+	balancerServerHTTP, err := configBuilder{client, p.AllowCrossNamespace}.buildServersLB(namespace, errorPage.Service.LoadBalancerSpec)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -373,10 +382,11 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alp
 	}
 
 	forwardAuth := &dynamic.ForwardAuth{
-		Address:             auth.Address,
-		TrustForwardHeader:  auth.TrustForwardHeader,
-		AuthResponseHeaders: auth.AuthResponseHeaders,
-		AuthRequestHeaders:  auth.AuthRequestHeaders,
+		Address:                  auth.Address,
+		TrustForwardHeader:       auth.TrustForwardHeader,
+		AuthResponseHeaders:      auth.AuthResponseHeaders,
+		AuthResponseHeadersRegex: auth.AuthResponseHeadersRegex,
+		AuthRequestHeaders:       auth.AuthRequestHeaders,
 	}
 
 	if auth.TLS == nil {
@@ -814,4 +824,9 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	})
 
 	return eventsChanBuffered
+}
+
+func isNamespaceAllowed(allowCrossNamespace *bool, parentNamespace, namespace string) bool {
+	// If allowCrossNamespace option is not defined the default behavior is to allow cross namespace references.
+	return allowCrossNamespace == nil || *allowCrossNamespace || parentNamespace == namespace
 }

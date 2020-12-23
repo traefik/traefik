@@ -531,6 +531,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
 ### Enabling TLS via Annotations
 
 To enable TLS on the underlying router created from an Ingress, one should configure it through annotations:
+
 ```yaml
 traefik.ingress.kubernetes.io/router.tls: "true"
 ```

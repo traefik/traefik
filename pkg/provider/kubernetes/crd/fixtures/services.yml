@@ -123,6 +123,35 @@ subsets:
 apiVersion: v1
 kind: Service
 metadata:
+  name: whoami-ipv6
+  namespace: default
+
+spec:
+  ports:
+    - name: web
+      port: 8080
+  selector:
+    app: traefiklabs
+    task: whoami-ipv6
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoami-ipv6
+  namespace: default
+
+subsets:
+  - addresses:
+      - ip: "2001:db8:85a3:8d3:1319:8a2e:370:7348"
+    ports:
+      - name: web
+        port: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
   name: external-svc
   namespace: default
 spec:
@@ -157,5 +186,46 @@ spec:
       protocol: TCP
       port: 443
 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-svc-with-ipv6
+  namespace: default
+spec:
+  externalName: "2001:db8:85a3:8d3:1319:8a2e:370:7347"
+  type: ExternalName
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami-svc
+  namespace: cross-ns
 
+spec:
+  ports:
+    - name: web
+      port: 80
+  selector:
+    app: traefiklabs
+    task: whoami
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoami-svc
+  namespace: cross-ns
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.1
+      - ip: 10.10.0.2
+    ports:
+      - name: web
+        port: 80

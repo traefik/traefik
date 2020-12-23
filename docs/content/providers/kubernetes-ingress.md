@@ -4,7 +4,7 @@ The Kubernetes Ingress Controller.
 {: .subtitle }
 
 The Traefik Kubernetes Ingress provider is a Kubernetes Ingress controller; that is to say,
-it manages access to a cluster services by supporting the [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) specification.
+it manages access to cluster services by supporting the [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) specification.
 
 ## Routing Configuration
 
@@ -158,29 +158,6 @@ providers:
 Path to the certificate authority file.
 Used for the Kubernetes client configuration.
 
-### `disablePassHostHeaders`
-
-_Optional, Default=false_
-
-```toml tab="File (TOML)"
-[providers.kubernetesIngress]
-  disablePassHostHeaders = true
-  # ...
-```
-
-```yaml tab="File (YAML)"
-providers:
-  kubernetesIngress:
-    disablePassHostHeaders: true
-    # ...
-```
-
-```bash tab="CLI"
---providers.kubernetesingress.disablepasshostheaders=true
-```
-
-Whether to disable PassHost Headers.
-
 ### `namespaces`
 
 _Optional, Default: all namespaces (empty array)_
@@ -212,23 +189,23 @@ _Optional,Default: empty (process all Ingresses)_
 
 ```toml tab="File (TOML)"
 [providers.kubernetesIngress]
-  labelSelector = "A and not B"
+  labelSelector = "app=traefik"
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   kubernetesIngress:
-    labelselector: "A and not B"
+    labelselector: "app=traefik"
     # ...
 ```
 
 ```bash tab="CLI"
---providers.kubernetesingress.labelselector="A and not B"
+--providers.kubernetesingress.labelselector="app=traefik"
 ```
 
-By default, Traefik processes all Ingress objects in the configured namespaces.
-A label selector can be defined to filter on specific Ingress objects only.
+By default, Traefik processes all `Ingress` objects in the configured namespaces.
+A label selector can be defined to filter on specific `Ingress` objects only.
 
 See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
 

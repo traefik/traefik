@@ -80,7 +80,6 @@
     endpoint = "foobar"
     token = "foobar"
     certAuthFilePath = "foobar"
-    disablePassHostHeaders = true
     namespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
     ingressClass = "foobar"
@@ -92,7 +91,6 @@
     endpoint = "foobar"
     token = "foobar"
     certAuthFilePath = "foobar"
-    disablePassHostHeaders = true
     namespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
     ingressClass = "foobar"
@@ -288,6 +286,7 @@
         address = "foobar"
         trustForwardHeader = true
         authResponseHeaders = ["foobar", "foobar"]
+        authResponseHeadersRegex = "foobar"
         authRequestHeaders = ["foobar", "foobar"]
         [http.middlewares.Middleware15.forwardAuth.tls]
           ca = "foobar"

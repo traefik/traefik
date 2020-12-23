@@ -1,4 +1,5 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
+set -e
 
 HACK_DIR="$( cd "$( dirname "${0}" )" && pwd -P)"; export HACK_DIR
 REPO_ROOT=${HACK_DIR}/..

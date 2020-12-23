@@ -42,7 +42,7 @@ func (c *Config) SetDefaults() {
 
 // Collector provides configuration settings for jaeger collector.
 type Collector struct {
-	Endpoint string `description:"Instructs reporter to send spans to jaeger-collector at this URL." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
+	Endpoint string `description:"Instructs reporter to send spans to jaeger-collector at this URL." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
 	User     string `description:"User for basic http authentication when sending spans to jaeger-collector." json:"user,omitempty" toml:"user,omitempty" yaml:"user,omitempty"`
 	Password string `description:"Password for basic http authentication when sending spans to jaeger-collector." json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty"`
 }

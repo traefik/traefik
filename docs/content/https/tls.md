@@ -64,7 +64,7 @@ tls:
 !!! important "Restriction"
 
     Any store definition other than the default one (named `default`) will be ignored,
-    and there is thefore only one globally available TLS store.
+    and there is therefore only one globally available TLS store.
 
 In the `tls.certificates` section, a list of stores can then be specified to indicate where the certificates should be stored:
 

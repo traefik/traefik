@@ -99,11 +99,10 @@
     endpoint = "foobar"
     token = "foobar"
     certAuthFilePath = "foobar"
-    disablePassHostHeaders = true
     namespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
     ingressClass = "foobar"
-    throttleDuration = "10s"
+    throttleDuration = "42s"
     [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
       hostname = "foobar"
@@ -112,10 +111,17 @@
     endpoint = "foobar"
     token = "foobar"
     certAuthFilePath = "foobar"
-    disablePassHostHeaders = true
     namespaces = ["foobar", "foobar"]
+    allowCrossNamespace = true
     labelSelector = "foobar"
     ingressClass = "foobar"
+    throttleDuration = 42
+  [providers.kubernetesGateway]
+    endpoint = "foobar"
+    token = "foobar"
+    certAuthFilePath = "foobar"
+    namespaces = ["foobar", "foobar"]
+    labelSelector = "foobar"
     throttleDuration = 42
   [providers.rest]
     insecure = true
@@ -251,9 +257,6 @@
     addEntryPointsLabels = true
     addServicesLabels = true
 
-[pilot]
-  token = "foobar"
-
 [ping]
   entryPoint = "foobar"
   manualRouting = true
@@ -343,6 +346,9 @@
       preferredChain = "foobar"
       storage = "foobar"
       keyType = "foobar"
+      [certificatesResolvers.CertificateResolver0.acme.eab]
+        kid = "foobar"
+        hmacEncoded = "foobar"
       [certificatesResolvers.CertificateResolver0.acme.dnsChallenge]
         provider = "foobar"
         delayBeforeCheck = 42
@@ -358,6 +364,9 @@
       preferredChain = "foobar"
       storage = "foobar"
       keyType = "foobar"
+      [certificatesResolvers.CertificateResolver1.acme.eab]
+        kid = "foobar"
+        hmacEncoded = "foobar"
       [certificatesResolvers.CertificateResolver1.acme.dnsChallenge]
         provider = "foobar"
         delayBeforeCheck = 42
@@ -366,6 +375,9 @@
       [certificatesResolvers.CertificateResolver1.acme.httpChallenge]
         entryPoint = "foobar"
       [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]
+
+[pilot]
+  token = "foobar"
 
 [experimental]
   [experimental.plugins]
@@ -378,3 +390,4 @@
   [experimental.devPlugin]
     goPath = "foobar"
     moduleName = "foobar"
+  kubernetesGateway = true

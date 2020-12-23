@@ -1,0 +1,65 @@
+{
+	"routers": {
+		"default-api-route-29f28a463fb5d5ba16d2@kubernetescrd": {
+			"entryPoints": [
+				"web"
+			],
+			"service": "api@internal",
+			"rule": "PathPrefix(`/api`)",
+			"status": "enabled",
+			"using": [
+				"web"
+			]
+		},
+		"default-test-route-6b204d94623b3df4370c@kubernetescrd": {
+			"entryPoints": [
+				"web"
+			],
+			"service": "default-test-route-6b204d94623b3df4370c",
+			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/bar`)",
+			"priority": 12,
+			"tls": {
+				"options": "default-mytlsoption"
+			},
+			"status": "enabled",
+			"using": [
+				"web"
+			]
+		}
+	},
+	"services": {
+		"api@internal": {
+			"status": "enabled",
+			"usedBy": [
+				"default-api-route-29f28a463fb5d5ba16d2@kubernetescrd"
+			]
+		},
+		"dashboard@internal": {
+			"status": "enabled"
+		},
+		"default-test-route-6b204d94623b3df4370c@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"url": "http://10.42.0.3:80"
+					},
+					{
+						"url": "http://10.42.0.4:80"
+					}
+				],
+				"passHostHeader": true
+			},
+			"status": "enabled",
+			"usedBy": [
+				"default-test-route-6b204d94623b3df4370c@kubernetescrd"
+			],
+			"serverStatus": {
+				"http://10.42.0.3:80": "UP",
+				"http://10.42.0.4:80": "UP"
+			}
+		},
+		"noop@internal": {
+			"status": "enabled"
+		}
+	}
+}

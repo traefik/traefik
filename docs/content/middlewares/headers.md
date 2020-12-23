@@ -306,7 +306,7 @@ The `accessControlAllowOriginList` indicates whether a resource can be shared by
 A wildcard origin `*` can also be configured, and will match all requests.
 If this value is set by a backend server, it will be overwritten by Traefik
 
-This value can contains a list of allowed origins.
+This value can contain a list of allowed origins.
 
 More information including how to use the settings can be found on:
 
@@ -315,6 +315,14 @@ More information including how to use the settings can be found on:
 - [IETF](https://tools.ietf.org/html/rfc6454#section-7.1)
 
 Traefik no longer supports the null value, as it is [no longer recommended as a return value](https://w3c.github.io/webappsec-cors-for-developers/#avoid-returning-access-control-allow-origin-null).
+
+### `accessControlAllowOriginListRegex`
+
+The `accessControlAllowOriginListRegex` option is the counterpart of the `accessControlAllowOriginList` option with regular expressions instead of origin values.
+It will allow all origin that contains any match of a regular expression in the `accessControlAllowOriginList`.
+
+!!! tip
+    Regular expressions can be tested using online tools such as [Go Playground](https://play.golang.org/p/mWU9p-wk2ru) or the [Regex101](https://regex101.com/r/58sIgx/2).
 
 ### `accessControlExposeHeaders`
 

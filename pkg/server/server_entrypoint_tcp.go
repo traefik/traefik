@@ -2,14 +2,16 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	stdlog "log"
 	"net"
 	"net/http"
 	"sync"
+	"syscall"
 	"time"
 
-	proxyprotocol "github.com/c0va23/go-proxyprotocol"
+	"github.com/pires/go-proxyproto"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/traefik/v2/pkg/config/static"
 	"github.com/traefik/traefik/v2/pkg/ip"
@@ -172,11 +174,15 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 		conn, err := e.listener.Accept()
 		if err != nil {
 			logger.Error(err)
-			if netErr, ok := err.(net.Error); ok && netErr.Temporary() {
+
+			var netErr net.Error
+			if errors.As(err, &netErr) && netErr.Temporary() {
 				continue
 			}
+
 			e.httpServer.Forwarder.errChan <- err
 			e.httpsServer.Forwarder.errChan <- err
+
 			return
 		}
 
@@ -230,7 +236,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 		if err == nil {
 			return
 		}
-		if ctx.Err() == context.DeadlineExceeded {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			logger.Debugf("Server failed to shutdown within deadline because: %s", err)
 			if err = server.Close(); err != nil {
 				logger.Error(err)
@@ -261,7 +267,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 			if err == nil {
 				return
 			}
-			if ctx.Err() == context.DeadlineExceeded {
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 				logger.Debugf("Server failed to shutdown before deadline because: %s", err)
 			}
 			e.tracker.Close()
@@ -310,10 +316,10 @@ func (c *writeCloserWrapper) CloseWrite() error {
 // implementation, if any was found within the underlying conn.
 func writeCloser(conn net.Conn) (tcp.WriteCloser, error) {
 	switch typedConn := conn.(type) {
-	case *proxyprotocol.Conn:
-		underlying, err := writeCloser(typedConn.Conn)
-		if err != nil {
-			return nil, err
+	case *proxyproto.Conn:
+		underlying, ok := typedConn.TCPConn()
+		if !ok {
+			return nil, fmt.Errorf("underlying connection is not a tcp connection")
 		}
 		return &writeCloserWrapper{writeCloser: underlying, Conn: typedConn}, nil
 	case *net.TCPConn:
@@ -340,48 +346,45 @@ func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
 	}
 
 	if err = tc.SetKeepAlivePeriod(3 * time.Minute); err != nil {
-		return nil, err
+		// Some systems, such as OpenBSD, have no user-settable per-socket TCP
+		// keepalive options.
+		if !errors.Is(err, syscall.ENOPROTOOPT) {
+			return nil, err
+		}
 	}
 
 	return tc, nil
 }
 
-type proxyProtocolLogger struct {
-	log.Logger
-}
-
-// Printf force log level to debug.
-func (p proxyProtocolLogger) Printf(format string, v ...interface{}) {
-	p.Debugf(format, v...)
-}
-
 func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoint, listener net.Listener) (net.Listener, error) {
-	var sourceCheck func(addr net.Addr) (bool, error)
+	proxyListener := &proxyproto.Listener{Listener: listener}
+
 	if entryPoint.ProxyProtocol.Insecure {
-		sourceCheck = func(_ net.Addr) (bool, error) {
-			return true, nil
-		}
-	} else {
-		checker, err := ip.NewChecker(entryPoint.ProxyProtocol.TrustedIPs)
-		if err != nil {
-			return nil, err
+		log.FromContext(ctx).Infof("Enabling ProxyProtocol without trusted IPs: Insecure")
+		return proxyListener, nil
+	}
+
+	checker, err := ip.NewChecker(entryPoint.ProxyProtocol.TrustedIPs)
+	if err != nil {
+		return nil, err
+	}
+
+	proxyListener.Policy = func(upstream net.Addr) (proxyproto.Policy, error) {
+		ipAddr, ok := upstream.(*net.TCPAddr)
+		if !ok {
+			return proxyproto.REJECT, fmt.Errorf("type error %v", upstream)
 		}
 
-		sourceCheck = func(addr net.Addr) (bool, error) {
-			ipAddr, ok := addr.(*net.TCPAddr)
-			if !ok {
-				return false, fmt.Errorf("type error %v", addr)
-			}
-
-			return checker.ContainsIP(ipAddr.IP), nil
+		if !checker.ContainsIP(ipAddr.IP) {
+			log.FromContext(ctx).Debugf("IP %s is not in trusted IPs list, ignoring ProxyProtocol Headers and bypass connection", ipAddr.IP)
+			return proxyproto.IGNORE, nil
 		}
+		return proxyproto.USE, nil
 	}
 
 	log.FromContext(ctx).Infof("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
 
-	return proxyprotocol.NewDefaultListener(listener).
-		WithSourceChecker(sourceCheck).
-		WithLogger(proxyProtocolLogger{Logger: log.FromContext(ctx)}), nil
+	return proxyListener, nil
 }
 
 func buildListener(ctx context.Context, entryPoint *static.EntryPoint) (net.Listener, error) {

@@ -2,6 +2,7 @@ package wrr
 
 import (
 	"container/heap"
+	"errors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -105,7 +106,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if b.stickyCookie != nil {
 		cookie, err := req.Cookie(b.stickyCookie.name)
 
-		if err != nil && err != http.ErrNoCookie {
+		if err != nil && !errors.Is(err, http.ErrNoCookie) {
 			log.WithoutContext().Warnf("Error while reading cookie: %v", err)
 		}
 

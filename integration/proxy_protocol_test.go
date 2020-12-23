@@ -34,7 +34,7 @@ func (s *ProxyProtocolSuite) TestProxyProtocolTrusted(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	err = try.GetRequest("http://"+haproxyIP+"/whoami", 500*time.Millisecond,
+	err = try.GetRequest("http://"+haproxyIP+"/whoami", 1*time.Second,
 		try.StatusCodeIs(http.StatusOK),
 		try.BodyContains("X-Forwarded-For: "+gatewayIP))
 	c.Assert(err, checker.IsNil)
@@ -57,7 +57,7 @@ func (s *ProxyProtocolSuite) TestProxyProtocolV2Trusted(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	err = try.GetRequest("http://"+haproxyIP+":81/whoami", 500*time.Millisecond,
+	err = try.GetRequest("http://"+haproxyIP+":81/whoami", 1*time.Second,
 		try.StatusCodeIs(http.StatusOK),
 		try.BodyContains("X-Forwarded-For: "+gatewayIP))
 	c.Assert(err, checker.IsNil)
@@ -79,7 +79,7 @@ func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	err = try.GetRequest("http://"+haproxyIP+"/whoami", 500*time.Millisecond,
+	err = try.GetRequest("http://"+haproxyIP+"/whoami", 1*time.Second,
 		try.StatusCodeIs(http.StatusOK),
 		try.BodyContains("X-Forwarded-For: "+haproxyIP))
 	c.Assert(err, checker.IsNil)
@@ -101,7 +101,7 @@ func (s *ProxyProtocolSuite) TestProxyProtocolV2NotTrusted(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	err = try.GetRequest("http://"+haproxyIP+":81/whoami", 500*time.Millisecond,
+	err = try.GetRequest("http://"+haproxyIP+":81/whoami", 1*time.Second,
 		try.StatusCodeIs(http.StatusOK),
 		try.BodyContains("X-Forwarded-For: "+haproxyIP))
 	c.Assert(err, checker.IsNil)

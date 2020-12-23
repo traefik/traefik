@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -34,16 +36,15 @@ const (
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	Endpoint               string           `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-	Token                  string           `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
-	CertAuthFilePath       string           `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
-	DisablePassHostHeaders bool             `description:"Kubernetes disable PassHost Headers." json:"disablePassHostHeaders,omitempty" toml:"disablePassHostHeaders,omitempty" yaml:"disablePassHostHeaders,omitempty" export:"true"`
-	Namespaces             []string         `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
-	LabelSelector          string           `description:"Kubernetes Ingress label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
-	IngressClass           string           `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
-	IngressEndpoint        *EndpointIngress `description:"Kubernetes Ingress Endpoint." json:"ingressEndpoint,omitempty" toml:"ingressEndpoint,omitempty" yaml:"ingressEndpoint,omitempty"`
-	ThrottleDuration       ptypes.Duration  `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty"`
-	lastConfiguration      safe.Safe
+	Endpoint          string           `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Token             string           `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
+	CertAuthFilePath  string           `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
+	Namespaces        []string         `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
+	LabelSelector     string           `description:"Kubernetes Ingress label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
+	IngressClass      string           `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
+	IngressEndpoint   *EndpointIngress `description:"Kubernetes Ingress Endpoint." json:"ingressEndpoint,omitempty" toml:"ingressEndpoint,omitempty" yaml:"ingressEndpoint,omitempty" export:"true"`
+	ThrottleDuration  ptypes.Duration  `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
+	lastConfiguration safe.Safe
 }
 
 // EndpointIngress holds the endpoint information for the Kubernetes provider.
@@ -53,15 +54,15 @@ type EndpointIngress struct {
 	PublishedService string `description:"Published Kubernetes Service to copy status from." json:"publishedService,omitempty" toml:"publishedService,omitempty" yaml:"publishedService,omitempty"`
 }
 
-func (p *Provider) newK8sClient(ctx context.Context, ingressLabelSelector string) (*clientWrapper, error) {
-	ingLabelSel, err := labels.Parse(ingressLabelSelector)
+func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
+	_, err := labels.Parse(p.LabelSelector)
 	if err != nil {
-		return nil, fmt.Errorf("invalid ingress label selector: %q", ingressLabelSelector)
+		return nil, fmt.Errorf("invalid ingress label selector: %q", p.LabelSelector)
 	}
 
 	logger := log.FromContext(ctx)
 
-	logger.Infof("ingress label selector is: %q", ingLabelSel)
+	logger.Infof("ingress label selector is: %q", p.LabelSelector)
 
 	withEndpoint := ""
 	if p.Endpoint != "" {
@@ -81,11 +82,12 @@ func (p *Provider) newK8sClient(ctx context.Context, ingressLabelSelector string
 		cl, err = newExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
 	}
 
-	if err == nil {
-		cl.ingressLabelSelector = ingLabelSel
+	if err != nil {
+		return nil, err
 	}
 
-	return cl, err
+	cl.ingressLabelSelector = p.LabelSelector
+	return cl, nil
 }
 
 // Init the provider.
@@ -99,8 +101,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	ctxLog := log.With(context.Background(), log.Str(log.ProviderName, "kubernetes"))
 	logger := log.FromContext(ctxLog)
 
-	logger.Debugf("Using Ingress label selector: %q", p.LabelSelector)
-	k8sClient, err := p.newK8sClient(ctxLog, p.LabelSelector)
+	k8sClient, err := p.newK8sClient(ctxLog)
 	if err != nil {
 		return err
 	}
@@ -479,9 +480,10 @@ func loadService(client Client, namespace string, backend networkingv1beta1.Ingr
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		protocol := getProtocol(portSpec, portSpec.Name, svcConfig)
+		hostPort := net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(portSpec.Port)))
 
 		svc.LoadBalancer.Servers = []dynamic.Server{
-			{URL: fmt.Sprintf("%s://%s:%d", protocol, service.Spec.ExternalName, portSpec.Port)},
+			{URL: fmt.Sprintf("%s://%s", protocol, hostPort)},
 		}
 
 		return svc, nil
@@ -516,8 +518,10 @@ func loadService(client Client, namespace string, backend networkingv1beta1.Ingr
 		protocol := getProtocol(portSpec, portName, svcConfig)
 
 		for _, addr := range subset.Addresses {
+			hostPort := net.JoinHostPort(addr.IP, strconv.Itoa(int(port)))
+
 			svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
-				URL: fmt.Sprintf("%s://%s:%d", protocol, addr.IP, port),
+				URL: fmt.Sprintf("%s://%s", protocol, hostPort),
 			})
 		}
 	}

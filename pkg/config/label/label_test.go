@@ -49,6 +49,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolallowmethods":                   "GET, PUT",
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolalloworigin":                    "foobar",
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolalloworiginList":                "foobar, fiibar",
+		"traefik.http.middlewares.Middleware8.headers.accesscontrolalloworiginListRegex":           "foobar, fiibar",
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolexposeheaders":                  "X-foobar, X-fiibar",
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolmaxage":                         "200",
 		"traefik.http.middlewares.Middleware8.headers.addvaryheader":                               "true",
@@ -122,6 +123,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware15.replacepathregex.regex":                             "foobar",
 		"traefik.http.middlewares.Middleware15.replacepathregex.replacement":                       "foobar",
 		"traefik.http.middlewares.Middleware16.retry.attempts":                                     "42",
+		"traefik.http.middlewares.Middleware16.retry.initialinterval":                              "1s",
 		"traefik.http.middlewares.Middleware17.stripprefix.prefixes":                               "foobar, fiibar",
 		"traefik.http.middlewares.Middleware18.stripprefixregex.regex":                             "foobar, fiibar",
 		"traefik.http.middlewares.Middleware19.compress":                                           "true",
@@ -181,8 +183,10 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.tcp.routers.Router1.tls.passthrough":                                  "false",
 		"traefik.tcp.services.Service0.loadbalancer.server.Port":                       "42",
 		"traefik.tcp.services.Service0.loadbalancer.TerminationDelay":                  "42",
+		"traefik.tcp.services.Service0.loadbalancer.proxyProtocol.version":             "42",
 		"traefik.tcp.services.Service1.loadbalancer.server.Port":                       "42",
 		"traefik.tcp.services.Service1.loadbalancer.TerminationDelay":                  "42",
+		"traefik.tcp.services.Service1.loadbalancer.proxyProtocol":                     "true",
 
 		"traefik.udp.routers.Router0.entrypoints":                "foobar, fiibar",
 		"traefik.udp.routers.Router0.service":                    "foobar",
@@ -232,6 +236,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							},
 						},
 						TerminationDelay: func(i int) *int { return &i }(42),
+						ProxyProtocol:    &dynamic.ProxyProtocol{Version: 42},
 					},
 				},
 				"Service1": {
@@ -242,6 +247,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							},
 						},
 						TerminationDelay: func(i int) *int { return &i }(42),
+						ProxyProtocol:    &dynamic.ProxyProtocol{Version: 2},
 					},
 				},
 			},
@@ -417,7 +423,8 @@ func TestDecodeConfiguration(t *testing.T) {
 				},
 				"Middleware16": {
 					Retry: &dynamic.Retry{
-						Attempts: 42,
+						Attempts:        42,
+						InitialInterval: ptypes.Duration(time.Second),
 					},
 				},
 				"Middleware17": {
@@ -526,6 +533,10 @@ func TestDecodeConfiguration(t *testing.T) {
 						},
 						AccessControlAllowOrigin: "foobar",
 						AccessControlAllowOriginList: []string{
+							"foobar",
+							"fiibar",
+						},
+						AccessControlAllowOriginListRegex: []string{
 							"foobar",
 							"fiibar",
 						},
@@ -882,7 +893,8 @@ func TestEncodeConfiguration(t *testing.T) {
 				},
 				"Middleware16": {
 					Retry: &dynamic.Retry{
-						Attempts: 42,
+						Attempts:        42,
+						InitialInterval: ptypes.Duration(time.Second),
 					},
 				},
 				"Middleware17": {
@@ -999,6 +1011,10 @@ func TestEncodeConfiguration(t *testing.T) {
 						},
 						AccessControlAllowOrigin: "foobar",
 						AccessControlAllowOriginList: []string{
+							"foobar",
+							"fiibar",
+						},
+						AccessControlAllowOriginListRegex: []string{
 							"foobar",
 							"fiibar",
 						},
@@ -1158,6 +1174,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowMethods":                   "GET, PUT",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowOrigin":                    "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowOriginList":                "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowOriginListRegex":           "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlExposeHeaders":                  "X-foobar, X-fiibar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlMaxAge":                         "200",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AddVaryHeader":                               "true",
@@ -1232,6 +1249,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware15.ReplacePathRegex.Regex":                             "foobar",
 		"traefik.HTTP.Middlewares.Middleware15.ReplacePathRegex.Replacement":                       "foobar",
 		"traefik.HTTP.Middlewares.Middleware16.Retry.Attempts":                                     "42",
+		"traefik.HTTP.Middlewares.Middleware16.Retry.InitialInterval":                              "1000000000",
 		"traefik.HTTP.Middlewares.Middleware17.StripPrefix.Prefixes":                               "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware17.StripPrefix.ForceSlash":                             "true",
 		"traefik.HTTP.Middlewares.Middleware18.StripPrefixRegex.Regex":                             "foobar, fiibar",

@@ -69,6 +69,12 @@ Use a DNS-01 based challenge provider rather than HTTPS.
 `--certificatesresolvers.<name>.acme.dnschallenge.resolvers`:  
 Use following DNS servers to resolve the FQDN authority.
 
+`--certificatesresolvers.<name>.acme.eab.hmacencoded`:  
+Base64 encoded HMAC key from External CA.
+
+`--certificatesresolvers.<name>.acme.eab.kid`:  
+Key identifier from External CA.
+
 `--certificatesresolvers.<name>.acme.email`:  
 Email address used for registration.
 
@@ -167,6 +173,9 @@ plugin's GOPATH.
 
 `--experimental.devplugin.modulename`:  
 plugin's module name.
+
+`--experimental.kubernetesgateway`:  
+Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 
 `--experimental.plugins.<name>.modulename`:  
 plugin's module name.
@@ -330,6 +339,9 @@ TLS key
 `--providers.consul.username`:  
 KV Username
 
+`--providers.consulcatalog`:  
+Enable ConsulCatalog backend with default settings. (Default: ```false```)
+
 `--providers.consulcatalog.cache`:  
 Use local agent caching for catalog reads. (Default: ```false```)
 
@@ -438,6 +450,9 @@ Use the ip address from the bound port, rather than from the inner network. (Def
 `--providers.docker.watch`:  
 Watch Docker Swarm events. (Default: ```true```)
 
+`--providers.ecs`:  
+Enable AWS ECS backend with default settings. (Default: ```false```)
+
 `--providers.ecs.accesskeyid`:  
 The AWS credentials access key to use for making requests
 
@@ -537,11 +552,11 @@ TLS key
 `--providers.kubernetescrd`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
 
+`--providers.kubernetescrd.allowcrossnamespace`:  
+Allow cross namespace resource reference. (Default: ```true```)
+
 `--providers.kubernetescrd.certauthfilepath`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
-
-`--providers.kubernetescrd.disablepasshostheaders`:  
-Kubernetes disable PassHost Headers. (Default: ```false```)
 
 `--providers.kubernetescrd.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).
@@ -561,14 +576,32 @@ Ingress refresh throttle duration (Default: ```0```)
 `--providers.kubernetescrd.token`:  
 Kubernetes bearer token (not needed for in-cluster client).
 
+`--providers.kubernetesgateway`:  
+Enable Kubernetes gateway api provider with default settings. (Default: ```false```)
+
+`--providers.kubernetesgateway.certauthfilepath`:  
+Kubernetes certificate authority file path (not needed for in-cluster client).
+
+`--providers.kubernetesgateway.endpoint`:  
+Kubernetes server endpoint (required for external cluster client).
+
+`--providers.kubernetesgateway.labelselector`:  
+Kubernetes label selector to select specific GatewayClasses.
+
+`--providers.kubernetesgateway.namespaces`:  
+Kubernetes namespaces.
+
+`--providers.kubernetesgateway.throttleduration`:  
+Kubernetes refresh throttle duration (Default: ```0```)
+
+`--providers.kubernetesgateway.token`:  
+Kubernetes bearer token (not needed for in-cluster client).
+
 `--providers.kubernetesingress`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
 
 `--providers.kubernetesingress.certauthfilepath`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
-
-`--providers.kubernetesingress.disablepasshostheaders`:  
-Kubernetes disable PassHost Headers. (Default: ```false```)
 
 `--providers.kubernetesingress.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).

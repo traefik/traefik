@@ -373,7 +373,7 @@ func getPort(task marathon.Task, app marathon.Application, serverPort string) (s
 // one of the available port. The first such found port is returned unless an
 // optional index is provided.
 func processPorts(app marathon.Application, task marathon.Task, serverPort string) (int, error) {
-	if len(serverPort) > 0 && !strings.HasPrefix(serverPort, "index:") {
+	if len(serverPort) > 0 && !(strings.HasPrefix(serverPort, "index:") || strings.HasPrefix(serverPort, "name:")) {
 		port, err := strconv.Atoi(serverPort)
 		if err != nil {
 			return 0, err
@@ -386,6 +386,17 @@ func processPorts(app marathon.Application, task marathon.Task, serverPort strin
 		}
 	}
 
+	if strings.HasPrefix(serverPort, "name:") {
+		name := strings.TrimPrefix(serverPort, "name:")
+		port := retrieveNamedPort(app, name)
+
+		if port == 0 {
+			return 0, fmt.Errorf("no port with name %s", name)
+		}
+
+		return port, nil
+	}
+
 	ports := retrieveAvailablePorts(app, task)
 	if len(ports) == 0 {
 		return 0, errors.New("no port found")
@@ -393,8 +404,8 @@ func processPorts(app marathon.Application, task marathon.Task, serverPort strin
 
 	portIndex := 0
 	if strings.HasPrefix(serverPort, "index:") {
-		split := strings.SplitN(serverPort, ":", 2)
-		index, err := strconv.Atoi(split[1])
+		indexString := strings.TrimPrefix(serverPort, "index:")
+		index, err := strconv.Atoi(indexString)
 		if err != nil {
 			return 0, err
 		}
@@ -402,9 +413,33 @@ func processPorts(app marathon.Application, task marathon.Task, serverPort strin
 		if index < 0 || index > len(ports)-1 {
 			return 0, fmt.Errorf("index %d must be within range (0, %d)", index, len(ports)-1)
 		}
+
 		portIndex = index
 	}
+
 	return ports[portIndex], nil
+}
+
+func retrieveNamedPort(app marathon.Application, name string) int {
+	// Using port definition if available
+	if app.PortDefinitions != nil && len(*app.PortDefinitions) > 0 {
+		for _, def := range *app.PortDefinitions {
+			if def.Port != nil && *def.Port > 0 && def.Name == name {
+				return *def.Port
+			}
+		}
+	}
+
+	// If using IP-per-task using this port definition
+	if app.IPAddressPerTask != nil && app.IPAddressPerTask.Discovery != nil && len(*(app.IPAddressPerTask.Discovery.Ports)) > 0 {
+		for _, def := range *(app.IPAddressPerTask.Discovery.Ports) {
+			if def.Number > 0 && def.Name == name {
+				return def.Number
+			}
+		}
+	}
+
+	return 0
 }
 
 func retrieveAvailablePorts(app marathon.Application, task marathon.Task) []int {

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+	"strconv"
 	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -53,7 +55,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 			serviceName := makeID(ingressRouteTCP.Namespace, key)
 
 			for _, service := range route.Services {
-				balancerServerTCP, err := createLoadBalancerServerTCP(client, ingressRouteTCP.Namespace, service)
+				balancerServerTCP, err := p.createLoadBalancerServerTCP(client, ingressRouteTCP.Namespace, service)
 				if err != nil {
 					logger.
 						WithField("serviceName", service.Name).
@@ -123,9 +125,13 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 	return conf
 }
 
-func createLoadBalancerServerTCP(client Client, namespace string, service v1alpha1.ServiceTCP) (*dynamic.TCPService, error) {
-	ns := namespace
+func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace string, service v1alpha1.ServiceTCP) (*dynamic.TCPService, error) {
+	ns := parentNamespace
 	if len(service.Namespace) > 0 {
+		if !isNamespaceAllowed(p.AllowCrossNamespace, parentNamespace, service.Namespace) {
+			return nil, fmt.Errorf("tcp service %s/%s is not in the parent resource namespace %s", service.Namespace, service.Name, parentNamespace)
+		}
+
 		ns = service.Namespace
 	}
 
@@ -138,6 +144,15 @@ func createLoadBalancerServerTCP(client Client, namespace string, service v1alph
 		LoadBalancer: &dynamic.TCPServersLoadBalancer{
 			Servers: servers,
 		},
+	}
+
+	if service.ProxyProtocol != nil {
+		tcpService.LoadBalancer.ProxyProtocol = &dynamic.ProxyProtocol{}
+		tcpService.LoadBalancer.ProxyProtocol.SetDefaults()
+
+		if service.ProxyProtocol.Version != 0 {
+			tcpService.LoadBalancer.ProxyProtocol.Version = service.ProxyProtocol.Version
+		}
 	}
 
 	if service.TerminationDelay != nil {
@@ -165,7 +180,7 @@ func loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([
 	var servers []dynamic.TCPServer
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		servers = append(servers, dynamic.TCPServer{
-			Address: fmt.Sprintf("%s:%d", service.Spec.ExternalName, svcPort.Port),
+			Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(svcPort.Port))),
 		})
 	} else {
 		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, svc.Name)
@@ -196,7 +211,7 @@ func loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([
 
 			for _, addr := range subset.Addresses {
 				servers = append(servers, dynamic.TCPServer{
-					Address: fmt.Sprintf("%s:%d", addr.IP, port),
+					Address: net.JoinHostPort(addr.IP, strconv.Itoa(int(port))),
 				})
 			}
 		}

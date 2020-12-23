@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sort"
 	"strings"
@@ -27,6 +28,10 @@ const (
 	configReloadsFailuresTotalName = metricConfigPrefix + "reloads_failure_total"
 	configLastReloadSuccessName    = metricConfigPrefix + "last_reload_success"
 	configLastReloadFailureName    = metricConfigPrefix + "last_reload_failure"
+
+	// TLS.
+	metricsTLSPrefix          = MetricNamePrefix + "tls_"
+	tlsCertsNotAfterTimestamp = metricsTLSPrefix + "certs_not_after"
 
 	// entry point.
 	metricEntryPointPrefix     = MetricNamePrefix + "entrypoint_"
@@ -74,12 +79,15 @@ func RegisterPrometheus(ctx context.Context, config *types.Prometheus) Registry 
 	standardRegistry := initStandardRegistry(config)
 
 	if err := promRegistry.Register(stdprometheus.NewProcessCollector(stdprometheus.ProcessCollectorOpts{})); err != nil {
-		if _, ok := err.(stdprometheus.AlreadyRegisteredError); !ok {
+		var arErr stdprometheus.AlreadyRegisteredError
+		if !errors.As(err, &arErr) {
 			log.FromContext(ctx).Warn("ProcessCollector is already registered")
 		}
 	}
+
 	if err := promRegistry.Register(stdprometheus.NewGoCollector()); err != nil {
-		if _, ok := err.(stdprometheus.AlreadyRegisteredError); !ok {
+		var arErr stdprometheus.AlreadyRegisteredError
+		if !errors.As(err, &arErr) {
 			log.FromContext(ctx).Warn("GoCollector is already registered")
 		}
 	}
@@ -117,21 +125,27 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		Name: configLastReloadFailureName,
 		Help: "Last config reload failure",
 	}, []string{})
+	tlsCertsNotAfterTimesptamp := newGaugeFrom(promState.collectors, stdprometheus.GaugeOpts{
+		Name: tlsCertsNotAfterTimestamp,
+		Help: "Certificate expiration timestamp",
+	}, []string{"cn", "serial", "sans"})
 
 	promState.describers = []func(chan<- *stdprometheus.Desc){
 		configReloads.cv.Describe,
 		configReloadsFailures.cv.Describe,
 		lastConfigReloadSuccess.gv.Describe,
 		lastConfigReloadFailure.gv.Describe,
+		tlsCertsNotAfterTimesptamp.gv.Describe,
 	}
 
 	reg := &standardRegistry{
-		epEnabled:                    config.AddEntryPointsLabels,
-		svcEnabled:                   config.AddServicesLabels,
-		configReloadsCounter:         configReloads,
-		configReloadsFailureCounter:  configReloadsFailures,
-		lastConfigReloadSuccessGauge: lastConfigReloadSuccess,
-		lastConfigReloadFailureGauge: lastConfigReloadFailure,
+		epEnabled:                      config.AddEntryPointsLabels,
+		svcEnabled:                     config.AddServicesLabels,
+		configReloadsCounter:           configReloads,
+		configReloadsFailureCounter:    configReloadsFailures,
+		lastConfigReloadSuccessGauge:   lastConfigReloadSuccess,
+		lastConfigReloadFailureGauge:   lastConfigReloadFailure,
+		tlsCertsNotAfterTimestampGauge: tlsCertsNotAfterTimesptamp,
 	}
 
 	if config.AddEntryPointsLabels {
@@ -159,11 +173,13 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 			entryPointReqDurations.hv.Describe,
 			entryPointOpenConns.gv.Describe,
 		}...)
+
 		reg.entryPointReqsCounter = entryPointReqs
 		reg.entryPointReqsTLSCounter = entryPointReqsTLS
 		reg.entryPointReqDurationHistogram, _ = NewHistogramWithScale(entryPointReqDurations, time.Second)
 		reg.entryPointOpenConnsGauge = entryPointOpenConns
 	}
+
 	if config.AddServicesLabels {
 		serviceReqs := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
 			Name: serviceReqsTotalName,
@@ -212,15 +228,21 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 }
 
 func registerPromState(ctx context.Context) bool {
-	if err := promRegistry.Register(promState); err != nil {
-		logger := log.FromContext(ctx)
-		if _, ok := err.(stdprometheus.AlreadyRegisteredError); !ok {
-			logger.Errorf("Unable to register Traefik to Prometheus: %v", err)
-			return false
-		}
-		logger.Debug("Prometheus collector already registered.")
+	err := promRegistry.Register(promState)
+	if err == nil {
+		return true
 	}
-	return true
+
+	logger := log.FromContext(ctx)
+
+	var arErr stdprometheus.AlreadyRegisteredError
+	if errors.As(err, &arErr) {
+		logger.Debug("Prometheus collector already registered.")
+		return true
+	}
+
+	logger.Errorf("Unable to register Traefik to Prometheus: %v", err)
+	return false
 }
 
 // OnConfigurationUpdate receives the current configuration from Traefik.

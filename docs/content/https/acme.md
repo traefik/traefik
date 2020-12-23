@@ -10,7 +10,7 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
 
     Use Let's Encrypt staging server with the [`caServer`](#caserver) configuration option
     when experimenting to avoid hitting this limit too fast.
-    
+
 ## Certificate Resolvers
 
 Traefik requires you to define "Certificate Resolvers" in the [static configuration](../getting-started/configuration-overview.md#the-static-configuration), 
@@ -322,8 +322,9 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | HTTP request                                                | `httpreq`      | `HTTPREQ_ENDPOINT`, `HTTPREQ_MODE`, `HTTPREQ_USERNAME`, `HTTPREQ_PASSWORD` [^1]                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/httpreq)      |
 | [HyperOne](https://www.hyperone.com)                        | `hyperone`     | `HYPERONE_PASSPORT_LOCATION`, `HYPERONE_LOCATION_ID`                                                                                        | [Additional configuration](https://go-acme.github.io/lego/dns/hyperone)     |
 | [IIJ](https://www.iij.ad.jp/)                               | `iij`          | `IIJ_API_ACCESS_KEY`, `IIJ_API_SECRET_KEY`, `IIJ_DO_SERVICE_CODE`                                                                           | [Additional configuration](https://go-acme.github.io/lego/dns/iij)          |
+| [Infomaniak](https://www.infomaniak.com)                    | `infomaniak`   | `INFOMANIAK_ACCESS_TOKEN`                                                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/infomaniak)   |
 | [INWX](https://www.inwx.de/en)                              | `inwx`         | `INWX_USERNAME`, `INWX_PASSWORD`                                                                                                            | [Additional configuration](https://go-acme.github.io/lego/dns/inwx)         |
-| [Joker.com](https://joker.com)                              | `joker`        | `JOKER_API_KEY` or `JOKER_USERNAME`, `JOKER_PASSWORD`                                                                                       | [Additional configuration](https://go-acme.github.io/lego/dns/joker)        |
+| [Joker.com](https://joker.com)                              | `joker`        | `JOKER_API_MODE` with `JOKER_API_KEY` or `JOKER_USERNAME`, `JOKER_PASSWORD`                                                                 | [Additional configuration](https://go-acme.github.io/lego/dns/joker)        |
 | [Lightsail](https://aws.amazon.com/lightsail/)              | `lightsail`    | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `DNS_ZONE`                                                                                    | [Additional configuration](https://go-acme.github.io/lego/dns/lightsail)    |
 | [Linode v4](https://www.linode.com)                         | `linode`       | `LINODE_TOKEN`                                                                                                                              | [Additional configuration](https://go-acme.github.io/lego/dns/linode)       |
 | [Liquid Web](https://www.liquidweb.com/)                    | `liquidweb`    | `LIQUID_WEB_PASSWORD`, `LIQUID_WEB_USERNAME`, `LIQUID_WEB_ZONE`                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/liquidweb)    |
@@ -406,6 +407,35 @@ certificatesResolvers:
 
 [ACME V2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) supports wildcard certificates.
 As described in [Let's Encrypt's post](https://community.letsencrypt.org/t/staging-endpoint-for-acme-v2/49605) wildcard certificates can only be generated through a [`DNS-01` challenge](#dnschallenge).
+
+## External Account Binding
+
+- `kid`: Key identifier from External CA
+- `hmacEncoded`: HMAC key from External CA, should be in Base64 URL Encoding without padding format
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  [certificatesResolvers.myresolver.acme.eab]
+    kid = "abc-keyID-xyz"
+    hmacEncoded = "abc-hmac-xyz"
+```
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      eab:
+        kid: abc-keyID-xyz
+        hmacEncoded: abc-hmac-xyz
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.eab.kid=abc-keyID-xyz
+--certificatesresolvers.myresolver.acme.eab.hmacencoded=abc-hmac-xyz
+```
 
 ## More Configuration
 

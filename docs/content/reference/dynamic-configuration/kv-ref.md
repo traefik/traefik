@@ -31,6 +31,7 @@
 | `traefik/http/middlewares/Middleware09/forwardAuth/authRequestHeaders/1` | `foobar` |
 | `traefik/http/middlewares/Middleware09/forwardAuth/authResponseHeaders/0` | `foobar` |
 | `traefik/http/middlewares/Middleware09/forwardAuth/authResponseHeaders/1` | `foobar` |
+| `traefik/http/middlewares/Middleware09/forwardAuth/authResponseHeadersRegex` | `foobar` |
 | `traefik/http/middlewares/Middleware09/forwardAuth/tls/ca` | `foobar` |
 | `traefik/http/middlewares/Middleware09/forwardAuth/tls/caOptional` | `true` |
 | `traefik/http/middlewares/Middleware09/forwardAuth/tls/cert` | `foobar` |
@@ -45,6 +46,8 @@
 | `traefik/http/middlewares/Middleware10/headers/accessControlAllowOrigin` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/accessControlAllowOriginList/0` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/accessControlAllowOriginList/1` | `foobar` |
+| `traefik/http/middlewares/Middleware10/headers/accessControlAllowOriginListRegex/0` | `foobar` |
+| `traefik/http/middlewares/Middleware10/headers/accessControlAllowOriginListRegex/1` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/accessControlExposeHeaders/0` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/accessControlExposeHeaders/1` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/accessControlMaxAge` | `42` |
@@ -127,6 +130,7 @@
 | `traefik/http/middlewares/Middleware19/replacePathRegex/regex` | `foobar` |
 | `traefik/http/middlewares/Middleware19/replacePathRegex/replacement` | `foobar` |
 | `traefik/http/middlewares/Middleware20/retry/attempts` | `42` |
+| `traefik/http/middlewares/Middleware20/retry/initialInterval` | `42` |
 | `traefik/http/middlewares/Middleware21/stripPrefix/forceSlash` | `true` |
 | `traefik/http/middlewares/Middleware21/stripPrefix/prefixes/0` | `foobar` |
 | `traefik/http/middlewares/Middleware21/stripPrefix/prefixes/1` | `foobar` |
@@ -244,6 +248,7 @@
 | `traefik/tcp/routers/TCPRouter1/tls/domains/1/sans/1` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/tls/options` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/tls/passthrough` | `true` |
+| `traefik/tcp/services/TCPService01/loadBalancer/proxyProtocol/version` | `42` |
 | `traefik/tcp/services/TCPService01/loadBalancer/servers/0/address` | `foobar` |
 | `traefik/tcp/services/TCPService01/loadBalancer/servers/1/address` | `foobar` |
 | `traefik/tcp/services/TCPService01/loadBalancer/terminationDelay` | `42` |

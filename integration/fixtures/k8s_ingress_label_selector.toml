@@ -1,0 +1,16 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[api]
+  insecure = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[providers.kubernetesIngress]
+  labelSelector = "app=traefik"

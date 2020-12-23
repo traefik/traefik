@@ -3,6 +3,8 @@ kind: Ingress
 metadata:
   name: test.ingress
   namespace: default
+  labels:
+    app: traefik
 
 spec:
   rules:

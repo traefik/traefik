@@ -66,8 +66,9 @@
               dense
               clickable
               @click.native="$router.push({ path: `/${protocol}/services/${getServiceId()}`})"
-              class="app-chip app-chip-wrap app-chip-service">
+              class="app-chip app-chip-wrap app-chip-service app-chip-overflow">
               {{ data.service }}
+              <q-tooltip>{{ data.service }}</q-tooltip>
             </q-chip>
           </div>
         </div>

@@ -139,6 +139,7 @@
         address = "foobar"
         trustForwardHeader = true
         authResponseHeaders = ["foobar", "foobar"]
+        authResponseHeadersRegex = "foobar"
         authRequestHeaders = ["foobar", "foobar"]
         [http.middlewares.Middleware09.forwardAuth.tls]
           ca = "foobar"
@@ -153,6 +154,7 @@
         accessControlAllowMethods = ["foobar", "foobar"]
         accessControlAllowOrigin = "foobar"
         accessControlAllowOriginList = ["foobar", "foobar"]
+        accessControlAllowOriginListRegex = ["foobar", "foobar"]
         accessControlExposeHeaders = ["foobar", "foobar"]
         accessControlMaxAge = 42
         addVaryHeader = true
@@ -260,6 +262,7 @@
     [http.middlewares.Middleware20]
       [http.middlewares.Middleware20.retry]
         attempts = 42
+        initialInterval = 42
     [http.middlewares.Middleware21]
       [http.middlewares.Middleware21.stripPrefix]
         prefixes = ["foobar", "foobar"]
@@ -341,6 +344,8 @@
     [tcp.services.TCPService01]
       [tcp.services.TCPService01.loadBalancer]
         terminationDelay = 42
+        [tcp.services.TCPService01.loadBalancer.proxyProtocol]
+          version = 42
 
         [[tcp.services.TCPService01.loadBalancer.servers]]
           address = "foobar"
