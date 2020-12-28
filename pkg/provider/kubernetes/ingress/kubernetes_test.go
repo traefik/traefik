@@ -943,8 +943,41 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-foobar-com-bar": {
+						"testing-*-foobar-com-bar": {
 							Rule:    "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.foobar.com`) && PathPrefix(`/bar`)",
+							Service: "testing-service1-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+								Servers: []dynamic.Server{
+									{
+										URL:    "http://10.10.0.1:8080",
+										Scheme: "",
+										Port:   "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "Ingress with wildcard host and same host",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-*-tarefik-tchouk-bar": {
+							Rule:    "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.tarefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "testing-service1-80",
+						},
+						"testing-tarefik-tchouk-bar": {
+							Rule:    "Host(`tarefik.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
 						},
 					},
