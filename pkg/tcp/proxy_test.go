@@ -17,6 +17,8 @@ import (
 )
 
 func fakeRedis(t *testing.T, listener net.Listener) {
+	t.Helper()
+
 	for {
 		conn, err := listener.Accept()
 		fmt.Println("Accept on server")

@@ -300,6 +300,8 @@ func findPilotMetric(name string, metrics []PilotMetric) *PilotMetric {
 }
 
 func buildPilotCounterAssert(t *testing.T, metricName string, expectedValue float64) func(metric *PilotMetric) {
+	t.Helper()
+
 	return func(metric *PilotMetric) {
 		for _, value := range metric.Observations {
 			if cv := value.(float64); cv != expectedValue {
@@ -311,6 +313,8 @@ func buildPilotCounterAssert(t *testing.T, metricName string, expectedValue floa
 }
 
 func buildPilotGreaterThanCounterAssert(t *testing.T, metricName string, expectedMinValue float64) func(metric *PilotMetric) {
+	t.Helper()
+
 	return func(metric *PilotMetric) {
 		for _, value := range metric.Observations {
 			if cv := value.(float64); cv < expectedMinValue {
@@ -322,6 +326,8 @@ func buildPilotGreaterThanCounterAssert(t *testing.T, metricName string, expecte
 }
 
 func buildPilotHistogramAssert(t *testing.T, metricName string, expectedSampleCount float64) func(metric *PilotMetric) {
+	t.Helper()
+
 	return func(metric *PilotMetric) {
 		for _, value := range metric.Observations {
 			if pho := value.(*pilotHistogramObservation); pho.Count != expectedSampleCount {
@@ -333,6 +339,8 @@ func buildPilotHistogramAssert(t *testing.T, metricName string, expectedSampleCo
 }
 
 func buildPilotGaugeAssert(t *testing.T, metricName string, expectedValue float64) func(metric *PilotMetric) {
+	t.Helper()
+
 	return func(metric *PilotMetric) {
 		for _, value := range metric.Observations {
 			if gv := value.(float64); gv != expectedValue {
@@ -344,6 +352,8 @@ func buildPilotGaugeAssert(t *testing.T, metricName string, expectedValue float6
 }
 
 func buildPilotTimestampAssert(t *testing.T, metricName string) func(metric *PilotMetric) {
+	t.Helper()
+
 	return func(metric *PilotMetric) {
 		for _, value := range metric.Observations {
 			if ts := time.Unix(int64(value.(float64)), 0); time.Since(ts) > time.Minute {
