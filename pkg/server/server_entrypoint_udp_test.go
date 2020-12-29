@@ -103,6 +103,8 @@ func TestShutdownUDPConn(t *testing.T) {
 // It fatals if the read blocks longer than timeout, which is useful to detect
 // regressions that would make a test wait forever.
 func requireEcho(t *testing.T, data string, conn io.ReadWriter, timeout time.Duration) {
+	t.Helper()
+
 	_, err := conn.Write([]byte(data))
 	require.NoError(t, err)
 
