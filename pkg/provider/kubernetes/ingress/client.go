@@ -180,9 +180,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 
 		if supportsNetworkingBetaIngress(serverVersion) {
 			factoryIngress.Networking().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
-		}
-
-		if supportsNetworkingV1Ingress(serverVersion) {
+		} else {
 			factoryIngress.Networking().V1().Ingresses().Informer().AddEventHandler(eventHandler)
 		}
 
@@ -301,15 +299,17 @@ func addServiceFromV1Beta1(ing *networkingv1.Ingress, old networkingv1beta1.Ingr
 		port := networkingv1.ServiceBackendPort{}
 		if old.Spec.Backend.ServicePort.Type == intstr.Int {
 			port.Number = old.Spec.Backend.ServicePort.IntVal
-		} else {
+		} else if old.Spec.Backend.ServicePort.StrVal != "" {
 			port.Name = old.Spec.Backend.ServicePort.StrVal
 		}
 
-		ing.Spec.DefaultBackend = &networkingv1.IngressBackend{
-			Service: &networkingv1.IngressServiceBackend{
-				Name: old.Spec.Backend.ServiceName,
-				Port: port,
-			},
+		if old.Spec.Backend.ServiceName != "" {
+			ing.Spec.DefaultBackend = &networkingv1.IngressBackend{
+				Service: &networkingv1.IngressServiceBackend{
+					Name: old.Spec.Backend.ServiceName,
+					Port: port,
+				},
+			}
 		}
 	}
 

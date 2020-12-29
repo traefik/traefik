@@ -226,7 +226,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			log.FromContext(ctx).Errorf("Error configuring TLS: %v", err)
 		}
 
-		if len(ingress.Spec.Rules) == 0 && (ingress.Spec.DefaultBackend != &networkingv1.IngressBackend{}) {
+		if len(ingress.Spec.Rules) == 0 && ingress.Spec.DefaultBackend != nil {
 			if _, ok := conf.HTTP.Services["default-backend"]; ok {
 				log.FromContext(ctx).Error("The default backend already exists.")
 				continue

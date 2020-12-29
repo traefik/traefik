@@ -191,7 +191,6 @@ func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 }
 
 func TestClientUsesCorrectServerVersion(t *testing.T) {
-
 	ingressV1Beta := &v1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
@@ -258,5 +257,4 @@ func TestClientUsesCorrectServerVersion(t *testing.T) {
 		assert.Fail(t, "received more than one event")
 	case <-time.After(50 * time.Millisecond):
 	}
-
 }
