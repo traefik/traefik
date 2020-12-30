@@ -347,6 +347,10 @@ func (c *clientWrapper) UpdateIngressStatus(src *networkingv1.Ingress, ingStatus
 	}
 
 	serverVersion, err := c.GetServerVersion()
+	if err != nil {
+		log.WithoutContext().Errorf("Failed to get server version: %v", err)
+		return err
+	}
 
 	if supportsNetworkingBetaIngress(serverVersion) {
 		return c.updateIngressStatusOld(src, ingStatus)
