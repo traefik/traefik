@@ -209,7 +209,7 @@ func TestClientUsesCorrectServerVersion(t *testing.T) {
 
 	discovery, _ := kubeClient.Discovery().(*fakediscovery.FakeDiscovery)
 	discovery.FakedServerVersion = &version.Info{
-		GitVersion: "v1.18",
+		GitVersion: "v1.18.12+foobar",
 	}
 
 	stopCh := make(chan struct{})
