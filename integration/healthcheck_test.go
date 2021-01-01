@@ -16,6 +16,8 @@ type HealthCheckSuite struct {
 	BaseSuite
 	whoami1IP string
 	whoami2IP string
+	whoami3IP string
+	whoami4IP string
 }
 
 func (s *HealthCheckSuite) SetUpSuite(c *check.C) {
@@ -270,4 +272,141 @@ func (s *HealthCheckSuite) TestMultipleRoutersOnSameService(c *check.C) {
 
 	err = try.Request(healthReqWeb2, 3*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
+}
+
+func (s *HealthCheckSuite) TestPropagate(c *check.C) {
+	s.whoami3IP = s.composeProject.Container(c, "whoami3").NetworkSettings.IPAddress
+	s.whoami4IP = s.composeProject.Container(c, "whoami4").NetworkSettings.IPAddress
+	file := s.adaptFile(c, "fixtures/healthcheck/propagate.toml", struct {
+		Server1 string
+		Server2 string
+		Server3 string
+		Server4 string
+	}{s.whoami1IP, s.whoami2IP, s.whoami3IP, s.whoami4IP})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`root.localhost`)"))
+	c.Assert(err, checker.IsNil)
+
+	frontendHealthReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/health", nil)
+	c.Assert(err, checker.IsNil)
+	frontendHealthReq.Host = "root.localhost"
+
+	rootReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+	c.Assert(err, checker.IsNil)
+	rootReq.Host = "root.localhost"
+
+	err = try.Request(rootReq, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	// Bring whoami1 and whoami3 down
+	client := &http.Client{}
+	whoamiHosts := []string{s.whoami1IP, s.whoami3IP}
+	for _, whoami := range whoamiHosts {
+		statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+whoami+"/health", bytes.NewBuffer([]byte("500")))
+		c.Assert(err, checker.IsNil)
+		_, err = client.Do(statusInternalServerErrorReq)
+		c.Assert(err, checker.IsNil)
+	}
+
+	time.Sleep(time.Second)
+
+	// Verify load-balancing on root still works, and that we're getting wsp2, wsp4, wsp2, wsp4, etc.
+	var want string
+	for i := 0; i < 4; i++ {
+		if i%2 == 0 {
+			want = `IP: ` + s.whoami4IP
+		} else {
+			want = `IP: ` + s.whoami2IP
+		}
+		// N.B: using a Nanosecond here is important, because we actually want the request
+		// to be tried only once. And we're too lazy not to use try.Request.
+		err = try.Request(rootReq, time.Nanosecond, try.BodyContains(want))
+		c.Assert(err, checker.IsNil)
+	}
+
+	fooReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+	c.Assert(err, checker.IsNil)
+	fooReq.Host = "foo.localhost"
+
+	// Verify load-balancing on foo still works, and that we're getting wsp2, wsp2, wsp2, wsp2, etc.
+	want = `IP: ` + s.whoami2IP
+	for i := 0; i < 4; i++ {
+		err = try.Request(fooReq, time.Nanosecond, try.BodyContains(want))
+		c.Assert(err, checker.IsNil)
+	}
+
+	barReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+	c.Assert(err, checker.IsNil)
+	barReq.Host = "bar.localhost"
+
+	// Verify load-balancing on bar still works, and that we're getting wsp2, wsp2, wsp2, wsp2, etc.
+	want = `IP: ` + s.whoami2IP
+	for i := 0; i < 4; i++ {
+		err = try.Request(barReq, time.Nanosecond, try.BodyContains(want))
+		c.Assert(err, checker.IsNil)
+	}
+
+	// Bring whoami2 and whoami4 down
+	whoamiHosts = []string{s.whoami2IP, s.whoami4IP}
+	for _, whoami := range whoamiHosts {
+		statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+whoami+"/health", bytes.NewBuffer([]byte("500")))
+		c.Assert(err, checker.IsNil)
+		_, err = client.Do(statusInternalServerErrorReq)
+		c.Assert(err, checker.IsNil)
+	}
+
+	time.Sleep(time.Second)
+
+	// Verify that everything is down, and that we get 503s everywhere.
+	for i := 0; i < 2; i++ {
+		err = try.Request(rootReq, time.Nanosecond, try.StatusCodeIs(http.StatusServiceUnavailable))
+		c.Assert(err, checker.IsNil)
+		err = try.Request(fooReq, time.Nanosecond, try.StatusCodeIs(http.StatusServiceUnavailable))
+		c.Assert(err, checker.IsNil)
+		err = try.Request(barReq, time.Nanosecond, try.StatusCodeIs(http.StatusServiceUnavailable))
+		c.Assert(err, checker.IsNil)
+	}
+
+	// Bring everything back up.
+	whoamiHosts = []string{s.whoami1IP, s.whoami2IP, s.whoami3IP, s.whoami4IP}
+	for _, whoami := range whoamiHosts {
+		statusOKReq, err := http.NewRequest(http.MethodPost, "http://"+whoami+"/health", bytes.NewBuffer([]byte("200")))
+		c.Assert(err, checker.IsNil)
+		_, err = client.Do(statusOKReq)
+		c.Assert(err, checker.IsNil)
+	}
+
+	time.Sleep(time.Second)
+
+	// Verify everything is up on root router.
+	wantIPs := []string{s.whoami3IP, s.whoami1IP, s.whoami4IP, s.whoami2IP}
+	for i := 0; i < 4; i++ {
+		want := `IP: ` + wantIPs[i]
+		err = try.Request(rootReq, time.Nanosecond, try.BodyContains(want))
+		c.Assert(err, checker.IsNil)
+	}
+
+	// Verify everything is up on foo router.
+	wantIPs = []string{s.whoami1IP, s.whoami1IP, s.whoami3IP, s.whoami2IP}
+	for i := 0; i < 4; i++ {
+		want := `IP: ` + wantIPs[i]
+		err = try.Request(fooReq, time.Nanosecond, try.BodyContains(want))
+		c.Assert(err, checker.IsNil)
+	}
+
+	// Verify everything is up on bar router.
+	wantIPs = []string{s.whoami1IP, s.whoami1IP, s.whoami3IP, s.whoami2IP}
+	for i := 0; i < 4; i++ {
+		want := `IP: ` + wantIPs[i]
+		err = try.Request(barReq, time.Nanosecond, try.BodyContains(want))
+		c.Assert(err, checker.IsNil)
+	}
 }

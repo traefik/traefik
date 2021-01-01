@@ -241,7 +241,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			},
 		},
 		{
-			desc:        "PassHost doesn't passe the host instead of the IP",
+			desc:        "PassHost doesn't pass the host instead of the IP",
 			serviceName: "test",
 			service: &dynamic.ServersLoadBalancer{
 				PassHostHeader: Bool(false),

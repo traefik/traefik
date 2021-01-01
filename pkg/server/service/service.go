@@ -162,9 +162,23 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 		if err != nil {
 			return nil, err
 		}
-
 		balancer.AddService(service.Name, serviceHandler, service.Weight)
+		if config.HealthCheck == nil {
+			continue
+		}
+		childName := service.Name
+		updater, ok := serviceHandler.(healthcheck.StatusUpdater)
+		if !ok {
+			return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", childName, serviceName, serviceHandler)
+		}
+		if err := updater.RegisterStatusUpdater(func(up bool) {
+			balancer.SetStatus(serviceName, childName, up)
+		}); err != nil {
+			return nil, err
+		}
+		log.FromContext(ctx).Debugf("Child service %v will update parent %v on status change", childName, serviceName)
 	}
+
 	return balancer, nil
 }
 
@@ -213,28 +227,24 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	return emptybackendhandler.New(balancer), nil
 }
 
-// LaunchHealthCheck Launches the health checks.
+// LaunchHealthCheck launches the health checks.
 func (m *Manager) LaunchHealthCheck() {
 	backendConfigs := make(map[string]*healthcheck.BackendConfig)
 
 	for serviceName, balancers := range m.balancers {
 		ctx := log.With(context.Background(), log.Str(log.ServiceName, serviceName))
 
-		// TODO Should all the services handle healthcheck? Handle different types
 		service := m.configs[serviceName].LoadBalancer
 
 		// Health Check
-		var backendHealthCheck *healthcheck.BackendConfig
-		if hcOpts := buildHealthCheckOptions(ctx, balancers, serviceName, service.HealthCheck); hcOpts != nil {
-			log.FromContext(ctx).Debugf("Setting up healthcheck for service %s with %s", serviceName, *hcOpts)
-
-			hcOpts.Transport, _ = m.roundTripperManager.Get(service.ServersTransport)
-			backendHealthCheck = healthcheck.NewBackendConfig(*hcOpts, serviceName)
+		hcOpts := buildHealthCheckOptions(ctx, balancers, serviceName, service.HealthCheck)
+		if hcOpts == nil {
+			continue
 		}
+		hcOpts.Transport, _ = m.roundTripperManager.Get(service.ServersTransport)
+		log.FromContext(ctx).Debugf("Setting up healthcheck for service %s with %s", serviceName, *hcOpts)
 
-		if backendHealthCheck != nil {
-			backendConfigs[serviceName] = backendHealthCheck
-		}
+		backendConfigs[serviceName] = healthcheck.NewBackendConfig(*hcOpts, serviceName)
 	}
 
 	healthcheck.GetHealthCheck(m.metricsRegistry).SetBackendsConfiguration(context.Background(), backendConfigs)

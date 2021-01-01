@@ -35,11 +35,21 @@ type Balancer struct {
 	mutex       sync.RWMutex
 	handlers    []*namedHandler
 	curDeadline float64
+	// status is a record of which child services of the Balancer are healthy, keyed
+	// by name of child service. A service is initially added to the map when it is
+	// created via AddService, and it is later removed or added to the map as needed,
+	// through the SetStatus method.
+	status map[string]struct{}
+	// updaters is the list of hooks that are run (to update the Balancer
+	// parent(s)), whenever the Balancer status changes.
+	updaters []func(bool)
 }
 
 // New creates a new load balancer.
 func New(sticky *dynamic.Sticky) *Balancer {
-	balancer := &Balancer{}
+	balancer := &Balancer{
+		status: make(map[string]struct{}),
+	}
 	if sticky != nil && sticky.Cookie != nil {
 		balancer.stickyCookie = &stickyCookie{
 			name:     sticky.Cookie.Name,
@@ -81,6 +91,58 @@ func (b *Balancer) Pop() interface{} {
 	return h
 }
 
+// SetStatus sets on the balancer that its given child is now of the given
+// status. balancerName is only needed for logging purposes.
+func (b *Balancer) SetStatus(balancerName, childName string, up bool) {
+	// TODO(mpl): pass a context around, instead of directly balancerName?
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+
+	upBefore := len(b.status) > 0
+
+	log.WithoutContext().Debugf("Setting status of %s to %v on %s", childName, up, balancerName)
+	if up {
+		b.status[childName] = struct{}{}
+	} else {
+		delete(b.status, childName)
+	}
+
+	if !upBefore {
+		if !up {
+			// We're still down, no need to propagate
+			log.WithoutContext().Debugf("No need to propagate that %s is still DOWN", balancerName)
+			return
+		}
+		// propagate upwards that we are now UP
+		log.WithoutContext().Debugf("And propagating that status of %s is now UP", balancerName)
+		for _, fn := range b.updaters {
+			fn(true)
+		}
+		return
+	}
+
+	if len(b.status) > 0 {
+		// we were up before and we still are, no need to propagate
+		log.WithoutContext().Debugf("No need to propagate that %s is still UP", balancerName)
+		return
+	}
+	// propagate upwards that we are now DOWN
+	log.WithoutContext().Debugf("And propagating that status of %s is now DOWN", balancerName)
+	for _, fn := range b.updaters {
+		fn(false)
+	}
+}
+
+// RegisterStatusUpdater adds fn to the list of hooks that are run when the
+// status of the Balancer changes.
+// Not thread safe.
+func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
+	b.updaters = append(b.updaters, fn)
+	return nil
+}
+
+var errNoAvailableServer = errors.New("no available server")
+
 func (b *Balancer) nextServer() (*namedHandler, error) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
@@ -88,15 +150,24 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	if len(b.handlers) == 0 {
 		return nil, fmt.Errorf("no servers in the pool")
 	}
+	if len(b.status) == 0 {
+		return nil, errNoAvailableServer
+	}
 
-	// Pick handler with closest deadline.
-	handler := heap.Pop(b).(*namedHandler)
+	var handler *namedHandler
+	for {
+		// Pick handler with closest deadline.
+		handler = heap.Pop(b).(*namedHandler)
 
-	// curDeadline should be handler's deadline so that new added entry would have a fair competition environment with the old ones.
-	b.curDeadline = handler.deadline
-	handler.deadline += 1 / handler.weight
+		// curDeadline should be handler's deadline so that new added entry would have a fair competition environment with the old ones.
+		b.curDeadline = handler.deadline
+		handler.deadline += 1 / handler.weight
 
-	heap.Push(b, handler)
+		heap.Push(b, handler)
+		if _, ok := b.status[handler.name]; ok {
+			break
+		}
+	}
 
 	log.WithoutContext().Debugf("Service selected by WRR: %s", handler.name)
 	return handler, nil
@@ -112,17 +183,28 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 		if err == nil && cookie != nil {
 			for _, handler := range b.handlers {
-				if handler.name == cookie.Value {
-					handler.ServeHTTP(w, req)
-					return
+				if handler.name != cookie.Value {
+					continue
 				}
+				b.mutex.RLock()
+				_, ok := b.status[handler.name]
+				b.mutex.RUnlock()
+				if !ok {
+					continue
+				}
+				handler.ServeHTTP(w, req)
+				return
 			}
 		}
 	}
 
 	server, err := b.nextServer()
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError)+err.Error(), http.StatusInternalServerError)
+		if errors.Is(err, errNoAvailableServer) {
+			http.Error(w, errNoAvailableServer.Error(), http.StatusServiceUnavailable)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -135,7 +217,6 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 // AddService adds a handler.
-// It is not thread safe with ServeHTTP.
 // A handler with a non-positive weight is ignored.
 func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
 	w := 1
@@ -148,10 +229,9 @@ func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
 
 	h := &namedHandler{Handler: handler, name: name, weight: float64(w)}
 
-	// use RWLock to protect b.curDeadline
-	b.mutex.RLock()
+	b.mutex.Lock()
 	h.deadline = b.curDeadline + 1/h.weight
-	b.mutex.RUnlock()
-
 	heap.Push(b, h)
+	b.status[name] = struct{}{}
+	b.mutex.Unlock()
 }

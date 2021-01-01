@@ -313,6 +313,8 @@ On subsequent requests, to keep the session alive with the same server, the clie
 Configure health check to remove unhealthy servers from the load balancing rotation.
 Traefik will consider your servers healthy as long as they return status codes between `2XX` and `3XX` to the health check requests (carried out every `interval`).
 
+To propagate status changes (e.g. all servers of this service are down) upwards, HealthCheck must also be enabled on the parent(s) of this service.
+
 Below are the available options for the health check mechanism:
 
 - `path` is appended to the server URL to set the health check endpoint.
@@ -851,9 +853,43 @@ The WRR is able to load balance the requests between multiple services based on 
 
 This strategy is only available to load balance between [services](./index.md) and not between [servers](./index.md#servers).
 
-!!! info "Supported Providers"
+#### Health Check
+
+HealthCheck enables automatic self-healthcheck for this service, i.e. whenever one of its children (either another WeightedRoundRobin, or a ServersLoadBalancer) is reported as down, this service becomes aware of it, and takes it into account (i.e. it ignores the down child) when running the load-balancing algorithm. In addition, if the parent of this service also has HealthCheck enabled, this service reports to its parent any status change.
 
     This strategy can be defined currently with the [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md) providers.
+
+```toml tab="TOML"
+## Dynamic configuration
+[http.services]
+  [http.services.app]
+    # none of the fields of healthCheck are relevant here
+    [http.services.app.weighted.healthCheck]
+    [[http.services.app.weighted.services]]
+      name = "appv1"
+      weight = 3
+    [[http.services.app.weighted.services]]
+      name = "appv2"
+      weight = 1
+
+  [http.services.appv1]
+    [http.services.appv1.loadBalancer]
+      [http.services.appv1.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.appv1.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+
+  [http.services.appv2]
+    [http.services.appv2.loadBalancer]
+      [http.services.appv2.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.appv2.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
 
 ```yaml tab="YAML"
 ## Dynamic configuration
@@ -861,6 +897,8 @@ http:
   services:
     app:
       weighted:
+        # none of the fields of healthCheck are relevant here
+        healthCheck: {}
         services:
         - name: appv1
           weight: 3
@@ -869,11 +907,19 @@ http:
 
     appv1:
       loadBalancer:
+        healthCheck:
+          path: /status
+          interval: 10s
+          timeout: 3s
         servers:
         - url: "http://private-ip-server-1/"
 
     appv2:
       loadBalancer:
+        healthCheck:
+          path: /status
+          interval: 10s
+          timeout: 3s
         servers:
         - url: "http://private-ip-server-2/"
 ```
