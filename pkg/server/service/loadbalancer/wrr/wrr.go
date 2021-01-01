@@ -26,7 +26,9 @@ type stickyCookie struct {
 
 // New creates a new load balancer.
 func New(sticky *dynamic.Sticky) *Balancer {
-	balancer := &Balancer{}
+	balancer := &Balancer{
+		Skip: make(map[string]bool),
+	}
 	if sticky != nil && sticky.Cookie != nil {
 		balancer.stickyCookie = &stickyCookie{
 			name:     sticky.Cookie.Name,
@@ -79,6 +81,7 @@ type Balancer struct {
 	mutex       sync.RWMutex
 	handlers    []*namedHandler
 	curDeadline float64
+	Skip        map[string]bool
 }
 
 func (b *Balancer) nextServer() (*namedHandler, error) {
@@ -88,15 +91,32 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	if len(b.handlers) == 0 {
 		return nil, fmt.Errorf("no servers in the pool")
 	}
+	up := false
+	for _, h := range b.handlers {
+		if !b.Skip[h.name] {
+			up = true
+			break
+		}
+	}
+	if !up {
+		return nil, fmt.Errorf("no up servers in the pool")
+	}
 
-	// Pick handler with closest deadline.
-	handler := heap.Pop(b).(*namedHandler)
+	var handler *namedHandler
+	up = false
+	for !up {
+		// Pick handler with closest deadline.
+		handler = heap.Pop(b).(*namedHandler)
 
-	// curDeadline should be handler's deadline so that new added entry would have a fair competition environment with the old ones.
-	b.curDeadline = handler.deadline
-	handler.deadline += 1 / handler.weight
+		// curDeadline should be handler's deadline so that new added entry would have a fair competition environment with the old ones.
+		b.curDeadline = handler.deadline
+		handler.deadline += 1 / handler.weight
 
-	heap.Push(b, handler)
+		heap.Push(b, handler)
+		if !b.Skip[handler.name] {
+			break
+		}
+	}
 
 	log.WithoutContext().Debugf("Service selected by WRR: %s", handler.name)
 	return handler, nil

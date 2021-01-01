@@ -72,6 +72,54 @@ func TestBalancerOneServerZeroWeight(t *testing.T) {
 	assert.Equal(t, 3, recorder.save["first"])
 }
 
+func TestBalancerNoServiceUp(t *testing.T) {
+	balancer := New(nil)
+
+	balancer.AddService("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusInternalServerError)
+	}), Int(1))
+
+	balancer.AddService("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusInternalServerError)
+	}), Int(1))
+
+	balancer.Skip = map[string]bool{
+		"first":  true,
+		"second": true,
+	}
+
+	recorder := httptest.NewRecorder()
+	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+
+	assert.Equal(t, http.StatusInternalServerError, recorder.Result().StatusCode)
+}
+
+func TestBalancerOneServerDown(t *testing.T) {
+
+	balancer := New(nil)
+
+	balancer.AddService("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "first")
+		rw.WriteHeader(http.StatusOK)
+	}), Int(1))
+
+	balancer.AddService("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusInternalServerError)
+	}), Int(1))
+
+	balancer.Skip = map[string]bool{
+		"first":  false,
+		"second": true,
+	}
+
+	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+	for i := 0; i < 3; i++ {
+		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	}
+
+	assert.Equal(t, 3, recorder.save["first"])
+}
+
 func TestBalancerAllServersZeroWeight(t *testing.T) {
 	balancer := New(nil)
 

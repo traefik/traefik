@@ -164,6 +164,19 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 
 		balancer.AddService(service.Name, serviceHandler, service.Weight)
 	}
+
+	healthcheck.GetHealthCheck(m.metricsRegistry).OnStatusUpdate(func(name string, up bool) {
+		inWRR := false
+		for _, service := range config.Services {
+			if service.Name == name {
+				inWRR = true
+			}
+		}
+		if inWRR {
+			balancer.Skip[name] = !up
+		}
+	})
+
 	return balancer, nil
 }
 

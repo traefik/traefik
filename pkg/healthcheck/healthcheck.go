@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -106,9 +107,10 @@ func (b *BackendConfig) addHeadersAndHost(req *http.Request) *http.Request {
 
 // HealthCheck struct.
 type HealthCheck struct {
-	Backends map[string]*BackendConfig
-	metrics  metricsHealthcheck
-	cancel   context.CancelFunc
+	Backends        map[string]*BackendConfig
+	metrics         metricsHealthcheck
+	cancel          context.CancelFunc
+	statusListeners []func(string, bool)
 }
 
 // SetBackendsConfiguration set backends configuration.
@@ -163,6 +165,15 @@ func (hc *HealthCheck) checkBackend(ctx context.Context, backend *BackendConfig)
 				logger.Error(err)
 			}
 
+			if len(backend.LB.Servers()) != 0 {
+				name := strings.Split(backend.name, "@")[0]
+				logger.Debugf("New working server in %s: %s\n", name, disabledURL.url.String())
+
+				for _, fn := range hc.statusListeners {
+					fn(name, true)
+				}
+			}
+
 			serverUpMetricValue = 1
 		} else {
 			logger.Warnf("Health check still failing. Backend: %q URL: %q Reason: %s", backend.name, disabledURL.url.String(), err)
@@ -195,6 +206,15 @@ func (hc *HealthCheck) checkBackend(ctx context.Context, backend *BackendConfig)
 				logger.Error(err)
 			}
 
+			if len(backend.LB.Servers()) == 0 {
+				name := strings.Split(backend.name, "@")[0]
+				logger.Debugf("No working servers in %s\n", name)
+
+				for _, fn := range hc.statusListeners {
+					fn(name, false)
+				}
+			}
+
 			backend.disabledURLs = append(backend.disabledURLs, backendURL{enableURL, weight})
 			serverUpMetricValue = 0
 		}
@@ -202,6 +222,14 @@ func (hc *HealthCheck) checkBackend(ctx context.Context, backend *BackendConfig)
 		labelValues := []string{"service", backend.name, "url", enableURL.String()}
 		hc.metrics.serverUpGauge.With(labelValues...).Set(serverUpMetricValue)
 	}
+}
+
+// OnStatusUpdate is used to receive callback when service status changes
+func (hc *HealthCheck) OnStatusUpdate(callback func(name string, up bool)) {
+	if hc.statusListeners == nil {
+		hc.statusListeners = make([]func(string, bool), 0)
+	}
+	hc.statusListeners = append(hc.statusListeners, callback)
 }
 
 // GetHealthCheck returns the health check which is guaranteed to be a singleton.
