@@ -224,7 +224,7 @@ func (hc *HealthCheck) checkBackend(ctx context.Context, backend *BackendConfig)
 	}
 }
 
-// OnStatusUpdate is used to receive callback when service status changes
+// OnStatusUpdate is used to receive callback when service status changes.
 func (hc *HealthCheck) OnStatusUpdate(callback func(name string, up bool)) {
 	if hc.statusListeners == nil {
 		hc.statusListeners = make([]func(string, bool), 0)

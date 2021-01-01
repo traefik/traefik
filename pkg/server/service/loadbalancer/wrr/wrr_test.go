@@ -95,7 +95,6 @@ func TestBalancerNoServiceUp(t *testing.T) {
 }
 
 func TestBalancerOneServerDown(t *testing.T) {
-
 	balancer := New(nil)
 
 	balancer.AddService("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
