@@ -9,7 +9,7 @@ If you want to use Let's Encrypt with Traefik, sharing configuration or TLS cert
 Ok, could we mount a shared volume used by all my instances? Yes, you can, but it will not work.
 When you use Let's Encrypt, you need to store certificates, but not only.
 When Traefik generates a new certificate, it configures a challenge and once Let's Encrypt will verify the ownership of the domain, it will ping back the challenge.
-If the challenge is not known by other Traefik instances, the validation will fail.
+If the challenge is not recognised by other Traefik instances, the validation will fail.
 
 For more information about the challenge: [Automatic Certificate Management Environment (ACME)](https://github.com/ietf-wg-acme/acme/blob/master/draft-ietf-acme-acme.md#http-challenge)
 
