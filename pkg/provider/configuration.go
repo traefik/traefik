@@ -349,7 +349,7 @@ func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPCo
 // Normalize Replace all special chars with `-`.
 func Normalize(name string) string {
 	fargs := func(c rune) bool {
-		return !unicode.IsLetter(c) && !unicode.IsNumber(c) && c != '*'
+		return !unicode.IsLetter(c) && !unicode.IsNumber(c)
 	}
 	// get function
 	return strings.Join(strings.FieldsFunc(name, fargs), "-")

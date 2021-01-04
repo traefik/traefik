@@ -6,14 +6,7 @@ metadata:
 
 spec:
   rules:
-  - host: '*.tarefik.tchouk'
-    http:
-      paths:
-      - path: /bar
-        backend:
-          serviceName: service1
-          servicePort: 80
-  - host: tarefik.tchouk
+  - host: "*.bar"
     http:
       paths:
       - path: /bar
@@ -21,3 +14,10 @@ spec:
           serviceName: service1
           servicePort: 80
 
+  - host: "bar"
+    http:
+      paths:
+      - path: /bar
+        backend:
+          serviceName: service1
+          servicePort: 80
