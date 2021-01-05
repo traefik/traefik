@@ -268,7 +268,6 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 		if e.http3Server != nil {
 			wg.Add(1)
 			go shutdownServer(e.http3Server)
-
 		}
 	}
 
@@ -530,7 +529,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	listener := newHTTPForwarder(ln)
 	go func() {
 		err := serverHTTP.Serve(listener)
-		if err != nil && err != http.ErrServerClosed {
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.FromContext(ctx).Errorf("Error while starting server: %v", err)
 		}
 	}()

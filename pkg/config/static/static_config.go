@@ -238,7 +238,7 @@ func (c *Configuration) SetEffectiveConfiguration() {
 
 	if c.Experimental == nil || !c.Experimental.HTTP3 {
 		for _, ep := range c.EntryPoints {
-			ep.HTTP3 = false
+			ep.EnableHTTP3 = false
 		}
 	}
 

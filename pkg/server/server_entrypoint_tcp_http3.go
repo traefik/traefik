@@ -26,7 +26,7 @@ type http3server struct {
 }
 
 func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, httpsServer *httpServer) (*http3server, error) {
-	if configuration.HTTP3 {
+	if configuration.EnableHTTP3 {
 		return nil, nil
 	}
 
