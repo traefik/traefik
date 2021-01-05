@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/v2/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -47,7 +46,7 @@ func newServer(t *testing.T, addr string, handler Handler) {
 	addrL, err := net.ResolveUDPAddr("udp", addr)
 	require.NoError(t, err)
 
-	listener, err := Listen("udp", addrL, types.Duration(3*time.Second))
+	listener, err := Listen("udp", addrL, 3*time.Second)
 	require.NoError(t, err)
 
 	for {

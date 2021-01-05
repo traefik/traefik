@@ -864,3 +864,35 @@ entryPoints:
     --entrypoints.websecure.address=:443
     --entrypoints.websecure.http.tls.certResolver=leresolver
     ```
+
+## UDP Options
+
+This whole section is dedicated to options, keyed by entry point, that will apply only to UDP routing.
+
+### Timeout
+
+_Optional, Default=3s_
+
+Timeout determines how long to wait on an idle session before releasing the related resources.
+The Timeout value must be greater than zero.
+
+```toml tab="File (TOML)"
+[entryPoints.foo]
+  address = ":8000/udp"
+
+    [entryPoints.foo.udp]
+      timeout = "10s"
+```
+
+```yaml tab="File (YAML)"
+entryPoints:
+  foo:
+    address: ':8000/udp'
+    udp:
+      timeout: 10s
+```
+
+```bash tab="CLI"
+entrypoints.foo.address=:8000/udp
+entrypoints.foo.udp.timeout=10s
+```
