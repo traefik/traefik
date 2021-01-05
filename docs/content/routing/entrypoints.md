@@ -223,13 +223,14 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
 
 ### EnableHTTP3
 
-`enableHTTP3` defines that you want to enable http3 on this `address`. You can only define http3 on TCP entrypoint.
-http3 will automatically add the correct header for the upgrade to http3.
+`enableHTTP3` defines that you want to enable HTTP3 on this `address`.
+You can only define HTTP3 on TCP entrypoint.
+HTTP3 will automatically add the correct header for the upgrade to HTTP3.
 
-??? info "http3 uses UDP+TLS"
+??? info "HTTP3 uses UDP+TLS"
 
-    As http3 uses UDP, you can't have a TCP entrypoint with http3 on the same port as a UDP entrypoint.
-    As http3 uses TLS, only routers with TLS will be in http3.
+    As HTTP3 uses UDP, you can't have a TCP entrypoint with HTTP3 on the same port as a UDP entrypoint.
+    As HTTP3 uses TLS, only routers with TLS will be in HTTP3.
 
 !!! warning "Enabling The Experimental HTTP3"
 
@@ -254,11 +255,8 @@ http3 will automatically add the correct header for the upgrade to http3.
     ```
     
     ```bash tab="CLI"
-    --experimental.http3=true --entrypoints.name.enableHTTP3=true
+    --experimental.http3=true --entrypoints.name.enablehttp3=true
     ```
-
-    
-    
 
 ### Forwarded Headers
 
