@@ -279,27 +279,20 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				conf.HTTP.Services[serviceName] = service
 
 				routerKey := strings.TrimPrefix(provider.Normalize(ingress.Name+"-"+ingress.Namespace+"-"+rule.Host+pa.Path), "-")
-
-				if _, ok := routers[routerKey]; !ok {
-					routers[routerKey] = []*dynamic.Router{}
-				}
-
 				routers[routerKey] = append(routers[routerKey], loadRouter(rule, pa, rtConfig, serviceName))
 			}
 		}
 
 		for routerKey, conflictingRouters := range routers {
 			if len(conflictingRouters) == 1 {
-				for _, router := range conflictingRouters {
-					conf.HTTP.Routers[routerKey] = router
-				}
+				conf.HTTP.Routers[routerKey] = conflictingRouters[0]
 				continue
 			}
 
 			log.FromContext(ctx).Debugf("Multiple routers are defined with the same key %q, generating hashes to avoid conflicts", routerKey)
 
 			for _, router := range conflictingRouters {
-				key, err := makeHashRouterKey(routerKey, router.Rule)
+				key, err := makeRouterKeyWithHash(routerKey, router.Rule)
 				if err != nil {
 					log.FromContext(ctx).Error(err)
 					continue
@@ -571,7 +564,7 @@ func getProtocol(portSpec corev1.ServicePort, portName string, svcConfig *Servic
 	return protocol
 }
 
-func makeHashRouterKey(key, rule string) (string, error) {
+func makeRouterKeyWithHash(key, rule string) (string, error) {
 	h := sha256.New()
 	if _, err := h.Write([]byte(rule)); err != nil {
 		return "", err
