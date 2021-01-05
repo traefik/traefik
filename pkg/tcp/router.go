@@ -27,6 +27,7 @@ type Router struct {
 	hostHTTPTLSConfig map[string]*tls.Config // TLS configs keyed by SNI
 }
 
+// GetTLSGetClientInfo is called after a ClientHello is received from a client.
 func (r *Router) GetTLSGetClientInfo() func(info *tls.ClientHelloInfo) (*tls.Config, error) {
 	return func(info *tls.ClientHelloInfo) (*tls.Config, error) {
 		if tlsConfig, ok := r.hostHTTPTLSConfig[info.ServerName]; ok {
