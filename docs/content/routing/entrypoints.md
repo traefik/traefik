@@ -100,6 +100,7 @@ They can be defined by using a file (TOML or YAML) or CLI arguments.
     [entryPoints]
       [entryPoints.name]
         address = ":8888" # same as ":8888/tcp"
+        enableHTTP3 = true
         [entryPoints.name.transport]
           [entryPoints.name.transport.lifeCycle]
             requestAcceptGraceTimeout = 42
@@ -121,6 +122,7 @@ They can be defined by using a file (TOML or YAML) or CLI arguments.
     entryPoints:
       name:
         address: ":8888" # same as ":8888/tcp"
+        enableHTTP3: true
         transport:
           lifeCycle:
             requestAcceptGraceTimeout: 42
@@ -144,6 +146,7 @@ They can be defined by using a file (TOML or YAML) or CLI arguments.
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.name.address=:8888 # same as :8888/tcp
+    --entryPoints.name.http3=true
     --entryPoints.name.transport.lifeCycle.requestAcceptGraceTimeout=42
     --entryPoints.name.transport.lifeCycle.graceTimeOut=42
     --entryPoints.name.transport.respondingTimeouts.readTimeout=42
@@ -217,6 +220,45 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
     ```
     
     Full details for how to specify `address` can be found in [net.Listen](https://golang.org/pkg/net/#Listen) (and [net.Dial](https://golang.org/pkg/net/#Dial)) of the doc for go.
+
+### EnableHTTP3
+
+`enableHTTP3` defines that you want to enable http3 on this `address`. You can only define http3 on TCP entrypoint.
+http3 will automatically add the correct header for the upgrade to http3.
+
+??? info "http3 uses UDP+TLS"
+
+    As http3 uses UDP, you can't have a TCP entrypoint with http3 on the same port as a UDP entrypoint.
+    As http3 uses TLS, only routers with TLS will be in http3.
+
+!!! warning "Enabling The Experimental HTTP3"
+
+    As HTTP3 is still in draft, HTTP3 in Traefik is an experimental feature and it needs to be activated 
+    in the experimental section of the static configuration. 
+    
+    ```toml tab="File (TOML)"
+    [experimental]
+      http3 = true
+    
+    [entryPoints.name]
+      enableHTTP3 = true
+    ```
+    
+    ```yaml tab="File (YAML)"
+    experimental:
+      http3: true
+    
+    entryPoints:
+      name:
+        enableHTTP3: true
+    ```
+    
+    ```bash tab="CLI"
+    --experimental.http3=true --entrypoints.name.enableHTTP3=true
+    ```
+
+    
+    
 
 ### Forwarded Headers
 
