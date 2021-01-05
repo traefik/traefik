@@ -82,13 +82,10 @@ require (
 	github.com/vulcand/predicate v1.1.0
 	go.elastic.co/apm v1.7.0
 	go.elastic.co/apm/module/apmot v1.7.0
-	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect
 	golang.org/x/mod v0.3.0
 	golang.org/x/net v0.0.0-20200904194848-62affa334b73
-	golang.org/x/sys v0.0.0-20201223074533-0d417f636930 // indirect
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
 	google.golang.org/grpc v1.27.1
-	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/DataDog/dd-trace-go.v1 v1.19.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/jcmturner/goidentity.v3 v3.0.0 // indirect
