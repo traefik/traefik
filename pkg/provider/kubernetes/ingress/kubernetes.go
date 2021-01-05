@@ -2,6 +2,7 @@ package ingress
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"math"
@@ -253,6 +254,8 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			conf.HTTP.Services["default-backend"] = service
 		}
 
+		routers := map[string][]*dynamic.Router{}
+
 		for _, rule := range ingress.Spec.Rules {
 			if err := p.updateIngressStatus(ingress, client); err != nil {
 				log.FromContext(ctx).Errorf("Error while updating ingress status: %v", err)
@@ -276,8 +279,26 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				conf.HTTP.Services[serviceName] = service
 
 				routerKey := strings.TrimPrefix(provider.Normalize(ingress.Name+"-"+ingress.Namespace+"-"+rule.Host+pa.Path), "-")
+				routers[routerKey] = append(routers[routerKey], loadRouter(rule, pa, rtConfig, serviceName))
+			}
+		}
 
-				conf.HTTP.Routers[routerKey] = loadRouter(rule, pa, rtConfig, serviceName)
+		for routerKey, conflictingRouters := range routers {
+			if len(conflictingRouters) == 1 {
+				conf.HTTP.Routers[routerKey] = conflictingRouters[0]
+				continue
+			}
+
+			log.FromContext(ctx).Debugf("Multiple routers are defined with the same key %q, generating hashes to avoid conflicts", routerKey)
+
+			for _, router := range conflictingRouters {
+				key, err := makeRouterKeyWithHash(routerKey, router.Rule)
+				if err != nil {
+					log.FromContext(ctx).Error(err)
+					continue
+				}
+
+				conf.HTTP.Routers[key] = router
 			}
 		}
 	}
@@ -541,6 +562,17 @@ func getProtocol(portSpec corev1.ServicePort, portName string, svcConfig *Servic
 	}
 
 	return protocol
+}
+
+func makeRouterKeyWithHash(key, rule string) (string, error) {
+	h := sha256.New()
+	if _, err := h.Write([]byte(rule)); err != nil {
+		return "", err
+	}
+
+	dupKey := fmt.Sprintf("%s-%.10x", key, h.Sum(nil))
+
+	return dupKey, nil
 }
 
 func loadRouter(rule networkingv1beta1.IngressRule, pa networkingv1beta1.HTTPIngressPath, rtConfig *RouterConfig, serviceName string) *dynamic.Router {
