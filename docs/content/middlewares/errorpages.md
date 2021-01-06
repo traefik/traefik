@@ -28,7 +28,7 @@ metadata:
 spec:
   errors:
     status:
-      - 500-599
+      - "500-599"
     query: /{status}.html
     service:
       name: whoami

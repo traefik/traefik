@@ -1,0 +1,166 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami
+  namespace: default
+
+spec:
+  ports:
+    - name: web2
+      port: 8000
+      targetPort: web2
+    - name: web
+      port: 80
+      targetPort: web
+  selector:
+    app: containous
+    task: whoami
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoami
+  namespace: default
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.1
+      - ip: 10.10.0.2
+    ports:
+      - name: web
+        port: 80
+      - name: web2
+        port: 8000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami2
+  namespace: default
+
+spec:
+  ports:
+    - name: web
+      port: 8080
+      targetPort: web
+  selector:
+    app: containous
+    task: whoami2
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoami2
+  namespace: default
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.3
+      - ip: 10.10.0.4
+    ports:
+      - name: web
+        port: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamitls
+  namespace: default
+
+spec:
+  ports:
+    - name: websecure
+      port: 443
+      targetPort: websecure
+  selector:
+    app: containous
+    task: whoami2
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoamitls
+  namespace: default
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.5
+      - ip: 10.10.0.6
+    ports:
+      - name: websecure
+        port: 8443
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami3
+  namespace: default
+
+spec:
+  ports:
+    - name: websecure2
+      port: 8443
+      targetPort: websecure2
+      scheme: https
+  selector:
+    app: containous
+    task: whoami3
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoami3
+  namespace: default
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.7
+      - ip: 10.10.0.8
+    ports:
+      - name: websecure2
+        port: 8443
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-svc
+  namespace: default
+spec:
+  externalName: external.domain
+  type: ExternalName
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-svc-with-http
+  namespace: default
+spec:
+  externalName: external.domain
+  type: ExternalName
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-svc-with-https
+  namespace: default
+spec:
+  externalName: external.domain
+  type: ExternalName
+  ports:
+    - name: https
+      protocol: TCP
+      port: 443

@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/testhelpers"
 )
 
 func TestRedirectRegexHandler(t *testing.T) {
@@ -30,16 +29,6 @@ func TestRedirectRegexHandler(t *testing.T) {
 			config: dynamic.RedirectRegex{
 				Regex:       `^(?:http?:\/\/)(foo)(\.com)(:\d+)(.*)$`,
 				Replacement: "https://${1}bar$2:443$4",
-			},
-			url:            "http://foo.com:80",
-			expectedURL:    "https://foobar.com:443",
-			expectedStatus: http.StatusFound,
-		},
-		{
-			desc: "use request header",
-			config: dynamic.RedirectRegex{
-				Regex:       `^(?:http?:\/\/)(foo)(\.com)(:\d+)(.*)$`,
-				Replacement: `https://${1}{{ .Request.Header.Get "X-Foo" }}$2:443$4`,
 			},
 			url:            "http://foo.com:80",
 			expectedURL:    "https://foobar.com:443",
@@ -186,7 +175,7 @@ func TestRedirectRegexHandler(t *testing.T) {
 					method = test.method
 				}
 
-				req := testhelpers.MustNewRequest(method, test.url, nil)
+				req := httptest.NewRequest(method, test.url, nil)
 				if test.secured {
 					req.TLS = &tls.ConnectionState{}
 				}

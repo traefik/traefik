@@ -131,7 +131,6 @@
       "endpoint": "xxxx",
       "token": "xxxx",
       "certAuthFilePath": "xxxx",
-      "disablePassHostHeaders": true,
       "namespaces": [
         "a",
         "b"
@@ -149,13 +148,23 @@
       "endpoint": "xxxx",
       "token": "xxxx",
       "certAuthFilePath": "xxxx",
-      "disablePassHostHeaders": true,
       "namespaces": [
         "a",
         "b"
       ],
       "labelSelector": "myLabelSelector",
       "ingressClass": "MyIngressClass",
+      "throttleDuration": 111000000000
+    },
+    "kubernetesGateway": {
+      "endpoint": "xxxx",
+      "token": "xxxx",
+      "certAuthFilePath": "xxxx",
+      "namespaces": [
+        "a",
+        "b"
+      ],
+      "labelSelector": "myLabelSelector",
       "throttleDuration": 111000000000
     },
     "rest": {

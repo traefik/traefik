@@ -87,7 +87,7 @@ _Optional, Default=["default"]_
 
 ```toml tab="File (TOML)"
 [providers.ecs]
-  cluster = ["default"]
+  clusters = ["default"]
   # ...
 ```
 

@@ -105,7 +105,6 @@ providers:
     endpoint: foobar
     token: foobar
     certAuthFilePath: foobar
-    disablePassHostHeaders: true
     namespaces:
     - foobar
     - foobar
@@ -120,12 +119,21 @@ providers:
     endpoint: foobar
     token: foobar
     certAuthFilePath: foobar
-    disablePassHostHeaders: true
+    namespaces:
+    - foobar
+    - foobar
+    allowCrossNamespace: true
+    labelSelector: foobar
+    ingressClass: foobar
+    throttleDuration: 42s
+  kubernetesGateway:
+    endpoint: foobar
+    token: foobar
+    certAuthFilePath: foobar
     namespaces:
     - foobar
     - foobar
     labelSelector: foobar
-    ingressClass: foobar
     throttleDuration: 42s
   rest:
     insecure: true
@@ -402,3 +410,5 @@ experimental:
   devPlugin:
     goPath: foobar
     moduleName: foobar
+  kubernetesGateway: true
+

@@ -169,8 +169,28 @@ func AddServiceTCP(configuration *dynamic.TCPConfiguration, serviceName string, 
 		return false
 	}
 
-	configuration.Services[serviceName].LoadBalancer.Servers = append(configuration.Services[serviceName].LoadBalancer.Servers, service.LoadBalancer.Servers...)
+	uniq := map[string]struct{}{}
+	for _, server := range configuration.Services[serviceName].LoadBalancer.Servers {
+		uniq[server.Address] = struct{}{}
+	}
+
+	for _, server := range service.LoadBalancer.Servers {
+		if _, ok := uniq[server.Address]; !ok {
+			configuration.Services[serviceName].LoadBalancer.Servers = append(configuration.Services[serviceName].LoadBalancer.Servers, server)
+		}
+	}
+
 	return true
+}
+
+// AddRouterTCP Adds a router to a configurations.
+func AddRouterTCP(configuration *dynamic.TCPConfiguration, routerName string, router *dynamic.TCPRouter) bool {
+	if _, ok := configuration.Routers[routerName]; !ok {
+		configuration.Routers[routerName] = router
+		return true
+	}
+
+	return reflect.DeepEqual(configuration.Routers[routerName], router)
 }
 
 // AddServiceUDP adds a service to a configuration.
@@ -184,18 +204,18 @@ func AddServiceUDP(configuration *dynamic.UDPConfiguration, serviceName string, 
 		return false
 	}
 
-	configuration.Services[serviceName].LoadBalancer.Servers = append(configuration.Services[serviceName].LoadBalancer.Servers, service.LoadBalancer.Servers...)
-	return true
-}
-
-// AddRouterTCP Adds a router to a configurations.
-func AddRouterTCP(configuration *dynamic.TCPConfiguration, routerName string, router *dynamic.TCPRouter) bool {
-	if _, ok := configuration.Routers[routerName]; !ok {
-		configuration.Routers[routerName] = router
-		return true
+	uniq := map[string]struct{}{}
+	for _, server := range configuration.Services[serviceName].LoadBalancer.Servers {
+		uniq[server.Address] = struct{}{}
 	}
 
-	return reflect.DeepEqual(configuration.Routers[routerName], router)
+	for _, server := range service.LoadBalancer.Servers {
+		if _, ok := uniq[server.Address]; !ok {
+			configuration.Services[serviceName].LoadBalancer.Servers = append(configuration.Services[serviceName].LoadBalancer.Servers, server)
+		}
+	}
+
+	return true
 }
 
 // AddRouterUDP adds a router to a configuration.
@@ -219,7 +239,17 @@ func AddService(configuration *dynamic.HTTPConfiguration, serviceName string, se
 		return false
 	}
 
-	configuration.Services[serviceName].LoadBalancer.Servers = append(configuration.Services[serviceName].LoadBalancer.Servers, service.LoadBalancer.Servers...)
+	uniq := map[string]struct{}{}
+	for _, server := range configuration.Services[serviceName].LoadBalancer.Servers {
+		uniq[server.URL] = struct{}{}
+	}
+
+	for _, server := range service.LoadBalancer.Servers {
+		if _, ok := uniq[server.URL]; !ok {
+			configuration.Services[serviceName].LoadBalancer.Servers = append(configuration.Services[serviceName].LoadBalancer.Servers, server)
+		}
+	}
+
 	return true
 }
 

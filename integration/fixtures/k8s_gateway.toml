@@ -1,0 +1,22 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[api]
+  insecure = true
+
+[experimental]
+  kubernetesGateway = true
+
+[entryPoints]
+  [entryPoints.footcp]
+    address = ":8193"
+  [entryPoints.fooudp]
+    address = ":8190/udp"
+  [entryPoints.web]
+    address = ":8180"
+
+[providers.kubernetesGateway]

@@ -174,6 +174,9 @@ plugin's GOPATH.
 `TRAEFIK_EXPERIMENTAL_DEVPLUGIN_MODULENAME`:  
 plugin's module name.
 
+`TRAEFIK_EXPERIMENTAL_KUBERNETESGATEWAY`:  
+Allow the Kubernetes gateway api provider usage. (Default: ```false```)
+
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_MODULENAME`:  
 plugin's module name.
 
@@ -549,11 +552,11 @@ TLS key
 `TRAEFIK_PROVIDERS_KUBERNETESCRD`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_KUBERNETESCRD_ALLOWCROSSNAMESPACE`:  
+Allow cross namespace resource reference. (Default: ```true```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_CERTAUTHFILEPATH`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
-
-`TRAEFIK_PROVIDERS_KUBERNETESCRD_DISABLEPASSHOSTHEADERS`:  
-Kubernetes disable PassHost Headers. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
@@ -573,14 +576,32 @@ Ingress refresh throttle duration (Default: ```0```)
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_TOKEN`:  
 Kubernetes bearer token (not needed for in-cluster client).
 
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY`:  
+Enable Kubernetes gateway api provider with default settings. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_CERTAUTHFILEPATH`:  
+Kubernetes certificate authority file path (not needed for in-cluster client).
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_ENDPOINT`:  
+Kubernetes server endpoint (required for external cluster client).
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_LABELSELECTOR`:  
+Kubernetes label selector to select specific GatewayClasses.
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_NAMESPACES`:  
+Kubernetes namespaces.
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_THROTTLEDURATION`:  
+Kubernetes refresh throttle duration (Default: ```0```)
+
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_TOKEN`:  
+Kubernetes bearer token (not needed for in-cluster client).
+
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_CERTAUTHFILEPATH`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
-
-`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_DISABLEPASSHOSTHEADERS`:  
-Kubernetes disable PassHost Headers. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
