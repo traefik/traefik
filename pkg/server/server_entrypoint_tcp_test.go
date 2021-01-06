@@ -28,6 +28,7 @@ func TestShutdownHijacked(t *testing.T) {
 		err = resp.Write(conn)
 		require.NoError(t, err)
 	}))
+
 	testShutdown(t, router)
 }
 
@@ -37,6 +38,7 @@ func TestShutdownHTTP(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 		time.Sleep(time.Second)
 	}))
+
 	testShutdown(t, router)
 }
 
@@ -61,6 +63,8 @@ func TestShutdownTCP(t *testing.T) {
 }
 
 func testShutdown(t *testing.T, router *tcp.Router) {
+	t.Helper()
+
 	epConfig := &static.EntryPointsTransport{}
 	epConfig.SetDefaults()
 

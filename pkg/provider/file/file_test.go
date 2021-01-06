@@ -76,8 +76,7 @@ func TestErrorWhenEmptyConfig(t *testing.T) {
 func TestProvideWithoutWatch(t *testing.T) {
 	for _, test := range getTestCases() {
 		t.Run(test.desc+" without watch", func(t *testing.T) {
-			provider, clean := createProvider(t, test, false)
-			defer clean()
+			provider := createProvider(t, test, false)
 			configChan := make(chan dynamic.Message)
 
 			provider.DebugLogGeneratedTemplate = true
@@ -109,8 +108,7 @@ func TestProvideWithoutWatch(t *testing.T) {
 func TestProvideWithWatch(t *testing.T) {
 	for _, test := range getTestCases() {
 		t.Run(test.desc+" with watch", func(t *testing.T) {
-			provider, clean := createProvider(t, test, true)
-			defer clean()
+			provider := createProvider(t, test, true)
 			configChan := make(chan dynamic.Message)
 
 			go func() {
@@ -244,7 +242,9 @@ func getTestCases() []ProvideTestCase {
 	}
 }
 
-func createProvider(t *testing.T, test ProvideTestCase, watch bool) (*Provider, func()) {
+func createProvider(t *testing.T, test ProvideTestCase, watch bool) *Provider {
+	t.Helper()
+
 	tempDir := createTempDir(t, "testdir")
 
 	provider := &Provider{}
@@ -276,9 +276,11 @@ func createProvider(t *testing.T, test ProvideTestCase, watch bool) (*Provider, 
 		provider.Filename = file.Name()
 	}
 
-	return provider, func() {
+	t.Cleanup(func() {
 		os.RemoveAll(tempDir)
-	}
+	})
+
+	return provider
 }
 
 // createTempDir Helper.

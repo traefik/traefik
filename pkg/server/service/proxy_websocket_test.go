@@ -696,12 +696,16 @@ func (w *websocketRequest) open() (*websocket.Conn, net.Conn, error) {
 }
 
 func parseURI(t *testing.T, uri string) *url.URL {
+	t.Helper()
+
 	out, err := url.ParseRequestURI(uri)
 	require.NoError(t, err)
 	return out
 }
 
 func createProxyWithForwarder(t *testing.T, proxy http.Handler, url string) *httptest.Server {
+	t.Helper()
+
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		path := req.URL.Path // keep the original path
 		// Set new backend URL

@@ -486,6 +486,8 @@ func assertCounterValue(t *testing.T, want float64, family *dto.MetricFamily, la
 }
 
 func buildCounterAssert(t *testing.T, metricName string, expectedValue int) func(family *dto.MetricFamily) {
+	t.Helper()
+
 	return func(family *dto.MetricFamily) {
 		if cv := int(family.Metric[0].Counter.GetValue()); cv != expectedValue {
 			t.Errorf("metric %s has value %d, want %d", metricName, cv, expectedValue)
@@ -494,6 +496,8 @@ func buildCounterAssert(t *testing.T, metricName string, expectedValue int) func
 }
 
 func buildGreaterThanCounterAssert(t *testing.T, metricName string, expectedMinValue int) func(family *dto.MetricFamily) {
+	t.Helper()
+
 	return func(family *dto.MetricFamily) {
 		if cv := int(family.Metric[0].Counter.GetValue()); cv < expectedMinValue {
 			t.Errorf("metric %s has value %d, want at least %d", metricName, cv, expectedMinValue)
@@ -502,6 +506,8 @@ func buildGreaterThanCounterAssert(t *testing.T, metricName string, expectedMinV
 }
 
 func buildHistogramAssert(t *testing.T, metricName string, expectedSampleCount int) func(family *dto.MetricFamily) {
+	t.Helper()
+
 	return func(family *dto.MetricFamily) {
 		if sc := int(family.Metric[0].Histogram.GetSampleCount()); sc != expectedSampleCount {
 			t.Errorf("metric %s has sample count value %d, want %d", metricName, sc, expectedSampleCount)
@@ -510,6 +516,8 @@ func buildHistogramAssert(t *testing.T, metricName string, expectedSampleCount i
 }
 
 func buildGaugeAssert(t *testing.T, metricName string, expectedValue int) func(family *dto.MetricFamily) {
+	t.Helper()
+
 	return func(family *dto.MetricFamily) {
 		if gv := int(family.Metric[0].Gauge.GetValue()); gv != expectedValue {
 			t.Errorf("metric %s has value %d, want %d", metricName, gv, expectedValue)
@@ -518,6 +526,8 @@ func buildGaugeAssert(t *testing.T, metricName string, expectedValue int) func(f
 }
 
 func buildTimestampAssert(t *testing.T, metricName string) func(family *dto.MetricFamily) {
+	t.Helper()
+
 	return func(family *dto.MetricFamily) {
 		if ts := time.Unix(int64(family.Metric[0].Gauge.GetValue()), 0); time.Since(ts) > time.Minute {
 			t.Errorf("metric %s has wrong timestamp %v", metricName, ts)

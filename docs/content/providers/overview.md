@@ -131,13 +131,14 @@ Below is the list of the currently supported providers in Traefik.
 | [Docker](./docker.md)                 | Orchestrator | Label                      |
 | [Kubernetes](./kubernetes-crd.md)     | Orchestrator | Custom Resource or Ingress |
 | [Consul Catalog](./consul-catalog.md) | Orchestrator | Label                      |
+| [ECS](./ecs.md)                       | Orchestrator | Label                      |
 | [Marathon](./marathon.md)             | Orchestrator | Label                      |
 | [Rancher](./rancher.md)               | Orchestrator | Label                      |
 | [File](./file.md)                     | Manual       | TOML/YAML format           |
 | [Consul](./consul.md)                 | KV           | KV                         |
 | [Etcd](./etcd.md)                     | KV           | KV                         |
-| [Redis](./redis.md)                   | KV           | KV                         |
 | [ZooKeeper](./zookeeper.md)           | KV           | KV                         |
+| [Redis](./redis.md)                   | KV           | KV                         |
 | [HTTP](./http.md)                     | Manual       | JSON format                |
 
 !!! info "More Providers"
