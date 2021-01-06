@@ -40,9 +40,6 @@ func (c *Config) SetDefaults() {
 	}
 
 	c.LocalAgentHostPort = net.JoinHostPort(host, port)
-	c.GlobalTag = ""
-	c.Debug = false
-	c.PrioritySampling = false
 }
 
 // Setup sets up the tracer.
