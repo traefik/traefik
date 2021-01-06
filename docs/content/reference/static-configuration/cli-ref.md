@@ -102,6 +102,9 @@ Entry points definition. (Default: ```false```)
 `--entrypoints.<name>.address`:  
 Entry point address.
 
+`--entrypoints.<name>.enablehttp3`:  
+Enable HTTP3. (Default: ```false```)
+
 `--entrypoints.<name>.forwardedheaders.insecure`:  
 Trust all forwarded headers. (Default: ```false```)
 
@@ -173,6 +176,9 @@ plugin's GOPATH.
 
 `--experimental.devplugin.modulename`:  
 plugin's module name.
+
+`--experimental.http3`:  
+Enable HTTP3. (Default: ```false```)
 
 `--experimental.kubernetesgateway`:  
 Allow the Kubernetes gateway api provider usage. (Default: ```false```)
