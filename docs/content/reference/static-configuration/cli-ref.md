@@ -177,8 +177,14 @@ plugin's module name.
 `--experimental.kubernetesgateway`:  
 Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 
+`--experimental.plugins.<name>.cleanarchives`:  
+Whether to clear the history packet? (Default: ```false```)
+
 `--experimental.plugins.<name>.modulename`:  
 plugin's module name.
+
+`--experimental.plugins.<name>.online`:  
+online (Default: ```false```)
 
 `--experimental.plugins.<name>.version`:  
 plugin's version.

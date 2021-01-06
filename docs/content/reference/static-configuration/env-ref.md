@@ -177,8 +177,14 @@ plugin's module name.
 `TRAEFIK_EXPERIMENTAL_KUBERNETESGATEWAY`:  
 Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 
+`TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_CLEANARCHIVES`:  
+Whether to clear the history packet? (Default: ```false```)
+
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_MODULENAME`:  
 plugin's module name.
+
+`TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_ONLINE`:  
+online (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_VERSION`:  
 plugin's version.

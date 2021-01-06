@@ -328,7 +328,7 @@ func (c *Client) CleanArchives(plugins map[string]Descriptor) error {
 
 	for pName, pVersion := range previous {
 		for _, desc := range plugins {
-			if desc.ModuleName == pName && desc.Version != pVersion {
+			if desc.CleanArchives && desc.ModuleName == pName && desc.Version != pVersion {
 				archivePath := c.buildArchivePath(pName, pVersion)
 				if err = os.RemoveAll(archivePath); err != nil {
 					return fmt.Errorf("failed to remove archive %s: %w", archivePath, err)

@@ -26,29 +26,28 @@ func Setup(client *Client, plugins map[string]Descriptor, devPlugin *DevPlugin) 
 	for pAlias, desc := range plugins {
 		log.FromContext(ctx).Debugf("loading of plugin: %s: %s@%s", pAlias, desc.ModuleName, desc.Version)
 
+        if ! desc.Online {
+			continue
+		}
 		hash, err := client.Download(ctx, desc.ModuleName, desc.Version)
 		if err != nil {
-			_ = client.ResetAll()
 			return fmt.Errorf("failed to download plugin %s: %w", desc.ModuleName, err)
 		}
 
 		err = client.Check(ctx, desc.ModuleName, desc.Version, hash)
 		if err != nil {
-			_ = client.ResetAll()
 			return fmt.Errorf("failed to check archive integrity of the plugin %s: %w", desc.ModuleName, err)
 		}
 	}
 
 	err = client.WriteState(plugins)
 	if err != nil {
-		_ = client.ResetAll()
 		return fmt.Errorf("failed to write plugins state: %w", err)
 	}
 
 	for _, desc := range plugins {
 		err = client.Unzip(desc.ModuleName, desc.Version)
 		if err != nil {
-			_ = client.ResetAll()
 			return fmt.Errorf("failed to unzip archive: %w", err)
 		}
 	}

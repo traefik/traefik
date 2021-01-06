@@ -7,6 +7,12 @@ type Descriptor struct {
 
 	// Version (required)
 	Version string `description:"plugin's version." json:"version,omitempty" toml:"version,omitempty" yaml:"version,omitempty" export:"true"`
+
+    // CleanArchives
+	CleanArchives bool `description:"Whether to clear the history packet?" json:"cleanArchives,omitempty" toml:"cleanArchives,omitempty" yaml:"cleanArchives,omitempty" export:"true"`
+
+	// OnLine
+	Online bool `description:"online" json:"online,omitempty" toml:"online,omitempty" yaml:"online,omitempty" export:"true"`
 }
 
 // DevPlugin The static part of a plugin configuration (only for dev).
