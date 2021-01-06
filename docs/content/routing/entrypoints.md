@@ -224,17 +224,17 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
 ### EnableHTTP3
 
 `enableHTTP3` defines that you want to enable HTTP3 on this `address`.
-You can only define HTTP3 on TCP entrypoint.
-HTTP3 will automatically add the correct header for the upgrade to HTTP3.
+You can only enable HTTP3 on a TCP entrypoint.
+Enabling HTTP3 will automatically add the correct headers for the connection upgrade to HTTP3.
 
 ??? info "HTTP3 uses UDP+TLS"
 
     As HTTP3 uses UDP, you can't have a TCP entrypoint with HTTP3 on the same port as a UDP entrypoint.
-    As HTTP3 uses TLS, only routers with TLS will be in HTTP3.
+    Since HTTP3 requires the use of TLS, only routers with TLS enabled will be usable with HTTP3.
 
-!!! warning "Enabling The Experimental HTTP3"
+!!! warning "Enabling Experimental HTTP3"
 
-    As HTTP3 is still in draft, HTTP3 in Traefik is an experimental feature and it needs to be activated 
+    As the HTTP3 spec is still in draft, HTTP3 support in Traefik is an experimental feature and needs to be activated 
     in the experimental section of the static configuration. 
     
     ```toml tab="File (TOML)"
