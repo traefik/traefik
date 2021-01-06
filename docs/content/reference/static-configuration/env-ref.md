@@ -172,7 +172,7 @@ ReadTimeout is the maximum duration for reading the entire request, including th
 WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set. (Default: ```0```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_UDP_TIMEOUT`:  
-Timeout determines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
+Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 
 `TRAEFIK_EXPERIMENTAL_DEVPLUGIN_GOPATH`:  
 plugin's GOPATH.

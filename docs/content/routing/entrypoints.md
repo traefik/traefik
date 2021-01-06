@@ -873,7 +873,7 @@ This whole section is dedicated to options, keyed by entry point, that will appl
 
 _Optional, Default=3s_
 
-Timeout determines how long to wait on an idle session before releasing the related resources.
+Timeout defines how long to wait on an idle session before releasing the related resources.
 The Timeout value must be greater than zero.
 
 ```toml tab="File (TOML)"
