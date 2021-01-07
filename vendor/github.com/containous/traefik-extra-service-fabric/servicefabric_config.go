@@ -13,7 +13,7 @@ import (
 )
 
 func (p *Provider) buildConfiguration(services []ServiceItemExtended) (*types.Configuration, error) {
-	var sfFuncMap = template.FuncMap{
+	sfFuncMap := template.FuncMap{
 		// Services
 		"getServices":                getServices,
 		"hasLabel":                   hasService,

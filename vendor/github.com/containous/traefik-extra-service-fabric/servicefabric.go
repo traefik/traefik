@@ -28,7 +28,7 @@ const (
 	kindStateless = "Stateless"
 )
 
-// Provider holds for configuration for the provider
+// Provider holds for configuration for the provider.
 type Provider struct {
 	provider.BaseProvider `mapstructure:",squash"`
 	ClusterManagementURL  string           `description:"Service Fabric API endpoint"`
@@ -42,7 +42,7 @@ type Provider struct {
 	sfClient              sfClient
 }
 
-// Init the provider
+// Init the provider.
 func (p *Provider) Init(constraints types.Constraints) error {
 	err := p.BaseProvider.Init(constraints)
 	if err != nil {

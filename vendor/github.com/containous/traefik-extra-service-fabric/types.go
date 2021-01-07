@@ -6,7 +6,7 @@ import (
 
 // ServiceItemExtended provides a flattened view
 // of the service with details of the application
-// it belongs too and the replicas/partitions
+// it belongs too and the replicas/partitions.
 type ServiceItemExtended struct {
 	sf.ServiceItem
 	Application sf.ApplicationItem
@@ -15,7 +15,7 @@ type ServiceItemExtended struct {
 }
 
 // PartitionItemExtended provides a flattened view
-// of a services partitions
+// of a services partitions.
 type PartitionItemExtended struct {
 	sf.PartitionItem
 	Replicas  []sf.ReplicaItem
@@ -36,7 +36,7 @@ type sfClient interface {
 }
 
 // replicaInstance interface provides a unified interface
-// over replicas and instances
+// over replicas and instances.
 type replicaInstance interface {
 	GetReplicaData() (string, *sf.ReplicaItemBase)
 }

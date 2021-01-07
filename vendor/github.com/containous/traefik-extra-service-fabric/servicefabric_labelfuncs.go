@@ -6,7 +6,7 @@ import (
 	"github.com/traefik/traefik/provider/label"
 )
 
-// SF Specific Traefik Labels
+// SF Specific Traefik Labels.
 const (
 	traefikSFGroupName                   = "traefik.servicefabric.groupname"
 	traefikSFGroupWeight                 = "traefik.servicefabric.groupweight"
