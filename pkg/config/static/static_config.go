@@ -236,6 +236,12 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		c.Providers.KubernetesGateway = nil
 	}
 
+	if c.Experimental == nil || !c.Experimental.HTTP3 {
+		for _, ep := range c.EntryPoints {
+			ep.EnableHTTP3 = false
+		}
+	}
+
 	// Configure Gateway API provider
 	if c.Providers.KubernetesGateway != nil {
 		log.WithoutContext().Debugf("Experimental Kubernetes Gateway provider has been activated")

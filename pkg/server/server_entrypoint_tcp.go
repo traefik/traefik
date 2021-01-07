@@ -125,6 +125,8 @@ type TCPEntryPoint struct {
 	tracker                *connectionTracker
 	httpServer             *httpServer
 	httpsServer            *httpServer
+
+	http3Server *http3server
 }
 
 // NewTCPEntryPoint creates a new TCPEntryPoint.
@@ -136,24 +138,29 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*T
 		return nil, fmt.Errorf("error preparing server: %w", err)
 	}
 
-	router := &tcp.Router{}
+	rt := &tcp.Router{}
 
 	httpServer, err := createHTTPServer(ctx, listener, configuration, true)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing httpServer: %w", err)
 	}
 
-	router.HTTPForwarder(httpServer.Forwarder)
+	rt.HTTPForwarder(httpServer.Forwarder)
 
 	httpsServer, err := createHTTPServer(ctx, listener, configuration, false)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing httpsServer: %w", err)
 	}
 
-	router.HTTPSForwarder(httpsServer.Forwarder)
+	h3server, err := newHTTP3Server(ctx, configuration, httpsServer)
+	if err != nil {
+		return nil, err
+	}
+
+	rt.HTTPSForwarder(httpsServer.Forwarder)
 
 	tcpSwitcher := &tcp.HandlerSwitcher{}
-	tcpSwitcher.Switch(router)
+	tcpSwitcher.Switch(rt)
 
 	return &TCPEntryPoint{
 		listener:               listener,
@@ -162,6 +169,7 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*T
 		tracker:                tracker,
 		httpServer:             httpServer,
 		httpsServer:            httpsServer,
+		http3Server:            h3server,
 	}, nil
 }
 
@@ -169,6 +177,10 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*T
 func (e *TCPEntryPoint) Start(ctx context.Context) {
 	logger := log.FromContext(ctx)
 	logger.Debugf("Start TCP Server")
+
+	if e.http3Server != nil {
+		go func() { _ = e.http3Server.Start() }()
+	}
 
 	for {
 		conn, err := e.listener.Accept()
@@ -230,7 +242,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 
 	var wg sync.WaitGroup
 
-	shutdownServer := func(server stoppableServer) {
+	shutdownServer := func(server stoppable) {
 		defer wg.Done()
 		err := server.Shutdown(ctx)
 		if err == nil {
@@ -257,6 +269,11 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 	if e.httpsServer.Server != nil {
 		wg.Add(1)
 		go shutdownServer(e.httpsServer.Server)
+
+		if e.http3Server != nil {
+			wg.Add(1)
+			go shutdownServer(e.http3Server)
+		}
 	}
 
 	if e.tracker != nil {
@@ -299,6 +316,10 @@ func (e *TCPEntryPoint) SwitchRouter(rt *tcp.Router) {
 	e.httpsServer.Switcher.UpdateHandler(httpsHandler)
 
 	e.switcher.Switch(rt)
+
+	if e.http3Server != nil {
+		e.http3Server.Switch(rt)
+	}
 }
 
 // writeCloserWrapper wraps together a connection, and the concrete underlying
@@ -463,9 +484,13 @@ func (c *connectionTracker) Close() {
 	}
 }
 
-type stoppableServer interface {
+type stoppable interface {
 	Shutdown(context.Context) error
 	Close() error
+}
+
+type stoppableServer interface {
+	stoppable
 	Serve(listener net.Listener) error
 }
 
@@ -504,7 +529,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	listener := newHTTPForwarder(ln)
 	go func() {
 		err := serverHTTP.Serve(listener)
-		if err != nil {
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.FromContext(ctx).Errorf("Error while starting server: %v", err)
 		}
 	}()
