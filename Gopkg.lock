@@ -410,12 +410,12 @@
   version = "v3.1.2"
 
 [[projects]]
-  digest = "1:9b26357809c7871d856b558859d3f3caabbc26842955c87a71e2c84ba6074199"
+  digest = "1:f9036e25cfbaae520f7500f2eec29b514f9c38f82e067c36cf7255457b37f277"
   name = "github.com/containous/traefik-extra-service-fabric"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "c8e3ab561e7b492243858120742bcb37cd2a327c"
-  version = "v1.6.0"
+  revision = "d16f97f4104db329fdb15177b5d97fb047185625"
+  version = "v1.7.0"
 
 [[projects]]
   digest = "1:4e9c9d51ef5c98f2a71d6fa56a22f0bb8a4463656f9591ba24ebff2c21bcbd1f"
