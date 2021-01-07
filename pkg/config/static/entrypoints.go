@@ -5,6 +5,7 @@ import (
 	"math"
 	"strings"
 
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
@@ -16,6 +17,7 @@ type EntryPoint struct {
 	ForwardedHeaders *ForwardedHeaders     `description:"Trust client forwarding headers." json:"forwardedHeaders,omitempty" toml:"forwardedHeaders,omitempty" yaml:"forwardedHeaders,omitempty" export:"true"`
 	HTTP             HTTPConfig            `description:"HTTP configuration." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" export:"true"`
 	EnableHTTP3      bool                  `description:"Enable HTTP3." json:"enableHTTP3,omitempty" toml:"enableHTTP3,omitempty" yaml:"enableHTTP3,omitempty" export:"true"`
+	UDP              *UDPConfig            `description:"UDP configuration." json:"udp,omitempty" toml:"udp,omitempty" yaml:"udp,omitempty"`
 }
 
 // GetAddress strips any potential protocol part of the address field of the
@@ -46,6 +48,8 @@ func (ep *EntryPoint) SetDefaults() {
 	ep.Transport = &EntryPointsTransport{}
 	ep.Transport.SetDefaults()
 	ep.ForwardedHeaders = &ForwardedHeaders{}
+	ep.UDP = &UDPConfig{}
+	ep.UDP.SetDefaults()
 }
 
 // HTTPConfig is the HTTP configuration of an entry point.
@@ -109,4 +113,14 @@ func (t *EntryPointsTransport) SetDefaults() {
 	t.LifeCycle.SetDefaults()
 	t.RespondingTimeouts = &RespondingTimeouts{}
 	t.RespondingTimeouts.SetDefaults()
+}
+
+// UDPConfig is the UDP configuration of an entry point.
+type UDPConfig struct {
+	Timeout ptypes.Duration `description:"Timeout defines how long to wait on an idle session before releasing the related resources." json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty"`
+}
+
+// SetDefaults sets the default values.
+func (u *UDPConfig) SetDefaults() {
+	u.Timeout = ptypes.Duration(DefaultUDPTimeout)
 }

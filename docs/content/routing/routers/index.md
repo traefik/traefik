@@ -982,8 +982,9 @@ So UDP "routers" at this time are pretty much only load-balancers in one form or
 	It basically means that some state is kept about an ongoing communication between a client and a backend,
 	notably so that the proxy knows where to forward a response packet from a backend.
 	As expected, a `timeout` is associated to each of these sessions,
-	so that they get cleaned out if they go through a period of inactivity longer than a given duration (that is hardcoded to 3 seconds for now).
-	Making this timeout configurable will be considered later if we get more usage feedback on this matter.
+	so that they get cleaned out if they go through a period of inactivity longer than a given duration. 
+	Timeout can be configured using the `entryPoints.name.udp.timeout` option as described 
+	under [entry points](../entrypoints/#udp-options).
 
 ### EntryPoints
 

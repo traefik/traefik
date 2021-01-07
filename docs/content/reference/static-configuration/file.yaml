@@ -33,6 +33,8 @@ entryPoints:
       - foobar
       - foobar
     enableHTTP3: true
+    udp:
+      timeout: 42
     http:
       redirections:
         entryPoint:

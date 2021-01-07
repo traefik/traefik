@@ -51,6 +51,10 @@ const (
 
 	// DefaultAcmeCAServer is the default ACME API endpoint.
 	DefaultAcmeCAServer = "https://acme-v02.api.letsencrypt.org/directory"
+
+	// DefaultUDPTimeout defines how long to wait by default on an idle session,
+	// before releasing all resources related to that session.
+	DefaultUDPTimeout = 3 * time.Second
 )
 
 // Configuration is the static configuration.
