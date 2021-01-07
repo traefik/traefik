@@ -17,7 +17,7 @@ import (
 )
 
 type http3server struct {
-	http3.Server
+	*http3.Server
 
 	http3conn net.PacketConn
 
@@ -42,7 +42,7 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 		},
 	}
 
-	server := &http3.Server{
+	h3.Server = &http3.Server{
 		Server: &http.Server{
 			Addr:         configuration.GetAddress(),
 			Handler:      httpsServer.Server.(*http.Server).Handler,
@@ -57,7 +57,7 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 	previousHandler := httpsServer.Server.(*http.Server).Handler
 
 	httpsServer.Server.(*http.Server).Handler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		err := server.SetQuicHeaders(rw.Header())
+		err := h3.Server.SetQuicHeaders(rw.Header())
 		if err != nil {
 			log.FromContext(ctx).Errorf("failed to set HTTP3 headers: %v", err)
 		}
