@@ -330,7 +330,7 @@
                 v-for="(val, key) in exData(middleware).customRequestHeaders" :key="key"
                 dense
                 class="app-chip app-chip-green">
-                {{ val }}
+                {{ key }}: {{ val }}
               </q-chip>
             </div>
           </div>
@@ -344,7 +344,7 @@
                 v-for="(val, key) in exData(middleware).customResponseHeaders" :key="key"
                 dense
                 class="app-chip app-chip-green">
-                {{ val }}
+                {{ key }}: {{ val }}
               </q-chip>
             </div>
           </div>

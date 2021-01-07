@@ -57,7 +57,10 @@
     "nlreturn", # Not relevant
     "wrapcheck", # Too strict
     "tparallel", # Not relevant
+    "paralleltest", # Not relevant
     "exhaustivestruct", # Not relevant
+    "makezero", # not relevant
+    "forbidigo", # not relevant
   ]
 
 [issues]

@@ -2,6 +2,8 @@ package datadog
 
 import (
 	"io"
+	"net"
+	"os"
 	"strings"
 
 	"github.com/opentracing/opentracing-go"
@@ -27,10 +29,17 @@ type Config struct {
 
 // SetDefaults sets the default values.
 func (c *Config) SetDefaults() {
-	c.LocalAgentHostPort = "localhost:8126"
-	c.GlobalTag = ""
-	c.Debug = false
-	c.PrioritySampling = false
+	host, ok := os.LookupEnv("DD_AGENT_HOST")
+	if !ok {
+		host = "localhost"
+	}
+
+	port, ok := os.LookupEnv("DD_TRACE_AGENT_PORT")
+	if !ok {
+		port = "8126"
+	}
+
+	c.LocalAgentHostPort = net.JoinHostPort(host, port)
 }
 
 // Setup sets up the tracer.

@@ -171,6 +171,8 @@ func TestTimeoutWithoutRead(t *testing.T) {
 }
 
 func testTimeout(t *testing.T, withRead bool) {
+	t.Helper()
+
 	addr, err := net.ResolveUDPAddr("udp", ":0")
 	require.NoError(t, err)
 
@@ -312,6 +314,8 @@ func TestShutdown(t *testing.T) {
 // It fatals if the read blocks longer than timeout,
 // which is useful to detect regressions that would make a test wait forever.
 func requireEcho(t *testing.T, data string, conn io.ReadWriter, timeout time.Duration) {
+	t.Helper()
+
 	_, err := conn.Write([]byte(data))
 	require.NoError(t, err)
 

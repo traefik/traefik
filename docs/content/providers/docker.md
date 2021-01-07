@@ -188,7 +188,7 @@ While in Swarm Mode, Traefik uses labels found on services, not on individual co
 Therefore, if you use a compose file with Swarm Mode, labels should be defined in the
 [`deploy`](https://docs.docker.com/compose/compose-file/compose-file-v3/#labels-1) part of your service.
 
-This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file)).
+This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/compose-file-v3/)).
 
 ### Port Detection
 
