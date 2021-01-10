@@ -18,8 +18,9 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 			ServersTransports: make(map[string]*dynamic.ServersTransport),
 		},
 		TCP: &dynamic.TCPConfiguration{
-			Routers:  make(map[string]*dynamic.TCPRouter),
-			Services: make(map[string]*dynamic.TCPService),
+			Routers:     make(map[string]*dynamic.TCPRouter),
+			Services:    make(map[string]*dynamic.TCPService),
+			Middlewares: make(map[string]*dynamic.TCPMiddleware),
 		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  make(map[string]*dynamic.UDPRouter),
@@ -62,6 +63,9 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 		if configuration.TCP != nil {
 			for routerName, router := range configuration.TCP.Routers {
 				conf.TCP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
+			}
+			for middlewareName, middleware := range configuration.TCP.Middlewares {
+				conf.TCP.Middlewares[provider.MakeQualifiedName(pvd, middlewareName)] = middleware
 			}
 			for serviceName, service := range configuration.TCP.Services {
 				conf.TCP.Services[provider.MakeQualifiedName(pvd, serviceName)] = service

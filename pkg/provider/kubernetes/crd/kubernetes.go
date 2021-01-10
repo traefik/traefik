@@ -266,6 +266,12 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		}
 	}
 
+	for _, middlewareTCP := range client.GetMiddlewareTCPs() {
+		id := provider.Normalize(makeID(middlewareTCP.Namespace, middlewareTCP.Name))
+
+		conf.TCP.Middlewares[id] = &dynamic.TCPMiddleware{}
+	}
+
 	cb := configBuilder{client, p.AllowCrossNamespace}
 
 	for _, service := range client.GetTraefikServices() {

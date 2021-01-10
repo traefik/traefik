@@ -23,29 +23,36 @@ const (
 	defaultTLSStoreName  = "default"
 )
 
+type middlewareBuilder interface {
+	BuildChain(ctx context.Context, names []string) *tcp.Chain
+}
+
 // NewManager Creates a new Manager.
 func NewManager(conf *runtime.Configuration,
 	serviceManager *tcpservice.Manager,
+	middlewaresBuilder middlewareBuilder,
 	httpHandlers map[string]http.Handler,
 	httpsHandlers map[string]http.Handler,
 	tlsManager *traefiktls.Manager,
 ) *Manager {
 	return &Manager{
-		serviceManager: serviceManager,
-		httpHandlers:   httpHandlers,
-		httpsHandlers:  httpsHandlers,
-		tlsManager:     tlsManager,
-		conf:           conf,
+		serviceManager:     serviceManager,
+		middlewaresBuilder: middlewaresBuilder,
+		httpHandlers:       httpHandlers,
+		httpsHandlers:      httpsHandlers,
+		tlsManager:         tlsManager,
+		conf:               conf,
 	}
 }
 
 // Manager is a route/router manager.
 type Manager struct {
-	serviceManager *tcpservice.Manager
-	httpHandlers   map[string]http.Handler
-	httpsHandlers  map[string]http.Handler
-	tlsManager     *traefiktls.Manager
-	conf           *runtime.Configuration
+	serviceManager     *tcpservice.Manager
+	middlewaresBuilder middlewareBuilder
+	httpHandlers       map[string]http.Handler
+	httpsHandlers      map[string]http.Handler
+	tlsManager         *traefiktls.Manager
+	conf               *runtime.Configuration
 }
 
 func (m *Manager) getTCPRouters(ctx context.Context, entryPoints []string) map[string]map[string]*runtime.TCPRouterInfo {
@@ -239,7 +246,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			continue
 		}
 
-		handler, err := m.serviceManager.BuildTCP(ctxRouter, routerConfig.Service)
+		handler, err := m.buildTCPHandler(ctxRouter, routerConfig)
 		if err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error(err)
@@ -297,6 +304,27 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	}
 
 	return router, nil
+}
+
+func (m *Manager) buildTCPHandler(ctx context.Context, router *runtime.TCPRouterInfo) (tcp.Handler, error) {
+	var qualifiedNames []string
+	for _, name := range router.Middlewares {
+		qualifiedNames = append(qualifiedNames, provider.GetQualifiedName(ctx, name))
+	}
+	router.Middlewares = qualifiedNames
+
+	if router.Service == "" {
+		return nil, errors.New("the service is missing on the router")
+	}
+
+	sHandler, err := m.serviceManager.BuildTCP(ctx, router.Service)
+	if err != nil {
+		return nil, err
+	}
+
+	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
+
+	return tcp.NewChain().Extend(*mHandler).Then(sHandler)
 }
 
 func findTLSOptionName(tlsOptionsForHost map[string]string, host string) string {
