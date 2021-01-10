@@ -2,10 +2,12 @@ package tcpmiddleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
+	ipwhitelist "github.com/traefik/traefik/v2/pkg/middlewares/tcp/ipwhitelist"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
 	"github.com/traefik/traefik/v2/pkg/tcp"
 )
@@ -81,6 +83,17 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	}
 
 	var middleware tcp.Constructor
+	badConf := errors.New("cannot create TCP middleware: multi-types middleware not supported, consider declaring two different pieces of middleware instead")
+
+	// IPWhiteList
+	if config.IPWhiteList != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next tcp.Handler) (tcp.Handler, error) {
+			return ipwhitelist.New(ctx, next, *config.IPWhiteList, middlewareName)
+		}
+	}
 
 	if middleware == nil {
 		return nil, fmt.Errorf("invalid middleware %q configuration: invalid middleware type or middleware does not exist", middlewareName)

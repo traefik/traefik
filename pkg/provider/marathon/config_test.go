@@ -192,6 +192,58 @@ func TestBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "TCP with IP whitelist",
+			applications: withApplications(
+				application(
+					appID("/app"),
+					appPorts(80),
+
+					withLabel("traefik.tcp.routers.Test.rule", "HostSNI(`foo.bar`)"),
+					withLabel("traefik.tcp.middlewares.Middleware1.ipwhitelist.sourcerange", "foobar, fiibar"),
+					withLabel("traefik.tcp.routers.Test.middlewares", "Middleware1"),
+					withTasks(localhostTask(taskPorts(80))),
+				)),
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"Test": {
+							Service:     "app",
+							Rule:        "HostSNI(`foo.bar`)",
+							Middlewares: []string{"Middleware1"},
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{
+						"Middleware1": {
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"foobar", "fiibar"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.TCPService{
+						"app": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "localhost:80",
+									},
+								},
+								TerminationDelay: Int(100),
+							},
+						},
+					},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
 			desc: "2 applications in the same service",
 			applications: withApplications(
 				application(

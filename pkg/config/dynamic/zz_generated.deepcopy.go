@@ -1331,11 +1331,6 @@ func (in *TCPIPWhiteList) DeepCopyInto(out *TCPIPWhiteList) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
-	if in.ExcludedIPs != nil {
-		in, out := &in.ExcludedIPs, &out.ExcludedIPs
-		*out = make([]string, len(*in))
-		copy(*out, *in)
-	}
 	return
 }
 

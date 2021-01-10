@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -19,6 +20,7 @@ type MiddlewareTCP struct {
 
 // MiddlewareTCPSpec holds the MiddlewareTCP configuration.
 type MiddlewareTCPSpec struct {
+	IPWhiteList *dynamic.TCPIPWhiteList `json:"ipWhiteList,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
