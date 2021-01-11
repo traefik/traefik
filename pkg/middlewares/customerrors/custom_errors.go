@@ -93,7 +93,7 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	code := catcher.getCode()
 	for _, block := range c.httpCodeRanges {
 		if code >= block[0] && code <= block[1] {
-			logger.Errorf("Caught HTTP Status Code %d, returning error page", code)
+			logger.Debugf("Caught HTTP Status Code %d, returning error page", code)
 
 			var query string
 			if len(c.backendQuery) > 0 {
