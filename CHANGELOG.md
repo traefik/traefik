@@ -1,3 +1,16 @@
+## [v2.4.0-rc2](https://github.com/traefik/traefik/tree/v2.4.0-rc2) (2021-01-12)
+[All Commits](https://github.com/traefik/traefik/compare/v2.4.0-rc1...v2.4.0-rc2)
+
+**Documentation:**
+- **[middleware]** Rephrase forwardauth.authRequestHeaders documentation ([#7701](https://github.com/traefik/traefik/pull/7701) by [Beanow](https://github.com/Beanow))
+
+**Misc:**
+- Merge current v2.3 branch into v2.4 ([#7744](https://github.com/traefik/traefik/pull/7744) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.3 branch into v2.4 ([#7742](https://github.com/traefik/traefik/pull/7742) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.3 branch into v2.4 ([#7727](https://github.com/traefik/traefik/pull/7727) by [mmatur](https://github.com/mmatur))
+- Merge current v2.3 branch into v2.4 ([#7703](https://github.com/traefik/traefik/pull/7703) by [kevinpollet](https://github.com/kevinpollet))
+- Merge current v2.3 branch into v2.4 ([#7689](https://github.com/traefik/traefik/pull/7689) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v2.3.7](https://github.com/traefik/traefik/tree/v2.3.7) (2021-01-11)
 [All Commits](https://github.com/traefik/traefik/compare/v2.3.6...v2.3.7)
 
