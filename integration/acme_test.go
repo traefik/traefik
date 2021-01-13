@@ -455,7 +455,7 @@ func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase acmeTestCase) {
 		}
 
 		// wait for traefik (generating acme account take some seconds)
-		err = try.Do(60*time.Second, func() error {
+		err = try.Do(120*time.Second, func() error {
 			_, errGet := client.Get("https://127.0.0.1:5001")
 			return errGet
 		})
@@ -478,7 +478,7 @@ func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase acmeTestCase) {
 		var resp *http.Response
 
 		// Retry to send a Request which uses the LE generated certificate
-		err = try.Do(60*time.Second, func() error {
+		err = try.Do(120*time.Second, func() error {
 			resp, err = client.Do(req)
 
 			// /!\ If connection is not closed, SSLHandshake will only be done during the first trial /!\

@@ -48,7 +48,7 @@ func (s *HostResolverSuite) TestSimpleConfig(c *check.C) {
 		c.Assert(err, checker.IsNil)
 		req.Host = test.host
 
-		err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(test.status), try.HasBody())
+		err = try.Request(req, 5*time.Second, try.StatusCodeIs(test.status), try.HasBody())
 		c.Assert(err, checker.IsNil)
 	}
 }

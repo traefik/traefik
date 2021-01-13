@@ -30,6 +30,8 @@ func (s *SimpleSuite) TestInvalidConfigShouldFail(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
+	time.Sleep(time.Second)
+
 	err = try.Do(500*time.Millisecond, func() error {
 		expected := "Near line 0 (last key parsed ''): bare keys cannot contain '{'"
 		actual := output.String()
@@ -50,6 +52,8 @@ func (s *SimpleSuite) TestSimpleDefaultConfig(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
+	time.Sleep(time.Second)
+
 	// TODO validate : run on 80
 	// Expected a 404 as we did not configure anything
 	err = try.GetRequest("http://127.0.0.1:8000/", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
@@ -63,6 +67,8 @@ func (s *SimpleSuite) TestWithWebConfig(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
+	time.Sleep(time.Second)
+
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 }
@@ -73,6 +79,8 @@ func (s *SimpleSuite) TestPrintHelp(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
+
+	time.Sleep(time.Second)
 
 	err = try.Do(500*time.Millisecond, func() error {
 		expected := "Usage:"
@@ -107,6 +115,8 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
+
+	time.Sleep(time.Second)
 
 	// Wait for Traefik to turn ready.
 	err = try.GetRequest("http://127.0.0.1:8000/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
@@ -171,6 +181,8 @@ func (s *SimpleSuite) TestCustomPingTerminationStatusCode(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
+	time.Sleep(time.Second)
+
 	// Wait for Traefik to turn ready.
 	err = try.GetRequest("http://127.0.0.1:8001/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
@@ -209,6 +221,8 @@ func (s *SimpleSuite) TestStatsWithMultipleEntryPoint(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
+	time.Sleep(time.Second)
+
 	err = try.GetRequest("http://127.0.0.1:8080/api", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
@@ -239,6 +253,8 @@ func (s *SimpleSuite) TestNoAuthOnPing(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
+
+	time.Sleep(time.Second)
 
 	err = try.GetRequest("http://127.0.0.1:8001/api/rawdata", 2*time.Second, try.StatusCodeIs(http.StatusUnauthorized))
 	c.Assert(err, checker.IsNil)
@@ -276,6 +292,8 @@ func (s *SimpleSuite) TestWithNonExistingEntryPoint(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
+	time.Sleep(time.Second)
+
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
 	c.Assert(err, checker.IsNil)
 
@@ -293,6 +311,8 @@ func (s *SimpleSuite) TestMetricsPrometheusDefaultEntryPoint(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
+
+	time.Sleep(time.Second)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
 	c.Assert(err, checker.IsNil)
@@ -322,6 +342,8 @@ func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
+	time.Sleep(time.Second)
+
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
 	c.Assert(err, checker.IsNil)
 
@@ -342,6 +364,8 @@ func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
+
+	time.Sleep(time.Second)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("override"))
 	c.Assert(err, checker.IsNil)
@@ -411,6 +435,8 @@ func (s *SimpleSuite) TestXForwardedHeaders(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
+	time.Sleep(time.Second)
+
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
 		try.BodyContains("override.remoteaddr.whitelist.docker.local"))
 	c.Assert(err, checker.IsNil)
@@ -445,6 +471,8 @@ func (s *SimpleSuite) TestMultiProvider(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
+
+	time.Sleep(time.Second)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("service"))
 	c.Assert(err, checker.IsNil)
@@ -497,6 +525,8 @@ func (s *SimpleSuite) TestSimpleConfigurationHostRequestTrailingPeriod(c *check.
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
+	time.Sleep(time.Second)
+
 	testCases := []struct {
 		desc        string
 		requestHost string
@@ -541,6 +571,8 @@ func (s *SimpleSuite) TestRouterConfigErrors(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
+	time.Sleep(time.Second)
+
 	// All errors
 	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers", 1000*time.Millisecond, try.BodyContains(`["middleware \"unknown@file\" does not exist","found different TLS options for routers on the same host snitest.net, so using the default TLS options instead"]`))
 	c.Assert(err, checker.IsNil)
@@ -569,6 +601,8 @@ func (s *SimpleSuite) TestServiceConfigErrors(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
+	time.Sleep(time.Second)
+
 	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains(`["the service \"service1@file\" does not have any type defined"]`))
 	c.Assert(err, checker.IsNil)
 
@@ -590,6 +624,8 @@ func (s *SimpleSuite) TestTCPRouterConfigErrors(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
+	time.Sleep(time.Second)
+
 	// router3 has an error because it uses an unknown entrypoint
 	err = try.GetRequest("http://127.0.0.1:8080/api/tcp/routers/router3@file", 1000*time.Millisecond, try.BodyContains(`entryPoint \"unknown-entrypoint\" doesn't exist`, "no valid entryPoint for this router"))
 	c.Assert(err, checker.IsNil)
@@ -609,6 +645,8 @@ func (s *SimpleSuite) TestTCPServiceConfigErrors(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
+
+	time.Sleep(time.Second)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/tcp/services", 1000*time.Millisecond, try.BodyContains(`["the service \"service1@file\" does not have any type defined"]`))
 	c.Assert(err, checker.IsNil)
@@ -631,6 +669,8 @@ func (s *SimpleSuite) TestUDPRouterConfigErrors(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
+	time.Sleep(time.Second)
+
 	err = try.GetRequest("http://127.0.0.1:8080/api/udp/routers/router3@file", 1000*time.Millisecond, try.BodyContains(`entryPoint \"unknown-entrypoint\" doesn't exist`, "no valid entryPoint for this router"))
 	c.Assert(err, checker.IsNil)
 }
@@ -645,6 +685,8 @@ func (s *SimpleSuite) TestUDPServiceConfigErrors(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
+
+	time.Sleep(time.Second)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/udp/services", 1000*time.Millisecond, try.BodyContains(`["the udp service \"service1@file\" does not have any type defined"]`))
 	c.Assert(err, checker.IsNil)
@@ -675,6 +717,8 @@ func (s *SimpleSuite) TestWRR(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
+
+	time.Sleep(time.Second)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("service1", "service2"))
 	c.Assert(err, checker.IsNil)
@@ -722,6 +766,8 @@ func (s *SimpleSuite) TestWRRSticky(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
+
+	time.Sleep(time.Second)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("service1", "service2"))
 	c.Assert(err, checker.IsNil)
@@ -786,6 +832,8 @@ func (s *SimpleSuite) TestMirror(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
+
+	time.Sleep(time.Second)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("mirror1", "mirror2", "service1"))
 	c.Assert(err, checker.IsNil)
@@ -867,7 +915,9 @@ func (s *SimpleSuite) TestMirrorWithBody(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("mirror1", "mirror2", "service1"))
+	time.Sleep(time.Second)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 5*time.Second, try.BodyContains("mirror1", "mirror2", "service1"))
 	c.Assert(err, checker.IsNil)
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", bytes.NewBuffer(body20))
@@ -964,7 +1014,9 @@ func (s *SimpleSuite) TestMirrorCanceled(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("mirror1", "mirror2", "service1"))
+	time.Sleep(time.Second)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 5*time.Second, try.BodyContains("mirror1", "mirror2", "service1"))
 	c.Assert(err, checker.IsNil)
 
 	for i := 0; i < 5; i++ {
@@ -999,6 +1051,8 @@ func (s *SimpleSuite) TestSecureAPI(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
+
+	time.Sleep(time.Second)
 
 	err = try.GetRequest("http://127.0.0.1:8000/secure/api/rawdata", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
@@ -1053,6 +1107,8 @@ func (s *SimpleSuite) TestContentTypeDisableAutoDetect(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
 	defer s.killCmd(cmd)
+
+	time.Sleep(time.Second)
 
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))

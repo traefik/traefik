@@ -69,7 +69,7 @@ func testShutdown(t *testing.T, router *tcp.Router) {
 	epConfig.SetDefaults()
 
 	epConfig.LifeCycle.RequestAcceptGraceTimeout = 0
-	epConfig.LifeCycle.GraceTimeOut = ptypes.Duration(5 * time.Second)
+	epConfig.LifeCycle.GraceTimeOut = ptypes.Duration(30 * time.Second)
 
 	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
 		// We explicitly use an IPV4 address because on Alpine, with an IPV6 address
@@ -88,7 +88,7 @@ func testShutdown(t *testing.T, router *tcp.Router) {
 	request, err := http.NewRequest(http.MethodHead, "http://127.0.0.1:8082", nil)
 	require.NoError(t, err)
 
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(time.Second)
 
 	// We need to do a write on the conn before the shutdown to make it "exist".
 	// Because the connection indeed exists as far as TCP is concerned,
@@ -98,6 +98,7 @@ func testShutdown(t *testing.T, router *tcp.Router) {
 	require.NoError(t, err)
 
 	go entryPoint.Shutdown(context.Background())
+	time.Sleep(time.Second)
 
 	// Make sure that new connections are not permitted anymore.
 	// Note that this should be true not only after Shutdown has returned,
@@ -108,7 +109,7 @@ func testShutdown(t *testing.T, router *tcp.Router) {
 		loopConn, err := net.Dial("tcp", epAddr)
 		if err == nil {
 			loopConn.Close()
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(time.Second)
 			continue
 		}
 		if !strings.HasSuffix(err.Error(), "connection refused") && !strings.HasSuffix(err.Error(), "reset by peer") {
