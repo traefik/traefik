@@ -1,3 +1,30 @@
+## [v2.4.0-rc2](https://github.com/traefik/traefik/tree/v2.4.0-rc2) (2021-01-12)
+[All Commits](https://github.com/traefik/traefik/compare/v2.4.0-rc1...v2.4.0-rc2)
+
+**Documentation:**
+- **[middleware]** Rephrase forwardauth.authRequestHeaders documentation ([#7701](https://github.com/traefik/traefik/pull/7701) by [Beanow](https://github.com/Beanow))
+
+**Misc:**
+- Merge current v2.3 branch into v2.4 ([#7744](https://github.com/traefik/traefik/pull/7744) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.3 branch into v2.4 ([#7742](https://github.com/traefik/traefik/pull/7742) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.3 branch into v2.4 ([#7727](https://github.com/traefik/traefik/pull/7727) by [mmatur](https://github.com/mmatur))
+- Merge current v2.3 branch into v2.4 ([#7703](https://github.com/traefik/traefik/pull/7703) by [kevinpollet](https://github.com/kevinpollet))
+- Merge current v2.3 branch into v2.4 ([#7689](https://github.com/traefik/traefik/pull/7689) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v2.3.7](https://github.com/traefik/traefik/tree/v2.3.7) (2021-01-11)
+[All Commits](https://github.com/traefik/traefik/compare/v2.3.6...v2.3.7)
+
+**Bug fixes:**
+- **[k8s,k8s/ingress]** Fix wildcard hostname issue ([#7711](https://github.com/traefik/traefik/pull/7711) by [avdhoot](https://github.com/avdhoot))
+- **[k8s,k8s/ingress]** Compile kubernetes ingress annotation regex only once ([#7647](https://github.com/traefik/traefik/pull/7647) by [hensur](https://github.com/hensur))
+- **[middleware,webui]** webui: fix missing custom request and response header names ([#7706](https://github.com/traefik/traefik/pull/7706) by [kevinpollet](https://github.com/kevinpollet))
+- **[middleware]** Fix log level on error pages middleware ([#7737](https://github.com/traefik/traefik/pull/7737) by [Nowheresly](https://github.com/Nowheresly))
+
+**Documentation:**
+- **[docker]** docs: fix broken links to docker-compose documentation ([#7702](https://github.com/traefik/traefik/pull/7702) by [kevinpollet](https://github.com/kevinpollet))
+- **[ecs]** Add ECS to supported providers list ([#7714](https://github.com/traefik/traefik/pull/7714) by [anilmaurya](https://github.com/anilmaurya))
+- Update copyright year for 2021 ([#7734](https://github.com/traefik/traefik/pull/7734) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v2.3.6](https://github.com/traefik/traefik/tree/v2.3.6) (2020-12-17)
 [All Commits](https://github.com/traefik/traefik/compare/v2.3.5...v2.3.6)
 
