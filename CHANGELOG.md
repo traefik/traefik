@@ -1,7 +1,7 @@
 # Change Log
 
-## [v1.7.27](https://github.com/traefik/traefik/tree/v1.7.27) (2021-01-13)
-[All Commits](https://github.com/traefik/traefik/compare/v1.7.26...v1.7.27)
+## [v1.7.28](https://github.com/traefik/traefik/tree/v1.7.28) (2021-01-13)
+[All Commits](https://github.com/traefik/traefik/compare/v1.7.26...v1.7.28)
 
 **Bug fixes:**
 - **[middleware,tracing]** Do not SetError on tracing event when whitelist allowed request ([#7174](https://github.com/traefik/traefik/pull/7174) by [LordGaav](https://github.com/LordGaav))
@@ -9,8 +9,14 @@
 
 **Documentation:**
 - **[acme]** docs: fix language &#34;if challenge is not known&#34; ([#7718](https://github.com/traefik/traefik/pull/7718) by [amosshapira](https://github.com/amosshapira))
+- Prepare release v1.7.27 ([#7755](https://github.com/traefik/traefik/pull/7755) by [rtribotte](https://github.com/rtribotte))
 - Update copyright year for 2021 ([#7753](https://github.com/traefik/traefik/pull/7753) by [rtribotte](https://github.com/rtribotte))
 - Fix typo &#34;CA&#39;s&#34; instead of &#34;CA:s&#34; ([#7315](https://github.com/traefik/traefik/pull/7315) by [amosshapira](https://github.com/amosshapira))
+
+## [v1.7.27](https://github.com/traefik/traefik/tree/v1.7.27) (2021-01-13)
+[All Commits](https://github.com/traefik/traefik/compare/v1.7.26...v1.7.27)
+
+Release canceled due to a bad tag.
 
 ## [v1.7.26](https://github.com/traefik/traefik/tree/v1.7.26) (2020-07-28)
 [All Commits](https://github.com/traefik/traefik/compare/v1.7.25...v1.7.26)
