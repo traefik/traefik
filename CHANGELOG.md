@@ -1,5 +1,17 @@
 # Change Log
 
+## [v1.7.27](https://github.com/traefik/traefik/tree/v1.7.27) (2021-01-13)
+[All Commits](https://github.com/traefik/traefik/compare/v1.7.26...v1.7.27)
+
+**Bug fixes:**
+- **[middleware,tracing]** Do not SetError on tracing event when whitelist allowed request ([#7174](https://github.com/traefik/traefik/pull/7174) by [LordGaav](https://github.com/LordGaav))
+- **[servicefabric]** Fix stickiness support in Service Fabric. ([#7667](https://github.com/traefik/traefik/pull/7667) by [tpayne84](https://github.com/tpayne84))
+
+**Documentation:**
+- **[acme]** docs: fix language &#34;if challenge is not known&#34; ([#7718](https://github.com/traefik/traefik/pull/7718) by [amosshapira](https://github.com/amosshapira))
+- Update copyright year for 2021 ([#7753](https://github.com/traefik/traefik/pull/7753) by [rtribotte](https://github.com/rtribotte))
+- Fix typo &#34;CA&#39;s&#34; instead of &#34;CA:s&#34; ([#7315](https://github.com/traefik/traefik/pull/7315) by [amosshapira](https://github.com/amosshapira))
+
 ## [v1.7.26](https://github.com/traefik/traefik/tree/v1.7.26) (2020-07-28)
 [All Commits](https://github.com/traefik/traefik/compare/v1.7.25...v1.7.26)
 
