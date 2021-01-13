@@ -416,15 +416,8 @@ func splitSvcNameProvider(name string) (string, string) {
 }
 
 func fullServiceName(ctx context.Context, namespace string, service v1alpha1.LoadBalancerSpec, port intstr.IntOrString) string {
-	switch port.Type {
-	case intstr.Int:
-		if port.IntVal != 0 {
-			return provider.Normalize(fmt.Sprintf("%s-%s-%d", namespace, service.Name, port.IntVal))
-		}
-	case intstr.String:
-		if port.StrVal != "" {
-			return provider.Normalize(fmt.Sprintf("%s-%s-%s", namespace, service.Name, port.StrVal))
-		}
+	if (port.Type == intstr.Int && port.IntVal != 0) || (port.Type == intstr.String && port.StrVal != "") {
+		return provider.Normalize(fmt.Sprintf("%s-%s-%s", namespace, service.Name, &port))
 	}
 
 	if !strings.Contains(service.Name, providerNamespaceSeparator) {

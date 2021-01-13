@@ -113,25 +113,12 @@ func loadUDPServers(client Client, namespace string, svc v1alpha1.ServiceUDP) ([
 	}
 
 	var portSpec *corev1.ServicePort
-	switch svc.Port.Type {
-	case intstr.Int:
-		for _, p := range service.Spec.Ports {
-			p := p // exportloopref
-			if svc.Port.IntVal == p.Port {
-				portSpec = &p
-				break
-			}
+	for _, p := range service.Spec.Ports {
+		p := p
+		if (svc.Port.Type == intstr.Int && svc.Port.IntVal == p.Port) || (svc.Port.Type == intstr.String && svc.Port.StrVal == p.Name) {
+			portSpec = &p
+			break
 		}
-	case intstr.String:
-		for _, p := range service.Spec.Ports {
-			p := p // exportloopref
-			if svc.Port.StrVal == p.Name {
-				portSpec = &p
-				break
-			}
-		}
-	default:
-		return nil, errors.New("service port is unknown type")
 	}
 
 	if portSpec == nil {
