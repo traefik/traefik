@@ -3787,12 +3787,13 @@ func TestGetServicePort(t *testing.T) {
 			expectError: true,
 		},
 		{
-			desc: "Matching port names",
+			desc: "Matching named port",
 			svc: &corev1.Service{
 				Spec: corev1.ServiceSpec{
 					Ports: []corev1.ServicePort{
 						{
 							Name: "http",
+							Port: 80,
 						},
 					},
 				},
@@ -3800,12 +3801,14 @@ func TestGetServicePort(t *testing.T) {
 			port: intstr.FromString("http"),
 			expected: &corev1.ServicePort{
 				Name: "http",
+				Port: 80,
 			},
 		},
 		{
-			desc: "Both port and name",
+			desc: "Matching named port (with external name)",
 			svc: &corev1.Service{
 				Spec: corev1.ServiceSpec{
+					Type: corev1.ServiceTypeExternalName,
 					Ports: []corev1.ServicePort{
 						{
 							Name: "http",
@@ -3829,6 +3832,14 @@ func TestGetServicePort(t *testing.T) {
 			expectError: true,
 		},
 		{
+			desc: "Mismatching, only named port(Ingress) defined",
+			svc: &corev1.Service{
+				Spec: corev1.ServiceSpec{},
+			},
+			port:        intstr.FromString("http"),
+			expectError: true,
+		},
+		{
 			desc: "Mismatching, only port(Ingress) defined with external name",
 			svc: &corev1.Service{
 				Spec: corev1.ServiceSpec{
@@ -3839,6 +3850,16 @@ func TestGetServicePort(t *testing.T) {
 			expected: &corev1.ServicePort{
 				Port: 80,
 			},
+		},
+		{
+			desc: "Mismatching, only named port(Ingress) defined with external name",
+			svc: &corev1.Service{
+				Spec: corev1.ServiceSpec{
+					Type: corev1.ServiceTypeExternalName,
+				},
+			},
+			port:        intstr.FromString("http"),
+			expectError: true,
 		},
 		{
 			desc: "Mismatching, only Service port defined",
@@ -3882,17 +3903,18 @@ func TestGetServicePort(t *testing.T) {
 			expectError: true,
 		},
 		{
-			desc: "Mismatching, port and name",
+			desc: "Two different named ports defined",
 			svc: &corev1.Service{
 				Spec: corev1.ServiceSpec{
 					Ports: []corev1.ServicePort{
 						{
+							Name: "foo",
 							Port: 80,
 						},
 					},
 				},
 			},
-			port:        intstr.FromString("http"),
+			port:        intstr.FromString("bar"),
 			expectError: true,
 		},
 		{
@@ -3911,6 +3933,22 @@ func TestGetServicePort(t *testing.T) {
 			expected: &corev1.ServicePort{
 				Port: 443,
 			},
+		},
+		{
+			desc: "Two different named ports defined (with external name)",
+			svc: &corev1.Service{
+				Spec: corev1.ServiceSpec{
+					Type: corev1.ServiceTypeExternalName,
+					Ports: []corev1.ServicePort{
+						{
+							Name: "foo",
+							Port: 80,
+						},
+					},
+				},
+			},
+			port:        intstr.FromString("bar"),
+			expectError: true,
 		},
 	}
 	for _, test := range testCases {
