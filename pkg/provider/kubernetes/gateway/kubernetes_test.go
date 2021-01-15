@@ -253,23 +253,12 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06": {
 							EntryPoints: []string{"web"},
-							Service:     "default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06-wrr",
+							Service:     "api@internal",
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
-					Services: map[string]*dynamic.Service{
-						"default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06-wrr": {
-							Weighted: &dynamic.WeightedRoundRobin{
-								Services: []dynamic.WRRService{
-									{
-										Name:   "api@internal",
-										Weight: func(i int) *int { return &i }(1),
-									},
-								},
-							},
-						},
-					},
+					Services:    map[string]*dynamic.Service{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
