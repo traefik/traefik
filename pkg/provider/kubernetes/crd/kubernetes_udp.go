@@ -11,7 +11,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client Client) *dynamic.UDPConfiguration {
@@ -112,23 +111,15 @@ func loadUDPServers(client Client, namespace string, svc v1alpha1.ServiceUDP) ([
 		return nil, errors.New("service not found")
 	}
 
-	var portSpec *corev1.ServicePort
-	for _, p := range service.Spec.Ports {
-		p := p
-		if (svc.Port.Type == intstr.Int && svc.Port.IntVal == p.Port) || (svc.Port.Type == intstr.String && svc.Port.StrVal == p.Name) {
-			portSpec = &p
-			break
-		}
-	}
-
-	if portSpec == nil {
-		return nil, errors.New("service port not found")
+	svcPort, err := getServicePort(service, svc.Port)
+	if err != nil {
+		return nil, err
 	}
 
 	var servers []dynamic.UDPServer
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		servers = append(servers, dynamic.UDPServer{
-			Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(portSpec.Port))),
+			Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(svcPort.Port))),
 		})
 	} else {
 		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, svc.Name)
@@ -147,7 +138,7 @@ func loadUDPServers(client Client, namespace string, svc v1alpha1.ServiceUDP) ([
 		var port int32
 		for _, subset := range endpoints.Subsets {
 			for _, p := range subset.Ports {
-				if portSpec.Name == p.Name {
+				if svcPort.Name == p.Name {
 					port = p.Port
 					break
 				}
