@@ -24,6 +24,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
@@ -323,18 +324,18 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	return conf
 }
 
-func getServicePort(svc *corev1.Service, port int32) (*corev1.ServicePort, error) {
+func getServicePort(svc *corev1.Service, port intstr.IntOrString) (*corev1.ServicePort, error) {
 	if svc == nil {
 		return nil, errors.New("service is not defined")
 	}
 
-	if port == 0 {
+	if (port.Type == intstr.Int && port.IntVal == 0) || (port.Type == intstr.String && port.StrVal == "") {
 		return nil, errors.New("ingressRoute service port not defined")
 	}
 
 	hasValidPort := false
 	for _, p := range svc.Spec.Ports {
-		if p.Port == port {
+		if (port.Type == intstr.Int && port.IntVal == p.Port) || (port.Type == intstr.String && port.StrVal == p.Name) {
 			return &p, nil
 		}
 
@@ -343,8 +344,8 @@ func getServicePort(svc *corev1.Service, port int32) (*corev1.ServicePort, error
 		}
 	}
 
-	if svc.Spec.Type != corev1.ServiceTypeExternalName {
-		return nil, fmt.Errorf("service port not found: %d", port)
+	if svc.Spec.Type != corev1.ServiceTypeExternalName || port.Type == intstr.String {
+		return nil, fmt.Errorf("service port not found: %s", &port)
 	}
 
 	if hasValidPort {
@@ -352,7 +353,7 @@ func getServicePort(svc *corev1.Service, port int32) (*corev1.ServicePort, error
 			Warning("The port %d from IngressRoute doesn't match with ports defined in the ExternalName service %s/%s.", port, svc.Namespace, svc.Name)
 	}
 
-	return &corev1.ServicePort{Port: port}, nil
+	return &corev1.ServicePort{Port: port.IntVal}, nil
 }
 
 func (p *Provider) createErrorPageMiddleware(client Client, namespace string, errorPage *v1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {

@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // IngressRouteUDPSpec is a specification for a IngressRouteUDPSpec resource.
@@ -23,10 +24,10 @@ type TLSOptionUDPRef struct {
 
 // ServiceUDP defines an upstream to proxy traffic.
 type ServiceUDP struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-	Port      int32  `json:"port"`
-	Weight    *int   `json:"weight,omitempty"`
+	Name      string             `json:"name"`
+	Namespace string             `json:"namespace"`
+	Port      intstr.IntOrString `json:"port"`
+	Weight    *int               `json:"weight,omitempty"`
 }
 
 // +genclient

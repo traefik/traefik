@@ -4,6 +4,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // IngressRouteTCPSpec is a specification for a IngressRouteTCPSpec resource.
@@ -56,7 +57,7 @@ type TLSStoreTCPRef struct {
 type ServiceTCP struct {
 	Name             string                 `json:"name"`
 	Namespace        string                 `json:"namespace"`
-	Port             int32                  `json:"port"`
+	Port             intstr.IntOrString     `json:"port"`
 	Weight           *int                   `json:"weight,omitempty"`
 	TerminationDelay *int                   `json:"terminationDelay,omitempty"`
 	ProxyProtocol    *dynamic.ProxyProtocol `json:"proxyProtocol,omitempty"`
