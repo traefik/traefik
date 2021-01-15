@@ -28,7 +28,11 @@ import (
 	"sigs.k8s.io/service-apis/apis/v1alpha1"
 )
 
-const providerName = "kubernetesgateway"
+const (
+	providerName               = "kubernetesgateway"
+	groupName                  = "traefik.containo.us"
+	providerNamespaceSeparator = "@"
+)
 
 // Provider holds configurations of the provider.
 type Provider struct {
@@ -754,6 +758,15 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 	return cert, key, nil
 }
 
+func splitSvcNameProvider(name string) (string, string) {
+	parts := strings.Split(name, providerNamespaceSeparator)
+
+	svc := strings.Join(parts[:len(parts)-1], providerNamespaceSeparator)
+	pvd := parts[len(parts)-1]
+
+	return svc, pvd
+}
+
 // loadServices is generating a WRR service, even when there is only one target.
 func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteForwardTo) (*dynamic.Service, map[string]*dynamic.Service, error) {
 	services := map[string]*dynamic.Service{}
@@ -765,7 +778,7 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 	}
 
 	for _, forwardTo := range targets {
-		if forwardTo.ServiceName == nil {
+		if forwardTo.ServiceName == nil && forwardTo.BackendRef == nil {
 			continue
 		}
 
@@ -773,6 +786,21 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 			LoadBalancer: &dynamic.ServersLoadBalancer{
 				PassHostHeader: func(v bool) *bool { return &v }(true),
 			},
+		}
+		weight := int(forwardTo.Weight)
+
+		if forwardTo.ServiceName == nil {
+			// TODO add backend ref - check if we can have a working crossprovider conf
+			if forwardTo.BackendRef.Kind != "TraefikService" || forwardTo.BackendRef.Group != groupName {
+				continue
+			}
+
+			name, pName := splitSvcNameProvider(forwardTo.BackendRef.Name)
+			serviceName := provider.Normalize(name) + providerNamespaceSeparator + pName
+			service := dynamic.WRRService{Name: serviceName, Weight: &weight}
+			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, service)
+
+			continue
 		}
 
 		// TODO Handle BackendRefs
@@ -855,11 +883,10 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 		serviceName := provider.Normalize(makeID(service.Namespace, service.Name) + "-" + portStr)
 		services[serviceName] = &svc
 
-		weight := int(forwardTo.Weight)
 		wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: serviceName, Weight: &weight})
 	}
 
-	if len(services) == 0 {
+	if len(wrrSvc.Weighted.Services) == 0 {
 		return nil, nil, errors.New("no service has been created")
 	}
 
