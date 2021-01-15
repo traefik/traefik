@@ -45,5 +45,8 @@ spec:
           backendRef:
             group: traefik.containo.us
             kind: TraefikService
-            name: api@internal
+            name: service@file
           port: 80
+        - serviceName: whoami
+          port: 80
+          weight: 1

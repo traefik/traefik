@@ -29,9 +29,8 @@ import (
 )
 
 const (
-	providerName               = "kubernetesgateway"
-	groupName                  = "traefik.containo.us"
-	providerNamespaceSeparator = "@"
+	providerName = "kubernetesgateway"
+	groupName    = "traefik.containo.us"
 )
 
 // Provider holds configurations of the provider.
@@ -781,18 +780,30 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 	}
 
 	for _, forwardTo := range targets {
-		if forwardTo.ServiceName == nil && forwardTo.BackendRef == nil {
+		weight := int(forwardTo.Weight)
+
+		if forwardTo.ServiceName == nil && forwardTo.BackendRef != nil {
+			if !(forwardTo.BackendRef.Group == groupName && forwardTo.BackendRef.Kind == "TraefikService") {
+				continue
+			}
+
+			if strings.HasSuffix(forwardTo.BackendRef.Name, "@internal") {
+				return nil, nil, fmt.Errorf("traefik internal service %s is not allowed in wrr loadbalancer", forwardTo.BackendRef.Name)
+			}
+
+			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: forwardTo.BackendRef.Name, Weight: &weight})
 			continue
 		}
-		// TODO add exception on internal service
+
+		if forwardTo.ServiceName == nil {
+			continue
+		}
 
 		svc := dynamic.Service{
 			LoadBalancer: &dynamic.ServersLoadBalancer{
 				PassHostHeader: func(v bool) *bool { return &v }(true),
 			},
 		}
-
-		// TODO Handle BackendRefs
 
 		service, exists, err := client.GetService(namespace, *forwardTo.ServiceName)
 		if err != nil {
@@ -872,11 +883,10 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 		serviceName := provider.Normalize(makeID(service.Namespace, service.Name) + "-" + portStr)
 		services[serviceName] = &svc
 
-		weight := int(forwardTo.Weight)
 		wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: serviceName, Weight: &weight})
 	}
 
-	if len(services) == 0 {
+	if len(wrrSvc.Weighted.Services) == 0 {
 		return nil, nil, errors.New("no service has been created")
 	}
 
