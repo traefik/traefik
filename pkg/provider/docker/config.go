@@ -315,7 +315,7 @@ func (p Provider) getIPAddress(ctx context.Context, container dockerData) string
 		if settings.Networks != nil {
 			network := settings.Networks[container.ExtraConf.Docker.Network]
 			if network != nil {
-				return network.Addr
+				return container.Name
 			}
 
 			logger.Warnf("Could not find network named '%s' for container '%s'! Maybe you're missing the project's prefix in the label? Defaulting to first available network.", container.ExtraConf.Docker.Network, container.Name)

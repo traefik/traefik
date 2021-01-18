@@ -553,17 +553,31 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 
 func parseTasks(ctx context.Context, task swarmtypes.Task, serviceDockerData dockerData,
 	networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool) dockerData {
+
+	var hostName string
+
+	if task.Spec.ContainerSpec.Hostname != "" {
+		hostName = strings.ReplaceAll(task.Spec.ContainerSpec.Hostname, "{{.Task.Slot}}", strconv.Itoa(task.Slot))
+		hostName = strings.ReplaceAll(hostName, "{{.Service.Name}}", serviceDockerData.Name)
+		hostName = strings.ReplaceAll(hostName, "{{.Node.ID}}", task.NodeID)
+		if serviceDockerData.Node != nil && serviceDockerData.Node.Name != "" {
+			hostName = strings.ReplaceAll(hostName, "{{.Node.Hostname}}", serviceDockerData.Node.Name)
+		}
+	} else {
+		if isGlobalSvc {
+			hostName = serviceDockerData.Name + "." + task.NodeID + "." + task.ID
+		} else {
+			hostName = serviceDockerData.Name + "." + strconv.Itoa(task.Slot) + "." + task.ID
+		}
+	}
+
 	dData := dockerData{
 		ID:              task.ID,
 		ServiceName:     serviceDockerData.Name,
-		Name:            serviceDockerData.Name + "." + strconv.Itoa(task.Slot),
+		Name:            hostName,
 		Labels:          serviceDockerData.Labels,
 		ExtraConf:       serviceDockerData.ExtraConf,
 		NetworkSettings: networkSettings{},
-	}
-
-	if isGlobalSvc {
-		dData.Name = serviceDockerData.Name + "." + task.ID
 	}
 
 	if task.NetworksAttachments != nil {
