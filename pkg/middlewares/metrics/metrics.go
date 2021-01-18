@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"context"
-	"crypto/tls"
 	"net/http"
 	"strconv"
 	"strings"
@@ -148,18 +147,11 @@ func getMethod(r *http.Request) string {
 }
 
 func getRequestTLSVersion(req *http.Request) string {
-	switch req.TLS.Version {
-	case tls.VersionTLS10:
-		return "1.0"
-	case tls.VersionTLS11:
-		return "1.1"
-	case tls.VersionTLS12:
-		return "1.2"
-	case tls.VersionTLS13:
-		return "1.3"
-	default:
-		return "unknown"
+	if version, ok := traefiktls.VersionsReversed[req.TLS.Version]; ok {
+		return version
 	}
+
+	return "unknown"
 }
 
 func getRequestTLSCipher(req *http.Request) string {
