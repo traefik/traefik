@@ -29,8 +29,8 @@ import (
 )
 
 const (
-	providerName = "kubernetesgateway"
-	groupName    = "traefik.containo.us"
+	providerName            = "kubernetesgateway"
+	traefikServiceGroupName = "traefik.containo.us"
 )
 
 // Provider holds configurations of the provider.
@@ -471,7 +471,7 @@ func (p *Provider) fillGatewayConf(client Client, gateway *v1alpha1.Gateway, con
 						routeRule.ForwardTo[0].ServiceName == nil &&
 						routeRule.ForwardTo[0].BackendRef != nil &&
 						routeRule.ForwardTo[0].BackendRef.Kind == "TraefikService" &&
-						routeRule.ForwardTo[0].BackendRef.Group == groupName &&
+						routeRule.ForwardTo[0].BackendRef.Group == traefikServiceGroupName &&
 						strings.HasSuffix(routeRule.ForwardTo[0].BackendRef.Name, "@internal")
 
 					if isInternalService {
@@ -783,12 +783,12 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 		weight := int(forwardTo.Weight)
 
 		if forwardTo.ServiceName == nil && forwardTo.BackendRef != nil {
-			if !(forwardTo.BackendRef.Group == groupName && forwardTo.BackendRef.Kind == "TraefikService") {
+			if !(forwardTo.BackendRef.Group == traefikServiceGroupName && forwardTo.BackendRef.Kind == "TraefikService") {
 				continue
 			}
 
 			if strings.HasSuffix(forwardTo.BackendRef.Name, "@internal") {
-				return nil, nil, fmt.Errorf("traefik internal service %s is not allowed in wrr loadbalancer", forwardTo.BackendRef.Name)
+				return nil, nil, fmt.Errorf("traefik internal service %s is not allowed in a WRR loadbalancer", forwardTo.BackendRef.Name)
 			}
 
 			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: forwardTo.BackendRef.Name, Weight: &weight})
