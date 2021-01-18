@@ -82,11 +82,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -123,11 +121,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -137,11 +133,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -179,11 +173,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -423,11 +415,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -467,11 +457,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -532,11 +520,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -595,11 +581,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -657,11 +641,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -708,11 +690,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -759,11 +739,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -801,11 +779,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -844,11 +820,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 								TerminationDelay: Int(500),
@@ -893,11 +867,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -938,7 +910,6 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "external.domain:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -976,7 +947,6 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "external.domain:80",
-										Port:    "",
 									},
 								},
 							},
@@ -3036,11 +3006,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 								ProxyProtocol: &dynamic.ProxyProtocol{Version: 2},
@@ -3393,11 +3361,9 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 								Servers: []dynamic.UDPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -3438,11 +3404,9 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 								Servers: []dynamic.UDPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -3452,11 +3416,9 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 								Servers: []dynamic.UDPServer{
 									{
 										Address: "10.10.0.3:8080",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.4:8080",
-										Port:    "",
 									},
 								},
 							},
@@ -3639,7 +3601,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 								Servers: []dynamic.UDPServer{
 									{
 										Address: "external.domain:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -3676,7 +3637,6 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 								Servers: []dynamic.UDPServer{
 									{
 										Address: "external.domain:80",
-										Port:    "",
 									},
 								},
 							},
@@ -4459,11 +4419,9 @@ func TestCrossNamespace(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -4519,11 +4477,9 @@ func TestCrossNamespace(t *testing.T) {
 								Servers: []dynamic.UDPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
