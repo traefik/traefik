@@ -1322,7 +1322,7 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
 |------|--------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [1]  | `entryPoints`                  | List of [entrypoints](../routers/index.md#entrypoints_1) names                                                                                                                                                                                                                                                                                                                           |
 | [2]  | `routes`                       | List of routes                                                                                                                                                                                                                                                                                                                                                                           |
-| [3]  | `routes[n].services`           | List of [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) definitions                                                                                                                                                                                                                                                                               |
+| [3]  | `routes[n].services`           | List of [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) definitions (See below for `ExternalName Service` setup)                                                                                                                                                                                                                                  |
 | [4]  | `services[n].name`             | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/)                                                                                                                                                                                                                                                                             |
 | [6]  | `services[n].port`             | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.                                                                                                                                                                                                                                   |
 | [7]  | `services[n].weight`           | Defines the weight to apply to the server load balancing                                                                                                                                                                                                                                                                                                                                 |
@@ -1347,6 +1347,105 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
           port: 8081
           weight: 10
     ```
+
+!!! important "Using Kubernetes ExternalName Service"
+
+    Traefik backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/fr/docs/concepts/services-networking/service/#externalname) could be defined without any port.
+    Accordingly, Traefik supports defining a port in two ways:
+    
+    - only on `IngressRouteUDP` service
+    - on both sides, you'll be warned if the ports don't match, and the `IngressRouteUDP` service port is used
+    
+    Thus, in case of two sides port definition, Traefik expects a match between ports.
+    
+    ??? example "Examples"
+        
+        ```yaml tab="IngressRouteUDP"
+        ---
+        apiVersion: traefik.containo.us/v1alpha1
+        kind: IngressRouteUDP
+        metadata:
+          name: test.route
+          namespace: default
+        
+        spec:
+          entryPoints:
+            - foo
+        
+          routes:
+          - services:
+            - name: external-svc
+              port: 80
+        
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: external-svc
+          namespace: default
+        spec:
+          externalName: external.domain
+          type: ExternalName
+        ```
+        
+        ```yaml tab="ExternalName Service"
+        ---
+        apiVersion: traefik.containo.us/v1alpha1
+        kind: IngressRouteUDP
+        metadata:
+          name: test.route
+          namespace: default
+        
+        spec:
+          entryPoints:
+            - foo
+        
+          routes:
+          - services:
+            - name: external-svc
+        
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: external-svc
+          namespace: default
+        spec:
+          externalName: external.domain
+          type: ExternalName
+          ports:
+            - port: 80
+        ```
+        
+        ```yaml tab="Both sides"
+        ---
+        apiVersion: traefik.containo.us/v1alpha1
+        kind: IngressRouteUDP
+        metadata:
+          name: test.route
+          namespace: default
+        
+        spec:
+          entryPoints:
+            - foo
+        
+          routes:
+          - services:
+            - name: external-svc
+              port: 80
+        
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: external-svc
+          namespace: default
+        spec:
+          externalName: external.domain
+          type: ExternalName
+          ports:
+            - port: 80
+        ```
 
 ### Kind: `TLSOption`
 
