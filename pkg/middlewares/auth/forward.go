@@ -26,6 +26,19 @@ const (
 	forwardedTypeName = "ForwardedAuthType"
 )
 
+// hopHeaders Hop-by-hop headers to be removed in the authentication request.
+// http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
+// Proxy-Authorization header is forwarded to the authentication server (see https://tools.ietf.org/html/rfc7235#section-4.4).
+var hopHeaders = []string{
+	forward.Connection,
+	forward.KeepAlive,
+	forward.ProxyAuthenticate,
+	forward.Te, // canonicalized version of "TE"
+	forward.Trailers,
+	forward.TransferEncoding,
+	forward.Upgrade,
+}
+
 type forwardAuth struct {
 	address                  string
 	authResponseHeaders      []string
@@ -187,6 +200,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowedHeaders []string) {
 	utils.CopyHeaders(forwardReq.Header, req.Header)
+	utils.RemoveHeaders(forwardReq.Header, hopHeaders...)
 
 	forwardReq.Header = filterForwardRequestHeaders(forwardReq.Header, allowedHeaders)
 
@@ -246,7 +260,6 @@ func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowed
 
 func filterForwardRequestHeaders(forwardRequestHeaders http.Header, allowedHeaders []string) http.Header {
 	if len(allowedHeaders) == 0 {
-		utils.RemoveHeaders(forwardRequestHeaders, keepProxyAuthHeader(forward.HopHeaders)...)
 		return forwardRequestHeaders
 	}
 
@@ -259,14 +272,4 @@ func filterForwardRequestHeaders(forwardRequestHeaders http.Header, allowedHeade
 	}
 
 	return filteredHeaders
-}
-
-func keepProxyAuthHeader(hopHeaders []string) []string {
-	var headers []string
-	for _, h := range hopHeaders {
-		if h != forward.ProxyAuthorization {
-			headers = append(headers, h)
-		}
-	}
-	return headers
 }
