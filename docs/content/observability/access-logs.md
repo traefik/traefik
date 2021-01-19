@@ -209,7 +209,7 @@ accessLog:
     | `RequestScheme`         | The HTTP scheme requested `http` or `https`.                                                                                                                        |
     | `RequestLine`           | `RequestMethod` + `RequestPath` + `RequestProtocol`                                                                                                                 |
     | `RequestContentSize`    | The number of bytes in the request entity (a.k.a. body) sent by the client.                                                                                         |
-    | `OriginDuration`        | The time taken (in nanoseconds) by the origin server ('upstream') to return its response.                                                                                            |
+    | `OriginDuration`        | The time taken (in nanoseconds) by the origin server ('upstream') to return its response.                                                                           |
     | `OriginContentSize`     | The content length specified by the origin server, or 0 if unspecified.                                                                                             |
     | `OriginStatus`          | The HTTP status code returned by the origin server. If the request was handled by this Traefik instance (e.g. with a redirect), then this value will be absent.     |
     | `OriginStatusLine`      | `OriginStatus` + Status code explanation                                                                                                                            |
@@ -218,8 +218,10 @@ accessLog:
     | `DownstreamContentSize` | The number of bytes in the response entity returned to the client. This is in addition to the "Content-Length" header, which may be present in the origin response. |
     | `RequestCount`          | The number of requests received since the Traefik instance started.                                                                                                 |
     | `GzipRatio`             | The response body compression ratio achieved.                                                                                                                       |
-    | `Overhead`              | The processing time overhead (in nanoseconds) caused by Traefik.                                                                                                                     |
+    | `Overhead`              | The processing time overhead (in nanoseconds) caused by Traefik.                                                                                                    |
     | `RetryAttempts`         | The amount of attempts the request was retried.                                                                                                                     |
+    | `TLSVersion`            | The TLS version used by the connection (e.g. `1.2`) (if connection is TLS).                                                                                         |
+    | `TLSCipher`             | The TLS cipher used by the connection (e.g. `TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA`) (if connection is TLS)                                                           |
 
 ## Log Rotation
 
