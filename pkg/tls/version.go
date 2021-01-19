@@ -2,11 +2,19 @@ package tls
 
 import "crypto/tls"
 
-// VersionsReversed Map of TLS versions from crypto/tls
+// GetVersion returns the normalized TLS version.
 // Available TLS versions defined at https://golang.org/pkg/crypto/tls/#pkg-constants
-var VersionsReversed = map[uint16]string{
-	tls.VersionTLS10: "1.0",
-	tls.VersionTLS11: "1.1",
-	tls.VersionTLS12: "1.2",
-	tls.VersionTLS13: "1.3",
+func GetVersion(connState *tls.ConnectionState) string {
+	switch connState.Version {
+	case tls.VersionTLS10:
+		return "1.0"
+	case tls.VersionTLS11:
+		return "1.1"
+	case tls.VersionTLS12:
+		return "1.2"
+	case tls.VersionTLS13:
+		return "1.3"
+	}
+
+	return "unknown"
 }
