@@ -5,7 +5,6 @@ go 1.15
 require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/ExpediaDotCom/haystack-client-go v0.0.0-20190315171017-e7edbdf53a61
-	github.com/Masterminds/semver v1.4.2 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.0
 	github.com/Microsoft/hcsshim v0.8.7 // indirect
 	github.com/NYTimes/gziphandler v1.1.1
