@@ -30,6 +30,7 @@ import (
 
 const (
 	providerName            = "kubernetesgateway"
+	traefikServiceKind      = "TraefikService"
 	traefikServiceGroupName = "traefik.containo.us"
 )
 
@@ -470,7 +471,7 @@ func (p *Provider) fillGatewayConf(client Client, gateway *v1alpha1.Gateway, con
 					isInternalService := len(routeRule.ForwardTo) == 1 &&
 						routeRule.ForwardTo[0].ServiceName == nil &&
 						routeRule.ForwardTo[0].BackendRef != nil &&
-						routeRule.ForwardTo[0].BackendRef.Kind == "TraefikService" &&
+						routeRule.ForwardTo[0].BackendRef.Kind == traefikServiceKind &&
 						routeRule.ForwardTo[0].BackendRef.Group == traefikServiceGroupName &&
 						strings.HasSuffix(routeRule.ForwardTo[0].BackendRef.Name, "@internal")
 
@@ -783,7 +784,7 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 		weight := int(forwardTo.Weight)
 
 		if forwardTo.ServiceName == nil && forwardTo.BackendRef != nil {
-			if !(forwardTo.BackendRef.Group == traefikServiceGroupName && forwardTo.BackendRef.Kind == "TraefikService") {
+			if !(forwardTo.BackendRef.Group == traefikServiceGroupName && forwardTo.BackendRef.Kind == traefikServiceKind) {
 				continue
 			}
 
