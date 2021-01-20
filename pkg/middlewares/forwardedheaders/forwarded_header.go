@@ -183,7 +183,7 @@ func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // unsafeHeader allows to manage Header values.
-// Must be used only when the header name are already a canonical key.
+// Must be used only when the header name is already a canonical key.
 type unsafeHeader map[string][]string
 
 func (h unsafeHeader) Set(key, value string) {
