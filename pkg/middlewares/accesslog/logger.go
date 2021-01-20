@@ -210,8 +210,8 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 	core[RequestScheme] = "http"
 	if req.TLS != nil {
 		core[RequestScheme] = "https"
-		core[TLSVersion] = getRequestTLSVersion(req)
-		core[TLSCipher] = getRequestTLSCipher(req)
+		core[TLSVersion] = traefiktls.GetVersion(req.TLS)
+		core[TLSCipher] = traefiktls.GetCipherName(req.TLS)
 	}
 
 	core[ClientAddr] = req.RemoteAddr
@@ -384,20 +384,4 @@ var requestCounter uint64 // Request ID
 
 func nextRequestCount() uint64 {
 	return atomic.AddUint64(&requestCounter, 1)
-}
-
-func getRequestTLSVersion(req *http.Request) string {
-	if version, ok := traefiktls.VersionsReversed[req.TLS.Version]; ok {
-		return version
-	}
-
-	return "unknown"
-}
-
-func getRequestTLSCipher(req *http.Request) string {
-	if cypher, ok := traefiktls.CipherSuitesReversed[req.TLS.CipherSuite]; ok {
-		return cypher
-	}
-
-	return "unknown"
 }

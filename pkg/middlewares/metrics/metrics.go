@@ -89,7 +89,7 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	if req.TLS != nil {
 		var tlsLabels []string
 		tlsLabels = append(tlsLabels, m.baseLabels...)
-		tlsLabels = append(tlsLabels, "tls_version", getRequestTLSVersion(req), "tls_cipher", getRequestTLSCipher(req))
+		tlsLabels = append(tlsLabels, "tls_version", traefiktls.GetVersion(req.TLS), "tls_cipher", traefiktls.GetCipherName(req.TLS))
 
 		m.reqsTLSCounter.With(tlsLabels...).Add(1)
 	}
@@ -144,22 +144,6 @@ func getMethod(r *http.Request) string {
 		return "NON_UTF8_HTTP_METHOD"
 	}
 	return r.Method
-}
-
-func getRequestTLSVersion(req *http.Request) string {
-	if version, ok := traefiktls.VersionsReversed[req.TLS.Version]; ok {
-		return version
-	}
-
-	return "unknown"
-}
-
-func getRequestTLSCipher(req *http.Request) string {
-	if version, ok := traefiktls.CipherSuitesReversed[req.TLS.CipherSuite]; ok {
-		return version
-	}
-
-	return "unknown"
 }
 
 type retryMetrics interface {
