@@ -8,6 +8,7 @@ import (
 
 	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/gorilla/mux"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/config/static"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -157,6 +158,14 @@ func extractType(element interface{}) string {
 	v := reflect.ValueOf(element).Elem()
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
+
+		if field.Kind() == reflect.Map && field.Type().Elem() == reflect.TypeOf(dynamic.PluginConf{}) {
+			keys := field.MapKeys()
+			if len(keys) == 1 {
+				return keys[0].String()
+			}
+		}
+
 		if field.Kind() == reflect.Ptr && field.Elem().Kind() == reflect.Struct {
 			if !field.IsNil() {
 				return v.Type().Field(i).Name
