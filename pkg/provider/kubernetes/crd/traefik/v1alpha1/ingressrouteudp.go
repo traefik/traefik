@@ -32,6 +32,7 @@ type ServiceUDP struct {
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:storageversion
 
 // IngressRouteUDP is an Ingress CRD specification.
 type IngressRouteUDP struct {

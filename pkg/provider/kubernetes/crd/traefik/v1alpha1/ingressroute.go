@@ -82,7 +82,7 @@ type LoadBalancerSpec struct {
 
 // Service defines an upstream to proxy traffic.
 type Service struct {
-	LoadBalancerSpec
+	LoadBalancerSpec `json:",inline"`
 }
 
 // MiddlewareRef is a ref to the Middleware resources.
@@ -93,6 +93,7 @@ type MiddlewareRef struct {
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:storageversion
 
 // IngressRoute is an Ingress CRD specification.
 type IngressRoute struct {

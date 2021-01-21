@@ -94,6 +94,7 @@ require (
 	k8s.io/client-go v0.19.2
 	k8s.io/code-generator v0.19.2
 	mvdan.cc/xurls/v2 v2.1.0
+	sigs.k8s.io/controller-tools v0.4.0
 	sigs.k8s.io/service-apis v0.1.0
 )
 
