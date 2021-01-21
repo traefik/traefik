@@ -31,6 +31,7 @@ package v1alpha1
 import (
 	dynamic "github.com/traefik/traefik/v2/pkg/config/dynamic"
 	types "github.com/traefik/traefik/v2/pkg/types"
+	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -727,7 +728,7 @@ func (in *MiddlewareSpec) DeepCopyInto(out *MiddlewareSpec) {
 	}
 	if in.Plugin != nil {
 		in, out := &in.Plugin, &out.Plugin
-		*out = make(map[string]dynamic.PluginConf, len(*in))
+		*out = make(map[string]v1.JSON, len(*in))
 		for key, val := range *in {
 			(*out)[key] = *val.DeepCopy()
 		}

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -23,6 +24,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -219,6 +221,12 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			conf.HTTP.Services[serviceName] = errorPageService
 		}
 
+		plugin, err := createPluginMiddleware(middleware.Spec.Plugin)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading plugins middleware: %v", err)
+			continue
+		}
+
 		conf.HTTP.Middlewares[id] = &dynamic.Middleware{
 			AddPrefix:         middleware.Spec.AddPrefix,
 			StripPrefix:       middleware.Spec.StripPrefix,
@@ -242,7 +250,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			PassTLSClientCert: middleware.Spec.PassTLSClientCert,
 			Retry:             middleware.Spec.Retry,
 			ContentType:       middleware.Spec.ContentType,
-			Plugin:            middleware.Spec.Plugin,
+			Plugin:            plugin,
 		}
 	}
 
@@ -354,6 +362,22 @@ func getServicePort(svc *corev1.Service, port intstr.IntOrString) (*corev1.Servi
 	}
 
 	return &corev1.ServicePort{Port: port.IntVal}, nil
+}
+
+func createPluginMiddleware(pluginSpec map[string]apiextensionv1.JSON) (map[string]dynamic.PluginConf, error) {
+	pc := map[string]dynamic.PluginConf{}
+
+	data, err := json.Marshal(pluginSpec)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(data, &pc)
+	if err != nil {
+		return nil, err
+	}
+
+	return pc, nil
 }
 
 func (p *Provider) createErrorPageMiddleware(client Client, namespace string, errorPage *v1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
