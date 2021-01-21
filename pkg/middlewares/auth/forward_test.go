@@ -26,6 +26,7 @@ func TestForwardAuthFail(t *testing.T) {
 	})
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(forward.ProxyAuthenticate, "test")
 		http.Error(w, "Forbidden", http.StatusForbidden)
 	}))
 	t.Cleanup(server.Close)
@@ -48,6 +49,7 @@ func TestForwardAuthFail(t *testing.T) {
 	err = res.Body.Close()
 	require.NoError(t, err)
 
+	assert.Equal(t, "test", res.Header.Get(forward.ProxyAuthenticate))
 	assert.Equal(t, "Forbidden\n", string(body))
 }
 
@@ -142,7 +144,7 @@ func TestForwardAuthRedirect(t *testing.T) {
 func TestForwardAuthRemoveHopByHopHeaders(t *testing.T) {
 	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		headers := w.Header()
-		for _, header := range forward.HopHeaders {
+		for _, header := range hopHeaders {
 			if header == forward.TransferEncoding {
 				headers.Set(header, "chunked")
 			} else {
@@ -372,6 +374,7 @@ func Test_writeHeader(t *testing.T) {
 				"X-Forwarded-Host":         "foo.bar",
 				"X-Forwarded-Uri":          "/path?q=1",
 				"X-Forwarded-Method":       "GET",
+				forward.ProxyAuthenticate:  "ProxyAuthenticate",
 				forward.ProxyAuthorization: "ProxyAuthorization",
 			},
 			checkForUnexpectedHeaders: true,

@@ -32,7 +32,6 @@ const (
 var hopHeaders = []string{
 	forward.Connection,
 	forward.KeepAlive,
-	forward.ProxyAuthenticate,
 	forward.Te, // canonicalized version of "TE"
 	forward.Trailers,
 	forward.TransferEncoding,
@@ -144,7 +143,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		logger.Debugf("Remote error %s. StatusCode: %d", fa.address, forwardResponse.StatusCode)
 
 		utils.CopyHeaders(rw.Header(), forwardResponse.Header)
-		utils.RemoveHeaders(rw.Header(), forward.HopHeaders...)
+		utils.RemoveHeaders(rw.Header(), hopHeaders...)
 
 		// Grab the location header, if any.
 		redirectURL, err := forwardResponse.Location()
