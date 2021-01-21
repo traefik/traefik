@@ -808,6 +808,41 @@ If you want to limit the router scope to a set of entry points, set the entry po
     Hence, only TLS routers will be able to specify a domain name with that rule.
     However, non-TLS routers will have to explicitly use that rule with `*` (every domain) to state that every non-TLS request will be handled by the router.
 
+### Middlewares
+
+You can attach a list of [middlewares](../../middlewares/overview.md) to each TCP router.
+The middlewares will take effect only if the rule matches, and before connecting to the service.
+
+!!! warning "The character `@` is not authorized in the middleware name."
+
+!!! tip "Middlewares order"
+
+    Middlewares are applied in the same order as their declaration in **router**.
+
+??? example "With a [middleware](../../middlewares/tcp/overview.md) -- using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [tcp.routers]
+      [tcp.routers.my-router]
+        rule = "HostSNI(`*`)"
+        # declared elsewhere
+        middlewares = ["ipwhitelist"]
+        service = "service-foo"
+    ```
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    tcp:
+      routers:
+        my-router:
+          rule: "HostSNI(`*`)"
+          # declared elsewhere
+          middlewares:
+          - ipwhitelist
+          service: service-foo
+    ```
+
 ### Services
 
 You must attach a TCP [service](../services/index.md) per TCP router.
