@@ -4,6 +4,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // +genclient
@@ -31,7 +32,7 @@ type MiddlewareSpec struct {
 	IPWhiteList       *dynamic.IPWhiteList           `json:"ipWhiteList,omitempty"`
 	Headers           *dynamic.Headers               `json:"headers,omitempty"`
 	Errors            *ErrorPage                     `json:"errors,omitempty"`
-	RateLimit         *dynamic.RateLimit             `json:"rateLimit,omitempty"`
+	RateLimit         *RateLimit                     `json:"rateLimit,omitempty"`
 	RedirectRegex     *dynamic.RedirectRegex         `json:"redirectRegex,omitempty"`
 	RedirectScheme    *dynamic.RedirectScheme        `json:"redirectScheme,omitempty"`
 	BasicAuth         *BasicAuth                     `json:"basicAuth,omitempty"`
@@ -42,7 +43,7 @@ type MiddlewareSpec struct {
 	CircuitBreaker    *dynamic.CircuitBreaker        `json:"circuitBreaker,omitempty"`
 	Compress          *dynamic.Compress              `json:"compress,omitempty"`
 	PassTLSClientCert *dynamic.PassTLSClientCert     `json:"passTLSClientCert,omitempty"`
-	Retry             *dynamic.Retry                 `json:"retry,omitempty"`
+	Retry             *Retry                         `json:"retry,omitempty"`
 	ContentType       *dynamic.ContentType           `json:"contentType,omitempty"`
 	Plugin            map[string]apiextensionv1.JSON `json:"plugin,omitempty"`
 }
@@ -111,4 +112,22 @@ type MiddlewareList struct {
 	metav1.ListMeta `json:"metadata"`
 
 	Items []Middleware `json:"items"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RateLimit holds the rate limiting configuration for a given router.
+type RateLimit struct {
+	Average         int64                    `json:"average,omitempty"`
+	Period          intstr.IntOrString       `json:"period,omitempty"`
+	Burst           int64                    `json:"burst,omitempty"`
+	SourceCriterion *dynamic.SourceCriterion `json:"sourceCriterion,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Retry holds the retry configuration.
+type Retry struct {
+	Attempts        int                `json:"attempts,omitempty"`
+	InitialInterval intstr.IntOrString `json:"initialInterval,omitempty"`
 }

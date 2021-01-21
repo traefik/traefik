@@ -227,6 +227,18 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
+		rateLimit, err := createRateLimitMiddleware(middleware.Spec.RateLimit)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading rateLimit middleware: %v", err)
+			continue
+		}
+
+		retry, err := createRetryMiddleware(middleware.Spec.Retry)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading retry middleware: %v", err)
+			continue
+		}
+
 		conf.HTTP.Middlewares[id] = &dynamic.Middleware{
 			AddPrefix:         middleware.Spec.AddPrefix,
 			StripPrefix:       middleware.Spec.StripPrefix,
@@ -237,7 +249,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			IPWhiteList:       middleware.Spec.IPWhiteList,
 			Headers:           middleware.Spec.Headers,
 			Errors:            errorPage,
-			RateLimit:         middleware.Spec.RateLimit,
+			RateLimit:         rateLimit,
 			RedirectRegex:     middleware.Spec.RedirectRegex,
 			RedirectScheme:    middleware.Spec.RedirectScheme,
 			BasicAuth:         basicAuth,
@@ -248,7 +260,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			CircuitBreaker:    middleware.Spec.CircuitBreaker,
 			Compress:          middleware.Spec.Compress,
 			PassTLSClientCert: middleware.Spec.PassTLSClientCert,
-			Retry:             middleware.Spec.Retry,
+			Retry:             retry,
 			ContentType:       middleware.Spec.ContentType,
 			Plugin:            plugin,
 		}
@@ -378,6 +390,44 @@ func createPluginMiddleware(pluginSpec map[string]apiextensionv1.JSON) (map[stri
 	}
 
 	return pc, nil
+}
+
+func createRateLimitMiddleware(rateLimit *v1alpha1.RateLimit) (*dynamic.RateLimit, error) {
+	if rateLimit == nil {
+		return nil, nil
+	}
+
+	var period ptypes.Duration
+
+	err := period.Set(rateLimit.Period.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return &dynamic.RateLimit{
+		Average:         rateLimit.Average,
+		Burst:           rateLimit.Burst,
+		Period:          period,
+		SourceCriterion: rateLimit.SourceCriterion,
+	}, nil
+}
+
+func createRetryMiddleware(retry *v1alpha1.Retry) (*dynamic.Retry, error) {
+	if retry == nil {
+		return nil, nil
+	}
+
+	var initialInterval ptypes.Duration
+
+	err := initialInterval.Set(retry.InitialInterval.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return &dynamic.Retry{
+		Attempts:        retry.Attempts,
+		InitialInterval: initialInterval,
+	}, nil
 }
 
 func (p *Provider) createErrorPageMiddleware(client Client, namespace string, errorPage *v1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
