@@ -23,6 +23,8 @@ import (
 func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, certInfo *connectCert) *dynamic.Configuration {
 	configurations := make(map[string]*dynamic.Configuration)
 
+	transports := make(map[string]*dynamic.ServersTransport)
+
 	for _, item := range items {
 		svcName := provider.Normalize(item.Node + "-" + item.Name + "-" + item.ID)
 		ctxSvc := log.With(ctx, log.Str(log.ServiceName, svcName))
@@ -69,12 +71,15 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 			continue
 		}
 
-		if len(confFromLabel.HTTP.ServersTransports) == 0 {
-			confFromLabel.HTTP.ServersTransports = make(map[string]*dynamic.ServersTransport)
-		}
-
 		if item.ConnectEnabled {
-			confFromLabel.HTTP.ServersTransports[connectTransportName(item.Name)] = certInfo.serverTransport(item)
+			transportName := connectTransportName(item.Name)
+			if transports[transportName] == nil {
+				transports[transportName] = certInfo.serverTransport(item)
+			}
+			if len(confFromLabel.HTTP.ServersTransports) == 0 {
+				confFromLabel.HTTP.ServersTransports = make(map[string]*dynamic.ServersTransport)
+			}
+			confFromLabel.HTTP.ServersTransports[transportName] = transports[transportName]
 		}
 
 		err = p.buildServiceConfiguration(ctxSvc, item, confFromLabel.HTTP)
