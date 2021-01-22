@@ -10,17 +10,18 @@ import (
 // IngressRouteSpec is a specification for a IngressRouteSpec resource.
 type IngressRouteSpec struct {
 	Routes      []Route  `json:"routes"`
-	EntryPoints []string `json:"entryPoints"`
+	EntryPoints []string `json:"entryPoints,omitempty"`
 	TLS         *TLS     `json:"tls,omitempty"`
 }
 
 // Route contains the set of routes.
 type Route struct {
-	Match       string          `json:"match"`
+	Match string `json:"match"`
+	// +kubebuilder:validation:Enum=Rule
 	Kind        string          `json:"kind"`
-	Priority    int             `json:"priority"`
+	Priority    int             `json:"priority,omitempty"`
 	Services    []Service       `json:"services,omitempty"`
-	Middlewares []MiddlewareRef `json:"middlewares"`
+	Middlewares []MiddlewareRef `json:"middlewares,omitempty"`
 }
 
 // TLS contains the TLS certificates configuration of the routes.
@@ -34,7 +35,7 @@ type Route struct {
 type TLS struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the
 	// certificate details.
-	SecretName string `json:"secretName"`
+	SecretName string `json:"secretName,omitempty"`
 	// Options is a reference to a TLSOption, that specifies the parameters of the TLS connection.
 	Options *TLSOptionRef `json:"options,omitempty"`
 	// Store is a reference to a TLSStore, that specifies the parameters of the TLS store.
@@ -46,13 +47,13 @@ type TLS struct {
 // TLSOptionRef is a ref to the TLSOption resources.
 type TLSOptionRef struct {
 	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	Namespace string `json:"namespace,omitempty"`
 }
 
 // TLSStoreRef is a ref to the TLSStore resource.
 type TLSStoreRef struct {
 	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	Namespace string `json:"namespace,omitempty"`
 }
 
 // LoadBalancerSpec can reference either a Kubernetes Service object (a load-balancer of servers),
@@ -61,13 +62,15 @@ type LoadBalancerSpec struct {
 	// Name is a reference to a Kubernetes Service object (for a load-balancer of servers),
 	// or to a TraefikService object (service load-balancer, mirroring, etc).
 	// The differentiation between the two is specified in the Kind field.
-	Name      string          `json:"name"`
-	Kind      string          `json:"kind"`
-	Namespace string          `json:"namespace"`
+	Name string `json:"name"`
+	// +kubebuilder:validation:Enum=Service;TraefikService
+	Kind      string          `json:"kind,omitempty"`
+	Namespace string          `json:"namespace,omitempty"`
 	Sticky    *dynamic.Sticky `json:"sticky,omitempty"`
 
 	// Port and all the fields below are related to a servers load-balancer,
 	// and therefore should only be specified when Name references a Kubernetes Service.
+
 	Port               intstr.IntOrString          `json:"port"`
 	Scheme             string                      `json:"scheme,omitempty"`
 	Strategy           string                      `json:"strategy,omitempty"`
@@ -88,7 +91,7 @@ type Service struct {
 // MiddlewareRef is a ref to the Middleware resources.
 type MiddlewareRef struct {
 	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	Namespace string `json:"namespace,omitempty"`
 }
 
 // +genclient

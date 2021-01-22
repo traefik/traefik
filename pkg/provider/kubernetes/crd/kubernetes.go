@@ -377,13 +377,12 @@ func getServicePort(svc *corev1.Service, port intstr.IntOrString) (*corev1.Servi
 }
 
 func createPluginMiddleware(pluginSpec map[string]apiextensionv1.JSON) (map[string]dynamic.PluginConf, error) {
-	pc := map[string]dynamic.PluginConf{}
-
 	data, err := json.Marshal(pluginSpec)
 	if err != nil {
 		return nil, err
 	}
 
+	pc := map[string]dynamic.PluginConf{}
 	err = json.Unmarshal(data, &pc)
 	if err != nil {
 		return nil, err
