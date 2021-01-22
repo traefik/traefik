@@ -235,6 +235,20 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		return nil, err
 	}
 
+	// Providers plugins
+
+	for s, i := range staticConfiguration.Providers.Plugin {
+		p, err := pluginBuilder.BuildProvider(s, i)
+		if err != nil {
+			return nil, err
+		}
+
+		err = providerAggregator.AddProvider(p)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// Metrics
 
 	metricRegistries := registerMetricClients(staticConfiguration.Metrics)
