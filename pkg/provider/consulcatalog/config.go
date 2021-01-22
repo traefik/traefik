@@ -133,7 +133,7 @@ func (c *connectCert) serverTransport(item itemData) *dynamic.ServersTransport {
 		Certificates: tls.Certificates{
 			c.getLeaf(),
 		},
-		VerifyConnection: func(cfg *gtls.Config, cs gtls.ConnectionState) error {
+		VerifyPeerCertificate: func(cfg *gtls.Config, rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
 			// This is basically what Go itself does sans the hostname validation
 			t := cfg.Time
 			if t == nil {
@@ -144,10 +144,21 @@ func (c *connectCert) serverTransport(item itemData) *dynamic.ServersTransport {
 				CurrentTime:   t(),
 				Intermediates: x509.NewCertPool(),
 			}
-			for _, cert := range cs.PeerCertificates[1:] {
+
+			certs := make([]*x509.Certificate, len(rawCerts))
+			for i, asn1Data := range rawCerts {
+				cert, err := x509.ParseCertificate(asn1Data)
+				if err != nil {
+					return errors.New("tls: failed to parse certificate from peer: " + err.Error())
+				}
+				certs[i] = cert
+			}
+
+			for _, cert := range certs[1:] {
 				opts.Intermediates.AddCert(cert)
 			}
-			cert := cs.PeerCertificates[0]
+
+			cert := certs[0]
 			_, err := cert.Verify(opts)
 			if err != nil {
 				return err

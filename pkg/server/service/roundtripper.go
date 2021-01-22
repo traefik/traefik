@@ -132,16 +132,16 @@ func createRoundTripper(cfg *dynamic.ServersTransport) (http.RoundTripper, error
 		transport.IdleConnTimeout = time.Duration(cfg.ForwardingTimeouts.IdleConnTimeout)
 	}
 
-	if cfg.InsecureSkipVerify || len(cfg.RootCAs) > 0 || len(cfg.ServerName) > 0 || len(cfg.Certificates) > 0 {
+	if cfg.InsecureSkipVerify || len(cfg.RootCAs) > 0 || len(cfg.ServerName) > 0 || len(cfg.Certificates) > 0 || cfg.VerifyPeerCertificate != nil {
 		transport.TLSClientConfig = &tls.Config{
 			ServerName:         cfg.ServerName,
 			InsecureSkipVerify: cfg.InsecureSkipVerify,
 			RootCAs:            createRootCACertPool(cfg.RootCAs),
 			Certificates:       cfg.Certificates.GetCertificates(),
 		}
-		if cfg.VerifyConnection != nil {
-			transport.TLSClientConfig.VerifyConnection = func(cs tls.ConnectionState) error {
-				return cfg.VerifyConnection(transport.TLSClientConfig, cs)
+		if cfg.VerifyPeerCertificate != nil {
+			transport.TLSClientConfig.VerifyPeerCertificate = func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+				return cfg.VerifyPeerCertificate(transport.TLSClientConfig, rawCerts, verifiedChains)
 			}
 		}
 	}
