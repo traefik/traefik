@@ -514,14 +514,24 @@ func loadCASecret(namespace, secretName string, k8sClient Client) (string, error
 	if secret == nil {
 		return "", fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
 	}
-	if len(secret.Data) != 1 {
-		return "", fmt.Errorf("found %d elements for secret '%s/%s', must be single element exactly", len(secret.Data), namespace, secretName)
+
+	caCrtData, caCrtExists := secret.Data["ca.crt"]
+	if caCrtExists {
+		return string(caCrtData), nil
 	}
 
+	// Fall back to tls.ca if ca.crt is missing.
+	tlsCAData, tlsCAExists := secret.Data["tls.ca"]
+	if tlsCAExists {
+		return string(tlsCAData), nil
+	}
+
+	// Just use the first string as ca if both ca.crt and tls.ca is missing for backwards compatibility.
 	for _, v := range secret.Data {
 		return string(v), nil
 	}
-	return "", nil
+
+	return "", fmt.Errorf("secret %s/%s is missing ca.crt or tls.ca", namespace, secretName)
 }
 
 func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, string, error) {
@@ -535,8 +545,8 @@ func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, 
 	if secret == nil {
 		return "", "", fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
 	}
-	if len(secret.Data) != 2 {
-		return "", "", fmt.Errorf("found %d elements for secret '%s/%s', must be two elements exactly", len(secret.Data), namespace, secretName)
+	if len(secret.Data) < 2 {
+		return "", "", fmt.Errorf("found %d elements for secret '%s/%s', must be at least two elements", len(secret.Data), namespace, secretName)
 	}
 
 	return getCertificateBlocks(secret, namespace, secretName)

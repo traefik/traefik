@@ -21,6 +21,27 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
+  name: rootCas3
+  namespace: foo
+
+data:
+  ca.crt: VEVTVFJPT1RDQVMz
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rootCas4
+  namespace: foo
+
+data:
+  tls.ca: VEVTVFJPT1RDQVM0
+  ca.crt: VEVTVFJPT1RDQVM1 # <-- This should be the prefered one.
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
   name: mtls1
   namespace: foo
 
@@ -40,6 +61,18 @@ data:
   tls.key: VEVTVEtFWTI=
 
 ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mtls3
+  namespace: foo
+
+data:
+  ca.crt: VEVTVFJPT1RDQVMz
+  tls.crt: VEVTVENFUlQz
+  tls.key: VEVTVEtFWTM=
+
+---
 apiVersion: traefik.containo.us/v1alpha1
 kind: ServersTransport
 metadata:
@@ -53,9 +86,12 @@ spec:
   rootCAsSecrets:
   - rootCas1
   - rootCas2
+  - rootCas3
+  - rootCas4
   certificatesSecrets:
   - mtls1
   - mtls2
+  - mtls3
   forwardingTimeouts:
     dialTimeout: 42
     responseHeaderTimeout: 42s

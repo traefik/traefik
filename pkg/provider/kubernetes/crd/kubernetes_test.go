@@ -3444,10 +3444,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"test": {
 							ServerName:         "test",
 							InsecureSkipVerify: true,
-							RootCAs:            []tls.FileOrContent{"TESTROOTCAS", "TESTROOTCAS2"},
+							RootCAs:            []tls.FileOrContent{"TESTROOTCAS", "TESTROOTCAS2", "TESTROOTCAS3", "TESTROOTCAS5"},
 							Certificates: tls.Certificates{
 								{CertFile: "TESTCERT1", KeyFile: "TESTKEY1"},
 								{CertFile: "TESTCERT2", KeyFile: "TESTKEY2"},
+								{CertFile: "TESTCERT3", KeyFile: "TESTKEY3"},
 							},
 							MaxIdleConnsPerHost: 42,
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
