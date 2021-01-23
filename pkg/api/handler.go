@@ -160,8 +160,7 @@ func extractType(element interface{}) string {
 		field := v.Field(i)
 
 		if field.Kind() == reflect.Map && field.Type().Elem() == reflect.TypeOf(dynamic.PluginConf{}) {
-			keys := field.MapKeys()
-			if len(keys) == 1 {
+			if keys := field.MapKeys(); len(keys) == 1 {
 				return keys[0].String()
 			}
 		}
