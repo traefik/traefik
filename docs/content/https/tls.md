@@ -14,7 +14,7 @@ See the [Let's Encrypt](./acme.md) page.
 To add / remove TLS certificates, even when Traefik is already running, their definition can be added to the [dynamic configuration](../getting-started/configuration-overview.md), in the `[[tls.certificates]]` section:
 
 ```toml tab="File (TOML)"
-# Dynamic configuration
+# Dynamic configuration only; don't put this in the static traefik.toml
 
 [[tls.certificates]]
   certFile = "/path/to/domain.cert"
@@ -26,7 +26,7 @@ To add / remove TLS certificates, even when Traefik is already running, their de
 ```
 
 ```yaml tab="File (YAML)"
-# Dynamic configuration
+# Dynamic configuration only; don't put this in the static traefik.yml
 
 tls:
   certificates:
@@ -47,14 +47,14 @@ tls:
 In Traefik, certificates are grouped together in certificates stores, which are defined as such:
 
 ```toml tab="File (TOML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 [tls.stores]
   [tls.stores.default]
 ```
 
 ```yaml tab="File (YAML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 tls:
   stores:
@@ -69,7 +69,7 @@ tls:
 In the `tls.certificates` section, a list of stores can then be specified to indicate where the certificates should be stored:
 
 ```toml tab="File (TOML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 [[tls.certificates]]
   certFile = "/path/to/domain.cert"
@@ -84,7 +84,7 @@ In the `tls.certificates` section, a list of stores can then be specified to ind
 ```
 
 ```yaml tab="File (YAML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 tls:
   certificates:
@@ -108,7 +108,7 @@ Traefik can use a default certificate for connections without a SNI, or without 
 This default certificate should be defined in a TLS store:
 
 ```toml tab="File (TOML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 [tls.stores]
   [tls.stores.default]
@@ -118,7 +118,7 @@ This default certificate should be defined in a TLS store:
 ```
 
 ```yaml tab="File (YAML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 tls:
   stores:
@@ -156,7 +156,7 @@ The TLS options allow one to configure some parameters of the TLS connection.
 ### Minimum TLS Version
 
 ```toml tab="File (TOML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 [tls.options]
 
@@ -168,7 +168,7 @@ The TLS options allow one to configure some parameters of the TLS connection.
 ```
 
 ```yaml tab="File (YAML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 tls:
   options:
@@ -207,7 +207,7 @@ We discourage the use of this setting to disable TLS1.3.
 The recommended approach is to update the clients to support TLS1.3.
 
 ```toml tab="File (TOML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 [tls.options]
 
@@ -219,7 +219,7 @@ The recommended approach is to update the clients to support TLS1.3.
 ```
 
 ```yaml tab="File (YAML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 tls:
   options:
@@ -256,7 +256,7 @@ spec:
 See [cipherSuites](https://godoc.org/crypto/tls#pkg-constants) for more information.
 
 ```toml tab="File (TOML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 [tls.options]
   [tls.options.default]
@@ -266,7 +266,7 @@ See [cipherSuites](https://godoc.org/crypto/tls#pkg-constants) for more informat
 ```
 
 ```yaml tab="File (YAML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 tls:
   options:
@@ -302,7 +302,7 @@ The names of the curves defined by [`crypto`](https://godoc.org/crypto/tls#Curve
 See [CurveID](https://godoc.org/crypto/tls#CurveID) for more information.
 
 ```toml tab="File (TOML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 [tls.options]
   [tls.options.default]
@@ -310,7 +310,7 @@ See [CurveID](https://godoc.org/crypto/tls#CurveID) for more information.
 ```
 
 ```yaml tab="File (YAML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 tls:
   options:
@@ -339,7 +339,7 @@ With strict SNI checking enabled, Traefik won't allow connections from clients
 that do not specify a server_name extension or don't match any certificate configured on the tlsOption.
 
 ```toml tab="File (TOML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 [tls.options]
   [tls.options.default]
@@ -347,7 +347,7 @@ that do not specify a server_name extension or don't match any certificate confi
 ```
 
 ```yaml tab="File (YAML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 tls:
   options:
@@ -372,7 +372,7 @@ This option allows the server to choose its most preferred cipher suite instead 
 Please note that this is enabled automatically when `minVersion` or `maxVersion` are set.
 
 ```toml tab="File (TOML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 [tls.options]
   [tls.options.default]
@@ -380,7 +380,7 @@ Please note that this is enabled automatically when `minVersion` or `maxVersion`
 ```
 
 ```yaml tab="File (YAML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 tls:
   options:
@@ -414,7 +414,7 @@ The `clientAuth.clientAuthType` option governs the behaviour as follows:
 - `RequireAndVerifyClientCert`: requires a certificate, which must be signed by a CA listed in `clientAuth.caFiles`. 
 
 ```toml tab="File (TOML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 [tls.options]
   [tls.options.default]
@@ -425,7 +425,7 @@ The `clientAuth.clientAuthType` option governs the behaviour as follows:
 ```
 
 ```yaml tab="File (YAML)"
-# Dynamic configuration
+# Dynamic configuration only
 
 tls:
   options:
