@@ -395,7 +395,7 @@ or [marathon](../providers/marathon.md#service-definition) documentation.
 
 #### General
 
- When a TLS section is specified, it instructs Traefik that the current router is dedicated to HTTPS requests only (and that the router should ignore HTTP (non TLS) requests).
+When a TLS section is specified, it instructs Traefik that the current router is dedicated to HTTPS requests only (and that the router should ignore HTTP (non TLS) requests).
 Traefik will terminate the SSL connections (meaning that it will send decrypted data to the services).
 
 ??? example "Configuring the router to accept HTTPS requests only"
@@ -635,6 +635,21 @@ The [supported `provider` table](../../https/acme.md#providers) indicates if the
 
 !!! warning "Double Wildcard Certificates"
     It is not possible to request a double wildcard certificate for a domain (for example `*.*.local.com`).
+
+### HTTPS endpoints
+
+For HTTPS endpoints one needs to specifiy the `loadbalancer.server.scheme=https` field withing the `routers` configuration. For example for the Docker provider, specify labels such as these:
+```yaml tab="Docker Compose"
+services:
+  web:
+    ...
+    expose:
+      - 443
+    labels:
+      ...
+      - 'traefik.http.services.web.loadbalancer.server.port=443'
+      - 'traefik.http.services.web.loadbalancer.server.scheme=https'
+```
 
 ## Configuring TCP Routers
 
