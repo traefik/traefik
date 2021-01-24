@@ -639,6 +639,7 @@ The [supported `provider` table](../../https/acme.md#providers) indicates if the
 ### HTTPS endpoints
 
 For HTTPS endpoints one needs to specifiy the `loadbalancer.server.scheme=https` field withing the `routers` configuration. For example for the Docker provider, specify labels such as these:
+
 ```yaml tab="Docker Compose"
 services:
   web:
