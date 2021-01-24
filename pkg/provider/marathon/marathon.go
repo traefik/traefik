@@ -215,7 +215,6 @@ func (p *Provider) validateQueryParameters() (url.Values, error) {
 	values := url.Values{}
 
 	m, err := url.ParseQuery(p.QueryParameters)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse QueryParameters: %w", err)
 	}
@@ -230,7 +229,6 @@ func (p *Provider) validateQueryParameters() (url.Values, error) {
 }
 
 func (p *Provider) getApplications() (*marathon.Applications, error) {
-
 	v, err := p.validateQueryParameters()
 	if err != nil {
 		return nil, err
