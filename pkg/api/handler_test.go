@@ -171,3 +171,112 @@ func TestHandler_RawData(t *testing.T) {
 		})
 	}
 }
+
+func TestHandler_GetMiddleware(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		middlewareName string
+		conf           runtime.Configuration
+		expectedStatus int
+		expected       interface{}
+	}{
+		{
+			desc:           "Middleware not found",
+			middlewareName: "auth@myprovider",
+			conf: runtime.Configuration{
+				Middlewares: map[string]*runtime.MiddlewareInfo{},
+			},
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			desc:           "Get middleware",
+			middlewareName: "auth@myprovider",
+			conf: runtime.Configuration{
+				Middlewares: map[string]*runtime.MiddlewareInfo{
+					"auth@myprovider": {
+						Middleware: &dynamic.Middleware{
+							BasicAuth: &dynamic.BasicAuth{
+								Users: []string{"admin:admin"},
+							},
+						},
+					},
+				},
+			},
+			expectedStatus: http.StatusOK,
+			expected: middlewareRepresentation{
+				MiddlewareInfo: &runtime.MiddlewareInfo{
+					Middleware: &dynamic.Middleware{
+						BasicAuth: &dynamic.BasicAuth{
+							Users: []string{"admin:admin"},
+						},
+					},
+				},
+				Name:     "auth@myprovider",
+				Provider: "myprovider",
+				Type:     "basicauth",
+			},
+		},
+		{
+			desc:           "Get plugin middleware",
+			middlewareName: "myplugin@myprovider",
+			conf: runtime.Configuration{
+				Middlewares: map[string]*runtime.MiddlewareInfo{
+					"myplugin@myprovider": {
+						Middleware: &dynamic.Middleware{
+							Plugin: map[string]dynamic.PluginConf{
+								"mysuperplugin": {
+									"foo": "bar",
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedStatus: http.StatusOK,
+			expected: middlewareRepresentation{
+				MiddlewareInfo: &runtime.MiddlewareInfo{
+					Middleware: &dynamic.Middleware{
+						Plugin: map[string]dynamic.PluginConf{
+							"mysuperplugin": {
+								"foo": "bar",
+							},
+						},
+					},
+				},
+				Name:     "myplugin@myprovider",
+				Provider: "myprovider",
+				Type:     "mysuperplugin",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			handler := New(static.Configuration{API: &static.API{}, Global: &static.Global{}}, &test.conf)
+			server := httptest.NewServer(handler.createRouter())
+
+			resp, err := http.DefaultClient.Get(server.URL + "/api/http/middlewares/" + test.middlewareName)
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expectedStatus, resp.StatusCode)
+
+			if test.expected == nil {
+				return
+			}
+
+			data, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+
+			err = resp.Body.Close()
+			require.NoError(t, err)
+
+			expected, err := json.Marshal(test.expected)
+			require.NoError(t, err)
+
+			assert.JSONEq(t, string(expected), string(data))
+		})
+	}
+}
