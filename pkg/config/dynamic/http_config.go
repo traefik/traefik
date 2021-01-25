@@ -228,7 +228,7 @@ type ServersTransport struct {
 	ForwardingTimeouts  *ForwardingTimeouts `description:"Timeouts for requests forwarded to the backend servers." json:"forwardingTimeouts,omitempty" toml:"forwardingTimeouts,omitempty" yaml:"forwardingTimeouts,omitempty" export:"true"`
 	DisableHTTP2        bool                `description:"Disable HTTP/2 for connections with backend servers." json:"disableHTTP2,omitempty" toml:"disableHTTP2,omitempty" yaml:"disableHTTP2,omitempty" export:"true"`
 	// TODO: Verify with traefik team if there is a better way to expose this
-	VerifyPeerCertificate func(cfg *gtls.Config, rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error `json:"-"`
+	VerifyPeerCertificate func(cfg *gtls.Config, rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error `json:"-" hash:"-"`
 }
 
 // +k8s:deepcopy-gen=true
