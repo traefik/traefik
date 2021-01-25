@@ -145,7 +145,7 @@ _Optional, Default=empty_
 ```yaml tab="File (YAML)"
 providers:
   kubernetesGateway:
-    token = "mytoken"
+    token: "mytoken"
     # ...
 ```
 
