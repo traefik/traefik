@@ -81,10 +81,12 @@ func checkDevPluginConfiguration(plugin *DevPlugin) error {
 		return err
 	}
 
-	// FIXME provider
-	// if m.Type != "middleware" {
-	// 	return errors.New("unsupported type")
-	// }
+	switch m.Type {
+	case "middleware", "provider":
+		// noop
+	default:
+		return errors.New("unsupported type")
+	}
 
 	if m.Import == "" {
 		return errors.New("missing import")
