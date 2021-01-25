@@ -32,19 +32,18 @@ const (
 var _ provider.Provider = (*Provider)(nil)
 
 type itemData struct {
-	ID                 string
-	Node               string
-	Datacenter         string
-	Name               string
-	Namespace          string
-	Address            string
-	Port               string
-	Status             string
-	Labels             map[string]string
-	Tags               []string
-	ConnectEnabled     bool
-	ConnectDestination string
-	ExtraConf          configuration
+	ID             string
+	Node           string
+	Datacenter     string
+	Name           string
+	Namespace      string
+	Address        string
+	Port           string
+	Status         string
+	Labels         map[string]string
+	Tags           []string
+	ConnectEnabled bool
+	ExtraConf      configuration
 }
 
 // Provider holds configurations of the provider.
@@ -59,6 +58,7 @@ type Provider struct {
 	ExposedByDefault  bool            `description:"Expose containers by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
 	DefaultRule       string          `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 	ConnectAware      bool            `description:"Enable Consul Connect support." json:"connectAware,omitempty" toml:"connectAware,omitempty" yaml:"connectAware,omitempty"`
+	ConnectByDefault  bool            `description:"Automatically connect to a service via Consul connect." json:"connectByDefault,omitempty" toml:"connectByDefault,omitempty" yaml:"connectByDefault,omitempty"`
 	ServiceName       string          `description:"Name of the traefik service in Consul Catalog." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty"`
 	ServicePort       int             `description:"Port of the traefik service to register in Consul Catalog" json:"servicePort,omitempty" toml:"servicePort,omitempty" yaml:"servicePort,omitempty"`
 
@@ -99,6 +99,7 @@ func (p *Provider) SetDefaults() {
 	p.ExposedByDefault = true
 	p.DefaultRule = DefaultTemplateRule
 	p.ConnectAware = false
+	p.ConnectByDefault = false
 	p.certChan = make(chan *connectCert)
 }
 
@@ -204,8 +205,8 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 	}
 
 	var data []itemData
-	for _, name := range consulServiceNames {
-		consulServices, statuses, err := p.fetchService(ctx, name)
+	for name, connectEnabled := range consulServiceNames {
+		consulServices, statuses, err := p.fetchService(ctx, name, connectEnabled)
 		if err != nil {
 			return nil, err
 		}
@@ -230,17 +231,13 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 				Node:           consulService.Node,
 				Datacenter:     consulService.Datacenter,
 				Namespace:      namespace,
-				Name:           consulService.ServiceName,
+				Name:           name,
 				Address:        address,
 				Port:           strconv.Itoa(consulService.ServicePort),
 				Labels:         tagsToNeutralLabels(consulService.ServiceTags, p.Prefix),
 				Tags:           consulService.ServiceTags,
 				Status:         status,
-				ConnectEnabled: isConnectProxy(consulService),
-			}
-
-			if item.ConnectEnabled {
-				item.ConnectDestination = consulService.ServiceProxy.DestinationServiceName
+				ConnectEnabled: connectEnabled,
 			}
 
 			extraConf, err := p.getConfiguration(item)
@@ -256,15 +253,7 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 	return data, nil
 }
 
-func isConnectProxy(service *api.CatalogService) bool {
-	if service.ServiceProxy == nil {
-		return false
-	}
-
-	return service.ServiceProxy.DestinationServiceID != ""
-}
-
-func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.CatalogService, map[string]string, error) {
+func (p *Provider) fetchService(ctx context.Context, name string, connectEnabled bool) ([]*api.CatalogService, map[string]string, error) {
 	var tagFilter string
 	if !p.ExposedByDefault {
 		tagFilter = p.Prefix + ".enable=true"
@@ -273,12 +262,19 @@ func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.Catalo
 	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache}
 	opts = opts.WithContext(ctx)
 
-	consulServices, _, err := p.client.Catalog().Service(name, tagFilter, opts)
+	catalogFunc := p.client.Catalog().Service
+	healthFunc := p.client.Health().Service
+	if connectEnabled {
+		catalogFunc = p.client.Catalog().Connect
+		healthFunc = p.client.Health().Connect
+	}
+
+	consulServices, _, err := catalogFunc(name, tagFilter, opts)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	healthServices, _, err := p.client.Health().Service(name, tagFilter, false, opts)
+	healthServices, _, err := healthFunc(name, tagFilter, false, opts)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -297,7 +293,7 @@ func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.Catalo
 	return consulServices, statuses, err
 }
 
-func (p *Provider) fetchServices(ctx context.Context) ([]string, error) {
+func (p *Provider) fetchServices(ctx context.Context) (map[string]bool, error) {
 	// The query option "Filter" is not supported by /catalog/services.
 	// https://www.consul.io/api/catalog.html#list-services
 	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache}
@@ -306,9 +302,9 @@ func (p *Provider) fetchServices(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 
+	filtered := make(map[string]bool)
 	// The keys are the service names, and the array values provide all known tags for a given service.
 	// https://www.consul.io/api/catalog.html#list-services
-	var filtered []string
 	for svcName, tags := range serviceNames {
 		logger := log.FromContext(log.With(ctx, log.Str("serviceName", svcName)))
 
@@ -333,7 +329,14 @@ func (p *Provider) fetchServices(ctx context.Context) ([]string, error) {
 			continue
 		}
 
-		filtered = append(filtered, svcName)
+		connect := p.ConnectByDefault
+		if contains(tags, p.Prefix+".connect=true") {
+			connect = true
+		} else if contains(tags, p.Prefix+".connect=false") {
+			connect = false
+		}
+
+		filtered[svcName] = connect
 	}
 
 	return filtered, err

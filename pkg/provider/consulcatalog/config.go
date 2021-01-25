@@ -180,7 +180,7 @@ func (c *connectCert) serverTransport(item itemData) *dynamic.ServersTransport {
 			expectURI.Host = gotURI.Host
 			expectURI.Scheme = "spiffe"
 			expectURI.Path = fmt.Sprintf("/ns/%s/dc/%s/svc/%s",
-				item.Namespace, item.Datacenter, item.ConnectDestination)
+				item.Namespace, item.Datacenter, item.Name)
 
 			if strings.EqualFold(gotURI.String(), expectURI.String()) {
 				return nil
