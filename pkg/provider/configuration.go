@@ -307,6 +307,7 @@ func AddRouter(configuration *dynamic.HTTPConfiguration, routerName string, rout
 	return reflect.DeepEqual(configuration.Routers[routerName], router)
 }
 
+// AddTransport Adds a transport to a configurations.
 func AddTransport(configuration *dynamic.HTTPConfiguration, transportName string, transport *dynamic.ServersTransport) bool {
 	if _, ok := configuration.ServersTransports[transportName]; !ok {
 		configuration.ServersTransports[transportName] = transport

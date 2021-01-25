@@ -8,13 +8,12 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"
+	"github.com/hashicorp/consul/api"
 	"github.com/hashicorp/consul/api/watch"
 	"github.com/hashicorp/go-hclog"
 	"github.com/sirupsen/logrus"
-
-	"github.com/cenkalti/backoff/v4"
-	"github.com/hashicorp/consul/api"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/job"
@@ -381,7 +380,7 @@ func (p *Provider) registerConnectService(ctx context.Context) {
 
 		err = client.Agent().ServiceRegister(regReq)
 		if err != nil {
-			return fmt.Errorf("failed to register service in consul catalog. %s", err)
+			return fmt.Errorf("failed to register service in consul catalog. %w", err)
 		}
 
 		return nil
@@ -404,7 +403,7 @@ func (p *Provider) registerConnectService(ctx context.Context) {
 	}
 }
 
-func rootsWatchHandler(logger log.Logger, dest chan<- []string) func(watch.BlockingParamVal, interface{}) {
+func rootsWatchHandler(ctx context.Context, dest chan<- []string) func(watch.BlockingParamVal, interface{}) {
 	return func(_ watch.BlockingParamVal, raw interface{}) {
 		if raw == nil {
 			return
@@ -412,7 +411,7 @@ func rootsWatchHandler(logger log.Logger, dest chan<- []string) func(watch.Block
 
 		v, ok := raw.(*api.CARootList)
 		if !ok || v == nil {
-			logger.Errorf("invalid result for root certificate watcher")
+			log.FromContext(ctx).Errorf("invalid result for root certificate watcher")
 			return
 		}
 
@@ -430,7 +429,7 @@ type keyPair struct {
 	key  string
 }
 
-func leafWatcherHandler(logger log.Logger, dest chan<- keyPair) func(watch.BlockingParamVal, interface{}) {
+func leafWatcherHandler(ctx context.Context, dest chan<- keyPair) func(watch.BlockingParamVal, interface{}) {
 	return func(_ watch.BlockingParamVal, raw interface{}) {
 		if raw == nil {
 			return
@@ -438,7 +437,7 @@ func leafWatcherHandler(logger log.Logger, dest chan<- keyPair) func(watch.Block
 
 		v, ok := raw.(*api.LeafCert)
 		if !ok || v == nil {
-			logger.Errorf("invalid result for leaf certificate watcher")
+			log.FromContext(ctx).Errorf("invalid result for leaf certificate watcher")
 			return
 		}
 
@@ -463,7 +462,6 @@ func (p *Provider) watchConnectTLS(ctx context.Context) {
 		"type":    "connect_leaf",
 		"service": p.ServiceName,
 	})
-
 	if err != nil {
 		logger.WithError(err).Error("failed to create leaf cert watcher plan")
 		return
@@ -472,7 +470,6 @@ func (p *Provider) watchConnectTLS(ctx context.Context) {
 	rootWatcher, err := watch.Parse(map[string]interface{}{
 		"type": "connect_roots",
 	})
-
 	if err != nil {
 		logger.WithError(err).Error("failed to create root cert watcher plan")
 	}
@@ -480,8 +477,8 @@ func (p *Provider) watchConnectTLS(ctx context.Context) {
 	leafChan := make(chan keyPair)
 	rootChan := make(chan []string)
 
-	leafWatcher.HybridHandler = leafWatcherHandler(logger, leafChan)
-	rootWatcher.HybridHandler = rootsWatchHandler(logger, rootChan)
+	leafWatcher.HybridHandler = leafWatcherHandler(ctx, leafChan)
+	rootWatcher.HybridHandler = rootsWatchHandler(ctx, rootChan)
 
 	logOpts := &hclog.LoggerOptions{
 		Name:       "consulcatalog",
