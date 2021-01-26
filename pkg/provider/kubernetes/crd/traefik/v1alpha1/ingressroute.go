@@ -71,7 +71,7 @@ type LoadBalancerSpec struct {
 	// Port and all the fields below are related to a servers load-balancer,
 	// and therefore should only be specified when Name references a Kubernetes Service.
 
-	Port               intstr.IntOrString          `json:"port"`
+	Port               intstr.IntOrString          `json:"port,omitempty"`
 	Scheme             string                      `json:"scheme,omitempty"`
 	Strategy           string                      `json:"strategy,omitempty"`
 	PassHostHeader     *bool                       `json:"passHostHeader,omitempty"`
