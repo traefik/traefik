@@ -9,7 +9,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
 
     ```yaml tab="Resource Definition"
     # All resources definition must be declared
-    --8<-- "content/reference/dynamic-configuration/kubernetes-crd-definition.yml"
+    --8<-- "content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml"
     ```
     
     ```yaml tab="RBAC"

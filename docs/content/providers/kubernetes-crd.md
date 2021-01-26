@@ -24,7 +24,7 @@ the Traefik engineering team developed a [Custom Resource Definition](https://ku
 
     ```yaml tab="Traefik Resource Definition"
     # All resources definition must be declared
-    --8<-- "content/reference/dynamic-configuration/kubernetes-crd-definition.yml"
+    --8<-- "content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml"
     ```
 
     ```yaml tab="RBAC for Traefik CRD"

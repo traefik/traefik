@@ -31,6 +31,6 @@ cp -r "${REPO_ROOT}"/"${TRAEFIK_MODULE_VERSION:?}"/* "${REPO_ROOT}"; rm -rf "${R
 go run "${REPO_ROOT}"/vendor/sigs.k8s.io/controller-tools/cmd/controller-gen \
   crd:crdVersions=v1 \
   paths="${REPO_ROOT}"/pkg/provider/kubernetes/crd/traefik/v1alpha1/... \
-  output:crd:dir="${REPO_ROOT}"/docs/content/reference/dynamic-configuration/crds
+  output:dir="${REPO_ROOT}"/docs/content/reference/dynamic-configuration/
 
 rm -rf "${REPO_ROOT}"/vendor
