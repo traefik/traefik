@@ -573,7 +573,7 @@ that will be set as client certificates for mTLS.
 http:
   serversTransports:
     mytransport:
-      certficates:
+      certificates:
         - certFile: foo.crt
           keyFile: bar.crt
 ```
