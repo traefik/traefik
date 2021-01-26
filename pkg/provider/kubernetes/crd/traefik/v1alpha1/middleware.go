@@ -119,8 +119,8 @@ type MiddlewareList struct {
 // RateLimit holds the rate limiting configuration for a given router.
 type RateLimit struct {
 	Average         int64                    `json:"average,omitempty"`
-	Period          intstr.IntOrString       `json:"period,omitempty"`
-	Burst           int64                    `json:"burst,omitempty"`
+	Period          *intstr.IntOrString      `json:"period,omitempty"`
+	Burst           *int64                   `json:"burst,omitempty"`
 	SourceCriterion *dynamic.SourceCriterion `json:"sourceCriterion,omitempty"`
 }
 

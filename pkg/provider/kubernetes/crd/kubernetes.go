@@ -376,8 +376,12 @@ func getServicePort(svc *corev1.Service, port intstr.IntOrString) (*corev1.Servi
 	return &corev1.ServicePort{Port: port.IntVal}, nil
 }
 
-func createPluginMiddleware(pluginSpec map[string]apiextensionv1.JSON) (map[string]dynamic.PluginConf, error) {
-	data, err := json.Marshal(pluginSpec)
+func createPluginMiddleware(plugins map[string]apiextensionv1.JSON) (map[string]dynamic.PluginConf, error) {
+	if plugins == nil {
+		return nil, nil
+	}
+
+	data, err := json.Marshal(plugins)
 	if err != nil {
 		return nil, err
 	}
@@ -396,19 +400,21 @@ func createRateLimitMiddleware(rateLimit *v1alpha1.RateLimit) (*dynamic.RateLimi
 		return nil, nil
 	}
 
-	var period ptypes.Duration
+	rl := &dynamic.RateLimit{Average: rateLimit.Average}
+	rl.SetDefaults()
 
-	err := period.Set(rateLimit.Period.String())
-	if err != nil {
-		return nil, err
+	if rateLimit.Burst != nil {
+		rl.Burst = *rateLimit.Burst
 	}
 
-	return &dynamic.RateLimit{
-		Average:         rateLimit.Average,
-		Burst:           rateLimit.Burst,
-		Period:          period,
-		SourceCriterion: rateLimit.SourceCriterion,
-	}, nil
+	if rateLimit.Period != nil {
+		err := rl.Period.Set(rateLimit.Period.String())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return rl, nil
 }
 
 func createRetryMiddleware(retry *v1alpha1.Retry) (*dynamic.Retry, error) {
@@ -416,17 +422,14 @@ func createRetryMiddleware(retry *v1alpha1.Retry) (*dynamic.Retry, error) {
 		return nil, nil
 	}
 
-	var initialInterval ptypes.Duration
+	r := &dynamic.Retry{Attempts: retry.Attempts}
 
-	err := initialInterval.Set(retry.InitialInterval.String())
+	err := r.InitialInterval.Set(retry.InitialInterval.String())
 	if err != nil {
 		return nil, err
 	}
 
-	return &dynamic.Retry{
-		Attempts:        retry.Attempts,
-		InitialInterval: initialInterval,
-	}, nil
+	return r, nil
 }
 
 func (p *Provider) createErrorPageMiddleware(client Client, namespace string, errorPage *v1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
