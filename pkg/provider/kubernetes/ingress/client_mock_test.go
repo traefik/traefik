@@ -14,11 +14,11 @@ import (
 var _ Client = (*clientMock)(nil)
 
 type clientMock struct {
-	ingresses    []*networkingv1beta1.Ingress
-	services     []*corev1.Service
-	secrets      []*corev1.Secret
-	endpoints    []*corev1.Endpoints
-	ingressClass *networkingv1beta1.IngressClass
+	ingresses      []*networkingv1beta1.Ingress
+	services       []*corev1.Service
+	secrets        []*corev1.Secret
+	endpoints      []*corev1.Endpoints
+	ingressClasses []*networkingv1beta1.IngressClass
 
 	serverVersion *version.Version
 
@@ -59,7 +59,7 @@ func newClientMock(serverVersion string, paths ...string) clientMock {
 				}
 				c.ingresses = append(c.ingresses, ing)
 			case *networkingv1beta1.IngressClass:
-				c.ingressClass = o
+				c.ingressClasses = append(c.ingressClasses, o)
 			default:
 				panic(fmt.Sprintf("Unknown runtime object %+v %T", o, o))
 			}
@@ -117,8 +117,8 @@ func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, err
 	return nil, false, nil
 }
 
-func (c clientMock) GetIngressClass() (*networkingv1beta1.IngressClass, error) {
-	return c.ingressClass, nil
+func (c clientMock) GetIngressClasses() ([]*networkingv1beta1.IngressClass, error) {
+	return c.ingressClasses, nil
 }
 
 func (c clientMock) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
