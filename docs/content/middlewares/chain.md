@@ -5,12 +5,12 @@ When One Isn't Enough
 
 ![Chain](../assets/img/middleware/chain.png)
 
-The Chain middleware enables you to define reusable combinations of other pieces of middleware. 
+The Chain middleware enables you to define reusable combinations of other pieces of middleware.
 It makes reusing the same groups easier.
 
 ## Configuration Example
 
-Example "A Chain for WhiteList, BasicAuth, and HTTPS"
+Below is an example of a Chain containing `WhiteList`, `BasicAuth`, and `RedirectScheme`.
 
 ```yaml tab="Docker"
 labels:
@@ -30,11 +30,9 @@ kind: IngressRoute
 metadata:
   name: test
   namespace: default
-
 spec:
   entryPoints:
     - web
-
   routes:
     - match: Host(`mydomain`)
       kind: Rule
@@ -148,7 +146,7 @@ labels:
 ```
 
 ```yaml tab="File (YAML)"
-# ...    
+# ...
 http:
   routers:
     router1:
