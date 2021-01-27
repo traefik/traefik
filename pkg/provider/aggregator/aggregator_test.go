@@ -13,8 +13,8 @@ import (
 
 func TestProviderAggregator_Provide(t *testing.T) {
 	aggregator := ProviderAggregator{
-		traefikProvider: &providerMock{"traefik"},
-		fileProvider:    &providerMock{"file"},
+		internalProvider: &providerMock{"internal"},
+		fileProvider:     &providerMock{"file"},
 		providers: []provider.Provider{
 			&providerMock{"salad"},
 			&providerMock{"tomato"},
@@ -26,14 +26,14 @@ func TestProviderAggregator_Provide(t *testing.T) {
 	errCh := make(chan error)
 	pool := safe.NewPool(context.Background())
 
-	defer pool.Stop()
+	t.Cleanup(pool.Stop)
 
 	go func() {
 		errCh <- aggregator.Provide(cfgCh, pool)
 	}()
 
-	// Make sure the traefik provider is always called first, followed by the file provider.
-	requireReceivedMessageFromProviders(t, cfgCh, []string{"traefik"})
+	// Make sure the internal provider is always called first, followed by the file provider.
+	requireReceivedMessageFromProviders(t, cfgCh, []string{"internal"})
 	requireReceivedMessageFromProviders(t, cfgCh, []string{"file"})
 
 	// Check if all providers have been called, the order doesn't matter.
@@ -42,8 +42,8 @@ func TestProviderAggregator_Provide(t *testing.T) {
 	require.NoError(t, <-errCh)
 }
 
-// requireReceivedMessageFromProviders makes sure the given providers have emitted a message on the given
-// message channel. Providers order is not enforced.
+// requireReceivedMessageFromProviders makes sure the given providers have emitted a message on the given message channel.
+// Providers order is not enforced.
 func requireReceivedMessageFromProviders(t *testing.T, cfgCh <-chan dynamic.Message, names []string) {
 	t.Helper()
 
