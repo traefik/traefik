@@ -5,22 +5,22 @@ How to Read the Request before Forwarding It
 
 ![Buffering](../assets/img/middleware/buffering.png)
 
-The Buffering middleware gives you control on how you want to read the requests before sending them to services.
+The Buffering middleware limits the size of requests that can be forwarded to services.
 
-With Buffering, Traefik reads the entire request into memory (possibly buffering large requests into disk), and rejects requests that are over a specified limit.
+With Buffering, Traefik reads the entire request into memory (possibly buffering large requests into disk), and rejects requests that are over a specified size limit.
 
-This can help services deal with large data (multipart/form-data for example), and can minimize time spent sending data to a service.
+This can help services avoid large amounts of data (`multipart/form-data` for example), and can minimize the time spent sending data to a service.
 
 ## Configuration Examples
 
 ```yaml tab="Docker"
-# Sets the maximum request body to 2Mb
+# Sets the maximum request body to 2MB
 labels:
   - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
 ```
 
 ```yaml tab="Kubernetes"
-# Sets the maximum request body to 2Mb
+# Sets the maximum request body to 2MB
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
@@ -31,7 +31,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-# Sets the maximum request body to 2Mb
+# Sets the maximum request body to 2MB
 - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
 ```
 
@@ -42,20 +42,20 @@ spec:
 ```
 
 ```yaml tab="Rancher"
-# Sets the maximum request body to 2Mb
+# Sets the maximum request body to 2MB
 labels:
   - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
 ```
 
 ```toml tab="File (TOML)"
-# Sets the maximum request body to 2Mb
+# Sets the maximum request body to 2MB
 [http.middlewares]
   [http.middlewares.limit.buffering]
     maxRequestBodyBytes = 2000000
 ```
 
 ```yaml tab="File (YAML)"
-# Sets the maximum request body to 2Mb
+# Sets the maximum request body to 2MB
 http:
   middlewares:
     limit:
@@ -67,9 +67,9 @@ http:
 
 ### `maxRequestBodyBytes`
 
-With the `maxRequestBodyBytes` option, you can configure the maximum allowed body size for the request (in Bytes).
+The `maxRequestBodyBytes` option configures the maximum allowed body size for the request (in bytes).
 
-If the request exceeds the allowed size, it is not forwarded to the service and the client gets a `413 (Request Entity Too Large)` response.
+If the request exceeds the allowed size, it is not forwarded to the service, and the client gets a `413 (Request Entity Too Large)` response.
 
 ```yaml tab="Docker"
 labels:
@@ -117,7 +117,7 @@ http:
 
 ### `memRequestBodyBytes`
 
-You can configure a threshold (in Bytes) from which the request will be buffered on disk instead of in memory with the `memRequestBodyBytes` option. 
+You can configure a threshold (in bytes) from which the request will be buffered on disk instead of in memory with the `memRequestBodyBytes` option.
 
 ```yaml tab="Docker"
 labels:
@@ -165,7 +165,7 @@ http:
 
 ### `maxResponseBodyBytes`
 
-With the `maxResponseBodyBytes` option, you can configure the maximum allowed response size from the service (in Bytes).
+The `maxResponseBodyBytes` option configures the maximum allowed response size from the service (in bytes).
 
 If the response exceeds the allowed size, it is not forwarded to the client. The client gets a `413 (Request Entity Too Large) response` instead.
 
@@ -215,7 +215,7 @@ http:
 
 ### `memResponseBodyBytes`
 
-You can configure a threshold (in Bytes) from which the response will be buffered on disk instead of in memory with the `memResponseBodyBytes` option. 
+You can configure a threshold (in bytes) from which the response will be buffered on disk instead of in memory with the `memResponseBodyBytes` option.
 
 ```yaml tab="Docker"
 labels:
@@ -263,9 +263,9 @@ http:
 
 ### `retryExpression`
 
-You can have the Buffering middleware replay the request with the help of the `retryExpression` option.
+You can have the Buffering middleware replay the request using `retryExpression`.
 
-??? example "Retries once in case of a network error"
+??? example "Retries once in the case of a network error"
     
     ```yaml tab="Docker"
     labels:
@@ -315,4 +315,4 @@ The retry expression is defined as a logical combination of the functions below 
 
 - `Attempts()` number of attempts (the first one counts)
 - `ResponseCode()` response code of the service
-- `IsNetworkError()` - if the response code is related to networking error 
+- `IsNetworkError()` whether the response code is related to networking error
