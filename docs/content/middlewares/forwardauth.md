@@ -1,12 +1,12 @@
 # ForwardAuth
 
-Using an External Service to Check for Credentials
+Using an External Service to Forward Authentication
 {: .subtitle }
 
 ![AuthForward](../assets/img/middleware/authforward.png)
 
-The ForwardAuth middleware delegate the authentication to an external service.
-If the service response code is 2XX, access is granted and the original request is performed.
+The ForwardAuth middleware delegates authentication to an external service.
+If the service answers with a 2XX code, access is granted, and the original request is performed.
 Otherwise, the response from the authentication server is returned.
 
 ## Configuration Examples
@@ -125,7 +125,7 @@ http:
 
 ### `trustForwardHeader`
 
-Set the `trustForwardHeader` option to `true` to trust all the existing `X-Forwarded-*` headers.
+Set the `trustForwardHeader` option to `true` to trust all `X-Forwarded-*` headers.
 
 ```yaml tab="Docker"
 labels:
@@ -176,7 +176,8 @@ http:
 
 ### `authResponseHeaders`
 
-The `authResponseHeaders` option is the list of the headers to copy from the authentication server to the request. All incoming request's headers in this list are deleted from the request before any copy happens.
+The `authResponseHeaders` option is the list of headers to copy from the authentication server response and set on
+forwarded request, replacing any existing conflicting headers.
 
 ```yaml tab="Docker"
 labels:
@@ -231,9 +232,10 @@ http:
 
 ### `authResponseHeadersRegex`
 
-The `authResponseHeadersRegex` option is the regex to match the headers that should be copied from the authentication server to the request. All incoming request's headers matching this regex are deleted from the request before any copy happens.
-It allows partial matching of the regular expression against the header's key.
-You should use start of string (`^`) and end of string (`$`) anchors to ensure a full match against the header's key.
+The `authResponseHeadersRegex` option is the regex to match headers to copy from the authentication server response and
+set on forwarded request, after stripping all headers that match the regex.
+It allows partial matching of the regular expression against the header key.
+The start of string (`^`) and end of string (`$`) anchors should be used to ensure a full match against the header key.
 
 ```yaml tab="Docker"
 labels:
@@ -286,7 +288,7 @@ http:
 
 The `authRequestHeaders` option is the list of the headers to copy from the request to the authentication server.
 It allows filtering headers that should not be passed to the authentication server.
-If not set or empty then all request headers will be passed.
+If not set or empty then all request headers are passed.
 
 ```yaml tab="Docker"
 labels:
@@ -409,12 +411,15 @@ http:
 
 #### `tls.caOptional`
 
-Policy used for the secured connection with TLS Client Authentication to the authentication server.
-Requires `tls.ca` to be defined.
+The value of `tls.caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to the authentication server.
 
-- `true`: VerifyClientCertIfGiven
-- `false`: RequireAndVerifyClientCert
-- if `tls.ca` is undefined NoClientCert
+!!! warning ""
+
+    If `tls.ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
+
+When this option is set to `true`, a client certificate is requested during the handshake but is not required. If a certificate is sent, it is required to be valid.
+
+When this option is set to `false`, a client certificate is requested during the handshake, and at least one valid certificate should be sent by the client.
 
 ```yaml tab="Docker"
 labels:
@@ -468,7 +473,7 @@ http:
 
 #### `tls.cert`
 
-Public certificate used for the secured connection to the authentication server.
+The public certificate used for the secure connection to the authentication server.
 
 ```yaml tab="Docker"
 labels:
@@ -538,11 +543,12 @@ http:
 ```
 
 !!! info
-    For security reasons, the field doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead.
+
+    For security reasons, the field does not exist for Kubernetes IngressRoute, and one should use the `secret` field instead.
 
 #### `tls.key`
 
-Private certificate used for the secure connection to the authentication server.
+The private certificate used for the secure connection to the authentication server.
 
 ```yaml tab="Docker"
 labels:
@@ -612,11 +618,12 @@ http:
 ```
 
 !!! info
-    For security reasons, the field doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead.
+
+    For security reasons, the field does not exist for Kubernetes IngressRoute, and one should use the `secret` field instead.
 
 #### `tls.insecureSkipVerify`
 
-If `insecureSkipVerify` is `true`, TLS for the connection to authentication server accepts any certificate presented by the server and any host name in that certificate.
+If `insecureSkipVerify` is `true`, the TLS connection to the authentication server accepts any certificate presented by the server regardless of the hostnames it covers.
 
 ```yaml tab="Docker"
 labels:
