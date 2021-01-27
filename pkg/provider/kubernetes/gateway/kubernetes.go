@@ -468,14 +468,7 @@ func (p *Provider) fillGatewayConf(client Client, gateway *v1alpha1.Gateway, con
 
 				if routeRule.ForwardTo != nil {
 					// Traefik internal service can be used only if there is only one ForwardTo service reference.
-					isInternalService := len(routeRule.ForwardTo) == 1 &&
-						routeRule.ForwardTo[0].ServiceName == nil &&
-						routeRule.ForwardTo[0].BackendRef != nil &&
-						routeRule.ForwardTo[0].BackendRef.Kind == traefikServiceKind &&
-						routeRule.ForwardTo[0].BackendRef.Group == traefikServiceGroupName &&
-						strings.HasSuffix(routeRule.ForwardTo[0].BackendRef.Name, "@internal")
-
-					if isInternalService {
+					if len(routeRule.ForwardTo) == 1 && isInternalService(routeRule.ForwardTo[0]) {
 						router.Service = routeRule.ForwardTo[0].BackendRef.Name
 					} else {
 						wrrService, subServices, err := loadServices(client, gateway.Namespace, routeRule.ForwardTo)
@@ -931,4 +924,12 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	})
 
 	return eventsChanBuffered
+}
+
+func isInternalService(forwardTo v1alpha1.HTTPRouteForwardTo) bool {
+	return forwardTo.ServiceName == nil &&
+		forwardTo.BackendRef != nil &&
+		forwardTo.BackendRef.Kind == traefikServiceKind &&
+		forwardTo.BackendRef.Group == traefikServiceGroupName &&
+		strings.HasSuffix(forwardTo.BackendRef.Name, "@internal")
 }
