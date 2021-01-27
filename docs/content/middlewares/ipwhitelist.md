@@ -89,7 +89,6 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `3`     | `"11.0.0.1"` |
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `5`     | `""`         |
 
-
 ```yaml tab="Docker"
 # Whitelisting Based on `X-Forwarded-For` with `depth=2`
 labels:
