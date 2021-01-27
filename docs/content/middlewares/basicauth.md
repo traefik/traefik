@@ -5,7 +5,7 @@ Adding Basic Authentication
 
 ![BasicAuth](../assets/img/middleware/basicauth.png)
 
-The BasicAuth middleware is a quick way to restrict access to your services to known users.
+The BasicAuth middleware restricts access to your services to known users.
 
 ## Configuration Examples
 
@@ -81,7 +81,7 @@ Passwords must be hashed using MD5, SHA1, or BCrypt.
 
 ### `users`
 
-The `users` option is an array of authorized users. Each user will be declared using the `name:hashed-password` format.
+The `users` option is an array of authorized users. Each user must be declared using the `name:hashed-password` format.
 
 !!! note ""
     
