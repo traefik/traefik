@@ -50,10 +50,10 @@ func (s *TLSClientHeadersSuite) TestTLSClientHeaders(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("PathPrefix(`/`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("PathPrefix(`/foo`)"))
 	c.Assert(err, checker.IsNil)
 
-	request, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:8443", nil)
+	request, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:8443/foo", nil)
 	c.Assert(err, checker.IsNil)
 
 	certificate, err := tls.LoadX509KeyPair(certPemPath, certKeyPath)
