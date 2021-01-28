@@ -395,7 +395,7 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 
 func (c *clientWrapper) GetIngressClasses() ([]*networkingv1beta1.IngressClass, error) {
 	if c.clusterFactory == nil {
-		return nil, errors.New("factory not loaded")
+		return nil, errors.New("cluster factory not loaded")
 	}
 
 	ingressClasses, err := c.clusterFactory.Networking().V1beta1().IngressClasses().Lister().List(labels.Everything())
