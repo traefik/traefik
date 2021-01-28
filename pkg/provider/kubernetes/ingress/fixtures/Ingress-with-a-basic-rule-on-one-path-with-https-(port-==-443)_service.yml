@@ -8,4 +8,4 @@ spec:
   ports:
   - port: 443
     targetPort: 8443
-  clusterIp: 10.0.0.1
+  clusterIP: 10.0.0.1

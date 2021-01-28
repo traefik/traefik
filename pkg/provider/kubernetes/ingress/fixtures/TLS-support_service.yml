@@ -8,7 +8,7 @@ spec:
   ports:
   - name: http
     port: 80
-  clusterIp: 10.0.0.1
+  clusterIP: 10.0.0.1
   type: ClusterIP
 
 ---
@@ -22,5 +22,5 @@ spec:
   ports:
   - name: http
     port: 80
-  clusterIp: 10.0.0.2
+  clusterIP: 10.0.0.2
   type: ClusterIP
