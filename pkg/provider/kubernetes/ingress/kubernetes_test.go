@@ -1069,6 +1069,10 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
+						"testing-foo": {
+							Rule:    "PathPrefix(`/foo`)",
+							Service: "testing-service1-80",
+						},
 						"testing-bar": {
 							Rule:    "PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
