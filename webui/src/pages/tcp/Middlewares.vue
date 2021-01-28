@@ -10,11 +10,11 @@
           <div class="col-12">
             <main-table
               ref="mainTable"
-              v-bind="getTableProps({ type: 'tcp-routers' })"
-              :data="allRouters.items"
+              v-bind="getTableProps({ type: 'tcp-middlewares' })"
+              :data="allMiddlewares.items"
               :onLoadMore="handleLoadMore"
-              :endReached="allRouters.endReached"
-              :loading="allRouters.loading"
+              :endReached="allMiddlewares.endReached"
+              :loading="allMiddlewares.loading"
             />
           </div>
         </div>
@@ -33,11 +33,11 @@ import ToolBarTable from '../../components/_commons/ToolBarTable'
 import MainTable from '../../components/_commons/MainTable'
 
 export default {
-  name: 'PageTCPRouters',
+  name: 'PageTCPMiddlewares',
   mixins: [
     GetTablePropsMixin,
     PaginationMixin({
-      fetchMethod: 'getAllRoutersWithParams',
+      fetchMethod: 'getAllMiddlewaresWithParams',
       scrollerRef: 'mainTable.$refs.scroller',
       pollingIntervalTime: 5000
     })
@@ -54,19 +54,19 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('tcp', { allRouters: 'allRouters' })
+    ...mapGetters('tcp', { allMiddlewares: 'allMiddlewares' })
   },
   methods: {
-    ...mapActions('tcp', { getAllRouters: 'getAllRouters' }),
-    getAllRoutersWithParams (params) {
-      return this.getAllRouters({
+    ...mapActions('tcp', { getAllMiddlewares: 'getAllMiddlewares' }),
+    getAllMiddlewaresWithParams (params) {
+      return this.getAllMiddlewares({
         query: this.filter,
         status: this.status,
         ...params
       })
     },
     refreshAll () {
-      if (this.allRouters.loading) {
+      if (this.allMiddlewares.loading) {
         return
       }
 
@@ -85,7 +85,7 @@ export default {
     }
   },
   beforeDestroy () {
-    this.$store.commit('tcp/getAllRoutersClear')
+    this.$store.commit('tcp/getAllMiddlewaresClear')
   }
 }
 </script>
