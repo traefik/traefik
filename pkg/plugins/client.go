@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/traefik/traefik/v2/pkg/log"
 	"golang.org/x/mod/module"
 	"golang.org/x/mod/zip"
 	"gopkg.in/yaml.v3"
@@ -91,6 +92,23 @@ func NewClient(opts ClientOptions) (*Client, error) {
 
 		token: opts.Token,
 	}, nil
+}
+
+// CheckPilotReachability verifies whether the Pilot API is reachable by making a
+// HEAD request against the Pilot base URL.
+func (c *Client) CheckPilotReachability(ctx context.Context) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, c.baseURL.Path, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	_, err = c.HTTPClient.Do(req)
+	if err != nil {
+		log.FromContext(ctx).Error("Unable to reach Pilot API. Please visit https://doc.traefik.io/traefik-pilot/ips/ for information on using Pilot from behind a firewall.")
+		return fmt.Errorf("unable to reach Pilot API: %w", err)
+	}
+
+	return nil
 }
 
 // GoPath gets the plugins GoPath.

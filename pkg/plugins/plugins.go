@@ -16,12 +16,17 @@ func Setup(client *Client, plugins map[string]Descriptor, devPlugin *DevPlugin) 
 		return fmt.Errorf("invalid configuration: %w", err)
 	}
 
+	ctx := context.Background()
+
+	err = client.CheckPilotReachability(ctx)
+	if err != nil {
+		return err
+	}
+
 	err = client.CleanArchives(plugins)
 	if err != nil {
 		return fmt.Errorf("failed to clean archives: %w", err)
 	}
-
-	ctx := context.Background()
 
 	for pAlias, desc := range plugins {
 		log.FromContext(ctx).Debugf("loading of plugin: %s: %s@%s", pAlias, desc.ModuleName, desc.Version)
