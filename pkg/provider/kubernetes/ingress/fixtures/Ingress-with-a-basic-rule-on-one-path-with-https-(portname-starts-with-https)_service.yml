@@ -9,4 +9,4 @@ spec:
   - name: https-foo
     protocol: ""
     port: 8443
-  clusterIp: 10.0.0.1
+  clusterIP: 10.0.0.1

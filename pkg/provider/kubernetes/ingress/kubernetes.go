@@ -190,15 +190,15 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		return conf
 	}
 
-	var ingressClass *networkingv1beta1.IngressClass
+	var ingressClasses []*networkingv1beta1.IngressClass
 
 	if supportsIngressClass(serverVersion) {
-		ic, err := client.GetIngressClass()
+		ics, err := client.GetIngressClasses()
 		if err != nil {
-			log.FromContext(ctx).Warnf("Failed to find an ingress class: %v", err)
+			log.FromContext(ctx).Warnf("Failed to list ingress classes: %v", err)
 		}
 
-		ingressClass = ic
+		ingressClasses = ics
 	}
 
 	ingresses := client.GetIngresses()
@@ -207,7 +207,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 	for _, ingress := range ingresses {
 		ctx = log.With(ctx, log.Str("ingress", ingress.Name), log.Str("namespace", ingress.Namespace))
 
-		if !p.shouldProcessIngress(p.IngressClass, ingress, ingressClass) {
+		if !p.shouldProcessIngress(ingress, ingressClasses) {
 			continue
 		}
 
@@ -351,14 +351,20 @@ func (p *Provider) updateIngressStatus(ing *networkingv1beta1.Ingress, k8sClient
 	return k8sClient.UpdateIngressStatus(ing, service.Status.LoadBalancer.Ingress)
 }
 
-func (p *Provider) shouldProcessIngress(providerIngressClass string, ingress *networkingv1beta1.Ingress, ingressClass *networkingv1beta1.IngressClass) bool {
+func (p *Provider) shouldProcessIngress(ingress *networkingv1beta1.Ingress, ingressClasses []*networkingv1beta1.IngressClass) bool {
 	// configuration through the new kubernetes ingressClass
 	if ingress.Spec.IngressClassName != nil {
-		return ingressClass != nil && ingressClass.ObjectMeta.Name == *ingress.Spec.IngressClassName
+		for _, ic := range ingressClasses {
+			if *ingress.Spec.IngressClassName == ic.ObjectMeta.Name {
+				return true
+			}
+		}
+
+		return false
 	}
 
-	return providerIngressClass == ingress.Annotations[annotationKubernetesIngressClass] ||
-		len(providerIngressClass) == 0 && ingress.Annotations[annotationKubernetesIngressClass] == traefikDefaultIngressClass
+	return p.IngressClass == ingress.Annotations[annotationKubernetesIngressClass] ||
+		len(p.IngressClass) == 0 && ingress.Annotations[annotationKubernetesIngressClass] == traefikDefaultIngressClass
 }
 
 func buildHostRule(host string) string {
