@@ -284,9 +284,9 @@ func TestIntegrationShouldCompress(t *testing.T) {
 	}
 }
 
-func generateBytes(len int) []byte {
+func generateBytes(length int) []byte {
 	var value []byte
-	for i := 0; i < len; i++ {
+	for i := 0; i < length; i++ {
 		value = append(value, 0x61+byte(i))
 	}
 	return value

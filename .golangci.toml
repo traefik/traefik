@@ -61,6 +61,7 @@
     "exhaustivestruct", # Not relevant
     "makezero", # not relevant
     "forbidigo", # not relevant
+    "ifshort", # not relevant
   ]
 
 [issues]
