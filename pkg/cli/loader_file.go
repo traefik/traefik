@@ -5,9 +5,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/traefik/paerser/cli"
 	"github.com/traefik/paerser/file"
 	"github.com/traefik/paerser/flag"
+	tcmd "github.com/traefik/traefik/v2/cmd"
 	"github.com/traefik/traefik/v2/pkg/log"
 )
 
@@ -51,6 +53,12 @@ func (f *FileLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 
 	if configFile == "" {
 		return false, nil
+	}
+
+	// Checks if the newly loaded configuration specifies JSON logging, and if so sets the format so that the configuration loaded message will be in JSON
+	configuration := cmd.Configuration.(*tcmd.TraefikCmdConfiguration)
+	if configuration.Log != nil && configuration.Log.Format == "json" {
+		log.SetFormatter(&logrus.JSONFormatter{})
 	}
 
 	logger := log.WithoutContext()
