@@ -12,7 +12,7 @@ See the dedicated section in [routing](../routing/providers/kubernetes-ingress.m
 
 ## Enabling and Using the Provider
 
-As usual, the provider is enabled through the static configuration:
+The provider can be enabled in the static configuration:
 
 ```toml tab="File (TOML)"
 [providers.kubernetesIngress]
@@ -29,7 +29,7 @@ providers:
 
 The provider then watches for incoming ingresses events, such as the example below,
 and derives the corresponding dynamic configuration from it,
-which in turn will create the resulting routers, services, handlers, etc.
+which in turn creates the resulting routers, services, handlers, etc.
 
 ```yaml tab="File (YAML)"
 kind: Ingress
@@ -64,23 +64,36 @@ as is a common pattern in the kubernetes ecosystem.
 When using a single instance of Traefik with LetsEncrypt, no issues should be encountered,
 however this could be a single point of failure.
 Unfortunately, it is not possible to run multiple instances of Traefik 2.0 with LetsEncrypt enabled,
-because there is no way to ensure that the correct instance of Traefik will receive the challenge request, and subsequent responses.
+because there is no way to ensure that the correct instance of Traefik receives the challenge request, and subsequent responses.
 Previous versions of Traefik used a [KV store](https://doc.traefik.io/traefik/v1.7/configuration/acme/#storage) to attempt to achieve this,
-but due to sub-optimal performance was dropped as a feature in 2.0.
+but due to sub-optimal performance that feature was dropped in 2.0.
 
-If you require LetsEncrypt with HA in a kubernetes environment,
+If you need LetsEncrypt with HA in a kubernetes environment,
 we recommend using [Traefik Enterprise](https://traefik.io/traefik-enterprise/) where distributed LetsEncrypt is a supported feature.
 
-If you are wanting to continue to run Traefik Community Edition,
+If you want to keep using Traefik Community Edition,
 LetsEncrypt HA can be achieved by using a Certificate Controller such as [Cert-Manager](https://docs.cert-manager.io/en/latest/index.html).
 When using Cert-Manager to manage certificates,
-it will create secrets in your namespaces that can be referenced as TLS secrets in your [ingress objects](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls).
+it creates secrets in your namespaces that can be referenced as TLS secrets in your [ingress objects](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls).
 
 ## Provider Configuration
 
 ### `endpoint`
 
-_Optional, Default=empty_
+_Optional, Default=""_
+
+The Kubernetes server endpoint URL.
+
+When deployed into Kubernetes, Traefik reads the environment variables `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT` or `KUBECONFIG` to construct the endpoint.
+
+The access token is looked up in `/var/run/secrets/kubernetes.io/serviceaccount/token` and the SSL CA certificate in `/var/run/secrets/kubernetes.io/serviceaccount/ca.crt`.
+Both are mounted automatically when deployed inside Kubernetes.
+
+The endpoint may be specified to override the environment variable values inside a cluster.
+
+When the environment variables are not found, Traefik tries to connect to the Kubernetes API server with an external-cluster client.
+In this case, the endpoint is required.
+Specifically, it may be set to the URL used by `kubectl proxy` to connect to a Kubernetes cluster using the granted authentication and authorization of the associated kubeconfig.
 
 ```toml tab="File (TOML)"
 [providers.kubernetesIngress]
@@ -99,21 +112,11 @@ providers:
 --providers.kubernetesingress.endpoint=http://localhost:8080
 ```
 
-The Kubernetes server endpoint as URL, which is only used when the behavior based on environment variables described below does not apply.
-
-When deployed into Kubernetes, Traefik reads the environment variables `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT` or `KUBECONFIG` to construct the endpoint.
-
-The access token is looked up in `/var/run/secrets/kubernetes.io/serviceaccount/token` and the SSL CA certificate in `/var/run/secrets/kubernetes.io/serviceaccount/ca.crt`.
-They are both provided automatically as mounts in the pod where Traefik is deployed.
-
-When the environment variables are not found, Traefik tries to connect to the Kubernetes API server with an external-cluster client.
-In which case, the endpoint is required.
-Specifically, it may be set to the URL used by `kubectl proxy` to connect to a Kubernetes cluster using the granted authentication
-and authorization of the associated kubeconfig.
-
 ### `token`
 
-_Optional, Default=empty_
+_Optional, Default=""_
+
+Bearer token used for the Kubernetes client configuration.
 
 ```toml tab="File (TOML)"
 [providers.kubernetesIngress]
@@ -132,11 +135,12 @@ providers:
 --providers.kubernetesingress.token=mytoken
 ```
 
-Bearer token used for the Kubernetes client configuration.
-
 ### `certAuthFilePath`
 
-_Optional, Default=empty_
+_Optional, Default=""_
+
+Path to the certificate authority file.
+Used for the Kubernetes client configuration.
 
 ```toml tab="File (TOML)"
 [providers.kubernetesIngress]
@@ -155,12 +159,12 @@ providers:
 --providers.kubernetesingress.certauthfilepath=/my/ca.crt
 ```
 
-Path to the certificate authority file.
-Used for the Kubernetes client configuration.
-
 ### `namespaces`
 
-_Optional, Default: all namespaces (empty array)_
+_Optional, Default: []_
+
+Array of namespaces to watch.
+If left empty, watches all namespaces if the value of `namespaces`.
 
 ```toml tab="File (TOML)"
 [providers.kubernetesIngress]
@@ -181,11 +185,14 @@ providers:
 --providers.kubernetesingress.namespaces=default,production
 ```
 
-Array of namespaces to watch.
-
 ### `labelSelector`
 
-_Optional,Default: empty (process all Ingresses)_
+_Optional, Default: ""_
+
+A label selector can be defined to filter on specific Ingress objects only.
+If left empty, Traefik processes all Ingress objects in the configured namespaces.
+
+See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
 
 ```toml tab="File (TOML)"
 [providers.kubernetesIngress]
@@ -204,14 +211,48 @@ providers:
 --providers.kubernetesingress.labelselector="app=traefik"
 ```
 
-By default, Traefik processes all `Ingress` objects in the configured namespaces.
-A label selector can be defined to filter on specific `Ingress` objects only.
-
-See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
-
 ### `ingressClass`
 
-_Optional, Default: empty_
+_Optional, Default: ""_
+
+Value of `kubernetes.io/ingress.class` annotation that identifies Ingress objects to be processed.
+
+If the parameter is set, only Ingresses containing an annotation with the same value are processed.
+Otherwise, Ingresses missing the annotation, having an empty value, or the value `traefik` are processed.
+
+!!! info "Kubernetes 1.18+"
+
+    If the Kubernetes cluster version is 1.18+,
+    the new `IngressClass` resource can be leveraged to identify Ingress objects that should be processed.
+    In that case, Traefik will look for an `IngressClass` in the cluster with the controller value equal to *traefik.io/ingress-controller*. 
+
+    Please see [this article](https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/) for more information or the example below.
+
+    ```yaml tab="IngressClass"
+    apiVersion: networking.k8s.io/v1beta1
+    kind: IngressClass
+    metadata:
+      name: traefik-lb
+    spec:
+      controller: traefik.io/ingress-controller
+    ```
+
+    ```yaml tab="Ingress"
+    apiVersion: "networking.k8s.io/v1beta1"
+    kind: "Ingress"
+    metadata:
+      name: "example-ingress"
+    spec:
+      ingressClassName: "traefik-lb"
+      rules:
+      - host: "*.example.com"
+        http:
+          paths:
+          - path: "/example"
+            backend:
+              serviceName: "example-service"
+              servicePort: 80
+    ```
 
 ```toml tab="File (TOML)"
 [providers.kubernetesIngress]
@@ -230,50 +271,13 @@ providers:
 --providers.kubernetesingress.ingressclass=traefik-internal
 ```
 
-Value of `kubernetes.io/ingress.class` annotation that identifies Ingress objects to be processed.
-
-If the parameter is non-empty, only Ingresses containing an annotation with the same value are processed.
-Otherwise, Ingresses missing the annotation, having an empty value, or with the value `traefik` are processed.
-
-!!! info "Kubernetes 1.18+"
-
-    If the Kubernetes cluster version is 1.18+,
-    the new `IngressClass` resource can be leveraged to identify Ingress objects that should be processed.
-    In that case, Traefik will look for an `IngressClass` in the cluster with the controller value equal to *traefik.io/ingress-controller*. 
-    
-    Please see [this article](https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/) for more information or the example below.
-
-    ```yaml tab="IngressClass"
-    apiVersion: networking.k8s.io/v1beta1
-    kind: IngressClass
-    metadata: 
-      name: traefik-lb
-    spec: 
-      controller: traefik.io/ingress-controller
-    ```
-  
-    ```yaml tab="Ingress"
-    apiVersion: "networking.k8s.io/v1beta1"
-    kind: "Ingress"
-    metadata:
-      name: "example-ingress"
-    spec:
-      ingressClassName: "traefik-lb"
-      rules:
-      - host: "*.example.com"
-        http:
-          paths:
-          - path: "/example"
-            backend:
-              serviceName: "example-service"
-              servicePort: 80
-    ```
-
 ### `ingressEndpoint`
 
 #### `hostname`
 
-_Optional, Default: empty_
+_Optional, Default: ""_
+
+Hostname used for Kubernetes Ingress endpoints.
 
 ```toml tab="File (TOML)"
 [providers.kubernetesIngress.ingressEndpoint]
@@ -293,11 +297,11 @@ providers:
 --providers.kubernetesingress.ingressendpoint.hostname=example.net
 ```
 
-Hostname used for Kubernetes Ingress endpoints.
-
 #### `ip`
 
-_Optional, Default: empty_
+_Optional, Default: ""_
+
+IP used for Kubernetes Ingress endpoints.
 
 ```toml tab="File (TOML)"
 [providers.kubernetesIngress.ingressEndpoint]
@@ -317,11 +321,12 @@ providers:
 --providers.kubernetesingress.ingressendpoint.ip=1.2.3.4
 ```
 
-IP used for Kubernetes Ingress endpoints.
-
 #### `publishedService`
 
-_Optional, Default: empty_
+_Optional, Default: ""_
+
+Published Kubernetes Service to copy status from.
+Format: `namespace/servicename`.
 
 ```toml tab="File (TOML)"
 [providers.kubernetesIngress.ingressEndpoint]
@@ -341,12 +346,17 @@ providers:
 --providers.kubernetesingress.ingressendpoint.publishedservice=namespace/foo-service
 ```
 
-Published Kubernetes Service to copy status from.
-Format: `namespace/servicename`.
-
 ### `throttleDuration`
 
-_Optional, Default: 0 (no throttling)_
+_Optional, Default: 0_
+
+The `throttleDuration` option defines how often the provider is allowed to handle events from Kubernetes. This prevents
+a Kubernetes cluster that updates many times per second from continuously changing your Traefik configuration.
+
+If left empty, the provider does not apply any throttling and does not drop any Kubernetes events.
+
+The value of `throttleDuration` should be provided in seconds or as a valid duration format,
+see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).
 
 ```toml tab="File (TOML)"
 [providers.kubernetesIngress]
@@ -367,5 +377,5 @@ providers:
 
 ### Further
 
-If one wants to know more about the various aspects of the Ingress spec that Traefik supports,
-many examples of Ingresses definitions are located in the tests [data](https://github.com/traefik/traefik/tree/v2.4/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
+To learn more about the various aspects of the Ingress specification that Traefik supports,
+many examples of Ingresses definitions are located in the test [examples](https://github.com/traefik/traefik/tree/v2.4/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
