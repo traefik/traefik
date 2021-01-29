@@ -128,7 +128,6 @@ Use stale consistency for catalog reads.
 
     For more information, see the consul [documentation on consistency](https://www.consul.io/api-docs/features/consistency).
 
-
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
   stale = true

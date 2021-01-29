@@ -350,7 +350,6 @@ but still uses the `traefik.http.services.<name>.loadbalancer.server.port` that 
         - `ExtPort` stands for "external Port found in the binding"
         - `IntPort` stands for "internal network container's port."
 
-
 ```toml tab="File (TOML)"
 [providers.docker]
   useBindPortIP = true

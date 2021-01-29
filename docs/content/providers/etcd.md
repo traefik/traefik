@@ -136,7 +136,6 @@ When this option is set to `true`, a client certificate is requested during the 
 
 When this option is set to `false`, a client certificate is requested during the handshake, and at least one valid certificate should be sent by the client.
 
-
 ```toml tab="File (TOML)"
 [providers.etcd.tls]
   caOptional = true
