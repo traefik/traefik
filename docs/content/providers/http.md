@@ -1,6 +1,6 @@
 # Traefik & HTTP
 
-Provide your [dynamic configuration](./overview.md) via an HTTP(s) endpoint and let Traefik do the rest!
+Provide your [dynamic configuration](./overview.md) via an HTTP(S) endpoint and let Traefik do the rest!
 
 ## Routing Configuration
 
@@ -12,7 +12,7 @@ The HTTP provider uses the same configuration as the [File Provider](./file.md) 
 
 _Required_
 
-Defines the HTTP(s) endpoint to poll.
+Defines the HTTP(S) endpoint to poll.
 
 ```toml tab="File (TOML)"
 [providers.http]
@@ -78,7 +78,7 @@ _Optional_
 
 #### `tls.ca`
 
-Certificate Authority used for the secured connection to the configured Endpoint.
+Certificate Authority used for the secure connection to the configured endpoint.
 
 ```toml tab="File (TOML)"
 [providers.http.tls]
@@ -98,12 +98,15 @@ providers:
 
 #### `tls.caOptional`
 
-Policy followed for the secured connection with TLS Client Authentication to the configured Endpoint.
-Requires `tls.ca` to be defined.
+The value of `tls.caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to the configured endpoint.
 
-- `true`: VerifyClientCertIfGiven
-- `false`: RequireAndVerifyClientCert
-- if `tls.ca` is undefined NoClientCert
+!!! warning ""
+
+    If `tls.ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
+
+When this option is set to `true`, a client certificate is requested during the handshake but is not required. If a certificate is sent, it is required to be valid.
+
+When this option is set to `false`, a client certificate is requested during the handshake, and at least one valid certificate should be sent by the client.
 
 ```toml tab="File (TOML)"
 [providers.http.tls]
@@ -123,7 +126,7 @@ providers:
 
 #### `tls.cert`
 
-Public certificate used for the secured connection to the configured Endpoint.
+Public certificate used for the secure connection to the configured endpoint.
 
 ```toml tab="File (TOML)"
 [providers.http.tls]
@@ -146,7 +149,7 @@ providers:
 
 #### `tls.key`
 
-Private certificate used for the secured connection to the configured Endpoint.
+Private certificate used for the secure connection to the configured endpoint.
 
 ```toml tab="File (TOML)"
 [providers.http.tls]
@@ -169,8 +172,7 @@ providers:
 
 #### `tls.insecureSkipVerify`
 
-If `insecureSkipVerify` is `true`, TLS connection to the configured Endpoint accepts any certificate presented by the 
-server and any host name in that certificate.
+If `insecureSkipVerify` is `true`, the TLS connection to the endpoint accepts any certificate presented by the server regardless of the hostnames it covers.
 
 ```toml tab="File (TOML)"
 [providers.http.tls]
