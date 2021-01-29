@@ -462,7 +462,7 @@ By default, `passHostHeader` is true.
 
 #### ServersTransport
 
-`serversTransport` allows to reference a ServersTransport configuration for the communication between Traefik and your servers.
+`serversTransport` allows to reference a [ServersTransport](./index.md#serverstransport_1) configuration for the communication between Traefik and your servers.
 
 ??? example "Specify a transport -- Using the [File Provider](../../providers/file.md)"
 

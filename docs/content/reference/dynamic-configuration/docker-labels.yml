@@ -159,6 +159,7 @@
 - "traefik.http.services.service01.loadbalancer.sticky.cookie.secure=true"
 - "traefik.http.services.service01.loadbalancer.server.port=foobar"
 - "traefik.http.services.service01.loadbalancer.server.scheme=foobar"
+- "traefik.http.services.service01.loadbalancer.serverstransport=foobar"
 - "traefik.tcp.routers.tcprouter0.entrypoints=foobar, foobar"
 - "traefik.tcp.routers.tcprouter0.rule=foobar"
 - "traefik.tcp.routers.tcprouter0.service=foobar"
