@@ -93,9 +93,6 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 		tlsConfig = &tls.Config{}
 	}
 
-	store := m.getStore(storeName)
-	acmeTLSStore := m.getStore(tlsalpn01.ACMETLS1Protocol)
-
 	if err == nil {
 		tlsConfig, err = buildTLSConfig(config)
 		if err != nil {
@@ -107,6 +104,7 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 		domainToCheck := types.CanonicalDomain(clientHello.ServerName)
 
 		if isACMETLS(clientHello) {
+			acmeTLSStore := m.getStore(tlsalpn01.ACMETLS1Protocol)
 			certificate := acmeTLSStore.GetBestCertificate(clientHello)
 			if certificate == nil {
 				return nil, fmt.Errorf("no certificate for TLSALPN challenge: %s", domainToCheck)
@@ -115,6 +113,7 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 			return certificate, nil
 		}
 
+		store := m.getStore(storeName)
 		bestCertificate := store.GetBestCertificate(clientHello)
 		if bestCertificate != nil {
 			return bestCertificate, nil
