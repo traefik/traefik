@@ -96,6 +96,7 @@ spec:
           strategy: RoundRobin
         - name: s2
           port: 433
+          serversTransport: mytransport
     - match: PathPrefix(`/misc`)
       services:
         - name: s3
