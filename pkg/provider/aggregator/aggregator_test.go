@@ -33,8 +33,8 @@ func TestProviderAggregator_Provide(t *testing.T) {
 	}()
 
 	// Make sure the file provider is always called first, followed by the internal provider.
-	requireReceivedMessageFromProviders(t, cfgCh, []string{"file"})
 	requireReceivedMessageFromProviders(t, cfgCh, []string{"internal"})
+	requireReceivedMessageFromProviders(t, cfgCh, []string{"file"})
 
 	// Check if all providers have been called, the order doesn't matter.
 	requireReceivedMessageFromProviders(t, cfgCh, []string{"salad", "tomato", "onion"})
