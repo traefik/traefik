@@ -119,12 +119,12 @@ func (p ProviderAggregator) Init() error {
 
 // Provide calls the provide method of every providers.
 func (p ProviderAggregator) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	if p.fileProvider != nil {
-		launchProvider(configurationChan, pool, p.fileProvider)
-	}
-
 	if p.internalProvider != nil {
 		launchProvider(configurationChan, pool, p.internalProvider)
+	}
+
+	if p.fileProvider != nil {
+		launchProvider(configurationChan, pool, p.fileProvider)
 	}
 
 	for _, prd := range p.providers {
