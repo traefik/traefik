@@ -32,7 +32,7 @@ func TestProviderAggregator_Provide(t *testing.T) {
 		errCh <- aggregator.Provide(cfgCh, pool)
 	}()
 
-	// Make sure the file provider is always called first, followed by the internal provider.
+	// Make sure the internal provider is always called first, followed by the file provider.
 	requireReceivedMessageFromProviders(t, cfgCh, []string{"internal"})
 	requireReceivedMessageFromProviders(t, cfgCh, []string{"file"})
 
