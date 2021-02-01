@@ -33,6 +33,8 @@ const (
 	pilotInstanceInfoTimer = 5 * time.Minute
 	pilotDynConfTimer      = 12 * time.Hour
 	maxElapsedTime         = 4 * time.Minute
+	initialInterval        = 5 * time.Second
+	multiplier             = 3
 )
 
 type instanceInfo struct {
@@ -219,6 +221,8 @@ func (c *client) SendInstanceInfo(ctx context.Context, pilotMetrics []metrics.Pi
 func (c *client) sendDataRetryable(ctx context.Context, req *http.Request) error {
 	exponentialBackOff := backoff.NewExponentialBackOff()
 	exponentialBackOff.MaxElapsedTime = maxElapsedTime
+	exponentialBackOff.InitialInterval = initialInterval
+	exponentialBackOff.Multiplier = multiplier
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set(tokenHashHeader, c.tokenHash)
