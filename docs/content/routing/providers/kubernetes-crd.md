@@ -335,6 +335,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
           responseForwarding:
             flushInterval: 1ms
           scheme: https
+          serversTransport: transport
           sticky:
             cookie:
               httpOnly: true
