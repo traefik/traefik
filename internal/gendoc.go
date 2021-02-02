@@ -64,7 +64,12 @@ THIS FILE MUST NOT BE EDITED BY HAND
 			continue
 		}
 
-		w.writeln("`" + prefix + strings.ReplaceAll(flat.Name, "[0]", "[n]") + "`:  ")
+		if prefix == "" {
+			w.writeln("`" + prefix + strings.ReplaceAll(flat.Name, "[0]", "_n") + "`:  ")
+		} else {
+			w.writeln("`" + prefix + strings.ReplaceAll(flat.Name, "[0]", "[n]") + "`:  ")
+		}
+
 		if flat.Default == "" {
 			w.writeln(flat.Description)
 		} else {
