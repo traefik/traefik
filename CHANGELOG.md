@@ -1,3 +1,13 @@
+## [v2.4.2](https://github.com/traefik/traefik/tree/v2.4.2) (2021-02-02)
+[All Commits](https://github.com/traefik/traefik/compare/v2.4.1...v2.4.2)
+
+**Bug fixes:**
+- **[acme]** Fix the redirect entrypoint default priority ([#7851](https://github.com/traefik/traefik/pull/7851) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[middleware]** Fix the infinite loop in forwarded header middleware. ([#7847](https://github.com/traefik/traefik/pull/7847) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- Fix the static configuration generation for environment variables ([#7849](https://github.com/traefik/traefik/pull/7849) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
 ## [v2.4.1](https://github.com/traefik/traefik/tree/v2.4.1) (2021-02-01)
 [All Commits](https://github.com/traefik/traefik/compare/v2.4.0...v2.4.1)
 
