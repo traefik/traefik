@@ -104,9 +104,10 @@ func isWebsocketRequest(req *http.Request) bool {
 				return true
 			}
 
-			h = h[pos:]
+			h = h[pos+1:]
 		}
 	}
+
 	return containsHeader(connection, "upgrade") && containsHeader(upgrade, "websocket")
 }
 
