@@ -41,17 +41,12 @@ spec:
             type: Exact
             value: /bar
       forwardTo:
+        - weight: 1
+          backendRef:
+            group: traefik.containo.us
+            kind: TraefikService
+            name: service@file
+          port: 80
         - serviceName: whoami
           port: 80
           weight: 1
-    - matches:
-        - path:
-            type: Prefix
-            value: /foo
-      forwardTo:
-        - backendRef:
-            group: traefik.containo.us
-            kind: TraefikService
-            name: myservice@file
-          weight: 1
-          port: 80

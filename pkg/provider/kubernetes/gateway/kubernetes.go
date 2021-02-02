@@ -28,7 +28,11 @@ import (
 	"sigs.k8s.io/service-apis/apis/v1alpha1"
 )
 
-const providerName = "kubernetesgateway"
+const (
+	providerName            = "kubernetesgateway"
+	traefikServiceKind      = "TraefikService"
+	traefikServiceGroupName = "traefik.containo.us"
+)
 
 // Provider holds configurations of the provider.
 type Provider struct {
@@ -463,29 +467,34 @@ func (p *Provider) fillGatewayConf(client Client, gateway *v1alpha1.Gateway, con
 				}
 
 				if routeRule.ForwardTo != nil {
-					wrrService, subServices, err := loadServices(client, gateway.Namespace, routeRule.ForwardTo)
-					if err != nil {
-						// update "ResolvedRefs" status true with "DroppedRoutes" reason
-						listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
-							Type:               string(v1alpha1.ListenerConditionResolvedRefs),
-							Status:             metav1.ConditionFalse,
-							LastTransitionTime: metav1.Now(),
-							Reason:             string(v1alpha1.ListenerReasonDegradedRoutes),
-							Message:            fmt.Sprintf("Cannot load service from HTTPRoute %s/%s : %v", gateway.Namespace, httpRoute.Name, err),
-						})
+					// Traefik internal service can be used only if there is only one ForwardTo service reference.
+					if len(routeRule.ForwardTo) == 1 && isInternalService(routeRule.ForwardTo[0]) {
+						router.Service = routeRule.ForwardTo[0].BackendRef.Name
+					} else {
+						wrrService, subServices, err := loadServices(client, gateway.Namespace, routeRule.ForwardTo)
+						if err != nil {
+							// update "ResolvedRefs" status true with "DroppedRoutes" reason
+							listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
+								Type:               string(v1alpha1.ListenerConditionResolvedRefs),
+								Status:             metav1.ConditionFalse,
+								LastTransitionTime: metav1.Now(),
+								Reason:             string(v1alpha1.ListenerReasonDegradedRoutes),
+								Message:            fmt.Sprintf("Cannot load service from HTTPRoute %s/%s : %v", gateway.Namespace, httpRoute.Name, err),
+							})
 
-						// TODO update the RouteStatus condition / deduplicate conditions on listener
-						continue
+							// TODO update the RouteStatus condition / deduplicate conditions on listener
+							continue
+						}
+
+						for svcName, svc := range subServices {
+							conf.HTTP.Services[svcName] = svc
+						}
+
+						serviceName := provider.Normalize(routerKey + "-wrr")
+						conf.HTTP.Services[serviceName] = wrrService
+
+						router.Service = serviceName
 					}
-
-					for svcName, svc := range subServices {
-						conf.HTTP.Services[svcName] = svc
-					}
-
-					serviceName := provider.Normalize(routerKey + "-wrr")
-					conf.HTTP.Services[serviceName] = wrrService
-
-					router.Service = serviceName
 				}
 
 				if router.Service != "" {
@@ -765,6 +774,21 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 	}
 
 	for _, forwardTo := range targets {
+		weight := int(forwardTo.Weight)
+
+		if forwardTo.ServiceName == nil && forwardTo.BackendRef != nil {
+			if !(forwardTo.BackendRef.Group == traefikServiceGroupName && forwardTo.BackendRef.Kind == traefikServiceKind) {
+				continue
+			}
+
+			if strings.HasSuffix(forwardTo.BackendRef.Name, "@internal") {
+				return nil, nil, fmt.Errorf("traefik internal service %s is not allowed in a WRR loadbalancer", forwardTo.BackendRef.Name)
+			}
+
+			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: forwardTo.BackendRef.Name, Weight: &weight})
+			continue
+		}
+
 		if forwardTo.ServiceName == nil {
 			continue
 		}
@@ -774,8 +798,6 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 				PassHostHeader: func(v bool) *bool { return &v }(true),
 			},
 		}
-
-		// TODO Handle BackendRefs
 
 		service, exists, err := client.GetService(namespace, *forwardTo.ServiceName)
 		if err != nil {
@@ -855,11 +877,10 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 		serviceName := provider.Normalize(makeID(service.Namespace, service.Name) + "-" + portStr)
 		services[serviceName] = &svc
 
-		weight := int(forwardTo.Weight)
 		wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: serviceName, Weight: &weight})
 	}
 
-	if len(services) == 0 {
+	if len(wrrSvc.Weighted.Services) == 0 {
 		return nil, nil, errors.New("no service has been created")
 	}
 
@@ -903,4 +924,12 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	})
 
 	return eventsChanBuffered
+}
+
+func isInternalService(forwardTo v1alpha1.HTTPRouteForwardTo) bool {
+	return forwardTo.ServiceName == nil &&
+		forwardTo.BackendRef != nil &&
+		forwardTo.BackendRef.Kind == traefikServiceKind &&
+		forwardTo.BackendRef.Group == traefikServiceGroupName &&
+		strings.HasSuffix(forwardTo.BackendRef.Name, "@internal")
 }
