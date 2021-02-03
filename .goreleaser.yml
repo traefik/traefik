@@ -25,6 +25,7 @@ builds:
       - arm
       - arm64
       - ppc64le
+      - mips64le
     goarm:
       - 7
       - 6
