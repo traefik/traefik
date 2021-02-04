@@ -8,13 +8,15 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/file"
+	"github.com/traefik/traefik/v2/pkg/provider/traefik"
 	"github.com/traefik/traefik/v2/pkg/safe"
 )
 
 // ProviderAggregator aggregates providers.
 type ProviderAggregator struct {
-	fileProvider *file.Provider
-	providers    []provider.Provider
+	internalProvider provider.Provider
+	fileProvider     provider.Provider
+	providers        []provider.Provider
 }
 
 // NewProviderAggregator returns an aggregate of all the providers configured in the static configuration.
@@ -98,11 +100,15 @@ func (p *ProviderAggregator) AddProvider(provider provider.Provider) error {
 		return err
 	}
 
-	if fileProvider, ok := provider.(*file.Provider); ok {
-		p.fileProvider = fileProvider
-	} else {
+	switch provider.(type) {
+	case *file.Provider:
+		p.fileProvider = provider
+	case *traefik.Provider:
+		p.internalProvider = provider
+	default:
 		p.providers = append(p.providers, provider)
 	}
+
 	return nil
 }
 
@@ -113,6 +119,10 @@ func (p ProviderAggregator) Init() error {
 
 // Provide calls the provide method of every providers.
 func (p ProviderAggregator) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
+	if p.internalProvider != nil {
+		launchProvider(configurationChan, pool, p.internalProvider)
+	}
+
 	if p.fileProvider != nil {
 		launchProvider(configurationChan, pool, p.fileProvider)
 	}
@@ -123,6 +133,7 @@ func (p ProviderAggregator) Provide(configurationChan chan<- dynamic.Message, po
 			launchProvider(configurationChan, pool, prd)
 		})
 	}
+
 	return nil
 }
 

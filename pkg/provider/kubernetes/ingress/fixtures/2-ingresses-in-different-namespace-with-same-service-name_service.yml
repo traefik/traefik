@@ -8,7 +8,7 @@ spec:
   ports:
     - name: tchouk
       port: 80
-  clusterIp: 10.0.0.1
+  clusterIP: 10.0.0.1
 
 ---
 kind: Service
@@ -21,4 +21,4 @@ spec:
   ports:
     - name: tchouk
       port: 80
-  clusterIp: 10.0.0.1
+  clusterIP: 10.0.0.1

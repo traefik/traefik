@@ -403,6 +403,7 @@ certificatesResolvers:
 pilot:
   token: foobar
 experimental:
+  kubernetesGateway: true
   plugins:
     Descriptor0:
       moduleName: foobar

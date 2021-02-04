@@ -383,6 +383,7 @@
   token = "foobar"
 
 [experimental]
+  kubernetesGateway = true
   [experimental.plugins]
     [experimental.plugins.Descriptor0]
       moduleName = "foobar"
