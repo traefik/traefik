@@ -144,11 +144,17 @@ func (p *Provider) Init() error {
 
 // Provide wraps the Provide method of a plugin.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
+	defer func() {
+		if err := recover(); err != nil {
+			log.WithoutContext().WithField(log.ProviderName, p.name).Errorf("panic inside the plugin %v", err)
+		}
+	}()
+
 	cfgChan := make(chan json.Marshaler)
 
 	err := p.pp.Provide(cfgChan)
 	if err != nil {
-		return err
+		return fmt.Errorf("error from %s: %w", p.name, err)
 	}
 
 	pool.GoCtx(func(ctx context.Context) {
