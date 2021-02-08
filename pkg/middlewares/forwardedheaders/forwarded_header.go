@@ -137,7 +137,11 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 
 		if x.ipChecker != nil {
 			strategy := ip.CheckerStrategy{Checker: x.ipChecker}
-			clientIP = strategy.GetIP(outreq)
+			xClientIP := strategy.GetIP(outreq)
+			if xClientIP != "" {
+				// X-Forwarded-For wasn't empty
+				clientIP = xClientIP
+			}
 		}
 
 		if unsafeHeader(outreq.Header).Get(xRealIP) == "" {

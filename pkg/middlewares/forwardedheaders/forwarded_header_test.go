@@ -178,6 +178,15 @@ func TestServeHTTP(t *testing.T) {
 			},
 		},
 		{
+			desc:       "xRealIP populated from remote address, but not tricked by Trusted Ips",
+			insecure:   false,
+			trustedIps: []string{"10.0.0.0/8"},
+			remoteAddr: "10.0.1.101:80",
+			expectedHeaders: map[string]string{
+				xRealIP: "10.0.1.101",
+			},
+		},
+		{
 			desc:       "xRealIP was already populated from previous headers",
 			insecure:   true,
 			remoteAddr: "10.0.1.101:80",
