@@ -20,8 +20,6 @@ type RemoteAddrStrategy struct{}
 
 // GetIP returns the selected IP.
 func (s *RemoteAddrStrategy) GetIP(req *http.Request) string {
-	// FIXME: I would use req.Header.Get(xRealIP) instead
-	// as related to #3097 I would properly try to populate it
 	ip, _, err := net.SplitHostPort(req.RemoteAddr)
 	if err != nil {
 		return req.RemoteAddr
