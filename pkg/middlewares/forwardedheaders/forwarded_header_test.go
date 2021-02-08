@@ -102,12 +102,11 @@ func TestServeHTTP(t *testing.T) {
 			trustedIps: []string{"10.0.0.0/8"},
 			remoteAddr: "10.0.1.100:80",
 			incomingHeaders: map[string]string{
-				"X-Forwarded-for":      "172.31.1.25, 10.0.1.0, 10.0.1.12",
+				"X-Forwarded-for": "172.31.1.25, 10.0.1.0, 10.0.1.12",
 			},
 			expectedHeaders: map[string]string{
-				"X-Forwarded-for":      "172.31.1.25, 10.0.1.0, 10.0.1.12",
-				xRealIP:                "172.31.1.25",
-
+				"X-Forwarded-for": "172.31.1.25, 10.0.1.0, 10.0.1.12",
+				xRealIP:           "172.31.1.25",
 			},
 		},
 		{
