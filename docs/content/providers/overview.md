@@ -13,7 +13,7 @@ and when Traefik detects a change, it dynamically updates the routes.
 
 ## Orchestrators
 
-While each provider is different, we can categorize them in four groups:
+While each provider is different, you can think of each as belonging to one of four categories:
 
 - Label-based: each deployed container has a set of labels attached to it
 - Key-Value-based: each deployed container updates a key-value store with relevant information
@@ -24,7 +24,7 @@ While each provider is different, we can categorize them in four groups:
 
 When you declare certain objects in the Traefik dynamic configuration,
 such as middleware, services, TLS options or server transports, they reside in their provider's namespace.
-For example, if you declare a middleware using a Docker label, it resides in the docker provider namespace.
+For example, if you declare a middleware using a Docker label, it resides in the Docker provider namespace.
 
 If you use multiple providers and wish to reference such an object declared in another provider
 (e.g. referencing a cross-provider object like middleware), then the object name should be suffixed by the `@`
@@ -37,10 +37,10 @@ separator, and the provider name.
 !!! important "Kubernetes Namespace"
 
     As Kubernetes also has its own notion of namespace,
-    one should not confuse the "provider namespace" with the "Kubernetes Namespace" of a resource when in the context of cross-provider usage.
+    one should not confuse the _provider namespace_ with the _Kubernetes Namespace_ of a resource when in the context of cross-provider usage.
 
     In this case, since the definition of a Traefik dynamic configuration object is not in Kubernetes,
-    specifying a "Kubernetes Namespace" when referring to the resource does not make any sense.
+    specifying a Kubernetes Namespace when referring to the resource does not make any sense.
 
     On the other hand, if you were to declare a middleware as a Custom Resource in Kubernetes and use the non-CRD Ingress objects,
     you would have to add the Kubernetes Namespace of the middleware to the annotation like this `<middleware-namespace>-<middleware-name>@kubernetescrd`.

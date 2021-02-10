@@ -6,10 +6,10 @@ The Kubernetes Gateway API, The Experimental Way.
 Gateway API is the evolution of Kubernetes APIs that relate to `Services`, such as `Ingress`.
 The Gateway API project is part of Kubernetes, working under SIG-NETWORK.
 
-The Kubernetes Gateway provider is a Traefik implementation of the [service APIs](https://github.com/kubernetes-sigs/service-apis)
+The Kubernetes Gateway provider is a Traefik implementation of the [Service APIs](https://kubernetes-sigs.github.io/service-apis/)
 specifications from the Kubernetes Special Interest Groups (SIGs).
 
-This provider is proposed as an experimental feature and partially supports the service APIs [v0.1.0](https://github.com/kubernetes-sigs/service-apis/releases/tag/v0.1.0) specification.
+This provider is proposed as an experimental feature and partially supports the Service APIs [v0.1.0](https://github.com/kubernetes-sigs/service-apis/releases/tag/v0.1.0) specification.
 
 !!! warning "Enabling The Experimental Kubernetes Gateway Provider"
 
@@ -71,7 +71,7 @@ This provider is proposed as an experimental feature and partially supports the 
     --8<-- "content/reference/dynamic-configuration/kubernetes-gateway-rbac.yml"
     ```
 
-The Kubernetes Service APIs provides several [guides](https://kubernetes-sigs.github.io/service-apis/guides/) on how to use their API.
+The Kubernetes Service APIs project provides several [guides](https://kubernetes-sigs.github.io/service-apis/guides/) on how to use the APIs.
 These guides can help you to go further than the example above.
 The [getting started guide](https://kubernetes-sigs.github.io/service-apis/getting-started/) details how to install the CRDs from their repository.
 

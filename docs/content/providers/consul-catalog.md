@@ -66,7 +66,7 @@ providers:
 
 _required, Default="traefik"_
 
-The prefix for Consul Catalog tags defining traefik labels.
+The prefix for Consul Catalog tags defining Traefik labels.
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]

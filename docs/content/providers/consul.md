@@ -81,7 +81,7 @@ providers:
 
 _Optional, Default=""_
 
-Defines a password to connect to Consul with.
+Defines a password with which to connect to Consul.
 
 ```toml tab="File (TOML)"
 [providers.consul]

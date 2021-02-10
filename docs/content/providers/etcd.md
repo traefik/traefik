@@ -58,7 +58,7 @@ providers:
 
 _Optional, Default=""_
 
-Defines a username to connect to etcd with.
+Defines a username with which to connect to etcd.
 
 ```toml tab="File (TOML)"
 [providers.etcd]
@@ -81,7 +81,7 @@ providers:
 
 _Optional, Default=""_
 
-Defines a password to connect to etcd with.
+Defines a password with which to connect to etcd.
 
 ```toml tab="File (TOML)"
 [providers.etcd]
