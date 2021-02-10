@@ -12,7 +12,7 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
 
 !!! tip "The Quick Start Uses Docker"
 
-    If you did not already read it, maybe you would like to go through the [quick start guide](../getting-started/quick-start.md) that uses the docker provider!
+    If you have not already read it, maybe you would like to go through the [quick start guide](../getting-started/quick-start.md) that uses the Docker provider.
 
 ## Configuration Examples
 
@@ -327,7 +327,7 @@ When setting `useBindPortIP=true`, you tell Traefik to use the IP/Port attached 
 
 When used in conjunction with the `traefik.http.services.<name>.loadbalancer.server.port` label (that tells Traefik to route requests to a specific port),
 Traefik tries to find a binding on port `traefik.http.services.<name>.loadbalancer.server.port`.
-If it can not find such a binding, Traefik falls back on the internal network IP of the container,
+If it cannot find such a binding, Traefik falls back on the internal network IP of the container,
 but still uses the `traefik.http.services.<name>.loadbalancer.server.port` that is set in the label.
 
 ??? example "Examples of `usebindportip` in different situations."
