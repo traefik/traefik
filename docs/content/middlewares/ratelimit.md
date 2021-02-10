@@ -74,7 +74,7 @@ http:
 
 ### `average`
 
-`average` is the maximum rate, by default in requests by second, allowed from a given source.
+`average` is the maximum rate, by default in requests per second, allowed from a given source.
 
 It defaults to `0`, which means no rate limiting.
 

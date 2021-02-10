@@ -73,5 +73,5 @@ The `regex` option is the regular expression to match the path prefix from the r
 
 For instance, `/products` also matches `/products/shoes` and `/products/shirts`.
 
-If your backend is serving assets (e.g., images or Javascript files), it can use the `X-Forwarded-Prefix` header to properly construct relative URLs.
+If your backend is serving assets (e.g., images or JavaScript files), it can use the `X-Forwarded-Prefix` header to properly construct relative URLs.
 Using the previous example, the backend should return `/products/shoes/image.png` (and not `/images.png`, which Traefik would likely not be able to associate with the same backend).

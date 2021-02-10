@@ -251,7 +251,7 @@ PassTLSClientCert can add two headers to the request:
     * These options only work accordingly to the [MutualTLS configuration](../https/tls.md#client-authentication-mtls).
     That is to say, only the certificates that match the `clientAuth.clientAuthType` policy are passed.
 
-In the following example, you can see a complete certificate. We use each of its parts to explain the middleware options.
+The following example shows a complete certificate and explains each of the middleware options.
 
 ??? example "A complete client TLS certificate"
 

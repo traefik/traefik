@@ -107,7 +107,7 @@ The service that will serve the new requested error page.
 
 !!! note ""
 
-    In Kubernetes, you need to reference a Kubernetes Service instead of a traefik service.
+    In Kubernetes, you need to reference a Kubernetes Service instead of a Traefik service.
 
 ### `query`
 
