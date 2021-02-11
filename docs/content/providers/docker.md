@@ -155,7 +155,7 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
         Expose the Docker socket over TCP or SSH, instead of the default Unix socket file.
         It allows different implementation levels of the [AAA (Authentication, Authorization, Accounting) concepts](https://en.wikipedia.org/wiki/AAA_(computer_security)), depending on your security assessment:
 
-        - Authentication with Client Certificates as described in ["Protect the Docker daemon socket."](https://docs.docker.com/engine/security/https/)
+        - Authentication with Client Certificates as described in ["Protect the Docker daemon socket."](https://docs.docker.com/engine/security/protect-access/)
         - Authorize and filter requests to restrict possible actions with [the TecnativaDocker Socket Proxy](https://github.com/Tecnativa/docker-socket-proxy).
         - Authorization with the [Docker Authorization Plugin Mechanism](https://web.archive.org/web/20190920092526/https://docs.docker.com/engine/extend/plugins_authorization/)
         - Accounting at networking level, by exposing the socket only inside a Docker private network, only available for Traefik.

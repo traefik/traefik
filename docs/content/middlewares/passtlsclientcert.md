@@ -7,7 +7,7 @@ Adding Client Certificates in a Header
 TODO: add schema
 -->
 
-PassTLSClientCert adds in header the selected data from the passed client tls certificate.
+PassTLSClientCert adds the selected data from the passed client TLS certificate to a header.
 
 ## Configuration Examples
 
@@ -86,7 +86,7 @@ http:
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.province=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.serialnumber=true"
     ```
-    
+
     ```yaml tab="Kubernetes"
     # Pass all the available info in the `X-Forwarded-Tls-Client-Cert-Info` header
     apiVersion: traefik.containo.us/v1alpha1
@@ -116,7 +116,7 @@ http:
             serialNumber: true
             domainComponent: true
     ```
-    
+
     ```yaml tab="Consul Catalog"
     # Pass all the available info in the `X-Forwarded-Tls-Client-Cert-Info` header
     - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notafter=true"
@@ -137,7 +137,7 @@ http:
     - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.province=true"
     - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.serialnumber=true"
     ```
-        
+
     ```json tab="Marathon"
     "labels": {
       "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notafter": "true",
@@ -159,7 +159,7 @@ http:
       "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.serialnumber": "true"
     }
     ```
-    
+
     ```yaml tab="Rancher"
     # Pass all the available info in the `X-Forwarded-Tls-Client-Cert-Info` header
     labels:
@@ -240,7 +240,7 @@ http:
 
 ### General
 
-PassTLSClientCert can add two headers to the request: 
+PassTLSClientCert can add two headers to the request:
 
 - `X-Forwarded-Tls-Client-Cert` that contains the escaped pem.
 - `X-Forwarded-Tls-Client-Cert-Info` that contains all the selected certificate information in an escaped string.
@@ -251,9 +251,9 @@ PassTLSClientCert can add two headers to the request:
     * These options only work accordingly to the [MutualTLS configuration](../https/tls.md#client-authentication-mtls).
     That is to say, only the certificates that match the `clientAuth.clientAuthType` policy are passed.
 
-In the following example, you can see a complete certificate. We will use each part of it to explain the middleware options.
+The following example shows a complete certificate and explains each of the middleware options.
 
-??? example "A complete client tls certificate"
+??? example "A complete client TLS certificate"
 
     ```
     Certificate:
@@ -292,16 +292,16 @@ In the following example, you can see a complete certificate. We will use each p
             X509v3 extensions:
                 X509v3 Key Usage: critical
                     Digital Signature, Key Encipherment
-                X509v3 Basic Constraints: 
+                X509v3 Basic Constraints:
                     CA:FALSE
-                X509v3 Extended Key Usage: 
+                X509v3 Extended Key Usage:
                     TLS Web Server Authentication, TLS Web Client Authentication
-                X509v3 Subject Key Identifier: 
+                X509v3 Subject Key Identifier:
                     94:BA:73:78:A2:87:FB:58:28:28:CF:98:3B:C2:45:70:16:6E:29:2F
-                X509v3 Authority Key Identifier: 
+                X509v3 Authority Key Identifier:
                     keyid:1E:52:A2:E8:54:D5:37:EB:D5:A8:1D:E4:C2:04:1D:37:E2:F7:70:03
-    
-                X509v3 Subject Alternative Name: 
+
+                X509v3 Subject Alternative Name:
                     DNS:*.example.org, DNS:*.example.net, DNS:*.example.com, IP Address:10.0.1.0, IP Address:10.0.1.2, email:test@example.org, email:test@example.net
         Signature Algorithm: sha1WithRSAEncryption
              76:6b:05:b0:0e:34:11:b1:83:99:91:dc:ae:1b:e2:08:15:8b:
@@ -359,9 +359,9 @@ In the following example, you can see a complete certificate. We will use each p
 
 ### `pem`
 
-The `pem` option sets the `X-Forwarded-Tls-Client-Cert` header with the escape certificate.
+The `pem` option sets the `X-Forwarded-Tls-Client-Cert` header with the escaped certificate.
 
-In the example, it is the part between `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----` delimiters :
+In the example, it is the part between `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----` delimiters:
 
 ??? example "The data used by the pem option"
 
@@ -403,23 +403,24 @@ In the example, it is the part between `-----BEGIN CERTIFICATE-----` and `-----E
     ML9n/4zmm1PMhzZHcEA72ZAq0tKCxpz10djg5v2qL5V+Oaz8TtTOZbPsxpiKMQ==
     -----END CERTIFICATE-----
     ```
-    
+
 !!! info "Extracted data"
-    
-    The delimiters and `\n` will be removed.  
+
+    The delimiters and `\n` will be removed.
     If there are more than one certificate, they are separated by a "`,`".
 
 !!! warning "`X-Forwarded-Tls-Client-Cert` value could exceed the web server header size limit"
 
-    The header size limit of web servers is commonly between 4kb and 8kb.  
+    The header size limit of web servers is commonly between 4kb and 8kb.
     You could change the server configuration to allow bigger header or use the `info` option with the needed field(s).
 
 ### `info`
 
-The `info` option select the specific client certificate details you want to add to the `X-Forwarded-Tls-Client-Cert-Info` header.
-The value of the header will be an escaped concatenation of all the selected certificate details.
+The `info` option selects the specific client certificate details you want to add to the `X-Forwarded-Tls-Client-Cert-Info` header.
 
-The following example shows an unescaped result that uses all the available fields: 
+The value of the header is an escaped concatenation of all the selected certificate details.
+
+The following example shows an unescaped result that uses all the available fields:
 
 ```text
 Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=*.example.com";Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2";NB="1544094616";NA="1607166616";SAN="*.example.org,*.example.net,*.example.com,test@example.org,test@example.net,10.0.1.0,10.0.1.2"
@@ -433,14 +434,14 @@ Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TO
 
 Set the `info.notAfter` option to `true` to add the `Not After` information from the `Validity` part.
 
-The data are taken from the following certificate part:      
+The data is taken from the following certificate part:
 
 ```text
     Validity
-        Not After : Dec  5 11:10:16 2020 GMT            
+        Not After : Dec  5 11:10:16 2020 GMT
 ```
 
-The escape `notAfter` info part will be like:
+The escaped `notAfter` info part is formatted as below:
 
 ```text
 NA="1607166616"
@@ -450,14 +451,14 @@ NA="1607166616"
 
 Set the `info.notBefore` option to `true` to add the `Not Before` information from the `Validity` part.
 
-The data are taken from the following certificate part:
+The data is taken from the following certificate part:
 
 ```text
 Validity
     Not Before: Dec  6 11:10:16 2018 GMT
 ```
 
-The escape `notBefore` info part will be like:
+The escaped `notBefore` info part is formatted as below:
 
 ```text
 NB="1544094616"
@@ -467,28 +468,28 @@ NB="1544094616"
 
 Set the `info.sans` option to `true` to add the `Subject Alternative Name` information from the `Subject Alternative Name` part.
 
-The data are taken from the following certificate part:
+The data is taken from the following certificate part:
 
 ```text
- X509v3 Subject Alternative Name: 
+ X509v3 Subject Alternative Name:
     DNS:*.example.org, DNS:*.example.net, DNS:*.example.com, IP Address:10.0.1.0, IP Address:10.0.1.2, email:test@example.org, email:test@example.net
 ```
 
-The escape SANs info part will be like:
+The escape SANs info part is formatted as below:
 
 ```text
 SAN="*.example.org,*.example.net,*.example.com,test@example.org,test@example.net,10.0.1.0,10.0.1.2"
 ```
 
-!!! info "multiple values"
+!!! info "Multiple values"
 
-    All the SANs data are separated by a `,`.
+    The SANs are separated by a `,`.
 
 #### `info.subject`
 
-The `info.subject` select the specific client certificate subject details you want to add to the `X-Forwarded-Tls-Client-Cert-Info` header.
+The `info.subject` selects the specific client certificate subject details you want to add to the `X-Forwarded-Tls-Client-Cert-Info` header.
 
-The data are taken from the following certificate part :
+The data is taken from the following certificate part:
 
 ```text
 Subject: DC=org, DC=cheese, O=Cheese, O=Cheese 2, OU=Simple Signing Section, OU=Simple Signing Section 2, CN=*.example.org, CN=*.example.com, C=FR, C=US, L=TOULOUSE, L=LYON, ST=Cheese org state, ST=Cheese com state/emailAddress=cert@example.org/emailAddress=cert@sexample.com
@@ -496,9 +497,11 @@ Subject: DC=org, DC=cheese, O=Cheese, O=Cheese 2, OU=Simple Signing Section, OU=
 
 ##### `info.subject.country`
 
-Set the `info.subject.country` option to true to add the `country` information into the subject.  
-The data are taken from the subject part with the `C` key. 
-The escape country info in the subject part will be like :
+Set the `info.subject.country` option to `true` to add the `country` information into the subject.
+
+The data is taken from the subject part with the `C` key.
+
+The escape country info in the subject part is formatted as below:
 
 ```text
 C=FR,C=US
@@ -506,11 +509,11 @@ C=FR,C=US
 
 ##### `info.subject.province`
 
-Set the `info.subject.province` option to true to add the `province` information into the subject.
-  
-The data are taken from the subject part with the `ST` key.
+Set the `info.subject.province` option to `true` to add the `province` information into the subject.
 
-The escape province info in the subject part will be like :
+The data is taken from the subject part with the `ST` key.
+
+The escape province info in the subject part is formatted as below:
 
 ```text
 ST=Cheese org state,ST=Cheese com state
@@ -518,11 +521,11 @@ ST=Cheese org state,ST=Cheese com state
 
 ##### `info.subject.locality`
 
-Set the `info.subject.locality` option to true to add the `locality` information into the subject.
-  
-The data are taken from the subject part with the `L` key.
+Set the `info.subject.locality` option to `true` to add the `locality` information into the subject.
 
-The escape locality info in the subject part will be like :
+The data is taken from the subject part with the `L` key.
+
+The escape locality info in the subject part is formatted as below:
 
 ```text
 L=TOULOUSE,L=LYON
@@ -530,11 +533,11 @@ L=TOULOUSE,L=LYON
 
 ##### `info.subject.organization`
 
-Set the `info.subject.organization` option to true to add the `organization` information into the subject.
-  
-The data are taken from the subject part with the `O` key.
+Set the `info.subject.organization` option to `true` to add the `organization` information into the subject.
 
-The escape organization info in the subject part will be like :
+The data is taken from the subject part with the `O` key.
+
+The escape organization info in the subject part is formatted as below:
 
 ```text
 O=Cheese,O=Cheese 2
@@ -542,11 +545,11 @@ O=Cheese,O=Cheese 2
 
 ##### `info.subject.commonName`
 
-Set the `info.subject.commonName` option to true to add the `commonName` information into the subject.
-  
-The data are taken from the subject part with the `CN` key.
+Set the `info.subject.commonName` option to `true` to add the `commonName` information into the subject.
 
-The escape common name info in the subject part will be like :
+The data is taken from the subject part with the `CN` key.
+
+The escape common name info in the subject part is formatted as below:
 
 ```text
 CN=*.example.com
@@ -554,11 +557,11 @@ CN=*.example.com
 
 ##### `info.subject.serialNumber`
 
-Set the `info.subject.serialNumber` option to true to add the `serialNumber` information into the subject.
-  
-The data are taken from the subject part with the `SN` key.
+Set the `info.subject.serialNumber` option to `true` to add the `serialNumber` information into the subject.
 
-The escape serial number info in the subject part will be like :
+The data is taken from the subject part with the `SN` key.
+
+The escape serial number info in the subject part is formatted as below:
 
 ```text
 SN=1234567890
@@ -566,11 +569,11 @@ SN=1234567890
 
 ##### `info.subject.domainComponent`
 
-Set the `info.subject.domainComponent` option to true to add the `domainComponent` information into the subject.
-  
-The data are taken from the subject part with the `DC` key.
+Set the `info.subject.domainComponent` option to `true` to add the `domainComponent` information into the subject.
 
-The escape domaincomponent info in the subject part will be like :
+The data is taken from the subject part with the `DC` key.
+
+The escape domain component info in the subject part is formatted as below:
 
 ```text
 DC=org,DC=cheese
@@ -578,9 +581,9 @@ DC=org,DC=cheese
 
 #### `info.issuer`
 
-The `info.issuer` select the specific client certificate issuer details you want to add to the `X-Forwarded-Tls-Client-Cert-Info` header.
+The `info.issuer` selects the specific client certificate issuer details you want to add to the `X-Forwarded-Tls-Client-Cert-Info` header.
 
-The data are taken from the following certificate part :
+The data is taken from the following certificate part:
 
 ```text
 Issuer: DC=org, DC=cheese, O=Cheese, O=Cheese 2, OU=Simple Signing Section, OU=Simple Signing Section 2, CN=Simple Signing CA, CN=Simple Signing CA 2, C=FR, C=US, L=TOULOUSE, L=LYON, ST=Signing State, ST=Signing State 2/emailAddress=simple@signing.com/emailAddress=simple2@signing.com
@@ -588,9 +591,11 @@ Issuer: DC=org, DC=cheese, O=Cheese, O=Cheese 2, OU=Simple Signing Section, OU=S
 
 ##### `info.issuer.country`
 
-Set the `info.issuer.country` option to true to add the `country` information into the issuer.  
-The data are taken from the issuer part with the `C` key. 
-The escape country info in the issuer part will be like :
+Set the `info.issuer.country` option to `true` to add the `country` information into the issuer.
+
+The data is taken from the issuer part with the `C` key.
+
+The escape country info in the issuer part is formatted as below:
 
 ```text
 C=FR,C=US
@@ -598,11 +603,11 @@ C=FR,C=US
 
 ##### `info.issuer.province`
 
-Set the `info.issuer.province` option to true to add the `province` information into the issuer.
-  
-The data are taken from the issuer part with the `ST` key.
+Set the `info.issuer.province` option to `true` to add the `province` information into the issuer.
 
-The escape province info in the issuer part will be like :
+The data is taken from the issuer part with the `ST` key.
+
+The escape province info in the issuer part is formatted as below:
 
 ```text
 ST=Signing State,ST=Signing State 2
@@ -610,11 +615,11 @@ ST=Signing State,ST=Signing State 2
 
 ##### `info.issuer.locality`
 
-Set the `info.issuer.locality` option to true to add the `locality` information into the issuer.
-  
-The data are taken from the issuer part with the `L` key.
+Set the `info.issuer.locality` option to `true` to add the `locality` information into the issuer.
 
-The escape locality info in the issuer part will be like :
+The data is taken from the issuer part with the `L` key.
+
+The escape locality info in the issuer part is formatted as below:
 
 ```text
 L=TOULOUSE,L=LYON
@@ -622,11 +627,11 @@ L=TOULOUSE,L=LYON
 
 ##### `info.issuer.organization`
 
-Set the `info.issuer.organization` option to true to add the `organization` information into the issuer.
-  
-The data are taken from the issuer part with the `O` key.
+Set the `info.issuer.organization` option to `true` to add the `organization` information into the issuer.
 
-The escape organization info in the issuer part will be like :
+The data is taken from the issuer part with the `O` key.
+
+The escape organization info in the issuer part is formatted as below:
 
 ```text
 O=Cheese,O=Cheese 2
@@ -634,11 +639,11 @@ O=Cheese,O=Cheese 2
 
 ##### `info.issuer.commonName`
 
-Set the `info.issuer.commonName` option to true to add the `commonName` information into the issuer.
-  
-The data are taken from the issuer part with the `CN` key.
+Set the `info.issuer.commonName` option to `true` to add the `commonName` information into the issuer.
 
-The escape common name info in the issuer part will be like :
+The data is taken from the issuer part with the `CN` key.
+
+The escape common name info in the issuer part is formatted as below:
 
 ```text
 CN=Simple Signing CA 2
@@ -646,11 +651,11 @@ CN=Simple Signing CA 2
 
 ##### `info.issuer.serialNumber`
 
-Set the `info.issuer.serialNumber` option to true to add the `serialNumber` information into the issuer.
-  
-The data are taken from the issuer part with the `SN` key.
+Set the `info.issuer.serialNumber` option to `true` to add the `serialNumber` information into the issuer.
 
-The escape serial number info in the issuer part will be like :
+The data is taken from the issuer part with the `SN` key.
+
+The escape serial number info in the issuer part is formatted as below:
 
 ```text
 SN=1234567890
@@ -658,11 +663,11 @@ SN=1234567890
 
 ##### `info.issuer.domainComponent`
 
-Set the `info.issuer.domainComponent` option to true to add the `domainComponent` information into the issuer.
-  
-The data are taken from the issuer part with the `DC` key.
+Set the `info.issuer.domainComponent` option to `true` to add the `domainComponent` information into the issuer.
 
-The escape domain component info in the issuer part will be like :
+The data is taken from the issuer part with the `DC` key.
+
+The escape domain component info in the issuer part is formatted as below:
 
 ```text
 DC=org,DC=cheese

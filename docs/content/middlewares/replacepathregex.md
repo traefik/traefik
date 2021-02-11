@@ -7,7 +7,7 @@ Updating the Path Before Forwarding the Request (Using a Regex)
 TODO: add schema
 -->
 
-The ReplaceRegex replace a path from an url to another with regex matching and replacement.
+The ReplaceRegex replaces the path of a URL using regex matching and replacement.
 
 ## Configuration Examples
 
@@ -51,7 +51,7 @@ labels:
 ```
 
 ```toml tab="File (TOML)"
-# Redirect with domain replacement
+# Replace path with regex
 [http.middlewares]
   [http.middlewares.test-replacepathregex.replacePathRegex]
     regex = "^/foo/(.*)"
@@ -59,7 +59,7 @@ labels:
 ```
 
 ```yaml tab="File (YAML)"
-# Redirect with domain replacement
+# Replace path with regex
 http:
   middlewares:
     test-replacepathregex:
@@ -74,21 +74,21 @@ http:
 
 The ReplacePathRegex middleware will:
 
-- replace the matching path by the specified one.
+- replace the matching path with the specified one.
 - store the original path in a `X-Replaced-Path` header.
+
+!!! tip
+
+    Regular expressions and replacements can be tested using online tools such as [Go Playground](https://play.golang.org/p/mWU9p-wk2ru) or [Regex101](https://regex101.com/r/58sIgx/2).
 
 ### `regex`
 
 The `regex` option is the regular expression to match and capture the path from the request URL.
+    
+### `replacement`
+
+The `replacement` option defines the replacement path format, which can include captured variables.
 
 !!! warning
 
     Care should be taken when defining replacement expand variables: `$1x` is equivalent to `${1x}`, not `${1}x` (see [Regexp.Expand](https://golang.org/pkg/regexp/#Regexp.Expand)), so use `${1}` syntax.
-
-!!! tip
-
-    Regular expressions and replacements can be tested using online tools such as [Go Playground](https://play.golang.org/p/mWU9p-wk2ru) or the [Regex101](https://regex101.com/r/58sIgx/2).
-    
-### `replacement`
-
-The `replacement` option defines how to modify the path to have the new target path.
