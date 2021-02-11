@@ -71,7 +71,7 @@ func (c *ChallengeTLSALPN) Present(domain, _, keyAuth string) error {
 
 		err = c.CleanUp(domain, "", keyAuth)
 		if err != nil {
-			logger.Errorf("failed to clean up: %v", err)
+			logger.Errorf("Failed to clean up TLS challenge: %v", err)
 		}
 
 		errC = fmt.Errorf("timeout %s", t)
