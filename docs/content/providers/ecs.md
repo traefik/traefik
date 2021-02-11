@@ -10,16 +10,16 @@ Attach labels to your ECS containers and let Traefik do the rest!
 ??? example "Configuring ECS provider"
 
     Enabling the ECS provider:
-    
+
     ```toml tab="File (TOML)"
     [providers.ecs]
     ```
-    
+
     ```yaml tab="File (YAML)"
     providers:
       ecs: {}
     ```
-    
+
     ```bash tab="CLI"
     --providers.ecs=true
     ```
@@ -52,11 +52,16 @@ Traefik needs the following policy to read ECS information:
 }
 ```
 
-## Provider configuration
+## Provider Configuration
 
 ### `autoDiscoverClusters`
 
 _Optional, Default=false_
+
+Search for services in cluster list.
+
+- If set to `true` service discovery is disabled on configured clusters, but enabled for all other clusters.
+- If set to `false` service discovery is enabled on configured clusters only.
 
 ```toml tab="File (TOML)"
 [providers.ecs]
@@ -76,14 +81,11 @@ providers:
 # ...
 ```
 
-Search for services in clusters list.
-
-- If set to `true` the configured clusters will be ignored and the clusters will be discovered.
-- If set to `false` the services will be discovered only in configured clusters.
-
 ### `clusters`
 
 _Optional, Default=["default"]_
+
+Search for services in cluster list.
 
 ```toml tab="File (TOML)"
 [providers.ecs]
@@ -104,11 +106,13 @@ providers:
 # ...
 ```
 
-Search for services in clusters list.
-
 ### `exposedByDefault`
 
 _Optional, Default=true_
+
+Expose ECS services by default in Traefik.
+
+If set to `false`, services that do not have a `traefik.enable=true` label are ignored from the resulting routing configuration.
 
 ```toml tab="File (TOML)"
 [providers.ecs]
@@ -128,12 +132,16 @@ providers:
 # ...
 ```
 
-Expose ECS services by default in Traefik.
-If set to false, services that don't have a `traefik.enable=true` label will be ignored from the resulting routing configuration.
-
 ### `defaultRule`
 
 _Optional, Default=```Host(`{{ normalize .Name }}`)```_
+
+The `defaultRule` option defines what routing rule to apply to a container if no rule is defined by a label.
+
+It must be a valid [Go template](https://golang.org/pkg/text/template/), and can use
+[sprig template functions](http://masterminds.github.io/sprig/).
+The container service name can be accessed with the `Name` identifier,
+and the template has access to all the labels defined on this container.
 
 ```toml tab="File (TOML)"
 [providers.ecs]
@@ -153,15 +161,11 @@ providers:
 # ...
 ```
 
-For a given container if no routing rule was defined by a label, it is defined by this defaultRule instead.
-It must be a valid [Go template](https://golang.org/pkg/text/template/),
-augmented with the [sprig template functions](http://masterminds.github.io/sprig/).
-The service name can be accessed as the `Name` identifier,
-and the template has access to all the labels defined on this container.
-
 ### `refreshSeconds`
 
 _Optional, Default=15_
+
+Polling interval (in seconds).
 
 ```toml tab="File (TOML)"
 [providers.ecs]
@@ -181,11 +185,18 @@ providers:
 # ...
 ```
 
-Polling interval (in seconds).
-
 ### Credentials
 
 _Optional_
+
+If `region` is not provided, it is resolved from the EC2 metadata endpoint for EC2 tasks.
+In a FARGATE context it is resolved from the `AWS_REGION` environment variable.
+
+If `accessKeyID` and `secretAccessKey` are not provided, credentials are resolved in the following order:
+
+- Using the environment variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN`.
+- Using shared credentials, determined by `AWS_PROFILE` and `AWS_SHARED_CREDENTIALS_FILE`, defaults to `default` and `~/.aws/credentials`.
+- Using EC2 instance role or ECS task role
 
 ```toml tab="File (TOML)"
 [providers.ecs]
@@ -209,12 +220,3 @@ providers:
 --providers.ecs.secretAccessKey="123"
 # ...
 ```
-
-If `region` is not provided, it will be resolved from the EC2 metadata endpoint for EC2 tasks. 
-In a FARGATE context it will be resolved from the `AWS_REGION` env variable.
-
-If `accessKeyID` / `secretAccessKey` are not provided, credentials will be resolved in the following order:
-
-- From environment variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN`.
-- Shared credentials, determined by `AWS_PROFILE` and `AWS_SHARED_CREDENTIALS_FILE`, defaults to default and `~/.aws/credentials`.
-- EC2 instance role or ECS task role
