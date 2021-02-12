@@ -91,24 +91,25 @@ func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 	baseBody := generateBytes(gziphandler.DefaultMinSize)
 
-	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		_, err := rw.Write(baseBody)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-		}
-	})
-
 	testCases := []struct {
-		desc           string
-		conf           dynamic.Compress
-		reqContentType string
+		desc            string
+		conf            dynamic.Compress
+		reqContentType  string
+		respContentType string
 	}{
 		{
-			desc: "text/event-stream",
+			desc: "Exclude Request Content-Type",
 			conf: dynamic.Compress{
 				ExcludedContentTypes: []string{"text/event-stream"},
 			},
 			reqContentType: "text/event-stream",
+		},
+		{
+			desc: "Exclude Response Content-Type",
+			conf: dynamic.Compress{
+				ExcludedContentTypes: []string{"text/event-stream"},
+			},
+			respContentType: "text/event-stream",
 		},
 		{
 			desc:           "application/grpc",
@@ -127,6 +128,17 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 			if test.reqContentType != "" {
 				req.Header.Add(contentTypeHeader, test.reqContentType)
 			}
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+				if len(test.respContentType) > 0 {
+					rw.Header().Set(contentTypeHeader, test.respContentType)
+				}
+
+				_, err := rw.Write(baseBody)
+				if err != nil {
+					http.Error(rw, err.Error(), http.StatusInternalServerError)
+				}
+			})
 
 			handler, err := New(context.Background(), next, test.conf, "test")
 			require.NoError(t, err)
