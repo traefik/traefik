@@ -181,6 +181,12 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 				address = consulService.Address
 			}
 
+			labels := tagsToNeutralLabels(consulService.ServiceTags, p.Prefix)
+			svcName, exists := labels["traefik.service"]
+			if !exists {
+				svcName = consulService.ServiceName
+			}
+
 			status, exists := statuses[consulService.ID+consulService.ServiceID]
 			if !exists {
 				status = api.HealthAny
@@ -189,10 +195,10 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 			item := itemData{
 				ID:      consulService.ServiceID,
 				Node:    consulService.Node,
-				Name:    consulService.ServiceName,
+				Name:    svcName,
 				Address: address,
 				Port:    strconv.Itoa(consulService.ServicePort),
-				Labels:  tagsToNeutralLabels(consulService.ServiceTags, p.Prefix),
+				Labels:  labels,
 				Tags:    consulService.ServiceTags,
 				Status:  status,
 			}

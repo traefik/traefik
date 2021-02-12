@@ -150,6 +150,70 @@ func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings(c *c
 	c.Assert(err, checker.IsNil)
 }
 
+func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndMultipleServicesBehindTags(c *check.C) {
+	reg1 := &api.AgentServiceRegistration{
+		ID:      "whoami1",
+		Name:    "whoami",
+		Tags:    []string{"whoami1", "traefik.enable=true"},
+		Port:    80,
+		Address: s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress,
+	}
+	err := s.registerService(reg1, false)
+	c.Assert(err, checker.IsNil)
+
+	reg2 := &api.AgentServiceRegistration{
+		ID:      "whoami2",
+		Name:    "whoami",
+		Tags:    []string{"whoami2", "traefik.enable=true", "traefik.service=someone-else"},
+		Port:    80,
+		Address: s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress,
+	}
+	err = s.registerService(reg2, false)
+	c.Assert(err, checker.IsNil)
+
+	tempObjects := struct {
+		ConsulAddress string
+	}{
+		ConsulAddress: s.consulAddress,
+	}
+
+	file := s.adaptFile(c, "fixtures/consul_catalog/default_not_exposed.toml", tempObjects)
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err = cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "whoami"
+
+	err = try.Request(req, 2*time.Second,
+		try.StatusCodeIs(200),
+		try.BodyContains("Hostname: whoami1"),
+		try.BodyNotContains("Hostname: whoami2"),
+	)
+	c.Assert(err, checker.IsNil)
+
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "someone-else"
+
+	err = try.Request(req, 2*time.Second,
+		try.StatusCodeIs(200),
+		try.BodyContains("Hostname: whoami2"),
+		try.BodyNotContains("Hostname: whoami1"),
+	)
+	c.Assert(err, checker.IsNil)
+
+	err = s.deregisterService("whoami1", false)
+	c.Assert(err, checker.IsNil)
+	err = s.deregisterService("whoami2", false)
+	c.Assert(err, checker.IsNil)
+}
+
 func (s *ConsulCatalogSuite) TestByLabels(c *check.C) {
 	containerIP := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
 
