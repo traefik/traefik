@@ -52,7 +52,7 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		c.next.ServeHTTP(rw, req)
 	} else {
 		ctx := middlewares.GetLoggerCtx(req.Context(), c.name, typeName)
-		c.gzipHandler(ctx, c.next).ServeHTTP(rw, req)
+		c.gzipHandler(ctx).ServeHTTP(rw, req)
 	}
 }
 
@@ -60,7 +60,7 @@ func (c *compress) GetTracingInformation() (string, ext.SpanKindEnum) {
 	return c.name, tracing.SpanKindNoneEnum
 }
 
-func (c *compress) gzipHandler(ctx context.Context, h http.Handler) http.Handler {
+func (c *compress) gzipHandler(ctx context.Context) http.Handler {
 	wrapper, err := gziphandler.GzipHandlerWithOpts(
 		gziphandler.ContentTypeExceptions(c.excludes),
 		gziphandler.CompressionLevel(gzip.DefaultCompression),
@@ -69,7 +69,7 @@ func (c *compress) gzipHandler(ctx context.Context, h http.Handler) http.Handler
 		log.FromContext(ctx).Error(err)
 	}
 
-	return wrapper(h)
+	return wrapper(c.next)
 }
 
 func contains(values []string, val string) bool {
