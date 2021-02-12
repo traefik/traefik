@@ -32,6 +32,9 @@ jobs:
       - name: Install Structor ${{ env.STRUCTOR_VERSION }}
         run: curl -sSfL https://raw.githubusercontent.com/traefik/structor/master/godownloader.sh | sh -s -- -b $HOME/bin ${STRUCTOR_VERSION}
 
+      - name: Install Seo-doc
+        run: curl -sSfL https://raw.githubusercontent.com/traefik/seo-doc/master/godownloader.sh | sh -s -- -b "${HOME}/bin"
+
       - name: Install Mixtus ${{ env.MIXTUS_VERSION }}
         run: curl -sSfL https://raw.githubusercontent.com/traefik/mixtus/master/godownloader.sh | sh -s -- -b $HOME/bin ${MIXTUS_VERSION}
 
@@ -39,6 +42,9 @@ jobs:
         run: $HOME/bin/structor -o traefik -r traefik --dockerfile-url="https://raw.githubusercontent.com/traefik/traefik/v1.7/docs.Dockerfile" --menu.js-url="https://raw.githubusercontent.com/traefik/structor/master/traefik-menu.js.gotmpl" --rqts-url="https://raw.githubusercontent.com/traefik/structor/master/requirements-override.txt" --force-edit-url --exp-branch=master --debug
         env:
           STRUCTOR_LATEST_TAG: ${{ secrets.STRUCTOR_LATEST_TAG }}
+
+      - name: Apply seo
+        run: $HOME/bin/seo -path=./site
 
       - name: Publish documentation
         run: $HOME/bin/mixtus --dst-doc-path="./traefik" --dst-owner=traefik --dst-repo-name=doc --git-user-email="30906710+traefiker@users.noreply.github.com" --git-user-name=traefiker --src-doc-path="./site" --src-owner=containous --src-repo-name=traefik
