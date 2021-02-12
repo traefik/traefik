@@ -71,9 +71,9 @@ http:
 
 ### `excludedContentTypes`
 
-`excludedContentTypes` specifies a list of content types to compare the `Content-Type` header of the incoming requests to before compressing.
+`excludedContentTypes` specifies a list of content types to compare the `Content-Type` header of the incoming requests and responses before compressing.
 
-The requests with content types defined in `excludedContentTypes` are not compressed.
+The responses with content types defined in `excludedContentTypes` are not compressed.
 
 Content types are compared in a case-insensitive, whitespace-ignored manner.
 
