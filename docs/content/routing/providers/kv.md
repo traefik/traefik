@@ -110,6 +110,14 @@ A Story of key & values
     |-----------------------------------------------------------------|-----------------------------------------|
     | `traefik/http/services/myservice/loadbalancer/servers/0/url`    | `http://<ip-server-1>:<port-server-1>/` |
 
+??? info "`traefik/http/services/<service_name>/loadbalancer/serverstransport`"
+
+    See [serverstransport](../services/index.md#serverstransport) for more information.
+
+    | Key (Path)                                                      | Value    |
+    |-----------------------------------------------------------------|----------|
+    | `traefik/http/services/myservice/loadbalancer/serverstransport` | `foobar` |
+
 ??? info "`traefik/http/services/<service_name>/loadbalancer/passhostheader`"
 
     See [pass Host header](../services/index.md#pass-host-header) for more information.

@@ -133,6 +133,14 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     traefik.http.services.myservice.loadbalancer.server.scheme=http
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.serverstransport`"
+    
+    See [serverstransport](../services/index.md#serverstransport) for more information.
+    
+    ```yaml
+    traefik.http.services.<service_name>.loadbalancer.serverstransport=foobar
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.passhostheader`"
 
     See [pass Host header](../services/index.md#pass-host-header) for more information.
@@ -205,12 +213,12 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     traefik.http.services.myservice.loadbalancer.healthcheck.followredirects=true
     ```
 
-??? info "`traefik.http.services.<service_name>.loadbalancer.sticky`"
+??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie`"
     
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
     
     ```yaml
-    traefik.http.services.myservice.loadbalancer.sticky=true
+    traefik.http.services.myservice.loadbalancer.sticky.cookie=true
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.httponly`"

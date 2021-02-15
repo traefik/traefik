@@ -160,6 +160,14 @@ For example, to change the passHostHeader behavior, you'd add the label `"traefi
     "traefik.http.services.myservice.loadbalancer.server.scheme": "http"
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.serverstransport`"
+    
+    See [serverstransport](../services/index.md#serverstransport) for more information.
+    
+    ```json
+    "traefik.http.services.<service_name>.loadbalancer.serverstransport": "foobar"
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.passhostheader`"
     
     See [pass Host header](../services/index.md#pass-host-header) for more information.
