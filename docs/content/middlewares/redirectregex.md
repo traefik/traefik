@@ -7,7 +7,7 @@ Redirecting the Client to a Different Location
 TODO: add schema
 -->
 
-RegexRedirect redirect a request from an url to another with regex matching and replacement.
+The RedirectRegex redirects a request using regex matching and replacement.
 
 ## Configuration Examples
 
@@ -73,6 +73,10 @@ http:
 
 ## Configuration Options
 
+!!! tip
+
+    Regular expressions and replacements can be tested using online tools such as [Go Playground](https://play.golang.org/p/mWU9p-wk2ru) or the [Regex101](https://regex101.com/r/58sIgx/2).
+
 ### `permanent`
 
 Set the `permanent` option to `true` to apply a permanent redirection.
@@ -80,15 +84,11 @@ Set the `permanent` option to `true` to apply a permanent redirection.
 ### `regex`
 
 The `regex` option is the regular expression to match and capture elements from the request URL.
-
-!!! warning
-
-    Care should be taken when defining replacement expand variables: `$1x` is equivalent to `${1x}`, not `${1}x` (see [Regexp.Expand](https://golang.org/pkg/regexp/#Regexp.Expand)), so use `${1}` syntax.
-
-!!! tip
-
-    Regular expressions and replacements can be tested using online tools such as [Go Playground](https://play.golang.org/p/mWU9p-wk2ru) or the [Regex101](https://regex101.com/r/58sIgx/2).
     
 ### `replacement`
 
 The `replacement` option defines how to modify the URL to have the new target URL.
+
+!!! warning
+
+    Care should be taken when defining replacement expand variables: `$1x` is equivalent to `${1x}`, not `${1}x` (see [Regexp.Expand](https://golang.org/pkg/regexp/#Regexp.Expand)), so use `${1}` syntax.

@@ -11,23 +11,24 @@ Traefik works with both [Docker (standalone) Engine](https://docs.docker.com/eng
 and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
 
 !!! tip "The Quick Start Uses Docker"
-    If you haven't already, maybe you'd like to go through the [quick start](../getting-started/quick-start.md) that uses the docker provider!
+
+    If you have not already read it, maybe you would like to go through the [quick start guide](../getting-started/quick-start.md) that uses the Docker provider.
 
 ## Configuration Examples
 
 ??? example "Configuring Docker & Deploying / Exposing Services"
 
     Enabling the docker provider
-    
+
     ```toml tab="File (TOML)"
     [providers.docker]
     ```
-    
+
     ```yaml tab="File (YAML)"
     providers:
       docker: {}
     ```
-    
+
     ```bash tab="CLI"
     --providers.docker=true
     ```
@@ -55,7 +56,7 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
       endpoint = "tcp://127.0.0.1:2377"
       swarmMode = true
     ```
-    
+
     ```yaml tab="File (YAML)"
     providers:
       docker:
@@ -65,7 +66,7 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
         endpoint: "tcp://127.0.0.1:2377"
         swarmMode: true
     ```
-    
+
     ```bash tab="CLI"
     # swarm classic (1.12-)
     # --providers.docker.endpoint=tcp://127.0.0.1:2375
@@ -102,17 +103,18 @@ When using Docker Compose, labels are specified by the directive
 ["services" objects](https://docs.docker.com/compose/compose-file/compose-file-v3/#service-configuration-reference).
 
 !!! tip "Not Only Docker"
+
     Please note that any tool like Nomad, Terraform, Ansible, etc.
     that is able to define a Docker container with labels can work
-    with Traefik & the Docker provider.
+    with Traefik and the Docker provider.
 
 ### Port Detection
 
 Traefik retrieves the private IP and port of containers from the Docker API.
 
-Ports detection works as follows:
+Port detection works as follows:
 
-- If a container [exposes](https://docs.docker.com/engine/reference/builder/#expose) only one port,
+- If a container [exposes](https://docs.docker.com/engine/reference/builder/#expose) a single port,
   then Traefik uses this port for private communication.
 - If a container [exposes](https://docs.docker.com/engine/reference/builder/#expose) multiple ports,
   or does not expose any port, then you must manually specify which port Traefik should use for communication 
@@ -126,12 +128,11 @@ the IP address of the host is resolved as follows:
 
 <!-- TODO: verify and document the swarm mode case with container.Node.IPAddress coming from the API -->
 - try a lookup of `host.docker.internal`
-- otherwise fall back to `127.0.0.1`
+- if the lookup was unsuccessful, fall back to `127.0.0.1`
 
-On Linux, (and until [github.com/moby/moby/pull/40007](https://github.com/moby/moby/pull/40007) is included in a release),
-for `host.docker.internal` to be defined, it should be provided as an `extra_host` to the Traefik container,
-using the `--add-host` flag. For example, to set it to the IP address of the bridge interface (docker0 by default):
-`--add-host=host.docker.internal:172.17.0.1`
+On Linux, for versions of Docker older than 20.10.0, for `host.docker.internal` to be defined, it should be provided
+as an `extra_host` to the Traefik container, using the `--add-host` flag. For example, to set it to the IP address of
+the bridge interface (`docker0` by default): `--add-host=host.docker.internal:172.17.0.1`
 
 ### Docker API Access
 
@@ -145,9 +146,10 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
     If Traefik is attacked, then the attacker might get access to the underlying host.
     {: #security-note }
 
-    As explained in the Docker documentation: ([Docker Daemon Attack Surface page](https://docs.docker.com/engine/security/#docker-daemon-attack-surface)):
+    As explained in the [Docker Daemon Attack Surface documentation](https://docs.docker.com/engine/security/#docker-daemon-attack-surface):
 
     !!! quote
+
         [...] only **trusted** users should be allowed to control your Docker daemon [...]
 
     ??? success "Solutions"
@@ -155,7 +157,7 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
         Expose the Docker socket over TCP or SSH, instead of the default Unix socket file.
         It allows different implementation levels of the [AAA (Authentication, Authorization, Accounting) concepts](https://en.wikipedia.org/wiki/AAA_(computer_security)), depending on your security assessment:
 
-        - Authentication with Client Certificates as described in ["Protect the Docker daemon socket."](https://docs.docker.com/engine/security/https/)
+        - Authentication with Client Certificates as described in ["Protect the Docker daemon socket."](https://docs.docker.com/engine/security/protect-access/)
         - Authorize and filter requests to restrict possible actions with [the TecnativaDocker Socket Proxy](https://github.com/Tecnativa/docker-socket-proxy).
         - Authorization with the [Docker Authorization Plugin Mechanism](https://web.archive.org/web/20190920092526/https://docs.docker.com/engine/extend/plugins_authorization/)
         - Accounting at networking level, by exposing the socket only inside a Docker private network, only available for Traefik.
@@ -165,6 +167,7 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
         - SSH public key authentication (SSH is supported with Docker > 18.09)
 
     ??? info "More Resources and Examples"
+
         - ["Paranoid about mounting /var/run/docker.sock?"](https://medium.com/@containeroo/traefik-2-0-paranoid-about-mounting-var-run-docker-sock-22da9cb3e78c)
         - [Traefik and Docker: A Discussion with Docker Captain, Bret Fisher](https://blog.traefik.io/traefik-and-docker-a-discussion-with-docker-captain-bret-fisher-7f0b9a54ff88)
         - [KubeCon EU 2018 Keynote, Running with Scissors, from Liz Rice](https://www.youtube.com/watch?v=ltrV-Qmh3oY)
@@ -194,15 +197,15 @@ This behavior is only enabled for docker-compose version 3+ ([Compose file refer
 
 Docker Swarm does not provide any [port detection](#port-detection) information to Traefik.
 
-Therefore you **must** specify the port to use for communication by using the label `traefik.http.services.<service_name>.loadbalancer.server.port`
+Therefore, you **must** specify the port to use for communication by using the label `traefik.http.services.<service_name>.loadbalancer.server.port`
 (Check the reference for this label in the [routing section for Docker](../routing/providers/docker.md#port)).
 
 ### Docker API Access
 
 Docker Swarm Mode follows the same rules as Docker [API Access](#docker-api-access).
 
-As the Swarm API is only exposed on the [manager nodes](https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/#manager-nodes), you should schedule Traefik on the Swarm manager nodes by default,
-by deploying Traefik with a constraint on the node's "role":
+Since the Swarm API is only exposed on the [manager nodes](https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/#manager-nodes),
+these are the nodes that Traefik should be scheduled on by deploying Traefik with a constraint on the node "role":
 
 ```shell tab="With Docker CLI"
 docker service create \
@@ -223,13 +226,13 @@ services:
 ```
 
 !!! tip "Scheduling Traefik on Worker Nodes"
-    
+
     Following the guidelines given in the previous section ["Docker API Access"](#docker-api-access),
     if you expose the Docker API through TCP, then Traefik can be scheduled on any node if the TCP
     socket is reachable.
-    
+
     Please consider the security implications by reading the [Security Note](#security-note).
-    
+
     A good example can be found on [Bret Fisher's repository](https://github.com/BretFisher/dogvscat/blob/master/stack-proxy-global.yml#L124).
 
 ## Provider Configuration
@@ -237,21 +240,6 @@ services:
 ### `endpoint`
 
 _Required, Default="unix:///var/run/docker.sock"_
-
-```toml tab="File (TOML)"
-[providers.docker]
-  endpoint = "unix:///var/run/docker.sock"
-```
-
-```yaml tab="File (YAML)"
-providers:
-  docker:
-    endpoint: "unix:///var/run/docker.sock"
-```
-
-```bash tab="CLI"
---providers.docker.endpoint=unix:///var/run/docker.sock
-```
 
 See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API Access](#docker-api-access_1) for more information.
 
@@ -278,14 +266,14 @@ See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API A
       endpoint = "unix:///var/run/docker.sock"
       # ...
     ```
-    
+
     ```yaml tab="File (YAML)"
     providers:
       docker:
         endpoint: "unix:///var/run/docker.sock"
          # ...
     ```
-    
+
     ```bash tab="CLI"
     --providers.docker.endpoint=unix:///var/run/docker.sock
     # ...
@@ -302,22 +290,65 @@ See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API A
       endpoint = "ssh://traefik@192.168.2.5:2022"
       # ...
     ```
-    
+
     ```yaml tab="File (YAML)"
     providers:
       docker:
         endpoint: "ssh://traefik@192.168.2.5:2022"
          # ...
     ```
-    
+
     ```bash tab="CLI"
     --providers.docker.endpoint=ssh://traefik@192.168.2.5:2022
     # ...
     ```
 
+```toml tab="File (TOML)"
+[providers.docker]
+  endpoint = "unix:///var/run/docker.sock"
+```
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+```
+
+```bash tab="CLI"
+--providers.docker.endpoint=unix:///var/run/docker.sock
+```
+
 ### `useBindPortIP`
 
 _Optional, Default=false_
+
+Traefik routes requests to the IP/port of the matching container.
+When setting `useBindPortIP=true`, you tell Traefik to use the IP/Port attached to the container's _binding_ instead of its inner network IP/Port.
+
+When used in conjunction with the `traefik.http.services.<name>.loadbalancer.server.port` label (that tells Traefik to route requests to a specific port),
+Traefik tries to find a binding on port `traefik.http.services.<name>.loadbalancer.server.port`.
+If it cannot find such a binding, Traefik falls back on the internal network IP of the container,
+but still uses the `traefik.http.services.<name>.loadbalancer.server.port` that is set in the label.
+
+??? example "Examples of `usebindportip` in different situations."
+
+    | port label         | Container's binding                                | Routes to      |
+    |--------------------|----------------------------------------------------|----------------|
+    |          -         |           -                                        | IntIP:IntPort  |
+    |          -         | ExtPort:IntPort                                    | IntIP:IntPort  |
+    |          -         | ExtIp:ExtPort:IntPort                              | ExtIp:ExtPort  |
+    | LblPort            |           -                                        | IntIp:LblPort  |
+    | LblPort            | ExtIp:ExtPort:LblPort                              | ExtIp:ExtPort  |
+    | LblPort            | ExtIp:ExtPort:OtherPort                            | IntIp:LblPort  |
+    | LblPort            | ExtIp1:ExtPort1:IntPort1 & ExtIp2:LblPort:IntPort2 | ExtIp2:LblPort |
+
+    !!! info ""
+        In the above table:
+
+        - `ExtIp` stands for "external IP found in the binding"
+        - `IntIp` stands for "internal network container's IP",
+        - `ExtPort` stands for "external Port found in the binding"
+        - `IntPort` stands for "internal network container's port."
 
 ```toml tab="File (TOML)"
 [providers.docker]
@@ -337,37 +368,14 @@ providers:
 # ...
 ```
 
-Traefik routes requests to the IP/Port of the matching container.
-When setting `useBindPortIP=true`, you tell Traefik to use the IP/Port attached to the container's _binding_ instead of its inner network IP/Port.
-
-When used in conjunction with the `traefik.http.services.<name>.loadbalancer.server.port` label (that tells Traefik to route requests to a specific port),
-Traefik tries to find a binding on port `traefik.http.services.<name>.loadbalancer.server.port`.
-If it can't find such a binding, Traefik falls back on the internal network IP of the container,
-but still uses the `traefik.http.services.<name>.loadbalancer.server.port` that is set in the label.
-
-??? example "Examples of `usebindportip` in different situations."
-
-    | port label         | Container's binding                                | Routes to      |
-    |--------------------|----------------------------------------------------|----------------|
-    |          -         |           -                                        | IntIP:IntPort  |
-    |          -         | ExtPort:IntPort                                    | IntIP:IntPort  |
-    |          -         | ExtIp:ExtPort:IntPort                              | ExtIp:ExtPort  |
-    | LblPort            |           -                                        | IntIp:LblPort  |
-    | LblPort            | ExtIp:ExtPort:LblPort                              | ExtIp:ExtPort  |
-    | LblPort            | ExtIp:ExtPort:OtherPort                            | IntIp:LblPort  |
-    | LblPort            | ExtIp1:ExtPort1:IntPort1 & ExtIp2:LblPort:IntPort2 | ExtIp2:LblPort |
-
-    !!! info ""
-        In the above table:
-        
-        - `ExtIp` stands for "external IP found in the binding"
-        - `IntIp` stands for "internal network container's IP",
-        - `ExtPort` stands for "external Port found in the binding"
-        - `IntPort` stands for "internal network container's port."
-
 ### `exposedByDefault`
 
 _Optional, Default=true_
+
+Expose containers by default through Traefik.
+If set to `false`, containers that do not have a `traefik.enable=true` label are ignored from the resulting routing configuration.
+
+For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
 
 ```toml tab="File (TOML)"
 [providers.docker]
@@ -387,14 +395,13 @@ providers:
 # ...
 ```
 
-Expose containers by default through Traefik.
-If set to false, containers that don't have a `traefik.enable=true` label will be ignored from the resulting routing configuration.
-
-See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
-
 ### `network`
 
-_Optional, Default=empty_
+_Optional, Default=""_
+
+Defines a default docker network to use for connections to all containers.
+
+This option can be overridden on a per-container basis with the `traefik.docker.network` label.
 
 ```toml tab="File (TOML)"
 [providers.docker]
@@ -414,13 +421,16 @@ providers:
 # ...
 ```
 
-Defines a default docker network to use for connections to all containers.
-
-This option can be overridden on a container basis with the `traefik.docker.network` label.
-
 ### `defaultRule`
 
 _Optional, Default=```Host(`{{ normalize .Name }}`)```_
+
+The `defaultRule` option defines what routing rule to apply to a container if no rule is defined by a label.
+
+It must be a valid [Go template](https://golang.org/pkg/text/template/), and can use
+[sprig template functions](http://masterminds.github.io/sprig/).
+The container service name can be accessed with the `Name` identifier,
+and the template has access to all the labels defined on this container.
 
 ```toml tab="File (TOML)"
 [providers.docker]
@@ -440,15 +450,11 @@ providers:
 # ...
 ```
 
-For a given container if no routing rule was defined by a label, it is defined by this defaultRule instead.
-It must be a valid [Go template](https://golang.org/pkg/text/template/),
-augmented with the [sprig template functions](http://masterminds.github.io/sprig/).
-The container service name can be accessed as the `Name` identifier,
-and the template has access to all the labels defined on this container.
-
 ### `swarmMode`
 
 _Optional, Default=false_
+
+Enables the Swarm Mode (instead of standalone Docker).
 
 ```toml tab="File (TOML)"
 [providers.docker]
@@ -468,11 +474,11 @@ providers:
 # ...
 ```
 
-Activates the Swarm Mode (instead of standalone Docker).
-
 ### `swarmModeRefreshSeconds`
 
 _Optional, Default=15_
+
+Defines the polling interval (in seconds) for Swarm Mode.
 
 ```toml tab="File (TOML)"
 [providers.docker]
@@ -492,11 +498,11 @@ providers:
 # ...
 ```
 
-Defines the polling interval (in seconds) in Swarm Mode.
-
 ### `httpClientTimeout`
 
 _Optional, Default=0_
+
+Defines the client timeout (in seconds) for HTTP connections. If its value is `0`, no timeout is set.
 
 ```toml tab="File (TOML)"
 [providers.docker]
@@ -516,11 +522,11 @@ providers:
 # ...
 ```
 
-Defines the client timeout (in seconds) for HTTP connections. If zero, no timeout is set.
-
 ### `watch`
 
 _Optional, Default=true_
+
+Watch Docker Swarm events.
 
 ```toml tab="File (TOML)"
 [providers.docker]
@@ -540,11 +546,50 @@ providers:
 # ...
 ```
 
-Watch Docker Swarm events.
-
 ### `constraints`
 
 _Optional, Default=""_
+
+The `constraints` option can be set to an expression that Traefik matches against the container tags to determine whether
+to create any route for that container. If none of the container tags match the expression, no route for that container is
+created. If the expression is empty, all detected containers are included.
+
+The expression syntax is based on the ```Tag(`tag`)```, and ```TagRegex(`tag`)``` functions,
+as well as the usual boolean logic, as shown in examples below.
+
+??? example "Constraints Expression Examples"
+
+    ```toml
+    # Includes only containers having a label with key `a.label.name` and value `foo`
+    constraints = "Label(`a.label.name`, `foo`)"
+    ```
+
+    ```toml
+    # Excludes containers having any label with key `a.label.name` and value `foo`
+    constraints = "!Label(`a.label.name`, `value`)"
+    ```
+
+    ```toml
+    # With logical AND.
+    constraints = "Label(`a.label.name`, `valueA`) && Label(`another.label.name`, `valueB`)"
+    ```
+
+    ```toml
+    # With logical OR.
+    constraints = "Label(`a.label.name`, `valueA`) || Label(`another.label.name`, `valueB`)"
+    ```
+
+    ```toml
+    # With logical AND and OR, with precedence set by parentheses.
+    constraints = "Label(`a.label.name`, `valueA`) && (Label(`another.label.name`, `valueB`) || Label(`yet.another.label.name`, `valueC`))"
+    ```
+
+    ```toml
+    # Includes only containers having a label with key `a.label.name` and a value matching the `a.+` regular expression.
+    constraints = "LabelRegex(`a.label.name`, `a.+`)"
+    ```
+
+For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
 
 ```toml tab="File (TOML)"
 [providers.docker]
@@ -564,53 +609,13 @@ providers:
 # ...
 ```
 
-Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
-That is to say, if none of the container's labels match the expression, no route for the container is created.
-If the expression is empty, all detected containers are included.
-
-The expression syntax is based on the `Label("key", "value")`, and `LabelRegex("key", "value")` functions, as well as the usual boolean logic, as shown in examples below.
-
-??? example "Constraints Expression Examples"
-
-    ```toml
-    # Includes only containers having a label with key `a.label.name` and value `foo`
-    constraints = "Label(`a.label.name`, `foo`)"
-    ```
-    
-    ```toml
-    # Excludes containers having any label with key `a.label.name` and value `foo`
-    constraints = "!Label(`a.label.name`, `value`)"
-    ```
-    
-    ```toml
-    # With logical AND.
-    constraints = "Label(`a.label.name`, `valueA`) && Label(`another.label.name`, `valueB`)"
-    ```
-    
-    ```toml
-    # With logical OR.
-    constraints = "Label(`a.label.name`, `valueA`) || Label(`another.label.name`, `valueB`)"
-    ```
-    
-    ```toml
-    # With logical AND and OR, with precedence set by parentheses.
-    constraints = "Label(`a.label.name`, `valueA`) && (Label(`another.label.name`, `valueB`) || Label(`yet.another.label.name`, `valueC`))"
-    ```
-    
-    ```toml
-    # Includes only containers having a label with key `a.label.name` and a value matching the `a.+` regular expression.
-    constraints = "LabelRegex(`a.label.name`, `a.+`)"
-    ```
-
-See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
-
 ### `tls`
 
 _Optional_
 
 #### `tls.ca`
 
-Certificate Authority used for the secured connection to Docker.
+Certificate Authority used for the secure connection to Docker.
 
 ```toml tab="File (TOML)"
 [providers.docker.tls]
@@ -630,12 +635,15 @@ providers:
 
 #### `tls.caOptional`
 
-Policy followed for the secured connection with TLS Client Authentication to Docker.
-Requires `tls.ca` to be defined.
+The value of `tls.caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to Docker.
 
-- `true`: VerifyClientCertIfGiven
-- `false`: RequireAndVerifyClientCert
-- if `tls.ca` is undefined NoClientCert
+!!! warning ""
+
+    If `tls.ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
+
+When this option is set to `true`, a client certificate is requested during the handshake but is not required. If a certificate is sent, it is required to be valid.
+
+When this option is set to `false`, a client certificate is requested during the handshake, and at least one valid certificate should be sent by the client.
 
 ```toml tab="File (TOML)"
 [providers.docker.tls]
@@ -655,7 +663,7 @@ providers:
 
 #### `tls.cert`
 
-Public certificate used for the secured connection to Docker.
+Public certificate used for the secure connection to Docker.
 
 ```toml tab="File (TOML)"
 [providers.docker.tls]
@@ -678,7 +686,7 @@ providers:
 
 #### `tls.key`
 
-Private certificate used for the secured connection to Docker.
+Private certificate used for the secure connection to Docker.
 
 ```toml tab="File (TOML)"
 [providers.docker.tls]
@@ -701,7 +709,7 @@ providers:
 
 #### `tls.insecureSkipVerify`
 
-If `insecureSkipVerify` is `true`, TLS for the connection to Docker accepts any certificate presented by the server and any host name in that certificate.
+If `insecureSkipVerify` is `true`, the TLS connection to Docker accepts any certificate presented by the server regardless of the hostnames it covers.
 
 ```toml tab="File (TOML)"
 [providers.docker.tls]

@@ -7,30 +7,28 @@ Traefik's Many Friends
 
 Configuration discovery in Traefik is achieved through _Providers_.
 
-The _providers_ are existing infrastructure components, whether orchestrators, container engines, cloud providers, or key-value stores. 
-The idea is that Traefik will query the providers' API in order to find relevant information about routing,
-and each time Traefik detects a change, it dynamically updates the routes.
-
-Deploy and forget is Traefik's credo.
+The _providers_ are infrastructure components, whether orchestrators, container engines, cloud providers, or key-value stores.
+The idea is that Traefik queries the provider APIs in order to find relevant information about routing,
+and when Traefik detects a change, it dynamically updates the routes.
 
 ## Orchestrators
 
-Even if each provider is different, we can categorize them in four groups:
+While each provider is different, you can think of each as belonging to one of four categories:
 
-- Label based (each deployed container has a set of labels attached to it)
-- Key-Value based (each deployed container updates a key-value store with relevant information)
-- Annotation based (a separate object, with annotations, defines the characteristics of the container)
-- File based (the good old configuration file)
+- Label-based: each deployed container has a set of labels attached to it
+- Key-Value-based: each deployed container updates a key-value store with relevant information
+- Annotation-based: a separate object, with annotations, defines the characteristics of the container
+- File-based: uses files to define configuration
 
 ## Provider Namespace
 
-When you declare certain objects, in Traefik dynamic configuration,
-such as middleware, service, TLS options or servers transport, they live in its provider's namespace.
-For example, if you declare a middleware using a Docker label, under the hoods, it will reside in the docker provider namespace.
+When you declare certain objects in the Traefik dynamic configuration,
+such as middleware, services, TLS options or server transports, they reside in their provider's namespace.
+For example, if you declare a middleware using a Docker label, it resides in the Docker provider namespace.
 
-If you use multiple providers and wish to reference such an object declared in another provider 
-(aka referencing a cross-provider object, e.g. middleware), then you'll have to append the `@` separator, 
-followed by the provider name to the object name.
+If you use multiple providers and wish to reference such an object declared in another provider
+(e.g. referencing a cross-provider object like middleware), then the object name should be suffixed by the `@`
+separator, and the provider name.
 
 ```text
 <resource-name>@<provider-name>
@@ -39,14 +37,15 @@ followed by the provider name to the object name.
 !!! important "Kubernetes Namespace"
 
     As Kubernetes also has its own notion of namespace,
-    one should not confuse the "provider namespace" with the "kubernetes namespace" of a resource when in the context of a cross-provider usage.  
-    In this case, since the definition of a traefik dynamic configuration object is not in kubernetes,
-    specifying a "kubernetes namespace" when referring to the resource does not make any sense,
-    and therefore this specification would be ignored even if present.  
-    On the other hand, if you, say, declare a middleware as a Custom Resource in Kubernetes and use the non-crd Ingress objects,
-    you'll have to add the Kubernetes namespace of the middleware to the annotation like this `<middleware-namespace>-<middleware-name>@kubernetescrd`.
+    one should not confuse the _provider namespace_ with the _Kubernetes Namespace_ of a resource when in the context of cross-provider usage.
 
-!!! abstract "Referencing a Traefik dynamic configuration object from Another Provider"
+    In this case, since the definition of a Traefik dynamic configuration object is not in Kubernetes,
+    specifying a Kubernetes Namespace when referring to the resource does not make any sense.
+
+    On the other hand, if you were to declare a middleware as a Custom Resource in Kubernetes and use the non-CRD Ingress objects,
+    you would have to add the Kubernetes Namespace of the middleware to the annotation like this `<middleware-namespace>-<middleware-name>@kubernetescrd`.
+
+!!! abstract "Referencing a Traefik Dynamic Configuration Object from Another Provider"
 
     Declaring the add-foo-prefix in the file provider.
 
@@ -55,7 +54,7 @@ followed by the provider name to the object name.
       [http.middlewares.add-foo-prefix.addPrefix]
         prefix = "/foo"
     ```
-    
+
     ```yaml tab="File (YAML)"
     http:
       middlewares:
@@ -96,7 +95,7 @@ followed by the provider name to the object name.
             # A namespace specification such as above is ignored
             # when the cross-provider syntax is used.
     ```
-    
+
     ```yaml tab="Kubernetes Ingress"
     apiVersion: traefik.containo.us/v1alpha1
     kind: Middleware
@@ -107,7 +106,7 @@ followed by the provider name to the object name.
       stripPrefix:
         prefixes:
           - /stripit
-    
+
     ---
     apiVersion: networking.k8s.io/v1
     kind: Ingress
@@ -122,9 +121,9 @@ followed by the provider name to the object name.
       # ... regular ingress definition
     ```
 
-## Supported Providers 
+## Supported Providers
 
-Below is the list of the currently supported providers in Traefik. 
+Below is the list of the currently supported providers in Traefik.
 
 | Provider                              | Type         | Configuration Type         |
 |---------------------------------------|--------------|----------------------------|
@@ -143,26 +142,32 @@ Below is the list of the currently supported providers in Traefik.
 
 !!! info "More Providers"
 
-    The current version of Traefik doesn't support (yet) every provider.
+    The current version of Traefik does not yet support every provider that Traefik v1.7 did.
     See the [previous version (v1.7)](https://doc.traefik.io/traefik/v1.7/) for more providers.
 
-### Configuration reload frequency
+### Configuration Reload Frequency
+
+#### `providers.providersThrottleDuration`
+
+_Optional, Default: 2s_
 
 In some cases, some providers might undergo a sudden burst of changes,
 which would generate a lot of configuration change events.
 If Traefik took them all into account,
-that would trigger a lot more configuration reloads than what is necessary,
+that would trigger a lot more configuration reloads than is necessary,
 or even useful.
 
 In order to mitigate that, the `providers.providersThrottleDuration` option can be set.
 It is the duration that Traefik waits for, after a configuration reload,
 before taking into account any new configuration refresh event.
-If any event arrives during that duration, only the most recent one is taken into account,
-and all the previous others are dropped.
+If multiple events occur within this time, only the most recent one is taken into account,
+and all others are discarded.
 
 This option cannot be set per provider,
-but the throttling algorithm applies independently to each of them.
-It defaults to 2 seconds.
+but the throttling algorithm applies to each of them independently.
+
+The value of `providers.providersThrottleDuration` should be provided in seconds or as a valid duration format,
+see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).
 
 ```toml tab="File (TOML)"
 [providers]
@@ -184,17 +189,18 @@ TODO (document TCP VS HTTP dynamic configuration)
 
 ## Restrict the Scope of Service Discovery
 
-By default Traefik will create routes for all detected containers.
+By default, Traefik creates routes for all detected containers.
 
-If you want to limit the scope of Traefik's service discovery,
+If you want to limit the scope of the Traefik service discovery,
 i.e. disallow route creation for some containers,
 you can do so in two different ways:
-either with the generic configuration option `exposedByDefault`,
-or with a finer granularity mechanism based on constraints.
+
+- the generic configuration option `exposedByDefault`,
+- a finer granularity mechanism based on constraints.
 
 ### `exposedByDefault` and `traefik.enable`
 
-List of providers that support that feature:
+List of providers that support these features:
 
 - [Docker](./docker.md#exposedbydefault)
 - [Consul Catalog](./consul-catalog.md#exposedbydefault)
@@ -211,3 +217,4 @@ List of providers that support constraints:
 - [Marathon](./marathon.md#constraints)
 - [Kubernetes CRD](./kubernetes-crd.md#labelselector)
 - [Kubernetes Ingress](./kubernetes-ingress.md#labelselector)
+- [Kubernetes Gateway](./kubernetes-gateway.md#labelselector)

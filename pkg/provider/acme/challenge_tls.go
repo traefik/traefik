@@ -39,8 +39,8 @@ func NewChallengeTLSALPN(timeout time.Duration) *ChallengeTLSALPN {
 
 // Present presents a challenge to obtain new ACME certificate.
 func (c *ChallengeTLSALPN) Present(domain, _, keyAuth string) error {
-	log.WithoutContext().WithField(log.ProviderName, providerNameALPN).
-		Debugf("TLS Challenge Present temp certificate for %s", domain)
+	logger := log.WithoutContext().WithField(log.ProviderName, providerNameALPN)
+	logger.Debugf("TLS Challenge Present temp certificate for %s", domain)
 
 	certPEMBlock, keyPEMBlock, err := tlsalpn01.ChallengeBlocks(domain, keyAuth)
 	if err != nil {
@@ -68,6 +68,12 @@ func (c *ChallengeTLSALPN) Present(domain, _, keyAuth string) error {
 	case t := <-timer.C:
 		timer.Stop()
 		close(c.chans[string(certPEMBlock)])
+
+		err = c.CleanUp(domain, "", keyAuth)
+		if err != nil {
+			logger.Errorf("Failed to clean up TLS challenge: %v", err)
+		}
+
 		errC = fmt.Errorf("timeout %s", t)
 	case <-ch:
 		// noop

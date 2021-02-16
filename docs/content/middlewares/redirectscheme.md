@@ -7,7 +7,7 @@ Redirecting the Client to a Different Scheme/Port
 TODO: add schema
 -->
 
-RedirectScheme redirect request from a scheme to another.
+RedirectScheme redirects requests from a scheme/port to another.
 
 ## Configuration Examples
 
@@ -135,7 +135,7 @@ http:
 
 ### `scheme`
 
-The `scheme` option defines the scheme of the new url.
+The `scheme` option defines the scheme of the new URL.
 
 ```yaml tab="Docker"
 # Redirect to https
@@ -190,7 +190,7 @@ http:
 
 ### `port`
 
-The `port` option defines the port of the new url.
+The `port` option defines the port of the new URL.
 
 ```yaml tab="Docker"
 # Redirect to https

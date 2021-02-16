@@ -480,7 +480,7 @@ By default, `passHostHeader` is true.
       services:
         Service01:
           loadBalancer:
-            serversTransport = "mytransport"
+            serversTransport: mytransport
     ```
 
 !!! info default serversTransport
