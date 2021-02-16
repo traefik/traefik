@@ -2,12 +2,14 @@ package auth
 
 import (
 	"context"
+	"crypto/sha512"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 
 	goauth "github.com/abbot/go-http-auth"
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -27,6 +29,7 @@ type basicAuth struct {
 	headerField  string
 	removeHeader bool
 	name         string
+	cache        *lru.Cache
 }
 
 // NewBasic creates a basicAuth middleware.
@@ -37,12 +40,18 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 		return nil, err
 	}
 
+	cache, err := lru.New(128)
+	if err != nil {
+		return nil, err
+	}
+
 	ba := &basicAuth{
 		next:         next,
 		users:        users,
 		headerField:  authConfig.HeaderField,
 		removeHeader: authConfig.RemoveHeader,
 		name:         name,
+		cache:        cache,
 	}
 
 	realm := defaultRealm
@@ -65,8 +74,18 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	user, password, ok := req.BasicAuth()
 	if ok {
 		secret := b.auth.Secrets(user, b.auth.Realm)
-		if secret == "" || !goauth.CheckSecret(password, secret) {
+		if secret == "" {
 			ok = false
+		} else {
+			hashInputs := []string{b.auth.Realm, user, password}
+			cacheKey := sha512.Sum512([]byte(strings.Join(hashInputs, "\x00")))
+			cachedValue, hit := b.cache.Get(cacheKey)
+			if hit {
+				ok = cachedValue.(bool)
+			} else {
+				ok = goauth.CheckSecret(password, secret)
+				b.cache.Add(cacheKey, ok)
+			}
 		}
 	}
 

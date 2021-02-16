@@ -38,10 +38,13 @@ func TestBasicAuthFail(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	req.SetBasicAuth("test", "test")
 
-	res, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
+	// Loop to test cache hit/miss scenarios.
+	for i := 0; i < 3; i++ {
+		res, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
 
-	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
+		assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
+	}
 }
 
 func TestBasicAuthSuccess(t *testing.T) {
@@ -61,16 +64,19 @@ func TestBasicAuthSuccess(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	req.SetBasicAuth("test", "test")
 
-	res, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
+	// Loop to test cache hit/miss scenarios.
+	for i := 0; i < 3; i++ {
+		res, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
 
-	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
+		assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 
-	body, err := ioutil.ReadAll(res.Body)
-	require.NoError(t, err)
-	defer res.Body.Close()
+		body, err := ioutil.ReadAll(res.Body)
+		require.NoError(t, err)
+		defer res.Body.Close()
 
-	assert.Equal(t, "traefik\n", string(body), "they should be equal")
+		assert.Equal(t, "traefik\n", string(body), "they should be equal")
+	}
 }
 
 func TestBasicAuthUserHeader(t *testing.T) {
