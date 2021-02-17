@@ -33,6 +33,12 @@ func (g DashboardHandler) Append(router *mux.Router) {
 		Handler(http.StripPrefix("/dashboard/", http.FileServer(g.Assets)))
 }
 
+func (g DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// allow iframes from our domains only
+	w.Header().Set("Content-Security-Policy", "frame-ancestors 'self' traefik.io *.traefik.io;")
+	http.FileServer(g.Assets).ServeHTTP(w, r)
+}
+
 func safePrefix(req *http.Request) string {
 	prefix := req.Header.Get("X-Forwarded-Prefix")
 	if prefix == "" {
