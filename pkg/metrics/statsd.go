@@ -17,6 +17,8 @@ var (
 )
 
 const (
+	statsdMetricsRouterReqsName         = "router.request.total"
+	statsdMetricsRouterLatencyName      = "router.request.duration"
 	statsdMetricsServiceReqsName        = "service.request.total"
 	statsdMetricsServiceLatencyName     = "service.request.duration"
 	statsdRetriesTotalName              = "service.retries.total"
@@ -27,6 +29,7 @@ const (
 	statsdEntryPointReqsName            = "entrypoint.request.total"
 	statsdEntryPointReqDurationName     = "entrypoint.request.duration"
 	statsdEntryPointOpenConnsName       = "entrypoint.connections.open"
+	statsdRouterOpenConnsName           = "router.connections.open"
 	statsdOpenConnsName                 = "service.connections.open"
 	statsdServerUpName                  = "service.server.up"
 	statsdTLSCertsNotAfterTimestampName = "tls.certs.notAfterTimestamp"
@@ -61,6 +64,13 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 		registry.entryPointReqsCounter = statsdClient.NewCounter(statsdEntryPointReqsName, 1.0)
 		registry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(statsdClient.NewTiming(statsdEntryPointReqDurationName, 1.0), time.Millisecond)
 		registry.entryPointOpenConnsGauge = statsdClient.NewGauge(statsdEntryPointOpenConnsName)
+	}
+
+	if config.AddRoutersLabels {
+		registry.routerEnabled = config.AddRoutersLabels
+		registry.routerReqsCounter = statsdClient.NewCounter(statsdMetricsRouterReqsName, 1.0)
+		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(statsdClient.NewTiming(statsdMetricsRouterLatencyName, 1.0), time.Millisecond)
+		registry.routerOpenConnsGauge = statsdClient.NewGauge(statsdRouterOpenConnsName)
 	}
 
 	if config.AddServicesLabels {

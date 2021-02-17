@@ -20,6 +20,9 @@ var datadogTicker *time.Ticker
 
 // Metric names consistent with https://github.com/DataDog/integrations-extras/pull/64
 const (
+	ddMetricsRouterReqsName         = "router.request.total"
+	ddMetricsRouterLatencyName      = "router.request.duration"
+	ddRouterOpenConnsName           = "router.connections.open"
 	ddMetricsServiceReqsName        = "service.request.total"
 	ddMetricsServiceLatencyName     = "service.request.duration"
 	ddRetriesTotalName              = "service.retries.total"
@@ -54,6 +57,13 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 		registry.entryPointReqsCounter = datadogClient.NewCounter(ddEntryPointReqsName, 1.0)
 		registry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddEntryPointReqDurationName, 1.0), time.Second)
 		registry.entryPointOpenConnsGauge = datadogClient.NewGauge(ddEntryPointOpenConnsName)
+	}
+
+	if config.AddRoutersLabels {
+		registry.routerEnabled = config.AddRoutersLabels
+		registry.routerReqsCounter = datadogClient.NewCounter(ddMetricsRouterReqsName, 1.0)
+		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddMetricsRouterLatencyName, 1.0), time.Second)
+		registry.routerOpenConnsGauge = datadogClient.NewGauge(ddRouterOpenConnsName)
 	}
 
 	if config.AddServicesLabels {

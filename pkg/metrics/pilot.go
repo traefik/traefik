@@ -24,6 +24,13 @@ const (
 	pilotEntryPointReqDurationName  = pilotEntryPointPrefix + "RequestDurationSeconds"
 	pilotEntryPointOpenConnsName    = pilotEntryPointPrefix + "OpenConnections"
 
+	// router.
+	pilotRouterPrefix           = "router"
+	pilotRouterReqsTotalName    = pilotRouterPrefix + "RequestsTotal"
+	pilotRouterReqsTLSTotalName = pilotRouterPrefix + "RequestsTLSTotal"
+	pilotRouterReqDurationName  = pilotRouterPrefix + "RequestDurationSeconds"
+	pilotRouterOpenConnsName    = pilotRouterPrefix + "OpenConnections"
+
 	// service level.
 	pilotServicePrefix           = "service"
 	pilotServiceReqsTotalName    = pilotServicePrefix + "RequestsTotal"
@@ -39,8 +46,9 @@ const root = "value"
 // RegisterPilot registers all Pilot metrics.
 func RegisterPilot() *PilotRegistry {
 	standardRegistry := &standardRegistry{
-		epEnabled:  true,
-		svcEnabled: true,
+		epEnabled:     true,
+		routerEnabled: true,
+		svcEnabled:    true,
 	}
 
 	pr := &PilotRegistry{
@@ -59,6 +67,11 @@ func RegisterPilot() *PilotRegistry {
 	standardRegistry.entryPointReqsTLSCounter = pr.newCounter(pilotEntryPointReqsTLSTotalName)
 	standardRegistry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(pr.newHistogram(pilotEntryPointReqDurationName), time.Millisecond)
 	standardRegistry.entryPointOpenConnsGauge = pr.newGauge(pilotEntryPointOpenConnsName)
+
+	standardRegistry.routerReqsCounter = pr.newCounter(pilotRouterReqsTotalName)
+	standardRegistry.routerReqsTLSCounter = pr.newCounter(pilotRouterReqsTLSTotalName)
+	standardRegistry.routerReqDurationHistogram, _ = NewHistogramWithScale(pr.newHistogram(pilotRouterReqDurationName), time.Millisecond)
+	standardRegistry.routerOpenConnsGauge = pr.newGauge(pilotRouterOpenConnsName)
 
 	standardRegistry.serviceReqsCounter = pr.newCounter(pilotServiceReqsTotalName)
 	standardRegistry.serviceReqsTLSCounter = pr.newCounter(pilotServiceReqsTLSTotalName)

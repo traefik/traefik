@@ -120,8 +120,8 @@ func assertPilotHistogramValues(t *testing.T, expCount, expTotal float64, labels
 func TestPilotMetrics(t *testing.T) {
 	pilotRegistry := RegisterPilot()
 
-	if !pilotRegistry.IsEpEnabled() || !pilotRegistry.IsSvcEnabled() {
-		t.Errorf("PilotRegistry should return true for IsEnabled() and IsSvcEnabled()")
+	if !pilotRegistry.IsEpEnabled() || !pilotRegistry.IsSvcEnabled() || !pilotRegistry.IsRouterEnabled() {
+		t.Errorf("PilotRegistry should return true for IsEnabled(), IsRouterEnabled() and IsSvcEnabled()")
 	}
 
 	pilotRegistry.ConfigReloadsCounter().Add(1)
@@ -140,6 +140,19 @@ func TestPilotMetrics(t *testing.T) {
 	pilotRegistry.
 		EntryPointOpenConnsGauge().
 		With("method", http.MethodGet, "protocol", "http", "entrypoint", "http").
+		Set(1)
+
+	pilotRegistry.
+		RouterReqsCounter().
+		With("router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		Add(1)
+	pilotRegistry.
+		RouterReqDurationHistogram().
+		With("router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		Observe(10000)
+	pilotRegistry.
+		RouterOpenConnsGauge().
+		With("router", "demo", "service", "service1", "method", http.MethodGet, "protocol", "http").
 		Set(1)
 
 	pilotRegistry.
@@ -214,6 +227,38 @@ func TestPilotMetrics(t *testing.T) {
 				"entrypoint": "http",
 			},
 			assert: buildPilotGaugeAssert(t, pilotEntryPointOpenConnsName, 1),
+		},
+		{
+			name: pilotRouterReqsTotalName,
+			labels: map[string]string{
+				"code":     "200",
+				"method":   http.MethodGet,
+				"protocol": "http",
+				"service":  "service1",
+				"router":   "demo",
+			},
+			assert: buildPilotCounterAssert(t, pilotRouterReqsTotalName, 1),
+		},
+		{
+			name: pilotRouterReqDurationName,
+			labels: map[string]string{
+				"code":     "200",
+				"method":   http.MethodGet,
+				"protocol": "http",
+				"service":  "service1",
+				"router":   "demo",
+			},
+			assert: buildPilotHistogramAssert(t, pilotRouterReqDurationName, 1),
+		},
+		{
+			name: pilotRouterOpenConnsName,
+			labels: map[string]string{
+				"method":   http.MethodGet,
+				"protocol": "http",
+				"service":  "service1",
+				"router":   "demo",
+			},
+			assert: buildPilotGaugeAssert(t, pilotRouterOpenConnsName, 1),
 		},
 		{
 			name: pilotServiceReqsTotalName,

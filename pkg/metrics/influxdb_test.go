@@ -21,14 +21,16 @@ func TestInfluxDB(t *testing.T) {
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
-	influxDBRegistry := RegisterInfluxDB(context.Background(), &types.InfluxDB{Address: ":8089", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddServicesLabels: true})
+	influxDBRegistry := RegisterInfluxDB(context.Background(), &types.InfluxDB{Address: ":8089", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddRoutersLabels: true, AddServicesLabels: true})
 	defer StopInfluxDB()
 
-	if !influxDBRegistry.IsEpEnabled() || !influxDBRegistry.IsSvcEnabled() {
-		t.Fatalf("InfluxDB registry must be epEnabled")
+	if !influxDBRegistry.IsEpEnabled() || !influxDBRegistry.IsRouterEnabled() || !influxDBRegistry.IsSvcEnabled() {
+		t.Fatalf("InfluxDBRegistry  should return true for IsEnabled(), IsRouterEnabled() and IsSvcEnabled()")
 	}
 
 	expectedService := []string{
+		`(traefik\.router\.requests\.total,code=200,method=GET,router=demo,service=test count=1) [\d]{19}`,
+		`(traefik\.router\.requests\.total,code=404,method=GET,router=demo,service=test count=1) [\d]{19}`,
 		`(traefik\.service\.requests\.total,code=200,method=GET,service=test count=1) [\d]{19}`,
 		`(traefik\.service\.requests\.total,code=404,method=GET,service=test count=1) [\d]{19}`,
 		`(traefik\.service\.request\.duration,code=200,service=test p50=10000,p90=10000,p95=10000,p99=10000) [\d]{19}`,
@@ -39,6 +41,8 @@ func TestInfluxDB(t *testing.T) {
 	}
 
 	msgService := udp.ReceiveString(t, func() {
+		influxDBRegistry.RouterReqsCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+		influxDBRegistry.RouterReqsCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 		influxDBRegistry.ServiceReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 		influxDBRegistry.ServiceReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 		influxDBRegistry.ServiceRetriesCounter().With("service", "test").Add(1)
@@ -90,16 +94,19 @@ func TestInfluxDBHTTP(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	influxDBRegistry := RegisterInfluxDB(context.Background(), &types.InfluxDB{Address: ts.URL, Protocol: "http", PushInterval: ptypes.Duration(time.Second), Database: "test", RetentionPolicy: "autogen", AddEntryPointsLabels: true, AddServicesLabels: true})
+	influxDBRegistry := RegisterInfluxDB(context.Background(), &types.InfluxDB{Address: ts.URL, Protocol: "http", PushInterval: ptypes.Duration(time.Second), Database: "test", RetentionPolicy: "autogen", AddEntryPointsLabels: true, AddServicesLabels: true, AddRoutersLabels: true})
 	defer StopInfluxDB()
 
-	if !influxDBRegistry.IsEpEnabled() || !influxDBRegistry.IsSvcEnabled() {
+	if !influxDBRegistry.IsEpEnabled() || !influxDBRegistry.IsRouterEnabled() || !influxDBRegistry.IsSvcEnabled() {
 		t.Fatalf("InfluxDB registry must be epEnabled")
 	}
 
 	expectedService := []string{
+		`(traefik\.router\.requests\.total,code=200,method=GET,router=demo,service=test count=1) [\d]{19}`,
+		`(traefik\.router\.requests\.total,code=404,method=GET,router=demo,service=test count=1) [\d]{19}`,
 		`(traefik\.service\.requests\.total,code=200,method=GET,service=test count=1) [\d]{19}`,
 		`(traefik\.service\.requests\.total,code=404,method=GET,service=test count=1) [\d]{19}`,
+		`(traefik\.router\.request\.duration,code=200,router=demo,service=test p50=10000,p90=10000,p95=10000,p99=10000) [\d]{19}`,
 		`(traefik\.service\.request\.duration,code=200,service=test p50=10000,p90=10000,p95=10000,p99=10000) [\d]{19}`,
 		`(traefik\.service\.retries\.total(?:,code=[\d]{3},method=GET)?,service=test count=2) [\d]{19}`,
 		`(traefik\.config\.reload\.total(?:[a-z=0-9A-Z,]+)? count=1) [\d]{19}`,
@@ -107,10 +114,13 @@ func TestInfluxDBHTTP(t *testing.T) {
 		`(traefik\.service\.server\.up,service=test(?:[a-z=0-9A-Z,]+)?,url=http://127.0.0.1 value=1) [\d]{19}`,
 	}
 
+	influxDBRegistry.RouterReqsCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+	influxDBRegistry.RouterReqsCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 	influxDBRegistry.ServiceReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	influxDBRegistry.ServiceReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 	influxDBRegistry.ServiceRetriesCounter().With("service", "test").Add(1)
 	influxDBRegistry.ServiceRetriesCounter().With("service", "test").Add(1)
+	influxDBRegistry.RouterReqDurationHistogram().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 	influxDBRegistry.ServiceReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 	influxDBRegistry.ConfigReloadsCounter().Add(1)
 	influxDBRegistry.ConfigReloadsFailureCounter().Add(1)

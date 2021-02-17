@@ -33,7 +33,7 @@ const (
 	metricsTLSPrefix          = MetricNamePrefix + "tls_"
 	tlsCertsNotAfterTimestamp = metricsTLSPrefix + "certs_not_after"
 
-	// entry point.
+	// router level.
 	metricRouterPrefix     = MetricNamePrefix + "router_"
 	routerReqsTotalName    = metricRouterPrefix + "requests_total"
 	routerReqsTLSTotalName = metricRouterPrefix + "requests_tls_total"
@@ -147,6 +147,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 
 	reg := &standardRegistry{
 		epEnabled:                      config.AddEntryPointsLabels,
+		routerEnabled:                  config.AddRoutersLabels,
 		svcEnabled:                     config.AddServicesLabels,
 		configReloadsCounter:           configReloads,
 		configReloadsFailureCounter:    configReloadsFailures,
