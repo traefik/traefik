@@ -7,10 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"net/url"
-	"strings"
-	"time"
 
+	"github.com/hashicorp/consul/agent/connect"
 	"github.com/hashicorp/consul/api"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/label"
@@ -130,64 +128,30 @@ func (c *connectCert) getLeaf() tls.Certificate {
 }
 
 func (c *connectCert) serverTransport(item itemData) *dynamic.ServersTransport {
-	sname := connectTransportName(item.Name)
 	return &dynamic.ServersTransport{
-		ServerName:         sname,
+		ServerName:         connectTransportName(item.Name),
 		InsecureSkipVerify: true,
 		RootCAs:            c.getRoot(),
 		Certificates: tls.Certificates{
 			c.getLeaf(),
 		},
 		VerifyPeerCertificate: func(cfg *gtls.Config, rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
-			// This is basically what Go itself does sans the hostname validation
-			t := cfg.Time
-			if t == nil {
-				t = time.Now
-			}
-			opts := x509.VerifyOptions{
-				Roots:         cfg.RootCAs,
-				CurrentTime:   t(),
-				Intermediates: x509.NewCertPool(),
-			}
-
-			certs := make([]*x509.Certificate, len(rawCerts))
-			for i, asn1Data := range rawCerts {
-				cert, err := x509.ParseCertificate(asn1Data)
-				if err != nil {
-					return errors.New("tls: failed to parse certificate from peer: " + err.Error())
-				}
-				certs[i] = cert
-			}
-
-			for _, cert := range certs[1:] {
-				opts.Intermediates.AddCert(cert)
-			}
-
-			cert := certs[0]
-			_, err := cert.Verify(opts)
+			// We should use RootCAs here, but consul expect that in ClientCAs (don't ask)
+			// https://github.com/hashicorp/consul/blob/cd428060f6547afddd9e0060c07b2a2c862da801/connect/tls.go#L279-L282
+			// called via https://github.com/hashicorp/consul/blob/cd428060f6547afddd9e0060c07b2a2c862da801/connect/tls.go#L258
+			cfg.ClientCAs = cfg.RootCAs
+			cert, err := verifyChain(cfg, rawCerts, true)
 			if err != nil {
 				return err
 			}
-			// Go cert validation done, validate SPIFFE URI now
-
-			// Our certs will only ever have a single URI for now so only check that
-			if len(cert.URIs) < 1 {
-				return errors.New("peer certificate invalid")
+			certs := []*x509.Certificate{0: cert}
+			uri := &connect.SpiffeIDService{
+				Host:       item.Node,
+				Namespace:  item.Namespace,
+				Datacenter: item.Datacenter,
+				Service:    item.Name,
 			}
-			gotURI := cert.URIs[0]
-
-			var expectURI url.URL
-			expectURI.Host = gotURI.Host
-			expectURI.Scheme = "spiffe"
-			expectURI.Path = fmt.Sprintf("/ns/%s/dc/%s/svc/%s",
-				item.Namespace, item.Datacenter, item.Name)
-
-			if strings.EqualFold(gotURI.String(), expectURI.String()) {
-				return nil
-			}
-
-			return fmt.Errorf("peer certificate mismatch got %s, want %s",
-				gotURI.String(), expectURI.String())
+			return verifyServerCertMatchesURI(certs, uri)
 		},
 	}
 }
