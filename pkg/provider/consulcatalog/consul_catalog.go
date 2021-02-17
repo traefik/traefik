@@ -157,16 +157,14 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 			for {
 				select {
-				case <-ticker.C:
-					err = p.loadConfiguration(routineCtx, certInfo, configurationChan)
-					if err != nil {
-						return fmt.Errorf("failed to refresh consul catalog data: %w", err)
-					}
-				case certInfo = <-p.certChan:
-					// nothing much to do, next ticker cycle will propagate
-					// the updates.
 				case <-routineCtx.Done():
 					return nil
+				case <-ticker.C:
+				case certInfo = <-p.certChan:
+				}
+				err = p.loadConfiguration(routineCtx, certInfo, configurationChan)
+				if err != nil {
+					return fmt.Errorf("failed to refresh consul catalog data: %w", err)
 				}
 			}
 		}
@@ -383,19 +381,19 @@ func (p *Provider) registerConnectService(ctx context.Context) {
 
 		err = client.Agent().ServiceRegister(regReq)
 		if err != nil {
-			return fmt.Errorf("failed to register service in consul catalog. %w", err)
+			return fmt.Errorf("failed to register service in Consul Catalog: %w", err)
 		}
 
 		return nil
 	}
 
 	notify := func(err error, time time.Duration) {
-		logger.Errorf("Failed to register traefik as Connect Native service in consul catalog. %s", err)
+		logger.Errorf("Failed to register traefik as Connect Native service: %w, retrying in %s", err, time)
 	}
 
 	err = backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), context.Background()), notify)
 	if err != nil {
-		logger.WithError(err).Error("failed to register traefik in consul catalog as connect native service")
+		logger.Errorf("Failed to register traefik as Connect Native service: %w", err)
 		return
 	}
 
