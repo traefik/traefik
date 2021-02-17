@@ -60,7 +60,6 @@ func verifyServerCertMatchesURI(certs []*x509.Certificate, expected connect.Cert
 // verifyChain performs standard TLS verification without enforcing remote
 // hostname matching.
 func verifyChain(tlsCfg *tls.Config, rawCerts [][]byte, client bool) (*x509.Certificate, error) {
-
 	// Fetch leaf and intermediates. This is based on code form tls handshake.
 	if len(rawCerts) < 1 {
 		return nil, errors.New("tls: no certificates from peer")
