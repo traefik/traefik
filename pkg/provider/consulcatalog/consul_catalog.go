@@ -116,6 +116,12 @@ func (p *Provider) Init() error {
 
 // Provide allows the consul catalog provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
+	var err error
+	p.client, err = createClient(p.Endpoint)
+	if err != nil {
+		return fmt.Errorf("unable to create consul client: %w", err)
+	}
+
 	if p.ConnectAware {
 		pool.GoCtx(p.registerConnectService)
 		pool.GoCtx(p.watchConnectTLS)
@@ -130,11 +136,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				err      error
 				certInfo *connectCert
 			)
-
-			p.client, err = createClient(p.Endpoint)
-			if err != nil {
-				return fmt.Errorf("unable to create consul client: %w", err)
-			}
 
 			// If we are running in connect aware mode then we need to
 			// make sure that we obtain the certificates before starting
@@ -350,21 +351,13 @@ func contains(values []string, val string) bool {
 }
 
 func (p *Provider) registerConnectService(ctx context.Context) {
-	if !p.ConnectAware {
-		return
-	}
+	var err error
 
 	ctxLog := log.With(ctx, log.Str(log.ProviderName, "consulcatalog"))
 	logger := log.FromContext(ctxLog)
 
 	if p.ServiceName == "" {
 		p.ServiceName = "traefik"
-	}
-
-	client, err := createClient(p.Endpoint)
-	if err != nil {
-		logger.WithError(err).Error("failed to create consul client")
-		return
 	}
 
 	serviceID := uuid.New().String()
@@ -379,7 +372,7 @@ func (p *Provider) registerConnectService(ctx context.Context) {
 			},
 		}
 
-		err = client.Agent().ServiceRegister(regReq)
+		err = p.client.Agent().ServiceRegister(regReq)
 		if err != nil {
 			return fmt.Errorf("failed to register service in Consul Catalog: %w", err)
 		}
@@ -398,7 +391,7 @@ func (p *Provider) registerConnectService(ctx context.Context) {
 	}
 
 	<-ctx.Done()
-	err = client.Agent().ServiceDeregister(serviceID)
+	err = p.client.Agent().ServiceDeregister(serviceID)
 	if err != nil {
 		logger.WithError(err).Error("failed to deregister traefik from consul catalog")
 	}
@@ -453,12 +446,6 @@ func (p *Provider) watchConnectTLS(ctx context.Context) {
 	ctxLog := log.With(ctx, log.Str(log.ProviderName, "consulcatalog"))
 	logger := log.FromContext(ctxLog)
 
-	client, err := createClient(p.Endpoint)
-	if err != nil {
-		logger.WithError(err).Errorf("failed to create consul client")
-		return
-	}
-
 	leafWatcher, err := watch.Parse(map[string]interface{}{
 		"type":    "connect_leaf",
 		"service": p.ServiceName,
@@ -490,14 +477,14 @@ func (p *Provider) watchConnectTLS(ctx context.Context) {
 	hclogger := hclog.New(logOpts)
 
 	go func() {
-		err := leafWatcher.RunWithClientAndHclog(client, hclogger)
+		err := leafWatcher.RunWithClientAndHclog(p.client, hclogger)
 		if err != nil {
 			logger.WithError(err).Errorf("Leaf certificate watcher failed with error")
 		}
 	}()
 
 	go func() {
-		err := rootWatcher.RunWithClientAndHclog(client, hclogger)
+		err := rootWatcher.RunWithClientAndHclog(p.client, hclogger)
 		if err != nil {
 			logger.WithError(err).Errorf("Root certificate watcher failed with error")
 		}
