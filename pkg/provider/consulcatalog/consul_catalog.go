@@ -385,7 +385,7 @@ func (p *Provider) registerConnectService(ctx context.Context) {
 		logger.Errorf("Failed to register traefik as Connect Native service: %w, retrying in %s", err, time)
 	}
 
-	err = backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), context.Background()), notify)
+	err = backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxLog), notify)
 	if err != nil {
 		logger.Errorf("Failed to register traefik as Connect Native service: %w", err)
 		return
