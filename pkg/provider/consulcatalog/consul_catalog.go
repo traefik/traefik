@@ -3,6 +3,7 @@ package consulcatalog
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"text/template"
@@ -513,10 +514,14 @@ func (p *Provider) watchConnectTLS(ctx context.Context) {
 		case leafCerts = <-leafChan:
 
 		case <-ticker.C:
-			p.certChan <- &connectCert{
+			newCertInfo := &connectCert{
 				service: p.ServiceName,
 				root:    rootCerts,
 				leaf:    leafCerts,
+			}
+			if !reflect.DeepEqual(newCertInfo, certInfo) {
+				logger.Debugf("Updating connect certs for service %s", p.ServiceName)
+				p.certChan <- newCertInfo
 			}
 		}
 	}
