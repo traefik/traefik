@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -56,17 +57,68 @@ func Test_safePrefix(t *testing.T) {
 }
 
 func Test_ContentSecurityPolicy(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/toto.html", nil)
-	rw := httptest.NewRecorder()
-
-	DashboardHandler{
-		Assets: &assetfs.AssetFS{
-			Asset: func(path string) ([]byte, error) {
-				return []byte{}, nil
+	testCases := []struct {
+		desc     string
+		handler  DashboardHandler
+		expected int
+	}{
+		{
+			desc: "OK",
+			handler: DashboardHandler{
+				Assets: &assetfs.AssetFS{
+					Asset: func(path string) ([]byte, error) {
+						return []byte{}, nil
+					},
+					AssetDir: func(path string) ([]string, error) {
+						return []string{}, nil
+					},
+				},
 			},
+			expected: http.StatusOK,
 		},
-	}.ServeHTTP(rw, req)
+		{
+			desc: "Not found",
+			handler: DashboardHandler{
+				Assets: &assetfs.AssetFS{
+					Asset: func(path string) ([]byte, error) {
+						return []byte{}, fmt.Errorf("not found")
+					},
+					AssetDir: func(path string) ([]string, error) {
+						return []string{}, fmt.Errorf("not found")
+					},
+				},
+			},
+			expected: http.StatusNotFound,
+		},
+		{
+			desc: "Internal server error",
+			handler: DashboardHandler{
+				Assets: &assetfs.AssetFS{
+					Asset: func(path string) ([]byte, error) {
+						return []byte{}, fmt.Errorf("oops")
+					},
+					AssetDir: func(path string) ([]string, error) {
+						return []string{}, fmt.Errorf("oops")
+					},
+				},
+			},
+			expected: http.StatusInternalServerError,
+		},
+	}
 
-	assert.Equal(t, http.StatusOK, rw.Code)
-	assert.Equal(t, []string{"frame-src 'self' https://traefik.io https://*.traefik.io;"}, rw.Result().Header["Content-Security-Policy"])
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			req := httptest.NewRequest(http.MethodGet, "/foobar.html", nil)
+
+			rw := httptest.NewRecorder()
+
+			test.handler.ServeHTTP(rw, req)
+
+			assert.Equal(t, test.expected, rw.Code)
+			assert.Equal(t, "frame-src 'self' https://traefik.io https://*.traefik.io;", rw.Result().Header.Get("Content-Security-Policy"))
+		})
+	}
 }
