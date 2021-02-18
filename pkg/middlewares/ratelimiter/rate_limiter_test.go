@@ -259,7 +259,7 @@ func TestRateLimit(t *testing.T) {
 			overCharge:   false,
 		},
 		{
-			desc: "exclusion SourceRange not matching, over capacity",
+			desc: "exclusion SourceRange not matching, over charge",
 			config: dynamic.RateLimit{
 				Average: 100,
 				Burst:   0,
@@ -362,14 +362,10 @@ func TestRateLimit(t *testing.T) {
 				t.Fatalf("rate was slower than expected: %d requests (wanted > %d) in %v", reqCount, minCount, elapsed)
 			}
 			if reqCount > maxCount {
-				if test.overCharge == true {
-					return
-				} else {
+				if test.overCharge != true {
 					t.Fatalf("rate was faster than expected: %d requests (wanted < %d) in %v", reqCount, maxCount, elapsed)
 				}
-			}
-
-			if test.overCharge == true {
+			} else if test.overCharge == true {
 				t.Fatalf("dropped call expected: %d requests (wanted < %d) in %v", reqCount, maxCount, elapsed)
 			}
 		})
