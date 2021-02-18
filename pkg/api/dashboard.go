@@ -35,7 +35,7 @@ func (g DashboardHandler) Append(router *mux.Router) {
 
 func (g DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// allow iframes from our domains only
-	w.Header().Set("Content-Security-Policy", "frame-ancestors 'self' traefik.io *.traefik.io;")
+	w.Header().Set("Content-Security-Policy", "frame-src 'self' https://traefik.io https://*.traefik.io;")
 	http.FileServer(g.Assets).ServeHTTP(w, r)
 }
 
