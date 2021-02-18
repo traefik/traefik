@@ -493,3 +493,74 @@ http:
         sourceCriterion:
           requestHost: true
 ```
+
+### `exclusion`
+
+The `exclusion` option defines a whitelist of IPs to exclude from the rate limiting.
+
+#### `exclusion.sourceRange`
+
+The `sourceRange` option sets the whitelisted IPs (or ranges of whitelisted IPs by using CIDR notation).
+
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.exclusion.sourceRange=127.0.0.1/32, 192.168.1.7"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ratelimit
+spec:
+  rateLimit:
+    average: 100
+    exclusion:
+      sourceRange:
+        - 127.0.0.1/32
+        - 192.168.1.7
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
+- "traefik.http.middlewares.test-ratelimit.ratelimit.exclusion.sourceRange=127.0.0.1/32, 192.168.1.7"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-ratelimit.ratelimit.average": "100",
+  "traefik.http.middlewares.test-ratelimit.ratelimit.exclusion.sourceRange": "127.0.0.1/32, 192.168.1.7",
+}
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
+  - "traefik.http.middlewares.test-ratelimit.exclusion.sourceRange=127.0.0.1/32, 192.168.1.7"
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ratelimit.rateLimit]
+    average = 100
+    [http.middlewares.test-ratelimit.exclusion]
+      sourceRange = ["127.0.0.1/32", "192.168.1.7"]
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ratelimit:
+      rateLimit:
+        average: 100
+        exclusion:
+          sourceRange:
+            - 127.0.0.1/32
+            - 192.168.1.7
+```
+
+#### `exclusion.ipStrategy`
+
+The `ipStrategy` option defines two parameters that configures how Traefik determines the client IP: `depth`, and `excludedIPs`.
+See `sourceCriterion.ipStrategy` above for more informations.

@@ -305,6 +305,14 @@ type SourceCriterion struct {
 
 // +k8s:deepcopy-gen=true
 
+// Defined exclusion strategy
+type Exclusion struct {
+	SourceRange []string    `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
+	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty"  label:"allowEmpty" file:"allowEmpty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
 // RateLimit holds the rate limiting configuration for a given router.
 type RateLimit struct {
 	// Average is the maximum rate, by default in requests/s, allowed for the given source.
@@ -322,6 +330,7 @@ type RateLimit struct {
 	Burst int64 `json:"burst,omitempty" toml:"burst,omitempty" yaml:"burst,omitempty" export:"true"`
 
 	SourceCriterion *SourceCriterion `json:"sourceCriterion,omitempty" toml:"sourceCriterion,omitempty" yaml:"sourceCriterion,omitempty" export:"true"`
+	Exclusion       *Exclusion       `json:"exclusion,omitempty" toml:"exclusion,omitempty" yaml:"exclusion,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values on a RateLimit.

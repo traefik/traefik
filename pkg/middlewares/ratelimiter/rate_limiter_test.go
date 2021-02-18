@@ -73,6 +73,21 @@ func TestNewRateLimiter(t *testing.T) {
 			},
 			expectedError: "iPStrategy and RequestHeaderName are mutually exclusive",
 		},
+		{
+			desc: "Exclusion SourceRange is an invalid CIDR",
+			config: dynamic.RateLimit{
+				Average: 200,
+				Burst:   10,
+				SourceCriterion: &dynamic.SourceCriterion{
+					IPStrategy:        &dynamic.IPStrategy{},
+					RequestHeaderName: "Foo",
+				},
+				Exclusion: &dynamic.Exclusion{
+					SourceRange: []string{"foo"},
+				},
+			},
+			expectedError: "cannot parse CIDR [foo]: parsing CIDR trusted IPs <nil>: invalid CIDR address: foo",
+		},
 	}
 
 	for _, test := range testCases {
@@ -130,6 +145,7 @@ func TestRateLimit(t *testing.T) {
 		loadDuration time.Duration
 		incomingLoad int // in reqs/s
 		burst        int
+		overCharge   bool
 	}{
 		{
 			desc: "Average is respected",
@@ -139,6 +155,7 @@ func TestRateLimit(t *testing.T) {
 			},
 			loadDuration: 2 * time.Second,
 			incomingLoad: 400,
+			overCharge:   false,
 		},
 		{
 			desc: "burst allowed, no bursty traffic",
@@ -148,6 +165,7 @@ func TestRateLimit(t *testing.T) {
 			},
 			loadDuration: 2 * time.Second,
 			incomingLoad: 200,
+			overCharge:   false,
 		},
 		{
 			desc: "burst allowed, initial burst, under capacity",
@@ -158,6 +176,7 @@ func TestRateLimit(t *testing.T) {
 			loadDuration: 2 * time.Second,
 			incomingLoad: 200,
 			burst:        50,
+			overCharge:   false,
 		},
 		{
 			desc: "burst allowed, initial burst, over capacity",
@@ -168,6 +187,7 @@ func TestRateLimit(t *testing.T) {
 			loadDuration: 2 * time.Second,
 			incomingLoad: 200,
 			burst:        150,
+			overCharge:   false,
 		},
 		{
 			desc: "burst over average, initial burst, over capacity",
@@ -178,6 +198,7 @@ func TestRateLimit(t *testing.T) {
 			loadDuration: 2 * time.Second,
 			incomingLoad: 200,
 			burst:        300,
+			overCharge:   false,
 		},
 		{
 			desc: "lower than 1/s",
@@ -188,6 +209,7 @@ func TestRateLimit(t *testing.T) {
 			loadDuration: 2 * time.Second,
 			incomingLoad: 100,
 			burst:        0,
+			overCharge:   false,
 		},
 		{
 			desc: "lower than 1/s, longer",
@@ -198,6 +220,7 @@ func TestRateLimit(t *testing.T) {
 			loadDuration: time.Minute,
 			incomingLoad: 100,
 			burst:        0,
+			overCharge:   false,
 		},
 		{
 			desc: "lower than 1/s, longer, harsher",
@@ -208,6 +231,7 @@ func TestRateLimit(t *testing.T) {
 			loadDuration: time.Minute,
 			incomingLoad: 100,
 			burst:        0,
+			overCharge:   false,
 		},
 		{
 			desc: "period below 1 second",
@@ -218,6 +242,35 @@ func TestRateLimit(t *testing.T) {
 			loadDuration: 2 * time.Second,
 			incomingLoad: 300,
 			burst:        0,
+			overCharge:   false,
+		},
+		{
+			desc: "over capacity, but not with the exclusion SourceRange",
+			config: dynamic.RateLimit{
+				Average:              100,
+				Burst:                0,
+				Exclusion: &dynamic.Exclusion {
+					SourceRange: []string{"127.0.0.1"},
+				},
+			},
+			loadDuration: 2 * time.Second,
+			incomingLoad: 200,
+			burst:        50,
+			overCharge:   false,
+		},
+		{
+			desc: "exclusion SourceRange not matching, over capacity",
+			config: dynamic.RateLimit{
+				Average: 100,
+				Burst:   0,
+				Exclusion: &dynamic.Exclusion {
+					SourceRange: []string{"192.168.1.1"},
+				},
+			},
+			loadDuration: 2 * time.Second,
+			incomingLoad: 200,
+			burst:        0,
+			overCharge:   true,
 		},
 		// TODO Try to disambiguate when it fails if it is because of too high a load.
 		// {
@@ -309,7 +362,15 @@ func TestRateLimit(t *testing.T) {
 				t.Fatalf("rate was slower than expected: %d requests (wanted > %d) in %v", reqCount, minCount, elapsed)
 			}
 			if reqCount > maxCount {
-				t.Fatalf("rate was faster than expected: %d requests (wanted < %d) in %v", reqCount, maxCount, elapsed)
+				if test.overCharge == true {
+					return
+				} else {
+					t.Fatalf("rate was faster than expected: %d requests (wanted < %d) in %v", reqCount, maxCount, elapsed)
+				}
+			}
+
+			if test.overCharge == true {
+				t.Fatalf("dropped call expected: %d requests (wanted < %d) in %v", reqCount, maxCount, elapsed)
 			}
 		})
 	}

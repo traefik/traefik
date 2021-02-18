@@ -10,6 +10,7 @@ import (
 	"github.com/mailgun/ttlmap"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/ip"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/tracing"
@@ -25,9 +26,11 @@ const (
 // rateLimiter implements rate limiting and traffic shaping with a set of token buckets;
 // one for each traffic source. The same parameters are applied to all the buckets.
 type rateLimiter struct {
-	name  string
-	rate  rate.Limit // reqs/s
-	burst int64
+	name      string
+	rate      rate.Limit // reqs/s
+	burst     int64
+	ipChecker *ip.Checker
+	strategy  ip.Strategy
 	// maxDelay is the maximum duration we're willing to wait for a bucket reservation to become effective, in nanoseconds.
 	// For now it is somewhat arbitrarily set to 1/(2*rate).
 	maxDelay      time.Duration
@@ -47,6 +50,23 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 			config.SourceCriterion.RequestHeaderName == "" && !config.SourceCriterion.RequestHost {
 		config.SourceCriterion = &dynamic.SourceCriterion{
 			IPStrategy: &dynamic.IPStrategy{},
+		}
+	}
+
+	var ipChecker *ip.Checker
+	var strategy ip.Strategy
+	if config.Exclusion != nil {
+		var err error
+		if len(config.Exclusion.SourceRange) > 0 {
+			ipChecker, err = ip.NewChecker(config.Exclusion.SourceRange)
+			if err != nil {
+				return nil, fmt.Errorf("cannot parse CIDR %s: %w", config.Exclusion.SourceRange, err)
+			}
+		}
+
+		strategy, err = config.Exclusion.IPStrategy.Get()
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -90,6 +110,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 		name:          name,
 		rate:          rate.Limit(rtl),
 		burst:         burst,
+		ipChecker:     ipChecker,
+		strategy:      strategy,
 		maxDelay:      maxDelay,
 		next:          next,
 		sourceMatcher: sourceMatcher,
@@ -105,44 +127,54 @@ func (rl *rateLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := middlewares.GetLoggerCtx(r.Context(), rl.name, typeName)
 	logger := log.FromContext(ctx)
 
-	source, amount, err := rl.sourceMatcher.Extract(r)
-	if err != nil {
-		logger.Errorf("could not extract source of request: %v", err)
-		http.Error(w, "could not extract source of request", http.StatusInternalServerError)
-		return
-	}
-
-	if amount != 1 {
-		logger.Infof("ignoring token bucket amount > 1: %d", amount)
-	}
-
-	var bucket *rate.Limiter
-	if rlSource, exists := rl.buckets.Get(source); exists {
-		bucket = rlSource.(*rate.Limiter)
-	} else {
-		bucket = rate.NewLimiter(rl.rate, int(rl.burst))
-		if err := rl.buckets.Set(source, bucket, int(rl.maxDelay)*10+1); err != nil {
-			logger.Errorf("could not insert bucket: %v", err)
-			http.Error(w, "could not insert bucket", http.StatusInternalServerError)
+	if rl.isNotIPAuthorized(r) {
+		source, amount, err := rl.sourceMatcher.Extract(r)
+		if err != nil {
+			logger.Errorf("could not extract source of request: %v", err)
+			http.Error(w, "could not extract source of request", http.StatusInternalServerError)
 			return
 		}
+
+		if amount != 1 {
+			logger.Infof("ignoring token bucket amount > 1: %d", amount)
+		}
+
+		var bucket *rate.Limiter
+		if rlSource, exists := rl.buckets.Get(source); exists {
+			bucket = rlSource.(*rate.Limiter)
+		} else {
+			bucket = rate.NewLimiter(rl.rate, int(rl.burst))
+			if err := rl.buckets.Set(source, bucket, int(rl.maxDelay)*10+1); err != nil {
+				logger.Errorf("could not insert bucket: %v", err)
+				http.Error(w, "could not insert bucket", http.StatusInternalServerError)
+				return
+			}
+		}
+
+		res := bucket.Reserve()
+		if !res.OK() {
+			http.Error(w, "No bursty traffic allowed", http.StatusTooManyRequests)
+			return
+		}
+
+		delay := res.Delay()
+		if delay > rl.maxDelay {
+			res.Cancel()
+			rl.serveDelayError(ctx, w, r, delay)
+			return
+		}
+
+		time.Sleep(delay)
 	}
 
-	res := bucket.Reserve()
-	if !res.OK() {
-		http.Error(w, "No bursty traffic allowed", http.StatusTooManyRequests)
-		return
-	}
-
-	delay := res.Delay()
-	if delay > rl.maxDelay {
-		res.Cancel()
-		rl.serveDelayError(ctx, w, r, delay)
-		return
-	}
-
-	time.Sleep(delay)
 	rl.next.ServeHTTP(w, r)
+}
+
+func (rl *rateLimiter) isNotIPAuthorized(req *http.Request) bool {
+	if rl.ipChecker == nil || rl.strategy == nil {
+		return true
+	}
+	return rl.ipChecker.IsAuthorized(rl.strategy.GetIP(req)) == nil
 }
 
 func (rl *rateLimiter) serveDelayError(ctx context.Context, w http.ResponseWriter, r *http.Request, delay time.Duration) {
