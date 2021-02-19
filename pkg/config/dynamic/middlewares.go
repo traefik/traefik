@@ -305,7 +305,7 @@ type SourceCriterion struct {
 
 // +k8s:deepcopy-gen=true
 
-// Defined exclusion strategy
+// Exclusion defines which IPs to exclude from the middleware.
 type Exclusion struct {
 	SourceRange []string    `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
 	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty"  label:"allowEmpty" file:"allowEmpty" export:"true"`

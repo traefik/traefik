@@ -247,9 +247,9 @@ func TestRateLimit(t *testing.T) {
 		{
 			desc: "over capacity, but not with the exclusion SourceRange",
 			config: dynamic.RateLimit{
-				Average:              100,
-				Burst:                0,
-				Exclusion: &dynamic.Exclusion {
+				Average: 100,
+				Burst:   0,
+				Exclusion: &dynamic.Exclusion{
 					SourceRange: []string{"127.0.0.1"},
 				},
 			},
@@ -263,7 +263,7 @@ func TestRateLimit(t *testing.T) {
 			config: dynamic.RateLimit{
 				Average: 100,
 				Burst:   0,
-				Exclusion: &dynamic.Exclusion {
+				Exclusion: &dynamic.Exclusion{
 					SourceRange: []string{"192.168.1.1"},
 				},
 			},
