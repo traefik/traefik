@@ -6,7 +6,7 @@ The Kubernetes Gateway API, The Experimental Way.
 Gateway API is the evolution of Kubernetes APIs that relate to `Services`, such as `Ingress`.
 The Gateway API project is part of Kubernetes, working under SIG-NETWORK.
 
-The Kubernetes Gateway provider is a Traefik implementation of the [Service APIs](https://gateway-api.sigs.k8s.io/)
+The Kubernetes Gateway provider is a Traefik implementation of the [Gateway API](https://gateway-api.sigs.k8s.io/)
 specifications from the Kubernetes Special Interest Groups (SIGs).
 
 This provider is proposed as an experimental feature and partially supports the Service APIs [v0.1.0](https://github.com/kubernetes-sigs/service-apis/releases/tag/v0.1.0) specification.
