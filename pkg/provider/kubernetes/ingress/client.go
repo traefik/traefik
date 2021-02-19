@@ -341,7 +341,7 @@ func (c *clientWrapper) updateIngressStatusOld(src *networkingv1beta1.Ingress, i
 }
 
 // isLoadBalancerIngressEquals returns true if the given slices are equal, false otherwise.
-func isLoadBalancerIngressEquals(aSlice []corev1.LoadBalancerIngress, bSlice []corev1.LoadBalancerIngress) bool {
+func isLoadBalancerIngressEquals(aSlice, bSlice []corev1.LoadBalancerIngress) bool {
 	if len(aSlice) != len(bSlice) {
 		return false
 	}
