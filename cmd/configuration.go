@@ -18,9 +18,6 @@ type TraefikCmdConfiguration struct {
 func NewTraefikConfiguration() *TraefikCmdConfiguration {
 	return &TraefikCmdConfiguration{
 		Configuration: static.Configuration{
-			Global: &static.Global{
-				CheckNewVersion: true,
-			},
 			EntryPoints: make(static.EntryPoints),
 			Providers: &static.Providers{
 				ProvidersThrottleDuration: ptypes.Duration(2 * time.Second),

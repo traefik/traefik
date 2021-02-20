@@ -111,7 +111,7 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	}
 
 	if staticConfiguration.Global.CheckNewVersion {
-		checkNewVersion()
+		checkNewVersion(staticConfiguration)
 	}
 
 	stats(staticConfiguration)
@@ -522,13 +522,20 @@ func configureLogging(staticConfiguration *static.Configuration) {
 	}
 }
 
-func checkNewVersion() {
-	ticker := time.Tick(24 * time.Hour)
-	safe.Go(func() {
-		for time.Sleep(10 * time.Minute); ; <-ticker {
-			version.CheckNewVersion()
-		}
-	})
+func checkNewVersion(staticConfiguration *static.Configuration) {
+	logger := log.WithoutContext()
+
+	if staticConfiguration.Global.CheckNewVersion {
+		logger.Info(`Version Check is enabled.`)
+		ticker := time.Tick(24 * time.Hour)
+		safe.Go(func() {
+			for time.Sleep(10 * time.Minute); ; <-ticker {
+				version.CheckNewVersion()
+			}
+		})
+	} else {
+		logger.Info(`Version Check is disabled`)
+	}
 }
 
 func stats(staticConfiguration *static.Configuration) {
