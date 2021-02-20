@@ -5,7 +5,7 @@ Good Old Configuration File
 
 The file provider lets you define the [dynamic configuration](./overview.md) in a TOML or YAML file.
 
-It supports providing configuration through a [single configuration file]](#filename) or [multiple separate files](#directory).
+It supports providing configuration through a [single configuration file](#filename) or [multiple separate files](#directory).
 
 !!! info
 

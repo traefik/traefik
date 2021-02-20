@@ -1,3 +1,14 @@
+## [v2.4.5](https://github.com/traefik/traefik/tree/v2.4.5) (2021-02-18)
+[All Commits](https://github.com/traefik/traefik/compare/v2.4.3...v2.4.5)
+
+**Bug fixes:**
+- **[webui]** Only allow iframes to be loaded from our domain ([#7904](https://github.com/traefik/traefik/pull/7904) by [SantoDE](https://github.com/SantoDE))
+
+## [v2.4.4](https://github.com/traefik/traefik/tree/v2.4.4) (2021-02-18)
+[All Commits](https://github.com/traefik/traefik/compare/v2.4.3...v2.4.4)
+
+Release canceled.
+
 ## [v2.4.3](https://github.com/traefik/traefik/tree/v2.4.3) (2021-02-15)
 [All Commits](https://github.com/traefik/traefik/compare/v2.4.2...v2.4.3)
 

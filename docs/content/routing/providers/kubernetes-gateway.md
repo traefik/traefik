@@ -33,16 +33,16 @@ The Kubernetes Gateway API, The Experimental Way.
     
 You can find an excerpt of the supported Kubernetes Gateway API resources in the table below:
 
-| Kind                               | Purpose                                                                   | Concept Behind                                                                            |
-|------------------------------------|---------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|
-| [GatewayClass](#kind-gatewayclass) | Defines a set of Gateways that share a common configuration and behaviour | [GatewayClass](https://kubernetes-sigs.github.io/gateway-api/api-overview/#gatewayclass)  |
-| [Gateway](#kind-gateway)           | Describes how traffic can be translated to Services within the cluster    | [Gateway](https://kubernetes-sigs.github.io/gateway-api/api-overview/#gateway)            |
-| [HTTPRoute](#kind-httproute)       | HTTP rules for mapping requests from a Gateway to Kubernetes Services     | [Route](https://kubernetes-sigs.github.io/gateway-api/api-overview/#httptcpfooroute)      |
+| Kind                               | Purpose                                                                   | Concept Behind                                                              |
+|------------------------------------|---------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| [GatewayClass](#kind-gatewayclass) | Defines a set of Gateways that share a common configuration and behaviour | [GatewayClass](https://gateway-api.sigs.k8s.io/api-overview/#gatewayclass)  |
+| [Gateway](#kind-gateway)           | Describes how traffic can be translated to Services within the cluster    | [Gateway](https://gateway-api.sigs.k8s.io/api-overview/#gateway)            |
+| [HTTPRoute](#kind-httproute)       | HTTP rules for mapping requests from a Gateway to Kubernetes Services     | [Route](https://gateway-api.sigs.k8s.io/api-overview/#httptcpfooroute)      |
 
 ### Kind: `GatewayClass`
 
 `GatewayClass` is cluster-scoped resource defined by the infrastructure provider. This resource represents a class of Gateways that can be instantiated.
-More details on the GatewayClass [official documentation](https://kubernetes-sigs.github.io/gateway-api/gatewayclass/).
+More details on the GatewayClass [official documentation](https://gateway-api.sigs.k8s.io/gatewayclass/).
 
 The `GatewayClass` should be declared by the infrastructure provider, otherwise please register the `GatewayClass`
 [definition](../../reference/dynamic-configuration/kubernetes-gateway.md#definitions) in the Kubernetes cluster before 
@@ -65,7 +65,7 @@ creating `GatewayClass` objects.
 
 A `Gateway` is 1:1 with the life cycle of the configuration of infrastructure. When a user creates a Gateway, 
 some load balancing infrastructure is provisioned or configured by the GatewayClass controller. 
-More details on the Gateway [official documentation](https://kubernetes-sigs.github.io/gateway-api/gateway/).
+More details on the Gateway [official documentation](https://gateway-api.sigs.k8s.io/gateway/).
 
 Register the `Gateway` [definition](../../reference/dynamic-configuration/kubernetes-gateway.md#definitions) in the
 Kubernetes cluster before creating `Gateway` objects.
