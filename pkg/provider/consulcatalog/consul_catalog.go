@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/google/uuid"
 	"github.com/hashicorp/consul/api"
 	"github.com/hashicorp/consul/api/watch"
 	"github.com/hashicorp/go-hclog"
@@ -60,8 +59,7 @@ type Provider struct {
 	DefaultRule       string          `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 	ConnectAware      bool            `description:"Enable Consul Connect support." json:"connectAware,omitempty" toml:"connectAware,omitempty" yaml:"connectAware,omitempty"`
 	ConnectByDefault  bool            `description:"Automatically connect to a service via Consul connect." json:"connectByDefault,omitempty" toml:"connectByDefault,omitempty" yaml:"connectByDefault,omitempty"`
-	ServiceName       string          `description:"Name of the traefik service in Consul Catalog." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty"`
-	ServicePort       int             `description:"Port of the traefik service to register in Consul Catalog" json:"servicePort,omitempty" toml:"servicePort,omitempty" yaml:"servicePort,omitempty"`
+	ServiceName       string          `description:"Name of the traefik service in Consul Catalog (needs to be registered via the orchestrator or manually)." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty"`
 
 	client         *api.Client
 	defaultRuleTpl *template.Template
@@ -124,7 +122,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	}
 
 	if p.ConnectAware {
-		pool.GoCtx(p.registerConnectService)
 		pool.GoCtx(p.watchConnectTLS)
 	}
 
@@ -349,53 +346,6 @@ func contains(values []string, val string) bool {
 		}
 	}
 	return false
-}
-
-func (p *Provider) registerConnectService(ctx context.Context) {
-	var err error
-
-	ctxLog := log.With(ctx, log.Str(log.ProviderName, "consulcatalog"))
-	logger := log.FromContext(ctxLog)
-
-	if p.ServiceName == "" {
-		p.ServiceName = "traefik"
-	}
-
-	serviceID := uuid.New().String()
-	operation := func() error {
-		regReq := &api.AgentServiceRegistration{
-			ID:   serviceID,
-			Kind: api.ServiceKindTypical,
-			Name: p.ServiceName,
-			Port: p.ServicePort,
-			Connect: &api.AgentServiceConnect{
-				Native: true,
-			},
-		}
-
-		err = p.client.Agent().ServiceRegister(regReq)
-		if err != nil {
-			return fmt.Errorf("failed to register service in Consul Catalog: %w", err)
-		}
-
-		return nil
-	}
-
-	notify := func(err error, time time.Duration) {
-		logger.Errorf("Failed to register traefik as Connect Native service: %w, retrying in %s", err, time)
-	}
-
-	err = backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxLog), notify)
-	if err != nil {
-		logger.Errorf("Failed to register traefik as Connect Native service: %w", err)
-		return
-	}
-
-	<-ctx.Done()
-	err = p.client.Agent().ServiceDeregister(serviceID)
-	if err != nil {
-		logger.WithError(err).Error("failed to deregister traefik from consul catalog")
-	}
 }
 
 func rootsWatchHandler(ctx context.Context, dest chan<- []string) func(watch.BlockingParamVal, interface{}) {
