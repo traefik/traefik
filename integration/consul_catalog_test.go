@@ -54,6 +54,18 @@ func (s *ConsulCatalogSuite) waitToElectConsulLeader() error {
 	})
 }
 
+func (s *ConsulCatalogSuite) waitForConnectCA() error {
+	return try.Do(15*time.Second, func() error {
+		caroots, _, err := s.consulClient.Connect().CARoots(nil)
+
+		if err != nil || len(caroots.Roots) == 0 {
+			return fmt.Errorf("connect CA not fully initialized. %w", err)
+		}
+
+		return nil
+	})
+}
+
 func (s *ConsulCatalogSuite) TearDownSuite(c *check.C) {
 	// shutdown and delete compose project
 	if s.composeProject != nil {
@@ -609,5 +621,51 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithHealthCheck(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	err = s.deregisterService("whoami2", false)
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *ConsulCatalogSuite) TestConsulConnect(c *check.C) {
+	// Wait for consul to fully initialize connect CA
+	err := s.waitForConnectCA()
+	c.Assert(err, checker.IsNil)
+
+	containerIP := s.composeProject.Container(c, "connect").NetworkSettings.IPAddress
+	reg := &api.AgentServiceRegistration{
+		ID:   "uuid-api1",
+		Name: "uuid-api",
+		Tags: []string{
+			"traefik.enable=true",
+			"traefik.connect=true",
+			"traefik.http.routers.router1.rule=Path(`/`)",
+			"traefik.http.routers.router1.service=service1",
+			"traefik.http.services.service1.loadBalancer.server.url=https://" + containerIP,
+		},
+		Connect: &api.AgentServiceConnect{
+			Native: true,
+		},
+		Port:    443,
+		Address: containerIP,
+	}
+	err = s.registerService(reg, false)
+	c.Assert(err, checker.IsNil)
+
+	tempObjects := struct {
+		ConsulAddress string
+	}{
+		ConsulAddress: s.consulAddress,
+	}
+	file := s.adaptFile(c, "fixtures/consul_catalog/connect.toml", tempObjects)
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err = cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	err = try.GetRequest("http://127.0.0.1:8000/", 10*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	err = s.deregisterService("uuid-api1", false)
 	c.Assert(err, checker.IsNil)
 }

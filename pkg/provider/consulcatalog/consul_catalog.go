@@ -360,7 +360,7 @@ func rootsWatchHandler(ctx context.Context, dest chan<- []string) func(watch.Blo
 			return
 		}
 
-		roots := make([]string, len(v.Roots))
+		roots := make([]string, 0, len(v.Roots))
 		for _, root := range v.Roots {
 			roots = append(roots, root.RootCertPEM)
 		}
@@ -450,6 +450,7 @@ func (p *Provider) watchConnectTLS(ctx context.Context) {
 		leaf:    leafCerts,
 	}
 
+	logger.Debugf("Received connect certs for service %s", p.ServiceName)
 	p.certChan <- certInfo
 
 	ticker := time.NewTicker(time.Duration(p.RefreshInterval))
