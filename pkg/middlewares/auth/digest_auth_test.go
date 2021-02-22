@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -127,7 +128,7 @@ func TestDigestAuthUsersFromFile(t *testing.T) {
 				require.Equal(t, http.StatusOK, res.StatusCode, "Cannot authenticate user "+userName)
 
 				var body []byte
-				body, err = ioutil.ReadAll(res.Body)
+				body, err = io.ReadAll(res.Body)
 				require.NoError(t, err)
 				err = res.Body.Close()
 				require.NoError(t, err)
@@ -145,7 +146,7 @@ func TestDigestAuthUsersFromFile(t *testing.T) {
 			require.Equal(t, http.StatusUnauthorized, res.StatusCode)
 
 			var body []byte
-			body, err = ioutil.ReadAll(res.Body)
+			body, err = io.ReadAll(res.Body)
 			require.NoError(t, err)
 			err = res.Body.Close()
 			require.NoError(t, err)

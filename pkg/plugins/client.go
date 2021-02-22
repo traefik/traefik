@@ -197,7 +197,7 @@ func (c *Client) Download(ctx context.Context, pName, pVersion string) (string, 
 		return hash, nil
 	}
 
-	data, _ := ioutil.ReadAll(resp.Body)
+	data, _ := io.ReadAll(resp.Body)
 	return "", fmt.Errorf("error: %d: %s", resp.StatusCode, string(data))
 }
 
@@ -353,7 +353,7 @@ func (c *Client) WriteState(plugins map[string]Descriptor) error {
 		return err
 	}
 
-	return ioutil.WriteFile(c.stateFile, mp, 0o600)
+	return os.WriteFile(c.stateFile, mp, 0o600)
 }
 
 // ResetAll resets all plugins related directories.

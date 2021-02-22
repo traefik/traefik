@@ -100,7 +100,7 @@ func TestLogRotation(t *testing.T) {
 
 func lineCount(t *testing.T, fileName string) int {
 	t.Helper()
-	fileContents, err := ioutil.ReadFile(fileName)
+	fileContents, err := os.ReadFile(fileName)
 	if err != nil {
 		t.Fatalf("Error reading from file %s: %s", fileName, err)
 	}
@@ -202,7 +202,7 @@ func TestLoggerHeaderFields(t *testing.T) {
 				writer.WriteHeader(http.StatusOK)
 			}))
 
-			logData, err := ioutil.ReadFile(logFile.Name())
+			logData, err := os.ReadFile(logFile.Name())
 			require.NoError(t, err)
 
 			if test.expected == types.AccessLogDrop {
@@ -221,7 +221,7 @@ func TestLoggerCLF(t *testing.T) {
 	config := &types.AccessLog{FilePath: logFilePath, Format: CommonFormat}
 	doLogging(t, config)
 
-	logData, err := ioutil.ReadFile(logFilePath)
+	logData, err := os.ReadFile(logFilePath)
 	require.NoError(t, err)
 
 	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testRouter" "http://127.0.0.1/testService" 1ms`
@@ -235,7 +235,7 @@ func TestAsyncLoggerCLF(t *testing.T) {
 	config := &types.AccessLog{FilePath: logFilePath, Format: CommonFormat, BufferingSize: 1024}
 	doLogging(t, config)
 
-	logData, err := ioutil.ReadFile(logFilePath)
+	logData, err := os.ReadFile(logFilePath)
 	require.NoError(t, err)
 
 	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testRouter" "http://127.0.0.1/testService" 1ms`
@@ -461,7 +461,7 @@ func TestLoggerJSON(t *testing.T) {
 				doLogging(t, test.config)
 			}
 
-			logData, err := ioutil.ReadFile(logFilePath)
+			logData, err := os.ReadFile(logFilePath)
 			require.NoError(t, err)
 
 			jsonData := make(map[string]interface{})
@@ -675,7 +675,7 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 
 			doLogging(t, test.config)
 
-			written, err := ioutil.ReadFile(file.Name())
+			written, err := os.ReadFile(file.Name())
 			require.NoError(t, err, "unable to read captured stdout from file")
 			assertValidLogData(t, test.expectedLog, written)
 		})

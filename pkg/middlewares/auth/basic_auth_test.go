@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -66,7 +67,7 @@ func TestBasicAuthSuccess(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
 	defer res.Body.Close()
 
@@ -97,7 +98,7 @@ func TestBasicAuthUserHeader(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
 	defer res.Body.Close()
 
@@ -128,7 +129,7 @@ func TestBasicAuthHeaderRemoved(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
 	err = res.Body.Close()
 	require.NoError(t, err)
@@ -159,7 +160,7 @@ func TestBasicAuthHeaderPresent(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
 	err = res.Body.Close()
 	require.NoError(t, err)
@@ -250,7 +251,7 @@ func TestBasicAuthUsersFromFile(t *testing.T) {
 				require.Equal(t, http.StatusOK, res.StatusCode, "Cannot authenticate user "+userName)
 
 				var body []byte
-				body, err = ioutil.ReadAll(res.Body)
+				body, err = io.ReadAll(res.Body)
 				require.NoError(t, err)
 				err = res.Body.Close()
 				require.NoError(t, err)
@@ -270,7 +271,7 @@ func TestBasicAuthUsersFromFile(t *testing.T) {
 				require.Equal(t, `Basic realm="`+test.realm+`"`, res.Header.Get("WWW-Authenticate"))
 			}
 
-			body, err := ioutil.ReadAll(res.Body)
+			body, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 			err = res.Body.Close()
 			require.NoError(t, err)
