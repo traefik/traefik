@@ -48,7 +48,7 @@ func TestShutdownTCP(t *testing.T) {
 		for {
 			_, err := http.ReadRequest(bufio.NewReader(conn))
 
-			if errors.Is(err, io.EOF) || (err != nil && strings.HasSuffix(err.Error(), "use of closed network connection")) {
+			if errors.Is(err, io.EOF) || (err != nil && errors.Is(err, net.ErrClosed)) {
 				return
 			}
 			require.NoError(t, err)
