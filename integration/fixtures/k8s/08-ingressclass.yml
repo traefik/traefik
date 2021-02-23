@@ -6,14 +6,6 @@ spec:
   controller: traefik.io/ingress-controller
 
 ---
-apiVersion: networking.k8s.io/v1beta1
-kind: IngressClass
-metadata:
-  name: traefik-drop
-spec:
-  controller: traefik.io/ingress-controller
-
----
 kind: Ingress
 apiVersion: networking.k8s.io/v1beta1
 metadata:
@@ -30,6 +22,14 @@ spec:
           servicePort: 80
 
 ---
+apiVersion: networking.k8s.io/v1beta1
+kind: IngressClass
+metadata:
+  name: traefik-drop
+spec:
+  controller: traefik.io/ingress-controller
+
+---
 kind: Ingress
 apiVersion: networking.k8s.io/v1beta1
 metadata:
@@ -41,6 +41,30 @@ spec:
     http:
       paths:
       - path: "/drop"
+        backend:
+          serviceName: "whoami"
+          servicePort: 80
+
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: IngressClass
+metadata:
+  name: traefik-not-ingress-controller
+spec:
+  controller: not.tr43phic.io/ingress-controller
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1beta1
+metadata:
+  name: "whoami-drop-ingress"
+spec:
+  ingressClassName: "traefik-not-ingress-controller"
+  rules:
+  - host: "whoami.test.not.ingress"
+    http:
+      paths:
+      - path: "/ingress"
         backend:
           serviceName: "whoami"
           servicePort: 80
