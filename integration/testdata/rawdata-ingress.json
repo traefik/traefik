@@ -49,6 +49,28 @@
 			"using": [
 				"web"
 			]
+		},
+		"whoami-drop-route-default-whoami-test-drop-drop@kubernetes": {
+			"entryPoints": [
+				"web"
+			],
+			"service": "default-whoami-80",
+			"rule": "Host(`whoami.test.drop`) \u0026\u0026 PathPrefix(`/drop`)",
+			"status": "enabled",
+			"using": [
+				"web"
+			]
+		},
+		"whoami-keep-route-default-whoami-test-keep-keep@kubernetes": {
+			"entryPoints": [
+				"web"
+			],
+			"service": "default-whoami-80",
+			"rule": "Host(`whoami.test.keep`) \u0026\u0026 PathPrefix(`/keep`)",
+			"status": "enabled",
+			"using": [
+				"web"
+			]
 		}
 	},
 	"middlewares": {
@@ -88,6 +110,28 @@
 			"usedBy": [
 				"dashboard@internal"
 			]
+		},
+		"default-whoami-80@kubernetes": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"url": "XXXX"
+					},
+					{
+						"url": "XXXX"
+					}
+				],
+				"passHostHeader": true
+			},
+			"status": "enabled",
+			"usedBy": [
+				"whoami-drop-route-default-whoami-test-drop-drop@kubernetes",
+				"whoami-keep-route-default-whoami-test-keep-keep@kubernetes"
+			],
+			"serverStatus": {
+				"http://XXXX": "UP",
+				"http://XXXX": "UP"
+			}
 		},
 		"default-whoami-http@kubernetes": {
 			"loadBalancer": {
