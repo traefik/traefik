@@ -38,6 +38,8 @@ builds:
         goarch: arm64
       - goos: freebsd
         goarch: arm64
+      - goos: darwin
+        goarch: arm64
 
 changelog:
   skip: true
