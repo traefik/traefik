@@ -402,9 +402,6 @@ Forces the read to be fully consistent. (Default: ```false```)
 `TRAEFIK_PROVIDERS_CONSULCATALOG_SERVICENAME`:  
 Name of the traefik service in Consul Catalog.
 
-`TRAEFIK_PROVIDERS_CONSULCATALOG_SERVICEPORT`:  
-Port of the traefik service to register in Consul Catalog (Default: ```0```)
-
 `TRAEFIK_PROVIDERS_CONSULCATALOG_STALE`:  
 Use stale consistency for catalog reads. (Default: ```false```)
 
