@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -94,9 +93,8 @@ func TestDigestAuthUsersFromFile(t *testing.T) {
 			t.Parallel()
 
 			// Creates the temporary configuration file with the users
-			usersFile, err := ioutil.TempFile("", "auth-users")
+			usersFile, err := os.CreateTemp(t.TempDir(), "auth-users")
 			require.NoError(t, err)
-			defer os.Remove(usersFile.Name())
 
 			_, err = usersFile.Write([]byte(test.userFileContent))
 			require.NoError(t, err)

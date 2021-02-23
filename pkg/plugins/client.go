@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -68,7 +67,7 @@ func NewClient(opts ClientOptions) (*Client, error) {
 		return nil, err
 	}
 
-	goPath, err := ioutil.TempDir(sourcesRootPath, "gop-*")
+	goPath, err := os.MkdirTemp(sourcesRootPath, "gop-*")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create GoPath: %w", err)
 	}

@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -42,9 +41,7 @@ var (
 )
 
 func TestLogRotation(t *testing.T) {
-	tempDir := createTempDir(t, "traefik_")
-
-	fileName := filepath.Join(tempDir, "traefik.log")
+	fileName := filepath.Join(t.TempDir(), "traefik.log")
 	rotatedFileName := fileName + ".rotated"
 
 	config := &types.AccessLog{FilePath: fileName, Format: CommonFormat}
@@ -117,8 +114,6 @@ func lineCount(t *testing.T, fileName string) int {
 }
 
 func TestLoggerHeaderFields(t *testing.T) {
-	tmpDir := createTempDir(t, CommonFormat)
-
 	expectedValue := "expectedValue"
 
 	testCases := []struct {
@@ -172,7 +167,7 @@ func TestLoggerHeaderFields(t *testing.T) {
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
-			logFile, err := ioutil.TempFile(tmpDir, "*.log")
+			logFile, err := os.CreateTemp(t.TempDir(), "*.log")
 			require.NoError(t, err)
 
 			config := &types.AccessLog{
@@ -215,9 +210,7 @@ func TestLoggerHeaderFields(t *testing.T) {
 }
 
 func TestLoggerCLF(t *testing.T) {
-	tmpDir := createTempDir(t, CommonFormat)
-
-	logFilePath := filepath.Join(tmpDir, logFileNameSuffix)
+	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
 	config := &types.AccessLog{FilePath: logFilePath, Format: CommonFormat}
 	doLogging(t, config)
 
@@ -229,9 +222,7 @@ func TestLoggerCLF(t *testing.T) {
 }
 
 func TestAsyncLoggerCLF(t *testing.T) {
-	tmpDir := createTempDir(t, CommonFormat)
-
-	logFilePath := filepath.Join(tmpDir, logFileNameSuffix)
+	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
 	config := &types.AccessLog{FilePath: logFilePath, Format: CommonFormat, BufferingSize: 1024}
 	doLogging(t, config)
 
@@ -450,9 +441,7 @@ func TestLoggerJSON(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			tmpDir := createTempDir(t, JSONFormat)
-
-			logFilePath := filepath.Join(tmpDir, logFileNameSuffix)
+			logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
 
 			test.config.FilePath = logFilePath
 			if test.tls {
@@ -720,7 +709,7 @@ func assertValidLogData(t *testing.T, expected string, logData []byte) {
 func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {
 	t.Helper()
 
-	file, err := ioutil.TempFile("", "testlogger")
+	file, err := os.CreateTemp("", "testlogger")
 	require.NoError(t, err, "failed to create temp file")
 
 	original := os.Stdout
@@ -732,17 +721,6 @@ func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {
 	}
 
 	return file, restoreStdout
-}
-
-func createTempDir(t *testing.T, prefix string) string {
-	t.Helper()
-
-	tmpDir, err := ioutil.TempDir("", prefix)
-	require.NoError(t, err, "failed to create temp dir")
-
-	t.Cleanup(func() { _ = os.RemoveAll(tmpDir) })
-
-	return tmpDir
 }
 
 func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
