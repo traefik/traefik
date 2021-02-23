@@ -24,10 +24,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
-const (
-	// DefaultTemplateRule The default template for the default rule.
-	DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
-)
+// DefaultTemplateRule The default template for the default rule.
+const DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 
 var _ provider.Provider = (*Provider)(nil)
 

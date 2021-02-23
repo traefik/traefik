@@ -227,8 +227,8 @@ type ServersTransport struct {
 	MaxIdleConnsPerHost int                 `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, DefaultMaxIdleConnsPerHost is used" json:"maxIdleConnsPerHost,omitempty" toml:"maxIdleConnsPerHost,omitempty" yaml:"maxIdleConnsPerHost,omitempty" export:"true"`
 	ForwardingTimeouts  *ForwardingTimeouts `description:"Timeouts for requests forwarded to the backend servers." json:"forwardingTimeouts,omitempty" toml:"forwardingTimeouts,omitempty" yaml:"forwardingTimeouts,omitempty" export:"true"`
 	DisableHTTP2        bool                `description:"Disable HTTP/2 for connections with backend servers." json:"disableHTTP2,omitempty" toml:"disableHTTP2,omitempty" yaml:"disableHTTP2,omitempty" export:"true"`
-	// Specialized hook for certificate verification, cannot be exported to a config file nor pilot.
-	VerifyPeerCertificate func(cfg *gtls.Config, rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error `json:"-,omitempty" toml:"-,omitempty" yaml:"-,omitempty" hash:"-" label:"-" export:"false"`
+	// VerifyPeerCertificate is only (optionally) set by the Consul Catalog provider in order to implement the Consul Connect protocol between Traefik and the Consul services. Therefore it is not serializable to prevent it from being configurable by other parties.
+	VerifyPeerCertificate func(cfg *gtls.Config, rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error `json:"-" toml:"-" yaml:"-" hash:"-" label:"-" export:"false"`
 }
 
 // +k8s:deepcopy-gen=true

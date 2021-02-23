@@ -129,7 +129,7 @@ func (c *connectCert) getLeaf() tls.Certificate {
 
 func (c *connectCert) serverTransport(item itemData) *dynamic.ServersTransport {
 	return &dynamic.ServersTransport{
-		ServerName:         connectTransportName(item.Name),
+		// InsecureSkipVerify is needed because Go wants to verify a hostname otherwise
 		InsecureSkipVerify: true,
 		RootCAs:            c.getRoot(),
 		Certificates: tls.Certificates{
@@ -146,7 +146,6 @@ func (c *connectCert) serverTransport(item itemData) *dynamic.ServersTransport {
 			}
 			certs := []*x509.Certificate{0: cert}
 			uri := &connect.SpiffeIDService{
-				Host:       item.Node,
 				Namespace:  item.Namespace,
 				Datacenter: item.Datacenter,
 				Service:    item.Name,
