@@ -30,6 +30,13 @@ func TestNewIPWhiteLister(t *testing.T) {
 				SourceRange: []string{"10.10.10.10"},
 			},
 		},
+		{
+			desc: "valid Deny IP",
+			whiteList: dynamic.IPWhiteList{
+				SourceRange: []string{"10.10.10.10"},
+				Deny:        true,
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -71,6 +78,24 @@ func TestIPWhiteLister_ServeHTTP(t *testing.T) {
 				SourceRange: []string{"20.20.20.20"},
 			},
 			remoteAddr: "20.20.20.21:1234",
+			expected:   403,
+		},
+		{
+			desc: "authorized with remote address in deny mode",
+			whiteList: dynamic.IPWhiteList{
+				SourceRange: []string{"20.20.20.20"},
+				Deny:        true,
+			},
+			remoteAddr: "20.20.20.21:1234",
+			expected:   200,
+		},
+		{
+			desc: "non authorized with remote address in deny mode",
+			whiteList: dynamic.IPWhiteList{
+				SourceRange: []string{"20.20.20.20"},
+				Deny:        true,
+			},
+			remoteAddr: "20.20.20.20:1234",
 			expected:   403,
 		},
 	}

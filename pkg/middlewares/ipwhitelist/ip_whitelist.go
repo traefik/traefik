@@ -23,6 +23,7 @@ type ipWhiteLister struct {
 	next        http.Handler
 	whiteLister *ip.Checker
 	strategy    ip.Strategy
+	deny        bool
 	name        string
 }
 
@@ -51,6 +52,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.IPWhiteList, nam
 		strategy:    strategy,
 		whiteLister: checker,
 		next:        next,
+		deny:        config.Deny,
 		name:        name,
 	}, nil
 }
@@ -64,7 +66,7 @@ func (wl *ipWhiteLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := log.FromContext(ctx)
 
 	err := wl.whiteLister.IsAuthorized(wl.strategy.GetIP(req))
-	if err != nil {
+	if (err != nil && !wl.deny) || (err == nil && wl.deny) {
 		logMessage := fmt.Sprintf("rejecting request %+v: %v", req, err)
 		logger.Debug(logMessage)
 		tracing.SetErrorWithEvent(req, logMessage)

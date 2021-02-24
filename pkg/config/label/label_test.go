@@ -81,6 +81,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware9.ipwhitelist.ipstrategy.depth":                        "42",
 		"traefik.http.middlewares.Middleware9.ipwhitelist.ipstrategy.excludedips":                  "foobar, fiibar",
 		"traefik.http.middlewares.Middleware9.ipwhitelist.sourcerange":                             "foobar, fiibar",
+		"traefik.http.middlewares.Middleware9.ipwhitelist.deny":                                    "false",
 		"traefik.http.middlewares.Middleware10.inflightreq.amount":                                 "42",
 		"traefik.http.middlewares.Middleware10.inflightreq.sourcecriterion.ipstrategy.depth":       "42",
 		"traefik.http.middlewares.Middleware10.inflightreq.sourcecriterion.ipstrategy.excludedips": "foobar, fiibar",
@@ -589,6 +590,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								"fiibar",
 							},
 						},
+						Deny: false,
 					},
 				},
 				"Middleware20": {
@@ -1204,6 +1206,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware9.IPWhiteList.IPStrategy.Depth":                        "42",
 		"traefik.HTTP.Middlewares.Middleware9.IPWhiteList.IPStrategy.ExcludedIPs":                  "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware9.IPWhiteList.SourceRange":                             "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware9.IPWhiteList.Deny":                                    "false",
 		"traefik.HTTP.Middlewares.Middleware10.InFlightReq.Amount":                                 "42",
 		"traefik.HTTP.Middlewares.Middleware10.InFlightReq.SourceCriterion.IPStrategy.Depth":       "42",
 		"traefik.HTTP.Middlewares.Middleware10.InFlightReq.SourceCriterion.IPStrategy.ExcludedIPs": "foobar, fiibar",

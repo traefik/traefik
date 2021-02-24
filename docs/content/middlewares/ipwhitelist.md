@@ -225,3 +225,67 @@ http:
             - "127.0.0.1/32"
             - "192.168.1.7"
 ```
+
+### `deny`
+
+The `deny` option denies access to IP or CIDR addresses from` sourceRange` instead of allowing it.
+
+```yaml tab="Docker"
+# Denies request from defined IP
+labels:
+  - "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
+  - "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.deny=true"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ipwhitelist
+spec:
+  ipWhiteList:
+    sourceRange:
+      - 127.0.0.1/32
+      - 192.168.1.7
+    deny: true
+```
+
+```yaml tab="Consul Catalog"
+# Denies request from defined IP
+- "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
+- "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.deny=true"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.sourcerange": "127.0.0.1/32,192.168.1.7",
+  "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.deny": "true"
+}
+```
+
+```yaml tab="Rancher"
+# Denies request from defined IP
+labels:
+  - "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
+  - "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.deny=true"
+```
+
+```toml tab="File (TOML)"
+# Accepts request from defined IP
+[http.middlewares]
+  [http.middlewares.test-ipwhitelist.ipWhiteList]
+    sourceRange = ["127.0.0.1/32", "192.168.1.7"]
+    deny = true
+```
+
+```yaml tab="File (YAML)"
+# Denies request from defined IP
+http:
+  middlewares:
+    test-ipwhitelist:
+      ipWhiteList:
+        sourceRange:
+          - "127.0.0.1/32"
+          - "192.168.1.7"
+       deny: true
+```
