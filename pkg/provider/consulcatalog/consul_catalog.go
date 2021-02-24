@@ -464,6 +464,8 @@ func (p *Provider) watchConnectTLS(ctx context.Context, leafWatcher *watch.Plan,
 	for {
 		select {
 		case <-ctx.Done():
+			leafWatcher.Stop()
+			rootWatcher.Stop()
 			return
 		case rootCerts = <-rootChan:
 		case leafCerts = <-leafChan:
@@ -478,7 +480,6 @@ func (p *Provider) watchConnectTLS(ctx context.Context, leafWatcher *watch.Plan,
 			certInfo = newCertInfo
 			p.certChan <- newCertInfo
 		}
-
 	}
 }
 
