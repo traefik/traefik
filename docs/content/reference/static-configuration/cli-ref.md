@@ -616,7 +616,7 @@ Kubernetes certificate authority file path (not needed for in-cluster client).
 Kubernetes server endpoint (required for external cluster client).
 
 `--providers.kubernetesingress.ingressclass`:  
-Value of kubernetes.io/ingress.class annotation to watch for or the name of the correct ingressclass resource to filter.
+Value of kubernetes.io/ingress.class annotation or IngressClass name to watch for.
 
 `--providers.kubernetesingress.ingressendpoint.hostname`:  
 Hostname used for Kubernetes Ingress endpoints.
