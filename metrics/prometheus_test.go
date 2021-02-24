@@ -1,7 +1,6 @@
 package metrics
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"testing"
@@ -16,7 +15,10 @@ import (
 
 func TestRegisterPromState(t *testing.T) {
 	// Reset state of global promState.
-	defer promState.reset()
+	t.Cleanup(func() {
+		prometheus.Unregister(promState)
+		promState.reset()
+	})
 
 	testCases := []struct {
 		desc                 string
@@ -63,36 +65,40 @@ func TestRegisterPromState(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		actualNbRegistries := 0
-		for _, prom := range test.prometheusSlice {
-			if test.initPromState {
-				initStandardRegistry(prom)
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			actualNbRegistries := 0
+			for _, prom := range test.prometheusSlice {
+				if test.initPromState {
+					initStandardRegistry(prom)
+				}
+
+				if registerPromState() {
+					actualNbRegistries++
+				}
+
+				if test.unregisterPromState {
+					prometheus.Unregister(promState)
+				}
+
+				promState.reset()
 			}
 
-			promReg := registerPromState()
-			if promReg != false {
-				actualNbRegistries++
-			}
+			prometheus.Unregister(promState)
 
-			if test.unregisterPromState {
-				prometheus.Unregister(promState)
-			}
-
-			promState.reset()
-		}
-
-		prometheus.Unregister(promState)
-
-		assert.Equal(t, test.expectedNbRegistries, actualNbRegistries)
+			assert.Equal(t, test.expectedNbRegistries, actualNbRegistries)
+		})
 	}
 }
 
 func TestPrometheus(t *testing.T) {
-	// Reset state of global promState.
-	defer promState.reset()
-
 	prometheusRegistry := RegisterPrometheus(&types.Prometheus{})
-	defer prometheus.Unregister(promState)
+
+	// Reset state of global promState.
+	t.Cleanup(func() {
+		prometheus.Unregister(promState)
+		promState.reset()
+	})
 
 	if !prometheusRegistry.IsEnabled() {
 		t.Errorf("PrometheusRegistry should return true for IsEnabled()")
@@ -139,9 +145,9 @@ func TestPrometheus(t *testing.T) {
 
 	delayForTrackingCompletion()
 
-	metricsFamilies := mustScrape()
+	metricsFamilies := mustScrape(t)
 
-	tests := []struct {
+	testCases := []struct {
 		name   string
 		labels map[string]string
 		assert func(*dto.MetricFamily)
@@ -237,21 +243,26 @@ func TestPrometheus(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		family := findMetricFamily(test.name, metricsFamilies)
-		if family == nil {
-			t.Errorf("gathered metrics do not contain %q", test.name)
-			continue
-		}
-		for _, label := range family.Metric[0].Label {
-			val, ok := test.labels[*label.Name]
-			if !ok {
-				t.Errorf("%q metric contains unexpected label %q", test.name, *label.Name)
-			} else if val != *label.Value {
-				t.Errorf("label %q in metric %q has wrong value %q, expected %q", *label.Name, test.name, *label.Value, val)
+	for _, test := range testCases {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			family := findMetricFamily(test.name, metricsFamilies)
+			if family == nil {
+				t.Errorf("gathered metrics do not contain %q", test.name)
+				return
 			}
-		}
-		test.assert(family)
+
+			for _, label := range family.Metric[0].Label {
+				val, ok := test.labels[*label.Name]
+				if !ok {
+					t.Errorf("%q metric contains unexpected label %q", test.name, *label.Name)
+				} else if val != *label.Value {
+					t.Errorf("label %q in metric %q has wrong value %q, expected %q", *label.Name, test.name, *label.Value, val)
+				}
+			}
+
+			test.assert(family)
+		})
 	}
 }
 
@@ -291,8 +302,8 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 
 	delayForTrackingCompletion()
 
-	assertMetricsExist(t, mustScrape(), entrypointReqsTotalName, backendReqsTotalName, backendServerUpName)
-	assertMetricsAbsent(t, mustScrape(), entrypointReqsTotalName, backendReqsTotalName, backendServerUpName)
+	assertMetricsExist(t, mustScrape(t), entrypointReqsTotalName, backendReqsTotalName, backendServerUpName)
+	assertMetricsAbsent(t, mustScrape(t), entrypointReqsTotalName, backendReqsTotalName, backendServerUpName)
 
 	// To verify that metrics belonging to active configurations are not removed
 	// here the counter examples.
@@ -303,8 +314,8 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 
 	delayForTrackingCompletion()
 
-	assertMetricsExist(t, mustScrape(), entrypointReqsTotalName)
-	assertMetricsExist(t, mustScrape(), entrypointReqsTotalName)
+	assertMetricsExist(t, mustScrape(t), entrypointReqsTotalName)
+	assertMetricsExist(t, mustScrape(t), entrypointReqsTotalName)
 }
 
 func TestPrometheusRemovedMetricsReset(t *testing.T) {
@@ -327,12 +338,12 @@ func TestPrometheusRemovedMetricsReset(t *testing.T) {
 
 	delayForTrackingCompletion()
 
-	metricsFamilies := mustScrape()
+	metricsFamilies := mustScrape(t)
 	assertCounterValue(t, 3, findMetricFamily(backendReqsTotalName, metricsFamilies), labelNamesValues...)
 
 	// There is no dynamic configuration and so this metric will be deleted
 	// after the first scrape.
-	assertMetricsAbsent(t, mustScrape(), backendReqsTotalName)
+	assertMetricsAbsent(t, mustScrape(t), backendReqsTotalName)
 
 	prometheusRegistry.
 		BackendReqsCounter().
@@ -341,7 +352,7 @@ func TestPrometheusRemovedMetricsReset(t *testing.T) {
 
 	delayForTrackingCompletion()
 
-	metricsFamilies = mustScrape()
+	metricsFamilies = mustScrape(t)
 	assertCounterValue(t, 1, findMetricFamily(backendReqsTotalName, metricsFamilies), labelNamesValues...)
 }
 
@@ -355,10 +366,12 @@ func delayForTrackingCompletion() {
 	time.Sleep(250 * time.Millisecond)
 }
 
-func mustScrape() []*dto.MetricFamily {
+func mustScrape(t *testing.T) []*dto.MetricFamily {
+	t.Helper()
+
 	families, err := prometheus.DefaultGatherer.Gather()
 	if err != nil {
-		panic(fmt.Sprintf("could not gather metrics families: %s", err))
+		t.Fatalf("could not gather metrics families: %v", err)
 	}
 	return families
 }
@@ -445,6 +458,8 @@ func assertCounterValue(t *testing.T, want float64, family *dto.MetricFamily, la
 }
 
 func buildCounterAssert(t *testing.T, metricName string, expectedValue int) func(family *dto.MetricFamily) {
+	t.Helper()
+
 	return func(family *dto.MetricFamily) {
 		if cv := int(family.Metric[0].Counter.GetValue()); cv != expectedValue {
 			t.Errorf("metric %s has value %d, want %d", metricName, cv, expectedValue)
@@ -453,6 +468,8 @@ func buildCounterAssert(t *testing.T, metricName string, expectedValue int) func
 }
 
 func buildGreaterThanCounterAssert(t *testing.T, metricName string, expectedMinValue int) func(family *dto.MetricFamily) {
+	t.Helper()
+
 	return func(family *dto.MetricFamily) {
 		if cv := int(family.Metric[0].Counter.GetValue()); cv < expectedMinValue {
 			t.Errorf("metric %s has value %d, want at least %d", metricName, cv, expectedMinValue)
@@ -461,6 +478,8 @@ func buildGreaterThanCounterAssert(t *testing.T, metricName string, expectedMinV
 }
 
 func buildHistogramAssert(t *testing.T, metricName string, expectedSampleCount int) func(family *dto.MetricFamily) {
+	t.Helper()
+
 	return func(family *dto.MetricFamily) {
 		if sc := int(family.Metric[0].Histogram.GetSampleCount()); sc != expectedSampleCount {
 			t.Errorf("metric %s has sample count value %d, want %d", metricName, sc, expectedSampleCount)
@@ -469,6 +488,8 @@ func buildHistogramAssert(t *testing.T, metricName string, expectedSampleCount i
 }
 
 func buildGaugeAssert(t *testing.T, metricName string, expectedValue int) func(family *dto.MetricFamily) {
+	t.Helper()
+
 	return func(family *dto.MetricFamily) {
 		if gv := int(family.Metric[0].Gauge.GetValue()); gv != expectedValue {
 			t.Errorf("metric %s has value %d, want %d", metricName, gv, expectedValue)
@@ -477,6 +498,8 @@ func buildGaugeAssert(t *testing.T, metricName string, expectedValue int) func(f
 }
 
 func buildTimestampAssert(t *testing.T, metricName string) func(family *dto.MetricFamily) {
+	t.Helper()
+
 	return func(family *dto.MetricFamily) {
 		if ts := time.Unix(int64(family.Metric[0].Gauge.GetValue()), 0); time.Since(ts) > time.Minute {
 			t.Errorf("metric %s has wrong timestamp %v", metricName, ts)
