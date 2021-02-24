@@ -477,7 +477,7 @@ func supportsIngressClass(serverVersion *version.Version) bool {
 	return ingressClassVersion.LessThanOrEqual(serverVersion)
 }
 
-// filterIngressClassByName remove ingressclass from slice.
+// filterIngressClassByName return a slice containing ingressclasses with the correct name.
 func filterIngressClassByName(ingressClassName string, ics []*networkingv1beta1.IngressClass) []*networkingv1beta1.IngressClass {
 	var ingressClasses []*networkingv1beta1.IngressClass
 
