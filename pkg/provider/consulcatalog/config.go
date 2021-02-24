@@ -107,9 +107,8 @@ func connectTransportName(n string) string {
 }
 
 type connectCert struct {
-	service string
-	root    []string
-	leaf    keyPair
+	root []string
+	leaf keyPair
 }
 
 func (c *connectCert) getRoot() []tls.FileOrContent {

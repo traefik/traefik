@@ -471,9 +471,8 @@ func (p *Provider) watchConnectTLS(ctx context.Context, leafWatcher *watch.Plan,
 		case leafCerts = <-leafChan:
 		}
 		newCertInfo := &connectCert{
-			service: p.ServiceName,
-			root:    rootCerts,
-			leaf:    leafCerts,
+			root: rootCerts,
+			leaf: leafCerts,
 		}
 		if newCertInfo.isReady() && !reflect.DeepEqual(newCertInfo, certInfo) {
 			logger.Debugf("Updating connect certs for service %s", p.ServiceName)
