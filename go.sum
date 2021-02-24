@@ -881,8 +881,8 @@ github.com/traefik/gziphandler v1.1.2-0.20210212101304-175e0fad6888 h1:GMY0C+M/w
 github.com/traefik/gziphandler v1.1.2-0.20210212101304-175e0fad6888/go.mod h1:sLqwoN03tkluITKL+lPEZbfsJQU2suYoKbrR/HeV9aM=
 github.com/traefik/paerser v0.1.1 h1:Suj0iA4hTAV6E4Dh5/++TXAj5u6iTwydBlFssIUz+9w=
 github.com/traefik/paerser v0.1.1/go.mod h1:yYnAgdEC2wJH5CgG75qGWC8SsFDEapg09o9RrA6FfrE=
-github.com/traefik/yaegi v0.9.8 h1:sYGKV2d911B9olVsSO/nRmjIh+CQTffAUSzoyv4a4/4=
-github.com/traefik/yaegi v0.9.8/go.mod h1:FAYnRlZyuVlEkvnkHq3bvJ1lW5be6XuwgLdkYgYG6Lk=
+github.com/traefik/yaegi v0.9.13 h1:LQzMIjTp3fFyAULaWel88iJz1QL2lBd0bbaOSV8or4o=
+github.com/traefik/yaegi v0.9.13/go.mod h1:FAYnRlZyuVlEkvnkHq3bvJ1lW5be6XuwgLdkYgYG6Lk=
 github.com/transip/gotransip/v6 v6.2.0 h1:0Z+qVsyeiQdWfcAUeJyF0IEKAPvhJwwpwPi2WGtBIiE=
 github.com/transip/gotransip/v6 v6.2.0/go.mod h1:pQZ36hWWRahCUXkFWlx9Hs711gLd8J4qdgLdRzmtY+g=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
