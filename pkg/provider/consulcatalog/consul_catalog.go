@@ -154,7 +154,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			}
 
 			// get configuration at the provider's startup.
-			err = p.loadConfiguration(routineCtx, certInfo, configurationChan)
+			err = p.loadConfiguration(ctxLog, certInfo, configurationChan)
 			if err != nil {
 				return fmt.Errorf("failed to get consul catalog data: %w", err)
 			}
@@ -170,7 +170,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				case <-ticker.C:
 				case certInfo = <-p.certChan:
 				}
-				err = p.loadConfiguration(routineCtx, certInfo, configurationChan)
+				err = p.loadConfiguration(ctxLog, certInfo, configurationChan)
 				if err != nil {
 					return fmt.Errorf("failed to refresh consul catalog data: %w", err)
 				}
