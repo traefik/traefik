@@ -127,6 +127,10 @@ func (c *connectCert) getLeaf() tls.Certificate {
 	}
 }
 
+func (c *connectCert) isReady() bool {
+	return len(c.root) > 0 && c.leaf.cert != "" && c.leaf.key != ""
+}
+
 func (c *connectCert) serverTransport(item itemData) *dynamic.ServersTransport {
 	return &dynamic.ServersTransport{
 		// InsecureSkipVerify is needed because Go wants to verify a hostname otherwise

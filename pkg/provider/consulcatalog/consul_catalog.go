@@ -146,7 +146,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			// will cause an error condition.
 			if p.ConnectAware {
 				logger.Infof("Waiting for Connect certificate before building first configuration")
-				certInfo = <-p.certChan
+				select {
+				case <-routineCtx.Done():
+					return nil
+				case certInfo = <-p.certChan:
+				}
 			}
 
 			// get configuration at the provider's startup.
@@ -451,17 +455,11 @@ func (p *Provider) watchConnectTLS(ctx context.Context, leafWatcher *watch.Plan,
 		}
 	}()
 
-	leafCerts := <-leafChan
-	rootCerts := <-rootChan
-
-	certInfo := &connectCert{
-		service: p.ServiceName,
-		root:    rootCerts,
-		leaf:    leafCerts,
-	}
-
-	logger.Debugf("Received connect certs for service %s", p.ServiceName)
-	p.certChan <- certInfo
+	var (
+		certInfo  *connectCert
+		leafCerts keyPair
+		rootCerts []string
+	)
 
 	for {
 		select {
@@ -475,8 +473,9 @@ func (p *Provider) watchConnectTLS(ctx context.Context, leafWatcher *watch.Plan,
 			root:    rootCerts,
 			leaf:    leafCerts,
 		}
-		if !reflect.DeepEqual(newCertInfo, certInfo) {
+		if newCertInfo.isReady() && !reflect.DeepEqual(newCertInfo, certInfo) {
 			logger.Debugf("Updating connect certs for service %s", p.ServiceName)
+			certInfo = newCertInfo
 			p.certChan <- newCertInfo
 		}
 
