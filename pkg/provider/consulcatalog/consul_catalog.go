@@ -139,6 +139,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			// that gets resolved before the certificates are available
 			// will cause an error condition.
 			if p.ConnectAware {
+				logger.Infof("Waiting for Connect certificate before building first configuration")
 				certInfo = <-p.certChan
 			}
 
