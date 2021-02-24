@@ -120,7 +120,13 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	}
 
 	if p.ConnectAware {
-		pool.GoCtx(p.watchConnectTLS)
+		leafWatcher, rootWatcher, err := p.createConnectTLSWatchers()
+		if err != nil {
+			return fmt.Errorf("unable to create consul watch plans: %w", err)
+		}
+		pool.GoCtx(func(routineCtx context.Context) {
+			p.watchConnectTLS(routineCtx, leafWatcher, rootWatcher)
+		})
 	}
 
 	pool.GoCtx(func(routineCtx context.Context) {
@@ -392,25 +398,28 @@ func leafWatcherHandler(ctx context.Context, dest chan<- keyPair) func(watch.Blo
 	}
 }
 
-func (p *Provider) watchConnectTLS(ctx context.Context) {
-	ctxLog := log.With(ctx, log.Str(log.ProviderName, "consulcatalog"))
-	logger := log.FromContext(ctxLog)
-
+func (p *Provider) createConnectTLSWatchers() (*watch.Plan, *watch.Plan, error) {
 	leafWatcher, err := watch.Parse(map[string]interface{}{
 		"type":    "connect_leaf",
 		"service": p.ServiceName,
 	})
 	if err != nil {
-		logger.WithError(err).Error("failed to create leaf cert watcher plan")
-		return
+		return nil, nil, fmt.Errorf("failed to create leaf cert watcher plan: %w", err)
 	}
 
 	rootWatcher, err := watch.Parse(map[string]interface{}{
 		"type": "connect_roots",
 	})
 	if err != nil {
-		logger.WithError(err).Error("failed to create root cert watcher plan")
+		return nil, nil, fmt.Errorf("failed to create root cert watcher plan: %w", err)
 	}
+
+	return leafWatcher, rootWatcher, nil
+}
+
+func (p *Provider) watchConnectTLS(ctx context.Context, leafWatcher *watch.Plan, rootWatcher *watch.Plan) {
+	ctxLog := log.With(ctx, log.Str(log.ProviderName, "consulcatalog"))
+	logger := log.FromContext(ctxLog)
 
 	leafChan := make(chan keyPair)
 	rootChan := make(chan []string)
@@ -429,6 +438,7 @@ func (p *Provider) watchConnectTLS(ctx context.Context) {
 	go func() {
 		err := leafWatcher.RunWithClientAndHclog(p.client, hclogger)
 		if err != nil {
+			// This should never be triggered, RunWithClientAndHclog does not seem to ever return anything but nil
 			logger.WithError(err).Errorf("Leaf certificate watcher failed with error")
 		}
 	}()
@@ -436,6 +446,7 @@ func (p *Provider) watchConnectTLS(ctx context.Context) {
 	go func() {
 		err := rootWatcher.RunWithClientAndHclog(p.client, hclogger)
 		if err != nil {
+			// This should never be triggered, RunWithClientAndHclog does not seem to ever return anything but nil
 			logger.WithError(err).Errorf("Root certificate watcher failed with error")
 		}
 	}()
@@ -452,28 +463,23 @@ func (p *Provider) watchConnectTLS(ctx context.Context) {
 	logger.Debugf("Received connect certs for service %s", p.ServiceName)
 	p.certChan <- certInfo
 
-	ticker := time.NewTicker(time.Duration(p.RefreshInterval))
-
 	for {
 		select {
 		case <-ctx.Done():
-			ticker.Stop()
 			return
-
 		case rootCerts = <-rootChan:
 		case leafCerts = <-leafChan:
-
-		case <-ticker.C:
-			newCertInfo := &connectCert{
-				service: p.ServiceName,
-				root:    rootCerts,
-				leaf:    leafCerts,
-			}
-			if !reflect.DeepEqual(newCertInfo, certInfo) {
-				logger.Debugf("Updating connect certs for service %s", p.ServiceName)
-				p.certChan <- newCertInfo
-			}
 		}
+		newCertInfo := &connectCert{
+			service: p.ServiceName,
+			root:    rootCerts,
+			leaf:    leafCerts,
+		}
+		if !reflect.DeepEqual(newCertInfo, certInfo) {
+			logger.Debugf("Updating connect certs for service %s", p.ServiceName)
+			p.certChan <- newCertInfo
+		}
+
 	}
 }
 
