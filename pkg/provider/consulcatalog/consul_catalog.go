@@ -145,6 +145,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					return nil
 				case certInfo = <-p.certChan:
 				}
+				if certInfo.err != nil {
+					return backoff.Permanent(err)
+				}
 			}
 
 			// get configuration at the provider's startup.
@@ -163,6 +166,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					return nil
 				case <-ticker.C:
 				case certInfo = <-p.certChan:
+				}
+				if certInfo.err != nil {
+					return backoff.Permanent(err)
 				}
 				err = p.loadConfiguration(ctxLog, certInfo, configurationChan)
 				if err != nil {
@@ -436,16 +442,14 @@ func (p *Provider) watchConnectTLS(ctx context.Context, leafWatcher *watch.Plan,
 	go func() {
 		err := leafWatcher.RunWithClientAndHclog(p.client, hclogger)
 		if err != nil {
-			// This should never be triggered, RunWithClientAndHclog does not seem to ever return anything but nil
-			logger.WithError(err).Errorf("Leaf certificate watcher failed with error")
+			p.certChan <- &connectCert{err: err}
 		}
 	}()
 
 	go func() {
 		err := rootWatcher.RunWithClientAndHclog(p.client, hclogger)
 		if err != nil {
-			// This should never be triggered, RunWithClientAndHclog does not seem to ever return anything but nil
-			logger.WithError(err).Errorf("Root certificate watcher failed with error")
+			p.certChan <- &connectCert{err: err}
 		}
 	}()
 
@@ -468,7 +472,7 @@ func (p *Provider) watchConnectTLS(ctx context.Context, leafWatcher *watch.Plan,
 			root: rootCerts,
 			leaf: leafCerts,
 		}
-		if newCertInfo.isReady() && !reflect.DeepEqual(newCertInfo, certInfo) {
+		if newCertInfo.isReady() && (newCertInfo.leaf != certInfo.leaf || !reflect.DeepEqual(newCertInfo.root, certInfo.root)) {
 			logger.Debugf("Updating connect certs for service %s", p.ServiceName)
 			certInfo = newCertInfo
 			p.certChan <- newCertInfo

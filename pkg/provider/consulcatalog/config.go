@@ -109,6 +109,7 @@ func connectTransportName(n string) string {
 type connectCert struct {
 	root []string
 	leaf keyPair
+	err  error
 }
 
 func (c *connectCert) getRoot() []tls.FileOrContent {
