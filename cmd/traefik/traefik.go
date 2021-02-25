@@ -256,6 +256,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		providerAggregator,
 		time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration),
 		getDefaultsEntrypoints(staticConfiguration),
+		"internal",
 	)
 
 	// TLS
