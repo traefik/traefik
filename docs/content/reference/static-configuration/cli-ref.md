@@ -184,7 +184,7 @@ plugin's module name.
 plugin's version.
 
 `--global.checknewversion`:  
-Periodically check if a new version has been released. (Default: ```false```)
+Periodically check if a new version has been released. (Default: ```true```)
 
 `--global.sendanonymoususage`:  
 Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default. (Default: ```false```)

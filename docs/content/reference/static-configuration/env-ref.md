@@ -184,7 +184,7 @@ plugin's module name.
 plugin's version.
 
 `TRAEFIK_GLOBAL_CHECKNEWVERSION`:  
-Periodically check if a new version has been released. (Default: ```false```)
+Periodically check if a new version has been released. (Default: ```true```)
 
 `TRAEFIK_GLOBAL_SENDANONYMOUSUSAGE`:  
 Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default. (Default: ```false```)
