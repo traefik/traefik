@@ -75,11 +75,6 @@ type EndpointConfig struct {
 	EndpointWaitTime ptypes.Duration         `description:"WaitTime limits how long a Watch will block. If not provided, the agent default values will be used" json:"endpointWaitTime,omitempty" toml:"endpointWaitTime,omitempty" yaml:"endpointWaitTime,omitempty" export:"true"`
 }
 
-// SetDefaults sets the default values.
-func (c *EndpointConfig) SetDefaults() {
-	c.Address = "127.0.0.1:8500"
-}
-
 // EndpointHTTPAuthConfig holds configurations of the authentication.
 type EndpointHTTPAuthConfig struct {
 	Username string `description:"Basic Auth username" json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty"`
@@ -89,7 +84,6 @@ type EndpointHTTPAuthConfig struct {
 // SetDefaults sets the default values.
 func (p *Provider) SetDefaults() {
 	endpoint := &EndpointConfig{}
-	endpoint.SetDefaults()
 	p.Endpoint = endpoint
 	p.RefreshInterval = ptypes.Duration(15 * time.Second)
 	p.Prefix = "traefik"
