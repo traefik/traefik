@@ -131,6 +131,21 @@ func (c *connectCert) isReady() bool {
 	return len(c.root) > 0 && c.leaf.cert != "" && c.leaf.key != ""
 }
 
+func (c *connectCert) Equal(other *connectCert) bool {
+	if other == nil {
+		return false
+	}
+	if len(c.root) != len(other.root) {
+		return false
+	}
+	for i, v := range c.root {
+		if v != other.root[i] {
+			return false
+		}
+	}
+	return c.leaf == other.leaf
+}
+
 func (c *connectCert) serverTransport(item itemData) *dynamic.ServersTransport {
 	return &dynamic.ServersTransport{
 		// InsecureSkipVerify is needed because Go wants to verify a hostname otherwise

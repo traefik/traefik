@@ -3,7 +3,6 @@ package consulcatalog
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 	"text/template"
@@ -472,7 +471,7 @@ func (p *Provider) watchConnectTLS(ctx context.Context, leafWatcher *watch.Plan,
 			root: rootCerts,
 			leaf: leafCerts,
 		}
-		if newCertInfo.isReady() && (newCertInfo.leaf != certInfo.leaf || !reflect.DeepEqual(newCertInfo.root, certInfo.root)) {
+		if newCertInfo.isReady() && !newCertInfo.Equal(certInfo) {
 			logger.Debugf("Updating connect certs for service %s", p.ServiceName)
 			certInfo = newCertInfo
 			p.certChan <- newCertInfo
