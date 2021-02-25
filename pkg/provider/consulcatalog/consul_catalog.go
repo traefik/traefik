@@ -144,9 +144,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				case <-routineCtx.Done():
 					return nil
 				case certInfo = <-p.certChan:
-				}
-				if certInfo.err != nil {
-					return backoff.Permanent(err)
+					if certInfo.err != nil {
+						return backoff.Permanent(err)
+					}
 				}
 			}
 
@@ -166,9 +166,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					return nil
 				case <-ticker.C:
 				case certInfo = <-p.certChan:
-				}
-				if certInfo.err != nil {
-					return backoff.Permanent(err)
+					if certInfo.err != nil {
+						return backoff.Permanent(err)
+					}
 				}
 				err = p.loadConfiguration(ctxLog, certInfo, configurationChan)
 				if err != nil {
