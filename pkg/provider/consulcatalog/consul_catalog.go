@@ -341,6 +341,11 @@ func (p *Provider) fetchServices(ctx context.Context) (map[string]bool, error) {
 			connect = false
 		}
 
+		if connect && !p.ConnectAware {
+			logger.Debugf("Filtering connect aware item because traefik's connect support is not enabled")
+			continue
+		}
+
 		filtered[svcName] = connect
 	}
 
