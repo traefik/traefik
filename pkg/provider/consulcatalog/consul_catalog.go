@@ -359,6 +359,7 @@ func contains(values []string, val string) bool {
 func rootsWatchHandler(ctx context.Context, dest chan<- []string) func(watch.BlockingParamVal, interface{}) {
 	return func(_ watch.BlockingParamVal, raw interface{}) {
 		if raw == nil {
+			log.FromContext(ctx).Errorf("root certificate watcher called with nil")
 			return
 		}
 
@@ -385,6 +386,7 @@ type keyPair struct {
 func leafWatcherHandler(ctx context.Context, dest chan<- keyPair) func(watch.BlockingParamVal, interface{}) {
 	return func(_ watch.BlockingParamVal, raw interface{}) {
 		if raw == nil {
+			log.FromContext(ctx).Errorf("leaf certificate watcher called with nil")
 			return
 		}
 
@@ -471,7 +473,7 @@ func (p *Provider) watchConnectTLS(ctx context.Context, leafWatcher *watch.Plan,
 			root: rootCerts,
 			leaf: leafCerts,
 		}
-		if newCertInfo.isReady() && !newCertInfo.Equal(certInfo) {
+		if newCertInfo.isReady() && !newCertInfo.equals(certInfo) {
 			logger.Debugf("Updating connect certs for service %s", p.ServiceName)
 			certInfo = newCertInfo
 			p.certChan <- newCertInfo

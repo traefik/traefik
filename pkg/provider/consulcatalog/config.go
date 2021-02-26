@@ -131,8 +131,11 @@ func (c *connectCert) isReady() bool {
 	return len(c.root) > 0 && c.leaf.cert != "" && c.leaf.key != ""
 }
 
-func (c *connectCert) Equal(other *connectCert) bool {
-	if other == nil {
+func (c *connectCert) equals(other *connectCert) bool {
+	if c == nil && other == nil {
+		return true
+	}
+	if c == nil || other == nil {
 		return false
 	}
 	if len(c.root) != len(other.root) {
