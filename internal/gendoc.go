@@ -73,7 +73,13 @@ THIS FILE MUST NOT BE EDITED BY HAND
 		if flat.Default == "" {
 			w.writeln(flat.Description)
 		} else {
-			w.writeln(flat.Description + " (Default: ```" + flat.Default + "```)")
+			def := flat.Default
+			// TODO must be handle into the flats.
+			if strings.HasSuffix(strings.ToLower(flat.Name), "checknewversion") {
+				def = "true"
+			}
+
+			w.writeln(flat.Description + " (Default: ```" + def + "```)")
 		}
 
 		if i < len(flats)-1 {
