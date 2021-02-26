@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"net/http"
+	"strconv"
 	"testing"
 	"time"
 
@@ -35,11 +36,11 @@ func TestStatsD(t *testing.T) {
 	}
 
 	udp.ShouldReceiveAll(t, expected, func() {
-		statsdRegistry.BackendReqsCounter().With("service", "test", "code", string(http.StatusOK), "method", http.MethodGet).Add(1)
-		statsdRegistry.BackendReqsCounter().With("service", "test", "code", string(http.StatusNotFound), "method", http.MethodGet).Add(1)
+		statsdRegistry.BackendReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+		statsdRegistry.BackendReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 		statsdRegistry.BackendRetriesCounter().With("service", "test").Add(1)
 		statsdRegistry.BackendRetriesCounter().With("service", "test").Add(1)
-		statsdRegistry.BackendReqDurationHistogram().With("service", "test", "code", string(http.StatusOK)).Observe(10000)
+		statsdRegistry.BackendReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 		statsdRegistry.ConfigReloadsCounter().Add(1)
 		statsdRegistry.ConfigReloadsFailureCounter().Add(1)
 		statsdRegistry.EntrypointReqsCounter().With("entrypoint", "test").Add(1)

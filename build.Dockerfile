@@ -1,4 +1,4 @@
-FROM golang:1.14-alpine
+FROM golang:1.16-alpine
 
 RUN apk --update upgrade \
     && apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar ca-certificates tzdata \
@@ -11,6 +11,8 @@ RUN go get golang.org/x/lint/golint \
 # Which docker version to test on
 ARG DOCKER_VERSION=18.09.7
 ARG DEP_VERSION=0.5.1
+
+ENV GO111MODULE=off
 
 # Download go-bindata binary to bin folder in $GOPATH
 RUN mkdir -p /usr/local/bin \
