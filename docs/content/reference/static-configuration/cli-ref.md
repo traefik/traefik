@@ -382,7 +382,7 @@ Constraints is an expression that Traefik matches against the container's labels
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
 `--providers.consulcatalog.endpoint.address`:  
-The address of the Consul server (Default: ```127.0.0.1:8500```)
+The address of the Consul server
 
 `--providers.consulcatalog.endpoint.datacenter`:  
 Data center to use. If not provided, the default agent data center is used
