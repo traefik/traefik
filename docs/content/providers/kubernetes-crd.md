@@ -24,7 +24,8 @@ the Traefik engineering team developed a [Custom Resource Definition](https://ku
 
     The `apiextensions.k8s.io/v1beta1` CustomResourceDefinition is deprecated in Kubernetes `v1.16+` and will be removed in `v1.22+`.
     
-    Please use the Traefik `apiextensions.k8s.io/v1` CRDs instead.
+    For Kubernetes `v1.16+`, please use the Traefik `apiextensions.k8s.io/v1` CRDs instead.
+
 ??? example "Initializing Resource Definition and RBAC"
 
     ```yaml tab="Traefik Resource Definition"
