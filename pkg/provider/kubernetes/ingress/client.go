@@ -570,14 +570,6 @@ func filterIngressClassByName(ingressClassName string, ics []*networkingv1beta1.
 	return ingressClasses
 }
 
-// Ingress in networking.k8s.io/v1beta1 is deprecated starting 1.19
-// thus, we query it in K8s 1.18.
-func supportsNetworkingBetaIngress(serverVersion *version.Version) bool {
-	ingressNetworkingBetaVersion := version.Must(version.NewVersion("1.19"))
-
-	return ingressNetworkingBetaVersion.GreaterThan(serverVersion)
-}
-
 //  Ingress in networking.k8s.io/v1 is supported starting 1.19.
 // thus, we query it in K8s starting 1.19.
 func supportsNetworkingV1Ingress(serverVersion *version.Version) bool {
