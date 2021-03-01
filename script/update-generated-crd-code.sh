@@ -33,10 +33,7 @@ go run "${REPO_ROOT}"/vendor/sigs.k8s.io/controller-tools/cmd/controller-gen \
   paths="${REPO_ROOT}"/pkg/provider/kubernetes/crd/traefik/v1alpha1/... \
   output:dir="${REPO_ROOT}"/docs/content/reference/dynamic-configuration/
 
-# Generate the CRD definitions for the integration tests
-go run "${REPO_ROOT}"/vendor/sigs.k8s.io/controller-tools/cmd/controller-gen \
-  crd:crdVersions=v1 \
-  paths="${REPO_ROOT}"/pkg/provider/kubernetes/crd/traefik/v1alpha1/... \
-  output:stdout > "${REPO_ROOT}"/integration/fixtures/k8s/01-traefik-crd.yml
+# Concatenate the CRD definitions for the integration tests
+cat "${REPO_ROOT}"/docs/content/reference/dynamic-configuration/traefik.containo.us_*.yaml > "${REPO_ROOT}"/integration/fixtures/k8s/01-traefik-crd.yml
 
 rm -rf "${REPO_ROOT}"/vendor
