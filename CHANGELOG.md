@@ -1,3 +1,16 @@
+## [v2.4.6](https://github.com/traefik/traefik/tree/v2.4.6) (2021-03-01)
+[All Commits](https://github.com/traefik/traefik/compare/v2.4.5...v2.4.6)
+
+**Bug fixes:**
+- **[plugins]** Update Yaegi to v0.9.13 ([#7928](https://github.com/traefik/traefik/pull/7928) by [ldez](https://github.com/ldez))
+- **[provider]** Fix: wait for file and internal before applying configurations ([#7925](https://github.com/traefik/traefik/pull/7925) by [juliens](https://github.com/juliens))
+
+**Documentation:**
+- **[file]** Fix reflink typo in file provider documentation ([#7913](https://github.com/traefik/traefik/pull/7913) by [vgerak](https://github.com/vgerak))
+- **[k8s/serviceapi]** Fix Kubernetes Gateway API documentation links ([#7914](https://github.com/traefik/traefik/pull/7914) by [kevinpollet](https://github.com/kevinpollet))
+- **[service]** Fix typo in routing/services/index.md ([#7922](https://github.com/traefik/traefik/pull/7922) by [snikch](https://github.com/snikch))
+- Fixing doc for default value of checknewversion ([#7933](https://github.com/traefik/traefik/pull/7933) by [tomMoulard](https://github.com/tomMoulard))
+
 ## [v2.4.5](https://github.com/traefik/traefik/tree/v2.4.5) (2021-02-18)
 [All Commits](https://github.com/traefik/traefik/compare/v2.4.3...v2.4.5)
 
