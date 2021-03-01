@@ -149,31 +149,35 @@ func (c *connectCert) equals(other *connectCert) bool {
 	return c.leaf == other.leaf
 }
 
+func (dat itemData) VerifyPeerCertificate(cfg *gtls.Config, rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+	// We should use RootCAs here, but consul expect that in ClientCAs (don't ask)
+	// https://github.com/hashicorp/consul/blob/cd428060f6547afddd9e0060c07b2a2c862da801/connect/tls.go#L279-L282
+	// called via https://github.com/hashicorp/consul/blob/cd428060f6547afddd9e0060c07b2a2c862da801/connect/tls.go#L258
+	cfg.ClientCAs = cfg.RootCAs
+	cert, err := verifyChain(cfg, rawCerts, true)
+	if err != nil {
+		return err
+	}
+	certs := []*x509.Certificate{0: cert}
+	uri := &connect.SpiffeIDService{
+		Namespace:  dat.Namespace,
+		Datacenter: dat.Datacenter,
+		Service:    dat.Name,
+	}
+	return verifyServerCertMatchesURI(certs, uri)
+}
+
 func (c *connectCert) serverTransport(item itemData) *dynamic.ServersTransport {
 	return &dynamic.ServersTransport{
+		// This ensure that the config changes, whenever the verifier func changes as well
+		ServerName: fmt.Sprintf("%s-%s-%s", item.Namespace, item.Datacenter, item.Name),
 		// InsecureSkipVerify is needed because Go wants to verify a hostname otherwise
 		InsecureSkipVerify: true,
 		RootCAs:            c.getRoot(),
 		Certificates: tls.Certificates{
 			c.getLeaf(),
 		},
-		VerifyPeerCertificate: func(cfg *gtls.Config, rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
-			// We should use RootCAs here, but consul expect that in ClientCAs (don't ask)
-			// https://github.com/hashicorp/consul/blob/cd428060f6547afddd9e0060c07b2a2c862da801/connect/tls.go#L279-L282
-			// called via https://github.com/hashicorp/consul/blob/cd428060f6547afddd9e0060c07b2a2c862da801/connect/tls.go#L258
-			cfg.ClientCAs = cfg.RootCAs
-			cert, err := verifyChain(cfg, rawCerts, true)
-			if err != nil {
-				return err
-			}
-			certs := []*x509.Certificate{0: cert}
-			uri := &connect.SpiffeIDService{
-				Namespace:  item.Namespace,
-				Datacenter: item.Datacenter,
-				Service:    item.Name,
-			}
-			return verifyServerCertMatchesURI(certs, uri)
-		},
+		CertVerifier: item,
 	}
 }
 

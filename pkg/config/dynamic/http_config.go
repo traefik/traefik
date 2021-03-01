@@ -211,6 +211,11 @@ func (h *ServerHealthCheck) SetDefaults() {
 	h.FollowRedirects = &fr
 }
 
+// CertVerifier provides access to `VerifyPeerCertificate`
+type CertVerifier interface {
+	VerifyPeerCertificate(cfg *gtls.Config, rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error
+}
+
 // +k8s:deepcopy-gen=true
 
 // HealthCheck controls healthcheck awareness and propagation at the services level.
@@ -231,7 +236,7 @@ type ServersTransport struct {
 	// order to implement the Consul Connect protocol between Traefik and the Consul
 	// services. Therefore it is not serializable to prevent it from being configurable
 	// by other parties.
-	VerifyPeerCertificate func(cfg *gtls.Config, rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error `json:"-" toml:"-" yaml:"-" hash:"-" label:"-" export:"false"`
+	CertVerifier `json:"-" toml:"-" yaml:"-" hash:"-" label:"-" export:"false"`
 }
 
 // +k8s:deepcopy-gen=true
