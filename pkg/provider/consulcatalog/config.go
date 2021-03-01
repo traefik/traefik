@@ -70,7 +70,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 		}
 
 		if item.ConnectEnabled {
-			transportName := connectTransportName(item.Name)
+			transportName := connectTransportName(item)
 			if transports[transportName] == nil {
 				transports[transportName] = certInfo.serverTransport(item)
 			}
@@ -102,8 +102,8 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 	return provider.Merge(ctx, configurations)
 }
 
-func connectTransportName(n string) string {
-	return "connect-tls-" + n
+func connectTransportName(item itemData) string {
+	return fmt.Sprintf("tls-%s-%s-%s", item.Namespace, item.Datacenter, item.Name)
 }
 
 type connectCert struct {
@@ -149,7 +149,7 @@ func (c *connectCert) equals(other *connectCert) bool {
 	return c.leaf == other.leaf
 }
 
-func (dat itemData) VerifyPeerCertificate(cfg *gtls.Config, rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+func (item itemData) VerifyPeerCertificate(cfg *gtls.Config, rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
 	// We should use RootCAs here, but consul expect that in ClientCAs (don't ask)
 	// https://github.com/hashicorp/consul/blob/cd428060f6547afddd9e0060c07b2a2c862da801/connect/tls.go#L279-L282
 	// called via https://github.com/hashicorp/consul/blob/cd428060f6547afddd9e0060c07b2a2c862da801/connect/tls.go#L258
@@ -160,16 +160,16 @@ func (dat itemData) VerifyPeerCertificate(cfg *gtls.Config, rawCerts [][]byte, v
 	}
 	certs := []*x509.Certificate{0: cert}
 	uri := &connect.SpiffeIDService{
-		Namespace:  dat.Namespace,
-		Datacenter: dat.Datacenter,
-		Service:    dat.Name,
+		Namespace:  item.Namespace,
+		Datacenter: item.Datacenter,
+		Service:    item.Name,
 	}
 	return verifyServerCertMatchesURI(certs, uri)
 }
 
 func (c *connectCert) serverTransport(item itemData) *dynamic.ServersTransport {
 	return &dynamic.ServersTransport{
-		// This ensure that the config changes, whenever the verifier func changes as well
+		// This ensures that the config changes whenever the verifier function changes
 		ServerName: fmt.Sprintf("%s-%s-%s", item.Namespace, item.Datacenter, item.Name),
 		// InsecureSkipVerify is needed because Go wants to verify a hostname otherwise
 		InsecureSkipVerify: true,
@@ -364,7 +364,7 @@ func (p *Provider) addServer(ctx context.Context, item itemData, loadBalancer *d
 	}
 
 	if item.ConnectEnabled {
-		loadBalancer.ServersTransport = connectTransportName(item.Name)
+		loadBalancer.ServersTransport = connectTransportName(item)
 		loadBalancer.Servers[0].Scheme = "https"
 	}
 
