@@ -256,7 +256,6 @@ func (c *clientWrapper) GetIngresses() []*networkingv1.Ingress {
 		} else {
 			// networking beta
 			list, err := factory.Networking().V1beta1().Ingresses().Lister().List(labels.Everything())
-
 			if err != nil {
 				log.WithoutContext().Errorf("Failed to list ingresses in namespace %s: %v", ns, err)
 			}
