@@ -363,7 +363,7 @@ func (p *Provider) updateIngressStatus(ing *networkingv1.Ingress, k8sClient Clie
 	return k8sClient.UpdateIngressStatus(ing, service.Status.LoadBalancer.Ingress)
 }
 
-func (p *Provider) shouldProcessIngress(providerIngressClass string, ingress *networkingv1.Ingress, ingressClass *networkingv1beta1.IngressClass) bool {
+func (p *Provider) shouldProcessIngress(ingress *networkingv1.Ingress, ingressClasses []*networkingv1beta1.IngressClass) bool {
 	// configuration through the new kubernetes ingressClass
 	if ingress.Spec.IngressClassName != nil {
 		for _, ic := range ingressClasses {
