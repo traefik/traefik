@@ -170,17 +170,16 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 
 	serverVersion, err := c.GetServerVersion()
 	if err != nil {
-		log.WithoutContext().Errorf("Failed to get server version: %v", err)
-		return eventCh, nil
+		return nil, fmt.Errorf("failed to get server version: %w", err)
 	}
 
 	for _, ns := range namespaces {
 		factoryIngress := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns), informers.WithTweakListOptions(matchesLabelSelector))
 
-		if supportsNetworkingBetaIngress(serverVersion) {
-			factoryIngress.Networking().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
-		} else {
+		if supportsNetworkingV1Ingress(serverVersion) {
 			factoryIngress.Networking().V1().Ingresses().Informer().AddEventHandler(eventHandler)
+		} else {
+			factoryIngress.Networking().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
 		}
 
 		c.factoriesIngress[ns] = factoryIngress
@@ -246,17 +245,26 @@ func (c *clientWrapper) GetIngresses() []*networkingv1.Ingress {
 	var results []*networkingv1.Ingress
 
 	for ns, factory := range c.factoriesIngress {
-		if supportsNetworkingBetaIngress(serverVersion) {
+		if supportsNetworkingV1Ingress(serverVersion) {
+			// networking
+			listNew, err := factory.Networking().V1().Ingresses().Lister().List(labels.Everything())
+			if err != nil {
+				log.WithoutContext().Errorf("Failed to list ingresses in namespace %s: %v", ns, err)
+			}
+
+			results = append(results, listNew...)
+		} else {
 			// networking beta
 			list, err := factory.Networking().V1beta1().Ingresses().Lister().List(labels.Everything())
+
 			if err != nil {
-				log.Errorf("Failed to list ingresses in namespace %s: %v", ns, err)
+				log.WithoutContext().Errorf("Failed to list ingresses in namespace %s: %v", ns, err)
 			}
 
 			for _, ing := range list {
-				n, err := convertToNetworking(ing)
+				n, err := toNetworkingV1(ing)
 				if err != nil {
-					log.Errorf("Failed to convert ingress %s from networking/v1beta1 to networking/v1: %v", ns, err)
+					log.WithoutContext().Errorf("Failed to convert ingress %s from networking/v1beta1 to networking/v1: %v", ns, err)
 					continue
 				}
 
@@ -278,7 +286,7 @@ func (c *clientWrapper) GetIngresses() []*networkingv1.Ingress {
 	return results
 }
 
-func convertToNetworking(ing marshaler) (*networkingv1.Ingress, error) {
+func toNetworkingV1(ing marshaler) (*networkingv1.Ingress, error) {
 	data, err := ing.Marshal()
 	if err != nil {
 		return nil, err
@@ -316,26 +324,28 @@ func addServiceFromV1Beta1(ing *networkingv1.Ingress, old networkingv1beta1.Ingr
 		return
 	}
 
-	for rc, rules := range ing.Spec.Rules {
-		if rules.HTTP == nil || len(rules.HTTP.Paths) == 0 {
-			return
+	for rc, rule := range ing.Spec.Rules {
+		if rule.HTTP == nil || len(rule.HTTP.Paths) == 0 {
+			continue
 		}
-		for pc, path := range rules.HTTP.Paths {
+		for pc, path := range rule.HTTP.Paths {
 			if path.Backend.Service == nil {
+				oldBackend := old.Spec.Rules[rc].HTTP.Paths[pc].Backend
+
 				port := networkingv1.ServiceBackendPort{}
-				if old.Spec.Rules[rc].HTTP.Paths[pc].Backend.ServicePort.Type == intstr.Int {
-					port.Number = old.Spec.Rules[rc].HTTP.Paths[pc].Backend.ServicePort.IntVal
+				if oldBackend.ServicePort.Type == intstr.Int {
+					port.Number = oldBackend.ServicePort.IntVal
 				} else {
-					port.Name = old.Spec.Rules[rc].HTTP.Paths[pc].Backend.ServicePort.StrVal
+					port.Name = oldBackend.ServicePort.StrVal
 				}
 
-				svc := networkingv1.IngressServiceBackend{}
-				svc.Port = port
+				svc := networkingv1.IngressServiceBackend{
+					Name: oldBackend.ServiceName,
+					Port: port,
+				}
 
-				svc.Name = old.Spec.Rules[rc].HTTP.Paths[pc].Backend.ServiceName
-				path.Backend.Service = &svc
+				ing.Spec.Rules[rc].HTTP.Paths[pc].Backend.Service = &svc
 			}
-			ing.Spec.Rules[rc].HTTP.Paths[pc].Backend = path.Backend
 		}
 	}
 }
@@ -352,7 +362,7 @@ func (c *clientWrapper) UpdateIngressStatus(src *networkingv1.Ingress, ingStatus
 		return err
 	}
 
-	if supportsNetworkingBetaIngress(serverVersion) {
+	if !supportsNetworkingV1Ingress(serverVersion) {
 		return c.updateIngressStatusOld(src, ingStatus)
 	}
 

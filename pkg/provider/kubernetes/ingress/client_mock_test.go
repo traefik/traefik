@@ -51,7 +51,7 @@ func newClientMock(serverVersion string, paths ...string) clientMock {
 			case *corev1.Endpoints:
 				c.endpoints = append(c.endpoints, o)
 			case *networkingv1beta1.Ingress:
-				ing, err := convertToNetworking(o)
+				ing, err := toNetworkingV1(o)
 				if err != nil {
 					panic(err)
 				}

@@ -6,6 +6,9 @@ The Kubernetes Ingress Controller.
 The Traefik Kubernetes Ingress provider is a Kubernetes Ingress controller; that is to say,
 it manages access to cluster services by supporting the [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) specification.
 
+## Requirements
+Traefik supports `1.14+` Kubernetes clusters.
+
 ## Routing Configuration
 
 See the dedicated section in [routing](../routing/providers/kubernetes-ingress.md).
