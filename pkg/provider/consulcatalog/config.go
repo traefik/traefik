@@ -106,10 +106,13 @@ func connectTransportName(item itemData) string {
 	return fmt.Sprintf("tls-%s-%s-%s", item.Namespace, item.Datacenter, item.Name)
 }
 
+// connectCert holds our certificates as a client of the Consul Connect protocol.
 type connectCert struct {
 	root []string
 	leaf keyPair
-	err  error
+	// err is used to propagate to the caller (Provide) any error occurring within
+	// the certificate watcher goroutines.
+	err error
 }
 
 func (c *connectCert) getRoot() []tls.FileOrContent {

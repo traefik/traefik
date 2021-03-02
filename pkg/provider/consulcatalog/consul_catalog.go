@@ -427,6 +427,9 @@ func (p *Provider) createConnectTLSWatchers() (*watch.Plan, *watch.Plan, error) 
 	return leafWatcher, rootWatcher, nil
 }
 
+// watchConnectTLS watches for updates of the root certificate or the leaf
+// certificate, and transmits them to the caller via p.certChan. Any error is also
+// propagated up through p.certChan, in connectCert.err.
 func (p *Provider) watchConnectTLS(ctx context.Context, leafWatcher *watch.Plan, rootWatcher *watch.Plan) {
 	ctxLog := log.With(ctx, log.Str(log.ProviderName, "consulcatalog"))
 	logger := log.FromContext(ctxLog)
