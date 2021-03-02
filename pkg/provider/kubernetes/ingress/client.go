@@ -486,5 +486,6 @@ func filterIngressClassByName(ingressClassName string, ics []*networkingv1beta1.
 			ingressClasses = append(ingressClasses, ic)
 		}
 	}
+	
 	return ingressClasses
 }
