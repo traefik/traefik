@@ -476,3 +476,16 @@ func supportsIngressClass(serverVersion *version.Version) bool {
 
 	return ingressClassVersion.LessThanOrEqual(serverVersion)
 }
+
+// filterIngressClassByName return a slice containing ingressclasses with the correct name.
+func filterIngressClassByName(ingressClassName string, ics []*networkingv1beta1.IngressClass) []*networkingv1beta1.IngressClass {
+	var ingressClasses []*networkingv1beta1.IngressClass
+
+	for _, ic := range ics {
+		if ic.Name == ingressClassName {
+			ingressClasses = append(ingressClasses, ic)
+		}
+	}
+
+	return ingressClasses
+}

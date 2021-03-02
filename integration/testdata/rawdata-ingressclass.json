@@ -28,39 +28,6 @@
 				"traefik"
 			]
 		},
-		"test-ingress-default-whoami-test-whoami@kubernetes": {
-			"entryPoints": [
-				"web"
-			],
-			"service": "default-whoami-http",
-			"rule": "Host(`whoami.test`) \u0026\u0026 PathPrefix(`/whoami`)",
-			"status": "enabled",
-			"using": [
-				"web"
-			]
-		},
-		"test-ingress-https-default-whoami-test-https-whoami@kubernetes": {
-			"entryPoints": [
-				"web"
-			],
-			"service": "default-whoami-http",
-			"rule": "Host(`whoami.test.https`) \u0026\u0026 PathPrefix(`/whoami`)",
-			"status": "enabled",
-			"using": [
-				"web"
-			]
-		},
-		"whoami-drop-route-default-whoami-test-drop-drop@kubernetes": {
-			"entryPoints": [
-				"web"
-			],
-			"service": "default-whoami-80",
-			"rule": "Host(`whoami.test.drop`) \u0026\u0026 PathPrefix(`/drop`)",
-			"status": "enabled",
-			"using": [
-				"web"
-			]
-		},
 		"whoami-keep-route-default-whoami-test-keep-keep@kubernetes": {
 			"entryPoints": [
 				"web"
@@ -115,44 +82,21 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "XXXX"
+						"url": "http://10.42.0.4:80"
 					},
 					{
-						"url": "XXXX"
+						"url": "http://10.42.0.5:80"
 					}
 				],
 				"passHostHeader": true
 			},
 			"status": "enabled",
 			"usedBy": [
-				"whoami-drop-route-default-whoami-test-drop-drop@kubernetes",
 				"whoami-keep-route-default-whoami-test-keep-keep@kubernetes"
 			],
 			"serverStatus": {
-				"http://XXXX": "UP",
-				"http://XXXX": "UP"
-			}
-		},
-		"default-whoami-http@kubernetes": {
-			"loadBalancer": {
-				"servers": [
-					{
-						"url": "http://10.42.0.10:80"
-					},
-					{
-						"url": "http://10.42.0.8:80"
-					}
-				],
-				"passHostHeader": true
-			},
-			"status": "enabled",
-			"usedBy": [
-				"test-ingress-default-whoami-test-whoami@kubernetes",
-				"test-ingress-https-default-whoami-test-https-whoami@kubernetes"
-			],
-			"serverStatus": {
-				"http://10.42.0.10:80": "UP",
-				"http://10.42.0.8:80": "UP"
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.5:80": "UP"
 			}
 		},
 		"noop@internal": {
