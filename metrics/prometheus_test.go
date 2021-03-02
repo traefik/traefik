@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"testing"
@@ -16,7 +17,7 @@ import (
 func TestRegisterPromState(t *testing.T) {
 	// Reset state of global promState.
 	t.Cleanup(func() {
-		prometheus.Unregister(promState)
+		promRegistry.Unregister(promState)
 		promState.reset()
 	})
 
@@ -36,7 +37,7 @@ func TestRegisterPromState(t *testing.T) {
 		{
 			desc:                 "Register once with no promState init",
 			prometheusSlice:      []*types.Prometheus{{}},
-			expectedNbRegistries: 0,
+			expectedNbRegistries: 1,
 		},
 		{
 			desc:                 "Register twice",
@@ -47,7 +48,7 @@ func TestRegisterPromState(t *testing.T) {
 		{
 			desc:                 "Register twice with no promstate init",
 			prometheusSlice:      []*types.Prometheus{{}, {}},
-			expectedNbRegistries: 0,
+			expectedNbRegistries: 2,
 		},
 		{
 			desc:                 "Register twice with unregister",
@@ -60,7 +61,7 @@ func TestRegisterPromState(t *testing.T) {
 			desc:                 "Register twice with unregister but no promstate init",
 			prometheusSlice:      []*types.Prometheus{{}, {}},
 			unregisterPromState:  true,
-			expectedNbRegistries: 0,
+			expectedNbRegistries: 2,
 		},
 	}
 
@@ -78,27 +79,36 @@ func TestRegisterPromState(t *testing.T) {
 				}
 
 				if test.unregisterPromState {
-					prometheus.Unregister(promState)
+					promRegistry.Unregister(promState)
 				}
 
 				promState.reset()
 			}
 
-			prometheus.Unregister(promState)
-
+			promRegistry.Unregister(promState)
 			assert.Equal(t, test.expectedNbRegistries, actualNbRegistries)
 		})
 	}
 }
 
-func TestPrometheus(t *testing.T) {
-	prometheusRegistry := RegisterPrometheus(&types.Prometheus{})
+// reset is a utility method for unit testing. It should be called after each
+// test run that changes promState internally in order to avoid dependencies
+// between unit tests.
+func (ps *prometheusState) reset() {
+	ps.collectors = make(chan *collector)
+	ps.describers = []func(ch chan<- *prometheus.Desc){}
+	ps.dynamicConfig = newDynamicConfig()
+	ps.state = make(map[string]*collector)
+}
 
+func TestPrometheus(t *testing.T) {
+	promState = newPrometheusState()
+	promRegistry = prometheus.NewRegistry()
 	// Reset state of global promState.
-	t.Cleanup(func() {
-		prometheus.Unregister(promState)
-		promState.reset()
-	})
+	defer promState.reset()
+
+	prometheusRegistry := RegisterPrometheus(&types.Prometheus{})
+	defer promRegistry.Unregister(promState)
 
 	if !prometheusRegistry.IsEnabled() {
 		t.Errorf("PrometheusRegistry should return true for IsEnabled()")
@@ -267,11 +277,13 @@ func TestPrometheus(t *testing.T) {
 }
 
 func TestPrometheusMetricRemoval(t *testing.T) {
+	promState = newPrometheusState()
+	promRegistry = prometheus.NewRegistry()
 	// Reset state of global promState.
 	defer promState.reset()
 
 	prometheusRegistry := RegisterPrometheus(&types.Prometheus{})
-	defer prometheus.Unregister(promState)
+	defer promRegistry.Unregister(promState)
 
 	configurations := make(types.Configurations)
 	configurations["providerName"] = th.BuildConfiguration(
@@ -323,7 +335,7 @@ func TestPrometheusRemovedMetricsReset(t *testing.T) {
 	defer promState.reset()
 
 	prometheusRegistry := RegisterPrometheus(&types.Prometheus{})
-	defer prometheus.Unregister(promState)
+	defer promRegistry.Unregister(promState)
 
 	labelNamesValues := []string{
 		"backend", "backend",
@@ -360,18 +372,18 @@ func TestPrometheusRemovedMetricsReset(t *testing.T) {
 // In practice this is no problem, because in case a tracked metric would miss
 // the current scrape, it would just be there in the next one.
 // That we can test reliably the tracking of all metrics here, we sleep
-// for a short amount of time, to make sure the metric will be present
+// for a short amount of time, to makeTestPrometheusMetricRemoval sure the metric will be present
 // in the next scrape.
 func delayForTrackingCompletion() {
 	time.Sleep(250 * time.Millisecond)
 }
 
 func mustScrape(t *testing.T) []*dto.MetricFamily {
-	t.Helper()
+	//t.Helper()
 
-	families, err := prometheus.DefaultGatherer.Gather()
+	families, err := promRegistry.Gather()
 	if err != nil {
-		t.Fatalf("could not gather metrics families: %v", err)
+		panic(fmt.Sprintf("could not gather metrics families: %s", err))
 	}
 	return families
 }

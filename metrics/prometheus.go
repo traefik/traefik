@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"errors"
 	"net/http"
 	"sort"
 	"strings"
@@ -57,6 +58,8 @@ const (
 // doesn't exist anymore.
 var promState = newPrometheusState()
 
+var promRegistry = stdprometheus.NewRegistry()
+
 // PrometheusHandler exposes Prometheus routes.
 type PrometheusHandler struct{}
 
@@ -69,6 +72,20 @@ func (h PrometheusHandler) AddRoutes(router *mux.Router) {
 // It must be called only once and failing to register the metrics will lead to a panic.
 func RegisterPrometheus(config *types.Prometheus) Registry {
 	standardRegistry := initStandardRegistry(config)
+
+	if err := promRegistry.Register(stdprometheus.NewProcessCollector(stdprometheus.ProcessCollectorOpts{})); err != nil {
+		var arErr stdprometheus.AlreadyRegisteredError
+		if !errors.As(err, &arErr) {
+			log.Warn("ProcessCollector is already registered")
+		}
+	}
+
+	if err := promRegistry.Register(stdprometheus.NewGoCollector()); err != nil {
+		var arErr stdprometheus.AlreadyRegisteredError
+		if !errors.As(err, &arErr) {
+			log.Warn("GoCollector is already registered")
+		}
+	}
 
 	if !registerPromState() {
 		return nil
@@ -173,14 +190,19 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 }
 
 func registerPromState() bool {
-	if err := stdprometheus.Register(promState); err != nil {
-		if _, ok := err.(stdprometheus.AlreadyRegisteredError); !ok {
-			log.Errorf("Unable to register Traefik to Prometheus: %v", err)
-			return false
-		}
-		log.Debug("Prometheus collector already registered.")
+	err := promRegistry.Register(promState)
+	if err == nil {
+		return true
 	}
-	return true
+
+	var arErr stdprometheus.AlreadyRegisteredError
+	if errors.As(err, &arErr) {
+		log.Debug("Prometheus collector already registered.")
+		return true
+	}
+
+	log.Errorf("Unable to register Traefik to Prometheus: %v", err)
+	return false
 }
 
 // OnConfigurationUpdate receives the current configuration from Traefik.
@@ -222,16 +244,6 @@ type prometheusState struct {
 	mtx           sync.Mutex
 	dynamicConfig *dynamicConfig
 	state         map[string]*collector
-}
-
-// reset is a utility method for unit testing. It should be called after each
-// test run that changes promState internally in order to avoid dependencies
-// between unit tests.
-func (ps *prometheusState) reset() {
-	ps.collectors = make(chan *collector)
-	ps.describers = []func(ch chan<- *stdprometheus.Desc){}
-	ps.dynamicConfig = newDynamicConfig()
-	ps.state = make(map[string]*collector)
 }
 
 func (ps *prometheusState) SetDynamicConfig(dynamicConfig *dynamicConfig) {
