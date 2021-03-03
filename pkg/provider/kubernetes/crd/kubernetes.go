@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -23,6 +24,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -219,6 +221,24 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			conf.HTTP.Services[serviceName] = errorPageService
 		}
 
+		plugin, err := createPluginMiddleware(middleware.Spec.Plugin)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading plugins middleware: %v", err)
+			continue
+		}
+
+		rateLimit, err := createRateLimitMiddleware(middleware.Spec.RateLimit)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading rateLimit middleware: %v", err)
+			continue
+		}
+
+		retry, err := createRetryMiddleware(middleware.Spec.Retry)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading retry middleware: %v", err)
+			continue
+		}
+
 		conf.HTTP.Middlewares[id] = &dynamic.Middleware{
 			AddPrefix:         middleware.Spec.AddPrefix,
 			StripPrefix:       middleware.Spec.StripPrefix,
@@ -229,7 +249,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			IPWhiteList:       middleware.Spec.IPWhiteList,
 			Headers:           middleware.Spec.Headers,
 			Errors:            errorPage,
-			RateLimit:         middleware.Spec.RateLimit,
+			RateLimit:         rateLimit,
 			RedirectRegex:     middleware.Spec.RedirectRegex,
 			RedirectScheme:    middleware.Spec.RedirectScheme,
 			BasicAuth:         basicAuth,
@@ -240,9 +260,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			CircuitBreaker:    middleware.Spec.CircuitBreaker,
 			Compress:          middleware.Spec.Compress,
 			PassTLSClientCert: middleware.Spec.PassTLSClientCert,
-			Retry:             middleware.Spec.Retry,
+			Retry:             retry,
 			ContentType:       middleware.Spec.ContentType,
-			Plugin:            middleware.Spec.Plugin,
+			Plugin:            plugin,
 		}
 	}
 
@@ -354,6 +374,62 @@ func getServicePort(svc *corev1.Service, port intstr.IntOrString) (*corev1.Servi
 	}
 
 	return &corev1.ServicePort{Port: port.IntVal}, nil
+}
+
+func createPluginMiddleware(plugins map[string]apiextensionv1.JSON) (map[string]dynamic.PluginConf, error) {
+	if plugins == nil {
+		return nil, nil
+	}
+
+	data, err := json.Marshal(plugins)
+	if err != nil {
+		return nil, err
+	}
+
+	pc := map[string]dynamic.PluginConf{}
+	err = json.Unmarshal(data, &pc)
+	if err != nil {
+		return nil, err
+	}
+
+	return pc, nil
+}
+
+func createRateLimitMiddleware(rateLimit *v1alpha1.RateLimit) (*dynamic.RateLimit, error) {
+	if rateLimit == nil {
+		return nil, nil
+	}
+
+	rl := &dynamic.RateLimit{Average: rateLimit.Average}
+	rl.SetDefaults()
+
+	if rateLimit.Burst != nil {
+		rl.Burst = *rateLimit.Burst
+	}
+
+	if rateLimit.Period != nil {
+		err := rl.Period.Set(rateLimit.Period.String())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return rl, nil
+}
+
+func createRetryMiddleware(retry *v1alpha1.Retry) (*dynamic.Retry, error) {
+	if retry == nil {
+		return nil, nil
+	}
+
+	r := &dynamic.Retry{Attempts: retry.Attempts}
+
+	err := r.InitialInterval.Set(retry.InitialInterval.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return r, nil
 }
 
 func (p *Provider) createErrorPageMiddleware(client Client, namespace string, errorPage *v1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
