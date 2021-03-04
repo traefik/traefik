@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
-	"io/ioutil"
 	"math/rand"
 	"net"
 	"os"
@@ -35,9 +34,9 @@ type myserver struct {
 
 func (s *GRPCSuite) SetUpSuite(c *check.C) {
 	var err error
-	LocalhostCert, err = ioutil.ReadFile("./resources/tls/local.cert")
+	LocalhostCert, err = os.ReadFile("./resources/tls/local.cert")
 	c.Assert(err, check.IsNil)
-	LocalhostKey, err = ioutil.ReadFile("./resources/tls/local.key")
+	LocalhostKey, err = os.ReadFile("./resources/tls/local.key")
 	c.Assert(err, check.IsNil)
 }
 

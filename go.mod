@@ -1,6 +1,6 @@
 module github.com/traefik/traefik/v2
 
-go 1.15
+go 1.16
 
 require (
 	github.com/BurntSushi/toml v0.3.1
@@ -78,7 +78,7 @@ require (
 	github.com/unrolled/render v1.0.2
 	github.com/unrolled/secure v1.0.7
 	github.com/vdemeester/shakers v0.1.0
-	github.com/vulcand/oxy v1.1.0
+	github.com/vulcand/oxy v1.2.0
 	github.com/vulcand/predicate v1.1.0
 	go.elastic.co/apm v1.7.0
 	go.elastic.co/apm/module/apmot v1.7.0
@@ -88,7 +88,6 @@ require (
 	google.golang.org/grpc v1.27.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.19.0
 	gopkg.in/fsnotify.v1 v1.4.7
-	gopkg.in/jcmturner/goidentity.v3 v3.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 	k8s.io/api v0.19.2
 	k8s.io/apimachinery v0.19.2
