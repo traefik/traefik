@@ -3,6 +3,7 @@ package retry
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httptrace"
@@ -28,14 +29,14 @@ func TestRetry(t *testing.T) {
 	}{
 		{
 			desc:                  "no retry on success",
-			config:                dynamic.Retry{Attempts: 1},
+			config:                dynamic.Retry{Attempts: 5},
 			wantRetryAttempts:     0,
 			wantResponseStatus:    http.StatusOK,
 			amountFaultyEndpoints: 0,
 		},
 		{
 			desc:                  "no retry on success with backoff",
-			config:                dynamic.Retry{Attempts: 1, InitialInterval: ptypes.Duration(time.Microsecond * 50)},
+			config:                dynamic.Retry{Attempts: 5, InitialInterval: ptypes.Duration(time.Microsecond * 50)},
 			wantRetryAttempts:     0,
 			wantResponseStatus:    http.StatusOK,
 			amountFaultyEndpoints: 0,
@@ -108,6 +109,9 @@ func TestRetry(t *testing.T) {
 				retryAttemps++
 
 				if retryAttemps > test.amountFaultyEndpoints {
+					// calls WroteHeaders on httptrace.
+					_ = r.Write(io.Discard)
+
 					rw.WriteHeader(http.StatusOK)
 					return
 				}
