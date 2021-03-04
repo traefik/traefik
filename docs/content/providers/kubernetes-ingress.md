@@ -224,7 +224,9 @@ Otherwise, Ingresses missing the annotation, having an empty value, or the value
 
     If the Kubernetes cluster version is 1.18+,
     the new `IngressClass` resource can be leveraged to identify Ingress objects that should be processed.
-    In that case, Traefik will look for an `IngressClass` in the cluster with the controller value equal to *traefik.io/ingress-controller*. 
+    In that case, Traefik will look for an `IngressClass` in the cluster with the controller value equal to *traefik.io/ingress-controller*.
+
+    In addition to the controller value matching mechanism, the property `ingressClass` (if set) will be used to select IngressClasses by applying a strict matching on their name.
 
     Please see [this article](https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/) for more information or the example below.
 
