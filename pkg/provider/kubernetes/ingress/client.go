@@ -253,24 +253,24 @@ func (c *clientWrapper) GetIngresses() []*networkingv1.Ingress {
 			}
 
 			results = append(results, listNew...)
-		} else {
-			// networking beta
-			list, err := factory.Networking().V1beta1().Ingresses().Lister().List(labels.Everything())
+			continue
+		}
+		// networking beta
+		list, err := factory.Networking().V1beta1().Ingresses().Lister().List(labels.Everything())
+		if err != nil {
+			log.WithoutContext().Errorf("Failed to list ingresses in namespace %s: %v", ns, err)
+		}
+
+		for _, ing := range list {
+			n, err := toNetworkingV1(ing)
 			if err != nil {
-				log.WithoutContext().Errorf("Failed to list ingresses in namespace %s: %v", ns, err)
+				log.WithoutContext().Errorf("Failed to convert ingress %s from networking/v1beta1 to networking/v1: %v", ns, err)
+				continue
 			}
 
-			for _, ing := range list {
-				n, err := toNetworkingV1(ing)
-				if err != nil {
-					log.WithoutContext().Errorf("Failed to convert ingress %s from networking/v1beta1 to networking/v1: %v", ns, err)
-					continue
-				}
+			addServiceFromV1Beta1(n, *ing)
 
-				addServiceFromV1Beta1(n, *ing)
-
-				results = append(results, n)
-			}
+			results = append(results, n)
 		}
 	}
 	return results
