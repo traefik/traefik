@@ -711,10 +711,10 @@ func assertValidLogData(t *testing.T, expected string, logData []byte) {
 	assert.Equal(t, resultExpected[OriginContentSize], result[OriginContentSize], formatErrMessage)
 	assert.Equal(t, resultExpected[RequestRefererHeader], result[RequestRefererHeader], formatErrMessage)
 	assert.Equal(t, resultExpected[RequestUserAgentHeader], result[RequestUserAgentHeader], formatErrMessage)
-	assert.Regexp(t, regexp.MustCompile("[0-9]*"), result[RequestCount], formatErrMessage)
+	assert.Regexp(t, regexp.MustCompile(`\d*`), result[RequestCount], formatErrMessage)
 	assert.Equal(t, resultExpected[RouterName], result[RouterName], formatErrMessage)
 	assert.Equal(t, resultExpected[ServiceURL], result[ServiceURL], formatErrMessage)
-	assert.Regexp(t, regexp.MustCompile("[0-9]*ms"), result[Duration], formatErrMessage)
+	assert.Regexp(t, regexp.MustCompile(`\d*ms`), result[Duration], formatErrMessage)
 }
 
 func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {

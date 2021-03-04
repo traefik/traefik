@@ -147,8 +147,8 @@ func (b blackHoleResponseWriter) Header() http.Header {
 	return http.Header{}
 }
 
-func (b blackHoleResponseWriter) Write(bytes []byte) (int, error) {
-	return len(bytes), nil
+func (b blackHoleResponseWriter) Write(data []byte) (int, error) {
+	return len(data), nil
 }
 
 func (b blackHoleResponseWriter) WriteHeader(statusCode int) {}

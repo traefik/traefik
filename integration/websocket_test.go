@@ -461,8 +461,7 @@ func (s *WebsocketSuite) TestSSLhttp2(c *check.C) {
 	}))
 
 	ts.TLS = &tls.Config{}
-	ts.TLS.NextProtos = append(ts.TLS.NextProtos, `h2`)
-	ts.TLS.NextProtos = append(ts.TLS.NextProtos, `http/1.1`)
+	ts.TLS.NextProtos = append(ts.TLS.NextProtos, `h2`, `http/1.1`)
 	ts.StartTLS()
 
 	file := s.adaptFile(c, "fixtures/websocket/config_https.toml", struct {
