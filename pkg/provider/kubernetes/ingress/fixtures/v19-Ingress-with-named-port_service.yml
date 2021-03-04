@@ -8,5 +8,5 @@ spec:
   ports:
     - name: foobar
       port: 4711
-  clusterIp: 10.0.0.1
+  clusterIP: 10.0.0.1
 
