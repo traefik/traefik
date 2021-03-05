@@ -51,7 +51,8 @@ func requireReceivedMessageFromProviders(t *testing.T, cfgCh <-chan dynamic.Mess
 
 	for range names {
 		select {
-		case <-time.After(10 * time.Millisecond):
+		case <-time.After(100 * time.Millisecond):
+			require.Fail(t, "Timeout while waiting for configuration.")
 		case msg = <-cfgCh:
 			receivedMessagesFrom = append(receivedMessagesFrom, msg.ProviderName)
 		}
