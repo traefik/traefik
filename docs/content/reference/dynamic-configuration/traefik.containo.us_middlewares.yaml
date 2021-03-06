@@ -411,6 +411,8 @@ spec:
                             type: boolean
                           organization:
                             type: boolean
+                          organizationalUnit:
+                            type: boolean
                           province:
                             type: boolean
                           serialNumber:
@@ -437,6 +439,8 @@ spec:
                           locality:
                             type: boolean
                           organization:
+                            type: boolean
+                          organizationalUnit:
                             type: boolean
                           province:
                             type: boolean
