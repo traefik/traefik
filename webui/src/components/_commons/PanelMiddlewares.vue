@@ -810,125 +810,133 @@
             </div>
           </q-card-section>
 
-          <!-- EXTRA FIELDS FROM MIDDLEWARES - [passTLSClientCert] - pem -->
-          <q-card-section v-if="middleware.passTLSClientCert">
-            <div class="row items-start no-wrap">
-              <div class="col">
-                <div class="text-subtitle2">PEM</div>
-                <boolean-state :value="!!exData(middleware).pem"/>
-              </div>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [passTLSClientCert] - pem -->
+        <q-card-section v-if="middleware.passTLSClientCert">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">PEM</div>
+              <boolean-state :value="!!exData(middleware).pem"/>
             </div>
-          </q-card-section>
-          <!-- EXTRA FIELDS FROM MIDDLEWARES - [passTLSClientCert] - info - notAfter -->
-          <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info">
-            <div class="text-subtitle2">Info:</div>
-            <div class="row items-start no-wrap">
-              <div class="col">
-                <div class="text-subtitle2">Not After</div>
-                <boolean-state :value="!!exData(middleware).info.notAfter"/>
-              </div>
-              <div class="col">
-                <div class="text-subtitle2">Not Before</div>
-                <boolean-state :value="!!exData(middleware).info.notBefore"/>
-              </div>
-              <div class="col">
-                <div class="text-subtitle2">Sans</div>
-                <boolean-state :value="!!exData(middleware).info.sans"/>
-              </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [passTLSClientCert] - info - notAfter -->
+        <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info">
+          <div class="text-subtitle2">Info:</div>
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Not After</div>
+              <boolean-state :value="!!exData(middleware).info.notAfter"/>
             </div>
-          </q-card-section>
-          <!-- EXTRA FIELDS FROM MIDDLEWARES - [passTLSClientCert] - info - subject -->
-          <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.subject">
-            <div class="text-subtitle2">Info Subject:</div>
-            <div class="row items-start no-wrap">
-              <div class="col">
-                <div class="text-subtitle2">country</div>
-                <boolean-state :value="!!exData(middleware).info.subject.country"/>
-              </div>
-              <div class="col">
-                <div class="text-subtitle2">Province</div>
-                <boolean-state :value="!!exData(middleware).info.subject.province"/>
-              </div>
+            <div class="col">
+              <div class="text-subtitle2">Not Before</div>
+              <boolean-state :value="!!exData(middleware).info.notBefore"/>
             </div>
-          </q-card-section>
-          <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.subject">
-            <div class="row items-start no-wrap">
-              <div class="col">
-                <div class="text-subtitle2">Locality</div>
-                <boolean-state :value="!!exData(middleware).info.subject.locality"/>
-              </div>
-              <div class="col">
-                <div class="text-subtitle2">Organization</div>
-                <boolean-state :value="!!exData(middleware).info.subject.organization"/>
-              </div>
+            <div class="col">
+              <div class="text-subtitle2">Sans</div>
+              <boolean-state :value="!!exData(middleware).info.sans"/>
             </div>
-          </q-card-section>
-          <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.subject">
-            <div class="row items-start no-wrap">
-              <div class="col">
-                <div class="text-subtitle2">Common Name</div>
-                <boolean-state :value="!!exData(middleware).info.subject.commonName"/>
-              </div>
-              <div class="col">
-                <div class="text-subtitle2">Serial Number</div>
-                <boolean-state :value="!!exData(middleware).info.subject.serialNumber"/>
-              </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [passTLSClientCert] - info - subject -->
+        <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.subject">
+          <div class="text-subtitle2">Info Subject:</div>
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">country</div>
+              <boolean-state :value="!!exData(middleware).info.subject.country"/>
             </div>
-          </q-card-section>
-          <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.subject">
-            <div class="row items-start no-wrap">
-              <div class="col">
-                <div class="text-subtitle2">Domain Component</div>
-                <boolean-state :value="!!exData(middleware).info.subject.domainComponent"/>
-              </div>
+            <div class="col">
+              <div class="text-subtitle2">Province</div>
+              <boolean-state :value="!!exData(middleware).info.subject.province"/>
             </div>
-          </q-card-section>
-          <!-- EXTRA FIELDS FROM MIDDLEWARES - [passTLSClientCert] - info - issuer -->
-          <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.issuer">
-            <div class="text-subtitle2">Info Issuer:</div>
-            <div class="row items-start no-wrap">
-              <div class="col">
-                <div class="text-subtitle2">country</div>
-                <boolean-state :value="!!exData(middleware).info.issuer.country"/>
-              </div>
-              <div class="col">
-                <div class="text-subtitle2">Province</div>
-                <boolean-state :value="!!exData(middleware).info.issuer.province"/>
-              </div>
+          </div>
+        </q-card-section>
+        <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.subject">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Locality</div>
+              <boolean-state :value="!!exData(middleware).info.subject.locality"/>
             </div>
-          </q-card-section>
-          <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.issuer">
-            <div class="row items-start no-wrap">
-              <div class="col">
-                <div class="text-subtitle2">Locality</div>
-                <boolean-state :value="!!exData(middleware).info.issuer.locality"/>
-              </div>
-              <div class="col">
-                <div class="text-subtitle2">Organization</div>
-                <boolean-state :value="!!exData(middleware).info.issuer.organization"/>
-              </div>
+            <div class="col">
+              <div class="text-subtitle2">Organization</div>
+              <boolean-state :value="!!exData(middleware).info.subject.organization"/>
             </div>
-          </q-card-section>
-          <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.issuer">
-            <div class="row items-start no-wrap">
-              <div class="col">
-                <div class="text-subtitle2">Common Name</div>
-                <boolean-state :value="!!exData(middleware).info.issuer.commonName"/>
-              </div>
-              <div class="col">
-                <div class="text-subtitle2">Serial Number</div>
-                <boolean-state :value="!!exData(middleware).info.issuer.serialNumber"/>
-              </div>
+          </div>
+        </q-card-section>
+        <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.subject">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Organizational Unit</div>
+              <boolean-state :value="!!exData(middleware).info.subject.organizationalUnit"/>
             </div>
-          </q-card-section>
-          <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.issuer">
-            <div class="row items-start no-wrap">
-              <div class="col">
-                <div class="text-subtitle2">Domain Component</div>
-                <boolean-state :value="!!exData(middleware).info.issuer.domainComponent"/>
-              </div>
+            <div class="col">
+              <div class="text-subtitle2">Common Name</div>
+              <boolean-state :value="!!exData(middleware).info.subject.commonName"/>
             </div>
-          </q-card-section>
+          </div>
+        </q-card-section>
+        <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.subject">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Serial Number</div>
+              <boolean-state :value="!!exData(middleware).info.subject.serialNumber"/>
+            </div>
+            <div class="col">
+              <div class="text-subtitle2">Domain Component</div>
+              <boolean-state :value="!!exData(middleware).info.subject.domainComponent"/>
+            </div>
+          </div>
+        </q-card-section>
+        <!-- EXTRA FIELDS FROM MIDDLEWARES - [passTLSClientCert] - info - issuer -->
+        <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.issuer">
+          <div class="text-subtitle2">Info Issuer:</div>
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">country</div>
+              <boolean-state :value="!!exData(middleware).info.issuer.country"/>
+            </div>
+            <div class="col">
+              <div class="text-subtitle2">Province</div>
+              <boolean-state :value="!!exData(middleware).info.issuer.province"/>
+            </div>
+          </div>
+        </q-card-section>
+        <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.issuer">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Locality</div>
+              <boolean-state :value="!!exData(middleware).info.issuer.locality"/>
+            </div>
+            <div class="col">
+              <div class="text-subtitle2">Organization</div>
+              <boolean-state :value="!!exData(middleware).info.issuer.organization"/>
+            </div>
+          </div>
+        </q-card-section>
+        <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.issuer">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Organizational Unit</div>
+              <boolean-state :value="!!exData(middleware).info.issuer.organizationalUnit"/>
+            </div>
+            <div class="col">
+              <div class="text-subtitle2">Common Name</div>
+              <boolean-state :value="!!exData(middleware).info.issuer.commonName"/>
+            </div>
+          </div>
+        </q-card-section>
+        <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.issuer">
+          <div class="row items-start no-wrap">
+            <div class="col">
+              <div class="text-subtitle2">Serial Number</div>
+              <boolean-state :value="!!exData(middleware).info.issuer.serialNumber"/>
+            </div>
+            <div class="col">
+              <div class="text-subtitle2">Domain Component</div>
+              <boolean-state :value="!!exData(middleware).info.issuer.domainComponent"/>
+            </div>
+          </div>
+        </q-card-section>
 
           <!-- EXTRA FIELDS FROM MIDDLEWARES - [redirectRegex] - regex -->
           <q-card-section v-if="middleware.redirectRegex">
