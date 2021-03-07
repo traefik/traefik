@@ -573,16 +573,24 @@ func (p *Provider) makeGatewayStatus(listenerStatuses []v1alpha1.ListenerStatus)
 }
 
 func hostRule(httpRouteSpec v1alpha1.HTTPRouteSpec) string {
-	hostRule := ""
-	for i, hostname := range httpRouteSpec.Hostnames {
-		if i > 0 && len(hostname) > 0 {
-			hostRule += "`, `"
+	rules := []string{}
+	ruleType := "Host"
+	for _, hostname := range httpRouteSpec.Hostnames {
+		host := string(hostname)
+		if host == "" {
+			continue
 		}
-		hostRule += string(hostname)
+		if strings.HasPrefix(host, "*.") {
+			ruleType = "HostRegexp"
+			rules = append(rules, "`"+strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1)+"`")
+		} else {
+			rules = append(rules, "`"+host+"`")
+		}
 	}
 
+	hostRule := strings.Join(rules, ", ")
 	if hostRule != "" {
-		return "Host(`" + hostRule + "`)"
+		return ruleType + "(" + hostRule + ")"
 	}
 
 	return ""
