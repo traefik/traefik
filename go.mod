@@ -19,7 +19,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/cli v0.0.0-20200221155518-740919cc7fc0
 	github.com/docker/distribution v2.7.1+incompatible // indirect
-	github.com/docker/docker v0.7.3-0.20190327010347-be7ac8be2ae0
+	github.com/docker/docker v17.12.0-ce-rc1.0.20200204220554-5f6d6f3f2203+incompatible
 	github.com/docker/docker-credential-helpers v0.6.3 // indirect
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-metrics v0.0.0-20181218153428-b84716841b82 // indirect
@@ -96,9 +96,6 @@ require (
 	mvdan.cc/xurls/v2 v2.1.0
 	sigs.k8s.io/service-apis v0.1.0
 )
-
-// Docker v19.03.6
-replace github.com/docker/docker => github.com/docker/engine v1.4.2-0.20200204220554-5f6d6f3f2203
 
 // Containous forks
 replace (
