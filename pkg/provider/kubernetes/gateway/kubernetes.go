@@ -582,10 +582,9 @@ func hostRule(httpRouteSpec v1alpha1.HTTPRouteSpec) string {
 		}
 		if strings.HasPrefix(host, "*.") {
 			ruleType = "HostRegexp"
-			rules = append(rules, "`"+strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1)+"`")
-		} else {
-			rules = append(rules, "`"+host+"`")
+			host = strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1)
 		}
+		rules = append(rules, "`"+host+"`")
 	}
 
 	hostRule := strings.Join(rules, ", ")
