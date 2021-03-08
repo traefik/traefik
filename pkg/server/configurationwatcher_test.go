@@ -216,7 +216,7 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 	defer watcher.Stop()
 
 	// give some time so that the configuration can be processed
-	time.Sleep(40 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
 	expected := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
