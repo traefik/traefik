@@ -1,3 +1,14 @@
+## [v2.4.7](https://github.com/traefik/traefik/tree/v2.4.7) (2021-03-08)
+[All Commits](https://github.com/traefik/traefik/compare/v2.4.6...v2.4.7)
+
+**Bug fixes:**
+- **[acme]** Fix: double close chan on TLS challenge ([#7956](https://github.com/traefik/traefik/pull/7956) by [ldez](https://github.com/ldez))
+- **[provider]** Bump paerser to v0.1.2 ([#7945](https://github.com/traefik/traefik/pull/7945) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[server]** Feature: tune transport buffer size to increase performance ([#7957](https://github.com/traefik/traefik/pull/7957) by [mvertes](https://github.com/mvertes))
+
+**Documentation:**
+- **[service]** Fix ServersTransport documentation ([#7942](https://github.com/traefik/traefik/pull/7942) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.4.6](https://github.com/traefik/traefik/tree/v2.4.6) (2021-03-01)
 [All Commits](https://github.com/traefik/traefik/compare/v2.4.5...v2.4.6)
 
