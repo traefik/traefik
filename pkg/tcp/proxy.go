@@ -53,20 +53,20 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	// needed because of e.g. server.trackedConnection
 	defer conn.Close()
 
+	var c net.Conn
+	var err error
 	if p.refreshTarget {
-		tcpAddr, err := net.ResolveTCPAddr("tcp", p.address)
-		if err != nil {
-			log.Errorf("Error resolving tcp address: %v", err)
-			return
-		}
-		p.target = tcpAddr
+		c, err = net.Dial("tcp", p.address)
+	} else {
+		c, err = net.DialTCP("tcp", nil, p.target)
 	}
 
-	connBackend, err := net.DialTCP("tcp", nil, p.target)
 	if err != nil {
 		log.Errorf("Error while connection to backend: %v", err)
 		return
 	}
+
+	connBackend := c.(*net.TCPConn)
 
 	// maybe not needed, but just in case
 	defer connBackend.Close()
