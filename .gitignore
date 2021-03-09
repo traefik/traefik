@@ -10,8 +10,12 @@
 /site/
 /docs/site/
 /traefik.toml
+/traefik.yml
 /dist
 /traefik
 *.log
 *.exe
 cover.out
+vendor/
+plugins-storage/
+traefik_changelog.md

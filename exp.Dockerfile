@@ -7,14 +7,12 @@ RUN mkdir -p $WEBUI_DIR
 COPY ./webui/ $WEBUI_DIR/
 
 WORKDIR $WEBUI_DIR
-RUN yarn install
 
+RUN yarn install
 RUN npm run build
 
 # BUILD
 FROM golang:1.16-alpine as gobuild
-
-ENV GO111MODULE=off
 
 RUN apk --update upgrade \
     && apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar ca-certificates tzdata \
@@ -26,6 +24,12 @@ RUN mkdir -p /usr/local/bin \
     && chmod +x /usr/local/bin/go-bindata
 
 WORKDIR /go/src/github.com/traefik/traefik
+
+# Download go modules
+COPY go.mod .
+COPY go.sum .
+RUN GO111MODULE=on GOPROXY=https://proxy.golang.org go mod download
+
 COPY . /go/src/github.com/traefik/traefik
 
 RUN rm -rf /go/src/github.com/traefik/traefik/static/
