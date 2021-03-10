@@ -278,10 +278,10 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					continue
 				}
 
-				serviceName := provider.Normalize(ingress.Namespace + "-" + pa.Backend.ServiceName + "-" + pa.Backend.ServicePort.String())
+				serviceName := provider.Normalize(ingress.Namespace) + "." + provider.Normalize(pa.Backend.ServiceName) + "." + provider.Normalize(pa.Backend.ServicePort.String())
 				conf.HTTP.Services[serviceName] = service
 
-				routerKey := strings.TrimPrefix(provider.Normalize(ingress.Name+"-"+ingress.Namespace+"-"+rule.Host+pa.Path), "-")
+				routerKey := strings.TrimPrefix(provider.Normalize(ingress.Namespace)+"."+provider.Normalize(ingress.Name)+"."+provider.Normalize(rule.Host+pa.Path), "-")
 				routers[routerKey] = append(routers[routerKey], loadRouter(rule, pa, rtConfig, serviceName))
 			}
 		}
