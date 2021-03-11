@@ -884,7 +884,19 @@ and will connect via TLS automatically.
 
 Ingresses can be created that look like the following:
 
-```yaml
+```yaml tab="Ingress"
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+ name: cheese
+
+spec:
+  defaultBackend:
+    serviceName: stilton
+    serverPort: 80
+```
+
+```yaml tab="Ingress Kubernetes v1.19+"
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
