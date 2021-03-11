@@ -237,28 +237,34 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 
 // GetIngresses returns all Ingresses for observed namespaces in the cluster.
 func (c *clientWrapper) GetIngresses() []*networkingv1.Ingress {
+	var results []*networkingv1.Ingress
+
 	serverVersion, err := c.GetServerVersion()
 	if err != nil {
 		log.Errorf("Failed to get server version: %v", err)
+		return results
 	}
 
-	var results []*networkingv1.Ingress
+	isNetworkingV1Supported := supportsNetworkingV1Ingress(serverVersion)
 
 	for ns, factory := range c.factoriesIngress {
-		if supportsNetworkingV1Ingress(serverVersion) {
+		if isNetworkingV1Supported {
 			// networking
 			listNew, err := factory.Networking().V1().Ingresses().Lister().List(labels.Everything())
 			if err != nil {
 				log.WithoutContext().Errorf("Failed to list ingresses in namespace %s: %v", ns, err)
+				continue
 			}
 
 			results = append(results, listNew...)
 			continue
 		}
+
 		// networking beta
 		list, err := factory.Networking().V1beta1().Ingresses().Lister().List(labels.Everything())
 		if err != nil {
 			log.WithoutContext().Errorf("Failed to list ingresses in namespace %s: %v", ns, err)
+			continue
 		}
 
 		for _, ing := range list {
@@ -296,7 +302,7 @@ func addServiceFromV1Beta1(ing *networkingv1.Ingress, old networkingv1beta1.Ingr
 		port := networkingv1.ServiceBackendPort{}
 		if old.Spec.Backend.ServicePort.Type == intstr.Int {
 			port.Number = old.Spec.Backend.ServicePort.IntVal
-		} else if old.Spec.Backend.ServicePort.StrVal != "" {
+		} else {
 			port.Name = old.Spec.Backend.ServicePort.StrVal
 		}
 
@@ -310,12 +316,8 @@ func addServiceFromV1Beta1(ing *networkingv1.Ingress, old networkingv1beta1.Ingr
 		}
 	}
 
-	if ing.Spec.Rules == nil {
-		return
-	}
-
 	for rc, rule := range ing.Spec.Rules {
-		if rule.HTTP == nil || len(rule.HTTP.Paths) == 0 {
+		if rule.HTTP == nil {
 			continue
 		}
 		for pc, path := range rule.HTTP.Paths {

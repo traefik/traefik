@@ -1538,6 +1538,35 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc:          "v19 Ingress with defaultbackend",
+			serverVersion: "v1.19",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"default-router": {
+							Rule:     "PathPrefix(`/`)",
+							Priority: math.MinInt32,
+							Service:  "default-backend",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-backend": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
