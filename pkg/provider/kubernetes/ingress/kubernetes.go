@@ -278,11 +278,9 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					continue
 				}
 
-				portString := ""
+				portString := pa.Backend.Service.Port.Name
 
-				if len(pa.Backend.Service.Port.Name) > 0 {
-					portString = pa.Backend.Service.Port.Name
-				} else {
+				if len(pa.Backend.Service.Port.Name) == 0 {
 					portString = fmt.Sprint(pa.Backend.Service.Port.Number)
 				}
 
