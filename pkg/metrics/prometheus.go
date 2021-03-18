@@ -33,13 +33,6 @@ const (
 	metricsTLSPrefix          = MetricNamePrefix + "tls_"
 	tlsCertsNotAfterTimestamp = metricsTLSPrefix + "certs_not_after"
 
-	// router level.
-	metricRouterPrefix     = MetricNamePrefix + "router_"
-	routerReqsTotalName    = metricRouterPrefix + "requests_total"
-	routerReqsTLSTotalName = metricRouterPrefix + "requests_tls_total"
-	routerReqDurationName  = metricRouterPrefix + "request_duration_seconds"
-	routerOpenConnsName    = metricRouterPrefix + "open_connections"
-
 	// entry point.
 	metricEntryPointPrefix     = MetricNamePrefix + "entrypoint_"
 	entryPointReqsTotalName    = metricEntryPointPrefix + "requests_total"
@@ -47,16 +40,21 @@ const (
 	entryPointReqDurationName  = metricEntryPointPrefix + "request_duration_seconds"
 	entryPointOpenConnsName    = metricEntryPointPrefix + "open_connections"
 
-	// service level.
+	// router level.
+	metricRouterPrefix     = MetricNamePrefix + "router_"
+	routerReqsTotalName    = metricRouterPrefix + "requests_total"
+	routerReqsTLSTotalName = metricRouterPrefix + "requests_tls_total"
+	routerReqDurationName  = metricRouterPrefix + "request_duration_seconds"
+	routerOpenConnsName    = metricRouterPrefix + "open_connections"
 
-	// MetricServicePrefix prefix of all service metric names.
-	MetricServicePrefix     = MetricNamePrefix + "service_"
-	serviceReqsTotalName    = MetricServicePrefix + "requests_total"
-	serviceReqsTLSTotalName = MetricServicePrefix + "requests_tls_total"
-	serviceReqDurationName  = MetricServicePrefix + "request_duration_seconds"
-	serviceOpenConnsName    = MetricServicePrefix + "open_connections"
-	serviceRetriesTotalName = MetricServicePrefix + "retries_total"
-	serviceServerUpName     = MetricServicePrefix + "server_up"
+	// service level.
+	metricServicePrefix     = MetricNamePrefix + "service_"
+	serviceReqsTotalName    = metricServicePrefix + "requests_total"
+	serviceReqsTLSTotalName = metricServicePrefix + "requests_tls_total"
+	serviceReqDurationName  = metricServicePrefix + "request_duration_seconds"
+	serviceOpenConnsName    = metricServicePrefix + "open_connections"
+	serviceRetriesTotalName = metricServicePrefix + "retries_total"
+	serviceServerUpName     = metricServicePrefix + "server_up"
 )
 
 // promState holds all metric state internally and acts as the only Collector we register for Prometheus.
@@ -195,7 +193,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		}, []string{"code", "method", "protocol", "router", "service"})
 		routerReqsTLS := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
 			Name: routerReqsTLSTotalName,
-			Help: "How many HTTP requests with TLS processed on an router, partitioned by TLS Version, service and TLS cipher Used.",
+			Help: "How many HTTP requests with TLS processed on an router, partitioned by service, TLS Version and TLS cipher Used.",
 		}, []string{"tls_version", "tls_cipher", "router", "service"})
 		routerReqDurations := newHistogramFrom(promState.collectors, stdprometheus.HistogramOpts{
 			Name:    routerReqDurationName,
