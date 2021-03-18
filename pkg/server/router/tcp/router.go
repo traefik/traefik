@@ -267,26 +267,27 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 				if routerConfig.TLS.Passthrough {
 					router.AddRoute(domain, handler)
-				} else {
-					tlsOptionsName := routerConfig.TLS.Options
-
-					if len(tlsOptionsName) == 0 {
-						tlsOptionsName = defaultTLSConfigName
-					}
-
-					if tlsOptionsName != defaultTLSConfigName {
-						tlsOptionsName = provider.GetQualifiedName(ctxRouter, tlsOptionsName)
-					}
-
-					tlsConf, err := m.tlsManager.Get(defaultTLSStoreName, tlsOptionsName)
-					if err != nil {
-						routerConfig.AddError(err, true)
-						logger.Debug(err)
-						continue
-					}
-
-					router.AddRouteTLS(domain, handler, tlsConf)
+					continue
 				}
+
+				tlsOptionsName := routerConfig.TLS.Options
+
+				if len(tlsOptionsName) == 0 {
+					tlsOptionsName = defaultTLSConfigName
+				}
+
+				if tlsOptionsName != defaultTLSConfigName {
+					tlsOptionsName = provider.GetQualifiedName(ctxRouter, tlsOptionsName)
+				}
+
+				tlsConf, err := m.tlsManager.Get(defaultTLSStoreName, tlsOptionsName)
+				if err != nil {
+					routerConfig.AddError(err, true)
+					logger.Debug(err)
+					continue
+				}
+
+				router.AddRouteTLS(domain, handler, tlsConf)
 			case domain == "*":
 				router.AddCatchAllNoTLS(handler)
 			default:
