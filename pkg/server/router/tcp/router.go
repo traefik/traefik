@@ -258,16 +258,16 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			logger.Debugf("Adding route %s on TCP", domain)
 			switch {
 			case routerConfig.TLS != nil:
+				if !rules.IsASCII(domain) {
+					asciiError := fmt.Errorf("invalid domain name value %q, non-ASCII characters are not allowed", domain)
+					routerConfig.AddError(asciiError, true)
+					logger.Debug(asciiError)
+					continue
+				}
+
 				if routerConfig.TLS.Passthrough {
 					router.AddRoute(domain, handler)
 				} else {
-					if !rules.IsASCII(domain) {
-						asciiError := fmt.Errorf("invalid domain name value %q, non-ASCII characters are not allowed", domain)
-						routerConfig.AddError(asciiError, true)
-						logger.Debug(asciiError)
-						continue
-					}
-
 					tlsOptionsName := routerConfig.TLS.Options
 
 					if len(tlsOptionsName) == 0 {
