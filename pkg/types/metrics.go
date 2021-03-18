@@ -30,7 +30,6 @@ type Prometheus struct {
 func (p *Prometheus) SetDefaults() {
 	p.Buckets = []float64{0.1, 0.3, 1.2, 5}
 	p.AddEntryPointsLabels = true
-	p.AddRoutersLabels = false
 	p.AddServicesLabels = true
 	p.EntryPoint = "traefik"
 }
@@ -58,7 +57,6 @@ func (d *Datadog) SetDefaults() {
 	d.Address = net.JoinHostPort(host, port)
 	d.PushInterval = types.Duration(10 * time.Second)
 	d.AddEntryPointsLabels = true
-	d.AddRoutersLabels = false
 	d.AddServicesLabels = true
 }
 
@@ -77,7 +75,6 @@ func (s *Statsd) SetDefaults() {
 	s.Address = "localhost:8125"
 	s.PushInterval = types.Duration(10 * time.Second)
 	s.AddEntryPointsLabels = true
-	s.AddRoutersLabels = false
 	s.AddServicesLabels = true
 	s.Prefix = "traefik"
 }
@@ -102,7 +99,6 @@ func (i *InfluxDB) SetDefaults() {
 	i.Protocol = "udp"
 	i.PushInterval = types.Duration(10 * time.Second)
 	i.AddEntryPointsLabels = true
-	i.AddRoutersLabels = false
 	i.AddServicesLabels = true
 }
 
