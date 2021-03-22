@@ -248,9 +248,9 @@ The table below lists all the available matchers:
 
 !!! important "Regexp Syntax"
 
-    In order to use regular expressions with `HostRegexp` and `Path` expressions,
-    you must declare an arbitrarily named variable followed by the colon-separated regular expression, all enclosed in curly braces.
-    Any pattern supported by [Go's regexp package](https://golang.org/pkg/regexp/) may be used (example: `/posts/{id:[0-9]+}`).
+    `HostRegexp` and `Path` accept an expression with zero or more groups enclosed by curly braces.
+    Named groups can be like `{name:pattern}` that matches the given regexp pattern or like `{name}` that matches anything until the next dot.
+    Any pattern supported by [Go's regexp package](https://golang.org/pkg/regexp/) may be used (example: `{subdomain:[a-z]+}.{domain}.com`).
 
 !!! info "Combining Matchers Using Operators and Parenthesis"
 
