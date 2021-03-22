@@ -20,7 +20,7 @@ func TestForwardAuthFail(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 	}))
-	defer server.Close()
+	t.Cleanup(server.Close)
 
 	middleware, err := NewAuthenticator(&types.Auth{
 		Forward: &types.Forward{
@@ -35,7 +35,7 @@ func TestForwardAuthFail(t *testing.T) {
 	n := negroni.New(middleware)
 	n.UseHandler(handler)
 	ts := httptest.NewServer(n)
-	defer ts.Close()
+	t.Cleanup(ts.Close)
 
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	res, err := http.DefaultClient.Do(req)
@@ -55,7 +55,7 @@ func TestForwardAuthSuccess(t *testing.T) {
 		w.Header().Set("X-Auth-Secret", "secret")
 		fmt.Fprintln(w, "Success")
 	}))
-	defer server.Close()
+	t.Cleanup(server.Close)
 
 	middleware, err := NewAuthenticator(&types.Auth{
 		Forward: &types.Forward{
@@ -74,7 +74,7 @@ func TestForwardAuthSuccess(t *testing.T) {
 	n := negroni.New(middleware)
 	n.UseHandler(handler)
 	ts := httptest.NewServer(n)
-	defer ts.Close()
+	t.Cleanup(ts.Close)
 
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	req.Header.Set("X-Auth-Group", "admin_group")
@@ -91,7 +91,7 @@ func TestForwardAuthRedirect(t *testing.T) {
 	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "http://example.com/redirect-test", http.StatusFound)
 	}))
-	defer authTs.Close()
+	t.Cleanup(authTs.Close)
 
 	authMiddleware, err := NewAuthenticator(&types.Auth{
 		Forward: &types.Forward{
@@ -106,7 +106,7 @@ func TestForwardAuthRedirect(t *testing.T) {
 	n := negroni.New(authMiddleware)
 	n.UseHandler(handler)
 	ts := httptest.NewServer(n)
-	defer ts.Close()
+	t.Cleanup(ts.Close)
 
 	client := &http.Client{
 		CheckRedirect: func(r *http.Request, via []*http.Request) error {
@@ -132,7 +132,7 @@ func TestForwardAuthRemoveHopByHopHeaders(t *testing.T) {
 		headers := w.Header()
 		for _, header := range forward.HopHeaders {
 			if header == forward.TransferEncoding {
-				headers.Add(header, "identity")
+				headers.Add(header, "chunked")
 			} else {
 				headers.Add(header, "test")
 			}
@@ -140,7 +140,7 @@ func TestForwardAuthRemoveHopByHopHeaders(t *testing.T) {
 
 		http.Redirect(w, r, "http://example.com/redirect-test", http.StatusFound)
 	}))
-	defer authTs.Close()
+	t.Cleanup(authTs.Close)
 
 	authMiddleware, err := NewAuthenticator(&types.Auth{
 		Forward: &types.Forward{
@@ -155,16 +155,17 @@ func TestForwardAuthRemoveHopByHopHeaders(t *testing.T) {
 	n := negroni.New(authMiddleware)
 	n.UseHandler(handler)
 	ts := httptest.NewServer(n)
-	defer ts.Close()
+	t.Cleanup(ts.Close)
 
 	client := &http.Client{
 		CheckRedirect: func(r *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 	}
+
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	res, err := client.Do(req)
-	assert.NoError(t, err, "there should be no error")
+	require.NoError(t, err)
 	assert.Equal(t, http.StatusFound, res.StatusCode, "they should be equal")
 
 	for _, header := range forward.HopHeaders {
@@ -172,11 +173,11 @@ func TestForwardAuthRemoveHopByHopHeaders(t *testing.T) {
 	}
 
 	location, err := res.Location()
-	assert.NoError(t, err, "there should be no error")
+	require.NoError(t, err)
 	assert.Equal(t, "http://example.com/redirect-test", location.String(), "they should be equal")
 
 	body, err := ioutil.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
+	require.NoError(t, err)
 	assert.NotEmpty(t, string(body), "there should be something in the body")
 }
 
@@ -187,7 +188,7 @@ func TestForwardAuthFailResponseHeaders(t *testing.T) {
 		w.Header().Add("X-Foo", "bar")
 		http.Error(w, "Forbidden", http.StatusForbidden)
 	}))
-	defer authTs.Close()
+	t.Cleanup(authTs.Close)
 
 	authMiddleware, err := NewAuthenticator(&types.Auth{
 		Forward: &types.Forward{
@@ -202,7 +203,7 @@ func TestForwardAuthFailResponseHeaders(t *testing.T) {
 	n := negroni.New(authMiddleware)
 	n.UseHandler(handler)
 	ts := httptest.NewServer(n)
-	defer ts.Close()
+	t.Cleanup(ts.Close)
 
 	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	client := &http.Client{}

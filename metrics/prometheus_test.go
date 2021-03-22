@@ -1,7 +1,6 @@
 package metrics
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"testing"
@@ -10,13 +9,17 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	th "github.com/traefik/traefik/testhelpers"
 	"github.com/traefik/traefik/types"
 )
 
 func TestRegisterPromState(t *testing.T) {
 	// Reset state of global promState.
-	defer promState.reset()
+	t.Cleanup(func() {
+		promRegistry.Unregister(promState)
+		promState.reset()
+	})
 
 	testCases := []struct {
 		desc                 string
@@ -34,7 +37,7 @@ func TestRegisterPromState(t *testing.T) {
 		{
 			desc:                 "Register once with no promState init",
 			prometheusSlice:      []*types.Prometheus{{}},
-			expectedNbRegistries: 0,
+			expectedNbRegistries: 1,
 		},
 		{
 			desc:                 "Register twice",
@@ -45,7 +48,7 @@ func TestRegisterPromState(t *testing.T) {
 		{
 			desc:                 "Register twice with no promstate init",
 			prometheusSlice:      []*types.Prometheus{{}, {}},
-			expectedNbRegistries: 0,
+			expectedNbRegistries: 2,
 		},
 		{
 			desc:                 "Register twice with unregister",
@@ -58,41 +61,54 @@ func TestRegisterPromState(t *testing.T) {
 			desc:                 "Register twice with unregister but no promstate init",
 			prometheusSlice:      []*types.Prometheus{{}, {}},
 			unregisterPromState:  true,
-			expectedNbRegistries: 0,
+			expectedNbRegistries: 2,
 		},
 	}
 
 	for _, test := range testCases {
-		actualNbRegistries := 0
-		for _, prom := range test.prometheusSlice {
-			if test.initPromState {
-				initStandardRegistry(prom)
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			actualNbRegistries := 0
+			for _, prom := range test.prometheusSlice {
+				if test.initPromState {
+					initStandardRegistry(prom)
+				}
+
+				if registerPromState() {
+					actualNbRegistries++
+				}
+
+				if test.unregisterPromState {
+					promRegistry.Unregister(promState)
+				}
+
+				promState.reset()
 			}
 
-			promReg := registerPromState()
-			if promReg != false {
-				actualNbRegistries++
-			}
-
-			if test.unregisterPromState {
-				prometheus.Unregister(promState)
-			}
-
-			promState.reset()
-		}
-
-		prometheus.Unregister(promState)
-
-		assert.Equal(t, test.expectedNbRegistries, actualNbRegistries)
+			promRegistry.Unregister(promState)
+			assert.Equal(t, test.expectedNbRegistries, actualNbRegistries)
+		})
 	}
 }
 
+// reset is a utility method for unit testing. It should be called after each
+// test run that changes promState internally in order to avoid dependencies
+// between unit tests.
+func (ps *prometheusState) reset() {
+	ps.collectors = make(chan *collector)
+	ps.describers = []func(ch chan<- *prometheus.Desc){}
+	ps.dynamicConfig = newDynamicConfig()
+	ps.state = make(map[string]*collector)
+}
+
 func TestPrometheus(t *testing.T) {
+	promState = newPrometheusState()
+	promRegistry = prometheus.NewRegistry()
 	// Reset state of global promState.
 	defer promState.reset()
 
 	prometheusRegistry := RegisterPrometheus(&types.Prometheus{})
-	defer prometheus.Unregister(promState)
+	defer promRegistry.Unregister(promState)
 
 	if !prometheusRegistry.IsEnabled() {
 		t.Errorf("PrometheusRegistry should return true for IsEnabled()")
@@ -139,9 +155,9 @@ func TestPrometheus(t *testing.T) {
 
 	delayForTrackingCompletion()
 
-	metricsFamilies := mustScrape()
+	metricsFamilies := mustScrape(t)
 
-	tests := []struct {
+	testCases := []struct {
 		name   string
 		labels map[string]string
 		assert func(*dto.MetricFamily)
@@ -237,30 +253,37 @@ func TestPrometheus(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		family := findMetricFamily(test.name, metricsFamilies)
-		if family == nil {
-			t.Errorf("gathered metrics do not contain %q", test.name)
-			continue
-		}
-		for _, label := range family.Metric[0].Label {
-			val, ok := test.labels[*label.Name]
-			if !ok {
-				t.Errorf("%q metric contains unexpected label %q", test.name, *label.Name)
-			} else if val != *label.Value {
-				t.Errorf("label %q in metric %q has wrong value %q, expected %q", *label.Name, test.name, *label.Value, val)
+	for _, test := range testCases {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			family := findMetricFamily(test.name, metricsFamilies)
+			if family == nil {
+				t.Errorf("gathered metrics do not contain %q", test.name)
+				return
 			}
-		}
-		test.assert(family)
+
+			for _, label := range family.Metric[0].Label {
+				val, ok := test.labels[*label.Name]
+				if !ok {
+					t.Errorf("%q metric contains unexpected label %q", test.name, *label.Name)
+				} else if val != *label.Value {
+					t.Errorf("label %q in metric %q has wrong value %q, expected %q", *label.Name, test.name, *label.Value, val)
+				}
+			}
+
+			test.assert(family)
+		})
 	}
 }
 
 func TestPrometheusMetricRemoval(t *testing.T) {
+	promState = newPrometheusState()
+	promRegistry = prometheus.NewRegistry()
 	// Reset state of global promState.
 	defer promState.reset()
 
 	prometheusRegistry := RegisterPrometheus(&types.Prometheus{})
-	defer prometheus.Unregister(promState)
+	defer promRegistry.Unregister(promState)
 
 	configurations := make(types.Configurations)
 	configurations["providerName"] = th.BuildConfiguration(
@@ -291,8 +314,8 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 
 	delayForTrackingCompletion()
 
-	assertMetricsExist(t, mustScrape(), entrypointReqsTotalName, backendReqsTotalName, backendServerUpName)
-	assertMetricsAbsent(t, mustScrape(), entrypointReqsTotalName, backendReqsTotalName, backendServerUpName)
+	assertMetricsExist(t, mustScrape(t), entrypointReqsTotalName, backendReqsTotalName, backendServerUpName)
+	assertMetricsAbsent(t, mustScrape(t), entrypointReqsTotalName, backendReqsTotalName, backendServerUpName)
 
 	// To verify that metrics belonging to active configurations are not removed
 	// here the counter examples.
@@ -303,8 +326,8 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 
 	delayForTrackingCompletion()
 
-	assertMetricsExist(t, mustScrape(), entrypointReqsTotalName)
-	assertMetricsExist(t, mustScrape(), entrypointReqsTotalName)
+	assertMetricsExist(t, mustScrape(t), entrypointReqsTotalName)
+	assertMetricsExist(t, mustScrape(t), entrypointReqsTotalName)
 }
 
 func TestPrometheusRemovedMetricsReset(t *testing.T) {
@@ -312,7 +335,7 @@ func TestPrometheusRemovedMetricsReset(t *testing.T) {
 	defer promState.reset()
 
 	prometheusRegistry := RegisterPrometheus(&types.Prometheus{})
-	defer prometheus.Unregister(promState)
+	defer promRegistry.Unregister(promState)
 
 	labelNamesValues := []string{
 		"backend", "backend",
@@ -327,12 +350,12 @@ func TestPrometheusRemovedMetricsReset(t *testing.T) {
 
 	delayForTrackingCompletion()
 
-	metricsFamilies := mustScrape()
+	metricsFamilies := mustScrape(t)
 	assertCounterValue(t, 3, findMetricFamily(backendReqsTotalName, metricsFamilies), labelNamesValues...)
 
 	// There is no dynamic configuration and so this metric will be deleted
 	// after the first scrape.
-	assertMetricsAbsent(t, mustScrape(), backendReqsTotalName)
+	assertMetricsAbsent(t, mustScrape(t), backendReqsTotalName)
 
 	prometheusRegistry.
 		BackendReqsCounter().
@@ -341,7 +364,7 @@ func TestPrometheusRemovedMetricsReset(t *testing.T) {
 
 	delayForTrackingCompletion()
 
-	metricsFamilies = mustScrape()
+	metricsFamilies = mustScrape(t)
 	assertCounterValue(t, 1, findMetricFamily(backendReqsTotalName, metricsFamilies), labelNamesValues...)
 }
 
@@ -355,11 +378,12 @@ func delayForTrackingCompletion() {
 	time.Sleep(250 * time.Millisecond)
 }
 
-func mustScrape() []*dto.MetricFamily {
-	families, err := prometheus.DefaultGatherer.Gather()
-	if err != nil {
-		panic(fmt.Sprintf("could not gather metrics families: %s", err))
-	}
+func mustScrape(t *testing.T) []*dto.MetricFamily {
+	t.Helper()
+
+	families, err := promRegistry.Gather()
+	require.NoError(t, err, "could not gather metrics families")
+
 	return families
 }
 
@@ -445,6 +469,8 @@ func assertCounterValue(t *testing.T, want float64, family *dto.MetricFamily, la
 }
 
 func buildCounterAssert(t *testing.T, metricName string, expectedValue int) func(family *dto.MetricFamily) {
+	t.Helper()
+
 	return func(family *dto.MetricFamily) {
 		if cv := int(family.Metric[0].Counter.GetValue()); cv != expectedValue {
 			t.Errorf("metric %s has value %d, want %d", metricName, cv, expectedValue)
@@ -453,6 +479,8 @@ func buildCounterAssert(t *testing.T, metricName string, expectedValue int) func
 }
 
 func buildGreaterThanCounterAssert(t *testing.T, metricName string, expectedMinValue int) func(family *dto.MetricFamily) {
+	t.Helper()
+
 	return func(family *dto.MetricFamily) {
 		if cv := int(family.Metric[0].Counter.GetValue()); cv < expectedMinValue {
 			t.Errorf("metric %s has value %d, want at least %d", metricName, cv, expectedMinValue)
@@ -461,6 +489,8 @@ func buildGreaterThanCounterAssert(t *testing.T, metricName string, expectedMinV
 }
 
 func buildHistogramAssert(t *testing.T, metricName string, expectedSampleCount int) func(family *dto.MetricFamily) {
+	t.Helper()
+
 	return func(family *dto.MetricFamily) {
 		if sc := int(family.Metric[0].Histogram.GetSampleCount()); sc != expectedSampleCount {
 			t.Errorf("metric %s has sample count value %d, want %d", metricName, sc, expectedSampleCount)
@@ -469,6 +499,8 @@ func buildHistogramAssert(t *testing.T, metricName string, expectedSampleCount i
 }
 
 func buildGaugeAssert(t *testing.T, metricName string, expectedValue int) func(family *dto.MetricFamily) {
+	t.Helper()
+
 	return func(family *dto.MetricFamily) {
 		if gv := int(family.Metric[0].Gauge.GetValue()); gv != expectedValue {
 			t.Errorf("metric %s has value %d, want %d", metricName, gv, expectedValue)
@@ -477,6 +509,8 @@ func buildGaugeAssert(t *testing.T, metricName string, expectedValue int) func(f
 }
 
 func buildTimestampAssert(t *testing.T, metricName string) func(family *dto.MetricFamily) {
+	t.Helper()
+
 	return func(family *dto.MetricFamily) {
 		if ts := time.Unix(int64(family.Metric[0].Gauge.GetValue()), 0); time.Since(ts) > time.Minute {
 			t.Errorf("metric %s has wrong timestamp %v", metricName, ts)

@@ -1,10 +1,10 @@
 package middlewares
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
-	"github.com/pkg/errors"
 	"github.com/traefik/traefik/log"
 	"github.com/traefik/traefik/middlewares/tracing"
 	"github.com/traefik/traefik/whitelist"

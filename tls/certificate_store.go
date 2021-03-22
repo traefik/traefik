@@ -135,8 +135,11 @@ func getCertificateDomains(cert *tls.Certificate) []string {
 	if len(x509Cert.Subject.CommonName) > 0 {
 		names = append(names, x509Cert.Subject.CommonName)
 	}
+
 	for _, san := range x509Cert.DNSNames {
-		names = append(names, san)
+		if san != x509Cert.Subject.CommonName {
+			names = append(names, san)
+		}
 	}
 
 	return names
