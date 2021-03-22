@@ -525,12 +525,13 @@ func loadService(client Client, namespace string, backend networkingv1beta1.Ingr
 		return nil, errors.New("endpoints not found")
 	}
 
-	if len(endpoints.Subsets) == 0 {
+	endpointsLen := len(endpoints.Subsets)
+	if endpointsLen == 0 {
 		return nil, errors.New("subset not found")
 	}
 
 	var port int32
-	for _, subset := range endpoints.Subsets {
+	for i, subset := range endpoints.Subsets {
 		for _, p := range subset.Ports {
 			if portName == p.Name {
 				port = p.Port
@@ -538,18 +539,20 @@ func loadService(client Client, namespace string, backend networkingv1beta1.Ingr
 			}
 		}
 
-		if port == 0 {
+		if port == 0 && i == endpointsLen-1 {
 			return nil, errors.New("cannot define a port")
 		}
 
-		protocol := getProtocol(portSpec, portName, svcConfig)
+		if port != 0 {
+			protocol := getProtocol(portSpec, portName, svcConfig)
 
-		for _, addr := range subset.Addresses {
-			hostPort := net.JoinHostPort(addr.IP, strconv.Itoa(int(port)))
+			for _, addr := range subset.Addresses {
+				hostPort := net.JoinHostPort(addr.IP, strconv.Itoa(int(port)))
 
-			svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
-				URL: fmt.Sprintf("%s://%s", protocol, hostPort),
-			})
+				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
+					URL: fmt.Sprintf("%s://%s", protocol, hostPort),
+				})
+			}
 		}
 	}
 
