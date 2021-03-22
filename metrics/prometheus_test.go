@@ -1,7 +1,6 @@
 package metrics
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"testing"
@@ -10,6 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	th "github.com/traefik/traefik/testhelpers"
 	"github.com/traefik/traefik/types"
 )
@@ -372,19 +372,18 @@ func TestPrometheusRemovedMetricsReset(t *testing.T) {
 // In practice this is no problem, because in case a tracked metric would miss
 // the current scrape, it would just be there in the next one.
 // That we can test reliably the tracking of all metrics here, we sleep
-// for a short amount of time, to makeTestPrometheusMetricRemoval sure the metric will be present
+// for a short amount of time, to make sure the metric will be present
 // in the next scrape.
 func delayForTrackingCompletion() {
 	time.Sleep(250 * time.Millisecond)
 }
 
 func mustScrape(t *testing.T) []*dto.MetricFamily {
-	//t.Helper()
+	t.Helper()
 
 	families, err := promRegistry.Gather()
-	if err != nil {
-		panic(fmt.Sprintf("could not gather metrics families: %s", err))
-	}
+	require.NoError(t, err, "could not gather metrics families")
+
 	return families
 }
 
