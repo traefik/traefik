@@ -48,7 +48,7 @@ func (d *Datadog) SetDefaults() {
 		host = "localhost"
 	}
 
-	port, ok := os.LookupEnv("DD_METRICS_AGENT_PORT")
+	port, ok := os.LookupEnv("DD_DOGSTATSD_PORT")
 	if !ok {
 		port = "8125"
 	}
