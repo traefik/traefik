@@ -423,7 +423,17 @@ func (p *Provider) fillGatewayConf(client Client, gateway *v1alpha1.Gateway, con
 				continue
 			}
 
-			hostRule := hostRule(httpRoute.Spec)
+			hostRule, err := hostRule(httpRoute.Spec)
+			if err != nil {
+				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
+					Type:               string(v1alpha1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(v1alpha1.ListenerReasonDegradedRoutes),
+					Message:            fmt.Sprintf("Skipping HTTPRoute %s: invalid hostname: %v", httpRoute.Name, err),
+				})
+				continue
+			}
 
 			for _, routeRule := range httpRoute.Spec.Rules {
 				rule, err := extractRule(routeRule, hostRule)
@@ -572,27 +582,46 @@ func (p *Provider) makeGatewayStatus(listenerStatuses []v1alpha1.ListenerStatus)
 	return gatewayStatus, nil
 }
 
-func hostRule(httpRouteSpec v1alpha1.HTTPRouteSpec) string {
-	rules := []string{}
-	ruleType := "Host"
+func hostRule(httpRouteSpec v1alpha1.HTTPRouteSpec) (string, error) {
+	var hostNames []string
+	var hostRegexNames []string
+
 	for _, hostname := range httpRouteSpec.Hostnames {
 		host := string(hostname)
 		if host == "" {
 			continue
 		}
-		if strings.HasPrefix(host, "*.") {
-			ruleType = "HostRegexp"
-			host = strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1)
+
+		wildcard := strings.Count(host, "*")
+		if wildcard >= 1 {
+			// https://gateway-api.sigs.k8s.io/spec/#networking.x-k8s.io/v1alpha1.Hostname
+			if !strings.HasPrefix(host, "*.") || wildcard > 1 {
+				return "", fmt.Errorf("invalid rule: %q", host)
+			}
+
+			hostRegexNames = append(hostRegexNames, strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1))
+			continue
 		}
-		rules = append(rules, "`"+host+"`")
+
+		hostNames = append(hostNames, host)
 	}
 
-	hostRule := strings.Join(rules, ", ")
-	if hostRule != "" {
-		return ruleType + "(" + hostRule + ")"
+	var res string
+	if len(hostNames) > 0 {
+		res = "Host(`" + strings.Join(hostNames, "`, `") + "`)"
 	}
 
-	return ""
+	if len(hostRegexNames) == 0 {
+		return res, nil
+	}
+
+	hostRegexp := "HostRegexp(`" + strings.Join(hostRegexNames, "`, `") + "`)"
+
+	if len(res) > 0 {
+		return "(" + res + " || " + hostRegexp + ")", nil
+	}
+
+	return hostRegexp, nil
 }
 
 func extractRule(routeRule v1alpha1.HTTPRouteRule, hostRule string) (string, error) {

@@ -453,15 +453,15 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-http-app-1-my-gateway-web-4e9d3ae85daaa027916d": {
+						"default-http-app-1-my-gateway-web-2dbd7883f5537db39bca": {
 							EntryPoints: []string{"web"},
-							Service:     "default-http-app-1-my-gateway-web-4e9d3ae85daaa027916d-wrr",
-							Rule:        "HostRegexp(`foo.com`, `{subdomain:[a-zA-Z0-9-]+}.bar.com`) && PathPrefix(`/`)",
+							Service:     "default-http-app-1-my-gateway-web-2dbd7883f5537db39bca-wrr",
+							Rule:        "(Host(`foo.com`) || HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.bar.com`)) && PathPrefix(`/`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-http-app-1-my-gateway-web-4e9d3ae85daaa027916d-wrr": {
+						"default-http-app-1-my-gateway-web-2dbd7883f5537db39bca-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
@@ -898,6 +898,7 @@ func TestHostRule(t *testing.T) {
 		desc         string
 		routeSpec    v1alpha1.HTTPRouteSpec
 		expectedRule string
+		expectErr    bool
 	}{
 		{
 			desc:         "Empty rule and matches",
@@ -945,14 +946,78 @@ func TestHostRule(t *testing.T) {
 			},
 			expectedRule: "",
 		},
+		{
+			desc: "Several Host and wildcard",
+			routeSpec: v1alpha1.HTTPRouteSpec{
+				Hostnames: []v1alpha1.Hostname{
+					"*.bar.foo",
+					"bar.foo",
+					"foo.foo",
+				},
+			},
+			expectedRule: "(Host(`bar.foo`, `foo.foo`) || HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.bar.foo`))",
+		},
+		{
+			desc: "Host with wildcard",
+			routeSpec: v1alpha1.HTTPRouteSpec{
+				Hostnames: []v1alpha1.Hostname{
+					"*.bar.foo",
+				},
+			},
+			expectedRule: "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.bar.foo`)",
+		},
+		{
+			desc: "Alone wildcard",
+			routeSpec: v1alpha1.HTTPRouteSpec{
+				Hostnames: []v1alpha1.Hostname{
+					"foo.foo",
+					"*",
+				},
+			},
+			expectErr: true,
+		},
+		{
+			desc: "Multiple alone Wildcard",
+			routeSpec: v1alpha1.HTTPRouteSpec{
+				Hostnames: []v1alpha1.Hostname{
+					"foo.foo",
+					"*.*",
+				},
+			},
+			expectErr: true,
+		},
+		{
+			desc: "Multiple Wildcard",
+			routeSpec: v1alpha1.HTTPRouteSpec{
+				Hostnames: []v1alpha1.Hostname{
+					"foo.foo",
+					"*.toto.*.bar.foo",
+				},
+			},
+			expectErr: true,
+		},
+		{
+			desc: "Multiple subdomain with misplaced wildcard",
+			routeSpec: v1alpha1.HTTPRouteSpec{
+				Hostnames: []v1alpha1.Hostname{
+					"foo.foo",
+					"toto.*.bar.foo",
+				},
+			},
+			expectErr: true,
+		},
 	}
 
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+			rule, err := hostRule(test.routeSpec)
 
-			assert.Equal(t, test.expectedRule, hostRule(test.routeSpec))
+			assert.Equal(t, test.expectedRule, rule)
+			if test.expectErr {
+				assert.Error(t, err)
+			}
 		})
 	}
 }
