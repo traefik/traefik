@@ -31,7 +31,7 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 		return nil, fmt.Errorf("unknown proxyProtocol version: %d", proxyProtocol.Version)
 	}
 
-	// enable the refresh of the target only if the address in an IP
+	// enable the refresh of the target only if the address in not an IP
 	refreshTarget := false
 	if host, _, err := net.SplitHostPort(address); err == nil && net.ParseIP(host) == nil {
 		refreshTarget = true
@@ -48,25 +48,16 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 
 // ServeTCP forwards the connection to a service.
 func (p *Proxy) ServeTCP(conn WriteCloser) {
-	log.Debugf("Handling connection from %s", conn.RemoteAddr())
+	log.WithoutContext().Debugf("Handling connection from %s", conn.RemoteAddr())
 
 	// needed because of e.g. server.trackedConnection
 	defer conn.Close()
 
-	var c net.Conn
-	var err error
-	if p.refreshTarget {
-		c, err = net.Dial("tcp", p.address)
-	} else {
-		c, err = net.DialTCP("tcp", nil, p.target)
-	}
-
+	connBackend, err := p.dialBackend()
 	if err != nil {
-		log.Errorf("Error while connection to backend: %v", err)
+		log.WithoutContext().Errorf("Error while connecting to backend: %v", err)
 		return
 	}
-
-	connBackend := c.(*net.TCPConn)
 
 	// maybe not needed, but just in case
 	defer connBackend.Close()
@@ -89,6 +80,19 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	}
 
 	<-errChan
+}
+
+func (p Proxy) dialBackend() (*net.TCPConn, error) {
+	if !p.refreshTarget {
+		return net.DialTCP("tcp", nil, p.target)
+	}
+
+	conn, err := net.Dial("tcp", p.address)
+	if err != nil {
+		return nil, err
+	}
+
+	return conn.(*net.TCPConn), nil
 }
 
 func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {

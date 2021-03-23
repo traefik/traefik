@@ -171,3 +171,42 @@ func TestProxyProtocol(t *testing.T) {
 		})
 	}
 }
+
+func TestLookupAddress(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		address       string
+		expectRefresh bool
+	}{
+		{
+			desc:    "IP doesn't need refresh",
+			address: "8.8.4.4:53",
+		},
+		{
+			desc:          "Hostname needs refresh",
+			address:       "dns.google:53",
+			expectRefresh: true,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			proxy, err := NewProxy(test.address, 10*time.Millisecond, nil)
+			require.NoError(t, err)
+
+			require.NotNil(t, proxy.target)
+
+			conn, err := proxy.dialBackend()
+			require.NoError(t, err)
+
+			if test.expectRefresh {
+				assert.NotEqual(t, test.address, conn.RemoteAddr().String())
+			} else {
+				assert.Equal(t, test.address, conn.RemoteAddr().String())
+			}
+		})
+	}
+}
