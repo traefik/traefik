@@ -403,7 +403,7 @@ Interval for check Consul API. Default 15s (Default: ```15```)
 Forces the read to be fully consistent. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_SERVICENAME`:  
-Name of the traefik service in Consul Catalog (needs to be registered via the orchestrator or manually).
+Name of the traefik service in Consul Catalog (needs to be registered via the orchestrator or manually). (Default: ```traefik```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_STALE`:  
 Use stale consistency for catalog reads. (Default: ```false```)
