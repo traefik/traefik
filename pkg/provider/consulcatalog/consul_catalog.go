@@ -90,6 +90,7 @@ func (p *Provider) SetDefaults() {
 	p.DefaultRule = DefaultTemplateRule
 	p.ConnectAware = false
 	p.ConnectByDefault = false
+	p.ServiceName = "traefik"
 	p.certChan = make(chan *connectCert)
 }
 
