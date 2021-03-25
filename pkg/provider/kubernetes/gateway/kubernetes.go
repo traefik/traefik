@@ -588,22 +588,25 @@ func hostRule(httpRouteSpec v1alpha1.HTTPRouteSpec) (string, error) {
 
 	for _, hostname := range httpRouteSpec.Hostnames {
 		host := string(hostname)
-		if host == "" {
-			continue
+		// When unspecified, "", or *, all hostnames are matched.
+		// This field can be omitted for protocols that don't require hostname based matching.
+		// TODO Refactor this when building support for TLS options.
+		if host == "*" || host == "" {
+			return "", nil
 		}
 
 		wildcard := strings.Count(host, "*")
-		if wildcard >= 1 {
-			// https://gateway-api.sigs.k8s.io/spec/#networking.x-k8s.io/v1alpha1.Hostname
-			if !strings.HasPrefix(host, "*.") || wildcard > 1 {
-				return "", fmt.Errorf("invalid rule: %q", host)
-			}
-
-			hostRegexNames = append(hostRegexNames, strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1))
+		if wildcard == 0 {
+			hostNames = append(hostNames, host)
 			continue
 		}
 
-		hostNames = append(hostNames, host)
+		// https://gateway-api.sigs.k8s.io/spec/#networking.x-k8s.io/v1alpha1.Hostname
+		if !strings.HasPrefix(host, "*.") || wildcard > 1 {
+			return "", fmt.Errorf("invalid rule: %q", host)
+		}
+
+		hostRegexNames = append(hostRegexNames, strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1))
 	}
 
 	var res string
