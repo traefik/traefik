@@ -709,7 +709,7 @@ spec:
 
 _Optional, Default=false_
 
-`disableHTTP2` disables the usage of http/2.
+`disableHTTP2` disables HTTP/2 for connections with backend servers.
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
