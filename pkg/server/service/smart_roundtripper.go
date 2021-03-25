@@ -7,7 +7,7 @@ import (
 	"golang.org/x/net/http2"
 )
 
-func newSmartRoundTripper(transport *http.Transport, disableHTTP2 bool) (http.RoundTripper, error) {
+func newSmartRoundTripper(transport *http.Transport) (http.RoundTripper, error) {
 	transportHTTP1 := transport.Clone()
 
 	err := http2.ConfigureTransport(transport)
@@ -16,23 +16,21 @@ func newSmartRoundTripper(transport *http.Transport, disableHTTP2 bool) (http.Ro
 	}
 
 	return &smartRoundTripper{
-		http2:        transport,
-		http:         transportHTTP1,
-		disableHTTP2: disableHTTP2,
+		http2: transport,
+		http:  transportHTTP1,
 	}, nil
 }
 
 type smartRoundTripper struct {
-	http2        *http.Transport
-	http         *http.Transport
-	disableHTTP2 bool
+	http2 *http.Transport
+	http  *http.Transport
 }
 
 // smartRoundTripper implements RoundTrip while making sure that HTTP/2 is not used
 // with protocols that start with a Connection Upgrade, such as SPDY or Websocket.
 func (m *smartRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	// If we have disabled HTTP/2 through config or this is a connection upgrade, we don't use HTTP/2
-	if m.disableHTTP2 || httpguts.HeaderValuesContainsToken(req.Header["Connection"], "Upgrade") {
+	// If we have a connection upgrade, we don't use HTTP/2
+	if httpguts.HeaderValuesContainsToken(req.Header["Connection"], "Upgrade") {
 		return m.http.RoundTrip(req)
 	}
 
