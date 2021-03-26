@@ -543,16 +543,18 @@ func loadService(client Client, namespace string, backend networkingv1beta1.Ingr
 			return nil, errors.New("cannot define a port")
 		}
 
-		if port != 0 {
-			protocol := getProtocol(portSpec, portName, svcConfig)
+		if port == 0 {
+			continue
+		}
 
-			for _, addr := range subset.Addresses {
-				hostPort := net.JoinHostPort(addr.IP, strconv.Itoa(int(port)))
+		protocol := getProtocol(portSpec, portName, svcConfig)
 
-				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
-					URL: fmt.Sprintf("%s://%s", protocol, hostPort),
-				})
-			}
+		for _, addr := range subset.Addresses {
+			hostPort := net.JoinHostPort(addr.IP, strconv.Itoa(int(port)))
+
+			svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
+				URL: fmt.Sprintf("%s://%s", protocol, hostPort),
+			})
 		}
 	}
 
