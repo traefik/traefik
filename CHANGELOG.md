@@ -1,5 +1,10 @@
 # Change Log
 
+## [v1.7.29](https://github.com/traefik/traefik/tree/v1.7.29) (2021-03-22)
+[All Commits](https://github.com/traefik/traefik/compare/v1.7.28...v1.7.29)
+
+- Update to go1.16 ([#7967](https://github.com/traefik/traefik/pull/7967) by [ldez](https://github.com/ldez))
+
 ## [v1.7.28](https://github.com/traefik/traefik/tree/v1.7.28) (2021-01-13)
 [All Commits](https://github.com/traefik/traefik/compare/v1.7.26...v1.7.28)
 
