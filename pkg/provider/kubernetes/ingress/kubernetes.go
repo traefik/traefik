@@ -525,22 +525,17 @@ func loadService(client Client, namespace string, backend networkingv1beta1.Ingr
 		return nil, errors.New("endpoints not found")
 	}
 
-	endpointsLen := len(endpoints.Subsets)
-	if endpointsLen == 0 {
+	if len(endpoints.Subsets) == 0 {
 		return nil, errors.New("subset not found")
 	}
 
 	var port int32
-	for i, subset := range endpoints.Subsets {
+	for _, subset := range endpoints.Subsets {
 		for _, p := range subset.Ports {
 			if portName == p.Name {
 				port = p.Port
 				break
 			}
-		}
-
-		if port == 0 && i == endpointsLen-1 {
-			return nil, errors.New("cannot define a port")
 		}
 
 		if port == 0 {
@@ -556,6 +551,10 @@ func loadService(client Client, namespace string, backend networkingv1beta1.Ingr
 				URL: fmt.Sprintf("%s://%s", protocol, hostPort),
 			})
 		}
+	}
+
+	if len(svc.LoadBalancer.Servers) == 0 {
+		return nil, errors.New("no valid subset found")
 	}
 
 	return svc, nil
