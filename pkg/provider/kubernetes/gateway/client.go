@@ -236,7 +236,7 @@ func (c *clientWrapper) GetHTTPRoutes(namespace string, selector labels.Selector
 	}
 
 	if len(httpRoutes) == 0 {
-		return nil, fmt.Errorf("failed to get HTTPRoute %s with labels selector %s: namespace is not within watched namespaces", namespace, selector)
+		log.WithoutContext().Debugf("No HTTPRoute found in %q namespace with labels selector %s", namespace, selector)
 	}
 
 	return httpRoutes, nil
