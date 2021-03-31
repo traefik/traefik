@@ -2,13 +2,13 @@ package ecs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"text/template"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
@@ -261,20 +261,15 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 				}
 				taskArray, err := p.listTasks(ctx, client, input)
 				if err != nil {
+					var snfe *ecs.ServiceNotFoundException
+					var cnfe *ecs.ClusterNotFoundException
 					// Don't want to stop operations if a cluster or service was misstyped or went down so we just log it and move on
-					if aerr, ok := err.(awserr.Error); ok {
-						switch aerr.Code() {
-						case ecs.ErrCodeServiceNotFoundException:
-							logger.Errorf("Service not found: %s", service)
-							break
-						case ecs.ErrCodeClusterNotFoundException:
-							logger.Errorf("Cluster not found: %s", cluster)
-							break
-						default:
-							return nil, err
-						}
-					} else {
-						// If it's not an AWS Error, it's probably something worse so hand it up
+					switch {
+					case errors.As(err, &snfe):
+						logger.Errorf("Service not found: %s", service)
+					case errors.As(err, &cnfe):
+						logger.Errorf("Cluster not found: %s", cluster)
+					default:
 						return nil, err
 					}
 				}
@@ -289,15 +284,12 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 			}
 			taskArray, err := p.listTasks(ctx, client, input)
 			if err != nil {
-				if aerr, ok := err.(awserr.Error); ok {
-					switch aerr.Code() {
-					case ecs.ErrCodeClusterNotFoundException:
-						logger.Errorf("Cluster not found: %s", cluster)
-						break
-					default:
-						return nil, err
-					}
-				} else {
+				var cnfe *ecs.ClusterNotFoundException
+				// Don't want to stop operations if a cluster or service was misstyped or went down so we just log it and move on
+				switch {
+				case errors.As(err, &cnfe):
+					logger.Errorf("Cluster not found: %s", cluster)
+				default:
 					return nil, err
 				}
 			}
