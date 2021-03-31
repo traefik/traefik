@@ -469,7 +469,7 @@ The AWS credentials access key to use for making requests
 Auto discover cluster (Default: ```false```)
 
 `--providers.ecs.clusters`:  
-ECS Clusters name (Default: ```default```)
+ECS Cluster names (Default: ```default```)
 
 `--providers.ecs.constraints`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
@@ -488,6 +488,9 @@ The AWS region to use for requests
 
 `--providers.ecs.secretaccesskey`:  
 The AWS credentials access key to use for making requests
+
+`--providers.ecs.services`:  
+ECS Service names
 
 `--providers.etcd`:  
 Enable Etcd backend with default settings. (Default: ```false```)
