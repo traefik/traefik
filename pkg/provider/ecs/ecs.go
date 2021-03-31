@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
@@ -260,7 +261,22 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 				}
 				taskArray, err := p.listTasks(ctx, client, input)
 				if err != nil {
-					logger.Error(err)
+					// Don't want to stop operations if a cluster or service was misstyped or went down so we just log it and move on
+					if aerr, ok := err.(awserr.Error); ok {
+						switch aerr.Code() {
+						case ecs.ErrCodeServiceNotFoundException:
+							logger.Errorf("Service not found: %s", service)
+							break
+						case ecs.ErrCodeClusterNotFoundException:
+							logger.Errorf("Cluster not found: %s", cluster)
+							break
+						default:
+							return nil, err
+						}
+					} else {
+						// If it's not an AWS Error, it's probably something worse so hand it up
+						return nil, err
+					}
 				}
 				for _, t := range taskArray {
 					tasks[aws.StringValue(t.TaskArn)] = t
@@ -273,7 +289,17 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 			}
 			taskArray, err := p.listTasks(ctx, client, input)
 			if err != nil {
-				logger.Error(err)
+				if aerr, ok := err.(awserr.Error); ok {
+					switch aerr.Code() {
+					case ecs.ErrCodeClusterNotFoundException:
+						logger.Errorf("Cluster not found: %s", cluster)
+						break
+					default:
+						return nil, err
+					}
+				} else {
+					return nil, err
+				}
 			}
 			for _, t := range taskArray {
 				tasks[aws.StringValue(t.TaskArn)] = t
@@ -404,7 +430,6 @@ func (p *Provider) listTasks(ctx context.Context, client *awsClient, input *ecs.
 		return !lastPage
 	})
 	if err != nil {
-		logger.Errorf("%s", err)
 		return nil, err
 	}
 	return tasks, nil
