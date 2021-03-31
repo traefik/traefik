@@ -247,15 +247,16 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 	logger.Debugf("ECS Clusters: %s", clusters)
 	logger.Debugf("ECS Services: %s", services)
 	for _, c := range clusters {
+		cluster := c
 		var input *ecs.ListTasksInput
 		tasks := make(map[string]*ecs.Task)
 		if len(services) > 0 {
 			for _, s := range services {
-				logger.Debugf("Retrieving tasks for service: %s", s)
+				service := s
 				input = &ecs.ListTasksInput{
-					Cluster:       &c,
+					Cluster:       &cluster,
 					DesiredStatus: aws.String(ecs.DesiredStatusRunning),
-					ServiceName:   &s,
+					ServiceName:   &service,
 				}
 				taskArray, err := p.listTasks(ctx, client, input)
 				if err != nil {
@@ -267,7 +268,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 			}
 		} else {
 			input = &ecs.ListTasksInput{
-				Cluster:       &c,
+				Cluster:       &cluster,
 				DesiredStatus: aws.String(ecs.DesiredStatusRunning),
 			}
 			taskArray, err := p.listTasks(ctx, client, input)
