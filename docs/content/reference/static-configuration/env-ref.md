@@ -486,6 +486,9 @@ Polling interval (in seconds) (Default: ```15```)
 `TRAEFIK_PROVIDERS_ECS_REGION`:  
 The AWS region to use for requests
 
+`TRAEFIK_PROVIDERS_ECS_REQUIREHEALTHYTASK`:  
+Require a task to be in the healthy state (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_ECS_SECRETACCESSKEY`:  
 The AWS credentials access key to use for making requests
 
