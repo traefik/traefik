@@ -35,6 +35,7 @@ type Provider struct {
 	Clusters             []string `description:"ECS Cluster names" json:"clusters,omitempty" toml:"clusters,omitempty" yaml:"clusters,omitempty" export:"true"`
 	Services             []string `description:"ECS Service names" json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
 	AutoDiscoverClusters bool     `description:"Auto discover cluster" json:"autoDiscoverClusters,omitempty" toml:"autoDiscoverClusters,omitempty" yaml:"autoDiscoverClusters,omitempty" export:"true"`
+	RequireHealthyTask   bool     `description:"Require a task to be in the healthy state" json:"requireHealthyTask,omitempty" toml:"requireHealthyTask,omitempty" yaml:"requireHealthyTask,omitempty" export:"true"`
 	Region               string   `description:"The AWS region to use for requests"  json:"region,omitempty" toml:"region,omitempty" yaml:"region,omitempty" export:"true"`
 	AccessKeyID          string   `description:"The AWS credentials access key to use for making requests" json:"accessKeyID,omitempty" toml:"accessKeyID,omitempty" yaml:"accessKeyID,omitempty"`
 	SecretAccessKey      string   `description:"The AWS credentials access key to use for making requests" json:"secretAccessKey,omitempty" toml:"secretAccessKey,omitempty" yaml:"secretAccessKey,omitempty"`
@@ -81,6 +82,7 @@ func (p *Provider) SetDefaults() {
 	p.Clusters = []string{"default"}
 	p.Services = []string{}
 	p.AutoDiscoverClusters = false
+	p.RequireHealthyTask = false
 	p.ExposedByDefault = true
 	p.RefreshSeconds = 15
 	p.DefaultRule = DefaultTemplateRule
@@ -413,6 +415,12 @@ func (p *Provider) listTasks(ctx context.Context, client *awsClient, input *ecs.
 				logger.Errorf("Unable to describe tasks for %v", page.TaskArns)
 			} else {
 				for _, t := range resp.Tasks {
+					if p.RequireHealthyTask {
+						if aws.StringValue(t.HealthStatus) != ecs.HealthStatusHealthy {
+							logger.Debugf("Task %s not HealthStatus Healthy - skipping", *t.TaskArn)
+							continue
+						}
+					}
 					if aws.StringValue(t.LastStatus) == ecs.DesiredStatusRunning {
 						tasks = append(tasks, t)
 					}

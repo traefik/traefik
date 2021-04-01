@@ -486,6 +486,9 @@ Polling interval (in seconds) (Default: ```15```)
 `--providers.ecs.region`:  
 The AWS region to use for requests
 
+`--providers.ecs.requirehealthytask`:  
+Require a task to be in the healthy state (Default: ```false```)
+
 `--providers.ecs.secretaccesskey`:  
 The AWS credentials access key to use for making requests
 
