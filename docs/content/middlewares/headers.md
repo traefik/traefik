@@ -78,6 +78,8 @@ and responses are stripped of their `X-Custom-Response-Header` header.
 ```yaml tab="Docker"
 labels:
   - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
+  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header=\"\""
+  - "traefik.http.middlewares.testheader.headers.customResponseHeaders.X-Custom-Response-Header=\"\""
 ```
 
 ```yaml tab="Kubernetes"
@@ -96,17 +98,23 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
+- "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header=\"\""
+- "traefik.http.middlewares.testheader.headers.customResponseHeaders.X-Custom-Response-Header=\"\""
 ```
 
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name": "test",
+  "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header": "",
+  "traefik.http.middlewares.testheader.headers.customResponseHeaders.X-Custom-Response-Header": "",
 }
 ```
 
 ```yaml tab="Rancher"
 labels:
   - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
+  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header=\"\""
+  - "traefik.http.middlewares.testheader.headers.customResponseHeaders.X-Custom-Response-Header=\"\""
 ```
 
 ```toml tab="File (TOML)"
