@@ -17,6 +17,7 @@ TRAEFIK_IMAGE := $(if $(REPONAME),$(REPONAME),"traefik/traefik")
 
 INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)", -e "TEST_CONTAINER=1" -v "/var/run/docker.sock:/var/run/docker.sock")
 DOCKER_BUILD_ARGS := $(if $(DOCKER_VERSION), "--build-arg=DOCKER_VERSION=$(DOCKER_VERSION)",)
+DOCKER_BUILD_PLATFORMS ?= "linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6"
 
 TRAEFIK_ENVS := \
 	-e OS_ARCH_ARG \
@@ -56,6 +57,10 @@ dist:
 ## Build WebUI Docker image
 build-webui-image:
 	docker build -t traefik-webui --build-arg ARG_PLATFORM_URL=$(PLATFORM_URL) -f webui/Dockerfile webui
+
+## Build Multi archs Docker image
+build-multi-arch-image:
+	docker buildx build -t $(TRAEFIK_IMAGE) --platform=$(DOCKER_BUILD_PLATFORMS) --build-arg ARG_PLATFORM_URL=$(PLATFORM_URL) -f buildx.Dockerfile .
 
 ## Generate WebUI
 generate-webui: build-webui-image

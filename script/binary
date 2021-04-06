@@ -25,10 +25,14 @@ if [ -z "$DATE" ]; then
     DATE=$(date -u '+%Y-%m-%d_%I:%M:%S%p')
 fi
 
+if [ -z "$OUTPUT" ]; then
+    OUTPUT="dist/traefik"
+fi
+
 # Build binaries
 # shellcheck disable=SC2086
 CGO_ENABLED=0 GOGC=off go build ${FLAGS[*]} -ldflags "-s -w \
     -X github.com/traefik/traefik/v2/pkg/version.Version=$VERSION \
     -X github.com/traefik/traefik/v2/pkg/version.Codename=$CODENAME \
     -X github.com/traefik/traefik/v2/pkg/version.BuildDate=$DATE" \
-    -a -installsuffix nocgo -o dist/traefik ./cmd/traefik
+    -a -installsuffix nocgo -o $OUTPUT ./cmd/traefik
