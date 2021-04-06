@@ -54,6 +54,30 @@ func Test_addRoute(t *testing.T) {
 			},
 		},
 		{
+			desc:          "PathExcept empth",
+			rule:          "PathExcept(``)",
+			expectedError: true,
+		},
+		{
+			desc: "PathExcept",
+			rule: "PathExcept(`/danger`, `.+/secret$`)",
+			expected: map[string]int{
+				"http://localhost/danger":     http.StatusNotFound,
+				"http://localhost/foo":        http.StatusOK,
+				"http://localhost/foo/secret": http.StatusNotFound,
+			},
+		},
+		{
+			desc: "PathExcept hole punching",
+			rule: "PathPrefix(`/foo`) && PathExcept(`/baz$`)",
+			expected: map[string]int{
+				"http://localhost/foo":     http.StatusOK,
+				"http://localhost/foo/bar": http.StatusOK,
+				"http://localhost/foo/baz": http.StatusNotFound,
+				"http://localhost/bar":     http.StatusNotFound,
+			},
+		},
+		{
 			desc: "Host",
 			rule: "Host(`localhost`)",
 			expected: map[string]int{

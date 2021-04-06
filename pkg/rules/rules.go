@@ -3,6 +3,7 @@ package rules
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"unicode/utf8"
 
@@ -18,6 +19,7 @@ var funcs = map[string]func(*mux.Route, ...string) error{
 	"HostRegexp":    hostRegexp,
 	"Path":          path,
 	"PathPrefix":    pathPrefix,
+	"PathExcept":    pathExcept,
 	"Method":        methods,
 	"Headers":       headers,
 	"HeadersRegexp": headersRegexp,
@@ -98,6 +100,34 @@ func pathPrefix(route *mux.Route, paths ...string) error {
 			return tmpRt.GetError()
 		}
 	}
+	return nil
+}
+
+func pathExcept(route *mux.Route, paths ...string) error {
+	pathRegexps := make([]*regexp.Regexp, len(paths))
+	for i, path := range paths {
+		var err error
+		pathRegexps[i], err = regexp.Compile(path)
+		if err != nil {
+			return fmt.Errorf("invalid value %q for \"PathExcept\" matcher, must be a valid regular expression", path)
+		}
+	}
+
+	rt := route.Subrouter()
+
+	tmpRt := rt.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
+		reqPath := req.URL.EscapedPath()
+		for _, pathRegexp := range pathRegexps {
+			if pathRegexp.MatchString(reqPath) {
+				return false
+			}
+		}
+		return true
+	})
+	if tmpRt.GetError() != nil {
+		return tmpRt.GetError()
+	}
+
 	return nil
 }
 
