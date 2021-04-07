@@ -65,7 +65,9 @@ type PrometheusHandler struct{}
 
 // AddRoutes adds Prometheus routes on a router.
 func (h PrometheusHandler) AddRoutes(router *mux.Router) {
-	router.Methods(http.MethodGet).Path("/metrics").Handler(promhttp.Handler())
+	router.Methods(http.MethodGet).Path("/metrics").Handler(
+		promhttp.HandlerFor(promRegistry, promhttp.HandlerOpts{}),
+	)
 }
 
 // RegisterPrometheus registers all Prometheus metrics.
