@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.7.30](https://github.com/traefik/traefik/tree/v1.7.30) (2021-04-07)
+[All Commits](https://github.com/traefik/traefik/compare/v1.7.29...v1.7.30)
+
+**Bug fixes:**
+- **[metrics]** Prometheus: fixing prom Handler to use the custom registry ([#8040](https://github.com/traefik/traefik/pull/8040) by [tomMoulard](https://github.com/tomMoulard))
+
 ## [v1.7.29](https://github.com/traefik/traefik/tree/v1.7.29) (2021-03-22)
 [All Commits](https://github.com/traefik/traefik/compare/v1.7.28...v1.7.29)
 
