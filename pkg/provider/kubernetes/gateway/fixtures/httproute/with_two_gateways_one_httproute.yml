@@ -21,7 +21,7 @@ spec:
 kind: Gateway
 apiVersion: networking.x-k8s.io/v1alpha1
 metadata:
-  name: my-gateway
+  name: my-gateway-https
   namespace: default
 spec:
   gatewayClassName: my-gateway-class
@@ -38,7 +38,27 @@ spec:
         namespaces:
           from: Same
         selector:
-          app: foo
+          matchLabels:
+            app: foo
+
+---
+kind: Gateway
+apiVersion: networking.x-k8s.io/v1alpha1
+metadata:
+  name: my-gateway-http
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:  # Use GatewayClass defaults for listener definition.
+    - protocol: HTTP
+      port: 80
+      routes:
+        kind: HTTPRoute
+        namespaces:
+          from: Same
+        selector:
+          matchLabels:
+            app: foo
 
 ---
 kind: HTTPRoute

@@ -3,6 +3,7 @@ kind: GatewayClass
 apiVersion: networking.x-k8s.io/v1alpha1
 metadata:
   name: my-gateway-class
+  namespace: default
 spec:
   controller: traefik.io/gateway-controller
 
@@ -10,19 +11,40 @@ spec:
 kind: Gateway
 apiVersion: networking.x-k8s.io/v1alpha1
 metadata:
-  name: my-gateway
+  name: my-mixed-gateway
   namespace: default
 spec:
   gatewayClassName: my-gateway-class
   listeners:  # Use GatewayClass defaults for listener definition.
-    - protocol: HTTP
+    - protocol: TCP
+      port: 9000
+      routes:
+        kind: TCPRoute
+        selector:
+          matchLabels:
+            app: label-tcp-app-1
+    - protocol: TLS
       port: 80
       routes:
-        kind: HTTPRoute
-        namespaces:
-          from: Same
+        kind: TLSRoute
         selector:
-          app: foo
+          matchLabels:
+            app: label-http-app-1
+
+---
+kind: TLSRoute
+apiVersion: networking.x-k8s.io/v1alpha1
+metadata:
+  name: tls-app-1
+  namespace: default
+  labels:
+    app: label-tls-app-1
+spec:
+  rules:
+    - forwardTo:
+        - serviceName: whoamitcp
+          port: 9000
+          weight: 1
 
 ---
 kind: HTTPRoute
@@ -31,34 +53,14 @@ metadata:
   name: http-app-1
   namespace: default
   labels:
-    app: foo
+    app: label-http-app-1
 spec:
-  hostnames:
-    - "foo.com"
   rules:
     - matches:
         - path:
-            type: Prefix
-            value: /bar
-          headers:
-            type: Exact
-            values:
-              my-header: foo
-              my-header2: bar
-      forwardTo:
-        - serviceName: whoami
-          port: 80
-          weight: 1
-
-    - matches:
-        - path:
             type: Exact
             value: /bar
-          headers:
-            type: Exact
-            values:
-              my-header: bar
       forwardTo:
-        - serviceName: whoami
+        - serviceName: whoamitcp
           port: 80
           weight: 1

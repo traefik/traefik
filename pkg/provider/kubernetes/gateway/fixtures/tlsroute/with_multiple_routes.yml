@@ -14,6 +14,7 @@ kind: GatewayClass
 apiVersion: networking.x-k8s.io/v1alpha1
 metadata:
   name: my-gateway-class
+  namespace: default
 spec:
   controller: traefik.io/gateway-controller
 
@@ -21,50 +22,62 @@ spec:
 kind: Gateway
 apiVersion: networking.x-k8s.io/v1alpha1
 metadata:
-  name: my-gateway
+  name: my-tls-gateway
   namespace: default
 spec:
   gatewayClassName: my-gateway-class
   listeners:  # Use GatewayClass defaults for listener definition.
-    - protocol: HTTPS
-      port: 443
+    - protocol: TLS
+      port: 9000
       tls:
         certificateRef:
           kind: Secret
           name: supersecret
           group: core
       routes:
-        kind: HTTPRoute
-        namespaces:
-          from: Same
+        kind: TLSRoute
         selector:
-          app: foo
-    - protocol: HTTP
-      port: 80
+          matchLabels:
+            app: label-tls-app-1
+    - protocol: TLS
+      port: 10000
+      tls:
+        certificateRef:
+          kind: Secret
+          name: supersecret
+          group: core
       routes:
-        kind: HTTPRoute
-        namespaces:
-          from: Same
+        kind: TLSRoute
         selector:
-          app: foo
+          matchLabels:
+            app: label-tls-app-2
 
 ---
-kind: HTTPRoute
+kind: TLSRoute
 apiVersion: networking.x-k8s.io/v1alpha1
 metadata:
-  name: http-app-1
+  name: tls-app-1
   namespace: default
   labels:
-    app: foo
+    app: label-tls-app-1
 spec:
-  hostnames:
-    - "foo.com"
   rules:
-    - matches:
-        - path:
-            type: Exact
-            value: /bar
-      forwardTo:
-        - serviceName: whoami
-          port: 80
+    - forwardTo:
+        - serviceName: whoamitcp
+          port: 9000
+          weight: 1
+
+---
+kind: TLSRoute
+apiVersion: networking.x-k8s.io/v1alpha1
+metadata:
+  name: tls-app-2
+  namespace: default
+  labels:
+    app: label-tls-app-2
+spec:
+  rules:
+    - forwardTo:
+        - serviceName: whoamitcp
+          port: 10000
           weight: 1

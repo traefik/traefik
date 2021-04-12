@@ -35,6 +35,8 @@ type clientMock struct {
 	gatewayClasses []*v1alpha1.GatewayClass
 	gateways       []*v1alpha1.Gateway
 	httpRoutes     []*v1alpha1.HTTPRoute
+	tcpRoutes      []*v1alpha1.TCPRoute
+	tlsRoutes      []*v1alpha1.TLSRoute
 
 	watchChan chan interface{}
 }
@@ -63,6 +65,10 @@ func newClientMock(paths ...string) clientMock {
 				c.gateways = append(c.gateways, o)
 			case *v1alpha1.HTTPRoute:
 				c.httpRoutes = append(c.httpRoutes, o)
+			case *v1alpha1.TCPRoute:
+				c.tcpRoutes = append(c.tcpRoutes, o)
+			case *v1alpha1.TLSRoute:
+				c.tlsRoutes = append(c.tlsRoutes, o)
 			default:
 				panic(fmt.Sprintf("Unknown runtime object %+v %T", o, o))
 			}
@@ -134,6 +140,28 @@ func (c clientMock) GetHTTPRoutes(namespace string, selector labels.Selector) ([
 		}
 	}
 	return httpRoutes, nil
+}
+
+func (c clientMock) GetTCPRoutes(namespace string, selector labels.Selector) ([]*v1alpha1.TCPRoute, error) {
+	tcpRoutes := make([]*v1alpha1.TCPRoute, len(c.tcpRoutes))
+
+	for _, tcpRoute := range c.tcpRoutes {
+		if tcpRoute.Namespace == namespace && selector.Matches(labels.Set(tcpRoute.Labels)) {
+			tcpRoutes = append(tcpRoutes, tcpRoute)
+		}
+	}
+	return tcpRoutes, nil
+}
+
+func (c clientMock) GetTLSRoutes(namespace string, selector labels.Selector) ([]*v1alpha1.TLSRoute, error) {
+	tlsRoutes := make([]*v1alpha1.TLSRoute, len(c.tlsRoutes))
+
+	for _, tlsRoute := range c.tlsRoutes {
+		if tlsRoute.Namespace == namespace && selector.Matches(labels.Set(tlsRoute.Labels)) {
+			tlsRoutes = append(tlsRoutes, tlsRoute)
+		}
+	}
+	return tlsRoutes, nil
 }
 
 func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, error) {

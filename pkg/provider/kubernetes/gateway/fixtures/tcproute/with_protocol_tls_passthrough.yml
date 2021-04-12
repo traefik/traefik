@@ -15,40 +15,35 @@ metadata:
 spec:
   gatewayClassName: my-gateway-class
   listeners:  # Use GatewayClass defaults for listener definition.
-    - protocol: HTTP
-      port: 80
+    - protocol: TLS
+      port: 9001
+      hostname: foo.example.com
+      tls:
+        mode: Passthrough
+        # certificateRef is ignored with mode "Passthrough"
+        certificateRef:
+          kind: Secret
+          name: supersecret
+          group: core
       routes:
-        kind: HTTPRoute
+        kind: TCPRoute
         namespaces:
           from: Same
         selector:
-          app: foo
+          matchLabels:
+            app: tcp-app
 
 ---
-kind: HTTPRoute
+kind: TCPRoute
 apiVersion: networking.x-k8s.io/v1alpha1
 metadata:
-  name: http-app-1
+  name: tcp-app-1
   namespace: default
   labels:
-    app: foo
+    app: tcp-app
 spec:
-  hostnames:
-    - "foo.com"
   rules:
-    - matches:
-        - path:
-            type: Exact
-            value: /bar
-      forwardTo:
-        - serviceName: whoami
-          port: 80
-          weight: 1
-    - matches:
-        - path:
-            type: Exact
-            value: /bir
-      forwardTo:
-        - serviceName: whoami2
-          port: 8080
+    - forwardTo:
+        - serviceName: whoamitcp
+          port: 9000
           weight: 1

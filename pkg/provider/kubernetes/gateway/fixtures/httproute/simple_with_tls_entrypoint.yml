@@ -16,13 +16,14 @@ spec:
   gatewayClassName: my-gateway-class
   listeners:  # Use GatewayClass defaults for listener definition.
     - protocol: HTTP
-      port: 80
+      port: 443
       routes:
         kind: HTTPRoute
         namespaces:
           from: Same
         selector:
-          app: foo
+          matchLabels:
+            app: foo
 
 ---
 kind: HTTPRoute
@@ -41,9 +42,6 @@ spec:
             type: Exact
             value: /bar
       forwardTo:
-        - weight: 1
-          backendRef:
-            group: traefik.containo.us
-            kind: TraefikService
-            name: api@internal
+        - serviceName: whoami
           port: 80
+          weight: 1
