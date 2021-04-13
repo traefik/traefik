@@ -68,17 +68,17 @@ Enable metrics on routers.
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.datadog]
-    AddRoutersLabels = true
+    addRoutersLabels = true
 ```
 
 ```yaml tab="File (YAML)"
 metrics:
   datadog:
-    AddRoutersLabels: true
+    addRoutersLabels: true
 ```
 
 ```bash tab="CLI"
---metrics.datadog.AddRoutersLabels=true
+--metrics.datadog.addrouterslabels=true
 ```
 
 #### `addServicesLabels`

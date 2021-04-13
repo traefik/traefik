@@ -189,20 +189,20 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 	if config.AddRoutersLabels {
 		routerReqs := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
 			Name: routerReqsTotalName,
-			Help: "How many HTTP requests processed on an router, partitioned by service, status code, protocol, and method.",
+			Help: "How many HTTP requests are processed on a router, partitioned by service, status code, protocol, and method.",
 		}, []string{"code", "method", "protocol", "router", "service"})
 		routerReqsTLS := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
 			Name: routerReqsTLSTotalName,
-			Help: "How many HTTP requests with TLS processed on an router, partitioned by service, TLS Version and TLS cipher Used.",
+			Help: "How many HTTP requests with TLS are processed on a router, partitioned by service, TLS Version, and TLS cipher Used.",
 		}, []string{"tls_version", "tls_cipher", "router", "service"})
 		routerReqDurations := newHistogramFrom(promState.collectors, stdprometheus.HistogramOpts{
 			Name:    routerReqDurationName,
-			Help:    "How long it took to process the request on an router, partitioned by service, status code, protocol, and method.",
+			Help:    "How long it took to process the request on a router, partitioned by service, status code, protocol, and method.",
 			Buckets: buckets,
 		}, []string{"code", "method", "protocol", "router", "service"})
 		routerOpenConns := newGaugeFrom(promState.collectors, stdprometheus.GaugeOpts{
 			Name: routerOpenConnsName,
-			Help: "How many open connections exist on an router, partitioned by service, method and protocol.",
+			Help: "How many open connections exist on a router, partitioned by service, method, and protocol.",
 		}, []string{"method", "protocol", "router", "service"})
 
 		promState.describers = append(promState.describers, []func(chan<- *stdprometheus.Desc){

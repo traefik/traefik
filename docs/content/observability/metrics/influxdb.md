@@ -179,17 +179,17 @@ Enable metrics on routers.
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.influxDB]
-    AddRoutersLabels = true
+    addRoutersLabels = true
 ```
 
 ```yaml tab="File (YAML)"
 metrics:
   influxDB:
-    AddRoutersLabels: true
+    addRoutersLabels: true
 ```
 
 ```bash tab="CLI"
---metrics.influxdb.AddRoutersLabels=true
+--metrics.influxdb.addrouterslabels=true
 ```
 
 #### `addServicesLabels`

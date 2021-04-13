@@ -73,17 +73,17 @@ Enable metrics on routers.
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.prometheus]
-    AddRoutersLabels = true
+    addRoutersLabels = true
 ```
 
 ```yaml tab="File (YAML)"
 metrics:
   prometheus:
-    AddRoutersLabels: true
+    addRoutersLabels: true
 ```
 
 ```bash tab="CLI"
---metrics.prometheus.AddRoutersLabels=true
+--metrics.prometheus.addrouterslabels=true
 ```
 
 #### `addServicesLabels`

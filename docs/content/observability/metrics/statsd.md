@@ -69,17 +69,17 @@ Enable metrics on entry points.
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.statsD]
-    AddRoutersLabels = true
+    addRoutersLabels = true
 ```
 
 ```yaml tab="File (YAML)"
 metrics:
   statsD:
-    AddRoutersLabels: true
+    addRoutersLabels: true
 ```
 
 ```bash tab="CLI"
---metrics.statsd.AddRoutersLabels=true
+--metrics.statsd.addrouterslabels=true
 ```
 
 #### `addServicesLabels`
