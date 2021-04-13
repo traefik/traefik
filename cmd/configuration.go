@@ -235,7 +235,6 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 			HTTPEndpoint: "http://localhost:9411/api/v1/spans",
 			SameSpan:     false,
 			ID128Bit:     true,
-			Debug:        false,
 		},
 		DataDog: &datadog.Config{
 			LocalAgentHostPort: "localhost:8126",

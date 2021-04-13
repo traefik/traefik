@@ -101,12 +101,6 @@ Traefik supports three tracing backends: Jaeger, Zipkin and DataDog.
     #
     httpEndpoint = "http://localhost:9411/api/v1/spans"
 
-    # Enable Zipkin debug
-    #
-    # Default: false
-    #
-    debug = false
-
     # Use ZipKin SameSpan RPC style traces
     #
     # Default: false

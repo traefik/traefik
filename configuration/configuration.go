@@ -357,7 +357,6 @@ func (gc *GlobalConfiguration) initTracing() {
 					HTTPEndpoint: "http://localhost:9411/api/v1/spans",
 					SameSpan:     false,
 					ID128Bit:     true,
-					Debug:        false,
 				}
 			}
 			if gc.Tracing.Jaeger != nil {

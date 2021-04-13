@@ -1,46 +1,75 @@
 package zipkin
 
 import (
+	"github.com/sirupsen/logrus"
+	"github.com/traefik/traefik/log"
 	"io"
+	fmtlog "log"
+	"time"
 
 	"github.com/opentracing/opentracing-go"
-	zipkin "github.com/openzipkin-contrib/zipkin-go-opentracing"
-	"github.com/traefik/traefik/log"
+	zipkinot "github.com/openzipkin-contrib/zipkin-go-opentracing"
+	"github.com/openzipkin/zipkin-go"
+	"github.com/openzipkin/zipkin-go/reporter/http"
 )
 
-// Name sets the name of this tracer
+// Name sets the name of this tracer.
 const Name = "zipkin"
 
-// Config provides configuration settings for a zipkin tracer
+// Config provides configuration settings for a zipkin tracer.
 type Config struct {
-	HTTPEndpoint string `description:"HTTP Endpoint to report traces to." export:"false"`
-	SameSpan     bool   `description:"Use ZipKin SameSpan RPC style traces." export:"true"`
-	ID128Bit     bool   `description:"Use ZipKin 128 bit root span IDs." export:"true"`
-	Debug        bool   `description:"Enable Zipkin debug." export:"true"`
+	HTTPEndpoint string `description:"HTTP Endpoint to report traces to." json:"httpEndpoint,omitempty" toml:"httpEndpoint,omitempty" yaml:"httpEndpoint,omitempty"`
+	SameSpan     bool   `description:"Use Zipkin SameSpan RPC style traces." json:"sameSpan,omitempty" toml:"sameSpan,omitempty" yaml:"sameSpan,omitempty" export:"true"`
+	ID128Bit     bool   `description:"Use Zipkin 128 bit root span IDs." json:"id128Bit,omitempty" toml:"id128Bit,omitempty" yaml:"id128Bit,omitempty" export:"true"`
 }
 
-// Setup sets up the tracer
-func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
-	collector, err := zipkin.NewHTTPCollector(c.HTTPEndpoint)
-	if err != nil {
-		return nil, nil, err
-	}
-	recorder := zipkin.NewRecorder(collector, c.Debug, "0.0.0.0:0", serviceName)
-	tracer, err := zipkin.NewTracer(
-		recorder,
-		zipkin.ClientServerSameSpan(c.SameSpan),
-		zipkin.TraceID128Bit(c.ID128Bit),
-		zipkin.DebugMode(c.Debug),
-	)
+// SetDefaults sets the default values.
+func (c *Config) SetDefaults() {
+	c.HTTPEndpoint = "http://localhost:9411/api/v2/spans"
+	c.SameSpan = false
+	c.ID128Bit = true
+}
 
+// Setup sets up the tracer.
+func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
+	// create our local endpoint
+	endpoint, err := zipkin.NewEndpoint(serviceName, "0.0.0.0:0")
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// create our sampler
+	sampleRate := 1.0
+	sampler, err := zipkin.NewBoundarySampler(sampleRate, time.Now().Unix())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// create error logger (http.Reporter only logs errors)
+	errLogger := fmtlog.New(log.WriterLevel(logrus.ErrorLevel), "zipkin: ", 0)
+
+	// create the span reporter
+	reporter := http.NewReporter(c.HTTPEndpoint, http.Logger(errLogger))
+
+	// create the native Zipkin tracer
+	nativeTracer, err := zipkin.NewTracer(
+		reporter,
+		zipkin.WithLocalEndpoint(endpoint),
+		zipkin.WithSharedSpans(c.SameSpan),
+		zipkin.WithTraceID128Bit(c.ID128Bit),
+		zipkin.WithSampler(sampler),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// wrap the Zipkin native tracer with the OpenTracing Bridge
+	tracer := zipkinot.Wrap(nativeTracer)
 
 	// Without this, child spans are getting the NOOP tracer
 	opentracing.SetGlobalTracer(tracer)
 
 	log.Debug("Zipkin tracer configured")
 
-	return tracer, collector, nil
+	return tracer, reporter, nil
 }

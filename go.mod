@@ -41,7 +41,7 @@ require (
 	github.com/emicklei/go-restful v1.1.4-0.20160814184150-89ef8af493ab // indirect
 	github.com/fatih/color v1.5.1-0.20170523202404-62e9147c64a1 // indirect
 	github.com/gambol99/go-marathon v0.7.2-0.20180614232016-99a156b96fb2
-	github.com/go-acme/lego/v3 v3.0.1
+	github.com/go-acme/lego/v3 v3.0.2
 	github.com/go-check/check v0.0.0-00010101000000-000000000000
 	github.com/go-kit/kit v0.8.0
 	github.com/go-openapi/jsonpointer v0.0.0-20160704185906-46af16f9f7b1 // indirect
@@ -49,7 +49,7 @@ require (
 	github.com/go-openapi/spec v0.0.0-20160808142527-6aced65f8501 // indirect
 	github.com/go-openapi/swag v0.0.0-20160704191624-1d0bd113de87 // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
-	github.com/golang/protobuf v1.3.2
+	github.com/golang/protobuf v1.4.2
 	github.com/google/go-github v9.0.0+incompatible
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.1.1
@@ -85,15 +85,15 @@ require (
 	github.com/ogier/pflag v0.0.2-0.20160129220114-45c278ab3607
 	github.com/opencontainers/image-spec v1.0.0-rc5.0.20170515205857-f03dbe35d449 // indirect
 	github.com/opencontainers/runc v1.0.0-rc3.0.20170425215914-b6b70e534517 // indirect
-	github.com/opentracing-contrib/go-observer v0.0.0-20170622124052-a52f23424492 // indirect
-	github.com/opentracing/opentracing-go v1.0.2
-	github.com/openzipkin-contrib/zipkin-go-opentracing v0.3.5
+	github.com/opentracing/opentracing-go v1.1.0
+	github.com/openzipkin-contrib/zipkin-go-opentracing v0.4.5
+	github.com/openzipkin/zipkin-go v0.2.5
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/philhofer/fwd v1.0.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.1.0
-	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90
+	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4
 	github.com/rancher/go-rancher v0.1.1-0.20171004213057-52e2f4895340
 	github.com/rancher/go-rancher-metadata v0.0.0-00010101000000-000000000000
 	github.com/ryanuber/go-glob v1.0.0
@@ -119,7 +119,7 @@ require (
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	golang.org/x/net v0.0.0-20190923162816-aa69164e4478
 	golang.org/x/sys v0.0.0-20191115151921-52ab43148777 // indirect
-	google.golang.org/grpc v1.22.1
+	google.golang.org/grpc v1.30.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.13.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/inf.v0 v0.9.0 // indirect
@@ -137,5 +137,6 @@ replace (
 	github.com/go-check/check => github.com/containous/check v0.0.0-20170915194414-ca0bf163426a
 	github.com/mesosphere/mesos-dns => github.com/containous/mesos-dns v0.5.3-rc1.0.20160623212649-b47dc4c19f21
 	github.com/rancher/go-rancher-metadata => github.com/containous/go-rancher-metadata v0.0.0-20180116133453-e937e8308985
+	google.golang.org/grpc => google.golang.org/grpc v1.22.1
 	gopkg.in/fsnotify.v1 => github.com/fsnotify/fsnotify v1.4.2
 )

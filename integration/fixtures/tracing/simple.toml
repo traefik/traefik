@@ -13,7 +13,7 @@ debug = true
   backend = "{{.TracingBackend}}"
   servicename = "tracing"
     [tracing.zipkin]
-      httpEndpoint = "http://{{.ZipkinIP}}:9411/api/v1/spans"
+      httpEndpoint = "http://{{.ZipkinIP}}:9411/api/v2/spans"
       debug = true
     [tracing.jaeger]
       samplingType = "const"

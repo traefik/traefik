@@ -137,7 +137,6 @@ func TestSetEffectiveConfigurationTracing(t *testing.T) {
 					HTTPEndpoint: "http://localhost:9411/api/v1/spans",
 					SameSpan:     false,
 					ID128Bit:     true,
-					Debug:        false,
 				},
 			},
 			expected: &tracing.Tracing{
@@ -171,7 +170,6 @@ func TestSetEffectiveConfigurationTracing(t *testing.T) {
 					HTTPEndpoint: "http://localhost:9411/api/v1/spans",
 					SameSpan:     false,
 					ID128Bit:     true,
-					Debug:        false,
 				},
 			},
 		},
@@ -190,7 +188,6 @@ func TestSetEffectiveConfigurationTracing(t *testing.T) {
 					HTTPEndpoint: "http://powpow:9411/api/v1/spans",
 					SameSpan:     true,
 					ID128Bit:     true,
-					Debug:        true,
 				},
 			},
 			expected: &tracing.Tracing{
@@ -200,7 +197,6 @@ func TestSetEffectiveConfigurationTracing(t *testing.T) {
 					HTTPEndpoint: "http://powpow:9411/api/v1/spans",
 					SameSpan:     true,
 					ID128Bit:     true,
-					Debug:        true,
 				},
 			},
 		},
