@@ -73,7 +73,7 @@ This provider is proposed as an experimental feature and partially supports the 
 
 The Kubernetes Gateway API project provides several [guides](https://gateway-api.sigs.k8s.io/guides/) on how to use the APIs.
 These guides can help you to go further than the example above.
-The [getting started guide](https://gateway-api.sigs.k8s.io/getting-started/) details how to install the CRDs from their repository.
+The [getting started guide](https://gateway-api.sigs.k8s.io/guides/getting-started/) details how to install the CRDs from their repository.
 
 !!! note ""
 
@@ -81,9 +81,9 @@ The [getting started guide](https://gateway-api.sigs.k8s.io/getting-started/) de
 
 For now, the Traefik Gateway Provider can be used while following the below guides:
 
-* [Simple Gateway](https://gateway-api.sigs.k8s.io/simple-gateway/)
-* [HTTP routing](https://gateway-api.sigs.k8s.io/http-routing/)
-* [TLS](https://gateway-api.sigs.k8s.io/tls/) (Partial support: only on listeners with terminate mode)
+* [Simple Gateway](https://gateway-api.sigs.k8s.io/guides/simple-gateway/)
+* [HTTP routing](https://gateway-api.sigs.k8s.io/guides/http-routing/)
+* [TLS](https://gateway-api.sigs.k8s.io/guides/tls/) (Partial support: only on listeners with terminate mode)
 
 ## Resource Configuration
 
@@ -91,7 +91,7 @@ When using Kubernetes Gateway API as a provider, Traefik uses Kubernetes
 [Custom Resource Definitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)
 to retrieve its routing configuration.
 
-All concepts can be found in the official API concepts [documentation](https://gateway-api.sigs.k8s.io/api-overview/).
+All concepts can be found in the official API concepts [documentation](https://gateway-api.sigs.k8s.io/concepts/api-overview/).
 Traefik implements the following resources:
 
 * `GatewayClass` defines a set of Gateways that share a common configuration and behaviour.
