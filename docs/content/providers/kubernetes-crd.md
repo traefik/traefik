@@ -3,10 +3,11 @@
 The Kubernetes Ingress Controller, The Custom Resource Way.
 {: .subtitle }
 
-Traefik used to support Kubernetes only through the [Kubernetes Ingress provider](./kubernetes-ingress.md), which is a Kubernetes Ingress controller in the strict sense of the term.
+In early versions, Traefik supported Kubernetes only through the [Kubernetes Ingress provider](./kubernetes-ingress.md), which is a Kubernetes Ingress controller in the strict sense of the term.
 
 However, as the community expressed the need to benefit from Traefik features without resorting to (lots of) annotations,
-we ended up writing a [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (alias CRD in the following) for an IngressRoute type, defined below, in order to provide a better way to configure access to a Kubernetes cluster.
+the Traefik engineering team developed a [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)
+(CRD) for an IngressRoute type, defined below, in order to provide a better way to configure access to a Kubernetes cluster.
 
 ## Configuration Requirements
 
@@ -17,13 +18,19 @@ we ended up writing a [Custom Resource Definition](https://kubernetes.io/docs/co
     * Use [Helm Chart](../getting-started/install-traefik.md#use-the-helm-chart) or use a custom Traefik Deployment 
         * Enable the kubernetesCRD provider
         * Apply the needed kubernetesCRD provider [configuration](#provider-configuration)
-    * Add all needed traefik custom [resources](../reference/dynamic-configuration/kubernetes-crd.md#resources)
- 
+    * Add all necessary Traefik custom [resources](../reference/dynamic-configuration/kubernetes-crd.md#resources)
+
+!!! warning "Deprecated apiextensions.k8s.io/v1beta1 CRD"
+
+    The `apiextensions.k8s.io/v1beta1` CustomResourceDefinition is deprecated in Kubernetes `v1.16+` and will be removed in `v1.22+`.
+    
+    For Kubernetes `v1.16+`, please use the Traefik `apiextensions.k8s.io/v1` CRDs instead.
+
 ??? example "Initializing Resource Definition and RBAC"
 
     ```yaml tab="Traefik Resource Definition"
     # All resources definition must be declared
-    --8<-- "content/reference/dynamic-configuration/kubernetes-crd-definition.yml"
+    --8<-- "content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml"
     ```
 
     ```yaml tab="RBAC for Traefik CRD"
@@ -37,13 +44,11 @@ Traefik uses [Custom Resource Definition](https://kubernetes.io/docs/concepts/ex
 Traefik Custom Resource Definitions are a Kubernetes implementation of the Traefik concepts. The main particularities are:
 
 * The usage of `name` **and** `namespace` to refer to another Kubernetes resource.
-* The usage of [secret](https://kubernetes.io/docs/concepts/configuration/secret/) for sensible data like:
-    * TLS certificate.
-    * Authentication data.
+* The usage of [secret](https://kubernetes.io/docs/concepts/configuration/secret/) for sensitive data (TLS certificates and credentials).
 * The structure of the configuration.
-* The obligation to declare all the [definitions](../reference/dynamic-configuration/kubernetes-crd.md#definitions).
+* The requirement to declare all the [definitions](../reference/dynamic-configuration/kubernetes-crd.md#definitions).
 
-The Traefik CRD are building blocks which you can assemble according to your needs.
+The Traefik CRDs are building blocks that you can assemble according to your needs.
 See the list of CRDs in the dedicated [routing section](../routing/providers/kubernetes-crd.md).
 
 ## LetsEncrypt Support with the Custom Resource Definition Provider
@@ -51,23 +56,36 @@ See the list of CRDs in the dedicated [routing section](../routing/providers/kub
 By design, Traefik is a stateless application, meaning that it only derives its configuration from the environment it runs in, without additional configuration.
 For this reason, users can run multiple instances of Traefik at the same time to achieve HA, as is a common pattern in the kubernetes ecosystem.
 
-When using a single instance of Traefik with LetsEncrypt, no issues should be encountered, however this could be a single point of failure.
-Unfortunately, it is not possible to run multiple instances of Traefik 2.0 with LetsEncrypt enabled, because there is no way to ensure that the correct instance of Traefik will receive the challenge request, and subsequent responses.
-Previous versions of Traefik used a [KV store](https://doc.traefik.io/traefik/v1.7/configuration/acme/#storage) to attempt to achieve this, but due to sub-optimal performance was dropped as a feature in 2.0.
+When using a single instance of Traefik with Let's Encrypt, you should encounter no issues. However, this could be a single point of failure.
+Unfortunately, it is not possible to run multiple instances of Traefik Proxy 2.0 with Let's Encrypt enabled, because there is no way to ensure that the correct instance of Traefik will receive the challenge request and subsequent responses.
+Previous versions of Traefik used a [KV store](https://doc.traefik.io/traefik/v1.7/configuration/acme/#storage) to attempt to achieve this, but due to sub-optimal performance that feature was dropped in 2.0.
 
-If you require LetsEncrypt with HA in a kubernetes environment, we recommend using [Traefik Enterprise](https://traefik.io/traefik-enterprise/) where distributed LetsEncrypt is a supported feature.
+If you need Let's Encrypt with HA in a Kubernetes environment, we recommend using [Traefik Enterprise](https://traefik.io/traefik-enterprise/), which includes distributed Let's Encrypt as a supported feature.
 
-If you want to continue to run Traefik Community Edition, LetsEncrypt HA can be achieved by using a Certificate Controller such as [Cert-Manager](https://docs.cert-manager.io/en/latest/index.html).
-When using Cert-Manager to manage certificates, it will create secrets in your namespaces that can be referenced as TLS secrets in your [ingress objects](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls).
-When using the Traefik Kubernetes CRD Provider, unfortunately Cert-Manager cannot interface directly with the CRDs _yet_, but this is being worked on by our team.
+If you want to keep using Traefik Proxy, high availability for Let's Encrypt can be achieved by using a Certificate Controller such as [Cert-Manager](https://docs.cert-manager.io/en/latest/index.html).
+When using Cert-Manager to manage certificates, it creates secrets in your namespaces that can be referenced as TLS secrets in your [ingress objects](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls).
+When using the Traefik Kubernetes CRD Provider, unfortunately Cert-Manager cannot yet interface directly with the CRDs.
 A workaround is to enable the [Kubernetes Ingress provider](./kubernetes-ingress.md) to allow Cert-Manager to create ingress objects to complete the challenges.
-Please note that this still requires manual intervention to create the certificates through Cert-Manager, but once created, Cert-Manager will keep the certificate renewed.
+Please note that this still requires manual intervention to create the certificates through Cert-Manager, but once the certificates are created, Cert-Manager keeps them renewed.
 
 ## Provider Configuration
 
 ### `endpoint`
 
-_Optional, Default=empty_
+_Optional, Default=""_
+
+The Kubernetes server endpoint URL.
+
+When deployed into Kubernetes, Traefik reads the environment variables `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT` or `KUBECONFIG` to construct the endpoint.
+
+The access token is looked up in `/var/run/secrets/kubernetes.io/serviceaccount/token` and the SSL CA certificate in `/var/run/secrets/kubernetes.io/serviceaccount/ca.crt`.
+Both are mounted automatically when deployed inside Kubernetes.
+
+The endpoint may be specified to override the environment variable values inside a cluster.
+
+When the environment variables are not found, Traefik tries to connect to the Kubernetes API server with an external-cluster client.
+In this case, the endpoint is required.
+Specifically, it may be set to the URL used by `kubectl proxy` to connect to a Kubernetes cluster using the granted authentication and authorization of the associated kubeconfig.
 
 ```toml tab="File (TOML)"
 [providers.kubernetesCRD]
@@ -86,22 +104,11 @@ providers:
 --providers.kubernetescrd.endpoint=http://localhost:8080
 ```
 
-The Kubernetes server endpoint as URL.
-
-When deployed into Kubernetes, Traefik will read the environment variables `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT` or `KUBECONFIG` to construct the endpoint.
-
-The access token will be looked up in `/var/run/secrets/kubernetes.io/serviceaccount/token` and the SSL CA certificate in `/var/run/secrets/kubernetes.io/serviceaccount/ca.crt`.
-Both are provided mounted automatically when deployed inside Kubernetes.
-
-The endpoint may be specified to override the environment variable values inside a cluster.
-
-When the environment variables are not found, Traefik will try to connect to the Kubernetes API server with an external-cluster client.
-In this case, the endpoint is required.
-Specifically, it may be set to the URL used by `kubectl proxy` to connect to a Kubernetes cluster using the granted authentication and authorization of the associated kubeconfig.
-
 ### `token`
 
-_Optional, Default=empty_
+_Optional, Default=""_
+
+Bearer token used for the Kubernetes client configuration.
 
 ```toml tab="File (TOML)"
 [providers.kubernetesCRD]
@@ -120,11 +127,12 @@ providers:
 --providers.kubernetescrd.token=mytoken
 ```
 
-Bearer token used for the Kubernetes client configuration.
-
 ### `certAuthFilePath`
 
-_Optional, Default=empty_
+_Optional, Default=""_
+
+Path to the certificate authority file.
+Used for the Kubernetes client configuration.
 
 ```toml tab="File (TOML)"
 [providers.kubernetesCRD]
@@ -143,12 +151,12 @@ providers:
 --providers.kubernetescrd.certauthfilepath=/my/ca.crt
 ```
 
-Path to the certificate authority file.
-Used for the Kubernetes client configuration.
-
 ### `namespaces`
 
-_Optional, Default: all namespaces (empty array)_
+_Optional, Default: []_
+
+Array of namespaces to watch.
+If left empty, watches all namespaces if the value of `namespaces`.
 
 ```toml tab="File (TOML)"
 [providers.kubernetesCRD]
@@ -169,11 +177,20 @@ providers:
 --providers.kubernetescrd.namespaces=default,production
 ```
 
-Array of namespaces to watch.
-
 ### `labelselector`
 
-_Optional,Default: empty (process all resources)_
+_Optional, Default: ""_
+
+A label selector can be defined to filter on specific resource objects only,
+this applies only to Traefik [Custom Resources](../routing/providers/kubernetes-crd.md#custom-resource-definition-crd)
+and has no effect on Kubernetes `Secrets`, `Endpoints` and `Services`.
+If left empty, Traefik processes all resource objects in the configured namespaces.
+
+See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
+
+!!! warning
+
+    Because the label selector is applied to all Traefik Custom Resources, they all must match the filter.
 
 ```toml tab="File (TOML)"
 [providers.kubernetesCRD]
@@ -192,20 +209,14 @@ providers:
 --providers.kubernetescrd.labelselector="app=traefik"
 ```
 
-By default, Traefik processes all resource objects in the configured namespaces.
-A label selector can be defined to filter on specific resource objects only,
-this will apply only on Traefik [Custom Resources](../routing/providers/kubernetes-crd.md#custom-resource-definition-crd)
-and has no effect on Kubernetes `Secrets`, `Endpoints` and `Services`.
-
-See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
-
-!!! warning
-
-    As the LabelSelector is applied to all Traefik Custom Resources, they all must match the filter. 
-
 ### `ingressClass`
 
-_Optional, Default: empty_
+_Optional, Default: ""_
+
+Value of `kubernetes.io/ingress.class` annotation that identifies resource objects to be processed.
+
+If the parameter is set, only resources containing an annotation with the same value are processed.
+Otherwise, resources missing the annotation, having an empty value, or the value `traefik` are processed.
 
 ```toml tab="File (TOML)"
 [providers.kubernetesCRD]
@@ -224,14 +235,17 @@ providers:
 --providers.kubernetescrd.ingressclass=traefik-internal
 ```
 
-Value of `kubernetes.io/ingress.class` annotation that identifies resource objects to be processed.
-
-If the parameter is non-empty, only resources containing an annotation with the same value are processed.
-Otherwise, resources missing the annotation, having an empty value, or the value `traefik` are processed.
-
 ### `throttleDuration`
 
-_Optional, Default: 0 (no throttling)_
+_Optional, Default: 0_
+
+The `throttleDuration` option defines how often the provider is allowed to handle events from Kubernetes. This prevents
+a Kubernetes cluster that updates many times per second from continuously changing your Traefik configuration.
+
+If left empty, the provider does not apply any throttling and does not drop any Kubernetes events.
+
+The value of `throttleDuration` should be provided in seconds or as a valid duration format,
+see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).
 
 ```toml tab="File (TOML)"
 [providers.kubernetesCRD]
@@ -254,6 +268,12 @@ providers:
 
 _Optional, Default: true_
 
+If the parameter is set to `false`, IngressRoutes are not able to reference any resources in other namespaces than theirs.
+
+!!! warning "Deprecation"
+
+    Please note that the default value for this option will be set to `false` in a future version.
+
 ```toml tab="File (TOML)"
 [providers.kubernetesCRD]
   allowCrossNamespace = false
@@ -271,13 +291,6 @@ providers:
 --providers.kubernetescrd.allowCrossNamespace=false
 ```
 
-If the parameter is set to `false`, an IngressRoute will not be able to reference any resources
-in another namespace than the IngressRoute namespace.
+## Full Example
 
-!!! warning "Deprecation"
-    
-    Please notice that the default value for this option will be set to `false` in a future version.
-
-## Further
-
-Also see the [full example](../user-guides/crd-acme/index.md) with Let's Encrypt.
+For additional information, refer to the [full example](../user-guides/crd-acme/index.md) with Let's Encrypt.

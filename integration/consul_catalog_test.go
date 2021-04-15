@@ -482,10 +482,10 @@ func (s *ConsulCatalogSuite) TestSameServiceIDOnDifferentConsulAgent(c *check.C)
 			s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress))
 	c.Assert(err, checker.IsNil)
 
-	err = s.deregisterService("whoami1", false)
+	err = s.deregisterService("whoami", false)
 	c.Assert(err, checker.IsNil)
 
-	err = s.deregisterService("whoami2", true)
+	err = s.deregisterService("whoami", true)
 	c.Assert(err, checker.IsNil)
 }
 

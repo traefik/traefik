@@ -235,16 +235,22 @@ The table below lists all the available matchers:
 | ```Host(`example.com`, ...)```                                         | Check if the request domain (host header value) targets one of the given `domains`.                            |
 | ```HostHeader(`example.com`, ...)```                                   | Check if the request domain (host header value) targets one of the given `domains`.                            |
 | ```HostRegexp(`example.com`, `{subdomain:[a-z]+}.example.com`, ...)``` | Check if the request domain matches the given `regexp`.                                                        |
-| ```Method(`GET`, ...)```                                               | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`)            |
+| ```Method(`GET`, ...)```                                               | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `HEAD`)    |
 | ```Path(`/path`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`, ...)```         | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
 | ```PathPrefix(`/products/`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`)```   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
 | ```Query(`foo=bar`, `bar=baz`)```                                      | Match Query String parameters. It accepts a sequence of key=value pairs.                                       |
 
+!!! important "Non-ASCII Domain Names"
+
+    Non-ASCII characters are not supported in `Host` and `HostRegexp` expressions, and by doing so the associated router will be invalid.
+    For the `Host` expression, domain names containing non-ASCII characters must be provided as punycode encoded values ([rfc 3492](https://tools.ietf.org/html/rfc3492)).
+    As well, when using the `HostRegexp` expressions, in order to match domain names containing non-ASCII characters, the regular expression should match a punycode encoded domain name.
+
 !!! important "Regexp Syntax"
 
-    In order to use regular expressions with `Host` and `Path` expressions,
-    you must declare an arbitrarily named variable followed by the colon-separated regular expression, all enclosed in curly braces.
-    Any pattern supported by [Go's regexp package](https://golang.org/pkg/regexp/) may be used (example: `/posts/{id:[0-9]+}`).
+    `HostRegexp` and `Path` accept an expression with zero or more groups enclosed by curly braces.
+    Named groups can be like `{name:pattern}` that matches the given regexp pattern or like `{name}` that matches anything until the next dot.
+    Any pattern supported by [Go's regexp package](https://golang.org/pkg/regexp/) may be used (example: `{subdomain:[a-z]+}.{domain}.com`).
 
 !!! info "Combining Matchers Using Operators and Parenthesis"
 
@@ -782,6 +788,11 @@ If you want to limit the router scope to a set of entry points, set the entry po
 |--------------------------------|-------------------------------------------------------------------------|
 | ```HostSNI(`domain-1`, ...)``` | Check if the Server Name Indication corresponds to the given `domains`. |
 
+!!! important "Non-ASCII Domain Names"
+
+    Non-ASCII characters are not supported in the `HostSNI` expression, and by doing so the associated TCP router will be invalid.
+    Domain names containing non-ASCII characters must be provided as punycode encoded values ([rfc 3492](https://tools.ietf.org/html/rfc3492)).
+
 !!! important "HostSNI & TLS"
 
     It is important to note that the Server Name Indication is an extension of the TLS protocol.
@@ -982,8 +993,9 @@ So UDP "routers" at this time are pretty much only load-balancers in one form or
 	It basically means that some state is kept about an ongoing communication between a client and a backend,
 	notably so that the proxy knows where to forward a response packet from a backend.
 	As expected, a `timeout` is associated to each of these sessions,
-	so that they get cleaned out if they go through a period of inactivity longer than a given duration (that is hardcoded to 3 seconds for now).
-	Making this timeout configurable will be considered later if we get more usage feedback on this matter.
+	so that they get cleaned out if they go through a period of inactivity longer than a given duration. 
+	Timeout can be configured using the `entryPoints.name.udp.timeout` option as described 
+	under [entry points](../entrypoints/#udp-options).
 
 ### EntryPoints
 

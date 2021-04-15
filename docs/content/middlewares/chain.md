@@ -5,12 +5,12 @@ When One Isn't Enough
 
 ![Chain](../assets/img/middleware/chain.png)
 
-The Chain middleware enables you to define reusable combinations of other pieces of middleware. 
+The Chain middleware enables you to define reusable combinations of other pieces of middleware.
 It makes reusing the same groups easier.
 
 ## Configuration Example
 
-Example "A Chain for WhiteList, BasicAuth, and HTTPS"
+Below is an example of a Chain containing `WhiteList`, `BasicAuth`, and `RedirectScheme`.
 
 ```yaml tab="Docker"
 labels:
@@ -21,7 +21,7 @@ labels:
   - "traefik.http.middlewares.auth-users.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
   - "traefik.http.middlewares.https-only.redirectscheme.scheme=https"
   - "traefik.http.middlewares.known-ips.ipwhitelist.sourceRange=192.168.1.7,127.0.0.1/32"
-  - "http.services.service1.loadbalancer.server.port=80"
+  - "traefik.http.services.service1.loadbalancer.server.port=80"
 ```
 
 ```yaml tab="Kubernetes"
@@ -30,11 +30,9 @@ kind: IngressRoute
 metadata:
   name: test
   namespace: default
-
 spec:
   entryPoints:
     - web
-
   routes:
     - match: Host(`mydomain`)
       kind: Rule
@@ -91,7 +89,7 @@ spec:
 - "traefik.http.middlewares.auth-users.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
 - "traefik.http.middlewares.https-only.redirectscheme.scheme=https"
 - "traefik.http.middlewares.known-ips.ipwhitelist.sourceRange=192.168.1.7,127.0.0.1/32"
-- "http.services.service1.loadbalancer.server.port=80"
+- "traefik.http.services.service1.loadbalancer.server.port=80"
 ```
 
 ```json tab="Marathon"
@@ -103,7 +101,7 @@ spec:
   "traefik.http.middlewares.auth-users.basicauth.users": "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
   "traefik.http.middlewares.https-only.redirectscheme.scheme": "https",
   "traefik.http.middlewares.known-ips.ipwhitelist.sourceRange": "192.168.1.7,127.0.0.1/32",
-  "http.services.service1.loadbalancer.server.port": "80"
+  "traefik.http.services.service1.loadbalancer.server.port": "80"
 }
 ```
 
@@ -116,7 +114,7 @@ labels:
   - "traefik.http.middlewares.auth-users.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
   - "traefik.http.middlewares.https-only.redirectscheme.scheme=https"
   - "traefik.http.middlewares.known-ips.ipwhitelist.sourceRange=192.168.1.7,127.0.0.1/32"
-  - "http.services.service1.loadbalancer.server.port=80"
+  - "traefik.http.services.service1.loadbalancer.server.port=80"
 ```
 
 ```toml tab="File (TOML)"
@@ -148,7 +146,7 @@ labels:
 ```
 
 ```yaml tab="File (YAML)"
-# ...    
+# ...
 http:
   routers:
     router1:

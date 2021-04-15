@@ -5,7 +5,7 @@ Limiting the Number of Simultaneous In-Flight Requests
 
 ![InFlightReq](../assets/img/middleware/inflightreq.png)
 
-To proactively prevent services from being overwhelmed with high load, a limit on the number of simultaneous in-flight requests can be applied.
+To proactively prevent services from being overwhelmed with high load, the number of allowed simultaneous in-flight requests can be limited.
 
 ## Configuration Examples
 
@@ -45,7 +45,7 @@ labels:
 # Limiting to 10 simultaneous connections
 [http.middlewares]
   [http.middlewares.test-inflightreq.inFlightReq]
-    amount = 10 
+    amount = 10
 ```
 
 ```yaml tab="File (YAML)"
@@ -54,7 +54,7 @@ http:
   middlewares:
     test-inflightreq:
       inFlightReq:
-        amount: 10 
+        amount: 10
 ```
 
 ## Configuration Options
@@ -62,7 +62,7 @@ http:
 ### `amount`
 
 The `amount` option defines the maximum amount of allowed simultaneous in-flight request.
-The middleware will return an `HTTP 429 Too Many Requests` if there are already `amount` requests in progress (based on the same `sourceCriterion` strategy).
+The middleware responds with `HTTP 429 Too Many Requests` if there are already `amount` requests in progress (based on the same `sourceCriterion` strategy).
 
 ```yaml tab="Docker"
 labels:
@@ -100,7 +100,7 @@ labels:
 # Limiting to 10 simultaneous connections
 [http.middlewares]
   [http.middlewares.test-inflightreq.inFlightReq]
-    amount = 10 
+    amount = 10
 ```
 
 ```yaml tab="File (YAML)"
@@ -109,29 +109,29 @@ http:
   middlewares:
     test-inflightreq:
       inFlightReq:
-        amount: 10 
+        amount: 10
 ```
 
 ### `sourceCriterion`
- 
-SourceCriterion defines what criterion is used to group requests as originating from a common source.
+
+The `sourceCriterion` option defines what criterion is used to group requests as originating from a common source.
 The precedence order is `ipStrategy`, then `requestHeaderName`, then `requestHost`.
 If none are set, the default is to use the `requestHost`.
 
 #### `sourceCriterion.ipStrategy`
 
-The `ipStrategy` option defines two parameters that sets how Traefik will determine the client IP: `depth`, and `excludedIPs`.
+The `ipStrategy` option defines two parameters that configures how Traefik determines the client IP: `depth`, and `excludedIPs`.
 
 ##### `ipStrategy.depth`
 
-The `depth` option tells Traefik to use the `X-Forwarded-For` header and take the IP located at the `depth` position (starting from the right).
+The `depth` option tells Traefik to use the `X-Forwarded-For` header and select the IP located at the `depth` position (starting from the right).
 
-- If `depth` is greater than the total number of IPs in `X-Forwarded-For`, then the client IP will be empty.
-- `depth` is ignored if its value is lesser than or equal to 0.
-    
+- If `depth` is greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty.
+- `depth` is ignored if its value is less than or equal to 0.
+
 !!! example "Example of Depth & X-Forwarded-For"
 
-    If `depth` was equal to 2, and the request `X-Forwarded-For` header was `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` then the "real" client IP would be `"10.0.0.1"` (at depth 4) but the IP used as the criterion would be `"12.0.0.1"` (`depth=2`).
+    If `depth` is set to 2, and the request `X-Forwarded-For` header is `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` then the "real" client IP is `"10.0.0.1"` (at depth 4) but the IP used as the criterion is `"12.0.0.1"` (`depth=2`).
 
     | `X-Forwarded-For`                       | `depth` | clientIP     |
     |-----------------------------------------|---------|--------------|
@@ -190,7 +190,7 @@ http:
 
 ##### `ipStrategy.excludedIPs`
 
-`excludedIPs` tells Traefik to scan the `X-Forwarded-For` header and pick the first IP not in the list.
+`excludedIPs` configures Traefik to scan the `X-Forwarded-For` header and select the first IP not in the list.
 
 !!! important "If `depth` is specified, `excludedIPs` is ignored."
 
@@ -259,7 +259,7 @@ http:
 
 #### `sourceCriterion.requestHeaderName`
 
-Requests having the same value for the given header are grouped as coming from the same source.
+Name of the header used to group incoming requests.
 
 ```yaml tab="Docker"
 labels:

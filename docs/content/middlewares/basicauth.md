@@ -5,7 +5,7 @@ Adding Basic Authentication
 
 ![BasicAuth](../assets/img/middleware/basicauth.png)
 
-The BasicAuth middleware is a quick way to restrict access to your services to known users.
+The BasicAuth middleware restricts access to your services to known users.
 
 ## Configuration Examples
 
@@ -14,7 +14,7 @@ The BasicAuth middleware is a quick way to restrict access to your services to k
 #
 # Note: when used in docker-compose.yml all dollar signs in the hash need to be doubled for escaping.
 # To create user:password pair, it's possible to use this command:
-# echo $(htpasswd -nb user password) | sed -e s/\\$/\\$\\$/g
+# echo $(htpasswd -nB user) | sed -e s/\\$/\\$\\$/g
 #
 # Also note that dollar signs should NOT be doubled when they not evaluated (e.g. Ansible docker_container module).
 labels:
@@ -81,7 +81,7 @@ Passwords must be hashed using MD5, SHA1, or BCrypt.
 
 ### `users`
 
-The `users` option is an array of authorized users. Each user will be declared using the `name:hashed-password` format.
+The `users` option is an array of authorized users. Each user must be declared using the `name:hashed-password` format.
 
 !!! note ""
     

@@ -160,6 +160,15 @@ For example, to change the passHostHeader behavior, you'd add the label `"traefi
     "traefik.http.services.myservice.loadbalancer.server.scheme": "http"
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.serverstransport`"
+
+    Allows to reference a ServersTransport resource that is defined either with the File provider or the Kubernetes CRD one.
+    See [serverstransport](../services/index.md#serverstransport) for more information.
+    
+    ```json
+    "traefik.http.services.<service_name>.loadbalancer.serverstransport": "foobar@file"
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.passhostheader`"
     
     See [pass Host header](../services/index.md#pass-host-header) for more information.

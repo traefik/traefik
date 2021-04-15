@@ -14,14 +14,17 @@ import (
 )
 
 func TestShutdownUDPConn(t *testing.T) {
-	entryPoint, err := NewUDPEntryPoint(&static.EntryPoint{
+	ep := static.EntryPoint{
 		Address: ":0",
 		Transport: &static.EntryPointsTransport{
 			LifeCycle: &static.LifeCycle{
 				GraceTimeOut: ptypes.Duration(5 * time.Second),
 			},
 		},
-	})
+	}
+	ep.SetDefaults()
+
+	entryPoint, err := NewUDPEntryPoint(&ep)
 	require.NoError(t, err)
 
 	go entryPoint.Start(context.Background())

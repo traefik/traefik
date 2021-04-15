@@ -28,21 +28,21 @@ The Kubernetes Gateway API, The Experimental Way.
 ### Custom Resource Definition (CRD)
 
 * You can find an exhaustive list, of the custom resources and their attributes in
-[the reference page](../../reference/dynamic-configuration/kubernetes-gateway.md) or in the Kubernetes Sigs `Service APIs` [repository](https://github.com/kubernetes-sigs/service-apis/).
+[the reference page](../../reference/dynamic-configuration/kubernetes-gateway.md) or in the Kubernetes Sigs `Gateway API` [repository](https://github.com/kubernetes-sigs/gateway-api).
 * Validate that [the prerequisites](../../providers/kubernetes-gateway.md#configuration-requirements) are fulfilled before using the Traefik Kubernetes Gateway Provider.
     
 You can find an excerpt of the supported Kubernetes Gateway API resources in the table below:
 
-| Kind                               | Purpose                                                                   | Concept Behind                                                                            |
-|------------------------------------|---------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|
-| [GatewayClass](#kind-gatewayclass) | Defines a set of Gateways that share a common configuration and behaviour | [GatewayClass](https://kubernetes-sigs.github.io/service-apis/api-overview/#gatewayclass) |
-| [Gateway](#kind-gateway)           | Describes how traffic can be translated to Services within the cluster    | [Gateway](https://kubernetes-sigs.github.io/service-apis/api-overview/#gateway)           |
-| [HTTPRoute](#kind-httproute)       | HTTP rules for mapping requests from a Gateway to Kubernetes Services     | [Route](https://kubernetes-sigs.github.io/service-apis/api-overview/#httptcpfooroute)     |
+| Kind                               | Purpose                                                                   | Concept Behind                                                              |
+|------------------------------------|---------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| [GatewayClass](#kind-gatewayclass) | Defines a set of Gateways that share a common configuration and behaviour | [GatewayClass](https://gateway-api.sigs.k8s.io/api-types/gatewayclass)  |
+| [Gateway](#kind-gateway)           | Describes how traffic can be translated to Services within the cluster    | [Gateway](https://gateway-api.sigs.k8s.io/api-types/gateway)            |
+| [HTTPRoute](#kind-httproute)       | HTTP rules for mapping requests from a Gateway to Kubernetes Services     | [Route](https://gateway-api.sigs.k8s.io/api-types/httproute)      |
 
 ### Kind: `GatewayClass`
 
 `GatewayClass` is cluster-scoped resource defined by the infrastructure provider. This resource represents a class of Gateways that can be instantiated.
-More details on the GatewayClass [official documentation](https://kubernetes-sigs.github.io/service-apis/gatewayclass/).
+More details on the GatewayClass [official documentation](https://gateway-api.sigs.k8s.io/api-types/gatewayclass/).
 
 The `GatewayClass` should be declared by the infrastructure provider, otherwise please register the `GatewayClass`
 [definition](../../reference/dynamic-configuration/kubernetes-gateway.md#definitions) in the Kubernetes cluster before 
@@ -65,7 +65,7 @@ creating `GatewayClass` objects.
 
 A `Gateway` is 1:1 with the life cycle of the configuration of infrastructure. When a user creates a Gateway, 
 some load balancing infrastructure is provisioned or configured by the GatewayClass controller. 
-More details on the Gateway [official documentation](https://kubernetes-sigs.github.io/service-apis/gateway/).
+More details on the Gateway [official documentation](https://gateway-api.sigs.k8s.io/api-types/gateway/).
 
 Register the `Gateway` [definition](../../reference/dynamic-configuration/kubernetes-gateway.md#definitions) in the
 Kubernetes cluster before creating `Gateway` objects.
@@ -123,39 +123,49 @@ Kubernetes cluster before creating `HTTPRoute` objects.
     metadata:
       name: http-app-1
       namespace: default
-      labels:                       # [1]
+      labels:                                   # [1]
         app: foo
     spec:
-      hostnames:                    # [2]
+      hostnames:                                # [2]
         - "whoami"
-      rules:                        # [3]
-        - matches:                  # [4]
-            - path:                 # [5]
-                type: Exact         # [6]
-                value: /bar         # [7]
-            - headers:              # [8]
-                type: Exact         # [9]
-                values:             # [10]
+      rules:                                    # [3]
+        - matches:                              # [4]
+            - path:                             # [5]
+                type: Exact                     # [6]
+                value: /bar                     # [7]
+            - headers:                          # [8]
+                type: Exact                     # [9]
+                values:                         # [10]
                   - foo: bar
-          forwardTo:                # [11]
-            - serviceName: whoami   # [12]
-              weight: 1             # [13]
-              port: 80              # [14]
+          forwardTo:                            # [11]
+            - serviceName: whoami               # [12]
+              weight: 1                         # [13]
+              port: 80                          # [14]
+            - backendRef:                       # [15]
+                group: traefik.containo.us      # [16]
+                kind: TraefikService            # [17]
+                name: api@internal              # [18]
+              port: 80
+              weight: 1
     ```
 
-| Ref  | Attribute     | Description                                                                                                                                                                 |
-|------|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1]  | `labels`      | Labels to match with the `Gateway` labelselector.                                                                                                                           |
-| [2]  | `hostnames`   | A set of hostname that should match against the HTTP Host header to select a HTTPRoute to process the request.                                                              |
-| [3]  | `rules`       | A list of HTTP matchers, filters and actions.                                                                                                                               |
-| [4]  | `matches`     | Conditions used for matching the rule against incoming HTTP requests. Each match is independent, i.e. this rule will be matched if **any** one of the matches is satisfied. |
-| [5]  | `path`        | An HTTP request path matcher. If this field is not specified, a default prefix match on the "/" path is provided.                                                           |
-| [6]  | `type`        | Type of match against the path Value (supported types: `Exact`, `Prefix`).                                                                                                  |
-| [7]  | `value`       | The value of the HTTP path to match against.                                                                                                                                |
-| [8]  | `headers`     | Conditions to select a HTTP route by matching HTTP request headers.                                                                                                         |
-| [9]  | `type`        | Type of match for the HTTP request header match against the `values` (supported types: `Exact`).                                                                            |
-| [10] | `values`      | A map of HTTP Headers to be matched. It MUST contain at least one entry.                                                                                                    |
-| [11] | `forwardTo`   | The upstream target(s) where the request should be sent.                                                                                                                    |
-| [12] | `serviceName` | The name of the referent service.                                                                                                                                           |
-| [13] | `weight`      | The proportion of traffic forwarded to a targetRef, computed as weight/(sum of all weights in targetRefs).                                                                  |
-| [14] | `port`        | The port of the referent service.                                                                                                                                           |
+| Ref  | Attribute     | Description                                                                                                                                                                                                                               |
+|------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [1]  | `labels`      | Labels to match with the `Gateway` labelselector.                                                                                                                                                                                         |
+| [2]  | `hostnames`   | A set of hostname that should match against the HTTP Host header to select a HTTPRoute to process the request.                                                                                                                            |
+| [3]  | `rules`       | A list of HTTP matchers, filters and actions.                                                                                                                                                                                             |
+| [4]  | `matches`     | Conditions used for matching the rule against incoming HTTP requests. Each match is independent, i.e. this rule will be matched if **any** one of the matches is satisfied.                                                               |
+| [5]  | `path`        | An HTTP request path matcher. If this field is not specified, a default prefix match on the "/" path is provided.                                                                                                                         |
+| [6]  | `type`        | Type of match against the path Value (supported types: `Exact`, `Prefix`).                                                                                                                                                                |
+| [7]  | `value`       | The value of the HTTP path to match against.                                                                                                                                                                                              |
+| [8]  | `headers`     | Conditions to select a HTTP route by matching HTTP request headers.                                                                                                                                                                       |
+| [9]  | `type`        | Type of match for the HTTP request header match against the `values` (supported types: `Exact`).                                                                                                                                          |
+| [10] | `values`      | A map of HTTP Headers to be matched. It MUST contain at least one entry.                                                                                                                                                                  |
+| [11] | `forwardTo`   | The upstream target(s) where the request should be sent.                                                                                                                                                                                  |
+| [12] | `serviceName` | The name of the referent service.                                                                                                                                                                                                         |
+| [13] | `weight`      | The proportion of traffic forwarded to a targetRef, computed as weight/(sum of all weights in targetRefs).                                                                                                                                |
+| [14] | `port`        | The port of the referent service.                                                                                                                                                                                                         |
+| [15] | `backendRef`  | The BackendRef is a reference to a backend (API object within a known namespace) to forward matched requests to. If both BackendRef and ServiceName are specified, ServiceName will be given precedence. Only `TraefikService` is supported. |
+| [16] | `group`       | Group is the group of the referent. Only `traefik.containo.us` value is supported.                                                                                                                                                        |
+| [17] | `kind`        | Kind is kind of the referent. Only `TraefikService` value is supported.                                                                                                                                                                   |
+| [18] | `name`        | Name is the name of the referent.                                                                                                                                                                                                         |

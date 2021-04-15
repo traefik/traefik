@@ -421,6 +421,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 					if route.TLS == nil || route.TLS.CertResolver != p.ResolverName {
 						continue
 					}
+
 					ctxRouter := log.With(ctx, log.Str(log.RouterName, routerName), log.Str(log.Rule, route.Rule))
 
 					tlsStore := "default"
@@ -462,6 +463,7 @@ func (p *Provider) resolveCertificate(ctx context.Context, domain types.Domain, 
 	if len(uncheckedDomains) == 0 {
 		return nil, nil
 	}
+
 	defer p.removeResolvingDomains(uncheckedDomains)
 
 	logger := log.FromContext(ctx)

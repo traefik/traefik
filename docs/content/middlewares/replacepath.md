@@ -7,18 +7,18 @@ Updating the Path Before Forwarding the Request
 TODO: add schema
 -->
 
-Replace the path of the request url.
+Replace the path of the request URL.
 
 ## Configuration Examples
 
 ```yaml tab="Docker"
-# Replace the path by /foo
+# Replace the path with /foo
 labels:
   - "traefik.http.middlewares.test-replacepath.replacepath.path=/foo"
 ```
 
 ```yaml tab="Kubernetes"
-# Replace the path by /foo
+# Replace the path with /foo
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
@@ -29,7 +29,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-# Replace the path by /foo
+# Replace the path with /foo
 - "traefik.http.middlewares.test-replacepath.replacepath.path=/foo"
 ```
 
@@ -40,20 +40,20 @@ spec:
 ```
 
 ```yaml tab="Rancher"
-# Replace the path by /foo
+# Replace the path with /foo
 labels:
   - "traefik.http.middlewares.test-replacepath.replacepath.path=/foo"
 ```
 
 ```toml tab="File (TOML)"
-# Replace the path by /foo
+# Replace the path with /foo
 [http.middlewares]
   [http.middlewares.test-replacepath.replacePath]
     path = "/foo"
 ```
 
 ```yaml tab="File (YAML)"
-# Replace the path by /foo
+# Replace the path with /foo
 http:
   middlewares:
     test-replacepath:
@@ -67,9 +67,9 @@ http:
 
 The ReplacePath middleware will:
 
-- replace the actual path by the specified one.
+- replace the actual path with the specified one.
 - store the original path in a `X-Replaced-Path` header.
 
 ### `path`
 
-The `path` option defines the path to use as replacement in the request url.
+The `path` option defines the path to use as replacement in the request URL.

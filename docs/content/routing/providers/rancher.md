@@ -166,6 +166,15 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     - "traefik.http.services.myservice.loadbalancer.server.scheme=http"
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.serverstransport`"
+    
+    Allows to reference a ServersTransport resource that is defined either with the File provider or the Kubernetes CRD one.
+    See [serverstransport](../services/index.md#serverstransport) for more information.
+    
+    ```yaml
+    - "traefik.http.services.<service_name>.loadbalancer.serverstransport=foobar@file"
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.passhostheader`"
     
     See [pass Host header](../services/index.md#pass-host-header) for more information.
@@ -195,7 +204,7 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     See [health check](../services/index.md#health-check) for more information.
     
     ```yaml
-    - "traefik.http.services.myservice.loadbalancer.healthcheck.interval=10"
+    - "traefik.http.services.myservice.loadbalancer.healthcheck.interval=10s"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.path`"

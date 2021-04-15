@@ -1,11 +1,11 @@
 # DigestAuth
 
 Adding Digest Authentication
-{: .subtitle } 
+{: .subtitle }
 
 ![BasicAuth](../assets/img/middleware/digestauth.png)
 
-The DigestAuth middleware is a quick way to restrict access to your services to known users.
+The DigestAuth middleware restricts access to your services to known users.
 
 ## Configuration Examples
 
@@ -66,8 +66,8 @@ http:
 
 ## Configuration Options
 
-!!! tip 
-   
+!!! tip
+
     Use `htdigest` to generate passwords.
 
 ### `users`
@@ -75,9 +75,9 @@ http:
 The `users` option is an array of authorized users. Each user will be declared using the `name:realm:encoded-password` format.
 
 !!! note ""
-    
+
     - If both `users` and `usersFile` are provided, the two are merged. The contents of `usersFile` have precedence over the values in `users`.
-    - For security reasons, the field `users` doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead. 
+    - For security reasons, the field `users` doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead.
 
 ```yaml tab="Docker"
 labels:
@@ -146,7 +146,7 @@ The `usersFile` option is the path to an external file that contains the authori
 The file content is a list of `name:realm:encoded-password`.
 
 !!! note ""
-    
+
     - If both `users` and `usersFile` are provided, the two are merged. The contents of `usersFile` have precedence over the values in `users`.
     - Because it does not make much sense to refer to a file path on Kubernetes, the `usersFile` field doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead. 
 
@@ -215,7 +215,7 @@ http:
 
 ### `realm`
 
-You can customize the realm for the authentication with the `realm` option. The default value is `traefik`. 
+You can customize the realm for the authentication with the `realm` option. The default value is `traefik`.
 
 ```yaml tab="Docker"
 labels:

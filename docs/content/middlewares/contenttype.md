@@ -1,18 +1,19 @@
 
 # ContentType
 
-Handling ContentType auto-detection
+Handling Content-Type auto-detection
 {: .subtitle }
 
-The Content-Type middleware - or rather its unique `autoDetect` option -
+The Content-Type middleware - or rather its `autoDetect` option -
 specifies whether to let the `Content-Type` header,
-if it has not been set by the backend,
+if it has not been defined by the backend,
 be automatically set to a value derived from the contents of the response.
 
 As a proxy, the default behavior should be to leave the header alone,
 regardless of what the backend did with it.
-However, the historic default was to always auto-detect and set the header if it was nil,
-and it is going to be kept that way in order to support users currently relying on it.
+However, the historic default was to always auto-detect and set the header if it was not already defined,
+and altering this behavior would be a breaking change which would impact many users.
+
 This middleware exists to enable the correct behavior until at least the default one can be changed in a future version.
 
 !!! info
@@ -21,7 +22,7 @@ This middleware exists to enable the correct behavior until at least the default
     is still to automatically set the `Content-Type` header.
     Therefore, given the default value of the `autoDetect` option (false),
     simply enabling this middleware for a router switches the router's behavior.
-    
+
     The scope of the Content-Type middleware is the MIME type detection done by the core of Traefik (the server part).
     Therefore, it has no effect against any other `Content-Type` header modifications (e.g.: in another middleware such as compress).
 

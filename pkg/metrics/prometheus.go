@@ -391,18 +391,18 @@ func (d *dynamicConfig) hasServerURL(serviceName, serverURL string) bool {
 	return false
 }
 
-func newCollector(metricName string, labels stdprometheus.Labels, c stdprometheus.Collector, delete func()) *collector {
+func newCollector(metricName string, labels stdprometheus.Labels, c stdprometheus.Collector, deleteFn func()) *collector {
 	return &collector{
 		id:        buildMetricID(metricName, labels),
 		labels:    labels,
 		collector: c,
-		delete:    delete,
+		delete:    deleteFn,
 	}
 }
 
 // collector wraps a Collector object from the Prometheus client library.
 // It adds information on how many generations this metric should be present
-// in the /metrics output, relatived to the time it was last tracked.
+// in the /metrics output, relative to the time it was last tracked.
 type collector struct {
 	id        string
 	labels    stdprometheus.Labels

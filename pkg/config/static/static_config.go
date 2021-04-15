@@ -51,6 +51,10 @@ const (
 
 	// DefaultAcmeCAServer is the default ACME API endpoint.
 	DefaultAcmeCAServer = "https://acme-v02.api.letsencrypt.org/directory"
+
+	// DefaultUDPTimeout defines how long to wait by default on an idle session,
+	// before releasing all resources related to that session.
+	DefaultUDPTimeout = 3 * time.Second
 )
 
 // Configuration is the static configuration.
@@ -231,9 +235,21 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		c.Global.SendAnonymousUsage = true
 	}
 
+	// Create Pilot struct to apply default value on undefined configuration.
+	if c.Pilot == nil {
+		c.Pilot = &Pilot{}
+		c.Pilot.SetDefaults()
+	}
+
 	// Disable Gateway API provider if not enabled in experimental
 	if c.Experimental == nil || !c.Experimental.KubernetesGateway {
 		c.Providers.KubernetesGateway = nil
+	}
+
+	if c.Experimental == nil || !c.Experimental.HTTP3 {
+		for _, ep := range c.EntryPoints {
+			ep.EnableHTTP3 = false
+		}
 	}
 
 	// Configure Gateway API provider

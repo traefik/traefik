@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -26,6 +25,7 @@ func TestForwardAuthFail(t *testing.T) {
 	})
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(forward.ProxyAuthenticate, "test")
 		http.Error(w, "Forbidden", http.StatusForbidden)
 	}))
 	t.Cleanup(server.Close)
@@ -43,11 +43,12 @@ func TestForwardAuthFail(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusForbidden, res.StatusCode)
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
 	err = res.Body.Close()
 	require.NoError(t, err)
 
+	assert.Equal(t, "test", res.Header.Get(forward.ProxyAuthenticate))
 	assert.Equal(t, "Forbidden\n", string(body))
 }
 
@@ -90,7 +91,7 @@ func TestForwardAuthSuccess(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
 	err = res.Body.Close()
 	require.NoError(t, err)
@@ -132,7 +133,7 @@ func TestForwardAuthRedirect(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "http://example.com/redirect-test", location.String())
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
 	err = res.Body.Close()
 	require.NoError(t, err)
@@ -142,7 +143,7 @@ func TestForwardAuthRedirect(t *testing.T) {
 func TestForwardAuthRemoveHopByHopHeaders(t *testing.T) {
 	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		headers := w.Header()
-		for _, header := range forward.HopHeaders {
+		for _, header := range hopHeaders {
 			if header == forward.TransferEncoding {
 				headers.Set(header, "chunked")
 			} else {
@@ -185,7 +186,7 @@ func TestForwardAuthRemoveHopByHopHeaders(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "http://example.com/redirect-test", location.String(), "they should be equal")
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
 	assert.NotEmpty(t, string(body), "there should be something in the body")
 }
@@ -236,7 +237,7 @@ func TestForwardAuthFailResponseHeaders(t *testing.T) {
 		assert.Equal(t, value, res.Header[key])
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
 	err = res.Body.Close()
 	require.NoError(t, err)
@@ -367,11 +368,13 @@ func Test_writeHeader(t *testing.T) {
 			},
 			trustForwardHeader: false,
 			expectedHeaders: map[string]string{
-				"X-CustomHeader":     "CustomHeader",
-				"X-Forwarded-Proto":  "http",
-				"X-Forwarded-Host":   "foo.bar",
-				"X-Forwarded-Uri":    "/path?q=1",
-				"X-Forwarded-Method": "GET",
+				"X-CustomHeader":           "CustomHeader",
+				"X-Forwarded-Proto":        "http",
+				"X-Forwarded-Host":         "foo.bar",
+				"X-Forwarded-Uri":          "/path?q=1",
+				"X-Forwarded-Method":       "GET",
+				forward.ProxyAuthenticate:  "ProxyAuthenticate",
+				forward.ProxyAuthorization: "ProxyAuthorization",
 			},
 			checkForUnexpectedHeaders: true,
 		},
@@ -485,5 +488,5 @@ type mockBackend struct {
 }
 
 func (b *mockBackend) Setup(componentName string) (opentracing.Tracer, io.Closer, error) {
-	return b.Tracer, ioutil.NopCloser(nil), nil
+	return b.Tracer, io.NopCloser(nil), nil
 }

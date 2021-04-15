@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"time"
 
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -16,9 +16,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"sigs.k8s.io/service-apis/apis/v1alpha1"
-	"sigs.k8s.io/service-apis/pkg/client/clientset/versioned"
-	"sigs.k8s.io/service-apis/pkg/client/informers/externalversions"
+	"sigs.k8s.io/gateway-api/apis/v1alpha1"
+	"sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
+	"sigs.k8s.io/gateway-api/pkg/client/informers/externalversions"
 )
 
 const resyncPeriod = 10 * time.Minute
@@ -138,7 +138,7 @@ func newExternalClusterClient(endpoint, token, caFilePath string) (*clientWrappe
 	}
 
 	if caFilePath != "" {
-		caData, err := ioutil.ReadFile(caFilePath)
+		caData, err := os.ReadFile(caFilePath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read CA file %s: %w", caFilePath, err)
 		}
@@ -236,7 +236,7 @@ func (c *clientWrapper) GetHTTPRoutes(namespace string, selector labels.Selector
 	}
 
 	if len(httpRoutes) == 0 {
-		return nil, fmt.Errorf("failed to get HTTPRoute %s with labels selector %s: namespace is not within watched namespaces", namespace, selector)
+		log.WithoutContext().Debugf("No HTTPRoute found in %q namespace with labels selector %s", namespace, selector)
 	}
 
 	return httpRoutes, nil

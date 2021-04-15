@@ -5,7 +5,7 @@ Prefixing the Path
 
 ![AddPrefix](../assets/img/middleware/addprefix.png) 
 
-The AddPrefix middleware updates the URL Path of the request before forwarding it.
+The AddPrefix middleware updates the path of a request before forwarding it.
 
 ## Configuration Examples
 
@@ -64,4 +64,4 @@ http:
 ### `prefix`
 
 `prefix` is the string to add before the current path in the requested URL.
-It should include the leading slash (`/`).
+It should include a leading slash (`/`).

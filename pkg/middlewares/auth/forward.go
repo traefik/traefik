@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"regexp"
@@ -25,6 +25,18 @@ const (
 	xForwardedMethod  = "X-Forwarded-Method"
 	forwardedTypeName = "ForwardedAuthType"
 )
+
+// hopHeaders Hop-by-hop headers to be removed in the authentication request.
+// http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
+// Proxy-Authorization header is forwarded to the authentication server (see https://tools.ietf.org/html/rfc7235#section-4.4).
+var hopHeaders = []string{
+	forward.Connection,
+	forward.KeepAlive,
+	forward.Te, // canonicalized version of "TE"
+	forward.Trailers,
+	forward.TransferEncoding,
+	forward.Upgrade,
+}
 
 type forwardAuth struct {
 	address                  string
@@ -114,7 +126,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	body, readError := ioutil.ReadAll(forwardResponse.Body)
+	body, readError := io.ReadAll(forwardResponse.Body)
 	if readError != nil {
 		logMessage := fmt.Sprintf("Error reading body %s. Cause: %s", fa.address, readError)
 		logger.Debug(logMessage)
@@ -131,7 +143,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		logger.Debugf("Remote error %s. StatusCode: %d", fa.address, forwardResponse.StatusCode)
 
 		utils.CopyHeaders(rw.Header(), forwardResponse.Header)
-		utils.RemoveHeaders(rw.Header(), forward.HopHeaders...)
+		utils.RemoveHeaders(rw.Header(), hopHeaders...)
 
 		// Grab the location header, if any.
 		redirectURL, err := forwardResponse.Location()
@@ -187,7 +199,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowedHeaders []string) {
 	utils.CopyHeaders(forwardReq.Header, req.Header)
-	utils.RemoveHeaders(forwardReq.Header, forward.HopHeaders...)
+	utils.RemoveHeaders(forwardReq.Header, hopHeaders...)
 
 	forwardReq.Header = filterForwardRequestHeaders(forwardReq.Header, allowedHeaders)
 

@@ -102,6 +102,9 @@ Entry points definition. (Default: ```false```)
 `TRAEFIK_ENTRYPOINTS_<NAME>_ADDRESS`:  
 Entry point address.
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_ENABLEHTTP3`:  
+Enable HTTP3. (Default: ```false```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_FORWARDEDHEADERS_INSECURE`:  
 Trust all forwarded headers. (Default: ```false```)
 
@@ -118,7 +121,7 @@ Default middlewares for the routers linked to the entry point.
 Applies a permanent redirection. (Default: ```true```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_REDIRECTIONS_ENTRYPOINT_PRIORITY`:  
-Priority of the generated router. (Default: ```2147483647```)
+Priority of the generated router. (Default: ```2147483646```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME`:  
 Scheme used for the redirection. (Default: ```https```)
@@ -135,10 +138,10 @@ Default certificate resolver for the routers linked to the entry point.
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_DOMAINS`:  
 Default TLS domains for the routers linked to the entry point.
 
-`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_DOMAINS[n]_MAIN`:  
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_DOMAINS_n_MAIN`:  
 Default subject name.
 
-`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_DOMAINS[n]_SANS`:  
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_DOMAINS_n_SANS`:  
 Subject alternative names.
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_OPTIONS`:  
@@ -168,11 +171,17 @@ ReadTimeout is the maximum duration for reading the entire request, including th
 `TRAEFIK_ENTRYPOINTS_<NAME>_TRANSPORT_RESPONDINGTIMEOUTS_WRITETIMEOUT`:  
 WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set. (Default: ```0```)
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_UDP_TIMEOUT`:  
+Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
+
 `TRAEFIK_EXPERIMENTAL_DEVPLUGIN_GOPATH`:  
 plugin's GOPATH.
 
 `TRAEFIK_EXPERIMENTAL_DEVPLUGIN_MODULENAME`:  
 plugin's module name.
+
+`TRAEFIK_EXPERIMENTAL_HTTP3`:  
+Enable HTTP3. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_KUBERNETESGATEWAY`:  
 Allow the Kubernetes gateway api provider usage. (Default: ```false```)
@@ -184,7 +193,7 @@ plugin's module name.
 plugin's version.
 
 `TRAEFIK_GLOBAL_CHECKNEWVERSION`:  
-Periodically check if a new version has been released. (Default: ```false```)
+Periodically check if a new version has been released. (Default: ```true```)
 
 `TRAEFIK_GLOBAL_SENDANONYMOUSUSAGE`:  
 Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default. (Default: ```false```)
@@ -294,6 +303,9 @@ Prefix to use for metrics collection. (Default: ```traefik```)
 `TRAEFIK_METRICS_STATSD_PUSHINTERVAL`:  
 StatsD push interval. (Default: ```10```)
 
+`TRAEFIK_PILOT_DASHBOARD`:  
+Enable Traefik Pilot in the dashboard. (Default: ```true```)
+
 `TRAEFIK_PILOT_TOKEN`:  
 Traefik Pilot token.
 
@@ -367,7 +379,7 @@ Expose containers by default. (Default: ```true```)
 Prefix for consul service tags. Default 'traefik' (Default: ```traefik```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_REFRESHINTERVAL`:  
-Interval for check Consul API. Default 100ms (Default: ```15```)
+Interval for check Consul API. Default 15s (Default: ```15```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_REQUIRECONSISTENT`:  
 Forces the read to be fully consistent. (Default: ```false```)
@@ -607,7 +619,7 @@ Kubernetes certificate authority file path (not needed for in-cluster client).
 Kubernetes server endpoint (required for external cluster client).
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_INGRESSCLASS`:  
-Value of kubernetes.io/ingress.class annotation to watch for.
+Value of kubernetes.io/ingress.class annotation or IngressClass name to watch for.
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_INGRESSENDPOINT_HOSTNAME`:  
 Hostname used for Kubernetes Ingress endpoints.
@@ -694,7 +706,7 @@ Display additional provider logs. (Default: ```false```)
 Watch provider. (Default: ```true```)
 
 `TRAEFIK_PROVIDERS_PROVIDERSTHROTTLEDURATION`:  
-Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time. (Default: ```0```)
+Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time. (Default: ```2```)
 
 `TRAEFIK_PROVIDERS_RANCHER`:  
 Enable Rancher backend with default settings. (Default: ```false```)
@@ -802,7 +814,7 @@ The amount of time to wait for a server's response headers after fully writing t
 Disable SSL certificate verification. (Default: ```false```)
 
 `TRAEFIK_SERVERSTRANSPORT_MAXIDLECONNSPERHOST`:  
-If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, DefaultMaxIdleConnsPerHost is used (Default: ```0```)
+If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, DefaultMaxIdleConnsPerHost is used (Default: ```200```)
 
 `TRAEFIK_SERVERSTRANSPORT_ROOTCAS`:  
 Add cert file for self-signed certificate.

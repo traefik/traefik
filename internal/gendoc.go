@@ -14,7 +14,7 @@ import (
 	"github.com/traefik/paerser/flag"
 	"github.com/traefik/paerser/generator"
 	"github.com/traefik/paerser/parser"
-	"github.com/traefik/traefik/v2/pkg/config/static"
+	"github.com/traefik/traefik/v2/cmd"
 	"github.com/traefik/traefik/v2/pkg/log"
 )
 
@@ -29,7 +29,7 @@ func main() {
 func genStaticConfDoc(outputFile, prefix string, encodeFn func(interface{}) ([]parser.Flat, error)) {
 	logger := log.WithoutContext().WithField("file", outputFile)
 
-	element := &static.Configuration{}
+	element := &cmd.NewTraefikConfiguration().Configuration
 
 	generator.Generate(element)
 
@@ -64,7 +64,12 @@ THIS FILE MUST NOT BE EDITED BY HAND
 			continue
 		}
 
-		w.writeln("`" + prefix + strings.ReplaceAll(flat.Name, "[0]", "[n]") + "`:  ")
+		if prefix == "" {
+			w.writeln("`" + prefix + strings.ReplaceAll(flat.Name, "[0]", "_n") + "`:  ")
+		} else {
+			w.writeln("`" + prefix + strings.ReplaceAll(flat.Name, "[0]", "[n]") + "`:  ")
+		}
+
 		if flat.Default == "" {
 			w.writeln(flat.Description)
 		} else {

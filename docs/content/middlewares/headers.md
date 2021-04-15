@@ -1,17 +1,17 @@
-# Headers 
+# Headers
 
-Adding Headers to the Request / Response
+Managing Request/Response headers
 {: .subtitle }
 
 ![Headers](../assets/img/middleware/headers.png)
 
-The Headers middleware can manage the requests/responses headers.
+The Headers middleware manages the headers of requests and responses.
 
 ## Configuration Examples
 
 ### Adding Headers to the Request and the Response
 
-Add the `X-Script-Name` header to the proxied request and the `X-Custom-Response-Header` to the response
+The following example adds the `X-Script-Name` header to the proxied request and the `X-Custom-Response-Header` header to the response
 
 ```yaml tab="Docker"
 labels:
@@ -72,10 +72,8 @@ http:
 
 ### Adding and Removing Headers
 
-`X-Script-Name` header added to the proxied request, the `X-Custom-Request-Header` header removed from the request,
-and the `X-Custom-Response-Header` header removed from the response.
-
-Please note that it is not possible to remove headers through the use of labels (Docker, Rancher, Marathon, ...) for now.
+In the following example, requests are proxied with an extra `X-Script-Name` header while their `X-Custom-Request-Header` header gets stripped,
+and responses are stripped of their `X-Custom-Response-Header` header.
 
 ```yaml tab="Docker"
 labels:
@@ -135,8 +133,8 @@ http:
 
 ### Using Security Headers
 
-Security related headers (HSTS headers, SSL redirection, Browser XSS filter, etc) can be added and configured in a manner similar to the custom headers above.
-This functionality allows for some easy security features to quickly be set.
+Security-related headers (HSTS headers, SSL redirection, Browser XSS filter, etc) can be managed similarly to custom headers as shown above.
+This functionality makes it possible to easily use security features by adding headers.
 
 ```yaml tab="Docker"
 labels:
@@ -173,14 +171,14 @@ labels:
   - "traefik.http.middlewares.testheader.headers.sslredirect=true"
 ```
 
-```toml tab="File (TOML)"    
+```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     frameDeny = true
     sslRedirect = true
 ```
 
-```yaml tab="File (YAML)"  
+```yaml tab="File (YAML)"
 http:
   middlewares:
     testHeader:
@@ -244,7 +242,7 @@ labels:
   - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
 ```
 
-```toml tab="File (TOML)"    
+```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
@@ -274,18 +272,20 @@ http:
 ### General
 
 !!! warning
-    If the custom header name is the same as one header name of the request or response, it will be replaced.
+
+    Custom headers will overwrite existing headers if they have identical names.
 
 !!! note ""
-    The detailed documentation for the security headers can be found in [unrolled/secure](https://github.com/unrolled/secure#available-options).
+
+    The detailed documentation for security headers can be found in [unrolled/secure](https://github.com/unrolled/secure#available-options).
 
 ### `customRequestHeaders`
 
-The `customRequestHeaders` option lists the Header names and values to apply to the request.
+The `customRequestHeaders` option lists the header names and values to apply to the request.
 
 ### `customResponseHeaders`
 
-The `customResponseHeaders` option lists the Header names and values to apply to the response.
+The `customResponseHeaders` option lists the header names and values to apply to the response.
 
 ### `accessControlAllowCredentials`
 
@@ -303,25 +303,26 @@ The  `accessControlAllowMethods` indicates which methods can be used during requ
 
 The `accessControlAllowOriginList` indicates whether a resource can be shared by returning different values.
 
-A wildcard origin `*` can also be configured, and will match all requests.
-If this value is set by a backend server, it will be overwritten by Traefik
+A wildcard origin `*` can also be configured, and matches all requests.
+If this value is set by a backend service, it will be overwritten by Traefik.
 
 This value can contain a list of allowed origins.
 
-More information including how to use the settings can be found on:
+More information including how to use the settings can be found at:
 
 - [Mozilla.org](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin)
 - [w3](https://fetch.spec.whatwg.org/#http-access-control-allow-origin)
 - [IETF](https://tools.ietf.org/html/rfc6454#section-7.1)
 
-Traefik no longer supports the null value, as it is [no longer recommended as a return value](https://w3c.github.io/webappsec-cors-for-developers/#avoid-returning-access-control-allow-origin-null).
+Traefik no longer supports the `null` value, as it is [no longer recommended as a return value](https://w3c.github.io/webappsec-cors-for-developers/#avoid-returning-access-control-allow-origin-null).
 
 ### `accessControlAllowOriginListRegex`
 
 The `accessControlAllowOriginListRegex` option is the counterpart of the `accessControlAllowOriginList` option with regular expressions instead of origin values.
-It will allow all origin that contains any match of a regular expression in the `accessControlAllowOriginList`.
+It allows all origins that contain any match of a regular expression in the `accessControlAllowOriginList`.
 
 !!! tip
+
     Regular expressions can be tested using online tools such as [Go Playground](https://play.golang.org/p/mWU9p-wk2ru) or the [Regex101](https://regex101.com/r/58sIgx/2).
 
 ### `accessControlExposeHeaders`
@@ -330,66 +331,66 @@ The `accessControlExposeHeaders` indicates which headers are safe to expose to t
 
 ### `accessControlMaxAge`
 
-The `accessControlMaxAge` indicates how long (in seconds) a preflight request can be cached.
+The `accessControlMaxAge` indicates how many seconds a preflight request can be cached for.
 
 ### `addVaryHeader`
 
-The `addVaryHeader` is used in conjunction with `accessControlAllowOriginList` to determine whether the vary header should be added or modified to demonstrate that server responses can differ based on the value of the origin header.
+The `addVaryHeader` is used in conjunction with `accessControlAllowOriginList` to determine whether the `Vary` header should be added or modified to demonstrate that server responses can differ based on the value of the origin header.
 
-### `allowedHosts` 
+### `allowedHosts`
 
 The `allowedHosts` option lists fully qualified domain names that are allowed.
 
-### `hostsProxyHeaders` 
+### `hostsProxyHeaders`
 
 The `hostsProxyHeaders` option is a set of header keys that may hold a proxied hostname value for the request.
 
-### `sslRedirect` 
+### `sslRedirect`
 
-The `sslRedirect` is set to true, then only allow https requests.
+The `sslRedirect` only allow HTTPS requests when set to `true`.
 
 ### `sslTemporaryRedirect`
-                    
-Set the `sslTemporaryRedirect` to `true` to force an SSL redirection using a 302 (instead of a 301).
 
-### `sslHost` 
+Set `sslTemporaryRedirect` to `true` to force an SSL redirection using a 302 (instead of a 301).
 
-The `sslHost` option is the host name that is used to redirect http requests to https.
+### `sslHost`
 
-### `sslProxyHeaders` 
+The `sslHost` option is the host name that is used to redirect HTTP requests to HTTPS.
 
-The `sslProxyHeaders` option is set of header keys with associated values that would indicate a valid https request.
-Useful when using other proxies with header like: `"X-Forwarded-Proto": "https"`.
+### `sslProxyHeaders`
 
-### `sslForceHost` 
+The `sslProxyHeaders` option is set of header keys with associated values that would indicate a valid HTTPS request.
+It can be useful when using other proxies (example: `"X-Forwarded-Proto": "https"`).
 
-Set `sslForceHost` to true and set SSLHost to forced requests to use `SSLHost` even the ones that are already using SSL.
+### `sslForceHost`
 
-### `stsSeconds` 
+Set `sslForceHost` to `true` and set `sslHost` to force requests to use `SSLHost` regardless of whether they already use SSL.
 
-The `stsSeconds` is the max-age of the Strict-Transport-Security header.
-If set to 0, would NOT include the header.
+### `stsSeconds`
 
-### `stsIncludeSubdomains` 
+The `stsSeconds` is the max-age of the `Strict-Transport-Security` header.
+If set to `0`, the header is not set.
 
-The `stsIncludeSubdomains` is set to true, the `includeSubDomains` directive will be appended to the Strict-Transport-Security header.
+### `stsIncludeSubdomains`
 
-### `stsPreload` 
+If the `stsIncludeSubdomains` is set to `true`, the `includeSubDomains` directive is appended to the `Strict-Transport-Security` header.
 
-Set `stsPreload` to true to have the `preload` flag appended to the Strict-Transport-Security header.
+### `stsPreload`
+
+Set `stsPreload` to `true` to have the `preload` flag appended to the `Strict-Transport-Security` header.
 
 ### `forceSTSHeader`
 
-Set `forceSTSHeader` to true, to add the STS header even when the connection is HTTP.
+Set `forceSTSHeader` to `true` to add the STS header even when the connection is HTTP.
 
-### `frameDeny` 
+### `frameDeny`
 
-Set `frameDeny` to true to add the `X-Frame-Options` header with the value of `DENY`.
- 
-### `customFrameOptionsValue` 
+Set `frameDeny` to `true` to add the `X-Frame-Options` header with the value of `DENY`.
+
+### `customFrameOptionsValue`
 
 The `customFrameOptionsValue` allows the `X-Frame-Options` header value to be set with a custom value.
-This overrides the FrameDeny option.
+This overrides the `FrameDeny` option.
 
 ### `contentTypeNosniff`
 
@@ -402,7 +403,7 @@ Set `browserXssFilter` to true to add the `X-XSS-Protection` header with the val
 ### `customBrowserXSSValue`
 
 The `customBrowserXssValue` option allows the `X-XSS-Protection` header value to be set with a custom value.
-This overrides the BrowserXssFilter option.
+This overrides the `BrowserXssFilter` option.
 
 ### `contentSecurityPolicy`
 
@@ -410,11 +411,11 @@ The `contentSecurityPolicy` option allows the `Content-Security-Policy` header v
 
 ### `publicKey`
 
-The `publicKey` implements HPKP to prevent MITM attacks with forged certificates. 
+The `publicKey` implements HPKP to prevent MITM attacks with forged certificates.
 
 ### `referrerPolicy`
 
-The `referrerPolicy` allows sites to control when browsers will pass the Referer header to other sites.
+The `referrerPolicy` allows sites to control whether browsers forward the `Referer` header to other sites.
 
 ### `featurePolicy`
 
@@ -422,7 +423,6 @@ The `featurePolicy` allows sites to control browser features.
 
 ### `isDevelopment`
 
-Set `isDevelopment` to true when developing.
-The AllowedHosts, SSL, and STS options can cause some unwanted effects.
-Usually testing happens on http, not https, and on localhost, not your production domain.  
-If you would like your development environment to mimic production with complete Host blocking, SSL redirects, and STS headers, leave this as false.
+Set `isDevelopment` to `true` when developing to mitigate the unwanted effects of the `AllowedHosts`, SSL, and STS options.
+Usually testing takes place using HTTP, not HTTPS, and on `localhost`, not your production domain.
+If you would like your development environment to mimic production with complete Host blocking, SSL redirects, and STS headers, leave this as `false`.

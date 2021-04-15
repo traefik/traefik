@@ -3,7 +3,7 @@
 A Story of KV store & Containers
 {: .subtitle }
 
-Store your configuration in Etcd and let Traefik do the rest!
+Store your configuration in etcd and let Traefik do the rest!
 
 ## Routing Configuration
 
@@ -15,7 +15,7 @@ See the dedicated section in [routing](../routing/providers/kv.md).
 
 _Required, Default="127.0.0.1:2379"_
 
-Defines how to access to Etcd.
+Defines how to access etcd.
 
 ```toml tab="File (TOML)"
 [providers.etcd]
@@ -35,9 +35,9 @@ providers:
 
 ### `rootKey`
 
-Defines the root key of the configuration.
-
 _Required, Default="traefik"_
+
+Defines the root key of the configuration.
 
 ```toml tab="File (TOML)"
 [providers.etcd]
@@ -56,9 +56,9 @@ providers:
 
 ### `username`
 
-Defines a username to connect with Etcd.
-
 _Optional, Default=""_
+
+Defines a username with which to connect to etcd.
 
 ```toml tab="File (TOML)"
 [providers.etcd]
@@ -81,7 +81,7 @@ providers:
 
 _Optional, Default=""_
 
-Defines a password to connect with Etcd.
+Defines a password with which to connect to etcd.
 
 ```toml tab="File (TOML)"
 [providers.etcd]
@@ -106,7 +106,7 @@ _Optional_
 
 #### `tls.ca`
 
-Certificate Authority used for the secured connection to Etcd.
+Certificate Authority used for the secure connection to etcd.
 
 ```toml tab="File (TOML)"
 [providers.etcd.tls]
@@ -126,12 +126,15 @@ providers:
 
 #### `tls.caOptional`
 
-Policy followed for the secured connection with TLS Client Authentication to Etcd.
-Requires `tls.ca` to be defined.
+The value of `tls.caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to etcd.
 
-- `true`: VerifyClientCertIfGiven
-- `false`: RequireAndVerifyClientCert
-- if `tls.ca` is undefined NoClientCert
+!!! warning ""
+
+    If `tls.ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
+
+When this option is set to `true`, a client certificate is requested during the handshake but is not required. If a certificate is sent, it is required to be valid.
+
+When this option is set to `false`, a client certificate is requested during the handshake, and at least one valid certificate should be sent by the client.
 
 ```toml tab="File (TOML)"
 [providers.etcd.tls]
@@ -151,7 +154,7 @@ providers:
 
 #### `tls.cert`
 
-Public certificate used for the secured connection to Etcd.
+Public certificate used for the secure connection to etcd.
 
 ```toml tab="File (TOML)"
 [providers.etcd.tls]
@@ -174,7 +177,7 @@ providers:
 
 #### `tls.key`
 
-Private certificate used for the secured connection to Etcd.
+Private certificate used for the secure connection to etcd.
 
 ```toml tab="File (TOML)"
 [providers.etcd.tls]
@@ -197,7 +200,7 @@ providers:
 
 #### `tls.insecureSkipVerify`
 
-If `insecureSkipVerify` is `true`, TLS for the connection to Etcd accepts any certificate presented by the server and any host name in that certificate.
+If `insecureSkipVerify` is `true`, the TLS connection to etcd accepts any certificate presented by the server regardless of the hostnames it covers.
 
 ```toml tab="File (TOML)"
 [providers.etcd.tls]

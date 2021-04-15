@@ -8,25 +8,25 @@ A Story of Labels, Services & Containers
 Attach labels to your services and let Traefik do the rest!
 
 !!! important "This provider is specific to Rancher 1.x."
-    
+
     Rancher 2.x requires Kubernetes and does not have a metadata endpoint of its own for Traefik to query.
-    As such, Rancher 2.x users should utilize the [Kubernetes provider](./kubernetes-crd.md) directly.
+    As such, Rancher 2.x users should utilize the [Kubernetes CRD provider](./kubernetes-crd.md) directly.
 
 ## Configuration Examples
 
 ??? example "Configuring Rancher & Deploying / Exposing Services"
 
-    Enabling the rancher provider
+    Enabling the Rancher provider
 
     ```toml tab="File (TOML)"
     [providers.rancher]
     ```
-    
+
     ```yaml tab="File (YAML)"
     providers:
       rancher: {}
     ```
-    
+
     ```bash tab="CLI"
     --providers.rancher=true
     ```
@@ -45,16 +45,17 @@ See the dedicated section in [routing](../routing/providers/rancher.md).
 ## Provider Configuration
 
 ??? tip "Browse the Reference"
-    If you're in a hurry, maybe you'd rather go through the configuration reference:
-    
+
+    For an overview of all the options that can be set with the Rancher provider, see the following snippets:
+
     ```toml tab="File (TOML)"
     --8<-- "content/providers/rancher.toml"
     ```
-    
+
     ```yaml tab="File (YAML)"
     --8<-- "content/providers/rancher.yml"
     ```
-    
+
     ```bash tab="CLI"
     --8<-- "content/providers/rancher.txt"
     ```
@@ -62,6 +63,11 @@ See the dedicated section in [routing](../routing/providers/rancher.md).
 ### `exposedByDefault`
 
 _Optional, Default=true_
+
+Expose Rancher services by default in Traefik.
+If set to `false`, services that do not have a `traefik.enable=true` label are ignored from the resulting routing configuration.
+
+For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
 
 ```toml tab="File (TOML)"
 [providers.rancher]
@@ -81,14 +87,20 @@ providers:
 # ...
 ```
 
-Expose Rancher services by default in Traefik.
-If set to false, services that don't have a `traefik.enable=true` label will be ignored from the resulting routing configuration.
-
-See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
-
 ### `defaultRule`
 
 _Optional, Default=```Host(`{{ normalize .Name }}`)```_
+
+The default host rule for all services.
+
+The `defaultRule` option defines what routing rule to apply to a container if no rule is defined by a label.
+
+It must be a valid [Go template](https://golang.org/pkg/text/template/), and can use
+[sprig template functions](http://masterminds.github.io/sprig/).
+The service name can be accessed with the `Name` identifier,
+and the template has access to all the labels defined on this container.
+
+This option can be overridden on a container basis with the `traefik.http.routers.Router1.rule` label.
 
 ```toml tab="File (TOML)"
 [providers.rancher]
@@ -108,19 +120,11 @@ providers:
 # ...
 ```
 
-The default host rule for all services.
-
-For a given container if no routing rule was defined by a label, it is defined by this defaultRule instead.
-It must be a valid [Go template](https://golang.org/pkg/text/template/),
-augmented with the [sprig template functions](http://masterminds.github.io/sprig/).
-The service name can be accessed as the `Name` identifier,
-and the template has access to all the labels defined on this container.
-
-This option can be overridden on a container basis with the `traefik.http.routers.Router1.rule` label.
-
 ### `enableServiceHealthFilter`
 
 _Optional, Default=true_
+
+Filter out services with unhealthy states and inactive states.
 
 ```toml tab="File (TOML)"
 [providers.rancher]
@@ -140,11 +144,11 @@ providers:
 # ...
 ```
 
-Filter services with unhealthy states and inactive states.
-
 ### `refreshSeconds`
 
 _Optional, Default=15_
+
+Defines the polling interval (in seconds).
 
 ```toml tab="File (TOML)"
 [providers.rancher]
@@ -164,11 +168,12 @@ providers:
 # ...
 ```
 
-Defines the polling interval (in seconds).
-
 ### `intervalPoll`
 
 _Optional, Default=false_
+
+Poll the Rancher metadata service for changes every `rancher.refreshSeconds`,
+which is less accurate than the default long polling technique which provides near instantaneous updates to Traefik.
 
 ```toml tab="File (TOML)"
 [providers.rancher]
@@ -188,12 +193,11 @@ providers:
 # ...
 ```
 
-Poll the Rancher metadata service for changes every `rancher.refreshSeconds`,
-which is less accurate than the default long polling technique which will provide near instantaneous updates to Traefik.
-
 ### `prefix`
 
-_Optional, Default=/latest_
+_Optional, Default="/latest"_
+
+Prefix used for accessing the Rancher metadata service.
 
 ```toml tab="File (TOML)"
 [providers.rancher]
@@ -213,11 +217,50 @@ providers:
 # ...
 ```
 
-Prefix used for accessing the Rancher metadata service
-
 ### `constraints`
 
 _Optional, Default=""_
+
+The `constraints` option can be set to an expression that Traefik matches against the container labels to determine whether
+to create any route for that container. If none of the container tags match the expression, no route for that container is
+created. If the expression is empty, all detected containers are included.
+
+The expression syntax is based on the `Label("key", "value")`, and `LabelRegex("key", "value")` functions, as well as
+the usual boolean logic, as shown in examples below.
+
+??? example "Constraints Expression Examples"
+
+    ```toml
+    # Includes only containers having a label with key `a.label.name` and value `foo`
+    constraints = "Label(`a.label.name`, `foo`)"
+    ```
+
+    ```toml
+    # Excludes containers having any label with key `a.label.name` and value `foo`
+    constraints = "!Label(`a.label.name`, `value`)"
+    ```
+
+    ```toml
+    # With logical AND.
+    constraints = "Label(`a.label.name`, `valueA`) && Label(`another.label.name`, `valueB`)"
+    ```
+
+    ```toml
+    # With logical OR.
+    constraints = "Label(`a.label.name`, `valueA`) || Label(`another.label.name`, `valueB`)"
+    ```
+
+    ```toml
+    # With logical AND and OR, with precedence set by parentheses.
+    constraints = "Label(`a.label.name`, `valueA`) && (Label(`another.label.name`, `valueB`) || Label(`yet.another.label.name`, `valueC`))"
+    ```
+
+    ```toml
+    # Includes only containers having a label with key `a.label.name` and a value matching the `a.+` regular expression.
+    constraints = "LabelRegex(`a.label.name`, `a.+`)"
+    ```
+
+For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
 
 ```toml tab="File (TOML)"
 [providers.rancher]
@@ -236,43 +279,3 @@ providers:
 --providers.rancher.constraints=Label(`a.label.name`,`foo`)
 # ...
 ```
-
-Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
-That is to say, if none of the container's labels match the expression, no route for the container is created.
-If the expression is empty, all detected containers are included.
-
-The expression syntax is based on the `Label("key", "value")`, and `LabelRegex("key", "value")` functions, as well as the usual boolean logic, as shown in examples below.
-
-??? example "Constraints Expression Examples"
-
-    ```toml
-    # Includes only containers having a label with key `a.label.name` and value `foo`
-    constraints = "Label(`a.label.name`, `foo`)"
-    ```
-    
-    ```toml
-    # Excludes containers having any label with key `a.label.name` and value `foo`
-    constraints = "!Label(`a.label.name`, `value`)"
-    ```
-    
-    ```toml
-    # With logical AND.
-    constraints = "Label(`a.label.name`, `valueA`) && Label(`another.label.name`, `valueB`)"
-    ```
-    
-    ```toml
-    # With logical OR.
-    constraints = "Label(`a.label.name`, `valueA`) || Label(`another.label.name`, `valueB`)"
-    ```
-    
-    ```toml
-    # With logical AND and OR, with precedence set by parentheses.
-    constraints = "Label(`a.label.name`, `valueA`) && (Label(`another.label.name`, `valueB`) || Label(`yet.another.label.name`, `valueC`))"
-    ```
-    
-    ```toml
-    # Includes only containers having a label with key `a.label.name` and a value matching the `a.+` regular expression.
-    constraints = "LabelRegex(`a.label.name`, `a.+`)"
-    ```
-
-See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).

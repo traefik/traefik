@@ -188,7 +188,9 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	tlsManager := traefiktls.NewManager()
 	httpChallengeProvider := acme.NewChallengeHTTP()
-	tlsChallengeProvider := acme.NewChallengeTLSALPN(time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration))
+
+	// we need to wait at least 2 times the ProvidersThrottleDuration to be sure to handle the challenge.
+	tlsChallengeProvider := acme.NewChallengeTLSALPN(time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration) * 2)
 	err = providerAggregator.AddProvider(tlsChallengeProvider)
 	if err != nil {
 		return nil, err
@@ -220,6 +222,10 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		routinesPool.GoCtx(func(ctx context.Context) {
 			aviator.Tick(ctx)
 		})
+	}
+
+	if staticConfiguration.Pilot != nil {
+		version.PilotEnabled = staticConfiguration.Pilot.Dashboard
 	}
 
 	// Plugins
@@ -256,6 +262,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		providerAggregator,
 		time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration),
 		getDefaultsEntrypoints(staticConfiguration),
+		"internal",
 	)
 
 	// TLS
@@ -370,30 +377,32 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 
 	var resolvers []*acme.Provider
 	for name, resolver := range c.CertificatesResolvers {
-		if resolver.ACME != nil {
-			if localStores[resolver.ACME.Storage] == nil {
-				localStores[resolver.ACME.Storage] = acme.NewLocalStore(resolver.ACME.Storage)
-			}
-
-			p := &acme.Provider{
-				Configuration:         resolver.ACME,
-				Store:                 localStores[resolver.ACME.Storage],
-				ResolverName:          name,
-				HTTPChallengeProvider: httpChallengeProvider,
-				TLSChallengeProvider:  tlsChallengeProvider,
-			}
-
-			if err := providerAggregator.AddProvider(p); err != nil {
-				log.WithoutContext().Errorf("The ACME resolver %q is skipped from the resolvers list because: %v", name, err)
-				continue
-			}
-
-			p.SetTLSManager(tlsManager)
-
-			p.SetConfigListenerChan(make(chan dynamic.Configuration))
-
-			resolvers = append(resolvers, p)
+		if resolver.ACME == nil {
+			continue
 		}
+
+		if localStores[resolver.ACME.Storage] == nil {
+			localStores[resolver.ACME.Storage] = acme.NewLocalStore(resolver.ACME.Storage)
+		}
+
+		p := &acme.Provider{
+			Configuration:         resolver.ACME,
+			Store:                 localStores[resolver.ACME.Storage],
+			ResolverName:          name,
+			HTTPChallengeProvider: httpChallengeProvider,
+			TLSChallengeProvider:  tlsChallengeProvider,
+		}
+
+		if err := providerAggregator.AddProvider(p); err != nil {
+			log.WithoutContext().Errorf("The ACME resolver %q is skipped from the resolvers list because: %v", name, err)
+			continue
+		}
+
+		p.SetTLSManager(tlsManager)
+
+		p.SetConfigListenerChan(make(chan dynamic.Configuration))
+
+		resolvers = append(resolvers, p)
 	}
 
 	return resolvers

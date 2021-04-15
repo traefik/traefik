@@ -3,6 +3,7 @@ package forwardedheaders
 import (
 	"crypto/tls"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -296,6 +297,74 @@ func TestServeHTTP(t *testing.T) {
 			for k, v := range test.expectedHeaders {
 				assert.Equal(t, v, req.Header.Get(k))
 			}
+		})
+	}
+}
+
+func Test_isWebsocketRequest(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		connectionHeader string
+		upgradeHeader    string
+		assert           assert.BoolAssertionFunc
+	}{
+		{
+			desc:             "connection Header multiple values middle",
+			connectionHeader: "foo,upgrade,bar",
+			upgradeHeader:    "websocket",
+			assert:           assert.True,
+		},
+		{
+			desc:             "connection Header multiple values end",
+			connectionHeader: "foo,bar,upgrade",
+			upgradeHeader:    "websocket",
+			assert:           assert.True,
+		},
+		{
+			desc:             "connection Header multiple values begin",
+			connectionHeader: "upgrade,foo,bar",
+			upgradeHeader:    "websocket",
+			assert:           assert.True,
+		},
+		{
+			desc:             "connection Header no upgrade",
+			connectionHeader: "foo,bar",
+			upgradeHeader:    "websocket",
+			assert:           assert.False,
+		},
+		{
+			desc:             "connection Header empty",
+			connectionHeader: "",
+			upgradeHeader:    "websocket",
+			assert:           assert.False,
+		},
+		{
+			desc:             "no header values",
+			connectionHeader: "foo,bar",
+			upgradeHeader:    "foo,bar",
+			assert:           assert.False,
+		},
+		{
+			desc:             "upgrade header multiple values",
+			connectionHeader: "upgrade",
+			upgradeHeader:    "foo,bar,websocket",
+			assert:           assert.True,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			req := httptest.NewRequest(http.MethodGet, "http://localhost", nil)
+
+			req.Header.Set(connection, test.connectionHeader)
+			req.Header.Set(upgrade, test.upgradeHeader)
+
+			ok := isWebsocketRequest(req)
+
+			test.assert(t, ok)
 		})
 	}
 }

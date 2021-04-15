@@ -9,10 +9,11 @@ repo_url: 'https://github.com/traefik/traefik'
 
 docs_dir: 'content'
 
+product: proxy
+
 # https://squidfunk.github.io/mkdocs-material/
 theme:
-  name: 'material'
-  custom_dir: 'theme'
+  name: 'traefik-labs'
   language: en
   include_sidebar: true
   favicon: assets/img/traefikproxy-icon-color.png
@@ -26,16 +27,7 @@ theme:
     prev: 'Previous'
     next: 'Next'
 
-copyright: "Copyright &copy; 2016-2020 Containous; 2020 Traefik Labs"
-
-extra_css:
-  - assets/styles/root.css
-  - assets/styles/header.css
-  - assets/styles/footer.css
-  - assets/styles/menu.css
-  - assets/styles/content.css
-  - assets/styles/product-switcher.css
-  - assets/styles/atom-one-light.css # HightlightJS's CSS theme
+copyright: "Copyright &copy; 2016-2020 Containous; 2020-2021 Traefik Labs"
 
 extra_javascript:
   - assets/js/hljs/highlight.pack.js # Download from https://highlightjs.org/download/ and enable YAML, TOML and Dockerfile
@@ -181,7 +173,6 @@ nav:
       - 'Data Collection': 'contributing/data-collection.md'
       - 'Advocating': 'contributing/advocating.md'
       - 'Maintainers': 'contributing/maintainers.md'
-#  - 'Glossary': 'glossary.md'
   - 'References':
       - 'Static Configuration':
           - 'Overview': 'reference/static-configuration/overview.md'

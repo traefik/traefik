@@ -332,7 +332,7 @@ Below are the available options for the health check mechanism:
 !!! info "Recovering Servers"
 
     Traefik keeps monitoring the health of unhealthy servers.
-    If a server has recovered (returning `2xx` -> `3xx` responses again), it will be added back to the load balacer rotation pool.
+    If a server has recovered (returning `2xx` -> `3xx` responses again), it will be added back to the load balancer rotation pool.
 
 !!! warning "Health check in Kubernetes"
 
@@ -462,7 +462,7 @@ By default, `passHostHeader` is true.
 
 #### ServersTransport
 
-`serversTransport` allows to reference a ServersTransport configuration for the communication between Traefik and your servers.
+`serversTransport` allows to reference a [ServersTransport](./index.md#serverstransport_1) configuration for the communication between Traefik and your servers.
 
 ??? example "Specify a transport -- Using the [File Provider](../../providers/file.md)"
 
@@ -480,7 +480,7 @@ By default, `passHostHeader` is true.
       services:
         Service01:
           loadBalancer:
-            serversTransport = "mytransport"
+            serversTransport: mytransport
     ```
 
 !!! info default serversTransport
@@ -573,7 +573,7 @@ that will be set as client certificates for mTLS.
 http:
   serversTransports:
     mytransport:
-      certficates:
+      certificates:
         - certFile: foo.crt
           keyFile: bar.crt
 ```
@@ -703,6 +703,37 @@ metadata:
 
 spec:
     maxIdleConnsPerHost: 7
+```
+
+#### `disableHTTP2`
+
+_Optional, Default=false_
+
+`disableHTTP2` disables HTTP/2 for connections with backend servers.
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport]
+  disableHTTP2 = true
+```
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      disableHTTP2: true
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    disableHTTP2: true
 ```
 
 #### `forwardingTimeouts`

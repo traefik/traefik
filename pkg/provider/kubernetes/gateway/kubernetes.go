@@ -25,10 +25,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"sigs.k8s.io/service-apis/apis/v1alpha1"
+	"sigs.k8s.io/gateway-api/apis/v1alpha1"
 )
 
-const providerName = "kubernetesgateway"
+const (
+	providerName            = "kubernetesgateway"
+	traefikServiceKind      = "TraefikService"
+	traefikServiceGroupName = "traefik.containo.us"
+)
 
 // Provider holds configurations of the provider.
 type Provider struct {
@@ -463,29 +467,34 @@ func (p *Provider) fillGatewayConf(client Client, gateway *v1alpha1.Gateway, con
 				}
 
 				if routeRule.ForwardTo != nil {
-					wrrService, subServices, err := loadServices(client, gateway.Namespace, routeRule.ForwardTo)
-					if err != nil {
-						// update "ResolvedRefs" status true with "DroppedRoutes" reason
-						listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
-							Type:               string(v1alpha1.ListenerConditionResolvedRefs),
-							Status:             metav1.ConditionFalse,
-							LastTransitionTime: metav1.Now(),
-							Reason:             string(v1alpha1.ListenerReasonDegradedRoutes),
-							Message:            fmt.Sprintf("Cannot load service from HTTPRoute %s/%s : %v", gateway.Namespace, httpRoute.Name, err),
-						})
+					// Traefik internal service can be used only if there is only one ForwardTo service reference.
+					if len(routeRule.ForwardTo) == 1 && isInternalService(routeRule.ForwardTo[0]) {
+						router.Service = routeRule.ForwardTo[0].BackendRef.Name
+					} else {
+						wrrService, subServices, err := loadServices(client, gateway.Namespace, routeRule.ForwardTo)
+						if err != nil {
+							// update "ResolvedRefs" status true with "DroppedRoutes" reason
+							listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
+								Type:               string(v1alpha1.ListenerConditionResolvedRefs),
+								Status:             metav1.ConditionFalse,
+								LastTransitionTime: metav1.Now(),
+								Reason:             string(v1alpha1.ListenerReasonDegradedRoutes),
+								Message:            fmt.Sprintf("Cannot load service from HTTPRoute %s/%s : %v", gateway.Namespace, httpRoute.Name, err),
+							})
 
-						// TODO update the RouteStatus condition / deduplicate conditions on listener
-						continue
+							// TODO update the RouteStatus condition / deduplicate conditions on listener
+							continue
+						}
+
+						for svcName, svc := range subServices {
+							conf.HTTP.Services[svcName] = svc
+						}
+
+						serviceName := provider.Normalize(routerKey + "-wrr")
+						conf.HTTP.Services[serviceName] = wrrService
+
+						router.Service = serviceName
 					}
-
-					for svcName, svc := range subServices {
-						conf.HTTP.Services[svcName] = svc
-					}
-
-					serviceName := provider.Normalize(routerKey + "-wrr")
-					conf.HTTP.Services[serviceName] = wrrService
-
-					router.Service = serviceName
 				}
 
 				if router.Service != "" {
@@ -541,23 +550,24 @@ func (p *Provider) makeGatewayStatus(listenerStatuses []v1alpha1.ListenerStatus)
 
 	gatewayStatus.Listeners = listenerStatuses
 
-	// update "Scheduled" status with "ResourcesAvailable" reason
-	gatewayStatus.Conditions = append(gatewayStatus.Conditions, metav1.Condition{
-		Type:               string(v1alpha1.GatewayConditionScheduled),
-		Status:             metav1.ConditionTrue,
-		Reason:             "ResourcesAvailable",
-		Message:            "Resources available",
-		LastTransitionTime: metav1.Now(),
-	})
-
-	// update "Ready" status with "ListenersValid" reason
-	gatewayStatus.Conditions = append(gatewayStatus.Conditions, metav1.Condition{
-		Type:               string(v1alpha1.GatewayConditionReady),
-		Status:             metav1.ConditionTrue,
-		Reason:             "ListenersValid",
-		Message:            "Listeners valid",
-		LastTransitionTime: metav1.Now(),
-	})
+	gatewayStatus.Conditions = append(gatewayStatus.Conditions,
+		// update "Scheduled" status with "ResourcesAvailable" reason
+		metav1.Condition{
+			Type:               string(v1alpha1.GatewayConditionScheduled),
+			Status:             metav1.ConditionTrue,
+			Reason:             "ResourcesAvailable",
+			Message:            "Resources available",
+			LastTransitionTime: metav1.Now(),
+		},
+		// update "Ready" status with "ListenersValid" reason
+		metav1.Condition{
+			Type:               string(v1alpha1.GatewayConditionReady),
+			Status:             metav1.ConditionTrue,
+			Reason:             "ListenersValid",
+			Message:            "Listeners valid",
+			LastTransitionTime: metav1.Now(),
+		},
+	)
 
 	return gatewayStatus, nil
 }
@@ -765,6 +775,21 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 	}
 
 	for _, forwardTo := range targets {
+		weight := int(forwardTo.Weight)
+
+		if forwardTo.ServiceName == nil && forwardTo.BackendRef != nil {
+			if !(forwardTo.BackendRef.Group == traefikServiceGroupName && forwardTo.BackendRef.Kind == traefikServiceKind) {
+				continue
+			}
+
+			if strings.HasSuffix(forwardTo.BackendRef.Name, "@internal") {
+				return nil, nil, fmt.Errorf("traefik internal service %s is not allowed in a WRR loadbalancer", forwardTo.BackendRef.Name)
+			}
+
+			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: forwardTo.BackendRef.Name, Weight: &weight})
+			continue
+		}
+
 		if forwardTo.ServiceName == nil {
 			continue
 		}
@@ -775,8 +800,6 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 			},
 		}
 
-		// TODO Handle BackendRefs
-
 		service, exists, err := client.GetService(namespace, *forwardTo.ServiceName)
 		if err != nil {
 			return nil, nil, err
@@ -786,12 +809,12 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 			return nil, nil, errors.New("service not found")
 		}
 
-		if len(service.Spec.Ports) > 1 && forwardTo.Port == 0 {
+		if len(service.Spec.Ports) > 1 && forwardTo.Port == nil {
 			// If the port is unspecified and the backend is a Service
 			// object consisting of multiple port definitions, the route
 			// must be dropped from the Gateway. The controller should
 			// raise the "ResolvedRefs" condition on the Gateway with the
-			// "DroppedRoutes" reason.  The gateway status for this route
+			// "DroppedRoutes" reason. The gateway status for this route
 			// should be updated with a condition that describes the error
 			// more specifically.
 			log.WithoutContext().Errorf("A multiple ports Kubernetes Service cannot be used if unspecified forwardTo.Port")
@@ -803,7 +826,7 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 		var match bool
 
 		for _, p := range service.Spec.Ports {
-			if forwardTo.Port == 0 || p.Port == int32(forwardTo.Port) {
+			if forwardTo.Port == nil || p.Port == int32(*forwardTo.Port) {
 				portName = p.Name
 				portSpec = p
 				match = true
@@ -855,11 +878,10 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 		serviceName := provider.Normalize(makeID(service.Namespace, service.Name) + "-" + portStr)
 		services[serviceName] = &svc
 
-		weight := int(forwardTo.Weight)
 		wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: serviceName, Weight: &weight})
 	}
 
-	if len(services) == 0 {
+	if len(wrrSvc.Weighted.Services) == 0 {
 		return nil, nil, errors.New("no service has been created")
 	}
 
@@ -903,4 +925,12 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	})
 
 	return eventsChanBuffered
+}
+
+func isInternalService(forwardTo v1alpha1.HTTPRouteForwardTo) bool {
+	return forwardTo.ServiceName == nil &&
+		forwardTo.BackendRef != nil &&
+		forwardTo.BackendRef.Kind == traefikServiceKind &&
+		forwardTo.BackendRef.Group == traefikServiceGroupName &&
+		strings.HasSuffix(forwardTo.BackendRef.Name, "@internal")
 }

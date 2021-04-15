@@ -16,12 +16,12 @@ Attach tags to your services and let Traefik do the rest!
     ```toml tab="File (TOML)"
     [providers.consulCatalog]
     ```
-    
+
     ```yaml tab="File (YAML)"
     providers:
       consulCatalog: {}
     ```
-    
+
     ```bash tab="CLI"
     --providers.consulcatalog=true
     ```
@@ -42,6 +42,8 @@ See the dedicated section in [routing](../routing/providers/consul-catalog.md).
 
 _Optional, Default=15s_
 
+Defines the polling interval.
+
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
   refreshInterval = "30s"
@@ -60,11 +62,11 @@ providers:
 # ...
 ```
 
-Defines the polling interval.
-
 ### `prefix`
 
 _required, Default="traefik"_
+
+The prefix for Consul Catalog tags defining Traefik labels.
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
@@ -84,11 +86,17 @@ providers:
 # ...
 ```
 
-The prefix for Consul Catalog tags defining traefik labels.
-
 ### `requireConsistent`
 
 _Optional, Default=false_
+
+Forces the read to be fully consistent.
+
+!!! note ""
+
+    It is more expensive due to an extra round-trip but prevents ever performing a stale read.
+
+    For more information, see the consul [documentation on consistency](https://www.consul.io/api-docs/features/consistency).
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
@@ -108,11 +116,17 @@ providers:
 # ...
 ```
 
-Forces the read to be fully consistent.
-
 ### `stale`
 
 _Optional, Default=false_
+
+Use stale consistency for catalog reads.
+
+!!! note ""
+
+    This makes reads very fast and scalable at the cost of a higher likelihood of stale values.
+
+    For more information, see the consul [documentation on consistency](https://www.consul.io/api-docs/features/consistency).
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
@@ -132,11 +146,11 @@ providers:
 # ...
 ```
 
-Use stale consistency for catalog reads.
-
 ### `cache`
 
 _Optional, Default=false_
+
+Use local agent caching for catalog reads.
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
@@ -156,13 +170,13 @@ providers:
 # ...
 ```
 
-Use local agent caching for catalog reads.
-
 ### `endpoint`
 
 Defines the Consul server endpoint.
 
 #### `address`
+
+Defines the address of the Consul server.
 
 _Optional, Default="127.0.0.1:8500"_
 
@@ -186,11 +200,11 @@ providers:
 # ...
 ```
 
-Defines the address of the Consul server.
-
 #### `scheme`
 
 _Optional, Default=""_
+
+Defines the URI scheme for the Consul server.
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
@@ -212,11 +226,12 @@ providers:
 # ...
 ```
 
-Defines the URI scheme for the Consul server.
-
 #### `datacenter`
 
 _Optional, Default=""_
+
+Defines the datacenter to use.
+If not provided in Traefik, Consul uses the default agent datacenter.
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
@@ -238,12 +253,11 @@ providers:
 # ...
 ```
 
-Defines the Data center to use.
-If not provided, the default agent data center is used.
-
 #### `token`
 
 _Optional, Default=""_
+
+Token is used to provide a per-request ACL token which overwrites the agent's default token.
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
@@ -265,11 +279,12 @@ providers:
 # ...
 ```
 
-Token is used to provide a per-request ACL token which overrides the agent's default token.
-
 #### `endpointWaitTime`
 
 _Optional, Default=""_
+
+Limits the duration for which a Watch can block.
+If not provided, the agent default values will be used.
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
@@ -291,18 +306,17 @@ providers:
 # ...
 ```
 
-WaitTime limits how long a Watch will block.
-If not provided, the agent default values will be used
-
 #### `httpAuth`
 
 _Optional_
 
-Used to authenticate http client with HTTP Basic Authentication.
+Used to authenticate the HTTP client using HTTP Basic Authentication.
 
 ##### `username`
 
-_Optional_
+_Optional, Default=""_
+
+Username to use for HTTP Basic Authentication.
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog.endpoint.httpAuth]
@@ -321,11 +335,11 @@ providers:
 --providers.consulcatalog.endpoint.httpauth.username=test
 ```
 
-Username to use for HTTP Basic Authentication
-
 ##### `password`
 
-_Optional_
+_Optional, Default=""_
+
+Password to use for HTTP Basic Authentication.
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog.endpoint.httpAuth]
@@ -344,8 +358,6 @@ providers:
 --providers.consulcatalog.endpoint.httpauth.password=test
 ```
 
-Password to use for HTTP Basic Authentication
-
 #### `tls`
 
 _Optional_
@@ -355,6 +367,8 @@ Defines TLS options for Consul server endpoint.
 ##### `ca`
 
 _Optional_
+
+`ca` is the path to the CA certificate used for Consul communication, defaults to the system bundle if not specified.
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog.endpoint.tls]
@@ -373,11 +387,19 @@ providers:
 --providers.consulcatalog.endpoint.tls.ca=path/to/ca.crt
 ```
 
-`ca` is the path to the CA certificate used for Consul communication, defaults to the system bundle if not specified.
-
 ##### `caOptional`
 
 _Optional_
+
+The value of `tls.caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to Consul.
+
+!!! warning ""
+
+    If `tls.ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
+
+When this option is set to `true`, a client certificate is requested during the handshake but is not required. If a certificate is sent, it is required to be valid.
+
+When this option is set to `false`, a client certificate is requested during the handshake, and at least one valid certificate should be sent by the client.
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog.endpoint.tls]
@@ -396,16 +418,13 @@ providers:
 --providers.consulcatalog.endpoint.tls.caoptional=true
 ```
 
-Policy followed for the secured connection with TLS Client Authentication to Consul.
-Requires `tls.ca` to be defined.
-
-- `true`: VerifyClientCertIfGiven
-- `false`: RequireAndVerifyClientCert
-- if `tls.ca` is undefined NoClientCert
-
 ##### `cert`
 
 _Optional_
+
+`cert` is the path to the public certificate to use for Consul communication.
+
+When using this option, setting the `key` option is required.
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog.endpoint.tls]
@@ -426,14 +445,15 @@ providers:
 --providers.consulcatalog.endpoint.tls.cert=path/to/foo.cert
 --providers.consulcatalog.endpoint.tls.key=path/to/foo.key
 ```
-
-`cert` is the path to the public certificate for Consul communication.
-If this is set then you need to also set `key.
 
 ##### `key`
 
 _Optional_
 
+`key` is the path to the private key for Consul communication.
+
+When using this option, setting the `cert` option is required.
+
 ```toml tab="File (TOML)"
 [providers.consulCatalog.endpoint.tls]
   cert = "path/to/foo.cert"
@@ -454,12 +474,11 @@ providers:
 --providers.consulcatalog.endpoint.tls.key=path/to/foo.key
 ```
 
-`key` is the path to the private key for Consul communication.
-If this is set then you need to also set `cert`.
-
 ##### `insecureSkipVerify`
 
 _Optional_
+
+If `insecureSkipVerify` is `true`, the TLS connection to Consul accepts any certificate presented by the server regardless of the hostnames it covers.
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog.endpoint.tls]
@@ -478,11 +497,14 @@ providers:
 --providers.consulcatalog.endpoint.tls.insecureskipverify=true
 ```
 
-If `insecureSkipVerify` is `true`, TLS for the connection to Consul server accepts any certificate presented by the server and any host name in that certificate.
-
 ### `exposedByDefault`
 
 _Optional, Default=true_
+
+Expose Consul Catalog services by default in Traefik.
+If set to `false`, services that don't have a `traefik.enable=true` tag will be ignored from the resulting routing configuration.
+
+For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
@@ -502,14 +524,19 @@ providers:
 # ...
 ```
 
-Expose Consul Catalog services by default in Traefik.
-If set to false, services that don't have a `traefik.enable=true` tag will be ignored from the resulting routing configuration.
-
-See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
-
 ### `defaultRule`
 
 _Optional, Default=```Host(`{{ normalize .Name }}`)```_
+
+The default host rule for all services.
+
+For a given service, if no routing rule was defined by a tag, it is defined by this `defaultRule` instead.
+The `defaultRule` must be set to a valid [Go template](https://golang.org/pkg/text/template/),
+and can include [sprig template functions](http://masterminds.github.io/sprig/).
+The service name can be accessed with the `Name` identifier,
+and the template has access to all the labels (i.e. tags beginning with the `prefix`) defined on this service.
+
+The option can be overridden on an instance basis with the `traefik.http.routers.{name-of-your-choice}.rule` tag.
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
@@ -529,19 +556,48 @@ providers:
 # ...
 ```
 
-The default host rule for all services.
-
-For a given service if no routing rule was defined by a tag, it is defined by this defaultRule instead.
-It must be a valid [Go template](https://golang.org/pkg/text/template/),
-augmented with the [sprig template functions](http://masterminds.github.io/sprig/).
-The service name can be accessed as the `Name` identifier,
-and the template has access to all the labels (i.e. tags beginning with the `prefix`) defined on this service.
-
-The option can be overridden on an instance basis with the `traefik.http.routers.{name-of-your-choice}.rule` tag.
-
 ### `constraints`
 
 _Optional, Default=""_
+
+The `constraints` option can be set to an expression that Traefik matches against the service tags to determine whether
+to create any route for that service. If none of the service tags match the expression, no route for that service is
+created. If the expression is empty, all detected services are included.
+
+The expression syntax is based on the ```Tag(`tag`)```, and ```TagRegex(`tag`)``` functions,
+as well as the usual boolean logic, as shown in examples below.
+
+??? example "Constraints Expression Examples"
+
+    ```toml
+    # Includes only services having the tag `a.tag.name=foo`
+    constraints = "Tag(`a.tag.name=foo`)"
+    ```
+
+    ```toml
+    # Excludes services having any tag `a.tag.name=foo`
+    constraints = "!Tag(`a.tag.name=foo`)"
+    ```
+
+    ```toml
+    # With logical AND.
+    constraints = "Tag(`a.tag.name`) && Tag(`another.tag.name`)"
+    ```
+
+    ```toml
+    # With logical OR.
+    constraints = "Tag(`a.tag.name`) || Tag(`another.tag.name`)"
+    ```
+
+    ```toml
+    # With logical AND and OR, with precedence set by parentheses.
+    constraints = "Tag(`a.tag.name`) && (Tag(`another.tag.name`) || Tag(`yet.another.tag.name`))"
+    ```
+
+    ```toml
+    # Includes only services having a tag matching the `a\.tag\.t.+` regular expression.
+    constraints = "TagRegex(`a\.tag\.t.+`)"
+    ```
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
@@ -561,43 +617,4 @@ providers:
 # ...
 ```
 
-Constraints is an expression that Traefik matches against the service's tags to determine whether to create any route for that service.
-That is to say, if none of the service's tags match the expression, no route for that service is created.
-If the expression is empty, all detected services are included.
-
-The expression syntax is based on the ```Tag(`tag`)```, and ```TagRegex(`tag`)``` functions,
-as well as the usual boolean logic, as shown in examples below.
-
-??? example "Constraints Expression Examples"
-
-    ```toml
-    # Includes only services having the tag `a.tag.name=foo`
-    constraints = "Tag(`a.tag.name=foo`)"
-    ```
-    
-    ```toml
-    # Excludes services having any tag `a.tag.name=foo`
-    constraints = "!Tag(`a.tag.name=foo`)"
-    ```
-    
-    ```toml
-    # With logical AND.
-    constraints = "Tag(`a.tag.name`) && Tag(`another.tag.name`)"
-    ```
-    
-    ```toml
-    # With logical OR.
-    constraints = "Tag(`a.tag.name`) || Tag(`another.tag.name`)"
-    ```
-    
-    ```toml
-    # With logical AND and OR, with precedence set by parentheses.
-    constraints = "Tag(`a.tag.name`) && (Tag(`another.tag.name`) || Tag(`yet.another.tag.name`))"
-    ```
-    
-    ```toml
-    # Includes only services having a tag matching the `a\.tag\.t.+` regular expression.
-    constraints = "TagRegex(`a\.tag\.t.+`)"
-    ```
-
-See also [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
+For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).

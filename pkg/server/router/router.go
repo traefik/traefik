@@ -16,10 +16,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/server/provider"
 )
 
-const (
-	recoveryMiddlewareName = "traefik-internal-recovery"
-)
-
 type middlewareBuilder interface {
 	BuildChain(ctx context.Context, names []string) *alice.Chain
 }
@@ -130,7 +126,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 	chain := alice.New()
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-		return recovery.New(ctx, next, recoveryMiddlewareName)
+		return recovery.New(ctx, next)
 	})
 
 	return chain.Then(router)

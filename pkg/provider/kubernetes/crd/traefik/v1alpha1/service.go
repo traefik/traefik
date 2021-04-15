@@ -7,6 +7,7 @@ import (
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:storageversion
 
 // TraefikService is the specification for a service (that an IngressRoute refers
 // to) that is usually not a terminal service (i.e. not a pod of servers), as
@@ -43,8 +44,9 @@ type ServiceSpec struct {
 // Mirroring defines a mirroring service, which is composed of a main
 // load-balancer, and a list of mirrors.
 type Mirroring struct {
-	LoadBalancerSpec
-	MaxBodySize *int64
+	LoadBalancerSpec `json:",inline"`
+
+	MaxBodySize *int64          `json:"maxBodySize,omitempty"`
 	Mirrors     []MirrorService `json:"mirrors,omitempty"`
 }
 
@@ -52,7 +54,8 @@ type Mirroring struct {
 
 // MirrorService defines one of the mirrors of a Mirroring service.
 type MirrorService struct {
-	LoadBalancerSpec
+	LoadBalancerSpec `json:",inline"`
+
 	Percent int `json:"percent,omitempty"`
 }
 

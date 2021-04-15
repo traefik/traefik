@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -119,6 +118,17 @@ func (s *K8sSuite) TestGatewayConfiguration(c *check.C) {
 	testConfiguration(c, "testdata/rawdata-gateway.json", "8080")
 }
 
+func (s *K8sSuite) TestIngressclass(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_ingressclass.toml"))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	testConfiguration(c, "testdata/rawdata-ingressclass.json", "8080")
+}
+
 func testConfiguration(c *check.C, path, apiPort string) {
 	err := try.GetRequest("http://127.0.0.1:"+apiPort+"/api/entrypoints", 20*time.Second, try.BodyContains(`"name":"web"`))
 	c.Assert(err, checker.IsNil)
@@ -153,14 +163,14 @@ func testConfiguration(c *check.C, path, apiPort string) {
 	newJSON, err := json.MarshalIndent(rtRepr, "", "\t")
 	c.Assert(err, checker.IsNil)
 
-	err = ioutil.WriteFile(expectedJSON, newJSON, 0o644)
+	err = os.WriteFile(expectedJSON, newJSON, 0o644)
 	c.Assert(err, checker.IsNil)
 	c.Errorf("We do not want a passing test in file update mode")
 }
 
 func matchesConfig(wantConfig string, buf *bytes.Buffer) try.ResponseCondition {
 	return func(res *http.Response) error {
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		if err != nil {
 			return fmt.Errorf("failed to read response body: %w", err)
 		}
@@ -187,7 +197,7 @@ func matchesConfig(wantConfig string, buf *bytes.Buffer) try.ResponseCondition {
 			return err
 		}
 
-		expected, err := ioutil.ReadFile(wantConfig)
+		expected, err := os.ReadFile(wantConfig)
 		if err != nil {
 			return err
 		}

@@ -2,14 +2,14 @@ package compress
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/NYTimes/gziphandler"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/gziphandler"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/testhelpers"
 )
@@ -91,24 +91,25 @@ func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 	baseBody := generateBytes(gziphandler.DefaultMinSize)
 
-	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		_, err := rw.Write(baseBody)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-		}
-	})
-
 	testCases := []struct {
-		desc           string
-		conf           dynamic.Compress
-		reqContentType string
+		desc            string
+		conf            dynamic.Compress
+		reqContentType  string
+		respContentType string
 	}{
 		{
-			desc: "text/event-stream",
+			desc: "Exclude Request Content-Type",
 			conf: dynamic.Compress{
 				ExcludedContentTypes: []string{"text/event-stream"},
 			},
 			reqContentType: "text/event-stream",
+		},
+		{
+			desc: "Exclude Response Content-Type",
+			conf: dynamic.Compress{
+				ExcludedContentTypes: []string{"text/event-stream"},
+			},
+			respContentType: "text/event-stream",
 		},
 		{
 			desc:           "application/grpc",
@@ -127,6 +128,17 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 			if test.reqContentType != "" {
 				req.Header.Add(contentTypeHeader, test.reqContentType)
 			}
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+				if len(test.respContentType) > 0 {
+					rw.Header().Set(contentTypeHeader, test.respContentType)
+				}
+
+				_, err := rw.Write(baseBody)
+				if err != nil {
+					http.Error(rw, err.Error(), http.StatusInternalServerError)
+				}
+			})
 
 			handler, err := New(context.Background(), next, test.conf, "test")
 			require.NoError(t, err)
@@ -193,7 +205,7 @@ func TestIntegrationShouldNotCompress(t *testing.T) {
 			assert.Equal(t, gzipValue, resp.Header.Get(contentEncodingHeader))
 			assert.Equal(t, acceptEncodingHeader, resp.Header.Get(varyHeader))
 
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			assert.EqualValues(t, fakeCompressedBody, body)
 		})
@@ -275,7 +287,7 @@ func TestIntegrationShouldCompress(t *testing.T) {
 			assert.Equal(t, gzipValue, resp.Header.Get(contentEncodingHeader))
 			assert.Equal(t, acceptEncodingHeader, resp.Header.Get(varyHeader))
 
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			if assert.ObjectsAreEqualValues(body, fakeBody) {
 				assert.Fail(t, "expected a compressed body", "got %v", body)
@@ -284,9 +296,9 @@ func TestIntegrationShouldCompress(t *testing.T) {
 	}
 }
 
-func generateBytes(len int) []byte {
+func generateBytes(length int) []byte {
 	var value []byte
-	for i := 0; i < len; i++ {
+	for i := 0; i < length; i++ {
 		value = append(value, 0x61+byte(i))
 	}
 	return value

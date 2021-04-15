@@ -52,7 +52,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 					break
 				}
 
-				serviceKey := fmt.Sprintf("%s-%s-%d", serviceName, service.Name, service.Port)
+				serviceKey := fmt.Sprintf("%s-%s-%s", serviceName, service.Name, &service.Port)
 				conf.Services[serviceKey] = balancerServerUDP
 
 				srv := dynamic.UDPWRRService{Name: serviceKey}
@@ -111,23 +111,15 @@ func loadUDPServers(client Client, namespace string, svc v1alpha1.ServiceUDP) ([
 		return nil, errors.New("service not found")
 	}
 
-	var portSpec *corev1.ServicePort
-	for _, p := range service.Spec.Ports {
-		p := p
-		if svc.Port == p.Port {
-			portSpec = &p
-			break
-		}
-	}
-
-	if portSpec == nil {
-		return nil, errors.New("service port not found")
+	svcPort, err := getServicePort(service, svc.Port)
+	if err != nil {
+		return nil, err
 	}
 
 	var servers []dynamic.UDPServer
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		servers = append(servers, dynamic.UDPServer{
-			Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(portSpec.Port))),
+			Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(svcPort.Port))),
 		})
 	} else {
 		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, svc.Name)
@@ -146,7 +138,7 @@ func loadUDPServers(client Client, namespace string, svc v1alpha1.ServiceUDP) ([
 		var port int32
 		for _, subset := range endpoints.Subsets {
 			for _, p := range subset.Ports {
-				if portSpec.Name == p.Name {
+				if svcPort.Name == p.Name {
 					port = p.Port
 					break
 				}
