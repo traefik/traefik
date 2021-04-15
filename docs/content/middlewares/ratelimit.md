@@ -325,7 +325,13 @@ http:
 
 ##### `ipStrategy.excludedIPs`
 
-`excludedIPs` configures Traefik to scan the `X-Forwarded-For` header and select the first IP not in the list.
+`excludedIPs` defines a pool of IPs that will be considered as the same source
+of requests, which means they will contribute together with respect to the rate
+limiting (in the leaky bucket analogy, they all are in the same bucket).
+Contrary to what the name might suggest, this option is _not_ about excluding an
+IP from the rate limiter. When comparing a request against the pool, it will
+match if any of its IPs in the `X-Forwarded-For` header, or its `RemoteAddr` IP,
+matches one of the IPs in the pool.
 
 !!! important "If `depth` is specified, `excludedIPs` is ignored."
 

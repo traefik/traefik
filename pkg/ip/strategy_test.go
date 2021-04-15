@@ -80,6 +80,7 @@ func TestExcludedIPsStrategy_GetIP(t *testing.T) {
 		excludedIPs   []string
 		xForwardedFor string
 		expected      string
+		useRemote     bool
 	}{
 		{
 			desc:          "Use excluded all IPs",
@@ -105,6 +106,34 @@ func TestExcludedIPsStrategy_GetIP(t *testing.T) {
 			xForwardedFor: "10.0.0.4,10.0.0.3,10.0.0.2,10.0.0.1",
 			expected:      "",
 		},
+		{
+			desc:          "No forwarded, useRemote not in pool",
+			excludedIPs:   []string{"10.0.0.4", "10.0.0.3", "10.0.0.2", "10.0.0.1"},
+			xForwardedFor: "",
+			expected:      "127.0.0.1",
+			useRemote:     true,
+		},
+		{
+			desc:          "No forwarded, useRemote in pool",
+			excludedIPs:   []string{"127.0.0.1", "10.0.0.4", "10.0.0.3", "10.0.0.2", "10.0.0.1"},
+			xForwardedFor: "",
+			expected:      "",
+			useRemote:     true,
+		},
+		{
+			desc:          "With forwarded, useRemote not in pool",
+			excludedIPs:   []string{"10.0.0.4", "10.0.0.3", "10.0.0.2", "10.0.0.1"},
+			xForwardedFor: "10.0.0.4",
+			expected:      "127.0.0.1",
+			useRemote:     true,
+		},
+		{
+			desc:          "With forwarded, useRemote in pool",
+			excludedIPs:   []string{"127.0.0.1", "10.0.0.4", "10.0.0.3", "10.0.0.2", "10.0.0.1"},
+			xForwardedFor: "",
+			expected:      "",
+			useRemote:     true,
+		},
 	}
 
 	for _, test := range testCases {
@@ -115,8 +144,11 @@ func TestExcludedIPsStrategy_GetIP(t *testing.T) {
 			checker, err := NewChecker(test.excludedIPs)
 			require.NoError(t, err)
 
-			strategy := CheckerStrategy{Checker: checker}
+			strategy := PoolStrategy{Checker: checker, UseRemote: test.useRemote}
 			req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1", nil)
+			if test.useRemote {
+				req.RemoteAddr = "127.0.0.1"
+			}
 			req.Header.Set(xForwardedFor, test.xForwardedFor)
 			actual := strategy.GetIP(req)
 			assert.Equal(t, test.expected, actual)
