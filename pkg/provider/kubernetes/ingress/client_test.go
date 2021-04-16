@@ -194,8 +194,8 @@ func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 func TestClientIgnoresEmptyEndpointUpdates(t *testing.T) {
 	emptyEndpoint := &corev1.Endpoints{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "empty-endpoint",
-			Namespace: "test",
+			Name:            "empty-endpoint",
+			Namespace:       "test",
 			ResourceVersion: "1244",
 			Annotations: map[string]string{
 				"test-annotation": "_",
@@ -205,8 +205,8 @@ func TestClientIgnoresEmptyEndpointUpdates(t *testing.T) {
 
 	filledEndpoint := &corev1.Endpoints{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "filled-endpoint",
-			Namespace: "test",
+			Name:            "filled-endpoint",
+			Namespace:       "test",
 			ResourceVersion: "1234",
 		},
 		Subsets: []corev1.EndpointSubset{{
