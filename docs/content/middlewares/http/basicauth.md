@@ -3,7 +3,7 @@
 Adding Basic Authentication
 {: .subtitle }
 
-![BasicAuth](../assets/img/middleware/basicauth.png)
+![BasicAuth](../../assets/img/middleware/basicauth.png)
 
 The BasicAuth middleware restricts access to your services to known users.
 

@@ -3,7 +3,7 @@
 How to Read the Request before Forwarding It
 {: .subtitle }
 
-![Buffering](../assets/img/middleware/buffering.png)
+![Buffering](../../assets/img/middleware/buffering.png)
 
 The Buffering middleware limits the size of requests that can be forwarded to services.
 

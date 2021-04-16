@@ -3,7 +3,7 @@
 Managing Request/Response headers
 {: .subtitle }
 
-![Headers](../assets/img/middleware/headers.png)
+![Headers](../../assets/img/middleware/headers.png)
 
 The Headers middleware manages the headers of requests and responses.
 

@@ -116,7 +116,7 @@ The `url` option point to a specific instance.
 !!! info ""
     Paths in the servers' `url` have no effect.
     If you want the requests to be sent to a specific path on your servers,
-    configure your [`routers`](../routers/index.md) to use a corresponding [middleware](../../middlewares/overview.md) (e.g. the [AddPrefix](../../middlewares/addprefix.md) or [ReplacePath](../../middlewares/replacepath.md)) middlewares.
+    configure your [`routers`](../routers/index.md) to use a corresponding [middleware](../../middlewares/overview.md) (e.g. the [AddPrefix](../../middlewares/http/addprefix.md) or [ReplacePath](../../middlewares/http/replacepath.md)) middlewares.
 
 ??? example "A Service with One Server -- Using the [File Provider](../../providers/file.md)"
 

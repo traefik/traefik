@@ -3,7 +3,7 @@
 Limiting the Number of Simultaneous In-Flight Requests
 {: .subtitle }
 
-![InFlightReq](../assets/img/middleware/inflightreq.png)
+![InFlightReq](../../assets/img/middleware/inflightreq.png)
 
 To proactively prevent services from being overwhelmed with high load, the number of allowed simultaneous in-flight requests can be limited.
 

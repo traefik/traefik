@@ -327,7 +327,7 @@ With Traefik v2 it is applied on an entry point or a [Router](../routing/routers
 To apply a redirection:
 
 - on an entry point, the [HTTP redirection](../routing/entrypoints.md#redirection) has to be configured.
-- on a router, one of the redirect middlewares, [RedirectRegex](../middlewares/redirectregex.md) or [RedirectScheme](../middlewares/redirectscheme.md), has to be configured and added to the router middlewares list.
+- on a router, one of the redirect middlewares, [RedirectRegex](../middlewares/http/redirectregex.md) or [RedirectScheme](../middlewares/http/redirectscheme.md), has to be configured and added to the router middlewares list.
 
 !!! example "Global HTTP to HTTPS redirection"
 
@@ -545,7 +545,7 @@ Use Case: Incoming requests to `http://example.org/admin` are forwarded to the w
 with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, you must:
 
 - First, configure a router named `admin` with a rule matching at least the path prefix with the `PathPrefix` keyword,
-- Then, define a middleware of type [`stripprefix`](../middlewares/stripprefix.md), which removes the prefix `/admin`, associated to the router `admin`.
+- Then, define a middleware of type [`stripprefix`](../middlewares/http/stripprefix.md), which removes the prefix `/admin`, associated to the router `admin`.
 
 !!! example "Strip Path Prefix When Forwarding to Backend"
 

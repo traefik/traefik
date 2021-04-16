@@ -1,14 +1,9 @@
-# Middlewares
+# TCP Middlewares
 
 Controlling connections
 {: .subtitle }
 
-Attached to the routers, pieces of middleware are a means TODO
-
-!!! warning "Provider Namespace"
-
-    Be aware of the concept of Providers Namespace described in the [Configuration Discovery](../../providers/overview.md#provider-namespace) section. 
-    It also applies to TCP Middlewares.
+![Overview](../../assets/img/middleware/overview.png)
 
 ## Configuration Example
 
@@ -132,7 +127,7 @@ tcp:
         - address: "xx.xx.xx.xx:xx"
 ```
 
-## Available Middlewares
+## Available TCP Middlewares
 
 | Middleware                                | Purpose                                           | Area                        |
 |-------------------------------------------|---------------------------------------------------|-----------------------------|
