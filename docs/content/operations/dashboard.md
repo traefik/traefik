@@ -10,9 +10,9 @@ The dashboard is the central place that shows you the current active routes hand
     <figcaption>The dashboard in action</figcaption>
 </figure>
 
-The dashboard is available at the same location as the [API](./api.md) but on the path `/dashboard/` by default.
+The dashboard is available at a special internal `service` named `dashboard@internal`.
 
-!!! warning "The trailing slash `/` in `/dashboard/` is mandatory"
+!!! warning "In older version, the dashboard is avaliable at the `api@internal` service with `/dashboard/` path prefix. (The trailing slash `/` in `/dashboard/` is mandatory)"
 
 There are 2 ways to configure and access the dashboard:
 
@@ -20,7 +20,7 @@ There are 2 ways to configure and access the dashboard:
 - [Insecure mode](#insecure-mode)
 
 !!! note ""
-    There is also a redirect of the path `/` to the path `/dashboard/`,
+    There is no need a redirect of the path `/` to the path `/dashboard/`,
     but one should not rely on that property as it is bound to change,
     and it might make for confusing routing rules anyway.
 
@@ -61,7 +61,7 @@ api:
 ```
 
 Then define a routing configuration on Traefik itself,
-with a router attached to the service `api@internal` in the
+with a router attached to the two services `api@internal` and `dashboard@internal` in the
 [dynamic configuration](../getting-started/configuration-overview.md#the-dynamic-configuration),
 to allow defining:
 
@@ -74,26 +74,26 @@ to allow defining:
 
 ### Dashboard Router Rule
 
-As underlined in the [documentation for the `api.dashboard` option](./api.md#dashboard),
-the [router rule](../routing/routers/index.md#rule) defined for Traefik must match
-the path prefixes `/api` and `/dashboard`.
+The `api@internal` service should match the path prefix `/api`, and `dashboard@internal` should match the path prefix `/`.
+If the dashboard is served at `http://traefik.example.com/foo/bar/`, you must use middleware to strip the `/foo/bar` in the path. 
+
 
 We recommend to use a "Host Based rule" as ```Host(`traefik.example.com`)``` to match everything on the host domain,
 or to make sure that the defined rule captures both prefixes:
 
 ```bash tab="Host Rule"
-# The dashboard can be accessed on http://traefik.example.com/dashboard/
+# The dashboard can be accessed on http://traefik.example.com/
 rule = "Host(`traefik.example.com`)"
 ```
 
 ```bash tab="Path Prefix Rule"
-# The dashboard can be accessed on http://example.com/dashboard/ or http://traefik.example.com/dashboard/
-rule = "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+# The dashboard can be accessed on http://example.com/ or http://traefik.example.com/
+rule = "PathPrefix(`/api`) || PathPrefix(`/`)"
 ```
 
 ```bash tab="Combination of Rules"
 # The dashboard can be accessed on http://traefik.example.com/dashboard/
-rule = "Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+rule = "Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/`))"
 ```
 
 ??? example "Dashboard Dynamic Configuration Examples"
