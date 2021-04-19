@@ -248,6 +248,9 @@ func TestClientIgnoresEmptyEndpointUpdates(t *testing.T) {
 	emptyEndpoint, err = kubeClient.CoreV1().Endpoints("test").Get(context.TODO(), "empty-endpoint", metav1.GetOptions{})
 	assert.NoError(t, err)
 
+	// Update endpoint annotation and resource version (apparently not done by fake client itself)
+	// to show an update that should not trigger an update event on our eventCh.
+	// This reflects the behavior of kubernetes controllers which use endpoint annotations for leader election.
 	emptyEndpoint.Annotations["test-annotation"] = "___"
 	emptyEndpoint.ResourceVersion = "1245"
 	_, err = kubeClient.CoreV1().Endpoints("test").Update(context.TODO(), emptyEndpoint, metav1.UpdateOptions{})
