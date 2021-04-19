@@ -47,6 +47,20 @@ spec:
                   properties:
                     match:
                       type: string
+                    middlewares:
+                      items:
+                        description: MiddlewareTCPRef is a ref to the MiddlewareTCP
+                          resources.
+                        properties:
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                        required:
+                        - name
+                        - namespace
+                        type: object
+                      type: array
                     services:
                       items:
                         description: ServiceTCP defines an upstream to proxy traffic.
@@ -77,6 +91,7 @@ spec:
                       type: array
                   required:
                   - match
+                  - middlewares
                   type: object
                 type: array
               tls:
