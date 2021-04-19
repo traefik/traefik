@@ -50,14 +50,16 @@ func (wl *ipWhiteLister) ServeTCP(conn tcp.WriteCloser) {
 	ctx := middlewares.GetLoggerCtx(context.Background(), wl.name, typeName)
 	logger := log.FromContext(ctx)
 
-	addr := conn.RemoteAddr()
+	addr := conn.RemoteAddr().String()
 
-	err := wl.whiteLister.IsAuthorized(addr.String())
+	err := wl.whiteLister.IsAuthorized(addr)
 	if err != nil {
 		logger.Errorf("Connection closed: %v", err)
 		conn.Close()
 		return
 	}
+
+	logger.Debugf("Connection accepted: %s", addr)
 
 	wl.next.ServeTCP(conn)
 }

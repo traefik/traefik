@@ -19,6 +19,11 @@ func TestNewIPWhiteLister(t *testing.T) {
 		expectedError bool
 	}{
 		{
+			desc:          "Empty config",
+			whiteList:     dynamic.TCPIPWhiteList{},
+			expectedError: true,
+		},
+		{
 			desc: "invalid IP",
 			whiteList: dynamic.TCPIPWhiteList{
 				SourceRange: []string{"foo"},

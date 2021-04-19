@@ -660,12 +660,12 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
 
 ??? question "What About Other Path Transformations?"
 
-    Instead of removing the path prefix with the [`stripprefix` middleware](../../middlewares/stripprefix/), you can also:
+    Instead of removing the path prefix with the [`stripprefix` middleware](../../middlewares/http/stripprefix/), you can also:
 
-    - Add a path prefix with the [`addprefix` middleware](../../middlewares/addprefix/)
-    - Replace the complete path of the request with the [`replacepath` middleware](../../middlewares/replacepath/)
-    - ReplaceRewrite path using Regexp with the [`replacepathregex` middleware](../../middlewares/replacepathregex/)
-    - And a lot more on the [`middlewares` page](../../middlewares/overview/)
+    - Add a path prefix with the [`addprefix` middleware](../../middlewares/http/addprefix/)
+    - Replace the complete path of the request with the [`replacepath` middleware](../../middlewares/http/replacepath/)
+    - ReplaceRewrite path using Regexp with the [`replacepathregex` middleware](../../middlewares/http/replacepathregex/)
+    - And a lot more on the [`HTTP middlewares` page](../../middlewares/http/overview/)
 
 ## ACME (LetsEncrypt)
 

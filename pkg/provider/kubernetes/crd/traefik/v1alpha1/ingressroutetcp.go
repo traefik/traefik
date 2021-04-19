@@ -18,7 +18,7 @@ type IngressRouteTCPSpec struct {
 type RouteTCP struct {
 	Match       string             `json:"match"`
 	Services    []ServiceTCP       `json:"services,omitempty"`
-	Middlewares []MiddlewareTCPRef `json:"middlewares"`
+	Middlewares []MiddlewareTCPRef `json:"middlewares,omitempty"`
 }
 
 // TLSTCP contains the TLS certificates configuration of the routes.
@@ -45,7 +45,7 @@ type TLSTCP struct {
 // MiddlewareTCPRef is a ref to the MiddlewareTCP resources.
 type MiddlewareTCPRef struct {
 	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	Namespace string `json:"namespace,omitempty"`
 }
 
 // TLSOptionTCPRef is a ref to the TLSOption resources.
