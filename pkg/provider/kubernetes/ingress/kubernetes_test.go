@@ -130,6 +130,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 										URL: "protocol://10.21.0.1:8080",
 									},
 								},
+								ServersTransport: "foobar@file",
 							},
 						},
 					},

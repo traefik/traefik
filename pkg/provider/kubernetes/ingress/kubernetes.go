@@ -530,6 +530,10 @@ func loadService(client Client, namespace string, backend networkingv1.IngressBa
 		}
 	}
 
+	if svcConfig != nil && svcConfig.Service != nil && svcConfig.Service.ServersTransport != "" {
+		svc.LoadBalancer.ServersTransport = svcConfig.Service.ServersTransport
+	}
+
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		protocol := getProtocol(portSpec, portSpec.Name, svcConfig)
 		hostPort := net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(portSpec.Port)))
