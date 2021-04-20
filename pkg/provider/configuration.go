@@ -149,7 +149,7 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 
 	for transportName := range transportsToDelete {
 		logger.WithField(log.ServersTransportName, transportName).
-			Errorf("ServersTransport defined multiple times with different configuration in %v", transports[transportName])
+			Errorf("ServersTransport defined multiple times with different configurations in %v", transports[transportName])
 		delete(configuration.HTTP.ServersTransports, transportName)
 	}
 

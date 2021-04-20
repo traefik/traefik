@@ -56,7 +56,7 @@ type Provider struct {
 	DefaultRule       string          `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 	ConnectAware      bool            `description:"Enable Consul Connect support." json:"connectAware,omitempty" toml:"connectAware,omitempty" yaml:"connectAware,omitempty"`
 	ConnectByDefault  bool            `description:"Automatically connect to a service via Consul connect." json:"connectByDefault,omitempty" toml:"connectByDefault,omitempty" yaml:"connectByDefault,omitempty"`
-	ServiceName       string          `description:"Name of the traefik service in Consul Catalog (needs to be registered via the orchestrator or manually)." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty"`
+	ServiceName       string          `description:"Name of the traefik service in Consul Catalog (needs to be registered via the orchestrator or manually)." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty"` // defaults to "traefik"
 
 	client         *api.Client
 	defaultRuleTpl *template.Template
@@ -363,13 +363,13 @@ func contains(values []string, val string) bool {
 func rootsWatchHandler(ctx context.Context, dest chan<- []string) func(watch.BlockingParamVal, interface{}) {
 	return func(_ watch.BlockingParamVal, raw interface{}) {
 		if raw == nil {
-			log.FromContext(ctx).Errorf("root certificate watcher called with nil")
+			log.FromContext(ctx).Errorf("Root certificate watcher called with nil")
 			return
 		}
 
 		v, ok := raw.(*api.CARootList)
 		if !ok || v == nil {
-			log.FromContext(ctx).Errorf("invalid result for root certificate watcher")
+			log.FromContext(ctx).Errorf("Invalid result for root certificate watcher")
 			return
 		}
 
@@ -390,13 +390,13 @@ type keyPair struct {
 func leafWatcherHandler(ctx context.Context, dest chan<- keyPair) func(watch.BlockingParamVal, interface{}) {
 	return func(_ watch.BlockingParamVal, raw interface{}) {
 		if raw == nil {
-			log.FromContext(ctx).Errorf("leaf certificate watcher called with nil")
+			log.FromContext(ctx).Errorf("Leaf certificate watcher called with nil")
 			return
 		}
 
 		v, ok := raw.(*api.LeafCert)
 		if !ok || v == nil {
-			log.FromContext(ctx).Errorf("invalid result for leaf certificate watcher")
+			log.FromContext(ctx).Errorf("Invalid result for leaf certificate watcher")
 			return
 		}
 
