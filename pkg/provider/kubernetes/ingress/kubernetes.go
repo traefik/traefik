@@ -548,7 +548,7 @@ func loadService(client Client, namespace string, backend networkingv1.IngressBa
 		}
 
 		if port == 0 {
-			return nil, errors.New("cannot define a port")
+			continue
 		}
 
 		protocol := getProtocol(portSpec, portName, svcConfig)
@@ -560,6 +560,10 @@ func loadService(client Client, namespace string, backend networkingv1.IngressBa
 				URL: fmt.Sprintf("%s://%s", protocol, hostPort),
 			})
 		}
+	}
+
+	if len(svc.LoadBalancer.Servers) == 0 {
+		return nil, errors.New("no valid subset found")
 	}
 
 	return svc, nil
