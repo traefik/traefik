@@ -71,7 +71,7 @@ This provider is proposed as an experimental feature and partially supports the 
     --8<-- "content/reference/dynamic-configuration/kubernetes-gateway-rbac.yml"
     ```
 
-The Kubernetes Gateway API project provides several [guides](https://gateway-api.sigs.k8s.io/guides/) on how to use the APIs.
+The Kubernetes Gateway API project provides several guide on how to use the APIs.
 These guides can help you to go further than the example above.
 The [getting started guide](https://gateway-api.sigs.k8s.io/guides/getting-started/) details how to install the CRDs from their repository.
 
