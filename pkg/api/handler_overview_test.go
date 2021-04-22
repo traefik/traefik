@@ -256,14 +256,13 @@ func TestHandler_Overview(t *testing.T) {
 
 			resp, err := http.DefaultClient.Get(server.URL + test.path)
 			require.NoError(t, err)
-
 			require.Equal(t, test.expected.statusCode, resp.StatusCode)
+			assert.Equal(t, resp.Header.Get("Content-Type"), "application/json")
 
 			if test.expected.jsonFile == "" {
 				return
 			}
 
-			assert.Equal(t, resp.Header.Get("Content-Type"), "application/json")
 			contents, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 

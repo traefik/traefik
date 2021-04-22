@@ -20,13 +20,14 @@ type apiError struct {
 }
 
 func writeError(rw http.ResponseWriter, msg string, code int) {
-	data, err := json.Marshal(apiError{Message: msg})
+	rw.Header().Set("Content-Type", "application/json")
+	rw.Header().Set("X-Content-Type-Options", "nosniff")
+	rw.WriteHeader(code)
+	err := json.NewEncoder(rw).Encode(apiError{Message: msg})
 	if err != nil {
 		http.Error(rw, msg, code)
 		return
 	}
-
-	http.Error(rw, string(data), code)
 }
 
 type serviceInfoRepresentation struct {

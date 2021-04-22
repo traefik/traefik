@@ -526,14 +526,12 @@ func TestHandler_TCP(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected.nextPage, resp.Header.Get(nextPageHeader))
-
 			require.Equal(t, test.expected.statusCode, resp.StatusCode)
+			assert.Equal(t, resp.Header.Get("Content-Type"), "application/json")
 
 			if test.expected.jsonFile == "" {
 				return
 			}
-
-			assert.Equal(t, resp.Header.Get("Content-Type"), "application/json")
 
 			contents, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
