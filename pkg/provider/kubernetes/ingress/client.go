@@ -41,7 +41,7 @@ type marshaler interface {
 type Client interface {
 	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
 	GetIngresses() []*networkingv1.Ingress
-	GetIngressClasses() ([]*networkingv1beta1.IngressClass, error)
+	GetIngressClasses() ([]*networkingv1.IngressClass, error)
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
@@ -206,8 +206,15 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	if supportsIngressClass(serverVersion) {
+
 		c.clusterFactory = informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod)
-		c.clusterFactory.Networking().V1beta1().IngressClasses().Informer().AddEventHandler(eventHandler)
+
+		if supportsNetworkingV1Ingress(serverVersion) {
+			c.clusterFactory.Networking().V1().IngressClasses().Informer().AddEventHandler(eventHandler)
+		} else {
+			c.clusterFactory.Networking().V1beta1().IngressClasses().Informer().AddEventHandler(eventHandler)
+		}
+
 		c.clusterFactory.Start(stopCh)
 
 		for typ, ok := range c.clusterFactory.WaitForCacheSync(stopCh) {
@@ -274,6 +281,21 @@ func toNetworkingV1(ing marshaler) (*networkingv1.Ingress, error) {
 	}
 
 	ni := &networkingv1.Ingress{}
+	err = ni.Unmarshal(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return ni, nil
+}
+
+func toNetworkingV1IngressClass(ing marshaler) (*networkingv1.IngressClass, error) {
+	data, err := ing.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	ni := &networkingv1.IngressClass{}
 	err = ni.Unmarshal(data)
 	if err != nil {
 		return nil, err
@@ -450,9 +472,35 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 	return secret, exist, err
 }
 
-func (c *clientWrapper) GetIngressClasses() ([]*networkingv1beta1.IngressClass, error) {
+func (c *clientWrapper) GetIngressClasses() ([]*networkingv1.IngressClass, error) {
+
+	var results []*networkingv1.IngressClass
+
+	serverVersion, err := c.GetServerVersion()
+	if err != nil {
+		log.Errorf("Failed to get server version: %v", err)
+		return results, nil
+	}
+
 	if c.clusterFactory == nil {
 		return nil, errors.New("cluster factory not loaded")
+	}
+
+	isNetworkingV1Supported := supportsNetworkingV1Ingress(serverVersion)
+
+	if isNetworkingV1Supported {
+		ingressClasses, err := c.clusterFactory.Networking().V1().IngressClasses().Lister().List(labels.Everything())
+		if err != nil {
+			return nil, err
+		}
+
+		for _, ic := range ingressClasses {
+			if ic.Spec.Controller == traefikDefaultIngressClassController {
+				results = append(results, ic)
+			}
+		}
+
+		return results, nil
 	}
 
 	ingressClasses, err := c.clusterFactory.Networking().V1beta1().IngressClasses().Lister().List(labels.Everything())
@@ -460,14 +508,19 @@ func (c *clientWrapper) GetIngressClasses() ([]*networkingv1beta1.IngressClass, 
 		return nil, err
 	}
 
-	var ics []*networkingv1beta1.IngressClass
 	for _, ic := range ingressClasses {
 		if ic.Spec.Controller == traefikDefaultIngressClassController {
-			ics = append(ics, ic)
+			icN, err := toNetworkingV1IngressClass(ic)
+
+			if err != nil {
+
+			}
+
+			results = append(results, icN)
 		}
 	}
 
-	return ics, nil
+	return results, nil
 }
 
 // lookupNamespace returns the lookup namespace key for the given namespace.
@@ -525,8 +578,8 @@ func supportsIngressClass(serverVersion *version.Version) bool {
 }
 
 // filterIngressClassByName return a slice containing ingressclasses with the correct name.
-func filterIngressClassByName(ingressClassName string, ics []*networkingv1beta1.IngressClass) []*networkingv1beta1.IngressClass {
-	var ingressClasses []*networkingv1beta1.IngressClass
+func filterIngressClassByName(ingressClassName string, ics []*networkingv1.IngressClass) []*networkingv1.IngressClass {
+	var ingressClasses []*networkingv1.IngressClass
 
 	for _, ic := range ics {
 		if ic.Name == ingressClassName {
