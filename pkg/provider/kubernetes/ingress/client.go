@@ -206,7 +206,6 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	if supportsIngressClass(serverVersion) {
-
 		c.clusterFactory = informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod)
 
 		if supportsNetworkingV1Ingress(serverVersion) {
@@ -473,7 +472,6 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 }
 
 func (c *clientWrapper) GetIngressClasses() ([]*networkingv1.IngressClass, error) {
-
 	var results []*networkingv1.IngressClass
 
 	serverVersion, err := c.GetServerVersion()
@@ -511,11 +509,10 @@ func (c *clientWrapper) GetIngressClasses() ([]*networkingv1.IngressClass, error
 	for _, ic := range ingressClasses {
 		if ic.Spec.Controller == traefikDefaultIngressClassController {
 			icN, err := toNetworkingV1IngressClass(ic)
-
 			if err != nil {
-
+				log.WithoutContext().Errorf("Failed to convert ingress class %s from networking/v1beta1 to networking/v1: %v", ic.Name, err)
+				continue
 			}
-
 			results = append(results, icN)
 		}
 	}
