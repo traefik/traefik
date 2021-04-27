@@ -184,7 +184,7 @@ labels:
 [http.middlewares]
   [http.middlewares.test-ratelimit.rateLimit]
     average = 6
-    period = 1m
+    period = "1m"
 ```
 
 ```yaml tab="File (YAML)"
