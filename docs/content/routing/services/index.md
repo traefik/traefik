@@ -167,8 +167,8 @@ For now, only round robin load balancing is supported:
 
 #### Sticky sessions
 
-When sticky sessions are enabled, a cookie is set on the initial request and response to let the client know which server handles the first response.
-On subsequent requests, to keep the session alive with the same server, the client should resend the same cookie.
+When sticky sessions are enabled, a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response.
+On subsequent requests, to keep the session alive with the same server, the client should send the cookie with the value set.
 
 !!! info "Stickiness on multiple levels"
 
