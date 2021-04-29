@@ -629,7 +629,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect(c *check.C) {
 	err := s.waitForConnectCA()
 	c.Assert(err, checker.IsNil)
 
-	containerIP := s.composeProject.Container(c, "connect").NetworkSettings.IPAddress
+	connectIP := s.composeProject.Container(c, "connect").NetworkSettings.IPAddress
 	reg := &api.AgentServiceRegistration{
 		ID:   "uuid-api1",
 		Name: "uuid-api",
@@ -638,15 +638,30 @@ func (s *ConsulCatalogSuite) TestConsulConnect(c *check.C) {
 			"traefik.connect=true",
 			"traefik.http.routers.router1.rule=Path(`/`)",
 			"traefik.http.routers.router1.service=service1",
-			"traefik.http.services.service1.loadBalancer.server.url=https://" + containerIP,
+			"traefik.http.services.service1.loadBalancer.server.url=https://" + connectIP,
 		},
 		Connect: &api.AgentServiceConnect{
 			Native: true,
 		},
 		Port:    443,
-		Address: containerIP,
+		Address: connectIP,
 	}
 	err = s.registerService(reg, false)
+	c.Assert(err, checker.IsNil)
+
+	whoamiIP := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	regWhoami := &api.AgentServiceRegistration{
+		ID:   "whoami1",
+		Name: "whoami",
+		Tags: []string{
+			"traefik.enable=true",
+			"traefik.http.routers.router2.rule=Path(`/whoami`)",
+			"traefik.http.routers.router2.service=whoami",
+		},
+		Port:    80,
+		Address: whoamiIP,
+	}
+	err = s.registerService(regWhoami, false)
 	c.Assert(err, checker.IsNil)
 
 	tempObjects := struct {
@@ -666,6 +681,163 @@ func (s *ConsulCatalogSuite) TestConsulConnect(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/", 10*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
+	err = try.GetRequest("http://127.0.0.1:8000/whoami", 10*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
 	err = s.deregisterService("uuid-api1", false)
+	c.Assert(err, checker.IsNil)
+	err = s.deregisterService("whoami1", false)
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *ConsulCatalogSuite) TestConsulConnect_ByDefault(c *check.C) {
+	// Wait for consul to fully initialize connect CA
+	err := s.waitForConnectCA()
+	c.Assert(err, checker.IsNil)
+
+	connectIP := s.composeProject.Container(c, "connect").NetworkSettings.IPAddress
+	reg := &api.AgentServiceRegistration{
+		ID:   "uuid-api1",
+		Name: "uuid-api",
+		Tags: []string{
+			"traefik.enable=true",
+			"traefik.http.routers.router1.rule=Path(`/`)",
+			"traefik.http.routers.router1.service=service1",
+			"traefik.http.services.service1.loadBalancer.server.url=https://" + connectIP,
+		},
+		Connect: &api.AgentServiceConnect{
+			Native: true,
+		},
+		Port:    443,
+		Address: connectIP,
+	}
+	err = s.registerService(reg, false)
+	c.Assert(err, checker.IsNil)
+
+	whoamiIP := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	regWhoami := &api.AgentServiceRegistration{
+		ID:   "whoami1",
+		Name: "whoami1",
+		Tags: []string{
+			"traefik.enable=true",
+			"traefik.http.routers.router2.rule=Path(`/whoami`)",
+			"traefik.http.routers.router2.service=whoami",
+		},
+		Port:    80,
+		Address: whoamiIP,
+	}
+	err = s.registerService(regWhoami, false)
+	c.Assert(err, checker.IsNil)
+
+	whoami2IP := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
+	regWhoami2 := &api.AgentServiceRegistration{
+		ID:   "whoami2",
+		Name: "whoami2",
+		Tags: []string{
+			"traefik.enable=true",
+			"traefik.connect=false",
+			"traefik.http.routers.router2.rule=Path(`/whoami2`)",
+			"traefik.http.routers.router2.service=whoami2",
+		},
+		Port:    80,
+		Address: whoami2IP,
+	}
+	err = s.registerService(regWhoami2, false)
+	c.Assert(err, checker.IsNil)
+
+	tempObjects := struct {
+		ConsulAddress string
+	}{
+		ConsulAddress: s.consulAddress,
+	}
+	file := s.adaptFile(c, "fixtures/consul_catalog/connect_by_default.toml", tempObjects)
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err = cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	err = try.GetRequest("http://127.0.0.1:8000/", 10*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/whoami", 10*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/whoami2", 10*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	err = s.deregisterService("uuid-api1", false)
+	c.Assert(err, checker.IsNil)
+	err = s.deregisterService("whoami1", false)
+	c.Assert(err, checker.IsNil)
+	err = s.deregisterService("whoami2", false)
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *ConsulCatalogSuite) TestConsulConnect_NotAware(c *check.C) {
+	// Wait for consul to fully initialize connect CA
+	err := s.waitForConnectCA()
+	c.Assert(err, checker.IsNil)
+
+	connectIP := s.composeProject.Container(c, "connect").NetworkSettings.IPAddress
+	reg := &api.AgentServiceRegistration{
+		ID:   "uuid-api1",
+		Name: "uuid-api",
+		Tags: []string{
+			"traefik.enable=true",
+			"traefik.connect=true",
+			"traefik.http.routers.router1.rule=Path(`/`)",
+			"traefik.http.routers.router1.service=service1",
+			"traefik.http.services.service1.loadBalancer.server.url=https://" + connectIP,
+		},
+		Connect: &api.AgentServiceConnect{
+			Native: true,
+		},
+		Port:    443,
+		Address: connectIP,
+	}
+	err = s.registerService(reg, false)
+	c.Assert(err, checker.IsNil)
+
+	whoamiIP := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	regWhoami := &api.AgentServiceRegistration{
+		ID:   "whoami1",
+		Name: "whoami",
+		Tags: []string{
+			"traefik.enable=true",
+			"traefik.http.routers.router2.rule=Path(`/whoami`)",
+			"traefik.http.routers.router2.service=whoami",
+		},
+		Port:    80,
+		Address: whoamiIP,
+	}
+	err = s.registerService(regWhoami, false)
+	c.Assert(err, checker.IsNil)
+
+	tempObjects := struct {
+		ConsulAddress string
+	}{
+		ConsulAddress: s.consulAddress,
+	}
+	file := s.adaptFile(c, "fixtures/consul_catalog/connect_not_aware.toml", tempObjects)
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err = cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	err = try.GetRequest("http://127.0.0.1:8000/", 10*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/whoami", 10*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	err = s.deregisterService("uuid-api1", false)
+	c.Assert(err, checker.IsNil)
+	err = s.deregisterService("whoami1", false)
 	c.Assert(err, checker.IsNil)
 }

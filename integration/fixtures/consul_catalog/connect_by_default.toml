@@ -17,5 +17,6 @@
     exposedByDefault = false
     refreshInterval = "500ms"
     connectAware = true
+    connectByDefault = true
   [providers.consulCatalog.endpoint]
     address = "{{ .ConsulAddress }}"

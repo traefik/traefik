@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/tls"
 )
 
 func Int(v int) *int    { return &v }
@@ -332,6 +333,87 @@ func Test_buildConfiguration(t *testing.T) {
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc: "one connect container",
+			items: []itemData{
+				{
+					ID:             "Test",
+					Node:           "Node1",
+					Datacenter:     "dc1",
+					Name:           "dev/Test",
+					Namespace:      "ns",
+					Address:        "127.0.0.1",
+					Port:           "443",
+					Status:         api.HealthPassing,
+					Labels:         map[string]string{},
+					Tags:           nil,
+					ConnectEnabled: true,
+					ExtraConf:      configuration{},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"dev-Test": {
+							Service: "dev-Test",
+							Rule:    "Host(`dev-Test.traefik.wtf`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"dev-Test": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "https://127.0.0.1:443",
+									},
+								},
+								PassHostHeader:   Bool(true),
+								ServersTransport: "tls-ns-dc1-dev-Test",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"tls-ns-dc1-dev-Test": {
+							ServerName:         "ns-dc1-dev/Test",
+							InsecureSkipVerify: true,
+							RootCAs: []tls.FileOrContent{
+								"root",
+							},
+							Certificates: []tls.Certificate{
+								{
+									CertFile: "cert",
+									KeyFile:  "key",
+								},
+							},
+							CertVerifier: itemData{
+								ID:             "Test",
+								Node:           "Node1",
+								Datacenter:     "dc1",
+								Name:           "dev/Test",
+								Namespace:      "ns",
+								Address:        "127.0.0.1",
+								Port:           "443",
+								Status:         "passing",
+								Labels:         map[string]string{},
+								ConnectEnabled: true,
+								ExtraConf: configuration{
+									Enable: true,
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -2452,7 +2534,6 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 	}
-
 	for _, test := range testCases {
 		test := test
 
@@ -2480,7 +2561,13 @@ func Test_buildConfiguration(t *testing.T) {
 				test.items[i].Tags = tags
 			}
 
-			configuration := p.buildConfiguration(context.Background(), test.items, nil)
+			configuration := p.buildConfiguration(context.Background(), test.items, &connectCert{
+				root: []string{"root"},
+				leaf: keyPair{
+					cert: "cert",
+					key:  "key",
+				},
+			})
 
 			assert.Equal(t, test.expected, configuration)
 		})

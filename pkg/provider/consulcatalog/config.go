@@ -21,8 +21,6 @@ import (
 func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, certInfo *connectCert) *dynamic.Configuration {
 	configurations := make(map[string]*dynamic.Configuration)
 
-	transports := make(map[string]*dynamic.ServersTransport)
-
 	for _, item := range items {
 		svcName := provider.Normalize(item.Node + "-" + item.Name + "-" + item.ID)
 		ctxSvc := log.With(ctx, log.Str(log.ServiceName, svcName))
@@ -70,14 +68,14 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 		}
 
 		if item.ConnectEnabled {
-			transportName := connectTransportName(item)
-			if transports[transportName] == nil {
-				transports[transportName] = certInfo.serverTransport(item)
-			}
-			if len(confFromLabel.HTTP.ServersTransports) == 0 {
+			if confFromLabel.HTTP.ServersTransports == nil {
 				confFromLabel.HTTP.ServersTransports = make(map[string]*dynamic.ServersTransport)
 			}
-			confFromLabel.HTTP.ServersTransports[transportName] = transports[transportName]
+
+			serversTransportKey := itemServersTransportKey(item)
+			if confFromLabel.HTTP.ServersTransports[serversTransportKey] == nil {
+				confFromLabel.HTTP.ServersTransports[serversTransportKey] = certInfo.serversTransport(item)
+			}
 		}
 
 		err = p.buildServiceConfiguration(ctxSvc, item, confFromLabel.HTTP)
@@ -100,10 +98,6 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 	}
 
 	return provider.Merge(ctx, configurations)
-}
-
-func connectTransportName(item itemData) string {
-	return fmt.Sprintf("tls-%s-%s-%s", item.Namespace, item.Datacenter, item.Name)
 }
 
 // connectCert holds our certificates as a client of the Consul Connect protocol.
@@ -170,7 +164,7 @@ func (item itemData) VerifyPeerCertificate(cfg *gtls.Config, rawCerts [][]byte, 
 	return verifyServerCertMatchesURI(certs, uri)
 }
 
-func (c *connectCert) serverTransport(item itemData) *dynamic.ServersTransport {
+func (c *connectCert) serversTransport(item itemData) *dynamic.ServersTransport {
 	return &dynamic.ServersTransport{
 		// This ensures that the config changes whenever the verifier function changes
 		ServerName: fmt.Sprintf("%s-%s-%s", item.Namespace, item.Datacenter, item.Name),
@@ -366,13 +360,19 @@ func (p *Provider) addServer(ctx context.Context, item itemData, loadBalancer *d
 		return errors.New("address is missing")
 	}
 
-	if item.ConnectEnabled {
-		loadBalancer.ServersTransport = connectTransportName(item)
-		loadBalancer.Servers[0].Scheme = "https"
-	}
-
-	loadBalancer.Servers[0].URL = fmt.Sprintf("%s://%s", loadBalancer.Servers[0].Scheme, net.JoinHostPort(item.Address, port))
+	scheme := loadBalancer.Servers[0].Scheme
 	loadBalancer.Servers[0].Scheme = ""
 
+	if item.ConnectEnabled {
+		loadBalancer.ServersTransport = itemServersTransportKey(item)
+		scheme = "https"
+	}
+
+	loadBalancer.Servers[0].URL = fmt.Sprintf("%s://%s", scheme, net.JoinHostPort(item.Address, port))
+
 	return nil
+}
+
+func itemServersTransportKey(item itemData) string {
+	return provider.Normalize("tls-" + item.Namespace + "-" + item.Datacenter + "-" + item.Name)
 }

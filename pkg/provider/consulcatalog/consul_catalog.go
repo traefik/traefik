@@ -220,6 +220,7 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 			if address == "" {
 				address = consulService.Address
 			}
+
 			namespace := consulService.Namespace
 			if namespace == "" {
 				namespace = "default"
@@ -254,6 +255,7 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 			data = append(data, item)
 		}
 	}
+
 	return data, nil
 }
 
@@ -333,15 +335,14 @@ func (p *Provider) fetchServices(ctx context.Context) (map[string]bool, error) {
 			continue
 		}
 
-		connect := p.ConnectByDefault
-		if contains(tags, p.Prefix+".connect=true") {
-			connect = true
-		} else if contains(tags, p.Prefix+".connect=false") {
+		connect := p.ConnectByDefault || contains(tags, p.Prefix+".connect=true")
+
+		if contains(tags, p.Prefix+".connect=false") {
 			connect = false
 		}
 
 		if connect && !p.ConnectAware {
-			logger.Debugf("Filtering connect aware item because traefik's connect support is not enabled")
+			logger.Debugf("Filtering out Connect aware item %q, Connect support is not enabled", svcName)
 			continue
 		}
 
