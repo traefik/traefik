@@ -11,6 +11,7 @@ import (
 
 	"github.com/hashicorp/go-version"
 	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
 	traefikversion "github.com/traefik/traefik/v2/pkg/version"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -32,22 +33,6 @@ const (
 
 type marshaler interface {
 	Marshal() ([]byte, error)
-}
-
-type resourceEventHandler struct {
-	ev chan<- interface{}
-}
-
-func (reh *resourceEventHandler) OnAdd(obj interface{}) {
-	eventHandlerFunc(reh.ev, obj)
-}
-
-func (reh *resourceEventHandler) OnUpdate(oldObj, newObj interface{}) {
-	eventHandlerFunc(reh.ev, newObj)
-}
-
-func (reh *resourceEventHandler) OnDelete(obj interface{}) {
-	eventHandlerFunc(reh.ev, obj)
 }
 
 // Client is a client for the Provider master.
@@ -151,7 +136,7 @@ func newClientImpl(clientset kubernetes.Interface) *clientWrapper {
 // WatchAll starts namespace-specific controllers for all relevant kinds.
 func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	eventCh := make(chan interface{}, 1)
-	eventHandler := &resourceEventHandler{eventCh}
+	eventHandler := &k8s.ResourceEventHandler{Ev: eventCh}
 
 	if len(namespaces) == 0 {
 		namespaces = []string{metav1.NamespaceAll}
@@ -506,16 +491,6 @@ func (c *clientWrapper) GetServerVersion() (*version.Version, error) {
 	}
 
 	return version.NewVersion(serverVersion.GitVersion)
-}
-
-// eventHandlerFunc will pass the obj on to the events channel or drop it.
-// This is so passing the events along won't block in the case of high volume.
-// The events are only used for signaling anyway so dropping a few is ok.
-func eventHandlerFunc(events chan<- interface{}, obj interface{}) {
-	select {
-	case events <- obj:
-	default:
-	}
 }
 
 // translateNotFoundError will translate a "not found" error to a boolean return
