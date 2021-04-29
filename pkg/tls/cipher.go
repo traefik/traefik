@@ -69,3 +69,13 @@ var (
 		tls.TLS_FALLBACK_SCSV:                             `TLS_FALLBACK_SCSV`,
 	}
 )
+
+// GetCipherName returns the Cipher suite name.
+// Available CipherSuites defined at https://golang.org/pkg/crypto/tls/#pkg-constants
+func GetCipherName(connState *tls.ConnectionState) string {
+	if cipher, ok := CipherSuitesReversed[connState.CipherSuite]; ok {
+		return cipher
+	}
+
+	return "unknown"
+}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/x509"
 	"encoding/json"
 	stdlog "log"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 	"github.com/coreos/go-systemd/daemon"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/go-acme/lego/v4/challenge"
+	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/paerser/cli"
 	"github.com/traefik/traefik/v2/autogen/genstatic"
@@ -267,6 +269,11 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	watcher.AddListener(func(conf dynamic.Configuration) {
 		ctx := context.Background()
 		tlsManager.UpdateConfigs(ctx, conf.TLS.Stores, conf.TLS.Options, conf.TLS.Certificates)
+
+		gauge := metricsRegistry.TLSCertsNotAfterTimestampGauge()
+		for _, certificate := range tlsManager.GetCertificates() {
+			appendCertMetric(gauge, certificate)
+		}
 	})
 
 	// Metrics
@@ -439,6 +446,20 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 	}
 
 	return registries
+}
+
+func appendCertMetric(gauge gokitmetrics.Gauge, certificate *x509.Certificate) {
+	sort.Strings(certificate.DNSNames)
+
+	labels := []string{
+		"cn", certificate.Subject.CommonName,
+		"serial", certificate.SerialNumber.String(),
+		"sans", strings.Join(certificate.DNSNames, ","),
+	}
+
+	notAfter := float64(certificate.NotAfter.Unix())
+
+	gauge.With(labels...).Set(notAfter)
 }
 
 func setupAccessLog(conf *types.AccessLog) *accesslog.Handler {

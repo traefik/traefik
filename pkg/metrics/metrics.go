@@ -21,6 +21,9 @@ type Registry interface {
 	LastConfigReloadSuccessGauge() metrics.Gauge
 	LastConfigReloadFailureGauge() metrics.Gauge
 
+	// TLS
+	TLSCertsNotAfterTimestampGauge() metrics.Gauge
+
 	// entry point metrics
 	EntryPointReqsCounter() metrics.Counter
 	EntryPointReqsTLSCounter() metrics.Counter
@@ -50,6 +53,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var configReloadsFailureCounter []metrics.Counter
 	var lastConfigReloadSuccessGauge []metrics.Gauge
 	var lastConfigReloadFailureGauge []metrics.Gauge
+	var tlsCertsNotAfterTimestampGauge []metrics.Gauge
 	var entryPointReqsCounter []metrics.Counter
 	var entryPointReqsTLSCounter []metrics.Counter
 	var entryPointReqDurationHistogram []ScalableHistogram
@@ -73,6 +77,9 @@ func NewMultiRegistry(registries []Registry) Registry {
 		}
 		if r.LastConfigReloadFailureGauge() != nil {
 			lastConfigReloadFailureGauge = append(lastConfigReloadFailureGauge, r.LastConfigReloadFailureGauge())
+		}
+		if r.TLSCertsNotAfterTimestampGauge() != nil {
+			tlsCertsNotAfterTimestampGauge = append(tlsCertsNotAfterTimestampGauge, r.TLSCertsNotAfterTimestampGauge())
 		}
 		if r.EntryPointReqsCounter() != nil {
 			entryPointReqsCounter = append(entryPointReqsCounter, r.EntryPointReqsCounter())
@@ -113,6 +120,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 		configReloadsFailureCounter:    multi.NewCounter(configReloadsFailureCounter...),
 		lastConfigReloadSuccessGauge:   multi.NewGauge(lastConfigReloadSuccessGauge...),
 		lastConfigReloadFailureGauge:   multi.NewGauge(lastConfigReloadFailureGauge...),
+		tlsCertsNotAfterTimestampGauge: multi.NewGauge(tlsCertsNotAfterTimestampGauge...),
 		entryPointReqsCounter:          multi.NewCounter(entryPointReqsCounter...),
 		entryPointReqsTLSCounter:       multi.NewCounter(entryPointReqsTLSCounter...),
 		entryPointReqDurationHistogram: NewMultiHistogram(entryPointReqDurationHistogram...),
@@ -133,6 +141,7 @@ type standardRegistry struct {
 	configReloadsFailureCounter    metrics.Counter
 	lastConfigReloadSuccessGauge   metrics.Gauge
 	lastConfigReloadFailureGauge   metrics.Gauge
+	tlsCertsNotAfterTimestampGauge metrics.Gauge
 	entryPointReqsCounter          metrics.Counter
 	entryPointReqsTLSCounter       metrics.Counter
 	entryPointReqDurationHistogram ScalableHistogram
@@ -167,6 +176,10 @@ func (r *standardRegistry) LastConfigReloadSuccessGauge() metrics.Gauge {
 
 func (r *standardRegistry) LastConfigReloadFailureGauge() metrics.Gauge {
 	return r.lastConfigReloadFailureGauge
+}
+
+func (r *standardRegistry) TLSCertsNotAfterTimestampGauge() metrics.Gauge {
+	return r.tlsCertsNotAfterTimestampGauge
 }
 
 func (r *standardRegistry) EntryPointReqsCounter() metrics.Counter {

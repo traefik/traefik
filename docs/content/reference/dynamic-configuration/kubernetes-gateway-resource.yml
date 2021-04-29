@@ -44,3 +44,14 @@ spec:
         - serviceName: whoami
           port: 80
           weight: 1
+    - matches:
+        - path:
+            type: Prefix
+            value: /foo
+      forwardTo:
+        - backendRef:
+            group: traefik.containo.us
+            kind: TraefikService
+            name: myservice@file
+          weight: 1
+          port: 80

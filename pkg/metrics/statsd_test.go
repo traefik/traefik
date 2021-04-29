@@ -35,6 +35,7 @@ func TestStatsD(t *testing.T) {
 		"traefik.entrypoint.request.duration:10000.000000|ms",
 		"traefik.entrypoint.connections.open:1.000000|g\n",
 		"traefik.service.server.up:1.000000|g\n",
+		"tls.certs.notAfterTimestamp:1.000000|g\n",
 	}
 
 	udp.ShouldReceiveAll(t, expected, func() {
@@ -49,6 +50,7 @@ func TestStatsD(t *testing.T) {
 		statsdRegistry.EntryPointReqDurationHistogram().With("entrypoint", "test").Observe(10000)
 		statsdRegistry.EntryPointOpenConnsGauge().With("entrypoint", "test").Set(1)
 		statsdRegistry.ServiceServerUpGauge().With("service:test", "url", "http://127.0.0.1").Set(1)
+		statsdRegistry.TLSCertsNotAfterTimestampGauge().With("key", "value").Set(1)
 	})
 }
 
@@ -75,6 +77,7 @@ func TestStatsDWithPrefix(t *testing.T) {
 		"testPrefix.entrypoint.request.duration:10000.000000|ms",
 		"testPrefix.entrypoint.connections.open:1.000000|g\n",
 		"testPrefix.service.server.up:1.000000|g\n",
+		"tls.certs.notAfterTimestamp:1.000000|g\n",
 	}
 
 	udp.ShouldReceiveAll(t, expected, func() {
@@ -89,5 +92,6 @@ func TestStatsDWithPrefix(t *testing.T) {
 		statsdRegistry.EntryPointReqDurationHistogram().With("entrypoint", "test").Observe(10000)
 		statsdRegistry.EntryPointOpenConnsGauge().With("entrypoint", "test").Set(1)
 		statsdRegistry.ServiceServerUpGauge().With("service:test", "url", "http://127.0.0.1").Set(1)
+		statsdRegistry.TLSCertsNotAfterTimestampGauge().With("key", "value").Set(1)
 	})
 }

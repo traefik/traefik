@@ -18,6 +18,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 )
 
@@ -81,11 +82,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -122,11 +121,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -136,11 +133,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -178,11 +173,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -422,11 +415,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -466,11 +457,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -531,11 +520,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -594,11 +581,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -656,11 +641,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -707,11 +690,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -758,11 +739,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -800,11 +779,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -843,11 +820,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 								TerminationDelay: Int(500),
@@ -892,11 +867,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -937,7 +910,6 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "external.domain:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -975,7 +947,6 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "external.domain:80",
-										Port:    "",
 									},
 								},
 							},
@@ -3035,11 +3006,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 								ProxyProtocol: &dynamic.ProxyProtocol{Version: 2},
@@ -3392,11 +3361,9 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 								Servers: []dynamic.UDPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -3437,11 +3404,9 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 								Servers: []dynamic.UDPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -3451,11 +3416,9 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 								Servers: []dynamic.UDPServer{
 									{
 										Address: "10.10.0.3:8080",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.4:8080",
-										Port:    "",
 									},
 								},
 							},
@@ -3622,6 +3585,104 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			},
 		},
 		{
+			desc:  "Simple Ingress Route, with externalName service",
+			paths: []string{"udp/services.yml", "udp/with_externalname.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-test.route-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-0",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"default-test.route-0": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "external.domain:8000",
+									},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Ingress Route, externalName service with port",
+			paths: []string{"udp/services.yml", "udp/with_externalname_with_port.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-test.route-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-0",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"default-test.route-0": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "external.domain:80",
+									},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Ingress Route, externalName service without port",
+			paths: []string{"udp/services.yml", "udp/with_externalname_without_ports.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-test.route-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-0",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:         "Ingress class does not match",
 			paths:        []string{"udp/services.yml", "udp/simple.yml"},
 			ingressClass: "tchouk",
@@ -3738,7 +3799,7 @@ func TestGetServicePort(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		svc         *corev1.Service
-		port        int32
+		port        intstr.IntOrString
 		expected    *corev1.ServicePort
 		expectError bool
 	}{
@@ -3757,7 +3818,7 @@ func TestGetServicePort(t *testing.T) {
 					},
 				},
 			},
-			port: 80,
+			port: intstr.FromInt(80),
 			expected: &corev1.ServicePort{
 				Port: 80,
 			},
@@ -3786,11 +3847,56 @@ func TestGetServicePort(t *testing.T) {
 			expectError: true,
 		},
 		{
+			desc: "Matching named port",
+			svc: &corev1.Service{
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{
+						{
+							Name: "http",
+							Port: 80,
+						},
+					},
+				},
+			},
+			port: intstr.FromString("http"),
+			expected: &corev1.ServicePort{
+				Name: "http",
+				Port: 80,
+			},
+		},
+		{
+			desc: "Matching named port (with external name)",
+			svc: &corev1.Service{
+				Spec: corev1.ServiceSpec{
+					Type: corev1.ServiceTypeExternalName,
+					Ports: []corev1.ServicePort{
+						{
+							Name: "http",
+							Port: 80,
+						},
+					},
+				},
+			},
+			port: intstr.FromString("http"),
+			expected: &corev1.ServicePort{
+				Name: "http",
+				Port: 80,
+			},
+		},
+		{
 			desc: "Mismatching, only port(Ingress) defined",
 			svc: &corev1.Service{
 				Spec: corev1.ServiceSpec{},
 			},
-			port:        80,
+			port:        intstr.FromInt(80),
+			expectError: true,
+		},
+		{
+			desc: "Mismatching, only named port(Ingress) defined",
+			svc: &corev1.Service{
+				Spec: corev1.ServiceSpec{},
+			},
+			port:        intstr.FromString("http"),
 			expectError: true,
 		},
 		{
@@ -3800,10 +3906,20 @@ func TestGetServicePort(t *testing.T) {
 					Type: corev1.ServiceTypeExternalName,
 				},
 			},
-			port: 80,
+			port: intstr.FromInt(80),
 			expected: &corev1.ServicePort{
 				Port: 80,
 			},
+		},
+		{
+			desc: "Mismatching, only named port(Ingress) defined with external name",
+			svc: &corev1.Service{
+				Spec: corev1.ServiceSpec{
+					Type: corev1.ServiceTypeExternalName,
+				},
+			},
+			port:        intstr.FromString("http"),
+			expectError: true,
 		},
 		{
 			desc: "Mismatching, only Service port defined",
@@ -3843,7 +3959,22 @@ func TestGetServicePort(t *testing.T) {
 					},
 				},
 			},
-			port:        443,
+			port:        intstr.FromInt(443),
+			expectError: true,
+		},
+		{
+			desc: "Two different named ports defined",
+			svc: &corev1.Service{
+				Spec: corev1.ServiceSpec{
+					Ports: []corev1.ServicePort{
+						{
+							Name: "foo",
+							Port: 80,
+						},
+					},
+				},
+			},
+			port:        intstr.FromString("bar"),
 			expectError: true,
 		},
 		{
@@ -3858,10 +3989,26 @@ func TestGetServicePort(t *testing.T) {
 					},
 				},
 			},
-			port: 443,
+			port: intstr.FromInt(443),
 			expected: &corev1.ServicePort{
 				Port: 443,
 			},
+		},
+		{
+			desc: "Two different named ports defined (with external name)",
+			svc: &corev1.Service{
+				Spec: corev1.ServiceSpec{
+					Type: corev1.ServiceTypeExternalName,
+					Ports: []corev1.ServicePort{
+						{
+							Name: "foo",
+							Port: 80,
+						},
+					},
+				},
+			},
+			port:        intstr.FromString("bar"),
+			expectError: true,
 		},
 	}
 	for _, test := range testCases {
@@ -4272,11 +4419,9 @@ func TestCrossNamespace(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},
@@ -4332,11 +4477,9 @@ func TestCrossNamespace(t *testing.T) {
 								Servers: []dynamic.UDPServer{
 									{
 										Address: "10.10.0.1:8000",
-										Port:    "",
 									},
 									{
 										Address: "10.10.0.2:8000",
-										Port:    "",
 									},
 								},
 							},

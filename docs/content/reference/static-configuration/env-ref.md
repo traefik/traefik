@@ -102,6 +102,9 @@ Entry points definition. (Default: ```false```)
 `TRAEFIK_ENTRYPOINTS_<NAME>_ADDRESS`:  
 Entry point address.
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_ENABLEHTTP3`:  
+Enable HTTP3. (Default: ```false```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_FORWARDEDHEADERS_INSECURE`:  
 Trust all forwarded headers. (Default: ```false```)
 
@@ -168,11 +171,17 @@ ReadTimeout is the maximum duration for reading the entire request, including th
 `TRAEFIK_ENTRYPOINTS_<NAME>_TRANSPORT_RESPONDINGTIMEOUTS_WRITETIMEOUT`:  
 WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set. (Default: ```0```)
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_UDP_TIMEOUT`:  
+Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
+
 `TRAEFIK_EXPERIMENTAL_DEVPLUGIN_GOPATH`:  
 plugin's GOPATH.
 
 `TRAEFIK_EXPERIMENTAL_DEVPLUGIN_MODULENAME`:  
 plugin's module name.
+
+`TRAEFIK_EXPERIMENTAL_HTTP3`:  
+Enable HTTP3. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_KUBERNETESGATEWAY`:  
 Allow the Kubernetes gateway api provider usage. (Default: ```false```)
@@ -610,7 +619,7 @@ Kubernetes certificate authority file path (not needed for in-cluster client).
 Kubernetes server endpoint (required for external cluster client).
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_INGRESSCLASS`:  
-Value of kubernetes.io/ingress.class annotation to watch for.
+Value of kubernetes.io/ingress.class annotation or IngressClass name to watch for.
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_INGRESSENDPOINT_HOSTNAME`:  
 Hostname used for Kubernetes Ingress endpoints.

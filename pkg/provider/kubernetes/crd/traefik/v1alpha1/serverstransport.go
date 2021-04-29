@@ -7,6 +7,7 @@ import (
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:storageversion
 
 // ServersTransport is a specification for a ServersTransport resource.
 type ServersTransport struct {
@@ -20,21 +21,33 @@ type ServersTransport struct {
 
 // ServersTransportSpec options to configure communication between Traefik and the servers.
 type ServersTransportSpec struct {
-	ServerName          string              `description:"ServerName used to contact the server" json:"serverName,omitempty" toml:"serverName,omitempty" yaml:"serverName,omitempty" export:"true"`
-	InsecureSkipVerify  bool                `description:"Disable SSL certificate verification." json:"insecureSkipVerify,omitempty" toml:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" export:"true"`
-	RootCAsSecrets      []string            `description:"Add cert file for self-signed certificate." json:"rootCAsSecrets,omitempty" toml:"rootCAsSecrets,omitempty" yaml:"rootCAsSecrets,omitempty"`
-	CertificatesSecrets []string            `description:"Certificates for mTLS." json:"certificatesSecrets,omitempty" toml:"certificatesSecrets,omitempty" yaml:"certificatesSecrets,omitempty"`
-	MaxIdleConnsPerHost int                 `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, DefaultMaxIdleConnsPerHost is used" json:"maxIdleConnsPerHost,omitempty" toml:"maxIdleConnsPerHost,omitempty" yaml:"maxIdleConnsPerHost,omitempty" export:"true"`
-	ForwardingTimeouts  *ForwardingTimeouts `description:"Timeouts for requests forwarded to the backend servers." json:"forwardingTimeouts,omitempty" toml:"forwardingTimeouts,omitempty" yaml:"forwardingTimeouts,omitempty" export:"true"`
+	// ServerName used to contact the server.
+	ServerName string `json:"serverName,omitempty"`
+	// Disable SSL certificate verification.
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
+	// Add cert file for self-signed certificate.
+	RootCAsSecrets []string `json:"rootCAsSecrets,omitempty"`
+	// Certificates for mTLS.
+	CertificatesSecrets []string `json:"certificatesSecrets,omitempty"`
+	// If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, DefaultMaxIdleConnsPerHost is used.
+	MaxIdleConnsPerHost int `json:"maxIdleConnsPerHost,omitempty"`
+	// Timeouts for requests forwarded to the backend servers.
+	ForwardingTimeouts *ForwardingTimeouts `json:"forwardingTimeouts,omitempty"`
+	// Disable HTTP/2 for connections with backend servers.
+	DisableHTTP2 bool `json:"disableHTTP2,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
 
 // ForwardingTimeouts contains timeout configurations for forwarding requests to the backend servers.
 type ForwardingTimeouts struct {
-	DialTimeout           *intstr.IntOrString `description:"The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists." json:"dialTimeout,omitempty" toml:"dialTimeout,omitempty" yaml:"dialTimeout,omitempty" export:"true"`
-	ResponseHeaderTimeout *intstr.IntOrString `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists." json:"responseHeaderTimeout,omitempty" toml:"responseHeaderTimeout,omitempty" yaml:"responseHeaderTimeout,omitempty" export:"true"`
-	IdleConnTimeout       *intstr.IntOrString `description:"The maximum period for which an idle HTTP keep-alive connection will remain open before closing itself" json:"idleConnTimeout,omitempty" toml:"idleConnTimeout,omitempty" yaml:"idleConnTimeout,omitempty" export:"true"`
+	// The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists.
+	DialTimeout *intstr.IntOrString `json:"dialTimeout,omitempty"`
+	// The amount of time to wait for a server's response headers after fully writing the request (including its body, if any).
+	// If zero, no timeout exists.
+	ResponseHeaderTimeout *intstr.IntOrString `json:"responseHeaderTimeout,omitempty"`
+	// The maximum period for which an idle HTTP keep-alive connection will remain open before closing itself.
+	IdleConnTimeout *intstr.IntOrString `json:"idleConnTimeout,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

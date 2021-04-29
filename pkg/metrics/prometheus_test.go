@@ -117,6 +117,11 @@ func TestPrometheus(t *testing.T) {
 	prometheusRegistry.LastConfigReloadFailureGauge().Set(float64(time.Now().Unix()))
 
 	prometheusRegistry.
+		TLSCertsNotAfterTimestampGauge().
+		With("cn", "value", "serial", "value", "sans", "value").
+		Set(float64(time.Now().Unix()))
+
+	prometheusRegistry.
 		EntryPointReqsCounter().
 		With("code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "http").
 		Add(1)
@@ -174,6 +179,15 @@ func TestPrometheus(t *testing.T) {
 		{
 			name:   configLastReloadFailureName,
 			assert: buildTimestampAssert(t, configLastReloadFailureName),
+		},
+		{
+			name: tlsCertsNotAfterTimestamp,
+			labels: map[string]string{
+				"cn":     "value",
+				"serial": "value",
+				"sans":   "value",
+			},
+			assert: buildTimestampAssert(t, tlsCertsNotAfterTimestamp),
 		},
 		{
 			name: entryPointReqsTotalName,

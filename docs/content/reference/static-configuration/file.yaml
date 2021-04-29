@@ -32,6 +32,9 @@ entryPoints:
       trustedIPs:
       - foobar
       - foobar
+    enableHTTP3: true
+    udp:
+      timeout: 42
     http:
       redirections:
         entryPoint:
@@ -411,4 +414,6 @@ experimental:
   devPlugin:
     goPath: foobar
     moduleName: foobar
+  http3: true
+  kubernetesGateway: true
 

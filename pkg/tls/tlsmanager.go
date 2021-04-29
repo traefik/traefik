@@ -131,6 +131,27 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 	return tlsConfig, err
 }
 
+// GetCertificates returns all stored certificates.
+func (m *Manager) GetCertificates() []*x509.Certificate {
+	var certificates []*x509.Certificate
+
+	// We iterate over all the certificates.
+	for _, store := range m.stores {
+		if store.DynamicCerts != nil && store.DynamicCerts.Get() != nil {
+			for _, cert := range store.DynamicCerts.Get().(map[string]*tls.Certificate) {
+				x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
+				if err != nil {
+					continue
+				}
+
+				certificates = append(certificates, x509Cert)
+			}
+		}
+	}
+
+	return certificates
+}
+
 func (m *Manager) getStore(storeName string) *CertificateStore {
 	_, ok := m.stores[storeName]
 	if !ok {
