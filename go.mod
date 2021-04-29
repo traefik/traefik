@@ -77,7 +77,7 @@ require (
 	github.com/unrolled/render v1.0.2
 	github.com/unrolled/secure v1.0.7
 	github.com/vdemeester/shakers v0.1.0
-	github.com/vulcand/oxy v1.2.0
+	github.com/vulcand/oxy v1.3.0
 	github.com/vulcand/predicate v1.1.0
 	go.elastic.co/apm v1.7.0
 	go.elastic.co/apm/module/apmot v1.7.0
