@@ -235,6 +235,7 @@
   [metrics.prometheus]
     buckets = [42.0, 42.0]
     addEntryPointsLabels = true
+    addRoutersLabels = true
     addServicesLabels = true
     entryPoint = "foobar"
     manualRouting = true
@@ -242,11 +243,13 @@
     address = "foobar"
     pushInterval = "42s"
     addEntryPointsLabels = true
+    addRoutersLabels = true
     addServicesLabels = true
   [metrics.statsD]
     address = "foobar"
     pushInterval = "42s"
     addEntryPointsLabels = true
+    addRoutersLabels = true
     addServicesLabels = true
     prefix = "foobar"
   [metrics.influxDB]
@@ -258,6 +261,7 @@
     username = "foobar"
     password = "foobar"
     addEntryPointsLabels = true
+    addRoutersLabels = true
     addServicesLabels = true
 
 [ping]
