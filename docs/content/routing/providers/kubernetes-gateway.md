@@ -72,6 +72,16 @@ More details on the Gateway [official documentation](https://gateway-api.sigs.k8
 Register the `Gateway` [definition](../../reference/dynamic-configuration/kubernetes-gateway.md#definitions) in the
 Kubernetes cluster before creating `Gateway` objects.
 
+Depending on the Listener Protocol, different modes and Route types are supported.
+
+| Listener Protocol | TLS Mode       | Route Type Supported         |
+|-------------------|----------------|------------------------------|
+| TCP               | Not applicable | [TCPRoute](#kind-tcproute)   |
+| TLS               | Passthrough    | [TLSRoute](#kind-tlsroute)   |
+| TLS               | Terminate      | [TCPRoute](#kind-tcproute)   |
+| HTTP              | Not applicable | [HTTPRoute](#kind-httproute) |
+| HTTPS             | Terminate      | [HTTPRoute](#kind-httproute) |
+
 !!! info "Declaring Gateway"
 
     ```yaml tab="HTTP Listener"

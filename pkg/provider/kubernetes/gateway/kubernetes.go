@@ -352,7 +352,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 		if listener.Protocol == v1alpha1.HTTPProtocolType && listener.Routes.Kind != routeHTTPKind ||
 			listener.Protocol == v1alpha1.HTTPSProtocolType && listener.Routes.Kind != routeHTTPKind ||
 			listener.Protocol == v1alpha1.TCPProtocolType && listener.Routes.Kind != routeTCPKind ||
-			listener.Protocol == v1alpha1.TLSProtocolType && listener.Routes.Kind != routeTLSKind {
+			listener.Protocol == v1alpha1.TLSProtocolType && listener.Routes.Kind != routeTLSKind && listener.Routes.Kind != routeTCPKind {
 			// update "Detached" status true with "UnsupportedProtocol" reason
 			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
 				Type:               string(v1alpha1.ListenerConditionDetached),
@@ -392,6 +392,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			continue
 		}
 
+		// TLS
 		if listener.Protocol == v1alpha1.HTTPSProtocolType || listener.Protocol == v1alpha1.TLSProtocolType {
 			if listener.TLS == nil || (listener.TLS.CertificateRef == nil && listener.TLS.Mode != v1alpha1.TLSModePassthrough) {
 				// update "Detached" status with "UnsupportedProtocol" reason
@@ -411,7 +412,23 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 				logger.Warnf("In case of Passthrough TLS mode, no TLS settings take effect as the TLS session from the client is NOT terminated at the Gateway")
 			}
 
-			if listener.TLS.Mode != v1alpha1.TLSModePassthrough {
+			isTLSPassthrough := listener.TLS.Mode == v1alpha1.TLSModePassthrough
+			isTLSRouteKind := listener.Routes.Kind == routeTLSKind
+
+			if listener.Protocol == v1alpha1.TLSProtocolType && isTLSPassthrough != isTLSRouteKind {
+				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
+					Type:               string(v1alpha1.ListenerConditionDetached),
+					Status:             metav1.ConditionTrue,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(v1alpha1.ListenerReasonUnsupportedProtocol),
+					Message: fmt.Sprintf("Unsupported route kind %q with %q",
+						listener.Routes.Kind, listener.TLS.Mode),
+				})
+
+				continue
+			}
+
+			if !isTLSPassthrough {
 				if listener.TLS.CertificateRef.Kind != "Secret" || listener.TLS.CertificateRef.Group != "core" {
 					// update "ResolvedRefs" status true with "InvalidCertificateRef" reason
 					listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{

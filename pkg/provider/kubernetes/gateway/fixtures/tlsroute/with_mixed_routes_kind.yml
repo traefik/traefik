@@ -22,7 +22,7 @@ spec:
         kind: TCPRoute
         selector:
           matchLabels:
-            app: label-tcp-app-1
+            app: label-tls-app-1
     - protocol: TLS
       port: 80
       routes:

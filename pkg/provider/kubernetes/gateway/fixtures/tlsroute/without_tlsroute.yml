@@ -17,6 +17,8 @@ spec:
   listeners:  # Use GatewayClass defaults for listener definition.
     - protocol: TLS
       port: 8080
+      tls:
+        mode: Passthrough
       routes:
         kind: TLSRoutes
         namespaces:

@@ -34,21 +34,21 @@ spec:
           name: supersecret
           group: core
       routes:
-        kind: TLSRoute
+        kind: TCPRoute
         namespaces:
           from: Same
         selector:
           matchLabels:
-            app: tls-app
+            app: tcp-app
 
 ---
-kind: TLSRoute
+kind: TCPRoute
 apiVersion: networking.x-k8s.io/v1alpha1
 metadata:
-  name: tls-app-1
+  name: tcp-app-1
   namespace: default
   labels:
-    app: tls-app
+    app: tcp-app
 spec:
   rules:
     - forwardTo:

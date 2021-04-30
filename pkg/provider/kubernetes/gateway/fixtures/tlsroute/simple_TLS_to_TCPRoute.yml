@@ -28,6 +28,7 @@ spec:
   gatewayClassName: my-gateway-class
   listeners:  # Use GatewayClass defaults for listener definition.
     - protocol: TLS
+      hostname: foo.example.com
       port: 9000
       tls:
         certificateRef:
@@ -35,49 +36,22 @@ spec:
           name: supersecret
           group: core
       routes:
-        kind: TLSRoute
+        kind: TCPRoute
         selector:
           matchLabels:
-            app: label-tls-app-1
-    - protocol: TLS
-      port: 10000
-      tls:
-        certificateRef:
-          kind: Secret
-          name: supersecret
-          group: core
-      routes:
-        kind: TLSRoute
-        selector:
-          matchLabels:
-            app: label-tls-app-2
+            app: whoamitcp
 
 ---
-kind: TLSRoute
+kind: TCPRoute
 apiVersion: networking.x-k8s.io/v1alpha1
 metadata:
-  name: tls-app-1
+  name: tcp-app-1
   namespace: default
   labels:
-    app: label-tls-app-1
+    app: whoamitcp
 spec:
   rules:
     - forwardTo:
         - serviceName: whoamitcp
           port: 9000
-          weight: 1
-
----
-kind: TLSRoute
-apiVersion: networking.x-k8s.io/v1alpha1
-metadata:
-  name: tls-app-2
-  namespace: default
-  labels:
-    app: label-tls-app-2
-spec:
-  rules:
-    - forwardTo:
-        - serviceName: whoamitcp
-          port: 10000
           weight: 1

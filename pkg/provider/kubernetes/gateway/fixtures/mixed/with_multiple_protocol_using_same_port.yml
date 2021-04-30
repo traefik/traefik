@@ -56,10 +56,7 @@ spec:
     - protocol: TLS
       port: 9000
       tls:
-        certificateRef:
-          kind: Secret
-          name: supersecret
-          group: core
+        mode: Passthrough
       routes:
         kind: TLSRoute
         namespaces:
@@ -67,6 +64,20 @@ spec:
         selector:
           matchLabels:
             app: tls-app
+    - protocol: TLS
+      port: 9000
+      tls:
+        certificateRef:
+          kind: Secret
+          name: supersecret
+          group: core
+      routes:
+        kind: TCPRoute
+        namespaces:
+          from: Same
+        selector:
+          matchLabels:
+            app: tcp-app
 
 ---
 kind: HTTPRoute

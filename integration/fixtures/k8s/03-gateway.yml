@@ -59,13 +59,8 @@ spec:
   listeners:
     - protocol: TLS
       port: 9001
-      hostname: tls.foo.example.com
       tls:
-        mode: Terminate
-        certificateRef:
-          kind: Secret
-          name: supersecret
-          group: core
+        mode: Passthrough
       routes:
         kind: TLSRoute
         namespaces:
@@ -73,6 +68,21 @@ spec:
         selector:
           matchLabels:
             app: tls-app-1
+    - protocol: TLS
+      port: 9002
+      tls:
+        mode: Terminate
+        certificateRef:
+          kind: Secret
+          name: supersecret
+          group: core
+      routes:
+        kind: TCPRoute
+        namespaces:
+          from: Same
+        selector:
+          matchLabels:
+            app: tcp-app-1
 
 ---
 kind: Gateway
@@ -149,3 +159,6 @@ spec:
         - serviceName: whoamitcp
           port: 8080
           weight: 1
+      matches:
+        - snis:
+            - foo.bar
