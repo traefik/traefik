@@ -35,7 +35,7 @@ tracing:
 ```
 
 ```bash tab="CLI"
---tracing.elastic.serverurl="http://apm:8200"
+--tracing.elastic.serverurl=http://apm:8200
 ```
 
 #### `secretToken`
