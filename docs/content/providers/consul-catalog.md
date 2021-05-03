@@ -556,6 +556,81 @@ providers:
 # ...
 ```
 
+### `connectAware`
+
+_Optional, Default=false_
+
+Enable Consul Connect support.
+If set to `true`, Traefik will be enabled to communicate with Connect services.
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  connectAware = true
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    connectAware: true
+    # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.connectAware=true
+# ...
+```
+
+### `connectByDefault`
+
+_Optional, Default=false_
+
+Consider every service as Connect capable by default.
+If set to `true`, Traefik will consider every Consul Catalog service to be Connect capable by default.
+The option can be overridden on an instance basis with the `traefik.connect` tag.
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  connectByDefault = true
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    connectByDefault: true
+    # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.connectByDefault=true
+# ...
+```
+
+### `serviceName`
+
+_Optional, Default="traefik"_
+
+Name of the Traefik service in Consul Catalog.
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  serviceName = "test"
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    serviceName: test
+    # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.serviceName=test
+# ...
+```
+
 ### `constraints`
 
 _Optional, Default=""_

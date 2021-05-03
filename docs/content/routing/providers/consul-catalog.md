@@ -454,6 +454,16 @@ You can tell Traefik to consider (or not) the service by setting `traefik.enable
 
 This option overrides the value of `exposedByDefault`.
 
+#### `traefik.connect`
+
+```yaml
+traefik.connect=true
+```
+
+You can tell Traefik to consider (or not) the service as a Connect capable one by setting `traefik.connect` to true or false.
+
+This option overrides the value of `connectByDefault`.
+
 #### Port Lookup
 
 Traefik is capable of detecting the port to use, by following the default consul Catalog flow.

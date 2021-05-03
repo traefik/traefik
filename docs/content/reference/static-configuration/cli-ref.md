@@ -373,7 +373,7 @@ Use local agent caching for catalog reads. (Default: ```false```)
 Enable Consul Connect support. (Default: ```false```)
 
 `--providers.consulcatalog.connectbydefault`:  
-Automatically connect to a service via Consul connect. (Default: ```false```)
+Consider every service as Connect capable by default. (Default: ```false```)
 
 `--providers.consulcatalog.constraints`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
@@ -430,7 +430,7 @@ Interval for check Consul API. Default 15s (Default: ```15```)
 Forces the read to be fully consistent. (Default: ```false```)
 
 `--providers.consulcatalog.servicename`:  
-Name of the traefik service in Consul Catalog (needs to be registered via the orchestrator or manually). (Default: ```traefik```)
+Name of the Traefik service in Consul Catalog (needs to be registered via the orchestrator or manually). (Default: ```traefik```)
 
 `--providers.consulcatalog.stale`:  
 Use stale consistency for catalog reads. (Default: ```false```)
