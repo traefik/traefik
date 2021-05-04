@@ -88,12 +88,12 @@ rule = "Host(`traefik.example.com`)"
 
 ```bash tab="Path Prefix Rule"
 # The dashboard can be accessed on http://example.com/dashboard/ or http://traefik.example.com/dashboard/
-rule = "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+rule = "PathPrefix(`/api/`) || PathPrefix(`/dashboard/`)"
 ```
 
 ```bash tab="Combination of Rules"
 # The dashboard can be accessed on http://traefik.example.com/dashboard/
-rule = "Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+rule = "Host(`traefik.example.com`) && (PathPrefix(`/api/`) || PathPrefix(`/dashboard/`))"
 ```
 
 ??? example "Dashboard Dynamic Configuration Examples"
