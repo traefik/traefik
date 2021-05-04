@@ -30,7 +30,8 @@ type stickyCookie struct {
 // Entries have deadlines set at currentDeadline + 1 / weight,
 // providing weighted round robin behavior with floating point weights and an O(log n) pick time.
 type Balancer struct {
-	stickyCookie *stickyCookie
+	stickyCookie     *stickyCookie
+	wantsHealthCheck bool
 
 	mutex       sync.RWMutex
 	handlers    []*namedHandler
@@ -46,9 +47,10 @@ type Balancer struct {
 }
 
 // New creates a new load balancer.
-func New(sticky *dynamic.Sticky) *Balancer {
+func New(sticky *dynamic.Sticky, hc *dynamic.HealthCheck) *Balancer {
 	balancer := &Balancer{
-		status: make(map[string]struct{}),
+		status:           make(map[string]struct{}),
+		wantsHealthCheck: hc != nil,
 	}
 	if sticky != nil && sticky.Cookie != nil {
 		balancer.stickyCookie = &stickyCookie{
@@ -137,6 +139,9 @@ func (b *Balancer) SetStatus(balancerName, childName string, up bool) {
 // status of the Balancer changes.
 // Not thread safe.
 func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
+	if !b.wantsHealthCheck {
+		return errors.New("healthCheck not enabled in config for this Balancer")
+	}
 	b.updaters = append(b.updaters, fn)
 	return nil
 }

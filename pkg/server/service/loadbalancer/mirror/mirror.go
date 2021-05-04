@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/traefik/traefik/v2/pkg/healthcheck"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v2/pkg/safe"
@@ -132,6 +133,17 @@ func (m *Mirroring) AddMirror(handler http.Handler, percent int) error {
 	}
 	m.mirrorHandlers = append(m.mirrorHandlers, &mirrorHandler{Handler: handler, percent: percent})
 	return nil
+}
+
+// RegisterStatusUpdater adds fn to the list of hooks that are run when the
+// status of handler of the Mirroring changes.
+// Not thread safe.
+func (m *Mirroring) RegisterStatusUpdater(fn func(up bool)) error {
+	updater, ok := m.handler.(healthcheck.StatusUpdater)
+	if !ok {
+		return fmt.Errorf("%T not a healthcheck.StatusUpdater", m.handler)
+	}
+	return updater.RegisterStatusUpdater(fn)
 }
 
 type blackHoleResponseWriter struct{}

@@ -1,9 +1,11 @@
 package emptybackendhandler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/healthcheck"
 )
 
@@ -11,12 +13,13 @@ import (
 // has at least one active Server in respect to the healthchecks and if this
 // is not the case, it will stop the middleware chain and respond with 503.
 type emptyBackend struct {
-	next healthcheck.BalancerHandler
+	next             healthcheck.BalancerHandler
+	wantsHealthCheck bool
 }
 
 // New creates a new EmptyBackend middleware.
-func New(lb healthcheck.BalancerHandler) http.Handler {
-	return &emptyBackend{next: lb}
+func New(lb healthcheck.BalancerHandler, hc *dynamic.HealthCheck) http.Handler {
+	return &emptyBackend{next: lb, wantsHealthCheck: hc != nil}
 }
 
 // ServeHTTP responds with 503 when there is no active Server and otherwise
@@ -37,6 +40,9 @@ func (e *emptyBackend) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 // status of emptyBackend changes.
 // Not thread safe.
 func (e *emptyBackend) RegisterStatusUpdater(fn func(up bool)) error {
+	if !e.wantsHealthCheck {
+		return errors.New("healthCheck not enabled in config for this backend")
+	}
 	n, ok := e.next.(healthcheck.StatusUpdater)
 	if !ok {
 		return fmt.Errorf("%T not a healthcheck.StatusUpdater", e.next)

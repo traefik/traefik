@@ -147,6 +147,17 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 			return nil, err
 		}
 	}
+	// TODO(mpl): since the status propagation is completely transparent through the
+	// mirroring (because of the recursion on the underlying service), we could maybe
+	// skip all that below, and even not add HealthCheck as a field of
+	// dynamic.Mirroring.
+	if config.HealthCheck == nil {
+		return handler, nil
+	}
+	if _, ok := serviceHandler.(healthcheck.StatusUpdater); !ok {
+		return nil, fmt.Errorf("mirror handler (%T) not a healthcheck.StatusUpdater", serviceHandler)
+	}
+	log.FromContext(ctx).Debugf("handler of mirroring will propagate status changes")
 	return handler, nil
 }
 
@@ -156,7 +167,7 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 		config.Sticky.Cookie.Name = cookie.GetName(config.Sticky.Cookie.Name, serviceName)
 	}
 
-	balancer := wrr.New(config.Sticky)
+	balancer := wrr.New(config.Sticky, config.HealthCheck)
 	for _, service := range config.Services {
 		serviceHandler, err := m.BuildHTTP(ctx, service.Name)
 		if err != nil {
@@ -224,7 +235,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	m.balancers[serviceName] = append(m.balancers[serviceName], balancer)
 
 	// Empty (backend with no servers)
-	return emptybackendhandler.New(balancer), nil
+	return emptybackendhandler.New(balancer, service.HealthCheck), nil
 }
 
 // LaunchHealthCheck launches the health checks.
