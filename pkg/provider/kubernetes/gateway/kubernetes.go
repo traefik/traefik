@@ -685,8 +685,6 @@ func gatewayTLSRouteToTCPConf(ep string, listener v1alpha1.Listener, gateway *v1
 	}
 
 	var conditions []metav1.Condition
-	rule := hostSNIRule(listener.Hostname)
-
 	for _, tlsRoute := range tlsRoutes {
 		// Should never happen
 		if tlsRoute == nil {
@@ -694,6 +692,20 @@ func gatewayTLSRouteToTCPConf(ep string, listener v1alpha1.Listener, gateway *v1
 		}
 
 		for _, routeRule := range tlsRoute.Spec.Rules {
+			rule, err := hostSNIRule(routeRule)
+			if err != nil {
+				// update "ResolvedRefs" status true with "DroppedRoutes" reason
+				conditions = append(conditions, metav1.Condition{
+					Type:               string(v1alpha1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(v1alpha1.ListenerReasonDegradedRoutes),
+					Message:            fmt.Sprintf("Skipping %s %s: cannot make route's SNI match: %v", listener.Routes.Kind, tlsRoute.Name, err),
+				})
+				// TODO update the RouteStatus condition / deduplicate conditions on listener
+				continue
+			}
+
 			router := dynamic.TCPRouter{
 				Rule:        rule,
 				EntryPoints: []string{ep},
@@ -867,14 +879,31 @@ func hostRule(httpRouteSpec v1alpha1.HTTPRouteSpec) (string, error) {
 	return hostRegexp, nil
 }
 
-func hostSNIRule(hostname *v1alpha1.Hostname) string {
-	domain := "*"
+func hostSNIRule(rule v1alpha1.TLSRouteRule) (string, error) {
+	var hostnames []string
+	for _, match := range rule.Matches {
+		for _, hostname := range match.SNIs {
+			if len(hostname) == 0 {
+				continue
+			}
 
-	if hostname != nil && *hostname != "" {
-		domain = string(*hostname)
+			h := string(hostname)
+
+			// first naive validation, should be improved
+			wildcardNb := strings.Count(h, "*")
+			if wildcardNb != 0 && !strings.HasPrefix(h, "*.") || wildcardNb > 1 {
+				return "", fmt.Errorf("invalid hostname: %q", h)
+			}
+
+			hostnames = append(hostnames, "`"+h+"`")
+		}
 	}
 
-	return "HostSNI(`" + domain + "`)"
+	if len(hostnames) == 0 {
+		return "HostSNI(`*`)", nil
+	}
+
+	return "HostSNI(" + strings.Join(hostnames, ",") + ")", nil
 }
 
 func extractRule(routeRule v1alpha1.HTTPRouteRule, hostRule string) (string, error) {

@@ -1454,7 +1454,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 						"default-tcp-app-1-my-gateway-tcp-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tcp"},
 							Service:     "default-tcp-app-1-my-gateway-tcp-e3b0c44298fc1c149afb-wrr",
-							Rule:        "HostSNI(`foo.example.com`)",
+							Rule:        "HostSNI(`*`)",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -1699,6 +1699,29 @@ func TestLoadTLSRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "Simple TLSRoute, with multiple SNI matching",
+			paths: []string{"services.yml", "tlsroute/with_invalid_SNI_matching.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9001"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:  "Simple TLS listener to TCPRoute, with foo entrypoint",
 			paths: []string{"services.yml", "tlsroute/simple_TLS_to_TCPRoute.yml"},
 			entryPoints: map[string]Entrypoint{
@@ -1775,7 +1798,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 						"default-tls-app-1-my-tls-gateway-tcp-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tcp"},
 							Service:     "default-tls-app-1-my-tls-gateway-tcp-e3b0c44298fc1c149afb-wrr",
-							Rule:        "HostSNI(`foo.example.com`)",
+							Rule:        "HostSNI(`*`)",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -1987,7 +2010,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 						"default-tls-app-1-my-gateway-tls-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls"},
 							Service:     "default-tls-app-1-my-gateway-tls-e3b0c44298fc1c149afb-wrr",
-							Rule:        "HostSNI(`foo.example.com`)",
+							Rule:        "HostSNI(`*`)",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -2042,7 +2065,117 @@ func TestLoadTLSRoutes(t *testing.T) {
 						"default-tls-app-1-my-gateway-tls-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls"},
 							Service:     "default-tls-app-1-my-gateway-tls-e3b0c44298fc1c149afb-wrr",
-							Rule:        "HostSNI(`foo.example.com`)",
+							Rule:        "HostSNI(`*`)",
+							TLS: &dynamic.RouterTCPTLSConfig{
+								Passthrough: true,
+							},
+						},
+					},
+					Services: map[string]*dynamic.TCPService{
+						"default-tls-app-1-my-gateway-tls-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "default-whoamitcp-9000",
+										Weight: func(i int) *int { return &i }(1),
+									},
+								},
+							},
+						},
+						"default-whoamitcp-9000": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.9:9000",
+									},
+									{
+										Address: "10.10.0.10:9000",
+									},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Simple TLSRoute, with single SNI matching",
+			paths: []string{"services.yml", "tlsroute/with_SNI_matching.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9001"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-tls-app-1-my-gateway-tls-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"tls"},
+							Service:     "default-tls-app-1-my-gateway-tls-e3b0c44298fc1c149afb-wrr",
+							Rule:        "HostSNI(`foo.bar`)",
+							TLS: &dynamic.RouterTCPTLSConfig{
+								Passthrough: true,
+							},
+						},
+					},
+					Services: map[string]*dynamic.TCPService{
+						"default-tls-app-1-my-gateway-tls-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "default-whoamitcp-9000",
+										Weight: func(i int) *int { return &i }(1),
+									},
+								},
+							},
+						},
+						"default-whoamitcp-9000": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.9:9000",
+									},
+									{
+										Address: "10.10.0.10:9000",
+									},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Simple TLSRoute, with multiple SNI matching",
+			paths: []string{"services.yml", "tlsroute/with_multiple_SNI_matching.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9001"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-tls-app-1-my-gateway-tls-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"tls"},
+							Service:     "default-tls-app-1-my-gateway-tls-e3b0c44298fc1c149afb-wrr",
+							Rule:        "HostSNI(`foo.bar`,`fiz.baz`)",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -2220,7 +2353,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 						"default-tls-app-1-my-gateway-tls-2-e3b0c44298fc1c149afb": {
 							EntryPoints: []string{"tls-2"},
 							Service:     "default-tls-app-1-my-gateway-tls-2-e3b0c44298fc1c149afb-wrr",
-							Rule:        "HostSNI(`pass.tls.foo.example.com`)",
+							Rule:        "HostSNI(`*`)",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -2667,6 +2800,134 @@ func TestExtractRule(t *testing.T) {
 
 			rule, err := extractRule(test.routeRule, test.hostRule)
 			if test.expectedError {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, test.expectedRule, rule)
+		})
+	}
+}
+
+func TestHostSNI(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		routeRule    v1alpha1.TLSRouteRule
+		expectedRule string
+		expectError  bool
+	}{
+		{
+			desc:         "Empty rule",
+			expectedRule: "HostSNI(`*`)",
+		},
+		{
+			desc: "Empty rule and matches",
+			routeRule: v1alpha1.TLSRouteRule{
+				Matches: []v1alpha1.TLSRouteMatch{},
+			},
+			expectedRule: "HostSNI(`*`)",
+		},
+		{
+			desc: "One match, SNI with empty hostname",
+			routeRule: v1alpha1.TLSRouteRule{
+				Matches: []v1alpha1.TLSRouteMatch{
+					{
+						SNIs: []v1alpha1.Hostname{""},
+					},
+				},
+			},
+			expectedRule: "HostSNI(`*`)",
+		},
+		{
+			desc: "One match, SNI with one unsupported wildcard",
+			routeRule: v1alpha1.TLSRouteRule{
+				Matches: []v1alpha1.TLSRouteMatch{
+					{
+						SNIs: []v1alpha1.Hostname{"*"},
+					},
+				},
+			},
+			expectError: true,
+		},
+		{
+			desc: "One match, SNI with multiple malformed wildcard",
+			routeRule: v1alpha1.TLSRouteRule{
+				Matches: []v1alpha1.TLSRouteMatch{
+					{
+						SNIs: []v1alpha1.Hostname{"*.foo.*"},
+					},
+				},
+			},
+			expectError: true,
+		},
+		{
+			desc: "One match, SNI with some empty hostnames",
+			routeRule: v1alpha1.TLSRouteRule{
+				Matches: []v1alpha1.TLSRouteMatch{
+					{
+						SNIs: []v1alpha1.Hostname{"foo", "", "bar"},
+					},
+				},
+			},
+			expectedRule: "HostSNI(`foo`,`bar`)",
+		},
+		{
+			desc: "One match, one SNI hostname",
+			routeRule: v1alpha1.TLSRouteRule{
+				Matches: []v1alpha1.TLSRouteMatch{
+					{
+						SNIs: []v1alpha1.Hostname{"foo"},
+					},
+				},
+			},
+			expectedRule: "HostSNI(`foo`)",
+		},
+		{
+			desc: "One match, multiple SNI hostnames",
+			routeRule: v1alpha1.TLSRouteRule{
+				Matches: []v1alpha1.TLSRouteMatch{
+					{
+						SNIs: []v1alpha1.Hostname{"foo", "bar"},
+					},
+				},
+			},
+			expectedRule: "HostSNI(`foo`,`bar`)",
+		},
+		{
+			desc: "One SNI multiple hostnames",
+			routeRule: v1alpha1.TLSRouteRule{
+				Matches: []v1alpha1.TLSRouteMatch{
+					{
+						SNIs: []v1alpha1.Hostname{"foo", "bar"},
+					},
+				},
+			},
+			expectedRule: "HostSNI(`foo`,`bar`)",
+		},
+		{
+			desc: "Multiple SNI multiple hostnames",
+			routeRule: v1alpha1.TLSRouteRule{
+				Matches: []v1alpha1.TLSRouteMatch{
+					{
+						SNIs: []v1alpha1.Hostname{"foo", "bar"},
+					},
+					{
+						SNIs: []v1alpha1.Hostname{"foz", "baz"},
+					},
+				},
+			},
+			expectedRule: "HostSNI(`foo`,`bar`,`foz`,`baz`)",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rule, err := hostSNIRule(test.routeRule)
+			if test.expectError {
 				assert.Error(t, err)
 				return
 			}
