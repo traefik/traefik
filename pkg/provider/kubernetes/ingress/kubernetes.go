@@ -241,6 +241,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					Errorf("Cannot create service: %v", err)
 				continue
 			}
+
 			if len(service.LoadBalancer.Servers) == 0 && p.IgnoreEmptyServices {
 				log.FromContext(ctx).
 					WithField("serviceName", ingress.Spec.DefaultBackend.Service.Name).
@@ -285,6 +286,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 						Errorf("Cannot create service: %v", err)
 					continue
 				}
+
 				if len(service.LoadBalancer.Servers) == 0 && p.IgnoreEmptyServices {
 					log.FromContext(ctx).
 						WithField("serviceName", pa.Backend.Service.Name).
