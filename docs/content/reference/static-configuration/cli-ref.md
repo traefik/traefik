@@ -624,6 +624,9 @@ Kubernetes bearer token (not needed for in-cluster client).
 `--providers.kubernetesingress`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
 
+`--providers.kubernetesingress.allowemptyservices`:  
+Allow creation of services without endpoints. (Default: ```false```)
+
 `--providers.kubernetesingress.certauthfilepath`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
 

@@ -624,6 +624,9 @@ Kubernetes bearer token (not needed for in-cluster client).
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_ALLOWEMPTYSERVICES`:  
+Allow creation of services without endpoints. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_CERTAUTHFILEPATH`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
 

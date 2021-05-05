@@ -440,29 +440,29 @@ providers:
 --providers.kubernetesingress.throttleDuration=10s
 ```
 
-### `ignoreEmptyServices`
+### `allowEmptyServices`
 
 _Optional, Default: false
 
 ```toml tab="File (TOML)"
 [providers.kubernetesIngress]
-  ignoreEmptyServices = true
+  allowEmptyServices = true
   # ...
 ```
 
 ```yaml tab="File (YAML)"
 providers:
   kubernetesIngress:
-    ignoreEmptyServices: true
+    allowEmptyServices: true
     # ...
 ```
 
 ```bash tab="CLI"
---providers.kubernetesingress.ignoreEmptyServices=true
+--providers.kubernetesingress.allowEmptyServices=true
 ```
 
-Prevents the creation of services if there are no endpoints available.
-This normally results in `404` http responses instead of `503`.
+Allow the creation of services if there are no endpoints available.
+This results in `503` http responses instead of `404`.
 
 ### Further
 

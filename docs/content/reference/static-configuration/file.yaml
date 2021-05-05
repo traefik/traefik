@@ -114,7 +114,7 @@ providers:
     labelSelector: foobar
     ingressClass: foobar
     throttleDuration: 42s
-    ignoreEmptyServices: true
+    allowEmptyServices: true
     ingressEndpoint:
       ip: foobar
       hostname: foobar
