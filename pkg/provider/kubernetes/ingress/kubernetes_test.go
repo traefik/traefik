@@ -468,7 +468,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Ingress with one service without endpoints subset with allowEmptyServices",
+			desc: "Ingress with one service without endpoint",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
