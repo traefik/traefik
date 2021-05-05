@@ -575,10 +575,6 @@ func loadService(client Client, namespace string, backend networkingv1.IngressBa
 		}
 	}
 
-	if len(svc.LoadBalancer.Servers) == 0 {
-		return nil, errors.New("no valid subset found")
-	}
-
 	return svc, nil
 }
 
