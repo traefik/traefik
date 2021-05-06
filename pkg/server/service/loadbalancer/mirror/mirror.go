@@ -155,7 +155,7 @@ func (m *Mirroring) RegisterStatusUpdater(fn func(up bool)) error {
 		return fmt.Errorf("service of mirroring %T not a healthcheck.StatusUpdater", m.handler)
 	}
 	if err := updater.RegisterStatusUpdater(fn); err != nil {
-		return fmt.Errorf("cannot register service of mirroring as updater: %v", err)
+		return fmt.Errorf("cannot register service of mirroring as updater: %w", err)
 	}
 	return nil
 }

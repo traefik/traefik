@@ -865,7 +865,7 @@ HealthCheck enabled, this service reports to its parent any status change.
 !!! info "All or nothing"
 
     If HealthCheck is enabled for a given service, but any of its descendants does
-not have it enabled, the creation of the service will fail.
+    not have it enabled, the creation of the service will fail.
 
     This strategy can be defined currently with the [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md) providers.
 
@@ -951,7 +951,7 @@ into account.
 !!! info "All or nothing"
 
     If HealthCheck is enabled for a given service, but any of its descendants does
-not have it enabled, the creation of the service will fail.
+    not have it enabled, the creation of the service will fail.
 
 !!! info "Supported Providers"
     

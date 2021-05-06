@@ -174,7 +174,7 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 		if err := updater.RegisterStatusUpdater(func(up bool) {
 			balancer.SetStatus(ctx, childName, up)
 		}); err != nil {
-			return nil, fmt.Errorf("cannot register %v as updater for %v: %v", childName, serviceName, err)
+			return nil, fmt.Errorf("cannot register %v as updater for %v: %w", childName, serviceName, err)
 		}
 		log.FromContext(ctx).Debugf("Child service %v will update parent %v on status change", childName, serviceName)
 	}
