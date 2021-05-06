@@ -1202,7 +1202,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
     
     ??? example "Examples"
         
-        ```yaml tab="Only on the IngressRouteTCP"
+        ```yaml tab="Only on IngressRouteTCP"
         ---
         apiVersion: traefik.containo.us/v1alpha1
         kind: IngressRouteTCP
