@@ -472,52 +472,49 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 }
 
 func (c *clientWrapper) GetIngressClasses() ([]*networkingv1.IngressClass, error) {
-	var results []*networkingv1.IngressClass
-
 	serverVersion, err := c.GetServerVersion()
 	if err != nil {
-		log.Errorf("Failed to get server version: %v", err)
-		return results, nil
+		log.WithoutContext().Errorf("Failed to get server version: %v", err)
+		return nil, err
 	}
 
 	if c.clusterFactory == nil {
 		return nil, errors.New("cluster factory not loaded")
 	}
 
-	isNetworkingV1Supported := supportsNetworkingV1Ingress(serverVersion)
-
-	if isNetworkingV1Supported {
-		ingressClasses, err := c.clusterFactory.Networking().V1().IngressClasses().Lister().List(labels.Everything())
+	var ics []*networkingv1.IngressClass
+	if !supportsNetworkingV1Ingress(serverVersion) {
+		ingressClasses, err := c.clusterFactory.Networking().V1beta1().IngressClasses().Lister().List(labels.Everything())
 		if err != nil {
 			return nil, err
 		}
 
 		for _, ic := range ingressClasses {
 			if ic.Spec.Controller == traefikDefaultIngressClassController {
-				results = append(results, ic)
+				icN, err := toNetworkingV1IngressClass(ic)
+				if err != nil {
+					log.WithoutContext().Errorf("Failed to convert ingress class %s from networking/v1beta1 to networking/v1: %v", ic.Name, err)
+					continue
+				}
+				ics = append(ics, icN)
 			}
 		}
 
-		return results, nil
+		return ics, nil
 	}
 
-	ingressClasses, err := c.clusterFactory.Networking().V1beta1().IngressClasses().Lister().List(labels.Everything())
+	ingressClasses, err := c.clusterFactory.Networking().V1().IngressClasses().Lister().List(labels.Everything())
 	if err != nil {
 		return nil, err
 	}
 
 	for _, ic := range ingressClasses {
 		if ic.Spec.Controller == traefikDefaultIngressClassController {
-			icN, err := toNetworkingV1IngressClass(ic)
-			if err != nil {
-				log.WithoutContext().Errorf("Failed to convert ingress class %s from networking/v1beta1 to networking/v1: %v", ic.Name, err)
-				continue
-			}
-			results = append(results, icN)
+			ics = append(ics, ic)
 		}
 	}
 
-	return results, nil
+	return ics, nil
 }
 
 // lookupNamespace returns the lookup namespace key for the given namespace.
