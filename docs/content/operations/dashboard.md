@@ -121,5 +121,5 @@ api:
 --api.dashboard=true --api.insecure=true
 ```
 
-You can now access the dashboard on the port `8080` of the Traefik instance,
-at the following URL: `http://<Traefik IP>:8080/dashboard/` (trailing slash is mandatory).
+You can now access the dashboard on the port `9000` of the Traefik instance after port-forward,
+at the following URL: `http://<Traefik IP>:9000/dashboard/` (trailing slash is mandatory).
