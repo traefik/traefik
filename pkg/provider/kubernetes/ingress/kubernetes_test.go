@@ -24,10 +24,11 @@ func Bool(v bool) *bool { return &v }
 
 func TestLoadConfigurationFromIngresses(t *testing.T) {
 	testCases := []struct {
-		desc          string
-		ingressClass  string
-		serverVersion string
-		expected      *dynamic.Configuration
+		desc               string
+		ingressClass       string
+		serverVersion      string
+		expected           *dynamic.Configuration
+		allowEmptyServices bool
 	}{
 		{
 			desc: "Empty ingresses",
@@ -444,13 +445,25 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Ingress with one service without endpoints subset",
+			desc:               "Ingress with one service without endpoints subset",
+			allowEmptyServices: true,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
-					Routers:     map[string]*dynamic.Router{},
-					Services:    map[string]*dynamic.Service{},
+					Routers: map[string]*dynamic.Router{
+						"testing-traefik-tchouk-bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "testing-service1-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
 				},
 			},
 		},
@@ -1631,7 +1644,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 
 			clientMock := newClientMock(serverVersion, paths...)
 
-			p := Provider{IngressClass: test.ingressClass}
+			p := Provider{IngressClass: test.ingressClass, AllowEmptyServices: test.allowEmptyServices}
 			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
 
 			assert.Equal(t, test.expected, conf)

@@ -106,6 +106,7 @@
     labelSelector = "foobar"
     ingressClass = "foobar"
     throttleDuration = "42s"
+    allowEmptyServices = true
     [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
       hostname = "foobar"
