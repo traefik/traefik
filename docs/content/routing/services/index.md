@@ -855,7 +855,17 @@ This strategy is only available to load balance between [services](./index.md) a
 
 #### Health Check
 
-HealthCheck enables automatic self-healthcheck for this service, i.e. whenever one of its children (either another WeightedRoundRobin, or a ServersLoadBalancer) is reported as down, this service becomes aware of it, and takes it into account (i.e. it ignores the down child) when running the load-balancing algorithm. In addition, if the parent of this service also has HealthCheck enabled, this service reports to its parent any status change.
+HealthCheck enables automatic self-healthcheck for this service, i.e. whenever
+one of its children (either another WeightedRoundRobin, or a
+ServersLoadBalancer) is reported as down, this service becomes aware of it, and
+takes it into account (i.e. it ignores the down child) when running the
+load-balancing algorithm. In addition, if the parent of this service also has
+HealthCheck enabled, this service reports to its parent any status change.
+
+!!! info "All or nothing"
+
+    If HealthCheck is enabled for a given service, but any of its descendants does
+not have it enabled, the creation of the service will fail.
 
     This strategy can be defined currently with the [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md) providers.
 
@@ -924,19 +934,50 @@ http:
         - url: "http://private-ip-server-2/"
 ```
 
+### Mirroring (service)
+
+The mirroring is able to mirror requests sent to a service to other services.
+Please note that by default the whole request is buffered in memory while it is being mirrored.
+See the maxBodySize option in the example below for how to modify this behaviour.
+
+#### Health Check
+
+HealthCheck enables automatic self-healthcheck for this service, i.e. if the
+main handler of the service becomes unreachable, the information is propagated
+upwards to its parent.
+None of the fields of HealthCheck are relevant here, and are therefore not taken
+into account.
+
+!!! info "All or nothing"
+
+    If HealthCheck is enabled for a given service, but any of its descendants does
+not have it enabled, the creation of the service will fail.
+
+!!! info "Supported Providers"
+    
+    This strategy can be defined currently with the [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md) providers.
+
 ```toml tab="TOML"
 ## Dynamic configuration
 [http.services]
-  [http.services.app]
-    [[http.services.app.weighted.services]]
-      name = "appv1"
-      weight = 3
-    [[http.services.app.weighted.services]]
+  [http.services.mirrored-api]
+    [http.services.mirrored-api.mirroring]
+      [http.services.mirrored-api.mirroring.healthCheck]
+      service = "appv1"
+      # maxBodySize is the maximum size in bytes allowed for the body of the request.
+      # If the body is larger, the request is not mirrored.
+      # Default value is -1, which means unlimited size.
+      maxBodySize = 1024
+    [[http.services.mirrored-api.mirroring.mirrors]]
       name = "appv2"
       weight = 1
 
   [http.services.appv1]
     [http.services.appv1.loadBalancer]
+      [http.services.appv1.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
       [[http.services.appv1.loadBalancer.servers]]
         url = "http://private-ip-server-1/"
 
@@ -946,22 +987,13 @@ http:
         url = "http://private-ip-server-2/"
 ```
 
-### Mirroring (service)
-
-The mirroring is able to mirror requests sent to a service to other services.
-Please note that by default the whole request is buffered in memory while it is being mirrored.
-See the maxBodySize option in the example below for how to modify this behaviour.
-
-!!! info "Supported Providers"
-
-    This strategy can be defined currently with the [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md) providers.
-
 ```yaml tab="YAML"
 ## Dynamic configuration
 http:
   services:
     mirrored-api:
       mirroring:
+        healthCheck: {}
         service: appv1
         # maxBodySize is the maximum size allowed for the body of the request.
         # If the body is larger, the request is not mirrored.
@@ -973,6 +1005,10 @@ http:
 
     appv1:
       loadBalancer:
+        healthCheck:
+          path: /status
+          interval: 10s
+          timeout: 3s
         servers:
         - url: "http://private-ip-server-1/"
 

@@ -1,6 +1,7 @@
 package wrr
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -26,7 +27,7 @@ func (r *responseRecorder) WriteHeader(statusCode int) {
 }
 
 func TestBalancer(t *testing.T) {
-	balancer := New(nil)
+	balancer := New(nil, nil)
 
 	balancer.AddService("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -48,7 +49,7 @@ func TestBalancer(t *testing.T) {
 }
 
 func TestBalancerNoService(t *testing.T) {
-	balancer := New(nil)
+	balancer := New(nil, nil)
 
 	recorder := httptest.NewRecorder()
 	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -57,7 +58,7 @@ func TestBalancerNoService(t *testing.T) {
 }
 
 func TestBalancerOneServerZeroWeight(t *testing.T) {
-	balancer := New(nil)
+	balancer := New(nil, nil)
 
 	balancer.AddService("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -75,7 +76,7 @@ func TestBalancerOneServerZeroWeight(t *testing.T) {
 }
 
 func TestBalancerNoServiceUp(t *testing.T) {
-	balancer := New(nil)
+	balancer := New(nil, nil)
 
 	balancer.AddService("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -85,8 +86,8 @@ func TestBalancerNoServiceUp(t *testing.T) {
 		rw.WriteHeader(http.StatusInternalServerError)
 	}), Int(1))
 
-	balancer.SetStatus("parent", "first", false)
-	balancer.SetStatus("parent", "second", false)
+	balancer.SetStatus(context.WithValue(context.Background(), "serviceName", "parent"), "first", false)
+	balancer.SetStatus(context.WithValue(context.Background(), "serviceName", "parent"), "second", false)
 
 	recorder := httptest.NewRecorder()
 	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -95,7 +96,7 @@ func TestBalancerNoServiceUp(t *testing.T) {
 }
 
 func TestBalancerOneServerDown(t *testing.T) {
-	balancer := New(nil)
+	balancer := New(nil, nil)
 
 	balancer.AddService("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -105,7 +106,7 @@ func TestBalancerOneServerDown(t *testing.T) {
 	balancer.AddService("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusInternalServerError)
 	}), Int(1))
-	balancer.SetStatus("parent", "second", false)
+	balancer.SetStatus(context.WithValue(context.Background(), "serviceName", "parent"), "second", false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	for i := 0; i < 3; i++ {
@@ -116,7 +117,7 @@ func TestBalancerOneServerDown(t *testing.T) {
 }
 
 func TestBalancerDownThenUp(t *testing.T) {
-	balancer := New(nil)
+	balancer := New(nil, nil)
 
 	balancer.AddService("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -127,7 +128,7 @@ func TestBalancerDownThenUp(t *testing.T) {
 		rw.Header().Set("server", "second")
 		rw.WriteHeader(http.StatusOK)
 	}), Int(1))
-	balancer.SetStatus("parent", "second", false)
+	balancer.SetStatus(context.WithValue(context.Background(), "serviceName", "parent"), "second", false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	for i := 0; i < 3; i++ {
@@ -135,7 +136,7 @@ func TestBalancerDownThenUp(t *testing.T) {
 	}
 	assert.Equal(t, 3, recorder.save["first"])
 
-	balancer.SetStatus("parent", "second", true)
+	balancer.SetStatus(context.WithValue(context.Background(), "serviceName", "parent"), "second", true)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	for i := 0; i < 2; i++ {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -145,7 +146,7 @@ func TestBalancerDownThenUp(t *testing.T) {
 }
 
 func TestBalancerPropagate(t *testing.T) {
-	balancer1 := New(nil)
+	balancer1 := New(nil, &dynamic.HealthCheck{})
 
 	balancer1.AddService("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -156,7 +157,7 @@ func TestBalancerPropagate(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), Int(1))
 
-	balancer2 := New(nil)
+	balancer2 := New(nil, &dynamic.HealthCheck{})
 	balancer2.AddService("third", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "third")
 		rw.WriteHeader(http.StatusOK)
@@ -166,16 +167,16 @@ func TestBalancerPropagate(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), Int(1))
 
-	topBalancer := New(nil)
+	topBalancer := New(nil, &dynamic.HealthCheck{})
 	topBalancer.AddService("balancer1", balancer1, Int(1))
 	balancer1.RegisterStatusUpdater(func(up bool) {
-		topBalancer.SetStatus("top", "balancer1", up)
+		topBalancer.SetStatus(context.WithValue(context.Background(), "serviceName", "top"), "balancer1", up)
 		// TODO(mpl): if test gets flaky, add channel or something here to signal that
 		// propagation is done, and wait on it before sending request.
 	})
 	topBalancer.AddService("balancer2", balancer2, Int(1))
 	balancer2.RegisterStatusUpdater(func(up bool) {
-		topBalancer.SetStatus("top", "balancer2", up)
+		topBalancer.SetStatus(context.WithValue(context.Background(), "serviceName", "top"), "balancer2", up)
 	})
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
@@ -190,7 +191,7 @@ func TestBalancerPropagate(t *testing.T) {
 	assert.Equal(t, wantStatus, recorder.status)
 
 	// fourth gets downed, but balancer2 still up since third is still up.
-	balancer2.SetStatus("top", "fourth", false)
+	balancer2.SetStatus(context.WithValue(context.Background(), "serviceName", "top"), "fourth", false)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	for i := 0; i < 8; i++ {
 		topBalancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -204,7 +205,7 @@ func TestBalancerPropagate(t *testing.T) {
 
 	// third gets downed, and the propagation triggers balancer2 to be marked as
 	// down as well for topBalancer.
-	balancer2.SetStatus("top", "third", false)
+	balancer2.SetStatus(context.WithValue(context.Background(), "serviceName", "top"), "third", false)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	for i := 0; i < 8; i++ {
 		topBalancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -218,7 +219,7 @@ func TestBalancerPropagate(t *testing.T) {
 }
 
 func TestBalancerAllServersZeroWeight(t *testing.T) {
-	balancer := New(nil)
+	balancer := New(nil, nil)
 
 	balancer.AddService("test", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), Int(0))
 	balancer.AddService("test2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), Int(0))
@@ -232,7 +233,7 @@ func TestBalancerAllServersZeroWeight(t *testing.T) {
 func TestSticky(t *testing.T) {
 	balancer := New(&dynamic.Sticky{
 		Cookie: &dynamic.Cookie{Name: "test"},
-	})
+	}, nil)
 
 	balancer.AddService("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -263,7 +264,7 @@ func TestSticky(t *testing.T) {
 // TestBalancerBias makes sure that the WRR algorithm spreads elements evenly right from the start,
 // and that it does not "over-favor" the high-weighted ones with a biased start-up regime.
 func TestBalancerBias(t *testing.T) {
-	balancer := New(nil)
+	balancer := New(nil, nil)
 
 	balancer.AddService("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "A")

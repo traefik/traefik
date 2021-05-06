@@ -41,7 +41,7 @@ func (e *emptyBackend) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 // Not thread safe.
 func (e *emptyBackend) RegisterStatusUpdater(fn func(up bool)) error {
 	if !e.wantsHealthCheck {
-		return errors.New("healthCheck not enabled in config for this backend")
+		return errors.New("healthCheck not enabled in config for this loadbalancer service")
 	}
 	n, ok := e.next.(healthcheck.StatusUpdater)
 	if !ok {

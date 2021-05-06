@@ -303,7 +303,10 @@ func (lb *LbStatusUpdater) RegisterStatusUpdater(fn func(up bool)) error {
 // RemoveServer removes the given server from the BalancerHandler,
 // and updates the status of the server to "DOWN".
 func (lb *LbStatusUpdater) RemoveServer(u *url.URL) error {
-	// TODO(mpl): pass a context around, for better logging?
+	// TODO(mpl): when we have the freedom to change the signature of RemoveServer
+	// (kinda stuck because of oxy for now), let's pass around a context to improve
+	// logging.
+	ctx := context.TODO()
 	upBefore := len(lb.BalancerHandler.Servers()) > 0
 	err := lb.BalancerHandler.RemoveServer(u)
 	if err != nil {
@@ -312,19 +315,20 @@ func (lb *LbStatusUpdater) RemoveServer(u *url.URL) error {
 	if lb.serviceInfo != nil {
 		lb.serviceInfo.UpdateServerStatus(u.String(), serverDown)
 	}
+	log.FromContext(ctx).Debugf("child %s now %s", u.String(), serverDown)
 
 	if !upBefore {
 		// we were already down, and we still are, no need to propagate.
-		log.WithoutContext().Debugf("child %s now DOWN, but we were already DOWN, so no need to propagate.", u.String())
+		log.FromContext(ctx).Debugf("Still %s, no need to propagate", serverDown)
 		return nil
 	}
 	if len(lb.BalancerHandler.Servers()) > 0 {
 		// we were up, and we still are, no need to propagate
-		log.WithoutContext().Debugf("child %s now DOWN, but we still are UP, so no need to propagate.", u.String())
+		log.FromContext(ctx).Debugf("Still %s, no need to propagate", serverUp)
 		return nil
 	}
 
-	log.WithoutContext().Debugf("child %s now DOWN, and so are we, updating parent(s).", u.String())
+	log.FromContext(ctx).Debugf("Propagating new %s status", serverDown)
 	for _, fn := range lb.updaters {
 		fn(false)
 	}
@@ -334,6 +338,7 @@ func (lb *LbStatusUpdater) RemoveServer(u *url.URL) error {
 // UpsertServer adds the given server to the BalancerHandler,
 // and updates the status of the server to "UP".
 func (lb *LbStatusUpdater) UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error {
+	ctx := context.TODO()
 	upBefore := len(lb.BalancerHandler.Servers()) > 0
 	err := lb.BalancerHandler.UpsertServer(u, options...)
 	if err != nil {
@@ -342,14 +347,15 @@ func (lb *LbStatusUpdater) UpsertServer(u *url.URL, options ...roundrobin.Server
 	if lb.serviceInfo != nil {
 		lb.serviceInfo.UpdateServerStatus(u.String(), serverUp)
 	}
+	log.FromContext(ctx).Debugf("child %s now %s", u.String(), serverUp)
 
 	if upBefore {
 		// we were up, and we still are, no need to propagate
-		log.WithoutContext().Debugf("child %s now UP, but we were already UP, so no need to propagate.", u.String())
+		log.FromContext(ctx).Debugf("Still %s, no need to propagate", serverUp)
 		return nil
 	}
 
-	log.WithoutContext().Debugf("child %s now UP, and so are we, updating parent(s).", u.String())
+	log.FromContext(ctx).Debugf("Propagating new %s status", serverUp)
 	for _, fn := range lb.updaters {
 		fn(true)
 	}

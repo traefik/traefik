@@ -135,7 +135,7 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 	if config.MaxBodySize != nil {
 		maxBodySize = *config.MaxBodySize
 	}
-	handler := mirror.New(serviceHandler, m.routinePool, maxBodySize)
+	handler := mirror.New(serviceHandler, m.routinePool, maxBodySize, config.HealthCheck)
 	for _, mirrorConfig := range config.Mirrors {
 		mirrorHandler, err := m.BuildHTTP(ctx, mirrorConfig.Name)
 		if err != nil {
@@ -147,17 +147,6 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 			return nil, err
 		}
 	}
-	// TODO(mpl): since the status propagation is completely transparent through the
-	// mirroring (because of the recursion on the underlying service), we could maybe
-	// skip all that below, and even not add HealthCheck as a field of
-	// dynamic.Mirroring.
-	if config.HealthCheck == nil {
-		return handler, nil
-	}
-	if _, ok := serviceHandler.(healthcheck.StatusUpdater); !ok {
-		return nil, fmt.Errorf("mirror handler (%T) not a healthcheck.StatusUpdater", serviceHandler)
-	}
-	log.FromContext(ctx).Debugf("handler of mirroring will propagate status changes")
 	return handler, nil
 }
 
@@ -183,9 +172,9 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 			return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", childName, serviceName, serviceHandler)
 		}
 		if err := updater.RegisterStatusUpdater(func(up bool) {
-			balancer.SetStatus(serviceName, childName, up)
+			balancer.SetStatus(ctx, childName, up)
 		}); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("cannot register %v as updater for %v: %v", childName, serviceName, err)
 		}
 		log.FromContext(ctx).Debugf("Child service %v will update parent %v on status change", childName, serviceName)
 	}

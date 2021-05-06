@@ -2,6 +2,7 @@ package wrr
 
 import (
 	"container/heap"
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -93,16 +94,23 @@ func (b *Balancer) Pop() interface{} {
 	return h
 }
 
+func statusFromBool(up bool) string {
+	if up {
+		return "UP"
+	}
+	return "DOWN"
+}
+
 // SetStatus sets on the balancer that its given child is now of the given
 // status. balancerName is only needed for logging purposes.
-func (b *Balancer) SetStatus(balancerName, childName string, up bool) {
-	// TODO(mpl): pass a context around, instead of directly balancerName?
+func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
+	// TODO(mpl): review suggestion from team.
 	upBefore := len(b.status) > 0
 
-	log.WithoutContext().Debugf("Setting status of %s to %v on %s", childName, up, balancerName)
+	log.FromContext(ctx).Debugf("Setting status of %s to %v", childName, statusFromBool(up))
 	if up {
 		b.status[childName] = struct{}{}
 	} else {
@@ -112,11 +120,11 @@ func (b *Balancer) SetStatus(balancerName, childName string, up bool) {
 	if !upBefore {
 		if !up {
 			// We're still down, no need to propagate
-			log.WithoutContext().Debugf("No need to propagate that %s is still DOWN", balancerName)
+			log.FromContext(ctx).Debugf("Still DOWN, no need to propagate")
 			return
 		}
 		// propagate upwards that we are now UP
-		log.WithoutContext().Debugf("And propagating that status of %s is now UP", balancerName)
+		log.FromContext(ctx).Debugf("Propagating new UP status")
 		for _, fn := range b.updaters {
 			fn(true)
 		}
@@ -125,11 +133,11 @@ func (b *Balancer) SetStatus(balancerName, childName string, up bool) {
 
 	if len(b.status) > 0 {
 		// we were up before and we still are, no need to propagate
-		log.WithoutContext().Debugf("No need to propagate that %s is still UP", balancerName)
+		log.FromContext(ctx).Debugf("Still UP, no need to propagate")
 		return
 	}
 	// propagate upwards that we are now DOWN
-	log.WithoutContext().Debugf("And propagating that status of %s is now DOWN", balancerName)
+	log.FromContext(ctx).Debugf("Propagating new DOWN status")
 	for _, fn := range b.updaters {
 		fn(false)
 	}
@@ -140,7 +148,7 @@ func (b *Balancer) SetStatus(balancerName, childName string, up bool) {
 // Not thread safe.
 func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 	if !b.wantsHealthCheck {
-		return errors.New("healthCheck not enabled in config for this Balancer")
+		return errors.New("healthCheck not enabled in config for this weighted service")
 	}
 	b.updaters = append(b.updaters, fn)
 	return nil
