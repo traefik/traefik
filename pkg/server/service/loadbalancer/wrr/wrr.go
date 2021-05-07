@@ -100,7 +100,6 @@ func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
-	// TODO(mpl): review suggestion from team.
 	upBefore := len(b.status) > 0
 
 	status := "DOWN"
