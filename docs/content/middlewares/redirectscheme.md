@@ -27,6 +27,7 @@ metadata:
 spec:
   redirectScheme:
     scheme: https
+    port: 443
     permanent: true
 ```
 
