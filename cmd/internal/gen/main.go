@@ -36,9 +36,9 @@ func (c JSONPayload) MarshalJSON() ([]byte, error) {
 `
 
 // main generate Go Structures from Go structures.
-// Allows to create an external module (destModuleName)
-// that contains a "neutral" dynamic configuration
-// use by the plugin's provider.
+// Allows to create an external module (destModuleName) used by the plugin's providers
+// that contains Go structs of the dynamic configuration and nothing else.
+// These Go structs do not have any non-exported fields and do not rely on any external dependencies.
 func main() {
 	dest := filepath.Join(path.Join(build.Default.GOPATH, "src"), destModuleName, destPkg)
 
@@ -65,7 +65,7 @@ func run(dest string) error {
 		// tls
 		"CertificateStore", "Manager",
 		// dynamic
-		"Message", "Configurations", // "Model",
+		"Message", "Configurations",
 		// types
 		"HTTPCodeRanges", "HostResolverConfig",
 	}
