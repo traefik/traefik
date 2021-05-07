@@ -94,13 +94,6 @@ func (b *Balancer) Pop() interface{} {
 	return h
 }
 
-func statusFromBool(up bool) string {
-	if up {
-		return "UP"
-	}
-	return "DOWN"
-}
-
 // SetStatus sets on the balancer that its given child is now of the given
 // status. balancerName is only needed for logging purposes.
 func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
@@ -110,36 +103,34 @@ func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 	// TODO(mpl): review suggestion from team.
 	upBefore := len(b.status) > 0
 
-	log.FromContext(ctx).Debugf("Setting status of %s to %v", childName, statusFromBool(up))
+	status := "DOWN"
+	if up {
+		status = "UP"
+	}
+	log.FromContext(ctx).Debugf("Setting status of %s to %v", childName, status)
 	if up {
 		b.status[childName] = struct{}{}
 	} else {
 		delete(b.status, childName)
 	}
 
-	if !upBefore {
-		if !up {
-			// We're still down, no need to propagate
-			log.FromContext(ctx).Debugf("Still DOWN, no need to propagate")
-			return
-		}
-		// propagate upwards that we are now UP
-		log.FromContext(ctx).Debugf("Propagating new UP status")
-		for _, fn := range b.updaters {
-			fn(true)
-		}
+	upAfter := len(b.status) > 0
+	status = "DOWN"
+	if upAfter {
+		status = "UP"
+	}
+
+	// No Status Change
+	if upBefore == upAfter {
+		// We're still with the same status, no need to propagate
+		log.FromContext(ctx).Debugf("Still %s, no need to propagate", status)
 		return
 	}
 
-	if len(b.status) > 0 {
-		// we were up before and we still are, no need to propagate
-		log.FromContext(ctx).Debugf("Still UP, no need to propagate")
-		return
-	}
-	// propagate upwards that we are now DOWN
-	log.FromContext(ctx).Debugf("Propagating new DOWN status")
+	// Status Change
+	log.FromContext(ctx).Debugf("Propagating new %s status", status)
 	for _, fn := range b.updaters {
-		fn(false)
+		fn(upAfter)
 	}
 }
 

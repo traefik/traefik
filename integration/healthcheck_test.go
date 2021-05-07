@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -26,6 +27,8 @@ func (s *HealthCheckSuite) SetUpSuite(c *check.C) {
 
 	s.whoami1IP = s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
 	s.whoami2IP = s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
+	s.whoami3IP = s.composeProject.Container(c, "whoami3").NetworkSettings.IPAddress
+	s.whoami4IP = s.composeProject.Container(c, "whoami4").NetworkSettings.IPAddress
 }
 
 func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
@@ -275,8 +278,6 @@ func (s *HealthCheckSuite) TestMultipleRoutersOnSameService(c *check.C) {
 }
 
 func (s *HealthCheckSuite) TestPropagate(c *check.C) {
-	s.whoami3IP = s.composeProject.Container(c, "whoami3").NetworkSettings.IPAddress
-	s.whoami4IP = s.composeProject.Container(c, "whoami4").NetworkSettings.IPAddress
 	file := s.adaptFile(c, "fixtures/healthcheck/propagate.toml", struct {
 		Server1 string
 		Server2 string
@@ -407,6 +408,76 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 	for i := 0; i < 4; i++ {
 		want := `IP: ` + wantIPs[i]
 		err = try.Request(barReq, time.Nanosecond, try.BodyContains(want))
+		c.Assert(err, checker.IsNil)
+	}
+}
+
+func (s *HealthCheckSuite) TestPropagateReload(c *check.C) {
+	// Setup a WSP service without the healthcheck enabled (wsp-service1)
+	withoutHealthCheck := s.adaptFile(c, "fixtures/healthcheck/reload_without_healthcheck.toml", struct {
+		Server1 string
+		Server2 string
+	}{s.whoami1IP, s.whoami2IP})
+	defer os.Remove(withoutHealthCheck)
+	withHealthCheck := s.adaptFile(c, "fixtures/healthcheck/reload_with_healthcheck.toml", struct {
+		Server1 string
+		Server2 string
+	}{s.whoami1IP, s.whoami2IP})
+	defer os.Remove(withHealthCheck)
+
+	cmd, display := s.traefikCmd(withConfigFile(withoutHealthCheck))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`root.localhost`)"))
+	c.Assert(err, checker.IsNil)
+
+	frontendHealthReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/health", nil)
+	c.Assert(err, checker.IsNil)
+	frontendHealthReq.Host = "root.localhost"
+
+	// Allow one of the underlying services on it to fail all servers HC (whoami2)
+	client := &http.Client{}
+	statusOKReq, err := http.NewRequest(http.MethodPost, "http://"+s.whoami2IP+"/health", bytes.NewBuffer([]byte("500")))
+	c.Assert(err, checker.IsNil)
+	_, err = client.Do(statusOKReq)
+	c.Assert(err, checker.IsNil)
+
+	rootReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+	c.Assert(err, checker.IsNil)
+	rootReq.Host = "root.localhost"
+
+	// Check the failed service (whoami2) is getting requests, but answer 500
+	err = try.Request(rootReq, 500*time.Millisecond, try.StatusCodeIs(http.StatusServiceUnavailable))
+	c.Assert(err, checker.IsNil)
+
+	// Enable the healthcheck on the root WSP (wsp-service1) and let Traefik reload the config
+	fr1, err := os.OpenFile(withoutHealthCheck, os.O_APPEND|os.O_WRONLY, 0644)
+	c.Assert(fr1, checker.NotNil)
+	c.Assert(err, checker.IsNil)
+	err = fr1.Truncate(0)
+	c.Assert(err, checker.IsNil)
+
+	fr2, err := os.ReadFile(withHealthCheck)
+	c.Assert(err, checker.IsNil)
+	_, err = fmt.Fprint(fr1, string(fr2))
+	c.Assert(err, checker.IsNil)
+	err = fr1.Close()
+	c.Assert(err, checker.IsNil)
+
+	// wait for traefik
+	time.Sleep(1 * time.Second)
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`root.localhost`)"))
+	c.Assert(err, checker.IsNil)
+
+	// Check the failed service (whoami2) is not getting requests
+	wantIPs := []string{s.whoami1IP, s.whoami1IP, s.whoami1IP, s.whoami1IP}
+	for _, ip := range wantIPs {
+		want := "IP: " + ip
+		err = try.Request(rootReq, time.Nanosecond, try.BodyContains(want))
 		c.Assert(err, checker.IsNil)
 	}
 }
