@@ -291,11 +291,13 @@ type LbStatusUpdater struct {
 // status of the Balancer changes.
 // Not thread safe.
 func (lb *LbStatusUpdater) RegisterStatusUpdater(fn func(up bool)) error {
-	// TODO: in theory, LbStatusUpdater should we aware of whether the healthcheck
-	// was enabled in the config for this balancer. However, since at the moment it is
-	// always wrapped in an emptyBackend, which already deals with that. If
-	// LbStatusUpdater gets used in another context, we might have to deal with that
-	// here too.
+	// TODO: in theory, if we want to check here whether the healthcheck was enabled
+	// in the config for this balancer (like we do in other RegisterStatusUpdater
+	// implementations), LbStatusUpdater should have some sort of field to represent
+	// that config parameter. However, since at the moment it is always wrapped in an
+	// emptyBackend, which already deals with that, it is not needed in practice. If
+	// LbStatusUpdater ever gets used alone in another context, we will have to
+	// reconsider that question.
 	lb.updaters = append(lb.updaters, fn)
 	return nil
 }
