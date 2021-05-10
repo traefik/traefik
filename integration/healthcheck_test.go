@@ -296,10 +296,6 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`root.localhost`)"))
 	c.Assert(err, checker.IsNil)
 
-	frontendHealthReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/health", nil)
-	c.Assert(err, checker.IsNil)
-	frontendHealthReq.Host = "root.localhost"
-
 	rootReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
 	c.Assert(err, checker.IsNil)
 	rootReq.Host = "root.localhost"
@@ -434,10 +430,6 @@ func (s *HealthCheckSuite) TestPropagateReload(c *check.C) {
 	// wait for traefik
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`root.localhost`)"))
 	c.Assert(err, checker.IsNil)
-
-	frontendHealthReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/health", nil)
-	c.Assert(err, checker.IsNil)
-	frontendHealthReq.Host = "root.localhost"
 
 	// Allow one of the underlying services on it to fail all servers HC (whoami2)
 	client := &http.Client{}
