@@ -242,7 +242,7 @@ Enabling HTTP3 will automatically add the correct headers for the connection upg
     ```yaml tab="File (YAML)"
     experimental:
       http3: true
-    
+
     entryPoints:
       name:
         http3:
