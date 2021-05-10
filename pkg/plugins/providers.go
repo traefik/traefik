@@ -52,12 +52,12 @@ func ppSymbols() map[string]map[string]reflect.Value {
 // BuildProvider builds a plugin's provider.
 func (b Builder) BuildProvider(pName string, config map[string]interface{}) (provider.Provider, error) {
 	if b.providerDescriptors == nil {
-		return nil, fmt.Errorf("plugin: no plugin definition in the static configuration: %s", pName)
+		return nil, fmt.Errorf("no plugin definition in the static configuration: %s", pName)
 	}
 
 	descriptor, ok := b.providerDescriptors[pName]
 	if !ok {
-		return nil, fmt.Errorf("plugin: unknown plugin type: %s", pName)
+		return nil, fmt.Errorf("unknown plugin type: %s", pName)
 	}
 
 	return newProvider(descriptor, config, "plugin-"+pName)
@@ -77,7 +77,7 @@ func newProvider(descriptor pluginContext, config map[string]interface{}, provid
 
 	vConfig, err := descriptor.interpreter.Eval(basePkg + `.CreateConfig()`)
 	if err != nil {
-		return nil, fmt.Errorf("plugin: failed to eval CreateConfig: %w", err)
+		return nil, fmt.Errorf("failed to eval CreateConfig: %w", err)
 	}
 
 	cfg := &mapstructure.DecoderConfig{
@@ -88,12 +88,12 @@ func newProvider(descriptor pluginContext, config map[string]interface{}, provid
 
 	decoder, err := mapstructure.NewDecoder(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("plugin: failed to create configuration decoder: %w", err)
+		return nil, fmt.Errorf("failed to create configuration decoder: %w", err)
 	}
 
 	err = decoder.Decode(config)
 	if err != nil {
-		return nil, fmt.Errorf("plugin: failed to decode configuration: %w", err)
+		return nil, fmt.Errorf("failed to decode configuration: %w", err)
 	}
 
 	_, err = descriptor.interpreter.Eval(`package wrapper
@@ -112,12 +112,12 @@ func NewWrapper(ctx context.Context, config *` + basePkg + `.Config, name string
 }
 `)
 	if err != nil {
-		return nil, fmt.Errorf("plugin: failed to eval wrapper: %w", err)
+		return nil, fmt.Errorf("failed to eval wrapper: %w", err)
 	}
 
 	fnNew, err := descriptor.interpreter.Eval("wrapper.NewWrapper")
 	if err != nil {
-		return nil, fmt.Errorf("plugin: failed to eval New: %w", err)
+		return nil, fmt.Errorf("failed to eval New: %w", err)
 	}
 
 	ctx := context.Background()
@@ -131,7 +131,7 @@ func NewWrapper(ctx context.Context, config *` + basePkg + `.Config, name string
 
 	prov, ok := results[0].Interface().(PP)
 	if !ok {
-		return nil, fmt.Errorf("plugin: invalid provider type: %T", results[0].Interface())
+		return nil, fmt.Errorf("invalid provider type: %T", results[0].Interface())
 	}
 
 	return &Provider{name: providerName, pp: prov}, nil

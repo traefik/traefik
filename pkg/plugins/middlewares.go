@@ -14,12 +14,12 @@ import (
 // Build builds a middleware plugin.
 func (b Builder) Build(pName string, config map[string]interface{}, middlewareName string) (Constructor, error) {
 	if b.middlewareDescriptors == nil {
-		return nil, fmt.Errorf("plugin: no plugin definition in the static configuration: %s", pName)
+		return nil, fmt.Errorf("no plugin definition in the static configuration: %s", pName)
 	}
 
 	descriptor, ok := b.middlewareDescriptors[pName]
 	if !ok {
-		return nil, fmt.Errorf("plugin: unknown plugin type: %s", pName)
+		return nil, fmt.Errorf("unknown plugin type: %s", pName)
 	}
 
 	m, err := newMiddleware(descriptor, config, middlewareName)
@@ -45,7 +45,7 @@ func newMiddleware(descriptor pluginContext, config map[string]interface{}, midd
 
 	vConfig, err := descriptor.interpreter.Eval(basePkg + `.CreateConfig()`)
 	if err != nil {
-		return nil, fmt.Errorf("plugin: failed to eval CreateConfig: %w", err)
+		return nil, fmt.Errorf("failed to eval CreateConfig: %w", err)
 	}
 
 	cfg := &mapstructure.DecoderConfig{
@@ -56,17 +56,17 @@ func newMiddleware(descriptor pluginContext, config map[string]interface{}, midd
 
 	decoder, err := mapstructure.NewDecoder(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("plugin: failed to create configuration decoder: %w", err)
+		return nil, fmt.Errorf("failed to create configuration decoder: %w", err)
 	}
 
 	err = decoder.Decode(config)
 	if err != nil {
-		return nil, fmt.Errorf("plugin: failed to decode configuration: %w", err)
+		return nil, fmt.Errorf("failed to decode configuration: %w", err)
 	}
 
 	fnNew, err := descriptor.interpreter.Eval(basePkg + `.New`)
 	if err != nil {
-		return nil, fmt.Errorf("plugin: failed to eval New: %w", err)
+		return nil, fmt.Errorf("failed to eval New: %w", err)
 	}
 
 	return &Middleware{
@@ -87,7 +87,7 @@ func (m *Middleware) NewHandler(ctx context.Context, next http.Handler) (http.Ha
 
 	handler, ok := results[0].Interface().(http.Handler)
 	if !ok {
-		return nil, fmt.Errorf("plugin: invalid handler type: %T", results[0].Interface())
+		return nil, fmt.Errorf("invalid handler type: %T", results[0].Interface())
 	}
 
 	return handler, nil
