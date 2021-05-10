@@ -182,6 +182,190 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc: "Empty caused by HTTPS with TLS passthrough",
+			entryPoints: map[string]Entrypoint{"websecure": {
+				Address: ":443",
+			}},
+			paths: []string{"services.yml", "httproute/with_protocol_https_with_tls_passthrough.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Empty caused by HTTPRoute with protocol TLS",
+			entryPoints: map[string]Entrypoint{"websecure": {
+				Address: ":443",
+			}},
+			paths: []string{"services.yml", "httproute/with_protocol_tls.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Empty caused by HTTPRoute with protocol TCP",
+			entryPoints: map[string]Entrypoint{"websecure": {
+				Address: ":443",
+			}},
+			paths: []string{"services.yml", "httproute/with_protocol_tcp.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Empty caused by TCPRoute with protocol HTTP",
+			entryPoints: map[string]Entrypoint{"websecure": {
+				Address: ":443",
+			}},
+			paths: []string{"services.yml", "tcproute/with_protocol_http.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Empty caused by TCPRoute with protocol HTTPS",
+			entryPoints: map[string]Entrypoint{"websecure": {
+				Address: ":443",
+			}},
+			paths: []string{"services.yml", "tcproute/with_protocol_https.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Empty caused by TLSRoute with protocol TCP",
+			entryPoints: map[string]Entrypoint{"websecure": {
+				Address: ":443",
+			}},
+			paths: []string{"services.yml", "tlsroute/with_protocol_tcp.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Empty caused by TLSRoute with protocol HTTP",
+			entryPoints: map[string]Entrypoint{"websecure": {
+				Address: ":443",
+			}},
+			paths: []string{"services.yml", "tlsroute/with_protocol_http.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Empty caused by TLSRoute with protocol HTTPS",
+			entryPoints: map[string]Entrypoint{"websecure": {
+				Address: ":443",
+			}},
+			paths: []string{"services.yml", "tlsroute/with_protocol_https.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc: "Use http entrypoint with tls activated with HTTPRoute",
 			entryPoints: map[string]Entrypoint{"websecure": {
 				Address:        ":443",
@@ -2918,6 +3102,20 @@ func TestHostSNI(t *testing.T) {
 				},
 			},
 			expectedRule: "HostSNI(`foo`,`bar`,`foz`,`baz`)",
+		},
+		{
+			desc: "Multiple SNI multiple hostnames overlapping",
+			routeRule: v1alpha1.TLSRouteRule{
+				Matches: []v1alpha1.TLSRouteMatch{
+					{
+						SNIs: []v1alpha1.Hostname{"foo", "bar"},
+					},
+					{
+						SNIs: []v1alpha1.Hostname{"foo", "baz"},
+					},
+				},
+			},
+			expectedRule: "HostSNI(`foo`,`bar`,`baz`)",
 		},
 	}
 

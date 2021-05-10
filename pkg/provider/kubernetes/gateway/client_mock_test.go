@@ -132,7 +132,7 @@ func (c clientMock) GetGateways() []*v1alpha1.Gateway {
 }
 
 func (c clientMock) GetHTTPRoutes(namespace string, selector labels.Selector) ([]*v1alpha1.HTTPRoute, error) {
-	httpRoutes := make([]*v1alpha1.HTTPRoute, len(c.httpRoutes))
+	var httpRoutes []*v1alpha1.HTTPRoute
 
 	for _, httpRoute := range c.httpRoutes {
 		if httpRoute.Namespace == namespace && selector.Matches(labels.Set(httpRoute.Labels)) {
@@ -143,7 +143,7 @@ func (c clientMock) GetHTTPRoutes(namespace string, selector labels.Selector) ([
 }
 
 func (c clientMock) GetTCPRoutes(namespace string, selector labels.Selector) ([]*v1alpha1.TCPRoute, error) {
-	tcpRoutes := make([]*v1alpha1.TCPRoute, len(c.tcpRoutes))
+	var tcpRoutes []*v1alpha1.TCPRoute
 
 	for _, tcpRoute := range c.tcpRoutes {
 		if tcpRoute.Namespace == namespace && selector.Matches(labels.Set(tcpRoute.Labels)) {
@@ -154,7 +154,7 @@ func (c clientMock) GetTCPRoutes(namespace string, selector labels.Selector) ([]
 }
 
 func (c clientMock) GetTLSRoutes(namespace string, selector labels.Selector) ([]*v1alpha1.TLSRoute, error) {
-	tlsRoutes := make([]*v1alpha1.TLSRoute, len(c.tlsRoutes))
+	var tlsRoutes []*v1alpha1.TLSRoute
 
 	for _, tlsRoute := range c.tlsRoutes {
 		if tlsRoute.Namespace == namespace && selector.Matches(labels.Set(tlsRoute.Labels)) {

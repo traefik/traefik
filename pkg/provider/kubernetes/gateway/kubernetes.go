@@ -408,14 +408,19 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			}
 
 			if listener.TLS.Mode == v1alpha1.TLSModePassthrough && listener.TLS.CertificateRef != nil {
-				// https://gateway-api.sigs.k8s.io/tls/
+				// https://gateway-api.sigs.k8s.io/guides/tls/
 				logger.Warnf("In case of Passthrough TLS mode, no TLS settings take effect as the TLS session from the client is NOT terminated at the Gateway")
 			}
 
 			isTLSPassthrough := listener.TLS.Mode == v1alpha1.TLSModePassthrough
 			isTLSRouteKind := listener.Routes.Kind == routeTLSKind
 
-			if listener.Protocol == v1alpha1.TLSProtocolType && isTLSPassthrough != isTLSRouteKind {
+			// Allowed configurations:
+			// Protocol TLS -> Passthrough -> TLSRoute
+			// Protocol TLS -> Terminate -> TCPRoute
+			// Protocol HTTPS -> Terminate -> HTTPRoute
+			if listener.Protocol == v1alpha1.HTTPSProtocolType && isTLSPassthrough ||
+				listener.Protocol == v1alpha1.TLSProtocolType && isTLSPassthrough != isTLSRouteKind {
 				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
 					Type:               string(v1alpha1.ListenerConditionDetached),
 					Status:             metav1.ConditionTrue,
@@ -492,11 +497,6 @@ func gatewayHTTPRouteToHTTPConf(ep string, listener v1alpha1.Listener, gateway *
 
 	var conditions []metav1.Condition
 	for _, httpRoute := range httpRoutes {
-		// Should never happen
-		if httpRoute == nil {
-			continue
-		}
-
 		hostRule, err := hostRule(httpRoute.Spec)
 		if err != nil {
 			conditions = append(conditions, metav1.Condition{
@@ -549,41 +549,41 @@ func gatewayHTTPRouteToHTTPConf(ep string, listener v1alpha1.Listener, gateway *
 				continue
 			}
 
-			if routeRule.ForwardTo != nil {
-				// Traefik internal service can be used only if there is only one ForwardTo service reference.
-				if len(routeRule.ForwardTo) == 1 && isInternalService(routeRule.ForwardTo[0].ServiceName, routeRule.ForwardTo[0].BackendRef) {
-					router.Service = routeRule.ForwardTo[0].BackendRef.Name
-				} else {
-					wrrService, subServices, err := loadServices(client, gateway.Namespace, routeRule.ForwardTo)
-					if err != nil {
-						// update "ResolvedRefs" status true with "DroppedRoutes" reason
-						conditions = append(conditions, metav1.Condition{
-							Type:               string(v1alpha1.ListenerConditionResolvedRefs),
-							Status:             metav1.ConditionFalse,
-							LastTransitionTime: metav1.Now(),
-							Reason:             string(v1alpha1.ListenerReasonDegradedRoutes),
-							Message:            fmt.Sprintf("Cannot load service from %s %s/%s : %v", listener.Routes.Kind, gateway.Namespace, httpRoute.Name, err),
-						})
+			if routeRule.ForwardTo == nil {
+				continue
+			}
 
-						// TODO update the RouteStatus condition / deduplicate conditions on listener
-						continue
-					}
+			// Traefik internal service can be used only if there is only one ForwardTo service reference.
+			if len(routeRule.ForwardTo) == 1 && isInternalService(routeRule.ForwardTo[0].ServiceName, routeRule.ForwardTo[0].BackendRef) {
+				router.Service = routeRule.ForwardTo[0].BackendRef.Name
+			} else {
+				wrrService, subServices, err := loadServices(client, gateway.Namespace, routeRule.ForwardTo)
+				if err != nil {
+					// update "ResolvedRefs" status true with "DroppedRoutes" reason
+					conditions = append(conditions, metav1.Condition{
+						Type:               string(v1alpha1.ListenerConditionResolvedRefs),
+						Status:             metav1.ConditionFalse,
+						LastTransitionTime: metav1.Now(),
+						Reason:             string(v1alpha1.ListenerReasonDegradedRoutes),
+						Message:            fmt.Sprintf("Cannot load service from %s %s/%s : %v", listener.Routes.Kind, gateway.Namespace, httpRoute.Name, err),
+					})
 
-					for svcName, svc := range subServices {
-						conf.HTTP.Services[svcName] = svc
-					}
-
-					serviceName := provider.Normalize(routerKey + "-wrr")
-					conf.HTTP.Services[serviceName] = wrrService
-
-					router.Service = serviceName
+					// TODO update the RouteStatus condition / deduplicate conditions on listener
+					continue
 				}
+
+				for svcName, svc := range subServices {
+					conf.HTTP.Services[svcName] = svc
+				}
+
+				serviceName := provider.Normalize(routerKey + "-wrr")
+				conf.HTTP.Services[serviceName] = wrrService
+
+				router.Service = serviceName
 			}
 
-			if router.Service != "" {
-				routerKey = provider.Normalize(routerKey)
-				conf.HTTP.Routers[routerKey] = &router
-			}
+			routerKey = provider.Normalize(routerKey)
+			conf.HTTP.Routers[routerKey] = &router
 		}
 	}
 
@@ -606,11 +606,6 @@ func gatewayTCPRouteToTCPConf(ep string, listener v1alpha1.Listener, gateway *v1
 
 	var conditions []metav1.Condition
 	for _, tcpRoute := range tcpRoutes {
-		// Should never happen
-		if tcpRoute == nil {
-			continue
-		}
-
 		for _, routeRule := range tcpRoute.Spec.Rules {
 			router := dynamic.TCPRouter{
 				Rule:        "HostSNI(`*`)", // Gateway listener hostname not available in TCP
@@ -634,36 +629,38 @@ func gatewayTCPRouteToTCPConf(ep string, listener v1alpha1.Listener, gateway *v1
 				continue
 			}
 
-			if routeRule.ForwardTo != nil {
-				wrrService, subServices, err := loadTCPServices(client, gateway.Namespace, routeRule.ForwardTo)
-				if err != nil {
-					// update "ResolvedRefs" status true with "DroppedRoutes" reason
-					conditions = append(conditions, metav1.Condition{
-						Type:               string(v1alpha1.ListenerConditionResolvedRefs),
-						Status:             metav1.ConditionFalse,
-						LastTransitionTime: metav1.Now(),
-						Reason:             string(v1alpha1.ListenerReasonDegradedRoutes),
-						Message:            fmt.Sprintf("Cannot load service from %s %s/%s : %v", listener.Routes.Kind, gateway.Namespace, tcpRoute.Name, err),
-					})
-
-					// TODO update the RouteStatus condition / deduplicate conditions on listener
-					continue
-				}
-
-				for svcName, svc := range subServices {
-					conf.TCP.Services[svcName] = svc
-				}
-
-				serviceName := provider.Normalize(routerKey + "-wrr")
-				conf.TCP.Services[serviceName] = wrrService
-
-				router.Service = serviceName
+			// Should not happen due to validation
+			// https://github.com/kubernetes-sigs/gateway-api/blob/af68a622f072811767d246ef5897135d93af0704/apis/v1alpha1/tcproute_types.go#L76
+			if routeRule.ForwardTo == nil {
+				continue
 			}
 
-			if router.Service != "" {
-				routerKey = provider.Normalize(routerKey)
-				conf.TCP.Routers[routerKey] = &router
+			wrrService, subServices, err := loadTCPServices(client, gateway.Namespace, routeRule.ForwardTo)
+			if err != nil {
+				// update "ResolvedRefs" status true with "DroppedRoutes" reason
+				conditions = append(conditions, metav1.Condition{
+					Type:               string(v1alpha1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(v1alpha1.ListenerReasonDegradedRoutes),
+					Message:            fmt.Sprintf("Cannot load service from %s %s/%s : %v", listener.Routes.Kind, gateway.Namespace, tcpRoute.Name, err),
+				})
+
+				// TODO update the RouteStatus condition / deduplicate conditions on listener
+				continue
 			}
+
+			for svcName, svc := range subServices {
+				conf.TCP.Services[svcName] = svc
+			}
+
+			serviceName := provider.Normalize(routerKey + "-wrr")
+			conf.TCP.Services[serviceName] = wrrService
+
+			router.Service = serviceName
+
+			routerKey = provider.Normalize(routerKey)
+			conf.TCP.Routers[routerKey] = &router
 		}
 	}
 
@@ -686,11 +683,6 @@ func gatewayTLSRouteToTCPConf(ep string, listener v1alpha1.Listener, gateway *v1
 
 	var conditions []metav1.Condition
 	for _, tlsRoute := range tlsRoutes {
-		// Should never happen
-		if tlsRoute == nil {
-			continue
-		}
-
 		for _, routeRule := range tlsRoute.Spec.Rules {
 			rule, err := hostSNIRule(routeRule)
 			if err != nil {
@@ -735,36 +727,38 @@ func gatewayTLSRouteToTCPConf(ep string, listener v1alpha1.Listener, gateway *v1
 				continue
 			}
 
-			if routeRule.ForwardTo != nil {
-				wrrService, subServices, err := loadTCPServices(client, gateway.Namespace, routeRule.ForwardTo)
-				if err != nil {
-					// update "ResolvedRefs" status true with "DroppedRoutes" reason
-					conditions = append(conditions, metav1.Condition{
-						Type:               string(v1alpha1.ListenerConditionResolvedRefs),
-						Status:             metav1.ConditionFalse,
-						LastTransitionTime: metav1.Now(),
-						Reason:             string(v1alpha1.ListenerReasonDegradedRoutes),
-						Message:            fmt.Sprintf("Cannot load service from %s %s/%s : %v", listener.Routes.Kind, gateway.Namespace, tlsRoute.Name, err),
-					})
-
-					// TODO update the RouteStatus condition / deduplicate conditions on listener
-					continue
-				}
-
-				for svcName, svc := range subServices {
-					conf.TCP.Services[svcName] = svc
-				}
-
-				serviceName := provider.Normalize(routerKey + "-wrr")
-				conf.TCP.Services[serviceName] = wrrService
-
-				router.Service = serviceName
+			// Should not happen due to validation
+			// https://github.com/kubernetes-sigs/gateway-api/blob/af68a622f072811767d246ef5897135d93af0704/apis/v1alpha1/tlsroute_types.go#L79
+			if routeRule.ForwardTo == nil {
+				continue
 			}
 
-			if router.Service != "" {
-				routerKey = provider.Normalize(routerKey)
-				conf.TCP.Routers[routerKey] = &router
+			wrrService, subServices, err := loadTCPServices(client, gateway.Namespace, routeRule.ForwardTo)
+			if err != nil {
+				// update "ResolvedRefs" status true with "DroppedRoutes" reason
+				conditions = append(conditions, metav1.Condition{
+					Type:               string(v1alpha1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(v1alpha1.ListenerReasonDegradedRoutes),
+					Message:            fmt.Sprintf("Cannot load service from %s %s/%s : %v", listener.Routes.Kind, gateway.Namespace, tlsRoute.Name, err),
+				})
+
+				// TODO update the RouteStatus condition / deduplicate conditions on listener
+				continue
 			}
+
+			for svcName, svc := range subServices {
+				conf.TCP.Services[svcName] = svc
+			}
+
+			serviceName := provider.Normalize(routerKey + "-wrr")
+			conf.TCP.Services[serviceName] = wrrService
+
+			router.Service = serviceName
+
+			routerKey = provider.Normalize(routerKey)
+			conf.TCP.Routers[routerKey] = &router
 		}
 	}
 
@@ -880,6 +874,7 @@ func hostRule(httpRouteSpec v1alpha1.HTTPRouteSpec) (string, error) {
 }
 
 func hostSNIRule(rule v1alpha1.TLSRouteRule) (string, error) {
+	uniqHostnames := map[string]struct{}{}
 	var hostnames []string
 	for _, match := range rule.Matches {
 		for _, hostname := range match.SNIs {
@@ -895,7 +890,11 @@ func hostSNIRule(rule v1alpha1.TLSRouteRule) (string, error) {
 				return "", fmt.Errorf("invalid hostname: %q", h)
 			}
 
-			hostnames = append(hostnames, "`"+h+"`")
+			hostname := "`" + h + "`"
+			if _, ok := uniqHostnames[hostname]; !ok {
+				hostnames = append(hostnames, hostname)
+				uniqHostnames[hostname] = struct{}{}
+			}
 		}
 	}
 
