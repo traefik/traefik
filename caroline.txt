@@ -1,0 +1,2 @@
+THis is my notes on how to use GIT
+
