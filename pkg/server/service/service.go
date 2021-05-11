@@ -224,7 +224,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	m.balancers[serviceName] = append(m.balancers[serviceName], balancer)
 
 	// Empty (backend with no servers)
-	return emptybackendhandler.New(balancer, service.HealthCheck), nil
+	return emptybackendhandler.New(balancer), nil
 }
 
 // LaunchHealthCheck launches the health checks.
@@ -305,7 +305,7 @@ func buildHealthCheckOptions(ctx context.Context, lb healthcheck.Balancer, backe
 	}
 }
 
-func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, service *dynamic.ServersLoadBalancer, fwd http.Handler) (healthcheck.BalancerHandler, error) {
+func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, service *dynamic.ServersLoadBalancer, fwd http.Handler) (healthcheck.BalancerStatusHandler, error) {
 	logger := log.FromContext(ctx)
 	logger.Debug("Creating load-balancer")
 
@@ -337,7 +337,7 @@ func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, servi
 		return nil, err
 	}
 
-	lbsu := healthcheck.NewLBStatusUpdater(lb, m.configs[serviceName])
+	lbsu := healthcheck.NewLBStatusUpdater(lb, m.configs[serviceName], service.HealthCheck)
 	if err := m.upsertServers(ctx, lbsu, service.Servers); err != nil {
 		return nil, fmt.Errorf("error configuring load balancer for service %s: %w", serviceName, err)
 	}

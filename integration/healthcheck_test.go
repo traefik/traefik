@@ -408,6 +408,30 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 	}
 }
 
+func (s *HealthCheckSuite) TestPropagateNoHealthCheck(c *check.C) {
+	file := s.adaptFile(c, "fixtures/healthcheck/propagate_no_healthcheck.toml", struct {
+		Server1 string
+	}{s.whoami1IP})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`noop.localhost`)"), try.BodyNotContains("Host(`root.localhost`)"))
+	c.Assert(err, checker.IsNil)
+
+	rootReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+	c.Assert(err, checker.IsNil)
+	rootReq.Host = "root.localhost"
+
+	err = try.Request(rootReq, 500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+}
+
 func (s *HealthCheckSuite) TestPropagateReload(c *check.C) {
 	// Setup a WSP service without the healthcheck enabled (wsp-service1)
 	withoutHealthCheck := s.adaptFile(c, "fixtures/healthcheck/reload_without_healthcheck.toml", struct {
@@ -447,7 +471,7 @@ func (s *HealthCheckSuite) TestPropagateReload(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Enable the healthcheck on the root WSP (wsp-service1) and let Traefik reload the config
-	fr1, err := os.OpenFile(withoutHealthCheck, os.O_APPEND|os.O_WRONLY, 0644)
+	fr1, err := os.OpenFile(withoutHealthCheck, os.O_APPEND|os.O_WRONLY, 0o644)
 	c.Assert(fr1, checker.NotNil)
 	c.Assert(err, checker.IsNil)
 	err = fr1.Truncate(0)

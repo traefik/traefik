@@ -31,52 +31,52 @@
 [http.services]
   [http.services.wsp-service1.weighted]
     [http.services.wsp-service1.weighted.healthcheck]
-      [[http.services.wsp-service1.weighted.services]]
-        name = "wsp12"
-        weight = 1
-      [[http.services.wsp-service1.weighted.services]]
-        name = "wsp34"
-        weight = 1
+    [[http.services.wsp-service1.weighted.services]]
+      name = "wsp12"
+      weight = 1
+    [[http.services.wsp-service1.weighted.services]]
+      name = "wsp34"
+      weight = 1
   [http.services.wsp-service2.weighted]
     [http.services.wsp-service2.weighted.healthcheck]
-      [[http.services.wsp-service2.weighted.services]]
-        name = "wsp13"
-        weight = 1
-      [[http.services.wsp-service2.weighted.services]]
-        name = "wsp12"
-        weight = 1
+    [[http.services.wsp-service2.weighted.services]]
+      name = "wsp13"
+      weight = 1
+    [[http.services.wsp-service2.weighted.services]]
+      name = "wsp12"
+      weight = 1
   [http.services.wsp-service3.weighted]
     [http.services.wsp-service3.weighted.healthcheck]
-      [[http.services.wsp-service3.weighted.services]]
-        name = "wsp13"
-        weight = 1
-      [[http.services.wsp-service3.weighted.services]]
-        name = "wsp12b"
-        weight = 1
+    [[http.services.wsp-service3.weighted.services]]
+      name = "wsp13"
+      weight = 1
+    [[http.services.wsp-service3.weighted.services]]
+      name = "wsp12b"
+      weight = 1
   [http.services.wsp12.weighted]
     [http.services.wsp12.weighted.healthcheck]
-      [[http.services.wsp12.weighted.services]]
-        name = "wsp1"
-        weight = 1
-      [[http.services.wsp12.weighted.services]]
-        name = "wsp2"
-        weight = 1
+    [[http.services.wsp12.weighted.services]]
+      name = "wsp1"
+      weight = 1
+    [[http.services.wsp12.weighted.services]]
+      name = "wsp2"
+      weight = 1
   [http.services.wsp34.weighted]
     [http.services.wsp34.weighted.healthcheck]
-      [[http.services.wsp34.weighted.services]]
-        name = "wsp3"
-        weight = 1
-      [[http.services.wsp34.weighted.services]]
-        name = "wsp4"
-        weight = 1
+    [[http.services.wsp34.weighted.services]]
+      name = "wsp3"
+      weight = 1
+    [[http.services.wsp34.weighted.services]]
+      name = "wsp4"
+      weight = 1
   [http.services.wsp13.weighted]
     [http.services.wsp13.weighted.healthcheck]
-      [[http.services.wsp13.weighted.services]]
-        name = "wsp1"
-        weight = 1
-      [[http.services.wsp13.weighted.services]]
-        name = "wsp3"
-        weight = 1
+    [[http.services.wsp13.weighted.services]]
+      name = "wsp1"
+      weight = 1
+    [[http.services.wsp13.weighted.services]]
+      name = "wsp3"
+      weight = 1
 
   [http.services.wsp1.loadBalancer]
     [http.services.wsp1.loadBalancer.healthcheck]

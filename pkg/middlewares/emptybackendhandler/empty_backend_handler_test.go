@@ -32,7 +32,7 @@ func TestEmptyBackendHandler(t *testing.T) {
 		t.Run(fmt.Sprintf("amount servers %d", test.amountServer), func(t *testing.T) {
 			t.Parallel()
 
-			handler := New(&healthCheckLoadBalancer{amountServer: test.amountServer}, nil)
+			handler := New(&healthCheckLoadBalancer{amountServer: test.amountServer})
 
 			recorder := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, "http://localhost", nil)
@@ -46,6 +46,10 @@ func TestEmptyBackendHandler(t *testing.T) {
 
 type healthCheckLoadBalancer struct {
 	amountServer int
+}
+
+func (lb *healthCheckLoadBalancer) RegisterStatusUpdater(fn func(up bool)) error {
+	return nil
 }
 
 func (lb *healthCheckLoadBalancer) ServeHTTP(w http.ResponseWriter, r *http.Request) {

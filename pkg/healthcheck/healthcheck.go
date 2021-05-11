@@ -2,6 +2,7 @@ package healthcheck
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	gokitmetrics "github.com/go-kit/kit/metrics"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/metrics"
@@ -39,6 +41,13 @@ type Balancer interface {
 type BalancerHandler interface {
 	ServeHTTP(w http.ResponseWriter, req *http.Request)
 	Balancer
+}
+
+// BalancerStatusHandler is an http Handler that does load-balancing,
+// andupdates its parents of its status.
+type BalancerStatusHandler interface {
+	BalancerHandler
+	StatusUpdater
 }
 
 type metricsHealthcheck struct {
@@ -272,10 +281,11 @@ type StatusUpdater interface {
 }
 
 // NewLBStatusUpdater returns a new LbStatusUpdater.
-func NewLBStatusUpdater(bh BalancerHandler, info *runtime.ServiceInfo) *LbStatusUpdater {
+func NewLBStatusUpdater(bh BalancerHandler, info *runtime.ServiceInfo, hc *dynamic.HealthCheck) *LbStatusUpdater {
 	return &LbStatusUpdater{
-		BalancerHandler: bh,
-		serviceInfo:     info,
+		BalancerHandler:  bh,
+		serviceInfo:      info,
+		wantsHealthCheck: hc != nil,
 	}
 }
 
@@ -283,21 +293,19 @@ func NewLBStatusUpdater(bh BalancerHandler, info *runtime.ServiceInfo) *LbStatus
 // so it can keep track of the status of a server in the ServiceInfo.
 type LbStatusUpdater struct {
 	BalancerHandler
-	serviceInfo *runtime.ServiceInfo // can be nil
-	updaters    []func(up bool)
+	serviceInfo      *runtime.ServiceInfo // can be nil
+	updaters         []func(up bool)
+	wantsHealthCheck bool
 }
 
 // RegisterStatusUpdater adds fn to the list of hooks that are run when the
 // status of the Balancer changes.
 // Not thread safe.
 func (lb *LbStatusUpdater) RegisterStatusUpdater(fn func(up bool)) error {
-	// TODO: in theory, if we want to check here whether the healthcheck was enabled
-	// in the config for this balancer (like we do in other RegisterStatusUpdater
-	// implementations), LbStatusUpdater should have some sort of field to represent
-	// that config parameter. However, since at the moment it is always wrapped in an
-	// emptyBackend, which already deals with that, it is not needed in practice. If
-	// LbStatusUpdater ever gets used alone in another context, we will have to
-	// reconsider that question.
+	if !lb.wantsHealthCheck {
+		return errors.New("healthCheck not enabled in config for this loadbalancer service")
+	}
+
 	lb.updaters = append(lb.updaters, fn)
 	return nil
 }
