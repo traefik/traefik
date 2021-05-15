@@ -382,6 +382,8 @@ certificatesResolvers:
         - foobar
         - foobar
         disablePropagationCheck: true
+        environment:
+          foobar: foobar
       httpChallenge:
         entryPoint: foobar
       tlsChallenge: {}
@@ -402,6 +404,8 @@ certificatesResolvers:
         - foobar
         - foobar
         disablePropagationCheck: true
+        environment:
+          foobar: foobar
       httpChallenge:
         entryPoint: foobar
       tlsChallenge: {}

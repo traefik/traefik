@@ -63,6 +63,9 @@ Assume DNS propagates after a delay in seconds rather than finding and querying 
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE_DISABLEPROPAGATIONCHECK`:  
 Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended] (Default: ```false```)
 
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE_ENVIRONMENT_<NAME>`:  
+Optional environment variables to override before running lego for ACME challenge.
+
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE_PROVIDER`:  
 Use a DNS-01 based challenge provider rather than HTTPS.
 

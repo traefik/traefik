@@ -3,7 +3,11 @@ package acme
 import (
 	"context"
 	"crypto/tls"
+	"github.com/go-acme/lego/v4/providers/dns/rfc2136"
+	"os"
+	"reflect"
 	"testing"
+	"unsafe"
 
 	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/stretchr/testify/assert"
@@ -591,4 +595,73 @@ func TestInitAccount(t *testing.T) {
 			assert.Equal(t, test.expectedAccount.KeyType, actualAccount.KeyType, "unexpected keyType account")
 		})
 	}
+}
+
+// Test Configure DNSChallenge using environment overrides.
+func TestConfigureDNSChallengeUsingEnvironmentOverrides(t *testing.T) {
+	testEnvironment := make(map[string]string)
+
+	testNameserver := "testNameserver:53"
+	testTSigKey := "testTSigKey"
+	testTSigSecret := "testTSigSecret"
+
+	testEnvironment[rfc2136.EnvNameserver] = testNameserver
+	testEnvironment[rfc2136.EnvTSIGKey] = testTSigKey
+	testEnvironment[rfc2136.EnvTSIGSecret] = testTSigSecret
+
+	testChallenge := DNSChallenge{
+		Provider:    "rfc2136",
+		Environment: testEnvironment,
+	}
+
+	provider, err := testChallenge.NewDnsChallengeProvider()
+
+	assert.Nil(t, err, "DNSChallenge provider should be created without error")
+
+	providerReflect := reflect.ValueOf(provider)
+	providerConfigField := reflect.Indirect(providerReflect).FieldByName("config")
+
+	providerConfigField = reflect.NewAt(providerConfigField.Type(), unsafe.Pointer(providerConfigField.UnsafeAddr())).Elem()
+
+	providerConfig := providerConfigField.Interface().(*rfc2136.Config)
+
+	assert.Equal(t, providerConfig.Nameserver, testNameserver, "Nameserver should be equal to test nameserver")
+	assert.Equal(t, providerConfig.TSIGKey, testTSigKey, "TSigKey should be equal to test TSigKey")
+	assert.Equal(t, providerConfig.TSIGSecret, testTSigSecret, "TSigSecret should be equal to test TSigSecret")
+
+}
+
+// Test that DNSChallenge configuration correctly restores previous environment variables.
+func TestDNSChallengeConfigurationCorrectlyRestoresEnvironmentVariables(t *testing.T) {
+	testEnvironment := make(map[string]string)
+
+	testOverrideNameserver := "testOverrideNameserver:53"
+	testOverrideTSigKey := "testOverrideTSigKey"
+	testOverrideTSigSecret := "testOverrideTSigSecret"
+
+	testNameserver := "testNameserver:53"
+	testTSigKey := "testTSigKey"
+	testTSigSecret := "testTSigSecret"
+
+	os.Setenv(rfc2136.EnvNameserver, testNameserver)
+	os.Setenv(rfc2136.EnvTSIGKey, testTSigKey)
+	os.Setenv(rfc2136.EnvTSIGSecret, testTSigSecret)
+
+	testEnvironment[rfc2136.EnvNameserver] = testOverrideNameserver
+	testEnvironment[rfc2136.EnvTSIGKey] = testOverrideTSigKey
+	testEnvironment[rfc2136.EnvTSIGSecret] = testOverrideTSigSecret
+
+	testChallenge := DNSChallenge{
+		Provider:    "rfc2136",
+		Environment: testEnvironment,
+	}
+
+	_, err := testChallenge.NewDnsChallengeProvider()
+
+	assert.Nil(t, err, "DNSChallenge provider should be created without error")
+
+	assert.Equal(t, os.Getenv(rfc2136.EnvNameserver), testNameserver, "Nameserver environment variable should be equal to testNameserver")
+	assert.Equal(t, os.Getenv(rfc2136.EnvTSIGKey), testTSigKey, "TSigKey environment variable should be equal to testTSigKey")
+	assert.Equal(t, os.Getenv(rfc2136.EnvTSIGSecret), testTSigSecret, "TSigSecret environment variable should be equal to testTSigSecret")
+
 }

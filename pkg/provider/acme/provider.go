@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"reflect"
 	"strings"
 	"sync"
@@ -73,10 +74,11 @@ type EAB struct {
 
 // DNSChallenge contains DNS challenge configuration.
 type DNSChallenge struct {
-	Provider                string          `description:"Use a DNS-01 based challenge provider rather than HTTPS." json:"provider,omitempty" toml:"provider,omitempty" yaml:"provider,omitempty" export:"true"`
-	DelayBeforeCheck        ptypes.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers." json:"delayBeforeCheck,omitempty" toml:"delayBeforeCheck,omitempty" yaml:"delayBeforeCheck,omitempty" export:"true"`
-	Resolvers               []string        `description:"Use following DNS servers to resolve the FQDN authority." json:"resolvers,omitempty" toml:"resolvers,omitempty" yaml:"resolvers,omitempty"`
-	DisablePropagationCheck bool            `description:"Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]" json:"disablePropagationCheck,omitempty" toml:"disablePropagationCheck,omitempty" yaml:"disablePropagationCheck,omitempty" export:"true"`
+	Provider                string            `description:"Use a DNS-01 based challenge provider rather than HTTPS." json:"provider,omitempty" toml:"provider,omitempty" yaml:"provider,omitempty" export:"true"`
+	DelayBeforeCheck        ptypes.Duration   `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers." json:"delayBeforeCheck,omitempty" toml:"delayBeforeCheck,omitempty" yaml:"delayBeforeCheck,omitempty" export:"true"`
+	Resolvers               []string          `description:"Use following DNS servers to resolve the FQDN authority." json:"resolvers,omitempty" toml:"resolvers,omitempty" yaml:"resolvers,omitempty"`
+	DisablePropagationCheck bool              `description:"Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]" json:"disablePropagationCheck,omitempty" toml:"disablePropagationCheck,omitempty" yaml:"disablePropagationCheck,omitempty" export:"true"`
+	Environment             map[string]string `description:"Optional environment variables to override before running lego for ACME challenge." json:"environment" toml:"environment,omitempty" yaml:"environment,omitempty" export:"true"`
 }
 
 // HTTPChallenge contains HTTP challenge configuration.
@@ -266,7 +268,9 @@ func (p *Provider) getClient() (*lego.Client, error) {
 		logger.Debugf("Using DNS Challenge provider: %s", p.DNSChallenge.Provider)
 
 		var provider challenge.Provider
-		provider, err = dns.NewDNSChallengeProviderByName(p.DNSChallenge.Provider)
+
+		provider, err = p.DNSChallenge.NewDnsChallengeProvider()
+
 		if err != nil {
 			return nil, err
 		}
@@ -311,6 +315,30 @@ func (p *Provider) getClient() (*lego.Client, error) {
 
 	p.client = client
 	return p.client, nil
+}
+
+func (c *DNSChallenge) NewDnsChallengeProvider() (challenge.Provider, error) {
+	backup := c.BackupEnvironmentOverride()
+
+	SetEnvironmentVariables(c.Environment)
+	defer SetEnvironmentVariables(backup)
+
+	return dns.NewDNSChallengeProviderByName(c.Provider)
+}
+
+func (c *DNSChallenge) BackupEnvironmentOverride() map[string]string {
+	m := make(map[string]string)
+
+	for key, _ := range c.Environment {
+		m[key] = os.Getenv(key)
+	}
+	return m
+}
+
+func SetEnvironmentVariables(environment map[string]string) {
+	for key, value := range environment {
+		os.Setenv(key, value)
+	}
 }
 
 func (p *Provider) initAccount(ctx context.Context) (*Account, error) {

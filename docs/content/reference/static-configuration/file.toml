@@ -362,6 +362,8 @@
         delayBeforeCheck = 42
         resolvers = ["foobar", "foobar"]
         disablePropagationCheck = true
+        [certificatesResolvers.CertificateResolver1.acme.dnsChallenge.environment]
+          foobar = "foobar"
       [certificatesResolvers.CertificateResolver0.acme.httpChallenge]
         entryPoint = "foobar"
       [certificatesResolvers.CertificateResolver0.acme.tlsChallenge]
@@ -380,6 +382,8 @@
         delayBeforeCheck = 42
         resolvers = ["foobar", "foobar"]
         disablePropagationCheck = true
+        [certificatesResolvers.CertificateResolver1.acme.dnsChallenge.environment]
+          foobar = "foobar"
       [certificatesResolvers.CertificateResolver1.acme.httpChallenge]
         entryPoint = "foobar"
       [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]

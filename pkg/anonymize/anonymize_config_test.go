@@ -934,6 +934,10 @@ func TestDo_staticConfiguration(t *testing.T) {
 					DelayBeforeCheck:        42,
 					Resolvers:               []string{"resolver1", "resolver2"},
 					DisablePropagationCheck: true,
+					Environment: map[string]string{
+						"test1": "test1",
+						"test2": "test2",
+					},
 				},
 				HTTPChallenge: &acme.HTTPChallenge{
 					EntryPoint: "MyEntryPoint",

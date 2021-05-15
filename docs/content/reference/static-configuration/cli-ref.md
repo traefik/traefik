@@ -63,6 +63,9 @@ Assume DNS propagates after a delay in seconds rather than finding and querying 
 `--certificatesresolvers.<name>.acme.dnschallenge.disablepropagationcheck`:  
 Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended] (Default: ```false```)
 
+`--certificatesresolvers.<name>.acme.dnschallenge.environment.<name>`:  
+Optional environment variables to override before running lego for ACME challenge.
+
 `--certificatesresolvers.<name>.acme.dnschallenge.provider`:  
 Use a DNS-01 based challenge provider rather than HTTPS.
 
