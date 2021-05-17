@@ -612,6 +612,11 @@ func gatewayTCPRouteToTCPConf(ep string, listener v1alpha1.Listener, gateway *v1
 				EntryPoints: []string{ep},
 			}
 
+			if listener.TLS != nil {
+				// TODO support let's encrypt
+				router.TLS = &dynamic.RouterTCPTLSConfig{}
+			}
+
 			// Adding the gateway name and the entryPoint name prevents overlapping of routers build from the same routes.
 			routerName := tcpRoute.Name + "-" + gateway.Name + "-" + ep
 			routerKey, err := makeRouterKey("", makeID(tcpRoute.Namespace, routerName))

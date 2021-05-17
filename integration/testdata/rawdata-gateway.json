@@ -158,6 +158,9 @@
 			],
 			"service": "default-tcp-app-1-my-tls-gateway-footlsterminate-e3b0c44298fc1c149afb-wrr",
 			"rule": "HostSNI(`*`)",
+			"tls": {
+				"passthrough": false
+			},
 			"status": "enabled",
 			"using": [
 				"footlsterminate"
