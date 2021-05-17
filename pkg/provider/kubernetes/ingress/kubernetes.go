@@ -24,7 +24,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
-	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -191,7 +190,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		return conf
 	}
 
-	var ingressClasses []*networkingv1beta1.IngressClass
+	var ingressClasses []*networkingv1.IngressClass
 
 	if supportsIngressClass(serverVersion) {
 		ics, err := client.GetIngressClasses()
@@ -378,7 +377,7 @@ func (p *Provider) updateIngressStatus(ing *networkingv1.Ingress, k8sClient Clie
 	return k8sClient.UpdateIngressStatus(ing, service.Status.LoadBalancer.Ingress)
 }
 
-func (p *Provider) shouldProcessIngress(ingress *networkingv1.Ingress, ingressClasses []*networkingv1beta1.IngressClass) bool {
+func (p *Provider) shouldProcessIngress(ingress *networkingv1.Ingress, ingressClasses []*networkingv1.IngressClass) bool {
 	// configuration through the new kubernetes ingressClass
 	if ingress.Spec.IngressClassName != nil {
 		for _, ic := range ingressClasses {
