@@ -54,7 +54,7 @@ func (wl *ipWhiteLister) ServeTCP(conn tcp.WriteCloser) {
 
 	err := wl.whiteLister.IsAuthorized(addr)
 	if err != nil {
-		logger.Errorf("Connection closed: %v", err)
+		logger.Errorf("Connection from %s rejected: %v", addr, err)
 		conn.Close()
 		return
 	}
