@@ -75,7 +75,6 @@ func checkRecursion(ctx context.Context, middlewareName string) (context.Context
 	return context.WithValue(ctx, middlewareStackKey, append(currentStack, middlewareName)), nil
 }
 
-// it is the responsibility of the caller to make sure that b.configs[middlewareName].Middleware exists.
 func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (tcp.Constructor, error) {
 	config := b.configs[middlewareName]
 	if config == nil || config.TCPMiddleware == nil {
