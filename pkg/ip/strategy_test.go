@@ -74,63 +74,63 @@ func TestDepthStrategy_GetIP(t *testing.T) {
 	}
 }
 
-func TestExcludedIPsStrategy_GetIP(t *testing.T) {
+func TestTrustedIPsStrategy_GetIP(t *testing.T) {
 	testCases := []struct {
 		desc          string
-		excludedIPs   []string
+		trustedIPs    []string
 		xForwardedFor string
 		expected      string
 		useRemote     bool
 	}{
 		{
-			desc:          "Use excluded all IPs",
-			excludedIPs:   []string{"10.0.0.4", "10.0.0.3", "10.0.0.2", "10.0.0.1"},
+			desc:          "Trust all IPs",
+			trustedIPs:    []string{"10.0.0.4", "10.0.0.3", "10.0.0.2", "10.0.0.1"},
 			xForwardedFor: "10.0.0.4,10.0.0.3,10.0.0.2,10.0.0.1",
 			expected:      "",
 		},
 		{
-			desc:          "Use excluded IPs",
-			excludedIPs:   []string{"10.0.0.2", "10.0.0.1"},
+			desc:          "Do not trust all IPs",
+			trustedIPs:    []string{"10.0.0.2", "10.0.0.1"},
 			xForwardedFor: "10.0.0.4,10.0.0.3,10.0.0.2,10.0.0.1",
 			expected:      "10.0.0.3",
 		},
 		{
-			desc:          "Use excluded IPs CIDR",
-			excludedIPs:   []string{"10.0.0.1/24"},
+			desc:          "Do not trust all IPs with CIDR",
+			trustedIPs:    []string{"10.0.0.1/24"},
 			xForwardedFor: "127.0.0.1,10.0.0.4,10.0.0.3,10.0.0.2,10.0.0.1",
 			expected:      "127.0.0.1",
 		},
 		{
-			desc:          "Use excluded all IPs CIDR",
-			excludedIPs:   []string{"10.0.0.1/24"},
+			desc:          "Trust all IPs with CIDR",
+			trustedIPs:    []string{"10.0.0.1/24"},
 			xForwardedFor: "10.0.0.4,10.0.0.3,10.0.0.2,10.0.0.1",
 			expected:      "",
 		},
 		{
 			desc:          "No forwarded, useRemote not in pool",
-			excludedIPs:   []string{"10.0.0.4", "10.0.0.3", "10.0.0.2", "10.0.0.1"},
+			trustedIPs:    []string{"10.0.0.4", "10.0.0.3", "10.0.0.2", "10.0.0.1"},
 			xForwardedFor: "",
 			expected:      "127.0.0.1",
 			useRemote:     true,
 		},
 		{
 			desc:          "No forwarded, useRemote in pool",
-			excludedIPs:   []string{"127.0.0.1", "10.0.0.4", "10.0.0.3", "10.0.0.2", "10.0.0.1"},
+			trustedIPs:    []string{"127.0.0.1", "10.0.0.4", "10.0.0.3", "10.0.0.2", "10.0.0.1"},
 			xForwardedFor: "",
 			expected:      "",
 			useRemote:     true,
 		},
 		{
 			desc:          "With forwarded, useRemote not in pool",
-			excludedIPs:   []string{"10.0.0.4", "10.0.0.3", "10.0.0.2", "10.0.0.1"},
+			trustedIPs:    []string{"10.0.0.4", "10.0.0.3", "10.0.0.2", "10.0.0.1"},
 			xForwardedFor: "10.0.0.4",
 			expected:      "127.0.0.1",
 			useRemote:     true,
 		},
 		{
 			desc:          "With forwarded, useRemote in pool",
-			excludedIPs:   []string{"127.0.0.1", "10.0.0.4", "10.0.0.3", "10.0.0.2", "10.0.0.1"},
-			xForwardedFor: "",
+			trustedIPs:    []string{"127.0.0.1", "10.0.0.4", "10.0.0.3", "10.0.0.2", "10.0.0.1"},
+			xForwardedFor: "10.0.0.4,10.0.0.3",
 			expected:      "",
 			useRemote:     true,
 		},
@@ -141,7 +141,7 @@ func TestExcludedIPsStrategy_GetIP(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			checker, err := NewChecker(test.excludedIPs)
+			checker, err := NewChecker(test.trustedIPs)
 			require.NoError(t, err)
 
 			strategy := PoolStrategy{Checker: checker, UseRemote: test.useRemote}

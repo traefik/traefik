@@ -71,11 +71,14 @@ func (s *PoolStrategy) GetIP(req *http.Request) string {
 			return xffTrimmed
 		}
 	}
+
 	if !s.UseRemote {
 		return ""
 	}
+
 	if contain, _ := s.Checker.Contains(req.RemoteAddr); !contain {
 		return req.RemoteAddr
 	}
+
 	return ""
 }
