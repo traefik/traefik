@@ -59,7 +59,7 @@ func (wl *ipWhiteLister) ServeTCP(conn tcp.WriteCloser) {
 		return
 	}
 
-	logger.Debugf("Connection accepted: %s", addr)
+	logger.Debugf("Connection from %s accepted", addr)
 
 	wl.next.ServeTCP(conn)
 }
