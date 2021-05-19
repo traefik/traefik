@@ -232,7 +232,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 
 func (c *clientWrapper) GetHTTPRoutes(namespace string, selector labels.Selector) ([]*v1alpha1.HTTPRoute, error) {
 	if !c.isWatchedNamespace(namespace) {
-		return nil, fmt.Errorf("failed to get HTTPRoute %s with labels selector %s: namespace is not within watched namespaces", namespace, selector)
+		return nil, fmt.Errorf("failed to get HTTPRoutes %s with labels selector %s: namespace is not within watched namespaces", namespace, selector)
 	}
 	httpRoutes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Networking().V1alpha1().HTTPRoutes().Lister().HTTPRoutes(namespace).List(selector)
 	if err != nil {
@@ -240,7 +240,7 @@ func (c *clientWrapper) GetHTTPRoutes(namespace string, selector labels.Selector
 	}
 
 	if len(httpRoutes) == 0 {
-		log.WithoutContext().Debugf("No HTTPRoute found in %q namespace with labels selector %s", namespace, selector)
+		log.WithoutContext().Debugf("No HTTPRoutes found in %q namespace with labels selector %s", namespace, selector)
 	}
 
 	return httpRoutes, nil
@@ -248,7 +248,7 @@ func (c *clientWrapper) GetHTTPRoutes(namespace string, selector labels.Selector
 
 func (c *clientWrapper) GetTCPRoutes(namespace string, selector labels.Selector) ([]*v1alpha1.TCPRoute, error) {
 	if !c.isWatchedNamespace(namespace) {
-		return nil, fmt.Errorf("failed to get TCPRoute %s with labels selector %s: namespace is not within watched namespaces", namespace, selector)
+		return nil, fmt.Errorf("failed to get TCPRoutes %s with labels selector %s: namespace is not within watched namespaces", namespace, selector)
 	}
 
 	tcpRoutes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Networking().V1alpha1().TCPRoutes().Lister().TCPRoutes(namespace).List(selector)
@@ -257,7 +257,7 @@ func (c *clientWrapper) GetTCPRoutes(namespace string, selector labels.Selector)
 	}
 
 	if len(tcpRoutes) == 0 {
-		log.WithoutContext().Debugf("No TCPRoute found in %q namespace with labels selector %s", namespace, selector)
+		log.WithoutContext().Debugf("No TCPRoutes found in %q namespace with labels selector %s", namespace, selector)
 	}
 
 	return tcpRoutes, nil
@@ -265,7 +265,7 @@ func (c *clientWrapper) GetTCPRoutes(namespace string, selector labels.Selector)
 
 func (c *clientWrapper) GetTLSRoutes(namespace string, selector labels.Selector) ([]*v1alpha1.TLSRoute, error) {
 	if !c.isWatchedNamespace(namespace) {
-		return nil, fmt.Errorf("failed to get TCPRoute %s with labels selector %s: namespace is not within watched namespaces", namespace, selector)
+		return nil, fmt.Errorf("failed to get TLSRoutes %s with labels selector %s: namespace is not within watched namespaces", namespace, selector)
 	}
 
 	tlsRoutes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Networking().V1alpha1().TLSRoutes().Lister().TLSRoutes(namespace).List(selector)
@@ -274,7 +274,7 @@ func (c *clientWrapper) GetTLSRoutes(namespace string, selector labels.Selector)
 	}
 
 	if len(tlsRoutes) == 0 {
-		log.WithoutContext().Debugf("No TLSRoute found in %q namespace with labels selector %s", namespace, selector)
+		log.WithoutContext().Debugf("No TLSRoutes found in %q namespace with labels selector %s", namespace, selector)
 	}
 
 	return tlsRoutes, nil

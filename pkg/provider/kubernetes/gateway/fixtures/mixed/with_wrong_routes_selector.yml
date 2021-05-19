@@ -16,29 +16,38 @@ metadata:
 spec:
   gatewayClassName: my-gateway-class
   listeners:  # Use GatewayClass defaults for listener definition.
-    - protocol: TCP
-      port: 9000
-      routes:
-        kind: TCPRoute
-        selector:
-          matchLabels:
-            app: label-tcp-app-1
     - protocol: HTTP
       port: 80
       routes:
         kind: HTTPRoute
         selector:
           matchLabels:
+            app: label-tls-app-1
+    - protocol: TCP
+      port: 9000
+      routes:
+        kind: TCPRoute
+        selector:
+          matchLabels:
+            app: label-tls-app-1
+    - protocol: TLS
+      port: 9443
+      tls:
+        mode: Passthrough
+      routes:
+        kind: TLSRoute
+        selector:
+          matchLabels:
             app: label-http-app-1
 
 ---
-kind: TCPRoute
+kind: TLSRoute
 apiVersion: networking.x-k8s.io/v1alpha1
 metadata:
-  name: tcp-app-1
+  name: tls-app-1
   namespace: default
   labels:
-    app: label-tcp-app-1
+    app: label-tls-app-1
 spec:
   rules:
     - forwardTo:
