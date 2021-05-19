@@ -2008,6 +2008,30 @@ func TestGetTLS(t *testing.T) {
 			},
 			errResult: "secret testing/test-secret does not contain PEM formatted TLS data entries: tls.crt,tls.key",
 		},
+		{
+			desc: "load nested bad certificate",
+			ingress: buildIngress(
+				iNamespace("testing"),
+				iAnnotation(annotationKubernetesFrontendEntryPoints, "https,api-secure"),
+				iRules(iRule(iHost("example.com"))),
+				iTLSes(iTLS("test-secret")),
+			),
+			client: clientMock{
+				secrets: []*corev1.Secret{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-secret",
+							Namespace: "testing",
+						},
+						Data: map[string][]byte{
+							"tls.crt": []byte("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\n\x00\x00\x00-----END CERTIFICATE-----\n"),
+							"tls.key": []byte("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+						},
+					},
+				},
+			},
+			errResult: "secret testing/test-secret does not contain PEM formatted TLS data entries: tls.crt",
+		},
 	}
 
 	for _, test := range testCases {

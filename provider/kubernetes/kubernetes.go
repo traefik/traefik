@@ -836,7 +836,7 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 			namespace, secretName, strings.Join(missingEntries, ", "))
 	}
 
-	if !isPem(tlsCrtData){
+	if !isPem(tlsCrtData) {
 		missingEntries = append(missingEntries, "tls.crt")
 	}
 
@@ -1285,6 +1285,15 @@ func templateSafeString(value string) error {
 }
 
 func isPem(data []byte) bool {
-	block, _ := pem.Decode(data)
-	return block != nil
+	for {
+		block, rest := pem.Decode(data)
+		if block == nil {
+			return false
+		}
+		if len(rest) == 0 {
+			break
+		}
+		data = rest
+	}
+	return true
 }
