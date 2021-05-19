@@ -210,6 +210,16 @@ func AddRouterTCP(configuration *dynamic.TCPConfiguration, routerName string, ro
 	return reflect.DeepEqual(configuration.Routers[routerName], router)
 }
 
+// AddMiddlewareTCP Adds a middleware to a configurations.
+func AddMiddlewareTCP(configuration *dynamic.TCPConfiguration, middlewareName string, middleware *dynamic.TCPMiddleware) bool {
+	if _, ok := configuration.Middlewares[middlewareName]; !ok {
+		configuration.Middlewares[middlewareName] = middleware
+		return true
+	}
+
+	return reflect.DeepEqual(configuration.Middlewares[middlewareName], middleware)
+}
+
 // AddServiceUDP adds a service to a configuration.
 func AddServiceUDP(configuration *dynamic.UDPConfiguration, serviceName string, service *dynamic.UDPService) bool {
 	if _, ok := configuration.Services[serviceName]; !ok {
@@ -282,16 +292,6 @@ func AddRouter(configuration *dynamic.HTTPConfiguration, routerName string, rout
 
 // AddMiddleware Adds a middleware to a configurations.
 func AddMiddleware(configuration *dynamic.HTTPConfiguration, middlewareName string, middleware *dynamic.Middleware) bool {
-	if _, ok := configuration.Middlewares[middlewareName]; !ok {
-		configuration.Middlewares[middlewareName] = middleware
-		return true
-	}
-
-	return reflect.DeepEqual(configuration.Middlewares[middlewareName], middleware)
-}
-
-// AddMiddlewareTCP Adds a middleware to a configurations.
-func AddMiddlewareTCP(configuration *dynamic.TCPConfiguration, middlewareName string, middleware *dynamic.TCPMiddleware) bool {
 	if _, ok := configuration.Middlewares[middlewareName]; !ok {
 		configuration.Middlewares[middlewareName] = middleware
 		return true
