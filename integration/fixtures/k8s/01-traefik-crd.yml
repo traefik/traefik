@@ -246,9 +246,11 @@ spec:
                     match:
                       type: string
                     middlewares:
+                      description: Middlewares contains references to MiddlewareTCP
+                        resources.
                       items:
-                        description: MiddlewareTCPRef is a ref to the MiddlewareTCP
-                          resources.
+                        description: ObjectReference is a generic reference to a Traefik
+                          resource.
                         properties:
                           name:
                             type: string
