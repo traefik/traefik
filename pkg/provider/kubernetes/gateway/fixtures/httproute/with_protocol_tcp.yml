@@ -15,14 +15,15 @@ metadata:
 spec:
   gatewayClassName: my-gateway-class
   listeners:  # Use GatewayClass defaults for listener definition.
-    - protocol: HTTP
-      port: 80
+    - protocol: TCP
+      port: 443
       routes:
         kind: HTTPRoute
         namespaces:
           from: Same
         selector:
-          app: foo
+          matchLabels:
+            app: foo
 
 ---
 kind: HTTPRoute
@@ -38,26 +39,8 @@ spec:
   rules:
     - matches:
         - path:
-            type: Prefix
-            value: /bar
-          headers:
-            type: Exact
-            values:
-              my-header: foo
-              my-header2: bar
-      forwardTo:
-        - serviceName: whoami
-          port: 80
-          weight: 1
-
-    - matches:
-        - path:
             type: Exact
             value: /bar
-          headers:
-            type: Exact
-            values:
-              my-header: bar
       forwardTo:
         - serviceName: whoami
           port: 80
