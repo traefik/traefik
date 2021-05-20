@@ -162,20 +162,24 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 		if err != nil {
 			return nil, err
 		}
+
 		balancer.AddService(service.Name, serviceHandler, service.Weight)
 		if config.HealthCheck == nil {
 			continue
 		}
+
 		childName := service.Name
 		updater, ok := serviceHandler.(healthcheck.StatusUpdater)
 		if !ok {
 			return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", childName, serviceName, serviceHandler)
 		}
+
 		if err := updater.RegisterStatusUpdater(func(up bool) {
 			balancer.SetStatus(ctx, childName, up)
 		}); err != nil {
 			return nil, fmt.Errorf("cannot register %v as updater for %v: %w", childName, serviceName, err)
 		}
+
 		log.FromContext(ctx).Debugf("Child service %v will update parent %v on status change", childName, serviceName)
 	}
 
