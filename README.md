@@ -28,6 +28,7 @@ Pointing Traefik at your orchestrator should be the _only_ configuration step yo
 . **[Support](#support)** .
 **[Release cycle](#release-cycle)** .
 **[Contributing](#contributing)** .
+**[External Maintainers Guidelines](#external-maintainers-guidelines)** . 
 **[Maintainers](#maintainers)** .
 **[Credits](#credits)** .
 
@@ -123,6 +124,10 @@ git clone https://github.com/traefik/traefik
 ## Introductory Videos
 
 You can find high level and deep dive videos on [videos.traefik.io](https://videos.traefik.io).
+
+## External Maintainers Guidelines
+
+[The External Maintainers Guidelines](docs/content/contributing/external-maintainers-guidelines.md)
 
 ## Maintainers
 
