@@ -26,37 +26,18 @@ metadata:
 spec:
   gatewayClassName: my-gateway-class
   listeners:  # Use GatewayClass defaults for listener definition.
-    - protocol: HTTPS
-      port: 443
+    - protocol: TLS
+      port: 8080
       tls:
         certificateRef:
           kind: Secret
           name: supersecret
           group: core
       routes:
-        kind: HTTPRoute
+        kind: TCPRoute
         namespaces:
           from: Same
         selector:
-          app: foo
+          matchLabels:
+            app: foo
 
----
-kind: HTTPRoute
-apiVersion: networking.x-k8s.io/v1alpha1
-metadata:
-  name: http-app-1
-  namespace: default
-  labels:
-    app: foo
-spec:
-  hostnames:
-    - "foo.com"
-  rules:
-    - matches:
-        - path:
-            type: Exact
-            value: /bar
-      forwardTo:
-        - serviceName: whoami
-          port: 80
-          weight: 1

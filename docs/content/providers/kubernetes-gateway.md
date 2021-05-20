@@ -77,13 +77,13 @@ The [getting started guide](https://gateway-api.sigs.k8s.io/guides/getting-start
 
 !!! note ""
 
-    Keep in mind that the Traefik Gateway provider only supports the `v0.1.0`.
+    Keep in mind that the Traefik Gateway provider only supports the `v0.2.0`.
 
 For now, the Traefik Gateway Provider can be used while following the below guides:
 
 * [Simple Gateway](https://gateway-api.sigs.k8s.io/guides/simple-gateway/)
 * [HTTP routing](https://gateway-api.sigs.k8s.io/guides/http-routing/)
-* [TLS](https://gateway-api.sigs.k8s.io/guides/tls/) (Partial support: only on listeners with terminate mode)
+* [TLS](https://gateway-api.sigs.k8s.io/guides/tls/)
 
 ## Resource Configuration
 
@@ -96,7 +96,9 @@ Traefik implements the following resources:
 
 * `GatewayClass` defines a set of Gateways that share a common configuration and behaviour.
 * `Gateway` describes how traffic can be translated to Services within the cluster.
-* `HTTPRoute` define HTTP rules for mapping requests from a Gateway to Kubernetes Services.
+* `HTTPRoute` defines HTTP rules for mapping requests from a Gateway to Kubernetes Services.
+* `TCPRoute` defines TCP rules for mapping requests from a Gateway to Kubernetes Services.
+* `TLSRoute` defines TLS rules for mapping requests from a Gateway to Kubernetes Services.
 
 ## Provider Configuration
 
