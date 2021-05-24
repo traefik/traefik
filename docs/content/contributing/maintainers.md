@@ -20,6 +20,10 @@
 * Kevin Pollet [@kevinpollet](https://github.com/kevinpollet)
 * Harold Ozouf [@jspdown](https://github.com/jspdown)
 
+## Maintainers guidelines
+
+Please read the [maintainers guidelines](maintainers-guidelines.md)
+
 ## Issue Triage
 
 Issues and PRs are triaged daily and the process for triaging may be found under [triaging issues](https://github.com/traefik/contributors-guide/blob/master/issue_triage.md) in our [contributors guide repository](https://github.com/traefik/contributors-guide).
