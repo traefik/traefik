@@ -127,7 +127,7 @@ You can find high level and deep dive videos on [videos.traefik.io](https://vide
 
 ## Maintainers Guidelines
 
-[The External Maintainers Guidelines](docs/content/contributing/maintainers-guidelines.md)
+[The Maintainers Guidelines](docs/content/contributing/maintainers-guidelines.md)
 
 ## Maintainers
 
