@@ -399,6 +399,7 @@ certificatesResolvers:
       tlsChallenge: {}
 pilot:
   token: foobar
+  dashboard: true
 experimental:
   kubernetesGateway: true
   plugins:
