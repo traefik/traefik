@@ -22,4 +22,5 @@ spec:
         namespaces:
           from: Same
         selector:
-          app: foo
+          matchLabels:
+            app: foo

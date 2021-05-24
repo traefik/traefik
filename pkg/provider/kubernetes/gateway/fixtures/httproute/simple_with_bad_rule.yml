@@ -14,7 +14,7 @@ metadata:
   namespace: default
 spec:
   gatewayClassName: my-gateway-class
-  listeners:
+  listeners:  # Use GatewayClass defaults for listener definition.
     - protocol: HTTP
       port: 80
       routes:
@@ -35,11 +35,11 @@ metadata:
     app: foo
 spec:
   hostnames:
-    - "whoami"
+    - "foo.com"
   rules:
     - matches:
         - path:
-            type: Exact
+            type: ImplementationSpecific
             value: /bar
       forwardTo:
         - serviceName: whoami

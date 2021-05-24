@@ -15,32 +15,33 @@ metadata:
 spec:
   gatewayClassName: my-gateway-class
   listeners:  # Use GatewayClass defaults for listener definition.
-    - protocol: HTTPS
-      port: 443
+    - protocol: TCP
+      port: 9000
       routes:
-        kind: HTTPRoute
+        kind: TCPRoute
         namespaces:
           from: Same
         selector:
-          app: foo
+          matchLabels:
+            app: tcp-app
 
 ---
-kind: HTTPRoute
+kind: TCPRoute
 apiVersion: networking.x-k8s.io/v1alpha1
 metadata:
-  name: http-app-1
+  name: tcp-app-1
   namespace: default
   labels:
-    app: foo
+    app: tcp-app
 spec:
-  hostnames:
-    - "foo.com"
   rules:
-    - matches:
-        - path:
-            type: Exact
-            value: /bar
-      forwardTo:
-        - serviceName: whoami
-          port: 80
+    - forwardTo:
+        - weight: 1
+          backendRef:
+            group: traefik.containo.us
+            kind: TraefikService
+            name: service@file
+          port: 9000
+        - serviceName: whoamitcp
+          port: 9000
           weight: 1
