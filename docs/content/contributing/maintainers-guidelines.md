@@ -1,8 +1,8 @@
-# The External Maintainers Guidelines
+# The Maintainers Guidelines
 
 Note: the document is a work in progress.
 
-Welcome to the Traefik Community. This document describes various responsibilities and guidelines for Traefik contributors. We are in the process of hiring external maintainers into the project, so that information can be relevant if you are interested in being a part of the community.
+Welcome to the Traefik Community. This document describes various responsibilities and guidelines for Traefik maintainers. We are in the process of hiring  maintainers into the project, so that information can be relevant if you are interested in being a part of the community.
 
 ## Onboarding process
 
@@ -34,14 +34,17 @@ There are lots of areas where you can contribute to the project but we can sugge
 - You will be listed on our Maintainers Github page as well as on our website in the section [maintainers](maintainers.md).
 - We will be promoting you in social channels (mostly on Twitter).
 
+## Governance
+
+- Roadmap meetings on a regular basisc where all maintainers are welcome.
+
 ## Communicating
 - All of our maintainers are added to Slack #traefik-maintainers channel that belongs to Traefik labs workspace. Having the team in one place helps us to communicate effectively. You can reach Traefik core developers directly, which offers the possibility to discuss issues, pull requests, enhancements more efficiently and get the feedback almost immediately. Fewer blockers mean more fun and engaging work.
 - We publish a report to the channel on a daily basis that includes all the activities performed during the day. You are updated in regards to the workload that has been processed including: working on the new features and enhancements, activities related to the reported issues and PR’s, other important project-related announcements.
 - At 5:00 PM CET every day we review all the created issues that have been reported, assign the specific *[labels](maintainers.md#Labels)* and prioritize them based on the severity of the problem. The process is called *[issue triaging](https://github.com/traefik/contributors-guide/blob/master/issue_triage.md).* Each of the maintainers is welcome to join the meeting. For that purpose, we use a dedicated Discord server where you are invited once you have become the official maintainer.
 
-## Evaluation
-Every six months we will evaluate external maintainers and determine if they are still active and participating as a maintainer.
-Note: we are not really evaluating performance here, we just want to ensure that our maintainers stay engaged and we are proactive about reaching out if they are not.
+## Maintainers Activity
+Every six months we will validate maintainers acttivity and determine if they are still active and participating as a maintainer.
 
 - Has the maintainer engaged with the team and the community by meeting two or more of these benchmarks in the past six months?
     - Has the maintainer participated in at least two or three maintainer meetings?
