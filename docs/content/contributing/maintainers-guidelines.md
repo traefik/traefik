@@ -9,6 +9,9 @@ Welcome to the Traefik Community. This document describes various responsibiliti
 If you consider joining our community please drop us a line using Twitter or leave a note in the issue. We will schedule a quick call in order to meet you and learn more about your motivation. During the call the team will discuss the process of becoming a maintainer. We will be happy to answer any questions and explain all your doubts.
 
 ## Maintainers requirements
+
+Note: you do not have to meet all of the listed requirements, but must have achieved several.
+
 - Enabled [2FA](https://docs.github.com/en/github/authenticating-to-github/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication) on your Github account
 - The contributor has opened and successfully run medium to large PR’s in the past 6 months.
 - The contributor has participated in multiple code reviews of other PR’s, including those of other maintainers and contributors.
@@ -16,7 +19,6 @@ If you consider joining our community please drop us a line using Twitter or lea
 - The contributor is active on Traefik Community forums or other technical forums / boards such as K8S slack, Reddit, StackOverflow, hacker news.
 - Have read and accepted the contributor guidelines.
 
-Note: you don't have to meet all of the listed requirements.
 
 ## Maintainers responsibilities and privileges
 
