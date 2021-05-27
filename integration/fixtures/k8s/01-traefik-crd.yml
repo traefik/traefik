@@ -676,10 +676,6 @@ spec:
                     items:
                       type: string
                     type: array
-                  accessControlAllowOrigin:
-                    description: AccessControlAllowOrigin Can be "origin-list-or-null"
-                      or "*". From (https://www.w3.org/TR/cors/#access-control-allow-origin-response-header)
-                    type: string
                   accessControlAllowOriginList:
                     description: AccessControlAllowOriginList is a list of allowable
                       origins. Can also be a wildcard origin "*".
@@ -705,7 +701,7 @@ spec:
                     type: integer
                   addVaryHeader:
                     description: AddVaryHeader controls if the Vary header is automatically
-                      added/updated when the AccessControlAllowOrigin is set.
+                      added/updated when the AccessControlAllowOriginList is set.
                     type: boolean
                   allowedHosts:
                     items:

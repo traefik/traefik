@@ -18,11 +18,6 @@ const (
 )
 
 func handleDeprecation(ctx context.Context, cfg *dynamic.Headers) {
-	if cfg.AccessControlAllowOrigin != "" {
-		log.FromContext(ctx).Warn("accessControlAllowOrigin is deprecated, please use accessControlAllowOriginList instead.")
-		cfg.AccessControlAllowOriginList = append(cfg.AccessControlAllowOriginList, cfg.AccessControlAllowOrigin)
-		cfg.AccessControlAllowOrigin = ""
-	}
 	if cfg.SSLRedirect {
 		log.FromContext(ctx).Warn("SSLRedirect is deprecated, please use entrypoint redirection instead.")
 	}
