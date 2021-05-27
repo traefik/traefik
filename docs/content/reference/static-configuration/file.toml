@@ -378,6 +378,7 @@
 
 [pilot]
   token = "foobar"
+  dashboard = true
 
 [experimental]
   kubernetesGateway = true
