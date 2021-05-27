@@ -133,13 +133,13 @@ http:
 
 ### Using Security Headers
 
-Security-related headers (HSTS headers, SSL redirection, Browser XSS filter, etc) can be managed similarly to custom headers as shown above.
+Security-related headers (HSTS headers, Browser XSS filter, etc) can be managed similarly to custom headers as shown above.
 This functionality makes it possible to easily use security features by adding headers.
 
 ```yaml tab="Docker"
 labels:
   - "traefik.http.middlewares.testHeader.headers.framedeny=true"
-  - "traefik.http.middlewares.testHeader.headers.sslredirect=true"
+  - "traefik.http.middlewares.testHeader.headers.browserxssfilter=true"
 ```
 
 ```yaml tab="Kubernetes"
@@ -150,32 +150,32 @@ metadata:
 spec:
   headers:
     frameDeny: true
-    sslRedirect: true
+    browserxssfilter: true
 ```
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.testheader.headers.framedeny=true"
-- "traefik.http.middlewares.testheader.headers.sslredirect=true"
+- "traefik.http.middlewares.testheader.headers.browserxssfilter=true"
 ```
 
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.testheader.headers.framedeny": "true",
-  "traefik.http.middlewares.testheader.headers.sslredirect": "true"
+  "traefik.http.middlewares.testheader.headers.browserxssfilter": "true"
 }
 ```
 
 ```yaml tab="Rancher"
 labels:
   - "traefik.http.middlewares.testheader.headers.framedeny=true"
-  - "traefik.http.middlewares.testheader.headers.sslredirect=true"
+  - "traefik.http.middlewares.testheader.headers.browserxssfilter=true"
 ```
 
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     frameDeny = true
-    sslRedirect = true
+    browserxssfilter = true
 ```
 
 ```yaml tab="File (YAML)"
@@ -184,7 +184,7 @@ http:
     testHeader:
       headers:
         frameDeny: true
-        sslRedirect: true
+        browserxssfilter: true
 ```
 
 ### CORS Headers
@@ -347,13 +347,25 @@ The `hostsProxyHeaders` option is a set of header keys that may hold a proxied h
 
 ### `sslRedirect`
 
+!!! warning
+
+    Deprecated in favor of [EntryPoint redirection](../routing/entrypoints.md#redirection) or the [RedirectScheme middleware](./redirectscheme.md).
+
 The `sslRedirect` only allow HTTPS requests when set to `true`.
 
 ### `sslTemporaryRedirect`
 
+!!! warning
+
+    Deprecated in favor of [EntryPoint redirection](../routing/entrypoints.md#redirection) or the [RedirectScheme middleware](./redirectscheme.md).
+
 Set `sslTemporaryRedirect` to `true` to force an SSL redirection using a 302 (instead of a 301).
 
 ### `sslHost`
+
+!!! warning
+
+    Deprecated in favor of the [RedirectRegex middleware](./redirectregex.md).
 
 The `sslHost` option is the host name that is used to redirect HTTP requests to HTTPS.
 
@@ -363,6 +375,10 @@ The `sslProxyHeaders` option is set of header keys with associated values that w
 It can be useful when using other proxies (example: `"X-Forwarded-Proto": "https"`).
 
 ### `sslForceHost`
+
+!!! warning
+
+    Deprecated in favor of the [RedirectRegex middleware](./redirectregex.md).
 
 Set `sslForceHost` to `true` and set `sslHost` to force requests to use `SSLHost` regardless of whether they already use SSL.
 
