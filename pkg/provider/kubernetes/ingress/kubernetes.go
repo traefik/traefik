@@ -529,8 +529,8 @@ func loadService(client Client, namespace string, backend networkingv1beta1.Ingr
 		return nil, errors.New("subset not found")
 	}
 
-	var port int32
 	for _, subset := range endpoints.Subsets {
+		var port int32
 		for _, p := range subset.Ports {
 			if portName == p.Name {
 				port = p.Port
