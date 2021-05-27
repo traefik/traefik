@@ -46,7 +46,7 @@ There are lots of areas where you can contribute to the project but we can sugge
 - At 5:00 PM CET every day we review all the created issues that have been reported, assign the specific *[labels](maintainers.md#Labels)* and prioritize them based on the severity of the problem. The process is called *[issue triaging](https://github.com/traefik/contributors-guide/blob/master/issue_triage.md).* Each of the maintainers is welcome to join the meeting. For that purpose, we use a dedicated Discord server where you are invited once you have become the official maintainer.
 
 ## Maintainers Activity
-Every six months we will validate maintainers acttivity and determine if they are still active and participating as a maintainer.
+In order to keep the core team efficient and dynamic, maintainers activity and involvement will be reviewed on a regular basis.
 
 - Has the maintainer engaged with the team and the community by meeting two or more of these benchmarks in the past six months?
     - Has the maintainer participated in at least two or three maintainer meetings?
