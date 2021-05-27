@@ -38,7 +38,7 @@ There are lots of areas where you can contribute to the project but we can sugge
 
 ## Governance
 
-- Roadmap meetings on a regular basisc where all maintainers are welcome.
+- Roadmap meetings on a regular basis where all maintainers are welcome.
 
 ## Communicating
 - All of our maintainers are added to Slack #traefik-maintainers channel that belongs to Traefik labs workspace. Having the team in one place helps us to communicate effectively. You can reach Traefik core developers directly, which offers the possibility to discuss issues, pull requests, enhancements more efficiently and get the feedback almost immediately. Fewer blockers mean more fun and engaging work.
