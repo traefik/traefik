@@ -125,7 +125,7 @@ git clone https://github.com/traefik/traefik
 
 You can find high level and deep dive videos on [videos.traefik.io](https://videos.traefik.io).
 
-## Maintainers Guidelines
+## Maintainers
 
 [The Maintainers Guidelines](docs/content/contributing/maintainers-guidelines.md)
 
