@@ -746,16 +746,22 @@ spec:
                   referrerPolicy:
                     type: string
                   sslForceHost:
+                    description: 'Deprecated: use RedirectRegex instead.'
                     type: boolean
                   sslHost:
+                    description: 'Deprecated: use RedirectRegex instead.'
                     type: string
                   sslProxyHeaders:
                     additionalProperties:
                       type: string
                     type: object
                   sslRedirect:
+                    description: 'Deprecated: use EntryPoint redirection or RedirectScheme
+                      instead.'
                     type: boolean
                   sslTemporaryRedirect:
+                    description: 'Deprecated: use EntryPoint redirection or RedirectScheme
+                      instead.'
                     type: boolean
                   stsIncludeSubdomains:
                     type: boolean
