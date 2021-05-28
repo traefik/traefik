@@ -525,13 +525,14 @@ func loadService(client Client, namespace string, backend networkingv1.IngressBa
 
 	if svcConfig != nil && svcConfig.Service != nil {
 		svc.LoadBalancer.Sticky = svcConfig.Service.Sticky
+
 		if svcConfig.Service.PassHostHeader != nil {
 			svc.LoadBalancer.PassHostHeader = svcConfig.Service.PassHostHeader
 		}
-	}
 
-	if svcConfig != nil && svcConfig.Service != nil && svcConfig.Service.ServersTransport != "" {
-		svc.LoadBalancer.ServersTransport = svcConfig.Service.ServersTransport
+		if svcConfig.Service.ServersTransport != "" {
+			svc.LoadBalancer.ServersTransport = svcConfig.Service.ServersTransport
+		}
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {

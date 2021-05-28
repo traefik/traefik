@@ -299,7 +299,7 @@ which in turn will create the resulting routers, services, handlers, etc.
     See [ServersTransport](../services/index.md#serverstransport) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/service.serversscheme: mtls@file
+    traefik.ingress.kubernetes.io/service.serverstransport: foobar@file
     ```
 
 ??? info "`traefik.ingress.kubernetes.io/service.passhostheader`"
