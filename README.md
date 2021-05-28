@@ -28,7 +28,6 @@ Pointing Traefik at your orchestrator should be the _only_ configuration step yo
 . **[Support](#support)** .
 **[Release cycle](#release-cycle)** .
 **[Contributing](#contributing)** .
-**[Maintainers Guidelines](#maintainers-guidelines)** . 
 **[Maintainers](#maintainers)** .
 **[Credits](#credits)** .
 
@@ -131,9 +130,6 @@ We are strongly promoting a philosophy of openness and sharing, and firmly stand
 This [document](docs/content/contributing/maintainers-guidelines.md) describes how to be part of the core team as well as various responsibilities and guidelines for Traefik maintainers.
 You can also find more information on our process to review pull requests and manage issues [in this document](docs/content/contributing/maintainers.md).
 
-## Maintainers
-
-[Information about process and maintainers](docs/content/contributing/maintainers.md)
 
 ## Contributing
 
