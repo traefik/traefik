@@ -439,9 +439,8 @@ func Test_addRoute(t *testing.T) {
 			desc: "Rule with not",
 			rule: `!Host("tchouk")`,
 			expected: map[string]int{
-				"http://tchouk/titi":   http.StatusNotFound,
-				"http://tchouk/powpow": http.StatusNotFound,
-				"http://test/powpow":   http.StatusOK,
+				"http://tchouk/titi": http.StatusNotFound,
+				"http://test/powpow": http.StatusOK,
 			},
 		},
 		{
@@ -450,7 +449,6 @@ func Test_addRoute(t *testing.T) {
 			expected: map[string]int{
 				"http://tchouk/titi":   http.StatusNotFound,
 				"http://tchouk/powpow": http.StatusOK,
-				"http://test/titi":     http.StatusNotFound,
 			},
 		},
 		{
@@ -468,6 +466,7 @@ func Test_addRoute(t *testing.T) {
 			expected: map[string]int{
 				"http://tchouk/titi": http.StatusNotFound,
 				"http://tchouk/toto": http.StatusOK,
+				"http://test/titi":   http.StatusOK,
 			},
 		},
 		{
@@ -485,14 +484,16 @@ func Test_addRoute(t *testing.T) {
 			expected: map[string]int{
 				"http://tchouk/titi": http.StatusNotFound,
 				"http://tchouk/toto": http.StatusOK,
+				"http://test/titi":   http.StatusOK,
 			},
 		},
 		{
 			desc: "Rule case with double not",
-			rule: `!(!((Host("tchouk") && Pathprefix("/titi"))))`,
+			rule: `!(!(Host("tchouk") && Pathprefix("/titi")))`,
 			expected: map[string]int{
 				"http://tchouk/titi":   http.StatusOK,
 				"http://tchouk/powpow": http.StatusNotFound,
+				"http://test/titi":     http.StatusNotFound,
 			},
 		},
 		{

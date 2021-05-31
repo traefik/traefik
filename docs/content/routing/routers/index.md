@@ -258,7 +258,7 @@ The table below lists all the available matchers:
 
 !!! info "Invert a matcher"
 
-    You can invert a matcher by using the `!` operator. 
+    You can invert a matcher by using the `!` operator.
 
 !!! important "Rule, Middleware, and Services"
 
