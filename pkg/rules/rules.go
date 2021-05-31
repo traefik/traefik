@@ -72,6 +72,7 @@ func (r *Router) AddRoute(rule string, priority int, handler http.Handler) error
 
 type tree struct {
 	matcher   string
+	not       bool
 	value     []string
 	ruleLeft  *tree
 	ruleRight *tree
@@ -215,7 +216,24 @@ func addRuleOnRouter(router *mux.Router, rule *tree) error {
 			return err
 		}
 
+		if rule.not {
+			return not(funcs[rule.matcher])(router.NewRoute(), rule.value...)
+		}
 		return funcs[rule.matcher](router.NewRoute(), rule.value...)
+	}
+}
+
+func not(m func(*mux.Route, ...string) error) func(*mux.Route, ...string) error {
+	return func(r *mux.Route, v ...string) error {
+		router := mux.NewRouter()
+		err := m(router.NewRoute(), v...)
+		if err != nil {
+			return err
+		}
+		r.MatcherFunc(func(req *http.Request, ma *mux.RouteMatch) bool {
+			return !router.Match(req, ma)
+		})
+		return nil
 	}
 }
 
@@ -243,6 +261,9 @@ func addRuleOnRoute(route *mux.Route, rule *tree) error {
 			return err
 		}
 
+		if rule.not {
+			return not(funcs[rule.matcher])(route, rule.value...)
+		}
 		return funcs[rule.matcher](route, rule.value...)
 	}
 }
