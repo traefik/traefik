@@ -146,9 +146,7 @@ func TestTrustedIPsStrategy_GetIP(t *testing.T) {
 
 			strategy := PoolStrategy{Checker: checker, UseRemote: test.useRemote}
 			req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1", nil)
-			if test.useRemote {
-				req.RemoteAddr = "127.0.0.1"
-			}
+			req.RemoteAddr = "127.0.0.1"
 			req.Header.Set(xForwardedFor, test.xForwardedFor)
 			actual := strategy.GetIP(req)
 			assert.Equal(t, test.expected, actual)
