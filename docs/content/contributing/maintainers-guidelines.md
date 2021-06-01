@@ -31,8 +31,6 @@ There are lots of areas where you can contribute to the project but we can sugge
 - Code contribution. 
 - Documentation contribution. 
   - Technical documentation is one of the most important components of the product. The ability to set up a testing environment using Traefik in a few minutes using the official documentation is a game changer.
-- Documentation contribution. 
-  - Technical documentation is one of the most important components of the product. The ability to set up a testing environment using Traefik in a few minutes using the official documentation is a game changer.
 - You will be listed on our Maintainers Github page as well as on our website in the section [maintainers](maintainers.md).
 - We will be promoting you in social channels (mostly on Twitter).
 
