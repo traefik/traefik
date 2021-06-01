@@ -6,5 +6,4 @@ Here are some guidelines that should help to start contributing to the project.
 - [Submitting issues](https://doc.traefik.io/traefik/contributing/submitting-issues/)
 - [Submitting security issues](docs/content/contributing/submitting-security-issues.md)
 
-Should you have a look at [maintainers guidelines](docs/content/contributing/maintainers-guidelines.md)?
-
+If you are willing to become a maintainer of the project, please take a look at the [maintainers guidelines](docs/content/contributing/maintainers-guidelines.md).
