@@ -60,7 +60,7 @@ In order to keep the core team efficient and dynamic, maintainers activity and i
 - Be open-minded and respectful with other maintainers and other community members.
 - Keep the communication public - if anyone tries to communicate with you directly, ask him politely to move the conversation to a public communication channel.
 - Stay away from defensive comments.
-- Please try to express your thoughts clearly enough and note that some of us (including me) are not native English speakers. Try to rephrase your sentences, avoiding mental shortcuts; none of us is able to predict your thoughts.
+- Please try to express your thoughts clearly enough and note that some of us are not native English speakers. Try to rephrase your sentences, avoiding mental shortcuts; none of us is able to predict your thoughts.
 - There are a lot of use cases of using Traefik and even more issues that are difficult to reproduce. If the issue can’t be replicated due to a lack of reproducible case (a simple docker compose should be enough) - set your own time limits while working on the issue and express it clearly that you were not able to replicate it. You can come back later to that case.
 - Be proactive.
 - Emoji are fine, but if you express yourself clearly enough they are not necessary. They will not replace good communication.
