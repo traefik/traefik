@@ -39,6 +39,7 @@ There are lots of areas where you can contribute to the project but we can sugge
 - Roadmap meetings on a regular basis where all maintainers are welcome.
 
 ## Communicating
+
 - All of our maintainers are added to Slack #traefik-maintainers channel that belongs to Traefik labs workspace. Having the team in one place helps us to communicate effectively. You can reach Traefik core developers directly, which offers the possibility to discuss issues, pull requests, enhancements more efficiently and get the feedback almost immediately. Fewer blockers mean more fun and engaging work.
 - We publish a report to the channel on a daily basis that includes all the activities performed during the day. You are updated in regards to the workload that has been processed including: working on the new features and enhancements, activities related to the reported issues and PR’s, other important project-related announcements.
 - At 5:00 PM CET every day we review all the created issues that have been reported, assign the specific *[labels](maintainers.md#Labels)* and prioritize them based on the severity of the problem. The process is called *[issue triaging](https://github.com/traefik/contributors-guide/blob/master/issue_triage.md).* Each of the maintainers is welcome to join the meeting. For that purpose, we use a dedicated Discord server where you are invited once you have become the official maintainer.
