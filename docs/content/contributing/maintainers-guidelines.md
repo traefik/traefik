@@ -2,7 +2,7 @@
 
 Note: the document is a work in progress.
 
-Welcome to the Traefik Community. This document describes how to be part of the core team as well as various responsibilities and guidelines for Traefik maintainers.. We are strongly promoting a philosophy of openness and sharing, and firmly standing against the elitist closed approach. Being part of the core team should be accessible to anyone who is motivated and want to be part of that journey!
+Welcome to the Traefik Community. This document describes how to be part of the core team as well as various responsibilities and guidelines for Traefik maintainers. We are strongly promoting a philosophy of openness and sharing, and firmly standing against the elitist closed approach. Being part of the core team should be accessible to anyone who is motivated and want to be part of that journey!
 
 ## Onboarding process
 
