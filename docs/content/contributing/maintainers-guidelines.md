@@ -19,7 +19,6 @@ Note: you do not have to meet all of the listed requirements, but must have achi
 - The contributor is active on Traefik Community forums or other technical forums / boards such as K8S slack, Reddit, StackOverflow, hacker news.
 - Have read and accepted the contributor guidelines.
 
-
 ## Maintainers responsibilities and privileges
 
 There are lots of areas where you can contribute to the project but we can suggest you start with activities such as:
