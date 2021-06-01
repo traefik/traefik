@@ -56,8 +56,8 @@ In order to keep the core team efficient and dynamic, maintainers activity and i
 
 ## Additional comments for (not only) maintainers
 
-- Use Traefik on a daily basis. You can’t be a good maintainer if you are not using Traefik daily and you can’t put yourself in your users’ shoes.
-- Prioritize the maintainer. Be user-focused but if you use Traefik every day, you are already in the user's shoes, so respect other maintainers and other community members.
+- Be able to put yourself in users’ shoes.
+- Be open-minded and respectful with other maintainers and other community members.
 - Keep the communication public - if anyone tries to communicate with you directly, ask him politely to move the conversation to a public communication channel.
 - Stay away from defensive comments.
 - Please try to express your thoughts clearly enough and note that some of us (including me) are not native English speakers. Try to rephrase your sentences, avoiding mental shortcuts; none of us is able to predict your thoughts.
