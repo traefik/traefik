@@ -126,7 +126,10 @@ You can find high level and deep dive videos on [videos.traefik.io](https://vide
 
 ## Maintainers
 
-[Information about process and maintainers](docs/content/contributing/maintainers.md)
+We are strongly promoting a philosophy of openness and sharing, and firmly standing against the elitist closed approach. Being part of the core team should be accessible to anyone who is motivated and want to be part of that journey!
+This [document](docs/content/contributing/maintainers-guidelines.md) describes how to be part of the core team as well as various responsibilities and guidelines for Traefik maintainers.
+You can also find more information on our process to review pull requests and manage issues [in this document](docs/content/contributing/maintainers.md).
+
 
 ## Contributing
 
