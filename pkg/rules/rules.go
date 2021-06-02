@@ -2,6 +2,7 @@ package rules
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"strings"
 	"unicode/utf8"
@@ -16,6 +17,7 @@ var funcs = map[string]func(*mux.Route, ...string) error{
 	"Host":          host,
 	"HostHeader":    host,
 	"HostRegexp":    hostRegexp,
+	"ClientIP":      clientIP,
 	"Path":          path,
 	"PathPrefix":    pathPrefix,
 	"Method":        methods,
@@ -152,6 +154,47 @@ func host(route *mux.Route, hosts ...string) error {
 		}
 		return false
 	})
+	return nil
+}
+
+func clientIP(route *mux.Route, clientIPs ...string) error {
+	var authorizedIPs []net.IP
+	var authorizedIPsNet []*net.IPNet
+
+	for _, ip := range clientIPs {
+		if ipAddr := net.ParseIP(ip); ipAddr == nil {
+			_, ipNet, err := net.ParseCIDR(ip)
+			if err != nil {
+				return fmt.Errorf("invalid value %q for \"ClientIP\" matcher: %w", ip, err)
+			}
+			authorizedIPsNet = append(authorizedIPsNet, ipNet)
+		} else {
+			authorizedIPs = append(authorizedIPs, ipAddr)
+		}
+	}
+
+	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
+		host, _, err := net.SplitHostPort(req.RemoteAddr)
+		if err != nil {
+			host = req.RemoteAddr
+		}
+
+		remoteAddr := net.ParseIP(host)
+		for _, authorizedIP := range authorizedIPs {
+			if authorizedIP.Equal(remoteAddr) {
+				return true
+			}
+		}
+
+		for _, authorizedNet := range authorizedIPsNet {
+			if authorizedNet.Contains(remoteAddr) {
+				return true
+			}
+		}
+
+		return false
+	})
+
 	return nil
 }
 
