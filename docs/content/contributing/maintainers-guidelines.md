@@ -1,3 +1,7 @@
+<p align="center">
+<img src="../assets/img/maintainers-guidelines.png" alt="Traefik Maintainer's Guidelines" title="Maintainer's Guidelines" />
+</p>
+
 # The Maintainers Guidelines
 
 Note: the document is a work in progress.
