@@ -691,7 +691,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 
 		id := makeID(tlsOption.Namespace, tlsOption.Name)
 		// If the name is default, we override the default config.
-		if tlsOption.Name == "default" {
+		if tlsOption.Name == tls.DefaultTLSConfigName {
 			id = tlsOption.Name
 			nsDefault = append(nsDefault, tlsOption.Namespace)
 		}
@@ -710,7 +710,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 	}
 
 	if len(nsDefault) > 1 {
-		delete(tlsOptions, "default")
+		delete(tlsOptions, tls.DefaultTLSConfigName)
 		log.FromContext(ctx).Errorf("Default TLS Options defined in multiple namespaces: %v", nsDefault)
 	}
 
@@ -750,7 +750,7 @@ func buildTLSStores(ctx context.Context, client Client) map[string]tls.Store {
 
 		id := makeID(tlsStore.Namespace, tlsStore.Name)
 		// If the name is default, we override the default config.
-		if tlsStore.Name == "default" {
+		if tlsStore.Name == tls.DefaultTLSStoreName {
 			id = tlsStore.Name
 			nsDefault = append(nsDefault, tlsStore.Namespace)
 		}
@@ -763,7 +763,7 @@ func buildTLSStores(ctx context.Context, client Client) map[string]tls.Store {
 	}
 
 	if len(nsDefault) > 1 {
-		delete(tlsStores, "default")
+		delete(tlsStores, tls.DefaultTLSStoreName)
 		log.FromContext(ctx).Errorf("Default TLS Stores defined in multiple namespaces: %v", nsDefault)
 	}
 

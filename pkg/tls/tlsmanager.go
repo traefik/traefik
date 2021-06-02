@@ -15,6 +15,14 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
+const (
+	// DefaultTLSConfigName is the name of the default set of options for configuring TLS.
+	DefaultTLSConfigName = "default"
+	// DefaultTLSStoreName is the name of the default store of TLS certificates.
+	// Note that it actually is the only usable one for now.
+	DefaultTLSStoreName = "default"
+)
+
 // DefaultTLSOptions the default TLS options.
 var DefaultTLSOptions = Options{}
 
@@ -38,6 +46,7 @@ func NewManager() *Manager {
 }
 
 // UpdateConfigs updates the TLS* configuration options.
+// It initializes the default TLS store, and the TLS store for the ACME challenges.
 func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, configs map[string]Options, certs []*CertAndStores) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
@@ -45,6 +54,18 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 	m.configs = configs
 	m.storesConfig = stores
 	m.certs = certs
+
+	if m.storesConfig == nil {
+		m.storesConfig = make(map[string]Store)
+	}
+
+	if _, ok := m.storesConfig[DefaultTLSStoreName]; !ok {
+		m.storesConfig[DefaultTLSStoreName] = Store{}
+	}
+
+	if _, ok := m.storesConfig[tlsalpn01.ACMETLS1Protocol]; !ok {
+		m.storesConfig[tlsalpn01.ACMETLS1Protocol] = Store{}
+	}
 
 	m.stores = make(map[string]*CertificateStore)
 	for storeName, storeConfig := range m.storesConfig {
@@ -75,33 +96,42 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 	}
 
 	for storeName, certs := range storesCertificates {
-		m.getStore(storeName).DynamicCerts.Set(certs)
+		st, ok := m.stores[storeName]
+		if !ok {
+			st, _ = buildCertificateStore(context.Background(), Store{}, storeName)
+			m.stores[storeName] = st
+		}
+		st.DynamicCerts.Set(certs)
 	}
 }
 
 // Get gets the TLS configuration to use for a given store / configuration.
 func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
-	m.lock.Lock()
-	store := m.getStore(storeName)
-	acmeTLSStore := m.getStore(tlsalpn01.ACMETLS1Protocol)
-	m.lock.Unlock()
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 
 	var tlsConfig *tls.Config
 	var err error
 
+	sniStrict := false
 	config, ok := m.configs[configName]
-	if !ok {
+	if ok {
+		sniStrict = config.SniStrict
+		tlsConfig, err = buildTLSConfig(config)
+	} else {
 		err = fmt.Errorf("unknown TLS options: %s", configName)
+	}
+	if err != nil {
 		tlsConfig = &tls.Config{}
 	}
 
-	if err == nil {
-		tlsConfig, err = buildTLSConfig(config)
-		if err != nil {
-			tlsConfig = &tls.Config{}
-		}
+	store := m.getStore(storeName)
+	if store == nil {
+		err = fmt.Errorf("TLS store %s not found", storeName)
+	}
+	acmeTLSStore := m.getStore(tlsalpn01.ACMETLS1Protocol)
+	if acmeTLSStore == nil {
+		err = fmt.Errorf("ACME TLS store %s not found", tlsalpn01.ACMETLS1Protocol)
 	}
 
 	tlsConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
@@ -121,7 +151,7 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 			return bestCertificate, nil
 		}
 
-		if m.configs[configName].SniStrict {
+		if sniStrict {
 			return nil, fmt.Errorf("strict SNI enabled - No certificate found for domain: %q, closing connection", domainToCheck)
 		}
 
@@ -153,20 +183,19 @@ func (m *Manager) GetCertificates() []*x509.Certificate {
 	return certificates
 }
 
-// getStore returns the store found for storeName. If not found, a new one is
-// created, populated with a default certificate, and written to m.stores.
+// getStore returns the store found for storeName, or nil otherwise.
 func (m *Manager) getStore(storeName string) *CertificateStore {
-	_, ok := m.stores[storeName]
+	st, ok := m.stores[storeName]
 	if !ok {
-		m.stores[storeName], _ = buildCertificateStore(context.Background(), Store{}, storeName)
+		return nil
 	}
-	return m.stores[storeName]
+	return st
 }
 
 // GetStore gets the certificate store of a given name.
 func (m *Manager) GetStore(storeName string) *CertificateStore {
-	m.lock.Lock()
-	defer m.lock.Unlock()
+	m.lock.RLock()
+	defer m.lock.RUnlock()
 
 	return m.getStore(storeName)
 }

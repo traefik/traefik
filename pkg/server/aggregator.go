@@ -91,7 +91,7 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 			}
 
 			for key, store := range configuration.TLS.Stores {
-				if key != "default" {
+				if key != tls.DefaultTLSStoreName {
 					key = provider.MakeQualifiedName(pvd, key)
 				} else {
 					defaultTLSStoreProviders = append(defaultTLSStoreProviders, pvd)
@@ -113,16 +113,16 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 
 	if len(defaultTLSStoreProviders) > 1 {
 		log.WithoutContext().Errorf("Default TLS Stores defined multiple times in %v", defaultTLSOptionProviders)
-		delete(conf.TLS.Stores, "default")
+		delete(conf.TLS.Stores, tls.DefaultTLSStoreName)
 	}
 
 	if len(defaultTLSOptionProviders) == 0 {
-		conf.TLS.Options["default"] = tls.DefaultTLSOptions
+		conf.TLS.Options[tls.DefaultTLSConfigName] = tls.DefaultTLSOptions
 	} else if len(defaultTLSOptionProviders) > 1 {
 		log.WithoutContext().Errorf("Default TLS Options defined multiple times in %v", defaultTLSOptionProviders)
 		// We do not set an empty tls.TLS{} as above so that we actually get a "cascading failure" later on,
 		// i.e. routers depending on this missing TLS option will fail to initialize as well.
-		delete(conf.TLS.Options, "default")
+		delete(conf.TLS.Options, tls.DefaultTLSConfigName)
 	}
 
 	return conf
