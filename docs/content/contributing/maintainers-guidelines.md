@@ -1,5 +1,5 @@
 <p align="center">
-<img src="../assets/img/maintainers-guidelines.png" alt="Traefik Maintainer's Guidelines" title="Maintainer's Guidelines" />
+<img src="../../assets/img/maintainers-guidelines.png" alt="Traefik Maintainer's Guidelines" title="Maintainer's Guidelines" />
 </p>
 
 # The Maintainers Guidelines
@@ -27,13 +27,13 @@ Note: you do not have to meet all of the listed requirements, but must have achi
 
 There are lots of areas where you can contribute to the project but we can suggest you start with activities such as:
 
-- PR reviewing. 
-  - According to our guidelines we require you have at least 3 reviewers, thus you can review a PR and leave the relevant comment if it is necessary.
-- Participating in a daily [issue triage](https://github.com/traefik/contributors-guide/blob/master/issue_triage.md). 
-  - The process helps to understand and prioritize the reported issue according to its importance and severity. This is crucial in order to learn how our users implement Traefik. Each of the issues that are labeled as bug/possible bug/confirmed requires a reproducible use case. You can help in creating a reproducible use case if it has not been added to the issue or use the sample code provided by the reporter. Typically, a simple docker compose should be enough to reproduce the issue.
-- Code contribution. 
-- Documentation contribution. 
-  - Technical documentation is one of the most important components of the product. The ability to set up a testing environment using Traefik in a few minutes using the official documentation is a game changer.
+- PR reviewing.
+    - According to our guidelines we require you have at least 3 reviewers, thus you can review a PR and leave the relevant comment if it is necessary.
+- Participating in a daily [issue triage](https://github.com/traefik/contributors-guide/blob/master/issue_triage.md).
+    - The process helps to understand and prioritize the reported issue according to its importance and severity. This is crucial in order to learn how our users implement Traefik. Each of the issues that are labeled as bug/possible bug/confirmed requires a reproducible use case. You can help in creating a reproducible use case if it has not been added to the issue or use the sample code provided by the reporter. Typically, a simple docker compose should be enough to reproduce the issue.
+- Code contribution.
+- Documentation contribution.
+    - Technical documentation is one of the most important components of the product. The ability to set up a testing environment using Traefik in a few minutes using the official documentation is a game changer.
 - You will be listed on our Maintainers Github page as well as on our website in the section [maintainers](maintainers.md).
 - We will be promoting you in social channels (mostly on Twitter).
 
@@ -45,7 +45,7 @@ There are lots of areas where you can contribute to the project but we can sugge
 
 - All of our maintainers are added to Slack #traefik-maintainers channel that belongs to Traefik labs workspace. Having the team in one place helps us to communicate effectively. You can reach Traefik core developers directly, which offers the possibility to discuss issues, pull requests, enhancements more efficiently and get the feedback almost immediately. Fewer blockers mean more fun and engaging work.
 - We publish a report to the channel on a daily basis that includes all the activities performed during the day. You are updated in regards to the workload that has been processed including: working on the new features and enhancements, activities related to the reported issues and PR’s, other important project-related announcements.
-- At 5:00 PM CET every day we review all the created issues that have been reported, assign the specific *[labels](maintainers.md#Labels)* and prioritize them based on the severity of the problem. The process is called *[issue triaging](https://github.com/traefik/contributors-guide/blob/master/issue_triage.md).* Each of the maintainers is welcome to join the meeting. For that purpose, we use a dedicated Discord server where you are invited once you have become the official maintainer.
+- At 5:00 PM CET every day we review all the created issues that have been reported, assign the specific *[labels](maintainers.md#labels)* and prioritize them based on the severity of the problem. The process is called *[issue triaging](https://github.com/traefik/contributors-guide/blob/master/issue_triage.md).* Each of the maintainers is welcome to join the meeting. For that purpose, we use a dedicated Discord server where you are invited once you have become the official maintainer.
 
 ## Maintainers Activity
 
