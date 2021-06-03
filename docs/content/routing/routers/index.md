@@ -813,7 +813,7 @@ If you want to limit the router scope to a set of entry points, set the entry po
 You can attach a list of [middlewares](../../middlewares/overview.md) to each TCP router.
 The middlewares will take effect only if the rule matches, and before connecting to the service.
 
-!!! warning "The character `@` is not authorized in the middleware name."
+!!! warning "The character `@` is not allowed to be used in the middleware name."
 
 !!! tip "Middlewares order"
 

@@ -9,7 +9,7 @@ Attached to the routers, pieces of middleware are a means of tweaking the reques
 
 There are several available middleware in Traefik, some can modify the request, the headers, some are in charge of redirections, some add authentication, and so on.
 
-Pieces of middleware with the same protocol can be combined in chains to fit every scenario.
+Middlewares that use the same protocol can be combined into chains to fit every scenario.
 
 !!! warning "Provider Namespace"
 

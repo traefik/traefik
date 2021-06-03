@@ -97,9 +97,9 @@ labels:
   [tcp.services.service1]
     [tcp.services.service1.loadBalancer]
     [[tcp.services.service1.loadBalancer.servers]]
-      address = "xx.xx.xx.xx:xx"
+      address = "10.0.0.10:4000"
     [[tcp.services.service1.loadBalancer.servers]]
-      address = "xx.xx.xx.xx:xx"
+      address = "10.0.0.11:4000"
 ```
 
 ```yaml tab="File (YAML)"
@@ -123,8 +123,8 @@ tcp:
     service1:
       loadBalancer:
         servers:
-        - address: "xx.xx.xx.xx:xx"
-        - address: "xx.xx.xx.xx:xx"
+        - address: "10.0.0.10:4000"
+        - address: "10.0.0.11:4000"
 ```
 
 ## Available TCP Middlewares
