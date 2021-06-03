@@ -385,18 +385,6 @@ func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
 			host:               "override.excludedips.whitelist.docker.local",
 			expectedStatusCode: 200,
 		},
-		{
-			desc:               "A override excludedIPs with remote accepted",
-			xForwardedFor:      "10.0.0.1,10.0.0.2",
-			host:               "override.excludedips.whitelist.remote.accepted.docker.local",
-			expectedStatusCode: 200,
-		},
-		{
-			desc:               "override excludedIPs with remote rejected",
-			xForwardedFor:      "10.0.0.1,10.0.0.2",
-			host:               "override.excludedips.whitelist.remote.rejected.docker.local",
-			expectedStatusCode: 403,
-		},
 	}
 
 	for _, test := range testCases {
@@ -404,7 +392,6 @@ func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
 		req.Header.Set("X-Forwarded-For", test.xForwardedFor)
 		req.Host = test.host
 		req.RequestURI = ""
-		req.RemoteAddr = "127.0.0.1"
 
 		err = try.Request(req, 1*time.Second, try.StatusCodeIs(test.expectedStatusCode))
 		if err != nil {

@@ -47,13 +47,11 @@ func (s *DepthStrategy) GetIP(req *http.Request) string {
 // It allows to check whether addresses are in a given pool of IPs.
 type PoolStrategy struct {
 	Checker *Checker
-	// UseRemote defines whether to also check req.RemoteAddr against the pool of IPs.
-	UseRemote bool
 }
 
-// GetIP checks the list of Forwarded IPs (most recent first), as well as the
-// RemoteAddr, against the Checker pool of IPs. It returns the first IP that is not
-// in the pool, or the empty string otherwise.
+// GetIP checks the list of Forwarded IPs (most recent first) against the
+// Checker pool of IPs. It returns the first IP that is not in the pool, or the
+// empty string otherwise.
 func (s *PoolStrategy) GetIP(req *http.Request) string {
 	if s.Checker == nil {
 		return ""
@@ -70,14 +68,6 @@ func (s *PoolStrategy) GetIP(req *http.Request) string {
 		if contain, _ := s.Checker.Contains(xffTrimmed); !contain {
 			return xffTrimmed
 		}
-	}
-
-	if !s.UseRemote {
-		return ""
-	}
-
-	if contain, _ := s.Checker.Contains(req.RemoteAddr); !contain {
-		return req.RemoteAddr
 	}
 
 	return ""

@@ -260,8 +260,7 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 			return nil, err
 		}
 		return &ip.PoolStrategy{
-			Checker:   checker,
-			UseRemote: true,
+			Checker: checker,
 		}, nil
 	}
 
