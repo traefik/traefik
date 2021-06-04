@@ -388,7 +388,7 @@ Token is used to provide a per-request ACL token which overrides the agent's def
 Expose containers by default. (Default: ```true```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_NAMESPACES`:  
-Namespaces to search.
+Namespaces to search.  Use ['*'] to search across all namespaces.  If missing, only the default namespace is searched.
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_PREFIX`:  
 Prefix for consul service tags. Default 'traefik' (Default: ```traefik```)
