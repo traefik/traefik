@@ -2,12 +2,12 @@ package rules
 
 import (
 	"fmt"
-	"net"
 	"net/http"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/gorilla/mux"
+	"github.com/traefik/traefik/v2/pkg/ip"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
 	"github.com/vulcand/predicate"
@@ -158,41 +158,16 @@ func host(route *mux.Route, hosts ...string) error {
 }
 
 func clientIP(route *mux.Route, clientIPs ...string) error {
-	var authorizedIPs []net.IP
-	var authorizedIPsNet []*net.IPNet
-
-	for _, ip := range clientIPs {
-		if ipAddr := net.ParseIP(ip); ipAddr == nil {
-			_, ipNet, err := net.ParseCIDR(ip)
-			if err != nil {
-				return fmt.Errorf("invalid value %q for \"ClientIP\" matcher: %w", ip, err)
-			}
-			authorizedIPsNet = append(authorizedIPsNet, ipNet)
-		} else {
-			authorizedIPs = append(authorizedIPs, ipAddr)
-		}
+	checker, err := ip.NewChecker(clientIPs)
+	if err != nil {
+		return err
 	}
 
+	strategy := ip.RemoteAddrStrategy{}
+
 	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
-		host, _, err := net.SplitHostPort(req.RemoteAddr)
-		if err != nil {
-			host = req.RemoteAddr
-		}
-
-		remoteAddr := net.ParseIP(host)
-		for _, authorizedIP := range authorizedIPs {
-			if authorizedIP.Equal(remoteAddr) {
-				return true
-			}
-		}
-
-		for _, authorizedNet := range authorizedIPsNet {
-			if authorizedNet.Contains(remoteAddr) {
-				return true
-			}
-		}
-
-		return false
+		ok, err := checker.Contains(strategy.GetIP(req))
+		return err == nil && ok
 	})
 
 	return nil
