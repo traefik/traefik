@@ -239,7 +239,7 @@ The table below lists all the available matchers:
 | ```Path(`/path`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`, ...)```         | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
 | ```PathPrefix(`/products/`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`)```   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
 | ```Query(`foo=bar`, `bar=baz`)```                                      | Match Query String parameters. It accepts a sequence of key=value pairs.                                       |
-| ```ClientIP(`10.0.0.0/16`, `::1`)```                                   | Check if the request client IP matches one of the given IP/CIDR. It accepts IPv4, IPv6 and CIDR format.        |
+| ```ClientIP(`10.0.0.0/16`, `::1`)```                                   | Match if the request client IP is one of the given IP/CIDR. It accepts IPv4, IPv6 and CIDR formats.            |
 
 !!! important "Non-ASCII Domain Names"
 
@@ -275,7 +275,7 @@ The table below lists all the available matchers:
 
 !!! info "ClientIP matcher"
 
-    `ClientIP` matcher only try to match the request client IP and does not rely on the `X-Forwarded-For` header.
+    The `ClientIP` matcher will only match the request client IP and does not use the `X-Forwarded-For` header for matching.
 
 ### Priority
 
