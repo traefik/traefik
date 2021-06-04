@@ -178,7 +178,7 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 		}
 		p.Namespaces = allNamespaces
 	}
-	
+
 	var data []itemData
 	for _, ns := range p.Namespaces {
 		nsLogger := log.FromContext(log.With(ctx, log.Str("namespace", ns)))
@@ -233,7 +233,7 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 
 func (p *Provider) fetchNamespaces(ctx context.Context) ([]string, error) {
 	namespaces := []string{}
-	consulNamespaces, _ ,err := p.client.Namespaces().List(nil)
+	consulNamespaces, _, err := p.client.Namespaces().List(nil)
 	if err != nil {
 		return []string{}, err
 	}
