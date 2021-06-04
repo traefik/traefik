@@ -49,7 +49,7 @@ type Provider struct {
 	Cache             bool            `description:"Use local agent caching for catalog reads." json:"cache,omitempty" toml:"cache,omitempty" yaml:"cache,omitempty" export:"true"`
 	ExposedByDefault  bool            `description:"Expose containers by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
 	DefaultRule       string          `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
-	Namespaces        []string        `description:"Namespaces to search." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty"`
+	Namespaces        []string        `description:"Namespaces to search.  Use ['*'] to search across all namespaces.  If missing, only the default namespace is searched." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty"`
 
 	client         *api.Client
 	defaultRuleTpl *template.Template
@@ -165,9 +165,18 @@ func (p *Provider) loadConfiguration(ctx context.Context, configurationChan chan
 }
 
 func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error) {
-	// if no namespaces are specified, use the default
+	// if no namespaces are specified, only use the default
 	if len(p.Namespaces) == 0 {
 		p.Namespaces = []string{"default"}
+	}
+
+	// if namespace list is ["*"], search all namespaces
+	if len(p.Namespaces) == 1 && p.Namespaces[0] == "*" {
+		allNamespaces, err := p.fetchNamespaces(ctx)
+		if err != nil {
+			return nil, err
+		}
+		p.Namespaces = allNamespaces
 	}
 	
 	var data []itemData
@@ -220,6 +229,20 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 		}
 	}
 	return data, nil
+}
+
+func (p *Provider) fetchNamespaces(ctx context.Context) ([]string, error) {
+	namespaces := []string{}
+	consulNamespaces, _ ,err := p.client.Namespaces().List(nil)
+	if err != nil {
+		return []string{}, err
+	}
+	for _, ns := range consulNamespaces {
+		if ns.DeletedAt == nil {
+			namespaces = append(namespaces, ns.Name)
+		}
+	}
+	return namespaces, nil
 }
 
 func (p *Provider) fetchService(ctx context.Context, name string, namespace string) ([]*api.CatalogService, map[string]string, error) {
