@@ -325,19 +325,46 @@ http:
 
 ##### `ipStrategy.excludedIPs`
 
-`excludedIPs` configures Traefik to scan the `X-Forwarded-For` header and select the first IP not in the list.
+!!! important "Contrary to what the name might suggest, this option is _not_ about excluding an IP from the rate limiter, and therefore cannot be used to deactivate rate limiting for some IPs."
 
 !!! important "If `depth` is specified, `excludedIPs` is ignored."
 
-!!! example "Example of ExcludedIPs & X-Forwarded-For"
+`excludedIPs` is meant to address two classes of somewhat distinct use-cases:
 
-    | `X-Forwarded-For`                       | `excludedIPs`         | clientIP     |
-    |-----------------------------------------|-----------------------|--------------|
-    | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"12.0.0.1,13.0.0.1"` | `"11.0.0.1"` |
-    | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"15.0.0.1,13.0.0.1"` | `"12.0.0.1"` |
-    | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"10.0.0.1,13.0.0.1"` | `"12.0.0.1"` |
-    | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"15.0.0.1,16.0.0.1"` | `"13.0.0.1"` |
-    | `"10.0.0.1,11.0.0.1"`                   | `"10.0.0.1,11.0.0.1"` | `""`         |
+1. Distinguish IPs which are behind the same (set of) reverse-proxies so that each of them contributes, independently to the others,
+   to its own rate-limit "bucket" (cf the [leaky bucket analogy](https://wikipedia.org/wiki/Leaky_bucket)).
+   In this case, `excludedIPs` should be set to match the list of `X-Forwarded-For IPs` that are to be excluded,
+   in order to find the actual clientIP.
+
+    !!! example "Each IP as a distinct source"
+
+        | X-Forwarded-For                | excludedIPs           | clientIP     |
+        |--------------------------------|-----------------------|--------------|
+        | `"10.0.0.1,11.0.0.1,12.0.0.1"` | `"11.0.0.1,12.0.0.1"` | `"10.0.0.1"` |
+        | `"10.0.0.2,11.0.0.1,12.0.0.1"` | `"11.0.0.1,12.0.0.1"` | `"10.0.0.2"` |
+
+2. Group together a set of IPs (also behind a common set of reverse-proxies) so that they are considered the same source,
+   and all contribute to the same rate-limit bucket.
+
+    !!! example "Group IPs together as same source"
+
+        |  X-Forwarded-For               |  excludedIPs | clientIP     |
+        |--------------------------------|--------------|--------------|
+        | `"10.0.0.1,11.0.0.1,12.0.0.1"` | `"12.0.0.1"` | `"11.0.0.1"` |
+        | `"10.0.0.2,11.0.0.1,12.0.0.1"` | `"12.0.0.1"` | `"11.0.0.1"` |
+        | `"10.0.0.3,11.0.0.1,12.0.0.1"` | `"12.0.0.1"` | `"11.0.0.1"` |
+
+For completeness, below are additional examples to illustrate how the matching works.
+For a given request the list of `X-Forwarded-For` IPs is checked from most recent to most distant against the `excludedIPs` pool,
+and the first IP that is _not_ in the pool (if any) is returned.
+
+!!! example "Matching for clientIP"
+
+    |  X-Forwarded-For               |  excludedIPs          | clientIP     |
+    |--------------------------------|-----------------------|--------------|
+    | `"10.0.0.1,11.0.0.1,13.0.0.1"` | `"11.0.0.1"`          | `"13.0.0.1"` |
+    | `"10.0.0.1,11.0.0.1,13.0.0.1"` | `"15.0.0.1,16.0.0.1"` | `"13.0.0.1"` |
+    | `"10.0.0.1,11.0.0.1"`          | `"10.0.0.1,11.0.0.1"` | `""`         |
 
 ```yaml tab="Docker"
 labels:
