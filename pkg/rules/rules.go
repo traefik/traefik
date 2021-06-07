@@ -160,14 +160,19 @@ func host(route *mux.Route, hosts ...string) error {
 func clientIP(route *mux.Route, clientIPs ...string) error {
 	checker, err := ip.NewChecker(clientIPs)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not initialize IP Checker for \"ClientIP\" matcher: %w", err)
 	}
 
 	strategy := ip.RemoteAddrStrategy{}
 
 	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
 		ok, err := checker.Contains(strategy.GetIP(req))
-		return err == nil && ok
+		if err != nil {
+			log.FromContext(req.Context()).Warnf("\"ClientIP\" matcher: could not match remote address : %w", err)
+			return false
+		}
+
+		return ok
 	})
 
 	return nil
