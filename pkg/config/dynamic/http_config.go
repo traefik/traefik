@@ -236,7 +236,7 @@ type ServersTransport struct {
 	// order to implement the Consul Connect protocol between Traefik and the Consul
 	// services. Therefore it is not serializable to prevent it from being configurable
 	// by other parties.
-	CertVerifier `json:"-" toml:"-" yaml:"-" hash:"-" label:"-" export:"false"`
+	CertVerifier CertVerifier `json:"-" toml:"-" yaml:"-" hash:"-" label:"-" export:"false"`
 }
 
 // +k8s:deepcopy-gen=true
