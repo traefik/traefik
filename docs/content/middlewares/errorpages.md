@@ -99,7 +99,9 @@ The status code ranges are inclusive (`500-599` will trigger with every code bet
 
 !!! note ""
 
-    You can define either a status code as a number (`500`) or ranges by separating two codes with a dash (`500-599`).
+    You can define either a status code as a number (`500`), as multiple
+    comma-separated numbers (`500,502`), as ranges by separating two codes with
+    a dash (`500-599`), or a combination of the two (`404,418,500-599`).
 
 ### `service`
 
