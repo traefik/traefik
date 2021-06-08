@@ -58,9 +58,8 @@ const (
 
 // RegisterInfluxDB registers the metrics pusher if this didn't happen yet and creates a InfluxDB Registry instance.
 func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
-	if influxDBClient == nil {
-		influxDBClient = initInfluxDBClient(ctx, config)
-	}
+	influxDBClient = initInfluxDBClient(ctx, config)
+
 	if influxDBTicker == nil {
 		influxDBTicker = initInfluxDBTicker(ctx, config)
 	}
@@ -134,7 +133,7 @@ func initInfluxDBClient(ctx context.Context, config *types.InfluxDB) *influx.Inf
 	}
 
 	return influx.New(
-		map[string]string{},
+		config.AdditionalTags,
 		influxdb.BatchPointsConfig{
 			Database:        config.Database,
 			RetentionPolicy: config.RetentionPolicy,

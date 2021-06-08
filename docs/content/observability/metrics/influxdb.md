@@ -235,3 +235,29 @@ metrics:
 ```bash tab="CLI"
 --metrics.influxdb.pushInterval=10s
 ```
+
+#### `additionalTags`
+
+_Optional, Default={}_
+
+Additional tags to send to influxdb for all metrics.
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.influxDB]
+    [metrics.influxDB.additionalTags]
+      host = "traefik01.example.com"
+      environment = "production"
+```
+
+```yaml tab="File (YAML)"
+metrics:
+  influxDB:
+    additionalTags:
+      host: traefik01.example.com
+      environment: production
+```
+
+```bash tab="CLI"
+--metrics.influxdb.additionaltags.host=traefik01.example.com --metrics.influxdb.additionaltags.environment=production
+```
