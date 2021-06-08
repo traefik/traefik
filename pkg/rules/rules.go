@@ -7,6 +7,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/gorilla/mux"
+	"github.com/traefik/traefik/v2/pkg/ip"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
 	"github.com/vulcand/predicate"
@@ -16,6 +17,7 @@ var funcs = map[string]func(*mux.Route, ...string) error{
 	"Host":          host,
 	"HostHeader":    host,
 	"HostRegexp":    hostRegexp,
+	"ClientIP":      clientIP,
 	"Path":          path,
 	"PathPrefix":    pathPrefix,
 	"Method":        methods,
@@ -152,6 +154,27 @@ func host(route *mux.Route, hosts ...string) error {
 		}
 		return false
 	})
+	return nil
+}
+
+func clientIP(route *mux.Route, clientIPs ...string) error {
+	checker, err := ip.NewChecker(clientIPs)
+	if err != nil {
+		return fmt.Errorf("could not initialize IP Checker for \"ClientIP\" matcher: %w", err)
+	}
+
+	strategy := ip.RemoteAddrStrategy{}
+
+	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
+		ok, err := checker.Contains(strategy.GetIP(req))
+		if err != nil {
+			log.FromContext(req.Context()).Warnf("\"ClientIP\" matcher: could not match remote address : %w", err)
+			return false
+		}
+
+		return ok
+	})
+
 	return nil
 }
 
