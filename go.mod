@@ -32,7 +32,7 @@ require (
 	github.com/fatih/structs v1.1.0
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
 	github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2
-	github.com/go-acme/lego/v4 v4.3.1
+	github.com/go-acme/lego/v4 v4.4.0
 	github.com/go-check/check v0.0.0-00010101000000-000000000000
 	github.com/go-kit/kit v0.10.1-0.20200915143503-439c4d2ed3ea
 	github.com/golang/protobuf v1.4.3
@@ -82,9 +82,9 @@ require (
 	github.com/vulcand/predicate v1.1.0
 	go.elastic.co/apm v1.7.0
 	go.elastic.co/apm/module/apmot v1.7.0
-	golang.org/x/mod v0.3.0
+	golang.org/x/mod v0.4.2
 	golang.org/x/net v0.0.0-20210220033124-5f55cee0dc0d
-	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324
+	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	google.golang.org/grpc v1.27.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.19.0
 	gopkg.in/fsnotify.v1 v1.4.7
