@@ -4,20 +4,26 @@
 
 Traefik is a dynamic reverse proxy,
 and while the documentation often demonstrates configuration options through file examples,
-the core feature of Traefik is its ability to be provided with configuration dynamically.
+the core feature of Traefik is its dynamic configurability,
+directly reacting to changes from providers over time.
 
-The file provider allows providing [dynamic configuration](../configuration-overview/#the-dynamic-configuration) through a file or directory.
-This is different from the [static configuration](../configuration-overview/#the-static-configuration),
-which can also be provided by a file.
+Notably, a part of the configuration is [static](../configuration-overview/#the-static-configuration),
+and can be provided by a file on startup, whereas various providers,
+such as the file provider,
+contribute dynamically all along the traefik instance lifetime to its [dynamic configuration](../configuration-overview/#the-dynamic-configuration) changes.
 
-For HTTP configurations, the EntryPoint concept matches the Transport Layer (TCP),
-while the Router concept matches the Presentation (TLS) and Application layers (HTTP).
+In addition, the configuration englobes concepts such as the EntryPoint which can be seen as a listener on the Transport Layer (TCP),
+as apposed to the Router which is more about the Presentation (TLS) and Application layers (HTTP). And there can be as many routers as one wishes for a given EntryPoint.
 
-An EntryPoint is not tied to the protocol HTTP or HTTPS,
-as one can attach a TLS router or a non-TLS router to the same EntryPoint.
+In other words, for a given Entrypoint,
+at any given time the traffic seen is not bound to be just about one protocol.
+It could be HTTP, or otherwise. Over TLS, or not.
+Not to mention that dynamic configuration changes potentially make that kind of traffic vary over time.
 
-***Therefore, in this dynamic context, when an EntryPoint is configured, 
-Traefik is handling traffic on the EP port without the guarantee to match any configured route.***
+***Therefore, in this dynamic context,
+the static configuration of an EntryPoint does not give any hint whatsoever about how the traffic going through that EntryPoint is going to be routed.
+Or whether it's even going to be routed at all,
+i.e. whether there is a Router matching the kind of traffic going through it.***
 
 ### 404 Not found
 
