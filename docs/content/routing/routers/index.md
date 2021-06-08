@@ -239,6 +239,7 @@ The table below lists all the available matchers:
 | ```Path(`/path`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`, ...)```         | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
 | ```PathPrefix(`/products/`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`)```   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
 | ```Query(`foo=bar`, `bar=baz`)```                                      | Match Query String parameters. It accepts a sequence of key=value pairs.                                       |
+| ```ClientIP(`10.0.0.0/16`, `::1`)```                                   | Match if the request client IP is one of the given IP/CIDR. It accepts IPv4, IPv6 and CIDR formats.            |
 
 !!! important "Non-ASCII Domain Names"
 
@@ -271,6 +272,10 @@ The table below lists all the available matchers:
     Use a `*Prefix*` matcher if your service listens on a particular base path but also serves requests on sub-paths.
     For instance, `PathPrefix: /products` would match `/products` but also `/products/shoes` and `/products/shirts`.
     Since the path is forwarded as-is, your service is expected to listen on `/products`.
+
+!!! info "ClientIP matcher"
+
+    The `ClientIP` matcher will only match the request client IP and does not use the `X-Forwarded-For` header for matching.
 
 ### Priority
 

@@ -17,6 +17,7 @@ func Test_addRoute(t *testing.T) {
 		desc          string
 		rule          string
 		headers       map[string]string
+		remoteAddr    string
 		expected      map[string]int
 		expectedError bool
 	}{
@@ -519,6 +520,112 @@ func Test_addRoute(t *testing.T) {
 				"http://plopi/a":       http.StatusOK,
 			},
 		},
+		{
+			desc:          "ClientIP empty",
+			rule:          "ClientIP(``)",
+			expectedError: true,
+		},
+		{
+			desc:          "Invalid ClientIP",
+			rule:          "ClientIP(`invalid`)",
+			expectedError: true,
+		},
+		{
+			desc:       "Non matching ClientIP",
+			rule:       "ClientIP(`10.10.1.1`)",
+			remoteAddr: "10.0.0.0",
+			expected: map[string]int{
+				"http://tchouk/toto": http.StatusNotFound,
+			},
+		},
+		{
+			desc:       "Non matching IPv6",
+			rule:       "ClientIP(`10::10`)",
+			remoteAddr: "::1",
+			expected: map[string]int{
+				"http://tchouk/toto": http.StatusNotFound,
+			},
+		},
+		{
+			desc:       "Matching IP",
+			rule:       "ClientIP(`10.0.0.0`)",
+			remoteAddr: "10.0.0.0:8456",
+			expected: map[string]int{
+				"http://tchouk/toto": http.StatusOK,
+			},
+		},
+		{
+			desc:       "Matching IPv6",
+			rule:       "ClientIP(`10::10`)",
+			remoteAddr: "10::10",
+			expected: map[string]int{
+				"http://tchouk/toto": http.StatusOK,
+			},
+		},
+		{
+			desc:       "Matching IP among several IP",
+			rule:       "ClientIP(`10.0.0.1`, `10.0.0.0`)",
+			remoteAddr: "10.0.0.0",
+			expected: map[string]int{
+				"http://tchouk/toto": http.StatusOK,
+			},
+		},
+		{
+			desc:       "Non Matching IP with CIDR",
+			rule:       "ClientIP(`11.0.0.0/24`)",
+			remoteAddr: "10.0.0.0",
+			expected: map[string]int{
+				"http://tchouk/toto": http.StatusNotFound,
+			},
+		},
+		{
+			desc:       "Non Matching IPv6 with CIDR",
+			rule:       "ClientIP(`11::/16`)",
+			remoteAddr: "10::",
+			expected: map[string]int{
+				"http://tchouk/toto": http.StatusNotFound,
+			},
+		},
+		{
+			desc:       "Matching IP with CIDR",
+			rule:       "ClientIP(`10.0.0.0/16`)",
+			remoteAddr: "10.0.0.0",
+			expected: map[string]int{
+				"http://tchouk/toto": http.StatusOK,
+			},
+		},
+		{
+			desc:       "Matching IPv6 with CIDR",
+			rule:       "ClientIP(`10::/16`)",
+			remoteAddr: "10::10",
+			expected: map[string]int{
+				"http://tchouk/toto": http.StatusOK,
+			},
+		},
+		{
+			desc:       "Matching IP among several CIDR",
+			rule:       "ClientIP(`11.0.0.0/16`, `10.0.0.0/16`)",
+			remoteAddr: "10.0.0.0",
+			expected: map[string]int{
+				"http://tchouk/toto": http.StatusOK,
+			},
+		},
+		{
+			desc:       "Matching IP among non matching CIDR and matching IP",
+			rule:       "ClientIP(`11.0.0.0/16`, `10.0.0.0`)",
+			remoteAddr: "10.0.0.0",
+			expected: map[string]int{
+				"http://tchouk/toto": http.StatusOK,
+			},
+		},
+		{
+			desc:       "Matching IP among matching CIDR and non matching IP",
+			rule:       "ClientIP(`11.0.0.0`, `10.0.0.0/16`)",
+			remoteAddr: "10.0.0.0",
+			expected: map[string]int{
+				"http://tchouk/toto": http.StatusOK,
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -545,6 +652,10 @@ func Test_addRoute(t *testing.T) {
 					w := httptest.NewRecorder()
 
 					req := testhelpers.MustNewRequest(http.MethodGet, calledURL, nil)
+
+					// Useful for the ClientIP matcher
+					req.RemoteAddr = test.remoteAddr
+
 					for key, value := range test.headers {
 						req.Header.Set(key, value)
 					}
