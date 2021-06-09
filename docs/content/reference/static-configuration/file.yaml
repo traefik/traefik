@@ -376,6 +376,7 @@ certificatesResolvers:
       email: foobar
       caServer: foobar
       renewBeforeExpiry: 42
+      expirationCheckInterval: 42
       preferredChain: foobar
       storage: foobar
       keyType: foobar
@@ -397,6 +398,7 @@ certificatesResolvers:
       email: foobar
       caServer: foobar
       renewBeforeExpiry: 42
+      expirationCheckInterval: 42
       preferredChain: foobar
       storage: foobar
       keyType: foobar
