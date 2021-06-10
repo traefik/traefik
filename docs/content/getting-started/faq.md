@@ -21,11 +21,10 @@ at any given time the traffic seen is not bound to be just about one protocol.
 It could be HTTP, or otherwise. Over TLS, or not.
 Not to mention that dynamic configuration changes potentially make that kind of traffic vary over time.
 
-!!! info "Note"
-    Therefore, in this dynamic context,
-    the static configuration of an `entryPoint` does not give any hint whatsoever about how the traffic going through that `entryPoint` is going to be routed.
-    Or whether it's even going to be routed at all,
-    i.e. whether there is a Router matching the kind of traffic going through it.
+Therefore, in this dynamic context,
+the static configuration of an `entryPoint` does not give any hint whatsoever about how the traffic going through that `entryPoint` is going to be routed.
+Or whether it's even going to be routed at all,
+i.e. whether there is a Router matching the kind of traffic going through it.
 
 ### `404 Not found`
 
@@ -39,7 +38,7 @@ Traefik returns a `404` response code in the following situations:
 From Traefik's point of view, 
 every time a request cannot be matched with a router the correct response code is a `404 Not found`.
 
-A `503 Service Unavailable` response code would not be used in this situation 
+In this situation, the response code is not a `503 Service Unavailable`
 because Traefik is not able to confirm that the lack of a matching router for a request is only temporary.
 Traefik's routing configuration is dynamic and aggregated from different providers,
 hence it's not possible to assume at any moment that a specific route should be handled or not.
@@ -77,7 +76,7 @@ or when a service has healthcheck enabled and all servers are unhealthy.
 
 Sometimes, the `404` response code doesn't play well with other parties or services (such as CDNs).
 
-In these situations, you may want Traefik to always reply with a 503 response code,
+In these situations, you may want Traefik to always reply with a `503` response code,
 instead of a `404` response code.
 
 To achieve this behavior, a simple catchall router, 
@@ -122,5 +121,6 @@ http:
 ```
 
 !!! info "Dedicated service"
-    To gain control over the response code and message,
-    a custom service would be associated with the catchall router.
+    If there is a need for a response code other than a `503` and/or a custom message,
+    the principle of the above example above (a catchall router) still stands,
+    but the `unavailable` service should be adapted to fit such a need.
