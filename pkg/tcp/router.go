@@ -124,22 +124,6 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 	}
 }
 
-// AddRoute defines a handler for a given sniHost (* is the only valid option).
-// func (r *Router) AddRoute(sniHost string, target Handler) {
-// 	if r.routingTable == nil {
-// 		r.routingTable = map[string]Handler{}
-// 	}
-// 	r.routingTable[strings.ToLower(sniHost)] = target
-// }
-
-// AddRouteTLS defines a handler for a given sniHost and sets the matching tlsConfig.
-// func (r *Router) AddRouteTLS(sniHost string, target Handler, config *tls.Config) {
-// 	r.AddRoute(sniHost, &TLSHandler{
-// 		Next:   target,
-// 		Config: config,
-// 	})
-// }
-
 // AddRouteHTTPTLS defines a handler for a given sniHost and sets the matching tlsConfig.
 func (r *Router) AddRouteHTTPTLS(sniHost string, config *tls.Config) {
 	if r.hostHTTPTLSConfig == nil {

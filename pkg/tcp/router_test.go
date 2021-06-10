@@ -15,7 +15,6 @@ func TestAddMatchers(t *testing.T) {
 	assert.Len(t, route.matchers, 1)
 	route.AddMatcher(NewSNIHost("foo"))
 	assert.Len(t, route.matchers, 2)
-
 }
 
 func TestAddRoutes(t *testing.T) {
