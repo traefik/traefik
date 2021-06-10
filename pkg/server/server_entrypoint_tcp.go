@@ -150,7 +150,7 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hos
 		return nil, fmt.Errorf("error preparing http server: %w", err)
 	}
 
-	rt.HTTPForwarder(httpServer.Forwarder)
+	rt.SetHTTPForwarder(httpServer.Forwarder)
 
 	httpsServer, err := createHTTPServer(ctx, listener, configuration, false, reqDecorator)
 	if err != nil {
@@ -162,7 +162,7 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hos
 		return nil, fmt.Errorf("error preparing http3 server: %w", err)
 	}
 
-	rt.HTTPSForwarder(httpsServer.Forwarder)
+	rt.SetHTTPSForwarder(httpsServer.Forwarder)
 
 	tcpSwitcher := &tcp.HandlerSwitcher{}
 	tcpSwitcher.Switch(rt)
@@ -302,7 +302,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 
 // SwitchRouter switches the TCP router handler.
 func (e *TCPEntryPoint) SwitchRouter(rt *tcp.Router) {
-	rt.HTTPForwarder(e.httpServer.Forwarder)
+	rt.SetHTTPForwarder(e.httpServer.Forwarder)
 
 	httpHandler := rt.GetHTTPHandler()
 	if httpHandler == nil {
@@ -311,7 +311,7 @@ func (e *TCPEntryPoint) SwitchRouter(rt *tcp.Router) {
 
 	e.httpServer.Switcher.UpdateHandler(httpHandler)
 
-	rt.HTTPSForwarder(e.httpsServer.Forwarder)
+	rt.SetHTTPSForwarder(e.httpsServer.Forwarder)
 
 	httpsHandler := rt.GetHTTPSHandler()
 	if httpsHandler == nil {
