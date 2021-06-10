@@ -2,6 +2,7 @@ package tcp
 
 import (
 	"bufio"
+	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/types"
 )
@@ -51,6 +52,26 @@ func (s SNIHost) Match(conn WriteCloser) bool {
 		return false
 	}
 
-	// FIXME needs regex matching
-	return (s.host == serverName || s.host == "*")
+	return MatchDomain(serverName, s.host)
+}
+
+// MatchDomain return true if a domain matches the given domain.
+func MatchDomain(domain, givenDomain string) bool {
+	if domain == givenDomain {
+		return true
+	}
+
+	for len(givenDomain) > 0 && givenDomain[len(givenDomain)-1] == '.' {
+		givenDomain = givenDomain[:len(givenDomain)-1]
+	}
+
+	labels := strings.Split(domain, ".")
+	for i := range labels {
+		labels[i] = "*"
+		candidate := strings.Join(labels, ".")
+		if givenDomain == candidate {
+			return true
+		}
+	}
+	return false
 }
