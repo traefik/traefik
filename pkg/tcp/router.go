@@ -49,7 +49,7 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 	}
 
 	br := bufio.NewReader(conn)
-	serverName, tls, peeked, err := clientHelloServerName(br)
+	serverName, tls, peeked, err := ClientHelloServerName(br)
 	if err != nil {
 		conn.Close()
 		return
@@ -204,10 +204,10 @@ func (c *Conn) Read(p []byte) (n int, err error) {
 	return c.WriteCloser.Read(p)
 }
 
-// clientHelloServerName returns the SNI server name inside the TLS ClientHello,
+// ClientHelloServerName returns the SNI server name inside the TLS ClientHello,
 // without consuming any bytes from br.
 // On any error, the empty string is returned.
-func clientHelloServerName(br *bufio.Reader) (string, bool, string, error) {
+func ClientHelloServerName(br *bufio.Reader) (string, bool, string, error) {
 	hdr, err := br.Peek(1)
 	if err != nil {
 		var opErr *net.OpError
