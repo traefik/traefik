@@ -373,7 +373,8 @@ metadata:
   namespace: default
 
 data:
-  ca: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+  # Must contain a certificate under either a `tls.ca` or a `ca.crt` key. 
+  tls.ca: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
 ```
 
 ```yaml tab="Consul Catalog"

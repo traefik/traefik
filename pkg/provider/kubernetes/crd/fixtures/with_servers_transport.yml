@@ -1,11 +1,21 @@
 apiVersion: v1
 kind: Secret
 metadata:
+  name: rootCas0
+  namespace: foo
+
+data:
+  foobar: VEVTVFJPT1RDQVM=
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
   name: rootCas1
   namespace: foo
 
 data:
-  tls.ca: VEVTVFJPT1RDQVM=
+  tls.ca: VEVTVFJPT1RDQVMx
 
 ---
 apiVersion: v1
@@ -35,8 +45,8 @@ metadata:
   namespace: foo
 
 data:
-  tls.ca: VEVTVFJPT1RDQVM0
-  ca.crt: VEVTVFJPT1RDQVM1 # <-- This should be the prefered one.
+  ca.crt: VEVTVFJPT1RDQVM0
+  tls.ca: VEVTVFJPT1RDQVM1 # <-- This should be the prefered one.
 
 ---
 apiVersion: v1
@@ -84,6 +94,7 @@ spec:
   insecureSkipVerify: true
   maxIdleConnsPerHost: 42
   rootCAsSecrets:
+  - rootCas0
   - rootCas1
   - rootCas2
   - rootCas3
