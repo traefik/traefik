@@ -301,6 +301,19 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 				logger.Warn("TCP Router ignored, cannot specify a Host rule without TLS")
 			}
 		}
+
+		ips, err := rules.ParseClientIP(routerConfig.Rule)
+		if err != nil {
+			routerErr := fmt.Errorf("unknown rule %s", routerConfig.Rule)
+			routerConfig.AddError(routerErr, true)
+			logger.Error(routerErr)
+			continue
+		}
+		for _, ip := range ips {
+			route := tcp.NewRoute(handler)
+			route.AddMatcher(tcp.NewClientIP(ip))
+			router.AddRoute(route)
+		}
 	}
 
 	return router, nil
