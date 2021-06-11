@@ -2,6 +2,7 @@ package tcp
 
 import (
 	"bufio"
+	"net"
 	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/types"
@@ -24,7 +25,12 @@ func NewClientIP(ip string) *ClientIP {
 
 // Match checks if the Remote Address matches the matcher IP.
 func (c ClientIP) Match(conn WriteCloser) bool {
-	return c.ip == conn.RemoteAddr().String()
+	host, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
+	if len(host) == 0 {
+		return false
+	}
+
+	return host == c.ip
 }
 
 // SNIHost matches the SNI Host of the connection.
