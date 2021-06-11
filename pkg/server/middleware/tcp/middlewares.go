@@ -2,7 +2,6 @@ package tcpmiddleware
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -31,6 +30,7 @@ func NewBuilder(configs map[string]*runtime.TCPMiddlewareInfo) *Builder {
 // BuildChain creates a middleware chain.
 func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *tcp.Chain {
 	chain := tcp.NewChain()
+
 	for _, name := range middlewares {
 		middlewareName := provider.GetQualifiedName(ctx, name)
 
@@ -61,6 +61,7 @@ func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *tcp.Cha
 			return handler, nil
 		})
 	}
+
 	return &chain
 }
 
@@ -69,9 +70,11 @@ func checkRecursion(ctx context.Context, middlewareName string) (context.Context
 	if !ok {
 		currentStack = []string{}
 	}
+
 	if inSlice(middlewareName, currentStack) {
 		return ctx, fmt.Errorf("could not instantiate middleware %s: recursion detected in %s", middlewareName, strings.Join(append(currentStack, middlewareName), "->"))
 	}
+
 	return context.WithValue(ctx, middlewareStackKey, append(currentStack, middlewareName)), nil
 }
 
@@ -82,13 +85,9 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	}
 
 	var middleware tcp.Constructor
-	badConf := errors.New("cannot create TCP middleware: multi-types middleware not supported, consider declaring two different pieces of middleware instead")
 
 	// IPWhiteList
 	if config.IPWhiteList != nil {
-		if middleware != nil {
-			return nil, badConf
-		}
 		middleware = func(next tcp.Handler) (tcp.Handler, error) {
 			return ipwhitelist.New(ctx, next, *config.IPWhiteList, middlewareName)
 		}
