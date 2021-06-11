@@ -98,7 +98,7 @@ func parseDomain(tree *tree) []string {
 func parseClientIP(tree *tree) []string {
 	switch tree.matcher {
 	case and, or:
-		return append(parseDomain(tree.ruleLeft), parseDomain(tree.ruleRight)...)
+		return append(parseClientIP(tree.ruleLeft), parseClientIP(tree.ruleRight)...)
 	case "ClientIP":
 		return tree.value
 	default:
