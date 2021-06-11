@@ -310,6 +310,7 @@
   [tcp.routers]
     [tcp.routers.TCPRouter0]
       entryPoints = ["foobar", "foobar"]
+      middlewares = ["foobar", "foobar"]
       service = "foobar"
       rule = "foobar"
       [tcp.routers.TCPRouter0.tls]
@@ -326,6 +327,7 @@
           sans = ["foobar", "foobar"]
     [tcp.routers.TCPRouter1]
       entryPoints = ["foobar", "foobar"]
+      middlewares = ["foobar", "foobar"]
       service = "foobar"
       rule = "foobar"
       [tcp.routers.TCPRouter1.tls]
@@ -362,6 +364,10 @@
         [[tcp.services.TCPService02.weighted.services]]
           name = "foobar"
           weight = 42
+  [tcp.middlewares]
+    [tcp.middlewares.Middleware00]
+      [tcp.middlewares.Middleware00.ipWhiteList]
+      sourceRange = ["foobar", "foobar"]
 
 [udp]
   [udp.routers]

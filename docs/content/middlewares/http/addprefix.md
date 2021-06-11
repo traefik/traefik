@@ -3,7 +3,7 @@
 Prefixing the Path 
 {: .subtitle }
 
-![AddPrefix](../assets/img/middleware/addprefix.png) 
+![AddPrefix](../../assets/img/middleware/addprefix.png) 
 
 The AddPrefix middleware updates the path of a request before forwarding it.
 

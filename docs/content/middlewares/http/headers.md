@@ -3,7 +3,7 @@
 Managing Request/Response headers
 {: .subtitle }
 
-![Headers](../assets/img/middleware/headers.png)
+![Headers](../../assets/img/middleware/headers.png)
 
 The Headers middleware manages the headers of requests and responses.
 
@@ -349,7 +349,7 @@ The `hostsProxyHeaders` option is a set of header keys that may hold a proxied h
 
 !!! warning
 
-    Deprecated in favor of [EntryPoint redirection](../routing/entrypoints.md#redirection) or the [RedirectScheme middleware](./redirectscheme.md).
+    Deprecated in favor of [EntryPoint redirection](../../routing/entrypoints.md#redirection) or the [RedirectScheme middleware](./redirectscheme.md).
 
 The `sslRedirect` only allow HTTPS requests when set to `true`.
 
@@ -357,7 +357,7 @@ The `sslRedirect` only allow HTTPS requests when set to `true`.
 
 !!! warning
 
-    Deprecated in favor of [EntryPoint redirection](../routing/entrypoints.md#redirection) or the [RedirectScheme middleware](./redirectscheme.md).
+    Deprecated in favor of [EntryPoint redirection](../../routing/entrypoints.md#redirection) or the [RedirectScheme middleware](./redirectscheme.md).
 
 Set `sslTemporaryRedirect` to `true` to force an SSL redirection using a 302 (instead of a 301).
 

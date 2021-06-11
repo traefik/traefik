@@ -3,7 +3,7 @@
 Using an External Service to Forward Authentication
 {: .subtitle }
 
-![AuthForward](../assets/img/middleware/authforward.png)
+![AuthForward](../../assets/img/middleware/authforward.png)
 
 The ForwardAuth middleware delegates authentication to an external service.
 If the service answers with a 2XX code, access is granted, and the original request is performed.
