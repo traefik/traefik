@@ -471,6 +471,10 @@ func (c *clientWrapper) isWatchedNamespace(ns string) bool {
 // IngressClass objects are supported since Kubernetes v1.18.
 // See https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class
 func supportsIngressClass(serverVersion *version.Version) bool {
+	if serverVersion == nil {
+		return false
+	}
+
 	ingressClassVersion := version.Must(version.NewVersion("1.18"))
 
 	return ingressClassVersion.LessThanOrEqual(serverVersion)
