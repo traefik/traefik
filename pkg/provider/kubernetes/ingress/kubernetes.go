@@ -192,12 +192,11 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 	serverVersion, err := client.GetServerVersion()
 	if err != nil {
 		log.FromContext(ctx).Errorf("Failed to get server version: %v", err)
-		return conf
 	}
 
 	var ingressClasses []*networkingv1beta1.IngressClass
 
-	if supportsIngressClass(serverVersion) {
+	if serverVersion != nil && supportsIngressClass(serverVersion) {
 		ics, err := client.GetIngressClasses()
 		if err != nil {
 			log.FromContext(ctx).Warnf("Failed to list ingress classes: %v", err)
