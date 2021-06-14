@@ -508,20 +508,29 @@ func loadCASecret(namespace, secretName string, k8sClient Client) (string, error
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch secret '%s/%s': %w", namespace, secretName, err)
 	}
+
 	if !ok {
 		return "", fmt.Errorf("secret '%s/%s' not found", namespace, secretName)
 	}
+
 	if secret == nil {
 		return "", fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
 	}
-	if len(secret.Data) != 1 {
-		return "", fmt.Errorf("found %d elements for secret '%s/%s', must be single element exactly", len(secret.Data), namespace, secretName)
+
+	tlsCAData, err := getCABlocks(secret, namespace, secretName)
+	if err == nil {
+		return tlsCAData, nil
 	}
 
-	for _, v := range secret.Data {
-		return string(v), nil
+	// TODO: remove this behavior in the next major version (v3)
+	if len(secret.Data) == 1 {
+		// For backwards compatibility, use the only available secret data as CA if both 'ca.crt' and 'tls.ca' are missing.
+		for _, v := range secret.Data {
+			return string(v), nil
+		}
 	}
-	return "", nil
+
+	return "", fmt.Errorf("could not find CA block: %w", err)
 }
 
 func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, string, error) {
@@ -529,14 +538,13 @@ func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, 
 	if err != nil {
 		return "", "", fmt.Errorf("failed to fetch secret '%s/%s': %w", namespace, secretName, err)
 	}
+
 	if !exists {
 		return "", "", fmt.Errorf("secret '%s/%s' does not exist", namespace, secretName)
 	}
+
 	if secret == nil {
 		return "", "", fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
-	}
-	if len(secret.Data) != 2 {
-		return "", "", fmt.Errorf("found %d elements for secret '%s/%s', must be two elements exactly", len(secret.Data), namespace, secretName)
 	}
 
 	return getCertificateBlocks(secret, namespace, secretName)
@@ -869,16 +877,16 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 
 func getCABlocks(secret *corev1.Secret, namespace, secretName string) (string, error) {
 	tlsCrtData, tlsCrtExists := secret.Data["tls.ca"]
-	if !tlsCrtExists {
-		return "", fmt.Errorf("the tls.ca entry is missing from secret %s/%s", namespace, secretName)
+	if tlsCrtExists {
+		return string(tlsCrtData), nil
 	}
 
-	cert := string(tlsCrtData)
-	if cert == "" {
-		return "", fmt.Errorf("the tls.ca entry in secret %s/%s is empty", namespace, secretName)
+	tlsCrtData, tlsCrtExists = secret.Data["ca.crt"]
+	if tlsCrtExists {
+		return string(tlsCrtData), nil
 	}
 
-	return cert, nil
+	return "", fmt.Errorf("secret %s/%s contains neither tls.ca nor ca.crt", namespace, secretName)
 }
 
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
