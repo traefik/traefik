@@ -5,7 +5,7 @@ metadata:
   namespace: foo
 
 data:
-  foobar: VEVTVFJPT1RDQVM=
+  foobar: VEVTVFJPT1RDQVMw
 
 ---
 apiVersion: v1
@@ -74,11 +74,11 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: mtls3
+  name: allcerts
   namespace: foo
 
 data:
-  ca.crt: VEVTVFJPT1RDQVMz
+  ca.crt: VEVTVEFMTENFUlRT
   tls.crt: VEVTVENFUlQz
   tls.key: VEVTVEtFWTM=
 
@@ -99,10 +99,11 @@ spec:
   - rootCas2
   - rootCas3
   - rootCas4
+  - allcerts
   certificatesSecrets:
   - mtls1
   - mtls2
-  - mtls3
+  - allcerts
   forwardingTimeouts:
     dialTimeout: 42
     responseHeaderTimeout: 42s
