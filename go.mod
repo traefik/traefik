@@ -79,8 +79,8 @@ require (
 	github.com/vdemeester/shakers v0.1.0
 	github.com/vulcand/oxy v1.3.0
 	github.com/vulcand/predicate v1.1.0
-	go.elastic.co/apm v1.7.0
-	go.elastic.co/apm/module/apmot v1.7.0
+	go.elastic.co/apm v1.11.0
+	go.elastic.co/apm/module/apmot v1.11.0
 	golang.org/x/mod v0.3.0
 	golang.org/x/net v0.0.0-20210220033124-5f55cee0dc0d
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324
