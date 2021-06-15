@@ -1299,7 +1299,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 
 			clientMock := newClientMock(serverVersion, paths...)
 			p := Provider{IngressClass: test.ingressClass}
-			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+			conf, _ := p.loadConfigurationFromIngresses(context.Background(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
@@ -1447,7 +1447,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 
 			p := Provider{IngressClass: test.ingressClass}
 			p.AllowExternalNameServices = test.allowExternalNameServices
-			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+			conf, _ := p.loadConfigurationFromIngresses(context.Background(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
