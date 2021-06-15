@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v2/pkg/tls"
+	"golang.org/x/crypto/bcrypt"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -5264,4 +5266,79 @@ func TestExternalNameService(t *testing.T) {
 			assert.Equal(t, test.expected, conf)
 		})
 	}
+}
+
+func TestLoadAuthCredentials(t *testing.T) {
+	var k8sObjects []runtime.Object
+	var crdObjects []runtime.Object
+	yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/basic_auth_secrets.yml"))
+	if err != nil {
+		panic(err)
+	}
+
+	objects := k8s.MustParseYaml(yamlContent)
+	for _, obj := range objects {
+		switch o := obj.(type) {
+		case *corev1.Service, *corev1.Endpoints, *corev1.Secret:
+			k8sObjects = append(k8sObjects, o)
+		case *v1alpha1.IngressRoute:
+			crdObjects = append(crdObjects, o)
+		case *v1alpha1.IngressRouteTCP:
+			crdObjects = append(crdObjects, o)
+		case *v1alpha1.IngressRouteUDP:
+			crdObjects = append(crdObjects, o)
+		case *v1alpha1.Middleware:
+			crdObjects = append(crdObjects, o)
+		case *v1alpha1.MiddlewareTCP:
+			crdObjects = append(crdObjects, o)
+		case *v1alpha1.TraefikService:
+			crdObjects = append(crdObjects, o)
+		case *v1alpha1.TLSOption:
+			crdObjects = append(crdObjects, o)
+		case *v1alpha1.TLSStore:
+			crdObjects = append(crdObjects, o)
+		default:
+		}
+	}
+
+	kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+	crdClient := crdfake.NewSimpleClientset(crdObjects...)
+
+	client := newClientImpl(kubeClient, crdClient)
+
+	stopCh := make(chan struct{})
+
+	eventCh, err := client.WatchAll([]string{"default"}, stopCh)
+	require.NoError(t, err)
+
+	if k8sObjects != nil || crdObjects != nil {
+		// just wait for the first event
+		<-eventCh
+	}
+
+	// Testing for username/password components in basic-auth secret
+	credentials, secretErr := getBasicAuthCredentials(client, "basic-auth-secret", "default")
+	require.Len(t, credentials, 1)
+	require.NoError(t, secretErr)
+
+	components := strings.Split(credentials[0], ":")
+	require.Len(t, components, 2)
+
+	username := components[0]
+	hashedPassword := components[1]
+
+	assert.Equal(t, "user", username)
+	// Have to use CompareHashAndPassword, because the getBasicAuthCredentials doesn't return a consistent result due to bcrypt.
+	assert.NoError(t, bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte("password")))
+
+	// Testing for username/password components in htpasswd secret
+	credentials, secretErr = getBasicAuthCredentials(client, "authsecret", "default")
+	require.Len(t, credentials, 2)
+	require.NoError(t, secretErr)
+
+	components = strings.Split(credentials[0], ":")
+	require.Len(t, components, 2)
+	assert.Equal(t, components[0], "test")
+	// Password already crypted.
+	assert.Equal(t, components[1], "$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/")
 }

@@ -23,6 +23,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/tls"
+	"golang.org/x/crypto/bcrypt"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -555,7 +556,7 @@ func createBasicAuthMiddleware(client Client, namespace string, basicAuth *v1alp
 		return nil, nil
 	}
 
-	credentials, err := getAuthCredentials(client, basicAuth.Secret, namespace)
+	credentials, err := getBasicAuthCredentials(client, basicAuth.Secret, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -573,7 +574,7 @@ func createDigestAuthMiddleware(client Client, namespace string, digestAuth *v1a
 		return nil, nil
 	}
 
-	credentials, err := getAuthCredentials(client, digestAuth.Secret, namespace)
+	credentials, err := getDigestAuthCredentials(client, digestAuth.Secret, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -586,12 +587,12 @@ func createDigestAuthMiddleware(client Client, namespace string, digestAuth *v1a
 	}, nil
 }
 
-func getAuthCredentials(k8sClient Client, authSecret, namespace string) ([]string, error) {
+func getBasicAuthCredentials(k8sClient Client, authSecret, namespace string) ([]string, error) {
 	if authSecret == "" {
 		return nil, fmt.Errorf("auth secret must be set")
 	}
 
-	auth, err := loadAuthCredentials(namespace, authSecret, k8sClient)
+	auth, err := loadBasicAuthCredentials(namespace, authSecret, k8sClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load auth credentials: %w", err)
 	}
@@ -599,7 +600,81 @@ func getAuthCredentials(k8sClient Client, authSecret, namespace string) ([]strin
 	return auth, nil
 }
 
-func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]string, error) {
+func getDigestAuthCredentials(k8sClient Client, authSecret, namespace string) ([]string, error) {
+	if authSecret == "" {
+		return nil, fmt.Errorf("auth secret must be set")
+	}
+
+	auth, err := loadDigestAuthCredentials(namespace, authSecret, k8sClient)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load auth credentials: %w", err)
+	}
+
+	return auth, nil
+}
+
+func loadBasicAuthCredentials(namespace, secretName string, k8sClient Client) ([]string, error) {
+	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch secret '%s/%s': %w", namespace, secretName, err)
+	}
+	if !ok {
+		return nil, fmt.Errorf("secret '%s/%s' not found", namespace, secretName)
+	}
+	if secret == nil {
+		return nil, fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
+	}
+	if len(secret.Data) == 2 {
+		username, usernameExists := secret.Data["username"]
+		password, passwordExists := secret.Data["password"]
+		if !(usernameExists && passwordExists) {
+			return nil, fmt.Errorf("found 2 elements for secret '%s/%s', must contain username and password keys", namespace, secretName)
+		}
+
+		if secret.Type != corev1.SecretTypeBasicAuth {
+			return nil, fmt.Errorf("secret '%s/%s', must be of type %s", namespace, secretName, corev1.SecretTypeBasicAuth)
+		}
+
+		return generateCredentialsFromUsernamePassword(username, password)
+	}
+
+	if len(secret.Data) != 1 {
+		return nil, fmt.Errorf("found %d elements for secret '%s/%s', must be single element exactly", len(secret.Data), namespace, secretName)
+	}
+
+	var firstSecret []byte
+	for _, v := range secret.Data {
+		firstSecret = v
+		break
+	}
+
+	var credentials []string
+	scanner := bufio.NewScanner(bytes.NewReader(firstSecret))
+	for scanner.Scan() {
+		if cred := scanner.Text(); len(cred) > 0 {
+			credentials = append(credentials, cred)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading secret for %s/%s: %w", namespace, secretName, err)
+	}
+	if len(credentials) == 0 {
+		return nil, fmt.Errorf("secret '%s/%s' does not contain any credentials", namespace, secretName)
+	}
+
+	return credentials, nil
+}
+
+func generateCredentialsFromUsernamePassword(username, password []byte) ([]string, error) {
+	obscuredPass, err := bcrypt.GenerateFromPassword(password, bcrypt.MinCost)
+	if err != nil {
+		return nil, err
+	}
+	credential := fmt.Sprintf("%s:%s", string(username), string(obscuredPass))
+	return []string{credential}, nil
+}
+
+func loadDigestAuthCredentials(namespace, secretName string, k8sClient Client) ([]string, error) {
 	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch secret '%s/%s': %w", namespace, secretName, err)
