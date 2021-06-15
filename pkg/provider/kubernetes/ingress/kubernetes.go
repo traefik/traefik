@@ -142,7 +142,10 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// dropped events. This is fine, because we don't treat different
 					// event types differently. But if we do in the future, we'll need to
 					// track more information about the dropped events.
-					conf := p.loadConfigurationFromIngresses(ctxLog, k8sClient)
+					conf, err := p.loadConfigurationFromIngresses(ctxLog, k8sClient)
+					if err != nil {
+						return err
+					}
 
 					confHash, err := hashstructure.Hash(conf, nil)
 					switch {
@@ -179,7 +182,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	return nil
 }
 
-func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Client) *dynamic.Configuration {
+func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Client) (*dynamic.Configuration, error) {
 	conf := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers:     map[string]*dynamic.Router{},
@@ -192,6 +195,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 	serverVersion, err := client.GetServerVersion()
 	if err != nil {
 		log.FromContext(ctx).Errorf("Failed to get server version: %v", err)
+		return conf, fmt.Errorf("failed to get server version: %v", err)
 	}
 
 	var ingressClasses []*networkingv1beta1.IngressClass
@@ -313,7 +317,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		}
 	}
 
-	return conf
+	return conf, nil
 }
 
 func (p *Provider) updateIngressStatus(ing *networkingv1beta1.Ingress, k8sClient Client) error {
