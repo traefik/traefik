@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha1"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,7 +25,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/tls"
-	"golang.org/x/crypto/bcrypt"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -624,18 +625,18 @@ func loadBasicAuthCredentials(namespace, secretName string, k8sClient Client) ([
 	if secret == nil {
 		return nil, fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
 	}
-	if len(secret.Data) == 2 {
+	if secret.Type == corev1.SecretTypeBasicAuth {
+		if len(secret.Data) != 2 {
+			return nil, fmt.Errorf("basic-auth secrets require 2 elements for secret '%s/%s', secret must contain username and password keys", namespace, secretName)
+		}
+
 		username, usernameExists := secret.Data["username"]
 		password, passwordExists := secret.Data["password"]
 		if !(usernameExists && passwordExists) {
-			return nil, fmt.Errorf("found 2 elements for secret '%s/%s', must contain username and password keys", namespace, secretName)
+			return nil, fmt.Errorf("basic-auth secrets require 2 elements for secret '%s/%s', secret must contain both username and password keys", namespace, secretName)
 		}
 
-		if secret.Type != corev1.SecretTypeBasicAuth {
-			return nil, fmt.Errorf("secret '%s/%s', must be of type %s", namespace, secretName, corev1.SecretTypeBasicAuth)
-		}
-
-		return generateCredentialsFromUsernamePassword(username, password)
+		return generateCredentialsFromUsernamePassword(username, password), nil
 	}
 
 	if len(secret.Data) != 1 {
@@ -665,13 +666,13 @@ func loadBasicAuthCredentials(namespace, secretName string, k8sClient Client) ([
 	return credentials, nil
 }
 
-func generateCredentialsFromUsernamePassword(username, password []byte) ([]string, error) {
-	obscuredPass, err := bcrypt.GenerateFromPassword(password, bcrypt.MinCost)
-	if err != nil {
-		return nil, err
-	}
-	credential := fmt.Sprintf("%s:%s", string(username), string(obscuredPass))
-	return []string{credential}, nil
+func generateCredentialsFromUsernamePassword(username, password []byte) []string {
+	hash := sha1.New()
+	hash.Write(password)
+	passwordSum := base64.StdEncoding.EncodeToString(hash.Sum(nil))
+
+	credential := fmt.Sprintf("%s:{SHA}%s", string(username), passwordSum)
+	return []string{credential}
 }
 
 func loadDigestAuthCredentials(namespace, secretName string, k8sClient Client) ([]string, error) {

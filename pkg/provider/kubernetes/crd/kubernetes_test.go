@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	auth "github.com/abbot/go-http-auth"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/paerser/types"
@@ -17,7 +18,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v2/pkg/tls"
-	"golang.org/x/crypto/bcrypt"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -5327,9 +5327,9 @@ func TestLoadAuthCredentials(t *testing.T) {
 	username := components[0]
 	hashedPassword := components[1]
 
-	assert.Equal(t, "user", username)
-	// Have to use CompareHashAndPassword, because the getBasicAuthCredentials doesn't return a consistent result due to bcrypt.
-	assert.NoError(t, bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte("password")))
+	require.Equal(t, "user", username)
+	require.Equal(t, "{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=", hashedPassword)
+	assert.True(t, auth.CheckSecret("password", hashedPassword))
 
 	// Testing for username/password components in htpasswd secret
 	credentials, secretErr = getBasicAuthCredentials(client, "authsecret", "default")
