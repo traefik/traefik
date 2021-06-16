@@ -72,6 +72,7 @@ type clientWrapper struct {
 	ingressLabelSelector string
 	isNamespaceAll       bool
 	watchedNamespaces    []string
+	serverVersion        *version.Version
 }
 
 // newInClusterClient returns a new Provider client that is expected to run
@@ -208,6 +209,9 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		}
 	}
 
+	// Reset the stored server version to recheck on reconnection.
+	c.serverVersion = nil
+	// Get and store the serverVersion for future use.
 	serverVersion, err := c.GetServerVersion()
 	if err != nil {
 		log.WithoutContext().Errorf("Failed to get server version: %v", err)
@@ -427,12 +431,22 @@ func (c *clientWrapper) lookupNamespace(ns string) string {
 
 // GetServerVersion returns the cluster server version, or an error.
 func (c *clientWrapper) GetServerVersion() (*version.Version, error) {
-	serverVersion, err := c.clientset.Discovery().ServerVersion()
+	if c.serverVersion != nil {
+		return c.serverVersion, nil
+	}
+
+	serverVersionInfo, err := c.clientset.Discovery().ServerVersion()
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve server version: %w", err)
 	}
 
-	return version.NewVersion(serverVersion.GitVersion)
+	serverVersion, err := version.NewVersion(serverVersionInfo.GitVersion)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse server version: %w", err)
+	}
+
+	c.serverVersion = serverVersion
+	return c.serverVersion, nil
 }
 
 // eventHandlerFunc will pass the obj on to the events channel or drop it.
