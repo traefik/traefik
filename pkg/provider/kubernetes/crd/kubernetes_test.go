@@ -5268,7 +5268,7 @@ func TestExternalNameService(t *testing.T) {
 	}
 }
 
-func TestLoadAuthCredentials(t *testing.T) {
+func TestCreateAuthCredentials(t *testing.T) {
 	var k8sObjects []runtime.Object
 	var crdObjects []runtime.Object
 	yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/basic_auth_secrets.yml"))
@@ -5279,24 +5279,8 @@ func TestLoadAuthCredentials(t *testing.T) {
 	objects := k8s.MustParseYaml(yamlContent)
 	for _, obj := range objects {
 		switch o := obj.(type) {
-		case *corev1.Service, *corev1.Endpoints, *corev1.Secret:
+		case *corev1.Secret:
 			k8sObjects = append(k8sObjects, o)
-		case *v1alpha1.IngressRoute:
-			crdObjects = append(crdObjects, o)
-		case *v1alpha1.IngressRouteTCP:
-			crdObjects = append(crdObjects, o)
-		case *v1alpha1.IngressRouteUDP:
-			crdObjects = append(crdObjects, o)
-		case *v1alpha1.Middleware:
-			crdObjects = append(crdObjects, o)
-		case *v1alpha1.MiddlewareTCP:
-			crdObjects = append(crdObjects, o)
-		case *v1alpha1.TraefikService:
-			crdObjects = append(crdObjects, o)
-		case *v1alpha1.TLSOption:
-			crdObjects = append(crdObjects, o)
-		case *v1alpha1.TLSStore:
-			crdObjects = append(crdObjects, o)
 		default:
 		}
 	}
@@ -5317,11 +5301,11 @@ func TestLoadAuthCredentials(t *testing.T) {
 	}
 
 	// Testing for username/password components in basic-auth secret
-	credentials, secretErr := getBasicAuthCredentials(client, "basic-auth-secret", "default")
-	require.Len(t, credentials, 1)
+	basicAuth, secretErr := createBasicAuthMiddleware(client, "default", &v1alpha1.BasicAuth{Secret: "basic-auth-secret"})
 	require.NoError(t, secretErr)
+	require.Len(t, basicAuth.Users, 1)
 
-	components := strings.Split(credentials[0], ":")
+	components := strings.Split(basicAuth.Users[0], ":")
 	require.Len(t, components, 2)
 
 	username := components[0]
@@ -5332,13 +5316,17 @@ func TestLoadAuthCredentials(t *testing.T) {
 	assert.True(t, auth.CheckSecret("password", hashedPassword))
 
 	// Testing for username/password components in htpasswd secret
-	credentials, secretErr = getBasicAuthCredentials(client, "authsecret", "default")
-	require.Len(t, credentials, 2)
+	basicAuth, secretErr = createBasicAuthMiddleware(client, "default", &v1alpha1.BasicAuth{Secret: "authsecret"})
 	require.NoError(t, secretErr)
+	require.Len(t, basicAuth.Users, 2)
 
-	components = strings.Split(credentials[0], ":")
+	components = strings.Split(basicAuth.Users[1], ":")
 	require.Len(t, components, 2)
-	assert.Equal(t, components[0], "test")
-	// Password already crypted.
-	assert.Equal(t, components[1], "$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/")
+
+	username = components[0]
+	hashedPassword = components[1]
+
+	assert.Equal(t, username, "test2")
+	assert.Equal(t, hashedPassword, "$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0")
+	assert.True(t, auth.CheckSecret("test2", hashedPassword))
 }
