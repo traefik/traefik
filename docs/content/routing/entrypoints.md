@@ -332,7 +332,7 @@ Setting them has no effect for UDP entryPoints.
     `writeTimeout` is the maximum duration before timing out writes of the response.
 
     It covers the time from the end of the request header read to the end of the response write.
-    If zero, no timeout exists.
+    If zero, no timeout exists.  
     Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
     If no units are provided, the value is parsed assuming seconds.
 
@@ -368,7 +368,7 @@ Setting them has no effect for UDP entryPoints.
 
     `idleTimeout` is the maximum duration an idle (keep-alive) connection will remain idle before closing itself.
 
-    If zero, no timeout exists.
+    If zero, no timeout exists.  
     Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
     If no units are provided, the value is parsed assuming seconds.
 
