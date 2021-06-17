@@ -146,7 +146,14 @@ func (c *connectCert) equals(other *connectCert) bool {
 	return c.leaf == other.leaf
 }
 
-func (item itemData) VerifyPeerCertificate(cfg *gtls.Config, rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+// verifierData implements the CertVerifier interface.
+type verifierData struct {
+	namespace  string
+	datacenter string
+	name       string
+}
+
+func (verifier verifierData) VerifyPeerCertificate(cfg *gtls.Config, rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
 	// We should use RootCAs here, but consul expect that in ClientCAs (don't ask)
 	// https://github.com/hashicorp/consul/blob/cd428060f6547afddd9e0060c07b2a2c862da801/connect/tls.go#L279-L282
 	// called via https://github.com/hashicorp/consul/blob/cd428060f6547afddd9e0060c07b2a2c862da801/connect/tls.go#L258
@@ -157,9 +164,9 @@ func (item itemData) VerifyPeerCertificate(cfg *gtls.Config, rawCerts [][]byte, 
 	}
 	certs := []*x509.Certificate{0: cert}
 	uri := &connect.SpiffeIDService{
-		Namespace:  item.Namespace,
-		Datacenter: item.Datacenter,
-		Service:    item.Name,
+		Namespace:  verifier.namespace,
+		Datacenter: verifier.datacenter,
+		Service:    verifier.name,
 	}
 	return verifyServerCertMatchesURI(certs, uri)
 }
@@ -174,7 +181,7 @@ func (c *connectCert) serversTransport(item itemData) *dynamic.ServersTransport 
 		Certificates: tls.Certificates{
 			c.getLeaf(),
 		},
-		CertVerifier: item,
+		CertVerifier: verifierData{namespace: item.Namespace, datacenter: item.Datacenter, name: item.Name},
 	}
 }
 

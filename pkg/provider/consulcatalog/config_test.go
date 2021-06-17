@@ -397,20 +397,98 @@ func Test_buildConfiguration(t *testing.T) {
 									KeyFile:  "key",
 								},
 							},
-							CertVerifier: itemData{
-								ID:             "Test",
-								Node:           "Node1",
-								Datacenter:     "dc1",
-								Name:           "dev/Test",
-								Namespace:      "ns",
-								Address:        "127.0.0.1",
-								Port:           "443",
-								Status:         "passing",
-								Labels:         map[string]string{},
-								ConnectEnabled: true,
-								ExtraConf: configuration{
-									Enable: true,
+							CertVerifier: verifierData{
+								datacenter: "dc1",
+								name:       "dev/Test",
+								namespace:  "ns",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "two connect containers on same service",
+			items: []itemData{
+				{
+					ID:             "Test1",
+					Node:           "Node1",
+					Datacenter:     "dc1",
+					Name:           "dev/Test",
+					Namespace:      "ns",
+					Address:        "127.0.0.1",
+					Port:           "443",
+					Status:         api.HealthPassing,
+					Labels:         map[string]string{},
+					Tags:           nil,
+					ConnectEnabled: true,
+					ExtraConf:      configuration{},
+				},
+				{
+					ID:             "Test2",
+					Node:           "Node2",
+					Datacenter:     "dc1",
+					Name:           "dev/Test",
+					Namespace:      "ns",
+					Address:        "127.0.0.2",
+					Port:           "444",
+					Status:         api.HealthPassing,
+					Labels:         map[string]string{},
+					Tags:           nil,
+					ConnectEnabled: true,
+					ExtraConf:      configuration{},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"dev-Test": {
+							Service: "dev-Test",
+							Rule:    "Host(`dev-Test.traefik.wtf`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"dev-Test": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "https://127.0.0.1:443",
+									},
+									{
+										URL: "https://127.0.0.2:444",
+									},
 								},
+								PassHostHeader:   Bool(true),
+								ServersTransport: "tls-ns-dc1-dev-Test",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"tls-ns-dc1-dev-Test": {
+							ServerName:         "ns-dc1-dev/Test",
+							InsecureSkipVerify: true,
+							RootCAs: []tls.FileOrContent{
+								"root",
+							},
+							Certificates: []tls.Certificate{
+								{
+									CertFile: "cert",
+									KeyFile:  "key",
+								},
+							},
+							CertVerifier: verifierData{
+								datacenter: "dc1",
+								name:       "dev/Test",
+								namespace:  "ns",
 							},
 						},
 					},
