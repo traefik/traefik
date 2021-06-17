@@ -35,7 +35,7 @@ Traefik returns a `404` response code in the following situations:
 - An HTTPS request reaching an EntryPoint that has no HTTPS Router
 - A request reaching an EntryPoint that has HTTP/HTTPS Routers that cannot be matched
 
-From Traefik's point of view, 
+From Traefik's point of view,
 every time a request cannot be matched with a router the correct response code is a `404 Not found`.
 
 In this situation, the response code is not a `503 Service Unavailable`
@@ -52,7 +52,7 @@ hence it's not possible to assume at any moment that a specific route should be 
     some delay. If known, the length of the delay MAY be indicated in a
     Retry-After header. If no Retry-After is given, the client SHOULD
     handle the response as it would for a 500 response.
-    
+
         Note: The existence of the 503 status code does not imply that a
         server must use it when becoming overloaded. Some servers may wish
         to simply refuse the connection.
@@ -66,7 +66,7 @@ Traefik returns a `502` response code when an error happens while contacting the
 
 ### `503 Service Unavailable`
 
-Traefik returns a `503` response code when a Router has been matched 
+Traefik returns a `503` response code when a Router has been matched
 but there are no servers ready to handle the request.
 
 This situation is encountered when a service has been explicitly configured without servers,
@@ -79,14 +79,14 @@ Sometimes, the `404` response code doesn't play well with other parties or servi
 In these situations, you may want Traefik to always reply with a `503` response code,
 instead of a `404` response code.
 
-To achieve this behavior, a simple catchall router, 
+To achieve this behavior, a simple catchall router,
 with the lowest possible priority and routing to a service without servers,
 can handle all the requests when no other router has been matched.
 
 The example below is a file provider only version (`yaml`) of what this configuration could look like:
 
 ```yaml tab="Static configuration"
-# traefik.yaml
+# traefik.yml
 
 entrypoints:
   web:

@@ -49,18 +49,18 @@ separator, and the provider name.
 
     Declaring the add-foo-prefix in the file provider.
 
-    ```toml tab="File (TOML)"
-    [http.middlewares]
-      [http.middlewares.add-foo-prefix.addPrefix]
-        prefix = "/foo"
-    ```
-
     ```yaml tab="File (YAML)"
     http:
       middlewares:
         add-foo-prefix:
           addPrefix:
             prefix: "/foo"
+    ```
+
+    ```toml tab="File (TOML)"
+    [http.middlewares]
+      [http.middlewares.add-foo-prefix.addPrefix]
+        prefix = "/foo"
     ```
 
     Using the add-foo-prefix middleware from other providers:
@@ -133,7 +133,7 @@ Below is the list of the currently supported providers in Traefik.
 | [ECS](./ecs.md)                       | Orchestrator | Label                      |
 | [Marathon](./marathon.md)             | Orchestrator | Label                      |
 | [Rancher](./rancher.md)               | Orchestrator | Label                      |
-| [File](./file.md)                     | Manual       | TOML/YAML format           |
+| [File](./file.md)                     | Manual       | YAML/TOML format           |
 | [Consul](./consul.md)                 | KV           | KV                         |
 | [Etcd](./etcd.md)                     | KV           | KV                         |
 | [ZooKeeper](./zookeeper.md)           | KV           | KV                         |
@@ -169,14 +169,14 @@ but the throttling algorithm applies to each of them independently.
 The value of `providers.providersThrottleDuration` should be provided in seconds or as a valid duration format,
 see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).
 
-```toml tab="File (TOML)"
-[providers]
-  providers.providersThrottleDuration = 10s
-```
-
 ```yaml tab="File (YAML)"
 providers:
   providersThrottleDuration: 10s
+```
+
+```toml tab="File (TOML)"
+[providers]
+  providers.providersThrottleDuration = 10s
 ```
 
 ```bash tab="CLI"
