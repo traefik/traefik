@@ -125,7 +125,7 @@ func (c *connectCert) getLeaf() tls.Certificate {
 }
 
 func (c *connectCert) isReady() bool {
-	return len(c.root) > 0 && c.leaf.cert != "" && c.leaf.key != ""
+	return c != nil && len(c.root) > 0 && c.leaf.cert != "" && c.leaf.key != ""
 }
 
 func (c *connectCert) equals(other *connectCert) bool {

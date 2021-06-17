@@ -121,22 +121,21 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		})
 	}
 
+	var certInfo *connectCert
+
 	pool.GoCtx(func(routineCtx context.Context) {
 		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "consulcatalog"))
 		logger := log.FromContext(ctxLog)
 
 		operation := func() error {
-			var (
-				err      error
-				certInfo *connectCert
-			)
+			var err error
 
 			// If we are running in connect aware mode then we need to
 			// make sure that we obtain the certificates before starting
 			// the service watcher, otherwise a connect enabled service
 			// that gets resolved before the certificates are available
 			// will cause an error condition.
-			if p.ConnectAware {
+			if p.ConnectAware && !certInfo.isReady() {
 				logger.Infof("Waiting for Connect certificate before building first configuration")
 				select {
 				case <-routineCtx.Done():
