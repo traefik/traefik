@@ -50,15 +50,6 @@ labels:
   - "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header=value"
 ```
 
-```toml tab="File (TOML)"
-[http.middlewares]
-  [http.middlewares.testHeader.headers]
-    [http.middlewares.testHeader.headers.customRequestHeaders]
-        X-Script-Name = "test"
-    [http.middlewares.testHeader.headers.customResponseHeaders]
-        X-Custom-Response-Header = "value"
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -68,6 +59,15 @@ http:
           X-Script-Name: "test"
         customResponseHeaders:
           X-Custom-Response-Header: "value"
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.testHeader.headers]
+    [http.middlewares.testHeader.headers.customRequestHeaders]
+        X-Script-Name = "test"
+    [http.middlewares.testHeader.headers.customResponseHeaders]
+        X-Custom-Response-Header = "value"
 ```
 
 ### Adding and Removing Headers
@@ -117,16 +117,6 @@ labels:
   - "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header="
 ```
 
-```toml tab="File (TOML)"
-[http.middlewares]
-  [http.middlewares.testHeader.headers]
-    [http.middlewares.testHeader.headers.customRequestHeaders]
-        X-Script-Name = "test" # Adds
-        X-Custom-Request-Header = "" # Removes
-    [http.middlewares.testHeader.headers.customResponseHeaders]
-        X-Custom-Response-Header = "" # Removes
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -137,6 +127,16 @@ http:
           X-Custom-Request-Header: "" # Removes
         customResponseHeaders:
           X-Custom-Response-Header: "" # Removes
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.testHeader.headers]
+    [http.middlewares.testHeader.headers.customRequestHeaders]
+        X-Script-Name = "test" # Adds
+        X-Custom-Request-Header = "" # Removes
+    [http.middlewares.testHeader.headers.customResponseHeaders]
+        X-Custom-Response-Header = "" # Removes
 ```
 
 ### Using Security Headers
@@ -179,13 +179,6 @@ labels:
   - "traefik.http.middlewares.testheader.headers.sslredirect=true"
 ```
 
-```toml tab="File (TOML)"
-[http.middlewares]
-  [http.middlewares.testHeader.headers]
-    frameDeny = true
-    sslRedirect = true
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -193,6 +186,13 @@ http:
       headers:
         frameDeny: true
         sslRedirect: true
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.testHeader.headers]
+    frameDeny = true
+    sslRedirect = true
 ```
 
 ### CORS Headers
@@ -250,15 +250,6 @@ labels:
   - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
 ```
 
-```toml tab="File (TOML)"
-[http.middlewares]
-  [http.middlewares.testHeader.headers]
-    accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
-    accessControlAllowOriginList = ["https://foo.bar.org","https://example.org"]
-    accessControlMaxAge = 100
-    addVaryHeader = true
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -273,6 +264,15 @@ http:
           - https://example.org
         accessControlMaxAge: 100
         addVaryHeader: true
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.testHeader.headers]
+    accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
+    accessControlAllowOriginList = ["https://foo.bar.org","https://example.org"]
+    accessControlMaxAge = 100
+    addVaryHeader = true
 ```
 
 ## Configuration Options

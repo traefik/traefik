@@ -12,7 +12,7 @@ which in turn will create the resulting routers, services, handlers, etc.
 ## Configuration Example
 
 ??? example "Configuring Kubernetes Ingress Controller"
-    
+
     ```yaml tab="RBAC"
     ---
     kind: ClusterRole
@@ -46,7 +46,7 @@ which in turn will create the resulting routers, services, handlers, etc.
           - ingresses/status
         verbs:
           - update
-    
+
     ---
     kind: ClusterRoleBinding
     apiVersion: rbac.authorization.k8s.io/v1beta1
@@ -61,7 +61,7 @@ which in turn will create the resulting routers, services, handlers, etc.
         name: traefik-ingress-controller
         namespace: default
     ```
-    
+
     ```yaml tab="Ingress"
     kind: Ingress
     apiVersion: networking.k8s.io/v1beta1
@@ -69,7 +69,7 @@ which in turn will create the resulting routers, services, handlers, etc.
       name: myingress
       annotations:
         traefik.ingress.kubernetes.io/router.entrypoints: web
-    
+
     spec:
       rules:
         - host: example.com
@@ -90,7 +90,7 @@ which in turn will create the resulting routers, services, handlers, etc.
     kind: ServiceAccount
     metadata:
       name: traefik-ingress-controller
-    
+
     ---
     kind: Deployment
     apiVersion: apps/v1
@@ -98,7 +98,7 @@ which in turn will create the resulting routers, services, handlers, etc.
       name: traefik
       labels:
         app: traefik
-    
+
     spec:
       replicas: 1
       selector:
@@ -119,7 +119,7 @@ which in turn will create the resulting routers, services, handlers, etc.
               ports:
                 - name: web
                   containerPort: 80
-    
+
     ---
     apiVersion: v1
     kind: Service
@@ -135,7 +135,7 @@ which in turn will create the resulting routers, services, handlers, etc.
           name: web
           targetPort: 80
     ```
-    
+
     ```yaml tab="Whoami"
     kind: Deployment
     apiVersion: apps/v1
@@ -144,7 +144,7 @@ which in turn will create the resulting routers, services, handlers, etc.
       labels:
         app: traefiklabs
         name: whoami
-    
+
     spec:
       replicas: 2
       selector:
@@ -162,13 +162,13 @@ which in turn will create the resulting routers, services, handlers, etc.
               image: traefik/whoami
               ports:
                 - containerPort: 80
-    
+
     ---
     apiVersion: v1
     kind: Service
     metadata:
       name: whoami
-    
+
     spec:
       ports:
         - name: http
@@ -210,7 +210,7 @@ which in turn will create the resulting routers, services, handlers, etc.
 
     Overrides the default router rule type used for a path.  
     Only path-related matcher name can be specified: `Path`, `PathPrefix`.
-    
+
     Default `PathPrefix`
 
     ```yaml
@@ -316,7 +316,7 @@ which in turn will create the resulting routers, services, handlers, etc.
     ```
 
 ## Path Types on Kubernetes 1.18+
-              
+
 If the Kubernetes cluster version is 1.18+,
 the new `pathType` property can be leveraged to define the rules matchers:
 
@@ -341,14 +341,6 @@ TLS can be enabled through the [HTTP options](../entrypoints.md#tls) of an Entry
 --entrypoints.websecure.http.tls
 ```
 
-```toml tab="File (TOML)"
-# Static configuration
-[entryPoints.websecure]
-  address = ":443"
-
-    [entryPoints.websecure.http.tls]
-```
-
 ```yaml tab="File (YAML)"
 # Static configuration
 entryPoints:
@@ -358,10 +350,18 @@ entryPoints:
       tls: {}
 ```
 
+```toml tab="File (TOML)"
+# Static configuration
+[entryPoints.websecure]
+  address = ":443"
+
+    [entryPoints.websecure.http.tls]
+```
+
 This way, any Ingress attached to this Entrypoint will have TLS termination by default.
 
 ??? example "Configuring Kubernetes Ingress Controller with TLS on Entrypoint"
-    
+
     ```yaml tab="RBAC"
     ---
     kind: ClusterRole
@@ -395,7 +395,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
           - ingresses/status
         verbs:
           - update
-    
+
     ---
     kind: ClusterRoleBinding
     apiVersion: rbac.authorization.k8s.io/v1beta1
@@ -410,7 +410,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
         name: traefik-ingress-controller
         namespace: default
     ```
-    
+
     ```yaml tab="Ingress"
     kind: Ingress
     apiVersion: networking.k8s.io/v1beta1
@@ -418,7 +418,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
       name: myingress
       annotations:
         traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    
+
     spec:
       rules:
         - host: example.com
@@ -439,7 +439,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
     kind: ServiceAccount
     metadata:
       name: traefik-ingress-controller
-    
+
     ---
     kind: Deployment
     apiVersion: apps/v1
@@ -447,7 +447,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
       name: traefik
       labels:
         app: traefik
-    
+
     spec:
       replicas: 1
       selector:
@@ -469,7 +469,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
               ports:
                 - name: websecure
                   containerPort: 443
-    
+
     ---
     apiVersion: v1
     kind: Service
@@ -485,7 +485,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
           name: websecure
           targetPort: 443
     ```
-    
+
     ```yaml tab="Whoami"
     kind: Deployment
     apiVersion: apps/v1
@@ -494,7 +494,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
       labels:
         app: traefiklabs
         name: whoami
-    
+
     spec:
       replicas: 2
       selector:
@@ -512,13 +512,13 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
               image: traefik/whoami
               ports:
                 - containerPort: 80
-    
+
     ---
     apiVersion: v1
     kind: Service
     metadata:
       name: whoami
-    
+
     spec:
       ports:
         - name: http
@@ -535,11 +535,11 @@ To enable TLS on the underlying router created from an Ingress, one should confi
 ```yaml
 traefik.ingress.kubernetes.io/router.tls: "true"
 ```
-    
+
 For more options, please refer to the available [annotations](#on-ingress).
 
 ??? example "Configuring Kubernetes Ingress Controller with TLS"
-    
+
     ```yaml tab="RBAC"
     ---
     kind: ClusterRole
@@ -573,7 +573,7 @@ For more options, please refer to the available [annotations](#on-ingress).
           - ingresses/status
         verbs:
           - update
-    
+
     ---
     kind: ClusterRoleBinding
     apiVersion: rbac.authorization.k8s.io/v1beta1
@@ -588,7 +588,7 @@ For more options, please refer to the available [annotations](#on-ingress).
         name: traefik-ingress-controller
         namespace: default
     ```
-    
+
     ```yaml tab="Ingress"
     kind: Ingress
     apiVersion: networking.k8s.io/v1beta1
@@ -597,7 +597,7 @@ For more options, please refer to the available [annotations](#on-ingress).
       annotations:
         traefik.ingress.kubernetes.io/router.entrypoints: websecure
         traefik.ingress.kubernetes.io/router.tls: true
-    
+
     spec:
       rules:
         - host: example.com
@@ -618,7 +618,7 @@ For more options, please refer to the available [annotations](#on-ingress).
     kind: ServiceAccount
     metadata:
       name: traefik-ingress-controller
-    
+
     ---
     kind: Deployment
     apiVersion: apps/v1
@@ -626,7 +626,7 @@ For more options, please refer to the available [annotations](#on-ingress).
       name: traefik
       labels:
         app: traefik
-    
+
     spec:
       replicas: 1
       selector:
@@ -647,7 +647,7 @@ For more options, please refer to the available [annotations](#on-ingress).
               ports:
                 - name: websecure
                   containerPort: 443
-    
+
     ---
     apiVersion: v1
     kind: Service
@@ -663,7 +663,7 @@ For more options, please refer to the available [annotations](#on-ingress).
           name: websecure
           targetPort: 443
     ```
-    
+
     ```yaml tab="Whoami"
     kind: Deployment
     apiVersion: apps/v1
@@ -672,7 +672,7 @@ For more options, please refer to the available [annotations](#on-ingress).
       labels:
         app: traefiklabs
         name: whoami
-    
+
     spec:
       replicas: 2
       selector:
@@ -690,13 +690,13 @@ For more options, please refer to the available [annotations](#on-ingress).
               image: traefik/whoami
               ports:
                 - containerPort: 80
-    
+
     ---
     apiVersion: v1
     kind: Service
     metadata:
       name: whoami
-    
+
     spec:
       ports:
         - name: http
@@ -709,14 +709,14 @@ For more options, please refer to the available [annotations](#on-ingress).
 ### Certificates Management
 
 ??? example "Using a secret"
-    
+
     ```yaml tab="Ingress"
     kind: Ingress
     apiVersion: networking.k8s.io/v1beta1
     metadata:
       name: foo
       namespace: production
-    
+
     spec:
       rules:
       - host: example.net
@@ -738,7 +738,7 @@ For more options, please refer to the available [annotations](#on-ingress).
     kind: Secret
     metadata:
       name: supersecret
-    
+
     data:
       tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
       tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
@@ -747,7 +747,7 @@ For more options, please refer to the available [annotations](#on-ingress).
 TLS certificates can be managed in Secrets objects.
 
 !!! info
-    
+
     Only TLS certificates provided by users can be stored in Kubernetes Secrets.
     [Let's Encrypt](../../https/acme.md) certificates cannot be managed in Kubernetes Secrets yet.
 
@@ -767,7 +767,7 @@ If either of those configuration options exist, then the backend communication p
 and will connect via TLS automatically.
 
 !!! info
-    
+
     Please note that by enabling TLS communication between traefik and your pods,
     you will have to have trusted certificates that have the proper trust chain and IP subject name.
     If this is not an option, you may need to skip TLS certificate verification.
@@ -793,8 +793,8 @@ This ingress follows the Global Default Backend property of ingresses.
 This will allow users to create a "default router" that will match all unmatched requests.
 
 !!! info
-    
+
     Due to Traefik's use of priorities, you may have to set this ingress priority lower than other ingresses in your environment,
     to avoid this global ingress from satisfying requests that could match other ingresses.
-    
+
     To do this, use the `traefik.ingress.kubernetes.io/router.priority` annotation (as seen in [Annotations on Ingress](#on-ingress)) on your ingresses accordingly.

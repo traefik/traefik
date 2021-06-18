@@ -15,14 +15,6 @@ This provider is proposed as an experimental feature and partially supports the 
 
     Since this provider is still experimental, it needs to be activated in the experimental section of the static configuration.
 
-    ```toml tab="File (TOML)"
-    [experimental]
-      kubernetesGateway = true
-
-    [providers.kubernetesGateway]
-    #...
-    ```
-
     ```yaml tab="File (YAML)"
     experimental:
       kubernetesGateway: true
@@ -30,6 +22,14 @@ This provider is proposed as an experimental feature and partially supports the 
     providers:
       kubernetesGateway: {}
       #...
+    ```
+
+    ```toml tab="File (TOML)"
+    [experimental]
+      kubernetesGateway = true
+
+    [providers.kubernetesGateway]
+    #...
     ```
 
     ```bash tab="CLI"
@@ -117,17 +117,17 @@ When the environment variables are not found, Traefik tries to connect to the Ku
 In this case, the endpoint is required.
 Specifically, it may be set to the URL used by `kubectl proxy` to connect to a Kubernetes cluster using the granted authentication and authorization of the associated kubeconfig.
 
-```toml tab="File (TOML)"
-[providers.kubernetesGateway]
-  endpoint = "http://localhost:8080"
-  # ...
-```
-
 ```yaml tab="File (YAML)"
 providers:
   kubernetesGateway:
     endpoint: "http://localhost:8080"
     # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway]
+  endpoint = "http://localhost:8080"
+  # ...
 ```
 
 ```bash tab="CLI"
@@ -140,17 +140,17 @@ _Optional, Default=""_
 
 Bearer token used for the Kubernetes client configuration.
 
-```toml tab="File (TOML)"
-[providers.kubernetesGateway]
-  token = "mytoken"
-  # ...
-```
-
 ```yaml tab="File (YAML)"
 providers:
   kubernetesGateway:
     token: "mytoken"
     # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway]
+  token = "mytoken"
+  # ...
 ```
 
 ```bash tab="CLI"
@@ -164,17 +164,17 @@ _Optional, Default=""_
 Path to the certificate authority file.
 Used for the Kubernetes client configuration.
 
-```toml tab="File (TOML)"
-[providers.kubernetesGateway]
-  certAuthFilePath = "/my/ca.crt"
-  # ...
-```
-
 ```yaml tab="File (YAML)"
 providers:
   kubernetesGateway:
     certAuthFilePath: "/my/ca.crt"
     # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway]
+  certAuthFilePath = "/my/ca.crt"
+  # ...
 ```
 
 ```bash tab="CLI"
@@ -188,12 +188,6 @@ _Optional, Default: []_
 Array of namespaces to watch.
 If left empty, watches all namespaces if the value of `namespaces`.
 
-```toml tab="File (TOML)"
-[providers.kubernetesGateway]
-  namespaces = ["default", "production"]
-  # ...
-```
-
 ```yaml tab="File (YAML)"
 providers:
   kubernetesGateway:
@@ -201,6 +195,12 @@ providers:
     - "default"
     - "production"
     # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway]
+  namespaces = ["default", "production"]
+  # ...
 ```
 
 ```bash tab="CLI"
@@ -216,17 +216,17 @@ If left empty, Traefik processes all GatewayClass objects in the configured name
 
 See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
 
-```toml tab="File (TOML)"
-[providers.kubernetesGateway]
-  labelselector = "app=traefik"
-  # ...
-```
-
 ```yaml tab="File (YAML)"
 providers:
   kubernetesGateway:
     labelselector: "app=traefik"
     # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway]
+  labelselector = "app=traefik"
+  # ...
 ```
 
 ```bash tab="CLI"
@@ -245,17 +245,17 @@ If left empty, the provider does not apply any throttling and does not drop any 
 The value of `throttleDuration` should be provided in seconds or as a valid duration format,
 see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).
 
-```toml tab="File (TOML)"
-[providers.kubernetesGateway]
-  throttleDuration = "10s"
-  # ...
-```
-
 ```yaml tab="File (YAML)"
 providers:
   kubernetesGateway:
     throttleDuration: "10s"
     # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway]
+  throttleDuration = "10s"
+  # ...
 ```
 
 ```bash tab="CLI"
