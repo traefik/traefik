@@ -112,7 +112,7 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 		opts...,
 	)
 	if err != nil {
-		log.WithoutContext().Warnf("Could not initialize jaeger tracer: %s", err.Error())
+		log.WithoutContext().Warnf("Could not initialize jaeger tracer: %v", err)
 		return nil, nil, err
 	}
 	log.WithoutContext().Debug("Jaeger tracer configured")
