@@ -124,11 +124,11 @@ func Test_newSecure_modifyResponse(t *testing.T) {
 		expected http.Header
 	}{
 		{
-			desc: "FeaturePolicy",
+			desc: "PermissionsPolicy",
 			cfg: dynamic.Headers{
-				FeaturePolicy: "vibrate 'none';",
+				PermissionsPolicy: "microphone 'none';",
 			},
-			expected: http.Header{"Feature-Policy": []string{"vibrate 'none';"}},
+			expected: http.Header{"Permissions-Policy": []string{"microphone 'none';"}},
 		},
 		{
 			desc: "STSSeconds",

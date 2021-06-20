@@ -595,7 +595,7 @@ func Test_buildConfiguration(t *testing.T) {
 						ContentSecurityPolicy:   "foobar",
 						PublicKey:               "foobar",
 						ReferrerPolicy:          "foobar",
-						FeaturePolicy:           "foobar",
+						PermissionsPolicy:       "foobar",
 						IsDevelopment:           true,
 					},
 				},
