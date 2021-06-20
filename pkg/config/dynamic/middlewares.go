@@ -230,6 +230,7 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 		h.ContentSecurityPolicy != "" ||
 		h.PublicKey != "" ||
 		h.ReferrerPolicy != "" ||
+		h.FeaturePolicy != "" ||
 		h.PermissionsPolicy != "" ||
 		h.IsDevelopment)
 }

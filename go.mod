@@ -13,7 +13,6 @@ require (
 	github.com/abronan/valkeyrie v0.0.0-20200127174252-ef4277a138cd
 	github.com/aws/aws-sdk-go v1.37.27
 	github.com/cenkalti/backoff/v4 v4.1.0
-	github.com/codegangsta/negroni v1.0.0 // indirect
 	github.com/containerd/containerd v1.3.2 // indirect
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
