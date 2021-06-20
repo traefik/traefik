@@ -435,7 +435,15 @@ The `referrerPolicy` allows sites to control whether browsers forward the `Refer
 
 ### `featurePolicy`
 
+!!! warning
+
+    Deprecated in favor of PermissionsPolicy
+
 The `featurePolicy` allows sites to control browser features.
+
+### `permissionsPolicy`
+
+The `permissionsPolicy` allows sites to control browser features.
 
 ### `isDevelopment`
 
