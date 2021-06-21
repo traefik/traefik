@@ -67,6 +67,7 @@
     "scopelint", # Deprecated
     "interfacer", # Deprecated
     "maligned", # Deprecated
+    "golint", # Deprecated
     "sqlclosecheck", # Not relevant (SQL)
     "rowserrcheck", # Not relevant (SQL)
     "lll", # Not relevant
