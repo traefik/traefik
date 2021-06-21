@@ -17,4 +17,4 @@ jobs:
           fetch-depth: 0
 
       - name: Check documentation
-        run: make docs
+        run: make docs-pull-images docs
