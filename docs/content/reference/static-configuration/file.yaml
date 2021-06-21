@@ -409,6 +409,7 @@ pilot:
   token: foobar
 experimental:
   kubernetesGateway: true
+  http3: true
   plugins:
     Descriptor0:
       moduleName: foobar
@@ -419,6 +420,3 @@ experimental:
   devPlugin:
     goPath: foobar
     moduleName: foobar
-  http3: true
-  kubernetesGateway: true
-

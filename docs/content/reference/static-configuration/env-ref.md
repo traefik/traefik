@@ -720,6 +720,9 @@ Display additional provider logs. (Default: ```false```)
 `TRAEFIK_PROVIDERS_MARATHON_WATCH`:  
 Watch provider. (Default: ```true```)
 
+`TRAEFIK_PROVIDERS_PLUGIN_<NAME>`:  
+Plugins configuration.
+
 `TRAEFIK_PROVIDERS_PROVIDERSTHROTTLEDURATION`:  
 Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time. (Default: ```2```)
 
