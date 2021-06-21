@@ -139,7 +139,7 @@ func (s *HeadersSuite) TestSecureHeadersResponses(c *check.C) {
 		{
 			desc: "Permissions-Policy Set",
 			expected: http.Header{
-				"Permissions-Policy": {"microphone 'none';"},
+				"Permissions-Policy": {"microphone=(),"},
 			},
 			reqHost:         "test.localhost",
 			internalReqHost: "internal.localhost",

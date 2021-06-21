@@ -34,7 +34,7 @@
 
 [http.middlewares]
   [http.middlewares.secure.headers]
-    permissionsPolicy = "microphone 'none';"
+    permissionsPolicy = "microphone=(),"
 
 [http.services]
   [http.services.service1.loadBalancer]
