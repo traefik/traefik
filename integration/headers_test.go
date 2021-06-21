@@ -185,7 +185,7 @@ func (s *HeadersSuite) TestMultipleSecureHeadersResponses(c *check.C) {
 		reqHost  string
 	}{
 		{
-			desc: "Permissions-Policy Set",
+			desc: "Multiple Secure Headers Set",
 			expected: http.Header{
 				"X-Frame-Options":        {"DENY"},
 				"X-Content-Type-Options": {"nosniff"},
