@@ -67,6 +67,7 @@
     "scopelint", # Deprecated
     "interfacer", # Deprecated
     "maligned", # Deprecated
+    "golint", # Deprecated
     "sqlclosecheck", # Not relevant (SQL)
     "rowserrcheck", # Not relevant (SQL)
     "lll", # Not relevant
@@ -97,6 +98,7 @@
     "unparam", # Too strict
     "godox", # Too strict
     "forcetypeassert", # Too strict
+    "tagliatelle", # Not compatible with current tags.
   ]
 
 [issues]
