@@ -178,6 +178,7 @@
           "publicKey": "xxxx",
           "referrerPolicy": "foo",
           "featurePolicy": "foo",
+          "permissionsPolicy": "foo",
           "isDevelopment": true
         },
         "errors": {

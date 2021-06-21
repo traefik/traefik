@@ -226,6 +226,7 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 					PublicKey:                         "foo",
 					ReferrerPolicy:                    "foo",
 					FeaturePolicy:                     "foo",
+					PermissionsPolicy:                 "foo",
 					IsDevelopment:                     true,
 				},
 				Errors: &dynamic.ErrorPage{
