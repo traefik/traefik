@@ -97,6 +97,7 @@
     "unparam", # Too strict
     "godox", # Too strict
     "forcetypeassert", # Too strict
+    "tagliatelle", # Not compatible with current tags.
   ]
 
 [issues]
