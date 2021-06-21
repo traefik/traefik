@@ -39,6 +39,69 @@ func (p *mockProvider) Init() error {
 	panic("implement me")
 }
 
+func TestIsEmptyConfiguration(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		config      *dynamic.Configuration
+		expectEmpty bool
+	}{
+		{
+			desc:        "Nil configuration",
+			expectEmpty: true,
+		},
+		{
+			desc: "Empty configuration",
+			config: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{},
+				TCP:  &dynamic.TCPConfiguration{},
+				UDP:  &dynamic.UDPConfiguration{},
+			},
+			expectEmpty: true,
+		},
+		{
+			desc: "Empty configuration with maps initialized",
+			config: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+					Models:      map[string]*dynamic.Model{"foobar": {}},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+			},
+			expectEmpty: true,
+		},
+		{
+			desc: "Not empty configuration",
+			config: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"myrouter": {},
+					},
+				},
+			},
+			expectEmpty: false,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, test.expectEmpty, isEmptyConfiguration(test.config))
+		})
+	}
+}
+
 func TestNewConfigurationWatcher(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
 	pvd := &mockProvider{
