@@ -1,6 +1,6 @@
-# The Maintainers Guidelines
+# Maintainer's Guidelines
 
-![Maintainers Guidelines](../assets/img/maintainers-guidelines.png)
+![Maintainer's Guidelines](../assets/img/maintainers-guidelines.png)
 
 Note: the document is a work in progress.
 
