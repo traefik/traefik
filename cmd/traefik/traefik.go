@@ -126,12 +126,6 @@ func runCmd(staticConfiguration *static.Configuration) error {
 
 	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
-	if staticConfiguration.Experimental != nil && staticConfiguration.Experimental.DevPlugin != nil {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, 30*time.Minute)
-		defer cancel()
-	}
-
 	if staticConfiguration.Ping != nil {
 		staticConfiguration.Ping.WithContext(ctx)
 	}
@@ -240,8 +234,8 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	// Providers plugins
 
-	for s, i := range staticConfiguration.Providers.Plugin {
-		p, err := pluginBuilder.BuildProvider(s, i)
+	for name, conf := range staticConfiguration.Providers.Plugin {
+		p, err := pluginBuilder.BuildProvider(name, conf)
 		if err != nil {
 			return nil, fmt.Errorf("plugin: failed to build provider: %w", err)
 		}

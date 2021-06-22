@@ -6,12 +6,15 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/traefik/traefik/v2/pkg/log"
 )
 
-// Setup setup plugins environment.
-func Setup(client *Client, plugins map[string]Descriptor, devPlugin *DevPlugin) error {
-	err := checkPluginsConfiguration(plugins)
+const localGoPath = "./plugins-local/"
+
+// SetupRemotePlugins setup remote plugins environment.
+func SetupRemotePlugins(client *Client, plugins map[string]Descriptor) error {
+	err := checkRemotePluginsConfiguration(plugins)
 	if err != nil {
 		return fmt.Errorf("invalid configuration: %w", err)
 	}
@@ -53,65 +56,81 @@ func Setup(client *Client, plugins map[string]Descriptor, devPlugin *DevPlugin) 
 		}
 	}
 
-	if devPlugin != nil {
-		err := checkDevPluginConfiguration(devPlugin)
-		if err != nil {
-			return fmt.Errorf("invalid configuration: %w", err)
-		}
-	}
-
 	return nil
 }
 
-func checkDevPluginConfiguration(plugin *DevPlugin) error {
-	if plugin == nil {
+// SetupLocalPlugins setup local plugins environment.
+func SetupLocalPlugins(plugins map[string]LocalDescriptor) error {
+	if plugins == nil {
 		return nil
 	}
 
-	if plugin.GoPath == "" {
-		return errors.New("missing Go Path (prefer a dedicated Go Path)")
+	uniq := make(map[string]struct{})
+
+	var errs *multierror.Error
+	for pAlias, descriptor := range plugins {
+		if descriptor.ModuleName == "" {
+			errs = multierror.Append(errs, fmt.Errorf("%s: plugin name is missing", pAlias))
+		}
+
+		if strings.HasPrefix(descriptor.ModuleName, "/") || strings.HasSuffix(descriptor.ModuleName, "/") {
+			errs = multierror.Append(errs, fmt.Errorf("%s: plugin name should not start or end with a /", pAlias))
+			continue
+		}
+
+		if _, ok := uniq[descriptor.ModuleName]; ok {
+			errs = multierror.Append(errs, fmt.Errorf("only one version of a plugin is allowed, there is a duplicate of %s", descriptor.ModuleName))
+			continue
+		}
+
+		uniq[descriptor.ModuleName] = struct{}{}
+
+		err := checkLocalPluginManifest(descriptor)
+		errs = multierror.Append(errs, err)
 	}
 
-	if plugin.ModuleName == "" {
-		return errors.New("missing module name")
-	}
+	return errs.ErrorOrNil()
+}
 
-	m, err := ReadManifest(plugin.GoPath, plugin.ModuleName)
+func checkLocalPluginManifest(descriptor LocalDescriptor) error {
+	m, err := ReadManifest(localGoPath, descriptor.ModuleName)
 	if err != nil {
 		return err
 	}
+
+	var errs *multierror.Error
 
 	switch m.Type {
 	case "middleware", "provider":
 		// noop
 	default:
-		return errors.New("unsupported type")
+		errs = multierror.Append(errs, fmt.Errorf("%s: unsupported type", descriptor.ModuleName))
 	}
 
 	if m.Import == "" {
-		return errors.New("missing import")
+		errs = multierror.Append(errs, fmt.Errorf("%s: missing import", descriptor.ModuleName))
 	}
 
-	if !strings.HasPrefix(m.Import, plugin.ModuleName) {
-		return fmt.Errorf("the import %q must be related to the module name %q", m.Import, plugin.ModuleName)
+	if !strings.HasPrefix(m.Import, descriptor.ModuleName) {
+		errs = multierror.Append(errs, fmt.Errorf("the import %q must be related to the module name %q", m.Import, descriptor.ModuleName))
 	}
 
 	if m.DisplayName == "" {
-		return errors.New("missing DisplayName")
+		errs = multierror.Append(errs, fmt.Errorf("%s: missing DisplayName", descriptor.ModuleName))
 	}
 
 	if m.Summary == "" {
-		return errors.New("missing Summary")
+		errs = multierror.Append(errs, fmt.Errorf("%s: missing Summary", descriptor.ModuleName))
 	}
 
 	if m.TestData == nil {
-		return errors.New("missing TestData")
+		errs = multierror.Append(errs, fmt.Errorf("%s: missing TestData", descriptor.ModuleName))
 	}
 
-	return nil
+	return errs.ErrorOrNil()
 }
 
-func checkPluginsConfiguration(plugins map[string]Descriptor) error {
+func checkRemotePluginsConfiguration(plugins map[string]Descriptor) error {
 	if plugins == nil {
 		return nil
 	}
