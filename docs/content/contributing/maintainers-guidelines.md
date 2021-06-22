@@ -20,7 +20,7 @@ We will schedule a quick call to meet you and learn more about your motivation.
 During the call, the team will discuss the process of becoming a maintainer.
 We will be happy to answer any questions and explain all your doubts.
 
-## Maintainers requirements
+## Maintainer's requirements
 
 Note: you do not have to meet all the listed requirements,
 but must have achieved several.
