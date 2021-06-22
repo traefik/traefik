@@ -77,7 +77,7 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 							SameSite: "foo",
 						},
 					},
-					HealthCheck: &dynamic.HealthCheck{
+					HealthCheck: &dynamic.ServerHealthCheck{
 						Scheme:          "foo",
 						Path:            "foo",
 						Port:            42,

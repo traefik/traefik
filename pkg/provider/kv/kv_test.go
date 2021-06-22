@@ -628,7 +628,7 @@ func Test_buildConfiguration(t *testing.T) {
 								Scheme: "http",
 							},
 						},
-						HealthCheck: &dynamic.HealthCheck{
+						HealthCheck: &dynamic.ServerHealthCheck{
 							Scheme:          "foobar",
 							Path:            "foobar",
 							Port:            42,

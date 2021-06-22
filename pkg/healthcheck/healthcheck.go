@@ -281,7 +281,7 @@ type StatusUpdater interface {
 }
 
 // NewLBStatusUpdater returns a new LbStatusUpdater.
-func NewLBStatusUpdater(bh BalancerHandler, info *runtime.ServiceInfo, hc *dynamic.HealthCheck) *LbStatusUpdater {
+func NewLBStatusUpdater(bh BalancerHandler, info *runtime.ServiceInfo, hc *dynamic.ServerHealthCheck) *LbStatusUpdater {
 	return &LbStatusUpdater{
 		BalancerHandler:  bh,
 		serviceInfo:      info,
