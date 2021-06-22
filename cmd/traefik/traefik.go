@@ -8,9 +8,11 @@ import (
 	stdlog "log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"sort"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/coreos/go-systemd/daemon"
@@ -122,7 +124,7 @@ func runCmd(staticConfiguration *static.Configuration) error {
 		return err
 	}
 
-	ctx := cmd.ContextWithSignal(context.Background())
+	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
 	if staticConfiguration.Experimental != nil && staticConfiguration.Experimental.DevPlugin != nil {
 		var cancel context.CancelFunc

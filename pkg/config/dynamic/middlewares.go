@@ -246,7 +246,7 @@ type IPStrategy struct {
 
 // Get an IP selection strategy.
 // If nil return the RemoteAddr strategy
-// else return a strategy base on the configuration using the X-Forwarded-For Header.
+// else return a strategy based on the configuration using the X-Forwarded-For Header.
 // Depth override the ExcludedIPs.
 func (s *IPStrategy) Get() (ip.Strategy, error) {
 	if s == nil {
@@ -264,7 +264,7 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &ip.CheckerStrategy{
+		return &ip.PoolStrategy{
 			Checker: checker,
 		}, nil
 	}

@@ -1203,7 +1203,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
     
     ??? example "Examples"
         
-        ```yaml tab="IngressRouteTCP"
+        ```yaml tab="Only on IngressRouteTCP"
         ---
         apiVersion: traefik.containo.us/v1alpha1
         kind: IngressRouteTCP
@@ -1233,38 +1233,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
           type: ExternalName
         ```
         
-        ```yaml tab="ExternalName Service"
-        ---
-        apiVersion: traefik.containo.us/v1alpha1
-        kind: IngressRouteTCP
-        metadata:
-          name: test.route
-          namespace: default
-        
-        spec:
-          entryPoints:
-            - foo
-        
-          routes:
-          - match: HostSNI(`*`)
-            kind: Rule
-            services:
-            - name: external-svc
-        
-        ---
-        apiVersion: v1
-        kind: Service
-        metadata:
-          name: external-svc
-          namespace: default
-        spec:
-          externalName: external.domain
-          type: ExternalName
-          ports:
-            - port: 80
-        ```
-        
-        ```yaml tab="Both sides"
+        ```yaml tab="On both sides"
         ---
         apiVersion: traefik.containo.us/v1alpha1
         kind: IngressRouteTCP

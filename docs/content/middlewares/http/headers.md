@@ -50,15 +50,6 @@ labels:
   - "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header=value"
 ```
 
-```toml tab="File (TOML)"
-[http.middlewares]
-  [http.middlewares.testHeader.headers]
-    [http.middlewares.testHeader.headers.customRequestHeaders]
-        X-Script-Name = "test"
-    [http.middlewares.testHeader.headers.customResponseHeaders]
-        X-Custom-Response-Header = "value"
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -70,6 +61,15 @@ http:
           X-Custom-Response-Header: "value"
 ```
 
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.testHeader.headers]
+    [http.middlewares.testHeader.headers.customRequestHeaders]
+        X-Script-Name = "test"
+    [http.middlewares.testHeader.headers.customResponseHeaders]
+        X-Custom-Response-Header = "value"
+```
+
 ### Adding and Removing Headers
 
 In the following example, requests are proxied with an extra `X-Script-Name` header while their `X-Custom-Request-Header` header gets stripped,
@@ -78,6 +78,8 @@ and responses are stripped of their `X-Custom-Response-Header` header.
 ```yaml tab="Docker"
 labels:
   - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
+  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header="
+  - "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header="
 ```
 
 ```yaml tab="Kubernetes"
@@ -96,27 +98,23 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
+- "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header="
+- "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header="
 ```
 
 ```json tab="Marathon"
 "labels": {
   "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name": "test",
+  "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header": "",
+  "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header": "",
 }
 ```
 
 ```yaml tab="Rancher"
 labels:
   - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-```
-
-```toml tab="File (TOML)"
-[http.middlewares]
-  [http.middlewares.testHeader.headers]
-    [http.middlewares.testHeader.headers.customRequestHeaders]
-        X-Script-Name = "test" # Adds
-        X-Custom-Request-Header = "" # Removes
-    [http.middlewares.testHeader.headers.customResponseHeaders]
-        X-Custom-Response-Header = "" # Removes
+  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header="
+  - "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header="
 ```
 
 ```yaml tab="File (YAML)"
@@ -129,6 +127,16 @@ http:
           X-Custom-Request-Header: "" # Removes
         customResponseHeaders:
           X-Custom-Response-Header: "" # Removes
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.testHeader.headers]
+    [http.middlewares.testHeader.headers.customRequestHeaders]
+        X-Script-Name = "test" # Adds
+        X-Custom-Request-Header = "" # Removes
+    [http.middlewares.testHeader.headers.customResponseHeaders]
+        X-Custom-Response-Header = "" # Removes
 ```
 
 ### Using Security Headers
@@ -171,13 +179,6 @@ labels:
   - "traefik.http.middlewares.testheader.headers.browserxssfilter=true"
 ```
 
-```toml tab="File (TOML)"
-[http.middlewares]
-  [http.middlewares.testHeader.headers]
-    frameDeny = true
-    browserxssfilter = true
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -185,6 +186,13 @@ http:
       headers:
         frameDeny: true
         browserxssfilter: true
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.testHeader.headers]
+    frameDeny = true
+    browserxssfilter = true
 ```
 
 ### CORS Headers
@@ -242,15 +250,6 @@ labels:
   - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
 ```
 
-```toml tab="File (TOML)"
-[http.middlewares]
-  [http.middlewares.testHeader.headers]
-    accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
-    accessControlAllowOriginList = ["https://foo.bar.org","https://example.org"]
-    accessControlMaxAge = 100
-    addVaryHeader = true
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -265,6 +264,15 @@ http:
           - https://example.org
         accessControlMaxAge: 100
         addVaryHeader: true
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.testHeader.headers]
+    accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
+    accessControlAllowOriginList = ["https://foo.bar.org","https://example.org"]
+    accessControlMaxAge = 100
+    addVaryHeader = true
 ```
 
 ## Configuration Options
