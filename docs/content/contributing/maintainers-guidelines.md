@@ -1,6 +1,6 @@
-# The Maintainers Guidelines
+# Maintainer's Guidelines
 
-![Maintainers Guidelines](../assets/img/maintainers-guidelines.png)
+![Maintainer's Guidelines](../assets/img/maintainers-guidelines.png)
 
 Note: the document is a work in progress.
 
@@ -13,14 +13,14 @@ and firmly standing against the elitist closed approach.
 Being part of the core team should be accessible to anyone motivated
 and wants to be part of that journey!
 
-## Onboarding process
+## Onboarding Process
 
 If you consider joining our community please drop us a line using Twitter or leave a note in the issue.
 We will schedule a quick call to meet you and learn more about your motivation.
 During the call, the team will discuss the process of becoming a maintainer.
 We will be happy to answer any questions and explain all your doubts.
 
-## Maintainers requirements
+## Maintainer's Requirements
 
 Note: you do not have to meet all the listed requirements,
 but must have achieved several.
@@ -34,7 +34,7 @@ but must have achieved several.
   or other technical forums/boards such as K8S slack, Reddit, StackOverflow, hacker news.
 - Have read and accepted the contributor guidelines.
 
-## Maintainers responsibilities and privileges
+## Maintainer's Responsibilities and Privileges
 
 There are lots of areas where you can contribute to the project,
 but we can suggest you start with activities such as:
@@ -103,7 +103,7 @@ maintainers' activity and involvement will be reviewed on a regular basis.
   non-threatening,
   and friendly behavior towards other people on the maintainer team and with our community?
 
-## Additional comments for (not only) maintainers
+## Additional Comments for (not only) Maintainers
 
 - Be able to put yourself in users’ shoes.
 - Be open-minded and respectful with other maintainers and other community members.
