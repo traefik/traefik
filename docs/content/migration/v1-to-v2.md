@@ -441,7 +441,7 @@ To apply a redirection:
     apiVersion: traefik.containo.us/v1alpha1
     kind: IngressRoute
     metadata:
-      name: http-redirect-ingressRoute
+      name: http-redirect-ingressroute
 
     spec:
       entryPoints:
@@ -459,7 +459,7 @@ To apply a redirection:
     apiVersion: traefik.containo.us/v1alpha1
     kind: IngressRoute
     metadata:
-      name: https-ingressRoute
+      name: https-ingressroute
 
     spec:
       entryPoints:
@@ -595,7 +595,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     apiVersion: traefik.containo.us/v1alpha1
     kind: IngressRoute
     metadata:
-      name: http-redirect-ingressRoute
+      name: http-redirect-ingressroute
       namespace: admin-web
     spec:
       entryPoints:
