@@ -104,7 +104,7 @@ func checkLocalPluginManifest(descriptor LocalDescriptor) error {
 	case "middleware", "provider":
 		// noop
 	default:
-		errs = multierror.Append(errs, fmt.Errorf("%s: unsupported type", descriptor.ModuleName))
+		errs = multierror.Append(errs, fmt.Errorf("%s: unsupported type %q", descriptor.ModuleName, m.Type))
 	}
 
 	if m.Import == "" {
