@@ -28,7 +28,7 @@ For example, if you declare a middleware using a Docker label, it resides in the
 
 If you use multiple providers and wish to reference such an object declared in another provider
 (e.g. referencing a cross-provider object like middleware), then the object name should be suffixed by the `@`
-separator, and the provider name.
+separator, and the provider name. See below for list of available provider name
 
 ```text
 <resource-name>@<provider-name>
@@ -125,20 +125,20 @@ separator, and the provider name.
 
 Below is the list of the currently supported providers in Traefik.
 
-| Provider                              | Type         | Configuration Type         |
-|---------------------------------------|--------------|----------------------------|
-| [Docker](./docker.md)                 | Orchestrator | Label                      |
-| [Kubernetes](./kubernetes-crd.md)     | Orchestrator | Custom Resource or Ingress |
-| [Consul Catalog](./consul-catalog.md) | Orchestrator | Label                      |
-| [ECS](./ecs.md)                       | Orchestrator | Label                      |
-| [Marathon](./marathon.md)             | Orchestrator | Label                      |
-| [Rancher](./rancher.md)               | Orchestrator | Label                      |
-| [File](./file.md)                     | Manual       | YAML/TOML format           |
-| [Consul](./consul.md)                 | KV           | KV                         |
-| [Etcd](./etcd.md)                     | KV           | KV                         |
-| [ZooKeeper](./zookeeper.md)           | KV           | KV                         |
-| [Redis](./redis.md)                   | KV           | KV                         |
-| [HTTP](./http.md)                     | Manual       | JSON format                |
+| Provider                              | Type         | Configuration Type                  | Provider Name                                 |
+|---------------------------------------|--------------|-------------------------------------| ----------------------------------------------|
+| [Docker](./docker.md)                 | Orchestrator | Label                               | docker                                        |
+| [Kubernetes](./kubernetes-crd.md)     | Orchestrator | Custom Resource, Ingress or Gateway | kubernetescrd, kubernetes, kubernetesgateway  |
+| [Consul Catalog](./consul-catalog.md) | Orchestrator | Label                               | consulcatalog                                 |
+| [ECS](./ecs.md)                       | Orchestrator | Label                               | ecs                                           |
+| [Marathon](./marathon.md)             | Orchestrator | Label                               | marathon                                      |
+| [Rancher](./rancher.md)               | Orchestrator | Label                               | rancher                                       |
+| [File](./file.md)                     | Manual       | YAML/TOML format                    | file                                          |
+| [Consul](./consul.md)                 | KV           | KV                                  | consul                                        |
+| [Etcd](./etcd.md)                     | KV           | KV                                  | etcd                                          |
+| [ZooKeeper](./zookeeper.md)           | KV           | KV                                  | zookeeper                                     |
+| [Redis](./redis.md)                   | KV           | KV                                  | redis                                         |
+| [HTTP](./http.md)                     | Manual       | JSON format                         | http                                          |
 
 !!! info "More Providers"
 
