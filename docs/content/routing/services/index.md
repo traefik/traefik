@@ -853,6 +853,55 @@ The WRR is able to load balance the requests between multiple services based on 
 
 This strategy is only available to load balance between [services](./index.md) and not between [servers](./index.md#servers).
 
+!!! info "Supported Providers"
+
+    This strategy can be defined currently with the [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md) providers.
+
+```yaml tab="YAML"
+## Dynamic configuration
+http:
+  services:
+    app:
+      weighted:
+        services:
+        - name: appv1
+          weight: 3
+        - name: appv2
+          weight: 1
+
+    appv1:
+      loadBalancer:
+        servers:
+        - url: "http://private-ip-server-1/"
+
+    appv2:
+      loadBalancer:
+        servers:
+        - url: "http://private-ip-server-2/"
+```
+
+```toml tab="TOML"
+## Dynamic configuration
+[http.services]
+  [http.services.app]
+    [[http.services.app.weighted.services]]
+      name = "appv1"
+      weight = 3
+    [[http.services.app.weighted.services]]
+      name = "appv2"
+      weight = 1
+
+  [http.services.appv1]
+    [http.services.appv1.loadBalancer]
+      [[http.services.appv1.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+
+  [http.services.appv2]
+    [http.services.appv2.loadBalancer]
+      [[http.services.appv2.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
+
 #### Health Check
 
 HealthCheck enables automatic self-healthcheck for this service, i.e. whenever
@@ -866,7 +915,7 @@ HealthCheck enabled, this service reports to its parent any status change.
     If HealthCheck is enabled for a given service, but any of its descendants does
     not have it enabled, the creation of the service will fail.
 
-    This strategy can be defined currently with the [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md) providers.
+    HealthCheck on Weighted services can be defined currently only with the [File](../../providers/file.md) provider.
 
 ```yaml tab="YAML"
 ## Dynamic configuration
@@ -937,6 +986,61 @@ The mirroring is able to mirror requests sent to a service to other services.
 Please note that by default the whole request is buffered in memory while it is being mirrored.
 See the maxBodySize option in the example below for how to modify this behaviour.
 
+!!! info "Supported Providers"
+
+    This strategy can be defined currently with the [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md) providers.
+
+```yaml tab="YAML"
+## Dynamic configuration
+http:
+  services:
+    mirrored-api:
+      mirroring:
+        service: appv1
+        # maxBodySize is the maximum size allowed for the body of the request.
+        # If the body is larger, the request is not mirrored.
+        # Default value is -1, which means unlimited size.
+        maxBodySize: 1024
+        mirrors:
+        - name: appv2
+          percent: 10
+
+    appv1:
+      loadBalancer:
+        servers:
+        - url: "http://private-ip-server-1/"
+
+    appv2:
+      loadBalancer:
+        servers:
+        - url: "http://private-ip-server-2/"
+```
+
+```toml tab="TOML"
+## Dynamic configuration
+[http.services]
+  [http.services.mirrored-api]
+    [http.services.mirrored-api.mirroring]
+      service = "appv1"
+      # maxBodySize is the maximum size in bytes allowed for the body of the request.
+      # If the body is larger, the request is not mirrored.
+      # Default value is -1, which means unlimited size.
+      maxBodySize = 1024
+    [[http.services.mirrored-api.mirroring.mirrors]]
+      name = "appv2"
+      percent = 10
+
+  [http.services.appv1]
+    [http.services.appv1.loadBalancer]
+      [[http.services.appv1.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+
+  [http.services.appv2]
+    [http.services.appv2.loadBalancer]
+      [[http.services.appv2.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
+
 #### Health Check
 
 HealthCheck enables automatic self-healthcheck for this service, i.e. if the
@@ -948,9 +1052,7 @@ upwards to its parent.
     If HealthCheck is enabled for a given service, but any of its descendants does
     not have it enabled, the creation of the service will fail.
 
-!!! info "Supported Providers"
-
-    This strategy can be defined currently with the [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md) providers.
+    HealthCheck on Mirroring services can be defined currently only with the [File](../../providers/file.md) provider.
 
 ```yaml tab="YAML"
 ## Dynamic configuration
@@ -960,10 +1062,6 @@ http:
       mirroring:
         healthCheck: {}
         service: appv1
-        # maxBodySize is the maximum size allowed for the body of the request.
-        # If the body is larger, the request is not mirrored.
-        # Default value is -1, which means unlimited size.
-        maxBodySize: 1024
         mirrors:
         - name: appv2
           percent: 10
@@ -990,10 +1088,6 @@ http:
     [http.services.mirrored-api.mirroring]
       [http.services.mirrored-api.mirroring.healthCheck]
       service = "appv1"
-      # maxBodySize is the maximum size in bytes allowed for the body of the request.
-      # If the body is larger, the request is not mirrored.
-      # Default value is -1, which means unlimited size.
-      maxBodySize = 1024
     [[http.services.mirrored-api.mirroring.mirrors]]
       name = "appv2"
       percent = 10
@@ -1009,6 +1103,10 @@ http:
 
   [http.services.appv2]
     [http.services.appv2.loadBalancer]
+      [http.services.appv1.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
       [[http.services.appv2.loadBalancer.servers]]
         url = "http://private-ip-server-2/"
 ```
