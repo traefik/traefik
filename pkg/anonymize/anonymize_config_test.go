@@ -958,9 +958,13 @@ func TestDo_staticConfiguration(t *testing.T) {
 				Version:    "foobar",
 			},
 		},
-		DevPlugin: &plugins.DevPlugin{
-			GoPath:     "foobar",
-			ModuleName: "foobar",
+		LocalPlugins: map[string]plugins.LocalDescriptor{
+			"Descriptor0": {
+				ModuleName: "foobar",
+			},
+			"Descriptor1": {
+				ModuleName: "foobar",
+			},
 		},
 	}
 
