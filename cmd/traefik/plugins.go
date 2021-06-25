@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/traefik/traefik/v2/pkg/config/static"
 	"github.com/traefik/traefik/v2/pkg/plugins"
 )
@@ -17,6 +19,11 @@ func createPluginBuilder(staticConfiguration *static.Configuration) (*plugins.Bu
 }
 
 func initPlugins(staticCfg *static.Configuration) (*plugins.Client, map[string]plugins.Descriptor, map[string]plugins.LocalDescriptor, error) {
+	err := checkUniquePluginNames(staticCfg.Experimental)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
 	var client *plugins.Client
 	plgs := map[string]plugins.Descriptor{}
 
@@ -52,6 +59,20 @@ func initPlugins(staticCfg *static.Configuration) (*plugins.Client, map[string]p
 	}
 
 	return client, plgs, localPlgs, nil
+}
+
+func checkUniquePluginNames(e *static.Experimental) error {
+	if e == nil {
+		return nil
+	}
+
+	for s := range e.LocalPlugins {
+		if _, ok := e.Plugins[s]; ok {
+			return fmt.Errorf("the plugin's name %q must be unique", s)
+		}
+	}
+
+	return nil
 }
 
 func isPilotEnabled(staticCfg *static.Configuration) bool {

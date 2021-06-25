@@ -59,6 +59,43 @@ func SetupRemotePlugins(client *Client, plugins map[string]Descriptor) error {
 	return nil
 }
 
+func checkRemotePluginsConfiguration(plugins map[string]Descriptor) error {
+	if plugins == nil {
+		return nil
+	}
+
+	uniq := make(map[string]struct{})
+
+	var errs []string
+	for pAlias, descriptor := range plugins {
+		if descriptor.ModuleName == "" {
+			errs = append(errs, fmt.Sprintf("%s: plugin name is missing", pAlias))
+		}
+
+		if descriptor.Version == "" {
+			errs = append(errs, fmt.Sprintf("%s: plugin version is missing", pAlias))
+		}
+
+		if strings.HasPrefix(descriptor.ModuleName, "/") || strings.HasSuffix(descriptor.ModuleName, "/") {
+			errs = append(errs, fmt.Sprintf("%s: plugin name should not start or end with a /", pAlias))
+			continue
+		}
+
+		if _, ok := uniq[descriptor.ModuleName]; ok {
+			errs = append(errs, fmt.Sprintf("only one version of a plugin is allowed, there is a duplicate of %s", descriptor.ModuleName))
+			continue
+		}
+
+		uniq[descriptor.ModuleName] = struct{}{}
+	}
+
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, ": "))
+	}
+
+	return nil
+}
+
 // SetupLocalPlugins setup local plugins environment.
 func SetupLocalPlugins(plugins map[string]LocalDescriptor) error {
 	if plugins == nil {
@@ -128,41 +165,4 @@ func checkLocalPluginManifest(descriptor LocalDescriptor) error {
 	}
 
 	return errs.ErrorOrNil()
-}
-
-func checkRemotePluginsConfiguration(plugins map[string]Descriptor) error {
-	if plugins == nil {
-		return nil
-	}
-
-	uniq := make(map[string]struct{})
-
-	var errs []string
-	for pAlias, descriptor := range plugins {
-		if descriptor.ModuleName == "" {
-			errs = append(errs, fmt.Sprintf("%s: plugin name is missing", pAlias))
-		}
-
-		if descriptor.Version == "" {
-			errs = append(errs, fmt.Sprintf("%s: plugin version is missing", pAlias))
-		}
-
-		if strings.HasPrefix(descriptor.ModuleName, "/") || strings.HasSuffix(descriptor.ModuleName, "/") {
-			errs = append(errs, fmt.Sprintf("%s: plugin name should not start or end with a /", pAlias))
-			continue
-		}
-
-		if _, ok := uniq[descriptor.ModuleName]; ok {
-			errs = append(errs, fmt.Sprintf("only one version of a plugin is allowed, there is a duplicate of %s", descriptor.ModuleName))
-			continue
-		}
-
-		uniq[descriptor.ModuleName] = struct{}{}
-	}
-
-	if len(errs) > 0 {
-		return errors.New(strings.Join(errs, ": "))
-	}
-
-	return nil
 }
