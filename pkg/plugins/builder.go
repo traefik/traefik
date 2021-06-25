@@ -47,8 +47,16 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 		}
 
 		i := interp.New(interp.Options{GoPath: client.GoPath()})
-		i.Use(stdlib.Symbols)
-		i.Use(ppSymbols())
+
+		err = i.Use(stdlib.Symbols)
+		if err != nil {
+			return nil, fmt.Errorf("%s: failed to load symbols: %w", desc.ModuleName, err)
+		}
+
+		err = i.Use(ppSymbols())
+		if err != nil {
+			return nil, fmt.Errorf("%s: failed to load provider symbols: %w", desc.ModuleName, err)
+		}
 
 		_, err = i.Eval(fmt.Sprintf(`import "%s"`, manifest.Import))
 		if err != nil {
@@ -82,8 +90,16 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 		}
 
 		i := interp.New(interp.Options{GoPath: localGoPath})
-		i.Use(stdlib.Symbols)
-		i.Use(ppSymbols())
+
+		err = i.Use(stdlib.Symbols)
+		if err != nil {
+			return nil, fmt.Errorf("%s: failed to load symbols: %w", desc.ModuleName, err)
+		}
+
+		err = i.Use(ppSymbols())
+		if err != nil {
+			return nil, fmt.Errorf("%s: failed to load provider symbols: %w", desc.ModuleName, err)
+		}
 
 		_, err = i.Eval(fmt.Sprintf(`import "%s"`, manifest.Import))
 		if err != nil {

@@ -71,7 +71,7 @@ require (
 	github.com/tinylib/msgp v1.0.2 // indirect
 	github.com/traefik/gziphandler v1.1.2-0.20210212101304-175e0fad6888
 	github.com/traefik/paerser v0.1.4
-	github.com/traefik/yaegi v0.9.17
+	github.com/traefik/yaegi v0.9.19
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/unrolled/render v1.0.2
