@@ -313,6 +313,8 @@ On subsequent requests, to keep the session alive with the same server, the clie
 Configure health check to remove unhealthy servers from the load balancing rotation.
 Traefik will consider your servers healthy as long as they return status codes between `2XX` and `3XX` to the health check requests (carried out every `interval`).
 
+To propagate status changes (e.g. all servers of this service are down) upwards, HealthCheck must also be enabled on the parent(s) of this service.
+
 Below are the available options for the health check mechanism:
 
 - `path` is appended to the server URL to set the health check endpoint.
@@ -900,6 +902,84 @@ http:
         url = "http://private-ip-server-2/"
 ```
 
+#### Health Check
+
+HealthCheck enables automatic self-healthcheck for this service, i.e. whenever
+one of its children is reported as down, this service becomes aware of it, and
+takes it into account (i.e. it ignores the down child) when running the
+load-balancing algorithm. In addition, if the parent of this service also has
+HealthCheck enabled, this service reports to its parent any status change.
+
+!!! info "All or nothing"
+
+    If HealthCheck is enabled for a given service, but any of its descendants does
+    not have it enabled, the creation of the service will fail.
+
+    HealthCheck on Weighted services can be defined currently only with the [File](../../providers/file.md) provider.
+
+```yaml tab="YAML"
+## Dynamic configuration
+http:
+  services:
+    app:
+      weighted:
+        healthCheck: {}
+        services:
+        - name: appv1
+          weight: 3
+        - name: appv2
+          weight: 1
+
+    appv1:
+      loadBalancer:
+        healthCheck:
+          path: /status
+          interval: 10s
+          timeout: 3s
+        servers:
+        - url: "http://private-ip-server-1/"
+
+    appv2:
+      loadBalancer:
+        healthCheck:
+          path: /status
+          interval: 10s
+          timeout: 3s
+        servers:
+        - url: "http://private-ip-server-2/"
+```
+
+```toml tab="TOML"
+## Dynamic configuration
+[http.services]
+  [http.services.app]
+    [http.services.app.weighted.healthCheck]
+    [[http.services.app.weighted.services]]
+      name = "appv1"
+      weight = 3
+    [[http.services.app.weighted.services]]
+      name = "appv2"
+      weight = 1
+
+  [http.services.appv1]
+    [http.services.appv1.loadBalancer]
+      [http.services.appv1.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.appv1.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+
+  [http.services.appv2]
+    [http.services.appv2.loadBalancer]
+      [http.services.appv2.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.appv2.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
+
 ### Mirroring (service)
 
 The mirroring is able to mirror requests sent to a service to other services.
@@ -957,6 +1037,76 @@ http:
 
   [http.services.appv2]
     [http.services.appv2.loadBalancer]
+      [[http.services.appv2.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
+
+#### Health Check
+
+HealthCheck enables automatic self-healthcheck for this service, i.e. if the
+main handler of the service becomes unreachable, the information is propagated
+upwards to its parent.
+
+!!! info "All or nothing"
+
+    If HealthCheck is enabled for a given service, but any of its descendants does
+    not have it enabled, the creation of the service will fail.
+
+    HealthCheck on Mirroring services can be defined currently only with the [File](../../providers/file.md) provider.
+
+```yaml tab="YAML"
+## Dynamic configuration
+http:
+  services:
+    mirrored-api:
+      mirroring:
+        healthCheck: {}
+        service: appv1
+        mirrors:
+        - name: appv2
+          percent: 10
+
+    appv1:
+      loadBalancer:
+        healthCheck:
+          path: /status
+          interval: 10s
+          timeout: 3s
+        servers:
+        - url: "http://private-ip-server-1/"
+
+    appv2:
+      loadBalancer:
+        servers:
+        - url: "http://private-ip-server-2/"
+```
+
+```toml tab="TOML"
+## Dynamic configuration
+[http.services]
+  [http.services.mirrored-api]
+    [http.services.mirrored-api.mirroring]
+      [http.services.mirrored-api.mirroring.healthCheck]
+      service = "appv1"
+    [[http.services.mirrored-api.mirroring.mirrors]]
+      name = "appv2"
+      percent = 10
+
+  [http.services.appv1]
+    [http.services.appv1.loadBalancer]
+      [http.services.appv1.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.appv1.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+
+  [http.services.appv2]
+    [http.services.appv2.loadBalancer]
+      [http.services.appv1.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
       [[http.services.appv2.loadBalancer.servers]]
         url = "http://private-ip-server-2/"
 ```
