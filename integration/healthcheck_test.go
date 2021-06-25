@@ -3,6 +3,7 @@ package integration
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -304,7 +305,10 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Bring whoami1 and whoami3 down
-	client := &http.Client{}
+	client := http.Client{
+		Timeout: 10 * time.Second,
+	}
+
 	whoamiHosts := []string{s.whoami1IP, s.whoami3IP}
 	for _, whoami := range whoamiHosts {
 		statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+whoami+"/health", bytes.NewBuffer([]byte("500")))
@@ -313,7 +317,7 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 		c.Assert(err, checker.IsNil)
 	}
 
-	time.Sleep(time.Second)
+	try.Sleep(time.Second)
 
 	// Verify load-balancing on root still works, and that we're getting wsp2, wsp4, wsp2, wsp4, etc.
 	var want string
@@ -323,10 +327,14 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 		} else {
 			want = `IP: ` + s.whoami2IP
 		}
-		// N.B: using a Nanosecond here is important, because we actually want the request
-		// to be tried only once. And we're too lazy not to use try.Request.
-		err = try.Request(rootReq, time.Nanosecond, try.BodyContains(want))
+
+		resp, err := client.Do(rootReq)
 		c.Assert(err, checker.IsNil)
+
+		body, err := ioutil.ReadAll(resp.Body)
+		c.Assert(err, checker.IsNil)
+
+		c.Assert(string(body), checker.Contains, want)
 	}
 
 	fooReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
@@ -336,8 +344,13 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 	// Verify load-balancing on foo still works, and that we're getting wsp2, wsp2, wsp2, wsp2, etc.
 	want = `IP: ` + s.whoami2IP
 	for i := 0; i < 4; i++ {
-		err = try.Request(fooReq, time.Nanosecond, try.BodyContains(want))
+		resp, err := client.Do(fooReq)
 		c.Assert(err, checker.IsNil)
+
+		body, err := ioutil.ReadAll(resp.Body)
+		c.Assert(err, checker.IsNil)
+
+		c.Assert(string(body), checker.Contains, want)
 	}
 
 	barReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
@@ -347,8 +360,13 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 	// Verify load-balancing on bar still works, and that we're getting wsp2, wsp2, wsp2, wsp2, etc.
 	want = `IP: ` + s.whoami2IP
 	for i := 0; i < 4; i++ {
-		err = try.Request(barReq, time.Nanosecond, try.BodyContains(want))
+		resp, err := client.Do(barReq)
 		c.Assert(err, checker.IsNil)
+
+		body, err := ioutil.ReadAll(resp.Body)
+		c.Assert(err, checker.IsNil)
+
+		c.Assert(string(body), checker.Contains, want)
 	}
 
 	// Bring whoami2 and whoami4 down
@@ -360,16 +378,21 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 		c.Assert(err, checker.IsNil)
 	}
 
-	time.Sleep(time.Second)
+	try.Sleep(time.Second)
 
 	// Verify that everything is down, and that we get 503s everywhere.
 	for i := 0; i < 2; i++ {
-		err = try.Request(rootReq, time.Nanosecond, try.StatusCodeIs(http.StatusServiceUnavailable))
+		resp, err := client.Do(rootReq)
 		c.Assert(err, checker.IsNil)
-		err = try.Request(fooReq, time.Nanosecond, try.StatusCodeIs(http.StatusServiceUnavailable))
+		c.Assert(resp.StatusCode, checker.Equals, http.StatusServiceUnavailable)
+
+		resp, err = client.Do(fooReq)
 		c.Assert(err, checker.IsNil)
-		err = try.Request(barReq, time.Nanosecond, try.StatusCodeIs(http.StatusServiceUnavailable))
+		c.Assert(resp.StatusCode, checker.Equals, http.StatusServiceUnavailable)
+
+		resp, err = client.Do(barReq)
 		c.Assert(err, checker.IsNil)
+		c.Assert(resp.StatusCode, checker.Equals, http.StatusServiceUnavailable)
 	}
 
 	// Bring everything back up.
@@ -381,30 +404,45 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 		c.Assert(err, checker.IsNil)
 	}
 
-	time.Sleep(time.Second)
+	try.Sleep(time.Second)
 
 	// Verify everything is up on root router.
 	wantIPs := []string{s.whoami3IP, s.whoami1IP, s.whoami4IP, s.whoami2IP}
 	for i := 0; i < 4; i++ {
 		want := `IP: ` + wantIPs[i]
-		err = try.Request(rootReq, time.Nanosecond, try.BodyContains(want))
+		resp, err := client.Do(rootReq)
 		c.Assert(err, checker.IsNil)
+
+		body, err := ioutil.ReadAll(resp.Body)
+		c.Assert(err, checker.IsNil)
+
+		c.Assert(string(body), checker.Contains, want)
 	}
 
 	// Verify everything is up on foo router.
 	wantIPs = []string{s.whoami1IP, s.whoami1IP, s.whoami3IP, s.whoami2IP}
 	for i := 0; i < 4; i++ {
 		want := `IP: ` + wantIPs[i]
-		err = try.Request(fooReq, time.Nanosecond, try.BodyContains(want))
+		resp, err := client.Do(fooReq)
 		c.Assert(err, checker.IsNil)
+
+		body, err := ioutil.ReadAll(resp.Body)
+		c.Assert(err, checker.IsNil)
+
+		c.Assert(string(body), checker.Contains, want)
 	}
 
 	// Verify everything is up on bar router.
 	wantIPs = []string{s.whoami1IP, s.whoami1IP, s.whoami3IP, s.whoami2IP}
 	for i := 0; i < 4; i++ {
 		want := `IP: ` + wantIPs[i]
-		err = try.Request(barReq, time.Nanosecond, try.BodyContains(want))
+		resp, err := client.Do(barReq)
 		c.Assert(err, checker.IsNil)
+
+		body, err := ioutil.ReadAll(resp.Body)
+		c.Assert(err, checker.IsNil)
+
+		c.Assert(string(body), checker.Contains, want)
 	}
 }
 
@@ -456,7 +494,9 @@ func (s *HealthCheckSuite) TestPropagateReload(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Allow one of the underlying services on it to fail all servers HC (whoami2)
-	client := &http.Client{}
+	client := http.Client{
+		Timeout: 10 * time.Second,
+	}
 	statusOKReq, err := http.NewRequest(http.MethodPost, "http://"+s.whoami2IP+"/health", bytes.NewBuffer([]byte("500")))
 	c.Assert(err, checker.IsNil)
 	_, err = client.Do(statusOKReq)
@@ -484,16 +524,18 @@ func (s *HealthCheckSuite) TestPropagateReload(c *check.C) {
 	err = fr1.Close()
 	c.Assert(err, checker.IsNil)
 
-	// wait for traefik
-	time.Sleep(1 * time.Second)
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`root.localhost`)"))
-	c.Assert(err, checker.IsNil)
+	try.Sleep(1 * time.Second)
 
 	// Check the failed service (whoami2) is not getting requests
 	wantIPs := []string{s.whoami1IP, s.whoami1IP, s.whoami1IP, s.whoami1IP}
 	for _, ip := range wantIPs {
 		want := "IP: " + ip
-		err = try.Request(rootReq, time.Nanosecond, try.BodyContains(want))
+		resp, err := client.Do(rootReq)
 		c.Assert(err, checker.IsNil)
+
+		body, err := ioutil.ReadAll(resp.Body)
+		c.Assert(err, checker.IsNil)
+
+		c.Assert(string(body), checker.Contains, want)
 	}
 }
