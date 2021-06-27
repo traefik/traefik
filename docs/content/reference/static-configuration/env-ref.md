@@ -538,7 +538,7 @@ KV Username
 Enable debug logging of generated configuration template. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_FILE_DIRECTORY`:  
-Load dynamic configuration from one or more .toml or .yml files in a directory.
+Load dynamic configuration from one or more .yml or .toml files in a directory.
 
 `TRAEFIK_PROVIDERS_FILE_FILENAME`:  
 Load dynamic configuration from a file.
@@ -719,6 +719,9 @@ Display additional provider logs. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_MARATHON_WATCH`:  
 Watch provider. (Default: ```true```)
+
+`TRAEFIK_PROVIDERS_PLUGIN_<NAME>`:  
+Plugins configuration.
 
 `TRAEFIK_PROVIDERS_PROVIDERSTHROTTLEDURATION`:  
 Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time. (Default: ```2```)

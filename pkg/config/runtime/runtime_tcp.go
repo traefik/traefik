@@ -15,14 +15,8 @@ func (c *Configuration) GetTCPRoutersByEntryPoints(ctx context.Context, entryPoi
 	for rtName, rt := range c.TCPRouters {
 		logger := log.FromContext(log.With(ctx, log.Str(log.RouterName, rtName)))
 
-		eps := rt.EntryPoints
-		if len(eps) == 0 {
-			logger.Debugf("No entryPoint defined for this router, using the default one(s) instead: %+v", entryPoints)
-			eps = entryPoints
-		}
-
 		entryPointsCount := 0
-		for _, entryPointName := range eps {
+		for _, entryPointName := range rt.EntryPoints {
 			if !contains(entryPoints, entryPointName) {
 				rt.AddError(fmt.Errorf("entryPoint %q doesn't exist", entryPointName), false)
 				logger.WithField(log.EntryPointName, entryPointName).
@@ -110,5 +104,35 @@ func (s *TCPServiceInfo) AddError(err error, critical bool) {
 	// only set it to "warning" if not already in a worse state
 	if s.Status != StatusDisabled {
 		s.Status = StatusWarning
+	}
+}
+
+// TCPMiddlewareInfo holds information about a currently running middleware.
+type TCPMiddlewareInfo struct {
+	*dynamic.TCPMiddleware // dynamic configuration
+	// Err contains all the errors that occurred during service creation.
+	Err    []string `json:"error,omitempty"`
+	Status string   `json:"status,omitempty"`
+	UsedBy []string `json:"usedBy,omitempty"` // list of TCP routers and services using that middleware.
+}
+
+// AddError adds err to s.Err, if it does not already exist.
+// If critical is set, m is marked as disabled.
+func (m *TCPMiddlewareInfo) AddError(err error, critical bool) {
+	for _, value := range m.Err {
+		if value == err.Error() {
+			return
+		}
+	}
+
+	m.Err = append(m.Err, err.Error())
+	if critical {
+		m.Status = StatusDisabled
+		return
+	}
+
+	// only set it to "warning" if not already in a worse state
+	if m.Status != StatusDisabled {
+		m.Status = StatusWarning
 	}
 }

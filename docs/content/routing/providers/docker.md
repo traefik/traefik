@@ -13,13 +13,13 @@ Attach labels to your containers and let Traefik do the rest!
 
     Enabling the docker provider
 
-    ```toml tab="File (TOML)"
-    [providers.docker]
-    ```
-
     ```yaml tab="File (YAML)"
     providers:
       docker: {}
+    ```
+
+    ```toml tab="File (TOML)"
+    [providers.docker]
     ```
 
     ```bash tab="CLI"
@@ -82,15 +82,6 @@ Attach labels to your containers and let Traefik do the rest!
 
     Enabling the docker provider (Swarm Mode)
 
-    ```toml tab="File (TOML)"
-    [providers.docker]
-      # swarm classic (1.12-)
-      # endpoint = "tcp://127.0.0.1:2375"
-      # docker swarm mode (1.12+)
-      endpoint = "tcp://127.0.0.1:2377"
-      swarmMode = true
-    ```
-
     ```yaml tab="File (YAML)"
     providers:
       docker:
@@ -99,6 +90,15 @@ Attach labels to your containers and let Traefik do the rest!
         # docker swarm mode (1.12+)
         endpoint: "tcp://127.0.0.1:2377"
         swarmMode: true
+    ```
+
+    ```toml tab="File (TOML)"
+    [providers.docker]
+      # swarm classic (1.12-)
+      # endpoint = "tcp://127.0.0.1:2375"
+      # docker swarm mode (1.12+)
+      endpoint = "tcp://127.0.0.1:2377"
+      swarmMode = true
     ```
 
     ```bash tab="CLI"
@@ -266,7 +266,7 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
 !!! warning "The character `@` is not authorized in the service name `<service_name>`."
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.server.port`"
-    
+
     Registers a port.
     Useful when the container exposes multiples ports.
 
@@ -289,7 +289,7 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
 
     Allows to reference a ServersTransport resource that is defined either with the File provider or the Kubernetes CRD one.
     See [serverstransport](../services/index.md#serverstransport) for more information.
-    
+
     ```yaml
     - "traefik.http.services.<service_name>.loadbalancer.serverstransport=foobar@file"
     ```
@@ -399,9 +399,9 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.samesite`"
-    
+
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
-    
+
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.sticky.cookie.samesite=none"
     ```
@@ -419,7 +419,7 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
 You can declare pieces of middleware using labels starting with `traefik.http.middlewares.<name-of-your-choice>.`,
 followed by the middleware type/options.
 
-For example, to declare a middleware [`redirectscheme`](../../middlewares/redirectscheme.md) named `my-redirect`,
+For example, to declare a middleware [`redirectscheme`](../../middlewares/http/redirectscheme.md) named `my-redirect`,
 you'd write `traefik.http.middlewares.my-redirect.redirectscheme.scheme=https`.
 
 More information about available middlewares in the dedicated [middlewares section](../../middlewares/overview.md).

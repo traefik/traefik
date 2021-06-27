@@ -68,6 +68,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware8.headers.publickey":                                   "foobar",
 		"traefik.http.middlewares.Middleware8.headers.referrerpolicy":                              "foobar",
 		"traefik.http.middlewares.Middleware8.headers.featurepolicy":                               "foobar",
+		"traefik.http.middlewares.Middleware8.headers.permissionspolicy":                           "foobar",
 		"traefik.http.middlewares.Middleware8.headers.sslforcehost":                                "true",
 		"traefik.http.middlewares.Middleware8.headers.sslhost":                                     "foobar",
 		"traefik.http.middlewares.Middleware8.headers.sslproxyheaders.name0":                       "foobar",
@@ -169,22 +170,24 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service1.loadbalancer.server.port":                      "8080",
 		"traefik.http.services.Service1.loadbalancer.sticky":                           "false",
 		"traefik.http.services.Service1.loadbalancer.sticky.cookie.name":               "fui",
-		"traefik.tcp.routers.Router0.rule":                                             "foobar",
-		"traefik.tcp.routers.Router0.entrypoints":                                      "foobar, fiibar",
-		"traefik.tcp.routers.Router0.service":                                          "foobar",
-		"traefik.tcp.routers.Router0.tls.passthrough":                                  "false",
-		"traefik.tcp.routers.Router0.tls.options":                                      "foo",
-		"traefik.tcp.routers.Router1.rule":                                             "foobar",
-		"traefik.tcp.routers.Router1.entrypoints":                                      "foobar, fiibar",
-		"traefik.tcp.routers.Router1.service":                                          "foobar",
-		"traefik.tcp.routers.Router1.tls.options":                                      "foo",
-		"traefik.tcp.routers.Router1.tls.passthrough":                                  "false",
-		"traefik.tcp.services.Service0.loadbalancer.server.Port":                       "42",
-		"traefik.tcp.services.Service0.loadbalancer.TerminationDelay":                  "42",
-		"traefik.tcp.services.Service0.loadbalancer.proxyProtocol.version":             "42",
-		"traefik.tcp.services.Service1.loadbalancer.server.Port":                       "42",
-		"traefik.tcp.services.Service1.loadbalancer.TerminationDelay":                  "42",
-		"traefik.tcp.services.Service1.loadbalancer.proxyProtocol":                     "true",
+
+		"traefik.tcp.middlewares.Middleware0.ipwhitelist.sourcerange":      "foobar, fiibar",
+		"traefik.tcp.routers.Router0.rule":                                 "foobar",
+		"traefik.tcp.routers.Router0.entrypoints":                          "foobar, fiibar",
+		"traefik.tcp.routers.Router0.service":                              "foobar",
+		"traefik.tcp.routers.Router0.tls.passthrough":                      "false",
+		"traefik.tcp.routers.Router0.tls.options":                          "foo",
+		"traefik.tcp.routers.Router1.rule":                                 "foobar",
+		"traefik.tcp.routers.Router1.entrypoints":                          "foobar, fiibar",
+		"traefik.tcp.routers.Router1.service":                              "foobar",
+		"traefik.tcp.routers.Router1.tls.options":                          "foo",
+		"traefik.tcp.routers.Router1.tls.passthrough":                      "false",
+		"traefik.tcp.services.Service0.loadbalancer.server.Port":           "42",
+		"traefik.tcp.services.Service0.loadbalancer.TerminationDelay":      "42",
+		"traefik.tcp.services.Service0.loadbalancer.proxyProtocol.version": "42",
+		"traefik.tcp.services.Service1.loadbalancer.server.Port":           "42",
+		"traefik.tcp.services.Service1.loadbalancer.TerminationDelay":      "42",
+		"traefik.tcp.services.Service1.loadbalancer.proxyProtocol":         "true",
 
 		"traefik.udp.routers.Router0.entrypoints":                "foobar, fiibar",
 		"traefik.udp.routers.Router0.service":                    "foobar",
@@ -222,6 +225,13 @@ func TestDecodeConfiguration(t *testing.T) {
 					TLS: &dynamic.RouterTCPTLSConfig{
 						Passthrough: false,
 						Options:     "foo",
+					},
+				},
+			},
+			Middlewares: map[string]*dynamic.TCPMiddleware{
+				"Middleware0": {
+					IPWhiteList: &dynamic.TCPIPWhiteList{
+						SourceRange: []string{"foobar", "fiibar"},
 					},
 				},
 			},
@@ -571,6 +581,7 @@ func TestDecodeConfiguration(t *testing.T) {
 						PublicKey:               "foobar",
 						ReferrerPolicy:          "foobar",
 						FeaturePolicy:           "foobar",
+						PermissionsPolicy:       "foobar",
 						IsDevelopment:           true,
 					},
 				},
@@ -614,7 +625,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								Port:   "8080",
 							},
 						},
-						HealthCheck: &dynamic.HealthCheck{
+						HealthCheck: &dynamic.ServerHealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
 							Port:     42,
@@ -641,7 +652,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								Port:   "8080",
 							},
 						},
-						HealthCheck: &dynamic.HealthCheck{
+						HealthCheck: &dynamic.ServerHealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
 							Port:     42,
@@ -693,6 +704,13 @@ func TestEncodeConfiguration(t *testing.T) {
 					TLS: &dynamic.RouterTCPTLSConfig{
 						Passthrough: false,
 						Options:     "foo",
+					},
+				},
+			},
+			Middlewares: map[string]*dynamic.TCPMiddleware{
+				"Middleware0": {
+					IPWhiteList: &dynamic.TCPIPWhiteList{
+						SourceRange: []string{"foobar", "fiibar"},
 					},
 				},
 			},
@@ -1047,6 +1065,7 @@ func TestEncodeConfiguration(t *testing.T) {
 						PublicKey:               "foobar",
 						ReferrerPolicy:          "foobar",
 						FeaturePolicy:           "foobar",
+						PermissionsPolicy:       "foobar",
 						IsDevelopment:           true,
 					},
 				},
@@ -1081,7 +1100,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								Port:   "8080",
 							},
 						},
-						HealthCheck: &dynamic.HealthCheck{
+						HealthCheck: &dynamic.ServerHealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
 							Port:     42,
@@ -1107,7 +1126,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								Port:   "8080",
 							},
 						},
-						HealthCheck: &dynamic.HealthCheck{
+						HealthCheck: &dynamic.ServerHealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
 							Port:     42,
@@ -1188,6 +1207,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware8.Headers.PublicKey":                                   "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.ReferrerPolicy":                              "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.FeaturePolicy":                               "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.PermissionsPolicy":                           "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.SSLForceHost":                                "true",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.SSLHost":                                     "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.SSLProxyHeaders.name0":                       "foobar",
@@ -1289,6 +1309,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.Scheme":                    "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
 
+		"traefik.TCP.Middlewares.Middleware0.IPWhiteList.SourceRange": "foobar, fiibar",
 		"traefik.TCP.Routers.Router0.Rule":                            "foobar",
 		"traefik.TCP.Routers.Router0.EntryPoints":                     "foobar, fiibar",
 		"traefik.TCP.Routers.Router0.Service":                         "foobar",

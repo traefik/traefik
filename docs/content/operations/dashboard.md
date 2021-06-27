@@ -31,16 +31,6 @@ This is the **recommended** method.
 Start by enabling the dashboard by using the following option from [Traefik's API](./api.md)
 on the [static configuration](../getting-started/configuration-overview.md#the-static-configuration):
 
-```toml tab="File (TOML)"
-[api]
-  # Dashboard
-  #
-  # Optional
-  # Default: true
-  #
-  dashboard = true
-```
-
 ```yaml tab="File (YAML)"
 api:
   # Dashboard
@@ -49,6 +39,16 @@ api:
   # Default: true
   #
   dashboard: true
+```
+
+```toml tab="File (TOML)"
+[api]
+  # Dashboard
+  #
+  # Optional
+  # Default: true
+  #
+  dashboard = true
 ```
 
 ```bash tab="CLI"
@@ -66,8 +66,8 @@ with a router attached to the service `api@internal` in the
 to allow defining:
 
 - One or more security features through [middlewares](../middlewares/overview.md)
-  like authentication ([basicAuth](../middlewares/basicauth.md) , [digestAuth](../middlewares/digestauth.md),
-  [forwardAuth](../middlewares/forwardauth.md)) or [whitelisting](../middlewares/ipwhitelist.md).
+  like authentication ([basicAuth](../middlewares/http/basicauth.md) , [digestAuth](../middlewares/http/digestauth.md),
+  [forwardAuth](../middlewares/http/forwardauth.md)) or [whitelisting](../middlewares/http/ipwhitelist.md).
 
 - A [router rule](#dashboard-router-rule) for accessing the dashboard,
   through Traefik itself (sometimes referred as "Traefik-ception").
@@ -105,16 +105,16 @@ This mode is not recommended because it does not allow the use of security featu
 
 To enable the "insecure mode", use the following options from [Traefik's API](./api.md#insecure):
 
-```toml tab="File (TOML)"
-[api]
-  dashboard = true
-  insecure = true
-```
-
 ```yaml tab="File (YAML)"
 api:
   dashboard: true
   insecure: true
+```
+
+```toml tab="File (TOML)"
+[api]
+  dashboard = true
+  insecure = true
 ```
 
 ```bash tab="CLI"

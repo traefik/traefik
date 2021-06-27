@@ -47,6 +47,21 @@ spec:
                   properties:
                     match:
                       type: string
+                    middlewares:
+                      description: Middlewares contains references to MiddlewareTCP
+                        resources.
+                      items:
+                        description: ObjectReference is a generic reference to a Traefik
+                          resource.
+                        properties:
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                        required:
+                        - name
+                        type: object
+                      type: array
                     services:
                       items:
                         description: ServiceTCP defines an upstream to proxy traffic.
