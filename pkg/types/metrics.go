@@ -91,7 +91,7 @@ type InfluxDB struct {
 	AddEntryPointsLabels bool              `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
 	AddRoutersLabels     bool              `description:"Enable metrics on routers." json:"addRoutersLabels,omitempty" toml:"addRoutersLabels,omitempty" yaml:"addRoutersLabels,omitempty" export:"true"`
 	AddServicesLabels    bool              `description:"Enable metrics on services." json:"addServicesLabels,omitempty" toml:"addServicesLabels,omitempty" yaml:"addServicesLabels,omitempty" export:"true"`
-	AdditionalTags       map[string]string `description:"Additional Tags on all metrics" json:"additionalTags,omitempty" toml:"additionalTags,omitEmpty" yaml:"additionalTags,omitEmpty" export:"true"`
+	AdditionalLabels     map[string]string `description:"Additional labels (influxdb tags) on all metrics" json:"additionalLabels,omitempty" toml:"additionalLabels,omitEmpty" yaml:"additionalLabels,omitEmpty" export:"true"`
 }
 
 // SetDefaults sets the default values.
