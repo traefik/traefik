@@ -236,16 +236,16 @@ metrics:
 --metrics.influxdb.pushInterval=10s
 ```
 
-#### `additionalTags`
+#### `additionalLabels`
 
 _Optional, Default={}_
 
-Additional tags to send to influxdb for all metrics.
+Additional labels (influxdb tags) to send to influxdb for all metrics.
 
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.influxDB]
-    [metrics.influxDB.additionalTags]
+    [metrics.influxDB.additionalLabels]
       host = "traefik01.example.com"
       environment = "production"
 ```
@@ -253,11 +253,11 @@ Additional tags to send to influxdb for all metrics.
 ```yaml tab="File (YAML)"
 metrics:
   influxDB:
-    additionalTags:
+    additionalLabels:
       host: traefik01.example.com
       environment: production
 ```
 
 ```bash tab="CLI"
---metrics.influxdb.additionaltags.host=traefik01.example.com --metrics.influxdb.additionaltags.environment=production
+--metrics.influxdb.additionallabels.host=traefik01.example.com --metrics.influxdb.additionallabels.environment=production
 ```

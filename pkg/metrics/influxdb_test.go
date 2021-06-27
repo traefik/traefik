@@ -28,7 +28,7 @@ func TestInfluxDB(t *testing.T) {
 			AddEntryPointsLabels: true,
 			AddRoutersLabels:     true,
 			AddServicesLabels:    true,
-			AdditionalTags:       map[string]string{"tag1": "val1"},
+			AdditionalLabels:     map[string]string{"tag1": "val1"},
 		})
 	defer StopInfluxDB()
 

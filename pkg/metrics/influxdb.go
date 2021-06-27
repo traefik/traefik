@@ -133,7 +133,7 @@ func initInfluxDBClient(ctx context.Context, config *types.InfluxDB) *influx.Inf
 	}
 
 	return influx.New(
-		config.AdditionalTags,
+		config.AdditionalLabels,
 		influxdb.BatchPointsConfig{
 			Database:        config.Database,
 			RetentionPolicy: config.RetentionPolicy,
