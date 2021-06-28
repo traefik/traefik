@@ -23,7 +23,7 @@ labels:
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
-  name: testHeader
+  name: test-header
 spec:
   headers:
     customRequestHeaders:
@@ -86,7 +86,7 @@ labels:
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
-  name: testHeader
+  name: test-header
 spec:
   headers:
     customRequestHeaders:
@@ -154,7 +154,7 @@ labels:
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
-  name: testHeader
+  name: test-header
 spec:
   headers:
     frameDeny: true
@@ -212,7 +212,7 @@ labels:
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
-  name: testHeader
+  name: test-header
 spec:
   headers:
     accessControlAllowMethods:

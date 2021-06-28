@@ -386,7 +386,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
     apiVersion: traefik.containo.us/v1alpha1
     kind: IngressRoute
     metadata:
-      name: testName
+      name: test-name
       namespace: default
     spec:
       entryPoints:
@@ -1445,8 +1445,8 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
         - TLS_RSA_WITH_AES_256_GCM_SHA384
       clientAuth:                                   # [5]
         secretNames:                                # [6]
-          - secretCA1
-          - secretCA2
+          - secret-ca1
+          - secret-ca2
         clientAuthType: VerifyClientCertIfGiven     # [7]
       sniStrict: true                               # [8]
     ```
@@ -1483,8 +1483,8 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
         - TLS_RSA_WITH_AES_256_GCM_SHA384
       clientAuth:
         secretNames:
-          - secretCA1
-          - secretCA2
+          - secret-ca1
+          - secret-ca2
         clientAuthType: VerifyClientCertIfGiven
     ```
     
@@ -1513,7 +1513,7 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
     apiVersion: v1
     kind: Secret
     metadata:
-      name: secretCA1
+      name: secret-ca1
       namespace: default
     
     data:
@@ -1524,7 +1524,7 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
     apiVersion: v1
     kind: Secret
     metadata:
-      name: secretCA2
+      name: secret-ca2
       namespace: default
     
     data:
@@ -1565,7 +1565,7 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
     
     spec:
       defaultCertificate:
-        secretName: mySecret                      # [1]
+        secretName: my-secret                      # [1]
     ```
 
 | Ref | Attribute    | Purpose                                                                                                                                                     |
