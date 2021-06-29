@@ -92,3 +92,8 @@ func (w *responseModifier) Flush() {
 		flusher.Flush()
 	}
 }
+
+// CloseNotify implements http.CloseNotifier.
+func (w *responseModifier) CloseNotify() <-chan bool {
+	return w.w.(http.CloseNotifier).CloseNotify()
+}
