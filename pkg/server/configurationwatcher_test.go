@@ -51,6 +51,7 @@ func (p *mockProvider) Init() error {
 
 func TestNewConfigurationWatcher(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
+	defer routinesPool.Stop()
 	pvd := &mockProvider{
 		messages: []dynamic.Message{{
 			ProviderName: "mock",
@@ -106,12 +107,13 @@ func TestNewConfigurationWatcher(t *testing.T) {
 		close(run)
 	})
 
-	watcher.Start()
+	watcher.start()
 	<-run
 }
 
 func TestWaitForRequiredProvider(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
+	defer routinesPool.Stop()
 
 	pvdAggregator := &mockProvider{
 		wait: 5 * time.Millisecond,
@@ -146,8 +148,7 @@ func TestWaitForRequiredProvider(t *testing.T) {
 		publishedConfigCount++
 	})
 
-	watcher.Start()
-	defer watcher.Stop()
+	watcher.start()
 
 	// give some time so that the configuration can be processed
 	time.Sleep(20 * time.Millisecond)
@@ -158,6 +159,7 @@ func TestWaitForRequiredProvider(t *testing.T) {
 
 func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
+	defer routinesPool.Stop()
 
 	pvd := &mockProvider{
 		wait: 10 * time.Millisecond,
@@ -182,8 +184,7 @@ func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 		publishedConfigCount++
 	})
 
-	watcher.Start()
-	defer watcher.Stop()
+	watcher.start()
 
 	// give some time so that the configuration can be processed
 	time.Sleep(100 * time.Millisecond)
@@ -195,6 +196,7 @@ func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 
 func TestListenProvidersSkipsEmptyConfigs(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
+	defer routinesPool.Stop()
 	pvd := &mockProvider{
 		messages: []dynamic.Message{{ProviderName: "mock"}},
 	}
@@ -203,8 +205,7 @@ func TestListenProvidersSkipsEmptyConfigs(t *testing.T) {
 	watcher.AddListener(func(_ dynamic.Configuration) {
 		t.Error("An empty configuration was published but it should not")
 	})
-	watcher.Start()
-	defer watcher.Stop()
+	watcher.start()
 
 	// give some time so that the configuration can be processed
 	time.Sleep(100 * time.Millisecond)
@@ -212,6 +213,7 @@ func TestListenProvidersSkipsEmptyConfigs(t *testing.T) {
 
 func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
+	defer routinesPool.Stop()
 	message := dynamic.Message{
 		ProviderName: "mock",
 		Configuration: &dynamic.Configuration{
@@ -235,8 +237,7 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 		alreadyCalled = true
 	})
 
-	watcher.Start()
-	defer watcher.Stop()
+	watcher.start()
 
 	// give some time so that the configuration can be processed
 	time.Sleep(100 * time.Millisecond)
@@ -244,6 +245,7 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 
 func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
+	defer routinesPool.Stop()
 
 	configuration := &dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
@@ -275,8 +277,7 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 		lastConfig = conf
 	})
 
-	watcher.Start()
-	defer watcher.Stop()
+	watcher.start()
 
 	// give some time so that the configuration can be processed
 	time.Sleep(100 * time.Millisecond)
@@ -315,6 +316,7 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 
 func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
+	defer routinesPool.Stop()
 
 	configuration := &dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
@@ -364,8 +366,7 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 		})
 	})
 
-	watcher.Start()
-	defer watcher.Stop()
+	watcher.start()
 
 	// Wait long enough
 	time.Sleep(50 * time.Millisecond)
@@ -408,7 +409,7 @@ func TestApplyConfigUnderStress(t *testing.T) {
 			case <-ctx.Done():
 				return
 			default:
-				watcher.configurationValidatedChan <- dynamic.Message{ProviderName: "mock", Configuration: &dynamic.Configuration{}}
+				watcher.throttledConfigs <- dynamic.Message{ProviderName: "mock", Configuration: &dynamic.Configuration{}}
 			}
 		}
 	})
@@ -418,10 +419,9 @@ func TestApplyConfigUnderStress(t *testing.T) {
 		configurationReloads++
 	})
 
-	watcher.Start()
+	watcher.start()
 	time.Sleep(100 * time.Millisecond)
 	routinesPool.Stop()
-	watcher.Stop()
 
 	// Ensure that at least one configuration has been applied
 	// while the configuration validated channel is constantly fed.
@@ -431,6 +431,7 @@ func TestApplyConfigUnderStress(t *testing.T) {
 
 func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
+	defer routinesPool.Stop()
 
 	configuration := &dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
@@ -479,8 +480,7 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 		lastConfig = conf
 	})
 
-	watcher.Start()
-	defer watcher.Stop()
+	watcher.start()
 
 	// Wait long enough
 	time.Sleep(50 * time.Millisecond)
@@ -515,6 +515,7 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 
 func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
+	defer routinesPool.Stop()
 
 	configuration := &dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
@@ -538,8 +539,7 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 		publishedProviderConfig = conf
 	})
 
-	watcher.Start()
-	defer watcher.Stop()
+	watcher.start()
 
 	// give some time so that the configuration can be processed
 	time.Sleep(100 * time.Millisecond)
@@ -584,6 +584,7 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 
 func TestPublishConfigUpdatedByProvider(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
+	defer routinesPool.Stop()
 
 	pvdConfiguration := dynamic.Configuration{
 		TCP: &dynamic.TCPConfiguration{
@@ -617,8 +618,7 @@ func TestPublishConfigUpdatedByProvider(t *testing.T) {
 		pvdConfiguration.TCP.Routers["bar"] = &dynamic.TCPRouter{}
 	})
 
-	watcher.Start()
-	defer watcher.Stop()
+	watcher.start()
 
 	// give some time so that the configuration can be processed.
 	time.Sleep(100 * time.Millisecond)
@@ -628,6 +628,7 @@ func TestPublishConfigUpdatedByProvider(t *testing.T) {
 
 func TestPublishConfigUpdatedByConfigWatcherListener(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
+	defer routinesPool.Stop()
 
 	pvd := &mockProvider{
 		wait: 10 * time.Millisecond,
@@ -666,8 +667,7 @@ func TestPublishConfigUpdatedByConfigWatcherListener(t *testing.T) {
 		configuration.TCP.Routers["foo@mock"].Rule = "bar"
 	})
 
-	watcher.Start()
-	defer watcher.Stop()
+	watcher.start()
 
 	// give some time so that the configuration can be processed.
 	time.Sleep(100 * time.Millisecond)
