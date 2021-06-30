@@ -246,7 +246,7 @@ Additional labels (influxdb tags) on all metrics.
 [metrics]
   [metrics.influxDB]
     [metrics.influxDB.additionalLabels]
-      host = "traefik01.example.com"
+      host = "example.com"
       environment = "production"
 ```
 
@@ -254,36 +254,10 @@ Additional labels (influxdb tags) on all metrics.
 metrics:
   influxDB:
     additionalLabels:
-      host: traefik01.example.com
+      host: example.com
       environment: production
 ```
 
 ```bash tab="CLI"
---metrics.influxdb.additionallabels.host=traefik01.example.com --metrics.influxdb.additionallabels.environment=production
-```
-
-#### `additionalLabels`
-
-_Optional, Default={}_
-
-Additional labels (influxdb tags) to send to influxdb for all metrics.
-
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.influxDB]
-    [metrics.influxDB.additionalLabels]
-      host = "traefik01.example.com"
-      environment = "production"
-```
-
-```yaml tab="File (YAML)"
-metrics:
-  influxDB:
-    additionalLabels:
-      host: traefik01.example.com
-      environment: production
-```
-
-```bash tab="CLI"
---metrics.influxdb.additionallabels.host=traefik01.example.com --metrics.influxdb.additionallabels.environment=production
+--metrics.influxdb.additionallabels.host=example.com --metrics.influxdb.additionallabels.environment=production
 ```
