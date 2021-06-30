@@ -174,17 +174,17 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 `TRAEFIK_ENTRYPOINTS_<NAME>_UDP_TIMEOUT`:  
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 
-`TRAEFIK_EXPERIMENTAL_DEVPLUGIN_GOPATH`:  
-plugin's GOPATH.
-
-`TRAEFIK_EXPERIMENTAL_DEVPLUGIN_MODULENAME`:  
-plugin's module name.
-
 `TRAEFIK_EXPERIMENTAL_HTTP3`:  
 Enable HTTP3. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_KUBERNETESGATEWAY`:  
 Allow the Kubernetes gateway api provider usage. (Default: ```false```)
+
+`TRAEFIK_EXPERIMENTAL_LOCALPLUGINS_<NAME>`:  
+Local plugins configuration. (Default: ```false```)
+
+`TRAEFIK_EXPERIMENTAL_LOCALPLUGINS_<NAME>_MODULENAME`:  
+plugin's module name.
 
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_MODULENAME`:  
 plugin's module name.

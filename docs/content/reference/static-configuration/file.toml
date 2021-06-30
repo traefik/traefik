@@ -226,6 +226,9 @@
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
+  [providers.plugin]
+    [providers.plugin.Descriptor0]
+    [providers.plugin.Descriptor1]
 
 [api]
   insecure = true
@@ -398,6 +401,8 @@
     [experimental.plugins.Descriptor1]
       moduleName = "foobar"
       version = "foobar"
-  [experimental.devPlugin]
-    goPath = "foobar"
-    moduleName = "foobar"
+  [experimental.localPlugins]
+    [experimental.localPlugins.Descriptor0]
+      moduleName = "foobar"
+    [experimental.localPlugins.Descriptor1]
+      moduleName = "foobar"
