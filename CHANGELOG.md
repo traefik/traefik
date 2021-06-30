@@ -1,5 +1,5 @@
-## [v2.5.0-rc1](https://github.com/traefik/traefik/tree/v2.5.0-rc1) (2021-06-28)
-[All Commits](https://github.com/traefik/traefik/compare/v2.4.0-rc1...v2.5.0-rc1)
+## [v2.5.0-rc2](https://github.com/traefik/traefik/tree/v2.5.0-rc2) (2021-06-28)
+[All Commits](https://github.com/traefik/traefik/compare/v2.4.0-rc1...v2.5.0-rc2)
 
 **Enhancements:**
 - **[file]** Update sprig to v3.2.0 ([#7746](https://github.com/traefik/traefik/pull/7746) by [sirlatrom](https://github.com/sirlatrom))
@@ -67,6 +67,10 @@
 - Merge current v2.4 into master ([#7761](https://github.com/traefik/traefik/pull/7761) by [rtribotte](https://github.com/rtribotte))
 - Merge current v2.4 into master ([#7748](https://github.com/traefik/traefik/pull/7748) by [kevinpollet](https://github.com/kevinpollet))
 - Merge current v2.4 into master ([#7728](https://github.com/traefik/traefik/pull/7728) by [mmatur](https://github.com/mmatur))
+
+## [v2.5.0-rc1](https://github.com/traefik/traefik/tree/v2.5.0-rc1) (2021-06-28)
+
+Release canceled.
 
 ## [v2.4.9](https://github.com/traefik/traefik/tree/v2.4.9) (2021-06-21)
 [All Commits](https://github.com/traefik/traefik/compare/v2.4.8...v2.4.9)
