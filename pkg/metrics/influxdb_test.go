@@ -21,6 +21,7 @@ func TestInfluxDB(t *testing.T) {
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
+	influxDBClient = nil
 	influxDBRegistry := RegisterInfluxDB(context.Background(),
 		&types.InfluxDB{
 			Address:              ":8089",
@@ -134,7 +135,18 @@ func TestInfluxDBHTTP(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	influxDBRegistry := RegisterInfluxDB(context.Background(), &types.InfluxDB{Address: ts.URL, Protocol: "http", PushInterval: ptypes.Duration(time.Second), Database: "test", RetentionPolicy: "autogen", AddEntryPointsLabels: true, AddServicesLabels: true, AddRoutersLabels: true})
+	influxDBClient = nil
+	influxDBRegistry := RegisterInfluxDB(context.Background(),
+		&types.InfluxDB{
+			Address:              ts.URL,
+			Protocol:             "http",
+			PushInterval:         ptypes.Duration(time.Second),
+			Database:             "test",
+			RetentionPolicy:      "autogen",
+			AddEntryPointsLabels: true,
+			AddServicesLabels:    true,
+			AddRoutersLabels:     true,
+		})
 	defer StopInfluxDB()
 
 	if !influxDBRegistry.IsEpEnabled() || !influxDBRegistry.IsRouterEnabled() || !influxDBRegistry.IsSvcEnabled() {

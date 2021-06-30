@@ -16,14 +16,15 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
-var influxDBClient *influx.Influx
-
 type influxDBWriter struct {
 	buf    bytes.Buffer
 	config *types.InfluxDB
 }
 
-var influxDBTicker *time.Ticker
+var (
+	influxDBClient *influx.Influx
+	influxDBTicker *time.Ticker
+)
 
 const (
 	influxDBConfigReloadsName           = "traefik.config.reload.total"
@@ -58,8 +59,9 @@ const (
 
 // RegisterInfluxDB registers the metrics pusher if this didn't happen yet and creates a InfluxDB Registry instance.
 func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
-	influxDBClient = initInfluxDBClient(ctx, config)
-
+	if influxDBClient == nil {
+		influxDBClient = initInfluxDBClient(ctx, config)
+	}
 	if influxDBTicker == nil {
 		influxDBTicker = initInfluxDBTicker(ctx, config)
 	}
