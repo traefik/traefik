@@ -35,13 +35,13 @@ require (
 	github.com/go-kit/kit v0.10.1-0.20200915143503-439c4d2ed3ea
 	github.com/golang/protobuf v1.4.3
 	github.com/google/go-github/v28 v28.1.1
-	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.7.3
 	github.com/gorilla/websocket v1.4.2
-	github.com/hashicorp/consul/api v1.7.0
-	github.com/hashicorp/go-hclog v0.12.0
+	github.com/hashicorp/consul v1.10.0
+	github.com/hashicorp/consul/api v1.9.0
+	github.com/hashicorp/go-hclog v0.14.1
 	github.com/hashicorp/go-multierror v1.1.0
-	github.com/hashicorp/go-version v1.2.0
+	github.com/hashicorp/go-version v1.2.1
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
 	github.com/instana/go-sensor v1.5.1
 	github.com/libkermit/compose v0.0.0-20171122111507-c04e39c026ad
@@ -49,10 +49,10 @@ require (
 	github.com/libkermit/docker-check v0.0.0-20171122104347-1113af38e591
 	github.com/lucas-clemente/quic-go v0.20.1
 	github.com/mailgun/ttlmap v0.0.0-20170619185759-c1c17f74874f
-	github.com/miekg/dns v1.1.40
+	github.com/miekg/dns v1.1.41
 	github.com/mitchellh/copystructure v1.0.0
 	github.com/mitchellh/hashstructure v1.0.0
-	github.com/mitchellh/mapstructure v1.3.3
+	github.com/mitchellh/mapstructure v1.4.1-0.20210112042008-8ebf2d61a8b4
 	github.com/morikuni/aec v0.0.0-20170113033406-39771216ff4c // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
@@ -84,7 +84,7 @@ require (
 	go.elastic.co/apm v1.11.0
 	go.elastic.co/apm/module/apmot v1.11.0
 	golang.org/x/mod v0.4.2
-	golang.org/x/net v0.0.0-20210220033124-5f55cee0dc0d
+	golang.org/x/net v0.0.0-20210410081132-afb366fc7cd1
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	golang.org/x/tools v0.0.0-20200904185747-39188db58858
 	google.golang.org/grpc v1.27.1
