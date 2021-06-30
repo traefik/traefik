@@ -240,7 +240,7 @@ metrics:
 
 _Optional, Default={}_
 
-Additional labels (influxdb tags) to send to influxdb for all metrics.
+Additional labels (influxdb tags) on all metrics.
 
 ```toml tab="File (TOML)"
 [metrics]
