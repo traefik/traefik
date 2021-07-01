@@ -182,9 +182,11 @@ func (c *ConfigurationWatcher) preLoadConfiguration(configMsg dynamic.Message) {
 			}
 		}
 
-		for _, transport := range copyConf.HTTP.ServersTransports {
-			transport.Certificates = tls.Certificates{}
-			transport.RootCAs = []tls.FileOrContent{}
+		if copyConf.HTTP != nil {
+			for _, transport := range copyConf.HTTP.ServersTransports {
+				transport.Certificates = tls.Certificates{}
+				transport.RootCAs = []tls.FileOrContent{}
+			}
 		}
 
 		jsonConf, err := json.Marshal(copyConf)
