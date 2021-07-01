@@ -12,6 +12,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/traefik/traefik/v2/pkg/tls"
 )
 
 // ConfigurationWatcher watches configuration changes.
@@ -164,11 +165,26 @@ func (c *ConfigurationWatcher) preLoadConfiguration(configMsg dynamic.Message) {
 		if copyConf.TLS != nil {
 			copyConf.TLS.Certificates = nil
 
+			if copyConf.TLS.Options != nil {
+				cleanedOptions := make(map[string]tls.Options, len(copyConf.TLS.Options))
+				for name, option := range copyConf.TLS.Options {
+					option.ClientAuth.CAFiles = []tls.FileOrContent{}
+					cleanedOptions[name] = option
+				}
+
+				copyConf.TLS.Options = cleanedOptions
+			}
+
 			for k := range copyConf.TLS.Stores {
 				st := copyConf.TLS.Stores[k]
 				st.DefaultCertificate = nil
 				copyConf.TLS.Stores[k] = st
 			}
+		}
+
+		for _, transport := range copyConf.HTTP.ServersTransports {
+			transport.Certificates = tls.Certificates{}
+			transport.RootCAs = []tls.FileOrContent{}
 		}
 
 		jsonConf, err := json.Marshal(copyConf)
