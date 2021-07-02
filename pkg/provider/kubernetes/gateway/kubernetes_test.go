@@ -16,6 +16,12 @@ var _ provider.Provider = (*Provider)(nil)
 
 func Bool(v bool) *bool { return &v }
 
+func Str(s string) *string { return &s }
+
+func PMT(p v1alpha1.PathMatchType) *v1alpha1.PathMatchType { return &p }
+
+func HMT(h v1alpha1.HeaderMatchType) *v1alpha1.HeaderMatchType { return &h }
+
 func TestLoadHTTPRoutes(t *testing.T) {
 	testCases := []struct {
 		desc         string
@@ -2937,13 +2943,73 @@ func TestExtractRule(t *testing.T) {
 			expectedRule: "Host(`foo.com`) && PathPrefix(`/`)",
 		},
 		{
+			desc: "One Path with nil HTTPHeaderMatch",
+			routeRule: v1alpha1.HTTPRouteRule{
+				Matches: []v1alpha1.HTTPRouteMatch{
+					{Headers: nil},
+				},
+			},
+			expectedRule: "",
+		},
+		{
+			desc: "One Path with nil HTTPHeaderMatch Type",
+			routeRule: v1alpha1.HTTPRouteRule{
+				Matches: []v1alpha1.HTTPRouteMatch{
+					{
+						Headers: &v1alpha1.HTTPHeaderMatch{
+							Type:   nil,
+							Values: map[string]string{"foo": "bar"},
+						},
+					},
+				},
+			},
+			expectedRule: "",
+		},
+		{
+			desc: "One Path with nil HTTPMatch Type",
+			routeRule: v1alpha1.HTTPRouteRule{
+				Matches: []v1alpha1.HTTPRouteMatch{
+					{
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  nil,
+							Value: Str("/foo/"),
+						},
+					},
+				},
+			},
+			expectedRule: "",
+		},
+		{
+			desc: "One Path with nil HTTPPathMatch",
+			routeRule: v1alpha1.HTTPRouteRule{
+				Matches: []v1alpha1.HTTPRouteMatch{
+					{Path: nil},
+				},
+			},
+			expectedRule: "",
+		},
+		{
+			desc: "One Path with nil HTTPMatch Value",
+			routeRule: v1alpha1.HTTPRouteRule{
+				Matches: []v1alpha1.HTTPRouteMatch{
+					{
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  PMT(v1alpha1.PathMatchExact),
+							Value: nil,
+						},
+					},
+				},
+			},
+			expectedRule: "",
+		},
+		{
 			desc: "One Path in matches",
 			routeRule: v1alpha1.HTTPRouteRule{
 				Matches: []v1alpha1.HTTPRouteMatch{
 					{
-						Path: v1alpha1.HTTPPathMatch{
-							Type:  v1alpha1.PathMatchExact,
-							Value: "/foo/",
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  PMT(v1alpha1.PathMatchExact),
+							Value: Str("/foo/"),
 						},
 					},
 				},
@@ -2955,15 +3021,15 @@ func TestExtractRule(t *testing.T) {
 			routeRule: v1alpha1.HTTPRouteRule{
 				Matches: []v1alpha1.HTTPRouteMatch{
 					{
-						Path: v1alpha1.HTTPPathMatch{
-							Type:  v1alpha1.PathMatchExact,
-							Value: "/foo/",
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  PMT(v1alpha1.PathMatchExact),
+							Value: Str("/foo/"),
 						},
 					},
 					{
-						Path: v1alpha1.HTTPPathMatch{
-							Type:  "unknown",
-							Value: "/foo/",
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  PMT("unknown"),
+							Value: Str("/foo/"),
 						},
 					},
 				},
@@ -2975,9 +3041,9 @@ func TestExtractRule(t *testing.T) {
 			routeRule: v1alpha1.HTTPRouteRule{
 				Matches: []v1alpha1.HTTPRouteMatch{
 					{
-						Path: v1alpha1.HTTPPathMatch{
-							Type:  v1alpha1.PathMatchExact,
-							Value: "/foo/",
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  PMT(v1alpha1.PathMatchExact),
+							Value: Str("/foo/"),
 						},
 					},
 					{},
@@ -2990,14 +3056,14 @@ func TestExtractRule(t *testing.T) {
 			routeRule: v1alpha1.HTTPRouteRule{
 				Matches: []v1alpha1.HTTPRouteMatch{
 					{
-						Path: v1alpha1.HTTPPathMatch{
-							Type:  v1alpha1.PathMatchExact,
-							Value: "/foo/",
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  PMT(v1alpha1.PathMatchExact),
+							Value: Str("/foo/"),
 						},
 					},
 					{
 						Headers: &v1alpha1.HTTPHeaderMatch{
-							Type: v1alpha1.HeaderMatchExact,
+							Type: HMT(v1alpha1.HeaderMatchExact),
 							Values: map[string]string{
 								"my-header": "foo",
 							},
@@ -3012,12 +3078,12 @@ func TestExtractRule(t *testing.T) {
 			routeRule: v1alpha1.HTTPRouteRule{
 				Matches: []v1alpha1.HTTPRouteMatch{
 					{
-						Path: v1alpha1.HTTPPathMatch{
-							Type:  v1alpha1.PathMatchExact,
-							Value: "/foo/",
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  PMT(v1alpha1.PathMatchExact),
+							Value: Str("/foo/"),
 						},
 						Headers: &v1alpha1.HTTPHeaderMatch{
-							Type: v1alpha1.HeaderMatchExact,
+							Type: HMT(v1alpha1.HeaderMatchExact),
 							Values: map[string]string{
 								"my-header": "foo",
 							},
@@ -3033,12 +3099,12 @@ func TestExtractRule(t *testing.T) {
 			routeRule: v1alpha1.HTTPRouteRule{
 				Matches: []v1alpha1.HTTPRouteMatch{
 					{
-						Path: v1alpha1.HTTPPathMatch{
-							Type:  v1alpha1.PathMatchExact,
-							Value: "/foo/",
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  PMT(v1alpha1.PathMatchExact),
+							Value: Str("/foo/"),
 						},
 						Headers: &v1alpha1.HTTPHeaderMatch{
-							Type: v1alpha1.HeaderMatchExact,
+							Type: HMT(v1alpha1.HeaderMatchExact),
 							Values: map[string]string{
 								"my-header": "foo",
 							},
@@ -3054,14 +3120,14 @@ func TestExtractRule(t *testing.T) {
 			routeRule: v1alpha1.HTTPRouteRule{
 				Matches: []v1alpha1.HTTPRouteMatch{
 					{
-						Path: v1alpha1.HTTPPathMatch{
-							Type:  v1alpha1.PathMatchExact,
-							Value: "/foo/",
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  PMT(v1alpha1.PathMatchExact),
+							Value: Str("/foo/"),
 						},
 					},
 					{
 						Headers: &v1alpha1.HTTPHeaderMatch{
-							Type: v1alpha1.HeaderMatchExact,
+							Type: HMT(v1alpha1.HeaderMatchExact),
 							Values: map[string]string{
 								"my-header": "foo",
 							},
