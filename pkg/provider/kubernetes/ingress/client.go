@@ -60,7 +60,7 @@ type Client interface {
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
 	UpdateIngressStatus(ing *networkingv1beta1.Ingress, ingStatus []corev1.LoadBalancerIngress) error
-	GetServerVersion() (*version.Version, error)
+	GetServerVersion() *version.Version
 }
 
 type clientWrapper struct {
@@ -209,15 +209,18 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		}
 	}
 
-	// Reset the stored server version to recheck on reconnection.
-	c.serverVersion = nil
 	// Get and store the serverVersion for future use.
-	serverVersion, err := c.GetServerVersion()
+	serverVersionInfo, err := c.clientset.Discovery().ServerVersion()
 	if err != nil {
-		log.WithoutContext().Errorf("Failed to get server version: %v", err)
-		return eventCh, nil
+		return eventCh, fmt.Errorf("could not retrieve server version: %w", err)
 	}
 
+	serverVersion, err := version.NewVersion(serverVersionInfo.GitVersion)
+	if err != nil {
+		return eventCh, fmt.Errorf("could not parse server version: %w", err)
+	}
+
+	c.serverVersion = serverVersion
 	if supportsIngressClass(serverVersion) {
 		c.clusterFactory = informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod)
 		c.clusterFactory.Networking().V1beta1().IngressClasses().Informer().AddEventHandler(eventHandler)
@@ -430,23 +433,8 @@ func (c *clientWrapper) lookupNamespace(ns string) string {
 }
 
 // GetServerVersion returns the cluster server version, or an error.
-func (c *clientWrapper) GetServerVersion() (*version.Version, error) {
-	if c.serverVersion != nil {
-		return c.serverVersion, nil
-	}
-
-	serverVersionInfo, err := c.clientset.Discovery().ServerVersion()
-	if err != nil {
-		return nil, fmt.Errorf("could not retrieve server version: %w", err)
-	}
-
-	serverVersion, err := version.NewVersion(serverVersionInfo.GitVersion)
-	if err != nil {
-		return nil, fmt.Errorf("could not parse server version: %w", err)
-	}
-
-	c.serverVersion = serverVersion
-	return c.serverVersion, nil
+func (c *clientWrapper) GetServerVersion() *version.Version {
+	return c.serverVersion
 }
 
 // eventHandlerFunc will pass the obj on to the events channel or drop it.
