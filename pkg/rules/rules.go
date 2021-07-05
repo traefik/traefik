@@ -113,6 +113,11 @@ func host(route *mux.Route, hosts ...string) error {
 	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
 		reqHost := requestdecorator.GetCanonizedHost(req.Context())
 		if len(reqHost) == 0 {
+			if req.Proto == "HTTP/1.0" || (req.ProtoMajor == 1 && req.ProtoMinor == 0) {
+				// If the request is an HTTP/1.0 request, then a Host may not be defined.
+				return false
+			}
+
 			log.FromContext(req.Context()).Warnf("Could not retrieve CanonizedHost, rejecting %s", req.Host)
 			return false
 		}
