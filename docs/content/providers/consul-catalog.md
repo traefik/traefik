@@ -587,7 +587,7 @@ _Optional, Default=false_
 
 Consider every service as Connect capable by default.
 If set to `true`, Traefik will consider every Consul Catalog service to be Connect capable by default.
-The option can be overridden on an instance basis with the `traefik.connect` tag.
+The option can be overridden on an instance basis with the `traefik.consulcatalog.connect` tag.
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]

@@ -454,13 +454,13 @@ You can tell Traefik to consider (or not) the service by setting `traefik.enable
 
 This option overrides the value of `exposedByDefault`.
 
-#### `traefik.connect`
+#### `traefik.consulcatalog.connect`
 
 ```yaml
-traefik.connect=true
+traefik.consulcatalog.connect=true
 ```
 
-You can tell Traefik to consider (or not) the service as a Connect capable one by setting `traefik.connect` to true or false.
+You can tell Traefik to consider (or not) the service as a Connect capable one by setting `traefik.consulcatalog.connect` to true or false.
 
 This option overrides the value of `connectByDefault`.
 

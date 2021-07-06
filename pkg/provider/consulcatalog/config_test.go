@@ -271,7 +271,7 @@ func TestDefaultRule(t *testing.T) {
 
 			for i := 0; i < len(test.items); i++ {
 				var err error
-				test.items[i].ExtraConf, err = p.getConfiguration(test.items[i])
+				test.items[i].ExtraConf, err = p.getConfiguration(test.items[i].Labels)
 				require.NoError(t, err)
 			}
 
@@ -284,10 +284,11 @@ func TestDefaultRule(t *testing.T) {
 
 func Test_buildConfiguration(t *testing.T) {
 	testCases := []struct {
-		desc        string
-		items       []itemData
-		constraints string
-		expected    *dynamic.Configuration
+		desc         string
+		items        []itemData
+		constraints  string
+		ConnectAware bool
+		expected     *dynamic.Configuration
 	}{
 		{
 			desc: "one container no label",
@@ -337,27 +338,29 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one connect container",
+			desc:         "one connect container",
+			ConnectAware: true,
 			items: []itemData{
 				{
-					ID:             "Test",
-					Node:           "Node1",
-					Datacenter:     "dc1",
-					Name:           "dev/Test",
-					Namespace:      "ns",
-					Address:        "127.0.0.1",
-					Port:           "443",
-					Status:         api.HealthPassing,
-					Labels:         map[string]string{},
-					Tags:           nil,
-					ConnectEnabled: true,
-					ExtraConf:      configuration{},
+					ID:         "Test",
+					Node:       "Node1",
+					Datacenter: "dc1",
+					Name:       "dev/Test",
+					Namespace:  "ns",
+					Address:    "127.0.0.1",
+					Port:       "443",
+					Status:     api.HealthPassing,
+					Labels: map[string]string{
+						"traefik.consulcatalog.connect": "true",
+					},
+					Tags: nil,
 				},
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:  map[string]*dynamic.TCPRouter{},
-					Services: map[string]*dynamic.TCPService{},
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Services:    map[string]*dynamic.TCPService{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -397,52 +400,54 @@ func Test_buildConfiguration(t *testing.T) {
 									KeyFile:  "key",
 								},
 							},
-							CertVerifier: verifierData{
-								datacenter: "dc1",
-								name:       "dev/Test",
-								namespace:  "ns",
-							},
+							CertVerifier: newVerifierData(itemData{
+								Datacenter: "dc1",
+								Name:       "dev/Test",
+								Namespace:  "ns",
+							}),
 						},
 					},
 				},
 			},
 		},
 		{
-			desc: "two connect containers on same service",
+			desc:         "two connect containers on same service",
+			ConnectAware: true,
 			items: []itemData{
 				{
-					ID:             "Test1",
-					Node:           "Node1",
-					Datacenter:     "dc1",
-					Name:           "dev/Test",
-					Namespace:      "ns",
-					Address:        "127.0.0.1",
-					Port:           "443",
-					Status:         api.HealthPassing,
-					Labels:         map[string]string{},
-					Tags:           nil,
-					ConnectEnabled: true,
-					ExtraConf:      configuration{},
+					ID:         "Test1",
+					Node:       "Node1",
+					Datacenter: "dc1",
+					Name:       "dev/Test",
+					Namespace:  "ns",
+					Address:    "127.0.0.1",
+					Port:       "443",
+					Status:     api.HealthPassing,
+					Labels: map[string]string{
+						"traefik.consulcatalog.connect": "true",
+					},
+					Tags: nil,
 				},
 				{
-					ID:             "Test2",
-					Node:           "Node2",
-					Datacenter:     "dc1",
-					Name:           "dev/Test",
-					Namespace:      "ns",
-					Address:        "127.0.0.2",
-					Port:           "444",
-					Status:         api.HealthPassing,
-					Labels:         map[string]string{},
-					Tags:           nil,
-					ConnectEnabled: true,
-					ExtraConf:      configuration{},
+					ID:         "Test2",
+					Node:       "Node2",
+					Datacenter: "dc1",
+					Name:       "dev/Test",
+					Namespace:  "ns",
+					Address:    "127.0.0.2",
+					Port:       "444",
+					Status:     api.HealthPassing,
+					Labels: map[string]string{
+						"traefik.consulcatalog.connect": "true",
+					},
+					Tags: nil,
 				},
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:  map[string]*dynamic.TCPRouter{},
-					Services: map[string]*dynamic.TCPService{},
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Services:    map[string]*dynamic.TCPService{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -485,11 +490,11 @@ func Test_buildConfiguration(t *testing.T) {
 									KeyFile:  "key",
 								},
 							},
-							CertVerifier: verifierData{
-								datacenter: "dc1",
-								name:       "dev/Test",
-								namespace:  "ns",
-							},
+							CertVerifier: newVerifierData(itemData{
+								Datacenter: "dc1",
+								Name:       "dev/Test",
+								Namespace:  "ns",
+							}),
 						},
 					},
 				},
@@ -2065,9 +2070,10 @@ func Test_buildConfiguration(t *testing.T) {
 					Services: map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -2612,6 +2618,7 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 	}
+
 	for _, test := range testCases {
 		test := test
 
@@ -2621,15 +2628,16 @@ func Test_buildConfiguration(t *testing.T) {
 			p := Provider{
 				ExposedByDefault: true,
 				DefaultRule:      "Host(`{{ normalize .Name }}.traefik.wtf`)",
+				ConnectAware:     test.ConnectAware,
+				Constraints:      test.constraints,
 			}
-			p.Constraints = test.constraints
 
 			err := p.Init()
 			require.NoError(t, err)
 
 			for i := 0; i < len(test.items); i++ {
 				var err error
-				test.items[i].ExtraConf, err = p.getConfiguration(test.items[i])
+				test.items[i].ExtraConf, err = p.getConfiguration(test.items[i].Labels)
 				require.NoError(t, err)
 
 				var tags []string

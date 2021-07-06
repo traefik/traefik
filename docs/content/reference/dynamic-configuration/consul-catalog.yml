@@ -1,2 +1,2 @@
 - "traefik.enable=true"
-- "traefik.connect=true"
+- "traefik.consulcatalog.connect=true"

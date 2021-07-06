@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"strings"
 	"text/template"
 	"time"
 
@@ -29,18 +28,17 @@ const DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 var _ provider.Provider = (*Provider)(nil)
 
 type itemData struct {
-	ID             string
-	Node           string
-	Datacenter     string
-	Name           string
-	Namespace      string
-	Address        string
-	Port           string
-	Status         string
-	Labels         map[string]string
-	Tags           []string
-	ConnectEnabled bool
-	ExtraConf      configuration
+	ID         string
+	Node       string
+	Datacenter string
+	Name       string
+	Namespace  string
+	Address    string
+	Port       string
+	Status     string
+	Labels     map[string]string
+	Tags       []string
+	ExtraConf  configuration
 }
 
 // Provider holds configurations of the provider.
@@ -202,14 +200,46 @@ func (p *Provider) loadConfiguration(ctx context.Context, certInfo *connectCert,
 }
 
 func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error) {
-	consulServiceNames, err := p.fetchServices(ctx)
+	// The query option "Filter" is not supported by /catalog/services.
+	// https://www.consul.io/api/catalog.html#list-services
+	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache}
+	serviceNames, _, err := p.client.Catalog().Services(opts)
 	if err != nil {
 		return nil, err
 	}
 
 	var data []itemData
-	for name, connectEnabled := range consulServiceNames {
-		consulServices, statuses, err := p.fetchService(ctx, name, connectEnabled)
+	for name, tags := range serviceNames {
+		logger := log.FromContext(log.With(ctx, log.Str("serviceName", name)))
+
+		svcCfg, err := p.getConfiguration(tagsToNeutralLabels(tags, p.Prefix))
+		if err != nil {
+			logger.Errorf("Skip service: %v", err)
+			continue
+		}
+
+		if !svcCfg.Enable {
+			logger.Debug("Filtering disabled item")
+			continue
+		}
+
+		matches, err := constraints.MatchTags(tags, p.Constraints)
+		if err != nil {
+			logger.Errorf("Error matching constraint expressions: %v", err)
+			continue
+		}
+
+		if !matches {
+			logger.Debugf("Container pruned by constraint expressions: %q", p.Constraints)
+			continue
+		}
+
+		if !p.ConnectAware && svcCfg.ConsulCatalog.Connect {
+			logger.Debugf("Filtering out Connect aware item, Connect support is not enabled")
+			continue
+		}
+
+		consulServices, statuses, err := p.fetchService(ctx, name, svcCfg.ConsulCatalog.Connect)
 		if err != nil {
 			return nil, err
 		}
@@ -231,20 +261,19 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 			}
 
 			item := itemData{
-				ID:             consulService.ServiceID,
-				Node:           consulService.Node,
-				Datacenter:     consulService.Datacenter,
-				Namespace:      namespace,
-				Name:           name,
-				Address:        address,
-				Port:           strconv.Itoa(consulService.ServicePort),
-				Labels:         tagsToNeutralLabels(consulService.ServiceTags, p.Prefix),
-				Tags:           consulService.ServiceTags,
-				Status:         status,
-				ConnectEnabled: connectEnabled,
+				ID:         consulService.ServiceID,
+				Node:       consulService.Node,
+				Datacenter: consulService.Datacenter,
+				Namespace:  namespace,
+				Name:       name,
+				Address:    address,
+				Port:       strconv.Itoa(consulService.ServicePort),
+				Labels:     tagsToNeutralLabels(consulService.ServiceTags, p.Prefix),
+				Tags:       consulService.ServiceTags,
+				Status:     status,
 			}
 
-			extraConf, err := p.getConfiguration(item)
+			extraConf, err := p.getConfiguration(item.Labels)
 			if err != nil {
 				log.FromContext(ctx).Errorf("Skip item %s: %v", item.Name, err)
 				continue
@@ -296,68 +325,6 @@ func (p *Provider) fetchService(ctx context.Context, name string, connectEnabled
 	}
 
 	return consulServices, statuses, err
-}
-
-func (p *Provider) fetchServices(ctx context.Context) (map[string]bool, error) {
-	// The query option "Filter" is not supported by /catalog/services.
-	// https://www.consul.io/api/catalog.html#list-services
-	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache}
-	serviceNames, _, err := p.client.Catalog().Services(opts)
-	if err != nil {
-		return nil, err
-	}
-
-	filtered := make(map[string]bool)
-	// The keys are the service names, and the array values provide all known tags for a given service.
-	// https://www.consul.io/api/catalog.html#list-services
-	for svcName, tags := range serviceNames {
-		logger := log.FromContext(log.With(ctx, log.Str("serviceName", svcName)))
-
-		if !p.ExposedByDefault && !contains(tags, p.Prefix+".enable=true") {
-			logger.Debug("Filtering disabled item")
-			continue
-		}
-
-		if contains(tags, p.Prefix+".enable=false") {
-			logger.Debug("Filtering disabled item")
-			continue
-		}
-
-		matches, err := constraints.MatchTags(tags, p.Constraints)
-		if err != nil {
-			logger.Errorf("Error matching constraints expression: %v", err)
-			continue
-		}
-
-		if !matches {
-			logger.Debugf("Container pruned by constraint expression: %q", p.Constraints)
-			continue
-		}
-
-		connect := p.ConnectByDefault || contains(tags, p.Prefix+".connect=true")
-
-		if contains(tags, p.Prefix+".connect=false") {
-			connect = false
-		}
-
-		if connect && !p.ConnectAware {
-			logger.Debugf("Filtering out Connect aware item %q, Connect support is not enabled", svcName)
-			continue
-		}
-
-		filtered[svcName] = connect
-	}
-
-	return filtered, err
-}
-
-func contains(values []string, val string) bool {
-	for _, value := range values {
-		if strings.EqualFold(value, val) {
-			return true
-		}
-	}
-	return false
 }
 
 func rootsWatchHandler(ctx context.Context, dest chan<- []string) func(watch.BlockingParamVal, interface{}) {

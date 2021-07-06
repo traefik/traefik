@@ -635,7 +635,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect(c *check.C) {
 		Name: "uuid-api",
 		Tags: []string{
 			"traefik.enable=true",
-			"traefik.connect=true",
+			"traefik.consulcatalog.connect=true",
 			"traefik.http.routers.router1.rule=Path(`/`)",
 			"traefik.http.routers.router1.service=service1",
 			"traefik.http.services.service1.loadBalancer.server.url=https://" + connectIP,
@@ -735,7 +735,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_ByDefault(c *check.C) {
 		Name: "whoami2",
 		Tags: []string{
 			"traefik.enable=true",
-			"traefik.connect=false",
+			"traefik.consulcatalog.connect=false",
 			"traefik.http.routers.router2.rule=Path(`/whoami2`)",
 			"traefik.http.routers.router2.service=whoami2",
 		},
@@ -787,7 +787,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_NotAware(c *check.C) {
 		Name: "uuid-api",
 		Tags: []string{
 			"traefik.enable=true",
-			"traefik.connect=true",
+			"traefik.consulcatalog.connect=true",
 			"traefik.http.routers.router1.rule=Path(`/`)",
 			"traefik.http.routers.router1.service=service1",
 			"traefik.http.services.service1.loadBalancer.server.url=https://" + connectIP,

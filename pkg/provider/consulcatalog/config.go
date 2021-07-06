@@ -2,20 +2,16 @@ package consulcatalog
 
 import (
 	"context"
-	gtls "crypto/tls"
-	"crypto/x509"
 	"errors"
 	"fmt"
 	"net"
 
-	"github.com/hashicorp/consul/agent/connect"
 	"github.com/hashicorp/consul/api"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/label"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/constraints"
-	"github.com/traefik/traefik/v2/pkg/tls"
 )
 
 func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, certInfo *connectCert) *dynamic.Configuration {
@@ -46,6 +42,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 				logger.Error(err)
 				continue
 			}
+
 			provider.BuildTCPRouterConfiguration(ctxSvc, confFromLabel.TCP)
 		}
 
@@ -67,7 +64,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 			continue
 		}
 
-		if item.ConnectEnabled {
+		if item.ExtraConf.ConsulCatalog.Connect {
 			if confFromLabel.HTTP.ServersTransports == nil {
 				confFromLabel.HTTP.ServersTransports = make(map[string]*dynamic.ServersTransport)
 			}
@@ -100,91 +97,6 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 	return provider.Merge(ctx, configurations)
 }
 
-// connectCert holds our certificates as a client of the Consul Connect protocol.
-type connectCert struct {
-	root []string
-	leaf keyPair
-	// err is used to propagate to the caller (Provide) any error occurring within
-	// the certificate watcher goroutines.
-	err error
-}
-
-func (c *connectCert) getRoot() []tls.FileOrContent {
-	var result []tls.FileOrContent
-	for _, r := range c.root {
-		result = append(result, tls.FileOrContent(r))
-	}
-	return result
-}
-
-func (c *connectCert) getLeaf() tls.Certificate {
-	return tls.Certificate{
-		CertFile: tls.FileOrContent(c.leaf.cert),
-		KeyFile:  tls.FileOrContent(c.leaf.key),
-	}
-}
-
-func (c *connectCert) isReady() bool {
-	return c != nil && len(c.root) > 0 && c.leaf.cert != "" && c.leaf.key != ""
-}
-
-func (c *connectCert) equals(other *connectCert) bool {
-	if c == nil && other == nil {
-		return true
-	}
-	if c == nil || other == nil {
-		return false
-	}
-	if len(c.root) != len(other.root) {
-		return false
-	}
-	for i, v := range c.root {
-		if v != other.root[i] {
-			return false
-		}
-	}
-	return c.leaf == other.leaf
-}
-
-// verifierData implements the CertVerifier interface.
-type verifierData struct {
-	namespace  string
-	datacenter string
-	name       string
-}
-
-func (verifier verifierData) VerifyPeerCertificate(cfg *gtls.Config, rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
-	// We should use RootCAs here, but consul expect that in ClientCAs (don't ask)
-	// https://github.com/hashicorp/consul/blob/cd428060f6547afddd9e0060c07b2a2c862da801/connect/tls.go#L279-L282
-	// called via https://github.com/hashicorp/consul/blob/cd428060f6547afddd9e0060c07b2a2c862da801/connect/tls.go#L258
-	cfg.ClientCAs = cfg.RootCAs
-	cert, err := verifyChain(cfg, rawCerts, true)
-	if err != nil {
-		return err
-	}
-	certs := []*x509.Certificate{0: cert}
-	uri := &connect.SpiffeIDService{
-		Namespace:  verifier.namespace,
-		Datacenter: verifier.datacenter,
-		Service:    verifier.name,
-	}
-	return verifyServerCertMatchesURI(certs, uri)
-}
-
-func (c *connectCert) serversTransport(item itemData) *dynamic.ServersTransport {
-	return &dynamic.ServersTransport{
-		// This ensures that the config changes whenever the verifier function changes
-		ServerName: fmt.Sprintf("%s-%s-%s", item.Namespace, item.Datacenter, item.Name),
-		// InsecureSkipVerify is needed because Go wants to verify a hostname otherwise
-		InsecureSkipVerify: true,
-		RootCAs:            c.getRoot(),
-		Certificates: tls.Certificates{
-			c.getLeaf(),
-		},
-		CertVerifier: verifierData{namespace: item.Namespace, datacenter: item.Datacenter, name: item.Name},
-	}
-}
-
 func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
 	logger := log.FromContext(ctx)
 
@@ -193,13 +105,18 @@ func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
 		return false
 	}
 
+	if !p.ConnectAware && item.ExtraConf.ConsulCatalog.Connect {
+		logger.Debugf("Filtering out Connect aware item, Connect support is not enabled")
+		return false
+	}
+
 	matches, err := constraints.MatchTags(item.Tags, p.Constraints)
 	if err != nil {
-		logger.Errorf("Error matching constraints expression: %v", err)
+		logger.Errorf("Error matching constraint expressions: %v", err)
 		return false
 	}
 	if !matches {
-		logger.Debugf("Container pruned by constraint expression: %q", p.Constraints)
+		logger.Debugf("Container pruned by constraint expressions: %q", p.Constraints)
 		return false
 	}
 
@@ -370,7 +287,7 @@ func (p *Provider) addServer(ctx context.Context, item itemData, loadBalancer *d
 	scheme := loadBalancer.Servers[0].Scheme
 	loadBalancer.Servers[0].Scheme = ""
 
-	if item.ConnectEnabled {
+	if item.ExtraConf.ConsulCatalog.Connect {
 		loadBalancer.ServersTransport = itemServersTransportKey(item)
 		scheme = "https"
 	}
