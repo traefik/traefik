@@ -1648,19 +1648,21 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
         dialTimeout: 42s               # [7]
         responseHeaderTimeout: 42s     # [8]
         idleConnTimeout: 42s           # [9]
+      peerCertURI: foobar              # [10]
     ```
 
-| Ref | Attribute               | Purpose                                                                                                                                              |
-|-----|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1] | `serverName`            | ServerName used to contact the server.                                                                                                               |
-| [2] | `insecureSkipVerify`    | Disable SSL certificate verification.                                                                                                                |
-| [3] | `rootCAsSecrets`        | Add cert file for self-signed certificate. The secret must contain a certificate under either a tls.ca or a ca.crt key.                              |
-| [4] | `certificatesSecrets`   | Certificates for mTLS.                                                                                                                               |
-| [5] | `maxIdleConnsPerHost`   | If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, `defaultMaxIdleConnsPerHost` is used.                                 |
-| [6] | `forwardingTimeouts`    | Timeouts for requests forwarded to the backend servers.                                                                                              |
-| [7] | `dialTimeout`           | The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists.                                    |
-| [8] | `responseHeaderTimeout` | The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists. |
-| [9] | `idleConnTimeout`       | The maximum period for which an idle HTTP keep-alive connection will remain open before closing itself.                                              |
+| Ref  | Attribute               | Purpose                                                                                                                                              |
+|------|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [1]  | `serverName`            | ServerName used to contact the server.                                                                                                               |
+| [2]  | `insecureSkipVerify`    | Disable SSL certificate verification.                                                                                                                |
+| [3]  | `rootCAsSecrets`        | Add cert file for self-signed certificate. The secret must contain a certificate under either a tls.ca or a ca.crt key.                              |
+| [4]  | `certificatesSecrets`   | Certificates for mTLS.                                                                                                                               |
+| [5]  | `maxIdleConnsPerHost`   | If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, `defaultMaxIdleConnsPerHost` is used.                                 |
+| [6]  | `forwardingTimeouts`    | Timeouts for requests forwarded to the backend servers.                                                                                              |
+| [7]  | `dialTimeout`           | The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists.                                    |
+| [8]  | `responseHeaderTimeout` | The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists. |
+| [9]  | `idleConnTimeout`       | The maximum period for which an idle HTTP keep-alive connection will remain open before closing itself.                                              |
+| [10] | `peerCertURI`           | URI used to match with service certificate.                                                                                                          |
 
 !!! info "CA Secret"
 

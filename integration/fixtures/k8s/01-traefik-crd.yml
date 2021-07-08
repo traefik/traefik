@@ -1145,6 +1145,10 @@ spec:
                 description: If non-zero, controls the maximum idle (keep-alive) to
                   keep per-host. If zero, DefaultMaxIdleConnsPerHost is used.
                 type: integer
+              peerCertURI:
+                description: URI used to match against SAN URI during the peer certificate
+                  verification.
+                type: string
               rootCAsSecrets:
                 description: Add cert file for self-signed certificate.
                 items:

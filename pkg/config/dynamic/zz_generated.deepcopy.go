@@ -1155,9 +1155,6 @@ func (in *ServersTransport) DeepCopyInto(out *ServersTransport) {
 		*out = new(ForwardingTimeouts)
 		**out = **in
 	}
-	if in.CertVerifier != nil {
-		out.CertVerifier = in.CertVerifier.DeepCopyCertVerifier()
-	}
 	return
 }
 
