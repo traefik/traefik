@@ -35,6 +35,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 			key := fmt.Sprintf("%s-%d", ingressName, i)
 			serviceName := makeID(ingressRouteUDP.Namespace, key)
 
+			encounteredErr := false
 			for _, service := range route.Services {
 				balancerServerUDP, err := p.createLoadBalancerServerUDP(client, ingressRouteUDP.Namespace, service)
 				if err != nil {
@@ -42,6 +43,8 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 						WithField("serviceName", service.Name).
 						WithField("servicePort", service.Port).
 						Errorf("Cannot create service: %v", err)
+					// If there is an error with creating the service, skip adding the service.
+					encounteredErr = true
 					continue
 				}
 
@@ -67,6 +70,11 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 				conf.Services[serviceName].Weighted.Services = append(conf.Services[serviceName].Weighted.Services, srv)
 			}
 
+			if encounteredErr && len(conf.Services) == 0 {
+				// If we encountered an error in creating a balancerServer, and there are no other services, skip creating the router.
+				continue
+			}
+
 			conf.Routers[serviceName] = &dynamic.UDPRouter{
 				EntryPoints: ingressRouteUDP.Spec.EntryPoints,
 				Service:     serviceName,
@@ -87,7 +95,7 @@ func (p *Provider) createLoadBalancerServerUDP(client Client, parentNamespace st
 		ns = service.Namespace
 	}
 
-	servers, err := loadUDPServers(client, ns, service)
+	servers, err := p.loadUDPServers(client, ns, service)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +109,7 @@ func (p *Provider) createLoadBalancerServerUDP(client Client, parentNamespace st
 	return udpService, nil
 }
 
-func loadUDPServers(client Client, namespace string, svc v1alpha1.ServiceUDP) ([]dynamic.UDPServer, error) {
+func (p *Provider) loadUDPServers(client Client, namespace string, svc v1alpha1.ServiceUDP) ([]dynamic.UDPServer, error) {
 	service, exists, err := client.GetService(namespace, svc.Name)
 	if err != nil {
 		return nil, err
@@ -109,6 +117,10 @@ func loadUDPServers(client Client, namespace string, svc v1alpha1.ServiceUDP) ([
 
 	if !exists {
 		return nil, errors.New("service not found")
+	}
+
+	if service.Spec.Type == corev1.ServiceTypeExternalName && !p.AllowExternalNameServices {
+		return nil, fmt.Errorf("externalName services not allowed: %s/%s", namespace, svc.Name)
 	}
 
 	var portSpec *corev1.ServicePort

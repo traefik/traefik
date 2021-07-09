@@ -281,6 +281,29 @@ providers:
 --providers.kubernetescrd.allowCrossNamespace=true
 ```
 
+### `allowExternalNameServices`
+
+_Optional, Default: false_
+
+If the parameter is set to `true`, IngressRoutes are able to reference externalname services.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesCRD:
+    allowExternalNameServices: false
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesCRD]
+  allowExternalNameServices = false
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetescrd.allowExternalNameServices=false
+```
+
 ## Full Example
 
 For additional information, refer to the [full example](../user-guides/crd-acme/index.md) with Let's Encrypt.

@@ -160,3 +160,16 @@ subsets:
     ports:
       - name: myapp
         port: 8000
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: external.service.with.port
+  namespace: default
+spec:
+  externalName: external.domain
+  type: ExternalName
+  ports:
+    - name: http
+      port: 80
+

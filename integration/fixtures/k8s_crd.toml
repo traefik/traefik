@@ -17,3 +17,4 @@
 
 [providers.kubernetesCRD]
   allowCrossNamespace = false
+  allowExternalNameServices = true

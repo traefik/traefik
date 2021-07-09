@@ -558,6 +558,9 @@ Enable Kubernetes backend with default settings. (Default: ```false```)
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_ALLOWCROSSNAMESPACE`:  
 Allow cross namespace resource reference. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_KUBERNETESCRD_ALLOWEXTERNALNAMESERVICES`:  
+Allow ExternalName services. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_CERTAUTHFILEPATH`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
@@ -602,6 +605,9 @@ Kubernetes bearer token (not needed for in-cluster client).
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_ALLOWEXTERNALNAMESERVICES`:  
+Allow ExternalName services. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_CERTAUTHFILEPATH`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).

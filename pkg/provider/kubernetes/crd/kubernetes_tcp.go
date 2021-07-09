@@ -54,6 +54,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 
 			serviceName := makeID(ingressRouteTCP.Namespace, key)
 
+			encounteredErr := false
 			for _, service := range route.Services {
 				balancerServerTCP, err := p.createLoadBalancerServerTCP(client, ingressRouteTCP.Namespace, service)
 				if err != nil {
@@ -61,6 +62,8 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 						WithField("serviceName", service.Name).
 						WithField("servicePort", service.Port).
 						Errorf("Cannot create service: %v", err)
+					// If there is an error with creating the service, skip adding the service.
+					encounteredErr = true
 					continue
 				}
 
@@ -86,6 +89,10 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				conf.Services[serviceName].Weighted.Services = append(conf.Services[serviceName].Weighted.Services, srv)
 			}
 
+			if encounteredErr && len(conf.Services) == 0 {
+				// If we encountered an error in creating a balancerServer, and there are no other services, skip creating the router.
+				continue
+			}
 			conf.Routers[serviceName] = &dynamic.TCPRouter{
 				EntryPoints: ingressRouteTCP.Spec.EntryPoints,
 				Rule:        route.Match,
@@ -135,7 +142,7 @@ func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace st
 		ns = service.Namespace
 	}
 
-	servers, err := loadTCPServers(client, ns, service)
+	servers, err := p.loadTCPServers(client, ns, service)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +169,7 @@ func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace st
 	return tcpService, nil
 }
 
-func loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([]dynamic.TCPServer, error) {
+func (p *Provider) loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([]dynamic.TCPServer, error) {
 	service, exists, err := client.GetService(namespace, svc.Name)
 	if err != nil {
 		return nil, err
@@ -170,6 +177,10 @@ func loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([
 
 	if !exists {
 		return nil, errors.New("service not found")
+	}
+
+	if service.Spec.Type == corev1.ServiceTypeExternalName && !p.AllowExternalNameServices {
+		return nil, fmt.Errorf("externalName services not allowed: %s/%s", namespace, svc.Name)
 	}
 
 	svcPort, err := getServicePort(service, svc.Port)
