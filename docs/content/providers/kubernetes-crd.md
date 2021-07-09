@@ -264,7 +264,6 @@ _Optional, Default: false_
 
 If the parameter is set to `true`, IngressRoutes are  able to reference  resources in other namespaces than theirs.
 
-
 ```yaml tab="File (YAML)"
 providers:
   kubernetesCRD:
