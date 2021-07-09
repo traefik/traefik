@@ -28,11 +28,10 @@ func Bool(v bool) *bool { return &v }
 
 func TestLoadIngressRouteTCPs(t *testing.T) {
 	testCases := []struct {
-		desc                  string
-		ingressClass          string
-		paths                 []string
-		enabledCrossNamespace bool
-		expected              *dynamic.Configuration
+		desc         string
+		ingressClass string
+		paths        []string
+		expected     *dynamic.Configuration
 	}{
 		{
 			desc: "Empty",
