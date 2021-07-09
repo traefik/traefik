@@ -114,7 +114,7 @@ func lineCount(t *testing.T, fileName string) int {
 }
 
 func TestLoggerHeaderFields(t *testing.T) {
-	expectedValue := "expectedValue"
+	expectedValues := []string{"AAA", "BBB"}
 
 	testCases := []struct {
 		desc            string
@@ -191,7 +191,10 @@ func TestLoggerHeaderFields(t *testing.T) {
 					Path: testPath,
 				},
 			}
-			req.Header.Set(test.header, expectedValue)
+
+			for _, s := range expectedValues {
+				req.Header.Add(test.header, s)
+			}
 
 			logger.ServeHTTP(httptest.NewRecorder(), req, http.HandlerFunc(func(writer http.ResponseWriter, r *http.Request) {
 				writer.WriteHeader(http.StatusOK)
@@ -201,9 +204,9 @@ func TestLoggerHeaderFields(t *testing.T) {
 			require.NoError(t, err)
 
 			if test.expected == types.AccessLogDrop {
-				assert.NotContains(t, string(logData), expectedValue)
+				assert.NotContains(t, string(logData), strings.Join(expectedValues, ","))
 			} else {
-				assert.Contains(t, string(logData), expectedValue)
+				assert.Contains(t, string(logData), strings.Join(expectedValues, ","))
 			}
 		})
 	}
