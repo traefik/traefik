@@ -2943,7 +2943,7 @@ func TestExtractRule(t *testing.T) {
 			expectedRule: "Host(`foo.com`) && PathPrefix(`/`)",
 		},
 		{
-			desc: "One Path with nil HTTPHeaderMatch",
+			desc: "One HTTPRouteMatch with nil HTTPHeaderMatch",
 			routeRule: v1alpha1.HTTPRouteRule{
 				Matches: []v1alpha1.HTTPRouteMatch{
 					{Headers: nil},
@@ -2952,7 +2952,7 @@ func TestExtractRule(t *testing.T) {
 			expectedRule: "",
 		},
 		{
-			desc: "One Path with nil HTTPHeaderMatch Type",
+			desc: "One HTTPRouteMatch with nil HTTPHeaderMatch Type",
 			routeRule: v1alpha1.HTTPRouteRule{
 				Matches: []v1alpha1.HTTPRouteMatch{
 					{
@@ -2966,7 +2966,30 @@ func TestExtractRule(t *testing.T) {
 			expectedRule: "",
 		},
 		{
-			desc: "One Path with nil HTTPMatch Type",
+			desc: "One HTTPRouteMatch with nil HTTPHeaderMatch Values",
+			routeRule: v1alpha1.HTTPRouteRule{
+				Matches: []v1alpha1.HTTPRouteMatch{
+					{
+						Headers: &v1alpha1.HTTPHeaderMatch{
+							Type:   HMT(v1alpha1.HeaderMatchExact),
+							Values: nil,
+						},
+					},
+				},
+			},
+			expectedRule: "",
+		},
+		{
+			desc: "One HTTPRouteMatch with nil HTTPPathMatch",
+			routeRule: v1alpha1.HTTPRouteRule{
+				Matches: []v1alpha1.HTTPRouteMatch{
+					{Path: nil},
+				},
+			},
+			expectedRule: "",
+		},
+		{
+			desc: "One HTTPRouteMatch with nil HTTPPathMatch Type",
 			routeRule: v1alpha1.HTTPRouteRule{
 				Matches: []v1alpha1.HTTPRouteMatch{
 					{
@@ -2980,16 +3003,7 @@ func TestExtractRule(t *testing.T) {
 			expectedRule: "",
 		},
 		{
-			desc: "One Path with nil HTTPPathMatch",
-			routeRule: v1alpha1.HTTPRouteRule{
-				Matches: []v1alpha1.HTTPRouteMatch{
-					{Path: nil},
-				},
-			},
-			expectedRule: "",
-		},
-		{
-			desc: "One Path with nil HTTPMatch Value",
+			desc: "One HTTPRouteMatch with nil HTTPPathMatch Values",
 			routeRule: v1alpha1.HTTPRouteRule{
 				Matches: []v1alpha1.HTTPRouteMatch{
 					{
