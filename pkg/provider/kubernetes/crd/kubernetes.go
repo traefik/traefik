@@ -51,7 +51,7 @@ type Provider struct {
 
 // SetDefaults sets the default values.
 func (p *Provider) SetDefaults() {
-	p.AllowCrossNamespace = func(b bool) *bool { return &b }(true)
+	p.AllowCrossNamespace = func(b bool) *bool { return &b }(false)
 }
 
 func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {

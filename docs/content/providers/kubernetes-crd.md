@@ -260,13 +260,10 @@ providers:
 
 ### `allowCrossNamespace`
 
-_Optional, Default: true_
+_Optional, Default: false_
 
-If the parameter is set to `false`, IngressRoutes are not able to reference any resources in other namespaces than theirs.
+If the parameter is set to `true`, IngressRoutes are  able to reference  resources in other namespaces than theirs.
 
-!!! warning "Deprecation"
-
-    Please note that the default value for this option will be set to `false` in a future version.
 
 ```yaml tab="File (YAML)"
 providers:

@@ -28,10 +28,11 @@ func Bool(v bool) *bool { return &v }
 
 func TestLoadIngressRouteTCPs(t *testing.T) {
 	testCases := []struct {
-		desc         string
-		ingressClass string
-		paths        []string
-		expected     *dynamic.Configuration
+		desc                  string
+		ingressClass          string
+		paths                 []string
+		enabledCrossNamespace bool
+		expected              *dynamic.Configuration
 	}{
 		{
 			desc: "Empty",
@@ -1155,6 +1156,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 
 			p := Provider{IngressClass: test.ingressClass}
 			p.SetDefaults()
+			p.AllowCrossNamespace = Bool(true)
 
 			clientMock := newClientMock(test.paths...)
 			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)
@@ -3340,6 +3342,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 
 			p := Provider{IngressClass: test.ingressClass}
 			p.SetDefaults()
+			p.AllowCrossNamespace = Bool(true)
 
 			clientMock := newClientMock(test.paths...)
 			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)
@@ -3657,6 +3660,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 
 			p := Provider{IngressClass: test.ingressClass}
 			p.SetDefaults()
+			p.AllowCrossNamespace = Bool(true)
 
 			clientMock := newClientMock(test.paths...)
 			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)

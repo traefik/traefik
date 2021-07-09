@@ -556,7 +556,7 @@ TLS key
 Enable Kubernetes backend with default settings. (Default: ```false```)
 
 `--providers.kubernetescrd.allowcrossnamespace`:  
-Allow cross namespace resource reference. (Default: ```true```)
+Allow cross namespace resource reference. (Default: ```false```)
 
 `--providers.kubernetescrd.certauthfilepath`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).

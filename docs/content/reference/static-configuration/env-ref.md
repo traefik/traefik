@@ -556,7 +556,7 @@ TLS key
 Enable Kubernetes backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_ALLOWCROSSNAMESPACE`:  
-Allow cross namespace resource reference. (Default: ```true```)
+Allow cross namespace resource reference. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_CERTAUTHFILEPATH`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
