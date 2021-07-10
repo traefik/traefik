@@ -12,7 +12,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"reflect"
 	"sort"
 	"strings"
 
@@ -184,15 +183,15 @@ func (c Centrifuge) writeStruct(name string, obj *types.Struct, rootPkg string, 
 			continue
 		}
 
-		values, ok := lookupTagValue(obj.Tag(i), "json")
-		if len(values) > 0 && values[0] == "-" {
-			continue
-		}
-
 		b.WriteString(fmt.Sprintf("\t%s %s", field.Name(), fType))
 
-		if ok {
-			b.WriteString(fmt.Sprintf(" `json:\"%s\"`", strings.Join(values, ",")))
+		tags := obj.Tag(i)
+		if tags != "" {
+			tg := extractJSONTag(tags)
+
+			if tg != `json:"-"` {
+				b.WriteString(fmt.Sprintf(" `%s`", tg))
+			}
 		}
 
 		b.WriteString("\n")
@@ -203,19 +202,16 @@ func (c Centrifuge) writeStruct(name string, obj *types.Struct, rootPkg string, 
 	return b.String()
 }
 
-func lookupTagValue(raw, key string) ([]string, bool) {
-	value, ok := reflect.StructTag(raw).Lookup(key)
-	if !ok {
-		return nil, ok
+func extractJSONTag(value string) string {
+	fields := strings.Fields(value)
+
+	for _, field := range fields {
+		if strings.HasPrefix(field, `json:"`) {
+			return field
+		}
 	}
 
-	values := strings.Split(value, ",")
-
-	if len(values) < 1 {
-		return nil, true
-	}
-
-	return values, true
+	return ""
 }
 
 func extractPackage(t types.Type) string {
