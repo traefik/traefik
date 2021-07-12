@@ -264,6 +264,10 @@ _Optional, Default: false_
 
 If the parameter is set to `true`, IngressRoutes are  able to reference  resources in other namespaces than theirs.
 
+!!! warning "Default Change"
+
+    Please note that the default value for this option has been changed since previous versions of Traefik.
+
 ```yaml tab="File (YAML)"
 providers:
   kubernetesCRD:
@@ -280,10 +284,6 @@ providers:
 ```bash tab="CLI"
 --providers.kubernetescrd.allowCrossNamespace=false
 ```
-
-!!! warning "Default Change"
-
-    Please note that the default value for this option has been changed since previous versions of Traefik.
 
 ## Full Example
 
