@@ -1,8 +1,6 @@
 package dynamic
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"reflect"
 	"time"
 
@@ -209,11 +207,6 @@ type ServerHealthCheck struct {
 func (h *ServerHealthCheck) SetDefaults() {
 	fr := true
 	h.FollowRedirects = &fr
-}
-
-// CertVerifier is a wrapper for the callback of the certificate validation.
-type CertVerifier interface {
-	VerifyPeerCertificate(cfg *tls.Config, rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error
 }
 
 // +k8s:deepcopy-gen=true
