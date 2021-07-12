@@ -281,6 +281,10 @@ providers:
 --providers.kubernetescrd.allowCrossNamespace=false
 ```
 
+!!! warning "Default Change"
+
+    Please note that the default value for this option has been changed since previous versions of Traefik.
+
 ## Full Example
 
 For additional information, refer to the [full example](../user-guides/crd-acme/index.md) with Let's Encrypt.
