@@ -87,7 +87,7 @@ func (p *Provider) createLoadBalancerServerUDP(client Client, parentNamespace st
 		ns = service.Namespace
 	}
 
-	servers, err := loadUDPServers(client, ns, service)
+	servers, err := p.loadUDPServers(client, ns, service)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func (p *Provider) createLoadBalancerServerUDP(client Client, parentNamespace st
 	return udpService, nil
 }
 
-func loadUDPServers(client Client, namespace string, svc v1alpha1.ServiceUDP) ([]dynamic.UDPServer, error) {
+func (p *Provider) loadUDPServers(client Client, namespace string, svc v1alpha1.ServiceUDP) ([]dynamic.UDPServer, error) {
 	service, exists, err := client.GetService(namespace, svc.Name)
 	if err != nil {
 		return nil, err
@@ -109,6 +109,10 @@ func loadUDPServers(client Client, namespace string, svc v1alpha1.ServiceUDP) ([
 
 	if !exists {
 		return nil, errors.New("service not found")
+	}
+
+	if service.Spec.Type == corev1.ServiceTypeExternalName && !p.AllowExternalNameServices {
+		return nil, fmt.Errorf("externalName services not allowed: %s/%s", namespace, svc.Name)
 	}
 
 	svcPort, err := getServicePort(service, svc.Port)
