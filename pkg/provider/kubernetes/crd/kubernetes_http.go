@@ -173,7 +173,7 @@ func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace str
 
 type configBuilder struct {
 	client              Client
-	allowCrossNamespace *bool
+	allowCrossNamespace bool
 }
 
 // buildTraefikService creates the configuration for the traefik service defined in tService,
