@@ -1153,9 +1153,8 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				return
 			}
 
-			p := Provider{IngressClass: test.ingressClass}
+			p := Provider{IngressClass: test.ingressClass, AllowCrossNamespace: Bool(true)}
 			p.SetDefaults()
-			p.AllowCrossNamespace = Bool(true)
 
 			clientMock := newClientMock(test.paths...)
 			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)
@@ -3339,9 +3338,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 				return
 			}
 
-			p := Provider{IngressClass: test.ingressClass}
+			p := Provider{IngressClass: test.ingressClass, AllowCrossNamespace: Bool(true)}
 			p.SetDefaults()
-			p.AllowCrossNamespace = Bool(true)
 
 			clientMock := newClientMock(test.paths...)
 			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)
@@ -3657,9 +3655,8 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 				return
 			}
 
-			p := Provider{IngressClass: test.ingressClass}
+			p := Provider{IngressClass: test.ingressClass, AllowCrossNamespace: Bool(true)}
 			p.SetDefaults()
-			p.AllowCrossNamespace = Bool(true)
 
 			clientMock := newClientMock(test.paths...)
 			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)

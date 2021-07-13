@@ -132,7 +132,7 @@ shell: build-dev-image
 docs:
 	make -C ./docs docs
 
-## Serve the documentation site localy
+## Serve the documentation site locally
 docs-serve:
 	make -C ./docs docs-serve
 
