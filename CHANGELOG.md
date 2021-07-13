@@ -1,3 +1,21 @@
+## [v2.4.10](https://github.com/traefik/traefik/tree/v2.4.10) (2021-07-13)
+[All Commits](https://github.com/traefik/traefik/compare/v2.4.9...v2.4.10)
+
+**Bug fixes:**
+- **[k8s,k8s/crd,k8s/ingress]** Disable ExternalName Services by default on Kubernetes providers ([#8261](https://github.com/traefik/traefik/pull/8261) by [dtomcej](https://github.com/dtomcej))
+- **[k8s,k8s/crd,k8s/ingress]** Fix: malformed Kubernetes resource names and references in tests ([#8226](https://github.com/traefik/traefik/pull/8226) by [rtribotte](https://github.com/rtribotte))
+- **[k8s,k8s/crd]** Disable Cross-Namespace by default for IngressRoute provider ([#8260](https://github.com/traefik/traefik/pull/8260) by [dtomcej](https://github.com/dtomcej))
+- **[logs,middleware]** Accesslog: support multiple values for a given header ([#8258](https://github.com/traefik/traefik/pull/8258) by [ldez](https://github.com/ldez))
+- **[logs]** Ignore http 1.0 request host missing errors ([#8252](https://github.com/traefik/traefik/pull/8252) by [dtomcej](https://github.com/dtomcej))
+- **[middleware]** Headers Middleware: support http.CloseNotifier interface ([#8238](https://github.com/traefik/traefik/pull/8238) by [dtomcej](https://github.com/dtomcej))
+- **[tls]** Detect certificates content modifications ([#8243](https://github.com/traefik/traefik/pull/8243) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
+**Documentation:**
+- **[middleware,k8s]** Fix invalid subdomain ([#8212](https://github.com/traefik/traefik/pull/8212) by [WLun001](https://github.com/WLun001))
+- Add the list of available provider names ([#8225](https://github.com/traefik/traefik/pull/8225) by [WLun001](https://github.com/WLun001))
+- Fix maintainers-guidelines page title ([#8216](https://github.com/traefik/traefik/pull/8216) by [kubopanda](https://github.com/kubopanda))
+- Typos in contributing section ([#8215](https://github.com/traefik/traefik/pull/8215) by [kubopanda](https://github.com/kubopanda))
+
 ## [v2.4.9](https://github.com/traefik/traefik/tree/v2.4.9) (2021-06-21)
 [All Commits](https://github.com/traefik/traefik/compare/v2.4.8...v2.4.9)
 
