@@ -267,18 +267,18 @@ If the parameter is set to `true`, IngressRoutes are  able to reference  resourc
 ```yaml tab="File (YAML)"
 providers:
   kubernetesCRD:
-    allowCrossNamespace: false
+    allowCrossNamespace: true
     # ...
 ```
 
 ```toml tab="File (TOML)"
 [providers.kubernetesCRD]
-  allowCrossNamespace = false
+  allowCrossNamespace = true
   # ...
 ```
 
 ```bash tab="CLI"
---providers.kubernetescrd.allowCrossNamespace=false
+--providers.kubernetescrd.allowCrossNamespace=true
 ```
 
 ## Full Example
