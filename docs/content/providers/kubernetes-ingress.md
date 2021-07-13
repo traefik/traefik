@@ -375,6 +375,29 @@ providers:
 --providers.kubernetesingress.throttleDuration=10s
 ```
 
+### `allowExternalNameServices`
+
+_Optional, Default: false_
+
+If the parameter is set to `true`, Ingresses are able to reference ExternalName services.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    allowExternalNameServices: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  allowExternalNameServices = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.allowexternalnameservices=true
+```
+
 ### Further
 
 To learn more about the various aspects of the Ingress specification that Traefik supports,

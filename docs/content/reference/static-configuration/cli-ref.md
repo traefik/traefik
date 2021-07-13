@@ -558,6 +558,9 @@ Enable Kubernetes backend with default settings. (Default: ```false```)
 `--providers.kubernetescrd.allowcrossnamespace`:  
 Allow cross namespace resource reference. (Default: ```false```)
 
+`--providers.kubernetescrd.allowexternalnameservices`:  
+Allow ExternalName services. (Default: ```false```)
+
 `--providers.kubernetescrd.certauthfilepath`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
@@ -602,6 +605,9 @@ Kubernetes bearer token (not needed for in-cluster client).
 
 `--providers.kubernetesingress`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
+
+`--providers.kubernetesingress.allowexternalnameservices`:  
+Allow ExternalName services. (Default: ```false```)
 
 `--providers.kubernetesingress.certauthfilepath`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
