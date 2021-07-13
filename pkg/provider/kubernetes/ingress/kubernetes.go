@@ -474,11 +474,11 @@ func (p *Provider) loadService(client Client, namespace string, backend networki
 	if !exists {
 		return nil, errors.New("service not found")
 	}
-	if service.Spec.Type == corev1.ServiceTypeExternalName {
-		if !p.AllowExternalNameServices {
-			return nil, fmt.Errorf("externalName services not allowed: %s/%s", namespace, backend.ServiceName)
-		}
+
+	if !p.AllowExternalNameServices && service.Spec.Type == corev1.ServiceTypeExternalName {
+		return nil, fmt.Errorf("externalName services not allowed: %s/%s", namespace, backend.ServiceName)
 	}
+
 	var portName string
 	var portSpec corev1.ServicePort
 	var match bool

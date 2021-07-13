@@ -54,7 +54,6 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 
 			serviceName := makeID(ingressRouteTCP.Namespace, key)
 
-			encounteredErr := false
 			for _, service := range route.Services {
 				balancerServerTCP, err := p.createLoadBalancerServerTCP(client, ingressRouteTCP.Namespace, service)
 				if err != nil {
@@ -62,8 +61,6 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 						WithField("serviceName", service.Name).
 						WithField("servicePort", service.Port).
 						Errorf("Cannot create service: %v", err)
-					// If there is an error with creating the service, skip adding the service.
-					encounteredErr = true
 					continue
 				}
 
@@ -89,10 +86,6 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				conf.Services[serviceName].Weighted.Services = append(conf.Services[serviceName].Weighted.Services, srv)
 			}
 
-			if encounteredErr && len(conf.Services) == 0 {
-				// If we encountered an error in creating a balancerServer, and there are no other services, skip creating the router.
-				continue
-			}
 			conf.Routers[serviceName] = &dynamic.TCPRouter{
 				EntryPoints: ingressRouteTCP.Spec.EntryPoints,
 				Rule:        route.Match,

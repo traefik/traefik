@@ -1000,7 +1000,13 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Services: map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
-					Routers:  map[string]*dynamic.TCPRouter{},
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+						},
+					},
 					Services: map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1147,9 +1153,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				return
 			}
 
-			p := Provider{IngressClass: test.ingressClass, AllowCrossNamespace: true}
-			p.SetDefaults()
-			p.AllowExternalNameServices = true
+			p := Provider{IngressClass: test.ingressClass, AllowCrossNamespace: true, AllowExternalNameServices: true}
 
 			clientMock := newClientMock(test.paths...)
 			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)
@@ -3333,9 +3337,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 				return
 			}
 
-			p := Provider{IngressClass: test.ingressClass, AllowCrossNamespace: true}
-			p.SetDefaults()
-			p.AllowExternalNameServices = true
+			p := Provider{IngressClass: test.ingressClass, AllowCrossNamespace: true, AllowExternalNameServices: true}
 
 			clientMock := newClientMock(test.paths...)
 			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)
@@ -4291,7 +4293,13 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					// The router that references the invalid service will be discarded.
-					Routers:  map[string]*dynamic.TCPRouter{},
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+						},
+					},
 					Services: map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -4351,7 +4359,12 @@ func TestCrossNamespace(t *testing.T) {
 			expected: &dynamic.Configuration{
 				// The router that references the invalid service will be discarded.
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-test.route-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-0",
+						},
+					},
 					Services: map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
@@ -4422,10 +4435,8 @@ func TestCrossNamespace(t *testing.T) {
 				<-eventCh
 			}
 
-			p := Provider{}
-			p.SetDefaults()
+			p := Provider{AllowCrossNamespace: test.allowCrossNamespace}
 
-			p.AllowCrossNamespace = test.allowCrossNamespace
 			conf := p.loadConfigurationFromCRD(context.Background(), client)
 			assert.Equal(t, test.expected, conf)
 		})
@@ -4570,7 +4581,13 @@ func TestExternalNameService(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					// The router that references the invalid service will be discarded.
-					Routers:  map[string]*dynamic.TCPRouter{},
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+						},
+					},
 					Services: map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -4626,7 +4643,12 @@ func TestExternalNameService(t *testing.T) {
 			expected: &dynamic.Configuration{
 				// The router that references the invalid service will be discarded.
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-test.route-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-0",
+						},
+					},
 					Services: map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
@@ -4697,10 +4719,8 @@ func TestExternalNameService(t *testing.T) {
 				<-eventCh
 			}
 
-			p := Provider{}
+			p := Provider{AllowExternalNameServices: test.allowExternalNameService}
 
-			p.AllowCrossNamespace = test.allowCrossNamespace
-			p.AllowExternalNameServices = test.allowExternalNameService
 			conf := p.loadConfigurationFromCRD(context.Background(), client)
 			assert.Equal(t, test.expected, conf)
 		})

@@ -50,12 +50,6 @@ type Provider struct {
 	lastConfiguration         safe.Safe
 }
 
-// SetDefaults sets the default values.
-func (p *Provider) SetDefaults() {
-	p.AllowCrossNamespace = true
-	p.AllowExternalNameServices = false
-}
-
 func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	_, err := labels.Parse(p.LabelSelector)
 	if err != nil {

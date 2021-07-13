@@ -285,23 +285,23 @@ providers:
 
 _Optional, Default: false_
 
-If the parameter is set to `true`, IngressRoutes are able to reference externalname services.
+If the parameter is set to `true`, IngressRoutes are able to reference ExternalName services.
 
 ```yaml tab="File (YAML)"
 providers:
   kubernetesCRD:
-    allowExternalNameServices: false
+    allowExternalNameServices: true
     # ...
 ```
 
 ```toml tab="File (TOML)"
 [providers.kubernetesCRD]
-  allowExternalNameServices = false
+  allowExternalNameServices = true
   # ...
 ```
 
 ```bash tab="CLI"
---providers.kubernetescrd.allowExternalNameServices=false
+--providers.kubernetescrd.allowexternalnameservices=true
 ```
 
 ## Full Example

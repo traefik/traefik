@@ -379,23 +379,23 @@ providers:
 
 _Optional, Default: false_
 
-If the parameter is set to `true`, Ingresses are able to reference externalname services.
+If the parameter is set to `true`, Ingresses are able to reference ExternalName services.
 
 ```yaml tab="File (YAML)"
 providers:
   kubernetesIngress:
-    allowExternalNameServices: false
+    allowExternalNameServices: true
     # ...
 ```
 
 ```toml tab="File (TOML)"
 [providers.kubernetesIngress]
-  allowExternalNameServices = false
+  allowExternalNameServices = true
   # ...
 ```
 
 ```bash tab="CLI"
---providers.kubernetesingress.allowExternalNameServices=false
+--providers.kubernetesingress.allowexternalnameservices=true
 ```
 
 ### Further
