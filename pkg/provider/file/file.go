@@ -167,6 +167,86 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 
 	if configuration.TLS != nil {
 		configuration.TLS.Certificates = flattenCertificates(ctx, configuration.TLS)
+
+		// TLS Options
+		if configuration.TLS.Options != nil {
+			for name, options := range configuration.TLS.Options {
+				var caCerts []tls.FileOrContent
+
+				for _, caFile := range options.ClientAuth.CAFiles {
+					content, err := caFile.Read()
+					if err != nil {
+						log.FromContext(ctx).Error(err)
+						continue
+					}
+
+					caCerts = append(caCerts, tls.FileOrContent(content))
+				}
+				options.ClientAuth.CAFiles = caCerts
+
+				configuration.TLS.Options[name] = options
+			}
+		}
+
+		// TLS stores
+		if len(configuration.TLS.Stores) > 0 {
+			for name, store := range configuration.TLS.Stores {
+				content, err := store.DefaultCertificate.CertFile.Read()
+				if err != nil {
+					log.FromContext(ctx).Error(err)
+					continue
+				}
+				store.DefaultCertificate.CertFile = tls.FileOrContent(content)
+
+				content, err = store.DefaultCertificate.KeyFile.Read()
+				if err != nil {
+					log.FromContext(ctx).Error(err)
+					continue
+				}
+				store.DefaultCertificate.KeyFile = tls.FileOrContent(content)
+
+				configuration.TLS.Stores[name] = store
+			}
+		}
+	}
+
+	// ServersTransport
+	if configuration.HTTP != nil && len(configuration.HTTP.ServersTransports) > 0 {
+		for name, st := range configuration.HTTP.ServersTransports {
+			var certificates []tls.Certificate
+			for _, cert := range st.Certificates {
+				content, err := cert.CertFile.Read()
+				if err != nil {
+					log.FromContext(ctx).Error(err)
+					continue
+				}
+				cert.CertFile = tls.FileOrContent(content)
+
+				content, err = cert.KeyFile.Read()
+				if err != nil {
+					log.FromContext(ctx).Error(err)
+					continue
+				}
+				cert.KeyFile = tls.FileOrContent(content)
+
+				certificates = append(certificates, cert)
+			}
+
+			configuration.HTTP.ServersTransports[name].Certificates = certificates
+
+			var rootCAs []tls.FileOrContent
+			for _, rootCA := range st.RootCAs {
+				content, err := rootCA.Read()
+				if err != nil {
+					log.FromContext(ctx).Error(err)
+					continue
+				}
+
+				rootCAs = append(rootCAs, tls.FileOrContent(content))
+			}
+
+			st.RootCAs = rootCAs
+		}
 	}
 
 	return configuration, nil
