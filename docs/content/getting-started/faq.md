@@ -132,8 +132,8 @@ a configuration update is only triggered when one of the [watched](../providers/
 
 Which is why, when a certificate is defined by path,
 and the actual contents of this certificate change,
-a configuration update is _not_ triggered (even though it should).
+a configuration update is _not_ triggered.
 
-To take into account the new certificate contents, the dynamic configuration update must be forced.
+To take into account the new certificate contents, the update of the dynamic configuration must be forced.
 One way to achieve that, is to trigger a file notification,
 for example, by using the `touch` command on the configuration file.
