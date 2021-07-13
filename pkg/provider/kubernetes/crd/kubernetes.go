@@ -42,16 +42,11 @@ type Provider struct {
 	Token               string          `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
 	CertAuthFilePath    string          `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
 	Namespaces          []string        `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
-	AllowCrossNamespace *bool           `description:"Allow cross namespace resource reference." json:"allowCrossNamespace,omitempty" toml:"allowCrossNamespace,omitempty" yaml:"allowCrossNamespace,omitempty" export:"true"`
+	AllowCrossNamespace bool            `description:"Allow cross namespace resource reference." json:"allowCrossNamespace,omitempty" toml:"allowCrossNamespace,omitempty" yaml:"allowCrossNamespace,omitempty" export:"true"`
 	LabelSelector       string          `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
 	IngressClass        string          `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
 	ThrottleDuration    ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	lastConfiguration   safe.Safe
-}
-
-// SetDefaults sets the default values.
-func (p *Provider) SetDefaults() {
-	p.AllowCrossNamespace = func(b bool) *bool { return &b }(false)
 }
 
 func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
@@ -103,7 +98,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		return err
 	}
 
-	if p.AllowCrossNamespace == nil || *p.AllowCrossNamespace {
+	if p.AllowCrossNamespace {
 		logger.Warn("Cross-namespace reference between IngressRoutes and resources is enabled, please ensure that this is expected (see AllowCrossNamespace option)")
 	}
 
@@ -826,7 +821,7 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	return eventsChanBuffered
 }
 
-func isNamespaceAllowed(allowCrossNamespace *bool, parentNamespace, namespace string) bool {
+func isNamespaceAllowed(allowCrossNamespace bool, parentNamespace, namespace string) bool {
 	// If allowCrossNamespace option is not defined the default behavior is to allow cross namespace references.
-	return allowCrossNamespace == nil || *allowCrossNamespace || parentNamespace == namespace
+	return allowCrossNamespace || parentNamespace == namespace
 }
