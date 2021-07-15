@@ -25,6 +25,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/gateway-api/apis/v1alpha1"
 )
 
@@ -62,7 +63,9 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
 	}
-	log.FromContext(ctx).Infof("label selector is: %q", p.LabelSelector)
+
+	logger := log.FromContext(ctx)
+	logger.Infof("label selector is: %q", p.LabelSelector)
 
 	withEndpoint := ""
 	if p.Endpoint != "" {
@@ -72,19 +75,20 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	var client *clientWrapper
 	switch {
 	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
-		log.FromContext(ctx).Infof("Creating in-cluster Provider client%s", withEndpoint)
+		logger.Infof("Creating in-cluster Provider client%s", withEndpoint)
 		client, err = newInClusterClient(p.Endpoint)
 	case os.Getenv("KUBECONFIG") != "":
-		log.FromContext(ctx).Infof("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
+		logger.Infof("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
 		client, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
 	default:
-		log.FromContext(ctx).Infof("Creating cluster-external Provider client%s", withEndpoint)
+		logger.Infof("Creating cluster-external Provider client%s", withEndpoint)
 		client, err = newExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
 	}
 
 	if err != nil {
 		return nil, err
 	}
+
 	client.labelSelector = p.LabelSelector
 
 	return client, nil
@@ -966,11 +970,13 @@ func extractRule(routeRule v1alpha1.HTTPRouteRule, hostRule string) (string, err
 		var matchRules []string
 		// TODO handle other path types
 		if match.Path != nil && match.Path.Type != nil && match.Path.Value != nil {
+			val := pointer.StringDeref(match.Path.Value, "")
+
 			switch *match.Path.Type {
 			case v1alpha1.PathMatchExact:
-				matchRules = append(matchRules, "Path(`"+*match.Path.Value+"`)")
+				matchRules = append(matchRules, fmt.Sprintf("Path(`%s`)", val))
 			case v1alpha1.PathMatchPrefix:
-				matchRules = append(matchRules, "PathPrefix(`"+*match.Path.Value+"`)")
+				matchRules = append(matchRules, fmt.Sprintf("PathPrefix(`%s`)", val))
 			default:
 				return "", fmt.Errorf("unsupported path match %s", *match.Path.Type)
 			}
@@ -983,7 +989,7 @@ func extractRule(routeRule v1alpha1.HTTPRouteRule, hostRule string) (string, err
 				var headerRules []string
 
 				for headerName, headerValue := range match.Headers.Values {
-					headerRules = append(headerRules, "Headers(`"+headerName+"`,`"+headerValue+"`)")
+					headerRules = append(headerRules, fmt.Sprintf("Headers(`%s`,`%s`)", headerName, headerValue))
 				}
 				// to have a consistent order
 				sort.Strings(headerRules)
@@ -1142,10 +1148,7 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 	}
 
 	for _, forwardTo := range targets {
-		weight := 1
-		if forwardTo.Weight != nil {
-			weight = int(*forwardTo.Weight)
-		}
+		weight := int(pointer.Int32Deref(forwardTo.Weight, 1))
 
 		if forwardTo.ServiceName == nil && forwardTo.BackendRef != nil {
 			if !(forwardTo.BackendRef.Group == traefikServiceGroupName && forwardTo.BackendRef.Kind == traefikServiceKind) {
@@ -1166,7 +1169,7 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 
 		svc := dynamic.Service{
 			LoadBalancer: &dynamic.ServersLoadBalancer{
-				PassHostHeader: func(v bool) *bool { return &v }(true),
+				PassHostHeader: pointer.Bool(true),
 			},
 		}
 
@@ -1206,7 +1209,7 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 			return nil, nil, errors.New("service port not found")
 		}
 
-		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, *forwardTo.ServiceName)
+		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, pointer.StringDeref(forwardTo.ServiceName, ""))
 		if endpointsErr != nil {
 			return nil, nil, endpointsErr
 		}
@@ -1267,10 +1270,7 @@ func loadTCPServices(client Client, namespace string, targets []v1alpha1.RouteFo
 	}
 
 	for _, forwardTo := range targets {
-		weight := 1
-		if forwardTo.Weight != nil {
-			weight = int(*forwardTo.Weight)
-		}
+		weight := int(pointer.Int32Deref(forwardTo.Weight, 1))
 
 		if forwardTo.ServiceName == nil && forwardTo.BackendRef != nil {
 			if !(forwardTo.BackendRef.Group == traefikServiceGroupName && forwardTo.BackendRef.Kind == traefikServiceKind) {

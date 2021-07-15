@@ -96,6 +96,7 @@ require (
 	k8s.io/apimachinery v0.21.0
 	k8s.io/client-go v0.21.0
 	k8s.io/code-generator v0.21.0
+	k8s.io/utils v0.0.0-20210709001253-0e1f9d693477
 	mvdan.cc/xurls/v2 v2.1.0
 	sigs.k8s.io/controller-tools v0.5.0
 	sigs.k8s.io/gateway-api v0.3.0

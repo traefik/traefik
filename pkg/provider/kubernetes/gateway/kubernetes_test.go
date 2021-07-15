@@ -9,14 +9,11 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/tls"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/gateway-api/apis/v1alpha1"
 )
 
 var _ provider.Provider = (*Provider)(nil)
-
-func Bool(v bool) *bool { return &v }
-
-func Str(s string) *string { return &s }
 
 func PMT(p v1alpha1.PathMatchType) *v1alpha1.PathMatchType { return &p }
 
@@ -532,7 +529,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
@@ -622,7 +619,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
@@ -678,7 +675,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
@@ -742,7 +739,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
@@ -797,7 +794,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
@@ -852,7 +849,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
@@ -922,7 +919,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 						"default-whoami2-8080": {
@@ -935,7 +932,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
@@ -994,7 +991,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 						"default-whoami2-8080": {
@@ -1007,7 +1004,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
@@ -1083,7 +1080,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
@@ -1168,7 +1165,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
@@ -1247,7 +1244,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
@@ -2733,7 +2730,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
@@ -2995,7 +2992,7 @@ func TestExtractRule(t *testing.T) {
 					{
 						Path: &v1alpha1.HTTPPathMatch{
 							Type:  nil,
-							Value: Str("/foo/"),
+							Value: pointer.String("/foo/"),
 						},
 					},
 				},
@@ -3023,7 +3020,7 @@ func TestExtractRule(t *testing.T) {
 					{
 						Path: &v1alpha1.HTTPPathMatch{
 							Type:  PMT(v1alpha1.PathMatchExact),
-							Value: Str("/foo/"),
+							Value: pointer.String("/foo/"),
 						},
 					},
 				},
@@ -3037,13 +3034,13 @@ func TestExtractRule(t *testing.T) {
 					{
 						Path: &v1alpha1.HTTPPathMatch{
 							Type:  PMT(v1alpha1.PathMatchExact),
-							Value: Str("/foo/"),
+							Value: pointer.String("/foo/"),
 						},
 					},
 					{
 						Path: &v1alpha1.HTTPPathMatch{
 							Type:  PMT("unknown"),
-							Value: Str("/foo/"),
+							Value: pointer.String("/foo/"),
 						},
 					},
 				},
@@ -3057,7 +3054,7 @@ func TestExtractRule(t *testing.T) {
 					{
 						Path: &v1alpha1.HTTPPathMatch{
 							Type:  PMT(v1alpha1.PathMatchExact),
-							Value: Str("/foo/"),
+							Value: pointer.String("/foo/"),
 						},
 					},
 					{},
@@ -3072,7 +3069,7 @@ func TestExtractRule(t *testing.T) {
 					{
 						Path: &v1alpha1.HTTPPathMatch{
 							Type:  PMT(v1alpha1.PathMatchExact),
-							Value: Str("/foo/"),
+							Value: pointer.String("/foo/"),
 						},
 					},
 					{
@@ -3094,7 +3091,7 @@ func TestExtractRule(t *testing.T) {
 					{
 						Path: &v1alpha1.HTTPPathMatch{
 							Type:  PMT(v1alpha1.PathMatchExact),
-							Value: Str("/foo/"),
+							Value: pointer.String("/foo/"),
 						},
 						Headers: &v1alpha1.HTTPHeaderMatch{
 							Type: HMT(v1alpha1.HeaderMatchExact),
@@ -3115,7 +3112,7 @@ func TestExtractRule(t *testing.T) {
 					{
 						Path: &v1alpha1.HTTPPathMatch{
 							Type:  PMT(v1alpha1.PathMatchExact),
-							Value: Str("/foo/"),
+							Value: pointer.String("/foo/"),
 						},
 						Headers: &v1alpha1.HTTPHeaderMatch{
 							Type: HMT(v1alpha1.HeaderMatchExact),
@@ -3136,7 +3133,7 @@ func TestExtractRule(t *testing.T) {
 					{
 						Path: &v1alpha1.HTTPPathMatch{
 							Type:  PMT(v1alpha1.PathMatchExact),
-							Value: Str("/foo/"),
+							Value: pointer.String("/foo/"),
 						},
 					},
 					{
