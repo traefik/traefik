@@ -1,5 +1,5 @@
-## [v2.4.10](https://github.com/traefik/traefik/tree/v2.4.10) (2021-07-13)
-[All Commits](https://github.com/traefik/traefik/compare/v2.4.9...v2.4.10)
+## [v2.4.11](https://github.com/traefik/traefik/tree/v2.4.11) (2021-07-15)
+[All Commits](https://github.com/traefik/traefik/compare/v2.4.9...v2.4.11)
 
 **Bug fixes:**
 - **[k8s,k8s/crd,k8s/ingress]** Disable ExternalName Services by default on Kubernetes providers ([#8261](https://github.com/traefik/traefik/pull/8261) by [dtomcej](https://github.com/dtomcej))
@@ -15,6 +15,11 @@
 - Add the list of available provider names ([#8225](https://github.com/traefik/traefik/pull/8225) by [WLun001](https://github.com/WLun001))
 - Fix maintainers-guidelines page title ([#8216](https://github.com/traefik/traefik/pull/8216) by [kubopanda](https://github.com/kubopanda))
 - Typos in contributing section ([#8215](https://github.com/traefik/traefik/pull/8215) by [kubopanda](https://github.com/kubopanda))
+
+## [v2.4.10](https://github.com/traefik/traefik/tree/v2.4.10) (2021-07-13)
+[All Commits](https://github.com/traefik/traefik/compare/v2.4.9...v2.4.10)
+
+Release canceled.
 
 ## [v2.4.9](https://github.com/traefik/traefik/tree/v2.4.9) (2021-06-21)
 [All Commits](https://github.com/traefik/traefik/compare/v2.4.8...v2.4.9)
