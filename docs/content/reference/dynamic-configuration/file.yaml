@@ -329,6 +329,7 @@ http:
         responseHeaderTimeout: 42s
         idleConnTimeout: 42s
       disableHTTP2: true
+      peerCertURI: foobar
     ServersTransport1:
       serverName: foobar
       insecureSkipVerify: true
@@ -346,6 +347,7 @@ http:
         responseHeaderTimeout: 42s
         idleConnTimeout: 42s
       disableHTTP2: true
+      peerCertURI: foobar
 tcp:
   routers:
     TCPRouter0:

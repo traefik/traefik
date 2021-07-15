@@ -278,6 +278,7 @@
       rootCAs = ["foobar", "foobar"]
       maxIdleConnsPerHost = 42
       disableHTTP2 = true
+      peerCertURI = "foobar"
 
       [[http.serversTransports.ServersTransport0.certificates]]
         certFile = "foobar"
@@ -296,6 +297,7 @@
       rootCAs = ["foobar", "foobar"]
       maxIdleConnsPerHost = 42
       disableHTTP2 = true
+      peerCertURI = "foobar"
 
       [[http.serversTransports.ServersTransport1.certificates]]
         certFile = "foobar"

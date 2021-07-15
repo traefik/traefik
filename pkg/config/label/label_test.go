@@ -675,6 +675,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		},
 	}
 
+	assert.Nil(t, configuration.HTTP.ServersTransports)
 	assert.Equal(t, expected, configuration)
 }
 

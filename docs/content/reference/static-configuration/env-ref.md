@@ -342,6 +342,12 @@ Enable ConsulCatalog backend with default settings. (Default: ```false```)
 `TRAEFIK_PROVIDERS_CONSULCATALOG_CACHE`:  
 Use local agent caching for catalog reads. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_CONSULCATALOG_CONNECTAWARE`:  
+Enable Consul Connect support. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_CONNECTBYDEFAULT`:  
+Consider every service as Connect capable by default. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_CONSULCATALOG_CONSTRAINTS`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
 
@@ -349,7 +355,7 @@ Constraints is an expression that Traefik matches against the container's labels
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_ADDRESS`:  
-The address of the Consul server (Default: ```127.0.0.1:8500```)
+The address of the Consul server
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_DATACENTER`:  
 Data center to use. If not provided, the default agent data center is used
@@ -395,6 +401,9 @@ Interval for check Consul API. Default 15s (Default: ```15```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_REQUIRECONSISTENT`:  
 Forces the read to be fully consistent. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_SERVICENAME`:  
+Name of the Traefik service in Consul Catalog (needs to be registered via the orchestrator or manually). (Default: ```traefik```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_STALE`:  
 Use stale consistency for catalog reads. (Default: ```false```)

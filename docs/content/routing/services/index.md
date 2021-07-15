@@ -738,6 +738,37 @@ spec:
     disableHTTP2: true
 ```
 
+#### `peerCertURI`
+
+_Optional, Default=false_
+
+`peerCertURI` defines the URI used to match against SAN URI during the peer certificate verification.
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport]
+  peerCertURI = "foobar"
+```
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      peerCertURI: foobar
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    peerCertURI: foobar
+```
+
 #### `forwardingTimeouts`
 
 `forwardingTimeouts` is about a number of timeouts relevant to when forwarding requests to the backend servers.
