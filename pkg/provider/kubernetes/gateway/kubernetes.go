@@ -25,6 +25,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/gateway-api/apis/v1alpha1"
 )
 
@@ -62,7 +63,9 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
 	}
-	log.FromContext(ctx).Infof("label selector is: %q", p.LabelSelector)
+
+	logger := log.FromContext(ctx)
+	logger.Infof("label selector is: %q", p.LabelSelector)
 
 	withEndpoint := ""
 	if p.Endpoint != "" {
@@ -72,19 +75,20 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	var client *clientWrapper
 	switch {
 	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
-		log.FromContext(ctx).Infof("Creating in-cluster Provider client%s", withEndpoint)
+		logger.Infof("Creating in-cluster Provider client%s", withEndpoint)
 		client, err = newInClusterClient(p.Endpoint)
 	case os.Getenv("KUBECONFIG") != "":
-		log.FromContext(ctx).Infof("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
+		logger.Infof("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
 		client, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
 	default:
-		log.FromContext(ctx).Infof("Creating cluster-external Provider client%s", withEndpoint)
+		logger.Infof("Creating cluster-external Provider client%s", withEndpoint)
 		client, err = newExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
 	}
 
 	if err != nil {
 		return nil, err
 	}
+
 	client.labelSelector = p.LabelSelector
 
 	return client, nil
@@ -394,7 +398,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 
 		// TLS
 		if listener.Protocol == v1alpha1.HTTPSProtocolType || listener.Protocol == v1alpha1.TLSProtocolType {
-			if listener.TLS == nil || (listener.TLS.CertificateRef == nil && listener.TLS.Mode != v1alpha1.TLSModePassthrough) {
+			if listener.TLS == nil || (listener.TLS.CertificateRef == nil && listener.TLS.Mode != nil && *listener.TLS.Mode != v1alpha1.TLSModePassthrough) {
 				// update "Detached" status with "UnsupportedProtocol" reason
 				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
 					Type:               string(v1alpha1.ListenerConditionDetached),
@@ -407,12 +411,17 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 				continue
 			}
 
-			if listener.TLS.Mode == v1alpha1.TLSModePassthrough && listener.TLS.CertificateRef != nil {
+			var tlsModeType v1alpha1.TLSModeType
+			if listener.TLS.Mode != nil {
+				tlsModeType = *listener.TLS.Mode
+			}
+
+			if tlsModeType == v1alpha1.TLSModePassthrough && listener.TLS.CertificateRef != nil {
 				// https://gateway-api.sigs.k8s.io/guides/tls/
 				logger.Warnf("In case of Passthrough TLS mode, no TLS settings take effect as the TLS session from the client is NOT terminated at the Gateway")
 			}
 
-			isTLSPassthrough := listener.TLS.Mode == v1alpha1.TLSModePassthrough
+			isTLSPassthrough := tlsModeType == v1alpha1.TLSModePassthrough
 
 			// Allowed configurations:
 			// Protocol TLS -> Passthrough -> TLSRoute
@@ -428,7 +437,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(v1alpha1.ListenerReasonUnsupportedProtocol),
 					Message: fmt.Sprintf("Unsupported route kind %q with %q",
-						listener.Routes.Kind, listener.TLS.Mode),
+						listener.Routes.Kind, tlsModeType),
 				})
 
 				continue
@@ -484,7 +493,11 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 
 func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha1.Listener, gateway *v1alpha1.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
 	// TODO: support RouteNamespaces
-	selector := labels.SelectorFromSet(listener.Routes.Selector.MatchLabels)
+	selector := labels.Everything()
+	if listener.Routes.Selector != nil {
+		selector = labels.SelectorFromSet(listener.Routes.Selector.MatchLabels)
+	}
+
 	httpRoutes, err := client.GetHTTPRoutes(gateway.Namespace, selector)
 	if err != nil {
 		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
@@ -599,7 +612,11 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha
 
 func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener v1alpha1.Listener, gateway *v1alpha1.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
 	// TODO: support RouteNamespaces
-	selector := labels.SelectorFromSet(listener.Routes.Selector.MatchLabels)
+	selector := labels.Everything()
+	if listener.Routes.Selector != nil {
+		selector = labels.SelectorFromSet(listener.Routes.Selector.MatchLabels)
+	}
+
 	tcpRoutes, err := client.GetTCPRoutes(gateway.Namespace, selector)
 	if err != nil {
 		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
@@ -698,7 +715,11 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener v1alpha1.
 
 func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha1.Listener, gateway *v1alpha1.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
 	// TODO: support RouteNamespaces
-	selector := labels.SelectorFromSet(listener.Routes.Selector.MatchLabels)
+	selector := labels.Everything()
+	if listener.Routes.Selector != nil {
+		selector = labels.SelectorFromSet(listener.Routes.Selector.MatchLabels)
+	}
+
 	tlsRoutes, err := client.GetTLSRoutes(gateway.Namespace, selector)
 	if err != nil {
 		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
@@ -736,13 +757,10 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha1.
 			router := dynamic.TCPRouter{
 				Rule:        rule,
 				EntryPoints: []string{ep},
-			}
-
-			if listener.TLS != nil {
-				// TODO support let's encrypt
-				router.TLS = &dynamic.RouterTCPTLSConfig{
-					Passthrough: listener.TLS.Mode == v1alpha1.TLSModePassthrough,
-				}
+				// The TLS Passthrough is the only TLS mode supported by a Gateway TLSRoute.
+				TLS: &dynamic.RouterTCPTLSConfig{
+					Passthrough: true,
+				},
 			}
 
 			// Adding the gateway name and the entryPoint name prevents overlapping of routers build from the same routes.
@@ -945,37 +963,39 @@ func extractRule(routeRule v1alpha1.HTTPRouteRule, hostRule string) (string, err
 	var matchesRules []string
 
 	for _, match := range routeRule.Matches {
-		if len(match.Path.Type) == 0 && match.Headers == nil {
+		if (match.Path == nil || match.Path.Type == nil) && match.Headers == nil {
 			continue
 		}
 
 		var matchRules []string
 		// TODO handle other path types
-		if len(match.Path.Type) > 0 {
-			switch match.Path.Type {
+		if match.Path != nil && match.Path.Type != nil && match.Path.Value != nil {
+			val := pointer.StringDeref(match.Path.Value, "")
+
+			switch *match.Path.Type {
 			case v1alpha1.PathMatchExact:
-				matchRules = append(matchRules, "Path(`"+match.Path.Value+"`)")
+				matchRules = append(matchRules, fmt.Sprintf("Path(`%s`)", val))
 			case v1alpha1.PathMatchPrefix:
-				matchRules = append(matchRules, "PathPrefix(`"+match.Path.Value+"`)")
+				matchRules = append(matchRules, fmt.Sprintf("PathPrefix(`%s`)", val))
 			default:
-				return "", fmt.Errorf("unsupported path match %s", match.Path.Type)
+				return "", fmt.Errorf("unsupported path match %s", *match.Path.Type)
 			}
 		}
 
 		// TODO handle other headers types
-		if match.Headers != nil {
-			switch match.Headers.Type {
+		if match.Headers != nil && match.Headers.Type != nil {
+			switch *match.Headers.Type {
 			case v1alpha1.HeaderMatchExact:
 				var headerRules []string
 
 				for headerName, headerValue := range match.Headers.Values {
-					headerRules = append(headerRules, "Headers(`"+headerName+"`,`"+headerValue+"`)")
+					headerRules = append(headerRules, fmt.Sprintf("Headers(`%s`,`%s`)", headerName, headerValue))
 				}
 				// to have a consistent order
 				sort.Strings(headerRules)
 				matchRules = append(matchRules, headerRules...)
 			default:
-				return "", fmt.Errorf("unsupported header match type %s", match.Headers.Type)
+				return "", fmt.Errorf("unsupported header match type %s", *match.Headers.Type)
 			}
 		}
 
@@ -1128,7 +1148,7 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 	}
 
 	for _, forwardTo := range targets {
-		weight := int(forwardTo.Weight)
+		weight := int(pointer.Int32Deref(forwardTo.Weight, 1))
 
 		if forwardTo.ServiceName == nil && forwardTo.BackendRef != nil {
 			if !(forwardTo.BackendRef.Group == traefikServiceGroupName && forwardTo.BackendRef.Kind == traefikServiceKind) {
@@ -1149,7 +1169,7 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 
 		svc := dynamic.Service{
 			LoadBalancer: &dynamic.ServersLoadBalancer{
-				PassHostHeader: func(v bool) *bool { return &v }(true),
+				PassHostHeader: pointer.Bool(true),
 			},
 		}
 
@@ -1189,7 +1209,7 @@ func loadServices(client Client, namespace string, targets []v1alpha1.HTTPRouteF
 			return nil, nil, errors.New("service port not found")
 		}
 
-		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, *forwardTo.ServiceName)
+		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, pointer.StringDeref(forwardTo.ServiceName, ""))
 		if endpointsErr != nil {
 			return nil, nil, endpointsErr
 		}
@@ -1250,7 +1270,7 @@ func loadTCPServices(client Client, namespace string, targets []v1alpha1.RouteFo
 	}
 
 	for _, forwardTo := range targets {
-		weight := int(forwardTo.Weight)
+		weight := int(pointer.Int32Deref(forwardTo.Weight, 1))
 
 		if forwardTo.ServiceName == nil && forwardTo.BackendRef != nil {
 			if !(forwardTo.BackendRef.Group == traefikServiceGroupName && forwardTo.BackendRef.Kind == traefikServiceKind) {
