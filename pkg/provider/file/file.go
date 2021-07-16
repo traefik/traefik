@@ -191,21 +191,23 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 		// TLS stores
 		if len(configuration.TLS.Stores) > 0 {
 			for name, store := range configuration.TLS.Stores {
-				if store.DefaultCertificate != nil {
-					content, err := store.DefaultCertificate.CertFile.Read()
-					if err != nil {
-						log.FromContext(ctx).Error(err)
-						continue
-					}
-					store.DefaultCertificate.CertFile = tls.FileOrContent(content)
-
-					content, err = store.DefaultCertificate.KeyFile.Read()
-					if err != nil {
-						log.FromContext(ctx).Error(err)
-						continue
-					}
-					store.DefaultCertificate.KeyFile = tls.FileOrContent(content)
+				if store.DefaultCertificate == nil {
+					continue
 				}
+
+				content, err := store.DefaultCertificate.CertFile.Read()
+				if err != nil {
+					log.FromContext(ctx).Error(err)
+					continue
+				}
+				store.DefaultCertificate.CertFile = tls.FileOrContent(content)
+
+				content, err = store.DefaultCertificate.KeyFile.Read()
+				if err != nil {
+					log.FromContext(ctx).Error(err)
+					continue
+				}
+				store.DefaultCertificate.KeyFile = tls.FileOrContent(content)
 
 				configuration.TLS.Stores[name] = store
 			}
