@@ -7,7 +7,7 @@ jobs:
 
   generate:
     name: Check and verify code
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     container:
       image: golang:1.16
       env:
