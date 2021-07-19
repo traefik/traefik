@@ -1,6 +1,7 @@
 package ingress
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -154,7 +155,8 @@ func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 	stopCh := make(chan struct{})
 
 	eventCh, err := client.WatchAll(nil, stopCh)
-	require.NoError(t, err)
+	// Fake clientset always returns this exact serverVersion that fails our validation.
+	require.Error(t, errors.New(`could not parse server version: Malformed version: v0.0.0-master+$Format:%h$`), err)
 
 	select {
 	case event := <-eventCh:
