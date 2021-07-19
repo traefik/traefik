@@ -142,7 +142,7 @@ docs-pull-images:
 
 ## Generate CRD clientset
 generate-crd:
-	./script/update-generated-crd-code.sh
+	@$(CURDIR)/script/code-gen.sh
 
 ## Create packages for the release
 release-packages: generate-webui build-dev-image
