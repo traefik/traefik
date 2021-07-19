@@ -174,6 +174,7 @@
 | `traefik/http/serversTransports/ServersTransport0/forwardingTimeouts/responseHeaderTimeout` | `42s` |
 | `traefik/http/serversTransports/ServersTransport0/insecureSkipVerify` | `true` |
 | `traefik/http/serversTransports/ServersTransport0/maxIdleConnsPerHost` | `42` |
+| `traefik/http/serversTransports/ServersTransport0/peerCertURI` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport0/rootCAs/0` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport0/rootCAs/1` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport0/serverName` | `foobar` |
@@ -187,6 +188,7 @@
 | `traefik/http/serversTransports/ServersTransport1/forwardingTimeouts/responseHeaderTimeout` | `42s` |
 | `traefik/http/serversTransports/ServersTransport1/insecureSkipVerify` | `true` |
 | `traefik/http/serversTransports/ServersTransport1/maxIdleConnsPerHost` | `42` |
+| `traefik/http/serversTransports/ServersTransport1/peerCertURI` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/rootCAs/0` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/rootCAs/1` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/serverName` | `foobar` |
