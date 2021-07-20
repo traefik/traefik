@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/tls"
 )
 
 func Int(v int) *int    { return &v }
@@ -65,6 +66,7 @@ func TestDefaultRule(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -114,6 +116,7 @@ func TestDefaultRule(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -156,6 +159,7 @@ func TestDefaultRule(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -198,6 +202,7 @@ func TestDefaultRule(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -245,6 +250,7 @@ func TestDefaultRule(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -265,11 +271,11 @@ func TestDefaultRule(t *testing.T) {
 
 			for i := 0; i < len(test.items); i++ {
 				var err error
-				test.items[i].ExtraConf, err = p.getConfiguration(test.items[i])
+				test.items[i].ExtraConf, err = p.getConfiguration(test.items[i].Labels)
 				require.NoError(t, err)
 			}
 
-			configuration := p.buildConfiguration(context.Background(), test.items)
+			configuration := p.buildConfiguration(context.Background(), test.items, nil)
 
 			assert.Equal(t, test.expected, configuration)
 		})
@@ -278,10 +284,11 @@ func TestDefaultRule(t *testing.T) {
 
 func Test_buildConfiguration(t *testing.T) {
 	testCases := []struct {
-		desc        string
-		items       []itemData
-		constraints string
-		expected    *dynamic.Configuration
+		desc         string
+		items        []itemData
+		constraints  string
+		ConnectAware bool
+		expected     *dynamic.Configuration
 	}{
 		{
 			desc: "one container no label",
@@ -324,6 +331,162 @@ func Test_buildConfiguration(t *testing.T) {
 								},
 								PassHostHeader: Bool(true),
 							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc:         "one connect container",
+			ConnectAware: true,
+			items: []itemData{
+				{
+					ID:         "Test",
+					Node:       "Node1",
+					Datacenter: "dc1",
+					Name:       "dev/Test",
+					Namespace:  "ns",
+					Address:    "127.0.0.1",
+					Port:       "443",
+					Status:     api.HealthPassing,
+					Labels: map[string]string{
+						"traefik.consulcatalog.connect": "true",
+					},
+					Tags: nil,
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Services:    map[string]*dynamic.TCPService{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"dev-Test": {
+							Service: "dev-Test",
+							Rule:    "Host(`dev-Test.traefik.wtf`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"dev-Test": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "https://127.0.0.1:443",
+									},
+								},
+								PassHostHeader:   Bool(true),
+								ServersTransport: "tls-ns-dc1-dev-Test",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"tls-ns-dc1-dev-Test": {
+							ServerName:         "ns-dc1-dev/Test",
+							InsecureSkipVerify: true,
+							RootCAs: []tls.FileOrContent{
+								"root",
+							},
+							Certificates: []tls.Certificate{
+								{
+									CertFile: "cert",
+									KeyFile:  "key",
+								},
+							},
+							PeerCertURI: "spiffe:///ns/ns/dc/dc1/svc/dev/Test",
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:         "two connect containers on same service",
+			ConnectAware: true,
+			items: []itemData{
+				{
+					ID:         "Test1",
+					Node:       "Node1",
+					Datacenter: "dc1",
+					Name:       "dev/Test",
+					Namespace:  "ns",
+					Address:    "127.0.0.1",
+					Port:       "443",
+					Status:     api.HealthPassing,
+					Labels: map[string]string{
+						"traefik.consulcatalog.connect": "true",
+					},
+					Tags: nil,
+				},
+				{
+					ID:         "Test2",
+					Node:       "Node2",
+					Datacenter: "dc1",
+					Name:       "dev/Test",
+					Namespace:  "ns",
+					Address:    "127.0.0.2",
+					Port:       "444",
+					Status:     api.HealthPassing,
+					Labels: map[string]string{
+						"traefik.consulcatalog.connect": "true",
+					},
+					Tags: nil,
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Services:    map[string]*dynamic.TCPService{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"dev-Test": {
+							Service: "dev-Test",
+							Rule:    "Host(`dev-Test.traefik.wtf`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"dev-Test": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "https://127.0.0.1:443",
+									},
+									{
+										URL: "https://127.0.0.2:444",
+									},
+								},
+								PassHostHeader:   Bool(true),
+								ServersTransport: "tls-ns-dc1-dev-Test",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"tls-ns-dc1-dev-Test": {
+							ServerName:         "ns-dc1-dev/Test",
+							InsecureSkipVerify: true,
+							RootCAs: []tls.FileOrContent{
+								"root",
+							},
+							Certificates: []tls.Certificate{
+								{
+									CertFile: "cert",
+									KeyFile:  "key",
+								},
+							},
+							PeerCertURI: "spiffe:///ns/ns/dc/dc1/svc/dev/Test",
 						},
 					},
 				},
@@ -395,6 +558,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -453,6 +617,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -508,6 +673,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -566,6 +732,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -613,6 +780,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -662,6 +830,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -709,6 +878,7 @@ func Test_buildConfiguration(t *testing.T) {
 							Rule:    "Host(`foo.com`)",
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -757,6 +927,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -811,6 +982,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -854,8 +1026,9 @@ func Test_buildConfiguration(t *testing.T) {
 							Rule:    "Host(`Test.traefik.wtf`)",
 						},
 					},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -910,8 +1083,9 @@ func Test_buildConfiguration(t *testing.T) {
 							Rule:    "Host(`Test.traefik.wtf`)",
 						},
 					},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -972,6 +1146,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1025,6 +1200,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1090,6 +1266,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1149,6 +1326,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1224,6 +1402,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1280,6 +1459,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1350,6 +1530,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1412,6 +1593,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1459,6 +1641,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1507,6 +1690,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1560,6 +1744,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1586,9 +1771,10 @@ func Test_buildConfiguration(t *testing.T) {
 					Services: map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1616,9 +1802,10 @@ func Test_buildConfiguration(t *testing.T) {
 					Services: map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1646,9 +1833,10 @@ func Test_buildConfiguration(t *testing.T) {
 					Services: map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1676,9 +1864,10 @@ func Test_buildConfiguration(t *testing.T) {
 					Services: map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1708,9 +1897,10 @@ func Test_buildConfiguration(t *testing.T) {
 					Services: map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1759,6 +1949,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1817,6 +2008,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1870,9 +2062,10 @@ func Test_buildConfiguration(t *testing.T) {
 					Services: map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1919,9 +2112,10 @@ func Test_buildConfiguration(t *testing.T) {
 					Services: map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -1965,9 +2159,10 @@ func Test_buildConfiguration(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -2007,9 +2202,10 @@ func Test_buildConfiguration(t *testing.T) {
 					Services: map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -2059,9 +2255,10 @@ func Test_buildConfiguration(t *testing.T) {
 					Services: map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -2106,9 +2303,10 @@ func Test_buildConfiguration(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -2195,6 +2393,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -2277,6 +2476,7 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -2316,9 +2516,10 @@ func Test_buildConfiguration(t *testing.T) {
 					Services: map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -2357,9 +2558,10 @@ func Test_buildConfiguration(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -2400,9 +2602,10 @@ func Test_buildConfiguration(t *testing.T) {
 					Services: map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 			},
 		},
@@ -2417,15 +2620,16 @@ func Test_buildConfiguration(t *testing.T) {
 			p := Provider{
 				ExposedByDefault: true,
 				DefaultRule:      "Host(`{{ normalize .Name }}.traefik.wtf`)",
+				ConnectAware:     test.ConnectAware,
+				Constraints:      test.constraints,
 			}
-			p.Constraints = test.constraints
 
 			err := p.Init()
 			require.NoError(t, err)
 
 			for i := 0; i < len(test.items); i++ {
 				var err error
-				test.items[i].ExtraConf, err = p.getConfiguration(test.items[i])
+				test.items[i].ExtraConf, err = p.getConfiguration(test.items[i].Labels)
 				require.NoError(t, err)
 
 				var tags []string
@@ -2435,7 +2639,13 @@ func Test_buildConfiguration(t *testing.T) {
 				test.items[i].Tags = tags
 			}
 
-			configuration := p.buildConfiguration(context.Background(), test.items)
+			configuration := p.buildConfiguration(context.Background(), test.items, &connectCert{
+				root: []string{"root"},
+				leaf: keyPair{
+					cert: "cert",
+					key:  "key",
+				},
+			})
 
 			assert.Equal(t, test.expected, configuration)
 		})

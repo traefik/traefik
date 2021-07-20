@@ -96,6 +96,15 @@ test-integration: $(PRE_TARGET)
 	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK),TEST_CONTAINER=1) ./script/make.sh generate binary test-integration
 	TEST_HOST=1 ./script/make.sh test-integration
 
+## Run the container integration tests
+test-integration-container: $(PRE_TARGET)
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK),TEST_CONTAINER=1) ./script/make.sh generate binary test-integration
+
+## Run the host integration tests
+test-integration-host: $(PRE_TARGET)
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK),TEST_CONTAINER=1) ./script/make.sh generate binary
+	TEST_HOST=1 ./script/make.sh test-integration
+
 ## Validate code and docs
 validate-files: $(PRE_TARGET)
 	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh generate validate-lint validate-misspell

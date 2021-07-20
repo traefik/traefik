@@ -9,12 +9,15 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/tls"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/gateway-api/apis/v1alpha1"
 )
 
 var _ provider.Provider = (*Provider)(nil)
 
-func Bool(v bool) *bool { return &v }
+func PMT(p v1alpha1.PathMatchType) *v1alpha1.PathMatchType { return &p }
+
+func HMT(h v1alpha1.HeaderMatchType) *v1alpha1.HeaderMatchType { return &h }
 
 func TestLoadHTTPRoutes(t *testing.T) {
 	testCases := []struct {
@@ -37,9 +40,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -61,9 +65,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -85,9 +90,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -109,9 +115,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -133,9 +140,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -157,9 +165,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -181,9 +190,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -205,9 +215,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -229,9 +240,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -253,9 +265,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -277,9 +290,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -301,9 +315,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -325,9 +340,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -349,9 +365,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -373,9 +390,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -398,9 +416,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -422,9 +441,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -446,9 +466,10 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
@@ -508,10 +529,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -540,8 +562,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							Rule:        "Host(`foo.com`) && Path(`/bar`)",
 						},
 					},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -596,10 +619,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -651,10 +675,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
@@ -714,10 +739,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -768,10 +794,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -822,10 +849,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -891,7 +919,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 						"default-whoami2-8080": {
@@ -904,10 +932,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -962,7 +991,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 						"default-whoami2-8080": {
@@ -975,10 +1004,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.4:8080",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1050,10 +1080,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
@@ -1134,10 +1165,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
@@ -1212,10 +1244,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1260,9 +1293,10 @@ func TestLoadTCPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1284,9 +1318,10 @@ func TestLoadTCPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1308,9 +1343,10 @@ func TestLoadTCPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1332,9 +1368,10 @@ func TestLoadTCPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1356,9 +1393,10 @@ func TestLoadTCPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1380,9 +1418,10 @@ func TestLoadTCPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1433,9 +1472,10 @@ func TestLoadTCPRoutes(t *testing.T) {
 					},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1515,9 +1555,10 @@ func TestLoadTCPRoutes(t *testing.T) {
 					},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1541,9 +1582,10 @@ func TestLoadTCPRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1598,9 +1640,10 @@ func TestLoadTCPRoutes(t *testing.T) {
 					},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1650,9 +1693,10 @@ func TestLoadTCPRoutes(t *testing.T) {
 					},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
@@ -1706,9 +1750,10 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1730,9 +1775,10 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1754,9 +1800,10 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1778,9 +1825,10 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1802,9 +1850,10 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1826,9 +1875,10 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1858,9 +1908,10 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1882,9 +1933,10 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1906,9 +1958,10 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1960,9 +2013,10 @@ func TestLoadTLSRoutes(t *testing.T) {
 					},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
@@ -2025,9 +2079,10 @@ func TestLoadTLSRoutes(t *testing.T) {
 					},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -2110,9 +2165,10 @@ func TestLoadTLSRoutes(t *testing.T) {
 					},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
@@ -2177,9 +2233,10 @@ func TestLoadTLSRoutes(t *testing.T) {
 					},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
@@ -2242,9 +2299,10 @@ func TestLoadTLSRoutes(t *testing.T) {
 					},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -2298,9 +2356,10 @@ func TestLoadTLSRoutes(t *testing.T) {
 					},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -2354,9 +2413,10 @@ func TestLoadTLSRoutes(t *testing.T) {
 					},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -2410,9 +2470,10 @@ func TestLoadTLSRoutes(t *testing.T) {
 					},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -2457,9 +2518,10 @@ func TestLoadMixedRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -2481,9 +2543,10 @@ func TestLoadMixedRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -2505,9 +2568,10 @@ func TestLoadMixedRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -2529,9 +2593,10 @@ func TestLoadMixedRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -2665,10 +2730,11 @@ func TestLoadMixedRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer.Bool(true),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
@@ -2701,9 +2767,10 @@ func TestLoadMixedRoutes(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services:    map[string]*dynamic.Service{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -2873,13 +2940,87 @@ func TestExtractRule(t *testing.T) {
 			expectedRule: "Host(`foo.com`) && PathPrefix(`/`)",
 		},
 		{
+			desc: "One HTTPRouteMatch with nil HTTPHeaderMatch",
+			routeRule: v1alpha1.HTTPRouteRule{
+				Matches: []v1alpha1.HTTPRouteMatch{
+					{Headers: nil},
+				},
+			},
+			expectedRule: "",
+		},
+		{
+			desc: "One HTTPRouteMatch with nil HTTPHeaderMatch Type",
+			routeRule: v1alpha1.HTTPRouteRule{
+				Matches: []v1alpha1.HTTPRouteMatch{
+					{
+						Headers: &v1alpha1.HTTPHeaderMatch{
+							Type:   nil,
+							Values: map[string]string{"foo": "bar"},
+						},
+					},
+				},
+			},
+			expectedRule: "",
+		},
+		{
+			desc: "One HTTPRouteMatch with nil HTTPHeaderMatch Values",
+			routeRule: v1alpha1.HTTPRouteRule{
+				Matches: []v1alpha1.HTTPRouteMatch{
+					{
+						Headers: &v1alpha1.HTTPHeaderMatch{
+							Type:   HMT(v1alpha1.HeaderMatchExact),
+							Values: nil,
+						},
+					},
+				},
+			},
+			expectedRule: "",
+		},
+		{
+			desc: "One HTTPRouteMatch with nil HTTPPathMatch",
+			routeRule: v1alpha1.HTTPRouteRule{
+				Matches: []v1alpha1.HTTPRouteMatch{
+					{Path: nil},
+				},
+			},
+			expectedRule: "",
+		},
+		{
+			desc: "One HTTPRouteMatch with nil HTTPPathMatch Type",
+			routeRule: v1alpha1.HTTPRouteRule{
+				Matches: []v1alpha1.HTTPRouteMatch{
+					{
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  nil,
+							Value: pointer.String("/foo/"),
+						},
+					},
+				},
+			},
+			expectedRule: "",
+		},
+		{
+			desc: "One HTTPRouteMatch with nil HTTPPathMatch Values",
+			routeRule: v1alpha1.HTTPRouteRule{
+				Matches: []v1alpha1.HTTPRouteMatch{
+					{
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  PMT(v1alpha1.PathMatchExact),
+							Value: nil,
+						},
+					},
+				},
+			},
+			expectedRule: "",
+		},
+		{
 			desc: "One Path in matches",
 			routeRule: v1alpha1.HTTPRouteRule{
 				Matches: []v1alpha1.HTTPRouteMatch{
 					{
-						Path: v1alpha1.HTTPPathMatch{
-							Type:  v1alpha1.PathMatchExact,
-							Value: "/foo/",
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  PMT(v1alpha1.PathMatchExact),
+							Value: pointer.String("/foo/"),
 						},
 					},
 				},
@@ -2891,15 +3032,15 @@ func TestExtractRule(t *testing.T) {
 			routeRule: v1alpha1.HTTPRouteRule{
 				Matches: []v1alpha1.HTTPRouteMatch{
 					{
-						Path: v1alpha1.HTTPPathMatch{
-							Type:  v1alpha1.PathMatchExact,
-							Value: "/foo/",
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  PMT(v1alpha1.PathMatchExact),
+							Value: pointer.String("/foo/"),
 						},
 					},
 					{
-						Path: v1alpha1.HTTPPathMatch{
-							Type:  "unknown",
-							Value: "/foo/",
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  PMT("unknown"),
+							Value: pointer.String("/foo/"),
 						},
 					},
 				},
@@ -2911,9 +3052,9 @@ func TestExtractRule(t *testing.T) {
 			routeRule: v1alpha1.HTTPRouteRule{
 				Matches: []v1alpha1.HTTPRouteMatch{
 					{
-						Path: v1alpha1.HTTPPathMatch{
-							Type:  v1alpha1.PathMatchExact,
-							Value: "/foo/",
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  PMT(v1alpha1.PathMatchExact),
+							Value: pointer.String("/foo/"),
 						},
 					},
 					{},
@@ -2926,14 +3067,14 @@ func TestExtractRule(t *testing.T) {
 			routeRule: v1alpha1.HTTPRouteRule{
 				Matches: []v1alpha1.HTTPRouteMatch{
 					{
-						Path: v1alpha1.HTTPPathMatch{
-							Type:  v1alpha1.PathMatchExact,
-							Value: "/foo/",
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  PMT(v1alpha1.PathMatchExact),
+							Value: pointer.String("/foo/"),
 						},
 					},
 					{
 						Headers: &v1alpha1.HTTPHeaderMatch{
-							Type: v1alpha1.HeaderMatchExact,
+							Type: HMT(v1alpha1.HeaderMatchExact),
 							Values: map[string]string{
 								"my-header": "foo",
 							},
@@ -2948,12 +3089,12 @@ func TestExtractRule(t *testing.T) {
 			routeRule: v1alpha1.HTTPRouteRule{
 				Matches: []v1alpha1.HTTPRouteMatch{
 					{
-						Path: v1alpha1.HTTPPathMatch{
-							Type:  v1alpha1.PathMatchExact,
-							Value: "/foo/",
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  PMT(v1alpha1.PathMatchExact),
+							Value: pointer.String("/foo/"),
 						},
 						Headers: &v1alpha1.HTTPHeaderMatch{
-							Type: v1alpha1.HeaderMatchExact,
+							Type: HMT(v1alpha1.HeaderMatchExact),
 							Values: map[string]string{
 								"my-header": "foo",
 							},
@@ -2969,12 +3110,12 @@ func TestExtractRule(t *testing.T) {
 			routeRule: v1alpha1.HTTPRouteRule{
 				Matches: []v1alpha1.HTTPRouteMatch{
 					{
-						Path: v1alpha1.HTTPPathMatch{
-							Type:  v1alpha1.PathMatchExact,
-							Value: "/foo/",
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  PMT(v1alpha1.PathMatchExact),
+							Value: pointer.String("/foo/"),
 						},
 						Headers: &v1alpha1.HTTPHeaderMatch{
-							Type: v1alpha1.HeaderMatchExact,
+							Type: HMT(v1alpha1.HeaderMatchExact),
 							Values: map[string]string{
 								"my-header": "foo",
 							},
@@ -2990,14 +3131,14 @@ func TestExtractRule(t *testing.T) {
 			routeRule: v1alpha1.HTTPRouteRule{
 				Matches: []v1alpha1.HTTPRouteMatch{
 					{
-						Path: v1alpha1.HTTPPathMatch{
-							Type:  v1alpha1.PathMatchExact,
-							Value: "/foo/",
+						Path: &v1alpha1.HTTPPathMatch{
+							Type:  PMT(v1alpha1.PathMatchExact),
+							Value: pointer.String("/foo/"),
 						},
 					},
 					{
 						Headers: &v1alpha1.HTTPHeaderMatch{
-							Type: v1alpha1.HeaderMatchExact,
+							Type: HMT(v1alpha1.HeaderMatchExact),
 							Values: map[string]string{
 								"my-header": "foo",
 							},

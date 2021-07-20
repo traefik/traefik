@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -347,7 +348,7 @@ func (h *Handler) redactHeaders(headers http.Header, fields logrus.Fields, prefi
 	for k := range headers {
 		v := h.config.Fields.KeepHeader(k)
 		if v == types.AccessLogKeep {
-			fields[prefix+k] = headers.Get(k)
+			fields[prefix+k] = strings.Join(headers.Values(k), ",")
 		} else if v == types.AccessLogRedact {
 			fields[prefix+k] = "REDACTED"
 		}

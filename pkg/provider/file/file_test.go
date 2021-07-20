@@ -25,10 +25,13 @@ type ProvideTestCase struct {
 	expectedNumTLSOptions int
 }
 
-func TestTLSContent(t *testing.T) {
+func TestTLSCertificateContent(t *testing.T) {
 	tempDir := t.TempDir()
 
 	fileTLS, err := createTempFile("./fixtures/toml/tls_file.cert", tempDir)
+	require.NoError(t, err)
+
+	fileTLSKey, err := createTempFile("./fixtures/toml/tls_file_key.cert", tempDir)
 	require.NoError(t, err)
 
 	fileConfig, err := os.CreateTemp(tempDir, "temp*.toml")
@@ -37,7 +40,20 @@ func TestTLSContent(t *testing.T) {
 	content := `
 [[tls.certificates]]
   certFile = "` + fileTLS.Name() + `"
-  keyFile = "` + fileTLS.Name() + `"
+  keyFile = "` + fileTLSKey.Name() + `"
+
+[tls.options.default.clientAuth]
+  caFiles = ["` + fileTLS.Name() + `"]
+
+[tls.stores.default.defaultCertificate]
+  certFile = "` + fileTLS.Name() + `"
+  keyFile = "` + fileTLSKey.Name() + `"
+
+[http.serversTransports.default]
+  rootCAs = ["` + fileTLS.Name() + `"]
+  [[http.serversTransports.default.certificates]]
+    certFile = "` + fileTLS.Name() + `"
+    keyFile = "` + fileTLSKey.Name() + `"
 `
 
 	_, err = fileConfig.Write([]byte(content))
@@ -48,7 +64,16 @@ func TestTLSContent(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "CONTENT", configuration.TLS.Certificates[0].Certificate.CertFile.String())
-	require.Equal(t, "CONTENT", configuration.TLS.Certificates[0].Certificate.KeyFile.String())
+	require.Equal(t, "CONTENTKEY", configuration.TLS.Certificates[0].Certificate.KeyFile.String())
+
+	require.Equal(t, "CONTENT", configuration.TLS.Options["default"].ClientAuth.CAFiles[0].String())
+
+	require.Equal(t, "CONTENT", configuration.TLS.Stores["default"].DefaultCertificate.CertFile.String())
+	require.Equal(t, "CONTENTKEY", configuration.TLS.Stores["default"].DefaultCertificate.KeyFile.String())
+
+	require.Equal(t, "CONTENT", configuration.HTTP.ServersTransports["default"].Certificates[0].CertFile.String())
+	require.Equal(t, "CONTENTKEY", configuration.HTTP.ServersTransports["default"].Certificates[0].KeyFile.String())
+	require.Equal(t, "CONTENT", configuration.HTTP.ServersTransports["default"].RootCAs[0].String())
 }
 
 func TestErrorWhenEmptyConfig(t *testing.T) {
@@ -236,6 +261,13 @@ func getTestCases() []ProvideTestCase {
 			},
 			expectedNumRouter:  20,
 			expectedNumService: 20,
+		},
+		{
+			desc:               "simple file with empty store yaml",
+			filePath:           "./fixtures/yaml/simple_empty_store.yml",
+			expectedNumRouter:  0,
+			expectedNumService: 0,
+			expectedNumTLSConf: 0,
 		},
 	}
 }

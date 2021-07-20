@@ -50,7 +50,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			ingressName = ingressRoute.GenerateName
 		}
 
-		cb := configBuilder{client, p.AllowCrossNamespace}
+		cb := configBuilder{client: client, allowCrossNamespace: p.AllowCrossNamespace, allowExternalNameServices: p.AllowExternalNameServices}
 
 		for _, route := range ingressRoute.Spec.Routes {
 			if route.Kind != "Rule" {
@@ -173,8 +173,9 @@ func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace str
 }
 
 type configBuilder struct {
-	client              Client
-	allowCrossNamespace *bool
+	client                    Client
+	allowCrossNamespace       bool
+	allowExternalNameServices bool
 }
 
 // buildTraefikService creates the configuration for the traefik service defined in tService,
@@ -323,6 +324,10 @@ func (c configBuilder) loadServers(parentNamespace string, svc v1alpha1.LoadBala
 
 	var servers []dynamic.Server
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
+		if !c.allowExternalNameServices {
+			return nil, fmt.Errorf("externalName services not allowed: %s/%s", namespace, sanitizedName)
+		}
+
 		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
 		if err != nil {
 			return nil, err
