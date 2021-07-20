@@ -1,3 +1,24 @@
+## [v2.5.0-rc3](https://github.com/traefik/traefik/tree/v2.5.0-rc3) (2021-07-20)
+[All Commits](https://github.com/traefik/traefik/compare/v2.5.0-rc2...v2.5.0-rc3)
+
+**Enhancements:**
+- **[consulcatalog]** Add Support for Consul Connect ([#7407](https://github.com/traefik/traefik/pull/7407) by [Gufran](https://github.com/Gufran))
+
+**Bug fixes:**
+- **[k8s,k8s/gatewayapi]** Update Gateway API version to v0.3.0 ([#8253](https://github.com/traefik/traefik/pull/8253) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[middleware]** Library change for compress middleware to increase performance ([#8245](https://github.com/traefik/traefik/pull/8245) by [tomMoulard](https://github.com/tomMoulard))
+- **[plugins]** Update yaegi to v0.9.21 ([#8285](https://github.com/traefik/traefik/pull/8285) by [ldez](https://github.com/ldez))
+- **[plugins]** Downgrade yaegi to v0.9.19 ([#8282](https://github.com/traefik/traefik/pull/8282) by [ldez](https://github.com/ldez))
+- **[webui]** Fix dashboard to display middleware details ([#8284](https://github.com/traefik/traefik/pull/8284) by [tomMoulard](https://github.com/tomMoulard))
+
+**Documentation:**
+- Fix KV reference documentation ([#8280](https://github.com/traefik/traefik/pull/8280) by [rtribotte](https://github.com/rtribotte))
+- Fix migration guide ([#8269](https://github.com/traefik/traefik/pull/8269) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Update generated and reference doc for plugins ([#8236](https://github.com/traefik/traefik/pull/8236) by [tomMoulard](https://github.com/tomMoulard))
+
+**Misc:**
+- Merge current v2.4 into v2.5 ([#8263](https://github.com/traefik/traefik/pull/8263) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.4.11](https://github.com/traefik/traefik/tree/v2.4.11) (2021-07-15)
 [All Commits](https://github.com/traefik/traefik/compare/v2.4.9...v2.4.11)
 
