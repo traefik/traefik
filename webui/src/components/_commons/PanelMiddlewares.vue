@@ -1131,7 +1131,7 @@ export default {
       return exData
     },
     getProviderLogoPath (provider) {
-      const name = provider.name.toLowerCase()
+      const name = provider.toLowerCase()
 
       if (name.includes('plugin-')) {
         return 'statics/providers/plugin.svg'
