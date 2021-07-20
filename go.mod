@@ -35,6 +35,7 @@ require (
 	github.com/go-acme/lego/v4 v4.4.0
 	github.com/go-check/check v0.0.0-00010101000000-000000000000
 	github.com/go-kit/kit v0.10.1-0.20200915143503-439c4d2ed3ea
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.4.3
 	github.com/google/go-github/v28 v28.1.1
 	github.com/gorilla/mux v1.7.3
