@@ -23,6 +23,7 @@ type PP interface {
 }
 
 type _PP struct {
+	IValue   interface{}
 	WInit    func() error
 	WProvide func(cfgChan chan<- json.Marshaler) error
 	WStop    func() error
