@@ -150,6 +150,19 @@ func newClientImpl(clientset kubernetes.Interface) *clientWrapper {
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
 func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
+	// Get and store the serverVersion for future use.
+	serverVersionInfo, err := c.clientset.Discovery().ServerVersion()
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve server version: %w", err)
+	}
+
+	serverVersion, err := version.NewVersion(serverVersionInfo.GitVersion)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse server version: %w", err)
+	}
+
+	c.serverVersion = serverVersion
+
 	eventCh := make(chan interface{}, 1)
 	eventHandler := &resourceEventHandler{eventCh}
 
@@ -209,18 +222,6 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		}
 	}
 
-	// Get and store the serverVersion for future use.
-	serverVersionInfo, err := c.clientset.Discovery().ServerVersion()
-	if err != nil {
-		return eventCh, fmt.Errorf("could not retrieve server version: %w", err)
-	}
-
-	serverVersion, err := version.NewVersion(serverVersionInfo.GitVersion)
-	if err != nil {
-		return eventCh, fmt.Errorf("could not parse server version: %w", err)
-	}
-
-	c.serverVersion = serverVersion
 	if supportsIngressClass(serverVersion) {
 		c.clusterFactory = informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod)
 		c.clusterFactory.Networking().V1beta1().IngressClasses().Informer().AddEventHandler(eventHandler)
