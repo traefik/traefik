@@ -447,7 +447,7 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 			expectedHeader: `Subject="O=Cheese";Issuer="C=FR,C=US";NA="1632568236"`,
 		},
 		{
-			desc:         "TLS with simple certificate, requesting non-existant info",
+			desc:         "TLS with simple certificate, requesting non-existent info",
 			certContents: []string{minimalCheeseCrt},
 			config: dynamic.PassTLSClientCert{
 				Info: &dynamic.TLSClientCertificateInfo{
