@@ -2,9 +2,8 @@ name: Check Documentation
 
 on:
   pull_request:
-    paths:
-      - 'docs/**'
-
+    branches:
+      - '*'
 jobs:
 
   docs:
