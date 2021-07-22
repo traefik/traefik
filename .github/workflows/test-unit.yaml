@@ -14,12 +14,13 @@ on:
       - '**.md'
       - 'docs/'
 
+env:
+  GO_VERSION: 1.16
+  PRE_TARGET: ""
+
 jobs:
   test-unit:
     runs-on: ubuntu-20.04
-    env:
-      GO_VERSION: 1.16
-      PRE_TARGET: ""
 
     defaults:
       run:

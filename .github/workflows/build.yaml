@@ -14,11 +14,12 @@ on:
       - '**.md'
       - 'docs/'
 
+env:
+  PRE_TARGET: ""
+
 jobs:
   build-webui:
     runs-on: ubuntu-20.04
-    env:
-      PRE_TARGET: ""
 
     steps:
       - name: Check out code
@@ -44,7 +45,6 @@ jobs:
     env:
       GO_VERSION: 1.16
       CGO_ENABLED: 0
-      PRE_TARGET: ""
 
     strategy:
       matrix:
