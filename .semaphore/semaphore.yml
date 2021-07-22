@@ -90,5 +90,5 @@ blocks:
         - name: Release
           commands:
             - make release-packages
-            - gh release create ${SEMAPHORE_GIT_TAG_NAME} ./dist/traefik_*.* --repo traefik/traefik --title ${SEMAPHORE_GIT_TAG_NAME} --notes ${SEMAPHORE_GIT_TAG_NAME}
+            - gh release create ${SEMAPHORE_GIT_TAG_NAME} ./dist/traefik*.* --repo traefik/traefik --title ${SEMAPHORE_GIT_TAG_NAME} --notes ${SEMAPHORE_GIT_TAG_NAME}
             - ./script/deploy.sh
