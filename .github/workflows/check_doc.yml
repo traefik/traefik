@@ -2,12 +2,13 @@ name: Check Documentation
 
 on:
   pull_request:
-
+    branches:
+      - '*'
 jobs:
 
   docs:
     name: Check, verify and build documentation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
 

@@ -1,0 +1,97 @@
+version: v1.0
+name: Traefik
+agent:
+  machine:
+    type: e1-standard-4
+    os_image: ubuntu1804
+
+fail_fast:
+  stop:
+    when: "branch != 'master'"
+
+auto_cancel:
+  queued:
+    when: "branch != 'master'"
+  running:
+    when: "branch != 'master'"
+
+global_job_config:
+  prologue:
+    commands:
+      - curl -sSfL https://raw.githubusercontent.com/ldez/semgo/master/godownloader.sh | sudo sh -s -- -b "/usr/local/bin"
+      - sudo semgo go1.16
+      - export "GOPATH=$(go env GOPATH)"
+      - export "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/traefik/${SEMAPHORE_PROJECT_NAME}"
+      - export "PATH=${GOPATH}/bin:${PATH}"
+      - mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"
+      - export GOPROXY=https://proxy.golang.org,direct
+      - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "${GOPATH}/bin" v1.41.1
+      - curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | bash -s -- -b "${GOPATH}/bin"
+      - go install github.com/containous/go-bindata/go-bindata@v1.0.0
+      - checkout
+      - cache restore traefik-$(checksum go.sum)
+
+blocks:
+  - name: Test Integration Container
+    dependencies: []
+    run:
+      when: "branch =~ '.*' OR pull_request =~'.*'"
+    task:
+      jobs:
+        - name: Test Integration Container
+          commands:
+            - make pull-images
+            - mkdir -p static # Avoid to generate webui
+            - PRE_TARGET="" make binary
+            - make test-integration-container
+            - df -h
+      epilogue:
+        always:
+          commands:
+            - cache store traefik-$(checksum go.sum) $HOME/go/pkg/mod
+
+  - name: Test Integration Host
+    dependencies: []
+    run:
+      when: "branch =~ '.*' OR pull_request =~'.*'"
+    task:
+      env_vars:
+        - name: PRE_TARGET
+          value: ""
+      jobs:
+        - name: Test Integration Host
+          commands:
+            - cache restore traefik-$(checksum go.sum)
+            - mkdir -p static # Avoid to generate webui
+            - make test-integration-host
+      epilogue:
+        always:
+          commands:
+            - cache store traefik-$(checksum go.sum) $HOME/go/pkg/mod
+
+  - name: Release
+    dependencies: []
+    run:
+      when: "tag =~ '.*'"
+    task:
+      secrets:
+        - name: traefik
+      env_vars:
+        - name: GH_VERSION
+          value: 1.12.1
+        - name: CODENAME
+          value: "livarot"
+        - name: PRE_TARGET
+          value: ""
+      prologue:
+        commands:
+          - export VERSION=${SEMAPHORE_GIT_TAG_NAME}
+          - curl -sSL -o /tmp/gh_${GH_VERSION}_linux_amd64.tar.gz https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz
+          - tar -zxvf /tmp/gh_${GH_VERSION}_linux_amd64.tar.gz -C /tmp
+          - sudo mv /tmp/gh_${GH_VERSION}_linux_amd64/bin/gh /usr/local/bin/gh
+      jobs:
+        - name: Release
+          commands:
+            - make release-packages
+            - gh release create ${SEMAPHORE_GIT_TAG_NAME} ./dist/traefik*.* --repo traefik/traefik --title ${SEMAPHORE_GIT_TAG_NAME} --notes ${SEMAPHORE_GIT_TAG_NAME}
+            - ./script/deploy.sh
