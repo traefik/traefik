@@ -1,0 +1,57 @@
+name: Test Unit
+
+on:
+  push:
+    branches:
+      - '*'
+    paths-ignore:
+      - '**.md'
+      - 'docs/'
+  pull_request:
+    branches:
+      - '*'
+    paths-ignore:
+      - '**.md'
+      - 'docs/'
+
+jobs:
+  test-unit:
+    runs-on: ubuntu-20.04
+    env:
+      GO_VERSION: 1.16
+      PRE_TARGET: ""
+
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}/go/src/github.com/traefik/traefik
+
+    steps:
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          path: go/src/github.com/traefik/traefik
+          fetch-depth: 0
+
+      # https://github.com/marketplace/actions/cache
+      - name: Cache Go modules
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-test-unit-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-test-unit-go-
+
+      - name: Installing dependencies
+        run: |
+          go install github.com/containous/go-bindata/go-bindata@v1.0.0
+
+      - name: Tests
+        run: |
+          make test-unit
