@@ -30,6 +30,7 @@ global_job_config:
       - go install github.com/containous/go-bindata/go-bindata@v1.0.0
       - checkout
       - cache restore traefik-$(checksum go.sum)
+
 blocks:
   - name: Test Integration Container
     dependencies: []
@@ -48,6 +49,7 @@ blocks:
         always:
           commands:
             - cache store traefik-$(checksum go.sum) $HOME/go/pkg/mod
+
   - name: Test Integration Host
     dependencies: []
     run:
@@ -66,6 +68,7 @@ blocks:
         always:
           commands:
             - cache store traefik-$(checksum go.sum) $HOME/go/pkg/mod
+
   - name: Release
     dependencies: []
     run:
@@ -74,12 +77,12 @@ blocks:
       secrets:
         - name: traefik
       env_vars:
-        - name: PRE_TARGET
-          value: ""
         - name: GH_VERSION
           value: 1.12.1
         - name: CODENAME
           value: "livarot"
+        - name: PRE_TARGET
+          value: ""
       prologue:
         commands:
           - export VERSION=${SEMAPHORE_GIT_TAG_NAME}

@@ -45,13 +45,10 @@ jobs:
             ~/go/pkg/mod
             ~/.cache/go-build
           key: ${{ runner.os }}-test-unit-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-test-unit-go-
+          restore-keys: ${{ runner.os }}-test-unit-go-
 
       - name: Installing dependencies
-        run: |
-          go install github.com/containous/go-bindata/go-bindata@v1.0.0
+        run: go install github.com/containous/go-bindata/go-bindata@v1.0.0
 
       - name: Tests
-        run: |
-          make test-unit
+        run: make test-unit

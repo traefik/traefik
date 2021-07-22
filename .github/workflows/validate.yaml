@@ -19,9 +19,9 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       GO_VERSION: 1.16
-      PRE_TARGET: ""
       GOLANGCI_LINT_VERSION: v1.41.1
       MISSSPELL_VERSION: v0.3.4
+      PRE_TARGET: ""
 
     defaults:
       run:
@@ -47,12 +47,10 @@ jobs:
             ~/go/pkg/mod
             ~/.cache/go-build
           key: ${{ runner.os }}-validate-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-validate-go-
+          restore-keys: ${{ runner.os }}-validate-go-
 
       - name: Installing dependencies
-        run: |
-          go install github.com/containous/go-bindata/go-bindata@v1.0.0
+        run: go install github.com/containous/go-bindata/go-bindata@v1.0.0
 
       # https://golangci-lint.run/usage/install#other-ci
       - name: Install golangci-lint ${{ env.GOLANGCI_LINT_VERSION }}
@@ -62,16 +60,15 @@ jobs:
         run: curl -sfL https://raw.githubusercontent.com/client9/misspell/master/install-misspell.sh | sh -s -- -b $(go env GOPATH)/bin ${MISSSPELL_VERSION}
 
       - name: Validate
-        run: |
-          make validate
+        run: make validate
 
   validate-generate:
     runs-on: ubuntu-20.04
     env:
       GO_VERSION: 1.16
-      PRE_TARGET: ""
       GOLANGCI_LINT_VERSION: v1.41.1
       MISSSPELL_VERSION: v0.3.4
+      PRE_TARGET: ""
 
     defaults:
       run:
@@ -97,12 +94,10 @@ jobs:
             ~/go/pkg/mod
             ~/.cache/go-build
           key: ${{ runner.os }}-validate-generate-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-validate-generate-go-
+          restore-keys: ${{ runner.os }}-validate-generate-go-
 
       - name: Installing dependencies
-        run: |
-          go install github.com/containous/go-bindata/go-bindata@v1.0.0
+        run: go install github.com/containous/go-bindata/go-bindata@v1.0.0
 
       - name: go generate
         run: |
