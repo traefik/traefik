@@ -1,18 +1,9 @@
 name: Validate
 
 on:
-  push:
-    branches:
-      - '*'
-    paths-ignore:
-      - '**.md'
-      - 'docs/'
   pull_request:
     branches:
       - '*'
-    paths-ignore:
-      - '**.md'
-      - 'docs/'
 
 env:
   GO_VERSION: 1.16
@@ -21,6 +12,7 @@ env:
   PRE_TARGET: ""
 
 jobs:
+
   validate:
     runs-on: ubuntu-20.04
 
@@ -40,7 +32,6 @@ jobs:
           path: go/src/github.com/traefik/traefik
           fetch-depth: 0
 
-      # https://github.com/marketplace/actions/cache
       - name: Cache Go modules
         uses: actions/cache@v2
         with:
@@ -53,7 +44,6 @@ jobs:
       - name: Installing dependencies
         run: go install github.com/containous/go-bindata/go-bindata@v1.0.0
 
-      # https://golangci-lint.run/usage/install#other-ci
       - name: Install golangci-lint ${{ env.GOLANGCI_LINT_VERSION }}
         run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin ${GOLANGCI_LINT_VERSION}
 
@@ -82,7 +72,6 @@ jobs:
           path: go/src/github.com/traefik/traefik
           fetch-depth: 0
 
-      # https://github.com/marketplace/actions/cache
       - name: Cache Go modules
         uses: actions/cache@v2
         with:

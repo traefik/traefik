@@ -1,23 +1,17 @@
-name: Build
+name: Build Binaries
 
 on:
-  push:
-    branches:
-      - '*'
-    paths-ignore:
-      - '**.md'
-      - 'docs/'
   pull_request:
     branches:
       - '*'
-    paths-ignore:
-      - '**.md'
-      - 'docs/'
 
 env:
+  GO_VERSION: 1.16
+  CGO_ENABLED: 0
   PRE_TARGET: ""
 
 jobs:
+
   build-webui:
     runs-on: ubuntu-20.04
 
@@ -40,16 +34,11 @@ jobs:
 
   build:
     runs-on: ${{ matrix.os }}
-    needs:
-      - build-webui
-    env:
-      GO_VERSION: 1.16
-      CGO_ENABLED: 0
-
     strategy:
       matrix:
         os: [ ubuntu-20.04, macos-latest, windows-latest ]
-
+    needs:
+      - build-webui
     defaults:
       run:
         working-directory: ${{ github.workspace }}/go/src/github.com/traefik/traefik
@@ -66,7 +55,6 @@ jobs:
           path: go/src/github.com/traefik/traefik
           fetch-depth: 0
 
-      # https://github.com/marketplace/actions/cache
       - name: Cache Go modules
         uses: actions/cache@v2
         with:

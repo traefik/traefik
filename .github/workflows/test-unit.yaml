@@ -1,24 +1,16 @@
 name: Test Unit
 
 on:
-  push:
-    branches:
-      - '*'
-    paths-ignore:
-      - '**.md'
-      - 'docs/'
   pull_request:
     branches:
       - '*'
-    paths-ignore:
-      - '**.md'
-      - 'docs/'
 
 env:
   GO_VERSION: 1.16
   PRE_TARGET: ""
 
 jobs:
+
   test-unit:
     runs-on: ubuntu-20.04
 
@@ -38,7 +30,6 @@ jobs:
           path: go/src/github.com/traefik/traefik
           fetch-depth: 0
 
-      # https://github.com/marketplace/actions/cache
       - name: Cache Go modules
         uses: actions/cache@v2
         with:

@@ -18,7 +18,6 @@ jobs:
     if: github.repository == 'traefik/traefik'
 
     steps:
-
       - name: Check out code
         uses: actions/checkout@v2
         with:

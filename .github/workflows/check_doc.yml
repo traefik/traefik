@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - '*'
+
 jobs:
 
   docs:
@@ -11,7 +12,6 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-
       - name: Check out code
         uses: actions/checkout@v2
         with:
