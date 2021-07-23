@@ -6,18 +6,18 @@ on:
       - master
       - v*
 
+env:
+  STRUCTOR_VERSION: v1.11.2
+  MIXTUS_VERSION: v0.4.1
+
 jobs:
 
   docs:
     name: Doc Process
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     if: github.repository == 'traefik/traefik'
-    env:
-      STRUCTOR_VERSION: v1.11.2
-      MIXTUS_VERSION: v0.4.1
 
     steps:
-
       - name: Check out code
         uses: actions/checkout@v2
         with:
