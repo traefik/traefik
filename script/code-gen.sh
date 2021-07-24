@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -e 
 
 set -e -o pipefail
 
