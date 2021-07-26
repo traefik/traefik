@@ -310,21 +310,21 @@ func TestPassTLSClientCert_PEM(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		tlsClientHeaders, err := New(context.Background(), next, test.config, "foo")
-		require.NoError(t, err)
-
-		res := httptest.NewRecorder()
-		req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
-
-		if test.certContents != nil && len(test.certContents) > 0 {
-			req.TLS = buildTLSWith(test.certContents)
-		}
-
-		tlsClientHeaders.ServeHTTP(res, req)
-
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
+			tlsClientHeaders, err := New(context.Background(), next, test.config, "foo")
+			require.NoError(t, err)
+
+			res := httptest.NewRecorder()
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
+
+			if test.certContents != nil && len(test.certContents) > 0 {
+				req.TLS = buildTLSWith(test.certContents)
+			}
+
+			tlsClientHeaders.ServeHTTP(res, req)
 
 			assert.Equal(t, http.StatusOK, res.Code, "Http Status should be OK")
 			assert.Equal(t, "bar", res.Body.String(), "Should be the expected body")
@@ -344,7 +344,7 @@ func TestPassTLSClientCert_PEM(t *testing.T) {
 func TestPassTLSClientCert_certInfo(t *testing.T) {
 	minimalCheeseCertAllInfo := strings.Join([]string{
 		`Subject="C=FR,ST=Some-State,O=Cheese"`,
-		`Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,OU=Simple Signing Section,OU=Simple Signing Section 2,CN=Simple Signing CA 2"`,
+		`Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2"`,
 		`SerialNumber="481535886039632329873080491016862977516759989652"`,
 		`NB="1544094636"`,
 		`NA="1632568236"`,
@@ -412,7 +412,7 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 						DomainComponent:    true,
 						Locality:           true,
 						Organization:       true,
-						OrganizationalUnit: true, // The simple subject has no OU
+						OrganizationalUnit: true,
 						Province:           true,
 						SerialNumber:       true,
 					},
@@ -533,21 +533,21 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		tlsClientHeaders, err := New(context.Background(), next, test.config, "foo")
-		require.NoError(t, err)
-
-		res := httptest.NewRecorder()
-		req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
-
-		if test.certContents != nil && len(test.certContents) > 0 {
-			req.TLS = buildTLSWith(test.certContents)
-		}
-
-		tlsClientHeaders.ServeHTTP(res, req)
-
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
+			tlsClientHeaders, err := New(context.Background(), next, test.config, "foo")
+			require.NoError(t, err)
+
+			res := httptest.NewRecorder()
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
+
+			if test.certContents != nil && len(test.certContents) > 0 {
+				req.TLS = buildTLSWith(test.certContents)
+			}
+
+			tlsClientHeaders.ServeHTTP(res, req)
 
 			assert.Equal(t, http.StatusOK, res.Code, "Http Status should be OK")
 			assert.Equal(t, "bar", res.Body.String(), "Should be the expected body")
@@ -645,11 +645,11 @@ func Test_getSANs(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		sans := getSANs(test.cert)
-
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
+			sans := getSANs(test.cert)
 
 			if len(test.expected) > 0 {
 				for i, expected := range test.expected {
