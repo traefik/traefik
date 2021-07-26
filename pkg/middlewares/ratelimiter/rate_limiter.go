@@ -102,7 +102,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	if rtl >= 1 {
 		ttl++
 	} else if rtl > 0 {
-		ttl += int(1. / rtl)
+		ttl += int(1 / rtl)
 	}
 
 	return &rateLimiter{
