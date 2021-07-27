@@ -16,14 +16,15 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
-var influxDBClient *influx.Influx
-
 type influxDBWriter struct {
 	buf    bytes.Buffer
 	config *types.InfluxDB
 }
 
-var influxDBTicker *time.Ticker
+var (
+	influxDBClient *influx.Influx
+	influxDBTicker *time.Ticker
+)
 
 const (
 	influxDBConfigReloadsName           = "traefik.config.reload.total"
@@ -134,7 +135,7 @@ func initInfluxDBClient(ctx context.Context, config *types.InfluxDB) *influx.Inf
 	}
 
 	return influx.New(
-		map[string]string{},
+		config.AdditionalLabels,
 		influxdb.BatchPointsConfig{
 			Database:        config.Database,
 			RetentionPolicy: config.RetentionPolicy,
