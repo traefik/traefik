@@ -243,6 +243,36 @@ func Test_addRoute(t *testing.T) {
 			},
 		},
 		{
+			desc: "HeadersDistrib with lower score",
+			rule: "HeadersDistrib(`X-User-Id`, `0`, `0.6`)",
+			headers: map[string]string{
+				"X-User-Id": "11223344",
+			},
+			expected: map[string]int{
+				"http://localhost/foo": http.StatusNotFound,
+			},
+		},
+		{
+			desc: "HeadersDistrib with matching header",
+			rule: "HeadersDistrib(`X-User-Id`, `0.6`, `0.8`)",
+			headers: map[string]string{
+				"X-User-Id": "11223344",
+			},
+			expected: map[string]int{
+				"http://localhost/foo": http.StatusOK,
+			},
+		},
+		{
+			desc: "HeadersDistrib with higher score",
+			rule: "HeadersDistrib(`X-User-Id`, `0.8`, `1`)",
+			headers: map[string]string{
+				"X-User-Id": "11223344",
+			},
+			expected: map[string]int{
+				"http://localhost/foo": http.StatusNotFound,
+			},
+		},
+		{
 			desc: "Query with multiple params",
 			rule: "Query(`foo=bar`, `bar=baz`)",
 			expected: map[string]int{
@@ -409,6 +439,16 @@ func Test_addRoute(t *testing.T) {
 		{
 			desc:          "Rule HeadersRegexp with error",
 			rule:          `HeadersRegexp("titi")`,
+			expectedError: true,
+		},
+		{
+			desc:          "Rule HeadersDistrib with fewer args",
+			rule:          "HeadersDistrib(`X-User-Id`, `0.6`)",
+			expectedError: true,
+		},
+		{
+			desc:          "Rule HeadersDistrib with non-numeric",
+			rule:          "HeadersDistrib(`X-User-Id`, `0`, `K`)",
 			expectedError: true,
 		},
 		{
