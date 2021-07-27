@@ -511,7 +511,7 @@ Set the `info.subject.country` option to `true` to add the `country` information
 
 The data is taken from the subject part with the `C` key.
 
-The country info in the subject part is formatted as follows:
+And it is formatted as follows in the header:
 
 ```text
 C=FR,C=US
@@ -523,7 +523,7 @@ Set the `info.subject.province` option to `true` to add the `province` informati
 
 The data is taken from the subject part with the `ST` key.
 
-The province info in the subject part is formatted as follows:
+And it is formatted as follows in the header:
 
 ```text
 ST=Cheese org state,ST=Cheese com state
@@ -535,7 +535,7 @@ Set the `info.subject.locality` option to `true` to add the `locality` informati
 
 The data is taken from the subject part with the `L` key.
 
-The locality info in the subject part is formatted as follows:
+And it is formatted as follows in the header:
 
 ```text
 L=TOULOUSE,L=LYON
@@ -547,7 +547,7 @@ Set the `info.subject.organization` option to `true` to add the `organization` i
 
 The data is taken from the subject part with the `O` key.
 
-The organization info in the subject part is formatted as follows:
+And it is formatted as follows in the header:
 
 ```text
 O=Cheese,O=Cheese 2
@@ -559,7 +559,7 @@ Set the `info.subject.organizationalUnit` option to `true` to add the `organizat
 
 The data is taken from the subject part with the `OU` key.
 
-The organizational unit info in the subject part is formatted as follows:
+And it is formatted as follows in the header:
 
 ```text
 OU=Cheese Section,OU=Cheese Section 2
@@ -571,7 +571,7 @@ Set the `info.subject.commonName` option to `true` to add the `commonName` infor
 
 The data is taken from the subject part with the `CN` key.
 
-The common name info in the subject part is formatted as follows:
+And it is formatted as follows in the header:
 
 ```text
 CN=*.example.com
@@ -583,7 +583,7 @@ Set the `info.subject.serialNumber` option to `true` to add the `serialNumber` i
 
 The data is taken from the subject part with the `SN` key.
 
-The serial number info in the subject part is formatted as follows:
+And it is formatted as follows in the header:
 
 ```text
 SN=1234567890
@@ -595,7 +595,7 @@ Set the `info.subject.domainComponent` option to `true` to add the `domainCompon
 
 The data is taken from the subject part with the `DC` key.
 
-The domain component info in the subject part is formatted as follows:
+And it is formatted as follows in the header:
 
 ```text
 DC=org,DC=cheese
@@ -617,7 +617,7 @@ Set the `info.issuer.country` option to `true` to add the `country` information 
 
 The data is taken from the issuer part with the `C` key.
 
-The country info in the issuer part is formatted as follows:
+And it is formatted as follows in the header:
 
 ```text
 C=FR,C=US
@@ -629,7 +629,7 @@ Set the `info.issuer.province` option to `true` to add the `province` informatio
 
 The data is taken from the issuer part with the `ST` key.
 
-The province info in the issuer part is formatted as follows:
+And it is formatted as follows in the header:
 
 ```text
 ST=Signing State,ST=Signing State 2
@@ -641,7 +641,7 @@ Set the `info.issuer.locality` option to `true` to add the `locality` informatio
 
 The data is taken from the issuer part with the `L` key.
 
-The locality info in the issuer part is formatted as follows:
+And it is formatted as follows in the header:
 
 ```text
 L=TOULOUSE,L=LYON
@@ -653,7 +653,7 @@ Set the `info.issuer.organization` option to `true` to add the `organization` in
 
 The data is taken from the issuer part with the `O` key.
 
-The organization info in the issuer part is formatted as follows:
+And it is formatted as follows in the header:
 
 ```text
 O=Cheese,O=Cheese 2
@@ -665,7 +665,7 @@ Set the `info.issuer.commonName` option to `true` to add the `commonName` inform
 
 The data is taken from the issuer part with the `CN` key.
 
-The common name info in the issuer part is formatted as follows:
+And it is formatted as follows in the header:
 
 ```text
 CN=Simple Signing CA 2
@@ -677,7 +677,7 @@ Set the `info.issuer.serialNumber` option to `true` to add the `serialNumber` in
 
 The data is taken from the issuer part with the `SN` key.
 
-The serial number info in the issuer part is formatted as follows:
+And it is formatted as follows in the header:
 
 ```text
 SN=1234567890
@@ -689,7 +689,7 @@ Set the `info.issuer.domainComponent` option to `true` to add the `domainCompone
 
 The data is taken from the issuer part with the `DC` key.
 
-The domain component info in the issuer part is formatted as follows:
+And it is formatted as follows in the header:
 
 ```text
 DC=org,DC=cheese
