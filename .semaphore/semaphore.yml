@@ -61,7 +61,6 @@ blocks:
       jobs:
         - name: Test Integration Host
           commands:
-            - cache restore traefik-$(checksum go.sum)
             - mkdir -p static # Avoid to generate webui
             - make test-integration-host
       epilogue:
