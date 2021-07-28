@@ -48,12 +48,10 @@ func objChanged(oldObj, newObj interface{}) bool {
 	}
 
 	if _, ok := oldObj.(*corev1.Endpoints); ok {
-		if endpointsChanged(oldObj.(*corev1.Endpoints), newObj.(*corev1.Endpoints)) {
-			return true
-		}
+		return endpointsChanged(oldObj.(*corev1.Endpoints), newObj.(*corev1.Endpoints))
 	}
 
-	return false
+	return true
 }
 
 func endpointsChanged(a, b *corev1.Endpoints) bool {
