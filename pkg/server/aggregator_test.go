@@ -469,6 +469,7 @@ func Test_mergeConfiguration_defaultTCPEntryPoint(t *testing.T) {
 				EntryPoints: []string{"defaultEP"},
 			},
 		},
+		Middlewares: map[string]*dynamic.TCPMiddleware{},
 		Services: map[string]*dynamic.TCPService{
 			"service-1@provider-1": {},
 		},

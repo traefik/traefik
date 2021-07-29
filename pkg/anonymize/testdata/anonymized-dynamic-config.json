@@ -144,7 +144,6 @@
           "accessControlAllowMethods": [
             "foo"
           ],
-          "accessControlAllowOrigin": "xxxx",
           "accessControlAllowOriginList": [
             "xxxx"
           ],
@@ -179,6 +178,7 @@
           "publicKey": "xxxx",
           "referrerPolicy": "foo",
           "featurePolicy": "foo",
+          "permissionsPolicy": "foo",
           "isDevelopment": true
         },
         "errors": {
@@ -288,6 +288,7 @@
               "province": true,
               "locality": true,
               "organization": true,
+              "organizationalUnit": true,
               "commonName": true,
               "serialNumber": true,
               "domainComponent": true

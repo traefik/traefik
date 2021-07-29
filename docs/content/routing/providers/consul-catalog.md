@@ -263,7 +263,7 @@ you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.pass
 
 You can declare pieces of middleware using tags starting with `traefik.http.middlewares.{name-of-your-choice}.`, followed by the middleware type/options.
 
-For example, to declare a middleware [`redirectscheme`](../../middlewares/redirectscheme.md) named `my-redirect`, you'd write `traefik.http.middlewares.my-redirect.redirectscheme.scheme: https`.
+For example, to declare a middleware [`redirectscheme`](../../middlewares/http/redirectscheme.md) named `my-redirect`, you'd write `traefik.http.middlewares.my-redirect.redirectscheme.scheme: https`.
 
 More information about available middlewares in the dedicated [middlewares section](../../middlewares/overview.md).
 
@@ -453,6 +453,16 @@ traefik.enable=true
 You can tell Traefik to consider (or not) the service by setting `traefik.enable` to true or false.
 
 This option overrides the value of `exposedByDefault`.
+
+#### `traefik.consulcatalog.connect`
+
+```yaml
+traefik.consulcatalog.connect=true
+```
+
+You can tell Traefik to consider (or not) the service as a Connect capable one by setting `traefik.consulcatalog.connect` to true or false.
+
+This option overrides the value of `connectByDefault`.
 
 #### Port Lookup
 

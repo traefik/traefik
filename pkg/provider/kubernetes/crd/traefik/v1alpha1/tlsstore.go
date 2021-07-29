@@ -6,6 +6,7 @@ import (
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:storageversion
 
 // TLSStore is a specification for a TLSStore resource.
 type TLSStore struct {
@@ -26,9 +27,8 @@ type TLSStoreSpec struct {
 
 // DefaultCertificate holds a secret name for the TLSOption resource.
 type DefaultCertificate struct {
-	// SecretName is the name of the referenced Kubernetes Secret to specify the
-	// certificate details.
-	SecretName string `json:"secretName,omitempty"`
+	// SecretName is the name of the referenced Kubernetes Secret to specify the certificate details.
+	SecretName string `json:"secretName"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

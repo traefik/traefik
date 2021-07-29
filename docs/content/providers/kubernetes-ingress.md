@@ -6,6 +6,10 @@ The Kubernetes Ingress Controller.
 The Traefik Kubernetes Ingress provider is a Kubernetes Ingress controller; that is to say,
 it manages access to cluster services by supporting the [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) specification.
 
+## Requirements
+
+Traefik supports `1.14+` Kubernetes clusters.
+
 ## Routing Configuration
 
 See the dedicated section in [routing](../routing/providers/kubernetes-ingress.md).
@@ -31,9 +35,9 @@ The provider then watches for incoming ingresses events, such as the example bel
 and derives the corresponding dynamic configuration from it,
 which in turn creates the resulting routers, services, handlers, etc.
 
-```yaml tab="File (YAML)"
+```yaml tab="Ingress"
 kind: Ingress
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 metadata:
   name: "foo"
   namespace: production
@@ -51,6 +55,32 @@ spec:
             backend:
               serviceName: service1
               servicePort: 80
+```
+
+```yaml tab="Ingress Kubernetes v1.19+"
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: "foo"
+  namespace: production
+
+spec:
+  rules:
+    - host: example.net
+      http:
+        paths:
+          - path: /bar
+            backend:
+              service:
+                name:  service1
+                port:
+                  number: 80
+          - path: /foo
+            backend:
+              service:
+                name:  service1
+                port:
+                  number: 80
 ```
 
 ## LetsEncrypt Support with the Ingress Provider
@@ -220,11 +250,13 @@ Value of `kubernetes.io/ingress.class` annotation that identifies Ingress object
 If the parameter is set, only Ingresses containing an annotation with the same value are processed.
 Otherwise, Ingresses missing the annotation, having an empty value, or the value `traefik` are processed.
 
-!!! info "Kubernetes 1.18+"
+??? info "Kubernetes 1.18+"
 
     If the Kubernetes cluster version is 1.18+,
     the new `IngressClass` resource can be leveraged to identify Ingress objects that should be processed.
-    In that case, Traefik will look for an `IngressClass` in the cluster with the controller value equal to *traefik.io/ingress-controller*. 
+    In that case, Traefik will look for an `IngressClass` in the cluster with the controller value equal to *traefik.io/ingress-controller*.
+
+    In addition to the controller value matching mechanism, the property `ingressClass` (if set) will be used to select IngressClasses by applying a strict matching on their name.
 
     Please see [this article](https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/) for more information or the example below.
 
@@ -252,6 +284,39 @@ Otherwise, Ingresses missing the annotation, having an empty value, or the value
             backend:
               serviceName: "example-service"
               servicePort: 80
+    ```
+
+??? info "Kubernetes 1.19+"
+
+    If the Kubernetes cluster version is 1.19+,
+    prefer using the `networking.k8s.io/v1` [apiVersion](https://v1-19.docs.kubernetes.io/docs/setup/release/notes/#api-change) of `Ingress` and `IngressClass`.
+
+    ```yaml tab="IngressClass"
+    apiVersion: networking.k8s.io/v1
+    kind: IngressClass
+    metadata:
+      name: traefik-lb
+    spec:
+      controller: traefik.io/ingress-controller
+    ```
+
+    ```yaml tab="Ingress"
+    apiVersion: "networking.k8s.io/v1"
+    kind: "Ingress"
+    metadata:
+      name: "example-ingress"
+    spec:
+      ingressClassName: "traefik-lb"
+      rules:
+      - host: "*.example.com"
+        http:
+          paths:
+          - path: "/example"
+            backend:
+              service:
+                name: "example-service"
+                port:
+                    number: 80
     ```
 
 ```yaml tab="File (YAML)"
@@ -374,6 +439,30 @@ providers:
 ```bash tab="CLI"
 --providers.kubernetesingress.throttleDuration=10s
 ```
+
+### `allowEmptyServices`
+
+_Optional, Default: false
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    allowEmptyServices: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  allowEmptyServices = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.allowEmptyServices=true
+```
+
+Allow the creation of services if there are no endpoints available.
+This results in `503` http responses instead of `404`.
 
 ### `allowExternalNameServices`
 

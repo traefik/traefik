@@ -456,9 +456,13 @@
         "version": "foobar"
       }
     },
-    "devPlugin": {
-      "goPath": "foobar",
-      "moduleName": "foobar"
+    "localPlugins": {
+      "Descriptor0": {
+        "moduleName": "foobar"
+      },
+      "Descriptor1": {
+        "moduleName": "foobar"
+      }
     }
   }
 }

@@ -77,7 +77,7 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 							SameSite: "foo",
 						},
 					},
-					HealthCheck: &dynamic.HealthCheck{
+					HealthCheck: &dynamic.ServerHealthCheck{
 						Scheme:          "foo",
 						Path:            "foo",
 						Port:            42,
@@ -201,7 +201,6 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 					AccessControlAllowCredentials:     true,
 					AccessControlAllowHeaders:         []string{"foo"},
 					AccessControlAllowMethods:         []string{"foo"},
-					AccessControlAllowOrigin:          "foo",
 					AccessControlAllowOriginList:      []string{"foo"},
 					AccessControlAllowOriginListRegex: []string{"foo"},
 					AccessControlExposeHeaders:        []string{"foo"},
@@ -227,6 +226,7 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 					PublicKey:                         "foo",
 					ReferrerPolicy:                    "foo",
 					FeaturePolicy:                     "foo",
+					PermissionsPolicy:                 "foo",
 					IsDevelopment:                     true,
 				},
 				Errors: &dynamic.ErrorPage{
@@ -315,16 +315,17 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 						NotAfter:  true,
 						NotBefore: true,
 						Sans:      true,
-						Subject: &dynamic.TLSCLientCertificateDNInfo{
-							Country:         true,
-							Province:        true,
-							Locality:        true,
-							Organization:    true,
-							CommonName:      true,
-							SerialNumber:    true,
-							DomainComponent: true,
+						Subject: &dynamic.TLSCLientCertificateSubjectDNInfo{
+							Country:            true,
+							Province:           true,
+							Locality:           true,
+							Organization:       true,
+							OrganizationalUnit: true,
+							CommonName:         true,
+							SerialNumber:       true,
+							DomainComponent:    true,
 						},
-						Issuer: &dynamic.TLSCLientCertificateDNInfo{
+						Issuer: &dynamic.TLSCLientCertificateIssuerDNInfo{
 							Country:         true,
 							Province:        true,
 							Locality:        true,
@@ -958,9 +959,13 @@ func TestDo_staticConfiguration(t *testing.T) {
 				Version:    "foobar",
 			},
 		},
-		DevPlugin: &plugins.DevPlugin{
-			GoPath:     "foobar",
-			ModuleName: "foobar",
+		LocalPlugins: map[string]plugins.LocalDescriptor{
+			"Descriptor0": {
+				ModuleName: "foobar",
+			},
+			"Descriptor1": {
+				ModuleName: "foobar",
+			},
 		},
 	}
 

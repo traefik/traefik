@@ -20,6 +20,9 @@ tracing:
     Traefik is able to send data over the compact thrift protocol to the [Jaeger agent](https://www.jaegertracing.io/docs/deployment/#agent)
     or a [Jaeger collector](https://www.jaegertracing.io/docs/deployment/#collectors).
 
+!!! info
+    All Jaeger configuration can be overridden by [environment variables](https://github.com/jaegertracing/jaeger-client-go#environment-variables)
+
 #### `samplingServerURL`
 
 _Required, Default="http://localhost:5778/sampling"_

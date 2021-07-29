@@ -102,6 +102,9 @@ Entry points definition. (Default: ```false```)
 `TRAEFIK_ENTRYPOINTS_<NAME>_ADDRESS`:  
 Entry point address.
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_ENABLEHTTP3`:  
+Enable HTTP3. (Default: ```false```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_FORWARDEDHEADERS_INSECURE`:  
 Trust all forwarded headers. (Default: ```false```)
 
@@ -168,14 +171,20 @@ ReadTimeout is the maximum duration for reading the entire request, including th
 `TRAEFIK_ENTRYPOINTS_<NAME>_TRANSPORT_RESPONDINGTIMEOUTS_WRITETIMEOUT`:  
 WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set. (Default: ```0```)
 
-`TRAEFIK_EXPERIMENTAL_DEVPLUGIN_GOPATH`:  
-plugin's GOPATH.
+`TRAEFIK_ENTRYPOINTS_<NAME>_UDP_TIMEOUT`:  
+Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 
-`TRAEFIK_EXPERIMENTAL_DEVPLUGIN_MODULENAME`:  
-plugin's module name.
+`TRAEFIK_EXPERIMENTAL_HTTP3`:  
+Enable HTTP3. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_KUBERNETESGATEWAY`:  
 Allow the Kubernetes gateway api provider usage. (Default: ```false```)
+
+`TRAEFIK_EXPERIMENTAL_LOCALPLUGINS_<NAME>`:  
+Local plugins configuration. (Default: ```false```)
+
+`TRAEFIK_EXPERIMENTAL_LOCALPLUGINS_<NAME>_MODULENAME`:  
+plugin's module name.
 
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_MODULENAME`:  
 plugin's module name.
@@ -222,6 +231,9 @@ Enable metrics on entry points. (Default: ```true```)
 `TRAEFIK_METRICS_DATADOG_ADDRESS`:  
 Datadog's address. (Default: ```localhost:8125```)
 
+`TRAEFIK_METRICS_DATADOG_ADDROUTERSLABELS`:  
+Enable metrics on routers. (Default: ```false```)
+
 `TRAEFIK_METRICS_DATADOG_ADDSERVICESLABELS`:  
 Enable metrics on services. (Default: ```true```)
 
@@ -236,6 +248,9 @@ Enable metrics on entry points. (Default: ```true```)
 
 `TRAEFIK_METRICS_INFLUXDB_ADDRESS`:  
 InfluxDB address. (Default: ```localhost:8089```)
+
+`TRAEFIK_METRICS_INFLUXDB_ADDROUTERSLABELS`:  
+Enable metrics on routers. (Default: ```false```)
 
 `TRAEFIK_METRICS_INFLUXDB_ADDSERVICESLABELS`:  
 Enable metrics on services. (Default: ```true```)
@@ -264,6 +279,9 @@ Prometheus metrics exporter type. (Default: ```false```)
 `TRAEFIK_METRICS_PROMETHEUS_ADDENTRYPOINTSLABELS`:  
 Enable metrics on entry points. (Default: ```true```)
 
+`TRAEFIK_METRICS_PROMETHEUS_ADDROUTERSLABELS`:  
+Enable metrics on routers. (Default: ```false```)
+
 `TRAEFIK_METRICS_PROMETHEUS_ADDSERVICESLABELS`:  
 Enable metrics on services. (Default: ```true```)
 
@@ -284,6 +302,9 @@ Enable metrics on entry points. (Default: ```true```)
 
 `TRAEFIK_METRICS_STATSD_ADDRESS`:  
 StatsD address. (Default: ```localhost:8125```)
+
+`TRAEFIK_METRICS_STATSD_ADDROUTERSLABELS`:  
+Enable metrics on routers. (Default: ```false```)
 
 `TRAEFIK_METRICS_STATSD_ADDSERVICESLABELS`:  
 Enable metrics on services. (Default: ```true```)
@@ -321,6 +342,12 @@ Enable ConsulCatalog backend with default settings. (Default: ```false```)
 `TRAEFIK_PROVIDERS_CONSULCATALOG_CACHE`:  
 Use local agent caching for catalog reads. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_CONSULCATALOG_CONNECTAWARE`:  
+Enable Consul Connect support. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_CONNECTBYDEFAULT`:  
+Consider every service as Connect capable by default. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_CONSULCATALOG_CONSTRAINTS`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
 
@@ -328,7 +355,7 @@ Constraints is an expression that Traefik matches against the container's labels
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_ADDRESS`:  
-The address of the Consul server (Default: ```127.0.0.1:8500```)
+The address of the Consul server
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_DATACENTER`:  
 Data center to use. If not provided, the default agent data center is used
@@ -374,6 +401,9 @@ Interval for check Consul API. Default 15s (Default: ```15```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_REQUIRECONSISTENT`:  
 Forces the read to be fully consistent. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_SERVICENAME`:  
+Name of the Traefik service in Consul Catalog (needs to be registered via the orchestrator or manually). (Default: ```traefik```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_STALE`:  
 Use stale consistency for catalog reads. (Default: ```false```)
@@ -606,6 +636,9 @@ Kubernetes bearer token (not needed for in-cluster client).
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_ALLOWEMPTYSERVICES`:  
+Allow creation of services without endpoints. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_ALLOWEXTERNALNAMESERVICES`:  
 Allow ExternalName services. (Default: ```false```)
 
@@ -616,7 +649,7 @@ Kubernetes certificate authority file path (not needed for in-cluster client).
 Kubernetes server endpoint (required for external cluster client).
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_INGRESSCLASS`:  
-Value of kubernetes.io/ingress.class annotation to watch for.
+Value of kubernetes.io/ingress.class annotation or IngressClass name to watch for.
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_INGRESSENDPOINT_HOSTNAME`:  
 Hostname used for Kubernetes Ingress endpoints.
@@ -701,6 +734,9 @@ Display additional provider logs. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_MARATHON_WATCH`:  
 Watch provider. (Default: ```true```)
+
+`TRAEFIK_PROVIDERS_PLUGIN_<NAME>`:  
+Plugins configuration.
 
 `TRAEFIK_PROVIDERS_PROVIDERSTHROTTLEDURATION`:  
 Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time. (Default: ```2```)
