@@ -55,6 +55,7 @@
 | `traefik/http/middlewares/Middleware10/headers/allowedHosts/0` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/allowedHosts/1` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/browserXssFilter` | `true` |
+| `traefik/http/middlewares/Middleware10/headers/cleanConnectionHeader` | `true` |
 | `traefik/http/middlewares/Middleware10/headers/contentSecurityPolicy` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/contentTypeNosniff` | `true` |
 | `traefik/http/middlewares/Middleware10/headers/customBrowserXSSValue` | `foobar` |

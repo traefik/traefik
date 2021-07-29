@@ -170,6 +170,7 @@ http:
         customResponseHeaders:
           name0: foobar
           name1: foobar
+        cleanConnectionHeader: true
         accessControlAllowCredentials: true
         accessControlAllowHeaders:
         - foobar

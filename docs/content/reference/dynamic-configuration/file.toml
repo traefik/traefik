@@ -178,6 +178,7 @@
         referrerPolicy = "foobar"
         featurePolicy = "foobar"
         isDevelopment = true
+        cleanConnectionHeader = true
         [http.middlewares.Middleware10.headers.customRequestHeaders]
           name0 = "foobar"
           name1 = "foobar"
