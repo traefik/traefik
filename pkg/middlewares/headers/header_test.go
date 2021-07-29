@@ -69,6 +69,127 @@ func TestNewHeader_customRequestHeader(t *testing.T) {
 	}
 }
 
+func TestHeader_modifyCustomRequestHeaders(t *testing.T) {
+	testCases := []struct {
+		desc                 string
+		customRequestHeaders map[string]string
+		connectionHeaders    []string
+		expected             http.Header
+	}{
+		{
+			desc:                 "custom Request Headers canonical name",
+			customRequestHeaders: map[string]string{"Foo": "test"},
+			connectionHeaders:    []string{"Bar,Foo", "bir"},
+			expected: http.Header{
+				"Foo":        []string{"test"},
+				"Connection": []string{"Bar,bir"},
+			},
+		},
+		{
+			desc:                 "custom Request Headers lower case",
+			customRequestHeaders: map[string]string{"foo": "test"},
+			connectionHeaders:    []string{"Bar,Foo", "bir"},
+			expected: http.Header{
+				"Foo":        []string{"test"},
+				"Connection": []string{"Bar,bir"},
+			},
+		},
+		{
+			desc:                 "connection Headers lower case",
+			customRequestHeaders: map[string]string{"Foo": "test"},
+			connectionHeaders:    []string{"Bar,foo", "bir"},
+			expected: http.Header{
+				"Foo":        []string{"test"},
+				"Connection": []string{"Bar,bir"},
+			},
+		},
+		{
+			desc:                 "one connection header",
+			customRequestHeaders: map[string]string{"Foo": "test"},
+			connectionHeaders:    []string{"foo", "bir"},
+			expected: http.Header{
+				"Foo":        []string{"test"},
+				"Connection": []string{"bir"},
+			},
+		},
+		{
+			desc:                 "aggregate connection headers",
+			customRequestHeaders: map[string]string{"Foo": "test"},
+			connectionHeaders:    []string{"bar", "bir"},
+			expected: http.Header{
+				"Foo":        []string{"test"},
+				"Connection": []string{"bar,bir"},
+			},
+		},
+		{
+			desc:                 "empty connection headers",
+			customRequestHeaders: map[string]string{"Foo": "test"},
+			connectionHeaders:    []string{",foo,"},
+			expected: http.Header{
+				"Foo":        []string{"test"},
+				"Connection": []string{},
+			},
+		},
+		{
+			desc:                 "multiple time the same connection header",
+			customRequestHeaders: map[string]string{"Foo": "test"},
+			connectionHeaders:    []string{"foo,foo"},
+			expected: http.Header{
+				"Foo":        []string{"test"},
+				"Connection": []string{},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := dynamic.Headers{
+				CustomRequestHeaders:  test.customRequestHeaders,
+				CleanConnectionHeader: true,
+			}
+			mid, err := NewHeader(nil, cfg)
+			require.NoError(t, err)
+
+			req, _ := http.NewRequest(http.MethodGet, "https://localhost", nil)
+			req.Header.Set("Foo", "bar")
+
+			for _, value := range test.connectionHeaders {
+				req.Header.Add("Connection", value)
+			}
+
+			mid.modifyCustomRequestHeaders(req)
+
+			assert.Equal(t, test.expected, req.Header)
+		})
+	}
+}
+
+func BenchmarkName(b *testing.B) {
+	// BenchmarkName-8   	 1357780	       896.1 ns/op
+	// BenchmarkName-8   	 1000000	      1164 ns/op
+	// BenchmarkName-8   	 1382215	       893.9 ns/op
+	// BenchmarkName-8   	 1309630	       881.8 ns/op
+	// BenchmarkName-8   	 1212604	       921.2 ns/op
+	mid := Header{
+		headers: &dynamic.Headers{
+			CustomRequestHeaders: map[string]string{"foo": "test"},
+		},
+	}
+
+	req, _ := http.NewRequest(http.MethodGet, "https://localhost", nil)
+
+	for i := 0; i < b.N; i++ {
+		req.Header.Set("Foo", "bar")
+		req.Header.Set("Connection", "Bar,Foo")
+		req.Header.Add("Connection", "bir")
+
+		mid.modifyCustomRequestHeaders(req)
+	}
+}
+
 func TestNewHeader_customRequestHeader_Host(t *testing.T) {
 	testCases := []struct {
 		desc            string

@@ -291,6 +291,10 @@ http:
 
 The `customRequestHeaders` option lists the header names and values to apply to the request.
 
+### `cleanConnectionHeader`
+
+The `cleanConnectionHeader` option removes the headers defined in the `customRequestHeaders` from the `Connection` header.
+
 ### `customResponseHeaders`
 
 The `customResponseHeaders` option lists the header names and values to apply to the response.

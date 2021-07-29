@@ -62,6 +62,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware8.headers.customrequestheaders.name1":                  "foobar",
 		"traefik.http.middlewares.Middleware8.headers.customresponseheaders.name0":                 "foobar",
 		"traefik.http.middlewares.Middleware8.headers.customresponseheaders.name1":                 "foobar",
+		"traefik.http.middlewares.Middleware8.headers.cleanconnectionheader":                       "true",
 		"traefik.http.middlewares.Middleware8.headers.forcestsheader":                              "true",
 		"traefik.http.middlewares.Middleware8.headers.framedeny":                                   "true",
 		"traefik.http.middlewares.Middleware8.headers.hostsproxyheaders":                           "foobar, fiibar",
@@ -516,6 +517,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							"name0": "foobar",
 							"name1": "foobar",
 						},
+						CleanConnectionHeader: true,
 						CustomResponseHeaders: map[string]string{
 							"name0": "foobar",
 							"name1": "foobar",
@@ -997,6 +999,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							"name0": "foobar",
 							"name1": "foobar",
 						},
+						CleanConnectionHeader:         true,
 						AccessControlAllowCredentials: true,
 						AccessControlAllowHeaders: []string{
 							"X-foobar",
@@ -1181,6 +1184,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware8.Headers.ContentTypeNosniff":                          "true",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomBrowserXSSValue":                       "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomFrameOptionsValue":                     "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.CleanConnectionHeader":                       "true",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomRequestHeaders.name0":                  "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomRequestHeaders.name1":                  "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomResponseHeaders.name0":                 "foobar",
