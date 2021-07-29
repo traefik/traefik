@@ -12,6 +12,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 )
 
+const connectionHeader = "Connection"
+
 // Header is a middleware that helps setup a few basic security features.
 // A single headerOptions struct can be provided to configure which features should be enabled,
 // and the ability to override a few of the default values.
@@ -39,6 +41,12 @@ func NewHeader(next http.Handler, cfg dynamic.Headers) (*Header, error) {
 		}
 		regexes[i] = reg
 	}
+
+	cleanedCustomRequestHeaders := make(map[string]string)
+	for k, v := range cfg.CustomRequestHeaders {
+		cleanedCustomRequestHeaders[http.CanonicalHeaderKey(k)] = v
+	}
+	cfg.CustomRequestHeaders = cleanedCustomRequestHeaders
 
 	return &Header{
 		next:               next,
@@ -79,6 +87,37 @@ func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
 		default:
 			req.Header.Set(header, value)
 		}
+	}
+
+	if s.headers.CleanConnectionHeader {
+		cleanConnectionHeaders(req, s.headers.CustomRequestHeaders)
+	}
+}
+
+func cleanConnectionHeaders(req *http.Request, headers map[string]string) {
+	var cleanHeaders string
+	for _, co := range req.Header[connectionHeader] {
+		j := 0
+		for j < len(co) {
+			i := strings.Index(co[j:], ",")
+			if i == -1 {
+				i = len(co[j:])
+			}
+
+			f := co[j : j+i]
+
+			if _, ok := headers[http.CanonicalHeaderKey(f)]; !ok {
+				cleanHeaders += f + ","
+			}
+
+			j += i + 1
+		}
+	}
+
+	if len(cleanHeaders) < 2 {
+		req.Header[connectionHeader] = []string{}
+	} else {
+		req.Header[connectionHeader] = []string{cleanHeaders[:len(cleanHeaders)-1]}
 	}
 }
 
