@@ -143,6 +143,7 @@ type ForwardAuth struct {
 // Headers holds the custom header configuration.
 type Headers struct {
 	CustomRequestHeaders  map[string]string `json:"customRequestHeaders,omitempty" toml:"customRequestHeaders,omitempty" yaml:"customRequestHeaders,omitempty" export:"true"`
+	CleanConnectionHeader bool              `json:"cleanConnectionHeader,omitempty" toml:"cleanConnectionHeader,omitempty" yaml:"cleanConnectionHeader,omitempty" export:"true"`
 	CustomResponseHeaders map[string]string `json:"customResponseHeaders,omitempty" toml:"customResponseHeaders,omitempty" yaml:"customResponseHeaders,omitempty" export:"true"`
 
 	// AccessControlAllowCredentials is only valid if true. false is ignored.
