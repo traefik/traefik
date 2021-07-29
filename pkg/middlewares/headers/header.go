@@ -89,7 +89,9 @@ func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
 		}
 	}
 
-	cleanConnectionHeaders(req, s.headers.CustomRequestHeaders)
+	if s.headers.CleanConnectionHeader {
+		cleanConnectionHeaders(req, s.headers.CustomRequestHeaders)
+	}
 }
 
 func cleanConnectionHeaders(req *http.Request, headers map[string]string) {

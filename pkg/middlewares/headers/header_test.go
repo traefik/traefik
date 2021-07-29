@@ -146,7 +146,10 @@ func TestHeader_modifyCustomRequestHeaders(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			cfg := dynamic.Headers{CustomRequestHeaders: test.customRequestHeaders}
+			cfg := dynamic.Headers{
+				CustomRequestHeaders:  test.customRequestHeaders,
+				CleanConnectionHeader: true,
+			}
 			mid, err := NewHeader(nil, cfg)
 			require.NoError(t, err)
 
