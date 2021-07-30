@@ -64,7 +64,7 @@ func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name strin
 			return nil, err
 		}
 
-		handler = connectionheader.Remove(h)
+		handler = connectionheader.Remover(h)
 	}
 
 	return &headers{

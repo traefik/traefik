@@ -8,11 +8,15 @@ import (
 	"golang.org/x/net/http/httpguts"
 )
 
-// Remove removes hop-by-hop headers listed in the "Connection" header of h.
+// Remover removes hop-by-hop headers listed in the "Connection" header.
 // See RFC 7230, section 6.1.
-func Remove(next http.Handler) http.HandlerFunc {
+func Remover(next http.Handler) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		reqUpType := upgradeType(req.Header)
+		var reqUpType string
+		if httpguts.HeaderValuesContainsToken(req.Header["Connection"], "Upgrade") {
+			reqUpType = req.Header.Get("Upgrade")
+		}
+
 		removeConnectionHeaders(req.Header)
 
 		if reqUpType != "" {
@@ -34,11 +38,4 @@ func removeConnectionHeaders(h http.Header) {
 			}
 		}
 	}
-}
-
-func upgradeType(h http.Header) string {
-	if !httpguts.HeaderValuesContainsToken(h["Connection"], "Upgrade") {
-		return ""
-	}
-	return h.Get("Upgrade")
 }

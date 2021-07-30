@@ -90,7 +90,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		fa.authResponseHeadersRegex = re
 	}
 
-	return connectionheader.Remove(fa), nil
+	return connectionheader.Remover(fa), nil
 }
 
 func (fa *forwardAuth) GetTracingInformation() (string, ext.SpanKindEnum) {

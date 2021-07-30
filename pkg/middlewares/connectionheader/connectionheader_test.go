@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRemove(t *testing.T) {
+func TestRemover(t *testing.T) {
 	testCases := []struct {
 		desc       string
 		reqHeaders map[string]string
@@ -53,7 +53,7 @@ func TestRemove(t *testing.T) {
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
 
-			h := Remove(next)
+			h := Remover(next)
 
 			req := httptest.NewRequest(http.MethodGet, "https://localhost", nil)
 
