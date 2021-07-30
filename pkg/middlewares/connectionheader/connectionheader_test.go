@@ -17,28 +17,28 @@ func TestRemover(t *testing.T) {
 		{
 			desc: "simple remove",
 			reqHeaders: map[string]string{
-				"Foo":        "bar",
-				"Connection": "foo",
+				"Foo":            "bar",
+				connectionHeader: "foo",
 			},
 			expected: http.Header{},
 		},
 		{
 			desc: "remove and Upgrade",
 			reqHeaders: map[string]string{
-				"Upgrade":    "test",
-				"Foo":        "bar",
-				"Connection": "Upgrade,foo",
+				upgradeHeader:    "test",
+				"Foo":            "bar",
+				connectionHeader: "Upgrade,foo",
 			},
 			expected: http.Header{
-				"Upgrade":    []string{"test"},
-				"Connection": []string{"Upgrade"},
+				upgradeHeader:    []string{"test"},
+				connectionHeader: []string{"Upgrade"},
 			},
 		},
 		{
 			desc: "no remove",
 			reqHeaders: map[string]string{
-				"Foo":        "bar",
-				"Connection": "fii",
+				"Foo":            "bar",
+				connectionHeader: "fii",
 			},
 			expected: http.Header{
 				"Foo": []string{"bar"},
