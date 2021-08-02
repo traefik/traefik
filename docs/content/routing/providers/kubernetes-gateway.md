@@ -97,8 +97,10 @@ Depending on the Listener Protocol, different modes and Route types are supporte
           port: 80                              # [4]
           routes:                               # [8]
             kind: HTTPRoute                     # [9]
-            selector:                           # [10]
-              matchLabels:                      # [11]
+            namespaces:
+              from: Same                        # [10]
+            selector:                           # [11]
+              matchLabels:                      # [12]
                 app: foo
     ```
 
@@ -120,8 +122,10 @@ Depending on the Listener Protocol, different modes and Route types are supporte
               name: "mysecret"
           routes:                               # [8]
             kind: HTTPRoute                     # [9]
-            selector:                           # [10]
-              matchLabels:                      # [11]
+            namespaces:
+              from: Same                        # [10]
+            selector:                           # [11]
+              matchLabels:                      # [12]
                 app: foo
     ```
 
@@ -138,8 +142,10 @@ Depending on the Listener Protocol, different modes and Route types are supporte
           port: 8000                            # [4]
           routes:                               # [8]
             kind: TCPRoute                      # [9]
-            selector:                           # [10]
-              matchLabels:                      # [11]
+            namespaces:
+              from: Same                        # [10]
+            selector:                           # [11]
+              matchLabels:                      # [12]
                 app: footcp
     ```
 
@@ -162,8 +168,10 @@ Depending on the Listener Protocol, different modes and Route types are supporte
               name: "mysecret"
           routes:                               # [8]
             kind: TLSRoute                      # [9]
-            selector:                           # [10]
-              matchLabels:                      # [11]
+            namespaces:
+              from: Same                        # [10]
+            selector:                           # [11]
+              matchLabels:                      # [12]
                 app: footcp
     ```
 
@@ -178,8 +186,21 @@ Depending on the Listener Protocol, different modes and Route types are supporte
 | [7]  | `certificateRef`   | The reference to Kubernetes object that contains a TLS certificate and private key.                                                                  |
 | [8]  | `routes`           | A schema for associating routes with the Listener using selectors.                                                                                   |
 | [9]  | `kind`             | The kind of the referent.                                                                                                                            |
-| [10] | `selector`         | Routes in namespaces selected by the selector may be used by this Gateway routes to associate with the Gateway.                                      |
-| [11] | `matchLabels`      | A set of route labels used for selecting routes to associate with the Gateway.                                                                       |
+| [10] | `from`             | From indicates where Routes will be selected for this Gateway (Default to `Same`).                                                                   |
+| [11] | `selector`         | Routes in namespaces selected by the selector may be used by this Gateway routes to associate with the Gateway.                                      |
+| [12] | `matchLabels`      | A set of route labels used for selecting routes to associate with the Gateway.                                                                       |
+
+!!! info "Namespace Route selector"
+
+    When declaring a gateway,
+    you can specify a namespace route selector that state from which namespaces Routes should be selected.
+    
+    Here is an overview of possible values for this selector:
+
+    | Route select type | Description                                                                   |
+    |-------------------|-------------------------------------------------------------------------------|
+    | `All`             | Routes in all namespaces may be used by this Gateway.                         |
+    | `Same` (default)  | Only Routes in the same namespace as the Gateway may be used by this Gateway. |
 
 ### Kind: `HTTPRoute`
 
