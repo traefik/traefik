@@ -1,8 +1,14 @@
+## [v2.5.0-rc4](https://github.com/traefik/traefik/tree/v2.5.0-rc4) (2021-08-03)
+[All Commits](https://github.com/traefik/traefik/compare/v2.5.0-rc3...v2.5.0-rc4)
+
+**Bug fixes:**
+- **[k8s]** Kubernetes: detect changes for resources other than endpoints ([#8313](https://github.com/traefik/traefik/pull/8313) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.4.13](https://github.com/traefik/traefik/tree/v2.4.13) (2021-07-30)
 [All Commits](https://github.com/traefik/traefik/compare/v2.4.12...v2.4.13)
 
 **Bug fixes:**
-- **[authentication,middleware]** Remove hop-by-hop headers define in connection header beore some middleware ([#8319](https://github.com/traefik/traefik/pull/8319) by [ldez](https://github.com/ldez))
+- **[authentication,middleware]** Remove hop-by-hop headers defined in connection header before some middleware ([#8319](https://github.com/traefik/traefik/pull/8319) by [ldez](https://github.com/ldez))
 
 ## [v2.4.12](https://github.com/traefik/traefik/tree/v2.4.12) (2021-07-26)
 [All Commits](https://github.com/traefik/traefik/compare/v2.4.11...v2.4.12)
