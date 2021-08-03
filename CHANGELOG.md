@@ -1,8 +1,17 @@
-## [v2.5.0-rc4](https://github.com/traefik/traefik/tree/v2.5.0-rc4) (2021-08-03)
-[All Commits](https://github.com/traefik/traefik/compare/v2.5.0-rc3...v2.5.0-rc4)
+## [v2.5.0-rc5](https://github.com/traefik/traefik/tree/v2.5.0-rc5) (2021-08-03)
+[All Commits](https://github.com/traefik/traefik/compare/v2.5.0-rc3...v2.5.0-rc5)
 
 **Bug fixes:**
 - **[k8s]** Kubernetes: detect changes for resources other than endpoints ([#8313](https://github.com/traefik/traefik/pull/8313) by [rtribotte](https://github.com/rtribotte))
+
+**Misc:**
+- Merge current v2.4 into v2.5 ([#8325](https://github.com/traefik/traefik/pull/8325) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Merge current v2.4 into v2.5 ([#8314](https://github.com/traefik/traefik/pull/8314) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.4 into v2.5 ([#8296](https://github.com/traefik/traefik/pull/8296) by [tomMoulard](https://github.com/tomMoulard))
+
+## [v2.5.0-rc4](https://github.com/traefik/traefik/tree/v2.5.0-rc4) (2021-08-03)
+
+Release canceled.
 
 ## [v2.4.13](https://github.com/traefik/traefik/tree/v2.4.13) (2021-07-30)
 [All Commits](https://github.com/traefik/traefik/compare/v2.4.12...v2.4.13)
