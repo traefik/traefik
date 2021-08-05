@@ -28,6 +28,7 @@ func TestDecode(t *testing.T) {
 				"traefik/fieldf/Test2":  "B",
 				"traefik/fieldg/0/name": "A",
 				"traefik/fieldg/1/name": "B",
+				"traefik/fieldh/":       "foo",
 			},
 			expected: &sample{
 				FieldA: "bar",
@@ -45,6 +46,7 @@ func TestDecode(t *testing.T) {
 					{Name: "A"},
 					{Name: "B"},
 				},
+				FieldH: "foo",
 			},
 		},
 		{
@@ -61,6 +63,7 @@ func TestDecode(t *testing.T) {
 				"foo/bar/traefik/fieldf/Test2":  "B",
 				"foo/bar/traefik/fieldg/0/name": "A",
 				"foo/bar/traefik/fieldg/1/name": "B",
+				"foo/bar/traefik/fieldh/":       "foo",
 			},
 			expected: &sample{
 				FieldA: "bar",
@@ -78,6 +81,7 @@ func TestDecode(t *testing.T) {
 					{Name: "A"},
 					{Name: "B"},
 				},
+				FieldH: "foo",
 			},
 		},
 	}
@@ -107,6 +111,7 @@ type sample struct {
 	} `label:"allowEmpty"`
 	FieldF map[string]string
 	FieldG []sub
+	FieldH string
 }
 
 type sub struct {
