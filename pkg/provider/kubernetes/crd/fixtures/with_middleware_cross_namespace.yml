@@ -28,6 +28,15 @@ spec:
       port: 80
     middlewares:
     - name: test-errorpage
+  - match: Host(`foo.com`) && PathPrefix(`/bur`)
+    kind: Rule
+    priority: 12
+    services:
+    - name: whoami
+      namespace: default
+      port: 80
+    middlewares:
+    - name: cross-ns-stripprefix@kubernetescrd
 
 ---
 apiVersion: traefik.containo.us/v1alpha1

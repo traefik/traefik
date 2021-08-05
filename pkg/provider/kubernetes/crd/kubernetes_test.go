@@ -4313,6 +4313,13 @@ func TestCrossNamespace(t *testing.T) {
 							Priority:    12,
 							Middlewares: []string{"default-test-errorpage"},
 						},
+						"default-test-crossnamespace-route-a1963878aac7331b7950": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-crossnamespace-route-a1963878aac7331b7950",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bur`)",
+							Priority:    12,
+							Middlewares: []string{"cross-ns-stripprefix@kubernetescrd"},
+						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"cross-ns-stripprefix": {
@@ -4357,6 +4364,19 @@ func TestCrossNamespace(t *testing.T) {
 							},
 						},
 						"default-test-errorpage-errorpage-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+						"default-test-crossnamespace-route-a1963878aac7331b7950": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
