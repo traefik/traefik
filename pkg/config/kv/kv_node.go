@@ -23,16 +23,17 @@ func DecodeToNode(pairs []*store.KVPair, rootName string, filters ...string) (*p
 		if !strings.HasPrefix(pair.Key, rootName+"/") {
 			return nil, fmt.Errorf("invalid label root %s", rootName)
 		}
-
-		split := strings.Split(pair.Key[len(rootName)+1:], "/")
+		// TrimSuffix to avoid final empty fragment when there is a trailing slash.
+		split := strings.Split(strings.TrimSuffix(pair.Key[len(rootName)+1:], "/"), "/")
 
 		parts := []string{rootName}
 		for _, fragment := range split {
 			if exp.MatchString(fragment) {
 				parts = append(parts, "["+fragment+"]")
-			} else {
-				parts = append(parts, fragment)
+				continue
 			}
+
+			parts = append(parts, fragment)
 		}
 
 		if i == 0 {
