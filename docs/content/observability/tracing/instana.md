@@ -1,6 +1,6 @@
 # Instana
 
-To enable the Instana:
+To enable the Instana tracer:
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -20,7 +20,7 @@ tracing:
 
 _Require, Default="127.0.0.1"_
 
-Local Agent Host instructs reporter to send spans to instana-agent at this address.
+Local Agent Host instructs reporter to send spans to the Instana Agent at this address.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -42,7 +42,7 @@ tracing:
 
 _Require, Default=42699_
 
-Local Agent port instructs reporter to send spans to the instana-agent at this port.
+Local Agent port instructs reporter to send spans to the Instana Agent listening on this port.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -64,7 +64,7 @@ tracing:
 
 _Require, Default="info"_
 
-Set Instana tracer log level.
+Set the Instana tracer log level.
 
 Valid values for logLevel field are:
 
@@ -87,4 +87,26 @@ tracing:
 
 ```bash tab="CLI"
 --tracing.instana.logLevel=info
+```
+
+#### `enableProfiling`
+
+_Require, Default=false_
+
+Whether to enable the process profiling feature of the Instana tracer.
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.instana]
+    enableProfiling = true
+```
+
+```yaml tab="File (YAML)"
+tracing:
+  instana:
+    enableProfiling: true
+```
+
+```bash tab="CLI"
+--tracing.instana.enableProfiling=true
 ```

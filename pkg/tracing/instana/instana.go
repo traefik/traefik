@@ -11,17 +11,19 @@ import (
 // Name sets the name of this tracer.
 const Name = "instana"
 
-// Config provides configuration settings for a instana tracer.
+// Config provides configuration settings for the Instana tracer.
 type Config struct {
-	LocalAgentHost string `description:"Set instana-agent's host that the reporter will used." json:"localAgentHost,omitempty" toml:"localAgentHost,omitempty" yaml:"localAgentHost,omitempty"`
-	LocalAgentPort int    `description:"Set instana-agent's port that the reporter will used." json:"localAgentPort,omitempty" toml:"localAgentPort,omitempty" yaml:"localAgentPort,omitempty"`
-	LogLevel       string `description:"Set instana-agent's log level. ('error','warn','info','debug')" json:"logLevel,omitempty" toml:"logLevel,omitempty" yaml:"logLevel,omitempty" export:"true"`
+	LocalAgentHost  string `description:"Set the Instana Agent host." json:"localAgentHost,omitempty" toml:"localAgentHost,omitempty" yaml:"localAgentHost,omitempty"`
+	LocalAgentPort  int    `description:"Set the Instana Agent port." json:"localAgentPort,omitempty" toml:"localAgentPort,omitempty" yaml:"localAgentPort,omitempty"`
+	LogLevel        string `description:"Set the log level for the Instana tracer. ('error','warn','info','debug')" json:"logLevel,omitempty" toml:"logLevel,omitempty" yaml:"logLevel,omitempty" export:"true"`
+	EnableProfiling bool   `description:"Whether or not to enable automatic profiling for the traefik process." json:"enableProfiling,omitempty" toml:"enableProfiling,omitempty" yaml:"enableProfiling,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (c *Config) SetDefaults() {
 	c.LocalAgentPort = 42699
 	c.LogLevel = "info"
+	c.EnableProfiling = false
 }
 
 // Setup sets up the tracer.
@@ -40,10 +42,11 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 	}
 
 	tracer := instana.NewTracerWithOptions(&instana.Options{
-		Service:   serviceName,
-		LogLevel:  logLevel,
-		AgentPort: c.LocalAgentPort,
-		AgentHost: c.LocalAgentHost,
+		Service:           serviceName,
+		LogLevel:          logLevel,
+		AgentPort:         c.LocalAgentPort,
+		AgentHost:         c.LocalAgentHost,
+		EnableAutoProfile: c.EnableProfiling,
 	})
 
 	// Without this, child spans are getting the NOOP tracer
