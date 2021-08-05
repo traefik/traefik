@@ -24,15 +24,16 @@ func DecodeToNode(pairs []*store.KVPair, rootName string, filters ...string) (*p
 			return nil, fmt.Errorf("invalid label root %s", rootName)
 		}
 
-		split := strings.Split(pair.Key[len(rootName)+1:], "/")
+		split := strings.FieldsFunc(pair.Key[len(rootName)+1:], func(c rune) bool { return c == '/' })
 
 		parts := []string{rootName}
 		for _, fragment := range split {
 			if exp.MatchString(fragment) {
 				parts = append(parts, "["+fragment+"]")
-			} else {
-				parts = append(parts, fragment)
+				continue
 			}
+
+			parts = append(parts, fragment)
 		}
 
 		if i == 0 {
