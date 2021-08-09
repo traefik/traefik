@@ -1,6 +1,7 @@
 package redirect
 
 import (
+	"net"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -101,7 +102,10 @@ func (m *moveHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 func rawURL(req *http.Request) string {
 	scheme := "http"
-	host := req.Host
+	host, _, err := net.SplitHostPort(req.Host)
+	if err != nil {
+		host = req.Host
+	}
 	port := ""
 	uri := req.RequestURI
 
