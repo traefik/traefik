@@ -1,6 +1,7 @@
 package redirect
 
 import (
+	"net"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -101,8 +102,12 @@ func (m *moveHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 func rawURL(req *http.Request) string {
 	scheme := "http"
-	host := req.Host
-	port := ""
+	host, port, err := net.SplitHostPort(req.Host)
+	if err != nil {
+		host = req.Host
+	} else {
+		port = ":" + port
+	}
 	uri := req.RequestURI
 
 	schemeRegex := `^(https?):\/\/(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
@@ -124,6 +129,10 @@ func rawURL(req *http.Request) string {
 
 	if req.TLS != nil {
 		scheme = "https"
+	}
+
+	if scheme == "http" && port == ":80" || scheme == "https" && port == ":443" || port == "" {
+		port = ""
 	}
 
 	return strings.Join([]string{scheme, "://", host, port, uri}, "")
