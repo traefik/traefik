@@ -143,6 +143,7 @@ http:
 | [Chain](chain.md)                         | Combine multiple pieces of middleware             | Middleware tool             |
 | [CircuitBreaker](circuitbreaker.md)       | Stop calling unhealthy services                   | Request Lifecycle           |
 | [Compress](compress.md)                   | Compress the response                             | Content Modifier            |
+| [ContentType](contenttype.md)             | Handling Content-Type in a Header                 | Content Modifier            |
 | [DigestAuth](digestauth.md)               | Adds Digest Authentication                        | Security, Authentication    |
 | [Errors](errorpages.md)                   | Define custom error pages                         | Request Lifecycle           |
 | [ForwardAuth](forwardauth.md)             | Authentication delegation                         | Security, Authentication    |
