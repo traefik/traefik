@@ -19,7 +19,6 @@ func TestRedirectSchemeHandler(t *testing.T) {
 		config         dynamic.RedirectScheme
 		method         string
 		url            string
-		host           string
 		headers        map[string]string
 		secured        bool
 		expectedURL    string
@@ -128,8 +127,18 @@ func TestRedirectSchemeHandler(t *testing.T) {
 				Port:   "80",
 			},
 			url:            "http://foo:80",
-			expectedURL:    "http://foo",
-			expectedStatus: http.StatusFound,
+			expectedURL:    "http://foo:80",
+			expectedStatus: http.StatusOK,
+		},
+		{
+			desc: "to HTTPS 443",
+			config: dynamic.RedirectScheme{
+				Scheme: "https",
+				Port:   "443",
+			},
+			url:            "https://foo:443",
+			expectedURL:    "https://foo:443",
+			expectedStatus: http.StatusOK,
 		},
 		{
 			desc: "HTTP to wss",
@@ -225,15 +234,6 @@ func TestRedirectSchemeHandler(t *testing.T) {
 			expectedURL:    "https://[::1]:8443",
 			expectedStatus: http.StatusFound,
 		},
-		{
-			desc: "HTTP to HTTPS, with port in Host header",
-			config: dynamic.RedirectScheme{
-				Scheme: "https",
-			},
-			url:            "https://foo",
-			host:           "foo:443",
-			expectedStatus: http.StatusOK,
-		},
 	}
 
 	for _, test := range testCases {
@@ -258,11 +258,8 @@ func TestRedirectSchemeHandler(t *testing.T) {
 				if test.method != "" {
 					method = test.method
 				}
-				req := httptest.NewRequest(method, test.url, nil)
 
-				if test.host != "" {
-					req.Host = test.host
-				}
+				req := httptest.NewRequest(method, test.url, nil)
 
 				for k, v := range test.headers {
 					req.Header.Set(k, v)

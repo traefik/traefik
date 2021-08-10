@@ -182,9 +182,6 @@ func TestRedirectRegexHandler(t *testing.T) {
 
 				for k, v := range test.headers {
 					req.Header.Set(k, v)
-					if k == "Host" {
-						req.Host = v
-					}
 				}
 
 				req.Header.Set("X-Foo", "bar")
