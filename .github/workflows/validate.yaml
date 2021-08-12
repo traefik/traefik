@@ -6,7 +6,7 @@ on:
       - '*'
 
 env:
-  GO_VERSION: 1.17rc2
+  GO_VERSION: 1.17.0-rc1
   GOLANGCI_LINT_VERSION: v1.41.1
   MISSSPELL_VERSION: v0.3.4
   PRE_TARGET: ""
@@ -14,7 +14,7 @@ env:
 jobs:
 
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     defaults:
       run:
@@ -24,6 +24,7 @@ jobs:
       - name: Set up Go ${{ env.GO_VERSION }}
         uses: actions/setup-go@v2
         with:
+          stable: 'false'
           go-version: ${{ env.GO_VERSION }}
 
       - name: Check out code
@@ -54,7 +55,7 @@ jobs:
         run: make validate
 
   validate-generate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     defaults:
       run:
