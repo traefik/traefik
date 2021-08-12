@@ -65,6 +65,7 @@ jobs:
       - name: Set up Go ${{ env.GO_VERSION }}
         uses: actions/setup-go@v2
         with:
+          stable: 'false'
           go-version: ${{ env.GO_VERSION }}
 
       - name: Check out code
