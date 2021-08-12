@@ -6,14 +6,14 @@ on:
       - '*'
 
 env:
-  GO_VERSION: 1.16
+  GO_VERSION: 1.17.0-rc1
   CGO_ENABLED: 0
   PRE_TARGET: ""
 
 jobs:
 
   build-webui:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out code
@@ -36,7 +36,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-20.04, macos-latest, windows-latest ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
     needs:
       - build-webui
     defaults:

@@ -6,13 +6,13 @@ on:
       - '*'
 
 env:
-  GO_VERSION: 1.16
+  GO_VERSION: 1.17.0-rc1
   PRE_TARGET: ""
 
 jobs:
 
   test-unit:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     defaults:
       run:
