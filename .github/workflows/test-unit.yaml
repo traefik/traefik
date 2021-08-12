@@ -6,7 +6,7 @@ on:
       - '*'
 
 env:
-  GO_VERSION: 1.17.0-rc1
+  GO_VERSION: 1.17rc2
   PRE_TARGET: ""
 
 jobs:
