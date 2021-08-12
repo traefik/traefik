@@ -14,7 +14,7 @@ env:
 jobs:
 
   validate:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     defaults:
       run:
@@ -54,7 +54,7 @@ jobs:
         run: make validate
 
   validate-generate:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     defaults:
       run:
