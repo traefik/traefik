@@ -488,9 +488,6 @@ func TestHandler_UDP(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-		if test.desc != "all UDP routers" {
-			//			continue
-		}
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -537,6 +534,5 @@ func TestHandler_UDP(t *testing.T) {
 			require.NoError(t, err)
 			assert.JSONEq(t, string(data), string(contents))
 		})
-		// break
 	}
 }
