@@ -1,3 +1,12 @@
+## [v2.5.0-rc6](https://github.com/traefik/traefik/tree/v2.5.0-rc6) (2021-08-13)
+[All Commits](https://github.com/traefik/traefik/compare/v2.5.0-rc5...v2.5.0-rc6)
+
+**Enhancements:**
+- Update Go version ([#8355](https://github.com/traefik/traefik/pull/8355) by [mpl](https://github.com/mpl))
+
+**Misc:**
+- Merge current v2.4 into v2.5 ([#8333](https://github.com/traefik/traefik/pull/8333) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
 ## [v2.5.0-rc5](https://github.com/traefik/traefik/tree/v2.5.0-rc5) (2021-08-03)
 [All Commits](https://github.com/traefik/traefik/compare/v2.5.0-rc3...v2.5.0-rc5)
 
