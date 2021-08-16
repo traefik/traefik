@@ -28,8 +28,8 @@ A Story of key & values
 
     | Key (Path)                                    | Value       |
     |-----------------------------------------------|-------------|
-    | `traefik.http.routers.myrouter.entrypoints/0` | `web`       |
-    | `traefik.http.routers.myrouter.entrypoints/1` | `websecure` |
+    | `traefik/http/routers/myrouter/entrypoints/0` | `web`       |
+    | `traefik/http/routers/myrouter/entrypoints/1` | `websecure` |
 
 ??? info "`traefik/http/routers/<router_name>/middlewares`"
 
