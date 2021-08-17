@@ -1,3 +1,14 @@
+## [v2.4.14](https://github.com/traefik/traefik/tree/v2.4.14) (2021-08-16)
+[All Commits](https://github.com/traefik/traefik/compare/v2.4.13...v2.4.14)
+
+**Bug fixes:**
+- **[k8s/crd,k8s]** Avoid unauthorized middleware cross namespace reference  ([#8322](https://github.com/traefik/traefik/pull/8322) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[kv]** Remove unwanted trailing slash in key ([#8335](https://github.com/traefik/traefik/pull/8335) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[middleware]** Redirect: fix comparison when explicit port request and implicit redirect port ([#8348](https://github.com/traefik/traefik/pull/8348) by [tcolgate](https://github.com/tcolgate))
+
+**Documentation:**
+- **[kv]** Fix a router&#39;s entryPoint definition example for KV provider ([#8357](https://github.com/traefik/traefik/pull/8357) by [avtion](https://github.com/avtion))
+
 ## [v2.5.0-rc6](https://github.com/traefik/traefik/tree/v2.5.0-rc6) (2021-08-13)
 [All Commits](https://github.com/traefik/traefik/compare/v2.5.0-rc5...v2.5.0-rc6)
 
