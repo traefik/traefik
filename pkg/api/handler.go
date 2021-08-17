@@ -2,11 +2,11 @@ package api
 
 import (
 	"encoding/json"
+	"io/fs"
 	"net/http"
 	"reflect"
 	"strings"
 
-	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/gorilla/mux"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
@@ -51,7 +51,7 @@ type Handler struct {
 	dashboard       bool
 	debug           bool
 	staticConfig    static.Configuration
-	dashboardAssets *assetfs.AssetFS
+	dashboardAssets fs.FS
 
 	// runtimeConfiguration is the data set used to create all the data representations exposed by the API.
 	runtimeConfiguration *runtime.Configuration
@@ -119,7 +119,7 @@ func (h Handler) createRouter() *mux.Router {
 	version.Handler{}.Append(router)
 
 	if h.dashboard {
-		DashboardHandler{Assets: h.dashboardAssets}.Append(router)
+		DashboardHandler{FS: h.dashboardAssets}.Append(router)
 	}
 
 	return router

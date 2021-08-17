@@ -64,6 +64,7 @@ generate-webui:
 		mkdir -p static; \
 		docker run --rm -v "$$PWD/static":'/src/static' traefik-webui npm run build:nc; \
 		docker run --rm -v "$$PWD/static":'/src/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ../static; \
+		cp -R ./static/ ./webui/static/; \
 		echo 'For more information show `webui/readme.md`' > $$PWD/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md; \
 	fi
 
