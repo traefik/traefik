@@ -66,9 +66,6 @@ jobs:
           key: ${{ runner.os }}-build-go-${{ hashFiles('**/go.sum') }}
           restore-keys: ${{ runner.os }}-build-go-
 
-      - name: Installing dependencies
-        run: go install github.com/containous/go-bindata/go-bindata@v1.0.0
-
       - name: Artifact webui
         uses: actions/download-artifact@v2
         with:
@@ -76,7 +73,7 @@ jobs:
           path: ${{ github.workspace }}/go/src/github.com/traefik/traefik
 
       - name: Untar webui
-        run: tar xvf webui.tar.gz
+        run: tar xvf webui.tar.gz && cp -R ./static/ ./webui/static/
 
       - name: Build
         run: make binary
