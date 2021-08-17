@@ -1,12 +1,13 @@
 package api
 
 import (
-	"fmt"
+	"errors"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
-	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -65,42 +66,27 @@ func Test_ContentSecurityPolicy(t *testing.T) {
 		{
 			desc: "OK",
 			handler: DashboardHandler{
-				Assets: &assetfs.AssetFS{
-					Asset: func(path string) ([]byte, error) {
-						return []byte{}, nil
-					},
-					AssetDir: func(path string) ([]string, error) {
-						return []string{}, nil
-					},
-				},
+				FS: fsMock(func(name string) (fs.File, error) {
+					return fileMock{name: name}, nil
+				}),
 			},
 			expected: http.StatusOK,
 		},
 		{
 			desc: "Not found",
 			handler: DashboardHandler{
-				Assets: &assetfs.AssetFS{
-					Asset: func(path string) ([]byte, error) {
-						return []byte{}, fmt.Errorf("not found")
-					},
-					AssetDir: func(path string) ([]string, error) {
-						return []string{}, fmt.Errorf("not found")
-					},
-				},
+				FS: fsMock(func(name string) (fs.File, error) {
+					return nil, fs.ErrNotExist
+				}),
 			},
 			expected: http.StatusNotFound,
 		},
 		{
 			desc: "Internal server error",
 			handler: DashboardHandler{
-				Assets: &assetfs.AssetFS{
-					Asset: func(path string) ([]byte, error) {
-						return []byte{}, fmt.Errorf("oops")
-					},
-					AssetDir: func(path string) ([]string, error) {
-						return []string{}, fmt.Errorf("oops")
-					},
-				},
+				FS: fsMock(func(name string) (fs.File, error) {
+					return nil, errors.New("oops")
+				}),
 			},
 			expected: http.StatusInternalServerError,
 		},
@@ -122,3 +108,38 @@ func Test_ContentSecurityPolicy(t *testing.T) {
 		})
 	}
 }
+
+type fsMock func(name string) (fs.File, error)
+
+func (m fsMock) Open(name string) (fs.File, error) {
+	return m(name)
+}
+
+type fileMock struct {
+	name    string
+	content []byte
+}
+
+func (f fileMock) Stat() (fs.FileInfo, error) {
+	return fileInfoMock{name: f.name}, nil
+}
+
+func (f fileMock) Read(bytes []byte) (int, error) {
+	n := copy(bytes, f.content)
+	return n, nil
+}
+
+func (f fileMock) Close() error {
+	return nil
+}
+
+type fileInfoMock struct {
+	name string
+}
+
+func (f fileInfoMock) Name() string       { return f.name }
+func (f fileInfoMock) Size() int64        { return 0 }
+func (f fileInfoMock) Mode() fs.FileMode  { return 0 }
+func (f fileInfoMock) ModTime() time.Time { return time.Time{} }
+func (f fileInfoMock) IsDir() bool        { return false }
+func (f fileInfoMock) Sys() interface{}   { return nil }
