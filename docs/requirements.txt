@@ -1,4 +1,4 @@
-mkdocs==1.1
+mkdocs==1.2.2
 pymdown-extensions==7.0
 mkdocs-bootswatch==1.0
 mkdocs-traefiklabs>=100.0.7
