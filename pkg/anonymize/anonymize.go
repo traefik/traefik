@@ -160,9 +160,10 @@ func reset(field reflect.Value, name string) error {
 			}
 		}
 	case reflect.Interface:
-		if !field.IsNil() {
+		if !field.IsNil() && field.NumMethod() == 0 {
 			return reset(field.Elem(), "")
 		}
+		field.Set(reflect.Zero(field.Type()))
 	default:
 		// Primitive type
 		field.Set(reflect.Zero(field.Type()))
