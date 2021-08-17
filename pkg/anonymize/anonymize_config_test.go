@@ -2,12 +2,12 @@ package anonymize
 
 import (
 	"flag"
+	"io/fs"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
-	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
@@ -778,18 +778,9 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Insecure:  true,
 		Dashboard: true,
 		Debug:     true,
-		DashboardAssets: &assetfs.AssetFS{
-			Asset: func(path string) ([]byte, error) {
-				return nil, nil
-			},
-			AssetDir: func(path string) ([]string, error) {
-				return nil, nil
-			},
-			AssetInfo: func(path string) (os.FileInfo, error) {
-				return nil, nil
-			},
-			Prefix: "fii",
-		},
+		DashboardAssets: fsMock(func(name string) (fs.File, error) {
+			return nil, nil
+		}),
 	}
 
 	config.Metrics = &types.Metrics{
@@ -993,4 +984,10 @@ func intPtr(value int) *int {
 
 func int64Ptr(value int64) *int64 {
 	return &value
+}
+
+type fsMock func(name string) (fs.File, error)
+
+func (m fsMock) Open(name string) (fs.File, error) {
+	return m(name)
 }
