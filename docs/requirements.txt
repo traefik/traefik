@@ -2,5 +2,7 @@ mkdocs==1.1
 pymdown-extensions==7.0
 mkdocs-bootswatch==1.0
 mkdocs-traefiklabs>=100.0.7
+mkdocs-material==6.1.7
+mkdocs-material-extensions==1.0
 markdown-include==0.5.1
 mkdocs-exclude==1.0.2
