@@ -366,7 +366,7 @@ tracing:
   lightstep:
     serverHost: foobar
     serverPort: 8383
-    plaintext: foobar
+    plaintext: true
     accessToken: foobar
 hostResolver:
   cnameFlattening: true
