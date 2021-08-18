@@ -343,6 +343,11 @@
     serverURL = "foobar"
     secretToken = "foobar"
     serviceEnvironment = "foobar"
+  [tracing.lightstep]
+    serverHost = "foobar"
+    serverPort = 8383
+    plaintext = true
+    accessToken = "foobar"
 
 [hostResolver]
   cnameFlattening = true

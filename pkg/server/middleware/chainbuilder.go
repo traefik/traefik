@@ -116,6 +116,14 @@ func setupTracing(conf *static.Tracing) *tracing.Tracing {
 		}
 	}
 
+	if conf.Lightstep != nil {
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Lightstep backend.")
+		} else {
+			backend = conf.Lightstep
+		}
+	}
+
 	if backend == nil {
 		log.WithoutContext().Debug("Could not initialize tracing, using Jaeger by default")
 		defaultBackend := &jaeger.Config{}
