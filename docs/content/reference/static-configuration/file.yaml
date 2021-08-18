@@ -363,6 +363,11 @@ tracing:
     serverURL: foobar
     secretToken: foobar
     serviceEnvironment: foobar
+  lightstep:
+    serverHost: foobar
+    serverPort: 8383
+    plaintext: foobar
+    accessToken: foobar
 hostResolver:
   cnameFlattening: true
   resolvConfig: foobar

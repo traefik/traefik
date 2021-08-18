@@ -35,6 +35,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/tracing/instana"
 	"github.com/traefik/traefik/v2/pkg/tracing/jaeger"
 	"github.com/traefik/traefik/v2/pkg/tracing/zipkin"
+        "github.com/traefik/traefik/v2/pkg/tracing/lightstep"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
@@ -162,6 +163,7 @@ type Tracing struct {
 	Instana       *instana.Config  `description:"Settings for Instana." json:"instana,omitempty" toml:"instana,omitempty" yaml:"instana,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	Haystack      *haystack.Config `description:"Settings for Haystack." json:"haystack,omitempty" toml:"haystack,omitempty" yaml:"haystack,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	Elastic       *elastic.Config  `description:"Settings for Elastic." json:"elastic,omitempty" toml:"elastic,omitempty" yaml:"elastic,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
+        Lightstep       *lightstep.Config  `description:"Settings for Lightstep." json:"lightstep,omitempty" toml:"lightstep,omitempty" yaml:"lightstep,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 }
 
 // SetDefaults sets the default values.

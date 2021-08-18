@@ -966,6 +966,21 @@ Set the sampling type. (Default: ```const```)
 `TRAEFIK_TRACING_JAEGER_TRACECONTEXTHEADERNAME`:  
 Set the header to use for the trace-id. (Default: ```uber-trace-id```)
 
+`TRAEFIK_TRACING_LIGHTSTEP`:  
+Settings for Lightstep. (Default: ```false```)
+
+`TRAEFIK_TRACING_LIGHTSTEP_SERVERHOST`:  
+Set the hostname of the Lightstep Satellite server.
+
+`TRAEFIK_TRACING_LIGHTSTEP_SERVERPORT`:  
+Set the listener port of the Lightstep Satellite server.
+
+`TRAEFIK_TRACING_LIGHTSTEP_PLAINTEXT`:  
+Set the switch to set plaintext or encrypted communication with the Lightstep Satellite server.
+
+`TRAEFIK_TRACING_LIGHTSTEP_ACCESSTOKEN`:  
+Set the token used to connect to your Lightstep project.
+
 `TRAEFIK_TRACING_SERVICENAME`:  
 Set the name for this service. (Default: ```traefik```)
 
