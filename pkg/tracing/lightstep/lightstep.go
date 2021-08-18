@@ -21,7 +21,7 @@ type Config struct {
 
 // Setup sets up the tracer.
 func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
-	options := lightstep.Options{}
+	var options lightstep.Options
 	log.Infof("Setting up Lightstep tracer with service name %s", serviceName)
 
 	if c.ServerHost != "" {

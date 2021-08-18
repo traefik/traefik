@@ -115,6 +115,10 @@ validate: $(PRE_TARGET)
 	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh generate validate-lint validate-misspell validate-vendor
 	bash $(CURDIR)/script/validate-shell-script.sh
 
+validate-peter: $(PRE_TARGET)
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh generate validate-misspell validate-vendor
+	bash $(CURDIR)/script/validate-shell-script.sh
+
 ## Clean up static directory and build a Docker Traefik image
 build-image: binary
 	rm -rf static

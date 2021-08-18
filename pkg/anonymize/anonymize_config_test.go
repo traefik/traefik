@@ -469,7 +469,7 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 	require.NoError(t, err)
 
 	if *updateExpected {
-		require.NoError(t, os.WriteFile("testdata/anonymized-dynamic-config.json", []byte(cleanJSON), 0666))
+		require.NoError(t, os.WriteFile("testdata/anonymized-dynamic-config.json", []byte(cleanJSON), 0o666))
 	}
 
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
@@ -976,7 +976,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 	require.NoError(t, err)
 
 	if *updateExpected {
-		require.NoError(t, os.WriteFile("testdata/anonymized-static-config.json", []byte(cleanJSON), 0666))
+		require.NoError(t, os.WriteFile("testdata/anonymized-static-config.json", []byte(cleanJSON), 0o666))
 	}
 
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
