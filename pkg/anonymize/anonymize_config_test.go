@@ -2,10 +2,10 @@ package anonymize
 
 import (
 	"flag"
-	"io/fs"
 	"os"
 	"strings"
 	"testing"
+	"testing/fstest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -775,12 +775,10 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.API = &static.API{
-		Insecure:  true,
-		Dashboard: true,
-		Debug:     true,
-		DashboardAssets: fsMock(func(name string) (fs.File, error) {
-			return nil, nil
-		}),
+		Insecure:        true,
+		Dashboard:       true,
+		Debug:           true,
+		DashboardAssets: fstest.MapFS{},
 	}
 
 	config.Metrics = &types.Metrics{
@@ -984,10 +982,4 @@ func intPtr(value int) *int {
 
 func int64Ptr(value int64) *int64 {
 	return &value
-}
-
-type fsMock func(name string) (fs.File, error)
-
-func (m fsMock) Open(name string) (fs.File, error) {
-	return m(name)
 }
