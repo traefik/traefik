@@ -15,7 +15,7 @@ func TestConsecutiveWrites(t *testing.T) {
 	addr, err := net.ResolveUDPAddr("udp", ":0")
 	require.NoError(t, err)
 
-	ln, err := Listen("udp", addr)
+	ln, err := Listen("udp", addr, 3*time.Second)
 	require.NoError(t, err)
 	defer func() {
 		err := ln.Close()
@@ -77,7 +77,7 @@ func TestListenNotBlocking(t *testing.T) {
 
 	require.NoError(t, err)
 
-	ln, err := Listen("udp", addr)
+	ln, err := Listen("udp", addr, 3*time.Second)
 	require.NoError(t, err)
 	defer func() {
 		err := ln.Close()
@@ -162,6 +162,14 @@ func TestListenNotBlocking(t *testing.T) {
 	}
 }
 
+func TestListenWithZeroTimeout(t *testing.T) {
+	addr, err := net.ResolveUDPAddr("udp", ":0")
+	require.NoError(t, err)
+
+	_, err = Listen("udp", addr, 0)
+	assert.Error(t, err)
+}
+
 func TestTimeoutWithRead(t *testing.T) {
 	testTimeout(t, true)
 }
@@ -176,7 +184,7 @@ func testTimeout(t *testing.T, withRead bool) {
 	addr, err := net.ResolveUDPAddr("udp", ":0")
 	require.NoError(t, err)
 
-	ln, err := Listen("udp", addr)
+	ln, err := Listen("udp", addr, 3*time.Second)
 	require.NoError(t, err)
 	defer func() {
 		err := ln.Close()
@@ -212,7 +220,7 @@ func testTimeout(t *testing.T, withRead bool) {
 
 	assert.Equal(t, 10, len(ln.conns))
 
-	time.Sleep(4 * time.Second)
+	time.Sleep(ln.timeout + time.Second)
 	assert.Equal(t, 0, len(ln.conns))
 }
 
@@ -220,7 +228,7 @@ func TestShutdown(t *testing.T) {
 	addr, err := net.ResolveUDPAddr("udp", ":0")
 	require.NoError(t, err)
 
-	l, err := Listen("udp", addr)
+	l, err := Listen("udp", addr, 3*time.Second)
 	require.NoError(t, err)
 
 	go func() {

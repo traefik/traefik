@@ -63,10 +63,10 @@ spec:
   mirroring:
     name: wrr2
     kind: TraefikService
+    # Optional
+    maxBodySize: 2000000000
     mirrors:
       - name: s2
-        # Optional
-        maxBodySize: 2000000000
         # Optional, as it is the default value
         kind: Service
         percent: 20
@@ -77,6 +77,7 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: ingressroute
+
 spec:
   entryPoints:
     - web
@@ -98,6 +99,7 @@ spec:
           port: 433
           serversTransport: mytransport
     - match: PathPrefix(`/misc`)
+      kind: Rule
       services:
         - name: s3
           port: 80
@@ -105,6 +107,7 @@ spec:
         - name: stripprefix
         - name: addprefix
     - match: PathPrefix(`/misc`)
+      kind: Rule
       services:
         - name: s3
           # Optional, as it is the default value
@@ -113,10 +116,12 @@ spec:
           # scheme allow to override the scheme for the service. (ex: https or h2c)
           scheme: https
     - match: PathPrefix(`/lb`)
+      kind: Rule
       services:
         - name: wrr1
           kind: TraefikService
     - match: PathPrefix(`/mirrored`)
+      kind: Rule
       services:
         - name: mirror1
           kind: TraefikService
@@ -142,6 +147,8 @@ spec:
       services:
         - name: whoamitcp
           port: 8080
+      middlewares:
+        - name: ipwhitelist
   tls:
     secretName: foosecret
     passthrough: false
@@ -181,10 +188,10 @@ spec:
     - foobar
     - foobar
   clientAuth:
-    caFiles:
+    secretNames:
       - foobar
       - foobar
-    clientAuthType: foobar
+    clientAuthType: RequireAndVerifyClientCert
   sniStrict: true
   preferServerCipherSuites: true
 
@@ -209,3 +216,4 @@ spec:
     dialTimeout: 42s
     responseHeaderTimeout: 42s
     idleConnTimeout: 42s
+  disableHTTP2: true

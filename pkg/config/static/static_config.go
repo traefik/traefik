@@ -51,6 +51,10 @@ const (
 
 	// DefaultAcmeCAServer is the default ACME API endpoint.
 	DefaultAcmeCAServer = "https://acme-v02.api.letsencrypt.org/directory"
+
+	// DefaultUDPTimeout defines how long to wait by default on an idle session,
+	// before releasing all resources related to that session.
+	DefaultUDPTimeout = 3 * time.Second
 )
 
 // Configuration is the static configuration.
@@ -186,6 +190,8 @@ type Providers struct {
 	ZooKeeper *zk.Provider     `description:"Enable ZooKeeper backend with default settings." json:"zooKeeper,omitempty" toml:"zooKeeper,omitempty" yaml:"zooKeeper,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Redis     *redis.Provider  `description:"Enable Redis backend with default settings." json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	HTTP      *http.Provider   `description:"Enable HTTP backend with default settings." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+
+	Plugin map[string]PluginConf `description:"Plugins configuration." json:"plugin,omitempty" toml:"plugin,omitempty" yaml:"plugin,omitempty"`
 }
 
 // SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.
@@ -240,6 +246,12 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	// Disable Gateway API provider if not enabled in experimental
 	if c.Experimental == nil || !c.Experimental.KubernetesGateway {
 		c.Providers.KubernetesGateway = nil
+	}
+
+	if c.Experimental == nil || !c.Experimental.HTTP3 {
+		for _, ep := range c.EntryPoints {
+			ep.EnableHTTP3 = false
+		}
 	}
 
 	// Configure Gateway API provider

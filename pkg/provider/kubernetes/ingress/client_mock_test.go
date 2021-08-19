@@ -7,18 +7,18 @@ import (
 	"github.com/hashicorp/go-version"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 )
 
 var _ Client = (*clientMock)(nil)
 
 type clientMock struct {
-	ingresses      []*networkingv1beta1.Ingress
+	ingresses      []*networkingv1.Ingress
 	services       []*corev1.Service
 	secrets        []*corev1.Secret
 	endpoints      []*corev1.Endpoints
-	ingressClasses []*networkingv1beta1.IngressClass
+	ingressClasses []*networkingv1.IngressClass
 
 	serverVersion *version.Version
 
@@ -51,14 +51,21 @@ func newClientMock(serverVersion string, paths ...string) clientMock {
 			case *corev1.Endpoints:
 				c.endpoints = append(c.endpoints, o)
 			case *networkingv1beta1.Ingress:
-				c.ingresses = append(c.ingresses, o)
-			case *extensionsv1beta1.Ingress:
-				ing, err := extensionsToNetworking(o)
+				ing, err := toNetworkingV1(o)
 				if err != nil {
 					panic(err)
 				}
+				addServiceFromV1Beta1(ing, *o)
 				c.ingresses = append(c.ingresses, ing)
+			case *networkingv1.Ingress:
+				c.ingresses = append(c.ingresses, o)
 			case *networkingv1beta1.IngressClass:
+				ic, err := toNetworkingV1IngressClass(o)
+				if err != nil {
+					panic(err)
+				}
+				c.ingressClasses = append(c.ingressClasses, ic)
+			case *networkingv1.IngressClass:
 				c.ingressClasses = append(c.ingressClasses, o)
 			default:
 				panic(fmt.Sprintf("Unknown runtime object %+v %T", o, o))
@@ -69,7 +76,7 @@ func newClientMock(serverVersion string, paths ...string) clientMock {
 	return c
 }
 
-func (c clientMock) GetIngresses() []*networkingv1beta1.Ingress {
+func (c clientMock) GetIngresses() []*networkingv1.Ingress {
 	return c.ingresses
 }
 
@@ -117,7 +124,7 @@ func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, err
 	return nil, false, nil
 }
 
-func (c clientMock) GetIngressClasses() ([]*networkingv1beta1.IngressClass, error) {
+func (c clientMock) GetIngressClasses() ([]*networkingv1.IngressClass, error) {
 	return c.ingressClasses, nil
 }
 
@@ -125,6 +132,6 @@ func (c clientMock) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-cha
 	return c.watchChan, nil
 }
 
-func (c clientMock) UpdateIngressStatus(_ *networkingv1beta1.Ingress, _ []corev1.LoadBalancerIngress) error {
+func (c clientMock) UpdateIngressStatus(_ *networkingv1.Ingress, _ []corev1.LoadBalancerIngress) error {
 	return c.apiIngressStatusError
 }

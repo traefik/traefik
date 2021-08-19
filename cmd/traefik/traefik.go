@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/x509"
 	"encoding/json"
+	"fmt"
 	stdlog "log"
 	"net/http"
 	"os"
@@ -16,6 +18,7 @@ import (
 	"github.com/coreos/go-systemd/daemon"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/go-acme/lego/v4/challenge"
+	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/paerser/cli"
 	"github.com/traefik/traefik/v2/autogen/genstatic"
@@ -123,12 +126,6 @@ func runCmd(staticConfiguration *static.Configuration) error {
 
 	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
-	if staticConfiguration.Experimental != nil && staticConfiguration.Experimental.DevPlugin != nil {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, 30*time.Minute)
-		defer cancel()
-	}
-
 	if staticConfiguration.Ping != nil {
 		staticConfiguration.Ping.WithContext(ctx)
 	}
@@ -235,6 +232,20 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		return nil, err
 	}
 
+	// Providers plugins
+
+	for name, conf := range staticConfiguration.Providers.Plugin {
+		p, err := pluginBuilder.BuildProvider(name, conf)
+		if err != nil {
+			return nil, fmt.Errorf("plugin: failed to build provider: %w", err)
+		}
+
+		err = providerAggregator.AddProvider(p)
+		if err != nil {
+			return nil, fmt.Errorf("plugin: failed to add provider: %w", err)
+		}
+	}
+
 	// Metrics
 
 	metricRegistries := registerMetricClients(staticConfiguration.Metrics)
@@ -253,7 +264,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
 	chainBuilder := middleware.NewChainBuilder(*staticConfiguration, metricsRegistry, accessLog)
-	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder)
+	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder, metricsRegistry)
 
 	// Watcher
 
@@ -269,6 +280,11 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	watcher.AddListener(func(conf dynamic.Configuration) {
 		ctx := context.Background()
 		tlsManager.UpdateConfigs(ctx, conf.TLS.Stores, conf.TLS.Options, conf.TLS.Certificates)
+
+		gauge := metricsRegistry.TLSCertsNotAfterTimestampGauge()
+		for _, certificate := range tlsManager.GetCertificates() {
+			appendCertMetric(gauge, certificate)
+		}
 	})
 
 	// Metrics
@@ -441,6 +457,20 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 	}
 
 	return registries
+}
+
+func appendCertMetric(gauge gokitmetrics.Gauge, certificate *x509.Certificate) {
+	sort.Strings(certificate.DNSNames)
+
+	labels := []string{
+		"cn", certificate.Subject.CommonName,
+		"serial", certificate.SerialNumber.String(),
+		"sans", strings.Join(certificate.DNSNames, ","),
+	}
+
+	notAfter := float64(certificate.NotAfter.Unix())
+
+	gauge.With(labels...).Set(notAfter)
 }
 
 func setupAccessLog(conf *types.AccessLog) *accesslog.Handler {

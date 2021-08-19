@@ -46,7 +46,7 @@ func newServer(t *testing.T, addr string, handler Handler) {
 	addrL, err := net.ResolveUDPAddr("udp", addr)
 	require.NoError(t, err)
 
-	listener, err := Listen("udp", addrL)
+	listener, err := Listen("udp", addrL, 3*time.Second)
 	require.NoError(t, err)
 
 	for {

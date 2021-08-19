@@ -19,6 +19,7 @@ import (
 	"github.com/sirupsen/logrus"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/log"
+	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
@@ -210,6 +211,8 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 	core[RequestScheme] = "http"
 	if req.TLS != nil {
 		core[RequestScheme] = "https"
+		core[TLSVersion] = traefiktls.GetVersion(req.TLS)
+		core[TLSCipher] = traefiktls.GetCipherName(req.TLS)
 	}
 
 	core[ClientAddr] = req.RemoteAddr
