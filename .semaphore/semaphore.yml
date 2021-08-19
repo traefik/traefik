@@ -40,7 +40,7 @@ blocks:
         - name: Test Integration Container
           commands:
             - make pull-images
-            - mkdir -p static && touch static/index.html # Avoid generating webui
+            - mkdir -p webui/static && touch webui/static/index.html # Avoid generating webui
             - PRE_TARGET="" make binary
             - make test-integration-container
             - df -h
@@ -60,7 +60,7 @@ blocks:
       jobs:
         - name: Test Integration Host
           commands:
-            - mkdir -p static && touch static/index.html # Avoid generating webui
+            - mkdir -p webui/static && touch webui/static/index.html # Avoid generating webui
             - make test-integration-host
       epilogue:
         always:

@@ -48,7 +48,7 @@ jobs:
         run: curl -sfL https://raw.githubusercontent.com/client9/misspell/master/install-misspell.sh | sh -s -- -b $(go env GOPATH)/bin ${MISSSPELL_VERSION}
 
       - name: Avoid generating webui
-        run: mkdir -p static && touch static/index.html
+        run: mkdir -p webui/static && touch webui/static/index.html
 
       - name: Validate
         run: make validate
