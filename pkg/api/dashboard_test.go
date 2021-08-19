@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"testing/fstest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -66,27 +67,24 @@ func Test_ContentSecurityPolicy(t *testing.T) {
 		{
 			desc: "OK",
 			handler: DashboardHandler{
-				FS: fsMock(func(name string) (fs.File, error) {
-					return fileMock{name: name}, nil
-				}),
+				FS: fstest.MapFS{"foobar.html": &fstest.MapFile{
+					Mode:    0755,
+					ModTime: time.Now(),
+				}},
 			},
 			expected: http.StatusOK,
 		},
 		{
 			desc: "Not found",
 			handler: DashboardHandler{
-				FS: fsMock(func(name string) (fs.File, error) {
-					return nil, fs.ErrNotExist
-				}),
+				FS: fstest.MapFS{},
 			},
 			expected: http.StatusNotFound,
 		},
 		{
 			desc: "Internal server error",
 			handler: DashboardHandler{
-				FS: fsMock(func(name string) (fs.File, error) {
-					return nil, errors.New("oops")
-				}),
+				FS: errorFS{},
 			},
 			expected: http.StatusInternalServerError,
 		},
@@ -109,37 +107,9 @@ func Test_ContentSecurityPolicy(t *testing.T) {
 	}
 }
 
-type fsMock func(name string) (fs.File, error)
+type errorFS struct {}
 
-func (m fsMock) Open(name string) (fs.File, error) {
-	return m(name)
+func (e errorFS) Open(name string) (fs.File, error) {
+	return nil, errors.New("oops")
 }
 
-type fileMock struct {
-	name    string
-	content []byte
-}
-
-func (f fileMock) Stat() (fs.FileInfo, error) {
-	return fileInfoMock{name: f.name}, nil
-}
-
-func (f fileMock) Read(bytes []byte) (int, error) {
-	n := copy(bytes, f.content)
-	return n, nil
-}
-
-func (f fileMock) Close() error {
-	return nil
-}
-
-type fileInfoMock struct {
-	name string
-}
-
-func (f fileInfoMock) Name() string       { return f.name }
-func (f fileInfoMock) Size() int64        { return 0 }
-func (f fileInfoMock) Mode() fs.FileMode  { return 0 }
-func (f fileInfoMock) ModTime() time.Time { return time.Time{} }
-func (f fileInfoMock) IsDir() bool        { return false }
-func (f fileInfoMock) Sys() interface{}   { return nil }
