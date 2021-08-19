@@ -85,6 +85,7 @@ require (
 	go.elastic.co/apm/module/apmot v1.11.0
 	golang.org/x/mod v0.4.2
 	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
+	golang.org/x/sys v0.0.0-20210817190340-bfb29a6856f2 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	golang.org/x/tools v0.1.1
 	google.golang.org/grpc v1.27.1
@@ -109,5 +110,4 @@ replace (
 	github.com/gorilla/mux => github.com/containous/mux v0.0.0-20181024131434-c33f32e26898
 	github.com/mailgun/minheap => github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595
 	github.com/mailgun/multibuf => github.com/containous/multibuf v0.0.0-20190809014333-8b6c9a7e6bba
-	golang.org/x/sys => golang.org/x/sys v0.0.0-20210817190340-bfb29a6856f2
 )
