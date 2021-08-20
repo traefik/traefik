@@ -17,8 +17,9 @@ import (
 
 func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.TCPConfiguration {
 	conf := &dynamic.TCPConfiguration{
-		Routers:  map[string]*dynamic.TCPRouter{},
-		Services: map[string]*dynamic.TCPService{},
+		Routers:     map[string]*dynamic.TCPRouter{},
+		Middlewares: map[string]*dynamic.TCPMiddleware{},
+		Services:    map[string]*dynamic.TCPService{},
 	}
 
 	for _, ingressRouteTCP := range client.GetIngressRouteTCPs() {
@@ -52,6 +53,12 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				continue
 			}
 
+			mds, err := p.makeMiddlewareTCPKeys(ctx, ingressRouteTCP.Namespace, route.Middlewares)
+			if err != nil {
+				logger.Errorf("Failed to create middleware keys: %v", err)
+				continue
+			}
+
 			serviceName := makeID(ingressRouteTCP.Namespace, key)
 
 			for _, service := range route.Services {
@@ -71,7 +78,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 					break
 				}
 
-				serviceKey := fmt.Sprintf("%s-%s-%d", serviceName, service.Name, service.Port)
+				serviceKey := fmt.Sprintf("%s-%s-%s", serviceName, service.Name, &service.Port)
 				conf.Services[serviceKey] = balancerServerTCP
 
 				srv := dynamic.TCPWRRService{Name: serviceKey}
@@ -88,6 +95,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 
 			conf.Routers[serviceName] = &dynamic.TCPRouter{
 				EntryPoints: ingressRouteTCP.Spec.EntryPoints,
+				Middlewares: mds,
 				Rule:        route.Match,
 				Service:     serviceName,
 			}
@@ -123,6 +131,35 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 	}
 
 	return conf
+}
+
+func (p *Provider) makeMiddlewareTCPKeys(ctx context.Context, ingRouteTCPNamespace string, middlewares []v1alpha1.ObjectReference) ([]string, error) {
+	var mds []string
+
+	for _, mi := range middlewares {
+		if strings.Contains(mi.Name, providerNamespaceSeparator) {
+			if len(mi.Namespace) > 0 {
+				log.FromContext(ctx).
+					WithField(log.MiddlewareName, mi.Name).
+					Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
+			}
+			mds = append(mds, mi.Name)
+			continue
+		}
+
+		ns := ingRouteTCPNamespace
+		if len(mi.Namespace) > 0 {
+			if !isNamespaceAllowed(p.AllowCrossNamespace, ingRouteTCPNamespace, mi.Namespace) {
+				return nil, fmt.Errorf("middleware %s/%s is not in the IngressRouteTCP namespace %s", mi.Namespace, mi.Name, ingRouteTCPNamespace)
+			}
+
+			ns = mi.Namespace
+		}
+
+		mds = append(mds, makeID(ns, mi.Name))
+	}
+
+	return mds, nil
 }
 
 func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace string, service v1alpha1.ServiceTCP) (*dynamic.TCPService, error) {

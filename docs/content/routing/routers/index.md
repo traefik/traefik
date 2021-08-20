@@ -239,6 +239,7 @@ The table below lists all the available matchers:
 | ```Path(`/path`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`, ...)```         | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
 | ```PathPrefix(`/products/`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`)```   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
 | ```Query(`foo=bar`, `bar=baz`)```                                      | Match Query String parameters. It accepts a sequence of key=value pairs.                                       |
+| ```ClientIP(`10.0.0.0/16`, `::1`)```                                   | Match if the request client IP is one of the given IP/CIDR. It accepts IPv4, IPv6 and CIDR formats.            |
 
 !!! important "Non-ASCII Domain Names"
 
@@ -256,6 +257,10 @@ The table below lists all the available matchers:
 
     You can combine multiple matchers using the AND (`&&`) and OR (`||`) operators. You can also use parenthesis.
 
+!!! info "Invert a matcher"
+
+    You can invert a matcher by using the `!` operator.
+
 !!! important "Rule, Middleware, and Services"
 
     The rule is evaluated "before" any middleware has the opportunity to work, and "before" the request is forwarded to the service.
@@ -267,6 +272,10 @@ The table below lists all the available matchers:
     Use a `*Prefix*` matcher if your service listens on a particular base path but also serves requests on sub-paths.
     For instance, `PathPrefix: /products` would match `/products` but also `/products/shoes` and `/products/shirts`.
     Since the path is forwarded as-is, your service is expected to listen on `/products`.
+
+!!! info "ClientIP matcher"
+
+    The `ClientIP` matcher will only match the request client IP and does not use the `X-Forwarded-For` header for matching.
 
 ### Priority
 
@@ -799,6 +808,41 @@ If you want to limit the router scope to a set of entry points, set the entry po
     Hence, only TLS routers will be able to specify a domain name with that rule.
     However, non-TLS routers will have to explicitly use that rule with `*` (every domain) to state that every non-TLS request will be handled by the router.
 
+### Middlewares
+
+You can attach a list of [middlewares](../../middlewares/overview.md) to each TCP router.
+The middlewares will take effect only if the rule matches, and before connecting to the service.
+
+!!! warning "The character `@` is not allowed to be used in the middleware name."
+
+!!! tip "Middlewares order"
+
+    Middlewares are applied in the same order as their declaration in **router**.
+
+??? example "With a [middleware](../../middlewares/tcp/overview.md) -- using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [tcp.routers]
+      [tcp.routers.my-router]
+        rule = "HostSNI(`*`)"
+        # declared elsewhere
+        middlewares = ["ipwhitelist"]
+        service = "service-foo"
+    ```
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    tcp:
+      routers:
+        my-router:
+          rule: "HostSNI(`*`)"
+          # declared elsewhere
+          middlewares:
+          - ipwhitelist
+          service: service-foo
+    ```
+
 ### Services
 
 You must attach a TCP [service](../services/index.md) per TCP router.
@@ -993,8 +1037,9 @@ So UDP "routers" at this time are pretty much only load-balancers in one form or
 	It basically means that some state is kept about an ongoing communication between a client and a backend,
 	notably so that the proxy knows where to forward a response packet from a backend.
 	As expected, a `timeout` is associated to each of these sessions,
-	so that they get cleaned out if they go through a period of inactivity longer than a given duration (that is hardcoded to 3 seconds for now).
-	Making this timeout configurable will be considered later if we get more usage feedback on this matter.
+	so that they get cleaned out if they go through a period of inactivity longer than a given duration. 
+	Timeout can be configured using the `entryPoints.name.udp.timeout` option as described 
+	under [entry points](../entrypoints/#udp-options).
 
 ### EntryPoints
 

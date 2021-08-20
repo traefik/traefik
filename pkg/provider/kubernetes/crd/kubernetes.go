@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -23,7 +24,9 @@ import (
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
@@ -218,6 +221,24 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			conf.HTTP.Services[serviceName] = errorPageService
 		}
 
+		plugin, err := createPluginMiddleware(middleware.Spec.Plugin)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading plugins middleware: %v", err)
+			continue
+		}
+
+		rateLimit, err := createRateLimitMiddleware(middleware.Spec.RateLimit)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading rateLimit middleware: %v", err)
+			continue
+		}
+
+		retry, err := createRetryMiddleware(middleware.Spec.Retry)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading retry middleware: %v", err)
+			continue
+		}
+
 		conf.HTTP.Middlewares[id] = &dynamic.Middleware{
 			AddPrefix:         middleware.Spec.AddPrefix,
 			StripPrefix:       middleware.Spec.StripPrefix,
@@ -228,7 +249,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			IPWhiteList:       middleware.Spec.IPWhiteList,
 			Headers:           middleware.Spec.Headers,
 			Errors:            errorPage,
-			RateLimit:         middleware.Spec.RateLimit,
+			RateLimit:         rateLimit,
 			RedirectRegex:     middleware.Spec.RedirectRegex,
 			RedirectScheme:    middleware.Spec.RedirectScheme,
 			BasicAuth:         basicAuth,
@@ -239,9 +260,17 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			CircuitBreaker:    middleware.Spec.CircuitBreaker,
 			Compress:          middleware.Spec.Compress,
 			PassTLSClientCert: middleware.Spec.PassTLSClientCert,
-			Retry:             middleware.Spec.Retry,
+			Retry:             retry,
 			ContentType:       middleware.Spec.ContentType,
-			Plugin:            middleware.Spec.Plugin,
+			Plugin:            plugin,
+		}
+	}
+
+	for _, middlewareTCP := range client.GetMiddlewareTCPs() {
+		id := provider.Normalize(makeID(middlewareTCP.Namespace, middlewareTCP.Name))
+
+		conf.TCP.Middlewares[id] = &dynamic.TCPMiddleware{
+			IPWhiteList: middlewareTCP.Spec.IPWhiteList,
 		}
 	}
 
@@ -323,18 +352,18 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	return conf
 }
 
-func getServicePort(svc *corev1.Service, port int32) (*corev1.ServicePort, error) {
+func getServicePort(svc *corev1.Service, port intstr.IntOrString) (*corev1.ServicePort, error) {
 	if svc == nil {
 		return nil, errors.New("service is not defined")
 	}
 
-	if port == 0 {
+	if (port.Type == intstr.Int && port.IntVal == 0) || (port.Type == intstr.String && port.StrVal == "") {
 		return nil, errors.New("ingressRoute service port not defined")
 	}
 
 	hasValidPort := false
 	for _, p := range svc.Spec.Ports {
-		if p.Port == port {
+		if (port.Type == intstr.Int && port.IntVal == p.Port) || (port.Type == intstr.String && port.StrVal == p.Name) {
 			return &p, nil
 		}
 
@@ -343,8 +372,8 @@ func getServicePort(svc *corev1.Service, port int32) (*corev1.ServicePort, error
 		}
 	}
 
-	if svc.Spec.Type != corev1.ServiceTypeExternalName {
-		return nil, fmt.Errorf("service port not found: %d", port)
+	if svc.Spec.Type != corev1.ServiceTypeExternalName || port.Type == intstr.String {
+		return nil, fmt.Errorf("service port not found: %s", &port)
 	}
 
 	if hasValidPort {
@@ -352,7 +381,63 @@ func getServicePort(svc *corev1.Service, port int32) (*corev1.ServicePort, error
 			Warning("The port %d from IngressRoute doesn't match with ports defined in the ExternalName service %s/%s.", port, svc.Namespace, svc.Name)
 	}
 
-	return &corev1.ServicePort{Port: port}, nil
+	return &corev1.ServicePort{Port: port.IntVal}, nil
+}
+
+func createPluginMiddleware(plugins map[string]apiextensionv1.JSON) (map[string]dynamic.PluginConf, error) {
+	if plugins == nil {
+		return nil, nil
+	}
+
+	data, err := json.Marshal(plugins)
+	if err != nil {
+		return nil, err
+	}
+
+	pc := map[string]dynamic.PluginConf{}
+	err = json.Unmarshal(data, &pc)
+	if err != nil {
+		return nil, err
+	}
+
+	return pc, nil
+}
+
+func createRateLimitMiddleware(rateLimit *v1alpha1.RateLimit) (*dynamic.RateLimit, error) {
+	if rateLimit == nil {
+		return nil, nil
+	}
+
+	rl := &dynamic.RateLimit{Average: rateLimit.Average}
+	rl.SetDefaults()
+
+	if rateLimit.Burst != nil {
+		rl.Burst = *rateLimit.Burst
+	}
+
+	if rateLimit.Period != nil {
+		err := rl.Period.Set(rateLimit.Period.String())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return rl, nil
+}
+
+func createRetryMiddleware(retry *v1alpha1.Retry) (*dynamic.Retry, error) {
+	if retry == nil {
+		return nil, nil
+	}
+
+	r := &dynamic.Retry{Attempts: retry.Attempts}
+
+	err := r.InitialInterval.Set(retry.InitialInterval.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return r, nil
 }
 
 func (p *Provider) createErrorPageMiddleware(client Client, namespace string, errorPage *v1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
@@ -423,20 +508,29 @@ func loadCASecret(namespace, secretName string, k8sClient Client) (string, error
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch secret '%s/%s': %w", namespace, secretName, err)
 	}
+
 	if !ok {
 		return "", fmt.Errorf("secret '%s/%s' not found", namespace, secretName)
 	}
+
 	if secret == nil {
 		return "", fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
 	}
-	if len(secret.Data) != 1 {
-		return "", fmt.Errorf("found %d elements for secret '%s/%s', must be single element exactly", len(secret.Data), namespace, secretName)
+
+	tlsCAData, err := getCABlocks(secret, namespace, secretName)
+	if err == nil {
+		return tlsCAData, nil
 	}
 
-	for _, v := range secret.Data {
-		return string(v), nil
+	// TODO: remove this behavior in the next major version (v3)
+	if len(secret.Data) == 1 {
+		// For backwards compatibility, use the only available secret data as CA if both 'ca.crt' and 'tls.ca' are missing.
+		for _, v := range secret.Data {
+			return string(v), nil
+		}
 	}
-	return "", nil
+
+	return "", fmt.Errorf("could not find CA block: %w", err)
 }
 
 func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, string, error) {
@@ -444,14 +538,13 @@ func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, 
 	if err != nil {
 		return "", "", fmt.Errorf("failed to fetch secret '%s/%s': %w", namespace, secretName, err)
 	}
+
 	if !exists {
 		return "", "", fmt.Errorf("secret '%s/%s' does not exist", namespace, secretName)
 	}
+
 	if secret == nil {
 		return "", "", fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
-	}
-	if len(secret.Data) != 2 {
-		return "", "", fmt.Errorf("found %d elements for secret '%s/%s', must be two elements exactly", len(secret.Data), namespace, secretName)
 	}
 
 	return getCertificateBlocks(secret, namespace, secretName)
@@ -606,7 +699,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 
 		id := makeID(tlsOption.Namespace, tlsOption.Name)
 		// If the name is default, we override the default config.
-		if tlsOption.Name == "default" {
+		if tlsOption.Name == tls.DefaultTLSConfigName {
 			id = tlsOption.Name
 			nsDefault = append(nsDefault, tlsOption.Namespace)
 		}
@@ -625,7 +718,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 	}
 
 	if len(nsDefault) > 1 {
-		delete(tlsOptions, "default")
+		delete(tlsOptions, tls.DefaultTLSConfigName)
 		log.FromContext(ctx).Errorf("Default TLS Options defined in multiple namespaces: %v", nsDefault)
 	}
 
@@ -665,7 +758,7 @@ func buildTLSStores(ctx context.Context, client Client) map[string]tls.Store {
 
 		id := makeID(tlsStore.Namespace, tlsStore.Name)
 		// If the name is default, we override the default config.
-		if tlsStore.Name == "default" {
+		if tlsStore.Name == tls.DefaultTLSStoreName {
 			id = tlsStore.Name
 			nsDefault = append(nsDefault, tlsStore.Namespace)
 		}
@@ -678,7 +771,7 @@ func buildTLSStores(ctx context.Context, client Client) map[string]tls.Store {
 	}
 
 	if len(nsDefault) > 1 {
-		delete(tlsStores, "default")
+		delete(tlsStores, tls.DefaultTLSStoreName)
 		log.FromContext(ctx).Errorf("Default TLS Stores defined in multiple namespaces: %v", nsDefault)
 	}
 
@@ -784,16 +877,16 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 
 func getCABlocks(secret *corev1.Secret, namespace, secretName string) (string, error) {
 	tlsCrtData, tlsCrtExists := secret.Data["tls.ca"]
-	if !tlsCrtExists {
-		return "", fmt.Errorf("the tls.ca entry is missing from secret %s/%s", namespace, secretName)
+	if tlsCrtExists {
+		return string(tlsCrtData), nil
 	}
 
-	cert := string(tlsCrtData)
-	if cert == "" {
-		return "", fmt.Errorf("the tls.ca entry in secret %s/%s is empty", namespace, secretName)
+	tlsCrtData, tlsCrtExists = secret.Data["ca.crt"]
+	if tlsCrtExists {
+		return string(tlsCrtData), nil
 	}
 
-	return cert, nil
+	return "", fmt.Errorf("secret %s/%s contains neither tls.ca nor ca.crt", namespace, secretName)
 }
 
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {

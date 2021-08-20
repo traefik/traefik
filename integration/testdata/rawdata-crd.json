@@ -317,7 +317,17 @@
 		}
 	},
 	"udpServices": {
-		"default-test3.route-0@kubernetescrd": {
+		"default-test3.route-0-externalname-svc-9090@kubernetescrd": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"address": "domain.com:9090"
+					}
+				]
+			},
+			"status": "enabled"
+		},
+		"default-test3.route-0-whoamiudp-8090@kubernetescrd": {
 			"loadBalancer": {
 				"servers": [
 					{
@@ -325,6 +335,21 @@
 					},
 					{
 						"address": "10.42.0.9:8090"
+					}
+				]
+			},
+			"status": "enabled"
+		},
+		"default-test3.route-0@kubernetescrd": {
+			"weighted": {
+				"services": [
+					{
+						"name": "default-test3.route-0-whoamiudp-8090",
+						"weight": 1
+					},
+					{
+						"name": "default-test3.route-0-externalname-svc-9090",
+						"weight": 1
 					}
 				]
 			},

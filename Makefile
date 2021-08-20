@@ -7,7 +7,7 @@ SHA := $(shell git rev-parse HEAD)
 VERSION_GIT := $(if $(TAG_NAME),$(TAG_NAME),$(SHA))
 VERSION := $(if $(VERSION),$(VERSION),$(VERSION_GIT))
 
-BIND_DIR := "dist"
+BIND_DIR := dist
 
 GIT_BRANCH := $(subst heads/,,$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null))
 TRAEFIK_DEV_IMAGE := traefik-dev$(if $(GIT_BRANCH),:$(subst /,-,$(GIT_BRANCH)))
@@ -144,10 +144,14 @@ docs-pull-images:
 generate-crd:
 	@$(CURDIR)/script/code-gen.sh
 
+## Generate code from dynamic configuration https://github.com/traefik/genconf
+generate-genconf:
+	go run ./cmd/internal/gen/
+
 ## Create packages for the release
 release-packages: generate-webui $(PRE_TARGET)
 	rm -rf dist
-	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_NOTTY)) goreleaser release --skip-publish --timeout="60m"
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_NOTTY)) goreleaser release --skip-publish --timeout="90m"
 	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_NOTTY)) tar cfz dist/traefik-${VERSION}.src.tar.gz \
 		--exclude-vcs \
 		--exclude .idea \
