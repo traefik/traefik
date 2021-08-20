@@ -1327,6 +1327,11 @@ func (in *TLSOptionSpec) DeepCopyInto(out *TLSOptionSpec) {
 		copy(*out, *in)
 	}
 	in.ClientAuth.DeepCopyInto(&out.ClientAuth)
+	if in.ALPNProtocols != nil {
+		in, out := &in.ALPNProtocols, &out.ALPNProtocols
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
