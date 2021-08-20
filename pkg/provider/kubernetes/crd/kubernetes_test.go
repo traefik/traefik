@@ -616,6 +616,11 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							},
 							SniStrict:                true,
 							PreferServerCipherSuites: true,
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -678,6 +683,11 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
 							SniStrict: true,
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -739,6 +749,11 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
 							SniStrict: true,
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -789,6 +804,11 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Options: map[string]tls.Options{
 						"default-foo": {
 							MinVersion: "VersionTLS12",
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -839,6 +859,11 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Options: map[string]tls.Options{
 						"default-foo": {
 							MinVersion: "VersionTLS12",
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -2539,6 +2564,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 							},
 							SniStrict:                true,
 							PreferServerCipherSuites: true,
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -2648,6 +2678,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 							},
 							SniStrict:                true,
 							PreferServerCipherSuites: true,
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -2716,6 +2751,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
 							SniStrict: true,
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -2779,6 +2819,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
 							SniStrict: true,
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -2831,6 +2876,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Options: map[string]tls.Options{
 						"default-foo": {
 							MinVersion: "VersionTLS12",
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -2883,6 +2933,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Options: map[string]tls.Options{
 						"default-foo": {
 							MinVersion: "VersionTLS12",
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
