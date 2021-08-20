@@ -703,6 +703,12 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 			id = tlsOption.Name
 			nsDefault = append(nsDefault, tlsOption.Namespace)
 		}
+
+		alpnProtocols := tls.DefaultTLSOptions.ALPNProtocols
+		if len(tlsOption.Spec.ALPNProtocols) > 0 {
+			alpnProtocols = tlsOption.Spec.ALPNProtocols
+		}
+
 		tlsOptions[id] = tls.Options{
 			MinVersion:       tlsOption.Spec.MinVersion,
 			MaxVersion:       tlsOption.Spec.MaxVersion,
@@ -714,6 +720,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 			},
 			SniStrict:                tlsOption.Spec.SniStrict,
 			PreferServerCipherSuites: tlsOption.Spec.PreferServerCipherSuites,
+			ALPNProtocols:            alpnProtocols,
 		}
 	}
 
