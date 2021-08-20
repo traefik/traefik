@@ -27,6 +27,7 @@ type TLSOptionSpec struct {
 	ClientAuth               ClientAuth `json:"clientAuth,omitempty"`
 	SniStrict                bool       `json:"sniStrict,omitempty"`
 	PreferServerCipherSuites bool       `json:"preferServerCipherSuites,omitempty"`
+	ALPNProtocols            []string   `json:"alpnProtocols,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

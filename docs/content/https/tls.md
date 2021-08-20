@@ -399,6 +399,40 @@ spec:
   preferServerCipherSuites: true
 ```
 
+### ALPN Protocols
+
+This option allows to specify the list of Application Level Protocols.
+The server will use this list during the ALPN negotiation with the client.
+Please note that this is enabled automatically when `minVersion` or `maxVersion` are set.
+
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
+tls:
+  options:
+    default:
+      preferServerCipherSuites: true
+```
+
+```toml tab="File (TOML)"
+# Dynamic configuration
+
+[tls.options]
+  [tls.options.default]
+    preferServerCipherSuites = true
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  preferServerCipherSuites: true
+```
+
 ### Client Authentication (mTLS)
 
 Traefik supports mutual authentication, through the `clientAuth` section.
