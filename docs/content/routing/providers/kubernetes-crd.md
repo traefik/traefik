@@ -1506,6 +1506,8 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
           - secret-ca2
         clientAuthType: VerifyClientCertIfGiven     # [7]
       sniStrict: true                               # [8]
+      alpnProtocols:                                # [9]
+        - foobar
     ```
 
 | Ref | Attribute                   | Purpose                                                                                                                                                                                                                    |
@@ -1518,6 +1520,7 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
 | [6] | `clientAuth.secretNames`    | list of names of the referenced Kubernetes [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/) (in TLSOption namespace). The secret must contain a certificate under either a `tls.ca` or a `ca.crt` key. |
 | [7] | `clientAuth.clientAuthType` | defines the client authentication type to apply. The available values are: `NoClientCert`, `RequestClientCert`, `VerifyClientCertIfGiven` and `RequireAndVerifyClientCert`                                                 |
 | [8] | `sniStrict`                 | if `true`, Traefik won't allow connections from clients connections that do not specify a server_name extension                                                                                                            |
+| [9] | `alpnProtocols`             | List of supported [application level protocols](../../https/tls.md#alpn-protocols) for the TLS handshake, in order of preference.                                                                                          |
 
 !!! info "CA Secret"
 
