@@ -76,7 +76,13 @@ func TestNewConfigurationWatcher(t *testing.T) {
 			},
 			TLS: &dynamic.TLSConfiguration{
 				Options: map[string]tls.Options{
-					"default": {},
+					"default": {
+						ALPNProtocols: []string{
+							"h2",
+							"http/1.1",
+							"acme-tls/1",
+						},
+					},
 				},
 				Stores: map[string]tls.Store{},
 			},
@@ -236,7 +242,13 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Options: map[string]tls.Options{
-				"default": {},
+				"default": {
+					ALPNProtocols: []string{
+						"h2",
+						"http/1.1",
+						"acme-tls/1",
+					},
+				},
 			},
 			Stores: map[string]tls.Store{},
 		},
@@ -292,7 +304,13 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Options: map[string]tls.Options{
-				"default": {},
+				"default": {
+					ALPNProtocols: []string{
+						"h2",
+						"http/1.1",
+						"acme-tls/1",
+					},
+				},
 			},
 			Stores: map[string]tls.Store{},
 		},
