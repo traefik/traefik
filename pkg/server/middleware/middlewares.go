@@ -127,6 +127,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	// CasbinAuth
+	if config.CasbinAuth != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return auth.NewCasbin(ctx, next, *config.CasbinAuth, middlewareName)
+		}
+	}
+
 	// Buffering
 	if config.Buffering != nil {
 		if middleware != nil {
