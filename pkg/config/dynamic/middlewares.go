@@ -28,6 +28,7 @@ type Middleware struct {
 	RedirectRegex     *RedirectRegex     `json:"redirectRegex,omitempty" toml:"redirectRegex,omitempty" yaml:"redirectRegex,omitempty" export:"true"`
 	RedirectScheme    *RedirectScheme    `json:"redirectScheme,omitempty" toml:"redirectScheme,omitempty" yaml:"redirectScheme,omitempty" export:"true"`
 	BasicAuth         *BasicAuth         `json:"basicAuth,omitempty" toml:"basicAuth,omitempty" yaml:"basicAuth,omitempty" export:"true"`
+	CasbinAuth        *CasbinAuth        `json:"casbinAuth,omitempty" toml:"casbinAuth,omitempty" yaml:"casbinAuth,omitempty" export:"true"`
 	DigestAuth        *DigestAuth        `json:"digestAuth,omitempty" toml:"digestAuth,omitempty" yaml:"digestAuth,omitempty" export:"true"`
 	ForwardAuth       *ForwardAuth       `json:"forwardAuth,omitempty" toml:"forwardAuth,omitempty" yaml:"forwardAuth,omitempty" export:"true"`
 	InFlightReq       *InFlightReq       `json:"inFlightReq,omitempty" toml:"inFlightReq,omitempty" yaml:"inFlightReq,omitempty" export:"true"`
@@ -72,6 +73,11 @@ type BasicAuth struct {
 	Realm        string `json:"realm,omitempty" toml:"realm,omitempty" yaml:"realm,omitempty"`
 	RemoveHeader bool   `json:"removeHeader,omitempty" toml:"removeHeader,omitempty" yaml:"removeHeader,omitempty" export:"true"`
 	HeaderField  string `json:"headerField,omitempty" toml:"headerField,omitempty" yaml:"headerField,omitempty" export:"true"`
+}
+
+type CasbinAuth struct {
+	ModelPath  string `json:"modelPath,omitempty" toml:"modelPath,omitempty" yaml:"modelPath,omitempty"`
+	PolicyPath string `json:"policyPath,omitempty" toml:"policyPath,omitempty" yaml:"policyPath,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
