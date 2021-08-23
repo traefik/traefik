@@ -224,21 +224,23 @@ func newReusableRequest(req *http.Request, maxBodySize int64) (*reusableRequest,
 	// the request body is larger than what we allow for the mirrors.
 	body := make([]byte, maxBodySize+1)
 	n, err := io.ReadFull(req.Body, body)
-	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
+	if err == nil {
+		// err == nil means data size > maxBodySize
+		return nil, body[:n], errBodyTooLarge
+	}
+
+	// unexpected error
+	if !(errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, io.EOF)) {
 		return nil, nil, err
 	}
 
-	// we got an ErrUnexpectedEOF, which means there was less than maxBodySize data to read,
+	// we got an ErrUnexpectedEOF or an EOF error,
+	// which means there was less than maxBodySize data to read,
 	// which permits us sending also to all the mirrors later.
-	if errors.Is(err, io.ErrUnexpectedEOF) {
-		return &reusableRequest{
-			req:  req,
-			body: body[:n],
-		}, nil, nil
-	}
-
-	// err == nil , which means data size > maxBodySize
-	return nil, body[:n], errBodyTooLarge
+	return &reusableRequest{
+		req:  req,
+		body: body[:n],
+	}, nil, nil
 }
 
 func (rr reusableRequest) clone(ctx context.Context) *http.Request {
