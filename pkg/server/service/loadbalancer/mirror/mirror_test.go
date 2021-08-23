@@ -248,6 +248,17 @@ func TestCloneRequest(t *testing.T) {
 		assert.Nil(t, expectedBytes)
 	})
 
+	t.Run("valid GET case with maxBodySize", func(t *testing.T) {
+		bb := []byte(``)
+		buf := bytes.NewBuffer(bb)
+		req, err := http.NewRequest(http.MethodGet, "/", buf)
+		assert.NoError(t, err)
+
+		_, expectedBytes, err := newReusableRequest(req, 20)
+		assert.NoError(t, err)
+		assert.Nil(t, expectedBytes)
+	})
+
 	t.Run("no request given", func(t *testing.T) {
 		_, _, err := newReusableRequest(nil, defaultMaxBodySize)
 		assert.Error(t, err)
