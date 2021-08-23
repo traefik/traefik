@@ -70,12 +70,14 @@ spec:
       http:
         paths:
           - path: /bar
+            pathType: Exact
             backend:
               service:
                 name:  service1
                 port:
                   number: 80
           - path: /foo
+            pathType: Exact
             backend:
               service:
                 name:  service1
@@ -312,6 +314,7 @@ Otherwise, Ingresses missing the annotation, having an empty value, or the value
         http:
           paths:
           - path: "/example"
+            pathType: Exact
             backend:
               service:
                 name: "example-service"

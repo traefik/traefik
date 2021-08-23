@@ -99,12 +99,14 @@ which in turn will create the resulting routers, services, handlers, etc.
           http:
             paths:
               - path: /bar
+                pathType: Exact
                 backend:
                   service:
                     name:  whoami
                     port:
                       number: 80
               - path: /foo
+                pathType: Exact
                 backend:
                   service:
                     name:  whoami
@@ -483,12 +485,14 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
           http:
             paths:
               - path: /bar
+                pathType: Exact
                 backend:
                   service:
                     name:  whoami
                     port:
                       number: 80
               - path: /foo
+                pathType: Exact
                 backend:
                   service:
                     name:  whoami
@@ -690,12 +694,14 @@ For more options, please refer to the available [annotations](#on-ingress).
           http:
             paths:
               - path: /bar
+                pathType: Exact
                 backend:
                   service:
                     name:  whoami
                     port:
                       number: 80
               - path: /foo
+                pathType: Exact
                 backend:
                   service:
                     name:  whoami
@@ -836,6 +842,7 @@ For more options, please refer to the available [annotations](#on-ingress).
         http:
           paths:
           - path: /bar
+            pathType: Exact
             backend:
               service:
                 name:  service1
