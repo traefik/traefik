@@ -664,6 +664,9 @@ func (p *Provider) refreshCertificates() {
 			Certificate: traefiktls.Certificate{
 				CertFile: traefiktls.FileOrContent(cert.Certificate.Certificate),
 				KeyFile:  traefiktls.FileOrContent(cert.Key),
+				OCSP: traefiktls.OCSPConfig{
+					DisableStapling: true,
+				},
 			},
 			Stores: []string{cert.Store},
 		}
