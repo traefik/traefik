@@ -1,3 +1,14 @@
+## [v2.5.1](https://github.com/traefik/traefik/tree/v2.5.1) (2021-08-20)
+[All Commits](https://github.com/traefik/traefik/compare/v2.5.0...v2.5.1)
+
+**Bug fixes:**
+- **[middleware,http3]** Conditional CloseNotify in header middleware ([#8374](https://github.com/traefik/traefik/pull/8374) by [juliens](https://github.com/juliens))
+- **[tls,tcp,k8s/crd,k8s]** Makes ALPN protocols configurable ([#8383](https://github.com/traefik/traefik/pull/8383) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- **[k8s]** Adds MiddlewareTCP CRD documentation ([#8369](https://github.com/traefik/traefik/pull/8369) by [perosb](https://github.com/perosb))
+- **[middleware]** Adds ContentType to middleware&#39;s overview table ([#8350](https://github.com/traefik/traefik/pull/8350) by [euidong](https://github.com/euidong))
+
 ## [v2.5.0](https://github.com/traefik/traefik/tree/v2.5.0) (2021-08-17)
 [All Commits](https://github.com/traefik/traefik/compare/v2.4.0-rc1...v2.5.0)
 
