@@ -20,5 +20,12 @@ docker run --rm \
            -w "/go/src/${PROJECT_MODULE}" \
            "${IMAGE_NAME}" $cmd
 
+cmd="deepcopy-gen --input-dirs ${PROJECT_MODULE}/${MODULE_VERSION}/pkg/config/dynamic --input-dirs ${PROJECT_MODULE}/${MODULE_VERSION}/pkg/tls --input-dirs ${PROJECT_MODULE}/${MODULE_VERSION}/pkg/types --output-package ${PROJECT_MODULE}/${MODULE_VERSION} -O zz_generated.deepcopy --go-header-file=/go/src/${PROJECT_MODULE}/script/boilerplate.go.tmpl"
+
+docker run --rm \
+           -v "$(pwd):/go/src/${PROJECT_MODULE}" \
+           -w "/go/src/${PROJECT_MODULE}" \
+           "${IMAGE_NAME}" $cmd
+
 cp -r $(pwd)/${MODULE_VERSION}/* $(pwd)
 rm -rf $(pwd)/${MODULE_VERSION}
