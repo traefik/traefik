@@ -28,6 +28,9 @@ func (c *connectCert) getLeaf() traefiktls.Certificate {
 	return traefiktls.Certificate{
 		CertFile: traefiktls.FileOrContent(c.leaf.cert),
 		KeyFile:  traefiktls.FileOrContent(c.leaf.key),
+		OCSPConfig: traefiktls.OCSPConfig{
+			DisableStapling: false,
+		},
 	}
 }
 
