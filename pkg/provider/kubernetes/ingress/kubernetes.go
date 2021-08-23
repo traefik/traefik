@@ -428,6 +428,9 @@ func getCertificates(ctx context.Context, ingress *networkingv1.Ingress, k8sClie
 				Certificate: tls.Certificate{
 					CertFile: tls.FileOrContent(cert),
 					KeyFile:  tls.FileOrContent(key),
+					OCSPConfig: tls.OCSPConfig{
+						DisableStapling: false,
+					},
 				},
 			}
 		}
