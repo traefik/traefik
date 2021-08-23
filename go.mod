@@ -85,6 +85,7 @@ require (
 	go.elastic.co/apm/module/apmot v1.11.0
 	golang.org/x/mod v0.4.2
 	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
+	golang.org/x/sys v0.0.0-20210817190340-bfb29a6856f2 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	golang.org/x/tools v0.1.1
 	google.golang.org/grpc v1.27.1
