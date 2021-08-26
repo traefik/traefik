@@ -1455,6 +1455,11 @@ func (in *TLSStoreSpec) DeepCopyInto(out *TLSStoreSpec) {
 		*out = make([]Certificate, len(*in))
 		copy(*out, *in)
 	}
+	if in.DefaultCertDomain != nil {
+		in, out := &in.DefaultCertDomain, &out.DefaultCertDomain
+		*out = new(types.Domain)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
