@@ -1,5 +1,7 @@
 package tls
 
+import "github.com/traefik/traefik/v2/pkg/types"
+
 const certificateHeader = "-----BEGIN CERTIFICATE-----\n"
 
 // +k8s:deepcopy-gen=true
@@ -36,7 +38,9 @@ func (o *Options) SetDefaults() {
 
 // Store holds the options for a given Store.
 type Store struct {
-	DefaultCertificate *Certificate `json:"defaultCertificate,omitempty" toml:"defaultCertificate,omitempty" yaml:"defaultCertificate,omitempty" export:"true"`
+	DefaultCertificate  *Certificate  `json:"defaultCertificate,omitempty" toml:"defaultCertificate,omitempty" yaml:"defaultCertificate,omitempty" export:"true"`
+	DefaultCertResolver string        `json:"defaultCertResolver,omitempty" toml:"defaultCertResolver,omitempty" yaml:"defaultCertResolver,omitempty" export:"true"`
+	DefaultCertDomain   *types.Domain `json:"defaultCertDomain,omitempty" toml:"defaultCertDomain,omitempty" yaml:"defaultCertDomain,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

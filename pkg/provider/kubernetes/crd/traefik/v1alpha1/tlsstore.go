@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"github.com/traefik/traefik/v2/pkg/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -29,6 +30,10 @@ type TLSStoreSpec struct {
 	DefaultCertificate *Certificate `json:"defaultCertificate,omitempty"`
 	// Certificates is a list of secret names, each secret holding a key/certificate pair to add to the store.
 	Certificates []Certificate `json:"certificates,omitempty"`
+	// DefaultCertResolver is the name of the resolver that will be used to issue the DefaultCertificate.
+	DefaultCertResolver string `json:"defaultCertResolver,omitempty"`
+	// DefaultCertDomain is the domain definition for the DefaultCertificate.
+	DefaultCertDomain *types.Domain `json:"defaultCertDomain,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
