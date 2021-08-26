@@ -62,6 +62,57 @@ http:
     pem = true
 ```
 
+Pass the SHA1 fingerprint in the `SSL-CLIENT-FINGERPRINT` header.
+
+```yaml tab="Docker"
+# Pass the SHA1 fingerprint in the `SSL-CLIENT-FINGERPRINT` header.
+labels:
+  - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.fingerprint=true"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: addprefix
+spec:
+  passTLSClientCert:
+    fingerprint:: true
+```
+
+```yaml tab="Consul Catalog"
+# Pass the SHA1 fingerprint in the `SSL-CLIENT-FINGERPRINT` header.
+- "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.fingerprint=true"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.fingerprint": "true"
+}
+```
+
+```yaml tab="Rancher"
+# Pass the SHA1 fingerprint in the `SSL-CLIENT-FINGERPRINT` header.
+labels:
+  - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.fingerprint=true"
+```
+
+```yaml tab="File (YAML)"
+# Pass the SHA1 fingerprint in the `SSL-CLIENT-FINGERPRINT` header.
+http:
+  middlewares:
+    test-passtlsclientcert:
+      passTLSClientCert:
+        fingerprint: true
+```
+
+```toml tab="File (TOML)"
+# Pass the SHA1 fingerprint in the `SSL-CLIENT-FINGERPRINT` header.
+[http.middlewares]
+  [http.middlewares.test-passtlsclientcert.passTLSClientCert]
+    fingerprint = true
+```
+
 ??? example "Pass the escaped pem in the `X-Forwarded-Tls-Client-Cert` header"
 
     ```yaml tab="Docker"

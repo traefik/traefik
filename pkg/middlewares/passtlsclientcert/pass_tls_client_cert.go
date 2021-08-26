@@ -2,6 +2,7 @@ package passtlsclientcert
 
 import (
 	"context"
+	"crypto/sha1"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
@@ -23,6 +24,7 @@ const typeName = "PassClientTLSCert"
 const (
 	xForwardedTLSClientCert     = "X-Forwarded-Tls-Client-Cert"
 	xForwardedTLSClientCertInfo = "X-Forwarded-Tls-Client-Cert-Info"
+	clientFingerprint           = "SSL-CLIENT-FINGERPRINT"
 )
 
 const (
@@ -122,10 +124,11 @@ func newTLSClientCertificateInfo(info *dynamic.TLSClientCertificateInfo) *tlsCli
 
 // passTLSClientCert is a middleware that helps setup a few tls info features.
 type passTLSClientCert struct {
-	next http.Handler
-	name string
-	pem  bool                      // pass the sanitized pem to the backend in a specific header
-	info *tlsClientCertificateInfo // pass selected information from the client certificate
+	next        http.Handler
+	name        string
+	pem         bool                      // pass the sanitized pem to the backend in a specific header
+	fingerprint bool                      // pass SHA1 hash
+	info        *tlsClientCertificateInfo // pass selected information from the client certificate
 }
 
 // New constructs a new PassTLSClientCert instance from supplied frontend header struct.
@@ -133,10 +136,11 @@ func New(ctx context.Context, next http.Handler, config dynamic.PassTLSClientCer
 	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
 
 	return &passTLSClientCert{
-		next: next,
-		name: name,
-		pem:  config.PEM,
-		info: newTLSClientCertificateInfo(config.Info),
+		next:        next,
+		name:        name,
+		pem:         config.PEM,
+		fingerprint: config.Fingerprint,
+		info:        newTLSClientCertificateInfo(config.Info),
 	}, nil
 }
 
@@ -160,6 +164,14 @@ func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		if req.TLS != nil && len(req.TLS.PeerCertificates) > 0 {
 			headerContent := p.getCertInfo(ctx, req.TLS.PeerCertificates)
 			req.Header.Set(xForwardedTLSClientCertInfo, url.QueryEscape(headerContent))
+		} else {
+			logger.Warn("Tried to extract a certificate on a request without mutual TLS")
+		}
+	}
+
+	if p.fingerprint {
+		if req.TLS != nil && len(req.TLS.PeerCertificates) == 1 {
+			req.Header.Set(clientFingerprint, extractFingerprint(req.TLS.PeerCertificates[0]))
 		} else {
 			logger.Warn("Tried to extract a certificate on a request without mutual TLS")
 		}
@@ -354,6 +366,12 @@ func extractCertificate(ctx context.Context, cert *x509.Certificate) string {
 	}
 
 	return sanitize(certPEM)
+}
+
+func extractFingerprint(cert *x509.Certificate) string {
+	sha1Fingerprint := fmt.Sprintf("%x", sha1.Sum(cert.Raw))
+
+	return sha1Fingerprint
 }
 
 // getSANs get the Subject Alternate Name values.
