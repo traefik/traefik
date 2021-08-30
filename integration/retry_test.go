@@ -64,7 +64,7 @@ func (s *RetrySuite) TestRetryBackoff(c *check.C) {
 	response, err := http.Get("http://127.0.0.1:8000/")
 	duration := time.Since(start)
 	// test case delays: 500 + 700 + 1000ms with randomization.  It should be safely > 1500ms
-	minAllowed := time.Millisecond * 1500
+	minAllowed := time.Millisecond * 1400
 
 	c.Assert(err, checker.IsNil)
 	c.Assert(response.StatusCode, checker.Equals, http.StatusOK)

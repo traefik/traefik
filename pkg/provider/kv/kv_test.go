@@ -848,6 +848,11 @@ func Test_buildConfiguration(t *testing.T) {
 						ClientAuthType: "foobar",
 					},
 					SniStrict: true,
+					ALPNProtocols: []string{
+						"h2",
+						"http/1.1",
+						"acme-tls/1",
+					},
 				},
 				"Options1": {
 					MinVersion: "foobar",
@@ -868,6 +873,11 @@ func Test_buildConfiguration(t *testing.T) {
 						ClientAuthType: "foobar",
 					},
 					SniStrict: true,
+					ALPNProtocols: []string{
+						"h2",
+						"http/1.1",
+						"acme-tls/1",
+					},
 				},
 			},
 			Stores: map[string]tls.Store{

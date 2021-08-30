@@ -19,7 +19,7 @@ global_job_config:
   prologue:
     commands:
       - curl -sSfL https://raw.githubusercontent.com/ldez/semgo/master/godownloader.sh | sudo sh -s -- -b "/usr/local/bin"
-      - sudo semgo go1.16
+      - sudo semgo go1.17
       - export "GOPATH=$(go env GOPATH)"
       - export "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/traefik/${SEMAPHORE_PROJECT_NAME}"
       - export "PATH=${GOPATH}/bin:${PATH}"
@@ -73,6 +73,10 @@ blocks:
     run:
       when: "tag =~ '.*'"
     task:
+      agent:
+        machine:
+          type: e1-standard-8
+          os_image: ubuntu1804
       secrets:
         - name: traefik
       env_vars:
