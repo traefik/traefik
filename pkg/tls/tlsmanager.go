@@ -24,7 +24,10 @@ const (
 )
 
 // DefaultTLSOptions the default TLS options.
-var DefaultTLSOptions = Options{}
+var DefaultTLSOptions = Options{
+	// ensure http2 enabled
+	ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+}
 
 // Manager is the TLS option/store/configuration factory.
 type Manager struct {
@@ -230,10 +233,9 @@ func buildCertificateStore(ctx context.Context, tlsStore Store, storename string
 
 // creates a TLS config that allows terminating HTTPS for multiple domains using SNI.
 func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
-	conf := &tls.Config{}
-
-	// ensure http2 enabled
-	conf.NextProtos = []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol}
+	conf := &tls.Config{
+		NextProtos: tlsOption.ALPNProtocols,
+	}
 
 	if len(tlsOption.ClientAuth.CAFiles) > 0 {
 		pool := x509.NewCertPool()

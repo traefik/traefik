@@ -147,13 +147,23 @@ func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace str
 	var mds []string
 
 	for _, mi := range middlewares {
-		if strings.Contains(mi.Name, providerNamespaceSeparator) {
+		name := mi.Name
+
+		if !p.AllowCrossNamespace && strings.HasSuffix(mi.Name, providerNamespaceSeparator+providerName) {
+			// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
+			// if the provider namespace kubernetescrd is used,
+			// we don't allow this format to avoid cross namespace references.
+			return nil, fmt.Errorf("invalid reference to middleware %s: with crossnamespace disallowed, the namespace field needs to be explicitly specified", mi.Name)
+		}
+
+		if strings.Contains(name, providerNamespaceSeparator) {
 			if len(mi.Namespace) > 0 {
 				log.FromContext(ctx).
 					WithField(log.MiddlewareName, mi.Name).
 					Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
 			}
-			mds = append(mds, mi.Name)
+
+			mds = append(mds, name)
 			continue
 		}
 
@@ -166,7 +176,7 @@ func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace str
 			ns = mi.Namespace
 		}
 
-		mds = append(mds, makeID(ns, mi.Name))
+		mds = append(mds, makeID(ns, name))
 	}
 
 	return mds, nil
