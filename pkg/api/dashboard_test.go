@@ -107,9 +107,8 @@ func Test_ContentSecurityPolicy(t *testing.T) {
 	}
 }
 
-type errorFS struct {}
+type errorFS struct{}
 
 func (e errorFS) Open(name string) (fs.File, error) {
 	return nil, errors.New("oops")
 }
-
