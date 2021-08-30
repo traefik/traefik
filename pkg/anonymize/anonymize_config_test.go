@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"testing/fstest"
 	"time"
 
-	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
@@ -775,21 +775,10 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.API = &static.API{
-		Insecure:  true,
-		Dashboard: true,
-		Debug:     true,
-		DashboardAssets: &assetfs.AssetFS{
-			Asset: func(path string) ([]byte, error) {
-				return nil, nil
-			},
-			AssetDir: func(path string) ([]string, error) {
-				return nil, nil
-			},
-			AssetInfo: func(path string) (os.FileInfo, error) {
-				return nil, nil
-			},
-			Prefix: "fii",
-		},
+		Insecure:        true,
+		Dashboard:       true,
+		Debug:           true,
+		DashboardAssets: fstest.MapFS{},
 	}
 
 	config.Metrics = &types.Metrics{

@@ -13,11 +13,6 @@ RUN mkdir -p /usr/local/bin \
     && curl -fL https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz \
     | tar -xzC /usr/local/bin --transform 's#^.+/##x'
 
-# Download go-bindata binary to bin folder in $GOPATH
-RUN mkdir -p /usr/local/bin \
-    && curl -fsSL -o /usr/local/bin/go-bindata https://github.com/containous/go-bindata/releases/download/v1.0.0/go-bindata \
-    && chmod +x /usr/local/bin/go-bindata
-
 # Download golangci-lint binary to bin folder in $GOPATH
 RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.41.1
 

@@ -1,12 +1,14 @@
 package api
 
 import (
-	"fmt"
+	"errors"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"testing/fstest"
+	"time"
 
-	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -65,42 +67,24 @@ func Test_ContentSecurityPolicy(t *testing.T) {
 		{
 			desc: "OK",
 			handler: DashboardHandler{
-				Assets: &assetfs.AssetFS{
-					Asset: func(path string) ([]byte, error) {
-						return []byte{}, nil
-					},
-					AssetDir: func(path string) ([]string, error) {
-						return []string{}, nil
-					},
-				},
+				FS: fstest.MapFS{"foobar.html": &fstest.MapFile{
+					Mode:    0755,
+					ModTime: time.Now(),
+				}},
 			},
 			expected: http.StatusOK,
 		},
 		{
 			desc: "Not found",
 			handler: DashboardHandler{
-				Assets: &assetfs.AssetFS{
-					Asset: func(path string) ([]byte, error) {
-						return []byte{}, fmt.Errorf("not found")
-					},
-					AssetDir: func(path string) ([]string, error) {
-						return []string{}, fmt.Errorf("not found")
-					},
-				},
+				FS: fstest.MapFS{},
 			},
 			expected: http.StatusNotFound,
 		},
 		{
 			desc: "Internal server error",
 			handler: DashboardHandler{
-				Assets: &assetfs.AssetFS{
-					Asset: func(path string) ([]byte, error) {
-						return []byte{}, fmt.Errorf("oops")
-					},
-					AssetDir: func(path string) ([]string, error) {
-						return []string{}, fmt.Errorf("oops")
-					},
-				},
+				FS: errorFS{},
 			},
 			expected: http.StatusInternalServerError,
 		},
@@ -122,3 +106,10 @@ func Test_ContentSecurityPolicy(t *testing.T) {
 		})
 	}
 }
+
+type errorFS struct {}
+
+func (e errorFS) Open(name string) (fs.File, error) {
+	return nil, errors.New("oops")
+}
+

@@ -39,7 +39,7 @@ func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *s
 		factory.api = api.NewBuilder(staticConfiguration)
 
 		if staticConfiguration.API.Dashboard {
-			factory.dashboardHandler = api.DashboardHandler{Assets: staticConfiguration.API.DashboardAssets}
+			factory.dashboardHandler = api.DashboardHandler{FS: staticConfiguration.API.DashboardAssets}
 		}
 	}
 
