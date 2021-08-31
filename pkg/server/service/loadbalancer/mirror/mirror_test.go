@@ -243,9 +243,10 @@ func TestCloneRequest(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, "/", buf)
 		assert.NoError(t, err)
 
-		_, expectedBytes, err := newReusableRequest(req, 20)
+		rr, expectedBytes, err := newReusableRequest(req, 20)
 		assert.NoError(t, err)
 		assert.Nil(t, expectedBytes)
+		assert.Len(t, rr.body, 10)
 	})
 
 	t.Run("valid GET case with maxBodySize", func(t *testing.T) {
@@ -254,9 +255,10 @@ func TestCloneRequest(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/", buf)
 		assert.NoError(t, err)
 
-		_, expectedBytes, err := newReusableRequest(req, 20)
+		rr, expectedBytes, err := newReusableRequest(req, 20)
 		assert.NoError(t, err)
 		assert.Nil(t, expectedBytes)
+		assert.Len(t, rr.body, 0)
 	})
 
 	t.Run("no request given", func(t *testing.T) {
