@@ -12,7 +12,7 @@ RUN npm install
 RUN npm run build
 
 # BUILD
-FROM golang:1.16-alpine as gobuild
+FROM golang:1.17-alpine as gobuild
 
 RUN apk --update upgrade \
     && apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar ca-certificates tzdata \
@@ -38,7 +38,7 @@ COPY --from=webui /src/static/ /go/src/github.com/traefik/traefik/static/
 RUN ./script/make.sh generate binary
 
 ## IMAGE
-FROM alpine:3.10
+FROM alpine:3.14
 
 RUN apk --no-cache --no-progress add bash curl ca-certificates tzdata \
     && update-ca-certificates \

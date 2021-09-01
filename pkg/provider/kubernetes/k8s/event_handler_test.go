@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -59,6 +60,33 @@ func Test_detectChanges(t *testing.T) {
 					ResourceVersion: "2",
 				},
 			},
+		},
+		{
+			name: "Ingress With same version",
+			oldObj: &v1.Ingress{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "1",
+				},
+			},
+			newObj: &v1.Ingress{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "1",
+				},
+			},
+		},
+		{
+			name: "Ingress With different version",
+			oldObj: &v1.Ingress{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "1",
+				},
+			},
+			newObj: &v1.Ingress{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "2",
+				},
+			},
+			want: true,
 		},
 		{
 			name: "With same annotations",
