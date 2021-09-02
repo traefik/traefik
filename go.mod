@@ -81,8 +81,8 @@ require (
 	github.com/vdemeester/shakers v0.1.0
 	github.com/vulcand/oxy v1.3.0
 	github.com/vulcand/predicate v1.1.0
-	go.elastic.co/apm v1.11.0
-	go.elastic.co/apm/module/apmot v1.11.0
+	go.elastic.co/apm v1.13.1
+	go.elastic.co/apm/module/apmot v1.13.1
 	golang.org/x/mod v0.4.2
 	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
 	golang.org/x/sys v0.0.0-20210817190340-bfb29a6856f2 // indirect
