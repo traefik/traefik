@@ -1,3 +1,17 @@
+## [v2.5.2](https://github.com/traefik/traefik/tree/v2.5.2) (2021-09-02)
+[All Commits](https://github.com/traefik/traefik/compare/v2.5.1...v2.5.2)
+
+**Bug fixes:**
+- **[http3]** Upgrade github.com/lucas-clemente/quic-go to v0.23.0 ([#8413](https://github.com/traefik/traefik/pull/8413) by [sylr](https://github.com/sylr))
+- **[middleware]** Fix empty body error for mirroring middleware ([#8381](https://github.com/traefik/traefik/pull/8381) by [antgubarev](https://github.com/antgubarev))
+- **[tracing]** Bump go.elastic.co/apm version to v1.13.1 ([#8399](https://github.com/traefik/traefik/pull/8399) by [rtribotte](https://github.com/rtribotte))
+- Update x/sys to support go 1.17 ([#8368](https://github.com/traefik/traefik/pull/8368) by [roopakv](https://github.com/roopakv))
+- Bump Alpine docker image version from 3.11 to 3.14 for official Traefik images
+
+**Documentation:**
+- **[k8s/ingress,k8s]** Adds pathType for v1 ingresses examples ([#8392](https://github.com/traefik/traefik/pull/8392) by [rtribotte](https://github.com/rtribotte))
+- Fix http scheme urls in documentation ([#8395](https://github.com/traefik/traefik/pull/8395) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.5.1](https://github.com/traefik/traefik/tree/v2.5.1) (2021-08-20)
 [All Commits](https://github.com/traefik/traefik/compare/v2.5.0...v2.5.1)
 
