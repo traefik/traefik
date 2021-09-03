@@ -93,7 +93,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				conf.Services[serviceName].Weighted.Services = append(conf.Services[serviceName].Weighted.Services, srv)
 			}
 
-			conf.Routers[serviceName] = &dynamic.TCPRouter{
+			r := &dynamic.TCPRouter{
 				EntryPoints: ingressRouteTCP.Spec.EntryPoints,
 				Middlewares: mds,
 				Rule:        route.Match,
@@ -101,13 +101,14 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 			}
 
 			if ingressRouteTCP.Spec.TLS != nil {
-				conf.Routers[serviceName].TLS = &dynamic.RouterTCPTLSConfig{
+				r.TLS = &dynamic.RouterTCPTLSConfig{
 					Passthrough:  ingressRouteTCP.Spec.TLS.Passthrough,
 					CertResolver: ingressRouteTCP.Spec.TLS.CertResolver,
 					Domains:      ingressRouteTCP.Spec.TLS.Domains,
 				}
 
 				if ingressRouteTCP.Spec.TLS.Options == nil || len(ingressRouteTCP.Spec.TLS.Options.Name) == 0 {
+					conf.Routers[serviceName] = r
 					continue
 				}
 
@@ -125,8 +126,16 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 						Warnf("namespace %q is ignored in cross-provider context", ns)
 				}
 
-				conf.Routers[serviceName].TLS.Options = tlsOptionsName
+				if !isNamespaceAllowed(p.AllowCrossNamespace, ingressRouteTCP.Namespace, ns) {
+					logger.Errorf("TLSOption %s/%s is not in the IngressRouteTCP namespace %s",
+						ns, ingressRouteTCP.Spec.TLS.Options.Name, ingressRouteTCP.Namespace)
+					continue
+				}
+
+				r.TLS.Options = tlsOptionsName
 			}
+
+			conf.Routers[serviceName] = r
 		}
 	}
 
