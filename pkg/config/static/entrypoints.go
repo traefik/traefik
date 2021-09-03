@@ -16,7 +16,7 @@ type EntryPoint struct {
 	ProxyProtocol    *ProxyProtocol        `description:"Proxy-Protocol configuration." json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	ForwardedHeaders *ForwardedHeaders     `description:"Trust client forwarding headers." json:"forwardedHeaders,omitempty" toml:"forwardedHeaders,omitempty" yaml:"forwardedHeaders,omitempty" export:"true"`
 	HTTP             HTTPConfig            `description:"HTTP configuration." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" export:"true"`
-	HTTP3            *HTTP3Config          `description:"HTTP3 configuration." json:"http3,omitempty" toml:"http3,omitempty" yaml:"http3,omitempty" export:"true"`
+	HTTP3            *HTTP3Config          `description:"HTTP3 configuration." json:"http3,omitempty" toml:"http3,omitempty" yaml:"http3,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	UDP              *UDPConfig            `description:"UDP configuration." json:"udp,omitempty" toml:"udp,omitempty" yaml:"udp,omitempty"`
 }
 
@@ -74,8 +74,7 @@ type RedirectEntryPoint struct {
 
 // HTTP3Config is the HTTP3 configuration of an entry point.
 type HTTP3Config struct {
-	Enabled      bool   `description:"Enable HTTP3." json:"enabled,omitempty" toml:"enabled,omitempty" yaml:"enabled,omitempty" export:"true"`
-	AdvertisedAs string `description:"Advertised HTTP3." json:"advertisedAs,omitempty" toml:"advertisedAs,omitempty" yaml:"advertisedAs,omitempty" export:"true"`
+	AdvertisedPort int32 `description:"UDP port to advertise, on which HTTP/3 is available." json:"advertisedPort,omitempty" toml:"advertisedPort,omitempty" yaml:"advertisedPort,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.

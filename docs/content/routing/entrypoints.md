@@ -102,7 +102,7 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
         address: ":8888" # same as ":8888/tcp"
         http3:
           enabled: true
-          advertisedAs: ":8888"
+          advertisedPort: 8888
         transport:
           lifeCycle:
             requestAcceptGraceTimeout: 42
@@ -130,7 +130,7 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
         address = ":8888" # same as ":8888/tcp"
         [entryPoints.name.http3]
           enabled = true
-          advertisedAs = ":8888"
+          advertisedPort = 8888
         [entryPoints.name.transport]
           [entryPoints.name.transport.lifeCycle]
             requestAcceptGraceTimeout = 42
@@ -151,7 +151,7 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
     ## Static configuration
     --entryPoints.name.address=:8888 # same as :8888/tcp
     --entryPoints.name.http3.enabled=true
-    --entryPoints.name.http3.advertisedAs=:8888
+    --entryPoints.name.http3.advertisedport=8888
     --entryPoints.name.transport.lifeCycle.requestAcceptGraceTimeout=42
     --entryPoints.name.transport.lifeCycle.graceTimeOut=42
     --entryPoints.name.transport.respondingTimeouts.readTimeout=42
@@ -228,12 +228,11 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
 
 ### HTTP3
 
-`http3.enabled` defines that you want to enable HTTP3 on this `address`.
+#### `http3`
+
+`http3` enables HTTP3 protocol on the entryPoint.
 You can only enable HTTP3 on a TCP entrypoint.
 Enabling HTTP3 will automatically add the correct headers for the connection upgrade to HTTP3.
-
-`http3.advertisedAs` defines what address to advertise as the HTTP3 authority.
-It defaults to the entrypoint's address. It can be used to override the authority in the `alt-svc` header, for example if the exposed port of the endpoint is different from where Traefik is listening.
 
 ??? info "HTTP3 uses UDP+TLS"
 
@@ -251,9 +250,7 @@ It defaults to the entrypoint's address. It can be used to override the authorit
 
     entryPoints:
       name:
-        http3:
-          enabled: true
-          advertisedAs: ":443"
+        http3: {}
     ```
 
     ```toml tab="File (TOML)"
@@ -261,12 +258,40 @@ It defaults to the entrypoint's address. It can be used to override the authorit
       http3 = true
     
     [entryPoints.name.http3]
-      enabled = true
-      advertisedAs = ":443"
     ```
     
     ```bash tab="CLI"
-    --experimental.http3=true --entrypoints.name.http3.enabled=true --entrypoints.name.http3.advertisedAs=:443
+    --experimental.http3=true --entrypoints.name.http3
+    ```
+
+#### `advertisedPort`
+
+`http3.advertisedPort` defines which UDP port to advertise as the HTTP3 authority.
+It defaults to the entrypoint's address port.
+It can be used to override the authority in the `alt-svc` header, for example if the public facing port is different from where Traefik is listening.
+
+!!! info "http3.advertisedPort"
+
+    ```yaml tab="File (YAML)"
+    experimental:
+      http3: true
+
+    entryPoints:
+      name:
+        http3:
+          advertisedPort: 443
+    ```
+
+    ```toml tab="File (TOML)"
+    [experimental]
+      http3 = true
+    
+    [entryPoints.name.http3]
+      advertisedPort = 443
+    ```
+    
+    ```bash tab="CLI"
+    --experimental.http3=true --entrypoints.name.http3.advertisedport=443
     ```
 
 ### Forwarded Headers
