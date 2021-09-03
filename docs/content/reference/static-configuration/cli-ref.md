@@ -102,12 +102,6 @@ Entry points definition. (Default: ```false```)
 `--entrypoints.<name>.address`:  
 Entry point address.
 
-`--entrypoints.<name>.http3.enabled`:  
-Enable HTTP3. (Default: ```false```)
-
-`--entrypoints.<name>.http3.advertisedAs`:  
-The advertised address for HTTP3. (Default: the entry point's address)
-
 `--entrypoints.<name>.forwardedheaders.insecure`:  
 Trust all forwarded headers. (Default: ```false```)
 
@@ -149,6 +143,12 @@ Subject alternative names.
 
 `--entrypoints.<name>.http.tls.options`:  
 Default TLS options for the routers linked to the entry point.
+
+`--entrypoints.<name>.http3`:  
+HTTP3 configuration. (Default: ```false```)
+
+`--entrypoints.<name>.http3.advertisedport`:  
+UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
 
 `--entrypoints.<name>.proxyprotocol`:  
 Proxy-Protocol configuration. (Default: ```false```)
