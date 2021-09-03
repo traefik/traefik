@@ -26,7 +26,7 @@ type http3server struct {
 }
 
 func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, httpsServer *httpServer) (*http3server, error) {
-	if configuration.HTTP3 == nil || !configuration.HTTP3.Enabled {
+	if configuration.HTTP3 == nil {
 		return nil, nil
 	}
 
@@ -42,14 +42,9 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 		},
 	}
 
-	// fall back to the entry point's address if AdvertisedAs is not specified
-	if configuration.HTTP3.AdvertisedAs == "" {
-		configuration.HTTP3.AdvertisedAs = configuration.GetAddress()
-	}
-
 	h3.Server = &http3.Server{
 		Server: &http.Server{
-			Addr:         configuration.HTTP3.AdvertisedAs,
+			Addr:         configuration.GetAddress(),
 			Handler:      httpsServer.Server.(*http.Server).Handler,
 			ErrorLog:     httpServerLogger,
 			ReadTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
@@ -61,8 +56,21 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 
 	previousHandler := httpsServer.Server.(*http.Server).Handler
 
+	// TODO: rewrite this part if at some point `port` become an exported field of http3.Server
+	advertisedAddress := configuration.GetAddress()
+	if configuration.HTTP3.AdvertisedPort != 0 {
+		advertisedAddress = fmt.Sprintf(`:%d`, configuration.HTTP3.AdvertisedPort)
+	}
+	// if `QuickConfig` of h3.server happens to be configured, it should also be configured identically in the headerServer
+	headerServer := &http3.Server{
+		Server: &http.Server{
+			Addr: advertisedAddress,
+		},
+	}
+
 	httpsServer.Server.(*http.Server).Handler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		err := h3.Server.SetQuicHeaders(rw.Header())
+		// set quic headers with the "header" http3 server instance
+		err := headerServer.SetQuicHeaders(rw.Header())
 		if err != nil {
 			log.FromContext(ctx).Errorf("failed to set HTTP3 headers: %v", err)
 		}
