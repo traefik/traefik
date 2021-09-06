@@ -462,6 +462,17 @@ By default, `passHostHeader` is true.
           passHostHeader = false
     ```
 
+!!! info "Default Headers"
+	The following headers are automatically added when proxying requests:
+
+	| Property                  | HTTP Header            |
+	|---------------------------|------------------------|
+	| Client's IP               | X-Forwarded-For        |
+	| Host                      | X-Forwarded-Host       |
+	| Port                      | X-Forwarded-Port       |
+	| Protocol                  | X-Forwarded-Proto      |
+	| Proxy Server's Hostname   | X-Forwarded-Server     |
+
 #### ServersTransport
 
 `serversTransport` allows to reference a [ServersTransport](./index.md#serverstransport_1) configuration for the communication between Traefik and your servers.
