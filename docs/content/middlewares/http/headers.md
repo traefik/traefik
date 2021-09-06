@@ -7,17 +7,7 @@ Managing Request/Response headers
 
 The Headers middleware manages the headers of requests and responses.
 
-## Default Headers
-
-The following headers are automatically added when proxying requests:
-
-| Property                  | HTTP Header            |
-|---------------------------|------------------------|
-| Client's IP               | X-Forwarded-For        |
-| Host                      | X-Forwarded-Host       |
-| Port                      | X-Forwarded-Port       |
-| Protocol                  | X-Forwarded-Proto      |
-| Proxy Server's Hostname   | X-Forwarded-Server     |
+Some headers are automatically added by default. See the [Pass Host Header documentation](../../routing/services/index.md#pass-host-header) for more information.
 
 ## Configuration Examples
 
