@@ -333,43 +333,7 @@ func (s *SimpleSuite) TestMetricsPrometheusTwoRoutersOneService(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/whoami2", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
-	request, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/metrics", nil)
-	c.Assert(err, checker.IsNil)
-
-	response, err := http.DefaultClient.Do(request)
-	c.Assert(err, checker.IsNil)
-	c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
-
-	body, err := io.ReadAll(response.Body)
-	c.Assert(err, checker.IsNil)
-
-	// Reqs count of 1 for both routers
-	c.Assert(string(body), checker.Contains, "traefik_router_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",router=\"router1@docker\",service=\"whoami1-integrationtestbase@docker\"} 1")
-	c.Assert(string(body), checker.Contains, "traefik_router_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",router=\"router2@docker\",service=\"whoami1-integrationtestbase@docker\"} 1")
-	// Reqs count of 2 for service behind both routers
-	c.Assert(string(body), checker.Contains, "traefik_service_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",service=\"whoami1-integrationtestbase@docker\"} 2")
-}
-
-func (s *SimpleSuite) TestMetricsPrometheusTwoRoutersOneServiceRepeating(c *check.C) {
-	s.createComposeProject(c, "base")
-	s.composeProject.Start(c)
-
-	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--api.insecure", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--providers.docker", "--metrics.prometheus.addentrypointslabels=false", "--metrics.prometheus.addrouterslabels=true", "--log.level=DEBUG")
-	defer output(c)
-
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix"))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/whoami2", 1*time.Second, try.StatusCodeIs(http.StatusOK))
-	c.Assert(err, checker.IsNil)
-
+	// adding a loop to test if metrics are not deleted
 	for i := 0; i < 10; i++ {
 		request, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/metrics", nil)
 		c.Assert(err, checker.IsNil)
