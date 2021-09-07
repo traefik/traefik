@@ -7,6 +7,7 @@ import (
 
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	ipwhitelist "github.com/traefik/traefik/v2/pkg/middlewares/tcp/ipwhitelist"
+	rateLimiter "github.com/traefik/traefik/v2/pkg/middlewares/tcp/ratelimiter"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
 	"github.com/traefik/traefik/v2/pkg/tcp"
 )
@@ -90,6 +91,13 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	if config.IPWhiteList != nil {
 		middleware = func(next tcp.Handler) (tcp.Handler, error) {
 			return ipwhitelist.New(ctx, next, *config.IPWhiteList, middlewareName)
+		}
+	}
+
+	// RateLimit
+	if config.RateLimit != nil {
+		middleware = func(next tcp.Handler) (tcp.Handler, error) {
+			return rateLimiter.New(ctx, next, *config.RateLimit, middlewareName)
 		}
 	}
 
