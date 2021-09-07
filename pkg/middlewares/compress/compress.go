@@ -42,7 +42,7 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 
 	minimumBodySize := conf.MinimumBodySizeBytes
 	if minimumBodySize <= 0 {
-		minimumBodySize = gziphandler.DefaultMinSize
+		minimumBodySize = gzhttp.DefaultMinSize
 	}
 
 	return &compress{next: next, name: name, excludes: excludes, minimumBodySize: minimumBodySize}, nil
