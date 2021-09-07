@@ -2,7 +2,6 @@ package static
 
 import (
 	"fmt"
-	"io/fs"
 	stdlog "log"
 	"strings"
 	"time"
@@ -108,7 +107,6 @@ type API struct {
 	Debug     bool `description:"Enable additional endpoints for debugging and profiling." json:"debug,omitempty" toml:"debug,omitempty" yaml:"debug,omitempty" export:"true"`
 	// TODO: Re-enable statistics
 	// Statistics      *types.Statistics `description:"Enable more detailed statistics." json:"statistics,omitempty" toml:"statistics,omitempty" yaml:"statistics,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	DashboardAssets fs.FS `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 }
 
 // SetDefaults sets the default values.

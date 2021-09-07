@@ -102,7 +102,7 @@ Once you've set up your go environment and cloned the source repository, you can
 
 ```bash
 # Generate UI static files
-rm -rf ./static/ ./webui/static/; make generate-webui
+rm -rf ./webui/static/; make generate-webui
 
 # required to merge non-code components into the final binary,
 # such as the web dashboard/UI

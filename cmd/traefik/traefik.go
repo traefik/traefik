@@ -42,7 +42,6 @@ import (
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"github.com/traefik/traefik/v2/pkg/types"
 	"github.com/traefik/traefik/v2/pkg/version"
-	"github.com/traefik/traefik/v2/webui"
 	"github.com/vulcand/oxy/roundrobin"
 )
 
@@ -106,10 +105,6 @@ func runCmd(staticConfiguration *static.Configuration) error {
 		log.WithoutContext().Debugf("Static configuration loaded [struct] %#v", staticConfiguration)
 	} else {
 		log.WithoutContext().Debugf("Static configuration loaded %s", string(jsonConf))
-	}
-
-	if staticConfiguration.API != nil && staticConfiguration.API.Dashboard {
-		staticConfiguration.API.DashboardAssets = webui.FS
 	}
 
 	if staticConfiguration.Global.CheckNewVersion {

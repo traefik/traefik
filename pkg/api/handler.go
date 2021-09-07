@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"io/fs"
 	"net/http"
 	"reflect"
 	"strings"
@@ -48,10 +47,7 @@ type RunTimeRepresentation struct {
 
 // Handler serves the configuration and status of Traefik on API endpoints.
 type Handler struct {
-	dashboard       bool
-	debug           bool
-	staticConfig    static.Configuration
-	dashboardAssets fs.FS
+	staticConfig static.Configuration
 
 	// runtimeConfiguration is the data set used to create all the data representations exposed by the API.
 	runtimeConfiguration *runtime.Configuration
@@ -73,11 +69,8 @@ func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration
 	}
 
 	return &Handler{
-		dashboard:            staticConfig.API.Dashboard,
-		dashboardAssets:      staticConfig.API.DashboardAssets,
 		runtimeConfiguration: rConfig,
 		staticConfig:         staticConfig,
-		debug:                staticConfig.API.Debug,
 	}
 }
 
@@ -85,7 +78,7 @@ func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration
 func (h Handler) createRouter() *mux.Router {
 	router := mux.NewRouter()
 
-	if h.debug {
+	if h.staticConfig.API.Debug {
 		DebugHandler{}.Append(router)
 	}
 
@@ -117,10 +110,6 @@ func (h Handler) createRouter() *mux.Router {
 	router.Methods(http.MethodGet).Path("/api/udp/services/{serviceID}").HandlerFunc(h.getUDPService)
 
 	version.Handler{}.Append(router)
-
-	if h.dashboard {
-		DashboardHandler{FS: h.dashboardAssets}.Append(router)
-	}
 
 	return router
 }
