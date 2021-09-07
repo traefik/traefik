@@ -866,17 +866,21 @@
           <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.subject">
             <div class="row items-start no-wrap">
               <div class="col">
-                <div class="text-subtitle2">Common Name</div>
-                <boolean-state :value="!!exData(middleware).info.subject.commonName"/>
+                <div class="text-subtitle2">Organizational Unit</div>
+                <boolean-state :value="!!exData(middleware).info.subject.organizationalUnit"/>
               </div>
               <div class="col">
-                <div class="text-subtitle2">Serial Number</div>
-                <boolean-state :value="!!exData(middleware).info.subject.serialNumber"/>
+                <div class="text-subtitle2">Common Name</div>
+                <boolean-state :value="!!exData(middleware).info.subject.commonName"/>
               </div>
             </div>
           </q-card-section>
           <q-card-section v-if="middleware.passTLSClientCert && middleware.passTLSClientCert.info && middleware.passTLSClientCert.info.subject">
             <div class="row items-start no-wrap">
+              <div class="col">
+                <div class="text-subtitle2">Serial Number</div>
+                <boolean-state :value="!!exData(middleware).info.subject.serialNumber"/>
+              </div>
               <div class="col">
                 <div class="text-subtitle2">Domain Component</div>
                 <boolean-state :value="!!exData(middleware).info.subject.domainComponent"/>
@@ -1131,7 +1135,7 @@ export default {
       return exData
     },
     getProviderLogoPath (provider) {
-      const name = provider.name.toLowerCase()
+      const name = provider.toLowerCase()
 
       if (name.includes('plugin-')) {
         return 'statics/providers/plugin.svg'

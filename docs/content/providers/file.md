@@ -199,7 +199,7 @@ providers:
 
 Traefik supports using Go templating to automatically generate repetitive sections of configuration files.
 These sections must be a valid [Go template](https://golang.org/pkg/text/template/), and can use
-[sprig template functions](http://masterminds.github.io/sprig/).
+[sprig template functions](https://masterminds.github.io/sprig/).
 
 To illustrate, it is possible to easily define multiple routers, services, and TLS certificates as described in the following examples:
 

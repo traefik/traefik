@@ -2,6 +2,7 @@
 --8<-- "content/reference/dynamic-configuration/traefik.containo.us_ingressroutetcps.yaml"
 --8<-- "content/reference/dynamic-configuration/traefik.containo.us_ingressrouteudps.yaml"
 --8<-- "content/reference/dynamic-configuration/traefik.containo.us_middlewares.yaml"
+--8<-- "content/reference/dynamic-configuration/traefik.containo.us_middlewaretcps.yaml"
 --8<-- "content/reference/dynamic-configuration/traefik.containo.us_serverstransports.yaml"
 --8<-- "content/reference/dynamic-configuration/traefik.containo.us_tlsoptions.yaml"
 --8<-- "content/reference/dynamic-configuration/traefik.containo.us_tlsstores.yaml"

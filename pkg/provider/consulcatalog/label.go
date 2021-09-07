@@ -6,15 +6,21 @@ import (
 
 // configuration Contains information from the labels that are globals (not related to the dynamic configuration) or specific to the provider.
 type configuration struct {
-	Enable bool
+	Enable        bool
+	ConsulCatalog specificConfiguration
 }
 
-func (p *Provider) getConfiguration(item itemData) (configuration, error) {
+type specificConfiguration struct {
+	Connect bool
+}
+
+func (p *Provider) getConfiguration(labels map[string]string) (configuration, error) {
 	conf := configuration{
-		Enable: p.ExposedByDefault,
+		Enable:        p.ExposedByDefault,
+		ConsulCatalog: specificConfiguration{Connect: p.ConnectByDefault},
 	}
 
-	err := label.Decode(item.Labels, &conf, "traefik.consulcatalog.", "traefik.enable")
+	err := label.Decode(labels, &conf, "traefik.consulcatalog.", "traefik.enable")
 	if err != nil {
 		return configuration{}, err
 	}

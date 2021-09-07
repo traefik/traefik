@@ -251,6 +251,7 @@ http:
             province: true
             locality: true
             organization: true
+            organizationalUnit: true
             commonName: true
             serialNumber: true
             domainComponent: true
@@ -330,6 +331,7 @@ http:
         responseHeaderTimeout: 42s
         idleConnTimeout: 42s
       disableHTTP2: true
+      peerCertURI: foobar
     ServersTransport1:
       serverName: foobar
       insecureSkipVerify: true
@@ -347,6 +349,7 @@ http:
         responseHeaderTimeout: 42s
         idleConnTimeout: 42s
       disableHTTP2: true
+      peerCertURI: foobar
 tcp:
   routers:
     TCPRouter0:
@@ -469,6 +472,9 @@ tls:
         clientAuthType: foobar
       sniStrict: true
       preferServerCipherSuites: true
+      alpnProtocols:
+        - foobar
+        - foobar
     Options1:
       minVersion: foobar
       maxVersion: foobar
@@ -485,6 +491,9 @@ tls:
         clientAuthType: foobar
       sniStrict: true
       preferServerCipherSuites: true
+      alpnProtocols:
+        - foobar
+        - foobar
   stores:
     Store0:
       defaultCertificate:

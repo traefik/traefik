@@ -218,6 +218,7 @@
             province = true
             locality = true
             organization = true
+            organizationalUnit = true
             commonName = true
             serialNumber = true
             domainComponent = true
@@ -279,6 +280,7 @@
       rootCAs = ["foobar", "foobar"]
       maxIdleConnsPerHost = 42
       disableHTTP2 = true
+      peerCertURI = "foobar"
 
       [[http.serversTransports.ServersTransport0.certificates]]
         certFile = "foobar"
@@ -297,6 +299,7 @@
       rootCAs = ["foobar", "foobar"]
       maxIdleConnsPerHost = 42
       disableHTTP2 = true
+      peerCertURI = "foobar"
 
       [[http.serversTransports.ServersTransport1.certificates]]
         certFile = "foobar"
@@ -420,6 +423,7 @@
       curvePreferences = ["foobar", "foobar"]
       sniStrict = true
       preferServerCipherSuites = true
+      alpnProtocols = ["foobar", "foobar"]
       [tls.options.Options0.clientAuth]
         caFiles = ["foobar", "foobar"]
         clientAuthType = "foobar"
@@ -430,6 +434,7 @@
       curvePreferences = ["foobar", "foobar"]
       sniStrict = true
       preferServerCipherSuites = true
+      alpnProtocols = ["foobar", "foobar"]
       [tls.options.Options1.clientAuth]
         caFiles = ["foobar", "foobar"]
         clientAuthType = "foobar"

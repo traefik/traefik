@@ -70,12 +70,14 @@ spec:
       http:
         paths:
           - path: /bar
+            pathType: Exact
             backend:
               service:
                 name:  service1
                 port:
                   number: 80
           - path: /foo
+            pathType: Exact
             backend:
               service:
                 name:  service1
@@ -312,6 +314,7 @@ Otherwise, Ingresses missing the annotation, having an empty value, or the value
         http:
           paths:
           - path: "/example"
+            pathType: Exact
             backend:
               service:
                 name: "example-service"
@@ -464,7 +467,30 @@ providers:
 Allow the creation of services if there are no endpoints available.
 This results in `503` http responses instead of `404`.
 
+### `allowExternalNameServices`
+
+_Optional, Default: false_
+
+If the parameter is set to `true`, Ingresses are able to reference ExternalName services.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    allowExternalNameServices: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  allowExternalNameServices = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.allowexternalnameservices=true
+```
+
 ### Further
 
 To learn more about the various aspects of the Ingress specification that Traefik supports,
-many examples of Ingresses definitions are located in the test [examples](https://github.com/traefik/traefik/tree/v2.4/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
+many examples of Ingresses definitions are located in the test [examples](https://github.com/traefik/traefik/tree/v2.5/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.

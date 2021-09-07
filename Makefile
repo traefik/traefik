@@ -58,8 +58,9 @@ build-webui-image:
 	docker build -t traefik-webui --build-arg ARG_PLATFORM_URL=$(PLATFORM_URL) -f webui/Dockerfile webui
 
 ## Generate WebUI
-generate-webui: build-webui-image
+generate-webui:
 	if [ ! -d "static" ]; then \
+		$(MAKE) build-webui-image; \
 		mkdir -p static; \
 		docker run --rm -v "$$PWD/static":'/src/static' traefik-webui npm run build:nc; \
 		docker run --rm -v "$$PWD/static":'/src/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ../static; \
@@ -92,8 +93,16 @@ pull-images:
 	grep --no-filename -E '^\s+image:' ./integration/resources/compose/*.yml | awk '{print $$2}' | sort | uniq | xargs -P 6 -n 1 docker pull
 
 ## Run the integration tests
-test-integration: $(PRE_TARGET)
-	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK),TEST_CONTAINER=1) ./script/make.sh generate binary test-integration
+test-integration: $(PRE_TARGET) binary
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK),TEST_CONTAINER=1) ./script/make.sh test-integration
+	TEST_HOST=1 ./script/make.sh test-integration
+
+## Run the container integration tests
+test-integration-container: $(PRE_TARGET) binary
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK),TEST_CONTAINER=1) ./script/make.sh test-integration
+
+## Run the host integration tests
+test-integration-host: $(PRE_TARGET) binary
 	TEST_HOST=1 ./script/make.sh test-integration
 
 ## Validate code and docs
@@ -131,26 +140,26 @@ docs-serve:
 docs-pull-images:
 	make -C ./docs docs-pull-images
 
-## Generate CRD clientset
+## Generate CRD clientset and CRD manifests
 generate-crd:
-	./script/update-generated-crd-code.sh
+	@$(CURDIR)/script/code-gen.sh
 
 ## Generate code from dynamic configuration https://github.com/traefik/genconf
 generate-genconf:
 	go run ./cmd/internal/gen/
 
 ## Create packages for the release
-release-packages: generate-webui build-dev-image
+release-packages: generate-webui $(PRE_TARGET)
 	rm -rf dist
-	$(DOCKER_RUN_TRAEFIK_NOTTY) goreleaser release --skip-publish --timeout="90m"
-	$(DOCKER_RUN_TRAEFIK_NOTTY) tar cfz dist/traefik-${VERSION}.src.tar.gz \
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_NOTTY)) goreleaser release --skip-publish --timeout="90m"
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_NOTTY)) tar cfz dist/traefik-${VERSION}.src.tar.gz \
 		--exclude-vcs \
 		--exclude .idea \
 		--exclude .travis \
 		--exclude .semaphoreci \
 		--exclude .github \
 		--exclude dist .
-	$(DOCKER_RUN_TRAEFIK_NOTTY) chown -R $(shell id -u):$(shell id -g) dist/
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_NOTTY)) chown -R $(shell id -u):$(shell id -g) dist/
 
 ## Format the Code
 fmt:

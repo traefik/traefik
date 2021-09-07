@@ -4,7 +4,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.4.1
+    controller-gen.kubebuilder.io/version: v0.6.2
   creationTimestamp: null
   name: middlewares.traefik.containo.us
 spec:
@@ -302,6 +302,7 @@ spec:
                       type: string
                     type: object
                   featurePolicy:
+                    description: 'Deprecated: use PermissionsPolicy instead.'
                     type: string
                   forceSTSHeader:
                     type: boolean
@@ -313,6 +314,8 @@ spec:
                     type: array
                   isDevelopment:
                     type: boolean
+                  permissionsPolicy:
+                    type: string
                   publicKey:
                     type: string
                   referrerPolicy:
@@ -398,8 +401,9 @@ spec:
                       info configuration.
                     properties:
                       issuer:
-                        description: TLSCLientCertificateDNInfo holds the client TLS
-                          certificate distinguished name info configuration. cf https://tools.ietf.org/html/rfc3739
+                        description: TLSCLientCertificateIssuerDNInfo holds the client
+                          TLS certificate distinguished name info configuration. cf
+                          https://tools.ietf.org/html/rfc3739
                         properties:
                           commonName:
                             type: boolean
@@ -425,8 +429,9 @@ spec:
                       serialNumber:
                         type: boolean
                       subject:
-                        description: TLSCLientCertificateDNInfo holds the client TLS
-                          certificate distinguished name info configuration. cf https://tools.ietf.org/html/rfc3739
+                        description: TLSCLientCertificateSubjectDNInfo holds the client
+                          TLS certificate distinguished name info configuration. cf
+                          https://tools.ietf.org/html/rfc3739
                         properties:
                           commonName:
                             type: boolean
@@ -437,6 +442,8 @@ spec:
                           locality:
                             type: boolean
                           organization:
+                            type: boolean
+                          organizationalUnit:
                             type: boolean
                           province:
                             type: boolean

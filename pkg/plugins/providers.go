@@ -23,6 +23,7 @@ type PP interface {
 }
 
 type _PP struct {
+	IValue   interface{}
 	WInit    func() error
 	WProvide func(cfgChan chan<- json.Marshaler) error
 	WStop    func() error
@@ -42,7 +43,7 @@ func (p _PP) Stop() error {
 
 func ppSymbols() map[string]map[string]reflect.Value {
 	return map[string]map[string]reflect.Value{
-		"github.com/traefik/traefik/v2/pkg/plugins": {
+		"github.com/traefik/traefik/v2/pkg/plugins/plugins": {
 			"PP":  reflect.ValueOf((*PP)(nil)),
 			"_PP": reflect.ValueOf((*_PP)(nil)),
 		},

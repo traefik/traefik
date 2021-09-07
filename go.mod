@@ -33,24 +33,27 @@ require (
 	github.com/go-acme/lego/v4 v4.4.0
 	github.com/go-check/check v0.0.0-00010101000000-000000000000
 	github.com/go-kit/kit v0.10.1-0.20200915143503-439c4d2ed3ea
-	github.com/golang/protobuf v1.4.3
+	github.com/golang/protobuf v1.5.2
 	github.com/google/go-github/v28 v28.1.1
 	github.com/gorilla/mux v1.7.3
 	github.com/gorilla/websocket v1.4.2
-	github.com/hashicorp/consul/api v1.3.0
-	github.com/hashicorp/go-multierror v1.0.0
-	github.com/hashicorp/go-version v1.2.0
+	github.com/hashicorp/consul v1.10.0
+	github.com/hashicorp/consul/api v1.9.1
+	github.com/hashicorp/go-hclog v0.16.1
+	github.com/hashicorp/go-multierror v1.1.1
+	github.com/hashicorp/go-version v1.2.1
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
 	github.com/instana/go-sensor v1.5.1
+	github.com/klauspost/compress v1.13.0
 	github.com/libkermit/compose v0.0.0-20171122111507-c04e39c026ad
 	github.com/libkermit/docker v0.0.0-20171122101128-e6674d32b807
 	github.com/libkermit/docker-check v0.0.0-20171122104347-1113af38e591
-	github.com/lucas-clemente/quic-go v0.20.1
+	github.com/lucas-clemente/quic-go v0.23.0
 	github.com/mailgun/ttlmap v0.0.0-20170619185759-c1c17f74874f
-	github.com/miekg/dns v1.1.40
+	github.com/miekg/dns v1.1.43
 	github.com/mitchellh/copystructure v1.0.0
 	github.com/mitchellh/hashstructure v1.0.0
-	github.com/mitchellh/mapstructure v1.3.3
+	github.com/mitchellh/mapstructure v1.4.1
 	github.com/morikuni/aec v0.0.0-20170113033406-39771216ff4c // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
@@ -69,9 +72,8 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
 	github.com/tinylib/msgp v1.0.2 // indirect
-	github.com/traefik/gziphandler v1.1.2-0.20210212101304-175e0fad6888
 	github.com/traefik/paerser v0.1.4
-	github.com/traefik/yaegi v0.9.19
+	github.com/traefik/yaegi v0.9.23
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/unrolled/render v1.0.2
@@ -79,24 +81,24 @@ require (
 	github.com/vdemeester/shakers v0.1.0
 	github.com/vulcand/oxy v1.3.0
 	github.com/vulcand/predicate v1.1.0
-	go.elastic.co/apm v1.11.0
-	go.elastic.co/apm/module/apmot v1.11.0
+	go.elastic.co/apm v1.13.1
+	go.elastic.co/apm/module/apmot v1.13.1
 	golang.org/x/mod v0.4.2
-	golang.org/x/net v0.0.0-20210220033124-5f55cee0dc0d
+	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
+	golang.org/x/sys v0.0.0-20210817190340-bfb29a6856f2 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
-	golang.org/x/tools v0.0.0-20200904185747-39188db58858
+	golang.org/x/tools v0.1.1
 	google.golang.org/grpc v1.27.1
 	gopkg.in/DataDog/dd-trace-go.v1 v1.19.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	k8s.io/api v0.20.2
-	k8s.io/apiextensions-apiserver v0.20.1
-	k8s.io/apimachinery v0.20.2
-	k8s.io/client-go v0.20.2
-	k8s.io/code-generator v0.20.2
+	k8s.io/api v0.21.0
+	k8s.io/apiextensions-apiserver v0.20.2
+	k8s.io/apimachinery v0.21.0
+	k8s.io/client-go v0.21.0
+	k8s.io/utils v0.0.0-20210709001253-0e1f9d693477
 	mvdan.cc/xurls/v2 v2.1.0
-	sigs.k8s.io/controller-tools v0.4.1
-	sigs.k8s.io/gateway-api v0.2.0
+	sigs.k8s.io/gateway-api v0.3.0
 )
 
 // Containous forks

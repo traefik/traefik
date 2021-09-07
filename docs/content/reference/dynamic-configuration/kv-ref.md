@@ -107,6 +107,7 @@
 | `traefik/http/middlewares/Middleware13/passTLSClientCert/info/subject/domainComponent` | `true` |
 | `traefik/http/middlewares/Middleware13/passTLSClientCert/info/subject/locality` | `true` |
 | `traefik/http/middlewares/Middleware13/passTLSClientCert/info/subject/organization` | `true` |
+| `traefik/http/middlewares/Middleware13/passTLSClientCert/info/subject/organizationalUnit` | `true` |
 | `traefik/http/middlewares/Middleware13/passTLSClientCert/info/subject/province` | `true` |
 | `traefik/http/middlewares/Middleware13/passTLSClientCert/info/subject/serialNumber` | `true` |
 | `traefik/http/middlewares/Middleware13/passTLSClientCert/pem` | `true` |
@@ -175,6 +176,7 @@
 | `traefik/http/serversTransports/ServersTransport0/forwardingTimeouts/responseHeaderTimeout` | `42s` |
 | `traefik/http/serversTransports/ServersTransport0/insecureSkipVerify` | `true` |
 | `traefik/http/serversTransports/ServersTransport0/maxIdleConnsPerHost` | `42` |
+| `traefik/http/serversTransports/ServersTransport0/peerCertURI` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport0/rootCAs/0` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport0/rootCAs/1` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport0/serverName` | `foobar` |
@@ -188,6 +190,7 @@
 | `traefik/http/serversTransports/ServersTransport1/forwardingTimeouts/responseHeaderTimeout` | `42s` |
 | `traefik/http/serversTransports/ServersTransport1/insecureSkipVerify` | `true` |
 | `traefik/http/serversTransports/ServersTransport1/maxIdleConnsPerHost` | `42` |
+| `traefik/http/serversTransports/ServersTransport1/peerCertURI` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/rootCAs/0` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/rootCAs/1` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/serverName` | `foobar` |
@@ -273,6 +276,8 @@
 | `traefik/tls/certificates/1/keyFile` | `foobar` |
 | `traefik/tls/certificates/1/stores/0` | `foobar` |
 | `traefik/tls/certificates/1/stores/1` | `foobar` |
+| `traefik/tls/options/Options0/alpnProtocols/0` | `foobar` |
+| `traefik/tls/options/Options0/alpnProtocols/1` | `foobar` |
 | `traefik/tls/options/Options0/cipherSuites/0` | `foobar` |
 | `traefik/tls/options/Options0/cipherSuites/1` | `foobar` |
 | `traefik/tls/options/Options0/clientAuth/caFiles/0` | `foobar` |
@@ -284,6 +289,8 @@
 | `traefik/tls/options/Options0/minVersion` | `foobar` |
 | `traefik/tls/options/Options0/preferServerCipherSuites` | `true` |
 | `traefik/tls/options/Options0/sniStrict` | `true` |
+| `traefik/tls/options/Options1/alpnProtocols/0` | `foobar` |
+| `traefik/tls/options/Options1/alpnProtocols/1` | `foobar` |
 | `traefik/tls/options/Options1/cipherSuites/0` | `foobar` |
 | `traefik/tls/options/Options1/cipherSuites/1` | `foobar` |
 | `traefik/tls/options/Options1/clientAuth/caFiles/0` | `foobar` |

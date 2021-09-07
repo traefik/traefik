@@ -35,6 +35,8 @@ type ServersTransportSpec struct {
 	ForwardingTimeouts *ForwardingTimeouts `json:"forwardingTimeouts,omitempty"`
 	// Disable HTTP/2 for connections with backend servers.
 	DisableHTTP2 bool `json:"disableHTTP2,omitempty"`
+	// URI used to match against SAN URI during the peer certificate verification.
+	PeerCertURI string `json:"peerCertURI,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

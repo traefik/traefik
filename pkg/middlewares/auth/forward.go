@@ -15,6 +15,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
+	"github.com/traefik/traefik/v2/pkg/middlewares/connectionheader"
 	"github.com/traefik/traefik/v2/pkg/tracing"
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/utils"
@@ -89,7 +90,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		fa.authResponseHeadersRegex = re
 	}
 
-	return fa, nil
+	return connectionheader.Remover(fa), nil
 }
 
 func (fa *forwardAuth) GetTracingInformation() (string, ext.SpanKindEnum) {

@@ -41,20 +41,16 @@ const (
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	Endpoint            string          `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-	Token               string          `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
-	CertAuthFilePath    string          `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
-	Namespaces          []string        `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
-	AllowCrossNamespace *bool           `description:"Allow cross namespace resource reference." json:"allowCrossNamespace,omitempty" toml:"allowCrossNamespace,omitempty" yaml:"allowCrossNamespace,omitempty" export:"true"`
-	LabelSelector       string          `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
-	IngressClass        string          `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
-	ThrottleDuration    ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
-	lastConfiguration   safe.Safe
-}
-
-// SetDefaults sets the default values.
-func (p *Provider) SetDefaults() {
-	p.AllowCrossNamespace = func(b bool) *bool { return &b }(true)
+	Endpoint                  string          `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Token                     string          `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
+	CertAuthFilePath          string          `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
+	Namespaces                []string        `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
+	AllowCrossNamespace       bool            `description:"Allow cross namespace resource reference." json:"allowCrossNamespace,omitempty" toml:"allowCrossNamespace,omitempty" yaml:"allowCrossNamespace,omitempty" export:"true"`
+	AllowExternalNameServices bool            `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
+	LabelSelector             string          `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
+	IngressClass              string          `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
+	ThrottleDuration          ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
+	lastConfiguration         safe.Safe
 }
 
 func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
@@ -106,8 +102,12 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		return err
 	}
 
-	if p.AllowCrossNamespace == nil || *p.AllowCrossNamespace {
+	if p.AllowCrossNamespace {
 		logger.Warn("Cross-namespace reference between IngressRoutes and resources is enabled, please ensure that this is expected (see AllowCrossNamespace option)")
+	}
+
+	if p.AllowExternalNameServices {
+		logger.Warn("ExternalName service loading is enabled, please ensure that this is expected (see AllowExternalNameServices option)")
 	}
 
 	pool.GoCtx(func(ctxPool context.Context) {
@@ -274,7 +274,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		}
 	}
 
-	cb := configBuilder{client, p.AllowCrossNamespace}
+	cb := configBuilder{client: client, allowCrossNamespace: p.AllowCrossNamespace, allowExternalNameServices: p.AllowExternalNameServices}
 
 	for _, service := range client.GetTraefikServices() {
 		err := cb.buildTraefikService(ctx, service, conf.HTTP.Services)
@@ -450,7 +450,7 @@ func (p *Provider) createErrorPageMiddleware(client Client, namespace string, er
 		Query:  errorPage.Query,
 	}
 
-	balancerServerHTTP, err := configBuilder{client, p.AllowCrossNamespace}.buildServersLB(namespace, errorPage.Service.LoadBalancerSpec)
+	balancerServerHTTP, err := configBuilder{client: client, allowCrossNamespace: p.AllowCrossNamespace, allowExternalNameServices: p.AllowExternalNameServices}.buildServersLB(namespace, errorPage.Service.LoadBalancerSpec)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -703,6 +703,12 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 			id = tlsOption.Name
 			nsDefault = append(nsDefault, tlsOption.Namespace)
 		}
+
+		alpnProtocols := tls.DefaultTLSOptions.ALPNProtocols
+		if len(tlsOption.Spec.ALPNProtocols) > 0 {
+			alpnProtocols = tlsOption.Spec.ALPNProtocols
+		}
+
 		tlsOptions[id] = tls.Options{
 			MinVersion:       tlsOption.Spec.MinVersion,
 			MaxVersion:       tlsOption.Spec.MaxVersion,
@@ -714,6 +720,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 			},
 			SniStrict:                tlsOption.Spec.SniStrict,
 			PreferServerCipherSuites: tlsOption.Spec.PreferServerCipherSuites,
+			ALPNProtocols:            alpnProtocols,
 		}
 	}
 
@@ -919,7 +926,7 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	return eventsChanBuffered
 }
 
-func isNamespaceAllowed(allowCrossNamespace *bool, parentNamespace, namespace string) bool {
+func isNamespaceAllowed(allowCrossNamespace bool, parentNamespace, namespace string) bool {
 	// If allowCrossNamespace option is not defined the default behavior is to allow cross namespace references.
-	return allowCrossNamespace == nil || *allowCrossNamespace || parentNamespace == namespace
+	return allowCrossNamespace || parentNamespace == namespace
 }

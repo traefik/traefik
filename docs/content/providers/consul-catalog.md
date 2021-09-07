@@ -532,7 +532,7 @@ The default host rule for all services.
 
 For a given service, if no routing rule was defined by a tag, it is defined by this `defaultRule` instead.
 The `defaultRule` must be set to a valid [Go template](https://golang.org/pkg/text/template/),
-and can include [sprig template functions](http://masterminds.github.io/sprig/).
+and can include [sprig template functions](https://masterminds.github.io/sprig/).
 The service name can be accessed with the `Name` identifier,
 and the template has access to all the labels (i.e. tags beginning with the `prefix`) defined on this service.
 
@@ -553,6 +553,81 @@ providers:
 
 ```bash tab="CLI"
 --providers.consulcatalog.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+# ...
+```
+
+### `connectAware`
+
+_Optional, Default=false_
+
+Enable Consul Connect support.
+If set to `true`, Traefik will be enabled to communicate with Connect services.
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  connectAware = true
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    connectAware: true
+    # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.connectAware=true
+# ...
+```
+
+### `connectByDefault`
+
+_Optional, Default=false_
+
+Consider every service as Connect capable by default.
+If set to `true`, Traefik will consider every Consul Catalog service to be Connect capable by default.
+The option can be overridden on an instance basis with the `traefik.consulcatalog.connect` tag.
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  connectByDefault = true
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    connectByDefault: true
+    # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.connectByDefault=true
+# ...
+```
+
+### `serviceName`
+
+_Optional, Default="traefik"_
+
+Name of the Traefik service in Consul Catalog.
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  serviceName = "test"
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    serviceName: test
+    # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.serviceName=test
 # ...
 ```
 

@@ -156,6 +156,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware12/passTLSClientCert/info/subject/province":              "true",
 		"traefik/http/middlewares/Middleware12/passTLSClientCert/info/subject/locality":              "true",
 		"traefik/http/middlewares/Middleware12/passTLSClientCert/info/subject/organization":          "true",
+		"traefik/http/middlewares/Middleware12/passTLSClientCert/info/subject/organizationalunit":    "true",
 		"traefik/http/middlewares/Middleware12/passTLSClientCert/info/subject/commonName":            "true",
 		"traefik/http/middlewares/Middleware12/passTLSClientCert/info/subject/serialNumber":          "true",
 		"traefik/http/middlewares/Middleware12/passTLSClientCert/info/subject/domainComponent":       "true",
@@ -480,16 +481,17 @@ func Test_buildConfiguration(t *testing.T) {
 							NotAfter:  true,
 							NotBefore: true,
 							Sans:      true,
-							Subject: &dynamic.TLSCLientCertificateDNInfo{
-								Country:         true,
-								Province:        true,
-								Locality:        true,
-								Organization:    true,
-								CommonName:      true,
-								SerialNumber:    true,
-								DomainComponent: true,
+							Subject: &dynamic.TLSCLientCertificateSubjectDNInfo{
+								Country:            true,
+								Province:           true,
+								Locality:           true,
+								Organization:       true,
+								OrganizationalUnit: true,
+								CommonName:         true,
+								SerialNumber:       true,
+								DomainComponent:    true,
 							},
-							Issuer: &dynamic.TLSCLientCertificateDNInfo{
+							Issuer: &dynamic.TLSCLientCertificateIssuerDNInfo{
 								Country:         true,
 								Province:        true,
 								Locality:        true,
@@ -848,6 +850,11 @@ func Test_buildConfiguration(t *testing.T) {
 						ClientAuthType: "foobar",
 					},
 					SniStrict: true,
+					ALPNProtocols: []string{
+						"h2",
+						"http/1.1",
+						"acme-tls/1",
+					},
 				},
 				"Options1": {
 					MinVersion: "foobar",
@@ -868,6 +875,11 @@ func Test_buildConfiguration(t *testing.T) {
 						ClientAuthType: "foobar",
 					},
 					SniStrict: true,
+					ALPNProtocols: []string{
+						"h2",
+						"http/1.1",
+						"acme-tls/1",
+					},
 				},
 			},
 			Stores: map[string]tls.Store{
