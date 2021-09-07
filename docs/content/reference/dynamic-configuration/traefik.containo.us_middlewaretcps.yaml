@@ -44,6 +44,31 @@ spec:
                       type: string
                     type: array
                 type: object
+              rateLimit:
+                description: TCPRateLimit holds the rate limiting configuration for
+                  a given router.
+                properties:
+                  average:
+                    description: Average is the maximum rate, by default in requests/s,
+                      allowed for the given source. It defaults to 0, which means
+                      no rate limiting. The rate is actually defined by dividing Average
+                      by Period. So for a rate below 1req/s, one needs to define a
+                      Period larger than a second.
+                    format: int64
+                    type: integer
+                  burst:
+                    description: Burst is the maximum number of requests allowed to
+                      arrive in the same arbitrarily small period of time. It defaults
+                      to 1.
+                    format: int64
+                    type: integer
+                  period:
+                    description: 'Period, in combination with Average, defines the
+                      actual maximum rate, such as: r = Average / Period. It defaults
+                      to a second.'
+                    format: int64
+                    type: integer
+                type: object
             type: object
         required:
         - metadata
