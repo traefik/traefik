@@ -24,7 +24,7 @@ jobs:
       - name: Build webui
         run: |
           make generate-webui
-          tar czvf webui.tar.gz ./static/
+          tar czvf webui.tar.gz ./webui/static/
 
       - name: Artifact webui
         uses: actions/upload-artifact@v2
@@ -73,7 +73,7 @@ jobs:
           path: ${{ github.workspace }}/go/src/github.com/traefik/traefik
 
       - name: Untar webui
-        run: tar xvf webui.tar.gz && cp -R ./static/ ./webui/static/
+        run: tar xvf webui.tar.gz
 
       - name: Build
         run: make binary

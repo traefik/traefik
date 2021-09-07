@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"testing/fstest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -775,10 +774,9 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.API = &static.API{
-		Insecure:        true,
-		Dashboard:       true,
-		Debug:           true,
-		DashboardAssets: fstest.MapFS{},
+		Insecure:  true,
+		Dashboard: true,
+		Debug:     true,
 	}
 
 	config.Metrics = &types.Metrics{

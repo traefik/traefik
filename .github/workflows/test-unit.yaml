@@ -39,5 +39,8 @@ jobs:
           key: ${{ runner.os }}-test-unit-go-${{ hashFiles('**/go.sum') }}
           restore-keys: ${{ runner.os }}-test-unit-go-
 
+      - name: Avoid generating webui
+        run: mkdir -p webui/static && touch webui/static/index.html
+
       - name: Tests
         run: make test-unit

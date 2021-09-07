@@ -1,4 +1,4 @@
-package api
+package dashboard
 
 import (
 	"errors"
@@ -61,13 +61,13 @@ func Test_safePrefix(t *testing.T) {
 func Test_ContentSecurityPolicy(t *testing.T) {
 	testCases := []struct {
 		desc     string
-		handler  DashboardHandler
+		handler  Handler
 		expected int
 	}{
 		{
 			desc: "OK",
-			handler: DashboardHandler{
-				FS: fstest.MapFS{"foobar.html": &fstest.MapFile{
+			handler: Handler{
+				assets: fstest.MapFS{"foobar.html": &fstest.MapFile{
 					Mode:    0755,
 					ModTime: time.Now(),
 				}},
@@ -76,15 +76,15 @@ func Test_ContentSecurityPolicy(t *testing.T) {
 		},
 		{
 			desc: "Not found",
-			handler: DashboardHandler{
-				FS: fstest.MapFS{},
+			handler: Handler{
+				assets: fstest.MapFS{},
 			},
 			expected: http.StatusNotFound,
 		},
 		{
 			desc: "Internal server error",
-			handler: DashboardHandler{
-				FS: errorFS{},
+			handler: Handler{
+				assets: errorFS{},
 			},
 			expected: http.StatusInternalServerError,
 		},
