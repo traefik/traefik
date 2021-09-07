@@ -230,15 +230,15 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		}, []string{"tls_version", "tls_cipher", "service"})
 		serviceBytesReceivedCounter := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
 			Name: serviceBytesReceivedTotalName,
-			Help: "How many incoming HTTP requests processed on a service, partitioned by status code, protocol, and method.",
-		}, []string{"code", "method", "protocol", "service"})
+			Help: "How many incoming HTTP requests processed on a service.",
+		}, []string{"service"})
 		serviceBytesSentCounter := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
 			Name: serviceBytesSentTotalName,
-			Help: "How many HTTP outgoihg bytes processed on a service, partitioned by status code, protocol, and method.",
-		}, []string{"code", "method", "protocol", "service"})
+			Help: "How many HTTP outgoihg bytes processed on a service.",
+		}, []string{"service"})
 		serviceReqDurations := newHistogramFrom(promState.collectors, stdprometheus.HistogramOpts{
 			Name:    serviceReqDurationName,
-			Help:    "How long it took to process the request on a service, partitioned by status code, protocol, and method.",
+			Help:    "How long it took to process the request on a service.",
 			Buckets: buckets,
 		}, []string{"code", "method", "protocol", "service"})
 		serviceOpenConns := newGaugeFrom(promState.collectors, stdprometheus.GaugeOpts{

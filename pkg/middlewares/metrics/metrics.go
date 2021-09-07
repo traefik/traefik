@@ -133,10 +133,10 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	labels = append(labels, "code", strconv.Itoa(recorder.getCode()))
 
 	if m.bytesReceivedCounter != nil {
-		m.bytesReceivedCounter.With(labels...).Add(float64(bodyWrapper.read))
+		m.bytesReceivedCounter.With(m.baseLabels...).Add(float64(bodyWrapper.read))
 	}
 	if m.bytesSentCounter != nil {
-		m.bytesSentCounter.With(labels...).Add(float64(responseWrapper.sent))
+		m.bytesSentCounter.With(m.baseLabels...).Add(float64(responseWrapper.sent))
 	}
 
 	histograms := m.reqDurationHistogram.With(labels...)
