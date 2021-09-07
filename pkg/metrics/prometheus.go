@@ -48,13 +48,15 @@ const (
 	routerOpenConnsName    = metricRouterPrefix + "open_connections"
 
 	// service level.
-	metricServicePrefix     = MetricNamePrefix + "service_"
-	serviceReqsTotalName    = metricServicePrefix + "requests_total"
-	serviceReqsTLSTotalName = metricServicePrefix + "requests_tls_total"
-	serviceReqDurationName  = metricServicePrefix + "request_duration_seconds"
-	serviceOpenConnsName    = metricServicePrefix + "open_connections"
-	serviceRetriesTotalName = metricServicePrefix + "retries_total"
-	serviceServerUpName     = metricServicePrefix + "server_up"
+	metricServicePrefix           = MetricNamePrefix + "service_"
+	serviceReqsTotalName          = metricServicePrefix + "requests_total"
+	serviceReqsTLSTotalName       = metricServicePrefix + "requests_tls_total"
+	serviceBytesReceivedTotalName = metricServicePrefix + "bytes_received_total"
+	serviceBytesSentTotalName     = metricServicePrefix + "bytes_sent_total"
+	serviceReqDurationName        = metricServicePrefix + "request_duration_seconds"
+	serviceOpenConnsName          = metricServicePrefix + "open_connections"
+	serviceRetriesTotalName       = metricServicePrefix + "retries_total"
+	serviceServerUpName           = metricServicePrefix + "server_up"
 )
 
 // promState holds all metric state internally and acts as the only Collector we register for Prometheus.
@@ -220,12 +222,20 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 	if config.AddServicesLabels {
 		serviceReqs := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
 			Name: serviceReqsTotalName,
-			Help: "How many HTTP requests processed on a service, partitioned by status code, protocol, and method.",
+			Help: "How many HTTP requests bytes received processed on a service, partitioned by status code, protocol, and method.",
 		}, []string{"code", "method", "protocol", "service"})
 		serviceReqsTLS := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
 			Name: serviceReqsTLSTotalName,
 			Help: "How many HTTP requests with TLS processed on a service, partitioned by TLS version and TLS cipher.",
 		}, []string{"tls_version", "tls_cipher", "service"})
+		serviceBytesReceivedCounter := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
+			Name: serviceBytesReceivedTotalName,
+			Help: "How many incoming HTTP requests processed on a service, partitioned by status code, protocol, and method.",
+		}, []string{"code", "method", "protocol", "service"})
+		serviceBytesSentCounter := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
+			Name: serviceBytesSentTotalName,
+			Help: "How many HTTP outgoihg bytes processed on a service, partitioned by status code, protocol, and method.",
+		}, []string{"code", "method", "protocol", "service"})
 		serviceReqDurations := newHistogramFrom(promState.collectors, stdprometheus.HistogramOpts{
 			Name:    serviceReqDurationName,
 			Help:    "How long it took to process the request on a service, partitioned by status code, protocol, and method.",
@@ -254,6 +264,8 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		}...)
 
 		reg.serviceReqsCounter = serviceReqs
+		reg.serviceBytesReceivedCounter = serviceBytesReceivedCounter
+		reg.serviceBytesSentCounter = serviceBytesSentCounter
 		reg.serviceReqsTLSCounter = serviceReqsTLS
 		reg.serviceReqDurationHistogram, _ = NewHistogramWithScale(serviceReqDurations, time.Second)
 		reg.serviceOpenConnsGauge = serviceOpenConns

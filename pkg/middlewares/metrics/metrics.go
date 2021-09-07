@@ -30,6 +30,8 @@ type metricsMiddleware struct {
 	next                 http.Handler
 	reqsCounter          gokitmetrics.Counter
 	reqsTLSCounter       gokitmetrics.Counter
+	bytesSentCounter     gokitmetrics.Counter
+	bytesReceivedCounter gokitmetrics.Counter
 	reqDurationHistogram metrics.ScalableHistogram
 	openConnsGauge       gokitmetrics.Gauge
 	baseLabels           []string
@@ -71,6 +73,8 @@ func NewServiceMiddleware(ctx context.Context, next http.Handler, registry metri
 		next:                 next,
 		reqsCounter:          registry.ServiceReqsCounter(),
 		reqsTLSCounter:       registry.ServiceReqsTLSCounter(),
+		bytesReceivedCounter: registry.ServiceBytesReceivedCounter(),
+		bytesSentCounter:     registry.ServiceBytesSentCounter(),
 		reqDurationHistogram: registry.ServiceReqDurationHistogram(),
 		openConnsGauge:       registry.ServiceOpenConnsGauge(),
 		baseLabels:           []string{"service", serviceName},
@@ -118,9 +122,22 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	recorder := newResponseRecorder(rw)
 	start := time.Now()
 
-	m.next.ServeHTTP(recorder, req)
+	responseWrapper := NewResponseWritrWrapper(recorder)
+	bodyWrapper := NewBodyWrapper(req.Body)
+	bodyWrapper.read += uint64(requestHeaderSize(req))
+	req.Body = bodyWrapper
+
+	m.next.ServeHTTP(responseWrapper, req)
+	responseWrapper.sent += uint64(responseHeaderSize(responseWrapper.Header(), req.Proto, ""))
 
 	labels = append(labels, "code", strconv.Itoa(recorder.getCode()))
+
+	if m.bytesReceivedCounter != nil {
+		m.bytesReceivedCounter.With(labels...).Add(float64(bodyWrapper.read))
+	}
+	if m.bytesSentCounter != nil {
+		m.bytesSentCounter.With(labels...).Add(float64(responseWrapper.sent))
+	}
 
 	histograms := m.reqDurationHistogram.With(labels...)
 	histograms.ObserveFromStart(start)

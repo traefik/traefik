@@ -41,6 +41,8 @@ type Registry interface {
 	// service metrics
 	ServiceReqsCounter() metrics.Counter
 	ServiceReqsTLSCounter() metrics.Counter
+	ServiceBytesSentCounter() metrics.Counter
+	ServiceBytesReceivedCounter() metrics.Counter
 	ServiceReqDurationHistogram() ScalableHistogram
 	ServiceOpenConnsGauge() metrics.Gauge
 	ServiceRetriesCounter() metrics.Counter
@@ -72,6 +74,8 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var routerOpenConnsGauge []metrics.Gauge
 	var serviceReqsCounter []metrics.Counter
 	var serviceReqsTLSCounter []metrics.Counter
+	var serviceBytesReceivedCounter []metrics.Counter
+	var serviceBytesSentCounter []metrics.Counter
 	var serviceReqDurationHistogram []ScalableHistogram
 	var serviceOpenConnsGauge []metrics.Gauge
 	var serviceRetriesCounter []metrics.Counter
@@ -123,6 +127,12 @@ func NewMultiRegistry(registries []Registry) Registry {
 		if r.ServiceReqsTLSCounter() != nil {
 			serviceReqsTLSCounter = append(serviceReqsTLSCounter, r.ServiceReqsTLSCounter())
 		}
+		if r.ServiceBytesReceivedCounter() != nil {
+			serviceBytesReceivedCounter = append(serviceBytesReceivedCounter, r.ServiceBytesReceivedCounter())
+		}
+		if r.ServiceBytesReceivedCounter() != nil {
+			serviceBytesSentCounter = append(serviceBytesSentCounter, r.ServiceBytesSentCounter())
+		}
 		if r.ServiceReqDurationHistogram() != nil {
 			serviceReqDurationHistogram = append(serviceReqDurationHistogram, r.ServiceReqDurationHistogram())
 		}
@@ -156,6 +166,8 @@ func NewMultiRegistry(registries []Registry) Registry {
 		routerOpenConnsGauge:           multi.NewGauge(routerOpenConnsGauge...),
 		serviceReqsCounter:             multi.NewCounter(serviceReqsCounter...),
 		serviceReqsTLSCounter:          multi.NewCounter(serviceReqsTLSCounter...),
+		serviceBytesReceivedCounter:    multi.NewCounter(serviceBytesReceivedCounter...),
+		serviceBytesSentCounter:        multi.NewCounter(serviceBytesSentCounter...),
 		serviceReqDurationHistogram:    NewMultiHistogram(serviceReqDurationHistogram...),
 		serviceOpenConnsGauge:          multi.NewGauge(serviceOpenConnsGauge...),
 		serviceRetriesCounter:          multi.NewCounter(serviceRetriesCounter...),
@@ -182,6 +194,8 @@ type standardRegistry struct {
 	routerOpenConnsGauge           metrics.Gauge
 	serviceReqsCounter             metrics.Counter
 	serviceReqsTLSCounter          metrics.Counter
+	serviceBytesReceivedCounter    metrics.Counter
+	serviceBytesSentCounter        metrics.Counter
 	serviceReqDurationHistogram    ScalableHistogram
 	serviceOpenConnsGauge          metrics.Gauge
 	serviceRetriesCounter          metrics.Counter
@@ -258,6 +272,14 @@ func (r *standardRegistry) ServiceReqsCounter() metrics.Counter {
 
 func (r *standardRegistry) ServiceReqsTLSCounter() metrics.Counter {
 	return r.serviceReqsTLSCounter
+}
+
+func (r *standardRegistry) ServiceBytesSentCounter() metrics.Counter {
+	return r.serviceBytesSentCounter
+}
+
+func (r *standardRegistry) ServiceBytesReceivedCounter() metrics.Counter {
+	return r.serviceBytesReceivedCounter
 }
 
 func (r *standardRegistry) ServiceReqDurationHistogram() ScalableHistogram {
