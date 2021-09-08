@@ -4943,7 +4943,7 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"cross-ns-tls-options-cn": tls.Options{
+						"cross-ns-tls-options-cn": {
 							MinVersion:    "VersionTLS12",
 							ALPNProtocols: []string{"h2", "http/1.1", "acme-tls/1"},
 						},
@@ -4987,7 +4987,7 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"cross-ns-tls-options-cn": tls.Options{
+						"cross-ns-tls-options-cn": {
 							MinVersion:    "VersionTLS12",
 							ALPNProtocols: []string{"h2", "http/1.1", "acme-tls/1"},
 						},
@@ -5235,7 +5235,7 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"cross-ns-tls-options-cn": tls.Options{
+						"cross-ns-tls-options-cn": {
 							MinVersion:    "VersionTLS12",
 							ALPNProtocols: []string{"h2", "http/1.1", "acme-tls/1"},
 						},
@@ -5278,7 +5278,7 @@ func TestCrossNamespace(t *testing.T) {
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
-						"cross-ns-tls-options-cn": tls.Options{
+						"cross-ns-tls-options-cn": {
 							MinVersion:    "VersionTLS12",
 							ALPNProtocols: []string{"h2", "http/1.1", "acme-tls/1"},
 						},
