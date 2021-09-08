@@ -132,6 +132,7 @@ nav:
         - 'StripPrefixRegex': 'middlewares/http/stripprefixregex.md'
     - 'TCP':
         - 'Overview': 'middlewares/tcp/overview.md'
+        - 'InFlightReq': 'middlewares/tcp/inflightreq.md'
         - 'IpWhitelist': 'middlewares/tcp/ipwhitelist.md'
   - 'Plugins & Traefik Pilot': 'plugins/index.md'
   - 'Operations':
