@@ -20,6 +20,7 @@ type MiddlewareTCP struct {
 
 // MiddlewareTCPSpec holds the MiddlewareTCP configuration.
 type MiddlewareTCPSpec struct {
+	InFlightReq *dynamic.TCPInFlightReq `json:"inFlightReq,omitempty"`
 	IPWhiteList *dynamic.TCPIPWhiteList `json:"ipWhiteList,omitempty"`
 }
 

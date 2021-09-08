@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
+	inflightreq "github.com/traefik/traefik/v2/pkg/middlewares/tcp/inflightreq"
 	ipwhitelist "github.com/traefik/traefik/v2/pkg/middlewares/tcp/ipwhitelist"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
 	"github.com/traefik/traefik/v2/pkg/tcp"
@@ -85,6 +86,13 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	}
 
 	var middleware tcp.Constructor
+
+	// InFlightReq
+	if config.InFlightReq != nil {
+		middleware = func(next tcp.Handler) (tcp.Handler, error) {
+			return inflightreq.New(ctx, next, *config.InFlightReq, middlewareName)
+		}
+	}
 
 	// IPWhiteList
 	if config.IPWhiteList != nil {
