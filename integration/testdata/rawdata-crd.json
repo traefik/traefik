@@ -180,7 +180,7 @@
 					}
 				],
 				"passHostHeader": true,
-				"serversTransport": "mytransport@kubernetescrd"
+				"serversTransport": "default-mytransport@kubernetescrd"
 			},
 			"status": "enabled",
 			"usedBy": [
