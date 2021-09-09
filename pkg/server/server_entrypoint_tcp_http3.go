@@ -70,7 +70,7 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 	return h3, nil
 }
 
-// TODO: rewrite if at some point `port` become an exported field of http3.Server
+// TODO: rewrite if at some point `port` become an exported field of http3.Server.
 func getQuicHeadersFunc(configuration *static.EntryPoint) func(header http.Header) error {
 	advertisedAddress := configuration.GetAddress()
 	if configuration.HTTP3.AdvertisedPort != 0 {
