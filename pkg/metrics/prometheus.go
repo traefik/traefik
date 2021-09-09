@@ -250,7 +250,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 	if config.AddServicesLabels {
 		serviceReqs := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
 			Name: serviceReqsTotalName,
-			Help: "How many HTTP requests received processed on a service, partitioned by status code, protocol, and method.",
+			Help: "How many HTTP requests processed on a service, partitioned by status code, protocol, and method.",
 		}, []string{"code", "method", "protocol", "service"})
 		serviceReqsTLS := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
 			Name: serviceReqsTLSTotalName,
@@ -266,7 +266,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		}, []string{"service"})
 		serviceReqDurations := newHistogramFrom(promState.collectors, stdprometheus.HistogramOpts{
 			Name:    serviceReqDurationName,
-			Help:    "How long it took to process the request on a service.",
+			Help:    "How long it took to process the request on a service, partitioned by status code, protocol, and method.",
 			Buckets: buckets,
 		}, []string{"code", "method", "protocol", "service"})
 		serviceOpenConns := newGaugeFrom(promState.collectors, stdprometheus.GaugeOpts{
