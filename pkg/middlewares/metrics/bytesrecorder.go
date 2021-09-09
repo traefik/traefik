@@ -36,8 +36,7 @@ func NewResponseWritrWrapper(rw http.ResponseWriter) *ResponseWriterWrapper {
 }
 
 func (r *ResponseWriterWrapper) Write(d []byte) (int, error) {
-	x := uint64(len(d))
-	r.sent += x
+	r.sent += uint64(len(d))
 	return r.ResponseWriter.Write(d)
 }
 
