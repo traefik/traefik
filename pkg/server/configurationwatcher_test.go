@@ -388,7 +388,13 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Options: map[string]tls.Options{
-				"default": {},
+				"default": {
+					ALPNProtocols: []string{
+						"h2",
+						"http/1.1",
+						"acme-tls/1",
+					},
+				},
 			},
 			Stores: map[string]tls.Store{},
 		},
@@ -502,7 +508,13 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Options: map[string]tls.Options{
-				"default": {},
+				"default": {
+					ALPNProtocols: []string{
+						"h2",
+						"http/1.1",
+						"acme-tls/1",
+					},
+				},
 			},
 			Stores: map[string]tls.Store{},
 		},
