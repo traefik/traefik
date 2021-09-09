@@ -8,46 +8,50 @@ import (
 	gokitmetrics "github.com/go-kit/kit/metrics"
 )
 
-type BodyWrapper struct {
+type bodyWrapper struct {
 	io.ReadCloser
 	counter gokitmetrics.Counter
 }
 
-func NewBodyWrapper(body io.ReadCloser, counter gokitmetrics.Counter) *BodyWrapper {
-	return &BodyWrapper{
+func newBodyWrapper(body io.ReadCloser, counter gokitmetrics.Counter) *bodyWrapper {
+	return &bodyWrapper{
 		body,
 		counter,
 	}
 }
 
-func (b *BodyWrapper) Read(p []byte) (int, error) {
+// Read calls the wrapped ReadCloser Read and increments the
+//      counter by the number of read bytes
+func (b *bodyWrapper) Read(p []byte) (int, error) {
 	r, e := b.ReadCloser.Read(p)
 	b.add(r)
 	return r, e
 }
 
-func (r *BodyWrapper) add(v int) {
-	r.counter.Add(float64(v))
+func (b *bodyWrapper) add(v int) {
+	b.counter.Add(float64(v))
 }
 
-type ResponseWriterWrapper struct {
+type responseWriterWrapper struct {
 	http.ResponseWriter
 	counter gokitmetrics.Counter
 }
 
-func NewResponseWritrWrapper(rw http.ResponseWriter, counter gokitmetrics.Counter) *ResponseWriterWrapper {
-	return &ResponseWriterWrapper{
+func newResponseWritrWrapper(rw http.ResponseWriter, counter gokitmetrics.Counter) *responseWriterWrapper {
+	return &responseWriterWrapper{
 		rw,
 		counter,
 	}
 }
 
-func (r *ResponseWriterWrapper) Write(d []byte) (int, error) {
+// Write calls the wrapped ResponseWriter write and increments the
+//      counter by the number of written bytes
+func (r *responseWriterWrapper) Write(d []byte) (int, error) {
 	r.add(len(d))
 	return r.ResponseWriter.Write(d)
 }
 
-func (r *ResponseWriterWrapper) add(v int) {
+func (r *responseWriterWrapper) add(v int) {
 	r.counter.Add(float64(v))
 }
 

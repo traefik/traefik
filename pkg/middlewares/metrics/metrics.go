@@ -126,8 +126,8 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	recorder := newResponseRecorder(rw)
 	start := time.Now()
 
-	responseWrapper := NewResponseWritrWrapper(recorder, m.bytesSentCounter.With(m.baseLabels...))
-	bodyWrapper := NewBodyWrapper(req.Body, m.bytesReceivedCounter.With(m.baseLabels...))
+	responseWrapper := newResponseWritrWrapper(recorder, m.bytesSentCounter.With(m.baseLabels...))
+	bodyWrapper := newBodyWrapper(req.Body, m.bytesReceivedCounter.With(m.baseLabels...))
 	bodyWrapper.add(requestHeaderSize(req))
 	req.Body = bodyWrapper
 
