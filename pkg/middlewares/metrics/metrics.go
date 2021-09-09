@@ -30,6 +30,8 @@ type metricsMiddleware struct {
 	next                 http.Handler
 	reqsCounter          gokitmetrics.Counter
 	reqsTLSCounter       gokitmetrics.Counter
+	bytesReceivedCounter gokitmetrics.Counter
+	bytesSentCounter     gokitmetrics.Counter
 	reqDurationHistogram metrics.ScalableHistogram
 	openConnsGauge       gokitmetrics.Gauge
 	baseLabels           []string
@@ -43,6 +45,8 @@ func NewEntryPointMiddleware(ctx context.Context, next http.Handler, registry me
 		next:                 next,
 		reqsCounter:          registry.EntryPointReqsCounter(),
 		reqsTLSCounter:       registry.EntryPointReqsTLSCounter(),
+		bytesReceivedCounter: registry.EntryPointBytesReceivedCounter(),
+		bytesSentCounter:     registry.EntryPointBytesSentCounter(),
 		reqDurationHistogram: registry.EntryPointReqDurationHistogram(),
 		openConnsGauge:       registry.EntryPointOpenConnsGauge(),
 		baseLabels:           []string{"entrypoint", entryPointName},
@@ -57,6 +61,8 @@ func NewRouterMiddleware(ctx context.Context, next http.Handler, registry metric
 		next:                 next,
 		reqsCounter:          registry.RouterReqsCounter(),
 		reqsTLSCounter:       registry.RouterReqsTLSCounter(),
+		bytesReceivedCounter: registry.RouterBytesReceivedCounter(),
+		bytesSentCounter:     registry.RouterBytesSentCounter(),
 		reqDurationHistogram: registry.RouterReqDurationHistogram(),
 		openConnsGauge:       registry.RouterOpenConnsGauge(),
 		baseLabels:           []string{"router", routerName, "service", serviceName},
@@ -71,6 +77,8 @@ func NewServiceMiddleware(ctx context.Context, next http.Handler, registry metri
 		next:                 next,
 		reqsCounter:          registry.ServiceReqsCounter(),
 		reqsTLSCounter:       registry.ServiceReqsTLSCounter(),
+		bytesReceivedCounter: registry.ServiceBytesReceivedCounter(),
+		bytesSentCounter:     registry.ServiceBytesSentCounter(),
 		reqDurationHistogram: registry.ServiceReqDurationHistogram(),
 		openConnsGauge:       registry.ServiceOpenConnsGauge(),
 		baseLabels:           []string{"service", serviceName},
@@ -118,7 +126,13 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	recorder := newResponseRecorder(rw)
 	start := time.Now()
 
-	m.next.ServeHTTP(recorder, req)
+	responseWrapper := newResponseWritrWrapper(recorder, m.bytesSentCounter.With(m.baseLabels...))
+	bodyWrapper := newBodyWrapper(req.Body, m.bytesReceivedCounter.With(m.baseLabels...))
+	bodyWrapper.add(requestHeaderSize(req))
+	req.Body = bodyWrapper
+
+	m.next.ServeHTTP(responseWrapper, req)
+	responseWrapper.add(responseHeaderSize(responseWrapper.Header(), req.Proto, recorder.getCode()))
 
 	labels = append(labels, "code", strconv.Itoa(recorder.getCode()))
 

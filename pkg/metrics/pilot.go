@@ -18,20 +18,24 @@ const (
 	pilotConfigLastReloadFailureName    = pilotConfigPrefix + "LastReloadFailure"
 
 	// entry point.
-	pilotEntryPointPrefix           = "entrypoint"
-	pilotEntryPointReqsTotalName    = pilotEntryPointPrefix + "RequestsTotal"
-	pilotEntryPointReqsTLSTotalName = pilotEntryPointPrefix + "RequestsTLSTotal"
-	pilotEntryPointReqDurationName  = pilotEntryPointPrefix + "RequestDurationSeconds"
-	pilotEntryPointOpenConnsName    = pilotEntryPointPrefix + "OpenConnections"
+	pilotEntryPointPrefix                 = "entrypoint"
+	pilotEntryPointReqsTotalName          = pilotEntryPointPrefix + "RequestsTotal"
+	pilotEntryPointReqsTLSTotalName       = pilotEntryPointPrefix + "RequestsTLSTotal"
+	pilotEntryPointBytesReceivedTotalName = pilotEntryPointPrefix + "BytesReceivedTotal"
+	pilotEntryPointBytesSentTotalName     = pilotEntryPointPrefix + "BytesSentTotal"
+	pilotEntryPointReqDurationName        = pilotEntryPointPrefix + "RequestDurationSeconds"
+	pilotEntryPointOpenConnsName          = pilotEntryPointPrefix + "OpenConnections"
 
 	// service level.
-	pilotServicePrefix           = "service"
-	pilotServiceReqsTotalName    = pilotServicePrefix + "RequestsTotal"
-	pilotServiceReqsTLSTotalName = pilotServicePrefix + "RequestsTLSTotal"
-	pilotServiceReqDurationName  = pilotServicePrefix + "RequestDurationSeconds"
-	pilotServiceOpenConnsName    = pilotServicePrefix + "OpenConnections"
-	pilotServiceRetriesTotalName = pilotServicePrefix + "RetriesTotal"
-	pilotServiceServerUpName     = pilotServicePrefix + "ServerUp"
+	pilotServicePrefix                 = "service"
+	pilotServiceReqsTotalName          = pilotServicePrefix + "RequestsTotal"
+	pilotServiceReqsTLSTotalName       = pilotServicePrefix + "RequestsTLSTotal"
+	pilotServiceBytesReceivedTotalName = pilotServicePrefix + "BytesReceivedTotal"
+	pilotServiceBytesSentTotalName     = pilotServicePrefix + "BytesSentTotal"
+	pilotServiceReqDurationName        = pilotServicePrefix + "RequestDurationSeconds"
+	pilotServiceOpenConnsName          = pilotServicePrefix + "OpenConnections"
+	pilotServiceRetriesTotalName       = pilotServicePrefix + "RetriesTotal"
+	pilotServiceServerUpName           = pilotServicePrefix + "ServerUp"
 )
 
 const root = "value"
@@ -57,11 +61,15 @@ func RegisterPilot() *PilotRegistry {
 
 	standardRegistry.entryPointReqsCounter = pr.newCounter(pilotEntryPointReqsTotalName)
 	standardRegistry.entryPointReqsTLSCounter = pr.newCounter(pilotEntryPointReqsTLSTotalName)
+	standardRegistry.entryPointBytesReceivedCounter = pr.newCounter(pilotEntryPointBytesReceivedTotalName)
+	standardRegistry.entryPointBytesSentCounter = pr.newCounter(pilotEntryPointBytesSentTotalName)
 	standardRegistry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(pr.newHistogram(pilotEntryPointReqDurationName), time.Millisecond)
 	standardRegistry.entryPointOpenConnsGauge = pr.newGauge(pilotEntryPointOpenConnsName)
 
 	standardRegistry.serviceReqsCounter = pr.newCounter(pilotServiceReqsTotalName)
 	standardRegistry.serviceReqsTLSCounter = pr.newCounter(pilotServiceReqsTLSTotalName)
+	standardRegistry.serviceBytesReceivedCounter = pr.newCounter(pilotServiceBytesReceivedTotalName)
+	standardRegistry.serviceBytesSentCounter = pr.newCounter(pilotServiceBytesSentTotalName)
 	standardRegistry.serviceReqDurationHistogram, _ = NewHistogramWithScale(pr.newHistogram(pilotServiceReqDurationName), time.Millisecond)
 	standardRegistry.serviceOpenConnsGauge = pr.newGauge(pilotServiceOpenConnsName)
 	standardRegistry.serviceRetriesCounter = pr.newCounter(pilotServiceRetriesTotalName)

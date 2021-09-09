@@ -34,27 +34,33 @@ const (
 	tlsCertsNotAfterTimestamp = metricsTLSPrefix + "certs_not_after"
 
 	// entry point.
-	metricEntryPointPrefix     = MetricNamePrefix + "entrypoint_"
-	entryPointReqsTotalName    = metricEntryPointPrefix + "requests_total"
-	entryPointReqsTLSTotalName = metricEntryPointPrefix + "requests_tls_total"
-	entryPointReqDurationName  = metricEntryPointPrefix + "request_duration_seconds"
-	entryPointOpenConnsName    = metricEntryPointPrefix + "open_connections"
+	metricEntryPointPrefix           = MetricNamePrefix + "entrypoint_"
+	entryPointReqsTotalName          = metricEntryPointPrefix + "requests_total"
+	entryPointReqsTLSTotalName       = metricEntryPointPrefix + "requests_tls_total"
+	entryPointBytesReceivedTotalName = metricEntryPointPrefix + "bytes_received_total"
+	entryPointBytesSentTotalName     = metricEntryPointPrefix + "bytes_sent_total"
+	entryPointReqDurationName        = metricEntryPointPrefix + "request_duration_seconds"
+	entryPointOpenConnsName          = metricEntryPointPrefix + "open_connections"
 
 	// router level.
-	metricRouterPrefix     = MetricNamePrefix + "router_"
-	routerReqsTotalName    = metricRouterPrefix + "requests_total"
-	routerReqsTLSTotalName = metricRouterPrefix + "requests_tls_total"
-	routerReqDurationName  = metricRouterPrefix + "request_duration_seconds"
-	routerOpenConnsName    = metricRouterPrefix + "open_connections"
+	metricRouterPrefix           = MetricNamePrefix + "router_"
+	routerReqsTotalName          = metricRouterPrefix + "requests_total"
+	routerReqsTLSTotalName       = metricRouterPrefix + "requests_tls_total"
+	routerBytesReceivedTotalName = metricRouterPrefix + "bytes_received_total"
+	routerBytesSentTotalName     = metricRouterPrefix + "bytes_sent_total"
+	routerReqDurationName        = metricRouterPrefix + "request_duration_seconds"
+	routerOpenConnsName          = metricRouterPrefix + "open_connections"
 
 	// service level.
-	metricServicePrefix     = MetricNamePrefix + "service_"
-	serviceReqsTotalName    = metricServicePrefix + "requests_total"
-	serviceReqsTLSTotalName = metricServicePrefix + "requests_tls_total"
-	serviceReqDurationName  = metricServicePrefix + "request_duration_seconds"
-	serviceOpenConnsName    = metricServicePrefix + "open_connections"
-	serviceRetriesTotalName = metricServicePrefix + "retries_total"
-	serviceServerUpName     = metricServicePrefix + "server_up"
+	metricServicePrefix           = MetricNamePrefix + "service_"
+	serviceReqsTotalName          = metricServicePrefix + "requests_total"
+	serviceReqsTLSTotalName       = metricServicePrefix + "requests_tls_total"
+	serviceBytesReceivedTotalName = metricServicePrefix + "bytes_received_total"
+	serviceBytesSentTotalName     = metricServicePrefix + "bytes_sent_total"
+	serviceReqDurationName        = metricServicePrefix + "request_duration_seconds"
+	serviceOpenConnsName          = metricServicePrefix + "open_connections"
+	serviceRetriesTotalName       = metricServicePrefix + "retries_total"
+	serviceServerUpName           = metricServicePrefix + "server_up"
 )
 
 // promState holds all metric state internally and acts as the only Collector we register for Prometheus.
@@ -163,6 +169,14 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 			Name: entryPointReqsTLSTotalName,
 			Help: "How many HTTP requests with TLS processed on an entrypoint, partitioned by TLS Version and TLS cipher Used.",
 		}, []string{"tls_version", "tls_cipher", "entrypoint"})
+		entryPointBytesReceived := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
+			Name: entryPointBytesReceivedTotalName,
+			Help: "How many incoming HTTP requests processed on a service.",
+		}, []string{"entrypoint"})
+		entryPointBytesSent := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
+			Name: entryPointBytesSentTotalName,
+			Help: "How many HTTP outgoihg bytes processed on a service.",
+		}, []string{"entrypoint"})
 		entryPointReqDurations := newHistogramFrom(promState.collectors, stdprometheus.HistogramOpts{
 			Name:    entryPointReqDurationName,
 			Help:    "How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.",
@@ -176,12 +190,16 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		promState.describers = append(promState.describers, []func(chan<- *stdprometheus.Desc){
 			entryPointReqs.cv.Describe,
 			entryPointReqsTLS.cv.Describe,
+			entryPointBytesReceived.cv.Describe,
+			entryPointBytesSent.cv.Describe,
 			entryPointReqDurations.hv.Describe,
 			entryPointOpenConns.gv.Describe,
 		}...)
 
 		reg.entryPointReqsCounter = entryPointReqs
 		reg.entryPointReqsTLSCounter = entryPointReqsTLS
+		reg.entryPointBytesReceivedCounter = entryPointBytesReceived
+		reg.entryPointBytesSentCounter = entryPointBytesSent
 		reg.entryPointReqDurationHistogram, _ = NewHistogramWithScale(entryPointReqDurations, time.Second)
 		reg.entryPointOpenConnsGauge = entryPointOpenConns
 	}
@@ -195,6 +213,14 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 			Name: routerReqsTLSTotalName,
 			Help: "How many HTTP requests with TLS are processed on a router, partitioned by service, TLS Version, and TLS cipher Used.",
 		}, []string{"tls_version", "tls_cipher", "router", "service"})
+		routerBytesReceived := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
+			Name: routerBytesReceivedTotalName,
+			Help: "How many incoming HTTP requests processed on a service.",
+		}, []string{"router", "service"})
+		routerBytesSent := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
+			Name: routerBytesSentTotalName,
+			Help: "How many HTTP requests with TLS are processed on a router, partitioned by service, TLS Version, and TLS cipher Used.",
+		}, []string{"router", "service"})
 		routerReqDurations := newHistogramFrom(promState.collectors, stdprometheus.HistogramOpts{
 			Name:    routerReqDurationName,
 			Help:    "How long it took to process the request on a router, partitioned by service, status code, protocol, and method.",
@@ -208,11 +234,15 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		promState.describers = append(promState.describers, []func(chan<- *stdprometheus.Desc){
 			routerReqs.cv.Describe,
 			routerReqsTLS.cv.Describe,
+			routerBytesReceived.cv.Describe,
+			routerBytesSent.cv.Describe,
 			routerReqDurations.hv.Describe,
 			routerOpenConns.gv.Describe,
 		}...)
 		reg.routerReqsCounter = routerReqs
 		reg.routerReqsTLSCounter = routerReqsTLS
+		reg.routerBytesReceivedCounter = routerBytesReceived
+		reg.routerBytesSentCounter = routerBytesSent
 		reg.routerReqDurationHistogram, _ = NewHistogramWithScale(routerReqDurations, time.Second)
 		reg.routerOpenConnsGauge = routerOpenConns
 	}
@@ -226,6 +256,14 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 			Name: serviceReqsTLSTotalName,
 			Help: "How many HTTP requests with TLS processed on a service, partitioned by TLS version and TLS cipher.",
 		}, []string{"tls_version", "tls_cipher", "service"})
+		serviceBytesReceived := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
+			Name: serviceBytesReceivedTotalName,
+			Help: "How many incoming HTTP requests processed on a service.",
+		}, []string{"service"})
+		serviceBytesSent := newCounterFrom(promState.collectors, stdprometheus.CounterOpts{
+			Name: serviceBytesSentTotalName,
+			Help: "How many HTTP outgoihg bytes processed on a service.",
+		}, []string{"service"})
 		serviceReqDurations := newHistogramFrom(promState.collectors, stdprometheus.HistogramOpts{
 			Name:    serviceReqDurationName,
 			Help:    "How long it took to process the request on a service, partitioned by status code, protocol, and method.",
@@ -247,6 +285,8 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		promState.describers = append(promState.describers, []func(chan<- *stdprometheus.Desc){
 			serviceReqs.cv.Describe,
 			serviceReqsTLS.cv.Describe,
+			serviceBytesReceived.cv.Describe,
+			serviceBytesSent.cv.Describe,
 			serviceReqDurations.hv.Describe,
 			serviceOpenConns.gv.Describe,
 			serviceRetries.cv.Describe,
@@ -255,6 +295,8 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 
 		reg.serviceReqsCounter = serviceReqs
 		reg.serviceReqsTLSCounter = serviceReqsTLS
+		reg.serviceBytesReceivedCounter = serviceBytesReceived
+		reg.serviceBytesSentCounter = serviceBytesSent
 		reg.serviceReqDurationHistogram, _ = NewHistogramWithScale(serviceReqDurations, time.Second)
 		reg.serviceOpenConnsGauge = serviceOpenConns
 		reg.serviceRetriesCounter = serviceRetries

@@ -134,6 +134,14 @@ func TestPilotMetrics(t *testing.T) {
 		With("code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "http").
 		Add(1)
 	pilotRegistry.
+		EntryPointBytesReceivedCounter().
+		With("entrypoint", "http").
+		Add(1000)
+	pilotRegistry.
+		EntryPointBytesSentCounter().
+		With("entrypoint", "http").
+		Add(1000)
+	pilotRegistry.
 		EntryPointReqDurationHistogram().
 		With("code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "http").
 		Observe(1)
@@ -146,6 +154,14 @@ func TestPilotMetrics(t *testing.T) {
 		ServiceReqsCounter().
 		With("service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
+	pilotRegistry.
+		ServiceBytesReceivedCounter().
+		With("service", "service1").
+		Add(1000)
+	pilotRegistry.
+		ServiceBytesSentCounter().
+		With("service", "service1").
+		Add(1000)
 	pilotRegistry.
 		ServiceReqDurationHistogram().
 		With("service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
@@ -197,6 +213,20 @@ func TestPilotMetrics(t *testing.T) {
 			assert: buildPilotCounterAssert(t, pilotEntryPointReqsTotalName, 1),
 		},
 		{
+			name: pilotEntryPointBytesReceivedTotalName,
+			labels: map[string]string{
+				"entrypoint": "http",
+			},
+			assert: buildPilotCounterAssert(t, pilotEntryPointBytesReceivedTotalName, 1000),
+		},
+		{
+			name: pilotEntryPointBytesSentTotalName,
+			labels: map[string]string{
+				"entrypoint": "http",
+			},
+			assert: buildPilotCounterAssert(t, pilotEntryPointBytesSentTotalName, 1000),
+		},
+		{
 			name: pilotEntryPointReqDurationName,
 			labels: map[string]string{
 				"code":       "200",
@@ -224,6 +254,20 @@ func TestPilotMetrics(t *testing.T) {
 				"service":  "service1",
 			},
 			assert: buildPilotCounterAssert(t, pilotServiceReqsTotalName, 1),
+		},
+		{
+			name: pilotServiceBytesReceivedTotalName,
+			labels: map[string]string{
+				"service": "service1",
+			},
+			assert: buildPilotCounterAssert(t, pilotServiceBytesReceivedTotalName, 1000),
+		},
+		{
+			name: pilotServiceBytesSentTotalName,
+			labels: map[string]string{
+				"service": "service1",
+			},
+			assert: buildPilotCounterAssert(t, pilotServiceBytesSentTotalName, 1000),
 		},
 		{
 			name: pilotServiceReqDurationName,

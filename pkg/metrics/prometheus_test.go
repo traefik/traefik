@@ -126,6 +126,14 @@ func TestPrometheus(t *testing.T) {
 		With("code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "http").
 		Add(1)
 	prometheusRegistry.
+		EntryPointBytesReceivedCounter().
+		With("entrypoint", "http").
+		Add(1000)
+	prometheusRegistry.
+		EntryPointBytesSentCounter().
+		With("entrypoint", "http").
+		Add(1000)
+	prometheusRegistry.
 		EntryPointReqDurationHistogram().
 		With("code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "http").
 		Observe(1)
@@ -143,6 +151,14 @@ func TestPrometheus(t *testing.T) {
 		With("router", "demo", "service", "service1", "tls_version", "foo", "tls_cipher", "bar").
 		Add(1)
 	prometheusRegistry.
+		RouterBytesReceivedCounter().
+		With("router", "demo", "service", "service1").
+		Add(1000)
+	prometheusRegistry.
+		RouterBytesSentCounter().
+		With("router", "demo", "service", "service1").
+		Add(1000)
+	prometheusRegistry.
 		RouterReqDurationHistogram().
 		With("router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Observe(10000)
@@ -159,6 +175,14 @@ func TestPrometheus(t *testing.T) {
 		ServiceReqsTLSCounter().
 		With("service", "service1", "tls_version", "foo", "tls_cipher", "bar").
 		Add(1)
+	prometheusRegistry.
+		ServiceBytesReceivedCounter().
+		With("service", "service1").
+		Add(1000)
+	prometheusRegistry.
+		ServiceBytesSentCounter().
+		With("service", "service1").
+		Add(1000)
 	prometheusRegistry.
 		ServiceReqDurationHistogram().
 		With("service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
@@ -221,6 +245,20 @@ func TestPrometheus(t *testing.T) {
 			assert: buildCounterAssert(t, entryPointReqsTotalName, 1),
 		},
 		{
+			name: entryPointBytesReceivedTotalName,
+			labels: map[string]string{
+				"entrypoint": "http",
+			},
+			assert: buildCounterAssert(t, entryPointBytesReceivedTotalName, 1000),
+		},
+		{
+			name: entryPointBytesSentTotalName,
+			labels: map[string]string{
+				"entrypoint": "http",
+			},
+			assert: buildCounterAssert(t, entryPointBytesSentTotalName, 1000),
+		},
+		{
 			name: entryPointReqDurationName,
 			labels: map[string]string{
 				"code":       "200",
@@ -261,6 +299,22 @@ func TestPrometheus(t *testing.T) {
 			assert: buildCounterAssert(t, routerReqsTLSTotalName, 1),
 		},
 		{
+			name: routerBytesReceivedTotalName,
+			labels: map[string]string{
+				"service": "service1",
+				"router":  "demo",
+			},
+			assert: buildCounterAssert(t, routerBytesReceivedTotalName, 1000),
+		},
+		{
+			name: routerBytesSentTotalName,
+			labels: map[string]string{
+				"service": "service1",
+				"router":  "demo",
+			},
+			assert: buildCounterAssert(t, routerBytesSentTotalName, 1000),
+		},
+		{
 			name: routerReqDurationName,
 			labels: map[string]string{
 				"code":     "200",
@@ -299,6 +353,20 @@ func TestPrometheus(t *testing.T) {
 				"tls_cipher":  "bar",
 			},
 			assert: buildCounterAssert(t, serviceReqsTLSTotalName, 1),
+		},
+		{
+			name: serviceBytesReceivedTotalName,
+			labels: map[string]string{
+				"service": "service1",
+			},
+			assert: buildCounterAssert(t, serviceBytesReceivedTotalName, 1000),
+		},
+		{
+			name: serviceBytesSentTotalName,
+			labels: map[string]string{
+				"service": "service1",
+			},
+			assert: buildCounterAssert(t, serviceBytesSentTotalName, 1000),
 		},
 		{
 			name: serviceReqDurationName,

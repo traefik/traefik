@@ -33,22 +33,28 @@ const (
 
 	influxDBTLSCertsNotAfterTimestampName = "traefik.tls.certs.notAfterTimestamp"
 
-	influxDBEntryPointReqsName        = "traefik.entrypoint.requests.total"
-	influxDBEntryPointReqsTLSName     = "traefik.entrypoint.requests.tls.total"
-	influxDBEntryPointReqDurationName = "traefik.entrypoint.request.duration"
-	influxDBEntryPointOpenConnsName   = "traefik.entrypoint.connections.open"
+	influxDBEntryPointReqsName          = "traefik.entrypoint.requests.total"
+	influxDBEntryPointReqsTLSName       = "traefik.entrypoint.requests.tls.total"
+	influxDBEntryPointBytesReceivedName = "traefik.entrypoint.bytes.received.total"
+	influxDBEntryPointBytesSentName     = "traefik.entrypoint.bytes.sent.total"
+	influxDBEntryPointReqDurationName   = "traefik.entrypoint.request.duration"
+	influxDBEntryPointOpenConnsName     = "traefik.entrypoint.connections.open"
 
-	influxDBRouterReqsName         = "traefik.router.requests.total"
-	influxDBRouterReqsTLSName      = "traefik.router.requests.tls.total"
-	influxDBRouterReqsDurationName = "traefik.router.request.duration"
-	influxDBORouterOpenConnsName   = "traefik.router.connections.open"
+	influxDBRouterReqsName          = "traefik.router.requests.total"
+	influxDBRouterReqsTLSName       = "traefik.router.requests.tls.total"
+	influxDBRouterBytesReceivedName = "traefik.router.bytes.received.total"
+	influxDBRouterBytesSentName     = "traefik.router.bytes.sent.total"
+	influxDBRouterReqsDurationName  = "traefik.router.request.duration"
+	influxDBORouterOpenConnsName    = "traefik.router.connections.open"
 
-	influxDBServiceReqsName         = "traefik.service.requests.total"
-	influxDBServiceReqsTLSName      = "traefik.service.requests.tls.total"
-	influxDBServiceReqsDurationName = "traefik.service.request.duration"
-	influxDBServiceRetriesTotalName = "traefik.service.retries.total"
-	influxDBServiceOpenConnsName    = "traefik.service.connections.open"
-	influxDBServiceServerUpName     = "traefik.service.server.up"
+	influxDBServiceReqsName          = "traefik.service.requests.total"
+	influxDBServiceReqsTLSName       = "traefik.service.requests.tls.total"
+	influxDBServiceBytesReceivedName = "traefik.service.bytes.received.total"
+	influxDBServiceBytesSentName     = "traefik.service.bytes.sent.total"
+	influxDBServiceReqsDurationName  = "traefik.service.request.duration"
+	influxDBServiceRetriesTotalName  = "traefik.service.retries.total"
+	influxDBServiceOpenConnsName     = "traefik.service.connections.open"
+	influxDBServiceServerUpName      = "traefik.service.server.up"
 )
 
 const (
@@ -77,6 +83,8 @@ func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 		registry.epEnabled = config.AddEntryPointsLabels
 		registry.entryPointReqsCounter = influxDBClient.NewCounter(influxDBEntryPointReqsName)
 		registry.entryPointReqsTLSCounter = influxDBClient.NewCounter(influxDBEntryPointReqsTLSName)
+		registry.entryPointBytesReceivedCounter = influxDBClient.NewCounter(influxDBEntryPointBytesReceivedName)
+		registry.entryPointBytesSentCounter = influxDBClient.NewCounter(influxDBEntryPointBytesSentName)
 		registry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(influxDBClient.NewHistogram(influxDBEntryPointReqDurationName), time.Second)
 		registry.entryPointOpenConnsGauge = influxDBClient.NewGauge(influxDBEntryPointOpenConnsName)
 	}
@@ -85,6 +93,8 @@ func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 		registry.routerEnabled = config.AddRoutersLabels
 		registry.routerReqsCounter = influxDBClient.NewCounter(influxDBRouterReqsName)
 		registry.routerReqsTLSCounter = influxDBClient.NewCounter(influxDBRouterReqsTLSName)
+		registry.routerBytesReceivedCounter = influxDBClient.NewCounter(influxDBRouterBytesReceivedName)
+		registry.routerBytesSentCounter = influxDBClient.NewCounter(influxDBRouterBytesSentName)
 		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(influxDBClient.NewHistogram(influxDBRouterReqsDurationName), time.Second)
 		registry.routerOpenConnsGauge = influxDBClient.NewGauge(influxDBORouterOpenConnsName)
 	}
@@ -93,6 +103,8 @@ func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 		registry.svcEnabled = config.AddServicesLabels
 		registry.serviceReqsCounter = influxDBClient.NewCounter(influxDBServiceReqsName)
 		registry.serviceReqsTLSCounter = influxDBClient.NewCounter(influxDBServiceReqsTLSName)
+		registry.serviceBytesReceivedCounter = influxDBClient.NewCounter(influxDBServiceBytesReceivedName)
+		registry.serviceBytesSentCounter = influxDBClient.NewCounter(influxDBServiceBytesSentName)
 		registry.serviceReqDurationHistogram, _ = NewHistogramWithScale(influxDBClient.NewHistogram(influxDBServiceReqsDurationName), time.Second)
 		registry.serviceRetriesCounter = influxDBClient.NewCounter(influxDBServiceRetriesTotalName)
 		registry.serviceOpenConnsGauge = influxDBClient.NewGauge(influxDBServiceOpenConnsName)

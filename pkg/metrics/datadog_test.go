@@ -34,18 +34,24 @@ func TestDatadog(t *testing.T) {
 
 		"traefik.entrypoint.request.total:1.000000|c|#entrypoint:test\n",
 		"traefik.entrypoint.request.tls.total:1.000000|c|#entrypoint:test,tls_version:foo,tls_cipher:bar\n",
+		"traefik.entrypoint.bytes.received.total:1000.000000|c|#entrypoint:test\n",
+		"traefik.entrypoint.bytes.sent.total:1000.000000|c|#entrypoint:test\n",
 		"traefik.entrypoint.request.duration:10000.000000|h|#entrypoint:test\n",
 		"traefik.entrypoint.connections.open:1.000000|g|#entrypoint:test\n",
 
 		"traefik.router.request.total:1.000000|c|#router:demo,service:test,code:404,method:GET\n",
 		"traefik.router.request.total:1.000000|c|#router:demo,service:test,code:200,method:GET\n",
 		"traefik.router.request.tls.total:1.000000|c|#router:demo,service:test,tls_version:foo,tls_cipher:bar\n",
+		"traefik.router.bytes.received.total:1000.000000|c|#router:demo,service:test\n",
+		"traefik.router.bytes.sent.total:1000.000000|c|#router:demo,service:test\n",
 		"traefik.router.request.duration:10000.000000|h|#router:demo,service:test,code:200\n",
 		"traefik.router.connections.open:1.000000|g|#router:demo,service:test\n",
 
 		"traefik.service.request.total:1.000000|c|#service:test,code:404,method:GET\n",
 		"traefik.service.request.total:1.000000|c|#service:test,code:200,method:GET\n",
 		"traefik.service.request.tls.total:1.000000|c|#service:test,tls_version:foo,tls_cipher:bar\n",
+		"traefik.service.bytes.received.total:1000.000000|c|#service:test\n",
+		"traefik.service.bytes.sent.total:1000.000000|c|#service:test\n",
 		"traefik.service.request.duration:10000.000000|h|#service:test,code:200\n",
 		"traefik.service.connections.open:1.000000|g|#service:test\n",
 		"traefik.service.retries.total:2.000000|c|#service:test\n",
@@ -63,18 +69,24 @@ func TestDatadog(t *testing.T) {
 
 		datadogRegistry.EntryPointReqsCounter().With("entrypoint", "test").Add(1)
 		datadogRegistry.EntryPointReqsTLSCounter().With("entrypoint", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
+		datadogRegistry.EntryPointBytesReceivedCounter().With("entrypoint", "test").Add(1000)
+		datadogRegistry.EntryPointBytesSentCounter().With("entrypoint", "test").Add(1000)
 		datadogRegistry.EntryPointReqDurationHistogram().With("entrypoint", "test").Observe(10000)
 		datadogRegistry.EntryPointOpenConnsGauge().With("entrypoint", "test").Set(1)
 
 		datadogRegistry.RouterReqsCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 		datadogRegistry.RouterReqsCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 		datadogRegistry.RouterReqsTLSCounter().With("router", "demo", "service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
+		datadogRegistry.RouterBytesReceivedCounter().With("router", "demo", "service", "test").Add(1000)
+		datadogRegistry.RouterBytesSentCounter().With("router", "demo", "service", "test").Add(1000)
 		datadogRegistry.RouterReqDurationHistogram().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 		datadogRegistry.RouterOpenConnsGauge().With("router", "demo", "service", "test").Set(1)
 
 		datadogRegistry.ServiceReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 		datadogRegistry.ServiceReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 		datadogRegistry.ServiceReqsTLSCounter().With("service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
+		datadogRegistry.ServiceBytesReceivedCounter().With("service", "test").Add(1000)
+		datadogRegistry.ServiceBytesSentCounter().With("service", "test").Add(1000)
 		datadogRegistry.ServiceReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 		datadogRegistry.ServiceOpenConnsGauge().With("service", "test").Set(1)
 		datadogRegistry.ServiceRetriesCounter().With("service", "test").Add(1)
