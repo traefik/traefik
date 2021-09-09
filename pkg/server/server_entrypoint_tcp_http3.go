@@ -56,10 +56,10 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 
 	previousHandler := httpsServer.Server.(*http.Server).Handler
 
-	setQuicHeadersFunc := getQuicHeadersFunc(configuration)
+	setQuicHeaders := getQuicHeadersFunc(configuration)
 
 	httpsServer.Server.(*http.Server).Handler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		err := setQuicHeadersFunc(rw.Header())
+		err := setQuicHeaders(rw.Header())
 		if err != nil {
 			log.FromContext(ctx).Errorf("failed to set HTTP3 headers: %v", err)
 		}
@@ -77,17 +77,16 @@ func getQuicHeadersFunc(configuration *static.EntryPoint) func(header http.Heade
 		advertisedAddress = fmt.Sprintf(`:%d`, configuration.HTTP3.AdvertisedPort)
 	}
 
-	// if `QuickConfig` of h3.server happens to be configured, it should also be configured identically in the headerServer
+	// if `QuickConfig` of h3.server happens to be configured,
+	// it should also be configured identically in the headerServer
 	headerServer := &http3.Server{
 		Server: &http.Server{
 			Addr: advertisedAddress,
 		},
 	}
 
-	return func(header http.Header) error {
-		// set quic headers with the "header" http3 server instance
-		return headerServer.SetQuicHeaders(header)
-	}
+	// set quic headers with the "header" http3 server instance
+	return headerServer.SetQuicHeaders
 }
 
 func (e *http3server) Start() error {
