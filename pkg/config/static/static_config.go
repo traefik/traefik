@@ -249,8 +249,11 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	}
 
 	if c.Experimental == nil || !c.Experimental.HTTP3 {
-		for _, ep := range c.EntryPoints {
-			ep.EnableHTTP3 = false
+		for epName, ep := range c.EntryPoints {
+			if ep.HTTP3 != nil {
+				ep.HTTP3 = nil
+				log.WithoutContext().Debugf("Disabling HTTP3 configuration for entryPoint %q: HTTP3 is disabled in the experimental configuration section", epName)
+			}
 		}
 	}
 
