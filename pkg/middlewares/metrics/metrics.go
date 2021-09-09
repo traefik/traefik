@@ -30,8 +30,8 @@ type metricsMiddleware struct {
 	next                 http.Handler
 	reqsCounter          gokitmetrics.Counter
 	reqsTLSCounter       gokitmetrics.Counter
-	bytesSentCounter     gokitmetrics.Counter
 	bytesReceivedCounter gokitmetrics.Counter
+	bytesSentCounter     gokitmetrics.Counter
 	reqDurationHistogram metrics.ScalableHistogram
 	openConnsGauge       gokitmetrics.Gauge
 	baseLabels           []string
@@ -45,6 +45,8 @@ func NewEntryPointMiddleware(ctx context.Context, next http.Handler, registry me
 		next:                 next,
 		reqsCounter:          registry.EntryPointReqsCounter(),
 		reqsTLSCounter:       registry.EntryPointReqsTLSCounter(),
+		bytesReceivedCounter: registry.EntryPointBytesReceivedCounter(),
+		bytesSentCounter:     registry.EntryPointBytesSentCounter(),
 		reqDurationHistogram: registry.EntryPointReqDurationHistogram(),
 		openConnsGauge:       registry.EntryPointOpenConnsGauge(),
 		baseLabels:           []string{"entrypoint", entryPointName},
@@ -59,6 +61,8 @@ func NewRouterMiddleware(ctx context.Context, next http.Handler, registry metric
 		next:                 next,
 		reqsCounter:          registry.RouterReqsCounter(),
 		reqsTLSCounter:       registry.RouterReqsTLSCounter(),
+		bytesReceivedCounter: registry.RouterBytesReceivedCounter(),
+		bytesSentCounter:     registry.RouterBytesSentCounter(),
 		reqDurationHistogram: registry.RouterReqDurationHistogram(),
 		openConnsGauge:       registry.RouterOpenConnsGauge(),
 		baseLabels:           []string{"router", routerName, "service", serviceName},
@@ -132,12 +136,8 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	labels = append(labels, "code", strconv.Itoa(recorder.getCode()))
 
-	if m.bytesReceivedCounter != nil {
-		m.bytesReceivedCounter.With(m.baseLabels...).Add(float64(bodyWrapper.read))
-	}
-	if m.bytesSentCounter != nil {
-		m.bytesSentCounter.With(m.baseLabels...).Add(float64(responseWrapper.sent))
-	}
+	m.bytesReceivedCounter.With(m.baseLabels...).Add(float64(bodyWrapper.read))
+	m.bytesSentCounter.With(m.baseLabels...).Add(float64(responseWrapper.sent))
 
 	histograms := m.reqDurationHistogram.With(labels...)
 	histograms.ObserveFromStart(start)

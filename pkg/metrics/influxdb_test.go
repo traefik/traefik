@@ -57,6 +57,8 @@ func TestInfluxDB(t *testing.T) {
 	expectedEntrypoint := []string{
 		`(traefik\.entrypoint\.requests\.total,code=200,entrypoint=test,method=GET count=1) [\d]{19}`,
 		`(traefik\.entrypoint\.requests\.tls\.total,entrypoint=test,tls_cipher=bar,tls_version=foo count=1) [\d]{19}`,
+		`(traefik\.entrypoint\.bytes\.received\.total,entrypoint=test count=1000) [\d]{19}`,
+		`(traefik\.entrypoint\.bytes\.sent\.total,entrypoint=test count=1000) [\d]{19}`,
 		`(traefik\.entrypoint\.request\.duration(?:,code=[\d]{3})?,entrypoint=test p50=10000,p90=10000,p95=10000,p99=10000) [\d]{19}`,
 		`(traefik\.entrypoint\.connections\.open,entrypoint=test value=1) [\d]{19}`,
 	}
@@ -64,6 +66,8 @@ func TestInfluxDB(t *testing.T) {
 	msgEntrypoint := udp.ReceiveString(t, func() {
 		influxDBRegistry.EntryPointReqsCounter().With("entrypoint", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 		influxDBRegistry.EntryPointReqsTLSCounter().With("entrypoint", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
+		influxDBRegistry.EntryPointBytesReceivedCounter().With("entrypoint", "test").Add(1000)
+		influxDBRegistry.EntryPointBytesSentCounter().With("entrypoint", "test").Add(1000)
 		influxDBRegistry.EntryPointReqDurationHistogram().With("entrypoint", "test").Observe(10000)
 		influxDBRegistry.EntryPointOpenConnsGauge().With("entrypoint", "test").Set(1)
 	})
@@ -74,6 +78,8 @@ func TestInfluxDB(t *testing.T) {
 		`(traefik\.router\.requests\.total,code=200,method=GET,router=demo,service=test count=1) [\d]{19}`,
 		`(traefik\.router\.requests\.total,code=404,method=GET,router=demo,service=test count=1) [\d]{19}`,
 		`(traefik\.router\.requests\.tls\.total,router=demo,service=test,tls_cipher=bar,tls_version=foo count=1) [\d]{19}`,
+		`(traefik\.router\.bytes\.received\.total,router=demo,service=test count=1000) [\d]{19}`,
+		`(traefik\.router\.bytes\.sent\.total,router=demo,service=test count=1000) [\d]{19}`,
 		`(traefik\.router\.request\.duration,code=200,router=demo,service=test p50=10000,p90=10000,p95=10000,p99=10000) [\d]{19}`,
 		`(traefik\.router\.connections\.open,router=demo,service=test value=1) [\d]{19}`,
 	}
@@ -82,6 +88,8 @@ func TestInfluxDB(t *testing.T) {
 		influxDBRegistry.RouterReqsCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 		influxDBRegistry.RouterReqsCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 		influxDBRegistry.RouterReqsTLSCounter().With("router", "demo", "service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
+		influxDBRegistry.RouterBytesReceivedCounter().With("router", "demo", "service", "test").Add(1000)
+		influxDBRegistry.RouterBytesSentCounter().With("router", "demo", "service", "test").Add(1000)
 		influxDBRegistry.RouterReqDurationHistogram().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 		influxDBRegistry.RouterOpenConnsGauge().With("router", "demo", "service", "test").Set(1)
 	})
@@ -92,6 +100,8 @@ func TestInfluxDB(t *testing.T) {
 		`(traefik\.service\.requests\.total,code=200,method=GET,service=test count=1) [\d]{19}`,
 		`(traefik\.service\.requests\.total,code=404,method=GET,service=test count=1) [\d]{19}`,
 		`(traefik\.service\.requests\.tls\.total,service=test,tls_cipher=bar,tls_version=foo count=1) [\d]{19}`,
+		`(traefik\.service\.bytes\.received\.total,service=test count=1000) [\d]{19}`,
+		`(traefik\.service\.bytes\.sent\.total,service=test count=1000) [\d]{19}`,
 		`(traefik\.service\.request\.duration,code=200,service=test p50=10000,p90=10000,p95=10000,p99=10000) [\d]{19}`,
 		`(traefik\.service\.retries\.total(?:,code=[\d]{3},method=GET)?,service=test count=2) [\d]{19}`,
 		`(traefik\.service\.server\.up,service=test,url=http://127.0.0.1 value=1) [\d]{19}`,
@@ -102,6 +112,8 @@ func TestInfluxDB(t *testing.T) {
 		influxDBRegistry.ServiceReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 		influxDBRegistry.ServiceReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 		influxDBRegistry.ServiceReqsTLSCounter().With("service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
+		influxDBRegistry.ServiceBytesReceivedCounter().With("service", "test").Add(1000)
+		influxDBRegistry.ServiceBytesSentCounter().With("service", "test").Add(1000)
 		influxDBRegistry.ServiceReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 		influxDBRegistry.ServiceOpenConnsGauge().With("service", "test").Set(1)
 		influxDBRegistry.ServiceRetriesCounter().With("service", "test").Add(1)
@@ -160,12 +172,16 @@ func TestInfluxDBHTTP(t *testing.T) {
 	expectedEntrypoint := []string{
 		`(traefik\.entrypoint\.requests\.total,code=200,entrypoint=test,method=GET count=1) [\d]{19}`,
 		`(traefik\.entrypoint\.requests\.tls\.total,entrypoint=test,tls_cipher=bar,tls_version=foo count=1) [\d]{19}`,
+		`(traefik\.entrypoint\.bytes\.received\.total,entrypoint=test count=1000) [\d]{19}`,
+		`(traefik\.entrypoint\.bytes\.sent\.total,entrypoint=test count=1000) [\d]{19}`,
 		`(traefik\.entrypoint\.request\.duration(?:,code=[\d]{3})?,entrypoint=test p50=10000,p90=10000,p95=10000,p99=10000) [\d]{19}`,
 		`(traefik\.entrypoint\.connections\.open,entrypoint=test value=1) [\d]{19}`,
 	}
 
 	influxDBRegistry.EntryPointReqsCounter().With("entrypoint", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	influxDBRegistry.EntryPointReqsTLSCounter().With("entrypoint", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
+	influxDBRegistry.EntryPointBytesReceivedCounter().With("entrypoint", "test").Add(1000)
+	influxDBRegistry.EntryPointBytesSentCounter().With("entrypoint", "test").Add(1000)
 	influxDBRegistry.EntryPointReqDurationHistogram().With("entrypoint", "test").Observe(10000)
 	influxDBRegistry.EntryPointOpenConnsGauge().With("entrypoint", "test").Set(1)
 	msgEntrypoint := <-c
@@ -176,6 +192,8 @@ func TestInfluxDBHTTP(t *testing.T) {
 		`(traefik\.router\.requests\.total,code=200,method=GET,router=demo,service=test count=1) [\d]{19}`,
 		`(traefik\.router\.requests\.total,code=404,method=GET,router=demo,service=test count=1) [\d]{19}`,
 		`(traefik\.router\.requests\.tls\.total,router=demo,service=test,tls_cipher=bar,tls_version=foo count=1) [\d]{19}`,
+		`(traefik\.router\.bytes\.received\.total,router=demo,service=test count=1000) [\d]{19}`,
+		`(traefik\.router\.bytes\.sent\.total,router=demo,service=test count=1000) [\d]{19}`,
 		`(traefik\.router\.request\.duration,code=200,router=demo,service=test p50=10000,p90=10000,p95=10000,p99=10000) [\d]{19}`,
 		`(traefik\.router\.connections\.open,router=demo,service=test value=1) [\d]{19}`,
 	}
@@ -183,6 +201,8 @@ func TestInfluxDBHTTP(t *testing.T) {
 	influxDBRegistry.RouterReqsCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 	influxDBRegistry.RouterReqsCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	influxDBRegistry.RouterReqsTLSCounter().With("router", "demo", "service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
+	influxDBRegistry.RouterBytesReceivedCounter().With("router", "demo", "service", "test").Add(1000)
+	influxDBRegistry.RouterBytesSentCounter().With("router", "demo", "service", "test").Add(1000)
 	influxDBRegistry.RouterReqDurationHistogram().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 	influxDBRegistry.RouterOpenConnsGauge().With("router", "demo", "service", "test").Set(1)
 	msgRouter := <-c
@@ -193,6 +213,8 @@ func TestInfluxDBHTTP(t *testing.T) {
 		`(traefik\.service\.requests\.total,code=200,method=GET,service=test count=1) [\d]{19}`,
 		`(traefik\.service\.requests\.total,code=404,method=GET,service=test count=1) [\d]{19}`,
 		`(traefik\.service\.requests\.tls\.total,service=test,tls_cipher=bar,tls_version=foo count=1) [\d]{19}`,
+		`(traefik\.service\.bytes\.received\.total,service=test count=1000) [\d]{19}`,
+		`(traefik\.service\.bytes\.sent\.total,service=test count=1000) [\d]{19}`,
 		`(traefik\.service\.request\.duration,code=200,service=test p50=10000,p90=10000,p95=10000,p99=10000) [\d]{19}`,
 		`(traefik\.service\.retries\.total(?:,code=[\d]{3},method=GET)?,service=test count=2) [\d]{19}`,
 		`(traefik\.service\.server\.up,service=test,url=http://127.0.0.1 value=1) [\d]{19}`,
@@ -202,6 +224,8 @@ func TestInfluxDBHTTP(t *testing.T) {
 	influxDBRegistry.ServiceReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	influxDBRegistry.ServiceReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 	influxDBRegistry.ServiceReqsTLSCounter().With("service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
+	influxDBRegistry.ServiceBytesReceivedCounter().With("service", "test").Add(1000)
+	influxDBRegistry.ServiceBytesSentCounter().With("service", "test").Add(1000)
 	influxDBRegistry.ServiceReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 	influxDBRegistry.ServiceOpenConnsGauge().With("service", "test").Set(1)
 	influxDBRegistry.ServiceRetriesCounter().With("service", "test").Add(1)
