@@ -1,43 +1,54 @@
 package metrics
 
 import (
+	"fmt"
 	"io"
 	"net/http"
+
+	gokitmetrics "github.com/go-kit/kit/metrics"
 )
 
 type BodyWrapper struct {
 	io.ReadCloser
-	read uint64
+	counter gokitmetrics.Counter
 }
 
-func NewBodyWrapper(body io.ReadCloser) *BodyWrapper {
+func NewBodyWrapper(body io.ReadCloser, counter gokitmetrics.Counter) *BodyWrapper {
 	return &BodyWrapper{
 		body,
-		0,
+		counter,
 	}
 }
 
 func (b *BodyWrapper) Read(p []byte) (int, error) {
 	r, e := b.ReadCloser.Read(p)
-	b.read += uint64(r)
+	b.add(r)
 	return r, e
+}
+
+func (r *BodyWrapper) add(v int) {
+	r.counter.Add(float64(v))
 }
 
 type ResponseWriterWrapper struct {
 	http.ResponseWriter
-	sent uint64
+	counter gokitmetrics.Counter
 }
 
-func NewResponseWritrWrapper(rw http.ResponseWriter) *ResponseWriterWrapper {
+func NewResponseWritrWrapper(rw http.ResponseWriter, counter gokitmetrics.Counter) *ResponseWriterWrapper {
 	return &ResponseWriterWrapper{
 		rw,
-		0,
+		counter,
 	}
 }
 
 func (r *ResponseWriterWrapper) Write(d []byte) (int, error) {
-	r.sent += uint64(len(d))
+	r.add(len(d))
 	return r.ResponseWriter.Write(d)
+}
+
+func (r *ResponseWriterWrapper) add(v int) {
+	r.counter.Add(float64(v))
 }
 
 func requestHeaderSize(req *http.Request) int {
@@ -54,21 +65,18 @@ func requestHeaderSize(req *http.Request) int {
 	return size
 }
 
-func responseHeaderSize(h http.Header, proto string, status string) int {
-	// some headers are not sent from the client
-	// like X-Forwarded-Server, should they be counted or not?
+func responseHeaderSize(h http.Header, proto string, status int) int {
 	size := 1
 	size += len(proto) + 1
-	size += len(status) + 1
+	size += len(fmt.Sprintf("%d", status)) + 1
+	size += len(http.StatusText(status)) + 1
 	size += headerSize(h) + 1
 
 	return size
 }
 
 func headerSize(h http.Header) int {
-	// some headers are not sent from the client
-	// like X-Forwarded-Server, should they be counted or not?
-	size := 1
+	size := 0
 	for k, v := range h {
 		for _, e := range v {
 			size += len(k) + len(e) + 3
