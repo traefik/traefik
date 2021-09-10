@@ -115,3 +115,7 @@ The service that will serve the new requested error page.
 ### `query`
 
 The URL for the error page (hosted by `service`). You can use the `{status}` variable in the `query` option in order to insert the status code in the URL.
+
+### `host`
+
+The Host header of the request made to the error service. By default the host of the original request is used.

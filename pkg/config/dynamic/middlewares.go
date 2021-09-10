@@ -124,6 +124,7 @@ type ErrorPage struct {
 	Status  []string `json:"status,omitempty" toml:"status,omitempty" yaml:"status,omitempty" export:"true"`
 	Service string   `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
 	Query   string   `json:"query,omitempty" toml:"query,omitempty" yaml:"query,omitempty" export:"true"`
+	Host    string   `json:"host,omitempty" toml:"host,omitempty" yaml:"host,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

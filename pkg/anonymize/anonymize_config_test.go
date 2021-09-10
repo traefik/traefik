@@ -233,6 +233,7 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 					Status:  []string{"foo"},
 					Service: "foo",
 					Query:   "foo",
+					Host:    "foo",
 				},
 				RateLimit: &dynamic.RateLimit{
 					Average: 42,
