@@ -186,7 +186,8 @@
             "foo"
           ],
           "service": "foo",
-          "query": "foo"
+          "query": "foo",
+          "host": "xxxx"
         },
         "rateLimit": {
           "average": 42,
