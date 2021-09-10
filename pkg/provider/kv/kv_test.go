@@ -175,6 +175,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware07/errors/status/1":                                      "foobar",
 		"traefik/http/middlewares/Middleware07/errors/service":                                       "foobar",
 		"traefik/http/middlewares/Middleware07/errors/query":                                         "foobar",
+		"traefik/http/middlewares/Middleware07/errors/host":                                          "foobar",
 		"traefik/http/middlewares/Middleware13/rateLimit/average":                                    "42",
 		"traefik/http/middlewares/Middleware13/rateLimit/period":                                     "1s",
 		"traefik/http/middlewares/Middleware13/rateLimit/burst":                                      "42",
@@ -535,6 +536,7 @@ func Test_buildConfiguration(t *testing.T) {
 						},
 						Service: "foobar",
 						Query:   "foobar",
+						Host:    "foobar",
 					},
 				},
 				"Middleware09": {
