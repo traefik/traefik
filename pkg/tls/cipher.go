@@ -6,7 +6,7 @@ import (
 
 var (
 	// CipherSuites Map of TLS CipherSuites from crypto/tls
-	// Available CipherSuites defined at https://golang.org/pkg/crypto/tls/#pkg-constants
+	// Available CipherSuites defined at https://pkg.go.dev/crypto/tls/#pkg-constants
 	CipherSuites = map[string]uint16{
 		`TLS_RSA_WITH_RC4_128_SHA`:                      tls.TLS_RSA_WITH_RC4_128_SHA,
 		`TLS_RSA_WITH_3DES_EDE_CBC_SHA`:                 tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
@@ -39,7 +39,7 @@ var (
 	}
 
 	// CipherSuitesReversed Map of TLS CipherSuites from crypto/tls
-	// Available CipherSuites defined at https://golang.org/pkg/crypto/tls/#pkg-constants
+	// Available CipherSuites defined at https://pkg.go.dev/crypto/tls/#pkg-constants
 	CipherSuitesReversed = map[uint16]string{
 		tls.TLS_RSA_WITH_RC4_128_SHA:                      `TLS_RSA_WITH_RC4_128_SHA`,
 		tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA:                 `TLS_RSA_WITH_3DES_EDE_CBC_SHA`,
@@ -71,7 +71,7 @@ var (
 )
 
 // GetCipherName returns the Cipher suite name.
-// Available CipherSuites defined at https://golang.org/pkg/crypto/tls/#pkg-constants
+// Available CipherSuites defined at https://pkg.go.dev/crypto/tls/#pkg-constants
 func GetCipherName(connState *tls.ConnectionState) string {
 	if cipher, ok := CipherSuitesReversed[connState.CipherSuite]; ok {
 		return cipher
