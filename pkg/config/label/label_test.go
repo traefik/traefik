@@ -34,6 +34,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware6.errors.query":                                        "foobar",
 		"traefik.http.middlewares.Middleware6.errors.service":                                      "foobar",
 		"traefik.http.middlewares.Middleware6.errors.status":                                       "foobar, fiibar",
+		"traefik.http.middlewares.Middleware6.errors.host":                                         "foobar",
 		"traefik.http.middlewares.Middleware7.forwardauth.address":                                 "foobar",
 		"traefik.http.middlewares.Middleware7.forwardauth.authresponseheaders":                     "foobar, fiibar",
 		"traefik.http.middlewares.Middleware7.forwardauth.authrequestheaders":                      "foobar, fiibar",
@@ -498,6 +499,7 @@ func TestDecodeConfiguration(t *testing.T) {
 						},
 						Service: "foobar",
 						Query:   "foobar",
+						Host:    "foobar",
 					},
 				},
 				"Middleware7": {
@@ -984,6 +986,7 @@ func TestEncodeConfiguration(t *testing.T) {
 						},
 						Service: "foobar",
 						Query:   "foobar",
+						Host:    "foobar",
 					},
 				},
 				"Middleware7": {
@@ -1177,6 +1180,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware6.Errors.Query":                                        "foobar",
 		"traefik.HTTP.Middlewares.Middleware6.Errors.Service":                                      "foobar",
 		"traefik.HTTP.Middlewares.Middleware6.Errors.Status":                                       "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware6.Errors.Host":                                         "foobar",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.Address":                                 "foobar",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.AuthResponseHeaders":                     "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.AuthRequestHeaders":                      "foobar, fiibar",
