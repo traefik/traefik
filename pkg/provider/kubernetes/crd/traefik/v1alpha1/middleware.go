@@ -55,6 +55,7 @@ type ErrorPage struct {
 	Status  []string `json:"status,omitempty"`
 	Service Service  `json:"service,omitempty"`
 	Query   string   `json:"query,omitempty"`
+	Host    string   `json:"host,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

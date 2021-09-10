@@ -124,6 +124,37 @@ func TestHandler(t *testing.T) {
 				assert.NotContains(t, recorder.Body.String(), "oops", "Should not return the oops page")
 			},
 		},
+		{
+			desc:        "has request's host header",
+			errorPage:   &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"500-501", "503-599"}},
+			backendCode: http.StatusInternalServerError,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintf(w, "Host: %s\n", r.Host)
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, http.StatusInternalServerError, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), "Host: localhost", "Host header")
+			},
+		},
+		{
+			desc:        "has host header from config",
+			errorPage:   &dynamic.ErrorPage{
+				Service: "error",
+				Query:   "/test",
+				Status:  []string{"500-501", "503-599"},
+				Host:    "testhost",
+			},
+			backendCode: http.StatusInternalServerError,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintf(w, "Host: %s\n", r.Host)
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, http.StatusInternalServerError, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), "Host: testhost", "Host header")
+			},
+		},
 	}
 
 	for _, test := range testCases {
