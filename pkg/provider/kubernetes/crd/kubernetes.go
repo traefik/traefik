@@ -448,6 +448,7 @@ func (p *Provider) createErrorPageMiddleware(client Client, namespace string, er
 	errorPageMiddleware := &dynamic.ErrorPage{
 		Status: errorPage.Status,
 		Query:  errorPage.Query,
+		Host:   errorPage.Host,
 	}
 
 	balancerServerHTTP, err := configBuilder{client: client, allowCrossNamespace: p.AllowCrossNamespace, allowExternalNameServices: p.AllowExternalNameServices}.buildServersLB(namespace, errorPage.Service.LoadBalancerSpec)

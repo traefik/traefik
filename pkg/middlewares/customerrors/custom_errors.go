@@ -27,10 +27,7 @@ var (
 	_ middlewares.Stateful = &codeCatcherWithCloseNotify{}
 )
 
-const (
-	typeName   = "customError"
-	backendURL = "http://0.0.0.0"
-)
+const typeName = "customError"
 
 type serviceBuilder interface {
 	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
@@ -43,6 +40,7 @@ type customErrors struct {
 	backendHandler http.Handler
 	httpCodeRanges types.HTTPCodeRanges
 	backendQuery   string
+	backendHost    string
 }
 
 // New creates a new custom error pages middleware.
@@ -65,6 +63,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		backendHandler: backend,
 		httpCodeRanges: httpCodeRanges,
 		backendQuery:   config.Query,
+		backendHost:    config.Host,
 	}, nil
 }
 
@@ -104,7 +103,16 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			query = strings.ReplaceAll(query, "{status}", strconv.Itoa(code))
 		}
 
-		pageReq, err := newRequest(backendURL + query)
+		var backendHost string
+		if c.backendHost != "" {
+			backendHost = c.backendHost
+		} else {
+			// use the original request's host
+			backendHost = req.Host
+		}
+
+		backendURL := fmt.Sprintf("http://%s%s", backendHost, query)
+		pageReq, err := newRequest(backendURL)
 		if err != nil {
 			logger.Error(err)
 			rw.WriteHeader(code)
