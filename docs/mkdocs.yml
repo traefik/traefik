@@ -133,6 +133,7 @@ nav:
     - 'TCP':
         - 'Overview': 'middlewares/tcp/overview.md'
         - 'IpWhitelist': 'middlewares/tcp/ipwhitelist.md'
+        - 'RateLimit': 'middlewares/tcp/ratelimit.md'
   - 'Plugins & Traefik Pilot': 'plugins/index.md'
   - 'Operations':
       - 'CLI': 'operations/cli.md'

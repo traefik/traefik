@@ -271,6 +271,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 		conf.TCP.Middlewares[id] = &dynamic.TCPMiddleware{
 			IPWhiteList: middlewareTCP.Spec.IPWhiteList,
+			RateLimit:   middlewareTCP.Spec.RateLimit,
 		}
 	}
 

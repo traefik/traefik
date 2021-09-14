@@ -815,6 +815,11 @@ func (in *MiddlewareTCPSpec) DeepCopyInto(out *MiddlewareTCPSpec) {
 		*out = new(dynamic.TCPIPWhiteList)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.RateLimit != nil {
+		in, out := &in.RateLimit, &out.RateLimit
+		*out = new(dynamic.TCPRateLimit)
+		**out = **in
+	}
 	return
 }
 
