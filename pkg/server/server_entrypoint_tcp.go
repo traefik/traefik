@@ -20,6 +20,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/middlewares/forwardedheaders"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/server/router"
+	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v2/pkg/tcp"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -111,7 +112,7 @@ func (eps TCPEntryPoints) Stop() {
 }
 
 // Switch the TCP routers.
-func (eps TCPEntryPoints) Switch(routersTCP map[string]*tcp.Router) {
+func (eps TCPEntryPoints) Switch(routersTCP map[string]*tcprouter.Router) {
 	for entryPointName, rt := range routersTCP {
 		eps[entryPointName].SwitchRouter(rt)
 	}
@@ -138,7 +139,7 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*T
 		return nil, fmt.Errorf("error preparing server: %w", err)
 	}
 
-	rt := &tcp.Router{}
+	rt := &tcprouter.Router{}
 
 	httpServer, err := createHTTPServer(ctx, listener, configuration, true)
 	if err != nil {
@@ -176,7 +177,7 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*T
 // Start starts the TCP server.
 func (e *TCPEntryPoint) Start(ctx context.Context) {
 	logger := log.FromContext(ctx)
-	logger.Debugf("Start TCP Server")
+	logger.Debugf("Starting TCP Server")
 
 	if e.http3Server != nil {
 		go func() { _ = e.http3Server.Start() }()
@@ -296,7 +297,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 }
 
 // SwitchRouter switches the TCP router handler.
-func (e *TCPEntryPoint) SwitchRouter(rt *tcp.Router) {
+func (e *TCPEntryPoint) SwitchRouter(rt *tcprouter.Router) {
 	rt.SetHTTPForwarder(e.httpServer.Forwarder)
 
 	httpHandler := rt.GetHTTPHandler()
