@@ -5268,7 +5268,7 @@ func TestExternalNameService(t *testing.T) {
 	}
 }
 
-func TestCreateAuthCredentials(t *testing.T) {
+func TestCreateBasicAuthCredentials(t *testing.T) {
 	var k8sObjects []runtime.Object
 	var crdObjects []runtime.Object
 	yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/basic_auth_secrets.yml"))
@@ -5316,7 +5316,7 @@ func TestCreateAuthCredentials(t *testing.T) {
 	assert.True(t, auth.CheckSecret("password", hashedPassword))
 
 	// Testing for username/password components in htpasswd secret
-	basicAuth, secretErr = createBasicAuthMiddleware(client, "default", &v1alpha1.BasicAuth{Secret: "authsecret"})
+	basicAuth, secretErr = createBasicAuthMiddleware(client, "default", &v1alpha1.BasicAuth{Secret: "auth-secret"})
 	require.NoError(t, secretErr)
 	require.Len(t, basicAuth.Users, 2)
 
