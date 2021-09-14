@@ -75,7 +75,9 @@ func TestHTTP3AdvertisedPort(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	router := &tcp.Router{}
+	router, err := tcp.NewRouter()
+	require.NoError(t, err)
+
 	router.AddRouteHTTPTLS("*", &tls.Config{
 		Certificates: []tls.Certificate{tlsCert},
 	})

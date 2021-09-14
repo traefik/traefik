@@ -26,11 +26,6 @@ var funcs = map[string]func(*mux.Route, ...string) error{
 	"Query":         query,
 }
 
-var tcpFuncs = map[string]func() error{
-	"HostSNI":  tcpHostSNI,
-	"ClientIP": tcpClientIP,
-}
-
 // Router handle routing with rules.
 type Router struct {
 	*mux.Router
@@ -39,7 +34,7 @@ type Router struct {
 
 // NewRouter returns a new router instance.
 func NewRouter() (*Router, error) {
-	parser, err := newParser(false)
+	parser, err := newParser()
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +52,7 @@ func (r *Router) AddRoute(rule string, priority int, handler http.Handler) error
 		return fmt.Errorf("error while parsing rule %s: %w", rule, err)
 	}
 
-	buildTree, ok := parse.(treeBuilder)
+	buildTree, ok := parse.(TreeBuilder)
 	if !ok {
 		return fmt.Errorf("error while parsing rule %s", rule)
 	}
@@ -75,14 +70,6 @@ func (r *Router) AddRoute(rule string, priority int, handler http.Handler) error
 	}
 
 	return nil
-}
-
-type tree struct {
-	matcher   string
-	not       bool
-	value     []string
-	ruleLeft  *tree
-	ruleRight *tree
 }
 
 func path(route *mux.Route, paths ...string) error {
@@ -225,41 +212,33 @@ func query(route *mux.Route, query ...string) error {
 	return route.GetError()
 }
 
-func tcpHostSNI() error {
-	return nil
-}
-
-func tcpClientIP() error {
-	return nil
-}
-
-func addRuleOnRouter(router *mux.Router, rule *tree) error {
-	switch rule.matcher {
+func addRuleOnRouter(router *mux.Router, rule *Tree) error {
+	switch rule.Matcher {
 	case "and":
 		route := router.NewRoute()
-		err := addRuleOnRoute(route, rule.ruleLeft)
+		err := addRuleOnRoute(route, rule.RuleLeft)
 		if err != nil {
 			return err
 		}
 
-		return addRuleOnRoute(route, rule.ruleRight)
+		return addRuleOnRoute(route, rule.RuleRight)
 	case "or":
-		err := addRuleOnRouter(router, rule.ruleLeft)
+		err := addRuleOnRouter(router, rule.RuleLeft)
 		if err != nil {
 			return err
 		}
 
-		return addRuleOnRouter(router, rule.ruleRight)
+		return addRuleOnRouter(router, rule.RuleRight)
 	default:
-		err := checkRule(rule)
+		err := CheckRule(rule)
 		if err != nil {
 			return err
 		}
 
-		if rule.not {
-			return not(funcs[rule.matcher])(router.NewRoute(), rule.value...)
+		if rule.Not {
+			return not(funcs[rule.Matcher])(router.NewRoute(), rule.Value...)
 		}
-		return funcs[rule.matcher](router.NewRoute(), rule.value...)
+		return funcs[rule.Matcher](router.NewRoute(), rule.Value...)
 	}
 }
 
@@ -277,45 +256,45 @@ func not(m func(*mux.Route, ...string) error) func(*mux.Route, ...string) error 
 	}
 }
 
-func addRuleOnRoute(route *mux.Route, rule *tree) error {
-	switch rule.matcher {
+func addRuleOnRoute(route *mux.Route, rule *Tree) error {
+	switch rule.Matcher {
 	case "and":
-		err := addRuleOnRoute(route, rule.ruleLeft)
+		err := addRuleOnRoute(route, rule.RuleLeft)
 		if err != nil {
 			return err
 		}
 
-		return addRuleOnRoute(route, rule.ruleRight)
+		return addRuleOnRoute(route, rule.RuleRight)
 	case "or":
 		subRouter := route.Subrouter()
 
-		err := addRuleOnRouter(subRouter, rule.ruleLeft)
+		err := addRuleOnRouter(subRouter, rule.RuleLeft)
 		if err != nil {
 			return err
 		}
 
-		return addRuleOnRouter(subRouter, rule.ruleRight)
+		return addRuleOnRouter(subRouter, rule.RuleRight)
 	default:
-		err := checkRule(rule)
+		err := CheckRule(rule)
 		if err != nil {
 			return err
 		}
 
-		if rule.not {
-			return not(funcs[rule.matcher])(route, rule.value...)
+		if rule.Not {
+			return not(funcs[rule.Matcher])(route, rule.Value...)
 		}
-		return funcs[rule.matcher](route, rule.value...)
+		return funcs[rule.Matcher](route, rule.Value...)
 	}
 }
 
-func checkRule(rule *tree) error {
-	if len(rule.value) == 0 {
-		return fmt.Errorf("no args for matcher %s", rule.matcher)
+func CheckRule(rule *Tree) error {
+	if len(rule.Value) == 0 {
+		return fmt.Errorf("no args for matcher %s", rule.Matcher)
 	}
 
-	for _, v := range rule.value {
+	for _, v := range rule.Value {
 		if len(v) == 0 {
-			return fmt.Errorf("empty args for matcher %s, %v", rule.matcher, rule.value)
+			return fmt.Errorf("empty args for matcher %s, %v", rule.Matcher, rule.Value)
 		}
 	}
 	return nil
