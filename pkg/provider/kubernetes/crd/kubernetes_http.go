@@ -31,6 +31,8 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 		ServersTransports: map[string]*dynamic.ServersTransport{},
 	}
 
+	serversTransports := client.GetServersTransports()
+
 	for _, ingressRoute := range client.GetIngressRoutes() {
 		ctxRt := log.With(ctx, log.Str("ingress", ingressRoute.Name), log.Str("namespace", ingressRoute.Namespace))
 		logger := log.FromContext(ctxRt)
@@ -97,6 +99,20 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					continue
 				}
 
+				if serversLB != nil && serversLB.LoadBalancer != nil && serversLB.LoadBalancer.ServersTransport != "" {
+					st, err := getServersTransports(serversTransports, serversLB.LoadBalancer.ServersTransport)
+					if err != nil {
+						logger.Errorf("Failed to get serversTransport: %v", err)
+						continue
+					}
+
+					if !isNamespaceAllowed(p.AllowCrossNamespace, ingressRoute.Namespace, st.Namespace) {
+						logger.Errorf("ServersTransport %s/%s is not in the IngressRoute namespace %s",
+							st.Namespace, st.Name, ingressRoute.Namespace)
+						continue
+					}
+				}
+
 				if serversLB != nil {
 					conf.Services[serviceName] = serversLB
 				} else {
@@ -104,7 +120,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				}
 			}
 
-			conf.Routers[normalized] = &dynamic.Router{
+			r := &dynamic.Router{
 				Middlewares: mds,
 				Priority:    route.Priority,
 				EntryPoints: ingressRoute.Spec.EntryPoints,
@@ -133,10 +149,19 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 							Warnf("namespace %q is ignored in cross-provider context", ns)
 					}
 
+					if !isNamespaceAllowed(p.AllowCrossNamespace, ingressRoute.Namespace, ns) {
+						logger.Errorf("TLSOption %s/%s is not in the IngressRoute namespace %s",
+							ns, ingressRoute.Spec.TLS.Options.Name, ingressRoute.Namespace)
+						continue
+					}
+
 					tlsConf.Options = tlsOptionsName
 				}
-				conf.Routers[normalized].TLS = tlsConf
+
+				r.TLS = tlsConf
 			}
+
+			conf.Routers[normalized] = r
 		}
 	}
 
@@ -494,4 +519,14 @@ func parseServiceProtocol(providedScheme, portName string, portNumber int32) (st
 	}
 
 	return "", fmt.Errorf("invalid scheme %q specified", providedScheme)
+}
+
+func getServersTransports(serversTransports []*v1alpha1.ServersTransport, st string) (*v1alpha1.ServersTransport, error) {
+	for _, serversTransport := range serversTransports {
+		if serversTransport.Name == st {
+			return serversTransport, nil
+		}
+	}
+
+	return nil, fmt.Errorf("serversTransport %s not found", st)
 }
