@@ -370,7 +370,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
 | [7]  | `middlewares[n].namespace`     | Defines the [Middleware](#kind-middleware) namespace                                                                                                                                                                                                                                       |
 | [8]  | `routes[n].services`           | List of any combination of [TraefikService](#kind-traefikservice) and reference to a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) (See below for `ExternalName Service` setup)                                                                   |
 | [9]  | `services[n].port`             | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.                                                                                                                                     |
-| [10] | `services[n].serversTransport` | Defines a reference to a [ServersTransport](#kind-serverstransport). The ServersTransport namespace is assumed to be the [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace (see [ServersTransport reference](#serverstransport-reference)). |
+| [10] | `services[n].serversTransport` | Defines the reference to a [ServersTransport](#kind-serverstransport). The ServersTransport namespace is assumed to be the [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace (see [ServersTransport reference](#serverstransport-reference)). |
 | [11] | `tls`                          | Defines [TLS](../routers/index.md#tls) certificate configuration                                                                                                                                                                                                                           |
 | [12] | `tls.secretName`               | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace)                                                                                                                                       |
 | [13] | `tls.options`                  | Defines the reference to a [TLSOption](#kind-tlsoption)                                                                                                                                                                                                                                    |
@@ -1766,14 +1766,13 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
 
 #### ServersTransport reference
 
-If the referenced ServersTransport has been defined with a CRD, 
-it must be in the [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace.
+By default, the referenced ServersTransport CRD must be defined in the [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace. 
 
-To reference a ServersTransport resource from another namespace,
-one should use the namespace-name@kubernetescrd format,
-and [allow cross-namespace](../../../providers/kubernetes-crd/#allowcrossnamespace).
+To reference a ServersTransport CRD from another namespace, 
+the value must be of form `namespace-name@kubernetescrd`,
+and the [cross-namespace](../../../providers/kubernetes-crd/#allowcrossnamespace) option must be enabled.
 
-For other providers, references of the format name@provider can be used.
+If the ServersTransport is defined in another provider the cross-provider format `name@provider` should be used.
 
 ## Further
 
