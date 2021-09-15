@@ -298,11 +298,10 @@ func (c configBuilder) buildServersLB(namespace string, svc v1alpha1.LoadBalance
 
 	lb.Sticky = svc.Sticky
 
-	serversTransportKey, err := c.makeServersTransportKey(namespace, svc.ServersTransport)
+	lb.ServersTransport, err = c.makeServersTransportKey(namespace, svc.ServersTransport)
 	if err != nil {
 		return nil, err
 	}
-	lb.ServersTransport = serversTransportKey
 
 	return &dynamic.Service{LoadBalancer: lb}, nil
 }
