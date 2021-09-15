@@ -83,7 +83,7 @@ func run(dest string) error {
 		return err
 	}
 
-	return ioutil.WriteFile(filepath.Join(dest, "marshaler.go"), []byte(fmt.Sprintf(marsh, destPkg)), 0666)
+	return ioutil.WriteFile(filepath.Join(dest, "marshaler.go"), []byte(fmt.Sprintf(marsh, destPkg)), 0o666)
 }
 
 func cleanType(typ types.Type, base string) string {
