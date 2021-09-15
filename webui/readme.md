@@ -14,8 +14,8 @@ Traefik Web UI provide 2 types of information:
 Use the make file :
 
 ```shell
-make build           # Generate Docker image
-make generate-webui  # Generate static contents in `traefik/static/` folder.
+make build-image      # Generate Docker image
+make generate-webui   # Generate static contents in `traefik/webui/static/` folder.
 ```
 
 ## How to build (only for frontend developer)
@@ -32,9 +32,9 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
 
   - `npm run build`
 
-- Static contents are built in the `static` directory
+- Static contents are built in the `webui/static` directory
 
-**Do not manually change the files in the `static` directory**
+**Do not manually change the files in the `webui/static` directory**
 
 - The build allows to:
   - optimize all JavaScript
@@ -46,7 +46,7 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
 
 ## How to edit (only for frontend developer)
 
-**Do not manually change the files in the `static` directory**
+**Do not manually change the files in the `webui/static` directory**
 
 - Go to the `webui` directory
 - Edit files in `webui/src`
