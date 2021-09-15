@@ -7,7 +7,7 @@ Managing Request/Response headers
 
 The Headers middleware manages the headers of requests and responses.
 
-Some headers are automatically added by default. See the [Pass Host Header documentation](../../routing/services/index.md#pass-host-header) for more information.
+Some headers are automatically added by default. See the [faq](../../getting-started/faq.md#what-are-the-forwarded-headers-when-proxying-http-requests) for more information.
 
 ## Configuration Examples
 
