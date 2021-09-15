@@ -16,12 +16,10 @@ import (
 	"time"
 
 	"github.com/coreos/go-systemd/daemon"
-	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/go-acme/lego/v4/challenge"
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/paerser/cli"
-	"github.com/traefik/traefik/v2/autogen/genstatic"
 	"github.com/traefik/traefik/v2/cmd"
 	"github.com/traefik/traefik/v2/cmd/healthcheck"
 	cmdVersion "github.com/traefik/traefik/v2/cmd/version"
@@ -107,10 +105,6 @@ func runCmd(staticConfiguration *static.Configuration) error {
 		log.WithoutContext().Debugf("Static configuration loaded [struct] %#v", staticConfiguration)
 	} else {
 		log.WithoutContext().Debugf("Static configuration loaded %s", string(jsonConf))
-	}
-
-	if staticConfiguration.API != nil && staticConfiguration.API.Dashboard {
-		staticConfiguration.API.DashboardAssets = &assetfs.AssetFS{Asset: genstatic.Asset, AssetInfo: genstatic.AssetInfo, AssetDir: genstatic.AssetDir, Prefix: "static"}
 	}
 
 	if staticConfiguration.Global.CheckNewVersion {
