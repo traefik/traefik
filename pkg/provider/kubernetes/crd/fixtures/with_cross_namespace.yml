@@ -33,7 +33,7 @@ spec:
         - name: whoami-svc
           namespace: cross-ns
           port: 80
-          serversTransport: test
+          serversTransport: foo-test@kubernetescrd
 
 ---
 apiVersion: traefik.containo.us/v1alpha1
