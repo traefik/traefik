@@ -93,6 +93,7 @@ spec:
   serverName: "test"
   insecureSkipVerify: true
   maxIdleConnsPerHost: 42
+  disableHTTP2: true
   rootCAsSecrets:
   - root-ca0
   - root-ca1
