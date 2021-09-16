@@ -1766,13 +1766,13 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
 
 #### ServersTransport reference
 
-By default, the referenced ServersTransport CRD must be defined in the [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace. 
+By default, the referenced ServersTransport CRD must be defined in the same [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace.
 
 To reference a ServersTransport CRD from another namespace, 
 the value must be of form `namespace-name@kubernetescrd`,
 and the [cross-namespace](../../../providers/kubernetes-crd/#allowcrossnamespace) option must be enabled.
 
-If the ServersTransport is defined in another provider the cross-provider format `name@provider` should be used.
+If the ServersTransport CRD is defined in another provider the cross-provider format `name@provider` should be used.
 
 ## Further
 
