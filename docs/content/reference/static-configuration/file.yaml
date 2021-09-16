@@ -290,6 +290,8 @@ metrics:
     addEntryPointsLabels: true
     addRoutersLabels: true
     addServicesLabels: true
+    additionalLabels:
+      foobar: foobar
 ping:
   entryPoint: foobar
   manualRouting: true
