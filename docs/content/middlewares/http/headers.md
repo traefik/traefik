@@ -7,7 +7,7 @@ Managing Request/Response headers
 
 The Headers middleware manages the headers of requests and responses.
 
-Some headers are automatically added by default. See the [FAQ](../../getting-started/faq.md#what-are-the-forwarded-headers-when-proxying-http-requests) for more information.
+A set of forwarded headers are automatically added by default. See the [FAQ](../../getting-started/faq.md#what-are-the-forwarded-headers-when-proxying-http-requests) for more information.
 
 ## Configuration Examples
 
