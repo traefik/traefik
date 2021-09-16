@@ -31,8 +31,6 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 		ServersTransports: map[string]*dynamic.ServersTransport{},
 	}
 
-	serversTransports := client.GetServersTransports()
-
 	for _, ingressRoute := range client.GetIngressRoutes() {
 		ctxRt := log.With(ctx, log.Str("ingress", ingressRoute.Name), log.Str("namespace", ingressRoute.Namespace))
 		logger := log.FromContext(ctxRt)
@@ -97,20 +95,6 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				if err != nil {
 					logger.Error(err)
 					continue
-				}
-
-				if serversLB != nil && serversLB.LoadBalancer != nil && serversLB.LoadBalancer.ServersTransport != "" {
-					st, err := getServersTransports(serversTransports, serversLB.LoadBalancer.ServersTransport)
-					if err != nil {
-						logger.Errorf("Failed to get serversTransport: %v", err)
-						continue
-					}
-
-					if !isNamespaceAllowed(p.AllowCrossNamespace, ingressRoute.Namespace, st.Namespace) {
-						logger.Errorf("ServersTransport %s/%s is not in the IngressRoute namespace %s",
-							st.Namespace, st.Name, ingressRoute.Namespace)
-						continue
-					}
 				}
 
 				if serversLB != nil {
@@ -542,14 +526,4 @@ func parseServiceProtocol(providedScheme, portName string, portNumber int32) (st
 	}
 
 	return "", fmt.Errorf("invalid scheme %q specified", providedScheme)
-}
-
-func getServersTransports(serversTransports []*v1alpha1.ServersTransport, st string) (*v1alpha1.ServersTransport, error) {
-	for _, serversTransport := range serversTransports {
-		if serversTransport.Name == st {
-			return serversTransport, nil
-		}
-	}
-
-	return nil, fmt.Errorf("serversTransport %s not found", st)
 }

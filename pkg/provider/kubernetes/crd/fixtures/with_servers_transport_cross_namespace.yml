@@ -15,7 +15,7 @@ spec:
     services:
     - name: whoami
       port: 80
-      serversTransport: st-cross-ns
+      serversTransport: cross-ns-st-cross-ns@kubernetescrd
 
 ---
 apiVersion: traefik.containo.us/v1alpha1

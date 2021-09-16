@@ -2732,8 +2732,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "TLS with tls options and specific namespace",
-			paths: []string{"services.yml", "with_tls_options_and_specific_namespace.yml"},
+			desc:                "TLS with tls options and specific namespace",
+			paths:               []string{"services.yml", "with_tls_options_and_specific_namespace.yml"},
+			AllowCrossNamespace: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2926,8 +2927,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "TLS with unknown tls options namespace",
-			paths: []string{"services.yml", "with_unknown_tls_options_namespace.yml"},
+			desc:                "TLS with unknown tls options namespace",
+			paths:               []string{"services.yml", "with_unknown_tls_options_namespace.yml"},
+			AllowCrossNamespace: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -4669,7 +4671,7 @@ func TestCrossNamespace(t *testing.T) {
 									},
 								},
 								PassHostHeader:   Bool(true),
-								ServersTransport: "cross-ns-test",
+								ServersTransport: "foo-test@kubernetescrd",
 							},
 						},
 						"cross-ns-whoami-svc-80": {
@@ -4852,17 +4854,18 @@ func TestCrossNamespace(t *testing.T) {
 									},
 								},
 								PassHostHeader:   Bool(true),
-								ServersTransport: "st-cross-ns",
+								ServersTransport: "cross-ns-st-cross-ns@kubernetescrd",
 							},
 						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
-						"st-cross-ns": {
+						"cross-ns-st-cross-ns": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:           30000000000,
 								ResponseHeaderTimeout: 0,
 								IdleConnTimeout:       90000000000,
 							},
+							DisableHTTP2: true,
 						},
 					},
 				},
@@ -4887,12 +4890,13 @@ func TestCrossNamespace(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services:    map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{
-						"st-cross-ns": {
+						"cross-ns-st-cross-ns": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:           30000000000,
 								ResponseHeaderTimeout: 0,
 								IdleConnTimeout:       90000000000,
 							},
+							DisableHTTP2: true,
 						},
 					},
 				},
