@@ -16,11 +16,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
-type influxDBWriter struct {
-	buf    bytes.Buffer
-	config *types.InfluxDB
-}
-
 var (
 	influxDBClient *influx.Influx
 	influxDBTicker *time.Ticker
@@ -164,6 +159,11 @@ func StopInfluxDB() {
 		influxDBTicker.Stop()
 	}
 	influxDBTicker = nil
+}
+
+type influxDBWriter struct {
+	buf    bytes.Buffer
+	config *types.InfluxDB
 }
 
 // Write creates a http or udp client and attempts to write BatchPoints.
