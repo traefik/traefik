@@ -1712,19 +1712,19 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
       disableHTTP2: true               # [11]
     ```
 
-| Ref  | Attribute               | Purpose                                                                                                                                              |
-|------|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1]  | `serverName`            | ServerName used to contact the server.                                                                                                               |
-| [2]  | `insecureSkipVerify`    | Disables SSL certificate verification.                                                                                                               |
-| [3]  | `rootCAsSecrets`        | Adds cert file for self-signed certificate. The secret must contain a certificate under either a tls.ca or a ca.crt key.                             |
-| [4]  | `certificatesSecrets`   | Certificates for mTLS.                                                                                                                               |
-| [5]  | `maxIdleConnsPerHost`   | If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, `defaultMaxIdleConnsPerHost` is used.                                 |
-| [6]  | `forwardingTimeouts`    | Timeouts for requests forwarded to the backend servers.                                                                                              |
-| [7]  | `dialTimeout`           | The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists.                                    |
-| [8]  | `responseHeaderTimeout` | The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists. |
-| [9]  | `idleConnTimeout`       | The maximum period for which an idle HTTP keep-alive connection will remain open before closing itself.                                              |
-| [10] | `peerCertURI`           | URI used to match with service certificate.                                                                                                          |
-| [11] | `disableHTTP2`          | Disables HTTP/2 for connections with backend servers.                                                                                                |
+| Ref  | Attribute               | Purpose                                                                                                                                                                 |
+|------|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [1]  | `serverName`            | ServerName used to contact the server.                                                                                                                                  |
+| [2]  | `insecureSkipVerify`    | Controls whether the server's certificate chain and host name is verified.                                                                                              |
+| [3]  | `rootCAsSecrets`        | Defines the set of root certificate authorities to use when verifying server certificates. The secret must contain a certificate under either a tls.ca or a ca.crt key. |
+| [4]  | `certificatesSecrets`   | Certificates to present to the server for mTLS.                                                                                                                         |
+| [5]  | `maxIdleConnsPerHost`   | Controls the maximum idle (keep-alive) connections to keep per-host. If zero, `defaultMaxIdleConnsPerHost` is used.                                                     |
+| [6]  | `forwardingTimeouts`    | Timeouts for requests forwarded to the servers.                                                                                                                         |
+| [7]  | `dialTimeout`           | The amount of time to wait until a connection to a server can be established. If zero, no timeout exists.                                                               |
+| [8]  | `responseHeaderTimeout` | The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists.                    |
+| [9]  | `idleConnTimeout`       | The maximum amount of time an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout exists.                                          |
+| [10] | `peerCertURI`           | URI used to match against SAN URIs during the server's certificate verification.                                                                                        |
+| [11] | `disableHTTP2`          | Disables HTTP/2 for connections with servers.                                                                                                                           |
 
 !!! info "CA Secret"
 

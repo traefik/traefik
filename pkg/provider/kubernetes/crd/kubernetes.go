@@ -347,6 +347,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			DisableHTTP2:        serversTransport.Spec.DisableHTTP2,
 			MaxIdleConnsPerHost: serversTransport.Spec.MaxIdleConnsPerHost,
 			ForwardingTimeouts:  forwardingTimeout,
+			PeerCertURI:         serversTransport.Spec.PeerCertURI,
 		}
 	}
 

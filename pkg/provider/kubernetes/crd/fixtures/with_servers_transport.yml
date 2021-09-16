@@ -94,17 +94,18 @@ spec:
   insecureSkipVerify: true
   maxIdleConnsPerHost: 42
   disableHTTP2: true
+  peerCertURI: foo://bar
   rootCAsSecrets:
-  - root-ca0
-  - root-ca1
-  - root-ca2
-  - root-ca3
-  - root-ca4
-  - allcerts
+    - root-ca0
+    - root-ca1
+    - root-ca2
+    - root-ca3
+    - root-ca4
+    - allcerts
   certificatesSecrets:
-  - mtls1
-  - mtls2
-  - allcerts
+    - mtls1
+    - mtls2
+    - allcerts
   forwardingTimeouts:
     dialTimeout: 42
     responseHeaderTimeout: 42s
