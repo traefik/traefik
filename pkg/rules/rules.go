@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -13,8 +14,12 @@ import (
 	"github.com/vulcand/predicate"
 )
 
+const (
+	hostMatcher = "Host"
+)
+
 var funcs = map[string]func(*mux.Route, ...string) error{
-	"Host":          host,
+	hostMatcher:     host,
 	"HostHeader":    host,
 	"HostRegexp":    hostRegexp,
 	"ClientIP":      clientIP,
@@ -34,7 +39,12 @@ type Router struct {
 
 // NewRouter returns a new router instance.
 func NewRouter() (*Router, error) {
-	parser, err := newParser()
+	var matchers []string
+	for matcher, _ := range funcs {
+		matchers = append(matchers, matcher)
+	}
+
+	parser, err := NewParser(matchers)
 	if err != nil {
 		return nil, err
 	}
@@ -71,6 +81,50 @@ func (r *Router) AddRoute(rule string, priority int, handler http.Handler) error
 
 	return nil
 }
+
+// ParseDomains extract domains from rule.
+func ParseDomains(rule string) ([]string, error) {
+	var matchers []string
+	for matcher, _ := range funcs {
+		matchers = append(matchers, matcher)
+	}
+
+	parser, err := NewParser(matchers)
+	if err != nil {
+		return nil, err
+	}
+
+	parse, err := parser.Parse(rule)
+	if err != nil {
+		return nil, err
+	}
+
+	buildTree, ok := parse.(TreeBuilder)
+	if !ok {
+		return nil, errors.New("cannot parse")
+	}
+
+	return buildTree().ParseMatchers([]string{hostMatcher}), nil
+}
+
+//func lower(slice []string) []string {
+//	var lowerStrings []string
+//	for _, value := range slice {
+//		lowerStrings = append(lowerStrings, strings.ToLower(value))
+//	}
+//	return lowerStrings
+//}
+
+//func parseDomain(tree *Tree) []string {
+//	switch tree.Matcher {
+//	case and, or:
+//		return append(parseDomain(tree.RuleLeft), parseDomain(tree.RuleRight)...)
+//	case "Host", "HostSNI":
+//		return tree.Value
+//	default:
+//		return nil
+//	}
+//}
 
 func path(route *mux.Route, paths ...string) error {
 	rt := route.Subrouter()

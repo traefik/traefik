@@ -253,7 +253,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			continue
 		}
 
-		domains, err := rules.ParseHostSNI(routerConfig.Rule)
+		domains, err := tcp.ParseHostSNI(routerConfig.Rule)
 		if err != nil {
 			routerErr := fmt.Errorf("unknown rule %s", routerConfig.Rule)
 			routerConfig.AddError(routerErr, true)

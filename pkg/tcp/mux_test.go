@@ -296,6 +296,121 @@ func (f fakeAddr) Network() string {
 	panic("Implement me")
 }
 
-func Test_MaRoute(t *testing.T) {
+func TestParseHostSNI(t *testing.T) {
+	testCases := []struct {
+		description   string
+		expression    string
+		domain        []string
+		errorExpected bool
+	}{
+		{
+			description:   "Many hostSNI rules",
+			expression:    "HostSNI(`foo.bar`,`test.bar`)",
+			domain:        []string{"foo.bar", "test.bar"},
+			errorExpected: false,
+		},
+		{
+			description:   "Many hostSNI rules upper",
+			expression:    "HOSTSNI(`foo.bar`,`test.bar`)",
+			domain:        []string{"foo.bar", "test.bar"},
+			errorExpected: false,
+		},
+		{
+			description:   "Many hostSNI rules lower",
+			expression:    "hostsni(`foo.bar`,`test.bar`)",
+			domain:        []string{"foo.bar", "test.bar"},
+			errorExpected: false,
+		},
+		{
+			description:   "No hostSNI rule",
+			expression:    "ClientIP(`10.1`)",
+			errorExpected: false,
+		},
+		{
+			description:   "HostSNI rule and another rule",
+			expression:    "HostSNI(`foo.bar`) && ClientIP(`10.1`)",
+			domain:        []string{"foo.bar"},
+			errorExpected: false,
+		},
+		{
+			description:   "HostSNI rule to lower and another rule",
+			expression:    "HostSNI(`Foo.Bar`) && ClientIP(`10.1`)",
+			domain:        []string{"foo.bar"},
+			errorExpected: false,
+		},
+		{
+			description:   "HostSNI rule with no domain",
+			expression:    "HostSNI() && ClientIP(`10.1`)",
+			errorExpected: false,
+		},
+	}
 
+	for _, test := range testCases {
+		test := test
+		t.Run(test.expression, func(t *testing.T) {
+			t.Parallel()
+
+			domains, err := ParseHostSNI(test.expression)
+
+			if test.errorExpected {
+				require.Errorf(t, err, "unable to parse correctly the domains in the HostSNI rule from %q", test.expression)
+			} else {
+				require.NoError(t, err, "%s: Error while parsing domain.", test.expression)
+			}
+
+			assert.EqualValues(t, test.domain, domains, "%s: Error parsing domains from expression.", test.expression)
+		})
+	}
+}
+
+func Test_MatchHost(t *testing.T) {
+	testCases := []struct {
+		desc      string
+		ruleHost  string
+		givenHost string
+		matchErr  bool
+	}{
+		{
+			desc: "Empty",
+		},
+		{
+			desc:      "Not Matching hosts",
+			ruleHost:  "foobar",
+			givenHost: "bar",
+			matchErr:  true,
+		},
+		{
+			desc:      "Matching hosts",
+			ruleHost:  "foobar",
+			givenHost: "foobar",
+		},
+		{
+			desc:      "Matching hosts with subdomains",
+			ruleHost:  "foo.bar",
+			givenHost: "foo.bar",
+		},
+		{
+			desc:      "Matching hosts with subdomains and globing",
+			ruleHost:  "*.bar",
+			givenHost: "foo.bar",
+		},
+		{
+			desc:      "Matching hosts with subdomains and multiple globing",
+			ruleHost:  "*.*.bar",
+			givenHost: "foo.baz.bar",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			if test.matchErr {
+				assert.False(t, matchHost(test.givenHost, test.ruleHost))
+			} else {
+				assert.True(t, matchHost(test.givenHost, test.ruleHost))
+			}
+		})
+	}
 }

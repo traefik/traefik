@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -15,6 +16,32 @@ import (
 var funcs = map[string]func(*route, ...string) error{
 	"HostSNI":  hostSNI,
 	"ClientIP": clientIP,
+}
+
+// ParseHostSNI extracts the HostSNIs declared in a rule.
+// This is a first naive implementation used in TCP routing.
+func ParseHostSNI(rule string) ([]string, error) {
+	var matchers []string
+	for matcher, _ := range funcs {
+		matchers = append(matchers, matcher)
+	}
+
+	parser, err := rules.NewParser(matchers)
+	if err != nil {
+		return nil, err
+	}
+
+	parse, err := parser.Parse(rule)
+	if err != nil {
+		return nil, err
+	}
+
+	buildTree, ok := parse.(rules.TreeBuilder)
+	if !ok {
+		return nil, errors.New("cannot parse")
+	}
+
+	return buildTree().ParseMatchers([]string{"HostSNI"}), nil
 }
 
 // metaTCP contains TCP connection metadata
@@ -43,7 +70,12 @@ type TCPRouterMux struct {
 }
 
 func NewTCPRouterMux() (*TCPRouterMux, error) {
-	parser, err := rules.NewTCPParser()
+	var matchers []string
+	for matcher, _ := range funcs {
+		matchers = append(matchers, matcher)
+	}
+
+	parser, err := rules.NewParser(matchers)
 	if err != nil {
 		return nil, fmt.Errorf("error while creating rules parser: %w", err)
 	}
@@ -273,6 +305,14 @@ func clientIP(route *route, clientIPs ...string) error {
 
 // hostSNI checks if the SNI Host of the connection match the matcher host.
 func hostSNI(route *route, hosts ...string) error {
+	for i, host := range hosts {
+		if !rules.IsASCII(host) {
+			return fmt.Errorf("invalid value %q for \"Host\" matcher, non-ASCII characters are not allowed", host)
+		}
+
+		hosts[i] = strings.ToLower(host)
+	}
+
 	route.addMatcher(func(meta metaTCP) bool {
 		if len(hosts) == 0 {
 			return false
@@ -298,20 +338,23 @@ func hostSNI(route *route, hosts ...string) error {
 	return nil
 }
 
-func matchHost(host, givenHost string) bool {
-	if host == givenHost {
+func matchHost(givenHost, ruleHost string) bool {
+	if ruleHost == givenHost {
 		return true
 	}
 
-	for len(givenHost) > 0 && givenHost[len(givenHost)-1] == '.' {
-		givenHost = givenHost[:len(givenHost)-1]
+	givenHost = strings.TrimSuffix(givenHost, ".")
+	ruleHost = strings.TrimSuffix(ruleHost, ".")
+
+	if ruleHost == givenHost {
+		return true
 	}
 
-	labels := strings.Split(host, ".")
+	labels := strings.Split(givenHost, ".")
 	for i := range labels {
 		labels[i] = "*"
 		candidate := strings.Join(labels, ".")
-		if givenHost == candidate {
+		if candidate == ruleHost {
 			return true
 		}
 	}
