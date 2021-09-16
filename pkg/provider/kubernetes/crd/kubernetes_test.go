@@ -3516,6 +3516,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								ResponseHeaderTimeout: types.Duration(42 * time.Second),
 								IdleConnTimeout:       types.Duration(42 * time.Millisecond),
 							},
+							PeerCertURI: "foo://bar",
 						},
 						"default-test": {
 							ServerName: "test",
@@ -3627,6 +3628,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								IdleConnTimeout:       types.Duration(42 * time.Millisecond),
 							},
 							DisableHTTP2: true,
+							PeerCertURI:  "foo://bar",
 						},
 						"default-test": {
 							ServerName: "test",
