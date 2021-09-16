@@ -27,7 +27,6 @@ global_job_config:
       - export GOPROXY=https://proxy.golang.org,direct
       - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "${GOPATH}/bin" v1.41.1
       - curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | bash -s -- -b "${GOPATH}/bin"
-      - go install github.com/containous/go-bindata/go-bindata@v1.0.0
       - checkout
       - cache restore traefik-$(checksum go.sum)
 
@@ -41,7 +40,7 @@ blocks:
         - name: Test Integration Container
           commands:
             - make pull-images
-            - mkdir -p static # Avoid to generate webui
+            - mkdir -p webui/static && touch webui/static/index.html # Avoid generating webui
             - PRE_TARGET="" make binary
             - make test-integration-container
             - df -h
@@ -61,7 +60,7 @@ blocks:
       jobs:
         - name: Test Integration Host
           commands:
-            - mkdir -p static # Avoid to generate webui
+            - mkdir -p webui/static && touch webui/static/index.html # Avoid generating webui
             - make test-integration-host
       epilogue:
         always:

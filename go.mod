@@ -27,7 +27,6 @@ require (
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
 	github.com/donovanhide/eventsource v0.0.0-20170630084216-b8f31a59085e // indirect
 	github.com/eapache/channels v1.1.0
-	github.com/elazarl/go-bindata-assetfs v1.0.0
 	github.com/fatih/structs v1.1.0
 	github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2
 	github.com/go-acme/lego/v4 v4.4.0
@@ -48,7 +47,7 @@ require (
 	github.com/libkermit/compose v0.0.0-20171122111507-c04e39c026ad
 	github.com/libkermit/docker v0.0.0-20171122101128-e6674d32b807
 	github.com/libkermit/docker-check v0.0.0-20171122104347-1113af38e591
-	github.com/lucas-clemente/quic-go v0.22.0
+	github.com/lucas-clemente/quic-go v0.23.0
 	github.com/mailgun/ttlmap v0.0.0-20170619185759-c1c17f74874f
 	github.com/miekg/dns v1.1.43
 	github.com/mitchellh/copystructure v1.0.0
@@ -81,8 +80,8 @@ require (
 	github.com/vdemeester/shakers v0.1.0
 	github.com/vulcand/oxy v1.3.0
 	github.com/vulcand/predicate v1.1.0
-	go.elastic.co/apm v1.11.0
-	go.elastic.co/apm/module/apmot v1.11.0
+	go.elastic.co/apm v1.13.1
+	go.elastic.co/apm/module/apmot v1.13.1
 	golang.org/x/mod v0.4.2
 	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
 	golang.org/x/sys v0.0.0-20210817190340-bfb29a6856f2 // indirect
@@ -96,10 +95,8 @@ require (
 	k8s.io/apiextensions-apiserver v0.20.2
 	k8s.io/apimachinery v0.21.0
 	k8s.io/client-go v0.21.0
-	k8s.io/code-generator v0.21.0
 	k8s.io/utils v0.0.0-20210709001253-0e1f9d693477
 	mvdan.cc/xurls/v2 v2.1.0
-	sigs.k8s.io/controller-tools v0.5.0
 	sigs.k8s.io/gateway-api v0.3.0
 )
 
