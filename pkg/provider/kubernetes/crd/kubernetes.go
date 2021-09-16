@@ -341,7 +341,8 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			}
 		}
 
-		conf.HTTP.ServersTransports[serversTransport.Name] = &dynamic.ServersTransport{
+		id := provider.Normalize(makeID(serversTransport.Namespace, serversTransport.Name))
+		conf.HTTP.ServersTransports[id] = &dynamic.ServersTransport{
 			ServerName:          serversTransport.Spec.ServerName,
 			InsecureSkipVerify:  serversTransport.Spec.InsecureSkipVerify,
 			RootCAs:             rootCAs,
