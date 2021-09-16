@@ -297,9 +297,32 @@ func (c configBuilder) buildServersLB(namespace string, svc v1alpha1.LoadBalance
 	lb.ResponseForwarding = conf.ResponseForwarding
 
 	lb.Sticky = svc.Sticky
-	lb.ServersTransport = svc.ServersTransport
+
+	lb.ServersTransport, err = c.makeServersTransportKey(namespace, svc.ServersTransport)
+	if err != nil {
+		return nil, err
+	}
 
 	return &dynamic.Service{LoadBalancer: lb}, nil
+}
+
+func (c *configBuilder) makeServersTransportKey(parentNamespace string, serversTransportName string) (string, error) {
+	if serversTransportName == "" {
+		return "", nil
+	}
+
+	if !c.allowCrossNamespace && strings.HasSuffix(serversTransportName, providerNamespaceSeparator+providerName) {
+		// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
+		// if the provider namespace kubernetescrd is used,
+		// we don't allow this format to avoid cross namespace references.
+		return "", fmt.Errorf("invalid reference to serversTransport %s: namespace-name@kubernetescrd format is not allowed when crossnamespace is disallowed", serversTransportName)
+	}
+
+	if strings.Contains(serversTransportName, providerNamespaceSeparator) {
+		return serversTransportName, nil
+	}
+
+	return provider.Normalize(makeID(parentNamespace, serversTransportName)), nil
 }
 
 func (c configBuilder) loadServers(parentNamespace string, svc v1alpha1.LoadBalancerSpec) ([]dynamic.Server, error) {
