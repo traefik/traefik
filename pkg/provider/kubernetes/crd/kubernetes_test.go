@@ -3507,6 +3507,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								{CertFile: "TESTCERT3", KeyFile: "TESTKEY3"},
 							},
 							MaxIdleConnsPerHost: 42,
+							DisableHTTP2:        true,
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout:           types.Duration(42 * time.Second),
 								ResponseHeaderTimeout: types.Duration(42 * time.Second),
