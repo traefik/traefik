@@ -55,7 +55,7 @@ func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	case req.URL.RawPath != "":
 		currentPath = req.URL.RawPath
 	case req.URL.String() != req.URL.Path:
-		// If req.URL.String() != req.URL.Path, then the original URL may contain percent encoded values decoded in req.URL.Path.
+		// The original URL may contain percent encoded values decoded in req.URL.Path.
 		currentPath = req.URL.String()
 	default:
 		currentPath = req.URL.Path
