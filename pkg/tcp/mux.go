@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"regexp"
 	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/ip"
@@ -56,6 +57,11 @@ func NewMetaTCP(serverName string, conn WriteCloser) (metaTCP, error) {
 	if err != nil {
 		return metaTCP{}, fmt.Errorf("error while parsing remote address %q: %v", conn.RemoteAddr().String(), err)
 	}
+
+	// as per https://datatracker.ietf.org/doc/html/rfc6066:
+	// > The hostname is represented as a byte string using ASCII encoding without a trailing dot.
+	// so there is no need to trim a potential trailing dot
+	serverName = types.CanonicalDomain(serverName)
 
 	return metaTCP{
 		serverName: types.CanonicalDomain(serverName),
@@ -303,20 +309,29 @@ func clientIP(route *route, clientIPs ...string) error {
 	return nil
 }
 
+var almostFQDN = regexp.MustCompile("^[[:alnum:]\\.-]+$")
+
 // hostSNI checks if the SNI Host of the connection match the matcher host.
 func hostSNI(route *route, hosts ...string) error {
+	if len(hosts) == 0 {
+		return fmt.Errorf("empty value for \"Host\" matcher is not allowed")
+	}
+
 	for i, host := range hosts {
-		if !rules.IsASCII(host) {
-			return fmt.Errorf("invalid value %q for \"Host\" matcher, non-ASCII characters are not allowed", host)
+		// Special case to allow global wildcard
+		if host == "*" {
+			hosts[i] = strings.ToLower(host)
+			continue
+		}
+
+		if !almostFQDN.MatchString(host) {
+			return fmt.Errorf("invalid value for \"HostSNI\" matcher, %q is not a valid hostname", host)
 		}
 
 		hosts[i] = strings.ToLower(host)
 	}
 
 	route.addMatcher(func(meta metaTCP) bool {
-		if len(hosts) == 0 {
-			return false
-		}
 		// TODO verify if this is correct
 		if hosts[0] == "*" {
 			return true
@@ -327,37 +342,21 @@ func hostSNI(route *route, hosts ...string) error {
 		}
 
 		for _, host := range hosts {
-			if matchHost(meta.serverName, host) {
+			if host == meta.serverName {
 				return true
 			}
+
+			// trim trailing period in case of FQDN
+			host = strings.TrimSuffix(host, ".")
+			if host == meta.serverName {
+				return true
+			}
+
+			return false
 		}
 
 		return false
 	})
 
 	return nil
-}
-
-func matchHost(givenHost, ruleHost string) bool {
-	if ruleHost == givenHost {
-		return true
-	}
-
-	givenHost = strings.TrimSuffix(givenHost, ".")
-	ruleHost = strings.TrimSuffix(ruleHost, ".")
-
-	if ruleHost == givenHost {
-		return true
-	}
-
-	labels := strings.Split(givenHost, ".")
-	for i := range labels {
-		labels[i] = "*"
-		candidate := strings.Join(labels, ".")
-		if candidate == ruleHost {
-			return true
-		}
-	}
-
-	return false
 }

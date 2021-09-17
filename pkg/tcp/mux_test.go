@@ -363,41 +363,58 @@ func TestParseHostSNI(t *testing.T) {
 	}
 }
 
-func Test_MatchHost(t *testing.T) {
+func Test_HostSNI(t *testing.T) {
 	testCases := []struct {
-		desc      string
-		ruleHost  string
-		givenHost string
-		matchErr  bool
+		desc       string
+		ruleHosts  []string
+		serverName string
+		buildErr   bool
+		matchErr   bool
 	}{
 		{
-			desc: "Empty",
+			desc:     "Empty",
+			buildErr: true,
 		},
 		{
-			desc:      "Not Matching hosts",
-			ruleHost:  "foobar",
-			givenHost: "bar",
-			matchErr:  true,
+			desc:      "Non ASCII host",
+			ruleHosts: []string{"héhé"},
+			buildErr:  true,
 		},
 		{
-			desc:      "Matching hosts",
-			ruleHost:  "foobar",
-			givenHost: "foobar",
+			desc:       "Not Matching hosts",
+			ruleHosts:  []string{"foobar"},
+			serverName: "bar",
+			matchErr:   true,
 		},
 		{
-			desc:      "Matching hosts with subdomains",
-			ruleHost:  "foo.bar",
-			givenHost: "foo.bar",
+			desc:       "Matching globing host `*`",
+			ruleHosts:  []string{"*"},
+			serverName: "foobar",
 		},
 		{
-			desc:      "Matching hosts with subdomains and globing",
-			ruleHost:  "*.bar",
-			givenHost: "foo.bar",
+			desc:      "Not Matching globing host with subdomain",
+			ruleHosts: []string{"*.bar"},
+			buildErr:  true,
 		},
 		{
-			desc:      "Matching hosts with subdomains and multiple globing",
-			ruleHost:  "*.*.bar",
-			givenHost: "foo.baz.bar",
+			desc:       "Not Matching host with trailing dot with ",
+			ruleHosts:  []string{"foobar."},
+			serverName: "foobar.",
+		},
+		{
+			desc:       "Matching host with trailing dot",
+			ruleHosts:  []string{"foobar."},
+			serverName: "foobar",
+		},
+		{
+			desc:       "Matching hosts",
+			ruleHosts:  []string{"foobar"},
+			serverName: "foobar",
+		},
+		{
+			desc:       "Matching hosts with subdomains",
+			ruleHosts:  []string{"foo.bar"},
+			serverName: "foo.bar",
 		},
 	}
 
@@ -406,10 +423,105 @@ func Test_MatchHost(t *testing.T) {
 
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
+			var route route
+			err := hostSNI(&route, test.ruleHosts...)
+			if test.buildErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			meta := metaTCP{
+				serverName: test.serverName,
+			}
+
 			if test.matchErr {
-				assert.False(t, matchHost(test.givenHost, test.ruleHost))
+				assert.False(t, route.match(meta))
 			} else {
-				assert.True(t, matchHost(test.givenHost, test.ruleHost))
+				assert.True(t, route.match(meta))
+			}
+		})
+	}
+}
+
+func Test_ClientIP(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		ruleHosts  []string
+		serverName string
+		buildErr   bool
+		matchErr   bool
+	}{
+		{
+			desc:     "Empty",
+			buildErr: true,
+		},
+		{
+			desc:      "Non ASCII host",
+			ruleHosts: []string{"héhé"},
+			buildErr:  true,
+		},
+		{
+			desc:       "Not Matching hosts",
+			ruleHosts:  []string{"foobar"},
+			serverName: "bar",
+			matchErr:   true,
+		},
+		{
+			desc:       "Matching globing host `*`",
+			ruleHosts:  []string{"*"},
+			serverName: "foobar",
+		},
+		{
+			desc:      "Not Matching globing host with subdomain",
+			ruleHosts: []string{"*.bar"},
+			buildErr:  true,
+		},
+		{
+			desc:       "Not Matching host with trailing dot with ",
+			ruleHosts:  []string{"foobar."},
+			serverName: "foobar.",
+		},
+		{
+			desc:       "Matching host with trailing dot",
+			ruleHosts:  []string{"foobar."},
+			serverName: "foobar",
+		},
+		{
+			desc:       "Matching hosts",
+			ruleHosts:  []string{"foobar"},
+			serverName: "foobar",
+		},
+		{
+			desc:       "Matching hosts with subdomains",
+			ruleHosts:  []string{"foo.bar"},
+			serverName: "foo.bar",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var route route
+			err := hostSNI(&route, test.ruleHosts...)
+			if test.buildErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			meta := metaTCP{
+				serverName: test.serverName,
+			}
+
+			if test.matchErr {
+				assert.False(t, route.match(meta))
+			} else {
+				assert.True(t, route.match(meta))
 			}
 		})
 	}
