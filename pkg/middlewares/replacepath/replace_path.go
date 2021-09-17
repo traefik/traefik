@@ -45,6 +45,7 @@ func (r *replacePath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	case req.URL.RawPath != "":
 		req.Header.Add(ReplacedPathHeader, req.URL.RawPath)
 	case req.URL.String() != req.URL.Path:
+		// The original URL may contain percent encoded values decoded in req.URL.Path.
 		req.Header.Add(ReplacedPathHeader, req.URL.String())
 	default:
 		req.Header.Add(ReplacedPathHeader, req.URL.Path)
