@@ -107,32 +107,29 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 					Domains:      ingressRouteTCP.Spec.TLS.Domains,
 				}
 
-				if ingressRouteTCP.Spec.TLS.Options == nil || len(ingressRouteTCP.Spec.TLS.Options.Name) == 0 {
-					conf.Routers[serviceName] = r
-					continue
-				}
-
-				tlsOptionsName := ingressRouteTCP.Spec.TLS.Options.Name
-				// Is a Kubernetes CRD reference (i.e. not a cross-provider reference)
-				ns := ingressRouteTCP.Spec.TLS.Options.Namespace
-				if !strings.Contains(tlsOptionsName, "@") {
-					if len(ns) == 0 {
-						ns = ingressRouteTCP.Namespace
+				if ingressRouteTCP.Spec.TLS.Options != nil && len(ingressRouteTCP.Spec.TLS.Options.Name) > 0 {
+					tlsOptionsName := ingressRouteTCP.Spec.TLS.Options.Name
+					// Is a Kubernetes CRD reference (i.e. not a cross-provider reference)
+					ns := ingressRouteTCP.Spec.TLS.Options.Namespace
+					if !strings.Contains(tlsOptionsName, providerNamespaceSeparator) {
+						if len(ns) == 0 {
+							ns = ingressRouteTCP.Namespace
+						}
+						tlsOptionsName = makeID(ns, tlsOptionsName)
+					} else if len(ns) > 0 {
+						logger.
+							WithField("TLSoptions", ingressRouteTCP.Spec.TLS.Options.Name).
+							Warnf("namespace %q is ignored in cross-provider context", ns)
 					}
-					tlsOptionsName = makeID(ns, tlsOptionsName)
-				} else if len(ns) > 0 {
-					logger.
-						WithField("TLSoptions", ingressRouteTCP.Spec.TLS.Options.Name).
-						Warnf("namespace %q is ignored in cross-provider context", ns)
-				}
 
-				if !isNamespaceAllowed(p.AllowCrossNamespace, ingressRouteTCP.Namespace, ns) {
-					logger.Errorf("TLSOption %s/%s is not in the IngressRouteTCP namespace %s",
-						ns, ingressRouteTCP.Spec.TLS.Options.Name, ingressRouteTCP.Namespace)
-					continue
-				}
+					if !isNamespaceAllowed(p.AllowCrossNamespace, ingressRouteTCP.Namespace, ns) {
+						logger.Errorf("TLSOption %s/%s is not in the IngressRouteTCP namespace %s",
+							ns, ingressRouteTCP.Spec.TLS.Options.Name, ingressRouteTCP.Namespace)
+						continue
+					}
 
-				r.TLS.Options = tlsOptionsName
+					r.TLS.Options = tlsOptionsName
+				}
 			}
 
 			conf.Routers[serviceName] = r
