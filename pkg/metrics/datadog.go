@@ -2,6 +2,8 @@ package metrics
 
 import (
 	"context"
+	"net"
+	"os"
 	"time"
 
 	kitlog "github.com/go-kit/kit/log"
@@ -90,7 +92,17 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 func initDatadogClient(ctx context.Context, config *types.Datadog) *time.Ticker {
 	address := config.Address
 	if len(address) == 0 {
-		address = "localhost:8125"
+		host, defined := os.LookupEnv("DD_AGENT_HOST")
+		if !defined {
+			host = "localhost"
+		}
+
+		port, defined := os.LookupEnv("DD_DOGSTATSD_PORT")
+		if !defined {
+			port = "8125"
+		}
+
+		address = net.JoinHostPort(host, port)
 	}
 
 	report := time.NewTicker(time.Duration(config.PushInterval))
