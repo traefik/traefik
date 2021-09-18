@@ -399,6 +399,47 @@ spec:
   preferServerCipherSuites: true
 ```
 
+### ALPN Protocols
+
+_Optional, Default="h2, http/1.1, acme-tls/1"_
+
+This option allows to specify the list of supported application level protocols for the TLS handshake,
+in order of preference.
+If the client supports ALPN, the selected protocol will be one from this list, 
+and the connection will fail if there is no mutually supported protocol.
+
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
+tls:
+  options:
+    default:
+      alpnProtocols:
+        - http/1.1
+        - h2
+```
+
+```toml tab="File (TOML)"
+# Dynamic configuration
+
+[tls.options]
+  [tls.options.default]
+    alpnProtocols = ["http/1.1", "h2"]
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  alpnProtocols:
+    - http/1.1
+    - h2
+```
+
 ### Client Authentication (mTLS)
 
 Traefik supports mutual authentication, through the `clientAuth` section.

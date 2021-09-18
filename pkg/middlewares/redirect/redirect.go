@@ -4,11 +4,15 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"strings"
 
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/tracing"
 	"github.com/vulcand/oxy/utils"
+)
+
+const (
+	schemeHTTP  = "http"
+	schemeHTTPS = "https"
 )
 
 type redirect struct {
@@ -18,10 +22,11 @@ type redirect struct {
 	permanent   bool
 	errHandler  utils.ErrorHandler
 	name        string
+	rawURL      func(*http.Request) string
 }
 
 // New creates a Redirect middleware.
-func newRedirect(next http.Handler, regex, replacement string, permanent bool, name string) (http.Handler, error) {
+func newRedirect(next http.Handler, regex, replacement string, permanent bool, rawURL func(*http.Request) string, name string) (http.Handler, error) {
 	re, err := regexp.Compile(regex)
 	if err != nil {
 		return nil, err
@@ -34,6 +39,7 @@ func newRedirect(next http.Handler, regex, replacement string, permanent bool, n
 		errHandler:  utils.DefaultHandler,
 		next:        next,
 		name:        name,
+		rawURL:      rawURL,
 	}, nil
 }
 
@@ -42,7 +48,7 @@ func (r *redirect) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (r *redirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	oldURL := rawURL(req)
+	oldURL := r.rawURL(req)
 
 	// If the Regexp doesn't match, skip to the next handler.
 	if !r.regex.MatchString(oldURL) {
@@ -97,34 +103,4 @@ func (m *moveHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 	}
-}
-
-func rawURL(req *http.Request) string {
-	scheme := "http"
-	host := req.Host
-	port := ""
-	uri := req.RequestURI
-
-	schemeRegex := `^(https?):\/\/(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
-	re, _ := regexp.Compile(schemeRegex)
-	if re.Match([]byte(req.RequestURI)) {
-		match := re.FindStringSubmatch(req.RequestURI)
-		scheme = match[1]
-
-		if len(match[2]) > 0 {
-			host = match[2]
-		}
-
-		if len(match[3]) > 0 {
-			port = match[3]
-		}
-
-		uri = match[4]
-	}
-
-	if req.TLS != nil {
-		scheme = "https"
-	}
-
-	return strings.Join([]string{scheme, "://", host, port, uri}, "")
 }

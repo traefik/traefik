@@ -3,7 +3,7 @@ package tls
 import "crypto/tls"
 
 // GetVersion returns the normalized TLS version.
-// Available TLS versions defined at https://golang.org/pkg/crypto/tls/#pkg-constants
+// Available TLS versions defined at https://pkg.go.dev/crypto/tls/#pkg-constants
 func GetVersion(connState *tls.ConnectionState) string {
 	switch connState.Version {
 	case tls.VersionTLS10:

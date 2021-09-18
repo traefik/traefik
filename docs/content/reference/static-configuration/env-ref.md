@@ -102,9 +102,6 @@ Entry points definition. (Default: ```false```)
 `TRAEFIK_ENTRYPOINTS_<NAME>_ADDRESS`:  
 Entry point address.
 
-`TRAEFIK_ENTRYPOINTS_<NAME>_ENABLEHTTP3`:  
-Enable HTTP3. (Default: ```false```)
-
 `TRAEFIK_ENTRYPOINTS_<NAME>_FORWARDEDHEADERS_INSECURE`:  
 Trust all forwarded headers. (Default: ```false```)
 
@@ -113,6 +110,12 @@ Trust only forwarded headers from selected IPs.
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP`:  
 HTTP configuration.
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP3`:  
+HTTP3 configuration. (Default: ```false```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP3_ADVERTISEDPORT`:  
+UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_MIDDLEWARES`:  
 Default middlewares for the routers linked to the entry point.
@@ -245,6 +248,9 @@ InfluxDB metrics exporter type. (Default: ```false```)
 
 `TRAEFIK_METRICS_INFLUXDB_ADDENTRYPOINTSLABELS`:  
 Enable metrics on entry points. (Default: ```true```)
+
+`TRAEFIK_METRICS_INFLUXDB_ADDITIONALLABELS_<NAME>`:  
+Additional labels (influxdb tags) on all metrics
 
 `TRAEFIK_METRICS_INFLUXDB_ADDRESS`:  
 InfluxDB address. (Default: ```localhost:8089```)

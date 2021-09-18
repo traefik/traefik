@@ -113,8 +113,8 @@ The default host rule for all services.
 
 For a given application, if no routing rule was defined by a label, it is defined by this `defaultRule` instead.
 
-It must be a valid [Go template](https://golang.org/pkg/text/template/),
-and can include [sprig template functions](http://masterminds.github.io/sprig/).
+It must be a valid [Go template](https://pkg.go.dev/text/template/),
+and can include [sprig template functions](https://masterminds.github.io/sprig/).
 
 The app ID can be accessed with the `Name` identifier,
 and the template has access to all the labels defined on this Marathon application.

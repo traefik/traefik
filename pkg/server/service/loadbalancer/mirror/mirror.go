@@ -204,7 +204,7 @@ func newReusableRequest(req *http.Request, maxBodySize int64) (*reusableRequest,
 	if req == nil {
 		return nil, nil, errors.New("nil input request")
 	}
-	if req.Body == nil {
+	if req.Body == nil || req.ContentLength == 0 {
 		return &reusableRequest{req: req}, nil, nil
 	}
 

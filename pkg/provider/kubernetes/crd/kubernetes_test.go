@@ -4,9 +4,11 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
+	auth "github.com/abbot/go-http-auth"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/paerser/types"
@@ -616,6 +618,11 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							},
 							SniStrict:                true,
 							PreferServerCipherSuites: true,
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -678,6 +685,11 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
 							SniStrict: true,
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -739,6 +751,11 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
 							SniStrict: true,
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -789,6 +806,11 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Options: map[string]tls.Options{
 						"default-foo": {
 							MinVersion: "VersionTLS12",
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -839,6 +861,11 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					Options: map[string]tls.Options{
 						"default-foo": {
 							MinVersion: "VersionTLS12",
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -2539,6 +2566,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 							},
 							SniStrict:                true,
 							PreferServerCipherSuites: true,
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -2648,6 +2680,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 							},
 							SniStrict:                true,
 							PreferServerCipherSuites: true,
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -2716,6 +2753,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
 							SniStrict: true,
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -2779,6 +2821,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
 							SniStrict: true,
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -2831,6 +2878,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Options: map[string]tls.Options{
 						"default-foo": {
 							MinVersion: "VersionTLS12",
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -2883,6 +2935,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Options: map[string]tls.Options{
 						"default-foo": {
 							MinVersion: "VersionTLS12",
+							ALPNProtocols: []string{
+								"h2",
+								"http/1.1",
+								"acme-tls/1",
+							},
 						},
 					},
 				},
@@ -4313,6 +4370,13 @@ func TestCrossNamespace(t *testing.T) {
 							Priority:    12,
 							Middlewares: []string{"default-test-errorpage"},
 						},
+						"default-test-crossnamespace-route-a1963878aac7331b7950": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-crossnamespace-route-a1963878aac7331b7950",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bur`)",
+							Priority:    12,
+							Middlewares: []string{"cross-ns-stripprefix@kubernetescrd"},
+						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"cross-ns-stripprefix": {
@@ -4357,6 +4421,19 @@ func TestCrossNamespace(t *testing.T) {
 							},
 						},
 						"default-test-errorpage-errorpage-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+						"default-test-crossnamespace-route-a1963878aac7331b7950": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -5189,4 +5266,67 @@ func TestExternalNameService(t *testing.T) {
 			assert.Equal(t, test.expected, conf)
 		})
 	}
+}
+
+func TestCreateBasicAuthCredentials(t *testing.T) {
+	var k8sObjects []runtime.Object
+	var crdObjects []runtime.Object
+	yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/basic_auth_secrets.yml"))
+	if err != nil {
+		panic(err)
+	}
+
+	objects := k8s.MustParseYaml(yamlContent)
+	for _, obj := range objects {
+		switch o := obj.(type) {
+		case *corev1.Secret:
+			k8sObjects = append(k8sObjects, o)
+		default:
+		}
+	}
+
+	kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+	crdClient := crdfake.NewSimpleClientset(crdObjects...)
+
+	client := newClientImpl(kubeClient, crdClient)
+
+	stopCh := make(chan struct{})
+
+	eventCh, err := client.WatchAll([]string{"default"}, stopCh)
+	require.NoError(t, err)
+
+	if k8sObjects != nil || crdObjects != nil {
+		// just wait for the first event
+		<-eventCh
+	}
+
+	// Testing for username/password components in basic-auth secret
+	basicAuth, secretErr := createBasicAuthMiddleware(client, "default", &v1alpha1.BasicAuth{Secret: "basic-auth-secret"})
+	require.NoError(t, secretErr)
+	require.Len(t, basicAuth.Users, 1)
+
+	components := strings.Split(basicAuth.Users[0], ":")
+	require.Len(t, components, 2)
+
+	username := components[0]
+	hashedPassword := components[1]
+
+	require.Equal(t, "user", username)
+	require.Equal(t, "{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=", hashedPassword)
+	assert.True(t, auth.CheckSecret("password", hashedPassword))
+
+	// Testing for username/password components in htpasswd secret
+	basicAuth, secretErr = createBasicAuthMiddleware(client, "default", &v1alpha1.BasicAuth{Secret: "auth-secret"})
+	require.NoError(t, secretErr)
+	require.Len(t, basicAuth.Users, 2)
+
+	components = strings.Split(basicAuth.Users[1], ":")
+	require.Len(t, components, 2)
+
+	username = components[0]
+	hashedPassword = components[1]
+
+	assert.Equal(t, username, "test2")
+	assert.Equal(t, hashedPassword, "$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0")
+	assert.True(t, auth.CheckSecret("test2", hashedPassword))
 }
