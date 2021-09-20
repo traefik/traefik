@@ -196,7 +196,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware02/buffering/retryExpression":                            "foobar",
 		"traefik/http/middlewares/Middleware02/buffering/maxRequestBodyBytes":                        "42",
 		"traefik/http/middlewares/Middleware02/buffering/memRequestBodyBytes":                        "42",
-		"traefik/http/middlewares/Middleware05/compress/minimumBodySizeBytes":                        "42",
+		"traefik/http/middlewares/Middleware05/compress/minresponsebodybytes":                        "42",
 		"traefik/http/middlewares/Middleware18/retry/attempts":                                       "42",
 		"traefik/http/middlewares/Middleware19/stripPrefix/prefixes/0":                               "foobar",
 		"traefik/http/middlewares/Middleware19/stripPrefix/prefixes/1":                               "foobar",
@@ -396,7 +396,7 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 				"Middleware05": {
 					Compress: &dynamic.Compress{
-						MinimumBodySizeBytes: 42,
+						MinResponseBodyBytes: 42,
 					},
 				},
 				"Middleware08": {
