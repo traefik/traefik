@@ -1,0 +1,29 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - foo
+
+  routes:
+  - match: Host(`foo.com`) && PathPrefix(`/bar`)
+    kind: Rule
+    priority: 12
+    services:
+    - name: whoami
+      port: 80
+      serversTransport: cross-ns-st-cross-ns@kubernetescrd
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: st-cross-ns
+  namespace: cross-ns
+
+spec:
+  disableHTTP2: true
+
