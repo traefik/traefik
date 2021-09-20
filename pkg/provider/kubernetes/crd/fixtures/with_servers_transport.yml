@@ -142,7 +142,4 @@ spec:
         - name: whoamitls
           port: 443
           serversTransport: default-test
-        - name: whoami3
-          port: 8443
-          serversTransport: foo-test@kubernetescrd
 
