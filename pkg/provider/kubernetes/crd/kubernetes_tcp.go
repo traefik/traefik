@@ -118,8 +118,8 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 						tlsOptionsName = makeID(ns, tlsOptionsName)
 					} else if len(ns) > 0 {
 						logger.
-							WithField("TLSoptions", ingressRouteTCP.Spec.TLS.Options.Name).
-							Warnf("namespace %q is ignored in cross-provider context", ns)
+							WithField("TLSOption", ingressRouteTCP.Spec.TLS.Options.Name).
+							Warnf("Namespace %q is ignored in cross-provider context", ns)
 					}
 
 					if !isNamespaceAllowed(p.AllowCrossNamespace, ingressRouteTCP.Namespace, ns) {
