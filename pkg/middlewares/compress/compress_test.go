@@ -156,29 +156,6 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 	}
 }
 
-func TestShouldNotCompressWhenTooLowBodySize(t *testing.T) {
-	minimumBodySize := 1000
-
-	fakeBody := generateBytes(minimumBodySize - 1)
-
-	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
-	req.Header.Add(acceptEncodingHeader, gzipValue)
-
-	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		_, err := rw.Write(fakeBody)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-		}
-	})
-	handler := &compress{next: next, minimumBodySize: minimumBodySize}
-
-	rw := httptest.NewRecorder()
-	handler.ServeHTTP(rw, req)
-
-	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
-	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
-}
-
 func TestIntegrationShouldNotCompress(t *testing.T) {
 	fakeCompressedBody := generateBytes(100000)
 
@@ -324,6 +301,55 @@ func TestIntegrationShouldCompress(t *testing.T) {
 			if assert.ObjectsAreEqualValues(body, fakeBody) {
 				assert.Fail(t, "expected a compressed body", "got %v", body)
 			}
+		})
+	}
+}
+
+func TestMinResponseBodyBytes(t *testing.T) {
+	fakeBody := generateBytes(100000)
+
+	testCases := []struct {
+		name                 string
+		minResponseBodyBytes int
+		expectedCompression  bool
+	}{
+		{
+			name: "should compress",
+		},
+		{
+			name:                 "should not compress",
+			minResponseBodyBytes: 100000,
+			expectedCompression:  true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+			req.Header.Add(acceptEncodingHeader, gzipValue)
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+				if _, err := rw.Write(fakeBody); err != nil {
+					http.Error(rw, err.Error(), http.StatusInternalServerError)
+				}
+			})
+
+			handler, err := New(context.Background(), next, dynamic.Compress{MinResponseBodyBytes: test.minResponseBodyBytes}, "testing")
+			require.NoError(t, err)
+
+			rw := httptest.NewRecorder()
+			handler.ServeHTTP(rw, req)
+
+			if test.expectedCompression {
+				assert.Equal(t, gzipValue, rw.Header().Get(contentEncodingHeader))
+				assert.NotEqualValues(t, rw.Body.Bytes(), fakeBody)
+				return
+			}
+
+			assert.Empty(t, rw.Header().Get(contentEncodingHeader))
+			assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
 		})
 	}
 }

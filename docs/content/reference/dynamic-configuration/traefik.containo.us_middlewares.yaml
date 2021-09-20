@@ -101,8 +101,7 @@ spec:
                     items:
                       type: string
                     type: array
-                  minimumBodySizeBytes:
-                    format: int64
+                  minResponseBodyBytes:
                     type: integer
                 type: object
               contentType:
