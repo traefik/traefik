@@ -1,3 +1,21 @@
+## [v2.5.3](https://github.com/traefik/traefik/tree/v2.5.3) (2021-09-20)
+[All Commits](https://github.com/traefik/traefik/compare/v2.5.2...v2.5.3)
+
+**Bug fixes:**
+- **[consulcatalog]** Fix certChan defaulting on consul catalog provider ([#8439](https://github.com/traefik/traefik/pull/8439) by [tomMoulard](https://github.com/tomMoulard))
+- **[k8s/crd,k8s]** Fix peerCertURI config for k8s crd provider  ([#8454](https://github.com/traefik/traefik/pull/8454) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s/crd,k8s]** Ensure disableHTTP2 works with k8s crd ([#8448](https://github.com/traefik/traefik/pull/8448) by [ssboisen](https://github.com/ssboisen))
+- **[k8s/crd,k8s]** Fix ServersTransport reference from IngressRoute service definition ([#8431](https://github.com/traefik/traefik/pull/8431) by [rtribotte](https://github.com/rtribotte))
+- **[k8s/crd,k8s]** Add cross namespace verification in Kubernetes CRD ([#8422](https://github.com/traefik/traefik/pull/8422) by [tomMoulard](https://github.com/tomMoulard))
+- **[metrics]** Fix Prometheus router&#39;s metrics ([#8425](https://github.com/traefik/traefik/pull/8425) by [tomMoulard](https://github.com/tomMoulard))
+- **[plugins]** Update yaegi to v0.10.0 ([#8452](https://github.com/traefik/traefik/pull/8452) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[middleware,file]** Fix TCP middleware whitelist example ([#8421](https://github.com/traefik/traefik/pull/8421) by [tribal2](https://github.com/tribal2))
+- **[middleware]** Add default proxy headers list ([#8418](https://github.com/traefik/traefik/pull/8418) by [aaronraff](https://github.com/aaronraff))
+- Add Tom Moulard in maintainers team ([#8442](https://github.com/traefik/traefik/pull/8442) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Fix golang doc URLs ([#8434](https://github.com/traefik/traefik/pull/8434) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
 ## [v2.5.2](https://github.com/traefik/traefik/tree/v2.5.2) (2021-09-02)
 [All Commits](https://github.com/traefik/traefik/compare/v2.5.1...v2.5.2)
 
