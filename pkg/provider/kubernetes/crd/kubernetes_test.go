@@ -2734,8 +2734,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "TLS with tls options and specific namespace",
-			paths: []string{"services.yml", "with_tls_options_and_specific_namespace.yml"},
+			desc:                "TLS with tls options and specific namespace",
+			paths:               []string{"services.yml", "with_tls_options_and_specific_namespace.yml"},
+			AllowCrossNamespace: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2928,8 +2929,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "TLS with unknown tls options namespace",
-			paths: []string{"services.yml", "with_unknown_tls_options_namespace.yml"},
+			desc:                "TLS with unknown tls options namespace",
+			paths:               []string{"services.yml", "with_unknown_tls_options_namespace.yml"},
+			AllowCrossNamespace: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -3487,9 +3489,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:                "ServersTransport",
-			AllowCrossNamespace: true,
-			paths:               []string{"services.yml", "with_servers_transport.yml"},
+			desc:  "ServersTransport",
+			paths: []string{"services.yml", "with_servers_transport.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -3548,20 +3549,6 @@ func TestLoadIngressRoutes(t *testing.T) {
 								ServersTransport: "default-test",
 							},
 						},
-						"default-whoami3-8443": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.7:8443",
-									},
-									{
-										URL: "http://10.10.0.8:8443",
-									},
-								},
-								PassHostHeader:   Bool(true),
-								ServersTransport: "foo-test@kubernetescrd",
-							},
-						},
 						"default-whoamitls-443": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
@@ -3587,85 +3574,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 										Name:   "default-whoamitls-443",
 										Weight: Int(1),
 									},
-									{
-										Name:   "default-whoami3-8443",
-										Weight: Int(1),
-									},
 								},
-							},
-						},
-					},
-				},
-				TLS: &dynamic.TLSConfiguration{},
-			},
-		},
-		{
-			desc:  "ServersTransport without crossnamespace",
-			paths: []string{"services.yml", "with_servers_transport.yml"},
-			expected: &dynamic.Configuration{
-				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
-				},
-				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					ServersTransports: map[string]*dynamic.ServersTransport{
-						"foo-test": {
-							ServerName:         "test",
-							InsecureSkipVerify: true,
-							RootCAs:            []tls.FileOrContent{"TESTROOTCAS0", "TESTROOTCAS1", "TESTROOTCAS2", "TESTROOTCAS3", "TESTROOTCAS5", "TESTALLCERTS"},
-							Certificates: tls.Certificates{
-								{CertFile: "TESTCERT1", KeyFile: "TESTKEY1"},
-								{CertFile: "TESTCERT2", KeyFile: "TESTKEY2"},
-								{CertFile: "TESTCERT3", KeyFile: "TESTKEY3"},
-							},
-							MaxIdleConnsPerHost: 42,
-							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:           types.Duration(42 * time.Second),
-								ResponseHeaderTimeout: types.Duration(42 * time.Second),
-								IdleConnTimeout:       types.Duration(42 * time.Millisecond),
-							},
-							DisableHTTP2: true,
-							PeerCertURI:  "foo://bar",
-						},
-						"default-test": {
-							ServerName: "test",
-							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:     types.Duration(30 * time.Second),
-								IdleConnTimeout: types.Duration(90 * time.Second),
-							},
-						},
-					},
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services: map[string]*dynamic.Service{
-						"default-external-svc-with-https-443": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{
-										URL: "https://external.domain:443",
-									},
-								},
-								PassHostHeader:   Bool(true),
-								ServersTransport: "default-test",
-							},
-						},
-						"default-whoamitls-443": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{
-										URL: "https://10.10.0.5:8443",
-									},
-									{
-										URL: "https://10.10.0.6:8443",
-									},
-								},
-								PassHostHeader:   Bool(true),
-								ServersTransport: "default-default-test",
 							},
 						},
 					},
@@ -4671,7 +4580,7 @@ func TestCrossNamespace(t *testing.T) {
 									},
 								},
 								PassHostHeader:   Bool(true),
-								ServersTransport: "cross-ns-test",
+								ServersTransport: "foo-test@kubernetescrd",
 							},
 						},
 						"cross-ns-whoami-svc-80": {
@@ -4816,6 +4725,189 @@ func TestCrossNamespace(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                "HTTP ServersTransport cross namespace allowed",
+			paths:               []string{"services.yml", "with_servers_transport_cross_namespace.yml"},
+			allowCrossNamespace: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-route-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-6b204d94623b3df4370c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader:   Bool(true),
+								ServersTransport: "cross-ns-st-cross-ns@kubernetescrd",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"cross-ns-st-cross-ns": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:           30000000000,
+								ResponseHeaderTimeout: 0,
+								IdleConnTimeout:       90000000000,
+							},
+							DisableHTTP2: true,
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "HTTP ServersTransport cross namespace disallowed",
+			paths: []string{"services.yml", "with_servers_transport_cross_namespace.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"cross-ns-st-cross-ns": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:           30000000000,
+								ResponseHeaderTimeout: 0,
+								IdleConnTimeout:       90000000000,
+							},
+							DisableHTTP2: true,
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                "HTTP TLSOption cross namespace allowed",
+			paths:               []string{"services.yml", "with_tls_options_cross_namespace.yml"},
+			allowCrossNamespace: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-route-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "cross-ns-tls-options-cn",
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-6b204d94623b3df4370c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"cross-ns-tls-options-cn": {
+							MinVersion:    "VersionTLS12",
+							ALPNProtocols: []string{"h2", "http/1.1", "acme-tls/1"},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:                "HTTP TLSOption cross namespace disallowed",
+			paths:               []string{"services.yml", "with_tls_options_cross_namespace.yml"},
+			allowCrossNamespace: false,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-6b204d94623b3df4370c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"cross-ns-tls-options-cn": {
+							MinVersion:    "VersionTLS12",
+							ALPNProtocols: []string{"h2", "http/1.1", "acme-tls/1"},
+						},
+					},
+				},
 			},
 		},
 		{
@@ -5015,6 +5107,101 @@ func TestCrossNamespace(t *testing.T) {
 			},
 		},
 		{
+			desc:                "TCP TLSOption cross namespace allowed",
+			paths:               []string{"tcp/services.yml", "tcp/with_tls_options_cross_namespace.yml"},
+			allowCrossNamespace: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+							TLS: &dynamic.RouterTCPTLSConfig{
+								Options: "cross-ns-tls-options-cn",
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.1:8000",
+									},
+									{
+										Address: "10.10.0.2:8000",
+									},
+								},
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"cross-ns-tls-options-cn": {
+							MinVersion:    "VersionTLS12",
+							ALPNProtocols: []string{"h2", "http/1.1", "acme-tls/1"},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:                "TCP TLSOption cross namespace disallowed",
+			paths:               []string{"tcp/services.yml", "tcp/with_tls_options_cross_namespace.yml"},
+			allowCrossNamespace: false,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.1:8000",
+									},
+									{
+										Address: "10.10.0.2:8000",
+									},
+								},
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{
+						"cross-ns-tls-options-cn": {
+							MinVersion:    "VersionTLS12",
+							ALPNProtocols: []string{"h2", "http/1.1", "acme-tls/1"},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc:                "UDP cross namespace allowed",
 			paths:               []string{"udp/services.yml", "udp/with_cross_namespace.yml"},
 			allowCrossNamespace: true,
@@ -5119,6 +5306,8 @@ func TestCrossNamespace(t *testing.T) {
 					case *v1alpha1.TLSOption:
 						crdObjects = append(crdObjects, o)
 					case *v1alpha1.TLSStore:
+						crdObjects = append(crdObjects, o)
+					case *v1alpha1.ServersTransport:
 						crdObjects = append(crdObjects, o)
 					default:
 					}
