@@ -60,7 +60,7 @@ http:
 
     Responses are compressed when the following criteria are all met:
 
-    * The response body is larger than the configured minimum amount of bytes (default is 1400).
+    * The response body is larger than the configured minimum amount of bytes (default is `1024`).
     * The `Accept-Encoding` request header contains `gzip`.
     * The response is not already compressed, i.e. the `Content-Encoding` response header is not already set.
 
@@ -123,17 +123,17 @@ http:
     excludedContentTypes = ["text/event-stream"]
 ```
 
-### `minimumBodySizeBytes`
+### `minResponseBodyBytes`
 
-`minimumBodySizeBytes` specifies the minimum amount of bytes a response body has to consist of for the compression middleware to compress it.
+`minResponseBodyBytes` specifies the minimum amount of bytes a response body must have to be compressed.
 
-The default value is `1400`, which should be a reasonable value for most cases.
+The default value is `1024`, which should be a reasonable value for most cases.
 
 Responses smaller than the specified values will not be compressed.
 
 ```yaml tab="Docker"
 labels:
-  - "traefik.http.middlewares.test-compress.compress.minimumbodysizebytes=1200"
+  - "traefik.http.middlewares.test-compress.compress.minresponsebodybytes=1200"
 ```
 
 ```yaml tab="Kubernetes"
@@ -143,22 +143,22 @@ metadata:
   name: test-compress
 spec:
   compress:
-    minimumBodySizeBytes: 1200
+    minResponseBodyBytes: 1200
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-compress.compress.minimumbodysizebytes=1200"
+- "traefik.http.middlewares.test-compress.compress.minresponsebodybytes=1200"
 ```
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.test-compress.compress.minimumbodysizebytes": 1200
+  "traefik.http.middlewares.test-compress.compress.minresponsebodybytes": 1200
 }
 ```
 
 ```yaml tab="Rancher"
 labels:
-  - "traefik.http.middlewares.test-compress.compress.minimumbodysizebytes=1200"
+  - "traefik.http.middlewares.test-compress.compress.minresponsebodybytes=1200"
 ```
 
 ```yaml tab="File (YAML)"
@@ -166,11 +166,11 @@ http:
   middlewares:
     test-compress:
       compress:
-        minimumBodySizeBytes: 1200
+        minResponseBodyBytes: 1200
 ```
 
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.test-compress.compress]
-    minimumBodySizeBytes = 1200
+    minResponseBodyBytes = 1200
 ```

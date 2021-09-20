@@ -126,7 +126,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware16.retry.initialinterval":                              "1s",
 		"traefik.http.middlewares.Middleware17.stripprefix.prefixes":                               "foobar, fiibar",
 		"traefik.http.middlewares.Middleware18.stripprefixregex.regex":                             "foobar, fiibar",
-		"traefik.http.middlewares.Middleware19.compress.minimumbodysizebytes":                      "42",
+		"traefik.http.middlewares.Middleware19.compress.minresponsebodybytes":                      "42",
 		"traefik.http.middlewares.Middleware20.plugin.tomato.aaa":                                  "foo1",
 		"traefik.http.middlewares.Middleware20.plugin.tomato.bbb":                                  "foo2",
 		"traefik.http.routers.Router0.entrypoints":                                                 "foobar, fiibar",
@@ -455,7 +455,7 @@ func TestDecodeConfiguration(t *testing.T) {
 				},
 				"Middleware19": {
 					Compress: &dynamic.Compress{
-						MinimumBodySizeBytes: 42,
+						MinResponseBodyBytes: 42,
 					},
 				},
 				"Middleware2": {
@@ -935,7 +935,7 @@ func TestEncodeConfiguration(t *testing.T) {
 				},
 				"Middleware19": {
 					Compress: &dynamic.Compress{
-						MinimumBodySizeBytes: 42,
+						MinResponseBodyBytes: 42,
 					},
 				},
 				"Middleware2": {
@@ -1274,7 +1274,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware17.StripPrefix.Prefixes":                               "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware17.StripPrefix.ForceSlash":                             "true",
 		"traefik.HTTP.Middlewares.Middleware18.StripPrefixRegex.Regex":                             "foobar, fiibar",
-		"traefik.HTTP.Middlewares.Middleware19.Compress.MinimumBodySizeBytes":                      "42",
+		"traefik.HTTP.Middlewares.Middleware19.Compress.MinResponseBodyBytes":                      "42",
 		"traefik.HTTP.Middlewares.Middleware20.Plugin.tomato.aaa":                                  "foo1",
 		"traefik.HTTP.Middlewares.Middleware20.Plugin.tomato.bbb":                                  "foo2",
 
