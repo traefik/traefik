@@ -54,6 +54,9 @@ Certificates resolvers configuration. (Default: ```false```)
 `--certificatesresolvers.<name>.acme.caserver`:  
 CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```)
 
+`--certificatesresolvers.<name>.acme.certificatesduration`:  
+Durations of a certificate lifetime. (Default: ```2160h0m0s```)
+
 `--certificatesresolvers.<name>.acme.dnschallenge`:  
 Activate DNS-01 Challenge. (Default: ```false```)
 
@@ -78,9 +81,6 @@ Key identifier from External CA.
 `--certificatesresolvers.<name>.acme.email`:  
 Email address used for registration.
 
-`--certificatesresolvers.<name>.acme.expirationcheckinterval`:  
-Frequency in which Traefik will check if the certificate is due for renewal. (Default: ```24h0m0s```)
-
 `--certificatesresolvers.<name>.acme.httpchallenge`:  
 Activate HTTP-01 Challenge. (Default: ```false```)
 
@@ -92,9 +92,6 @@ KeyType used for generating certificate private key. Allow value 'EC256', 'EC384
 
 `--certificatesresolvers.<name>.acme.preferredchain`:  
 Preferred chain to use.
-
-`--certificatesresolvers.<name>.acme.renewalwindowratio`:  
-How much of a certificate's lifetime becomes the renewal window. The renewal window is the span of time at the end of the certificate's validity period in which it should be renewed. (Default: ```0.333333```)
 
 `--certificatesresolvers.<name>.acme.storage`:  
 Storage to use. (Default: ```acme.json```)

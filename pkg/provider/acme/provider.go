@@ -33,14 +33,13 @@ var oscpMustStaple = false
 
 // Configuration holds ACME configuration provided by users.
 type Configuration struct {
-	Email                   string        `description:"Email address used for registration." json:"email,omitempty" toml:"email,omitempty" yaml:"email,omitempty"`
-	CAServer                string        `description:"CA server to use." json:"caServer,omitempty" toml:"caServer,omitempty" yaml:"caServer,omitempty"`
-	RenewalWindowRatio      float64       `description:"How much of a certificate's lifetime becomes the renewal window. The renewal window is the span of time at the end of the certificate's validity period in which it should be renewed." json:"renewalWindowRatio,omitempty" toml:"renewalWindowRatio,omitempty" yaml:"renewalWindowRatio,omitempty" export:"true"`
-	PreferredChain          string        `description:"Preferred chain to use." json:"preferredChain,omitempty" toml:"preferredChain,omitempty" yaml:"preferredChain,omitempty" export:"true"`
-	Storage                 string        `description:"Storage to use." json:"storage,omitempty" toml:"storage,omitempty" yaml:"storage,omitempty" export:"true"`
-	KeyType                 string        `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
-	EAB                     *EAB          `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
-	ExpirationCheckInterval time.Duration `description:"Frequency in which Traefik will check if the certificate is due for renewal." json:"expirationCheckInterval,omitempty" toml:"expirationCheckInterval,omitempty" yaml:"expirationCheckInterval,omitempty" export:"true"`
+	Email                string        `description:"Email address used for registration." json:"email,omitempty" toml:"email,omitempty" yaml:"email,omitempty"`
+	CAServer             string        `description:"CA server to use." json:"caServer,omitempty" toml:"caServer,omitempty" yaml:"caServer,omitempty"`
+	PreferredChain       string        `description:"Preferred chain to use." json:"preferredChain,omitempty" toml:"preferredChain,omitempty" yaml:"preferredChain,omitempty" export:"true"`
+	Storage              string        `description:"Storage to use." json:"storage,omitempty" toml:"storage,omitempty" yaml:"storage,omitempty" export:"true"`
+	KeyType              string        `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
+	EAB                  *EAB          `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
+	CertificatesDuration time.Duration `description:"Durations of a certificate lifetime." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
 
 	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge." json:"dnsChallenge,omitempty" toml:"dnsChallenge,omitempty" yaml:"dnsChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge." json:"httpChallenge,omitempty" toml:"httpChallenge,omitempty" yaml:"httpChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -52,8 +51,7 @@ func (a *Configuration) SetDefaults() {
 	a.CAServer = lego.LEDirectoryProduction
 	a.Storage = "acme.json"
 	a.KeyType = "RSA4096"
-	a.RenewalWindowRatio = 1.0 / 3.0
-	a.ExpirationCheckInterval = 24 * time.Hour
+	a.CertificatesDuration = 3 * 30 * 24 * time.Hour // 90 Days
 }
 
 // CertAndStore allows mapping a TLS certificate to a TLS store.
@@ -137,6 +135,10 @@ func (p *Provider) Init() error {
 		return errors.New("unable to initialize ACME provider with no storage location for the certificates")
 	}
 
+	if p.CertificatesDuration < time.Hour*24 {
+		return errors.New("cannot manage certificates with lifespan lower than 1 day")
+	}
+
 	var err error
 	p.account, err = p.Store.GetAccount(p.ResolverName)
 	if err != nil {
@@ -178,10 +180,32 @@ func isAccountMatchingCaServer(ctx context.Context, accountURI, serverURI string
 	return cau.Hostname() == aru.Hostname()
 }
 
+// getIntervals return 2 durations calculated with the duration of certificates.
+// The first (`RenewBeforeExpiry`) the amount of time before the end of the
+// certificate lifetime to know when the certificates should be renewed.
+// The second (`ExpirationCheckInterval`) is the duration of the ticker that
+// check if certificates should be renewed.
+func (p *Provider) getIntervals() (time.Duration, time.Duration) {
+	switch {
+	case p.CertificatesDuration >= 265*24*time.Hour: // >= 1 year
+		return 4 * 30 * 24 * time.Hour, 7 * 24 * time.Hour // 4 month, 1 week
+	case p.CertificatesDuration >= 3*30*24*time.Hour: // >= 90 days
+		return 30 * 24 * time.Hour, 24 * time.Hour // 30 days, 1 day
+	case p.CertificatesDuration >= 7*24*time.Hour: // >= 7 days
+		return 24 * time.Hour, time.Hour // 1 days, 1 hour
+	case p.CertificatesDuration >= 24*time.Hour: // >= 1 days
+		return 6 * time.Hour, 10 * time.Minute // 6 Hours, 10 minutes
+	default:
+		return 30 * 24 * time.Hour, 24 * time.Hour
+	}
+}
+
 // Provide allows the file provider to provide configurations to traefik
 // using the given Configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	ctx := log.With(context.Background(), log.Str(log.ProviderName, p.ResolverName+".acme"))
+	ctx := log.With(context.Background(),
+		log.Str(log.ProviderName, p.ResolverName+".acme"),
+		log.Str("ACME CA", p.Configuration.CAServer))
 
 	p.pool = pool
 
@@ -191,14 +215,15 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	p.configurationChan = configurationChan
 	p.refreshCertificates()
 
-	p.renewCertificates(ctx)
+	renewBeforeExpiry, expirationCheckInterval := p.getIntervals()
+	p.renewCertificates(ctx, renewBeforeExpiry)
 
-	ticker := time.NewTicker(p.Configuration.ExpirationCheckInterval)
+	ticker := time.NewTicker(expirationCheckInterval)
 	pool.GoCtx(func(ctxPool context.Context) {
 		for {
 			select {
 			case <-ticker.C:
-				p.renewCertificates(ctx)
+				p.renewCertificates(ctx, renewBeforeExpiry)
 			case <-ctxPool.Done():
 				ticker.Stop()
 				return
@@ -641,46 +666,21 @@ func (p *Provider) refreshCertificates() {
 	p.configurationChan <- conf
 }
 
-// currentlyInRenewalWindow returns true if the current time is
-// within the renewal window, according to the given start/end
-// dates and the ratio of the renewal window. If true is returned,
-// the certificate being considered is due for renewal.
-// https://github.com/caddyserver/certmagic/blob/647f27cf265e6f72b6f043ac52ba34f01bb5da56/certificates.go#L79
-func (p *Provider) currentlyInRenewalWindow(notBefore, notAfter time.Time) bool {
-	if notAfter.IsZero() {
-		return false
-	}
-	lifetime := notAfter.Sub(notBefore)
-	renewalWindowRatio := p.Configuration.RenewalWindowRatio
-	if renewalWindowRatio <= 0 || renewalWindowRatio >= 1 {
-		renewalWindowRatio = 1.0 / 3.0
-	}
-	renewalWindow := time.Duration(float64(lifetime) * renewalWindowRatio)
-	renewalWindowStart := notAfter.Add(-renewalWindow)
-	return time.Now().After(renewalWindowStart)
-}
-
-// NeedsRenewal returns true if the certificate is in its
-// renewal window or has expired.
-func (p *Provider) NeedsRenewal(cert *x509.Certificate) bool {
-	return p.currentlyInRenewalWindow(cert.NotBefore, cert.NotAfter)
-}
-
-func (p *Provider) renewCertificates(ctx context.Context) {
+func (p *Provider) renewCertificates(ctx context.Context, renewBeforeExpiry time.Duration) {
 	logger := log.FromContext(ctx)
 
 	logger.Info("Testing certificate renew...")
 	for _, cert := range p.certificates {
 		crt, err := getX509Certificate(ctx, &cert.Certificate)
 		// If there's an error, we assume the cert is broken, and needs update
-		if err != nil || crt == nil || p.NeedsRenewal(crt) {
+		if err != nil || crt == nil || crt.NotAfter.Before(time.Now().Add(renewBeforeExpiry)) {
 			client, err := p.getClient()
 			if err != nil {
-				logger.Infof("Error renewing certificate from ACME CA (%s) : %+v, %v", p.Configuration.CAServer, cert.Domain, err)
+				logger.Infof("Error renewing certificate from LE : %+v, %v", cert.Domain, err)
 				continue
 			}
 
-			logger.Infof("Renewing certificate from ACME CA (%s): %+v", p.Configuration.CAServer, cert.Domain)
+			logger.Infof("Renewing certificate from LE : %+v", cert.Domain)
 
 			renewedCert, err := client.Certificate.Renew(certificate.Resource{
 				Domain:      cert.Domain.Main,
@@ -688,7 +688,7 @@ func (p *Provider) renewCertificates(ctx context.Context) {
 				Certificate: cert.Certificate.Certificate,
 			}, true, oscpMustStaple, p.PreferredChain)
 			if err != nil {
-				logger.Errorf("Error renewing certificate from ACME CA (%s): %v, %v", p.Configuration.CAServer, cert.Domain, err)
+				logger.Errorf("Error renewing certificate from LE: %v, %v", cert.Domain, err)
 				continue
 			}
 
