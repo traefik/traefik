@@ -376,8 +376,7 @@ certificatesResolvers:
     acme:
       email: foobar
       caServer: foobar
-      renewalWindowRatio: 0.42
-      expirationCheckInterval: 42h
+      certificatesDuration: 2160h
       preferredChain: foobar
       storage: foobar
       keyType: foobar
@@ -398,8 +397,7 @@ certificatesResolvers:
     acme:
       email: foobar
       caServer: foobar
-      renewalWindowRatio: 0.42
-      expirationCheckInterval: 42h
+      certificatesDuration: 2160h
       preferredChain: foobar
       storage: foobar
       keyType: foobar
