@@ -140,7 +140,12 @@ Please check the [configuration examples below](#configuration-examples) for mor
 
 Traefik automatically tracks the expiry date of ACME certificates it generates.
 
-By default, the last third of each certificate's lifetime becomes its renewal window. The renewal window is the span of time at the end of the certificate's validity period in which it should be renewed. [This ratio is configurable](#renewalwindowratio). With Let's Encrypt's 90 days lifetime, that means that Traefik will by default try to renew certificates that have 30 or less days left on their validity period.
+When using a certificates resolver that issues certificates with custom lifetime durations,
+you can explicitly set the certificate's lifetime duration to have Traefik renew certificates with more suited time frames.
+See the [`certificatesDuration`](#certificatesduration) option.
+
+By default, Traefik will manage 90 days certificates.
+It tries to renew certificates that have 30 or fewer days left on their validity period.
 
 !!! info ""
     Certificates that are no longer used may still be renewed, as Traefik does not currently check if the certificate is being used before renewing.
@@ -525,59 +530,35 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 !!! warning
     For concurrency reasons, this file cannot be shared across multiple instances of Traefik.
 
-### `renewalWindowRatio`
+### `certificatesDuration`
 
-_Optional, Default=0.33_
+_Optional, Default=2160h_
 
-How much of a certificate's lifetime becomes the renewal window. The renewal window is the span of time at the end of the certificate's validity period in which it should be renewed. By default, it's around one third.
+The `certificatesDuration` option sets the length of a certificate's lifetime in order to manage them more precisely.
+It defaults to `2160h` (3 months) to follow Let's Encrypt certificates lifetime,
+see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).
 
-```toml tab="File (TOML)"
-[certificatesResolvers.myresolver.acme]
-  # ...
-  renewalWindowRatio = 0.33
-  # ...
-```
+!!! warning "Traefik cannot manage certificates that have a lifespan lower than 1 day"
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
   myresolver:
     acme:
       # ...
-      renewalWindowRatio: 0.33
+      certificatesDuration: 72h
       # ...
 ```
-
-```bash tab="CLI"
-# ...
---certificatesresolvers.myresolver.acme.renewalWindowRatio=0.33
-# ...
-```
-
-### `expirationCheckInterval`
-
-_Optional, Default=24h_
-
-Frequency in which Traefik will check if the certificate is due for renewal.
 
 ```toml tab="File (TOML)"
 [certificatesResolvers.myresolver.acme]
   # ...
-  expirationCheckInterval = "24h"
+  certificatesDuration=72h
   # ...
-```
-
-```yaml tab="File (YAML)"
-certificatesResolvers:
-  myresolver:
-    acme:
-      # ...
-      expirationCheckInterval: "24h"
-      # ...
 ```
 
 ```bash tab="CLI"
 # ...
---certificatesresolvers.myresolver.acme.expirationCheckInterval=24h
+--certificatesresolvers.myresolver.acme.certificatesDuration=72h
 # ...
 ```
 
