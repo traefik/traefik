@@ -27,10 +27,7 @@ var (
 	_ middlewares.Stateful = &codeCatcherWithCloseNotify{}
 )
 
-const (
-	typeName   = "customError"
-	backendURL = "http://0.0.0.0"
-)
+const typeName = "customError"
 
 type serviceBuilder interface {
 	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
@@ -104,7 +101,7 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			query = strings.ReplaceAll(query, "{status}", strconv.Itoa(code))
 		}
 
-		pageReq, err := newRequest(backendURL + query)
+		pageReq, err := newRequest("http://" + req.Host + query)
 		if err != nil {
 			logger.Error(err)
 			rw.WriteHeader(code)
