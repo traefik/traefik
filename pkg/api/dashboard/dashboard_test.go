@@ -68,7 +68,7 @@ func Test_ContentSecurityPolicy(t *testing.T) {
 			desc: "OK",
 			handler: Handler{
 				assets: fstest.MapFS{"foobar.html": &fstest.MapFile{
-					Mode:    0755,
+					Mode:    0o755,
 					ModTime: time.Now(),
 				}},
 			},
