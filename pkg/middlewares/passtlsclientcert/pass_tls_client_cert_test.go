@@ -662,6 +662,74 @@ func Test_getSANs(t *testing.T) {
 	}
 }
 
+func TestPassTLSClientCert_Fingerprint(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		certContents   []string // set the request TLS attribute if defined
+		config         dynamic.PassTLSClientCert
+		expectedHeader string
+	}{
+		{
+			desc: "No TLS, no option",
+		},
+		{
+			desc:         "TLS, no option",
+			certContents: []string{minimalCheeseCrt},
+		},
+		{
+			desc:   "No TLS, with Fingerprint option true",
+			config: dynamic.PassTLSClientCert{Fingerprint: true},
+		},
+		{
+			desc:           "TLS with simple certificate, with Fingerprint option true",
+			certContents:   []string{minimalCheeseCrt},
+			config:         dynamic.PassTLSClientCert{Fingerprint: true},
+			expectedHeader: "517cf60cafdaf571b84df2deb5a1077367d0833b",
+		},
+		{
+			desc:           "TLS with complete certificate, with Fingerprint option true",
+			certContents:   []string{minimalCheeseCrt},
+			config:         dynamic.PassTLSClientCert{Fingerprint: true},
+			expectedHeader: "517cf60cafdaf571b84df2deb5a1077367d0833b",
+		},
+		{
+			desc:         "TLS with two certificate, with Fingerprint option true",
+			certContents: []string{minimalCert, minimalCheeseCrt},
+			config:       dynamic.PassTLSClientCert{Fingerprint: true},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			tlsClientHeaders, err := New(context.Background(), next, test.config, "foo")
+			require.NoError(t, err)
+
+			res := httptest.NewRecorder()
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
+
+			if test.certContents != nil && len(test.certContents) > 0 {
+				req.TLS = buildTLSWith(test.certContents)
+			}
+
+			tlsClientHeaders.ServeHTTP(res, req)
+
+			assert.Equal(t, http.StatusOK, res.Code, "Http Status should be OK")
+			assert.Equal(t, "bar", res.Body.String(), "Should be the expected body")
+
+			if test.expectedHeader != "" {
+				assert.Equal(t, test.expectedHeader, req.Header.Get(clientFingerprint), "The request header should contain the fingerprint")
+			} else {
+				assert.Empty(t, req.Header.Get(clientFingerprint))
+			}
+
+			assert.Empty(t, res.Header().Get(clientFingerprint), "The response header should be always empty")
+		})
+	}
+}
+
 func getCleanCertContents(certContents []string) string {
 	exp := regexp.MustCompile("-----BEGIN CERTIFICATE-----(?s)(.*)")
 
