@@ -16,9 +16,6 @@
   [linters-settings.gocyclo]
     min-complexity = 14.0
 
-  [linters-settings.maligned]
-    suggest-new = true
-
   [linters-settings.goconst]
     min-len = 3.0
     min-occurrences = 4.0
