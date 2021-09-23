@@ -380,6 +380,12 @@ func (ps *prometheusState) isOutdated(collector *collector) bool {
 		return true
 	}
 
+	if routerName, ok := labels["router"]; ok {
+		if !ps.dynamicConfig.hasRouter(routerName) {
+			return true
+		}
+	}
+
 	if serviceName, ok := labels["service"]; ok {
 		if !ps.dynamicConfig.hasService(serviceName) {
 			return true
@@ -417,6 +423,11 @@ func (d *dynamicConfig) hasEntryPoint(entrypointName string) bool {
 
 func (d *dynamicConfig) hasService(serviceName string) bool {
 	_, ok := d.services[serviceName]
+	return ok
+}
+
+func (d *dynamicConfig) hasRouter(routerName string) bool {
+	_, ok := d.routers[routerName]
 	return ok
 }
 
