@@ -606,7 +606,7 @@ metadata:
 
 _Optional_
 
-`insecureSkipVerify` disables SSL certificate verification.
+`insecureSkipVerify` controls whether the server's certificate chain and host name is verified.
 
 ```yaml tab="File (YAML)"
 ## Dynamic configuration
@@ -637,8 +637,7 @@ spec:
 
 _Optional_
 
-`rootCAs` is the list of certificates (as file paths, or data bytes)
-that will be set as Root Certificate Authorities when using a self-signed TLS certificate.
+`rootCAs` defines the set of root certificate authorities (as file paths, or data bytes) to use when verifying server certificates.
 
 ```yaml tab="File (YAML)"
 ## Dynamic configuration
@@ -711,7 +710,7 @@ spec:
 
 _Optional, Default=false_
 
-`disableHTTP2` disables HTTP/2 for connections with backend servers.
+`disableHTTP2` disables HTTP/2 for connections with servers.
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
@@ -742,7 +741,7 @@ spec:
 
 _Optional, Default=false_
 
-`peerCertURI` defines the URI used to match against SAN URI during the peer certificate verification.
+`peerCertURI` defines the URI used to match against SAN URIs during the server's certificate verification.
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
@@ -771,7 +770,7 @@ spec:
 
 #### `forwardingTimeouts`
 
-`forwardingTimeouts` is about a number of timeouts relevant to when forwarding requests to the backend servers.
+`forwardingTimeouts` are the timeouts applied when forwarding requests to the servers.
 
 ##### `forwardingTimeouts.dialTimeout`
 
@@ -847,8 +846,7 @@ spec:
 
 _Optional, Default=90s_
 
-`idleConnTimeout`, is the maximum amount of time an idle (keep-alive) connection
-will remain idle before closing itself.
+`idleConnTimeout` is the maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.
 Zero means no limit.
 
 ```yaml tab="File (YAML)"

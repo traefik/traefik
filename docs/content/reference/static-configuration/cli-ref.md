@@ -54,6 +54,9 @@ Certificates resolvers configuration. (Default: ```false```)
 `--certificatesresolvers.<name>.acme.caserver`:  
 CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```)
 
+`--certificatesresolvers.<name>.acme.certificatesduration`:  
+Durations of a certificate lifetime. (Default: ```2160h0m0s```)
+
 `--certificatesresolvers.<name>.acme.dnschallenge`:  
 Activate DNS-01 Challenge. (Default: ```false```)
 
