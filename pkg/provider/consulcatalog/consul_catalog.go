@@ -87,7 +87,6 @@ func (p *Provider) SetDefaults() {
 	p.ExposedByDefault = true
 	p.DefaultRule = DefaultTemplateRule
 	p.ServiceName = "traefik"
-	p.certChan = make(chan *connectCert)
 }
 
 // Init the provider.
@@ -98,6 +97,7 @@ func (p *Provider) Init() error {
 	}
 
 	p.defaultRuleTpl = defaultRuleTpl
+	p.certChan = make(chan *connectCert)
 	return nil
 }
 
