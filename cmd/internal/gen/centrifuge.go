@@ -258,7 +258,7 @@ type fileWriter struct {
 }
 
 func (f fileWriter) Write(files map[string]*File) error {
-	err := os.MkdirAll(f.baseDir, 0755)
+	err := os.MkdirAll(f.baseDir, 0o755)
 	if err != nil {
 		return err
 	}

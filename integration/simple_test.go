@@ -333,21 +333,24 @@ func (s *SimpleSuite) TestMetricsPrometheusTwoRoutersOneService(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/whoami2", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
-	request, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/metrics", nil)
-	c.Assert(err, checker.IsNil)
+	// adding a loop to test if metrics are not deleted
+	for i := 0; i < 10; i++ {
+		request, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/metrics", nil)
+		c.Assert(err, checker.IsNil)
 
-	response, err := http.DefaultClient.Do(request)
-	c.Assert(err, checker.IsNil)
-	c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
+		response, err := http.DefaultClient.Do(request)
+		c.Assert(err, checker.IsNil)
+		c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
 
-	body, err := io.ReadAll(response.Body)
-	c.Assert(err, checker.IsNil)
+		body, err := io.ReadAll(response.Body)
+		c.Assert(err, checker.IsNil)
 
-	// Reqs count of 1 for both routers
-	c.Assert(string(body), checker.Contains, "traefik_router_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",router=\"router1@docker\",service=\"whoami1-integrationtestbase\"} 1")
-	c.Assert(string(body), checker.Contains, "traefik_router_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",router=\"router2@docker\",service=\"whoami1-integrationtestbase\"} 1")
-	// Reqs count of 2 for service behind both routers
-	c.Assert(string(body), checker.Contains, "traefik_service_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",service=\"whoami1-integrationtestbase@docker\"} 2")
+		// Reqs count of 1 for both routers
+		c.Assert(string(body), checker.Contains, "traefik_router_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",router=\"router1@docker\",service=\"whoami1-integrationtestbase@docker\"} 1")
+		c.Assert(string(body), checker.Contains, "traefik_router_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",router=\"router2@docker\",service=\"whoami1-integrationtestbase@docker\"} 1")
+		// Reqs count of 2 for service behind both routers
+		c.Assert(string(body), checker.Contains, "traefik_service_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",service=\"whoami1-integrationtestbase@docker\"} 2")
+	}
 }
 
 func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
