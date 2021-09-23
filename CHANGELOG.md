@@ -1,3 +1,178 @@
+## [v2.5.3](https://github.com/traefik/traefik/tree/v2.5.3) (2021-09-20)
+[All Commits](https://github.com/traefik/traefik/compare/v2.5.2...v2.5.3)
+
+**Bug fixes:**
+- **[consulcatalog]** Fix certChan defaulting on consul catalog provider ([#8439](https://github.com/traefik/traefik/pull/8439) by [tomMoulard](https://github.com/tomMoulard))
+- **[k8s/crd,k8s]** Fix peerCertURI config for k8s crd provider  ([#8454](https://github.com/traefik/traefik/pull/8454) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s/crd,k8s]** Ensure disableHTTP2 works with k8s crd ([#8448](https://github.com/traefik/traefik/pull/8448) by [ssboisen](https://github.com/ssboisen))
+- **[k8s/crd,k8s]** Fix ServersTransport reference from IngressRoute service definition ([#8431](https://github.com/traefik/traefik/pull/8431) by [rtribotte](https://github.com/rtribotte))
+- **[k8s/crd,k8s]** Add cross namespace verification in Kubernetes CRD ([#8422](https://github.com/traefik/traefik/pull/8422) by [tomMoulard](https://github.com/tomMoulard))
+- **[metrics]** Fix Prometheus router&#39;s metrics ([#8425](https://github.com/traefik/traefik/pull/8425) by [tomMoulard](https://github.com/tomMoulard))
+- **[plugins]** Update yaegi to v0.10.0 ([#8452](https://github.com/traefik/traefik/pull/8452) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[middleware,file]** Fix TCP middleware whitelist example ([#8421](https://github.com/traefik/traefik/pull/8421) by [tribal2](https://github.com/tribal2))
+- **[middleware]** Add default proxy headers list ([#8418](https://github.com/traefik/traefik/pull/8418) by [aaronraff](https://github.com/aaronraff))
+- Add Tom Moulard in maintainers team ([#8442](https://github.com/traefik/traefik/pull/8442) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Fix golang doc URLs ([#8434](https://github.com/traefik/traefik/pull/8434) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
+## [v2.5.2](https://github.com/traefik/traefik/tree/v2.5.2) (2021-09-02)
+[All Commits](https://github.com/traefik/traefik/compare/v2.5.1...v2.5.2)
+
+**Bug fixes:**
+- **[http3]** Upgrade github.com/lucas-clemente/quic-go to v0.23.0 ([#8413](https://github.com/traefik/traefik/pull/8413) by [sylr](https://github.com/sylr))
+- **[middleware]** Fix empty body error for mirroring middleware ([#8381](https://github.com/traefik/traefik/pull/8381) by [antgubarev](https://github.com/antgubarev))
+- **[tracing]** Bump go.elastic.co/apm version to v1.13.1 ([#8399](https://github.com/traefik/traefik/pull/8399) by [rtribotte](https://github.com/rtribotte))
+- Update x/sys to support go 1.17 ([#8368](https://github.com/traefik/traefik/pull/8368) by [roopakv](https://github.com/roopakv))
+- Bump Alpine docker image version from 3.11 to 3.14 for official Traefik images
+
+**Documentation:**
+- **[k8s/ingress,k8s]** Adds pathType for v1 ingresses examples ([#8392](https://github.com/traefik/traefik/pull/8392) by [rtribotte](https://github.com/rtribotte))
+- Fix http scheme urls in documentation ([#8395](https://github.com/traefik/traefik/pull/8395) by [rtribotte](https://github.com/rtribotte))
+
+## [v2.5.1](https://github.com/traefik/traefik/tree/v2.5.1) (2021-08-20)
+[All Commits](https://github.com/traefik/traefik/compare/v2.5.0...v2.5.1)
+
+**Bug fixes:**
+- **[middleware,http3]** Conditional CloseNotify in header middleware ([#8374](https://github.com/traefik/traefik/pull/8374) by [juliens](https://github.com/juliens))
+- **[tls,tcp,k8s/crd,k8s]** Makes ALPN protocols configurable ([#8383](https://github.com/traefik/traefik/pull/8383) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- **[k8s]** Adds MiddlewareTCP CRD documentation ([#8369](https://github.com/traefik/traefik/pull/8369) by [perosb](https://github.com/perosb))
+- **[middleware]** Adds ContentType to middleware&#39;s overview table ([#8350](https://github.com/traefik/traefik/pull/8350) by [euidong](https://github.com/euidong))
+
+## [v2.5.0](https://github.com/traefik/traefik/tree/v2.5.0) (2021-08-17)
+[All Commits](https://github.com/traefik/traefik/compare/v2.4.0-rc1...v2.5.0)
+
+**Enhancements:**
+- **[consulcatalog]** Add Support for Consul Connect ([#7407](https://github.com/traefik/traefik/pull/7407) by [Gufran](https://github.com/Gufran))
+- Update Go version ([#8355](https://github.com/traefik/traefik/pull/8355) by [mpl](https://github.com/mpl))
+- **[file]** Update sprig to v3.2.0 ([#7746](https://github.com/traefik/traefik/pull/7746) by [sirlatrom](https://github.com/sirlatrom))
+- **[healthcheck]** Healthcheck: add support at the load-balancers of services level ([#8057](https://github.com/traefik/traefik/pull/8057) by [mpl](https://github.com/mpl))
+- **[http3]** Upgrade github.com/lucas-clemente/quic-go ([#8076](https://github.com/traefik/traefik/pull/8076) by [sylr](https://github.com/sylr))
+- **[http3]** Add HTTP3 support (experimental) ([#7724](https://github.com/traefik/traefik/pull/7724) by [juliens](https://github.com/juliens))
+- **[k8s,k8s/gatewayapi]** Add wildcard hostname rule to kubernetes gateway ([#7963](https://github.com/traefik/traefik/pull/7963) by [jberger](https://github.com/jberger))
+- **[k8s,k8s/gatewayapi]** Add support for TCPRoute and TLSRoute ([#8054](https://github.com/traefik/traefik/pull/8054) by [tomMoulard](https://github.com/tomMoulard))
+- **[k8s,k8s/gatewayapi]** Allow crossprovider service reference ([#7774](https://github.com/traefik/traefik/pull/7774) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[k8s/crd,k8s]** Add named port support to Kubernetes IngressRoute CRDs ([#7668](https://github.com/traefik/traefik/pull/7668) by [Cirrith](https://github.com/Cirrith))
+- **[k8s/crd,k8s]** Improve kubernetes external name service support for UDP ([#7773](https://github.com/traefik/traefik/pull/7773) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s/crd,k8s]** Upgrade the CRD version from apiextensions.k8s.io/v1beta1 to apiextensions.k8s.io/v1 ([#7815](https://github.com/traefik/traefik/pull/7815) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[k8s/ingress,k8s/crd,k8s]** Ignore empty endpoint changes ([#7646](https://github.com/traefik/traefik/pull/7646) by [hensur](https://github.com/hensur))
+- **[k8s/ingress,k8s]** Upgrade Ingress Handling to work with networkingv1/Ingress ([#7549](https://github.com/traefik/traefik/pull/7549) by [SantoDE](https://github.com/SantoDE))
+- **[k8s/ingress,k8s]** Filter ingress class resources by name ([#7915](https://github.com/traefik/traefik/pull/7915) by [tomMoulard](https://github.com/tomMoulard))
+- **[k8s/ingress,k8s]** Add k8s provider option to create services without endpoints ([#7593](https://github.com/traefik/traefik/pull/7593) by [Lucaber](https://github.com/Lucaber))
+- **[k8s/ingress,k8s]** Upgrade IngressClass to use v1 over v1Beta on Kube 1.19+ ([#8089](https://github.com/traefik/traefik/pull/8089) by [SantoDE](https://github.com/SantoDE))
+- **[k8s/ingress,k8s]** Add ServersTransport annotation to k8s ingress provider ([#8084](https://github.com/traefik/traefik/pull/8084) by [wdullaer](https://github.com/wdullaer))
+- **[logs,middleware]** Add TLS version and cipher to the accessLog ([#7478](https://github.com/traefik/traefik/pull/7478) by [na4ma4](https://github.com/na4ma4))
+- **[metrics]** Add TLS certs expiration metric ([#6924](https://github.com/traefik/traefik/pull/6924) by [sylr](https://github.com/sylr))
+- **[metrics]** Allow to define datadogs metrics endpoint with env vars ([#7968](https://github.com/traefik/traefik/pull/7968) by [sylr](https://github.com/sylr))
+- **[middleware,metrics]** Add router metrics ([#7510](https://github.com/traefik/traefik/pull/7510) by [jorge07](https://github.com/jorge07))
+- **[middleware,tcp]** Add TCP Middlewares support ([#7813](https://github.com/traefik/traefik/pull/7813) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Removes  headers middleware options  ([#8161](https://github.com/traefik/traefik/pull/8161) by [tomMoulard](https://github.com/tomMoulard))
+- **[middleware]** Headers: add `permissionsPolicy` and deprecate `featurePolicy` ([#8200](https://github.com/traefik/traefik/pull/8200) by [WLun001](https://github.com/WLun001))
+- **[middleware]** Deprecates ssl redirect headers middleware options ([#8160](https://github.com/traefik/traefik/pull/8160) by [tomMoulard](https://github.com/tomMoulard))
+- **[plugins]** Local private plugins. ([#8224](https://github.com/traefik/traefik/pull/8224) by [ldez](https://github.com/ldez))
+- **[provider,plugins]** Add plugin&#39;s support for provider ([#7794](https://github.com/traefik/traefik/pull/7794) by [ldez](https://github.com/ldez))
+- **[rules]** Support not in rules definition ([#8164](https://github.com/traefik/traefik/pull/8164) by [juliens](https://github.com/juliens))
+- **[rules]** Add routing IP rule matcher ([#8169](https://github.com/traefik/traefik/pull/8169) by [tomMoulard](https://github.com/tomMoulard))
+- **[server]** Improve host name resolution for TCP proxy ([#7971](https://github.com/traefik/traefik/pull/7971) by [H-M-H](https://github.com/H-M-H))
+- **[server]** Add ability to disable HTTP/2 in dynamic config ([#7645](https://github.com/traefik/traefik/pull/7645) by [jcuzzi](https://github.com/jcuzzi))
+- **[sticky-session]** Add a mechanism to format the sticky cookie value ([#8103](https://github.com/traefik/traefik/pull/8103) by [tomMoulard](https://github.com/tomMoulard))
+- **[tls]** Mutualize TLS version and cipher code ([#7779](https://github.com/traefik/traefik/pull/7779) by [rtribotte](https://github.com/rtribotte))
+- **[tls,k8s/crd,k8s]** Improve CA certificate loading from kubernetes secret ([#7789](https://github.com/traefik/traefik/pull/7789) by [rio](https://github.com/rio))
+- **[tls]** Do not build a default certificate for ACME challenges store ([#7833](https://github.com/traefik/traefik/pull/7833) by [rkojedzinszky](https://github.com/rkojedzinszky))
+- **[tracing]** Use Datadog tracer environment variables to setup default config ([#7721](https://github.com/traefik/traefik/pull/7721) by [GianOrtiz](https://github.com/GianOrtiz))
+- **[tracing]** Update Elastic APM from 1.7.0 to 1.11.0 ([#8187](https://github.com/traefik/traefik/pull/8187) by [afitzek](https://github.com/afitzek))
+- **[tracing]** Override jaeger configuration with env variables ([#8198](https://github.com/traefik/traefik/pull/8198) by [mmatur](https://github.com/mmatur))
+- **[udp]** Add udp timeout configuration ([#6982](https://github.com/traefik/traefik/pull/6982) by [Lindenk](https://github.com/Lindenk))
+
+**Bug fixes:**
+- **[k8s,k8s/gatewayapi]** Update Gateway API version to v0.3.0 ([#8253](https://github.com/traefik/traefik/pull/8253) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[k8s]** Kubernetes: detect changes for resources other than endpoints ([#8313](https://github.com/traefik/traefik/pull/8313) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Library change for compress middleware to increase performance ([#8245](https://github.com/traefik/traefik/pull/8245) by [tomMoulard](https://github.com/tomMoulard))
+- **[plugins]** Update yaegi to v0.9.21 ([#8285](https://github.com/traefik/traefik/pull/8285) by [ldez](https://github.com/ldez))
+- **[plugins]** Downgrade yaegi to v0.9.19 ([#8282](https://github.com/traefik/traefik/pull/8282) by [ldez](https://github.com/ldez))
+- **[webui]** Fix dashboard to display middleware details ([#8284](https://github.com/traefik/traefik/pull/8284) by [tomMoulard](https://github.com/tomMoulard))
+- **[webui]** Fix dashboard title for TCP middlewares ([#8339](https://github.com/traefik/traefik/pull/8339) by [mschneider82](https://github.com/mschneider82))
+- **[k8s]** Remove logging of changed object with cast ([#8128](https://github.com/traefik/traefik/pull/8128) by [hensur](https://github.com/hensur))
+
+**Documentation:**
+- Fix KV reference documentation ([#8280](https://github.com/traefik/traefik/pull/8280) by [rtribotte](https://github.com/rtribotte))
+- Fix migration guide ([#8269](https://github.com/traefik/traefik/pull/8269) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Update generated and reference doc for plugins ([#8236](https://github.com/traefik/traefik/pull/8236) by [tomMoulard](https://github.com/tomMoulard))
+- **[k8s/crd]** Fix: regenerate crd ([#8114](https://github.com/traefik/traefik/pull/8114) by [tomMoulard](https://github.com/tomMoulard))
+- **[k8s]** Clarify doc for ingressclass name in k8s 1.18+ ([#7944](https://github.com/traefik/traefik/pull/7944) by [tomMoulard](https://github.com/tomMoulard))
+- Update documentation references ([#8202](https://github.com/traefik/traefik/pull/8202) by [rtribotte](https://github.com/rtribotte))
+
+**Misc:**
+- Merge current v2.4 into v2.5 ([#8333](https://github.com/traefik/traefik/pull/8333) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Merge current v2.4 into v2.5 ([#8325](https://github.com/traefik/traefik/pull/8325) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Merge current v2.4 into v2.5 ([#8314](https://github.com/traefik/traefik/pull/8314) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.4 into v2.5 ([#8296](https://github.com/traefik/traefik/pull/8296) by [tomMoulard](https://github.com/tomMoulard))
+- Merge current v2.4 into v2.5 ([#8287](https://github.com/traefik/traefik/pull/8287) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.4 into v2.5 ([#8281](https://github.com/traefik/traefik/pull/8281) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.4 into v2.5 ([#8263](https://github.com/traefik/traefik/pull/8263) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.4 into master ([#8232](https://github.com/traefik/traefik/pull/8232) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.4 into master ([#8210](https://github.com/traefik/traefik/pull/8210) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.4 into master ([#8105](https://github.com/traefik/traefik/pull/8105) by [tomMoulard](https://github.com/tomMoulard))
+- Merge current v2.4 into master ([#8087](https://github.com/traefik/traefik/pull/8087) by [tomMoulard](https://github.com/tomMoulard))
+- Merge current v2.4 into master ([#8068](https://github.com/traefik/traefik/pull/8068) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Merge current v2.4 into master ([#8058](https://github.com/traefik/traefik/pull/8058) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Merge current v2.4 into master ([#8024](https://github.com/traefik/traefik/pull/8024) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Merge current v2.4 into master ([#7969](https://github.com/traefik/traefik/pull/7969) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Merge current v2.4 into master ([#7921](https://github.com/traefik/traefik/pull/7921) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.4 into master ([#7901](https://github.com/traefik/traefik/pull/7901) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.4 into master ([#7859](https://github.com/traefik/traefik/pull/7859) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Merge current v2.4 into master ([#7795](https://github.com/traefik/traefik/pull/7795) by [kevinpollet](https://github.com/kevinpollet))
+- Merge current v2.4 into master ([#8221](https://github.com/traefik/traefik/pull/8221) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.4 into master ([#7781](https://github.com/traefik/traefik/pull/7781) by [kevinpollet](https://github.com/kevinpollet))
+- Merge current v2.4 into master ([#7766](https://github.com/traefik/traefik/pull/7766) by [ldez](https://github.com/ldez))
+- Merge current v2.4 into master ([#7761](https://github.com/traefik/traefik/pull/7761) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.4 into master ([#7748](https://github.com/traefik/traefik/pull/7748) by [kevinpollet](https://github.com/kevinpollet))
+- Merge current v2.4 into master ([#7728](https://github.com/traefik/traefik/pull/7728) by [mmatur](https://github.com/mmatur))
+
+
+## [v2.4.14](https://github.com/traefik/traefik/tree/v2.4.14) (2021-08-16)
+[All Commits](https://github.com/traefik/traefik/compare/v2.4.13...v2.4.14)
+
+**Bug fixes:**
+- **[k8s/crd,k8s]** Avoid unauthorized middleware cross namespace reference  ([#8322](https://github.com/traefik/traefik/pull/8322) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[kv]** Remove unwanted trailing slash in key ([#8335](https://github.com/traefik/traefik/pull/8335) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[middleware]** Redirect: fix comparison when explicit port request and implicit redirect port ([#8348](https://github.com/traefik/traefik/pull/8348) by [tcolgate](https://github.com/tcolgate))
+
+**Documentation:**
+- **[kv]** Fix a router&#39;s entryPoint definition example for KV provider ([#8357](https://github.com/traefik/traefik/pull/8357) by [avtion](https://github.com/avtion))
+
+## [v2.5.0-rc6](https://github.com/traefik/traefik/tree/v2.5.0-rc6) (2021-08-13)
+[All Commits](https://github.com/traefik/traefik/compare/v2.5.0-rc5...v2.5.0-rc6)
+
+**Enhancements:**
+- Update Go version ([#8355](https://github.com/traefik/traefik/pull/8355) by [mpl](https://github.com/mpl))
+
+**Misc:**
+- Merge current v2.4 into v2.5 ([#8333](https://github.com/traefik/traefik/pull/8333) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
+## [v2.5.0-rc5](https://github.com/traefik/traefik/tree/v2.5.0-rc5) (2021-08-03)
+[All Commits](https://github.com/traefik/traefik/compare/v2.5.0-rc3...v2.5.0-rc5)
+
+**Bug fixes:**
+- **[k8s]** Kubernetes: detect changes for resources other than endpoints ([#8313](https://github.com/traefik/traefik/pull/8313) by [rtribotte](https://github.com/rtribotte))
+
+**Misc:**
+- Merge current v2.4 into v2.5 ([#8325](https://github.com/traefik/traefik/pull/8325) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Merge current v2.4 into v2.5 ([#8314](https://github.com/traefik/traefik/pull/8314) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.4 into v2.5 ([#8296](https://github.com/traefik/traefik/pull/8296) by [tomMoulard](https://github.com/tomMoulard))
+
+## [v2.5.0-rc4](https://github.com/traefik/traefik/tree/v2.5.0-rc4) (2021-08-03)
+
+Release canceled.
+
+## [v2.4.13](https://github.com/traefik/traefik/tree/v2.4.13) (2021-07-30)
+[All Commits](https://github.com/traefik/traefik/compare/v2.4.12...v2.4.13)
+
+**Bug fixes:**
+- **[authentication,middleware]** Remove hop-by-hop headers defined in connection header before some middleware ([#8319](https://github.com/traefik/traefik/pull/8319) by [ldez](https://github.com/ldez))
+
 ## [v2.4.12](https://github.com/traefik/traefik/tree/v2.4.12) (2021-07-26)
 [All Commits](https://github.com/traefik/traefik/compare/v2.4.11...v2.4.12)
 

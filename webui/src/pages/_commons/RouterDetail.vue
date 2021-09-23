@@ -46,7 +46,7 @@
           <div v-if="hasMiddlewares" class="col-12 col-md-3 q-mb-lg path-block">
             <div class="row no-wrap items-center q-mb-lg app-title">
               <q-icon name="eva-layers"></q-icon>
-              <div class="app-title-label">HTTP Middlewares</div>
+              <div class="app-title-label">{{ middlewareType }}</div>
             </div>
             <div class="row items-start q-col-gutter-lg">
               <div class="col-12 col-md-8">
@@ -186,6 +186,9 @@ export default {
   computed: {
     hasTLSConfiguration () {
       return this.routerByName.item.tls
+    },
+    middlewareType () {
+      return this.$route.meta.protocol.toUpperCase() + ' Middlewares'
     },
     routerType () {
       return this.$route.meta.protocol.toUpperCase() + ' Router'

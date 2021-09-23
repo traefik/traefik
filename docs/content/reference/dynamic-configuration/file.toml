@@ -122,6 +122,7 @@
     [http.middlewares.Middleware05]
       [http.middlewares.Middleware05.compress]
         excludedContentTypes = ["foobar", "foobar"]
+        minResponseBodyBytes = 42
     [http.middlewares.Middleware06]
       [http.middlewares.Middleware06.contentType]
         autoDetect = true
@@ -422,6 +423,7 @@
       curvePreferences = ["foobar", "foobar"]
       sniStrict = true
       preferServerCipherSuites = true
+      alpnProtocols = ["foobar", "foobar"]
       [tls.options.Options0.clientAuth]
         caFiles = ["foobar", "foobar"]
         clientAuthType = "foobar"
@@ -432,6 +434,7 @@
       curvePreferences = ["foobar", "foobar"]
       sniStrict = true
       preferServerCipherSuites = true
+      alpnProtocols = ["foobar", "foobar"]
       [tls.options.Options1.clientAuth]
         caFiles = ["foobar", "foobar"]
         clientAuthType = "foobar"

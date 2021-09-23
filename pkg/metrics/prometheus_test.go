@@ -364,7 +364,7 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 	// Reset state of global promState.
 	defer promState.reset()
 
-	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true})
+	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true, AddRoutersLabels: true})
 	defer promRegistry.Unregister(promState)
 
 	conf := dynamic.Configuration{
@@ -401,11 +401,14 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 		ServiceServerUpGauge().
 		With("service", "service1", "url", "http://localhost:9999").
 		Set(1)
-
-	delayForTrackingCompletion()
+	prometheusRegistry.
+		RouterReqsCounter().
+		With("router", "router2", "service", "service2", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		Add(1)
 
 	assertMetricsExist(t, mustScrape(), entryPointReqsTotalName, serviceReqsTotalName, serviceServerUpName)
 	assertMetricsAbsent(t, mustScrape(), entryPointReqsTotalName, serviceReqsTotalName, serviceServerUpName)
+	assertMetricsAbsent(t, mustScrape(), routerReqsTotalName, routerReqDurationName, routerOpenConnsName)
 
 	// To verify that metrics belonging to active configurations are not removed
 	// here the counter examples.
@@ -413,11 +416,17 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 		EntryPointReqsCounter().
 		With("entrypoint", "entrypoint1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
+	prometheusRegistry.
+		RouterReqsCounter().
+		With("router", "foo@providerName", "service", "bar@providerName", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		Add(1)
 
 	delayForTrackingCompletion()
 
 	assertMetricsExist(t, mustScrape(), entryPointReqsTotalName)
 	assertMetricsExist(t, mustScrape(), entryPointReqsTotalName)
+	assertMetricsExist(t, mustScrape(), routerReqsTotalName)
+	assertMetricsExist(t, mustScrape(), routerReqsTotalName)
 }
 
 func TestPrometheusRemovedMetricsReset(t *testing.T) {

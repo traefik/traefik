@@ -417,7 +417,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			}
 
 			if tlsModeType == v1alpha1.TLSModePassthrough && listener.TLS.CertificateRef != nil {
-				// https://gateway-api.sigs.k8s.io/guides/tls/
+				// https://gateway-api.sigs.k8s.io/v1alpha1/guides/tls/
 				logger.Warnf("In case of Passthrough TLS mode, no TLS settings take effect as the TLS session from the client is NOT terminated at the Gateway")
 			}
 
@@ -900,7 +900,7 @@ func hostRule(httpRouteSpec v1alpha1.HTTPRouteSpec) (string, error) {
 			continue
 		}
 
-		// https://gateway-api.sigs.k8s.io/references/spec/#networking.x-k8s.io/v1alpha1.Hostname
+		// https://gateway-api.sigs.k8s.io/v1alpha1/references/spec/#networking.x-k8s.io/v1alpha1.Hostname
 		if !strings.HasPrefix(host, "*.") || wildcard > 1 {
 			return "", fmt.Errorf("invalid rule: %q", host)
 		}

@@ -70,12 +70,14 @@ spec:
       http:
         paths:
           - path: /bar
+            pathType: Exact
             backend:
               service:
                 name:  service1
                 port:
                   number: 80
           - path: /foo
+            pathType: Exact
             backend:
               service:
                 name:  service1
@@ -312,6 +314,7 @@ Otherwise, Ingresses missing the annotation, having an empty value, or the value
         http:
           paths:
           - path: "/example"
+            pathType: Exact
             backend:
               service:
                 name: "example-service"
@@ -490,4 +493,4 @@ providers:
 ### Further
 
 To learn more about the various aspects of the Ingress specification that Traefik supports,
-many examples of Ingresses definitions are located in the test [examples](https://github.com/traefik/traefik/tree/v2.4/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
+many examples of Ingresses definitions are located in the test [examples](https://github.com/traefik/traefik/tree/v2.5/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
