@@ -36,7 +36,7 @@ type TLSOptionSpec struct {
 type ClientAuth struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the certificate details.
 	SecretNames []string `json:"secretNames,omitempty"`
-	// +kubebuilder:validation:Enum=NoClientCert;RequestClientCert;VerifyClientCertIfGiven;RequireAndVerifyClientCert
+	// +kubebuilder:validation:Enum=NoClientCert;RequestClientCert;RequireAnyClientCert;VerifyClientCertIfGiven;RequireAndVerifyClientCert
 	// ClientAuthType defines the client authentication type to apply.
 	ClientAuthType string `json:"clientAuthType,omitempty"`
 }
