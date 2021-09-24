@@ -93,18 +93,18 @@ tracing:
 
 _Require, Default=false_
 
-Whether to enable the process profiling feature of the Instana tracer.
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.instana]
-    enableProfiling = true
-```
+Enable automatic profiling for the traefik process.
 
 ```yaml tab="File (YAML)"
 tracing:
   instana:
     enableProfiling: true
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.instana]
+    enableProfiling = true
 ```
 
 ```bash tab="CLI"
