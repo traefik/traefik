@@ -34,6 +34,9 @@ const (
 
 	// JSONFormat is the JSON logging format.
 	JSONFormat string = "json"
+
+	// PatternFormat is the custom logging format.
+	PatternFormat string = "pattern"
 )
 
 type noopCloser struct {
@@ -92,6 +95,10 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 		formatter = new(CommonLogFormatter)
 	case JSONFormat:
 		formatter = new(logrus.JSONFormatter)
+	case PatternFormat:
+		patternformatter := new(PatternLogFormatter)
+		patternformatter.pattern = config.Pattern
+		formatter = patternformatter
 	default:
 		log.WithoutContext().Errorf("unsupported access log format: %q, defaulting to common format instead.", config.Format)
 		formatter = new(CommonLogFormatter)
