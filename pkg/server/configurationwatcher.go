@@ -177,7 +177,6 @@ func preLoadConfiguration(logger log.Logger, configMsg dynamic.Message) {
 
 	jsonConf, err := json.Marshal(copyConf)
 	if err != nil {
-		// TODO verify that we have the provider name in the log
 		logger.Errorf("Could not marshal dynamic configuration: %v", err)
 		logger.Debugf("Configuration received: [struct] %#v", copyConf)
 	} else {
