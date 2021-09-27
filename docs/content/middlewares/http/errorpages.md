@@ -116,7 +116,7 @@ The service that will serve the new requested error page.
 !!! info "Host Header"
 
     By default, the client `Host` header value is forwarded to the configured error [service](#service).
-    To forward the `Host` value corresponding to the configured error service URL, the [passHostHeader](../../../routing/services/#pass-host-header) option must be used.     
+    To forward the `Host` value corresponding to the configured error service URL, the [passHostHeader](../../../routing/services/#pass-host-header) option must be set to `false`.     
 
 ### `query`
 
