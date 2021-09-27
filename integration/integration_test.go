@@ -166,7 +166,7 @@ func (s *BaseSuite) killCmd(cmd *exec.Cmd) {
 }
 
 func (s *BaseSuite) traefikCmd(args ...string) (*exec.Cmd, func(*check.C)) {
-	args = append(args, "--providers.providersThrottleDuration=100ms")
+	//	args = append(args, "--providers.providersThrottleDuration=100ms")
 	cmd, out := s.cmdTraefik(args...)
 	return cmd, func(c *check.C) {
 		if c.Failed() || *showLog {
