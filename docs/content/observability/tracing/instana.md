@@ -18,7 +18,7 @@ tracing:
 
 #### `localAgentHost`
 
-_Require, Default="127.0.0.1"_
+_Required, Default="127.0.0.1"_
 
 Local Agent Host instructs reporter to send spans to the Instana Agent at this address.
 
@@ -40,7 +40,7 @@ tracing:
 
 #### `localAgentPort`
 
-_Require, Default=42699_
+_Required, Default=42699_
 
 Local Agent port instructs reporter to send spans to the Instana Agent listening on this port.
 
@@ -62,7 +62,7 @@ tracing:
 
 #### `logLevel`
 
-_Require, Default="info"_
+_Required, Default="info"_
 
 Set the Instana tracer log level.
 
@@ -91,7 +91,7 @@ tracing:
 
 #### `enableProfiling`
 
-_Require, Default=false_
+_Required, Default=false_
 
 Enable automatic profiling for the traefik process.
 
