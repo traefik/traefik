@@ -42,7 +42,7 @@ tracing:
 
 _Optional, Default=false_
 
-Use SameSpan RPC style traces.
+Uses SameSpan RPC style traces.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -64,7 +64,7 @@ tracing:
 
 _Optional, Default=true_
 
-Use 128 bit trace IDs.
+Uses 128 bits trace IDs.
 
 ```yaml tab="File (YAML)"
 tracing:
