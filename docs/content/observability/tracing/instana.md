@@ -64,7 +64,7 @@ tracing:
 
 _Required, Default="info"_
 
-Set Instana tracer log level.
+Sets Instana tracer log level.
 
 Valid values are:
 
