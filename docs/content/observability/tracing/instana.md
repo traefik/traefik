@@ -18,7 +18,7 @@ tracing:
 
 #### `localAgentHost`
 
-_Require, Default="127.0.0.1"_
+_Required, Default="127.0.0.1"_
 
 Local Agent Host instructs reporter to send spans to instana-agent at this address.
 
@@ -40,7 +40,7 @@ tracing:
 
 #### `localAgentPort`
 
-_Require, Default=42699_
+_Required, Default=42699_
 
 Local Agent port instructs reporter to send spans to the instana-agent at this port.
 
@@ -62,7 +62,7 @@ tracing:
 
 #### `logLevel`
 
-_Require, Default="info"_
+_Required, Default="info"_
 
 Set Instana tracer log level.
 
