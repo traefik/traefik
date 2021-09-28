@@ -1,6 +1,6 @@
 # Jaeger
 
-To enable the Jaeger:
+To enable the Jaeger tracer:
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -27,7 +27,7 @@ tracing:
 
 _Required, Default="http://localhost:5778/sampling"_
 
-Sampling Server URL is the address of jaeger-agent's HTTP sampling server.
+Address of the Jaeger Agent HTTP sampling server.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -49,7 +49,13 @@ tracing:
 
 _Required, Default="const"_
 
-Sampling Type specifies the type of the sampler: `const`, `probabilistic`, `rateLimiting`.
+Type of the sampler.
+
+Valid values are:
+
+- `const`
+- `probabilistic`
+- `rateLimiting`
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -71,9 +77,9 @@ tracing:
 
 _Required, Default=1.0_
 
-Sampling Param is a value passed to the sampler.
+Value passed to the sampler.
 
-Valid values for Param field are:
+Valid values are:
 
 - for `const` sampler, 0 or 1 for always false/true respectively
 - for `probabilistic` sampler, a probability between 0 and 1
@@ -99,7 +105,7 @@ tracing:
 
 _Required, Default="127.0.0.1:6831"_
 
-Local Agent Host Port instructs reporter to send spans to jaeger-agent at this address.
+Local Agent Host Port instructs the reporter to send spans to the Jaeger Agent at this address (host:port).
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -144,7 +150,8 @@ tracing:
 _Required, Default="jaeger"_
 
 Set the propagation header type.
-This can be either:
+
+Valid values are:
 
 - `jaeger`, jaeger's default trace header.
 - `b3`, compatible with OpenZipkin
@@ -169,7 +176,7 @@ tracing:
 
 _Required, Default="uber-trace-id"_
 
-Trace Context Header Name is the http header name used to propagate tracing context.
+HTTP header name used to propagate tracing context.
 This must be in lower-case to avoid mismatches when decoding incoming headers.
 
 ```yaml tab="File (YAML)"
@@ -216,7 +223,7 @@ tracing:
 
 _Optional, Default=""_
 
-Collector Endpoint instructs reporter to send spans to jaeger-collector at this URL.
+Collector Endpoint instructs the reporter to send spans to the Jaeger Collector at this URL.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -239,7 +246,7 @@ tracing:
 
 _Optional, Default=""_
 
-User instructs reporter to include a user for basic http authentication when sending spans to jaeger-collector.
+User instructs the reporter to include a user for basic HTTP authentication when sending spans to the Jaeger Collector.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -262,7 +269,7 @@ tracing:
 
 _Optional, Default=""_
 
-Password instructs reporter to include a password for basic http authentication when sending spans to jaeger-collector.
+Password instructs the reporter to include a password for basic HTTP authentication when sending spans to the Jaeger Collector.
 
 ```yaml tab="File (YAML)"
 tracing:
