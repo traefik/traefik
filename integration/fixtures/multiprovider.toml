@@ -13,7 +13,6 @@
     address = ":8000"
 
 [providers]
-  providersThrottleDuration = "100ms"
   [providers.rest]
     insecure = true
 

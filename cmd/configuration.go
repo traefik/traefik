@@ -23,7 +23,7 @@ func NewTraefikConfiguration() *TraefikCmdConfiguration {
 			},
 			EntryPoints: make(static.EntryPoints),
 			Providers: &static.Providers{
-				ProvidersThrottleDuration: ptypes.Duration(2 * time.Second),
+				ProvidersThrottleDuration: ptypes.Duration(100 * time.Millisecond),
 			},
 			ServersTransport: &static.ServersTransport{
 				MaxIdleConnsPerHost: 200,

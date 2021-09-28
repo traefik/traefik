@@ -10,7 +10,6 @@
     address = ":8000"
 
 [providers]
-  providersThrottleDuration = "100ms"
 
 [providers.file]
   filename = "{{ .SelfFilename }}"

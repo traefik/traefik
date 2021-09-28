@@ -15,7 +15,6 @@
   insecure = true
 
 [providers]
-  providersThrottleDuration = "100ms"
   [providers.http]
     endpoint = "http://127.0.0.1:9000"
     pollInterval = "100ms"

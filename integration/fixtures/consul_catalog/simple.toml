@@ -13,7 +13,6 @@
   insecure = true
 
 [providers]
-  providersThrottleDuration = "100ms"
   [providers.consulCatalog]
     exposedByDefault = true
     refreshInterval = "500ms"

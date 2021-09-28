@@ -16,7 +16,6 @@
   insecure = true
 
 [providers]
-  providersThrottleDuration = "100ms"
   [providers.file]
     fileName = "{{.DynamicConfFileName}}"
     watch = true
