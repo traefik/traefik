@@ -3,7 +3,7 @@ package integration
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -331,7 +331,7 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 		resp, err := client.Do(rootReq)
 		c.Assert(err, checker.IsNil)
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		c.Assert(err, checker.IsNil)
 
 		c.Assert(string(body), checker.Contains, want)
@@ -347,7 +347,7 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 		resp, err := client.Do(fooReq)
 		c.Assert(err, checker.IsNil)
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		c.Assert(err, checker.IsNil)
 
 		c.Assert(string(body), checker.Contains, want)
@@ -363,7 +363,7 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 		resp, err := client.Do(barReq)
 		c.Assert(err, checker.IsNil)
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		c.Assert(err, checker.IsNil)
 
 		c.Assert(string(body), checker.Contains, want)
@@ -413,7 +413,7 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 		resp, err := client.Do(rootReq)
 		c.Assert(err, checker.IsNil)
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		c.Assert(err, checker.IsNil)
 
 		c.Assert(string(body), checker.Contains, want)
@@ -426,7 +426,7 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 		resp, err := client.Do(fooReq)
 		c.Assert(err, checker.IsNil)
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		c.Assert(err, checker.IsNil)
 
 		c.Assert(string(body), checker.Contains, want)
@@ -439,7 +439,7 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 		resp, err := client.Do(barReq)
 		c.Assert(err, checker.IsNil)
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		c.Assert(err, checker.IsNil)
 
 		c.Assert(string(body), checker.Contains, want)
@@ -533,7 +533,7 @@ func (s *HealthCheckSuite) TestPropagateReload(c *check.C) {
 		resp, err := client.Do(rootReq)
 		c.Assert(err, checker.IsNil)
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		c.Assert(err, checker.IsNil)
 
 		c.Assert(string(body), checker.Contains, want)
