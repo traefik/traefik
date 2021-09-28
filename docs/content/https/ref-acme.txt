@@ -25,9 +25,9 @@
 # By default, it's 3 months to follow Let's Encrypt certificates lifetime.
 #
 # Optional
-# Default: 2160h
+# Default: 2160
 #
---certificatesresolvers.myresolver.acme.certificatesDuration=2160h
+--certificatesresolvers.myresolver.acme.certificatesDuration=2160
 
 # Preferred chain to use.
 #
