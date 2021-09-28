@@ -914,7 +914,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 			ACME: &acme.Configuration{
 				Email:                "acme Email",
 				CAServer:             "CAServer",
-				CertificatesDuration: 3 * 30 * 24 * time.Hour,
+				CertificatesDuration: 3 * 30 * 24,
 				PreferredChain:       "foobar",
 				Storage:              "Storage",
 				KeyType:              "MyKeyType",

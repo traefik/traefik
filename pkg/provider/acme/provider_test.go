@@ -597,36 +597,36 @@ func TestInitAccount(t *testing.T) {
 func TestGetIntervals(t *testing.T) {
 	testCases := []struct {
 		desc                  string
-		CertificatesDurations time.Duration
+		CertificatesDurations int
 		expectRenew           time.Duration
 		expectExpire          time.Duration
 	}{
 		{
 			desc:         "Empty",
-			expectRenew:  time.Hour * 24 * 30,
-			expectExpire: time.Hour * 24,
+			expectRenew:  time.Minute * 20,
+			expectExpire: time.Minute,
 		},
 		{
 			desc:                  "1 Year certificates: 2 months renew period, 1 week check interval",
-			CertificatesDurations: time.Hour * 24 * 365,
+			CertificatesDurations: 24 * 365,
 			expectRenew:           time.Hour * 24 * 30 * 4,
 			expectExpire:          time.Hour * 24 * 7,
 		},
 		{
 			desc:                  "90 Days certificates: 30 days renew period, 1 day check interval",
-			CertificatesDurations: time.Hour * 24 * 90,
+			CertificatesDurations: 24 * 90,
 			expectRenew:           time.Hour * 24 * 30,
 			expectExpire:          time.Hour * 24,
 		},
 		{
 			desc:                  "7 Days certificates: 1 days renew period, 1 hour check interval",
-			CertificatesDurations: time.Hour * 24 * 7,
+			CertificatesDurations: 24 * 7,
 			expectRenew:           time.Hour * 24,
 			expectExpire:          time.Hour,
 		},
 		{
 			desc:                  "24 Hours certificates: 6 hours renew period, 10 minutes check interval",
-			CertificatesDurations: time.Hour * 24,
+			CertificatesDurations: 24,
 			expectRenew:           time.Hour * 6,
 			expectExpire:          time.Minute * 10,
 		},
@@ -637,7 +637,7 @@ func TestGetIntervals(t *testing.T) {
 			t.Parallel()
 
 			acmeProvider := Provider{Configuration: &Configuration{CertificatesDuration: test.CertificatesDurations}}
-			renewTime, expirationTime := acmeProvider.getIntervals()
+			renewTime, expirationTime := acmeProvider.getCertificateRenewIntervals()
 			assert.Equal(t, test.expectRenew, renewTime)
 			assert.Equal(t, test.expectExpire, expirationTime)
 		})
