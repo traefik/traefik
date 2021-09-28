@@ -375,6 +375,7 @@ certificatesResolvers:
     acme:
       email: foobar
       caServer: foobar
+      certificatesDuration: 2160
       preferredChain: foobar
       storage: foobar
       keyType: foobar
@@ -395,6 +396,7 @@ certificatesResolvers:
     acme:
       email: foobar
       caServer: foobar
+      certificatesDuration: 2160
       preferredChain: foobar
       storage: foobar
       keyType: foobar
