@@ -9,6 +9,8 @@
   [entryPoints.web]
     address = ":8000"
 
+[providers]
+
 [providers.file]
   filename = "{{ .SelfFilename }}"
 
