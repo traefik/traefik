@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"testing"
+	"time"
 
 	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/stretchr/testify/assert"
@@ -589,6 +590,56 @@ func TestInitAccount(t *testing.T) {
 			assert.Nil(t, err, "Init account in error")
 			assert.Equal(t, test.expectedAccount.Email, actualAccount.Email, "unexpected email account")
 			assert.Equal(t, test.expectedAccount.KeyType, actualAccount.KeyType, "unexpected keyType account")
+		})
+	}
+}
+
+func TestGetIntervals(t *testing.T) {
+	testCases := []struct {
+		desc                  string
+		CertificatesDurations int
+		expectRenew           time.Duration
+		expectExpire          time.Duration
+	}{
+		{
+			desc:         "Empty",
+			expectRenew:  time.Minute * 20,
+			expectExpire: time.Minute,
+		},
+		{
+			desc:                  "1 Year certificates: 2 months renew period, 1 week check interval",
+			CertificatesDurations: 24 * 365,
+			expectRenew:           time.Hour * 24 * 30 * 4,
+			expectExpire:          time.Hour * 24 * 7,
+		},
+		{
+			desc:                  "90 Days certificates: 30 days renew period, 1 day check interval",
+			CertificatesDurations: 24 * 90,
+			expectRenew:           time.Hour * 24 * 30,
+			expectExpire:          time.Hour * 24,
+		},
+		{
+			desc:                  "7 Days certificates: 1 days renew period, 1 hour check interval",
+			CertificatesDurations: 24 * 7,
+			expectRenew:           time.Hour * 24,
+			expectExpire:          time.Hour,
+		},
+		{
+			desc:                  "24 Hours certificates: 6 hours renew period, 10 minutes check interval",
+			CertificatesDurations: 24,
+			expectRenew:           time.Hour * 6,
+			expectExpire:          time.Minute * 10,
+		},
+	}
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			acmeProvider := Provider{Configuration: &Configuration{CertificatesDuration: test.CertificatesDurations}}
+			renewTime, expirationTime := acmeProvider.getCertificateRenewIntervals()
+			assert.Equal(t, test.expectRenew, renewTime)
+			assert.Equal(t, test.expectExpire, expirationTime)
 		})
 	}
 }
