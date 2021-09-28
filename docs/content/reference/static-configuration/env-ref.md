@@ -859,76 +859,76 @@ OpenTracing configuration. (Default: ```false```)
 Settings for Datadog. (Default: ```false```)
 
 `TRAEFIK_TRACING_DATADOG_BAGAGEPREFIXHEADERNAME`:  
-Set the header name prefix used to store baggage items in a map.
+Sets the header name prefix used to store baggage items in a map.
 
 `TRAEFIK_TRACING_DATADOG_DEBUG`:  
-Enable Datadog debug. (Default: ```false```)
+Enables Datadog debug. (Default: ```false```)
 
 `TRAEFIK_TRACING_DATADOG_GLOBALTAG`:  
-Set a key:value tag on all spans.
+Sets a key:value tag on all spans.
 
 `TRAEFIK_TRACING_DATADOG_LOCALAGENTHOSTPORT`:  
-Set the Datadog Agent host:port. (Default: ```localhost:8126```)
+Sets the Datadog Agent host:port. (Default: ```localhost:8126```)
 
 `TRAEFIK_TRACING_DATADOG_PARENTIDHEADERNAME`:  
-Set the header name used to store the parent ID.
+Sets the header name used to store the parent ID.
 
 `TRAEFIK_TRACING_DATADOG_PRIORITYSAMPLING`:  
-Enable priority sampling. When using distributed tracing, this option must be enabled in order to get all the parts of a distributed trace sampled. (Default: ```false```)
+Enables priority sampling. When using distributed tracing, this option must be enabled in order to get all the parts of a distributed trace sampled. (Default: ```false```)
 
 `TRAEFIK_TRACING_DATADOG_SAMPLINGPRIORITYHEADERNAME`:  
-Set the header name used to store the sampling priority.
+Sets the header name used to store the sampling priority.
 
 `TRAEFIK_TRACING_DATADOG_TRACEIDHEADERNAME`:  
-Set the header name used to store the trace ID.
+Sets the header name used to store the trace ID.
 
 `TRAEFIK_TRACING_ELASTIC`:  
 Settings for Elastic. (Default: ```false```)
 
 `TRAEFIK_TRACING_ELASTIC_SECRETTOKEN`:  
-Set the token used to connect to Elastic APM Server.
+Sets the token used to connect to Elastic APM Server.
 
 `TRAEFIK_TRACING_ELASTIC_SERVERURL`:  
-Set the URL of the Elastic APM server.
+Sets the URL of the Elastic APM server.
 
 `TRAEFIK_TRACING_ELASTIC_SERVICEENVIRONMENT`:  
-Set the name of the environment Traefik is deployed in, e.g. 'production' or 'staging'.
+Sets the name of the environment Traefik is deployed in, e.g. 'production' or 'staging'.
 
 `TRAEFIK_TRACING_HAYSTACK`:  
 Settings for Haystack. (Default: ```false```)
 
 `TRAEFIK_TRACING_HAYSTACK_BAGGAGEPREFIXHEADERNAME`:  
-Set the header name prefix used to store baggage items in a map.
+Sets the header name prefix used to store baggage items in a map.
 
 `TRAEFIK_TRACING_HAYSTACK_GLOBALTAG`:  
-Set a key:value tag on all spans.
+Sets a key:value tag on all spans.
 
 `TRAEFIK_TRACING_HAYSTACK_LOCALAGENTHOST`:  
-Set the Haystack Agent host. (Default: ```127.0.0.1```)
+Sets the Haystack Agent host. (Default: ```127.0.0.1```)
 
 `TRAEFIK_TRACING_HAYSTACK_LOCALAGENTPORT`:  
-Set the Haystack Agent port. (Default: ```35000```)
+Sets the Haystack Agent port. (Default: ```35000```)
 
 `TRAEFIK_TRACING_HAYSTACK_PARENTIDHEADERNAME`:  
-Set the header name used to store the parent ID.
+Sets the header name used to store the parent ID.
 
 `TRAEFIK_TRACING_HAYSTACK_SPANIDHEADERNAME`:  
-Set the header name used to store the span ID.
+Sets the header name used to store the span ID.
 
 `TRAEFIK_TRACING_HAYSTACK_TRACEIDHEADERNAME`:  
-Set the header name used to store the trace ID.
+Sets the header name used to store the trace ID.
 
 `TRAEFIK_TRACING_INSTANA`:  
 Settings for Instana. (Default: ```false```)
 
 `TRAEFIK_TRACING_INSTANA_LOCALAGENTHOST`:  
-Set the Instana Agent host.
+Sets the Instana Agent host.
 
 `TRAEFIK_TRACING_INSTANA_LOCALAGENTPORT`:  
-Set the Instana Agent port used. (Default: ```42699```)
+Sets the Instana Agent port used. (Default: ```42699```)
 
 `TRAEFIK_TRACING_INSTANA_LOGLEVEL`:  
-Set the log level for the Instana tracer. ('error','warn','info','debug') (Default: ```info```)
+Sets the log level for the Instana tracer. ('error','warn','info','debug') (Default: ```info```)
 
 `TRAEFIK_TRACING_JAEGER`:  
 Settings for Jaeger. (Default: ```false```)
@@ -943,28 +943,28 @@ Password for basic http authentication when sending spans to jaeger-collector.
 User for basic http authentication when sending spans to jaeger-collector.
 
 `TRAEFIK_TRACING_JAEGER_DISABLEATTEMPTRECONNECTING`:  
-Disable the periodic re-resolution of the agent's hostname and reconnection if there was a change. (Default: ```true```)
+Disables the periodic re-resolution of the agent's hostname and reconnection if there was a change. (Default: ```true```)
 
 `TRAEFIK_TRACING_JAEGER_GEN128BIT`:  
-Generate 128 bit span IDs. (Default: ```false```)
+Generates 128 bits span IDs. (Default: ```false```)
 
 `TRAEFIK_TRACING_JAEGER_LOCALAGENTHOSTPORT`:  
-Set the Jaeger Agent host:port. (Default: ```127.0.0.1:6831```)
+Sets the Jaeger Agent host:port. (Default: ```127.0.0.1:6831```)
 
 `TRAEFIK_TRACING_JAEGER_PROPAGATION`:  
-Set the propagation format (jaeger/b3). (Default: ```jaeger```)
+Sets the propagation format (jaeger/b3). (Default: ```jaeger```)
 
 `TRAEFIK_TRACING_JAEGER_SAMPLINGPARAM`:  
-Set the sampling parameter. (Default: ```1.000000```)
+Sets the sampling parameter. (Default: ```1.000000```)
 
 `TRAEFIK_TRACING_JAEGER_SAMPLINGSERVERURL`:  
-Set the sampling server URL. (Default: ```http://localhost:5778/sampling```)
+Sets the sampling server URL. (Default: ```http://localhost:5778/sampling```)
 
 `TRAEFIK_TRACING_JAEGER_SAMPLINGTYPE`:  
-Set the sampling type. (Default: ```const```)
+Sets the sampling type. (Default: ```const```)
 
 `TRAEFIK_TRACING_JAEGER_TRACECONTEXTHEADERNAME`:  
-Set the header name used to store the trace ID. (Default: ```uber-trace-id```)
+Sets the header name used to store the trace ID. (Default: ```uber-trace-id```)
 
 `TRAEFIK_TRACING_SERVICENAME`:  
 Set the name for this service. (Default: ```traefik```)
@@ -976,13 +976,13 @@ Set the maximum character limit for Span names (default 0 = no limit). (Default:
 Settings for Zipkin. (Default: ```false```)
 
 `TRAEFIK_TRACING_ZIPKIN_HTTPENDPOINT`:  
-Set the HTTP Endpoint to report traces to. (Default: ```http://localhost:9411/api/v2/spans```)
+Sets the HTTP Endpoint to report traces to. (Default: ```http://localhost:9411/api/v2/spans```)
 
 `TRAEFIK_TRACING_ZIPKIN_ID128BIT`:  
-Use Zipkin 128 bit root span IDs. (Default: ```true```)
+Uses 128 bits root span IDs. (Default: ```true```)
 
 `TRAEFIK_TRACING_ZIPKIN_SAMESPAN`:  
-Use Zipkin SameSpan RPC style traces. (Default: ```false```)
+Uses SameSpan RPC style traces. (Default: ```false```)
 
 `TRAEFIK_TRACING_ZIPKIN_SAMPLERATE`:  
-Set the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
+Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)

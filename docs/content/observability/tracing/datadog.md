@@ -42,7 +42,7 @@ tracing:
 
 _Optional, Default=false_
 
-Enable Datadog debug.
+Enables Datadog debug.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -64,7 +64,7 @@ tracing:
 
 _Optional, Default=empty_
 
-Apply a shared key:value tag on all spans.
+Applies a shared key:value tag on all spans.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -86,7 +86,7 @@ tracing:
 
 _Optional, Default=false_
 
-Enable priority sampling.
+Enables priority sampling.
 When using distributed tracing, 
 this option must be enabled in order to get all the parts of a distributed trace sampled.
 

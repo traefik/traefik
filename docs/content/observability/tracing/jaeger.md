@@ -127,7 +127,7 @@ tracing:
 
 _Optional, Default=false_
 
-Generate 128-bit trace IDs, compatible with OpenCensus.
+Generates 128 bits trace IDs, compatible with OpenCensus.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -149,7 +149,7 @@ tracing:
 
 _Required, Default="jaeger"_
 
-Set the propagation header type.
+Sets the propagation header type.
 
 Valid values are:
 
@@ -199,7 +199,7 @@ tracing:
 
 _Optional, Default=true_
 
-Disable the UDP connection helper that periodically re-resolves the agent's hostname and reconnects if there was a change.
+Disables the UDP connection helper that periodically re-resolves the agent's hostname and reconnects if there was a change.
 Enabling the re-resolving of UDP address make the client more robust in Kubernetes deployments.
 
 ```yaml tab="File (YAML)"

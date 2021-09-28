@@ -64,7 +64,7 @@ tracing:
 
 _Optional, Default=empty_
 
-Apply shared key:value tag on all spans.
+Applies shared key:value tag on all spans.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -86,7 +86,7 @@ tracing:
 
 _Optional, Default=empty_
 
-Set the header name used to store the trace ID.
+Sets the header name used to store the trace ID.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -108,7 +108,7 @@ tracing:
 
 _Optional, Default=empty_
 
-Set the header name used to store the parent ID.
+Sets the header name used to store the parent ID.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -130,7 +130,7 @@ tracing:
 
 _Optional, Default=empty_
 
-Set the header name used to store the span ID.
+Sets the header name used to store the span ID.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -152,7 +152,7 @@ tracing:
 
 _Optional, Default=empty_
 
-Set the header name prefix used to store baggage items in a map.
+Sets the header name prefix used to store baggage items in a map.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -165,7 +165,6 @@ tracing:
   [tracing.haystack]
     baggagePrefixHeaderName = "sample"
 ```
-
 
 ```bash tab="CLI"
 --tracing.haystack.baggagePrefixHeaderName=sample

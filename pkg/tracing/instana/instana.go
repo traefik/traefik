@@ -13,9 +13,9 @@ const Name = "instana"
 
 // Config provides configuration settings for a instana tracer.
 type Config struct {
-	LocalAgentHost string `description:"Set the Instana Agent host." json:"localAgentHost,omitempty" toml:"localAgentHost,omitempty" yaml:"localAgentHost,omitempty"`
-	LocalAgentPort int    `description:"Set the Instana Agent port used." json:"localAgentPort,omitempty" toml:"localAgentPort,omitempty" yaml:"localAgentPort,omitempty"`
-	LogLevel       string `description:"Set the log level for the Instana tracer. ('error','warn','info','debug')" json:"logLevel,omitempty" toml:"logLevel,omitempty" yaml:"logLevel,omitempty" export:"true"`
+	LocalAgentHost string `description:"Sets the Instana Agent host." json:"localAgentHost,omitempty" toml:"localAgentHost,omitempty" yaml:"localAgentHost,omitempty"`
+	LocalAgentPort int    `description:"Sets the Instana Agent port used." json:"localAgentPort,omitempty" toml:"localAgentPort,omitempty" yaml:"localAgentPort,omitempty"`
+	LogLevel       string `description:"Sets the log level for the Instana tracer. ('error','warn','info','debug')" json:"logLevel,omitempty" toml:"logLevel,omitempty" yaml:"logLevel,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
