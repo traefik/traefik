@@ -18,7 +18,7 @@ tracing:
 
 #### `localAgentHost`
 
-_Require, Default="127.0.0.1"_
+_Required, Default="127.0.0.1"_
 
 Local Agent Host instructs reporter to send spans to haystack-agent at this address.
 
@@ -40,7 +40,7 @@ tracing:
 
 #### `localAgentPort`
 
-_Require, Default=35000_
+_Required, Default=35000_
 
 Local Agent port instructs reporter to send spans to the haystack-agent at this port.
 
