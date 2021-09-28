@@ -358,7 +358,7 @@
     [certificatesResolvers.CertificateResolver0.acme]
       email = "foobar"
       caServer = "foobar"
-      certificatesDuration = "2160h"
+      certificatesDuration = 2160
       preferredChain = "foobar"
       storage = "foobar"
       keyType = "foobar"
@@ -377,7 +377,7 @@
     [certificatesResolvers.CertificateResolver1.acme]
       email = "foobar"
       caServer = "foobar"
-      certificatesDuration = "2160h"
+      certificatesDuration = 2160
       preferredChain = "foobar"
       storage = "foobar"
       keyType = "foobar"

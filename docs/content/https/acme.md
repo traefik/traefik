@@ -540,35 +540,47 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 
 ### `certificatesDuration`
 
-_Optional, Default=2160h_
+_Optional, Default=2160_
 
-The `certificatesDuration` option sets the length of a certificate's lifetime in order to manage them more precisely.
-It defaults to `2160h` (3 months) to follow Let's Encrypt certificates lifetime,
-see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).
+The `certificatesDuration` option sets the length of a certificate's lifetime in hour in order to manage them more precisely.
+It defaults to `2160` (3 months) to follow Let's Encrypt certificates lifetime.
 
-!!! warning "Traefik cannot manage certificates that have a lifespan lower than 1 day"
+!!! warning "Traefik cannot manage certificates that have a lifespan lower than 1 hour."
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
   myresolver:
     acme:
       # ...
-      certificatesDuration: 72h
+      certificatesDuration: 72
       # ...
 ```
 
 ```toml tab="File (TOML)"
 [certificatesResolvers.myresolver.acme]
   # ...
-  certificatesDuration=72h
+  certificatesDuration=72
   # ...
 ```
 
 ```bash tab="CLI"
 # ...
---certificatesresolvers.myresolver.acme.certificatesDuration=72h
+--certificatesresolvers.myresolver.acme.certificatesduration=72
 # ...
 ```
+
+`certificatesDuration` is used to calculate two durations:
+
+- `RenewBeforeExpiry`: the amount of time before the end of the certificate lifetime that indicates when the certificates should be renewed.
+- `ExpirationCheckInterval`: the interval of time when it will check if there are certificates to renew.
+
+| Certificate Duration | RenewBeforeExpiry | ExpirationCheckInterval |
+|----------------------|-------------------|-------------------------|
+| >= 1 year            | 4 months          | 1 week                  |
+| >= 90 days           | 30 days           | 1 day                   |
+| >= 7 days            | 1 day             | 1 hour                  |
+| >= 24 hours          | 6 hours           | 10 min                  |
+| < 24 hours           | 20 min            | 1 min                   |
 
 ### `preferredChain`
 
