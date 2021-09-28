@@ -34,6 +34,7 @@
   insecure = true
 
 [providers]
+  providersThrottleDuration = "100ms"
   [providers.file]
     filename = "fixtures/acme/certificates.toml"
     watch = true

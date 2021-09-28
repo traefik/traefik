@@ -25,6 +25,7 @@
   insecure = true
 
 [providers]
+  providersThrottleDuration = "100ms"
   [providers.docker]
     exposedByDefault = false
     defaultRule = "Host(`{{ normalize .Name }}.docker.local`)"

@@ -15,4 +15,5 @@
   insecure = true
 
 [providers]
+  providersThrottleDuration = "100ms"
   [providers.docker]
