@@ -257,9 +257,8 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 			for _, s := range services {
 				service := s
 				input = &ecs.ListTasksInput{
-					Cluster:       &cluster,
-					DesiredStatus: aws.String(ecs.DesiredStatusRunning),
-					ServiceName:   &service,
+					Cluster:     &cluster,
+					ServiceName: &service,
 				}
 				taskArray, err := p.listTasks(ctx, client, input)
 				if err != nil {
@@ -281,8 +280,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 			}
 		} else {
 			input = &ecs.ListTasksInput{
-				Cluster:       &cluster,
-				DesiredStatus: aws.String(ecs.DesiredStatusRunning),
+				Cluster: &cluster,
 			}
 			taskArray, err := p.listTasks(ctx, client, input)
 			if err != nil {
@@ -415,13 +413,13 @@ func (p *Provider) listTasks(ctx context.Context, client *awsClient, input *ecs.
 				logger.Errorf("Unable to describe tasks for %v", page.TaskArns)
 			} else {
 				for _, t := range resp.Tasks {
-					if p.RequireHealthyTask {
-						if aws.StringValue(t.HealthStatus) != ecs.HealthStatusHealthy {
-							logger.Debugf("Task %s not HealthStatus Healthy - skipping", *t.TaskArn)
-							continue
-						}
-					}
 					if aws.StringValue(t.LastStatus) == ecs.DesiredStatusRunning {
+						if p.RequireHealthyTask {
+							if aws.StringValue(t.HealthStatus) != ecs.HealthStatusHealthy {
+								logger.Debugf("Task %s not HealthStatus Healthy - skipping", *t.TaskArn)
+								continue
+							}
+						}
 						tasks = append(tasks, t)
 					}
 				}
