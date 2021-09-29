@@ -81,7 +81,7 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 		m.stores[storeName] = store
 	}
 
-	storesCertificates := make(map[string]map[string]*Certificate)
+	storesCertificates := make(map[string]map[string]*Cert)
 	for _, conf := range certs {
 		if len(conf.Stores) == 0 {
 			if log.GetLevel() >= logrus.DebugLevel {
@@ -92,7 +92,8 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 		}
 		for _, store := range conf.Stores {
 			ctxStore := log.With(ctx, log.Str(log.TLSStoreName, store))
-			if err := conf.Certificate.AppendCertificate(storesCertificates, store); err != nil {
+			cert := Cert{config: &conf.Certificate}
+			if err := cert.AppendCertificate(storesCertificates, store); err != nil {
 				log.FromContext(ctxStore).Errorf("Unable to append certificate %s to store: %v", conf.Certificate.GetTruncatedCertificateName(), err)
 			}
 		}
@@ -177,7 +178,7 @@ func (m *Manager) GetCertificates() []*x509.Certificate {
 	// We iterate over all the certificates.
 	for _, store := range m.stores {
 		if store.DynamicCerts != nil && store.DynamicCerts.Get() != nil {
-			for _, cert := range store.DynamicCerts.Get().(map[string]*Certificate) {
+			for _, cert := range store.DynamicCerts.Get().(map[string]*Cert) {
 				x509Cert, err := x509.ParseCertificate(cert.Certificate.Certificate[0])
 				if err != nil {
 					continue
@@ -210,7 +211,7 @@ func (m *Manager) GetStore(storeName string) *CertificateStore {
 
 func buildCertificateStore(ctx context.Context, tlsStore Store, storename string) (*CertificateStore, error) {
 	certificateStore := NewCertificateStore()
-	certificateStore.DynamicCerts.Set(make(map[string]*Certificate))
+	certificateStore.DynamicCerts.Set(make(map[string]*Cert))
 
 	if tlsStore.DefaultCertificate != nil {
 		cert, err := buildDefaultCertificate(tlsStore.DefaultCertificate)
