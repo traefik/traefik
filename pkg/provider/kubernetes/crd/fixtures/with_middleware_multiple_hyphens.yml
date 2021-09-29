@@ -1,0 +1,31 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: multiple---hyphens
+  namespace: default
+
+spec:
+  stripPrefix:
+    prefixes:
+      - /tobestripped
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test2.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+
+  routes:
+    - match: Host(`foo.com`) && PathPrefix(`/tobestripped`)
+      priority: 12
+      kind: Rule
+      services:
+        - name: whoami
+          port: 80
+      middlewares:
+        - name: multiple---hyphens
