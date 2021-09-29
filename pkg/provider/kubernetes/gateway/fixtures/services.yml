@@ -200,7 +200,6 @@ spec:
       protocol: TCP
       port: 443
 
-
 ---
 kind: Endpoints
 apiVersion: v1

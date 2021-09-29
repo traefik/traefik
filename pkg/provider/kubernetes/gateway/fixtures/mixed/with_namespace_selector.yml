@@ -31,7 +31,10 @@ spec:
       routes:
         kind: HTTPRoute
         namespaces:
-          from: All
+          from: Selector
+          selector:
+            matchLabels:
+              foo: bar
         selector:
           matchLabels:
             app: http-app
@@ -45,7 +48,10 @@ spec:
       routes:
         kind: HTTPRoute
         namespaces:
-          from: All
+          from: Selector
+          selector:
+            matchLabels:
+              foo: bar
         selector:
           matchLabels:
             app: http-app
@@ -54,7 +60,10 @@ spec:
       routes:
         kind: TCPRoute
         namespaces:
-          from: All
+          from: Selector
+          selector:
+            matchLabels:
+              foo: bar
         selector:
           matchLabels:
             app: tcp-app
@@ -69,7 +78,10 @@ spec:
       routes:
         kind: TCPRoute
         namespaces:
-          from: All
+          from: Selector
+          selector:
+            matchLabels:
+              foo: bar
         selector:
           matchLabels:
             app: tcp-app
@@ -81,7 +93,10 @@ spec:
       routes:
         kind: TLSRoute
         namespaces:
-          from: Same
+          from: Selector
+          selector:
+            matchLabels:
+              foo: bar
         selector:
           matchLabels:
             app: tls-app
@@ -175,3 +190,4 @@ spec:
         - serviceName: whoamitcp-bar
           port: 9000
           weight: 1
+

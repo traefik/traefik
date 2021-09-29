@@ -23,7 +23,10 @@ spec:
       routes:
         kind: TLSRoute
         namespaces:
-          from: Same
+          from: Selector
+          selector:
+            matchLabels:
+              foo: bar
         selector:
           matchLabels:
             app: tls-app
@@ -44,7 +47,7 @@ spec:
           weight: 1
       matches:
         - snis:
-          - foo.default
+            - foo.default
 
 ---
 kind: TLSRoute
@@ -62,4 +65,4 @@ spec:
           weight: 1
       matches:
         - snis:
-          - foo.bar
+            - foo.bar
