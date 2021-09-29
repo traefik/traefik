@@ -64,7 +64,7 @@ Defines a username to connect with Redis.
 providers:
   redis:
     # ...
-    usename: "foo"
+    username: "foo"
 ```
 
 ```toml tab="File (TOML)"

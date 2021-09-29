@@ -64,7 +64,7 @@ Defines a username to connect with ZooKeeper.
 providers:
   zooKeeper:
     # ...
-    usename: "foo"
+    username: "foo"
 ```
 
 ```toml tab="File (TOML)"
