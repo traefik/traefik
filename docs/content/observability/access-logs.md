@@ -44,6 +44,8 @@ accessLog:
 
 By default, logs are written using the Common Log Format (CLF).
 To write logs in JSON, use `json` in the `format` option.
+To write logs in Pattern, use `pattern` in the `format` option, then configure
+the custom log format in 'pattern' option.
 If the given format is unsupported, the default (CLF) is used instead.
 
 !!! info "Common Log Format"
@@ -51,6 +53,16 @@ If the given format is unsupported, the default (CLF) is used instead.
     ```html
     <remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <origin_server_HTTP_status> <origin_server_content_size> "<request_referrer>" "<request_user_agent>" <number_of_requests_received_since_Traefik_started> "<Traefik_router_name>" "<Traefik_server_URL>" <request_duration_in_ms>ms
     ```
+
+!!! info "Pattern Log Format"
+
+```yaml tab="File (YAML)"
+# Configuring the pattern logger format, the Field shoud be defined from a given list with the `fields.names`
+accessLog:
+  filePath: "/path/to/access.log"
+  format: pattern
+  pattern: "[$StartUTC] $ClientHost - $RequestMethod $RequestPath $RouterName $RequestProtocol $Duration\n"
+```
 
 ### `bufferingSize`
 

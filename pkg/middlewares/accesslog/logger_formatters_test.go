@@ -161,3 +161,54 @@ func Test_toLog(t *testing.T) {
 		})
 	}
 }
+
+func TestPatternLogFormatter_Format(t *testing.T) {
+	clf := PatternLogFormatter{}
+	clf.pattern = "[$StartUTC] $ClientHost - '$RequestMethod' $RequestPath $RouterName $RequestProtocol $Duration\n"
+
+	testCases := []struct {
+		name        string
+		data        map[string]interface{}
+		expectedLog string
+	}{
+		{
+			name: "OriginStatus & OriginContentSize are nil",
+			data: map[string]interface{}{
+				StartUTC:               time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
+				Duration:               123 * time.Second,
+				ClientHost:             "10.0.0.1",
+				ClientUsername:         "Client",
+				RequestMethod:          http.MethodGet,
+				RequestPath:            "/foo",
+				RequestProtocol:        "http",
+				OriginStatus:           nil,
+				OriginContentSize:      nil,
+				RequestRefererHeader:   "",
+				RequestUserAgentHeader: "",
+				RequestCount:           0,
+				RouterName:             "",
+				ServiceURL:             "",
+			},
+			expectedLog: `[10/Nov/2009:23:00:00 +0000] 10.0.0.1 - 'GET' /foo - http 123000ms
+`,
+		},
+	}
+
+	// Set timezone to Etc/GMT+9 to have a constant behavior
+	os.Setenv("TZ", "Etc/GMT+9")
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			entry := &logrus.Entry{Data: test.data}
+
+			raw, err := clf.Format(entry)
+			assert.NoError(t, err)
+
+			assert.Equal(t, test.expectedLog, string(raw))
+		})
+	}
+}
+
