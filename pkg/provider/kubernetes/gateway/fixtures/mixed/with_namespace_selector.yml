@@ -31,7 +31,10 @@ spec:
       routes:
         kind: HTTPRoute
         namespaces:
-          from: Same
+          from: Selector
+          selector:
+            matchLabels:
+              foo: bar
         selector:
           matchLabels:
             app: http-app
@@ -45,7 +48,10 @@ spec:
       routes:
         kind: HTTPRoute
         namespaces:
-          from: Same
+          from: Selector
+          selector:
+            matchLabels:
+              foo: bar
         selector:
           matchLabels:
             app: http-app
@@ -54,7 +60,10 @@ spec:
       routes:
         kind: TCPRoute
         namespaces:
-          from: Same
+          from: Selector
+          selector:
+            matchLabels:
+              foo: bar
         selector:
           matchLabels:
             app: tcp-app
@@ -69,7 +78,10 @@ spec:
       routes:
         kind: TCPRoute
         namespaces:
-          from: Same
+          from: Selector
+          selector:
+            matchLabels:
+              foo: bar
         selector:
           matchLabels:
             app: tcp-app
@@ -81,7 +93,10 @@ spec:
       routes:
         kind: TLSRoute
         namespaces:
-          from: Same
+          from: Selector
+          selector:
+            matchLabels:
+              foo: bar
         selector:
           matchLabels:
             app: tls-app
@@ -90,7 +105,7 @@ spec:
 kind: HTTPRoute
 apiVersion: networking.x-k8s.io/v1alpha1
 metadata:
-  name: http-app-1
+  name: http-app-default
   namespace: default
   labels:
     app: http-app
@@ -105,7 +120,7 @@ spec:
 kind: TCPRoute
 apiVersion: networking.x-k8s.io/v1alpha1
 metadata:
-  name: tcp-app-1
+  name: tcp-app-default
   namespace: default
   labels:
     app: tcp-app
@@ -120,7 +135,7 @@ spec:
 kind: TLSRoute
 apiVersion: networking.x-k8s.io/v1alpha1
 metadata:
-  name: tls-app-1
+  name: tls-app-default
   namespace: default
   labels:
     app: tls-app
@@ -130,3 +145,49 @@ spec:
         - serviceName: whoamitcp
           port: 9000
           weight: 1
+
+---
+kind: HTTPRoute
+apiVersion: networking.x-k8s.io/v1alpha1
+metadata:
+  name: http-app-bar
+  namespace: bar
+  labels:
+    app: http-app
+spec:
+  rules:
+    - forwardTo:
+        - serviceName: whoami-bar
+          port: 80
+          weight: 1
+
+---
+kind: TCPRoute
+apiVersion: networking.x-k8s.io/v1alpha1
+metadata:
+  name: tcp-app-bar
+  namespace: bar
+  labels:
+    app: tcp-app
+spec:
+  rules:
+    - forwardTo:
+        - serviceName: whoamitcp-bar
+          port: 9000
+          weight: 1
+
+---
+kind: TLSRoute
+apiVersion: networking.x-k8s.io/v1alpha1
+metadata:
+  name: tls-app-bar
+  namespace: bar
+  labels:
+    app: tls-app
+spec:
+  rules:
+    - forwardTo:
+        - serviceName: whoamitcp-bar
+          port: 9000
+          weight: 1
+
