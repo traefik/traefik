@@ -1,17 +1,23 @@
 package tls
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/tls/generate"
+	"golang.org/x/crypto/ocsp"
 )
 
 var (
@@ -46,11 +52,22 @@ var (
 	}
 )
 
+// OCSPConfig configures how OCSP is handled.
+type OCSPConfig struct {
+	DisableStapling bool `json:"disableStapling,omitempty" toml:"disableStapling,omitempty" yaml:"disableStapling,omitempty"`
+}
+
 // Certificate holds a SSL cert/key pair
 // Certs and Key could be either a file path, or the file content itself.
 type Certificate struct {
 	CertFile FileOrContent `json:"certFile,omitempty" toml:"certFile,omitempty" yaml:"certFile,omitempty"`
 	KeyFile  FileOrContent `json:"keyFile,omitempty" toml:"keyFile,omitempty" yaml:"keyFile,omitempty"`
+	OCSP     OCSPConfig    `json:"ocsp,omitempty" toml:"ocsp,omitempty" yaml:"ocsp,omitempty" label:"allowEmpty" file:"allowEmpty"`
+
+	Certificate  *tls.Certificate `json:"-" toml:"-" yaml:"-"`
+	SANs         []string         `json:"-" toml:"-" yaml:"-"`
+	OCSPServer   []string         `json:"-" toml:"-" yaml:"-"`
+	OCSPResponse *ocsp.Response   `json:"-" toml:"-" yaml:"-"`
 }
 
 // Certificates defines traefik certificates type
@@ -104,7 +121,6 @@ func (f FileOrContent) Read() ([]byte, error) {
 // CreateTLSConfig creates a TLS config from Certificate structures.
 func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, error) {
 	config := &tls.Config{}
-	domainsCertificates := make(map[string]map[string]*tls.Certificate)
 
 	if c.isEmpty() {
 		config.Certificates = []tls.Certificate{}
@@ -116,18 +132,21 @@ func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, erro
 
 		config.Certificates = append(config.Certificates, *cert)
 	} else {
-		for _, certificate := range *c {
-			err := certificate.AppendCertificate(domainsCertificates, entryPointName)
-			if err != nil {
-				log.Errorf("Unable to add a certificate to the entryPoint %q : %v", entryPointName, err)
-				continue
-			}
-
-			for _, certDom := range domainsCertificates {
-				for _, cert := range certDom {
-					config.Certificates = append(config.Certificates, *cert)
+		config.GetCertificate = func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+			for _, certificate := range *c {
+				for _, domainName := range certificate.SANs {
+					if MatchDomain(hello.ServerName, domainName) {
+						return certificate.Certificate, nil
+					}
 				}
 			}
+
+			cert, err := generate.DefaultCertificate()
+			if err != nil {
+				return nil, err
+			}
+
+			return cert, nil
 		}
 	}
 	return config, nil
@@ -149,7 +168,7 @@ func (c *Certificates) isEmpty() bool {
 }
 
 // AppendCertificate appends a Certificate to a certificates map keyed by entrypoint.
-func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certificate, ep string) error {
+func (c *Certificate) AppendCertificate(certs map[string]map[string]*Certificate, ep string) error {
 	certContent, err := c.CertFile.Read()
 	if err != nil {
 		return fmt.Errorf("unable to read CertFile : %w", err)
@@ -189,7 +208,7 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 
 	certExists := false
 	if certs[ep] == nil {
-		certs[ep] = make(map[string]*tls.Certificate)
+		certs[ep] = make(map[string]*Certificate)
 	} else {
 		for domains := range certs[ep] {
 			if domains == certKey {
@@ -198,14 +217,96 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 			}
 		}
 	}
+
 	if certExists {
 		log.Debugf("Skipping addition of certificate for domain(s) %q, to EntryPoint %s, as it already exists for this Entrypoint.", certKey, ep)
 	} else {
 		log.Debugf("Adding certificate for domain(s) %s", certKey)
-		certs[ep][certKey] = &tlsCert
+
+		certs[ep][certKey] = &Certificate{
+			Certificate: &tlsCert,
+			SANs:        SANs,
+			OCSPServer:  parsedCert.OCSPServer,
+			OCSP: OCSPConfig{
+				DisableStapling: false,
+			},
+		}
 	}
 
 	return err
+}
+
+func getOCSPForCert(certificate *Certificate, issuedCertificate *x509.Certificate, issuerCertificate *x509.Certificate) ([]byte, *ocsp.Response, error) {
+	if len(certificate.OCSPServer) == 0 {
+		return nil, nil, fmt.Errorf("no OCSP server specified in certificate")
+	}
+
+	respURL := certificate.OCSPServer[0]
+	ocspReq, err := ocsp.CreateRequest(issuedCertificate, issuerCertificate, nil)
+	if err != nil {
+		return nil, nil, fmt.Errorf("creating OCSP request: %w", err)
+	}
+
+	reader := bytes.NewReader(ocspReq)
+	req, err := http.Post(respURL, "application/ocsp-request", reader)
+	if err != nil {
+		return nil, nil, fmt.Errorf("making OCSP request: %w", err)
+	}
+	defer req.Body.Close()
+
+	ocspResBytes, err := ioutil.ReadAll(io.LimitReader(req.Body, 1024*1024))
+	if err != nil {
+		return nil, nil, fmt.Errorf("reading OCSP response: %w", err)
+	}
+
+	ocspRes, err := ocsp.ParseResponse(ocspResBytes, issuerCertificate)
+	if err != nil {
+		return nil, nil, fmt.Errorf("parsing OCSP response: %w", err)
+	}
+
+	return ocspResBytes, ocspRes, nil
+}
+
+// StapleOCSP populates the ocsp response of the certificate if needed and not disabled by configuration.
+func (c *Certificate) StapleOCSP() error {
+	if c.OCSP.DisableStapling {
+		return nil
+	}
+
+	ocspResponse := c.OCSPResponse
+	if ocspResponse != nil && time.Now().Before(ocspResponse.ThisUpdate.Add(ocspResponse.NextUpdate.Sub(ocspResponse.ThisUpdate)/2)) {
+		return nil
+	}
+
+	leaf, _ := x509.ParseCertificate(c.Certificate.Certificate[0])
+	var issuerCertificate *x509.Certificate
+	if len(c.Certificate.Certificate) == 1 {
+		issuerCertificate = leaf
+	} else {
+		ic, err := x509.ParseCertificate(c.Certificate.Certificate[1])
+		if err != nil {
+			return fmt.Errorf("cannot parse issuer certificate for %v: %w", c.SANs, err)
+		}
+
+		issuerCertificate = ic
+	}
+
+	ocspBytes, ocspResp, ocspErr := getOCSPForCert(c, leaf, issuerCertificate)
+	if ocspErr != nil {
+		return fmt.Errorf("no OCSP stapling for %v: %w", c.SANs, ocspErr)
+	}
+
+	log.WithoutContext().Debugf("ocsp response: %v", ocspResp)
+	if ocspResp.Status == ocsp.Good {
+		if ocspResp.NextUpdate.After(leaf.NotAfter) {
+			return fmt.Errorf("invalid: OCSP response for %v valid after certificate expiration (%s)", c.SANs, leaf.NotAfter.Sub(ocspResp.NextUpdate))
+		}
+
+		c.Certificate.OCSPStaple = ocspBytes
+		c.OCSPResponse = ocspResp
+	}
+
+	return nil
 }
 
 // GetCertificate retrieves Certificate as tls.Certificate.
@@ -266,6 +367,9 @@ func (c *Certificates) Set(value string) error {
 		*c = append(*c, Certificate{
 			CertFile: FileOrContent(files[0]),
 			KeyFile:  FileOrContent(files[1]),
+			OCSP: OCSPConfig{
+				DisableStapling: false,
+			},
 		})
 	}
 	return nil
