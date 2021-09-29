@@ -928,16 +928,16 @@ Specifies the header name that will be used to store the trace ID.
 Settings for Instana. (Default: ```false```)
 
 `--tracing.instana.enableautoprofile`:  
-Enable automatic profiling for the Traefik process. (Default: ```false```)
+Enables automatic profiling for the Traefik process. (Default: ```false```)
 
 `--tracing.instana.localagenthost`:  
-Set the Instana Agent host.
+Sets the Instana Agent host.
 
 `--tracing.instana.localagentport`:  
-Set the Instana Agent port. (Default: ```42699```)
+Sets the Instana Agent port. (Default: ```42699```)
 
 `--tracing.instana.loglevel`:  
-Set the log level for the Instana tracer. ('error','warn','info','debug') (Default: ```info```)
+Sets the log level for the Instana tracer. ('error','warn','info','debug') (Default: ```info```)
 
 `--tracing.jaeger`:  
 Settings for Jaeger. (Default: ```false```)

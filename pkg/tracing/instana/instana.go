@@ -13,10 +13,10 @@ const Name = "instana"
 
 // Config provides configuration settings for an instana tracer.
 type Config struct {
-	LocalAgentHost    string `description:"Set the Instana Agent host." json:"localAgentHost,omitempty" toml:"localAgentHost,omitempty" yaml:"localAgentHost,omitempty"`
-	LocalAgentPort    int    `description:"Set the Instana Agent port." json:"localAgentPort,omitempty" toml:"localAgentPort,omitempty" yaml:"localAgentPort,omitempty"`
-	LogLevel          string `description:"Set the log level for the Instana tracer. ('error','warn','info','debug')" json:"logLevel,omitempty" toml:"logLevel,omitempty" yaml:"logLevel,omitempty" export:"true"`
-	EnableAutoProfile bool   `description:"Enable automatic profiling for the Traefik process." json:"enableAutoProfile,omitempty" toml:"enableAutoProfile,omitempty" yaml:"enableAutoProfile,omitempty" export:"true"`
+	LocalAgentHost    string `description:"Sets the Instana Agent host." json:"localAgentHost,omitempty" toml:"localAgentHost,omitempty" yaml:"localAgentHost,omitempty"`
+	LocalAgentPort    int    `description:"Sets the Instana Agent port." json:"localAgentPort,omitempty" toml:"localAgentPort,omitempty" yaml:"localAgentPort,omitempty"`
+	LogLevel          string `description:"Sets the log level for the Instana tracer. ('error','warn','info','debug')" json:"logLevel,omitempty" toml:"logLevel,omitempty" yaml:"logLevel,omitempty" export:"true"`
+	EnableAutoProfile bool   `description:"Enables automatic profiling for the Traefik process." json:"enableAutoProfile,omitempty" toml:"enableAutoProfile,omitempty" yaml:"enableAutoProfile,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.

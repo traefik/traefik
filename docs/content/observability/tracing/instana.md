@@ -64,7 +64,7 @@ tracing:
 
 _Required, Default="info"_
 
-Set the Instana tracer log level.
+Sets the Instana tracer log level.
 
 Valid values for logLevel field are:
 
@@ -93,7 +93,7 @@ tracing:
 
 _Required, Default=false_
 
-Enable [automatic profiling](https://www.instana.com/docs/ecosystem/go/#instana-autoprofile) for the Traefik process.
+Enables [automatic profiling](https://www.instana.com/docs/ecosystem/go/#instana-autoprofile) for the Traefik process.
 
 ```yaml tab="File (YAML)"
 tracing:
