@@ -64,7 +64,7 @@ Defines a username with which to connect to etcd.
 providers:
   etcd:
     # ...
-    usename: "foo"
+    username: "foo"
 ```
 
 ```toml tab="File (TOML)"
