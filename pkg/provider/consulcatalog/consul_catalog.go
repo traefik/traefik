@@ -46,6 +46,7 @@ type Provider struct {
 	Constraints       string          `description:"Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
 	Endpoint          *EndpointConfig `description:"Consul endpoint settings" json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
 	Prefix            string          `description:"Prefix for consul service tags. Default 'traefik'" json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
+	EnableBlockingQuery bool 		  `description:"Enable Consul Service Check Blocking Query." json:"enableBlockingQuery,omitempty" toml:"enableBlockingQuery,omitempty" yaml:"enableBlockingQuery,omitempty" export:"true"`
 	RefreshInterval   ptypes.Duration `description:"Interval for check Consul API. Default 15s" json:"refreshInterval,omitempty" toml:"refreshInterval,omitempty" yaml:"refreshInterval,omitempty" export:"true"`
 	RequireConsistent bool            `description:"Forces the read to be fully consistent." json:"requireConsistent,omitempty" toml:"requireConsistent,omitempty" yaml:"requireConsistent,omitempty" export:"true"`
 	Stale             bool            `description:"Use stale consistency for catalog reads." json:"stale,omitempty" toml:"stale,omitempty" yaml:"stale,omitempty" export:"true"`
@@ -152,19 +153,45 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				return fmt.Errorf("failed to get consul catalog data: %w", err)
 			}
 
-			// Periodic refreshes.
-			ticker := time.NewTicker(time.Duration(p.RefreshInterval))
-			defer ticker.Stop()
+			var ticker *time.Ticker
+			if !p.EnableBlockingQuery {
+				// Periodic refreshes.
+				ticker = time.NewTicker(time.Duration(p.RefreshInterval))
+				defer ticker.Stop()
+			}
+
+			var lastIndex uint64
 
 			for {
 				select {
 				case <-routineCtx.Done():
 					return nil
-				case <-ticker.C:
 				case certInfo = <-p.certChan:
 					if certInfo.err != nil {
 						return backoff.Permanent(err)
 					}
+				default:
+					if p.EnableBlockingQuery {
+						// Watch monitors the consul health checks and then load
+						// configuration from the configurationChan.
+						// https://www.consul.io/docs/dynamic-app-config/watches
+						q := &api.QueryOptions{RequireConsistent: true, WaitIndex: lastIndex}
+						_, meta, err := p.client.Health().State("any", q)
+
+						if err != nil {
+							logger.Printf("[WARN] consul: Error fetching health state. %v", err)
+							time.Sleep(time.Second)
+							continue
+						}
+
+						// remember the last state and wait for the next change
+						lastIndex = meta.LastIndex
+					} else {
+						select {
+						case <- ticker.C:
+						}
+					}
+				}
 				}
 				err = p.loadConfiguration(ctxLog, certInfo, configurationChan)
 				if err != nil {
