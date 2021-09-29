@@ -192,7 +192,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 						}
 					}
 				}
-				}
 				err = p.loadConfiguration(ctxLog, certInfo, configurationChan)
 				if err != nil {
 					return fmt.Errorf("failed to refresh consul catalog data: %w", err)
