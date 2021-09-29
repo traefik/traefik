@@ -1,4 +1,12 @@
 ---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: bar
+  labels:
+    foo: bar
+
+---
 kind: GatewayClass
 apiVersion: networking.x-k8s.io/v1alpha1
 metadata:

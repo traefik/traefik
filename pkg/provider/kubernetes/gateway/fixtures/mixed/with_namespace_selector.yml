@@ -1,4 +1,12 @@
 ---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: bar
+  labels:
+    foo: bar
+
+---
 apiVersion: v1
 kind: Secret
 metadata:
