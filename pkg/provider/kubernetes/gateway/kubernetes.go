@@ -492,8 +492,23 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 }
 
 func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha1.Listener, gateway *v1alpha1.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
-	selector := getRouteBindingSelectorSelector(listener.Routes.Selector)
-	namespace, err := getRouteBindingSelectorNamespace(gateway.Namespace, listener.Routes.Namespaces)
+	selector := labels.Everything()
+
+	if listener.Routes.Selector != nil {
+		var err error
+		selector, err = metav1.LabelSelectorAsSelector(listener.Routes.Selector)
+		if err != nil {
+			return []metav1.Condition{{
+				Type:               string(v1alpha1.ListenerConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(v1alpha1.ListenerReasonInvalidRoutesRef),
+				Message:            fmt.Sprintf("Invalid routes selector: %v", err),
+			}}
+		}
+	}
+
+	namespaces, err := getRouteBindingSelectorNamespace(client, gateway.Namespace, listener.Routes.Namespaces)
 	if err != nil {
 		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
 		return []metav1.Condition{{
@@ -501,11 +516,11 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha
 			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(v1alpha1.ListenerReasonInvalidRoutesRef),
-			Message:            fmt.Sprintf("Invalid RouteBindingSelector: %v", err),
+			Message:            fmt.Sprintf("Invalid route namespaces selector: %v", err),
 		}}
 	}
 
-	httpRoutes, err := client.GetHTTPRoutes(namespace, selector)
+	httpRoutes, err := client.GetHTTPRoutes(namespaces, selector)
 	if err != nil {
 		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
 		return []metav1.Condition{{
@@ -513,7 +528,7 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha
 			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(v1alpha1.ListenerReasonInvalidRoutesRef),
-			Message:            fmt.Sprintf("Cannot fetch %ss for namespace %q and matchLabels %v", listener.Routes.Kind, namespace, listener.Routes.Selector.MatchLabels),
+			Message:            fmt.Sprintf("Cannot fetch %ss: %v", listener.Routes.Kind, err),
 		}}
 	}
 
@@ -584,7 +599,7 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha
 			if len(routeRule.ForwardTo) == 1 && isInternalService(routeRule.ForwardTo[0]) {
 				router.Service = routeRule.ForwardTo[0].BackendRef.Name
 			} else {
-				wrrService, subServices, err := loadServices(client, namespace, routeRule.ForwardTo)
+				wrrService, subServices, err := loadServices(client, httpRoute.Namespace, routeRule.ForwardTo)
 				if err != nil {
 					// update "ResolvedRefs" status true with "DroppedRoutes" reason
 					conditions = append(conditions, metav1.Condition{
@@ -592,7 +607,7 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha
 						Status:             metav1.ConditionFalse,
 						LastTransitionTime: metav1.Now(),
 						Reason:             string(v1alpha1.ListenerReasonDegradedRoutes),
-						Message:            fmt.Sprintf("Cannot load service from %s %s/%s : %v", listener.Routes.Kind, namespace, httpRoute.Name, err),
+						Message:            fmt.Sprintf("Cannot load service from %s %s/%s : %v", listener.Routes.Kind, httpRoute.Namespace, httpRoute.Name, err),
 					})
 
 					// TODO update the RouteStatus condition / deduplicate conditions on listener
@@ -618,8 +633,23 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha
 }
 
 func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener v1alpha1.Listener, gateway *v1alpha1.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
-	selector := getRouteBindingSelectorSelector(listener.Routes.Selector)
-	namespace, err := getRouteBindingSelectorNamespace(gateway.Namespace, listener.Routes.Namespaces)
+	selector := labels.Everything()
+
+	if listener.Routes.Selector != nil {
+		var err error
+		selector, err = metav1.LabelSelectorAsSelector(listener.Routes.Selector)
+		if err != nil {
+			return []metav1.Condition{{
+				Type:               string(v1alpha1.ListenerConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(v1alpha1.ListenerReasonInvalidRoutesRef),
+				Message:            fmt.Sprintf("Invalid routes selector: %v", err),
+			}}
+		}
+	}
+
+	namespaces, err := getRouteBindingSelectorNamespace(client, gateway.Namespace, listener.Routes.Namespaces)
 	if err != nil {
 		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
 		return []metav1.Condition{{
@@ -627,11 +657,11 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener v1alpha1.
 			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(v1alpha1.ListenerReasonInvalidRoutesRef),
-			Message:            fmt.Sprintf("Invalid RouteBindingSelector: %v", err),
+			Message:            fmt.Sprintf("Invalid route namespaces selector: %v", err),
 		}}
 	}
 
-	tcpRoutes, err := client.GetTCPRoutes(namespace, selector)
+	tcpRoutes, err := client.GetTCPRoutes(namespaces, selector)
 	if err != nil {
 		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
 		return []metav1.Condition{{
@@ -639,7 +669,7 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener v1alpha1.
 			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(v1alpha1.ListenerReasonInvalidRoutesRef),
-			Message:            fmt.Sprintf("Cannot fetch %ss for namespace %q and matchLabels %v", listener.Routes.Kind, namespace, listener.Routes.Selector.MatchLabels),
+			Message:            fmt.Sprintf("Cannot fetch %ss: %v", listener.Routes.Kind, err),
 		}}
 	}
 
@@ -695,7 +725,7 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener v1alpha1.
 				continue
 			}
 
-			wrrService, subServices, err := loadTCPServices(client, namespace, routeRule.ForwardTo)
+			wrrService, subServices, err := loadTCPServices(client, tcpRoute.Namespace, routeRule.ForwardTo)
 			if err != nil {
 				// update "ResolvedRefs" status true with "DroppedRoutes" reason
 				conditions = append(conditions, metav1.Condition{
@@ -703,7 +733,7 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener v1alpha1.
 					Status:             metav1.ConditionFalse,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(v1alpha1.ListenerReasonDegradedRoutes),
-					Message:            fmt.Sprintf("Cannot load service from %s %s/%s : %v", listener.Routes.Kind, namespace, tcpRoute.Name, err),
+					Message:            fmt.Sprintf("Cannot load service from %s %s/%s: %v", listener.Routes.Kind, tcpRoute.Namespace, tcpRoute.Name, err),
 				})
 
 				// TODO update the RouteStatus condition / deduplicate conditions on listener
@@ -728,8 +758,23 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener v1alpha1.
 }
 
 func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha1.Listener, gateway *v1alpha1.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
-	selector := getRouteBindingSelectorSelector(listener.Routes.Selector)
-	namespace, err := getRouteBindingSelectorNamespace(gateway.Namespace, listener.Routes.Namespaces)
+	selector := labels.Everything()
+
+	if listener.Routes.Selector != nil {
+		var err error
+		selector, err = metav1.LabelSelectorAsSelector(listener.Routes.Selector)
+		if err != nil {
+			return []metav1.Condition{{
+				Type:               string(v1alpha1.ListenerConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(v1alpha1.ListenerReasonInvalidRoutesRef),
+				Message:            fmt.Sprintf("Invalid routes selector: %v", err),
+			}}
+		}
+	}
+
+	namespaces, err := getRouteBindingSelectorNamespace(client, gateway.Namespace, listener.Routes.Namespaces)
 	if err != nil {
 		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
 		return []metav1.Condition{{
@@ -737,11 +782,11 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha1.
 			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(v1alpha1.ListenerReasonInvalidRoutesRef),
-			Message:            fmt.Sprintf("Invalid RouteBindingSelector: %v", err),
+			Message:            fmt.Sprintf("Invalid route namespaces selector: %v", err),
 		}}
 	}
 
-	tlsRoutes, err := client.GetTLSRoutes(namespace, selector)
+	tlsRoutes, err := client.GetTLSRoutes(namespaces, selector)
 	if err != nil {
 		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
 		return []metav1.Condition{{
@@ -749,7 +794,7 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha1.
 			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(v1alpha1.ListenerReasonInvalidRoutesRef),
-			Message:            fmt.Sprintf("Cannot fetch %ss for namespace %q and matchLabels %v", listener.Routes.Kind, namespace, listener.Routes.Selector.MatchLabels),
+			Message:            fmt.Sprintf("Cannot fetch %ss: %v", listener.Routes.Kind, err),
 		}}
 	}
 
@@ -807,7 +852,7 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha1.
 				continue
 			}
 
-			wrrService, subServices, err := loadTCPServices(client, namespace, routeRule.ForwardTo)
+			wrrService, subServices, err := loadTCPServices(client, tlsRoute.Namespace, routeRule.ForwardTo)
 			if err != nil {
 				// update "ResolvedRefs" status true with "DroppedRoutes" reason
 				conditions = append(conditions, metav1.Condition{
@@ -815,7 +860,7 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha1.
 					Status:             metav1.ConditionFalse,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(v1alpha1.ListenerReasonDegradedRoutes),
-					Message:            fmt.Sprintf("Cannot load service from %s %s/%s : %v", listener.Routes.Kind, namespace, tlsRoute.Name, err),
+					Message:            fmt.Sprintf("Cannot load service from %s %s/%s : %v", listener.Routes.Kind, tlsRoute.Namespace, tlsRoute.Name, err),
 				})
 
 				// TODO update the RouteStatus condition / deduplicate conditions on listener
@@ -839,30 +884,28 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha1.
 	return conditions
 }
 
-func getRouteBindingSelectorSelector(s *metav1.LabelSelector) labels.Selector {
-	if s == nil {
-		return labels.Everything()
+func getRouteBindingSelectorNamespace(client Client, gatewayNamespace string, routeNamespaces *v1alpha1.RouteNamespaces) ([]string, error) {
+	if routeNamespaces == nil || routeNamespaces.From == nil {
+		return []string{gatewayNamespace}, nil
 	}
 
-	return labels.SelectorFromSet(s.MatchLabels)
-}
+	switch *routeNamespaces.From {
+	case v1alpha1.RouteSelectAll:
+		return []string{metav1.NamespaceAll}, nil
 
-func getRouteBindingSelectorNamespace(gatewayNamespace string, routeNamespaces *v1alpha1.RouteNamespaces) (string, error) {
-	namespace := gatewayNamespace
+	case v1alpha1.RouteSelectSame:
+		return []string{gatewayNamespace}, nil
 
-	if routeNamespaces != nil && routeNamespaces.From != nil {
-		switch *routeNamespaces.From {
-		case v1alpha1.RouteSelectAll:
-			namespace = metav1.NamespaceAll
-		case v1alpha1.RouteSelectSame:
-			// Default values of namespace and selector
-		// TODO: support v1alpha1.RouteSelectSelector
-		default:
-			return "", fmt.Errorf("unsupported RouteSelectType: %q", *routeNamespaces.From)
+	case v1alpha1.RouteSelectSelector:
+		selector, err := metav1.LabelSelectorAsSelector(routeNamespaces.Selector)
+		if err != nil {
+			return nil, fmt.Errorf("malformed selector: %w", err)
 		}
+
+		return client.GetNamespaces(selector)
 	}
 
-	return namespace, nil
+	return nil, fmt.Errorf("unsupported RouteSelectType: %q", *routeNamespaces.From)
 }
 
 func (p *Provider) makeGatewayStatus(listenerStatuses []v1alpha1.ListenerStatus) (v1alpha1.GatewayStatus, error) {
