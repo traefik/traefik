@@ -86,7 +86,7 @@ tracing:
 
 _Required, Default=1.0_
 
-Rate between 0.0 and 1.0 of requests to trace.
+The proportion of requests to trace, specified between 0.0 and 1.0.
 
 ```yaml tab="File (YAML)"
 tracing:
