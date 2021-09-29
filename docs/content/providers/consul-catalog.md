@@ -38,6 +38,29 @@ See the dedicated section in [routing](../routing/providers/consul-catalog.md).
 
 ## Provider Configuration
 
+### `enableBlockingQuery`
+
+_Optional, Default=false_
+
+Enable blocking query is used to wait for a potential change using long polling.
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    enableBlockingQuery: true
+    # ...
+```
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  enableBlockingQuery = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.enableBlockingQuery=true
+# ...
+```
+
 ### `refreshInterval`
 
 _Optional, Default=15s_
