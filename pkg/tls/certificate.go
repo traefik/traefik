@@ -54,7 +54,7 @@ type OCSPConfig struct {
 // +k8s:deepcopy-gen=true
 
 // Certificate holds a SSL cert/key pair
-// Certs and Key could be either a file path, or the file content itself.
+// CertificateCollection and Key could be either a file path, or the file content itself.
 type Certificate struct {
 	CertFile FileOrContent `json:"certFile,omitempty" toml:"certFile,omitempty" yaml:"certFile,omitempty"`
 	KeyFile  FileOrContent `json:"keyFile,omitempty" toml:"keyFile,omitempty" yaml:"keyFile,omitempty"`
@@ -63,10 +63,10 @@ type Certificate struct {
 }
 
 // Certificates defines traefik Certificates type
-// Certs and Keys could be either a file path, or the file content itself.
+// CertificateCollection and Keys could be either a file path, or the file content itself.
 type Certificates []Certificate
 
-// GetCertificates retrieves the Certs as slice of tls.Certificate.
+// GetCertificates retrieves the CertificateCollection as slice of tls.Certificate.
 func (c Certificates) GetCertificates() []tls.Certificate {
 	var certs []tls.Certificate
 
