@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"context"
 	"time"
 
 	kitlog "github.com/go-kit/kit/log"
@@ -70,7 +71,7 @@ func initStatsdTicker(config *types.Statsd) *time.Ticker {
 	report := time.NewTicker(pushInterval)
 
 	safe.Go(func() {
-		statsdClient.SendLoop(report.C, "udp", address)
+		statsdClient.SendLoop(context.Background(), report.C, "udp", address)
 	})
 
 	return report
