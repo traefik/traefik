@@ -3,8 +3,8 @@ package acme
 import (
 	"crypto/tls"
 
-	"github.com/go-acme/lego/v3/challenge"
-	"github.com/go-acme/lego/v3/challenge/tlsalpn01"
+	"github.com/go-acme/lego/v4/challenge"
+	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/traefik/traefik/log"
 	"github.com/traefik/traefik/types"
 )
