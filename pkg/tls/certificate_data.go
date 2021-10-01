@@ -13,73 +13,22 @@ import (
 	"time"
 
 	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/tls/generate"
 	"golang.org/x/crypto/ocsp"
 )
 
-// Cert holds runtime data for runtime TLS certificate handling.
-type Cert struct {
+// CertificateData holds runtime data for runtime TLS certificate handling.
+type CertificateData struct {
 	config       *Certificate
 	Certificate  *tls.Certificate
 	OCSPServer   []string
 	OCSPResponse *ocsp.Response
 }
 
-// Certs defines traefik Certs type
-// Certs and Keys could be either a file path, or the file content itself.
-type Certs []Cert
+// CertificateCollection defines traefik CertificateCollection type.
+type CertificateCollection []CertificateData
 
-// CreateTLSConfig creates a TLS config from Certificate structures.
-func (c *Certs) CreateTLSConfig(entryPointName string) (*tls.Config, error) {
-	config := &tls.Config{}
-
-	if c.isEmpty() {
-		config.Certificates = []tls.Certificate{}
-
-		cert, err := generate.DefaultCertificate()
-		if err != nil {
-			return nil, err
-		}
-
-		config.Certificates = append(config.Certificates, *cert)
-	} else {
-		config.GetCertificate = func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-			for _, certificate := range *c {
-				for _, domainName := range certificate.config.SANs {
-					if MatchDomain(hello.ServerName, domainName) {
-						return certificate.Certificate, nil
-					}
-				}
-			}
-
-			cert, err := generate.DefaultCertificate()
-			if err != nil {
-				return nil, err
-			}
-
-			return cert, nil
-		}
-	}
-	return config, nil
-}
-
-// isEmpty checks if the Certs list is empty.
-func (c *Certs) isEmpty() bool {
-	if len(*c) == 0 {
-		return true
-	}
-	var key int
-	for _, cert := range *c {
-		if len(cert.config.CertFile.String()) != 0 && len(cert.config.KeyFile.String()) != 0 {
-			break
-		}
-		key++
-	}
-	return key == len(*c)
-}
-
-// AppendCertificate appends a Cert to a certificates map keyed by entrypoint.
-func (c *Cert) AppendCertificate(certs map[string]map[string]*Cert, ep string) error {
+// AppendCertificate appends a CertificateData to a certificates map keyed by entrypoint.
+func (c *CertificateData) AppendCertificate(certs map[string]map[string]*CertificateData, ep string) error {
 	certContent, err := c.config.CertFile.Read()
 	if err != nil {
 		return fmt.Errorf("unable to read CertFile : %w", err)
@@ -119,7 +68,7 @@ func (c *Cert) AppendCertificate(certs map[string]map[string]*Cert, ep string) e
 
 	certExists := false
 	if certs[ep] == nil {
-		certs[ep] = make(map[string]*Cert)
+		certs[ep] = make(map[string]*CertificateData)
 	} else {
 		for domains := range certs[ep] {
 			if domains == certKey {
@@ -134,7 +83,7 @@ func (c *Cert) AppendCertificate(certs map[string]map[string]*Cert, ep string) e
 	} else {
 		log.Debugf("Adding certificate for domain(s) %s", certKey)
 
-		certs[ep][certKey] = &Cert{
+		certs[ep][certKey] = &CertificateData{
 			Certificate: &tlsCert,
 			OCSPServer:  parsedCert.OCSPServer,
 			config: &Certificate{
@@ -149,7 +98,7 @@ func (c *Cert) AppendCertificate(certs map[string]map[string]*Cert, ep string) e
 	return err
 }
 
-func getOCSPForCert(certificate *Cert, issuedCertificate *x509.Certificate, issuerCertificate *x509.Certificate) ([]byte, *ocsp.Response, error) {
+func getOCSPForCert(certificate *CertificateData, issuedCertificate *x509.Certificate, issuerCertificate *x509.Certificate) ([]byte, *ocsp.Response, error) {
 	if len(certificate.OCSPServer) == 0 {
 		return nil, nil, fmt.Errorf("no OCSP server specified in certificate")
 	}
@@ -181,7 +130,7 @@ func getOCSPForCert(certificate *Cert, issuedCertificate *x509.Certificate, issu
 }
 
 // StapleOCSP populates the ocsp response of the certificate if needed and not disabled by configuration.
-func (c *Cert) StapleOCSP() error {
+func (c *CertificateData) StapleOCSP() error {
 	if c.config.OCSP.DisableStapling {
 		return nil
 	}
@@ -224,7 +173,7 @@ func (c *Cert) StapleOCSP() error {
 
 // String is the method to format the flag's value, part of the flag.Value interface.
 // The String method's output will be used in diagnostics.
-func (c *Certs) String() string {
+func (c *CertificateCollection) String() string {
 	if len(*c) == 0 {
 		return ""
 	}
@@ -238,14 +187,14 @@ func (c *Certs) String() string {
 // Set is the method to set the flag value, part of the flag.Value interface.
 // Set's argument is a string to be parsed to set the flag.
 // It's a comma-separated list, so we split it.
-func (c *Certs) Set(value string) error {
+func (c *CertificateCollection) Set(value string) error {
 	TLSCertificates := strings.Split(value, ";")
 	for _, certificate := range TLSCertificates {
 		files := strings.Split(certificate, ",")
 		if len(files) != 2 {
-			return fmt.Errorf("bad Certs format: %s", value)
+			return fmt.Errorf("bad CertificateCollection format: %s", value)
 		}
-		*c = append(*c, Cert{
+		*c = append(*c, CertificateData{
 			config: &Certificate{
 				CertFile: FileOrContent(files[0]),
 				KeyFile:  FileOrContent(files[1]),
@@ -259,6 +208,6 @@ func (c *Certs) Set(value string) error {
 }
 
 // Type is type of the struct.
-func (c *Certs) Type() string {
-	return "Certs"
+func (c *CertificateCollection) Type() string {
+	return "CertificateCollection"
 }
