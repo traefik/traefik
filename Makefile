@@ -27,7 +27,7 @@ DOCS_VERIFY_SKIP ?= false
 
 DOCKER_BUILD_ARGS := $(if $(DOCKER_VERSION), "--build-arg=DOCKER_VERSION=$(DOCKER_VERSION)",)
 DOCKER_RUN_OPTS := $(TRAEFIK_ENVS) $(TRAEFIK_MOUNT) "$(TRAEFIK_DEV_IMAGE)"
-DOCKER_RUN_TRAEFIK := docker run $(INTEGRATION_OPTS) -it $(DOCKER_RUN_OPTS)
+DOCKER_RUN_TRAEFIK ?= docker run $(INTEGRATION_OPTS) -it $(DOCKER_RUN_OPTS)
 DOCKER_RUN_TRAEFIK_NOTTY := docker run $(INTEGRATION_OPTS) -i $(DOCKER_RUN_OPTS)
 DOCKER_RUN_DOC_PORT := 8000
 DOCKER_RUN_DOC_MOUNT := -v $(CURDIR):/mkdocs
@@ -42,6 +42,9 @@ all: generate-webui build ## validate all checks, build linux binary, run all te
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh
 
 binary: generate-webui build ## build the linux binary
+	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary
+
+binary-with-no-ui: ## build the linux binary without the ui generation
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary
 
 crossbinary: generate-webui build ## cross build the non-linux binaries
@@ -73,6 +76,12 @@ test-unit: build ## run the unit tests
 
 test-integration: build ## run the integration tests
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary test-integration
+	TEST_HOST=1 ./script/make.sh test-integration
+
+test-integration-container: build ## Run the container integration tests
+	$(DOCKER_RUN_TRAEFIK) ./script/make.sh test-integration
+
+test-integration-host: build ## Run the host integration tests
 	TEST_HOST=1 ./script/make.sh test-integration
 
 validate: build  ## validate code, vendor and autogen
