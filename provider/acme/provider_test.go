@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"testing"
 
-	"github.com/go-acme/lego/v3/certcrypto"
+	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/safe"
 	traefiktls "github.com/traefik/traefik/tls"

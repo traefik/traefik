@@ -8,7 +8,7 @@ import (
 
 	"github.com/containous/flaeg"
 	servicefabric "github.com/containous/traefik-extra-service-fabric"
-	"github.com/go-acme/lego/v3/challenge/dns01"
+	"github.com/go-acme/lego/v4/challenge/dns01"
 	"github.com/traefik/traefik/acme"
 	"github.com/traefik/traefik/api"
 	"github.com/traefik/traefik/log"
