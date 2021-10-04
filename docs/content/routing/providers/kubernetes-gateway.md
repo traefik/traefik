@@ -97,8 +97,13 @@ Depending on the Listener Protocol, different modes and Route types are supporte
           port: 80                              # [4]
           routes:                               # [8]
             kind: HTTPRoute                     # [9]
-            selector:                           # [10]
-              matchLabels:                      # [11]
+            namespaces:
+              from: Selector                    # [10]
+              selector:                         # [11]
+                matchLabels:                    
+                  app: foo
+            selector:                           # [12]
+              matchLabels:                      
                 app: foo
     ```
 
@@ -120,8 +125,13 @@ Depending on the Listener Protocol, different modes and Route types are supporte
               name: "mysecret"
           routes:                               # [8]
             kind: HTTPRoute                     # [9]
-            selector:                           # [10]
-              matchLabels:                      # [11]
+            namespaces:
+              from: Selector                    # [10]
+              selector:                         # [11]
+                matchLabels:                    
+                  app: foo
+            selector:                           # [12]
+              matchLabels:
                 app: foo
     ```
 
@@ -138,8 +148,13 @@ Depending on the Listener Protocol, different modes and Route types are supporte
           port: 8000                            # [4]
           routes:                               # [8]
             kind: TCPRoute                      # [9]
-            selector:                           # [10]
-              matchLabels:                      # [11]
+            namespaces:
+              from: Selector                    # [10]
+              selector:                         # [11]
+                matchLabels:                    
+                  app: footcp
+            selector:                           # [12]
+              matchLabels:
                 app: footcp
     ```
 
@@ -162,24 +177,30 @@ Depending on the Listener Protocol, different modes and Route types are supporte
               name: "mysecret"
           routes:                               # [8]
             kind: TLSRoute                      # [9]
-            selector:                           # [10]
-              matchLabels:                      # [11]
+            namespaces:
+              from: Selector                    # [10]
+              selector:                         # [11]
+                matchLabels:                    
+                  app: footcp
+            selector:                           # [12]
+              matchLabels:
                 app: footcp
     ```
 
-| Ref  | Attribute          | Description                                                                                                                                          |
-|------|--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1]  | `gatewayClassName` | GatewayClassName used for this Gateway. This is the name of a GatewayClass resource.                                                                 |
-| [2]  | `listeners`        | Logical endpoints that are bound on this Gateway's addresses. At least one Listener MUST be specified.                                               |
-| [3]  | `protocol`         | The network protocol this listener expects to receive (only HTTP and HTTPS are implemented).                                                         |
-| [4]  | `port`             | The network port.                                                                                                                                    |
-| [5]  | `hostname`         | Hostname specifies the virtual hostname to match for protocol types that define this concept. When unspecified, “”, or *, all hostnames are matched. |
-| [6]  | `tls`              | TLS configuration for the Listener. This field is required if the Protocol field is "HTTPS" or "TLS" and ignored otherwise.                          |
-| [7]  | `certificateRef`   | The reference to Kubernetes object that contains a TLS certificate and private key.                                                                  |
-| [8]  | `routes`           | A schema for associating routes with the Listener using selectors.                                                                                   |
-| [9]  | `kind`             | The kind of the referent.                                                                                                                            |
-| [10] | `selector`         | Routes in namespaces selected by the selector may be used by this Gateway routes to associate with the Gateway.                                      |
-| [11] | `matchLabels`      | A set of route labels used for selecting routes to associate with the Gateway.                                                                       |
+| Ref  | Attribute          | Description                                                                                                                                                 |
+|------|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [1]  | `gatewayClassName` | GatewayClassName used for this Gateway. This is the name of a GatewayClass resource.                                                                        |
+| [2]  | `listeners`        | Logical endpoints that are bound on this Gateway's addresses. At least one Listener MUST be specified.                                                      |
+| [3]  | `protocol`         | The network protocol this listener expects to receive (only HTTP and HTTPS are implemented).                                                                |
+| [4]  | `port`             | The network port.                                                                                                                                           |
+| [5]  | `hostname`         | Hostname specifies the virtual hostname to match for protocol types that define this concept. When unspecified, “”, or *, all hostnames are matched.        |
+| [6]  | `tls`              | TLS configuration for the Listener. This field is required if the Protocol field is "HTTPS" or "TLS" and ignored otherwise.                                 |
+| [7]  | `certificateRef`   | The reference to Kubernetes object that contains a TLS certificate and private key.                                                                         |
+| [8]  | `routes`           | A schema for associating routes with the Listener using selectors.                                                                                          |
+| [9]  | `kind`             | The kind of the referent.                                                                                                                                   |
+| [10] | `from`             | From indicates in which namespaces the Routes will be selected for this Gateway. Possible values are `All`, `Same` and `Selector` (Defaults to `Same`).     |
+| [11] | `selector`         | Selector must be specified when From is set to `Selector`. In that case, only Routes in Namespaces matching this Selector will be selected by this Gateway. |
+| [12] | `selector`         | Selector specifies a set of route labels used for selecting routes to associate with the Gateway. An empty Selector matches all routes.                     |
 
 ### Kind: `HTTPRoute`
 
