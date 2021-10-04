@@ -19,7 +19,7 @@ import (
 
 	"github.com/armon/go-proxyproto"
 	"github.com/containous/mux"
-	"github.com/go-acme/lego/v3/challenge/tlsalpn01"
+	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/traefik/cluster"
 	"github.com/traefik/traefik/configuration"

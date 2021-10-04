@@ -93,6 +93,13 @@ entryPoint = "https"
 #
 # caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 
+# Preferred chain to use.
+#
+# Optional
+# Default: empty
+#
+preferredChain = "ISRG Root X1"
+
 # KeyType to use.
 #
 # Optional
@@ -183,6 +190,17 @@ This example shows the usage of Let's Encrypt's staging server:
 [acme]
 # ...
 caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+# ...
+```
+
+### `preferredChain`
+
+Preferred chain to use.
+
+```toml
+[acme]
+# ...
+preferredChain = "ISRG Root X1"
 # ...
 ```
 
