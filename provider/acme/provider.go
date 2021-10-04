@@ -15,13 +15,13 @@ import (
 
 	"github.com/cenk/backoff"
 	"github.com/containous/flaeg"
-	"github.com/go-acme/lego/v3/certificate"
-	"github.com/go-acme/lego/v3/challenge"
-	"github.com/go-acme/lego/v3/challenge/dns01"
-	"github.com/go-acme/lego/v3/lego"
-	legolog "github.com/go-acme/lego/v3/log"
-	"github.com/go-acme/lego/v3/providers/dns"
-	"github.com/go-acme/lego/v3/registration"
+	"github.com/go-acme/lego/v4/certificate"
+	"github.com/go-acme/lego/v4/challenge"
+	"github.com/go-acme/lego/v4/challenge/dns01"
+	"github.com/go-acme/lego/v4/lego"
+	legolog "github.com/go-acme/lego/v4/log"
+	"github.com/go-acme/lego/v4/providers/dns"
+	"github.com/go-acme/lego/v4/registration"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/traefik/log"
 	"github.com/traefik/traefik/rules"
@@ -38,18 +38,19 @@ var (
 
 // Configuration holds ACME configuration provided by users
 type Configuration struct {
-	Email         string         `description:"Email address used for registration"`
-	ACMELogging   bool           `description:"Enable debug logging of ACME actions."`
-	CAServer      string         `description:"CA server to use."`
-	Storage       string         `description:"Storage to use."`
-	EntryPoint    string         `description:"EntryPoint to use."`
-	KeyType       string         `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. Default to 'RSA4096'"`
-	OnHostRule    bool           `description:"Enable certificate generation on frontends Host rules."`
-	OnDemand      bool           `description:"Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` // Deprecated
-	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge"`
-	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge"`
-	TLSChallenge  *TLSChallenge  `description:"Activate TLS-ALPN-01 Challenge"`
-	Domains       []types.Domain `description:"CN and SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='*.main.net'. Wildcard domains only accepted with DNSChallenge"`
+	Email          string         `description:"Email address used for registration"`
+	ACMELogging    bool           `description:"Enable debug logging of ACME actions."`
+	PreferredChain string         `description:"Preferred chain to use."`
+	CAServer       string         `description:"CA server to use."`
+	Storage        string         `description:"Storage to use."`
+	EntryPoint     string         `description:"EntryPoint to use."`
+	KeyType        string         `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. Default to 'RSA4096'"`
+	OnHostRule     bool           `description:"Enable certificate generation on frontends Host rules."`
+	OnDemand       bool           `description:"Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` // Deprecated
+	DNSChallenge   *DNSChallenge  `description:"Activate DNS-01 Challenge"`
+	HTTPChallenge  *HTTPChallenge `description:"Activate HTTP-01 Challenge"`
+	TLSChallenge   *TLSChallenge  `description:"Activate TLS-ALPN-01 Challenge"`
+	Domains        []types.Domain `description:"CN and SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='*.main.net'. Wildcard domains only accepted with DNSChallenge"`
 }
 
 // Provider holds configurations of the provider.
@@ -270,14 +271,18 @@ func (p *Provider) getClient() (*lego.Client, error) {
 
 		err = client.Challenge.SetDNS01Provider(provider,
 			dns01.CondOption(len(p.DNSChallenge.Resolvers) > 0, dns01.AddRecursiveNameservers(p.DNSChallenge.Resolvers)),
-			dns01.CondOption(p.DNSChallenge.DisablePropagationCheck || p.DNSChallenge.DelayBeforeCheck > 0,
-				dns01.AddPreCheck(func(_, _ string) (bool, error) {
-					if p.DNSChallenge.DelayBeforeCheck > 0 {
-						log.Debugf("Delaying %d rather than validating DNS propagation now.", p.DNSChallenge.DelayBeforeCheck)
-						time.Sleep(time.Duration(p.DNSChallenge.DelayBeforeCheck))
-					}
+			dns01.WrapPreCheck(func(domain, fqdn, value string, check dns01.PreCheckFunc) (bool, error) {
+				if p.DNSChallenge.DelayBeforeCheck > 0 {
+					log.Debugf("Delaying %d rather than validating DNS propagation now.", p.DNSChallenge.DelayBeforeCheck)
+					time.Sleep(time.Duration(p.DNSChallenge.DelayBeforeCheck))
+				}
+
+				if p.DNSChallenge.DisablePropagationCheck {
 					return true, nil
-				})),
+				}
+
+				return check(fqdn, value)
+			}),
 		)
 		if err != nil {
 			return nil, err
@@ -654,7 +659,11 @@ func (p *Provider) renewCertificates() {
 				Domain:      cert.Domain.Main,
 				PrivateKey:  cert.Key,
 				Certificate: cert.Certificate,
-			}, true, OSCPMustStaple)
+			}, true, OSCPMustStaple, p.PreferredChain)
+			if err != nil {
+				log.Errorf("Error renewing certificate from LE: %v, %v", cert.Domain, err)
+				continue
+			}
 
 			if err != nil {
 				log.Errorf("Error renewing certificate from LE: %v, %v", cert.Domain, err)

@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -192,7 +193,7 @@ func (c *clientImpl) UpdateIngressStatus(namespace, name, ip, hostname string) e
 	ingCopy := ing.DeepCopy()
 	ingCopy.Status = extensionsv1beta1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: []corev1.LoadBalancerIngress{{IP: ip, Hostname: hostname}}}}
 
-	_, err = c.clientset.ExtensionsV1beta1().Ingresses(ingCopy.Namespace).UpdateStatus(ingCopy)
+	_, err = c.clientset.ExtensionsV1beta1().Ingresses(ingCopy.Namespace).UpdateStatus(context.Background(), ingCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to update ingress status %s/%s: %v", namespace, name, err)
 	}
