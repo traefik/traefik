@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net/url"
 	"regexp"
@@ -9,7 +10,7 @@ import (
 
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics/influx"
-	influxdb "github.com/influxdata/influxdb/client/v2"
+	influxdb "github.com/influxdata/influxdb1-client/v2"
 	"github.com/traefik/traefik/log"
 	"github.com/traefik/traefik/safe"
 	"github.com/traefik/traefik/types"
@@ -118,7 +119,7 @@ func initInfluxDBTicker(config *types.InfluxDB) *time.Ticker {
 
 	safe.Go(func() {
 		var buf bytes.Buffer
-		influxDBClient.WriteLoop(report.C, &influxDBWriter{buf: buf, config: config})
+		influxDBClient.WriteLoop(context.Background(), report.C, &influxDBWriter{buf: buf, config: config})
 	})
 
 	return report

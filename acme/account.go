@@ -14,8 +14,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-acme/lego/v3/certcrypto"
-	"github.com/go-acme/lego/v3/registration"
+	"github.com/go-acme/lego/v4/certcrypto"
+	"github.com/go-acme/lego/v4/registration"
 	"github.com/traefik/traefik/log"
 	acmeprovider "github.com/traefik/traefik/provider/acme"
 	"github.com/traefik/traefik/types"

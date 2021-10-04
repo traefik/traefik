@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"context"
 	"time"
 
 	kitlog "github.com/go-kit/kit/log"
@@ -72,7 +73,7 @@ func initDatadogClient(config *types.Datadog) *time.Ticker {
 	report := time.NewTicker(pushInterval)
 
 	safe.Go(func() {
-		datadogClient.SendLoop(report.C, "udp", address)
+		datadogClient.SendLoop(context.Background(), report.C, "udp", address)
 	})
 
 	return report
