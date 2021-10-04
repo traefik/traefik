@@ -7,6 +7,13 @@ rules:
   - apiGroups:
       - ""
     resources:
+      - namespaces
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
       - services
       - endpoints
       - secrets

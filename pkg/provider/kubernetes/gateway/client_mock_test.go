@@ -24,9 +24,10 @@ func init() {
 }
 
 type clientMock struct {
-	services  []*corev1.Service
-	secrets   []*corev1.Secret
-	endpoints []*corev1.Endpoints
+	services   []*corev1.Service
+	secrets    []*corev1.Secret
+	endpoints  []*corev1.Endpoints
+	namespaces []*corev1.Namespace
 
 	apiServiceError   error
 	apiSecretError    error
@@ -57,6 +58,8 @@ func newClientMock(paths ...string) clientMock {
 				c.services = append(c.services, o)
 			case *corev1.Secret:
 				c.secrets = append(c.secrets, o)
+			case *corev1.Namespace:
+				c.namespaces = append(c.namespaces, o)
 			case *corev1.Endpoints:
 				c.endpoints = append(c.endpoints, o)
 			case *v1alpha1.GatewayClass:
@@ -131,34 +134,51 @@ func (c clientMock) GetGateways() []*v1alpha1.Gateway {
 	return c.gateways
 }
 
-func (c clientMock) GetHTTPRoutes(namespace string, selector labels.Selector) ([]*v1alpha1.HTTPRoute, error) {
-	var httpRoutes []*v1alpha1.HTTPRoute
+func inNamespace(m metav1.ObjectMeta, s string) bool {
+	return s == metav1.NamespaceAll || m.Namespace == s
+}
 
-	for _, httpRoute := range c.httpRoutes {
-		if httpRoute.Namespace == namespace && selector.Matches(labels.Set(httpRoute.Labels)) {
-			httpRoutes = append(httpRoutes, httpRoute)
+func (c clientMock) GetNamespaces(selector labels.Selector) ([]string, error) {
+	var ns []string
+	for _, namespace := range c.namespaces {
+		if selector.Matches(labels.Set(namespace.Labels)) {
+			ns = append(ns, namespace.Name)
+		}
+	}
+	return ns, nil
+}
+
+func (c clientMock) GetHTTPRoutes(namespaces []string, selector labels.Selector) ([]*v1alpha1.HTTPRoute, error) {
+	var httpRoutes []*v1alpha1.HTTPRoute
+	for _, namespace := range namespaces {
+		for _, httpRoute := range c.httpRoutes {
+			if inNamespace(httpRoute.ObjectMeta, namespace) && selector.Matches(labels.Set(httpRoute.Labels)) {
+				httpRoutes = append(httpRoutes, httpRoute)
+			}
 		}
 	}
 	return httpRoutes, nil
 }
 
-func (c clientMock) GetTCPRoutes(namespace string, selector labels.Selector) ([]*v1alpha1.TCPRoute, error) {
+func (c clientMock) GetTCPRoutes(namespaces []string, selector labels.Selector) ([]*v1alpha1.TCPRoute, error) {
 	var tcpRoutes []*v1alpha1.TCPRoute
-
-	for _, tcpRoute := range c.tcpRoutes {
-		if tcpRoute.Namespace == namespace && selector.Matches(labels.Set(tcpRoute.Labels)) {
-			tcpRoutes = append(tcpRoutes, tcpRoute)
+	for _, namespace := range namespaces {
+		for _, tcpRoute := range c.tcpRoutes {
+			if inNamespace(tcpRoute.ObjectMeta, namespace) && selector.Matches(labels.Set(tcpRoute.Labels)) {
+				tcpRoutes = append(tcpRoutes, tcpRoute)
+			}
 		}
 	}
 	return tcpRoutes, nil
 }
 
-func (c clientMock) GetTLSRoutes(namespace string, selector labels.Selector) ([]*v1alpha1.TLSRoute, error) {
+func (c clientMock) GetTLSRoutes(namespaces []string, selector labels.Selector) ([]*v1alpha1.TLSRoute, error) {
 	var tlsRoutes []*v1alpha1.TLSRoute
-
-	for _, tlsRoute := range c.tlsRoutes {
-		if tlsRoute.Namespace == namespace && selector.Matches(labels.Set(tlsRoute.Labels)) {
-			tlsRoutes = append(tlsRoutes, tlsRoute)
+	for _, namespace := range namespaces {
+		for _, tlsRoute := range c.tlsRoutes {
+			if inNamespace(tlsRoute.ObjectMeta, namespace) && selector.Matches(labels.Set(tlsRoute.Labels)) {
+				tlsRoutes = append(tlsRoutes, tlsRoute)
+			}
 		}
 	}
 	return tlsRoutes, nil
@@ -170,7 +190,7 @@ func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, e
 	}
 
 	for _, service := range c.services {
-		if service.Namespace == namespace && service.Name == name {
+		if inNamespace(service.ObjectMeta, namespace) && service.Name == name {
 			return service, true, nil
 		}
 	}
@@ -183,7 +203,7 @@ func (c clientMock) GetEndpoints(namespace, name string) (*corev1.Endpoints, boo
 	}
 
 	for _, endpoints := range c.endpoints {
-		if endpoints.Namespace == namespace && endpoints.Name == name {
+		if inNamespace(endpoints.ObjectMeta, namespace) && endpoints.Name == name {
 			return endpoints, true, nil
 		}
 	}
@@ -197,7 +217,7 @@ func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, err
 	}
 
 	for _, secret := range c.secrets {
-		if secret.Namespace == namespace && secret.Name == name {
+		if inNamespace(secret.ObjectMeta, namespace) && secret.Name == name {
 			return secret, true, nil
 		}
 	}
