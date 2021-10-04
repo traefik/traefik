@@ -196,7 +196,7 @@ by watching the Docker API through this socket.
 !!! important
     Depending on your context and your usage, accessing the Docker API without any restriction might be a security concern.
 
-As explained on the Docker documentation: ([Docker Daemon Attack Surface page](https://docs.docker.com/engine/security/security/#docker-daemon-attack-surface)):
+As explained on the Docker documentation: ([Docker Daemon Attack Surface page](https://docs.docker.com/engine/security/#docker-daemon-attack-surface)):
 
 `[...] only **trusted** users should be allowed to control your Docker daemon [...]`
 
@@ -209,7 +209,7 @@ to let Traefik accessing the Docker Socket of the Swarm manager node.
 More information about Docker's security:
 
 - [KubeCon EU 2018 Keynote, Running with Scissors, from Liz Rice](https://www.youtube.com/watch?v=ltrV-Qmh3oY)
-- [Don't expose the Docker socket (not even to a container)](https://www.lvh.io/posts/dont-expose-the-docker-socket-not-even-to-a-container.html)
+- [Don't expose the Docker socket (not even to a container)](https://www.lvh.io/posts/dont-expose-the-docker-socket-not-even-to-a-container/)
 - [A thread on Stack Overflow about sharing the `/var/run/docker.sock` file](https://news.ycombinator.com/item?id=17983623)
 - [To Dind or not to DinD](https://blog.loof.fr/2018/01/to-dind-or-not-do-dind.html)
 
@@ -246,7 +246,7 @@ Use the following ressources to get started:
 ### Using Docker with Swarm Mode
 
 If you use a compose file with the Swarm mode, labels should be defined in the `deploy` part of your service.
-This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/#labels-1)).
+This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/compose-file-v3/#labels-2)).
 
 ```yaml
 version: "3"

@@ -1,0 +1,106 @@
+version: v1.0
+name: Traefik
+agent:
+  machine:
+    type: e1-standard-4
+    os_image: ubuntu1804
+
+fail_fast:
+  stop:
+    when: "branch != 'master'"
+
+auto_cancel:
+  queued:
+    when: "branch != 'master'"
+  running:
+    when: "branch != 'master'"
+
+global_job_config:
+  prologue:
+    commands:
+      - curl -sSfL https://raw.githubusercontent.com/ldez/semgo/master/godownloader.sh | sudo sh -s -- -b "/usr/local/bin"
+      - sudo semgo go1.16
+      - export "GOPATH=$(go env GOPATH)"
+      - export "GOROOT=$(go env GOROOT)"
+      - export "SEMAPHORE_GIT_DIR=${GOPATH}/src/github.com/traefik/${SEMAPHORE_PROJECT_NAME}"
+      - export "PATH=${GOPATH}/bin:${GOROOT}/bin:${PATH}"
+      - mkdir -vp "${SEMAPHORE_GIT_DIR}" "${GOPATH}/bin"
+      - curl -fsSL -o ${GOPATH}/bin/go-bindata https://github.com/containous/go-bindata/releases/download/v1.0.0/go-bindata
+      - chmod +x ${GOPATH}/bin/go-bindata
+      - export GOPROXY=https://proxy.golang.org,direct
+      - checkout
+      - cache restore traefik-$(checksum go.sum)
+
+blocks:
+  - name: Test Integration Container
+    dependencies: []
+    run:
+      when: "branch =~ '.*' OR pull_request =~'.*'"
+    task:
+      env_vars:
+        - name: DOCKER_RUN_TRAEFIK
+          value: ""
+        - name: TEST_CONTAINER
+          value: "1"
+      jobs:
+        - name: Test Integration Container
+          commands:
+            - make pull-images
+            - mkdir -p webui/static && touch webui/static/index.html # Avoid generating webui
+            - make binary-with-no-ui
+            - sudo CONTAINER=DOCKER DOCKER_RUN_TRAEFIK="" TEST_CONTAINER=1 make test-integration-container
+            - df -h
+      epilogue:
+        always:
+          commands:
+            - cache store traefik-$(checksum go.sum) $HOME/go/pkg/mod
+
+  - name: Test Integration Host
+    dependencies: []
+    run:
+      when: "branch =~ '.*' OR pull_request =~'.*'"
+    task:
+      env_vars:
+        - name: DOCKER_RUN_TRAEFIK
+          value: ""
+      jobs:
+        - name: Test Integration Host
+          commands:
+            - mkdir -p webui/static && touch webui/static/index.html # Avoid generating webui
+            - make binary-with-no-ui
+            - sudo DOCKER_RUN_TRAEFIK="" TEST_HOST=1 make test-integration-host
+      epilogue:
+        always:
+          commands:
+            - cache store traefik-$(checksum go.sum) $HOME/go/pkg/mod
+
+  - name: Release
+    dependencies: []
+    run:
+      when: "tag =~ '.*'"
+    task:
+      agent:
+        machine:
+          type: e1-standard-8
+          os_image: ubuntu1804
+      secrets:
+        - name: traefik
+      env_vars:
+        - name: GH_VERSION
+          value: 1.12.1
+        - name: CODENAME
+          value: "maroilles"
+        - name: DOCKER_RUN_TRAEFIK
+          value: ""
+      prologue:
+        commands:
+          - export VERSION=${SEMAPHORE_GIT_TAG_NAME}
+          - curl -sSL -o /tmp/gh_${GH_VERSION}_linux_amd64.tar.gz https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz
+          - tar -zxvf /tmp/gh_${GH_VERSION}_linux_amd64.tar.gz -C /tmp
+          - sudo mv /tmp/gh_${GH_VERSION}_linux_amd64/bin/gh /usr/local/bin/gh
+      jobs:
+        - name: Release
+          commands:
+            - make crossbinary-parallel
+            - gh release create ${SEMAPHORE_GIT_TAG_NAME} ./dist/traefik* --repo traefik/traefik --title ${SEMAPHORE_GIT_TAG_NAME} --notes ${SEMAPHORE_GIT_TAG_NAME}
+            - ./script/deploy.sh
