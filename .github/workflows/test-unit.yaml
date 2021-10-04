@@ -1,0 +1,53 @@
+name: Test Unit
+
+on:
+  pull_request:
+    branches:
+      - '*'
+
+env:
+  GO_VERSION: 1.16
+  PRE_TARGET: ""
+
+jobs:
+
+  test-unit:
+    runs-on: ubuntu-20.04
+
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}/go/src/github.com/traefik/traefik
+
+    steps:
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          path: go/src/github.com/traefik/traefik
+          fetch-depth: 0
+
+      - name: Cache Go modules
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-test-unit-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: ${{ runner.os }}-test-unit-go-
+
+      - name: Install gobindata
+        run: |
+          curl -fsSL -o $(go env GOPATH)/bin/go-bindata https://github.com/containous/go-bindata/releases/download/v1.0.0/go-bindata
+          chmod +x $(go env GOPATH)/bin/go-bindata
+
+      - name: Avoid generating webui
+        run: mkdir -p webui/static && touch webui/static/index.html
+
+      - name: Tests
+        env:
+          DOCKER_RUN_TRAEFIK: ""
+        run: make test-unit
