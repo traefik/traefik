@@ -373,7 +373,7 @@ Something more tricky using `regex`.
 
 In this case a slash is added to `siteexample.io/portainer` and redirect to `siteexample.io/portainer/`. For more details: https://github.com/traefik/traefik/issues/563
 
-The double sign `$$` are variables managed by the docker compose file ([documentation](https://docs.docker.com/compose/compose-file/#variable-substitution)). 
+The double sign `$$` are variables managed by the docker compose file ([documentation](https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution)). 
 
 ```
 portainer:
