@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-if [ -n "$TRAVIS_TAG" ]; then
+if [ -n "$SEMAPHORE_GIT_TAG_NAME" ]; then
   echo "Deploying..."
 else
   echo "Skipping deploy"
@@ -12,11 +12,9 @@ git config --global user.email "$TRAEFIKER_EMAIL"
 git config --global user.name "Traefiker"
 
 # load ssh key
-echo "Loading key..."
-openssl aes-256-cbc -K $encrypted_83c521e11abe_key -iv $encrypted_83c521e11abe_iv -in .travis/traefiker_rsa.enc -out ~/.ssh/traefiker_rsa -d
 eval "$(ssh-agent -s)"
-chmod 600 ~/.ssh/traefiker_rsa
-ssh-add ~/.ssh/traefiker_rsa
+chmod 600 /home/semaphore/.ssh/traefiker_rsa
+ssh-add /home/semaphore/.ssh/traefiker_rsa
 
 # update traefik-library-image repo (official Docker image)
 echo "Updating traefik-library-imag repo..."
