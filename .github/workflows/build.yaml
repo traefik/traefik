@@ -84,7 +84,7 @@ jobs:
           DOCKER_RUN_TRAEFIK: ""
         run: GOOS=darwin GOARCH=amd64 make binary
 
-      - name: Build for linuw
+      - name: Build for linux
         env:
           DOCKER_RUN_TRAEFIK: ""
         run: GOOS=linux GOARCH=amd64 make binary
