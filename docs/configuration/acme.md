@@ -186,6 +186,17 @@ caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 # ...
 ```
 
+### `preferredChain`
+
+Preferred chain to use.
+
+```toml
+[acme]
+# ...
+preferredChain = "ISRG Root X1"
+# ...
+```
+
 ### ACME Challenge
 
 #### `tlsChallenge`
