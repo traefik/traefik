@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.7.31](https://github.com/traefik/traefik/tree/v1.7.31) (2021-10-04)
+[All Commits](https://github.com/traefik/traefik/compare/v1.7.30...v1.7.31)
+
+**Bug fixes:**
+- **[acme,k8s]** acme: add support of preferredchain in Traefik v1 ([#8482](https://github.com/traefik/traefik/pull/8482) by [ldez](https://github.com/ldez))
+
 ## [v1.7.30](https://github.com/traefik/traefik/tree/v1.7.30) (2021-04-07)
 [All Commits](https://github.com/traefik/traefik/compare/v1.7.29...v1.7.30)
 
