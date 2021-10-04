@@ -607,7 +607,7 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha
 						Status:             metav1.ConditionFalse,
 						LastTransitionTime: metav1.Now(),
 						Reason:             string(v1alpha1.ListenerReasonDegradedRoutes),
-						Message:            fmt.Sprintf("Cannot load service from %s %s/%s : %v", listener.Routes.Kind, httpRoute.Namespace, httpRoute.Name, err),
+						Message:            fmt.Sprintf("Cannot load service from %s %s/%s: %v", listener.Routes.Kind, httpRoute.Namespace, httpRoute.Name, err),
 					})
 
 					// TODO update the RouteStatus condition / deduplicate conditions on listener
@@ -860,7 +860,7 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha1.
 					Status:             metav1.ConditionFalse,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(v1alpha1.ListenerReasonDegradedRoutes),
-					Message:            fmt.Sprintf("Cannot load service from %s %s/%s : %v", listener.Routes.Kind, tlsRoute.Namespace, tlsRoute.Name, err),
+					Message:            fmt.Sprintf("Cannot load service from %s %s/%s: %v", listener.Routes.Kind, tlsRoute.Namespace, tlsRoute.Name, err),
 				})
 
 				// TODO update the RouteStatus condition / deduplicate conditions on listener
