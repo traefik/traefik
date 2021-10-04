@@ -10,7 +10,7 @@ require (
 	github.com/Microsoft/hcsshim v0.8.7 // indirect
 	github.com/Shopify/sarama v1.23.1 // indirect
 	github.com/abbot/go-http-auth v0.0.0-00010101000000-000000000000
-	github.com/abronan/valkeyrie v0.0.0-20200127174252-ef4277a138cd
+	github.com/abronan/valkeyrie v0.2.0
 	github.com/aws/aws-sdk-go v1.39.0
 	github.com/cenkalti/backoff/v4 v4.1.1
 	github.com/containerd/containerd v1.3.2 // indirect
@@ -37,8 +37,8 @@ require (
 	github.com/google/go-github/v28 v28.1.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
-	github.com/hashicorp/consul v1.10.0
-	github.com/hashicorp/consul/api v1.9.1
+	github.com/hashicorp/consul v1.10.3
+	github.com/hashicorp/consul/api v1.10.0
 	github.com/hashicorp/go-hclog v0.16.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.2.1
@@ -63,9 +63,9 @@ require (
 	github.com/openzipkin/zipkin-go v0.2.2
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/philhofer/fwd v1.0.0 // indirect
-	github.com/pires/go-proxyproto v0.5.0
+	github.com/pires/go-proxyproto v0.6.1
 	github.com/pmezard/go-difflib v1.0.0
-	github.com/prometheus/client_golang v1.7.1
+	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/client_model v0.2.0
 	github.com/rancher/go-rancher-metadata v0.0.0-20200311180630-7f4c936a06ac
 	github.com/sirupsen/logrus v1.7.0
@@ -87,8 +87,8 @@ require (
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
 	golang.org/x/sys v0.0.0-20210817190340-bfb29a6856f2 // indirect
 	golang.org/x/time v0.0.0-20210611083556-38a9dc6acbc6
-	golang.org/x/tools v0.1.1
-	google.golang.org/grpc v1.27.1
+	golang.org/x/tools v0.1.2
+	google.golang.org/grpc v1.38.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.19.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
