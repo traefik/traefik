@@ -13,8 +13,8 @@ git config --global user.name "Traefiker"
 
 # load ssh key
 eval "$(ssh-agent -s)"
-chmod 600 /home/semaphore/.ssh/traefiker_rsa_new
-ssh-add /home/semaphore/.ssh/traefiker_rsa_new
+chmod 600 /home/semaphore/.ssh/traefiker_rsa
+ssh-add /home/semaphore/.ssh/traefiker_rsa
 
 # update traefik-library-image repo (official Docker image)
 echo "Updating traefik-library-imag repo..."
