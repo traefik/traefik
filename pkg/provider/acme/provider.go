@@ -39,7 +39,7 @@ type Configuration struct {
 	Storage              string `description:"Storage to use." json:"storage,omitempty" toml:"storage,omitempty" yaml:"storage,omitempty" export:"true"`
 	KeyType              string `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
 	EAB                  *EAB   `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
-	CertificatesDuration int    `description:"Durations of a certificate lifetime in hour." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
+	CertificatesDuration int    `description:"Duration of a certificate lifetime in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
 
 	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge." json:"dnsChallenge,omitempty" toml:"dnsChallenge,omitempty" yaml:"dnsChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge." json:"httpChallenge,omitempty" toml:"httpChallenge,omitempty" yaml:"httpChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -181,8 +181,8 @@ func isAccountMatchingCaServer(ctx context.Context, accountURI, serverURI string
 }
 
 // getCertificateRenewIntervals return 2 durations calculated with the duration of certificates.
-// The first (`RenewBeforeExpiry`) the amount of time before the end of the certificate lifetime to know when the certificates should be renewed.
-// The second (`ExpirationCheckInterval`) is the duration of the ticker that check if certificates should be renewed.
+// The first (RenewBeforeExpiry) the amount of time before the end of the certificate lifetime to know when the certificates should be renewed.
+// The second (ExpirationCheckInterval) is the duration of the ticker that check if certificates should be renewed.
 func (p *Provider) getCertificateRenewIntervals() (time.Duration, time.Duration) {
 	switch {
 	case p.CertificatesDuration >= 265*24: // >= 1 year
