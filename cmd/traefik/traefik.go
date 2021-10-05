@@ -181,7 +181,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	httpChallengeProvider := acme.NewChallengeHTTP()
 
 	// we need to wait at least 2 times the ProvidersThrottleDuration to be sure to handle the challenge.
-	tlsChallengeProvider := acme.NewChallengeTLSALPN(time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration) * 2)
+	tlsChallengeProvider := acme.NewChallengeTLSALPN(5 * time.Second)
 	err = providerAggregator.AddProvider(tlsChallengeProvider)
 	if err != nil {
 		return nil, err

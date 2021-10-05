@@ -21,8 +21,11 @@
     localAgentHostPort = "{{.IP}}:6831"
     traceContextHeaderName = "{{.TraceContextHeaderName}}"
 
-[providers.file]
-  filename = "{{ .SelfFilename }}"
+[providers]
+  providersThrottleDuration = "100ms"
+
+  [providers.file]
+    filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 
