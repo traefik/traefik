@@ -140,7 +140,12 @@ Please check the [configuration examples below](#configuration-examples) for mor
 
 Traefik automatically tracks the expiry date of ACME certificates it generates.
 
-If there are less than 30 days remaining before the certificate expires, Traefik will attempt to renew it automatically.
+When using a certificates resolver that issues certificates with custom lifetime durations,
+you can explicitly set the certificate's lifetime duration to have Traefik renew certificates with more suited time frames.
+See the [`certificatesDuration`](#certificatesduration) option.
+
+By default, Traefik will manage 90 days certificates.
+It tries to renew certificates that have 30 or fewer days left on their validity period.
 
 !!! info ""
     Certificates that are no longer used may still be renewed, as Traefik does not currently check if the certificate is being used before renewing.
@@ -524,6 +529,50 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 
 !!! warning
     For concurrency reasons, this file cannot be shared across multiple instances of Traefik.
+
+### `certificatesDuration`
+
+_Optional, Default=2160_
+
+The `certificatesDuration` option sets the length of a certificate's lifetime in hours in order to manage them more precisely.
+It defaults to `2160` (3 months) to follow Let's Encrypt certificates lifetime.
+
+!!! warning "Traefik cannot manage certificates that have a lifespan lower than 1 hour."
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      certificatesDuration: 72
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  certificatesDuration=72
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.certificatesduration=72
+# ...
+```
+
+`certificatesDuration` is used to calculate two durations:
+
+- `RenewBeforeExpiry`: the amount of time before the end of the certificate lifetime that indicates when the certificates should be renewed.
+- `ExpirationCheckInterval`: the interval of time when it will check if there are certificates to renew.
+
+| Certificate Duration | RenewBeforeExpiry | ExpirationCheckInterval |
+|----------------------|-------------------|-------------------------|
+| >= 1 year            | 4 months          | 1 week                  |
+| >= 90 days           | 30 days           | 1 day                   |
+| >= 7 days            | 1 day             | 1 hour                  |
+| >= 24 hours          | 6 hours           | 10 min                  |
+| < 24 hours           | 20 min            | 1 min                   |
 
 ### `preferredChain`
 
