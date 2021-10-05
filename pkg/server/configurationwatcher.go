@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
-	"time"
 
 	"github.com/eapache/channels"
 	"github.com/sirupsen/logrus"
@@ -21,7 +20,7 @@ type ConfigurationWatcher struct {
 
 	defaultEntryPoints []string
 
-	providersThrottleDuration time.Duration
+	//providersThrottleDuration time.Duration
 
 	allProvidersConfigs chan dynamic.Message
 
@@ -37,18 +36,18 @@ type ConfigurationWatcher struct {
 func NewConfigurationWatcher(
 	routinesPool *safe.Pool,
 	pvd provider.Provider,
-	providersThrottleDuration time.Duration,
+	//providersThrottleDuration time.Duration,
 	defaultEntryPoints []string,
 	requiredProvider string,
 ) *ConfigurationWatcher {
 	watcher := &ConfigurationWatcher{
-		provider:                  pvd,
-		allProvidersConfigs:       make(chan dynamic.Message, 100),
-		newConfigs:                channels.NewRingChannel(1),
-		providersThrottleDuration: providersThrottleDuration,
-		routinesPool:              routinesPool,
-		defaultEntryPoints:        defaultEntryPoints,
-		requiredProvider:          requiredProvider,
+		provider:            pvd,
+		allProvidersConfigs: make(chan dynamic.Message, 100),
+		newConfigs:          channels.NewRingChannel(1),
+		//providersThrottleDuration: providersThrottleDuration,
+		routinesPool:       routinesPool,
+		defaultEntryPoints: defaultEntryPoints,
+		requiredProvider:   requiredProvider,
 	}
 
 	return watcher
@@ -202,16 +201,16 @@ func (c *ConfigurationWatcher) throttleAndApplyConfigurations(ctx context.Contex
 				continue
 			}
 
-			start := time.Now()
+			//start := time.Now()
 			c.applyConfigurations(currentConfigurations)
 			lastConfigurations = currentConfigurations
 
-			elapsed := time.Now().Sub(start)
-			if elapsed > c.providersThrottleDuration {
-				continue
-			}
-
-			time.Sleep(c.providersThrottleDuration - elapsed)
+			//elapsed := time.Now().Sub(start)
+			//if elapsed > c.providersThrottleDuration {
+			//	continue
+			//}
+			//
+			//time.Sleep(c.providersThrottleDuration - elapsed)
 		}
 	}
 }

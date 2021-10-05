@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/provider/aggregator"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	th "github.com/traefik/traefik/v2/pkg/testhelpers"
 	"github.com/traefik/traefik/v2/pkg/tls"
@@ -66,7 +67,8 @@ func TestNewConfigurationWatcher(t *testing.T) {
 		}},
 	}
 
-	watcher := NewConfigurationWatcher(routinesPool, pvd, time.Second, []string{}, "")
+	//watcher := NewConfigurationWatcher(routinesPool, pvd, time.Second, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
 
 	run := make(chan struct{})
 
@@ -141,7 +143,8 @@ func TestWaitForRequiredProvider(t *testing.T) {
 		Configuration: config,
 	})
 
-	watcher := NewConfigurationWatcher(routinesPool, pvdAggregator, 1*time.Millisecond, []string{}, "required")
+	//watcher := NewConfigurationWatcher(routinesPool, pvdAggregator, 1*time.Millisecond, []string{}, "required")
+	watcher := NewConfigurationWatcher(routinesPool, pvdAggregator, []string{}, "required")
 
 	publishedConfigCount := 0
 	watcher.AddListener(func(_ dynamic.Configuration) {
@@ -177,7 +180,8 @@ func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 		})
 	}
 
-	watcher := NewConfigurationWatcher(routinesPool, pvd, 30*time.Millisecond, []string{}, "")
+	//watcher := NewConfigurationWatcher(routinesPool, aggregator.ProviderThrottle{pvd, 30 * time.Millisecond}, 30*time.Millisecond, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, aggregator.ProviderThrottle{pvd, 30 * time.Millisecond}, []string{}, "")
 
 	publishedConfigCount := 0
 	watcher.AddListener(func(_ dynamic.Configuration) {
@@ -202,7 +206,8 @@ func TestListenProvidersSkipsEmptyConfigs(t *testing.T) {
 		messages: []dynamic.Message{{ProviderName: "mock"}},
 	}
 
-	watcher := NewConfigurationWatcher(routinesPool, pvd, time.Second, []string{}, "")
+	//watcher := NewConfigurationWatcher(routinesPool, pvd, time.Second, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
 	watcher.AddListener(func(_ dynamic.Configuration) {
 		t.Error("An empty configuration was published but it should not")
 	})
@@ -228,7 +233,8 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 		messages: []dynamic.Message{message, message},
 	}
 
-	watcher := NewConfigurationWatcher(routinesPool, pvd, 10*time.Millisecond, []string{}, "")
+	//watcher := NewConfigurationWatcher(routinesPool, pvd, 10*time.Millisecond, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
 
 	alreadyCalled := false
 	watcher.AddListener(func(_ dynamic.Configuration) {
@@ -271,7 +277,8 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 		},
 	}
 
-	watcher := NewConfigurationWatcher(routinesPool, pvd, 15*time.Millisecond, []string{"defaultEP"}, "")
+	//watcher := NewConfigurationWatcher(routinesPool, pvd, 15*time.Millisecond, []string{"defaultEP"}, "")
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{"defaultEP"}, "")
 
 	var lastConfig dynamic.Configuration
 	watcher.AddListener(func(conf dynamic.Configuration) {
@@ -349,7 +356,8 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 		},
 	}
 
-	watcher := NewConfigurationWatcher(routinesPool, pvd, time.Millisecond, []string{"defaultEP"}, "")
+	//watcher := NewConfigurationWatcher(routinesPool, pvd, time.Millisecond, []string{"defaultEP"}, "")
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{"defaultEP"}, "")
 
 	var configurationReloads int
 	var lastConfig dynamic.Configuration
@@ -408,7 +416,8 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 
 func TestApplyConfigUnderStress(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
-	watcher := NewConfigurationWatcher(routinesPool, &mockProvider{}, 1*time.Millisecond, []string{"defaultEP"}, "")
+	//watcher := NewConfigurationWatcher(routinesPool, &mockProvider{}, 1*time.Millisecond, []string{"defaultEP"}, "")
+	watcher := NewConfigurationWatcher(routinesPool, &mockProvider{}, []string{"defaultEP"}, "")
 
 	routinesPool.GoCtx(func(ctx context.Context) {
 		i := 0
@@ -488,7 +497,8 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 		},
 	}
 
-	watcher := NewConfigurationWatcher(routinesPool, pvd, 10*time.Millisecond, []string{"defaultEP"}, "")
+	//watcher := NewConfigurationWatcher(routinesPool, aggregator.ProviderThrottle{pvd, 10 * time.Millisecond}, 10*time.Millisecond, []string{"defaultEP"}, "")
+	watcher := NewConfigurationWatcher(routinesPool, aggregator.ProviderThrottle{pvd, 10 * time.Millisecond}, []string{"defaultEP"}, "")
 
 	var configurationReloads int
 	var lastConfig dynamic.Configuration
@@ -554,7 +564,8 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 		},
 	}
 
-	watcher := NewConfigurationWatcher(routinesPool, pvd, 0, []string{"defaultEP"}, "")
+	//watcher := NewConfigurationWatcher(routinesPool, pvd, 0, []string{"defaultEP"}, "")
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{"defaultEP"}, "")
 
 	var publishedProviderConfig dynamic.Configuration
 
@@ -631,7 +642,8 @@ func TestPublishConfigUpdatedByProvider(t *testing.T) {
 		},
 	}
 
-	watcher := NewConfigurationWatcher(routinesPool, pvd, 30*time.Millisecond, []string{}, "")
+	//watcher := NewConfigurationWatcher(routinesPool, pvd, 30*time.Millisecond, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
 
 	publishedConfigCount := 0
 	watcher.AddListener(func(configuration dynamic.Configuration) {
@@ -679,7 +691,8 @@ func TestPublishConfigUpdatedByConfigWatcherListener(t *testing.T) {
 		},
 	}
 
-	watcher := NewConfigurationWatcher(routinesPool, pvd, 30*time.Millisecond, []string{}, "")
+	//watcher := NewConfigurationWatcher(routinesPool, pvd, 30*time.Millisecond, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
 
 	publishedConfigCount := 0
 	watcher.AddListener(func(configuration dynamic.Configuration) {
