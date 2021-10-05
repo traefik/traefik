@@ -534,7 +534,7 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 
 _Optional, Default=2160_
 
-The `certificatesDuration` option sets the length of a certificate's lifetime in hour in order to manage them more precisely.
+The `certificatesDuration` option sets the length of a certificate's lifetime in hours in order to manage them more precisely.
 It defaults to `2160` (3 months) to follow Let's Encrypt certificates lifetime.
 
 !!! warning "Traefik cannot manage certificates that have a lifespan lower than 1 hour."
