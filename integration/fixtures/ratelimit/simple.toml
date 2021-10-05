@@ -12,8 +12,11 @@
   [entryPoints.web]
     address = ":8081"
 
-[providers.file]
-  filename = "{{ .SelfFilename }}"
+[providers]
+  providersThrottleDuration = "100ms"
+
+  [providers.file]
+    filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
 
