@@ -11,6 +11,9 @@
 [api]
   insecure = true
 
-[providers.zookeeper]
-  rootKey = "traefik"
-  endpoints = ["{{ .ZkAddress }}"]
+[providers]
+  providersThrottleDuration = "100ms"
+
+  [providers.zookeeper]
+    rootKey = "traefik"
+    endpoints = ["{{ .ZkAddress }}"]
