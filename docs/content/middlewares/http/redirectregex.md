@@ -85,6 +85,10 @@ Set the `permanent` option to `true` to apply a permanent redirection.
 
 The `regex` option is the regular expression to match and capture elements from the request URL.
 
+!!! warning
+
+    When defining `regex` within YAML, any escape characters will need to be escaped again for YAML: `example\.com` would need to be written as `example\\.com`.
+
 ### `replacement`
 
 The `replacement` option defines how to modify the URL to have the new target URL.
