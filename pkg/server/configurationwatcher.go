@@ -184,20 +184,6 @@ func preLoadConfiguration(logger log.Logger, configMsg dynamic.Message) {
 	}
 }
 
-// providersThrottleDuration = 30s --> configApplication time 20s
-// sequence: a1 a2 a3 a4 a5 a6 b1 a7 a8 a9 a10 a11 a12 b2 a13 a14 a15 a16
-// fa = 10s / fb = 50s
-// master
-// a1 -30s-> a4 -20s-> b1 -20s-> a7 -30s-> a10 -20s-> b2 -20s-> a13 -30s-> a16
-// 3 * 30s + 4 * 20s
-// branch
-// a1 -30s-> a4 -30s-> a7b1 -30s-> a10 -30s-> a13b2 -30s-> a16
-// 5 * 30s
-
-//a1 a3 a6 b1 a8 a10 a12 b2 a14 a16...
-//a1 a4 b1 a7 a10 b2 a13 a16...
-//a1 a5 a9b1 a13b2...
-
 // throttleAndApplyConfigurations blocks on a RingChannel that receives the new
 // set of configurations that is compiled and sent by receiveConfigurations as soon
 // as a provider change occurs. If the new set is different from the previous set
@@ -220,7 +206,7 @@ func (c *ConfigurationWatcher) throttleAndApplyConfigurations(ctx context.Contex
 			c.applyConfigurations(currentConfigurations)
 			lastConfigurations = currentConfigurations
 
-			elapsed := start.Sub(time.Now())
+			elapsed := time.Now().Sub(start)
 			if elapsed > c.providersThrottleDuration {
 				continue
 			}
