@@ -118,6 +118,12 @@ Traefik supports three tracing backends: Jaeger, Zipkin and DataDog.
     # Default: true
     #
     id128Bit = true
+
+    # Sets the rate between 0.0 and 1.0 of requests to trace
+    #
+    # Default: 1.0
+    #
+    SampleRate = 1.0
 ```
 
 ## DataDog
