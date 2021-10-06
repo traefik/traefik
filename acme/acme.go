@@ -710,9 +710,10 @@ func (a *ACME) getDomainsCertificates(domains []string) (*Certificate, error) {
 	bundle := true
 
 	request := certificate.ObtainRequest{
-		Domains:    cleanDomains,
-		Bundle:     bundle,
-		MustStaple: OSCPMustStaple,
+		Domains:        cleanDomains,
+		Bundle:         bundle,
+		MustStaple:     OSCPMustStaple,
+		PreferredChain: a.PreferredChain,
 	}
 
 	cert, err := a.client.Certificate.Obtain(request)

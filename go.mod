@@ -6,20 +6,19 @@ require (
 	github.com/ArthurHlt/go-eureka-client v0.0.0-20170403140305-9d0a49cbd39a
 	github.com/ArthurHlt/gominlog v0.0.0-20170402142412-72eebf980f46 // indirect
 	github.com/Azure/azure-sdk-for-go v40.3.0+incompatible // indirect
-	github.com/Azure/go-autorest/autorest/azure/auth v0.4.2 // indirect
-	github.com/Azure/go-autorest/autorest/to v0.3.0 // indirect
-	github.com/Azure/go-autorest/autorest/validation v0.2.0 // indirect
 	github.com/BurntSushi/toml v0.3.1
 	github.com/BurntSushi/ty v0.0.0-20140213233908-6add9cd6ad42
 	github.com/Masterminds/sprig v2.19.0+incompatible
 	github.com/Microsoft/go-winio v0.4.3 // indirect
 	github.com/NYTimes/gziphandler v1.0.1
+	github.com/Shopify/sarama v1.30.0 // indirect
 	github.com/VividCortex/gohistogram v1.0.0 // indirect
 	github.com/abbot/go-http-auth v0.0.0-00010101000000-000000000000
 	github.com/abronan/valkeyrie v0.2.0
+	github.com/apache/thrift v0.12.0 // indirect
 	github.com/armon/go-metrics v0.3.8 // indirect
 	github.com/armon/go-proxyproto v0.0.0-20170620220930-48572f11356f
-	github.com/aws/aws-sdk-go v1.37.27
+	github.com/aws/aws-sdk-go v1.39.0
 	github.com/cenk/backoff v2.1.1+incompatible
 	github.com/codahale/hdrhistogram v0.9.0 // indirect
 	github.com/containous/flaeg v1.4.1
@@ -36,13 +35,11 @@ require (
 	github.com/eapache/channels v1.1.0
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 // indirect
 	github.com/elazarl/go-bindata-assetfs v1.0.0
-	github.com/frankban/quicktest v1.11.0 // indirect
 	github.com/gambol99/go-marathon v0.7.2-0.20180614232016-99a156b96fb2
-	github.com/go-acme/lego/v4 v4.4.0
+	github.com/go-acme/lego/v4 v4.5.3
 	github.com/go-check/check v0.0.0-00010101000000-000000000000
 	github.com/go-kit/kit v0.9.0
 	github.com/golang/protobuf v1.5.2
-	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/go-github v9.0.0+incompatible
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.1.2
@@ -64,11 +61,11 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mesos/mesos-go v0.0.3-0.20150930144802-068d5470506e
 	github.com/mesosphere/mesos-dns v0.0.0-00010101000000-000000000000
-	github.com/miekg/dns v1.1.41
+	github.com/miekg/dns v1.1.43
 	github.com/mitchellh/copystructure v1.0.0
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/mitchellh/hashstructure v1.0.0
-	github.com/mitchellh/mapstructure v1.4.1-0.20210112042008-8ebf2d61a8b4
+	github.com/mitchellh/mapstructure v1.4.1
 	github.com/mitchellh/reflectwalk v1.0.1 // indirect
 	github.com/mvdan/xurls v1.1.1-0.20170309204242-db96455566f0
 	github.com/ogier/pflag v0.0.2-0.20160129220114-45c278ab3607
@@ -79,14 +76,13 @@ require (
 	github.com/openzipkin-contrib/zipkin-go-opentracing v0.3.5
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/philhofer/fwd v1.0.0 // indirect
-	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/client_model v0.2.0
 	github.com/rancher/go-rancher v0.1.1-0.20171004213057-52e2f4895340
 	github.com/rancher/go-rancher-metadata v0.0.0-00010101000000-000000000000
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/shopspring/decimal v1.1.1-0.20191009025716-f1972eb1d1f5
-	github.com/sirupsen/logrus v1.6.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	github.com/stvp/go-udp-testing v0.0.0-20171104055251-c4434f09ec13
 	github.com/thoas/stats v0.0.0-20190104110215-4975baf6a358
@@ -100,8 +96,7 @@ require (
 	github.com/vdemeester/shakers v0.1.0
 	github.com/vulcand/oxy v1.2.0
 	go.etcd.io/bbolt v1.3.5 // indirect
-	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a // indirect
-	golang.org/x/net v0.0.0-20210410081132-afb366fc7cd1
+	golang.org/x/net v0.0.0-20210917221730-978cfadd31cf
 	google.golang.org/grpc v1.38.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.13.0
 	gopkg.in/fsnotify.v1 v1.4.7
