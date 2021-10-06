@@ -67,11 +67,13 @@ The StripPrefixRegex middleware strips the matching path prefix and stores it in
 
 The `regex` option is the regular expression to match the path prefix from the request URL.
 
-!!! tip
-
-    Regular expressions can be tested using online tools such as [Go Playground](https://play.golang.org/p/mWU9p-wk2ru) or the [Regex101](https://regex101.com/r/58sIgx/2).
-
 For instance, `/products` also matches `/products/shoes` and `/products/shirts`.
 
 If your backend is serving assets (e.g., images or JavaScript files), it can use the `X-Forwarded-Prefix` header to properly construct relative URLs.
 Using the previous example, the backend should return `/products/shoes/image.png` (and not `/images.png`, which Traefik would likely not be able to associate with the same backend).
+
+!!! tip
+
+    Regular expressions and replacements can be tested using online tools such as [Go Playground](https://play.golang.org/p/mWU9p-wk2ru) or the [Regex101](https://regex101.com/r/58sIgx/2).
+
+    When defining a regular expression within YAML, any escaped character needs to be escaped twice: `example\.com` needs to be written as `example\\.com`.
