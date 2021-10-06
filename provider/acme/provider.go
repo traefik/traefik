@@ -416,12 +416,13 @@ func (p *Provider) resolveCertificate(domain types.Domain, domainFromConfigurati
 	var cert *certificate.Resource
 	bundle := true
 	if p.useCertificateWithRetry(uncheckedDomains) {
-		cert, err = obtainCertificateWithRetry(domains, client, p.DNSChallenge.preCheckTimeout, p.DNSChallenge.preCheckInterval, bundle)
+		cert, err = obtainCertificateWithRetry(domains, client, p.DNSChallenge.preCheckTimeout, p.DNSChallenge.preCheckInterval, bundle, p.PreferredChain)
 	} else {
 		request := certificate.ObtainRequest{
-			Domains:    domains,
-			Bundle:     bundle,
-			MustStaple: OSCPMustStaple,
+			Domains:        domains,
+			Bundle:         bundle,
+			MustStaple:     OSCPMustStaple,
+			PreferredChain: p.PreferredChain,
 		}
 		cert, err = client.Certificate.Obtain(request)
 	}
@@ -492,15 +493,16 @@ func (p *Provider) useCertificateWithRetry(domains []string) bool {
 	return false
 }
 
-func obtainCertificateWithRetry(domains []string, client *lego.Client, timeout, interval time.Duration, bundle bool) (*certificate.Resource, error) {
+func obtainCertificateWithRetry(domains []string, client *lego.Client, timeout, interval time.Duration, bundle bool, preferredChain string) (*certificate.Resource, error) {
 	var cert *certificate.Resource
 	var err error
 
 	operation := func() error {
 		request := certificate.ObtainRequest{
-			Domains:    domains,
-			Bundle:     bundle,
-			MustStaple: OSCPMustStaple,
+			Domains:        domains,
+			Bundle:         bundle,
+			MustStaple:     OSCPMustStaple,
+			PreferredChain: preferredChain,
 		}
 		cert, err = client.Certificate.Obtain(request)
 		return err
