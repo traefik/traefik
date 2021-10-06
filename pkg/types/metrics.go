@@ -59,6 +59,7 @@ func (d *Datadog) SetDefaults() {
 	d.PushInterval = types.Duration(10 * time.Second)
 	d.AddEntryPointsLabels = true
 	d.AddServicesLabels = true
+	d.Prefix = "traefik"
 }
 
 // Statsd contains address and metrics pushing interval configuration.

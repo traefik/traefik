@@ -46,7 +46,7 @@ const (
 func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 	// just to be sure there is a prefix defined
 	if config.Prefix == "" {
-		config.Prefix = "traefik"
+		config.Prefix = defaultMetricsPrefix
 	}
 
 	datadogClient = dogstatsd.New(config.Prefix+".", kitlog.LoggerFunc(func(keyvals ...interface{}) error {
