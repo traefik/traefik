@@ -357,7 +357,7 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 	}
 
 	//watcher := NewConfigurationWatcher(routinesPool, pvd, time.Millisecond, []string{"defaultEP"}, "")
-	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{"defaultEP"}, "")
+	watcher := NewConfigurationWatcher(routinesPool, aggregator.ThrottledProvider{pvd, time.Millisecond}, []string{"defaultEP"}, "")
 
 	var configurationReloads int
 	var lastConfig dynamic.Configuration

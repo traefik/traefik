@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"reflect"
 
-	"github.com/eapache/channels"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -22,7 +21,7 @@ type ConfigurationWatcher struct {
 
 	allProvidersConfigs chan dynamic.Message
 
-	newConfigs *channels.RingChannel
+	newConfigs chan dynamic.Configurations
 
 	requiredProvider       string
 	configurationListeners []func(dynamic.Configuration)
@@ -40,7 +39,7 @@ func NewConfigurationWatcher(
 	watcher := &ConfigurationWatcher{
 		provider:            pvd,
 		allProvidersConfigs: make(chan dynamic.Message, 100),
-		newConfigs:          channels.NewRingChannel(1),
+		newConfigs:          make(chan dynamic.Configurations),
 		routinesPool:        routinesPool,
 		defaultEntryPoints:  defaultEntryPoints,
 		requiredProvider:    requiredProvider,
@@ -59,7 +58,7 @@ func (c *ConfigurationWatcher) Start() {
 // Stop the configuration watcher.
 func (c *ConfigurationWatcher) Stop() {
 	close(c.allProvidersConfigs)
-	c.newConfigs.Close()
+	close(c.newConfigs)
 }
 
 // AddListener adds a new listener function used when new configuration is provided.
@@ -99,40 +98,53 @@ func (c *ConfigurationWatcher) startProvider() {
 // global state we are aware of.
 func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 	lastConfigurations := make(dynamic.Configurations)
+	var newConfigurations dynamic.Configurations
+	var output chan dynamic.Configurations
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case configMsg, ok := <-c.allProvidersConfigs:
-			if !ok {
-				return
-			}
-
-			logger := log.WithoutContext().WithField(log.ProviderName, configMsg.ProviderName)
-
-			if configMsg.Configuration == nil {
-				logger.Debug("Received nil configuration from provider, skipping.")
-				continue
-			}
-
-			preLoadConfiguration(logger, configMsg)
-
-			if isEmptyConfiguration(configMsg.Configuration) {
-				logger.Info("Skipping empty Configuration")
-				continue
-			}
-
-			if reflect.DeepEqual(lastConfigurations[configMsg.ProviderName], configMsg.Configuration) {
-				// no change, do nothing
-				logger.Info("Skipping unchanged configuration")
-				continue
-			}
-
-			newConfigurations := lastConfigurations.DeepCopy()
-			newConfigurations[configMsg.ProviderName] = configMsg.Configuration.DeepCopy()
-
-			c.newConfigs.In() <- newConfigurations
+		case output <- newConfigurations:
+			output = nil
 			lastConfigurations = newConfigurations
+		default:
+			select {
+			case <-ctx.Done():
+				return
+			case configMsg, ok := <-c.allProvidersConfigs:
+				if !ok {
+					return
+				}
+
+				logger := log.WithoutContext().WithField(log.ProviderName, configMsg.ProviderName)
+
+				if configMsg.Configuration == nil {
+					logger.Debug("Received nil configuration from provider, skipping.")
+					continue
+				}
+
+				preLoadConfiguration(logger, configMsg)
+
+				if isEmptyConfiguration(configMsg.Configuration) {
+					logger.Info("Skipping empty Configuration")
+					continue
+				}
+
+				if reflect.DeepEqual(lastConfigurations[configMsg.ProviderName], configMsg.Configuration) {
+					// no change, do nothing
+					logger.Info("Skipping unchanged configuration")
+					continue
+				}
+
+				newConfigurations = lastConfigurations.DeepCopy()
+				newConfigurations[configMsg.ProviderName] = configMsg.Configuration.DeepCopy()
+
+				output = c.newConfigs
+
+			case output <- newConfigurations:
+				output = nil
+				lastConfigurations = newConfigurations
+			}
 		}
 	}
 }
@@ -190,8 +202,8 @@ func (c *ConfigurationWatcher) throttleAndApplyConfigurations(ctx context.Contex
 		select {
 		case <-ctx.Done():
 			return
-		case newConfigs := <-c.newConfigs.Out():
-			currentConfigurations := newConfigs.(dynamic.Configurations)
+		case newConfigs := <-c.newConfigs:
+			currentConfigurations := newConfigs
 
 			if reflect.DeepEqual(currentConfigurations, lastConfigurations) {
 				continue
