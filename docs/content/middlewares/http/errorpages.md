@@ -8,6 +8,7 @@ It Has Never Been Easier to Say That Something Went Wrong
 The ErrorPage middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
 
 !!! important
+
     The error page itself is _not_ hosted by Traefik.
 
 ## Configuration Examples
@@ -111,6 +112,11 @@ The service that will serve the new requested error page.
 !!! note ""
 
     In Kubernetes, you need to reference a Kubernetes Service instead of a Traefik service.
+
+!!! info "Host Header"
+
+    By default, the client `Host` header value is forwarded to the configured error [service](#service).
+    To forward the `Host` value corresponding to the configured error service URL, the [passHostHeader](../../../routing/services/#pass-host-header) option must be set to `false`.     
 
 ### `query`
 

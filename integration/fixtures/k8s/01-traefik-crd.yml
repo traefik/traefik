@@ -1232,6 +1232,7 @@ spec:
                     enum:
                     - NoClientCert
                     - RequestClientCert
+                    - RequireAnyClientCert
                     - VerifyClientCertIfGiven
                     - RequireAndVerifyClientCert
                     type: string
