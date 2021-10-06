@@ -20,8 +20,6 @@ type ConfigurationWatcher struct {
 
 	defaultEntryPoints []string
 
-	//providersThrottleDuration time.Duration
-
 	allProvidersConfigs chan dynamic.Message
 
 	newConfigs *channels.RingChannel
@@ -36,7 +34,6 @@ type ConfigurationWatcher struct {
 func NewConfigurationWatcher(
 	routinesPool *safe.Pool,
 	pvd provider.Provider,
-	//providersThrottleDuration time.Duration,
 	defaultEntryPoints []string,
 	requiredProvider string,
 ) *ConfigurationWatcher {
@@ -44,10 +41,9 @@ func NewConfigurationWatcher(
 		provider:            pvd,
 		allProvidersConfigs: make(chan dynamic.Message, 100),
 		newConfigs:          channels.NewRingChannel(1),
-		//providersThrottleDuration: providersThrottleDuration,
-		routinesPool:       routinesPool,
-		defaultEntryPoints: defaultEntryPoints,
-		requiredProvider:   requiredProvider,
+		routinesPool:        routinesPool,
+		defaultEntryPoints:  defaultEntryPoints,
+		requiredProvider:    requiredProvider,
 	}
 
 	return watcher
@@ -201,16 +197,8 @@ func (c *ConfigurationWatcher) throttleAndApplyConfigurations(ctx context.Contex
 				continue
 			}
 
-			//start := time.Now()
 			c.applyConfigurations(currentConfigurations)
 			lastConfigurations = currentConfigurations
-
-			//elapsed := time.Now().Sub(start)
-			//if elapsed > c.providersThrottleDuration {
-			//	continue
-			//}
-			//
-			//time.Sleep(c.providersThrottleDuration - elapsed)
 		}
 	}
 }

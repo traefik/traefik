@@ -180,8 +180,8 @@ func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 		})
 	}
 
-	//watcher := NewConfigurationWatcher(routinesPool, aggregator.ProviderThrottle{pvd, 30 * time.Millisecond}, 30*time.Millisecond, []string{}, "")
-	watcher := NewConfigurationWatcher(routinesPool, aggregator.ProviderThrottle{pvd, 30 * time.Millisecond}, []string{}, "")
+	//watcher := NewConfigurationWatcher(routinesPool, aggregator.ThrottledProvider{pvd, 30 * time.Millisecond}, 30*time.Millisecond, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, aggregator.ThrottledProvider{pvd, 30 * time.Millisecond}, []string{}, "")
 
 	publishedConfigCount := 0
 	watcher.AddListener(func(_ dynamic.Configuration) {
@@ -497,8 +497,8 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 		},
 	}
 
-	//watcher := NewConfigurationWatcher(routinesPool, aggregator.ProviderThrottle{pvd, 10 * time.Millisecond}, 10*time.Millisecond, []string{"defaultEP"}, "")
-	watcher := NewConfigurationWatcher(routinesPool, aggregator.ProviderThrottle{pvd, 10 * time.Millisecond}, []string{"defaultEP"}, "")
+	//watcher := NewConfigurationWatcher(routinesPool, aggregator.ThrottledProvider{pvd, 10 * time.Millisecond}, 10*time.Millisecond, []string{"defaultEP"}, "")
+	watcher := NewConfigurationWatcher(routinesPool, aggregator.ThrottledProvider{pvd, 10 * time.Millisecond}, []string{"defaultEP"}, "")
 
 	var configurationReloads int
 	var lastConfig dynamic.Configuration
@@ -510,7 +510,7 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 	watcher.Start()
 
 	// Wait long enough
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 
 	expected := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(

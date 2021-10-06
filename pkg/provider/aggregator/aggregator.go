@@ -3,7 +3,6 @@ package aggregator
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -15,56 +14,31 @@ import (
 	"github.com/traefik/traefik/v2/pkg/safe"
 )
 
-type ProviderThrottle struct {
+type ThrottledProvider struct {
 	provider.Provider
 	ProviderThrottleDuration time.Duration
 }
 
-func (p ProviderThrottle) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	//providerChan := make(chan dynamic.Message, 100)
-	//throttleChan := channels.NewRingChannel(1)
-
-	//pool.GoCtx(func(ctx context.Context) {
-	//	var previousMsg dynamic.Message
-	//	for {
-	//		select {
-	//		case msg := <-providerChan:
-	//			if reflect.DeepEqual(previousMsg, msg) {
-	//				continue
-	//			}
-	//			throttleChan.In() <- msg
-	//			previousMsg = msg
-	//		}
-	//	}
-	//})
-	//
-	//pool.GoCtx(func(ctx context.Context) {
-	//	for {
-	//		select {
-	//		case msg := <-throttleChan.Out():
-	//			configurationChan <- msg.(dynamic.Message)
-	//			time.Sleep(p.providerThrottleDuration)
-	//		}
-	//	}
-	//})
-
+func (p ThrottledProvider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	rc := NewRingChannel()
 	pool.GoCtx(func(ctx context.Context) {
-		select {
-		case <-ctx.Done():
-			return
-		case msg := <-rc.Out():
-			configurationChan <- msg
-			fmt.Printf("CONFIG\n")
-			time.Sleep(p.ProviderThrottleDuration)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case msg := <-rc.Out():
+				configurationChan <- msg
+				time.Sleep(p.ProviderThrottleDuration)
+			}
 		}
 	})
 
 	return p.Provider.Provide(rc.In(), pool)
 }
 
-func (p ProviderThrottle) Init() error {
-	return p.Provider.Init()
+func (p ThrottledProvider) Init() error {
+	// TODO return an error as it must not been called?
+	return nil
 }
 
 // ProviderAggregator aggregates providers.
@@ -160,11 +134,11 @@ func (p *ProviderAggregator) AddProvider(provider provider.Provider) error {
 
 	switch provider.(type) {
 	case *file.Provider:
-		p.fileProvider = provider
+		p.fileProvider = ThrottledProvider{provider, p.providersThrottleDuration}
 	case *traefik.Provider:
-		p.internalProvider = provider
+		p.internalProvider = ThrottledProvider{provider, p.providersThrottleDuration}
 	default:
-		p.providers = append(p.providers, provider)
+		p.providers = append(p.providers, ThrottledProvider{provider, p.providersThrottleDuration})
 	}
 
 	return nil
@@ -178,26 +152,26 @@ func (p ProviderAggregator) Init() error {
 // Provide calls the provide method of every providers.
 func (p ProviderAggregator) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	if p.fileProvider != nil {
-		launchProvider(configurationChan, pool, p.fileProvider, p.providersThrottleDuration)
+		launchProvider(configurationChan, pool, p.fileProvider)
 	}
 
 	for _, prd := range p.providers {
 		prd := prd
 		safe.Go(func() {
-			launchProvider(configurationChan, pool, prd, 0)
+			launchProvider(configurationChan, pool, prd)
 		})
 	}
 
 	// internal provider must be the last because we use it to know if all the providers are loaded.
 	// ConfigurationWatcher will wait for this requiredProvider before applying configurations.
 	if p.internalProvider != nil {
-		launchProvider(configurationChan, pool, p.internalProvider, 0)
+		launchProvider(configurationChan, pool, p.internalProvider)
 	}
 
 	return nil
 }
 
-func launchProvider(configurationChan chan<- dynamic.Message, pool *safe.Pool, prd provider.Provider, providerThrottleDuration time.Duration) {
+func launchProvider(configurationChan chan<- dynamic.Message, pool *safe.Pool, prd provider.Provider) {
 	jsonConf, err := json.Marshal(prd)
 	if err != nil {
 		log.WithoutContext().Debugf("Cannot marshal the provider configuration %T: %v", prd, err)
@@ -205,19 +179,7 @@ func launchProvider(configurationChan chan<- dynamic.Message, pool *safe.Pool, p
 
 	log.WithoutContext().Infof("Starting provider %T %s", prd, jsonConf)
 
-	//currentProvider := ProviderThrottle{prd, providerThrottleDuration}
 	currentProvider := prd
-	//rc := NewRingChannel()
-	//go func() {
-	//	select {
-	//	// TODO: ctx.Done
-	//	case msg := <-rc.Out():
-	//		configurationChan <- msg
-	//		time.Sleep(providerThrottleDuration)
-	//	}
-	//}()
-	//
-	//err = currentProvider.Provide(rc.In(), pool)
 	err = currentProvider.Provide(configurationChan, pool)
 	if err != nil {
 		log.WithoutContext().Errorf("Cannot start the provider %T: %v", prd, err)
