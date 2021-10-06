@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.7.32](https://github.com/traefik/traefik/tree/v1.7.32) (2021-10-06)
+[All Commits](https://github.com/traefik/traefik/compare/v1.7.31...v1.7.32)
+
+**Bug fixes:**
+- **[acme]** acme: add missing preferred chain ([#8495](https://github.com/traefik/traefik/pull/8495) by [ldez](https://github.com/ldez))
+
 ## [v1.7.31](https://github.com/traefik/traefik/tree/v1.7.31) (2021-10-04)
 [All Commits](https://github.com/traefik/traefik/compare/v1.7.30...v1.7.31)
 
