@@ -241,7 +241,7 @@ Enable metrics on routers. (Default: ```false```)
 Enable metrics on services. (Default: ```true```)
 
 `TRAEFIK_METRICS_DATADOG_PREFIX`:  
-Prefix to use for metrics collection.
+Prefix to use for metrics collection. (Default: ```traefik```)
 
 `TRAEFIK_METRICS_DATADOG_PUSHINTERVAL`:  
 Datadog push interval. (Default: ```10```)

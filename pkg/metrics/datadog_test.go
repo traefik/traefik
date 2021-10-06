@@ -23,7 +23,7 @@ func TestDatadog(t *testing.T) {
 	if !datadogRegistry.IsEpEnabled() || !datadogRegistry.IsRouterEnabled() || !datadogRegistry.IsSvcEnabled() {
 		t.Errorf("DatadogRegistry should return true for IsEnabled(), IsRouterEnabled() and IsSvcEnabled()")
 	}
-	testDatadogRegistry(t, "", datadogRegistry)
+	testDatadogRegistry(t, defaultMetricsPrefix, datadogRegistry)
 }
 
 func TestDatadogWithPrefix(t *testing.T) {
@@ -42,10 +42,6 @@ func TestDatadogWithPrefix(t *testing.T) {
 
 func testDatadogRegistry(t *testing.T, metricsPrefix string, datadogRegistry Registry) {
 	t.Helper()
-
-	if metricsPrefix == "" {
-		metricsPrefix = "traefik"
-	}
 
 	expected := []string{
 		metricsPrefix + ".config.reload.total:1.000000|c\n",
