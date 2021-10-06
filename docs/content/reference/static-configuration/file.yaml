@@ -272,6 +272,7 @@ metrics:
     addEntryPointsLabels: true
     addRoutersLabels: true
     addServicesLabels: true
+    prefix: foobar
   statsD:
     address: foobar
     pushInterval: 42

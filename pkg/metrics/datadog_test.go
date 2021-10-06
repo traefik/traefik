@@ -41,6 +41,8 @@ func TestDatadogWithPrefix(t *testing.T) {
 }
 
 func testDatadogRegistry(t *testing.T, metricsPrefix string, datadogRegistry Registry) {
+	t.Helper()
+
 	if metricsPrefix == "" {
 		metricsPrefix = "traefik"
 	}
