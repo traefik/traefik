@@ -240,6 +240,9 @@ Enable metrics on routers. (Default: ```false```)
 `--metrics.datadog.addserviceslabels`:  
 Enable metrics on services. (Default: ```true```)
 
+`--metrics.datadog.prefix`:  
+Prefix to use for metrics collection.
+
 `--metrics.datadog.pushinterval`:  
 Datadog push interval. (Default: ```10```)
 
