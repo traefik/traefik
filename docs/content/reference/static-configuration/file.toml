@@ -250,6 +250,7 @@
     addEntryPointsLabels = true
     addRoutersLabels = true
     addServicesLabels = true
+    prefix = "foobar"
   [metrics.statsD]
     address = "foobar"
     pushInterval = "42s"
