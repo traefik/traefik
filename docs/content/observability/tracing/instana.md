@@ -64,9 +64,9 @@ tracing:
 
 _Required, Default="info"_
 
-Sets the Instana tracer log level.
+Sets Instana tracer log level.
 
-Valid values for logLevel field are:
+Valid values are:
 
 - `error`
 - `warn`

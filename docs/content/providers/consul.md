@@ -64,7 +64,7 @@ Defines a username to connect to Consul with.
 providers:
   consul:
     # ...
-    usename: "foo"
+    username: "foo"
 ```
 
 ```toml tab="File (TOML)"

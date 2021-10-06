@@ -7,7 +7,7 @@ while IFS='' read -r line; do files+=("$line"); done < <(git ls-files "${SCRIPT_
 errors=()
 for f in "${files[@]}"; do
 	# we use source text here so we also check spelling of variable names
-	failedSpell=$(misspell -source=text "$f")
+	failedSpell=$(misspell -source=text -i "internetbs" "$f")
 	if [ "$failedSpell" ]; then
 		errors+=( "$failedSpell" )
 	fi

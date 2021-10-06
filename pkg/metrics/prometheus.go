@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-kit/kit/metrics"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -83,14 +84,14 @@ func PrometheusHandler() http.Handler {
 func RegisterPrometheus(ctx context.Context, config *types.Prometheus) Registry {
 	standardRegistry := initStandardRegistry(config)
 
-	if err := promRegistry.Register(stdprometheus.NewProcessCollector(stdprometheus.ProcessCollectorOpts{})); err != nil {
+	if err := promRegistry.Register(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{})); err != nil {
 		var arErr stdprometheus.AlreadyRegisteredError
 		if !errors.As(err, &arErr) {
 			log.FromContext(ctx).Warn("ProcessCollector is already registered")
 		}
 	}
 
-	if err := promRegistry.Register(stdprometheus.NewGoCollector()); err != nil {
+	if err := promRegistry.Register(collectors.NewGoCollector()); err != nil {
 		var arErr stdprometheus.AlreadyRegisteredError
 		if !errors.As(err, &arErr) {
 			log.FromContext(ctx).Warn("GoCollector is already registered")
