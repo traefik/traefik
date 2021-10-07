@@ -16,9 +16,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/tracing"
 )
 
-const (
-	typeName = "ReplacePathRegex"
-)
+const typeName = "ReplacePathRegex"
 
 // ReplacePathRegex is a middleware used to replace the path of a URL request with a regular expression.
 type replacePathRegex struct {
@@ -50,15 +48,9 @@ func (rp *replacePathRegex) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	var currentPath string
-	switch {
-	case req.URL.RawPath != "":
-		currentPath = req.URL.RawPath
-	case req.URL.String() != req.URL.Path:
-		// The original URL may contain percent encoded values decoded in req.URL.Path.
-		currentPath = req.URL.String()
-	default:
-		currentPath = req.URL.Path
+	currentPath := req.URL.RawPath
+	if currentPath == "" {
+		currentPath = req.URL.EscapedPath()
 	}
 
 	if rp.regexp != nil && len(rp.replacement) > 0 && rp.regexp.MatchString(currentPath) {
