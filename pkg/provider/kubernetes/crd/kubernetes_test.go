@@ -150,7 +150,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			},
 		},
 		{
-			desc:  "Middleware in ingress route config are normalized",
+			desc:  "Middlewares in ingress route config are normalized",
 			paths: []string{"tcp/services.yml", "tcp/with_middleware_multiple_hyphens.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
