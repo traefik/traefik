@@ -1,15 +1,15 @@
 # Datadog
 
-To enable the Datadog:
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.datadog]
-```
+To enable the Datadog tracer:
 
 ```yaml tab="File (YAML)"
 tracing:
   datadog: {}
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.datadog]
 ```
 
 ```bash tab="CLI"
@@ -20,18 +20,18 @@ tracing:
 
 _Required, Default="127.0.0.1:8126"_
 
-Local Agent Host Port instructs reporter to send spans to datadog-tracing-agent at this address.
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.datadog]
-    localAgentHostPort = "127.0.0.1:8126"
-```
+Local Agent Host Port instructs the reporter to send spans to the Datadog Agent at this address (host:port).
 
 ```yaml tab="File (YAML)"
 tracing:
   datadog:
     localAgentHostPort: 127.0.0.1:8126
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.datadog]
+    localAgentHostPort = "127.0.0.1:8126"
 ```
 
 ```bash tab="CLI"
@@ -42,18 +42,18 @@ tracing:
 
 _Optional, Default=false_
 
-Enable Datadog debug.
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.datadog]
-    debug = true
-```
+Enables Datadog debug.
 
 ```yaml tab="File (YAML)"
 tracing:
   datadog:
     debug: true
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.datadog]
+    debug = true
 ```
 
 ```bash tab="CLI"
@@ -64,18 +64,18 @@ tracing:
 
 _Optional, Default=empty_
 
-Apply shared tag in a form of Key:Value to all the traces.
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.datadog]
-    globalTag = "sample"
-```
+Applies a shared key:value tag on all spans.
 
 ```yaml tab="File (YAML)"
 tracing:
   datadog:
     globalTag: sample
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.datadog]
+    globalTag = "sample"
 ```
 
 ```bash tab="CLI"
@@ -86,19 +86,20 @@ tracing:
 
 _Optional, Default=false_
 
-Enable priority sampling. When using distributed tracing,
+Enables priority sampling.
+When using distributed tracing, 
 this option must be enabled in order to get all the parts of a distributed trace sampled.
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.datadog]
-    prioritySampling = true
-```
 
 ```yaml tab="File (YAML)"
 tracing:
   datadog:
     prioritySampling: true
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.datadog]
+    prioritySampling = true
 ```
 
 ```bash tab="CLI"

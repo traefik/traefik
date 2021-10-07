@@ -28,8 +28,8 @@ A Story of key & values
 
     | Key (Path)                                    | Value       |
     |-----------------------------------------------|-------------|
-    | `traefik.http.routers.myrouter.entrypoints/0` | `web`       |
-    | `traefik.http.routers.myrouter.entrypoints/1` | `websecure` |
+    | `traefik/http/routers/myrouter/entrypoints/0` | `web`       |
+    | `traefik/http/routers/myrouter/entrypoints/1` | `websecure` |
 
 ??? info "`traefik/http/routers/<router_name>/middlewares`"
 
@@ -109,6 +109,15 @@ A Story of key & values
     | Key (Path)                                                      | Value                                   |
     |-----------------------------------------------------------------|-----------------------------------------|
     | `traefik/http/services/myservice/loadbalancer/servers/0/url`    | `http://<ip-server-1>:<port-server-1>/` |
+
+??? info "`traefik/http/services/<service_name>/loadbalancer/serverstransport`"
+
+    Allows to reference a ServersTransport resource that is defined either with the File provider or the Kubernetes CRD one.
+    See [serverstransport](../services/index.md#serverstransport) for more information.
+
+    | Key (Path)                                                      | Value         |
+    |-----------------------------------------------------------------|---------------|
+    | `traefik/http/services/myservice/loadbalancer/serverstransport` | `foobar@file` |
 
 ??? info "`traefik/http/services/<service_name>/loadbalancer/passhostheader`"
 

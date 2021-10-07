@@ -1,0 +1,160 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: ingressroutetcps.traefik.containo.us
+spec:
+  group: traefik.containo.us
+  names:
+    kind: IngressRouteTCP
+    listKind: IngressRouteTCPList
+    plural: ingressroutetcps
+    singular: ingressroutetcp
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: IngressRouteTCP is an Ingress CRD specification.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: IngressRouteTCPSpec is a specification for a IngressRouteTCPSpec
+              resource.
+            properties:
+              entryPoints:
+                items:
+                  type: string
+                type: array
+              routes:
+                items:
+                  description: RouteTCP contains the set of routes.
+                  properties:
+                    match:
+                      type: string
+                    middlewares:
+                      description: Middlewares contains references to MiddlewareTCP
+                        resources.
+                      items:
+                        description: ObjectReference is a generic reference to a Traefik
+                          resource.
+                        properties:
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                        required:
+                        - name
+                        type: object
+                      type: array
+                    services:
+                      items:
+                        description: ServiceTCP defines an upstream to proxy traffic.
+                        properties:
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                          port:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            x-kubernetes-int-or-string: true
+                          proxyProtocol:
+                            description: ProxyProtocol holds the ProxyProtocol configuration.
+                            properties:
+                              version:
+                                type: integer
+                            type: object
+                          terminationDelay:
+                            type: integer
+                          weight:
+                            type: integer
+                        required:
+                        - name
+                        - port
+                        type: object
+                      type: array
+                  required:
+                  - match
+                  type: object
+                type: array
+              tls:
+                description: "TLSTCP contains the TLS certificates configuration of
+                  the routes. To enable Let's Encrypt, use an empty TLS struct, e.g.
+                  in YAML: \n \t tls: {} # inline format \n \t tls: \t   secretName:
+                  # block format"
+                properties:
+                  certResolver:
+                    type: string
+                  domains:
+                    items:
+                      description: Domain holds a domain name with SANs.
+                      properties:
+                        main:
+                          type: string
+                        sans:
+                          items:
+                            type: string
+                          type: array
+                      type: object
+                    type: array
+                  options:
+                    description: Options is a reference to a TLSOption, that specifies
+                      the parameters of the TLS connection.
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  passthrough:
+                    type: boolean
+                  secretName:
+                    description: SecretName is the name of the referenced Kubernetes
+                      Secret to specify the certificate details.
+                    type: string
+                  store:
+                    description: Store is a reference to a TLSStore, that specifies
+                      the parameters of the TLS store.
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                type: object
+            required:
+            - routes
+            type: object
+        required:
+        - metadata
+        - spec
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

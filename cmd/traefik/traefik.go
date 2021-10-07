@@ -4,21 +4,22 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/json"
+	"fmt"
 	stdlog "log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"sort"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/coreos/go-systemd/daemon"
-	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/go-acme/lego/v4/challenge"
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/paerser/cli"
-	"github.com/traefik/traefik/v2/autogen/genstatic"
 	"github.com/traefik/traefik/v2/cmd"
 	"github.com/traefik/traefik/v2/cmd/healthcheck"
 	cmdVersion "github.com/traefik/traefik/v2/cmd/version"
@@ -106,10 +107,6 @@ func runCmd(staticConfiguration *static.Configuration) error {
 		log.WithoutContext().Debugf("Static configuration loaded %s", string(jsonConf))
 	}
 
-	if staticConfiguration.API != nil && staticConfiguration.API.Dashboard {
-		staticConfiguration.API.DashboardAssets = &assetfs.AssetFS{Asset: genstatic.Asset, AssetInfo: genstatic.AssetInfo, AssetDir: genstatic.AssetDir, Prefix: "static"}
-	}
-
 	if staticConfiguration.Global.CheckNewVersion {
 		checkNewVersion()
 	}
@@ -121,13 +118,7 @@ func runCmd(staticConfiguration *static.Configuration) error {
 		return err
 	}
 
-	ctx := cmd.ContextWithSignal(context.Background())
-
-	if staticConfiguration.Experimental != nil && staticConfiguration.Experimental.DevPlugin != nil {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, 30*time.Minute)
-		defer cancel()
-	}
+	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
 	if staticConfiguration.Ping != nil {
 		staticConfiguration.Ping.WithContext(ctx)
@@ -188,7 +179,9 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	tlsManager := traefiktls.NewManager()
 	httpChallengeProvider := acme.NewChallengeHTTP()
-	tlsChallengeProvider := acme.NewChallengeTLSALPN(time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration))
+
+	// we need to wait at least 2 times the ProvidersThrottleDuration to be sure to handle the challenge.
+	tlsChallengeProvider := acme.NewChallengeTLSALPN(time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration) * 2)
 	err = providerAggregator.AddProvider(tlsChallengeProvider)
 	if err != nil {
 		return nil, err
@@ -222,11 +215,29 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		})
 	}
 
+	if staticConfiguration.Pilot != nil {
+		version.PilotEnabled = staticConfiguration.Pilot.Dashboard
+	}
+
 	// Plugins
 
 	pluginBuilder, err := createPluginBuilder(staticConfiguration)
 	if err != nil {
 		return nil, err
+	}
+
+	// Providers plugins
+
+	for name, conf := range staticConfiguration.Providers.Plugin {
+		p, err := pluginBuilder.BuildProvider(name, conf)
+		if err != nil {
+			return nil, fmt.Errorf("plugin: failed to build provider: %w", err)
+		}
+
+		err = providerAggregator.AddProvider(p)
+		if err != nil {
+			return nil, fmt.Errorf("plugin: failed to add provider: %w", err)
+		}
 	}
 
 	// Metrics
@@ -247,7 +258,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
 	chainBuilder := middleware.NewChainBuilder(*staticConfiguration, metricsRegistry, accessLog)
-	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder)
+	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder, metricsRegistry)
 
 	// Watcher
 
@@ -256,6 +267,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		providerAggregator,
 		time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration),
 		getDefaultsEntrypoints(staticConfiguration),
+		"internal",
 	)
 
 	// TLS
@@ -370,30 +382,32 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 
 	var resolvers []*acme.Provider
 	for name, resolver := range c.CertificatesResolvers {
-		if resolver.ACME != nil {
-			if localStores[resolver.ACME.Storage] == nil {
-				localStores[resolver.ACME.Storage] = acme.NewLocalStore(resolver.ACME.Storage)
-			}
-
-			p := &acme.Provider{
-				Configuration:         resolver.ACME,
-				Store:                 localStores[resolver.ACME.Storage],
-				ResolverName:          name,
-				HTTPChallengeProvider: httpChallengeProvider,
-				TLSChallengeProvider:  tlsChallengeProvider,
-			}
-
-			if err := providerAggregator.AddProvider(p); err != nil {
-				log.WithoutContext().Errorf("The ACME resolver %q is skipped from the resolvers list because: %v", name, err)
-				continue
-			}
-
-			p.SetTLSManager(tlsManager)
-
-			p.SetConfigListenerChan(make(chan dynamic.Configuration))
-
-			resolvers = append(resolvers, p)
+		if resolver.ACME == nil {
+			continue
 		}
+
+		if localStores[resolver.ACME.Storage] == nil {
+			localStores[resolver.ACME.Storage] = acme.NewLocalStore(resolver.ACME.Storage)
+		}
+
+		p := &acme.Provider{
+			Configuration:         resolver.ACME,
+			Store:                 localStores[resolver.ACME.Storage],
+			ResolverName:          name,
+			HTTPChallengeProvider: httpChallengeProvider,
+			TLSChallengeProvider:  tlsChallengeProvider,
+		}
+
+		if err := providerAggregator.AddProvider(p); err != nil {
+			log.WithoutContext().Errorf("The ACME resolver %q is skipped from the resolvers list because: %v", name, err)
+			continue
+		}
+
+		p.SetTLSManager(tlsManager)
+
+		p.SetConfigListenerChan(make(chan dynamic.Configuration))
+
+		resolvers = append(resolvers, p)
 	}
 
 	return resolvers

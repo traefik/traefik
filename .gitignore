@@ -5,10 +5,9 @@
 .DS_Store
 /dist
 /webui/.tmp/
+/webui/static/
 /site/
 /docs/site/
-/static/
-/autogen/
 /traefik
 /traefik.toml
 /traefik.yml
@@ -17,4 +16,5 @@
 cover.out
 vendor/
 plugins-storage/
+plugins-local/
 traefik_changelog.md

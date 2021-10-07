@@ -12,6 +12,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/traefik/traefik/v2/pkg/tls"
 )
 
 // ConfigurationWatcher watches configuration changes.
@@ -28,6 +29,7 @@ type ConfigurationWatcher struct {
 	configurationValidatedChan chan dynamic.Message
 	providerConfigUpdateMap    map[string]chan dynamic.Message
 
+	requiredProvider       string
 	configurationListeners []func(dynamic.Configuration)
 
 	routinesPool *safe.Pool
@@ -39,6 +41,7 @@ func NewConfigurationWatcher(
 	pvd provider.Provider,
 	providersThrottleDuration time.Duration,
 	defaultEntryPoints []string,
+	requiredProvider string,
 ) *ConfigurationWatcher {
 	watcher := &ConfigurationWatcher{
 		provider:                   pvd,
@@ -48,6 +51,7 @@ func NewConfigurationWatcher(
 		providersThrottleDuration:  providersThrottleDuration,
 		routinesPool:               routinesPool,
 		defaultEntryPoints:         defaultEntryPoints,
+		requiredProvider:           requiredProvider,
 	}
 
 	currentConfigurations := make(dynamic.Configurations)
@@ -146,8 +150,11 @@ func (c *ConfigurationWatcher) loadMessage(configMsg dynamic.Message) {
 	conf := mergeConfiguration(newConfigurations, c.defaultEntryPoints)
 	conf = applyModel(conf)
 
-	for _, listener := range c.configurationListeners {
-		listener(conf)
+	// We wait for first configuration of the require provider before applying configurations.
+	if _, ok := newConfigurations[c.requiredProvider]; c.requiredProvider == "" || ok {
+		for _, listener := range c.configurationListeners {
+			listener(conf)
+		}
 	}
 }
 
@@ -158,10 +165,27 @@ func (c *ConfigurationWatcher) preLoadConfiguration(configMsg dynamic.Message) {
 		if copyConf.TLS != nil {
 			copyConf.TLS.Certificates = nil
 
+			if copyConf.TLS.Options != nil {
+				cleanedOptions := make(map[string]tls.Options, len(copyConf.TLS.Options))
+				for name, option := range copyConf.TLS.Options {
+					option.ClientAuth.CAFiles = []tls.FileOrContent{}
+					cleanedOptions[name] = option
+				}
+
+				copyConf.TLS.Options = cleanedOptions
+			}
+
 			for k := range copyConf.TLS.Stores {
 				st := copyConf.TLS.Stores[k]
 				st.DefaultCertificate = nil
 				copyConf.TLS.Stores[k] = st
+			}
+		}
+
+		if copyConf.HTTP != nil {
+			for _, transport := range copyConf.HTTP.ServersTransports {
+				transport.Certificates = tls.Certificates{}
+				transport.RootCAs = []tls.FileOrContent{}
 			}
 		}
 
@@ -247,7 +271,7 @@ func isEmptyConfiguration(conf *dynamic.Configuration) bool {
 
 	httpEmpty := conf.HTTP.Routers == nil && conf.HTTP.Services == nil && conf.HTTP.Middlewares == nil
 	tlsEmpty := conf.TLS == nil || conf.TLS.Certificates == nil && conf.TLS.Stores == nil && conf.TLS.Options == nil
-	tcpEmpty := conf.TCP.Routers == nil && conf.TCP.Services == nil
+	tcpEmpty := conf.TCP.Routers == nil && conf.TCP.Services == nil && conf.TCP.Middlewares == nil
 	udpEmpty := conf.UDP.Routers == nil && conf.UDP.Services == nil
 
 	return httpEmpty && tlsEmpty && tcpEmpty && udpEmpty

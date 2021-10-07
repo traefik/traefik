@@ -8,7 +8,7 @@ spec:
   ports:
   - name: http
     port: 8080
-  clusterIp: "fc00:f853:ccd:e793::1"
+  clusterIP: "fc00:f853:ccd:e793::1"
   type: ClusterIP
 
 ---

@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	assetfs "github.com/elazarl/go-bindata-assetfs"
 	legolog "github.com/go-acme/lego/v4/log"
 	"github.com/sirupsen/logrus"
 	ptypes "github.com/traefik/paerser/types"
@@ -108,7 +107,6 @@ type API struct {
 	Debug     bool `description:"Enable additional endpoints for debugging and profiling." json:"debug,omitempty" toml:"debug,omitempty" yaml:"debug,omitempty" export:"true"`
 	// TODO: Re-enable statistics
 	// Statistics      *types.Statistics `description:"Enable more detailed statistics." json:"statistics,omitempty" toml:"statistics,omitempty" yaml:"statistics,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	DashboardAssets *assetfs.AssetFS `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 }
 
 // SetDefaults sets the default values.
@@ -190,6 +188,8 @@ type Providers struct {
 	ZooKeeper *zk.Provider     `description:"Enable ZooKeeper backend with default settings." json:"zooKeeper,omitempty" toml:"zooKeeper,omitempty" yaml:"zooKeeper,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Redis     *redis.Provider  `description:"Enable Redis backend with default settings." json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	HTTP      *http.Provider   `description:"Enable HTTP backend with default settings." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+
+	Plugin map[string]PluginConf `description:"Plugins configuration." json:"plugin,omitempty" toml:"plugin,omitempty" yaml:"plugin,omitempty"`
 }
 
 // SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.
@@ -235,14 +235,23 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		c.Global.SendAnonymousUsage = true
 	}
 
+	// Create Pilot struct to apply default value on undefined configuration.
+	if c.Pilot == nil {
+		c.Pilot = &Pilot{}
+		c.Pilot.SetDefaults()
+	}
+
 	// Disable Gateway API provider if not enabled in experimental
 	if c.Experimental == nil || !c.Experimental.KubernetesGateway {
 		c.Providers.KubernetesGateway = nil
 	}
 
 	if c.Experimental == nil || !c.Experimental.HTTP3 {
-		for _, ep := range c.EntryPoints {
-			ep.EnableHTTP3 = false
+		for epName, ep := range c.EntryPoints {
+			if ep.HTTP3 != nil {
+				ep.HTTP3 = nil
+				log.WithoutContext().Debugf("Disabling HTTP3 configuration for entryPoint %q: HTTP3 is disabled in the experimental configuration section", epName)
+			}
 		}
 	}
 

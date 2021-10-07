@@ -6,7 +6,7 @@ import (
 	"mime"
 	"net/http"
 
-	"github.com/NYTimes/gziphandler"
+	"github.com/klauspost/compress/gzhttp"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -23,6 +23,7 @@ type compress struct {
 	next     http.Handler
 	name     string
 	excludes []string
+	minSize  int
 }
 
 // New creates a new compress middleware.
@@ -39,7 +40,12 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 		excludes = append(excludes, mediaType)
 	}
 
-	return &compress{next: next, name: name, excludes: excludes}, nil
+	minSize := gzhttp.DefaultMinSize
+	if conf.MinResponseBodyBytes > 0 {
+		minSize = conf.MinResponseBodyBytes
+	}
+
+	return &compress{next: next, name: name, excludes: excludes, minSize: minSize}, nil
 }
 
 func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -52,7 +58,7 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		c.next.ServeHTTP(rw, req)
 	} else {
 		ctx := middlewares.GetLoggerCtx(req.Context(), c.name, typeName)
-		gzipHandler(ctx, c.next).ServeHTTP(rw, req)
+		c.gzipHandler(ctx).ServeHTTP(rw, req)
 	}
 }
 
@@ -60,15 +66,16 @@ func (c *compress) GetTracingInformation() (string, ext.SpanKindEnum) {
 	return c.name, tracing.SpanKindNoneEnum
 }
 
-func gzipHandler(ctx context.Context, h http.Handler) http.Handler {
-	wrapper, err := gziphandler.GzipHandlerWithOpts(
-		gziphandler.CompressionLevel(gzip.DefaultCompression),
-		gziphandler.MinSize(gziphandler.DefaultMinSize))
+func (c *compress) gzipHandler(ctx context.Context) http.Handler {
+	wrapper, err := gzhttp.NewWrapper(
+		gzhttp.ExceptContentTypes(c.excludes),
+		gzhttp.CompressionLevel(gzip.DefaultCompression),
+		gzhttp.MinSize(c.minSize))
 	if err != nil {
 		log.FromContext(ctx).Error(err)
 	}
 
-	return wrapper(h)
+	return wrapper(c.next)
 }
 
 func contains(values []string, val string) bool {

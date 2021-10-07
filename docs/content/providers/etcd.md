@@ -3,7 +3,7 @@
 A Story of KV store & Containers
 {: .subtitle }
 
-Store your configuration in Etcd and let Traefik do the rest!
+Store your configuration in etcd and let Traefik do the rest!
 
 ## Routing Configuration
 
@@ -15,12 +15,7 @@ See the dedicated section in [routing](../routing/providers/kv.md).
 
 _Required, Default="127.0.0.1:2379"_
 
-Defines how to access to Etcd.
-
-```toml tab="File (TOML)"
-[providers.etcd]
-  endpoints = ["127.0.0.1:2379"]
-```
+Defines how to access etcd.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -29,25 +24,30 @@ providers:
       - "127.0.0.1:2379"
 ```
 
+```toml tab="File (TOML)"
+[providers.etcd]
+  endpoints = ["127.0.0.1:2379"]
+```
+
 ```bash tab="CLI"
 --providers.etcd.endpoints=127.0.0.1:2379
 ```
 
 ### `rootKey`
 
-Defines the root key of the configuration.
-
 _Required, Default="traefik"_
 
-```toml tab="File (TOML)"
-[providers.etcd]
-  rootKey = "traefik"
-```
+Defines the root key of the configuration.
 
 ```yaml tab="File (YAML)"
 providers:
   etcd:
     rootKey: "traefik"
+```
+
+```toml tab="File (TOML)"
+[providers.etcd]
+  rootKey = "traefik"
 ```
 
 ```bash tab="CLI"
@@ -56,21 +56,21 @@ providers:
 
 ### `username`
 
-Defines a username to connect with Etcd.
-
 _Optional, Default=""_
 
-```toml tab="File (TOML)"
-[providers.etcd]
-  # ...
-  username = "foo"
-```
+Defines a username with which to connect to etcd.
 
 ```yaml tab="File (YAML)"
 providers:
   etcd:
     # ...
-    usename: "foo"
+    username: "foo"
+```
+
+```toml tab="File (TOML)"
+[providers.etcd]
+  # ...
+  username = "foo"
 ```
 
 ```bash tab="CLI"
@@ -81,19 +81,19 @@ providers:
 
 _Optional, Default=""_
 
-Defines a password to connect with Etcd.
-
-```toml tab="File (TOML)"
-[providers.etcd]
-  # ...
-  password = "bar"
-```
+Defines a password with which to connect to etcd.
 
 ```yaml tab="File (YAML)"
 providers:
   etcd:
     # ...
     password: "bar"
+```
+
+```toml tab="File (TOML)"
+[providers.etcd]
+  # ...
+  password = "bar"
 ```
 
 ```bash tab="CLI"
@@ -106,12 +106,7 @@ _Optional_
 
 #### `tls.ca`
 
-Certificate Authority used for the secured connection to Etcd.
-
-```toml tab="File (TOML)"
-[providers.etcd.tls]
-  ca = "path/to/ca.crt"
-```
+Certificate Authority used for the secure connection to etcd.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -120,23 +115,26 @@ providers:
       ca: path/to/ca.crt
 ```
 
+```toml tab="File (TOML)"
+[providers.etcd.tls]
+  ca = "path/to/ca.crt"
+```
+
 ```bash tab="CLI"
 --providers.etcd.tls.ca=path/to/ca.crt
 ```
 
 #### `tls.caOptional`
 
-Policy followed for the secured connection with TLS Client Authentication to Etcd.
-Requires `tls.ca` to be defined.
+The value of `tls.caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to etcd.
 
-- `true`: VerifyClientCertIfGiven
-- `false`: RequireAndVerifyClientCert
-- if `tls.ca` is undefined NoClientCert
+!!! warning ""
 
-```toml tab="File (TOML)"
-[providers.etcd.tls]
-  caOptional = true
-```
+    If `tls.ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
+
+When this option is set to `true`, a client certificate is requested during the handshake but is not required. If a certificate is sent, it is required to be valid.
+
+When this option is set to `false`, a client certificate is requested during the handshake, and at least one valid certificate should be sent by the client.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -145,19 +143,18 @@ providers:
       caOptional: true
 ```
 
+```toml tab="File (TOML)"
+[providers.etcd.tls]
+  caOptional = true
+```
+
 ```bash tab="CLI"
 --providers.etcd.tls.caOptional=true
 ```
 
 #### `tls.cert`
 
-Public certificate used for the secured connection to Etcd.
-
-```toml tab="File (TOML)"
-[providers.etcd.tls]
-  cert = "path/to/foo.cert"
-  key = "path/to/foo.key"
-```
+Public certificate used for the secure connection to etcd.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -165,6 +162,12 @@ providers:
     tls:
       cert: path/to/foo.cert
       key: path/to/foo.key
+```
+
+```toml tab="File (TOML)"
+[providers.etcd.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
 ```
 
 ```bash tab="CLI"
@@ -174,13 +177,7 @@ providers:
 
 #### `tls.key`
 
-Private certificate used for the secured connection to Etcd.
-
-```toml tab="File (TOML)"
-[providers.etcd.tls]
-  cert = "path/to/foo.cert"
-  key = "path/to/foo.key"
-```
+Private certificate used for the secure connection to etcd.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -190,6 +187,12 @@ providers:
       key: path/to/foo.key
 ```
 
+```toml tab="File (TOML)"
+[providers.etcd.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
 ```bash tab="CLI"
 --providers.etcd.tls.cert=path/to/foo.cert
 --providers.etcd.tls.key=path/to/foo.key
@@ -197,18 +200,18 @@ providers:
 
 #### `tls.insecureSkipVerify`
 
-If `insecureSkipVerify` is `true`, TLS for the connection to Etcd accepts any certificate presented by the server and any host name in that certificate.
-
-```toml tab="File (TOML)"
-[providers.etcd.tls]
-  insecureSkipVerify = true
-```
+If `insecureSkipVerify` is `true`, the TLS connection to etcd accepts any certificate presented by the server regardless of the hostnames it covers.
 
 ```yaml tab="File (YAML)"
 providers:
   etcd:
     tls:
       insecureSkipVerify: true
+```
+
+```toml tab="File (TOML)"
+[providers.etcd.tls]
+  insecureSkipVerify = true
 ```
 
 ```bash tab="CLI"

@@ -2,9 +2,10 @@ package api
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -170,6 +171,31 @@ func TestHandler_Overview(t *testing.T) {
 						Status: runtime.StatusDisabled,
 					},
 				},
+				TCPMiddlewares: map[string]*runtime.TCPMiddlewareInfo{
+					"ipwhitelist1@myprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						Status: runtime.StatusEnabled,
+					},
+					"ipwhitelist2@myprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+					},
+					"ipwhitelist3@myprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						Status: runtime.StatusDisabled,
+					},
+				},
 				TCPRouters: map[string]*runtime.TCPRouterInfo{
 					"tcpbar@myprovider": {
 						TCPRouter: &dynamic.TCPRouter{
@@ -216,6 +242,9 @@ func TestHandler_Overview(t *testing.T) {
 					KubernetesCRD:     &crd.Provider{},
 					Rest:              &rest.Provider{},
 					Rancher:           &rancher.Provider{},
+					Plugin: map[string]static.PluginConf{
+						"test": map[string]interface{}{},
+					},
 				},
 			},
 			confDyn: runtime.Configuration{},
@@ -263,7 +292,7 @@ func TestHandler_Overview(t *testing.T) {
 			}
 
 			assert.Equal(t, resp.Header.Get("Content-Type"), "application/json")
-			contents, err := ioutil.ReadAll(resp.Body)
+			contents, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 
 			err = resp.Body.Close()
@@ -277,11 +306,11 @@ func TestHandler_Overview(t *testing.T) {
 				newJSON, err := json.MarshalIndent(results, "", "\t")
 				require.NoError(t, err)
 
-				err = ioutil.WriteFile(test.expected.jsonFile, newJSON, 0o644)
+				err = os.WriteFile(test.expected.jsonFile, newJSON, 0o644)
 				require.NoError(t, err)
 			}
 
-			data, err := ioutil.ReadFile(test.expected.jsonFile)
+			data, err := os.ReadFile(test.expected.jsonFile)
 			require.NoError(t, err)
 			assert.JSONEq(t, string(data), string(contents))
 		})

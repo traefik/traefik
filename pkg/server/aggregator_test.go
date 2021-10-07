@@ -182,7 +182,13 @@ func Test_mergeConfiguration_tlsOptions(t *testing.T) {
 			desc:  "Nil returns an empty configuration",
 			given: nil,
 			expected: map[string]tls.Options{
-				"default": {},
+				"default": {
+					ALPNProtocols: []string{
+						"h2",
+						"http/1.1",
+						"acme-tls/1",
+					},
+				},
 			},
 		},
 		{
@@ -199,7 +205,13 @@ func Test_mergeConfiguration_tlsOptions(t *testing.T) {
 				},
 			},
 			expected: map[string]tls.Options{
-				"default": {},
+				"default": {
+					ALPNProtocols: []string{
+						"h2",
+						"http/1.1",
+						"acme-tls/1",
+					},
+				},
 				"foo@provider-1": {
 					MinVersion: "VersionTLS12",
 				},
@@ -228,7 +240,13 @@ func Test_mergeConfiguration_tlsOptions(t *testing.T) {
 				},
 			},
 			expected: map[string]tls.Options{
-				"default": {},
+				"default": {
+					ALPNProtocols: []string{
+						"h2",
+						"http/1.1",
+						"acme-tls/1",
+					},
+				},
 				"foo@provider-1": {
 					MinVersion: "VersionTLS13",
 				},
@@ -334,7 +352,13 @@ func Test_mergeConfiguration_tlsOptions(t *testing.T) {
 				},
 			},
 			expected: map[string]tls.Options{
-				"default": {},
+				"default": {
+					ALPNProtocols: []string{
+						"h2",
+						"http/1.1",
+						"acme-tls/1",
+					},
+				},
 				"foo@provider-1": {
 					MinVersion: "VersionTLS12",
 				},
@@ -447,6 +471,36 @@ func Test_mergeConfiguration_tlsStore(t *testing.T) {
 			assert.Equal(t, test.expected, actual.TLS.Stores)
 		})
 	}
+}
+
+func Test_mergeConfiguration_defaultTCPEntryPoint(t *testing.T) {
+	given := dynamic.Configurations{
+		"provider-1": &dynamic.Configuration{
+			TCP: &dynamic.TCPConfiguration{
+				Routers: map[string]*dynamic.TCPRouter{
+					"router-1": {},
+				},
+				Services: map[string]*dynamic.TCPService{
+					"service-1": {},
+				},
+			},
+		},
+	}
+
+	expected := &dynamic.TCPConfiguration{
+		Routers: map[string]*dynamic.TCPRouter{
+			"router-1@provider-1": {
+				EntryPoints: []string{"defaultEP"},
+			},
+		},
+		Middlewares: map[string]*dynamic.TCPMiddleware{},
+		Services: map[string]*dynamic.TCPService{
+			"service-1@provider-1": {},
+		},
+	}
+
+	actual := mergeConfiguration(given, []string{"defaultEP"})
+	assert.Equal(t, expected, actual.TCP)
 }
 
 func Test_applyModel(t *testing.T) {

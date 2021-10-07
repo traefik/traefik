@@ -2,7 +2,7 @@ package crd
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
@@ -34,6 +34,7 @@ type clientMock struct {
 	ingressRouteTCPs []*v1alpha1.IngressRouteTCP
 	ingressRouteUDPs []*v1alpha1.IngressRouteUDP
 	middlewares      []*v1alpha1.Middleware
+	middlewareTCPs   []*v1alpha1.MiddlewareTCP
 	tlsOptions       []*v1alpha1.TLSOption
 	tlsStores        []*v1alpha1.TLSStore
 	traefikServices  []*v1alpha1.TraefikService
@@ -46,7 +47,7 @@ func newClientMock(paths ...string) clientMock {
 	var c clientMock
 
 	for _, path := range paths {
-		yamlContent, err := ioutil.ReadFile(filepath.FromSlash("./fixtures/" + path))
+		yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/" + path))
 		if err != nil {
 			panic(err)
 		}
@@ -66,6 +67,8 @@ func newClientMock(paths ...string) clientMock {
 				c.ingressRouteUDPs = append(c.ingressRouteUDPs, o)
 			case *v1alpha1.Middleware:
 				c.middlewares = append(c.middlewares, o)
+			case *v1alpha1.MiddlewareTCP:
+				c.middlewareTCPs = append(c.middlewareTCPs, o)
 			case *v1alpha1.TraefikService:
 				c.traefikServices = append(c.traefikServices, o)
 			case *v1alpha1.TLSOption:
@@ -99,6 +102,10 @@ func (c clientMock) GetIngressRouteUDPs() []*v1alpha1.IngressRouteUDP {
 
 func (c clientMock) GetMiddlewares() []*v1alpha1.Middleware {
 	return c.middlewares
+}
+
+func (c clientMock) GetMiddlewareTCPs() []*v1alpha1.MiddlewareTCP {
+	return c.middlewareTCPs
 }
 
 func (c clientMock) GetTraefikService(namespace, name string) (*v1alpha1.TraefikService, bool, error) {

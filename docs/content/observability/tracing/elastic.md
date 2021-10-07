@@ -1,15 +1,15 @@
 # Elastic
 
-To enable the Elastic:
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.elastic]
-```
+To enable the Elastic tracer:
 
 ```yaml tab="File (YAML)"
 tracing:
   elastic: {}
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.elastic]
 ```
 
 ```bash tab="CLI"
@@ -20,18 +20,18 @@ tracing:
 
 _Optional, Default="http://localhost:8200"_
 
-APM ServerURL is the URL of the Elastic APM server.
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.elastic]
-    serverURL = "http://apm:8200"
-```
+URL of the Elastic APM server.
 
 ```yaml tab="File (YAML)"
 tracing:
   elastic:
     serverURL: "http://apm:8200"
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.elastic]
+    serverURL = "http://apm:8200"
 ```
 
 ```bash tab="CLI"
@@ -42,18 +42,18 @@ tracing:
 
 _Optional, Default=""_
 
-APM Secret Token is the token used to connect to Elastic APM Server.
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.elastic]
-    secretToken = "mytoken"
-```
+Token used to connect to Elastic APM Server.
 
 ```yaml tab="File (YAML)"
 tracing:
   elastic:
     secretToken: "mytoken"
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.elastic]
+    secretToken = "mytoken"
 ```
 
 ```bash tab="CLI"
@@ -64,18 +64,18 @@ tracing:
 
 _Optional, Default=""_
 
-APM Service Environment is the name of the environment Traefik is deployed in, e.g. `production` or `staging`.
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.elastic]
-    serviceEnvironment = "production"
-```
+Environment's name where Traefik is deployed in, e.g. `production` or `staging`.
 
 ```yaml tab="File (YAML)"
 tracing:
   elastic:
     serviceEnvironment: "production"
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.elastic]
+    serviceEnvironment = "production"
 ```
 
 ```bash tab="CLI"

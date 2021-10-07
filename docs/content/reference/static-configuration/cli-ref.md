@@ -102,9 +102,6 @@ Entry points definition. (Default: ```false```)
 `--entrypoints.<name>.address`:  
 Entry point address.
 
-`--entrypoints.<name>.enablehttp3`:  
-Enable HTTP3. (Default: ```false```)
-
 `--entrypoints.<name>.forwardedheaders.insecure`:  
 Trust all forwarded headers. (Default: ```false```)
 
@@ -121,7 +118,7 @@ Default middlewares for the routers linked to the entry point.
 Applies a permanent redirection. (Default: ```true```)
 
 `--entrypoints.<name>.http.redirections.entrypoint.priority`:  
-Priority of the generated router. (Default: ```2147483647```)
+Priority of the generated router. (Default: ```2147483646```)
 
 `--entrypoints.<name>.http.redirections.entrypoint.scheme`:  
 Scheme used for the redirection. (Default: ```https```)
@@ -146,6 +143,12 @@ Subject alternative names.
 
 `--entrypoints.<name>.http.tls.options`:  
 Default TLS options for the routers linked to the entry point.
+
+`--entrypoints.<name>.http3`:  
+HTTP3 configuration. (Default: ```false```)
+
+`--entrypoints.<name>.http3.advertisedport`:  
+UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
 
 `--entrypoints.<name>.proxyprotocol`:  
 Proxy-Protocol configuration. (Default: ```false```)
@@ -174,17 +177,17 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 `--entrypoints.<name>.udp.timeout`:  
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 
-`--experimental.devplugin.gopath`:  
-plugin's GOPATH.
-
-`--experimental.devplugin.modulename`:  
-plugin's module name.
-
 `--experimental.http3`:  
 Enable HTTP3. (Default: ```false```)
 
 `--experimental.kubernetesgateway`:  
 Allow the Kubernetes gateway api provider usage. (Default: ```false```)
+
+`--experimental.localplugins.<name>`:  
+Local plugins configuration. (Default: ```false```)
+
+`--experimental.localplugins.<name>.modulename`:  
+plugin's module name.
 
 `--experimental.plugins.<name>.modulename`:  
 plugin's module name.
@@ -193,7 +196,7 @@ plugin's module name.
 plugin's version.
 
 `--global.checknewversion`:  
-Periodically check if a new version has been released. (Default: ```false```)
+Periodically check if a new version has been released. (Default: ```true```)
 
 `--global.sendanonymoususage`:  
 Periodically send anonymous usage statistics. If the option is not specified, it will be enabled by default. (Default: ```false```)
@@ -231,8 +234,14 @@ Enable metrics on entry points. (Default: ```true```)
 `--metrics.datadog.address`:  
 Datadog's address. (Default: ```localhost:8125```)
 
+`--metrics.datadog.addrouterslabels`:  
+Enable metrics on routers. (Default: ```false```)
+
 `--metrics.datadog.addserviceslabels`:  
 Enable metrics on services. (Default: ```true```)
+
+`--metrics.datadog.prefix`:  
+Prefix to use for metrics collection. (Default: ```traefik```)
 
 `--metrics.datadog.pushinterval`:  
 Datadog push interval. (Default: ```10```)
@@ -243,8 +252,14 @@ InfluxDB metrics exporter type. (Default: ```false```)
 `--metrics.influxdb.addentrypointslabels`:  
 Enable metrics on entry points. (Default: ```true```)
 
+`--metrics.influxdb.additionallabels.<name>`:  
+Additional labels (influxdb tags) on all metrics
+
 `--metrics.influxdb.address`:  
 InfluxDB address. (Default: ```localhost:8089```)
+
+`--metrics.influxdb.addrouterslabels`:  
+Enable metrics on routers. (Default: ```false```)
 
 `--metrics.influxdb.addserviceslabels`:  
 Enable metrics on services. (Default: ```true```)
@@ -273,6 +288,9 @@ Prometheus metrics exporter type. (Default: ```false```)
 `--metrics.prometheus.addentrypointslabels`:  
 Enable metrics on entry points. (Default: ```true```)
 
+`--metrics.prometheus.addrouterslabels`:  
+Enable metrics on routers. (Default: ```false```)
+
 `--metrics.prometheus.addserviceslabels`:  
 Enable metrics on services. (Default: ```true```)
 
@@ -294,6 +312,9 @@ Enable metrics on entry points. (Default: ```true```)
 `--metrics.statsd.address`:  
 StatsD address. (Default: ```localhost:8125```)
 
+`--metrics.statsd.addrouterslabels`:  
+Enable metrics on routers. (Default: ```false```)
+
 `--metrics.statsd.addserviceslabels`:  
 Enable metrics on services. (Default: ```true```)
 
@@ -302,6 +323,9 @@ Prefix to use for metrics collection. (Default: ```traefik```)
 
 `--metrics.statsd.pushinterval`:  
 StatsD push interval. (Default: ```10```)
+
+`--pilot.dashboard`:  
+Enable Traefik Pilot in the dashboard. (Default: ```true```)
 
 `--pilot.token`:  
 Traefik Pilot token.
@@ -354,6 +378,12 @@ Enable ConsulCatalog backend with default settings. (Default: ```false```)
 `--providers.consulcatalog.cache`:  
 Use local agent caching for catalog reads. (Default: ```false```)
 
+`--providers.consulcatalog.connectaware`:  
+Enable Consul Connect support. (Default: ```false```)
+
+`--providers.consulcatalog.connectbydefault`:  
+Consider every service as Connect capable by default. (Default: ```false```)
+
 `--providers.consulcatalog.constraints`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
 
@@ -361,7 +391,7 @@ Constraints is an expression that Traefik matches against the container's labels
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
 `--providers.consulcatalog.endpoint.address`:  
-The address of the Consul server (Default: ```127.0.0.1:8500```)
+The address of the Consul server
 
 `--providers.consulcatalog.endpoint.datacenter`:  
 Data center to use. If not provided, the default agent data center is used
@@ -403,10 +433,13 @@ Expose containers by default. (Default: ```true```)
 Prefix for consul service tags. Default 'traefik' (Default: ```traefik```)
 
 `--providers.consulcatalog.refreshinterval`:  
-Interval for check Consul API. Default 100ms (Default: ```15```)
+Interval for check Consul API. Default 15s (Default: ```15```)
 
 `--providers.consulcatalog.requireconsistent`:  
 Forces the read to be fully consistent. (Default: ```false```)
+
+`--providers.consulcatalog.servicename`:  
+Name of the Traefik service in Consul Catalog (needs to be registered via the orchestrator or manually). (Default: ```traefik```)
 
 `--providers.consulcatalog.stale`:  
 Use stale consistency for catalog reads. (Default: ```false```)
@@ -523,7 +556,7 @@ KV Username
 Enable debug logging of generated configuration template. (Default: ```false```)
 
 `--providers.file.directory`:  
-Load dynamic configuration from one or more .toml or .yml files in a directory.
+Load dynamic configuration from one or more .yml or .toml files in a directory.
 
 `--providers.file.filename`:  
 Load dynamic configuration from a file.
@@ -562,7 +595,10 @@ TLS key
 Enable Kubernetes backend with default settings. (Default: ```false```)
 
 `--providers.kubernetescrd.allowcrossnamespace`:  
-Allow cross namespace resource reference. (Default: ```true```)
+Allow cross namespace resource reference. (Default: ```false```)
+
+`--providers.kubernetescrd.allowexternalnameservices`:  
+Allow ExternalName services. (Default: ```false```)
 
 `--providers.kubernetescrd.certauthfilepath`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
@@ -609,6 +645,12 @@ Kubernetes bearer token (not needed for in-cluster client).
 `--providers.kubernetesingress`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
 
+`--providers.kubernetesingress.allowemptyservices`:  
+Allow creation of services without endpoints. (Default: ```false```)
+
+`--providers.kubernetesingress.allowexternalnameservices`:  
+Allow ExternalName services. (Default: ```false```)
+
 `--providers.kubernetesingress.certauthfilepath`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
@@ -616,7 +658,7 @@ Kubernetes certificate authority file path (not needed for in-cluster client).
 Kubernetes server endpoint (required for external cluster client).
 
 `--providers.kubernetesingress.ingressclass`:  
-Value of kubernetes.io/ingress.class annotation to watch for.
+Value of kubernetes.io/ingress.class annotation or IngressClass name to watch for.
 
 `--providers.kubernetesingress.ingressendpoint.hostname`:  
 Hostname used for Kubernetes Ingress endpoints.
@@ -705,8 +747,11 @@ Display additional provider logs. (Default: ```false```)
 `--providers.marathon.watch`:  
 Watch provider. (Default: ```true```)
 
+`--providers.plugin.<name>`:  
+Plugins configuration.
+
 `--providers.providersthrottleduration`:  
-Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time. (Default: ```0```)
+Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time. (Default: ```2```)
 
 `--providers.rancher`:  
 Enable Rancher backend with default settings. (Default: ```false```)
@@ -814,7 +859,7 @@ The amount of time to wait for a server's response headers after fully writing t
 Disable SSL certificate verification. (Default: ```false```)
 
 `--serverstransport.maxidleconnsperhost`:  
-If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, DefaultMaxIdleConnsPerHost is used (Default: ```0```)
+If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, DefaultMaxIdleConnsPerHost is used (Default: ```200```)
 
 `--serverstransport.rootcas`:  
 Add cert file for self-signed certificate.
@@ -826,76 +871,79 @@ OpenTracing configuration. (Default: ```false```)
 Settings for Datadog. (Default: ```false```)
 
 `--tracing.datadog.bagageprefixheadername`:  
-Specifies the header name prefix that will be used to store baggage items in a map.
+Sets the header name prefix used to store baggage items in a map.
 
 `--tracing.datadog.debug`:  
-Enable Datadog debug. (Default: ```false```)
+Enables Datadog debug. (Default: ```false```)
 
 `--tracing.datadog.globaltag`:  
-Key:Value tag to be set on all the spans.
+Sets a key:value tag on all spans.
 
 `--tracing.datadog.localagenthostport`:  
-Set datadog-agent's host:port that the reporter will used. (Default: ```localhost:8126```)
+Sets the Datadog Agent host:port. (Default: ```localhost:8126```)
 
 `--tracing.datadog.parentidheadername`:  
-Specifies the header name that will be used to store the parent ID.
+Sets the header name used to store the parent ID.
 
 `--tracing.datadog.prioritysampling`:  
-Enable priority sampling. When using distributed tracing, this option must be enabled in order to get all the parts of a distributed trace sampled. (Default: ```false```)
+Enables priority sampling. When using distributed tracing, this option must be enabled in order to get all the parts of a distributed trace sampled. (Default: ```false```)
 
 `--tracing.datadog.samplingpriorityheadername`:  
-Specifies the header name that will be used to store the sampling priority.
+Sets the header name used to store the sampling priority.
 
 `--tracing.datadog.traceidheadername`:  
-Specifies the header name that will be used to store the trace ID.
+Sets the header name used to store the trace ID.
 
 `--tracing.elastic`:  
 Settings for Elastic. (Default: ```false```)
 
 `--tracing.elastic.secrettoken`:  
-Set the token used to connect to Elastic APM Server.
+Sets the token used to connect to Elastic APM Server.
 
 `--tracing.elastic.serverurl`:  
-Set the URL of the Elastic APM server.
+Sets the URL of the Elastic APM server.
 
 `--tracing.elastic.serviceenvironment`:  
-Set the name of the environment Traefik is deployed in, e.g. 'production' or 'staging'.
+Sets the name of the environment Traefik is deployed in, e.g. 'production' or 'staging'.
 
 `--tracing.haystack`:  
 Settings for Haystack. (Default: ```false```)
 
 `--tracing.haystack.baggageprefixheadername`:  
-Specifies the header name prefix that will be used to store baggage items in a map.
+Sets the header name prefix used to store baggage items in a map.
 
 `--tracing.haystack.globaltag`:  
-Key:Value tag to be set on all the spans.
+Sets a key:value tag on all spans.
 
 `--tracing.haystack.localagenthost`:  
-Set haystack-agent's host that the reporter will used. (Default: ```127.0.0.1```)
+Sets the Haystack Agent host. (Default: ```127.0.0.1```)
 
 `--tracing.haystack.localagentport`:  
-Set haystack-agent's port that the reporter will used. (Default: ```35000```)
+Sets the Haystack Agent port. (Default: ```35000```)
 
 `--tracing.haystack.parentidheadername`:  
-Specifies the header name that will be used to store the parent ID.
+Sets the header name used to store the parent ID.
 
 `--tracing.haystack.spanidheadername`:  
-Specifies the header name that will be used to store the span ID.
+Sets the header name used to store the span ID.
 
 `--tracing.haystack.traceidheadername`:  
-Specifies the header name that will be used to store the trace ID.
+Sets the header name used to store the trace ID.
 
 `--tracing.instana`:  
 Settings for Instana. (Default: ```false```)
 
+`--tracing.instana.enableautoprofile`:  
+Enables automatic profiling for the Traefik process. (Default: ```false```)
+
 `--tracing.instana.localagenthost`:  
-Set instana-agent's host that the reporter will used.
+Sets the Instana Agent host.
 
 `--tracing.instana.localagentport`:  
-Set instana-agent's port that the reporter will used. (Default: ```42699```)
+Sets the Instana Agent port. (Default: ```42699```)
 
 `--tracing.instana.loglevel`:  
-Set instana-agent's log level. ('error','warn','info','debug') (Default: ```info```)
+Sets the log level for the Instana tracer. ('error','warn','info','debug') (Default: ```info```)
 
 `--tracing.jaeger`:  
 Settings for Jaeger. (Default: ```false```)
@@ -910,28 +958,28 @@ Password for basic http authentication when sending spans to jaeger-collector.
 User for basic http authentication when sending spans to jaeger-collector.
 
 `--tracing.jaeger.disableattemptreconnecting`:  
-Disable the periodic re-resolution of the agent's hostname and reconnection if there was a change. (Default: ```true```)
+Disables the periodic re-resolution of the agent's hostname and reconnection if there was a change. (Default: ```true```)
 
 `--tracing.jaeger.gen128bit`:  
-Generate 128 bit span IDs. (Default: ```false```)
+Generates 128 bits span IDs. (Default: ```false```)
 
 `--tracing.jaeger.localagenthostport`:  
-Set jaeger-agent's host:port that the reporter will used. (Default: ```127.0.0.1:6831```)
+Sets the Jaeger Agent host:port. (Default: ```127.0.0.1:6831```)
 
 `--tracing.jaeger.propagation`:  
-Which propagation format to use (jaeger/b3). (Default: ```jaeger```)
+Sets the propagation format (jaeger/b3). (Default: ```jaeger```)
 
 `--tracing.jaeger.samplingparam`:  
-Set the sampling parameter. (Default: ```1.000000```)
+Sets the sampling parameter. (Default: ```1.000000```)
 
 `--tracing.jaeger.samplingserverurl`:  
-Set the sampling server url. (Default: ```http://localhost:5778/sampling```)
+Sets the sampling server URL. (Default: ```http://localhost:5778/sampling```)
 
 `--tracing.jaeger.samplingtype`:  
-Set the sampling type. (Default: ```const```)
+Sets the sampling type. (Default: ```const```)
 
 `--tracing.jaeger.tracecontextheadername`:  
-Set the header to use for the trace-id. (Default: ```uber-trace-id```)
+Sets the header name used to store the trace ID. (Default: ```uber-trace-id```)
 
 `--tracing.servicename`:  
 Set the name for this service. (Default: ```traefik```)
@@ -943,13 +991,13 @@ Set the maximum character limit for Span names (default 0 = no limit). (Default:
 Settings for Zipkin. (Default: ```false```)
 
 `--tracing.zipkin.httpendpoint`:  
-HTTP Endpoint to report traces to. (Default: ```http://localhost:9411/api/v2/spans```)
+Sets the HTTP Endpoint to report traces to. (Default: ```http://localhost:9411/api/v2/spans```)
 
 `--tracing.zipkin.id128bit`:  
-Use Zipkin 128 bit root span IDs. (Default: ```true```)
+Uses 128 bits root span IDs. (Default: ```true```)
 
 `--tracing.zipkin.samespan`:  
-Use Zipkin SameSpan RPC style traces. (Default: ```false```)
+Uses SameSpan RPC style traces. (Default: ```false```)
 
 `--tracing.zipkin.samplerate`:  
-The rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
+Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)

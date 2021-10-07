@@ -1,6 +1,6 @@
 # Traefik & HTTP
 
-Provide your [dynamic configuration](./overview.md) via an HTTP(s) endpoint and let Traefik do the rest!
+Provide your [dynamic configuration](./overview.md) via an HTTP(S) endpoint and let Traefik do the rest!
 
 ## Routing Configuration
 
@@ -12,18 +12,18 @@ The HTTP provider uses the same configuration as the [File Provider](./file.md) 
 
 _Required_
 
-Defines the HTTP(s) endpoint to poll.
-
-```toml tab="File (TOML)"
-[providers.http]
-  endpoint = "http://127.0.0.1:9000/api"
-```
+Defines the HTTP(S) endpoint to poll.
 
 ```yaml tab="File (YAML)"
 providers:
   http:
     endpoint:
       - "http://127.0.0.1:9000/api"
+```
+
+```toml tab="File (TOML)"
+[providers.http]
+  endpoint = "http://127.0.0.1:9000/api"
 ```
 
 ```bash tab="CLI"
@@ -36,15 +36,15 @@ _Optional, Default="5s"_
 
 Defines the polling interval.
 
-```toml tab="File (TOML)"
-[providers.http]
-  pollInterval = "5s"
-```
-
 ```yaml tab="File (YAML)"
 providers:
   http:
     pollInterval: "5s"
+```
+
+```toml tab="File (TOML)"
+[providers.http]
+  pollInterval = "5s"
 ```
 
 ```bash tab="CLI"
@@ -57,15 +57,15 @@ _Optional, Default="5s"_
 
 Defines the polling timeout when connecting to the configured endpoint.
 
-```toml tab="File (TOML)"
-[providers.http]
-  pollTimeout = "5s"
-```
-
 ```yaml tab="File (YAML)"
 providers:
   http:
     pollTimeout: "5s"
+```
+
+```toml tab="File (TOML)"
+[providers.http]
+  pollTimeout = "5s"
 ```
 
 ```bash tab="CLI"
@@ -78,12 +78,7 @@ _Optional_
 
 #### `tls.ca`
 
-Certificate Authority used for the secured connection to the configured Endpoint.
-
-```toml tab="File (TOML)"
-[providers.http.tls]
-  ca = "path/to/ca.crt"
-```
+Certificate Authority used for the secure connection to the configured endpoint.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -92,23 +87,26 @@ providers:
       ca: path/to/ca.crt
 ```
 
+```toml tab="File (TOML)"
+[providers.http.tls]
+  ca = "path/to/ca.crt"
+```
+
 ```bash tab="CLI"
 --providers.http.tls.ca=path/to/ca.crt
 ```
 
 #### `tls.caOptional`
 
-Policy followed for the secured connection with TLS Client Authentication to the configured Endpoint.
-Requires `tls.ca` to be defined.
+The value of `tls.caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to the configured endpoint.
 
-- `true`: VerifyClientCertIfGiven
-- `false`: RequireAndVerifyClientCert
-- if `tls.ca` is undefined NoClientCert
+!!! warning ""
 
-```toml tab="File (TOML)"
-[providers.http.tls]
-  caOptional = true
-```
+    If `tls.ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
+
+When this option is set to `true`, a client certificate is requested during the handshake but is not required. If a certificate is sent, it is required to be valid.
+
+When this option is set to `false`, a client certificate is requested during the handshake, and at least one valid certificate should be sent by the client.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -117,19 +115,18 @@ providers:
       caOptional: true
 ```
 
+```toml tab="File (TOML)"
+[providers.http.tls]
+  caOptional = true
+```
+
 ```bash tab="CLI"
 --providers.http.tls.caOptional=true
 ```
 
 #### `tls.cert`
 
-Public certificate used for the secured connection to the configured Endpoint.
-
-```toml tab="File (TOML)"
-[providers.http.tls]
-  cert = "path/to/foo.cert"
-  key = "path/to/foo.key"
-```
+Public certificate used for the secure connection to the configured endpoint.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -137,6 +134,12 @@ providers:
     tls:
       cert: path/to/foo.cert
       key: path/to/foo.key
+```
+
+```toml tab="File (TOML)"
+[providers.http.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
 ```
 
 ```bash tab="CLI"
@@ -146,13 +149,7 @@ providers:
 
 #### `tls.key`
 
-Private certificate used for the secured connection to the configured Endpoint.
-
-```toml tab="File (TOML)"
-[providers.http.tls]
-  cert = "path/to/foo.cert"
-  key = "path/to/foo.key"
-```
+Private certificate used for the secure connection to the configured endpoint.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -162,6 +159,12 @@ providers:
       key: path/to/foo.key
 ```
 
+```toml tab="File (TOML)"
+[providers.http.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
 ```bash tab="CLI"
 --providers.http.tls.cert=path/to/foo.cert
 --providers.http.tls.key=path/to/foo.key
@@ -169,19 +172,18 @@ providers:
 
 #### `tls.insecureSkipVerify`
 
-If `insecureSkipVerify` is `true`, TLS connection to the configured Endpoint accepts any certificate presented by the 
-server and any host name in that certificate.
-
-```toml tab="File (TOML)"
-[providers.http.tls]
-  insecureSkipVerify = true
-```
+If `insecureSkipVerify` is `true`, the TLS connection to the endpoint accepts any certificate presented by the server regardless of the hostnames it covers.
 
 ```yaml tab="File (YAML)"
 providers:
   http:
     tls:
       insecureSkipVerify: true
+```
+
+```toml tab="File (TOML)"
+[providers.http.tls]
+  insecureSkipVerify = true
 ```
 
 ```bash tab="CLI"

@@ -2,14 +2,14 @@
 
 To enable the Datadog:
 
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.datadog]
-```
-
 ```yaml tab="File (YAML)"
 metrics:
   datadog: {}
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.datadog]
 ```
 
 ```bash tab="CLI"
@@ -22,16 +22,16 @@ _Required, Default="127.0.0.1:8125"_
 
 Address instructs exporter to send metrics to datadog-agent at this address.
 
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.datadog]
-    address = "127.0.0.1:8125"
-```
-
 ```yaml tab="File (YAML)"
 metrics:
   datadog:
     address: 127.0.0.1:8125
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.datadog]
+    address = "127.0.0.1:8125"
 ```
 
 ```bash tab="CLI"
@@ -44,20 +44,41 @@ _Optional, Default=true_
 
 Enable metrics on entry points.
 
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.datadog]
-    addEntryPointsLabels = true
-```
-
 ```yaml tab="File (YAML)"
 metrics:
   datadog:
     addEntryPointsLabels: true
 ```
 
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.datadog]
+    addEntryPointsLabels = true
+```
+
 ```bash tab="CLI"
 --metrics.datadog.addEntryPointsLabels=true
+```
+#### `AddRoutersLabels`
+
+_Optional, Default=false_
+
+Enable metrics on routers.
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.datadog]
+    addRoutersLabels = true
+```
+
+```yaml tab="File (YAML)"
+metrics:
+  datadog:
+    addRoutersLabels: true
+```
+
+```bash tab="CLI"
+--metrics.datadog.addrouterslabels=true
 ```
 
 #### `addServicesLabels`
@@ -66,16 +87,16 @@ _Optional, Default=true_
 
 Enable metrics on services.
 
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.datadog]
-    addServicesLabels = true
-```
-
 ```yaml tab="File (YAML)"
 metrics:
   datadog:
     addServicesLabels: true
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.datadog]
+    addServicesLabels = true
 ```
 
 ```bash tab="CLI"
@@ -88,19 +109,40 @@ _Optional, Default=10s_
 
 The interval used by the exporter to push metrics to datadog-agent.
 
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.datadog]
-    pushInterval = 10s
-```
-
 ```yaml tab="File (YAML)"
 metrics:
   datadog:
     pushInterval: 10s
 ```
 
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.datadog]
+    pushInterval = 10s
+```
+
 ```bash tab="CLI"
 --metrics.datadog.pushInterval=10s
 ```
 
+#### `prefix`
+
+_Optional, Default="traefik"_
+
+The prefix to use for metrics collection.
+
+```yaml tab="File (YAML)"
+metrics:
+  datadog:
+    prefix: traefik
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.datadog]
+    prefix = "traefik"
+```
+
+```bash tab="CLI"
+--metrics.datadog.prefix="traefik"
+```

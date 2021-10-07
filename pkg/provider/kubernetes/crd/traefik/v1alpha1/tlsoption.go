@@ -6,6 +6,7 @@ import (
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:storageversion
 
 // TLSOption is a specification for a TLSOption resource.
 type TLSOption struct {
@@ -26,18 +27,18 @@ type TLSOptionSpec struct {
 	ClientAuth               ClientAuth `json:"clientAuth,omitempty"`
 	SniStrict                bool       `json:"sniStrict,omitempty"`
 	PreferServerCipherSuites bool       `json:"preferServerCipherSuites,omitempty"`
+	ALPNProtocols            []string   `json:"alpnProtocols,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
 
 // ClientAuth defines the parameters of the client authentication part of the TLS connection, if any.
 type ClientAuth struct {
-	// SecretName is the name of the referenced Kubernetes Secret to specify the
-	// certificate details.
-	SecretNames []string `json:"secretNames"`
+	// SecretName is the name of the referenced Kubernetes Secret to specify the certificate details.
+	SecretNames []string `json:"secretNames,omitempty"`
+	// +kubebuilder:validation:Enum=NoClientCert;RequestClientCert;RequireAnyClientCert;VerifyClientCertIfGiven;RequireAndVerifyClientCert
 	// ClientAuthType defines the client authentication type to apply.
-	// The available values are: "NoClientCert", "RequestClientCert", "VerifyClientCertIfGiven" and "RequireAndVerifyClientCert".
-	ClientAuthType string `json:"clientAuthType"`
+	ClientAuthType string `json:"clientAuthType,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

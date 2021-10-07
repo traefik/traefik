@@ -10,7 +10,7 @@ import (
 // IngressRouteTCPSpec is a specification for a IngressRouteTCPSpec resource.
 type IngressRouteTCPSpec struct {
 	Routes      []RouteTCP `json:"routes"`
-	EntryPoints []string   `json:"entryPoints"`
+	EntryPoints []string   `json:"entryPoints,omitempty"`
 	TLS         *TLSTCP    `json:"tls,omitempty"`
 }
 
@@ -18,6 +18,8 @@ type IngressRouteTCPSpec struct {
 type RouteTCP struct {
 	Match    string       `json:"match"`
 	Services []ServiceTCP `json:"services,omitempty"`
+	// Middlewares contains references to MiddlewareTCP resources.
+	Middlewares []ObjectReference `json:"middlewares,omitempty"`
 }
 
 // TLSTCP contains the TLS certificates configuration of the routes.
@@ -31,32 +33,20 @@ type RouteTCP struct {
 type TLSTCP struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the
 	// certificate details.
-	SecretName  string `json:"secretName"`
-	Passthrough bool   `json:"passthrough"`
+	SecretName  string `json:"secretName,omitempty"`
+	Passthrough bool   `json:"passthrough,omitempty"`
 	// Options is a reference to a TLSOption, that specifies the parameters of the TLS connection.
-	Options *TLSOptionTCPRef `json:"options"`
+	Options *ObjectReference `json:"options,omitempty"`
 	// Store is a reference to a TLSStore, that specifies the parameters of the TLS store.
-	Store        *TLSStoreTCPRef `json:"store"`
-	CertResolver string          `json:"certResolver"`
-	Domains      []types.Domain  `json:"domains,omitempty"`
-}
-
-// TLSOptionTCPRef is a ref to the TLSOption resources.
-type TLSOptionTCPRef struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-}
-
-// TLSStoreTCPRef is a ref to the TLSStore resources.
-type TLSStoreTCPRef struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	Store        *ObjectReference `json:"store,omitempty"`
+	CertResolver string           `json:"certResolver,omitempty"`
+	Domains      []types.Domain   `json:"domains,omitempty"`
 }
 
 // ServiceTCP defines an upstream to proxy traffic.
 type ServiceTCP struct {
 	Name             string                 `json:"name"`
-	Namespace        string                 `json:"namespace"`
+	Namespace        string                 `json:"namespace,omitempty"`
 	Port             intstr.IntOrString     `json:"port"`
 	Weight           *int                   `json:"weight,omitempty"`
 	TerminationDelay *int                   `json:"terminationDelay,omitempty"`
@@ -65,6 +55,7 @@ type ServiceTCP struct {
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:storageversion
 
 // IngressRouteTCP is an Ingress CRD specification.
 type IngressRouteTCP struct {

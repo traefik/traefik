@@ -2,7 +2,6 @@ package integration
 
 import (
 	"crypto/tls"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -26,11 +25,11 @@ func (s *TLSClientHeadersSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *TLSClientHeadersSuite) TestTLSClientHeaders(c *check.C) {
-	rootCertContent, err := ioutil.ReadFile(rootCertPath)
+	rootCertContent, err := os.ReadFile(rootCertPath)
 	c.Assert(err, check.IsNil)
-	serverCertContent, err := ioutil.ReadFile(certPemPath)
+	serverCertContent, err := os.ReadFile(certPemPath)
 	c.Assert(err, check.IsNil)
-	ServerKeyContent, err := ioutil.ReadFile(certKeyPath)
+	ServerKeyContent, err := os.ReadFile(certKeyPath)
 	c.Assert(err, check.IsNil)
 
 	file := s.adaptFile(c, "fixtures/tlsclientheaders/simple.toml", struct {
@@ -50,10 +49,10 @@ func (s *TLSClientHeadersSuite) TestTLSClientHeaders(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("PathPrefix(`/`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("PathPrefix(`/foo`)"))
 	c.Assert(err, checker.IsNil)
 
-	request, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:8443", nil)
+	request, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:8443/foo", nil)
 	c.Assert(err, checker.IsNil)
 
 	certificate, err := tls.LoadX509KeyPair(certPemPath, certKeyPath)

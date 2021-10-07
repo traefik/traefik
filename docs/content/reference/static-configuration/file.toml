@@ -14,7 +14,6 @@
 [entryPoints]
   [entryPoints.EntryPoint0]
     address = "foobar"
-    enableHTTP3 = true
     [entryPoints.EntryPoint0.transport]
       [entryPoints.EntryPoint0.transport.lifeCycle]
         requestAcceptGraceTimeout = 42
@@ -31,6 +30,8 @@
       trustedIPs = ["foobar", "foobar"]
     [entryPoints.EntryPoint0.udp]
       timeout = 42
+    [entryPoints.EntryPoint0.http3]
+      advertisedPort = 42
     [entryPoints.EntryPoint0.http]
       middlewares = ["foobar", "foobar"]
       [entryPoints.EntryPoint0.http.redirections]
@@ -106,6 +107,7 @@
     labelSelector = "foobar"
     ingressClass = "foobar"
     throttleDuration = "42s"
+    allowEmptyServices = true
     [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
       hostname = "foobar"
@@ -225,6 +227,9 @@
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
+  [providers.plugin]
+    [providers.plugin.Descriptor0]
+    [providers.plugin.Descriptor1]
 
 [api]
   insecure = true
@@ -235,6 +240,7 @@
   [metrics.prometheus]
     buckets = [42.0, 42.0]
     addEntryPointsLabels = true
+    addRoutersLabels = true
     addServicesLabels = true
     entryPoint = "foobar"
     manualRouting = true
@@ -242,11 +248,14 @@
     address = "foobar"
     pushInterval = "42s"
     addEntryPointsLabels = true
+    addRoutersLabels = true
     addServicesLabels = true
+    prefix = "foobar"
   [metrics.statsD]
     address = "foobar"
     pushInterval = "42s"
     addEntryPointsLabels = true
+    addRoutersLabels = true
     addServicesLabels = true
     prefix = "foobar"
   [metrics.influxDB]
@@ -258,7 +267,10 @@
     username = "foobar"
     password = "foobar"
     addEntryPointsLabels = true
+    addRoutersLabels = true
     addServicesLabels = true
+    [metrics.influxDB.additionalLabels]
+      foobar = "foobar"
 
 [ping]
   entryPoint = "foobar"
@@ -381,8 +393,11 @@
 
 [pilot]
   token = "foobar"
+  dashboard = true
 
 [experimental]
+  kubernetesGateway = true
+  http3 = true
   [experimental.plugins]
     [experimental.plugins.Descriptor0]
       moduleName = "foobar"
@@ -390,8 +405,8 @@
     [experimental.plugins.Descriptor1]
       moduleName = "foobar"
       version = "foobar"
-  [experimental.devPlugin]
-    goPath = "foobar"
-    moduleName = "foobar"
-  http3 = true
-  kubernetesGateway = true
+  [experimental.localPlugins]
+    [experimental.localPlugins.Descriptor0]
+      moduleName = "foobar"
+    [experimental.localPlugins.Descriptor1]
+      moduleName = "foobar"

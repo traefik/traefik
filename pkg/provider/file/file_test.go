@@ -3,7 +3,6 @@ package file
 import (
 	"context"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -26,20 +25,35 @@ type ProvideTestCase struct {
 	expectedNumTLSOptions int
 }
 
-func TestTLSContent(t *testing.T) {
-	tempDir := createTempDir(t, "testdir")
-	defer os.RemoveAll(tempDir)
+func TestTLSCertificateContent(t *testing.T) {
+	tempDir := t.TempDir()
 
 	fileTLS, err := createTempFile("./fixtures/toml/tls_file.cert", tempDir)
 	require.NoError(t, err)
 
-	fileConfig, err := ioutil.TempFile(tempDir, "temp*.toml")
+	fileTLSKey, err := createTempFile("./fixtures/toml/tls_file_key.cert", tempDir)
+	require.NoError(t, err)
+
+	fileConfig, err := os.CreateTemp(tempDir, "temp*.toml")
 	require.NoError(t, err)
 
 	content := `
 [[tls.certificates]]
   certFile = "` + fileTLS.Name() + `"
-  keyFile = "` + fileTLS.Name() + `"
+  keyFile = "` + fileTLSKey.Name() + `"
+
+[tls.options.default.clientAuth]
+  caFiles = ["` + fileTLS.Name() + `"]
+
+[tls.stores.default.defaultCertificate]
+  certFile = "` + fileTLS.Name() + `"
+  keyFile = "` + fileTLSKey.Name() + `"
+
+[http.serversTransports.default]
+  rootCAs = ["` + fileTLS.Name() + `"]
+  [[http.serversTransports.default.certificates]]
+    certFile = "` + fileTLS.Name() + `"
+    keyFile = "` + fileTLSKey.Name() + `"
 `
 
 	_, err = fileConfig.Write([]byte(content))
@@ -50,7 +64,16 @@ func TestTLSContent(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "CONTENT", configuration.TLS.Certificates[0].Certificate.CertFile.String())
-	require.Equal(t, "CONTENT", configuration.TLS.Certificates[0].Certificate.KeyFile.String())
+	require.Equal(t, "CONTENTKEY", configuration.TLS.Certificates[0].Certificate.KeyFile.String())
+
+	require.Equal(t, "CONTENT", configuration.TLS.Options["default"].ClientAuth.CAFiles[0].String())
+
+	require.Equal(t, "CONTENT", configuration.TLS.Stores["default"].DefaultCertificate.CertFile.String())
+	require.Equal(t, "CONTENTKEY", configuration.TLS.Stores["default"].DefaultCertificate.KeyFile.String())
+
+	require.Equal(t, "CONTENT", configuration.HTTP.ServersTransports["default"].Certificates[0].CertFile.String())
+	require.Equal(t, "CONTENTKEY", configuration.HTTP.ServersTransports["default"].Certificates[0].KeyFile.String())
+	require.Equal(t, "CONTENT", configuration.HTTP.ServersTransports["default"].RootCAs[0].String())
 }
 
 func TestErrorWhenEmptyConfig(t *testing.T) {
@@ -239,13 +262,20 @@ func getTestCases() []ProvideTestCase {
 			expectedNumRouter:  20,
 			expectedNumService: 20,
 		},
+		{
+			desc:               "simple file with empty store yaml",
+			filePath:           "./fixtures/yaml/simple_empty_store.yml",
+			expectedNumRouter:  0,
+			expectedNumService: 0,
+			expectedNumTLSConf: 0,
+		},
 	}
 }
 
 func createProvider(t *testing.T, test ProvideTestCase, watch bool) *Provider {
 	t.Helper()
 
-	tempDir := createTempDir(t, "testdir")
+	tempDir := t.TempDir()
 
 	provider := &Provider{}
 	provider.Watch = true
@@ -265,7 +295,7 @@ func createProvider(t *testing.T, test ProvideTestCase, watch bool) *Provider {
 		var file *os.File
 		if watch {
 			var err error
-			file, err = ioutil.TempFile(tempDir, "temp*"+filepath.Ext(test.filePath))
+			file, err = os.CreateTemp(tempDir, "temp*"+filepath.Ext(test.filePath))
 			require.NoError(t, err)
 		} else {
 			var err error
@@ -281,17 +311,6 @@ func createProvider(t *testing.T, test ProvideTestCase, watch bool) *Provider {
 	})
 
 	return provider
-}
-
-// createTempDir Helper.
-func createTempDir(t *testing.T, dir string) string {
-	t.Helper()
-
-	d, err := ioutil.TempDir("", dir)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return d
 }
 
 func copyFile(srcPath, dstPath string) error {
@@ -312,7 +331,7 @@ func copyFile(srcPath, dstPath string) error {
 }
 
 func createTempFile(srcPath, tempDir string) (*os.File, error) {
-	file, err := ioutil.TempFile(tempDir, "temp*"+filepath.Ext(srcPath))
+	file, err := os.CreateTemp(tempDir, "temp*"+filepath.Ext(srcPath))
 	if err != nil {
 		return nil, err
 	}

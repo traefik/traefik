@@ -1,21 +1,52 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: rootCas1
+  name: root-ca0
   namespace: foo
 
 data:
-  tls.ca: VEVTVFJPT1RDQVM=
+  foobar: VEVTVFJPT1RDQVMw
 
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: rootCas2
+  name: root-ca1
+  namespace: foo
+
+data:
+  tls.ca: VEVTVFJPT1RDQVMx
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: root-ca2
   namespace: foo
 
 data:
   tls.ca: VEVTVFJPT1RDQVMy
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: root-ca3
+  namespace: foo
+
+data:
+  ca.crt: VEVTVFJPT1RDQVMz
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: root-ca4
+  namespace: foo
+
+data:
+  ca.crt: VEVTVFJPT1RDQVM0
+  tls.ca: VEVTVFJPT1RDQVM1 # <-- This should be the prefered one.
 
 ---
 apiVersion: v1
@@ -40,6 +71,18 @@ data:
   tls.key: VEVTVEtFWTI=
 
 ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: allcerts
+  namespace: foo
+
+data:
+  ca.crt: VEVTVEFMTENFUlRT
+  tls.crt: VEVTVENFUlQz
+  tls.key: VEVTVEtFWTM=
+
+---
 apiVersion: traefik.containo.us/v1alpha1
 kind: ServersTransport
 metadata:
@@ -50,13 +93,53 @@ spec:
   serverName: "test"
   insecureSkipVerify: true
   maxIdleConnsPerHost: 42
+  disableHTTP2: true
+  peerCertURI: foo://bar
   rootCAsSecrets:
-  - rootCas1
-  - rootCas2
+    - root-ca0
+    - root-ca1
+    - root-ca2
+    - root-ca3
+    - root-ca4
+    - allcerts
   certificatesSecrets:
-  - mtls1
-  - mtls2
+    - mtls1
+    - mtls2
+    - allcerts
   forwardingTimeouts:
     dialTimeout: 42
     responseHeaderTimeout: 42s
     idleConnTimeout: 42ms
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: test
+  namespace: default
+
+spec:
+  serverName: "test"
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - foo
+
+  routes:
+    - match: Host(`foo.com`)
+      kind: Rule
+      services:
+        - name: external-svc-with-https
+          port: 443
+          serversTransport: test
+        - name: whoamitls
+          port: 443
+          serversTransport: default-test
+

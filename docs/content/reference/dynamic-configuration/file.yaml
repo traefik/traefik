@@ -75,6 +75,7 @@ http:
       mirroring:
         service: foobar
         maxBodySize: 42
+        healthCheck: {}
         mirrors:
         - name: foobar
           percent: 42
@@ -82,6 +83,7 @@ http:
           percent: 42
     Service03:
       weighted:
+        healthCheck: {}
         services:
         - name: foobar
           weight: 42
@@ -126,6 +128,7 @@ http:
         excludedContentTypes:
         - foobar
         - foobar
+        minResponseBodyBytes: 42
     Middleware06:
       contentType:
         autoDetect: true
@@ -177,7 +180,6 @@ http:
         accessControlAllowMethods:
         - foobar
         - foobar
-        accessControlAllowOrigin: foobar
         accessControlAllowOriginList:
         - foobar
         - foobar
@@ -249,6 +251,7 @@ http:
             province: true
             locality: true
             organization: true
+            organizationalUnit: true
             commonName: true
             serialNumber: true
             domainComponent: true
@@ -327,6 +330,8 @@ http:
         dialTimeout: 42s
         responseHeaderTimeout: 42s
         idleConnTimeout: 42s
+      disableHTTP2: true
+      peerCertURI: foobar
     ServersTransport1:
       serverName: foobar
       insecureSkipVerify: true
@@ -343,10 +348,15 @@ http:
         dialTimeout: 42s
         responseHeaderTimeout: 42s
         idleConnTimeout: 42s
+      disableHTTP2: true
+      peerCertURI: foobar
 tcp:
   routers:
     TCPRouter0:
       entryPoints:
+      - foobar
+      - foobar
+      middlewares:
       - foobar
       - foobar
       service: foobar
@@ -368,6 +378,9 @@ tcp:
       entryPoints:
       - foobar
       - foobar
+      middlewares:
+      - foobar
+      - foobar
       service: foobar
       rule: foobar
       tls:
@@ -383,6 +396,12 @@ tcp:
           sans:
           - foobar
           - foobar
+  middlewares:
+    Middleware00:
+      ipWhiteList:
+        sourceRange:
+        - foobar
+        - foobar
   services:
     TCPService01:
       loadBalancer:
@@ -453,6 +472,9 @@ tls:
         clientAuthType: foobar
       sniStrict: true
       preferServerCipherSuites: true
+      alpnProtocols:
+        - foobar
+        - foobar
     Options1:
       minVersion: foobar
       maxVersion: foobar
@@ -469,6 +491,9 @@ tls:
         clientAuthType: foobar
       sniStrict: true
       preferServerCipherSuites: true
+      alpnProtocols:
+        - foobar
+        - foobar
   stores:
     Store0:
       defaultCertificate:

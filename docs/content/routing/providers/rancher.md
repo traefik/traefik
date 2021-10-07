@@ -166,6 +166,15 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     - "traefik.http.services.myservice.loadbalancer.server.scheme=http"
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.serverstransport`"
+    
+    Allows to reference a ServersTransport resource that is defined either with the File provider or the Kubernetes CRD one.
+    See [serverstransport](../services/index.md#serverstransport) for more information.
+    
+    ```yaml
+    - "traefik.http.services.<service_name>.loadbalancer.serverstransport=foobar@file"
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.passhostheader`"
     
     See [pass Host header](../services/index.md#pass-host-header) for more information.
@@ -195,7 +204,7 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     See [health check](../services/index.md#health-check) for more information.
     
     ```yaml
-    - "traefik.http.services.myservice.loadbalancer.healthcheck.interval=10"
+    - "traefik.http.services.myservice.loadbalancer.healthcheck.interval=10s"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.path`"
@@ -290,7 +299,7 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
 
 You can declare pieces of middleware using labels starting with `traefik.http.middlewares.{name-of-your-choice}.`, followed by the middleware type/options.
 
-For example, to declare a middleware [`redirectscheme`](../../middlewares/redirectscheme.md) named `my-redirect`, you'd write `traefik.http.middlewares.my-redirect.redirectscheme.scheme: https`.
+For example, to declare a middleware [`redirectscheme`](../../middlewares/http/redirectscheme.md) named `my-redirect`, you'd write `traefik.http.middlewares.my-redirect.redirectscheme.scheme: https`.
 
 More information about available middlewares in the dedicated [middlewares section](../../middlewares/overview.md).
 

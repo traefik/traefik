@@ -32,7 +32,8 @@ entryPoints:
       trustedIPs:
       - foobar
       - foobar
-    enableHTTP3: true
+    http3:
+      advertisedPort: 42
     udp:
       timeout: 42
     http:
@@ -114,6 +115,7 @@ providers:
     labelSelector: foobar
     ingressClass: foobar
     throttleDuration: 42s
+    allowEmptyServices: true
     ingressEndpoint:
       ip: foobar
       hostname: foobar
@@ -247,6 +249,9 @@ providers:
       cert: foobar
       key: foobar
       insecureSkipVerify: true
+  plugin:
+    Descriptor0: {}
+    Descriptor1: {}
 api:
   insecure: true
   dashboard: true
@@ -257,6 +262,7 @@ metrics:
     - 42
     - 42
     addEntryPointsLabels: true
+    addRoutersLabels: true
     addServicesLabels: true
     entryPoint: foobar
     manualRouting: true
@@ -264,11 +270,14 @@ metrics:
     address: foobar
     pushInterval: 42
     addEntryPointsLabels: true
+    addRoutersLabels: true
     addServicesLabels: true
+    prefix: foobar
   statsD:
     address: foobar
     pushInterval: 42
     addEntryPointsLabels: true
+    addRoutersLabels: true
     addServicesLabels: true
     prefix: foobar
   influxDB:
@@ -280,7 +289,10 @@ metrics:
     username: foobar
     password: foobar
     addEntryPointsLabels: true
+    addRoutersLabels: true
     addServicesLabels: true
+    additionalLabels:
+      foobar: foobar
 ping:
   entryPoint: foobar
   manualRouting: true
@@ -402,7 +414,10 @@ certificatesResolvers:
       tlsChallenge: {}
 pilot:
   token: foobar
+  dashboard: true
 experimental:
+  kubernetesGateway: true
+  http3: true
   plugins:
     Descriptor0:
       moduleName: foobar
@@ -410,9 +425,8 @@ experimental:
     Descriptor1:
       moduleName: foobar
       version: foobar
-  devPlugin:
-    goPath: foobar
-    moduleName: foobar
-  http3: true
-  kubernetesGateway: true
-
+  localPlugins:
+    Descriptor0:
+      moduleName: foobar
+    Descriptor1:
+      moduleName: foobar

@@ -14,10 +14,10 @@ This [documentation](https://doc.traefik.io/traefik/) is built with [mkdocs](htt
 
 ### Method 1: `Docker` and `make`
 
-You can build the documentation and test it locally (with live reloading), using the `docs` target:
+You can build the documentation and test it locally (with live reloading), using the `docs-serve` target:
 
 ```bash
-$ make docs
+$ make docs-serve
 docker build -t traefik-docs -f docs.Dockerfile .
 # […]
 docker run  --rm -v /home/user/go/github/traefik/traefik:/mkdocs -p 8000:8000 traefik-docs mkdocs serve
@@ -29,7 +29,7 @@ docker run  --rm -v /home/user/go/github/traefik/traefik:/mkdocs -p 8000:8000 tr
 
 !!! tip "Default URL"
 
-    Your local documentation server will run by default on [http://127.0.0.1:8000](http://127.0.0.1:8000).
+    Your local documentation server will run by default on <http://127.0.0.1:8000>.
 
 If you only want to build the documentation without serving it locally, you can use the following command:
 
@@ -82,17 +82,19 @@ Running ["HtmlCheck", "ImageCheck", "ScriptCheck", "LinkCheck"] on /app/site/bas
 
 !!! note "Clean & Verify"
 
-    If you've made changes to the documentation, it's safter to clean it before verifying it. 
+    If you've made changes to the documentation, it's safter to clean it before verifying it.
 
     ```bash
-    $ make docs-clean docs-verify
+    $ make docs
     ...
     ```
+
+    Will perform all necessary steps for you.
 
 !!! note "Disabling Documentation Verification"
 
     Verification can be disabled by setting the environment variable `DOCS_VERIFY_SKIP` to `true`:
-    
+
     ```shell
     DOCS_VERIFY_SKIP=true make docs-verify
     ...

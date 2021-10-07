@@ -3,9 +3,10 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -506,6 +507,223 @@ func TestHandler_TCP(t *testing.T) {
 				statusCode: http.StatusNotFound,
 			},
 		},
+		{
+			desc: "all middlewares",
+			path: "/api/tcp/middlewares",
+			conf: runtime.Configuration{
+				TCPMiddlewares: map[string]*runtime.TCPMiddlewareInfo{
+					"ipwhitelist1@myprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
+					},
+					"ipwhitelist2@myprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.2/32"},
+							},
+						},
+						UsedBy: []string{"test@myprovider"},
+					},
+					"ipwhitelist1@anotherprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider"},
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/tcpmiddlewares.json",
+			},
+		},
+		{
+			desc: "middlewares filtered by status",
+			path: "/api/tcp/middlewares?status=enabled",
+			conf: runtime.Configuration{
+				TCPMiddlewares: map[string]*runtime.TCPMiddlewareInfo{
+					"ipwhitelist@myprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
+						Status: runtime.StatusEnabled,
+					},
+					"ipwhitelist2@myprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.2/32"},
+							},
+						},
+						UsedBy: []string{"test@myprovider"},
+						Status: runtime.StatusDisabled,
+					},
+					"ipwhitelist@anotherprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider"},
+						Status: runtime.StatusEnabled,
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/tcpmiddlewares-filtered-status.json",
+			},
+		},
+		{
+			desc: "middlewares filtered by search",
+			path: "/api/tcp/middlewares?search=ipwhitelist",
+			conf: runtime.Configuration{
+				TCPMiddlewares: map[string]*runtime.TCPMiddlewareInfo{
+					"bad@myprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
+						Status: runtime.StatusEnabled,
+					},
+					"ipwhitelist@myprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"test@myprovider"},
+						Status: runtime.StatusDisabled,
+					},
+					"ipwhitelist@anotherprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider"},
+						Status: runtime.StatusEnabled,
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/tcpmiddlewares-filtered-search.json",
+			},
+		},
+		{
+			desc: "all middlewares, 1 res per page, want page 2",
+			path: "/api/tcp/middlewares?page=2&per_page=1",
+			conf: runtime.Configuration{
+				TCPMiddlewares: map[string]*runtime.TCPMiddlewareInfo{
+					"ipwhitelist@myprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
+					},
+					"ipwhitelist2@myprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.2/32"},
+							},
+						},
+						UsedBy: []string{"test@myprovider"},
+					},
+					"ipwhitelist@anotherprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider"},
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "3",
+				jsonFile:   "testdata/tcpmiddlewares-page2.json",
+			},
+		},
+		{
+			desc: "one middleware by id",
+			path: "/api/tcp/middlewares/ipwhitelist@myprovider",
+			conf: runtime.Configuration{
+				TCPMiddlewares: map[string]*runtime.TCPMiddlewareInfo{
+					"ipwhitelist@myprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
+					},
+					"ipwhitelist2@myprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.2/32"},
+							},
+						},
+						UsedBy: []string{"test@myprovider"},
+					},
+					"ipwhitelist@anotherprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider"},
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				jsonFile:   "testdata/tcpmiddleware-ipwhitelist.json",
+			},
+		},
+		{
+			desc: "one middleware by id, that does not exist",
+			path: "/api/tcp/middlewares/foo@myprovider",
+			conf: runtime.Configuration{
+				TCPMiddlewares: map[string]*runtime.TCPMiddlewareInfo{
+					"ipwhitelist@myprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+			},
+		},
+		{
+			desc: "one middleware by id, but no config",
+			path: "/api/tcp/middlewares/foo@myprovider",
+			conf: runtime.Configuration{},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -534,7 +752,7 @@ func TestHandler_TCP(t *testing.T) {
 
 			assert.Equal(t, resp.Header.Get("Content-Type"), "application/json")
 
-			contents, err := ioutil.ReadAll(resp.Body)
+			contents, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 
 			err = resp.Body.Close()
@@ -548,11 +766,11 @@ func TestHandler_TCP(t *testing.T) {
 				newJSON, err := json.MarshalIndent(results, "", "\t")
 				require.NoError(t, err)
 
-				err = ioutil.WriteFile(test.expected.jsonFile, newJSON, 0o644)
+				err = os.WriteFile(test.expected.jsonFile, newJSON, 0o644)
 				require.NoError(t, err)
 			}
 
-			data, err := ioutil.ReadFile(test.expected.jsonFile)
+			data, err := os.ReadFile(test.expected.jsonFile)
 			require.NoError(t, err)
 			assert.JSONEq(t, string(data), string(contents))
 		})

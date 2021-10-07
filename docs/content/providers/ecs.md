@@ -10,16 +10,16 @@ Attach labels to your ECS containers and let Traefik do the rest!
 ??? example "Configuring ECS provider"
 
     Enabling the ECS provider:
-    
-    ```toml tab="File (TOML)"
-    [providers.ecs]
-    ```
-    
+
     ```yaml tab="File (YAML)"
     providers:
       ecs: {}
     ```
-    
+
+    ```toml tab="File (TOML)"
+    [providers.ecs]
+    ```
+
     ```bash tab="CLI"
     --providers.ecs=true
     ```
@@ -52,17 +52,16 @@ Traefik needs the following policy to read ECS information:
 }
 ```
 
-## Provider configuration
+## Provider Configuration
 
 ### `autoDiscoverClusters`
 
 _Optional, Default=false_
 
-```toml tab="File (TOML)"
-[providers.ecs]
-  autoDiscoverClusters = true
-  # ...
-```
+Search for services in cluster list.
+
+- If set to `true` service discovery is disabled on configured clusters, but enabled for all other clusters.
+- If set to `false` service discovery is enabled on configured clusters only.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -71,25 +70,22 @@ providers:
     # ...
 ```
 
+```toml tab="File (TOML)"
+[providers.ecs]
+  autoDiscoverClusters = true
+  # ...
+```
+
 ```bash tab="CLI"
 --providers.ecs.autoDiscoverClusters=true
 # ...
 ```
 
-Search for services in clusters list.
-
-- If set to `true` the configured clusters will be ignored and the clusters will be discovered.
-- If set to `false` the services will be discovered only in configured clusters.
-
 ### `clusters`
 
 _Optional, Default=["default"]_
 
-```toml tab="File (TOML)"
-[providers.ecs]
-  clusters = ["default"]
-  # ...
-```
+Search for services in cluster list.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -99,22 +95,24 @@ providers:
     # ...
 ```
 
+```toml tab="File (TOML)"
+[providers.ecs]
+  clusters = ["default"]
+  # ...
+```
+
 ```bash tab="CLI"
 --providers.ecs.clusters=default
 # ...
 ```
 
-Search for services in clusters list.
-
 ### `exposedByDefault`
 
 _Optional, Default=true_
 
-```toml tab="File (TOML)"
-[providers.ecs]
-  exposedByDefault = false
-  # ...
-```
+Expose ECS services by default in Traefik.
+
+If set to `false`, services that do not have a `traefik.enable=true` label are ignored from the resulting routing configuration.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -123,23 +121,27 @@ providers:
     # ...
 ```
 
+```toml tab="File (TOML)"
+[providers.ecs]
+  exposedByDefault = false
+  # ...
+```
+
 ```bash tab="CLI"
 --providers.ecs.exposedByDefault=false
 # ...
 ```
 
-Expose ECS services by default in Traefik.
-If set to false, services that don't have a `traefik.enable=true` label will be ignored from the resulting routing configuration.
-
 ### `defaultRule`
 
 _Optional, Default=```Host(`{{ normalize .Name }}`)```_
 
-```toml tab="File (TOML)"
-[providers.ecs]
-  defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
-  # ...
-```
+The `defaultRule` option defines what routing rule to apply to a container if no rule is defined by a label.
+
+It must be a valid [Go template](https://pkg.go.dev/text/template/), and can use
+[sprig template functions](https://masterminds.github.io/sprig/).
+The container service name can be accessed with the `Name` identifier,
+and the template has access to all the labels defined on this container.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -148,26 +150,22 @@ providers:
     # ...
 ```
 
+```toml tab="File (TOML)"
+[providers.ecs]
+  defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+  # ...
+```
+
 ```bash tab="CLI"
 --providers.ecs.defaultRule=Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)
 # ...
 ```
 
-For a given container if no routing rule was defined by a label, it is defined by this defaultRule instead.
-It must be a valid [Go template](https://golang.org/pkg/text/template/),
-augmented with the [sprig template functions](http://masterminds.github.io/sprig/).
-The service name can be accessed as the `Name` identifier,
-and the template has access to all the labels defined on this container.
-
 ### `refreshSeconds`
 
 _Optional, Default=15_
 
-```toml tab="File (TOML)"
-[providers.ecs]
-  refreshSeconds = 15
-  # ...
-```
+Polling interval (in seconds).
 
 ```yaml tab="File (YAML)"
 providers:
@@ -176,23 +174,29 @@ providers:
     # ...
 ```
 
+```toml tab="File (TOML)"
+[providers.ecs]
+  refreshSeconds = 15
+  # ...
+```
+
 ```bash tab="CLI"
 --providers.ecs.refreshSeconds=15
 # ...
 ```
 
-Polling interval (in seconds).
-
 ### Credentials
 
 _Optional_
 
-```toml tab="File (TOML)"
-[providers.ecs]
-  region = "us-east-1"
-  accessKeyID = "abc"
-  secretAccessKey = "123"
-```
+If `region` is not provided, it is resolved from the EC2 metadata endpoint for EC2 tasks.
+In a FARGATE context it is resolved from the `AWS_REGION` environment variable.
+
+If `accessKeyID` and `secretAccessKey` are not provided, credentials are resolved in the following order:
+
+- Using the environment variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN`.
+- Using shared credentials, determined by `AWS_PROFILE` and `AWS_SHARED_CREDENTIALS_FILE`, defaults to `default` and `~/.aws/credentials`.
+- Using EC2 instance role or ECS task role
 
 ```yaml tab="File (YAML)"
 providers:
@@ -203,18 +207,16 @@ providers:
     # ...
 ```
 
+```toml tab="File (TOML)"
+[providers.ecs]
+  region = "us-east-1"
+  accessKeyID = "abc"
+  secretAccessKey = "123"
+```
+
 ```bash tab="CLI"
 --providers.ecs.region="us-east-1"
 --providers.ecs.accessKeyID="abc"
 --providers.ecs.secretAccessKey="123"
 # ...
 ```
-
-If `region` is not provided, it will be resolved from the EC2 metadata endpoint for EC2 tasks. 
-In a FARGATE context it will be resolved from the `AWS_REGION` env variable.
-
-If `accessKeyID` / `secretAccessKey` are not provided, credentials will be resolved in the following order:
-
-- From environment variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN`.
-- Shared credentials, determined by `AWS_PROFILE` and `AWS_SHARED_CREDENTIALS_FILE`, defaults to default and `~/.aws/credentials`.
-- EC2 instance role or ECS task role

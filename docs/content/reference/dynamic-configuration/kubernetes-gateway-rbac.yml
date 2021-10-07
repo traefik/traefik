@@ -7,6 +7,13 @@ rules:
   - apiGroups:
       - ""
     resources:
+      - namespaces
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
       - services
       - endpoints
       - secrets
@@ -20,6 +27,8 @@ rules:
       - gatewayclasses
       - gateways
       - httproutes
+      - tcproutes
+      - tlsroutes
     verbs:
       - get
       - list
@@ -30,6 +39,8 @@ rules:
       - gatewayclasses/status
       - gateways/status
       - httproutes/status
+      - tcproutes/status
+      - tlsroutes/status
     verbs:
       - update
 

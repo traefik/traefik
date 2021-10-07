@@ -2,13 +2,11 @@ package anonymize
 
 import (
 	"flag"
-	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
-	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
@@ -78,7 +76,7 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 							SameSite: "foo",
 						},
 					},
-					HealthCheck: &dynamic.HealthCheck{
+					HealthCheck: &dynamic.ServerHealthCheck{
 						Scheme:          "foo",
 						Path:            "foo",
 						Port:            42,
@@ -202,7 +200,6 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 					AccessControlAllowCredentials:     true,
 					AccessControlAllowHeaders:         []string{"foo"},
 					AccessControlAllowMethods:         []string{"foo"},
-					AccessControlAllowOrigin:          "foo",
 					AccessControlAllowOriginList:      []string{"foo"},
 					AccessControlAllowOriginListRegex: []string{"foo"},
 					AccessControlExposeHeaders:        []string{"foo"},
@@ -228,6 +225,7 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 					PublicKey:                         "foo",
 					ReferrerPolicy:                    "foo",
 					FeaturePolicy:                     "foo",
+					PermissionsPolicy:                 "foo",
 					IsDevelopment:                     true,
 				},
 				Errors: &dynamic.ErrorPage{
@@ -316,16 +314,17 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 						NotAfter:  true,
 						NotBefore: true,
 						Sans:      true,
-						Subject: &dynamic.TLSCLientCertificateDNInfo{
-							Country:         true,
-							Province:        true,
-							Locality:        true,
-							Organization:    true,
-							CommonName:      true,
-							SerialNumber:    true,
-							DomainComponent: true,
+						Subject: &dynamic.TLSCLientCertificateSubjectDNInfo{
+							Country:            true,
+							Province:           true,
+							Locality:           true,
+							Organization:       true,
+							OrganizationalUnit: true,
+							CommonName:         true,
+							SerialNumber:       true,
+							DomainComponent:    true,
 						},
-						Issuer: &dynamic.TLSCLientCertificateDNInfo{
+						Issuer: &dynamic.TLSCLientCertificateIssuerDNInfo{
 							Country:         true,
 							Province:        true,
 							Locality:        true,
@@ -462,14 +461,14 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 		},
 	}
 
-	expectedConfiguration, err := ioutil.ReadFile("./testdata/anonymized-dynamic-config.json")
+	expectedConfiguration, err := os.ReadFile("./testdata/anonymized-dynamic-config.json")
 	require.NoError(t, err)
 
 	cleanJSON, err := Do(config, true)
 	require.NoError(t, err)
 
 	if *updateExpected {
-		require.NoError(t, ioutil.WriteFile("testdata/anonymized-dynamic-config.json", []byte(cleanJSON), 0666))
+		require.NoError(t, os.WriteFile("testdata/anonymized-dynamic-config.json", []byte(cleanJSON), 0o666))
 	}
 
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
@@ -778,18 +777,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Insecure:  true,
 		Dashboard: true,
 		Debug:     true,
-		DashboardAssets: &assetfs.AssetFS{
-			Asset: func(path string) ([]byte, error) {
-				return nil, nil
-			},
-			AssetDir: func(path string) ([]string, error) {
-				return nil, nil
-			},
-			AssetInfo: func(path string) (os.FileInfo, error) {
-				return nil, nil
-			},
-			Prefix: "fii",
-		},
 	}
 
 	config.Metrics = &types.Metrics{
@@ -959,20 +946,24 @@ func TestDo_staticConfiguration(t *testing.T) {
 				Version:    "foobar",
 			},
 		},
-		DevPlugin: &plugins.DevPlugin{
-			GoPath:     "foobar",
-			ModuleName: "foobar",
+		LocalPlugins: map[string]plugins.LocalDescriptor{
+			"Descriptor0": {
+				ModuleName: "foobar",
+			},
+			"Descriptor1": {
+				ModuleName: "foobar",
+			},
 		},
 	}
 
-	expectedConfiguration, err := ioutil.ReadFile("./testdata/anonymized-static-config.json")
+	expectedConfiguration, err := os.ReadFile("./testdata/anonymized-static-config.json")
 	require.NoError(t, err)
 
 	cleanJSON, err := Do(config, true)
 	require.NoError(t, err)
 
 	if *updateExpected {
-		require.NoError(t, ioutil.WriteFile("testdata/anonymized-static-config.json", []byte(cleanJSON), 0666))
+		require.NoError(t, os.WriteFile("testdata/anonymized-static-config.json", []byte(cleanJSON), 0o666))
 	}
 
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")

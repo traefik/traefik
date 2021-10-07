@@ -2,7 +2,7 @@ package gateway
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
@@ -10,7 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes/scheme"
-	"sigs.k8s.io/service-apis/apis/v1alpha1"
+	"sigs.k8s.io/gateway-api/apis/v1alpha1"
 )
 
 var _ Client = (*clientMock)(nil)
@@ -24,9 +24,10 @@ func init() {
 }
 
 type clientMock struct {
-	services  []*corev1.Service
-	secrets   []*corev1.Secret
-	endpoints []*corev1.Endpoints
+	services   []*corev1.Service
+	secrets    []*corev1.Secret
+	endpoints  []*corev1.Endpoints
+	namespaces []*corev1.Namespace
 
 	apiServiceError   error
 	apiSecretError    error
@@ -35,6 +36,8 @@ type clientMock struct {
 	gatewayClasses []*v1alpha1.GatewayClass
 	gateways       []*v1alpha1.Gateway
 	httpRoutes     []*v1alpha1.HTTPRoute
+	tcpRoutes      []*v1alpha1.TCPRoute
+	tlsRoutes      []*v1alpha1.TLSRoute
 
 	watchChan chan interface{}
 }
@@ -43,7 +46,7 @@ func newClientMock(paths ...string) clientMock {
 	var c clientMock
 
 	for _, path := range paths {
-		yamlContent, err := ioutil.ReadFile(filepath.FromSlash("./fixtures/" + path))
+		yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/" + path))
 		if err != nil {
 			panic(err)
 		}
@@ -55,6 +58,8 @@ func newClientMock(paths ...string) clientMock {
 				c.services = append(c.services, o)
 			case *corev1.Secret:
 				c.secrets = append(c.secrets, o)
+			case *corev1.Namespace:
+				c.namespaces = append(c.namespaces, o)
 			case *corev1.Endpoints:
 				c.endpoints = append(c.endpoints, o)
 			case *v1alpha1.GatewayClass:
@@ -63,6 +68,10 @@ func newClientMock(paths ...string) clientMock {
 				c.gateways = append(c.gateways, o)
 			case *v1alpha1.HTTPRoute:
 				c.httpRoutes = append(c.httpRoutes, o)
+			case *v1alpha1.TCPRoute:
+				c.tcpRoutes = append(c.tcpRoutes, o)
+			case *v1alpha1.TLSRoute:
+				c.tlsRoutes = append(c.tlsRoutes, o)
 			default:
 				panic(fmt.Sprintf("Unknown runtime object %+v %T", o, o))
 			}
@@ -125,15 +134,54 @@ func (c clientMock) GetGateways() []*v1alpha1.Gateway {
 	return c.gateways
 }
 
-func (c clientMock) GetHTTPRoutes(namespace string, selector labels.Selector) ([]*v1alpha1.HTTPRoute, error) {
-	httpRoutes := make([]*v1alpha1.HTTPRoute, len(c.httpRoutes))
+func inNamespace(m metav1.ObjectMeta, s string) bool {
+	return s == metav1.NamespaceAll || m.Namespace == s
+}
 
-	for _, httpRoute := range c.httpRoutes {
-		if httpRoute.Namespace == namespace && selector.Matches(labels.Set(httpRoute.Labels)) {
-			httpRoutes = append(httpRoutes, httpRoute)
+func (c clientMock) GetNamespaces(selector labels.Selector) ([]string, error) {
+	var ns []string
+	for _, namespace := range c.namespaces {
+		if selector.Matches(labels.Set(namespace.Labels)) {
+			ns = append(ns, namespace.Name)
+		}
+	}
+	return ns, nil
+}
+
+func (c clientMock) GetHTTPRoutes(namespaces []string, selector labels.Selector) ([]*v1alpha1.HTTPRoute, error) {
+	var httpRoutes []*v1alpha1.HTTPRoute
+	for _, namespace := range namespaces {
+		for _, httpRoute := range c.httpRoutes {
+			if inNamespace(httpRoute.ObjectMeta, namespace) && selector.Matches(labels.Set(httpRoute.Labels)) {
+				httpRoutes = append(httpRoutes, httpRoute)
+			}
 		}
 	}
 	return httpRoutes, nil
+}
+
+func (c clientMock) GetTCPRoutes(namespaces []string, selector labels.Selector) ([]*v1alpha1.TCPRoute, error) {
+	var tcpRoutes []*v1alpha1.TCPRoute
+	for _, namespace := range namespaces {
+		for _, tcpRoute := range c.tcpRoutes {
+			if inNamespace(tcpRoute.ObjectMeta, namespace) && selector.Matches(labels.Set(tcpRoute.Labels)) {
+				tcpRoutes = append(tcpRoutes, tcpRoute)
+			}
+		}
+	}
+	return tcpRoutes, nil
+}
+
+func (c clientMock) GetTLSRoutes(namespaces []string, selector labels.Selector) ([]*v1alpha1.TLSRoute, error) {
+	var tlsRoutes []*v1alpha1.TLSRoute
+	for _, namespace := range namespaces {
+		for _, tlsRoute := range c.tlsRoutes {
+			if inNamespace(tlsRoute.ObjectMeta, namespace) && selector.Matches(labels.Set(tlsRoute.Labels)) {
+				tlsRoutes = append(tlsRoutes, tlsRoute)
+			}
+		}
+	}
+	return tlsRoutes, nil
 }
 
 func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, error) {
@@ -142,7 +190,7 @@ func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, e
 	}
 
 	for _, service := range c.services {
-		if service.Namespace == namespace && service.Name == name {
+		if inNamespace(service.ObjectMeta, namespace) && service.Name == name {
 			return service, true, nil
 		}
 	}
@@ -155,7 +203,7 @@ func (c clientMock) GetEndpoints(namespace, name string) (*corev1.Endpoints, boo
 	}
 
 	for _, endpoints := range c.endpoints {
-		if endpoints.Namespace == namespace && endpoints.Name == name {
+		if inNamespace(endpoints.ObjectMeta, namespace) && endpoints.Name == name {
 			return endpoints, true, nil
 		}
 	}
@@ -169,7 +217,7 @@ func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, err
 	}
 
 	for _, secret := range c.secrets {
-		if secret.Namespace == namespace && secret.Name == name {
+		if inNamespace(secret.ObjectMeta, namespace) && secret.Name == name {
 			return secret, true, nil
 		}
 	}

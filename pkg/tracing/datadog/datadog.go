@@ -17,14 +17,14 @@ const Name = "datadog"
 
 // Config provides configuration settings for a datadog tracer.
 type Config struct {
-	LocalAgentHostPort         string `description:"Set datadog-agent's host:port that the reporter will used." json:"localAgentHostPort,omitempty" toml:"localAgentHostPort,omitempty" yaml:"localAgentHostPort,omitempty"`
-	GlobalTag                  string `description:"Key:Value tag to be set on all the spans." json:"globalTag,omitempty" toml:"globalTag,omitempty" yaml:"globalTag,omitempty" export:"true"`
-	Debug                      bool   `description:"Enable Datadog debug." json:"debug,omitempty" toml:"debug,omitempty" yaml:"debug,omitempty" export:"true"`
-	PrioritySampling           bool   `description:"Enable priority sampling. When using distributed tracing, this option must be enabled in order to get all the parts of a distributed trace sampled." json:"prioritySampling,omitempty" toml:"prioritySampling,omitempty" yaml:"prioritySampling,omitempty" export:"true"`
-	TraceIDHeaderName          string `description:"Specifies the header name that will be used to store the trace ID." json:"traceIDHeaderName,omitempty" toml:"traceIDHeaderName,omitempty" yaml:"traceIDHeaderName,omitempty" export:"true"`
-	ParentIDHeaderName         string `description:"Specifies the header name that will be used to store the parent ID." json:"parentIDHeaderName,omitempty" toml:"parentIDHeaderName,omitempty" yaml:"parentIDHeaderName,omitempty" export:"true"`
-	SamplingPriorityHeaderName string `description:"Specifies the header name that will be used to store the sampling priority." json:"samplingPriorityHeaderName,omitempty" toml:"samplingPriorityHeaderName,omitempty" yaml:"samplingPriorityHeaderName,omitempty" export:"true"`
-	BagagePrefixHeaderName     string `description:"Specifies the header name prefix that will be used to store baggage items in a map." json:"bagagePrefixHeaderName,omitempty" toml:"bagagePrefixHeaderName,omitempty" yaml:"bagagePrefixHeaderName,omitempty" export:"true"`
+	LocalAgentHostPort         string `description:"Sets the Datadog Agent host:port." json:"localAgentHostPort,omitempty" toml:"localAgentHostPort,omitempty" yaml:"localAgentHostPort,omitempty"`
+	GlobalTag                  string `description:"Sets a key:value tag on all spans." json:"globalTag,omitempty" toml:"globalTag,omitempty" yaml:"globalTag,omitempty" export:"true"`
+	Debug                      bool   `description:"Enables Datadog debug." json:"debug,omitempty" toml:"debug,omitempty" yaml:"debug,omitempty" export:"true"`
+	PrioritySampling           bool   `description:"Enables priority sampling. When using distributed tracing, this option must be enabled in order to get all the parts of a distributed trace sampled." json:"prioritySampling,omitempty" toml:"prioritySampling,omitempty" yaml:"prioritySampling,omitempty" export:"true"`
+	TraceIDHeaderName          string `description:"Sets the header name used to store the trace ID." json:"traceIDHeaderName,omitempty" toml:"traceIDHeaderName,omitempty" yaml:"traceIDHeaderName,omitempty" export:"true"`
+	ParentIDHeaderName         string `description:"Sets the header name used to store the parent ID." json:"parentIDHeaderName,omitempty" toml:"parentIDHeaderName,omitempty" yaml:"parentIDHeaderName,omitempty" export:"true"`
+	SamplingPriorityHeaderName string `description:"Sets the header name used to store the sampling priority." json:"samplingPriorityHeaderName,omitempty" toml:"samplingPriorityHeaderName,omitempty" yaml:"samplingPriorityHeaderName,omitempty" export:"true"`
+	BagagePrefixHeaderName     string `description:"Sets the header name prefix used to store baggage items in a map." json:"bagagePrefixHeaderName,omitempty" toml:"bagagePrefixHeaderName,omitempty" yaml:"bagagePrefixHeaderName,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
