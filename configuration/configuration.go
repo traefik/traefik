@@ -452,18 +452,19 @@ func (gc *GlobalConfiguration) InitACMEProvider() (*acmeprovider.Provider, error
 		if gc.Cluster == nil {
 			provider := &acmeprovider.Provider{}
 			provider.Configuration = &acmeprovider.Configuration{
-				KeyType:       gc.ACME.KeyType,
-				OnHostRule:    gc.ACME.OnHostRule,
-				OnDemand:      gc.ACME.OnDemand,
-				Email:         gc.ACME.Email,
-				Storage:       gc.ACME.Storage,
-				HTTPChallenge: gc.ACME.HTTPChallenge,
-				DNSChallenge:  gc.ACME.DNSChallenge,
-				TLSChallenge:  gc.ACME.TLSChallenge,
-				Domains:       gc.ACME.Domains,
-				ACMELogging:   gc.ACME.ACMELogging,
-				CAServer:      gc.ACME.CAServer,
-				EntryPoint:    gc.ACME.EntryPoint,
+				KeyType:        gc.ACME.KeyType,
+				OnHostRule:     gc.ACME.OnHostRule,
+				OnDemand:       gc.ACME.OnDemand,
+				Email:          gc.ACME.Email,
+				PreferredChain: gc.ACME.PreferredChain,
+				Storage:        gc.ACME.Storage,
+				HTTPChallenge:  gc.ACME.HTTPChallenge,
+				DNSChallenge:   gc.ACME.DNSChallenge,
+				TLSChallenge:   gc.ACME.TLSChallenge,
+				Domains:        gc.ACME.Domains,
+				ACMELogging:    gc.ACME.ACMELogging,
+				CAServer:       gc.ACME.CAServer,
+				EntryPoint:     gc.ACME.EntryPoint,
 			}
 
 			store := acmeprovider.NewLocalStore(provider.Storage)
