@@ -14,7 +14,7 @@ import (
 func MustParseYaml(content []byte) []runtime.Object {
 	acceptedK8sTypes := regexp.MustCompile(`^(Deployment|Endpoints|Service|Ingress|IngressRoute|IngressRouteTCP|IngressRouteUDP|Middleware|MiddlewareTCP|Secret|TLSOption|TLSStore|TraefikService|IngressClass|ServersTransport|GatewayClass|Gateway|HTTPRoute|TCPRoute|TLSRoute)$`)
 
-	files := strings.Split(string(content), "---")
+	files := strings.Split(string(content), "---\n")
 	retVal := make([]runtime.Object, 0, len(files))
 	for _, file := range files {
 		if file == "\n" || file == "" {
