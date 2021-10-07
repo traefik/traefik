@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.7.33](https://github.com/traefik/traefik/tree/v1.7.33) (2021-10-07)
+[All Commits](https://github.com/traefik/traefik/compare/v1.7.32...v1.7.33)
+
+**Bug fixes:**
+- **[acme]** acme: fix non-cluster mode ([#8501](https://github.com/traefik/traefik/pull/8501) by [ldez](https://github.com/ldez))
+
 ## [v1.7.32](https://github.com/traefik/traefik/tree/v1.7.32) (2021-10-06)
 [All Commits](https://github.com/traefik/traefik/compare/v1.7.31...v1.7.32)
 
