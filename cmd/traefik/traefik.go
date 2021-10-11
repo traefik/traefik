@@ -265,7 +265,6 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	watcher := server.NewConfigurationWatcher(
 		routinesPool,
 		providerAggregator,
-		time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration),
 		getDefaultsEntrypoints(staticConfiguration),
 		"internal",
 	)
