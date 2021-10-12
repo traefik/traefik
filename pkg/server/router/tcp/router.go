@@ -271,9 +271,8 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 					logger.Debug(asciiError)
 					continue
 				}
-
-			//case domain == "*":
-			//	router.SetCatchAllNoTLS(handler)
+			case domain == "*":
+				router.AddCatchAllNoTLS(handler)
 			default:
 				logger.Warn("TCP Router ignored, cannot specify a Host rule without TLS")
 			}

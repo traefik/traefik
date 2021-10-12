@@ -107,25 +107,6 @@ func ParseDomains(rule string) ([]string, error) {
 	return buildTree().ParseMatchers([]string{hostMatcher}), nil
 }
 
-//func lower(slice []string) []string {
-//	var lowerStrings []string
-//	for _, value := range slice {
-//		lowerStrings = append(lowerStrings, strings.ToLower(value))
-//	}
-//	return lowerStrings
-//}
-
-//func parseDomain(tree *Tree) []string {
-//	switch tree.Matcher {
-//	case and, or:
-//		return append(parseDomain(tree.RuleLeft), parseDomain(tree.RuleRight)...)
-//	case "Host", "HostSNI":
-//		return tree.Value
-//	default:
-//		return nil
-//	}
-//}
-
 func path(route *mux.Route, paths ...string) error {
 	rt := route.Subrouter()
 

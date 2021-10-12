@@ -445,6 +445,7 @@ func Test_HostSNI(t *testing.T) {
 	}
 }
 
+// TODO have a parse client ip test?
 func Test_ClientIP(t *testing.T) {
 	testCases := []struct {
 		desc       string
