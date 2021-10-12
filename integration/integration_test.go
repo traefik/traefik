@@ -14,6 +14,7 @@ import (
 	"text/template"
 	"time"
 
+	composeCli "github.com/compose-spec/compose-go/cli"
 	"github.com/fatih/structs"
 	"github.com/go-check/check"
 	compose "github.com/libkermit/compose/check"
@@ -105,6 +106,12 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 		}
 	}
 
+	ops, err := composeCli.NewProjectOptions([]string{composeFile})
+	c.Assert(err, checker.IsNil)
+	project, err := composeCli.ProjectFromOptions(ops)
+	c.Assert(err, checker.IsNil)
+
+	// s.composeProject = project
 	s.composeProject = compose.CreateProject(c, projectName, composeFile)
 }
 
