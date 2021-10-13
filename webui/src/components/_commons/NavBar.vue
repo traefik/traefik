@@ -28,8 +28,6 @@
                 </q-menu>
               </q-btn>
             </q-tabs>
-            <platform-auth-state
-              v-if="pilotEnabled" />
           </div>
         </q-toolbar>
       </div>
@@ -45,12 +43,10 @@
 
 <script>
 import config from '../../../package'
-import PlatformAuthState from '../platform/PlatformAuthState'
 import { mapActions, mapGetters } from 'vuex'
 
 export default {
   name: 'NavBar',
-  components: { PlatformAuthState },
   computed: {
     ...mapGetters('core', { coreVersion: 'version' }),
     version () {
@@ -58,9 +54,6 @@ export default {
       return /^(v?\d+\.\d+)/.test(this.coreVersion.Version)
         ? this.coreVersion.Version
         : this.coreVersion.Version.substring(0, 7)
-    },
-    pilotEnabled () {
-      return this.coreVersion.pilotEnabled
     },
     parsedVersion () {
       if (!this.version) {
