@@ -100,6 +100,16 @@ func (s *BaseSuite) TearDownSuite(c *check.C) {
 	}
 }
 
+func (s *BaseSuite) Container(c *check.C, services ...string) {
+	cs, err := s.dockerService.Ps(context.Background(), s.composeProject.Name, api.PsOptions{Services: services})
+	c.Assert(err, check.IsNil,
+		check.Commentf("error while getting the container for services '%v'", services))
+
+	for _, summary := range cs {
+		c.Assert(summary.State, checker.Contains, "running")
+	}
+}
+
 func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	projectName := "integration-test-" + name
 	composeFile := "resources/compose/" + name + ".yml"

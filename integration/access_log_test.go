@@ -38,16 +38,10 @@ type accessLogValue struct {
 
 func (s *AccessLogSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "access_log")
-	err := s.dockerService.Start(context.Background(), s.composeProject, api.StartOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
-	cs, err := s.dockerService.Ps(context.Background(), s.composeProject.Name, api.PsOptions{
-		Services: []string{"server0", "server1", "server2", "server3"},
-	})
-
-	for _, summary := range cs {
-		c.Assert(summary.State, checker.Contains, "running")
-	}
+	s.Container(c, "server0", "server1", "server2", "server3")
 }
 
 func (s *AccessLogSuite) TearDownTest(c *check.C) {
