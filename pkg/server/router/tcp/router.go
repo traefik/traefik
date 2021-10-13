@@ -271,47 +271,34 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 					logger.Debug(asciiError)
 					continue
 				}
-			case domain == "*":
-				router.AddCatchAllNoTLS(handler)
 			default:
 				logger.Warn("TCP Router ignored, cannot specify a Host rule without TLS")
 			}
 		}
 
-		if routerConfig.TLS != nil && !routerConfig.TLS.Passthrough {
-			tlsOptionsName := routerConfig.TLS.Options
-
-			if len(tlsOptionsName) == 0 {
-				tlsOptionsName = traefiktls.DefaultTLSConfigName
-			}
-
-			if tlsOptionsName != traefiktls.DefaultTLSConfigName {
-				tlsOptionsName = provider.GetQualifiedName(ctxRouter, tlsOptionsName)
-			}
-
-			tlsConf, err := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, tlsOptionsName)
-			if err != nil {
-				routerConfig.AddError(err, true)
-				logger.Debug(err)
-				continue
-			}
-
-			handler = &tcp.TLSHandler{Next: handler, Config: tlsConf}
+		if routerConfig.TLS == nil || routerConfig.TLS.Passthrough {
+			router.AddRoute(routerConfig.Rule, handler)
+			continue
 		}
 
-		//ips, err := rules.ParseClientIP(routerConfig.Rule)
-		//if err != nil {
-		//	routerErr := fmt.Errorf("unknown rule %s", routerConfig.Rule)
-		//	routerConfig.AddError(routerErr, true)
-		//	logger.Error(routerErr)
-		//	continue
-		//}
-		//for _, ip := range ips {
-		//	route := tcp.NewRoute(handler)
-		//	route.AddMatcher(tcp.NewClientIP(ip))
-		//	router.AddRoute(route)
-		//}
-		router.AddRoute(routerConfig.Rule, handler)
+		tlsOptionsName := routerConfig.TLS.Options
+
+		if len(tlsOptionsName) == 0 {
+			tlsOptionsName = traefiktls.DefaultTLSConfigName
+		}
+
+		if tlsOptionsName != traefiktls.DefaultTLSConfigName {
+			tlsOptionsName = provider.GetQualifiedName(ctxRouter, tlsOptionsName)
+		}
+
+		tlsConf, err := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, tlsOptionsName)
+		if err != nil {
+			routerConfig.AddError(err, true)
+			logger.Debug(err)
+			continue
+		}
+
+		router.AddRouteTLS(routerConfig.Rule, handler, tlsConf)
 	}
 
 	return router, nil
