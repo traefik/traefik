@@ -40,7 +40,7 @@ type Router struct {
 // NewRouter returns a new router instance.
 func NewRouter() (*Router, error) {
 	var matchers []string
-	for matcher, _ := range funcs {
+	for matcher := range funcs {
 		matchers = append(matchers, matcher)
 	}
 
@@ -85,7 +85,7 @@ func (r *Router) AddRoute(rule string, priority int, handler http.Handler) error
 // ParseDomains extract domains from rule.
 func ParseDomains(rule string) ([]string, error) {
 	var matchers []string
-	for matcher, _ := range funcs {
+	for matcher := range funcs {
 		matchers = append(matchers, matcher)
 	}
 
@@ -322,6 +322,7 @@ func addRuleOnRoute(route *mux.Route, rule *Tree) error {
 	}
 }
 
+// CheckRule validates the given rule.
 func CheckRule(rule *Tree) error {
 	if len(rule.Value) == 0 {
 		return fmt.Errorf("no args for matcher %s", rule.Matcher)

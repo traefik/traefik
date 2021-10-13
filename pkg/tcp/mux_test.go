@@ -238,11 +238,11 @@ func Test_addTCPRoute(t *testing.T) {
 			t.Parallel()
 
 			msg := "BYTES"
-			var handler HandlerFunc
-			handler = func(conn WriteCloser) {
-				conn.Write([]byte(msg))
-			}
-			router, err := NewTCPRouterMux()
+			handler := HandlerFunc(func(conn WriteCloser) {
+				_, err := conn.Write([]byte(msg))
+				require.NoError(t, err)
+			})
+			router, err := NewMuxer()
 			require.NoError(t, err)
 
 			err = router.AddRoute(test.rule, handler)
@@ -261,10 +261,10 @@ func Test_addTCPRoute(t *testing.T) {
 					remoteAddr: fakeAddr{addr: addr},
 				}
 
-				metaTCP, err := NewMetaTCP(test.serverName, conn)
+				connData, err := NewConnData(test.serverName, conn)
 				require.NoError(t, err)
 
-				handler := router.Match(metaTCP)
+				handler := router.Match(connData)
 				if test.matchErr {
 					require.Nil(t, handler)
 					return
@@ -278,7 +278,7 @@ func Test_addTCPRoute(t *testing.T) {
 				assert.Equal(t, n, 1)
 				assert.True(t, ok)
 
-				//assert.Equal(t, test.expected, results)
+				// assert.Equal(t, test.expected, results)
 			}
 		})
 	}
@@ -432,7 +432,7 @@ func Test_HostSNI(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			meta := metaTCP{
+			meta := connData{
 				serverName: test.serverName,
 			}
 
@@ -515,7 +515,7 @@ func Test_ClientIP(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			meta := metaTCP{
+			meta := connData{
 				serverName: test.serverName,
 			}
 

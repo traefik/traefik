@@ -277,7 +277,11 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		}
 
 		if routerConfig.TLS == nil || routerConfig.TLS.Passthrough {
-			router.AddRoute(routerConfig.Rule, handler)
+			err := router.AddRoute(routerConfig.Rule, handler)
+			if err != nil {
+				routerConfig.AddError(err, true)
+				logger.Debug(err)
+			}
 			continue
 		}
 
@@ -298,7 +302,11 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			continue
 		}
 
-		router.AddRouteTLS(routerConfig.Rule, handler, tlsConf)
+		err = router.AddRouteTLS(routerConfig.Rule, handler, tlsConf)
+		if err != nil {
+			routerConfig.AddError(err, true)
+			logger.Debug(err)
+		}
 	}
 
 	return router, nil

@@ -23,7 +23,7 @@ var funcs = map[string]func(*route, ...string) error{
 // This is a first naive implementation used in TCP routing.
 func ParseHostSNI(rule string) ([]string, error) {
 	var matchers []string
-	for matcher, _ := range funcs {
+	for matcher := range funcs {
 		matchers = append(matchers, matcher)
 	}
 
@@ -45,17 +45,17 @@ func ParseHostSNI(rule string) ([]string, error) {
 	return buildTree().ParseMatchers([]string{"HostSNI"}), nil
 }
 
-// metaTCP contains TCP connection metadata
-type metaTCP struct {
+// connData contains TCP connection metadata.
+type connData struct {
 	serverName string
 	remoteIP   string
 }
 
-// NewMetaTCP builds a metaTCP struct from the given parameters.
-func NewMetaTCP(serverName string, conn WriteCloser) (metaTCP, error) {
+// NewConnData builds a connData struct from the given parameters.
+func NewConnData(serverName string, conn WriteCloser) (connData, error) {
 	ip, _, err := net.SplitHostPort(conn.RemoteAddr().String())
 	if err != nil {
-		return metaTCP{}, fmt.Errorf("error while parsing remote address %q: %v", conn.RemoteAddr().String(), err)
+		return connData{}, fmt.Errorf("error while parsing remote address %q: %w", conn.RemoteAddr().String(), err)
 	}
 
 	// as per https://datatracker.ietf.org/doc/html/rfc6066:
@@ -63,21 +63,22 @@ func NewMetaTCP(serverName string, conn WriteCloser) (metaTCP, error) {
 	// so there is no need to trim a potential trailing dot
 	serverName = types.CanonicalDomain(serverName)
 
-	return metaTCP{
+	return connData{
 		serverName: types.CanonicalDomain(serverName),
 		remoteIP:   ip,
 	}, nil
 }
 
-// TCPRouterMux handle TCP routing with rules.
-type TCPRouterMux struct {
+// Muxer defines a muxer that handles TCP routing with rules.
+type Muxer struct {
 	subRouter
 	parser predicate.Parser
 }
 
-func NewTCPRouterMux() (*TCPRouterMux, error) {
+// NewMuxer returns a TCP muxer.
+func NewMuxer() (*Muxer, error) {
 	var matchers []string
-	for matcher, _ := range funcs {
+	for matcher := range funcs {
 		matchers = append(matchers, matcher)
 	}
 
@@ -86,10 +87,11 @@ func NewTCPRouterMux() (*TCPRouterMux, error) {
 		return nil, fmt.Errorf("error while creating rules parser: %w", err)
 	}
 
-	return &TCPRouterMux{parser: parser}, nil
+	return &Muxer{parser: parser}, nil
 }
 
-func (r TCPRouterMux) Match(meta metaTCP) Handler {
+// Match returns the handler of the first route matching the connection metadata.
+func (r Muxer) Match(meta connData) Handler {
 	// For each route, check if match, and return the handler for that route.
 	for _, route := range r.routes {
 		if route.match(meta) {
@@ -100,12 +102,8 @@ func (r TCPRouterMux) Match(meta metaTCP) Handler {
 	return nil
 }
 
-func (r *TCPRouterMux) HasRoutes() bool {
-	return len(r.routes) > 0
-}
-
 // AddRoute add a new route to the router.
-func (r *TCPRouterMux) AddRoute(rule string, handler Handler) error {
+func (r *Muxer) AddRoute(rule string, handler Handler) error {
 	parse, err := r.parser.Parse(rule)
 	if err != nil {
 		return fmt.Errorf("error while parsing rule %s: %w", rule, err)
@@ -132,13 +130,13 @@ type subRouter struct {
 	routes []*route
 }
 
-func (r *subRouter) newRoute() *route {
+func (s *subRouter) newRoute() *route {
 	route := &route{}
-	r.routes = append(r.routes, route)
+	s.routes = append(s.routes, route)
 	return route
 }
 
-func (s subRouter) match(meta metaTCP) bool {
+func (s subRouter) match(meta connData) bool {
 	// For each route, check if match, and return the handler for that route.
 	for _, route := range s.routes {
 		if route.match(meta) {
@@ -150,7 +148,7 @@ func (s subRouter) match(meta metaTCP) bool {
 }
 
 // matcher is a matcher used to match connection properties.
-type matcher func(meta metaTCP) bool
+type matcher func(meta connData) bool
 
 // route holds matchers to match TCP routes.
 type route struct {
@@ -176,7 +174,7 @@ func (r *route) subRouter() *subRouter {
 }
 
 // Match checks the connection against all the matchers in the route, and returns if there is a full match.
-func (r *route) match(meta metaTCP) bool {
+func (r *route) match(meta connData) bool {
 	if r.noMatch {
 		return false
 	}
@@ -188,7 +186,6 @@ func (r *route) match(meta metaTCP) bool {
 	// For each matcher, check if match, and return true if all are matched.
 	for _, matcher := range r.matchers {
 		if !matcher(meta) {
-
 			if r.router != nil {
 				return r.router.match(meta)
 			}
@@ -269,13 +266,13 @@ func addRuleOnRoute(route *route, rule *rules.Tree) error {
 
 func not(m func(*route, ...string) error) func(*route, ...string) error {
 	return func(r *route, v ...string) error {
-		router := TCPRouterMux{}
+		router := Muxer{}
 		err := m(router.newRoute(), v...)
 		if err != nil {
 			return err
 		}
 
-		r.addMatcher(func(meta metaTCP) bool {
+		r.addMatcher(func(meta connData) bool {
 			return !r.match(meta)
 		})
 
@@ -289,7 +286,7 @@ func clientIP(route *route, clientIPs ...string) error {
 		return fmt.Errorf("could not initialize IP Checker for \"ClientIP\" matcher: %w", err)
 	}
 
-	route.addMatcher(func(meta metaTCP) bool {
+	route.addMatcher(func(meta connData) bool {
 		if meta.remoteIP == "" {
 			return false
 		}
@@ -309,7 +306,7 @@ func clientIP(route *route, clientIPs ...string) error {
 	return nil
 }
 
-var almostFQDN = regexp.MustCompile("^[[:alnum:]\\.-]+$")
+var almostFQDN = regexp.MustCompile(`^[[:alnum:]\.-]+$`)
 
 // hostSNI checks if the SNI Host of the connection match the matcher host.
 func hostSNI(route *route, hosts ...string) error {
@@ -331,7 +328,7 @@ func hostSNI(route *route, hosts ...string) error {
 		hosts[i] = strings.ToLower(host)
 	}
 
-	route.addMatcher(func(meta metaTCP) bool {
+	route.addMatcher(func(meta connData) bool {
 		// TODO verify if this is correct
 		if hosts[0] == "*" {
 			return true
@@ -351,8 +348,6 @@ func hostSNI(route *route, hosts ...string) error {
 			if host == meta.serverName {
 				return true
 			}
-
-			return false
 		}
 
 		return false

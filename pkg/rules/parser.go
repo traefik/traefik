@@ -11,8 +11,10 @@ const (
 	or  = "or"
 )
 
+// TreeBuilder defines the type for a Tree builder.
 type TreeBuilder func() *Tree
 
+// Tree represents the rules tree structure.
 type Tree struct {
 	Matcher   string
 	Not       bool
@@ -21,6 +23,7 @@ type Tree struct {
 	RuleRight *Tree
 }
 
+// NewParser constructs a parser for the given matchers.
 func NewParser(matchers []string) (predicate.Parser, error) {
 	parserFuncs := make(map[string]interface{})
 
@@ -93,6 +96,7 @@ func notFunc(elem TreeBuilder) TreeBuilder {
 	}
 }
 
+// ParseMatchers returns the subset of matchers in the Tree matching the given matchers.
 func (tree *Tree) ParseMatchers(matchers []string) []string {
 	switch tree.Matcher {
 	case and, or:
