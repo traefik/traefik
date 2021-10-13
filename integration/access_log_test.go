@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"crypto/md5"
 	"crypto/rand"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -36,12 +38,16 @@ type accessLogValue struct {
 
 func (s *AccessLogSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "access_log")
-	s.composeProject.Start(c)
+	err := s.dockerService.Start(context.Background(), s.composeProject, api.StartOptions{})
+	c.Assert(err, checker.IsNil)
 
-	s.composeProject.Container(c, "server0")
-	s.composeProject.Container(c, "server1")
-	s.composeProject.Container(c, "server2")
-	s.composeProject.Container(c, "server3")
+	cs, err := s.dockerService.Ps(context.Background(), s.composeProject.Name, api.PsOptions{
+		Services: []string{"server0", "server1", "server2", "server3"},
+	})
+
+	for _, summary := range cs {
+		c.Assert(summary.State, checker.Contains, "running")
+	}
 }
 
 func (s *AccessLogSuite) TearDownTest(c *check.C) {
@@ -136,8 +142,6 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend(c *check.C) {
 
 	checkStatsForLogFile(c)
 
-	s.composeProject.Container(c, "authFrontend")
-
 	waitForTraefik(c, "authFrontend")
 
 	// Verify Traefik started OK
@@ -206,8 +210,6 @@ func (s *AccessLogSuite) TestAccessLogDigestAuthMiddleware(c *check.C) {
 	defer s.killCmd(cmd)
 
 	checkStatsForLogFile(c)
-
-	s.composeProject.Container(c, "digestAuthMiddleware")
 
 	waitForTraefik(c, "digestAuthMiddleware")
 
@@ -322,8 +324,6 @@ func (s *AccessLogSuite) TestAccessLogFrontendRedirect(c *check.C) {
 
 	checkStatsForLogFile(c)
 
-	s.composeProject.Container(c, "frontendRedirect")
-
 	waitForTraefik(c, "frontendRedirect")
 
 	// Verify Traefik started OK
@@ -374,8 +374,6 @@ func (s *AccessLogSuite) TestAccessLogRateLimit(c *check.C) {
 	defer s.killCmd(cmd)
 
 	checkStatsForLogFile(c)
-
-	s.composeProject.Container(c, "rateLimit")
 
 	waitForTraefik(c, "rateLimit")
 
@@ -471,8 +469,6 @@ func (s *AccessLogSuite) TestAccessLogFrontendWhitelist(c *check.C) {
 
 	checkStatsForLogFile(c)
 
-	s.composeProject.Container(c, "frontendWhitelist")
-
 	waitForTraefik(c, "frontendWhitelist")
 
 	// Verify Traefik started OK
@@ -517,8 +513,6 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontendSuccess(c *check.C) {
 	defer s.killCmd(cmd)
 
 	checkStatsForLogFile(c)
-
-	s.composeProject.Container(c, "authFrontend")
 
 	waitForTraefik(c, "authFrontend")
 
