@@ -958,3 +958,65 @@ func TestParseDomains(t *testing.T) {
 		})
 	}
 }
+
+//
+//func TestParseClientIP(t *testing.T) {
+//	testCases := []struct {
+//		description   string
+//		expression    string
+//		ips           []string
+//		errorExpected bool
+//	}{
+//		{
+//			description:   "Many clientIP rules",
+//			expression:    "ClientIP(`10.1`,`10.2`)",
+//			ips:           []string{"10.1", "10.2"},
+//			errorExpected: false,
+//		},
+//		{
+//			description:   "Many clientIP rules upper",
+//			expression:    "CLIENTIP(`10.1`,`10.2`)",
+//			ips:           []string{"10.1", "10.2"},
+//			errorExpected: false,
+//		},
+//		{
+//			description:   "Many clientIP rules lower",
+//			expression:    "clientip(`10.1`,`10.2`)",
+//			ips:           []string{"10.1", "10.2"},
+//			errorExpected: false,
+//		},
+//		{
+//			description:   "No clientIP rule",
+//			expression:    "HostSNI(`foo.bar`)",
+//			errorExpected: false,
+//		},
+//		{
+//			description:   "ClientIP rule and another rule",
+//			expression:    "ClientIP(`10.1`) && HostSNI(`foo.bar`)",
+//			ips:           []string{"10.1"},
+//			errorExpected: false,
+//		},
+//		{
+//			description:   "ClientIP rule with no ip",
+//			expression:    "ClientIP() && HostSNI(`foo.bar`)",
+//			errorExpected: false,
+//		},
+//	}
+//
+//	for _, test := range testCases {
+//		test := test
+//		t.Run(test.expression, func(t *testing.T) {
+//			t.Parallel()
+//
+//			ips, err := ParseClientIP(test.expression)
+//
+//			if test.errorExpected {
+//				require.Errorf(t, err, "unable to parse correctly the ips in the ClientIP rule from %q", test.expression)
+//			} else {
+//				require.NoError(t, err, "%s: Error while parsing ip.", test.expression)
+//			}
+//
+//			assert.EqualValues(t, test.ips, ips, "%s: Error parsing ips from expression.", test.expression)
+//		})
+//	}
+//}
