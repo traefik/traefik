@@ -1135,6 +1135,21 @@ spec:
                     description: The maximum period for which an idle HTTP keep-alive
                       connection will remain open before closing itself.
                     x-kubernetes-int-or-string: true
+                  pingTimeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: The timeout after which the HTTP/2 connection will
+                      be closed if a response to Ping is not received.
+                    x-kubernetes-int-or-string: true
+                  readIdleTimeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: The timeout after which a health check using ping
+                      frame will be carried out if no frame is received on the HTTP/2
+                      connection. If zero, no health check is performed.
+                    x-kubernetes-int-or-string: true
                   responseHeaderTimeout:
                     anyOf:
                     - type: integer
