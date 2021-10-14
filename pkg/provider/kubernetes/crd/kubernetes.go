@@ -339,6 +339,20 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 					logger.Errorf("Error while reading IdleConnTimeout: %v", err)
 				}
 			}
+
+			if serversTransport.Spec.ForwardingTimeouts.ReadIdleTimeout != nil {
+				err := forwardingTimeout.ReadIdleTimeout.Set(serversTransport.Spec.ForwardingTimeouts.ReadIdleTimeout.String())
+				if err != nil {
+					logger.Errorf("Error while reading ReadIdleTimeout: %v", err)
+				}
+			}
+
+			if serversTransport.Spec.ForwardingTimeouts.PingTimeout != nil {
+				err := forwardingTimeout.PingTimeout.Set(serversTransport.Spec.ForwardingTimeouts.PingTimeout.String())
+				if err != nil {
+					logger.Errorf("Error while reading PingTimeout: %v", err)
+				}
+			}
 		}
 
 		id := provider.Normalize(makeID(serversTransport.Namespace, serversTransport.Name))
