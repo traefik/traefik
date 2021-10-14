@@ -92,7 +92,6 @@ func NewMuxer() (*Muxer, error) {
 
 // Match returns the handler of the first route matching the connection metadata.
 func (r Muxer) Match(meta connData) Handler {
-	// For each route, check if match, and return the handler for that route.
 	for _, route := range r.routes {
 		if route.match(meta) {
 			return route.handler
@@ -173,7 +172,7 @@ func (r *route) subRouter() *subRouter {
 	return router
 }
 
-// Match checks the connection against all the matchers in the route, and returns if there is a full match.
+// match checks the connection against all the matchers in the route, and returns if there is a full match.
 func (r *route) match(meta connData) bool {
 	if r.noMatch {
 		return false

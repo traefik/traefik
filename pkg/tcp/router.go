@@ -116,9 +116,10 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 
 	if r.httpsForwarder != nil {
 		r.httpsForwarder.ServeTCP(r.GetConn(conn, peeked))
-	} else {
-		conn.Close()
+		return
 	}
+
+	conn.Close()
 }
 
 // AddRoute defines a handler for the give rule.
@@ -134,8 +135,8 @@ func (r *Router) AddRouteTLS(rule string, target Handler, config *tls.Config) er
 	})
 }
 
-// AddRouteHTTPTLS defines a handler for a given sniHost and sets the matching tlsConfig.
-func (r *Router) AddRouteHTTPTLS(sniHost string, config *tls.Config) {
+// AddHTTPTLSConfig defines a handler for a given sniHost and sets the matching tlsConfig.
+func (r *Router) AddHTTPTLSConfig(sniHost string, config *tls.Config) {
 	if r.hostHTTPTLSConfig == nil {
 		r.hostHTTPTLSConfig = map[string]*tls.Config{}
 	}
@@ -171,7 +172,10 @@ func (r *Router) HTTPForwarder(handler Handler) {
 func (r *Router) HTTPSForwarder(handler Handler) {
 	for sniHost, tlsConf := range r.hostHTTPTLSConfig {
 		// TODO check if we ignore the error
-		_ = r.AddRouteTLS("HostSNI(`"+sniHost+"`)", handler, tlsConf)
+		err := r.AddRouteTLS("HostSNI(`"+sniHost+"`)", handler, tlsConf)
+		if err != nil {
+			log.WithoutContext().Errorf("Error while adding route for host: %w", err)
+		}
 	}
 
 	r.httpsForwarder = &TLSHandler{

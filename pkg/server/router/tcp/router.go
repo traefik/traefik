@@ -109,7 +109,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	}
 
 	if len(configsHTTP) > 0 {
-		router.AddRouteHTTPTLS("*", defaultTLSConf)
+		router.AddHTTPTLSConfig("*", defaultTLSConf)
 	}
 
 	// Keyed by domain, then by options reference.
@@ -214,7 +214,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 			logger.Debugf("Adding route for %s with TLS options %s", hostSNI, optionsName)
 
-			router.AddRouteHTTPTLS(hostSNI, config)
+			router.AddHTTPTLSConfig(hostSNI, config)
 		} else {
 			routers := make([]string, 0, len(tlsConfigs))
 			for _, v := range tlsConfigs {
@@ -224,7 +224,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 			logger.Warnf("Found different TLS options for routers on the same host %v, so using the default TLS options instead for these routers: %#v", hostSNI, routers)
 
-			router.AddRouteHTTPTLS(hostSNI, defaultTLSConf)
+			router.AddHTTPTLSConfig(hostSNI, defaultTLSConf)
 		}
 	}
 
