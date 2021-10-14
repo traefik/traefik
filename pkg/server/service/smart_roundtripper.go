@@ -2,17 +2,24 @@ package service
 
 import (
 	"net/http"
+	"time"
 
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"golang.org/x/net/http/httpguts"
 	"golang.org/x/net/http2"
 )
 
-func newSmartRoundTripper(transport *http.Transport) (http.RoundTripper, error) {
+func newSmartRoundTripper(transport *http.Transport, forwardingTimeouts *dynamic.ForwardingTimeouts) (http.RoundTripper, error) {
 	transportHTTP1 := transport.Clone()
 
-	err := http2.ConfigureTransport(transport)
+	t, err := http2.ConfigureTransports(transport)
 	if err != nil {
 		return nil, err
+	}
+
+	if forwardingTimeouts != nil {
+		t.ReadIdleTimeout = time.Duration(forwardingTimeouts.ReadIdleTimeout)
+		t.PingTimeout = time.Duration(forwardingTimeouts.PingTimeout)
 	}
 
 	return &smartRoundTripper{
