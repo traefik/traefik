@@ -39,8 +39,6 @@ require (
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
 	github.com/instana/go-sensor v1.31.1
 	github.com/klauspost/compress v1.13.0
-	github.com/libkermit/docker v0.0.0-20171122101128-e6674d32b807
-	github.com/libkermit/docker-check v0.0.0-20171122104347-1113af38e591
 	github.com/lucas-clemente/quic-go v0.23.0
 	github.com/mailgun/ttlmap v0.0.0-20170619185759-c1c17f74874f
 	github.com/miekg/dns v1.1.43

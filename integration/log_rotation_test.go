@@ -5,12 +5,14 @@ package integration
 
 import (
 	"bufio"
+	"context"
 	"net/http"
 	"os"
 	"strings"
 	"syscall"
 	"time"
 
+	"github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
@@ -21,9 +23,8 @@ type LogRotationSuite struct{ BaseSuite }
 
 func (s *LogRotationSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "access_log")
-	s.composeProject.Start(c)
-
-	s.composeProject.Container(c, "server1")
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 }
 
 func (s *LogRotationSuite) TestAccessLogRotation(c *check.C) {

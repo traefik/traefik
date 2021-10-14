@@ -13,7 +13,7 @@ import (
 	"text/template"
 	"time"
 
-	composeCli "github.com/compose-spec/compose-go/cli"
+	"github.com/compose-spec/compose-go/cli"
 	"github.com/compose-spec/compose-go/types"
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/compose/v2/pkg/api"
@@ -100,16 +100,6 @@ func (s *BaseSuite) TearDownSuite(c *check.C) {
 	}
 }
 
-func (s *BaseSuite) Container(c *check.C, services ...string) {
-	cs, err := s.dockerService.Ps(context.Background(), s.composeProject.Name, api.PsOptions{Services: services})
-	c.Assert(err, check.IsNil,
-		check.Commentf("error while getting the container for services '%v'", services))
-
-	for _, summary := range cs {
-		c.Assert(summary.State, checker.Contains, "running")
-	}
-}
-
 func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	projectName := "integration-test-" + name
 	composeFile := "resources/compose/" + name + ".yml"
@@ -129,10 +119,10 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	c.Assert(err, checker.IsNil)
 	s.dockerService = compose.NewComposeService(composeClient, configfile.New(composeFile))
 
-	ops, err := composeCli.NewProjectOptions([]string{composeFile}, composeCli.WithName(projectName))
+	ops, err := cli.NewProjectOptions([]string{composeFile}, cli.WithName(projectName))
 	c.Assert(err, checker.IsNil)
 
-	s.composeProject, err = composeCli.ProjectFromOptions(ops)
+	s.composeProject, err = cli.ProjectFromOptions(ops)
 	c.Assert(err, checker.IsNil)
 }
 

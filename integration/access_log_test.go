@@ -40,8 +40,6 @@ func (s *AccessLogSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "access_log")
 	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
 	c.Assert(err, checker.IsNil)
-
-	s.Container(c, "server0", "server1", "server2", "server3")
 }
 
 func (s *AccessLogSuite) TearDownTest(c *check.C) {

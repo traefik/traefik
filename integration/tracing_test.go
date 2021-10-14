@@ -28,13 +28,13 @@ func (s *TracingSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "tracing")
 	s.composeProject.Start(c, "whoami")
 
-	s.WhoAmiIP = s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
+	s.WhoAmiIP = "whoami"
 	s.WhoAmiPort = 80
 }
 
 func (s *TracingSuite) startZipkin(c *check.C) {
 	s.composeProject.Start(c, "zipkin")
-	s.IP = s.composeProject.Container(c, "zipkin").NetworkSettings.IPAddress
+	s.IP = "zipkin"
 
 	// Wait for Zipkin to turn ready.
 	err := try.GetRequest("http://"+s.IP+":9411/api/v2/services", 20*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -147,7 +147,7 @@ func (s *TracingSuite) TestZipkinAuth(c *check.C) {
 
 func (s *TracingSuite) startJaeger(c *check.C) {
 	s.composeProject.Start(c, "jaeger")
-	s.IP = s.composeProject.Container(c, "jaeger").NetworkSettings.IPAddress
+	s.IP = "jaeger"
 
 	// Wait for Jaeger to turn ready.
 	err := try.GetRequest("http://"+s.IP+":16686/api/services", 20*time.Second, try.StatusCodeIs(http.StatusOK))

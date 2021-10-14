@@ -19,7 +19,7 @@ func (s *RetrySuite) SetUpSuite(c *check.C) {
 }
 
 func (s *RetrySuite) TestRetry(c *check.C) {
-	whoamiEndpoint := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
+	whoamiEndpoint := "whoami"
 	file := s.adaptFile(c, "fixtures/retry/simple.toml", struct {
 		WhoamiEndpoint string
 	}{whoamiEndpoint})
@@ -44,7 +44,7 @@ func (s *RetrySuite) TestRetry(c *check.C) {
 }
 
 func (s *RetrySuite) TestRetryBackoff(c *check.C) {
-	whoamiEndpoint := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
+	whoamiEndpoint := "whoami"
 	file := s.adaptFile(c, "fixtures/retry/backoff.toml", struct {
 		WhoamiEndpoint string
 	}{whoamiEndpoint})
@@ -72,7 +72,7 @@ func (s *RetrySuite) TestRetryBackoff(c *check.C) {
 }
 
 func (s *RetrySuite) TestRetryWebsocket(c *check.C) {
-	whoamiEndpoint := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
+	whoamiEndpoint := "whoami"
 	file := s.adaptFile(c, "fixtures/retry/simple.toml", struct {
 		WhoamiEndpoint string
 	}{whoamiEndpoint})

@@ -2,12 +2,14 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
@@ -24,12 +26,13 @@ type HealthCheckSuite struct {
 
 func (s *HealthCheckSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "healthcheck")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
-	s.whoami1IP = s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
-	s.whoami2IP = s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
-	s.whoami3IP = s.composeProject.Container(c, "whoami3").NetworkSettings.IPAddress
-	s.whoami4IP = s.composeProject.Container(c, "whoami4").NetworkSettings.IPAddress
+	s.whoami1IP = "whoami1"
+	s.whoami2IP = "whoami2"
+	s.whoami3IP = "whoami3"
+	s.whoami4IP = "whoami4"
 }
 
 func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
