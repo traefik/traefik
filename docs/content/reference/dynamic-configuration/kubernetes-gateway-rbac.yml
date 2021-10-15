@@ -22,7 +22,7 @@ rules:
       - list
       - watch
   - apiGroups:
-      - networking.x-k8s.io
+      - gateway.networking.k8s.io
     resources:
       - gatewayclasses
       - gateways
@@ -34,7 +34,7 @@ rules:
       - list
       - watch
   - apiGroups:
-      - networking.x-k8s.io
+      - gateway.networking.k8s.io
     resources:
       - gatewayclasses/status
       - gateways/status
@@ -45,11 +45,10 @@ rules:
       - update
 
 ---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: gateway-controller
-
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
