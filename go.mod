@@ -85,19 +85,19 @@ require (
 	golang.org/x/mod v0.4.2
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
 	golang.org/x/sys v0.0.0-20210817190340-bfb29a6856f2 // indirect
-	golang.org/x/time v0.0.0-20210611083556-38a9dc6acbc6
-	golang.org/x/tools v0.1.2
+	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
+	golang.org/x/tools v0.1.5
 	google.golang.org/grpc v1.38.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.19.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	k8s.io/api v0.21.0
-	k8s.io/apiextensions-apiserver v0.20.2
-	k8s.io/apimachinery v0.21.0
-	k8s.io/client-go v0.21.0
-	k8s.io/utils v0.0.0-20210709001253-0e1f9d693477
+	k8s.io/api v0.22.1
+	k8s.io/apiextensions-apiserver v0.21.3
+	k8s.io/apimachinery v0.22.1
+	k8s.io/client-go v0.22.1
+	k8s.io/utils v0.0.0-20210820185131-d34e5cb4466e
 	mvdan.cc/xurls/v2 v2.1.0
-	sigs.k8s.io/gateway-api v0.3.0
+	sigs.k8s.io/gateway-api v0.4.0
 )
 
 // Containous forks
