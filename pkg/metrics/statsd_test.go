@@ -23,7 +23,7 @@ func TestStatsD(t *testing.T) {
 
 	statsdRegistry := RegisterStatsd(context.Background(), &types.Statsd{Address: ":18125", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddRoutersLabels: true, AddServicesLabels: true})
 
-	testRegistry(t, "", statsdRegistry)
+	testRegistry(t, defaultMetricsPrefix, statsdRegistry)
 }
 
 func TestStatsDWithPrefix(t *testing.T) {
@@ -45,10 +45,6 @@ func testRegistry(t *testing.T, metricsPrefix string, registry Registry) {
 
 	if !registry.IsEpEnabled() || !registry.IsRouterEnabled() || !registry.IsSvcEnabled() {
 		t.Errorf("Statsd registry should return true for IsEnabled(), IsRouterEnabled() and IsSvcEnabled()")
-	}
-
-	if metricsPrefix == "" {
-		metricsPrefix = "traefik"
 	}
 
 	expected := []string{
