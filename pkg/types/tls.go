@@ -10,6 +10,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 )
 
+// +k8s:deepcopy-gen=true
+
 // ClientTLS holds TLS specific configurations as client
 // CA, Cert and Key can be either path or file contents.
 type ClientTLS struct {

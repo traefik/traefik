@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 func TestDecodeConfiguration(t *testing.T) {
@@ -501,7 +502,7 @@ func TestDecodeConfiguration(t *testing.T) {
 				"Middleware7": {
 					ForwardAuth: &dynamic.ForwardAuth{
 						Address: "foobar",
-						TLS: &dynamic.ClientTLS{
+						TLS: &types.ClientTLS{
 							CA:                 "foobar",
 							CAOptional:         true,
 							Cert:               "foobar",
@@ -986,7 +987,7 @@ func TestEncodeConfiguration(t *testing.T) {
 				"Middleware7": {
 					ForwardAuth: &dynamic.ForwardAuth{
 						Address: "foobar",
-						TLS: &dynamic.ClientTLS{
+						TLS: &types.ClientTLS{
 							CA:                 "foobar",
 							CAOptional:         true,
 							Cert:               "foobar",
