@@ -108,9 +108,9 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		log.FromContext(ctx).Errorf("Error during the build of the default TLS configuration: %v", err)
 	}
 
-	if len(configsHTTP) > 0 {
-		router.AddHTTPTLSConfig("*", defaultTLSConf)
-	}
+	//if len(configsHTTP) > 0 {
+	//	router.AddHTTPTLSConfig("*", defaultTLSConf)
+	//}
 
 	// Keyed by domain, then by options reference.
 	tlsOptionsForHostSNI := map[string]map[string]nameAndConfig{}

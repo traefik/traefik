@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/traefik/traefik/v2/pkg/log"
 )
 
@@ -146,6 +147,7 @@ func (r *Router) AddHTTPTLSConfig(sniHost string, config *tls.Config) {
 		r.hostHTTPTLSConfig = map[string]*tls.Config{}
 	}
 	r.hostHTTPTLSConfig[sniHost] = config
+	fmt.Printf("Config for host %s: %v\n", sniHost, spew.Sprint(config))
 }
 
 // GetConn creates a connection proxy with a peeked string.
