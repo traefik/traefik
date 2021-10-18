@@ -9,13 +9,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/paerser/types"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	crdfake "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v2/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -3243,7 +3244,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"default-forwardauth": {
 							ForwardAuth: &dynamic.ForwardAuth{
 								Address: "test.com",
-								TLS: &dynamic.ClientTLS{
+								TLS: &types.ClientTLS{
 									CA:   "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
 									Cert: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
 									Key:  "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----",
@@ -3612,17 +3613,17 @@ func TestLoadIngressRoutes(t *testing.T) {
 							MaxIdleConnsPerHost: 42,
 							DisableHTTP2:        true,
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:           types.Duration(42 * time.Second),
-								ResponseHeaderTimeout: types.Duration(42 * time.Second),
-								IdleConnTimeout:       types.Duration(42 * time.Millisecond),
+								DialTimeout:           ptypes.Duration(42 * time.Second),
+								ResponseHeaderTimeout: ptypes.Duration(42 * time.Second),
+								IdleConnTimeout:       ptypes.Duration(42 * time.Millisecond),
 							},
 							PeerCertURI: "foo://bar",
 						},
 						"default-test": {
 							ServerName: "test",
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:     types.Duration(30 * time.Second),
-								IdleConnTimeout: types.Duration(90 * time.Second),
+								DialTimeout:     ptypes.Duration(30 * time.Second),
+								IdleConnTimeout: ptypes.Duration(90 * time.Second),
 							},
 						},
 					},
