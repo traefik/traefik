@@ -23,6 +23,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v2/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -481,7 +482,7 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alp
 		return forwardAuth, nil
 	}
 
-	forwardAuth.TLS = &dynamic.ClientTLS{
+	forwardAuth.TLS = &types.ClientTLS{
 		CAOptional:         auth.TLS.CAOptional,
 		InsecureSkipVerify: auth.TLS.InsecureSkipVerify,
 	}

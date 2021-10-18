@@ -273,7 +273,7 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 				},
 				ForwardAuth: &dynamic.ForwardAuth{
 					Address: "127.0.0.1",
-					TLS: &dynamic.ClientTLS{
+					TLS: &types.ClientTLS{
 						CA:                 "ca.pem",
 						CAOptional:         true,
 						Cert:               "cert.pem",
