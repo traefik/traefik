@@ -366,7 +366,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							NotAfter:     true,
 							NotBefore:    true,
 							SerialNumber: true,
-							Subject: &dynamic.TLSCLientCertificateDNInfo{
+							Subject: &dynamic.TLSClientCertificateDNInfo{
 								Country:         true,
 								Province:        true,
 								Locality:        true,
@@ -375,7 +375,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								SerialNumber:    true,
 								DomainComponent: true,
 							},
-							Issuer: &dynamic.TLSCLientCertificateDNInfo{
+							Issuer: &dynamic.TLSClientCertificateDNInfo{
 								Country:         true,
 								Province:        true,
 								Locality:        true,
@@ -844,7 +844,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							NotAfter:     true,
 							NotBefore:    true,
 							SerialNumber: true,
-							Subject: &dynamic.TLSCLientCertificateDNInfo{
+							Subject: &dynamic.TLSClientCertificateDNInfo{
 								Country:         true,
 								Province:        true,
 								Locality:        true,
@@ -853,7 +853,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								SerialNumber:    true,
 								DomainComponent: true,
 							},
-							Issuer: &dynamic.TLSCLientCertificateDNInfo{
+							Issuer: &dynamic.TLSClientCertificateDNInfo{
 								Country:         true,
 								Province:        true,
 								Locality:        true,

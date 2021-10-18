@@ -376,7 +376,7 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 			desc: "No TLS, with subject info",
 			config: dynamic.PassTLSClientCert{
 				Info: &dynamic.TLSClientCertificateInfo{
-					Subject: &dynamic.TLSCLientCertificateDNInfo{
+					Subject: &dynamic.TLSClientCertificateDNInfo{
 						CommonName:   true,
 						Organization: true,
 						Locality:     true,
@@ -392,7 +392,7 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 			config: dynamic.PassTLSClientCert{
 				PEM: false,
 				Info: &dynamic.TLSClientCertificateInfo{
-					Subject: &dynamic.TLSCLientCertificateDNInfo{},
+					Subject: &dynamic.TLSClientCertificateDNInfo{},
 				},
 			},
 		},
@@ -405,7 +405,7 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 					NotBefore:    true,
 					Sans:         true,
 					SerialNumber: true,
-					Subject: &dynamic.TLSCLientCertificateDNInfo{
+					Subject: &dynamic.TLSClientCertificateDNInfo{
 						CommonName:      true,
 						Country:         true,
 						DomainComponent: true,
@@ -414,7 +414,7 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 						Province:        true,
 						SerialNumber:    true,
 					},
-					Issuer: &dynamic.TLSCLientCertificateDNInfo{
+					Issuer: &dynamic.TLSClientCertificateDNInfo{
 						CommonName:      true,
 						Country:         true,
 						DomainComponent: true,
@@ -434,10 +434,10 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 				Info: &dynamic.TLSClientCertificateInfo{
 					NotAfter: true,
 					Sans:     true,
-					Subject: &dynamic.TLSCLientCertificateDNInfo{
+					Subject: &dynamic.TLSClientCertificateDNInfo{
 						Organization: true,
 					},
-					Issuer: &dynamic.TLSCLientCertificateDNInfo{
+					Issuer: &dynamic.TLSClientCertificateDNInfo{
 						Country: true,
 					},
 				},
@@ -453,7 +453,7 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 					NotBefore:    true,
 					Sans:         true,
 					SerialNumber: true,
-					Subject: &dynamic.TLSCLientCertificateDNInfo{
+					Subject: &dynamic.TLSClientCertificateDNInfo{
 						Country:         true,
 						Province:        true,
 						Locality:        true,
@@ -462,7 +462,7 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 						SerialNumber:    true,
 						DomainComponent: true,
 					},
-					Issuer: &dynamic.TLSCLientCertificateDNInfo{
+					Issuer: &dynamic.TLSClientCertificateDNInfo{
 						Country:         true,
 						Province:        true,
 						Locality:        true,
@@ -484,7 +484,7 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 					NotBefore:    true,
 					Sans:         true,
 					SerialNumber: true,
-					Subject: &dynamic.TLSCLientCertificateDNInfo{
+					Subject: &dynamic.TLSClientCertificateDNInfo{
 						Country:         true,
 						Province:        true,
 						Locality:        true,
@@ -493,7 +493,7 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 						SerialNumber:    true,
 						DomainComponent: true,
 					},
-					Issuer: &dynamic.TLSCLientCertificateDNInfo{
+					Issuer: &dynamic.TLSClientCertificateDNInfo{
 						Country:         true,
 						Province:        true,
 						Locality:        true,
