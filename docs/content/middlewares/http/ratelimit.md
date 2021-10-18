@@ -250,7 +250,7 @@ http:
 ### `sourceCriterion`
 
 The `sourceCriterion` option defines what criterion is used to group requests as originating from a common source.
-The precedence order is `ipStrategy`, then `requestHeaderName`, then `requestHost`.
+The precedence could be `ipStrategy`, `requestHeaderName` or `requestHost` but an error will returns if more than one source criterion is provided..
 If none are set, the default is to use the request's remote address field (as an `ipStrategy`).
 
 #### `sourceCriterion.ipStrategy`
