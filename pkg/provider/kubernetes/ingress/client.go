@@ -15,7 +15,6 @@ import (
 	traefikversion "github.com/traefik/traefik/v2/pkg/version"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
-	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	kubeerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -173,7 +172,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		if supportsNetworkingV1Ingress(serverVersion) {
 			factoryIngress.Networking().V1().Ingresses().Informer().AddEventHandler(eventHandler)
 		} else {
-			factoryIngress.Networking().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
+			factoryIngress.Networking().v1().Ingresses().Informer().AddEventHandler(eventHandler)
 		}
 
 		c.factoriesIngress[ns] = factoryIngress
@@ -220,7 +219,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		if supportsNetworkingV1Ingress(serverVersion) {
 			c.clusterFactory.Networking().V1().IngressClasses().Informer().AddEventHandler(eventHandler)
 		} else {
-			c.clusterFactory.Networking().V1beta1().IngressClasses().Informer().AddEventHandler(eventHandler)
+			c.clusterFactory.Networking().v1().IngressClasses().Informer().AddEventHandler(eventHandler)
 		}
 
 		c.clusterFactory.Start(stopCh)
@@ -255,7 +254,7 @@ func (c *clientWrapper) GetIngresses() []*networkingv1.Ingress {
 		}
 
 		// networking beta
-		list, err := factory.Networking().V1beta1().Ingresses().Lister().List(labels.Everything())
+		list, err := factory.Networking().v1().Ingresses().Lister().List(labels.Everything())
 		if err != nil {
 			log.WithoutContext().Errorf("Failed to list ingresses in namespace %s: %v", ns, err)
 			continue
@@ -264,11 +263,11 @@ func (c *clientWrapper) GetIngresses() []*networkingv1.Ingress {
 		for _, ing := range list {
 			n, err := toNetworkingV1(ing)
 			if err != nil {
-				log.WithoutContext().Errorf("Failed to convert ingress %s from networking/v1beta1 to networking/v1: %v", ns, err)
+				log.WithoutContext().Errorf("Failed to convert ingress %s from networking/v1 to networking/v1: %v", ns, err)
 				continue
 			}
 
-			addServiceFromV1Beta1(n, *ing)
+			addServiceFromv1(n, *ing)
 
 			results = append(results, n)
 		}
@@ -306,7 +305,7 @@ func toNetworkingV1IngressClass(ing marshaler) (*networkingv1.IngressClass, erro
 	return ni, nil
 }
 
-func addServiceFromV1Beta1(ing *networkingv1.Ingress, old networkingv1beta1.Ingress) {
+func addServiceFromv1(ing *networkingv1.Ingress, old networkingv1.Ingress) {
 	if old.Spec.Backend != nil {
 		port := networkingv1.ServiceBackendPort{}
 		if old.Spec.Backend.ServicePort.Type == intstr.Int {
@@ -389,7 +388,7 @@ func (c *clientWrapper) UpdateIngressStatus(src *networkingv1.Ingress, ingStatus
 }
 
 func (c *clientWrapper) updateIngressStatusOld(src *networkingv1.Ingress, ingStatus []corev1.LoadBalancerIngress) error {
-	ing, err := c.factoriesIngress[c.lookupNamespace(src.Namespace)].Networking().V1beta1().Ingresses().Lister().Ingresses(src.Namespace).Get(src.Name)
+	ing, err := c.factoriesIngress[c.lookupNamespace(src.Namespace)].Networking().v1().Ingresses().Lister().Ingresses(src.Namespace).Get(src.Name)
 	if err != nil {
 		return fmt.Errorf("failed to get ingress %s/%s: %w", src.Namespace, src.Name, err)
 	}
@@ -402,12 +401,12 @@ func (c *clientWrapper) updateIngressStatusOld(src *networkingv1.Ingress, ingSta
 	}
 
 	ingCopy := ing.DeepCopy()
-	ingCopy.Status = networkingv1beta1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: ingStatus}}
+	ingCopy.Status = networkingv1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: ingStatus}}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
 
-	_, err = c.clientset.NetworkingV1beta1().Ingresses(ingCopy.Namespace).UpdateStatus(ctx, ingCopy, metav1.UpdateOptions{})
+	_, err = c.clientset.Networkingv1().Ingresses(ingCopy.Namespace).UpdateStatus(ctx, ingCopy, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to update ingress status %s/%s: %w", src.Namespace, src.Name, err)
 	}
@@ -475,7 +474,7 @@ func (c *clientWrapper) GetIngressClasses() ([]*networkingv1.IngressClass, error
 
 	var ics []*networkingv1.IngressClass
 	if !supportsNetworkingV1Ingress(c.serverVersion) {
-		ingressClasses, err := c.clusterFactory.Networking().V1beta1().IngressClasses().Lister().List(labels.Everything())
+		ingressClasses, err := c.clusterFactory.Networking().v1().IngressClasses().Lister().List(labels.Everything())
 		if err != nil {
 			return nil, err
 		}
@@ -484,7 +483,7 @@ func (c *clientWrapper) GetIngressClasses() ([]*networkingv1.IngressClass, error
 			if ic.Spec.Controller == traefikDefaultIngressClassController {
 				icN, err := toNetworkingV1IngressClass(ic)
 				if err != nil {
-					log.WithoutContext().Errorf("Failed to convert ingress class %s from networking/v1beta1 to networking/v1: %v", ic.Name, err)
+					log.WithoutContext().Errorf("Failed to convert ingress class %s from networking/v1 to networking/v1: %v", ic.Name, err)
 					continue
 				}
 				ics = append(ics, icN)

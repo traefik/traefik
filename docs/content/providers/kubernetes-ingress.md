@@ -37,7 +37,7 @@ which in turn creates the resulting routers, services, handlers, etc.
 
 ```yaml tab="Ingress"
 kind: Ingress
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 metadata:
   name: "foo"
   namespace: production
@@ -263,7 +263,7 @@ Otherwise, Ingresses missing the annotation, having an empty value, or the value
     Please see [this article](https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/) for more information or the example below.
 
     ```yaml tab="IngressClass"
-    apiVersion: networking.k8s.io/v1beta1
+    apiVersion: networking.k8s.io/v1
     kind: IngressClass
     metadata:
       name: traefik-lb
@@ -272,7 +272,7 @@ Otherwise, Ingresses missing the annotation, having an empty value, or the value
     ```
 
     ```yaml tab="Ingress"
-    apiVersion: "networking.k8s.io/v1beta1"
+    apiVersion: "networking.k8s.io/v1"
     kind: "Ingress"
     metadata:
       name: "example-ingress"

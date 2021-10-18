@@ -9,8 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
-	"k8s.io/api/networking/v1beta1"
+	v1 "k8s.io/api/networking/v1"
 	kubeerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -291,7 +290,7 @@ func TestClientIgnoresEmptyEndpointUpdates(t *testing.T) {
 }
 
 func TestClientUsesCorrectServerVersion(t *testing.T) {
-	ingressV1Beta := &v1beta1.Ingress{
+	ingressV1Beta := &v1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "ingress-v1beta",
@@ -321,7 +320,7 @@ func TestClientUsesCorrectServerVersion(t *testing.T) {
 
 	select {
 	case event := <-eventCh:
-		ingress, ok := event.(*v1beta1.Ingress)
+		ingress, ok := event.(*v1.Ingress)
 		require.True(t, ok)
 
 		assert.Equal(t, "ingress-v1beta", ingress.Name)

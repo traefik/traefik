@@ -8,7 +8,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
-	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 )
 
 var _ Client = (*clientMock)(nil)
@@ -50,16 +49,16 @@ func newClientMock(serverVersion string, paths ...string) clientMock {
 				c.secrets = append(c.secrets, o)
 			case *corev1.Endpoints:
 				c.endpoints = append(c.endpoints, o)
-			case *networkingv1beta1.Ingress:
+			case *networkingv1.Ingress:
 				ing, err := toNetworkingV1(o)
 				if err != nil {
 					panic(err)
 				}
-				addServiceFromV1Beta1(ing, *o)
+				addServiceFromv1(ing, *o)
 				c.ingresses = append(c.ingresses, ing)
 			case *networkingv1.Ingress:
 				c.ingresses = append(c.ingresses, o)
-			case *networkingv1beta1.IngressClass:
+			case *networkingv1.IngressClass:
 				ic, err := toNetworkingV1IngressClass(o)
 				if err != nil {
 					panic(err)
