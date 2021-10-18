@@ -50,7 +50,6 @@ spec:
           matchLabels:
             app: label-tls-app-1
 
-
 ---
 kind: TCPRoute
 apiVersion: networking.x-k8s.io/v1alpha1

@@ -27,7 +27,6 @@ require (
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
 	github.com/donovanhide/eventsource v0.0.0-20170630084216-b8f31a59085e // indirect
 	github.com/eapache/channels v1.1.0
-	github.com/elazarl/go-bindata-assetfs v1.0.0
 	github.com/fatih/structs v1.1.0
 	github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2
 	github.com/go-acme/lego/v4 v4.5.0
@@ -43,7 +42,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.2.1
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
-	github.com/instana/go-sensor v1.5.1
+	github.com/instana/go-sensor v1.31.1
 	github.com/klauspost/compress v1.13.0
 	github.com/libkermit/compose v0.0.0-20171122111507-c04e39c026ad
 	github.com/libkermit/docker v0.0.0-20171122101128-e6674d32b807

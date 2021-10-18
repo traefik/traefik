@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
@@ -315,16 +314,17 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 						NotAfter:  true,
 						NotBefore: true,
 						Sans:      true,
-						Subject: &dynamic.TLSCLientCertificateDNInfo{
-							Country:         true,
-							Province:        true,
-							Locality:        true,
-							Organization:    true,
-							CommonName:      true,
-							SerialNumber:    true,
-							DomainComponent: true,
+						Subject: &dynamic.TLSCLientCertificateSubjectDNInfo{
+							Country:            true,
+							Province:           true,
+							Locality:           true,
+							Organization:       true,
+							OrganizationalUnit: true,
+							CommonName:         true,
+							SerialNumber:       true,
+							DomainComponent:    true,
 						},
-						Issuer: &dynamic.TLSCLientCertificateDNInfo{
+						Issuer: &dynamic.TLSCLientCertificateIssuerDNInfo{
 							Country:         true,
 							Province:        true,
 							Locality:        true,
@@ -777,18 +777,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Insecure:  true,
 		Dashboard: true,
 		Debug:     true,
-		DashboardAssets: &assetfs.AssetFS{
-			Asset: func(path string) ([]byte, error) {
-				return nil, nil
-			},
-			AssetDir: func(path string) ([]string, error) {
-				return nil, nil
-			},
-			AssetInfo: func(path string) (os.FileInfo, error) {
-				return nil, nil
-			},
-			Prefix: "fii",
-		},
 	}
 
 	config.Metrics = &types.Metrics{
