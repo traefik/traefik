@@ -478,7 +478,7 @@ func Test_buildConfiguration(t *testing.T) {
 							NotAfter:  true,
 							NotBefore: true,
 							Sans:      true,
-							Subject: &dynamic.TLSCLientCertificateDNInfo{
+							Subject: &dynamic.TLSClientCertificateDNInfo{
 								Country:         true,
 								Province:        true,
 								Locality:        true,
@@ -487,7 +487,7 @@ func Test_buildConfiguration(t *testing.T) {
 								SerialNumber:    true,
 								DomainComponent: true,
 							},
-							Issuer: &dynamic.TLSCLientCertificateDNInfo{
+							Issuer: &dynamic.TLSClientCertificateDNInfo{
 								Country:         true,
 								Province:        true,
 								Locality:        true,

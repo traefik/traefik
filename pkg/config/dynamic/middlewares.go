@@ -402,16 +402,16 @@ type TLSClientCertificateInfo struct {
 	NotAfter     bool                        `json:"notAfter,omitempty" toml:"notAfter,omitempty" yaml:"notAfter,omitempty" export:"true"`
 	NotBefore    bool                        `json:"notBefore,omitempty" toml:"notBefore,omitempty" yaml:"notBefore,omitempty" export:"true"`
 	Sans         bool                        `json:"sans,omitempty" toml:"sans,omitempty" yaml:"sans,omitempty" export:"true"`
-	Subject      *TLSCLientCertificateDNInfo `json:"subject,omitempty" toml:"subject,omitempty" yaml:"subject,omitempty" export:"true"`
-	Issuer       *TLSCLientCertificateDNInfo `json:"issuer,omitempty" toml:"issuer,omitempty" yaml:"issuer,omitempty" export:"true"`
+	Subject      *TLSClientCertificateDNInfo `json:"subject,omitempty" toml:"subject,omitempty" yaml:"subject,omitempty" export:"true"`
+	Issuer       *TLSClientCertificateDNInfo `json:"issuer,omitempty" toml:"issuer,omitempty" yaml:"issuer,omitempty" export:"true"`
 	SerialNumber bool                        `json:"serialNumber,omitempty" toml:"serialNumber,omitempty" yaml:"serialNumber,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// TLSCLientCertificateDNInfo holds the client TLS certificate distinguished name info configuration.
+// TLSClientCertificateDNInfo holds the client TLS certificate distinguished name info configuration.
 // cf https://tools.ietf.org/html/rfc3739
-type TLSCLientCertificateDNInfo struct {
+type TLSClientCertificateDNInfo struct {
 	Country         bool `json:"country,omitempty" toml:"country,omitempty" yaml:"country,omitempty" export:"true"`
 	Province        bool `json:"province,omitempty" toml:"province,omitempty" yaml:"province,omitempty" export:"true"`
 	Locality        bool `json:"locality,omitempty" toml:"locality,omitempty" yaml:"locality,omitempty" export:"true"`
