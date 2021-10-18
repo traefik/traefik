@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -76,7 +77,7 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 		conn.Close()
 		return
 	}
-
+	println("TITI")
 	// Remove read/write deadline and delegate this to underlying tcp server (for now only handled by HTTP Server)
 	err = conn.SetReadDeadline(time.Time{})
 	if err != nil {
@@ -96,6 +97,8 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 	}
 
 	if !tls {
+		println("NO TLS")
+		// TODO priority (between ClientIP and HostSNI(`*`) for instance)
 		handler := r.tcpMuxer.Match(connData)
 		switch {
 		case handler != nil:
@@ -110,11 +113,13 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 
 	target := r.tcpMuxerTLS.Match(connData)
 	if target != nil {
+		fmt.Printf("Request matching one route of the tcp tls muxer: %s", connData.serverName)
 		target.ServeTCP(r.GetConn(conn, peeked))
 		return
 	}
 
 	if r.httpsForwarder != nil {
+		fmt.Printf("Request passed to the httpsForwarder")
 		r.httpsForwarder.ServeTCP(r.GetConn(conn, peeked))
 		return
 	}
@@ -122,12 +127,12 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 	conn.Close()
 }
 
-// AddRoute defines a handler for the give rule.
+// AddRoute defines a handler for the given rule.
 func (r *Router) AddRoute(rule string, target Handler) error {
 	return r.tcpMuxer.AddRoute(rule, target)
 }
 
-// AddRouteTLS defines a handler for a given sniHost and sets the matching tlsConfig.
+// AddRouteTLS defines a handler for a given rule and sets the matching tlsConfig.
 func (r *Router) AddRouteTLS(rule string, target Handler, config *tls.Config) error {
 	return r.tcpMuxerTLS.AddRoute(rule, &TLSHandler{
 		Next:   target,

@@ -316,7 +316,7 @@ func hostSNI(route *route, hosts ...string) error {
 	for i, host := range hosts {
 		// Special case to allow global wildcard
 		if host == "*" {
-			hosts[i] = strings.ToLower(host)
+			hosts[i] = host
 			continue
 		}
 
