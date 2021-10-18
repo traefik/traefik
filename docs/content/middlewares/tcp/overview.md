@@ -21,7 +21,7 @@ whoami:
 
 ```yaml tab="Kubernetes IngressRoute"
 # As a Kubernetes Traefik IngressRoute
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   name: middlewaretcps.traefik.containo.us

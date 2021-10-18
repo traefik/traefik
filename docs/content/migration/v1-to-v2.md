@@ -40,7 +40,7 @@ Then any router can refer to an instance of the wanted middleware.
     ```
 
     ```yaml tab="K8s Ingress"
-    apiVersion: networking.k8s.io/v1beta1
+    apiVersion: networking.k8s.io/v1
     kind: Ingress
     metadata:
       name: traefik
@@ -557,7 +557,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     ```
 
     ```yaml tab="Kubernetes Ingress"
-    apiVersion: networking.k8s.io/v1beta1
+    apiVersion: networking.k8s.io/v1
     kind: Ingress
     metadata:
       name: traefik
