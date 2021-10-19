@@ -15,8 +15,8 @@ which in turn will create the resulting routers, services, handlers, etc.
 
     ```yaml tab="RBAC"
     ---
-    kind: ClusterRole
     apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
     metadata:
       name: traefik-ingress-controller
     rules:
@@ -48,8 +48,8 @@ which in turn will create the resulting routers, services, handlers, etc.
           - update
 
     ---
-    kind: ClusterRoleBinding
     apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
     metadata:
       name: traefik-ingress-controller
     roleRef:
@@ -63,8 +63,8 @@ which in turn will create the resulting routers, services, handlers, etc.
     ```
 
     ```yaml tab="Ingress"
-    kind: Ingress
     apiVersion: networking.k8s.io/v1
+    kind: Ingress
     metadata:
       name: myingress
       annotations:
@@ -86,8 +86,8 @@ which in turn will create the resulting routers, services, handlers, etc.
     ```
 
     ```yaml tab="Ingress Kubernetes v1.19+"
-    kind: Ingress
     apiVersion: networking.k8s.io/v1
+    kind: Ingress
     metadata:
       name: myingress
       annotations:
@@ -121,8 +121,8 @@ which in turn will create the resulting routers, services, handlers, etc.
       name: traefik-ingress-controller
 
     ---
-    kind: Deployment
     apiVersion: apps/v1
+    kind: Deployment
     metadata:
       name: traefik
       labels:
@@ -166,8 +166,8 @@ which in turn will create the resulting routers, services, handlers, etc.
     ```
 
     ```yaml tab="Whoami"
-    kind: Deployment
     apiVersion: apps/v1
+    kind: Deployment
     metadata:
       name: whoami
       labels:
@@ -401,8 +401,8 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
 
     ```yaml tab="RBAC"
     ---
-    kind: ClusterRole
     apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
     metadata:
       name: traefik-ingress-controller
     rules:
@@ -434,8 +434,8 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
           - update
 
     ---
-    kind: ClusterRoleBinding
     apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
     metadata:
       name: traefik-ingress-controller
     roleRef:
@@ -449,8 +449,8 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
     ```
 
     ```yaml tab="Ingress"
-    kind: Ingress
     apiVersion: networking.k8s.io/v1
+    kind: Ingress
     metadata:
       name: myingress
       annotations:
@@ -472,8 +472,8 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
     ```
 
     ```yaml tab="Ingress Kubernetes v1.19+"
-    kind: Ingress
     apiVersion: networking.k8s.io/v1
+    kind: Ingress
     metadata:
       name: myingress
       annotations:
@@ -507,8 +507,8 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
       name: traefik-ingress-controller
 
     ---
-    kind: Deployment
     apiVersion: apps/v1
+    kind: Deployment
     metadata:
       name: traefik
       labels:
@@ -520,7 +520,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
         matchLabels:
           app: traefik
       template:
-        metadata:
+        metadat"Ingress Kubernetes v1.19+"a:
           labels:
             app: traefik
         spec:
@@ -553,8 +553,8 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
     ```
 
     ```yaml tab="Whoami"
-    kind: Deployment
     apiVersion: apps/v1
+    kind: Deployment
     metadata:
       name: whoami
       labels:
@@ -608,8 +608,8 @@ For more options, please refer to the available [annotations](#on-ingress).
 
     ```yaml tab="RBAC"
     ---
-    kind: ClusterRole
     apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
     metadata:
       name: traefik-ingress-controller
     rules:
@@ -641,8 +641,8 @@ For more options, please refer to the available [annotations](#on-ingress).
           - update
 
     ---
-    kind: ClusterRoleBinding
     apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
     metadata:
       name: traefik-ingress-controller
     roleRef:
@@ -656,8 +656,8 @@ For more options, please refer to the available [annotations](#on-ingress).
     ```
 
     ```yaml tab="Ingress"
-    kind: Ingress
     apiVersion: networking.k8s.io/v1
+    kind: Ingress
     metadata:
       name: myingress
       annotations:
@@ -680,8 +680,8 @@ For more options, please refer to the available [annotations](#on-ingress).
     ```
 
     ```yaml tab="Ingress Kubernetes v1.19+"
-    kind: Ingress
     apiVersion: networking.k8s.io/v1
+    kind: Ingress
     metadata:
       name: myingress
       annotations:
@@ -716,8 +716,8 @@ For more options, please refer to the available [annotations](#on-ingress).
       name: traefik-ingress-controller
 
     ---
-    kind: Deployment
     apiVersion: apps/v1
+    kind: Deployment
     metadata:
       name: traefik
       labels:
@@ -761,8 +761,8 @@ For more options, please refer to the available [annotations](#on-ingress).
     ```
 
     ```yaml tab="Whoami"
-    kind: Deployment
     apiVersion: apps/v1
+    kind: Deployment
     metadata:
       name: whoami
       labels:
@@ -807,8 +807,8 @@ For more options, please refer to the available [annotations](#on-ingress).
 ??? example "Using a secret"
 
     ```yaml tab="Ingress"
-    kind: Ingress
     apiVersion: networking.k8s.io/v1
+    kind: Ingress
     metadata:
       name: foo
       namespace: production
@@ -830,8 +830,8 @@ For more options, please refer to the available [annotations](#on-ingress).
     ```
 
     ```yaml tab="Ingress Kubernetes v1.19+"
-    kind: Ingress
     apiVersion: networking.k8s.io/v1
+    kind: Ingress
     metadata:
       name: foo
       namespace: production
