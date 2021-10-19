@@ -61,41 +61,52 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 		return nil, fmt.Errorf("TLS cert and key must be defined together")
 	}
 
-	var certificates []tls.Certificate
+	if !hasCert || !hasKey {
+		return &tls.Config{
+			RootCAs:            caPool,
+			InsecureSkipVerify: clientTLS.InsecureSkipVerify,
+			ClientAuth:         clientAuth,
+		}, nil
+	}
 
-	if hasCert && hasKey {
-		_, errKeyIsFile := os.Stat(clientTLS.Key)
-		_, errCertIsFile := os.Stat(clientTLS.Cert)
-
-		if errCertIsFile == nil {
-			if errKeyIsFile != nil {
-				return nil, fmt.Errorf("TLS cert is a file, but tls key is not")
-			}
-
-			cert, err := tls.LoadX509KeyPair(clientTLS.Cert, clientTLS.Key)
-			if err != nil {
-				return nil, fmt.Errorf("load TLS keypair from file: %w", err)
-			}
-
-			certificates = append(certificates, cert)
-		} else {
-			if errKeyIsFile == nil {
-				return nil, fmt.Errorf("TLS key is a file, but tls cert is not")
-			}
-
-			cert, err := tls.X509KeyPair([]byte(clientTLS.Cert), []byte(clientTLS.Key))
-			if err != nil {
-				return nil, fmt.Errorf("load TLS keypair from bytes: %w", err)
-			}
-
-			certificates = append(certificates, cert)
-		}
+	cert, err := loadKeyPair(clientTLS.Cert, clientTLS.Key)
+	if err != nil {
+		return nil, err
 	}
 
 	return &tls.Config{
-		Certificates:       certificates,
+		Certificates:       []tls.Certificate{cert},
 		RootCAs:            caPool,
 		InsecureSkipVerify: clientTLS.InsecureSkipVerify,
 		ClientAuth:         clientAuth,
 	}, nil
+}
+
+func loadKeyPair(cert, key string) (tls.Certificate, error) {
+	_, errCertIsFile := os.Stat(cert)
+	_, errKeyIsFile := os.Stat(key)
+
+	if errCertIsFile == nil && errKeyIsFile != nil {
+		return tls.Certificate{}, fmt.Errorf("TLS cert is a file, but tls key is not")
+	}
+
+	if errCertIsFile != nil && errKeyIsFile == nil {
+		return tls.Certificate{}, fmt.Errorf("TLS key is a file, but tls cert is not")
+	}
+
+	if errCertIsFile == nil && errKeyIsFile == nil {
+		keyPair, err := tls.LoadX509KeyPair(cert, key)
+		if err != nil {
+			return tls.Certificate{}, fmt.Errorf("load TLS keypair from file: %w", err)
+		}
+
+		return keyPair, nil
+	}
+
+	keyPair, err := tls.X509KeyPair([]byte(cert), []byte(key))
+	if err != nil {
+		return tls.Certificate{}, fmt.Errorf("load TLS keypair from bytes: %w", err)
+	}
+
+	return keyPair, nil
 }
