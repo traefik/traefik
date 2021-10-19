@@ -15,8 +15,8 @@ which in turn will create the resulting routers, services, handlers, etc.
 
     ```yaml tab="RBAC"
     ---
+    apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
-    apiVersion: rbac.authorization.k8s.io/v1beta1
     metadata:
       name: traefik-ingress-controller
     rules:
@@ -48,8 +48,8 @@ which in turn will create the resulting routers, services, handlers, etc.
           - update
 
     ---
+    apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
-    apiVersion: rbac.authorization.k8s.io/v1beta1
     metadata:
       name: traefik-ingress-controller
     roleRef:
@@ -63,8 +63,8 @@ which in turn will create the resulting routers, services, handlers, etc.
     ```
 
     ```yaml tab="Ingress"
+    apiVersion: networking.k8s.io/v1
     kind: Ingress
-    apiVersion: networking.k8s.io/v1beta1
     metadata:
       name: myingress
       annotations:
@@ -84,15 +84,15 @@ which in turn will create the resulting routers, services, handlers, etc.
                   serviceName: whoami
                   servicePort: 80
     ```
-    
+
     ```yaml tab="Ingress Kubernetes v1.19+"
-    kind: Ingress
     apiVersion: networking.k8s.io/v1
+    kind: Ingress
     metadata:
       name: myingress
       annotations:
         traefik.ingress.kubernetes.io/router.entrypoints: web
-    
+
     spec:
       rules:
         - host: example.com
@@ -113,7 +113,7 @@ which in turn will create the resulting routers, services, handlers, etc.
                     port:
                       number: 80
     ```
-    
+
     ```yaml tab="Traefik"
     apiVersion: v1
     kind: ServiceAccount
@@ -121,8 +121,8 @@ which in turn will create the resulting routers, services, handlers, etc.
       name: traefik-ingress-controller
 
     ---
-    kind: Deployment
     apiVersion: apps/v1
+    kind: Deployment
     metadata:
       name: traefik
       labels:
@@ -166,8 +166,8 @@ which in turn will create the resulting routers, services, handlers, etc.
     ```
 
     ```yaml tab="Whoami"
-    kind: Deployment
     apiVersion: apps/v1
+    kind: Deployment
     metadata:
       name: whoami
       labels:
@@ -237,7 +237,7 @@ which in turn will create the resulting routers, services, handlers, etc.
 
 ??? info "`traefik.ingress.kubernetes.io/router.pathmatcher`"
 
-    Overrides the default router rule type used for a path.  
+    Overrides the default router rule type used for a path.
     Only path-related matcher name can be specified: `Path`, `PathPrefix`.
 
     Default `PathPrefix`
@@ -401,8 +401,8 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
 
     ```yaml tab="RBAC"
     ---
+    apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
-    apiVersion: rbac.authorization.k8s.io/v1beta1
     metadata:
       name: traefik-ingress-controller
     rules:
@@ -434,8 +434,8 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
           - update
 
     ---
+    apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
-    apiVersion: rbac.authorization.k8s.io/v1beta1
     metadata:
       name: traefik-ingress-controller
     roleRef:
@@ -449,8 +449,8 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
     ```
 
     ```yaml tab="Ingress"
+    apiVersion: networking.k8s.io/v1
     kind: Ingress
-    apiVersion: networking.k8s.io/v1beta1
     metadata:
       name: myingress
       annotations:
@@ -470,15 +470,15 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
                   serviceName: whoami
                   servicePort: 80
     ```
-    
+
     ```yaml tab="Ingress Kubernetes v1.19+"
-    kind: Ingress
     apiVersion: networking.k8s.io/v1
+    kind: Ingress
     metadata:
       name: myingress
       annotations:
         traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    
+
     spec:
       rules:
         - host: example.com
@@ -499,7 +499,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
                     port:
                       number: 80
     ```
-    
+
     ```yaml tab="Traefik"
     apiVersion: v1
     kind: ServiceAccount
@@ -507,8 +507,8 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
       name: traefik-ingress-controller
 
     ---
-    kind: Deployment
     apiVersion: apps/v1
+    kind: Deployment
     metadata:
       name: traefik
       labels:
@@ -520,7 +520,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
         matchLabels:
           app: traefik
       template:
-        metadata:
+        metadat"Ingress Kubernetes v1.19+"a:
           labels:
             app: traefik
         spec:
@@ -553,8 +553,8 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
     ```
 
     ```yaml tab="Whoami"
-    kind: Deployment
     apiVersion: apps/v1
+    kind: Deployment
     metadata:
       name: whoami
       labels:
@@ -608,8 +608,8 @@ For more options, please refer to the available [annotations](#on-ingress).
 
     ```yaml tab="RBAC"
     ---
+    apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
-    apiVersion: rbac.authorization.k8s.io/v1beta1
     metadata:
       name: traefik-ingress-controller
     rules:
@@ -641,8 +641,8 @@ For more options, please refer to the available [annotations](#on-ingress).
           - update
 
     ---
+    apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
-    apiVersion: rbac.authorization.k8s.io/v1beta1
     metadata:
       name: traefik-ingress-controller
     roleRef:
@@ -656,8 +656,8 @@ For more options, please refer to the available [annotations](#on-ingress).
     ```
 
     ```yaml tab="Ingress"
+    apiVersion: networking.k8s.io/v1
     kind: Ingress
-    apiVersion: networking.k8s.io/v1beta1
     metadata:
       name: myingress
       annotations:
@@ -678,16 +678,16 @@ For more options, please refer to the available [annotations](#on-ingress).
                   serviceName: whoami
                   servicePort: 80
     ```
-    
+
     ```yaml tab="Ingress Kubernetes v1.19+"
-    kind: Ingress
     apiVersion: networking.k8s.io/v1
+    kind: Ingress
     metadata:
       name: myingress
       annotations:
         traefik.ingress.kubernetes.io/router.entrypoints: websecure
         traefik.ingress.kubernetes.io/router.tls: true
-    
+
     spec:
       rules:
         - host: example.com
@@ -708,7 +708,7 @@ For more options, please refer to the available [annotations](#on-ingress).
                     port:
                       number: 80
     ```
-    
+
     ```yaml tab="Traefik"
     apiVersion: v1
     kind: ServiceAccount
@@ -716,8 +716,8 @@ For more options, please refer to the available [annotations](#on-ingress).
       name: traefik-ingress-controller
 
     ---
-    kind: Deployment
     apiVersion: apps/v1
+    kind: Deployment
     metadata:
       name: traefik
       labels:
@@ -761,8 +761,8 @@ For more options, please refer to the available [annotations](#on-ingress).
     ```
 
     ```yaml tab="Whoami"
-    kind: Deployment
     apiVersion: apps/v1
+    kind: Deployment
     metadata:
       name: whoami
       labels:
@@ -807,8 +807,8 @@ For more options, please refer to the available [annotations](#on-ingress).
 ??? example "Using a secret"
 
     ```yaml tab="Ingress"
+    apiVersion: networking.k8s.io/v1
     kind: Ingress
-    apiVersion: networking.k8s.io/v1beta1
     metadata:
       name: foo
       namespace: production
@@ -830,12 +830,12 @@ For more options, please refer to the available [annotations](#on-ingress).
     ```
 
     ```yaml tab="Ingress Kubernetes v1.19+"
-    kind: Ingress
     apiVersion: networking.k8s.io/v1
+    kind: Ingress
     metadata:
       name: foo
       namespace: production
-    
+
     spec:
       rules:
       - host: example.net
@@ -854,7 +854,7 @@ For more options, please refer to the available [annotations](#on-ingress).
       tls:
       - secretName: supersecret
     ```
-      
+
     ```yaml tab="Secret"
     apiVersion: v1
     kind: Secret
@@ -900,7 +900,7 @@ and will connect via TLS automatically.
 Ingresses can be created that look like the following:
 
 ```yaml tab="Ingress"
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
  name: cheese
