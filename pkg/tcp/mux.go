@@ -92,7 +92,9 @@ func NewMuxer() (*Muxer, error) {
 
 // Match returns the handler of the first route matching the connection metadata.
 func (r Muxer) Match(meta connData) Handler {
+	fmt.Printf("ENTER Match, routes length: %v\n", len(r.routes))
 	for _, route := range r.routes {
+		fmt.Printf("Route %v matches meta %v:%v\n", route, meta, route.match(meta))
 		if route.match(meta) {
 			return route.handler
 		}
@@ -113,12 +115,14 @@ func (r *Muxer) AddRoute(rule string, handler Handler) error {
 		return fmt.Errorf("error while parsing rule %s", rule)
 	}
 
-	route := &route{handler: handler}
-	r.routes = append(r.routes, route)
+	newRoute := r.newRoute()
+	newRoute.handler = handler
+	fmt.Printf("ADD ROUTE LENGTH: %v\n", len(r.routes))
 
-	err = addRuleOnRoute(route, buildTree())
+	err = addRuleOnRoute(newRoute, buildTree())
 	if err != nil {
-		route.buildOnly()
+		fmt.Printf("Error while adding rule on route (build only): %w", err)
+		newRoute.buildOnly()
 		return err
 	}
 

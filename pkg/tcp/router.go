@@ -65,6 +65,7 @@ func (r *Router) GetTLSGetClientInfo() func(info *tls.ClientHelloInfo) (*tls.Con
 
 // ServeTCP forwards the connection to the right TCP/HTTP handler.
 func (r *Router) ServeTCP(conn WriteCloser) {
+	fmt.Printf("SERVE TCP on %s\n", conn.LocalAddr().String())
 	// FIXME -- Check if ProxyProtocol changes the first bytes of the request
 
 	// if !r.tcpMuxer.HasRoutes() && !r.tcpMuxerTLS.HasRoutes() {
@@ -73,12 +74,15 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 	// }
 
 	br := bufio.NewReader(conn)
+	fmt.Printf("NEW READER on %s\n", conn.LocalAddr().String())
 	serverName, tls, peeked, err := clientHelloServerName(br)
-	if err != nil {
+	if err != nil && !errors.Is(err, io.EOF) {
+		fmt.Printf("TCP READER ERROR on %s: %v\n", conn.LocalAddr().String(), err)
 		conn.Close()
 		return
 	}
-	println("TITI")
+	fmt.Printf("PEEKED BYTES %s on %s\n", peeked, conn.LocalAddr().String())
+
 	// Remove read/write deadline and delegate this to underlying tcp server (for now only handled by HTTP Server)
 	err = conn.SetReadDeadline(time.Time{})
 	if err != nil {
@@ -94,17 +98,21 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 	if err != nil {
 		// TODO
 		log.WithoutContext().Errorf("Error while : %v", err)
+		conn.Close()
 		return
 	}
 
 	if !tls {
-		println("NO TLS")
+
+		fmt.Printf("Try to match with routes length:%v\n", len(r.tcpMuxer.routes))
 		// TODO priority (between ClientIP and HostSNI(`*`) for instance)
 		handler := r.tcpMuxer.Match(connData)
 		switch {
 		case handler != nil:
+			fmt.Printf("FOUND HANDLER TCP on %s\n", conn.LocalAddr().String())
 			handler.ServeTCP(r.GetConn(conn, peeked))
 		case r.httpForwarder != nil:
+			fmt.Printf("SERVE HTTP on %s\n", conn.LocalAddr().String())
 			r.httpForwarder.ServeTCP(r.GetConn(conn, peeked))
 		default:
 			conn.Close()
@@ -112,15 +120,13 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 		return
 	}
 
-	target := r.tcpMuxerTLS.Match(connData)
-	if target != nil {
-		fmt.Printf("Request matching one route of the tcp tls muxer: %s", connData.serverName)
-		target.ServeTCP(r.GetConn(conn, peeked))
+	handler := r.tcpMuxerTLS.Match(connData)
+	if handler != nil {
+		handler.ServeTCP(r.GetConn(conn, peeked))
 		return
 	}
 
 	if r.httpsForwarder != nil {
-		fmt.Printf("Request passed to the httpsForwarder")
 		r.httpsForwarder.ServeTCP(r.GetConn(conn, peeked))
 		return
 	}
