@@ -115,7 +115,7 @@ http:
 ### `sourceCriterion`
 
 The `sourceCriterion` option defines what criterion is used to group requests as originating from a common source.
-The precedence order is `ipStrategy`, then `requestHeaderName`, then `requestHost`.
+If several strategies are defined at the same time, an error will be raised.
 If none are set, the default is to use the `requestHost`.
 
 #### `sourceCriterion.ipStrategy`
