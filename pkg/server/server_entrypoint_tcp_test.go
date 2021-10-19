@@ -43,8 +43,10 @@ func TestShutdownHTTP(t *testing.T) {
 }
 
 func TestShutdownTCP(t *testing.T) {
-	router := &tcp.Router{}
-	router.AddCatchAllNoTLS(tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+	router, err := tcp.NewRouter()
+	require.NoError(t, err)
+
+	err = router.AddRoute("HostSNI(`*`)", tcp.HandlerFunc(func(conn tcp.WriteCloser) {
 		for {
 			_, err := http.ReadRequest(bufio.NewReader(conn))
 
@@ -58,6 +60,7 @@ func TestShutdownTCP(t *testing.T) {
 			require.NoError(t, err)
 		}
 	}))
+	require.NoError(t, err)
 
 	testShutdown(t, router)
 }
