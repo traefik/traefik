@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/traefik/traefik/v2/pkg/log"
 )
 
@@ -73,7 +72,7 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 	//	return
 	// }
 
-	if r.tcpMuxer.hasRoutes() && !r.tcpMuxerTLS.hasRoutes() {
+	if r.tcpMuxer.catchAll != nil && r.tcpMuxerTLS.catchAll == nil && !r.tcpMuxerTLS.hasRoutes() {
 		fmt.Printf("NEW READER on %s\n", conn.LocalAddr().String())
 		connData, err := NewConnData("", conn)
 		if err != nil {
@@ -173,7 +172,6 @@ func (r *Router) AddHTTPTLSConfig(sniHost string, config *tls.Config) {
 		r.hostHTTPTLSConfig = map[string]*tls.Config{}
 	}
 	r.hostHTTPTLSConfig[sniHost] = config
-	fmt.Printf("Config for host %s: %v\n", sniHost, spew.Sprint(config))
 }
 
 // GetConn creates a connection proxy with a peeked string.
@@ -204,7 +202,6 @@ func (r *Router) HTTPForwarder(handler Handler) {
 // HTTPSForwarder sets the tcp handler that will forward the TLS connections to an http handler.
 func (r *Router) HTTPSForwarder(handler Handler) {
 	for sniHost, tlsConf := range r.hostHTTPTLSConfig {
-		log.WithoutContext().Errorf("ADD ROUTE TLS: %s", sniHost)
 		// TODO check if we ignore the error
 		err := r.AddRouteTLS("HostSNI(`"+sniHost+"`)", handler, tlsConf)
 		if err != nil {

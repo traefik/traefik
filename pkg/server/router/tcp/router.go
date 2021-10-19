@@ -109,9 +109,9 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	}
 
 	// FIXME: is this something we can do?
-	//if len(configsHTTP) > 0 {
-	//	router.AddHTTPTLSConfig("*", defaultTLSConf)
-	//}
+	if len(configsHTTP) > 0 {
+		router.AddHTTPTLSConfig("*", defaultTLSConf)
+	}
 
 	// Keyed by domain, then by options reference.
 	tlsOptionsForHostSNI := map[string]map[string]nameAndConfig{}

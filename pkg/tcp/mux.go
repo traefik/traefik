@@ -72,7 +72,8 @@ func NewConnData(serverName string, conn WriteCloser) (connData, error) {
 // Muxer defines a muxer that handles TCP routing with rules.
 type Muxer struct {
 	subRouter
-	parser predicate.Parser
+	catchAll Handler
+	parser   predicate.Parser
 }
 
 // NewMuxer returns a TCP muxer.
@@ -100,11 +101,20 @@ func (r Muxer) Match(meta connData) Handler {
 		}
 	}
 
+	if r.catchAll != nil {
+		return r.catchAll
+	}
+
 	return nil
 }
 
 // AddRoute add a new route to the router.
 func (r *Muxer) AddRoute(rule string, handler Handler) error {
+	if rule == "HostSNI(`*`)" {
+		r.catchAll = handler
+		return nil
+	}
+
 	parse, err := r.parser.Parse(rule)
 	if err != nil {
 		return fmt.Errorf("error while parsing rule %s: %w", rule, err)
@@ -325,7 +335,6 @@ func hostSNI(route *route, hosts ...string) error {
 	for i, host := range hosts {
 		// Special case to allow global wildcard
 		if host == "*" {
-			hosts[i] = host
 			continue
 		}
 
