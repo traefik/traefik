@@ -129,6 +129,11 @@ func (r *Muxer) AddRoute(rule string, handler Handler) error {
 	return nil
 }
 
+func (r *Muxer) hasRoutes() bool {
+	fmt.Printf("HAS ROUTES: %d\n", len(r.routes))
+	return len(r.routes) > 0
+}
+
 type subRouter struct {
 	routes []*route
 }

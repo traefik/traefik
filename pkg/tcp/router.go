@@ -73,10 +73,30 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 	//	return
 	// }
 
+	if r.tcpMuxer.hasRoutes() && !r.tcpMuxerTLS.hasRoutes() {
+		fmt.Printf("NEW READER on %s\n", conn.LocalAddr().String())
+		connData, err := NewConnData("", conn)
+		if err != nil {
+			// TODO
+			log.WithoutContext().Errorf("Error while : %v", err)
+			conn.Close()
+			return
+		}
+
+		handler := r.tcpMuxer.Match(connData)
+		switch {
+		case handler != nil:
+			handler.ServeTCP(conn)
+		default:
+			conn.Close()
+		}
+		return
+	}
+
 	br := bufio.NewReader(conn)
 	fmt.Printf("NEW READER on %s\n", conn.LocalAddr().String())
 	serverName, tls, peeked, err := clientHelloServerName(br)
-	if err != nil && !errors.Is(err, io.EOF) {
+	if err != nil {
 		fmt.Printf("TCP READER ERROR on %s: %v\n", conn.LocalAddr().String(), err)
 		conn.Close()
 		return
@@ -184,6 +204,7 @@ func (r *Router) HTTPForwarder(handler Handler) {
 // HTTPSForwarder sets the tcp handler that will forward the TLS connections to an http handler.
 func (r *Router) HTTPSForwarder(handler Handler) {
 	for sniHost, tlsConf := range r.hostHTTPTLSConfig {
+		log.WithoutContext().Errorf("ADD ROUTE TLS: %s", sniHost)
 		// TODO check if we ignore the error
 		err := r.AddRouteTLS("HostSNI(`"+sniHost+"`)", handler, tlsConf)
 		if err != nil {
