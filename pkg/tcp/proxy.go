@@ -83,15 +83,19 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 }
 
 func (p Proxy) dialBackend() (*net.TCPConn, error) {
+	log.WithoutContext().Debugf("ENTER DIAL BACKEND")
 	if !p.refreshTarget {
+		log.WithoutContext().Debugf("NOT REFRESH TARGET DIAL BACKEND")
 		return net.DialTCP("tcp", nil, p.target)
 	}
 
+	log.WithoutContext().Debugf("REFRESH TARGET DIAL BACKEND: %s", p.address)
 	conn, err := net.Dial("tcp", p.address)
 	if err != nil {
 		return nil, err
 	}
 
+	log.WithoutContext().Debugf("RETURN DIAL BACKEND")
 	return conn.(*net.TCPConn), nil
 }
 
