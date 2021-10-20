@@ -432,7 +432,7 @@ func Test_HostSNI(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			meta := connData{
+			meta := ConnData{
 				serverName: test.serverName,
 			}
 
@@ -515,7 +515,7 @@ func Test_ClientIP(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			meta := connData{
+			meta := ConnData{
 				serverName: test.serverName,
 			}
 

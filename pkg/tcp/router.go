@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"crypto/tls"
 	"errors"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -64,43 +63,32 @@ func (r *Router) GetTLSGetClientInfo() func(info *tls.ClientHelloInfo) (*tls.Con
 
 // ServeTCP forwards the connection to the right TCP/HTTP handler.
 func (r *Router) ServeTCP(conn WriteCloser) {
-	fmt.Printf("SERVE TCP on %s\n", conn.LocalAddr().String())
-	// FIXME -- Check if ProxyProtocol changes the first bytes of the request
-
-	// if !r.tcpMuxer.HasRoutes() && !r.tcpMuxerTLS.HasRoutes() {
-	//	r.catchAllNoTLS.ServeTCP(conn)
-	//	return
-	// }
-
-	if r.tcpMuxer.catchAll != nil && r.tcpMuxerTLS.catchAll == nil && !r.tcpMuxerTLS.hasRoutes() {
-		fmt.Printf("NEW READER on %s\n", conn.LocalAddr().String())
+	// Handling Non-TLS TCP connection early if there is no TLS routers configuration on the entryPoint
+	if r.tcpMuxer.hasRoutes() && !r.tcpMuxerTLS.hasRoutes() {
 		connData, err := NewConnData("", conn)
 		if err != nil {
-			// TODO
-			log.WithoutContext().Errorf("Error while : %v", err)
+			log.WithoutContext().Errorf("Error while reading TCP connection data : %v", err)
 			conn.Close()
 			return
 		}
 
 		handler := r.tcpMuxer.Match(connData)
-		switch {
-		case handler != nil:
+		if handler != nil {
 			handler.ServeTCP(conn)
-		default:
-			conn.Close()
+			return
 		}
-		return
-	}
 
-	br := bufio.NewReader(conn)
-	fmt.Printf("NEW READER on %s\n", conn.LocalAddr().String())
-	serverName, tls, peeked, err := clientHelloServerName(br)
-	if err != nil {
-		fmt.Printf("TCP READER ERROR on %s: %v\n", conn.LocalAddr().String(), err)
 		conn.Close()
 		return
 	}
-	fmt.Printf("PEEKED BYTES %s on %s\n", peeked, conn.LocalAddr().String())
+
+	// FIXME -- Check if ProxyProtocol changes the first bytes of the request
+	br := bufio.NewReader(conn)
+	serverName, tls, peeked, err := clientHelloServerName(br)
+	if err != nil {
+		conn.Close()
+		return
+	}
 
 	// Remove read/write deadline and delegate this to underlying tcp server (for now only handled by HTTP Server)
 	err = conn.SetReadDeadline(time.Time{})
@@ -115,23 +103,18 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 
 	connData, err := NewConnData(serverName, conn)
 	if err != nil {
-		// TODO
-		log.WithoutContext().Errorf("Error while : %v", err)
+		log.WithoutContext().Errorf("Error while reading TCP connection data : %v", err)
 		conn.Close()
 		return
 	}
 
 	if !tls {
-
-		fmt.Printf("Try to match with routes length:%v\n", len(r.tcpMuxer.routes))
 		// TODO priority (between ClientIP and HostSNI(`*`) for instance)
 		handler := r.tcpMuxer.Match(connData)
 		switch {
 		case handler != nil:
-			fmt.Printf("FOUND HANDLER TCP on %s\n", conn.LocalAddr().String())
 			handler.ServeTCP(r.GetConn(conn, peeked))
 		case r.httpForwarder != nil:
-			fmt.Printf("SERVE HTTP on %s\n", conn.LocalAddr().String())
 			r.httpForwarder.ServeTCP(r.GetConn(conn, peeked))
 		default:
 			conn.Close()
@@ -160,6 +143,10 @@ func (r *Router) AddRoute(rule string, target Handler) error {
 
 // AddRouteTLS defines a handler for a given rule and sets the matching tlsConfig.
 func (r *Router) AddRouteTLS(rule string, target Handler, config *tls.Config) error {
+	if config == nil {
+		return r.tcpMuxerTLS.AddRoute(rule, target)
+	}
+
 	return r.tcpMuxerTLS.AddRoute(rule, &TLSHandler{
 		Next:   target,
 		Config: config,
