@@ -373,6 +373,8 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			continue
 		}
 
+		// FIXME validate that TLS section is not defined for HTTP and TCP listener
+
 		// TLS
 		if listener.Protocol == v1alpha2.HTTPSProtocolType || listener.Protocol == v1alpha2.TLSProtocolType {
 			if listener.TLS == nil || (len(listener.TLS.CertificateRefs) == 0 && listener.TLS.Mode != nil && *listener.TLS.Mode != v1alpha2.TLSModePassthrough) {
@@ -411,7 +413,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 					Status:             metav1.ConditionTrue,
 					LastTransitionTime: metav1.Now(),
 					Reason:             string(v1alpha2.ListenerReasonUnsupportedProtocol),
-					Message:            fmt.Sprintf("HTTPS protocol is not supported with TLS mode Passthrough"),
+					Message:            "HTTPS protocol is not supported with TLS mode Passthrough",
 				})
 
 				continue
@@ -425,7 +427,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 						Status:             metav1.ConditionFalse,
 						LastTransitionTime: metav1.Now(),
 						Reason:             string(v1alpha2.ListenerReasonInvalidCertificateRef),
-						Message:            fmt.Sprintf("One TLS CertificateRef is required in Terminate mode"),
+						Message:            "One TLS CertificateRef is required in Terminate mode",
 					})
 
 					continue
@@ -435,7 +437,6 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 				// FIXME group name core?
 				if listener.TLS.CertificateRefs[0].Kind == nil || *listener.TLS.CertificateRefs[0].Kind != "Secret" ||
 					listener.TLS.CertificateRefs[0].Group == nil || *listener.TLS.CertificateRefs[0].Group != "" {
-
 					// update "ResolvedRefs" status true with "InvalidCertificateRef" reason
 					listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
 						Type:               string(v1alpha2.ListenerConditionResolvedRefs),
@@ -567,7 +568,7 @@ func (p *Provider) entryPointName(port v1alpha2.PortNumber, protocol v1alpha2.Pr
 	return "", fmt.Errorf("no matching entryPoint for port %d and protocol %q", port, protocol)
 }
 
-// FIXME Handle hostnames
+// FIXME Handle hostnames.
 func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha2.Listener, gateway *v1alpha2.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
 	if listener.AllowedRoutes == nil {
 		// Should not happen due to validation.
@@ -743,10 +744,11 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 			EntryPoints: []string{ep},
 		}
 
-		// FIXME validation?
-		if listener.TLS != nil {
+		if listener.Protocol == v1alpha2.TLSProtocolType && listener.TLS != nil {
 			// TODO support let's encrypt
-			router.TLS = &dynamic.RouterTCPTLSConfig{}
+			router.TLS = &dynamic.RouterTCPTLSConfig{
+				Passthrough: listener.TLS.Mode != nil && *listener.TLS.Mode == v1alpha2.TLSModePassthrough,
+			}
 		}
 
 		// Adding the gateway name and the entryPoint name prevents overlapping of routers build from the same routes.
