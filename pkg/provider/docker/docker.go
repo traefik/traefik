@@ -165,7 +165,7 @@ func (p *Provider) getClientOpts() ([]client.Opt, error) {
 
 		conf, err := p.TLS.CreateTLSConfig(ctx)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to create client TLS configuration: %w", err)
 		}
 
 		hostURL, err := client.ParseHostURL(p.Endpoint)
