@@ -46,7 +46,7 @@ type DistinguishedNameOptions struct {
 	StateOrProvinceName bool
 }
 
-func newDistinguishedNameOptions(info *dynamic.TLSCLientCertificateDNInfo) *DistinguishedNameOptions {
+func newDistinguishedNameOptions(info *dynamic.TLSClientCertificateDNInfo) *DistinguishedNameOptions {
 	if info == nil {
 		return nil
 	}
