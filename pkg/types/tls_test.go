@@ -91,6 +91,16 @@ func TestClientTLS_CreateTLSConfig(t *testing.T) {
 			clientTLS: ClientTLS{Cert: cert, Key: "fixtures/key.pem"},
 			wantErr:   true,
 		},
+		{
+			desc:      "Return an error if the client cert does not exist",
+			clientTLS: ClientTLS{Cert: "fixtures/cert2.pem", Key: "fixtures/key.pem"},
+			wantErr:   true,
+		},
+		{
+			desc:      "Return an error if the client key does not exist",
+			clientTLS: ClientTLS{Cert: "fixtures/cert.pem", Key: "fixtures/key2.pem"},
+			wantErr:   true,
+		},
 	}
 
 	for _, test := range tests {

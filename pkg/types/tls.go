@@ -84,29 +84,24 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 }
 
 func loadKeyPair(cert, key string) (tls.Certificate, error) {
-	_, errCertIsFile := os.Stat(cert)
-	_, errKeyIsFile := os.Stat(key)
-
-	if errCertIsFile == nil && errKeyIsFile != nil {
-		return tls.Certificate{}, errors.New("TLS cert is a file, but TLS key is not")
-	}
-
-	if errCertIsFile != nil && errKeyIsFile == nil {
-		return tls.Certificate{}, errors.New("TLS key is a file, but TLS cert is not")
-	}
-
-	if errCertIsFile == nil && errKeyIsFile == nil {
-		keyPair, err := tls.LoadX509KeyPair(cert, key)
-		if err != nil {
-			return tls.Certificate{}, fmt.Errorf("load TLS keypair from file: %w", err)
-		}
-
+	keyPair, err := tls.X509KeyPair([]byte(cert), []byte(key))
+	if err == nil {
 		return keyPair, nil
 	}
 
-	keyPair, err := tls.X509KeyPair([]byte(cert), []byte(key))
+	_, err = os.Stat(cert)
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("load TLS keypair from bytes: %w", err)
+		return tls.Certificate{}, errors.New("cert file does not exist")
+	}
+
+	_, err = os.Stat(key)
+	if err != nil {
+		return tls.Certificate{}, errors.New("key file does not exist")
+	}
+
+	keyPair, err = tls.LoadX509KeyPair(cert, key)
+	if err != nil {
+		return tls.Certificate{}, err
 	}
 
 	return keyPair, nil
