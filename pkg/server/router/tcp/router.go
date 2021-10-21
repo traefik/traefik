@@ -108,7 +108,6 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		log.FromContext(ctx).Errorf("Error during the build of the default TLS configuration: %v", err)
 	}
 
-	// FIXME: is this something we can do?
 	if len(configsHTTP) > 0 {
 		router.AddHTTPTLSConfig("*", defaultTLSConf)
 	}
