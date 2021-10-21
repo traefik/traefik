@@ -23,6 +23,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/rules"
 	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/traefik/traefik/v2/pkg/tcp"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"github.com/traefik/traefik/v2/pkg/types"
 	"github.com/traefik/traefik/v2/pkg/version"
@@ -406,7 +407,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 								})
 							}
 						} else {
-							domains, err := rules.ParseHostSNI(route.Rule)
+							domains, err := tcp.ParseHostSNI(route.Rule)
 							if err != nil {
 								logger.Errorf("Error parsing domains in provider ACME: %v", err)
 								continue
