@@ -17,8 +17,12 @@ const defaultBufSize = 4096
 
 // Router is a TCP router.
 type Router struct {
-	tcpMuxer    Muxer
-	tcpMuxerTLS Muxer
+	HasHTTPRouters bool
+	// Contains TCP routes
+	muxerTCP Muxer
+	//
+	muxerTCPTLS Muxer
+	muxerHTTPS  Muxer
 
 	// Forwarder handlers.
 	httpForwarder  Handler
@@ -35,19 +39,25 @@ type Router struct {
 
 // NewRouter returns a new TCP router.
 func NewRouter() (*Router, error) {
-	mux, err := NewMuxer()
+	muxTCP, err := NewMuxer()
 	if err != nil {
 		return nil, err
 	}
 
-	muxTLS, err := NewMuxer()
+	muxTCPTLS, err := NewMuxer()
+	if err != nil {
+		return nil, err
+	}
+
+	muxHTTPS, err := NewMuxer()
 	if err != nil {
 		return nil, err
 	}
 
 	return &Router{
-		tcpMuxer:    *mux,
-		tcpMuxerTLS: *muxTLS,
+		muxerTCP:    *muxTCP,
+		muxerTCPTLS: *muxTCPTLS,
+		muxerHTTPS:  *muxHTTPS,
 	}, nil
 }
 
@@ -63,8 +73,9 @@ func (r *Router) GetTLSGetClientInfo() func(info *tls.ClientHelloInfo) (*tls.Con
 
 // ServeTCP forwards the connection to the right TCP/HTTP handler.
 func (r *Router) ServeTCP(conn WriteCloser) {
-	// Handling Non-TLS TCP connection early if there is no TLS routers configuration on the entryPoint
-	if r.tcpMuxer.hasRoutes() && !r.tcpMuxerTLS.hasRoutes() {
+	// Handling Non-TLS TCP connection early if there is neither HTTP(S) nor TLS routers on the entryPoint
+	// TODO update documentation
+	if !r.HasHTTPRouters && r.muxerTCP.hasRoutes() && !r.muxerTCPTLS.hasRoutes() {
 		connData, err := NewConnData("", conn)
 		if err != nil {
 			log.WithoutContext().Errorf("Error while reading TCP connection data : %v", err)
@@ -72,7 +83,7 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 			return
 		}
 
-		handler := r.tcpMuxer.Match(connData)
+		handler := r.muxerTCP.Match(connData)
 		if handler != nil {
 			handler.ServeTCP(conn)
 			return
@@ -110,7 +121,7 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 
 	if !tls {
 		// TODO priority (between ClientIP and HostSNI(`*`) for instance)
-		handler := r.tcpMuxer.Match(connData)
+		handler := r.muxerTCP.Match(connData)
 		switch {
 		case handler != nil:
 			handler.ServeTCP(r.GetConn(conn, peeked))
@@ -122,7 +133,13 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 		return
 	}
 
-	handler := r.tcpMuxerTLS.Match(connData)
+	handler := r.muxerTCPTLS.Match(connData)
+	if handler != nil {
+		handler.ServeTCP(r.GetConn(conn, peeked))
+		return
+	}
+
+	handler = r.muxerHTTPS.Match(connData)
 	if handler != nil {
 		handler.ServeTCP(r.GetConn(conn, peeked))
 		return
@@ -138,16 +155,17 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 
 // AddRoute defines a handler for the given rule.
 func (r *Router) AddRoute(rule string, target Handler) error {
-	return r.tcpMuxer.AddRoute(rule, target)
+	return r.muxerTCP.AddRoute(rule, target)
 }
 
 // AddRouteTLS defines a handler for a given rule and sets the matching tlsConfig.
 func (r *Router) AddRouteTLS(rule string, target Handler, config *tls.Config) error {
+	// TODO clarify passthrough
 	if config == nil {
-		return r.tcpMuxerTLS.AddRoute(rule, target)
+		return r.muxerTCPTLS.AddRoute(rule, target)
 	}
 
-	return r.tcpMuxerTLS.AddRoute(rule, &TLSHandler{
+	return r.muxerTCPTLS.AddRoute(rule, &TLSHandler{
 		Next:   target,
 		Config: config,
 	})
@@ -190,7 +208,10 @@ func (r *Router) HTTPForwarder(handler Handler) {
 func (r *Router) HTTPSForwarder(handler Handler) {
 	for sniHost, tlsConf := range r.hostHTTPTLSConfig {
 		// TODO check if we ignore the error
-		err := r.AddRouteTLS("HostSNI(`"+sniHost+"`)", handler, tlsConf)
+		err := r.muxerHTTPS.AddRoute("HostSNI(`"+sniHost+"`)", &TLSHandler{
+			Next:   handler,
+			Config: tlsConf,
+		})
 		if err != nil {
 			log.WithoutContext().Errorf("Error while adding route for host: %w", err)
 		}
