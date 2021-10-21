@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"os"
 
@@ -44,7 +45,7 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 		}
 
 		if !caPool.AppendCertsFromPEM(ca) {
-			return nil, fmt.Errorf("failed to parse CA")
+			return nil, errors.New("failed to parse CA")
 		}
 
 		if clientTLS.CAOptional {
@@ -58,7 +59,7 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 	hasKey := len(clientTLS.Key) > 0
 
 	if hasCert != hasKey {
-		return nil, fmt.Errorf("TLS cert and key must be defined together")
+		return nil, errors.New("both TLS cert and key must be defined")
 	}
 
 	if !hasCert || !hasKey {
@@ -87,11 +88,11 @@ func loadKeyPair(cert, key string) (tls.Certificate, error) {
 	_, errKeyIsFile := os.Stat(key)
 
 	if errCertIsFile == nil && errKeyIsFile != nil {
-		return tls.Certificate{}, fmt.Errorf("TLS cert is a file, but tls key is not")
+		return tls.Certificate{}, errors.New("TLS cert is a file, but TLS key is not")
 	}
 
 	if errCertIsFile != nil && errKeyIsFile == nil {
-		return tls.Certificate{}, fmt.Errorf("TLS key is a file, but tls cert is not")
+		return tls.Certificate{}, errors.New("TLS key is a file, but TLS cert is not")
 	}
 
 	if errCertIsFile == nil && errKeyIsFile == nil {
