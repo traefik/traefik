@@ -297,7 +297,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 
 // SwitchRouter switches the TCP router handler.
 func (e *TCPEntryPoint) SwitchRouter(rt *tcp.Router) {
-	rt.HTTPForwarder(e.httpServer.Forwarder)
+	//rt.HTTPForwarder(e.httpServer.Forwarder)
 
 	httpHandler := rt.GetHTTPHandler()
 	if httpHandler == nil {

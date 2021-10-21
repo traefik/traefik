@@ -129,7 +129,6 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 	}
 
 	if r.httpsForwarder != nil {
-		panic("HTTPSFORWARDER USED")
 		r.httpsForwarder.ServeTCP(r.GetConn(conn, peeked))
 		return
 	}

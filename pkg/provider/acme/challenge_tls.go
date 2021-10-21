@@ -136,16 +136,12 @@ func createMessage(certs map[string]*Certificate) dynamic.Message {
 	conf := dynamic.Message{
 		ProviderName: providerNameALPN,
 		Configuration: &dynamic.Configuration{
-			HTTP: &dynamic.HTTPConfiguration{
-				Routers:     map[string]*dynamic.Router{},
-				Middlewares: map[string]*dynamic.Middleware{},
-				Services:    map[string]*dynamic.Service{},
-			},
 			TLS: &dynamic.TLSConfiguration{},
 		},
 	}
 
 	for _, cert := range certs {
+
 		certConf := &traefiktls.CertAndStores{
 			Certificate: traefiktls.Certificate{
 				CertFile: traefiktls.FileOrContent(cert.Certificate),
