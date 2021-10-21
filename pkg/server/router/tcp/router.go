@@ -108,8 +108,6 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		log.FromContext(ctx).Errorf("Error during the build of the default TLS configuration: %v", err)
 	}
 
-	router.HasHTTPRouters = len(configsHTTP) > 0
-
 	// Keyed by domain, then by options reference.
 	tlsOptionsForHostSNI := map[string]map[string]nameAndConfig{}
 	tlsOptionsForHost := map[string]string{}
@@ -135,17 +133,21 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		}
 
 		if len(domains) == 0 {
+			// Adding the default TLSConfig for the SNI "*".
+			// It will create a catchall TCP route for HTTPS routers that have no Host rule.
+			router.AddHTTPTLSConfig("*", defaultTLSConf)
+
 			logger.Warnf("No domain found in rule %v, the TLS options applied for this router will depend on the hostSNI of each request", routerHTTPConfig.Rule)
 		}
 
-		for _, domain := range domains {
-			tlsConf, err := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, tlsOptionsName)
-			if err != nil {
-				routerHTTPConfig.AddError(err, true)
-				logger.Debug(err)
-				continue
-			}
+		tlsConf, err := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, tlsOptionsName)
+		if err != nil {
+			routerHTTPConfig.AddError(err, true)
+			logger.Debug(err)
+			continue
+		}
 
+		for _, domain := range domains {
 			// domain is already in lower case thanks to the domain parsing
 			if tlsOptionsForHostSNI[domain] == nil {
 				tlsOptionsForHostSNI[domain] = make(map[string]nameAndConfig)
