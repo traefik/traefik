@@ -170,7 +170,7 @@ func (p *Provider) createKVClient(ctx context.Context) (store.Store, error) {
 		var err error
 		storeConfig.TLS, err = p.TLS.CreateTLSConfig(ctx)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to create client TLS configuration: %w", err)
 		}
 	}
 
