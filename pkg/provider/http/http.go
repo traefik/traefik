@@ -55,7 +55,7 @@ func (p *Provider) Init() error {
 	if p.TLS != nil {
 		tlsConfig, err := p.TLS.CreateTLSConfig(context.Background())
 		if err != nil {
-			return fmt.Errorf("unable to create TLS configuration: %w", err)
+			return fmt.Errorf("unable to create client TLS configuration: %w", err)
 		}
 
 		p.httpClient.Transport = &http.Transport{
