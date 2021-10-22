@@ -225,11 +225,13 @@ func (r *Router) HTTPSForwarder(handler Handler) {
 	}
 }
 
+// TODO(mpl): rename
 // HTTPHandler attaches http handlers on the router.
 func (r *Router) HTTPHandler(handler http.Handler) {
 	r.httpHandler = handler
 }
 
+// TODO(mpl): rename
 // HTTPSHandler attaches https handlers on the router.
 func (r *Router) HTTPSHandler(handler http.Handler, config *tls.Config) {
 	r.httpsHandler = handler
@@ -285,7 +287,7 @@ func clientHelloServerName(br *bufio.Reader) (string, bool, string, error) {
 	const recordTypeHandshake = 0x16
 	if hdr[0] != recordTypeHandshake {
 		if hdr[0] == recordTypeSSLv2 {
-			// we consider SSLv2 as TLS and it will be refuse by real TLS handshake.
+			// we consider SSLv2 as TLS and it will be refused by real TLS handshake.
 			return "", true, getPeeked(br), nil
 		}
 		return "", false, getPeeked(br), nil // Not TLS.
