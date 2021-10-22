@@ -40,6 +40,10 @@ metadata:
   name: http-app-default
   namespace: default
 spec:
+  parentRefs:
+    - name: my-gateway
+      kind: "Gateway"
+      group: "gateway.networking.k8s.io"
   hostnames:
     - "foo.com"
   rules:
@@ -61,6 +65,11 @@ metadata:
   name: http-app-bar
   namespace: bar
 spec:
+  parentRefs:
+    - name: my-gateway
+      namespace: default
+      kind: "Gateway"
+      group: "gateway.networking.k8s.io"
   hostnames:
     - "bar.com"
   rules:

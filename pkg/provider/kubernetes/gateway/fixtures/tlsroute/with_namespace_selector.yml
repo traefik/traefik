@@ -45,6 +45,10 @@ metadata:
   name: tls-app-default
   namespace: default
 spec:
+  parentRefs:
+    - name: my-gateway
+      kind: "Gateway"
+      group: "gateway.networking.k8s.io"
   hostnames:
     - foo.default
   rules:
@@ -62,6 +66,11 @@ metadata:
   name: tls-app-bar
   namespace: bar
 spec:
+  parentRefs:
+    - name: my-gateway
+      namespace: default
+      kind: "Gateway"
+      group: "gateway.networking.k8s.io"
   hostnames:
     - foo.bar
   rules:

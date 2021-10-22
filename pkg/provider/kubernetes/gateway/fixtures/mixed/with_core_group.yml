@@ -80,6 +80,10 @@ metadata:
   name: http-app-default
   namespace: default
 spec:
+  parentRefs:
+    - name: my-gateway
+      kind: "Gateway"
+      group: "gateway.networking.k8s.io"
   rules:
     - backendRefs:
         - name: whoami
@@ -95,6 +99,10 @@ metadata:
   name: tcp-app-default
   namespace: default
 spec:
+  parentRefs:
+    - name: my-gateway
+      kind: "Gateway"
+      group: "gateway.networking.k8s.io"
   rules:
     - backendRefs:
         - name: whoamitcp
@@ -110,6 +118,10 @@ metadata:
   name: tls-app-default
   namespace: default
 spec:
+  parentRefs:
+    - name: my-gateway
+      kind: "Gateway"
+      group: "gateway.networking.k8s.io"
   rules:
     - backendRefs:
         - name: whoamitcp

@@ -29,6 +29,10 @@ metadata:
   name: http-app-1
   namespace: default
 spec:
+  parentRefs:
+    - name: my-gateway
+      kind: "Gateway"
+      group: "gateway.networking.k8s.io"
   hostnames:
     - "foo.com"
     - "bar.com"

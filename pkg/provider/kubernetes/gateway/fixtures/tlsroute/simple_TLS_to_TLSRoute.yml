@@ -46,6 +46,10 @@ metadata:
   name: tls-app-1
   namespace: default
 spec:
+  parentRefs:
+    - name: my-tls-gateway
+      kind: "Gateway"
+      group: "gateway.networking.k8s.io"
   rules:
     - backendRefs:
         - name: whoamitcp

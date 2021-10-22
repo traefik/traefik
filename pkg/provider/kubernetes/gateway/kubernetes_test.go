@@ -4721,7 +4721,7 @@ func Test_shouldAttach(t *testing.T) {
 			routeSpec: v1alpha2.CommonRouteSpec{
 				ParentRefs: nil,
 			},
-			expectedAttach: true,
+			expectedAttach: false,
 		},
 		{
 			desc: "Unsupported Kind",

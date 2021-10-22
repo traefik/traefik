@@ -51,8 +51,6 @@ apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: tls-app-1
   namespace: default
-  labels:
-    app: label-tls-app-1
 spec:
   parentRefs:
     - name: my-mixed-gateway
