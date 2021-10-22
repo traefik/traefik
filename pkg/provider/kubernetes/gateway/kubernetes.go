@@ -20,6 +20,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/job"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
+	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
@@ -30,12 +31,13 @@ import (
 )
 
 const (
-	providerName            = "kubernetesgateway"
-	traefikServiceKind      = "TraefikService"
-	traefikServiceGroupName = "traefik.containo.us"
-	kindHTTPRoute           = "HTTPRoute"
-	kindTCPRoute            = "TCPRoute"
-	kindTLSRoute            = "TLSRoute"
+	providerName = "kubernetesgateway"
+
+	kindGateway        = "Gateway"
+	kindTraefikService = "TraefikService"
+	kindHTTPRoute      = "HTTPRoute"
+	kindTCPRoute       = "TCPRoute"
+	kindTLSRoute       = "TLSRoute"
 )
 
 // Provider holds configurations of the provider.
@@ -997,16 +999,12 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 }
 
 func shouldAttach(gateway *v1alpha2.Gateway, listener v1alpha2.Listener, routeNamespace string, routeSpec v1alpha2.CommonRouteSpec) bool {
-	if len(routeSpec.ParentRefs) == 0 {
-		return true
-	}
-
 	for _, parentRef := range routeSpec.ParentRefs {
 		if parentRef.Group == nil || *parentRef.Group != v1alpha2.GroupName {
 			continue
 		}
 
-		if parentRef.Kind == nil || *parentRef.Kind != "Gateway" {
+		if parentRef.Kind == nil || *parentRef.Kind != kindGateway {
 			continue
 		}
 
@@ -1320,7 +1318,7 @@ func loadServices(client Client, namespace string, backendRefs []v1alpha2.HTTPBa
 
 		weight := int(pointer.Int32Deref(backendRef.Weight, 1))
 
-		if *backendRef.Group == traefikServiceGroupName && *backendRef.Kind == traefikServiceKind {
+		if *backendRef.Group == traefikv1alpha1.GroupName && *backendRef.Kind == kindTraefikService {
 			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: string(backendRef.Name), Weight: &weight})
 			continue
 		}
@@ -1444,7 +1442,7 @@ func loadTCPServices(client Client, namespace string, backendRefs []v1alpha2.Bac
 
 		weight := int(pointer.Int32Deref(backendRef.Weight, 1))
 
-		if *backendRef.Group == traefikServiceGroupName && *backendRef.Kind == traefikServiceKind {
+		if *backendRef.Group == traefikv1alpha1.GroupName && *backendRef.Kind == kindTraefikService {
 			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.TCPWRRService{Name: string(backendRef.Name), Weight: &weight})
 			continue
 		}
@@ -1585,7 +1583,7 @@ func isInternalService(ref v1alpha2.BackendRef) bool {
 		return false
 	}
 
-	return *ref.Kind == traefikServiceKind &&
-		*ref.Group == traefikServiceGroupName &&
+	return *ref.Kind == kindTraefikService &&
+		*ref.Group == traefikv1alpha1.GroupName &&
 		strings.HasSuffix(string(ref.Name), "@internal")
 }

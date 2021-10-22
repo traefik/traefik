@@ -43,6 +43,10 @@ metadata:
   name: tcp-app-default
   namespace: default
 spec:
+  parentRefs:
+    - name: my-tcp-gateway
+      kind: "Gateway"
+      group: "gateway.networking.k8s.io"
   rules:
     - backendRefs:
         - name: whoamitcp
@@ -58,6 +62,11 @@ metadata:
   name: tcp-app-bar
   namespace: bar
 spec:
+  parentRefs:
+    - name: my-tcp-gateway
+      namespace: default
+      kind: "Gateway"
+      group: "gateway.networking.k8s.io"
   rules:
     - backendRefs:
         - name: whoamitcp-bar

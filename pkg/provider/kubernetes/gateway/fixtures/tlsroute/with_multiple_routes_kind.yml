@@ -26,7 +26,7 @@ metadata:
   namespace: default
 spec:
   gatewayClassName: my-gateway-class
-  listeners:  # Use GatewayClass defaults for listener definition.
+  listeners: # Use GatewayClass defaults for listener definition.
     - name: tls-9000
       protocol: TLS
       hostname: foo.example.com
@@ -60,6 +60,10 @@ metadata:
   name: tcp-app-1
   namespace: default
 spec:
+  parentRefs:
+    - name: my-tls-gateway
+      kind: "Gateway"
+      group: "gateway.networking.k8s.io"
   rules:
     - backendRefs:
         - name: whoamitcp
@@ -75,6 +79,10 @@ metadata:
   name: tls-app-1
   namespace: default
 spec:
+  parentRefs:
+    - name: my-tls-gateway
+      kind: "Gateway"
+      group: "gateway.networking.k8s.io"
   rules:
     - backendRefs:
         - name: whoamitcp
