@@ -18,7 +18,6 @@ spec:
     - name: tls
       protocol: TLS
       port: 9001
-      hostname: foo.example.com
       tls:
         mode: Passthrough
       allowedRoutes:
