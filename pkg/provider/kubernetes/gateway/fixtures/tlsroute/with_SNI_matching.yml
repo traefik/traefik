@@ -18,7 +18,7 @@ spec:
     - name: tls
       protocol: TLS
       port: 9001
-      hostname: foo.example.com
+      hostname: "*.example.com"
       tls:
         mode: Passthrough
       allowedRoutes:
@@ -40,7 +40,7 @@ spec:
       kind: "Gateway"
       group: "gateway.networking.k8s.io"
   hostnames:
-    - foo.bar
+    - foo.example.com
   rules:
     - backendRefs:
         - name: whoamitcp

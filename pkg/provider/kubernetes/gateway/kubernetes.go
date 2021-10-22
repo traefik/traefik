@@ -27,6 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/utils/pointer"
+	"k8s.io/utils/strings/slices"
 	"sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
@@ -662,7 +663,6 @@ func getListenerRouteKinds(listener v1alpha2.Listener) ([]string, []metav1.Condi
 	return routeKinds, conditions
 }
 
-// FIXME Handle hostnames.
 func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha2.Listener, gateway *v1alpha2.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
 	if listener.AllowedRoutes == nil {
 		// Should not happen due to validation.
@@ -681,7 +681,7 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha
 		}}
 	}
 
-	httpRoutes, err := client.GetHTTPRoutes(namespaces)
+	routes, err := client.GetHTTPRoutes(namespaces)
 	if err != nil {
 		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
 		return []metav1.Condition{{
@@ -693,30 +693,37 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha
 		}}
 	}
 
-	if len(httpRoutes) == 0 {
+	if len(routes) == 0 {
 		log.FromContext(ctx).Debugf("No HTTPRoutes found")
 		return nil
 	}
 
 	var conditions []metav1.Condition
-	for _, httpRoute := range httpRoutes {
-		if !shouldAttach(gateway, listener, httpRoute.Namespace, httpRoute.Spec.CommonRouteSpec) {
+	for _, route := range routes {
+		if !shouldAttach(gateway, listener, route.Namespace, route.Spec.CommonRouteSpec) {
 			continue
 		}
 
-		hostRule, err := hostRule(httpRoute.Spec)
+		hostnames := matchingHostnames(listener, route.Spec.Hostnames)
+		if len(hostnames) == 0 && listener.Hostname != nil && *listener.Hostname != "" && len(route.Spec.Hostnames) > 0 {
+			// TODO update the corresponding route parent status
+			// https://gateway-api.sigs.k8s.io/v1alpha2/references/spec/#gateway.networking.k8s.io/v1alpha2.TLSRoute
+			continue
+		}
+
+		hostRule, err := hostRule(hostnames)
 		if err != nil {
 			conditions = append(conditions, metav1.Condition{
 				Type:               string(v1alpha2.ListenerConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				LastTransitionTime: metav1.Now(),
 				Reason:             "InvalidRouteHostname", // TODO check the spec if a proper reason is introduced at some point
-				Message:            fmt.Sprintf("Skipping HTTPRoute %s: invalid hostname: %v", httpRoute.Name, err),
+				Message:            fmt.Sprintf("Skipping HTTPRoute %s: invalid hostname: %v", route.Name, err),
 			})
 			continue
 		}
 
-		for _, routeRule := range httpRoute.Spec.Rules {
+		for _, routeRule := range route.Spec.Rules {
 			rule, err := extractRule(routeRule, hostRule)
 			if err != nil {
 				// update "ResolvedRefs" status true with "DroppedRoutes" reason
@@ -725,7 +732,7 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha
 					Status:             metav1.ConditionFalse,
 					LastTransitionTime: metav1.Now(),
 					Reason:             "UnsupportedPathOrHeaderType", // TODO check the spec if a proper reason is introduced at some point
-					Message:            fmt.Sprintf("Skipping HTTPRoute %s: cannot generate rule: %v", httpRoute.Name, err),
+					Message:            fmt.Sprintf("Skipping HTTPRoute %s: cannot generate rule: %v", route.Name, err),
 				})
 			}
 
@@ -739,9 +746,9 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha
 				router.TLS = &dynamic.RouterTLSConfig{}
 			}
 
-			// Adding the gateway name and the entryPoint name prevents overlapping of routers build from the same routes.
-			routerName := httpRoute.Name + "-" + gateway.Name + "-" + ep
-			routerKey, err := makeRouterKey(router.Rule, makeID(httpRoute.Namespace, routerName))
+			// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
+			routerName := route.Name + "-" + gateway.Name + "-" + ep
+			routerKey, err := makeRouterKey(router.Rule, makeID(route.Namespace, routerName))
 			if err != nil {
 				// update "ResolvedRefs" status true with "DroppedRoutes" reason
 				conditions = append(conditions, metav1.Condition{
@@ -749,7 +756,7 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha
 					Status:             metav1.ConditionFalse,
 					LastTransitionTime: metav1.Now(),
 					Reason:             "InvalidRouterKey", // Should never happen
-					Message:            fmt.Sprintf("Skipping HTTPRoute %s: cannot make router's key with rule %s: %v", httpRoute.Name, router.Rule, err),
+					Message:            fmt.Sprintf("Skipping HTTPRoute %s: cannot make router's key with rule %s: %v", route.Name, router.Rule, err),
 				})
 
 				// TODO update the RouteStatus condition / deduplicate conditions on listener
@@ -760,11 +767,11 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha
 				continue
 			}
 
-			// Traefik internal service can be used only if there is only one ForwardTo service reference.
+			// Traefik internal service can be used only if there is only one BackendRef service reference.
 			if len(routeRule.BackendRefs) == 1 && isInternalService(routeRule.BackendRefs[0].BackendRef) {
 				router.Service = string(routeRule.BackendRefs[0].Name)
 			} else {
-				wrrService, subServices, err := loadServices(client, httpRoute.Namespace, routeRule.BackendRefs)
+				wrrService, subServices, err := loadServices(client, route.Namespace, routeRule.BackendRefs)
 				if err != nil {
 					// update "ResolvedRefs" status true with "DroppedRoutes" reason
 					conditions = append(conditions, metav1.Condition{
@@ -772,7 +779,7 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha
 						Status:             metav1.ConditionFalse,
 						LastTransitionTime: metav1.Now(),
 						Reason:             "InvalidBackendRefs", // TODO check the spec if a proper reason is introduced at some point
-						Message:            fmt.Sprintf("Cannot load HTTPRoute service %s/%s: %v", httpRoute.Namespace, httpRoute.Name, err),
+						Message:            fmt.Sprintf("Cannot load HTTPRoute service %s/%s: %v", route.Namespace, route.Name, err),
 					})
 
 					// TODO update the RouteStatus condition / deduplicate conditions on listener
@@ -850,7 +857,7 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 			}
 		}
 
-		// Adding the gateway name and the entryPoint name prevents overlapping of routers build from the same routes.
+		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
 		routerName := route.Name + "-" + gateway.Name + "-" + ep
 		routerKey, err := makeRouterKey("", makeID(route.Namespace, routerName))
 		if err != nil {
@@ -968,7 +975,14 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 			continue
 		}
 
-		rule, err := hostSNIRule(route.Spec.Hostnames)
+		hostnames := matchingHostnames(listener, route.Spec.Hostnames)
+		if len(hostnames) == 0 && listener.Hostname != nil && *listener.Hostname != "" && len(route.Spec.Hostnames) > 0 {
+			// TODO update the corresponding route parent status
+			// https://gateway-api.sigs.k8s.io/v1alpha2/references/spec/#gateway.networking.k8s.io/v1alpha2.TLSRoute
+			continue
+		}
+
+		rule, err := hostSNIRule(hostnames)
 		if err != nil {
 			// update "ResolvedRefs" status true with "DroppedRoutes" reason
 			conditions = append(conditions, metav1.Condition{
@@ -990,7 +1004,7 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 			},
 		}
 
-		// Adding the gateway name and the entryPoint name prevents overlapping of routers build from the same routes.
+		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
 		routerName := route.Name + "-" + gateway.Name + "-" + ep
 		routerKey, err := makeRouterKey(rule, makeID(route.Namespace, routerName))
 		if err != nil {
@@ -1009,7 +1023,6 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 
 		routerKey = provider.Normalize(routerKey)
 
-		// FIXME intersect route hostnames with listener hostname
 		var ruleServiceNames []string
 		for i, routeRule := range route.Spec.Rules {
 			if len(routeRule.BackendRefs) == 0 {
@@ -1068,6 +1081,50 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 	return conditions
 }
 
+// Because of Kubernetes validation we admit that the given Hostnames are valid.
+// https://github.com/kubernetes-sigs/gateway-api/blob/ff9883da4cad8554cd300394f725ab3a27502785/apis/v1alpha2/shared_types.go#L252
+func matchingHostnames(listener v1alpha2.Listener, hostnames []v1alpha2.Hostname) []v1alpha2.Hostname {
+	if listener.Hostname == nil || *listener.Hostname == "" {
+		return hostnames
+	}
+
+	if len(hostnames) == 0 {
+		return []v1alpha2.Hostname{*listener.Hostname}
+	}
+
+	listenerLabels := strings.Split(string(*listener.Hostname), ".")
+
+	var matches []v1alpha2.Hostname
+
+	for _, hostname := range hostnames {
+		if hostname == *listener.Hostname {
+			matches = append(matches, hostname)
+			continue
+		}
+
+		hostnameLabels := strings.Split(string(hostname), ".")
+		if len(listenerLabels) != len(hostnameLabels) {
+			continue
+		}
+
+		if !slices.Equal(listenerLabels[1:], hostnameLabels[1:]) {
+			continue
+		}
+
+		if listenerLabels[0] == "*" {
+			matches = append(matches, hostname)
+			continue
+		}
+
+		if hostnameLabels[0] == "*" {
+			matches = append(matches, *listener.Hostname)
+			continue
+		}
+	}
+
+	return matches
+}
+
 func shouldAttach(gateway *v1alpha2.Gateway, listener v1alpha2.Listener, routeNamespace string, routeSpec v1alpha2.CommonRouteSpec) bool {
 	for _, parentRef := range routeSpec.ParentRefs {
 		if parentRef.Group == nil || *parentRef.Group != v1alpha2.GroupName {
@@ -1119,11 +1176,11 @@ func getRouteBindingSelectorNamespace(client Client, gatewayNamespace string, ro
 	return nil, fmt.Errorf("unsupported RouteSelectType: %q", *routeNamespaces.From)
 }
 
-func hostRule(httpRouteSpec v1alpha2.HTTPRouteSpec) (string, error) {
+func hostRule(hostnames []v1alpha2.Hostname) (string, error) {
 	var hostNames []string
 	var hostRegexNames []string
 
-	for _, hostname := range httpRouteSpec.Hostnames {
+	for _, hostname := range hostnames {
 		host := string(hostname)
 		// When unspecified, "", or *, all hostnames are matched.
 		// This field can be omitted for protocols that don't require hostname based matching.
@@ -1164,6 +1221,7 @@ func hostRule(httpRouteSpec v1alpha2.HTTPRouteSpec) (string, error) {
 	return hostRegexp, nil
 }
 
+// FIXME: validate that route hostnames does not contain a wildcard (not supported by Traefik)
 func hostSNIRule(hostnames []v1alpha2.Hostname) (string, error) {
 	var matchers []string
 	uniqHostnames := map[v1alpha2.Hostname]struct{}{}
