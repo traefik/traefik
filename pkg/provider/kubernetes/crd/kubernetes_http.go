@@ -183,7 +183,7 @@ func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace str
 			ns = mi.Namespace
 		}
 
-		mds = append(mds, makeID(ns, name))
+		mds = append(mds, provider.Normalize(makeID(ns, name)))
 	}
 
 	return mds, nil

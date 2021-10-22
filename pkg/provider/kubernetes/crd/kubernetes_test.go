@@ -152,6 +152,54 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			},
 		},
 		{
+			desc:  "Middlewares in ingress route config are normalized",
+			paths: []string{"tcp/services.yml", "tcp/with_middleware_multiple_hyphens.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Middlewares: []string{"default-multiple-hyphens"},
+							Rule:        "HostSNI(`foo.com`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{
+						"default-multiple-hyphens": {
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.TCPService{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.1:8000",
+									},
+									{
+										Address: "10.10.0.2:8000",
+									},
+								},
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:  "Simple Ingress Route, with foo entrypoint and crossprovider middleware",
 			paths: []string{"tcp/services.yml", "tcp/with_middleware_crossprovider.yml"},
 			expected: &dynamic.Configuration{
@@ -1435,6 +1483,57 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"foo-addprefix": {
 							AddPrefix: &dynamic.AddPrefix{
 								Prefix: "/tobeadded",
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-test2-route-23c7f4c450289ee29016": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                "Middlewares in ingress route config are normalized",
+			AllowCrossNamespace: true,
+			paths:               []string{"services.yml", "with_middleware_multiple_hyphens.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test2-route-23c7f4c450289ee29016": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test2-route-23c7f4c450289ee29016",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/tobestripped`)",
+							Priority:    12,
+							Middlewares: []string{"default-multiple-hyphens"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-multiple-hyphens": {
+							StripPrefix: &dynamic.StripPrefix{
+								Prefixes: []string{"/tobestripped"},
 							},
 						},
 					},
