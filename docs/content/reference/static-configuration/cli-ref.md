@@ -40,7 +40,7 @@ Access log format: json | common (Default: ```common```)
 Enable api/dashboard. (Default: ```false```)
 
 `--api.dashboard`:  
-Activate dashboard. (Default: ```true```)
+Activate dashboard. (Default: ```false```)
 
 `--api.debug`:  
 Enable additional endpoints for debugging and profiling. (Default: ```false```)
