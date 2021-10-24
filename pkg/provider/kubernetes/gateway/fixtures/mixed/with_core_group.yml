@@ -26,7 +26,7 @@ metadata:
 spec:
   gatewayClassName: my-gateway-class
   listeners: # Use GatewayClass defaults for listener definition.
-    - name: http1
+    - name: http
       protocol: HTTP
       port: 9080
       allowedRoutes:
@@ -35,9 +35,14 @@ spec:
         namespaces:
           from: Same
 
-    - name: http2
-      protocol: HTTP
-      port: 9080
+    - name: https
+      protocol: HTTPS
+      port: 9443
+      tls:
+        certificateRefs:
+          - kind: Secret
+            name: supersecret
+            group: "core"
       allowedRoutes:
         kinds:
           - kind: HTTPRoute
@@ -55,23 +60,13 @@ spec:
 
     - name: tls
       protocol: TLS
-      port: 9000
-      tls:
-        mode: Passthrough
-      allowedRoutes:
-        kinds:
-          - kind: TLSRoute
-        namespaces:
-          from: Same
-
-    - name: tls2
-      protocol: TLS
-      port: 9000
+      port: 10000
+      hostname: tls.foo.example.com
       tls:
         certificateRefs:
           - kind: Secret
             name: supersecret
-            group: ""
+            group: "core"
       allowedRoutes:
         kinds:
           - kind: TCPRoute
@@ -82,7 +77,7 @@ spec:
 kind: HTTPRoute
 apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
-  name: http-app-1
+  name: http-app-default
   namespace: default
 spec:
   rules:
@@ -91,28 +86,13 @@ spec:
           port: 80
           weight: 1
           kind: Service
-          group: ""
-
----
-kind: HTTPRoute
-apiVersion: gateway.networking.k8s.io/v1alpha2
-metadata:
-  name: http-app-2
-  namespace: default
-spec:
-  rules:
-    - backendRefs:
-        - name: whoami
-          port: 80
-          weight: 1
-          kind: Service
-          group: ""
+          group: core
 
 ---
 kind: TCPRoute
 apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
-  name: tcp-app-1
+  name: tcp-app-default
   namespace: default
 spec:
   rules:
@@ -121,13 +101,13 @@ spec:
           port: 9000
           weight: 1
           kind: Service
-          group: ""
+          group: core
 
 ---
 kind: TLSRoute
 apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
-  name: tls-app-1
+  name: tls-app-default
   namespace: default
 spec:
   rules:
@@ -136,4 +116,4 @@ spec:
           port: 9000
           weight: 1
           kind: Service
-          group: ""
+          group: core

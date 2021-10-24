@@ -778,6 +778,8 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 			continue
 		}
 
+		// FIXME load balance backend refs
+
 		for _, routeRule := range tcpRoute.Spec.Rules {
 			if routeRule.BackendRefs == nil {
 				// Should not happen due to validation.
