@@ -11,25 +11,27 @@ spec:
 kind: Gateway
 apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
-  name: my-tcp-gateway
+  name: my-gateway
   namespace: default
 spec:
   gatewayClassName: my-gateway-class
   listeners: # Use GatewayClass defaults for listener definition.
-    - name: tcp
-      protocol: TCP
+    - name: tls
+      protocol: TLS
       port: 9000
+      tls:
+        mode: Passthrough
       allowedRoutes:
         kinds:
-          - kind: TCPRoute
+          - kind: TLSRoute
         namespaces:
           from: Same
 
 ---
-kind: TCPRoute
+kind: TLSRoute
 apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
-  name: tcp-app
+  name: tls-app
   namespace: default
 spec:
   rules:
