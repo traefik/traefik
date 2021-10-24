@@ -51,6 +51,7 @@ spec:
       allowedRoutes:
         kinds:
           - kind: HTTPRoute
+            group: "gateway.networking.k8s.io"
         namespaces:
           from: Selector
           selector:
@@ -68,6 +69,7 @@ spec:
       allowedRoutes:
         kinds:
           - kind: HTTPRoute
+            group: "gateway.networking.k8s.io"
         namespaces:
           from: Selector
           selector:
@@ -80,6 +82,7 @@ spec:
       allowedRoutes:
         kinds:
           - kind: TCPRoute
+            group: "gateway.networking.k8s.io"
         namespaces:
           from: Selector
           selector:
@@ -98,6 +101,7 @@ spec:
       allowedRoutes:
         kinds:
           - kind: TCPRoute
+            group: "gateway.networking.k8s.io"
         namespaces:
           from: Selector
           selector:
@@ -113,6 +117,7 @@ spec:
       allowedRoutes:
         kinds:
           - kind: TLSRoute
+            group: "gateway.networking.k8s.io"
         namespaces:
           from: Selector
           selector:
