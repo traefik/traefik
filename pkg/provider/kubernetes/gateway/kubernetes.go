@@ -608,6 +608,11 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha
 
 	var conditions []metav1.Condition
 	for _, httpRoute := range httpRoutes {
+		// FIXME status
+		if !shouldAttach(gateway, listener, httpRoute.Namespace, httpRoute.Spec.CommonRouteSpec) {
+			continue
+		}
+
 		hostRule, err := hostRule(httpRoute.Spec)
 		if err != nil {
 			conditions = append(conditions, metav1.Condition{
@@ -739,6 +744,11 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 
 	var conditions []metav1.Condition
 	for _, tcpRoute := range tcpRoutes {
+		// FIXME status
+		if !shouldAttach(gateway, listener, tcpRoute.Namespace, tcpRoute.Spec.CommonRouteSpec) {
+			continue
+		}
+
 		router := dynamic.TCPRouter{
 			Rule:        "HostSNI(`*`)", // Gateway listener hostname not available in TCP
 			EntryPoints: []string{ep},
@@ -845,6 +855,11 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 
 	var conditions []metav1.Condition
 	for _, tlsRoute := range tlsRoutes {
+		// FIXME status
+		if !shouldAttach(gateway, listener, tlsRoute.Namespace, tlsRoute.Spec.CommonRouteSpec) {
+			continue
+		}
+
 		rule, err := hostSNIRule(tlsRoute.Spec.Hostnames)
 		if err != nil {
 			// update "ResolvedRefs" status true with "DroppedRoutes" reason
@@ -922,6 +937,36 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 	}
 
 	return conditions
+}
+
+// FIXME tests
+func shouldAttach(gateway *v1alpha2.Gateway, listener v1alpha2.Listener, routeNamespace string, routeSpec v1alpha2.CommonRouteSpec) bool {
+	// FIXME check spec
+	if len(routeSpec.ParentRefs) == 0 {
+		return true
+	}
+
+	for _, parentRef := range routeSpec.ParentRefs {
+		if parentRef.Group == nil || parentRef.Kind == nil {
+			// Should never happen
+			continue
+		}
+
+		if parentRef.SectionName != nil && *parentRef.SectionName != listener.Name {
+			continue
+		}
+
+		namespace := routeNamespace
+		if parentRef.Namespace != nil {
+			namespace = string(*parentRef.Namespace)
+		}
+
+		if *parentRef.Kind == "Gateway" && string(parentRef.Name) == gateway.Name && namespace == gateway.Namespace {
+			return true
+		}
+	}
+
+	return false
 }
 
 func getRouteBindingSelectorNamespace(client Client, gatewayNamespace string, routeNamespaces *v1alpha2.RouteNamespaces) ([]string, error) {
