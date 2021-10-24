@@ -340,9 +340,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			continue
 		}
 
-		routeKinds := routeKinds(listener)
-
-		conditions := validateRouteKinds(listener, routeKinds)
+		routeKinds, conditions := getListenerRouteKinds(listener)
 		if len(conditions) > 0 {
 			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, conditions...)
 			continue
@@ -592,6 +590,78 @@ func (p *Provider) entryPointName(port v1alpha2.PortNumber, protocol v1alpha2.Pr
 	return "", fmt.Errorf("no matching entryPoint for port %d and protocol %q", port, protocol)
 }
 
+func getListenerRouteKinds(listener v1alpha2.Listener) ([]string, []metav1.Condition) {
+	var (
+		routeKinds []string
+		conditions []metav1.Condition
+	)
+
+	if listener.AllowedRoutes == nil || len(listener.AllowedRoutes.Kinds) == 0 {
+		switch listener.Protocol {
+		case v1alpha2.TCPProtocolType:
+			routeKinds = append(routeKinds, kindTCPRoute)
+		case v1alpha2.TLSProtocolType:
+			routeKinds = append(routeKinds, kindTCPRoute, kindTLSRoute)
+		case v1alpha2.HTTPProtocolType, v1alpha2.HTTPSProtocolType:
+			routeKinds = append(routeKinds, kindHTTPRoute)
+		}
+
+		return routeKinds, conditions
+	}
+
+	uniqRouteKinds := map[v1alpha2.Kind]struct{}{}
+	for _, routeKind := range listener.AllowedRoutes.Kinds {
+		if _, exists := uniqRouteKinds[routeKind.Kind]; exists {
+			continue
+		}
+
+		if routeKind.Group == nil || *routeKind.Group != v1alpha2.GroupName {
+			conditions = append(conditions, metav1.Condition{
+				Type:               string(v1alpha2.ListenerConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(v1alpha2.ListenerReasonInvalidRouteKinds),
+				Message:            fmt.Sprintf("Unsupported Route Group %v", routeKind.Group),
+			})
+			continue
+		}
+
+		if routeKind.Kind != kindHTTPRoute && routeKind.Kind != kindTCPRoute && routeKind.Kind != kindTLSRoute {
+			// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
+			conditions = append(conditions, metav1.Condition{
+				Type:               string(v1alpha2.ListenerConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(v1alpha2.ListenerReasonInvalidRouteKinds),
+				Message:            fmt.Sprintf("Unsupported Route Kind %v", routeKind),
+			})
+
+			continue
+		}
+
+		// Protocol compliant with route type
+		if listener.Protocol == v1alpha2.HTTPProtocolType && routeKind.Kind != kindHTTPRoute ||
+			listener.Protocol == v1alpha2.HTTPSProtocolType && routeKind.Kind != kindHTTPRoute ||
+			listener.Protocol == v1alpha2.TCPProtocolType && routeKind.Kind != kindTCPRoute ||
+			listener.Protocol == v1alpha2.TLSProtocolType && routeKind.Kind != kindTLSRoute && routeKind.Kind != kindTCPRoute {
+			// update "Detached" status true with "UnsupportedProtocol" reason
+			conditions = append(conditions, metav1.Condition{
+				Type:               string(v1alpha2.ListenerConditionDetached),
+				Status:             metav1.ConditionTrue,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(v1alpha2.ListenerReasonInvalidRouteKinds),
+				Message:            fmt.Sprintf("Listener protocol %q not supported with RouteGroupKind %s/%s", listener.Protocol, *routeKind.Group, routeKind.Kind),
+			})
+			continue
+		}
+
+		routeKinds = append(routeKinds, string(routeKind.Kind))
+		uniqRouteKinds[routeKind.Kind] = struct{}{}
+	}
+
+	return routeKinds, conditions
+}
+
 // FIXME Handle hostnames.
 func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha2.Listener, gateway *v1alpha2.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
 	if listener.AllowedRoutes == nil {
@@ -838,8 +908,8 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 			continue
 		}
 
-		routeService := &dynamic.TCPService{Weighted: &dynamic.TCPWeightedRoundRobin{}}
 		routeServiceKey := routerKey + "-wrr"
+		routeService := &dynamic.TCPService{Weighted: &dynamic.TCPWeightedRoundRobin{}}
 
 		for _, name := range ruleServiceNames {
 			service := dynamic.TCPWRRService{Name: name}
@@ -848,9 +918,9 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 			routeService.Weighted.Services = append(routeService.Weighted.Services, service)
 		}
 
-		router.Service = routeServiceKey
-
 		conf.TCP.Services[routeServiceKey] = routeService
+
+		router.Service = routeServiceKey
 		conf.TCP.Routers[routerKey] = &router
 	}
 
@@ -979,8 +1049,8 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 			continue
 		}
 
-		routeService := &dynamic.TCPService{Weighted: &dynamic.TCPWeightedRoundRobin{}}
 		routeServiceKey := routerKey + "-wrr"
+		routeService := &dynamic.TCPService{Weighted: &dynamic.TCPWeightedRoundRobin{}}
 
 		for _, name := range ruleServiceNames {
 			service := dynamic.TCPWRRService{Name: name}
@@ -989,9 +1059,9 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 			routeService.Weighted.Services = append(routeService.Weighted.Services, service)
 		}
 
-		router.Service = routeServiceKey
-
 		conf.TCP.Services[routeServiceKey] = routeService
+
+		router.Service = routeServiceKey
 		conf.TCP.Routers[routerKey] = &router
 	}
 

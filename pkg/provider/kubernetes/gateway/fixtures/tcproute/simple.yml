@@ -24,6 +24,7 @@ spec:
           from: Same
         kinds:
           - kind: TCPRoute
+            group: "gateway.networking.k8s.io"
 
 ---
 kind: TCPRoute

@@ -39,6 +39,7 @@ spec:
       allowedRoutes:
         kinds:
           - kind: TCPRoute
+            group: "gateway.networking.k8s.io"
         namespaces:
           from: Same
 
