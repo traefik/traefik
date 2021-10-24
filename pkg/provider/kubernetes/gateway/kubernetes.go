@@ -486,6 +486,87 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 	return listenerStatuses
 }
 
+func (p *Provider) makeGatewayStatus(listenerStatuses []v1alpha2.ListenerStatus) (v1alpha2.GatewayStatus, error) {
+	// As Status.Addresses are not implemented yet, we initialize an empty array to follow the API expectations.
+	gatewayStatus := v1alpha2.GatewayStatus{
+		Addresses: []v1alpha2.GatewayAddress{},
+	}
+
+	var result error
+	for i, listener := range listenerStatuses {
+		if len(listener.Conditions) == 0 {
+			// GatewayConditionReady "Ready", GatewayConditionReason "ListenerReady"
+			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
+				Type:               string(v1alpha2.ListenerConditionReady),
+				Status:             metav1.ConditionTrue,
+				LastTransitionTime: metav1.Now(),
+				Reason:             "ListenerReady",
+				Message:            "No error found",
+			})
+
+			continue
+		}
+
+		for _, condition := range listener.Conditions {
+			result = multierror.Append(result, errors.New(condition.Message))
+		}
+	}
+
+	if result != nil {
+		// GatewayConditionReady "Ready", GatewayConditionReason "ListenersNotValid"
+		gatewayStatus.Conditions = append(gatewayStatus.Conditions, metav1.Condition{
+			Type:               string(v1alpha2.GatewayConditionReady),
+			Status:             metav1.ConditionFalse,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(v1alpha2.GatewayReasonListenersNotValid),
+			Message:            "All Listeners must be valid",
+		})
+
+		return gatewayStatus, result
+	}
+
+	gatewayStatus.Listeners = listenerStatuses
+
+	gatewayStatus.Conditions = append(gatewayStatus.Conditions,
+		// update "Scheduled" status with "ResourcesAvailable" reason
+		metav1.Condition{
+			Type:               string(v1alpha2.GatewayConditionScheduled),
+			Status:             metav1.ConditionTrue,
+			Reason:             "ResourcesAvailable",
+			Message:            "Resources available",
+			LastTransitionTime: metav1.Now(),
+		},
+		// update "Ready" status with "ListenersValid" reason
+		metav1.Condition{
+			Type:               string(v1alpha2.GatewayConditionReady),
+			Status:             metav1.ConditionTrue,
+			Reason:             "ListenersValid",
+			Message:            "Listeners valid",
+			LastTransitionTime: metav1.Now(),
+		},
+	)
+
+	return gatewayStatus, nil
+}
+
+func (p *Provider) entryPointName(port v1alpha2.PortNumber, protocol v1alpha2.ProtocolType) (string, error) {
+	portStr := strconv.FormatInt(int64(port), 10)
+
+	for name, entryPoint := range p.EntryPoints {
+		if strings.HasSuffix(entryPoint.Address, ":"+portStr) {
+			// If the protocol is HTTP the entryPoint must have no TLS conf
+			// Not relevant for v1alpha2.TLSProtocolType && v1alpha2.TCPProtocolType
+			if protocol == v1alpha2.HTTPProtocolType && entryPoint.HasHTTPTLSConf {
+				continue
+			}
+
+			return name, nil
+		}
+	}
+
+	return "", fmt.Errorf("no matching entryPoint for port %d and protocol %q", port, protocol)
+}
+
 // FIXME Handle hostnames
 func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha2.Listener, gateway *v1alpha2.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
 	if listener.AllowedRoutes == nil {
@@ -863,69 +944,6 @@ func getRouteBindingSelectorNamespace(client Client, gatewayNamespace string, ro
 	}
 
 	return nil, fmt.Errorf("unsupported RouteSelectType: %q", *routeNamespaces.From)
-}
-
-func (p *Provider) makeGatewayStatus(listenerStatuses []v1alpha2.ListenerStatus) (v1alpha2.GatewayStatus, error) {
-	// As Status.Addresses are not implemented yet, we initialize an empty array to follow the API expectations.
-	gatewayStatus := v1alpha2.GatewayStatus{
-		Addresses: []v1alpha2.GatewayAddress{},
-	}
-
-	var result error
-	for i, listener := range listenerStatuses {
-		if len(listener.Conditions) == 0 {
-			// GatewayConditionReady "Ready", GatewayConditionReason "ListenerReady"
-			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
-				Type:               string(v1alpha2.ListenerConditionReady),
-				Status:             metav1.ConditionTrue,
-				LastTransitionTime: metav1.Now(),
-				Reason:             "ListenerReady",
-				Message:            "No error found",
-			})
-
-			continue
-		}
-
-		for _, condition := range listener.Conditions {
-			result = multierror.Append(result, errors.New(condition.Message))
-		}
-	}
-
-	if result != nil {
-		// GatewayConditionReady "Ready", GatewayConditionReason "ListenersNotValid"
-		gatewayStatus.Conditions = append(gatewayStatus.Conditions, metav1.Condition{
-			Type:               string(v1alpha2.GatewayConditionReady),
-			Status:             metav1.ConditionFalse,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(v1alpha2.GatewayReasonListenersNotValid),
-			Message:            "All Listeners must be valid",
-		})
-
-		return gatewayStatus, result
-	}
-
-	gatewayStatus.Listeners = listenerStatuses
-
-	gatewayStatus.Conditions = append(gatewayStatus.Conditions,
-		// update "Scheduled" status with "ResourcesAvailable" reason
-		metav1.Condition{
-			Type:               string(v1alpha2.GatewayConditionScheduled),
-			Status:             metav1.ConditionTrue,
-			Reason:             "ResourcesAvailable",
-			Message:            "Resources available",
-			LastTransitionTime: metav1.Now(),
-		},
-		// update "Ready" status with "ListenersValid" reason
-		metav1.Condition{
-			Type:               string(v1alpha2.GatewayConditionReady),
-			Status:             metav1.ConditionTrue,
-			Reason:             "ListenersValid",
-			Message:            "Listeners valid",
-			LastTransitionTime: metav1.Now(),
-		},
-	)
-
-	return gatewayStatus, nil
 }
 
 func hostRule(httpRouteSpec v1alpha2.HTTPRouteSpec) (string, error) {
