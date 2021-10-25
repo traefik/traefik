@@ -23,7 +23,7 @@ spec:
       allowedRoutes:
         kinds:
           - kind: TLSRoute
-            group: "gateway.networking.k8s.io"
+            group: gateway.networking.k8s.io
         namespaces:
           from: All
 
@@ -36,8 +36,8 @@ metadata:
 spec:
   parentRefs:
     - name: my-gateway
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
   hostnames:
     - foo.default
   rules:
@@ -58,8 +58,8 @@ spec:
   parentRefs:
     - name: my-gateway
       namespace: default
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
   hostnames:
     - foo.bar
   rules:

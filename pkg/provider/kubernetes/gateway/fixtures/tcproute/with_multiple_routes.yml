@@ -22,7 +22,7 @@ spec:
       allowedRoutes:
         kinds:
           - kind: TCPRoute
-            group: "gateway.networking.k8s.io"
+            group: gateway.networking.k8s.io
         namespaces:
           from: Same
 
@@ -32,7 +32,7 @@ spec:
       allowedRoutes:
         kinds:
           - kind: TCPRoute
-            group: "gateway.networking.k8s.io"
+            group: gateway.networking.k8s.io
         namespaces:
           from: Same
 
@@ -46,8 +46,8 @@ spec:
   parentRefs:
     - name: my-tcp-gateway
       sectionName: tcp-app-1
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
   rules:
     - backendRefs:
         - name: whoamitcp
@@ -66,8 +66,8 @@ spec:
   parentRefs:
     - name: my-tcp-gateway
       sectionName: tcp-app-2
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
   rules:
     - backendRefs:
         - name: whoamitcp

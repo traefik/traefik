@@ -63,11 +63,11 @@ metadata:
 spec:
   parentRefs:
     - name: my-gateway-http
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
     - name: my-gateway-https
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
   hostnames:
     - "foo.com"
   rules:

@@ -31,8 +31,8 @@ metadata:
 spec:
   parentRefs:
     - name: my-gateway
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
   hostnames:
     - "foo.com"
     - "*.bar.com"
