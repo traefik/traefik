@@ -177,6 +177,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 						EntryPoints: []string{"web"},
 						Service:     "foo-service",
 						Rule:        "HostSNI(`foo.bar`)",
+						TLS:         &dynamic.RouterTCPTLSConfig{},
 					},
 				},
 			},
@@ -236,6 +237,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 						EntryPoints: []string{"web"},
 						Service:     "wrong-service",
 						Rule:        "HostSNI(`bar.foo`)",
+						TLS:         &dynamic.RouterTCPTLSConfig{},
 					},
 				},
 				"bar": {
@@ -244,6 +246,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 						EntryPoints: []string{"web"},
 						Service:     "foo-service",
 						Rule:        "HostSNI(`foo.bar`)",
+						TLS:         &dynamic.RouterTCPTLSConfig{},
 					},
 				},
 			},
@@ -268,6 +271,32 @@ func TestRuntimeConfiguration(t *testing.T) {
 				},
 			},
 			expectedError: 2,
+		},
+		{
+			desc: "Router with HostSNI but no TLS",
+			tcpServiceConfig: map[string]*runtime.TCPServiceInfo{
+				"foo-service": {
+					TCPService: &dynamic.TCPService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
+							Servers: []dynamic.TCPServer{
+								{
+									Address: "127.0.0.1:80",
+								},
+							},
+						},
+					},
+				},
+			},
+			tcpRouterConfig: map[string]*runtime.TCPRouterInfo{
+				"foo": {
+					TCPRouter: &dynamic.TCPRouter{
+						EntryPoints: []string{"web"},
+						Service:     "foo-service",
+						Rule:        "HostSNI(`bar.foo`)",
+					},
+				},
+			},
+			expectedError: 1,
 		},
 	}
 
