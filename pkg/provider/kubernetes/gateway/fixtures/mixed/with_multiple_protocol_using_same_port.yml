@@ -32,7 +32,7 @@ spec:
       allowedRoutes:
         kinds:
           - kind: HTTPRoute
-            group: "gateway.networking.k8s.io"
+            group: gateway.networking.k8s.io
         namespaces:
           from: Same
 

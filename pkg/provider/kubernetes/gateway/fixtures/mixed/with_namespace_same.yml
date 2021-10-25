@@ -32,7 +32,7 @@ spec:
       allowedRoutes:
         kinds:
           - kind: HTTPRoute
-            group: "gateway.networking.k8s.io"
+            group: gateway.networking.k8s.io
         namespaces:
           from: Same
 
@@ -47,7 +47,7 @@ spec:
       allowedRoutes:
         kinds:
           - kind: HTTPRoute
-            group: "gateway.networking.k8s.io"
+            group: gateway.networking.k8s.io
         namespaces:
           from: Same
 
@@ -57,7 +57,7 @@ spec:
       allowedRoutes:
         kinds:
           - kind: TCPRoute
-            group: "gateway.networking.k8s.io"
+            group: gateway.networking.k8s.io
         namespaces:
           from: Same
 
@@ -73,7 +73,7 @@ spec:
       allowedRoutes:
         kinds:
           - kind: TCPRoute
-            group: "gateway.networking.k8s.io"
+            group: gateway.networking.k8s.io
         namespaces:
           from: Same
 
@@ -86,7 +86,7 @@ spec:
       allowedRoutes:
         kinds:
           - kind: TLSRoute
-            group: "gateway.networking.k8s.io"
+            group: gateway.networking.k8s.io
         namespaces:
           from: Same
 
@@ -100,12 +100,12 @@ spec:
   parentRefs:
     - name: my-gateway
       sectionName: http
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
     - name: my-gateway
       sectionName: https
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
   rules:
     - backendRefs:
         - name: whoami
@@ -124,12 +124,12 @@ spec:
   parentRefs:
     - name: my-gateway
       sectionName: tcp
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
     - name: my-gateway
       sectionName: tls
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
   rules:
     - backendRefs:
         - name: whoamitcp
@@ -148,8 +148,8 @@ spec:
   parentRefs:
     - name: my-gateway
       sectionName: tls2
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
   rules:
     - backendRefs:
         - name: whoamitcp
@@ -169,13 +169,13 @@ spec:
     - name: my-gateway
       namespace: default
       sectionName: http
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
     - name: my-gateway
       namespace: default
       sectionName: https
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
   rules:
     - backendRefs:
         - name: whoami-bar
@@ -195,13 +195,13 @@ spec:
     - name: my-gateway
       namespace: default
       sectionName: tcp
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
     - name: my-gateway
       namespace: default
       sectionName: tls
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
   rules:
     - backendRefs:
         - name: whoamitcp-bar
@@ -221,8 +221,8 @@ spec:
     - name: my-gateway
       namespace: default
       sectionName: tls2
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
   rules:
     - backendRefs:
         - name: whoamitcp-bar

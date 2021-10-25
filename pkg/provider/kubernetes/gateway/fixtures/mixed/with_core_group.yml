@@ -32,7 +32,7 @@ spec:
       allowedRoutes:
         kinds:
           - kind: HTTPRoute
-            group: "gateway.networking.k8s.io"
+            group: gateway.networking.k8s.io
         namespaces:
           from: Same
 
@@ -47,7 +47,7 @@ spec:
       allowedRoutes:
         kinds:
           - kind: HTTPRoute
-            group: "gateway.networking.k8s.io"
+            group: gateway.networking.k8s.io
         namespaces:
           from: Same
 
@@ -57,7 +57,7 @@ spec:
       allowedRoutes:
         kinds:
           - kind: TCPRoute
-            group: "gateway.networking.k8s.io"
+            group: gateway.networking.k8s.io
         namespaces:
           from: Same
 
@@ -73,7 +73,7 @@ spec:
       allowedRoutes:
         kinds:
           - kind: TCPRoute
-            group: "gateway.networking.k8s.io"
+            group: gateway.networking.k8s.io
         namespaces:
           from: Same
 
@@ -86,8 +86,8 @@ metadata:
 spec:
   parentRefs:
     - name: my-gateway
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
   rules:
     - backendRefs:
         - name: whoami
@@ -105,8 +105,8 @@ metadata:
 spec:
   parentRefs:
     - name: my-gateway
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
   rules:
     - backendRefs:
         - name: whoamitcp
@@ -124,8 +124,8 @@ metadata:
 spec:
   parentRefs:
     - name: my-gateway
-      kind: "Gateway"
-      group: "gateway.networking.k8s.io"
+      kind: Gateway
+      group: gateway.networking.k8s.io
   rules:
     - backendRefs:
         - name: whoamitcp
