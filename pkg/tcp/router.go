@@ -141,12 +141,15 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 		return
 	}
 
+	// for real, the handler returned here is always the same: it is the
+	// httpsForwarder that is used for all HTTPS connections that match
 	handler = r.muxerHTTPS.Match(connData)
 	if handler != nil {
 		handler.ServeTCP(r.GetConn(conn, peeked))
 		return
 	}
 
+	// needed to handle 404s for HTTPS
 	if r.httpsForwarder != nil {
 		r.httpsForwarder.ServeTCP(r.GetConn(conn, peeked))
 		return
@@ -209,7 +212,6 @@ func (r *Router) HTTPForwarder(handler Handler) {
 // HTTPSForwarder sets the tcp handler that will forward the TLS connections to an http handler.
 func (r *Router) HTTPSForwarder(handler Handler) {
 	for sniHost, tlsConf := range r.hostHTTPTLSConfig {
-		// TODO check if we ignore the error
 		err := r.muxerHTTPS.AddRoute("HostSNI(`"+sniHost+"`)", &TLSHandler{
 			Next:   handler,
 			Config: tlsConf,
@@ -225,15 +227,13 @@ func (r *Router) HTTPSForwarder(handler Handler) {
 	}
 }
 
-// TODO(mpl): rename
 // HTTPHandler attaches http handlers on the router.
-func (r *Router) HTTPHandler(handler http.Handler) {
+func (r *Router) SetHTTPHandler(handler http.Handler) {
 	r.httpHandler = handler
 }
 
-// TODO(mpl): rename
 // HTTPSHandler attaches https handlers on the router.
-func (r *Router) HTTPSHandler(handler http.Handler, config *tls.Config) {
+func (r *Router) SetHTTPSHandler(handler http.Handler, config *tls.Config) {
 	r.httpsHandler = handler
 	r.httpsTLSConfig = config
 }

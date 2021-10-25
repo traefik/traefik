@@ -18,6 +18,8 @@ import (
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 )
 
+// TODO: packages organization
+
 type middlewareBuilder interface {
 	BuildChain(ctx context.Context, names []string) *tcp.Chain
 }
@@ -101,7 +103,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		return nil, err
 	}
 
-	router.HTTPHandler(handlerHTTP)
+	router.SetHTTPHandler(handlerHTTP)
 
 	defaultTLSConf, err := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, traefiktls.DefaultTLSConfigName)
 	if err != nil {
@@ -225,9 +227,6 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			tlsOptionSNI := findTLSOptionName(tlsOptionsForHost, serverName)
 			tlsOptionHeader := findTLSOptionName(tlsOptionsForHost, host)
 
-			// TODO(mpl): wtf? why are we comparing the options and not the host names themselves?
-			// Ah ok, so we're not really disallowing Domain fronting, because we have to be
-			// nice to accidental domain fronting due to HTTP/2
 			if tlsOptionHeader != tlsOptionSNI {
 				log.WithoutContext().
 					WithField("host", host).
@@ -242,7 +241,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		handlerHTTPS.ServeHTTP(rw, req)
 	})
 
-	router.HTTPSHandler(sniCheck, defaultTLSConf)
+	router.SetHTTPSHandler(sniCheck, defaultTLSConf)
 
 	logger := log.FromContext(ctx)
 	for hostSNI, tlsConfigs := range tlsOptionsForHostSNI {
@@ -298,19 +297,25 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 		domains, err := tcp.ParseHostSNI(routerConfig.Rule)
 		if err != nil {
-			routerErr := fmt.Errorf("unknown rule %s", routerConfig.Rule)
+			routerErr := fmt.Errorf("invalid rule: %q , %w", routerConfig.Rule, err)
 			routerConfig.AddError(routerErr, true)
 			logger.Error(routerErr)
 			continue
 		}
 
 		if len(domains) > 0 && routerConfig.TLS == nil {
-			// TODO(mpl): we say that, but we actually still do router.AddRoute afterwards, so do we really want that message?
-			logger.Warn("TCP Router ignored, cannot specify a Host rule without TLS")
+			routerErr := fmt.Errorf("invalid rule: %q , HostSNI matcher but no TLS", routerConfig.Rule)
+			logger.Debug(routerErr)
+			routerConfig.AddError(routerErr, true)
+			err := router.AddRoute(routerConfig.Rule, handler)
+			if err != nil {
+				logger.Debug(err)
+				routerConfig.AddError(err, true)
+			}
 		}
 
 		if routerConfig.TLS == nil {
-			logger.Debugf("ADDING route for %s", routerConfig.Rule)
+			logger.Debugf("Adding route for %q", routerConfig.Rule)
 			err := router.AddRoute(routerConfig.Rule, handler)
 			if err != nil {
 				routerConfig.AddError(err, true)
@@ -320,7 +325,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		}
 
 		if routerConfig.TLS.Passthrough {
-			logger.Debugf("ADDING route for %s", routerConfig.Rule)
+			logger.Debugf("Adding Passthrough route for %q", routerConfig.Rule)
 			err := router.AddRouteTLS(routerConfig.Rule, handler, nil)
 			if err != nil {
 				routerConfig.AddError(err, true)
@@ -330,15 +335,13 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		}
 
 		for _, domain := range domains {
-			// TODO(mpl): isn't that message redundant with the ones further?
-			logger.Debugf("Adding route %s on TCP", domain)
-
-			if !rules.IsASCII(domain) {
-				asciiError := fmt.Errorf("invalid domain name value %q, non-ASCII characters are not allowed", domain)
-				routerConfig.AddError(asciiError, true)
-				logger.Debug(asciiError)
+			if rules.IsASCII(domain) {
 				continue
 			}
+
+			asciiError := fmt.Errorf("invalid domain name value %q, non-ASCII characters are not allowed", domain)
+			routerConfig.AddError(asciiError, true)
+			logger.Debug(asciiError)
 		}
 
 		tlsOptionsName := routerConfig.TLS.Options
@@ -372,6 +375,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		// it's all good. Otherwise, we would have to do as for HTTPS, i.e. disallow
 		// different TLS configs for the same HostSNIs.
 
+		logger.Debugf("Adding TLS route for %q", routerConfig.Rule)
 		err = router.AddRouteTLS(routerConfig.Rule, handler, tlsConf)
 		if err != nil {
 			routerConfig.AddError(err, true)
