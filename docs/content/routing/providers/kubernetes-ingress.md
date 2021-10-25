@@ -209,6 +209,11 @@ which in turn will create the resulting routers, services, handlers, etc.
 
 ## Annotations
 
+!!! warning "Referencing resources in annotations"
+    
+    In an annotation, when referencing a resource defined by another provider,
+    the [provider namespace syntax](../../providers/overview.md#provider-namespace) must be used.
+
 #### On Ingress
 
 ??? info "`traefik.ingress.kubernetes.io/router.entrypoints`"
@@ -224,7 +229,7 @@ which in turn will create the resulting routers, services, handlers, etc.
     See [middlewares](../routers/index.md#middlewares) and [middlewares overview](../../middlewares/overview.md) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/router.middlewares: auth@file,prefix@kubernetescrd,cb@file
+    traefik.ingress.kubernetes.io/router.middlewares: auth@file,default-prefix@kubernetescrd
     ```
 
 ??? info "`traefik.ingress.kubernetes.io/router.priority`"
@@ -283,7 +288,7 @@ which in turn will create the resulting routers, services, handlers, etc.
     See [options](../routers/index.md#options) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/router.tls.options: foobar
+    traefik.ingress.kubernetes.io/router.tls.options: foobar@file
     ```
 
 #### On Service
