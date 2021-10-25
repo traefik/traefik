@@ -322,26 +322,19 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 	for i, listener := range gateway.Spec.Listeners {
 		listenerStatuses[i] = v1alpha2.ListenerStatus{
 			Name:           listener.Name,
-			SupportedKinds: []v1alpha2.RouteGroupKind{}, // FIXME
+			SupportedKinds: []v1alpha2.RouteGroupKind{},
 			Conditions:     []metav1.Condition{},
 		}
 
-		// Supported Protocol
-		if listener.Protocol != v1alpha2.HTTPProtocolType && listener.Protocol != v1alpha2.HTTPSProtocolType &&
-			listener.Protocol != v1alpha2.TCPProtocolType && listener.Protocol != v1alpha2.TLSProtocolType {
-			// update "Detached" status true with "UnsupportedProtocol" reason
-			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
-				Type:               string(v1alpha2.ListenerConditionDetached),
-				Status:             metav1.ConditionTrue,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(v1alpha2.ListenerReasonUnsupportedProtocol),
-				Message:            fmt.Sprintf("Unsupported listener protocol %q", listener.Protocol),
-			})
-
+		supportedKinds, conditions := supportedRouteKinds(listener.Protocol)
+		if len(conditions) > 0 {
+			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, conditions...)
 			continue
 		}
 
-		routeKinds, conditions := getListenerRouteKinds(listener)
+		listenerStatuses[i].SupportedKinds = supportedKinds
+
+		routeKinds, conditions := getAllowedRouteKinds(listener, supportedKinds)
 		if len(conditions) > 0 {
 			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, conditions...)
 			continue
@@ -380,7 +373,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 				Status:             metav1.ConditionTrue,
 				LastTransitionTime: metav1.Now(),
 				Reason:             "InvalidTLSConfiguration", // TODO check the spec if a proper reason is introduced at some point
-				Message:            fmt.Sprintf("TLS configuration must no be defined when using HTTP or TCP protocol"),
+				Message:            "TLS configuration must no be defined when using HTTP or TCP protocol",
 			})
 
 			continue
@@ -496,7 +489,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 		}
 
 		for _, routeKind := range routeKinds {
-			switch routeKind {
+			switch routeKind.Kind {
 			case kindHTTPRoute:
 				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, gatewayHTTPRouteToHTTPConf(ctx, ep, listener, gateway, client, conf)...)
 			case kindTCPRoute:
@@ -591,73 +584,67 @@ func (p *Provider) entryPointName(port v1alpha2.PortNumber, protocol v1alpha2.Pr
 	return "", fmt.Errorf("no matching entryPoint for port %d and protocol %q", port, protocol)
 }
 
-func getListenerRouteKinds(listener v1alpha2.Listener) ([]string, []metav1.Condition) {
+func supportedRouteKinds(protocol v1alpha2.ProtocolType) ([]v1alpha2.RouteGroupKind, []metav1.Condition) {
+	group := v1alpha2.Group(v1alpha2.GroupName)
+
+	switch protocol {
+	case v1alpha2.TCPProtocolType:
+		return []v1alpha2.RouteGroupKind{{Kind: kindTCPRoute, Group: &group}}, nil
+
+	case v1alpha2.HTTPProtocolType, v1alpha2.HTTPSProtocolType:
+		return []v1alpha2.RouteGroupKind{{Kind: kindHTTPRoute, Group: &group}}, nil
+
+	case v1alpha2.TLSProtocolType:
+		return []v1alpha2.RouteGroupKind{
+			{Kind: kindTCPRoute, Group: &group},
+			{Kind: kindTLSRoute, Group: &group},
+		}, nil
+	}
+
+	return nil, []metav1.Condition{{
+		Type:               string(v1alpha2.ListenerConditionDetached),
+		Status:             metav1.ConditionTrue,
+		LastTransitionTime: metav1.Now(),
+		Reason:             string(v1alpha2.ListenerReasonUnsupportedProtocol),
+		Message:            fmt.Sprintf("Unsupported listener protocol %q", protocol),
+	}}
+}
+
+func getAllowedRouteKinds(listener v1alpha2.Listener, supportedKinds []v1alpha2.RouteGroupKind) ([]v1alpha2.RouteGroupKind, []metav1.Condition) {
+	if listener.AllowedRoutes == nil || len(listener.AllowedRoutes.Kinds) == 0 {
+		return supportedKinds, nil
+	}
+
 	var (
-		routeKinds []string
+		routeKinds []v1alpha2.RouteGroupKind
 		conditions []metav1.Condition
 	)
 
-	if listener.AllowedRoutes == nil || len(listener.AllowedRoutes.Kinds) == 0 {
-		switch listener.Protocol {
-		case v1alpha2.TCPProtocolType:
-			routeKinds = append(routeKinds, kindTCPRoute)
-		case v1alpha2.TLSProtocolType:
-			routeKinds = append(routeKinds, kindTCPRoute, kindTLSRoute)
-		case v1alpha2.HTTPProtocolType, v1alpha2.HTTPSProtocolType:
-			routeKinds = append(routeKinds, kindHTTPRoute)
-		}
-
-		return routeKinds, conditions
-	}
-
 	uniqRouteKinds := map[v1alpha2.Kind]struct{}{}
 	for _, routeKind := range listener.AllowedRoutes.Kinds {
-		if _, exists := uniqRouteKinds[routeKind.Kind]; exists {
-			continue
+		var isSupported bool
+		for _, kind := range supportedKinds {
+			if routeKind.Kind == kind.Kind && routeKind.Group != nil && *routeKind.Group == *kind.Group {
+				isSupported = true
+				break
+			}
 		}
 
-		if routeKind.Group == nil || *routeKind.Group != v1alpha2.GroupName {
-			conditions = append(conditions, metav1.Condition{
-				Type:               string(v1alpha2.ListenerConditionResolvedRefs),
-				Status:             metav1.ConditionFalse,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(v1alpha2.ListenerReasonInvalidRouteKinds),
-				Message:            fmt.Sprintf("Unsupported Route Group %v", routeKind.Group),
-			})
-			continue
-		}
-
-		if routeKind.Kind != kindHTTPRoute && routeKind.Kind != kindTCPRoute && routeKind.Kind != kindTLSRoute {
-			// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
-			conditions = append(conditions, metav1.Condition{
-				Type:               string(v1alpha2.ListenerConditionResolvedRefs),
-				Status:             metav1.ConditionFalse,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(v1alpha2.ListenerReasonInvalidRouteKinds),
-				Message:            fmt.Sprintf("Unsupported Route Kind %v", routeKind),
-			})
-
-			continue
-		}
-
-		// Protocol compliant with route type
-		if listener.Protocol == v1alpha2.HTTPProtocolType && routeKind.Kind != kindHTTPRoute ||
-			listener.Protocol == v1alpha2.HTTPSProtocolType && routeKind.Kind != kindHTTPRoute ||
-			listener.Protocol == v1alpha2.TCPProtocolType && routeKind.Kind != kindTCPRoute ||
-			listener.Protocol == v1alpha2.TLSProtocolType && routeKind.Kind != kindTLSRoute && routeKind.Kind != kindTCPRoute {
-			// update "Detached" status true with "UnsupportedProtocol" reason
+		if !isSupported {
 			conditions = append(conditions, metav1.Condition{
 				Type:               string(v1alpha2.ListenerConditionDetached),
 				Status:             metav1.ConditionTrue,
 				LastTransitionTime: metav1.Now(),
 				Reason:             string(v1alpha2.ListenerReasonInvalidRouteKinds),
-				Message:            fmt.Sprintf("Listener protocol %q not supported with RouteGroupKind %s/%s", listener.Protocol, *routeKind.Group, routeKind.Kind),
+				Message:            fmt.Sprintf("Listener protocol %q does not support RouteGroupKind %v/%s", listener.Protocol, routeKind.Group, routeKind.Kind),
 			})
 			continue
 		}
 
-		routeKinds = append(routeKinds, string(routeKind.Kind))
-		uniqRouteKinds[routeKind.Kind] = struct{}{}
+		if _, exists := uniqRouteKinds[routeKind.Kind]; !exists {
+			routeKinds = append(routeKinds, routeKind)
+			uniqRouteKinds[routeKind.Kind] = struct{}{}
+		}
 	}
 
 	return routeKinds, conditions

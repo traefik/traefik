@@ -5092,6 +5092,124 @@ func Test_matchingHostnames(t *testing.T) {
 	}
 }
 
+func Test_getAllowedRoutes(t *testing.T) {
+	tests := []struct {
+		desc                string
+		listener            v1alpha2.Listener
+		supportedRouteKinds []v1alpha2.RouteGroupKind
+		wantKinds           []v1alpha2.RouteGroupKind
+		wantErr             bool
+	}{
+		{
+			desc: "Empty",
+		},
+		{
+			desc: "Empty AllowedRoutes",
+			supportedRouteKinds: []v1alpha2.RouteGroupKind{
+				{Kind: kindTLSRoute, Group: groupPtr(v1alpha2.GroupName)},
+			},
+			wantKinds: []v1alpha2.RouteGroupKind{
+				{Kind: kindTLSRoute, Group: groupPtr(v1alpha2.GroupName)},
+			},
+		},
+		{
+			desc: "AllowedRoutes with unsupported Group",
+			listener: v1alpha2.Listener{
+				AllowedRoutes: &v1alpha2.AllowedRoutes{
+					Kinds: []v1alpha2.RouteGroupKind{{
+						Kind: kindTLSRoute, Group: groupPtr("foo"),
+					}},
+				},
+			},
+			supportedRouteKinds: []v1alpha2.RouteGroupKind{
+				{Kind: kindTLSRoute, Group: groupPtr(v1alpha2.GroupName)},
+			},
+			wantErr: true,
+		},
+		{
+			desc: "AllowedRoutes with nil Group",
+			listener: v1alpha2.Listener{
+				AllowedRoutes: &v1alpha2.AllowedRoutes{
+					Kinds: []v1alpha2.RouteGroupKind{{
+						Kind: kindTLSRoute, Group: nil,
+					}},
+				},
+			},
+			supportedRouteKinds: []v1alpha2.RouteGroupKind{
+				{Kind: kindTLSRoute, Group: groupPtr(v1alpha2.GroupName)},
+			},
+			wantErr: true,
+		},
+		{
+			desc: "AllowedRoutes with unsupported Kind",
+			listener: v1alpha2.Listener{
+				AllowedRoutes: &v1alpha2.AllowedRoutes{
+					Kinds: []v1alpha2.RouteGroupKind{{
+						Kind: "foo", Group: groupPtr(v1alpha2.GroupName),
+					}},
+				},
+			},
+			supportedRouteKinds: []v1alpha2.RouteGroupKind{
+				{Kind: kindTLSRoute, Group: groupPtr(v1alpha2.GroupName)},
+			},
+			wantErr: true,
+		},
+		{
+			desc: "Supported AllowedRoutes",
+			listener: v1alpha2.Listener{
+				AllowedRoutes: &v1alpha2.AllowedRoutes{
+					Kinds: []v1alpha2.RouteGroupKind{{
+						Kind: kindTLSRoute, Group: groupPtr(v1alpha2.GroupName),
+					}},
+				},
+			},
+			supportedRouteKinds: []v1alpha2.RouteGroupKind{
+				{Kind: kindTLSRoute, Group: groupPtr(v1alpha2.GroupName)},
+			},
+			wantKinds: []v1alpha2.RouteGroupKind{
+				{Kind: kindTLSRoute, Group: groupPtr(v1alpha2.GroupName)},
+			},
+		},
+		{
+			desc: "Supported AllowedRoutes with duplicates",
+			listener: v1alpha2.Listener{
+				AllowedRoutes: &v1alpha2.AllowedRoutes{
+					Kinds: []v1alpha2.RouteGroupKind{
+						{Kind: kindTLSRoute, Group: groupPtr(v1alpha2.GroupName)},
+						{Kind: kindTCPRoute, Group: groupPtr(v1alpha2.GroupName)},
+						{Kind: kindTLSRoute, Group: groupPtr(v1alpha2.GroupName)},
+						{Kind: kindTCPRoute, Group: groupPtr(v1alpha2.GroupName)},
+					},
+				},
+			},
+			supportedRouteKinds: []v1alpha2.RouteGroupKind{
+				{Kind: kindTLSRoute, Group: groupPtr(v1alpha2.GroupName)},
+				{Kind: kindTCPRoute, Group: groupPtr(v1alpha2.GroupName)},
+			},
+			wantKinds: []v1alpha2.RouteGroupKind{
+				{Kind: kindTLSRoute, Group: groupPtr(v1alpha2.GroupName)},
+				{Kind: kindTCPRoute, Group: groupPtr(v1alpha2.GroupName)},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			got, conditions := getAllowedRouteKinds(test.listener, test.supportedRouteKinds)
+			if test.wantErr {
+				require.NotEmpty(t, conditions, "no conditions")
+				return
+			}
+
+			require.Len(t, conditions, 0)
+			assert.Equal(t, test.wantKinds, got)
+		})
+	}
+}
+
 func hostnamePtr(hostname v1alpha2.Hostname) *v1alpha2.Hostname {
 	return &hostname
 }
