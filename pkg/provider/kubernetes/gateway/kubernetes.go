@@ -1221,7 +1221,6 @@ func hostRule(hostnames []v1alpha2.Hostname) (string, error) {
 	return hostRegexp, nil
 }
 
-// FIXME: validate that route hostnames does not contain a wildcard (not supported by Traefik)
 func hostSNIRule(hostnames []v1alpha2.Hostname) (string, error) {
 	var matchers []string
 	uniqHostnames := map[v1alpha2.Hostname]struct{}{}
@@ -1237,10 +1236,9 @@ func hostSNIRule(hostnames []v1alpha2.Hostname) (string, error) {
 
 		h := string(hostname)
 
-		// first naive validation, should be improved
-		wildcardNb := strings.Count(h, "*")
-		if wildcardNb != 0 && !strings.HasPrefix(h, "*.") || wildcardNb > 1 {
-			return "", fmt.Errorf("invalid hostname: %q", h)
+		// TODO support wildcard hostnames with an HostSNI regexp matcher
+		if strings.Contains(h, "*") {
+			return "", fmt.Errorf("wildcard hostname is not supported: %q", h)
 		}
 
 		matchers = append(matchers, "`"+h+"`")
