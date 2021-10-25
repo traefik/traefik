@@ -1,65 +1,70 @@
 ---
 kind: GatewayClass
-apiVersion: networking.x-k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: my-gateway-class
 spec:
-  controller: traefik.io/gateway-controller
+  controllerName: traefik.io/gateway-controller
 
 ---
 kind: Gateway
-apiVersion: networking.x-k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: my-gateway
   namespace: default
 spec:
   gatewayClassName: my-gateway-class
-  listeners:  # Use GatewayClass defaults for listener definition.
-    - protocol: HTTP
+  listeners: # Use GatewayClass defaults for listener definition.
+    - name: http
+      protocol: HTTP
       port: 80
-      routes:
-        kind: HTTPRoute
+      allowedRoutes:
         namespaces:
           from: Same
-        selector:
-          matchLabels:
-            app: foo
 
 ---
 kind: HTTPRoute
-apiVersion: networking.x-k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: http-app-1
   namespace: default
-  labels:
-    app: foo
 spec:
+  parentRefs:
+    - name: my-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
   hostnames:
     - "foo.com"
   rules:
     - matches:
         - path:
-            type: Prefix
+            type: PathPrefix
             value: /bar
           headers:
-            type: Exact
-            values:
-              my-header: foo
-              my-header2: bar
-      forwardTo:
-        - serviceName: whoami
+            - name: my-header
+              type: Exact
+              value: foo
+            - name: my-header2
+              type: Exact
+              value: bar
+      backendRefs:
+        - name: whoami
           port: 80
           weight: 1
+          kind: Service
+          group: ""
 
     - matches:
         - path:
             type: Exact
             value: /bar
           headers:
-            type: Exact
-            values:
-              my-header: bar
-      forwardTo:
-        - serviceName: whoami
+            - name: my-header
+              type: Exact
+              value: bar
+      backendRefs:
+        - name: whoami
           port: 80
           weight: 1
+          kind: Service
+          group: ""

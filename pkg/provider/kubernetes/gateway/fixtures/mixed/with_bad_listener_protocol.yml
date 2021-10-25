@@ -1,41 +1,41 @@
 ---
 kind: GatewayClass
-apiVersion: networking.x-k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: my-gateway-class
 spec:
-  controller: traefik.io/gateway-controller
+  controllerName: traefik.io/gateway-controller
 
 ---
 kind: Gateway
-apiVersion: networking.x-k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: my-gateway
   namespace: default
 spec:
   gatewayClassName: my-gateway-class
   listeners:
-    - protocol: UNKNOWN
+    - name: unknown
+      protocol: UNKNOWN
       port: 9080
-      routes:
-        kind: HTTPRoute
+      allowedRoutes:
+        kinds:
+          - kind: HTTPRoute
+            group: gateway.networking.k8s.io
         namespaces:
           from: Same
-        selector:
-          matchLabels:
-            app: http-app
 
 ---
 kind: HTTPRoute
-apiVersion: networking.x-k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: http-app-1
   namespace: default
-  labels:
-    app: http-app
 spec:
   rules:
-    - forwardTo:
-        - serviceName: whoami
+    - backendRefs:
+        - name: whoami
           port: 80
           weight: 1
+          kind: Service
+          group: ""
