@@ -1,38 +1,33 @@
 ---
 kind: GatewayClass
-apiVersion: networking.x-k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: my-gateway-class
 spec:
-  controller: unkown.io/gateway-controller
+  controllerName: unkown.io/gateway-controller
 
 ---
 kind: Gateway
-apiVersion: networking.x-k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: my-gateway
   namespace: default
 spec:
   gatewayClassName: my-gateway-class
-  listeners:  # Use GatewayClass defaults for listener definition.
-    - protocol: HTTP
+  listeners: # Use GatewayClass defaults for listener definition.
+    - name: http
+      protocol: HTTP
       port: 80
-      routes:
-        kind: HTTPRoute
+      allowedRoutes:
         namespaces:
           from: Same
-        selector:
-          matchLabels:
-            app: foo
 
 ---
 kind: HTTPRoute
-apiVersion: networking.x-k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: http-app-1
   namespace: default
-  labels:
-    app: foo
 spec:
   hostnames:
     - "foo.com"
@@ -41,7 +36,7 @@ spec:
         - path:
             type: Exact
             value: /bar
-      forwardTo:
-        - serviceName: whoami
+      backendRefs:
+        - name: whoami
           port: 80
           weight: 1
