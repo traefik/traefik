@@ -20,7 +20,7 @@ import (
 
 func TestShutdownHijacked(t *testing.T) {
 	router := &tcp.Router{}
-	router.HTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		conn, _, err := rw.(http.Hijacker).Hijack()
 		require.NoError(t, err)
 
@@ -34,7 +34,7 @@ func TestShutdownHijacked(t *testing.T) {
 
 func TestShutdownHTTP(t *testing.T) {
 	router := &tcp.Router{}
-	router.HTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 		time.Sleep(time.Second)
 	}))
@@ -169,7 +169,7 @@ func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 	require.NoError(t, err)
 
 	router := &tcp.Router{}
-	router.HTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 
@@ -205,7 +205,7 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 	require.NoError(t, err)
 
 	router := &tcp.Router{}
-	router.HTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 
