@@ -227,12 +227,12 @@ func (r *Router) HTTPSForwarder(handler Handler) {
 	}
 }
 
-// HTTPHandler attaches http handlers on the router.
+// SetHTTPHandler attaches http handlers on the router.
 func (r *Router) SetHTTPHandler(handler http.Handler) {
 	r.httpHandler = handler
 }
 
-// HTTPSHandler attaches https handlers on the router.
+// SetHTTPSHandler attaches https handlers on the router.
 func (r *Router) SetHTTPSHandler(handler http.Handler, config *tls.Config) {
 	r.httpsHandler = handler
 	r.httpsTLSConfig = config
