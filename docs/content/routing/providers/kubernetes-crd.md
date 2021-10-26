@@ -146,8 +146,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       entryPoints:
         - udpep
       routes:
-      - kind: Rule
-        services:
+      - services:
           - name: whoamiudp
             port: 8080
     ```
