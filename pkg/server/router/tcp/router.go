@@ -97,6 +97,9 @@ type nameAndConfig struct {
 }
 
 func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, configsHTTP map[string]*runtime.RouterInfo, handlerHTTP, handlerHTTPS http.Handler) (*tcp.Router, error) {
+
+	priorityCounter := 1
+
 	// Build a new Router.
 	router, err := tcp.NewRouter()
 	if err != nil {
@@ -309,30 +312,35 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			routerErr := fmt.Errorf("invalid rule: %q , has HostSNI matcher, but no TLS on router", routerConfig.Rule)
 			logger.Debug(routerErr)
 			routerConfig.AddError(routerErr, true)
-			err := router.AddRoute(routerConfig.Rule, handler)
-			if err != nil {
-				logger.Debug(err)
-				routerConfig.AddError(err, true)
-			}
+			// TODO: make sure this does not break anything.
+			/*
+				err := router.AddRoute(routerConfig.Rule, -1, handler)
+				if err != nil {
+					logger.Debug(err)
+					routerConfig.AddError(err, true)
+				}
+			*/
 		}
 
 		if routerConfig.TLS == nil {
 			logger.Debugf("Adding route for %q", routerConfig.Rule)
-			err := router.AddRoute(routerConfig.Rule, handler)
+			err := router.AddRoute(routerConfig.Rule, priorityCounter, handler)
 			if err != nil {
 				routerConfig.AddError(err, true)
 				logger.Debug(err)
 			}
+			priorityCounter++
 			continue
 		}
 
 		if routerConfig.TLS.Passthrough {
 			logger.Debugf("Adding Passthrough route for %q", routerConfig.Rule)
-			err := router.AddRouteTLS(routerConfig.Rule, handler, nil)
+			err := router.AddRouteTLS(routerConfig.Rule, priorityCounter, handler, nil)
 			if err != nil {
 				routerConfig.AddError(err, true)
 				logger.Debug(err)
 			}
+			priorityCounter++
 			continue
 		}
 
@@ -378,11 +386,12 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		// different TLS configs for the same HostSNIs.
 
 		logger.Debugf("Adding TLS route for %q", routerConfig.Rule)
-		err = router.AddRouteTLS(routerConfig.Rule, handler, tlsConf)
+		err = router.AddRouteTLS(routerConfig.Rule, priorityCounter, handler, tlsConf)
 		if err != nil {
 			routerConfig.AddError(err, true)
 			logger.Debug(err)
 		}
+		priorityCounter++
 	}
 
 	return router, nil

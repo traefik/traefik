@@ -167,18 +167,18 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 }
 
 // AddRoute defines a handler for the given rule.
-func (r *Router) AddRoute(rule string, target Handler) error {
-	return r.muxerTCP.AddRoute(rule, target)
+func (r *Router) AddRoute(rule string, priority int, target Handler) error {
+	return r.muxerTCP.AddRoute(rule, priority, target)
 }
 
 // AddRouteTLS defines a handler for a given rule and sets the matching tlsConfig.
-func (r *Router) AddRouteTLS(rule string, target Handler, config *tls.Config) error {
+func (r *Router) AddRouteTLS(rule string, priority int, target Handler, config *tls.Config) error {
 	// TLS PassThrough
 	if config == nil {
-		return r.muxerTCPTLS.AddRoute(rule, target)
+		return r.muxerTCPTLS.AddRoute(rule, priority, target)
 	}
 
-	return r.muxerTCPTLS.AddRoute(rule, &TLSHandler{
+	return r.muxerTCPTLS.AddRoute(rule, priority, &TLSHandler{
 		Next:   target,
 		Config: config,
 	})
@@ -220,7 +220,9 @@ func (r *Router) SetHTTPForwarder(handler Handler) {
 // HTTPSForwarder sets the tcp handler that will forward the TLS connections to an http handler.
 func (r *Router) SetHTTPSForwarder(handler Handler) {
 	for sniHost, tlsConf := range r.hostHTTPTLSConfig {
-		err := r.muxerHTTPS.AddRoute("HostSNI(`"+sniHost+"`)", &TLSHandler{
+		// muxerHTTPS only contains single HostSNI rules (and no other kind of rules),
+		// so there's no need for specifying a priority for them.
+		err := r.muxerHTTPS.AddRoute("HostSNI(`"+sniHost+"`)", 0, &TLSHandler{
 			Next:   handler,
 			Config: tlsConf,
 		})

@@ -245,7 +245,7 @@ func Test_addTCPRoute(t *testing.T) {
 			router, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = router.AddRoute(test.rule, handler)
+			err = router.AddRoute(test.rule, 0, handler)
 			if test.routeErr {
 				require.Error(t, err)
 			} else {

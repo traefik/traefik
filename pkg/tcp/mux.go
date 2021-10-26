@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/ip"
@@ -72,8 +73,9 @@ func NewConnData(serverName string, conn WriteCloser) (ConnData, error) {
 // Muxer defines a muxer that handles TCP routing with rules.
 type Muxer struct {
 	subRouter
-	catchAll Handler
-	parser   predicate.Parser
+	sortedRules []*route
+	//	catchAll    Handler
+	parser predicate.Parser
 }
 
 // NewMuxer returns a TCP muxer.
@@ -99,19 +101,27 @@ func (m Muxer) Match(meta ConnData) Handler {
 		}
 	}
 
-	if m.catchAll != nil {
-		return m.catchAll
-	}
+	/*
+		if m.catchAll != nil {
+			return m.catchAll
+		}
+	*/
 
 	return nil
 }
 
 // AddRoute adds a new route to the router.
-func (m *Muxer) AddRoute(rule string, handler Handler) error {
+func (m *Muxer) AddRoute(rule string, priority int, handler Handler) error {
 	// TODO: doc if priority does not allow us to remove catchAll.
-	if rule == "HostSNI(`*`)" {
-		m.catchAll = handler
-		return nil
+	if priority == 0 && rule == "HostSNI(`*`)" {
+		priority = -1
+		// m.catchAll = handler
+		// return nil
+	}
+
+	// default value, user has not set it, so we'll compute it
+	if priority == 0 {
+		priority = len(rule)
 	}
 
 	parse, err := m.parser.Parse(rule)
@@ -126,6 +136,7 @@ func (m *Muxer) AddRoute(rule string, handler Handler) error {
 
 	newRoute := m.newRoute()
 	newRoute.handler = handler
+	newRoute.priority = int32(priority)
 
 	err = addRuleOnRoute(newRoute, buildTree())
 	if err != nil {
@@ -133,11 +144,26 @@ func (m *Muxer) AddRoute(rule string, handler Handler) error {
 		return err
 	}
 
+	sort.Sort(routes(m.routes))
+
 	return nil
 }
 
+type routes []*route
+
+func (r routes) Len() int      { return len(r) }
+func (r routes) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
+func (r routes) Less(i, j int) bool {
+	return r[i].priority > r[j].priority
+}
+
+func (m *Muxer) sortRules() {
+	sort.Sort(routes(m.routes))
+}
+
 func (m *Muxer) hasRoutes() bool {
-	return m.catchAll != nil || len(m.routes) > 0
+	//	return m.catchAll != nil || len(m.routes) > 0
+	return len(m.routes) > 0
 }
 
 type subRouter struct {
@@ -173,6 +199,9 @@ type route struct {
 
 	// Handler responsible for handling the route.
 	handler Handler
+
+	// TODO: doc + type
+	priority int32
 
 	noMatch bool
 }
