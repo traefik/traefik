@@ -88,7 +88,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, client *dynamoClient)
 func (p *Provider) buildServiceConfiguration(value *dynamodb.AttributeValue, conf *dynamic.Configuration, name string) error {
 	serviceType, exists := value.M["type"]
 
-	if ! exists || *serviceType.S == "http" {
+	if !exists || *serviceType.S == "http" {
 		if exists {
 			delete(value.M, "type")
 		}
@@ -142,7 +142,7 @@ func (p *Provider) buildServiceConfiguration(value *dynamodb.AttributeValue, con
 func (p *Provider) buildRouterConfiguration(value *dynamodb.AttributeValue, conf *dynamic.Configuration, name string) error {
 	routerType, exists := value.M["type"]
 
-	if ! exists || *routerType.S == "http" {
+	if !exists || *routerType.S == "http" {
 		if exists {
 			delete(value.M, "type")
 		}
@@ -196,7 +196,7 @@ func (p *Provider) buildRouterConfiguration(value *dynamodb.AttributeValue, conf
 func (p *Provider) buildMiddlewareConfiguration(value *dynamodb.AttributeValue, conf *dynamic.Configuration, name string) error {
 	middlewareType, exists := value.M["type"]
 
-	if ! exists || *middlewareType.S == "http" {
+	if !exists || *middlewareType.S == "http" {
 		if exists {
 			delete(value.M, "type")
 		}

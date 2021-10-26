@@ -64,7 +64,7 @@ func (m *mockDynamoDBClient) ScanPages(input *dynamodb.ScanInput, fn func(*dynam
 					S: aws.String("test.traefik.io"),
 				},
 				"service": attributeService,
-				"router": attributeRouter,
+				"router":  attributeRouter,
 			},
 		},
 	}, true)
@@ -91,16 +91,16 @@ func TestBuildConfigurationSuccessful(t *testing.T) {
 			Routers: map[string]*dynamic.Router{
 				"test.traefik.io": router,
 			},
-			Middlewares: map[string]*dynamic.Middleware{},
+			Middlewares:       map[string]*dynamic.Middleware{},
 			ServersTransports: map[string]*dynamic.ServersTransport{},
 		},
-		TCP:  &dynamic.TCPConfiguration{
-			Routers: map[string]*dynamic.TCPRouter{},
-			Services: map[string]*dynamic.TCPService{},
+		TCP: &dynamic.TCPConfiguration{
+			Routers:     map[string]*dynamic.TCPRouter{},
+			Services:    map[string]*dynamic.TCPService{},
 			Middlewares: map[string]*dynamic.TCPMiddleware{},
 		},
-		UDP:  &dynamic.UDPConfiguration{
-			Routers: map[string]*dynamic.UDPRouter{},
+		UDP: &dynamic.UDPConfiguration{
+			Routers:  map[string]*dynamic.UDPRouter{},
 			Services: map[string]*dynamic.UDPService{},
 		},
 	}
