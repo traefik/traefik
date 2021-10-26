@@ -14,6 +14,7 @@ import (
 	acmeprovider "github.com/traefik/traefik/v2/pkg/provider/acme"
 	"github.com/traefik/traefik/v2/pkg/provider/consulcatalog"
 	"github.com/traefik/traefik/v2/pkg/provider/docker"
+	"github.com/traefik/traefik/v2/pkg/provider/dynamodb"
 	"github.com/traefik/traefik/v2/pkg/provider/ecs"
 	"github.com/traefik/traefik/v2/pkg/provider/file"
 	"github.com/traefik/traefik/v2/pkg/provider/http"
@@ -182,6 +183,7 @@ type Providers struct {
 	Rancher           *rancher.Provider       `description:"Enable Rancher backend with default settings." json:"rancher,omitempty" toml:"rancher,omitempty" yaml:"rancher,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	ConsulCatalog     *consulcatalog.Provider `description:"Enable ConsulCatalog backend with default settings." json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Ecs               *ecs.Provider           `description:"Enable AWS ECS backend with default settings." json:"ecs,omitempty" toml:"ecs,omitempty" yaml:"ecs,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	DynamoDb          *dynamodb.Provider      `description:"Enable AWS DynamoDB backend with default settings." json:"dynamodb,omitempty" toml:"dynamodb,omitempty" yaml:"dynamodb,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	Consul    *consul.Provider `description:"Enable Consul backend with default settings." json:"consul,omitempty" toml:"consul,omitempty" yaml:"consul,omitempty" label:"allowEmpty" file:"allowEmpty"  export:"true"`
 	Etcd      *etcd.Provider   `description:"Enable Etcd backend with default settings." json:"etcd,omitempty" toml:"etcd,omitempty" yaml:"etcd,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
