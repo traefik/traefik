@@ -492,6 +492,27 @@ Use the ip address from the bound port, rather than from the inner network. (Def
 `--providers.docker.watch`:  
 Watch Docker Swarm events. (Default: ```true```)
 
+`--providers.dynamodb`:  
+Enable AWS DynamoDB backend with default settings. (Default: ```false```)
+
+`--providers.dynamodb.accesskeyid`:  
+The AWS credentials access key to use for making requests
+
+`--providers.dynamodb.endpoint`:  
+The endpoint of a dynamodb. Used for testing with a local dynamodb
+
+`--providers.dynamodb.refreshseconds`:  
+Polling interval (in seconds) (Default: ```0```)
+
+`--providers.dynamodb.region`:  
+The AWS region to use for requests
+
+`--providers.dynamodb.secretaccesskey`:  
+The AWS credentials secret key to use for making requests
+
+`--providers.dynamodb.tablename`:  
+The AWS dynamodb table that stores configuration for traefik
+
 `--providers.ecs`:  
 Enable AWS ECS backend with default settings. (Default: ```false```)
 
