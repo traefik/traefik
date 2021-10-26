@@ -355,7 +355,9 @@
         "forwardingTimeouts": {
           "dialTimeout": "42ns",
           "responseHeaderTimeout": "42ns",
-          "idleConnTimeout": "42ns"
+          "idleConnTimeout": "42ns",
+          "readIdleTimeout": "42ns",
+          "pingTimeout": "42ns"
         }
       }
     }
