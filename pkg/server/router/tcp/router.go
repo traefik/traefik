@@ -303,6 +303,8 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			continue
 		}
 
+		// HostSNI Rule, but TLS not set on the router, which is an error.
+		// However, we allow the HostSNI(*) exception.
 		if len(domains) > 0 && routerConfig.TLS == nil && domains[0] != "*" {
 			routerErr := fmt.Errorf("invalid rule: %q , has HostSNI matcher, but no TLS on router", routerConfig.Rule)
 			logger.Debug(routerErr)

@@ -108,6 +108,7 @@ func (m Muxer) Match(meta ConnData) Handler {
 
 // AddRoute adds a new route to the router.
 func (m *Muxer) AddRoute(rule string, handler Handler) error {
+	// TODO: doc if priority does not allow us to remove catchAll.
 	if rule == "HostSNI(`*`)" {
 		m.catchAll = handler
 		return nil
