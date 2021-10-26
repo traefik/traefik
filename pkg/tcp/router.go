@@ -25,12 +25,15 @@ type Router struct {
 	muxerHTTPS Muxer
 
 	// Forwarder handlers.
+	// Handles all HTTP requests.
 	httpForwarder Handler
-	// Stands as an HTTPS fallback handler in case there is no HTTPS routes defined.
-	// TODO: more doc
+	// Handles (indirectly through muxerHTTPS, or directly) all HTTPS requests.
 	httpsForwarder Handler
 
-	// HTTP(S) handlers.
+	// TODO: try to remove them.
+	// Neither is used directly, but they are held here, and recreated on config
+	// reload, so that they can be passed to the Switcher at the end of the config
+	// reload phase.
 	httpHandler  http.Handler
 	httpsHandler http.Handler
 
@@ -150,7 +153,7 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 		return
 	}
 
-	// needed to handle 404s for HTTPS
+	// needed to handle 404s for HTTPS, as well as all non-Host (e.g. PathPrefix) matches.
 	if r.httpsForwarder != nil {
 		r.httpsForwarder.ServeTCP(r.GetConn(conn, peeked))
 		return
@@ -206,12 +209,12 @@ func (r *Router) GetHTTPSHandler() http.Handler {
 }
 
 // HTTPForwarder sets the tcp handler that will forward the connections to an http handler.
-func (r *Router) HTTPForwarder(handler Handler) {
+func (r *Router) SetHTTPForwarder(handler Handler) {
 	r.httpForwarder = handler
 }
 
 // HTTPSForwarder sets the tcp handler that will forward the TLS connections to an http handler.
-func (r *Router) HTTPSForwarder(handler Handler) {
+func (r *Router) SetHTTPSForwarder(handler Handler) {
 	for sniHost, tlsConf := range r.hostHTTPTLSConfig {
 		err := r.muxerHTTPS.AddRoute("HostSNI(`"+sniHost+"`)", &TLSHandler{
 			Next:   handler,

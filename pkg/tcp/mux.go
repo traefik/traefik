@@ -108,13 +108,10 @@ func (m Muxer) Match(meta ConnData) Handler {
 
 // AddRoute adds a new route to the router.
 func (m *Muxer) AddRoute(rule string, handler Handler) error {
-	// TODO(mpl): do we still want this bandaid?
-	/*
-		if rule == "HostSNI(`*`)" {
-			m.catchAll = handler
-			return nil
-		}
-	*/
+	if rule == "HostSNI(`*`)" {
+		m.catchAll = handler
+		return nil
+	}
 
 	parse, err := m.parser.Parse(rule)
 	if err != nil {
