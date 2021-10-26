@@ -365,13 +365,13 @@ func switchRouter(routerFactory *server.RouterFactory, serverEntryPointsTCP serv
 	return func(conf dynamic.Configuration) {
 		rtConf := runtime.NewConfig(conf)
 
-		routers, udpRouters := routerFactory.CreateRouters(rtConf)
+		httpHandlers, httpsHandlers, tcpRouters, udpRouters := routerFactory.CreateRouters(rtConf)
 
 		if aviator != nil {
 			aviator.SetDynamicConfiguration(conf)
 		}
 
-		serverEntryPointsTCP.Switch(routers)
+		serverEntryPointsTCP.Switch(httpHandlers, httpsHandlers, tcpRouters)
 		serverEntryPointsUDP.Switch(udpRouters)
 	}
 }

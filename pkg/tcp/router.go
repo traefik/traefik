@@ -7,7 +7,6 @@ import (
 	"errors"
 	"io"
 	"net"
-	"net/http"
 	"time"
 
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -30,12 +29,7 @@ type Router struct {
 	// Handles (indirectly through muxerHTTPS, or directly) all HTTPS requests.
 	httpsForwarder Handler
 
-	// TODO: try to remove them.
-	// Neither is used directly, but they are held here, and recreated on config
-	// reload, so that they can be passed to the Switcher at the end of the config
-	// reload phase.
-	httpHandler  http.Handler
-	httpsHandler http.Handler
+	tlsForwarder *TLSHandler
 
 	// TLS configs.
 	httpsTLSConfig    *tls.Config            // default TLS config
@@ -154,8 +148,8 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 	}
 
 	// needed to handle 404s for HTTPS, as well as all non-Host (e.g. PathPrefix) matches.
-	if r.httpsForwarder != nil {
-		r.httpsForwarder.ServeTCP(r.GetConn(conn, peeked))
+	if r.tlsForwarder != nil {
+		r.tlsForwarder.ServeTCP(r.GetConn(conn, peeked))
 		return
 	}
 
@@ -198,26 +192,17 @@ func (r *Router) GetConn(conn WriteCloser, peeked string) WriteCloser {
 	return conn
 }
 
-// GetHTTPHandler gets the attached http handler.
-func (r *Router) GetHTTPHandler() http.Handler {
-	return r.httpHandler
+// SetHTTPForwarders sets the tcp handler that will forward the connections to an http handler.
+func (r *Router) SetHTTPForwarders(httpForwarder, httpsForwarder Handler) {
+	r.httpForwarder = httpForwarder
+	r.httpsForwarder = httpsForwarder
 }
 
-// GetHTTPSHandler gets the attached https handler.
-func (r *Router) GetHTTPSHandler() http.Handler {
-	return r.httpsHandler
-}
-
-// HTTPForwarder sets the tcp handler that will forward the connections to an http handler.
-func (r *Router) SetHTTPForwarder(handler Handler) {
-	r.httpForwarder = handler
-}
-
-// HTTPSForwarder sets the tcp handler that will forward the TLS connections to an http handler.
-func (r *Router) SetHTTPSForwarder(handler Handler) {
+// ConfigureHTTPSForwarder sets the tcp handler that will forward the TLS connections to an http handler.
+func (r *Router) ConfigureHTTPSForwarder() {
 	for sniHost, tlsConf := range r.hostHTTPTLSConfig {
 		err := r.muxerHTTPS.AddRoute("HostSNI(`"+sniHost+"`)", &TLSHandler{
-			Next:   handler,
+			Next:   r.httpsForwarder,
 			Config: tlsConf,
 		})
 		if err != nil {
@@ -225,21 +210,10 @@ func (r *Router) SetHTTPSForwarder(handler Handler) {
 		}
 	}
 
-	r.httpsForwarder = &TLSHandler{
-		Next:   handler,
+	r.tlsForwarder = &TLSHandler{
+		Next:   r.httpsForwarder,
 		Config: r.httpsTLSConfig,
 	}
-}
-
-// SetHTTPHandler attaches http handlers on the router.
-func (r *Router) SetHTTPHandler(handler http.Handler) {
-	r.httpHandler = handler
-}
-
-// SetHTTPSHandler attaches https handlers on the router.
-func (r *Router) SetHTTPSHandler(handler http.Handler, config *tls.Config) {
-	r.httpsHandler = handler
-	r.httpsTLSConfig = config
 }
 
 // Conn is a connection proxy that handles Peeked bytes.

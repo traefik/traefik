@@ -28,15 +28,11 @@ type middlewareBuilder interface {
 func NewManager(conf *runtime.Configuration,
 	serviceManager *tcpservice.Manager,
 	middlewaresBuilder middlewareBuilder,
-	httpHandlers map[string]http.Handler,
-	httpsHandlers map[string]http.Handler,
 	tlsManager *traefiktls.Manager,
 ) *Manager {
 	return &Manager{
 		serviceManager:     serviceManager,
 		middlewaresBuilder: middlewaresBuilder,
-		httpHandlers:       httpHandlers,
-		httpsHandlers:      httpsHandlers,
 		tlsManager:         tlsManager,
 		conf:               conf,
 	}
@@ -46,8 +42,6 @@ func NewManager(conf *runtime.Configuration,
 type Manager struct {
 	serviceManager     *tcpservice.Manager
 	middlewaresBuilder middlewareBuilder
-	httpHandlers       map[string]http.Handler
-	httpsHandlers      map[string]http.Handler
 	tlsManager         *traefiktls.Manager
 	conf               *runtime.Configuration
 }
@@ -69,10 +63,11 @@ func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls 
 }
 
 // BuildHandlers builds the handlers for the given entrypoints.
-func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) map[string]*tcp.Router {
+func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, httpsHandlers map[string]http.Handler) (map[string]http.Handler, map[string]*tcp.Router) {
 	entryPointsRouters := m.getTCPRouters(rootCtx, entryPoints)
 	entryPointsRoutersHTTP := m.getHTTPRouters(rootCtx, entryPoints, true)
 
+	sniCheckHTTPSHandlers := make(map[string]http.Handler)
 	entryPointHandlers := make(map[string]*tcp.Router)
 	for _, entryPointName := range entryPoints {
 		entryPointName := entryPointName
@@ -81,14 +76,16 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 
 		ctx := log.With(rootCtx, log.Str(log.EntryPointName, entryPointName))
 
-		handler, err := m.buildEntryPointHandler(ctx, routers, entryPointsRoutersHTTP[entryPointName], m.httpHandlers[entryPointName], m.httpsHandlers[entryPointName])
+		httpsHandler, handler, err := m.buildEntryPointHandler(ctx, routers, entryPointsRoutersHTTP[entryPointName], httpsHandlers[entryPointName])
 		if err != nil {
 			log.FromContext(ctx).Error(err)
 			continue
 		}
+		sniCheckHTTPSHandlers[entryPointName] = httpsHandler
 		entryPointHandlers[entryPointName] = handler
 	}
-	return entryPointHandlers
+
+	return sniCheckHTTPSHandlers, entryPointHandlers
 }
 
 type nameAndConfig struct {
@@ -96,14 +93,12 @@ type nameAndConfig struct {
 	TLSConfig  *tls.Config
 }
 
-func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, configsHTTP map[string]*runtime.RouterInfo, handlerHTTP, handlerHTTPS http.Handler) (*tcp.Router, error) {
+func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, configsHTTP map[string]*runtime.RouterInfo, handlerHTTPS http.Handler) (http.Handler, *tcp.Router, error) {
 	// Build a new Router.
 	router, err := tcp.NewRouter()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-
-	router.SetHTTPHandler(handlerHTTP)
 
 	defaultTLSConf, err := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, traefiktls.DefaultTLSConfigName)
 	if err != nil {
@@ -240,8 +235,6 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 		handlerHTTPS.ServeHTTP(rw, req)
 	})
-
-	router.SetHTTPSHandler(sniCheck, defaultTLSConf)
 
 	logger := log.FromContext(ctx)
 	for hostSNI, tlsConfigs := range tlsOptionsForHostSNI {
@@ -383,7 +376,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		}
 	}
 
-	return router, nil
+	return sniCheck, router, nil
 }
 
 func (m *Manager) buildTCPHandler(ctx context.Context, router *runtime.TCPRouterInfo) (tcp.Handler, error) {

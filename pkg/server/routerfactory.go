@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/config/static"
@@ -64,7 +65,7 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 }
 
 // CreateRouters creates new TCPRouters and UDPRouters.
-func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string]*tcpCore.Router, map[string]udpCore.Handler) {
+func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string]http.Handler, map[string]http.Handler, map[string]*tcpCore.Router, map[string]udpCore.Handler) {
 	ctx := context.Background()
 
 	// HTTP
@@ -84,8 +85,8 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 
 	middlewaresTCPBuilder := middlewaretcp.NewBuilder(rtConf.TCPMiddlewares)
 
-	rtTCPManager := routertcp.NewManager(rtConf, svcTCPManager, middlewaresTCPBuilder, handlersNonTLS, handlersTLS, f.tlsManager)
-	routersTCP := rtTCPManager.BuildHandlers(ctx, f.entryPointsTCP)
+	rtTCPManager := routertcp.NewManager(rtConf, svcTCPManager, middlewaresTCPBuilder, f.tlsManager)
+	handlersTLS, routersTCP := rtTCPManager.BuildHandlers(ctx, f.entryPointsTCP, handlersTLS)
 
 	// UDP
 	svcUDPManager := udp.NewManager(rtConf)
@@ -94,5 +95,5 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 
 	rtConf.PopulateUsedBy()
 
-	return routersTCP, routersUDP
+	return handlersNonTLS, handlersTLS, routersTCP, routersUDP
 }
