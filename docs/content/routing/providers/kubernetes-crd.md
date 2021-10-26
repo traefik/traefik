@@ -131,7 +131,6 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
         - tcpep
       routes:
       - match: HostSNI(`bar`)
-        kind: Rule
         services:
           - name: whoamitcp
             port: 8080
@@ -1224,7 +1223,6 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
         
           routes:
           - match: HostSNI(`*`)
-            kind: Rule
             services:
             - name: external-svc
               port: 80
@@ -1254,7 +1252,6 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
         
           routes:
           - match: HostSNI(`*`)
-            kind: Rule
             services:
             - name: external-svc
               port: 80
