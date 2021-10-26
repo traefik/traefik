@@ -50,6 +50,10 @@ type ForwardingTimeouts struct {
 	ResponseHeaderTimeout *intstr.IntOrString `json:"responseHeaderTimeout,omitempty"`
 	// The maximum period for which an idle HTTP keep-alive connection will remain open before closing itself.
 	IdleConnTimeout *intstr.IntOrString `json:"idleConnTimeout,omitempty"`
+	// The timeout after which a health check using ping frame will be carried out if no frame is received on the HTTP/2 connection. If zero, no health check is performed.
+	ReadIdleTimeout *intstr.IntOrString `json:"readIdleTimeout,omitempty"`
+	// The timeout after which the HTTP/2 connection will be closed if a response to Ping is not received.
+	PingTimeout *intstr.IntOrString `json:"pingTimeout,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
