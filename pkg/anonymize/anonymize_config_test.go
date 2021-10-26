@@ -273,7 +273,7 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 				},
 				ForwardAuth: &dynamic.ForwardAuth{
 					Address: "127.0.0.1",
-					TLS: &dynamic.ClientTLS{
+					TLS: &types.ClientTLS{
 						CA:                 "ca.pem",
 						CAOptional:         true,
 						Cert:               "cert.pem",
@@ -315,7 +315,7 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 						NotAfter:  true,
 						NotBefore: true,
 						Sans:      true,
-						Subject: &dynamic.TLSCLientCertificateDNInfo{
+						Subject: &dynamic.TLSClientCertificateDNInfo{
 							Country:         true,
 							Province:        true,
 							Locality:        true,
@@ -324,7 +324,7 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 							SerialNumber:    true,
 							DomainComponent: true,
 						},
-						Issuer: &dynamic.TLSCLientCertificateDNInfo{
+						Issuer: &dynamic.TLSClientCertificateDNInfo{
 							Country:         true,
 							Province:        true,
 							Locality:        true,
