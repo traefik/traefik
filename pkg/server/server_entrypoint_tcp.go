@@ -111,9 +111,9 @@ func (eps TCPEntryPoints) Stop() {
 }
 
 // Switch the TCP routers.
-func (eps TCPEntryPoints) Switch(routersTCP map[string]*tcp.Router) {
+func (eps TCPEntryPoints) Switch(httpHandlers map[string]http.Handler, httpsHandlers map[string]http.Handler, routersTCP map[string]*tcp.Router) {
 	for entryPointName, rt := range routersTCP {
-		eps[entryPointName].SwitchRouter(rt)
+		eps[entryPointName].SwitchRouter(httpHandlers[entryPointName], httpsHandlers[entryPointName], rt)
 	}
 }
 
@@ -145,8 +145,6 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*T
 		return nil, fmt.Errorf("error preparing httpServer: %w", err)
 	}
 
-	rt.HTTPForwarder(httpServer.Forwarder)
-
 	httpsServer, err := createHTTPServer(ctx, listener, configuration, false)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing httpsServer: %w", err)
@@ -157,7 +155,7 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*T
 		return nil, err
 	}
 
-	rt.HTTPSForwarder(httpsServer.Forwarder)
+	rt.SetHTTPForwarders(httpServer.Forwarder, httpsServer.Forwarder)
 
 	tcpSwitcher := &tcp.HandlerSwitcher{}
 	tcpSwitcher.Switch(rt)
@@ -296,29 +294,16 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 }
 
 // SwitchRouter switches the TCP router handler.
-func (e *TCPEntryPoint) SwitchRouter(rt *tcp.Router) {
-	rt.HTTPForwarder(e.httpServer.Forwarder)
-
-	httpHandler := rt.GetHTTPHandler()
-	if httpHandler == nil {
-		httpHandler = router.BuildDefaultHTTPRouter()
-	}
-
+func (e *TCPEntryPoint) SwitchRouter(httpHandler, httpsHandler http.Handler, tcpRouter *tcp.Router) {
 	e.httpServer.Switcher.UpdateHandler(httpHandler)
-
-	rt.HTTPSForwarder(e.httpsServer.Forwarder)
-
-	httpsHandler := rt.GetHTTPSHandler()
-	if httpsHandler == nil {
-		httpsHandler = router.BuildDefaultHTTPRouter()
-	}
-
 	e.httpsServer.Switcher.UpdateHandler(httpsHandler)
 
-	e.switcher.Switch(rt)
+	tcpRouter.ConfigureHTTPSForwarder()
+
+	e.switcher.Switch(tcpRouter)
 
 	if e.http3Server != nil {
-		e.http3Server.Switch(rt)
+		e.http3Server.Switch(tcpRouter)
 	}
 }
 
