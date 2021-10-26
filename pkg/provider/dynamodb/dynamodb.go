@@ -24,24 +24,24 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configuration for provider.
 type Provider struct {
-	AccessKeyID           string `description:"The AWS credentials access key to use for making requests"`
-	RefreshSeconds        int    `description:"Polling interval (in seconds)" export:"true"`
-	Region                string `description:"The AWS region to use for requests" export:"true"`
-	SecretAccessKey       string `description:"The AWS credentials secret key to use for making requests"`
-	TableName             string `description:"The AWS dynamodb table that stores configuration for traefik" export:"true"`
-	Endpoint              string `description:"The endpoint of a dynamodb. Used for testing with a local dynamodb"`
+	AccessKeyID     string `description:"The AWS credentials access key to use for making requests"`
+	RefreshSeconds  int    `description:"Polling interval (in seconds)" export:"true"`
+	Region          string `description:"The AWS region to use for requests" export:"true"`
+	SecretAccessKey string `description:"The AWS credentials secret key to use for making requests"`
+	TableName       string `description:"The AWS dynamodb table that stores configuration for traefik" export:"true"`
+	Endpoint        string `description:"The endpoint of a dynamodb. Used for testing with a local dynamodb"`
 }
 
 type dynamoClient struct {
 	db dynamodbiface.DynamoDBAPI
 }
 
-// Init the provider
+// Init the provider.
 func (p *Provider) Init() error {
 	return nil
 }
 
-// createClient configures aws credentials and creates a dynamoClient
+// createClient configures aws credentials and creates a dynamoClient.
 func (p *Provider) createClient(logger log.Logger) (*dynamoClient, error) {
 	logger.Infoln("Creating Provider client...")
 	sess, err := session.NewSession()
@@ -80,7 +80,7 @@ func (p *Provider) createClient(logger log.Logger) (*dynamoClient, error) {
 	}, nil
 }
 
-// scanTable scans the given table and returns slice of all items in the table
+// scanTable scans the given table and returns slice of all items in the table.
 func (p *Provider) scanTable(client *dynamoClient, logger log.Logger) ([]map[string]*dynamodb.AttributeValue, error) {
 	logger.Debugf("Scanning Provider table: %s ...", p.TableName)
 	params := &dynamodb.ScanInput{
@@ -100,8 +100,7 @@ func (p *Provider) scanTable(client *dynamoClient, logger log.Logger) ([]map[str
 	return items, nil
 }
 
-// Provide provides the configuration to traefik via the configuration channel
-// if watch is enabled it polls dynamodb
+// Provide provides the configuration to traefik via the configuration channel if watch is enabled it polls dynamodb.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
 		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "ecs"))

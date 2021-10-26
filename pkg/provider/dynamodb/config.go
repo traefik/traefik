@@ -3,6 +3,7 @@ package dynamodb
 import (
 	"context"
 	"fmt"
+
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -10,7 +11,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider"
 )
 
-// buildConfiguration retrieves items from dynamodb and converts them into Backends and Frontends in a Configuration
+// buildConfiguration retrieves items from dynamodb and converts them into Backends and Frontends in a Configuration.
 func (p *Provider) buildConfiguration(ctx context.Context, client *dynamoClient) (*dynamic.Configuration, error) {
 	logger := log.FromContext(ctx)
 	configurations := make(map[string]*dynamic.Configuration)
@@ -88,7 +89,8 @@ func (p *Provider) buildConfiguration(ctx context.Context, client *dynamoClient)
 func (p *Provider) buildServiceConfiguration(value *dynamodb.AttributeValue, conf *dynamic.Configuration, name string) error {
 	serviceType, exists := value.M["type"]
 
-	if ! exists || *serviceType.S == "http" {
+	switch {
+	case !exists || *serviceType.S == "http":
 		if exists {
 			delete(value.M, "type")
 		}
@@ -104,7 +106,8 @@ func (p *Provider) buildServiceConfiguration(value *dynamodb.AttributeValue, con
 		}
 
 		conf.HTTP.Services[name] = tmpService
-	} else if *serviceType.S == "tcp" {
+
+	case *serviceType.S == "tcp":
 		delete(value.M, "type")
 
 		tmpService := &dynamic.TCPService{}
@@ -118,7 +121,8 @@ func (p *Provider) buildServiceConfiguration(value *dynamodb.AttributeValue, con
 		}
 
 		conf.TCP.Services[name] = tmpService
-	} else if *serviceType.S == "udp" {
+
+	case *serviceType.S == "udp":
 		delete(value.M, "type")
 
 		tmpService := &dynamic.UDPService{}
@@ -132,7 +136,8 @@ func (p *Provider) buildServiceConfiguration(value *dynamodb.AttributeValue, con
 		}
 
 		conf.UDP.Services[name] = tmpService
-	} else {
+
+	default:
 		return fmt.Errorf("unknown service type \"%s\"", *serviceType.S)
 	}
 
@@ -142,7 +147,8 @@ func (p *Provider) buildServiceConfiguration(value *dynamodb.AttributeValue, con
 func (p *Provider) buildRouterConfiguration(value *dynamodb.AttributeValue, conf *dynamic.Configuration, name string) error {
 	routerType, exists := value.M["type"]
 
-	if ! exists || *routerType.S == "http" {
+	switch {
+	case !exists || *routerType.S == "http":
 		if exists {
 			delete(value.M, "type")
 		}
@@ -158,7 +164,8 @@ func (p *Provider) buildRouterConfiguration(value *dynamodb.AttributeValue, conf
 		}
 
 		conf.HTTP.Routers[name] = tmpRouter
-	} else if *routerType.S == "tcp" {
+
+	case *routerType.S == "tcp":
 		delete(value.M, "type")
 
 		tmpRouter := &dynamic.TCPRouter{}
@@ -172,7 +179,8 @@ func (p *Provider) buildRouterConfiguration(value *dynamodb.AttributeValue, conf
 		}
 
 		conf.TCP.Routers[name] = tmpRouter
-	} else if *routerType.S == "udp" {
+
+	case *routerType.S == "udp":
 		delete(value.M, "type")
 
 		tmpRouter := &dynamic.UDPRouter{}
@@ -186,7 +194,8 @@ func (p *Provider) buildRouterConfiguration(value *dynamodb.AttributeValue, conf
 		}
 
 		conf.UDP.Routers[name] = tmpRouter
-	} else {
+
+	default:
 		return fmt.Errorf("unknown router type \"%s\"", *routerType.S)
 	}
 
@@ -196,7 +205,8 @@ func (p *Provider) buildRouterConfiguration(value *dynamodb.AttributeValue, conf
 func (p *Provider) buildMiddlewareConfiguration(value *dynamodb.AttributeValue, conf *dynamic.Configuration, name string) error {
 	middlewareType, exists := value.M["type"]
 
-	if ! exists || *middlewareType.S == "http" {
+	switch {
+	case !exists || *middlewareType.S == "http":
 		if exists {
 			delete(value.M, "type")
 		}
@@ -212,7 +222,8 @@ func (p *Provider) buildMiddlewareConfiguration(value *dynamodb.AttributeValue, 
 		}
 
 		conf.HTTP.Middlewares[name] = tmpMiddleware
-	} else if *middlewareType.S == "tcp" {
+
+	case *middlewareType.S == "tcp":
 		delete(value.M, "type")
 
 		tmpMiddleware := &dynamic.TCPMiddleware{}
@@ -226,7 +237,8 @@ func (p *Provider) buildMiddlewareConfiguration(value *dynamodb.AttributeValue, 
 		}
 
 		conf.TCP.Middlewares[name] = tmpMiddleware
-	} else {
+
+	default:
 		return fmt.Errorf("unknown middleware type \"%s\"", *middlewareType.S)
 	}
 
