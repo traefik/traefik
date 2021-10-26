@@ -10,10 +10,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
-
-	"github.com/stretchr/testify/assert"
 )
 
 type mockDynamoDBClient struct {
