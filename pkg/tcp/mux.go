@@ -349,7 +349,7 @@ var almostFQDN = regexp.MustCompile(`^[[:alnum:]\.-]+$`)
 // hostSNI checks if the SNI Host of the connection match the matcher host.
 func hostSNI(route *route, hosts ...string) error {
 	if len(hosts) == 0 {
-		return fmt.Errorf("empty value for \"Host\" matcher is not allowed")
+		return fmt.Errorf("empty value for \"HostSNI\" matcher is not allowed")
 	}
 
 	for i, host := range hosts {

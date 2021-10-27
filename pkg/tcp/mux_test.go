@@ -445,59 +445,66 @@ func Test_HostSNI(t *testing.T) {
 	}
 }
 
-// TODO have a parse client ip test?
 func Test_ClientIP(t *testing.T) {
 	testCases := []struct {
-		desc       string
-		ruleHosts  []string
-		serverName string
-		buildErr   bool
-		matchErr   bool
+		desc      string
+		ruleCIDRs []string
+		remoteIP  string
+		buildErr  bool
+		matchErr  bool
 	}{
 		{
 			desc:     "Empty",
 			buildErr: true,
 		},
 		{
-			desc:      "Non ASCII host",
-			ruleHosts: []string{"héhé"},
+			desc:      "Malformed CIDR",
+			ruleCIDRs: []string{"héhé"},
 			buildErr:  true,
 		},
 		{
-			desc:       "Not Matching hosts",
-			ruleHosts:  []string{"foobar"},
-			serverName: "bar",
-			matchErr:   true,
+			desc:      "Not matching IP",
+			ruleCIDRs: []string{"20.20.20.20"},
+			remoteIP:  "10.10.10.10",
+			matchErr:  true,
 		},
 		{
-			desc:       "Matching globing host `*`",
-			ruleHosts:  []string{"*"},
-			serverName: "foobar",
+			desc:      "Matching IP",
+			ruleCIDRs: []string{"10.10.10.10"},
+			remoteIP:  "10.10.10.10",
 		},
 		{
-			desc:      "Not Matching globing host with subdomain",
-			ruleHosts: []string{"*.bar"},
-			buildErr:  true,
+			desc:      "Not matching multiple IPs",
+			ruleCIDRs: []string{"20.20.20.20", "30.30.30.30"},
+			remoteIP:  "10.10.10.10",
+			matchErr:  true,
 		},
 		{
-			desc:       "Not Matching host with trailing dot with ",
-			ruleHosts:  []string{"foobar."},
-			serverName: "foobar.",
+			desc:      "Matching multiple IPs",
+			ruleCIDRs: []string{"10.10.10.10", "20.20.20.20", "30.30.30.30"},
+			remoteIP:  "20.20.20.20",
 		},
 		{
-			desc:       "Matching host with trailing dot",
-			ruleHosts:  []string{"foobar."},
-			serverName: "foobar",
+			desc:      "Not matching CIDR",
+			ruleCIDRs: []string{"20.0.0.0/24"},
+			remoteIP:  "10.10.10.10",
+			matchErr:  true,
 		},
 		{
-			desc:       "Matching hosts",
-			ruleHosts:  []string{"foobar"},
-			serverName: "foobar",
+			desc:      "Matching CIDR",
+			ruleCIDRs: []string{"20.0.0.0/8"},
+			remoteIP:  "20.10.10.10",
 		},
 		{
-			desc:       "Matching hosts with subdomains",
-			ruleHosts:  []string{"foo.bar"},
-			serverName: "foo.bar",
+			desc:      "Not matching multiple CIDRs",
+			ruleCIDRs: []string{"10.0.0.0/24", "20.0.0.0/24"},
+			remoteIP:  "10.10.10.10",
+			matchErr:  true,
+		},
+		{
+			desc:      "Matching multiple CIDRs",
+			ruleCIDRs: []string{"10.0.0.0/8", "20.0.0.0/8"},
+			remoteIP:  "20.10.10.10",
 		},
 	}
 
@@ -508,7 +515,7 @@ func Test_ClientIP(t *testing.T) {
 			t.Parallel()
 
 			var route route
-			err := hostSNI(&route, test.ruleHosts...)
+			err := clientIP(&route, test.ruleCIDRs...)
 			if test.buildErr {
 				require.Error(t, err)
 				return
@@ -516,7 +523,7 @@ func Test_ClientIP(t *testing.T) {
 			require.NoError(t, err)
 
 			meta := ConnData{
-				serverName: test.serverName,
+				remoteIP: test.remoteIP,
 			}
 
 			if test.matchErr {
@@ -524,6 +531,55 @@ func Test_ClientIP(t *testing.T) {
 			} else {
 				assert.True(t, route.match(meta))
 			}
+		})
+	}
+}
+
+func Test_Priority(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		rules        map[string]int
+		serverName   string
+		remoteIP     string
+		expectedRule string
+	}{
+		{
+			desc: "Matching less prioritized",
+			rules: map[string]int{
+				"HostSNI(`foobar`)": 0,
+				"HostSNI(`bar`)":    10000,
+			},
+			expectedRule: "HostSNI(`foobar`)",
+			serverName:   "foobar",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			muxer, err := NewMuxer()
+			require.NoError(t, err)
+
+			matchedRule := ""
+			for rule, priority := range test.rules {
+				rule := rule
+				err := muxer.AddRoute(rule, priority, HandlerFunc(func(conn WriteCloser) {
+					matchedRule = rule
+				}))
+				require.NoError(t, err)
+			}
+
+			handler := muxer.Match(ConnData{
+				serverName: test.serverName,
+				remoteIP:   test.remoteIP,
+			})
+			require.NotNil(t, handler)
+
+			handler.ServeTCP(nil)
+			assert.Equal(t, test.expectedRule, matchedRule)
 		})
 	}
 }
