@@ -560,7 +560,7 @@ certificatesResolvers:
 
 ```bash tab="CLI"
 # ...
---certificatesresolvers.myresolver.acme.preferredChain="ISRG Root X1"
+--certificatesresolvers.myresolver.acme.preferredChain=ISRG Root X1
 # ...
 ```
 
@@ -588,7 +588,7 @@ certificatesResolvers:
 
 ```bash tab="CLI"
 # ...
---certificatesresolvers.myresolver.acme.keyType="RSA4096"
+--certificatesresolvers.myresolver.acme.keyType=RSA4096
 # ...
 ```
 
