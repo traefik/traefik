@@ -644,7 +644,7 @@ func (s *SimpleSuite) TestTCPRouterConfigErrors(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// router4 has an unsupported Rule
-	err = try.GetRequest("http://127.0.0.1:8080/api/tcp/routers/router4@file", 1000*time.Millisecond, try.BodyContains("invalid rule: Host(`mydomain.com`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/tcp/routers/router4@file", 1000*time.Millisecond, try.BodyContains("invalid rule: \\\"Host(`mydomain.com``)\\\""))
 	c.Assert(err, checker.IsNil)
 }
 
