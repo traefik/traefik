@@ -97,8 +97,6 @@ type nameAndConfig struct {
 }
 
 func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, configsHTTP map[string]*runtime.RouterInfo, handlerHTTP, handlerHTTPS http.Handler) (*tcp.Router, error) {
-	priorityCounter := 1
-
 	// Build a new Router.
 	router, err := tcp.NewRouter()
 	if err != nil {
@@ -323,23 +321,21 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 		if routerConfig.TLS == nil {
 			logger.Debugf("Adding route for %q", routerConfig.Rule)
-			err := router.AddRoute(routerConfig.Rule, priorityCounter, handler)
+			err := router.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
 			if err != nil {
 				routerConfig.AddError(err, true)
 				logger.Debug(err)
 			}
-			priorityCounter++
 			continue
 		}
 
 		if routerConfig.TLS.Passthrough {
 			logger.Debugf("Adding Passthrough route for %q", routerConfig.Rule)
-			err := router.AddRouteTLS(routerConfig.Rule, priorityCounter, handler, nil)
+			err := router.AddRouteTLS(routerConfig.Rule, routerConfig.Priority, handler, nil)
 			if err != nil {
 				routerConfig.AddError(err, true)
 				logger.Debug(err)
 			}
-			priorityCounter++
 			continue
 		}
 
@@ -385,12 +381,11 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		// different TLS configs for the same HostSNIs.
 
 		logger.Debugf("Adding TLS route for %q", routerConfig.Rule)
-		err = router.AddRouteTLS(routerConfig.Rule, priorityCounter, handler, tlsConf)
+		err = router.AddRouteTLS(routerConfig.Rule, routerConfig.Priority, handler, tlsConf)
 		if err != nil {
 			routerConfig.AddError(err, true)
 			logger.Debug(err)
 		}
-		priorityCounter++
 	}
 
 	return router, nil
