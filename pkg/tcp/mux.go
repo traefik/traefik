@@ -73,7 +73,6 @@ func NewConnData(serverName string, conn WriteCloser) (ConnData, error) {
 // Muxer defines a muxer that handles TCP routing with rules.
 type Muxer struct {
 	subRouter
-	sortedRules []*route
 	//	catchAll    Handler
 	parser predicate.Parser
 }
@@ -155,10 +154,6 @@ func (r routes) Len() int      { return len(r) }
 func (r routes) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
 func (r routes) Less(i, j int) bool {
 	return r[i].priority > r[j].priority
-}
-
-func (m *Muxer) sortRules() {
-	sort.Sort(routes(m.routes))
 }
 
 func (m *Muxer) hasRoutes() bool {

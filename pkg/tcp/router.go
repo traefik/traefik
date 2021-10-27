@@ -212,12 +212,12 @@ func (r *Router) GetHTTPSHandler() http.Handler {
 	return r.httpsHandler
 }
 
-// HTTPForwarder sets the tcp handler that will forward the connections to an http handler.
+// SetHTTPForwarder sets the tcp handler that will forward the connections to an http handler.
 func (r *Router) SetHTTPForwarder(handler Handler) {
 	r.httpForwarder = handler
 }
 
-// HTTPSForwarder sets the tcp handler that will forward the TLS connections to an http handler.
+// SetHTTPSForwarder sets the tcp handler that will forward the TLS connections to an http handler.
 func (r *Router) SetHTTPSForwarder(handler Handler) {
 	for sniHost, tlsConf := range r.hostHTTPTLSConfig {
 		// muxerHTTPS only contains single HostSNI rules (and no other kind of rules),
