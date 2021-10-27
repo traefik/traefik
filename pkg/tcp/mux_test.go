@@ -43,6 +43,11 @@ func Test_addTCPRoute(t *testing.T) {
 			serverName: "foobar",
 		},
 		{
+			desc:       "Valid negative HostSNI rule matching",
+			rule:       "!HostSNI(`bar`)",
+			serverName: "foobar",
+		},
+		{
 			desc:       "Valid HostSNI rule matching with alternative case",
 			rule:       "hostsni(`foobar`)",
 			serverName: "foobar",
@@ -55,6 +60,12 @@ func Test_addTCPRoute(t *testing.T) {
 		{
 			desc:       "Valid HostSNI rule not matching",
 			rule:       "HostSNI(`foobar`)",
+			serverName: "bar",
+			matchErr:   true,
+		},
+		{
+			desc:       "Valid negative HostSNI rule not matching",
+			rule:       "!HostSNI(`bar`)",
 			serverName: "bar",
 			matchErr:   true,
 		},
@@ -79,6 +90,11 @@ func Test_addTCPRoute(t *testing.T) {
 			remoteAddr: "10.0.0.1:80",
 		},
 		{
+			desc:       "Valid negative ClientIP rule matching",
+			rule:       "!ClientIP(`20.0.0.1`)",
+			remoteAddr: "10.0.0.1:80",
+		},
+		{
 			desc:       "Valid ClientIP rule matching with alternative case",
 			rule:       "clientip(`10.0.0.1`)",
 			remoteAddr: "10.0.0.1:80",
@@ -91,6 +107,12 @@ func Test_addTCPRoute(t *testing.T) {
 		{
 			desc:       "Valid ClientIP rule not matching",
 			rule:       "ClientIP(`10.0.0.1`)",
+			remoteAddr: "10.0.0.2:80",
+			matchErr:   true,
+		},
+		{
+			desc:       "Valid negative ClientIP rule not matching",
+			rule:       "!ClientIP(`10.0.0.2`)",
 			remoteAddr: "10.0.0.2:80",
 			matchErr:   true,
 		},
@@ -150,6 +172,24 @@ func Test_addTCPRoute(t *testing.T) {
 		{
 			desc:       "Valid HostSNI and ClientIP rule matching",
 			rule:       "HostSNI(`foobar`) && ClientIP(`10.0.0.1`)",
+			serverName: "foobar",
+			remoteAddr: "10.0.0.1:80",
+		},
+		{
+			desc:       "Valid negative HostSNI and ClientIP rule matching",
+			rule:       "!HostSNI(`bar`) && ClientIP(`10.0.0.1`)",
+			serverName: "foobar",
+			remoteAddr: "10.0.0.1:80",
+		},
+		{
+			desc:       "Valid HostSNI and negative ClientIP rule matching",
+			rule:       "HostSNI(`foobar`) && !ClientIP(`10.0.0.2`)",
+			serverName: "foobar",
+			remoteAddr: "10.0.0.1:80",
+		},
+		{
+			desc:       "Valid negative HostSNI and negative ClientIP rule matching",
+			rule:       "!HostSNI(`bar`) && !ClientIP(`10.0.0.2`)",
 			serverName: "foobar",
 			remoteAddr: "10.0.0.1:80",
 		},
@@ -277,8 +317,6 @@ func Test_addTCPRoute(t *testing.T) {
 				n, ok := conn.call[msg]
 				assert.Equal(t, n, 1)
 				assert.True(t, ok)
-
-				// assert.Equal(t, test.expected, results)
 			}
 		})
 	}
@@ -392,6 +430,22 @@ func Test_HostSNI(t *testing.T) {
 			serverName: "foobar",
 		},
 		{
+			desc:       "Matching globing host `*` and empty serverName",
+			ruleHosts:  []string{"*"},
+			serverName: "",
+		},
+		{
+			desc:       "Matching globing host `*` and another non matching host",
+			ruleHosts:  []string{"foo", "*"},
+			serverName: "bar",
+		},
+		{
+			desc:       "Matching globing host `*` and another non matching host, and empty servername",
+			ruleHosts:  []string{"foo", "*"},
+			serverName: "",
+			matchErr:   true,
+		},
+		{
 			desc:      "Not Matching globing host with subdomain",
 			ruleHosts: []string{"*.bar"},
 			buildErr:  true,
@@ -461,6 +515,11 @@ func Test_ClientIP(t *testing.T) {
 			desc:      "Malformed CIDR",
 			ruleCIDRs: []string{"héhé"},
 			buildErr:  true,
+		},
+		{
+			desc:      "Not matching empty remote IP",
+			ruleCIDRs: []string{"20.20.20.20"},
+			matchErr:  true,
 		},
 		{
 			desc:      "Not matching IP",

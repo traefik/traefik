@@ -130,7 +130,6 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 	}
 
 	if !tls {
-		// TODO priority (between ClientIP and HostSNI(`*`) for instance)
 		handler := r.muxerTCP.Match(connData)
 		switch {
 		case handler != nil:
