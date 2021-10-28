@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"github.com/abronan/valkeyrie"
 	"github.com/abronan/valkeyrie/store"
 	"github.com/abronan/valkeyrie/store/consul"
+	composeAPI "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -26,12 +28,13 @@ type ConsulSuite struct {
 
 func (s *ConsulSuite) setupStore(c *check.C) {
 	s.createComposeProject(c, "consul")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeAPI.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
 	consul.Register()
 	kv, err := valkeyrie.NewStore(
 		store.CONSUL,
-		[]string{s.composeProject.Container(c, "consul").NetworkSettings.IPAddress + ":8500"},
+		[]string{"consul:8500"},
 		&store.Config{
 			ConnectionTimeout: 10 * time.Second,
 		},
@@ -46,19 +49,12 @@ func (s *ConsulSuite) setupStore(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *ConsulSuite) TearDownTest(c *check.C) {
-	// shutdown and delete compose project
-	if s.composeProject != nil {
-		s.composeProject.Stop(c)
-	}
-}
-
 func (s *ConsulSuite) TearDownSuite(c *check.C) {}
 
 func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
 	s.setupStore(c)
 
-	address := "http://" + s.composeProject.Container(c, "consul").NetworkSettings.IPAddress + ":8500"
+	address := "http://consul:8500"
 	file := s.adaptFile(c, "fixtures/consul/simple.toml", struct{ ConsulAddress string }{address})
 	defer os.Remove(file)
 

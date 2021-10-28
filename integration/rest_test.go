@@ -60,7 +60,7 @@ func (s *RestSuite) TestSimpleConfigurationInsecure(c *check.C) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",
+										URL: "http://whoami1:80",
 									},
 								},
 							},
@@ -86,7 +86,7 @@ func (s *RestSuite) TestSimpleConfigurationInsecure(c *check.C) {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
-										Address: s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",
+										Address: "whoami1:80",
 									},
 								},
 							},
@@ -164,7 +164,7 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",
+										URL: "http://whoami1:80",
 									},
 								},
 							},
@@ -190,7 +190,7 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
-										Address: s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",
+										Address: "whoami1:80",
 									},
 								},
 							},

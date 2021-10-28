@@ -31,7 +31,7 @@ func (s *RedisSuite) setupStore(c *check.C) {
 	redis.Register()
 	kv, err := valkeyrie.NewStore(
 		store.REDIS,
-		[]string{s.composeProject.Container(c, "redis").NetworkSettings.IPAddress + ":6379"},
+		[]string{"redis:6379"},
 		&store.Config{
 			ConnectionTimeout: 10 * time.Second,
 		},
@@ -58,7 +58,7 @@ func (s *RedisSuite) TearDownSuite(c *check.C) {}
 func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 	s.setupStore(c)
 
-	address := s.composeProject.Container(c, "redis").NetworkSettings.IPAddress + ":6379"
+	address := "redis:6379"
 	file := s.adaptFile(c, "fixtures/redis/simple.toml", struct{ RedisAddress string }{address})
 	defer os.Remove(file)
 
@@ -131,7 +131,7 @@ func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 	var obtained api.RunTimeRepresentation
 	err = json.NewDecoder(resp.Body).Decode(&obtained)
 	c.Assert(err, checker.IsNil)
-	got, err := json.MarshalIndent(obtained, "", "  ")
+	got, err := json.MarshalIndent(obtained, "")
 	c.Assert(err, checker.IsNil)
 
 	expectedJSON := filepath.FromSlash("testdata/rawdata-redis.json")

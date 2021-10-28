@@ -31,7 +31,7 @@ func (s *ZookeeperSuite) setupStore(c *check.C) {
 	zookeeper.Register()
 	kv, err := valkeyrie.NewStore(
 		store.ZK,
-		[]string{s.composeProject.Container(c, "zookeeper").NetworkSettings.IPAddress + ":2181"},
+		[]string{"zookeeper:2181"},
 		&store.Config{
 			ConnectionTimeout: 10 * time.Second,
 		},
@@ -58,7 +58,7 @@ func (s *ZookeeperSuite) TearDownSuite(c *check.C) {}
 func (s *ZookeeperSuite) TestSimpleConfiguration(c *check.C) {
 	s.setupStore(c)
 
-	address := s.composeProject.Container(c, "zookeeper").NetworkSettings.IPAddress + ":2181"
+	address := "zookeeper:2181"
 	file := s.adaptFile(c, "fixtures/zookeeper/simple.toml", struct{ ZkAddress string }{address})
 	defer os.Remove(file)
 
@@ -131,7 +131,7 @@ func (s *ZookeeperSuite) TestSimpleConfiguration(c *check.C) {
 	var obtained api.RunTimeRepresentation
 	err = json.NewDecoder(resp.Body).Decode(&obtained)
 	c.Assert(err, checker.IsNil)
-	got, err := json.MarshalIndent(obtained, "", "  ")
+	got, err := json.MarshalIndent(obtained, "")
 	c.Assert(err, checker.IsNil)
 
 	expectedJSON := filepath.FromSlash("testdata/rawdata-zk.json")

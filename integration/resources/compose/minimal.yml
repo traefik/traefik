@@ -3,4 +3,5 @@ whoami1:
   labels:
     - traefik.http.Routers.RouterMini.Rule=PathPrefix("/whoami")
     - traefik.enable=true
-    
+  deploy:
+    replicas: 2

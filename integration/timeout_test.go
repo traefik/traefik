@@ -19,7 +19,7 @@ func (s *TimeoutSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *TimeoutSuite) TestForwardingTimeouts(c *check.C) {
-	httpTimeoutEndpoint := s.composeProject.Container(c, "timeoutEndpoint").NetworkSettings.IPAddress
+	httpTimeoutEndpoint := "timeoutEndpoint"
 	file := s.adaptFile(c, "fixtures/timeout/forwarding_timeouts.toml", struct {
 		TimeoutEndpoint string
 	}{httpTimeoutEndpoint})
