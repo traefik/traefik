@@ -3,9 +3,9 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"flag"
 	"fmt"
-	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,9 +14,15 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/compose-spec/compose-go/cli"
+	"github.com/compose-spec/compose-go/types"
+	"github.com/docker/cli/cli/config/configfile"
+	"github.com/docker/compose/v2/pkg/api"
+	"github.com/docker/compose/v2/pkg/compose"
+	"github.com/docker/docker/client"
+
 	"github.com/fatih/structs"
 	"github.com/go-check/check"
-	compose "github.com/libkermit/compose/check"
 	"github.com/traefik/traefik/v2/pkg/log"
 	checker "github.com/vdemeester/shakers"
 )
@@ -80,13 +86,16 @@ func Test(t *testing.T) {
 var traefikBinary = "../dist/traefik"
 
 type BaseSuite struct {
-	composeProject *compose.Project
+	composeProject *types.Project
+	dockerService  api.Service
 }
 
 func (s *BaseSuite) TearDownSuite(c *check.C) {
 	// shutdown and delete compose project
-	if s.composeProject != nil {
-		s.composeProject.Stop(c)
+	if s.composeProject != nil && s.dockerService != nil {
+		// s.composeProject.Stop(c)
+		err := s.dockerService.Stop(context.Background(), s.composeProject, api.StopOptions{})
+		c.Assert(err, checker.IsNil)
 	}
 }
 
@@ -94,18 +103,18 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	projectName := fmt.Sprintf("integration-test-%s", name)
 	composeFile := fmt.Sprintf("resources/compose/%s.yml", name)
 
-	addrs, err := net.InterfaceAddrs()
+	composeClient, err := client.NewClientWithOpts()
 	c.Assert(err, checker.IsNil)
-	for _, addr := range addrs {
-		ip, _, err := net.ParseCIDR(addr.String())
-		c.Assert(err, checker.IsNil)
-		if !ip.IsLoopback() && ip.To4() != nil {
-			_ = os.Setenv("DOCKER_HOST_IP", ip.String())
-			break
-		}
-	}
+	s.dockerService = compose.NewComposeService(composeClient, configfile.New(composeFile))
 
-	s.composeProject = compose.CreateProject(c, projectName, composeFile)
+	ops, err := cli.NewProjectOptions([]string{composeFile}, cli.WithName(projectName))
+	c.Assert(err, checker.IsNil)
+
+	s.composeProject, err = cli.ProjectFromOptions(ops)
+	c.Assert(err, checker.IsNil)
+
+	os.Setenv("DOCKER_HOST_IP", composeClient.DaemonHost())
+	//s.composeProject = compose.CreateProject(c, projectName, composeFile)
 }
 
 func withConfigFile(file string) string {
