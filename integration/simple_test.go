@@ -95,7 +95,7 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout(c *check.C) {
 	s.createComposeProject(c, "reqacceptgrace")
 	s.composeProject.Start(c)
 
-	whoami := "http://" + s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress + ":80"
+	whoami := "http://whoami:80"
 
 	file := s.adaptFile(c, "fixtures/reqacceptgrace.toml", struct {
 		Server string
@@ -195,8 +195,8 @@ func (s *SimpleSuite) TestStatsWithMultipleEntryPoint(c *check.C) {
 	s.createComposeProject(c, "stats")
 	s.composeProject.Start(c)
 
-	whoami1 := "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80"
-	whoami2 := "http://" + s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress + ":80"
+	whoami1 := "http://whoami1:80"
+	whoami2 := "http://whoami2:80"
 
 	file := s.adaptFile(c, "fixtures/simple_stats.toml", struct {
 		Server1 string
@@ -357,8 +357,8 @@ func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	ipWhoami01 := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
-	ipWhoami02 := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
+	ipWhoami01 := "whoami1"
+	ipWhoami02 := "whoami2"
 	file := s.adaptFile(c, "fixtures/multiple_provider.toml", struct{ IP string }{
 		IP: ipWhoami02,
 	})
@@ -481,7 +481,7 @@ func (s *SimpleSuite) TestMultiProvider(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	server := "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	server := "http://whoami1"
 
 	file := s.adaptFile(c, "fixtures/multiprovider.toml", struct {
 		Server string
@@ -532,7 +532,7 @@ func (s *SimpleSuite) TestSimpleConfigurationHostRequestTrailingPeriod(c *check.
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	server := "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	server := "http://whoami1"
 
 	file := s.adaptFile(c, "fixtures/file/simple-hosts.toml", struct {
 		Server string
@@ -709,8 +709,8 @@ func (s *SimpleSuite) TestWRR(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	server1 := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
-	server2 := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
+	server1 := "whoami1"
+	server2 := "whoami2"
 
 	file := s.adaptFile(c, "fixtures/wrr.toml", struct {
 		Server1 string
@@ -756,8 +756,8 @@ func (s *SimpleSuite) TestWRRSticky(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	server1 := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
-	server2 := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
+	server1 := "whoami1"
+	server2 := "whoami2"
 
 	file := s.adaptFile(c, "fixtures/wrr_sticky.toml", struct {
 		Server1 string

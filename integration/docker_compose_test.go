@@ -1,12 +1,14 @@
 package integration
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
+	composeAPI "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/api"
@@ -25,21 +27,15 @@ type DockerComposeSuite struct {
 
 func (s *DockerComposeSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, composeProject)
-	s.composeProject.Start(c)
-}
-
-func (s *DockerComposeSuite) TearDownSuite(c *check.C) {
-	// shutdown and delete compose project
-	if s.composeProject != nil {
-		s.composeProject.Stop(c)
-	}
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeAPI.UpOptions{})
+	c.Assert(err, checker.IsNil)
 }
 
 func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
 	serviceCount := 2
 	composeService := "whoami1"
 
-	s.composeProject.Scale(c, composeService, serviceCount)
+	s.composeProject.Services[2].Scale = serviceCount
 
 	tempObjects := struct {
 		DockerHost  string

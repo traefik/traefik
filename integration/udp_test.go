@@ -47,10 +47,10 @@ func guessWhoUDP(addr string) (string, error) {
 }
 
 func (s *UDPSuite) TestWRR(c *check.C) {
-	whoamiAIP := s.composeProject.Container(c, "whoami-a").NetworkSettings.IPAddress
-	whoamiBIP := s.composeProject.Container(c, "whoami-b").NetworkSettings.IPAddress
-	whoamiCIP := s.composeProject.Container(c, "whoami-c").NetworkSettings.IPAddress
-	whoamiDIP := s.composeProject.Container(c, "whoami-d").NetworkSettings.IPAddress
+	whoamiAIP := "whoami-a"
+	whoamiBIP := "whoami-b"
+	whoamiCIP := "whoami-c"
+	whoamiDIP := "whoami-d"
 
 	file := s.adaptFile(c, "fixtures/udp/wrr.toml", struct {
 		WhoamiAIP string

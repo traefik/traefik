@@ -3,7 +3,7 @@
   sendAnonymousUsage = false
 
 [log]
-  level = "ERROR"
+  level = "INFO"
   filePath = "traefik.log"
 
 [accessLog]

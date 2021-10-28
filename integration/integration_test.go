@@ -5,7 +5,10 @@ import (
 	"bytes"
 	"context"
 	"flag"
+<<<<<<< HEAD
 	"fmt"
+=======
+>>>>>>> 6577c3151a88657f8db9783308c0565ab90a6bde
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -26,6 +29,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	checker "github.com/vdemeester/shakers"
 )
+
+// compose "github.com/libkermit/compose/check"
 
 var (
 	integration = flag.Bool("integration", false, "run integration tests")
@@ -100,9 +105,25 @@ func (s *BaseSuite) TearDownSuite(c *check.C) {
 }
 
 func (s *BaseSuite) createComposeProject(c *check.C, name string) {
-	projectName := fmt.Sprintf("integration-test-%s", name)
-	composeFile := fmt.Sprintf("resources/compose/%s.yml", name)
+	projectName := "integration-test-" + name
+	composeFile := "resources/compose/" + name + ".yml"
 
+	// addrs, err := net.InterfaceAddrs()
+	// c.Assert(err, checker.IsNil)
+	// for _, addr := range addrs {
+	// 	ip, _, err := net.ParseCIDR(addr.String())
+	// 	c.Assert(err, checker.IsNil)
+	// 	if !ip.IsLoopback() && ip.To4() != nil {
+	// 		_ = os.Setenv("DOCKER_HOST_IP", ip.String())
+	// 		break
+	// 	}
+	// }
+
+	composeClient, err := client.NewClientWithOpts()
+	c.Assert(err, checker.IsNil)
+	s.dockerService = compose.NewComposeService(composeClient, configfile.New(composeFile))
+
+<<<<<<< HEAD
 	composeClient, err := client.NewClientWithOpts()
 	c.Assert(err, checker.IsNil)
 	s.dockerService = compose.NewComposeService(composeClient, configfile.New(composeFile))
@@ -115,6 +136,13 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 
 	os.Setenv("DOCKER_HOST_IP", composeClient.DaemonHost())
 	//s.composeProject = compose.CreateProject(c, projectName, composeFile)
+=======
+	ops, err := cli.NewProjectOptions([]string{composeFile}, cli.WithName(projectName))
+	c.Assert(err, checker.IsNil)
+
+	s.composeProject, err = cli.ProjectFromOptions(ops)
+	c.Assert(err, checker.IsNil)
+>>>>>>> 6577c3151a88657f8db9783308c0565ab90a6bde
 }
 
 func withConfigFile(file string) string {
