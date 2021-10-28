@@ -1,12 +1,14 @@
 package integration
 
 import (
+	"context"
 	"net"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
@@ -16,7 +18,8 @@ type UDPSuite struct{ BaseSuite }
 
 func (s *UDPSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "udp")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 }
 
 func guessWhoUDP(addr string) (string, error) {

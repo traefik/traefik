@@ -2,12 +2,14 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -18,8 +20,8 @@ type RestSuite struct{ BaseSuite }
 
 func (s *RestSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "rest")
-
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 }
 
 func (s *RestSuite) TestSimpleConfigurationInsecure(c *check.C) {

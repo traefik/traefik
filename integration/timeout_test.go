@@ -1,11 +1,13 @@
 package integration
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
@@ -15,7 +17,8 @@ type TimeoutSuite struct{ BaseSuite }
 
 func (s *TimeoutSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "timeout")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 }
 
 func (s *TimeoutSuite) TestForwardingTimeouts(c *check.C) {

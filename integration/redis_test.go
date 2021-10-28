@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"github.com/abronan/valkeyrie"
 	"github.com/abronan/valkeyrie/store"
 	"github.com/abronan/valkeyrie/store/redis"
+	dockerapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -26,7 +28,8 @@ type RedisSuite struct {
 
 func (s *RedisSuite) setupStore(c *check.C) {
 	s.createComposeProject(c, "redis")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, dockerapi.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
 	redis.Register()
 	kv, err := valkeyrie.NewStore(
@@ -48,8 +51,9 @@ func (s *RedisSuite) setupStore(c *check.C) {
 
 func (s *RedisSuite) TearDownTest(c *check.C) {
 	// shutdown and delete compose project
-	if s.composeProject != nil {
-		s.composeProject.Stop(c)
+	if s.composeProject != nil && s.dockerService != nil {
+		err := s.dockerService.Stop(context.Background(), s.composeProject, dockerapi.StopOptions{})
+		c.Assert(err, checker.IsNil)
 	}
 }
 
@@ -131,7 +135,7 @@ func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 	var obtained api.RunTimeRepresentation
 	err = json.NewDecoder(resp.Body).Decode(&obtained)
 	c.Assert(err, checker.IsNil)
-	got, err := json.MarshalIndent(obtained, "")
+	got, err := json.MarshalIndent(obtained, "", "")
 	c.Assert(err, checker.IsNil)
 
 	expectedJSON := filepath.FromSlash("testdata/rawdata-redis.json")

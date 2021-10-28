@@ -1,10 +1,12 @@
 package integration
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/gorilla/websocket"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -15,7 +17,8 @@ type RetrySuite struct{ BaseSuite }
 
 func (s *RetrySuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "retry")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 }
 
 func (s *RetrySuite) TestRetry(c *check.C) {

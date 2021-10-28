@@ -1,10 +1,12 @@
 package integration
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
@@ -17,7 +19,8 @@ type RateLimitSuite struct {
 
 func (s *RateLimitSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "ratelimit")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
 	s.ServerIP = "whoami1"
 }
