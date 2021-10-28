@@ -97,9 +97,6 @@ type nameAndConfig struct {
 }
 
 func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, configsHTTP map[string]*runtime.RouterInfo, handlerHTTP, handlerHTTPS http.Handler) (*tcp.Router, error) {
-
-	priorityCounter := 1
-
 	// Build a new Router.
 	router, err := tcp.NewRouter()
 	if err != nil {
@@ -321,7 +318,6 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 				routerConfig.AddError(err, true)
 				logger.Debug(err)
 			}
-			priorityCounter++
 			continue
 		}
 
@@ -332,7 +328,6 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 				routerConfig.AddError(err, true)
 				logger.Debug(err)
 			}
-			priorityCounter++
 			continue
 		}
 
@@ -383,7 +378,6 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			routerConfig.AddError(err, true)
 			logger.Debug(err)
 		}
-		priorityCounter++
 	}
 
 	return router, nil
