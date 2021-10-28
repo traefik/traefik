@@ -312,14 +312,6 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			routerErr := fmt.Errorf("invalid rule: %q , has HostSNI matcher, but no TLS on router", routerConfig.Rule)
 			logger.Debug(routerErr)
 			routerConfig.AddError(routerErr, true)
-			// TODO: make sure this does not break anything.
-			/*
-				err := router.AddRoute(routerConfig.Rule, -1, handler)
-				if err != nil {
-					logger.Debug(err)
-					routerConfig.AddError(err, true)
-				}
-			*/
 		}
 
 		if routerConfig.TLS == nil {

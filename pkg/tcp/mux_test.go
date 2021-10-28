@@ -630,7 +630,7 @@ func Test_Priority(t *testing.T) {
 			serverName:   "foobar",
 		},
 		{
-			desc: "Two matching rule, custom priority",
+			desc: "Two matching rules, custom priority",
 			rules: map[string]int{
 				"HostSNI(`foobar`)":        10000,
 				"HostSNI(`foobar`, `bar`)": 0,

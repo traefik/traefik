@@ -212,7 +212,7 @@ If the rule is verified, the router becomes active, calls middlewares, and then 
 ??? tip "Backticks or Quotes?"
     To set the value of a rule, use [backticks](https://en.wiktionary.org/wiki/backtick) ``` ` ``` or escaped double-quotes `\"`.
 
-    Single quotes `'` are not accepted as values are [Golang's String Literals](https://golang.org/ref/spec#String_literals).
+    Single quotes `'` are not accepted since the values are [Golang's String Literals](https://golang.org/ref/spec#String_literals).
 
 !!! example "Host is example.com"
 
@@ -255,7 +255,8 @@ The table below lists all the available matchers:
 
 !!! info "Combining Matchers Using Operators and Parenthesis"
 
-    You can combine multiple matchers using the AND (`&&`) and OR (`||`) operators. You can also use parenthesis.
+    The usual AND (`&&`) and OR (`||`) logical operators can be used, with the expected precedence rules,
+    as well as parentheses.
 
 !!! info "Invert a matcher"
 
@@ -799,7 +800,7 @@ If the rule is verified, the router becomes active, calls middlewares, and then 
 ??? tip "Backticks or Quotes?"
 To set the value of a rule, use [backticks](https://en.wiktionary.org/wiki/backtick) ``` ` ``` or escaped double-quotes `\"`.
 
-    Single quotes `'` are not accepted as values are [Golang's String Literals](https://golang.org/ref/spec#String_literals).
+    Single quotes `'` are not accepted since the values are [Golang's String Literals](https://golang.org/ref/spec#String_literals).
 
 !!! example "HostSNI is example.com"
 
@@ -833,7 +834,8 @@ The table below lists all the available matchers:
 
 !!! info "Combining Matchers Using Operators and Parenthesis"
 
-    You can combine multiple matchers using the AND (`&&`) and OR (`||`) operators. You can also use parenthesis.
+    The usual AND (`&&`) and OR (`||`) logical operators can be used, with the expected precedence rules,
+    as well as parentheses.
 
 !!! info "Invert a matcher"
 
@@ -857,10 +859,10 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     tcp:
       routers:
         Router-1:
-          rule: "HostSNI(`traefik.com`)"
+          rule: "ClientIP(`192.168.0.12`)"
           # ...
         Router-2:
-          rule: "HostSNI(`traefik.com`, `foobar.traefik.com`)"
+          rule: "ClientIP(`192.168.0.0/24`)"
           # ...
     ```
 
@@ -868,38 +870,37 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     ## Dynamic configuration
     [tcp.routers]
       [tcp.routers.Router-1]
-        rule = "HostSNI(`traefik.com`)"
+        rule = "ClientIP(`192.168.0.12`)"
         # ...
       [tcp.routers.Router-2]
-        rule = "HostSNI(`traefik.com`, `foobar.traefik.com`)"
+        rule = "ClientIP(`192.168.0.0/24`)"
         # ...
     ```
 
-    In this case, all requests with host `traefik.com` will be routed through `Router-2` instead of `Router-1`.
+    The table below shows that `Router-2` has a higher computed priority than `Router-1`.
 
     | Name     | Rule                                                        | Priority |
     |----------|-------------------------------------------------------------|----------|
-    | Router-1 | ```HostSNI(`traefik.com`)```                                | 22       |
-    | Router-2 | ```HostSNI(`traefik.com`, `foobar.traefik.com`)```          | 44       |
+    | Router-1 | ```ClientIP(`192.168.0.12`)```                              | 24       |
+    | Router-2 | ```ClientIP(`192.168.0.0/24`)```                            | 26       |
 
-    The previous table shows that `Router-2` has a higher priority than `Router-1`.
+    Which means that requests from `192.168.0.12` would go to Router-2 even though Router-1 is intended to specifically handle them.
+    To achieve this intention, a priority (higher than 26) should be set on Router-1.
 
-    To solve this issue, the priority must be set.
-
-??? example "Set priorities -- using the [File Provider](../../providers/file.md)"
+??? example "Setting priorities -- using the [File Provider](../../providers/file.md)"
 
     ```yaml tab="File (YAML)"
     ## Dynamic configuration
     tcp:
       routers:
         Router-1:
-          rule: "HostSNI(`traefik.com`)"
+          rule: "ClientIP(`192.168.0.12`)"
           entryPoints:
           - "web"
           service: service-1
           priority: 2
         Router-2:
-          rule: "HostSNI(`traefik.com`, `foobar.traefik.com`)"
+          rule: "ClientIP(`192.168.0.0/24`)"
           entryPoints:
           - "web"
           priority: 1
@@ -910,18 +911,18 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     ## Dynamic configuration
     [tcp.routers]
       [tcp.routers.Router-1]
-        rule = "HostSNI(`traefik.com`)"
+        rule = "ClientIP(`192.168.0.12`)"
         entryPoints = ["web"]
         service = "service-1"
         priority = 2
       [tcp.routers.Router-2]
-        rule = "HostSNI(`traefik.com`, `foobar.traefik.com`)"
+        rule = "ClientIP(`192.168.0.0/24`)"
         entryPoints = ["web"]
         priority = 1
         service = "service-2"
     ```
 
-    In this configuration, the priority is configured to allow `Router-1` to handle requests with the `traefik.com` host.
+    In this configuration, the priority is configured so that `Router-1` will handle requests from `192.168.0.12`.
 
 ### Middlewares
 

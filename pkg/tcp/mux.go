@@ -101,16 +101,17 @@ func (m Muxer) Match(meta ConnData) Handler {
 	return nil
 }
 
-// AddRoute adds a new route to the router.
+// AddRoute adds a new route, associated to the given handler, at the given
+// priority, to the muxer.
 func (m *Muxer) AddRoute(rule string, priority int, handler Handler) error {
-	// Special case for catchAll rule
-	// We set the lowest computable priority minus one to this handler,
-	// in order to make it the last to be evaluated.
+	// Special case for when the catchAll fallback is present.
+	// When no user-defined priority is found, the lowest computable priority minus one is used,
+	// in order to make the fallback the last to be evaluated.
 	if priority == 0 && rule == "HostSNI(`*`)" {
 		priority = -1
 	}
 
-	// Default value, user has not set it, so we'll compute it.
+	// Default value, which means the user has not set it, so we'll compute it.
 	if priority == 0 {
 		priority = len(rule)
 	}
@@ -186,7 +187,10 @@ type route struct {
 	// Handler responsible for handling the route.
 	handler Handler
 
-	// TODO: doc + type
+	// Used to disambiguate between two (or more) rules that would both match for a
+	// given request.
+	// Defaults to 0.
+	// Computed from the matching rule length, if not user-set.
 	priority int
 
 	noMatch bool
@@ -358,9 +362,11 @@ func hostSNI(route *route, hosts ...string) error {
 	}
 
 	route.addMatcher(func(meta ConnData) bool {
-		// As HostSNI(`*`) rule has been prodided as catchAll for non-TLS TCP,
-		// we allow matching with an empty serverName only for that case.
-		if len(hosts) == 1 && hosts[0] == "*" {
+		// Since a HostSNI(`*`) rule has been provided as catchAll for non-TLS TCP,
+		// it allows matching with an empty serverName.
+		// Which is why we make sure to take that case into account before before
+		// checking meta.serverName.
+		if hosts[0] == "*" {
 			return true
 		}
 

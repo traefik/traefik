@@ -79,7 +79,7 @@ func (r *Router) GetTLSGetClientInfo() func(info *tls.ClientHelloInfo) (*tls.Con
 // ServeTCP forwards the connection to the right TCP/HTTP handler.
 func (r *Router) ServeTCP(conn WriteCloser) {
 	// Handling Non-TLS TCP connection early if there is neither HTTP(S) nor TLS
-	// routers on the entryPoint, and if there are configured routes for non-TLS TCP.
+	// routers on the entryPoint, and if there is at least one non-TLS TCP router.
 	// In the case of a non-TLS TCP client (that does not "send" first), we would
 	// block forever on clientHelloServerName, which is why we want to detect and
 	// handle that case first and foremost.
@@ -91,6 +91,7 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 			return
 		}
 
+		// TODO: if no match, get out and try hello.
 		handler := r.muxerTCP.Match(connData)
 		switch {
 		case handler != nil:
