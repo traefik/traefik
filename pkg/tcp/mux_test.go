@@ -43,6 +43,11 @@ func Test_addTCPRoute(t *testing.T) {
 			serverName: "foobar",
 		},
 		{
+			desc:       "Valid negative HostSNI rule matching",
+			rule:       "!HostSNI(`bar`)",
+			serverName: "foobar",
+		},
+		{
 			desc:       "Valid HostSNI rule matching with alternative case",
 			rule:       "hostsni(`foobar`)",
 			serverName: "foobar",
@@ -55,6 +60,12 @@ func Test_addTCPRoute(t *testing.T) {
 		{
 			desc:       "Valid HostSNI rule not matching",
 			rule:       "HostSNI(`foobar`)",
+			serverName: "bar",
+			matchErr:   true,
+		},
+		{
+			desc:       "Valid negative HostSNI rule not matching",
+			rule:       "!HostSNI(`bar`)",
 			serverName: "bar",
 			matchErr:   true,
 		},
@@ -79,6 +90,11 @@ func Test_addTCPRoute(t *testing.T) {
 			remoteAddr: "10.0.0.1:80",
 		},
 		{
+			desc:       "Valid negative ClientIP rule matching",
+			rule:       "!ClientIP(`20.0.0.1`)",
+			remoteAddr: "10.0.0.1:80",
+		},
+		{
 			desc:       "Valid ClientIP rule matching with alternative case",
 			rule:       "clientip(`10.0.0.1`)",
 			remoteAddr: "10.0.0.1:80",
@@ -91,6 +107,12 @@ func Test_addTCPRoute(t *testing.T) {
 		{
 			desc:       "Valid ClientIP rule not matching",
 			rule:       "ClientIP(`10.0.0.1`)",
+			remoteAddr: "10.0.0.2:80",
+			matchErr:   true,
+		},
+		{
+			desc:       "Valid negative ClientIP rule not matching",
+			rule:       "!ClientIP(`10.0.0.2`)",
 			remoteAddr: "10.0.0.2:80",
 			matchErr:   true,
 		},
@@ -150,6 +172,24 @@ func Test_addTCPRoute(t *testing.T) {
 		{
 			desc:       "Valid HostSNI and ClientIP rule matching",
 			rule:       "HostSNI(`foobar`) && ClientIP(`10.0.0.1`)",
+			serverName: "foobar",
+			remoteAddr: "10.0.0.1:80",
+		},
+		{
+			desc:       "Valid negative HostSNI and ClientIP rule matching",
+			rule:       "!HostSNI(`bar`) && ClientIP(`10.0.0.1`)",
+			serverName: "foobar",
+			remoteAddr: "10.0.0.1:80",
+		},
+		{
+			desc:       "Valid HostSNI and negative ClientIP rule matching",
+			rule:       "HostSNI(`foobar`) && !ClientIP(`10.0.0.2`)",
+			serverName: "foobar",
+			remoteAddr: "10.0.0.1:80",
+		},
+		{
+			desc:       "Valid negative HostSNI and negative ClientIP rule matching",
+			rule:       "!HostSNI(`bar`) && !ClientIP(`10.0.0.2`)",
 			serverName: "foobar",
 			remoteAddr: "10.0.0.1:80",
 		},
@@ -277,8 +317,6 @@ func Test_addTCPRoute(t *testing.T) {
 				n, ok := conn.call[msg]
 				assert.Equal(t, n, 1)
 				assert.True(t, ok)
-
-				// assert.Equal(t, test.expected, results)
 			}
 		})
 	}
@@ -392,6 +430,22 @@ func Test_HostSNI(t *testing.T) {
 			serverName: "foobar",
 		},
 		{
+			desc:       "Matching globing host `*` and empty serverName",
+			ruleHosts:  []string{"*"},
+			serverName: "",
+		},
+		{
+			desc:       "Matching globing host `*` and another non matching host",
+			ruleHosts:  []string{"foo", "*"},
+			serverName: "bar",
+		},
+		{
+			desc:       "Matching globing host `*` and another non matching host, and empty servername",
+			ruleHosts:  []string{"foo", "*"},
+			serverName: "",
+			matchErr:   true,
+		},
+		{
 			desc:      "Not Matching globing host with subdomain",
 			ruleHosts: []string{"*.bar"},
 			buildErr:  true,
@@ -445,59 +499,71 @@ func Test_HostSNI(t *testing.T) {
 	}
 }
 
-// TODO have a parse client ip test?
 func Test_ClientIP(t *testing.T) {
 	testCases := []struct {
-		desc       string
-		ruleHosts  []string
-		serverName string
-		buildErr   bool
-		matchErr   bool
+		desc      string
+		ruleCIDRs []string
+		remoteIP  string
+		buildErr  bool
+		matchErr  bool
 	}{
 		{
 			desc:     "Empty",
 			buildErr: true,
 		},
 		{
-			desc:      "Non ASCII host",
-			ruleHosts: []string{"héhé"},
+			desc:      "Malformed CIDR",
+			ruleCIDRs: []string{"héhé"},
 			buildErr:  true,
 		},
 		{
-			desc:       "Not Matching hosts",
-			ruleHosts:  []string{"foobar"},
-			serverName: "bar",
-			matchErr:   true,
+			desc:      "Not matching empty remote IP",
+			ruleCIDRs: []string{"20.20.20.20"},
+			matchErr:  true,
 		},
 		{
-			desc:       "Matching globing host `*`",
-			ruleHosts:  []string{"*"},
-			serverName: "foobar",
+			desc:      "Not matching IP",
+			ruleCIDRs: []string{"20.20.20.20"},
+			remoteIP:  "10.10.10.10",
+			matchErr:  true,
 		},
 		{
-			desc:      "Not Matching globing host with subdomain",
-			ruleHosts: []string{"*.bar"},
-			buildErr:  true,
+			desc:      "Matching IP",
+			ruleCIDRs: []string{"10.10.10.10"},
+			remoteIP:  "10.10.10.10",
 		},
 		{
-			desc:       "Not Matching host with trailing dot with ",
-			ruleHosts:  []string{"foobar."},
-			serverName: "foobar.",
+			desc:      "Not matching multiple IPs",
+			ruleCIDRs: []string{"20.20.20.20", "30.30.30.30"},
+			remoteIP:  "10.10.10.10",
+			matchErr:  true,
 		},
 		{
-			desc:       "Matching host with trailing dot",
-			ruleHosts:  []string{"foobar."},
-			serverName: "foobar",
+			desc:      "Matching multiple IPs",
+			ruleCIDRs: []string{"10.10.10.10", "20.20.20.20", "30.30.30.30"},
+			remoteIP:  "20.20.20.20",
 		},
 		{
-			desc:       "Matching hosts",
-			ruleHosts:  []string{"foobar"},
-			serverName: "foobar",
+			desc:      "Not matching CIDR",
+			ruleCIDRs: []string{"20.0.0.0/24"},
+			remoteIP:  "10.10.10.10",
+			matchErr:  true,
 		},
 		{
-			desc:       "Matching hosts with subdomains",
-			ruleHosts:  []string{"foo.bar"},
-			serverName: "foo.bar",
+			desc:      "Matching CIDR",
+			ruleCIDRs: []string{"20.0.0.0/8"},
+			remoteIP:  "20.10.10.10",
+		},
+		{
+			desc:      "Not matching multiple CIDRs",
+			ruleCIDRs: []string{"10.0.0.0/24", "20.0.0.0/24"},
+			remoteIP:  "10.10.10.10",
+			matchErr:  true,
+		},
+		{
+			desc:      "Matching multiple CIDRs",
+			ruleCIDRs: []string{"10.0.0.0/8", "20.0.0.0/8"},
+			remoteIP:  "20.10.10.10",
 		},
 	}
 
@@ -508,7 +574,7 @@ func Test_ClientIP(t *testing.T) {
 			t.Parallel()
 
 			var route route
-			err := hostSNI(&route, test.ruleHosts...)
+			err := clientIP(&route, test.ruleCIDRs...)
 			if test.buildErr {
 				require.Error(t, err)
 				return
@@ -516,7 +582,7 @@ func Test_ClientIP(t *testing.T) {
 			require.NoError(t, err)
 
 			meta := ConnData{
-				serverName: test.serverName,
+				remoteIP: test.remoteIP,
 			}
 
 			if test.matchErr {
@@ -524,6 +590,82 @@ func Test_ClientIP(t *testing.T) {
 			} else {
 				assert.True(t, route.match(meta))
 			}
+		})
+	}
+}
+
+func Test_Priority(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		rules        map[string]int
+		serverName   string
+		remoteIP     string
+		expectedRule string
+	}{
+		{
+			desc: "One matching rule, calculated priority",
+			rules: map[string]int{
+				"HostSNI(`bar`)":    0,
+				"HostSNI(`foobar`)": 0,
+			},
+			expectedRule: "HostSNI(`bar`)",
+			serverName:   "bar",
+		},
+		{
+			desc: "One matching rule, custom priority",
+			rules: map[string]int{
+				"HostSNI(`foobar`)": 0,
+				"HostSNI(`bar`)":    10000,
+			},
+			expectedRule: "HostSNI(`foobar`)",
+			serverName:   "foobar",
+		},
+		{
+			desc: "Two matching rules, calculated priority",
+			rules: map[string]int{
+				"HostSNI(`foobar`)":        0,
+				"HostSNI(`foobar`, `bar`)": 0,
+			},
+			expectedRule: "HostSNI(`foobar`, `bar`)",
+			serverName:   "foobar",
+		},
+		{
+			desc: "Two matching rule, custom priority",
+			rules: map[string]int{
+				"HostSNI(`foobar`)":        10000,
+				"HostSNI(`foobar`, `bar`)": 0,
+			},
+			expectedRule: "HostSNI(`foobar`)",
+			serverName:   "foobar",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			muxer, err := NewMuxer()
+			require.NoError(t, err)
+
+			matchedRule := ""
+			for rule, priority := range test.rules {
+				rule := rule
+				err := muxer.AddRoute(rule, priority, HandlerFunc(func(conn WriteCloser) {
+					matchedRule = rule
+				}))
+				require.NoError(t, err)
+			}
+
+			handler := muxer.Match(ConnData{
+				serverName: test.serverName,
+				remoteIP:   test.remoteIP,
+			})
+			require.NotNil(t, handler)
+
+			handler.ServeTCP(nil)
+			assert.Equal(t, test.expectedRule, matchedRule)
 		})
 	}
 }

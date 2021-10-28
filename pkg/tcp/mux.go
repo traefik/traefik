@@ -73,8 +73,6 @@ func NewConnData(serverName string, conn WriteCloser) (ConnData, error) {
 // Muxer defines a muxer that handles TCP routing with rules.
 type Muxer struct {
 	subRouter
-	sortedRules []*route
-	//	catchAll    Handler
 	parser predicate.Parser
 }
 
@@ -100,26 +98,19 @@ func (m Muxer) Match(meta ConnData) Handler {
 			return route.handler
 		}
 	}
-
-	/*
-		if m.catchAll != nil {
-			return m.catchAll
-		}
-	*/
-
 	return nil
 }
 
 // AddRoute adds a new route to the router.
 func (m *Muxer) AddRoute(rule string, priority int, handler Handler) error {
-	// TODO: doc if priority does not allow us to remove catchAll.
+	// Special case for catchAll rule
+	// We set the lowest computable priority minus one to this handler,
+	// in order to make it the last to be evaluated.
 	if priority == 0 && rule == "HostSNI(`*`)" {
 		priority = -1
-		// m.catchAll = handler
-		// return nil
 	}
 
-	// default value, user has not set it, so we'll compute it
+	// Default value, user has not set it, so we'll compute it.
 	if priority == 0 {
 		priority = len(rule)
 	}
@@ -136,7 +127,7 @@ func (m *Muxer) AddRoute(rule string, priority int, handler Handler) error {
 
 	newRoute := m.newRoute()
 	newRoute.handler = handler
-	newRoute.priority = int32(priority)
+	newRoute.priority = priority
 
 	err = addRuleOnRoute(newRoute, buildTree())
 	if err != nil {
@@ -157,12 +148,7 @@ func (r routes) Less(i, j int) bool {
 	return r[i].priority > r[j].priority
 }
 
-func (m *Muxer) sortRules() {
-	sort.Sort(routes(m.routes))
-}
-
 func (m *Muxer) hasRoutes() bool {
-	//	return m.catchAll != nil || len(m.routes) > 0
 	return len(m.routes) > 0
 }
 
@@ -201,7 +187,7 @@ type route struct {
 	handler Handler
 
 	// TODO: doc + type
-	priority int32
+	priority int
 
 	noMatch bool
 }
@@ -226,9 +212,10 @@ func (r *route) match(meta ConnData) bool {
 		return r.router.match(meta)
 	}
 
-	// For each matcher, check if match, and return true if all are matched.
+	// For each matcher, check if it matches, and return true if all are matched.
 	for _, matcher := range r.matchers {
 		if !matcher(meta) {
+			// TODO check why this is not covered by unit tests
 			if r.router != nil {
 				return r.router.match(meta)
 			}
@@ -309,14 +296,14 @@ func addRuleOnRoute(route *route, rule *rules.Tree) error {
 
 func not(m func(*route, ...string) error) func(*route, ...string) error {
 	return func(r *route, v ...string) error {
-		router := Muxer{}
+		router := subRouter{}
 		err := m(router.newRoute(), v...)
 		if err != nil {
 			return err
 		}
 
 		r.addMatcher(func(meta ConnData) bool {
-			return !r.match(meta)
+			return !router.match(meta)
 		})
 
 		return nil
@@ -354,7 +341,7 @@ var almostFQDN = regexp.MustCompile(`^[[:alnum:]\.-]+$`)
 // hostSNI checks if the SNI Host of the connection match the matcher host.
 func hostSNI(route *route, hosts ...string) error {
 	if len(hosts) == 0 {
-		return fmt.Errorf("empty value for \"Host\" matcher is not allowed")
+		return fmt.Errorf("empty value for \"HostSNI\" matcher is not allowed")
 	}
 
 	for i, host := range hosts {
@@ -371,8 +358,9 @@ func hostSNI(route *route, hosts ...string) error {
 	}
 
 	route.addMatcher(func(meta ConnData) bool {
-		// TODO verify if this is correct
-		if hosts[0] == "*" {
+		// As HostSNI(`*`) rule has been prodided as catchAll for non-TLS TCP,
+		// we allow matching with an empty serverName only for that case.
+		if len(hosts) == 1 && hosts[0] == "*" {
 			return true
 		}
 
@@ -381,6 +369,10 @@ func hostSNI(route *route, hosts ...string) error {
 		}
 
 		for _, host := range hosts {
+			if host == "*" {
+				return true
+			}
+
 			if host == meta.serverName {
 				return true
 			}
