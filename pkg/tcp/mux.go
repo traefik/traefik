@@ -15,7 +15,7 @@ import (
 	"github.com/vulcand/predicate"
 )
 
-var funcs = map[string]func(*route, ...string) error{
+var funcs = map[string]func(*matchersTree, ...string) error{
 	"HostSNI":  hostSNI,
 	"ClientIP": clientIP,
 }
@@ -72,7 +72,7 @@ func NewConnData(serverName string, conn WriteCloser) (ConnData, error) {
 
 // Muxer defines a muxer that handles TCP routing with rules.
 type Muxer struct {
-	subRouter
+	routes []*route
 	parser predicate.Parser
 }
 
@@ -126,11 +126,13 @@ func (m *Muxer) AddRoute(rule string, priority int, handler Handler) error {
 		return fmt.Errorf("error while parsing rule %s", rule)
 	}
 
-	newRoute := m.newRoute()
-	newRoute.handler = handler
-	newRoute.priority = priority
+	newRoute := &route{
+		handler:  handler,
+		priority: priority,
+	}
+	m.routes = append(m.routes, newRoute)
 
-	err = addRuleOnRoute(newRoute, buildTree())
+	err = addRule(&newRoute.matchers, buildTree())
 	if err != nil {
 		newRoute.buildOnly()
 		return err
@@ -141,6 +143,10 @@ func (m *Muxer) AddRoute(rule string, priority int, handler Handler) error {
 	return nil
 }
 
+func (m *Muxer) hasRoutes() bool {
+	return len(m.routes) > 0
+}
+
 type routes []*route
 
 func (r routes) Len() int      { return len(r) }
@@ -149,42 +155,11 @@ func (r routes) Less(i, j int) bool {
 	return r[i].priority > r[j].priority
 }
 
-func (m *Muxer) hasRoutes() bool {
-	return len(m.routes) > 0
-}
-
-type subRouter struct {
-	routes []*route
-}
-
-func (s *subRouter) newRoute() *route {
-	route := &route{}
-	s.routes = append(s.routes, route)
-	return route
-}
-
-func (s subRouter) match(meta ConnData) bool {
-	// For each route, check if match, and return the handler for that route.
-	for _, route := range s.routes {
-		if route.match(meta) {
-			return true
-		}
-	}
-
-	return false
-}
-
-// matcher is a matcher used to match connection properties.
-type matcher func(meta ConnData) bool
-
 // route holds matchers to match TCP routes.
 type route struct {
-	// List of matchers that will be used to match the route.
-	matchers []matcher
-
-	router *subRouter
-
-	// Handler responsible for handling the route.
+	// The matchers tree structure reflecting the rule.
+	matchers matchersTree
+	// The handler responsible for handling the route.
 	handler Handler
 
 	// Used to disambiguate between two (or more) rules that would both match for a
@@ -200,127 +175,84 @@ func (r *route) buildOnly() {
 	r.noMatch = true
 }
 
-func (r *route) subRouter() *subRouter {
-	router := &subRouter{}
-	r.router = router
-	return router
-}
-
-// match checks the connection against all the matchers in the route, and returns if there is a full match.
+// match checks the connection metadata against the matchers in the route.
 func (r *route) match(meta ConnData) bool {
 	if r.noMatch {
 		return false
 	}
 
-	if len(r.matchers) == 0 && r.router != nil {
-		return r.router.match(meta)
+	return r.matchers.match(meta)
+}
+
+// matcher is a matcher func used to match connection properties.
+type matcher func(meta ConnData) bool
+
+// matchersTree represents the matchers tree structure.
+type matchersTree struct {
+	matcher  matcher
+	operator string
+	left     *matchersTree
+	right    *matchersTree
+}
+
+func (m matchersTree) match(meta ConnData) bool {
+	if m.matcher != nil {
+		return m.matcher(meta)
 	}
 
-	// For each matcher, check if it matches, and return true if all are matched.
-	for _, matcher := range r.matchers {
-		if !matcher(meta) {
-			// TODO check why this is not covered by unit tests
-			if r.router != nil {
-				return r.router.match(meta)
+	// Defensive check that should never be true.
+	if m.left == nil || m.right == nil {
+		return false
+	}
+
+	if m.operator == "or" {
+		return m.left.match(meta) || m.right.match(meta)
+	}
+
+	return m.left.match(meta) && m.right.match(meta)
+}
+
+func addRule(tree *matchersTree, rule *rules.Tree) error {
+	switch rule.Matcher {
+	case "and", "or":
+		tree.operator = rule.Matcher
+		tree.left = &matchersTree{}
+		err := addRule(tree.left, rule.RuleLeft)
+		if err != nil {
+			return err
+		}
+
+		tree.right = &matchersTree{}
+		return addRule(tree.right, rule.RuleRight)
+	default:
+		err := rules.CheckRule(rule)
+		if err != nil {
+			return err
+		}
+
+		err = funcs[rule.Matcher](tree, rule.Value...)
+		if err != nil {
+			return err
+		}
+
+		if rule.Not {
+			matcherFunc := tree.matcher
+			tree.matcher = func(meta ConnData) bool {
+				return !matcherFunc(meta)
 			}
-
-			return false
 		}
 	}
 
-	// All matchers matched
-	return true
+	return nil
 }
 
-// addMatcher adds a matcher to the route.
-func (r *route) addMatcher(m matcher) {
-	r.matchers = append(r.matchers, m)
-}
-
-func addRuleOnRouter(router *subRouter, rule *rules.Tree) error {
-	switch rule.Matcher {
-	case "and":
-		route := router.newRoute()
-		err := addRuleOnRoute(route, rule.RuleLeft)
-		if err != nil {
-			return err
-		}
-
-		return addRuleOnRoute(route, rule.RuleRight)
-	case "or":
-		err := addRuleOnRouter(router, rule.RuleLeft)
-		if err != nil {
-			return err
-		}
-
-		return addRuleOnRouter(router, rule.RuleRight)
-	default:
-		err := rules.CheckRule(rule)
-		if err != nil {
-			return err
-		}
-
-		if rule.Not {
-			return not(funcs[rule.Matcher])(router.newRoute(), rule.Value...)
-		}
-		return funcs[rule.Matcher](router.newRoute(), rule.Value...)
-	}
-}
-
-func addRuleOnRoute(route *route, rule *rules.Tree) error {
-	switch rule.Matcher {
-	case "and":
-		err := addRuleOnRoute(route, rule.RuleLeft)
-		if err != nil {
-			return err
-		}
-
-		return addRuleOnRoute(route, rule.RuleRight)
-	case "or":
-		subRouter := route.subRouter()
-
-		err := addRuleOnRouter(subRouter, rule.RuleLeft)
-		if err != nil {
-			return err
-		}
-
-		return addRuleOnRouter(subRouter, rule.RuleRight)
-	default:
-		err := rules.CheckRule(rule)
-		if err != nil {
-			return err
-		}
-
-		if rule.Not {
-			return not(funcs[rule.Matcher])(route, rule.Value...)
-		}
-		return funcs[rule.Matcher](route, rule.Value...)
-	}
-}
-
-func not(m func(*route, ...string) error) func(*route, ...string) error {
-	return func(r *route, v ...string) error {
-		router := subRouter{}
-		err := m(router.newRoute(), v...)
-		if err != nil {
-			return err
-		}
-
-		r.addMatcher(func(meta ConnData) bool {
-			return !router.match(meta)
-		})
-
-		return nil
-	}
-}
-
-func clientIP(route *route, clientIPs ...string) error {
+func clientIP(tree *matchersTree, clientIPs ...string) error {
 	checker, err := ip.NewChecker(clientIPs)
 	if err != nil {
 		return fmt.Errorf("could not initialize IP Checker for \"ClientIP\" matcher: %w", err)
 	}
 
-	route.addMatcher(func(meta ConnData) bool {
+	tree.matcher = func(meta ConnData) bool {
 		if meta.remoteIP == "" {
 			return false
 		}
@@ -335,7 +267,7 @@ func clientIP(route *route, clientIPs ...string) error {
 		}
 
 		return false
-	})
+	}
 
 	return nil
 }
@@ -343,7 +275,7 @@ func clientIP(route *route, clientIPs ...string) error {
 var almostFQDN = regexp.MustCompile(`^[[:alnum:]\.-]+$`)
 
 // hostSNI checks if the SNI Host of the connection match the matcher host.
-func hostSNI(route *route, hosts ...string) error {
+func hostSNI(tree *matchersTree, hosts ...string) error {
 	if len(hosts) == 0 {
 		return fmt.Errorf("empty value for \"HostSNI\" matcher is not allowed")
 	}
@@ -361,7 +293,7 @@ func hostSNI(route *route, hosts ...string) error {
 		hosts[i] = strings.ToLower(host)
 	}
 
-	route.addMatcher(func(meta ConnData) bool {
+	tree.matcher = func(meta ConnData) bool {
 		// Since a HostSNI(`*`) rule has been provided as catchAll for non-TLS TCP,
 		// it allows matching with an empty serverName.
 		// Which is why we make sure to take that case into account before before
@@ -391,7 +323,7 @@ func hostSNI(route *route, hosts ...string) error {
 		}
 
 		return false
-	})
+	}
 
 	return nil
 }

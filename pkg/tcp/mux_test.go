@@ -269,6 +269,32 @@ func Test_addTCPRoute(t *testing.T) {
 			remoteAddr: "10.0.0.1:80",
 			matchErr:   true,
 		},
+		{
+			desc:       "Valid HostSNI and ClientIP complex combined rule matching",
+			rule:       "(HostSNI(`foobar`) || HostSNI(`bar`)) && (ClientIP(`10.0.0.1`) || ClientIP(`10.0.0.2`))",
+			serverName: "bar",
+			remoteAddr: "10.0.0.1:80",
+		},
+		{
+			desc:       "Valid HostSNI and ClientIP complex combined rule not matching",
+			rule:       "(HostSNI(`foobar`) || HostSNI(`bar`)) && (ClientIP(`10.0.0.1`) || ClientIP(`10.0.0.2`))",
+			serverName: "baz",
+			remoteAddr: "10.0.0.1:80",
+			matchErr:   true,
+		},
+		{
+			desc:       "Valid HostSNI and ClientIP complex combined rule not matching",
+			rule:       "(HostSNI(`foobar`) || HostSNI(`bar`)) && (ClientIP(`10.0.0.1`) || ClientIP(`10.0.0.2`))",
+			serverName: "bar",
+			remoteAddr: "10.0.0.3:80",
+			matchErr:   true,
+		},
+		{
+			desc:       "Valid HostSNI and ClientIP more complex (but absurd) combined rule matching",
+			rule:       "(HostSNI(`foobar`) || (HostSNI(`bar`) && !HostSNI(`foobar`))) && ((ClientIP(`10.0.0.1`) && !ClientIP(`10.0.0.2`)) || ClientIP(`10.0.0.2`)) ",
+			serverName: "bar",
+			remoteAddr: "10.0.0.1:80",
+		},
 	}
 
 	for _, test := range testCases {
@@ -478,8 +504,8 @@ func Test_HostSNI(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			var route route
-			err := hostSNI(&route, test.ruleHosts...)
+			matcherTree := &matchersTree{}
+			err := hostSNI(matcherTree, test.ruleHosts...)
 			if test.buildErr {
 				require.Error(t, err)
 				return
@@ -491,9 +517,9 @@ func Test_HostSNI(t *testing.T) {
 			}
 
 			if test.matchErr {
-				assert.False(t, route.match(meta))
+				assert.False(t, matcherTree.match(meta))
 			} else {
-				assert.True(t, route.match(meta))
+				assert.True(t, matcherTree.match(meta))
 			}
 		})
 	}
@@ -573,8 +599,8 @@ func Test_ClientIP(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			var route route
-			err := clientIP(&route, test.ruleCIDRs...)
+			matchersTree := &matchersTree{}
+			err := clientIP(matchersTree, test.ruleCIDRs...)
 			if test.buildErr {
 				require.Error(t, err)
 				return
@@ -586,9 +612,9 @@ func Test_ClientIP(t *testing.T) {
 			}
 
 			if test.matchErr {
-				assert.False(t, route.match(meta))
+				assert.False(t, matchersTree.match(meta))
 			} else {
-				assert.True(t, route.match(meta))
+				assert.True(t, matchersTree.match(meta))
 			}
 		})
 	}
