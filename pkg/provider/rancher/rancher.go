@@ -82,6 +82,11 @@ func (p *Provider) Init() error {
 	return nil
 }
 
+// ThrottleDuration returns the throttle duration.
+func (p *Provider) ThrottleDuration() *time.Duration {
+	return nil
+}
+
 func (p *Provider) createClient(ctx context.Context) (rancher.Client, error) {
 	metadataServiceURL := fmt.Sprintf("http://rancher-metadata.rancher.internal/%s", p.Prefix)
 	client, err := rancher.NewClientAndWait(metadataServiceURL)

@@ -17,9 +17,10 @@ import (
 )
 
 type mockProvider struct {
-	messages []dynamic.Message
-	wait     time.Duration
-	first    chan struct{}
+	messages         []dynamic.Message
+	wait             time.Duration
+	first            chan struct{}
+	throttleDuration time.Duration
 }
 
 func (p *mockProvider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
@@ -46,8 +47,13 @@ func (p *mockProvider) Provide(configurationChan chan<- dynamic.Message, pool *s
 	return nil
 }
 
+// ThrottleDuration returns the throttle duration.
+func (p *mockProvider) ThrottleDuration() *time.Duration {
+	return &p.throttleDuration
+}
+
 func (p *mockProvider) Init() error {
-	panic("implement me")
+	return nil
 }
 
 func TestNewConfigurationWatcher(t *testing.T) {
@@ -165,7 +171,8 @@ func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 	defer routinesPool.Stop()
 
 	pvd := &mockProvider{
-		wait: 10 * time.Millisecond,
+		wait:             10 * time.Millisecond,
+		throttleDuration: 30 * time.Millisecond,
 	}
 
 	for i := 0; i < 5; i++ {
@@ -181,7 +188,10 @@ func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 	}
 
 	//watcher := NewConfigurationWatcher(routinesPool, aggregator.ThrottledProvider{pvd, 30 * time.Millisecond}, 30*time.Millisecond, []string{}, "")
-	watcher := NewConfigurationWatcher(routinesPool, aggregator.ThrottledProvider{pvd, 30 * time.Millisecond}, []string{}, "")
+	aggregator := aggregator.ProviderAggregator{}
+	aggregator.AddProvider(pvd)
+
+	watcher := NewConfigurationWatcher(routinesPool, aggregator, []string{}, "")
 
 	publishedConfigCount := 0
 	watcher.AddListener(func(_ dynamic.Configuration) {
@@ -345,8 +355,9 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 	// those transient configurations will be ignored if they are sent in a time frame
 	// lower than the provider throttle duration.
 	pvd := &mockProvider{
-		wait:  1 * time.Microsecond, // Enqueue them fast
-		first: make(chan struct{}),
+		wait:             1 * time.Microsecond, // Enqueue them fast
+		throttleDuration: time.Millisecond,
+		first:            make(chan struct{}),
 		messages: []dynamic.Message{
 			{ProviderName: "mock", Configuration: configuration},
 			{ProviderName: "mock", Configuration: transientConfiguration},
@@ -357,7 +368,10 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 	}
 
 	//watcher := NewConfigurationWatcher(routinesPool, pvd, time.Millisecond, []string{"defaultEP"}, "")
-	watcher := NewConfigurationWatcher(routinesPool, aggregator.ThrottledProvider{pvd, time.Millisecond}, []string{"defaultEP"}, "")
+	aggregator := aggregator.ProviderAggregator{}
+	aggregator.AddProvider(pvd)
+
+	watcher := NewConfigurationWatcher(routinesPool, aggregator, []string{"defaultEP"}, "")
 
 	var configurationReloads int
 	var lastConfig dynamic.Configuration
@@ -488,7 +502,8 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 	}
 
 	pvd := &mockProvider{
-		wait: 10 * time.Microsecond, // Enqueue them fast
+		wait:             10 * time.Microsecond, // Enqueue them fast
+		throttleDuration: 10 * time.Millisecond,
 		messages: []dynamic.Message{
 			{ProviderName: "mock", Configuration: configuration},
 			{ProviderName: "mock", Configuration: transientConfiguration},
@@ -498,7 +513,10 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 	}
 
 	//watcher := NewConfigurationWatcher(routinesPool, aggregator.ThrottledProvider{pvd, 10 * time.Millisecond}, 10*time.Millisecond, []string{"defaultEP"}, "")
-	watcher := NewConfigurationWatcher(routinesPool, aggregator.ThrottledProvider{pvd, 10 * time.Millisecond}, []string{"defaultEP"}, "")
+	aggregator := aggregator.ProviderAggregator{}
+	aggregator.AddProvider(pvd)
+
+	watcher := NewConfigurationWatcher(routinesPool, aggregator, []string{"defaultEP"}, "")
 
 	var configurationReloads int
 	var lastConfig dynamic.Configuration

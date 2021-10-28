@@ -7,6 +7,7 @@ import (
 	"path"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -141,6 +142,11 @@ func NewWrapper(ctx context.Context, config *` + basePkg + `.Config, name string
 // Init wraps the Init method of a plugin.
 func (p *Provider) Init() error {
 	return p.pp.Init()
+}
+
+// ThrottleDuration returns the throttle duration.
+func (p *Provider) ThrottleDuration() *time.Duration {
+	return nil
 }
 
 // Provide wraps the Provide method of a plugin.

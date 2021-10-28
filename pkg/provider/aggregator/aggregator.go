@@ -14,31 +14,25 @@ import (
 	"github.com/traefik/traefik/v2/pkg/safe"
 )
 
-type ThrottledProvider struct {
-	provider.Provider
-	ProviderThrottleDuration time.Duration
-}
+type throttledProvide func(configurationChan chan<- dynamic.Message, pool *safe.Pool) error
 
-func (p ThrottledProvider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	rc := NewRingChannel()
-	pool.GoCtx(func(ctx context.Context) {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case msg := <-rc.Out():
-				configurationChan <- msg
-				time.Sleep(p.ProviderThrottleDuration)
+func throttleProvide(provider provider.Provider, providerThrottleDuration time.Duration) throttledProvide {
+	return func(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
+		rc := NewRingChannel()
+		pool.GoCtx(func(ctx context.Context) {
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case msg := <-rc.Out():
+					configurationChan <- msg
+					time.Sleep(providerThrottleDuration)
+				}
 			}
-		}
-	})
+		})
 
-	return p.Provider.Provide(rc.In(), pool)
-}
-
-func (p ThrottledProvider) Init() error {
-	// TODO return an error as it must not been called?
-	return nil
+		return provider.Provide(rc.In(), pool)
+	}
 }
 
 // ProviderAggregator aggregates providers.
@@ -134,11 +128,11 @@ func (p *ProviderAggregator) AddProvider(provider provider.Provider) error {
 
 	switch provider.(type) {
 	case *file.Provider:
-		p.fileProvider = ThrottledProvider{provider, p.providersThrottleDuration}
+		p.fileProvider = provider
 	case *traefik.Provider:
-		p.internalProvider = ThrottledProvider{provider, p.providersThrottleDuration}
+		p.internalProvider = provider
 	default:
-		p.providers = append(p.providers, ThrottledProvider{provider, p.providersThrottleDuration})
+		p.providers = append(p.providers, provider)
 	}
 
 	return nil
@@ -149,29 +143,34 @@ func (p ProviderAggregator) Init() error {
 	return nil
 }
 
+// ThrottleDuration returns the throttle duration.
+func (p ProviderAggregator) ThrottleDuration() *time.Duration {
+	return nil
+}
+
 // Provide calls the provide method of every providers.
 func (p ProviderAggregator) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	if p.fileProvider != nil {
-		launchProvider(configurationChan, pool, p.fileProvider)
+		p.launchProvider(configurationChan, pool, p.fileProvider)
 	}
 
 	for _, prd := range p.providers {
 		prd := prd
 		safe.Go(func() {
-			launchProvider(configurationChan, pool, prd)
+			p.launchProvider(configurationChan, pool, prd)
 		})
 	}
 
 	// internal provider must be the last because we use it to know if all the providers are loaded.
 	// ConfigurationWatcher will wait for this requiredProvider before applying configurations.
 	if p.internalProvider != nil {
-		launchProvider(configurationChan, pool, p.internalProvider)
+		p.launchProvider(configurationChan, pool, p.internalProvider)
 	}
 
 	return nil
 }
 
-func launchProvider(configurationChan chan<- dynamic.Message, pool *safe.Pool, prd provider.Provider) {
+func (p ProviderAggregator) launchProvider(configurationChan chan<- dynamic.Message, pool *safe.Pool, prd provider.Provider) {
 	jsonConf, err := json.Marshal(prd)
 	if err != nil {
 		log.WithoutContext().Debugf("Cannot marshal the provider configuration %T: %v", prd, err)
@@ -179,8 +178,28 @@ func launchProvider(configurationChan chan<- dynamic.Message, pool *safe.Pool, p
 
 	log.WithoutContext().Infof("Starting provider %T %s", prd, jsonConf)
 
-	currentProvider := prd
-	err = currentProvider.Provide(configurationChan, pool)
+	// Default throttling
+	if prd.ThrottleDuration() == nil {
+		err = throttleProvide(prd, p.providersThrottleDuration)(configurationChan, pool)
+		if err != nil {
+			log.WithoutContext().Errorf("Cannot start the provider %T: %v", prd, err)
+		}
+
+		return
+	}
+
+	// Custom throttling
+	if *prd.ThrottleDuration() != 0 {
+		err = throttleProvide(prd, *prd.ThrottleDuration())(configurationChan, pool)
+		if err != nil {
+			log.WithoutContext().Errorf("Cannot start the provider %T: %v", prd, err)
+		}
+
+		return
+	}
+
+	// Throttling deactivation
+	err = prd.Provide(configurationChan, pool)
 	if err != nil {
 		log.WithoutContext().Errorf("Cannot start the provider %T: %v", prd, err)
 	}

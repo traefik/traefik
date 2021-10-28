@@ -1,6 +1,8 @@
 package etcd
 
 import (
+	"time"
+
 	"github.com/abronan/valkeyrie/store"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/kv"
@@ -22,4 +24,9 @@ func (p *Provider) SetDefaults() {
 // Init the provider.
 func (p *Provider) Init() error {
 	return p.Provider.Init(store.ETCDV3, "etcd")
+}
+
+// ThrottleDuration returns the throttle duration.
+func (p *Provider) ThrottleDuration() *time.Duration {
+	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"math"
 	"net"
 	"regexp"
+	"time"
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/static"
@@ -44,6 +45,12 @@ func (i *Provider) Provide(configurationChan chan<- dynamic.Message, _ *safe.Poo
 // Init the provider.
 func (i *Provider) Init() error {
 	return nil
+}
+
+// ThrottleDuration returns the throttle duration.
+func (p *Provider) ThrottleDuration() *time.Duration {
+	duration := time.Duration(0)
+	return &duration
 }
 
 func (i *Provider) createConfiguration(ctx context.Context) *dynamic.Configuration {

@@ -52,7 +52,7 @@ type Provider struct {
 	AllowExternalNameServices bool            `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
 	LabelSelector             string          `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
 	IngressClass              string          `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
-	ThrottleDuration          ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
+	EventsThrottleDuration    ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	lastConfiguration         safe.Safe
 }
 
@@ -94,6 +94,11 @@ func (p *Provider) Init() error {
 	return nil
 }
 
+// ThrottleDuration returns the throttle duration.
+func (p *Provider) ThrottleDuration() *time.Duration {
+	return nil
+}
+
 // Provide allows the k8s provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
@@ -127,7 +132,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				}
 			}
 
-			throttleDuration := time.Duration(p.ThrottleDuration)
+			throttleDuration := time.Duration(p.EventsThrottleDuration)
 			throttledChan := throttleEvents(ctxLog, throttleDuration, pool, eventsChan)
 			if throttledChan != nil {
 				eventsChan = throttledChan

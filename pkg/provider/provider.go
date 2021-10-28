@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"time"
+
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/safe"
 )
@@ -11,4 +13,5 @@ type Provider interface {
 	// using the given configuration channel.
 	Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error
 	Init() error
+	ThrottleDuration() *time.Duration
 }
