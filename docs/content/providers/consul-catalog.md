@@ -364,11 +364,12 @@ _Optional_
 
 Defines TLS options for Consul server endpoint.
 
-##### `ca`
+##### `tls.ca`
 
 _Optional_
 
-`ca` is the path to the CA certificate used for Consul communication, defaults to the system bundle if not specified.
+Certificate Authority used for the secure connection to Consul Catalog,
+defaults to the system bundle if not specified.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -387,11 +388,11 @@ providers:
 --providers.consulcatalog.endpoint.tls.ca=path/to/ca.crt
 ```
 
-##### `caOptional`
+##### `tls.caOptional`
 
 _Optional_
 
-The value of `tls.caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to Consul.
+The value of `tls.caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to Consul Catalog.
 
 !!! warning ""
 
@@ -418,11 +419,11 @@ providers:
 --providers.consulcatalog.endpoint.tls.caoptional=true
 ```
 
-##### `cert`
+##### `tls.cert`
 
 _Optional_
 
-`cert` is the path to the public certificate to use for Consul communication.
+Public certificate used for the secure connection to Consul Catalog.
 
 When using this option, setting the `key` option is required.
 
@@ -446,11 +447,11 @@ providers:
 --providers.consulcatalog.endpoint.tls.key=path/to/foo.key
 ```
 
-##### `key`
+##### `tls.key`
 
 _Optional_
 
-`key` is the path to the private key for Consul communication.
+Private certificate used for the secure connection to Consul Catalog.
 
 When using this option, setting the `cert` option is required.
 
@@ -474,11 +475,11 @@ providers:
 --providers.consulcatalog.endpoint.tls.key=path/to/foo.key
 ```
 
-##### `insecureSkipVerify`
+##### `tls.insecureSkipVerify`
 
 _Optional_
 
-If `insecureSkipVerify` is `true`, the TLS connection to Consul accepts any certificate presented by the server regardless of the hostnames it covers.
+If `insecureSkipVerify` is `true`, the TLS connection to Consul Catalog accepts any certificate presented by the server regardless of the hostnames it covers.
 
 ```yaml tab="File (YAML)"
 providers:
