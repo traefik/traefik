@@ -106,7 +106,8 @@ _Optional_
 
 #### `tls.ca`
 
-Certificate Authority used for the secure connection to ZooKeeper.
+Certificate Authority used for the secure connection to ZooKeeper,
+defaults to the system bundle if not specified.
 
 ```yaml tab="File (YAML)"
 providers:
