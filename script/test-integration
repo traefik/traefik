@@ -3,7 +3,7 @@ set -e
 
 export DEST=.
 
-TESTFLAGS+=("-test.timeout=20m" -check.vv -check.list)
+TESTFLAGS+=("-test.timeout=20m" -check.vv)
 
 if [ -n "$VERBOSE" ]; then
     TESTFLAGS+=(-v)

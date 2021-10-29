@@ -42,8 +42,9 @@ func Test(t *testing.T) {
 	}
 
 	if *container {
-		// tests launched from a container
 		check.Suite(&AccessLogSuite{})
+		// tests launched from a container
+		/*check.Suite(&AccessLogSuite{})
 		check.Suite(&AcmeSuite{})
 		check.Suite(&EtcdSuite{})
 		check.Suite(&ConsulSuite{})
@@ -72,14 +73,14 @@ func Test(t *testing.T) {
 		check.Suite(&TracingSuite{})
 		check.Suite(&UDPSuite{})
 		check.Suite(&WebsocketSuite{})
-		check.Suite(&ZookeeperSuite{})
+		check.Suite(&ZookeeperSuite{})*/
 	}
-	/*if *host {
+	if *host {
 		// tests launched from the host
-		check.Suite(&K8sSuite{})
+		/*check.Suite(&K8sSuite{})
 		check.Suite(&ProxyProtocolSuite{})
-		check.Suite(&TCPSuite{})
-	}*/
+		check.Suite(&TCPSuite{})*/
+	}
 
 	check.TestingT(t)
 }
@@ -95,7 +96,7 @@ func (s *BaseSuite) TearDownSuite(c *check.C) {
 	// shutdown and delete compose project
 	if s.composeProject != nil && s.dockerService != nil {
 		// s.composeProject.Stop(c)
-		err := s.dockerService.Stop(context.Background(), s.composeProject, api.StopOptions{})
+		err := s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
 		c.Assert(err, checker.IsNil)
 	}
 }
