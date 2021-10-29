@@ -30,7 +30,6 @@ type Router struct {
 	// Handles (indirectly through muxerHTTPS, or directly) all HTTPS requests.
 	httpsForwarder Handler
 
-	// TODO: try to remove them.
 	// Neither is used directly, but they are held here, and recreated on config
 	// reload, so that they can be passed to the Switcher at the end of the config
 	// reload phase.
