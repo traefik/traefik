@@ -30,7 +30,8 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 		return nil, nil
 	}
 
-	caPool := x509.NewCertPool()
+	var caPool *x509.CertPool
+
 	clientAuth := tls.NoClientCert
 	if clientTLS.CA != "" {
 		var ca []byte
@@ -44,6 +45,7 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 			ca = []byte(clientTLS.CA)
 		}
 
+		caPool = x509.NewCertPool()
 		if !caPool.AppendCertsFromPEM(ca) {
 			return nil, errors.New("failed to parse CA")
 		}
