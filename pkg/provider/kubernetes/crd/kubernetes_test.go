@@ -11,7 +11,7 @@ import (
 	auth "github.com/abbot/go-http-auth"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/paerser/types"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	crdfake "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
@@ -3515,17 +3515,20 @@ func TestLoadIngressRoutes(t *testing.T) {
 							MaxIdleConnsPerHost: 42,
 							DisableHTTP2:        true,
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:           types.Duration(42 * time.Second),
-								ResponseHeaderTimeout: types.Duration(42 * time.Second),
-								IdleConnTimeout:       types.Duration(42 * time.Millisecond),
+								DialTimeout:           ptypes.Duration(42 * time.Second),
+								ResponseHeaderTimeout: ptypes.Duration(42 * time.Second),
+								IdleConnTimeout:       ptypes.Duration(42 * time.Millisecond),
+								ReadIdleTimeout:       ptypes.Duration(42 * time.Second),
+								PingTimeout:           ptypes.Duration(42 * time.Second),
 							},
 							PeerCertURI: "foo://bar",
 						},
 						"default-test": {
 							ServerName: "test",
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:     types.Duration(30 * time.Second),
-								IdleConnTimeout: types.Duration(90 * time.Second),
+								DialTimeout:     ptypes.Duration(30 * time.Second),
+								IdleConnTimeout: ptypes.Duration(90 * time.Second),
+								PingTimeout:     ptypes.Duration(15 * time.Second),
 							},
 						},
 					},
@@ -4773,6 +4776,7 @@ func TestCrossNamespace(t *testing.T) {
 								DialTimeout:           30000000000,
 								ResponseHeaderTimeout: 0,
 								IdleConnTimeout:       90000000000,
+								PingTimeout:           15000000000,
 							},
 							DisableHTTP2: true,
 						},
@@ -4804,6 +4808,7 @@ func TestCrossNamespace(t *testing.T) {
 								DialTimeout:           30000000000,
 								ResponseHeaderTimeout: 0,
 								IdleConnTimeout:       90000000000,
+								PingTimeout:           15000000000,
 							},
 							DisableHTTP2: true,
 						},
