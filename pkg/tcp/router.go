@@ -93,15 +93,19 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 
 		// TODO: if no match, get out and try hello.
 		handler := r.muxerTCP.Match(connData)
-		switch {
-		case handler != nil:
+		if handler != nil {
 			handler.ServeTCP(conn)
-		case r.httpForwarder != nil:
-			r.httpForwarder.ServeTCP(conn)
-		default:
-			conn.Close()
+			return
 		}
-		return
+		//switch {
+		//case handler != nil:
+		//	handler.ServeTCP(conn)
+		//case r.httpForwarder != nil:
+		//	r.httpForwarder.ServeTCP(conn)
+		//default:
+		//	conn.Close()
+		//}
+		//return
 	}
 
 	// FIXME -- Check if ProxyProtocol changes the first bytes of the request
