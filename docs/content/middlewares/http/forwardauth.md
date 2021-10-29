@@ -354,7 +354,7 @@ The `tls` option is the TLS configuration from Traefik to the authentication ser
 #### `tls.ca`
 
 Certificate Authority used for the secured connection to the authentication server,
-defaults to the system bundle if not specified.
+defaults to the system bundle.
 
 ```yaml tab="Docker"
 labels:
