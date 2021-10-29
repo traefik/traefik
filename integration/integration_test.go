@@ -49,7 +49,7 @@ func Test(t *testing.T) {
 		check.Suite(&ConsulSuite{})
 		check.Suite(&ConsulCatalogSuite{})
 		check.Suite(&DockerComposeSuite{})
-		// check.Suite(&DockerSuite{})
+		check.Suite(&DockerSuite{})
 		check.Suite(&ErrorPagesSuite{})
 		check.Suite(&FileSuite{})
 		check.Suite(&GRPCSuite{})
