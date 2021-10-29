@@ -615,7 +615,8 @@ _Optional_
 
 #### `tls.ca`
 
-Certificate Authority used for the secure connection to Docker.
+Certificate Authority used for the secure connection to Docker,
+defaults to the system bundle if not specified.
 
 ```yaml tab="File (YAML)"
 providers:

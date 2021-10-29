@@ -106,7 +106,8 @@ _Optional_
 
 #### `tls.ca`
 
-Certificate Authority used for the secure connection to etcd.
+Certificate Authority used for the secure connection to etcd,
+defaults to the system bundle if not specified.
 
 ```yaml tab="File (YAML)"
 providers:
