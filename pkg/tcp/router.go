@@ -91,21 +91,14 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 			return
 		}
 
-		// TODO: if no match, get out and try hello.
 		handler := r.muxerTCP.Match(connData)
+		// If there is a handler matching the connection metadata,
+		// we let it handle the connection.
+		// Otherwise, we flow through the clientHelloServerName.
 		if handler != nil {
 			handler.ServeTCP(conn)
 			return
 		}
-		//switch {
-		//case handler != nil:
-		//	handler.ServeTCP(conn)
-		//case r.httpForwarder != nil:
-		//	r.httpForwarder.ServeTCP(conn)
-		//default:
-		//	conn.Close()
-		//}
-		//return
 	}
 
 	// FIXME -- Check if ProxyProtocol changes the first bytes of the request

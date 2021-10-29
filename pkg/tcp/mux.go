@@ -78,12 +78,12 @@ type Muxer struct {
 
 // NewMuxer returns a TCP muxer.
 func NewMuxer() (*Muxer, error) {
-	var matchers []string
-	for matcher := range funcs {
-		matchers = append(matchers, matcher)
+	var matcherNames []string
+	for matcherName := range funcs {
+		matcherNames = append(matcherNames, matcherName)
 	}
 
-	parser, err := rules.NewParser(matchers)
+	parser, err := rules.NewParser(matcherNames)
 	if err != nil {
 		return nil, fmt.Errorf("error while creating rules parser: %w", err)
 	}
@@ -94,7 +94,7 @@ func NewMuxer() (*Muxer, error) {
 // Match returns the handler of the first route matching the connection metadata.
 func (m Muxer) Match(meta ConnData) Handler {
 	for _, route := range m.routes {
-		if route.match(meta) {
+		if route.matchers.match(meta) {
 			return route.handler
 		}
 	}
@@ -126,90 +126,22 @@ func (m *Muxer) AddRoute(rule string, priority int, handler Handler) error {
 		return fmt.Errorf("error while parsing rule %s", rule)
 	}
 
+	var matchers matchersTree
+	err = addRule(&matchers, buildTree())
+	if err != nil {
+		return err
+	}
+
 	newRoute := &route{
 		handler:  handler,
 		priority: priority,
+		matchers: matchers,
 	}
 	m.routes = append(m.routes, newRoute)
-
-	err = addRule(&newRoute.matchers, buildTree())
-	if err != nil {
-		newRoute.buildOnly()
-		return err
-	}
 
 	sort.Sort(routes(m.routes))
 
 	return nil
-}
-
-func (m *Muxer) hasRoutes() bool {
-	return len(m.routes) > 0
-}
-
-type routes []*route
-
-func (r routes) Len() int      { return len(r) }
-func (r routes) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
-func (r routes) Less(i, j int) bool {
-	return r[i].priority > r[j].priority
-}
-
-// route holds matchers to match TCP routes.
-type route struct {
-	// The matchers tree structure reflecting the rule.
-	matchers matchersTree
-	// The handler responsible for handling the route.
-	handler Handler
-
-	// Used to disambiguate between two (or more) rules that would both match for a
-	// given request.
-	// Defaults to 0.
-	// Computed from the matching rule length, if not user-set.
-	priority int
-
-	noMatch bool
-}
-
-func (r *route) buildOnly() {
-	r.noMatch = true
-}
-
-// match checks the connection metadata against the matchers in the route.
-func (r *route) match(meta ConnData) bool {
-	if r.noMatch {
-		return false
-	}
-
-	return r.matchers.match(meta)
-}
-
-// matcher is a matcher func used to match connection properties.
-type matcher func(meta ConnData) bool
-
-// matchersTree represents the matchers tree structure.
-type matchersTree struct {
-	matcher  matcher
-	operator string
-	left     *matchersTree
-	right    *matchersTree
-}
-
-func (m matchersTree) match(meta ConnData) bool {
-	if m.matcher != nil {
-		return m.matcher(meta)
-	}
-
-	// Defensive check that should never be true.
-	if m.left == nil || m.right == nil {
-		return false
-	}
-
-	if m.operator == "or" {
-		return m.left.match(meta) || m.right.match(meta)
-	}
-
-	return m.left.match(meta) && m.right.match(meta)
 }
 
 func addRule(tree *matchersTree, rule *rules.Tree) error {
@@ -244,6 +176,71 @@ func addRule(tree *matchersTree, rule *rules.Tree) error {
 	}
 
 	return nil
+}
+
+func (m *Muxer) hasRoutes() bool {
+	return len(m.routes) > 0
+}
+
+type routes []*route
+
+func (r routes) Len() int      { return len(r) }
+func (r routes) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
+func (r routes) Less(i, j int) bool {
+	return r[i].priority > r[j].priority
+}
+
+// route holds the matchers to match TCP route,
+// and the handler that will serve the connection.
+type route struct {
+	// The matchers tree structure reflecting the rule.
+	matchers matchersTree
+	// The handler responsible for handling the route.
+	handler Handler
+
+	// Used to disambiguate between two (or more) rules that would both match for a
+	// given request.
+	// Defaults to 0.
+	// Computed from the matching rule length, if not user-set.
+	priority int
+}
+
+// matcher is a matcher func used to match connection properties.
+type matcher func(meta ConnData) bool
+
+// matchersTree represents the matchers tree structure.
+type matchersTree struct {
+	// If matcher is not nil, it means that this matcherTree is a leaf of the tree.
+	// It is therefore mutually exclusive with left and right.
+	matcher matcher
+	// operator to combine the evaluation of left and right leaves.
+	operator string
+	// Mutually exclusive with matcher.
+	left  *matchersTree
+	right *matchersTree
+}
+
+func (m *matchersTree) match(meta ConnData) bool {
+	if m == nil {
+		// This should never happen as it should have been detected during parsing.
+		log.WithoutContext().Warnf("Rule matcher is nil")
+		return false
+	}
+
+	if m.matcher != nil {
+		return m.matcher(meta)
+	}
+
+	switch m.operator {
+	case "or":
+		return m.left.match(meta) || m.right.match(meta)
+	case "and":
+		return m.left.match(meta) && m.right.match(meta)
+	default:
+		// This should never happen as it should have been detected during parsing.
+		log.WithoutContext().Warnf("Invalid rule operator %s", m.operator)
+		return false
+	}
 }
 
 func clientIP(tree *matchersTree, clientIPs ...string) error {
