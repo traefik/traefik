@@ -368,7 +368,8 @@ Defines TLS options for Consul server endpoint.
 
 _Optional_
 
-`ca` is the path to the CA certificate used for Consul communication, defaults to the system bundle if not specified.
+Certificate Authority used for the secure connection to Consul,
+defaults to the system bundle.
 
 ```yaml tab="File (YAML)"
 providers:
