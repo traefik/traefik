@@ -1,6 +1,8 @@
 package service
 
 import (
+	"crypto/tls"
+	"net"
 	"net/http"
 	"time"
 
@@ -12,15 +14,31 @@ import (
 func newSmartRoundTripper(transport *http.Transport, forwardingTimeouts *dynamic.ForwardingTimeouts) (http.RoundTripper, error) {
 	transportHTTP1 := transport.Clone()
 
-	t, err := http2.ConfigureTransports(transport)
+	transportHTTP2, err := http2.ConfigureTransports(transport)
 	if err != nil {
 		return nil, err
 	}
 
 	if forwardingTimeouts != nil {
-		t.ReadIdleTimeout = time.Duration(forwardingTimeouts.ReadIdleTimeout)
-		t.PingTimeout = time.Duration(forwardingTimeouts.PingTimeout)
+		transportHTTP2.ReadIdleTimeout = time.Duration(forwardingTimeouts.ReadIdleTimeout)
+		transportHTTP2.PingTimeout = time.Duration(forwardingTimeouts.PingTimeout)
 	}
+
+	transportH2C := &h2cTransportWrapper{
+		Transport: &http2.Transport{
+			DialTLS: func(network, addr string, cfg *tls.Config) (net.Conn, error) {
+				return net.Dial(network, addr)
+			},
+			AllowHTTP: true,
+		},
+	}
+
+	if forwardingTimeouts != nil {
+		transportH2C.ReadIdleTimeout = time.Duration(forwardingTimeouts.ReadIdleTimeout)
+		transportH2C.PingTimeout = time.Duration(forwardingTimeouts.PingTimeout)
+	}
+
+	transport.RegisterProtocol("h2c", transportH2C)
 
 	return &smartRoundTripper{
 		http2: transport,
@@ -28,13 +46,13 @@ func newSmartRoundTripper(transport *http.Transport, forwardingTimeouts *dynamic
 	}, nil
 }
 
+// smartRoundTripper implements RoundTrip while making sure that HTTP/2 is not used
+// with protocols that start with a Connection Upgrade, such as SPDY or Websocket.
 type smartRoundTripper struct {
 	http2 *http.Transport
 	http  *http.Transport
 }
 
-// smartRoundTripper implements RoundTrip while making sure that HTTP/2 is not used
-// with protocols that start with a Connection Upgrade, such as SPDY or Websocket.
 func (m *smartRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	// If we have a connection upgrade, we don't use HTTP/2
 	if httpguts.HeaderValuesContainsToken(req.Header["Connection"], "Upgrade") {

@@ -152,22 +152,6 @@ func createRoundTripper(cfg *dynamic.ServersTransport) (http.RoundTripper, error
 		return transport, nil
 	}
 
-	h2cTransport := &h2cTransportWrapper{
-		Transport: &http2.Transport{
-			DialTLS: func(netw, addr string, cfg *tls.Config) (net.Conn, error) {
-				return net.Dial(netw, addr)
-			},
-			AllowHTTP: true,
-		},
-	}
-
-	if cfg.ForwardingTimeouts != nil {
-		h2cTransport.ReadIdleTimeout = time.Duration(cfg.ForwardingTimeouts.ReadIdleTimeout)
-		h2cTransport.PingTimeout = time.Duration(cfg.ForwardingTimeouts.PingTimeout)
-	}
-
-	transport.RegisterProtocol("h2c", h2cTransport)
-
 	return newSmartRoundTripper(transport, cfg.ForwardingTimeouts)
 }
 
