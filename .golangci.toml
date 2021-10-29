@@ -151,3 +151,6 @@
  [[issues.exclude-rules]]
     path = "pkg/log/deprecated.go"
     linters = ["godot"]
+ [[issues.exclude-rules]]
+    path = "pkg/server/router/tcp/manager.go"
+    text = "Function 'buildEntryPointHandler' is too long"
