@@ -1,4 +1,4 @@
-package rules
+package http
 
 import (
 	"errors"
@@ -11,6 +11,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/ip"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
+	"github.com/traefik/traefik/v2/pkg/rules"
 	"github.com/vulcand/predicate"
 )
 
@@ -31,38 +32,38 @@ var funcs = map[string]func(*mux.Route, ...string) error{
 	"Query":         query,
 }
 
-// Router handle routing with rules.
-type Router struct {
+// Muxer handle routing with rules.
+type Muxer struct {
 	*mux.Router
 	parser predicate.Parser
 }
 
-// NewRouter returns a new router instance.
-func NewRouter() (*Router, error) {
+// NewMuxer returns a new muxer instance.
+func NewMuxer() (*Muxer, error) {
 	var matchers []string
 	for matcher := range funcs {
 		matchers = append(matchers, matcher)
 	}
 
-	parser, err := NewParser(matchers)
+	parser, err := rules.NewParser(matchers)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Router{
+	return &Muxer{
 		Router: mux.NewRouter().SkipClean(true),
 		parser: parser,
 	}, nil
 }
 
 // AddRoute add a new route to the router.
-func (r *Router) AddRoute(rule string, priority int, handler http.Handler) error {
+func (r *Muxer) AddRoute(rule string, priority int, handler http.Handler) error {
 	parse, err := r.parser.Parse(rule)
 	if err != nil {
 		return fmt.Errorf("error while parsing rule %s: %w", rule, err)
 	}
 
-	buildTree, ok := parse.(TreeBuilder)
+	buildTree, ok := parse.(rules.TreeBuilder)
 	if !ok {
 		return fmt.Errorf("error while parsing rule %s", rule)
 	}
@@ -89,7 +90,7 @@ func ParseDomains(rule string) ([]string, error) {
 		matchers = append(matchers, matcher)
 	}
 
-	parser, err := NewParser(matchers)
+	parser, err := rules.NewParser(matchers)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +100,7 @@ func ParseDomains(rule string) ([]string, error) {
 		return nil, err
 	}
 
-	buildTree, ok := parse.(TreeBuilder)
+	buildTree, ok := parse.(rules.TreeBuilder)
 	if !ok {
 		return nil, errors.New("cannot parse")
 	}
@@ -247,7 +248,7 @@ func query(route *mux.Route, query ...string) error {
 	return route.GetError()
 }
 
-func addRuleOnRouter(router *mux.Router, rule *Tree) error {
+func addRuleOnRouter(router *mux.Router, rule *rules.Tree) error {
 	switch rule.Matcher {
 	case "and":
 		route := router.NewRoute()
@@ -265,7 +266,7 @@ func addRuleOnRouter(router *mux.Router, rule *Tree) error {
 
 		return addRuleOnRouter(router, rule.RuleRight)
 	default:
-		err := CheckRule(rule)
+		err := rules.CheckRule(rule)
 		if err != nil {
 			return err
 		}
@@ -291,7 +292,7 @@ func not(m func(*mux.Route, ...string) error) func(*mux.Route, ...string) error 
 	}
 }
 
-func addRuleOnRoute(route *mux.Route, rule *Tree) error {
+func addRuleOnRoute(route *mux.Route, rule *rules.Tree) error {
 	switch rule.Matcher {
 	case "and":
 		err := addRuleOnRoute(route, rule.RuleLeft)
@@ -310,7 +311,7 @@ func addRuleOnRoute(route *mux.Route, rule *Tree) error {
 
 		return addRuleOnRouter(subRouter, rule.RuleRight)
 	default:
-		err := CheckRule(rule)
+		err := rules.CheckRule(rule)
 		if err != nil {
 			return err
 		}
@@ -320,20 +321,6 @@ func addRuleOnRoute(route *mux.Route, rule *Tree) error {
 		}
 		return funcs[rule.Matcher](route, rule.Value...)
 	}
-}
-
-// CheckRule validates the given rule.
-func CheckRule(rule *Tree) error {
-	if len(rule.Value) == 0 {
-		return fmt.Errorf("no args for matcher %s", rule.Matcher)
-	}
-
-	for _, v := range rule.Value {
-		if len(v) == 0 {
-			return fmt.Errorf("empty args for matcher %s, %v", rule.Matcher, rule.Value)
-		}
-	}
-	return nil
 }
 
 // IsASCII checks if the given string contains only ASCII characters.

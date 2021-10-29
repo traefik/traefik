@@ -11,6 +11,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/ip"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/rules"
+	"github.com/traefik/traefik/v2/pkg/tcp"
 	"github.com/traefik/traefik/v2/pkg/types"
 	"github.com/vulcand/predicate"
 )
@@ -53,7 +54,7 @@ type ConnData struct {
 }
 
 // NewConnData builds a connData struct from the given parameters.
-func NewConnData(serverName string, conn WriteCloser) (ConnData, error) {
+func NewConnData(serverName string, conn tcp.WriteCloser) (ConnData, error) {
 	ip, _, err := net.SplitHostPort(conn.RemoteAddr().String())
 	if err != nil {
 		return ConnData{}, fmt.Errorf("error while parsing remote address %q: %w", conn.RemoteAddr().String(), err)
@@ -92,7 +93,7 @@ func NewMuxer() (*Muxer, error) {
 }
 
 // Match returns the handler of the first route matching the connection metadata.
-func (m Muxer) Match(meta ConnData) Handler {
+func (m Muxer) Match(meta ConnData) tcp.Handler {
 	for _, route := range m.routes {
 		if route.matchers.match(meta) {
 			return route.handler
@@ -103,7 +104,7 @@ func (m Muxer) Match(meta ConnData) Handler {
 
 // AddRoute adds a new route, associated to the given handler, at the given
 // priority, to the muxer.
-func (m *Muxer) AddRoute(rule string, priority int, handler Handler) error {
+func (m *Muxer) AddRoute(rule string, priority int, handler tcp.Handler) error {
 	// Special case for when the catchAll fallback is present.
 	// When no user-defined priority is found, the lowest computable priority minus one is used,
 	// in order to make the fallback the last to be evaluated.
@@ -178,7 +179,8 @@ func addRule(tree *matchersTree, rule *rules.Tree) error {
 	return nil
 }
 
-func (m *Muxer) hasRoutes() bool {
+// HasRoutes returns whether the muxer has routes.
+func (m *Muxer) HasRoutes() bool {
 	return len(m.routes) > 0
 }
 
@@ -196,7 +198,7 @@ type route struct {
 	// The matchers tree structure reflecting the rule.
 	matchers matchersTree
 	// The handler responsible for handling the route.
-	handler Handler
+	handler tcp.Handler
 
 	// Used to disambiguate between two (or more) rules that would both match for a
 	// given request.

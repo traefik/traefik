@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/tcp"
+	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 )
 
@@ -75,7 +75,7 @@ func TestHTTP3AdvertisedPort(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	router, err := tcp.NewRouter()
+	router, err := tcprouter.NewRouter()
 	require.NoError(t, err)
 
 	router.AddHTTPTLSConfig("*", &tls.Config{

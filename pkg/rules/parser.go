@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/vulcand/predicate"
@@ -109,6 +110,20 @@ func (tree *Tree) ParseMatchers(matchers []string) []string {
 		}
 		return nil
 	}
+}
+
+// CheckRule validates the given rule.
+func CheckRule(rule *Tree) error {
+	if len(rule.Value) == 0 {
+		return fmt.Errorf("no args for matcher %s", rule.Matcher)
+	}
+
+	for _, v := range rule.Value {
+		if len(v) == 0 {
+			return fmt.Errorf("empty args for matcher %s, %v", rule.Matcher, rule.Value)
+		}
+	}
+	return nil
 }
 
 func lower(slice []string) []string {

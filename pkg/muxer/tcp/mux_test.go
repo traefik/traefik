@@ -1,11 +1,56 @@
 package tcp
 
 import (
+	"net"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v2/pkg/tcp"
 )
+
+type fakeConn struct {
+	call       map[string]int
+	remoteAddr net.Addr
+}
+
+func (f *fakeConn) Read(b []byte) (n int, err error) {
+	panic("implement me")
+}
+
+func (f *fakeConn) Write(b []byte) (n int, err error) {
+	f.call[string(b)]++
+	return len(b), nil
+}
+
+func (f *fakeConn) Close() error {
+	panic("implement me")
+}
+
+func (f *fakeConn) LocalAddr() net.Addr {
+	panic("implement me")
+}
+
+func (f *fakeConn) RemoteAddr() net.Addr {
+	return f.remoteAddr
+}
+
+func (f *fakeConn) SetDeadline(t time.Time) error {
+	panic("implement me")
+}
+
+func (f *fakeConn) SetReadDeadline(t time.Time) error {
+	panic("implement me")
+}
+
+func (f *fakeConn) SetWriteDeadline(t time.Time) error {
+	panic("implement me")
+}
+
+func (f *fakeConn) CloseWrite() error {
+	panic("implement me")
+}
 
 func Test_addTCPRoute(t *testing.T) {
 	testCases := []struct {
@@ -304,7 +349,7 @@ func Test_addTCPRoute(t *testing.T) {
 			t.Parallel()
 
 			msg := "BYTES"
-			handler := HandlerFunc(func(conn WriteCloser) {
+			handler := tcp.HandlerFunc(func(conn tcp.WriteCloser) {
 				_, err := conn.Write([]byte(msg))
 				require.NoError(t, err)
 			})
@@ -678,7 +723,7 @@ func Test_Priority(t *testing.T) {
 			matchedRule := ""
 			for rule, priority := range test.rules {
 				rule := rule
-				err := muxer.AddRoute(rule, priority, HandlerFunc(func(conn WriteCloser) {
+				err := muxer.AddRoute(rule, priority, tcp.HandlerFunc(func(conn tcp.WriteCloser) {
 					matchedRule = rule
 				}))
 				require.NoError(t, err)
