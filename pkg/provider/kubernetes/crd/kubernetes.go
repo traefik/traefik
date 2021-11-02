@@ -273,8 +273,8 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		id := provider.Normalize(makeID(middlewareTCP.Namespace, middlewareTCP.Name))
 
 		conf.TCP.Middlewares[id] = &dynamic.TCPMiddleware{
-			InFlightReq: middlewareTCP.Spec.InFlightReq,
-			IPWhiteList: middlewareTCP.Spec.IPWhiteList,
+			InFlightConn: middlewareTCP.Spec.InFlightConn,
+			IPWhiteList:  middlewareTCP.Spec.IPWhiteList,
 		}
 	}
 
