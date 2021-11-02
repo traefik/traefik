@@ -1050,9 +1050,9 @@ spec:
           spec:
             description: MiddlewareTCPSpec holds the MiddlewareTCP configuration.
             properties:
-              inFlightReq:
-                description: TCPInFlightReq limits the number of requests being processed
-                  and served concurrently.
+              inFlightConn:
+                description: TCPInFlightConn limits the number of connections served
+                  concurrently.
                 properties:
                   amount:
                     format: int64

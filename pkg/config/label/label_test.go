@@ -173,7 +173,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service1.loadbalancer.sticky.cookie.name":               "fui",
 
 		"traefik.tcp.middlewares.Middleware0.ipwhitelist.sourcerange":      "foobar, fiibar",
-		"traefik.tcp.middlewares.Middleware2.inflightreq.amount":           "42",
+		"traefik.tcp.middlewares.Middleware2.inflightconn.amount":          "42",
 		"traefik.tcp.routers.Router0.rule":                                 "foobar",
 		"traefik.tcp.routers.Router0.entrypoints":                          "foobar, fiibar",
 		"traefik.tcp.routers.Router0.service":                              "foobar",
@@ -237,7 +237,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware2": {
-					InFlightReq: &dynamic.TCPInFlightReq{
+					InFlightConn: &dynamic.TCPInFlightConn{
 						Amount: 42,
 					},
 				},
@@ -725,7 +725,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware2": {
-					InFlightReq: &dynamic.TCPInFlightReq{
+					InFlightConn: &dynamic.TCPInFlightConn{
 						Amount: 42,
 					},
 				},
@@ -1330,7 +1330,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
 
 		"traefik.TCP.Middlewares.Middleware0.IPWhiteList.SourceRange": "foobar, fiibar",
-		"traefik.TCP.Middlewares.Middleware2.InFlightReq.Amount":      "42",
+		"traefik.TCP.Middlewares.Middleware2.InFlightConn.Amount":     "42",
 		"traefik.TCP.Routers.Router0.Rule":                            "foobar",
 		"traefik.TCP.Routers.Router0.EntryPoints":                     "foobar, fiibar",
 		"traefik.TCP.Routers.Router0.Service":                         "foobar",
