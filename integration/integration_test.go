@@ -42,44 +42,43 @@ func Test(t *testing.T) {
 	}
 
 	if *container {
-		check.Suite(&AccessLogSuite{})
 		// tests launched from a container
-		/*check.Suite(&AccessLogSuite{})
+		//check.Suite(&AccessLogSuite{})
 		check.Suite(&AcmeSuite{})
-		check.Suite(&EtcdSuite{})
-		check.Suite(&ConsulSuite{})
-		check.Suite(&ConsulCatalogSuite{})
-		check.Suite(&DockerComposeSuite{})
-		check.Suite(&DockerSuite{})
-		check.Suite(&ErrorPagesSuite{})
-		check.Suite(&FileSuite{})
-		check.Suite(&GRPCSuite{})
-		check.Suite(&HealthCheckSuite{})
-		check.Suite(&HeadersSuite{})
-		check.Suite(&HostResolverSuite{})
-		check.Suite(&HTTPSuite{})
-		check.Suite(&HTTPSSuite{})
-		check.Suite(&KeepAliveSuite{})
-		check.Suite(&LogRotationSuite{})
-		check.Suite(&MarathonSuite{})
-		check.Suite(&MarathonSuite15{})
-		check.Suite(&RateLimitSuite{})
-		check.Suite(&RedisSuite{})
-		check.Suite(&RestSuite{})
-		check.Suite(&RetrySuite{})
-		check.Suite(&SimpleSuite{})
-		check.Suite(&TimeoutSuite{})
-		check.Suite(&TLSClientHeadersSuite{})
-		check.Suite(&TracingSuite{})
-		check.Suite(&UDPSuite{})
-		check.Suite(&WebsocketSuite{})
-		check.Suite(&ZookeeperSuite{})*/
+		//check.Suite(&EtcdSuite{})
+		// check.Suite(&ConsulSuite{})
+		// check.Suite(&ConsulCatalogSuite{})
+		// check.Suite(&DockerComposeSuite{})
+		// check.Suite(&DockerSuite{})
+		// check.Suite(&ErrorPagesSuite{})
+		// check.Suite(&FileSuite{})
+		// check.Suite(&GRPCSuite{})
+		// check.Suite(&HealthCheckSuite{})
+		// check.Suite(&HeadersSuite{})
+		// check.Suite(&HostResolverSuite{})
+		// check.Suite(&HTTPSuite{})
+		// check.Suite(&HTTPSSuite{})
+		// check.Suite(&KeepAliveSuite{})
+		// check.Suite(&LogRotationSuite{})
+		// check.Suite(&MarathonSuite{})
+		// check.Suite(&MarathonSuite15{})
+		// check.Suite(&RateLimitSuite{})
+		// check.Suite(&RedisSuite{})
+		// check.Suite(&RestSuite{})
+		// check.Suite(&RetrySuite{})
+		// check.Suite(&SimpleSuite{})
+		// check.Suite(&TimeoutSuite{})
+		// check.Suite(&TLSClientHeadersSuite{})
+		// check.Suite(&TracingSuite{})
+		// check.Suite(&UDPSuite{})
+		// check.Suite(&WebsocketSuite{})
+		// check.Suite(&ZookeeperSuite{})
 	}
 	if *host {
 		// tests launched from the host
-		/*check.Suite(&K8sSuite{})
-		check.Suite(&ProxyProtocolSuite{})
-		check.Suite(&TCPSuite{})*/
+		// check.Suite(&K8sSuite{})
+		// check.Suite(&ProxyProtocolSuite{})
+		// check.Suite(&TCPSuite{})
 	}
 
 	check.TestingT(t)
@@ -105,21 +104,10 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	projectName := "integration-test-" + name
 	composeFile := "resources/compose/" + name + ".yml"
 
-	// addrs, err := net.InterfaceAddrs()
-	// c.Assert(err, checker.IsNil)
-	// for _, addr := range addrs {
-	// 	ip, _, err := net.ParseCIDR(addr.String())
-	// 	c.Assert(err, checker.IsNil)
-	// 	if !ip.IsLoopback() && ip.To4() != nil {
-	// 		_ = os.Setenv("DOCKER_HOST_IP", ip.String())
-	// 		break
-	// 	}
-	// }
-
 	composeClient, err := client.NewClientWithOpts()
 	c.Assert(err, checker.IsNil)
-	s.dockerService = compose.NewComposeService(composeClient, configfile.New(composeFile))
 
+	s.dockerService = compose.NewComposeService(composeClient, configfile.New(composeFile))
 	ops, err := cli.NewProjectOptions([]string{composeFile}, cli.WithName(projectName))
 	c.Assert(err, checker.IsNil)
 

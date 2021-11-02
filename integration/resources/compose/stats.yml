@@ -1,4 +1,7 @@
-whoami1:
-  image: traefik/whoami
-whoami2:
-  image: traefik/whoami
+services:
+  whoami1:
+    image: traefik/whoami
+    network_mode: "bridge"
+  whoami2:
+    image: traefik/whoami
+    network_mode: "bridge"

@@ -1,32 +1,40 @@
-consul:
-  image: consul:1.6.2
-  ports:
-    - 8500:8500
-  command: "agent -server -bootstrap -ui -client 0.0.0.0 -hcl 'connect { enabled = true }'"
-consul-agent:
-  image: consul:1.6.2
-  ports:
-    - 8501:8500
-  command: "agent -retry-join consul -client 0.0.0.0"
-  links:
-    - consul
-whoami1:
-  image: traefik/whoami
-  hostname: whoami1
-whoami2:
-  image: traefik/whoami
-  hostname: whoami2
-whoami3:
-  image: traefik/whoami
-  hostname: whoami3
-whoamitcp:
-  image: traefik/whoamitcp
-  hostname: whoamitcp
-connect:
-  image: hashicorpnomad/uuid-api:v5
-  links:
-    - consul
-  environment:
-    PORT: 443
-    BIND: 0.0.0.0
-    CONSUL_HTTP_ADDR: http://consul:8500
+services:
+  consul:
+    image: consul:1.6.2
+    ports:
+      - 8500:8500
+    command: "agent -server -bootstrap -ui -client 0.0.0.0 -hcl 'connect { enabled = true }'"
+    network_mode: "bridge"
+  consul-agent:
+    image: consul:1.6.2
+    ports:
+      - 8501:8500
+    command: "agent -retry-join consul -client 0.0.0.0"
+    links:
+      - consul
+    network_mode: "bridge"
+  whoami1:
+    image: traefik/whoami
+    hostname: whoami1
+    network_mode: "bridge"
+  whoami2:
+    image: traefik/whoami
+    hostname: whoami2
+    network_mode: "bridge"
+  whoami3:
+    image: traefik/whoami
+    hostname: whoami3
+    network_mode: "bridge"
+  whoamitcp:
+    image: traefik/whoamitcp
+    hostname: whoamitcp
+    network_mode: "bridge"
+  connect:
+    image: hashicorpnomad/uuid-api:v5
+    links:
+      - consul
+    environment:
+      PORT: 443
+      BIND: 0.0.0.0
+      CONSUL_HTTP_ADDR: http://consul:8500
+    network_mode: "bridge"

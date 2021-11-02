@@ -1,7 +1,9 @@
-whoami1:
-  image: traefik/whoami
-  labels:
-    - traefik.http.Routers.RouterMini.Rule=PathPrefix("/whoami")
-    - traefik.enable=true
-  deploy:
-    replicas: 2
+services:
+  whoami1:
+    image: traefik/whoami
+    labels:
+      - traefik.http.Routers.RouterMini.Rule=PathPrefix("/whoami")
+      - traefik.enable=true
+    deploy:
+      replicas: 2
+    network_mode: "bridge"

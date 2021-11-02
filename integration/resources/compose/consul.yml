@@ -1,4 +1,6 @@
-consul:
-  image: consul:1.6
-  ports:
-    - "8500:8500"
+services:
+  consul:
+    image: consul:1.6
+    ports:
+      - "8500:8500"
+    network_mode: "bridge"

@@ -1,20 +1,26 @@
-whoami1:
-  image: traefik/whoami
-  ports:
-    - "8881:80"
-whoami2:
-  image: traefik/whoami
-  ports:
-    - "8882:80"
-whoami3:
-  image: traefik/whoami
-  ports:
-    - "8883:80"
-whoami4:
-  image: traefik/whoami
-  ports:
-    - "8884:80"
-whoami5:
-  image: traefik/whoami
-  ports:
-    - "8885:80"
+services:
+  whoami1:
+    image: traefik/whoami
+    ports:
+      - "8881:80"
+    network_mode: "bridge"
+  whoami2:
+    image: traefik/whoami
+    ports:
+      - "8882:80"
+    network_mode: "bridge"
+  whoami3:
+    image: traefik/whoami
+    ports:
+      - "8883:80"
+    network_mode: "bridge"
+  whoami4:
+    image: traefik/whoami
+    ports:
+      - "8884:80"
+    network_mode: "bridge"
+  whoami5:
+    image: traefik/whoami
+    ports:
+      - "8885:80"
+    network_mode: "bridge"
