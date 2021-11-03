@@ -130,9 +130,11 @@ func (s *AcmeSuite) TestHTTP01Domains(c *check.C) {
 				Main: "traefik.acme.wtf",
 			}},
 			Acme: map[string]static.CertificateResolver{
-				"default": {ACME: &acme.Configuration{
-					HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
-				}},
+				"default": {
+					ACME: &acme.Configuration{
+						CAServer:      "http://pebble:14000/dir",
+						HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
+					}},
 			},
 		},
 	}

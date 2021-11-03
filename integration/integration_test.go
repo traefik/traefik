@@ -45,7 +45,7 @@ func Test(t *testing.T) {
 		// tests launched from a container
 		//check.Suite(&AccessLogSuite{})
 		check.Suite(&AcmeSuite{})
-		//check.Suite(&EtcdSuite{})
+		// check.Suite(&EtcdSuite{})
 		// check.Suite(&ConsulSuite{})
 		// check.Suite(&ConsulCatalogSuite{})
 		// check.Suite(&DockerComposeSuite{})
