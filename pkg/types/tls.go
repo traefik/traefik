@@ -30,6 +30,7 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 		return nil, nil
 	}
 
+	// Not initialized, to rely on system bundle.
 	var caPool *x509.CertPool
 
 	clientAuth := tls.NoClientCert
