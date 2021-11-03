@@ -15,7 +15,7 @@ TRAEFIK_DEV_IMAGE := traefik-dev$(if $(GIT_BRANCH),:$(subst /,-,$(GIT_BRANCH)))
 REPONAME := $(shell echo $(REPO) | tr '[:upper:]' '[:lower:]')
 TRAEFIK_IMAGE := $(if $(REPONAME),$(REPONAME),"traefik/traefik")
 
-INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)", -e "TEST_CONTAINER=1" -v "/var/run/docker.sock:/var/run/docker.sock")
+INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)", --network test-net -e "TEST_CONTAINER=1" -v "/var/run/docker.sock:/var/run/docker.sock")
 DOCKER_BUILD_ARGS := $(if $(DOCKER_VERSION), "--build-arg=DOCKER_VERSION=$(DOCKER_VERSION)",)
 
 TRAEFIK_ENVS := \
@@ -94,8 +94,10 @@ pull-images:
 
 ## Run the integration tests
 test-integration: $(PRE_TARGET) binary
+
 	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK),TEST_CONTAINER=1) ./script/make.sh test-integration
 	TEST_HOST=1 ./script/make.sh test-integration
+	docker network rm test-net
 
 ## Run the container integration tests
 test-integration-container: $(PRE_TARGET) binary

@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -93,9 +95,10 @@ func (s *SimpleSuite) TestPrintHelp(c *check.C) {
 
 func (s *SimpleSuite) TestRequestAcceptGraceTimeout(c *check.C) {
 	s.createComposeProject(c, "reqacceptgrace")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
-	whoami := "http://" + s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress + ":80"
+	whoami := "http://whoami:80"
 
 	file := s.adaptFile(c, "fixtures/reqacceptgrace.toml", struct {
 		Server string
@@ -104,7 +107,7 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout(c *check.C) {
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
-	err := cmd.Start()
+	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
@@ -193,10 +196,11 @@ func (s *SimpleSuite) TestCustomPingTerminationStatusCode(c *check.C) {
 func (s *SimpleSuite) TestStatsWithMultipleEntryPoint(c *check.C) {
 	c.Skip("Stats is missing")
 	s.createComposeProject(c, "stats")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
-	whoami1 := "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80"
-	whoami2 := "http://" + s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress + ":80"
+	whoami1 := "http://whoami1:80"
+	whoami2 := "http://whoami2:80"
 
 	file := s.adaptFile(c, "fixtures/simple_stats.toml", struct {
 		Server1 string
@@ -205,7 +209,7 @@ func (s *SimpleSuite) TestStatsWithMultipleEntryPoint(c *check.C) {
 	cmd, output := s.traefikCmd(withConfigFile(file))
 	defer output(c)
 
-	err := cmd.Start()
+	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
@@ -229,14 +233,15 @@ func (s *SimpleSuite) TestNoAuthOnPing(c *check.C) {
 	c.Skip("Waiting for new api handler implementation")
 
 	s.createComposeProject(c, "base")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
 	file := s.adaptFile(c, "./fixtures/simple_auth.toml", struct{}{})
 	defer os.Remove(file)
 	cmd, output := s.traefikCmd(withConfigFile(file))
 	defer output(c)
 
-	err := cmd.Start()
+	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
@@ -249,12 +254,13 @@ func (s *SimpleSuite) TestNoAuthOnPing(c *check.C) {
 
 func (s *SimpleSuite) TestDefaultEntryPointHTTP(c *check.C) {
 	s.createComposeProject(c, "base")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
 	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--log.level=DEBUG", "--providers.docker", "--api.insecure")
 	defer output(c)
 
-	err := cmd.Start()
+	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
@@ -267,12 +273,13 @@ func (s *SimpleSuite) TestDefaultEntryPointHTTP(c *check.C) {
 
 func (s *SimpleSuite) TestWithNonExistingEntryPoint(c *check.C) {
 	s.createComposeProject(c, "base")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
 	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--log.level=DEBUG", "--providers.docker", "--api.insecure")
 	defer output(c)
 
-	err := cmd.Start()
+	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
@@ -285,12 +292,13 @@ func (s *SimpleSuite) TestWithNonExistingEntryPoint(c *check.C) {
 
 func (s *SimpleSuite) TestMetricsPrometheusDefaultEntryPoint(c *check.C) {
 	s.createComposeProject(c, "base")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
 	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--api.insecure", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--providers.docker", "--metrics.prometheus.addrouterslabels=true", "--log.level=DEBUG")
 	defer output(c)
 
-	err := cmd.Start()
+	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
@@ -315,12 +323,13 @@ func (s *SimpleSuite) TestMetricsPrometheusDefaultEntryPoint(c *check.C) {
 
 func (s *SimpleSuite) TestMetricsPrometheusTwoRoutersOneService(c *check.C) {
 	s.createComposeProject(c, "base")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
 	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--api.insecure", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--providers.docker", "--metrics.prometheus.addentrypointslabels=false", "--metrics.prometheus.addrouterslabels=true", "--log.level=DEBUG")
 	defer output(c)
 
-	err := cmd.Start()
+	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
@@ -355,10 +364,11 @@ func (s *SimpleSuite) TestMetricsPrometheusTwoRoutersOneService(c *check.C) {
 
 func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
 	s.createComposeProject(c, "base")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
-	ipWhoami01 := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
-	ipWhoami02 := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
+	ipWhoami01 := "whoami1"
+	ipWhoami02 := "whoami2"
 	file := s.adaptFile(c, "fixtures/multiple_provider.toml", struct{ IP string }{
 		IP: ipWhoami02,
 	})
@@ -367,7 +377,7 @@ func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
 	cmd, output := s.traefikCmd(withConfigFile(file))
 	defer output(c)
 
-	err := cmd.Start()
+	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
@@ -383,12 +393,13 @@ func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
 
 func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
 	s.createComposeProject(c, "whitelist")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
 	cmd, output := s.traefikCmd(withConfigFile("fixtures/simple_whitelist.toml"))
 	defer output(c)
 
-	err := cmd.Start()
+	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
@@ -451,12 +462,13 @@ func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
 
 func (s *SimpleSuite) TestXForwardedHeaders(c *check.C) {
 	s.createComposeProject(c, "whitelist")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
 	cmd, output := s.traefikCmd(withConfigFile("fixtures/simple_whitelist.toml"))
 	defer output(c)
 
-	err := cmd.Start()
+	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
@@ -479,9 +491,10 @@ func (s *SimpleSuite) TestXForwardedHeaders(c *check.C) {
 
 func (s *SimpleSuite) TestMultiProvider(c *check.C) {
 	s.createComposeProject(c, "base")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
-	server := "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	server := "http://whoami1"
 
 	file := s.adaptFile(c, "fixtures/multiprovider.toml", struct {
 		Server string
@@ -491,7 +504,7 @@ func (s *SimpleSuite) TestMultiProvider(c *check.C) {
 	cmd, output := s.traefikCmd(withConfigFile(file))
 	defer output(c)
 
-	err := cmd.Start()
+	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
@@ -530,9 +543,10 @@ func (s *SimpleSuite) TestMultiProvider(c *check.C) {
 
 func (s *SimpleSuite) TestSimpleConfigurationHostRequestTrailingPeriod(c *check.C) {
 	s.createComposeProject(c, "base")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
-	server := "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	server := "http://whoami1"
 
 	file := s.adaptFile(c, "fixtures/file/simple-hosts.toml", struct {
 		Server string
@@ -542,7 +556,7 @@ func (s *SimpleSuite) TestSimpleConfigurationHostRequestTrailingPeriod(c *check.
 	cmd, output := s.traefikCmd(withConfigFile(file))
 	defer output(c)
 
-	err := cmd.Start()
+	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
@@ -707,10 +721,11 @@ func (s *SimpleSuite) TestUDPServiceConfigErrors(c *check.C) {
 
 func (s *SimpleSuite) TestWRR(c *check.C) {
 	s.createComposeProject(c, "base")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
-	server1 := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
-	server2 := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
+	server1 := "whoami1"
+	server2 := "whoami2"
 
 	file := s.adaptFile(c, "fixtures/wrr.toml", struct {
 		Server1 string
@@ -721,7 +736,7 @@ func (s *SimpleSuite) TestWRR(c *check.C) {
 	cmd, output := s.traefikCmd(withConfigFile(file))
 	defer output(c)
 
-	err := cmd.Start()
+	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
@@ -754,10 +769,11 @@ func (s *SimpleSuite) TestWRR(c *check.C) {
 
 func (s *SimpleSuite) TestWRRSticky(c *check.C) {
 	s.createComposeProject(c, "base")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
-	server1 := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
-	server2 := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
+	server1 := "whoami1"
+	server2 := "whoami2"
 
 	file := s.adaptFile(c, "fixtures/wrr_sticky.toml", struct {
 		Server1 string
@@ -768,7 +784,7 @@ func (s *SimpleSuite) TestWRRSticky(c *check.C) {
 	cmd, output := s.traefikCmd(withConfigFile(file))
 	defer output(c)
 
-	err := cmd.Start()
+	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
@@ -1037,7 +1053,8 @@ func (s *SimpleSuite) TestMirrorCanceled(c *check.C) {
 
 func (s *SimpleSuite) TestSecureAPI(c *check.C) {
 	s.createComposeProject(c, "base")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
 	file := s.adaptFile(c, "./fixtures/simple_secure_api.toml", struct{}{})
 	defer os.Remove(file)
@@ -1045,7 +1062,7 @@ func (s *SimpleSuite) TestSecureAPI(c *check.C) {
 	cmd, output := s.traefikCmd(withConfigFile(file))
 	defer output(c)
 
-	err := cmd.Start()
+	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 

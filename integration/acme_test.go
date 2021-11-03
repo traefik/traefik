@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/miekg/dns"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -22,7 +24,6 @@ import (
 // ACME test suites (using libcompose).
 type AcmeSuite struct {
 	BaseSuite
-	pebbleIP      string
 	fakeDNSServer *dns.Server
 }
 
@@ -53,10 +54,6 @@ const (
 	wildcardDomain = "*.acme.wtf"
 )
 
-func (s *AcmeSuite) getAcmeURL() string {
-	return fmt.Sprintf("https://%s:14000/dir", s.pebbleIP)
-}
-
 func setupPebbleRootCA() (*http.Transport, error) {
 	path, err := filepath.Abs("fixtures/acme/ssl/pebble.minica.pem")
 	if err != nil {
@@ -86,11 +83,10 @@ func setupPebbleRootCA() (*http.Transport, error) {
 
 func (s *AcmeSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "pebble")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
 	s.fakeDNSServer = startFakeDNSServer()
-
-	s.pebbleIP = s.composeProject.Container(c, "pebble").NetworkSettings.IPAddress
 
 	pebbleTransport, err := setupPebbleRootCA()
 	if err != nil {
@@ -98,7 +94,7 @@ func (s *AcmeSuite) SetUpSuite(c *check.C) {
 	}
 
 	// wait for pebble
-	req := testhelpers.MustNewRequest(http.MethodGet, s.getAcmeURL(), nil)
+	req := testhelpers.MustNewRequest(http.MethodGet, "https://pebble:14000/dir", nil)
 
 	client := &http.Client{
 		Transport: pebbleTransport,
@@ -119,11 +115,6 @@ func (s *AcmeSuite) TearDownSuite(c *check.C) {
 	if err != nil {
 		c.Log(err)
 	}
-
-	// shutdown and delete compose project
-	if s.composeProject != nil {
-		s.composeProject.Stop(c)
-	}
 }
 
 func (s *AcmeSuite) TestHTTP01Domains(c *check.C) {
@@ -139,9 +130,11 @@ func (s *AcmeSuite) TestHTTP01Domains(c *check.C) {
 				Main: "traefik.acme.wtf",
 			}},
 			Acme: map[string]static.CertificateResolver{
-				"default": {ACME: &acme.Configuration{
-					HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
-				}},
+				"default": {
+					ACME: &acme.Configuration{
+						CAServer:      "http://pebble:14000/dir",
+						HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
+					}},
 			},
 		},
 	}
@@ -428,7 +421,7 @@ func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase acmeTestCase) {
 
 	for _, value := range testCase.template.Acme {
 		if len(value.ACME.CAServer) == 0 {
-			value.ACME.CAServer = s.getAcmeURL()
+			value.ACME.CAServer = "https://pebble:14000/dir"
 		}
 	}
 

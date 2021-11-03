@@ -1,0 +1,40 @@
+simple:
+  image: "swarm:1.0.0"
+  command: [ "manage", "token://blablabla" ]
+
+withtcplabels:
+  image: "traefik/whoamitcp"
+  command: [ "-name", "my.super.host" ]
+    deploy:
+      labels:
+        traefik.tcp.Routers.Super.Rule: "HostSNI(`my.super.host`)"
+        traefik.tcp.Routers.Super.tls: "true"
+        traefik.tcp.Services.Super.Loadbalancer.server.port: "8080"
+
+withlabels1:
+  image: "swarm:1.0.0"
+  command: [ "manage", "token://blabla" ]
+    deploy:
+      labels:
+        traefik.http.Routers.Super.Rule: "Host(`my.super.host`)"
+withlabels2:
+  image: "swarm:1.0.0"
+  command: [ "manage", "token://blablabla" ]
+    deploy:
+      labels:
+        traefik.http.Routers.Super.Rule: "Host(`my-super.host`)"
+
+withonelabelmissing:
+  image: "swarm:1.0.0"
+  command: [ "manage", "token://blabla" ]
+    deploy:
+      labels:
+        traefik.random.value: "my.super.host"
+
+powpow:
+  image: "swarm:1.0.0"
+  command: [ "manage", "token://blabla" ]
+    deploy:
+      labels:
+        traefik.http.Routers.Super.Rule: "Host(`my.super.host`)",
+        traefik.http.Services.powpow.LoadBalancer.server.Port: "2375",

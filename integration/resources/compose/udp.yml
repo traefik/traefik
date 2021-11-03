@@ -1,14 +1,16 @@
-whoami-a:
-  image: traefik/whoamiudp:latest
-  command: -name whoami-a
-
-whoami-b:
-  image: traefik/whoamiudp:latest
-  command: -name whoami-b
-
-whoami-c:
-  image: traefik/whoamiudp:latest
-  command: -name whoami-c
-
-whoami-d:
-  image: traefik/whoami
+services:
+  whoami-a:
+    image: traefik/whoamiudp:latest
+    command: -name whoami-a
+    network_mode: "bridge"
+  whoami-b:
+    image: traefik/whoamiudp:latest
+    command: -name whoami-b
+    network_mode: "bridge"
+  whoami-c:
+    image: traefik/whoamiudp:latest
+    command: -name whoami-c
+    network_mode: "bridge"
+  whoami-d:
+    image: traefik/whoami
+    network_mode: "bridge"

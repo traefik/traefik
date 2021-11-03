@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -13,6 +14,7 @@ import (
 	"regexp"
 	"time"
 
+	composeAPI "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -28,7 +30,8 @@ type K8sSuite struct{ BaseSuite }
 
 func (s *K8sSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "k8s")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeAPI.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
 	abs, err := filepath.Abs("./fixtures/k8s/config.skip/kubeconfig.yaml")
 	c.Assert(err, checker.IsNil)
@@ -44,7 +47,12 @@ func (s *K8sSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *K8sSuite) TearDownSuite(c *check.C) {
-	s.composeProject.Stop(c)
+	// shutdown and delete compose project
+	if s.composeProject != nil && s.dockerService != nil {
+		// s.composeProject.Stop(c)
+		err := s.dockerService.Stop(context.Background(), s.composeProject, composeAPI.StopOptions{})
+		c.Assert(err, checker.IsNil)
+	}
 
 	generatedFiles := []string{
 		"./fixtures/k8s/config.skip/kubeconfig.yaml",

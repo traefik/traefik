@@ -3,9 +3,8 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"flag"
-	"fmt"
-	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,12 +13,20 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/compose-spec/compose-go/cli"
+	"github.com/compose-spec/compose-go/types"
+	"github.com/docker/cli/cli/config/configfile"
+	"github.com/docker/compose/v2/pkg/api"
+	"github.com/docker/compose/v2/pkg/compose"
+	"github.com/docker/docker/client"
+
 	"github.com/fatih/structs"
 	"github.com/go-check/check"
-	compose "github.com/libkermit/compose/check"
 	"github.com/traefik/traefik/v2/pkg/log"
 	checker "github.com/vdemeester/shakers"
 )
+
+// compose "github.com/libkermit/compose/check"
 
 var (
 	integration = flag.Bool("integration", false, "run integration tests")
@@ -36,42 +43,42 @@ func Test(t *testing.T) {
 
 	if *container {
 		// tests launched from a container
-		check.Suite(&AccessLogSuite{})
+		//check.Suite(&AccessLogSuite{})
 		check.Suite(&AcmeSuite{})
-		check.Suite(&EtcdSuite{})
-		check.Suite(&ConsulSuite{})
-		check.Suite(&ConsulCatalogSuite{})
-		check.Suite(&DockerComposeSuite{})
-		check.Suite(&DockerSuite{})
-		check.Suite(&ErrorPagesSuite{})
-		check.Suite(&FileSuite{})
-		check.Suite(&GRPCSuite{})
-		check.Suite(&HealthCheckSuite{})
-		check.Suite(&HeadersSuite{})
-		check.Suite(&HostResolverSuite{})
-		check.Suite(&HTTPSuite{})
-		check.Suite(&HTTPSSuite{})
-		check.Suite(&KeepAliveSuite{})
-		check.Suite(&LogRotationSuite{})
-		check.Suite(&MarathonSuite{})
-		check.Suite(&MarathonSuite15{})
-		check.Suite(&RateLimitSuite{})
-		check.Suite(&RedisSuite{})
-		check.Suite(&RestSuite{})
-		check.Suite(&RetrySuite{})
-		check.Suite(&SimpleSuite{})
-		check.Suite(&TimeoutSuite{})
-		check.Suite(&TLSClientHeadersSuite{})
-		check.Suite(&TracingSuite{})
-		check.Suite(&UDPSuite{})
-		check.Suite(&WebsocketSuite{})
-		check.Suite(&ZookeeperSuite{})
+		// check.Suite(&EtcdSuite{})
+		// check.Suite(&ConsulSuite{})
+		// check.Suite(&ConsulCatalogSuite{})
+		// check.Suite(&DockerComposeSuite{})
+		// check.Suite(&DockerSuite{})
+		// check.Suite(&ErrorPagesSuite{})
+		// check.Suite(&FileSuite{})
+		// check.Suite(&GRPCSuite{})
+		// check.Suite(&HealthCheckSuite{})
+		// check.Suite(&HeadersSuite{})
+		// check.Suite(&HostResolverSuite{})
+		// check.Suite(&HTTPSuite{})
+		// check.Suite(&HTTPSSuite{})
+		// check.Suite(&KeepAliveSuite{})
+		// check.Suite(&LogRotationSuite{})
+		// check.Suite(&MarathonSuite{})
+		// check.Suite(&MarathonSuite15{})
+		// check.Suite(&RateLimitSuite{})
+		// check.Suite(&RedisSuite{})
+		// check.Suite(&RestSuite{})
+		// check.Suite(&RetrySuite{})
+		// check.Suite(&SimpleSuite{})
+		// check.Suite(&TimeoutSuite{})
+		// check.Suite(&TLSClientHeadersSuite{})
+		// check.Suite(&TracingSuite{})
+		// check.Suite(&UDPSuite{})
+		// check.Suite(&WebsocketSuite{})
+		// check.Suite(&ZookeeperSuite{})
 	}
 	if *host {
 		// tests launched from the host
-		check.Suite(&K8sSuite{})
-		check.Suite(&ProxyProtocolSuite{})
-		check.Suite(&TCPSuite{})
+		// check.Suite(&K8sSuite{})
+		// check.Suite(&ProxyProtocolSuite{})
+		// check.Suite(&TCPSuite{})
 	}
 
 	check.TestingT(t)
@@ -80,32 +87,32 @@ func Test(t *testing.T) {
 var traefikBinary = "../dist/traefik"
 
 type BaseSuite struct {
-	composeProject *compose.Project
+	composeProject *types.Project
+	dockerService  api.Service
 }
 
 func (s *BaseSuite) TearDownSuite(c *check.C) {
 	// shutdown and delete compose project
-	if s.composeProject != nil {
-		s.composeProject.Stop(c)
+	if s.composeProject != nil && s.dockerService != nil {
+		// s.composeProject.Stop(c)
+		err := s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+		c.Assert(err, checker.IsNil)
 	}
 }
 
 func (s *BaseSuite) createComposeProject(c *check.C, name string) {
-	projectName := fmt.Sprintf("integration-test-%s", name)
-	composeFile := fmt.Sprintf("resources/compose/%s.yml", name)
+	projectName := "integration-test-" + name
+	composeFile := "resources/compose/" + name + ".yml"
 
-	addrs, err := net.InterfaceAddrs()
+	composeClient, err := client.NewClientWithOpts()
 	c.Assert(err, checker.IsNil)
-	for _, addr := range addrs {
-		ip, _, err := net.ParseCIDR(addr.String())
-		c.Assert(err, checker.IsNil)
-		if !ip.IsLoopback() && ip.To4() != nil {
-			_ = os.Setenv("DOCKER_HOST_IP", ip.String())
-			break
-		}
-	}
 
-	s.composeProject = compose.CreateProject(c, projectName, composeFile)
+	s.dockerService = compose.NewComposeService(composeClient, configfile.New(composeFile))
+	ops, err := cli.NewProjectOptions([]string{composeFile}, cli.WithName(projectName))
+	c.Assert(err, checker.IsNil)
+
+	s.composeProject, err = cli.ProjectFromOptions(ops)
+	c.Assert(err, checker.IsNil)
 }
 
 func withConfigFile(file string) string {
