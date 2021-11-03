@@ -115,9 +115,15 @@ func TestClientTLS_CreateTLSConfig(t *testing.T) {
 
 			require.NoError(t, err)
 
-			assert.Len(t, tlsConfig.RootCAs.Subjects(), test.wantCALen)
 			assert.Len(t, tlsConfig.Certificates, test.wantCertLen)
 			assert.Equal(t, test.clientTLS.InsecureSkipVerify, tlsConfig.InsecureSkipVerify)
+
+			if test.wantCALen > 0 {
+				assert.Len(t, tlsConfig.RootCAs.Subjects(), test.wantCALen)
+				return
+			}
+
+			assert.Nil(t, tlsConfig.RootCAs)
 		})
 	}
 }

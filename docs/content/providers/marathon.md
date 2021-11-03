@@ -406,7 +406,8 @@ _Optional_
 
 #### `tls.ca`
 
-Certificate Authority used for the secure connection to Marathon.
+Certificate Authority used for the secure connection to Marathon,
+defaults to the system bundle.
 
 ```yaml tab="File (YAML)"
 providers:
