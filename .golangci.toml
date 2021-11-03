@@ -96,6 +96,10 @@
     "godox", # Too strict
     "forcetypeassert", # Too strict
     "tagliatelle", # Not compatible with current tags.
+    "varnamelen", # not relevant
+    "nilnil", # not relevant
+    "ireturn", # not relevant
+    "contextcheck", # too many false-positive
   ]
 
 [issues]

@@ -2,7 +2,6 @@ package accesslog
 
 import (
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
@@ -84,7 +83,7 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 	}
 
 	// Set timezone to Etc/GMT+9 to have a constant behavior
-	os.Setenv("TZ", "Etc/GMT+9")
+	t.Setenv("TZ", "Etc/GMT+9")
 
 	for _, test := range testCases {
 		test := test
