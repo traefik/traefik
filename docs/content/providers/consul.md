@@ -106,7 +106,8 @@ _Optional_
 
 #### `tls.ca`
 
-Certificate Authority used for the secure connection to Consul.
+Certificate Authority used for the secure connection to Consul,
+defaults to the system bundle.
 
 ```yaml tab="File (YAML)"
 providers:

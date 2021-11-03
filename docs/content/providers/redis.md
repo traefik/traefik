@@ -106,7 +106,8 @@ _Optional_
 
 #### `tls.ca`
 
-Certificate Authority used for the secure connection to Redis.
+Certificate Authority used for the secure connection to Redis,
+defaults to the system bundle.
 
 ```yaml tab="File (YAML)"
 providers:

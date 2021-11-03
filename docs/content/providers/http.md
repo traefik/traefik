@@ -78,7 +78,8 @@ _Optional_
 
 #### `tls.ca`
 
-Certificate Authority used for the secure connection to the configured endpoint.
+Certificate Authority used for the secure connection to the configured endpoint,
+defaults to the system bundle.
 
 ```yaml tab="File (YAML)"
 providers:
