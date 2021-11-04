@@ -30,7 +30,8 @@ func NewWRRLoadBalancer() *WRRLoadBalancer {
 // ServeTCP forwards the connection to the right service.
 func (b *WRRLoadBalancer) ServeTCP(conn WriteCloser) {
 	if len(b.servers) == 0 {
-		log.WithoutContext().Error("no available server")
+		log.WithoutContext().Error("No available server")
+		conn.Close()
 		return
 	}
 
@@ -38,7 +39,9 @@ func (b *WRRLoadBalancer) ServeTCP(conn WriteCloser) {
 	if err != nil {
 		log.WithoutContext().Errorf("Error during load balancing: %v", err)
 		conn.Close()
+		return
 	}
+
 	next.ServeTCP(conn)
 }
 
@@ -100,8 +103,12 @@ func (b *WRRLoadBalancer) next() (Handler, error) {
 
 	// GCD across all enabled servers
 	gcd := b.weightGcd()
+
 	// Maximum weight across all enabled servers
 	max := b.maxWeight()
+	if max == 0 {
+		return nil, fmt.Errorf("all servers have 0 weight")
+	}
 
 	for {
 		b.index = (b.index + 1) % len(b.servers)
@@ -109,9 +116,6 @@ func (b *WRRLoadBalancer) next() (Handler, error) {
 			b.currentWeight -= gcd
 			if b.currentWeight <= 0 {
 				b.currentWeight = max
-				if b.currentWeight == 0 {
-					return nil, fmt.Errorf("all servers have 0 weight")
-				}
 			}
 		}
 		srv := b.servers[b.index]

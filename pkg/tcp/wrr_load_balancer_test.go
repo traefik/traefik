@@ -10,7 +10,8 @@ import (
 )
 
 type fakeConn struct {
-	call map[string]int
+	writeCall map[string]int
+	closeCall int
 }
 
 func (f *fakeConn) Read(b []byte) (n int, err error) {
@@ -18,12 +19,13 @@ func (f *fakeConn) Read(b []byte) (n int, err error) {
 }
 
 func (f *fakeConn) Write(b []byte) (n int, err error) {
-	f.call[string(b)]++
+	f.writeCall[string(b)]++
 	return len(b), nil
 }
 
 func (f *fakeConn) Close() error {
-	panic("implement me")
+	f.closeCall++
+	return nil
 }
 
 func (f *fakeConn) LocalAddr() net.Addr {
@@ -55,7 +57,8 @@ func TestLoadBalancing(t *testing.T) {
 		desc          string
 		serversWeight map[string]int
 		totalCall     int
-		expected      map[string]int
+		expectedWrite map[string]int
+		expectedClose int
 	}{
 		{
 			desc: "RoundRobin",
@@ -64,7 +67,7 @@ func TestLoadBalancing(t *testing.T) {
 				"h2": 1,
 			},
 			totalCall: 4,
-			expected: map[string]int{
+			expectedWrite: map[string]int{
 				"h1": 2,
 				"h2": 2,
 			},
@@ -76,7 +79,7 @@ func TestLoadBalancing(t *testing.T) {
 				"h2": 1,
 			},
 			totalCall: 4,
-			expected: map[string]int{
+			expectedWrite: map[string]int{
 				"h1": 3,
 				"h2": 1,
 			},
@@ -88,21 +91,32 @@ func TestLoadBalancing(t *testing.T) {
 				"h2": 1,
 			},
 			totalCall: 16,
-			expected: map[string]int{
+			expectedWrite: map[string]int{
 				"h1": 12,
 				"h2": 4,
 			},
 		},
 		{
-			desc: "WeighedRoundRobin with 0 weight server",
+			desc: "WeighedRoundRobin with one 0 weight server",
 			serversWeight: map[string]int{
 				"h1": 3,
 				"h2": 0,
 			},
 			totalCall: 16,
-			expected: map[string]int{
+			expectedWrite: map[string]int{
 				"h1": 16,
 			},
+		},
+		{
+			desc: "WeighedRoundRobin with all servers with 0 weight",
+			serversWeight: map[string]int{
+				"h1": 0,
+				"h2": 0,
+				"h3": 0,
+			},
+			totalCall:     10,
+			expectedWrite: map[string]int{},
+			expectedClose: 10,
 		},
 	}
 
@@ -120,12 +134,13 @@ func TestLoadBalancing(t *testing.T) {
 				}), &weight)
 			}
 
-			conn := &fakeConn{call: make(map[string]int)}
+			conn := &fakeConn{writeCall: make(map[string]int)}
 			for i := 0; i < test.totalCall; i++ {
 				balancer.ServeTCP(conn)
 			}
 
-			assert.Equal(t, test.expected, conn.call)
+			assert.Equal(t, test.expectedWrite, conn.writeCall)
+			assert.Equal(t, test.expectedClose, conn.closeCall)
 		})
 	}
 }
