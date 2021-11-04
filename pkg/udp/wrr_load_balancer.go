@@ -30,7 +30,8 @@ func NewWRRLoadBalancer() *WRRLoadBalancer {
 // ServeUDP forwards the connection to the right service.
 func (b *WRRLoadBalancer) ServeUDP(conn *Conn) {
 	if len(b.servers) == 0 {
-		log.WithoutContext().Error("no available server")
+		log.WithoutContext().Error("No available server")
+		conn.close()
 		return
 	}
 
