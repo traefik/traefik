@@ -30,7 +30,8 @@ func NewWRRLoadBalancer() *WRRLoadBalancer {
 // ServeTCP forwards the connection to the right service.
 func (b *WRRLoadBalancer) ServeTCP(conn WriteCloser) {
 	if len(b.servers) == 0 {
-		log.WithoutContext().Error("no available server")
+		log.WithoutContext().Error("No available server")
+		conn.Close()
 		return
 	}
 
