@@ -38,7 +38,9 @@ func (b *WRRLoadBalancer) ServeTCP(conn WriteCloser) {
 	if err != nil {
 		log.WithoutContext().Errorf("Error during load balancing: %v", err)
 		conn.Close()
+		return
 	}
+
 	next.ServeTCP(conn)
 }
 
