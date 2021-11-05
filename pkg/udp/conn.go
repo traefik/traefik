@@ -8,7 +8,9 @@ import (
 	"time"
 )
 
-const receiveMTU = 8192
+// maxDataSize is the maximum data size in an IPv4/IPv6 UDP datagram.
+// 65535 bytes − 8-byte UDP header − 20-byte IP header.
+const maxDataSize = 65507
 
 const closeRetryInterval = 500 * time.Millisecond
 
@@ -135,7 +137,8 @@ func (l *Listener) readLoop() {
 		// Allocating a new buffer for every read avoids
 		// overwriting data in c.msgs in case the next packet is received
 		// before c.msgs is emptied via Read()
-		buf := make([]byte, receiveMTU)
+		buf := make([]byte, maxDataSize)
+
 		n, raddr, err := l.pConn.ReadFrom(buf)
 		if err != nil {
 			return
@@ -144,6 +147,7 @@ func (l *Listener) readLoop() {
 		if err != nil {
 			continue
 		}
+
 		select {
 		case conn.receiveCh <- buf[:n]:
 		case <-conn.doneCh:
@@ -249,7 +253,9 @@ func (c *Conn) readLoop() {
 	}
 }
 
-// Read implements io.Reader for a Conn.
+// Read reads up to len(p) bytes into p from the message buffer.
+// Each buffer message corresponds to a UDP datagram.
+// If the len(p) is lower than len(msg), the extra bytes will be discarded.
 func (c *Conn) Read(p []byte) (int, error) {
 	select {
 	case c.readCh <- p:
@@ -258,22 +264,20 @@ func (c *Conn) Read(p []byte) (int, error) {
 		c.lastActivity = time.Now()
 		c.muActivity.Unlock()
 		return n, nil
+
 	case <-c.doneCh:
 		return 0, io.EOF
 	}
 }
 
-// Write implements io.Writer for a Conn.
+// Write writes len(p) bytes from p to the underlying connection.
+// Each Write call will send the byte array as a UDP datagram.
 func (c *Conn) Write(p []byte) (n int, err error) {
-	l := c.listener
-	if l == nil {
-		return 0, io.EOF
-	}
-
 	c.muActivity.Lock()
 	c.lastActivity = time.Now()
 	c.muActivity.Unlock()
-	return l.pConn.WriteTo(p, c.rAddr)
+
+	return c.listener.pConn.WriteTo(p, c.rAddr)
 }
 
 func (c *Conn) close() {
