@@ -1,3 +1,33 @@
+## [v2.5.4](https://github.com/traefik/traefik/tree/v2.5.4) (2021-11-08)
+[All Commits](https://github.com/traefik/traefik/compare/v2.5.3...v2.5.4)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.5.0 ([#8481](https://github.com/traefik/traefik/pull/8481) by [ldez](https://github.com/ldez))
+- **[k8s/crd,k8s]** fix: add missing RequireAnyClientCert value to TLSOption CRD ([#8464](https://github.com/traefik/traefik/pull/8464) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s/crd,k8s]** fix: normalize middleware names in ingress route config ([#8484](https://github.com/traefik/traefik/pull/8484) by [aaronraff](https://github.com/aaronraff))
+- **[middleware,provider,tls]** fix: do not require a TLS client cert when InsecureSkipVerify is false ([#8525](https://github.com/traefik/traefik/pull/8525) by [kevinpollet](https://github.com/kevinpollet))
+- **[middleware,tls]** fix: use host&#39;s root CA set if ClientTLS ca is not defined ([#8545](https://github.com/traefik/traefik/pull/8545) by [kevinpollet](https://github.com/kevinpollet))
+- **[middleware]** fix: forward request Host to errors middleware service ([#8460](https://github.com/traefik/traefik/pull/8460) by [kevinpollet](https://github.com/kevinpollet))
+- **[middleware]** fix: use EscapedPath as header value when RawPath is empty ([#8251](https://github.com/traefik/traefik/pull/8251) by [dtomcej](https://github.com/dtomcej))
+- **[tcp,udp]** fix: TCP/UDP wrr when all servers have a weight set to 0 ([#8553](https://github.com/traefik/traefik/pull/8553) by [tomMoulard](https://github.com/tomMoulard))
+- **[webui]** fix: bug parsing weighted service provider name ([#8522](https://github.com/traefik/traefik/pull/8522) by [cocoanton](https://github.com/cocoanton))
+
+**Documentation:**
+- **[acme]** docs: remove quotes in certificatesresolvers CLI examples ([#8544](https://github.com/traefik/traefik/pull/8544) by [rdxmb](https://github.com/rdxmb))
+- **[k8s/ingress,k8s]** docs: clarify usage for cross provider references in Kubernetes ingress annotations ([#8536](https://github.com/traefik/traefik/pull/8536) by [rtribotte](https://github.com/rtribotte))
+- **[k8s/ingress]** docs: networking.k8s.io/v1beta1 to networking.k8s.io/v1 ([#8523](https://github.com/traefik/traefik/pull/8523) by [pmareke](https://github.com/pmareke))
+- **[k8s]** docs: replace links to French translation of k8s docs with English ones ([#8457](https://github.com/traefik/traefik/pull/8457) by [FoseFx](https://github.com/FoseFx))
+- **[k8s]** docs: remove non-working kind config in IngressRouteTCP/UDP examples ([#8538](https://github.com/traefik/traefik/pull/8538) by [kevinpollet](https://github.com/kevinpollet))
+- **[kv]** docs: fix typo in KV providers documentation ([#8477](https://github.com/traefik/traefik/pull/8477) by [rondoe](https://github.com/rondoe))
+- **[metrics]** docs: fix typo in addRoutersLabels option title ([#8561](https://github.com/traefik/traefik/pull/8561) by [kevinpollet](https://github.com/kevinpollet))
+- **[middleware]** fix: sourceCriterion documentation for InFlightReq and RateLimit middlewares ([#8524](https://github.com/traefik/traefik/pull/8524) by [pmareke](https://github.com/pmareke))
+- **[middleware]** Mention escaping escape characters in YAML for regex usage ([#8496](https://github.com/traefik/traefik/pull/8496) by [JackMorganNZ](https://github.com/JackMorganNZ))
+- **[rules]** docs: add named groups details to Regexp Syntax section ([#8559](https://github.com/traefik/traefik/pull/8559) by [kerrsmith](https://github.com/kerrsmith))
+- **[tracing]** docs: reword tracing config descriptions to be consistent ([#8473](https://github.com/traefik/traefik/pull/8473) by [kevinpollet](https://github.com/kevinpollet))
+- docs: remove link to microbadger.com ([#8555](https://github.com/traefik/traefik/pull/8555) by [CrispyBaguette](https://github.com/CrispyBaguette))
+- docs: remove http scheme urls in documentation ([#8507](https://github.com/traefik/traefik/pull/8507) by [tomMoulard](https://github.com/tomMoulard))
+- docs: update traefik image version ([#8533](https://github.com/traefik/traefik/pull/8533) by [tomMoulard](https://github.com/tomMoulard))
+
 ## [v2.5.3](https://github.com/traefik/traefik/tree/v2.5.3) (2021-09-20)
 [All Commits](https://github.com/traefik/traefik/compare/v2.5.2...v2.5.3)
 
