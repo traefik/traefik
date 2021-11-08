@@ -8,9 +8,10 @@ import (
 	"time"
 )
 
-// maxDataSize is the maximum data size in an IPv4/IPv6 UDP datagram.
-// 65535 bytes − 8-byte UDP header − 20-byte IP header.
-const maxDataSize = 65507
+// maxDatagramSize is the maximum size of a UDP datagram.
+// The UDP datagram length is coded on 2 bytes (16 bits),
+// which means that the maximum theoretical size is 65535 bytes.
+const maxDatagramSize = 65535
 
 const closeRetryInterval = 500 * time.Millisecond
 
@@ -137,7 +138,7 @@ func (l *Listener) readLoop() {
 		// Allocating a new buffer for every read avoids
 		// overwriting data in c.msgs in case the next packet is received
 		// before c.msgs is emptied via Read()
-		buf := make([]byte, maxDataSize)
+		buf := make([]byte, maxDatagramSize)
 
 		n, raddr, err := l.pConn.ReadFrom(buf)
 		if err != nil {
