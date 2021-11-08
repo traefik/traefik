@@ -14,8 +14,7 @@ type server struct {
 
 // WRRLoadBalancer is a naive RoundRobin load balancer for UDP services.
 type WRRLoadBalancer struct {
-	servers []server
-
+	servers       []server
 	lock          sync.RWMutex
 	currentWeight int
 	index         int
@@ -30,6 +29,9 @@ func NewWRRLoadBalancer() *WRRLoadBalancer {
 
 // ServeUDP forwards the connection to the right service.
 func (b *WRRLoadBalancer) ServeUDP(conn *Conn) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+
 	next, err := b.next()
 	if err != nil {
 		log.WithoutContext().Errorf("Error during load balancing: %v", err)
@@ -48,6 +50,9 @@ func (b *WRRLoadBalancer) AddServer(serverHandler Handler) {
 
 // AddWeightedServer appends a handler to the existing list with a weight.
 func (b *WRRLoadBalancer) AddWeightedServer(serverHandler Handler, weight *int) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+
 	w := 1
 	if weight != nil {
 		w = *weight
@@ -88,9 +93,6 @@ func (b *WRRLoadBalancer) next() (Handler, error) {
 	if len(b.servers) == 0 {
 		return nil, fmt.Errorf("no servers in the pool")
 	}
-
-	b.lock.Lock()
-	defer b.lock.Unlock()
 
 	// The algorithm below may look messy,
 	// but is actually very simple it calculates the GCD  and subtracts it on every iteration,
