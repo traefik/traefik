@@ -15,7 +15,7 @@ type server struct {
 // WRRLoadBalancer is a naive RoundRobin load balancer for TCP services.
 type WRRLoadBalancer struct {
 	servers       []server
-	lock          sync.RWMutex
+	lock          sync.Mutex
 	currentWeight int
 	index         int
 }
@@ -30,9 +30,9 @@ func NewWRRLoadBalancer() *WRRLoadBalancer {
 // ServeTCP forwards the connection to the right service.
 func (b *WRRLoadBalancer) ServeTCP(conn WriteCloser) {
 	b.lock.Lock()
-	defer b.lock.Unlock()
-
 	next, err := b.next()
+	b.lock.Unlock()
+
 	if err != nil {
 		log.WithoutContext().Errorf("Error during load balancing: %v", err)
 		conn.Close()
