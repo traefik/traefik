@@ -36,10 +36,10 @@ and derives the corresponding dynamic configuration from it,
 which in turn creates the resulting routers, services, handlers, etc.
 
 ```yaml tab="Ingress"
+apiVersion: networking.k8s.io/v1
 kind: Ingress
-apiVersion: networking.k8s.io/v1beta1
 metadata:
-  name: "foo"
+  name: foo
   namespace: production
 
 spec:
@@ -48,20 +48,26 @@ spec:
       http:
         paths:
           - path: /bar
+            pathType: Exact
             backend:
-              serviceName: service1
-              servicePort: 80
+              service:
+                name:  service1
+                port:
+                  number: 80
           - path: /foo
+            pathType: Exact
             backend:
-              serviceName: service1
-              servicePort: 80
+              service:
+                name:  service1
+                port:
+                  number: 80
 ```
 
-```yaml tab="Ingress Kubernetes v1.19+"
+```yaml tab="Ingress v1beta1 (deprecated)"
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
-apiVersion: networking.k8s.io/v1
 metadata:
-  name: "foo"
+  name: foo
   namespace: production
 
 spec:
@@ -70,19 +76,13 @@ spec:
       http:
         paths:
           - path: /bar
-            pathType: Exact
             backend:
-              service:
-                name:  service1
-                port:
-                  number: 80
+              serviceName: service1
+              servicePort: 80
           - path: /foo
-            pathType: Exact
             backend:
-              service:
-                name:  service1
-                port:
-                  number: 80
+              serviceName: service1
+              servicePort: 80
 ```
 
 ## LetsEncrypt Support with the Ingress Provider
@@ -104,7 +104,7 @@ If you need Let's Encrypt with high availability in a Kubernetes environment,
 we recommend using [Traefik Enterprise](https://traefik.io/traefik-enterprise/) which includes distributed Let's Encrypt as a supported feature.
 
 If you want to keep using Traefik Proxy,
-LetsEncrypt HA can be achieved by using a Certificate Controller such as [Cert-Manager](https://docs.cert-manager.io/en/latest/index.html).
+LetsEncrypt HA can be achieved by using a Certificate Controller such as [Cert-Manager](https://cert-manager.io/docs/).
 When using Cert-Manager to manage certificates,
 it creates secrets in your namespaces that can be referenced as TLS secrets in your [ingress objects](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls).
 
@@ -272,19 +272,19 @@ Otherwise, Ingresses missing the annotation, having an empty value, or the value
     ```
 
     ```yaml tab="Ingress"
-    apiVersion: "networking.k8s.io/v1beta1"
-    kind: "Ingress"
+    apiVersion: networking.k8s.io/v1beta1
+    kind: Ingress
     metadata:
-      name: "example-ingress"
+      name: example-ingress
     spec:
-      ingressClassName: "traefik-lb"
+      ingressClassName: traefik-lb
       rules:
       - host: "*.example.com"
         http:
           paths:
-          - path: "/example"
+          - path: /example
             backend:
-              serviceName: "example-service"
+              serviceName: example-service
               servicePort: 80
     ```
 
@@ -303,21 +303,21 @@ Otherwise, Ingresses missing the annotation, having an empty value, or the value
     ```
 
     ```yaml tab="Ingress"
-    apiVersion: "networking.k8s.io/v1"
-    kind: "Ingress"
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
     metadata:
-      name: "example-ingress"
+      name: example-ingress
     spec:
-      ingressClassName: "traefik-lb"
+      ingressClassName: traefik-lb
       rules:
       - host: "*.example.com"
         http:
           paths:
-          - path: "/example"
+          - path: /example
             pathType: Exact
             backend:
               service:
-                name: "example-service"
+                name: example-service
                 port:
                     number: 80
     ```

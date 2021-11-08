@@ -400,7 +400,7 @@ spec:
                       info configuration.
                     properties:
                       issuer:
-                        description: TLSCLientCertificateIssuerDNInfo holds the client
+                        description: TLSClientCertificateIssuerDNInfo holds the client
                           TLS certificate distinguished name info configuration. cf
                           https://tools.ietf.org/html/rfc3739
                         properties:
@@ -428,7 +428,7 @@ spec:
                       serialNumber:
                         type: boolean
                       subject:
-                        description: TLSCLientCertificateSubjectDNInfo holds the client
+                        description: TLSClientCertificateSubjectDNInfo holds the client
                           TLS certificate distinguished name info configuration. cf
                           https://tools.ietf.org/html/rfc3739
                         properties:

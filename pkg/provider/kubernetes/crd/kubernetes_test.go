@@ -11,13 +11,14 @@ import (
 	auth "github.com/abbot/go-http-auth"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/paerser/types"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	crdfake "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v2/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -128,6 +129,54 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							},
 						},
 						"foo-ipwhitelist": {
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.TCPService{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.1:8000",
+									},
+									{
+										Address: "10.10.0.2:8000",
+									},
+								},
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Middlewares in ingress route config are normalized",
+			paths: []string{"tcp/services.yml", "tcp/with_middleware_multiple_hyphens.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Middlewares: []string{"default-multiple-hyphens"},
+							Rule:        "HostSNI(`foo.com`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{
+						"default-multiple-hyphens": {
 							IPWhiteList: &dynamic.TCPIPWhiteList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
@@ -1435,6 +1484,57 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"foo-addprefix": {
 							AddPrefix: &dynamic.AddPrefix{
 								Prefix: "/tobeadded",
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-test2-route-23c7f4c450289ee29016": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                "Middlewares in ingress route config are normalized",
+			AllowCrossNamespace: true,
+			paths:               []string{"services.yml", "with_middleware_multiple_hyphens.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test2-route-23c7f4c450289ee29016": {
+							EntryPoints: []string{"web"},
+							Service:     "default-test2-route-23c7f4c450289ee29016",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/tobestripped`)",
+							Priority:    12,
+							Middlewares: []string{"default-multiple-hyphens"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-multiple-hyphens": {
+							StripPrefix: &dynamic.StripPrefix{
+								Prefixes: []string{"/tobestripped"},
 							},
 						},
 					},
@@ -3146,7 +3246,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"default-forwardauth": {
 							ForwardAuth: &dynamic.ForwardAuth{
 								Address: "test.com",
-								TLS: &dynamic.ClientTLS{
+								TLS: &types.ClientTLS{
 									CA:   "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
 									Cert: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
 									Key:  "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----",
@@ -3515,17 +3615,17 @@ func TestLoadIngressRoutes(t *testing.T) {
 							MaxIdleConnsPerHost: 42,
 							DisableHTTP2:        true,
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:           types.Duration(42 * time.Second),
-								ResponseHeaderTimeout: types.Duration(42 * time.Second),
-								IdleConnTimeout:       types.Duration(42 * time.Millisecond),
+								DialTimeout:           ptypes.Duration(42 * time.Second),
+								ResponseHeaderTimeout: ptypes.Duration(42 * time.Second),
+								IdleConnTimeout:       ptypes.Duration(42 * time.Millisecond),
 							},
 							PeerCertURI: "foo://bar",
 						},
 						"default-test": {
 							ServerName: "test",
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:     types.Duration(30 * time.Second),
-								IdleConnTimeout: types.Duration(90 * time.Second),
+								DialTimeout:     ptypes.Duration(30 * time.Second),
+								IdleConnTimeout: ptypes.Duration(90 * time.Second),
 							},
 						},
 					},

@@ -134,7 +134,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 		TLSConfig, err := p.TLS.CreateTLSConfig(ctx)
 		if err != nil {
-			return err
+			return fmt.Errorf("unable to create client TLS configuration: %w", err)
 		}
 		confg.HTTPClient = &http.Client{
 			Transport: &http.Transport{

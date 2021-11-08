@@ -48,7 +48,7 @@ type IssuerDistinguishedNameOptions struct {
 	StateOrProvinceName bool
 }
 
-func newIssuerDistinguishedNameOptions(info *dynamic.TLSCLientCertificateIssuerDNInfo) *IssuerDistinguishedNameOptions {
+func newIssuerDistinguishedNameOptions(info *dynamic.TLSClientCertificateIssuerDNInfo) *IssuerDistinguishedNameOptions {
 	if info == nil {
 		return nil
 	}
@@ -78,7 +78,7 @@ type SubjectDistinguishedNameOptions struct {
 	StateOrProvinceName    bool
 }
 
-func newSubjectDistinguishedNameOptions(info *dynamic.TLSCLientCertificateSubjectDNInfo) *SubjectDistinguishedNameOptions {
+func newSubjectDistinguishedNameOptions(info *dynamic.TLSClientCertificateSubjectDNInfo) *SubjectDistinguishedNameOptions {
 	if info == nil {
 		return nil
 	}
