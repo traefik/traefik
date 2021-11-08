@@ -1,9 +1,11 @@
 package udp
 
 import (
+	"crypto/rand"
 	"errors"
 	"io"
 	"net"
+	"runtime"
 	"testing"
 	"time"
 
@@ -314,6 +316,56 @@ func TestShutdown(t *testing.T) {
 	case <-time.Tick(5 * time.Second):
 		// In case we introduce a regression that would make the test wait forever.
 		t.Fatal("Timeout during shutdown")
+	}
+}
+
+func TestReadMaxUDPDataSize(t *testing.T) {
+	if runtime.GOOS == "darwin" {
+		t.Skip("Skip test on darwin as the maximum dgram size is set to 9216 bytes by default")
+	}
+
+	doneCh := make(chan struct{})
+
+	addr, err := net.ResolveUDPAddr("udp", ":0")
+	require.NoError(t, err)
+
+	l, err := Listen("udp", addr, 3*time.Second)
+	require.NoError(t, err)
+
+	defer func() {
+		err := l.Close()
+		require.NoError(t, err)
+	}()
+
+	go func() {
+		defer close(doneCh)
+
+		conn, err := l.Accept()
+		require.NoError(t, err)
+
+		var buffer [maxDataSize]byte
+
+		n, err := conn.Read(buffer[:])
+		require.NoError(t, err)
+
+		assert.Equal(t, maxDataSize, n)
+	}()
+
+	c, err := net.Dial("udp", l.Addr().String())
+	require.NoError(t, err)
+
+	data := make([]byte, maxDataSize)
+
+	_, err = rand.Read(data)
+	require.NoError(t, err)
+
+	_, err = c.Write(data)
+	require.NoError(t, err)
+
+	select {
+	case <-doneCh:
+	case <-time.Tick(5 * time.Second):
+		t.Fatal("Timeout waiting for datagram read")
 	}
 }
 
