@@ -251,6 +251,7 @@ The table below lists all the available matchers:
 
     `HostRegexp` and `Path` accept an expression with zero or more groups enclosed by curly braces.
     Named groups can be like `{name:pattern}` that matches the given regexp pattern or like `{name}` that matches anything until the next dot.
+    The group name (`name` is the above examples) is an arbitrary value.
     Any pattern supported by [Go's regexp package](https://golang.org/pkg/regexp/) may be used (example: `{subdomain:[a-z]+}.{domain}.com`).
 
 !!! info "Combining Matchers Using Operators and Parenthesis"
