@@ -349,7 +349,7 @@ func TestReadMaxUDPDataSize(t *testing.T) {
 
 		buffer := make([]byte, dataSize)
 
-		n, err := conn.Read(buffer[:])
+		n, err := conn.Read(buffer)
 		require.NoError(t, err)
 
 		assert.Equal(t, dataSize, n)
