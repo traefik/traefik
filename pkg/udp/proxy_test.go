@@ -50,9 +50,13 @@ func TestProxy_ServeUDP_MaxDataSize(t *testing.T) {
 		t.Skip("Skip test on darwin as the maximum dgram size is set to 9216 bytes by default")
 	}
 
+	// theoretical maximum size of data in a UDP datagram.
+	// 65535 bytes − 8-byte UDP header − 20-byte IP header.
+	dataSize := 65507
+
 	backendAddr := ":8083"
 	go newServer(t, backendAddr, HandlerFunc(func(conn *Conn) {
-		buffer := make([]byte, maxDataSize)
+		buffer := make([]byte, dataSize)
 
 		n, err := conn.Read(buffer)
 		require.NoError(t, err)
@@ -72,7 +76,7 @@ func TestProxy_ServeUDP_MaxDataSize(t *testing.T) {
 	udpConn, err := net.Dial("udp", proxyAddr)
 	require.NoError(t, err)
 
-	want := make([]byte, maxDataSize)
+	want := make([]byte, dataSize)
 
 	_, err = rand.Read(want)
 	require.NoError(t, err)
@@ -80,7 +84,7 @@ func TestProxy_ServeUDP_MaxDataSize(t *testing.T) {
 	_, err = udpConn.Write(want)
 	require.NoError(t, err)
 
-	got := make([]byte, maxDataSize)
+	got := make([]byte, dataSize)
 
 	_, err = udpConn.Read(got)
 	require.NoError(t, err)

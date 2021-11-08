@@ -324,6 +324,10 @@ func TestReadMaxUDPDataSize(t *testing.T) {
 		t.Skip("Skip test on darwin as the maximum dgram size is set to 9216 bytes by default")
 	}
 
+	// theoretical maximum size of data in a UDP datagram.
+	// 65535 bytes − 8-byte UDP header − 20-byte IP header.
+	dataSize := 65507
+
 	doneCh := make(chan struct{})
 
 	addr, err := net.ResolveUDPAddr("udp", ":0")
@@ -343,18 +347,18 @@ func TestReadMaxUDPDataSize(t *testing.T) {
 		conn, err := l.Accept()
 		require.NoError(t, err)
 
-		var buffer [maxDataSize]byte
+		buffer := make([]byte, dataSize)
 
 		n, err := conn.Read(buffer[:])
 		require.NoError(t, err)
 
-		assert.Equal(t, maxDataSize, n)
+		assert.Equal(t, dataSize, n)
 	}()
 
 	c, err := net.Dial("udp", l.Addr().String())
 	require.NoError(t, err)
 
-	data := make([]byte, maxDataSize)
+	data := make([]byte, dataSize)
 
 	_, err = rand.Read(data)
 	require.NoError(t, err)
