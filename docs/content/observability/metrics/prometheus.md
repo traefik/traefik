@@ -64,7 +64,7 @@ metrics:
 --metrics.prometheus.addEntryPointsLabels=true
 ```
 
-#### `AddRoutersLabels`
+#### `addRoutersLabels`
 
 _Optional, Default=false_
 
