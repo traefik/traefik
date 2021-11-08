@@ -47,9 +47,9 @@ func (p *Proxy) ServeUDP(conn *Conn) {
 }
 
 func connCopy(dst io.WriteCloser, src io.Reader, errCh chan error) {
-	// The buffer is initialized to the maximum UDP data size,
+	// The buffer is initialized to the maximum UDP datagram size,
 	// to make sure that the whole UDP datagram is read or written atomically (no data is discarded).
-	buffer := make([]byte, maxDataSize)
+	buffer := make([]byte, maxDatagramSize)
 
 	_, err := io.CopyBuffer(dst, src, buffer)
 	errCh <- err
