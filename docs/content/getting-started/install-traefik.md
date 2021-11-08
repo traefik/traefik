@@ -24,7 +24,7 @@ For more details, go to the [Docker provider documentation](../providers/docker.
 !!! tip
 
     * Prefer a fixed version than the latest that could be an unexpected version.
-    ex: `traefik:v2.1.4`
+    ex: `traefik:v2.5`
     * Docker images are based from the [Alpine Linux Official image](https://hub.docker.com/_/alpine).
     * Any orchestrator using docker images can fetch the official Traefik docker image.
 
@@ -101,13 +101,13 @@ helm install traefik traefik/traefik
 
 This HelmChart does not expose the Traefik dashboard by default, for security concerns.
 Thus, there are multiple ways to expose the dashboard.
-For instance, the dashboard access could be achieved through a port-forward :
+For instance, the dashboard access could be achieved through a port-forward:
 
 ```shell
 kubectl port-forward $(kubectl get pods --selector "app.kubernetes.io/name=traefik" --output=name) 9000:9000
 ```
 
-Accessible with the url: http://127.0.0.1:9000/dashboard/
+It can then be reached at: `http://127.0.0.1:9000/dashboard/`
 
 Another way would be to apply your own configuration, for instance,
 by defining and applying an IngressRoute CRD (`kubectl apply -f dashboard.yaml`):

@@ -64,7 +64,7 @@ export default {
     },
     getProviderLogoPath (service) {
       const provider = this.getProvider(service)
-      const name = provider.name.toLowerCase()
+      const name = provider.toLowerCase()
 
       if (name.includes('plugin-')) {
         return 'statics/providers/plugin.svg'

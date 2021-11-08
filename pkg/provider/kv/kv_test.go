@@ -402,7 +402,7 @@ func Test_buildConfiguration(t *testing.T) {
 				"Middleware08": {
 					ForwardAuth: &dynamic.ForwardAuth{
 						Address: "foobar",
-						TLS: &dynamic.ClientTLS{
+						TLS: &types.ClientTLS{
 							CA:                 "foobar",
 							CAOptional:         true,
 							Cert:               "foobar",
@@ -481,7 +481,7 @@ func Test_buildConfiguration(t *testing.T) {
 							NotAfter:  true,
 							NotBefore: true,
 							Sans:      true,
-							Subject: &dynamic.TLSCLientCertificateSubjectDNInfo{
+							Subject: &dynamic.TLSClientCertificateSubjectDNInfo{
 								Country:            true,
 								Province:           true,
 								Locality:           true,
@@ -491,7 +491,7 @@ func Test_buildConfiguration(t *testing.T) {
 								SerialNumber:       true,
 								DomainComponent:    true,
 							},
-							Issuer: &dynamic.TLSCLientCertificateIssuerDNInfo{
+							Issuer: &dynamic.TLSClientCertificateIssuerDNInfo{
 								Country:         true,
 								Province:        true,
 								Locality:        true,

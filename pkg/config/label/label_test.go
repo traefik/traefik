@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 func TestDecodeConfiguration(t *testing.T) {
@@ -367,7 +368,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							NotAfter:     true,
 							NotBefore:    true,
 							SerialNumber: true,
-							Subject: &dynamic.TLSCLientCertificateSubjectDNInfo{
+							Subject: &dynamic.TLSClientCertificateSubjectDNInfo{
 								Country:            true,
 								Province:           true,
 								Locality:           true,
@@ -377,7 +378,7 @@ func TestDecodeConfiguration(t *testing.T) {
 								SerialNumber:       true,
 								DomainComponent:    true,
 							},
-							Issuer: &dynamic.TLSCLientCertificateIssuerDNInfo{
+							Issuer: &dynamic.TLSClientCertificateIssuerDNInfo{
 								Country:         true,
 								Province:        true,
 								Locality:        true,
@@ -505,7 +506,7 @@ func TestDecodeConfiguration(t *testing.T) {
 				"Middleware7": {
 					ForwardAuth: &dynamic.ForwardAuth{
 						Address: "foobar",
-						TLS: &dynamic.ClientTLS{
+						TLS: &types.ClientTLS{
 							CA:                 "foobar",
 							CAOptional:         true,
 							Cert:               "foobar",
@@ -848,7 +849,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							NotAfter:     true,
 							NotBefore:    true,
 							SerialNumber: true,
-							Subject: &dynamic.TLSCLientCertificateSubjectDNInfo{
+							Subject: &dynamic.TLSClientCertificateSubjectDNInfo{
 								Country:            true,
 								Province:           true,
 								Locality:           true,
@@ -858,7 +859,7 @@ func TestEncodeConfiguration(t *testing.T) {
 								SerialNumber:       true,
 								DomainComponent:    true,
 							},
-							Issuer: &dynamic.TLSCLientCertificateIssuerDNInfo{
+							Issuer: &dynamic.TLSClientCertificateIssuerDNInfo{
 								Country:         true,
 								Province:        true,
 								Locality:        true,
@@ -993,7 +994,7 @@ func TestEncodeConfiguration(t *testing.T) {
 				"Middleware7": {
 					ForwardAuth: &dynamic.ForwardAuth{
 						Address: "foobar",
-						TLS: &dynamic.ClientTLS{
+						TLS: &types.ClientTLS{
 							CA:                 "foobar",
 							CAOptional:         true,
 							Cert:               "foobar",

@@ -15,7 +15,7 @@ type server struct {
 // WRRLoadBalancer is a naive RoundRobin load balancer for UDP services.
 type WRRLoadBalancer struct {
 	servers       []server
-	lock          sync.RWMutex
+	lock          sync.Mutex
 	currentWeight int
 	index         int
 }
@@ -29,16 +29,16 @@ func NewWRRLoadBalancer() *WRRLoadBalancer {
 
 // ServeUDP forwards the connection to the right service.
 func (b *WRRLoadBalancer) ServeUDP(conn *Conn) {
-	if len(b.servers) == 0 {
-		log.WithoutContext().Error("no available server")
-		return
-	}
-
+	b.lock.Lock()
 	next, err := b.next()
+	b.lock.Unlock()
+
 	if err != nil {
 		log.WithoutContext().Errorf("Error during load balancing: %v", err)
 		conn.Close()
+		return
 	}
+
 	next.ServeUDP(conn)
 }
 
@@ -50,6 +50,9 @@ func (b *WRRLoadBalancer) AddServer(serverHandler Handler) {
 
 // AddWeightedServer appends a handler to the existing list with a weight.
 func (b *WRRLoadBalancer) AddWeightedServer(serverHandler Handler, weight *int) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+
 	w := 1
 	if weight != nil {
 		w = *weight
@@ -87,9 +90,6 @@ func gcd(a, b int) int {
 }
 
 func (b *WRRLoadBalancer) next() (Handler, error) {
-	b.lock.Lock()
-	defer b.lock.Unlock()
-
 	if len(b.servers) == 0 {
 		return nil, fmt.Errorf("no servers in the pool")
 	}
@@ -98,10 +98,14 @@ func (b *WRRLoadBalancer) next() (Handler, error) {
 	// but is actually very simple it calculates the GCD  and subtracts it on every iteration,
 	// what interleaves servers and allows us not to build an iterator every time we readjust weights.
 
-	// GCD across all enabled servers
-	gcd := b.weightGcd()
 	// Maximum weight across all enabled servers
 	max := b.maxWeight()
+	if max == 0 {
+		return nil, fmt.Errorf("all servers have 0 weight")
+	}
+
+	// GCD across all enabled servers
+	gcd := b.weightGcd()
 
 	for {
 		b.index = (b.index + 1) % len(b.servers)
@@ -109,9 +113,6 @@ func (b *WRRLoadBalancer) next() (Handler, error) {
 			b.currentWeight -= gcd
 			if b.currentWeight <= 0 {
 				b.currentWeight = max
-				if b.currentWeight == 0 {
-					return nil, fmt.Errorf("all servers have 0 weight")
-				}
 			}
 		}
 		srv := b.servers[b.index]

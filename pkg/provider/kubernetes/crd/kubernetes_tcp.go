@@ -10,6 +10,7 @@ import (
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/traefik/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
@@ -162,7 +163,7 @@ func (p *Provider) makeMiddlewareTCPKeys(ctx context.Context, ingRouteTCPNamespa
 			ns = mi.Namespace
 		}
 
-		mds = append(mds, makeID(ns, mi.Name))
+		mds = append(mds, provider.Normalize(makeID(ns, mi.Name)))
 	}
 
 	return mds, nil
