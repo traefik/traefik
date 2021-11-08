@@ -14,7 +14,8 @@ type server struct {
 
 // WRRLoadBalancer is a naive RoundRobin load balancer for TCP services.
 type WRRLoadBalancer struct {
-	servers       []server
+	servers []server
+
 	lock          sync.RWMutex
 	currentWeight int
 	index         int
@@ -29,12 +30,6 @@ func NewWRRLoadBalancer() *WRRLoadBalancer {
 
 // ServeTCP forwards the connection to the right service.
 func (b *WRRLoadBalancer) ServeTCP(conn WriteCloser) {
-	if len(b.servers) == 0 {
-		log.WithoutContext().Error("No available server")
-		conn.Close()
-		return
-	}
-
 	next, err := b.next()
 	if err != nil {
 		log.WithoutContext().Errorf("Error during load balancing: %v", err)
@@ -90,25 +85,25 @@ func gcd(a, b int) int {
 }
 
 func (b *WRRLoadBalancer) next() (Handler, error) {
-	b.lock.Lock()
-	defer b.lock.Unlock()
-
 	if len(b.servers) == 0 {
 		return nil, fmt.Errorf("no servers in the pool")
 	}
 
+	b.lock.Lock()
+	defer b.lock.Unlock()
+
 	// The algo below may look messy, but is actually very simple
 	// it calculates the GCD  and subtracts it on every iteration, what interleaves servers
 	// and allows us not to build an iterator every time we readjust weights
-
-	// GCD across all enabled servers
-	gcd := b.weightGcd()
 
 	// Maximum weight across all enabled servers
 	max := b.maxWeight()
 	if max == 0 {
 		return nil, fmt.Errorf("all servers have 0 weight")
 	}
+
+	// GCD across all enabled servers
+	gcd := b.weightGcd()
 
 	for {
 		b.index = (b.index + 1) % len(b.servers)
