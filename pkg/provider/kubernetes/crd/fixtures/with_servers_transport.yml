@@ -110,6 +110,8 @@ spec:
     dialTimeout: 42
     responseHeaderTimeout: 42s
     idleConnTimeout: 42ms
+    readIdleTimeout: 42s
+    pingTimeout: 42s
 
 ---
 apiVersion: traefik.containo.us/v1alpha1
