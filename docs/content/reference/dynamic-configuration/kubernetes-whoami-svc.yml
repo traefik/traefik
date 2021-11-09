@@ -1,6 +1,6 @@
 ---
-kind: Deployment
 apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: whoami
 
@@ -9,10 +9,12 @@ spec:
   selector:
     matchLabels:
       app: whoami
+
   template:
     metadata:
       labels:
         app: whoami
+
     spec:
       containers:
         - name: whoami
@@ -25,8 +27,9 @@ metadata:
   name: whoami
 
 spec:
+  selector:
+    app: whoami
+
   ports:
     - protocol: TCP
       port: 80
-  selector:
-    app: whoami

@@ -1,28 +1,28 @@
 ---
 kind: GatewayClass
-apiVersion: networking.x-k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: my-gateway-class
 spec:
-  controller: traefik.io/gateway-controller
+  controllerName: traefik.io/gateway-controller
 
 ---
 kind: Gateway
-apiVersion: networking.x-k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: my-gateway
   namespace: default
 spec:
   gatewayClassName: my-gateway-class
-  listeners:  # Use GatewayClass defaults for listener definition.
-    - protocol: TLS
+  listeners: # Use GatewayClass defaults for listener definition.
+    - name: tls
+      protocol: TLS
       port: 8080
       tls:
         mode: Passthrough
-      routes:
-        kind: TLSRoutes
+      allowedRoutes:
+        kinds:
+          - kind: TLSRoute
+            group: gateway.networking.k8s.io
         namespaces:
           from: Same
-        selector:
-          matchLabels:
-            app: foo
