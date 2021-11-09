@@ -15,16 +15,16 @@ import (
 const typeName = "InFlightConnTCP"
 
 type inFlightConn struct {
-	name string
-	next tcp.Handler
+	name           string
+	next           tcp.Handler
+	maxConnections int64
 
-	mu             sync.Mutex       // mutex protecting the connections map accesses.
-	connections    map[string]int64 // current number of connections by remote address.
-	maxConnections int64            // maximum amount of simultaneous connections.
+	mu          sync.Mutex
+	connections map[string]int64 // current number of connections by remote IP.
 }
 
 // New creates a max connections middleware.
-// The connections are limited by remote address.
+// The connections are limited by remote IP.
 func New(ctx context.Context, next tcp.Handler, config dynamic.TCPInFlightConn, name string) (tcp.Handler, error) {
 	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName))
 	logger.Debug("Creating middleware")
