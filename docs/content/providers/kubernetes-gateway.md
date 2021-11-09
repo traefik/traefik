@@ -9,7 +9,7 @@ The Gateway API project is part of Kubernetes, working under SIG-NETWORK.
 The Kubernetes Gateway provider is a Traefik implementation of the [Gateway API](https://gateway-api.sigs.k8s.io/)
 specifications from the Kubernetes Special Interest Groups (SIGs).
 
-This provider is proposed as an experimental feature and partially supports the Gateway API [v0.3.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v0.3.0) specification.
+This provider is proposed as an experimental feature and partially supports the Gateway API [v0.4.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v0.4.0) specification.
 
 !!! warning "Enabling The Experimental Kubernetes Gateway Provider"
 
@@ -41,7 +41,7 @@ This provider is proposed as an experimental feature and partially supports the 
 !!! tip "All Steps for a Successful Deployment"
 
     * Add/update the Kubernetes Gateway API [definitions](../reference/dynamic-configuration/kubernetes-gateway.md#definitions).
-    * Add/update the [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for the Traefik custom resources.
+    * Add/update the [RBAC](../reference/dynamic-configuration/kubernetes-gateway.md#rbac) for the Traefik custom resources.
     * Add all needed Kubernetes Gateway API [resources](../reference/dynamic-configuration/kubernetes-gateway.md#resources).
 
 ## Examples
@@ -62,9 +62,9 @@ This provider is proposed as an experimental feature and partially supports the 
 
     ```yaml tab="Gateway API CRDs"
     # All resources definition must be declared
-    --8<-- "content/reference/dynamic-configuration/networking.x-k8s.io_gatewayclasses.yaml"
-    --8<-- "content/reference/dynamic-configuration/networking.x-k8s.io_gateways.yaml"
-    --8<-- "content/reference/dynamic-configuration/networking.x-k8s.io_httproutes.yaml"
+    --8<-- "content/reference/dynamic-configuration/gateway.networking.k8s.io_gatewayclasses.yaml"
+    --8<-- "content/reference/dynamic-configuration/gateway.networking.k8s.io_gateways.yaml"
+    --8<-- "content/reference/dynamic-configuration/gateway.networking.k8s.io_httproutes.yaml"
     ```
 
     ```yaml tab="RBAC"
@@ -73,17 +73,17 @@ This provider is proposed as an experimental feature and partially supports the 
 
 The Kubernetes Gateway API project provides several guides on how to use the APIs.
 These guides can help you to go further than the example above.
-The [getting started guide](https://gateway-api.sigs.k8s.io/v1alpha1/guides/getting-started/) details how to install the CRDs from their repository.
+The [getting started guide](https://gateway-api.sigs.k8s.io/v1alpha2/guides/getting-started/) details how to install the CRDs from their repository.
 
 !!! note ""
 
-    Keep in mind that the Traefik Gateway provider only supports the `v0.3.0` (v1alpha1).
+    Keep in mind that the Traefik Gateway provider only supports the `v0.4.0` (v1alpha2).
 
 For now, the Traefik Gateway Provider can be used while following the below guides:
 
-* [Simple Gateway](https://gateway-api.sigs.k8s.io/v1alpha1/guides/simple-gateway/)
-* [HTTP routing](https://gateway-api.sigs.k8s.io/v1alpha1/guides/http-routing/)
-* [TLS](https://gateway-api.sigs.k8s.io/v1alpha1/guides/tls/)
+* [Simple Gateway](https://gateway-api.sigs.k8s.io/v1alpha2/guides/simple-gateway/)
+* [HTTP routing](https://gateway-api.sigs.k8s.io/v1alpha2/guides/http-routing/)
+* [TLS](https://gateway-api.sigs.k8s.io/v1alpha2/guides/tls/)
 
 ## Resource Configuration
 
