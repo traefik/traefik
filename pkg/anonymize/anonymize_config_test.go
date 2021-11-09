@@ -147,6 +147,8 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 					DialTimeout:           42,
 					ResponseHeaderTimeout: 42,
 					IdleConnTimeout:       42,
+					ReadIdleTimeout:       42,
+					PingTimeout:           42,
 				},
 			},
 		},

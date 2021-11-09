@@ -214,6 +214,16 @@ func (in *ForwardingTimeouts) DeepCopyInto(out *ForwardingTimeouts) {
 		*out = new(intstr.IntOrString)
 		**out = **in
 	}
+	if in.ReadIdleTimeout != nil {
+		in, out := &in.ReadIdleTimeout, &out.ReadIdleTimeout
+		*out = new(intstr.IntOrString)
+		**out = **in
+	}
+	if in.PingTimeout != nil {
+		in, out := &in.PingTimeout, &out.PingTimeout
+		*out = new(intstr.IntOrString)
+		**out = **in
+	}
 	return
 }
 
