@@ -919,7 +919,7 @@ spec:
 _Optional, Default=15s_
 
 `pingTimeout` is the timeout after which the HTTP/2 connection will be closed
-if a response to Ping is not received.
+if a response to ping is not received.
 
 ```yaml tab="File (YAML)"
 ## Dynamic configuration
