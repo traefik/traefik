@@ -43,13 +43,17 @@ type ServersTransportSpec struct {
 
 // ForwardingTimeouts contains timeout configurations for forwarding requests to the backend servers.
 type ForwardingTimeouts struct {
-	// The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists.
+	// DialTimeout is the amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists.
 	DialTimeout *intstr.IntOrString `json:"dialTimeout,omitempty"`
-	// The amount of time to wait for a server's response headers after fully writing the request (including its body, if any).
+	// ResponseHeaderTimeout is the amount of time to wait for a server's response headers after fully writing the request (including its body, if any).
 	// If zero, no timeout exists.
 	ResponseHeaderTimeout *intstr.IntOrString `json:"responseHeaderTimeout,omitempty"`
-	// The maximum period for which an idle HTTP keep-alive connection will remain open before closing itself.
+	// IdleConnTimeout is the maximum period for which an idle HTTP keep-alive connection will remain open before closing itself.
 	IdleConnTimeout *intstr.IntOrString `json:"idleConnTimeout,omitempty"`
+	// ReadIdleTimeout is the timeout after which a health check using ping frame will be carried out if no frame is received on the HTTP/2 connection. If zero, no health check is performed.
+	ReadIdleTimeout *intstr.IntOrString `json:"readIdleTimeout,omitempty"`
+	// PingTimeout is the timeout after which the HTTP/2 connection will be closed if a response to ping is not received.
+	PingTimeout *intstr.IntOrString `json:"pingTimeout,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
