@@ -47,11 +47,12 @@ func TestProxy_ServeUDP(t *testing.T) {
 
 func TestProxy_ServeUDP_MaxDataSize(t *testing.T) {
 	if runtime.GOOS == "darwin" {
+		// sudo sysctl -w net.inet.udp.maxdgram=65507
 		t.Skip("Skip test on darwin as the maximum dgram size is set to 9216 bytes by default")
 	}
 
-	// theoretical maximum size of data in a UDP datagram.
-	// 65535 bytes − 8-byte UDP header − 20-byte IP header.
+	// Theoretical maximum size of data in a UDP datagram.
+	// 65535 − 8 (UDP header) − 20 (IP header).
 	dataSize := 65507
 
 	backendAddr := ":8083"

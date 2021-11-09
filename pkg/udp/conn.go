@@ -9,8 +9,6 @@ import (
 )
 
 // maxDatagramSize is the maximum size of a UDP datagram.
-// The UDP datagram length is coded on 2 bytes (16 bits),
-// which means that the maximum theoretical size is 65535 bytes.
 const maxDatagramSize = 65535
 
 const closeRetryInterval = 500 * time.Millisecond
@@ -254,9 +252,9 @@ func (c *Conn) readLoop() {
 	}
 }
 
-// Read reads up to len(p) bytes into p from the message buffer.
-// Each buffer message corresponds to a UDP datagram.
-// If the len(p) is lower than len(msg), the extra bytes will be discarded.
+// Read reads up to len(p) bytes into p from the connection.
+// Each call corresponds to at most one datagram.
+// If p is smaller than the datagram, the extra bytes will be discarded.
 func (c *Conn) Read(p []byte) (int, error) {
 	select {
 	case c.readCh <- p:
@@ -272,7 +270,8 @@ func (c *Conn) Read(p []byte) (int, error) {
 }
 
 // Write writes len(p) bytes from p to the underlying connection.
-// Each Write call will send the byte array as a UDP datagram.
+// Each call sends at most one datagram.
+// It is an error to send a message larger than the system's max UDP datagram size.
 func (c *Conn) Write(p []byte) (n int, err error) {
 	c.muActivity.Lock()
 	c.lastActivity = time.Now()
