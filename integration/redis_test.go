@@ -155,7 +155,7 @@ func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 			FromFile: "Expected",
 			A:        difflib.SplitLines(expectedStr),
 			ToFile:   "Got",
-			B:        difflib.SplitLines(minifyJSON(string(got))),
+			B:        difflib.SplitLines(gotStr),
 			Context:  3,
 		}
 

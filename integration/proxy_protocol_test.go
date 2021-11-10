@@ -21,14 +21,14 @@ func (s *ProxyProtocolSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *ProxyProtocolSuite) TestProxyProtocolTrusted(c *check.C) {
-	gatewayIP := "haproxy"
-	haproxyIP := "haproxy"
-	whoamiIP := "whoami"
+	gatewayHost := "haproxy"
+	haproxyHost := "haproxy"
+	whoamiHost := "whoami"
 
 	file := s.adaptFile(c, "fixtures/proxy-protocol/with.toml", struct {
 		HaproxyIP string
 		WhoamiIP  string
-	}{HaproxyIP: haproxyIP, WhoamiIP: whoamiIP})
+	}{HaproxyIP: haproxyHost, WhoamiIP: whoamiHost})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -37,21 +37,21 @@ func (s *ProxyProtocolSuite) TestProxyProtocolTrusted(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	err = try.GetRequest("http://"+haproxyIP+"/whoami", 1*time.Second,
+	err = try.GetRequest("http://"+haproxyHost+"/whoami", 1*time.Second,
 		try.StatusCodeIs(http.StatusOK),
-		try.BodyContains("X-Forwarded-For: "+gatewayIP))
+		try.BodyContains("X-Forwarded-For: "+gatewayHost))
 	c.Assert(err, checker.IsNil)
 }
 
 func (s *ProxyProtocolSuite) TestProxyProtocolV2Trusted(c *check.C) {
-	gatewayIP := "haproxy"
-	haproxyIP := "haproxy"
-	whoamiIP := "whoami"
+	gatewayHost := "haproxy"
+	haproxyHost := "haproxy"
+	whoamiHost := "whoami"
 
 	file := s.adaptFile(c, "fixtures/proxy-protocol/with.toml", struct {
 		HaproxyIP string
 		WhoamiIP  string
-	}{HaproxyIP: haproxyIP, WhoamiIP: whoamiIP})
+	}{HaproxyIP: haproxyHost, WhoamiIP: whoamiHost})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -60,20 +60,20 @@ func (s *ProxyProtocolSuite) TestProxyProtocolV2Trusted(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	err = try.GetRequest("http://"+haproxyIP+":81/whoami", 1*time.Second,
+	err = try.GetRequest("http://"+haproxyHost+":81/whoami", 1*time.Second,
 		try.StatusCodeIs(http.StatusOK),
-		try.BodyContains("X-Forwarded-For: "+gatewayIP))
+		try.BodyContains("X-Forwarded-For: "+gatewayHost))
 	c.Assert(err, checker.IsNil)
 }
 
 func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted(c *check.C) {
-	haproxyIP := "haproxy"
-	whoamiIP := "whoami"
+	haproxyHost := "haproxy"
+	whoamiHost := "whoami"
 
 	file := s.adaptFile(c, "fixtures/proxy-protocol/without.toml", struct {
 		HaproxyIP string
 		WhoamiIP  string
-	}{HaproxyIP: haproxyIP, WhoamiIP: whoamiIP})
+	}{HaproxyIP: haproxyHost, WhoamiIP: whoamiHost})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -82,20 +82,20 @@ func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	err = try.GetRequest("http://"+haproxyIP+"/whoami", 1*time.Second,
+	err = try.GetRequest("http://"+haproxyHost+"/whoami", 1*time.Second,
 		try.StatusCodeIs(http.StatusOK),
-		try.BodyContains("X-Forwarded-For: "+haproxyIP))
+		try.BodyContains("X-Forwarded-For: "+haproxyHost))
 	c.Assert(err, checker.IsNil)
 }
 
 func (s *ProxyProtocolSuite) TestProxyProtocolV2NotTrusted(c *check.C) {
-	haproxyIP := "haproxy"
-	whoamiIP := "whoami"
+	haproxyHost := "haproxy"
+	whoamiHost := "whoami"
 
 	file := s.adaptFile(c, "fixtures/proxy-protocol/without.toml", struct {
 		HaproxyIP string
 		WhoamiIP  string
-	}{HaproxyIP: haproxyIP, WhoamiIP: whoamiIP})
+	}{HaproxyIP: haproxyHost, WhoamiIP: whoamiHost})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -104,8 +104,8 @@ func (s *ProxyProtocolSuite) TestProxyProtocolV2NotTrusted(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	err = try.GetRequest("http://"+haproxyIP+":81/whoami", 1*time.Second,
+	err = try.GetRequest("http://"+haproxyHost+":81/whoami", 1*time.Second,
 		try.StatusCodeIs(http.StatusOK),
-		try.BodyContains("X-Forwarded-For: "+haproxyIP))
+		try.BodyContains("X-Forwarded-For: "+haproxyHost))
 	c.Assert(err, checker.IsNil)
 }
