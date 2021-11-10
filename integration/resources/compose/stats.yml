@@ -1,4 +1,9 @@
-whoami1:
-  image: traefik/whoami
-whoami2:
-  image: traefik/whoami
+services:
+  whoami1:
+    image: traefik/whoami
+  whoami2:
+    image: traefik/whoami
+networks:
+  default:
+    external: true
+    name: test-net
