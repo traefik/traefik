@@ -66,8 +66,8 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 	s.startServicesOnly(c, []string{"simple"})
 
 	containers, err := s.dockerService.Ps(context.Background(), s.composeProject.Name, composeapi.PsOptions{})
-	containers = s.filterRunning(containers)
 	c.Assert(err, checker.IsNil)
+	containers = s.filterRunning(containers)
 	c.Assert(containers, checker.HasLen, 1)
 
 	// Start traefik
@@ -112,8 +112,8 @@ func (s *DockerSuite) TestDockerContainersWithTCPLabels(c *check.C) {
 	s.startServicesOnly(c, []string{"withtcplabels"})
 
 	containers, err := s.dockerService.Ps(context.Background(), s.composeProject.Name, composeapi.PsOptions{})
-	containers = s.filterRunning(containers)
 	c.Assert(err, checker.IsNil)
+	containers = s.filterRunning(containers)
 	c.Assert(containers, checker.HasLen, 1)
 
 	// Start traefik

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"flag"
+	"fmt"
 	"net"
 	"os"
 	"os/exec"
@@ -98,8 +99,8 @@ func (s *BaseSuite) TearDownSuite(c *check.C) {
 }
 
 func (s *BaseSuite) createComposeProject(c *check.C, name string) {
-	projectName := "integration-test-" + name
-	composeFile := "resources/compose/" + name + ".yml"
+	projectName := fmt.Sprintf("integration-test-%s", name)
+	composeFile := fmt.Sprintf("resources/compose/%s.yml", name)
 
 	composeClient, err := client.NewClientWithOpts()
 	c.Assert(err, checker.IsNil)
