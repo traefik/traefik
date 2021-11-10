@@ -140,12 +140,11 @@ Please check the [configuration examples below](#configuration-examples) for mor
 
 Traefik automatically tracks the expiry date of ACME certificates it generates.
 
-When using a certificates resolver that issues certificates with custom lifetime durations,
-you can explicitly set the certificate's lifetime duration to have Traefik renew certificates with more suited time frames.
-See the [`certificatesDuration`](#certificatesduration) option.
+By default, Traefik manages 90 days certificates,
+and starts to renew certificates 30 days before their expiry.
 
-By default, Traefik will manage 90 days certificates.
-It tries to renew certificates that have 30 or fewer days left on their validity period.
+When using a certificates resolver that issues certificates with custom durations,
+one can configure the certificates' duration with the [`certificatesDuration`](#certificatesduration) option.
 
 !!! info ""
     Certificates that are no longer used may still be renewed, as Traefik does not currently check if the certificate is being used before renewing.
@@ -542,10 +541,10 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 
 _Optional, Default=2160_
 
-The `certificatesDuration` option sets the length of a certificate's lifetime in hours in order to manage them more precisely.
-It defaults to `2160` (3 months) to follow Let's Encrypt certificates lifetime.
+The `certificatesDuration` option defines the certificates' duration in hours.
+It defaults to `2160` (90 days) to follow Let's Encrypt certificates lifespan.
 
-!!! warning "Traefik cannot manage certificates that have a lifespan lower than 1 hour."
+!!! warning "Traefik cannot manage certificates with a duration lower than 1 hour."
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
@@ -571,10 +570,10 @@ certificatesResolvers:
 
 `certificatesDuration` is used to calculate two durations:
 
-- `RenewBeforeExpiry`: the amount of time before the end of the certificate lifetime that indicates when the certificates should be renewed.
-- `ExpirationCheckInterval`: the interval of time when it will check if there are certificates to renew.
+- `Renew Period`: the period before the end of the certificate duration, during which the certificate should be renewed.
+- `Renew Interval`: the interval between renew attempts.
 
-| Certificate Duration | RenewBeforeExpiry | ExpirationCheckInterval |
+| Certificate Duration | Renew Period      | Renew Interval          |
 |----------------------|-------------------|-------------------------|
 | >= 1 year            | 4 months          | 1 week                  |
 | >= 90 days           | 30 days           | 1 day                   |

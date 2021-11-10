@@ -55,7 +55,7 @@ Certificates resolvers configuration. (Default: ```false```)
 CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```)
 
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CERTIFICATESDURATION`:  
-Duration of a certificate lifetime in hours. (Default: ```2160```)
+Certificates' duration in hours. (Default: ```2160```)
 
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE`:  
 Activate DNS-01 Challenge. (Default: ```false```)

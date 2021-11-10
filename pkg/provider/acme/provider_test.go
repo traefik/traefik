@@ -594,41 +594,42 @@ func TestInitAccount(t *testing.T) {
 	}
 }
 
-func TestGetIntervals(t *testing.T) {
+func Test_getCertificateRenewDurations(t *testing.T) {
 	testCases := []struct {
 		desc                  string
-		CertificatesDurations int
-		expectRenew           time.Duration
-		expectExpire          time.Duration
+		certificatesDurations int
+		expectRenewPeriod     time.Duration
+		expectRenewInterval   time.Duration
 	}{
 		{
-			desc:         "Empty",
-			expectRenew:  time.Minute * 20,
-			expectExpire: time.Minute,
+			desc:                  "Less than 24 Hours certificates: 20 minutes renew period, 1 minutes renew interval",
+			certificatesDurations: 1,
+			expectRenewPeriod:     time.Minute * 20,
+			expectRenewInterval:   time.Minute,
 		},
 		{
-			desc:                  "1 Year certificates: 2 months renew period, 1 week check interval",
-			CertificatesDurations: 24 * 365,
-			expectRenew:           time.Hour * 24 * 30 * 4,
-			expectExpire:          time.Hour * 24 * 7,
+			desc:                  "1 Year certificates: 2 months renew period, 1 week renew interval",
+			certificatesDurations: 24 * 365,
+			expectRenewPeriod:     time.Hour * 24 * 30 * 4,
+			expectRenewInterval:   time.Hour * 24 * 7,
 		},
 		{
-			desc:                  "90 Days certificates: 30 days renew period, 1 day check interval",
-			CertificatesDurations: 24 * 90,
-			expectRenew:           time.Hour * 24 * 30,
-			expectExpire:          time.Hour * 24,
+			desc:                  "90 Days certificates: 30 days renew period, 1 day renew interval",
+			certificatesDurations: 24 * 90,
+			expectRenewPeriod:     time.Hour * 24 * 30,
+			expectRenewInterval:   time.Hour * 24,
 		},
 		{
-			desc:                  "7 Days certificates: 1 days renew period, 1 hour check interval",
-			CertificatesDurations: 24 * 7,
-			expectRenew:           time.Hour * 24,
-			expectExpire:          time.Hour,
+			desc:                  "7 Days certificates: 1 days renew period, 1 hour renew interval",
+			certificatesDurations: 24 * 7,
+			expectRenewPeriod:     time.Hour * 24,
+			expectRenewInterval:   time.Hour,
 		},
 		{
-			desc:                  "24 Hours certificates: 6 hours renew period, 10 minutes check interval",
-			CertificatesDurations: 24,
-			expectRenew:           time.Hour * 6,
-			expectExpire:          time.Minute * 10,
+			desc:                  "24 Hours certificates: 6 hours renew period, 10 minutes renew interval",
+			certificatesDurations: 24,
+			expectRenewPeriod:     time.Hour * 6,
+			expectRenewInterval:   time.Minute * 10,
 		},
 	}
 	for _, test := range testCases {
@@ -636,10 +637,9 @@ func TestGetIntervals(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			acmeProvider := Provider{Configuration: &Configuration{CertificatesDuration: test.CertificatesDurations}}
-			renewTime, expirationTime := acmeProvider.getCertificateRenewIntervals()
-			assert.Equal(t, test.expectRenew, renewTime)
-			assert.Equal(t, test.expectExpire, expirationTime)
+			renewPeriod, renewInterval := getCertificateRenewDurations(test.certificatesDurations)
+			assert.Equal(t, test.expectRenewPeriod, renewPeriod)
+			assert.Equal(t, test.expectRenewInterval, renewInterval)
 		})
 	}
 }

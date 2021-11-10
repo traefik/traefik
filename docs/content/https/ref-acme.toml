@@ -22,8 +22,8 @@
   #
   # caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 
-  # The certificate's lifetime duration.
-  # By default, it's 3 months to follow Let's Encrypt certificates lifetime.
+  # The certificates' duration in hours.
+  # It defaults to 2160 (90 days) to follow Let's Encrypt certificates' duration.
   #
   # Optional
   # Default: 2160

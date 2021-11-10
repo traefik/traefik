@@ -39,7 +39,7 @@ type Configuration struct {
 	Storage              string `description:"Storage to use." json:"storage,omitempty" toml:"storage,omitempty" yaml:"storage,omitempty" export:"true"`
 	KeyType              string `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
 	EAB                  *EAB   `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
-	CertificatesDuration int    `description:"Duration of a certificate lifetime in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
+	CertificatesDuration int    `description:"Certificates' duration in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
 
 	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge." json:"dnsChallenge,omitempty" toml:"dnsChallenge,omitempty" yaml:"dnsChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge." json:"httpChallenge,omitempty" toml:"httpChallenge,omitempty" yaml:"httpChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -180,24 +180,6 @@ func isAccountMatchingCaServer(ctx context.Context, accountURI, serverURI string
 	return cau.Hostname() == aru.Hostname()
 }
 
-// getCertificateRenewIntervals return 2 durations calculated with the duration of certificates.
-// The first (RenewBeforeExpiry) the amount of time before the end of the certificate lifetime to know when the certificates should be renewed.
-// The second (ExpirationCheckInterval) is the duration of the ticker that check if certificates should be renewed.
-func (p *Provider) getCertificateRenewIntervals() (time.Duration, time.Duration) {
-	switch {
-	case p.CertificatesDuration >= 265*24: // >= 1 year
-		return 4 * 30 * 24 * time.Hour, 7 * 24 * time.Hour // 4 month, 1 week
-	case p.CertificatesDuration >= 3*30*24: // >= 90 days
-		return 30 * 24 * time.Hour, 24 * time.Hour // 30 days, 1 day
-	case p.CertificatesDuration >= 7*24: // >= 7 days
-		return 24 * time.Hour, time.Hour // 1 days, 1 hour
-	case p.CertificatesDuration >= 24: // >= 1 days
-		return 6 * time.Hour, 10 * time.Minute // 6 hours, 10 minutes
-	default:
-		return 20 * time.Minute, time.Minute
-	}
-}
-
 // Provide allows the file provider to provide configurations to traefik
 // using the given Configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
@@ -213,18 +195,18 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	p.configurationChan = configurationChan
 	p.refreshCertificates()
 
-	renewBeforeExpiry, expirationCheckInterval := p.getCertificateRenewIntervals()
+	renewPeriod, renewInterval := getCertificateRenewDurations(p.CertificatesDuration)
 	log.FromContext(ctx).Debugf("Attempt to renew certificates %q before expiry and check every %q",
-		renewBeforeExpiry, expirationCheckInterval)
+		renewPeriod, renewInterval)
 
-	p.renewCertificates(ctx, renewBeforeExpiry)
+	p.renewCertificates(ctx, renewPeriod)
 
-	ticker := time.NewTicker(expirationCheckInterval)
+	ticker := time.NewTicker(renewInterval)
 	pool.GoCtx(func(ctxPool context.Context) {
 		for {
 			select {
 			case <-ticker.C:
-				p.renewCertificates(ctx, renewBeforeExpiry)
+				p.renewCertificates(ctx, renewPeriod)
 			case <-ctxPool.Done():
 				ticker.Stop()
 				return
@@ -543,6 +525,24 @@ func (p *Provider) removeResolvingDomains(resolvingDomains []string) {
 
 func (p *Provider) addCertificateForDomain(domain types.Domain, certificate, key []byte, tlsStore string) {
 	p.certsChan <- &CertAndStore{Certificate: Certificate{Certificate: certificate, Key: key, Domain: domain}, Store: tlsStore}
+}
+
+// getCertificateRenewDurations returns renew durations calculated from the given certificatesDuration in hours.
+// The first (RenewPeriod) is the period before the end of the certificate duration, during which the certificate should be renewed.
+// The second (RenewInterval) is the interval between renew attempts.
+func getCertificateRenewDurations(certificatesDuration int) (time.Duration, time.Duration) {
+	switch {
+	case certificatesDuration >= 265*24: // >= 1 year
+		return 4 * 30 * 24 * time.Hour, 7 * 24 * time.Hour // 4 month, 1 week
+	case certificatesDuration >= 3*30*24: // >= 90 days
+		return 30 * 24 * time.Hour, 24 * time.Hour // 30 days, 1 day
+	case certificatesDuration >= 7*24: // >= 7 days
+		return 24 * time.Hour, time.Hour // 1 days, 1 hour
+	case certificatesDuration >= 24: // >= 1 days
+		return 6 * time.Hour, 10 * time.Minute // 6 hours, 10 minutes
+	default:
+		return 20 * time.Minute, time.Minute
+	}
 }
 
 // deleteUnnecessaryDomains deletes from the configuration :
