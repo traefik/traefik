@@ -38,12 +38,6 @@ type Listener interface {
 // each of them about a retry attempt.
 type Listeners []Listener
 
-// nexter returns the duration to wait before retrying the operation.
-type nexter interface {
-	NextBackOff() time.Duration
-	Reset()
-}
-
 // retry is a middleware that retries requests.
 type retry struct {
 	attempts        int
@@ -75,16 +69,19 @@ func (r *retry) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	// if we might make multiple attempts, swap the body for an io.NopCloser
-	// cf https://github.com/traefik/traefik/issues/1008
-	if r.attempts > 1 {
-		body := req.Body
-		defer body.Close()
-		req.Body = io.NopCloser(body)
+	if r.attempts == 1 {
+		r.next.ServeHTTP(rw, req)
+		return
 	}
 
+	closableBody := req.Body
+	defer closableBody.Close()
+
+	// if we might make multiple attempts, swap the body for an io.NopCloser
+	// cf https://github.com/traefik/traefik/issues/1008
+	req.Body = io.NopCloser(closableBody)
+
 	attempts := 1
-	backOff := backoff.WithContext(r.newBackOff(), req.Context())
 
 	operation := func() error {
 		shouldRetry := attempts < r.attempts
@@ -112,6 +109,8 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return fmt.Errorf("attempt %d failed", attempts-1)
 	}
 
+	backOff := backoff.WithContext(r.newBackOff(), req.Context())
+
 	notify := func(err error, d time.Duration) {
 		log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
 			Debugf("New attempt %d for request: %v", attempts, req.URL)
@@ -126,7 +125,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (r *retry) newBackOff() nexter {
+func (r *retry) newBackOff() backoff.BackOff {
 	if r.attempts < 2 || r.initialInterval <= 0 {
 		return &backoff.ZeroBackOff{}
 	}
