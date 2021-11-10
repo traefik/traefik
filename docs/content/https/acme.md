@@ -140,7 +140,11 @@ Please check the [configuration examples below](#configuration-examples) for mor
 
 Traefik automatically tracks the expiry date of ACME certificates it generates.
 
-If there are less than 30 days remaining before the certificate expires, Traefik will attempt to renew it automatically.
+By default, Traefik manages 90 days certificates,
+and starts to renew certificates 30 days before their expiry.
+
+When using a certificates resolver that issues certificates with custom durations,
+one can configure the certificates' duration with the [`certificatesDuration`](#certificatesduration) option.
 
 !!! info ""
     Certificates that are no longer used may still be renewed, as Traefik does not currently check if the certificate is being used before renewing.
@@ -532,6 +536,50 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 
 !!! warning
     For concurrency reasons, this file cannot be shared across multiple instances of Traefik.
+
+### `certificatesDuration`
+
+_Optional, Default=2160_
+
+The `certificatesDuration` option defines the certificates' duration in hours.
+It defaults to `2160` (90 days) to follow Let's Encrypt certificates lifespan.
+
+!!! warning "Traefik cannot manage certificates with a duration lower than 1 hour."
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      certificatesDuration: 72
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  certificatesDuration=72
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.certificatesduration=72
+# ...
+```
+
+`certificatesDuration` is used to calculate two durations:
+
+- `Renew Period`: the period before the end of the certificate duration, during which the certificate should be renewed.
+- `Renew Interval`: the interval between renew attempts.
+
+| Certificate Duration | Renew Period      | Renew Interval          |
+|----------------------|-------------------|-------------------------|
+| >= 1 year            | 4 months          | 1 week                  |
+| >= 90 days           | 30 days           | 1 day                   |
+| >= 7 days            | 1 day             | 1 hour                  |
+| >= 24 hours          | 6 hours           | 10 min                  |
+| < 24 hours           | 20 min            | 1 min                   |
 
 ### `preferredChain`
 
