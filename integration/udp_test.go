@@ -50,21 +50,21 @@ func guessWhoUDP(addr string) (string, error) {
 }
 
 func (s *UDPSuite) TestWRR(c *check.C) {
-	whoamiAIP := "whoami-a"
-	whoamiBIP := "whoami-b"
-	whoamiCIP := "whoami-c"
-	whoamiDIP := "whoami-d"
+	whoamiAHost := "whoami-a"
+	whoamiBHost := "whoami-b"
+	whoamiCHost := "whoami-c"
+	whoamiDHost := "whoami-d"
 
 	file := s.adaptFile(c, "fixtures/udp/wrr.toml", struct {
-		WhoamiAIP string
-		WhoamiBIP string
-		WhoamiCIP string
-		WhoamiDIP string
+		WhoamiAHost string
+		WhoamiBHost string
+		WhoamiCHost string
+		WhoamiDHost string
 	}{
-		WhoamiAIP: whoamiAIP,
-		WhoamiBIP: whoamiBIP,
-		WhoamiCIP: whoamiCIP,
-		WhoamiDIP: whoamiDIP,
+		WhoamiAHost: whoamiAHost,
+		WhoamiBHost: whoamiBHost,
+		WhoamiCHost: whoamiCHost,
+		WhoamiDHost: whoamiDHost,
 	})
 	defer os.Remove(file)
 
