@@ -2,6 +2,9 @@
   checkNewVersion = false
   sendAnonymousUsage = false
 
+[acme]
+acmeLogging=true
+
 [log]
   level = "DEBUG"
 

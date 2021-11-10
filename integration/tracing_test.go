@@ -1,10 +1,12 @@
 package integration
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
@@ -26,24 +28,30 @@ type TracingTemplate struct {
 
 func (s *TracingSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "tracing")
-	s.composeProject.Start(c, "whoami")
 
-	s.WhoAmiIP = s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
+
+	s.WhoAmiIP = "whoami"
 	s.WhoAmiPort = 80
 }
 
 func (s *TracingSuite) startZipkin(c *check.C) {
-	s.composeProject.Start(c, "zipkin")
-	s.IP = s.composeProject.Container(c, "zipkin").NetworkSettings.IPAddress
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
+	s.IP = "zipkin"
 
 	// Wait for Zipkin to turn ready.
-	err := try.GetRequest("http://"+s.IP+":9411/api/v2/services", 20*time.Second, try.StatusCodeIs(http.StatusOK))
+	err = try.GetRequest("http://"+s.IP+":9411/api/v2/services", 20*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 }
 
 func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 	s.startZipkin(c)
-	defer s.composeProject.Stop(c, "zipkin")
+
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
+
 	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
 		WhoAmiIP:   s.WhoAmiIP,
 		WhoAmiPort: s.WhoAmiPort,
@@ -53,7 +61,7 @@ func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
-	err := cmd.Start()
+	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
@@ -93,7 +101,12 @@ func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 
 func (s *TracingSuite) TestZipkinRetry(c *check.C) {
 	s.startZipkin(c)
-	defer s.composeProject.Stop(c, "zipkin")
+
+	defer func() {
+		err := s.dockerService.Down(context.Background(), "zipkin", api.DownOptions{})
+		c.Assert(err, checker.IsNil)
+	}()
+
 	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
 		WhoAmiIP:   s.WhoAmiIP,
 		WhoAmiPort: 81,
@@ -120,7 +133,12 @@ func (s *TracingSuite) TestZipkinRetry(c *check.C) {
 
 func (s *TracingSuite) TestZipkinAuth(c *check.C) {
 	s.startZipkin(c)
-	defer s.composeProject.Stop(c, "zipkin")
+
+	defer func() {
+		err := s.dockerService.Down(context.Background(), "zipkin", api.DownOptions{})
+		c.Assert(err, checker.IsNil)
+	}()
+
 	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
 		WhoAmiIP:   s.WhoAmiIP,
 		WhoAmiPort: s.WhoAmiPort,
@@ -146,17 +164,25 @@ func (s *TracingSuite) TestZipkinAuth(c *check.C) {
 }
 
 func (s *TracingSuite) startJaeger(c *check.C) {
-	s.composeProject.Start(c, "jaeger")
-	s.IP = s.composeProject.Container(c, "jaeger").NetworkSettings.IPAddress
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
+	s.IP = "jaeger"
 
 	// Wait for Jaeger to turn ready.
-	err := try.GetRequest("http://"+s.IP+":16686/api/services", 20*time.Second, try.StatusCodeIs(http.StatusOK))
+	err = try.GetRequest("http://"+s.IP+":16686/api/services", 20*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *TracingSuite) stopJaeger(c *check.C) {
+	err := s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
 func (s *TracingSuite) TestJaegerRateLimit(c *check.C) {
 	s.startJaeger(c)
-	defer s.composeProject.Stop(c, "jaeger")
+
+	defer s.stopJaeger(c)
+
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
 		WhoAmiIP:               s.WhoAmiIP,
 		WhoAmiPort:             s.WhoAmiPort,
@@ -206,7 +232,9 @@ func (s *TracingSuite) TestJaegerRateLimit(c *check.C) {
 
 func (s *TracingSuite) TestJaegerRetry(c *check.C) {
 	s.startJaeger(c)
-	defer s.composeProject.Stop(c, "jaeger")
+
+	defer s.stopJaeger(c)
+
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
 		WhoAmiIP:               s.WhoAmiIP,
 		WhoAmiPort:             81,
@@ -234,7 +262,9 @@ func (s *TracingSuite) TestJaegerRetry(c *check.C) {
 
 func (s *TracingSuite) TestJaegerAuth(c *check.C) {
 	s.startJaeger(c)
-	defer s.composeProject.Stop(c, "jaeger")
+
+	defer s.stopJaeger(c)
+
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
 		WhoAmiIP:               s.WhoAmiIP,
 		WhoAmiPort:             s.WhoAmiPort,
@@ -262,7 +292,9 @@ func (s *TracingSuite) TestJaegerAuth(c *check.C) {
 
 func (s *TracingSuite) TestJaegerCustomHeader(c *check.C) {
 	s.startJaeger(c)
-	defer s.composeProject.Stop(c, "jaeger")
+
+	defer s.stopJaeger(c)
+
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
 		WhoAmiIP:               s.WhoAmiIP,
 		WhoAmiPort:             s.WhoAmiPort,
@@ -290,7 +322,9 @@ func (s *TracingSuite) TestJaegerCustomHeader(c *check.C) {
 
 func (s *TracingSuite) TestJaegerAuthCollector(c *check.C) {
 	s.startJaeger(c)
-	defer s.composeProject.Stop(c, "jaeger")
+
+	defer s.stopJaeger(c)
+
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger-collector.toml", TracingTemplate{
 		WhoAmiIP:   s.WhoAmiIP,
 		WhoAmiPort: s.WhoAmiPort,
