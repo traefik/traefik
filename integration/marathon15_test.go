@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/docker/compose/v2/pkg/api"
+	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/gambol99/go-marathon"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -21,7 +21,7 @@ type MarathonSuite15 struct {
 
 func (s *MarathonSuite15) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "marathon15")
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	s.marathonURL = "http://" + containerNameMarathon + ":8080"

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/compose/v2/pkg/api"
+	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
@@ -65,7 +65,7 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 
 	s.startServicesOnly(c, []string{"simple"})
 
-	containers, err := s.dockerService.Ps(context.Background(), s.composeProject.Name, api.PsOptions{})
+	containers, err := s.dockerService.Ps(context.Background(), s.composeProject.Name, composeapi.PsOptions{})
 	containers = s.filterRunning(containers)
 	c.Assert(err, checker.IsNil)
 	c.Assert(containers, checker.HasLen, 1)
@@ -93,7 +93,7 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 	c.Assert(json.Unmarshal(body, &version), checker.IsNil)
 	c.Assert(version["Version"], checker.Equals, "swarm/1.0.0")
 
-	err = s.dockerService.Stop(context.Background(), s.composeProject, api.StopOptions{})
+	err = s.dockerService.Stop(context.Background(), s.composeProject, composeapi.StopOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
@@ -111,7 +111,7 @@ func (s *DockerSuite) TestDockerContainersWithTCPLabels(c *check.C) {
 
 	s.startServicesOnly(c, []string{"withtcplabels"})
 
-	containers, err := s.dockerService.Ps(context.Background(), s.composeProject.Name, api.PsOptions{})
+	containers, err := s.dockerService.Ps(context.Background(), s.composeProject.Name, composeapi.PsOptions{})
 	containers = s.filterRunning(containers)
 	c.Assert(err, checker.IsNil)
 	c.Assert(containers, checker.HasLen, 1)
@@ -130,7 +130,7 @@ func (s *DockerSuite) TestDockerContainersWithTCPLabels(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	c.Assert(who, checker.Contains, "my.super.host")
-	err = s.dockerService.Stop(context.Background(), s.composeProject, api.StopOptions{})
+	err = s.dockerService.Stop(context.Background(), s.composeProject, composeapi.StopOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
@@ -252,7 +252,7 @@ func (s *DockerSuite) TestRestartDockerContainers(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("powpow"))
 	c.Assert(err, checker.IsNil)
 
-	err = s.dockerService.Stop(context.Background(), s.composeProject, api.StopOptions{Services: []string{"powpow"}})
+	err = s.dockerService.Stop(context.Background(), s.composeProject, composeapi.StopOptions{Services: []string{"powpow"}})
 	c.Assert(err, checker.IsNil)
 
 	time.Sleep(5 * time.Second)
@@ -266,14 +266,14 @@ func (s *DockerSuite) TestRestartDockerContainers(c *check.C) {
 }
 
 func (s *DockerSuite) startServicesOnly(c *check.C, services []string) {
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	if len(services) == 0 {
 		return
 	}
 
-	containers, err := s.dockerService.Ps(context.Background(), s.composeProject.Name, api.PsOptions{})
+	containers, err := s.dockerService.Ps(context.Background(), s.composeProject.Name, composeapi.PsOptions{})
 	c.Assert(err, checker.IsNil)
 
 	toStop := make([]string, 0)
@@ -289,15 +289,15 @@ func (s *DockerSuite) startServicesOnly(c *check.C, services []string) {
 		}
 	}
 
-	err = s.dockerService.Stop(context.Background(), s.composeProject, api.StopOptions{Services: toStop})
+	err = s.dockerService.Stop(context.Background(), s.composeProject, composeapi.StopOptions{Services: toStop})
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *DockerSuite) filterRunning(containers []api.ContainerSummary) []api.ContainerSummary {
-	runningContainers := make([]api.ContainerSummary, 0)
+func (s *DockerSuite) filterRunning(containers []composeapi.ContainerSummary) []composeapi.ContainerSummary {
+	runningContainers := make([]composeapi.ContainerSummary, 0)
 
 	for _, c := range containers {
-		if strings.EqualFold(c.State, api.RUNNING) {
+		if strings.EqualFold(c.State, composeapi.RUNNING) {
 			runningContainers = append(runningContainers, c)
 		}
 	}

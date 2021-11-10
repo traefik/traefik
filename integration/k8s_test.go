@@ -14,7 +14,7 @@ import (
 	"regexp"
 	"time"
 
-	composeAPI "github.com/docker/compose/v2/pkg/api"
+	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -30,7 +30,7 @@ type K8sSuite struct{ BaseSuite }
 
 func (s *K8sSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "k8s")
-	err := s.dockerService.Up(context.Background(), s.composeProject, composeAPI.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	abs, err := filepath.Abs("./fixtures/k8s/config.skip/kubeconfig.yaml")
@@ -50,7 +50,7 @@ func (s *K8sSuite) TearDownSuite(c *check.C) {
 	// shutdown and delete compose project
 	if s.composeProject != nil && s.dockerService != nil {
 		// s.composeProject.Stop(c)
-		err := s.dockerService.Stop(context.Background(), s.composeProject, composeAPI.StopOptions{})
+		err := s.dockerService.Stop(context.Background(), s.composeProject, composeapi.StopOptions{})
 		c.Assert(err, checker.IsNil)
 	}
 

@@ -12,7 +12,7 @@ import (
 	"github.com/abronan/valkeyrie"
 	"github.com/abronan/valkeyrie/store"
 	"github.com/abronan/valkeyrie/store/redis"
-	dockerapi "github.com/docker/compose/v2/pkg/api"
+	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -28,7 +28,7 @@ type RedisSuite struct {
 
 func (s *RedisSuite) setupStore(c *check.C) {
 	s.createComposeProject(c, "redis")
-	err := s.dockerService.Up(context.Background(), s.composeProject, dockerapi.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	redis.Register()
@@ -52,7 +52,7 @@ func (s *RedisSuite) setupStore(c *check.C) {
 func (s *RedisSuite) TearDownTest(c *check.C) {
 	// shutdown and delete compose project
 	if s.composeProject != nil && s.dockerService != nil {
-		err := s.dockerService.Stop(context.Background(), s.composeProject, dockerapi.StopOptions{})
+		err := s.dockerService.Stop(context.Background(), s.composeProject, composeapi.StopOptions{})
 		c.Assert(err, checker.IsNil)
 	}
 }

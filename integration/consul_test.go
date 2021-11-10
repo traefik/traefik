@@ -12,7 +12,7 @@ import (
 	"github.com/abronan/valkeyrie"
 	"github.com/abronan/valkeyrie/store"
 	"github.com/abronan/valkeyrie/store/consul"
-	composeAPI "github.com/docker/compose/v2/pkg/api"
+	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -28,7 +28,7 @@ type ConsulSuite struct {
 
 func (s *ConsulSuite) setupStore(c *check.C) {
 	s.createComposeProject(c, "consul")
-	err := s.dockerService.Up(context.Background(), s.composeProject, composeAPI.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	consul.Register()

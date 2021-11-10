@@ -12,7 +12,7 @@ import (
 	"github.com/abronan/valkeyrie"
 	"github.com/abronan/valkeyrie/store"
 	etcdv3 "github.com/abronan/valkeyrie/store/etcd/v3"
-	composeAPI "github.com/docker/compose/v2/pkg/api"
+	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -28,7 +28,7 @@ type EtcdSuite struct {
 
 func (s *EtcdSuite) setupStore(c *check.C) {
 	s.createComposeProject(c, "etcd")
-	err := s.dockerService.Up(context.Background(), s.composeProject, composeAPI.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	etcdv3.Register()

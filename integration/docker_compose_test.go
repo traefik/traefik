@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	composeAPI "github.com/docker/compose/v2/pkg/api"
+	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/api"
@@ -27,7 +27,7 @@ type DockerComposeSuite struct {
 
 func (s *DockerComposeSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, composeProject)
-	err := s.dockerService.Up(context.Background(), s.composeProject, composeAPI.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 }
 

@@ -15,7 +15,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/docker/compose/v2/pkg/api"
+	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -95,7 +95,7 @@ func (s *SimpleSuite) TestPrintHelp(c *check.C) {
 
 func (s *SimpleSuite) TestRequestAcceptGraceTimeout(c *check.C) {
 	s.createComposeProject(c, "reqacceptgrace")
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	whoami := "http://whoami:80"
@@ -163,7 +163,7 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout(c *check.C) {
 		c.Fatal("Traefik did not terminate in time")
 	}
 
-	err = s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+	err = s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
@@ -199,7 +199,7 @@ func (s *SimpleSuite) TestCustomPingTerminationStatusCode(c *check.C) {
 func (s *SimpleSuite) TestStatsWithMultipleEntryPoint(c *check.C) {
 	c.Skip("Stats is missing")
 	s.createComposeProject(c, "stats")
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	whoami1 := "http://whoami1:80"
@@ -231,7 +231,7 @@ func (s *SimpleSuite) TestStatsWithMultipleEntryPoint(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/health", 1*time.Second, try.BodyContains(`"total_status_code_count":{"200":2}`))
 	c.Assert(err, checker.IsNil)
 
-	err = s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+	err = s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
@@ -239,7 +239,7 @@ func (s *SimpleSuite) TestNoAuthOnPing(c *check.C) {
 	c.Skip("Waiting for new api handler implementation")
 
 	s.createComposeProject(c, "base")
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	file := s.adaptFile(c, "./fixtures/simple_auth.toml", struct{}{})
@@ -257,13 +257,13 @@ func (s *SimpleSuite) TestNoAuthOnPing(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8001/ping", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
-	err = s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+	err = s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
 func (s *SimpleSuite) TestDefaultEntryPointHTTP(c *check.C) {
 	s.createComposeProject(c, "base")
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--log.level=DEBUG", "--providers.docker", "--api.insecure")
@@ -279,13 +279,13 @@ func (s *SimpleSuite) TestDefaultEntryPointHTTP(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
-	err = s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+	err = s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
 func (s *SimpleSuite) TestWithNonExistingEntryPoint(c *check.C) {
 	s.createComposeProject(c, "base")
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--log.level=DEBUG", "--providers.docker", "--api.insecure")
@@ -301,13 +301,13 @@ func (s *SimpleSuite) TestWithNonExistingEntryPoint(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
-	err = s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+	err = s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
 func (s *SimpleSuite) TestMetricsPrometheusDefaultEntryPoint(c *check.C) {
 	s.createComposeProject(c, "base")
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--api.insecure", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--providers.docker", "--metrics.prometheus.addrouterslabels=true", "--log.level=DEBUG")
@@ -335,13 +335,13 @@ func (s *SimpleSuite) TestMetricsPrometheusDefaultEntryPoint(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/metrics", 1*time.Second, try.BodyContains("_service_"))
 	c.Assert(err, checker.IsNil)
 
-	err = s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+	err = s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
 func (s *SimpleSuite) TestMetricsPrometheusTwoRoutersOneService(c *check.C) {
 	s.createComposeProject(c, "base")
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--api.insecure", "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0", "--providers.docker", "--metrics.prometheus.addentrypointslabels=false", "--metrics.prometheus.addrouterslabels=true", "--log.level=DEBUG")
@@ -379,13 +379,13 @@ func (s *SimpleSuite) TestMetricsPrometheusTwoRoutersOneService(c *check.C) {
 		c.Assert(string(body), checker.Contains, "traefik_service_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",service=\"whoami1-base@docker\"} 2")
 	}
 
-	err = s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+	err = s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
 func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
 	s.createComposeProject(c, "base")
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	ipWhoami01 := s.getServiceIP(c, "whoami1")
@@ -411,13 +411,13 @@ func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/file", 1*time.Second, try.BodyContains(ipWhoami02))
 	c.Assert(err, checker.IsNil)
 
-	err = s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+	err = s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
 func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
 	s.createComposeProject(c, "whitelist")
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	cmd, output := s.traefikCmd(withConfigFile("fixtures/simple_whitelist.toml"))
@@ -483,13 +483,13 @@ func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
 		}
 	}
 
-	err = s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+	err = s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
 func (s *SimpleSuite) TestXForwardedHeaders(c *check.C) {
 	s.createComposeProject(c, "whitelist")
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	cmd, output := s.traefikCmd(withConfigFile("fixtures/simple_whitelist.toml"))
@@ -515,13 +515,13 @@ func (s *SimpleSuite) TestXForwardedHeaders(c *check.C) {
 			"X-Forwarded-Host", "X-Forwarded-Port", "X-Forwarded-Server", "X-Real-Ip"))
 	c.Assert(err, checker.IsNil)
 
-	err = s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+	err = s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
 func (s *SimpleSuite) TestMultiProvider(c *check.C) {
 	s.createComposeProject(c, "base")
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	server := "http://whoami1"
@@ -570,13 +570,13 @@ func (s *SimpleSuite) TestMultiProvider(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/", 1*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("CustomValue"))
 	c.Assert(err, checker.IsNil)
 
-	err = s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+	err = s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
 func (s *SimpleSuite) TestSimpleConfigurationHostRequestTrailingPeriod(c *check.C) {
 	s.createComposeProject(c, "base")
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	server := "http://whoami1"
@@ -625,7 +625,7 @@ func (s *SimpleSuite) TestSimpleConfigurationHostRequestTrailingPeriod(c *check.
 		}
 	}
 
-	err = s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+	err = s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
@@ -757,7 +757,7 @@ func (s *SimpleSuite) TestUDPServiceConfigErrors(c *check.C) {
 
 func (s *SimpleSuite) TestWRR(c *check.C) {
 	s.createComposeProject(c, "base")
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	server1 := s.getServiceIP(c, "whoami1")
@@ -802,13 +802,13 @@ func (s *SimpleSuite) TestWRR(c *check.C) {
 	c.Assert(repartition[server1], checker.Equals, 3)
 	c.Assert(repartition[server2], checker.Equals, 1)
 
-	err = s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+	err = s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
 func (s *SimpleSuite) TestWRRSticky(c *check.C) {
 	s.createComposeProject(c, "base")
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	server1 := s.getServiceIP(c, "whoami1")
@@ -857,7 +857,7 @@ func (s *SimpleSuite) TestWRRSticky(c *check.C) {
 	c.Assert(repartition[server1], checker.Equals, 4)
 	c.Assert(repartition[server2], checker.Equals, 0)
 
-	err = s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+	err = s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
@@ -1095,7 +1095,7 @@ func (s *SimpleSuite) TestMirrorCanceled(c *check.C) {
 
 func (s *SimpleSuite) TestSecureAPI(c *check.C) {
 	s.createComposeProject(c, "base")
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	file := s.adaptFile(c, "./fixtures/simple_secure_api.toml", struct{}{})
@@ -1117,7 +1117,7 @@ func (s *SimpleSuite) TestSecureAPI(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 
-	err = s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+	err = s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
 	c.Assert(err, checker.IsNil)
 }
 

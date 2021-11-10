@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/docker/compose/v2/pkg/api"
+	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
@@ -29,7 +29,7 @@ type TracingTemplate struct {
 func (s *TracingSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "tracing")
 
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	s.WhoAmiIP = "whoami"
@@ -37,7 +37,7 @@ func (s *TracingSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *TracingSuite) startZipkin(c *check.C) {
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 	s.IP = "zipkin"
 
@@ -49,7 +49,7 @@ func (s *TracingSuite) startZipkin(c *check.C) {
 func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 	s.startZipkin(c)
 
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
@@ -101,7 +101,7 @@ func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 
 func (s *TracingSuite) TestZipkinRetry(c *check.C) {
 	s.startZipkin(c)
-	defer func() { _ = s.dockerService.Down(context.Background(), "zipkin", api.DownOptions{}) }()
+	defer func() { _ = s.dockerService.Down(context.Background(), "zipkin", composeapi.DownOptions{}) }()
 
 	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
 		WhoAmiIP:   s.WhoAmiIP,
@@ -129,7 +129,7 @@ func (s *TracingSuite) TestZipkinRetry(c *check.C) {
 
 func (s *TracingSuite) TestZipkinAuth(c *check.C) {
 	s.startZipkin(c)
-	defer func() { _ = s.dockerService.Down(context.Background(), "zipkin", api.DownOptions{}) }()
+	defer func() { _ = s.dockerService.Down(context.Background(), "zipkin", composeapi.DownOptions{}) }()
 
 	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
 		WhoAmiIP:   s.WhoAmiIP,
@@ -156,7 +156,7 @@ func (s *TracingSuite) TestZipkinAuth(c *check.C) {
 }
 
 func (s *TracingSuite) startJaeger(c *check.C) {
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 	s.IP = "jaeger"
 
@@ -166,7 +166,7 @@ func (s *TracingSuite) startJaeger(c *check.C) {
 }
 
 func (s *TracingSuite) stopJaeger(c *check.C) {
-	err := s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+	err := s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
 	c.Assert(err, checker.IsNil)
 }
 
