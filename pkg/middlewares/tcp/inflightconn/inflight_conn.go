@@ -42,23 +42,28 @@ func (i *inFlightConn) ServeTCP(conn tcp.WriteCloser) {
 	ctx := middlewares.GetLoggerCtx(context.Background(), i.name, typeName)
 	logger := log.FromContext(ctx)
 
-	err := i.acquire(conn.RemoteAddr())
+	ip, _, err := net.SplitHostPort(conn.RemoteAddr().String())
+	if err != nil {
+		logger.Errorf("Cannot parse IP from remote addr: %v", err)
+		conn.Close()
+		return
+	}
+
+	err = i.acquire(ip)
 	if err != nil {
 		logger.Debug("Connection rejected: %v", err)
 		conn.Close()
 		return
 	}
 
-	defer i.release(conn.RemoteAddr())
+	defer i.release(ip)
 
 	i.next.ServeTCP(conn)
 }
 
-func (i *inFlightConn) acquire(addr net.Addr) error {
+func (i *inFlightConn) acquire(ip string) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
-
-	ip := addr.String()
 
 	if i.connections[ip] >= i.maxConnections {
 		return fmt.Errorf("max connection reached for %s", ip)
@@ -69,9 +74,9 @@ func (i *inFlightConn) acquire(addr net.Addr) error {
 	return nil
 }
 
-func (i *inFlightConn) release(addr net.Addr) {
+func (i *inFlightConn) release(ip string) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
-	i.connections[addr.String()]--
+	i.connections[ip]--
 }

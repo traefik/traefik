@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -30,25 +31,34 @@ func TestInFlightConn_ServeTCP(t *testing.T) {
 	require.NoError(t, err)
 
 	// The first connection should succeed and wait.
-	go middleware.ServeTCP(fakeConn{addr: "127.0.0.1", wait: true})
-	<-proceedCh
+	go middleware.ServeTCP(fakeConn{addr: "127.0.0.1:9000", wait: true})
+	requireMessage(t, proceedCh)
 
 	// The second connection should be closed as the maximum number of connections is exceeded.
 	closeCh := make(chan struct{})
 
-	go middleware.ServeTCP(fakeConn{addr: "127.0.0.1", closeCh: closeCh})
-	<-closeCh
+	go middleware.ServeTCP(fakeConn{addr: "127.0.0.1:9001", closeCh: closeCh})
+	requireMessage(t, closeCh)
 
 	// The connection with another remote address should succeed.
-	go middleware.ServeTCP(fakeConn{addr: "127.0.0.2"})
-	<-proceedCh
+	go middleware.ServeTCP(fakeConn{addr: "127.0.0.2:9000"})
+	requireMessage(t, proceedCh)
 
 	// Once the first connection is closed, next connection with the same remote address should succeed.
 	close(waitCh)
-	<-finishCh
+	requireMessage(t, finishCh)
 
-	go middleware.ServeTCP(fakeConn{addr: "127.0.0.1"})
-	<-proceedCh
+	go middleware.ServeTCP(fakeConn{addr: "127.0.0.1:9002"})
+	requireMessage(t, proceedCh)
+}
+
+func requireMessage(t *testing.T, c chan struct{}) {
+	t.Helper()
+	select {
+	case <-c:
+	case <-time.After(time.Second):
+		t.Fatal("Timeout waiting for message")
+	}
 }
 
 type fakeConn struct {
