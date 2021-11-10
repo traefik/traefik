@@ -21,6 +21,14 @@
 #
 --certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
 
+# The certificates' duration in hours.
+# It defaults to 2160 (90 days) to follow Let's Encrypt certificates' duration.
+#
+# Optional
+# Default: 2160
+#
+--certificatesresolvers.myresolver.acme.certificatesDuration=2160
+
 # Preferred chain to use.
 #
 # If the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name.
