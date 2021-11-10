@@ -11,13 +11,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/17media/oxy/roundrobin"
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/vulcand/oxy/roundrobin"
 )
 
 const (

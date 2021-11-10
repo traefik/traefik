@@ -45,6 +45,8 @@ dmitri.shuralyov.com/html/belt v0.0.0-20180602232347-f7d459c86be0/go.mod h1:JLBr
 dmitri.shuralyov.com/service/change v0.0.0-20181023043359-a85b471d5412/go.mod h1:a1inKt/atXimZ4Mv927x+r7UpyzRUf4emIoiiSC2TN4=
 dmitri.shuralyov.com/state v0.0.0-20180228185332-28bcc343414c/go.mod h1:0PRwlb0D6DFvNNtx+9ybjezNCa8XF0xaYcETyp6rHWU=
 git.apache.org/thrift.git v0.0.0-20180902110319-2566ecd5d999/go.mod h1:fPE2ZNJGynbRyZ4dJvy6G277gSllfV2HJqblrnkyeyg=
+github.com/17media/oxy v1.5.0 h1:rmV3QyAG+lYl5b0kSlhZWD6lVrv7MOj4K8YVgt+WfeU=
+github.com/17media/oxy v1.5.0/go.mod h1:Il50fc+rXVrBerH3xOY63wRLg04s0nFgjpikSZbkP8E=
 github.com/Azure/azure-sdk-for-go v32.4.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/azure-sdk-for-go v40.3.0+incompatible h1:NthZg3psrLxvQLN6rVm07pZ9mv2wvGNaBNGQ3fnPvLE=
 github.com/Azure/azure-sdk-for-go v40.3.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
@@ -135,6 +137,8 @@ github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMx
 github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d/go.mod h1:3eOhrUMpNV+6aFIbp5/iudMxNCF27Vw2OZgy4xEx0Fg=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
+github.com/Yapcheekian/hashring v0.0.0-20211106024406-701b967bb5db h1:QkpAO1Ig+diuzDwrVYF1R2HLJ6HSTcT+hdjfS04ubZE=
+github.com/Yapcheekian/hashring v0.0.0-20211106024406-701b967bb5db/go.mod h1:1FlDIYTaHl/X137+zzxW+TbNzzRKZA6cbp05n60PFTw=
 github.com/abdullin/seq v0.0.0-20160510034733-d5467c17e7af/go.mod h1:5Jv4cbFiHJMsVxt52+i0Ha45fjshj6wxYr1r19tB9bw=
 github.com/abronan/valkeyrie v0.2.0 h1:jkig3zG67iCRcglnUFZeH1f/J0alJFnIxY8102jSejE=
 github.com/abronan/valkeyrie v0.2.0/go.mod h1:U0C/aC7N9PzFdftYQuflxuuRGsK/48JeYiSzgWuehsQ=
