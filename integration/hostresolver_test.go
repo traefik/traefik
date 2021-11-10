@@ -1,9 +1,11 @@
 package integration
 
 import (
+	"context"
 	"net/http"
 	"time"
 
+	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
@@ -14,8 +16,8 @@ type HostResolverSuite struct{ BaseSuite }
 func (s *HostResolverSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "hostresolver")
 
-	s.composeProject.Start(c)
-	s.composeProject.Container(c, "server1")
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
+	c.Assert(err, checker.IsNil)
 }
 
 func (s *HostResolverSuite) TestSimpleConfig(c *check.C) {
@@ -48,7 +50,7 @@ func (s *HostResolverSuite) TestSimpleConfig(c *check.C) {
 		c.Assert(err, checker.IsNil)
 		req.Host = test.host
 
-		err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(test.status), try.HasBody())
+		err = try.Request(req, 1*time.Second, try.StatusCodeIs(test.status), try.HasBody())
 		c.Assert(err, checker.IsNil)
 	}
 }
