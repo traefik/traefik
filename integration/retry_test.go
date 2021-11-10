@@ -1,10 +1,12 @@
 package integration
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"time"
 
+	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/gorilla/websocket"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -15,11 +17,12 @@ type RetrySuite struct{ BaseSuite }
 
 func (s *RetrySuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "retry")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
+	c.Assert(err, checker.IsNil)
 }
 
 func (s *RetrySuite) TestRetry(c *check.C) {
-	whoamiEndpoint := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
+	whoamiEndpoint := "whoami"
 	file := s.adaptFile(c, "fixtures/retry/simple.toml", struct {
 		WhoamiEndpoint string
 	}{whoamiEndpoint})
@@ -44,7 +47,7 @@ func (s *RetrySuite) TestRetry(c *check.C) {
 }
 
 func (s *RetrySuite) TestRetryBackoff(c *check.C) {
-	whoamiEndpoint := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
+	whoamiEndpoint := "whoami"
 	file := s.adaptFile(c, "fixtures/retry/backoff.toml", struct {
 		WhoamiEndpoint string
 	}{whoamiEndpoint})
@@ -72,7 +75,7 @@ func (s *RetrySuite) TestRetryBackoff(c *check.C) {
 }
 
 func (s *RetrySuite) TestRetryWebsocket(c *check.C) {
-	whoamiEndpoint := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
+	whoamiEndpoint := "whoami"
 	file := s.adaptFile(c, "fixtures/retry/simple.toml", struct {
 		WhoamiEndpoint string
 	}{whoamiEndpoint})
