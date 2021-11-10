@@ -1,10 +1,12 @@
 package integration
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
@@ -14,13 +16,14 @@ type ProxyProtocolSuite struct{ BaseSuite }
 
 func (s *ProxyProtocolSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "proxy-protocol")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	c.Assert(err, checker.IsNil)
 }
 
 func (s *ProxyProtocolSuite) TestProxyProtocolTrusted(c *check.C) {
-	gatewayIP := s.composeProject.Container(c, "haproxy").NetworkSettings.Gateway
-	haproxyIP := s.composeProject.Container(c, "haproxy").NetworkSettings.IPAddress
-	whoamiIP := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
+	gatewayIP := "haproxy"
+	haproxyIP := "haproxy"
+	whoamiIP := "whoami"
 
 	file := s.adaptFile(c, "fixtures/proxy-protocol/with.toml", struct {
 		HaproxyIP string
@@ -41,9 +44,9 @@ func (s *ProxyProtocolSuite) TestProxyProtocolTrusted(c *check.C) {
 }
 
 func (s *ProxyProtocolSuite) TestProxyProtocolV2Trusted(c *check.C) {
-	gatewayIP := s.composeProject.Container(c, "haproxy").NetworkSettings.Gateway
-	haproxyIP := s.composeProject.Container(c, "haproxy").NetworkSettings.IPAddress
-	whoamiIP := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
+	gatewayIP := "haproxy"
+	haproxyIP := "haproxy"
+	whoamiIP := "whoami"
 
 	file := s.adaptFile(c, "fixtures/proxy-protocol/with.toml", struct {
 		HaproxyIP string
@@ -64,8 +67,8 @@ func (s *ProxyProtocolSuite) TestProxyProtocolV2Trusted(c *check.C) {
 }
 
 func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted(c *check.C) {
-	haproxyIP := s.composeProject.Container(c, "haproxy").NetworkSettings.IPAddress
-	whoamiIP := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
+	haproxyIP := "haproxy"
+	whoamiIP := "whoami"
 
 	file := s.adaptFile(c, "fixtures/proxy-protocol/without.toml", struct {
 		HaproxyIP string
@@ -86,8 +89,8 @@ func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted(c *check.C) {
 }
 
 func (s *ProxyProtocolSuite) TestProxyProtocolV2NotTrusted(c *check.C) {
-	haproxyIP := s.composeProject.Container(c, "haproxy").NetworkSettings.IPAddress
-	whoamiIP := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
+	haproxyIP := "haproxy"
+	whoamiIP := "whoami"
 
 	file := s.adaptFile(c, "fixtures/proxy-protocol/without.toml", struct {
 		HaproxyIP string
