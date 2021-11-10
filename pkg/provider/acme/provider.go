@@ -136,7 +136,7 @@ func (p *Provider) Init() error {
 	}
 
 	if p.CertificatesDuration < 1 {
-		return errors.New("cannot manage certificates with lifespan lower than 1 hour")
+		return errors.New("cannot manage certificates with duration lower than 1 hour")
 	}
 
 	var err error
