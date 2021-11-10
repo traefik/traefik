@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"github.com/abronan/valkeyrie"
 	"github.com/abronan/valkeyrie/store"
 	"github.com/abronan/valkeyrie/store/zookeeper"
+	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -26,12 +28,13 @@ type ZookeeperSuite struct {
 
 func (s *ZookeeperSuite) setupStore(c *check.C) {
 	s.createComposeProject(c, "zookeeper")
-	s.composeProject.Start(c)
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
+	c.Assert(err, checker.IsNil)
 
 	zookeeper.Register()
 	kv, err := valkeyrie.NewStore(
 		store.ZK,
-		[]string{s.composeProject.Container(c, "zookeeper").NetworkSettings.IPAddress + ":2181"},
+		[]string{"zookeeper:2181"},
 		&store.Config{
 			ConnectionTimeout: 10 * time.Second,
 		},
@@ -48,17 +51,17 @@ func (s *ZookeeperSuite) setupStore(c *check.C) {
 
 func (s *ZookeeperSuite) TearDownTest(c *check.C) {
 	// shutdown and delete compose project
-	if s.composeProject != nil {
-		s.composeProject.Stop(c)
+	if s.composeProject != nil && s.dockerService != nil {
+		// s.composeProject.Stop(c)
+		err := s.dockerService.Stop(context.Background(), s.composeProject, composeapi.StopOptions{})
+		c.Assert(err, checker.IsNil)
 	}
 }
-
-func (s *ZookeeperSuite) TearDownSuite(c *check.C) {}
 
 func (s *ZookeeperSuite) TestSimpleConfiguration(c *check.C) {
 	s.setupStore(c)
 
-	address := s.composeProject.Container(c, "zookeeper").NetworkSettings.IPAddress + ":2181"
+	address := "zookeeper:2181"
 	file := s.adaptFile(c, "fixtures/zookeeper/simple.toml", struct{ ZkAddress string }{address})
 	defer os.Remove(file)
 
@@ -131,7 +134,7 @@ func (s *ZookeeperSuite) TestSimpleConfiguration(c *check.C) {
 	var obtained api.RunTimeRepresentation
 	err = json.NewDecoder(resp.Body).Decode(&obtained)
 	c.Assert(err, checker.IsNil)
-	got, err := json.MarshalIndent(obtained, "", "  ")
+	got, err := json.MarshalIndent(obtained, "", "")
 	c.Assert(err, checker.IsNil)
 
 	expectedJSON := filepath.FromSlash("testdata/rawdata-zk.json")
@@ -144,12 +147,16 @@ func (s *ZookeeperSuite) TestSimpleConfiguration(c *check.C) {
 	expected, err := os.ReadFile(expectedJSON)
 	c.Assert(err, checker.IsNil)
 
-	if !bytes.Equal(expected, got) {
+	// ensure json is minified before testing diff
+	expectedStr := minifyJSON(string(expected))
+	gotStr := minifyJSON(string(got))
+
+	if !bytes.Equal([]byte(expectedStr), []byte(gotStr)) {
 		diff := difflib.UnifiedDiff{
 			FromFile: "Expected",
-			A:        difflib.SplitLines(string(expected)),
+			A:        difflib.SplitLines(expectedStr),
 			ToFile:   "Got",
-			B:        difflib.SplitLines(string(got)),
+			B:        difflib.SplitLines(gotStr),
 			Context:  3,
 		}
 
