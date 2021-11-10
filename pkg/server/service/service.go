@@ -10,6 +10,8 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/17media/oxy/roundrobin"
+	"github.com/17media/oxy/roundrobin/stickycookie"
 	"github.com/containous/alice"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
@@ -25,8 +27,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/server/provider"
 	"github.com/traefik/traefik/v2/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v2/pkg/server/service/loadbalancer/wrr"
-	"github.com/vulcand/oxy/roundrobin"
-	"github.com/vulcand/oxy/roundrobin/stickycookie"
 )
 
 const (
