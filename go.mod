@@ -4,7 +4,7 @@ go 1.16
 
 // github.com/docker/docker v17.12.0-ce-rc1.0.20200204220554-5f6d6f3f2203+incompatible => v19.03.6
 require (
-	github.com/17media/oxy v1.4.0
+	github.com/17media/oxy v1.5.0
 	github.com/BurntSushi/toml v0.3.1
 	github.com/ExpediaDotCom/haystack-client-go v0.0.0-20190315171017-e7edbdf53a61
 	github.com/Masterminds/sprig/v3 v3.2.2

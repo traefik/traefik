@@ -45,8 +45,8 @@ dmitri.shuralyov.com/html/belt v0.0.0-20180602232347-f7d459c86be0/go.mod h1:JLBr
 dmitri.shuralyov.com/service/change v0.0.0-20181023043359-a85b471d5412/go.mod h1:a1inKt/atXimZ4Mv927x+r7UpyzRUf4emIoiiSC2TN4=
 dmitri.shuralyov.com/state v0.0.0-20180228185332-28bcc343414c/go.mod h1:0PRwlb0D6DFvNNtx+9ybjezNCa8XF0xaYcETyp6rHWU=
 git.apache.org/thrift.git v0.0.0-20180902110319-2566ecd5d999/go.mod h1:fPE2ZNJGynbRyZ4dJvy6G277gSllfV2HJqblrnkyeyg=
-github.com/17media/oxy v1.4.0 h1:EAEPhyKdrxKXvdnF38Pvw7DORSOEcxu2NgQAuoJJznU=
-github.com/17media/oxy v1.4.0/go.mod h1:Il50fc+rXVrBerH3xOY63wRLg04s0nFgjpikSZbkP8E=
+github.com/17media/oxy v1.5.0 h1:rmV3QyAG+lYl5b0kSlhZWD6lVrv7MOj4K8YVgt+WfeU=
+github.com/17media/oxy v1.5.0/go.mod h1:Il50fc+rXVrBerH3xOY63wRLg04s0nFgjpikSZbkP8E=
 github.com/Azure/azure-sdk-for-go v32.4.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
 github.com/Azure/azure-sdk-for-go v40.3.0+incompatible h1:NthZg3psrLxvQLN6rVm07pZ9mv2wvGNaBNGQ3fnPvLE=
 github.com/Azure/azure-sdk-for-go v40.3.0+incompatible/go.mod h1:9XXNKU+eRnpl9moKnB4QOLf1HestfXbmab5FXxiDBjc=
