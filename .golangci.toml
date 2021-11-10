@@ -57,6 +57,7 @@
       "github.com/gorilla/mux",
       "github.com/mailgun/minheap",
       "github.com/mailgun/multibuf",
+      "github.com/jaguilar/vt100",
     ]
 
 [linters]
