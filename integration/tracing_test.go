@@ -101,11 +101,7 @@ func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 
 func (s *TracingSuite) TestZipkinRetry(c *check.C) {
 	s.startZipkin(c)
-
-	defer func() {
-		err := s.dockerService.Down(context.Background(), "zipkin", api.DownOptions{})
-		c.Assert(err, checker.IsNil)
-	}()
+	defer func() { _ = s.dockerService.Down(context.Background(), "zipkin", api.DownOptions{}) }()
 
 	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
 		WhoAmiIP:   s.WhoAmiIP,
@@ -133,11 +129,7 @@ func (s *TracingSuite) TestZipkinRetry(c *check.C) {
 
 func (s *TracingSuite) TestZipkinAuth(c *check.C) {
 	s.startZipkin(c)
-
-	defer func() {
-		err := s.dockerService.Down(context.Background(), "zipkin", api.DownOptions{})
-		c.Assert(err, checker.IsNil)
-	}()
+	defer func() { _ = s.dockerService.Down(context.Background(), "zipkin", api.DownOptions{}) }()
 
 	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
 		WhoAmiIP:   s.WhoAmiIP,
@@ -180,7 +172,6 @@ func (s *TracingSuite) stopJaeger(c *check.C) {
 
 func (s *TracingSuite) TestJaegerRateLimit(c *check.C) {
 	s.startJaeger(c)
-
 	defer s.stopJaeger(c)
 
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
@@ -232,7 +223,6 @@ func (s *TracingSuite) TestJaegerRateLimit(c *check.C) {
 
 func (s *TracingSuite) TestJaegerRetry(c *check.C) {
 	s.startJaeger(c)
-
 	defer s.stopJaeger(c)
 
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
@@ -262,7 +252,6 @@ func (s *TracingSuite) TestJaegerRetry(c *check.C) {
 
 func (s *TracingSuite) TestJaegerAuth(c *check.C) {
 	s.startJaeger(c)
-
 	defer s.stopJaeger(c)
 
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
@@ -292,7 +281,6 @@ func (s *TracingSuite) TestJaegerAuth(c *check.C) {
 
 func (s *TracingSuite) TestJaegerCustomHeader(c *check.C) {
 	s.startJaeger(c)
-
 	defer s.stopJaeger(c)
 
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
@@ -322,7 +310,6 @@ func (s *TracingSuite) TestJaegerCustomHeader(c *check.C) {
 
 func (s *TracingSuite) TestJaegerAuthCollector(c *check.C) {
 	s.startJaeger(c)
-
 	defer s.stopJaeger(c)
 
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger-collector.toml", TracingTemplate{
