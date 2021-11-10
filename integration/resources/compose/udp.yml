@@ -1,14 +1,16 @@
-whoami-a:
-  image: traefik/whoamiudp:latest
-  command: -name whoami-a
-
-whoami-b:
-  image: traefik/whoamiudp:latest
-  command: -name whoami-b
-
-whoami-c:
-  image: traefik/whoamiudp:latest
-  command: -name whoami-c
-
-whoami-d:
-  image: traefik/whoami
+services:
+  whoami-a:
+    image: traefik/whoamiudp:latest
+    command: -name whoami-a
+  whoami-b:
+    image: traefik/whoamiudp:latest
+    command: -name whoami-b
+  whoami-c:
+    image: traefik/whoamiudp:latest
+    command: -name whoami-c
+  whoami-d:
+    image: traefik/whoami
+networks:
+  default:
+    external: true
+    name: test-net

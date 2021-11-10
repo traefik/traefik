@@ -3,8 +3,8 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"flag"
-	"fmt"
 	"net"
 	"os"
 	"os/exec"
@@ -14,9 +14,14 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/compose-spec/compose-go/cli"
+	"github.com/compose-spec/compose-go/types"
+	"github.com/docker/cli/cli/config/configfile"
+	"github.com/docker/compose/v2/pkg/api"
+	"github.com/docker/compose/v2/pkg/compose"
+	"github.com/docker/docker/client"
 	"github.com/fatih/structs"
 	"github.com/go-check/check"
-	compose "github.com/libkermit/compose/check"
 	"github.com/traefik/traefik/v2/pkg/log"
 	checker "github.com/vdemeester/shakers"
 )
@@ -80,32 +85,33 @@ func Test(t *testing.T) {
 var traefikBinary = "../dist/traefik"
 
 type BaseSuite struct {
-	composeProject *compose.Project
+	composeProject *types.Project
+	dockerService  api.Service
 }
 
 func (s *BaseSuite) TearDownSuite(c *check.C) {
 	// shutdown and delete compose project
-	if s.composeProject != nil {
-		s.composeProject.Stop(c)
+	if s.composeProject != nil && s.dockerService != nil {
+		// s.composeProject.Stop(c)
+		err := s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+		c.Assert(err, checker.IsNil)
 	}
 }
 
 func (s *BaseSuite) createComposeProject(c *check.C, name string) {
-	projectName := fmt.Sprintf("integration-test-%s", name)
-	composeFile := fmt.Sprintf("resources/compose/%s.yml", name)
+	projectName := "integration-test-" + name
+	composeFile := "resources/compose/" + name + ".yml"
 
-	addrs, err := net.InterfaceAddrs()
+	composeClient, err := client.NewClientWithOpts()
 	c.Assert(err, checker.IsNil)
-	for _, addr := range addrs {
-		ip, _, err := net.ParseCIDR(addr.String())
-		c.Assert(err, checker.IsNil)
-		if !ip.IsLoopback() && ip.To4() != nil {
-			_ = os.Setenv("DOCKER_HOST_IP", ip.String())
-			break
-		}
-	}
 
-	s.composeProject = compose.CreateProject(c, projectName, composeFile)
+	s.dockerService = compose.NewComposeService(composeClient, configfile.New(composeFile))
+	ops, err := cli.NewProjectOptions([]string{composeFile}, cli.WithName(projectName))
+	c.Assert(err, checker.IsNil)
+
+	s.composeProject, err = cli.ProjectFromOptions(ops)
+	c.Assert(err, checker.IsNil)
+	s.composeProject.Name = name
 }
 
 func withConfigFile(file string) string {
@@ -191,4 +197,16 @@ func (s *BaseSuite) adaptFile(c *check.C, path string, tempObjects interface{}) 
 	c.Assert(err, checker.IsNil)
 
 	return tmpFile.Name()
+}
+
+func minifyJSON(s string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(s, " ", ""), "\n", "")
+}
+
+func (s *BaseSuite) getServiceIP(c *check.C, service string) string {
+	ips, err := net.LookupIP(service)
+	c.Assert(err, checker.IsNil)
+	c.Assert(ips, checker.HasLen, 1)
+
+	return ips[0].String()
 }

@@ -1,11 +1,13 @@
 package integration
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"time"
 
+	composeAPI "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/hashicorp/consul/api"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -22,8 +24,9 @@ type ConsulCatalogSuite struct {
 
 func (s *ConsulCatalogSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "consul_catalog")
-	s.composeProject.Start(c)
-	s.consulAddress = "http://" + s.composeProject.Container(c, "consul").NetworkSettings.IPAddress + ":8500"
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeAPI.UpOptions{})
+	c.Assert(err, checker.IsNil)
+	s.consulAddress = "http://consul:8500"
 	client, err := api.NewClient(&api.Config{
 		Address: s.consulAddress,
 	})
@@ -34,7 +37,7 @@ func (s *ConsulCatalogSuite) SetUpSuite(c *check.C) {
 	err = s.waitToElectConsulLeader()
 	c.Assert(err, checker.IsNil)
 
-	s.consulAgentAddress = "http://" + s.composeProject.Container(c, "consul-agent").NetworkSettings.IPAddress + ":8500"
+	s.consulAgentAddress = "http://consul-agent:8500"
 	clientAgent, err := api.NewClient(&api.Config{
 		Address: s.consulAgentAddress,
 	})
@@ -66,13 +69,6 @@ func (s *ConsulCatalogSuite) waitForConnectCA() error {
 	})
 }
 
-func (s *ConsulCatalogSuite) TearDownSuite(c *check.C) {
-	// shutdown and delete compose project
-	if s.composeProject != nil {
-		s.composeProject.Stop(c)
-	}
-}
-
 func (s *ConsulCatalogSuite) registerService(reg *api.AgentServiceRegistration, onAgent bool) error {
 	client := s.consulClient
 	if onAgent {
@@ -96,7 +92,7 @@ func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings(c *c
 		Name:    "whoami",
 		Tags:    []string{"traefik.enable=true"},
 		Port:    80,
-		Address: s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress,
+		Address: s.getServiceIP(c, "whoami1"),
 	}
 	err := s.registerService(reg1, false)
 	c.Assert(err, checker.IsNil)
@@ -106,7 +102,7 @@ func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings(c *c
 		Name:    "whoami",
 		Tags:    []string{"traefik.enable=true"},
 		Port:    80,
-		Address: s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress,
+		Address: s.getServiceIP(c, "whoami2"),
 	}
 	err = s.registerService(reg2, false)
 	c.Assert(err, checker.IsNil)
@@ -116,7 +112,7 @@ func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings(c *c
 		Name:    "whoami",
 		Tags:    []string{"traefik.enable=true"},
 		Port:    80,
-		Address: s.composeProject.Container(c, "whoami3").NetworkSettings.IPAddress,
+		Address: s.getServiceIP(c, "whoami3"),
 	}
 	err = s.registerService(reg3, false)
 	c.Assert(err, checker.IsNil)
@@ -163,7 +159,7 @@ func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings(c *c
 }
 
 func (s *ConsulCatalogSuite) TestByLabels(c *check.C) {
-	containerIP := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	containerIP := s.getServiceIP(c, "whoami1")
 
 	reg := &api.AgentServiceRegistration{
 		ID:   "whoami1",
@@ -195,7 +191,7 @@ func (s *ConsulCatalogSuite) TestByLabels(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	err = try.GetRequest("http://127.0.0.1:8000/whoami", 2*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContainsOr("Hostname: whoami1", "Hostname: whoami2", "Hostname: whoami3"))
+	err = try.GetRequest("http://127.0.0.1:8000/whoami", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContainsOr("Hostname: whoami1", "Hostname: whoami2", "Hostname: whoami3"))
 	c.Assert(err, checker.IsNil)
 
 	err = s.deregisterService("whoami1", false)
@@ -219,7 +215,7 @@ func (s *ConsulCatalogSuite) TestSimpleConfiguration(c *check.C) {
 		Name:    "whoami",
 		Tags:    []string{"traefik.enable=true"},
 		Port:    80,
-		Address: s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress,
+		Address: s.getServiceIP(c, "whoami1"),
 	}
 	err := s.registerService(reg, false)
 	c.Assert(err, checker.IsNil)
@@ -296,7 +292,7 @@ func (s *ConsulCatalogSuite) TestDefaultConsulService(c *check.C) {
 		ID:      "whoami1",
 		Name:    "whoami",
 		Port:    80,
-		Address: s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress,
+		Address: s.getServiceIP(c, "whoami1"),
 	}
 	err := s.registerService(reg, false)
 	c.Assert(err, checker.IsNil)
@@ -312,7 +308,7 @@ func (s *ConsulCatalogSuite) TestDefaultConsulService(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	req.Host = "whoami.consul.localhost"
 
-	err = try.Request(req, 2*time.Second, try.StatusCodeIs(200), try.BodyContainsOr("Hostname: whoami1"))
+	err = try.Request(req, 5*time.Second, try.StatusCodeIs(200), try.BodyContainsOr("Hostname: whoami1"))
 	c.Assert(err, checker.IsNil)
 
 	err = s.deregisterService("whoami1", false)
@@ -341,7 +337,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithTCPLabels(c *check.C) {
 			"traefik.tcp.Services.Super.Loadbalancer.server.port=8080",
 		},
 		Port:    8080,
-		Address: s.composeProject.Container(c, "whoamitcp").NetworkSettings.IPAddress,
+		Address: s.getServiceIP(c, "whoamitcp"),
 	}
 
 	err := s.registerService(reg, false)
@@ -386,7 +382,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithLabels(c *check.C) {
 			"traefik.http.Routers.Super.Rule=Host(`my.super.host`)",
 		},
 		Port:    80,
-		Address: s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress,
+		Address: s.getServiceIP(c, "whoami1"),
 	}
 
 	err := s.registerService(reg1, false)
@@ -400,7 +396,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithLabels(c *check.C) {
 			"traefik.http.Routers.SuperHost.Rule=Host(`my-super.host`)",
 		},
 		Port:    80,
-		Address: s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress,
+		Address: s.getServiceIP(c, "whoami2"),
 	}
 	err = s.registerService(reg2, false)
 	c.Assert(err, checker.IsNil)
@@ -457,7 +453,7 @@ func (s *ConsulCatalogSuite) TestSameServiceIDOnDifferentConsulAgent(c *check.C)
 		Name:    "whoami",
 		Tags:    tags,
 		Port:    80,
-		Address: s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress,
+		Address: s.getServiceIP(c, "whoami1"),
 	}
 	err := s.registerService(reg1, false)
 	c.Assert(err, checker.IsNil)
@@ -467,7 +463,7 @@ func (s *ConsulCatalogSuite) TestSameServiceIDOnDifferentConsulAgent(c *check.C)
 		Name:    "whoami",
 		Tags:    tags,
 		Port:    80,
-		Address: s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress,
+		Address: s.getServiceIP(c, "whoami2"),
 	}
 	err = s.registerService(reg2, true)
 	c.Assert(err, checker.IsNil)
@@ -490,8 +486,7 @@ func (s *ConsulCatalogSuite) TestSameServiceIDOnDifferentConsulAgent(c *check.C)
 	c.Assert(err, checker.IsNil)
 
 	err = try.Request(req, 2*time.Second, try.StatusCodeIs(200),
-		try.BodyContainsOr(s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress,
-			s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress))
+		try.BodyContainsOr(s.getServiceIP(c, "whoami1"), s.getServiceIP(c, "whoami2")))
 	c.Assert(err, checker.IsNil)
 
 	err = s.deregisterService("whoami", false)
@@ -521,7 +516,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithOneMissingLabels(c *check.C) {
 			"traefik.random.value=my.super.host",
 		},
 		Port:    80,
-		Address: s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress,
+		Address: "whoami1",
 	}
 
 	err := s.registerService(reg, false)
@@ -550,7 +545,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithHealthCheck(c *check.C) {
 		"traefik.enable=true",
 		"traefik.http.routers.router1.rule=Path(`/whoami`)",
 		"traefik.http.routers.router1.service=service1",
-		"traefik.http.services.service1.loadBalancer.server.url=http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress,
+		"traefik.http.services.service1.loadBalancer.server.url=http://whoami1",
 	}
 
 	reg1 := &api.AgentServiceRegistration{
@@ -558,7 +553,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithHealthCheck(c *check.C) {
 		Name:    "whoami",
 		Tags:    tags,
 		Port:    80,
-		Address: s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress,
+		Address: s.getServiceIP(c, "whoami1"),
 		Check: &api.AgentServiceCheck{
 			CheckID:  "some-failed-check",
 			TCP:      "127.0.0.1:1234",
@@ -592,7 +587,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithHealthCheck(c *check.C) {
 	err = s.deregisterService("whoami1", false)
 	c.Assert(err, checker.IsNil)
 
-	containerIP := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
+	containerIP := s.getServiceIP(c, "whoami2")
 
 	reg2 := &api.AgentServiceRegistration{
 		ID:      "whoami2",
@@ -629,7 +624,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect(c *check.C) {
 	err := s.waitForConnectCA()
 	c.Assert(err, checker.IsNil)
 
-	connectIP := s.composeProject.Container(c, "connect").NetworkSettings.IPAddress
+	connectIP := s.getServiceIP(c, "connect")
 	reg := &api.AgentServiceRegistration{
 		ID:   "uuid-api1",
 		Name: "uuid-api",
@@ -649,7 +644,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect(c *check.C) {
 	err = s.registerService(reg, false)
 	c.Assert(err, checker.IsNil)
 
-	whoamiIP := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	whoamiIP := s.getServiceIP(c, "whoami1")
 	regWhoami := &api.AgentServiceRegistration{
 		ID:   "whoami1",
 		Name: "whoami",
@@ -695,7 +690,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_ByDefault(c *check.C) {
 	err := s.waitForConnectCA()
 	c.Assert(err, checker.IsNil)
 
-	connectIP := s.composeProject.Container(c, "connect").NetworkSettings.IPAddress
+	connectIP := s.getServiceIP(c, "connect")
 	reg := &api.AgentServiceRegistration{
 		ID:   "uuid-api1",
 		Name: "uuid-api",
@@ -714,7 +709,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_ByDefault(c *check.C) {
 	err = s.registerService(reg, false)
 	c.Assert(err, checker.IsNil)
 
-	whoamiIP := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	whoamiIP := s.getServiceIP(c, "whoami1")
 	regWhoami := &api.AgentServiceRegistration{
 		ID:   "whoami1",
 		Name: "whoami1",
@@ -729,7 +724,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_ByDefault(c *check.C) {
 	err = s.registerService(regWhoami, false)
 	c.Assert(err, checker.IsNil)
 
-	whoami2IP := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
+	whoami2IP := s.getServiceIP(c, "whoami2")
 	regWhoami2 := &api.AgentServiceRegistration{
 		ID:   "whoami2",
 		Name: "whoami2",
@@ -781,7 +776,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_NotAware(c *check.C) {
 	err := s.waitForConnectCA()
 	c.Assert(err, checker.IsNil)
 
-	connectIP := s.composeProject.Container(c, "connect").NetworkSettings.IPAddress
+	connectIP := s.getServiceIP(c, "connect")
 	reg := &api.AgentServiceRegistration{
 		ID:   "uuid-api1",
 		Name: "uuid-api",
@@ -801,7 +796,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_NotAware(c *check.C) {
 	err = s.registerService(reg, false)
 	c.Assert(err, checker.IsNil)
 
-	whoamiIP := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	whoamiIP := s.getServiceIP(c, "whoami1")
 	regWhoami := &api.AgentServiceRegistration{
 		ID:   "whoami1",
 		Name: "whoami",
