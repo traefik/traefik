@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"testing"
+	"time"
 
 	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/stretchr/testify/assert"
@@ -589,6 +590,56 @@ func TestInitAccount(t *testing.T) {
 			assert.Nil(t, err, "Init account in error")
 			assert.Equal(t, test.expectedAccount.Email, actualAccount.Email, "unexpected email account")
 			assert.Equal(t, test.expectedAccount.KeyType, actualAccount.KeyType, "unexpected keyType account")
+		})
+	}
+}
+
+func Test_getCertificateRenewDurations(t *testing.T) {
+	testCases := []struct {
+		desc                  string
+		certificatesDurations int
+		expectRenewPeriod     time.Duration
+		expectRenewInterval   time.Duration
+	}{
+		{
+			desc:                  "Less than 24 Hours certificates: 20 minutes renew period, 1 minutes renew interval",
+			certificatesDurations: 1,
+			expectRenewPeriod:     time.Minute * 20,
+			expectRenewInterval:   time.Minute,
+		},
+		{
+			desc:                  "1 Year certificates: 2 months renew period, 1 week renew interval",
+			certificatesDurations: 24 * 365,
+			expectRenewPeriod:     time.Hour * 24 * 30 * 4,
+			expectRenewInterval:   time.Hour * 24 * 7,
+		},
+		{
+			desc:                  "90 Days certificates: 30 days renew period, 1 day renew interval",
+			certificatesDurations: 24 * 90,
+			expectRenewPeriod:     time.Hour * 24 * 30,
+			expectRenewInterval:   time.Hour * 24,
+		},
+		{
+			desc:                  "7 Days certificates: 1 days renew period, 1 hour renew interval",
+			certificatesDurations: 24 * 7,
+			expectRenewPeriod:     time.Hour * 24,
+			expectRenewInterval:   time.Hour,
+		},
+		{
+			desc:                  "24 Hours certificates: 6 hours renew period, 10 minutes renew interval",
+			certificatesDurations: 24,
+			expectRenewPeriod:     time.Hour * 6,
+			expectRenewInterval:   time.Minute * 10,
+		},
+	}
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			renewPeriod, renewInterval := getCertificateRenewDurations(test.certificatesDurations)
+			assert.Equal(t, test.expectRenewPeriod, renewPeriod)
+			assert.Equal(t, test.expectRenewInterval, renewInterval)
 		})
 	}
 }
