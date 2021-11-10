@@ -667,14 +667,14 @@ func (p *Provider) refreshCertificates() {
 	p.configurationChan <- conf
 }
 
-func (p *Provider) renewCertificates(ctx context.Context, renewBeforeExpiry time.Duration) {
+func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Duration) {
 	logger := log.FromContext(ctx)
 
 	logger.Info("Testing certificate renew...")
 	for _, cert := range p.certificates {
 		crt, err := getX509Certificate(ctx, &cert.Certificate)
 		// If there's an error, we assume the cert is broken, and needs update
-		if err != nil || crt == nil || crt.NotAfter.Before(time.Now().Add(renewBeforeExpiry)) {
+		if err != nil || crt == nil || crt.NotAfter.Before(time.Now().Add(renewPeriod)) {
 			client, err := p.getClient()
 			if err != nil {
 				logger.Infof("Error renewing certificate from LE : %+v, %v", cert.Domain, err)
