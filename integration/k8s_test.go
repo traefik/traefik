@@ -49,7 +49,6 @@ func (s *K8sSuite) SetUpSuite(c *check.C) {
 func (s *K8sSuite) TearDownSuite(c *check.C) {
 	// shutdown and delete compose project
 	if s.composeProject != nil && s.dockerService != nil {
-		// s.composeProject.Stop(c)
 		err := s.dockerService.Stop(context.Background(), s.composeProject, composeapi.StopOptions{})
 		c.Assert(err, checker.IsNil)
 	}

@@ -52,7 +52,6 @@ func (s *ZookeeperSuite) setupStore(c *check.C) {
 func (s *ZookeeperSuite) TearDownTest(c *check.C) {
 	// shutdown and delete compose project
 	if s.composeProject != nil && s.dockerService != nil {
-		// s.composeProject.Stop(c)
 		err := s.dockerService.Stop(context.Background(), s.composeProject, composeapi.StopOptions{})
 		c.Assert(err, checker.IsNil)
 	}

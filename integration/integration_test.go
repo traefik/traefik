@@ -92,7 +92,6 @@ type BaseSuite struct {
 func (s *BaseSuite) TearDownSuite(c *check.C) {
 	// shutdown and delete compose project
 	if s.composeProject != nil && s.dockerService != nil {
-		// s.composeProject.Stop(c)
 		err := s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
 		c.Assert(err, checker.IsNil)
 	}
