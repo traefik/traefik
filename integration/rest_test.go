@@ -33,7 +33,7 @@ func (s *RestSuite) TestSimpleConfigurationInsecure(c *check.C) {
 	defer s.killCmd(cmd)
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/composeapi/rawdata", 1000*time.Millisecond, try.BodyContains("rest@internal"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("rest@internal"))
 	c.Assert(err, checker.IsNil)
 
 	// Expected a 404 as we did not configure anything.
@@ -104,14 +104,14 @@ func (s *RestSuite) TestSimpleConfigurationInsecure(c *check.C) {
 		data, err := json.Marshal(test.config)
 		c.Assert(err, checker.IsNil)
 
-		request, err := http.NewRequest(http.MethodPut, "http://127.0.0.1:8080/composeapi/providers/rest", bytes.NewReader(data))
+		request, err := http.NewRequest(http.MethodPut, "http://127.0.0.1:8080/api/providers/rest", bytes.NewReader(data))
 		c.Assert(err, checker.IsNil)
 
 		response, err := http.DefaultClient.Do(request)
 		c.Assert(err, checker.IsNil)
 		c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
 
-		err = try.GetRequest("http://127.0.0.1:8080/composeapi/rawdata", 3*time.Second, try.BodyContains(test.ruleMatch))
+		err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 3*time.Second, try.BodyContains(test.ruleMatch))
 		c.Assert(err, checker.IsNil)
 
 		err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusOK))
@@ -134,10 +134,10 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8080/composeapi/rawdata", 2000*time.Millisecond, try.BodyContains("PathPrefix(`/secure`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2000*time.Millisecond, try.BodyContains("PathPrefix(`/secure`)"))
 	c.Assert(err, checker.IsNil)
 
-	request, err := http.NewRequest(http.MethodPut, "http://127.0.0.1:8080/composeapi/providers/rest", strings.NewReader("{}"))
+	request, err := http.NewRequest(http.MethodPut, "http://127.0.0.1:8080/api/providers/rest", strings.NewReader("{}"))
 	c.Assert(err, checker.IsNil)
 
 	response, err := http.DefaultClient.Do(request)
@@ -208,14 +208,14 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 		data, err := json.Marshal(test.config)
 		c.Assert(err, checker.IsNil)
 
-		request, err := http.NewRequest(http.MethodPut, "http://127.0.0.1:8000/secure/composeapi/providers/rest", bytes.NewReader(data))
+		request, err := http.NewRequest(http.MethodPut, "http://127.0.0.1:8000/secure/api/providers/rest", bytes.NewReader(data))
 		c.Assert(err, checker.IsNil)
 
 		response, err := http.DefaultClient.Do(request)
 		c.Assert(err, checker.IsNil)
 		c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
 
-		err = try.GetRequest("http://127.0.0.1:8080/composeapi/rawdata", 4000*time.Millisecond, try.BodyContains(test.ruleMatch))
+		err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 4000*time.Millisecond, try.BodyContains(test.ruleMatch))
 		c.Assert(err, checker.IsNil)
 
 		err = try.GetRequest("http://127.0.0.1:8000/", 4000*time.Millisecond, try.StatusCodeIs(http.StatusOK))
