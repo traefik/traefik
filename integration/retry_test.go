@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/docker/compose/v2/pkg/api"
+	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/gorilla/websocket"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -17,7 +17,7 @@ type RetrySuite struct{ BaseSuite }
 
 func (s *RetrySuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "retry")
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 }
 

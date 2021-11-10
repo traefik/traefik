@@ -17,7 +17,7 @@ import (
 	"github.com/compose-spec/compose-go/cli"
 	"github.com/compose-spec/compose-go/types"
 	"github.com/docker/cli/cli/config/configfile"
-	"github.com/docker/compose/v2/pkg/api"
+	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/compose/v2/pkg/compose"
 	"github.com/docker/docker/client"
 	"github.com/fatih/structs"
@@ -86,14 +86,14 @@ var traefikBinary = "../dist/traefik"
 
 type BaseSuite struct {
 	composeProject *types.Project
-	dockerService  api.Service
+	dockerService  composeapi.Service
 }
 
 func (s *BaseSuite) TearDownSuite(c *check.C) {
 	// shutdown and delete compose project
 	if s.composeProject != nil && s.dockerService != nil {
 		// s.composeProject.Stop(c)
-		err := s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+		err := s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
 		c.Assert(err, checker.IsNil)
 	}
 }

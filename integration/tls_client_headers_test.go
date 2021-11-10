@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/docker/compose/v2/pkg/api"
+	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
@@ -23,7 +23,7 @@ type TLSClientHeadersSuite struct{ BaseSuite }
 
 func (s *TLSClientHeadersSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "tlsclientheaders")
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 }
 

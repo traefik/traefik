@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/docker/compose/v2/pkg/api"
+	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/miekg/dns"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -83,7 +83,7 @@ func setupPebbleRootCA() (*http.Transport, error) {
 
 func (s *AcmeSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "pebble")
-	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
 	s.fakeDNSServer = startFakeDNSServer()
@@ -117,7 +117,7 @@ func (s *AcmeSuite) TearDownSuite(c *check.C) {
 	}
 	// shutdown and delete compose project
 	if s.composeProject != nil && s.dockerService != nil {
-		err := s.dockerService.Stop(context.Background(), s.composeProject, api.StopOptions{})
+		err := s.dockerService.Stop(context.Background(), s.composeProject, composeapi.StopOptions{})
 		c.Assert(err, checker.IsNil)
 	}
 }

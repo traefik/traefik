@@ -93,7 +93,6 @@ replace (
 	github.com/abbot/go-http-auth => github.com/containous/go-http-auth v0.4.1-0.20200324110947-a37a7636d23e
 	github.com/go-check/check => github.com/containous/check v0.0.0-20170915194414-ca0bf163426a
 	github.com/gorilla/mux => github.com/containous/mux v0.0.0-20181024131434-c33f32e26898
-	github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
 	github.com/mailgun/minheap => github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595
 	github.com/mailgun/multibuf => github.com/containous/multibuf v0.0.0-20190809014333-8b6c9a7e6bba
 )
