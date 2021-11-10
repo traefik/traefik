@@ -147,15 +147,15 @@ func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// ensure json is minified before testing diff
-	expectedStr := minifyJson(string(expected))
-	gotStr := minifyJson(string(got))
+	expectedStr := minifyJSON(string(expected))
+	gotStr := minifyJSON(string(got))
 
 	if !bytes.Equal([]byte(expectedStr), []byte(gotStr)) {
 		diff := difflib.UnifiedDiff{
 			FromFile: "Expected",
 			A:        difflib.SplitLines(expectedStr),
 			ToFile:   "Got",
-			B:        difflib.SplitLines(minifyJson(string(got))),
+			B:        difflib.SplitLines(minifyJSON(string(got))),
 			Context:  3,
 		}
 

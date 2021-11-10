@@ -607,7 +607,6 @@ func checkTraefikStarted(c *check.C) []byte {
 
 func CheckAccessLogFormat(c *check.C, line string, i int) {
 	results, err := accesslog.ParseAccessLog(line)
-	//fmt.Printf("%#v\n", results)
 	c.Assert(err, checker.IsNil)
 	c.Assert(results, checker.HasLen, 14)
 	c.Assert(results[accesslog.OriginStatus], checker.Matches, `^(-|\d{3})$`)

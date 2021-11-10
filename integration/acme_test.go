@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/docker/compose/v2/pkg/api"
-	dockerapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/miekg/dns"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -118,7 +117,7 @@ func (s *AcmeSuite) TearDownSuite(c *check.C) {
 	}
 	// shutdown and delete compose project
 	if s.composeProject != nil && s.dockerService != nil {
-		err := s.dockerService.Stop(context.Background(), s.composeProject, dockerapi.StopOptions{})
+		err := s.dockerService.Stop(context.Background(), s.composeProject, api.StopOptions{})
 		c.Assert(err, checker.IsNil)
 	}
 }

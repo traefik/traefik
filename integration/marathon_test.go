@@ -14,8 +14,7 @@ import (
 )
 
 const (
-	containerNameMesosSlave = "mesos-slave"
-	containerNameMarathon   = "marathon"
+	containerNameMarathon = "marathon"
 )
 
 // Marathon test suites (using libcompose).

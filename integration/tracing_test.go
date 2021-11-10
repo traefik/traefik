@@ -28,8 +28,7 @@ type TracingTemplate struct {
 
 func (s *TracingSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "tracing")
-	//TODO Investigate what whoami is doing
-	// s.composeProject.Start(c, "whoami")
+
 	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
@@ -38,8 +37,6 @@ func (s *TracingSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *TracingSuite) startZipkin(c *check.C) {
-	//TODO Investigate what zipkin is doing
-	// s.composeProject.Start(c, "zipkin")
 	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
 	c.Assert(err, checker.IsNil)
 	s.IP = "zipkin"
@@ -51,8 +48,7 @@ func (s *TracingSuite) startZipkin(c *check.C) {
 
 func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 	s.startZipkin(c)
-	//TODO Investigate what zipkin is doing
-	// s.composeProject.Start(c, "zipkin")
+
 	err := s.dockerService.Up(context.Background(), s.composeProject, api.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
@@ -105,8 +101,11 @@ func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 
 func (s *TracingSuite) TestZipkinRetry(c *check.C) {
 	s.startZipkin(c)
-	// defer s.composeProject.Stop(c, "zipkin")
-	defer s.dockerService.Down(context.Background(), "zipkin", api.DownOptions{})
+
+	defer func() {
+		err := s.dockerService.Down(context.Background(), "zipkin", api.DownOptions{})
+		c.Assert(err, checker.IsNil)
+	}()
 
 	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
 		WhoAmiIP:   s.WhoAmiIP,
@@ -134,8 +133,11 @@ func (s *TracingSuite) TestZipkinRetry(c *check.C) {
 
 func (s *TracingSuite) TestZipkinAuth(c *check.C) {
 	s.startZipkin(c)
-	// defer s.composeProject.Stop(c, "zipkin")
-	defer s.dockerService.Down(context.Background(), "zipkin", api.DownOptions{})
+
+	defer func() {
+		err := s.dockerService.Down(context.Background(), "zipkin", api.DownOptions{})
+		c.Assert(err, checker.IsNil)
+	}()
 
 	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
 		WhoAmiIP:   s.WhoAmiIP,
@@ -171,10 +173,16 @@ func (s *TracingSuite) startJaeger(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
+func (s *TracingSuite) stopJaeger(c *check.C) {
+	err := s.dockerService.Down(context.Background(), s.composeProject.Name, api.DownOptions{})
+	c.Assert(err, checker.IsNil)
+}
+
 func (s *TracingSuite) TestJaegerRateLimit(c *check.C) {
 	s.startJaeger(c)
-	// defer s.composeProject.Stop(c, "jaeger")
-	defer s.dockerService.Down(context.Background(), "jaeger", api.DownOptions{})
+
+	defer s.stopJaeger(c)
+
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
 		WhoAmiIP:               s.WhoAmiIP,
 		WhoAmiPort:             s.WhoAmiPort,
@@ -224,8 +232,9 @@ func (s *TracingSuite) TestJaegerRateLimit(c *check.C) {
 
 func (s *TracingSuite) TestJaegerRetry(c *check.C) {
 	s.startJaeger(c)
-	// defer s.composeProject.Stop(c, "jaeger")
-	defer s.dockerService.Down(context.Background(), "jaeger", api.DownOptions{})
+
+	defer s.stopJaeger(c)
+
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
 		WhoAmiIP:               s.WhoAmiIP,
 		WhoAmiPort:             81,
@@ -253,8 +262,9 @@ func (s *TracingSuite) TestJaegerRetry(c *check.C) {
 
 func (s *TracingSuite) TestJaegerAuth(c *check.C) {
 	s.startJaeger(c)
-	// defer s.composeProject.Stop(c, "jaeger")
-	defer s.dockerService.Down(context.Background(), "jaeger", api.DownOptions{})
+
+	defer s.stopJaeger(c)
+
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
 		WhoAmiIP:               s.WhoAmiIP,
 		WhoAmiPort:             s.WhoAmiPort,
@@ -282,8 +292,9 @@ func (s *TracingSuite) TestJaegerAuth(c *check.C) {
 
 func (s *TracingSuite) TestJaegerCustomHeader(c *check.C) {
 	s.startJaeger(c)
-	// defer s.composeProject.Stop(c, "jaeger")
-	defer s.dockerService.Down(context.Background(), "jaeger", api.DownOptions{})
+
+	defer s.stopJaeger(c)
+
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger.toml", TracingTemplate{
 		WhoAmiIP:               s.WhoAmiIP,
 		WhoAmiPort:             s.WhoAmiPort,
@@ -311,8 +322,9 @@ func (s *TracingSuite) TestJaegerCustomHeader(c *check.C) {
 
 func (s *TracingSuite) TestJaegerAuthCollector(c *check.C) {
 	s.startJaeger(c)
-	// defer s.composeProject.Stop(c, "jaeger")
-	defer s.dockerService.Down(context.Background(), "jaeger", api.DownOptions{})
+
+	defer s.stopJaeger(c)
+
 	file := s.adaptFile(c, "fixtures/tracing/simple-jaeger-collector.toml", TracingTemplate{
 		WhoAmiIP:   s.WhoAmiIP,
 		WhoAmiPort: s.WhoAmiPort,

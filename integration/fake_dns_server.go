@@ -13,7 +13,6 @@ type handler struct{}
 
 func getFakeDNSIp() net.IP {
 	ifaces, err := net.Interfaces()
-
 	if err != nil {
 		return net.ParseIP("127.0.0.1")
 	}

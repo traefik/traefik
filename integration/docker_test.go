@@ -297,7 +297,7 @@ func (s *DockerSuite) filterRunning(containers []api.ContainerSummary) []api.Con
 	runningContainers := make([]api.ContainerSummary, 0)
 
 	for _, c := range containers {
-		if strings.ToLower(c.State) == strings.ToLower(api.RUNNING) {
+		if strings.EqualFold(c.State, api.RUNNING) {
 			runningContainers = append(runningContainers, c)
 		}
 	}

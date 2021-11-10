@@ -20,7 +20,6 @@ import (
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/compose/v2/pkg/compose"
 	"github.com/docker/docker/client"
-
 	"github.com/fatih/structs"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -41,7 +40,7 @@ func Test(t *testing.T) {
 	}
 
 	if *container {
-		//tests launched from a container
+		// tests launched from a container
 		check.Suite(&AccessLogSuite{})
 		check.Suite(&AcmeSuite{})
 		check.Suite(&EtcdSuite{})
@@ -200,7 +199,7 @@ func (s *BaseSuite) adaptFile(c *check.C, path string, tempObjects interface{}) 
 	return tmpFile.Name()
 }
 
-func minifyJson(s string) string {
+func minifyJSON(s string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(s, " ", ""), "\n", "")
 }
 
