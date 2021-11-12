@@ -24,5 +24,12 @@
     address = ":8180"
   [entryPoints.websecure]
     address = ":8443"
+  [entryPoints.traefik]
+    address = ":8080"
 
 [providers.kubernetesGateway]
+
+[http.routers.api]
+  rule = "PathPrefix(`/api`)"
+  service = "api@internal"
+  entryPoints = ["traefik"]
