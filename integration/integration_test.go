@@ -38,7 +38,7 @@ func Test(t *testing.T) {
 		return
 	}
 
-	//tests launched from a container
+	// tests launched from a container
 	check.Suite(&AccessLogSuite{})
 	check.Suite(&AcmeSuite{})
 	check.Suite(&EtcdSuite{})
