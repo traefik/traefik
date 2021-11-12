@@ -1,4 +1,9 @@
-zookeeper:
-  image: zookeeper:3.5
-  ports:
-    - "2181:2181"
+services:
+  zookeeper:
+    image: zookeeper:3.5
+    ports:
+      - "2181:2181"
+networks:
+  default:
+    external: true
+    name: test-net
