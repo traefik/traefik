@@ -15,7 +15,10 @@ TRAEFIK_DEV_IMAGE := traefik-dev$(if $(GIT_BRANCH),:$(subst /,-,$(GIT_BRANCH)))
 REPONAME := $(shell echo $(REPO) | tr '[:upper:]' '[:lower:]')
 TRAEFIK_IMAGE := $(if $(REPONAME),$(REPONAME),"traefik/traefik")
 
-INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)", --name=traefik --rm -e "TEST_CONTAINER=1" -v "/var/run/docker.sock:/var/run/docker.sock")
+INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)", --name=traefik --rm \
+-v "/var/run/docker.sock:/var/run/docker.sock" -v test-data:/test/data -v test-config:/test/config -v `pwd`/integration/fixtures/k8s:/test/manifests  \
+-e KUBECONFIG="/test/config/kubeconfig.yaml")
+
 DOCKER_BUILD_ARGS := $(if $(DOCKER_VERSION), "--build-arg=DOCKER_VERSION=$(DOCKER_VERSION)",)
 
 TRAEFIK_ENVS := \
@@ -96,20 +99,20 @@ pull-images:
 test-network:
 	docker network create test-net --driver bridge --subnet 172.31.42.0/24 || echo ""
 
+test-volumes:
+	docker volume create test-data || echo ""
+	docker volume create test-config || echo ""
+
 ## Run the integration tests
-test-integration: $(PRE_TARGET) binary test-network
+test-integration: $(PRE_TARGET) binary test-network test-volumes
 
-	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_TESTNET),TEST_CONTAINER=1) ./script/make.sh test-integration
-	TEST_HOST=1 ./script/make.sh test-integration
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_TESTNET)) /bin/bash -c "cp -a /test/manifests/. /test/data; \
+	cp /go/src/github.com/traefik/traefik/integration/resources/haproxy/haproxy.cfg /test/config; \
+	cp /go/src/github.com/traefik/traefik/integration/fixtures/tcp/*.{key,crt} /test/config; \
+	./script/make.sh test-integration;true"
 	docker network rm test-net || echo ""
-
-## Run the container integration tests
-test-integration-container: $(PRE_TARGET) binary
-	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK),TEST_CONTAINER=1) ./script/make.sh test-integration
-
-## Run the host integration tests
-test-integration-host: $(PRE_TARGET) binary
-	TEST_HOST=1 ./script/make.sh test-integration
+	docker volume rm test-data || echo ""
+	docker volume rm test-config || echo ""
 
 ## Validate code and docs
 validate-files: $(PRE_TARGET)

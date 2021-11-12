@@ -29,8 +29,6 @@ import (
 
 var (
 	integration = flag.Bool("integration", false, "run integration tests")
-	container   = flag.Bool("container", false, "run container integration tests")
-	host        = flag.Bool("host", false, "run host integration tests")
 	showLog     = flag.Bool("tlog", false, "always show Traefik logs")
 )
 
@@ -40,45 +38,41 @@ func Test(t *testing.T) {
 		return
 	}
 
-	if *container {
-		// tests launched from a container
-		check.Suite(&AccessLogSuite{})
-		check.Suite(&AcmeSuite{})
-		check.Suite(&EtcdSuite{})
-		check.Suite(&ConsulSuite{})
-		check.Suite(&ConsulCatalogSuite{})
-		check.Suite(&DockerComposeSuite{})
-		check.Suite(&DockerSuite{})
-		check.Suite(&ErrorPagesSuite{})
-		check.Suite(&FileSuite{})
-		check.Suite(&GRPCSuite{})
-		check.Suite(&HealthCheckSuite{})
-		check.Suite(&HeadersSuite{})
-		check.Suite(&HostResolverSuite{})
-		check.Suite(&HTTPSuite{})
-		check.Suite(&HTTPSSuite{})
-		check.Suite(&KeepAliveSuite{})
-		check.Suite(&LogRotationSuite{})
-		check.Suite(&MarathonSuite{})
-		check.Suite(&MarathonSuite15{})
-		check.Suite(&RateLimitSuite{})
-		check.Suite(&RedisSuite{})
-		check.Suite(&RestSuite{})
-		check.Suite(&RetrySuite{})
-		check.Suite(&SimpleSuite{})
-		check.Suite(&TimeoutSuite{})
-		check.Suite(&TLSClientHeadersSuite{})
-		check.Suite(&TracingSuite{})
-		check.Suite(&UDPSuite{})
-		check.Suite(&WebsocketSuite{})
-		check.Suite(&ZookeeperSuite{})
-	}
-	if *host {
-		// tests launched from the host
-		check.Suite(&K8sSuite{})
-		check.Suite(&ProxyProtocolSuite{})
-		check.Suite(&TCPSuite{})
-	}
+	//tests launched from a container
+	check.Suite(&AccessLogSuite{})
+	check.Suite(&AcmeSuite{})
+	check.Suite(&EtcdSuite{})
+	check.Suite(&ConsulSuite{})
+	check.Suite(&ConsulCatalogSuite{})
+	check.Suite(&DockerComposeSuite{})
+	check.Suite(&DockerSuite{})
+	check.Suite(&ErrorPagesSuite{})
+	check.Suite(&FileSuite{})
+	check.Suite(&GRPCSuite{})
+	check.Suite(&HealthCheckSuite{})
+	check.Suite(&HeadersSuite{})
+	check.Suite(&HostResolverSuite{})
+	check.Suite(&HTTPSuite{})
+	check.Suite(&HTTPSSuite{})
+	check.Suite(&KeepAliveSuite{})
+	check.Suite(&LogRotationSuite{})
+	check.Suite(&MarathonSuite{})
+	check.Suite(&MarathonSuite15{})
+	check.Suite(&RateLimitSuite{})
+	check.Suite(&RedisSuite{})
+	check.Suite(&RestSuite{})
+	check.Suite(&RetrySuite{})
+	check.Suite(&SimpleSuite{})
+	check.Suite(&TimeoutSuite{})
+	check.Suite(&TLSClientHeadersSuite{})
+	check.Suite(&TracingSuite{})
+	check.Suite(&UDPSuite{})
+	check.Suite(&WebsocketSuite{})
+	check.Suite(&ZookeeperSuite{})
+
+	check.Suite(&K8sSuite{})
+	check.Suite(&ProxyProtocolSuite{})
+	check.Suite(&TCPSuite{})
 
 	check.TestingT(t)
 }

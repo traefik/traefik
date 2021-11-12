@@ -11,6 +11,13 @@
 [entryPoints]
   [entryPoints.web]
     address = ":8000"
+  [entryPoints.traefik]
+    address = ":8080"
 
 [providers.kubernetesIngress]
   labelSelector = "app=traefik"
+
+[http.routers.api]
+  rule = "PathPrefix(`/api`)"
+  service = "api@internal"
+  entryPoints = ["traefik"]
