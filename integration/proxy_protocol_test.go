@@ -21,9 +21,9 @@ func (s *ProxyProtocolSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *ProxyProtocolSuite) TestProxyProtocolTrusted(c *check.C) {
-	gatewayHost := "haproxy"
-	haproxyHost := "haproxy"
-	whoamiHost := "whoami"
+	gatewayHost := s.getServiceIP(c, "traefik")
+	haproxyHost := s.getServiceIP(c, "haproxy")
+	whoamiHost := s.getServiceIP(c, "whoami")
 
 	file := s.adaptFile(c, "fixtures/proxy-protocol/with.toml", struct {
 		HaproxyIP string
@@ -44,9 +44,9 @@ func (s *ProxyProtocolSuite) TestProxyProtocolTrusted(c *check.C) {
 }
 
 func (s *ProxyProtocolSuite) TestProxyProtocolV2Trusted(c *check.C) {
-	gatewayHost := "haproxy"
-	haproxyHost := "haproxy"
-	whoamiHost := "whoami"
+	gatewayHost := s.getServiceIP(c, "traefik")
+	haproxyHost := s.getServiceIP(c, "haproxy")
+	whoamiHost := s.getServiceIP(c, "whoami")
 
 	file := s.adaptFile(c, "fixtures/proxy-protocol/with.toml", struct {
 		HaproxyIP string
@@ -67,8 +67,8 @@ func (s *ProxyProtocolSuite) TestProxyProtocolV2Trusted(c *check.C) {
 }
 
 func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted(c *check.C) {
-	haproxyHost := "haproxy"
-	whoamiHost := "whoami"
+	haproxyHost := s.getServiceIP(c, "haproxy")
+	whoamiHost := s.getServiceIP(c, "whoami")
 
 	file := s.adaptFile(c, "fixtures/proxy-protocol/without.toml", struct {
 		HaproxyIP string
@@ -89,8 +89,8 @@ func (s *ProxyProtocolSuite) TestProxyProtocolNotTrusted(c *check.C) {
 }
 
 func (s *ProxyProtocolSuite) TestProxyProtocolV2NotTrusted(c *check.C) {
-	haproxyHost := "haproxy"
-	whoamiHost := "whoami"
+	haproxyHost := s.getServiceIP(c, "haproxy")
+	whoamiHost := s.getServiceIP(c, "whoami")
 
 	file := s.adaptFile(c, "fixtures/proxy-protocol/without.toml", struct {
 		HaproxyIP string

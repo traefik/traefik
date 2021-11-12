@@ -19,7 +19,6 @@ import (
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/api"
-	"github.com/traefik/traefik/v2/pkg/log"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -33,10 +32,9 @@ func (s *K8sSuite) SetUpSuite(c *check.C) {
 	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
-	abs, err := filepath.Abs("./fixtures/k8s/config.skip/kubeconfig.yaml")
-	c.Assert(err, checker.IsNil)
+	abs := "/test/config/kubeconfig.yaml"
 
-	err = try.Do(60*time.Second, func() error {
+	err = try.Do(120*time.Second, func() error {
 		_, err := os.Stat(abs)
 		return err
 	})
@@ -44,29 +42,16 @@ func (s *K8sSuite) SetUpSuite(c *check.C) {
 
 	err = os.Setenv("KUBECONFIG", abs)
 	c.Assert(err, checker.IsNil)
+
+	// allow time for k8s resources to be created
+	time.Sleep(1 * time.Minute)
 }
 
 func (s *K8sSuite) TearDownSuite(c *check.C) {
 	// shutdown and delete compose project
 	if s.composeProject != nil && s.dockerService != nil {
-		err := s.dockerService.Stop(context.Background(), s.composeProject, composeapi.StopOptions{})
+		err := s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
 		c.Assert(err, checker.IsNil)
-	}
-
-	generatedFiles := []string{
-		"./fixtures/k8s/config.skip/kubeconfig.yaml",
-		"./fixtures/k8s/config.skip/k3s.log",
-		"./fixtures/k8s/coredns.yaml",
-		"./fixtures/k8s/rolebindings.yaml",
-		"./fixtures/k8s/traefik.yaml",
-		"./fixtures/k8s/ccm.yaml",
-	}
-
-	for _, filename := range generatedFiles {
-		err := os.Remove(filename)
-		if err != nil {
-			log.WithoutContext().Warning(err)
-		}
 	}
 }
 
@@ -100,7 +85,7 @@ func (s *K8sSuite) TestCRDConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	testConfiguration(c, "testdata/rawdata-crd.json", "8000")
+	testConfiguration(c, "testdata/rawdata-crd.json", "8080")
 }
 
 func (s *K8sSuite) TestCRDLabelSelector(c *check.C) {
@@ -111,7 +96,7 @@ func (s *K8sSuite) TestCRDLabelSelector(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	testConfiguration(c, "testdata/rawdata-crd-label-selector.json", "8000")
+	testConfiguration(c, "testdata/rawdata-crd-label-selector.json", "8080")
 }
 
 func (s *K8sSuite) TestGatewayConfiguration(c *check.C) {
@@ -150,7 +135,7 @@ func testConfiguration(c *check.C, path, apiPort string) {
 	}
 
 	var buf bytes.Buffer
-	err = try.GetRequest("http://127.0.0.1:"+apiPort+"/api/rawdata", 1*time.Minute, try.StatusCodeIs(http.StatusOK), matchesConfig(expectedJSON, &buf))
+	err = try.GetRequest("http://127.0.0.1:"+apiPort+"/api/rawdata", 20*time.Second, try.StatusCodeIs(http.StatusOK), matchesConfig(expectedJSON, &buf))
 
 	if !*updateExpected {
 		if err != nil {
@@ -167,7 +152,7 @@ func testConfiguration(c *check.C, path, apiPort string) {
 	err = json.Unmarshal(buf.Bytes(), &rtRepr)
 	c.Assert(err, checker.IsNil)
 
-	newJSON, err := json.MarshalIndent(rtRepr, "", "\t")
+	newJSON, err := json.Marshal(rtRepr)
 	c.Assert(err, checker.IsNil)
 
 	err = os.WriteFile(expectedJSON, newJSON, 0o644)
@@ -199,7 +184,7 @@ func matchesConfig(wantConfig string, buf *bytes.Buffer) try.ResponseCondition {
 			}
 		}
 
-		got, err := json.MarshalIndent(obtained, "", "\t")
+		got, err := json.MarshalIndent(obtained, "", "  ")
 		if err != nil {
 			return err
 		}
