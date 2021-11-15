@@ -7,22 +7,6 @@ Traefik supports 4 metrics backends:
 - [Prometheus](./prometheus.md)
 - [StatsD](./statsd.md)
 
-## Configuration
-
-To enable metrics:
-
-```yaml tab="File (YAML)"
-metrics: {}
-```
-
-```toml tab="File (TOML)"
-[metrics]
-```
-
-```bash tab="CLI"
---metrics=true
-```
-
 ## Server Metrics
 
 | Metric                                                                  | DataDog | InfluxDB | Prometheus | StatsD |
