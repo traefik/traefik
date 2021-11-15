@@ -7,6 +7,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/ExpediaDotCom/haystack-client-go v0.0.0-20190315171017-e7edbdf53a61
 	github.com/Masterminds/sprig/v3 v3.2.2
+	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/Microsoft/hcsshim v0.8.7 // indirect
 	github.com/Shopify/sarama v1.23.1 // indirect
 	github.com/abbot/go-http-auth v0.0.0-00010101000000-000000000000
