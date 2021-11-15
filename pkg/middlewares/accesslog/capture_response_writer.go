@@ -81,3 +81,11 @@ func (crw *captureResponseWriter) Status() int {
 func (crw *captureResponseWriter) Size() int64 {
 	return crw.size
 }
+
+// Push HTTP2-Push support
+func (crw *captureResponseWriter) Push(target string, opts *http.PushOptions) error {
+	if pusher, ok := crw.rw.(http.Pusher); ok {
+		return pusher.Push(target, opts)
+	}
+	return nil
+}
