@@ -8,7 +8,6 @@
 /webui/static/
 /site/
 /docs/site/
-/static/
 /autogen/
 /traefik
 /traefik.toml

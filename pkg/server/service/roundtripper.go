@@ -152,16 +152,7 @@ func createRoundTripper(cfg *dynamic.ServersTransport) (http.RoundTripper, error
 		return transport, nil
 	}
 
-	transport.RegisterProtocol("h2c", &h2cTransportWrapper{
-		Transport: &http2.Transport{
-			DialTLS: func(netw, addr string, cfg *tls.Config) (net.Conn, error) {
-				return net.Dial(netw, addr)
-			},
-			AllowHTTP: true,
-		},
-	})
-
-	return newSmartRoundTripper(transport)
+	return newSmartRoundTripper(transport, cfg.ForwardingTimeouts)
 }
 
 func createRootCACertPool(rootCAs []traefiktls.FileOrContent) *x509.CertPool {

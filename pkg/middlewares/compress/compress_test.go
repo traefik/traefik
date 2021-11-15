@@ -305,6 +305,57 @@ func TestIntegrationShouldCompress(t *testing.T) {
 	}
 }
 
+func TestMinResponseBodyBytes(t *testing.T) {
+	fakeBody := generateBytes(100000)
+
+	testCases := []struct {
+		name                 string
+		minResponseBodyBytes int
+		expectedCompression  bool
+	}{
+		{
+			name:                "should compress",
+			expectedCompression: true,
+		},
+		{
+			name:                 "should not compress",
+			minResponseBodyBytes: 100001,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+			req.Header.Add(acceptEncodingHeader, gzipValue)
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+				if _, err := rw.Write(fakeBody); err != nil {
+					http.Error(rw, err.Error(), http.StatusInternalServerError)
+				}
+			})
+
+			handler, err := New(context.Background(), next, dynamic.Compress{MinResponseBodyBytes: test.minResponseBodyBytes}, "testing")
+			require.NoError(t, err)
+
+			rw := httptest.NewRecorder()
+			handler.ServeHTTP(rw, req)
+
+			if test.expectedCompression {
+				assert.Equal(t, gzipValue, rw.Header().Get(contentEncodingHeader))
+				assert.NotEqualValues(t, rw.Body.Bytes(), fakeBody)
+				return
+			}
+
+			assert.Empty(t, rw.Header().Get(contentEncodingHeader))
+			assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+		})
+	}
+}
+
 func BenchmarkCompress(b *testing.B) {
 	testCases := []struct {
 		name     string

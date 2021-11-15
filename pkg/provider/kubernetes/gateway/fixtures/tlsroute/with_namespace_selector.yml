@@ -1,0 +1,82 @@
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: bar
+  labels:
+    foo: bar
+
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: my-gateway-class
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: my-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners: # Use GatewayClass defaults for listener definition.
+    - name: tls
+      protocol: TLS
+      port: 9001
+      tls:
+        mode: Passthrough
+      allowedRoutes:
+        kinds:
+          - kind: TLSRoute
+            group: gateway.networking.k8s.io
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              foo: bar
+
+---
+kind: TLSRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: tls-app-default
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  hostnames:
+    - foo.default
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 9000
+          weight: 1
+          kind: Service
+          group: ""
+
+---
+kind: TLSRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: tls-app-bar
+  namespace: bar
+spec:
+  parentRefs:
+    - name: my-gateway
+      namespace: default
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  hostnames:
+    - foo.bar
+  rules:
+    - backendRefs:
+        - name: whoamitcp-bar
+          port: 9000
+          weight: 1
+          kind: Service
+          group: ""

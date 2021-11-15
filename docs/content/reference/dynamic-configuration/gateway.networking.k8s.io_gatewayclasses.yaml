@@ -4,11 +4,11 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.5.0
+    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/891
   creationTimestamp: null
-  name: gatewayclasses.networking.x-k8s.io
+  name: gatewayclasses.gateway.networking.k8s.io
 spec:
-  group: networking.x-k8s.io
+  group: gateway.networking.k8s.io
   names:
     categories:
     - gateway-api
@@ -27,12 +27,26 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
-    name: v1alpha1
+    - jsonPath: .spec.description
+      name: Description
+      priority: 1
+      type: string
+    name: v1alpha2
     schema:
       openAPIV3Schema:
         description: "GatewayClass describes a class of Gateways available to the
-          user for creating Gateway resources. \n GatewayClass is a Cluster level
-          resource."
+          user for creating Gateway resources. \n It is recommended that this resource
+          be used as a template for Gateways. This means that a Gateway is based on
+          the state of the GatewayClass at the time it was created and changes to
+          the GatewayClass or associated parameters are not propagated down to existing
+          Gateways. This recommendation is intended to limit the blast radius of changes
+          to GatewayClass or associated parameters. If implementations choose to propagate
+          GatewayClass changes to existing Gateways, that MUST be clearly documented
+          by the implementation. \n Whenever one or more Gateways are using a GatewayClass,
+          implementations MUST add the `gateway-exists-finalizer.gateway.networking.k8s.io`
+          finalizer on the associated GatewayClass. This ensures that a GatewayClass
+          associated with a Gateway is not deleted while in use. \n GatewayClass is
+          a Cluster level resource."
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -49,14 +63,18 @@ spec:
           spec:
             description: Spec defines the desired state of GatewayClass.
             properties:
-              controller:
-                description: "Controller is a domain/path string that indicates the
-                  controller that is managing Gateways of this class. \n Example:
-                  \"acme.io/gateway-controller\". \n This field is not mutable and
-                  cannot be empty. \n The format of this field is DOMAIN \"/\" PATH,
-                  where DOMAIN and PATH are valid Kubernetes names (https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names).
-                  \n Support: Core"
+              controllerName:
+                description: "ControllerName is the name of the controller that is
+                  managing Gateways of this class. The value of this field MUST be
+                  a domain prefixed path. \n Example: \"example.net/gateway-controller\".
+                  \n This field is not mutable and cannot be empty. \n Support: Core"
                 maxLength: 253
+                minLength: 1
+                pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*\/[A-Za-z0-9\/\-._~%!$&'()*+,;=:]+$
+                type: string
+              description:
+                description: Description helps describe a GatewayClass with more details.
+                maxLength: 64
                 type: string
               parametersRef:
                 description: "ParametersRef is a reference to a resource that contains
@@ -71,12 +89,13 @@ spec:
                   group:
                     description: Group is the group of the referent.
                     maxLength: 253
-                    minLength: 1
+                    pattern: ^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
                     type: string
                   kind:
                     description: Kind is kind of the referent.
-                    maxLength: 253
+                    maxLength: 63
                     minLength: 1
+                    pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
                     type: string
                   name:
                     description: Name is the name of the referent.
@@ -85,18 +104,11 @@ spec:
                     type: string
                   namespace:
                     description: Namespace is the namespace of the referent. This
-                      field is required when scope is set to "Namespace" and ignored
-                      when scope is set to "Cluster".
-                    maxLength: 253
+                      field is required when referring to a Namespace-scoped resource
+                      and MUST be unset when referring to a Cluster-scoped resource.
+                    maxLength: 63
                     minLength: 1
-                    type: string
-                  scope:
-                    default: Cluster
-                    description: Scope represents if the referent is a Cluster or
-                      Namespace scoped resource. This may be set to "Cluster" or "Namespace".
-                    enum:
-                    - Cluster
-                    - Namespace
+                    pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                     type: string
                 required:
                 - group
@@ -104,7 +116,7 @@ spec:
                 - name
                 type: object
             required:
-            - controller
+            - controllerName
             type: object
           status:
             default:
@@ -112,8 +124,8 @@ spec:
               - lastTransitionTime: "1970-01-01T00:00:00Z"
                 message: Waiting for controller
                 reason: Waiting
-                status: "False"
-                type: Admitted
+                status: Unknown
+                type: Accepted
             description: Status defines the current state of GatewayClass.
             properties:
               conditions:
@@ -121,8 +133,8 @@ spec:
                 - lastTransitionTime: "1970-01-01T00:00:00Z"
                   message: Waiting for controller
                   reason: Waiting
-                  status: "False"
-                  type: Admitted
+                  status: Unknown
+                  type: Accepted
                 description: "Conditions is the current status from the controller
                   for this GatewayClass. \n Controllers should prefer to publish conditions
                   using values of GatewayClassConditionType for the type of each Condition."
@@ -199,6 +211,8 @@ spec:
                 - type
                 x-kubernetes-list-type: map
             type: object
+        required:
+        - spec
         type: object
     served: true
     storage: true
