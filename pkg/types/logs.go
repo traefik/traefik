@@ -21,9 +21,10 @@ const (
 
 // TraefikLog holds the configuration settings for the traefik logger.
 type TraefikLog struct {
-	Level    string `description:"Log level set to traefik logs." json:"level,omitempty" toml:"level,omitempty" yaml:"level,omitempty" export:"true"`
-	FilePath string `description:"Traefik log file path. Stdout is used when omitted or empty." json:"filePath,omitempty" toml:"filePath,omitempty" yaml:"filePath,omitempty"`
-	Format   string `description:"Traefik log format: json | common" json:"format,omitempty" toml:"format,omitempty" yaml:"format,omitempty" export:"true"`
+	Level     string `description:"Log level set to traefik logs." json:"level,omitempty" toml:"level,omitempty" yaml:"level,omitempty" export:"true"`
+	FilePath  string `description:"Traefik log file path. Stdout is used when omitted or empty." json:"filePath,omitempty" toml:"filePath,omitempty" yaml:"filePath,omitempty"`
+	Format    string `description:"Traefik log format: json | common" json:"format,omitempty" toml:"format,omitempty" yaml:"format,omitempty" export:"true"`
+	EnableETW bool   `description:"Log to ETW on Windows (provider id {63fae199-b614-503b-8fb6-c0be6dbe3fe5})." json:"enableETW,omitempty" toml:"enableETW,omitempty" yaml:"enableETW,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
