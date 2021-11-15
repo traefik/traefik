@@ -2,10 +2,6 @@
 
 package log
 
-import (
-	"io"
-)
-
 func InitNativeTracer() {
 	return
 }
