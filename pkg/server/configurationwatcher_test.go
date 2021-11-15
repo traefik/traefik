@@ -48,8 +48,8 @@ func (p *mockProvider) Provide(configurationChan chan<- dynamic.Message, pool *s
 }
 
 // ThrottleDuration returns the throttle duration.
-func (p *mockProvider) ThrottleDuration() *time.Duration {
-	return &p.throttleDuration
+func (p mockProvider) ThrottleDuration() time.Duration {
+	return p.throttleDuration
 }
 
 func (p *mockProvider) Init() error {

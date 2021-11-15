@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -29,11 +28,6 @@ var templatesRenderer = render.New(render.Options{Directory: "nowhere"})
 
 // Init the provider.
 func (p *Provider) Init() error {
-	return nil
-}
-
-// ThrottleDuration returns the throttle duration.
-func (p *Provider) ThrottleDuration() *time.Duration {
 	return nil
 }
 

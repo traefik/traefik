@@ -102,11 +102,6 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-// ThrottleDuration returns the throttle duration.
-func (p *Provider) ThrottleDuration() *time.Duration {
-	return nil
-}
-
 // Provide allows the consul catalog provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	var err error

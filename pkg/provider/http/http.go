@@ -66,11 +66,6 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-// ThrottleDuration returns the throttle duration.
-func (p *Provider) ThrottleDuration() *time.Duration {
-	return nil
-}
-
 // Provide allows the provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {

@@ -94,11 +94,6 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-// ThrottleDuration returns the throttle duration.
-func (p *Provider) ThrottleDuration() *time.Duration {
-	return nil
-}
-
 func (p *Provider) createClient(logger log.Logger) (*awsClient, error) {
 	sess, err := session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,

@@ -69,11 +69,6 @@ func (p *providerMock) Init() error {
 	return nil
 }
 
-// ThrottleDuration returns the throttle duration.
-func (p *providerMock) ThrottleDuration() *time.Duration {
-	return nil
-}
-
 func (p *providerMock) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	configurationChan <- dynamic.Message{
 		ProviderName:  p.Name,

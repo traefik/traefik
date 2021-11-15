@@ -104,9 +104,8 @@ func (c *ChallengeTLSALPN) Init() error {
 }
 
 // ThrottleDuration returns the throttle duration.
-func (p *ChallengeTLSALPN) ThrottleDuration() *time.Duration {
-	duration := time.Duration(0)
-	return &duration
+func (p ChallengeTLSALPN) ThrottleDuration() time.Duration {
+	return 0
 }
 
 // Provide allows the provider to provide configurations to traefik using the given configuration channel.

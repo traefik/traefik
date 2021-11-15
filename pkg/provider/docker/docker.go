@@ -83,11 +83,6 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-// ThrottleDuration returns the throttle duration.
-func (p *Provider) ThrottleDuration() *time.Duration {
-	return nil
-}
-
 // dockerData holds the need data to the provider.
 type dockerData struct {
 	ID              string

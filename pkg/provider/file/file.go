@@ -45,9 +45,10 @@ func (p *Provider) Init() error {
 }
 
 // ThrottleDuration returns the throttle duration.
-func (p *Provider) ThrottleDuration() *time.Duration {
-	duration := time.Duration(0)
-	return &duration
+func (p Provider) ThrottleDuration() time.Duration {
+	// TODO
+	println("TEST THIS")
+	return 0
 }
 
 // Provide allows the file provider to provide configurations to traefik

@@ -107,7 +107,8 @@ func (p *Provider) ThrottleDuration() *time.Duration {
 	return nil
 }
 
-// Provide allows the k8s provider to provide configurations to traefik using the given configuration channel.
+// Provide allows the k8s provider to provide configurations to traefik
+// using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	ctxLog := log.With(context.Background(), log.Str(log.ProviderName, providerName))
 	logger := log.FromContext(ctxLog)
