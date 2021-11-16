@@ -1,7 +1,6 @@
 # Traefik & Kubernetes
 
-The Kubernetes Gateway API, The Experimental Way.
-{: .subtitle }
+The Kubernetes Gateway API, The Experimental Way. {: .subtitle }
 
 ## Configuration Examples
 
@@ -28,162 +27,180 @@ The Kubernetes Gateway API, The Experimental Way.
 ### Custom Resource Definition (CRD)
 
 * You can find an exhaustive list, of the custom resources and their attributes in
-[the reference page](../../reference/dynamic-configuration/kubernetes-gateway.md) or in the Kubernetes Sigs `Gateway API` [repository](https://github.com/kubernetes-sigs/gateway-api).
-* Validate that [the prerequisites](../../providers/kubernetes-gateway.md#configuration-requirements) are fulfilled before using the Traefik Kubernetes Gateway Provider.
-    
+  [the reference page](../../reference/dynamic-configuration/kubernetes-gateway.md) or in the Kubernetes
+  Sigs `Gateway API` [repository](https://github.com/kubernetes-sigs/gateway-api).
+* Validate that [the prerequisites](../../providers/kubernetes-gateway.md#configuration-requirements) are fulfilled
+  before using the Traefik Kubernetes Gateway Provider.
+
 You can find an excerpt of the supported Kubernetes Gateway API resources in the table below:
 
 | Kind                               | Purpose                                                                   | Concept Behind                                                                       |
 |------------------------------------|---------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
-| [GatewayClass](#kind-gatewayclass) | Defines a set of Gateways that share a common configuration and behaviour | [GatewayClass](https://gateway-api.sigs.k8s.io/v1alpha1/api-types/gatewayclass)      |
-| [Gateway](#kind-gateway)           | Describes how traffic can be translated to Services within the cluster    | [Gateway](https://gateway-api.sigs.k8s.io/v1alpha1/api-types/gateway)                |
-| [HTTPRoute](#kind-httproute)       | HTTP rules for mapping requests from a Gateway to Kubernetes Services     | [Route](https://gateway-api.sigs.k8s.io/v1alpha1/api-types/httproute)                |
+| [GatewayClass](#kind-gatewayclass) | Defines a set of Gateways that share a common configuration and behaviour | [GatewayClass](https://gateway-api.sigs.k8s.io/v1alpha2/api-types/gatewayclass)      |
+| [Gateway](#kind-gateway)           | Describes how traffic can be translated to Services within the cluster    | [Gateway](https://gateway-api.sigs.k8s.io/v1alpha2/api-types/gateway)                |
+| [HTTPRoute](#kind-httproute)       | HTTP rules for mapping requests from a Gateway to Kubernetes Services     | [Route](https://gateway-api.sigs.k8s.io/v1alpha2/api-types/httproute)                |
 | [TCPRoute](#kind-tcproute)         | Allows mapping TCP requests from a Gateway to Kubernetes Services         | [Route](https://gateway-api.sigs.k8s.io/concepts/api-overview/#tcproute-and-udproute)|
 | [TLSRoute](#kind-tlsroute)         | Allows mapping TLS requests from a Gateway to Kubernetes Services         | [Route](https://gateway-api.sigs.k8s.io/concepts/api-overview/#tcproute-and-udproute)|
 
 ### Kind: `GatewayClass`
 
-`GatewayClass` is cluster-scoped resource defined by the infrastructure provider. This resource represents a class of Gateways that can be instantiated.
-More details on the GatewayClass [official documentation](https://gateway-api.sigs.k8s.io/v1alpha1/api-types/gatewayclass/).
+`GatewayClass` is cluster-scoped resource defined by the infrastructure provider. This resource represents a class of
+Gateways that can be instantiated. More details on the
+GatewayClass [official documentation](https://gateway-api.sigs.k8s.io/v1alpha1/api-types/gatewayclass/).
 
 The `GatewayClass` should be declared by the infrastructure provider, otherwise please register the `GatewayClass`
-[definition](../../reference/dynamic-configuration/kubernetes-gateway.md#definitions) in the Kubernetes cluster before 
+[definition](../../reference/dynamic-configuration/kubernetes-gateway.md#definitions) in the Kubernetes cluster before
 creating `GatewayClass` objects.
 
 !!! info "Declaring GatewayClass"
 
     ```yaml
+    apiVersion: gateway.networking.k8s.io/v1alpha2
     kind: GatewayClass
-    apiVersion: networking.x-k8s.io/v1alpha1
     metadata:
       name: my-gateway-class
     spec:
       # Controller is a domain/path string that indicates
       # the controller that is managing Gateways of this class.
-      controller: traefik.io/gateway-controller
+      controllerName: traefik.io/gateway-controller
     ```
 
 ### Kind: `Gateway`
 
-A `Gateway` is 1:1 with the life cycle of the configuration of infrastructure. When a user creates a Gateway, 
-some load balancing infrastructure is provisioned or configured by the GatewayClass controller. 
-More details on the Gateway [official documentation](https://gateway-api.sigs.k8s.io/v1alpha1/api-types/gateway/).
+A `Gateway` is 1:1 with the life cycle of the configuration of infrastructure. When a user creates a Gateway, some load
+balancing infrastructure is provisioned or configured by the GatewayClass controller. More details on the
+Gateway [official documentation](https://gateway-api.sigs.k8s.io/v1alpha2/api-types/gateway/).
 
 Register the `Gateway` [definition](../../reference/dynamic-configuration/kubernetes-gateway.md#definitions) in the
 Kubernetes cluster before creating `Gateway` objects.
 
 Depending on the Listener Protocol, different modes and Route types are supported.
 
-| Listener Protocol | TLS Mode       | Route Type Supported         |
-|-------------------|----------------|------------------------------|
-| TCP               | Not applicable | [TCPRoute](#kind-tcproute)   |
-| TLS               | Passthrough    | [TLSRoute](#kind-tlsroute)   |
-| TLS               | Terminate      | [TCPRoute](#kind-tcproute)   |
-| HTTP              | Not applicable | [HTTPRoute](#kind-httproute) |
-| HTTPS             | Terminate      | [HTTPRoute](#kind-httproute) |
+| Listener Protocol | TLS Mode       | Route Type Supported                                   |
+|-------------------|----------------|--------------------------------------------------------|
+| TCP               | Not applicable | [TCPRoute](#kind-tcproute)                             |
+| TLS               | Passthrough    | [TLSRoute](#kind-tlsroute), [TCPRoute](#kind-tcproute) |
+| TLS               | Terminate      | [TLSRoute](#kind-tlsroute), [TCPRoute](#kind-tcproute) |
+| HTTP              | Not applicable | [HTTPRoute](#kind-httproute)                           |
+| HTTPS             | Terminate      | [HTTPRoute](#kind-httproute)                           |
 
 !!! info "Declaring Gateway"
 
     ```yaml tab="HTTP Listener"
+    apiVersion: gateway.networking.k8s.io/v1alpha2
     kind: Gateway
-    apiVersion: networking.x-k8s.io/v1alpha1
     metadata:
       name: my-http-gateway
       namespace: default
     spec:
       gatewayClassName: my-gateway-class        # [1]
       listeners:                                # [2]
-        - protocol: HTTP                        # [3] 
-          port: 80                              # [4]
-          routes:                               # [8]
-            kind: HTTPRoute                     # [9]
-            selector:                           # [10]
-              matchLabels:                      # [11]
-                app: foo
+        - name: http                            # [3]
+          protocol: HTTP                        # [4] 
+          port: 80                              # [5]
+          allowedRoutes:                        # [9]
+            kinds:
+              - kind: HTTPRoute                 # [10]
+            namespaces:
+              from: Selector                    # [11]
+              selector:                         # [12]
+                matchLabels:                    
+                  app: foo
     ```
 
     ```yaml tab="HTTPS Listener"
+    apiVersion: gateway.networking.k8s.io/v1alpha2
     kind: Gateway
-    apiVersion: networking.x-k8s.io/v1alpha1
     metadata:
       name: my-https-gateway
       namespace: default
     spec:
       gatewayClassName: my-gateway-class        # [1]
       listeners:                                # [2]
-        - protocol: HTTPS                       # [3] 
-          port: 443                             # [4]
-          tls:                                  # [6]
-            certificateRef:                     # [7]
-              group: "core"
-              kind: "Secret"
-              name: "mysecret"
-          routes:                               # [8]
-            kind: HTTPRoute                     # [9]
-            selector:                           # [10]
-              matchLabels:                      # [11]
-                app: foo
+        - name: https                           # [3]
+          protocol: HTTPS                       # [4] 
+          port: 443                             # [5]
+          tls:                                  # [7]
+            certificateRefs:                    # [8]
+              - kind: "Secret"
+                name: "mysecret"
+          allowedRoutes:                        # [9]
+            kinds:
+              - kind: HTTPSRoute                # [10]
+            namespaces:
+              from: Selector                    # [11]
+              selector:                         # [12]
+                matchLabels:                    
+                  app: foo
     ```
 
     ```yaml tab="TCP Listener"
+    apiVersion: gateway.networking.k8s.io/v1alpha2
     kind: Gateway
-    apiVersion: networking.x-k8s.io/v1alpha1
     metadata:
       name: my-tcp-gateway
       namespace: default
     spec:
       gatewayClassName: my-gateway-class        # [1]
       listeners:                                # [2]
-        - protocol: TCP                         # [3] 
-          port: 8000                            # [4]
-          routes:                               # [8]
-            kind: TCPRoute                      # [9]
-            selector:                           # [10]
-              matchLabels:                      # [11]
-                app: footcp
+        - name: tcp                             # [3]
+          protocol: TCP                         # [4] 
+          port: 8000                            # [5]
+          allowedRoutes:                        # [9]
+            kinds:
+              - kind: TCPRoute                  # [10]  
+            namespaces:
+              from: Selector                    # [11]
+              selector:                         # [12]
+                matchLabels:                    
+                  app: footcp
     ```
 
     ```yaml tab="TLS Listener"
+    apiVersion: gateway.networking.k8s.io/v1alpha2
     kind: Gateway
-    apiVersion: networking.x-k8s.io/v1alpha1
     metadata:
       name: my-tls-gateway
       namespace: default
     spec:
       gatewayClassName: my-gateway-class        # [1]
       listeners:                                # [2]
-        - protocol: TLS                         # [3] 
-          port: 443                             # [4]
-          hostname: foo.com                     # [5]
-          tls:                                  # [6]
-            certificateRef:                     # [7]
-              group: "core"
-              kind: "Secret"
-              name: "mysecret"
-          routes:                               # [8]
-            kind: TLSRoute                      # [9]
-            selector:                           # [10]
-              matchLabels:                      # [11]
-                app: footcp
+        - name: tls                             # [3]
+          protocol: TLS                         # [4] 
+          port: 443                             # [5]
+          hostname: foo.com                     # [6]
+          tls:                                  # [7]
+            certificateRefs:                    # [8]
+              - kind: "Secret"
+                name: "mysecret"
+          allowedRoutes:                        # [9]
+            kinds:
+              - kind: TLSRoute                  # [10]
+            namespaces:
+              from: Selector                    # [11]
+              selector:                         # [12]
+                matchLabels:                    
+                  app: footcp
     ```
 
-| Ref  | Attribute          | Description                                                                                                                                          |
-|------|--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1]  | `gatewayClassName` | GatewayClassName used for this Gateway. This is the name of a GatewayClass resource.                                                                 |
-| [2]  | `listeners`        | Logical endpoints that are bound on this Gateway's addresses. At least one Listener MUST be specified.                                               |
-| [3]  | `protocol`         | The network protocol this listener expects to receive (only HTTP and HTTPS are implemented).                                                         |
-| [4]  | `port`             | The network port.                                                                                                                                    |
-| [5]  | `hostname`         | Hostname specifies the virtual hostname to match for protocol types that define this concept. When unspecified, “”, or *, all hostnames are matched. |
-| [6]  | `tls`              | TLS configuration for the Listener. This field is required if the Protocol field is "HTTPS" or "TLS" and ignored otherwise.                          |
-| [7]  | `certificateRef`   | The reference to Kubernetes object that contains a TLS certificate and private key.                                                                  |
-| [8]  | `routes`           | A schema for associating routes with the Listener using selectors.                                                                                   |
-| [9]  | `kind`             | The kind of the referent.                                                                                                                            |
-| [10] | `selector`         | Routes in namespaces selected by the selector may be used by this Gateway routes to associate with the Gateway.                                      |
-| [11] | `matchLabels`      | A set of route labels used for selecting routes to associate with the Gateway.                                                                       |
+| Ref  | Attribute          | Description                                                                                                                                                 |
+|------|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [1]  | `gatewayClassName` | GatewayClassName used for this Gateway. This is the name of a GatewayClass resource.                                                                        |
+| [2]  | `listeners`        | Logical endpoints that are bound on this Gateway's addresses. At least one Listener MUST be specified.                                                      |
+| [3]  | `name`             | Name of the Listener.                                                                                                                                       |
+| [4]  | `protocol`         | The network protocol this listener expects to receive (only HTTP and HTTPS are implemented).                                                                |
+| [5]  | `port`             | The network port.                                                                                                                                           |
+| [6]  | `hostname`         | Hostname specifies the virtual hostname to match for protocol types that define this concept. When unspecified, “”, or *, all hostnames are matched.        |
+| [7]  | `tls`              | TLS configuration for the Listener. This field is required if the Protocol field is "HTTPS" or "TLS" and ignored otherwise.                                 |
+| [8]  | `certificateRefs`  | The references to Kubernetes objects that contains TLS certificates and private keys (only one reference to a Kubernetes Secret is supported).              |
+| [9]  | `allowedRoutes`    | Defines the types of routes that MAY be attached to a Listener and the trusted namespaces where those Route resources MAY be present.                       |
+| [10] | `kind`             | The kind of the Route.                                                                                                                                      |
+| [11] | `from`             | From indicates in which namespaces the Routes will be selected for this Gateway. Possible values are `All`, `Same` and `Selector` (Defaults to `Same`).     |
+| [12] | `selector`         | Selector must be specified when From is set to `Selector`. In that case, only Routes in Namespaces matching this Selector will be selected by this Gateway. |
 
 ### Kind: `HTTPRoute`
 
-`HTTPRoute` defines HTTP rules for mapping requests from a `Gateway` to Kubernetes Services. 
+`HTTPRoute` defines HTTP rules for mapping requests from a `Gateway` to Kubernetes Services.
 
 Register the `HTTPRoute` [definition](../../reference/dynamic-configuration/kubernetes-gateway.md#definitions) in the
 Kubernetes cluster before creating `HTTPRoute` objects.
@@ -191,61 +208,60 @@ Kubernetes cluster before creating `HTTPRoute` objects.
 !!! info "Declaring HTTPRoute"
 
     ```yaml
+    apiVersion: gateway.networking.k8s.io/v1alpha2
     kind: HTTPRoute
-    apiVersion: networking.x-k8s.io/v1alpha1
     metadata:
-      name: http-app-1
+      name: http-app
       namespace: default
-      labels:                                   # [1]
-        app: foo
     spec:
-      hostnames:                                # [2]
-        - "whoami"
-      rules:                                    # [3]
-        - matches:                              # [4]
-            - path:                             # [5]
-                type: Exact                     # [6]
-                value: /bar                     # [7]
-            - headers:                          # [8]
+      parentRefs:                               # [1]
+        - name: my-tcp-gateway                  # [2]
+          namespace: default                    # [3]
+          sectionName: tcp                      # [4] 
+      hostnames:                                # [5]
+        - whoami
+      rules:                                    # [6]
+        - matches:                              # [7]
+            - path:                             # [8]
                 type: Exact                     # [9]
-                values:                         # [10]
-                  foo: bar
-          forwardTo:                            # [11]
-            - serviceName: whoami               # [12]
-              weight: 1                         # [13]
-              port: 80                          # [14]
-            - backendRef:                       # [15]
-                group: traefik.containo.us      # [16]
-                kind: TraefikService            # [17]
-                name: api@internal              # [18]
-              port: 80
-              weight: 1
+                value: /bar                     # [10]
+            - headers:                          # [11]
+                name: foo                       # [12]
+                value: bar                      # [13]
+        - backendRefs:                          # [14]
+            - name: whoamitcp                   # [15]
+              weight: 1                         # [16]
+              port: 8080                        # [17]
+            - name: api@internal
+              group: traefik.containo.us        # [18]
+              kind: TraefikService              # [19]
     ```
 
-| Ref  | Attribute     | Description                                                                                                                                                                                                                                  |
-|------|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1]  | `labels`      | Labels to match with the `Gateway` labelselector.                                                                                                                                                                                            |
-| [2]  | `hostnames`   | A set of hostname that should match against the HTTP Host header to select a HTTPRoute to process the request.                                                                                                                               |
-| [3]  | `rules`       | A list of HTTP matchers, filters and actions.                                                                                                                                                                                                |
-| [4]  | `matches`     | Conditions used for matching the rule against incoming HTTP requests. Each match is independent, i.e. this rule will be matched if **any** one of the matches is satisfied.                                                                  |
-| [5]  | `path`        | An HTTP request path matcher. If this field is not specified, a default prefix match on the "/" path is provided.                                                                                                                            |
-| [6]  | `type`        | Type of match against the path Value (supported types: `Exact`, `Prefix`).                                                                                                                                                                   |
-| [7]  | `value`       | The value of the HTTP path to match against.                                                                                                                                                                                                 |
-| [8]  | `headers`     | Conditions to select a HTTP route by matching HTTP request headers.                                                                                                                                                                          |
-| [9]  | `type`        | Type of match for the HTTP request header match against the `values` (supported types: `Exact`).                                                                                                                                             |
-| [10] | `values`      | A map of HTTP Headers to be matched. It MUST contain at least one entry.                                                                                                                                                                     |
-| [11] | `forwardTo`   | The upstream target(s) where the request should be sent.                                                                                                                                                                                     |
-| [12] | `serviceName` | The name of the referent service.                                                                                                                                                                                                            |
-| [13] | `weight`      | The proportion of traffic forwarded to a targetRef, computed as weight/(sum of all weights in targetRefs).                                                                                                                                   |
-| [14] | `port`        | The port of the referent service.                                                                                                                                                                                                            |
-| [15] | `backendRef`  | The BackendRef is a reference to a backend (API object within a known namespace) to forward matched requests to. If both BackendRef and ServiceName are specified, ServiceName will be given precedence. Only `TraefikService` is supported. |
-| [16] | `group`       | Group is the group of the referent. Only `traefik.containo.us` value is supported.                                                                                                                                                           |
-| [17] | `kind`        | Kind is kind of the referent. Only `TraefikService` value is supported.                                                                                                                                                                      |
-| [18] | `name`        | Name is the name of the referent.                                                                                                                                                                                                            |
+| Ref  | Attribute     | Description                                                                                                                                                                 |
+|------|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [1]  | `parentRefs`  | References the resources (usually Gateways) that a Route wants to be attached to.                                                                                           |
+| [2]  | `name`        | Name of the referent.                                                                                                                                                       |
+| [3]  | `namespace`   | Namespace of the referent. When unspecified (or empty string), this refers to the local namespace of the Route.                                                             |
+| [4]  | `sectionName` | Name of a section within the target resource (the Listener name).                                                                                                           |
+| [5]  | `hostnames`   | A set of hostname that should match against the HTTP Host header to select a HTTPRoute to process the request.                                                              |
+| [6]  | `rules`       | A list of HTTP matchers, filters and actions.                                                                                                                               |
+| [7]  | `matches`     | Conditions used for matching the rule against incoming HTTP requests. Each match is independent, i.e. this rule will be matched if **any** one of the matches is satisfied. |
+| [8]  | `path`        | An HTTP request path matcher. If this field is not specified, a default prefix match on the "/" path is provided.                                                           |
+| [9]  | `type`        | Type of match against the path Value (supported types: `Exact`, `Prefix`).                                                                                                  |
+| [10] | `value`       | The value of the HTTP path to match against.                                                                                                                                |
+| [11] | `headers`     | Conditions to select a HTTP route by matching HTTP request headers.                                                                                                         |
+| [12] | `type`        | Type of match for the HTTP request header match against the `values` (supported types: `Exact`).                                                                            |
+| [13] | `value`       | A map of HTTP Headers to be matched. It MUST contain at least one entry.                                                                                                    |
+| [14] | `backendRefs` | Defines the backend(s) where matching requests should be sent.                                                                                                              |
+| [15] | `name`        | The name of the referent service.                                                                                                                                           |
+| [16] | `weight`      | The proportion of traffic forwarded to a targetRef, computed as weight/(sum of all weights in targetRefs).                                                                  |
+| [17] | `port`        | The port of the referent service.                                                                                                                                           |
+| [18] | `group`       | Group is the group of the referent. Only `traefik.containo.us` and `gateway.networking.k8s.io` values are supported.                                                        |
+| [19] | `kind`        | Kind is kind of the referent. Only `TraefikService` and `Service` values are supported.                                                                                     |
 
 ### Kind: `TCPRoute`
 
-`TCPRoute` allows mapping TCP requests from a `Gateway` to Kubernetes Services
+`TCPRoute` allows mapping TCP requests from a `Gateway` to Kubernetes Services.
 
 Register the `TCPRoute` [definition](../../reference/dynamic-configuration/kubernetes-gateway.md#definitions) in the
 Kubernetes cluster before creating `TCPRoute` objects.
@@ -253,76 +269,83 @@ Kubernetes cluster before creating `TCPRoute` objects.
 !!! info "Declaring TCPRoute"
 
     ```yaml
+    apiVersion: gateway.networking.k8s.io/v1alpha2
     kind: TCPRoute
-    apiVersion: networking.x-k8s.io/v1alpha1
     metadata:
-      name: tcp-app-1
+      name: tcp-app
       namespace: default
-      labels:                                   # [1]
-        app: tcp-app-1
     spec:
-      rules:                                    # [2]
-        - forwardTo:                            # [3]
-            - serviceName: whoamitcp            # [4]
-              weight: 1                         # [5]
-              port: 8080                        # [6]
-            - backendRef:                       # [7]
-                group: traefik.containo.us      # [8]
-                kind: TraefikService            # [9]
-                name: api@internal              # [10]
+      parentRefs:                               # [1]
+        - name: my-tcp-gateway                  # [2]
+          namespace: default                    # [3]
+          sectionName: tcp                      # [4]
+      rules:                                    # [5]
+        - backendRefs:                          # [6]
+            - name: whoamitcp                   # [7]
+              weight: 1                         # [8]
+              port: 8080                        # [9]
+            - name: api@internal
+              group: traefik.containo.us        # [10]
+              kind: TraefikService              # [11]
     ```
 
-| Ref  | Attribute     | Description                                                                                                                                                                                                                                  |
-|------|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1]  | `labels`      | Labels to match with the `Gateway` labelselector.                                                                                                                                                                                            |
-| [2]  | `rules`       | Rules are a list of TCP matchers and actions.                                                                                                                                                                                                |
-| [3]  | `forwardTo`   | The upstream target(s) where the request should be sent.                                                                                                                                                                                     |
-| [4]  | `serviceName` | The name of the referent service.                                                                                                                                                                                                            |
-| [5]  | `weight`      | The proportion of traffic forwarded to a targetRef, computed as weight/(sum of all weights in targetRefs).                                                                                                                                   |
-| [6]  | `port`        | The port of the referent service.                                                                                                                                                                                                            |
-| [7]  | `backendRef`  | The BackendRef is a reference to a backend (API object within a known namespace) to forward matched requests to. If both BackendRef and ServiceName are specified, ServiceName will be given precedence. Only `TraefikService` is supported. |
-| [8]  | `group`       | Group is the group of the referent. Only `traefik.containo.us` value is supported.                                                                                                                                                           |
-| [9]  | `kind`        | Kind is kind of the referent. Only `TraefikService` value is supported.                                                                                                                                                                      |
-| [10] | `name`        | Name is the name of the referent.                                                                                                                                                                                                            |
+| Ref  | Attribute     | Description                                                                                                          |
+|------|---------------|----------------------------------------------------------------------------------------------------------------------|
+| [1]  | `parentRefs`  | References the resources (usually Gateways) that a Route wants to be attached to.                                    |
+| [2]  | `name`        | Name of the referent.                                                                                                |
+| [3]  | `namespace`   | Namespace of the referent. When unspecified (or empty string), this refers to the local namespace of the Route.      |
+| [4]  | `sectionName` | Name of a section within the target resource (the Listener name).                                                    |
+| [5]  | `rules`       | Rules are a list of TCP matchers and actions.                                                                        |
+| [6]  | `backendRefs` | Defines the backend(s) where matching requests should be sent.                                                       |
+| [7]  | `name`        | The name of the referent service.                                                                                    |
+| [8]  | `weight`      | The proportion of traffic forwarded to a targetRef, computed as weight/(sum of all weights in targetRefs).           |
+| [9]  | `port`        | The port of the referent service.                                                                                    |
+| [10] | `group`       | Group is the group of the referent. Only `traefik.containo.us` and `gateway.networking.k8s.io` values are supported. |
+| [11] | `kind`        | Kind is kind of the referent. Only `TraefikService` and `Service` values are supported.                              |
 
 ### Kind: `TLSRoute`
 
-`TLSRoute` allows mapping TLS requests from a `Gateway` to Kubernetes Services
+`TLSRoute` allows mapping TLS requests from a `Gateway` to Kubernetes Services.
 
 Register the `TLSRoute` [definition](../../reference/dynamic-configuration/kubernetes-gateway.md#definitions) in the
 Kubernetes cluster before creating `TLSRoute` objects.
 
-!!! info "Declaring TCPRoute"
+!!! info "Declaring TLSRoute"
 
     ```yaml
+    apiVersion: gateway.networking.k8s.io/v1alpha2
     kind: TLSRoute
-    apiVersion: networking.x-k8s.io/v1alpha1
     metadata:
-      name: tls-app-1
+      name: tls-app
       namespace: default
-      labels:                                   # [1]
-        app: tls-app-1
     spec:
-      rules:                                    # [2]
-        - forwardTo:                            # [3]
-            - serviceName: whoamitcp            # [4]
-              weight: 1                         # [5]
-              port: 8080                        # [6]
-            - backendRef:                       # [7]
-                group: traefik.containo.us      # [8]
-                kind: TraefikService            # [9]
-                name: api@internal              # [10]
+      parentRefs:                               # [1]
+        - name: my-tls-gateway                  # [2]
+          namespace: default                    # [3]
+          sectionName: tcp                      # [4]
+      hostnames:                                # [5]
+        - whoami                                
+      rules:                                    # [6]
+        - backendRefs:                          # [7]
+            - name: whoamitcp                   # [8]
+              weight: 1                         # [9]
+              port: 8080                        # [10]
+            - name: api@internal
+              group: traefik.containo.us        # [11]
+              kind: TraefikService              # [12]
     ```
 
-| Ref  | Attribute     | Description                                                                                                                                                                                                                                  |
-|------|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1]  | `labels`      | Labels to match with the `Gateway` labelselector.                                                                                                                                                                                            |
-| [2]  | `rules`       | Rules are a list of TCP matchers and actions.                                                                                                                                                                                                |
-| [3]  | `forwardTo`   | The upstream target(s) where the request should be sent.                                                                                                                                                                                     |
-| [4]  | `serviceName` | The name of the referent service.                                                                                                                                                                                                            |
-| [5]  | `weight`      | The proportion of traffic forwarded to a targetRef, computed as weight/(sum of all weights in targetRefs).                                                                                                                                   |
-| [6]  | `port`        | The port of the referent service.                                                                                                                                                                                                            |
-| [7]  | `backendRef`  | The BackendRef is a reference to a backend (API object within a known namespace) to forward matched requests to. If both BackendRef and ServiceName are specified, ServiceName will be given precedence. Only `TraefikService` is supported. |
-| [8]  | `group`       | Group is the group of the referent. Only `traefik.containo.us` value is supported.                                                                                                                                                           |
-| [9]  | `kind`        | Kind is kind of the referent. Only `TraefikService` value is supported.                                                                                                                                                                      |
-| [10] | `name`        | Name is the name of the referent.                                                                                                                                                                                                            |
+| Ref  | Attribute     | Description                                                                                                          |
+|------|---------------|----------------------------------------------------------------------------------------------------------------------|
+| [1]  | `parentRefs`  | References the resources (usually Gateways) that a Route wants to be attached to.                                    |
+| [2]  | `name`        | Name of the referent.                                                                                                |
+| [3]  | `namespace`   | Namespace of the referent. When unspecified (or empty string), this refers to the local namespace of the Route.      |
+| [4]  | `sectionName` | Name of a section within the target resource (the Listener name).                                                    |
+| [5]  | `hostnames`   | Defines a set of SNI names that should match against the SNI attribute of TLS ClientHello message in TLS handshake.  |
+| [6]  | `rules`       | Rules are a list of TCP matchers and actions.                                                                        |
+| [7]  | `backendRefs` | Defines the backend(s) where matching requests should be sent.                                                       |
+| [8]  | `name`        | The name of the referent service.                                                                                    |
+| [9]  | `weight`      | The proportion of traffic forwarded to a targetRef, computed as weight/(sum of all weights in targetRefs).           |
+| [10] | `port`        | The port of the referent service.                                                                                    |
+| [11] | `group`       | Group is the group of the referent. Only `traefik.containo.us` and `gateway.networking.k8s.io` values are supported. |
+| [12] | `kind`        | Kind is kind of the referent. Only `TraefikService` and `Service` values are supported.                              |

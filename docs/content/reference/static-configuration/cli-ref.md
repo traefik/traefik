@@ -54,6 +54,9 @@ Certificates resolvers configuration. (Default: ```false```)
 `--certificatesresolvers.<name>.acme.caserver`:  
 CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```)
 
+`--certificatesresolvers.<name>.acme.certificatesduration`:  
+Certificates' duration in hours. (Default: ```2160```)
+
 `--certificatesresolvers.<name>.acme.dnschallenge`:  
 Activate DNS-01 Challenge. (Default: ```false```)
 
@@ -102,9 +105,6 @@ Entry points definition. (Default: ```false```)
 `--entrypoints.<name>.address`:  
 Entry point address.
 
-`--entrypoints.<name>.enablehttp3`:  
-Enable HTTP3. (Default: ```false```)
-
 `--entrypoints.<name>.forwardedheaders.insecure`:  
 Trust all forwarded headers. (Default: ```false```)
 
@@ -146,6 +146,12 @@ Subject alternative names.
 
 `--entrypoints.<name>.http.tls.options`:  
 Default TLS options for the routers linked to the entry point.
+
+`--entrypoints.<name>.http3`:  
+HTTP3 configuration. (Default: ```false```)
+
+`--entrypoints.<name>.http3.advertisedport`:  
+UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
 
 `--entrypoints.<name>.proxyprotocol`:  
 Proxy-Protocol configuration. (Default: ```false```)
@@ -237,6 +243,9 @@ Enable metrics on routers. (Default: ```false```)
 `--metrics.datadog.addserviceslabels`:  
 Enable metrics on services. (Default: ```true```)
 
+`--metrics.datadog.prefix`:  
+Prefix to use for metrics collection. (Default: ```traefik```)
+
 `--metrics.datadog.pushinterval`:  
 Datadog push interval. (Default: ```10```)
 
@@ -245,6 +254,9 @@ InfluxDB metrics exporter type. (Default: ```false```)
 
 `--metrics.influxdb.addentrypointslabels`:  
 Enable metrics on entry points. (Default: ```true```)
+
+`--metrics.influxdb.additionallabels.<name>`:  
+Additional labels (influxdb tags) on all metrics
 
 `--metrics.influxdb.address`:  
 InfluxDB address. (Default: ```localhost:8089```)
@@ -921,11 +933,14 @@ Sets the header name used to store the trace ID.
 `--tracing.instana`:  
 Settings for Instana. (Default: ```false```)
 
+`--tracing.instana.enableautoprofile`:  
+Enables automatic profiling for the Traefik process. (Default: ```false```)
+
 `--tracing.instana.localagenthost`:  
 Sets the Instana Agent host.
 
 `--tracing.instana.localagentport`:  
-Sets the Instana Agent port used. (Default: ```42699```)
+Sets the Instana Agent port. (Default: ```42699```)
 
 `--tracing.instana.loglevel`:  
 Sets the log level for the Instana tracer. ('error','warn','info','debug') (Default: ```info```)

@@ -60,7 +60,7 @@ http:
 
     Responses are compressed when the following criteria are all met:
 
-    * The response body is larger than `1400` bytes.
+    * The response body is larger than the configured minimum amount of bytes (default is `1024`).
     * The `Accept-Encoding` request header contains `gzip`.
     * The response is not already compressed, i.e. the `Content-Encoding` response header is not already set.
 
@@ -121,4 +121,56 @@ http:
 [http.middlewares]
   [http.middlewares.test-compress.compress]
     excludedContentTypes = ["text/event-stream"]
+```
+
+### `minResponseBodyBytes`
+
+`minResponseBodyBytes` specifies the minimum amount of bytes a response body must have to be compressed.
+
+The default value is `1024`, which should be a reasonable value for most cases.
+
+Responses smaller than the specified values will not be compressed.
+
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.test-compress.compress.minresponsebodybytes=1200"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-compress
+spec:
+  compress:
+    minResponseBodyBytes: 1200
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-compress.compress.minresponsebodybytes=1200"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-compress.compress.minresponsebodybytes": 1200
+}
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.test-compress.compress.minresponsebodybytes=1200"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-compress:
+      compress:
+        minResponseBodyBytes: 1200
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-compress.compress]
+    minResponseBodyBytes = 1200
 ```

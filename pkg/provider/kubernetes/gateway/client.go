@@ -16,9 +16,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"sigs.k8s.io/gateway-api/apis/v1alpha1"
-	"sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
-	"sigs.k8s.io/gateway-api/pkg/client/informers/externalversions"
+	"sigs.k8s.io/gateway-api/apis/v1alpha2"
+	"sigs.k8s.io/gateway-api/pkg/client/clientset/gateway/versioned"
+	"sigs.k8s.io/gateway-api/pkg/client/informers/gateway/externalversions"
 )
 
 const resyncPeriod = 10 * time.Minute
@@ -33,7 +33,7 @@ func (reh *resourceEventHandler) OnAdd(obj interface{}) {
 
 func (reh *resourceEventHandler) OnUpdate(oldObj, newObj interface{}) {
 	switch oldObj.(type) {
-	case *v1alpha1.GatewayClass:
+	case *v1alpha2.GatewayClass:
 		// Skip update for gateway classes. We only manage addition or deletion for this cluster-wide resource.
 		return
 	default:
@@ -51,23 +51,25 @@ func (reh *resourceEventHandler) OnDelete(obj interface{}) {
 type Client interface {
 	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
 
-	GetGatewayClasses() ([]*v1alpha1.GatewayClass, error)
-	UpdateGatewayStatus(gateway *v1alpha1.Gateway, gatewayStatus v1alpha1.GatewayStatus) error
-	UpdateGatewayClassStatus(gatewayClass *v1alpha1.GatewayClass, condition metav1.Condition) error
-	GetGateways() []*v1alpha1.Gateway
-	GetHTTPRoutes(namespace string, selector labels.Selector) ([]*v1alpha1.HTTPRoute, error)
-	GetTCPRoutes(namespace string, selector labels.Selector) ([]*v1alpha1.TCPRoute, error)
-	GetTLSRoutes(namespace string, selector labels.Selector) ([]*v1alpha1.TLSRoute, error)
+	GetGatewayClasses() ([]*v1alpha2.GatewayClass, error)
+	UpdateGatewayStatus(gateway *v1alpha2.Gateway, gatewayStatus v1alpha2.GatewayStatus) error
+	UpdateGatewayClassStatus(gatewayClass *v1alpha2.GatewayClass, condition metav1.Condition) error
+	GetGateways() []*v1alpha2.Gateway
+	GetHTTPRoutes(namespaces []string) ([]*v1alpha2.HTTPRoute, error)
+	GetTCPRoutes(namespaces []string) ([]*v1alpha2.TCPRoute, error)
+	GetTLSRoutes(namespaces []string) ([]*v1alpha2.TLSRoute, error)
 
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
+	GetNamespaces(selector labels.Selector) ([]string, error)
 }
 
 type clientWrapper struct {
 	csGateway versioned.Interface
 	csKube    kubernetes.Interface
 
+	factoryNamespace    informers.SharedInformerFactory
 	factoryGatewayClass externalversions.SharedInformerFactory
 	factoriesGateway    map[string]externalversions.SharedInformerFactory
 	factoriesKube       map[string]informers.SharedInformerFactory
@@ -171,15 +173,21 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		options.LabelSelector = c.labelSelector
 	}
 
+	c.factoryNamespace = informers.NewSharedInformerFactory(c.csKube, resyncPeriod)
+	c.factoryNamespace.Core().V1().Namespaces().Informer().AddEventHandler(eventHandler)
+
 	c.factoryGatewayClass = externalversions.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, externalversions.WithTweakListOptions(labelSelectorOptions))
-	c.factoryGatewayClass.Networking().V1alpha1().GatewayClasses().Informer().AddEventHandler(eventHandler)
+	c.factoryGatewayClass.Gateway().V1alpha2().GatewayClasses().Informer().AddEventHandler(eventHandler)
+
+	// TODO manage Reference Policy
+	// https://gateway-api.sigs.k8s.io/v1alpha2/references/spec/#gateway.networking.k8s.io/v1alpha2.ReferencePolicy
 
 	for _, ns := range namespaces {
 		factoryGateway := externalversions.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, externalversions.WithNamespace(ns))
-		factoryGateway.Networking().V1alpha1().Gateways().Informer().AddEventHandler(eventHandler)
-		factoryGateway.Networking().V1alpha1().HTTPRoutes().Informer().AddEventHandler(eventHandler)
-		factoryGateway.Networking().V1alpha1().TCPRoutes().Informer().AddEventHandler(eventHandler)
-		factoryGateway.Networking().V1alpha1().TLSRoutes().Informer().AddEventHandler(eventHandler)
+		factoryGateway.Gateway().V1alpha2().Gateways().Informer().AddEventHandler(eventHandler)
+		factoryGateway.Gateway().V1alpha2().HTTPRoutes().Informer().AddEventHandler(eventHandler)
+		factoryGateway.Gateway().V1alpha2().TCPRoutes().Informer().AddEventHandler(eventHandler)
+		factoryGateway.Gateway().V1alpha2().TLSRoutes().Informer().AddEventHandler(eventHandler)
 
 		factoryKube := informers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, informers.WithNamespace(ns))
 		factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
@@ -193,12 +201,19 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		c.factoriesSecret[ns] = factorySecret
 	}
 
+	c.factoryNamespace.Start(stopCh)
 	c.factoryGatewayClass.Start(stopCh)
 
 	for _, ns := range namespaces {
 		c.factoriesGateway[ns].Start(stopCh)
 		c.factoriesKube[ns].Start(stopCh)
 		c.factoriesSecret[ns].Start(stopCh)
+	}
+
+	for t, ok := range c.factoryNamespace.WaitForCacheSync(stopCh) {
+		if !ok {
+			return nil, fmt.Errorf("timed out waiting for controller caches to sync %s", t.String())
+		}
 	}
 
 	for t, ok := range c.factoryGatewayClass.WaitForCacheSync(stopCh) {
@@ -230,61 +245,98 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	return eventCh, nil
 }
 
-func (c *clientWrapper) GetHTTPRoutes(namespace string, selector labels.Selector) ([]*v1alpha1.HTTPRoute, error) {
-	if !c.isWatchedNamespace(namespace) {
-		return nil, fmt.Errorf("failed to get HTTPRoutes %s with labels selector %s: namespace is not within watched namespaces", namespace, selector)
-	}
-	httpRoutes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Networking().V1alpha1().HTTPRoutes().Lister().HTTPRoutes(namespace).List(selector)
+func (c *clientWrapper) GetNamespaces(selector labels.Selector) ([]string, error) {
+	ns, err := c.factoryNamespace.Core().V1().Namespaces().Lister().List(selector)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(httpRoutes) == 0 {
-		log.WithoutContext().Debugf("No HTTPRoutes found in %q namespace with labels selector %s", namespace, selector)
+	var namespaces []string
+	for _, namespace := range ns {
+		if !c.isWatchedNamespace(namespace.Name) {
+			log.WithoutContext().Warnf("Namespace %q is not within  watched namespaces", selector, namespace)
+			continue
+		}
+		namespaces = append(namespaces, namespace.Name)
+	}
+	return namespaces, nil
+}
+
+func (c *clientWrapper) GetHTTPRoutes(namespaces []string) ([]*v1alpha2.HTTPRoute, error) {
+	var httpRoutes []*v1alpha2.HTTPRoute
+	for _, namespace := range namespaces {
+		if !c.isWatchedNamespace(namespace) {
+			log.WithoutContext().Warnf("Failed to get HTTPRoutes: %q is not within watched namespaces", namespace)
+			continue
+		}
+
+		routes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1alpha2().HTTPRoutes().Lister().HTTPRoutes(namespace).List(labels.Everything())
+		if err != nil {
+			return nil, err
+		}
+
+		if len(routes) == 0 {
+			log.WithoutContext().Debugf("No HTTPRoutes found in namespace %q", namespace)
+			continue
+		}
+
+		httpRoutes = append(httpRoutes, routes...)
 	}
 
 	return httpRoutes, nil
 }
 
-func (c *clientWrapper) GetTCPRoutes(namespace string, selector labels.Selector) ([]*v1alpha1.TCPRoute, error) {
-	if !c.isWatchedNamespace(namespace) {
-		return nil, fmt.Errorf("failed to get TCPRoutes %s with labels selector %s: namespace is not within watched namespaces", namespace, selector)
-	}
+func (c *clientWrapper) GetTCPRoutes(namespaces []string) ([]*v1alpha2.TCPRoute, error) {
+	var tcpRoutes []*v1alpha2.TCPRoute
+	for _, namespace := range namespaces {
+		if !c.isWatchedNamespace(namespace) {
+			log.WithoutContext().Warnf("Failed to get TCPRoutes: %q is not within watched namespaces", namespace)
+			continue
+		}
 
-	tcpRoutes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Networking().V1alpha1().TCPRoutes().Lister().TCPRoutes(namespace).List(selector)
-	if err != nil {
-		return nil, err
-	}
+		routes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1alpha2().TCPRoutes().Lister().TCPRoutes(namespace).List(labels.Everything())
+		if err != nil {
+			return nil, err
+		}
 
-	if len(tcpRoutes) == 0 {
-		log.WithoutContext().Debugf("No TCPRoutes found in %q namespace with labels selector %s", namespace, selector)
-	}
+		if len(routes) == 0 {
+			log.WithoutContext().Debugf("No TCPRoutes found in namespace %q", namespace)
+			continue
+		}
 
+		tcpRoutes = append(tcpRoutes, routes...)
+	}
 	return tcpRoutes, nil
 }
 
-func (c *clientWrapper) GetTLSRoutes(namespace string, selector labels.Selector) ([]*v1alpha1.TLSRoute, error) {
-	if !c.isWatchedNamespace(namespace) {
-		return nil, fmt.Errorf("failed to get TLSRoutes %s with labels selector %s: namespace is not within watched namespaces", namespace, selector)
-	}
+func (c *clientWrapper) GetTLSRoutes(namespaces []string) ([]*v1alpha2.TLSRoute, error) {
+	var tlsRoutes []*v1alpha2.TLSRoute
+	for _, namespace := range namespaces {
+		if !c.isWatchedNamespace(namespace) {
+			log.WithoutContext().Warnf("Failed to get TLSRoutes: %q is not within watched namespaces", namespace)
+			continue
+		}
 
-	tlsRoutes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Networking().V1alpha1().TLSRoutes().Lister().TLSRoutes(namespace).List(selector)
-	if err != nil {
-		return nil, err
-	}
+		routes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1alpha2().TLSRoutes().Lister().TLSRoutes(namespace).List(labels.Everything())
+		if err != nil {
+			return nil, err
+		}
 
-	if len(tlsRoutes) == 0 {
-		log.WithoutContext().Debugf("No TLSRoutes found in %q namespace with labels selector %s", namespace, selector)
-	}
+		if len(routes) == 0 {
+			log.WithoutContext().Debugf("No TLSRoutes found in namespace %q", namespace)
+			continue
+		}
 
+		tlsRoutes = append(tlsRoutes, routes...)
+	}
 	return tlsRoutes, nil
 }
 
-func (c *clientWrapper) GetGateways() []*v1alpha1.Gateway {
-	var result []*v1alpha1.Gateway
+func (c *clientWrapper) GetGateways() []*v1alpha2.Gateway {
+	var result []*v1alpha2.Gateway
 
 	for ns, factory := range c.factoriesGateway {
-		gateways, err := factory.Networking().V1alpha1().Gateways().Lister().List(labels.Everything())
+		gateways, err := factory.Gateway().V1alpha2().Gateways().Lister().List(labels.Everything())
 		if err != nil {
 			log.WithoutContext().Errorf("Failed to list Gateways in namespace %s: %v", ns, err)
 			continue
@@ -295,11 +347,11 @@ func (c *clientWrapper) GetGateways() []*v1alpha1.Gateway {
 	return result
 }
 
-func (c *clientWrapper) GetGatewayClasses() ([]*v1alpha1.GatewayClass, error) {
-	return c.factoryGatewayClass.Networking().V1alpha1().GatewayClasses().Lister().List(labels.Everything())
+func (c *clientWrapper) GetGatewayClasses() ([]*v1alpha2.GatewayClass, error) {
+	return c.factoryGatewayClass.Gateway().V1alpha2().GatewayClasses().Lister().List(labels.Everything())
 }
 
-func (c *clientWrapper) UpdateGatewayClassStatus(gatewayClass *v1alpha1.GatewayClass, condition metav1.Condition) error {
+func (c *clientWrapper) UpdateGatewayClassStatus(gatewayClass *v1alpha2.GatewayClass, condition metav1.Condition) error {
 	gc := gatewayClass.DeepCopy()
 
 	var newConditions []metav1.Condition
@@ -322,7 +374,7 @@ func (c *clientWrapper) UpdateGatewayClassStatus(gatewayClass *v1alpha1.GatewayC
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := c.csGateway.NetworkingV1alpha1().GatewayClasses().UpdateStatus(ctx, gc, metav1.UpdateOptions{})
+	_, err := c.csGateway.GatewayV1alpha2().GatewayClasses().UpdateStatus(ctx, gc, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to update GatewayClass %q status: %w", gatewayClass.Name, err)
 	}
@@ -330,7 +382,7 @@ func (c *clientWrapper) UpdateGatewayClassStatus(gatewayClass *v1alpha1.GatewayC
 	return nil
 }
 
-func (c *clientWrapper) UpdateGatewayStatus(gateway *v1alpha1.Gateway, gatewayStatus v1alpha1.GatewayStatus) error {
+func (c *clientWrapper) UpdateGatewayStatus(gateway *v1alpha2.Gateway, gatewayStatus v1alpha2.GatewayStatus) error {
 	if !c.isWatchedNamespace(gateway.Namespace) {
 		return fmt.Errorf("cannot update Gateway status %s/%s: namespace is not within watched namespaces", gateway.Namespace, gateway.Name)
 	}
@@ -345,7 +397,7 @@ func (c *clientWrapper) UpdateGatewayStatus(gateway *v1alpha1.Gateway, gatewaySt
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := c.csGateway.NetworkingV1alpha1().Gateways(gateway.Namespace).UpdateStatus(ctx, g, metav1.UpdateOptions{})
+	_, err := c.csGateway.GatewayV1alpha2().Gateways(gateway.Namespace).UpdateStatus(ctx, g, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to update Gateway %q status: %w", gateway.Name, err)
 	}
@@ -353,7 +405,7 @@ func (c *clientWrapper) UpdateGatewayStatus(gateway *v1alpha1.Gateway, gatewaySt
 	return nil
 }
 
-func statusEquals(oldStatus, newStatus v1alpha1.GatewayStatus) bool {
+func statusEquals(oldStatus, newStatus v1alpha2.GatewayStatus) bool {
 	if len(oldStatus.Listeners) != len(newStatus.Listeners) {
 		return false
 	}
@@ -365,7 +417,7 @@ func statusEquals(oldStatus, newStatus v1alpha1.GatewayStatus) bool {
 	listenerMatches := 0
 	for _, newListener := range newStatus.Listeners {
 		for _, oldListener := range oldStatus.Listeners {
-			if newListener.Port == oldListener.Port {
+			if newListener.Name == oldListener.Name {
 				if !conditionsEquals(newListener.Conditions, oldListener.Conditions) {
 					return false
 				}
