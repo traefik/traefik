@@ -73,7 +73,6 @@ func TestNewConfigurationWatcher(t *testing.T) {
 		}},
 	}
 
-	//watcher := NewConfigurationWatcher(routinesPool, pvd, time.Second, []string{}, "")
 	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
 
 	run := make(chan struct{})

@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
-	"time"
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/traefik/paerser/file"
@@ -42,13 +41,6 @@ func (p *Provider) SetDefaults() {
 // Init the provider.
 func (p *Provider) Init() error {
 	return nil
-}
-
-// ThrottleDuration returns the throttle duration.
-func (p Provider) ThrottleDuration() time.Duration {
-	// TODO
-	println("TEST THIS")
-	return 0
 }
 
 // Provide allows the file provider to provide configurations to traefik

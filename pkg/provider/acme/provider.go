@@ -162,11 +162,6 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-// ThrottleDuration returns the throttle duration.
-func (p Provider) ThrottleDuration() time.Duration {
-	return 0
-}
-
 func isAccountMatchingCaServer(ctx context.Context, accountURI, serverURI string) bool {
 	logger := log.FromContext(ctx)
 
