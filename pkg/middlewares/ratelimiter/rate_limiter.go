@@ -4,6 +4,7 @@ package ratelimiter
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"time"
 
@@ -174,7 +175,7 @@ func (rl *rateLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rl *rateLimiter) serveDelayError(ctx context.Context, w http.ResponseWriter, r *http.Request, delay time.Duration) {
-	w.Header().Set("Retry-After", fmt.Sprintf("%.0f", delay.Seconds()))
+	w.Header().Set("Retry-After", fmt.Sprintf("%.0f", math.Ceil(delay.Seconds())))
 	w.Header().Set("X-Retry-In", delay.String())
 	w.WriteHeader(http.StatusTooManyRequests)
 
