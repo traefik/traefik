@@ -67,7 +67,6 @@ func (s *ThrottlingSuite) TestThrottleConfReload(c *check.C) {
 	confChanges := 10
 
 	for i := 0; i < confChanges; i++ {
-		start := time.Now()
 		config.HTTP.Routers[fmt.Sprintf("routerHTTP%d", i)] = router
 		data, err := json.Marshal(config)
 		c.Assert(err, checker.IsNil)
@@ -79,21 +78,7 @@ func (s *ThrottlingSuite) TestThrottleConfReload(c *check.C) {
 		c.Assert(err, checker.IsNil)
 		c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
 		time.Sleep(200 * time.Millisecond)
-		println(time.Now().Sub(start))
 	}
-
-	/*
-	   203009991
-	   202101294
-	   202235744
-	   201726704
-	   202740339
-	   203074062
-	   201677864
-	   202298255
-	   201521913
-	   202303092
-	*/
 
 	reloadsRegexp := regexp.MustCompile(`traefik_config_reloads_total (\d*)\n`)
 
@@ -112,15 +97,10 @@ func (s *ThrottlingSuite) TestThrottleConfReload(c *check.C) {
 		panic(err)
 	}
 
-	// The test tries to trigger a config reload with the REST API every 200ms, 10 times (so for 2s in total).
-	// Therefore the throttling (set at 400ms for this test) should only let (2s / 400 ms =) 5 config reloads happen.
-	// We add a margin of error of 2 extra reloads to be safe.
-	// maxConfReloads := confChanges / 2 + 2
-	maxConfReloads := confChanges
-	c.Assert(reloads, checker.LessThan, maxConfReloads)
-
-	println("TOUT BON:", reloads)
-
-	time.Sleep(time.Hour)
-
+	// The test tries to trigger a config reload with the REST API every 200ms,
+	// 10 times (so for 2s in total).
+	// Therefore the throttling (set at 400ms for this test) should only let
+	// (2s / 400 ms =) 5 config reloads happen in theory.
+	// But we do not want to be flaky, so we're lenient on the check below.
+	c.Assert(reloads, checker.LessThan, confChanges)
 }

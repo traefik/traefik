@@ -14,24 +14,33 @@ import (
 	"github.com/traefik/traefik/v2/pkg/safe"
 )
 
+// throttled defines what kind of config refresh throttling the aggregator should
+// set up for a given provider.
+// If a provider implements throttled, the configuration changes it sends will be
+// taken into account no more often than the frequency inferred from ThrottleDuration().
+// If ThrottleDuration returns zero, no throttling will take place.
+// If throttled is not implemented, the throttling will be set up in accordance
+// with the global providersThrottleDuration option.
 type throttled interface {
-	provider.Provider
 	ThrottleDuration() time.Duration
 }
 
+// maybeThrottledProvide returns the Provide method of the given provider,
+// potentially augmented with some throttling depending on whether and how the
+// provider implements the throttled interface.
 func maybeThrottledProvide(prd provider.Provider, defaultDuration time.Duration) func(chan<- dynamic.Message, *safe.Pool) error {
 	var providerThrottleDuration time.Duration
 	throttled, ok := prd.(throttled)
 	if ok {
-		// user-defined throttling
+		// per-provider throttling
 		providerThrottleDuration = throttled.ThrottleDuration()
-		if providerThrottleDuration == 0 {
-			// throttling disabled by user
-			return prd.Provide
-		}
 	} else {
 		// Default throttling
 		providerThrottleDuration = defaultDuration
+	}
+	if providerThrottleDuration == 0 {
+		// throttling disabled
+		return prd.Provide
 	}
 
 	return func(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
@@ -54,10 +63,9 @@ func maybeThrottledProvide(prd provider.Provider, defaultDuration time.Duration)
 
 // ProviderAggregator aggregates providers.
 type ProviderAggregator struct {
-	providersThrottleDuration time.Duration
-	internalProvider          provider.Provider
-	fileProvider              provider.Provider
-	providers                 []provider.Provider
+	internalProvider provider.Provider
+	fileProvider     provider.Provider
+	providers        []provider.Provider
 }
 
 // NewProviderAggregator returns an aggregate of all the providers configured in the static configuration.
