@@ -1,29 +1,37 @@
+version: "3.8"
 services:
   whoami-a:
     image: traefik/whoamitcp
     command: -name whoami-a -certFile /certs/whoami-a.crt -keyFile /certs/whoami-a.key
     volumes:
       - test-config:/certs
+
   whoami-b:
     image: traefik/whoamitcp
     command: -name whoami-b -certFile /certs/whoami-b.crt -keyFile /certs/whoami-b.key
     volumes:
       - test-config:/certs
+
   whoami-no-cert:
     image: traefik/whoamitcp
     command: -name whoami-no-cert
+
   whoami-no-tls:
     image: traefik/whoamitcp
     command: -name whoami-no-tls
+
   whoami:
     image: traefik/whoami
+
   whoami-banner:
     image: traefik/whoamitcp
     command: -name whoami-banner --banner
+
 networks:
   default:
-    external: true
     name: test-net
+    external: true
+
 volumes:
   test-config:
     external: true

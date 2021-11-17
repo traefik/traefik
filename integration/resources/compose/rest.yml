@@ -1,9 +1,9 @@
+version: "3.8"
 services:
   whoami1:
     image: traefik/whoami
-    ports:
-      - "8881:80"
+
 networks:
   default:
-    external: true
     name: test-net
+    external: true

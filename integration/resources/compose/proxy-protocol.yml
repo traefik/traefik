@@ -1,14 +1,18 @@
+version: "3.8"
 services:
   haproxy:
     image: haproxy:2.2
     volumes:
       - test-config:/usr/local/etc/haproxy/
+
   whoami:
     image: traefik/whoami
+
 networks:
   default:
-    external: true
     name: test-net
+    external: true
+
 volumes:
   test-config:
     external: true
