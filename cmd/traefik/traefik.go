@@ -532,6 +532,11 @@ func configureLogging(staticConfiguration *static.Configuration) {
 			log.WithoutContext().Errorf("Error while opening log file %s: %v", logFile, err)
 		}
 	}
+
+	// configure the hook for native logging (etw in windows)
+	if staticConfiguration.Log != nil && staticConfiguration.Log.EnableETW {
+		log.InitNativeTracer()
+	}
 }
 
 func checkNewVersion() {
