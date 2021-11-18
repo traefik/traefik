@@ -15,7 +15,10 @@ TRAEFIK_DEV_IMAGE := traefik-dev$(if $(GIT_BRANCH),:$(subst /,-,$(GIT_BRANCH)))
 REPONAME := $(shell echo $(REPO) | tr '[:upper:]' '[:lower:]')
 TRAEFIK_IMAGE := $(if $(REPONAME),$(REPONAME),"traefik/traefik")
 
-INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)", -e "TEST_CONTAINER=1" -v "/var/run/docker.sock:/var/run/docker.sock")
+INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)", --name=traefik --rm \
+-v "/var/run/docker.sock:/var/run/docker.sock" -v traefik-test-data-volume:/test/data -v traefik-test-configuration-volume:/test/config -v `pwd`/integration/fixtures/k8s:/test/manifests  \
+-e KUBECONFIG="/test/config/kubeconfig.yaml")
+
 DOCKER_BUILD_ARGS := $(if $(DOCKER_VERSION), "--build-arg=DOCKER_VERSION=$(DOCKER_VERSION)",)
 
 TRAEFIK_ENVS := \
@@ -32,6 +35,7 @@ TRAEFIK_ENVS := \
 TRAEFIK_MOUNT := -v "$(CURDIR)/$(BIND_DIR):/go/src/github.com/traefik/traefik/$(BIND_DIR)"
 DOCKER_RUN_OPTS := $(TRAEFIK_ENVS) $(TRAEFIK_MOUNT) "$(TRAEFIK_DEV_IMAGE)"
 DOCKER_NON_INTERACTIVE ?= false
+DOCKER_RUN_TRAEFIK_TESTNET := docker run --add-host=host.docker.internal:127.0.0.1 --network traefik-test-network $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INTERACTIVE), , -it) $(DOCKER_RUN_OPTS)
 DOCKER_RUN_TRAEFIK := docker run --add-host=host.docker.internal:127.0.0.1 $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INTERACTIVE), , -it) $(DOCKER_RUN_OPTS)
 DOCKER_RUN_TRAEFIK_NOTTY := docker run $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INTERACTIVE), , -i) $(DOCKER_RUN_OPTS)
 
@@ -81,7 +85,7 @@ crossbinary-default-parallel:
 	$(MAKE) build-dev-image crossbinary-default
 
 ## Run the unit and integration tests
-test: build-dev-image
+test: build-dev-image test-integration-network test-integration-volumes
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate test-unit binary test-integration
 
 ## Run the unit tests
@@ -92,18 +96,22 @@ test-unit: $(PRE_TARGET)
 pull-images:
 	grep --no-filename -E '^\s+image:' ./integration/resources/compose/*.yml | awk '{print $$2}' | sort | uniq | xargs -P 6 -n 1 docker pull
 
+test-integration-network:
+	-docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
+
+test-integration-volumes:
+	-docker volume create traefik-test-data-volume
+	-docker volume create traefik-test-configuration-volume
+
 ## Run the integration tests
-test-integration: $(PRE_TARGET) binary
-	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK),TEST_CONTAINER=1) ./script/make.sh test-integration
-	TEST_HOST=1 ./script/make.sh test-integration
-
-## Run the container integration tests
-test-integration-container: $(PRE_TARGET) binary
-	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK),TEST_CONTAINER=1) ./script/make.sh test-integration
-
-## Run the host integration tests
-test-integration-host: $(PRE_TARGET) binary
-	TEST_HOST=1 ./script/make.sh test-integration
+test-integration: $(PRE_TARGET) binary test-integration-network test-integration-volumes
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_TESTNET)) /bin/bash -c "cp -a /test/manifests/. /test/data; \
+	cp /go/src/github.com/traefik/traefik/integration/resources/haproxy/haproxy.cfg /test/config; \
+	cp /go/src/github.com/traefik/traefik/integration/fixtures/tcp/*.{key,crt} /test/config; \
+	./script/make.sh test-integration;true"
+	-docker network rm traefik-test-network
+	-docker volume rm traefik-test-data-volume
+	-docker volume rm traefik-test-configuration-volume
 
 ## Validate code and docs
 validate-files: $(PRE_TARGET)
