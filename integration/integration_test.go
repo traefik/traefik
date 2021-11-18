@@ -6,7 +6,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,6 +19,8 @@ import (
 	"github.com/docker/cli/cli/config/configfile"
 	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/compose/v2/pkg/compose"
+	dockertypes "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/fatih/structs"
 	"github.com/go-check/check"
@@ -82,24 +83,28 @@ var traefikBinary = "../dist/traefik"
 type BaseSuite struct {
 	composeProject *types.Project
 	dockerService  composeapi.Service
+	dockerClient   *client.Client
 }
 
 func (s *BaseSuite) TearDownSuite(c *check.C) {
-	// shutdown and delete compose project
-	if s.composeProject != nil && s.dockerService != nil {
-		err := s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
-		c.Assert(err, checker.IsNil)
+	if s.composeProject == nil || s.dockerService == nil {
+		return
 	}
+
+	// shutdown and delete compose project
+	err := s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
+	c.Assert(err, checker.IsNil)
 }
 
 func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	projectName := fmt.Sprintf("integration-test-%s", name)
 	composeFile := fmt.Sprintf("resources/compose/%s.yml", name)
 
-	composeClient, err := client.NewClientWithOpts()
+	var err error
+	s.dockerClient, err = client.NewClientWithOpts()
 	c.Assert(err, checker.IsNil)
 
-	s.dockerService = compose.NewComposeService(composeClient, configfile.New(composeFile))
+	s.dockerService = compose.NewComposeService(s.dockerClient, configfile.New(composeFile))
 	ops, err := cli.NewProjectOptions([]string{composeFile}, cli.WithName(projectName))
 	c.Assert(err, checker.IsNil)
 
@@ -168,6 +173,7 @@ func (s *BaseSuite) getDockerHost() string {
 		// Default docker socket
 		dockerHost = "unix:///var/run/docker.sock"
 	}
+
 	return dockerHost
 }
 
@@ -193,14 +199,23 @@ func (s *BaseSuite) adaptFile(c *check.C, path string, tempObjects interface{}) 
 	return tmpFile.Name()
 }
 
-func minifyJSON(s string) string {
-	return strings.ReplaceAll(strings.ReplaceAll(s, " ", ""), "\n", "")
+func (s *BaseSuite) getServiceIP(c *check.C, service string) string {
+	filter := filters.NewArgs(
+		filters.Arg("label", fmt.Sprintf("%s=%s", composeapi.ProjectLabel, s.composeProject.Name)),
+		filters.Arg("label", fmt.Sprintf("%s=%s", composeapi.ServiceLabel, service)),
+	)
+
+	containers, err := s.dockerClient.ContainerList(context.Background(), dockertypes.ContainerListOptions{Filters: filter})
+	c.Assert(err, checker.IsNil)
+	c.Assert(containers, checker.HasLen, 1)
+
+	networkNames := s.composeProject.NetworkNames()
+	c.Assert(networkNames, checker.HasLen, 1)
+
+	network := s.composeProject.Networks[networkNames[0]]
+	return containers[0].NetworkSettings.Networks[network.Name].IPAddress
 }
 
-func (s *BaseSuite) getServiceIP(c *check.C, service string) string {
-	ips, err := net.LookupIP(service)
-	c.Assert(err, checker.IsNil)
-	c.Assert(ips, checker.HasLen, 1)
-
-	return ips[0].String()
+func minifyJSON(s string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(s, " ", ""), "\n", "")
 }
