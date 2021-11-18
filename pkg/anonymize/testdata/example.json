@@ -47,6 +47,7 @@
     "EntryPoint": "https",
     "DNSProvider": "",
     "DelayDontCheckDNS": 0,
+    "ACMELogging": false,
     "Options": null
   },
   "DefaultEntryPoints": [
