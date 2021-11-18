@@ -1,7 +1,6 @@
 version: "3.8"
 services:
   pebble:
-    container_name: pebble
     image: letsencrypt/pebble:v2.3.1
     command: pebble --dnsserver traefik:5053
     environment:
