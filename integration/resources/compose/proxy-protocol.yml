@@ -3,16 +3,16 @@ services:
   haproxy:
     image: haproxy:2.2
     volumes:
-      - test-config:/usr/local/etc/haproxy/
+      - traefik-test-configuration-volume:/usr/local/etc/haproxy/
 
   whoami:
     image: traefik/whoami
 
 networks:
   default:
-    name: test-net
+    name: traefik-test-network
     external: true
 
 volumes:
-  test-config:
+  traefik-test-configuration-volume:
     external: true

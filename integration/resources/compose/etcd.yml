@@ -6,5 +6,5 @@ services:
 
 networks:
   default:
-    name: test-net
+    name: traefik-test-network
     external: true
