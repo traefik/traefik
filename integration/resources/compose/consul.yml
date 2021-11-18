@@ -1,4 +1,7 @@
-consul:
-  image: consul:1.6
-  ports:
-    - "8500:8500"
+services:
+  consul:
+    image: consul:1.6
+networks:
+  default:
+    external: true
+    name: test-net
