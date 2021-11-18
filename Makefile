@@ -16,7 +16,7 @@ REPONAME := $(shell echo $(REPO) | tr '[:upper:]' '[:lower:]')
 TRAEFIK_IMAGE := $(if $(REPONAME),$(REPONAME),"traefik/traefik")
 
 INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)", --name=traefik --rm \
--v "/var/run/docker.sock:/var/run/docker.sock" -v traefik-test-data-volume:/test/data -v traefik-test-configuration-volume:/test/config -v `pwd`/integration/fixtures/k8s:/test/manifests  \
+-v "/var/run/docker.sock:/var/run/docker.sock" -v traefik-test-data-volume:/test/data -v traefik-test-configuration-volume:/test/config \
 -e KUBECONFIG="/test/config/kubeconfig.yaml")
 
 DOCKER_BUILD_ARGS := $(if $(DOCKER_VERSION), "--build-arg=DOCKER_VERSION=$(DOCKER_VERSION)",)
@@ -105,9 +105,10 @@ test-integration-volumes:
 
 ## Run the integration tests
 test-integration: $(PRE_TARGET) binary test-integration-network test-integration-volumes
-	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_TESTNET)) /bin/bash -c "cp -a /test/manifests/. /test/data; \
-	cp /go/src/github.com/traefik/traefik/integration/resources/haproxy/haproxy.cfg /test/config; \
-	cp /go/src/github.com/traefik/traefik/integration/fixtures/tcp/*.{key,crt} /test/config; \
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_TESTNET)) /bin/bash -c "\
+	cp -a ./integration/fixtures/k8s/. /test/data; \
+	cp ./integration/resources/haproxy/haproxy.cfg /test/config; \
+	cp ./integration/fixtures/tcp/*.{key,crt} /test/config; \
 	./script/make.sh test-integration;true"
 	-docker network rm traefik-test-network
 	-docker volume rm traefik-test-data-volume
