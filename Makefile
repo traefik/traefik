@@ -85,7 +85,7 @@ crossbinary-default-parallel:
 	$(MAKE) build-dev-image crossbinary-default
 
 ## Run the unit and integration tests
-test: build-dev-image
+test: build-dev-image test-network test-volumes
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate test-unit binary test-integration
 
 ## Run the unit tests
@@ -97,22 +97,21 @@ pull-images:
 	grep --no-filename -E '^\s+image:' ./integration/resources/compose/*.yml | awk '{print $$2}' | sort | uniq | xargs -P 6 -n 1 docker pull
 
 test-network:
-	docker network create test-net --driver bridge --subnet 172.31.42.0/24 || echo ""
+	-docker network create test-net --driver bridge --subnet 172.31.42.0/24
 
 test-volumes:
-	docker volume create test-data || echo ""
-	docker volume create test-config || echo ""
+	-docker volume create test-data
+	-docker volume create test-config
 
 ## Run the integration tests
 test-integration: $(PRE_TARGET) binary test-network test-volumes
-
 	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_TESTNET)) /bin/bash -c "cp -a /test/manifests/. /test/data; \
 	cp /go/src/github.com/traefik/traefik/integration/resources/haproxy/haproxy.cfg /test/config; \
 	cp /go/src/github.com/traefik/traefik/integration/fixtures/tcp/*.{key,crt} /test/config; \
 	./script/make.sh test-integration;true"
-	docker network rm test-net || echo ""
-	docker volume rm test-data || echo ""
-	docker volume rm test-config || echo ""
+	-docker network rm test-net
+	-docker volume rm test-data
+	-docker volume rm test-config
 
 ## Validate code and docs
 validate-files: $(PRE_TARGET)
