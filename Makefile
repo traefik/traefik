@@ -110,6 +110,7 @@ test-integration: $(PRE_TARGET) binary test-integration-network test-integration
 	cp ./integration/resources/haproxy/haproxy.cfg /test/config; \
 	cp ./integration/fixtures/tcp/*.{key,crt} /test/config; \
 	./script/make.sh test-integration;true"
+
 	-docker network rm traefik-test-network
 	-docker volume rm traefik-test-data-volume
 	-docker volume rm traefik-test-configuration-volume
