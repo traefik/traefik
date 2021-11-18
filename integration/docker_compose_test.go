@@ -1,12 +1,14 @@
 package integration
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
+	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/api"
@@ -25,21 +27,15 @@ type DockerComposeSuite struct {
 
 func (s *DockerComposeSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, composeProject)
-	s.composeProject.Start(c)
-}
-
-func (s *DockerComposeSuite) TearDownSuite(c *check.C) {
-	// shutdown and delete compose project
-	if s.composeProject != nil {
-		s.composeProject.Stop(c)
-	}
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
+	c.Assert(err, checker.IsNil)
 }
 
 func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
 	serviceCount := 2
 	composeService := "whoami1"
 
-	s.composeProject.Scale(c, composeService, serviceCount)
+	s.composeProject.Services[0].Scale = serviceCount
 
 	tempObjects := struct {
 		DockerHost  string
@@ -81,7 +77,7 @@ func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
 		if strings.HasSuffix(name, "@internal") {
 			continue
 		}
-		c.Assert(name, checker.Equals, composeService+"-integrationtest"+composeProject+"@docker")
+		c.Assert(name, checker.Equals, composeService+"-"+composeProject+"@docker")
 		c.Assert(service.LoadBalancer.Servers, checker.HasLen, serviceCount)
 		// We could break here, but we don't just to keep us honest.
 	}
