@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -13,11 +14,11 @@ import (
 	"regexp"
 	"time"
 
+	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/api"
-	"github.com/traefik/traefik/v2/pkg/log"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -28,12 +29,12 @@ type K8sSuite struct{ BaseSuite }
 
 func (s *K8sSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "k8s")
-	s.composeProject.Start(c)
-
-	abs, err := filepath.Abs("./fixtures/k8s/config.skip/kubeconfig.yaml")
+	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
 	c.Assert(err, checker.IsNil)
 
-	err = try.Do(60*time.Second, func() error {
+	abs := "/test/config/kubeconfig.yaml"
+
+	err = try.Do(120*time.Second, func() error {
 		_, err := os.Stat(abs)
 		return err
 	})
@@ -41,25 +42,16 @@ func (s *K8sSuite) SetUpSuite(c *check.C) {
 
 	err = os.Setenv("KUBECONFIG", abs)
 	c.Assert(err, checker.IsNil)
+
+	// allow time for k8s resources to be created
+	time.Sleep(1 * time.Minute)
 }
 
 func (s *K8sSuite) TearDownSuite(c *check.C) {
-	s.composeProject.Stop(c)
-
-	generatedFiles := []string{
-		"./fixtures/k8s/config.skip/kubeconfig.yaml",
-		"./fixtures/k8s/config.skip/k3s.log",
-		"./fixtures/k8s/coredns.yaml",
-		"./fixtures/k8s/rolebindings.yaml",
-		"./fixtures/k8s/traefik.yaml",
-		"./fixtures/k8s/ccm.yaml",
-	}
-
-	for _, filename := range generatedFiles {
-		err := os.Remove(filename)
-		if err != nil {
-			log.WithoutContext().Warning(err)
-		}
+	// shutdown and delete compose project
+	if s.composeProject != nil && s.dockerService != nil {
+		err := s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
+		c.Assert(err, checker.IsNil)
 	}
 }
 
@@ -160,7 +152,7 @@ func testConfiguration(c *check.C, path, apiPort string) {
 	err = json.Unmarshal(buf.Bytes(), &rtRepr)
 	c.Assert(err, checker.IsNil)
 
-	newJSON, err := json.MarshalIndent(rtRepr, "", "\t")
+	newJSON, err := json.Marshal(rtRepr)
 	c.Assert(err, checker.IsNil)
 
 	err = os.WriteFile(expectedJSON, newJSON, 0o644)
@@ -192,7 +184,7 @@ func matchesConfig(wantConfig string, buf *bytes.Buffer) try.ResponseCondition {
 			}
 		}
 
-		got, err := json.MarshalIndent(obtained, "", "\t")
+		got, err := json.MarshalIndent(obtained, "", "  ")
 		if err != nil {
 			return err
 		}
