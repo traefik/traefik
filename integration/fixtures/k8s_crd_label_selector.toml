@@ -6,7 +6,6 @@
   level = "DEBUG"
 
 [api]
-  insecure = true
 
 [entryPoints]
   [entryPoints.footcp]
@@ -15,13 +14,6 @@
     address = ":8090/udp"
   [entryPoints.web]
     address = ":8000"
-  [entryPoints.traefik]
-    address = ":8080"
 
 [providers.kubernetesCRD]
   labelSelector = "app=traefik"
-
-[http.routers.api]
-  rule = "PathPrefix(`/api`)"
-  service = "api@internal"
-  entryPoints = ["traefik"]

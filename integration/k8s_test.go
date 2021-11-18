@@ -85,7 +85,7 @@ func (s *K8sSuite) TestCRDConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	testConfiguration(c, "testdata/rawdata-crd.json", "8080")
+	testConfiguration(c, "testdata/rawdata-crd.json", "8000")
 }
 
 func (s *K8sSuite) TestCRDLabelSelector(c *check.C) {
@@ -96,7 +96,7 @@ func (s *K8sSuite) TestCRDLabelSelector(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	testConfiguration(c, "testdata/rawdata-crd-label-selector.json", "8080")
+	testConfiguration(c, "testdata/rawdata-crd-label-selector.json", "8000")
 }
 
 func (s *K8sSuite) TestGatewayConfiguration(c *check.C) {
@@ -135,7 +135,7 @@ func testConfiguration(c *check.C, path, apiPort string) {
 	}
 
 	var buf bytes.Buffer
-	err = try.GetRequest("http://127.0.0.1:"+apiPort+"/api/rawdata", 20*time.Second, try.StatusCodeIs(http.StatusOK), matchesConfig(expectedJSON, &buf))
+	err = try.GetRequest("http://127.0.0.1:"+apiPort+"/api/rawdata", 1*time.Minute, try.StatusCodeIs(http.StatusOK), matchesConfig(expectedJSON, &buf))
 
 	if !*updateExpected {
 		if err != nil {

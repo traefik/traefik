@@ -1,33 +1,5 @@
 {
   "routers": {
-    "api@internal": {
-      "entryPoints": [
-        "traefik"
-      ],
-      "service": "api@internal",
-      "rule": "PathPrefix(`/api`)",
-      "priority": 2147483646,
-      "status": "enabled",
-      "using": [
-        "traefik"
-      ]
-    },
-    "dashboard@internal": {
-      "entryPoints": [
-        "traefik"
-      ],
-      "middlewares": [
-        "dashboard_redirect@internal",
-        "dashboard_stripprefix@internal"
-      ],
-      "service": "dashboard@internal",
-      "rule": "PathPrefix(`/`)",
-      "priority": 2147483645,
-      "status": "enabled",
-      "using": [
-        "traefik"
-      ]
-    },
     "default-api-route-29f28a463fb5d5ba16d2@kubernetescrd": {
       "entryPoints": [
         "web"
@@ -106,29 +78,6 @@
     }
   },
   "middlewares": {
-    "dashboard_redirect@internal": {
-      "redirectRegex": {
-        "regex": "^(http:\\/\\/(\\[[\\w:.]+\\]|[\\w\\._-]+)(:\\d+)?)\\/$",
-        "replacement": "${1}/dashboard/",
-        "permanent": true
-      },
-      "status": "enabled",
-      "usedBy": [
-        "dashboard@internal"
-      ]
-    },
-    "dashboard_stripprefix@internal": {
-      "stripPrefix": {
-        "prefixes": [
-          "/dashboard/",
-          "/dashboard"
-        ]
-      },
-      "status": "enabled",
-      "usedBy": [
-        "dashboard@internal"
-      ]
-    },
     "default-mychain@kubernetescrd": {
       "chain": {
         "middlewares": [
@@ -161,15 +110,11 @@
     "api@internal": {
       "status": "enabled",
       "usedBy": [
-        "api@internal",
         "default-api-route-29f28a463fb5d5ba16d2@kubernetescrd"
       ]
     },
     "dashboard@internal": {
-      "status": "enabled",
-      "usedBy": [
-        "dashboard@internal"
-      ]
+      "status": "enabled"
     },
     "default-mirror1@kubernetescrd": {
       "mirroring": {
@@ -186,10 +131,10 @@
       "loadBalancer": {
         "servers": [
           {
-            "url": "http://10.42.0.2:80"
+            "url": "http://10.42.0.6:80"
           },
           {
-            "url": "http://10.42.0.6:80"
+            "url": "http://10.42.0.7:80"
           }
         ],
         "passHostHeader": true
@@ -199,18 +144,18 @@
         "default-test-route-6b204d94623b3df4370c@kubernetescrd"
       ],
       "serverStatus": {
-        "http://10.42.0.2:80": "UP",
-        "http://10.42.0.6:80": "UP"
+        "http://10.42.0.6:80": "UP",
+        "http://10.42.0.7:80": "UP"
       }
     },
     "default-test2-route-23c7f4c450289ee29016@kubernetescrd": {
       "loadBalancer": {
         "servers": [
           {
-            "url": "http://10.42.0.2:80"
+            "url": "http://10.42.0.6:80"
           },
           {
-            "url": "http://10.42.0.6:80"
+            "url": "http://10.42.0.7:80"
           }
         ],
         "passHostHeader": true
@@ -220,18 +165,18 @@
         "default-test2-route-23c7f4c450289ee29016@kubernetescrd"
       ],
       "serverStatus": {
-        "http://10.42.0.2:80": "UP",
-        "http://10.42.0.6:80": "UP"
+        "http://10.42.0.6:80": "UP",
+        "http://10.42.0.7:80": "UP"
       }
     },
     "default-testst-route-60ad45fcb5fc1f5f3629@kubernetescrd": {
       "loadBalancer": {
         "servers": [
           {
-            "url": "http://10.42.0.2:80"
+            "url": "http://10.42.0.6:80"
           },
           {
-            "url": "http://10.42.0.6:80"
+            "url": "http://10.42.0.7:80"
           }
         ],
         "passHostHeader": true,
@@ -242,26 +187,26 @@
         "default-testst-route-60ad45fcb5fc1f5f3629@kubernetescrd"
       ],
       "serverStatus": {
-        "http://10.42.0.2:80": "UP",
-        "http://10.42.0.6:80": "UP"
+        "http://10.42.0.6:80": "UP",
+        "http://10.42.0.7:80": "UP"
       }
     },
     "default-whoami-80@kubernetescrd": {
       "loadBalancer": {
         "servers": [
           {
-            "url": "http://10.42.0.2:80"
+            "url": "http://10.42.0.6:80"
           },
           {
-            "url": "http://10.42.0.6:80"
+            "url": "http://10.42.0.7:80"
           }
         ],
         "passHostHeader": true
       },
       "status": "enabled",
       "serverStatus": {
-        "http://10.42.0.2:80": "UP",
-        "http://10.42.0.6:80": "UP"
+        "http://10.42.0.6:80": "UP",
+        "http://10.42.0.7:80": "UP"
       }
     },
     "default-wrr1@kubernetescrd": {
@@ -331,10 +276,10 @@
         "terminationDelay": 100,
         "servers": [
           {
-            "address": "10.42.0.3:8080"
+            "address": "10.42.0.10:8080"
           },
           {
-            "address": "10.42.0.4:8080"
+            "address": "10.42.0.8:8080"
           }
         ]
       },
@@ -386,10 +331,10 @@
       "loadBalancer": {
         "servers": [
           {
-            "address": "10.42.0.5:8090"
+            "address": "10.42.0.4:8090"
           },
           {
-            "address": "10.42.0.7:8090"
+            "address": "10.42.0.9:8090"
           }
         ]
       },
