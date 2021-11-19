@@ -91,6 +91,8 @@ func (s *BaseSuite) TearDownSuite(c *check.C) {
 	}
 }
 
+// createComposeProject creates the docker compose project stored as a field in the BaseSuite.
+// This method should be called before starting and/or stopping compose services.
 func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	projectName := fmt.Sprintf("traefik-integration-test-%s", name)
 	composeFile := fmt.Sprintf("resources/compose/%s.yml", name)
@@ -107,14 +109,17 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	c.Assert(err, checker.IsNil)
 }
 
-// composeUp start the given services of the current docker compose project.
+// composeUp starts the given services of the current docker compose project.
+// Already running services are left intact (i.e. not stopped).
 func (s *BaseSuite) composeUp(c *check.C, services ...string) {
 	c.Assert(s.composeProject, check.NotNil)
 	c.Assert(s.dockerComposeService, check.NotNil)
 
-	// Make composeUp not altering existing services
-	currentComposeServices := s.composeProject.Services
-	defer func() { s.composeProject.Services = currentComposeServices }()
+	// To start a set of services, the current compose project service list needs to be updated
+	// before calling the UP method. To make sure that we will be able to start/stop all existing services
+	// after calling the UP method, the original service list is restored.
+	allServices := s.composeProject.Services
+	defer func() { s.composeProject.Services = allServices }()
 
 	var err error
 	s.composeProject.Services, err = s.composeProject.GetServices(services...)
@@ -124,7 +129,7 @@ func (s *BaseSuite) composeUp(c *check.C, services ...string) {
 	c.Assert(err, checker.IsNil)
 }
 
-// composeStop stops and removes the given service containers.
+// composeStop stops the given services of the current docker compose project and removes the corresponding containers.
 func (s *BaseSuite) composeStop(c *check.C, services ...string) {
 	c.Assert(s.dockerComposeService, check.NotNil)
 	c.Assert(s.composeProject, check.NotNil)
@@ -139,6 +144,7 @@ func (s *BaseSuite) composeStop(c *check.C, services ...string) {
 	c.Assert(err, checker.IsNil)
 }
 
+// composeDown stops all compose project services and removes the corresponding containers.
 func (s *BaseSuite) composeDown(c *check.C) {
 	c.Assert(s.dockerComposeService, check.NotNil)
 	c.Assert(s.composeProject, check.NotNil)
