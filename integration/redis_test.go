@@ -2,8 +2,8 @@ package integration
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,7 +12,6 @@ import (
 	"github.com/abronan/valkeyrie"
 	"github.com/abronan/valkeyrie/store"
 	"github.com/abronan/valkeyrie/store/redis"
-	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -20,21 +19,22 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// Redis test suites (using libcompose).
+// Redis test suites.
 type RedisSuite struct {
 	BaseSuite
-	kvClient store.Store
+	kvClient  store.Store
+	redisAddr string
 }
 
 func (s *RedisSuite) setupStore(c *check.C) {
 	s.createComposeProject(c, "redis")
-	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
-	c.Assert(err, checker.IsNil)
+	s.composeUp(c)
 
+	s.redisAddr = net.JoinHostPort(s.getComposeServiceIP(c, "redis"), "6379")
 	redis.Register()
 	kv, err := valkeyrie.NewStore(
 		store.REDIS,
-		[]string{"redis:6379"},
+		[]string{s.redisAddr},
 		&store.Config{
 			ConnectionTimeout: 10 * time.Second,
 		},
@@ -49,19 +49,10 @@ func (s *RedisSuite) setupStore(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *RedisSuite) TearDownTest(c *check.C) {
-	// shutdown and delete compose project
-	if s.composeProject != nil && s.dockerService != nil {
-		err := s.dockerService.Stop(context.Background(), s.composeProject, composeapi.StopOptions{})
-		c.Assert(err, checker.IsNil)
-	}
-}
-
 func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 	s.setupStore(c)
 
-	address := "redis:6379"
-	file := s.adaptFile(c, "fixtures/redis/simple.toml", struct{ RedisAddress string }{address})
+	file := s.adaptFile(c, "fixtures/redis/simple.toml", struct{ RedisAddress string }{s.redisAddr})
 	defer os.Remove(file)
 
 	data := map[string]string{

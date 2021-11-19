@@ -2,26 +2,29 @@ package integration
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
+	"net"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
-	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	checker "github.com/vdemeester/shakers"
 )
 
-type RestSuite struct{ BaseSuite }
+type RestSuite struct {
+	BaseSuite
+	whoamiAddr string
+}
 
 func (s *RestSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "rest")
-	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
-	c.Assert(err, checker.IsNil)
+	s.composeUp(c)
+
+	s.whoamiAddr = net.JoinHostPort(s.getComposeServiceIP(c, "whoami1"), "80")
 }
 
 func (s *RestSuite) TestSimpleConfigurationInsecure(c *check.C) {
@@ -62,7 +65,7 @@ func (s *RestSuite) TestSimpleConfigurationInsecure(c *check.C) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://whoami1:80",
+										URL: "http://" + s.whoamiAddr,
 									},
 								},
 							},
@@ -88,7 +91,7 @@ func (s *RestSuite) TestSimpleConfigurationInsecure(c *check.C) {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
-										Address: "whoami1:80",
+										Address: s.whoamiAddr,
 									},
 								},
 							},
@@ -166,7 +169,7 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://whoami1:80",
+										URL: "http://" + s.whoamiAddr,
 									},
 								},
 							},
@@ -192,7 +195,7 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
-										Address: "whoami1:80",
+										Address: s.whoamiAddr,
 									},
 								},
 							},
@@ -215,10 +218,10 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 		c.Assert(err, checker.IsNil)
 		c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
 
-		err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 4000*time.Millisecond, try.BodyContains(test.ruleMatch))
+		err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 4*time.Second, try.BodyContains(test.ruleMatch))
 		c.Assert(err, checker.IsNil)
 
-		err = try.GetRequest("http://127.0.0.1:8000/", 4000*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+		err = try.GetRequest("http://127.0.0.1:8000/", 4*time.Second, try.StatusCodeIs(http.StatusOK))
 		c.Assert(err, checker.IsNil)
 	}
 }

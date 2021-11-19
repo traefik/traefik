@@ -1,12 +1,10 @@
 package integration
 
 import (
-	"context"
 	"net/http"
 	"os"
 	"time"
 
-	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
@@ -21,11 +19,10 @@ type ErrorPagesSuite struct {
 
 func (s *ErrorPagesSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "error_pages")
-	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
-	c.Assert(err, checker.IsNil)
+	s.composeUp(c)
 
-	s.ErrorPageIP = "nginx2"
-	s.BackendIP = "nginx1"
+	s.ErrorPageIP = s.getComposeServiceIP(c, "nginx2")
+	s.BackendIP = s.getComposeServiceIP(c, "nginx1")
 }
 
 func (s *ErrorPagesSuite) TestSimpleConfiguration(c *check.C) {

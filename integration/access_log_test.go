@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"context"
 	"crypto/md5"
 	"crypto/rand"
 	"fmt"
@@ -12,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -38,8 +36,7 @@ type accessLogValue struct {
 
 func (s *AccessLogSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "access_log")
-	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
-	c.Assert(err, checker.IsNil)
+	s.composeUp(c)
 }
 
 func (s *AccessLogSuite) TearDownTest(c *check.C) {

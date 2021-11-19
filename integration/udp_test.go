@@ -1,14 +1,12 @@
 package integration
 
 import (
-	"context"
 	"net"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
-	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
@@ -18,8 +16,7 @@ type UDPSuite struct{ BaseSuite }
 
 func (s *UDPSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "udp")
-	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
-	c.Assert(err, checker.IsNil)
+	s.composeUp(c)
 }
 
 func guessWhoUDP(addr string) (string, error) {
@@ -50,21 +47,16 @@ func guessWhoUDP(addr string) (string, error) {
 }
 
 func (s *UDPSuite) TestWRR(c *check.C) {
-	whoamiAHost := "whoami-a"
-	whoamiBHost := "whoami-b"
-	whoamiCHost := "whoami-c"
-	whoamiDHost := "whoami-d"
-
 	file := s.adaptFile(c, "fixtures/udp/wrr.toml", struct {
-		WhoamiAHost string
-		WhoamiBHost string
-		WhoamiCHost string
-		WhoamiDHost string
+		WhoamiAIP string
+		WhoamiBIP string
+		WhoamiCIP string
+		WhoamiDIP string
 	}{
-		WhoamiAHost: whoamiAHost,
-		WhoamiBHost: whoamiBHost,
-		WhoamiCHost: whoamiCHost,
-		WhoamiDHost: whoamiDHost,
+		WhoamiAIP: s.getComposeServiceIP(c, "whoami-a"),
+		WhoamiBIP: s.getComposeServiceIP(c, "whoami-b"),
+		WhoamiCIP: s.getComposeServiceIP(c, "whoami-c"),
+		WhoamiDIP: s.getComposeServiceIP(c, "whoami-d"),
 	})
 	defer os.Remove(file)
 

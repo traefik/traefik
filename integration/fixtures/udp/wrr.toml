@@ -33,13 +33,13 @@
 
     [udp.services.whoami-a.loadBalancer]
       [[udp.services.whoami-a.loadBalancer.servers]]
-        address = "{{ .WhoamiAHost }}:8080"
+        address = "{{ .WhoamiAIP}}:8080"
       [[udp.services.whoami-a.loadBalancer.servers]]
-        address = "{{ .WhoamiCHost }}:8080"
+        address = "{{ .WhoamiCIP}}:8080"
 
     [udp.services.whoami-b.loadBalancer]
       [[udp.services.whoami-b.loadBalancer.servers]]
-        address = "{{ .WhoamiBHost }}:8080"
+        address = "{{ .WhoamiBIP}}:8080"
 
 [http]
   [http.routers]
@@ -50,4 +50,4 @@
 
     [http.services.whoami.loadBalancer]
       [[http.services.whoami.loadBalancer.servers]]
-        url = "http://{{ .WhoamiDHost }}"
+        url = "http://{{ .WhoamiDIP}}"

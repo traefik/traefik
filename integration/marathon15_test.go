@@ -1,19 +1,17 @@
 package integration
 
 import (
-	"context"
 	"net/http"
 	"os"
 	"time"
 
-	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/gambol99/go-marathon"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
 )
 
-// Marathon test suites (using libcompose).
+// Marathon test suites.
 type MarathonSuite15 struct {
 	BaseSuite
 	marathonURL string
@@ -21,15 +19,14 @@ type MarathonSuite15 struct {
 
 func (s *MarathonSuite15) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "marathon15")
-	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
-	c.Assert(err, checker.IsNil)
+	s.composeUp(c)
 
 	s.marathonURL = "http://" + containerNameMarathon + ":8080"
 
 	// Wait for Marathon readiness prior to creating the client so that we
 	// don't run into the "all cluster members down" state right from the
 	// start.
-	err = try.GetRequest(s.marathonURL+"/v2/leader", 1*time.Minute, try.StatusCodeIs(http.StatusOK))
+	err := try.GetRequest(s.marathonURL+"/v2/leader", 1*time.Minute, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 }
 

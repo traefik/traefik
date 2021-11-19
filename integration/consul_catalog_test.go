@@ -1,13 +1,12 @@
 package integration
 
 import (
-	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"time"
 
-	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/hashicorp/consul/api"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -16,33 +15,33 @@ import (
 
 type ConsulCatalogSuite struct {
 	BaseSuite
-	consulClient       *api.Client
-	consulAgentClient  *api.Client
-	consulAddress      string
-	consulAgentAddress string
+	consulClient      *api.Client
+	consulAgentClient *api.Client
+	consulURL         string
 }
 
 func (s *ConsulCatalogSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "consul_catalog")
-	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
-	c.Assert(err, checker.IsNil)
-	s.consulAddress = "http://consul:8500"
-	client, err := api.NewClient(&api.Config{
-		Address: s.consulAddress,
+	s.composeUp(c)
+
+	addr := net.JoinHostPort(s.getComposeServiceIP(c, "consul"), "8500")
+	s.consulURL = fmt.Sprintf("http://%s", addr)
+
+	var err error
+	s.consulClient, err = api.NewClient(&api.Config{
+		Address: s.consulURL,
 	})
 	c.Check(err, check.IsNil)
-	s.consulClient = client
 
 	// Wait for consul to elect itself leader
 	err = s.waitToElectConsulLeader()
 	c.Assert(err, checker.IsNil)
 
-	s.consulAgentAddress = "http://consul-agent:8500"
-	clientAgent, err := api.NewClient(&api.Config{
-		Address: s.consulAgentAddress,
+	addr = net.JoinHostPort(s.getComposeServiceIP(c, "consul-agent"), "8500")
+	s.consulAgentClient, err = api.NewClient(&api.Config{
+		Address: fmt.Sprintf("http://%s", addr),
 	})
 	c.Check(err, check.IsNil)
-	s.consulAgentClient = clientAgent
 }
 
 func (s *ConsulCatalogSuite) waitToElectConsulLeader() error {
@@ -92,7 +91,7 @@ func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings(c *c
 		Name:    "whoami",
 		Tags:    []string{"traefik.enable=true"},
 		Port:    80,
-		Address: s.getServiceIP(c, "whoami1"),
+		Address: s.getComposeServiceIP(c, "whoami1"),
 	}
 	err := s.registerService(reg1, false)
 	c.Assert(err, checker.IsNil)
@@ -102,7 +101,7 @@ func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings(c *c
 		Name:    "whoami",
 		Tags:    []string{"traefik.enable=true"},
 		Port:    80,
-		Address: s.getServiceIP(c, "whoami2"),
+		Address: s.getComposeServiceIP(c, "whoami2"),
 	}
 	err = s.registerService(reg2, false)
 	c.Assert(err, checker.IsNil)
@@ -112,7 +111,7 @@ func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings(c *c
 		Name:    "whoami",
 		Tags:    []string{"traefik.enable=true"},
 		Port:    80,
-		Address: s.getServiceIP(c, "whoami3"),
+		Address: s.getComposeServiceIP(c, "whoami3"),
 	}
 	err = s.registerService(reg3, false)
 	c.Assert(err, checker.IsNil)
@@ -120,7 +119,7 @@ func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings(c *c
 	tempObjects := struct {
 		ConsulAddress string
 	}{
-		ConsulAddress: s.consulAddress,
+		ConsulAddress: s.consulURL,
 	}
 
 	file := s.adaptFile(c, "fixtures/consul_catalog/default_not_exposed.toml", tempObjects)
@@ -159,7 +158,7 @@ func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings(c *c
 }
 
 func (s *ConsulCatalogSuite) TestByLabels(c *check.C) {
-	containerIP := s.getServiceIP(c, "whoami1")
+	containerIP := s.getComposeServiceIP(c, "whoami1")
 
 	reg := &api.AgentServiceRegistration{
 		ID:   "whoami1",
@@ -179,7 +178,7 @@ func (s *ConsulCatalogSuite) TestByLabels(c *check.C) {
 	tempObjects := struct {
 		ConsulAddress string
 	}{
-		ConsulAddress: s.consulAddress,
+		ConsulAddress: s.consulURL,
 	}
 
 	file := s.adaptFile(c, "fixtures/consul_catalog/default_not_exposed.toml", tempObjects)
@@ -203,7 +202,7 @@ func (s *ConsulCatalogSuite) TestSimpleConfiguration(c *check.C) {
 		ConsulAddress string
 		DefaultRule   string
 	}{
-		ConsulAddress: s.consulAddress,
+		ConsulAddress: s.consulURL,
 		DefaultRule:   "Host(`{{ normalize .Name }}.consul.localhost`)",
 	}
 
@@ -215,7 +214,7 @@ func (s *ConsulCatalogSuite) TestSimpleConfiguration(c *check.C) {
 		Name:    "whoami",
 		Tags:    []string{"traefik.enable=true"},
 		Port:    80,
-		Address: s.getServiceIP(c, "whoami1"),
+		Address: s.getComposeServiceIP(c, "whoami1"),
 	}
 	err := s.registerService(reg, false)
 	c.Assert(err, checker.IsNil)
@@ -242,7 +241,7 @@ func (s *ConsulCatalogSuite) TestRegisterServiceWithoutIP(c *check.C) {
 		ConsulAddress string
 		DefaultRule   string
 	}{
-		ConsulAddress: s.consulAddress,
+		ConsulAddress: s.consulURL,
 		DefaultRule:   "Host(`{{ normalize .Name }}.consul.localhost`)",
 	}
 
@@ -281,7 +280,7 @@ func (s *ConsulCatalogSuite) TestDefaultConsulService(c *check.C) {
 		DefaultRule   string
 	}{
 
-		ConsulAddress: s.consulAddress,
+		ConsulAddress: s.consulURL,
 		DefaultRule:   "Host(`{{ normalize .Name }}.consul.localhost`)",
 	}
 
@@ -292,7 +291,7 @@ func (s *ConsulCatalogSuite) TestDefaultConsulService(c *check.C) {
 		ID:      "whoami1",
 		Name:    "whoami",
 		Port:    80,
-		Address: s.getServiceIP(c, "whoami1"),
+		Address: s.getComposeServiceIP(c, "whoami1"),
 	}
 	err := s.registerService(reg, false)
 	c.Assert(err, checker.IsNil)
@@ -308,7 +307,7 @@ func (s *ConsulCatalogSuite) TestDefaultConsulService(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	req.Host = "whoami.consul.localhost"
 
-	err = try.Request(req, 5*time.Second, try.StatusCodeIs(200), try.BodyContainsOr("Hostname: whoami1"))
+	err = try.Request(req, 2*time.Second, try.StatusCodeIs(200), try.BodyContainsOr("Hostname: whoami1"))
 	c.Assert(err, checker.IsNil)
 
 	err = s.deregisterService("whoami1", false)
@@ -320,7 +319,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithTCPLabels(c *check.C) {
 		ConsulAddress string
 		DefaultRule   string
 	}{
-		ConsulAddress: s.consulAddress,
+		ConsulAddress: s.consulURL,
 		DefaultRule:   "Host(`{{ normalize .Name }}.consul.localhost`)",
 	}
 
@@ -337,7 +336,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithTCPLabels(c *check.C) {
 			"traefik.tcp.Services.Super.Loadbalancer.server.port=8080",
 		},
 		Port:    8080,
-		Address: s.getServiceIP(c, "whoamitcp"),
+		Address: s.getComposeServiceIP(c, "whoamitcp"),
 	}
 
 	err := s.registerService(reg, false)
@@ -367,7 +366,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithLabels(c *check.C) {
 		ConsulAddress string
 		DefaultRule   string
 	}{
-		ConsulAddress: s.consulAddress,
+		ConsulAddress: s.consulURL,
 		DefaultRule:   "Host(`{{ normalize .Name }}.consul.localhost`)",
 	}
 
@@ -382,7 +381,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithLabels(c *check.C) {
 			"traefik.http.Routers.Super.Rule=Host(`my.super.host`)",
 		},
 		Port:    80,
-		Address: s.getServiceIP(c, "whoami1"),
+		Address: s.getComposeServiceIP(c, "whoami1"),
 	}
 
 	err := s.registerService(reg1, false)
@@ -396,7 +395,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithLabels(c *check.C) {
 			"traefik.http.Routers.SuperHost.Rule=Host(`my-super.host`)",
 		},
 		Port:    80,
-		Address: s.getServiceIP(c, "whoami2"),
+		Address: s.getComposeServiceIP(c, "whoami2"),
 	}
 	err = s.registerService(reg2, false)
 	c.Assert(err, checker.IsNil)
@@ -434,7 +433,7 @@ func (s *ConsulCatalogSuite) TestSameServiceIDOnDifferentConsulAgent(c *check.C)
 		ConsulAddress string
 		DefaultRule   string
 	}{
-		ConsulAddress: s.consulAddress,
+		ConsulAddress: s.consulURL,
 		DefaultRule:   "Host(`{{ normalize .Name }}.consul.localhost`)",
 	}
 
@@ -453,7 +452,7 @@ func (s *ConsulCatalogSuite) TestSameServiceIDOnDifferentConsulAgent(c *check.C)
 		Name:    "whoami",
 		Tags:    tags,
 		Port:    80,
-		Address: s.getServiceIP(c, "whoami1"),
+		Address: s.getComposeServiceIP(c, "whoami1"),
 	}
 	err := s.registerService(reg1, false)
 	c.Assert(err, checker.IsNil)
@@ -463,7 +462,7 @@ func (s *ConsulCatalogSuite) TestSameServiceIDOnDifferentConsulAgent(c *check.C)
 		Name:    "whoami",
 		Tags:    tags,
 		Port:    80,
-		Address: s.getServiceIP(c, "whoami2"),
+		Address: s.getComposeServiceIP(c, "whoami2"),
 	}
 	err = s.registerService(reg2, true)
 	c.Assert(err, checker.IsNil)
@@ -486,7 +485,7 @@ func (s *ConsulCatalogSuite) TestSameServiceIDOnDifferentConsulAgent(c *check.C)
 	c.Assert(err, checker.IsNil)
 
 	err = try.Request(req, 2*time.Second, try.StatusCodeIs(200),
-		try.BodyContainsOr(s.getServiceIP(c, "whoami1"), s.getServiceIP(c, "whoami2")))
+		try.BodyContainsOr(s.getComposeServiceIP(c, "whoami1"), s.getComposeServiceIP(c, "whoami2")))
 	c.Assert(err, checker.IsNil)
 
 	err = s.deregisterService("whoami", false)
@@ -501,7 +500,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithOneMissingLabels(c *check.C) {
 		ConsulAddress string
 		DefaultRule   string
 	}{
-		ConsulAddress: s.consulAddress,
+		ConsulAddress: s.consulURL,
 		DefaultRule:   "Host(`{{ normalize .Name }}.consul.localhost`)",
 	}
 
@@ -516,7 +515,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithOneMissingLabels(c *check.C) {
 			"traefik.random.value=my.super.host",
 		},
 		Port:    80,
-		Address: "whoami1",
+		Address: s.getComposeServiceIP(c, "whoami1"),
 	}
 
 	err := s.registerService(reg, false)
@@ -541,11 +540,12 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithOneMissingLabels(c *check.C) {
 }
 
 func (s *ConsulCatalogSuite) TestConsulServiceWithHealthCheck(c *check.C) {
+	whoamiIP := s.getComposeServiceIP(c, "whoami1")
 	tags := []string{
 		"traefik.enable=true",
 		"traefik.http.routers.router1.rule=Path(`/whoami`)",
 		"traefik.http.routers.router1.service=service1",
-		"traefik.http.services.service1.loadBalancer.server.url=http://whoami1",
+		"traefik.http.services.service1.loadBalancer.server.url=http://" + whoamiIP,
 	}
 
 	reg1 := &api.AgentServiceRegistration{
@@ -553,7 +553,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithHealthCheck(c *check.C) {
 		Name:    "whoami",
 		Tags:    tags,
 		Port:    80,
-		Address: s.getServiceIP(c, "whoami1"),
+		Address: whoamiIP,
 		Check: &api.AgentServiceCheck{
 			CheckID:  "some-failed-check",
 			TCP:      "127.0.0.1:1234",
@@ -569,7 +569,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithHealthCheck(c *check.C) {
 	tempObjects := struct {
 		ConsulAddress string
 	}{
-		ConsulAddress: s.consulAddress,
+		ConsulAddress: s.consulURL,
 	}
 
 	file := s.adaptFile(c, "fixtures/consul_catalog/simple.toml", tempObjects)
@@ -587,17 +587,16 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithHealthCheck(c *check.C) {
 	err = s.deregisterService("whoami1", false)
 	c.Assert(err, checker.IsNil)
 
-	containerIP := s.getServiceIP(c, "whoami2")
-
+	whoami2IP := s.getComposeServiceIP(c, "whoami2")
 	reg2 := &api.AgentServiceRegistration{
 		ID:      "whoami2",
 		Name:    "whoami",
 		Tags:    tags,
 		Port:    80,
-		Address: containerIP,
+		Address: whoami2IP,
 		Check: &api.AgentServiceCheck{
 			CheckID:  "some-ok-check",
-			TCP:      containerIP + ":80",
+			TCP:      whoami2IP + ":80",
 			Name:     "some-ok-check",
 			Interval: "1s",
 			Timeout:  "1s",
@@ -624,7 +623,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect(c *check.C) {
 	err := s.waitForConnectCA()
 	c.Assert(err, checker.IsNil)
 
-	connectIP := s.getServiceIP(c, "connect")
+	connectIP := s.getComposeServiceIP(c, "connect")
 	reg := &api.AgentServiceRegistration{
 		ID:   "uuid-api1",
 		Name: "uuid-api",
@@ -644,7 +643,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect(c *check.C) {
 	err = s.registerService(reg, false)
 	c.Assert(err, checker.IsNil)
 
-	whoamiIP := s.getServiceIP(c, "whoami1")
+	whoamiIP := s.getComposeServiceIP(c, "whoami1")
 	regWhoami := &api.AgentServiceRegistration{
 		ID:   "whoami1",
 		Name: "whoami",
@@ -662,7 +661,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect(c *check.C) {
 	tempObjects := struct {
 		ConsulAddress string
 	}{
-		ConsulAddress: s.consulAddress,
+		ConsulAddress: s.consulURL,
 	}
 	file := s.adaptFile(c, "fixtures/consul_catalog/connect.toml", tempObjects)
 	defer os.Remove(file)
@@ -690,7 +689,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_ByDefault(c *check.C) {
 	err := s.waitForConnectCA()
 	c.Assert(err, checker.IsNil)
 
-	connectIP := s.getServiceIP(c, "connect")
+	connectIP := s.getComposeServiceIP(c, "connect")
 	reg := &api.AgentServiceRegistration{
 		ID:   "uuid-api1",
 		Name: "uuid-api",
@@ -709,7 +708,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_ByDefault(c *check.C) {
 	err = s.registerService(reg, false)
 	c.Assert(err, checker.IsNil)
 
-	whoamiIP := s.getServiceIP(c, "whoami1")
+	whoamiIP := s.getComposeServiceIP(c, "whoami1")
 	regWhoami := &api.AgentServiceRegistration{
 		ID:   "whoami1",
 		Name: "whoami1",
@@ -724,7 +723,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_ByDefault(c *check.C) {
 	err = s.registerService(regWhoami, false)
 	c.Assert(err, checker.IsNil)
 
-	whoami2IP := s.getServiceIP(c, "whoami2")
+	whoami2IP := s.getComposeServiceIP(c, "whoami2")
 	regWhoami2 := &api.AgentServiceRegistration{
 		ID:   "whoami2",
 		Name: "whoami2",
@@ -743,7 +742,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_ByDefault(c *check.C) {
 	tempObjects := struct {
 		ConsulAddress string
 	}{
-		ConsulAddress: s.consulAddress,
+		ConsulAddress: s.consulURL,
 	}
 	file := s.adaptFile(c, "fixtures/consul_catalog/connect_by_default.toml", tempObjects)
 	defer os.Remove(file)
@@ -776,7 +775,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_NotAware(c *check.C) {
 	err := s.waitForConnectCA()
 	c.Assert(err, checker.IsNil)
 
-	connectIP := s.getServiceIP(c, "connect")
+	connectIP := s.getComposeServiceIP(c, "connect")
 	reg := &api.AgentServiceRegistration{
 		ID:   "uuid-api1",
 		Name: "uuid-api",
@@ -796,7 +795,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_NotAware(c *check.C) {
 	err = s.registerService(reg, false)
 	c.Assert(err, checker.IsNil)
 
-	whoamiIP := s.getServiceIP(c, "whoami1")
+	whoamiIP := s.getComposeServiceIP(c, "whoami1")
 	regWhoami := &api.AgentServiceRegistration{
 		ID:   "whoami1",
 		Name: "whoami",
@@ -814,7 +813,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_NotAware(c *check.C) {
 	tempObjects := struct {
 		ConsulAddress string
 	}{
-		ConsulAddress: s.consulAddress,
+		ConsulAddress: s.consulURL,
 	}
 	file := s.adaptFile(c, "fixtures/consul_catalog/connect_not_aware.toml", tempObjects)
 	defer os.Remove(file)

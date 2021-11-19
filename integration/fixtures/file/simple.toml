@@ -31,13 +31,13 @@
 [http.services]
   [http.services.service1.loadBalancer]
     [[http.services.service1.loadBalancer.servers]]
-      url = "http://whoami1:80"
+      url = "http://172.17.0.2:80"
     [[http.services.service1.loadBalancer.servers]]
-      url = "http://whoami2:80"
+      url = "http://172.17.0.3:80"
     
   [http.services.service2]
     [http.services.service2.loadBalancer]
       [[http.services.service2.loadBalancer.servers]]
-        url = "http://whoami3:80"
+        url = "http://172.17.0.4:80"
       [[http.services.service2.loadBalancer.servers]]
-        url = "http://whoami4:80"
+        url = "http://172.17.0.5:80"

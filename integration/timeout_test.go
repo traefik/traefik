@@ -1,13 +1,11 @@
 package integration
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"time"
 
-	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
@@ -17,15 +15,12 @@ type TimeoutSuite struct{ BaseSuite }
 
 func (s *TimeoutSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "timeout")
-	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
-	c.Assert(err, checker.IsNil)
+	s.composeUp(c)
 }
 
 func (s *TimeoutSuite) TestForwardingTimeouts(c *check.C) {
-	httpTimeoutEndpoint := "timeoutEndpoint"
-	file := s.adaptFile(c, "fixtures/timeout/forwarding_timeouts.toml", struct {
-		TimeoutEndpoint string
-	}{httpTimeoutEndpoint})
+	timeoutEndpoint := s.getComposeServiceIP(c, "timeoutEndpoint")
+	file := s.adaptFile(c, "fixtures/timeout/forwarding_timeouts.toml", struct{ TimeoutEndpoint string }{timeoutEndpoint})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -43,7 +38,7 @@ func (s *TimeoutSuite) TestForwardingTimeouts(c *check.C) {
 	c.Assert(response.StatusCode, checker.Equals, http.StatusGatewayTimeout)
 
 	// Check that timeout service is available
-	statusURL := fmt.Sprintf("http://%s:9000/statusTest?status=200", httpTimeoutEndpoint)
+	statusURL := fmt.Sprintf("http://%s:9000/statusTest?status=200", timeoutEndpoint)
 	c.Assert(try.GetRequest(statusURL, 60*time.Second, try.StatusCodeIs(http.StatusOK)), checker.IsNil)
 
 	// This simulates a ResponseHeaderTimeout.

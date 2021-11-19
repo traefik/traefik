@@ -2,7 +2,6 @@ package integration
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -14,7 +13,6 @@ import (
 	"regexp"
 	"time"
 
-	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -29,12 +27,10 @@ type K8sSuite struct{ BaseSuite }
 
 func (s *K8sSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "k8s")
-	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
-	c.Assert(err, checker.IsNil)
+	s.composeUp(c)
 
 	abs := "/test/config/kubeconfig.yaml"
-
-	err = try.Do(120*time.Second, func() error {
+	err := try.Do(60*time.Second, func() error {
 		_, err := os.Stat(abs)
 		return err
 	})
@@ -42,17 +38,6 @@ func (s *K8sSuite) SetUpSuite(c *check.C) {
 
 	err = os.Setenv("KUBECONFIG", abs)
 	c.Assert(err, checker.IsNil)
-
-	// allow time for k8s resources to be created
-	time.Sleep(1 * time.Minute)
-}
-
-func (s *K8sSuite) TearDownSuite(c *check.C) {
-	// shutdown and delete compose project
-	if s.composeProject != nil && s.dockerService != nil {
-		err := s.dockerService.Down(context.Background(), s.composeProject.Name, composeapi.DownOptions{})
-		c.Assert(err, checker.IsNil)
-	}
 }
 
 func (s *K8sSuite) TestIngressConfiguration(c *check.C) {

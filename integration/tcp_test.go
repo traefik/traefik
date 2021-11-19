@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"context"
 	"crypto/tls"
 	"net"
 	"net/http"
@@ -10,20 +9,16 @@ import (
 	"strings"
 	"time"
 
-	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
 )
 
-const tcpTimeout = 5 * time.Second
-
 type TCPSuite struct{ BaseSuite }
 
 func (s *TCPSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "tcp")
-	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
-	c.Assert(err, checker.IsNil)
+	s.composeUp(c)
 }
 
 func (s *TCPSuite) TestMixed(c *check.C) {
@@ -230,8 +225,12 @@ func (s *TCPSuite) TestMiddlewareWhiteList(c *check.C) {
 }
 
 func welcome(addr string) (string, error) {
-	d := net.Dialer{Timeout: tcpTimeout, Deadline: time.Now().Add(tcpTimeout)}
-	conn, err := d.Dial("tcp", addr)
+	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
+	if err != nil {
+		return "", err
+	}
+
+	conn, err := net.DialTCP("tcp", nil, tcpAddr)
 	if err != nil {
 		return "", err
 	}
@@ -255,19 +254,19 @@ func guessWhoTLSMaxVersion(addr, serverName string, tlsCall bool, tlsMaxVersion 
 	var err error
 
 	if tlsCall {
-		d := tls.Dialer{
-			NetDialer: &net.Dialer{Timeout: tcpTimeout, Deadline: time.Now().Add(tcpTimeout)},
-			Config: &tls.Config{
-				ServerName:         serverName,
-				InsecureSkipVerify: true,
-				MinVersion:         0,
-				MaxVersion:         tlsMaxVersion,
-			},
-		}
-		conn, err = d.Dial("tcp", addr)
+		conn, err = tls.Dial("tcp", addr, &tls.Config{
+			ServerName:         serverName,
+			InsecureSkipVerify: true,
+			MinVersion:         0,
+			MaxVersion:         tlsMaxVersion,
+		})
 	} else {
-		d := net.Dialer{Timeout: tcpTimeout, Deadline: time.Now().Add(tcpTimeout)}
-		conn, err = d.Dial("tcp", addr)
+		tcpAddr, err2 := net.ResolveTCPAddr("tcp", addr)
+		if err2 != nil {
+			return "", err2
+		}
+
+		conn, err = net.DialTCP("tcp", nil, tcpAddr)
 		if err != nil {
 			return "", err
 		}

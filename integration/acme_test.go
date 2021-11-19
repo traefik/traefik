@@ -1,16 +1,15 @@
 package integration
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
-	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/miekg/dns"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -21,9 +20,10 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// ACME test suites (using libcompose).
+// ACME test suites.
 type AcmeSuite struct {
 	BaseSuite
+	pebbleIP      string
 	fakeDNSServer *dns.Server
 }
 
@@ -54,6 +54,11 @@ const (
 	wildcardDomain = "*.acme.wtf"
 )
 
+func (s *AcmeSuite) getAcmeURL() string {
+	addr := net.JoinHostPort(s.pebbleIP, "14000")
+	return fmt.Sprintf("https://%s/dir", addr)
+}
+
 func setupPebbleRootCA() (*http.Transport, error) {
 	path, err := filepath.Abs("fixtures/acme/ssl/pebble.minica.pem")
 	if err != nil {
@@ -83,10 +88,11 @@ func setupPebbleRootCA() (*http.Transport, error) {
 
 func (s *AcmeSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "pebble")
-	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
-	c.Assert(err, checker.IsNil)
+	s.composeUp(c)
 
 	s.fakeDNSServer = startFakeDNSServer()
+
+	s.pebbleIP = s.getComposeServiceIP(c, "pebble")
 
 	pebbleTransport, err := setupPebbleRootCA()
 	if err != nil {
@@ -94,7 +100,7 @@ func (s *AcmeSuite) SetUpSuite(c *check.C) {
 	}
 
 	// wait for pebble
-	req := testhelpers.MustNewRequest(http.MethodGet, "https://pebble:14000/dir", nil)
+	req := testhelpers.MustNewRequest(http.MethodGet, s.getAcmeURL(), nil)
 
 	client := &http.Client{
 		Transport: pebbleTransport,
@@ -111,15 +117,14 @@ func (s *AcmeSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *AcmeSuite) TearDownSuite(c *check.C) {
-	err := s.fakeDNSServer.Shutdown()
-	if err != nil {
-		c.Log(err)
+	if s.fakeDNSServer != nil {
+		err := s.fakeDNSServer.Shutdown()
+		if err != nil {
+			c.Log(err)
+		}
 	}
-	// shutdown and delete compose project
-	if s.composeProject != nil && s.dockerService != nil {
-		err := s.dockerService.Stop(context.Background(), s.composeProject, composeapi.StopOptions{})
-		c.Assert(err, checker.IsNil)
-	}
+
+	s.composeDown(c)
 }
 
 func (s *AcmeSuite) TestHTTP01Domains(c *check.C) {
@@ -424,7 +429,7 @@ func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase acmeTestCase) {
 
 	for _, value := range testCase.template.Acme {
 		if len(value.ACME.CAServer) == 0 {
-			value.ACME.CAServer = "https://pebble:14000/dir"
+			value.ACME.CAServer = s.getAcmeURL()
 		}
 	}
 

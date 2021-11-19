@@ -2,20 +2,18 @@ package integration
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"time"
 
-	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
 	checker "github.com/vdemeester/shakers"
 )
 
-// HealthCheck test suites (using libcompose).
+// HealthCheck test suites.
 type HealthCheckSuite struct {
 	BaseSuite
 	whoami1IP string
@@ -26,13 +24,12 @@ type HealthCheckSuite struct {
 
 func (s *HealthCheckSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "healthcheck")
-	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
-	c.Assert(err, checker.IsNil)
+	s.composeUp(c)
 
-	s.whoami1IP = s.getServiceIP(c, "whoami1")
-	s.whoami2IP = s.getServiceIP(c, "whoami2")
-	s.whoami3IP = s.getServiceIP(c, "whoami3")
-	s.whoami4IP = s.getServiceIP(c, "whoami4")
+	s.whoami1IP = s.getComposeServiceIP(c, "whoami1")
+	s.whoami2IP = s.getComposeServiceIP(c, "whoami2")
+	s.whoami3IP = s.getComposeServiceIP(c, "whoami3")
+	s.whoami4IP = s.getComposeServiceIP(c, "whoami4")
 }
 
 func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
@@ -92,7 +89,7 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Check if the service with bad health check (whoami2) never respond.
-	err = try.Request(frontendReq, 5*time.Second, try.BodyContains(s.whoami2IP))
+	err = try.Request(frontendReq, 2*time.Second, try.BodyContains(s.whoami2IP))
 	c.Assert(err, checker.NotNil)
 
 	// TODO validate : run on 80

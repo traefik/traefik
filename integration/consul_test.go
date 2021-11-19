@@ -2,8 +2,9 @@ package integration
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
+	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,7 +13,6 @@ import (
 	"github.com/abronan/valkeyrie"
 	"github.com/abronan/valkeyrie/store"
 	"github.com/abronan/valkeyrie/store/consul"
-	composeapi "github.com/docker/compose/v2/pkg/api"
 	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
@@ -20,21 +20,24 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// Consul test suites (using libcompose).
+// Consul test suites.
 type ConsulSuite struct {
 	BaseSuite
-	kvClient store.Store
+	kvClient  store.Store
+	consulURL string
 }
 
 func (s *ConsulSuite) setupStore(c *check.C) {
 	s.createComposeProject(c, "consul")
-	err := s.dockerService.Up(context.Background(), s.composeProject, composeapi.UpOptions{})
-	c.Assert(err, checker.IsNil)
+	s.composeUp(c)
+
+	consulAddr := net.JoinHostPort(s.getComposeServiceIP(c, "consul"), "8500")
+	s.consulURL = fmt.Sprintf("http://%s", consulAddr)
 
 	consul.Register()
 	kv, err := valkeyrie.NewStore(
 		store.CONSUL,
-		[]string{"consul:8500"},
+		[]string{consulAddr},
 		&store.Config{
 			ConnectionTimeout: 10 * time.Second,
 		},
@@ -52,8 +55,7 @@ func (s *ConsulSuite) setupStore(c *check.C) {
 func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
 	s.setupStore(c)
 
-	address := "http://consul:8500"
-	file := s.adaptFile(c, "fixtures/consul/simple.toml", struct{ ConsulAddress string }{address})
+	file := s.adaptFile(c, "fixtures/consul/simple.toml", struct{ ConsulAddress string }{s.consulURL})
 	defer os.Remove(file)
 
 	data := map[string]string{
