@@ -1,3 +1,5 @@
+# THIS IS NOT A REAL TRAEFIK CONFIGURATION.
+# IT'S JUST SAMPLE TO TEST SERIALIZATION.
 [global]
   checkNewVersion = true
   sendAnonymousUsage = true

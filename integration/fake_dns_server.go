@@ -11,6 +11,38 @@ import (
 
 type handler struct{}
 
+func getFakeDNSIp() net.IP {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return net.ParseIP("127.0.0.1")
+	}
+
+	for _, i := range ifaces {
+		addrs, err := i.Addrs()
+		if err != nil {
+			return net.ParseIP("127.0.0.1")
+		}
+
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+
+			if ip.IsLoopback() {
+				continue
+			}
+
+			return ip
+		}
+	}
+
+	return net.ParseIP("127.0.0.1")
+}
+
 // ServeDNS a fake DNS server
 // Simplified version of the Challenge Test Server from Boulder
 // https://github.com/letsencrypt/boulder/blob/a6597b9f120207eff192c3e4107a7e49972a0250/test/challtestsrv/dnsone.go#L40
@@ -21,10 +53,7 @@ func (s *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	m.SetReply(r)
 	m.Compress = false
 
-	fakeDNS := os.Getenv("DOCKER_HOST_IP")
-	if fakeDNS == "" {
-		fakeDNS = "127.0.0.1"
-	}
+	fakeDNS := getFakeDNSIp()
 
 	for _, q := range r.Question {
 		logger.Infof("Query -- [%s] %s", q.Name, dns.TypeToString[q.Qtype])
@@ -38,7 +67,7 @@ func (s *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 				Class:  dns.ClassINET,
 				Ttl:    0,
 			}
-			record.A = net.ParseIP(fakeDNS)
+			record.A = fakeDNS
 
 			m.Answer = append(m.Answer, record)
 		case dns.TypeCAA:
