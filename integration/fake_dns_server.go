@@ -9,38 +9,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 )
 
-type handler struct{}
-
-func getFakeDNSIp() net.IP {
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		return net.ParseIP("127.0.0.1")
-	}
-
-	for _, i := range ifaces {
-		addrs, err := i.Addrs()
-		if err != nil {
-			return net.ParseIP("127.0.0.1")
-		}
-
-		for _, addr := range addrs {
-			var ip net.IP
-			switch v := addr.(type) {
-			case *net.IPNet:
-				ip = v.IP
-			case *net.IPAddr:
-				ip = v.IP
-			}
-
-			if ip.IsLoopback() {
-				continue
-			}
-
-			return ip
-		}
-	}
-
-	return net.ParseIP("127.0.0.1")
+type handler struct {
+	traefikIP string
 }
 
 // ServeDNS a fake DNS server
@@ -52,8 +22,6 @@ func (s *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	m := new(dns.Msg)
 	m.SetReply(r)
 	m.Compress = false
-
-	fakeDNS := getFakeDNSIp()
 
 	for _, q := range r.Question {
 		logger.Infof("Query -- [%s] %s", q.Name, dns.TypeToString[q.Qtype])
@@ -67,7 +35,7 @@ func (s *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 				Class:  dns.ClassINET,
 				Ttl:    0,
 			}
-			record.A = fakeDNS
+			record.A = net.ParseIP(s.traefikIP)
 
 			m.Answer = append(m.Answer, record)
 		case dns.TypeCAA:
@@ -130,11 +98,11 @@ func (s *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	}
 }
 
-func startFakeDNSServer() *dns.Server {
+func startFakeDNSServer(traefikIP string) *dns.Server {
 	srv := &dns.Server{
 		Addr:    ":5053",
 		Net:     "udp",
-		Handler: &handler{},
+		Handler: &handler{traefikIP},
 	}
 
 	go func() {
