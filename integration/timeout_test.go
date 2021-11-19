@@ -19,8 +19,8 @@ func (s *TimeoutSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *TimeoutSuite) TestForwardingTimeouts(c *check.C) {
-	timeoutEndpoint := s.getComposeServiceIP(c, "timeoutEndpoint")
-	file := s.adaptFile(c, "fixtures/timeout/forwarding_timeouts.toml", struct{ TimeoutEndpoint string }{timeoutEndpoint})
+	timeoutEndpointIP := s.getComposeServiceIP(c, "timeoutEndpoint")
+	file := s.adaptFile(c, "fixtures/timeout/forwarding_timeouts.toml", struct{ TimeoutEndpoint string }{timeoutEndpointIP})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -38,7 +38,7 @@ func (s *TimeoutSuite) TestForwardingTimeouts(c *check.C) {
 	c.Assert(response.StatusCode, checker.Equals, http.StatusGatewayTimeout)
 
 	// Check that timeout service is available
-	statusURL := fmt.Sprintf("http://%s:9000/statusTest?status=200", timeoutEndpoint)
+	statusURL := fmt.Sprintf("http://%s:9000/statusTest?status=200", timeoutEndpointIP)
 	c.Assert(try.GetRequest(statusURL, 60*time.Second, try.StatusCodeIs(http.StatusOK)), checker.IsNil)
 
 	// This simulates a ResponseHeaderTimeout.
