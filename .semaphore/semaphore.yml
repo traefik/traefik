@@ -32,13 +32,13 @@ global_job_config:
       - cache restore traefik-$(checksum go.sum)
 
 blocks:
-  - name: Test Integration Container
+  - name: Test Integration
     dependencies: []
     run:
       when: "branch =~ '.*' OR pull_request =~'.*'"
     task:
       jobs:
-        - name: Test Integration Container
+        - name: Test Integration
           commands:
             - make pull-images
             - mkdir -p static # Avoid to generate webui
