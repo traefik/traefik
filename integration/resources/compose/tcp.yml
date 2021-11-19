@@ -4,13 +4,13 @@ services:
     image: traefik/whoamitcp
     command: -name whoami-a -certFile /certs/whoami-a.crt -keyFile /certs/whoami-a.key
     volumes:
-      - traefik-test-configuration-volume:/certs
+      - ./fixtures/tcp:/certs
 
   whoami-b:
     image: traefik/whoamitcp
     command: -name whoami-b -certFile /certs/whoami-b.crt -keyFile /certs/whoami-b.key
     volumes:
-      - traefik-test-configuration-volume:/certs
+      - ./fixtures/tcp:/certs:/certs
 
   whoami-no-cert:
     image: traefik/whoamitcp
@@ -30,8 +30,4 @@ services:
 networks:
   default:
     name: traefik-test-network
-    external: true
-
-volumes:
-  traefik-test-configuration-volume:
     external: true

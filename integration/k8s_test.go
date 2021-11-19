@@ -17,6 +17,7 @@ import (
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/api"
+	"github.com/traefik/traefik/v2/pkg/log"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -29,8 +30,10 @@ func (s *K8sSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "k8s")
 	s.composeUp(c)
 
-	abs := "/test/config/kubeconfig.yaml"
-	err := try.Do(60*time.Second, func() error {
+	abs, err := filepath.Abs("./fixtures/k8s/config.skip/kubeconfig.yaml")
+	c.Assert(err, checker.IsNil)
+
+	err = try.Do(60*time.Second, func() error {
 		_, err := os.Stat(abs)
 		return err
 	})
@@ -38,6 +41,25 @@ func (s *K8sSuite) SetUpSuite(c *check.C) {
 
 	err = os.Setenv("KUBECONFIG", abs)
 	c.Assert(err, checker.IsNil)
+}
+
+func (s *K8sSuite) TearDownSuite(c *check.C) {
+	s.composeDown(c)
+
+	generatedFiles := []string{
+		"./fixtures/k8s/config.skip/kubeconfig.yaml",
+		"./fixtures/k8s/config.skip/k3s.log",
+		"./fixtures/k8s/coredns.yaml",
+		"./fixtures/k8s/rolebindings.yaml",
+		"./fixtures/k8s/traefik.yaml",
+		"./fixtures/k8s/ccm.yaml",
+	}
+
+	for _, filename := range generatedFiles {
+		if err := os.Remove(filename); err != nil {
+			log.WithoutContext().Warning(err)
+		}
+	}
 }
 
 func (s *K8sSuite) TestIngressConfiguration(c *check.C) {
