@@ -8,8 +8,8 @@ services:
       K3S_KUBECONFIG_OUTPUT: /output/kubeconfig.yaml
       K3S_KUBECONFIG_MODE: 666
     volumes:
-      - traefik-test-configuration-volume:/output
-      - traefik-test-data-volume:/var/lib/rancher/k3s/server/manifests
+      - ./fixtures/k8s/config.skip:/output
+      - ./fixtures/k8s:/var/lib/rancher/k3s/server/manifests
 
   node:
     image: rancher/k3s:v1.18.20-k3s1
@@ -21,10 +21,4 @@ services:
 networks:
   default:
     name: traefik-test-network
-    external: true
-
-volumes:
-  traefik-test-data-volume:
-    external: true
-  traefik-test-configuration-volume:
     external: true
