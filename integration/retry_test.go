@@ -11,18 +11,20 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-type RetrySuite struct{ BaseSuite }
+type RetrySuite struct {
+	BaseSuite
+	whoamiIP string
+}
 
 func (s *RetrySuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "retry")
-	s.composeProject.Start(c)
+	s.composeUp(c)
+
+	s.whoamiIP = s.getComposeServiceIP(c, "whoami")
 }
 
 func (s *RetrySuite) TestRetry(c *check.C) {
-	whoamiEndpoint := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
-	file := s.adaptFile(c, "fixtures/retry/simple.toml", struct {
-		WhoamiEndpoint string
-	}{whoamiEndpoint})
+	file := s.adaptFile(c, "fixtures/retry/simple.toml", struct{ WhoamiIP string }{s.whoamiIP})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -44,10 +46,7 @@ func (s *RetrySuite) TestRetry(c *check.C) {
 }
 
 func (s *RetrySuite) TestRetryBackoff(c *check.C) {
-	whoamiEndpoint := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
-	file := s.adaptFile(c, "fixtures/retry/backoff.toml", struct {
-		WhoamiEndpoint string
-	}{whoamiEndpoint})
+	file := s.adaptFile(c, "fixtures/retry/backoff.toml", struct{ WhoamiIP string }{s.whoamiIP})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -72,10 +71,7 @@ func (s *RetrySuite) TestRetryBackoff(c *check.C) {
 }
 
 func (s *RetrySuite) TestRetryWebsocket(c *check.C) {
-	whoamiEndpoint := s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress
-	file := s.adaptFile(c, "fixtures/retry/simple.toml", struct {
-		WhoamiEndpoint string
-	}{whoamiEndpoint})
+	file := s.adaptFile(c, "fixtures/retry/simple.toml", struct{ WhoamiIP string }{s.whoamiIP})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))

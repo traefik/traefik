@@ -10,7 +10,7 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// ErrorPagesSuite test suites (using libcompose).
+// ErrorPagesSuite test suites.
 type ErrorPagesSuite struct {
 	BaseSuite
 	ErrorPageIP string
@@ -19,10 +19,10 @@ type ErrorPagesSuite struct {
 
 func (s *ErrorPagesSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "error_pages")
-	s.composeProject.Start(c)
+	s.composeUp(c)
 
-	s.ErrorPageIP = s.composeProject.Container(c, "nginx2").NetworkSettings.IPAddress
-	s.BackendIP = s.composeProject.Container(c, "nginx1").NetworkSettings.IPAddress
+	s.ErrorPageIP = s.getComposeServiceIP(c, "nginx2")
+	s.BackendIP = s.getComposeServiceIP(c, "nginx1")
 }
 
 func (s *ErrorPagesSuite) TestSimpleConfiguration(c *check.C) {
