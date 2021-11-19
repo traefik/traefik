@@ -18,7 +18,7 @@ type TCPSuite struct{ BaseSuite }
 
 func (s *TCPSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "tcp")
-	s.composeProject.Start(c)
+	s.composeUp(c)
 }
 
 func (s *TCPSuite) TestMixed(c *check.C) {

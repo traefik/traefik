@@ -3,6 +3,7 @@ package integration
 import (
 	"bytes"
 	"encoding/json"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -18,20 +19,22 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// Redis test suites (using libcompose).
+// Redis test suites.
 type RedisSuite struct {
 	BaseSuite
-	kvClient store.Store
+	kvClient  store.Store
+	redisAddr string
 }
 
 func (s *RedisSuite) setupStore(c *check.C) {
 	s.createComposeProject(c, "redis")
-	s.composeProject.Start(c)
+	s.composeUp(c)
 
+	s.redisAddr = net.JoinHostPort(s.getComposeServiceIP(c, "redis"), "6379")
 	redis.Register()
 	kv, err := valkeyrie.NewStore(
 		store.REDIS,
-		[]string{s.composeProject.Container(c, "redis").NetworkSettings.IPAddress + ":6379"},
+		[]string{s.redisAddr},
 		&store.Config{
 			ConnectionTimeout: 10 * time.Second,
 		},
@@ -46,20 +49,10 @@ func (s *RedisSuite) setupStore(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *RedisSuite) TearDownTest(c *check.C) {
-	// shutdown and delete compose project
-	if s.composeProject != nil {
-		s.composeProject.Stop(c)
-	}
-}
-
-func (s *RedisSuite) TearDownSuite(c *check.C) {}
-
 func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 	s.setupStore(c)
 
-	address := s.composeProject.Container(c, "redis").NetworkSettings.IPAddress + ":6379"
-	file := s.adaptFile(c, "fixtures/redis/simple.toml", struct{ RedisAddress string }{address})
+	file := s.adaptFile(c, "fixtures/redis/simple.toml", struct{ RedisAddress string }{s.redisAddr})
 	defer os.Remove(file)
 
 	data := map[string]string{
@@ -131,7 +124,7 @@ func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 	var obtained api.RunTimeRepresentation
 	err = json.NewDecoder(resp.Body).Decode(&obtained)
 	c.Assert(err, checker.IsNil)
-	got, err := json.MarshalIndent(obtained, "", "  ")
+	got, err := json.MarshalIndent(obtained, "", "")
 	c.Assert(err, checker.IsNil)
 
 	expectedJSON := filepath.FromSlash("testdata/rawdata-redis.json")
@@ -144,12 +137,16 @@ func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 	expected, err := os.ReadFile(expectedJSON)
 	c.Assert(err, checker.IsNil)
 
-	if !bytes.Equal(expected, got) {
+	// ensure json is minified before testing diff
+	expectedStr := minifyJSON(string(expected))
+	gotStr := minifyJSON(string(got))
+
+	if !bytes.Equal([]byte(expectedStr), []byte(gotStr)) {
 		diff := difflib.UnifiedDiff{
 			FromFile: "Expected",
-			A:        difflib.SplitLines(string(expected)),
+			A:        difflib.SplitLines(expectedStr),
 			ToFile:   "Got",
-			B:        difflib.SplitLines(string(got)),
+			B:        difflib.SplitLines(gotStr),
 			Context:  3,
 		}
 
