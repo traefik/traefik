@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -12,12 +11,9 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-const (
-	containerNameMesosSlave = "mesos-slave"
-	containerNameMarathon   = "marathon"
-)
+const containerNameMarathon = "marathon"
 
-// Marathon test suites (using libcompose).
+// Marathon test suites.
 type MarathonSuite struct {
 	BaseSuite
 	marathonURL string
@@ -25,53 +21,15 @@ type MarathonSuite struct {
 
 func (s *MarathonSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "marathon")
-	s.composeProject.Start(c)
+	s.composeUp(c)
 
-	marathonIPAddr := s.composeProject.Container(c, containerNameMarathon).NetworkSettings.IPAddress
-	c.Assert(marathonIPAddr, checker.Not(checker.HasLen), 0)
-	s.marathonURL = "http://" + marathonIPAddr + ":8080"
+	s.marathonURL = "http://" + containerNameMarathon + ":8080"
 
 	// Wait for Marathon readiness prior to creating the client so that we
 	// don't run into the "all cluster members down" state right from the
 	// start.
 	err := try.GetRequest(s.marathonURL+"/v2/leader", 1*time.Minute, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
-
-	// Add entry for Mesos slave container IP address in the hosts file so
-	// that Traefik can properly forward traffic.
-	// This is necessary as long as we are still using the docker-compose v1
-	// spec. Once we switch to v2 or higher, we can have both the test/builder
-	// container and the Mesos slave container join the same custom network and
-	// enjoy DNS-discoverable container host names.
-	mesosSlaveIPAddr := s.composeProject.Container(c, containerNameMesosSlave).NetworkSettings.IPAddress
-	c.Assert(mesosSlaveIPAddr, checker.Not(checker.HasLen), 0)
-	err = s.extendDockerHostsFile(containerNameMesosSlave, mesosSlaveIPAddr)
-	c.Assert(err, checker.IsNil)
-}
-
-// extendDockerHostsFile extends the hosts file (/etc/hosts) by the given
-// host/IP address mapping if we are running inside a container.
-func (s *MarathonSuite) extendDockerHostsFile(host, ipAddr string) error {
-	const hostsFile = "/etc/hosts"
-
-	// Determine if the run inside a container. The most reliable way to
-	// do this is to inject an indicator, which we do in terms of an
-	// environment variable.
-	// (See also https://groups.google.com/d/topic/docker-user/JOGE7AnJ3Gw/discussion.)
-	if os.Getenv("CONTAINER") == "DOCKER" {
-		// We are running inside a container -- extend the hosts file.
-		file, err := os.OpenFile(hostsFile, os.O_APPEND|os.O_WRONLY, 0o600)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-
-		if _, err = file.WriteString(fmt.Sprintf("%s\t%s\n", ipAddr, host)); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func deployApplication(c *check.C, client marathon.Marathon, application *marathon.Application) {

@@ -21,9 +21,7 @@ type LogRotationSuite struct{ BaseSuite }
 
 func (s *LogRotationSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "access_log")
-	s.composeProject.Start(c)
-
-	s.composeProject.Container(c, "server1")
+	s.composeUp(c)
 }
 
 func (s *LogRotationSuite) TestAccessLogRotation(c *check.C) {
