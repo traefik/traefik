@@ -1,7 +1,12 @@
-timeoutEndpoint:
-  image: yaman/timeout
-  environment:
-    - PROTO=http
-    - PORT=9000
-  ports:
-    - "9000:9000"
+version: "3.8"
+services:
+  timeoutEndpoint:
+    image: yaman/timeout
+    environment:
+      PROTO: http
+      PORT: 9000
+
+networks:
+  default:
+    name: traefik-test-network
+    external: true
