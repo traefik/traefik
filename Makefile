@@ -32,9 +32,9 @@ TRAEFIK_ENVS := \
 TRAEFIK_MOUNT := -v "$(CURDIR)/$(BIND_DIR):/go/src/github.com/traefik/traefik/$(BIND_DIR)"
 DOCKER_RUN_OPTS := $(TRAEFIK_ENVS) $(TRAEFIK_MOUNT) "$(TRAEFIK_DEV_IMAGE)"
 DOCKER_NON_INTERACTIVE ?= false
-DOCKER_RUN_TRAEFIK := docker run $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INTERACTIVE), , -it) $(DOCKER_RUN_OPTS)
+DOCKER_RUN_TRAEFIK := docker run --add-host=host.docker.internal:127.0.0.1 $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INTERACTIVE), , -it) $(DOCKER_RUN_OPTS)
+DOCKER_RUN_TRAEFIK_TEST_INTEGRATION := docker run --add-host=host.docker.internal:127.0.0.1 --rm --name=traefik --network traefik-test-network -v $(PWD):$(PWD) -w $(PWD) $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INTERACTIVE), , -it) $(DOCKER_RUN_OPTS)
 DOCKER_RUN_TRAEFIK_NOTTY := docker run $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INTERACTIVE), , -i) $(DOCKER_RUN_OPTS)
-DOCKER_RUN_TRAEFIK_TEST_INTEGRATION := docker run --rm --name=traefik --network traefik-test-network -v $(PWD):$(PWD) -w $(PWD) $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INTERACTIVE), , -it) $(DOCKER_RUN_OPTS)
 
 PRE_TARGET ?= build-dev-image
 
