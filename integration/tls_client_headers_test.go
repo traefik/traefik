@@ -21,7 +21,7 @@ type TLSClientHeadersSuite struct{ BaseSuite }
 
 func (s *TLSClientHeadersSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "tlsclientheaders")
-	s.composeProject.Start(c)
+	s.composeUp(c)
 }
 
 func (s *TLSClientHeadersSuite) TestTLSClientHeaders(c *check.C) {

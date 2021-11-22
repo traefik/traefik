@@ -9,7 +9,9 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 )
 
-type handler struct{}
+type handler struct {
+	traefikIP string
+}
 
 // ServeDNS a fake DNS server
 // Simplified version of the Challenge Test Server from Boulder
@@ -20,11 +22,6 @@ func (s *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	m := new(dns.Msg)
 	m.SetReply(r)
 	m.Compress = false
-
-	fakeDNS := os.Getenv("DOCKER_HOST_IP")
-	if fakeDNS == "" {
-		fakeDNS = "127.0.0.1"
-	}
 
 	for _, q := range r.Question {
 		logger.Infof("Query -- [%s] %s", q.Name, dns.TypeToString[q.Qtype])
@@ -38,7 +35,7 @@ func (s *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 				Class:  dns.ClassINET,
 				Ttl:    0,
 			}
-			record.A = net.ParseIP(fakeDNS)
+			record.A = net.ParseIP(s.traefikIP)
 
 			m.Answer = append(m.Answer, record)
 		case dns.TypeCAA:
@@ -101,11 +98,11 @@ func (s *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	}
 }
 
-func startFakeDNSServer() *dns.Server {
+func startFakeDNSServer(traefikIP string) *dns.Server {
 	srv := &dns.Server{
 		Addr:    ":5053",
 		Net:     "udp",
-		Handler: &handler{},
+		Handler: &handler{traefikIP},
 	}
 
 	go func() {

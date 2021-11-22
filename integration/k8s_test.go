@@ -28,7 +28,7 @@ type K8sSuite struct{ BaseSuite }
 
 func (s *K8sSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "k8s")
-	s.composeProject.Start(c)
+	s.composeUp(c)
 
 	abs, err := filepath.Abs("./fixtures/k8s/config.skip/kubeconfig.yaml")
 	c.Assert(err, checker.IsNil)
@@ -44,7 +44,7 @@ func (s *K8sSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *K8sSuite) TearDownSuite(c *check.C) {
-	s.composeProject.Stop(c)
+	s.composeDown(c)
 
 	generatedFiles := []string{
 		"./fixtures/k8s/config.skip/kubeconfig.yaml",
@@ -56,8 +56,7 @@ func (s *K8sSuite) TearDownSuite(c *check.C) {
 	}
 
 	for _, filename := range generatedFiles {
-		err := os.Remove(filename)
-		if err != nil {
+		if err := os.Remove(filename); err != nil {
 			log.WithoutContext().Warning(err)
 		}
 	}
@@ -160,7 +159,7 @@ func testConfiguration(c *check.C, path, apiPort string) {
 	err = json.Unmarshal(buf.Bytes(), &rtRepr)
 	c.Assert(err, checker.IsNil)
 
-	newJSON, err := json.MarshalIndent(rtRepr, "", "\t")
+	newJSON, err := json.Marshal(rtRepr)
 	c.Assert(err, checker.IsNil)
 
 	err = os.WriteFile(expectedJSON, newJSON, 0o644)
@@ -192,7 +191,7 @@ func matchesConfig(wantConfig string, buf *bytes.Buffer) try.ResponseCondition {
 			}
 		}
 
-		got, err := json.MarshalIndent(obtained, "", "\t")
+		got, err := json.MarshalIndent(obtained, "", "  ")
 		if err != nil {
 			return err
 		}

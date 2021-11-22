@@ -6,4 +6,4 @@
 [http.services]
   [http.services.service2.loadBalancer]
     [[http.services.service2.loadBalancer.servers]]
-      url = "http://172.17.0.123:80"
+      url = "http://127.0.0.1:80"
