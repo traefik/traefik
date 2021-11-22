@@ -34,9 +34,9 @@
 
     [tcp.services.whoami-a.loadBalancer]
       [[tcp.services.whoami-a.loadBalancer.servers]]
-        address = "localhost:8081"
+        address = "whoami-a:8080"
 
     [tcp.services.whoami-b.loadBalancer]
       [[tcp.services.whoami-b.loadBalancer.servers]]
-        address = "localhost:8082"
+        address = "whoami-b:8080"
 
