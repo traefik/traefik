@@ -3,6 +3,8 @@ package integration
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -18,20 +20,24 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// Consul test suites (using libcompose).
+// Consul test suites.
 type ConsulSuite struct {
 	BaseSuite
-	kvClient store.Store
+	kvClient  store.Store
+	consulURL string
 }
 
 func (s *ConsulSuite) setupStore(c *check.C) {
 	s.createComposeProject(c, "consul")
-	s.composeProject.Start(c)
+	s.composeUp(c)
+
+	consulAddr := net.JoinHostPort(s.getComposeServiceIP(c, "consul"), "8500")
+	s.consulURL = fmt.Sprintf("http://%s", consulAddr)
 
 	consul.Register()
 	kv, err := valkeyrie.NewStore(
 		store.CONSUL,
-		[]string{s.composeProject.Container(c, "consul").NetworkSettings.IPAddress + ":8500"},
+		[]string{consulAddr},
 		&store.Config{
 			ConnectionTimeout: 10 * time.Second,
 		},
@@ -46,20 +52,10 @@ func (s *ConsulSuite) setupStore(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *ConsulSuite) TearDownTest(c *check.C) {
-	// shutdown and delete compose project
-	if s.composeProject != nil {
-		s.composeProject.Stop(c)
-	}
-}
-
-func (s *ConsulSuite) TearDownSuite(c *check.C) {}
-
 func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
 	s.setupStore(c)
 
-	address := "http://" + s.composeProject.Container(c, "consul").NetworkSettings.IPAddress + ":8500"
-	file := s.adaptFile(c, "fixtures/consul/simple.toml", struct{ ConsulAddress string }{address})
+	file := s.adaptFile(c, "fixtures/consul/simple.toml", struct{ ConsulAddress string }{s.consulURL})
 	defer os.Remove(file)
 
 	data := map[string]string{
