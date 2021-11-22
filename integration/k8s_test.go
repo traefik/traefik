@@ -159,7 +159,7 @@ func testConfiguration(c *check.C, path, apiPort string) {
 	err = json.Unmarshal(buf.Bytes(), &rtRepr)
 	c.Assert(err, checker.IsNil)
 
-	newJSON, err := json.Marshal(rtRepr)
+	newJSON, err := json.MarshalIndent(rtRepr, "", "\t")
 	c.Assert(err, checker.IsNil)
 
 	err = os.WriteFile(expectedJSON, newJSON, 0o644)
@@ -191,7 +191,7 @@ func matchesConfig(wantConfig string, buf *bytes.Buffer) try.ResponseCondition {
 			}
 		}
 
-		got, err := json.MarshalIndent(obtained, "", "  ")
+		got, err := json.MarshalIndent(obtained, "", "\t")
 		if err != nil {
 			return err
 		}
