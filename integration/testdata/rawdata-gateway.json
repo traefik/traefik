@@ -1,242 +1,242 @@
 {
-  "routers": {
-    "api@internal": {
-      "entryPoints": [
-        "traefik"
-      ],
-      "service": "api@internal",
-      "rule": "PathPrefix(`/api`)",
-      "priority": 2147483646,
-      "status": "enabled",
-      "using": [
-        "traefik"
-      ]
-    },
-    "dashboard@internal": {
-      "entryPoints": [
-        "traefik"
-      ],
-      "middlewares": [
-        "dashboard_redirect@internal",
-        "dashboard_stripprefix@internal"
-      ],
-      "service": "dashboard@internal",
-      "rule": "PathPrefix(`/`)",
-      "priority": 2147483645,
-      "status": "enabled",
-      "using": [
-        "traefik"
-      ]
-    },
-    "default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06@kubernetesgateway": {
-      "entryPoints": [
-        "web"
-      ],
-      "service": "default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06-wrr",
-      "rule": "Host(`foo.com`) \u0026\u0026 Path(`/bar`)",
-      "status": "enabled",
-      "using": [
-        "web"
-      ]
-    },
-    "default-http-app-1-my-https-gateway-websecure-1c0cf64bde37d9d0df06@kubernetesgateway": {
-      "entryPoints": [
-        "websecure"
-      ],
-      "service": "default-http-app-1-my-https-gateway-websecure-1c0cf64bde37d9d0df06-wrr",
-      "rule": "Host(`foo.com`) \u0026\u0026 Path(`/bar`)",
-      "tls": {},
-      "status": "enabled",
-      "using": [
-        "websecure"
-      ]
-    }
-  },
-  "middlewares": {
-    "dashboard_redirect@internal": {
-      "redirectRegex": {
-        "regex": "^(http:\\/\\/(\\[[\\w:.]+\\]|[\\w\\._-]+)(:\\d+)?)\\/$",
-        "replacement": "${1}/dashboard/",
-        "permanent": true
-      },
-      "status": "enabled",
-      "usedBy": [
-        "dashboard@internal"
-      ]
-    },
-    "dashboard_stripprefix@internal": {
-      "stripPrefix": {
-        "prefixes": [
-          "/dashboard/",
-          "/dashboard"
-        ]
-      },
-      "status": "enabled",
-      "usedBy": [
-        "dashboard@internal"
-      ]
-    }
-  },
-  "services": {
-    "api@internal": {
-      "status": "enabled",
-      "usedBy": [
-        "api@internal"
-      ]
-    },
-    "dashboard@internal": {
-      "status": "enabled",
-      "usedBy": [
-        "dashboard@internal"
-      ]
-    },
-    "default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06-wrr@kubernetesgateway": {
-      "weighted": {
-        "services": [
-          {
-            "name": "default-whoami-80",
-            "weight": 1
-          }
-        ]
-      },
-      "status": "enabled",
-      "usedBy": [
-        "default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06@kubernetesgateway"
-      ]
-    },
-    "default-http-app-1-my-https-gateway-websecure-1c0cf64bde37d9d0df06-wrr@kubernetesgateway": {
-      "weighted": {
-        "services": [
-          {
-            "name": "default-whoami-80",
-            "weight": 1
-          }
-        ]
-      },
-      "status": "enabled",
-      "usedBy": [
-        "default-http-app-1-my-https-gateway-websecure-1c0cf64bde37d9d0df06@kubernetesgateway"
-      ]
-    },
-    "default-whoami-80@kubernetesgateway": {
-      "loadBalancer": {
-        "servers": [
-          {
-            "url": "http://10.42.0.6:80"
-          },
-          {
-            "url": "http://10.42.0.7:80"
-          }
-        ],
-        "passHostHeader": true
-      },
-      "status": "enabled",
-      "serverStatus": {
-        "http://10.42.0.6:80": "UP",
-        "http://10.42.0.7:80": "UP"
-      }
-    },
-    "noop@internal": {
-      "status": "enabled"
-    }
-  },
-  "tcpRouters": {
-    "default-tcp-app-1-my-tcp-gateway-footcp-e3b0c44298fc1c149afb@kubernetesgateway": {
-      "entryPoints": [
-        "footcp"
-      ],
-      "service": "default-tcp-app-1-my-tcp-gateway-footcp-e3b0c44298fc1c149afb-wrr",
-      "rule": "HostSNI(`*`)",
-      "status": "enabled",
-      "using": [
-        "footcp"
-      ]
-    },
-    "default-tcp-app-1-my-tls-gateway-footlsterminate-e3b0c44298fc1c149afb@kubernetesgateway": {
-      "entryPoints": [
-        "footlsterminate"
-      ],
-      "service": "default-tcp-app-1-my-tls-gateway-footlsterminate-e3b0c44298fc1c149afb-wrr",
-      "rule": "HostSNI(`*`)",
-      "tls": {
-        "passthrough": false
-      },
-      "status": "enabled",
-      "using": [
-        "footlsterminate"
-      ]
-    },
-    "default-tls-app-1-my-tls-gateway-footlspassthrough-2279fe75c5156dc5eb26@kubernetesgateway": {
-      "entryPoints": [
-        "footlspassthrough"
-      ],
-      "service": "default-tls-app-1-my-tls-gateway-footlspassthrough-2279fe75c5156dc5eb26-wrr",
-      "rule": "HostSNI(`foo.bar`)",
-      "tls": {
-        "passthrough": true
-      },
-      "status": "enabled",
-      "using": [
-        "footlspassthrough"
-      ]
-    }
-  },
-  "tcpServices": {
-    "default-tcp-app-1-my-tcp-gateway-footcp-e3b0c44298fc1c149afb-wrr@kubernetesgateway": {
-      "weighted": {
-        "services": [
-          {
-            "name": "default-whoamitcp-8080",
-            "weight": 1
-          }
-        ]
-      },
-      "status": "enabled",
-      "usedBy": [
-        "default-tcp-app-1-my-tcp-gateway-footcp-e3b0c44298fc1c149afb@kubernetesgateway"
-      ]
-    },
-    "default-tcp-app-1-my-tls-gateway-footlsterminate-e3b0c44298fc1c149afb-wrr@kubernetesgateway": {
-      "weighted": {
-        "services": [
-          {
-            "name": "default-whoamitcp-8080",
-            "weight": 1
-          }
-        ]
-      },
-      "status": "enabled",
-      "usedBy": [
-        "default-tcp-app-1-my-tls-gateway-footlsterminate-e3b0c44298fc1c149afb@kubernetesgateway"
-      ]
-    },
-    "default-tls-app-1-my-tls-gateway-footlspassthrough-2279fe75c5156dc5eb26-wrr@kubernetesgateway": {
-      "weighted": {
-        "services": [
-          {
-            "name": "default-whoamitcp-8080",
-            "weight": 1
-          }
-        ]
-      },
-      "status": "enabled",
-      "usedBy": [
-        "default-tls-app-1-my-tls-gateway-footlspassthrough-2279fe75c5156dc5eb26@kubernetesgateway"
-      ]
-    },
-    "default-whoamitcp-8080@kubernetesgateway": {
-      "loadBalancer": {
-        "terminationDelay": 100,
-        "servers": [
-          {
-            "address": "10.42.0.2:8080"
-          },
-          {
-            "address": "10.42.0.4:8080"
-          }
-        ]
-      },
-      "status": "enabled"
-    }
-  }
+	"routers": {
+		"api@internal": {
+			"entryPoints": [
+				"traefik"
+			],
+			"service": "api@internal",
+			"rule": "PathPrefix(`/api`)",
+			"priority": 2147483646,
+			"status": "enabled",
+			"using": [
+				"traefik"
+			]
+		},
+		"dashboard@internal": {
+			"entryPoints": [
+				"traefik"
+			],
+			"middlewares": [
+				"dashboard_redirect@internal",
+				"dashboard_stripprefix@internal"
+			],
+			"service": "dashboard@internal",
+			"rule": "PathPrefix(`/`)",
+			"priority": 2147483645,
+			"status": "enabled",
+			"using": [
+				"traefik"
+			]
+		},
+		"default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06@kubernetesgateway": {
+			"entryPoints": [
+				"web"
+			],
+			"service": "default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06-wrr",
+			"rule": "Host(`foo.com`) \u0026\u0026 Path(`/bar`)",
+			"status": "enabled",
+			"using": [
+				"web"
+			]
+		},
+		"default-http-app-1-my-https-gateway-websecure-1c0cf64bde37d9d0df06@kubernetesgateway": {
+			"entryPoints": [
+				"websecure"
+			],
+			"service": "default-http-app-1-my-https-gateway-websecure-1c0cf64bde37d9d0df06-wrr",
+			"rule": "Host(`foo.com`) \u0026\u0026 Path(`/bar`)",
+			"tls": {},
+			"status": "enabled",
+			"using": [
+				"websecure"
+			]
+		}
+	},
+	"middlewares": {
+		"dashboard_redirect@internal": {
+			"redirectRegex": {
+				"regex": "^(http:\\/\\/(\\[[\\w:.]+\\]|[\\w\\._-]+)(:\\d+)?)\\/$",
+				"replacement": "${1}/dashboard/",
+				"permanent": true
+			},
+			"status": "enabled",
+			"usedBy": [
+				"dashboard@internal"
+			]
+		},
+		"dashboard_stripprefix@internal": {
+			"stripPrefix": {
+				"prefixes": [
+					"/dashboard/",
+					"/dashboard"
+				]
+			},
+			"status": "enabled",
+			"usedBy": [
+				"dashboard@internal"
+			]
+		}
+	},
+	"services": {
+		"api@internal": {
+			"status": "enabled",
+			"usedBy": [
+				"api@internal"
+			]
+		},
+		"dashboard@internal": {
+			"status": "enabled",
+			"usedBy": [
+				"dashboard@internal"
+			]
+		},
+		"default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06-wrr@kubernetesgateway": {
+			"weighted": {
+				"services": [
+					{
+						"name": "default-whoami-80",
+						"weight": 1
+					}
+				]
+			},
+			"status": "enabled",
+			"usedBy": [
+				"default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06@kubernetesgateway"
+			]
+		},
+		"default-http-app-1-my-https-gateway-websecure-1c0cf64bde37d9d0df06-wrr@kubernetesgateway": {
+			"weighted": {
+				"services": [
+					{
+						"name": "default-whoami-80",
+						"weight": 1
+					}
+				]
+			},
+			"status": "enabled",
+			"usedBy": [
+				"default-http-app-1-my-https-gateway-websecure-1c0cf64bde37d9d0df06@kubernetesgateway"
+			]
+		},
+		"default-whoami-80@kubernetesgateway": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"url": "http://10.42.0.6:80"
+					},
+					{
+						"url": "http://10.42.0.7:80"
+					}
+				],
+				"passHostHeader": true
+			},
+			"status": "enabled",
+			"serverStatus": {
+				"http://10.42.0.6:80": "UP",
+				"http://10.42.0.7:80": "UP"
+			}
+		},
+		"noop@internal": {
+			"status": "enabled"
+		}
+	},
+	"tcpRouters": {
+		"default-tcp-app-1-my-tcp-gateway-footcp-e3b0c44298fc1c149afb@kubernetesgateway": {
+			"entryPoints": [
+				"footcp"
+			],
+			"service": "default-tcp-app-1-my-tcp-gateway-footcp-e3b0c44298fc1c149afb-wrr",
+			"rule": "HostSNI(`*`)",
+			"status": "enabled",
+			"using": [
+				"footcp"
+			]
+		},
+		"default-tcp-app-1-my-tls-gateway-footlsterminate-e3b0c44298fc1c149afb@kubernetesgateway": {
+			"entryPoints": [
+				"footlsterminate"
+			],
+			"service": "default-tcp-app-1-my-tls-gateway-footlsterminate-e3b0c44298fc1c149afb-wrr",
+			"rule": "HostSNI(`*`)",
+			"tls": {
+				"passthrough": false
+			},
+			"status": "enabled",
+			"using": [
+				"footlsterminate"
+			]
+		},
+		"default-tls-app-1-my-tls-gateway-footlspassthrough-2279fe75c5156dc5eb26@kubernetesgateway": {
+			"entryPoints": [
+				"footlspassthrough"
+			],
+			"service": "default-tls-app-1-my-tls-gateway-footlspassthrough-2279fe75c5156dc5eb26-wrr",
+			"rule": "HostSNI(`foo.bar`)",
+			"tls": {
+				"passthrough": true
+			},
+			"status": "enabled",
+			"using": [
+				"footlspassthrough"
+			]
+		}
+	},
+	"tcpServices": {
+		"default-tcp-app-1-my-tcp-gateway-footcp-e3b0c44298fc1c149afb-wrr@kubernetesgateway": {
+			"weighted": {
+				"services": [
+					{
+						"name": "default-whoamitcp-8080",
+						"weight": 1
+					}
+				]
+			},
+			"status": "enabled",
+			"usedBy": [
+				"default-tcp-app-1-my-tcp-gateway-footcp-e3b0c44298fc1c149afb@kubernetesgateway"
+			]
+		},
+		"default-tcp-app-1-my-tls-gateway-footlsterminate-e3b0c44298fc1c149afb-wrr@kubernetesgateway": {
+			"weighted": {
+				"services": [
+					{
+						"name": "default-whoamitcp-8080",
+						"weight": 1
+					}
+				]
+			},
+			"status": "enabled",
+			"usedBy": [
+				"default-tcp-app-1-my-tls-gateway-footlsterminate-e3b0c44298fc1c149afb@kubernetesgateway"
+			]
+		},
+		"default-tls-app-1-my-tls-gateway-footlspassthrough-2279fe75c5156dc5eb26-wrr@kubernetesgateway": {
+			"weighted": {
+				"services": [
+					{
+						"name": "default-whoamitcp-8080",
+						"weight": 1
+					}
+				]
+			},
+			"status": "enabled",
+			"usedBy": [
+				"default-tls-app-1-my-tls-gateway-footlspassthrough-2279fe75c5156dc5eb26@kubernetesgateway"
+			]
+		},
+		"default-whoamitcp-8080@kubernetesgateway": {
+			"loadBalancer": {
+				"terminationDelay": 100,
+				"servers": [
+					{
+						"address": "10.42.0.2:8080"
+					},
+					{
+						"address": "10.42.0.4:8080"
+					}
+				]
+			},
+			"status": "enabled"
+		}
+	}
 }

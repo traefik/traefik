@@ -83,19 +83,19 @@ crossbinary-default-parallel:
 
 ## Run the unit and integration tests
 test: $(PRE_TARGET)
-	docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
+	-docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
 	trap 'docker network rm traefik-test-network' EXIT; \
 	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_TEST),) ./script/make.sh generate test-unit binary test-integration
 
 ## Run the unit tests
 test-unit: $(PRE_TARGET)
-	docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
+	-docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
 	trap 'docker network rm traefik-test-network' EXIT; \
 	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_TEST)) ./script/make.sh generate test-unit
 
 ## Run the integration tests
 test-integration: $(PRE_TARGET)
-	docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
+	-docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
 	trap 'docker network rm traefik-test-network' EXIT; \
 	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_TEST),) ./script/make.sh binary test-integration
 

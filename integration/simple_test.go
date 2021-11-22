@@ -96,7 +96,6 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout(c *check.C) {
 
 	s.composeUp(c)
 	defer s.composeDown(c)
-	defer s.composeDown(c)
 
 	whoamiURL := "http://" + net.JoinHostPort(s.getComposeServiceIP(c, "whoami"), "80")
 
