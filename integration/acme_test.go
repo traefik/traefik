@@ -90,10 +90,7 @@ func (s *AcmeSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "pebble")
 	s.composeUp(c)
 
-	traefikIP, ok := os.LookupEnv("DOCKER_HOST_IP")
-	if !ok {
-		traefikIP = s.getContainerIP(c, "traefik")
-	}
+	traefikIP := s.getContainerIP(c, "traefik")
 
 	s.fakeDNSServer = startFakeDNSServer(traefikIP)
 	s.pebbleIP = s.getComposeServiceIP(c, "pebble")
