@@ -90,9 +90,7 @@ func (s *AcmeSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "pebble")
 	s.composeUp(c)
 
-	traefikIP := s.getContainerIP(c, "traefik")
-
-	s.fakeDNSServer = startFakeDNSServer(traefikIP)
+	s.fakeDNSServer = startFakeDNSServer(s.getContainerIP(c, "traefik"))
 	s.pebbleIP = s.getComposeServiceIP(c, "pebble")
 
 	pebbleTransport, err := setupPebbleRootCA()
