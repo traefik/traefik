@@ -124,7 +124,7 @@ func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 	var obtained api.RunTimeRepresentation
 	err = json.NewDecoder(resp.Body).Decode(&obtained)
 	c.Assert(err, checker.IsNil)
-	got, err := json.MarshalIndent(obtained, "", "")
+	got, err := json.MarshalIndent(obtained, "", "  ")
 	c.Assert(err, checker.IsNil)
 
 	expectedJSON := filepath.FromSlash("testdata/rawdata-redis.json")
@@ -137,16 +137,12 @@ func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 	expected, err := os.ReadFile(expectedJSON)
 	c.Assert(err, checker.IsNil)
 
-	// ensure json is minified before testing diff
-	expectedStr := minifyJSON(string(expected))
-	gotStr := minifyJSON(string(got))
-
-	if !bytes.Equal([]byte(expectedStr), []byte(gotStr)) {
+	if !bytes.Equal(expected, got) {
 		diff := difflib.UnifiedDiff{
 			FromFile: "Expected",
-			A:        difflib.SplitLines(expectedStr),
+			A:        difflib.SplitLines(string(expected)),
 			ToFile:   "Got",
-			B:        difflib.SplitLines(gotStr),
+			B:        difflib.SplitLines(string(got)),
 			Context:  3,
 		}
 

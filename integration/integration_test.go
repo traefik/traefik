@@ -282,7 +282,3 @@ func (s *BaseSuite) getContainerIP(c *check.C, name string) string {
 func withConfigFile(file string) string {
 	return "--configFile=" + file
 }
-
-func minifyJSON(s string) string {
-	return strings.ReplaceAll(strings.ReplaceAll(s, " ", ""), "\n", "")
-}
