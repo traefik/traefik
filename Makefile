@@ -32,8 +32,8 @@ TRAEFIK_ENVS := \
 TRAEFIK_MOUNT := -v "$(CURDIR)/$(BIND_DIR):/go/src/github.com/traefik/traefik/$(BIND_DIR)"
 DOCKER_RUN_OPTS := $(TRAEFIK_ENVS) $(TRAEFIK_MOUNT) "$(TRAEFIK_DEV_IMAGE)"
 DOCKER_NON_INTERACTIVE ?= false
-DOCKER_RUN_TRAEFIK := docker run --add-host=host.docker.internal:127.0.0.1 $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INTERACTIVE), , -it) $(DOCKER_RUN_OPTS)
-DOCKER_RUN_TRAEFIK_TEST_INTEGRATION := docker run --add-host=host.docker.internal:127.0.0.1 --rm --name=traefik --network traefik-test-network -v $(PWD):$(PWD) -w $(PWD) $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INTERACTIVE), , -it) $(DOCKER_RUN_OPTS)
+DOCKER_RUN_TRAEFIK := docker run $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INTERACTIVE), , -it) $(DOCKER_RUN_OPTS)
+DOCKER_RUN_TRAEFIK_TEST := docker run --add-host=host.docker.internal:127.0.0.1 --rm --name=traefik --network traefik-test-network -v $(PWD):$(PWD) -w $(PWD) $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INTERACTIVE), , -it) $(DOCKER_RUN_OPTS)
 DOCKER_RUN_TRAEFIK_NOTTY := docker run $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INTERACTIVE), , -i) $(DOCKER_RUN_OPTS)
 
 PRE_TARGET ?= build-dev-image
@@ -82,23 +82,26 @@ crossbinary-default-parallel:
 	$(MAKE) build-dev-image crossbinary-default
 
 ## Run the unit and integration tests
-test: build-dev-image test-integration-network
-	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate test-unit binary test-integration
+test: $(PRE_TARGET)
+	docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
+	trap 'docker network rm traefik-test-network' EXIT; \
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_TEST),) ./script/make.sh generate test-unit binary test-integration
 
 ## Run the unit tests
 test-unit: $(PRE_TARGET)
-	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh generate test-unit
+	docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
+	trap 'docker network rm traefik-test-network' EXIT; \
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_TEST)) ./script/make.sh generate test-unit
+
+## Run the integration tests
+test-integration: $(PRE_TARGET)
+	docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
+	trap 'docker network rm traefik-test-network' EXIT; \
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_TEST),) ./script/make.sh binary test-integration
 
 ## Pull all images for integration tests
 pull-images:
 	grep --no-filename -E '^\s+image:' ./integration/resources/compose/*.yml | awk '{print $$2}' | sort | uniq | xargs -P 6 -n 1 docker pull
-
-test-integration-network:
-	-docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
-
-## Run the integration tests
-test-integration: $(PRE_TARGET) binary test-integration-network
-	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_TEST_INTEGRATION),) ./script/make.sh test-integration
 
 ## Validate code and docs
 validate-files: $(PRE_TARGET)
