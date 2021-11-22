@@ -55,8 +55,8 @@ const (
 )
 
 func (s *AcmeSuite) getAcmeURL() string {
-	addr := net.JoinHostPort(s.pebbleIP, "14000")
-	return fmt.Sprintf("https://%s/dir", addr)
+	return fmt.Sprintf("https://%s/dir",
+		net.JoinHostPort(s.pebbleIP, "14000"))
 }
 
 func setupPebbleRootCA() (*http.Transport, error) {
