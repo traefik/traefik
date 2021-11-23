@@ -13,7 +13,7 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// HealthCheck test suites (using libcompose).
+// HealthCheck test suites.
 type HealthCheckSuite struct {
 	BaseSuite
 	whoami1IP string
@@ -24,12 +24,12 @@ type HealthCheckSuite struct {
 
 func (s *HealthCheckSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "healthcheck")
-	s.composeProject.Start(c)
+	s.composeUp(c)
 
-	s.whoami1IP = s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
-	s.whoami2IP = s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
-	s.whoami3IP = s.composeProject.Container(c, "whoami3").NetworkSettings.IPAddress
-	s.whoami4IP = s.composeProject.Container(c, "whoami4").NetworkSettings.IPAddress
+	s.whoami1IP = s.getComposeServiceIP(c, "whoami1")
+	s.whoami2IP = s.getComposeServiceIP(c, "whoami2")
+	s.whoami3IP = s.getComposeServiceIP(c, "whoami3")
+	s.whoami4IP = s.getComposeServiceIP(c, "whoami4")
 }
 
 func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
@@ -90,7 +90,7 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 
 	// Check if the service with bad health check (whoami2) never respond.
 	err = try.Request(frontendReq, 2*time.Second, try.BodyContains(s.whoami2IP))
-	c.Assert(err, checker.Not(checker.IsNil))
+	c.Assert(err, checker.NotNil)
 
 	// TODO validate : run on 80
 	resp, err := http.Get("http://127.0.0.1:8000/")

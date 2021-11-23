@@ -1063,13 +1063,13 @@ func (s *HTTPSSuite) TestEntryPointHttpsRedirectAndPathModification(c *check.C) 
 	for _, test := range testCases {
 		sourceURL := fmt.Sprintf("http://127.0.0.1:8888%s", test.path)
 		for _, host := range test.hosts {
-			req, err := http.NewRequest("GET", sourceURL, nil)
+			req, err := http.NewRequest(http.MethodGet, sourceURL, nil)
 			c.Assert(err, checker.IsNil)
 			req.Host = host
 
 			resp, err := client.Do(req)
 			c.Assert(err, checker.IsNil)
-			defer resp.Body.Close()
+			resp.Body.Close()
 
 			location := resp.Header.Get("Location")
 			expected := fmt.Sprintf("https://%s:8443%s", host, test.path)
