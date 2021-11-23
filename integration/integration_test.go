@@ -191,6 +191,11 @@ func (s *BaseSuite) displayLogK3S(c *check.C) {
 }
 
 func (s *BaseSuite) displayLogCompose(c *check.C) {
+	if s.dockerComposeService == nil || s.composeProject == nil {
+		log.WithoutContext().Infof("%s: No docker compose logs.", c.TestName())
+		return
+	}
+
 	log.WithoutContext().Infof("%s: docker compose logs: ", c.TestName())
 
 	logWriter := log.WithoutContext().WriterLevel(log.GetLevel())
