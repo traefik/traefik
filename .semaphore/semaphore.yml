@@ -32,37 +32,19 @@ global_job_config:
       - cache restore traefik-$(checksum go.sum)
 
 blocks:
-  - name: Test Integration Container
+  - name: Test Integration
     dependencies: []
     run:
       when: "branch =~ '.*' OR pull_request =~'.*'"
     task:
       jobs:
-        - name: Test Integration Container
+        - name: Test Integration
           commands:
             - make pull-images
             - mkdir -p static # Avoid to generate webui
             - PRE_TARGET="" make binary
-            - make test-integration-container
+            - make test-integration
             - df -h
-      epilogue:
-        always:
-          commands:
-            - cache store traefik-$(checksum go.sum) $HOME/go/pkg/mod
-
-  - name: Test Integration Host
-    dependencies: []
-    run:
-      when: "branch =~ '.*' OR pull_request =~'.*'"
-    task:
-      env_vars:
-        - name: PRE_TARGET
-          value: ""
-      jobs:
-        - name: Test Integration Host
-          commands:
-            - mkdir -p static # Avoid to generate webui
-            - make test-integration-host
       epilogue:
         always:
           commands:
