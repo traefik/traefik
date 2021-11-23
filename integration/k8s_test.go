@@ -28,7 +28,7 @@ type K8sSuite struct{ BaseSuite }
 
 func (s *K8sSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "k8s")
-	s.composeProject.Start(c)
+	s.composeUp(c)
 
 	abs, err := filepath.Abs("./fixtures/k8s/config.skip/kubeconfig.yaml")
 	c.Assert(err, checker.IsNil)
@@ -44,7 +44,7 @@ func (s *K8sSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *K8sSuite) TearDownSuite(c *check.C) {
-	s.composeProject.Stop(c)
+	s.composeDown(c)
 
 	generatedFiles := []string{
 		"./fixtures/k8s/config.skip/kubeconfig.yaml",
@@ -56,8 +56,7 @@ func (s *K8sSuite) TearDownSuite(c *check.C) {
 	}
 
 	for _, filename := range generatedFiles {
-		err := os.Remove(filename)
-		if err != nil {
+		if err := os.Remove(filename); err != nil {
 			log.WithoutContext().Warning(err)
 		}
 	}

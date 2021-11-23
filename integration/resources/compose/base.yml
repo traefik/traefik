@@ -1,11 +1,18 @@
-whoami1:
-  image: traefik/whoami
-  labels:
-    - traefik.enable=true
-    - traefik.http.routers.router1.rule=PathPrefix("/whoami")
-    - traefik.http.routers.router2.rule=PathPrefix("/whoami2")
+version: "3.8"
+services:
+  whoami1:
+    image: traefik/whoami
+    labels:
+      traefik.enable: true
+      traefik.http.routers.router1.rule: PathPrefix(`/whoami`)
+      traefik.http.routers.router2.rule: PathPrefix(`/whoami2`)
 
-whoami2:
-  image: traefik/whoami
-  labels:
-    - traefik.enable=false
+  whoami2:
+    image: traefik/whoami
+    labels:
+      traefik.enable: false
+
+networks:
+  default:
+    name: traefik-test-network
+    external: true

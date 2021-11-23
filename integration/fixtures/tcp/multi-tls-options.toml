@@ -20,14 +20,14 @@
 [tcp]
   [tcp.routers]
     [tcp.routers.to-whoami-no-cert]
-      rule = "HostSNI(`whoami-c.test`)"
+      rule = "HostSNI(`whoami-a.test`)"
       service = "whoami-no-cert"
       entryPoints = [ "tcp" ]
       [tcp.routers.to-whoami-no-cert.tls]
         options = "foo"
 
     [tcp.routers.to-whoami-sni-strict]
-      rule = "HostSNI(`whoami-d.test`)"
+      rule = "HostSNI(`whoami-b.test`)"
       service = "whoami-no-cert"
       entryPoints = [ "tcp" ]
       [tcp.routers.to-whoami-sni-strict.tls]
@@ -36,7 +36,7 @@
     [tcp.services.whoami-no-cert]
       [tcp.services.whoami-no-cert.loadBalancer]
         [[tcp.services.whoami-no-cert.loadBalancer.servers]]
-        address = "localhost:8083"
+        address = "whoami-no-cert:8080"
 
 [tls.options]
 
@@ -45,3 +45,11 @@
 
   [tls.options.bar]
     minVersion = "VersionTLS12"
+
+[[tls.certificates]]
+  certFile = "fixtures/tcp/whoami-a.crt"
+  keyFile = "fixtures/tcp/whoami-a.key"
+
+[[tls.certificates]]
+  certFile = "fixtures/tcp/whoami-b.crt"
+  keyFile = "fixtures/tcp/whoami-b.key"
