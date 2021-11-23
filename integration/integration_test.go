@@ -115,17 +115,12 @@ func (s *BaseSuite) composeUp(c *check.C, services ...string) {
 	c.Assert(s.composeProject, check.NotNil)
 	c.Assert(s.dockerComposeService, check.NotNil)
 
-	// To start a set of services, the current compose project service list needs to be updated
-	// before calling the UP method. To make sure that we will be able to start/stop all existing services
-	// after calling the UP method, the original service list is restored.
-	allServices := s.composeProject.Services
-	defer func() { s.composeProject.Services = allServices }()
-
-	var err error
-	s.composeProject.Services, err = s.composeProject.GetServices(services...)
+	// We use Create and Restart instead of Up, because the only option that actually works to control which containers
+	// are started is within the RestartOptions.
+	err := s.dockerComposeService.Create(context.Background(), s.composeProject, composeapi.CreateOptions{})
 	c.Assert(err, checker.IsNil)
 
-	err = s.dockerComposeService.Up(context.Background(), s.composeProject, composeapi.UpOptions{Create: composeapi.CreateOptions{IgnoreOrphans: true}})
+	err = s.dockerComposeService.Restart(context.Background(), s.composeProject, composeapi.RestartOptions{Services: services})
 	c.Assert(err, checker.IsNil)
 }
 
