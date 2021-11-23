@@ -60,3 +60,7 @@
     [tcp.services.whoami-no-cert.loadBalancer]
       [[tcp.services.whoami-no-cert.loadBalancer.servers]]
         address = "whoami-no-cert:8080"
+
+[[tls.certificates]]
+  certFile = "fixtures/tcp/whoami-c.crt"
+  keyFile = "fixtures/tcp/whoami-c.key"

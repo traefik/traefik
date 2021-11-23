@@ -26,7 +26,7 @@ type EtcdSuite struct {
 	etcdAddr string
 }
 
-func (s *EtcdSuite) setupStore(c *check.C) {
+func (s *EtcdSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "etcd")
 	s.composeUp(c)
 
@@ -51,8 +51,6 @@ func (s *EtcdSuite) setupStore(c *check.C) {
 }
 
 func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
-	s.setupStore(c)
-
 	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct{ EtcdAddress string }{s.etcdAddr})
 	defer os.Remove(file)
 

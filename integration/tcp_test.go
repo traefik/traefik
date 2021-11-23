@@ -2,6 +2,9 @@ package integration
 
 import (
 	"crypto/tls"
+	"crypto/x509"
+	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -82,21 +85,21 @@ func (s *TCPSuite) TestTLSOptions(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-c.test`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-a.test`)"))
 	c.Assert(err, checker.IsNil)
 
-	// Check that we can use a client tls version <= 1.1 with hostSNI 'whoami-c.test'
-	out, err := guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-c.test", true, tls.VersionTLS11)
-	c.Assert(err, checker.IsNil)
-	c.Assert(out, checker.Contains, "whoami-no-cert")
-
-	// Check that we can use a client tls version <= 1.2 with hostSNI 'whoami-d.test'
-	out, err = guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-d.test", true, tls.VersionTLS12)
+	// Check that we can use a client tls version <= 1.1 with hostSNI 'whoami-a.test'
+	out, err := guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-a.test", true, tls.VersionTLS11)
 	c.Assert(err, checker.IsNil)
 	c.Assert(out, checker.Contains, "whoami-no-cert")
 
-	// Check that we cannot use a client tls version <= 1.1 with hostSNI 'whoami-d.test'
-	_, err = guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-d.test", true, tls.VersionTLS11)
+	// Check that we can use a client tls version <= 1.2 with hostSNI 'whoami-b.test'
+	out, err = guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-b.test", true, tls.VersionTLS12)
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, "whoami-no-cert")
+
+	// Check that we cannot use a client tls version <= 1.1 with hostSNI 'whoami-b.test'
+	_, err = guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-b.test", true, tls.VersionTLS11)
 	c.Assert(err, checker.NotNil)
 	c.Assert(err.Error(), checker.Contains, "protocol version not supported")
 }
@@ -211,17 +214,50 @@ func (s *TCPSuite) TestMiddlewareWhiteList(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 50*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-a.test`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-a.test`)"))
 	c.Assert(err, checker.IsNil)
 
 	// Traefik not passes through, ipWhitelist closes connection
 	_, err = guessWho("127.0.0.1:8093", "whoami-a.test", true)
-	c.Assert(err, checker.NotNil)
+	c.Assert(err, checker.ErrorMatches, "EOF")
 
 	// Traefik passes through, termination handled by whoami-b
 	out, err := guessWho("127.0.0.1:8093", "whoami-b.test", true)
 	c.Assert(err, checker.IsNil)
 	c.Assert(out, checker.Contains, "whoami-b")
+}
+
+func (s *TCPSuite) TestWRR(c *check.C) {
+	file := s.adaptFile(c, "fixtures/tcp/wrr.toml", struct{}{})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-b.test`)"))
+	c.Assert(err, checker.IsNil)
+
+	call := map[string]int{}
+	for i := 0; i < 4; i++ {
+		// Traefik passes through, termination handled by whoami-b or whoami-bb
+		out, err := guessWho("127.0.0.1:8093", "whoami-b.test", true)
+		c.Assert(err, checker.IsNil)
+		switch {
+		case strings.Contains(out, "whoami-b"):
+			call["whoami-b"]++
+		case strings.Contains(out, "whoami-ab"):
+			call["whoami-ab"]++
+		default:
+			call["unknown"]++
+		}
+		time.Sleep(time.Second)
+	}
+
+	c.Assert(call, checker.DeepEquals, map[string]int{"whoami-b": 3, "whoami-ab": 1})
 }
 
 func welcome(addr string) (string, error) {
@@ -259,6 +295,26 @@ func guessWhoTLSMaxVersion(addr, serverName string, tlsCall bool, tlsMaxVersion 
 			InsecureSkipVerify: true,
 			MinVersion:         0,
 			MaxVersion:         tlsMaxVersion,
+			VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+				if len(rawCerts) > 1 {
+					return errors.New("tls: more than one certificates from peer")
+				}
+
+				cert, err := x509.ParseCertificate(rawCerts[0])
+				if err != nil {
+					return fmt.Errorf("tls: failed to parse certificate from peer: %w", err)
+				}
+
+				if cert.Subject.CommonName == serverName {
+					return nil
+				}
+
+				if err = cert.VerifyHostname(serverName); err == nil {
+					return nil
+				}
+
+				return fmt.Errorf("tls: no valid certificate for serverName %s", serverName)
+			},
 		})
 	} else {
 		tcpAddr, err2 := net.ResolveTCPAddr("tcp", addr)
@@ -289,36 +345,4 @@ func guessWhoTLSMaxVersion(addr, serverName string, tlsCall bool, tlsMaxVersion 
 	}
 
 	return string(out[:n]), nil
-}
-
-func (s *TCPSuite) TestWRR(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/wrr.toml", struct{}{})
-	defer os.Remove(file)
-
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI"))
-	c.Assert(err, checker.IsNil)
-
-	call := map[string]int{}
-	for i := 0; i < 4; i++ {
-		// Traefik passes through, termination handled by whoami-a
-		out, err := guessWho("127.0.0.1:8093", "whoami-a.test", true)
-		c.Assert(err, checker.IsNil)
-		switch {
-		case strings.Contains(out, "whoami-a"):
-			call["whoami-a"]++
-		case strings.Contains(out, "whoami-b"):
-			call["whoami-b"]++
-		default:
-			call["unknown"]++
-		}
-	}
-
-	c.Assert(call, checker.DeepEquals, map[string]int{"whoami-a": 3, "whoami-b": 1})
 }

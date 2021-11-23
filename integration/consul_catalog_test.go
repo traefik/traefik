@@ -24,8 +24,7 @@ func (s *ConsulCatalogSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "consul_catalog")
 	s.composeUp(c)
 
-	addr := net.JoinHostPort(s.getComposeServiceIP(c, "consul"), "8500")
-	s.consulURL = fmt.Sprintf("http://%s", addr)
+	s.consulURL = "http://" + net.JoinHostPort(s.getComposeServiceIP(c, "consul"), "8500")
 
 	var err error
 	s.consulClient, err = api.NewClient(&api.Config{
@@ -37,9 +36,8 @@ func (s *ConsulCatalogSuite) SetUpSuite(c *check.C) {
 	err = s.waitToElectConsulLeader()
 	c.Assert(err, checker.IsNil)
 
-	addr = net.JoinHostPort(s.getComposeServiceIP(c, "consul-agent"), "8500")
 	s.consulAgentClient, err = api.NewClient(&api.Config{
-		Address: fmt.Sprintf("http://%s", addr),
+		Address: "http://" + net.JoinHostPort(s.getComposeServiceIP(c, "consul-agent"), "8500"),
 	})
 	c.Check(err, check.IsNil)
 }
@@ -352,7 +350,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithTCPLabels(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`my.super.host`)"))
 	c.Assert(err, checker.IsNil)
 
-	who, err := guessWho("127.0.0.1:8000", "my.super.host", true)
+	who, err := guessWhoInsecure("127.0.0.1:8000", "my.super.host")
 	c.Assert(err, checker.IsNil)
 
 	c.Assert(who, checker.Contains, "whoamitcp")

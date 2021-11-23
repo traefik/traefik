@@ -109,8 +109,8 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	c.Assert(err, checker.IsNil)
 }
 
-// composeUp starts the given services of the current docker compose project.
-// Already running services are left intact (i.e. not stopped).
+// composeUp starts the given services of the current docker compose project, if they are not already started.
+// Already running services are not affected (i.e. not stopped).
 func (s *BaseSuite) composeUp(c *check.C, services ...string) {
 	c.Assert(s.composeProject, check.NotNil)
 	c.Assert(s.dockerComposeService, check.NotNil)
@@ -271,7 +271,9 @@ func (s *BaseSuite) getContainerIP(c *check.C, name string) string {
 		return network.IPAddress
 	}
 
-	return "No network found" // Should never happen.
+	// Should never happen.
+	c.Error("No network found")
+	return ""
 }
 
 func withConfigFile(file string) string {

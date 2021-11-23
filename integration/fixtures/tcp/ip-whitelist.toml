@@ -49,7 +49,3 @@
       sourceRange = ["127.0.0.1/32"]
     [tcp.middlewares.blocking-ipwhitelist.ipWhiteList]
       sourceRange = ["127.127.127.127/32"]
-
-[[tls.certificates]]
-  certFile = "/test/config/whoami-c.crt"
-  keyFile = "/test/config/whoami-c.key"

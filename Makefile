@@ -97,7 +97,7 @@ test-unit: $(PRE_TARGET)
 test-integration: $(PRE_TARGET)
 	-docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
 	trap 'docker network rm traefik-test-network' EXIT; \
-	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_TEST),) ./script/make.sh binary test-integration
+	$(if $(PRE_TARGET),$(DOCKER_RUN_TRAEFIK_TEST),) ./script/make.sh generate binary test-integration
 
 ## Pull all images for integration tests
 pull-images:

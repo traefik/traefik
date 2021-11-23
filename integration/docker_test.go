@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -116,7 +117,7 @@ func (s *DockerSuite) TestDockerContainersWithTCPLabels(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`my.super.host`)"))
 	c.Assert(err, checker.IsNil)
 
-	who, err := guessWho("127.0.0.1:8000", "my.super.host", true)
+	who, err := guessWhoInsecure("127.0.0.1:8000", "my.super.host")
 	c.Assert(err, checker.IsNil)
 
 	c.Assert(who, checker.Contains, "my.super.host")
@@ -252,4 +253,30 @@ func (s *DockerSuite) TestRestartDockerContainers(c *check.C) {
 	s.composeUp(c, "powpow")
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("powpow"))
 	c.Assert(err, checker.IsNil)
+}
+
+func guessWhoInsecure(addr, serverName string) (string, error) {
+	conn, err := tls.Dial("tcp", addr, &tls.Config{
+		ServerName:         serverName,
+		InsecureSkipVerify: true,
+		MinVersion:         0,
+		MaxVersion:         0,
+	})
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close()
+
+	_, err = conn.Write([]byte("WHO"))
+	if err != nil {
+		return "", err
+	}
+
+	out := make([]byte, 2048)
+	n, err := conn.Read(out)
+	if err != nil {
+		return "", err
+	}
+
+	return string(out[:n]), nil
 }

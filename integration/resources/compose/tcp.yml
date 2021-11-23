@@ -10,7 +10,13 @@ services:
     image: traefik/whoamitcp
     command: -name whoami-b -certFile /certs/whoami-b.crt -keyFile /certs/whoami-b.key
     volumes:
-      - ./fixtures/tcp:/certs:/certs
+      - ./fixtures/tcp:/certs
+
+  whoami-ab:
+    image: traefik/whoamitcp
+    command: -name whoami-ab -certFile /certs/whoami-b.crt -keyFile /certs/whoami-b.key
+    volumes:
+      - ./fixtures/tcp:/certs
 
   whoami-no-cert:
     image: traefik/whoamitcp

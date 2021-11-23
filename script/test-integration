@@ -15,6 +15,5 @@ cd integration
 echo "Testing against..."
 docker version
 
-echo "Testing from container…"
 # shellcheck disable=SC2086
 CGO_ENABLED=0 go test -integration ${TESTFLAGS[*]}
