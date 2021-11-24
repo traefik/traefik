@@ -1,20 +1,21 @@
-whoami1:
-  image: traefik/whoami
-  ports:
-    - "8881:80"
-whoami2:
-  image: traefik/whoami
-  ports:
-    - "8882:80"
-whoami3:
-  image: traefik/whoami
-  ports:
-    - "8883:80"
-whoami4:
-  image: traefik/whoami
-  ports:
-    - "8884:80"
-whoami5:
-  image: traefik/whoami
-  ports:
-    - "8885:80"
+version: "3.8"
+services:
+  whoami1:
+    image: traefik/whoami
+
+  whoami2:
+    image: traefik/whoami
+
+  whoami3:
+    image: traefik/whoami
+
+  whoami4:
+    image: traefik/whoami
+
+  whoami5:
+    image: traefik/whoami
+
+networks:
+  default:
+    name: traefik-test-network
+    external: true

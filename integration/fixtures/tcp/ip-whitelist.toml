@@ -38,18 +38,14 @@
   [tcp.services]
     [tcp.services.whoami-a.loadBalancer]
       [[tcp.services.whoami-a.loadBalancer.servers]]
-        address = "localhost:8081"
+        address = "whoami-a:8080"
 
     [tcp.services.whoami-b.loadBalancer]
       [[tcp.services.whoami-b.loadBalancer.servers]]
-        address = "localhost:8082"
+        address = "whoami-b:8080"
 
   [tcp.middlewares]
     [tcp.middlewares.allowing-ipwhitelist.ipWhiteList]
       sourceRange = ["127.0.0.1/32"]
     [tcp.middlewares.blocking-ipwhitelist.ipWhiteList]
       sourceRange = ["127.127.127.127/32"]
-
-[[tls.certificates]]
-  certFile = "fixtures/tcp/whoami-c.crt"
-  keyFile = "fixtures/tcp/whoami-c.key"
