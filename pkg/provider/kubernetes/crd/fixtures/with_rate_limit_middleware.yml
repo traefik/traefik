@@ -1,0 +1,37 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: ratelimit
+  namespace: default
+
+spec:
+  rateLimit:
+    period: 1m
+    average: 6
+    burst: 12
+    sourceCriterion:
+      ipStrategy:
+        excludedIPs:
+          - 127.0.0.1/32
+          - 192.168.1.7
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test2.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+
+  routes:
+    - match: Host(`foo.com`)
+      priority: 12
+      kind: Rule
+      services:
+        - name: whoami
+          port: 80
+      middlewares:
+        - name: ratelimit
