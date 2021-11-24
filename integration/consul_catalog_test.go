@@ -350,7 +350,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithTCPLabels(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`my.super.host`)"))
 	c.Assert(err, checker.IsNil)
 
-	who, err := guessWhoInsecure("127.0.0.1:8000", "my.super.host")
+	who, err := guessWho("127.0.0.1:8000", "my.super.host", true)
 	c.Assert(err, checker.IsNil)
 
 	c.Assert(who, checker.Contains, "whoamitcp")

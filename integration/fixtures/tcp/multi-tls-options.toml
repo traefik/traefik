@@ -20,14 +20,14 @@
 [tcp]
   [tcp.routers]
     [tcp.routers.to-whoami-no-cert]
-      rule = "HostSNI(`whoami-a.test`)"
+      rule = "HostSNI(`whoami-c.test`)"
       service = "whoami-no-cert"
       entryPoints = [ "tcp" ]
       [tcp.routers.to-whoami-no-cert.tls]
         options = "foo"
 
     [tcp.routers.to-whoami-sni-strict]
-      rule = "HostSNI(`whoami-b.test`)"
+      rule = "HostSNI(`whoami-d.test`)"
       service = "whoami-no-cert"
       entryPoints = [ "tcp" ]
       [tcp.routers.to-whoami-sni-strict.tls]
@@ -45,11 +45,3 @@
 
   [tls.options.bar]
     minVersion = "VersionTLS12"
-
-[[tls.certificates]]
-  certFile = "fixtures/tcp/whoami-a.crt"
-  keyFile = "fixtures/tcp/whoami-a.key"
-
-[[tls.certificates]]
-  certFile = "fixtures/tcp/whoami-b.crt"
-  keyFile = "fixtures/tcp/whoami-b.key"
