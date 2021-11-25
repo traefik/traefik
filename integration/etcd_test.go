@@ -3,6 +3,7 @@ package integration
 import (
 	"bytes"
 	"encoding/json"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -18,20 +19,24 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// etcd test suites (using libcompose).
+// etcd test suites.
 type EtcdSuite struct {
 	BaseSuite
 	kvClient store.Store
+	etcdAddr string
 }
 
-func (s *EtcdSuite) setupStore(c *check.C) {
+func (s *EtcdSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "etcd")
-	s.composeProject.Start(c)
+	s.composeUp(c)
 
 	etcdv3.Register()
-	kv, err := valkeyrie.NewStore(
+
+	var err error
+	s.etcdAddr = net.JoinHostPort(s.getComposeServiceIP(c, "etcd"), "2379")
+	s.kvClient, err = valkeyrie.NewStore(
 		store.ETCDV3,
-		[]string{s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress + ":2379"},
+		[]string{s.etcdAddr},
 		&store.Config{
 			ConnectionTimeout: 10 * time.Second,
 		},
@@ -39,27 +44,14 @@ func (s *EtcdSuite) setupStore(c *check.C) {
 	if err != nil {
 		c.Fatal("Cannot create store etcd")
 	}
-	s.kvClient = kv
 
 	// wait for etcd
-	err = try.Do(60*time.Second, try.KVExists(kv, "test"))
+	err = try.Do(60*time.Second, try.KVExists(s.kvClient, "test"))
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *EtcdSuite) TearDownTest(c *check.C) {
-	// shutdown and delete compose project
-	if s.composeProject != nil {
-		s.composeProject.Stop(c)
-	}
-}
-
-func (s *EtcdSuite) TearDownSuite(c *check.C) {}
-
 func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
-	s.setupStore(c)
-
-	address := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress + ":2379"
-	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct{ EtcdAddress string }{address})
+	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct{ EtcdAddress string }{s.etcdAddr})
 	defer os.Remove(file)
 
 	data := map[string]string{
