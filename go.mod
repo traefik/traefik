@@ -13,10 +13,11 @@ require (
 	github.com/aws/aws-sdk-go v1.39.0
 	github.com/cenkalti/backoff/v4 v4.1.1
 	github.com/compose-spec/compose-go v1.0.3
+	github.com/containerd/containerd v1.5.8 // indirect
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/davecgh/go-spew v1.1.1
-	github.com/docker/cli v20.10.7+incompatible
+	github.com/docker/cli v20.10.11+incompatible
 	github.com/docker/compose/v2 v2.0.1
 	github.com/docker/docker v20.10.7+incompatible
 	github.com/docker/go-connections v0.4.0
