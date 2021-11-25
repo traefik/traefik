@@ -327,7 +327,8 @@ func guessWhoTLSMaxVersion(addr, serverName string, tlsCall bool, tlsMaxVersion 
 	return string(out[:n]), nil
 }
 
-// guessWhoTLSPassthrough guesses service identity and ensure that the certificate is valid for the given server name.
+// guessWhoTLSPassthrough guesses service identity and ensures that the
+// certificate is valid for the given server name.
 func guessWhoTLSPassthrough(addr, serverName string) (string, error) {
 	var conn net.Conn
 	var err error
