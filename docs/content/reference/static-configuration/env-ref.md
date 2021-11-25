@@ -405,6 +405,9 @@ Token is used to provide a per-request ACL token which overrides the agent's def
 `TRAEFIK_PROVIDERS_CONSULCATALOG_EXPOSEDBYDEFAULT`:  
 Expose containers by default. (Default: ```true```)
 
+`TRAEFIK_PROVIDERS_CONSULCATALOG_NAMESPACE`:  
+Sets the namespace used to discover services (Consul Enterprise only).
+
 `TRAEFIK_PROVIDERS_CONSULCATALOG_PREFIX`:  
 Prefix for consul service tags. Default 'traefik' (Default: ```traefik```)
 
