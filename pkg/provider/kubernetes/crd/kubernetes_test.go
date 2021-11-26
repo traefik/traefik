@@ -1470,63 +1470,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test2-route-23c7f4c450289ee29016",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/tobestripped`)",
 							Priority:    12,
-							Middlewares: []string{"default-stripprefix", "foo-addprefix"},
-						},
-					},
-					Middlewares: map[string]*dynamic.Middleware{
-						"default-stripprefix": {
-							StripPrefix: &dynamic.StripPrefix{
-								Prefixes: []string{"/tobestripped"},
-							},
-						},
-						"foo-addprefix": {
-							AddPrefix: &dynamic.AddPrefix{
-								Prefix: "/tobeadded",
-							},
-						},
-					},
-					Services: map[string]*dynamic.Service{
-						"default-test2-route-23c7f4c450289ee29016": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:80",
-									},
-									{
-										URL: "http://10.10.0.2:80",
-									},
-								},
-								PassHostHeader: Bool(true),
-							},
-						},
-					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
-				},
-				TLS: &dynamic.TLSConfiguration{},
-			},
-		},
-		{
-			desc:                "Simple Ingress Route with Rate Limit middleware",
-			AllowCrossNamespace: true,
-			paths:               []string{"services.yml", "with_rate_limit_middleware.yml"},
-			expected: &dynamic.Configuration{
-				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
-				},
-				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"default-test2-route-6f97418635c7e18853da": {
-							EntryPoints: []string{"web"},
-							Service:     "default-test2-route-6f97418635c7e18853da",
-							Rule:        "Host(`foo.com`)",
-							Priority:    12,
-							Middlewares: []string{"default-ratelimit"},
+							Middlewares: []string{"default-stripprefix", "default-ratelimit", "foo-addprefix"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -1542,9 +1486,19 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 							},
 						},
+						"default-stripprefix": {
+							StripPrefix: &dynamic.StripPrefix{
+								Prefixes: []string{"/tobestripped"},
+							},
+						},
+						"foo-addprefix": {
+							AddPrefix: &dynamic.AddPrefix{
+								Prefix: "/tobeadded",
+							},
+						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-test2-route-6f97418635c7e18853da": {
+						"default-test2-route-23c7f4c450289ee29016": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
