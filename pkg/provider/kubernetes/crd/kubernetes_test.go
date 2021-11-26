@@ -1470,10 +1470,22 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Service:     "default-test2-route-23c7f4c450289ee29016",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/tobestripped`)",
 							Priority:    12,
-							Middlewares: []string{"default-stripprefix", "foo-addprefix"},
+							Middlewares: []string{"default-stripprefix", "default-ratelimit", "foo-addprefix"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ratelimit": {
+							RateLimit: &dynamic.RateLimit{
+								Average: 6,
+								Burst:   12,
+								Period:  ptypes.Duration(60 * time.Second),
+								SourceCriterion: &dynamic.SourceCriterion{
+									IPStrategy: &dynamic.IPStrategy{
+										ExcludedIPs: []string{"127.0.0.1/32", "192.168.1.7"},
+									},
+								},
+							},
+						},
 						"default-stripprefix": {
 							StripPrefix: &dynamic.StripPrefix{
 								Prefixes: []string{"/tobestripped"},
