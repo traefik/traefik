@@ -13,6 +13,24 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
+  name: ratelimit
+  namespace: default
+
+spec:
+  rateLimit:
+    period: 1m
+    average: 6
+    burst: 12
+    sourceCriterion:
+      ipStrategy:
+        excludedIPs:
+          - 127.0.0.1/32
+          - 192.168.1.7
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
   name: addprefix
   namespace: foo
 
@@ -40,5 +58,6 @@ spec:
           port: 80
       middlewares:
         - name: stripprefix
+        - name: ratelimit
         - name: addprefix
           namespace: foo
