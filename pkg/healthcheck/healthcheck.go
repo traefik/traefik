@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -18,6 +19,10 @@ import (
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/vulcand/oxy/roundrobin"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -238,9 +243,10 @@ func NewBackendConfig(options Options, backendName string) *BackendConfig {
 	}
 }
 
-// checkHealth returns a nil error in case it was successful and otherwise
+// checkHealthHTTP returns a nil error in case it was successful and otherwise
 // a non-nil error with a meaningful description why the health check failed.
-func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
+// Dedicatted to HTTP servers.
+func checkHealthHTTP(serverURL *url.URL, backend *BackendConfig) error {
 	req, err := backend.newRequest(serverURL)
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP request: %w", err)
@@ -271,6 +277,60 @@ func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
 	}
 
 	return nil
+}
+
+// checkHealthGrpc returns a nil error in case it was successful and otherwise
+// a non-nil error with a meaningful description why the health check failed.
+// Dedicatted to gRPC servers implementing gRPC Health Checking Protocol v1.
+func checkHealthGrpc(serverURL *url.URL, backend *BackendConfig) error {
+	u, err := serverURL.Parse(backend.Path)
+	if err != nil {
+		return fmt.Errorf("failed to parse serverURL: %w", err)
+	}
+	grpcSrvAddr := u.Hostname() + ":" + u.Port()
+
+	opts := []grpc.DialOption{
+		grpc.WithInsecure(),
+	}
+
+	grpcCtx, grpcCancel := context.WithTimeout(context.Background(), backend.Options.Timeout)
+	defer grpcCancel()
+
+	conn, err := grpc.DialContext(grpcCtx, grpcSrvAddr, opts...)
+	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return fmt.Errorf("fail to connect to %s within %s", grpcSrvAddr, backend.Options.Timeout)
+		}
+		return fmt.Errorf("fail to connect to %s: %w", grpcSrvAddr, err)
+	}
+	defer conn.Close()
+
+	resp, err := healthpb.NewHealthClient(conn).Check(grpcCtx, &healthpb.HealthCheckRequest{})
+	if err != nil {
+		if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unimplemented {
+			return fmt.Errorf("the server doesn't implement the gRPC health protocol")
+		}
+		if stat, ok := status.FromError(err); ok && stat.Code() == codes.DeadlineExceeded {
+			return fmt.Errorf("gRPC health check timeout")
+		}
+		return fmt.Errorf("gRPC request failed %w", err)
+	}
+
+	if resp.Status != healthpb.HealthCheckResponse_SERVING {
+		return fmt.Errorf("received gRPC status code: %v", resp.Status)
+	}
+
+	return nil
+}
+
+// checkHealth calls the proper health check function depending on the
+// scheme declared in the backend config options.
+// defaults to HTTP.
+func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
+	if strings.Compare(backend.Options.Scheme, "grpc") == 0 {
+		return checkHealthGrpc(serverURL, backend)
+	}
+	return checkHealthHTTP(serverURL, backend)
 }
 
 // StatusUpdater should be implemented by a service that, when its status
