@@ -287,24 +287,31 @@ func checkHealthGrpc(serverURL *url.URL, backend *BackendConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse serverURL: %w", err)
 	}
+	grpcSrvAddr := u.Hostname() + ":" + u.Port()
 
 	opts := []grpc.DialOption{
 		grpc.WithInsecure(),
 	}
 
-	conn, err := grpc.Dial(u.Hostname()+":"+u.Port(), opts...)
+	grpcCtx, grpcCancel := context.WithTimeout(context.Background(), backend.Options.Timeout)
+	defer grpcCancel()
+
+	conn, err := grpc.DialContext(grpcCtx, grpcSrvAddr, opts...)
 	if err != nil {
-		return fmt.Errorf("fail to dial: %w", err)
+		if errors.Is(err, context.DeadlineExceeded) {
+			return fmt.Errorf("fail to connect to %s within %s", grpcSrvAddr, backend.Options.Timeout)
+		}
+		return fmt.Errorf("fail to connect to %s: %w", grpcSrvAddr, err)
 	}
-
 	defer conn.Close()
-
-	grpcCtx := context.Background()
 
 	resp, err := healthpb.NewHealthClient(conn).Check(grpcCtx, &healthpb.HealthCheckRequest{})
 	if err != nil {
 		if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unimplemented {
-			return fmt.Errorf("the server doesn't implement the grpc health protocol")
+			return fmt.Errorf("the server doesn't implement the gRPC health protocol")
+		}
+		if stat, ok := status.FromError(err); ok && stat.Code() == codes.DeadlineExceeded {
+			return fmt.Errorf("gRPC health check timeout")
 		}
 		return fmt.Errorf("gRPC request failed %w", err)
 	}
