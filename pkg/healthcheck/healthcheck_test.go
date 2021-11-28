@@ -599,9 +599,9 @@ func newTestServerGrpc(t *testing.T, healthSequence []gRPCCheckStatus, gRPCListe
 		err := server.Serve((*gRPCListener))
 		assert.NoError(t, err)
 	}()
-	// Waitt for gRPC server to be ready
+	// Wait for gRPC server to be ready
 	time.Sleep(800 * time.Millisecond)
-	// Once the test server received tthe expectted number of queries, cancel the context
+	// Once the test server received the expected number of queries, cancel the context
 	go func() {
 		for {
 			time.Sleep(gRPChealthCheckInterval + healthCheckTimeout)

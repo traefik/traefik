@@ -312,14 +312,14 @@ On subsequent requests, to keep the session alive with the same server, the clie
 
 Configure health check to remove unhealthy servers from the load balancing rotation.
 Traefik will consider your HTTP(s) servers healthy as long as they return status codes between `2XX` and `3XX` to the health check requests (carried out every `interval`).
-For gRPC servers, Traefik will consider them healthy as long as they return `SERVING` to gRPC health check v1 requests). You have to define the `scheme`to `grpc`.
+For gRPC servers, Traefik will consider them healthy as long as they return `SERVING` to [gRPC health check v1](https://github.com/grpc/grpc/blob/master/doc/health-checking.md) requests. You have to define the `scheme` to `grpc`.
 
 To propagate status changes (e.g. all servers of this service are down) upwards, HealthCheck must also be enabled on the parent(s) of this service.
 
 Below are the available options for the health check mechanism:
 
 - `path` is appended to the server URL to set the health check endpoint.
-- `scheme`, if defined, will replace the server URL `scheme` for the health check endpoint
+- `scheme`, if defined to `grpc`, will use the gRPC health check protocol to probe the server. If defined to something else, will replace the server URL `scheme` for the health check endpoint.
 - `hostname`, if defined, will apply `Host` header `hostname` to the health check request.
 - `port`, if defined, will replace the server URL `port` for the health check endpoint.
 - `interval` defines the frequency of the health check calls.
