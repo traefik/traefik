@@ -165,6 +165,12 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 		unsafeHeader(outreq.Header).Set(xForwardedHost, outreq.Host)
 	}
 
+	// Per https://www.rfc-editor.org/rfc/rfc2616#section-4.2, the Forwarded IPs list is in
+	// the same order as the values in the X-Forwarded-For header(s).
+	if xffs := unsafeHeader(outreq.Header).Values(xForwardedFor); len(xffs) > 0 {
+		unsafeHeader(outreq.Header).Set(xForwardedFor, strings.Join(xffs, ", "))
+	}
+
 	if x.hostname != "" {
 		unsafeHeader(outreq.Header).Set(xForwardedServer, x.hostname)
 	}
@@ -196,6 +202,10 @@ func (h unsafeHeader) Get(key string) string {
 		return ""
 	}
 	return h[key][0]
+}
+
+func (h unsafeHeader) Values(key string) []string {
+	return h[key]
 }
 
 func (h unsafeHeader) Del(key string) {
