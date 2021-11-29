@@ -49,18 +49,20 @@ func (i *inFlightConn) ServeTCP(conn tcp.WriteCloser) {
 		return
 	}
 
-	err = i.acquire(ip)
+	err = i.increment(ip)
 	if err != nil {
-		logger.Debug("Connection rejected: %v", err)
+		logger.Errorf("Connection rejected: %v", err)
 		conn.Close()
 		return
 	}
 
-	defer i.release(ip)
+	defer i.decrement(ip)
 
 	i.next.ServeTCP(conn)
 }
 
+// increment check if an IP can open a new connection.
+// Returns an error if it cannot.
 func (i *inFlightConn) increment(ip string) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
@@ -74,9 +76,15 @@ func (i *inFlightConn) increment(ip string) error {
 	return nil
 }
 
+// decrement allow for a new connection for a given IP.
+// It ensures that the number of connection is greater or equal to zero.
 func (i *inFlightConn) decrement(ip string) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
+
+	if i.connections[ip] <= 0 {
+		return
+	}
 
 	i.connections[ip]--
 }
