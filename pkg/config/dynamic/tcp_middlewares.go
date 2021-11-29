@@ -10,7 +10,7 @@ type TCPMiddleware struct {
 
 // +k8s:deepcopy-gen=true
 
-// TCPInFlightConn limits the number of connections served concurrently.
+// TCPInFlightConn holds the TCP in flight connection configuration.
 type TCPInFlightConn struct {
 	Amount int64 `json:"amount,omitempty" toml:"amount,omitempty" yaml:"amount,omitempty" export:"true"`
 }
