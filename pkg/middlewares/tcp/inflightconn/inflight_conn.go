@@ -49,8 +49,7 @@ func (i *inFlightConn) ServeTCP(conn tcp.WriteCloser) {
 		return
 	}
 
-	err = i.increment(ip)
-	if err != nil {
+	if err = i.increment(ip); err != nil {
 		logger.Errorf("Connection rejected: %v", err)
 		conn.Close()
 		return
