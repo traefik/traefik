@@ -218,8 +218,8 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 	core[ClientAddr] = req.RemoteAddr
 	core[ClientHost], core[ClientPort] = silentSplitHostPort(req.RemoteAddr)
 
-	if xffs := req.Header.Values("X-Forwarded-For"); len(xffs) > 0 {
-		core[ClientHost] = strings.Join(xffs, ",")
+	if forwardedFor := req.Header.Get("X-Forwarded-For"); forwardedFor != "" {
+		core[ClientHost] = forwardedFor
 	}
 
 	crw := newCaptureResponseWriter(rw)

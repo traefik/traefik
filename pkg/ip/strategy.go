@@ -6,7 +6,9 @@ import (
 	"strings"
 )
 
-const xForwardedFor = "X-Forwarded-For"
+const (
+	xForwardedFor = "X-Forwarded-For"
+)
 
 // Strategy a strategy for IP selection.
 type Strategy interface {
@@ -32,11 +34,12 @@ type DepthStrategy struct {
 
 // GetIP return the selected IP.
 func (s *DepthStrategy) GetIP(req *http.Request) string {
-	xffs := getForwardedIPs(req.Header)
+	xff := req.Header.Get(xForwardedFor)
+	xffs := strings.Split(xff, ",")
+
 	if len(xffs) < s.Depth {
 		return ""
 	}
-
 	return strings.TrimSpace(xffs[len(xffs)-s.Depth])
 }
 
@@ -54,7 +57,8 @@ func (s *PoolStrategy) GetIP(req *http.Request) string {
 		return ""
 	}
 
-	xffs := getForwardedIPs(req.Header)
+	xff := req.Header.Get(xForwardedFor)
+	xffs := strings.Split(xff, ",")
 
 	for i := len(xffs) - 1; i >= 0; i-- {
 		xffTrimmed := strings.TrimSpace(xffs[i])
@@ -67,16 +71,4 @@ func (s *PoolStrategy) GetIP(req *http.Request) string {
 	}
 
 	return ""
-}
-
-// getForwardedIPs returns the list of the Forwarded IPs parsed from the X-Forwarded-For header(s) values.
-// Per https://www.rfc-editor.org/rfc/rfc2616#section-4.2, the returned list is in the same order as the values in the
-// X-Forwarded-For header(s).
-func getForwardedIPs(header http.Header) []string {
-	var ips []string
-	for _, xff := range header.Values(xForwardedFor) {
-		ips = append(ips, strings.Split(xff, ",")...)
-	}
-
-	return ips
 }
