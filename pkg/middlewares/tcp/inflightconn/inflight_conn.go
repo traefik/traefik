@@ -24,7 +24,7 @@ type inFlightConn struct {
 }
 
 // New creates a max connections middleware.
-// The connections are limited by remote IP.
+// The connections are identified and grouped by remote IP.
 func New(ctx context.Context, next tcp.Handler, config dynamic.TCPInFlightConn, name string) (tcp.Handler, error) {
 	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName))
 	logger.Debug("Creating middleware")
@@ -61,12 +61,12 @@ func (i *inFlightConn) ServeTCP(conn tcp.WriteCloser) {
 	i.next.ServeTCP(conn)
 }
 
-func (i *inFlightConn) acquire(ip string) error {
+func (i *inFlightConn) increment(ip string) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
 	if i.connections[ip] >= i.maxConnections {
-		return fmt.Errorf("max connection reached for %s", ip)
+		return fmt.Errorf("max number of connections reached for %s", ip)
 	}
 
 	i.connections[ip]++
@@ -74,7 +74,7 @@ func (i *inFlightConn) acquire(ip string) error {
 	return nil
 }
 
-func (i *inFlightConn) release(ip string) {
+func (i *inFlightConn) decrement(ip string) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
