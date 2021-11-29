@@ -37,31 +37,25 @@ func TestDepthStrategy_GetIP(t *testing.T) {
 	testCases := []struct {
 		desc          string
 		depth         int
-		xForwardedFor []string
+		xForwardedFor string
 		expected      string
 	}{
 		{
 			desc:          "Use depth",
 			depth:         3,
-			xForwardedFor: []string{"10.0.0.4,10.0.0.3,10.0.0.2,10.0.0.1"},
+			xForwardedFor: "10.0.0.4,10.0.0.3,10.0.0.2,10.0.0.1",
 			expected:      "10.0.0.3",
 		},
 		{
 			desc:          "Use non existing depth in XForwardedFor",
 			depth:         2,
-			xForwardedFor: []string{""},
+			xForwardedFor: "",
 			expected:      "",
 		},
 		{
 			desc:          "Use depth that match the first IP in XForwardedFor",
 			depth:         2,
-			xForwardedFor: []string{"10.0.0.2,10.0.0.1"},
-			expected:      "10.0.0.2",
-		},
-		{
-			desc:          "Use depth with multiple XForwardedFor headers",
-			depth:         3,
-			xForwardedFor: []string{"10.0.0.4,10.0.0.3,10.0.0.2", "10.0.0.1,10.0.0.0"},
+			xForwardedFor: "10.0.0.2,10.0.0.1",
 			expected:      "10.0.0.2",
 		},
 	}
@@ -73,11 +67,7 @@ func TestDepthStrategy_GetIP(t *testing.T) {
 
 			strategy := DepthStrategy{Depth: test.depth}
 			req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1", nil)
-
-			for _, xff := range test.xForwardedFor {
-				req.Header.Add(xForwardedFor, xff)
-			}
-
+			req.Header.Set(xForwardedFor, test.xForwardedFor)
 			actual := strategy.GetIP(req)
 			assert.Equal(t, test.expected, actual)
 		})
@@ -88,45 +78,33 @@ func TestTrustedIPsStrategy_GetIP(t *testing.T) {
 	testCases := []struct {
 		desc          string
 		trustedIPs    []string
-		xForwardedFor []string
+		xForwardedFor string
 		expected      string
 		useRemote     bool
 	}{
 		{
 			desc:          "Trust all IPs",
 			trustedIPs:    []string{"10.0.0.4", "10.0.0.3", "10.0.0.2", "10.0.0.1"},
-			xForwardedFor: []string{"10.0.0.4,10.0.0.3,10.0.0.2,10.0.0.1"},
-			expected:      "",
-		},
-		{
-			desc:          "Trust all IPs with CIDR",
-			trustedIPs:    []string{"10.0.0.1/24"},
-			xForwardedFor: []string{"10.0.0.4,10.0.0.3,10.0.0.2,10.0.0.1"},
-			expected:      "",
-		},
-		{
-			desc:          "Trust all IPs with multiple XForwardedFor headers",
-			trustedIPs:    []string{"10.0.0.4", "10.0.0.3", "10.0.0.2", "10.0.0.1", "10.0.0.0"},
-			xForwardedFor: []string{"10.0.0.4,10.0.0.3,10.0.0.2", "10.0.0.1,10.0.0.0"},
+			xForwardedFor: "10.0.0.4,10.0.0.3,10.0.0.2,10.0.0.1",
 			expected:      "",
 		},
 		{
 			desc:          "Do not trust all IPs",
 			trustedIPs:    []string{"10.0.0.2", "10.0.0.1"},
-			xForwardedFor: []string{"10.0.0.4,10.0.0.3,10.0.0.2,10.0.0.1"},
+			xForwardedFor: "10.0.0.4,10.0.0.3,10.0.0.2,10.0.0.1",
 			expected:      "10.0.0.3",
-		},
-		{
-			desc:          "Do not trust all IPs with multiple XForwardedFor headers",
-			trustedIPs:    []string{"10.0.0.2", "10.0.0.1"},
-			xForwardedFor: []string{"10.0.0.4,10.0.0.3,10.0.0.2", "10.0.0.1,10.0.0.0"},
-			expected:      "10.0.0.0",
 		},
 		{
 			desc:          "Do not trust all IPs with CIDR",
 			trustedIPs:    []string{"10.0.0.1/24"},
-			xForwardedFor: []string{"127.0.0.1,10.0.0.4,10.0.0.3,10.0.0.2,10.0.0.1"},
+			xForwardedFor: "127.0.0.1,10.0.0.4,10.0.0.3,10.0.0.2,10.0.0.1",
 			expected:      "127.0.0.1",
+		},
+		{
+			desc:          "Trust all IPs with CIDR",
+			trustedIPs:    []string{"10.0.0.1/24"},
+			xForwardedFor: "10.0.0.4,10.0.0.3,10.0.0.2,10.0.0.1",
+			expected:      "",
 		},
 	}
 
@@ -140,11 +118,7 @@ func TestTrustedIPsStrategy_GetIP(t *testing.T) {
 
 			strategy := PoolStrategy{Checker: checker}
 			req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1", nil)
-
-			for _, xff := range test.xForwardedFor {
-				req.Header.Add(xForwardedFor, xff)
-			}
-
+			req.Header.Set(xForwardedFor, test.xForwardedFor)
 			actual := strategy.GetIP(req)
 			assert.Equal(t, test.expected, actual)
 		})
