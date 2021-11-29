@@ -34,13 +34,13 @@ func TestInFlightConn_ServeTCP(t *testing.T) {
 	go middleware.ServeTCP(fakeConn{addr: "127.0.0.1:9000", wait: true})
 	requireMessage(t, proceedCh)
 
-	// The second connection should be closed as the maximum number of connections is exceeded.
 	closeCh := make(chan struct{})
 
-	go middleware.ServeTCP(fakeConn{addr: "127.0.0.1:9001", closeCh: closeCh})
+	// The second connection from the same remote address should be closed as the maximum number of connections is exceeded.
+	go middleware.ServeTCP(fakeConn{addr: "127.0.0.1:9000", closeCh: closeCh})
 	requireMessage(t, closeCh)
 
-	// The connection with another remote address should succeed.
+	// The connection from another remote address should succeed.
 	go middleware.ServeTCP(fakeConn{addr: "127.0.0.2:9000"})
 	requireMessage(t, proceedCh)
 
@@ -48,7 +48,7 @@ func TestInFlightConn_ServeTCP(t *testing.T) {
 	close(waitCh)
 	requireMessage(t, finishCh)
 
-	go middleware.ServeTCP(fakeConn{addr: "127.0.0.1:9002"})
+	go middleware.ServeTCP(fakeConn{addr: "127.0.0.1:9000"})
 	requireMessage(t, proceedCh)
 }
 
