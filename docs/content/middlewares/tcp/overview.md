@@ -131,5 +131,5 @@ tcp:
 
 | Middleware                                | Purpose                                           | Area                        |
 |-------------------------------------------|---------------------------------------------------|-----------------------------|
-| [InFlightConn](inflightconn.md)          | Limits the number of simultaneous connections.    | Security, Request lifecycle |
+| [InFlightConn](inflightconn.md)           | Limits the number of simultaneous connections.    | Security, Request lifecycle |
 | [IPWhiteList](ipwhitelist.md)             | Limit the allowed client IPs.                     | Security, Request lifecycle |
