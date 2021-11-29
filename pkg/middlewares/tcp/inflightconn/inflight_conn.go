@@ -61,8 +61,10 @@ func (i *inFlightConn) ServeTCP(conn tcp.WriteCloser) {
 	i.next.ServeTCP(conn)
 }
 
-// increment check if an IP can open a new connection.
-// Returns an error if it cannot.
+// increment increases the counter for the number of connections tracked for the
+// given IP.
+// It returns an error if the counter would go above the max allowed number of
+// connections.
 func (i *inFlightConn) increment(ip string) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
@@ -76,8 +78,9 @@ func (i *inFlightConn) increment(ip string) error {
 	return nil
 }
 
-// decrement allow for a new connection for a given IP.
-// It ensures that the number of connection is greater or equal to zero.
+// decrement decreases the counter for the number of connections tracked for the
+// given IP.
+// It ensures that the counter does not go below zero.
 func (i *inFlightConn) decrement(ip string) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
