@@ -362,13 +362,13 @@ providers:
 
 _Optional_
 
-Defines TLS options for Consul server endpoint.
+Defines the TLS configuration to use for the secure connection to Consul Catalog.
 
 ##### `ca`
 
 _Optional_
 
-Certificate Authority used for the secure connection to Consul,
+`ca` is the path to the certificate authority used for the secure connection to Consul Catalog,
 defaults to the system bundle.
 
 ```yaml tab="File (YAML)"
@@ -392,11 +392,11 @@ providers:
 
 _Optional_
 
-The value of `tls.caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to Consul.
+The value of `caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to Consul Catalog.
 
 !!! warning ""
 
-    If `tls.ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
+    If `ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
 
 When this option is set to `true`, a client certificate is requested during the handshake but is not required. If a certificate is sent, it is required to be valid.
 
@@ -423,8 +423,7 @@ providers:
 
 _Optional_
 
-`cert` is the path to the public certificate to use for Consul communication.
-
+`cert` is the path to the public certificate used for the secure connection to Consul Catalog.
 When using this option, setting the `key` option is required.
 
 ```yaml tab="File (YAML)"
@@ -451,8 +450,7 @@ providers:
 
 _Optional_
 
-`key` is the path to the private key for Consul communication.
-
+`key` is the path to the private key used for the secure connection to Consul Catalog.
 When using this option, setting the `cert` option is required.
 
 ```yaml tab="File (YAML)"
@@ -477,7 +475,7 @@ providers:
 
 ##### `insecureSkipVerify`
 
-_Optional_
+_Optional, Default=false_
 
 If `insecureSkipVerify` is `true`, the TLS connection to Consul accepts any certificate presented by the server regardless of the hostnames it covers.
 
