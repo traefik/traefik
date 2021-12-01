@@ -613,7 +613,7 @@ providers:
 
 _Optional_
 
-Defines the TLS configuration to use for the secure connection to Docker.
+Defines the TLS configuration used for the secure connection to Docker.
 
 #### `ca`
 

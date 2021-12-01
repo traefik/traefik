@@ -76,7 +76,7 @@ providers:
 
 _Optional_
 
-Defines the TLS configuration to use for the secure connection to the endpoint.
+Defines the TLS configuration used for the secure connection to the endpoint.
 
 #### `ca`
 
