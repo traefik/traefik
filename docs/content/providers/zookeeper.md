@@ -104,7 +104,7 @@ providers:
 
 _Optional_
 
-Defines the TLS configuration to use for the secure connection to ZooKeeper.
+Defines the TLS configuration used for the secure connection to ZooKeeper.
 
 #### `ca`
 
