@@ -10,8 +10,7 @@ import (
 )
 
 type fakeConn struct {
-	call       map[string]int
-	remoteAddr net.Addr
+	call map[string]int
 }
 
 func (f *fakeConn) Read(b []byte) (n int, err error) {
@@ -32,7 +31,7 @@ func (f *fakeConn) LocalAddr() net.Addr {
 }
 
 func (f *fakeConn) RemoteAddr() net.Addr {
-	return f.remoteAddr
+	panic("implement me")
 }
 
 func (f *fakeConn) SetDeadline(t time.Time) error {
