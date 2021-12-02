@@ -14,7 +14,7 @@ func TestRuleMatch(t *testing.T) {
 		rule           string
 		tree           Tree
 		expectParseErr bool
-		expectCheckErr bool
+		expectLeafErr  bool
 	}{
 		{
 			desc:           "No rule",
@@ -33,7 +33,7 @@ func TestRuleMatch(t *testing.T) {
 				Matcher: "m",
 				Value:   []string{},
 			},
-			expectCheckErr: true,
+			expectLeafErr: true,
 		},
 		{
 			desc:           "One value in rule with and",
@@ -120,7 +120,6 @@ func TestRuleMatch(t *testing.T) {
 					Value:   []string{"2"},
 				},
 			},
-			expectCheckErr: true,
 		},
 		{
 			desc: "Two value in rule with or",
@@ -136,7 +135,6 @@ func TestRuleMatch(t *testing.T) {
 					Value:   []string{"2"},
 				},
 			},
-			expectCheckErr: true,
 		},
 		{
 			desc: "Two value in rule with and negated",
@@ -154,7 +152,6 @@ func TestRuleMatch(t *testing.T) {
 					Value:   []string{"2"},
 				},
 			},
-			expectCheckErr: true,
 		},
 		{
 			desc: "Two value in rule with or negated",
@@ -172,7 +169,6 @@ func TestRuleMatch(t *testing.T) {
 					Value:   []string{"2"},
 				},
 			},
-			expectCheckErr: true,
 		},
 	}
 
@@ -199,12 +195,29 @@ func TestRuleMatch(t *testing.T) {
 
 			assert.Equal(t, &test.tree, tree)
 
-			err = CheckRule(tree)
-			if test.expectCheckErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
+			checkRule(t, tree, test.expectLeafErr)
 		})
+	}
+}
+
+func checkRule(t *testing.T, actual *Tree, expectLeafErr bool) {
+	t.Helper()
+
+	if actual == nil {
+		return
+	}
+
+	if actual.RuleLeft != nil {
+		checkRule(t, actual.RuleLeft, expectLeafErr)
+	}
+
+	if actual.RuleRight != nil {
+		checkRule(t, actual.RuleRight, expectLeafErr)
+	}
+
+	if actual.RuleRight == nil && actual.RuleLeft == nil && !expectLeafErr {
+		assert.NoError(t, CheckRule(actual))
+	} else {
+		assert.Error(t, CheckRule(actual))
 	}
 }
