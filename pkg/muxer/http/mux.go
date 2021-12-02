@@ -16,6 +16,7 @@ import (
 )
 
 const hostMatcher = "Host"
+
 var funcs = map[string]func(*mux.Route, ...string) error{
 	hostMatcher:     host,
 	"HostHeader":    host,
