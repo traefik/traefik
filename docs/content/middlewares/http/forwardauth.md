@@ -358,7 +358,7 @@ Defines the TLS configuration used for the secure connection to the authenticati
 _Optional_
 
 `ca` is the path to the certificate authority used for the secured connection to the authentication server,
-defaults to the system bundle.
+it defaults to the system bundle.
 
 ```yaml tab="Docker"
 labels:

@@ -111,7 +111,7 @@ Defines the TLS configuration used for the secure connection to Redis.
 _Optional_
 
 `ca` is the path to the certificate authority used for the secure connection to Redis,
-defaults to the system bundle.
+it defaults to the system bundle.
 
 ```yaml tab="File (YAML)"
 providers:

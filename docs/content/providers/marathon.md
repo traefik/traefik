@@ -409,7 +409,7 @@ Defines the TLS configuration used for the secure connection to Marathon.
 #### `ca`
 
 `ca` is the path to the certificate authority used for the secure connection to Marathon,
-defaults to the system bundle.
+it defaults to the system bundle.
 
 ```yaml tab="File (YAML)"
 providers:
