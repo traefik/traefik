@@ -108,6 +108,7 @@ func (tree *Tree) ParseMatchers(matchers []string) []string {
 				return lower(tree.Value)
 			}
 		}
+
 		return nil
 	}
 }
@@ -123,6 +124,7 @@ func CheckRule(rule *Tree) error {
 			return fmt.Errorf("empty args for matcher %s, %v", rule.Matcher, rule.Value)
 		}
 	}
+
 	return nil
 }
 
@@ -131,5 +133,6 @@ func lower(slice []string) []string {
 	for _, value := range slice {
 		lowerStrings = append(lowerStrings, strings.ToLower(value))
 	}
+
 	return lowerStrings
 }

@@ -15,10 +15,7 @@ import (
 	"github.com/vulcand/predicate"
 )
 
-const (
-	hostMatcher = "Host"
-)
-
+const hostMatcher = "Host"
 var funcs = map[string]func(*mux.Route, ...string) error{
 	hostMatcher:     host,
 	"HostHeader":    host,
@@ -274,6 +271,7 @@ func addRuleOnRouter(router *mux.Router, rule *rules.Tree) error {
 		if rule.Not {
 			return not(funcs[rule.Matcher])(router.NewRoute(), rule.Value...)
 		}
+
 		return funcs[rule.Matcher](router.NewRoute(), rule.Value...)
 	}
 }
@@ -319,6 +317,7 @@ func addRuleOnRoute(route *mux.Route, rule *rules.Tree) error {
 		if rule.Not {
 			return not(funcs[rule.Matcher])(route, rule.Value...)
 		}
+
 		return funcs[rule.Matcher](route, rule.Value...)
 	}
 }

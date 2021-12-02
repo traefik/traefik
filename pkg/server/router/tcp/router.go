@@ -73,6 +73,7 @@ func (r *Router) GetTLSGetClientInfo() func(info *tls.ClientHelloInfo) (*tls.Con
 		if tlsConfig, ok := r.hostHTTPTLSConfig[info.ServerName]; ok {
 			return tlsConfig, nil
 		}
+
 		return r.httpsTLSConfig, nil
 	}
 }
@@ -187,6 +188,7 @@ func (r *Router) AddHTTPTLSConfig(sniHost string, config *tls.Config) {
 	if r.hostHTTPTLSConfig == nil {
 		r.hostHTTPTLSConfig = map[string]*tls.Config{}
 	}
+
 	r.hostHTTPTLSConfig[sniHost] = config
 }
 
@@ -197,6 +199,7 @@ func (r *Router) GetConn(conn tcp.WriteCloser, peeked string) tcp.WriteCloser {
 		Peeked:      []byte(peeked),
 		WriteCloser: conn,
 	}
+
 	return conn
 }
 
