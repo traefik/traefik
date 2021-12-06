@@ -798,7 +798,7 @@ Rules are a set of matchers configured with values, that determine if a particul
 If the rule is verified, the router becomes active, calls middlewares, and then forwards the request to the service.
 
 ??? tip "Backticks or Quotes?"
-To set the value of a rule, use [backticks](https://en.wiktionary.org/wiki/backtick) ``` ` ``` or escaped double-quotes `\"`.
+     To set the value of a rule, use [backticks](https://en.wiktionary.org/wiki/backtick) ``` ` ``` or escaped double-quotes `\"`.
 
     Single quotes `'` are not accepted since the values are [Golang's String Literals](https://golang.org/ref/spec#String_literals).
 
