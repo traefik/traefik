@@ -262,7 +262,7 @@ func clientIP(tree *matchersTree, clientIPs ...string) error {
 
 		ok, err := checker.Contains(meta.remoteIP)
 		if err != nil {
-			log.WithoutContext().Warnf("\"ClientIP\" matcher: could not match remote address : %w", err)
+			log.WithoutContext().Warnf("\"ClientIP\" matcher: could not match remote address : %v", err)
 			return false
 		}
 		if ok {
