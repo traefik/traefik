@@ -24,7 +24,7 @@
     locale = "US"
 
   [linters-settings.funlen]
-    lines = 230 # default 60
+    lines = -1 # default 60
     statements = 120 # default 40
 
   [linters-settings.forbidigo]
@@ -151,6 +151,4 @@
  [[issues.exclude-rules]]
     path = "pkg/log/deprecated.go"
     linters = ["godot"]
- [[issues.exclude-rules]]
-    path = "pkg/server/router/tcp/manager.go"
-    text = "Function 'buildEntryPointHandler' is too long"
+
