@@ -130,6 +130,12 @@ func Test_addTCPRoute(t *testing.T) {
 			routeErr: true,
 		},
 		{
+			desc:       "Invalid remoteAddr",
+			rule:       "ClientIP(`10.0.0.1`)",
+			remoteAddr: "not.an.IP:80",
+			matchErr:   true,
+		},
+		{
 			desc:       "Valid ClientIP rule matching",
 			rule:       "ClientIP(`10.0.0.1`)",
 			remoteAddr: "10.0.0.1:80",
