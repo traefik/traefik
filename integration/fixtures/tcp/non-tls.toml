@@ -27,4 +27,4 @@
   [tcp.services]
     [tcp.services.whoami-no-tls.loadBalancer]
       [[tcp.services.whoami-no-tls.loadBalancer.servers]]
-        address = "localhost:8084"
+        address = "whoami-no-tls:8080"

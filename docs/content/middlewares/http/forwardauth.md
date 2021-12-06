@@ -349,12 +349,16 @@ http:
 
 ### `tls`
 
-The `tls` option is the TLS configuration from Traefik to the authentication server.
+_Optional_
 
-#### `tls.ca`
+Defines the TLS configuration used for the secure connection to the authentication server.
 
-Certificate Authority used for the secured connection to the authentication server,
-defaults to the system bundle.
+#### `ca`
+
+_Optional_
+
+`ca` is the path to the certificate authority used for the secured connection to the authentication server,
+it defaults to the system bundle.
 
 ```yaml tab="Docker"
 labels:
@@ -417,13 +421,15 @@ http:
       ca = "path/to/local.crt"
 ```
 
-#### `tls.caOptional`
+#### `caOptional`
 
-The value of `tls.caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to the authentication server.
+_Optional_
+
+The value of `caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to the authentication server.
 
 !!! warning ""
 
-    If `tls.ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
+    If `ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
 
 When this option is set to `true`, a client certificate is requested during the handshake but is not required. If a certificate is sent, it is required to be valid.
 
@@ -479,84 +485,12 @@ http:
       caOptional = true
 ```
 
-#### `tls.cert`
+#### `cert`
 
-The public certificate used for the secure connection to the authentication server.
+_Optional_
 
-```yaml tab="Docker"
-labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
-  - "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
-kind: Middleware
-metadata:
-  name: test-auth
-spec:
-  forwardAuth:
-    address: https://example.com/auth
-    tls:
-      certSecret: mytlscert
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: mytlscert
-  namespace: default
-
-data:
-  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
-  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
-```
-
-```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
-- "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.forwardauth.tls.cert": "path/to/foo.cert",
-  "traefik.http.middlewares.test-auth.forwardauth.tls.key": "path/to/foo.key"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
-  - "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
-```
-
-```yaml tab="File (YAML)"
-http:
-  middlewares:
-    test-auth:
-      forwardAuth:
-        address: "https://example.com/auth"
-        tls:
-          cert: "path/to/foo.cert"
-          key: "path/to/foo.key"
-```
-
-```toml tab="File (TOML)"
-[http.middlewares]
-  [http.middlewares.test-auth.forwardAuth]
-    address = "https://example.com/auth"
-    [http.middlewares.test-auth.forwardAuth.tls]
-      cert = "path/to/foo.cert"
-      key = "path/to/foo.key"
-```
-
-!!! info
-
-    For security reasons, the field does not exist for Kubernetes IngressRoute, and one should use the `secret` field instead.
-
-#### `tls.key`
-
-The private certificate used for the secure connection to the authentication server.
+`cert` is the path to the public certificate used for the secure connection to the authentication server.
+When using this option, setting the `key` option is required.
 
 ```yaml tab="Docker"
 labels:
@@ -629,7 +563,87 @@ http:
 
     For security reasons, the field does not exist for Kubernetes IngressRoute, and one should use the `secret` field instead.
 
-#### `tls.insecureSkipVerify`
+#### `key`
+
+_Optional_
+
+`key` is the path to the private key used for the secure connection to the authentication server.
+When using this option, setting the `cert` option is required.
+
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
+  - "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-auth
+spec:
+  forwardAuth:
+    address: https://example.com/auth
+    tls:
+      certSecret: mytlscert
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mytlscert
+  namespace: default
+
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
+- "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.test-auth.forwardauth.tls.cert": "path/to/foo.cert",
+  "traefik.http.middlewares.test-auth.forwardauth.tls.key": "path/to/foo.key"
+}
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
+  - "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-auth:
+      forwardAuth:
+        address: "https://example.com/auth"
+        tls:
+          cert: "path/to/foo.cert"
+          key: "path/to/foo.key"
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-auth.forwardAuth]
+    address = "https://example.com/auth"
+    [http.middlewares.test-auth.forwardAuth.tls]
+      cert = "path/to/foo.cert"
+      key = "path/to/foo.key"
+```
+
+!!! info
+
+    For security reasons, the field does not exist for Kubernetes IngressRoute, and one should use the `secret` field instead.
+
+#### `insecureSkipVerify`
+
+_Optional, Default=false_
 
 If `insecureSkipVerify` is `true`, the TLS connection to the authentication server accepts any certificate presented by the server regardless of the hostnames it covers.
 

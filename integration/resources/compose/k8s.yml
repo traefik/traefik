@@ -1,21 +1,24 @@
-server:
-  image: rancher/k3s:v1.18.20-k3s1
-  command: server --disable-agent --no-deploy coredns --no-deploy servicelb --no-deploy traefik --no-deploy local-storage --no-deploy metrics-server --log /output/k3s.log
-  environment:
-    - K3S_CLUSTER_SECRET=somethingtotallyrandom
-    - K3S_KUBECONFIG_OUTPUT=/output/kubeconfig.yaml
-    - K3S_KUBECONFIG_MODE=666
-  volumes:
-    - ../../fixtures/k8s/config.skip:/output
-    - ../../fixtures/k8s:/var/lib/rancher/k3s/server/manifests
-  ports:
-    - 6443:6443
+version: "3.8"
+services:
+  server:
+    image: rancher/k3s:v1.18.20-k3s1
+    command: server --disable-agent --no-deploy coredns --no-deploy servicelb --no-deploy traefik --no-deploy local-storage --no-deploy metrics-server --log /output/k3s.log --bind-address=server --tls-san=server
+    environment:
+      K3S_CLUSTER_SECRET: somethingtotallyrandom
+      K3S_KUBECONFIG_OUTPUT: /output/kubeconfig.yaml
+      K3S_KUBECONFIG_MODE: 666
+    volumes:
+      - ./fixtures/k8s/config.skip:/output
+      - ./fixtures/k8s:/var/lib/rancher/k3s/server/manifests
 
-node:
-  image: rancher/k3s:v1.18.20-k3s1
-  privileged: true
-  links:
-    - server
-  environment:
-    - K3S_URL=https://server:6443
-    - K3S_CLUSTER_SECRET=somethingtotallyrandom
+  node:
+    image: rancher/k3s:v1.18.20-k3s1
+    privileged: true
+    environment:
+      K3S_URL: https://server:6443
+      K3S_CLUSTER_SECRET: somethingtotallyrandom
+
+networks:
+  default:
+    name: traefik-test-network
+    external: true
