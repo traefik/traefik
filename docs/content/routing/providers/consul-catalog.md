@@ -63,7 +63,7 @@ For example, to change the rule, you could add the tag ```traefik.http.routers.m
     See [tls](../routers/index.md#tls) for more information.
     
     ```yaml
-    traefik.http.routers.myrouter>.tls=true
+    traefik.http.routers.myrouter.tls=true
     ```
 
 ??? info "`traefik.http.routers.<router_name>.tls.certresolver`"
@@ -136,7 +136,7 @@ you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.pass
     See [serverstransport](../services/index.md#serverstransport) for more information.
     
     ```yaml
-    traefik.http.services.<service_name>.loadbalancer.serverstransport=foobar@file
+    traefik.http.services.myservice.loadbalancer.serverstransport=foobar@file
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.passhostheader`"
