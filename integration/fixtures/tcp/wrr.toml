@@ -18,25 +18,24 @@
 ## dynamic configuration ##
 [tcp]
   [tcp.routers]
-    [tcp.routers.to-whoami-a]
-      rule = "HostSNI(`whoami-a.test`)"
+    [tcp.routers.to-whoami-b]
+      rule = "HostSNI(`whoami-b.test`)"
       service = "whoami"
       entryPoints = [ "tcp" ]
-      [tcp.routers.to-whoami-a.tls]
+      [tcp.routers.to-whoami-b.tls]
         passthrough=true
 
     [[tcp.services.whoami.weighted.services]]
-        name="whoami-a"
+        name="whoami-b"
         weight=3
     [[tcp.services.whoami.weighted.services]]
-        name="whoami-b"
+        name="whoami-ab"
         weight=1
-
-    [tcp.services.whoami-a.loadBalancer]
-      [[tcp.services.whoami-a.loadBalancer.servers]]
-        address = "localhost:8081"
 
     [tcp.services.whoami-b.loadBalancer]
       [[tcp.services.whoami-b.loadBalancer.servers]]
-        address = "localhost:8082"
+        address = "whoami-b:8080"
 
+    [tcp.services.whoami-ab.loadBalancer]
+      [[tcp.services.whoami-ab.loadBalancer.servers]]
+        address = "whoami-ab:8080"
