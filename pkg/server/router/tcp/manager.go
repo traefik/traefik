@@ -317,8 +317,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 		if routerConfig.TLS.Passthrough {
 			logger.Debugf("Adding Passthrough route for %q", routerConfig.Rule)
-			err := router.AddRouteTLS(routerConfig.Rule, routerConfig.Priority, handler, nil)
-			if err != nil {
+			if err := router.AddRouteTLS(routerConfig.Rule, routerConfig.Priority, handler, nil); err != nil {
 				routerConfig.AddError(err, true)
 				logger.Debug(err)
 			}
@@ -367,8 +366,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		// different TLS configs for the same HostSNIs.
 
 		logger.Debugf("Adding TLS route for %q", routerConfig.Rule)
-		err = router.AddRouteTLS(routerConfig.Rule, routerConfig.Priority, handler, tlsConf)
-		if err != nil {
+		if err := router.AddRouteTLS(routerConfig.Rule, routerConfig.Priority, handler, tlsConf); err != nil {
 			routerConfig.AddError(err, true)
 			logger.Debug(err)
 		}
