@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/tcp"
+	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 )
 
@@ -75,11 +75,13 @@ func TestHTTP3AdvertisedPort(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	router := &tcp.Router{}
-	router.AddRouteHTTPTLS("*", &tls.Config{
+	router, err := tcprouter.NewRouter()
+	require.NoError(t, err)
+
+	router.AddHTTPTLSConfig("*", &tls.Config{
 		Certificates: []tls.Certificate{tlsCert},
 	})
-	router.HTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	router.SetHTTPSHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}), nil)
 
