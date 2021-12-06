@@ -1,3 +1,5 @@
+# This file is not meant as a usable Traefik configuration.
+# It is only used in tests as a sample for serialization.
 [global]
   checkNewVersion = true
   sendAnonymousUsage = true

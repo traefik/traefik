@@ -1,38 +1,39 @@
-whoami-a:
-  image: traefik/whoamitcp
-  command: -name whoami-a -certFile /certs/whoami-a.crt -keyFile /certs/whoami-a.key
-  volumes:
-    - ../../fixtures/tcp:/certs
-  ports:
-    - "8081:8080"
+version: "3.8"
+services:
+  whoami-a:
+    image: traefik/whoamitcp
+    command: -name whoami-a -certFile /certs/whoami-a.crt -keyFile /certs/whoami-a.key
+    volumes:
+      - ./fixtures/tcp:/certs
 
-whoami-b:
-  image: traefik/whoamitcp
-  command: -name whoami-b -certFile /certs/whoami-b.crt -keyFile /certs/whoami-b.key
-  volumes:
-    - ../../fixtures/tcp:/certs
-  ports:
-    - "8082:8080"
+  whoami-b:
+    image: traefik/whoamitcp
+    command: -name whoami-b -certFile /certs/whoami-b.crt -keyFile /certs/whoami-b.key
+    volumes:
+      - ./fixtures/tcp:/certs
 
-whoami-no-cert:
-  image: traefik/whoamitcp
-  command: -name whoami-no-cert
-  ports:
-    - "8083:8080"
+  whoami-ab:
+    image: traefik/whoamitcp
+    command: -name whoami-ab -certFile /certs/whoami-b.crt -keyFile /certs/whoami-b.key
+    volumes:
+      - ./fixtures/tcp:/certs
 
-whoami-no-tls:
-  image: traefik/whoamitcp
-  command: -name whoami-no-tls
-  ports:
-    - "8084:8080"
+  whoami-no-cert:
+    image: traefik/whoamitcp
+    command: -name whoami-no-cert
 
-whoami:
-  image: traefik/whoami
-  ports:
-    - "8085:80"
+  whoami-no-tls:
+    image: traefik/whoamitcp
+    command: -name whoami-no-tls
 
-whoami-banner:
-  image: traefik/whoamitcp
-  command: -name whoami-banner --banner
-  ports:
-    - "8086:8080"
+  whoami:
+    image: traefik/whoami
+
+  whoami-banner:
+    image: traefik/whoamitcp
+    command: -name whoami-banner --banner
+
+networks:
+  default:
+    name: traefik-test-network
+    external: true
