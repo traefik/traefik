@@ -185,13 +185,17 @@ func (m *Muxer) HasRoutes() bool {
 	return len(m.routes) > 0
 }
 
+// routes implements sort.Interface.
 type routes []*route
 
-func (r routes) Len() int      { return len(r) }
+// Len implements sort.Interface.
+func (r routes) Len() int { return len(r) }
+
+// Swap implements sort.Interface.
 func (r routes) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
-func (r routes) Less(i, j int) bool {
-	return r[i].priority > r[j].priority
-}
+
+// Less implements sort.Interface.
+func (r routes) Less(i, j int) bool { return r[i].priority > r[j].priority }
 
 // route holds the matchers to match TCP route,
 // and the handler that will serve the connection.
