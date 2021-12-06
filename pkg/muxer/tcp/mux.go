@@ -207,7 +207,6 @@ type route struct {
 
 	// Used to disambiguate between two (or more) rules that would both match for a
 	// given request.
-	// Defaults to 0.
 	// Computed from the matching rule length, if not user-set.
 	priority int
 }
