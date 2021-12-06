@@ -15,12 +15,13 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/static"
+	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v2/pkg/tcp"
 )
 
 func TestShutdownHijacked(t *testing.T) {
-	router := &tcp.Router{}
-	router.HTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	router := &tcprouter.Router{}
+	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		conn, _, err := rw.(http.Hijacker).Hijack()
 		require.NoError(t, err)
 
@@ -33,8 +34,8 @@ func TestShutdownHijacked(t *testing.T) {
 }
 
 func TestShutdownHTTP(t *testing.T) {
-	router := &tcp.Router{}
-	router.HTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	router := &tcprouter.Router{}
+	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 		time.Sleep(time.Second)
 	}))
@@ -43,8 +44,10 @@ func TestShutdownHTTP(t *testing.T) {
 }
 
 func TestShutdownTCP(t *testing.T) {
-	router := &tcp.Router{}
-	router.AddCatchAllNoTLS(tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+	router, err := tcprouter.NewRouter()
+	require.NoError(t, err)
+
+	err = router.AddRoute("HostSNI(`*`)", 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {
 		for {
 			_, err := http.ReadRequest(bufio.NewReader(conn))
 
@@ -58,11 +61,12 @@ func TestShutdownTCP(t *testing.T) {
 			require.NoError(t, err)
 		}
 	}))
+	require.NoError(t, err)
 
 	testShutdown(t, router)
 }
 
-func testShutdown(t *testing.T, router *tcp.Router) {
+func testShutdown(t *testing.T, router *tcprouter.Router) {
 	t.Helper()
 
 	epConfig := &static.EntryPointsTransport{}
@@ -135,7 +139,7 @@ func testShutdown(t *testing.T, router *tcp.Router) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
-func startEntrypoint(entryPoint *TCPEntryPoint, router *tcp.Router) (net.Conn, error) {
+func startEntrypoint(entryPoint *TCPEntryPoint, router *tcprouter.Router) (net.Conn, error) {
 	go entryPoint.Start(context.Background())
 
 	entryPoint.SwitchRouter(router)
@@ -165,8 +169,8 @@ func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	router := &tcp.Router{}
-	router.HTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	router := &tcprouter.Router{}
+	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 
@@ -201,8 +205,8 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	router := &tcp.Router{}
-	router.HTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	router := &tcprouter.Router{}
+	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 
