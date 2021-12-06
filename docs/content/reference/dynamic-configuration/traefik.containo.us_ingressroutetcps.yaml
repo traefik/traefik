@@ -62,6 +62,8 @@ spec:
                         - name
                         type: object
                       type: array
+                    priority:
+                      type: integer
                     services:
                       items:
                         description: ServiceTCP defines an upstream to proxy traffic.
