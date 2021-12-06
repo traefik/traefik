@@ -308,8 +308,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 		if routerConfig.TLS == nil {
 			logger.Debugf("Adding route for %q", routerConfig.Rule)
-			err := router.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
-			if err != nil {
+			if err := router.AddRoute(routerConfig.Rule, routerConfig.Priority, handler); err != nil {
 				routerConfig.AddError(err, true)
 				logger.Debug(err)
 			}
