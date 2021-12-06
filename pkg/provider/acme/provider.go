@@ -21,7 +21,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/muxer/http"
+	httpmuxer "github.com/traefik/traefik/v2/pkg/muxer/http"
 	tcpmuxer "github.com/traefik/traefik/v2/pkg/muxer/tcp"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
@@ -436,7 +436,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 							})
 						}
 					} else {
-						domains, err := http.ParseDomains(route.Rule)
+						domains, err := httpmuxer.ParseDomains(route.Rule)
 						if err != nil {
 							log.FromContext(ctxRouter).Errorf("Error parsing domains in provider ACME: %v", err)
 							continue
