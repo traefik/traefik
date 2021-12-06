@@ -13,7 +13,7 @@ import (
 	"github.com/lucas-clemente/quic-go/http3"
 	"github.com/traefik/traefik/v2/pkg/config/static"
 	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/tcp"
+	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
 )
 
 type http3server struct {
@@ -93,7 +93,7 @@ func (e *http3server) Start() error {
 	return e.Serve(e.http3conn)
 }
 
-func (e *http3server) Switch(rt *tcp.Router) {
+func (e *http3server) Switch(rt *tcprouter.Router) {
 	e.lock.Lock()
 	defer e.lock.Unlock()
 

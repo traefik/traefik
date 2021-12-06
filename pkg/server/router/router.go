@@ -13,7 +13,7 @@ import (
 	metricsMiddle "github.com/traefik/traefik/v2/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/recovery"
 	"github.com/traefik/traefik/v2/pkg/middlewares/tracing"
-	"github.com/traefik/traefik/v2/pkg/rules"
+	httpmuxer "github.com/traefik/traefik/v2/pkg/muxer/http"
 	"github.com/traefik/traefik/v2/pkg/server/middleware"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
 )
@@ -102,7 +102,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 }
 
 func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.RouterInfo) (http.Handler, error) {
-	router, err := rules.NewRouter()
+	muxer, err := httpmuxer.NewMuxer()
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			continue
 		}
 
-		err = router.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
+		err = muxer.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
 		if err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error(err)
@@ -126,14 +126,14 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		}
 	}
 
-	router.SortRoutes()
+	muxer.SortRoutes()
 
 	chain := alice.New()
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
 		return recovery.New(ctx, next)
 	})
 
-	return chain.Then(router)
+	return chain.Then(muxer)
 }
 
 func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, routerConfig *runtime.RouterInfo) (http.Handler, error) {
