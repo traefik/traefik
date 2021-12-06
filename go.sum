@@ -621,8 +621,8 @@ github.com/ghodss/yaml v0.0.0-20150909031657-73d445a93680/go.mod h1:4dBDuWmgqj2H
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/gliderlabs/ssh v0.1.1/go.mod h1:U7qILu1NlMHj9FlMhZLlkCdDnU1DBEAqr0aevW3Awn0=
 github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8/go.mod h1:xkRDCp4j0OGD1HRkm4kmhM+pmpv3AKq5SU7GMg4oO/Q=
-github.com/go-acme/lego/v4 v4.5.0 h1:pLYIRysouuAJwu4BoJiKbnX37ouT9rIE445kJ7+NK78=
-github.com/go-acme/lego/v4 v4.5.0/go.mod h1:mL1DY809LzjvRuaxINNxsI26f5oStVhBGTpJMiinkZM=
+github.com/go-acme/lego/v4 v4.5.3 h1:v5RSN8l+RAeNHKTSL80eqLiec6q6UNaFpl2Df5x/5tM=
+github.com/go-acme/lego/v4 v4.5.3/go.mod h1:mL1DY809LzjvRuaxINNxsI26f5oStVhBGTpJMiinkZM=
 github.com/go-asn1-ber/asn1-ber v1.3.1/go.mod h1:hEBeB/ic+5LoWskz+yKT7vGhhPYkProFKoKdwZRWMe0=
 github.com/go-chi/chi/v5 v5.0.0/go.mod h1:BBug9lr0cqtdAhsu6R4AAdvufI0/XBzAQSsUqJpoZOs=
 github.com/go-cmd/cmd v1.0.5/go.mod h1:y8q8qlK5wQibcw63djSl/ntiHUHXHGdCkPk0j4QeW4s=
