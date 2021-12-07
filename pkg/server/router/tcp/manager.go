@@ -138,7 +138,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		if err != nil {
 			routerErr := fmt.Errorf("invalid rule %s, error: %w", routerHTTPConfig.Rule, err)
 			routerHTTPConfig.AddError(routerErr, true)
-			logger.Debug(routerErr)
+			logger.Error(routerErr)
 			continue
 		}
 
@@ -302,15 +302,15 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		// However, we allow the HostSNI(*) exception.
 		if len(domains) > 0 && routerConfig.TLS == nil && domains[0] != "*" {
 			routerErr := fmt.Errorf("invalid rule: %q , has HostSNI matcher, but no TLS on router", routerConfig.Rule)
-			logger.Debug(routerErr)
 			routerConfig.AddError(routerErr, true)
+			logger.Error(routerErr)
 		}
 
 		if routerConfig.TLS == nil {
 			logger.Debugf("Adding route for %q", routerConfig.Rule)
 			if err := router.AddRoute(routerConfig.Rule, routerConfig.Priority, handler); err != nil {
 				routerConfig.AddError(err, true)
-				logger.Debug(err)
+				logger.Error(err)
 			}
 			continue
 		}
@@ -319,7 +319,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			logger.Debugf("Adding Passthrough route for %q", routerConfig.Rule)
 			if err := router.AddRouteTLS(routerConfig.Rule, routerConfig.Priority, handler, nil); err != nil {
 				routerConfig.AddError(err, true)
-				logger.Debug(err)
+				logger.Error(err)
 			}
 			continue
 		}
@@ -331,7 +331,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 			asciiError := fmt.Errorf("invalid domain name value %q, non-ASCII characters are not allowed", domain)
 			routerConfig.AddError(asciiError, true)
-			logger.Debug(asciiError)
+			logger.Error(asciiError)
 		}
 
 		tlsOptionsName := routerConfig.TLS.Options
@@ -347,7 +347,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		tlsConf, err := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, tlsOptionsName)
 		if err != nil {
 			routerConfig.AddError(err, true)
-			logger.Debug(err)
+			logger.Error(err)
 			continue
 		}
 
@@ -368,7 +368,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		logger.Debugf("Adding TLS route for %q", routerConfig.Rule)
 		if err := router.AddRouteTLS(routerConfig.Rule, routerConfig.Priority, handler, tlsConf); err != nil {
 			routerConfig.AddError(err, true)
-			logger.Debug(err)
+			logger.Error(err)
 		}
 	}
 
