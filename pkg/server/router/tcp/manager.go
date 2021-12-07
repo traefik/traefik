@@ -180,7 +180,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		tlsConf, err := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, tlsOptionsName)
 		if err != nil {
 			routerHTTPConfig.AddError(err, true)
-			logger.Debug(err)
+			logger.Error(err)
 			continue
 		}
 

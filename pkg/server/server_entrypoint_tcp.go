@@ -177,7 +177,7 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint) (*T
 // Start starts the TCP server.
 func (e *TCPEntryPoint) Start(ctx context.Context) {
 	logger := log.FromContext(ctx)
-	logger.Debugf("Start TCP Server")
+	logger.Debugf("Starting TCP Server")
 
 	if e.http3Server != nil {
 		go func() { _ = e.http3Server.Start() }()
