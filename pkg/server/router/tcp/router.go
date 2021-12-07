@@ -1,337 +1,359 @@
 package tcp
 
 import (
-	"context"
+	"bufio"
+	"bytes"
 	"crypto/tls"
 	"errors"
-	"fmt"
+	"io"
 	"net"
 	"net/http"
-	"strings"
+	"time"
 
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/rules"
-	"github.com/traefik/traefik/v2/pkg/server/provider"
-	tcpservice "github.com/traefik/traefik/v2/pkg/server/service/tcp"
+	tcpmuxer "github.com/traefik/traefik/v2/pkg/muxer/tcp"
 	"github.com/traefik/traefik/v2/pkg/tcp"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 )
 
-type middlewareBuilder interface {
-	BuildChain(ctx context.Context, names []string) *tcp.Chain
+const defaultBufSize = 4096
+
+// Router is a TCP router.
+type Router struct {
+	// Contains TCP routes.
+	muxerTCP tcpmuxer.Muxer
+	// Contains TCP TLS routes.
+	muxerTCPTLS tcpmuxer.Muxer
+	// Contains HTTPS routes.
+	muxerHTTPS tcpmuxer.Muxer
+
+	// Forwarder handlers.
+	// Handles all HTTP requests.
+	httpForwarder tcp.Handler
+	// Handles (indirectly through muxerHTTPS, or directly) all HTTPS requests.
+	httpsForwarder tcp.Handler
+
+	// Neither is used directly, but they are held here, and recreated on config
+	// reload, so that they can be passed to the Switcher at the end of the config
+	// reload phase.
+	httpHandler  http.Handler
+	httpsHandler http.Handler
+
+	// TLS configs.
+	httpsTLSConfig    *tls.Config            // default TLS config
+	hostHTTPTLSConfig map[string]*tls.Config // TLS configs keyed by SNI
 }
 
-// NewManager Creates a new Manager.
-func NewManager(conf *runtime.Configuration,
-	serviceManager *tcpservice.Manager,
-	middlewaresBuilder middlewareBuilder,
-	httpHandlers map[string]http.Handler,
-	httpsHandlers map[string]http.Handler,
-	tlsManager *traefiktls.Manager,
-) *Manager {
-	return &Manager{
-		serviceManager:     serviceManager,
-		middlewaresBuilder: middlewaresBuilder,
-		httpHandlers:       httpHandlers,
-		httpsHandlers:      httpsHandlers,
-		tlsManager:         tlsManager,
-		conf:               conf,
-	}
-}
-
-// Manager is a route/router manager.
-type Manager struct {
-	serviceManager     *tcpservice.Manager
-	middlewaresBuilder middlewareBuilder
-	httpHandlers       map[string]http.Handler
-	httpsHandlers      map[string]http.Handler
-	tlsManager         *traefiktls.Manager
-	conf               *runtime.Configuration
-}
-
-func (m *Manager) getTCPRouters(ctx context.Context, entryPoints []string) map[string]map[string]*runtime.TCPRouterInfo {
-	if m.conf != nil {
-		return m.conf.GetTCPRoutersByEntryPoints(ctx, entryPoints)
-	}
-
-	return make(map[string]map[string]*runtime.TCPRouterInfo)
-}
-
-func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*runtime.RouterInfo {
-	if m.conf != nil {
-		return m.conf.GetRoutersByEntryPoints(ctx, entryPoints, tls)
-	}
-
-	return make(map[string]map[string]*runtime.RouterInfo)
-}
-
-// BuildHandlers builds the handlers for the given entrypoints.
-func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) map[string]*tcp.Router {
-	entryPointsRouters := m.getTCPRouters(rootCtx, entryPoints)
-	entryPointsRoutersHTTP := m.getHTTPRouters(rootCtx, entryPoints, true)
-
-	entryPointHandlers := make(map[string]*tcp.Router)
-	for _, entryPointName := range entryPoints {
-		entryPointName := entryPointName
-
-		routers := entryPointsRouters[entryPointName]
-
-		ctx := log.With(rootCtx, log.Str(log.EntryPointName, entryPointName))
-
-		handler, err := m.buildEntryPointHandler(ctx, routers, entryPointsRoutersHTTP[entryPointName], m.httpHandlers[entryPointName], m.httpsHandlers[entryPointName])
-		if err != nil {
-			log.FromContext(ctx).Error(err)
-			continue
-		}
-		entryPointHandlers[entryPointName] = handler
-	}
-	return entryPointHandlers
-}
-
-type nameAndConfig struct {
-	routerName string // just so we have it as additional information when logging
-	TLSConfig  *tls.Config
-}
-
-func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, configsHTTP map[string]*runtime.RouterInfo, handlerHTTP, handlerHTTPS http.Handler) (*tcp.Router, error) {
-	router := &tcp.Router{}
-	router.HTTPHandler(handlerHTTP)
-
-	defaultTLSConf, err := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, traefiktls.DefaultTLSConfigName)
-	if err != nil {
-		log.FromContext(ctx).Errorf("Error during the build of the default TLS configuration: %v", err)
-	}
-
-	if len(configsHTTP) > 0 {
-		router.AddRouteHTTPTLS("*", defaultTLSConf)
-	}
-
-	// Keyed by domain, then by options reference.
-	tlsOptionsForHostSNI := map[string]map[string]nameAndConfig{}
-	tlsOptionsForHost := map[string]string{}
-	for routerHTTPName, routerHTTPConfig := range configsHTTP {
-		if routerHTTPConfig.TLS == nil {
-			continue
-		}
-
-		ctxRouter := log.With(provider.AddInContext(ctx, routerHTTPName), log.Str(log.RouterName, routerHTTPName))
-		logger := log.FromContext(ctxRouter)
-
-		tlsOptionsName := traefiktls.DefaultTLSConfigName
-		if len(routerHTTPConfig.TLS.Options) > 0 && routerHTTPConfig.TLS.Options != traefiktls.DefaultTLSConfigName {
-			tlsOptionsName = provider.GetQualifiedName(ctxRouter, routerHTTPConfig.TLS.Options)
-		}
-
-		domains, err := rules.ParseDomains(routerHTTPConfig.Rule)
-		if err != nil {
-			routerErr := fmt.Errorf("invalid rule %s, error: %w", routerHTTPConfig.Rule, err)
-			routerHTTPConfig.AddError(routerErr, true)
-			logger.Debug(routerErr)
-			continue
-		}
-
-		if len(domains) == 0 {
-			logger.Warnf("No domain found in rule %v, the TLS options applied for this router will depend on the hostSNI of each request", routerHTTPConfig.Rule)
-		}
-
-		for _, domain := range domains {
-			tlsConf, err := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, tlsOptionsName)
-			if err != nil {
-				routerHTTPConfig.AddError(err, true)
-				logger.Debug(err)
-				continue
-			}
-
-			// domain is already in lower case thanks to the domain parsing
-			if tlsOptionsForHostSNI[domain] == nil {
-				tlsOptionsForHostSNI[domain] = make(map[string]nameAndConfig)
-			}
-			tlsOptionsForHostSNI[domain][tlsOptionsName] = nameAndConfig{
-				routerName: routerHTTPName,
-				TLSConfig:  tlsConf,
-			}
-
-			if name, ok := tlsOptionsForHost[domain]; ok && name != tlsOptionsName {
-				// Different tlsOptions on the same domain fallback to default
-				tlsOptionsForHost[domain] = traefiktls.DefaultTLSConfigName
-			} else {
-				tlsOptionsForHost[domain] = tlsOptionsName
-			}
-		}
-	}
-
-	sniCheck := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		if req.TLS == nil {
-			handlerHTTPS.ServeHTTP(rw, req)
-			return
-		}
-
-		host, _, err := net.SplitHostPort(req.Host)
-		if err != nil {
-			host = req.Host
-		}
-
-		host = strings.TrimSpace(host)
-		serverName := strings.TrimSpace(req.TLS.ServerName)
-
-		// Domain Fronting
-		if !strings.EqualFold(host, serverName) {
-			tlsOptionSNI := findTLSOptionName(tlsOptionsForHost, serverName)
-			tlsOptionHeader := findTLSOptionName(tlsOptionsForHost, host)
-
-			if tlsOptionHeader != tlsOptionSNI {
-				log.WithoutContext().
-					WithField("host", host).
-					WithField("req.Host", req.Host).
-					WithField("req.TLS.ServerName", req.TLS.ServerName).
-					Debugf("TLS options difference: SNI=%s, Header:%s", tlsOptionSNI, tlsOptionHeader)
-				http.Error(rw, http.StatusText(http.StatusMisdirectedRequest), http.StatusMisdirectedRequest)
-				return
-			}
-		}
-
-		handlerHTTPS.ServeHTTP(rw, req)
-	})
-
-	router.HTTPSHandler(sniCheck, defaultTLSConf)
-
-	logger := log.FromContext(ctx)
-	for hostSNI, tlsConfigs := range tlsOptionsForHostSNI {
-		if len(tlsConfigs) == 1 {
-			var optionsName string
-			var config *tls.Config
-			for k, v := range tlsConfigs {
-				optionsName = k
-				config = v.TLSConfig
-				break
-			}
-
-			logger.Debugf("Adding route for %s with TLS options %s", hostSNI, optionsName)
-
-			router.AddRouteHTTPTLS(hostSNI, config)
-		} else {
-			routers := make([]string, 0, len(tlsConfigs))
-			for _, v := range tlsConfigs {
-				configsHTTP[v.routerName].AddError(fmt.Errorf("found different TLS options for routers on the same host %v, so using the default TLS options instead", hostSNI), false)
-				routers = append(routers, v.routerName)
-			}
-
-			logger.Warnf("Found different TLS options for routers on the same host %v, so using the default TLS options instead for these routers: %#v", hostSNI, routers)
-
-			router.AddRouteHTTPTLS(hostSNI, defaultTLSConf)
-		}
-	}
-
-	for routerName, routerConfig := range configs {
-		ctxRouter := log.With(provider.AddInContext(ctx, routerName), log.Str(log.RouterName, routerName))
-		logger := log.FromContext(ctxRouter)
-
-		if routerConfig.Service == "" {
-			err := errors.New("the service is missing on the router")
-			routerConfig.AddError(err, true)
-			logger.Error(err)
-			continue
-		}
-
-		if routerConfig.Rule == "" {
-			err := errors.New("router has no rule")
-			routerConfig.AddError(err, true)
-			logger.Error(err)
-			continue
-		}
-
-		handler, err := m.buildTCPHandler(ctxRouter, routerConfig)
-		if err != nil {
-			routerConfig.AddError(err, true)
-			logger.Error(err)
-			continue
-		}
-
-		domains, err := rules.ParseHostSNI(routerConfig.Rule)
-		if err != nil {
-			routerErr := fmt.Errorf("unknown rule %s", routerConfig.Rule)
-			routerConfig.AddError(routerErr, true)
-			logger.Error(routerErr)
-			continue
-		}
-
-		for _, domain := range domains {
-			logger.Debugf("Adding route %s on TCP", domain)
-			switch {
-			case routerConfig.TLS != nil:
-				if !rules.IsASCII(domain) {
-					asciiError := fmt.Errorf("invalid domain name value %q, non-ASCII characters are not allowed", domain)
-					routerConfig.AddError(asciiError, true)
-					logger.Debug(asciiError)
-					continue
-				}
-
-				if routerConfig.TLS.Passthrough {
-					router.AddRoute(domain, handler)
-					continue
-				}
-
-				tlsOptionsName := routerConfig.TLS.Options
-
-				if len(tlsOptionsName) == 0 {
-					tlsOptionsName = traefiktls.DefaultTLSConfigName
-				}
-
-				if tlsOptionsName != traefiktls.DefaultTLSConfigName {
-					tlsOptionsName = provider.GetQualifiedName(ctxRouter, tlsOptionsName)
-				}
-
-				tlsConf, err := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, tlsOptionsName)
-				if err != nil {
-					routerConfig.AddError(err, true)
-					logger.Debug(err)
-					continue
-				}
-
-				router.AddRouteTLS(domain, handler, tlsConf)
-			case domain == "*":
-				router.AddCatchAllNoTLS(handler)
-			default:
-				logger.Warn("TCP Router ignored, cannot specify a Host rule without TLS")
-			}
-		}
-	}
-
-	return router, nil
-}
-
-func (m *Manager) buildTCPHandler(ctx context.Context, router *runtime.TCPRouterInfo) (tcp.Handler, error) {
-	var qualifiedNames []string
-	for _, name := range router.Middlewares {
-		qualifiedNames = append(qualifiedNames, provider.GetQualifiedName(ctx, name))
-	}
-	router.Middlewares = qualifiedNames
-
-	if router.Service == "" {
-		return nil, errors.New("the service is missing on the router")
-	}
-
-	sHandler, err := m.serviceManager.BuildTCP(ctx, router.Service)
+// NewRouter returns a new TCP router.
+func NewRouter() (*Router, error) {
+	muxTCP, err := tcpmuxer.NewMuxer()
 	if err != nil {
 		return nil, err
 	}
 
-	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
-
-	return tcp.NewChain().Extend(*mHandler).Then(sHandler)
-}
-
-func findTLSOptionName(tlsOptionsForHost map[string]string, host string) string {
-	tlsOptions, ok := tlsOptionsForHost[host]
-	if ok {
-		return tlsOptions
+	muxTCPTLS, err := tcpmuxer.NewMuxer()
+	if err != nil {
+		return nil, err
 	}
 
-	tlsOptions, ok = tlsOptionsForHost[strings.ToLower(host)]
-	if ok {
-		return tlsOptions
+	muxHTTPS, err := tcpmuxer.NewMuxer()
+	if err != nil {
+		return nil, err
 	}
 
-	return traefiktls.DefaultTLSConfigName
+	return &Router{
+		muxerTCP:    *muxTCP,
+		muxerTCPTLS: *muxTCPTLS,
+		muxerHTTPS:  *muxHTTPS,
+	}, nil
 }
+
+// GetTLSGetClientInfo is called after a ClientHello is received from a client.
+func (r *Router) GetTLSGetClientInfo() func(info *tls.ClientHelloInfo) (*tls.Config, error) {
+	return func(info *tls.ClientHelloInfo) (*tls.Config, error) {
+		if tlsConfig, ok := r.hostHTTPTLSConfig[info.ServerName]; ok {
+			return tlsConfig, nil
+		}
+
+		return r.httpsTLSConfig, nil
+	}
+}
+
+// ServeTCP forwards the connection to the right TCP/HTTP handler.
+func (r *Router) ServeTCP(conn tcp.WriteCloser) {
+	// Handling Non-TLS TCP connection early if there is neither HTTP(S) nor TLS
+	// routers on the entryPoint, and if there is at least one non-TLS TCP router.
+	// In the case of a non-TLS TCP client (that does not "send" first), we would
+	// block forever on clientHelloServerName, which is why we want to detect and
+	// handle that case first and foremost.
+	if r.muxerTCP.HasRoutes() && !r.muxerTCPTLS.HasRoutes() && !r.muxerHTTPS.HasRoutes() {
+		connData, err := tcpmuxer.NewConnData("", conn)
+		if err != nil {
+			log.WithoutContext().Errorf("Error while reading TCP connection data : %v", err)
+			conn.Close()
+			return
+		}
+
+		handler := r.muxerTCP.Match(connData)
+		// If there is a handler matching the connection metadata,
+		// we let it handle the connection.
+		// Otherwise, we flow through the clientHelloServerName.
+		if handler != nil {
+			handler.ServeTCP(conn)
+			return
+		}
+	}
+
+	// FIXME -- Check if ProxyProtocol changes the first bytes of the request
+	br := bufio.NewReader(conn)
+	serverName, tls, peeked, err := clientHelloServerName(br)
+	if err != nil {
+		conn.Close()
+		return
+	}
+
+	// Remove read/write deadline and delegate this to underlying tcp server (for now only handled by HTTP Server)
+	err = conn.SetReadDeadline(time.Time{})
+	if err != nil {
+		log.WithoutContext().Errorf("Error while setting read deadline: %v", err)
+	}
+
+	err = conn.SetWriteDeadline(time.Time{})
+	if err != nil {
+		log.WithoutContext().Errorf("Error while setting write deadline: %v", err)
+	}
+
+	connData, err := tcpmuxer.NewConnData(serverName, conn)
+	if err != nil {
+		log.WithoutContext().Errorf("Error while reading TCP connection data : %v", err)
+		conn.Close()
+		return
+	}
+
+	if !tls {
+		handler := r.muxerTCP.Match(connData)
+		switch {
+		case handler != nil:
+			handler.ServeTCP(r.GetConn(conn, peeked))
+		case r.httpForwarder != nil:
+			r.httpForwarder.ServeTCP(r.GetConn(conn, peeked))
+		default:
+			conn.Close()
+		}
+		return
+	}
+
+	handler := r.muxerTCPTLS.Match(connData)
+	if handler != nil {
+		handler.ServeTCP(r.GetConn(conn, peeked))
+		return
+	}
+
+	// for real, the handler returned here is always the same: it is the
+	// httpsForwarder that is used for all HTTPS connections that match
+	handler = r.muxerHTTPS.Match(connData)
+	if handler != nil {
+		handler.ServeTCP(r.GetConn(conn, peeked))
+		return
+	}
+
+	// needed to handle 404s for HTTPS, as well as all non-Host (e.g. PathPrefix) matches.
+	if r.httpsForwarder != nil {
+		r.httpsForwarder.ServeTCP(r.GetConn(conn, peeked))
+		return
+	}
+
+	conn.Close()
+}
+
+// AddRoute defines a handler for the given rule.
+func (r *Router) AddRoute(rule string, priority int, target tcp.Handler) error {
+	return r.muxerTCP.AddRoute(rule, priority, target)
+}
+
+// AddRouteTLS defines a handler for a given rule and sets the matching tlsConfig.
+func (r *Router) AddRouteTLS(rule string, priority int, target tcp.Handler, config *tls.Config) error {
+	// TLS PassThrough
+	if config == nil {
+		return r.muxerTCPTLS.AddRoute(rule, priority, target)
+	}
+
+	return r.muxerTCPTLS.AddRoute(rule, priority, &tcp.TLSHandler{
+		Next:   target,
+		Config: config,
+	})
+}
+
+// AddHTTPTLSConfig defines a handler for a given sniHost and sets the matching tlsConfig.
+func (r *Router) AddHTTPTLSConfig(sniHost string, config *tls.Config) {
+	if r.hostHTTPTLSConfig == nil {
+		r.hostHTTPTLSConfig = map[string]*tls.Config{}
+	}
+
+	r.hostHTTPTLSConfig[sniHost] = config
+}
+
+// GetConn creates a connection proxy with a peeked string.
+func (r *Router) GetConn(conn tcp.WriteCloser, peeked string) tcp.WriteCloser {
+	// FIXME should it really be on Router ?
+	conn = &Conn{
+		Peeked:      []byte(peeked),
+		WriteCloser: conn,
+	}
+
+	return conn
+}
+
+// GetHTTPHandler gets the attached http handler.
+func (r *Router) GetHTTPHandler() http.Handler {
+	return r.httpHandler
+}
+
+// GetHTTPSHandler gets the attached https handler.
+func (r *Router) GetHTTPSHandler() http.Handler {
+	return r.httpsHandler
+}
+
+// SetHTTPForwarder sets the tcp handler that will forward the connections to an http handler.
+func (r *Router) SetHTTPForwarder(handler tcp.Handler) {
+	r.httpForwarder = handler
+}
+
+// SetHTTPSForwarder sets the tcp handler that will forward the TLS connections to an http handler.
+func (r *Router) SetHTTPSForwarder(handler tcp.Handler) {
+	for sniHost, tlsConf := range r.hostHTTPTLSConfig {
+		// muxerHTTPS only contains single HostSNI rules (and no other kind of rules),
+		// so there's no need for specifying a priority for them.
+		err := r.muxerHTTPS.AddRoute("HostSNI(`"+sniHost+"`)", 0, &tcp.TLSHandler{
+			Next:   handler,
+			Config: tlsConf,
+		})
+		if err != nil {
+			log.WithoutContext().Errorf("Error while adding route for host: %w", err)
+		}
+	}
+
+	r.httpsForwarder = &tcp.TLSHandler{
+		Next:   handler,
+		Config: r.httpsTLSConfig,
+	}
+}
+
+// SetHTTPHandler attaches http handlers on the router.
+func (r *Router) SetHTTPHandler(handler http.Handler) {
+	r.httpHandler = handler
+}
+
+// SetHTTPSHandler attaches https handlers on the router.
+func (r *Router) SetHTTPSHandler(handler http.Handler, config *tls.Config) {
+	r.httpsHandler = handler
+	r.httpsTLSConfig = config
+}
+
+// Conn is a connection proxy that handles Peeked bytes.
+type Conn struct {
+	// Peeked are the bytes that have been read from Conn for the
+	// purposes of route matching, but have not yet been consumed
+	// by Read calls. It set to nil by Read when fully consumed.
+	Peeked []byte
+
+	// Conn is the underlying connection.
+	// It can be type asserted against *net.TCPConn or other types
+	// as needed. It should not be read from directly unless
+	// Peeked is nil.
+	tcp.WriteCloser
+}
+
+// Read reads bytes from the connection (using the buffer prior to actually reading).
+func (c *Conn) Read(p []byte) (n int, err error) {
+	if len(c.Peeked) > 0 {
+		n = copy(p, c.Peeked)
+		c.Peeked = c.Peeked[n:]
+		if len(c.Peeked) == 0 {
+			c.Peeked = nil
+		}
+		return n, nil
+	}
+	return c.WriteCloser.Read(p)
+}
+
+// clientHelloServerName returns the SNI server name inside the TLS ClientHello,
+// without consuming any bytes from br.
+// On any error, the empty string is returned.
+func clientHelloServerName(br *bufio.Reader) (string, bool, string, error) {
+	hdr, err := br.Peek(1)
+	if err != nil {
+		var opErr *net.OpError
+		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || opErr.Timeout()) {
+			// TODO(mpl): maybe Errorf?
+			log.WithoutContext().Debugf("Error while Peeking first byte: %s", err)
+		}
+
+		return "", false, "", err
+	}
+
+	// No valid TLS record has a type of 0x80, however SSLv2 handshakes
+	// start with a uint16 length where the MSB is set and the first record
+	// is always < 256 bytes long. Therefore typ == 0x80 strongly suggests
+	// an SSLv2 client.
+	const recordTypeSSLv2 = 0x80
+	const recordTypeHandshake = 0x16
+	if hdr[0] != recordTypeHandshake {
+		if hdr[0] == recordTypeSSLv2 {
+			// we consider SSLv2 as TLS and it will be refused by real TLS handshake.
+			return "", true, getPeeked(br), nil
+		}
+		return "", false, getPeeked(br), nil // Not TLS.
+	}
+
+	const recordHeaderLen = 5
+	hdr, err = br.Peek(recordHeaderLen)
+	if err != nil {
+		log.Errorf("Error while Peeking hello: %s", err)
+		return "", false, getPeeked(br), nil
+	}
+
+	recLen := int(hdr[3])<<8 | int(hdr[4]) // ignoring version in hdr[1:3]
+
+	if recordHeaderLen+recLen > defaultBufSize {
+		br = bufio.NewReaderSize(br, recordHeaderLen+recLen)
+	}
+
+	helloBytes, err := br.Peek(recordHeaderLen + recLen)
+	if err != nil {
+		log.Errorf("Error while Hello: %s", err)
+		return "", true, getPeeked(br), nil
+	}
+
+	sni := ""
+	server := tls.Server(sniSniffConn{r: bytes.NewReader(helloBytes)}, &tls.Config{
+		GetConfigForClient: func(hello *tls.ClientHelloInfo) (*tls.Config, error) {
+			sni = hello.ServerName
+			return nil, nil
+		},
+	})
+	_ = server.Handshake()
+
+	return sni, true, getPeeked(br), nil
+}
+
+func getPeeked(br *bufio.Reader) string {
+	peeked, err := br.Peek(br.Buffered())
+	if err != nil {
+		log.Errorf("Could not get anything: %s", err)
+		return ""
+	}
+	return string(peeked)
+}
+
+// sniSniffConn is a net.Conn that reads from r, fails on Writes,
+// and crashes otherwise.
+type sniSniffConn struct {
+	r        io.Reader
+	net.Conn // nil; crash on any unexpected use
+}
+
+// Read reads from the underlying reader.
+func (c sniSniffConn) Read(p []byte) (int, error) { return c.r.Read(p) }
+
+// Write crashes all the time.
+func (sniSniffConn) Write(p []byte) (int, error) { return 0, io.EOF }
