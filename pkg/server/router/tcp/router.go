@@ -284,8 +284,7 @@ func clientHelloServerName(br *bufio.Reader) (string, bool, string, error) {
 	if err != nil {
 		var opErr *net.OpError
 		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || opErr.Timeout()) {
-			// TODO(mpl): maybe Errorf?
-			log.WithoutContext().Debugf("Error while Peeking first byte: %s", err)
+			log.WithoutContext().Errorf("Error while Peeking first byte: %s", err)
 		}
 
 		return "", false, "", err
