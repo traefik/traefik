@@ -153,11 +153,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	cfgChan := make(chan json.Marshaler)
 
-	err := p.pp.Provide(cfgChan)
-	if err != nil {
-		return fmt.Errorf("error from %s: %w", p.name, err)
-	}
-
 	pool.GoCtx(func(ctx context.Context) {
 		logger := log.FromContext(log.With(ctx, log.Str(log.ProviderName, p.name)))
 
@@ -192,6 +187,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			}
 		}
 	})
+
+	err := p.pp.Provide(cfgChan)
+	if err != nil {
+		return fmt.Errorf("error from %s: %w", p.name, err)
+	}
 
 	return nil
 }
