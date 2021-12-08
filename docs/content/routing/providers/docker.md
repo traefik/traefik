@@ -538,6 +538,14 @@ You can declare TCP Routers and/or Services using labels.
     - "traefik.tcp.routers.mytcprouter.tls.passthrough=true"
     ```
 
+??? info "`traefik.tcp.routers.<router_name>.priority`"
+
+    See [priority](../routers/index.md#priority_1) for more information.
+
+    ```yaml
+    - "traefik.tcp.routers.myrouter.priority=42"
+    ```
+
 #### TCP Services
 
 ??? info "`traefik.tcp.services.<service_name>.loadbalancer.server.port`"
