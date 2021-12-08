@@ -365,36 +365,37 @@ func Test_addTCPRoute(t *testing.T) {
 			err = router.AddRoute(test.rule, 0, handler)
 			if test.routeErr {
 				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-
-				addr := "0.0.0.0:0"
-				if test.remoteAddr != "" {
-					addr = test.remoteAddr
-				}
-
-				conn := &fakeConn{
-					call:       map[string]int{},
-					remoteAddr: fakeAddr{addr: addr},
-				}
-
-				connData, err := NewConnData(test.serverName, conn)
-				require.NoError(t, err)
-
-				handler := router.Match(connData)
-				if test.matchErr {
-					require.Nil(t, handler)
-					return
-				}
-
-				require.NotNil(t, handler)
-
-				handler.ServeTCP(conn)
-
-				n, ok := conn.call[msg]
-				assert.Equal(t, n, 1)
-				assert.True(t, ok)
+				return
 			}
+
+			require.NoError(t, err)
+
+			addr := "0.0.0.0:0"
+			if test.remoteAddr != "" {
+				addr = test.remoteAddr
+			}
+
+			conn := &fakeConn{
+				call:       map[string]int{},
+				remoteAddr: fakeAddr{addr: addr},
+			}
+
+			connData, err := NewConnData(test.serverName, conn)
+			require.NoError(t, err)
+
+			matchingHandler := router.Match(connData)
+			if test.matchErr {
+				require.Nil(t, matchingHandler)
+				return
+			}
+
+			require.NotNil(t, matchingHandler)
+
+			matchingHandler.ServeTCP(conn)
+
+			n, ok := conn.call[msg]
+			assert.Equal(t, n, 1)
+			assert.True(t, ok)
 		})
 	}
 }
@@ -567,11 +568,7 @@ func Test_HostSNI(t *testing.T) {
 				serverName: test.serverName,
 			}
 
-			if test.matchErr {
-				assert.False(t, matcherTree.match(meta))
-			} else {
-				assert.True(t, matcherTree.match(meta))
-			}
+			assert.Equal(t, test.matchErr, !matcherTree.match(meta))
 		})
 	}
 }
@@ -662,11 +659,7 @@ func Test_ClientIP(t *testing.T) {
 				remoteIP: test.remoteIP,
 			}
 
-			if test.matchErr {
-				assert.False(t, matchersTree.match(meta))
-			} else {
-				assert.True(t, matchersTree.match(meta))
-			}
+			assert.Equal(t, test.matchErr, !matchersTree.match(meta))
 		})
 	}
 }
