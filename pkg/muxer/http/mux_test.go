@@ -1,4 +1,4 @@
-package rules
+package http
 
 import (
 	"net/http"
@@ -635,10 +635,10 @@ func Test_addRoute(t *testing.T) {
 			t.Parallel()
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			router, err := NewRouter()
+			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = router.AddRoute(test.rule, 0, handler)
+			err = muxer.AddRoute(test.rule, 0, handler)
 			if test.expectedError {
 				require.Error(t, err)
 			} else {
@@ -659,7 +659,7 @@ func Test_addRoute(t *testing.T) {
 					for key, value := range test.headers {
 						req.Header.Set(key, value)
 					}
-					reqHost.ServeHTTP(w, req, router.ServeHTTP)
+					reqHost.ServeHTTP(w, req, muxer.ServeHTTP)
 					results[calledURL] = w.Code
 				}
 				assert.Equal(t, test.expected, results)
@@ -787,7 +787,7 @@ func Test_addRoutePriority(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			router, err := NewRouter()
+			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
 			for _, route := range test.cases {
@@ -796,16 +796,16 @@ func Test_addRoutePriority(t *testing.T) {
 					w.Header().Set("X-From", route.xFrom)
 				})
 
-				err := router.AddRoute(route.rule, route.priority, handler)
+				err := muxer.AddRoute(route.rule, route.priority, handler)
 				require.NoError(t, err, route.rule)
 			}
 
-			router.SortRoutes()
+			muxer.SortRoutes()
 
 			w := httptest.NewRecorder()
 			req := testhelpers.MustNewRequest(http.MethodGet, test.path, nil)
 
-			router.ServeHTTP(w, req)
+			muxer.ServeHTTP(w, req)
 
 			assert.Equal(t, test.expected, w.Header().Get("X-From"))
 		})
@@ -900,44 +900,42 @@ func TestParseDomains(t *testing.T) {
 		errorExpected bool
 	}{
 		{
-			description:   "Many host rules",
-			expression:    "Host(`foo.bar`,`test.bar`)",
-			domain:        []string{"foo.bar", "test.bar"},
-			errorExpected: false,
+			description:   "Unknown rule",
+			expression:    "Foobar(`foo.bar`,`test.bar`)",
+			errorExpected: true,
 		},
 		{
-			description:   "Many host rules upper",
-			expression:    "HOST(`foo.bar`,`test.bar`)",
-			domain:        []string{"foo.bar", "test.bar"},
-			errorExpected: false,
+			description: "Many host rules",
+			expression:  "Host(`foo.bar`,`test.bar`)",
+			domain:      []string{"foo.bar", "test.bar"},
 		},
 		{
-			description:   "Many host rules lower",
-			expression:    "host(`foo.bar`,`test.bar`)",
-			domain:        []string{"foo.bar", "test.bar"},
-			errorExpected: false,
+			description: "Many host rules upper",
+			expression:  "HOST(`foo.bar`,`test.bar`)",
+			domain:      []string{"foo.bar", "test.bar"},
 		},
 		{
-			description:   "No host rule",
-			expression:    "Path(`/test`)",
-			errorExpected: false,
+			description: "Many host rules lower",
+			expression:  "host(`foo.bar`,`test.bar`)",
+			domain:      []string{"foo.bar", "test.bar"},
 		},
 		{
-			description:   "Host rule and another rule",
-			expression:    "Host(`foo.bar`) && Path(`/test`)",
-			domain:        []string{"foo.bar"},
-			errorExpected: false,
+			description: "No host rule",
+			expression:  "Path(`/test`)",
 		},
 		{
-			description:   "Host rule to trim and another rule",
-			expression:    "Host(`Foo.Bar`) && Path(`/test`)",
-			domain:        []string{"foo.bar"},
-			errorExpected: false,
+			description: "Host rule and another rule",
+			expression:  "Host(`foo.bar`) && Path(`/test`)",
+			domain:      []string{"foo.bar"},
 		},
 		{
-			description:   "Host rule with no domain",
-			expression:    "Host() && Path(`/test`)",
-			errorExpected: false,
+			description: "Host rule to trim and another rule",
+			expression:  "Host(`Foo.Bar`) && Path(`/test`)",
+			domain:      []string{"foo.bar"},
+		},
+		{
+			description: "Host rule with no domain",
+			expression:  "Host() && Path(`/test`)",
 		},
 	}
 
