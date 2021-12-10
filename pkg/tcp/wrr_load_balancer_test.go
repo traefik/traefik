@@ -10,9 +10,8 @@ import (
 )
 
 type fakeConn struct {
-	writeCall  map[string]int
-	closeCall  int
-	remoteAddr net.Addr
+	writeCall map[string]int
+	closeCall int
 }
 
 func (f *fakeConn) Read(b []byte) (n int, err error) {
