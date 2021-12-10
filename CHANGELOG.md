@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.7.34](https://github.com/traefik/traefik/tree/v1.7.34) (2021-12-10)
+[All Commits](https://github.com/traefik/traefik/compare/v1.7.33...v1.7.34)
+
+**Bug fixes:**
+- **[k8s]** require that secret is a valid PEM ([#8624](https://github.com/traefik/traefik/pull/8624) by [jr0d](https://github.com/jr0d))
+
 ## [v1.7.33](https://github.com/traefik/traefik/tree/v1.7.33) (2021-10-07)
 [All Commits](https://github.com/traefik/traefik/compare/v1.7.32...v1.7.33)
 
