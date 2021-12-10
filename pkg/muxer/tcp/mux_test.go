@@ -173,6 +173,11 @@ func Test_addTCPRoute(t *testing.T) {
 			remoteAddr: "[10::10]:80",
 		},
 		{
+			desc:       "Valid negative ClientIP rule matching IPv6",
+			rule:       "!ClientIP(`10::10`)",
+			remoteAddr: "[::1]:80",
+		},
+		{
 			desc:       "Valid ClientIP rule not matching IPv6",
 			rule:       "ClientIP(`10::10`)",
 			remoteAddr: "[::1]:80",
@@ -241,6 +246,37 @@ func Test_addTCPRoute(t *testing.T) {
 		{
 			desc:       "Valid negative HostSNI and negative ClientIP rule matching",
 			rule:       "!HostSNI(`bar`) && !ClientIP(`10.0.0.2`)",
+			serverName: "foobar",
+			remoteAddr: "10.0.0.1:80",
+		},
+		{
+			desc:       "Valid negative HostSNI or negative ClientIP rule matching",
+			rule:       "!(HostSNI(`bar`) || ClientIP(`10.0.0.2`))",
+			serverName: "foobar",
+			remoteAddr: "10.0.0.1:80",
+		},
+		{
+			desc:       "Valid negative HostSNI and negative ClientIP rule matching",
+			rule:       "!(HostSNI(`bar`) && ClientIP(`10.0.0.2`))",
+			serverName: "foobar",
+			remoteAddr: "10.0.0.2:80",
+		},
+		{
+			desc:       "Valid negative HostSNI and negative ClientIP rule matching",
+			rule:       "!(HostSNI(`bar`) && ClientIP(`10.0.0.2`))",
+			serverName: "bar",
+			remoteAddr: "10.0.0.1:80",
+		},
+		{
+			desc:       "Valid negative HostSNI and negative ClientIP rule matching",
+			rule:       "!(HostSNI(`bar`) && ClientIP(`10.0.0.2`))",
+			serverName: "bar",
+			remoteAddr: "10.0.0.2:80",
+			matchErr:   true,
+		},
+		{
+			desc:       "Valid negative HostSNI and negative ClientIP rule matching",
+			rule:       "!(HostSNI(`bar`) && ClientIP(`10.0.0.2`))",
 			serverName: "foobar",
 			remoteAddr: "10.0.0.1:80",
 		},
@@ -359,6 +395,7 @@ func Test_addTCPRoute(t *testing.T) {
 				_, err := conn.Write([]byte(msg))
 				require.NoError(t, err)
 			})
+
 			router, err := NewMuxer()
 			require.NoError(t, err)
 
