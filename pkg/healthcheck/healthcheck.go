@@ -184,10 +184,20 @@ func (hc *HealthCheck) checkServersLB(ctx context.Context, backend *BackendConfi
 
 	backend.disabledURLs = newDisabledURLs
 
+	checkedURLs := make(map[string]error)
+
 	for _, enabledURL := range enabledURLs {
 		serverUpMetricValue := float64(1)
 
-		if err := checkHealth(enabledURL, backend); err != nil {
+		stringURL := enabledURL.String()
+
+		checkResult, ok := checkedURLs[stringURL]
+		if ok == false {
+			checkResult = checkHealth(enabledURL, backend)
+			checkedURLs[stringURL] = checkResult
+		}
+
+		if checkResult != nil {
 			weight := 1
 			rr, ok := backend.LB.(*roundrobin.RoundRobin)
 			if ok {
@@ -199,7 +209,7 @@ func (hc *HealthCheck) checkServersLB(ctx context.Context, backend *BackendConfi
 			}
 
 			logger.Warnf("Health check failed, removing from server list. Backend: %q URL: %q Weight: %d Reason: %s",
-				backend.name, enabledURL.String(), weight, err)
+				backend.name, stringURL, weight, checkResult)
 			if err := backend.LB.RemoveServer(enabledURL); err != nil {
 				logger.Error(err)
 			}
@@ -208,7 +218,7 @@ func (hc *HealthCheck) checkServersLB(ctx context.Context, backend *BackendConfi
 			serverUpMetricValue = 0
 		}
 
-		labelValues := []string{"service", backend.name, "url", enabledURL.String()}
+		labelValues := []string{"service", backend.name, "url", stringURL}
 		hc.metrics.serverUpGauge.With(labelValues...).Set(serverUpMetricValue)
 	}
 }
