@@ -14,12 +14,8 @@ type IngressRouteUDPSpec struct {
 // RouteUDP contains the set of routes.
 type RouteUDP struct {
 	Services []ServiceUDP `json:"services,omitempty"`
-}
-
-// TLSOptionUDPRef is a ref to the TLSOption resources.
-type TLSOptionUDPRef struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace,omitempty"`
+	// Middlewares contains references to MiddlewareUDP resources.
+	Middlewares []ObjectReference `json:"middlewares,omitempty"`
 }
 
 // ServiceUDP defines an upstream to proxy traffic.

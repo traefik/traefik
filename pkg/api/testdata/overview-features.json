@@ -39,6 +39,11 @@
 		}
 	},
 	"udp": {
+		"middlewares": {
+			"errors": 0,
+			"total": 0,
+			"warnings": 0
+		},
 		"routers": {
 			"errors": 0,
 			"total": 0,

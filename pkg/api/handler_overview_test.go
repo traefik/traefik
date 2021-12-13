@@ -222,6 +222,31 @@ func TestHandler_Overview(t *testing.T) {
 						Status: runtime.StatusDisabled,
 					},
 				},
+				UDPMiddlewares: map[string]*runtime.UDPMiddlewareInfo{
+					"ipwhitelist1@myprovider": {
+						UDPMiddleware: &dynamic.UDPMiddleware{
+							IPWhiteList: &dynamic.UDPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						Status: runtime.StatusEnabled,
+					},
+					"ipwhitelist2@myprovider": {
+						UDPMiddleware: &dynamic.UDPMiddleware{
+							IPWhiteList: &dynamic.UDPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+					},
+					"ipwhitelist3@myprovider": {
+						UDPMiddleware: &dynamic.UDPMiddleware{
+							IPWhiteList: &dynamic.UDPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						Status: runtime.StatusDisabled,
+					},
+				},
 			},
 			expected: expected{
 				statusCode: http.StatusOK,
