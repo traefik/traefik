@@ -1,0 +1,47 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: MiddlewareUDP
+metadata:
+  name: ipwhitelist
+  namespace: default
+spec:
+  ipWhiteList:
+    sourceRange:
+      - 127.0.0.1/32
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: MiddlewareUDP
+metadata:
+  name: ipwhitelist
+  namespace: cross-ns
+spec:
+  ipWhiteList:
+    sourceRange:
+      - 127.0.0.1/32
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - foo
+
+  routes:
+    - services:
+        - name: whoamiudp
+          port: 8000
+
+      middlewares:
+        - name: ipwhitelist
+
+    - services:
+        - name: whoamiudp
+          port: 8000
+
+      middlewares:
+        - name: ipwhitelist
+          namespace: cross-ns

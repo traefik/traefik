@@ -484,6 +484,223 @@ func TestHandler_UDP(t *testing.T) {
 				statusCode: http.StatusNotFound,
 			},
 		},
+		{
+			desc: "all middlewares",
+			path: "/api/udp/middlewares",
+			conf: runtime.Configuration{
+				UDPMiddlewares: map[string]*runtime.UDPMiddlewareInfo{
+					"ipwhitelist1@myprovider": {
+						UDPMiddleware: &dynamic.UDPMiddleware{
+							IPWhiteList: &dynamic.UDPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
+					},
+					"ipwhitelist2@myprovider": {
+						UDPMiddleware: &dynamic.UDPMiddleware{
+							IPWhiteList: &dynamic.UDPIPWhiteList{
+								SourceRange: []string{"127.0.0.2/32"},
+							},
+						},
+						UsedBy: []string{"test@myprovider"},
+					},
+					"ipwhitelist1@anotherprovider": {
+						UDPMiddleware: &dynamic.UDPMiddleware{
+							IPWhiteList: &dynamic.UDPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider"},
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/udpmiddlewares.json",
+			},
+		},
+		{
+			desc: "middlewares filtered by status",
+			path: "/api/udp/middlewares?status=enabled",
+			conf: runtime.Configuration{
+				UDPMiddlewares: map[string]*runtime.UDPMiddlewareInfo{
+					"ipwhitelist@myprovider": {
+						UDPMiddleware: &dynamic.UDPMiddleware{
+							IPWhiteList: &dynamic.UDPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
+						Status: runtime.StatusEnabled,
+					},
+					"ipwhitelist2@myprovider": {
+						UDPMiddleware: &dynamic.UDPMiddleware{
+							IPWhiteList: &dynamic.UDPIPWhiteList{
+								SourceRange: []string{"127.0.0.2/32"},
+							},
+						},
+						UsedBy: []string{"test@myprovider"},
+						Status: runtime.StatusDisabled,
+					},
+					"ipwhitelist@anotherprovider": {
+						UDPMiddleware: &dynamic.UDPMiddleware{
+							IPWhiteList: &dynamic.UDPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider"},
+						Status: runtime.StatusEnabled,
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/udpmiddlewares-filtered-status.json",
+			},
+		},
+		{
+			desc: "middlewares filtered by search",
+			path: "/api/udp/middlewares?search=ipwhitelist",
+			conf: runtime.Configuration{
+				UDPMiddlewares: map[string]*runtime.UDPMiddlewareInfo{
+					"bad@myprovider": {
+						UDPMiddleware: &dynamic.UDPMiddleware{
+							IPWhiteList: &dynamic.UDPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
+						Status: runtime.StatusEnabled,
+					},
+					"ipwhitelist@myprovider": {
+						UDPMiddleware: &dynamic.UDPMiddleware{
+							IPWhiteList: &dynamic.UDPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"test@myprovider"},
+						Status: runtime.StatusDisabled,
+					},
+					"ipwhitelist@anotherprovider": {
+						UDPMiddleware: &dynamic.UDPMiddleware{
+							IPWhiteList: &dynamic.UDPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider"},
+						Status: runtime.StatusEnabled,
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/udpmiddlewares-filtered-search.json",
+			},
+		},
+		{
+			desc: "all middlewares, 1 res per page, want page 2",
+			path: "/api/udp/middlewares?page=2&per_page=1",
+			conf: runtime.Configuration{
+				UDPMiddlewares: map[string]*runtime.UDPMiddlewareInfo{
+					"ipwhitelist@myprovider": {
+						UDPMiddleware: &dynamic.UDPMiddleware{
+							IPWhiteList: &dynamic.UDPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
+					},
+					"ipwhitelist2@myprovider": {
+						UDPMiddleware: &dynamic.UDPMiddleware{
+							IPWhiteList: &dynamic.UDPIPWhiteList{
+								SourceRange: []string{"127.0.0.2/32"},
+							},
+						},
+						UsedBy: []string{"test@myprovider"},
+					},
+					"ipwhitelist@anotherprovider": {
+						UDPMiddleware: &dynamic.UDPMiddleware{
+							IPWhiteList: &dynamic.UDPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider"},
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "3",
+				jsonFile:   "testdata/udpmiddlewares-page2.json",
+			},
+		},
+		{
+			desc: "one middleware by id",
+			path: "/api/udp/middlewares/ipwhitelist@myprovider",
+			conf: runtime.Configuration{
+				UDPMiddlewares: map[string]*runtime.UDPMiddlewareInfo{
+					"ipwhitelist@myprovider": {
+						UDPMiddleware: &dynamic.UDPMiddleware{
+							IPWhiteList: &dynamic.UDPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
+					},
+					"ipwhitelist2@myprovider": {
+						UDPMiddleware: &dynamic.UDPMiddleware{
+							IPWhiteList: &dynamic.UDPIPWhiteList{
+								SourceRange: []string{"127.0.0.2/32"},
+							},
+						},
+						UsedBy: []string{"test@myprovider"},
+					},
+					"ipwhitelist@anotherprovider": {
+						UDPMiddleware: &dynamic.UDPMiddleware{
+							IPWhiteList: &dynamic.UDPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider"},
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				jsonFile:   "testdata/udpmiddleware-ipwhitelist.json",
+			},
+		},
+		{
+			desc: "one middleware by id, that does not exist",
+			path: "/api/udp/middlewares/foo@myprovider",
+			conf: runtime.Configuration{
+				UDPMiddlewares: map[string]*runtime.UDPMiddlewareInfo{
+					"ipwhitelist@myprovider": {
+						UDPMiddleware: &dynamic.UDPMiddleware{
+							IPWhiteList: &dynamic.UDPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+			},
+		},
+		{
+			desc: "one middleware by id, but no config",
+			path: "/api/udp/middlewares/foo@myprovider",
+			conf: runtime.Configuration{},
+			expected: expected{
+				statusCode: http.StatusNotFound,
+			},
+		},
 	}
 
 	for _, test := range testCases {

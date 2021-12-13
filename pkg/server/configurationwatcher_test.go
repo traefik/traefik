@@ -100,8 +100,9 @@ func TestNewConfigurationWatcher(t *testing.T) {
 				Stores: map[string]tls.Store{},
 			},
 			UDP: &dynamic.UDPConfiguration{
-				Routers:  map[string]*dynamic.UDPRouter{},
-				Services: map[string]*dynamic.UDPService{},
+				Routers:     map[string]*dynamic.UDPRouter{},
+				Middlewares: map[string]*dynamic.UDPMiddleware{},
+				Services:    map[string]*dynamic.UDPService{},
 			},
 		}
 
@@ -391,8 +392,9 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 			Services:    map[string]*dynamic.TCPService{},
 		},
 		UDP: &dynamic.UDPConfiguration{
-			Routers:  map[string]*dynamic.UDPRouter{},
-			Services: map[string]*dynamic.UDPService{},
+			Routers:     map[string]*dynamic.UDPRouter{},
+			Middlewares: map[string]*dynamic.UDPMiddleware{},
+			Services:    map[string]*dynamic.UDPService{},
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Options: map[string]tls.Options{
@@ -685,8 +687,9 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 			Stores: map[string]tls.Store{},
 		},
 		UDP: &dynamic.UDPConfiguration{
-			Routers:  map[string]*dynamic.UDPRouter{},
-			Services: map[string]*dynamic.UDPService{},
+			Routers:     map[string]*dynamic.UDPRouter{},
+			Middlewares: map[string]*dynamic.UDPMiddleware{},
+			Services:    map[string]*dynamic.UDPService{},
 		},
 	}
 
