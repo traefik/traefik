@@ -84,7 +84,7 @@ labels:
 # As TOML Configuration File
 [http.routers]
   [http.routers.router1]
-    service = "myService"
+    service = "service1"
     middlewares = ["foo-add-prefix"]
     rule = "Host(`example.com`)"
 
@@ -105,7 +105,7 @@ labels:
 http:
   routers:
     router1:
-      service: myService
+      service: service1
       middlewares:
         - "foo-add-prefix"
       rule: "Host(`example.com`)"
