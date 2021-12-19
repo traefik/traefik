@@ -675,32 +675,38 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 		crt, err := getX509Certificate(ctx, &cert.Certificate)
 		// If there's an error, we assume the cert is broken, and needs update
 		if err != nil || crt == nil || crt.NotAfter.Before(time.Now().Add(renewPeriod)) {
-			client, err := p.getClient()
-			if err != nil {
-				logger.Infof("Error renewing certificate from LE : %+v, %v", cert.Domain, err)
-				continue
-			}
-
-			logger.Infof("Renewing certificate from LE : %+v", cert.Domain)
-
-			renewedCert, err := client.Certificate.Renew(certificate.Resource{
-				Domain:      cert.Domain.Main,
-				PrivateKey:  cert.Key,
-				Certificate: cert.Certificate.Certificate,
-			}, true, oscpMustStaple, p.PreferredChain)
-			if err != nil {
-				logger.Errorf("Error renewing certificate from LE: %v, %v", cert.Domain, err)
-				continue
-			}
-
-			if len(renewedCert.Certificate) == 0 || len(renewedCert.PrivateKey) == 0 {
-				logger.Errorf("domains %v renew certificate with no value: %v", cert.Domain.ToStrArray(), cert)
-				continue
-			}
-
-			p.addCertificateForDomain(cert.Domain, renewedCert.Certificate, renewedCert.PrivateKey, cert.Store)
+			p.renewOneCertificate(ctx, cert)
 		}
 	}
+}
+
+func (p *Provider) renewOneCertificate(ctx context.Context, cert *CertAndStore) {
+	logger := log.FromContext(ctx)
+
+	client, err := p.getClient()
+	if err != nil {
+		logger.Infof("Error renewing certificate from LE : %+v, %v", cert.Domain, err)
+		return
+	}
+
+	logger.Infof("Renewing certificate from LE : %+v", cert.Domain)
+
+	renewedCert, err := client.Certificate.Renew(certificate.Resource{
+		Domain:      cert.Domain.Main,
+		PrivateKey:  cert.Key,
+		Certificate: cert.Certificate.Certificate,
+	}, true, oscpMustStaple, p.PreferredChain)
+	if err != nil {
+		logger.Errorf("Error renewing certificate from LE: %v, %v", cert.Domain, err)
+		return
+	}
+
+	if len(renewedCert.Certificate) == 0 || len(renewedCert.PrivateKey) == 0 {
+		logger.Errorf("domains %v renew certificate with no value: %v", cert.Domain.ToStrArray(), cert)
+		return
+	}
+
+	p.addCertificateForDomain(cert.Domain, renewedCert.Certificate, renewedCert.PrivateKey, cert.Store)
 }
 
 // Get provided certificate which check a domains list (Main and SANs)
