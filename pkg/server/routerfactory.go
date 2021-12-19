@@ -9,6 +9,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/server/middleware"
 	middlewaretcp "github.com/traefik/traefik/v2/pkg/server/middleware/tcp"
+	middlewareudp "github.com/traefik/traefik/v2/pkg/server/middleware/udp"
 	"github.com/traefik/traefik/v2/pkg/server/router"
 	routertcp "github.com/traefik/traefik/v2/pkg/server/router/tcp"
 	routerudp "github.com/traefik/traefik/v2/pkg/server/router/udp"
@@ -89,7 +90,8 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 
 	// UDP
 	svcUDPManager := udp.NewManager(rtConf)
-	rtUDPManager := routerudp.NewManager(rtConf, svcUDPManager)
+	middlewaresUDPBuilder := middlewareudp.NewBuilder(rtConf.UDPMiddlewares)
+	rtUDPManager := routerudp.NewManager(rtConf, svcUDPManager, middlewaresUDPBuilder)
 	routersUDP := rtUDPManager.BuildHandlers(ctx, f.entryPointsUDP)
 
 	rtConf.PopulateUsedBy()

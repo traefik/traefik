@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"errors"
 	"net"
 	"net/http"
 	"os"
@@ -38,12 +39,26 @@ func guessWhoUDP(addr string) (string, error) {
 		return "", err
 	}
 
-	out := make([]byte, 2048)
-	n, err := conn.Read(out)
-	if err != nil {
+	outCh := make(chan []byte)
+	errCh := make(chan error)
+	go func() {
+		out := make([]byte, 2048)
+		n, err := conn.Read(out)
+		if err != nil {
+			errCh <- err
+			return
+		}
+		outCh <- out[:n]
+	}()
+
+	select {
+	case out := <-outCh:
+		return string(out), nil
+	case err := <-errCh:
 		return "", err
+	case <-time.After(5 * time.Second):
+		return "", errors.New("timeout")
 	}
-	return string(out[:n]), nil
 }
 
 func (s *UDPSuite) TestWRR(c *check.C) {
@@ -97,6 +112,44 @@ func (s *UDPSuite) TestWRR(c *check.C) {
 	select {
 	case <-stop:
 	case <-time.Tick(5 * time.Second):
+		c.Error("Timeout")
+	}
+}
+
+func (s *UDPSuite) TestMiddlewareWhiteList(c *check.C) {
+	file := s.adaptFile(c, "fixtures/udp/ip-whitelist.toml", struct {
+		WhoamiAIP string
+		WhoamiBIP string
+	}{
+		WhoamiAIP: s.getComposeServiceIP(c, "whoami-a"),
+		WhoamiBIP: s.getComposeServiceIP(c, "whoami-b"),
+	})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	stop := make(chan struct{})
+	go func() {
+		out, err := guessWhoUDP("127.0.0.1:8093")
+		c.Assert(err, checker.ErrorMatches, "timeout")
+
+		out, err = guessWhoUDP("127.0.0.1:8094")
+		c.Assert(err, checker.IsNil)
+		c.Assert(out, checker.Contains, "whoami-b")
+		close(stop)
+	}()
+
+	select {
+	case <-stop:
+	case <-time.Tick(10 * time.Second):
 		c.Error("Timeout")
 	}
 }

@@ -50,8 +50,9 @@ func (h Handler) getOverview(rw http.ResponseWriter, request *http.Request) {
 			Middlewares: getTCPMiddlewareSection(h.runtimeConfiguration.TCPMiddlewares),
 		},
 		UDP: schemeOverview{
-			Routers:  getUDPRouterSection(h.runtimeConfiguration.UDPRouters),
-			Services: getUDPServiceSection(h.runtimeConfiguration.UDPServices),
+			Routers:     getUDPRouterSection(h.runtimeConfiguration.UDPRouters),
+			Services:    getUDPServiceSection(h.runtimeConfiguration.UDPServices),
+			Middlewares: getUDPMiddlewareSection(h.runtimeConfiguration.UDPMiddlewares),
 		},
 		Features:  getFeatures(h.staticConfig),
 		Providers: getProviders(h.staticConfig),
@@ -213,6 +214,25 @@ func getUDPServiceSection(services map[string]*runtime.UDPServiceInfo) *section 
 
 	return &section{
 		Total:    len(services),
+		Warnings: countWarnings,
+		Errors:   countErrors,
+	}
+}
+
+func getUDPMiddlewareSection(middlewares map[string]*runtime.UDPMiddlewareInfo) *section {
+	var countErrors int
+	var countWarnings int
+	for _, mid := range middlewares {
+		switch mid.Status {
+		case runtime.StatusDisabled:
+			countErrors++
+		case runtime.StatusWarning:
+			countWarnings++
+		}
+	}
+
+	return &section{
+		Total:    len(middlewares),
 		Warnings: countWarnings,
 		Errors:   countErrors,
 	}

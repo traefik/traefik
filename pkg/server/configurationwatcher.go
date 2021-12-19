@@ -272,7 +272,7 @@ func isEmptyConfiguration(conf *dynamic.Configuration) bool {
 	httpEmpty := conf.HTTP.Routers == nil && conf.HTTP.Services == nil && conf.HTTP.Middlewares == nil
 	tlsEmpty := conf.TLS == nil || conf.TLS.Certificates == nil && conf.TLS.Stores == nil && conf.TLS.Options == nil
 	tcpEmpty := conf.TCP.Routers == nil && conf.TCP.Services == nil && conf.TCP.Middlewares == nil
-	udpEmpty := conf.UDP.Routers == nil && conf.UDP.Services == nil
+	udpEmpty := conf.UDP.Routers == nil && conf.UDP.Services == nil && conf.UDP.Middlewares == nil
 
 	return httpEmpty && tlsEmpty && tcpEmpty && udpEmpty
 }
