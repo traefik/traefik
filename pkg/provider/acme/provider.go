@@ -102,6 +102,7 @@ type Provider struct {
 	account                *Account
 	client                 *lego.Client
 	certsChan              chan *CertAndStore
+	certsDelChan           chan *CertAndStore
 	configurationChan      chan<- dynamic.Message
 	tlsManager             *traefiktls.Manager
 	clientMutex            sync.Mutex
@@ -527,6 +528,10 @@ func (p *Provider) addCertificateForDomain(domain types.Domain, certificate, key
 	p.certsChan <- &CertAndStore{Certificate: Certificate{Certificate: certificate, Key: key, Domain: domain}, Store: tlsStore}
 }
 
+func (p *Provider) delCertificateForDomain(domain types.Domain, tlsStore string) {
+	p.certsDelChan <- &CertAndStore{Certificate: Certificate{Domain: domain}, Store: tlsStore}
+}
+
 // getCertificateRenewDurations returns renew durations calculated from the given certificatesDuration in hours.
 // The first (RenewPeriod) is the period before the end of the certificate duration, during which the certificate should be renewed.
 // The second (RenewInterval) is the interval between renew attempts.
@@ -604,6 +609,7 @@ func deleteUnnecessaryDomains(ctx context.Context, domains []types.Domain) []typ
 
 func (p *Provider) watchCertificate(ctx context.Context) {
 	p.certsChan = make(chan *CertAndStore)
+	p.certsDelChan = make(chan *CertAndStore)
 
 	p.pool.GoCtx(func(ctxPool context.Context) {
 		for {
@@ -619,6 +625,18 @@ func (p *Provider) watchCertificate(ctx context.Context) {
 				}
 				if !certUpdated {
 					p.certificates = append(p.certificates, cert)
+				}
+
+				err := p.saveCertificates()
+				if err != nil {
+					log.FromContext(ctx).Error(err)
+				}
+			case cert := <-p.certsDelChan:
+				for i, domainsCertificate := range p.certificates {
+					if reflect.DeepEqual(cert.Domain, domainsCertificate.Certificate.Domain) {
+						p.certificates = append(p.certificates[:i], p.certificates[i+1:]...)
+						break
+					}
 				}
 
 				err := p.saveCertificates()
@@ -674,8 +692,19 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 	for _, cert := range p.certificates {
 		crt, err := getX509Certificate(ctx, &cert.Certificate)
 		// If there's an error, we assume the cert is broken, and needs update
-		if err != nil || crt == nil || crt.NotAfter.Before(time.Now().Add(renewPeriod)) {
+		if err != nil || crt == nil {
 			p.renewOneCertificate(ctx, cert)
+			continue
+		}
+		// remove stale certificates to avoid inf renew retries in case its no longer needed
+		if crt.NotAfter.Add(7 * 24 * time.Hour).Before(time.Now()) {
+			logger.Infof("Removing outdated certificate from LE storage: %+v", cert.Domain)
+			p.delCertificateForDomain(cert.Domain, cert.Store)
+			continue
+		}
+		if crt.NotAfter.Before(time.Now().Add(renewPeriod)) {
+			p.renewOneCertificate(ctx, cert)
+			continue
 		}
 	}
 }
