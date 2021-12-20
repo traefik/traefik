@@ -134,6 +134,9 @@ nav:
         - 'Overview': 'middlewares/tcp/overview.md'
         - 'InFlightConn': 'middlewares/tcp/inflightconn.md'
         - 'IpWhitelist': 'middlewares/tcp/ipwhitelist.md'
+    - 'UDP':
+        - 'Overview': 'middlewares/udp/overview.md'
+        - 'IpWhitelist': 'middlewares/udp/ipwhitelist.md'
   - 'Plugins & Traefik Pilot': 'plugins/index.md'
   - 'Operations':
       - 'CLI': 'operations/cli.md'

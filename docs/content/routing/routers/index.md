@@ -1166,6 +1166,39 @@ If one wants to limit the router scope to a set of entry points, one should set 
     --entrypoints.streaming.address=":9191/udp"
     ```
 
+### Middlewares
+
+You can attach a list of [middlewares](../../middlewares/udp/overview.md) to each UDP router.
+The middlewares will take effect on every incoming UDP packets from the entry points, and before passing through to the service.
+
+!!! warning "The character `@` is not allowed to be used in the middleware name."
+
+!!! tip "Middlewares order"
+
+    Middlewares are applied in the same order as their declaration in **router**.
+
+??? example "With a [middleware](../../middlewares/udp/overview.md) -- using the [File Provider](../../providers/file.md)"
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [udp.routers]
+      [udp.routers.my-router]
+        # declared elsewhere
+        middlewares = ["ipwhitelist"]
+        service = "service-foo"
+    ```
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    udp:
+      routers:
+        my-router:
+          # declared elsewhere
+          middlewares:
+          - ipwhitelist
+          service: service-foo
+    ```
+
 ### Services
 
 There must be one (and only one) UDP [service](../services/index.md) referenced per UDP router.

@@ -293,11 +293,12 @@ You can find an excerpt of the available custom resources in the table below:
 | Kind                                       | Purpose                                                            | Concept Behind                                                 |
 |--------------------------------------------|--------------------------------------------------------------------|----------------------------------------------------------------|
 | [IngressRoute](#kind-ingressroute)         | HTTP Routing                                                       | [HTTP router](../routers/index.md#configuring-http-routers)    |
-| [Middleware](#kind-middleware)             | Tweaks the HTTP requests before they are sent to your service      | [HTTP Middlewares](../../middlewares/http/overview.md)              |
+| [Middleware](#kind-middleware)             | Tweaks the HTTP requests before they are sent to your service      | [HTTP Middlewares](../../middlewares/http/overview.md)         |
 | [TraefikService](#kind-traefikservice)     | Abstraction for HTTP loadbalancing/mirroring                       | [HTTP service](../services/index.md#configuring-http-services) |
 | [IngressRouteTCP](#kind-ingressroutetcp)   | TCP Routing                                                        | [TCP router](../routers/index.md#configuring-tcp-routers)      |
-| [MiddlewareTCP](#kind-middlewaretcp)       | Tweaks the TCP requests before they are sent to your service       | [TCP Middlewares](../../middlewares/tcp/overview.md)              |
+| [MiddlewareTCP](#kind-middlewaretcp)       | Tweaks the TCP requests before they are sent to your service       | [TCP Middlewares](../../middlewares/tcp/overview.md)           |
 | [IngressRouteUDP](#kind-ingressrouteudp)   | UDP Routing                                                        | [UDP router](../routers/index.md#configuring-udp-routers)      |
+| [MiddlewareUDP](#kind-middlewareudp)       | Tweaks the UDP requests before they are sent to your service       | [UDP Middlewares](../../middlewares/udp/overview.md)           |
 | [TLSOptions](#kind-tlsoption)              | Allows to configure some parameters of the TLS connection          | [TLSOptions](../../https/tls.md#tls-options)                   |
 | [TLSStores](#kind-tlsstore)                | Allows to configure the default TLS store                          | [TLSStores](../../https/tls.md#certificates-stores)            |
 | [ServersTransport](#kind-serverstransport) | Allows to configure the transport between Traefik and the backends | [ServersTransport](../../services/#serverstransport_1)         |
@@ -1471,6 +1472,55 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
           ports:
             - port: 80
         ```
+
+### Kind: `MiddlewareUDP`
+
+`MiddlewareUDP` is the CRD implementation of a [Traefik UDP middleware](../../middlewares/udp/overview.md).
+
+Register the `MiddlewareUDP` [kind](../../reference/dynamic-configuration/kubernetes-crd.md#definitions) in the Kubernetes cluster before creating `MiddlewareUDP` objects or referencing UDP middlewares in the [`IngressRouteUDP`](#kind-ingressrouteudp) objects.
+
+??? "Declaring and Referencing a MiddlewareUDP "
+
+    ```yaml tab="Middleware"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: MiddlewareUDP
+    metadata:
+      name: ipwhitelist
+    spec:
+      ipWhiteList:
+        sourceRange:
+          - 127.0.0.1/32
+          - 192.168.1.7
+    ```
+    
+    ```yaml tab="IngressRoute"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: ingressroutebar
+    
+    spec:
+      entryPoints:
+        - web
+      routes:
+        - services:
+            - name: whoami
+              port: 80
+          middlewares:
+            - name: ipwhitelist
+              namespace: foo
+    ```
+
+!!! important "Cross-provider namespace"
+
+    As Kubernetes also has its own notion of namespace, one should not confuse the kubernetes namespace of a resource
+    (in the reference to the middleware) with the [provider namespace](../../providers/overview.md#provider-namespace),
+    when the definition of the UDP middleware comes from another provider.
+    In this context, specifying a namespace when referring to the resource does not make any sense, and will be ignored.
+    Additionally, when you want to reference a MiddlewareUDP from the CRD Provider,
+    you have to append the namespace of the resource in the resource-name as Traefik appends the namespace internally automatically.
+
+More information about available UDP middlewares in the dedicated [middlewares section](../../middlewares/udp/overview.md).
 
 ### Kind: `TLSOption`
 

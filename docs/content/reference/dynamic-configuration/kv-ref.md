@@ -306,9 +306,15 @@
 | `traefik/tls/stores/Store0/defaultCertificate/keyFile` | `foobar` |
 | `traefik/tls/stores/Store1/defaultCertificate/certFile` | `foobar` |
 | `traefik/tls/stores/Store1/defaultCertificate/keyFile` | `foobar` |
+| `traefik/udp/middlewares/Middleware00/ipWhiteList/sourceRange/0` | `foobar` |
+| `traefik/udp/middlewares/Middleware00/ipWhiteList/sourceRange/1` | `foobar` |
 | `traefik/udp/routers/UDPRouter0/entryPoints/0` | `foobar` |
 | `traefik/udp/routers/UDPRouter0/entryPoints/1` | `foobar` |
+| `traefik/udp/routers/UDPRouter0/middlewares/0` | `foobar` |
+| `traefik/udp/routers/UDPRouter0/middlewares/1` | `foobar` |
 | `traefik/udp/routers/UDPRouter0/service` | `foobar` |
+| `traefik/udp/routers/UDPRouter1/middlewares/0` | `foobar` |
+| `traefik/udp/routers/UDPRouter1/middlewares/1` | `foobar` |
 | `traefik/udp/routers/UDPRouter1/entryPoints/0` | `foobar` |
 | `traefik/udp/routers/UDPRouter1/entryPoints/1` | `foobar` |
 | `traefik/udp/routers/UDPRouter1/service` | `foobar` |
