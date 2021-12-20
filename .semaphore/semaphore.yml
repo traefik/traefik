@@ -64,7 +64,7 @@ blocks:
         - name: GH_VERSION
           value: 1.12.1
         - name: CODENAME
-          value: "brie"
+          value: "rocamadour"
         - name: PRE_TARGET
           value: ""
       prologue:
