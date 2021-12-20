@@ -16,7 +16,7 @@ Choose one of the [official Docker images](https://hub.docker.com/_/traefik) and
 
 ```bash
 docker run -d -p 8080:8080 -p 80:80 \
-    -v $PWD/traefik.yml:/etc/traefik/traefik.yml traefik:v2.5
+    -v $PWD/traefik.yml:/etc/traefik/traefik.yml traefik:v2.6
 ```
 
 For more details, go to the [Docker provider documentation](../providers/docker.md)
@@ -24,7 +24,7 @@ For more details, go to the [Docker provider documentation](../providers/docker.
 !!! tip
 
     * Prefer a fixed version than the latest that could be an unexpected version.
-    ex: `traefik:v2.5`
+    ex: `traefik:v2.6`
     * Docker images are based from the [Alpine Linux Official image](https://hub.docker.com/_/alpine).
     * Any orchestrator using docker images can fetch the official Traefik docker image.
 
