@@ -192,12 +192,13 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.tcp.services.Service1.loadbalancer.TerminationDelay":      "42",
 		"traefik.tcp.services.Service1.loadbalancer.proxyProtocol":         "true",
 
-		"traefik.udp.routers.Router0.entrypoints":                "foobar, fiibar",
-		"traefik.udp.routers.Router0.service":                    "foobar",
-		"traefik.udp.routers.Router1.entrypoints":                "foobar, fiibar",
-		"traefik.udp.routers.Router1.service":                    "foobar",
-		"traefik.udp.services.Service0.loadbalancer.server.Port": "42",
-		"traefik.udp.services.Service1.loadbalancer.server.Port": "42",
+		"traefik.udp.middlewares.Middleware0.ipwhitelist.sourcerange": "foobar, fiibar",
+		"traefik.udp.routers.Router0.entrypoints":                     "foobar, fiibar",
+		"traefik.udp.routers.Router0.service":                         "foobar",
+		"traefik.udp.routers.Router1.entrypoints":                     "foobar, fiibar",
+		"traefik.udp.routers.Router1.service":                         "foobar",
+		"traefik.udp.services.Service0.loadbalancer.server.Port":      "42",
+		"traefik.udp.services.Service1.loadbalancer.server.Port":      "42",
 	}
 
 	configuration, err := DecodeConfiguration(labels)
@@ -283,6 +284,13 @@ func TestDecodeConfiguration(t *testing.T) {
 						"fiibar",
 					},
 					Service: "foobar",
+				},
+			},
+			Middlewares: map[string]*dynamic.UDPMiddleware{
+				"Middleware0": {
+					IPWhiteList: &dynamic.UDPIPWhiteList{
+						SourceRange: []string{"foobar", "fiibar"},
+					},
 				},
 			},
 			Services: map[string]*dynamic.UDPService{
@@ -769,6 +777,13 @@ func TestEncodeConfiguration(t *testing.T) {
 						"fiibar",
 					},
 					Service: "foobar",
+				},
+			},
+			Middlewares: map[string]*dynamic.UDPMiddleware{
+				"Middleware0": {
+					IPWhiteList: &dynamic.UDPIPWhiteList{
+						SourceRange: []string{"foobar", "fiibar"},
+					},
 				},
 			},
 			Services: map[string]*dynamic.UDPService{
@@ -1347,12 +1362,13 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.TCP.Services.Service1.LoadBalancer.server.Port":      "42",
 		"traefik.TCP.Services.Service1.LoadBalancer.TerminationDelay": "42",
 
-		"traefik.UDP.Routers.Router0.EntryPoints":                "foobar, fiibar",
-		"traefik.UDP.Routers.Router0.Service":                    "foobar",
-		"traefik.UDP.Routers.Router1.EntryPoints":                "foobar, fiibar",
-		"traefik.UDP.Routers.Router1.Service":                    "foobar",
-		"traefik.UDP.Services.Service0.LoadBalancer.server.Port": "42",
-		"traefik.UDP.Services.Service1.LoadBalancer.server.Port": "42",
+		"traefik.UDP.Middlewares.Middleware0.IPWhiteList.SourceRange": "foobar, fiibar",
+		"traefik.UDP.Routers.Router0.EntryPoints":                     "foobar, fiibar",
+		"traefik.UDP.Routers.Router0.Service":                         "foobar",
+		"traefik.UDP.Routers.Router1.EntryPoints":                     "foobar, fiibar",
+		"traefik.UDP.Routers.Router1.Service":                         "foobar",
+		"traefik.UDP.Services.Service0.LoadBalancer.server.Port":      "42",
+		"traefik.UDP.Services.Service1.LoadBalancer.server.Port":      "42",
 	}
 
 	for key, val := range expected {

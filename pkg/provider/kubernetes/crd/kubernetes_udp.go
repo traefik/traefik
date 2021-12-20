@@ -6,17 +6,20 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 )
 
 func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client Client) *dynamic.UDPConfiguration {
 	conf := &dynamic.UDPConfiguration{
-		Routers:  map[string]*dynamic.UDPRouter{},
-		Services: map[string]*dynamic.UDPService{},
+		Routers:     map[string]*dynamic.UDPRouter{},
+		Middlewares: map[string]*dynamic.UDPMiddleware{},
+		Services:    map[string]*dynamic.UDPService{},
 	}
 
 	for _, ingressRouteUDP := range client.GetIngressRouteUDPs() {
@@ -34,6 +37,12 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 		for i, route := range ingressRouteUDP.Spec.Routes {
 			key := fmt.Sprintf("%s-%d", ingressName, i)
 			serviceName := makeID(ingressRouteUDP.Namespace, key)
+
+			mds, err := p.makeMiddlewareUDPKeys(ctx, ingressRouteUDP.Namespace, route.Middlewares)
+			if err != nil {
+				logger.Errorf("Failed to create middleware keys: %v", err)
+				continue
+			}
 
 			for _, service := range route.Services {
 				balancerServerUDP, err := p.createLoadBalancerServerUDP(client, ingressRouteUDP.Namespace, service)
@@ -69,12 +78,42 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 
 			conf.Routers[serviceName] = &dynamic.UDPRouter{
 				EntryPoints: ingressRouteUDP.Spec.EntryPoints,
+				Middlewares: mds,
 				Service:     serviceName,
 			}
 		}
 	}
 
 	return conf
+}
+
+func (p *Provider) makeMiddlewareUDPKeys(ctx context.Context, ingRouteUDPNamespace string, middlewares []v1alpha1.ObjectReference) ([]string, error) {
+	var mds []string
+
+	for _, mi := range middlewares {
+		if strings.Contains(mi.Name, providerNamespaceSeparator) {
+			if len(mi.Namespace) > 0 {
+				log.FromContext(ctx).
+					WithField(log.MiddlewareName, mi.Name).
+					Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
+			}
+			mds = append(mds, mi.Name)
+			continue
+		}
+
+		ns := ingRouteUDPNamespace
+		if len(mi.Namespace) > 0 {
+			if !isNamespaceAllowed(p.AllowCrossNamespace, ingRouteUDPNamespace, mi.Namespace) {
+				return nil, fmt.Errorf("middleware %s/%s is not in the IngressRouteUDP namespace %s", mi.Namespace, mi.Name, ingRouteUDPNamespace)
+			}
+
+			ns = mi.Namespace
+		}
+
+		mds = append(mds, provider.Normalize(makeID(ns, mi.Name)))
+	}
+
+	return mds, nil
 }
 
 func (p *Provider) createLoadBalancerServerUDP(client Client, parentNamespace string, service v1alpha1.ServiceUDP) (*dynamic.UDPService, error) {

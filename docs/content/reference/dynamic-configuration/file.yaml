@@ -424,12 +424,24 @@ udp:
       entryPoints:
       - foobar
       - foobar
+      middlewares:
+      - foobar
+      - foobar
       service: foobar
     UDPRouter1:
       entryPoints:
       - foobar
       - foobar
+      middlewares:
+      - foobar
+      - foobar
       service: foobar
+  middlewares:
+    Middleware00:
+      ipWhiteList:
+        sourceRange:
+        - foobar
+        - foobar
   services:
     UDPService01:
       loadBalancer:

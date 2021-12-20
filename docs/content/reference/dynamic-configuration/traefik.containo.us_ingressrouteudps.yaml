@@ -45,6 +45,19 @@ spec:
                 items:
                   description: RouteUDP contains the set of routes.
                   properties:
+                    middlewares:
+                      items:
+                        description: ObjectReference is a generic reference to a Traefik
+                          resource.
+                        properties:
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                        required:
+                        - name
+                        type: object
+                      type: array
                     services:
                       items:
                         description: ServiceUDP defines an upstream to proxy traffic.

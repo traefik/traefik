@@ -36,6 +36,8 @@ type MiddlewareExpansion interface{}
 
 type MiddlewareTCPExpansion interface{}
 
+type MiddlewareUDPExpansion interface{}
+
 type ServersTransportExpansion interface{}
 
 type TLSOptionExpansion interface{}

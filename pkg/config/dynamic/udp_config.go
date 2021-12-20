@@ -8,8 +8,9 @@ import (
 
 // UDPConfiguration contains all the UDP configuration parameters.
 type UDPConfiguration struct {
-	Routers  map[string]*UDPRouter  `json:"routers,omitempty" toml:"routers,omitempty" yaml:"routers,omitempty" export:"true"`
-	Services map[string]*UDPService `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
+	Routers     map[string]*UDPRouter     `json:"routers,omitempty" toml:"routers,omitempty" yaml:"routers,omitempty" export:"true"`
+	Services    map[string]*UDPService    `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
+	Middlewares map[string]*UDPMiddleware `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -46,6 +47,7 @@ func (w *UDPWRRService) SetDefaults() {
 // UDPRouter defines the configuration for an UDP router.
 type UDPRouter struct {
 	EntryPoints []string `json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty" export:"true"`
+	Middlewares []string `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
 	Service     string   `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
 }
 
