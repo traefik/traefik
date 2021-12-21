@@ -241,6 +241,32 @@ const routes = [
           protocol: 'udp',
           title: 'TCP Service Detail'
         }
+      },
+      {
+        path: 'middlewares',
+        name: 'udpMiddlewares',
+        components: {
+          default: () => import('pages/udp/Middlewares.vue'),
+          NavBar: () => import('components/_commons/ToolBar.vue')
+        },
+        props: { default: true, NavBar: true },
+        meta: {
+          protocol: 'udp',
+          title: 'UDP Middlewares'
+        }
+      },
+      {
+        path: 'middlewares/:name',
+        name: 'udpMiddlewareDetail',
+        components: {
+          default: () => import('pages/_commons/MiddlewareDetail.vue'),
+          NavBar: () => import('components/_commons/ToolBar.vue')
+        },
+        props: { default: true, NavBar: true },
+        meta: {
+          protocol: 'udp',
+          title: 'UDP Middleware Detail'
+        }
       }
     ]
   }

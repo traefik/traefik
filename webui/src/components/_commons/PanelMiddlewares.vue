@@ -1092,6 +1092,23 @@
           </q-card-section>
         </q-card-section>
 
+        <q-card-section v-if="protocol === 'udp'">
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipWhiteList] - sourceRange -->
+          <q-card-section v-if="middleware.ipWhiteList">
+            <div class="row items-start no-wrap">
+              <div class="col">
+                <div class="text-subtitle2">Source Range</div>
+                <q-chip
+                  v-for="(range, key) in exData(middleware).sourceRange" :key="key"
+                  dense
+                  class="app-chip app-chip-green">
+                  {{ range }}
+                </q-chip>
+              </div>
+            </div>
+          </q-card-section>
+        </q-card-section>
+
         <q-separator v-if="(index+1) < data.length" inset />
       </div>
     </q-scroll-area>
