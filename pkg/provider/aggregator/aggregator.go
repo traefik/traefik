@@ -63,9 +63,10 @@ func maybeThrottledProvide(prd provider.Provider, defaultDuration time.Duration)
 
 // ProviderAggregator aggregates providers.
 type ProviderAggregator struct {
-	internalProvider provider.Provider
-	fileProvider     provider.Provider
-	providers        []provider.Provider
+	internalProvider          provider.Provider
+	fileProvider              provider.Provider
+	providers                 []provider.Provider
+	providersThrottleDuration time.Duration
 }
 
 // NewProviderAggregator returns an aggregate of all the providers configured in the static configuration.
