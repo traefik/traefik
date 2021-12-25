@@ -108,6 +108,12 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 	}
 }
 
+func isChaChaCipherSuite(cipherSuite uint16) bool {
+	return cipherSuite == tls.TLS_CHACHA20_POLY1305_SHA256 ||
+		cipherSuite == tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305 ||
+		cipherSuite == tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+}
+
 // Get gets the TLS configuration to use for a given store / configuration.
 func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 	m.lock.RLock()
@@ -135,6 +141,40 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 	acmeTLSStore := m.getStore(tlsalpn01.ACMETLS1Protocol)
 	if acmeTLSStore == nil {
 		err = fmt.Errorf("ACME TLS store %s not found", tlsalpn01.ACMETLS1Protocol)
+	}
+
+	tlsConfig.GetConfigForClient = func(clientHello *tls.ClientHelloInfo) (*tls.Config, error) {
+		if tlsConfig.CipherSuites != nil && len(tlsConfig.CipherSuites) > 0 {
+			if clientHello.CipherSuites != nil && len(clientHello.CipherSuites) > 0 {
+				// does the client have hardware acceleration or does it prefer ChaCha?
+				if isChaChaCipherSuite(clientHello.CipherSuites[0]) {
+					// client prefers ChaCha20, move ChaCha20 suite up front if configured
+					forceCiphers := []uint16{}
+					for _, cipherSuite := range tlsConfig.CipherSuites {
+						if cipherSuite == tls.TLS_CHACHA20_POLY1305_SHA256 ||
+							cipherSuite == tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305 ||
+							cipherSuite == tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305 {
+							forceCiphers = append(forceCiphers, cipherSuite)
+						}
+					}
+					config := new(tls.Config)
+					*config = *tlsConfig
+					config.CipherSuites = forceCiphers
+				newCipherSuitesLoop:
+					for _, cipherSuite := range tlsConfig.CipherSuites {
+						for _, forcedCipherSuite := range forceCiphers {
+							// Already at the top of the list
+							if forcedCipherSuite == cipherSuite {
+								continue newCipherSuitesLoop
+							}
+							config.CipherSuites = append(config.CipherSuites, cipherSuite)
+						}
+					}
+					return config, nil
+				}
+			}
+		}
+		return tlsConfig, nil
 	}
 
 	tlsConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
