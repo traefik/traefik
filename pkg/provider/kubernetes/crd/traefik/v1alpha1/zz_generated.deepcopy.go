@@ -535,6 +535,11 @@ func (in *LoadBalancerSpec) DeepCopyInto(out *LoadBalancerSpec) {
 		*out = new(int)
 		**out = **in
 	}
+	if in.HealthCheck != nil {
+		in, out := &in.HealthCheck, &out.HealthCheck
+		*out = new(dynamic.ServerHealthCheck)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 

@@ -235,12 +235,23 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tS
 		})
 	}
 
-	conf[id] = &dynamic.Service{
+	dynamicService := &dynamic.Service{
 		Weighted: &dynamic.WeightedRoundRobin{
 			Services: wrrServices,
 			Sticky:   tService.Weighted.Sticky,
 		},
 	}
+	for _, tServiceRef := range tService.Weighted.Services {
+		if tServiceRef.HealthCheck != nil {
+			if !c.allowExternalNameServices && tServiceRef.HealthCheck != nil {
+				return fmt.Errorf("ExternalName HealthChecks not allowed")
+			}
+			dynamicService.Weighted.HealthCheck = &dynamic.HealthCheck{}
+			break
+		}
+	}
+
+	conf[id] = dynamicService
 	return nil
 }
 
@@ -273,13 +284,24 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *v1alpha1.Tr
 		})
 	}
 
-	conf[id] = &dynamic.Service{
+	dynamicService := &dynamic.Service{
 		Mirroring: &dynamic.Mirroring{
 			Service:     fullNameMain,
 			Mirrors:     mirrorServices,
 			MaxBodySize: tService.Spec.Mirroring.MaxBodySize,
 		},
 	}
+
+	for _, tServiceRef := range tService.Spec.Mirroring.Mirrors {
+		if tServiceRef.HealthCheck != nil {
+			if !c.allowExternalNameServices && tServiceRef.HealthCheck != nil {
+				return fmt.Errorf("ExternalName HealthChecks not allowed.")
+			}
+			dynamicService.Weighted.HealthCheck = &dynamic.HealthCheck{}
+		}
+	}
+
+	conf[id] = dynamicService
 
 	return nil
 }
@@ -291,9 +313,14 @@ func (c configBuilder) buildServersLB(namespace string, svc v1alpha1.LoadBalance
 		return nil, err
 	}
 
+	if !c.allowExternalNameServices && svc.HealthCheck != nil {
+		return nil, fmt.Errorf("externalName HealthChecks not allowed: %s/%s", namespace, "sanitizedName")
+	}
+
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 	lb.Servers = servers
+	lb.HealthCheck = svc.HealthCheck
 
 	conf := svc
 	lb.PassHostHeader = conf.PassHostHeader

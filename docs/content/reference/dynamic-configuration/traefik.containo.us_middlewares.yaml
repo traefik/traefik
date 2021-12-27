@@ -139,6 +139,32 @@ spec:
                   service:
                     description: Service defines an upstream to proxy traffic.
                     properties:
+                      externalServiceHealthCheck:
+                        description: Healthcheck docs TODO
+                        properties:
+                          followRedirects:
+                            type: boolean
+                          headers:
+                            additionalProperties:
+                              type: string
+                            type: object
+                          hostname:
+                            type: string
+                          interval:
+                            description: FIXME change string to ptypes.Duration
+                            type: string
+                          path:
+                            type: string
+                          port:
+                            type: integer
+                          scheme:
+                            type: string
+                          timeout:
+                            description: FIXME change string to ptypes.Duration
+                            type: string
+                        required:
+                        - followRedirects
+                        type: object
                       kind:
                         enum:
                         - Service
