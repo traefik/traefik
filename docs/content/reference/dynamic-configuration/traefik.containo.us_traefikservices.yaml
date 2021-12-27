@@ -44,6 +44,32 @@ spec:
                 description: Mirroring defines a mirroring service, which is composed
                   of a main load-balancer, and a list of mirrors.
                 properties:
+                  externalServiceHealthCheck:
+                    description: Healthcheck docs TODO
+                    properties:
+                      followRedirects:
+                        type: boolean
+                      headers:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      hostname:
+                        type: string
+                      interval:
+                        description: FIXME change string to ptypes.Duration
+                        type: string
+                      path:
+                        type: string
+                      port:
+                        type: integer
+                      scheme:
+                        type: string
+                      timeout:
+                        description: FIXME change string to ptypes.Duration
+                        type: string
+                    required:
+                    - followRedirects
+                    type: object
                   kind:
                     enum:
                     - Service
@@ -57,6 +83,32 @@ spec:
                       description: MirrorService defines one of the mirrors of a Mirroring
                         service.
                       properties:
+                        externalServiceHealthCheck:
+                          description: Healthcheck docs TODO
+                          properties:
+                            followRedirects:
+                              type: boolean
+                            headers:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            hostname:
+                              type: string
+                            interval:
+                              description: FIXME change string to ptypes.Duration
+                              type: string
+                            path:
+                              type: string
+                            port:
+                              type: integer
+                            scheme:
+                              type: string
+                            timeout:
+                              description: FIXME change string to ptypes.Duration
+                              type: string
+                          required:
+                          - followRedirects
+                          type: object
                         kind:
                           enum:
                           - Service
@@ -178,6 +230,32 @@ spec:
                     items:
                       description: Service defines an upstream to proxy traffic.
                       properties:
+                        externalServiceHealthCheck:
+                          description: Healthcheck docs TODO
+                          properties:
+                            followRedirects:
+                              type: boolean
+                            headers:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            hostname:
+                              type: string
+                            interval:
+                              description: FIXME change string to ptypes.Duration
+                              type: string
+                            path:
+                              type: string
+                            port:
+                              type: integer
+                            scheme:
+                              type: string
+                            timeout:
+                              description: FIXME change string to ptypes.Duration
+                              type: string
+                          required:
+                          - followRedirects
+                          type: object
                         kind:
                           enum:
                           - Service
