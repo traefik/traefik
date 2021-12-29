@@ -1,3 +1,16 @@
+## [v2.5.6](https://github.com/traefik/traefik/tree/v2.5.6) (2021-12-22)
+[All Commits](https://github.com/traefik/traefik/compare/v2.5.5...v2.5.6)
+
+**Bug fixes:**
+- **[middleware]** Process all X-Forwarded-For headers in the request ([#8596](https://github.com/traefik/traefik/pull/8596) by [kevinpollet](https://github.com/kevinpollet))
+- **[plugins]** Update Yaegi to v0.11.2 ([#8650](https://github.com/traefik/traefik/pull/8650) by [ldez](https://github.com/ldez))
+- **[server]** Update golang.org/x/net dependency version ([#8635](https://github.com/traefik/traefik/pull/8635) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[api]** Add missing API endpoints documentation ([#8649](https://github.com/traefik/traefik/pull/8649) by [ichxxx](https://github.com/ichxxx))
+- **[middleware]** Fix passTLSClientCert CRD example name ([#8637](https://github.com/traefik/traefik/pull/8637) by [ddtmachado](https://github.com/ddtmachado))
+- **[middleware]** Correct documentation in middleware overview ([#8636](https://github.com/traefik/traefik/pull/8636) by [Alestrix](https://github.com/Alestrix))
+
 ## [v2.6.0-rc1](https://github.com/traefik/traefik/tree/v2.6.0-rc1) (2021-12-20)
 [All Commits](https://github.com/traefik/traefik/compare/v2.5.0-rc1...v2.6.0-rc1)
 
