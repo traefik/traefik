@@ -14,7 +14,7 @@ RUN mkdir -p /usr/local/bin \
     | tar -xzC /usr/local/bin --transform 's#^.+/##x'
 
 # Download golangci-lint binary to bin folder in $GOPATH
-RUN curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.43.0
+RUN curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | bash -s -- -b $GOPATH/bin v1.43.0
 
 # Download misspell binary to bin folder in $GOPATH
 RUN  curl -sfL https://raw.githubusercontent.com/client9/misspell/master/install-misspell.sh | bash -s -- -b $GOPATH/bin v0.3.4
