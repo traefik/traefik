@@ -27,7 +27,6 @@ global_job_config:
       - export GOPROXY=https://proxy.golang.org,direct
       - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "${GOPATH}/bin" v1.43.0
       - curl -sSfL https://gist.githubusercontent.com/traefiker/6d7ac019c11d011e4f131bb2cca8900e/raw/goreleaser.sh | bash -s -- -b "${GOPATH}/bin"
-      - go install github.com/containous/go-bindata/go-bindata@v1.0.0
       - checkout
       - cache restore traefik-$(checksum go.sum)
 
