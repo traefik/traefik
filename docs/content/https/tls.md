@@ -102,6 +102,8 @@ tls:
 
     The `stores` list will actually be ignored and automatically set to `["default"]`.
 
+If the certificates store contains several certificates for a given hostname, traefik will use first Elliptic Curves certificates, then RSA ones. In case the client don't handle Elliptic Curves certificates, traefik will determine that during the client connection establishment, and will present a RSA certificate.
+
 ### Default Certificate
 
 Traefik can use a default certificate for connections without a SNI, or without a matching domain.
