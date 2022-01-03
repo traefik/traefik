@@ -2,6 +2,7 @@ package tls
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"strings"
 	"testing"
@@ -18,53 +19,114 @@ func TestGetBestCertificate(t *testing.T) {
 	testCases := []struct {
 		desc          string
 		domainToCheck string
-		dynamicCert   string
+		dynamicCerts  []string
 		expectedCert  string
 		uppercase     bool
+		rsaSuitesOnly bool
 	}{
 		{
 			desc:          "Empty Store, returns no certs",
 			domainToCheck: "snitest.com",
-			dynamicCert:   "",
+			dynamicCerts:  nil,
 			expectedCert:  "",
 		},
 		{
 			desc:          "Best Match with no corresponding",
 			domainToCheck: "snitest.com",
-			dynamicCert:   "snitest.org",
+			dynamicCerts:  []string{"snitest.org"},
 			expectedCert:  "",
 		},
 		{
 			desc:          "Best Match",
 			domainToCheck: "snitest.com",
-			dynamicCert:   "snitest.com",
+			dynamicCerts:  []string{"snitest.com"},
 			expectedCert:  "snitest.com",
 		},
 		{
 			desc:          "Best Match with dynamic wildcard",
 			domainToCheck: "www.snitest.com",
-			dynamicCert:   "*.snitest.com",
+			dynamicCerts:  []string{"*.snitest.com"},
 			expectedCert:  "*.snitest.com",
 		},
 		{
 			desc:          "Best Match with dynamic wildcard only, case insensitive",
 			domainToCheck: "bar.www.snitest.com",
-			dynamicCert:   "*.www.snitest.com",
+			dynamicCerts:  []string{"*.www.snitest.com"},
 			expectedCert:  "*.www.snitest.com",
 			uppercase:     true,
 		},
+		{
+			desc:          "Best Match with both RSA and ECDSA, when client supports RSA only",
+			domainToCheck: "www.snitest.com",
+			dynamicCerts:  []string{"ecdsa.snitest.com_www.snitest.com", "www.snitest.com"},
+			expectedCert:  "www.snitest.com",
+			rsaSuitesOnly: true,
+		},
+		{
+			desc:          "Best Match RSA only",
+			domainToCheck: "snitest.com",
+			dynamicCerts:  []string{"snitest.com"},
+			expectedCert:  "snitest.com",
+			rsaSuitesOnly: true,
+		},
+		{
+			desc:          "Best Match with both RSA and ECDSA",
+			domainToCheck: "www.snitest.com",
+			dynamicCerts:  []string{"www.snitest.com", "alt.snitest.com_www.snitest.com", "ecdsa.snitest.com_www.snitest.com"},
+			expectedCert:  "ecdsa.snitest.com_www.snitest.com",
+		},
+		{
+			desc:          "Best Match with ECDSA, when client supports RSA only",
+			domainToCheck: "www.snitest.com",
+			dynamicCerts:  []string{"ecdsa.snitest.com_www.snitest.com"},
+			expectedCert:  "",
+			rsaSuitesOnly: true,
+		},
+		{
+			desc:          "Best Match with SAN",
+			domainToCheck: "alt.snitest.com",
+			dynamicCerts:  []string{"www.snitest.com", "alt.snitest.com_www.snitest.com", "ecdsa.snitest.com_www.snitest.com"},
+			expectedCert:  "alt.snitest.com_www.snitest.com",
+		},
+	}
+
+	var allCipherSuites, rsaCipherSuites []uint16
+	for _, suite := range tls.CipherSuites() {
+		allCipherSuites = append(allCipherSuites, suite.ID)
+		if strings.Contains(suite.Name, "TLS_RSA_") {
+			rsaCipherSuites = append(rsaCipherSuites, suite.ID)
+		}
+	}
+
+	allSignatureSchemes := []tls.SignatureScheme{
+		tls.PKCS1WithSHA256, tls.PKCS1WithSHA384, tls.PKCS1WithSHA512,
+		tls.PSSWithSHA256, tls.PSSWithSHA384, tls.PSSWithSHA512,
+		tls.ECDSAWithP256AndSHA256, tls.ECDSAWithP384AndSHA384, tls.ECDSAWithP521AndSHA512,
+		tls.Ed25519,
+		tls.PKCS1WithSHA1, tls.ECDSAWithSHA1,
+	}
+
+	rsaSignatureSchemes := []tls.SignatureScheme{
+		tls.PKCS1WithSHA256, tls.PKCS1WithSHA384, tls.PKCS1WithSHA512,
+		tls.PSSWithSHA256, tls.PSSWithSHA384, tls.PSSWithSHA512,
+		tls.PKCS1WithSHA1,
 	}
 
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			dynamicMap := map[string]*tls.Certificate{}
+			dynamicMap := map[string][]*tls.Certificate{}
 
-			if test.dynamicCert != "" {
-				cert, err := loadTestCert(test.dynamicCert, test.uppercase)
+			for _, certName := range test.dynamicCerts {
+				cert, err := loadTestCert(certName, test.uppercase)
 				require.NoError(t, err)
-				dynamicMap[strings.ToLower(test.dynamicCert)] = cert
+				key := strings.ReplaceAll(strings.ToLower(certName), "_", ",")
+				if _, exists := dynamicMap[key]; exists {
+					dynamicMap[key] = []*tls.Certificate{}
+				}
+
+				dynamicMap[key] = append(dynamicMap[key], cert)
 			}
 
 			store := &CertificateStore{
@@ -80,7 +142,15 @@ func TestGetBestCertificate(t *testing.T) {
 			}
 
 			clientHello := &tls.ClientHelloInfo{
-				ServerName: test.domainToCheck,
+				ServerName:        test.domainToCheck,
+				CipherSuites:      allCipherSuites,
+				SignatureSchemes:  allSignatureSchemes,
+				SupportedVersions: []uint16{tls.VersionTLS13, tls.VersionTLS12, tls.VersionTLS11, tls.VersionTLS10},
+			}
+
+			if test.rsaSuitesOnly {
+				clientHello.CipherSuites = rsaCipherSuites
+				clientHello.SignatureSchemes = rsaSignatureSchemes
 			}
 
 			actual := store.GetBestCertificate(clientHello)
@@ -99,6 +169,11 @@ func loadTestCert(certName string, uppercase bool) (*tls.Certificate, error) {
 		fmt.Sprintf("../../integration/fixtures/https/%s.cert", strings.ReplaceAll(certName, "*", replacement)),
 		fmt.Sprintf("../../integration/fixtures/https/%s.key", strings.ReplaceAll(certName, "*", replacement)),
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	staticCert.Leaf, err = x509.ParseCertificate(staticCert.Certificate[0])
 	if err != nil {
 		return nil, err
 	}
