@@ -104,7 +104,7 @@ func (f FileOrContent) Read() ([]byte, error) {
 // CreateTLSConfig creates a TLS config from Certificate structures.
 func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, error) {
 	config := &tls.Config{}
-	domainsCertificates := make(map[string]map[string]*tls.Certificate)
+	domainsCertificates := make(map[string]map[string][]*tls.Certificate)
 
 	if c.isEmpty() {
 		config.Certificates = []tls.Certificate{}
@@ -124,8 +124,10 @@ func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, erro
 			}
 
 			for _, certDom := range domainsCertificates {
-				for _, cert := range certDom {
-					config.Certificates = append(config.Certificates, *cert)
+				for _, certs := range certDom {
+					for _, cert := range certs {
+						config.Certificates = append(config.Certificates, *cert)
+					}
 				}
 			}
 		}
@@ -149,7 +151,7 @@ func (c *Certificates) isEmpty() bool {
 }
 
 // AppendCertificate appends a Certificate to a certificates map keyed by entrypoint.
-func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certificate, ep string) error {
+func (c *Certificate) AppendCertificate(certs map[string]map[string][]*tls.Certificate, ep string) error {
 	certContent, err := c.CertFile.Read()
 	if err != nil {
 		return fmt.Errorf("unable to read CertFile : %w", err)
@@ -165,6 +167,7 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 	}
 
 	parsedCert, _ := x509.ParseCertificate(tlsCert.Certificate[0])
+	tlsCert.Leaf = parsedCert
 
 	var SANs []string
 	if parsedCert.Subject.CommonName != "" {
@@ -187,22 +190,21 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 	}
 	certKey := strings.Join(SANs, ",")
 
-	certExists := false
 	if certs[ep] == nil {
-		certs[ep] = make(map[string]*tls.Certificate)
-	} else {
-		for domains := range certs[ep] {
-			if domains == certKey {
-				certExists = true
-				break
-			}
-		}
+		certs[ep] = make(map[string][]*tls.Certificate)
 	}
-	if certExists {
-		log.Debugf("Skipping addition of certificate for domain(s) %q, to EntryPoint %s, as it already exists for this Entrypoint.", certKey, ep)
+
+	log.Debugf("Adding certificate for domain(s) %s", certKey)
+	if len(certs[ep][certKey]) == 0 {
+		certs[ep][certKey] = []*tls.Certificate{&tlsCert}
 	} else {
-		log.Debugf("Adding certificate for domain(s) %s", certKey)
-		certs[ep][certKey] = &tlsCert
+		certs[ep][certKey] = append(certs[ep][certKey], &tlsCert)
+
+		// sorting certificates that has the same DNSNames according to their PublicKeyAlgorithms
+		// traefik will returns optimised certificates first (such as ed25519 and ECDSA, over RSA ones)
+		sort.Slice(certs[ep][certKey], func(i, j int) bool {
+			return certs[ep][certKey][i].Leaf.PublicKeyAlgorithm > certs[ep][certKey][j].Leaf.PublicKeyAlgorithm
+		})
 	}
 
 	return err
