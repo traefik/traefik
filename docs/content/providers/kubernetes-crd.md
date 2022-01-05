@@ -201,7 +201,7 @@ providers:
 
 ```toml tab="File (TOML)"
 [providers.kubernetesCRD]
-  labelselector = "app=traefik"
+  labelSelector = "app=traefik"
   # ...
 ```
 
