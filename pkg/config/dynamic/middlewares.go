@@ -324,6 +324,8 @@ type RateLimit struct {
 	Burst int64 `json:"burst,omitempty" toml:"burst,omitempty" yaml:"burst,omitempty" export:"true"`
 
 	SourceCriterion *SourceCriterion `json:"sourceCriterion,omitempty" toml:"sourceCriterion,omitempty" yaml:"sourceCriterion,omitempty" export:"true"`
+
+	HandleStrategy string `json:"handleStrategy,omitempty" toml:"handleStrategy,omitempty" yaml:"handleStrategy,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values on a RateLimit.
