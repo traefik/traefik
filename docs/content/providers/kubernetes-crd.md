@@ -195,13 +195,13 @@ See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-
 ```yaml tab="File (YAML)"
 providers:
   kubernetesCRD:
-    labelselector: "app=traefik"
+    labelSelector: "app=traefik"
     # ...
 ```
 
 ```toml tab="File (TOML)"
 [providers.kubernetesCRD]
-  labelselector = "app=traefik"
+  labelSelector = "app=traefik"
   # ...
 ```
 
