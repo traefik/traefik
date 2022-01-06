@@ -34,6 +34,7 @@ type Middleware struct {
 	PassTLSClientCert *PassTLSClientCert `json:"passTLSClientCert,omitempty" toml:"passTLSClientCert,omitempty" yaml:"passTLSClientCert,omitempty" export:"true"`
 	Retry             *Retry             `json:"retry,omitempty" toml:"retry,omitempty" yaml:"retry,omitempty" export:"true"`
 	ContentType       *ContentType       `json:"contentType,omitempty" toml:"contentType,omitempty" yaml:"contentType,omitempty" export:"true"`
+	Spnego            *Spnego            `json:"spnego,omitempty" toml:"spnego,omitempty" yaml:"spnego,omitempty" export:"true"`
 
 	Plugin map[string]PluginConf `json:"plugin,omitempty" toml:"plugin,omitempty" yaml:"plugin,omitempty" export:"true"`
 }
@@ -370,6 +371,27 @@ type ReplacePathRegex struct {
 type Retry struct {
 	Attempts        int             `json:"attempts,omitempty" toml:"attempts,omitempty" yaml:"attempts,omitempty" export:"true"`
 	InitialInterval ptypes.Duration `json:"initialInterval,omitempty" toml:"initialInterval,omitempty" yaml:"initialInterval,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Spnego defines spnego middleware configuration.
+type Spnego struct {
+	Host         string       `description:"Hostname which is protected by SPNEGO" json:"host,omitempty" toml:"host,omitempty" yaml:"host,omitempty" export:"true"`
+	User         string       `json:"user,omitempty" toml:"user,omitempty" yaml:"user,omitempty" export:"true"`
+	Realm        string       `json:"realm,omitempty" toml:"realm,omitempty" yaml:"realm,omitempty" export:"true"`
+	KrbConfPath  string       `json:"krbConfPath,omitempty" toml:"krbConfPath,omitempty" yaml:"krbConfPath,omitempty" export:"true"`
+	KeytabPath   string       `json:"keytabPath,omitempty" toml:"keytabPath,omitempty" yaml:"keytabPath,omitempty" export:"true"`
+	CcachePath   string       `json:"ccachePath,omitempty" toml:"ccachePath,omitempty" yaml:"ccachePath,omitempty" export:"true"`
+	SpnOverrides []SpnMapping `json:"spnOverrides,omitempty" toml:"spnOverrides,omitempty" yaml:"spnOverrides,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// SpnMapping maps domain name and SPN. If this is not specified, HTTP/domain-name per site is used by default.
+type SpnMapping struct {
+	Spn        string `json:"spn,omitempty" toml:"spn,omitempty" yaml:"spn,omitempty" export:"true"`
+	DomainName string `json:"domainName,omitempty" toml:"domainName,omitempty" yaml:"domainName,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
