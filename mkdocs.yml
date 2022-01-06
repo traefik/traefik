@@ -26,7 +26,7 @@ theme:
     prev: 'Previous'
     next: 'Next'
 
-copyright: "Copyright &copy; 2016-2019 Containous; 2020-2021 Traefik Labs"
+copyright: "Copyright &copy; 2016-2019 Containous; 2020-2022 Traefik Labs"
 
 # only to force the use of the analytics partials
 google_analytics:
