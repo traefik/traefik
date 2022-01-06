@@ -493,6 +493,8 @@ spec:
                       requestHost:
                         type: boolean
                     type: object
+                  handleStrategy:
+                    type: string
                 type: object
               redirectRegex:
                 description: RedirectRegex holds the redirection configuration.

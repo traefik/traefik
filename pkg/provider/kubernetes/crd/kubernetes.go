@@ -447,6 +447,8 @@ func createRateLimitMiddleware(rateLimit *v1alpha1.RateLimit) (*dynamic.RateLimi
 		rl.SourceCriterion = rateLimit.SourceCriterion
 	}
 
+	rl.HandleStrategy = rateLimit.HandleStrategy
+
 	return rl, nil
 }
 

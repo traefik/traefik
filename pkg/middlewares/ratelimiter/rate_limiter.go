@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/mailgun/ttlmap"
@@ -41,6 +42,8 @@ type rateLimiter struct {
 	next          http.Handler
 
 	buckets *ttlmap.TtlMap // actual buckets, keyed by source.
+
+	reqContinue bool
 }
 
 // New returns a rate limiter middleware.
@@ -106,6 +109,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 		ttl += int(1 / rtl)
 	}
 
+	reqContinue := strings.EqualFold(config.HandleStrategy, "continue")
+
 	return &rateLimiter{
 		name:          name,
 		rate:          rate.Limit(rtl),
@@ -115,6 +120,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 		sourceMatcher: sourceMatcher,
 		buckets:       buckets,
 		ttl:           ttl,
+		reqContinue:   reqContinue,
 	}, nil
 }
 
@@ -167,6 +173,10 @@ func (rl *rateLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if delay > rl.maxDelay {
 		res.Cancel()
 		rl.serveDelayError(ctx, w, r, delay)
+		if rl.reqContinue {
+			rl.next.ServeHTTP(w, r)
+			return
+		}
 		return
 	}
 
@@ -178,6 +188,10 @@ func (rl *rateLimiter) serveDelayError(ctx context.Context, w http.ResponseWrite
 	w.Header().Set("Retry-After", fmt.Sprintf("%.0f", math.Ceil(delay.Seconds())))
 	w.Header().Set("X-Retry-In", delay.String())
 	w.WriteHeader(http.StatusTooManyRequests)
+
+	if rl.reqContinue {
+		return
+	}
 
 	if _, err := w.Write([]byte(http.StatusText(http.StatusTooManyRequests))); err != nil {
 		log.FromContext(ctx).Errorf("could not serve 429: %v", err)

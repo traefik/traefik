@@ -122,6 +122,7 @@ type RateLimit struct {
 	Period          *intstr.IntOrString      `json:"period,omitempty"`
 	Burst           *int64                   `json:"burst,omitempty"`
 	SourceCriterion *dynamic.SourceCriterion `json:"sourceCriterion,omitempty"`
+	HandleStrategy  string                   `json:"handleStrategy,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
