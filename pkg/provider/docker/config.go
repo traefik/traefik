@@ -89,6 +89,8 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 }
 
 func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.TCPConfiguration) error {
+	logger := log.FromContext(ctx)
+
 	serviceName := getServiceName(container)
 
 	if len(configuration.Services) == 0 {
@@ -98,6 +100,11 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container d
 		configuration.Services[serviceName] = &dynamic.TCPService{
 			LoadBalancer: lb,
 		}
+	}
+
+	if container.Health != "" && container.Health != "healthy" {
+		logger.Debug("Filtering unhealthy or starting container")
+		return nil
 	}
 
 	for name, service := range configuration.Services {
@@ -112,6 +119,8 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container d
 }
 
 func (p *Provider) buildUDPServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.UDPConfiguration) error {
+	logger := log.FromContext(ctx)
+
 	serviceName := getServiceName(container)
 
 	if len(configuration.Services) == 0 {
@@ -120,6 +129,11 @@ func (p *Provider) buildUDPServiceConfiguration(ctx context.Context, container d
 		configuration.Services[serviceName] = &dynamic.UDPService{
 			LoadBalancer: lb,
 		}
+	}
+
+	if container.Health != "" && container.Health != "healthy" {
+		logger.Debug("Filtering unhealthy or starting container")
+		return nil
 	}
 
 	for name, service := range configuration.Services {
@@ -134,6 +148,8 @@ func (p *Provider) buildUDPServiceConfiguration(ctx context.Context, container d
 }
 
 func (p *Provider) buildServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.HTTPConfiguration) error {
+	logger := log.FromContext(ctx)
+
 	serviceName := getServiceName(container)
 
 	if len(configuration.Services) == 0 {
@@ -143,6 +159,11 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, container dock
 		configuration.Services[serviceName] = &dynamic.Service{
 			LoadBalancer: lb,
 		}
+	}
+
+	if container.Health != "" && container.Health != "healthy" {
+		logger.Debug("Filtering unhealthy or starting container")
+		return nil
 	}
 
 	for name, service := range configuration.Services {
@@ -171,11 +192,6 @@ func (p *Provider) keepContainer(ctx context.Context, container dockerData) bool
 	}
 	if !matches {
 		logger.Debugf("Container pruned by constraint expression: %q", p.Constraints)
-		return false
-	}
-
-	if container.Health != "" && container.Health != "healthy" {
-		logger.Debug("Filtering unhealthy or starting container")
 		return false
 	}
 
