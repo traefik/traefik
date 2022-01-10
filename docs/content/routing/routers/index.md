@@ -234,10 +234,10 @@ The table below lists all the available matchers:
 | ```HeadersRegexp(`key`, `regexp`)```                                   | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp` |
 | ```Host(`example.com`, ...)```                                         | Check if the request domain (host header value) targets one of the given `domains`.                            |
 | ```HostHeader(`example.com`, ...)```                                   | Check if the request domain (host header value) targets one of the given `domains`.                            |
-| ```HostRegexp(`example.com`, `{subdomain:[a-z]+}.example.com`, ...)``` | Check if the request domain matches the given `regexp`.                                                        |
+| ```HostRegexp(`{subdomain:[a-z]+}.example.com`, ...)```                | Match request domain. It accepts a sequence of literals and regular expressions.  See "Regexp Syntax" below. |
 | ```Method(`GET`, ...)```                                               | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `HEAD`)    |
 | ```Path(`/path`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`, ...)```         | Match exact request path. It accepts a sequence of literal and regular expression paths.                       |
-| ```PathPrefix(`/products/`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`)```   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.               |
+| ```PathPrefix(`/products/`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`)```   | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.  See "Regexp Syntax" below. |
 | ```Query(`foo=bar`, `bar=baz`)```                                      | Match Query String parameters. It accepts a sequence of key=value pairs.                                       |
 | ```ClientIP(`10.0.0.0/16`, `::1`)```                                   | Match if the request client IP is one of the given IP/CIDR. It accepts IPv4, IPv6 and CIDR formats.            |
 
@@ -249,8 +249,8 @@ The table below lists all the available matchers:
 
 !!! important "Regexp Syntax"
 
-    `HostRegexp` and `Path` accept an expression with zero or more groups enclosed by curly braces.
-    Named groups can be like `{name:pattern}` that matches the given regexp pattern or like `{name}` that matches anything until the next dot.
+    `HostRegexp` and `Path` accept an expression which is compared verbatim and only named groups enclosed by curly braces are interpreted as regular expressions.
+    Named groups can be like `{name:pattern}` that matches the given regexp pattern or like `{name}` that matches anything until the next dot. (It's equivalent to `{name:[^.]+}`)
     The group name (`name` in the above examples) is an arbitrary value.
     Any pattern supported by [Go's regexp package](https://golang.org/pkg/regexp/) may be used (example: `{subdomain:[a-z]+}.{domain}.com`).
 
