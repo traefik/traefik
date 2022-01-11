@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/abronan/valkeyrie/store"
+	"github.com/kvtools/valkeyrie/store"
 	"github.com/traefik/paerser/parser"
 )
 

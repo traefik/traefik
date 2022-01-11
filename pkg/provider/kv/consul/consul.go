@@ -1,7 +1,9 @@
 package consul
 
 import (
-	"github.com/abronan/valkeyrie/store"
+	"errors"
+
+	"github.com/kvtools/valkeyrie/store"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/kv"
 )
