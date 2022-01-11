@@ -23,5 +23,11 @@ func (p *Provider) SetDefaults() {
 
 // Init the provider.
 func (p *Provider) Init() error {
+	// Wildcard namespace allows fetching KV values from any namespace for recursive requests (see https://www.consul.io/api/kv#ns).
+	// As we are not supporting multiple namespaces at the same time, wildcard namespace is not allowed.
+	if p.Namespace == "*" {
+		return errors.New("wildcard namespace is not supported")
+	}
+
 	return p.Provider.Init(store.CONSUL, "consul")
 }
