@@ -1081,6 +1081,86 @@ http:
         url = "http://private-ip-server-2/"
 ```
 
+#### FailoverService
+
+Failover service allows to reference a service that will be use when no servers are available on the loadbalancer.
+
+!!! info "This is having effects only when `healthCheck` is set on children"
+
+```yaml tab="YAML"
+## Dynamic configuration
+http:
+  services:
+    app:
+      weighted:
+        failoverService: failover
+        services:
+          - name: appv1
+            weight: 3
+          - name: appv2
+            weight: 1
+
+    appv1:
+      loadBalancer:
+        healthCheck:
+          path: /status
+          interval: 10s
+          timeout: 3s
+        servers:
+          - url: "http://private-ip-server-1/"
+
+    appv2:
+      loadBalancer:
+        healthCheck:
+          path: /status
+          interval: 10s
+          timeout: 3s
+        servers:
+          - url: "http://private-ip-server-2/"
+
+    failover:
+      loadBalancer:
+        servers:
+          - url: "http://private-ip-server-3/"
+```
+
+```toml tab="TOML"
+## Dynamic configuration
+[http.services]
+  [http.services.app]
+    [http.services.app.weighted]
+      failoverService = "failover"
+      [[http.services.app.weighted.services]]
+        name = "appv1"
+        weight = 3
+      [[http.services.app.weighted.services]]
+        name = "appv2"
+        weight = 1
+
+  [http.services.appv1]
+    [http.services.appv1.loadBalancer]
+      [http.services.appv1.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.appv1.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+
+  [http.services.appv2]
+    [http.services.appv2.loadBalancer]
+      [http.services.appv2.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.appv2.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+
+  [http.services.failover]
+    [http.services.failover.loadBalancer]
+      [[http.services.failover.loadBalancer.servers]]
+        url = "http://private-ip-server-3/"
+```
+
 ### Mirroring (service)
 
 The mirroring is able to mirror requests sent to a service to other services.
