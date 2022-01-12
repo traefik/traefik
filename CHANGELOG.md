@@ -1,3 +1,15 @@
+## [v2.6.0-rc2](https://github.com/traefik/traefik/tree/v2.6.0-rc2) (2022-01-12)
+[All Commits](https://github.com/traefik/traefik/compare/v2.6.0-rc1...v2.6.0-rc2)
+
+**Bug fixes:**
+- **[consul,kv]** Support Consul KV Enterprise namespaces ([#8692](https://github.com/traefik/traefik/pull/8692) by [kevinpollet](https://github.com/kevinpollet))
+- **[tracing]** Upgrade Instana tracer dependency ([#8687](https://github.com/traefik/traefik/pull/8687) by [andriikushch](https://github.com/andriikushch))
+
+**Misc:**
+- Merge current v2.5 into v2.6 ([#8688](https://github.com/traefik/traefik/pull/8688) by [tomMoulard](https://github.com/tomMoulard))
+- Merge current v2.5 into v2.6 ([#8664](https://github.com/traefik/traefik/pull/8664) by [tomMoulard](https://github.com/tomMoulard))
+- Merge current v2.5 into v2.6 ([#8651](https://github.com/traefik/traefik/pull/8651) by [tomMoulard](https://github.com/tomMoulard))
+
 ## [v2.5.6](https://github.com/traefik/traefik/tree/v2.5.6) (2021-12-22)
 [All Commits](https://github.com/traefik/traefik/compare/v2.5.5...v2.5.6)
 
