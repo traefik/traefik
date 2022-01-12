@@ -9,7 +9,6 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/Shopify/sarama v1.23.1 // indirect
 	github.com/abbot/go-http-auth v0.0.0-00010101000000-000000000000
-	github.com/abronan/valkeyrie v0.2.0
 	github.com/aws/aws-sdk-go v1.39.0
 	github.com/cenkalti/backoff/v4 v4.1.1
 	github.com/compose-spec/compose-go v1.0.3
@@ -33,16 +32,17 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/consul v1.10.3
-	github.com/hashicorp/consul/api v1.10.0
+	github.com/hashicorp/consul/api v1.12.0
 	github.com/hashicorp/go-hclog v0.16.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.3.0
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
 	github.com/instana/go-sensor v1.38.3
 	github.com/klauspost/compress v1.13.0
+	github.com/kvtools/valkeyrie v0.4.0
 	github.com/lucas-clemente/quic-go v0.23.0
 	github.com/mailgun/ttlmap v0.0.0-20170619185759-c1c17f74874f
-	github.com/miekg/dns v1.1.43
+	github.com/miekg/dns v1.1.45
 	github.com/mitchellh/copystructure v1.0.0
 	github.com/mitchellh/hashstructure v1.0.0
 	github.com/mitchellh/mapstructure v1.4.2
@@ -75,7 +75,7 @@ require (
 	golang.org/x/net v0.0.0-20211209124913-491a49abca63
 	golang.org/x/sys v0.0.0-20210817190340-bfb29a6856f2 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
-	golang.org/x/tools v0.1.5
+	golang.org/x/tools v0.1.6-0.20210726203631-07bc1bf47fb2
 	google.golang.org/grpc v1.38.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.19.0
 	gopkg.in/fsnotify.v1 v1.4.7
