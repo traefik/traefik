@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/abronan/valkeyrie/store"
+	"github.com/kvtools/valkeyrie/store"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"

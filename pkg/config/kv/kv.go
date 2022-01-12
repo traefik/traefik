@@ -4,7 +4,7 @@ import (
 	"path"
 	"reflect"
 
-	"github.com/abronan/valkeyrie/store"
+	"github.com/kvtools/valkeyrie/store"
 	"github.com/traefik/paerser/parser"
 )
 
