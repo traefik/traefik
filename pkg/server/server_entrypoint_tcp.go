@@ -25,6 +25,10 @@ import (
 	"golang.org/x/net/http2/h2c"
 )
 
+func init() {
+	println("VERSION NEW THROTTLING")
+}
+
 var httpServerLogger = stdlog.New(log.WithoutContext().WriterLevel(logrus.DebugLevel), "", 0)
 
 type httpForwarder struct {

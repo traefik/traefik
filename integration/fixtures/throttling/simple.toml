@@ -13,9 +13,10 @@
   insecure = true
 
 [providers]
-  providersThrottleDuration = "100ms"
+  providersThrottleDuration = "400ms"
+  [providers.rest]
+    insecure = true
 
-  [providers.docker]
-    endpoint = "{{ .DockerHost }}"
-    defaultRule = "{{ .DefaultRule }}"
-    exposedByDefault = false
+[metrics]
+  [metrics.prometheus]
+    buckets = [0.1,0.3,1.2,5.0]

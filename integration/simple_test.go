@@ -280,7 +280,7 @@ func (s *SimpleSuite) TestWithNonExistingEntryPoint(c *check.C) {
 	s.composeUp(c)
 	defer s.composeDown(c)
 
-	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--log.level=DEBUG", "--providers.docker", "--api.insecure")
+	cmd, output := s.traefikCmd("--entryPoints.http.Address=:8000", "--log.level=DEBUG", "--providers.providersThrottleDuration=100ms", "--providers.docker", "--api.insecure")
 	defer output(c)
 
 	err := cmd.Start()
