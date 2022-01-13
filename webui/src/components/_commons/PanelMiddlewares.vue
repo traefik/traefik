@@ -1062,8 +1062,9 @@
                 <q-chip
                   v-for="(exp, key) in exData(middleware).regex" :key="key"
                   dense
-                  class="app-chip app-chip-green">
+                  class="app-chip app-chip-green app-chip-overflow">
                   {{ exp }}
+                  <q-tooltip>{{ exp }}</q-tooltip>
                 </q-chip>
               </div>
             </div>
