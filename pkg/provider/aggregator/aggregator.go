@@ -145,7 +145,8 @@ func launchProvider(configurationChan chan<- dynamic.Message, pool *safe.Pool, p
 		log.WithoutContext().Debugf("Cannot marshal the provider configuration %T: %v", prd, err)
 	}
 
-	log.WithoutContext().Infof("Starting provider %T %s", prd, jsonConf)
+	log.WithoutContext().Infof("Starting provider %T", prd)
+	log.WithoutContext().Debugf("%T provider configuration: %s", prd, jsonConf)
 
 	currentProvider := prd
 	err = currentProvider.Provide(configurationChan, pool)
