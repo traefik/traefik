@@ -89,7 +89,9 @@ func (c *ConfigurationWatcher) startProvider() {
 		logger.Debugf("Unable to marshal provider configuration %T: %v", c.provider, err)
 	}
 
-	logger.Infof("Starting provider %T %s", c.provider, jsonConf)
+	logger.Infof("Starting provider %T", c.provider)
+	logger.Debugf("%T provider configuration: %s", c.provider, jsonConf)
+
 	currentProvider := c.provider
 
 	safe.Go(func() {
