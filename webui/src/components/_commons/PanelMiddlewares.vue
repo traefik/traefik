@@ -937,8 +937,9 @@
                 <div class="text-subtitle2">Regex</div>
                 <q-chip
                   dense
-                  class="app-chip app-chip-green">
+                  class="app-chip app-chip-green app-chip-overflow">
                   {{ exData(middleware).regex }}
+                  <q-tooltip>{{ exData(middleware).regex }}</q-tooltip>
                 </q-chip>
               </div>
             </div>
@@ -950,8 +951,9 @@
                 <div class="text-subtitle2">Replacement</div>
                 <q-chip
                   dense
-                  class="app-chip app-chip-green">
+                  class="app-chip app-chip-green app-chip-overflow">
                   {{ exData(middleware).replacement }}
+                  <q-tooltip>{{ exData(middleware).replacement }}</q-tooltip>
                 </q-chip>
               </div>
             </div>
