@@ -84,13 +84,7 @@ func (c *ConfigurationWatcher) AddListener(listener func(dynamic.Configuration))
 func (c *ConfigurationWatcher) startProvider() {
 	logger := log.WithoutContext()
 
-	jsonConf, err := json.Marshal(c.provider)
-	if err != nil {
-		logger.Debugf("Unable to marshal provider configuration %T: %v", c.provider, err)
-	}
-
 	logger.Infof("Starting provider %T", c.provider)
-	logger.Debugf("%T provider configuration: %s", c.provider, jsonConf)
 
 	currentProvider := c.provider
 
