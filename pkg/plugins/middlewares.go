@@ -62,7 +62,11 @@ func (p middlewareBuilder) newHandler(ctx context.Context, next http.Handler, cf
 	results := p.fnNew.Call(args)
 
 	if len(results) > 1 && results[1].Interface() != nil {
-		return nil, results[1].Interface().(error)
+		err, ok := results[1].Interface().(error)
+		if !ok {
+			return nil, fmt.Errorf("invalid error type: %T", results[0].Interface())
+		}
+		return nil, err
 	}
 
 	handler, ok := results[0].Interface().(http.Handler)
@@ -76,7 +80,7 @@ func (p middlewareBuilder) newHandler(ctx context.Context, next http.Handler, cf
 func (p middlewareBuilder) createConfig(config map[string]interface{}) (reflect.Value, error) {
 	results := p.fnCreateConfig.Call(nil)
 	if len(results) != 1 {
-		return reflect.Value{}, fmt.Errorf("invalid return of the CreateConfig function: %d", len(results))
+		return reflect.Value{}, fmt.Errorf("invalid number of return for the CreateConfig function: %d", len(results))
 	}
 
 	vConfig := results[0]
