@@ -15,31 +15,17 @@ import (
 // Constructor creates a plugin handler.
 type Constructor func(context.Context, http.Handler) (http.Handler, error)
 
-// pluginContext The static part of a plugin configuration.
-type pluginContext struct {
-	// GoPath plugin's GOPATH
-	GoPath string `json:"goPath,omitempty" toml:"goPath,omitempty" yaml:"goPath,omitempty"`
-
-	// Import plugin's import/package
-	Import string `json:"import,omitempty" toml:"import,omitempty" yaml:"import,omitempty"`
-
-	// BasePkg plugin's base package name (optional)
-	BasePkg string `json:"basePkg,omitempty" toml:"basePkg,omitempty" yaml:"basePkg,omitempty"`
-
-	interpreter *interp.Interpreter
-}
-
 // Builder is a plugin builder.
 type Builder struct {
-	middlewareDescriptors map[string]pluginContext
-	providerDescriptors   map[string]pluginContext
+	middlewareBuilders map[string]*middlewareBuilder
+	providerBuilders   map[string]providerBuilder
 }
 
 // NewBuilder creates a new Builder.
 func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[string]LocalDescriptor) (*Builder, error) {
 	pb := &Builder{
-		middlewareDescriptors: map[string]pluginContext{},
-		providerDescriptors:   map[string]pluginContext{},
+		middlewareBuilders: map[string]*middlewareBuilder{},
+		providerBuilders:   map[string]providerBuilder{},
 	}
 
 	for pName, desc := range plugins {
@@ -74,16 +60,15 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 
 		switch manifest.Type {
 		case "middleware":
-			pb.middlewareDescriptors[pName] = pluginContext{
-				interpreter: i,
-				GoPath:      client.GoPath(),
-				Import:      manifest.Import,
-				BasePkg:     manifest.BasePkg,
+			middleware, err := newPluginMiddleware(i, manifest.BasePkg, manifest.Import)
+			if err != nil {
+				return nil, err
 			}
+
+			pb.middlewareBuilders[pName] = middleware
 		case "provider":
-			pb.providerDescriptors[pName] = pluginContext{
+			pb.providerBuilders[pName] = providerBuilder{
 				interpreter: i,
-				GoPath:      client.GoPath(),
 				Import:      manifest.Import,
 				BasePkg:     manifest.BasePkg,
 			}
@@ -123,16 +108,15 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 
 		switch manifest.Type {
 		case "middleware":
-			pb.middlewareDescriptors[pName] = pluginContext{
-				interpreter: i,
-				GoPath:      localGoPath,
-				Import:      manifest.Import,
-				BasePkg:     manifest.BasePkg,
+			middleware, err := newPluginMiddleware(i, manifest.BasePkg, manifest.Import)
+			if err != nil {
+				return nil, err
 			}
+
+			pb.middlewareBuilders[pName] = middleware
 		case "provider":
-			pb.providerDescriptors[pName] = pluginContext{
+			pb.providerBuilders[pName] = providerBuilder{
 				interpreter: i,
-				GoPath:      localGoPath,
 				Import:      manifest.Import,
 				BasePkg:     manifest.BasePkg,
 			}
