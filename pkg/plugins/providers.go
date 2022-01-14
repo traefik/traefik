@@ -13,6 +13,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/traefik/yaegi/interp"
 )
 
 // PP the interface of a plugin's provider.
@@ -52,16 +53,26 @@ func ppSymbols() map[string]map[string]reflect.Value {
 
 // BuildProvider builds a plugin's provider.
 func (b Builder) BuildProvider(pName string, config map[string]interface{}) (provider.Provider, error) {
-	if b.providerDescriptors == nil {
+	if b.providerBuilders == nil {
 		return nil, fmt.Errorf("no plugin definition in the static configuration: %s", pName)
 	}
 
-	descriptor, ok := b.providerDescriptors[pName]
+	descriptor, ok := b.providerBuilders[pName]
 	if !ok {
 		return nil, fmt.Errorf("unknown plugin type: %s", pName)
 	}
 
 	return newProvider(descriptor, config, "plugin-"+pName)
+}
+
+type providerBuilder struct {
+	// Import plugin's import/package
+	Import string `json:"import,omitempty" toml:"import,omitempty" yaml:"import,omitempty"`
+
+	// BasePkg plugin's base package name (optional)
+	BasePkg string `json:"basePkg,omitempty" toml:"basePkg,omitempty" yaml:"basePkg,omitempty"`
+
+	interpreter *interp.Interpreter
 }
 
 // Provider is a plugin's provider wrapper.
@@ -70,7 +81,7 @@ type Provider struct {
 	pp   PP
 }
 
-func newProvider(descriptor pluginContext, config map[string]interface{}, providerName string) (*Provider, error) {
+func newProvider(descriptor providerBuilder, config map[string]interface{}, providerName string) (*Provider, error) {
 	basePkg := descriptor.BasePkg
 	if basePkg == "" {
 		basePkg = strings.ReplaceAll(path.Base(descriptor.Import), "-", "_")
