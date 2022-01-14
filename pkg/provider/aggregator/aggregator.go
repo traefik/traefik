@@ -1,14 +1,13 @@
 package aggregator
 
 import (
-	"encoding/json"
-
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/static"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/file"
 	"github.com/traefik/traefik/v2/pkg/provider/traefik"
+	"github.com/traefik/traefik/v2/pkg/redactor"
 	"github.com/traefik/traefik/v2/pkg/safe"
 )
 
@@ -140,7 +139,7 @@ func (p ProviderAggregator) Provide(configurationChan chan<- dynamic.Message, po
 }
 
 func launchProvider(configurationChan chan<- dynamic.Message, pool *safe.Pool, prd provider.Provider) {
-	jsonConf, err := json.Marshal(prd)
+	jsonConf, err := redactor.RemoveCredentials(prd)
 	if err != nil {
 		log.WithoutContext().Debugf("Cannot marshal the provider configuration %T: %v", prd, err)
 	}
