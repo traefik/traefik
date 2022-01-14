@@ -1,4 +1,4 @@
-package anonymize
+package redactor
 
 import (
 	"os"
