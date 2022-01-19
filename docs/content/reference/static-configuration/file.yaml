@@ -196,6 +196,7 @@ providers:
     username: foobar
     password: foobar
     namespace: foobar
+    token: foobar
     tls:
       ca: foobar
       caOptional: true
@@ -210,6 +211,7 @@ providers:
     username: foobar
     password: foobar
     namespace: foobar
+    token: foobar
     tls:
       ca: foobar
       caOptional: true
@@ -224,6 +226,7 @@ providers:
     username: foobar
     password: foobar
     namespace: foobar
+    token: foobar
     tls:
       ca: foobar
       caOptional: true
@@ -238,6 +241,7 @@ providers:
     username: foobar
     password: foobar
     namespace: foobar
+    token: foobar
     tls:
       ca: foobar
       caOptional: true

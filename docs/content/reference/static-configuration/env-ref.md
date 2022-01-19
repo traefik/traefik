@@ -450,6 +450,9 @@ TLS insecure skip verify (Default: ```false```)
 `TRAEFIK_PROVIDERS_CONSUL_TLS_KEY`:  
 TLS key
 
+`TRAEFIK_PROVIDERS_CONSUL_TOKEN`:  
+KV Token
+
 `TRAEFIK_PROVIDERS_CONSUL_USERNAME`:  
 KV Username
 
@@ -560,6 +563,9 @@ TLS insecure skip verify (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ETCD_TLS_KEY`:  
 TLS key
+
+`TRAEFIK_PROVIDERS_ETCD_TOKEN`:  
+KV Token
 
 `TRAEFIK_PROVIDERS_ETCD_USERNAME`:  
 KV Username
@@ -819,6 +825,9 @@ TLS insecure skip verify (Default: ```false```)
 `TRAEFIK_PROVIDERS_REDIS_TLS_KEY`:  
 TLS key
 
+`TRAEFIK_PROVIDERS_REDIS_TOKEN`:  
+KV Token
+
 `TRAEFIK_PROVIDERS_REDIS_USERNAME`:  
 KV Username
 
@@ -857,6 +866,9 @@ TLS insecure skip verify (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER_TLS_KEY`:  
 TLS key
+
+`TRAEFIK_PROVIDERS_ZOOKEEPER_TOKEN`:  
+KV Token
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER_USERNAME`:  
 KV Username
