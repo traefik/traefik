@@ -692,3 +692,32 @@ providers:
 ```
 
 For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
+
+### `namespace`
+
+_Optional, Default=""_
+
+The `namespace` option defines the namespace in which the consul catalog services will be discovered.
+
+!!! warning
+
+    The namespace option only works with [Consul Enterprise](https://www.consul.io/docs/enterprise),
+    which provides the [Namespaces](https://www.consul.io/docs/enterprise/namespaces) feature.
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    namespace: "production" 
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  namespace = "production"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.namespace=production
+# ...
+```

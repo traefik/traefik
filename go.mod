@@ -23,7 +23,6 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/donovanhide/eventsource v0.0.0-20170630084216-b8f31a59085e // indirect
 	github.com/eapache/channels v1.1.0
-	github.com/elazarl/go-bindata-assetfs v1.0.0
 	github.com/fatih/structs v1.1.0
 	github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2
 	github.com/go-acme/lego/v4 v4.5.3
@@ -39,7 +38,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.3.0
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
-	github.com/instana/go-sensor v1.31.1
+	github.com/instana/go-sensor v1.38.3
 	github.com/jcmturner/gokrb5/v8 v8.4.2
 	github.com/klauspost/compress v1.13.0
 	github.com/lucas-clemente/quic-go v0.23.0
@@ -76,19 +75,19 @@ require (
 	golang.org/x/mod v0.4.2
 	golang.org/x/net v0.0.0-20211209124913-491a49abca63
 	golang.org/x/sys v0.0.0-20210817190340-bfb29a6856f2 // indirect
-	golang.org/x/time v0.0.0-20210611083556-38a9dc6acbc6
-	golang.org/x/tools v0.1.2
+	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
+	golang.org/x/tools v0.1.5
 	google.golang.org/grpc v1.38.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.19.0
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	k8s.io/api v0.21.0
-	k8s.io/apiextensions-apiserver v0.20.2
-	k8s.io/apimachinery v0.21.0
-	k8s.io/client-go v0.21.0
-	k8s.io/utils v0.0.0-20210709001253-0e1f9d693477
+	k8s.io/api v0.22.1
+	k8s.io/apiextensions-apiserver v0.21.3
+	k8s.io/apimachinery v0.22.1
+	k8s.io/client-go v0.22.1
+	k8s.io/utils v0.0.0-20210820185131-d34e5cb4466e
 	mvdan.cc/xurls/v2 v2.1.0
-	sigs.k8s.io/gateway-api v0.3.0
+	sigs.k8s.io/gateway-api v0.4.0
 )
 
 // Containous forks

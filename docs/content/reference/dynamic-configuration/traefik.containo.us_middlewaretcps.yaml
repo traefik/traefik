@@ -36,6 +36,13 @@ spec:
           spec:
             description: MiddlewareTCPSpec holds the MiddlewareTCP configuration.
             properties:
+              inFlightConn:
+                description: TCPInFlightConn holds the TCP in flight connection configuration.
+                properties:
+                  amount:
+                    format: int64
+                    type: integer
+                type: object
               ipWhiteList:
                 description: TCPIPWhiteList holds the TCP ip white list configuration.
                 properties:

@@ -55,6 +55,7 @@ type Provider struct {
 	ConnectAware      bool            `description:"Enable Consul Connect support." json:"connectAware,omitempty" toml:"connectAware,omitempty" yaml:"connectAware,omitempty" export:"true"`
 	ConnectByDefault  bool            `description:"Consider every service as Connect capable by default." json:"connectByDefault,omitempty" toml:"connectByDefault,omitempty" yaml:"connectByDefault,omitempty" export:"true"`
 	ServiceName       string          `description:"Name of the Traefik service in Consul Catalog (needs to be registered via the orchestrator or manually)." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
+	Namespace         string          `description:"Sets the namespace used to discover services (Consul Enterprise only)." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty" export:"true"`
 
 	client         *api.Client
 	defaultRuleTpl *template.Template
@@ -202,7 +203,9 @@ func (p *Provider) loadConfiguration(ctx context.Context, certInfo *connectCert,
 func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error) {
 	// The query option "Filter" is not supported by /catalog/services.
 	// https://www.consul.io/api/catalog.html#list-services
-	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache}
+	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache, Namespace: p.Namespace}
+	opts = opts.WithContext(ctx)
+
 	serviceNames, _, err := p.client.Catalog().Services(opts)
 	if err != nil {
 		return nil, err
@@ -293,7 +296,7 @@ func (p *Provider) fetchService(ctx context.Context, name string, connectEnabled
 		tagFilter = p.Prefix + ".enable=true"
 	}
 
-	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache}
+	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache, Namespace: p.Namespace}
 	opts = opts.WithContext(ctx)
 
 	catalogFunc := p.client.Catalog().Service

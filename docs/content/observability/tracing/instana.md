@@ -88,3 +88,25 @@ tracing:
 ```bash tab="CLI"
 --tracing.instana.logLevel=info
 ```
+
+#### `enableAutoProfile`
+
+_Required, Default=false_
+
+Enables [automatic profiling](https://www.instana.com/docs/ecosystem/go/#instana-autoprofile) for the Traefik process.
+
+```yaml tab="File (YAML)"
+tracing:
+  instana:
+    enableAutoProfile: true
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.instana]
+    enableAutoProfile = true
+```
+
+```bash tab="CLI"
+--tracing.instana.enableAutoProfile=true
+```

@@ -27,7 +27,7 @@ theme:
     prev: 'Previous'
     next: 'Next'
 
-copyright: "Copyright &copy; 2016-2020 Containous; 2020-2021 Traefik Labs"
+copyright: "Copyright &copy; 2016-2020 Containous; 2020-2022 Traefik Labs"
 
 extra_javascript:
   - assets/js/hljs/highlight.pack.js # Download from https://highlightjs.org/download/ and enable YAML, TOML and Dockerfile
@@ -132,6 +132,7 @@ nav:
         - 'StripPrefixRegex': 'middlewares/http/stripprefixregex.md'
     - 'TCP':
         - 'Overview': 'middlewares/tcp/overview.md'
+        - 'InFlightConn': 'middlewares/tcp/inflightconn.md'
         - 'IpWhitelist': 'middlewares/tcp/ipwhitelist.md'
   - 'Plugins & Traefik Pilot': 'plugins/index.md'
   - 'Operations':

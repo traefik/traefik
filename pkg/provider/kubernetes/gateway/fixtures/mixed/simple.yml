@@ -11,121 +11,149 @@ data:
 
 ---
 kind: GatewayClass
-apiVersion: networking.x-k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: my-gateway-class
 spec:
-  controller: traefik.io/gateway-controller
+  controllerName: traefik.io/gateway-controller
 
 ---
 kind: Gateway
-apiVersion: networking.x-k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: my-gateway
   namespace: default
 spec:
   gatewayClassName: my-gateway-class
-  listeners:  # Use GatewayClass defaults for listener definition.
-    - protocol: HTTP
+  listeners: # Use GatewayClass defaults for listener definition.
+    - name: http
+      protocol: HTTP
       port: 9080
-      routes:
-        kind: HTTPRoute
+      allowedRoutes:
+        kinds:
+          - kind: HTTPRoute
+            group: gateway.networking.k8s.io
         namespaces:
           from: Same
-        selector:
-          matchLabels:
-            app: http-app
-    - protocol: HTTPS
+
+    - name: https
+      protocol: HTTPS
       port: 9443
       tls:
-        certificateRef:
-          kind: Secret
-          name: supersecret
-          group: core
-      routes:
-        kind: HTTPRoute
+        certificateRefs:
+          - kind: Secret
+            name: supersecret
+            group: ""
+      allowedRoutes:
+        kinds:
+          - kind: HTTPRoute
+            group: gateway.networking.k8s.io
         namespaces:
           from: Same
-        selector:
-          matchLabels:
-            app: http-app
-    - protocol: TCP
+
+    - name: tcp
+      protocol: TCP
       port: 9000
-      routes:
-        kind: TCPRoute
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+            group: gateway.networking.k8s.io
         namespaces:
           from: Same
-        selector:
-          matchLabels:
-            app: tcp-app
-    - protocol: TLS
+
+    - name: tls-10000
+      protocol: TLS
       port: 10000
       hostname: tls.foo.example.com
       tls:
-        certificateRef:
-          kind: Secret
-          name: supersecret
-          group: core
-      routes:
-        kind: TCPRoute
+        certificateRefs:
+          - kind: Secret
+            name: supersecret
+            group: ""
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+            group: gateway.networking.k8s.io
         namespaces:
           from: Same
-        selector:
-          matchLabels:
-            app: tcp-app
-    - protocol: TLS
+
+    - name: tls-11000
+      protocol: TLS
       port: 11000
       hostname: pass.tls.foo.example.com
       tls:
         mode: Passthrough
-      routes:
-        kind: TLSRoute
+      allowedRoutes:
+        kinds:
+          - kind: TLSRoute
+            group: gateway.networking.k8s.io
         namespaces:
           from: Same
-        selector:
-          matchLabels:
-            app: tls-app
 
 ---
 kind: HTTPRoute
-apiVersion: networking.x-k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: http-app-1
   namespace: default
-  labels:
-    app: http-app
 spec:
+  parentRefs:
+    - name: my-gateway
+      sectionName: http
+      kind: Gateway
+      group: gateway.networking.k8s.io
+    - name: my-gateway
+      sectionName: https
+      kind: Gateway
+      group: gateway.networking.k8s.io
   rules:
-    - forwardTo:
-        - serviceName: whoami
+    - backendRefs:
+        - name: whoami
           port: 80
           weight: 1
+          kind: Service
+          group: ""
+
 ---
 kind: TCPRoute
-apiVersion: networking.x-k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: tcp-app-1
   namespace: default
-  labels:
-    app: tcp-app
 spec:
+  parentRefs:
+    - name: my-gateway
+      sectionName: tcp
+      kind: Gateway
+      group: gateway.networking.k8s.io
+    - name: my-gateway
+      sectionName: tls-10000
+      kind: Gateway
+      group: gateway.networking.k8s.io
   rules:
-    - forwardTo:
-        - serviceName: whoamitcp
+    - backendRefs:
+        - name: whoamitcp
           port: 9000
           weight: 1
+          kind: Service
+          group: ""
 
 ---
 kind: TLSRoute
-apiVersion: networking.x-k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: tls-app-1
   namespace: default
-  labels:
-    app: tls-app
 spec:
+  parentRefs:
+    - name: my-gateway
+      sectionName: tls-11000
+      kind: Gateway
+      group: gateway.networking.k8s.io
   rules:
-    - forwardTo:
-        - serviceName: whoamitcp
+    - backendRefs:
+        - name: whoamitcp
           port: 9000
           weight: 1
+          kind: Service
+          group: ""

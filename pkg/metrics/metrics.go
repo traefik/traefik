@@ -8,6 +8,8 @@ import (
 	"github.com/go-kit/kit/metrics/multi"
 )
 
+const defaultMetricsPrefix = "traefik"
+
 // Registry has to implemented by any system that wants to monitor and expose metrics.
 type Registry interface {
 	// IsEpEnabled shows whether metrics instrumentation is enabled on entry points.

@@ -876,6 +876,78 @@ spec:
       idleConnTimeout: "1s"
 ```
 
+##### `forwardingTimeouts.readIdleTimeout`
+
+_Optional, Default=0s_
+
+`readIdleTimeout` is the timeout after which a health check using ping frame will be carried out
+if no frame is received on the HTTP/2 connection.
+Note that a ping response will be considered a received frame,
+so if there is no other traffic on the connection,
+the health check will be performed every `readIdleTimeout` interval.
+If zero, no health check is performed.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      forwardingTimeouts:
+        readIdleTimeout: "1s"
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport.forwardingTimeouts]
+  readIdleTimeout = "1s"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    forwardingTimeouts:
+      readIdleTimeout: "1s"
+```
+
+##### `forwardingTimeouts.pingTimeout`
+
+_Optional, Default=15s_
+
+`pingTimeout` is the timeout after which the HTTP/2 connection will be closed
+if a response to ping is not received.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      forwardingTimeouts:
+        pingTimeout: "1s"
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport.forwardingTimeouts]
+  pingTimeout = "1s"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    forwardingTimeouts:
+      pingTimeout: "1s"
+```
+
 ### Weighted Round Robin (service)
 
 The WRR is able to load balance the requests between multiple services based on weights.

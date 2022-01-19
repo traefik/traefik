@@ -426,6 +426,7 @@
         "preferredChain": "foobar",
         "storage": "Storage",
         "keyType": "MyKeyType",
+        "certificatesDuration": 42,
         "dnsChallenge": {
           "provider": "DNSProvider",
           "delayBeforeCheck": "42ns",

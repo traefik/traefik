@@ -76,6 +76,7 @@ http:
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.domaincomponent=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.locality=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organization=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organizationalunit=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.province=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.serialnumber=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.commonname=true"
@@ -104,6 +105,7 @@ http:
             province: true
             locality: true
             organization: true
+            organizationalUnit: true
             commonName: true
             serialNumber: true
             domainComponent: true
@@ -127,6 +129,7 @@ http:
     - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.domaincomponent=true"
     - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.locality=true"
     - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organization=true"
+    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organizationalunit=true"
     - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.province=true"
     - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.serialnumber=true"
     - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.commonname=true"
@@ -148,6 +151,7 @@ http:
       "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.domaincomponent": "true",
       "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.locality": "true",
       "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organization": "true",
+      "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organizationalunit": "true",
       "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.province": "true",
       "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.serialnumber": "true",
       "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.commonname": "true",
@@ -171,6 +175,7 @@ http:
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.domaincomponent=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.locality=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organization=true"
+      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organizationalunit=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.province=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.serialnumber=true"
       - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.commonname=true"
@@ -197,6 +202,7 @@ http:
                 province: true
                 locality: true
                 organization: true
+                organizationalUnit: true
                 commonName: true
                 serialNumber: true
                 domainComponent: true
@@ -223,6 +229,7 @@ http:
             province = true
             locality = true
             organization = true
+            organizationalUnit = true
             commonName = true
             serialNumber = true
             domainComponent = true
@@ -247,7 +254,7 @@ PassTLSClientCert can add two headers to the request:
 
 !!! info
 
-    * The headers are filled with escaped string so it can be safely placed inside a URL query.
+    * Each header value is a string that has been escaped in order to be a valid URL query.
     * These options only work accordingly to the [MutualTLS configuration](../../https/tls.md#client-authentication-mtls).
     That is to say, only the certificates that match the `clientAuth.clientAuthType` policy are passed.
 
@@ -412,15 +419,18 @@ In the example, it is the part between `-----BEGIN CERTIFICATE-----` and `-----E
 !!! warning "`X-Forwarded-Tls-Client-Cert` value could exceed the web server header size limit"
 
     The header size limit of web servers is commonly between 4kb and 8kb.
-    You could change the server configuration to allow bigger header or use the `info` option with the needed field(s).
+    If that turns out to be a problem, and if reconfiguring the server to allow larger headers is not an option,
+    one can alleviate the problem by selecting only the interesting parts of the cert,
+    through the use of the `info` options described below. (And by setting `pem` to false).
 
 ### `info`
 
 The `info` option selects the specific client certificate details you want to add to the `X-Forwarded-Tls-Client-Cert-Info` header.
 
 The value of the header is an escaped concatenation of all the selected certificate details.
+But in the following, unless specified otherwise, all the header values examples are shown unescaped, for readability.
 
-The following example shows an unescaped result that uses all the available fields:
+The following example shows such a concatenation, when all the available fields are selected:
 
 ```text
 Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=*.example.com";Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2";NB="1544094616";NA="1607166616";SAN="*.example.org,*.example.net,*.example.com,test@example.org,test@example.net,10.0.1.0,10.0.1.2"
@@ -441,7 +451,7 @@ The data is taken from the following certificate part:
         Not After : Dec  5 11:10:16 2020 GMT
 ```
 
-The escaped `notAfter` info part is formatted as below:
+And it is formatted as follows in the header:
 
 ```text
 NA="1607166616"
@@ -458,7 +468,7 @@ Validity
     Not Before: Dec  6 11:10:16 2018 GMT
 ```
 
-The escaped `notBefore` info part is formatted as below:
+And it is formatted as follows in the header:
 
 ```text
 NB="1544094616"
@@ -475,7 +485,7 @@ The data is taken from the following certificate part:
     DNS:*.example.org, DNS:*.example.net, DNS:*.example.com, IP Address:10.0.1.0, IP Address:10.0.1.2, email:test@example.org, email:test@example.net
 ```
 
-The escape SANs info part is formatted as below:
+And it is formatted as follows in the header:
 
 ```text
 SAN="*.example.org,*.example.net,*.example.com,test@example.org,test@example.net,10.0.1.0,10.0.1.2"
@@ -501,7 +511,7 @@ Set the `info.subject.country` option to `true` to add the `country` information
 
 The data is taken from the subject part with the `C` key.
 
-The escape country info in the subject part is formatted as below:
+And it is formatted as follows in the header:
 
 ```text
 C=FR,C=US
@@ -513,7 +523,7 @@ Set the `info.subject.province` option to `true` to add the `province` informati
 
 The data is taken from the subject part with the `ST` key.
 
-The escape province info in the subject part is formatted as below:
+And it is formatted as follows in the header:
 
 ```text
 ST=Cheese org state,ST=Cheese com state
@@ -525,7 +535,7 @@ Set the `info.subject.locality` option to `true` to add the `locality` informati
 
 The data is taken from the subject part with the `L` key.
 
-The escape locality info in the subject part is formatted as below:
+And it is formatted as follows in the header:
 
 ```text
 L=TOULOUSE,L=LYON
@@ -537,10 +547,22 @@ Set the `info.subject.organization` option to `true` to add the `organization` i
 
 The data is taken from the subject part with the `O` key.
 
-The escape organization info in the subject part is formatted as below:
+And it is formatted as follows in the header:
 
 ```text
 O=Cheese,O=Cheese 2
+```
+
+##### `info.subject.organizationalUnit`
+
+Set the `info.subject.organizationalUnit` option to `true` to add the `organizationalUnit` information into the subject.
+
+The data is taken from the subject part with the `OU` key.
+
+And it is formatted as follows in the header:
+
+```text
+OU=Cheese Section,OU=Cheese Section 2
 ```
 
 ##### `info.subject.commonName`
@@ -549,7 +571,7 @@ Set the `info.subject.commonName` option to `true` to add the `commonName` infor
 
 The data is taken from the subject part with the `CN` key.
 
-The escape common name info in the subject part is formatted as below:
+And it is formatted as follows in the header:
 
 ```text
 CN=*.example.com
@@ -561,7 +583,7 @@ Set the `info.subject.serialNumber` option to `true` to add the `serialNumber` i
 
 The data is taken from the subject part with the `SN` key.
 
-The escape serial number info in the subject part is formatted as below:
+And it is formatted as follows in the header:
 
 ```text
 SN=1234567890
@@ -573,7 +595,7 @@ Set the `info.subject.domainComponent` option to `true` to add the `domainCompon
 
 The data is taken from the subject part with the `DC` key.
 
-The escape domain component info in the subject part is formatted as below:
+And it is formatted as follows in the header:
 
 ```text
 DC=org,DC=cheese
@@ -595,7 +617,7 @@ Set the `info.issuer.country` option to `true` to add the `country` information 
 
 The data is taken from the issuer part with the `C` key.
 
-The escape country info in the issuer part is formatted as below:
+And it is formatted as follows in the header:
 
 ```text
 C=FR,C=US
@@ -607,7 +629,7 @@ Set the `info.issuer.province` option to `true` to add the `province` informatio
 
 The data is taken from the issuer part with the `ST` key.
 
-The escape province info in the issuer part is formatted as below:
+And it is formatted as follows in the header:
 
 ```text
 ST=Signing State,ST=Signing State 2
@@ -619,7 +641,7 @@ Set the `info.issuer.locality` option to `true` to add the `locality` informatio
 
 The data is taken from the issuer part with the `L` key.
 
-The escape locality info in the issuer part is formatted as below:
+And it is formatted as follows in the header:
 
 ```text
 L=TOULOUSE,L=LYON
@@ -631,7 +653,7 @@ Set the `info.issuer.organization` option to `true` to add the `organization` in
 
 The data is taken from the issuer part with the `O` key.
 
-The escape organization info in the issuer part is formatted as below:
+And it is formatted as follows in the header:
 
 ```text
 O=Cheese,O=Cheese 2
@@ -643,7 +665,7 @@ Set the `info.issuer.commonName` option to `true` to add the `commonName` inform
 
 The data is taken from the issuer part with the `CN` key.
 
-The escape common name info in the issuer part is formatted as below:
+And it is formatted as follows in the header:
 
 ```text
 CN=Simple Signing CA 2
@@ -655,7 +677,7 @@ Set the `info.issuer.serialNumber` option to `true` to add the `serialNumber` in
 
 The data is taken from the issuer part with the `SN` key.
 
-The escape serial number info in the issuer part is formatted as below:
+And it is formatted as follows in the header:
 
 ```text
 SN=1234567890
@@ -667,7 +689,7 @@ Set the `info.issuer.domainComponent` option to `true` to add the `domainCompone
 
 The data is taken from the issuer part with the `DC` key.
 
-The escape domain component info in the issuer part is formatted as below:
+And it is formatted as follows in the header:
 
 ```text
 DC=org,DC=cheese
