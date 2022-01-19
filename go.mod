@@ -26,7 +26,7 @@ require (
 	github.com/elazarl/go-bindata-assetfs v1.0.0
 	github.com/fatih/structs v1.1.0
 	github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2
-	github.com/go-acme/lego/v4 v4.5.3
+	github.com/go-acme/lego/v4 v4.6.0
 	github.com/go-check/check v0.0.0-00010101000000-000000000000
 	github.com/go-kit/kit v0.10.1-0.20200915143503-439c4d2ed3ea
 	github.com/golang/protobuf v1.5.2
@@ -101,3 +101,7 @@ replace (
 
 // https://github.com/docker/compose/blob/e44222664abd07ce1d1fe6796d84d93cbc7468c3/go.mod#L131
 replace github.com/jaguilar/vt100 => github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305
+
+// ambiguous import: found package github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/http in multiple modules
+// tencentcloud uses monorepo with multimodule but the go.mod files are incomplete.
+exclude github.com/tencentcloud/tencentcloud-sdk-go v3.0.83+incompatible
