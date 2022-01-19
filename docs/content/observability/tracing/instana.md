@@ -93,7 +93,7 @@ tracing:
 
 _Required, Default=false_
 
-Enables [automatic profiling](https://www.instana.com/docs/ecosystem/go/#instana-autoprofile) for the Traefik process.
+Enables [automatic profiling](https://www.ibm.com/docs/en/obi/current?topic=instana-profile-processes) for the Traefik process.
 
 ```yaml tab="File (YAML)"
 tracing:
