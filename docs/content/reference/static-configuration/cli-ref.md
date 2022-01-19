@@ -375,6 +375,9 @@ TLS insecure skip verify (Default: ```false```)
 `--providers.consul.tls.key`:  
 TLS key
 
+`--providers.consul.token`:  
+KV Token
+
 `--providers.consul.username`:  
 KV Username
 
@@ -560,6 +563,9 @@ TLS insecure skip verify (Default: ```false```)
 
 `--providers.etcd.tls.key`:  
 TLS key
+
+`--providers.etcd.token`:  
+KV Token
 
 `--providers.etcd.username`:  
 KV Username
@@ -819,6 +825,9 @@ TLS insecure skip verify (Default: ```false```)
 `--providers.redis.tls.key`:  
 TLS key
 
+`--providers.redis.token`:  
+KV Token
+
 `--providers.redis.username`:  
 KV Username
 
@@ -857,6 +866,9 @@ TLS insecure skip verify (Default: ```false```)
 
 `--providers.zookeeper.tls.key`:  
 TLS key
+
+`--providers.zookeeper.token`:  
+KV Token
 
 `--providers.zookeeper.username`:  
 KV Username
