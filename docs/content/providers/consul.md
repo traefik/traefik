@@ -125,7 +125,30 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.consul.password=foo
+--providers.consul.password=bar
+```
+
+### `token`
+
+_Optional, Default=""_
+
+Defines a token with which to connect to Consul.
+
+```yaml tab="File (YAML)"
+providers:
+  consul:
+    # ...
+    token: "bar"
+```
+
+```toml tab="File (TOML)"
+[providers.consul]
+  # ...
+  token = "bar"
+```
+
+```bash tab="CLI"
+--providers.consul.token=bar
 ```
 
 ### `tls`
