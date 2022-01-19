@@ -39,6 +39,7 @@ require (
 	github.com/hashicorp/go-version v1.3.0
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
 	github.com/instana/go-sensor v1.38.3
+	github.com/jcmturner/gokrb5/v8 v8.4.2
 	github.com/klauspost/compress v1.13.0
 	github.com/lucas-clemente/quic-go v0.23.0
 	github.com/mailgun/ttlmap v0.0.0-20170619185759-c1c17f74874f

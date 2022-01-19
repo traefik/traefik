@@ -25,6 +25,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/middlewares/replacepath"
 	"github.com/traefik/traefik/v2/pkg/middlewares/replacepathregex"
 	"github.com/traefik/traefik/v2/pkg/middlewares/retry"
+	"github.com/traefik/traefik/v2/pkg/middlewares/spnego"
 	"github.com/traefik/traefik/v2/pkg/middlewares/stripprefix"
 	"github.com/traefik/traefik/v2/pkg/middlewares/stripprefixregex"
 	"github.com/traefik/traefik/v2/pkg/middlewares/tracing"
@@ -245,6 +246,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return inflightreq.New(ctx, next, *config.InFlightReq, middlewareName)
+		}
+	}
+
+	// Spnego
+	if config.Spnego != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return spnego.New(ctx, next, *config.Spnego, middlewareName)
 		}
 	}
 
