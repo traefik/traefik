@@ -29,6 +29,7 @@ type Provider struct {
 	Endpoints []string         `description:"KV store endpoints" json:"endpoints,omitempty" toml:"endpoints,omitempty" yaml:"endpoints,omitempty"`
 	Username  string           `description:"KV Username" json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty"`
 	Password  string           `description:"KV Password" json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty"`
+	Token     string           `description:"KV Token" json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
 	Namespace string           `description:"KV Namespace" json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
 	TLS       *types.ClientTLS `description:"Enable TLS support" export:"true" json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
 
@@ -165,6 +166,7 @@ func (p *Provider) createKVClient(ctx context.Context) (store.Store, error) {
 		Bucket:            "traefik",
 		Username:          p.Username,
 		Password:          p.Password,
+		Token:             p.Token,
 		Namespace:         p.Namespace,
 	}
 
