@@ -427,8 +427,8 @@ github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595 h1:aPspFRO6b94T
 github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595/go.mod h1:+lHFbEasIiQVGzhVDVw/cn0ZaOzde2OwNncp1NhXV4c=
 github.com/containous/multibuf v0.0.0-20190809014333-8b6c9a7e6bba h1:PhR03pep+5eO/9BSvCY9RyG8rjogB3uYS4X/WBYNTT8=
 github.com/containous/multibuf v0.0.0-20190809014333-8b6c9a7e6bba/go.mod h1:zkWcASFUJEst6QwCrxLdkuw1gvaKqmflEipm+iecV5M=
-github.com/containous/mux v0.0.0-20181024131434-c33f32e26898 h1:1srn9voikJGofblBhWy3WuZWqo14Ou7NaswNG/I2yWc=
-github.com/containous/mux v0.0.0-20181024131434-c33f32e26898/go.mod h1:z8WW7n06n8/1xF9Jl9WmuDeZuHAhfL+bwarNjsciwwg=
+github.com/containous/mux v0.0.0-20220113180107-8ffa4f6d063c h1:g6JvgTtfpS6AfhRjY87NZ0g39CrNDbdm8R+1CD85Cfo=
+github.com/containous/mux v0.0.0-20220113180107-8ffa4f6d063c/go.mod h1:z8WW7n06n8/1xF9Jl9WmuDeZuHAhfL+bwarNjsciwwg=
 github.com/coredns/coredns v1.1.2/go.mod h1:zASH/MVDgR6XZTbxvOnsZfffS+31vg6Ackf/wo1+AM0=
 github.com/coreos/bbolt v1.3.2/go.mod h1:iRUV2dpdMOn7Bo10OQBFzIJO9kkE559Wcmn+qkEiiKk=
 github.com/coreos/etcd v3.3.10+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
