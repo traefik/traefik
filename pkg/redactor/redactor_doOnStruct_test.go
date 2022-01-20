@@ -18,7 +18,6 @@ type Tomate struct {
 	Ho string
 }
 
-// FIXME Update testt for loggable
 type Carotte struct {
 	Name         string
 	EName        string `export:"true"`
