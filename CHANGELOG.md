@@ -1,3 +1,20 @@
+## [v2.5.7](https://github.com/traefik/traefik/tree/v2.5.7) (2022-01-20)
+[All Commits](https://github.com/traefik/traefik/compare/v2.5.6...v2.5.7)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.6.0 ([#8716](https://github.com/traefik/traefik/pull/8716) by [ldez](https://github.com/ldez))
+- **[logs]** Adjust log level from info to debug ([#8718](https://github.com/traefik/traefik/pull/8718) by [tomMoulard](https://github.com/tomMoulard))
+- **[plugins]** Fix middleware plugins memory leak ([#8702](https://github.com/traefik/traefik/pull/8702) by [ldez](https://github.com/ldez))
+- **[server]** Mitigate memory leak ([#8706](https://github.com/traefik/traefik/pull/8706) by [mpl](https://github.com/mpl))
+- **[webui,middleware]** Fix middleware regexp&#39;s display ([#8697](https://github.com/traefik/traefik/pull/8697) by [tomMoulard](https://github.com/tomMoulard))
+
+**Documentation:**
+- **[http]** Fix HTTP provider endpoint config example  ([#8715](https://github.com/traefik/traefik/pull/8715) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s]** Remove typo in Kubernetes providers labelSelector examples ([#8676](https://github.com/traefik/traefik/pull/8676) by [colinwilson](https://github.com/colinwilson))
+- **[rules]** Improve regexp matcher documentation ([#8686](https://github.com/traefik/traefik/pull/8686) by [Hades32](https://github.com/Hades32))
+- **[tracing]** Fix broken jaeger documentation link ([#8665](https://github.com/traefik/traefik/pull/8665) by [tomMoulard](https://github.com/tomMoulard))
+- Update copyright for 2022 ([#8679](https://github.com/traefik/traefik/pull/8679) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v2.6.0-rc2](https://github.com/traefik/traefik/tree/v2.6.0-rc2) (2022-01-12)
 [All Commits](https://github.com/traefik/traefik/compare/v2.6.0-rc1...v2.6.0-rc2)
 
