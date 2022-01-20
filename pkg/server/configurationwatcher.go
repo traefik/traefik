@@ -245,7 +245,7 @@ func (c *ConfigurationWatcher) throttleProviderConfigReload(ctx context.Context,
 		case nextConfig := <-in:
 			if reflect.DeepEqual(previousConfig, nextConfig) {
 				logger := log.WithoutContext().WithField(log.ProviderName, nextConfig.ProviderName)
-				logger.Info("Skipping same configuration")
+				logger.Debug("Skipping same configuration")
 				continue
 			}
 			previousConfig = *nextConfig.DeepCopy()
