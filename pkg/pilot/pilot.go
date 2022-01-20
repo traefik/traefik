@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/traefik/traefik/v2/pkg/anonymize"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/metrics"
+	"github.com/traefik/traefik/v2/pkg/redactor"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/version"
 )
@@ -173,7 +173,7 @@ func (c *client) createUUID() (string, error) {
 
 // SendAnonDynConf sends anonymized dynamic configuration to Pilot.
 func (c *client) SendAnonDynConf(ctx context.Context, config dynamic.Configuration) error {
-	anonConfig, err := anonymize.Do(&config, false)
+	anonConfig, err := redactor.Anonymize(&config, false)
 	if err != nil {
 		return fmt.Errorf("unable to anonymize dynamic configuration: %w", err)
 	}
