@@ -17,8 +17,7 @@ Defines the HTTP(S) endpoint to poll.
 ```yaml tab="File (YAML)"
 providers:
   http:
-    endpoint:
-      - "http://127.0.0.1:9000/api"
+    endpoint: "http://127.0.0.1:9000/api"
 ```
 
 ```toml tab="File (TOML)"
