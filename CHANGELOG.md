@@ -1,3 +1,13 @@
+## [v2.6.0-rc3](https://github.com/traefik/traefik/tree/v2.6.0-rc3) (2022-01-20)
+[All Commits](https://github.com/traefik/traefik/compare/v2.6.0-rc2...v2.6.0-rc3)
+
+**Bug fixes:**
+- **[consul]** Support token authentication for Consul KV  ([#8712](https://github.com/traefik/traefik/pull/8712) by [kevinpollet](https://github.com/kevinpollet))
+
+**Misc:**
+- Merge current v2.5 into v2.6 ([#8717](https://github.com/traefik/traefik/pull/8717) by [tomMoulard](https://github.com/tomMoulard))
+- Merge current v2.5 into v2.6 ([#8714](https://github.com/traefik/traefik/pull/8714) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.5.7](https://github.com/traefik/traefik/tree/v2.5.7) (2022-01-20)
 [All Commits](https://github.com/traefik/traefik/compare/v2.5.6...v2.5.7)
 
