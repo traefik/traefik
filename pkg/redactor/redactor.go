@@ -92,33 +92,28 @@ func doOnStruct(field reflect.Value, tag string, redactByDefault bool) error {
 				continue
 			}
 
-			if stField.Tag.Get(tag) == "false" {
+			if stField.Tag.Get(tag) == "false" || stField.Tag.Get(tag) != "true" && redactByDefault {
 				if err := reset(fld, stField.Name); err != nil {
 					return err
 				}
 				continue
 			}
-			if stField.Tag.Get(tag) == "true" || !redactByDefault {
-				// A struct field cannot be set it must be filled as pointer.
-				if fld.Kind() == reflect.Struct {
-					fldPtr := reflect.New(fld.Type())
-					fldPtr.Elem().Set(fld)
 
-					if err := doOnStruct(fldPtr, tag, redactByDefault); err != nil {
-						return err
-					}
+			// A struct field cannot be set it must be filled as pointer.
+			if fld.Kind() == reflect.Struct {
+				fldPtr := reflect.New(fld.Type())
+				fldPtr.Elem().Set(fld)
 
-					fld.Set(fldPtr.Elem())
-
-					continue
-				}
-
-				if err := doOnStruct(fld, tag, redactByDefault); err != nil {
+				if err := doOnStruct(fldPtr, tag, redactByDefault); err != nil {
 					return err
 				}
+
+				fld.Set(fldPtr.Elem())
+
 				continue
 			}
-			if err := reset(fld, stField.Name); err != nil {
+
+			if err := doOnStruct(fld, tag, redactByDefault); err != nil {
 				return err
 			}
 		}
