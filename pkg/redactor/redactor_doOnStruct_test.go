@@ -47,10 +47,10 @@ type Carotte struct {
 
 func Test_doOnStruct(t *testing.T) {
 	testCase := []struct {
-		name             string
-		base             *Carotte
-		expected         *Carotte
-		enabledByDefault bool
+		name            string
+		base            *Carotte
+		expected        *Carotte
+		redactByDefault bool
 	}{
 		{
 			name: "primitive",
@@ -69,6 +69,7 @@ func Test_doOnStruct(t *testing.T) {
 				List:   []string{"xxxx"},
 				EList:  []string{"test"},
 			},
+			redactByDefault: true,
 		},
 		{
 			name: "primitive2",
@@ -87,7 +88,7 @@ func Test_doOnStruct(t *testing.T) {
 				List:   []string{"test"},
 				EFList: []string{"xxxx"},
 			},
-			enabledByDefault: true,
+			redactByDefault: false,
 		},
 		{
 			name: "struct",
@@ -100,6 +101,7 @@ func Test_doOnStruct(t *testing.T) {
 			expected: &Carotte{
 				Name: "xxxx",
 			},
+			redactByDefault: true,
 		},
 		{
 			name: "struct2",
@@ -121,7 +123,7 @@ func Test_doOnStruct(t *testing.T) {
 					Ho: "",
 				},
 			},
-			enabledByDefault: true,
+			redactByDefault: false,
 		},
 		{
 			name: "pointer",
@@ -135,6 +137,7 @@ func Test_doOnStruct(t *testing.T) {
 				Name:      "xxxx",
 				Pourgette: nil,
 			},
+			redactByDefault: true,
 		},
 		{
 			name: "pointer2",
@@ -156,7 +159,7 @@ func Test_doOnStruct(t *testing.T) {
 				},
 				EFPourgette: nil,
 			},
-			enabledByDefault: true,
+			redactByDefault: false,
 		},
 		{
 			name: "export struct",
@@ -172,6 +175,7 @@ func Test_doOnStruct(t *testing.T) {
 					Ji: "xxxx",
 				},
 			},
+			redactByDefault: true,
 		},
 		{
 			name: "export struct 2",
@@ -192,7 +196,7 @@ func Test_doOnStruct(t *testing.T) {
 					Ji: "huu",
 				},
 			},
-			enabledByDefault: true,
+			redactByDefault: false,
 		},
 		{
 			name: "export pointer struct",
@@ -208,6 +212,7 @@ func Test_doOnStruct(t *testing.T) {
 					Ji: "xxxx",
 				},
 			},
+			redactByDefault: true,
 		},
 		{
 			name: "export pointer struct 2",
@@ -229,7 +234,7 @@ func Test_doOnStruct(t *testing.T) {
 				},
 				EFPourgette: nil,
 			},
-			enabledByDefault: true,
+			redactByDefault: false,
 		},
 		{
 			name: "export map string/string",
@@ -245,6 +250,7 @@ func Test_doOnStruct(t *testing.T) {
 					"foo": "bar",
 				},
 			},
+			redactByDefault: true,
 		},
 		{
 			name: "export map string/string 2",
@@ -266,7 +272,7 @@ func Test_doOnStruct(t *testing.T) {
 				},
 				EFAubergine: map[string]string{},
 			},
-			enabledByDefault: true,
+			redactByDefault: false,
 		},
 		{
 			name: "export map string/pointer",
@@ -286,6 +292,7 @@ func Test_doOnStruct(t *testing.T) {
 					},
 				},
 			},
+			redactByDefault: true,
 		},
 		{
 			name: "export map string/pointer 2",
@@ -311,7 +318,7 @@ func Test_doOnStruct(t *testing.T) {
 				},
 				EFPAubergine: map[string]*Tomate{},
 			},
-			enabledByDefault: true,
+			redactByDefault: false,
 		},
 		{
 			name: "export map string/struct",
@@ -331,6 +338,7 @@ func Test_doOnStruct(t *testing.T) {
 					},
 				},
 			},
+			redactByDefault: true,
 		},
 		{
 			name: "export map string/struct 2",
@@ -356,14 +364,16 @@ func Test_doOnStruct(t *testing.T) {
 				},
 				EFSAubergine: map[string]Tomate{},
 			},
-			enabledByDefault: true,
+			redactByDefault: false,
 		},
 	}
 
 	for _, test := range testCase {
+		test := test
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 			val := reflect.ValueOf(test.base).Elem()
-			err := doOnStruct(val, exportTag, test.enabledByDefault)
+			err := doOnStruct(val, tagExport, test.redactByDefault)
 			require.NoError(t, err)
 
 			assert.EqualValues(t, test.expected, test.base)
