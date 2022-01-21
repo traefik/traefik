@@ -139,7 +139,7 @@ func (p ProviderAggregator) Provide(configurationChan chan<- dynamic.Message, po
 }
 
 func launchProvider(configurationChan chan<- dynamic.Message, pool *safe.Pool, prd provider.Provider) {
-	jsonConf, err := redactor.RemoveCredentials(prd, false)
+	jsonConf, err := redactor.RemoveCredentials(prd)
 	if err != nil {
 		log.WithoutContext().Debugf("Cannot marshal the provider configuration %T: %v", prd, err)
 	}
