@@ -21,7 +21,7 @@ const (
 
 // Anonymize redacts the configuration fields that do not have an export=true struct tag.
 // It returns the resulting marshaled configuration.
-func Anonymize(baseConfig interface{}, indent bool) (string, error) {
+func Anonymize(baseConfig interface{}) (string, error) {
 	return anonymize(baseConfig, false)
 }
 
