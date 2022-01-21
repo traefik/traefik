@@ -1,4 +1,4 @@
-package anonymize
+package redactor
 
 import (
 	"flag"
@@ -44,7 +44,9 @@ import (
 
 var updateExpected = flag.Bool("update_expected", false, "Update expected files in fixtures")
 
-func TestDo_dynamicConfiguration(t *testing.T) {
+var fullDynConf *dynamic.Configuration
+
+func init() {
 	config := &dynamic.Configuration{}
 	config.HTTP = &dynamic.HTTPConfiguration{
 		Routers: map[string]*dynamic.Router{
@@ -241,7 +243,7 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 					SourceCriterion: &dynamic.SourceCriterion{
 						IPStrategy: &dynamic.IPStrategy{
 							Depth:       42,
-							ExcludedIPs: []string{"foo"},
+							ExcludedIPs: []string{"127.0.0.1"},
 						},
 						RequestHeaderName: "foo",
 						RequestHost:       true,
@@ -290,7 +292,7 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 					SourceCriterion: &dynamic.SourceCriterion{
 						IPStrategy: &dynamic.IPStrategy{
 							Depth:       42,
-							ExcludedIPs: []string{"foo"},
+							ExcludedIPs: []string{"127.0.0.1"},
 						},
 						RequestHeaderName: "foo",
 						RequestHost:       true,
@@ -461,14 +463,37 @@ func TestDo_dynamicConfiguration(t *testing.T) {
 		},
 	}
 
+	fullDynConf = config
+}
+
+func TestAnonymize_dynamicConfiguration(t *testing.T) {
+	config := fullDynConf
+
 	expectedConfiguration, err := os.ReadFile("./testdata/anonymized-dynamic-config.json")
 	require.NoError(t, err)
 
-	cleanJSON, err := Do(config, true)
+	cleanJSON, err := anonymize(config, true)
 	require.NoError(t, err)
 
 	if *updateExpected {
 		require.NoError(t, os.WriteFile("testdata/anonymized-dynamic-config.json", []byte(cleanJSON), 0o666))
+	}
+
+	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
+	assert.Equal(t, expected, cleanJSON)
+}
+
+func TestSecure_dynamicConfiguration(t *testing.T) {
+	config := fullDynConf
+
+	expectedConfiguration, err := os.ReadFile("./testdata/secured-dynamic-config.json")
+	require.NoError(t, err)
+
+	cleanJSON, err := removeCredentials(config, true)
+	require.NoError(t, err)
+
+	if *updateExpected {
+		require.NoError(t, os.WriteFile("testdata/secured-dynamic-config.json", []byte(cleanJSON), 0o666))
 	}
 
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
@@ -971,7 +996,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 	expectedConfiguration, err := os.ReadFile("./testdata/anonymized-static-config.json")
 	require.NoError(t, err)
 
-	cleanJSON, err := Do(config, true)
+	cleanJSON, err := anonymize(config, true)
 	require.NoError(t, err)
 
 	if *updateExpected {

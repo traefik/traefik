@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/mitchellh/hashstructure"
-	"github.com/traefik/traefik/v2/pkg/anonymize"
 	"github.com/traefik/traefik/v2/pkg/config/static"
 	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/redactor"
 	"github.com/traefik/traefik/v2/pkg/version"
 )
 
@@ -30,7 +30,7 @@ type data struct {
 
 // Collect anonymous data.
 func Collect(staticConfiguration *static.Configuration) error {
-	anonConfig, err := anonymize.Do(staticConfiguration, false)
+	anonConfig, err := redactor.Anonymize(staticConfiguration)
 	if err != nil {
 		return err
 	}
