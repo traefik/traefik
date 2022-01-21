@@ -173,7 +173,7 @@ func (c *client) createUUID() (string, error) {
 
 // SendAnonDynConf sends anonymized dynamic configuration to Pilot.
 func (c *client) SendAnonDynConf(ctx context.Context, config dynamic.Configuration) error {
-	anonConfig, err := redactor.Anonymize(&config, false)
+	anonConfig, err := redactor.Anonymize(&config)
 	if err != nil {
 		return fmt.Errorf("unable to anonymize dynamic configuration: %w", err)
 	}

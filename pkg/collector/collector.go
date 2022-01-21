@@ -30,7 +30,7 @@ type data struct {
 
 // Collect anonymous data.
 func Collect(staticConfiguration *static.Configuration) error {
-	anonConfig, err := redactor.Anonymize(staticConfiguration, false)
+	anonConfig, err := redactor.Anonymize(staticConfiguration)
 	if err != nil {
 		return err
 	}
