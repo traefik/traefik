@@ -22,6 +22,10 @@ const (
 // Anonymize redacts the configuration fields that do not have an export=true struct tag.
 // It returns the resulting marshaled configuration.
 func Anonymize(baseConfig interface{}, indent bool) (string, error) {
+	return anonymize(baseConfig, false)
+}
+
+func anonymize(baseConfig interface{}, indent bool) (string, error) {
 	conf, err := do(baseConfig, tagExport, true, indent)
 	if err != nil {
 		return "", err
@@ -31,7 +35,11 @@ func Anonymize(baseConfig interface{}, indent bool) (string, error) {
 
 // RemoveCredentials redacts the configuration fields that have a loggable=false struct tag.
 // It returns the resulting marshaled configuration.
-func RemoveCredentials(baseConfig interface{}, indent bool) (string, error) {
+func RemoveCredentials(baseConfig interface{}) (string, error) {
+	return removeCredentials(baseConfig, false)
+}
+
+func removeCredentials(baseConfig interface{}, indent bool) (string, error) {
 	return do(baseConfig, tagLoggable, false, indent)
 }
 

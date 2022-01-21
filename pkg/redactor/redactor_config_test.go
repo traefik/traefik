@@ -466,13 +466,13 @@ func init() {
 	fullDynConf = config
 }
 
-func TestAnonymise_dynamicConfiguration(t *testing.T) {
+func TestAnonymize_dynamicConfiguration(t *testing.T) {
 	config := fullDynConf
 
 	expectedConfiguration, err := os.ReadFile("./testdata/anonymized-dynamic-config.json")
 	require.NoError(t, err)
 
-	cleanJSON, err := do(config, tagExport, true, true)
+	cleanJSON, err := anonymize(config, true)
 	require.NoError(t, err)
 
 	if *updateExpected {
@@ -489,7 +489,7 @@ func TestSecure_dynamicConfiguration(t *testing.T) {
 	expectedConfiguration, err := os.ReadFile("./testdata/secured-dynamic-config.json")
 	require.NoError(t, err)
 
-	cleanJSON, err := do(config, tagLoggable, false, true)
+	cleanJSON, err := removeCredentials(config, true)
 	require.NoError(t, err)
 
 	if *updateExpected {
@@ -996,7 +996,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 	expectedConfiguration, err := os.ReadFile("./testdata/anonymized-static-config.json")
 	require.NoError(t, err)
 
-	cleanJSON, err := do(config, tagExport, true, true)
+	cleanJSON, err := anonymize(config, true)
 	require.NoError(t, err)
 
 	if *updateExpected {
