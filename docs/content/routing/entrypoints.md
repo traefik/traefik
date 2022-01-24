@@ -247,7 +247,7 @@ In most scenarios, that will be any entrypoint you use (e.g. websecure) that han
       http3: true
 
     entryPoints:
-      name: 
+      name:
         http3: {}
     ```
 
