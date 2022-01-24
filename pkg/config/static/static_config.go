@@ -106,7 +106,7 @@ type API struct {
 	Dashboard bool `description:"Activate dashboard." json:"dashboard,omitempty" toml:"dashboard,omitempty" yaml:"dashboard,omitempty" export:"true"`
 	Debug     bool `description:"Enable additional endpoints for debugging and profiling." json:"debug,omitempty" toml:"debug,omitempty" yaml:"debug,omitempty" export:"true"`
 	// TODO: Re-enable statistics
-	// Statistics      *types.Statistics `description:"Enable more detailed statistics." json:"statistics,omitempty" toml:"statistics,omitempty" yaml:"statistics,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
+	// Statistics      *types.Statistics `description:"Enable more detailed statistics." json:"statistics,omitempty" toml:"statistics,omitempty" yaml:"statistics,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // SetDefaults sets the default values.

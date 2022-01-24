@@ -223,7 +223,7 @@
       "secretAccessKey": "xxxx"
     },
     "consul": {
-      "rootKey": "RootKey",
+      "rootKey": "xxxx",
       "username": "xxxx",
       "password": "xxxx",
       "tls": {
@@ -235,7 +235,7 @@
       }
     },
     "etcd": {
-      "rootKey": "RootKey",
+      "rootKey": "xxxx",
       "username": "xxxx",
       "password": "xxxx",
       "tls": {
@@ -247,7 +247,7 @@
       }
     },
     "zooKeeper": {
-      "rootKey": "RootKey",
+      "rootKey": "xxxx",
       "username": "xxxx",
       "password": "xxxx",
       "tls": {
@@ -259,7 +259,7 @@
       }
     },
     "redis": {
-      "rootKey": "RootKey",
+      "rootKey": "xxxx",
       "username": "xxxx",
       "password": "xxxx",
       "tls": {
