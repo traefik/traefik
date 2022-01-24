@@ -228,8 +228,8 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
 #### `http3`
 
 `http3` enables HTTP3 protocol on the entryPoint.
-You can only enable HTTP3 on a TCP entrypoint.
-Enabling HTTP3 will automatically add the correct headers for the connection upgrade to HTTP3.
+You can only enable HTTP3 on a TCP entrypoint, as the connection upgrade to HTTP/3 requires some specific headers 
+Those will automatically be added, for requests getting served trough an entrypoint which has HTTP/3 enabled.
 
 ??? info "HTTP3 uses UDP+TLS"
 
@@ -246,7 +246,7 @@ Enabling HTTP3 will automatically add the correct headers for the connection upg
       http3: true
 
     entryPoints:
-      name:
+      <name>: # could be any entrypoint, most likely it will be the websecure one (or any other that handles TLS traffic)
         http3: {}
     ```
 
