@@ -24,14 +24,14 @@ import (
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	RootKey string `description:"Root key used for KV store" export:"true" json:"rootKey,omitempty" toml:"rootKey,omitempty" yaml:"rootKey,omitempty"`
+	RootKey string `description:"Root key used for KV store" json:"rootKey,omitempty" toml:"rootKey,omitempty" yaml:"rootKey,omitempty"`
 
 	Endpoints []string         `description:"KV store endpoints" json:"endpoints,omitempty" toml:"endpoints,omitempty" yaml:"endpoints,omitempty"`
-	Username  string           `description:"KV Username" json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty"`
-	Password  string           `description:"KV Password" json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty"`
-	Token     string           `description:"KV Token" json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
+	Username  string           `description:"KV Username" json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
+	Password  string           `description:"KV Password" json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
+	Token     string           `description:"KV Token" json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
 	Namespace string           `description:"KV Namespace" json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
-	TLS       *types.ClientTLS `description:"Enable TLS support" export:"true" json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
+	TLS       *types.ClientTLS `description:"Enable TLS support" json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true" `
 
 	storeType store.Backend
 	kvClient  store.Store
