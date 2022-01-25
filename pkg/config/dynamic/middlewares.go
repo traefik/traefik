@@ -64,7 +64,7 @@ type AddPrefix struct {
 
 // BasicAuth holds the HTTP basic authentication configuration.
 type BasicAuth struct {
-	Users        Users  `json:"users,omitempty" toml:"users,omitempty" yaml:"users,omitempty"`
+	Users        Users  `json:"users,omitempty" toml:"users,omitempty" yaml:"users,omitempty" loggable:"false"`
 	UsersFile    string `json:"usersFile,omitempty" toml:"usersFile,omitempty" yaml:"usersFile,omitempty"`
 	Realm        string `json:"realm,omitempty" toml:"realm,omitempty" yaml:"realm,omitempty"`
 	RemoveHeader bool   `json:"removeHeader,omitempty" toml:"removeHeader,omitempty" yaml:"removeHeader,omitempty" export:"true"`
@@ -108,7 +108,7 @@ type Compress struct {
 
 // DigestAuth holds the Digest HTTP authentication configuration.
 type DigestAuth struct {
-	Users        Users  `json:"users,omitempty" toml:"users,omitempty" yaml:"users,omitempty"`
+	Users        Users  `json:"users,omitempty" toml:"users,omitempty" yaml:"users,omitempty" loggable:"false"`
 	UsersFile    string `json:"usersFile,omitempty" toml:"usersFile,omitempty" yaml:"usersFile,omitempty"`
 	RemoveHeader bool   `json:"removeHeader,omitempty" toml:"removeHeader,omitempty" yaml:"removeHeader,omitempty" export:"true"`
 	Realm        string `json:"realm,omitempty" toml:"realm,omitempty" yaml:"realm,omitempty"`

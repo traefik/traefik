@@ -13,6 +13,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/traefik/yaegi/interp"
 )
 
 // PP the interface of a plugin's provider.
@@ -52,16 +53,26 @@ func ppSymbols() map[string]map[string]reflect.Value {
 
 // BuildProvider builds a plugin's provider.
 func (b Builder) BuildProvider(pName string, config map[string]interface{}) (provider.Provider, error) {
-	if b.providerDescriptors == nil {
+	if b.providerBuilders == nil {
 		return nil, fmt.Errorf("no plugin definition in the static configuration: %s", pName)
 	}
 
-	descriptor, ok := b.providerDescriptors[pName]
+	builder, ok := b.providerBuilders[pName]
 	if !ok {
 		return nil, fmt.Errorf("unknown plugin type: %s", pName)
 	}
 
-	return newProvider(descriptor, config, "plugin-"+pName)
+	return newProvider(builder, config, "plugin-"+pName)
+}
+
+type providerBuilder struct {
+	// Import plugin's import/package
+	Import string `json:"import,omitempty" toml:"import,omitempty" yaml:"import,omitempty"`
+
+	// BasePkg plugin's base package name (optional)
+	BasePkg string `json:"basePkg,omitempty" toml:"basePkg,omitempty" yaml:"basePkg,omitempty"`
+
+	interpreter *interp.Interpreter
 }
 
 // Provider is a plugin's provider wrapper.
@@ -70,13 +81,13 @@ type Provider struct {
 	pp   PP
 }
 
-func newProvider(descriptor pluginContext, config map[string]interface{}, providerName string) (*Provider, error) {
-	basePkg := descriptor.BasePkg
+func newProvider(builder providerBuilder, config map[string]interface{}, providerName string) (*Provider, error) {
+	basePkg := builder.BasePkg
 	if basePkg == "" {
-		basePkg = strings.ReplaceAll(path.Base(descriptor.Import), "-", "_")
+		basePkg = strings.ReplaceAll(path.Base(builder.Import), "-", "_")
 	}
 
-	vConfig, err := descriptor.interpreter.Eval(basePkg + `.CreateConfig()`)
+	vConfig, err := builder.interpreter.Eval(basePkg + `.CreateConfig()`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to eval CreateConfig: %w", err)
 	}
@@ -97,12 +108,12 @@ func newProvider(descriptor pluginContext, config map[string]interface{}, provid
 		return nil, fmt.Errorf("failed to decode configuration: %w", err)
 	}
 
-	_, err = descriptor.interpreter.Eval(`package wrapper
+	_, err = builder.interpreter.Eval(`package wrapper
 
 import (
 	"context"
 
-	` + basePkg + ` "` + descriptor.Import + `"
+	` + basePkg + ` "` + builder.Import + `"
 	"github.com/traefik/traefik/v2/pkg/plugins"
 )
 
@@ -116,7 +127,7 @@ func NewWrapper(ctx context.Context, config *` + basePkg + `.Config, name string
 		return nil, fmt.Errorf("failed to eval wrapper: %w", err)
 	}
 
-	fnNew, err := descriptor.interpreter.Eval("wrapper.NewWrapper")
+	fnNew, err := builder.interpreter.Eval("wrapper.NewWrapper")
 	if err != nil {
 		return nil, fmt.Errorf("failed to eval New: %w", err)
 	}
