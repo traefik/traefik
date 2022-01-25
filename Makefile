@@ -14,6 +14,7 @@ TRAEFIK_IMAGE := $(if $(REPONAME),$(REPONAME),"traefik/traefik")
 INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)",-v "/var/run/docker.sock:/var/run/docker.sock")
 DOCKER_BUILD_ARGS := $(if $(DOCKER_VERSION), "--build-arg=DOCKER_VERSION=$(DOCKER_VERSION)",)
 
+# only used when running in docker
 TRAEFIK_ENVS := \
 	-e OS_ARCH_ARG \
 	-e OS_PLATFORM_ARG \
@@ -23,7 +24,7 @@ TRAEFIK_ENVS := \
 	-e CODENAME \
 	-e TESTDIRS \
 	-e CI \
-	-e CONTAINER=DOCKER		# Indicator for integration tests that we are running inside a container.
+	-e IN_DOCKER=true		# Indicator for integration tests that we are running inside a container.
 
 TRAEFIK_MOUNT := -v "$(CURDIR)/dist:/go/src/github.com/traefik/traefik/dist"
 DOCKER_RUN_OPTS := $(TRAEFIK_ENVS) $(TRAEFIK_MOUNT) "$(TRAEFIK_DEV_IMAGE)"
@@ -102,7 +103,7 @@ crossbinary-default-parallel:
 test: build-dev-image
 	-docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
 	trap 'docker network rm traefik-test-network' EXIT; \
-	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK_TEST),) ./script/make.sh generate test-unit binary test-integration
+	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK_TEST)) ./script/make.sh generate test-unit binary test-integration
 
 ## Run the unit tests
 .PHONY: test-unit
@@ -116,7 +117,7 @@ test-unit: build-dev-image
 test-integration: build-dev-image
 	-docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
 	trap 'docker network rm traefik-test-network' EXIT; \
-	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK_TEST),) ./script/make.sh generate binary test-integration
+	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK_TEST)) ./script/make.sh generate binary test-integration
 
 ## Pull all images for integration tests
 .PHONY: pull-images
