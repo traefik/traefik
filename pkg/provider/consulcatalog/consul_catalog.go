@@ -43,10 +43,10 @@ type itemData struct {
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	Constraints       string          `description:"Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
-	Endpoint          *EndpointConfig `description:"Consul endpoint settings" json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
-	Prefix            string          `description:"Prefix for consul service tags. Default 'traefik'" json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
-	EnableBlockingQuery bool 		  `description:"Enable Consul Service Check Blocking Query." json:"enableBlockingQuery,omitempty" toml:"enableBlockingQuery,omitempty" yaml:"enableBlockingQuery,omitempty" export:"true"`
+	Constraints string          `description:"Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
+	Endpoint    *EndpointConfig `description:"Consul endpoint settings" json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
+	Prefix      string          `description:"Prefix for consul service tags. Default 'traefik'" json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
+
 	RefreshInterval   ptypes.Duration `description:"Interval for check Consul API. Default 15s" json:"refreshInterval,omitempty" toml:"refreshInterval,omitempty" yaml:"refreshInterval,omitempty" export:"true"`
 	RequireConsistent bool            `description:"Forces the read to be fully consistent." json:"requireConsistent,omitempty" toml:"requireConsistent,omitempty" yaml:"requireConsistent,omitempty" export:"true"`
 	Stale             bool            `description:"Use stale consistency for catalog reads." json:"stale,omitempty" toml:"stale,omitempty" yaml:"stale,omitempty" export:"true"`
@@ -57,10 +57,12 @@ type Provider struct {
 	ConnectByDefault  bool            `description:"Consider every service as Connect capable by default." json:"connectByDefault,omitempty" toml:"connectByDefault,omitempty" yaml:"connectByDefault,omitempty" export:"true"`
 	ServiceName       string          `description:"Name of the Traefik service in Consul Catalog (needs to be registered via the orchestrator or manually)." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
 	Namespace         string          `description:"Sets the namespace used to discover services (Consul Enterprise only)." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty" export:"true"`
+	Watch             bool            `description:"Watch Consul API events." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
 
 	client         *api.Client
 	defaultRuleTpl *template.Template
 	certChan       chan *connectCert
+	eventChan      chan event
 }
 
 // EndpointConfig holds configurations of the endpoint.
@@ -100,6 +102,7 @@ func (p *Provider) Init() error {
 
 	p.defaultRuleTpl = defaultRuleTpl
 	p.certChan = make(chan *connectCert)
+	p.eventChan = make(chan event)
 	return nil
 }
 
@@ -118,6 +121,34 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 		pool.GoCtx(func(routineCtx context.Context) {
 			p.watchConnectTLS(routineCtx, leafWatcher, rootWatcher)
+		})
+	}
+
+	// FIXME refactor
+	if p.Watch {
+		servicesWatcher, checksWatcher, err := p.createServiceWatchers()
+		if err != nil {
+			return fmt.Errorf("create services an checks watch plans: %w", err)
+		}
+
+		pool.GoCtx(func(routineCtx context.Context) {
+			p.watchServices(routineCtx, servicesWatcher, checksWatcher)
+		})
+
+	} else {
+		pool.GoCtx(func(routineCtx context.Context) {
+			ticker := time.NewTicker(time.Duration(p.RefreshInterval))
+			defer ticker.Stop()
+
+			for {
+				select {
+				case <-routineCtx.Done():
+					return
+
+				case <-ticker.C:
+					p.eventChan <- event{}
+				}
+			}
 		})
 	}
 
@@ -153,48 +184,24 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				return fmt.Errorf("failed to get consul catalog data: %w", err)
 			}
 
-			var ticker *time.Ticker
-			if !p.EnableBlockingQuery {
-				// Periodic refreshes.
-				ticker = time.NewTicker(time.Duration(p.RefreshInterval))
-				defer ticker.Stop()
-			}
-
-			var lastIndex uint64
-
 			for {
 				select {
 				case <-routineCtx.Done():
 					return nil
+
 				case certInfo = <-p.certChan:
 					if certInfo.err != nil {
 						return backoff.Permanent(err)
 					}
-				default:
-					if p.EnableBlockingQuery {
-						// Watch monitors the consul health checks and then load
-						// configuration from the configurationChan.
-						// https://www.consul.io/docs/dynamic-app-config/watches
-						q := &api.QueryOptions{RequireConsistent: true, WaitIndex: lastIndex}
-						_, meta, err := p.client.Health().State("any", q)
 
-						if err != nil {
-							logger.Printf("[WARN] consul: Error fetching health state. %v", err)
-							time.Sleep(time.Second)
-							continue
-						}
-
-						// remember the last state and wait for the next change
-						lastIndex = meta.LastIndex
-					} else {
-						select {
-						case <- ticker.C:
-						}
+				case event := <-p.eventChan:
+					if event.err != nil {
+						return backoff.Permanent(err)
 					}
-				}
-				err = p.loadConfiguration(ctxLog, certInfo, configurationChan)
-				if err != nil {
-					return fmt.Errorf("failed to refresh consul catalog data: %w", err)
+
+					if err = p.loadConfiguration(ctxLog, certInfo, configurationChan); err != nil {
+						return fmt.Errorf("failed to refresh consul catalog data: %w", err)
+					}
 				}
 			}
 		}
@@ -354,6 +361,58 @@ func (p *Provider) fetchService(ctx context.Context, name string, connectEnabled
 	}
 
 	return consulServices, statuses, err
+}
+
+type event struct {
+	err error
+}
+
+func (p *Provider) createServiceWatchers() (*watch.Plan, *watch.Plan, error) {
+	servicesWatcher, err := watch.Parse(map[string]interface{}{"type": "services"})
+	if err != nil {
+		return nil, nil, fmt.Errorf("parse watcher: %w", err)
+	}
+
+	servicesWatcher.HybridHandler = func(_ watch.BlockingParamVal, _ interface{}) {
+		p.eventChan <- event{}
+	}
+
+	checksWatcher, err := watch.Parse(map[string]interface{}{"type": "checks"})
+	if err != nil {
+		return nil, nil, fmt.Errorf("parse watcher: %w", err)
+	}
+
+	checksWatcher.HybridHandler = func(_ watch.BlockingParamVal, _ interface{}) {
+		p.eventChan <- event{}
+	}
+
+	return servicesWatcher, checksWatcher, nil
+}
+
+// FIXME rename
+func (p *Provider) watchServices(ctx context.Context, servicesWatcher *watch.Plan, checksWatcher *watch.Plan) {
+	logger := hclog.New(&hclog.LoggerOptions{
+		Name:       "consulcatalog",
+		Level:      hclog.LevelFromString(logrus.GetLevel().String()),
+		JSONFormat: true,
+	})
+
+	go func() {
+		if err := servicesWatcher.RunWithClientAndHclog(p.client, logger); err != nil {
+			p.eventChan <- event{err: err}
+		}
+	}()
+
+	go func() {
+		if err := checksWatcher.RunWithClientAndHclog(p.client, logger); err != nil {
+			p.eventChan <- event{err: err}
+		}
+	}()
+
+	<-ctx.Done()
+
+	checksWatcher.Stop()
+	servicesWatcher.Stop()
 }
 
 func rootsWatchHandler(ctx context.Context, dest chan<- []string) func(watch.BlockingParamVal, interface{}) {
