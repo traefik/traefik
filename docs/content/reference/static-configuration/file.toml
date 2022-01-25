@@ -179,6 +179,8 @@
     endpoints = ["foobar", "foobar"]
     username = "foobar"
     password = "foobar"
+    namespace = "foobar"
+    token = "foobar"
     [providers.consul.tls]
       ca = "foobar"
       caOptional = true
@@ -190,6 +192,8 @@
     endpoints = ["foobar", "foobar"]
     username = "foobar"
     password = "foobar"
+    namespace = "foobar"
+    token = "foobar"
     [providers.etcd.tls]
       ca = "foobar"
       caOptional = true
@@ -201,6 +205,8 @@
     endpoints = ["foobar", "foobar"]
     username = "foobar"
     password = "foobar"
+    namespace = "foobar"
+    token = "foobar"
     [providers.zooKeeper.tls]
       ca = "foobar"
       caOptional = true
@@ -212,6 +218,8 @@
     endpoints = ["foobar", "foobar"]
     username = "foobar"
     password = "foobar"
+    namespace = "foobar"
+    token = "foobar"
     [providers.redis.tls]
       ca = "foobar"
       caOptional = true

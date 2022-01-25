@@ -23,7 +23,7 @@ The total count of configuration reloads.
 config.reload.total
 ```
 
-```influxdb tab="InfluDB"
+```influxdb tab="InfluxDB"
 traefik.config.reload.total
 ```
 
@@ -43,7 +43,7 @@ The total count of configuration reload failures.
 config.reload.total (with tag "failure" to true)
 ```
 
-```influxdb tab="InfluDB"
+```influxdb tab="InfluxDB"
 traefik.config.reload.total.failure
 ```
 
@@ -63,7 +63,7 @@ The timestamp of the last configuration reload success.
 config.reload.lastSuccessTimestamp
 ```
 
-```influxdb tab="InfluDB"
+```influxdb tab="InfluxDB"
 traefik.config.reload.lastSuccessTimestamp
 ```
 
@@ -83,7 +83,7 @@ The timestamp of the last configuration reload failure.
 config.reload.lastFailureTimestamp
 ```
 
-```influxdb tab="InfluDB"
+```influxdb tab="InfluxDB"
 traefik.config.reload.lastFailureTimestamp
 ```
 
@@ -114,7 +114,7 @@ Available labels: `code`, `method`, `protocol`, `entrypoint`.
 entrypoint.request.total
 ```
 
-```influxdb tab="InfluDB"
+```influxdb tab="InfluxDB"
 traefik.entrypoint.requests.total
 ```
 
@@ -145,7 +145,7 @@ Available labels: `code`, `method`, `protocol`, `entrypoint`.
 entrypoint.request.duration
 ```
 
-```influxdb tab="InfluDB"
+```influxdb tab="InfluxDB"
 traefik.entrypoint.request.duration
 ```
 
@@ -167,7 +167,7 @@ Available labels: `method`, `protocol`, `entrypoint`.
 entrypoint.connections.open
 ```
 
-```influxdb tab="InfluDB"
+```influxdb tab="InfluxDB"
 traefik.entrypoint.connections.open
 ```
 
@@ -200,7 +200,7 @@ Available labels: `code`, `method`, `protocol`, `service`.
 service.request.total
 ```
 
-```influxdb tab="InfluDB"
+```influxdb tab="InfluxDB"
 traefik.service.requests.total
 ```
 
@@ -231,7 +231,7 @@ Available labels: `code`, `method`, `protocol`, `service`.
 service.request.duration
 ```
 
-```influxdb tab="InfluDB"
+```influxdb tab="InfluxDB"
 traefik.service.request.duration
 ```
 
@@ -253,7 +253,7 @@ Available labels: `method`, `protocol`, `service`.
 service.connections.open
 ```
 
-```influxdb tab="InfluDB"
+```influxdb tab="InfluxDB"
 traefik.service.connections.open
 ```
 
@@ -275,7 +275,7 @@ Available labels: `service`.
 service.retries.total
 ```
 
-```influxdb tab="InfluDB"
+```influxdb tab="InfluxDB"
 traefik.service.retries.total
 ```
 
@@ -297,7 +297,7 @@ Available labels: `service`, `url`.
 service.server.up
 ```
 
-```influxdb tab="InfluDB"
+```influxdb tab="InfluxDB"
 traefik.service.server.up
 ```
 

@@ -426,6 +426,9 @@ Use stale consistency for catalog reads. (Default: ```false```)
 `TRAEFIK_PROVIDERS_CONSUL_ENDPOINTS`:  
 KV store endpoints (Default: ```127.0.0.1:8500```)
 
+`TRAEFIK_PROVIDERS_CONSUL_NAMESPACE`:  
+KV Namespace
+
 `TRAEFIK_PROVIDERS_CONSUL_PASSWORD`:  
 KV Password
 
@@ -446,6 +449,9 @@ TLS insecure skip verify (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_CONSUL_TLS_KEY`:  
 TLS key
+
+`TRAEFIK_PROVIDERS_CONSUL_TOKEN`:  
+KV Token
 
 `TRAEFIK_PROVIDERS_CONSUL_USERNAME`:  
 KV Username
@@ -534,6 +540,9 @@ Enable Etcd backend with default settings. (Default: ```false```)
 `TRAEFIK_PROVIDERS_ETCD_ENDPOINTS`:  
 KV store endpoints (Default: ```127.0.0.1:2379```)
 
+`TRAEFIK_PROVIDERS_ETCD_NAMESPACE`:  
+KV Namespace
+
 `TRAEFIK_PROVIDERS_ETCD_PASSWORD`:  
 KV Password
 
@@ -554,6 +563,9 @@ TLS insecure skip verify (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ETCD_TLS_KEY`:  
 TLS key
+
+`TRAEFIK_PROVIDERS_ETCD_TOKEN`:  
+KV Token
 
 `TRAEFIK_PROVIDERS_ETCD_USERNAME`:  
 KV Username
@@ -789,6 +801,9 @@ Enable Redis backend with default settings. (Default: ```false```)
 `TRAEFIK_PROVIDERS_REDIS_ENDPOINTS`:  
 KV store endpoints (Default: ```127.0.0.1:6379```)
 
+`TRAEFIK_PROVIDERS_REDIS_NAMESPACE`:  
+KV Namespace
+
 `TRAEFIK_PROVIDERS_REDIS_PASSWORD`:  
 KV Password
 
@@ -810,6 +825,9 @@ TLS insecure skip verify (Default: ```false```)
 `TRAEFIK_PROVIDERS_REDIS_TLS_KEY`:  
 TLS key
 
+`TRAEFIK_PROVIDERS_REDIS_TOKEN`:  
+KV Token
+
 `TRAEFIK_PROVIDERS_REDIS_USERNAME`:  
 KV Username
 
@@ -824,6 +842,9 @@ Enable ZooKeeper backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER_ENDPOINTS`:  
 KV store endpoints (Default: ```127.0.0.1:2181```)
+
+`TRAEFIK_PROVIDERS_ZOOKEEPER_NAMESPACE`:  
+KV Namespace
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER_PASSWORD`:  
 KV Password
@@ -845,6 +866,9 @@ TLS insecure skip verify (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER_TLS_KEY`:  
 TLS key
+
+`TRAEFIK_PROVIDERS_ZOOKEEPER_TOKEN`:  
+KV Token
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER_USERNAME`:  
 KV Username
