@@ -161,6 +161,7 @@ providers:
     exposedByDefault: true
     defaultRule: foobar
     namespace: foobar
+    watch: true
     endpoint:
       address: foobar
       scheme: foobar
