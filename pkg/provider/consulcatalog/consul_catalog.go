@@ -61,7 +61,7 @@ type Provider struct {
 	client         *api.Client
 	defaultRuleTpl *template.Template
 	certChan       chan *connectCert
-	eventChan      chan event
+	eventChan      chan struct{}
 }
 
 // EndpointConfig holds configurations of the endpoint.
@@ -101,7 +101,7 @@ func (p *Provider) Init() error {
 
 	p.defaultRuleTpl = defaultRuleTpl
 	p.certChan = make(chan *connectCert)
-	p.eventChan = make(chan event)
+	p.eventChan = make(chan struct{})
 	return nil
 }
 
@@ -113,52 +113,26 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		return fmt.Errorf("unable to create consul client: %w", err)
 	}
 
-	if p.ConnectAware {
-		leafWatcher, rootWatcher, err := p.createConnectTLSWatchers()
-		if err != nil {
-			return fmt.Errorf("unable to create consul watch plans: %w", err)
-		}
-		pool.GoCtx(func(routineCtx context.Context) {
-			p.watchConnectTLS(routineCtx, leafWatcher, rootWatcher)
-		})
-	}
-
-	// FIXME refactor
-	if p.Watch {
-		servicesWatcher, checksWatcher, err := p.createServiceWatchers()
-		if err != nil {
-			return fmt.Errorf("create services an checks watch plans: %w", err)
-		}
-
-		pool.GoCtx(func(routineCtx context.Context) {
-			p.watchServices(routineCtx, servicesWatcher, checksWatcher)
-		})
-
-	} else {
-		pool.GoCtx(func(routineCtx context.Context) {
-			ticker := time.NewTicker(time.Duration(p.RefreshInterval))
-			defer ticker.Stop()
-
-			for {
-				select {
-				case <-routineCtx.Done():
-					return
-
-				case <-ticker.C:
-					p.eventChan <- event{}
-				}
-			}
-		})
-	}
-
-	var certInfo *connectCert
-
-	pool.GoCtx(func(routineCtx context.Context) {
-		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "consulcatalog"))
+	pool.GoCtx(func(ctx context.Context) {
+		ctxLog := log.With(ctx, log.Str(log.ProviderName, "consulcatalog"))
 		logger := log.FromContext(ctxLog)
 
 		operation := func() error {
+			opCtx, opCancel := context.WithCancel(ctxLog)
+			defer opCancel()
+
 			var err error
+
+			if p.ConnectAware {
+				go func() {
+					defer opCancel()
+					if err := p.watchConnectTLS(opCtx); err != nil {
+						logger.Errorf("watch connect certificates: %w", err)
+					}
+				}()
+			}
+
+			var certInfo *connectCert
 
 			// If we are running in connect aware mode then we need to
 			// make sure that we obtain the certificates before starting
@@ -168,36 +142,50 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			if p.ConnectAware && !certInfo.isReady() {
 				logger.Infof("Waiting for Connect certificate before building first configuration")
 				select {
-				case <-routineCtx.Done():
-					return nil
 				case certInfo = <-p.certChan:
-					if certInfo.err != nil {
-						return backoff.Permanent(err)
-					}
+				case <-opCtx.Done():
+					return nil
 				}
 			}
 
 			// get configuration at the provider's startup.
-			err = p.loadConfiguration(ctxLog, certInfo, configurationChan)
-			if err != nil {
+			if err = p.loadConfiguration(ctxLog, certInfo, configurationChan); err != nil {
 				return fmt.Errorf("failed to get consul catalog data: %w", err)
+			}
+
+			if p.Watch {
+				go func() {
+					defer opCancel()
+					if err := p.watchServices(opCtx); err != nil {
+						logger.Errorf("watch services: %w", err)
+					}
+				}()
+			} else {
+				go func() {
+					ticker := time.NewTicker(time.Duration(p.RefreshInterval))
+					defer ticker.Stop()
+
+					for {
+						select {
+						case <-opCtx.Done():
+							return
+
+						case <-ticker.C:
+							p.eventChan <- struct{}{}
+						}
+					}
+				}()
 			}
 
 			for {
 				select {
-				case <-routineCtx.Done():
+				case <-ctx.Done():
 					return nil
 
-				case certInfo = <-p.certChan:
-					if certInfo.err != nil {
-						return backoff.Permanent(err)
-					}
+				case <-opCtx.Done():
+					return opCtx.Err()
 
-				case event := <-p.eventChan:
-					if event.err != nil {
-						return backoff.Permanent(err)
-					}
-
+				case <-p.eventChan:
 					if err = p.loadConfiguration(ctxLog, certInfo, configurationChan); err != nil {
 						return fmt.Errorf("failed to refresh consul catalog data: %w", err)
 					}
@@ -362,56 +350,58 @@ func (p *Provider) fetchService(ctx context.Context, name string, connectEnabled
 	return consulServices, statuses, err
 }
 
-type event struct {
-	err error
-}
-
-func (p *Provider) createServiceWatchers() (*watch.Plan, *watch.Plan, error) {
+// watchServices watches for update events of the services list and statuses,
+// and transmits them to the caller through the p.eventChan.
+func (p *Provider) watchServices(ctx context.Context) error {
 	servicesWatcher, err := watch.Parse(map[string]interface{}{"type": "services"})
 	if err != nil {
-		return nil, nil, fmt.Errorf("parse watcher: %w", err)
+		return fmt.Errorf("parse watcher: %w", err)
 	}
 
 	servicesWatcher.HybridHandler = func(_ watch.BlockingParamVal, _ interface{}) {
-		p.eventChan <- event{}
+		p.eventChan <- struct{}{}
 	}
 
 	checksWatcher, err := watch.Parse(map[string]interface{}{"type": "checks"})
 	if err != nil {
-		return nil, nil, fmt.Errorf("parse watcher: %w", err)
+		return fmt.Errorf("parse watcher: %w", err)
 	}
 
 	checksWatcher.HybridHandler = func(_ watch.BlockingParamVal, _ interface{}) {
-		p.eventChan <- event{}
+		p.eventChan <- struct{}{}
 	}
 
-	return servicesWatcher, checksWatcher, nil
-}
-
-// FIXME rename
-func (p *Provider) watchServices(ctx context.Context, servicesWatcher *watch.Plan, checksWatcher *watch.Plan) {
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:       "consulcatalog",
 		Level:      hclog.LevelFromString(logrus.GetLevel().String()),
 		JSONFormat: true,
 	})
 
+	errChan := make(chan error, 2)
+
 	go func() {
 		if err := servicesWatcher.RunWithClientAndHclog(p.client, logger); err != nil {
-			p.eventChan <- event{err: err}
+			errChan <- err
 		}
 	}()
 
 	go func() {
 		if err := checksWatcher.RunWithClientAndHclog(p.client, logger); err != nil {
-			p.eventChan <- event{err: err}
+			errChan <- err
 		}
 	}()
 
-	<-ctx.Done()
+	select {
+	case <-ctx.Done():
+		checksWatcher.Stop()
+		servicesWatcher.Stop()
+		return nil
 
-	checksWatcher.Stop()
-	servicesWatcher.Stop()
+	case err := <-errChan:
+		checksWatcher.Stop()
+		servicesWatcher.Stop()
+		return err
+	}
 }
 
 func rootsWatchHandler(ctx context.Context, dest chan<- []string) func(watch.BlockingParamVal, interface{}) {
@@ -461,57 +451,47 @@ func leafWatcherHandler(ctx context.Context, dest chan<- keyPair) func(watch.Blo
 	}
 }
 
-func (p *Provider) createConnectTLSWatchers() (*watch.Plan, *watch.Plan, error) {
+// watchConnectTLS watches for updates of the root certificate or the leaf
+// certificate, and transmits them to the caller via p.certChan.
+func (p *Provider) watchConnectTLS(ctx context.Context) error {
+	logger := log.FromContext(ctx)
+
+	leafChan := make(chan keyPair)
 	leafWatcher, err := watch.Parse(map[string]interface{}{
 		"type":    "connect_leaf",
 		"service": p.ServiceName,
 	})
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create leaf cert watcher plan: %w", err)
+		return fmt.Errorf("failed to create leaf cert watcher plan: %w", err)
 	}
+	leafWatcher.HybridHandler = leafWatcherHandler(ctx, leafChan)
 
+	rootChan := make(chan []string)
 	rootWatcher, err := watch.Parse(map[string]interface{}{
 		"type": "connect_roots",
 	})
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create root cert watcher plan: %w", err)
+		return fmt.Errorf("failed to create root cert watcher plan: %w", err)
 	}
-
-	return leafWatcher, rootWatcher, nil
-}
-
-// watchConnectTLS watches for updates of the root certificate or the leaf
-// certificate, and transmits them to the caller via p.certChan. Any error is also
-// propagated up through p.certChan, in connectCert.err.
-func (p *Provider) watchConnectTLS(ctx context.Context, leafWatcher *watch.Plan, rootWatcher *watch.Plan) {
-	ctxLog := log.With(ctx, log.Str(log.ProviderName, "consulcatalog"))
-	logger := log.FromContext(ctxLog)
-
-	leafChan := make(chan keyPair)
-	rootChan := make(chan []string)
-
-	leafWatcher.HybridHandler = leafWatcherHandler(ctx, leafChan)
 	rootWatcher.HybridHandler = rootsWatchHandler(ctx, rootChan)
 
-	logOpts := &hclog.LoggerOptions{
+	hclogger := hclog.New(&hclog.LoggerOptions{
 		Name:       "consulcatalog",
 		Level:      hclog.LevelFromString(logrus.GetLevel().String()),
 		JSONFormat: true,
-	}
+	})
 
-	hclogger := hclog.New(logOpts)
+	errChan := make(chan error, 2)
 
 	go func() {
-		err := leafWatcher.RunWithClientAndHclog(p.client, hclogger)
-		if err != nil {
-			p.certChan <- &connectCert{err: err}
+		if err := leafWatcher.RunWithClientAndHclog(p.client, hclogger); err != nil {
+			errChan <- err
 		}
 	}()
 
 	go func() {
-		err := rootWatcher.RunWithClientAndHclog(p.client, hclogger)
-		if err != nil {
-			p.certChan <- &connectCert{err: err}
+		if err := rootWatcher.RunWithClientAndHclog(p.client, hclogger); err != nil {
+			errChan <- err
 		}
 	}()
 
@@ -526,10 +506,17 @@ func (p *Provider) watchConnectTLS(ctx context.Context, leafWatcher *watch.Plan,
 		case <-ctx.Done():
 			leafWatcher.Stop()
 			rootWatcher.Stop()
-			return
+			return nil
+
+		case err := <-errChan:
+			leafWatcher.Stop()
+			rootWatcher.Stop()
+			return err
+
 		case rootCerts = <-rootChan:
 		case leafCerts = <-leafChan:
 		}
+
 		newCertInfo := &connectCert{
 			root: rootCerts,
 			leaf: leafCerts,
