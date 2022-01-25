@@ -21,7 +21,7 @@ func (s *MarathonSuite15) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "marathon15")
 	s.composeUp(c)
 
-	s.marathonURL = "http://" + containerNameMarathon + ":8080"
+	s.marathonURL = "http://" + s.getComposeServiceIP(c, containerNameMarathon) + ":8080"
 
 	// Wait for Marathon readiness prior to creating the client so that we
 	// don't run into the "all cluster members down" state right from the
