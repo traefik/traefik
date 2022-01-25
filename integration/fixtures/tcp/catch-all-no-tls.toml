@@ -27,4 +27,4 @@
   [tcp.services]
     [tcp.services.whoami-no-tls.loadBalancer]
       [[tcp.services.whoami-no-tls.loadBalancer.servers]]
-        address = "whoami-banner:8080"
+        address = "{{ .WhoamiBannerAddress }}"
