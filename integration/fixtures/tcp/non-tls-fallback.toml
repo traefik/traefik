@@ -47,17 +47,17 @@
   [tcp.services]
     [tcp.services.whoami-no-tls.loadBalancer]
       [[tcp.services.whoami-no-tls.loadBalancer.servers]]
-        address = "whoami-no-tls:8080"
+        address = "{{ .WhoamiNoTLS }}"
 
     [tcp.services.whoami-a.loadBalancer]
       [[tcp.services.whoami-a.loadBalancer.servers]]
-        address = "whoami-a:8080"
+        address = "{{ .WhoamiA }}"
 
     [tcp.services.whoami-b.loadBalancer]
       [[tcp.services.whoami-b.loadBalancer.servers]]
-        address = "whoami-b:8080"
+        address = "{{ .WhoamiB }}"
 
     [tcp.services.whoami-no-cert.loadBalancer]
       [[tcp.services.whoami-no-cert.loadBalancer.servers]]
-        address = "whoami-no-cert:8080"
+        address = "{{ .WhoamiNoCert }}"
 
