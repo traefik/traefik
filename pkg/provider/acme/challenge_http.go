@@ -103,7 +103,7 @@ func (c *ChallengeHTTP) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 func (c *ChallengeHTTP) getTokenValue(ctx context.Context, token, domain string) []byte {
 	logger := log.FromContext(ctx)
-	logger.Debugf("Retrieving the ACME challenge for token %s...", token)
+	logger.Debugf("Retrieving the ACME challenge for %s token %s...", domain, token)
 
 	var result []byte
 
@@ -112,7 +112,7 @@ func (c *ChallengeHTTP) getTokenValue(ctx context.Context, token, domain string)
 		defer c.lock.RUnlock()
 
 		if _, ok := c.httpChallenges[token]; !ok {
-			return fmt.Errorf("cannot find challenge for token %s", token)
+			return fmt.Errorf("cannot find challenge for %s token %s", domain, token)
 		}
 
 		var ok bool
@@ -132,7 +132,7 @@ func (c *ChallengeHTTP) getTokenValue(ctx context.Context, token, domain string)
 	ebo.MaxElapsedTime = 60 * time.Second
 	err := backoff.RetryNotify(safe.OperationWithRecover(operation), ebo, notify)
 	if err != nil {
-		logger.Errorf("Cannot retrieve the ACME challenge for token %v: %v", token, err)
+		logger.Errorf("Cannot retrieve the ACME challenge for %s token %v: %v", domain, token, err)
 		return []byte{}
 	}
 
