@@ -23,6 +23,8 @@ Certificates are requested for domain names retrieved from the router's [dynamic
 
 You can read more about this retrieval mechanism in the following section: [ACME Domain Definition](#domain-definition).
 
+!!! warning "Defining an [ACME challenge type](#the-different-acme-challenges) is a requirement for a certificate resolver to be functional."
+
 !!! important "Defining a certificates resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
 
 ??? note "Configuration Reference"
@@ -157,6 +159,8 @@ When using LetsEncrypt with kubernetes, there are some known caveats with both t
     If you intend to run multiple instances of Traefik with LetsEncrypt, please ensure you read the sections on those provider pages.
 
 ## The Different ACME Challenges
+
+!!! warning "Defining one ACME challenge is a requirement for a certificate resolver to be functional."
 
 !!! important "Defining a certificates resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
 
