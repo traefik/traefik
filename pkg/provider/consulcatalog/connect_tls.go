@@ -12,8 +12,6 @@ import (
 type connectCert struct {
 	root []string
 	leaf keyPair
-	// err is used to propagate to the caller (Provide) any error occurring within the certificate watcher goroutines.
-	err error
 }
 
 func (c *connectCert) getRoot() []traefiktls.FileOrContent {
