@@ -234,6 +234,77 @@ func (s *ConsulCatalogSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
+func (s *ConsulCatalogSuite) TestSimpleConfigurationWithWatch(c *check.C) {
+	tempObjects := struct {
+		ConsulAddress string
+		DefaultRule   string
+	}{
+		ConsulAddress: s.consulURL,
+		DefaultRule:   "Host(`{{ normalize .Name }}.consul.localhost`)",
+	}
+
+	file := s.adaptFile(c, "fixtures/consul_catalog/simple_watch.toml", tempObjects)
+	defer os.Remove(file)
+
+	reg := &api.AgentServiceRegistration{
+		ID:      "whoami1",
+		Name:    "whoami",
+		Tags:    []string{"traefik.enable=true"},
+		Port:    80,
+		Address: s.getComposeServiceIP(c, "whoami1"),
+	}
+	err := s.registerService(reg, false)
+	c.Assert(err, checker.IsNil)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err = cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "whoami.consul.localhost"
+
+	err = try.Request(req, 2*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContainsOr("Hostname: whoami1"))
+	c.Assert(err, checker.IsNil)
+
+	err = s.deregisterService("whoami1", false)
+	c.Assert(err, checker.IsNil)
+
+	err = try.Request(req, 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+
+	whoamiIP := s.getComposeServiceIP(c, "whoami1")
+	reg.Check = &api.AgentServiceCheck{
+		CheckID:  "some-ok-check",
+		TCP:      whoamiIP + ":80",
+		Name:     "some-ok-check",
+		Interval: "1s",
+		Timeout:  "1s",
+	}
+
+	err = s.registerService(reg, false)
+	c.Assert(err, checker.IsNil)
+
+	err = try.Request(req, 2*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContainsOr("Hostname: whoami1"))
+	c.Assert(err, checker.IsNil)
+
+	reg.Check = &api.AgentServiceCheck{
+		CheckID:  "some-failing-check",
+		TCP:      ":80",
+		Name:     "some-failing-check",
+		Interval: "1s",
+		Timeout:  "1s",
+	}
+
+	err = s.registerService(reg, false)
+	c.Assert(err, checker.IsNil)
+
+	err = try.Request(req, 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+}
+
 func (s *ConsulCatalogSuite) TestRegisterServiceWithoutIP(c *check.C) {
 	tempObjects := struct {
 		ConsulAddress string
