@@ -303,6 +303,9 @@ func (s *ConsulCatalogSuite) TestSimpleConfigurationWithWatch(c *check.C) {
 
 	err = try.Request(req, 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
+
+	err = s.deregisterService("whoami1", false)
+	c.Assert(err, checker.IsNil)
 }
 
 func (s *ConsulCatalogSuite) TestRegisterServiceWithoutIP(c *check.C) {
