@@ -1,7 +1,7 @@
 package kv
 
 import (
-	"github.com/abronan/valkeyrie/store"
+	"github.com/kvtools/valkeyrie/store"
 	"github.com/traefik/traefik/v2/pkg/log"
 )
 
