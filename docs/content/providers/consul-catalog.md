@@ -721,3 +721,27 @@ providers:
 --providers.consulcatalog.namespace=production
 # ...
 ```
+
+### `watch`
+
+_Optional, Default=false_
+
+When set to `true`, watches for Consul changes ([Consul watches checks](https://www.consul.io/docs/dynamic-app-config/watches#checks)).
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    watch: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  watch = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.watch=true
+# ...
+```
