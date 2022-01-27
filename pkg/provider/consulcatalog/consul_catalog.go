@@ -100,8 +100,9 @@ func (p *Provider) Init() error {
 	}
 
 	p.defaultRuleTpl = defaultRuleTpl
-	p.certChan = make(chan *connectCert)
-	p.eventChan = make(chan struct{})
+	p.certChan = make(chan *connectCert, 1)
+	p.eventChan = make(chan struct{}, 1)
+
 	return nil
 }
 
@@ -142,9 +143,13 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			if p.ConnectAware && !certInfo.isReady() {
 				logger.Infof("Waiting for Connect certificate before building first configuration")
 				select {
-				case certInfo = <-p.certChan:
-				case <-opCtx.Done():
+				case <-ctx.Done():
 					return nil
+
+				case <-opCtx.Done():
+					return opCtx.Err()
+
+				case certInfo = <-p.certChan:
 				}
 			}
 
@@ -153,29 +158,36 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				return fmt.Errorf("failed to get consul catalog data: %w", err)
 			}
 
-			if p.Watch {
-				go func() {
+			go func() {
+				if p.Watch {
 					defer opCancel()
 					if err := p.watchServices(opCtx); err != nil {
 						logger.Errorf("watch services: %w", err)
 					}
-				}()
-			} else {
-				go func() {
-					ticker := time.NewTicker(time.Duration(p.RefreshInterval))
-					defer ticker.Stop()
+					return
+				}
 
-					for {
+				// Periodic refreshes.
+				ticker := time.NewTicker(time.Duration(p.RefreshInterval))
+				defer ticker.Stop()
+
+				for {
+					select {
+					case <-opCtx.Done():
+						return
+
+					case <-ticker.C:
 						select {
 						case <-opCtx.Done():
 							return
 
-						case <-ticker.C:
-							p.eventChan <- struct{}{}
+						case p.eventChan <- struct{}{}:
+						default:
+							// Event chan is full, discard event.
 						}
 					}
-				}()
-			}
+				}
+			}()
 
 			for {
 				select {
@@ -185,10 +197,12 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				case <-opCtx.Done():
 					return opCtx.Err()
 
+				case certInfo = <-p.certChan:
 				case <-p.eventChan:
-					if err = p.loadConfiguration(ctxLog, certInfo, configurationChan); err != nil {
-						return fmt.Errorf("failed to refresh consul catalog data: %w", err)
-					}
+				}
+
+				if err = p.loadConfiguration(ctxLog, certInfo, configurationChan); err != nil {
+					return fmt.Errorf("failed to refresh consul catalog data: %w", err)
 				}
 			}
 		}
@@ -359,7 +373,12 @@ func (p *Provider) watchServices(ctx context.Context) error {
 	}
 
 	servicesWatcher.HybridHandler = func(_ watch.BlockingParamVal, _ interface{}) {
-		p.eventChan <- struct{}{}
+		select {
+		case <-ctx.Done():
+		case p.eventChan <- struct{}{}:
+		default:
+			// Event chan is full, discard event.
+		}
 	}
 
 	checksWatcher, err := watch.Parse(map[string]interface{}{"type": "checks"})
@@ -368,7 +387,12 @@ func (p *Provider) watchServices(ctx context.Context) error {
 	}
 
 	checksWatcher.HybridHandler = func(_ watch.BlockingParamVal, _ interface{}) {
-		p.eventChan <- struct{}{}
+		select {
+		case <-ctx.Done():
+		case p.eventChan <- struct{}{}:
+		default:
+			// Event chan is full, discard event.
+		}
 	}
 
 	logger := hclog.New(&hclog.LoggerOptions{
@@ -422,7 +446,10 @@ func rootsWatchHandler(ctx context.Context, dest chan<- []string) func(watch.Blo
 			roots = append(roots, root.RootCertPEM)
 		}
 
-		dest <- roots
+		select {
+		case <-ctx.Done():
+		case dest <- roots:
+		}
 	}
 }
 
@@ -444,9 +471,14 @@ func leafWatcherHandler(ctx context.Context, dest chan<- keyPair) func(watch.Blo
 			return
 		}
 
-		dest <- keyPair{
+		kp := keyPair{
 			cert: v.CertPEM,
 			key:  v.PrivateKeyPEM,
+		}
+
+		select {
+		case <-ctx.Done():
+		case dest <- kp:
 		}
 	}
 }
