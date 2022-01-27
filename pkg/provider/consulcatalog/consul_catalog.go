@@ -355,7 +355,7 @@ func (p *Provider) fetchService(ctx context.Context, name string, connectEnabled
 func (p *Provider) watchServices(ctx context.Context) error {
 	servicesWatcher, err := watch.Parse(map[string]interface{}{"type": "services"})
 	if err != nil {
-		return fmt.Errorf("parse watcher: %w", err)
+		return fmt.Errorf("parse services watcher: %w", err)
 	}
 
 	servicesWatcher.HybridHandler = func(_ watch.BlockingParamVal, _ interface{}) {
@@ -364,7 +364,7 @@ func (p *Provider) watchServices(ctx context.Context) error {
 
 	checksWatcher, err := watch.Parse(map[string]interface{}{"type": "checks"})
 	if err != nil {
-		return fmt.Errorf("parse watcher: %w", err)
+		return fmt.Errorf("parse checks watcher: %w", err)
 	}
 
 	checksWatcher.HybridHandler = func(_ watch.BlockingParamVal, _ interface{}) {
