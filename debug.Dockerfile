@@ -1,6 +1,10 @@
-FROM ubuntu:latest
-# Feel free to add below any helpful dependency for debugging
-RUN apt-get update && apt-get install -y --no-install-recommends lsof iproute2
+FROM alpine:3.14
+# Feel free to add below any helpful dependency for debugging.
+# iproute2 is for ss.
+RUN apk --no-cache --no-progress add bash curl ca-certificates tzdata \
+    lsof iproute2 \
+    && update-ca-certificates \
+    && rm -rf /var/cache/apk/*
 COPY script/ca-certificates.crt /etc/ssl/certs/
 COPY dist/traefik /
 EXPOSE 80
