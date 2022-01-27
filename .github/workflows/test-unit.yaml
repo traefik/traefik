@@ -7,7 +7,7 @@ on:
 
 env:
   GO_VERSION: 1.17
-  PRE_TARGET: ""
+  IN_DOCKER: ""
 
 jobs:
 
