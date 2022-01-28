@@ -423,6 +423,9 @@ Name of the Traefik service in Consul Catalog (needs to be registered via the or
 `TRAEFIK_PROVIDERS_CONSULCATALOG_STALE`:  
 Use stale consistency for catalog reads. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_CONSULCATALOG_WATCH`:  
+Watch Consul API events. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_CONSUL_ENDPOINTS`:  
 KV store endpoints (Default: ```127.0.0.1:8500```)
 
