@@ -58,10 +58,10 @@ type Provider struct {
 	Namespace         string          `description:"Sets the namespace used to discover services (Consul Enterprise only)." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty" export:"true"`
 	Watch             bool            `description:"Watch Consul API events." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
 
-	client         *api.Client
-	defaultRuleTpl *template.Template
-	certChan       chan *connectCert
-	eventChan      chan struct{}
+	client            *api.Client
+	defaultRuleTpl    *template.Template
+	certChan          chan *connectCert
+	watchServicesChan chan struct{}
 }
 
 // EndpointConfig holds configurations of the endpoint.
@@ -101,7 +101,7 @@ func (p *Provider) Init() error {
 
 	p.defaultRuleTpl = defaultRuleTpl
 	p.certChan = make(chan *connectCert, 1)
-	p.eventChan = make(chan struct{}, 1)
+	p.watchServicesChan = make(chan struct{}, 1)
 
 	return nil
 }
@@ -111,7 +111,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	var err error
 	p.client, err = createClient(p.Namespace, p.Endpoint)
 	if err != nil {
-		return fmt.Errorf("unable to create consul client: %w", err)
+		return fmt.Errorf("failed to create consul client: %w", err)
 	}
 
 	pool.GoCtx(func(routineCtx context.Context) {
@@ -130,7 +130,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			if p.ConnectAware {
 				go func() {
 					if err := p.watchConnectTLS(ctx); err != nil {
-						errChan <- fmt.Errorf("watch connect certificates: %w", err)
+						errChan <- fmt.Errorf("failed to watch connect certificates: %w", err)
 					}
 				}()
 			}
@@ -163,12 +163,12 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			go func() {
 				// Periodic refreshes.
 				if !p.Watch {
-					repeatSend(ctx, time.Duration(p.RefreshInterval), p.eventChan)
+					repeatSend(ctx, time.Duration(p.RefreshInterval), p.watchServicesChan)
 					return
 				}
 
 				if err := p.watchServices(ctx); err != nil {
-					errChan <- fmt.Errorf("watch services: %w", err)
+					errChan <- fmt.Errorf("failed to watch services: %w", err)
 				}
 			}()
 
@@ -181,7 +181,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					return err
 
 				case certInfo = <-p.certChan:
-				case <-p.eventChan:
+				case <-p.watchServicesChan:
 				}
 
 				if err = p.loadConfiguration(ctx, certInfo, configurationChan); err != nil {
@@ -348,17 +348,17 @@ func (p *Provider) fetchService(ctx context.Context, name string, connectEnabled
 }
 
 // watchServices watches for update events of the services list and statuses,
-// and transmits them to the caller through the p.eventChan.
+// and transmits them to the caller through the p.watchServicesChan.
 func (p *Provider) watchServices(ctx context.Context) error {
 	servicesWatcher, err := watch.Parse(map[string]interface{}{"type": "services"})
 	if err != nil {
-		return fmt.Errorf("parse services watcher: %w", err)
+		return fmt.Errorf("failed to create services watcher plan: %w", err)
 	}
 
 	servicesWatcher.HybridHandler = func(_ watch.BlockingParamVal, _ interface{}) {
 		select {
 		case <-ctx.Done():
-		case p.eventChan <- struct{}{}:
+		case p.watchServicesChan <- struct{}{}:
 		default:
 			// Event chan is full, discard event.
 		}
@@ -366,13 +366,13 @@ func (p *Provider) watchServices(ctx context.Context) error {
 
 	checksWatcher, err := watch.Parse(map[string]interface{}{"type": "checks"})
 	if err != nil {
-		return fmt.Errorf("parse checks watcher: %w", err)
+		return fmt.Errorf("failed to create checks watcher plan: %w", err)
 	}
 
 	checksWatcher.HybridHandler = func(_ watch.BlockingParamVal, _ interface{}) {
 		select {
 		case <-ctx.Done():
-		case p.eventChan <- struct{}{}:
+		case p.watchServicesChan <- struct{}{}:
 		default:
 			// Event chan is full, discard event.
 		}
@@ -481,7 +481,7 @@ func (p *Provider) watchConnectTLS(ctx context.Context) error {
 		"type": "connect_roots",
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create root cert watcher plan: %w", err)
+		return fmt.Errorf("failed to create roots cert watcher plan: %w", err)
 	}
 	rootsWatcher.HybridHandler = rootsWatchHandler(ctx, rootsChan)
 
@@ -532,7 +532,11 @@ func (p *Provider) watchConnectTLS(ctx context.Context) error {
 			log.FromContext(ctx).Debugf("Updating connect certs for service %s", p.ServiceName)
 
 			certInfo = newCertInfo
-			p.certChan <- newCertInfo
+
+			select {
+			case <-ctx.Done():
+			case p.certChan <- newCertInfo:
+			}
 		}
 	}
 }
