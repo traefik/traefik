@@ -149,6 +149,7 @@
     exposedByDefault = true
     defaultRule = "foobar"
     namespace = "foobar"
+    watch = true
     [providers.consulCatalog.endpoint]
       address = "foobar"
       scheme = "foobar"
