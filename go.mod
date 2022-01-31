@@ -21,7 +21,6 @@ require (
 	github.com/docker/docker v20.10.7+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/donovanhide/eventsource v0.0.0-20170630084216-b8f31a59085e // indirect
-	github.com/eapache/channels v1.1.0
 	github.com/fatih/structs v1.1.0
 	github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2
 	github.com/go-acme/lego/v4 v4.6.0

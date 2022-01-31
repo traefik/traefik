@@ -23,3 +23,5 @@ func (p *Provider) SetDefaults() {
 func (p *Provider) Init() error {
 	return p.Provider.Init(store.ETCDV3, "etcd")
 }
+
+// ThrottleDuration returns the throttle duration.
