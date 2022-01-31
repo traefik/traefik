@@ -627,6 +627,9 @@ Kubernetes certificate authority file path (not needed for in-cluster client).
 `--providers.kubernetescrd.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).
 
+`--providers.kubernetescrd.eventsthrottleduration`:  
+Ingress refresh throttle duration (Default: ```0```)
+
 `--providers.kubernetescrd.ingressclass`:  
 Value of kubernetes.io/ingress.class annotation to watch for.
 
@@ -635,9 +638,6 @@ Kubernetes label selector to use.
 
 `--providers.kubernetescrd.namespaces`:  
 Kubernetes namespaces.
-
-`--providers.kubernetescrd.throttleduration`:  
-Ingress refresh throttle duration (Default: ```0```)
 
 `--providers.kubernetescrd.token`:  
 Kubernetes bearer token (not needed for in-cluster client).
@@ -651,14 +651,14 @@ Kubernetes certificate authority file path (not needed for in-cluster client).
 `--providers.kubernetesgateway.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).
 
+`--providers.kubernetesgateway.eventsthrottleduration`:  
+Kubernetes refresh throttle duration (Default: ```0```)
+
 `--providers.kubernetesgateway.labelselector`:  
 Kubernetes label selector to select specific GatewayClasses.
 
 `--providers.kubernetesgateway.namespaces`:  
 Kubernetes namespaces.
-
-`--providers.kubernetesgateway.throttleduration`:  
-Kubernetes refresh throttle duration (Default: ```0```)
 
 `--providers.kubernetesgateway.token`:  
 Kubernetes bearer token (not needed for in-cluster client).
@@ -678,6 +678,9 @@ Kubernetes certificate authority file path (not needed for in-cluster client).
 `--providers.kubernetesingress.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).
 
+`--providers.kubernetesingress.eventsthrottleduration`:  
+Ingress refresh throttle duration (Default: ```0```)
+
 `--providers.kubernetesingress.ingressclass`:  
 Value of kubernetes.io/ingress.class annotation or IngressClass name to watch for.
 
@@ -695,9 +698,6 @@ Kubernetes Ingress label selector to use.
 
 `--providers.kubernetesingress.namespaces`:  
 Kubernetes namespaces.
-
-`--providers.kubernetesingress.throttleduration`:  
-Ingress refresh throttle duration (Default: ```0```)
 
 `--providers.kubernetesingress.token`:  
 Kubernetes bearer token (not needed for in-cluster client).

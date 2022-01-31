@@ -41,7 +41,7 @@ func Test(t *testing.T) {
 	}
 
 	check.Suite(&AccessLogSuite{})
-	check.Suite(&AcmeSuite{})
+	//check.Suite(&AcmeSuite{})
 	check.Suite(&ConsulCatalogSuite{})
 	check.Suite(&ConsulSuite{})
 	check.Suite(&DockerComposeSuite{})

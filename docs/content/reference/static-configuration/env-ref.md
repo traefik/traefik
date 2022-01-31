@@ -627,6 +627,9 @@ Kubernetes certificate authority file path (not needed for in-cluster client).
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
 
+`TRAEFIK_PROVIDERS_KUBERNETESCRD_EVENTSTHROTTLEDURATION`:  
+Ingress refresh throttle duration (Default: ```0```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_INGRESSCLASS`:  
 Value of kubernetes.io/ingress.class annotation to watch for.
 
@@ -635,9 +638,6 @@ Kubernetes label selector to use.
 
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_NAMESPACES`:  
 Kubernetes namespaces.
-
-`TRAEFIK_PROVIDERS_KUBERNETESCRD_THROTTLEDURATION`:  
-Ingress refresh throttle duration (Default: ```0```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_TOKEN`:  
 Kubernetes bearer token (not needed for in-cluster client).
@@ -651,14 +651,14 @@ Kubernetes certificate authority file path (not needed for in-cluster client).
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
 
+`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_EVENTSTHROTTLEDURATION`:  
+Kubernetes refresh throttle duration (Default: ```0```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_LABELSELECTOR`:  
 Kubernetes label selector to select specific GatewayClasses.
 
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_NAMESPACES`:  
 Kubernetes namespaces.
-
-`TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_THROTTLEDURATION`:  
-Kubernetes refresh throttle duration (Default: ```0```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESGATEWAY_TOKEN`:  
 Kubernetes bearer token (not needed for in-cluster client).
@@ -678,6 +678,9 @@ Kubernetes certificate authority file path (not needed for in-cluster client).
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
 
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_EVENTSTHROTTLEDURATION`:  
+Ingress refresh throttle duration (Default: ```0```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_INGRESSCLASS`:  
 Value of kubernetes.io/ingress.class annotation or IngressClass name to watch for.
 
@@ -695,9 +698,6 @@ Kubernetes Ingress label selector to use.
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_NAMESPACES`:  
 Kubernetes namespaces.
-
-`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_THROTTLEDURATION`:  
-Ingress refresh throttle duration (Default: ```0```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_TOKEN`:  
 Kubernetes bearer token (not needed for in-cluster client).
