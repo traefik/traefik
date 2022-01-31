@@ -649,13 +649,13 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.Providers.KubernetesCRD = &crd.Provider{
-		Endpoint:         "MyEndpoint",
-		Token:            "MyToken",
-		CertAuthFilePath: "MyCertAuthPath",
-		Namespaces:       []string{"a", "b"},
-		LabelSelector:    "myLabelSelector",
-		IngressClass:     "MyIngressClass",
-		ThrottleDuration: ptypes.Duration(111 * time.Second),
+		Endpoint:               "MyEndpoint",
+		Token:                  "MyToken",
+		CertAuthFilePath:       "MyCertAuthPath",
+		Namespaces:             []string{"a", "b"},
+		LabelSelector:          "myLabelSelector",
+		IngressClass:           "MyIngressClass",
+		EventsThrottleDuration: ptypes.Duration(111 * time.Second),
 	}
 
 	config.Providers.KubernetesGateway = &gateway.Provider{

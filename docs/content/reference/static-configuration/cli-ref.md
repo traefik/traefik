@@ -627,6 +627,9 @@ Kubernetes certificate authority file path (not needed for in-cluster client).
 `--providers.kubernetescrd.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).
 
+`--providers.kubernetescrd.eventsthrottleduration`:  
+Ingress refresh throttle duration (Default: ```0```)
+
 `--providers.kubernetescrd.ingressclass`:  
 Value of kubernetes.io/ingress.class annotation to watch for.
 
@@ -635,9 +638,6 @@ Kubernetes label selector to use.
 
 `--providers.kubernetescrd.namespaces`:  
 Kubernetes namespaces.
-
-`--providers.kubernetescrd.throttleduration`:  
-Ingress refresh throttle duration (Default: ```0```)
 
 `--providers.kubernetescrd.token`:  
 Kubernetes bearer token (not needed for in-cluster client).
