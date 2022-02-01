@@ -456,6 +456,9 @@ Name of the Traefik service in Consul Catalog (needs to be registered via the or
 `--providers.consulcatalog.stale`:  
 Use stale consistency for catalog reads. (Default: ```false```)
 
+`--providers.consulcatalog.watch`:  
+Watch Consul API events. (Default: ```false```)
+
 `--providers.docker`:  
 Enable Docker backend with default settings. (Default: ```false```)
 
