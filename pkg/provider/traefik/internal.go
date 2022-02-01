@@ -29,6 +29,12 @@ func New(staticCfg static.Configuration) *Provider {
 	return &Provider{staticCfg: staticCfg}
 }
 
+// FIXME: possible ?
+//// ThrottleDuration returns the throttle duration.
+//func (i Provider) ThrottleDuration() time.Duration {
+//	return 0
+//}
+
 // Provide allows the provider to provide configurations to traefik using the given configuration channel.
 func (i *Provider) Provide(configurationChan chan<- dynamic.Message, _ *safe.Pool) error {
 	ctx := log.With(context.Background(), log.Str(log.ProviderName, "internal"))
