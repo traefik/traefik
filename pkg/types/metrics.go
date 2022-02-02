@@ -110,7 +110,7 @@ func (i *InfluxDB) SetDefaults() {
 type InfluxDB2 struct {
 	Address              string         `description:"InfluxDB v2 server address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
 	Token                string         `description:"InfluxDB v2 access token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
-	BatchSize            uint           `description:"InfluxDB v2 push batch size." json:"batchSize,omitempty" toml:"batchSize,omitempty" yaml:"batchSize,omitempty" export:"true"`
+	BatchSize            int            `description:"InfluxDB v2 push batch size." json:"batchSize,omitempty" toml:"batchSize,omitempty" yaml:"batchSize,omitempty" export:"true"`
 	PushInterval         types.Duration `description:"InfluxDB v2 push interval." json:"pushInterval,omitempty" toml:"pushInterval,omitempty" yaml:"pushInterval,omitempty" export:"true"`
 	Org                  string         `description:"InfluxDB v2 org ID." json:"org,omitempty" toml:"org,omitempty" yaml:"org,omitempty" export:"true"`
 	Bucket               string         `description:"InfluxDB v2 bucket ID." json:"bucket,omitempty" toml:"bucket,omitempty" yaml:"bucket,omitempty" export:"true"`
@@ -123,9 +123,8 @@ type InfluxDB2 struct {
 func (i *InfluxDB2) SetDefaults() {
 	i.Address = "http://localhost:8086"
 	i.BatchSize = 10
-	i.PushInterval = types.Duration(30 * time.Second)
+	i.PushInterval = types.Duration(10 * time.Second)
 	i.AddEntryPointsLabels = true
-	i.AddRoutersLabels = true
 	i.AddServicesLabels = true
 }
 
