@@ -6,6 +6,7 @@ import (
 	"math"
 	"net"
 	"regexp"
+	"time"
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/static"
@@ -29,11 +30,10 @@ func New(staticCfg static.Configuration) *Provider {
 	return &Provider{staticCfg: staticCfg}
 }
 
-// FIXME: possible ?
-//// ThrottleDuration returns the throttle duration.
-//func (i Provider) ThrottleDuration() time.Duration {
-//	return 0
-//}
+// ThrottleDuration returns the throttle duration.
+func (i Provider) ThrottleDuration() time.Duration {
+	return 0
+}
 
 // Provide allows the provider to provide configurations to traefik using the given configuration channel.
 func (i *Provider) Provide(configurationChan chan<- dynamic.Message, _ *safe.Pool) error {

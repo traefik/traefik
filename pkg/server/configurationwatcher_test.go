@@ -164,6 +164,92 @@ func TestWaitForRequiredProvider(t *testing.T) {
 	assert.Equal(t, 2, publishedConfigCount, "times configs were published")
 }
 
+func TestIgnoreTransientConfiguration(t *testing.T) {
+	routinesPool := safe.NewPool(context.Background())
+	defer routinesPool.Stop()
+
+	config := &dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("foo")),
+			th.WithLoadBalancerServices(th.WithService("bar")),
+		),
+	}
+
+	config2 := &dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("baz")),
+			th.WithLoadBalancerServices(th.WithService("toto")),
+		),
+	}
+
+	watcher := NewConfigurationWatcher(routinesPool, &mockProvider{}, []string{"defaultEP"}, "")
+
+	publishedConfigCount := 0
+	var lastConfig dynamic.Configuration
+	blockConfConsumer := make(chan struct{})
+	watcher.AddListener(func(config dynamic.Configuration) {
+		publishedConfigCount++
+		lastConfig = config
+		<-blockConfConsumer
+	})
+
+	watcher.Start()
+
+	watcher.allProvidersConfigs <- dynamic.Message{
+		ProviderName:  "mock",
+		Configuration: config,
+	}
+
+	watcher.allProvidersConfigs <- dynamic.Message{
+		ProviderName:  "mock",
+		Configuration: config2,
+	}
+
+	watcher.allProvidersConfigs <- dynamic.Message{
+		ProviderName:  "mock",
+		Configuration: config,
+	}
+
+	close(blockConfConsumer)
+
+	// give some time so that the configuration can be processed
+	time.Sleep(20 * time.Millisecond)
+
+	// after 20 milliseconds we should have 1 configs published
+	assert.Equal(t, 1, publishedConfigCount, "times configs were published")
+
+	expected := dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("defaultEP"))),
+			th.WithLoadBalancerServices(th.WithService("bar@mock")),
+			th.WithMiddlewares(),
+		),
+		TCP: &dynamic.TCPConfiguration{
+			Routers:     map[string]*dynamic.TCPRouter{},
+			Middlewares: map[string]*dynamic.TCPMiddleware{},
+			Services:    map[string]*dynamic.TCPService{},
+		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers:  map[string]*dynamic.UDPRouter{},
+			Services: map[string]*dynamic.UDPService{},
+		},
+		TLS: &dynamic.TLSConfiguration{
+			Options: map[string]tls.Options{
+				"default": {
+					ALPNProtocols: []string{
+						"h2",
+						"http/1.1",
+						"acme-tls/1",
+					},
+				},
+			},
+			Stores: map[string]tls.Store{},
+		},
+	}
+
+	assert.Equal(t, expected, lastConfig)
+}
+
 func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
 	defer routinesPool.Stop()
