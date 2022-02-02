@@ -93,16 +93,16 @@ func (c *ConfigurationWatcher) startProvider() {
 // constantly send in a non-blocking way to the throttling goroutine the last
 // global state we are aware of.
 func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
-	lastConfigurations := make(dynamic.Configurations)
-	var newConfigurations dynamic.Configurations
+	newConfigurations := make(dynamic.Configurations)
 	var output chan dynamic.Configurations
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case output <- newConfigurations:
+		// DeepCopy is necessary because newConfigurations gets modified later by the consumer of c.newConfigs
+		case output <- newConfigurations.DeepCopy():
 			output = nil
-			lastConfigurations = newConfigurations
+
 		default:
 			select {
 			case <-ctx.Done():
@@ -126,20 +126,19 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 					continue
 				}
 
-				if reflect.DeepEqual(lastConfigurations[configMsg.ProviderName], configMsg.Configuration) {
+				if reflect.DeepEqual(newConfigurations[configMsg.ProviderName], configMsg.Configuration) {
 					// no change, do nothing
 					logger.Info("Skipping unchanged configuration")
 					continue
 				}
 
-				newConfigurations = lastConfigurations.DeepCopy()
 				newConfigurations[configMsg.ProviderName] = configMsg.Configuration.DeepCopy()
 
 				output = c.newConfigs
 
-			case output <- newConfigurations:
+			// DeepCopy is necessary because newConfigurations gets modified later by the consumer of c.newConfigs
+			case output <- newConfigurations.DeepCopy():
 				output = nil
-				lastConfigurations = newConfigurations
 			}
 		}
 	}
