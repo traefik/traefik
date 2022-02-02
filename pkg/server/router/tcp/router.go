@@ -223,6 +223,13 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		}
 	}
 
+	for _, serviceConfig := range m.conf.TCPServices {
+		startTLSFlavor := serviceConfig.StartTLS
+		if startTLSFlavor != "" {
+			router.PreRoutingHook(startTLSFlavor, tcp.StartTLSServerFuncs[startTLSFlavor])
+		}
+	}
+
 	for routerName, routerConfig := range configs {
 		ctxRouter := log.With(provider.AddInContext(ctx, routerName), log.Str(log.RouterName, routerName))
 		logger := log.FromContext(ctxRouter)

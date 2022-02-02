@@ -1306,6 +1306,33 @@ Below are the available options for the PROXY protocol:
           version = 1
     ```
 
+#### StartTLS Protocol
+
+StartTLS is a procedure for initiating the encryption of a network communication using Transport Layer Security (TLS). It is used
+in various protocols such as SMTP, IMAP, POP3, FTP and PostgreSQL. In order to route one of these protocols Traefik needs to know
+which protocol is expected by the target service.
+
+To enable StartTLS, the `startTLS` option must be set to the desired protocol.
+
+Currently supported protocols are:
+
+- `postgres` for PostgreSQL
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    tcp:
+      services:
+        my-service:
+            startTLS: postgres
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [tcp.services]
+      [tcp.services.my-service]
+         startTLS  = "postgres" 
+    ```
+
 #### Termination Delay
 
 As a proxy between a client and a server, it can happen that either side (e.g. client side) decides to terminate its writing capability on the connection (i.e. issuance of a FIN packet).
