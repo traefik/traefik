@@ -262,7 +262,7 @@ Enable metrics on entry points. (Default: ```true```)
 InfluxDB v2 server address. (Default: ```http://localhost:8086```)
 
 `TRAEFIK_METRICS_INFLUXDB2_ADDROUTERSLABELS`:  
-Enable metrics on routers. (Default: ```true```)
+Enable metrics on routers. (Default: ```false```)
 
 `TRAEFIK_METRICS_INFLUXDB2_ADDSERVICESLABELS`:  
 Enable metrics on services. (Default: ```true```)
@@ -277,7 +277,7 @@ InfluxDB v2 bucket ID.
 InfluxDB v2 org ID.
 
 `TRAEFIK_METRICS_INFLUXDB2_PUSHINTERVAL`:  
-InfluxDB v2 push interval. (Default: ```30```)
+InfluxDB v2 push interval. (Default: ```10```)
 
 `TRAEFIK_METRICS_INFLUXDB2_TOKEN`:  
 InfluxDB v2 access token.
