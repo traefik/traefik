@@ -1,32 +1,26 @@
 # InfluxDB 2
 
-To enable the InfluxDB 2:
+To enable the InfluxDB2:
 
 ```yaml tab="File (YAML)"
 metrics:
-  influxDB2:
-    token: "<token>"
-    bucket: "my-bucket"
-    org: "my-org"
+  influxDB2: {}
 ```
 
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.influxDB2]
-    token = "<token>"
-    bucket = "my-bucket"
-    org = "my-org"
 ```
 
 ```bash tab="CLI"
---metrics.influxdb2=true --metrics.influxdb2.token="<token>" --metrics.influxdb2.bucket="my-bucket" --metrics.influxdb2.org="my-org"
+--metrics.influxdb2=true
 ```
 
 #### `address`
 
 _Required, Default="http://localhost:8086"_
 
-Address of InfluxDB 2 instance.
+Address of the InfluxDB2 instance.
 
 ```yaml tab="File (YAML)"
 metrics:
@@ -48,12 +42,12 @@ metrics:
 
 _Required, Default=""_
 
-InfluxDB token (can be obtained from InfluxDB instance web UI). Mandatory for connection.
+Defines a token with which to connect to InfluxDB2.
 
 ```yaml tab="File (YAML)"
 metrics:
   influxDB2:
-    token: "secret"
+    token: secret
 ```
 
 ```toml tab="File (TOML)"
@@ -63,19 +57,19 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics.influxdb2.token="secret"
+--metrics.influxdb2.token=secret
 ```
 
 #### `org`
 
 _Required, Default=""_
 
-InfluxDB org where Traefik metrics will be stored. Must not be left blank, necessary for connection.
+InfluxDB2's organisation where metrics will be stored.
 
 ```yaml tab="File (YAML)"
 metrics:
   influxDB2:
-    org: "my-org"
+    org: my-org
 ```
 
 ```toml tab="File (TOML)"
@@ -85,19 +79,19 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics.influxdb2.org="my-org"
+--metrics.influxdb2.org=my-org
 ```
 
 #### `bucket`
 
 _Required, Default=""_
 
-InfluxDB bucket where Traefik metrics will be stored. Must not be left blank, necessary for connection.
+InfluxDB's bucket where metrics will be stored.
 
 ```yaml tab="File (YAML)"
 metrics:
   influxDB2:
-    bucket: "my-bucket"
+    bucket: my-bucket
 ```
 
 ```toml tab="File (TOML)"
@@ -107,7 +101,7 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics.influxdb2.bucket="my-bucket"
+--metrics.influxdb2.bucket=my-bucket
 ```
 
 #### `addEntryPointsLabels`
@@ -134,20 +128,20 @@ metrics:
 
 #### `addRoutersLabels`
 
-_Optional, Default=true_
+_Optional, Default=false_
 
 Enable metrics on routers.
-
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.influxDB2]
-    addRoutersLabels = true
-```
 
 ```yaml tab="File (YAML)"
 metrics:
   influxDB2:
     addRoutersLabels: true
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.influxDB2]
+    addRoutersLabels = true
 ```
 
 ```bash tab="CLI"
@@ -180,7 +174,9 @@ metrics:
 
 _Optional, Default=10_
 
-Number of metrics reports collected before pushing to InfluxDB.
+Number of metrics reports collected before pushing to InfluxDB2.
+
+!!! warning "`batchSize` must be strictly greater thant zero"
 
 ```yaml tab="File (YAML)"
 metrics:
@@ -200,22 +196,22 @@ metrics:
 
 #### `pushInterval`
 
-_Optional, Default=30s_
+_Optional, Default=10s_
 
-Interval at which Traefik will save metrics to InfluxDB. Even if less than `BatchSize` metrics were collected, they will be sent to InfluxDB.
+The interval used by the exporter to push metrics to influxdb2.
 
 ```yaml tab="File (YAML)"
 metrics:
   influxDB2:
-    pushInterval: 30s
+    pushInterval: 10s
 ```
 
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.influxDB2]
-    pushInterval = 30s
+    pushInterval = "10s"
 ```
 
 ```bash tab="CLI"
---metrics.influxdb2.pushInterval=30s
+--metrics.influxdb2.pushInterval=10s
 ```
