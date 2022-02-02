@@ -12,9 +12,7 @@ Traefik supports 4 metrics backends:
 | Metric                                                                  | DataDog | InfluxDB | Prometheus | StatsD |
 |-------------------------------------------------------------------------|---------|----------|------------|--------|
 | [Configuration reloads](#configuration-reloads)                         | ✓       | ✓        | ✓          | ✓      |
-| [Configuration reload failures](#configuration-reload-failures)         | ✓       | ✓        | ✓          | ✓      |
 | [Last Configuration Reload Success](#last-configuration-reload-success) | ✓       | ✓        | ✓          | ✓      |
-| [Last Configuration Reload Failure](#last-configuration-reload-failure) | ✓       | ✓        | ✓          | ✓      |
 
 ### Configuration Reloads
 The total count of configuration reloads.
@@ -34,26 +32,6 @@ traefik_config_reloads_total
 ```statsd tab="StatsD"
 # Default prefix: "traefik"
 {prefix}.config.reload.total
-```
-
-### Configuration Reload Failures
-The total count of configuration reload failures.
-
-```dd tab="Datadog"
-config.reload.total (with tag "failure" to true)
-```
-
-```influxdb tab="InfluxDB"
-traefik.config.reload.total.failure
-```
-
-```prom tab="Prometheus"
-traefik_config_reloads_failure_total
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
-{prefix}.config.reload.total.failure
 ```
 
 ### Last Configuration Reload Success
@@ -76,24 +54,32 @@ traefik_config_last_reload_success
 {prefix}.config.reload.lastSuccessTimestamp
 ```
 
-### Last Configuration Reload Failure
-The timestamp of the last configuration reload failure.
+## Certificates Metrics
+
+| Metric                                                      | DataDog | InfluxDB | Prometheus | StatsD |
+|-------------------------------------------------------------|---------|----------|------------|--------|
+| [TLS certificates expiration](#TLS_certificates_expiration) | ✓       | ✓        | ✓          | ✓      |
+
+### TLS certificates expiration
+The timestamp of the end of validity for each certificate.
+
+Available labels: `cn`, `sans`, and `serial`.
 
 ```dd tab="Datadog"
-config.reload.lastFailureTimestamp
+tls.certs.notAfterTimestamp
 ```
 
 ```influxdb tab="InfluxDB"
-traefik.config.reload.lastFailureTimestamp
+traefik.tls.certs.notAfterTimestamp
 ```
 
 ```prom tab="Prometheus"
-traefik_config_last_reload_failure
+traefik_tls_certs_not_after
 ```
 
 ```statsd tab="StatsD"
 # Default prefix: "traefik"
-{prefix}.config.reload.lastFailureTimestamp
+{prefix}.tls.certs.notAfterTimestamp
 ```
 
 ## EntryPoint Metrics
