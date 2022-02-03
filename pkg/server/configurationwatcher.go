@@ -140,7 +140,7 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 	}
 }
 
-// throttleAndApplyConfigurations blocks on a RingChannel that receives the new
+// applyConfigurations blocks on a RingChannel that receives the new
 // set of configurations that is compiled and sent by receiveConfigurations as soon
 // as a provider change occurs. If the new set is different from the previous set
 // that had been applied, the new set is applied, and we sleep for a while before
