@@ -7,7 +7,7 @@ Traefik supports 4 metrics backends:
 - [Prometheus](./prometheus.md)
 - [StatsD](./statsd.md)
 
-## General Metrics
+## Global Metrics
 
 | Metric                                                                  | DataDog | InfluxDB | Prometheus | StatsD |
 |-------------------------------------------------------------------------|---------|----------|------------|--------|
@@ -59,7 +59,7 @@ traefik_config_last_reload_success
 
 ### TLS certificates expiration
 
-The timestamp of the end of validity for each certificate.
+The expiration date of certificates.
 
 Available labels: `cn`, `sans`, `serial`.
 
@@ -91,7 +91,7 @@ traefik_tls_certs_not_after
 
 ### HTTP Requests Count
 
-The total count of HTTP requests processed on an entrypoint.
+The total count of HTTP requests received by an entrypoint.
 
 Available labels: `code`, `method`, `protocol`, `entrypoint`.
 
@@ -114,7 +114,7 @@ traefik_entrypoint_requests_total
 
 ### HTTPS Requests Count
 
-The total count of HTTPS requests processed on an entrypoint.
+The total count of HTTPS requests received by an entrypoint.
 
 Available labels: `tls_version`, `tls_cipher`, `entrypoint`.
 
@@ -192,7 +192,7 @@ traefik_entrypoint_open_connections
 
 ### HTTP Requests Count
 
-The total count of HTTP requests processed on a router.
+The total count of HTTP requests handled by a router.
 
 Available labels: `code`, `method`, `protocol`, `router`, `service`.
 
@@ -215,7 +215,7 @@ traefik_router_requests_total
 
 ### HTTPS Requests Count
 
-The total count of HTTPS requests processed on a router.
+The total count of HTTPS requests handled by a router.
 
 Available labels: `tls_version`, `tls_cipher`, `router`, `service`.
 
