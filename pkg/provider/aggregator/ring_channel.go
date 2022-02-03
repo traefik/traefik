@@ -32,10 +32,6 @@ func (ch *RingChannel) out() <-chan dynamic.Message {
 	return ch.output
 }
 
-func (ch *RingChannel) close() {
-	close(ch.input)
-}
-
 // for all buffered cases.
 func (ch *RingChannel) ringBuffer() {
 	var input, output chan dynamic.Message

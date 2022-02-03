@@ -160,7 +160,7 @@ func (c *ConfigurationWatcher) applyConfigurations(ctx context.Context) {
 
 			// We wait for first configuration of the required providerAggregator before applying configurations.
 			if _, ok := currentConfigurations[c.requiredProvider]; c.requiredProvider != "" && !ok {
-				return
+				continue
 			}
 
 			conf := mergeConfiguration(currentConfigurations.DeepCopy(), c.defaultEntryPoints)
