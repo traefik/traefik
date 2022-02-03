@@ -16,6 +16,7 @@ Traefik supports 4 metrics backends:
 | [TLS certificates expiration](#tls-certificates-expiration)             | ✓       | ✓        | ✓          | ✓      |
 
 ### Configuration Reloads
+
 The total count of configuration reloads.
 
 ```dd tab="Datadog"
@@ -36,6 +37,7 @@ traefik_config_reloads_total
 ```
 
 ### Last Configuration Reload Success
+
 The timestamp of the last configuration reload success.
 
 ```dd tab="Datadog"
@@ -56,6 +58,7 @@ traefik_config_last_reload_success
 ```
 
 ### TLS certificates expiration
+
 The timestamp of the end of validity for each certificate.
 
 Available labels: `cn`, `sans`, `serial`.
@@ -87,6 +90,7 @@ traefik_tls_certs_not_after
 | [Open Connections Count](#open-connections-count)         | ✓       | ✓        | ✓          | ✓      |
 
 ### HTTP Requests Count
+
 The total count of HTTP requests processed on an entrypoint.
 
 Available labels: `code`, `method`, `protocol`, `entrypoint`.
@@ -109,6 +113,7 @@ traefik_entrypoint_requests_total
 ```
 
 ### HTTPS Requests Count
+
 The total count of HTTPS requests processed on an entrypoint.
 
 Available labels: `tls_version`, `tls_cipher`, `entrypoint`.
@@ -131,6 +136,7 @@ traefik_entrypoint_requests_tls_total
 ```
 
 ### Request Duration Histogram
+
 Request process time duration histogram on an entrypoint.
 
 Available labels: `code`, `method`, `protocol`, `entrypoint`.
@@ -153,6 +159,7 @@ traefik_entrypoint_request_duration_seconds
 ```
 
 ### Open Connections Count
+
 The current count of open connections on an entrypoint.
 
 Available labels: `method`, `protocol`, `entrypoint`.
@@ -184,6 +191,7 @@ traefik_entrypoint_open_connections
 | [Open Connections Count](#open-connections-count_1)         | ✓       | ✓        | ✓          | ✓      |
 
 ### HTTP Requests Count
+
 The total count of HTTP requests processed on a router.
 
 Available labels: `code`, `method`, `protocol`, `router`, `service`.
@@ -206,6 +214,7 @@ traefik_router_requests_total
 ```
 
 ### HTTPS Requests Count
+
 The total count of HTTPS requests processed on a router.
 
 Available labels: `tls_version`, `tls_cipher`, `router`, `service`.
@@ -228,6 +237,7 @@ traefik_router_requests_tls_total
 ```
 
 ### Request Duration Histogram
+
 Request process time duration histogram on a router.
 
 Available labels: `code`, `method`, `protocol`, `router`, `service`.
@@ -250,6 +260,7 @@ traefik_router_request_duration_seconds
 ```
 
 ### Open Connections Count
+
 The current count of open connections on a router.
 
 Available labels: `method`, `protocol`, `router`, `service`.
@@ -283,6 +294,7 @@ traefik_router_open_connections
 | [Service Server UP](#service-server-up)                     | ✓       | ✓        | ✓          | ✓      |
 
 ### HTTP Requests Count
+
 The total count of HTTP requests processed on a service.
 
 Available labels: `code`, `method`, `protocol`, `service`.
@@ -305,6 +317,7 @@ traefik_service_requests_total
 ```
 
 ### HTTPS Requests Count
+
 The total count of HTTPS requests processed on a service.
 
 Available labels: `tls_version`, `tls_cipher`, `service`.
@@ -327,6 +340,7 @@ traefik_service_requests_tls_total
 ```
 
 ### Request Duration Histogram
+
 Request process time duration histogram on a service.
 
 Available labels: `code`, `method`, `protocol`, `service`.
@@ -349,6 +363,7 @@ traefik_service_request_duration_seconds
 ```
 
 ### Open Connections Count
+
 The current count of open connections on a service.
 
 Available labels: `method`, `protocol`, `service`.
@@ -371,6 +386,7 @@ traefik_service_open_connections
 ```
 
 ### Requests Retries Count
+
 The count of requests retries on a service.
 
 Available labels: `service`.
@@ -393,6 +409,7 @@ traefik_service_retries_total
 ```
 
 ### Service Server UP
+
 Current service's server status, described by a gauge with a value of 0 for a down server or a value of 1 for an up server.
 
 Available labels: `service`, `url`.
