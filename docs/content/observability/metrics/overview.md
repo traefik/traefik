@@ -137,7 +137,7 @@ traefik_entrypoint_requests_tls_total
 
 ### Request Duration Histogram
 
-Request process time duration histogram on an entrypoint.
+Request processing duration histogram on an entrypoint.
 
 Available labels: `code`, `method`, `protocol`, `entrypoint`.
 
@@ -238,7 +238,7 @@ traefik_router_requests_tls_total
 
 ### Request Duration Histogram
 
-Request process time duration histogram on a router.
+Request processing duration histogram on a router.
 
 Available labels: `code`, `method`, `protocol`, `router`, `service`.
 
@@ -341,7 +341,7 @@ traefik_service_requests_tls_total
 
 ### Request Duration Histogram
 
-Request process time duration histogram on a service.
+Request processing duration histogram on a service.
 
 Available labels: `code`, `method`, `protocol`, `service`.
 
