@@ -182,10 +182,9 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	// The challenge presentation timeout is an arbitrary value that ensures the challenge cleanup,
 	// if the setup of the challenge does not end within this timeout duration.
-	// As the TLSALPN challenge provider is not throttled,
-	// and if the configuration does not take long to be applied,
+	// As the TLSALPN challenge provider is not throttled, and if the configuration does not take long to be applied,
 	// its configuration should be applied almost as soon as it is received by the configuration watcher.
-	// 5 seconds should cover most ot the worth cases scenarios.
+	// 5 seconds should cover most of the worst cases scenarios.
 	tlsChallengeProvider := acme.NewChallengeTLSALPN(5 * time.Second)
 	err = providerAggregator.AddProvider(tlsChallengeProvider)
 	if err != nil {

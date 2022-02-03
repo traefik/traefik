@@ -15,7 +15,7 @@ import (
 
 // ConfigurationWatcher watches configuration changes.
 type ConfigurationWatcher struct {
-	provider provider.Provider
+	providerAggregator provider.Provider
 
 	defaultEntryPoints []string
 
@@ -36,23 +36,21 @@ func NewConfigurationWatcher(
 	defaultEntryPoints []string,
 	requiredProvider string,
 ) *ConfigurationWatcher {
-	watcher := &ConfigurationWatcher{
-		provider:            pvd,
+	return &ConfigurationWatcher{
+		providerAggregator:  pvd,
 		allProvidersConfigs: make(chan dynamic.Message, 100),
 		newConfigs:          make(chan dynamic.Configurations),
 		routinesPool:        routinesPool,
 		defaultEntryPoints:  defaultEntryPoints,
 		requiredProvider:    requiredProvider,
 	}
-
-	return watcher
 }
 
 // Start the configuration watcher.
 func (c *ConfigurationWatcher) Start() {
 	c.routinesPool.GoCtx(c.receiveConfigurations)
 	c.routinesPool.GoCtx(c.throttleAndApplyConfigurations)
-	c.startProvider()
+	c.startProviderAggregator()
 }
 
 // Stop the configuration watcher.
@@ -69,17 +67,15 @@ func (c *ConfigurationWatcher) AddListener(listener func(dynamic.Configuration))
 	c.configurationListeners = append(c.configurationListeners, listener)
 }
 
-func (c *ConfigurationWatcher) startProvider() {
+func (c *ConfigurationWatcher) startProviderAggregator() {
 	logger := log.WithoutContext()
 
-	logger.Infof("Starting provider %T", c.provider)
-
-	currentProvider := c.provider
+	logger.Infof("Starting provider aggregator %T", c.providerAggregator)
 
 	safe.Go(func() {
-		err := currentProvider.Provide(c.allProvidersConfigs, c.routinesPool)
+		err := c.providerAggregator.Provide(c.allProvidersConfigs, c.routinesPool)
 		if err != nil {
-			logger.Errorf("Error starting provider %T: %s", currentProvider, err)
+			logger.Errorf("Error starting provider aggregator %T: %s", c.providerAggregator, err)
 		}
 	})
 }
@@ -115,7 +111,7 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 				logger := log.WithoutContext().WithField(log.ProviderName, configMsg.ProviderName)
 
 				if configMsg.Configuration == nil {
-					logger.Debug("Received nil configuration from provider, skipping.")
+					logger.Debug("Received nil configuration from providerAggregator, skipping.")
 					continue
 				}
 
@@ -211,7 +207,7 @@ func (c *ConfigurationWatcher) throttleAndApplyConfigurations(ctx context.Contex
 }
 
 func (c *ConfigurationWatcher) applyConfigurations(currentConfigurations dynamic.Configurations) {
-	// We wait for first configuration of the required provider before applying configurations.
+	// We wait for first configuration of the required providerAggregator before applying configurations.
 	if _, ok := currentConfigurations[c.requiredProvider]; c.requiredProvider != "" && !ok {
 		return
 	}
