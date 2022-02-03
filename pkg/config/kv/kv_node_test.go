@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/abronan/valkeyrie/store"
+	"github.com/kvtools/valkeyrie/store"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/paerser/parser"

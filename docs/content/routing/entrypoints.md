@@ -223,22 +223,22 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
 
     Full details for how to specify `address` can be found in [net.Listen](https://golang.org/pkg/net/#Listen) (and [net.Dial](https://golang.org/pkg/net/#Dial)) of the doc for go.
 
-### HTTP3
+### HTTP/3
 
 #### `http3`
 
-`http3` enables HTTP3 protocol on the entryPoint.
-You can only enable HTTP3 on a TCP entrypoint.
-Enabling HTTP3 will automatically add the correct headers for the connection upgrade to HTTP3.
+`http3` enables HTTP/3 protocol on the entryPoint.
+HTTP/3 requires a TCP entryPoint, as HTTP/3 always starts as a TCP connection that then gets upgraded to UDP.
+In most scenarios, this entryPoint is the same as the one used for TLS traffic.
 
-??? info "HTTP3 uses UDP+TLS"
+??? info "HTTP/3 uses UDP+TLS"
 
-    As HTTP3 uses UDP, you can't have a TCP entrypoint with HTTP3 on the same port as a UDP entrypoint.
-    Since HTTP3 requires the use of TLS, only routers with TLS enabled will be usable with HTTP3.
+    As HTTP/3 uses UDP, you can't have a TCP entryPoint with HTTP/3 on the same port as a UDP entryPoint.
+    Since HTTP/3 requires the use of TLS, only routers with TLS enabled will be usable with HTTP/3.
 
-!!! warning "Enabling Experimental HTTP3"
+!!! warning "Enabling Experimental HTTP/3"
 
-    As the HTTP3 spec is still in draft, HTTP3 support in Traefik is an experimental feature and needs to be activated 
+    As the HTTP/3 spec is still in draft, HTTP/3 support in Traefik is an experimental feature and needs to be activated 
     in the experimental section of the static configuration.
     
     ```yaml tab="File (YAML)"
@@ -263,8 +263,8 @@ Enabling HTTP3 will automatically add the correct headers for the connection upg
 
 #### `advertisedPort`
 
-`http3.advertisedPort` defines which UDP port to advertise as the HTTP3 authority.
-It defaults to the entrypoint's address port.
+`http3.advertisedPort` defines which UDP port to advertise as the HTTP/3 authority.
+It defaults to the entryPoint's address port.
 It can be used to override the authority in the `alt-svc` header, for example if the public facing port is different from where Traefik is listening.
 
 !!! info "http3.advertisedPort"

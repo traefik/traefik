@@ -67,7 +67,7 @@ type EndpointConfig struct {
 	Address          string                  `description:"The address of the Consul server" json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
 	Scheme           string                  `description:"The URI scheme for the Consul server" json:"scheme,omitempty" toml:"scheme,omitempty" yaml:"scheme,omitempty"`
 	DataCenter       string                  `description:"Data center to use. If not provided, the default agent data center is used" json:"datacenter,omitempty" toml:"datacenter,omitempty" yaml:"datacenter,omitempty"`
-	Token            string                  `description:"Token is used to provide a per-request ACL token which overrides the agent's default token" json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
+	Token            string                  `description:"Token is used to provide a per-request ACL token which overrides the agent's default token" json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
 	TLS              *types.ClientTLS        `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 	HTTPAuth         *EndpointHTTPAuthConfig `description:"Auth info to use for http access" json:"httpAuth,omitempty" toml:"httpAuth,omitempty" yaml:"httpAuth,omitempty" export:"true"`
 	EndpointWaitTime ptypes.Duration         `description:"WaitTime limits how long a Watch will block. If not provided, the agent default values will be used" json:"endpointWaitTime,omitempty" toml:"endpointWaitTime,omitempty" yaml:"endpointWaitTime,omitempty" export:"true"`
@@ -75,8 +75,8 @@ type EndpointConfig struct {
 
 // EndpointHTTPAuthConfig holds configurations of the authentication.
 type EndpointHTTPAuthConfig struct {
-	Username string `description:"Basic Auth username" json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty"`
-	Password string `description:"Basic Auth password" json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty"`
+	Username string `description:"Basic Auth username" json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
+	Password string `description:"Basic Auth password" json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
 }
 
 // SetDefaults sets the default values.
@@ -105,7 +105,7 @@ func (p *Provider) Init() error {
 // Provide allows the consul catalog provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	var err error
-	p.client, err = createClient(p.Endpoint)
+	p.client, err = createClient(p.Namespace, p.Endpoint)
 	if err != nil {
 		return fmt.Errorf("unable to create consul client: %w", err)
 	}
@@ -203,7 +203,7 @@ func (p *Provider) loadConfiguration(ctx context.Context, certInfo *connectCert,
 func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error) {
 	// The query option "Filter" is not supported by /catalog/services.
 	// https://www.consul.io/api/catalog.html#list-services
-	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache, Namespace: p.Namespace}
+	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache}
 	opts = opts.WithContext(ctx)
 
 	serviceNames, _, err := p.client.Catalog().Services(opts)
@@ -296,7 +296,7 @@ func (p *Provider) fetchService(ctx context.Context, name string, connectEnabled
 		tagFilter = p.Prefix + ".enable=true"
 	}
 
-	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache, Namespace: p.Namespace}
+	opts := &api.QueryOptions{AllowStale: p.Stale, RequireConsistent: p.RequireConsistent, UseCache: p.Cache}
 	opts = opts.WithContext(ctx)
 
 	catalogFunc := p.client.Catalog().Service
@@ -458,29 +458,30 @@ func (p *Provider) watchConnectTLS(ctx context.Context, leafWatcher *watch.Plan,
 	}
 }
 
-func createClient(cfg *EndpointConfig) (*api.Client, error) {
+func createClient(namespace string, endpoint *EndpointConfig) (*api.Client, error) {
 	config := api.Config{
-		Address:    cfg.Address,
-		Scheme:     cfg.Scheme,
-		Datacenter: cfg.DataCenter,
-		WaitTime:   time.Duration(cfg.EndpointWaitTime),
-		Token:      cfg.Token,
+		Address:    endpoint.Address,
+		Scheme:     endpoint.Scheme,
+		Datacenter: endpoint.DataCenter,
+		WaitTime:   time.Duration(endpoint.EndpointWaitTime),
+		Token:      endpoint.Token,
+		Namespace:  namespace,
 	}
 
-	if cfg.HTTPAuth != nil {
+	if endpoint.HTTPAuth != nil {
 		config.HttpAuth = &api.HttpBasicAuth{
-			Username: cfg.HTTPAuth.Username,
-			Password: cfg.HTTPAuth.Password,
+			Username: endpoint.HTTPAuth.Username,
+			Password: endpoint.HTTPAuth.Password,
 		}
 	}
 
-	if cfg.TLS != nil {
+	if endpoint.TLS != nil {
 		config.TLSConfig = api.TLSConfig{
-			Address:            cfg.Address,
-			CAFile:             cfg.TLS.CA,
-			CertFile:           cfg.TLS.Cert,
-			KeyFile:            cfg.TLS.Key,
-			InsecureSkipVerify: cfg.TLS.InsecureSkipVerify,
+			Address:            endpoint.Address,
+			CAFile:             endpoint.TLS.CA,
+			CertFile:           endpoint.TLS.Cert,
+			KeyFile:            endpoint.TLS.Key,
+			InsecureSkipVerify: endpoint.TLS.InsecureSkipVerify,
 		}
 	}
 

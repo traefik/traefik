@@ -54,6 +54,34 @@ providers:
 --providers.consul.rootkey=traefik
 ```
 
+### `namespace`
+
+_Optional, Default=""_
+
+The `namespace` option defines the namespace to query.
+
+!!! warning
+
+    The namespace option only works with [Consul Enterprise](https://www.consul.io/docs/enterprise),
+    which provides the [Namespaces](https://www.consul.io/docs/enterprise/namespaces) feature.
+
+```yaml tab="File (YAML)"
+providers:
+  consul:
+    # ...
+    namespace: "production"
+```
+
+```toml tab="File (TOML)"
+[providers.consul]
+  # ...
+  namespace = "production"
+```
+
+```bash tab="CLI"
+--providers.consul.namespace=production
+```
+
 ### `username`
 
 _Optional, Default=""_
@@ -97,7 +125,30 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.consul.password=foo
+--providers.consul.password=bar
+```
+
+### `token`
+
+_Optional, Default=""_
+
+Defines a token with which to connect to Consul.
+
+```yaml tab="File (YAML)"
+providers:
+  consul:
+    # ...
+    token: "bar"
+```
+
+```toml tab="File (TOML)"
+[providers.consul]
+  # ...
+  token = "bar"
+```
+
+```bash tab="CLI"
+--providers.consul.token=bar
 ```
 
 ### `tls`
