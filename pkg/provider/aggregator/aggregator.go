@@ -29,15 +29,12 @@ type throttled interface {
 // potentially augmented with some throttling depending on whether and how the
 // provider implements the throttled interface.
 func maybeThrottledProvide(prd provider.Provider, defaultDuration time.Duration) func(chan<- dynamic.Message, *safe.Pool) error {
-	var providerThrottleDuration time.Duration
-	throttled, ok := prd.(throttled)
-	if ok {
+	providerThrottleDuration := defaultDuration
+	if throttled, ok := prd.(throttled); ok {
 		// per-provider throttling
 		providerThrottleDuration = throttled.ThrottleDuration()
-	} else {
-		// Default throttling
-		providerThrottleDuration = defaultDuration
 	}
+
 	if providerThrottleDuration == 0 {
 		// throttling disabled
 		return prd.Provide
@@ -46,7 +43,6 @@ func maybeThrottledProvide(prd provider.Provider, defaultDuration time.Duration)
 	return func(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 		rc := newRingChannel()
 		pool.GoCtx(func(ctx context.Context) {
-			defer rc.close()
 			for {
 				select {
 				case <-ctx.Done():
