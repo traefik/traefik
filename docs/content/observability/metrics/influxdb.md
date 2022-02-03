@@ -69,7 +69,7 @@ InfluxDB database used when protocol is http.
 ```yaml tab="File (YAML)"
 metrics:
   influxDB:
-    database: "db"
+    database: db
 ```
 
 ```toml tab="File (TOML)"
@@ -91,7 +91,7 @@ InfluxDB retention policy used when protocol is http.
 ```yaml tab="File (YAML)"
 metrics:
   influxDB:
-    retentionPolicy: "two_hours"
+    retentionPolicy: two_hours
 ```
 
 ```toml tab="File (TOML)"
@@ -113,7 +113,7 @@ InfluxDB username (only with http).
 ```yaml tab="File (YAML)"
 metrics:
   influxDB:
-    username: "john"
+    username: john
 ```
 
 ```toml tab="File (TOML)"
@@ -135,7 +135,7 @@ InfluxDB password (only with http).
 ```yaml tab="File (YAML)"
 metrics:
   influxDB:
-    password: "secret"
+    password: secret
 ```
 
 ```toml tab="File (TOML)"
@@ -176,16 +176,16 @@ _Optional, Default=false_
 
 Enable metrics on routers.
 
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.influxDB]
-    addRoutersLabels = true
-```
-
 ```yaml tab="File (YAML)"
 metrics:
   influxDB:
     addRoutersLabels: true
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.influxDB]
+    addRoutersLabels = true
 ```
 
 ```bash tab="CLI"
@@ -229,7 +229,7 @@ metrics:
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.influxDB]
-    pushInterval = 10s
+    pushInterval = "10s"
 ```
 
 ```bash tab="CLI"
@@ -242,20 +242,20 @@ _Optional, Default={}_
 
 Additional labels (influxdb tags) on all metrics.
 
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.influxDB]
-    [metrics.influxDB.additionalLabels]
-      host = "example.com"
-      environment = "production"
-```
-
 ```yaml tab="File (YAML)"
 metrics:
   influxDB:
     additionalLabels:
       host: example.com
       environment: production
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.influxDB]
+    [metrics.influxDB.additionalLabels]
+      host = "example.com"
+      environment = "production"
 ```
 
 ```bash tab="CLI"
