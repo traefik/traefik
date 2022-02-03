@@ -49,7 +49,7 @@ func NewConfigurationWatcher(
 // Start the configuration watcher.
 func (c *ConfigurationWatcher) Start() {
 	c.routinesPool.GoCtx(c.receiveConfigurations)
-	c.routinesPool.GoCtx(c.throttleAndApplyConfigurations)
+	c.routinesPool.GoCtx(c.applyConfigurations)
 	c.startProviderAggregator()
 }
 
@@ -115,7 +115,7 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 					continue
 				}
 
-				preLoadConfiguration(logger, configMsg)
+				logConfiguration(logger, configMsg)
 
 				if isEmptyConfiguration(configMsg.Configuration) {
 					logger.Info("Skipping empty Configuration")
@@ -140,7 +140,42 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 	}
 }
 
-func preLoadConfiguration(logger log.Logger, configMsg dynamic.Message) {
+// throttleAndApplyConfigurations blocks on a RingChannel that receives the new
+// set of configurations that is compiled and sent by receiveConfigurations as soon
+// as a provider change occurs. If the new set is different from the previous set
+// that had been applied, the new set is applied, and we sleep for a while before
+// listening on the channel again.
+func (c *ConfigurationWatcher) applyConfigurations(ctx context.Context) {
+	var lastConfigurations dynamic.Configurations
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case newConfigs := <-c.newConfigs:
+			currentConfigurations := newConfigs
+
+			if reflect.DeepEqual(currentConfigurations, lastConfigurations) {
+				continue
+			}
+
+			// We wait for first configuration of the required providerAggregator before applying configurations.
+			if _, ok := currentConfigurations[c.requiredProvider]; c.requiredProvider != "" && !ok {
+				return
+			}
+
+			conf := mergeConfiguration(currentConfigurations.DeepCopy(), c.defaultEntryPoints)
+			conf = applyModel(conf)
+
+			for _, listener := range c.configurationListeners {
+				listener(conf)
+			}
+
+			lastConfigurations = currentConfigurations
+		}
+	}
+}
+
+func logConfiguration(logger log.Logger, configMsg dynamic.Message) {
 	if log.GetLevel() != logrus.DebugLevel {
 		return
 	}
@@ -179,44 +214,6 @@ func preLoadConfiguration(logger log.Logger, configMsg dynamic.Message) {
 		logger.Debugf("Configuration received: [struct] %#v", copyConf)
 	} else {
 		logger.Debugf("Configuration received: %s", string(jsonConf))
-	}
-}
-
-// throttleAndApplyConfigurations blocks on a RingChannel that receives the new
-// set of configurations that is compiled and sent by receiveConfigurations as soon
-// as a provider change occurs. If the new set is different from the previous set
-// that had been applied, the new set is applied, and we sleep for a while before
-// listening on the channel again.
-func (c *ConfigurationWatcher) throttleAndApplyConfigurations(ctx context.Context) {
-	var lastConfigurations dynamic.Configurations
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case newConfigs := <-c.newConfigs:
-			currentConfigurations := newConfigs
-
-			if reflect.DeepEqual(currentConfigurations, lastConfigurations) {
-				continue
-			}
-
-			c.applyConfigurations(currentConfigurations)
-			lastConfigurations = currentConfigurations
-		}
-	}
-}
-
-func (c *ConfigurationWatcher) applyConfigurations(currentConfigurations dynamic.Configurations) {
-	// We wait for first configuration of the required providerAggregator before applying configurations.
-	if _, ok := currentConfigurations[c.requiredProvider]; c.requiredProvider != "" && !ok {
-		return
-	}
-
-	conf := mergeConfiguration(currentConfigurations.DeepCopy(), c.defaultEntryPoints)
-	conf = applyModel(conf)
-
-	for _, listener := range c.configurationListeners {
-		listener(conf)
 	}
 }
 
