@@ -9,6 +9,8 @@ import (
 )
 
 func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoints []string) dynamic.Configuration {
+	// TODO: see if we can use DeepCopies inside, so that the given argument is left
+	// untouched, and the modified copy is returned.
 	conf := dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers:           make(map[string]*dynamic.Router),
