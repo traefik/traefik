@@ -118,7 +118,7 @@ metrics:
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.datadog]
-    pushInterval = 10s
+    pushInterval = "10s"
 ```
 
 ```bash tab="CLI"
@@ -144,5 +144,5 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics.datadog.prefix="traefik"
+--metrics.datadog.prefix=traefik
 ```
