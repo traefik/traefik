@@ -47,7 +47,7 @@ func (s *ThrottlingSuite) TestThrottleConfReload(c *check.C) {
 					LoadBalancer: &dynamic.ServersLoadBalancer{
 						Servers: []dynamic.Server{
 							{
-								URL: "http://" + s.getContainerIP(c, "whoami1") + ":80",
+								URL: "http://" + s.getComposeServiceIP(c, "whoami1") + ":80",
 							},
 						},
 					},
@@ -100,6 +100,6 @@ func (s *ThrottlingSuite) TestThrottleConfReload(c *check.C) {
 	// 10 times (so for 2s in total).
 	// Therefore the throttling (set at 400ms for this test) should only let
 	// (2s / 400 ms =) 5 config reloads happen in theory.
-	// But we do not want to be flaky, so we're lenient on the check below.
-	c.Assert(reloads, checker.LessThan, confChanges)
+	// In addition, we have to take into account the extra config reload from the internal provider (5 + 1).
+	c.Assert(reloads, checker.LessOrEqualThan, 6)
 }
