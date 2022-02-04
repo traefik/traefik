@@ -180,6 +180,11 @@ func isAccountMatchingCaServer(ctx context.Context, accountURI, serverURI string
 	return cau.Hostname() == aru.Hostname()
 }
 
+// ThrottleDuration returns the throttle duration.
+func (p *Provider) ThrottleDuration() time.Duration {
+	return 0
+}
+
 // Provide allows the file provider to provide configurations to traefik
 // using the given Configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
