@@ -6,6 +6,7 @@ import (
 	"math"
 	"net"
 	"regexp"
+	"time"
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/static"
@@ -27,6 +28,11 @@ type Provider struct {
 // New creates a new instance of the internal provider.
 func New(staticCfg static.Configuration) *Provider {
 	return &Provider{staticCfg: staticCfg}
+}
+
+// ThrottleDuration returns the throttle duration.
+func (i Provider) ThrottleDuration() time.Duration {
+	return 0
 }
 
 // Provide allows the provider to provide configurations to traefik using the given configuration channel.
