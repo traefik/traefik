@@ -151,7 +151,11 @@ func (c *ConfigurationWatcher) applyConfigurations(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case newConfigs := <-c.newConfigs:
+		case newConfigs, ok := <-c.newConfigs:
+			if !ok {
+				return
+			}
+
 			// We wait for first configuration of the required provider before applying configurations.
 			if _, ok := newConfigs[c.requiredProvider]; c.requiredProvider != "" && !ok {
 				continue
