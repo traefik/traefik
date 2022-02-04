@@ -111,20 +111,20 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 				logger := log.WithoutContext().WithField(log.ProviderName, configMsg.ProviderName)
 
 				if configMsg.Configuration == nil {
-					logger.Debug("Received nil configuration from providerAggregator, skipping.")
+					logger.Debug("Skipping nil configuration.")
+					continue
+				}
+
+				if isEmptyConfiguration(configMsg.Configuration) {
+					logger.Debug("Skipping empty configuration.")
 					continue
 				}
 
 				logConfiguration(logger, configMsg)
 
-				if isEmptyConfiguration(configMsg.Configuration) {
-					logger.Info("Skipping empty Configuration")
-					continue
-				}
-
 				if reflect.DeepEqual(newConfigurations[configMsg.ProviderName], configMsg.Configuration) {
 					// no change, do nothing
-					logger.Info("Skipping unchanged configuration")
+					logger.Debug("Skipping unchanged configuration.")
 					continue
 				}
 
@@ -152,25 +152,23 @@ func (c *ConfigurationWatcher) applyConfigurations(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case newConfigs := <-c.newConfigs:
-			currentConfigurations := newConfigs
-
-			if reflect.DeepEqual(currentConfigurations, lastConfigurations) {
+			// We wait for first configuration of the required provider before applying configurations.
+			if _, ok := newConfigs[c.requiredProvider]; c.requiredProvider != "" && !ok {
 				continue
 			}
 
-			// We wait for first configuration of the required providerAggregator before applying configurations.
-			if _, ok := currentConfigurations[c.requiredProvider]; c.requiredProvider != "" && !ok {
+			if reflect.DeepEqual(newConfigs, lastConfigurations) {
 				continue
 			}
 
-			conf := mergeConfiguration(currentConfigurations.DeepCopy(), c.defaultEntryPoints)
+			conf := mergeConfiguration(newConfigs.DeepCopy(), c.defaultEntryPoints)
 			conf = applyModel(conf)
 
 			for _, listener := range c.configurationListeners {
 				listener(conf)
 			}
 
-			lastConfigurations = currentConfigurations
+			lastConfigurations = newConfigs
 		}
 	}
 }
