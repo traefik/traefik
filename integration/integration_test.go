@@ -68,6 +68,7 @@ func Test(t *testing.T) {
 	check.Suite(&SimpleSuite{})
 	check.Suite(&TCPSuite{})
 	check.Suite(&TimeoutSuite{})
+	check.Suite(&ThrottlingSuite{})
 	check.Suite(&TLSClientHeadersSuite{})
 	check.Suite(&TracingSuite{})
 	check.Suite(&UDPSuite{})
