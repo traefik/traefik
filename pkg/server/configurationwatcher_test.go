@@ -59,6 +59,7 @@ func (p *mockProvider) Init() error {
 func TestNewConfigurationWatcher(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
 	defer routinesPool.Stop()
+
 	pvd := &mockProvider{
 		messages: []dynamic.Message{{
 			ProviderName: "mock",
@@ -271,11 +272,11 @@ func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 		})
 	}
 
-	aggregator := aggregator.ProviderAggregator{}
-	err := aggregator.AddProvider(pvd)
+	providerAggregator := aggregator.ProviderAggregator{}
+	err := providerAggregator.AddProvider(pvd)
 	assert.Nil(t, err)
 
-	watcher := NewConfigurationWatcher(routinesPool, aggregator, []string{}, "")
+	watcher := NewConfigurationWatcher(routinesPool, providerAggregator, []string{}, "")
 
 	publishedConfigCount := 0
 	watcher.AddListener(func(_ dynamic.Configuration) {
@@ -284,18 +285,19 @@ func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 
 	watcher.Start()
 
-	// give some time so that the configuration can be processed
+	// Give some time so that the configuration can be processed.
 	time.Sleep(100 * time.Millisecond)
 
-	// after 150 milliseconds 5 new configs were published
-	// with a throttle duration of 30 milliseconds this means, we should have received 3 new configs
-	assert.Less(t, publishedConfigCount, 5, "config was applied too many times")
+	// To load 5 new configs it would require 150ms (5 configs * 30ms).
+	// In 100ms, we should only have time to load 3 configs.
+	assert.LessOrEqual(t, publishedConfigCount, 3, "config was applied too many times")
 	assert.Greater(t, publishedConfigCount, 0, "config was not applied at least once")
 }
 
 func TestListenProvidersSkipsEmptyConfigs(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
 	defer routinesPool.Stop()
+
 	pvd := &mockProvider{
 		messages: []dynamic.Message{{ProviderName: "mock"}},
 	}
@@ -313,6 +315,7 @@ func TestListenProvidersSkipsEmptyConfigs(t *testing.T) {
 func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
 	defer routinesPool.Stop()
+
 	message := dynamic.Message{
 		ProviderName: "mock",
 		Configuration: &dynamic.Configuration{
@@ -322,6 +325,7 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 			),
 		},
 	}
+
 	pvd := &mockProvider{
 		messages: []dynamic.Message{message, message},
 	}
@@ -448,11 +452,11 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 		},
 	}
 
-	aggregator := aggregator.ProviderAggregator{}
-	err := aggregator.AddProvider(pvd)
+	providerAggregator := aggregator.ProviderAggregator{}
+	err := providerAggregator.AddProvider(pvd)
 	assert.Nil(t, err)
 
-	watcher := NewConfigurationWatcher(routinesPool, aggregator, []string{"defaultEP"}, "")
+	watcher := NewConfigurationWatcher(routinesPool, providerAggregator, []string{"defaultEP"}, "")
 
 	var configurationReloads int
 	var lastConfig dynamic.Configuration
@@ -592,11 +596,11 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 		},
 	}
 
-	aggregator := aggregator.ProviderAggregator{}
-	err := aggregator.AddProvider(pvd)
+	providerAggregator := aggregator.ProviderAggregator{}
+	err := providerAggregator.AddProvider(pvd)
 	assert.Nil(t, err)
 
-	watcher := NewConfigurationWatcher(routinesPool, aggregator, []string{"defaultEP"}, "")
+	watcher := NewConfigurationWatcher(routinesPool, providerAggregator, []string{"defaultEP"}, "")
 
 	var configurationReloads int
 	var lastConfig dynamic.Configuration
