@@ -145,13 +145,61 @@ The TLS options allow one to configure some parameters of the TLS connection.
 
 !!! important "TLSOptions in Kubernetes"
 
-    When using the TLSOptions-CRD in Kubernetes, one might setup a default set of options that,
-    if not explicitly overwritten, should apply to all ingresses.  
-    To achieve that, you'll have to create a TLSOptions CR with the name `default`.
+    On Kubernetes you have to use TLSOption, a CRD in Kubernetes, with the name `default`.
     There may exist only one TLSOption with the name `default` (across all namespaces) - otherwise they will be dropped.  
+    If not explicitly overwritten, this TLSOption will apply to all ingresses.
+
     To explicitly use a different TLSOption (and using the Kubernetes Ingress resources)
     you'll have to add an annotation to the Ingress in the following form:
     `traefik.ingress.kubernetes.io/router.tls.options: <resource-namespace>-<resource-name>@kubernetescrd`
+
+### Configuration example with TLS 1.2+ and up-to-date ciphers
+
+```yaml tab="File (YAML)"
+tls:
+  options:
+    default:
+      minVersion: VersionTLS12
+      cipherSuites:
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+```
+
+```toml tab="File (TOML)"
+[tls.options]
+  [tls.options.default]
+    minVersion = "VersionTLS12"
+    cipherSuites = [
+      "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+      "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+      "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+      "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+    ]
+```
+
+```yaml tab="Kubernetes"
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: traefikee # <=== Your Traefik Namespace here
+spec:
+  minVersion: VersionTLS12
+  cipherSuites:
+    - "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+    - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+    - "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+    - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+    - "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305"
+    - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+```
 
 ### Minimum TLS Version
 
