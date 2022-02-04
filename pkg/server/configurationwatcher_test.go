@@ -157,6 +157,7 @@ func TestWaitForRequiredProvider(t *testing.T) {
 	})
 
 	watcher.Start()
+	defer watcher.Stop()
 
 	// give some time so that the configuration can be processed
 	time.Sleep(20 * time.Millisecond)
@@ -195,6 +196,7 @@ func TestIgnoreTransientConfiguration(t *testing.T) {
 	})
 
 	watcher.Start()
+	defer watcher.Stop()
 
 	watcher.allProvidersConfigs <- dynamic.Message{
 		ProviderName:  "mock",
@@ -284,6 +286,7 @@ func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 	})
 
 	watcher.Start()
+	defer watcher.Stop()
 
 	// Give some time so that the configuration can be processed.
 	time.Sleep(100 * time.Millisecond)
@@ -306,7 +309,9 @@ func TestListenProvidersSkipsEmptyConfigs(t *testing.T) {
 	watcher.AddListener(func(_ dynamic.Configuration) {
 		t.Error("An empty configuration was published but it should not")
 	})
+
 	watcher.Start()
+	defer watcher.Stop()
 
 	// give some time so that the configuration can be processed
 	time.Sleep(100 * time.Millisecond)
@@ -332,18 +337,17 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 
 	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
 
-	alreadyCalled := false
+	var configurationReloads int
 	watcher.AddListener(func(_ dynamic.Configuration) {
-		if alreadyCalled {
-			t.Error("Same configuration should not be published multiple times")
-		}
-		alreadyCalled = true
+		configurationReloads++
 	})
 
 	watcher.Start()
+	defer watcher.Stop()
 
 	// give some time so that the configuration can be processed
 	time.Sleep(100 * time.Millisecond)
+	assert.Equal(t, configurationReloads, 1, "Same configuration should not be published multiple times")
 }
 
 func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
@@ -365,7 +369,8 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 	}
 
 	pvd := &mockProvider{
-		wait: 5 * time.Millisecond, // The last message needs to be received before the second has been fully processed
+		wait:             5 * time.Millisecond, // The last message needs to be received before the second has been fully processed
+		throttleDuration: 15 * time.Millisecond,
 		messages: []dynamic.Message{
 			{ProviderName: "mock", Configuration: configuration},
 			{ProviderName: "mock", Configuration: transientConfiguration},
@@ -381,6 +386,7 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 	})
 
 	watcher.Start()
+	defer watcher.Stop()
 
 	// give some time so that the configuration can be processed
 	time.Sleep(100 * time.Millisecond)
@@ -475,6 +481,7 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 	})
 
 	watcher.Start()
+	defer watcher.Stop()
 
 	// Wait long enough
 	time.Sleep(50 * time.Millisecond)
@@ -515,6 +522,8 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 
 func TestApplyConfigUnderStress(t *testing.T) {
 	routinesPool := safe.NewPool(context.Background())
+	defer routinesPool.Stop()
+
 	watcher := NewConfigurationWatcher(routinesPool, &mockProvider{}, []string{"defaultEP"}, "")
 
 	routinesPool.GoCtx(func(ctx context.Context) {
@@ -540,8 +549,9 @@ func TestApplyConfigUnderStress(t *testing.T) {
 	})
 
 	watcher.Start()
+	defer watcher.Stop()
+
 	time.Sleep(100 * time.Millisecond)
-	routinesPool.Stop()
 
 	// Ensure that at least two configurations have been applied
 	// if we simulate being spammed configuration changes by the
@@ -610,6 +620,7 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 	})
 
 	watcher.Start()
+	defer watcher.Stop()
 
 	// Wait long enough
 	time.Sleep(500 * time.Millisecond)
@@ -675,6 +686,7 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 	})
 
 	watcher.Start()
+	defer watcher.Stop()
 
 	// give some time so that the configuration can be processed
 	time.Sleep(100 * time.Millisecond)
@@ -754,6 +766,7 @@ func TestPublishConfigUpdatedByProvider(t *testing.T) {
 	})
 
 	watcher.Start()
+	defer watcher.Stop()
 
 	// give some time so that the configuration can be processed.
 	time.Sleep(100 * time.Millisecond)
@@ -803,6 +816,7 @@ func TestPublishConfigUpdatedByConfigWatcherListener(t *testing.T) {
 	})
 
 	watcher.Start()
+	defer watcher.Stop()
 
 	// give some time so that the configuration can be processed.
 	time.Sleep(100 * time.Millisecond)
