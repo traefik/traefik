@@ -4,12 +4,11 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 )
 
-// RingChannel implements the Channel interface in a way that never blocks the writer.
+// RingChannel implements a channel in a way that never blocks the writer.
 // Specifically, if a value is written to a RingChannel when its buffer is full then the oldest
 // value in the buffer is discarded to make room (just like a standard ring-buffer).
 // Note that Go's scheduler can cause discarded values when they could be avoided, simply by scheduling
 // the writer before the reader, so caveat emptor.
-// For the opposite behavior (discarding the newest element, not the oldest) see OverflowingChannel.
 type RingChannel struct {
 	input, output chan dynamic.Message
 	buffer        *dynamic.Message
