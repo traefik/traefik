@@ -17,8 +17,6 @@ const providerNameALPN = "tlsalpn.acme"
 
 // ChallengeTLSALPN TLSALPN challenge provider implements challenge.Provider.
 type ChallengeTLSALPN struct {
-	Timeout time.Duration
-
 	chans   map[string]chan struct{}
 	muChans sync.Mutex
 
@@ -29,11 +27,10 @@ type ChallengeTLSALPN struct {
 }
 
 // NewChallengeTLSALPN creates a new ChallengeTLSALPN.
-func NewChallengeTLSALPN(timeout time.Duration) *ChallengeTLSALPN {
+func NewChallengeTLSALPN() *ChallengeTLSALPN {
 	return &ChallengeTLSALPN{
-		Timeout: timeout,
-		chans:   make(map[string]chan struct{}),
-		certs:   make(map[string]*Certificate),
+		chans: make(map[string]chan struct{}),
+		certs: make(map[string]*Certificate),
 	}
 }
 
@@ -61,12 +58,13 @@ func (c *ChallengeTLSALPN) Present(domain, _, keyAuth string) error {
 
 	c.configurationChan <- conf
 
-	timer := time.NewTimer(c.Timeout)
+	// Present should return when its dynamic configuration has been received and applied by Traefik.
+	// The timer exists in case the above does not happen, to ensure the challenge cleanup.
+	timer := time.NewTimer(time.Minute)
+	defer timer.Stop()
 
 	select {
 	case t := <-timer.C:
-		timer.Stop()
-
 		c.muChans.Lock()
 		c.cleanChan(string(certPEMBlock))
 		c.muChans.Unlock()
@@ -101,6 +99,11 @@ func (c *ChallengeTLSALPN) CleanUp(domain, _, keyAuth string) error {
 // Init the provider.
 func (c *ChallengeTLSALPN) Init() error {
 	return nil
+}
+
+// ThrottleDuration returns the throttle duration.
+func (c *ChallengeTLSALPN) ThrottleDuration() time.Duration {
+	return 0
 }
 
 // Provide allows the provider to provide configurations to traefik using the given configuration channel.
