@@ -132,26 +132,91 @@ If no default certificate is provided, Traefik generates and uses a self-signed 
 
 ## TLS Options
 
-The TLS options allow one to configure some parameters of the TLS connection.
+The TLS options allow one to configure some parameters on TLS connections.
+
+!!! important "TLSOptions in Kubernetes"
+
+    On Kubernetes you have to use [TLSOption](../../routing/providers/kubernetes-crd#kind-tlsoption).
+    The configuration file **won't apply** on IngressRoute / IngressRouteTCP.
+
+On other environments, one can provide TLS Options with
+
+**1)** A configuration file
+
+```yaml tab="traefik-tls.yaml"
+tls:
+  options:
+    default:
+      minVersion: VersionTLS13
+
+    tls12:
+      minVersion: VersionTLS12
+    cipherSuites:
+      - "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+      - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+      - "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+      - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+      - "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305"
+      - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+
+```
+
+```toml tab="traefik-tls.toml"
+[tls.options]
+  [tls.options.default]
+    minVersion = "VersionTLS13"
+
+  [tls.options.tls12]
+    minVersion = "VersionTLS12"
+    cipherSuites = [
+      "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+      "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+      "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+      "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+    ]
+```
+
+**2)** a configuration file provider
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    endpoint: "tcp://dockersocketproxy:2375"
+    exposedByDefault: false
+
+  file:
+    filename: "/traefik-tls.yaml"
+```
+
+```toml tab="File (TOML)"
+[providers]
+  [providers.docker]
+    endpoint = "tcp://dockersocketproxy:2375"
+    exposedByDefault = false
+
+  [providers.file]
+    filename = "/traefik-tls.toml"
+
+```
+
+**3)** select tls options with labels on your routers
+
+```yaml tab="Default"
+traefik.http.routers.frontend.tls.options: "default"
+```
+
+```yaml tab="TLS 1.2"
+traefik.http.routers.frontend.tls.options: "tls12@file"
+```
 
 !!! important "'default' TLS Option"
 
     The `default` option is special.
-    When no tls options are specified in a tls router, the `default` option is used.  
-    When specifying the `default` option explicitly, make sure not to specify provider namespace as the `default` option does not have one.  
-    Conversely, for cross-provider references, for example, when referencing the file provider from a docker label,
-    you must specify the provider namespace, for example:  
-    `traefik.http.routers.myrouter.tls.options=myoptions@file`
-
-!!! important "TLSOptions in Kubernetes"
-
-    When using the TLSOptions-CRD in Kubernetes, one might setup a default set of options that,
-    if not explicitly overwritten, should apply to all ingresses.  
-    To achieve that, you'll have to create a TLSOptions CR with the name `default`.
-    There may exist only one TLSOption with the name `default` (across all namespaces) - otherwise they will be dropped.  
-    To explicitly use a different TLSOption (and using the Kubernetes Ingress resources)
-    you'll have to add an annotation to the Ingress in the following form:
-    `traefik.ingress.kubernetes.io/router.tls.options: <resource-namespace>-<resource-name>@kubernetescrd`
+    When no tls options are specified in a tls router, the `default` option is used.
+    Conversely, for cross-provider references, for example, when referencing the file
+    provider from a docker label, you must specify the provider, like in the example above.
 
 ### Minimum TLS Version
 
