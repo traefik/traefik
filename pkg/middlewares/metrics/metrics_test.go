@@ -98,3 +98,29 @@ func TestCloseNotifier(t *testing.T) {
 		})
 	}
 }
+
+func Test_getMethod(t *testing.T) {
+	testCases := []struct {
+		method   string
+		expected string
+	}{
+		{
+			method:   http.MethodGet,
+			expected: http.MethodGet,
+		},
+		{
+			method:   "THIS_IS_NOT_A_VALID_METHOD",
+			expected: "EXTENSION_METHOD",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.method, func(t *testing.T) {
+			t.Parallel()
+
+			request := httptest.NewRequest(test.method, "http://example.com", nil)
+			assert.Equal(t, test.expected, getMethod(request))
+		})
+	}
+}
