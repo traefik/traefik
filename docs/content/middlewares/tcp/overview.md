@@ -36,7 +36,7 @@ spec:
 
 ---
 apiVersion: traefik.containo.us/v1alpha1
-kind: Middleware
+kind: MiddlewareTCP
 metadata:
   name: foo-ip-whitelist
 spec:
@@ -47,7 +47,7 @@ spec:
 
 ---
 apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
+kind: IngressRouteTCP
 metadata:
   name: ingressroute
 spec:
