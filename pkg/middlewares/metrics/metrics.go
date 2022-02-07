@@ -159,12 +159,46 @@ func containsHeader(req *http.Request, name, value string) bool {
 	return false
 }
 
+// getMethod returns the request's method.
+// The return value is validated to remove possibility of DOS attacks by
+// generating requests with exotic methods.
+// To be valid, the method must be a UTF-8 valid string,
+// and be an intended method.
+// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
+// https://datatracker.ietf.org/doc/html/rfc2616/#section-9
+// https://datatracker.ietf.org/doc/html/rfc5789#section-2
+// https://datatracker.ietf.org/doc/html/rfc7540#section-11.6
+// Invalid methods are grouped with the method `EXTENSION_METHOD`.
 func getMethod(r *http.Request) string {
 	if !utf8.ValidString(r.Method) {
-		log.Warnf("Invalid HTTP method encoding: %s", r.Method)
+		log.WithoutContext().Warnf("Invalid HTTP method encoding: %s", r.Method)
 		return "NON_UTF8_HTTP_METHOD"
 	}
-	return r.Method
+
+	switch r.Method {
+	case "HEAD", "head":
+		return "HEAD"
+	case "GET", "get":
+		return "GET"
+	case "POST", "post":
+		return "POST"
+	case "PUT", "put":
+		return "PUT"
+	case "DELETE", "delete":
+		return "DELETE"
+	case "CONNECT", "connect":
+		return "CONNECT"
+	case "OPTIONS", "options":
+		return "OPTIONS"
+	case "TRACE", "trace":
+		return "TRACE"
+	case "PATCH", "patch":
+		return "PATCH"
+	case "PRI", "pri":
+		return "PRI"
+	default:
+		return "EXTENSION_METHOD"
+	}
 }
 
 type retryMetrics interface {
