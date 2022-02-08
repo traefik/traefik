@@ -160,15 +160,12 @@ func containsHeader(req *http.Request, name, value string) bool {
 }
 
 // getMethod returns the request's method.
-// The return value is validated to remove possibility of DOS attacks
-// by generating requests with exotic methods.
-// To be valid, the method must be a UTF-8 valid string,
-// and be an intended method.
+// It checks whether the method is a valid UTF-8 string.
+// To restrict the (potentially infinite) number of accepted values for the method,
+// and avoid unbounded memory issues,
+// values that are not part of the set of HTTP verbs are replaced with EXTENSION_METHOD.
 // See https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
-// https://datatracker.ietf.org/doc/html/rfc2616/#section-9
-// https://datatracker.ietf.org/doc/html/rfc5789#section-2
-// https://datatracker.ietf.org/doc/html/rfc7540#section-11.6
-// Invalid methods are grouped with the method `EXTENSION_METHOD`.
+// https://datatracker.ietf.org/doc/html/rfc2616/#section-5.1.1.
 func getMethod(r *http.Request) string {
 	if !utf8.ValidString(r.Method) {
 		log.WithoutContext().Warnf("Invalid HTTP method encoding: %s", r.Method)
@@ -176,26 +173,10 @@ func getMethod(r *http.Request) string {
 	}
 
 	switch r.Method {
-	case "HEAD", "head":
-		return "HEAD"
-	case "GET", "get":
-		return "GET"
-	case "POST", "post":
-		return "POST"
-	case "PUT", "put":
-		return "PUT"
-	case "DELETE", "delete":
-		return "DELETE"
-	case "CONNECT", "connect":
-		return "CONNECT"
-	case "OPTIONS", "options":
-		return "OPTIONS"
-	case "TRACE", "trace":
-		return "TRACE"
-	case "PATCH", "patch":
-		return "PATCH"
-	case "PRI", "pri":
-		return "PRI"
+	case "HEAD", "GET", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", // https://datatracker.ietf.org/doc/html/rfc7231#section-4
+		"PATCH", // https://datatracker.ietf.org/doc/html/rfc5789#section-2
+		"PRI":   // https://datatracker.ietf.org/doc/html/rfc7540#section-11.6
+		return r.Method
 	default:
 		return "EXTENSION_METHOD"
 	}

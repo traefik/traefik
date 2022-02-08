@@ -433,7 +433,7 @@ traefik_service_server_up
 
 ## Labels
 
-Here is a comprehensive list of label that are provided by the metrics:
+Here is a comprehensive list of labels that are provided by the metrics:
 
 | Label         | Description                           | example                    |
 |---------------|---------------------------------------|----------------------------|
@@ -450,10 +450,8 @@ Here is a comprehensive list of label that are provided by the metrics:
 | `tls_version` | TLS version used for the request      | "1.0"                      |
 | `url`         | Service server url                    | "http://example.com"       |
 
-!!! info "`method` label validation"
+!!! info "`method` label value"
 
-    The `method` label is bound to common HTTP methods that are defined in
-    [common](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods),
-    or [HTTP/2](https://datatracker.ietf.org/doc/html/rfc7540#section-11.6) method definition.
-    
-    Methods that are not in this list are served with the `EXTENSION_METHOD` value.
+    If the HTTP method verb on a request is not one defined in the set of common methods for [HTTP/1.1](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
+    or the [PRI](https://datatracker.ietf.org/doc/html/rfc7540#section-11.6) verb (for HTTP/2),
+    then the value for the metric becomes `EXTENSION_METHOD`.
