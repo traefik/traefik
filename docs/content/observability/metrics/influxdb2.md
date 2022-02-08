@@ -1,4 +1,4 @@
-# InfluxDB 2
+# InfluxDB v2
 
 To enable the InfluxDB2:
 
@@ -20,7 +20,7 @@ metrics:
 
 _Required, Default="http://localhost:8086"_
 
-Address of the InfluxDB2 instance.
+Address of the InfluxDB v2 instance.
 
 ```yaml tab="File (YAML)"
 metrics:
@@ -42,7 +42,7 @@ metrics:
 
 _Required, Default=""_
 
-Defines a token with which to connect to InfluxDB2.
+Token with which to connect to InfluxDB v2.
 
 ```yaml tab="File (YAML)"
 metrics:
@@ -64,7 +64,7 @@ metrics:
 
 _Required, Default=""_
 
-InfluxDB2's organisation where metrics will be stored.
+Organisation where metrics will be stored.
 
 ```yaml tab="File (YAML)"
 metrics:
@@ -86,7 +86,7 @@ metrics:
 
 _Required, Default=""_
 
-InfluxDB's bucket where metrics will be stored.
+Bucket where metrics will be stored.
 
 ```yaml tab="File (YAML)"
 metrics:
@@ -170,35 +170,11 @@ metrics:
 --metrics.influxdb2.addServicesLabels=true
 ```
 
-#### `batchSize`
-
-_Optional, Default=10_
-
-Number of metrics reports collected before pushing to InfluxDB2.
-
-!!! warning "`batchSize` must be strictly greater thant zero"
-
-```yaml tab="File (YAML)"
-metrics:
-  influxDB2:
-    batchSize: 10
-```
-
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.influxDB2]
-    batchSize = 10
-```
-
-```bash tab="CLI"
---metrics.influxdb2.batchSize=10
-```
-
 #### `pushInterval`
 
 _Optional, Default=10s_
 
-The interval used by the exporter to push metrics to influxdb2.
+The interval used by the exporter to push metrics to InfluxDB server.
 
 ```yaml tab="File (YAML)"
 metrics:
@@ -214,4 +190,30 @@ metrics:
 
 ```bash tab="CLI"
 --metrics.influxdb2.pushInterval=10s
+```
+
+#### `additionalLabels`
+
+_Optional, Default={}_
+
+Additional labels (InfluxDB tags) on all metrics.
+
+```yaml tab="File (YAML)"
+metrics:
+  influxDB2:
+    additionalLabels:
+      host: example.com
+      environment: production
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.influxDB2]
+    [metrics.influxDB2.additionalLabels]
+      host = "example.com"
+      environment = "production"
+```
+
+```bash tab="CLI"
+--metrics.influxdb2.additionallabels.host=example.com --metrics.influxdb2.additionallabels.environment=production
 ```

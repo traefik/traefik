@@ -291,17 +291,17 @@ InfluxDB v2 metrics exporter type. (Default: ```false```)
 `--metrics.influxdb2.addentrypointslabels`:  
 Enable metrics on entry points. (Default: ```true```)
 
+`--metrics.influxdb2.additionallabels.<name>`:  
+Additional labels (influxdb tags) on all metrics
+
 `--metrics.influxdb2.address`:  
-InfluxDB v2 server address. (Default: ```http://localhost:8086```)
+InfluxDB v2 address. (Default: ```http://localhost:8086```)
 
 `--metrics.influxdb2.addrouterslabels`:  
 Enable metrics on routers. (Default: ```false```)
 
 `--metrics.influxdb2.addserviceslabels`:  
 Enable metrics on services. (Default: ```true```)
-
-`--metrics.influxdb2.batchsize`:  
-InfluxDB v2 push batch size. (Default: ```10```)
 
 `--metrics.influxdb2.bucket`:  
 InfluxDB v2 bucket ID.
