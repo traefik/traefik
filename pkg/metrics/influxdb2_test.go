@@ -31,7 +31,7 @@ func TestInfluxDB2(t *testing.T) {
 		&types.InfluxDB2{
 			Address:              ts.URL,
 			Token:                "test-token",
-			PushInterval:         ptypes.Duration(time.Millisecond * 10),
+			PushInterval:         ptypes.Duration(10 * time.Millisecond),
 			Org:                  "test-org",
 			Bucket:               "test-bucket",
 			AddEntryPointsLabels: true,
