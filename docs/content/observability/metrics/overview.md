@@ -4,16 +4,17 @@ Traefik supports 4 metrics backends:
 
 - [Datadog](./datadog.md)
 - [InfluxDB](./influxdb.md)
+- [InfluxDB2](./influxdb2.md)
 - [Prometheus](./prometheus.md)
 - [StatsD](./statsd.md)
 
 ## Global Metrics
 
-| Metric                                                                  | DataDog | InfluxDB | Prometheus | StatsD |
-|-------------------------------------------------------------------------|---------|----------|------------|--------|
-| [Configuration reloads](#configuration-reloads)                         | ✓       | ✓        | ✓          | ✓      |
-| [Last Configuration Reload Success](#last-configuration-reload-success) | ✓       | ✓        | ✓          | ✓      |
-| [TLS certificates expiration](#tls-certificates-expiration)             | ✓       | ✓        | ✓          | ✓      |
+| Metric                                                                  | DataDog | InfluxDB / InfluxDB2 | Prometheus | StatsD |
+|-------------------------------------------------------------------------|---------|----------------------|------------|--------|
+| [Configuration reloads](#configuration-reloads)                         | ✓       | ✓                    | ✓          | ✓      |
+| [Last Configuration Reload Success](#last-configuration-reload-success) | ✓       | ✓                    | ✓          | ✓      |
+| [TLS certificates expiration](#tls-certificates-expiration)             | ✓       | ✓                    | ✓          | ✓      |
 
 ### Configuration Reloads
 
@@ -23,7 +24,7 @@ The total count of configuration reloads.
 config.reload.total
 ```
 
-```influxdb tab="InfluxDB"
+```influxdb tab="InfluxDB / InfluxDB2"
 traefik.config.reload.total
 ```
 
@@ -44,7 +45,7 @@ The timestamp of the last configuration reload success.
 config.reload.lastSuccessTimestamp
 ```
 
-```influxdb tab="InfluxDB"
+```influxdb tab="InfluxDB / InfluxDB2"
 traefik.config.reload.lastSuccessTimestamp
 ```
 
@@ -67,7 +68,7 @@ Available labels: `cn`, `sans`, `serial`.
 tls.certs.notAfterTimestamp
 ```
 
-```influxdb tab="InfluxDB"
+```influxdb tab="InfluxDB / InfluxDB2"
 traefik.tls.certs.notAfterTimestamp
 ```
 
@@ -82,12 +83,12 @@ traefik_tls_certs_not_after
 
 ## EntryPoint Metrics
 
-| Metric                                                    | DataDog | InfluxDB | Prometheus | StatsD |
-|-----------------------------------------------------------|---------|----------|------------|--------|
-| [HTTP Requests Count](#http-requests-count)               | ✓       | ✓        | ✓          | ✓      |
-| [HTTPS Requests Count](#https-requests-count)             | ✓       | ✓        | ✓          | ✓      |
-| [Request Duration Histogram](#request-duration-histogram) | ✓       | ✓        | ✓          | ✓      |
-| [Open Connections Count](#open-connections-count)         | ✓       | ✓        | ✓          | ✓      |
+| Metric                                                    | DataDog | InfluxDB / InfluxDB2 | Prometheus | StatsD |
+|-----------------------------------------------------------|---------|----------------------|------------|--------|
+| [HTTP Requests Count](#http-requests-count)               | ✓       | ✓                    | ✓          | ✓      |
+| [HTTPS Requests Count](#https-requests-count)             | ✓       | ✓                    | ✓          | ✓      |
+| [Request Duration Histogram](#request-duration-histogram) | ✓       | ✓                    | ✓          | ✓      |
+| [Open Connections Count](#open-connections-count)         | ✓       | ✓                    | ✓          | ✓      |
 
 ### HTTP Requests Count
 
@@ -99,7 +100,7 @@ Available labels: `code`, `method`, `protocol`, `entrypoint`.
 entrypoint.request.total
 ```
 
-```influxdb tab="InfluxDB"
+```influxdb tab="InfluxDB / InfluxDB2"
 traefik.entrypoint.requests.total
 ```
 
@@ -122,7 +123,7 @@ Available labels: `tls_version`, `tls_cipher`, `entrypoint`.
 entrypoint.request.tls.total
 ```
 
-```influxdb tab="InfluxDB"
+```influxdb tab="InfluxDB / InfluxDB2"
 traefik.entrypoint.requests.tls.total
 ```
 
@@ -145,7 +146,7 @@ Available labels: `code`, `method`, `protocol`, `entrypoint`.
 entrypoint.request.duration
 ```
 
-```influxdb tab="InfluxDB"
+```influxdb tab="InfluxDB / InfluxDB2"
 traefik.entrypoint.request.duration
 ```
 
@@ -168,7 +169,7 @@ Available labels: `method`, `protocol`, `entrypoint`.
 entrypoint.connections.open
 ```
 
-```influxdb tab="InfluxDB"
+```influxdb tab="InfluxDB / InfluxDB2"
 traefik.entrypoint.connections.open
 ```
 
@@ -183,12 +184,12 @@ traefik_entrypoint_open_connections
 
 ## Router Metrics
 
-| Metric                                                      | DataDog | InfluxDB | Prometheus | StatsD |
-|-------------------------------------------------------------|---------|----------|------------|--------|
-| [HTTP Requests Count](#http-requests-count_1)               | ✓       | ✓        | ✓          | ✓      |
-| [HTTPS Requests Count](#https-requests-count_1)             | ✓       | ✓        | ✓          | ✓      |
-| [Request Duration Histogram](#request-duration-histogram_1) | ✓       | ✓        | ✓          | ✓      |
-| [Open Connections Count](#open-connections-count_1)         | ✓       | ✓        | ✓          | ✓      |
+| Metric                                                      | DataDog | InfluxDB / InfluxDB2 | Prometheus | StatsD |
+|-------------------------------------------------------------|---------|----------------------|------------|--------|
+| [HTTP Requests Count](#http-requests-count_1)               | ✓       | ✓                    | ✓          | ✓      |
+| [HTTPS Requests Count](#https-requests-count_1)             | ✓       | ✓                    | ✓          | ✓      |
+| [Request Duration Histogram](#request-duration-histogram_1) | ✓       | ✓                    | ✓          | ✓      |
+| [Open Connections Count](#open-connections-count_1)         | ✓       | ✓                    | ✓          | ✓      |
 
 ### HTTP Requests Count
 
@@ -200,7 +201,7 @@ Available labels: `code`, `method`, `protocol`, `router`, `service`.
 router.request.total
 ```
 
-```influxdb tab="InfluxDB"
+```influxdb tab="InfluxDB / InfluxDB2"
 traefik.router.requests.total
 ```
 
@@ -223,7 +224,7 @@ Available labels: `tls_version`, `tls_cipher`, `router`, `service`.
 router.request.tls.total
 ```
 
-```influxdb tab="InfluxDB"
+```influxdb tab="InfluxDB / InfluxDB2"
 traefik.router.requests.tls.total
 ```
 
@@ -246,7 +247,7 @@ Available labels: `code`, `method`, `protocol`, `router`, `service`.
 router.request.duration
 ```
 
-```influxdb tab="InfluxDB"
+```influxdb tab="InfluxDB / InfluxDB2"
 traefik.router.request.duration
 ```
 
@@ -269,7 +270,7 @@ Available labels: `method`, `protocol`, `router`, `service`.
 router.connections.open
 ```
 
-```influxdb tab="InfluxDB"
+```influxdb tab="InfluxDB / InfluxDB2"
 traefik.router.connections.open
 ```
 
@@ -284,14 +285,14 @@ traefik_router_open_connections
 
 ## Service Metrics
 
-| Metric                                                      | DataDog | InfluxDB | Prometheus | StatsD |
-|-------------------------------------------------------------|---------|----------|------------|--------|
-| [HTTP Requests Count](#http-requests-count_2)               | ✓       | ✓        | ✓          | ✓      |
-| [HTTPS Requests Count](#https-requests-count_2)             | ✓       | ✓        | ✓          | ✓      |
-| [Request Duration Histogram](#request-duration-histogram_2) | ✓       | ✓        | ✓          | ✓      |
-| [Open Connections Count](#open-connections-count_2)         | ✓       | ✓        | ✓          | ✓      |
-| [Requests Retries Count](#requests-retries-count)           | ✓       | ✓        | ✓          | ✓      |
-| [Service Server UP](#service-server-up)                     | ✓       | ✓        | ✓          | ✓      |
+| Metric                                                      | DataDog | InfluxDB / InfluxDB2 | Prometheus | StatsD |
+|-------------------------------------------------------------|---------|----------------------|------------|--------|
+| [HTTP Requests Count](#http-requests-count_2)               | ✓       | ✓                    | ✓          | ✓      |
+| [HTTPS Requests Count](#https-requests-count_2)             | ✓       | ✓                    | ✓          | ✓      |
+| [Request Duration Histogram](#request-duration-histogram_2) | ✓       | ✓                    | ✓          | ✓      |
+| [Open Connections Count](#open-connections-count_2)         | ✓       | ✓                    | ✓          | ✓      |
+| [Requests Retries Count](#requests-retries-count)           | ✓       | ✓                    | ✓          | ✓      |
+| [Service Server UP](#service-server-up)                     | ✓       | ✓                    | ✓          | ✓      |
 
 ### HTTP Requests Count
 
@@ -303,7 +304,7 @@ Available labels: `code`, `method`, `protocol`, `service`.
 service.request.total
 ```
 
-```influxdb tab="InfluxDB"
+```influxdb tab="InfluxDB / InfluxDB2"
 traefik.service.requests.total
 ```
 
@@ -326,7 +327,7 @@ Available labels: `tls_version`, `tls_cipher`, `service`.
 router.service.tls.total
 ```
 
-```influxdb tab="InfluxDB"
+```influxdb tab="InfluxDB / InfluxDB2"
 traefik.service.requests.tls.total
 ```
 
@@ -349,7 +350,7 @@ Available labels: `code`, `method`, `protocol`, `service`.
 service.request.duration
 ```
 
-```influxdb tab="InfluxDB"
+```influxdb tab="InfluxDB / InfluxDB2"
 traefik.service.request.duration
 ```
 
@@ -372,7 +373,7 @@ Available labels: `method`, `protocol`, `service`.
 service.connections.open
 ```
 
-```influxdb tab="InfluxDB"
+```influxdb tab="InfluxDB / InfluxDB2"
 traefik.service.connections.open
 ```
 
@@ -395,7 +396,7 @@ Available labels: `service`.
 service.retries.total
 ```
 
-```influxdb tab="InfluxDB"
+```influxdb tab="InfluxDB / InfluxDB2"
 traefik.service.retries.total
 ```
 
@@ -418,7 +419,7 @@ Available labels: `service`, `url`.
 service.server.up
 ```
 
-```influxdb tab="InfluxDB"
+```influxdb tab="InfluxDB / InfluxDB2"
 traefik.service.server.up
 ```
 

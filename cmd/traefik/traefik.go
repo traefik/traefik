@@ -448,6 +448,16 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 			metricsConfig.InfluxDB.Address, metricsConfig.InfluxDB.PushInterval)
 	}
 
+	if metricsConfig.InfluxDB2 != nil {
+		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "influxdb2"))
+		influxDB2Register := metrics.RegisterInfluxDB2(ctx, metricsConfig.InfluxDB2)
+		if influxDB2Register != nil {
+			registries = append(registries, influxDB2Register)
+			log.FromContext(ctx).Debugf("Configured InfluxDB v2 metrics: pushing to %s (%s org/%s bucket) once every %s",
+				metricsConfig.InfluxDB2.Address, metricsConfig.InfluxDB2.Org, metricsConfig.InfluxDB2.Bucket, metricsConfig.InfluxDB2.PushInterval)
+		}
+	}
+
 	return registries
 }
 

@@ -281,6 +281,17 @@
     addServicesLabels = true
     [metrics.influxDB.additionalLabels]
       foobar = "foobar"
+  [metrics.influxDB2]
+    address = "foobar"
+    token = "foobar"
+    pushInterval = "42s"
+    org = "foobar"
+    bucket = "foobar"
+    addEntryPointsLabels = true
+    addRoutersLabels = true
+    addServicesLabels = true
+    [metrics.influxDB2.additionalLabels]
+      foobar = "foobar"
 
 [ping]
   entryPoint = "foobar"
