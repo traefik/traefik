@@ -139,7 +139,7 @@ func TestInfluxDBHTTP(t *testing.T) {
 		&types.InfluxDB{
 			Address:              ts.URL,
 			Protocol:             "http",
-			PushInterval:         ptypes.Duration(time.Millisecond * 10),
+			PushInterval:         ptypes.Duration(10 * time.Millisecond),
 			Database:             "test",
 			RetentionPolicy:      "autogen",
 			AddEntryPointsLabels: true,
