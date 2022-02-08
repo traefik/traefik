@@ -111,7 +111,7 @@ func Test_getMethod(t *testing.T) {
 		},
 		{
 			method:   strings.ToLower(http.MethodGet),
-			expected: http.MethodGet,
+			expected: "EXTENSION_METHOD",
 		},
 		{
 			method:   "THIS_IS_NOT_A_VALID_METHOD",
