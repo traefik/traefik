@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stvp/go-udp-testing"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/types"
@@ -125,10 +126,8 @@ func TestInfluxDBHTTP(t *testing.T) {
 	c := make(chan *string)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, "can't read body "+err.Error(), http.StatusBadRequest)
-			return
-		}
+		require.NoError(t, err)
+
 		bodyStr := string(body)
 		c <- &bodyStr
 		_, _ = fmt.Fprintln(w, "ok")
@@ -140,7 +139,7 @@ func TestInfluxDBHTTP(t *testing.T) {
 		&types.InfluxDB{
 			Address:              ts.URL,
 			Protocol:             "http",
-			PushInterval:         ptypes.Duration(time.Second),
+			PushInterval:         ptypes.Duration(10 * time.Millisecond),
 			Database:             "test",
 			RetentionPolicy:      "autogen",
 			AddEntryPointsLabels: true,
