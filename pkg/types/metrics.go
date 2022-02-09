@@ -120,7 +120,6 @@ type InfluxDB2 struct {
 }
 
 // SetDefaults sets the default values.
-// The BatchSize and PushInterval default to the InfluxDB2 client default values.
 func (i *InfluxDB2) SetDefaults() {
 	i.Address = "http://localhost:8086"
 	i.PushInterval = types.Duration(10 * time.Second)
