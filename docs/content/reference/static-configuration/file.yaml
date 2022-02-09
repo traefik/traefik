@@ -303,6 +303,18 @@ metrics:
     addServicesLabels: true
     additionalLabels:
       foobar: foobar
+  influxDB2:
+    address: foobar
+    token: foobar
+    pushInterval: 42s
+    org: foobar
+    bucket: foobar
+    addEntryPointsLabels: true
+    addRoutersLabels: true
+    addServicesLabels: true
+    additionalLabels:
+      foobar: foobar
+
 ping:
   entryPoint: foobar
   manualRouting: true
