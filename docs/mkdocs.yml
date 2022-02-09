@@ -147,6 +147,7 @@ nav:
           - 'Overview': 'observability/metrics/overview.md'
           - 'Datadog': 'observability/metrics/datadog.md'
           - 'InfluxDB': 'observability/metrics/influxdb.md'
+          - 'InfluxDB2': 'observability/metrics/influxdb2.md'
           - 'Prometheus': 'observability/metrics/prometheus.md'
           - 'StatsD': 'observability/metrics/statsd.md'
       - 'Tracing':
