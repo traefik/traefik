@@ -90,18 +90,19 @@ func RegisterInfluxDB2(ctx context.Context, config *types.InfluxDB2) Registry {
 	return registry
 }
 
-// StopInfluxDB2 stops and resets InfluxDB2 client and ticker.
+// StopInfluxDB2 stops and resets InfluxDB2 client, ticker and store.
 func StopInfluxDB2() {
 	if influxDB2Client != nil {
 		influxDB2Client.Close()
 	}
+	influxDB2Client = nil
 
 	if influxDB2Ticker != nil {
 		influxDB2Ticker.Stop()
 	}
-
-	influxDB2Client = nil
 	influxDB2Ticker = nil
+
+	influxDB2Store = nil
 }
 
 // newInfluxDB2Client creates an influxdb2.Client.
