@@ -102,6 +102,8 @@
     "nilnil", # not relevant
     "ireturn", # not relevant
     "contextcheck", # too many false-positive
+    "containedctx", # too many false-positive
+    "maintidx", # kind of duplicate of gocyclo
   ]
 
 [issues]

@@ -186,7 +186,6 @@ func TestGetRoutersByEntryPoints(t *testing.T) {
 				"webs": {
 					"bar": {
 						Router: &dynamic.Router{
-
 							EntryPoints: []string{"webs"},
 							Service:     "bar-service@myprovider",
 							Rule:        "Host(`foo.bar`)",

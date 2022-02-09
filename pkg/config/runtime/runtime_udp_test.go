@@ -169,7 +169,6 @@ func TestGetUDPRoutersByEntryPoints(t *testing.T) {
 				"webs": {
 					"bar": {
 						UDPRouter: &dynamic.UDPRouter{
-
 							EntryPoints: []string{"webs"},
 							Service:     "bar-service@myprovider",
 						},

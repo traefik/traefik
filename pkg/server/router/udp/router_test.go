@@ -46,7 +46,6 @@ func TestRuntimeConfiguration(t *testing.T) {
 				},
 				"bar": {
 					UDPRouter: &dynamic.UDPRouter{
-
 						EntryPoints: []string{"web"},
 						Service:     "foo-service",
 					},
@@ -78,7 +77,6 @@ func TestRuntimeConfiguration(t *testing.T) {
 				},
 				"bar": {
 					UDPRouter: &dynamic.UDPRouter{
-
 						EntryPoints: []string{"web"},
 						Service:     "foo-service",
 					},
