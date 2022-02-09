@@ -454,4 +454,4 @@ Here is a comprehensive list of labels that are provided by the metrics:
 
     If the HTTP method verb on a request is not one defined in the set of common methods for [`HTTP/1.1`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
     or the [`PRI`](https://datatracker.ietf.org/doc/html/rfc7540#section-11.6) verb (for `HTTP/2`),
-    then the value for the metric becomes `EXTENSION_METHOD`.
+    then the value for the method label becomes `EXTENSION_METHOD`.
