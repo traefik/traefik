@@ -72,9 +72,9 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 	}
 
 	if config.TLS != nil {
-		tlsConfig, err := config.TLS.CreateTLSConfig()
+		tlsConfig, err := config.TLS.CreateTLSConfig(ctx)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to create client TLS configuration: %w", err)
 		}
 
 		tr := http.DefaultTransport.(*http.Transport).Clone()

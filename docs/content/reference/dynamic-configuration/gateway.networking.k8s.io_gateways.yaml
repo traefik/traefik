@@ -1,0 +1,719 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    api-approved.kubernetes.io: https://github.com/kubernetes-sigs/gateway-api/pull/891
+  creationTimestamp: null
+  name: gateways.gateway.networking.k8s.io
+spec:
+  group: gateway.networking.k8s.io
+  names:
+    categories:
+    - gateway-api
+    kind: Gateway
+    listKind: GatewayList
+    plural: gateways
+    shortNames:
+    - gtw
+    singular: gateway
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.gatewayClassName
+      name: Class
+      type: string
+    - jsonPath: .status.addresses[*].value
+      name: Address
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha2
+    schema:
+      openAPIV3Schema:
+        description: Gateway represents an instance of a service-traffic handling
+          infrastructure by binding Listeners to a set of IP addresses.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: Spec defines the desired state of Gateway.
+            properties:
+              addresses:
+                description: "Addresses requested for this Gateway. This is optional
+                  and behavior can depend on the implementation. If a value is set
+                  in the spec and the requested address is invalid or unavailable,
+                  the implementation MUST indicate this in the associated entry in
+                  GatewayStatus.Addresses. \n The Addresses field represents a request
+                  for the address(es) on the \"outside of the Gateway\", that traffic
+                  bound for this Gateway will use. This could be the IP address or
+                  hostname of an external load balancer or other networking infrastructure,
+                  or some other address that traffic will be sent to. \n The .listener.hostname
+                  field is used to route traffic that has already arrived at the Gateway
+                  to the correct in-cluster destination. \n If no Addresses are specified,
+                  the implementation MAY schedule the Gateway in an implementation-specific
+                  manner, assigning an appropriate set of Addresses. \n The implementation
+                  MUST bind all Listeners to every GatewayAddress that it assigns
+                  to the Gateway and add a corresponding entry in GatewayStatus.Addresses.
+                  \n Support: Core"
+                items:
+                  description: GatewayAddress describes an address that can be bound
+                    to a Gateway.
+                  properties:
+                    type:
+                      default: IPAddress
+                      description: Type of the address.
+                      enum:
+                      - IPAddress
+                      - Hostname
+                      - NamedAddress
+                      type: string
+                    value:
+                      description: "Value of the address. The validity of the values
+                        will depend on the type and support by the controller. \n
+                        Examples: `1.2.3.4`, `128::1`, `my-ip-address`."
+                      maxLength: 253
+                      minLength: 1
+                      type: string
+                  required:
+                  - value
+                  type: object
+                maxItems: 16
+                type: array
+              gatewayClassName:
+                description: GatewayClassName used for this Gateway. This is the name
+                  of a GatewayClass resource.
+                maxLength: 253
+                minLength: 1
+                type: string
+              listeners:
+                description: "Listeners associated with this Gateway. Listeners define
+                  logical endpoints that are bound on this Gateway's addresses. At
+                  least one Listener MUST be specified. \n Each listener in a Gateway
+                  must have a unique combination of Hostname, Port, and Protocol.
+                  \n An implementation MAY group Listeners by Port and then collapse
+                  each group of Listeners into a single Listener if the implementation
+                  determines that the Listeners in the group are \"compatible\". An
+                  implementation MAY also group together and collapse compatible Listeners
+                  belonging to different Gateways. \n For example, an implementation
+                  might consider Listeners to be compatible with each other if all
+                  of the following conditions are met: \n 1. Either each Listener
+                  within the group specifies the \"HTTP\"    Protocol or each Listener
+                  within the group specifies either    the \"HTTPS\" or \"TLS\" Protocol.
+                  \n 2. Each Listener within the group specifies a Hostname that is
+                  unique    within the group. \n 3. As a special case, one Listener
+                  within a group may omit Hostname,    in which case this Listener
+                  matches when no other Listener    matches. \n If the implementation
+                  does collapse compatible Listeners, the hostname provided in the
+                  incoming client request MUST be matched to a Listener to find the
+                  correct set of Routes. The incoming hostname MUST be matched using
+                  the Hostname field for each Listener in order of most to least specific.
+                  That is, exact matches must be processed before wildcard matches.
+                  \n If this field specifies multiple Listeners that have the same
+                  Port value but are not compatible, the implementation must raise
+                  a \"Conflicted\" condition in the Listener status. \n Support: Core"
+                items:
+                  description: Listener embodies the concept of a logical endpoint
+                    where a Gateway accepts network connections.
+                  properties:
+                    allowedRoutes:
+                      default:
+                        namespaces:
+                          from: Same
+                      description: "AllowedRoutes defines the types of routes that
+                        MAY be attached to a Listener and the trusted namespaces where
+                        those Route resources MAY be present. \n Although a client
+                        request may match multiple route rules, only one rule may
+                        ultimately receive the request. Matching precedence MUST be
+                        determined in order of the following criteria: \n * The most
+                        specific match as defined by the Route type. * The oldest
+                        Route based on creation timestamp. For example, a Route with
+                        \  a creation timestamp of \"2020-09-08 01:02:03\" is given
+                        precedence over   a Route with a creation timestamp of \"2020-09-08
+                        01:02:04\". * If everything else is equivalent, the Route
+                        appearing first in   alphabetical order (namespace/name) should
+                        be given precedence. For   example, foo/bar is given precedence
+                        over foo/baz. \n All valid rules within a Route attached to
+                        this Listener should be implemented. Invalid Route rules can
+                        be ignored (sometimes that will mean the full Route). If a
+                        Route rule transitions from valid to invalid, support for
+                        that Route rule should be dropped to ensure consistency. For
+                        example, even if a filter specified by a Route rule is invalid,
+                        the rest of the rules within that Route should still be supported.
+                        \n Support: Core"
+                      properties:
+                        kinds:
+                          description: "Kinds specifies the groups and kinds of Routes
+                            that are allowed to bind to this Gateway Listener. When
+                            unspecified or empty, the kinds of Routes selected are
+                            determined using the Listener protocol. \n A RouteGroupKind
+                            MUST correspond to kinds of Routes that are compatible
+                            with the application protocol specified in the Listener's
+                            Protocol field. If an implementation does not support
+                            or recognize this resource type, it MUST set the \"ResolvedRefs\"
+                            condition to False for this Listener with the \"InvalidRoutesRef\"
+                            reason. \n Support: Core"
+                          items:
+                            description: RouteGroupKind indicates the group and kind
+                              of a Route resource.
+                            properties:
+                              group:
+                                default: gateway.networking.k8s.io
+                                description: Group is the group of the Route.
+                                maxLength: 253
+                                pattern: ^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                                type: string
+                              kind:
+                                description: Kind is the kind of the Route.
+                                maxLength: 63
+                                minLength: 1
+                                pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
+                                type: string
+                            required:
+                            - kind
+                            type: object
+                          maxItems: 8
+                          type: array
+                        namespaces:
+                          default:
+                            from: Same
+                          description: "Namespaces indicates namespaces from which
+                            Routes may be attached to this Listener. This is restricted
+                            to the namespace of this Gateway by default. \n Support:
+                            Core"
+                          properties:
+                            from:
+                              default: Same
+                              description: "From indicates where Routes will be selected
+                                for this Gateway. Possible values are: * All: Routes
+                                in all namespaces may be used by this Gateway. * Selector:
+                                Routes in namespaces selected by the selector may
+                                be used by   this Gateway. * Same: Only Routes in
+                                the same namespace may be used by this Gateway. \n
+                                Support: Core"
+                              enum:
+                              - All
+                              - Selector
+                              - Same
+                              type: string
+                            selector:
+                              description: "Selector must be specified when From is
+                                set to \"Selector\". In that case, only Routes in
+                                Namespaces matching this Selector will be selected
+                                by this Gateway. This field is ignored for other values
+                                of \"From\". \n Support: Core"
+                              properties:
+                                matchExpressions:
+                                  description: matchExpressions is a list of label
+                                    selector requirements. The requirements are ANDed.
+                                  items:
+                                    description: A label selector requirement is a
+                                      selector that contains values, a key, and an
+                                      operator that relates the key and values.
+                                    properties:
+                                      key:
+                                        description: key is the label key that the
+                                          selector applies to.
+                                        type: string
+                                      operator:
+                                        description: operator represents a key's relationship
+                                          to a set of values. Valid operators are
+                                          In, NotIn, Exists and DoesNotExist.
+                                        type: string
+                                      values:
+                                        description: values is an array of string
+                                          values. If the operator is In or NotIn,
+                                          the values array must be non-empty. If the
+                                          operator is Exists or DoesNotExist, the
+                                          values array must be empty. This array is
+                                          replaced during a strategic merge patch.
+                                        items:
+                                          type: string
+                                        type: array
+                                    required:
+                                    - key
+                                    - operator
+                                    type: object
+                                  type: array
+                                matchLabels:
+                                  additionalProperties:
+                                    type: string
+                                  description: matchLabels is a map of {key,value}
+                                    pairs. A single {key,value} in the matchLabels
+                                    map is equivalent to an element of matchExpressions,
+                                    whose key field is "key", the operator is "In",
+                                    and the values array contains only "value". The
+                                    requirements are ANDed.
+                                  type: object
+                              type: object
+                          type: object
+                      type: object
+                    hostname:
+                      description: "Hostname specifies the virtual hostname to match
+                        for protocol types that define this concept. When unspecified,
+                        all hostnames are matched. This field is ignored for protocols
+                        that don't require hostname based matching. \n Implementations
+                        MUST apply Hostname matching appropriately for each of the
+                        following protocols: \n * TLS: The Listener Hostname MUST
+                        match the SNI. * HTTP: The Listener Hostname MUST match the
+                        Host header of the request. * HTTPS: The Listener Hostname
+                        SHOULD match at both the TLS and HTTP   protocol layers as
+                        described above. If an implementation does not   ensure that
+                        both the SNI and Host header match the Listener hostname,
+                        \  it MUST clearly document that. \n For HTTPRoute and TLSRoute
+                        resources, there is an interaction with the `spec.hostnames`
+                        array. When both listener and route specify hostnames, there
+                        MUST be an intersection between the values for a Route to
+                        be accepted. For more information, refer to the Route specific
+                        Hostnames documentation. \n Support: Core"
+                      maxLength: 253
+                      minLength: 1
+                      pattern: ^(\*\.)?[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                      type: string
+                    name:
+                      description: "Name is the name of the Listener. \n Support:
+                        Core"
+                      maxLength: 253
+                      minLength: 1
+                      pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                      type: string
+                    port:
+                      description: "Port is the network port. Multiple listeners may
+                        use the same port, subject to the Listener compatibility rules.
+                        \n Support: Core"
+                      format: int32
+                      maximum: 65535
+                      minimum: 1
+                      type: integer
+                    protocol:
+                      description: "Protocol specifies the network protocol this listener
+                        expects to receive. \n Support: Core"
+                      maxLength: 255
+                      minLength: 1
+                      pattern: ^[a-zA-Z0-9]([-a-zSA-Z0-9]*[a-zA-Z0-9])?$|[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*\/[A-Za-z0-9]+$
+                      type: string
+                    tls:
+                      description: "TLS is the TLS configuration for the Listener.
+                        This field is required if the Protocol field is \"HTTPS\"
+                        or \"TLS\". It is invalid to set this field if the Protocol
+                        field is \"HTTP\", \"TCP\", or \"UDP\". \n The association
+                        of SNIs to Certificate defined in GatewayTLSConfig is defined
+                        based on the Hostname field for this listener. \n The GatewayClass
+                        MUST use the longest matching SNI out of all available certificates
+                        for any TLS handshake. \n Support: Core"
+                      properties:
+                        certificateRefs:
+                          description: "CertificateRefs contains a series of references
+                            to Kubernetes objects that contains TLS certificates and
+                            private keys. These certificates are used to establish
+                            a TLS handshake for requests that match the hostname of
+                            the associated listener. \n A single CertificateRef to
+                            a Kubernetes Secret has \"Core\" support. Implementations
+                            MAY choose to support attaching multiple certificates
+                            to a Listener, but this behavior is implementation-specific.
+                            \n References to a resource in different namespace are
+                            invalid UNLESS there is a ReferencePolicy in the target
+                            namespace that allows the certificate to be attached.
+                            If a ReferencePolicy does not allow this reference, the
+                            \"ResolvedRefs\" condition MUST be set to False for this
+                            listener with the \"InvalidCertificateRef\" reason. \n
+                            This field is required to have at least one element when
+                            the mode is set to \"Terminate\" (default) and is optional
+                            otherwise. \n CertificateRefs can reference to standard
+                            Kubernetes resources, i.e. Secret, or implementation-specific
+                            custom resources. \n Support: Core - A single reference
+                            to a Kubernetes Secret \n Support: Implementation-specific
+                            (More than one reference or other resource types)"
+                          items:
+                            description: "SecretObjectReference identifies an API
+                              object including its namespace, defaulting to Secret.
+                              \n The API object must be valid in the cluster; the
+                              Group and Kind must be registered in the cluster for
+                              this reference to be valid. \n References to objects
+                              with invalid Group and Kind are not valid, and must
+                              be rejected by the implementation, with appropriate
+                              Conditions set on the containing object."
+                            properties:
+                              group:
+                                default: ""
+                                description: Group is the group of the referent. For
+                                  example, "networking.k8s.io". When unspecified (empty
+                                  string), core API group is inferred.
+                                maxLength: 253
+                                pattern: ^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                                type: string
+                              kind:
+                                default: Secret
+                                description: Kind is kind of the referent. For example
+                                  "HTTPRoute" or "Service".
+                                maxLength: 63
+                                minLength: 1
+                                pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
+                                type: string
+                              name:
+                                description: Name is the name of the referent.
+                                maxLength: 253
+                                minLength: 1
+                                type: string
+                              namespace:
+                                description: "Namespace is the namespace of the backend.
+                                  When unspecified, the local namespace is inferred.
+                                  \n Note that when a namespace is specified, a ReferencePolicy
+                                  object is required in the referent namespace to
+                                  allow that namespace's owner to accept the reference.
+                                  See the ReferencePolicy documentation for details.
+                                  \n Support: Core"
+                                maxLength: 63
+                                minLength: 1
+                                pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                                type: string
+                            required:
+                            - name
+                            type: object
+                          maxItems: 64
+                          type: array
+                        mode:
+                          default: Terminate
+                          description: "Mode defines the TLS behavior for the TLS
+                            session initiated by the client. There are two possible
+                            modes: \n - Terminate: The TLS session between the downstream
+                            client   and the Gateway is terminated at the Gateway.
+                            This mode requires   certificateRefs to be set and contain
+                            at least one element. - Passthrough: The TLS session is
+                            NOT terminated by the Gateway. This   implies that the
+                            Gateway can't decipher the TLS stream except for   the
+                            ClientHello message of the TLS protocol.   CertificateRefs
+                            field is ignored in this mode. \n Support: Core"
+                          enum:
+                          - Terminate
+                          - Passthrough
+                          type: string
+                        options:
+                          additionalProperties:
+                            description: AnnotationValue is the value of an annotation
+                              in Gateway API. This is used for validation of maps
+                              such as TLS options. This roughly matches Kubernetes
+                              annotation validation, although the length validation
+                              in that case is based on the entire size of the annotations
+                              struct.
+                            maxLength: 4096
+                            minLength: 0
+                            type: string
+                          description: "Options are a list of key/value pairs to enable
+                            extended TLS configuration for each implementation. For
+                            example, configuring the minimum TLS version or supported
+                            cipher suites. \n A set of common keys MAY be defined
+                            by the API in the future. To avoid any ambiguity, implementation-specific
+                            definitions MUST use domain-prefixed names, such as `example.com/my-custom-option`.
+                            Un-prefixed names are reserved for key names defined by
+                            Gateway API. \n Support: Implementation-specific"
+                          maxProperties: 16
+                          type: object
+                      type: object
+                  required:
+                  - name
+                  - port
+                  - protocol
+                  type: object
+                maxItems: 64
+                minItems: 1
+                type: array
+                x-kubernetes-list-map-keys:
+                - name
+                x-kubernetes-list-type: map
+            required:
+            - gatewayClassName
+            - listeners
+            type: object
+          status:
+            default:
+              conditions:
+              - lastTransitionTime: "1970-01-01T00:00:00Z"
+                message: Waiting for controller
+                reason: NotReconciled
+                status: Unknown
+                type: Scheduled
+            description: Status defines the current state of Gateway.
+            properties:
+              addresses:
+                description: Addresses lists the IP addresses that have actually been
+                  bound to the Gateway. These addresses may differ from the addresses
+                  in the Spec, e.g. if the Gateway automatically assigns an address
+                  from a reserved pool.
+                items:
+                  description: GatewayAddress describes an address that can be bound
+                    to a Gateway.
+                  properties:
+                    type:
+                      default: IPAddress
+                      description: Type of the address.
+                      enum:
+                      - IPAddress
+                      - Hostname
+                      - NamedAddress
+                      type: string
+                    value:
+                      description: "Value of the address. The validity of the values
+                        will depend on the type and support by the controller. \n
+                        Examples: `1.2.3.4`, `128::1`, `my-ip-address`."
+                      maxLength: 253
+                      minLength: 1
+                      type: string
+                  required:
+                  - value
+                  type: object
+                maxItems: 16
+                type: array
+              conditions:
+                default:
+                - lastTransitionTime: "1970-01-01T00:00:00Z"
+                  message: Waiting for controller
+                  reason: NotReconciled
+                  status: Unknown
+                  type: Scheduled
+                description: "Conditions describe the current conditions of the Gateway.
+                  \n Implementations should prefer to express Gateway conditions using
+                  the `GatewayConditionType` and `GatewayConditionReason` constants
+                  so that operators and tools can converge on a common vocabulary
+                  to describe Gateway state. \n Known condition types are: \n * \"Scheduled\"
+                  * \"Ready\""
+                items:
+                  description: "Condition contains details for one aspect of the current
+                    state of this API Resource. --- This struct is intended for direct
+                    use as an array at the field path .status.conditions.  For example,
+                    type FooStatus struct{     // Represents the observations of a
+                    foo's current state.     // Known .status.conditions.type are:
+                    \"Available\", \"Progressing\", and \"Degraded\"     // +patchMergeKey=type
+                    \    // +patchStrategy=merge     // +listType=map     // +listMapKey=type
+                    \    Conditions []metav1.Condition `json:\"conditions,omitempty\"
+                    patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`
+                    \n     // other fields }"
+                  properties:
+                    lastTransitionTime:
+                      description: lastTransitionTime is the last time the condition
+                        transitioned from one status to another. This should be when
+                        the underlying condition changed.  If that is not known, then
+                        using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: message is a human readable message indicating
+                        details about the transition. This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: observedGeneration represents the .metadata.generation
+                        that the condition was set based upon. For instance, if .metadata.generation
+                        is currently 12, but the .status.conditions[x].observedGeneration
+                        is 9, the condition is out of date with respect to the current
+                        state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: reason contains a programmatic identifier indicating
+                        the reason for the condition's last transition. Producers
+                        of specific condition types may define expected values and
+                        meanings for this field, and whether the values are considered
+                        a guaranteed API. The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                        --- Many .condition.type values are consistent across resources
+                        like Available, but because arbitrary conditions can be useful
+                        (see .node.status.conditions), the ability to deconflict is
+                        important. The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                maxItems: 8
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              listeners:
+                description: Listeners provide status for each unique listener port
+                  defined in the Spec.
+                items:
+                  description: ListenerStatus is the status associated with a Listener.
+                  properties:
+                    attachedRoutes:
+                      description: AttachedRoutes represents the total number of Routes
+                        that have been successfully attached to this Listener.
+                      format: int32
+                      type: integer
+                    conditions:
+                      description: Conditions describe the current condition of this
+                        listener.
+                      items:
+                        description: "Condition contains details for one aspect of
+                          the current state of this API Resource. --- This struct
+                          is intended for direct use as an array at the field path
+                          .status.conditions.  For example, type FooStatus struct{
+                          \    // Represents the observations of a foo's current state.
+                          \    // Known .status.conditions.type are: \"Available\",
+                          \"Progressing\", and \"Degraded\"     // +patchMergeKey=type
+                          \    // +patchStrategy=merge     // +listType=map     //
+                          +listMapKey=type     Conditions []metav1.Condition `json:\"conditions,omitempty\"
+                          patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`
+                          \n     // other fields }"
+                        properties:
+                          lastTransitionTime:
+                            description: lastTransitionTime is the last time the condition
+                              transitioned from one status to another. This should
+                              be when the underlying condition changed.  If that is
+                              not known, then using the time when the API field changed
+                              is acceptable.
+                            format: date-time
+                            type: string
+                          message:
+                            description: message is a human readable message indicating
+                              details about the transition. This may be an empty string.
+                            maxLength: 32768
+                            type: string
+                          observedGeneration:
+                            description: observedGeneration represents the .metadata.generation
+                              that the condition was set based upon. For instance,
+                              if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration
+                              is 9, the condition is out of date with respect to the
+                              current state of the instance.
+                            format: int64
+                            minimum: 0
+                            type: integer
+                          reason:
+                            description: reason contains a programmatic identifier
+                              indicating the reason for the condition's last transition.
+                              Producers of specific condition types may define expected
+                              values and meanings for this field, and whether the
+                              values are considered a guaranteed API. The value should
+                              be a CamelCase string. This field may not be empty.
+                            maxLength: 1024
+                            minLength: 1
+                            pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                            type: string
+                          status:
+                            description: status of the condition, one of True, False,
+                              Unknown.
+                            enum:
+                            - "True"
+                            - "False"
+                            - Unknown
+                            type: string
+                          type:
+                            description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                              --- Many .condition.type values are consistent across
+                              resources like Available, but because arbitrary conditions
+                              can be useful (see .node.status.conditions), the ability
+                              to deconflict is important. The regex it matches is
+                              (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                            maxLength: 316
+                            pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                            type: string
+                        required:
+                        - lastTransitionTime
+                        - message
+                        - reason
+                        - status
+                        - type
+                        type: object
+                      maxItems: 8
+                      type: array
+                      x-kubernetes-list-map-keys:
+                      - type
+                      x-kubernetes-list-type: map
+                    name:
+                      description: Name is the name of the Listener that this status
+                        corresponds to.
+                      maxLength: 253
+                      minLength: 1
+                      pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                      type: string
+                    supportedKinds:
+                      description: "SupportedKinds is the list indicating the Kinds
+                        supported by this listener. This MUST represent the kinds
+                        an implementation supports for that Listener configuration.
+                        \n If kinds are specified in Spec that are not supported,
+                        they MUST NOT appear in this list and an implementation MUST
+                        set the \"ResolvedRefs\" condition to \"False\" with the \"InvalidRouteKinds\"
+                        reason. If both valid and invalid Route kinds are specified,
+                        the implementation MUST reference the valid Route kinds that
+                        have been specified."
+                      items:
+                        description: RouteGroupKind indicates the group and kind of
+                          a Route resource.
+                        properties:
+                          group:
+                            default: gateway.networking.k8s.io
+                            description: Group is the group of the Route.
+                            maxLength: 253
+                            pattern: ^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                            type: string
+                          kind:
+                            description: Kind is the kind of the Route.
+                            maxLength: 63
+                            minLength: 1
+                            pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
+                            type: string
+                        required:
+                        - kind
+                        type: object
+                      maxItems: 8
+                      type: array
+                  required:
+                  - attachedRoutes
+                  - conditions
+                  - name
+                  - supportedKinds
+                  type: object
+                maxItems: 64
+                type: array
+                x-kubernetes-list-map-keys:
+                - name
+                x-kubernetes-list-type: map
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

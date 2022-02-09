@@ -16,7 +16,7 @@ type UDPSuite struct{ BaseSuite }
 
 func (s *UDPSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "udp")
-	s.composeProject.Start(c)
+	s.composeUp(c)
 }
 
 func guessWhoUDP(addr string) (string, error) {
@@ -47,21 +47,16 @@ func guessWhoUDP(addr string) (string, error) {
 }
 
 func (s *UDPSuite) TestWRR(c *check.C) {
-	whoamiAIP := s.composeProject.Container(c, "whoami-a").NetworkSettings.IPAddress
-	whoamiBIP := s.composeProject.Container(c, "whoami-b").NetworkSettings.IPAddress
-	whoamiCIP := s.composeProject.Container(c, "whoami-c").NetworkSettings.IPAddress
-	whoamiDIP := s.composeProject.Container(c, "whoami-d").NetworkSettings.IPAddress
-
 	file := s.adaptFile(c, "fixtures/udp/wrr.toml", struct {
 		WhoamiAIP string
 		WhoamiBIP string
 		WhoamiCIP string
 		WhoamiDIP string
 	}{
-		WhoamiAIP: whoamiAIP,
-		WhoamiBIP: whoamiBIP,
-		WhoamiCIP: whoamiCIP,
-		WhoamiDIP: whoamiDIP,
+		WhoamiAIP: s.getComposeServiceIP(c, "whoami-a"),
+		WhoamiBIP: s.getComposeServiceIP(c, "whoami-b"),
+		WhoamiCIP: s.getComposeServiceIP(c, "whoami-c"),
+		WhoamiDIP: s.getComposeServiceIP(c, "whoami-d"),
 	})
 	defer os.Remove(file)
 

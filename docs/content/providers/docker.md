@@ -252,7 +252,7 @@ See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API A
 
     services:
       traefik:
-         image: traefik:v2.4 # The official v2 Traefik docker image
+         image: traefik:v2.6 # The official v2 Traefik docker image
          ports:
            - "80:80"
          volumes:
@@ -427,8 +427,8 @@ _Optional, Default=```Host(`{{ normalize .Name }}`)```_
 
 The `defaultRule` option defines what routing rule to apply to a container if no rule is defined by a label.
 
-It must be a valid [Go template](https://golang.org/pkg/text/template/), and can use
-[sprig template functions](http://masterminds.github.io/sprig/).
+It must be a valid [Go template](https://pkg.go.dev/text/template/), and can use
+[sprig template functions](https://masterminds.github.io/sprig/).
 The container service name can be accessed with the `Name` identifier,
 and the template has access to all the labels defined on this container.
 
@@ -613,9 +613,14 @@ providers:
 
 _Optional_
 
-#### `tls.ca`
+Defines the TLS configuration used for the secure connection to Docker.
 
-Certificate Authority used for the secure connection to Docker.
+#### `ca`
+
+_Optional_
+
+`ca` is the path to the certificate authority used for the secure connection to Docker,
+it defaults to the system bundle.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -633,13 +638,15 @@ providers:
 --providers.docker.tls.ca=path/to/ca.crt
 ```
 
-#### `tls.caOptional`
+#### `caOptional`
 
-The value of `tls.caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to Docker.
+_Optional_
+
+The value of `caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to Docker.
 
 !!! warning ""
 
-    If `tls.ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
+    If `ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
 
 When this option is set to `true`, a client certificate is requested during the handshake but is not required. If a certificate is sent, it is required to be valid.
 
@@ -661,32 +668,10 @@ providers:
 --providers.docker.tls.caOptional=true
 ```
 
-#### `tls.cert`
+#### `cert`
 
-Public certificate used for the secure connection to Docker.
-
-```yaml tab="File (YAML)"
-providers:
-  docker:
-    tls:
-      cert: path/to/foo.cert
-      key: path/to/foo.key
-```
-
-```toml tab="File (TOML)"
-[providers.docker.tls]
-  cert = "path/to/foo.cert"
-  key = "path/to/foo.key"
-```
-
-```bash tab="CLI"
---providers.docker.tls.cert=path/to/foo.cert
---providers.docker.tls.key=path/to/foo.key
-```
-
-#### `tls.key`
-
-Private certificate used for the secure connection to Docker.
+`cert` is the path to the public certificate used for the secure connection to Docker.
+When using this option, setting the `key` option is required.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -707,7 +692,35 @@ providers:
 --providers.docker.tls.key=path/to/foo.key
 ```
 
-#### `tls.insecureSkipVerify`
+#### `key`
+
+_Optional_
+
+`key` is the path to the private key used for the secure connection Docker.
+When using this option, setting the `cert` option is required.
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    tls:
+      cert: path/to/foo.cert
+      key: path/to/foo.key
+```
+
+```toml tab="File (TOML)"
+[providers.docker.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
+```bash tab="CLI"
+--providers.docker.tls.cert=path/to/foo.cert
+--providers.docker.tls.key=path/to/foo.key
+```
+
+#### `insecureSkipVerify`
+
+_Optional, Default=false_
 
 If `insecureSkipVerify` is `true`, the TLS connection to Docker accepts any certificate presented by the server regardless of the hostnames it covers.
 

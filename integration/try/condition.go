@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/abronan/valkeyrie/store"
+	"github.com/kvtools/valkeyrie/store"
 )
 
 // ResponseCondition is a retry condition function.

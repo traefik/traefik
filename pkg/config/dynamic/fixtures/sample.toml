@@ -1,3 +1,5 @@
+# This file is not meant as a usable Traefik configuration.
+# It is only used in tests as a sample for serialization.
 [global]
   checkNewVersion = true
   sendAnonymousUsage = true
@@ -330,6 +332,7 @@
             province = true
             locality = true
             organization = true
+            organizationalUnit = true
             commonName = true
             serialNumber = true
             domainComponent = true
@@ -367,7 +370,6 @@
         accessControlAllowCredentials = true
         accessControlAllowHeaders = ["foobar", "foobar"]
         accessControlAllowMethods = ["foobar", "foobar"]
-        accessControlAllowOrigin = "foobar"
         accessControlAllowOriginList = ["foobar", "foobar"]
         accessControlExposeHeaders = ["foobar", "foobar"]
         accessControlMaxAge = 42

@@ -27,6 +27,12 @@ func TestIsAuthorized(t *testing.T) {
 			remoteAddr: "1.2.3.1:123",
 			authorized: true,
 		},
+		{
+			desc:       "octal ip in remoteAddr",
+			whiteList:  []string{"127.2.3.4/24"},
+			remoteAddr: "0127.2.3.1:123",
+			authorized: false,
+		},
 	}
 
 	for _, test := range testCases {

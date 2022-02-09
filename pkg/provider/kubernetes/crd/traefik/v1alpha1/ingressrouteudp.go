@@ -2,12 +2,13 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // IngressRouteUDPSpec is a specification for a IngressRouteUDPSpec resource.
 type IngressRouteUDPSpec struct {
 	Routes      []RouteUDP `json:"routes"`
-	EntryPoints []string   `json:"entryPoints"`
+	EntryPoints []string   `json:"entryPoints,omitempty"`
 }
 
 // RouteUDP contains the set of routes.
@@ -18,19 +19,20 @@ type RouteUDP struct {
 // TLSOptionUDPRef is a ref to the TLSOption resources.
 type TLSOptionUDPRef struct {
 	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	Namespace string `json:"namespace,omitempty"`
 }
 
 // ServiceUDP defines an upstream to proxy traffic.
 type ServiceUDP struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-	Port      int32  `json:"port"`
-	Weight    *int   `json:"weight,omitempty"`
+	Name      string             `json:"name"`
+	Namespace string             `json:"namespace,omitempty"`
+	Port      intstr.IntOrString `json:"port"`
+	Weight    *int               `json:"weight,omitempty"`
 }
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:storageversion
 
 // IngressRouteUDP is an Ingress CRD specification.
 type IngressRouteUDP struct {

@@ -39,7 +39,7 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics.prometheus.buckets=0.100000, 0.300000, 1.200000, 5.000000
+--metrics.prometheus.buckets=0.1,0.3,1.2,5.0
 ```
 
 #### `addEntryPointsLabels`
@@ -62,6 +62,28 @@ metrics:
 
 ```bash tab="CLI"
 --metrics.prometheus.addEntryPointsLabels=true
+```
+
+#### `addRoutersLabels`
+
+_Optional, Default=false_
+
+Enable metrics on routers.
+
+```yaml tab="File (YAML)"
+metrics:
+  prometheus:
+    addRoutersLabels: true
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.prometheus]
+    addRoutersLabels = true
+```
+
+```bash tab="CLI"
+--metrics.prometheus.addrouterslabels=true
 ```
 
 #### `addServicesLabels`
@@ -95,7 +117,7 @@ Entry point used to expose metrics.
 ```yaml tab="File (YAML)"
 entryPoints:
   metrics:
-    address: ":8082"
+    address: :8082
 
 metrics:
   prometheus:

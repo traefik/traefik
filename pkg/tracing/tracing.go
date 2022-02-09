@@ -45,8 +45,8 @@ type Backend interface {
 
 // Tracing middleware.
 type Tracing struct {
-	ServiceName   string `description:"Set the name for this service" export:"true"`
-	SpanNameLimit int    `description:"Set the maximum character limit for Span names (default 0 = no limit)" export:"true"`
+	ServiceName   string `description:"Sets the name for this service" export:"true"`
+	SpanNameLimit int    `description:"Sets the maximum character limit for span names (default 0 = no limit)" export:"true"`
 
 	tracer opentracing.Tracer
 	closer io.Closer

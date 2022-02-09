@@ -60,6 +60,16 @@ func TestReplacePath(t *testing.T) {
 			expectedRawPath: "/foo%2Fbar",
 			expectedHeader:  "/path",
 		},
+		{
+			desc: "replacement with percent encoded backspace char",
+			path: "/path/%08bar",
+			config: dynamic.ReplacePath{
+				Path: "/path/%08bar",
+			},
+			expectedPath:    "/path/\bbar",
+			expectedRawPath: "/path/%08bar",
+			expectedHeader:  "/path/%08bar",
+		},
 	}
 
 	for _, test := range testCases {

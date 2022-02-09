@@ -60,6 +60,28 @@ metrics:
 --metrics.statsd.addEntryPointsLabels=true
 ```
 
+#### `addRoutersLabels`
+
+_Optional, Default=false_
+
+Enable metrics on entry points.
+
+```yaml tab="File (YAML)"
+metrics:
+  statsD:
+    addRoutersLabels: true
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.statsD]
+    addRoutersLabels = true
+```
+
+```bash tab="CLI"
+--metrics.statsd.addrouterslabels=true
+```
+
 #### `addServicesLabels`
 
 _Optional, Default=true_
@@ -97,7 +119,7 @@ metrics:
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.statsD]
-    pushInterval = 10s
+    pushInterval = "10s"
 ```
 
 ```bash tab="CLI"
@@ -123,5 +145,5 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics.statsd.prefix="traefik"
+--metrics.statsd.prefix=traefik
 ```

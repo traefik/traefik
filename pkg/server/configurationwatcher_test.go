@@ -70,12 +70,19 @@ func TestNewConfigurationWatcher(t *testing.T) {
 				th.WithLoadBalancerServices(),
 			),
 			TCP: &dynamic.TCPConfiguration{
-				Routers:  map[string]*dynamic.TCPRouter{},
-				Services: map[string]*dynamic.TCPService{},
+				Routers:     map[string]*dynamic.TCPRouter{},
+				Middlewares: map[string]*dynamic.TCPMiddleware{},
+				Services:    map[string]*dynamic.TCPService{},
 			},
 			TLS: &dynamic.TLSConfiguration{
 				Options: map[string]tls.Options{
-					"default": {},
+					"default": {
+						ALPNProtocols: []string{
+							"h2",
+							"http/1.1",
+							"acme-tls/1",
+						},
+					},
 				},
 				Stores: map[string]tls.Store{},
 			},
@@ -225,8 +232,9 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 			th.WithMiddlewares(),
 		),
 		TCP: &dynamic.TCPConfiguration{
-			Routers:  map[string]*dynamic.TCPRouter{},
-			Services: map[string]*dynamic.TCPService{},
+			Routers:     map[string]*dynamic.TCPRouter{},
+			Middlewares: map[string]*dynamic.TCPMiddleware{},
+			Services:    map[string]*dynamic.TCPService{},
 		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  map[string]*dynamic.UDPRouter{},
@@ -234,7 +242,13 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Options: map[string]tls.Options{
-				"default": {},
+				"default": {
+					ALPNProtocols: []string{
+						"h2",
+						"http/1.1",
+						"acme-tls/1",
+					},
+				},
 			},
 			Stores: map[string]tls.Store{},
 		},
@@ -284,12 +298,19 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 			th.WithMiddlewares(),
 		),
 		TCP: &dynamic.TCPConfiguration{
-			Routers:  map[string]*dynamic.TCPRouter{},
-			Services: map[string]*dynamic.TCPService{},
+			Routers:     map[string]*dynamic.TCPRouter{},
+			Middlewares: map[string]*dynamic.TCPMiddleware{},
+			Services:    map[string]*dynamic.TCPService{},
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Options: map[string]tls.Options{
-				"default": {},
+				"default": {
+					ALPNProtocols: []string{
+						"h2",
+						"http/1.1",
+						"acme-tls/1",
+					},
+				},
 			},
 			Stores: map[string]tls.Store{},
 		},

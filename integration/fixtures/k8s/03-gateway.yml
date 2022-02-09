@@ -1,34 +1,117 @@
 ---
 kind: GatewayClass
-apiVersion: networking.x-k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: my-gateway-class
 spec:
-  controller: traefik.io/gateway-controller
+  controllerName: traefik.io/gateway-controller
 
 ---
 kind: Gateway
-apiVersion: networking.x-k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: my-gateway
   namespace: default
 spec:
   gatewayClassName: my-gateway-class
   listeners:
-    - protocol: HTTP
+    - name: http
+      protocol: HTTP
       port: 8180
-      routes:
-        kind: HTTPRoute
+      allowedRoutes:
+        kinds:
+          - kind: HTTPRoute
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: my-tcp-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:
+    - name: tcp
+      protocol: TCP
+      port: 8193
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: supersecret
+  namespace: default
+
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUNJakNDQVl1Z0F3SUJBZ0lRS1F6S1hWV0duODRNNzk2QmhGUzV0VEFOQmdrcWhraUc5dzBCQVFzRkFEQVMKTVJBd0RnWURWUVFLRXdkQlkyMWxJRU52TUNBWERUY3dNREV3TVRBd01EQXdNRm9ZRHpJd09EUXdNVEk1TVRZdwpNREF3V2pBU01SQXdEZ1lEVlFRS0V3ZEJZMjFsSUVOdk1JR2ZNQTBHQ1NxR1NJYjNEUUVCQVFVQUE0R05BRENCCmlRS0JnUURsMHNndm5HSnJOMEt1NXVQanBVZjNwTkY2MTkyL0xSb1FjMmFCeENORkdtZW5XekhsZXpoS3Rnam4KZk0velRxeGU1Y3M5QzBvKzlpdFNrRTBzNEp0S0lob1R6NGEvbklCUmxRZ2hsWkRTQ2ZFVjdXdWxLZGVqbWE3Swp3MittUDVLYy9Qa0ozRkxPSCt0blJRSVZPakZmeDBhMllDS2VxTFJWRmhGOWlMSFBWd0lEQVFBQm8zY3dkVEFPCkJnTlZIUThCQWY4RUJBTUNBcVF3RXdZRFZSMGxCQXd3Q2dZSUt3WUJCUVVIQXdFd0R3WURWUjBUQVFIL0JBVXcKQXdFQi96QWRCZ05WSFE0RUZnUVVyZERBNGFIMHc2WjJHc2dxa3FHMHRqNlFZL2t3SGdZRFZSMFJCQmN3RllJVApkR3h6TG1admJ5NWxlR0Z0Y0d4bExtTnZiVEFOQmdrcWhraUc5dzBCQVFzRkFBT0JnUUIvVFBHcElMUGg0Nlp4CnVXZFM4WDFNWEc0ODVQSlNKYVhxZUNsTW9EVEQxdlVwa0Jzd1hEUUVESFRMQkU0SGROaEJaaUlpOFFLQjZCS1IKZEVqU0xFbmlhK0ExUkwyRjdIa05MbU1ycFVjT3lzdzBiOFg1LzkydkpGYStScXgxdjJwQ0FIUHRGUE9ZM240NQoza3lGZy96ZXUwd2w0NW80MUtNL0ZJT1ljWFA3dVE9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUNlQUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQW1Jd2dnSmVBZ0VBQW9HQkFPWFN5QytjWW1zM1FxN20KNCtPbFIvZWswWHJYM2I4dEdoQnpab0hFSTBVYVo2ZGJNZVY3T0VxMkNPZDh6L05PckY3bHl6MExTajcySzFLUQpUU3pnbTBvaUdoUFBocitjZ0ZHVkNDR1ZrTklKOFJYdGE2VXAxNk9acnNyRGI2WS9rcHo4K1FuY1VzNGY2MmRGCkFoVTZNVi9IUnJaZ0lwNm90RlVXRVgySXNjOVhBZ01CQUFFQ2dZRUF4MllMRSt2dUpESHM1RTBsZWhTa0RVUHUKRUZRTWE5dFkydDhWR0EreHZqbjdwdU5qdGtRamdnYlFVUEFraUdoQSs1RUt0ZXIrdndQY2NLVU1vSnc3ZmdBTQphMWxZVlJ1M1F6V1hSamdLL2xHbU5SN050bkVZaDBxL0VGcVRDZys5Nkp6UnR6b3FJSGdwN09IVWFVaUJUVURnCmFxUTdvcmc4Z1hiUmMxT0UwNWtDUVFEbXQ3TDRTNDk1Yk1CajFBL3kzamM5aThPeEZ1ZUt6Q1l3NWFZaC8xOGgKZTBYRkhRYmpSKzRxNDM1MmJsMkduMVg5Z0hKUDFUQllPY3V0UUM4Qmt0M2pBa0VBL3dIL2JFejd0RCtaWFVjZgpnb21XZzVEU2xhUmRtb0xrSTdLZllvcDl4VlNPUElTSnU4SEFhdnBhWVhiM1NuN05KL25EcUdZM1BVeFpsdzBZCmJNaEMvUUpBZTI3UUt4S1J3YzZ5NXpXdkNxcGtOMk1zNFBOMkVNWERzT2xNQm1oUGh1UWlvYUF6N1Npd2ZQV1UKMU51YTRja2hBaXpUKzIzOUhWWmVaMlF0UWRSSExRSkJBTE40aUhlRVJyRzVBUXJ3LzNBenZVYWpLbEkrOTlIQwp4U1dLbFRvWkZpTkhPMFBFVTl0Y3BUdWxMdTdoZDNGcWhLRFoyNll0S2p0dC9LK2VlODR6czFFQ1FRQ3oyNWlEClpCY2ZrR0FURlhjdWVzeXgvUlcyL2c4QzhtYkN6RW5oSCtYbWVBak44UFRDREF2VDNLVXltRm5MRVB6amVVYU0KRGRuSlZqc3JaNW8xK1c5WgotLS0tLUVORCBQUklWQVRFIEtFWS0tLS0tCg==
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: my-tls-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:
+    - name: tls-9001
+      protocol: TLS
+      port: 9001
+      tls:
+        mode: Passthrough
+      allowedRoutes:
+        kinds:
+          - kind: TLSRoute
+        namespaces:
+          from: Same
+
+    - name: tls-9002
+      protocol: TLS
+      port: 9002
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: supersecret
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: my-https-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 8443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: supersecret
+      allowedRoutes:
+        kinds:
+          - kind: HTTPRoute
 
 ---
 kind: HTTPRoute
-apiVersion: networking.x-k8s.io/v1alpha1
+apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: http-app-1
   namespace: default
-  labels:
-    app: foo
 spec:
+  parentRefs:
+    - name: my-gateway
+    - name: my-https-gateway
   hostnames:
     - "foo.com"
   rules:
@@ -36,7 +119,40 @@ spec:
         - path:
             type: Exact
             value: /bar
-      forwardTo:
-        - serviceName: whoami
+      backendRefs:
+        - name: whoami
           port: 80
+          weight: 1
+
+---
+kind: TCPRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: tcp-app-1
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-tcp-gateway
+    - name: my-tls-gateway
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 8080
+          weight: 1
+
+---
+kind: TLSRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: tls-app-1
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-tls-gateway
+  hostnames:
+    - foo.bar
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 8080
           weight: 1

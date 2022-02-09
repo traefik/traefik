@@ -1,4 +1,12 @@
-nginx1:
-  image: nginx:1.13.8-alpine
-nginx2:
-  image: nginx:1.13.8-alpine
+version: "3.8"
+services:
+  nginx1:
+    image: nginx:1.13.8-alpine
+
+  nginx2:
+    image: nginx:1.13.8-alpine
+
+networks:
+  default:
+    name: traefik-test-network
+    external: true

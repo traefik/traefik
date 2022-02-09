@@ -64,7 +64,6 @@ Requirements:
 
 - `go` v1.16+
 - environment variable `GO111MODULE=on`
-- [go-bindata](https://github.com/containous/go-bindata) `GO111MODULE=off go get -u github.com/containous/go-bindata/...`
 
 !!! tip "Source Directory"
 
@@ -101,18 +100,9 @@ Requirements:
 
 Once you've set up your go environment and cloned the source repository, you can build Traefik.
 
-Beforehand, you need to get [go-bindata](https://github.com/containous/go-bindata) (the first time) in order to be able to use the `go generate` command (which is part of the build process).
-
-```bash
-cd ~/go/src/github.com/traefik/traefik
-
-# Get go-bindata. (Important: the ellipses are required.)
-GO111MODULE=off go get github.com/containous/go-bindata/...
-```
-
 ```bash
 # Generate UI static files
-rm -rf static/ autogen/; make generate-webui
+rm -rf ./webui/static/; make generate-webui
 
 # required to merge non-code components into the final binary,
 # such as the web dashboard/UI

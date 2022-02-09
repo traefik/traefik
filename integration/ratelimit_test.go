@@ -17,9 +17,9 @@ type RateLimitSuite struct {
 
 func (s *RateLimitSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "ratelimit")
-	s.composeProject.Start(c)
+	s.composeUp(c)
 
-	s.ServerIP = s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	s.ServerIP = s.getComposeServiceIP(c, "whoami1")
 }
 
 func (s *RateLimitSuite) TestSimpleConfiguration(c *check.C) {

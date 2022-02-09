@@ -116,7 +116,7 @@ The `url` option point to a specific instance.
 !!! info ""
     Paths in the servers' `url` have no effect.
     If you want the requests to be sent to a specific path on your servers,
-    configure your [`routers`](../routers/index.md) to use a corresponding [middleware](../../middlewares/overview.md) (e.g. the [AddPrefix](../../middlewares/addprefix.md) or [ReplacePath](../../middlewares/replacepath.md)) middlewares.
+    configure your [`routers`](../routers/index.md) to use a corresponding [middleware](../../middlewares/overview.md) (e.g. the [AddPrefix](../../middlewares/http/addprefix.md) or [ReplacePath](../../middlewares/http/replacepath.md)) middlewares.
 
 ??? example "A Service with One Server -- Using the [File Provider](../../providers/file.md)"
 
@@ -167,8 +167,8 @@ For now, only round robin load balancing is supported:
 
 #### Sticky sessions
 
-When sticky sessions are enabled, a cookie is set on the initial request and response to let the client know which server handles the first response.
-On subsequent requests, to keep the session alive with the same server, the client should resend the same cookie.
+When sticky sessions are enabled, a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response.
+On subsequent requests, to keep the session alive with the same server, the client should send the cookie with the value set.
 
 !!! info "Stickiness on multiple levels"
 
@@ -313,6 +313,8 @@ On subsequent requests, to keep the session alive with the same server, the clie
 Configure health check to remove unhealthy servers from the load balancing rotation.
 Traefik will consider your servers healthy as long as they return status codes between `2XX` and `3XX` to the health check requests (carried out every `interval`).
 
+To propagate status changes (e.g. all servers of this service are down) upwards, HealthCheck must also be enabled on the parent(s) of this service.
+
 Below are the available options for the health check mechanism:
 
 - `path` is appended to the server URL to set the health check endpoint.
@@ -334,11 +336,11 @@ Below are the available options for the health check mechanism:
     Traefik keeps monitoring the health of unhealthy servers.
     If a server has recovered (returning `2xx` -> `3xx` responses again), it will be added back to the load balancer rotation pool.
 
-!!! warning "Health check in Kubernetes"
+!!! warning "Health check with Kubernetes"
 
-    The Traefik health check is not available for `kubernetesCRD` and `kubernetesIngress` providers because Kubernetes
-    already has a health check mechanism.
-    Unhealthy pods will be removed by kubernetes. (cf [liveness documentation](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-liveness-http-request))
+    Kubernetes has an health check mechanism to remove unhealthy pods from Kubernetes services (cf [readiness probe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-readiness-probes)).
+    As unhealthy pods have no Kubernetes endpoints, Traefik will not forward traffic to them.
+    Therefore, Traefik health check is not available for `kubernetesCRD` and `kubernetesIngress` providers.
 
 ??? example "Custom Interval & Timeout -- Using the [File Provider](../../providers/file.md)"
 
@@ -604,7 +606,7 @@ metadata:
 
 _Optional_
 
-`insecureSkipVerify` disables SSL certificate verification.
+`insecureSkipVerify` controls whether the server's certificate chain and host name is verified.
 
 ```yaml tab="File (YAML)"
 ## Dynamic configuration
@@ -635,8 +637,7 @@ spec:
 
 _Optional_
 
-`rootCAs` is the list of certificates (as file paths, or data bytes)
-that will be set as Root Certificate Authorities when using a self-signed TLS certificate.
+`rootCAs` defines the set of root certificate authorities (as file paths, or data bytes) to use when verifying server certificates.
 
 ```yaml tab="File (YAML)"
 ## Dynamic configuration
@@ -705,9 +706,71 @@ spec:
     maxIdleConnsPerHost: 7
 ```
 
+#### `disableHTTP2`
+
+_Optional, Default=false_
+
+`disableHTTP2` disables HTTP/2 for connections with servers.
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport]
+  disableHTTP2 = true
+```
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      disableHTTP2: true
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    disableHTTP2: true
+```
+
+#### `peerCertURI`
+
+_Optional, Default=false_
+
+`peerCertURI` defines the URI used to match against SAN URIs during the server's certificate verification.
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport]
+  peerCertURI = "foobar"
+```
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      peerCertURI: foobar
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    peerCertURI: foobar
+```
+
 #### `forwardingTimeouts`
 
-`forwardingTimeouts` is about a number of timeouts relevant to when forwarding requests to the backend servers.
+`forwardingTimeouts` are the timeouts applied when forwarding requests to the servers.
 
 ##### `forwardingTimeouts.dialTimeout`
 
@@ -783,8 +846,7 @@ spec:
 
 _Optional, Default=90s_
 
-`idleConnTimeout`, is the maximum amount of time an idle (keep-alive) connection
-will remain idle before closing itself.
+`idleConnTimeout` is the maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.
 Zero means no limit.
 
 ```yaml tab="File (YAML)"
@@ -812,6 +874,78 @@ metadata:
 spec:
     forwardingTimeouts:
       idleConnTimeout: "1s"
+```
+
+##### `forwardingTimeouts.readIdleTimeout`
+
+_Optional, Default=0s_
+
+`readIdleTimeout` is the timeout after which a health check using ping frame will be carried out
+if no frame is received on the HTTP/2 connection.
+Note that a ping response will be considered a received frame,
+so if there is no other traffic on the connection,
+the health check will be performed every `readIdleTimeout` interval.
+If zero, no health check is performed.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      forwardingTimeouts:
+        readIdleTimeout: "1s"
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport.forwardingTimeouts]
+  readIdleTimeout = "1s"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    forwardingTimeouts:
+      readIdleTimeout: "1s"
+```
+
+##### `forwardingTimeouts.pingTimeout`
+
+_Optional, Default=15s_
+
+`pingTimeout` is the timeout after which the HTTP/2 connection will be closed
+if a response to ping is not received.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      forwardingTimeouts:
+        pingTimeout: "1s"
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport.forwardingTimeouts]
+  pingTimeout = "1s"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    forwardingTimeouts:
+      pingTimeout: "1s"
 ```
 
 ### Weighted Round Robin (service)
@@ -865,6 +999,84 @@ http:
 
   [http.services.appv2]
     [http.services.appv2.loadBalancer]
+      [[http.services.appv2.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
+
+#### Health Check
+
+HealthCheck enables automatic self-healthcheck for this service, i.e. whenever
+one of its children is reported as down, this service becomes aware of it, and
+takes it into account (i.e. it ignores the down child) when running the
+load-balancing algorithm. In addition, if the parent of this service also has
+HealthCheck enabled, this service reports to its parent any status change.
+
+!!! info "All or nothing"
+
+    If HealthCheck is enabled for a given service, but any of its descendants does
+    not have it enabled, the creation of the service will fail.
+
+    HealthCheck on Weighted services can be defined currently only with the [File](../../providers/file.md) provider.
+
+```yaml tab="YAML"
+## Dynamic configuration
+http:
+  services:
+    app:
+      weighted:
+        healthCheck: {}
+        services:
+        - name: appv1
+          weight: 3
+        - name: appv2
+          weight: 1
+
+    appv1:
+      loadBalancer:
+        healthCheck:
+          path: /status
+          interval: 10s
+          timeout: 3s
+        servers:
+        - url: "http://private-ip-server-1/"
+
+    appv2:
+      loadBalancer:
+        healthCheck:
+          path: /status
+          interval: 10s
+          timeout: 3s
+        servers:
+        - url: "http://private-ip-server-2/"
+```
+
+```toml tab="TOML"
+## Dynamic configuration
+[http.services]
+  [http.services.app]
+    [http.services.app.weighted.healthCheck]
+    [[http.services.app.weighted.services]]
+      name = "appv1"
+      weight = 3
+    [[http.services.app.weighted.services]]
+      name = "appv2"
+      weight = 1
+
+  [http.services.appv1]
+    [http.services.appv1.loadBalancer]
+      [http.services.appv1.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.appv1.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+
+  [http.services.appv2]
+    [http.services.appv2.loadBalancer]
+      [http.services.appv2.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
       [[http.services.appv2.loadBalancer.servers]]
         url = "http://private-ip-server-2/"
 ```
@@ -926,6 +1138,76 @@ http:
 
   [http.services.appv2]
     [http.services.appv2.loadBalancer]
+      [[http.services.appv2.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
+
+#### Health Check
+
+HealthCheck enables automatic self-healthcheck for this service, i.e. if the
+main handler of the service becomes unreachable, the information is propagated
+upwards to its parent.
+
+!!! info "All or nothing"
+
+    If HealthCheck is enabled for a given service, but any of its descendants does
+    not have it enabled, the creation of the service will fail.
+
+    HealthCheck on Mirroring services can be defined currently only with the [File](../../providers/file.md) provider.
+
+```yaml tab="YAML"
+## Dynamic configuration
+http:
+  services:
+    mirrored-api:
+      mirroring:
+        healthCheck: {}
+        service: appv1
+        mirrors:
+        - name: appv2
+          percent: 10
+
+    appv1:
+      loadBalancer:
+        healthCheck:
+          path: /status
+          interval: 10s
+          timeout: 3s
+        servers:
+        - url: "http://private-ip-server-1/"
+
+    appv2:
+      loadBalancer:
+        servers:
+        - url: "http://private-ip-server-2/"
+```
+
+```toml tab="TOML"
+## Dynamic configuration
+[http.services]
+  [http.services.mirrored-api]
+    [http.services.mirrored-api.mirroring]
+      [http.services.mirrored-api.mirroring.healthCheck]
+      service = "appv1"
+    [[http.services.mirrored-api.mirroring.mirrors]]
+      name = "appv2"
+      percent = 10
+
+  [http.services.appv1]
+    [http.services.appv1.loadBalancer]
+      [http.services.appv1.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.appv1.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+
+  [http.services.appv2]
+    [http.services.appv2.loadBalancer]
+      [http.services.appv1.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
       [[http.services.appv2.loadBalancer.servers]]
         url = "http://private-ip-server-2/"
 ```

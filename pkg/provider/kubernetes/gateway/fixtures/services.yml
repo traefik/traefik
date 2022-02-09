@@ -37,6 +37,42 @@ subsets:
 apiVersion: v1
 kind: Service
 metadata:
+  name: whoami-bar
+  namespace: bar
+
+spec:
+  ports:
+    - name: web2
+      port: 8000
+      targetPort: web2
+    - name: web
+      port: 80
+      targetPort: web
+  selector:
+    app: containous
+    task: whoami
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoami-bar
+  namespace: bar
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.11
+      - ip: 10.10.0.12
+    ports:
+      - name: web
+        port: 80
+      - name: web2
+        port: 8000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
   name: whoami2
   namespace: default
 
@@ -107,7 +143,6 @@ spec:
     - name: websecure2
       port: 8443
       targetPort: websecure2
-      scheme: https
   selector:
     app: containous
     task: whoami3
@@ -164,3 +199,73 @@ spec:
     - name: https
       protocol: TCP
       port: 443
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoamitcp
+  namespace: default
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.9
+      - ip: 10.10.0.10
+    ports:
+      - name: tcp-1
+        protocol: TCP
+        port: 9000
+      - name: tcp-2
+        protocol: TCP
+        port: 10000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamitcp
+  namespace: default
+
+spec:
+  ports:
+    - protocol: TCP
+      port: 9000
+      name: tcp-1
+    - protocol: TCP
+      port: 10000
+      name: tcp-2
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoamitcp-bar
+  namespace: bar
+
+subsets:
+  - addresses:
+      - ip: 10.10.0.13
+      - ip: 10.10.0.14
+    ports:
+      - name: tcp-1
+        protocol: TCP
+        port: 9000
+      - name: tcp-2
+        protocol: TCP
+        port: 10000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamitcp-bar
+  namespace: bar
+
+spec:
+  ports:
+    - protocol: TCP
+      port: 9000
+      name: tcp-1
+    - protocol: TCP
+      port: 10000
+      name: tcp-2

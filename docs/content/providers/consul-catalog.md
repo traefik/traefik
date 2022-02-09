@@ -362,13 +362,14 @@ providers:
 
 _Optional_
 
-Defines TLS options for Consul server endpoint.
+Defines the TLS configuration used for the secure connection to Consul Catalog.
 
 ##### `ca`
 
 _Optional_
 
-`ca` is the path to the CA certificate used for Consul communication, defaults to the system bundle if not specified.
+`ca` is the path to the certificate authority used for the secure connection to Consul Catalog,
+it defaults to the system bundle.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -391,11 +392,11 @@ providers:
 
 _Optional_
 
-The value of `tls.caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to Consul.
+The value of `caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to Consul Catalog.
 
 !!! warning ""
 
-    If `tls.ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
+    If `ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
 
 When this option is set to `true`, a client certificate is requested during the handshake but is not required. If a certificate is sent, it is required to be valid.
 
@@ -422,8 +423,7 @@ providers:
 
 _Optional_
 
-`cert` is the path to the public certificate to use for Consul communication.
-
+`cert` is the path to the public certificate used for the secure connection to Consul Catalog.
 When using this option, setting the `key` option is required.
 
 ```yaml tab="File (YAML)"
@@ -450,8 +450,7 @@ providers:
 
 _Optional_
 
-`key` is the path to the private key for Consul communication.
-
+`key` is the path to the private key used for the secure connection to Consul Catalog.
 When using this option, setting the `cert` option is required.
 
 ```yaml tab="File (YAML)"
@@ -476,7 +475,7 @@ providers:
 
 ##### `insecureSkipVerify`
 
-_Optional_
+_Optional, Default=false_
 
 If `insecureSkipVerify` is `true`, the TLS connection to Consul accepts any certificate presented by the server regardless of the hostnames it covers.
 
@@ -531,8 +530,8 @@ _Optional, Default=```Host(`{{ normalize .Name }}`)```_
 The default host rule for all services.
 
 For a given service, if no routing rule was defined by a tag, it is defined by this `defaultRule` instead.
-The `defaultRule` must be set to a valid [Go template](https://golang.org/pkg/text/template/),
-and can include [sprig template functions](http://masterminds.github.io/sprig/).
+The `defaultRule` must be set to a valid [Go template](https://pkg.go.dev/text/template/),
+and can include [sprig template functions](https://masterminds.github.io/sprig/).
 The service name can be accessed with the `Name` identifier,
 and the template has access to all the labels (i.e. tags beginning with the `prefix`) defined on this service.
 
@@ -553,6 +552,81 @@ providers:
 
 ```bash tab="CLI"
 --providers.consulcatalog.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+# ...
+```
+
+### `connectAware`
+
+_Optional, Default=false_
+
+Enable Consul Connect support.
+If set to `true`, Traefik will be enabled to communicate with Connect services.
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  connectAware = true
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    connectAware: true
+    # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.connectAware=true
+# ...
+```
+
+### `connectByDefault`
+
+_Optional, Default=false_
+
+Consider every service as Connect capable by default.
+If set to `true`, Traefik will consider every Consul Catalog service to be Connect capable by default.
+The option can be overridden on an instance basis with the `traefik.consulcatalog.connect` tag.
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  connectByDefault = true
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    connectByDefault: true
+    # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.connectByDefault=true
+# ...
+```
+
+### `serviceName`
+
+_Optional, Default="traefik"_
+
+Name of the Traefik service in Consul Catalog.
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  serviceName = "test"
+  # ...
+```
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    serviceName: test
+    # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.serviceName=test
 # ...
 ```
 
@@ -618,3 +692,32 @@ providers:
 ```
 
 For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
+
+### `namespace`
+
+_Optional, Default=""_
+
+The `namespace` option defines the namespace in which the consul catalog services will be discovered.
+
+!!! warning
+
+    The namespace option only works with [Consul Enterprise](https://www.consul.io/docs/enterprise),
+    which provides the [Namespaces](https://www.consul.io/docs/enterprise/namespaces) feature.
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    namespace: "production" 
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  namespace = "production"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.namespace=production
+# ...
+```

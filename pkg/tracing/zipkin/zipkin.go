@@ -16,10 +16,10 @@ const Name = "zipkin"
 
 // Config provides configuration settings for a zipkin tracer.
 type Config struct {
-	HTTPEndpoint string  `description:"HTTP Endpoint to report traces to." json:"httpEndpoint,omitempty" toml:"httpEndpoint,omitempty" yaml:"httpEndpoint,omitempty"`
-	SameSpan     bool    `description:"Use Zipkin SameSpan RPC style traces." json:"sameSpan,omitempty" toml:"sameSpan,omitempty" yaml:"sameSpan,omitempty" export:"true"`
-	ID128Bit     bool    `description:"Use Zipkin 128 bit root span IDs." json:"id128Bit,omitempty" toml:"id128Bit,omitempty" yaml:"id128Bit,omitempty" export:"true"`
-	SampleRate   float64 `description:"The rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
+	HTTPEndpoint string  `description:"Sets the HTTP Endpoint to report traces to." json:"httpEndpoint,omitempty" toml:"httpEndpoint,omitempty" yaml:"httpEndpoint,omitempty"`
+	SameSpan     bool    `description:"Uses SameSpan RPC style traces." json:"sameSpan,omitempty" toml:"sameSpan,omitempty" yaml:"sameSpan,omitempty" export:"true"`
+	ID128Bit     bool    `description:"Uses 128 bits root span IDs." json:"id128Bit,omitempty" toml:"id128Bit,omitempty" yaml:"id128Bit,omitempty" export:"true"`
+	SampleRate   float64 `description:"Sets the rate between 0.0 and 1.0 of requests to trace." json:"sampleRate,omitempty" toml:"sampleRate,omitempty" yaml:"sampleRate,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.

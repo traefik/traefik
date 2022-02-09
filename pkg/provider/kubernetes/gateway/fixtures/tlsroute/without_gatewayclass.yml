@@ -1,0 +1,33 @@
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: my-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners: # Use GatewayClass defaults for listener definition.
+    - name: tls
+      protocol: TLS
+      port: 8080
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+            group: gateway.networking.k8s.io
+        namespaces:
+          from: Same
+
+---
+kind: TCPRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: tcp-app-1
+  namespace: default
+spec:
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 8080
+          weight: 1
+          kind: Service
+          group: ""

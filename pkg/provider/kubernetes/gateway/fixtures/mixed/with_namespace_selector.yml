@@ -1,0 +1,266 @@
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: bar
+  labels:
+    foo: bar
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: supersecret
+  namespace: default
+
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: supersecret
+  namespace: default
+
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: my-gateway-class
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: my-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners: # Use GatewayClass defaults for listener definition.
+    - name: http
+      protocol: HTTP
+      port: 9080
+      allowedRoutes:
+        kinds:
+          - kind: HTTPRoute
+            group: gateway.networking.k8s.io
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              foo: bar
+
+    - name: https
+      protocol: HTTPS
+      port: 9443
+      tls:
+        certificateRefs:
+          - kind: Secret
+            name: supersecret
+            group: ""
+      allowedRoutes:
+        kinds:
+          - kind: HTTPRoute
+            group: gateway.networking.k8s.io
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              foo: bar
+
+    - name: tcp
+      protocol: TCP
+      port: 9000
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+            group: gateway.networking.k8s.io
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              foo: bar
+
+    - name: tls
+      protocol: TLS
+      port: 10000
+      hostname: tls.foo.example.com
+      tls:
+        certificateRefs:
+          - kind: Secret
+            name: supersecret
+            group: ""
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+            group: gateway.networking.k8s.io
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              foo: bar
+
+    - name: tls2
+      protocol: TLS
+      port: 11000
+      hostname: pass.tls.foo.example.com
+      tls:
+        mode: Passthrough
+      allowedRoutes:
+        kinds:
+          - kind: TLSRoute
+            group: gateway.networking.k8s.io
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              foo: bar
+
+---
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: http-app-default
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-gateway
+      sectionName: http
+      kind: Gateway
+      group: gateway.networking.k8s.io
+    - name: my-gateway
+      sectionName: https
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - backendRefs:
+        - name: whoami
+          port: 80
+          weight: 1
+          kind: Service
+          group: ""
+
+---
+kind: TCPRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: tcp-app-default
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-gateway
+      sectionName: tcp
+      kind: Gateway
+      group: gateway.networking.k8s.io
+    - name: my-gateway
+      sectionName: tls
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 9000
+          weight: 1
+          kind: Service
+          group: ""
+
+---
+kind: TLSRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: tls-app-default
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-gateway
+      sectionName: tls2
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 9000
+          weight: 1
+          kind: Service
+          group: ""
+
+---
+kind: HTTPRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: http-app-bar
+  namespace: bar
+spec:
+  parentRefs:
+    - name: my-gateway
+      namespace: default
+      sectionName: http
+      kind: Gateway
+      group: gateway.networking.k8s.io
+    - name: my-gateway
+      namespace: default
+      sectionName: https
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - backendRefs:
+        - name: whoami-bar
+          port: 80
+          weight: 1
+          kind: Service
+          group: ""
+
+---
+kind: TCPRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: tcp-app-bar
+  namespace: bar
+spec:
+  parentRefs:
+    - name: my-gateway
+      namespace: default
+      sectionName: tcp
+      kind: Gateway
+      group: gateway.networking.k8s.io
+    - name: my-gateway
+      namespace: default
+      sectionName: tls
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - backendRefs:
+        - name: whoamitcp-bar
+          port: 9000
+          weight: 1
+          kind: Service
+          group: ""
+
+---
+kind: TLSRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: tls-app-bar
+  namespace: bar
+spec:
+  parentRefs:
+    - name: my-gateway
+      namespace: default
+      sectionName: tls2
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - backendRefs:
+        - name: whoamitcp-bar
+          port: 9000
+          weight: 1
+          kind: Service
+          group: ""

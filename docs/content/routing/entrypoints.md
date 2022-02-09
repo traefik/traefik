@@ -100,6 +100,8 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
     entryPoints:
       name:
         address: ":8888" # same as ":8888/tcp"
+        http3:
+          advertisedPort: 8888
         transport:
           lifeCycle:
             requestAcceptGraceTimeout: 42
@@ -125,6 +127,8 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
     [entryPoints]
       [entryPoints.name]
         address = ":8888" # same as ":8888/tcp"
+        [entryPoints.name.http3]
+          advertisedPort = 8888
         [entryPoints.name.transport]
           [entryPoints.name.transport.lifeCycle]
             requestAcceptGraceTimeout = 42
@@ -144,6 +148,7 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.name.address=:8888 # same as :8888/tcp
+    --entryPoints.name.http3.advertisedport=8888
     --entryPoints.name.transport.lifeCycle.requestAcceptGraceTimeout=42
     --entryPoints.name.transport.lifeCycle.graceTimeOut=42
     --entryPoints.name.transport.respondingTimeouts.readTimeout=42
@@ -217,6 +222,74 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
     ```
 
     Full details for how to specify `address` can be found in [net.Listen](https://golang.org/pkg/net/#Listen) (and [net.Dial](https://golang.org/pkg/net/#Dial)) of the doc for go.
+
+### HTTP/3
+
+#### `http3`
+
+`http3` enables HTTP/3 protocol on the entryPoint.
+HTTP/3 requires a TCP entryPoint, as HTTP/3 always starts as a TCP connection that then gets upgraded to UDP.
+In most scenarios, this entryPoint is the same as the one used for TLS traffic.
+
+??? info "HTTP/3 uses UDP+TLS"
+
+    As HTTP/3 uses UDP, you can't have a TCP entryPoint with HTTP/3 on the same port as a UDP entryPoint.
+    Since HTTP/3 requires the use of TLS, only routers with TLS enabled will be usable with HTTP/3.
+
+!!! warning "Enabling Experimental HTTP/3"
+
+    As the HTTP/3 spec is still in draft, HTTP/3 support in Traefik is an experimental feature and needs to be activated 
+    in the experimental section of the static configuration.
+    
+    ```yaml tab="File (YAML)"
+    experimental:
+      http3: true
+
+    entryPoints:
+      name:
+        http3: {}
+    ```
+
+    ```toml tab="File (TOML)"
+    [experimental]
+      http3 = true
+    
+    [entryPoints.name.http3]
+    ```
+    
+    ```bash tab="CLI"
+    --experimental.http3=true --entrypoints.name.http3
+    ```
+
+#### `advertisedPort`
+
+`http3.advertisedPort` defines which UDP port to advertise as the HTTP/3 authority.
+It defaults to the entryPoint's address port.
+It can be used to override the authority in the `alt-svc` header, for example if the public facing port is different from where Traefik is listening.
+
+!!! info "http3.advertisedPort"
+
+    ```yaml tab="File (YAML)"
+    experimental:
+      http3: true
+
+    entryPoints:
+      name:
+        http3:
+          advertisedPort: 443
+    ```
+
+    ```toml tab="File (TOML)"
+    [experimental]
+      http3 = true
+    
+    [entryPoints.name.http3]
+      advertisedPort = 443
+    ```
+    
+    ```bash tab="CLI"
+    --experimental.http3=true --entrypoints.name.http3.advertisedport=443
+    ```
 
 ### Forwarded Headers
 
@@ -824,3 +897,35 @@ entryPoints:
     --entrypoints.websecure.address=:443
     --entrypoints.websecure.http.tls.certResolver=leresolver
     ```
+
+## UDP Options
+
+This whole section is dedicated to options, keyed by entry point, that will apply only to UDP routing.
+
+### Timeout
+
+_Optional, Default=3s_
+
+Timeout defines how long to wait on an idle session before releasing the related resources.
+The Timeout value must be greater than zero.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  foo:
+    address: ':8000/udp'
+    udp:
+      timeout: 10s
+```
+
+```toml tab="File (TOML)"
+[entryPoints.foo]
+  address = ":8000/udp"
+
+    [entryPoints.foo.udp]
+      timeout = "10s"
+```
+
+```bash tab="CLI"
+entrypoints.foo.address=:8000/udp
+entrypoints.foo.udp.timeout=10s
+```

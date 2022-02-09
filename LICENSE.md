@@ -1,6 +1,6 @@
 The MIT License (MIT)
 
-Copyright (c) 2016-2020 Containous SAS; 2020-2021 Traefik Labs
+Copyright (c) 2016-2020 Containous SAS; 2020-2022 Traefik Labs
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -54,6 +54,34 @@ providers:
 --providers.consul.rootkey=traefik
 ```
 
+### `namespace`
+
+_Optional, Default=""_
+
+The `namespace` option defines the namespace to query.
+
+!!! warning
+
+    The namespace option only works with [Consul Enterprise](https://www.consul.io/docs/enterprise),
+    which provides the [Namespaces](https://www.consul.io/docs/enterprise/namespaces) feature.
+
+```yaml tab="File (YAML)"
+providers:
+  consul:
+    # ...
+    namespace: "production"
+```
+
+```toml tab="File (TOML)"
+[providers.consul]
+  # ...
+  namespace = "production"
+```
+
+```bash tab="CLI"
+--providers.consul.namespace=production
+```
+
 ### `username`
 
 _Optional, Default=""_
@@ -64,7 +92,7 @@ Defines a username to connect to Consul with.
 providers:
   consul:
     # ...
-    usename: "foo"
+    username: "foo"
 ```
 
 ```toml tab="File (TOML)"
@@ -97,16 +125,44 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.consul.password=foo
+--providers.consul.password=bar
+```
+
+### `token`
+
+_Optional, Default=""_
+
+Defines a token with which to connect to Consul.
+
+```yaml tab="File (YAML)"
+providers:
+  consul:
+    # ...
+    token: "bar"
+```
+
+```toml tab="File (TOML)"
+[providers.consul]
+  # ...
+  token = "bar"
+```
+
+```bash tab="CLI"
+--providers.consul.token=bar
 ```
 
 ### `tls`
 
 _Optional_
 
-#### `tls.ca`
+Defines the TLS configuration used for the secure connection to Consul.
 
-Certificate Authority used for the secure connection to Consul.
+#### `ca`
+
+_Optional_
+
+`ca` is the path to the certificate authority used for the secure connection to Consul,
+it defaults to the system bundle.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -124,13 +180,15 @@ providers:
 --providers.consul.tls.ca=path/to/ca.crt
 ```
 
-#### `tls.caOptional`
+#### `caOptional`
 
-The value of `tls.caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to Consul.
+_Optional_
+
+The value of `caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to Consul.
 
 !!! warning ""
 
-    If `tls.ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
+    If `ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
 
 When this option is set to `true`, a client certificate is requested during the handshake but is not required. If a certificate is sent, it is required to be valid.
 
@@ -152,32 +210,12 @@ providers:
 --providers.consul.tls.caOptional=true
 ```
 
-#### `tls.cert`
+#### `cert`
 
-Public certificate used for the secure connection to Consul.
+_Optional_
 
-```yaml tab="File (YAML)"
-providers:
-  consul:
-    tls:
-      cert: path/to/foo.cert
-      key: path/to/foo.key
-```
-
-```toml tab="File (TOML)"
-[providers.consul.tls]
-  cert = "path/to/foo.cert"
-  key = "path/to/foo.key"
-```
-
-```bash tab="CLI"
---providers.consul.tls.cert=path/to/foo.cert
---providers.consul.tls.key=path/to/foo.key
-```
-
-#### `tls.key`
-
-Private certificate used for the secure connection to Consul.
+`cert` is the path to the public certificate used for the secure connection to Consul.
+When using this option, setting the `key` option is required.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -198,7 +236,35 @@ providers:
 --providers.consul.tls.key=path/to/foo.key
 ```
 
-#### `tls.insecureSkipVerify`
+#### `key`
+
+_Optional_
+
+`key` is the path to the private key used for the secure connection to Consul.
+When using this option, setting the `cert` option is required.
+
+```yaml tab="File (YAML)"
+providers:
+  consul:
+    tls:
+      cert: path/to/foo.cert
+      key: path/to/foo.key
+```
+
+```toml tab="File (TOML)"
+[providers.consul.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
+```bash tab="CLI"
+--providers.consul.tls.cert=path/to/foo.cert
+--providers.consul.tls.key=path/to/foo.key
+```
+
+#### `insecureSkipVerify`
+
+_Optional, Default=false_
 
 If `insecureSkipVerify` is `true`, the TLS connection to Consul accepts any certificate presented by the server regardless of the hostnames it covers.
 

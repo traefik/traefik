@@ -1,14 +1,11 @@
 package dynamic
 
 import (
-	"crypto/tls"
-	"crypto/x509"
-	"fmt"
-	"os"
 	"time"
 
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/ip"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 // +k8s:deepcopy-gen=true
@@ -67,7 +64,7 @@ type AddPrefix struct {
 
 // BasicAuth holds the HTTP basic authentication configuration.
 type BasicAuth struct {
-	Users        Users  `json:"users,omitempty" toml:"users,omitempty" yaml:"users,omitempty"`
+	Users        Users  `json:"users,omitempty" toml:"users,omitempty" yaml:"users,omitempty" loggable:"false"`
 	UsersFile    string `json:"usersFile,omitempty" toml:"usersFile,omitempty" yaml:"usersFile,omitempty"`
 	Realm        string `json:"realm,omitempty" toml:"realm,omitempty" yaml:"realm,omitempty"`
 	RemoveHeader bool   `json:"removeHeader,omitempty" toml:"removeHeader,omitempty" yaml:"removeHeader,omitempty" export:"true"`
@@ -104,13 +101,14 @@ type CircuitBreaker struct {
 // Compress holds the compress configuration.
 type Compress struct {
 	ExcludedContentTypes []string `json:"excludedContentTypes,omitempty" toml:"excludedContentTypes,omitempty" yaml:"excludedContentTypes,omitempty" export:"true"`
+	MinResponseBodyBytes int      `json:"minResponseBodyBytes,omitempty" toml:"minResponseBodyBytes,omitempty" yaml:"minResponseBodyBytes,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
 
 // DigestAuth holds the Digest HTTP authentication configuration.
 type DigestAuth struct {
-	Users        Users  `json:"users,omitempty" toml:"users,omitempty" yaml:"users,omitempty"`
+	Users        Users  `json:"users,omitempty" toml:"users,omitempty" yaml:"users,omitempty" loggable:"false"`
 	UsersFile    string `json:"usersFile,omitempty" toml:"usersFile,omitempty" yaml:"usersFile,omitempty"`
 	RemoveHeader bool   `json:"removeHeader,omitempty" toml:"removeHeader,omitempty" yaml:"removeHeader,omitempty" export:"true"`
 	Realm        string `json:"realm,omitempty" toml:"realm,omitempty" yaml:"realm,omitempty"`
@@ -130,12 +128,12 @@ type ErrorPage struct {
 
 // ForwardAuth holds the http forward authentication configuration.
 type ForwardAuth struct {
-	Address                  string     `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
-	TLS                      *ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
-	TrustForwardHeader       bool       `json:"trustForwardHeader,omitempty" toml:"trustForwardHeader,omitempty" yaml:"trustForwardHeader,omitempty" export:"true"`
-	AuthResponseHeaders      []string   `json:"authResponseHeaders,omitempty" toml:"authResponseHeaders,omitempty" yaml:"authResponseHeaders,omitempty" export:"true"`
-	AuthResponseHeadersRegex string     `json:"authResponseHeadersRegex,omitempty" toml:"authResponseHeadersRegex,omitempty" yaml:"authResponseHeadersRegex,omitempty" export:"true"`
-	AuthRequestHeaders       []string   `json:"authRequestHeaders,omitempty" toml:"authRequestHeaders,omitempty" yaml:"authRequestHeaders,omitempty" export:"true"`
+	Address                  string           `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
+	TLS                      *types.ClientTLS `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	TrustForwardHeader       bool             `json:"trustForwardHeader,omitempty" toml:"trustForwardHeader,omitempty" yaml:"trustForwardHeader,omitempty" export:"true"`
+	AuthResponseHeaders      []string         `json:"authResponseHeaders,omitempty" toml:"authResponseHeaders,omitempty" yaml:"authResponseHeaders,omitempty" export:"true"`
+	AuthResponseHeadersRegex string           `json:"authResponseHeadersRegex,omitempty" toml:"authResponseHeadersRegex,omitempty" yaml:"authResponseHeadersRegex,omitempty" export:"true"`
+	AuthRequestHeaders       []string         `json:"authRequestHeaders,omitempty" toml:"authRequestHeaders,omitempty" yaml:"authRequestHeaders,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -151,8 +149,6 @@ type Headers struct {
 	AccessControlAllowHeaders []string `json:"accessControlAllowHeaders,omitempty" toml:"accessControlAllowHeaders,omitempty" yaml:"accessControlAllowHeaders,omitempty" export:"true"`
 	// AccessControlAllowMethods must be used in response to a preflight request with Access-Control-Request-Method set.
 	AccessControlAllowMethods []string `json:"accessControlAllowMethods,omitempty" toml:"accessControlAllowMethods,omitempty" yaml:"accessControlAllowMethods,omitempty" export:"true"`
-	// AccessControlAllowOrigin Can be "origin-list-or-null" or "*". From (https://www.w3.org/TR/cors/#access-control-allow-origin-response-header)
-	AccessControlAllowOrigin string `json:"accessControlAllowOrigin,omitempty" toml:"accessControlAllowOrigin,omitempty" yaml:"accessControlAllowOrigin,omitempty"` // Deprecated
 	// AccessControlAllowOriginList is a list of allowable origins. Can also be a wildcard origin "*".
 	AccessControlAllowOriginList []string `json:"accessControlAllowOriginList,omitempty" toml:"accessControlAllowOriginList,omitempty" yaml:"accessControlAllowOriginList,omitempty"`
 	// AccessControlAllowOriginListRegex is a list of allowable origins written following the Regular Expression syntax (https://golang.org/pkg/regexp/).
@@ -161,30 +157,36 @@ type Headers struct {
 	AccessControlExposeHeaders []string `json:"accessControlExposeHeaders,omitempty" toml:"accessControlExposeHeaders,omitempty" yaml:"accessControlExposeHeaders,omitempty" export:"true"`
 	// AccessControlMaxAge sets the time that a preflight request may be cached.
 	AccessControlMaxAge int64 `json:"accessControlMaxAge,omitempty" toml:"accessControlMaxAge,omitempty" yaml:"accessControlMaxAge,omitempty" export:"true"`
-	// AddVaryHeader controls if the Vary header is automatically added/updated when the AccessControlAllowOrigin is set.
+	// AddVaryHeader controls if the Vary header is automatically added/updated when the AccessControlAllowOriginList is set.
 	AddVaryHeader bool `json:"addVaryHeader,omitempty" toml:"addVaryHeader,omitempty" yaml:"addVaryHeader,omitempty" export:"true"`
 
-	AllowedHosts            []string          `json:"allowedHosts,omitempty" toml:"allowedHosts,omitempty" yaml:"allowedHosts,omitempty"`
-	HostsProxyHeaders       []string          `json:"hostsProxyHeaders,omitempty" toml:"hostsProxyHeaders,omitempty" yaml:"hostsProxyHeaders,omitempty" export:"true"`
-	SSLRedirect             bool              `json:"sslRedirect,omitempty" toml:"sslRedirect,omitempty" yaml:"sslRedirect,omitempty" export:"true"`
-	SSLTemporaryRedirect    bool              `json:"sslTemporaryRedirect,omitempty" toml:"sslTemporaryRedirect,omitempty" yaml:"sslTemporaryRedirect,omitempty" export:"true"`
-	SSLHost                 string            `json:"sslHost,omitempty" toml:"sslHost,omitempty" yaml:"sslHost,omitempty"`
-	SSLProxyHeaders         map[string]string `json:"sslProxyHeaders,omitempty" toml:"sslProxyHeaders,omitempty" yaml:"sslProxyHeaders,omitempty"`
-	SSLForceHost            bool              `json:"sslForceHost,omitempty" toml:"sslForceHost,omitempty" yaml:"sslForceHost,omitempty" export:"true"`
-	STSSeconds              int64             `json:"stsSeconds,omitempty" toml:"stsSeconds,omitempty" yaml:"stsSeconds,omitempty" export:"true"`
-	STSIncludeSubdomains    bool              `json:"stsIncludeSubdomains,omitempty" toml:"stsIncludeSubdomains,omitempty" yaml:"stsIncludeSubdomains,omitempty" export:"true"`
-	STSPreload              bool              `json:"stsPreload,omitempty" toml:"stsPreload,omitempty" yaml:"stsPreload,omitempty" export:"true"`
-	ForceSTSHeader          bool              `json:"forceSTSHeader,omitempty" toml:"forceSTSHeader,omitempty" yaml:"forceSTSHeader,omitempty" export:"true"`
-	FrameDeny               bool              `json:"frameDeny,omitempty" toml:"frameDeny,omitempty" yaml:"frameDeny,omitempty" export:"true"`
-	CustomFrameOptionsValue string            `json:"customFrameOptionsValue,omitempty" toml:"customFrameOptionsValue,omitempty" yaml:"customFrameOptionsValue,omitempty"`
-	ContentTypeNosniff      bool              `json:"contentTypeNosniff,omitempty" toml:"contentTypeNosniff,omitempty" yaml:"contentTypeNosniff,omitempty" export:"true"`
-	BrowserXSSFilter        bool              `json:"browserXssFilter,omitempty" toml:"browserXssFilter,omitempty" yaml:"browserXssFilter,omitempty" export:"true"`
-	CustomBrowserXSSValue   string            `json:"customBrowserXSSValue,omitempty" toml:"customBrowserXSSValue,omitempty" yaml:"customBrowserXSSValue,omitempty"`
-	ContentSecurityPolicy   string            `json:"contentSecurityPolicy,omitempty" toml:"contentSecurityPolicy,omitempty" yaml:"contentSecurityPolicy,omitempty"`
-	PublicKey               string            `json:"publicKey,omitempty" toml:"publicKey,omitempty" yaml:"publicKey,omitempty"`
-	ReferrerPolicy          string            `json:"referrerPolicy,omitempty" toml:"referrerPolicy,omitempty" yaml:"referrerPolicy,omitempty" export:"true"`
-	FeaturePolicy           string            `json:"featurePolicy,omitempty" toml:"featurePolicy,omitempty" yaml:"featurePolicy,omitempty" export:"true"`
-	IsDevelopment           bool              `json:"isDevelopment,omitempty" toml:"isDevelopment,omitempty" yaml:"isDevelopment,omitempty" export:"true"`
+	AllowedHosts      []string `json:"allowedHosts,omitempty" toml:"allowedHosts,omitempty" yaml:"allowedHosts,omitempty"`
+	HostsProxyHeaders []string `json:"hostsProxyHeaders,omitempty" toml:"hostsProxyHeaders,omitempty" yaml:"hostsProxyHeaders,omitempty" export:"true"`
+	// Deprecated: use EntryPoint redirection or RedirectScheme instead.
+	SSLRedirect bool `json:"sslRedirect,omitempty" toml:"sslRedirect,omitempty" yaml:"sslRedirect,omitempty" export:"true"`
+	// Deprecated: use EntryPoint redirection or RedirectScheme instead.
+	SSLTemporaryRedirect bool `json:"sslTemporaryRedirect,omitempty" toml:"sslTemporaryRedirect,omitempty" yaml:"sslTemporaryRedirect,omitempty" export:"true"`
+	// Deprecated: use RedirectRegex instead.
+	SSLHost         string            `json:"sslHost,omitempty" toml:"sslHost,omitempty" yaml:"sslHost,omitempty"`
+	SSLProxyHeaders map[string]string `json:"sslProxyHeaders,omitempty" toml:"sslProxyHeaders,omitempty" yaml:"sslProxyHeaders,omitempty"`
+	// Deprecated: use RedirectRegex instead.
+	SSLForceHost            bool   `json:"sslForceHost,omitempty" toml:"sslForceHost,omitempty" yaml:"sslForceHost,omitempty" export:"true"`
+	STSSeconds              int64  `json:"stsSeconds,omitempty" toml:"stsSeconds,omitempty" yaml:"stsSeconds,omitempty" export:"true"`
+	STSIncludeSubdomains    bool   `json:"stsIncludeSubdomains,omitempty" toml:"stsIncludeSubdomains,omitempty" yaml:"stsIncludeSubdomains,omitempty" export:"true"`
+	STSPreload              bool   `json:"stsPreload,omitempty" toml:"stsPreload,omitempty" yaml:"stsPreload,omitempty" export:"true"`
+	ForceSTSHeader          bool   `json:"forceSTSHeader,omitempty" toml:"forceSTSHeader,omitempty" yaml:"forceSTSHeader,omitempty" export:"true"`
+	FrameDeny               bool   `json:"frameDeny,omitempty" toml:"frameDeny,omitempty" yaml:"frameDeny,omitempty" export:"true"`
+	CustomFrameOptionsValue string `json:"customFrameOptionsValue,omitempty" toml:"customFrameOptionsValue,omitempty" yaml:"customFrameOptionsValue,omitempty"`
+	ContentTypeNosniff      bool   `json:"contentTypeNosniff,omitempty" toml:"contentTypeNosniff,omitempty" yaml:"contentTypeNosniff,omitempty" export:"true"`
+	BrowserXSSFilter        bool   `json:"browserXssFilter,omitempty" toml:"browserXssFilter,omitempty" yaml:"browserXssFilter,omitempty" export:"true"`
+	CustomBrowserXSSValue   string `json:"customBrowserXSSValue,omitempty" toml:"customBrowserXSSValue,omitempty" yaml:"customBrowserXSSValue,omitempty"`
+	ContentSecurityPolicy   string `json:"contentSecurityPolicy,omitempty" toml:"contentSecurityPolicy,omitempty" yaml:"contentSecurityPolicy,omitempty"`
+	PublicKey               string `json:"publicKey,omitempty" toml:"publicKey,omitempty" yaml:"publicKey,omitempty"`
+	ReferrerPolicy          string `json:"referrerPolicy,omitempty" toml:"referrerPolicy,omitempty" yaml:"referrerPolicy,omitempty" export:"true"`
+	// Deprecated: use PermissionsPolicy instead.
+	FeaturePolicy     string `json:"featurePolicy,omitempty" toml:"featurePolicy,omitempty" yaml:"featurePolicy,omitempty" export:"true"`
+	PermissionsPolicy string `json:"permissionsPolicy,omitempty" toml:"permissionsPolicy,omitempty" yaml:"permissionsPolicy,omitempty" export:"true"`
+	IsDevelopment     bool   `json:"isDevelopment,omitempty" toml:"isDevelopment,omitempty" yaml:"isDevelopment,omitempty" export:"true"`
 }
 
 // HasCustomHeadersDefined checks to see if any of the custom header elements have been set.
@@ -227,6 +229,7 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 		h.PublicKey != "" ||
 		h.ReferrerPolicy != "" ||
 		h.FeaturePolicy != "" ||
+		h.PermissionsPolicy != "" ||
 		h.IsDevelopment)
 }
 
@@ -394,19 +397,19 @@ type StripPrefixRegex struct {
 
 // TLSClientCertificateInfo holds the client TLS certificate info configuration.
 type TLSClientCertificateInfo struct {
-	NotAfter     bool                        `json:"notAfter,omitempty" toml:"notAfter,omitempty" yaml:"notAfter,omitempty" export:"true"`
-	NotBefore    bool                        `json:"notBefore,omitempty" toml:"notBefore,omitempty" yaml:"notBefore,omitempty" export:"true"`
-	Sans         bool                        `json:"sans,omitempty" toml:"sans,omitempty" yaml:"sans,omitempty" export:"true"`
-	Subject      *TLSCLientCertificateDNInfo `json:"subject,omitempty" toml:"subject,omitempty" yaml:"subject,omitempty" export:"true"`
-	Issuer       *TLSCLientCertificateDNInfo `json:"issuer,omitempty" toml:"issuer,omitempty" yaml:"issuer,omitempty" export:"true"`
-	SerialNumber bool                        `json:"serialNumber,omitempty" toml:"serialNumber,omitempty" yaml:"serialNumber,omitempty" export:"true"`
+	NotAfter     bool                               `json:"notAfter,omitempty" toml:"notAfter,omitempty" yaml:"notAfter,omitempty" export:"true"`
+	NotBefore    bool                               `json:"notBefore,omitempty" toml:"notBefore,omitempty" yaml:"notBefore,omitempty" export:"true"`
+	Sans         bool                               `json:"sans,omitempty" toml:"sans,omitempty" yaml:"sans,omitempty" export:"true"`
+	Subject      *TLSClientCertificateSubjectDNInfo `json:"subject,omitempty" toml:"subject,omitempty" yaml:"subject,omitempty" export:"true"`
+	Issuer       *TLSClientCertificateIssuerDNInfo  `json:"issuer,omitempty" toml:"issuer,omitempty" yaml:"issuer,omitempty" export:"true"`
+	SerialNumber bool                               `json:"serialNumber,omitempty" toml:"serialNumber,omitempty" yaml:"serialNumber,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// TLSCLientCertificateDNInfo holds the client TLS certificate distinguished name info configuration.
+// TLSClientCertificateIssuerDNInfo holds the client TLS certificate distinguished name info configuration.
 // cf https://tools.ietf.org/html/rfc3739
-type TLSCLientCertificateDNInfo struct {
+type TLSClientCertificateIssuerDNInfo struct {
 	Country         bool `json:"country,omitempty" toml:"country,omitempty" yaml:"country,omitempty" export:"true"`
 	Province        bool `json:"province,omitempty" toml:"province,omitempty" yaml:"province,omitempty" export:"true"`
 	Locality        bool `json:"locality,omitempty" toml:"locality,omitempty" yaml:"locality,omitempty" export:"true"`
@@ -418,85 +421,20 @@ type TLSCLientCertificateDNInfo struct {
 
 // +k8s:deepcopy-gen=true
 
-// Users holds a list of users.
-type Users []string
+// TLSClientCertificateSubjectDNInfo holds the client TLS certificate distinguished name info configuration.
+// cf https://tools.ietf.org/html/rfc3739
+type TLSClientCertificateSubjectDNInfo struct {
+	Country            bool `json:"country,omitempty" toml:"country,omitempty" yaml:"country,omitempty" export:"true"`
+	Province           bool `json:"province,omitempty" toml:"province,omitempty" yaml:"province,omitempty" export:"true"`
+	Locality           bool `json:"locality,omitempty" toml:"locality,omitempty" yaml:"locality,omitempty" export:"true"`
+	Organization       bool `json:"organization,omitempty" toml:"organization,omitempty" yaml:"organization,omitempty" export:"true"`
+	OrganizationalUnit bool `json:"organizationalUnit,omitempty" toml:"organizationalUnit,omitempty" yaml:"organizationalUnit,omitempty" export:"true"`
+	CommonName         bool `json:"commonName,omitempty" toml:"commonName,omitempty" yaml:"commonName,omitempty" export:"true"`
+	SerialNumber       bool `json:"serialNumber,omitempty" toml:"serialNumber,omitempty" yaml:"serialNumber,omitempty" export:"true"`
+	DomainComponent    bool `json:"domainComponent,omitempty" toml:"domainComponent,omitempty" yaml:"domainComponent,omitempty" export:"true"`
+}
 
 // +k8s:deepcopy-gen=true
 
-// ClientTLS holds the TLS specific configurations as client
-// CA, Cert and Key can be either path or file contents.
-type ClientTLS struct {
-	CA                 string `json:"ca,omitempty" toml:"ca,omitempty" yaml:"ca,omitempty"`
-	CAOptional         bool   `json:"caOptional,omitempty" toml:"caOptional,omitempty" yaml:"caOptional,omitempty" export:"true"`
-	Cert               string `json:"cert,omitempty" toml:"cert,omitempty" yaml:"cert,omitempty"`
-	Key                string `json:"key,omitempty" toml:"key,omitempty" yaml:"key,omitempty"`
-	InsecureSkipVerify bool   `json:"insecureSkipVerify,omitempty" toml:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" export:"true"`
-}
-
-// CreateTLSConfig creates a TLS config from ClientTLS structures.
-func (c *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
-	if c == nil {
-		return nil, nil
-	}
-
-	var err error
-	caPool := x509.NewCertPool()
-	clientAuth := tls.NoClientCert
-	if c.CA != "" {
-		var ca []byte
-		if _, errCA := os.Stat(c.CA); errCA == nil {
-			ca, err = os.ReadFile(c.CA)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read CA. %w", err)
-			}
-		} else {
-			ca = []byte(c.CA)
-		}
-
-		if !caPool.AppendCertsFromPEM(ca) {
-			return nil, fmt.Errorf("failed to parse CA")
-		}
-
-		if c.CAOptional {
-			clientAuth = tls.VerifyClientCertIfGiven
-		} else {
-			clientAuth = tls.RequireAndVerifyClientCert
-		}
-	}
-
-	cert := tls.Certificate{}
-	_, errKeyIsFile := os.Stat(c.Key)
-
-	if !c.InsecureSkipVerify && (len(c.Cert) == 0 || len(c.Key) == 0) {
-		return nil, fmt.Errorf("TLS Certificate or Key file must be set when TLS configuration is created")
-	}
-
-	if len(c.Cert) > 0 && len(c.Key) > 0 {
-		if _, errCertIsFile := os.Stat(c.Cert); errCertIsFile == nil {
-			if errKeyIsFile == nil {
-				cert, err = tls.LoadX509KeyPair(c.Cert, c.Key)
-				if err != nil {
-					return nil, fmt.Errorf("failed to load TLS keypair: %w", err)
-				}
-			} else {
-				return nil, fmt.Errorf("tls cert is a file, but tls key is not")
-			}
-		} else {
-			if errKeyIsFile != nil {
-				cert, err = tls.X509KeyPair([]byte(c.Cert), []byte(c.Key))
-				if err != nil {
-					return nil, fmt.Errorf("failed to load TLS keypair: %w", err)
-				}
-			} else {
-				return nil, fmt.Errorf("TLS key is a file, but tls cert is not")
-			}
-		}
-	}
-
-	return &tls.Config{
-		Certificates:       []tls.Certificate{cert},
-		RootCAs:            caPool,
-		InsecureSkipVerify: c.InsecureSkipVerify,
-		ClientAuth:         clientAuth,
-	}, nil
-}
+// Users holds a list of users.
+type Users []string

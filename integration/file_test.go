@@ -15,7 +15,7 @@ type FileSuite struct{ BaseSuite }
 
 func (s *FileSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "file")
-	s.composeProject.Start(c)
+	s.composeUp(c)
 }
 
 func (s *FileSuite) TestSimpleConfiguration(c *check.C) {

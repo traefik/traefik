@@ -6,8 +6,8 @@ on:
       - '*'
 
 env:
-  GO_VERSION: 1.16
-  GOLANGCI_LINT_VERSION: v1.41.1
+  GO_VERSION: 1.17
+  GOLANGCI_LINT_VERSION: v1.43.0
   MISSSPELL_VERSION: v0.3.4
   PRE_TARGET: ""
 
@@ -41,14 +41,14 @@ jobs:
           key: ${{ runner.os }}-validate-go-${{ hashFiles('**/go.sum') }}
           restore-keys: ${{ runner.os }}-validate-go-
 
-      - name: Installing dependencies
-        run: go install github.com/containous/go-bindata/go-bindata@v1.0.0
-
       - name: Install golangci-lint ${{ env.GOLANGCI_LINT_VERSION }}
         run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin ${GOLANGCI_LINT_VERSION}
 
       - name: Install missspell ${{ env.MISSSPELL_VERSION }}
         run: curl -sfL https://raw.githubusercontent.com/client9/misspell/master/install-misspell.sh | sh -s -- -b $(go env GOPATH)/bin ${MISSSPELL_VERSION}
+
+      - name: Avoid generating webui
+        run: mkdir -p webui/static && touch webui/static/index.html
 
       - name: Validate
         run: make validate
@@ -80,9 +80,6 @@ jobs:
             ~/.cache/go-build
           key: ${{ runner.os }}-validate-generate-go-${{ hashFiles('**/go.sum') }}
           restore-keys: ${{ runner.os }}-validate-generate-go-
-
-      - name: Installing dependencies
-        run: go install github.com/containous/go-bindata/go-bindata@v1.0.0
 
       - name: go generate
         run: |

@@ -6,7 +6,7 @@ on:
       - '*'
 
 env:
-  GO_VERSION: 1.16
+  GO_VERSION: 1.17
   PRE_TARGET: ""
 
 jobs:
@@ -39,8 +39,8 @@ jobs:
           key: ${{ runner.os }}-test-unit-go-${{ hashFiles('**/go.sum') }}
           restore-keys: ${{ runner.os }}-test-unit-go-
 
-      - name: Installing dependencies
-        run: go install github.com/containous/go-bindata/go-bindata@v1.0.0
+      - name: Avoid generating webui
+        run: mkdir -p webui/static && touch webui/static/index.html
 
       - name: Tests
         run: make test-unit

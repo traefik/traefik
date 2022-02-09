@@ -1,0 +1,106 @@
+{
+	"routers": {
+		"api@internal": {
+			"entryPoints": [
+				"traefik"
+			],
+			"service": "api@internal",
+			"rule": "PathPrefix(`/api`)",
+			"priority": 2147483646,
+			"status": "enabled",
+			"using": [
+				"traefik"
+			]
+		},
+		"dashboard@internal": {
+			"entryPoints": [
+				"traefik"
+			],
+			"middlewares": [
+				"dashboard_redirect@internal",
+				"dashboard_stripprefix@internal"
+			],
+			"service": "dashboard@internal",
+			"rule": "PathPrefix(`/`)",
+			"priority": 2147483645,
+			"status": "enabled",
+			"using": [
+				"traefik"
+			]
+		},
+		"whoami-keep-route-default-whoami-test-keep-keep@kubernetes": {
+			"entryPoints": [
+				"web"
+			],
+			"service": "default-whoami-80",
+			"rule": "Host(`whoami.test.keep`) \u0026\u0026 PathPrefix(`/keep`)",
+			"status": "enabled",
+			"using": [
+				"web"
+			]
+		}
+	},
+	"middlewares": {
+		"dashboard_redirect@internal": {
+			"redirectRegex": {
+				"regex": "^(http:\\/\\/(\\[[\\w:.]+\\]|[\\w\\._-]+)(:\\d+)?)\\/$",
+				"replacement": "${1}/dashboard/",
+				"permanent": true
+			},
+			"status": "enabled",
+			"usedBy": [
+				"dashboard@internal"
+			]
+		},
+		"dashboard_stripprefix@internal": {
+			"stripPrefix": {
+				"prefixes": [
+					"/dashboard/",
+					"/dashboard"
+				]
+			},
+			"status": "enabled",
+			"usedBy": [
+				"dashboard@internal"
+			]
+		}
+	},
+	"services": {
+		"api@internal": {
+			"status": "enabled",
+			"usedBy": [
+				"api@internal"
+			]
+		},
+		"dashboard@internal": {
+			"status": "enabled",
+			"usedBy": [
+				"dashboard@internal"
+			]
+		},
+		"default-whoami-80@kubernetes": {
+			"loadBalancer": {
+				"servers": [
+					{
+						"url": "http://10.42.0.4:80"
+					},
+					{
+						"url": "http://10.42.0.5:80"
+					}
+				],
+				"passHostHeader": true
+			},
+			"status": "enabled",
+			"usedBy": [
+				"whoami-keep-route-default-whoami-test-keep-keep@kubernetes"
+			],
+			"serverStatus": {
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.5:80": "UP"
+			}
+		},
+		"noop@internal": {
+			"status": "enabled"
+		}
+	}
+}

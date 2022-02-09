@@ -5,8 +5,12 @@ Dynamic configuration with Kubernetes Custom Resource
 
 ## Definitions
 
-```yaml
---8<-- "content/reference/dynamic-configuration/kubernetes-crd-definition.yml"
+```yaml tab="apiextensions.k8s.io/v1"
+--8<-- "content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml"
+```
+
+```yaml tab="apiextensions.k8s.io/v1beta1"
+--8<-- "content/reference/dynamic-configuration/kubernetes-crd-definition-v1beta1.yml"
 ```
 
 ## Resources

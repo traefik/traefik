@@ -9,23 +9,31 @@ spec:
     - foo
 
   routes:
-  - match: Host(`foo.com`) && PathPrefix(`/bar`)
-    kind: Rule
-    priority: 12
-    services:
-    - name: whoami-svc
-      namespace: cross-ns
-      port: 80
-    - name: tr-svc-wrr1
-      kind: TraefikService
-    - name: tr-svc-wrr2
-      namespace: cross-ns
-      kind: TraefikService
-    - name: tr-svc-mirror1
-      kind: TraefikService
-    - name: tr-svc-mirror2
-      namespace: cross-ns
-      kind: TraefikService
+    - match: Host(`foo.com`) && PathPrefix(`/bar`)
+      kind: Rule
+      priority: 12
+      services:
+      - name: whoami-svc
+        namespace: cross-ns
+        port: 80
+      - name: tr-svc-wrr1
+        kind: TraefikService
+      - name: tr-svc-wrr2
+        namespace: cross-ns
+        kind: TraefikService
+      - name: tr-svc-mirror1
+        kind: TraefikService
+      - name: tr-svc-mirror2
+        namespace: cross-ns
+        kind: TraefikService
+
+    - match: Host(`bar.com`) && PathPrefix(`/foo`)
+      kind: Rule
+      services:
+        - name: whoami-svc
+          namespace: cross-ns
+          port: 80
+          serversTransport: foo-test@kubernetescrd
 
 ---
 apiVersion: traefik.containo.us/v1alpha1
@@ -89,3 +97,13 @@ spec:
         namespace: cross-ns
         percent: 20
         port: 80
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: test
+  namespace: foo
+
+spec:
+  serverName: "test"

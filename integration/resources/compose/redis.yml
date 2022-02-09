@@ -1,4 +1,9 @@
-redis:
-  image: redis:5.0
-  ports:
-    - "6379:6379"
+version: "3.8"
+services:
+  redis:
+    image: redis:5.0
+
+networks:
+  default:
+    name: traefik-test-network
+    external: true

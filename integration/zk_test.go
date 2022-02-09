@@ -3,35 +3,41 @@ package integration
 import (
 	"bytes"
 	"encoding/json"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/abronan/valkeyrie"
-	"github.com/abronan/valkeyrie/store"
-	"github.com/abronan/valkeyrie/store/zookeeper"
 	"github.com/go-check/check"
+	"github.com/kvtools/valkeyrie"
+	"github.com/kvtools/valkeyrie/store"
+	"github.com/kvtools/valkeyrie/store/zookeeper"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/api"
 	checker "github.com/vdemeester/shakers"
 )
 
-// Zk test suites (using libcompose).
+// Zk test suites.
 type ZookeeperSuite struct {
 	BaseSuite
-	kvClient store.Store
+	kvClient      store.Store
+	zookeeperAddr string
 }
 
 func (s *ZookeeperSuite) setupStore(c *check.C) {
 	s.createComposeProject(c, "zookeeper")
-	s.composeProject.Start(c)
+	s.composeUp(c)
 
 	zookeeper.Register()
-	kv, err := valkeyrie.NewStore(
+
+	s.zookeeperAddr = net.JoinHostPort(s.getComposeServiceIP(c, "zookeeper"), "2181")
+
+	var err error
+	s.kvClient, err = valkeyrie.NewStore(
 		store.ZK,
-		[]string{s.composeProject.Container(c, "zookeeper").NetworkSettings.IPAddress + ":2181"},
+		[]string{s.zookeeperAddr},
 		&store.Config{
 			ConnectionTimeout: 10 * time.Second,
 		},
@@ -39,27 +45,16 @@ func (s *ZookeeperSuite) setupStore(c *check.C) {
 	if err != nil {
 		c.Fatal("Cannot create store zookeeper")
 	}
-	s.kvClient = kv
 
 	// wait for zk
-	err = try.Do(60*time.Second, try.KVExists(kv, "test"))
+	err = try.Do(60*time.Second, try.KVExists(s.kvClient, "test"))
 	c.Assert(err, checker.IsNil)
 }
-
-func (s *ZookeeperSuite) TearDownTest(c *check.C) {
-	// shutdown and delete compose project
-	if s.composeProject != nil {
-		s.composeProject.Stop(c)
-	}
-}
-
-func (s *ZookeeperSuite) TearDownSuite(c *check.C) {}
 
 func (s *ZookeeperSuite) TestSimpleConfiguration(c *check.C) {
 	s.setupStore(c)
 
-	address := s.composeProject.Container(c, "zookeeper").NetworkSettings.IPAddress + ":2181"
-	file := s.adaptFile(c, "fixtures/zookeeper/simple.toml", struct{ ZkAddress string }{address})
+	file := s.adaptFile(c, "fixtures/zookeeper/simple.toml", struct{ ZkAddress string }{s.zookeeperAddr})
 	defer os.Remove(file)
 
 	data := map[string]string{

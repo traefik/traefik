@@ -20,11 +20,17 @@ the Traefik engineering team developed a [Custom Resource Definition](https://ku
         * Apply the needed kubernetesCRD provider [configuration](#provider-configuration)
     * Add all necessary Traefik custom [resources](../reference/dynamic-configuration/kubernetes-crd.md#resources)
 
+!!! warning "Deprecated apiextensions.k8s.io/v1beta1 CRD"
+
+    The `apiextensions.k8s.io/v1beta1` CustomResourceDefinition is deprecated in Kubernetes `v1.16+` and will be removed in `v1.22+`.
+    
+    For Kubernetes `v1.16+`, please use the Traefik `apiextensions.k8s.io/v1` CRDs instead.
+
 ??? example "Initializing Resource Definition and RBAC"
 
     ```yaml tab="Traefik Resource Definition"
     # All resources definition must be declared
-    --8<-- "content/reference/dynamic-configuration/kubernetes-crd-definition.yml"
+    --8<-- "content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml"
     ```
 
     ```yaml tab="RBAC for Traefik CRD"
@@ -56,7 +62,7 @@ Previous versions of Traefik used a [KV store](https://doc.traefik.io/traefik/v1
 
 If you need Let's Encrypt with HA in a Kubernetes environment, we recommend using [Traefik Enterprise](https://traefik.io/traefik-enterprise/), which includes distributed Let's Encrypt as a supported feature.
 
-If you want to keep using Traefik Proxy, high availability for Let's Encrypt can be achieved by using a Certificate Controller such as [Cert-Manager](https://docs.cert-manager.io/en/latest/index.html).
+If you want to keep using Traefik Proxy, high availability for Let's Encrypt can be achieved by using a Certificate Controller such as [Cert-Manager](https://cert-manager.io/docs/).
 When using Cert-Manager to manage certificates, it creates secrets in your namespaces that can be referenced as TLS secrets in your [ingress objects](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls).
 When using the Traefik Kubernetes CRD Provider, unfortunately Cert-Manager cannot yet interface directly with the CRDs.
 A workaround is to enable the [Kubernetes Ingress provider](./kubernetes-ingress.md) to allow Cert-Manager to create ingress objects to complete the challenges.
@@ -189,13 +195,13 @@ See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-
 ```yaml tab="File (YAML)"
 providers:
   kubernetesCRD:
-    labelselector: "app=traefik"
+    labelSelector: "app=traefik"
     # ...
 ```
 
 ```toml tab="File (TOML)"
 [providers.kubernetesCRD]
-  labelselector = "app=traefik"
+  labelSelector = "app=traefik"
   # ...
 ```
 

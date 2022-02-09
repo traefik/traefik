@@ -1,0 +1,77 @@
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: my-gateway-class
+  namespace: default
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: my-tcp-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners: # Use GatewayClass defaults for listener definition.
+    - name: tcp-app-1
+      protocol: TCP
+      port: 9000
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+            group: gateway.networking.k8s.io
+        namespaces:
+          from: Same
+
+    - name: tcp-app-2
+      protocol: TCP
+      port: 10000
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+            group: gateway.networking.k8s.io
+        namespaces:
+          from: Same
+
+---
+kind: TCPRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: tcp-app-1
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-tcp-gateway
+      sectionName: tcp-app-1
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 9000
+          weight: 1
+          kind: Service
+          group: ""
+
+---
+kind: TCPRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: tcp-app-2
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-tcp-gateway
+      sectionName: tcp-app-2
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - backendRefs:
+        - name: whoamitcp
+          port: 10000
+          weight: 1
+          kind: Service
+          group: ""

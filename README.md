@@ -63,7 +63,7 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 - Keeps access logs (JSON, CLF)
 - Fast
 - Exposes a Rest API
-- Packaged as a single binary file (made with :heart: with go) and available as a [tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) docker image
+- Packaged as a single binary file (made with :heart: with go) and available as an [official](https://hub.docker.com/r/_/traefik/) docker image
 
 
 ## Supported Backends

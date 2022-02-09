@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package integration
@@ -12,7 +13,13 @@ import (
 
 	"github.com/go-check/check"
 	"github.com/traefik/traefik/v2/integration/try"
+	"github.com/traefik/traefik/v2/pkg/log"
 	checker "github.com/vdemeester/shakers"
+)
+
+const (
+	traefikTestLogFileRotated       = traefikTestLogFile + ".rotated"
+	traefikTestAccessLogFileRotated = traefikTestAccessLogFile + ".rotated"
 )
 
 // Log rotation integration test suite.
@@ -20,9 +27,24 @@ type LogRotationSuite struct{ BaseSuite }
 
 func (s *LogRotationSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "access_log")
-	s.composeProject.Start(c)
+	s.composeUp(c)
+}
 
-	s.composeProject.Container(c, "server1")
+func (s *LogRotationSuite) TearDownSuite(c *check.C) {
+	s.composeDown(c)
+
+	generatedFiles := []string{
+		traefikTestLogFile,
+		traefikTestLogFileRotated,
+		traefikTestAccessLogFile,
+		traefikTestAccessLogFileRotated,
+	}
+
+	for _, filename := range generatedFiles {
+		if err := os.Remove(filename); err != nil {
+			log.WithoutContext().Warning(err)
+		}
+	}
 }
 
 func (s *LogRotationSuite) TestAccessLogRotation(c *check.C) {
@@ -34,8 +56,6 @@ func (s *LogRotationSuite) TestAccessLogRotation(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
-
-	defer os.Remove(traefikTestAccessLogFile)
 
 	// Verify Traefik started ok
 	verifyEmptyErrorLog(c, "traefik.log")
@@ -51,7 +71,7 @@ func (s *LogRotationSuite) TestAccessLogRotation(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Rename access log
-	err = os.Rename(traefikTestAccessLogFile, traefikTestAccessLogFile+".rotated")
+	err = os.Rename(traefikTestAccessLogFile, traefikTestAccessLogFileRotated)
 	c.Assert(err, checker.IsNil)
 
 	// in the midst of the requests, issue SIGUSR1 signal to server process
@@ -65,8 +85,8 @@ func (s *LogRotationSuite) TestAccessLogRotation(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log.rotated output as expected
-	logAccessLogFile(c, traefikTestAccessLogFile+".rotated")
-	lineCount := verifyLogLines(c, traefikTestAccessLogFile+".rotated", 0, true)
+	logAccessLogFile(c, traefikTestAccessLogFileRotated)
+	lineCount := verifyLogLines(c, traefikTestAccessLogFileRotated, 0, true)
 	c.Assert(lineCount, checker.GreaterOrEqualThan, 1)
 
 	// make sure that the access log file is at least created before we do assertions on it
@@ -94,12 +114,10 @@ func (s *LogRotationSuite) TestTraefikLogRotation(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	defer os.Remove(traefikTestAccessLogFile)
-
 	waitForTraefik(c, "server1")
 
 	// Rename traefik log
-	err = os.Rename(traefikTestLogFile, traefikTestLogFile+".rotated")
+	err = os.Rename(traefikTestLogFile, traefikTestLogFileRotated)
 	c.Assert(err, checker.IsNil)
 
 	// issue SIGUSR1 signal to server process
@@ -117,7 +135,7 @@ func (s *LogRotationSuite) TestTraefikLogRotation(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// we have at least 6 lines in traefik.log.rotated
-	lineCount := verifyLogLines(c, traefikTestLogFile+".rotated", 0, false)
+	lineCount := verifyLogLines(c, traefikTestLogFileRotated, 0, false)
 
 	// GreaterOrEqualThan used to ensure test doesn't break
 	// If more log entries are output on startup

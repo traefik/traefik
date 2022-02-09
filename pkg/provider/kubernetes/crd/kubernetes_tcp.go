@@ -10,6 +10,7 @@ import (
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/traefik/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
@@ -17,8 +18,9 @@ import (
 
 func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.TCPConfiguration {
 	conf := &dynamic.TCPConfiguration{
-		Routers:  map[string]*dynamic.TCPRouter{},
-		Services: map[string]*dynamic.TCPService{},
+		Routers:     map[string]*dynamic.TCPRouter{},
+		Middlewares: map[string]*dynamic.TCPMiddleware{},
+		Services:    map[string]*dynamic.TCPService{},
 	}
 
 	for _, ingressRouteTCP := range client.GetIngressRouteTCPs() {
@@ -52,6 +54,12 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				continue
 			}
 
+			mds, err := p.makeMiddlewareTCPKeys(ctx, ingressRouteTCP.Namespace, route.Middlewares)
+			if err != nil {
+				logger.Errorf("Failed to create middleware keys: %v", err)
+				continue
+			}
+
 			serviceName := makeID(ingressRouteTCP.Namespace, key)
 
 			for _, service := range route.Services {
@@ -71,7 +79,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 					break
 				}
 
-				serviceKey := fmt.Sprintf("%s-%s-%d", serviceName, service.Name, service.Port)
+				serviceKey := fmt.Sprintf("%s-%s-%s", serviceName, service.Name, &service.Port)
 				conf.Services[serviceKey] = balancerServerTCP
 
 				srv := dynamic.TCPWRRService{Name: serviceKey}
@@ -86,43 +94,79 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				conf.Services[serviceName].Weighted.Services = append(conf.Services[serviceName].Weighted.Services, srv)
 			}
 
-			conf.Routers[serviceName] = &dynamic.TCPRouter{
+			r := &dynamic.TCPRouter{
 				EntryPoints: ingressRouteTCP.Spec.EntryPoints,
+				Middlewares: mds,
 				Rule:        route.Match,
 				Service:     serviceName,
 			}
 
 			if ingressRouteTCP.Spec.TLS != nil {
-				conf.Routers[serviceName].TLS = &dynamic.RouterTCPTLSConfig{
+				r.TLS = &dynamic.RouterTCPTLSConfig{
 					Passthrough:  ingressRouteTCP.Spec.TLS.Passthrough,
 					CertResolver: ingressRouteTCP.Spec.TLS.CertResolver,
 					Domains:      ingressRouteTCP.Spec.TLS.Domains,
 				}
 
-				if ingressRouteTCP.Spec.TLS.Options == nil || len(ingressRouteTCP.Spec.TLS.Options.Name) == 0 {
-					continue
-				}
-
-				tlsOptionsName := ingressRouteTCP.Spec.TLS.Options.Name
-				// Is a Kubernetes CRD reference (i.e. not a cross-provider reference)
-				ns := ingressRouteTCP.Spec.TLS.Options.Namespace
-				if !strings.Contains(tlsOptionsName, "@") {
-					if len(ns) == 0 {
-						ns = ingressRouteTCP.Namespace
+				if ingressRouteTCP.Spec.TLS.Options != nil && len(ingressRouteTCP.Spec.TLS.Options.Name) > 0 {
+					tlsOptionsName := ingressRouteTCP.Spec.TLS.Options.Name
+					// Is a Kubernetes CRD reference (i.e. not a cross-provider reference)
+					ns := ingressRouteTCP.Spec.TLS.Options.Namespace
+					if !strings.Contains(tlsOptionsName, providerNamespaceSeparator) {
+						if len(ns) == 0 {
+							ns = ingressRouteTCP.Namespace
+						}
+						tlsOptionsName = makeID(ns, tlsOptionsName)
+					} else if len(ns) > 0 {
+						logger.
+							WithField("TLSOption", ingressRouteTCP.Spec.TLS.Options.Name).
+							Warnf("Namespace %q is ignored in cross-provider context", ns)
 					}
-					tlsOptionsName = makeID(ns, tlsOptionsName)
-				} else if len(ns) > 0 {
-					logger.
-						WithField("TLSoptions", ingressRouteTCP.Spec.TLS.Options.Name).
-						Warnf("namespace %q is ignored in cross-provider context", ns)
-				}
 
-				conf.Routers[serviceName].TLS.Options = tlsOptionsName
+					if !isNamespaceAllowed(p.AllowCrossNamespace, ingressRouteTCP.Namespace, ns) {
+						logger.Errorf("TLSOption %s/%s is not in the IngressRouteTCP namespace %s",
+							ns, ingressRouteTCP.Spec.TLS.Options.Name, ingressRouteTCP.Namespace)
+						continue
+					}
+
+					r.TLS.Options = tlsOptionsName
+				}
 			}
+
+			conf.Routers[serviceName] = r
 		}
 	}
 
 	return conf
+}
+
+func (p *Provider) makeMiddlewareTCPKeys(ctx context.Context, ingRouteTCPNamespace string, middlewares []v1alpha1.ObjectReference) ([]string, error) {
+	var mds []string
+
+	for _, mi := range middlewares {
+		if strings.Contains(mi.Name, providerNamespaceSeparator) {
+			if len(mi.Namespace) > 0 {
+				log.FromContext(ctx).
+					WithField(log.MiddlewareName, mi.Name).
+					Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
+			}
+			mds = append(mds, mi.Name)
+			continue
+		}
+
+		ns := ingRouteTCPNamespace
+		if len(mi.Namespace) > 0 {
+			if !isNamespaceAllowed(p.AllowCrossNamespace, ingRouteTCPNamespace, mi.Namespace) {
+				return nil, fmt.Errorf("middleware %s/%s is not in the IngressRouteTCP namespace %s", mi.Namespace, mi.Name, ingRouteTCPNamespace)
+			}
+
+			ns = mi.Namespace
+		}
+
+		mds = append(mds, provider.Normalize(makeID(ns, mi.Name)))
+	}
+
+	return mds, nil
 }
 
 func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace string, service v1alpha1.ServiceTCP) (*dynamic.TCPService, error) {

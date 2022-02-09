@@ -12,3 +12,5 @@ spec:
     - name: whoamiudp
       namespace: default
       port: 8090
+    - name: externalname-svc
+      port: 9090

@@ -95,8 +95,8 @@ The default host rule for all services.
 
 The `defaultRule` option defines what routing rule to apply to a container if no rule is defined by a label.
 
-It must be a valid [Go template](https://golang.org/pkg/text/template/), and can use
-[sprig template functions](http://masterminds.github.io/sprig/).
+It must be a valid [Go template](https://pkg.go.dev/text/template/), and can use
+[sprig template functions](https://masterminds.github.io/sprig/).
 The service name can be accessed with the `Name` identifier,
 and the template has access to all the labels defined on this container.
 

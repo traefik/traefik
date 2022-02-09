@@ -3,6 +3,7 @@ package integration
 import (
 	"bytes"
 	"encoding/json"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -14,12 +15,16 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-type RestSuite struct{ BaseSuite }
+type RestSuite struct {
+	BaseSuite
+	whoamiAddr string
+}
 
 func (s *RestSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "rest")
+	s.composeUp(c)
 
-	s.composeProject.Start(c)
+	s.whoamiAddr = net.JoinHostPort(s.getComposeServiceIP(c, "whoami1"), "80")
 }
 
 func (s *RestSuite) TestSimpleConfigurationInsecure(c *check.C) {
@@ -60,7 +65,7 @@ func (s *RestSuite) TestSimpleConfigurationInsecure(c *check.C) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",
+										URL: "http://" + s.whoamiAddr,
 									},
 								},
 							},
@@ -86,7 +91,7 @@ func (s *RestSuite) TestSimpleConfigurationInsecure(c *check.C) {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
-										Address: s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",
+										Address: s.whoamiAddr,
 									},
 								},
 							},
@@ -164,7 +169,7 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",
+										URL: "http://" + s.whoamiAddr,
 									},
 								},
 							},
@@ -190,7 +195,7 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
-										Address: s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80",
+										Address: s.whoamiAddr,
 									},
 								},
 							},
@@ -213,10 +218,10 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 		c.Assert(err, checker.IsNil)
 		c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
 
-		err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains(test.ruleMatch))
+		err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains(test.ruleMatch))
 		c.Assert(err, checker.IsNil)
 
-		err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+		err = try.GetRequest("http://127.0.0.1:8000/", time.Second, try.StatusCodeIs(http.StatusOK))
 		c.Assert(err, checker.IsNil)
 	}
 }

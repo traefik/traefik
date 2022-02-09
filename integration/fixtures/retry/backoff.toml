@@ -33,13 +33,13 @@
     [http.services.service1.loadBalancer]
 
       [[http.services.service1.loadBalancer.servers]]
-        url = "http://{{.WhoamiEndpoint}}:8080"
+        url = "http://{{ .WhoamiIP }}:8080"
 
       [[http.services.service1.loadBalancer.servers]]
-        url = "http://{{.WhoamiEndpoint}}:8081"
+        url = "http://{{ .WhoamiIP }}:8081"
 
       [[http.services.service1.loadBalancer.servers]]
-        url = "http://{{.WhoamiEndpoint}}:8082"
+        url = "http://{{ .WhoamiIP }}:8082"
 
       [[http.services.service1.loadBalancer.servers]]
-        url = "http://{{.WhoamiEndpoint}}:80"
+        url = "http://{{ .WhoamiIP }}:80"

@@ -6,7 +6,7 @@ on:
       - '*'
 
 env:
-  GO_VERSION: 1.16
+  GO_VERSION: 1.17
   CGO_ENABLED: 0
   PRE_TARGET: ""
 
@@ -24,7 +24,7 @@ jobs:
       - name: Build webui
         run: |
           make generate-webui
-          tar czvf webui.tar.gz ./static/
+          tar czvf webui.tar.gz ./webui/static/
 
       - name: Artifact webui
         uses: actions/upload-artifact@v2
@@ -65,9 +65,6 @@ jobs:
             '%LocalAppData%\go-build'
           key: ${{ runner.os }}-build-go-${{ hashFiles('**/go.sum') }}
           restore-keys: ${{ runner.os }}-build-go-
-
-      - name: Installing dependencies
-        run: go install github.com/containous/go-bindata/go-bindata@v1.0.0
 
       - name: Artifact webui
         uses: actions/download-artifact@v2

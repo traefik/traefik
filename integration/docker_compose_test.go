@@ -14,33 +14,17 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-const (
-	composeProject = "minimal"
-)
-
 // Docker tests suite.
 type DockerComposeSuite struct {
 	BaseSuite
 }
 
 func (s *DockerComposeSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, composeProject)
-	s.composeProject.Start(c)
-}
-
-func (s *DockerComposeSuite) TearDownSuite(c *check.C) {
-	// shutdown and delete compose project
-	if s.composeProject != nil {
-		s.composeProject.Stop(c)
-	}
+	s.createComposeProject(c, "minimal")
+	s.composeUp(c)
 }
 
 func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
-	serviceCount := 2
-	composeService := "whoami1"
-
-	s.composeProject.Scale(c, composeService, serviceCount)
-
 	tempObjects := struct {
 		DockerHost  string
 		DefaultRule string
@@ -81,8 +65,8 @@ func (s *DockerComposeSuite) TestComposeScale(c *check.C) {
 		if strings.HasSuffix(name, "@internal") {
 			continue
 		}
-		c.Assert(name, checker.Equals, composeService+"-integrationtest"+composeProject+"@docker")
-		c.Assert(service.LoadBalancer.Servers, checker.HasLen, serviceCount)
+		c.Assert(name, checker.Equals, "whoami1-"+s.composeProject.Name+"@docker")
+		c.Assert(service.LoadBalancer.Servers, checker.HasLen, 2)
 		// We could break here, but we don't just to keep us honest.
 	}
 }

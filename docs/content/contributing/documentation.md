@@ -29,7 +29,7 @@ docker run  --rm -v /home/user/go/github/traefik/traefik:/mkdocs -p 8000:8000 tr
 
 !!! tip "Default URL"
 
-    Your local documentation server will run by default on [http://127.0.0.1:8000](http://127.0.0.1:8000).
+    Your local documentation server will run by default on <http://127.0.0.1:8000>.
 
 If you only want to build the documentation without serving it locally, you can use the following command:
 

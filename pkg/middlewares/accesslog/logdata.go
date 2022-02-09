@@ -70,6 +70,11 @@ const (
 	Overhead = "Overhead"
 	// RetryAttempts is the map key used for the amount of attempts the request was retried.
 	RetryAttempts = "RetryAttempts"
+
+	// TLSVersion is the version of TLS used in the request.
+	TLSVersion = "TLSVersion"
+	// TLSCipher is the cipher used in the request.
+	TLSCipher = "TLSCipher"
 )
 
 // These are written out in the default case when no config is provided to specify keys of interest.
@@ -111,6 +116,8 @@ func init() {
 	allCoreKeys[StartLocal] = struct{}{}
 	allCoreKeys[Overhead] = struct{}{}
 	allCoreKeys[RetryAttempts] = struct{}{}
+	allCoreKeys[TLSVersion] = struct{}{}
+	allCoreKeys[TLSCipher] = struct{}{}
 }
 
 // CoreLogData holds the fields computed from the request/response.

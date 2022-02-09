@@ -1,0 +1,469 @@
+{
+  "global": {
+    "checkNewVersion": true,
+    "sendAnonymousUsage": true
+  },
+  "serversTransport": {
+    "insecureSkipVerify": true,
+    "rootCAs": [
+      "xxxx",
+      "xxxx",
+      "xxxx"
+    ],
+    "maxIdleConnsPerHost": 111,
+    "forwardingTimeouts": {
+      "dialTimeout": "1m51s",
+      "responseHeaderTimeout": "1m51s",
+      "idleConnTimeout": "1m51s"
+    }
+  },
+  "entryPoints": {
+    "foobar": {
+      "address": "xxxx",
+      "transport": {
+        "lifeCycle": {
+          "requestAcceptGraceTimeout": "1m51s",
+          "graceTimeOut": "1m51s"
+        },
+        "respondingTimeouts": {
+          "readTimeout": "1m51s",
+          "writeTimeout": "1m51s",
+          "idleTimeout": "1m51s"
+        }
+      },
+      "proxyProtocol": {
+        "insecure": true,
+        "trustedIPs": [
+          "xxxx",
+          "xxxx"
+        ]
+      },
+      "forwardedHeaders": {
+        "insecure": true,
+        "trustedIPs": [
+          "xxxx",
+          "xxxx"
+        ]
+      },
+      "http": {
+        "redirections": {
+          "entryPoint": {
+            "to": "foobar",
+            "scheme": "foobar",
+            "permanent": true,
+            "priority": 42
+          }
+        },
+        "middlewares": [
+          "foobar",
+          "foobar"
+        ],
+        "tls": {
+          "options": "foobar",
+          "certResolver": "foobar",
+          "domains": [
+            {
+              "main": "xxxx",
+              "sans": [
+                "xxxx",
+                "xxxx"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "providers": {
+    "providersThrottleDuration": "1m51s",
+    "docker": {
+      "constraints": "Label(\"foo\", \"bar\")",
+      "watch": true,
+      "endpoint": "xxxx",
+      "defaultRule": "xxxx",
+      "tls": {
+        "ca": "xxxx",
+        "caOptional": true,
+        "cert": "xxxx",
+        "key": "xxxx",
+        "insecureSkipVerify": true
+      },
+      "exposedByDefault": true,
+      "useBindPortIP": true,
+      "swarmMode": true,
+      "network": "MyNetwork",
+      "swarmModeRefreshSeconds": "42ns",
+      "httpClientTimeout": "42ns"
+    },
+    "file": {
+      "directory": "file Directory",
+      "watch": true,
+      "filename": "file Filename",
+      "debugLogGeneratedTemplate": true
+    },
+    "marathon": {
+      "constraints": "Label(\"foo\", \"bar\")",
+      "trace": true,
+      "watch": true,
+      "endpoint": "xxxx",
+      "defaultRule": "xxxx",
+      "exposedByDefault": true,
+      "dcosToken": "xxxx",
+      "tls": {
+        "ca": "xxxx",
+        "caOptional": true,
+        "cert": "xxxx",
+        "key": "xxxx",
+        "insecureSkipVerify": true
+      },
+      "dialerTimeout": "42ns",
+      "responseHeaderTimeout": "42ns",
+      "tlsHandshakeTimeout": "42ns",
+      "keepAlive": "42ns",
+      "forceTaskHostname": true,
+      "basic": {
+        "httpBasicAuthUser": "xxxx",
+        "httpBasicPassword": "xxxx"
+      },
+      "respectReadinessChecks": true
+    },
+    "kubernetesIngress": {
+      "endpoint": "xxxx",
+      "token": "xxxx",
+      "certAuthFilePath": "xxxx",
+      "namespaces": [
+        "a",
+        "b"
+      ],
+      "labelSelector": "myLabelSelector",
+      "ingressClass": "MyIngressClass",
+      "ingressEndpoint": {
+        "ip": "xxxx",
+        "hostname": "xxxx",
+        "publishedService": "xxxx"
+      },
+      "throttleDuration": "1m51s"
+    },
+    "kubernetesCRD": {
+      "endpoint": "xxxx",
+      "token": "xxxx",
+      "certAuthFilePath": "xxxx",
+      "namespaces": [
+        "a",
+        "b"
+      ],
+      "labelSelector": "myLabelSelector",
+      "ingressClass": "MyIngressClass",
+      "throttleDuration": "1m51s"
+    },
+    "kubernetesGateway": {
+      "endpoint": "xxxx",
+      "token": "xxxx",
+      "certAuthFilePath": "xxxx",
+      "namespaces": [
+        "a",
+        "b"
+      ],
+      "labelSelector": "myLabelSelector",
+      "throttleDuration": "1m51s"
+    },
+    "rest": {
+      "insecure": true
+    },
+    "rancher": {
+      "constraints": "Label(\"foo\", \"bar\")",
+      "watch": true,
+      "defaultRule": "xxxx",
+      "exposedByDefault": true,
+      "enableServiceHealthFilter": true,
+      "refreshSeconds": 42,
+      "intervalPoll": true,
+      "prefix": "xxxx"
+    },
+    "consulCatalog": {
+      "constraints": "Label(\"foo\", \"bar\")",
+      "endpoint": {
+        "address": "xxxx",
+        "scheme": "xxxx",
+        "datacenter": "xxxx",
+        "token": "xxxx",
+        "tls": {
+          "ca": "xxxx",
+          "caOptional": true,
+          "cert": "xxxx",
+          "key": "xxxx",
+          "insecureSkipVerify": true
+        },
+        "httpAuth": {
+          "username": "xxxx",
+          "password": "xxxx"
+        },
+        "endpointWaitTime": "42ns"
+      },
+      "prefix": "MyPrefix",
+      "refreshInterval": "42ns",
+      "requireConsistent": true,
+      "stale": true,
+      "cache": true,
+      "exposedByDefault": true,
+      "defaultRule": "xxxx"
+    },
+    "ecs": {
+      "constraints": "Label(\"foo\", \"bar\")",
+      "exposedByDefault": true,
+      "refreshSeconds": 42,
+      "defaultRule": "xxxx",
+      "clusters": [
+        "Cluster1",
+        "Cluster2"
+      ],
+      "autoDiscoverClusters": true,
+      "region": "Awsregion",
+      "accessKeyID": "xxxx",
+      "secretAccessKey": "xxxx"
+    },
+    "consul": {
+      "rootKey": "xxxx",
+      "username": "xxxx",
+      "password": "xxxx",
+      "tls": {
+        "ca": "xxxx",
+        "caOptional": true,
+        "cert": "xxxx",
+        "key": "xxxx",
+        "insecureSkipVerify": true
+      }
+    },
+    "etcd": {
+      "rootKey": "xxxx",
+      "username": "xxxx",
+      "password": "xxxx",
+      "tls": {
+        "ca": "xxxx",
+        "caOptional": true,
+        "cert": "xxxx",
+        "key": "xxxx",
+        "insecureSkipVerify": true
+      }
+    },
+    "zooKeeper": {
+      "rootKey": "xxxx",
+      "username": "xxxx",
+      "password": "xxxx",
+      "tls": {
+        "ca": "xxxx",
+        "caOptional": true,
+        "cert": "xxxx",
+        "key": "xxxx",
+        "insecureSkipVerify": true
+      }
+    },
+    "redis": {
+      "rootKey": "xxxx",
+      "username": "xxxx",
+      "password": "xxxx",
+      "tls": {
+        "ca": "xxxx",
+        "caOptional": true,
+        "cert": "xxxx",
+        "key": "xxxx",
+        "insecureSkipVerify": true
+      }
+    },
+    "http": {
+      "endpoint": "xxxx",
+      "pollInterval": "42ns",
+      "pollTimeout": "42ns",
+      "tls": {
+        "ca": "xxxx",
+        "caOptional": true,
+        "cert": "xxxx",
+        "key": "xxxx",
+        "insecureSkipVerify": true
+      }
+    }
+  },
+  "api": {
+    "insecure": true,
+    "dashboard": true,
+    "debug": true
+  },
+  "metrics": {
+    "prometheus": {
+      "buckets": [
+        0.1,
+        0.3,
+        1.2,
+        5
+      ],
+      "addEntryPointsLabels": true,
+      "addServicesLabels": true,
+      "entryPoint": "MyEntryPoint",
+      "manualRouting": true
+    },
+    "datadog": {
+      "address": "xxxx",
+      "pushInterval": "42ns",
+      "addEntryPointsLabels": true,
+      "addServicesLabels": true
+    },
+    "statsD": {
+      "address": "xxxx",
+      "pushInterval": "42ns",
+      "addEntryPointsLabels": true,
+      "addServicesLabels": true,
+      "prefix": "MyPrefix"
+    },
+    "influxDB": {
+      "address": "xxxx",
+      "protocol": "xxxx",
+      "pushInterval": "42ns",
+      "database": "myDB",
+      "retentionPolicy": "12",
+      "username": "xxxx",
+      "password": "xxxx",
+      "addEntryPointsLabels": true,
+      "addServicesLabels": true
+    }
+  },
+  "ping": {
+    "entryPoint": "MyEntryPoint",
+    "manualRouting": true,
+    "terminatingStatusCode": 42
+  },
+  "log": {
+    "level": "Level",
+    "filePath": "xxxx",
+    "format": "json"
+  },
+  "accessLog": {
+    "filePath": "xxxx",
+    "format": "AccessLog Format",
+    "filters": {
+      "statusCodes": [
+        "200",
+        "500"
+      ],
+      "retryAttempts": true,
+      "minDuration": "42ns"
+    },
+    "fields": {
+      "defaultMode": "drop",
+      "names": {
+        "RequestHost": "keep"
+      },
+      "headers": {
+        "defaultMode": "drop",
+        "names": {
+          "Referer": "keep"
+        }
+      }
+    },
+    "bufferingSize": 42
+  },
+  "tracing": {
+    "serviceName": "myServiceName",
+    "spanNameLimit": 42,
+    "jaeger": {
+      "samplingServerURL": "xxxx",
+      "samplingType": "foobar",
+      "samplingParam": 42,
+      "localAgentHostPort": "xxxx",
+      "gen128Bit": true,
+      "propagation": "foobar",
+      "traceContextHeaderName": "foobar",
+      "collector": {
+        "endpoint": "xxxx",
+        "user": "xxxx",
+        "password": "xxxx"
+      },
+      "disableAttemptReconnecting": true
+    },
+    "zipkin": {
+      "httpEndpoint": "xxxx",
+      "sameSpan": true,
+      "id128Bit": true,
+      "sampleRate": 42
+    },
+    "datadog": {
+      "localAgentHostPort": "xxxx",
+      "globalTag": "foobar",
+      "debug": true,
+      "prioritySampling": true,
+      "traceIDHeaderName": "foobar",
+      "parentIDHeaderName": "foobar",
+      "samplingPriorityHeaderName": "foobar",
+      "bagagePrefixHeaderName": "foobar"
+    },
+    "instana": {
+      "localAgentHost": "xxxx",
+      "logLevel": "foobar"
+    },
+    "haystack": {
+      "localAgentHost": "xxxx",
+      "globalTag": "foobar",
+      "traceIDHeaderName": "foobar",
+      "parentIDHeaderName": "foobar",
+      "spanIDHeaderName": "foobar",
+      "baggagePrefixHeaderName": "foobar"
+    },
+    "elastic": {
+      "serverURL": "xxxx",
+      "secretToken": "xxxx",
+      "serviceEnvironment": "foobar"
+    }
+  },
+  "hostResolver": {
+    "cnameFlattening": true,
+    "resolvConfig": "foobar",
+    "resolvDepth": 42
+  },
+  "certificatesResolvers": {
+    "CertificateResolver0": {
+      "acme": {
+        "email": "xxxx",
+        "caServer": "xxxx",
+        "preferredChain": "foobar",
+        "storage": "Storage",
+        "keyType": "MyKeyType",
+        "certificatesDuration": 42,
+        "dnsChallenge": {
+          "provider": "DNSProvider",
+          "delayBeforeCheck": "42ns",
+          "resolvers": [
+            "xxxx",
+            "xxxx"
+          ],
+          "disablePropagationCheck": true
+        },
+        "httpChallenge": {
+          "entryPoint": "MyEntryPoint"
+        },
+        "tlsChallenge": {}
+      }
+    }
+  },
+  "pilot": {
+    "token": "xxxx"
+  },
+  "experimental": {
+    "plugins": {
+      "Descriptor0": {
+        "moduleName": "foobar",
+        "version": "foobar"
+      },
+      "Descriptor1": {
+        "moduleName": "foobar",
+        "version": "foobar"
+      }
+    },
+    "localPlugins": {
+      "Descriptor0": {
+        "moduleName": "foobar"
+      },
+      "Descriptor1": {
+        "moduleName": "foobar"
+      }
+    }
+  }
+}

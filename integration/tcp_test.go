@@ -2,6 +2,9 @@ package integration
 
 import (
 	"crypto/tls"
+	"crypto/x509"
+	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -18,7 +21,7 @@ type TCPSuite struct{ BaseSuite }
 
 func (s *TCPSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "tcp")
-	s.composeProject.Start(c)
+	s.composeUp(c)
 }
 
 func (s *TCPSuite) TestMixed(c *check.C) {
@@ -36,12 +39,12 @@ func (s *TCPSuite) TestMixed(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Traefik passes through, termination handled by whoami-a
-	out, err := guessWho("127.0.0.1:8093", "whoami-a.test", true)
+	out, err := guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-a.test")
 	c.Assert(err, checker.IsNil)
 	c.Assert(out, checker.Contains, "whoami-a")
 
 	// Traefik passes through, termination handled by whoami-b
-	out, err = guessWho("127.0.0.1:8093", "whoami-b.test", true)
+	out, err = guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-b.test")
 	c.Assert(err, checker.IsNil)
 	c.Assert(out, checker.Contains, "whoami-b")
 
@@ -116,12 +119,12 @@ func (s *TCPSuite) TestNonTLSFallback(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Traefik passes through, termination handled by whoami-a
-	out, err := guessWho("127.0.0.1:8093", "whoami-a.test", true)
+	out, err := guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-a.test")
 	c.Assert(err, checker.IsNil)
 	c.Assert(out, checker.Contains, "whoami-a")
 
 	// Traefik passes through, termination handled by whoami-b
-	out, err = guessWho("127.0.0.1:8093", "whoami-b.test", true)
+	out, err = guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-b.test")
 	c.Assert(err, checker.IsNil)
 	c.Assert(out, checker.Contains, "whoami-b")
 
@@ -200,6 +203,63 @@ func (s *TCPSuite) TestCatchAllNoTLSWithHTTPS(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
+func (s *TCPSuite) TestMiddlewareWhiteList(c *check.C) {
+	file := s.adaptFile(c, "fixtures/tcp/ip-whitelist.toml", struct{}{})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-a.test`)"))
+	c.Assert(err, checker.IsNil)
+
+	// Traefik not passes through, ipWhitelist closes connection
+	_, err = guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-a.test")
+	c.Assert(err, checker.ErrorMatches, "EOF")
+
+	// Traefik passes through, termination handled by whoami-b
+	out, err := guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-b.test")
+	c.Assert(err, checker.IsNil)
+	c.Assert(out, checker.Contains, "whoami-b")
+}
+
+func (s *TCPSuite) TestWRR(c *check.C) {
+	file := s.adaptFile(c, "fixtures/tcp/wrr.toml", struct{}{})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-b.test`)"))
+	c.Assert(err, checker.IsNil)
+
+	call := map[string]int{}
+	for i := 0; i < 4; i++ {
+		// Traefik passes through, termination handled by whoami-b or whoami-bb
+		out, err := guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-b.test")
+		c.Assert(err, checker.IsNil)
+		switch {
+		case strings.Contains(out, "whoami-b"):
+			call["whoami-b"]++
+		case strings.Contains(out, "whoami-ab"):
+			call["whoami-ab"]++
+		default:
+			call["unknown"]++
+		}
+		time.Sleep(time.Second)
+	}
+
+	c.Assert(call, checker.DeepEquals, map[string]int{"whoami-b": 3, "whoami-ab": 1})
+}
+
 func welcome(addr string) (string, error) {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
 	if err != nil {
@@ -267,34 +327,54 @@ func guessWhoTLSMaxVersion(addr, serverName string, tlsCall bool, tlsMaxVersion 
 	return string(out[:n]), nil
 }
 
-func (s *TCPSuite) TestWRR(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/wrr.toml", struct{}{})
-	defer os.Remove(file)
+// guessWhoTLSPassthrough guesses service identity and ensures that the
+// certificate is valid for the given server name.
+func guessWhoTLSPassthrough(addr, serverName string) (string, error) {
+	var conn net.Conn
+	var err error
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
+	conn, err = tls.Dial("tcp", addr, &tls.Config{
+		ServerName:         serverName,
+		InsecureSkipVerify: true,
+		MinVersion:         0,
+		MaxVersion:         0,
+		VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+			if len(rawCerts) > 1 {
+				return errors.New("tls: more than one certificates from peer")
+			}
 
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+			cert, err := x509.ParseCertificate(rawCerts[0])
+			if err != nil {
+				return fmt.Errorf("tls: failed to parse certificate from peer: %w", err)
+			}
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI"))
-	c.Assert(err, checker.IsNil)
+			if cert.Subject.CommonName == serverName {
+				return nil
+			}
 
-	call := map[string]int{}
-	for i := 0; i < 4; i++ {
-		// Traefik passes through, termination handled by whoami-a
-		out, err := guessWho("127.0.0.1:8093", "whoami-a.test", true)
-		c.Assert(err, checker.IsNil)
-		switch {
-		case strings.Contains(out, "whoami-a"):
-			call["whoami-a"]++
-		case strings.Contains(out, "whoami-b"):
-			call["whoami-b"]++
-		default:
-			call["unknown"]++
-		}
+			if err = cert.VerifyHostname(serverName); err == nil {
+				return nil
+			}
+
+			return fmt.Errorf("tls: no valid certificate for serverName %s", serverName)
+		},
+	})
+
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close()
+
+	_, err = conn.Write([]byte("WHO"))
+	if err != nil {
+		return "", err
 	}
 
-	c.Assert(call, checker.DeepEquals, map[string]int{"whoami-a": 3, "whoami-b": 1})
+	out := make([]byte, 2048)
+	n, err := conn.Read(out)
+	if err != nil {
+		return "", err
+	}
+
+	return string(out[:n]), nil
 }

@@ -15,14 +15,5 @@ cd integration
 echo "Testing against..."
 docker version
 
-if [ -n "$TEST_CONTAINER" ]; then
-    echo "Testing from container…"
-    # shellcheck disable=SC2086
-    CGO_ENABLED=0 go test -integration -container ${TESTFLAGS[*]}
-fi
-
-if [ -n "$TEST_HOST" ]; then
-    echo "Testing from host…"
-    # shellcheck disable=SC2086
-    CGO_ENABLED=0 go test -integration -host ${TESTFLAGS[*]}
-fi
+# shellcheck disable=SC2086
+CGO_ENABLED=0 go test -integration ${TESTFLAGS[*]}

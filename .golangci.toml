@@ -16,9 +16,6 @@
   [linters-settings.gocyclo]
     min-complexity = 14.0
 
-  [linters-settings.maligned]
-    suggest-new = true
-
   [linters-settings.goconst]
     min-len = 3.0
     min-occurrences = 4.0
@@ -51,6 +48,7 @@
     extensionsv1beta1 = "k8s.io/api/extensions/v1beta1"
     metav1 = "k8s.io/apimachinery/pkg/apis/meta/v1"
     kubeerror = "k8s.io/apimachinery/pkg/api/errors"
+    composeapi = "github.com/docker/compose/v2/pkg/api"
 
   [linters-settings.gomoddirectives]
     replace-allow-list = [
@@ -59,6 +57,7 @@
       "github.com/gorilla/mux",
       "github.com/mailgun/minheap",
       "github.com/mailgun/multibuf",
+      "github.com/jaguilar/vt100",
     ]
 
 [linters]
@@ -99,6 +98,10 @@
     "godox", # Too strict
     "forcetypeassert", # Too strict
     "tagliatelle", # Not compatible with current tags.
+    "varnamelen", # not relevant
+    "nilnil", # not relevant
+    "ireturn", # not relevant
+    "contextcheck", # too many false-positive
   ]
 
 [issues]
@@ -109,6 +112,11 @@
     "Error return value of .((os\\.)?std(out|err)\\..*|.*Close|.*Flush|os\\.Remove(All)?|.*printf?|os\\.(Un)?Setenv). is not checked",
     "should have a package comment, unless it's in another file for this package",
     "SA1019: http.CloseNotifier has been deprecated",  # FIXME must be fixed
+    "SA1019: cfg.SSLRedirect is deprecated",
+    "SA1019: cfg.SSLTemporaryRedirect is deprecated",
+    "SA1019: cfg.SSLHost is deprecated",
+    "SA1019: cfg.SSLForceHost is deprecated",
+    "SA1019: cfg.FeaturePolicy is deprecated",
   ]
  [[issues.exclude-rules]]
     path = "(.+)_test.go"

@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
+	tcpmiddleware "github.com/traefik/traefik/v2/pkg/server/middleware/tcp"
 	"github.com/traefik/traefik/v2/pkg/server/service/tcp"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 )
@@ -302,7 +303,9 @@ func TestRuntimeConfiguration(t *testing.T) {
 				},
 				[]*traefiktls.CertAndStores{})
 
-			routerManager := NewManager(conf, serviceManager,
+			middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
+
+			routerManager := NewManager(conf, serviceManager, middlewaresBuilder,
 				nil, nil, tlsManager)
 
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints)
@@ -532,7 +535,9 @@ func TestDomainFronting(t *testing.T) {
 				"web": http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {}),
 			}
 
-			routerManager := NewManager(conf, serviceManager, nil, httpsHandler, tlsManager)
+			middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
+
+			routerManager := NewManager(conf, serviceManager, middlewaresBuilder, nil, httpsHandler, tlsManager)
 
 			routers := routerManager.BuildHandlers(context.Background(), entryPoints)
 

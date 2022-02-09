@@ -1,6 +1,6 @@
 # Haystack
 
-To enable the Haystack:
+To enable the Haystack tracer:
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -18,9 +18,9 @@ tracing:
 
 #### `localAgentHost`
 
-_Require, Default="127.0.0.1"_
+_Required, Default="127.0.0.1"_
 
-Local Agent Host instructs reporter to send spans to haystack-agent at this address.
+Local Agent Host instructs reporter to send spans to the Haystack Agent at this address.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -40,9 +40,9 @@ tracing:
 
 #### `localAgentPort`
 
-_Require, Default=35000_
+_Required, Default=35000_
 
-Local Agent port instructs reporter to send spans to the haystack-agent at this port.
+Local Agent Port instructs reporter to send spans to the Haystack Agent at this port.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -64,7 +64,7 @@ tracing:
 
 _Optional, Default=empty_
 
-Apply shared tag in a form of Key:Value to all the traces.
+Applies shared key:value tag on all spans.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -86,7 +86,7 @@ tracing:
 
 _Optional, Default=empty_
 
-Specifies the header name that will be used to store the trace ID.
+Sets the header name used to store the trace ID.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -108,7 +108,7 @@ tracing:
 
 _Optional, Default=empty_
 
-Specifies the header name that will be used to store the parent ID.
+Sets the header name used to store the parent ID.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -130,7 +130,7 @@ tracing:
 
 _Optional, Default=empty_
 
-Specifies the header name that will be used to store the span ID.
+Sets the header name used to store the span ID.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -152,7 +152,7 @@ tracing:
 
 _Optional, Default=empty_
 
-Specifies the header name prefix that will be used to store baggage items in a map.
+Sets the header name prefix used to store baggage items in a map.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -165,7 +165,6 @@ tracing:
   [tracing.haystack]
     baggagePrefixHeaderName = "sample"
 ```
-
 
 ```bash tab="CLI"
 --tracing.haystack.baggagePrefixHeaderName=sample

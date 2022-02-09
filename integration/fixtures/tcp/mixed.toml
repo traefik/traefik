@@ -29,11 +29,15 @@
       rule = "Path(`/whoami/`)"
       service = "whoami"
       [http.routers.my-https-router.tls]
+    [http.routers.api]
+      rule = "PathPrefix(`/api`)"
+      service = "api@internal"
+      entryPoints = ["traefik"]
 
   [http.services]
     [http.services.whoami.loadBalancer]
       [[http.services.whoami.loadBalancer.servers]]
-        url = "http://localhost:8085"
+        url = "http://whoami:80"
 [tcp]
   [tcp.routers]
     [tcp.routers.to-whoami-a]
@@ -58,15 +62,15 @@
 
     [tcp.services.whoami-a.loadBalancer]
       [[tcp.services.whoami-a.loadBalancer.servers]]
-        address = "localhost:8081"
+        address = "whoami-a:8080"
 
     [tcp.services.whoami-b.loadBalancer]
       [[tcp.services.whoami-b.loadBalancer.servers]]
-        address = "localhost:8082"
+        address = "whoami-b:8080"
 
     [tcp.services.whoami-no-cert.loadBalancer]
       [[tcp.services.whoami-no-cert.loadBalancer.servers]]
-        address = "localhost:8083"
+        address = "whoami-no-cert:8080"
 
 [[tls.certificates]]
   certFile = "fixtures/tcp/whoami-c.crt"

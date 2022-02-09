@@ -1,0 +1,479 @@
+{
+  "http": {
+    "routers": {
+      "foo": {
+        "entryPoints": [
+          "foo"
+        ],
+        "middlewares": [
+          "foo"
+        ],
+        "service": "foo",
+        "rule": "xxxx",
+        "priority": 42,
+        "tls": {
+          "options": "foo",
+          "certResolver": "foo",
+          "domains": [
+            {
+              "main": "xxxx",
+              "sans": [
+                "xxxx"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "services": {
+      "bar": {
+        "weighted": {
+          "services": [
+            {
+              "name": "foo",
+              "weight": 42
+            }
+          ],
+          "sticky": {
+            "cookie": {
+              "name": "foo",
+              "secure": true,
+              "httpOnly": true,
+              "sameSite": "foo"
+            }
+          }
+        }
+      },
+      "baz": {
+        "mirroring": {
+          "service": "foo",
+          "maxBodySize": 42,
+          "mirrors": [
+            {
+              "name": "foo",
+              "percent": 42
+            }
+          ]
+        }
+      },
+      "foo": {
+        "loadBalancer": {
+          "sticky": {
+            "cookie": {
+              "name": "foo",
+              "secure": true,
+              "httpOnly": true,
+              "sameSite": "foo"
+            }
+          },
+          "servers": [
+            {
+              "url": "xxxx"
+            }
+          ],
+          "healthCheck": {
+            "scheme": "foo",
+            "path": "foo",
+            "port": 42,
+            "interval": "foo",
+            "timeout": "foo",
+            "hostname": "xxxx",
+            "followRedirects": true,
+            "headers": {
+              "foo": "bar"
+            }
+          },
+          "passHostHeader": true,
+          "responseForwarding": {
+            "flushInterval": "foo"
+          },
+          "serversTransport": "foo"
+        }
+      }
+    },
+    "middlewares": {
+      "foo": {
+        "addPrefix": {
+          "prefix": "foo"
+        },
+        "stripPrefix": {
+          "prefixes": [
+            "foo"
+          ],
+          "forceSlash": true
+        },
+        "stripPrefixRegex": {
+          "regex": [
+            "foo"
+          ]
+        },
+        "replacePath": {
+          "path": "foo"
+        },
+        "replacePathRegex": {
+          "regex": "foo",
+          "replacement": "foo"
+        },
+        "chain": {
+          "middlewares": [
+            "foo"
+          ]
+        },
+        "ipWhiteList": {
+          "sourceRange": [
+            "xxxx"
+          ],
+          "ipStrategy": {
+            "depth": 42,
+            "excludedIPs": [
+              "xxxx"
+            ]
+          }
+        },
+        "headers": {
+          "customRequestHeaders": {
+            "foo": "bar"
+          },
+          "customResponseHeaders": {
+            "foo": "bar"
+          },
+          "accessControlAllowCredentials": true,
+          "accessControlAllowHeaders": [
+            "foo"
+          ],
+          "accessControlAllowMethods": [
+            "foo"
+          ],
+          "accessControlAllowOriginList": [
+            "xxxx"
+          ],
+          "accessControlAllowOriginListRegex": [
+            "xxxx"
+          ],
+          "accessControlExposeHeaders": [
+            "foo"
+          ],
+          "accessControlMaxAge": 42,
+          "addVaryHeader": true,
+          "allowedHosts": [
+            "xxxx"
+          ],
+          "hostsProxyHeaders": [
+            "foo"
+          ],
+          "sslRedirect": true,
+          "sslTemporaryRedirect": true,
+          "sslHost": "xxxx",
+          "sslForceHost": true,
+          "stsSeconds": 42,
+          "stsIncludeSubdomains": true,
+          "stsPreload": true,
+          "forceSTSHeader": true,
+          "frameDeny": true,
+          "customFrameOptionsValue": "xxxx",
+          "contentTypeNosniff": true,
+          "browserXssFilter": true,
+          "customBrowserXSSValue": "xxxx",
+          "contentSecurityPolicy": "xxxx",
+          "publicKey": "xxxx",
+          "referrerPolicy": "foo",
+          "featurePolicy": "foo",
+          "permissionsPolicy": "foo",
+          "isDevelopment": true
+        },
+        "errors": {
+          "status": [
+            "foo"
+          ],
+          "service": "foo",
+          "query": "foo"
+        },
+        "rateLimit": {
+          "average": 42,
+          "period": "42ns",
+          "burst": 42,
+          "sourceCriterion": {
+            "ipStrategy": {
+              "depth": 42,
+              "excludedIPs": [
+                "xxxx"
+              ]
+            },
+            "requestHeaderName": "foo",
+            "requestHost": true
+          }
+        },
+        "redirectRegex": {
+          "regex": "xxxx",
+          "replacement": "xxxx",
+          "permanent": true
+        },
+        "redirectScheme": {
+          "scheme": "foo",
+          "port": "foo",
+          "permanent": true
+        },
+        "basicAuth": {
+          "users": [
+            "xxxx"
+          ],
+          "usersFile": "xxxx",
+          "realm": "xxxx",
+          "removeHeader": true,
+          "headerField": "foo"
+        },
+        "digestAuth": {
+          "users": [
+            "xxxx"
+          ],
+          "usersFile": "xxxx",
+          "removeHeader": true,
+          "realm": "xxxx",
+          "headerField": "foo"
+        },
+        "forwardAuth": {
+          "address": "xxxx",
+          "tls": {
+            "ca": "xxxx",
+            "caOptional": true,
+            "cert": "xxxx",
+            "key": "xxxx",
+            "insecureSkipVerify": true
+          },
+          "trustForwardHeader": true,
+          "authResponseHeaders": [
+            "foo"
+          ],
+          "authResponseHeadersRegex": "foo",
+          "authRequestHeaders": [
+            "foo"
+          ]
+        },
+        "inFlightReq": {
+          "amount": 42,
+          "sourceCriterion": {
+            "ipStrategy": {
+              "depth": 42,
+              "excludedIPs": [
+                "xxxx"
+              ]
+            },
+            "requestHeaderName": "foo",
+            "requestHost": true
+          }
+        },
+        "buffering": {
+          "maxRequestBodyBytes": 42,
+          "memRequestBodyBytes": 42,
+          "maxResponseBodyBytes": 42,
+          "memResponseBodyBytes": 42,
+          "retryExpression": "foo"
+        },
+        "circuitBreaker": {
+          "expression": "foo"
+        },
+        "compress": {
+          "excludedContentTypes": [
+            "foo"
+          ]
+        },
+        "passTLSClientCert": {
+          "pem": true,
+          "info": {
+            "notAfter": true,
+            "notBefore": true,
+            "sans": true,
+            "subject": {
+              "country": true,
+              "province": true,
+              "locality": true,
+              "organization": true,
+              "organizationalUnit": true,
+              "commonName": true,
+              "serialNumber": true,
+              "domainComponent": true
+            },
+            "issuer": {
+              "country": true,
+              "province": true,
+              "locality": true,
+              "organization": true,
+              "commonName": true,
+              "serialNumber": true,
+              "domainComponent": true
+            },
+            "serialNumber": true
+          }
+        },
+        "retry": {
+          "attempts": 42,
+          "initialInterval": "42ns"
+        },
+        "contentType": {
+          "autoDetect": true
+        },
+        "plugin": {
+          "foo": {
+            "answer": {}
+          }
+        }
+      }
+    },
+    "models": {
+      "foo": {
+        "middlewares": [
+          "foo"
+        ],
+        "tls": {
+          "options": "foo",
+          "certResolver": "foo",
+          "domains": [
+            {
+              "main": "xxxx",
+              "sans": [
+                "xxxx"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "serversTransports": {
+      "foo": {
+        "serverName": "xxxx",
+        "insecureSkipVerify": true,
+        "rootCAs": [
+          "xxxx"
+        ],
+        "certificates": [
+          {
+            "certFile": "xxxx",
+            "keyFile": "xxxx"
+          }
+        ],
+        "maxIdleConnsPerHost": 42,
+        "forwardingTimeouts": {
+          "dialTimeout": "42ns",
+          "responseHeaderTimeout": "42ns",
+          "idleConnTimeout": "42ns",
+          "readIdleTimeout": "42ns",
+          "pingTimeout": "42ns"
+        }
+      }
+    }
+  },
+  "tcp": {
+    "routers": {
+      "foo": {
+        "entryPoints": [
+          "foo"
+        ],
+        "service": "foo",
+        "rule": "xxxx",
+        "tls": {
+          "passthrough": true,
+          "options": "foo",
+          "certResolver": "foo",
+          "domains": [
+            {
+              "main": "xxxx",
+              "sans": [
+                "xxxx"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "services": {
+      "bar": {
+        "weighted": {
+          "services": [
+            {
+              "name": "foo",
+              "weight": 42
+            }
+          ]
+        }
+      },
+      "foo": {
+        "loadBalancer": {
+          "terminationDelay": 42,
+          "proxyProtocol": {
+            "version": 42
+          },
+          "servers": [
+            {
+              "address": "xxxx"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "udp": {
+    "routers": {
+      "foo": {
+        "entryPoints": [
+          "foo"
+        ],
+        "service": "foo"
+      }
+    },
+    "services": {
+      "bar": {
+        "weighted": {
+          "services": [
+            {
+              "name": "foo",
+              "weight": 42
+            }
+          ]
+        }
+      },
+      "foo": {
+        "loadBalancer": {
+          "servers": [
+            {
+              "address": "xxxx"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "tls": {
+    "certificates": [
+      {
+        "certFile": "xxxx",
+        "keyFile": "xxxx",
+        "stores": [
+          "foo"
+        ]
+      }
+    ],
+    "options": {
+      "foo": {
+        "minVersion": "foo",
+        "maxVersion": "foo",
+        "cipherSuites": [
+          "foo"
+        ],
+        "curvePreferences": [
+          "foo"
+        ],
+        "clientAuth": {},
+        "sniStrict": true,
+        "preferServerCipherSuites": true
+      }
+    },
+    "stores": {
+      "foo": {
+        "defaultCertificate": {
+          "certFile": "xxxx",
+          "keyFile": "xxxx"
+        }
+      }
+    }
+  }
+}

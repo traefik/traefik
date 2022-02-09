@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"context"
-	"crypto/tls"
 	"net/http"
 	"strconv"
 	"strings"
@@ -50,6 +49,20 @@ func NewEntryPointMiddleware(ctx context.Context, next http.Handler, registry me
 	}
 }
 
+// NewRouterMiddleware creates a new metrics middleware for a Router.
+func NewRouterMiddleware(ctx context.Context, next http.Handler, registry metrics.Registry, routerName string, serviceName string) http.Handler {
+	log.FromContext(middlewares.GetLoggerCtx(ctx, nameEntrypoint, typeName)).Debug("Creating middleware")
+
+	return &metricsMiddleware{
+		next:                 next,
+		reqsCounter:          registry.RouterReqsCounter(),
+		reqsTLSCounter:       registry.RouterReqsTLSCounter(),
+		reqDurationHistogram: registry.RouterReqDurationHistogram(),
+		openConnsGauge:       registry.RouterOpenConnsGauge(),
+		baseLabels:           []string{"router", routerName, "service", serviceName},
+	}
+}
+
 // NewServiceMiddleware creates a new metrics middleware for a Service.
 func NewServiceMiddleware(ctx context.Context, next http.Handler, registry metrics.Registry, serviceName string) http.Handler {
 	log.FromContext(middlewares.GetLoggerCtx(ctx, nameService, typeName)).Debug("Creating middleware")
@@ -68,6 +81,13 @@ func NewServiceMiddleware(ctx context.Context, next http.Handler, registry metri
 func WrapEntryPointHandler(ctx context.Context, registry metrics.Registry, entryPointName string) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
 		return NewEntryPointMiddleware(ctx, next, registry, entryPointName), nil
+	}
+}
+
+// WrapRouterHandler Wraps metrics router to alice.Constructor.
+func WrapRouterHandler(ctx context.Context, registry metrics.Registry, routerName string, serviceName string) alice.Constructor {
+	return func(next http.Handler) (http.Handler, error) {
+		return NewRouterMiddleware(ctx, next, registry, routerName, serviceName), nil
 	}
 }
 
@@ -90,7 +110,7 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	if req.TLS != nil {
 		var tlsLabels []string
 		tlsLabels = append(tlsLabels, m.baseLabels...)
-		tlsLabels = append(tlsLabels, "tls_version", getRequestTLSVersion(req), "tls_cipher", getRequestTLSCipher(req))
+		tlsLabels = append(tlsLabels, "tls_version", traefiktls.GetVersion(req.TLS), "tls_cipher", traefiktls.GetCipherName(req.TLS))
 
 		m.reqsTLSCounter.With(tlsLabels...).Add(1)
 	}
@@ -139,35 +159,27 @@ func containsHeader(req *http.Request, name, value string) bool {
 	return false
 }
 
+// getMethod returns the request's method.
+// It checks whether the method is a valid UTF-8 string.
+// To restrict the (potentially infinite) number of accepted values for the method,
+// and avoid unbounded memory issues,
+// values that are not part of the set of HTTP verbs are replaced with EXTENSION_METHOD.
+// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
+// https://datatracker.ietf.org/doc/html/rfc2616/#section-5.1.1.
 func getMethod(r *http.Request) string {
 	if !utf8.ValidString(r.Method) {
-		log.Warnf("Invalid HTTP method encoding: %s", r.Method)
+		log.WithoutContext().Warnf("Invalid HTTP method encoding: %s", r.Method)
 		return "NON_UTF8_HTTP_METHOD"
 	}
-	return r.Method
-}
 
-func getRequestTLSVersion(req *http.Request) string {
-	switch req.TLS.Version {
-	case tls.VersionTLS10:
-		return "1.0"
-	case tls.VersionTLS11:
-		return "1.1"
-	case tls.VersionTLS12:
-		return "1.2"
-	case tls.VersionTLS13:
-		return "1.3"
+	switch r.Method {
+	case "HEAD", "GET", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", // https://datatracker.ietf.org/doc/html/rfc7231#section-4
+		"PATCH", // https://datatracker.ietf.org/doc/html/rfc5789#section-2
+		"PRI":   // https://datatracker.ietf.org/doc/html/rfc7540#section-11.6
+		return r.Method
 	default:
-		return "unknown"
+		return "EXTENSION_METHOD"
 	}
-}
-
-func getRequestTLSCipher(req *http.Request) string {
-	if version, ok := traefiktls.CipherSuitesReversed[req.TLS.CipherSuite]; ok {
-		return version
-	}
-
-	return "unknown"
 }
 
 type retryMetrics interface {

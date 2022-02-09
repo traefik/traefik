@@ -14,7 +14,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/constraints"
 )
 
-func (p *Provider) buildConfiguration(ctx context.Context, items []itemData) *dynamic.Configuration {
+func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, certInfo *connectCert) *dynamic.Configuration {
 	configurations := make(map[string]*dynamic.Configuration)
 
 	for _, item := range items {
@@ -42,6 +42,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData) *dy
 				logger.Error(err)
 				continue
 			}
+
 			provider.BuildTCPRouterConfiguration(ctxSvc, confFromLabel.TCP)
 		}
 
@@ -61,6 +62,17 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData) *dy
 			len(confFromLabel.HTTP.Services) == 0 {
 			configurations[svcName] = confFromLabel
 			continue
+		}
+
+		if item.ExtraConf.ConsulCatalog.Connect {
+			if confFromLabel.HTTP.ServersTransports == nil {
+				confFromLabel.HTTP.ServersTransports = make(map[string]*dynamic.ServersTransport)
+			}
+
+			serversTransportKey := itemServersTransportKey(item)
+			if confFromLabel.HTTP.ServersTransports[serversTransportKey] == nil {
+				confFromLabel.HTTP.ServersTransports[serversTransportKey] = certInfo.serversTransport(item)
+			}
 		}
 
 		err = p.buildServiceConfiguration(ctxSvc, item, confFromLabel.HTTP)
@@ -93,13 +105,18 @@ func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
 		return false
 	}
 
+	if !p.ConnectAware && item.ExtraConf.ConsulCatalog.Connect {
+		logger.Debugf("Filtering out Connect aware item, Connect support is not enabled")
+		return false
+	}
+
 	matches, err := constraints.MatchTags(item.Tags, p.Constraints)
 	if err != nil {
-		logger.Errorf("Error matching constraints expression: %v", err)
+		logger.Errorf("Error matching constraint expressions: %v", err)
 		return false
 	}
 	if !matches {
-		logger.Debugf("Container pruned by constraint expression: %q", p.Constraints)
+		logger.Debugf("Container pruned by constraint expressions: %q", p.Constraints)
 		return false
 	}
 
@@ -267,8 +284,19 @@ func (p *Provider) addServer(ctx context.Context, item itemData, loadBalancer *d
 		return errors.New("address is missing")
 	}
 
-	loadBalancer.Servers[0].URL = fmt.Sprintf("%s://%s", loadBalancer.Servers[0].Scheme, net.JoinHostPort(item.Address, port))
+	scheme := loadBalancer.Servers[0].Scheme
 	loadBalancer.Servers[0].Scheme = ""
 
+	if item.ExtraConf.ConsulCatalog.Connect {
+		loadBalancer.ServersTransport = itemServersTransportKey(item)
+		scheme = "https"
+	}
+
+	loadBalancer.Servers[0].URL = fmt.Sprintf("%s://%s", scheme, net.JoinHostPort(item.Address, port))
+
 	return nil
+}
+
+func itemServersTransportKey(item itemData) string {
+	return provider.Normalize("tls-" + item.Namespace + "-" + item.Datacenter + "-" + item.Name)
 }

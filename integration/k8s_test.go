@@ -28,7 +28,7 @@ type K8sSuite struct{ BaseSuite }
 
 func (s *K8sSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "k8s")
-	s.composeProject.Start(c)
+	s.composeUp(c)
 
 	abs, err := filepath.Abs("./fixtures/k8s/config.skip/kubeconfig.yaml")
 	c.Assert(err, checker.IsNil)
@@ -44,7 +44,7 @@ func (s *K8sSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *K8sSuite) TearDownSuite(c *check.C) {
-	s.composeProject.Stop(c)
+	s.composeDown(c)
 
 	generatedFiles := []string{
 		"./fixtures/k8s/config.skip/kubeconfig.yaml",
@@ -56,8 +56,7 @@ func (s *K8sSuite) TearDownSuite(c *check.C) {
 	}
 
 	for _, filename := range generatedFiles {
-		err := os.Remove(filename)
-		if err != nil {
+		if err := os.Remove(filename); err != nil {
 			log.WithoutContext().Warning(err)
 		}
 	}
@@ -116,6 +115,17 @@ func (s *K8sSuite) TestGatewayConfiguration(c *check.C) {
 	defer s.killCmd(cmd)
 
 	testConfiguration(c, "testdata/rawdata-gateway.json", "8080")
+}
+
+func (s *K8sSuite) TestIngressclass(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_ingressclass.toml"))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	testConfiguration(c, "testdata/rawdata-ingressclass.json", "8080")
 }
 
 func testConfiguration(c *check.C, path, apiPort string) {

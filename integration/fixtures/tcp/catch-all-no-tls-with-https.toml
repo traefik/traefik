@@ -27,7 +27,7 @@
   [tcp.services]
     [tcp.services.whoami-no-tls.loadBalancer]
       [[tcp.services.whoami-no-tls.loadBalancer.servers]]
-        address = "localhost:8086"
+        address = "whoami-no-tls:8080"
 
 [http]
   [http.routers]
@@ -40,4 +40,4 @@
   [http.services]
     [http.services.whoami.loadBalancer]
       [[http.services.whoami.loadBalancer.servers]]
-        url = "http://localhost:8085"
+        url = "http://whoami:80"

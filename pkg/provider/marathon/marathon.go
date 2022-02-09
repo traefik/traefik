@@ -52,7 +52,7 @@ type Provider struct {
 	Endpoint               string           `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
 	DefaultRule            string           `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 	ExposedByDefault       bool             `description:"Expose Marathon apps by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
-	DCOSToken              string           `description:"DCOSToken for DCOS environment, This will override the Authorization header." json:"dcosToken,omitempty" toml:"dcosToken,omitempty" yaml:"dcosToken,omitempty"`
+	DCOSToken              string           `description:"DCOSToken for DCOS environment, This will override the Authorization header." json:"dcosToken,omitempty" toml:"dcosToken,omitempty" yaml:"dcosToken,omitempty" loggable:"false"`
 	TLS                    *types.ClientTLS `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 	DialerTimeout          ptypes.Duration  `description:"Set a dialer timeout for Marathon." json:"dialerTimeout,omitempty" toml:"dialerTimeout,omitempty" yaml:"dialerTimeout,omitempty" export:"true"`
 	ResponseHeaderTimeout  ptypes.Duration  `description:"Set a response header timeout for Marathon." json:"responseHeaderTimeout,omitempty" toml:"responseHeaderTimeout,omitempty" yaml:"responseHeaderTimeout,omitempty" export:"true"`
@@ -80,8 +80,8 @@ func (p *Provider) SetDefaults() {
 
 // Basic holds basic authentication specific configurations.
 type Basic struct {
-	HTTPBasicAuthUser string `description:"Basic authentication User." json:"httpBasicAuthUser,omitempty" toml:"httpBasicAuthUser,omitempty" yaml:"httpBasicAuthUser,omitempty"`
-	HTTPBasicPassword string `description:"Basic authentication Password." json:"httpBasicPassword,omitempty" toml:"httpBasicPassword,omitempty" yaml:"httpBasicPassword,omitempty"`
+	HTTPBasicAuthUser string `description:"Basic authentication User." json:"httpBasicAuthUser,omitempty" toml:"httpBasicAuthUser,omitempty" yaml:"httpBasicAuthUser,omitempty" loggable:"false"`
+	HTTPBasicPassword string `description:"Basic authentication Password." json:"httpBasicPassword,omitempty" toml:"httpBasicPassword,omitempty" yaml:"httpBasicPassword,omitempty" loggable:"false"`
 }
 
 // Init the provider.
@@ -134,7 +134,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 		TLSConfig, err := p.TLS.CreateTLSConfig(ctx)
 		if err != nil {
-			return err
+			return fmt.Errorf("unable to create client TLS configuration: %w", err)
 		}
 		confg.HTTPClient = &http.Client{
 			Transport: &http.Transport{

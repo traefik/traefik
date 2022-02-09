@@ -7,6 +7,13 @@ rules:
   - apiGroups:
       - ""
     resources:
+      - namespaces
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
       - services
       - endpoints
       - secrets
@@ -15,30 +22,33 @@ rules:
       - list
       - watch
   - apiGroups:
-      - networking.x-k8s.io
+      - gateway.networking.k8s.io
     resources:
       - gatewayclasses
       - gateways
       - httproutes
+      - tcproutes
+      - tlsroutes
     verbs:
       - get
       - list
       - watch
   - apiGroups:
-      - networking.x-k8s.io
+      - gateway.networking.k8s.io
     resources:
       - gatewayclasses/status
       - gateways/status
       - httproutes/status
+      - tcproutes/status
+      - tlsroutes/status
     verbs:
       - update
 
 ---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: gateway-controller
-
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole

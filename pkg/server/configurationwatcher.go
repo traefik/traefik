@@ -84,12 +84,8 @@ func (c *ConfigurationWatcher) AddListener(listener func(dynamic.Configuration))
 func (c *ConfigurationWatcher) startProvider() {
 	logger := log.WithoutContext()
 
-	jsonConf, err := json.Marshal(c.provider)
-	if err != nil {
-		logger.Debugf("Unable to marshal provider configuration %T: %v", c.provider, err)
-	}
+	logger.Infof("Starting provider %T", c.provider)
 
-	logger.Infof("Starting provider %T %s", c.provider, jsonConf)
 	currentProvider := c.provider
 
 	safe.Go(func() {
@@ -245,7 +241,7 @@ func (c *ConfigurationWatcher) throttleProviderConfigReload(ctx context.Context,
 		case nextConfig := <-in:
 			if reflect.DeepEqual(previousConfig, nextConfig) {
 				logger := log.WithoutContext().WithField(log.ProviderName, nextConfig.ProviderName)
-				logger.Info("Skipping same configuration")
+				logger.Debug("Skipping same configuration")
 				continue
 			}
 			previousConfig = *nextConfig.DeepCopy()
@@ -271,7 +267,7 @@ func isEmptyConfiguration(conf *dynamic.Configuration) bool {
 
 	httpEmpty := conf.HTTP.Routers == nil && conf.HTTP.Services == nil && conf.HTTP.Middlewares == nil
 	tlsEmpty := conf.TLS == nil || conf.TLS.Certificates == nil && conf.TLS.Stores == nil && conf.TLS.Options == nil
-	tcpEmpty := conf.TCP.Routers == nil && conf.TCP.Services == nil
+	tcpEmpty := conf.TCP.Routers == nil && conf.TCP.Services == nil && conf.TCP.Middlewares == nil
 	udpEmpty := conf.UDP.Routers == nil && conf.UDP.Services == nil
 
 	return httpEmpty && tlsEmpty && tcpEmpty && udpEmpty

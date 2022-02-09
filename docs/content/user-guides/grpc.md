@@ -224,8 +224,8 @@ So we modify the "gRPC server example" to use our own self-signed certificate:
 // ...
 
 // Read cert and key file
-backendCert, _ := ioutil.ReadFile("./backend.cert")
-backendKey, _ := ioutil.ReadFile("./backend.key")
+backendCert, _ := os.ReadFile("./backend.cert")
+backendKey, _ := os.ReadFile("./backend.key")
 
 // Generate Certificate struct
 cert, err := tls.X509KeyPair(backendCert, backendKey)
@@ -253,7 +253,7 @@ Next we will modify gRPC Client to use our Traefik self-signed certificate:
 // ...
 
 // Read cert file
-frontendCert, _ := ioutil.ReadFile("./frontend.cert")
+frontendCert, _ := os.ReadFile("./frontend.cert")
 
 // Create CertPool
 roots := x509.NewCertPool()

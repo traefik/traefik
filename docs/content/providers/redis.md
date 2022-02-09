@@ -64,7 +64,7 @@ Defines a username to connect with Redis.
 providers:
   redis:
     # ...
-    usename: "foo"
+    username: "foo"
 ```
 
 ```toml tab="File (TOML)"
@@ -104,9 +104,14 @@ providers:
 
 _Optional_
 
-#### `tls.ca`
+Defines the TLS configuration used for the secure connection to Redis.
 
-Certificate Authority used for the secure connection to Redis.
+#### `ca`
+
+_Optional_
+
+`ca` is the path to the certificate authority used for the secure connection to Redis,
+it defaults to the system bundle.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -124,13 +129,15 @@ providers:
 --providers.redis.tls.ca=path/to/ca.crt
 ```
 
-#### `tls.caOptional`
+#### `caOptional`
 
-The value of `tls.caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to Redis.
+_Optional_
+
+The value of `caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to Redis.
 
 !!! warning ""
 
-    If `tls.ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
+    If `ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
 
 When this option is set to `true`, a client certificate is requested during the handshake but is not required. If a certificate is sent, it is required to be valid.
 
@@ -152,32 +159,12 @@ providers:
 --providers.redis.tls.caOptional=true
 ```
 
-#### `tls.cert`
+#### `cert`
 
-Public certificate used for the secure connection to Redis.
+_Optional_
 
-```yaml tab="File (YAML)"
-providers:
-  redis:
-    tls:
-      cert: path/to/foo.cert
-      key: path/to/foo.key
-```
-
-```toml tab="File (TOML)"
-[providers.redis.tls]
-  cert = "path/to/foo.cert"
-  key = "path/to/foo.key"
-```
-
-```bash tab="CLI"
---providers.redis.tls.cert=path/to/foo.cert
---providers.redis.tls.key=path/to/foo.key
-```
-
-#### `tls.key`
-
-Private certificate used for the secure connection to Redis.
+`cert` is the path to the public certificate used for the secure connection to Redis.
+When using this option, setting the `key` option is required.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -198,7 +185,35 @@ providers:
 --providers.redis.tls.key=path/to/foo.key
 ```
 
-#### `tls.insecureSkipVerify`
+#### `key`
+
+_Optional_
+
+`key` is the path to the private key used for the secure connection to Redis.
+When using this option, setting the `cert` option is required.
+
+```yaml tab="File (YAML)"
+providers:
+  redis:
+    tls:
+      cert: path/to/foo.cert
+      key: path/to/foo.key
+```
+
+```toml tab="File (TOML)"
+[providers.redis.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
+```bash tab="CLI"
+--providers.redis.tls.cert=path/to/foo.cert
+--providers.redis.tls.key=path/to/foo.key
+```
+
+#### `insecureSkipVerify`
+
+_Optional, Default=false_
 
 If `insecureSkipVerify` is `true`, the TLS connection to Redis accepts any certificate presented by the server regardless of the hostnames it covers.
 

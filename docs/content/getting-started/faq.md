@@ -125,7 +125,7 @@ http:
     the principle of the above example above (a catchall router) still stands,
     but the `unavailable` service should be adapted to fit such a need.
 
-## Why Is My TLS Certificate Not Reloaded When Its Contents Change ? 
+## Why Is My TLS Certificate Not Reloaded When Its Contents Change? 
 
 With the file provider,
 a configuration update is only triggered when one of the [watched](../providers/file.md#provider-configuration) configuration files is modified.
@@ -137,3 +137,18 @@ a configuration update is _not_ triggered.
 To take into account the new certificate contents, the update of the dynamic configuration must be forced.
 One way to achieve that, is to trigger a file notification,
 for example, by using the `touch` command on the configuration file.
+
+## What Are the Forwarded Headers When Proxying HTTP Requests?
+
+By default, the following headers are automatically added when proxying requests:
+
+| Property                  | HTTP Header                |
+|---------------------------|----------------------------|
+| Client's IP               | X-Forwarded-For, X-Real-Ip |
+| Host                      | X-Forwarded-Host           |
+| Port                      | X-Forwarded-Port           |
+| Protocol                  | X-Forwarded-Proto          |
+| Proxy Server's Hostname   | X-Forwarded-Server         |
+
+For more details,
+please check out the [forwarded header](../routing/entrypoints.md#forwarded-headers) documentation.
