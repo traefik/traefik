@@ -7,7 +7,7 @@ Tweaking the Request
 
 Attached to the routers, pieces of middleware are a means of tweaking the requests before they are sent to your [service](../routing/services/index.md) (or before the answer from the services are sent to the clients).
 
-There are several available middleware in Traefik, some can modify the request, the headers, some are in charge of redirections, some add authentication, and so on.
+There are several available middlewares in Traefik, some can modify the request, the headers, some are in charge of redirections, some add authentication, and so on.
 
 Middlewares that use the same protocol can be combined into chains to fit every scenario.
 
