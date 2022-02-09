@@ -25,12 +25,10 @@ var (
 
 // RegisterInfluxDB2 creates metrics exporter for InfluxDB2.
 func RegisterInfluxDB2(ctx context.Context, config *types.InfluxDB2) Registry {
-	logger := log.FromContext(ctx)
-
 	if influxDB2Client == nil {
 		var err error
 		if influxDB2Client, err = newInfluxDB2Client(config); err != nil {
-			logger.Error(err)
+			log.FromContext(ctx).Error(err)
 			return nil
 		}
 	}
@@ -124,12 +122,13 @@ type influxDB2Writer struct {
 
 func (w influxDB2Writer) Write(bp influxdb.BatchPoints) error {
 	ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "influxdb2"))
+	logger := log.FromContext(ctx)
 
 	wps := make([]*write.Point, 0, len(bp.Points()))
 	for _, p := range bp.Points() {
 		fields, err := p.Fields()
 		if err != nil {
-			log.FromContext(ctx).Errorf("Error while getting %s point fields: %s", p.Name(), err)
+			logger.Errorf("Error while getting %s point fields: %s", p.Name(), err)
 			continue
 		}
 
