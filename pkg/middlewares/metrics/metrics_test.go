@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/go-kit/kit/metrics"
@@ -95,6 +96,36 @@ func TestCloseNotifier(t *testing.T) {
 			rw := newResponseRecorder(test.rw)
 			_, impl := rw.(http.CloseNotifier)
 			assert.Equal(t, test.implementsCloseNotifier, impl)
+		})
+	}
+}
+
+func Test_getMethod(t *testing.T) {
+	testCases := []struct {
+		method   string
+		expected string
+	}{
+		{
+			method:   http.MethodGet,
+			expected: http.MethodGet,
+		},
+		{
+			method:   strings.ToLower(http.MethodGet),
+			expected: "EXTENSION_METHOD",
+		},
+		{
+			method:   "THIS_IS_NOT_A_VALID_METHOD",
+			expected: "EXTENSION_METHOD",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.method, func(t *testing.T) {
+			t.Parallel()
+
+			request := httptest.NewRequest(test.method, "http://example.com", nil)
+			assert.Equal(t, test.expected, getMethod(request))
 		})
 	}
 }
