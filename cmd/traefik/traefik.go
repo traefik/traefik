@@ -180,8 +180,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	tlsManager := traefiktls.NewManager()
 	httpChallengeProvider := acme.NewChallengeHTTP()
 
-	// we need to wait at least 2 times the ProvidersThrottleDuration to be sure to handle the challenge.
-	tlsChallengeProvider := acme.NewChallengeTLSALPN(time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration) * 2)
+	tlsChallengeProvider := acme.NewChallengeTLSALPN()
 	err = providerAggregator.AddProvider(tlsChallengeProvider)
 	if err != nil {
 		return nil, err
@@ -265,7 +264,6 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	watcher := server.NewConfigurationWatcher(
 		routinesPool,
 		providerAggregator,
-		time.Duration(staticConfiguration.Providers.ProvidersThrottleDuration),
 		getDefaultsEntrypoints(staticConfiguration),
 		"internal",
 	)
@@ -448,6 +446,16 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 		registries = append(registries, metrics.RegisterInfluxDB(ctx, metricsConfig.InfluxDB))
 		log.FromContext(ctx).Debugf("Configured InfluxDB metrics: pushing to %s once every %s",
 			metricsConfig.InfluxDB.Address, metricsConfig.InfluxDB.PushInterval)
+	}
+
+	if metricsConfig.InfluxDB2 != nil {
+		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "influxdb2"))
+		influxDB2Register := metrics.RegisterInfluxDB2(ctx, metricsConfig.InfluxDB2)
+		if influxDB2Register != nil {
+			registries = append(registries, influxDB2Register)
+			log.FromContext(ctx).Debugf("Configured InfluxDB v2 metrics: pushing to %s (%s org/%s bucket) once every %s",
+				metricsConfig.InfluxDB2.Address, metricsConfig.InfluxDB2.Org, metricsConfig.InfluxDB2.Bucket, metricsConfig.InfluxDB2.PushInterval)
+		}
 	}
 
 	return registries
