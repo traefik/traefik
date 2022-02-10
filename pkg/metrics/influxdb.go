@@ -98,7 +98,7 @@ func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 	return registry
 }
 
-// initInfluxDBTicker creates a influxDBClient.
+// initInfluxDBClient creates a influxDBClient.
 func initInfluxDBClient(ctx context.Context, config *types.InfluxDB) *influx.Influx {
 	logger := log.FromContext(ctx)
 
