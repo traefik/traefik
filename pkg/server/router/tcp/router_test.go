@@ -538,7 +538,7 @@ func TestDomainFronting(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 		{
-			desc: "Request is misdirected when server name is empty and the host name is an FQDN",
+			desc: "Request is misdirected when server name is empty and the host name is an FQDN, but router's rule is not",
 			routers: map[string]*runtime.RouterInfo{
 				"router-1@file": {
 					Router: &dynamic.Router{
@@ -559,6 +559,30 @@ func TestDomainFronting(t *testing.T) {
 				},
 			},
 			host:           "host1.local.",
+			expectedStatus: http.StatusMisdirectedRequest,
+		},
+		{
+			desc: "Request is misdirected when server name is empty and the host name is not FQDN, but router's rule is",
+			routers: map[string]*runtime.RouterInfo{
+				"router-1@file": {
+					Router: &dynamic.Router{
+						EntryPoints: entryPoints,
+						Rule:        "Host(`host1.local.`)",
+						TLS: &dynamic.RouterTLSConfig{
+							Options: "host1@file",
+						},
+					},
+				},
+			},
+			tlsOptions: map[string]traefiktls.Options{
+				"default": {
+					MinVersion: "VersionTLS13",
+				},
+				"host1@file": {
+					MinVersion: "VersionTLS12",
+				},
+			},
+			host:           "host1.local",
 			expectedStatus: http.StatusMisdirectedRequest,
 		},
 	}
