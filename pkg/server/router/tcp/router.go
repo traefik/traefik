@@ -177,8 +177,8 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 		// Domain Fronting
 		if !strings.EqualFold(host, serverName) {
-			tlsOptionSNI := findTLSOptionName(tlsOptionsForHost, serverName)
-			tlsOptionHeader := findTLSOptionName(tlsOptionsForHost, host)
+			tlsOptionHeader := findTLSOptionName(tlsOptionsForHost, host, true)
+			tlsOptionSNI := findTLSOptionName(tlsOptionsForHost, serverName, false)
 
 			if tlsOptionHeader != tlsOptionSNI {
 				log.WithoutContext().
@@ -322,16 +322,43 @@ func (m *Manager) buildTCPHandler(ctx context.Context, router *runtime.TCPRouter
 	return tcp.NewChain().Extend(*mHandler).Then(sHandler)
 }
 
-func findTLSOptionName(tlsOptionsForHost map[string]string, host string) string {
+func findTLSOptionName(tlsOptionsForHost map[string]string, host string, fqdn bool) string {
+	name := findTLSOptName(tlsOptionsForHost, host, fqdn)
+	if name != "" {
+		return name
+	}
+
+	name = findTLSOptName(tlsOptionsForHost, strings.ToLower(host), fqdn)
+	if name != "" {
+		return name
+	}
+
+	return traefiktls.DefaultTLSConfigName
+}
+
+func findTLSOptName(tlsOptionsForHost map[string]string, host string, fqdn bool) string {
 	tlsOptions, ok := tlsOptionsForHost[host]
 	if ok {
 		return tlsOptions
 	}
 
-	tlsOptions, ok = tlsOptionsForHost[strings.ToLower(host)]
+	if !fqdn {
+		return ""
+	}
+
+	if last := len(host) - 1; last >= 0 && host[last] == '.' {
+		tlsOptions, ok = tlsOptionsForHost[host[:last]]
+		if ok {
+			return tlsOptions
+		}
+
+		return ""
+	}
+
+	tlsOptions, ok = tlsOptionsForHost[host+"."]
 	if ok {
 		return tlsOptions
 	}
 
-	return traefiktls.DefaultTLSConfigName
+	return ""
 }
