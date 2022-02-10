@@ -50,7 +50,7 @@ type Configuration struct {
 func (a *Configuration) SetDefaults() {
 	a.CAServer = lego.LEDirectoryProduction
 	a.Storage = "acme.json"
-	a.KeyType = "RSA4096"
+	a.KeyType = "EC256"
 	a.CertificatesDuration = 3 * 30 * 24 // 90 Days
 }
 
