@@ -1,3 +1,20 @@
+## [v2.6.1](https://github.com/traefik/traefik/tree/v2.6.1) (2022-02-14)
+[All Commits](https://github.com/traefik/traefik/compare/v2.6.0...v2.6.1)
+
+**Bug fixes:**
+- **[acme]** Add domain to HTTP challenge errors ([#8740](https://github.com/traefik/traefik/pull/8740) by [ldez](https://github.com/ldez))
+- **[metrics]** Fix metrics bucket key high cardinality ([#8761](https://github.com/traefik/traefik/pull/8761) by [tomMoulard](https://github.com/tomMoulard))
+- **[middleware,tls]** Use CNAME for SNI check on host header ([#8773](https://github.com/traefik/traefik/pull/8773) by [ldez](https://github.com/ldez))
+- **[middleware,tracing]** Rename Datadog span tags ([#8323](https://github.com/traefik/traefik/pull/8323) by [luckielordie](https://github.com/luckielordie))
+- **[tls]** Apply the same approach as the rules system on the TLS configuration choice ([#8764](https://github.com/traefik/traefik/pull/8764) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[acme]** Add Hurricane Electric to acme documentation ([#8746](https://github.com/traefik/traefik/pull/8746) by [vladshub](https://github.com/vladshub))
+- **[acme]** Clarify that ACME challenge is mandatory ([#8739](https://github.com/traefik/traefik/pull/8739) by [mpl](https://github.com/mpl))
+- **[http3]** Explain a bit more around enabling HTTP3 ([#8731](https://github.com/traefik/traefik/pull/8731) by [SantoDE](https://github.com/SantoDE))
+- **[metrics]** Fix mixups in metrics documentation ([#8752](https://github.com/traefik/traefik/pull/8752) by [tomMoulard](https://github.com/tomMoulard))
+- **[middleware,k8s/crd]** Fix Kubernetes TCP examples ([#8759](https://github.com/traefik/traefik/pull/8759) by [sylr](https://github.com/sylr))
+
 ## [v2.6.0](https://github.com/traefik/traefik/tree/v2.6.0) (2022-01-24)
 [All Commits](https://github.com/traefik/traefik/compare/v2.5.0-rc1...v2.6.0)
 
