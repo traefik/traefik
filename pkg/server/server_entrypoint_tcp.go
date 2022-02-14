@@ -524,7 +524,13 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	}
 
 	if withH2c {
-		handler = h2c.NewHandler(handler, &http2.Server{})
+		if configuration.HTTP2.MaxConcurrentStreams < 0 {
+			return nil, errors.New("max concurrent streams value must be greater than or equal to zero")
+		}
+
+		handler = h2c.NewHandler(handler, &http2.Server{
+			MaxConcurrentStreams: uint32(configuration.HTTP2.MaxConcurrentStreams),
+		})
 	}
 
 	serverHTTP := &http.Server{
