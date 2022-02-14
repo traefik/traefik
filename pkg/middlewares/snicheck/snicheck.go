@@ -10,7 +10,7 @@ import (
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 )
 
-// SNICheck is an HTTP handler that check if the TLS configuration is the same between server name and the host header.
+// SNICheck is an HTTP handler that checks whether the TLS configuration for the server name is the same as for the host header.
 type SNICheck struct {
 	next              http.Handler
 	tlsOptionsForHost map[string]string
@@ -40,7 +40,7 @@ func (s SNICheck) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				WithField("host", host).
 				WithField("req.Host", req.Host).
 				WithField("req.TLS.ServerName", req.TLS.ServerName).
-				Debugf("TLS options difference: SNI=%s, Header:%s", tlsOptionSNI, tlsOptionHeader)
+				Debugf("TLS options difference: SNI:%s, Header:%s", tlsOptionSNI, tlsOptionHeader)
 			http.Error(rw, http.StatusText(http.StatusMisdirectedRequest), http.StatusMisdirectedRequest)
 			return
 		}
@@ -83,8 +83,7 @@ func findTLSOptionName(tlsOptionsForHost map[string]string, host string, fqdn bo
 }
 
 func findTLSOptName(tlsOptionsForHost map[string]string, host string, fqdn bool) string {
-	tlsOptions, ok := tlsOptionsForHost[host]
-	if ok {
+	if tlsOptions, ok := tlsOptionsForHost[host]; ok {
 		return tlsOptions
 	}
 
@@ -93,16 +92,14 @@ func findTLSOptName(tlsOptionsForHost map[string]string, host string, fqdn bool)
 	}
 
 	if last := len(host) - 1; last >= 0 && host[last] == '.' {
-		tlsOptions, ok = tlsOptionsForHost[host[:last]]
-		if ok {
+		if tlsOptions, ok := tlsOptionsForHost[host[:last]]; ok {
 			return tlsOptions
 		}
 
 		return ""
 	}
 
-	tlsOptions, ok = tlsOptionsForHost[host+"."]
-	if ok {
+	if tlsOptions, ok := tlsOptionsForHost[host+"."]; ok {
 		return tlsOptions
 	}
 
