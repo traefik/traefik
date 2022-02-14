@@ -9,7 +9,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
 	metricsmiddleware "github.com/traefik/traefik/v2/pkg/middlewares/metrics"
-	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
 	mTracing "github.com/traefik/traefik/v2/pkg/middlewares/tracing"
 	"github.com/traefik/traefik/v2/pkg/tracing"
 	"github.com/traefik/traefik/v2/pkg/tracing/jaeger"
@@ -20,7 +19,6 @@ type ChainBuilder struct {
 	metricsRegistry        metrics.Registry
 	accessLoggerMiddleware *accesslog.Handler
 	tracer                 *tracing.Tracing
-	requestDecorator       *requestdecorator.RequestDecorator
 }
 
 // NewChainBuilder Creates a new ChainBuilder.
@@ -29,7 +27,6 @@ func NewChainBuilder(staticConfiguration static.Configuration, metricsRegistry m
 		metricsRegistry:        metricsRegistry,
 		accessLoggerMiddleware: accessLoggerMiddleware,
 		tracer:                 setupTracing(staticConfiguration.Tracing),
-		requestDecorator:       requestdecorator.New(staticConfiguration.HostResolver),
 	}
 }
 
@@ -49,7 +46,7 @@ func (c *ChainBuilder) Build(ctx context.Context, entryPointName string) alice.C
 		chain = chain.Append(metricsmiddleware.WrapEntryPointHandler(ctx, c.metricsRegistry, entryPointName))
 	}
 
-	return chain.Append(requestdecorator.WrapHandler(c.requestDecorator))
+	return chain
 }
 
 // Close accessLogger and tracer.
