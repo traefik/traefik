@@ -55,6 +55,11 @@ func getHost(req *http.Request) string {
 		return h
 	}
 
+	h = requestdecorator.GetCanonizedHost(req.Context())
+	if h != "" {
+		return h
+	}
+
 	host, _, err := net.SplitHostPort(req.Host)
 	if err != nil {
 		host = req.Host
