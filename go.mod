@@ -40,7 +40,7 @@ require (
 	github.com/instana/go-sensor v1.38.3
 	github.com/klauspost/compress v1.13.0
 	github.com/kvtools/valkeyrie v0.4.0
-	github.com/lucas-clemente/quic-go v0.23.0
+	github.com/lucas-clemente/quic-go v0.25.0
 	github.com/mailgun/ttlmap v0.0.0-20170619185759-c1c17f74874f
 	github.com/miekg/dns v1.1.45
 	github.com/mitchellh/copystructure v1.0.0
