@@ -277,7 +277,6 @@ func (s *ConsulCatalogSuite) TestDefaultConsulService(c *check.C) {
 		ConsulAddress string
 		DefaultRule   string
 	}{
-
 		ConsulAddress: s.consulURL,
 		DefaultRule:   "Host(`{{ normalize .Name }}.consul.localhost`)",
 	}

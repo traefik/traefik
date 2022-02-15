@@ -31,7 +31,6 @@ const resyncPeriod = 10 * time.Minute
 // The stores can then be accessed via the Get* functions.
 type Client interface {
 	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
-
 	GetIngressRoutes() []*v1alpha1.IngressRoute
 	GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP
 	GetIngressRouteUDPs() []*v1alpha1.IngressRouteUDP
@@ -42,7 +41,6 @@ type Client interface {
 	GetTLSOptions() []*v1alpha1.TLSOption
 	GetServersTransports() []*v1alpha1.ServersTransport
 	GetTLSStores() []*v1alpha1.TLSStore
-
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
