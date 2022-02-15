@@ -59,6 +59,11 @@ type HTTPConfig struct {
 	TLS          *TLSConfig    `description:"Default TLS configuration for the routers linked to the entry point." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty"  export:"true"`
 }
 
+// HTTP3Config is the HTTP3 configuration of an entry point.
+type HTTP3Config struct {
+	AdvertisedPort int32 `description:"UDP port to advertise, on which HTTP/3 is available." json:"advertisedPort,omitempty" toml:"advertisedPort,omitempty" yaml:"advertisedPort,omitempty" export:"true"`
+}
+
 // Redirections is a set of redirection for an entry point.
 type Redirections struct {
 	EntryPoint *RedirectEntryPoint `description:"Set of redirection for an entry point." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
@@ -70,11 +75,6 @@ type RedirectEntryPoint struct {
 	Scheme    string `description:"Scheme used for the redirection." json:"scheme,omitempty" toml:"scheme,omitempty" yaml:"scheme,omitempty" export:"true"`
 	Permanent bool   `description:"Applies a permanent redirection." json:"permanent,omitempty" toml:"permanent,omitempty" yaml:"permanent,omitempty" export:"true"`
 	Priority  int    `description:"Priority of the generated router." json:"priority,omitempty" toml:"priority,omitempty" yaml:"priority,omitempty" export:"true"`
-}
-
-// HTTP3Config is the HTTP3 configuration of an entry point.
-type HTTP3Config struct {
-	AdvertisedPort int32 `description:"UDP port to advertise, on which HTTP/3 is available." json:"advertisedPort,omitempty" toml:"advertisedPort,omitempty" yaml:"advertisedPort,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.

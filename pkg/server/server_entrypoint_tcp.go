@@ -147,19 +147,19 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hos
 
 	httpServer, err := createHTTPServer(ctx, listener, configuration, true, reqDecorator)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing httpServer: %w", err)
+		return nil, fmt.Errorf("error preparing http server: %w", err)
 	}
 
 	rt.HTTPForwarder(httpServer.Forwarder)
 
 	httpsServer, err := createHTTPServer(ctx, listener, configuration, false, reqDecorator)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing httpsServer: %w", err)
+		return nil, fmt.Errorf("error preparing https server: %w", err)
 	}
 
-	h3server, err := newHTTP3Server(ctx, configuration, httpsServer)
+	h3Server, err := newHTTP3Server(ctx, configuration, httpsServer)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error preparing http3 server: %w", err)
 	}
 
 	rt.HTTPSForwarder(httpsServer.Forwarder)
@@ -174,7 +174,7 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hos
 		tracker:                tracker,
 		httpServer:             httpServer,
 		httpsServer:            httpsServer,
-		http3Server:            h3server,
+		http3Server:            h3Server,
 	}, nil
 }
 
