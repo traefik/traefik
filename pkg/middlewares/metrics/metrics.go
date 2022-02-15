@@ -159,12 +159,27 @@ func containsHeader(req *http.Request, name, value string) bool {
 	return false
 }
 
+// getMethod returns the request's method.
+// It checks whether the method is a valid UTF-8 string.
+// To restrict the (potentially infinite) number of accepted values for the method,
+// and avoid unbounded memory issues,
+// values that are not part of the set of HTTP verbs are replaced with EXTENSION_METHOD.
+// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
+// https://datatracker.ietf.org/doc/html/rfc2616/#section-5.1.1.
 func getMethod(r *http.Request) string {
 	if !utf8.ValidString(r.Method) {
-		log.Warnf("Invalid HTTP method encoding: %s", r.Method)
+		log.WithoutContext().Warnf("Invalid HTTP method encoding: %s", r.Method)
 		return "NON_UTF8_HTTP_METHOD"
 	}
-	return r.Method
+
+	switch r.Method {
+	case "HEAD", "GET", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", // https://datatracker.ietf.org/doc/html/rfc7231#section-4
+		"PATCH", // https://datatracker.ietf.org/doc/html/rfc5789#section-2
+		"PRI":   // https://datatracker.ietf.org/doc/html/rfc7540#section-11.6
+		return r.Method
+	default:
+		return "EXTENSION_METHOD"
+	}
 }
 
 type retryMetrics interface {

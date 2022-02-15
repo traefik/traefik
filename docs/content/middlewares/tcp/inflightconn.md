@@ -14,7 +14,7 @@ labels:
 
 ```yaml tab="Kubernetes"
 apiVersion: traefik.containo.us/v1alpha1
-kind: Middleware
+kind: MiddlewareTCP
 metadata:
   name: test-inflightconn
 spec:

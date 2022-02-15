@@ -5,12 +5,11 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"net"
 	"net/http"
-	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/middlewares/snicheck"
 	"github.com/traefik/traefik/v2/pkg/rules"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
 	tcpservice "github.com/traefik/traefik/v2/pkg/server/service/tcp"
@@ -161,38 +160,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		}
 	}
 
-	sniCheck := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		if req.TLS == nil {
-			handlerHTTPS.ServeHTTP(rw, req)
-			return
-		}
-
-		host, _, err := net.SplitHostPort(req.Host)
-		if err != nil {
-			host = req.Host
-		}
-
-		host = strings.TrimSpace(host)
-		serverName := strings.TrimSpace(req.TLS.ServerName)
-
-		// Domain Fronting
-		if !strings.EqualFold(host, serverName) {
-			tlsOptionSNI := findTLSOptionName(tlsOptionsForHost, serverName)
-			tlsOptionHeader := findTLSOptionName(tlsOptionsForHost, host)
-
-			if tlsOptionHeader != tlsOptionSNI {
-				log.WithoutContext().
-					WithField("host", host).
-					WithField("req.Host", req.Host).
-					WithField("req.TLS.ServerName", req.TLS.ServerName).
-					Debugf("TLS options difference: SNI=%s, Header:%s", tlsOptionSNI, tlsOptionHeader)
-				http.Error(rw, http.StatusText(http.StatusMisdirectedRequest), http.StatusMisdirectedRequest)
-				return
-			}
-		}
-
-		handlerHTTPS.ServeHTTP(rw, req)
-	})
+	sniCheck := snicheck.New(tlsOptionsForHost, handlerHTTPS)
 
 	router.HTTPSHandler(sniCheck, defaultTLSConf)
 
@@ -320,18 +288,4 @@ func (m *Manager) buildTCPHandler(ctx context.Context, router *runtime.TCPRouter
 	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
 
 	return tcp.NewChain().Extend(*mHandler).Then(sHandler)
-}
-
-func findTLSOptionName(tlsOptionsForHost map[string]string, host string) string {
-	tlsOptions, ok := tlsOptionsForHost[host]
-	if ok {
-		return tlsOptions
-	}
-
-	tlsOptions, ok = tlsOptionsForHost[strings.ToLower(host)]
-	if ok {
-		return tlsOptions
-	}
-
-	return traefiktls.DefaultTLSConfigName
 }
