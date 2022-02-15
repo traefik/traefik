@@ -126,7 +126,6 @@ func TestStripPrefix(t *testing.T) {
 		{
 			desc: "earlier prefix matching",
 			config: dynamic.StripPrefix{
-
 				Prefixes: []string{"/stat", "/stat/us"},
 			},
 			path:               "/stat/us",
