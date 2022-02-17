@@ -101,7 +101,7 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
       name:
         address: ":8888" # same as ":8888/tcp"
         http2:
-          maxConcurrentStreams: 250
+          maxConcurrentStreams: 42
         http3:
           advertisedPort: 8888
         transport:
@@ -130,7 +130,7 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
       [entryPoints.name]
         address = ":8888" # same as ":8888/tcp"
         [entryPoints.name.http2]
-          maxConcurrentStreams = 250
+          maxConcurrentStreams = 42
         [entryPoints.name.http3]
           advertisedPort = 8888
         [entryPoints.name.transport]
@@ -152,7 +152,7 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.name.address=:8888 # same as :8888/tcp
-    --entryPoints.name.http2.maxConcurrentStreams=250
+    --entryPoints.name.http2.maxConcurrentStreams=42
     --entryPoints.name.http3.advertisedport=8888
     --entryPoints.name.transport.lifeCycle.requestAcceptGraceTimeout=42
     --entryPoints.name.transport.lifeCycle.graceTimeOut=42
