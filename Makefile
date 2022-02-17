@@ -118,7 +118,7 @@ validate: $(PRE_TARGET)
 	bash $(CURDIR)/script/validate-shell-script.sh
 
 ## Clean up static directory and build a Docker Traefik image
-build-image: binary clean-webui
+build-image: clean-webui binary
 	docker build -t $(TRAEFIK_IMAGE) .
 
 ## Build a Docker Traefik image
