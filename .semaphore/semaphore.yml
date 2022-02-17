@@ -40,7 +40,7 @@ blocks:
         - name: Test Integration
           commands:
             - make pull-images
-            - mkdir -p webui/static && touch webui/static/index.html # Avoid generating webui
+            - touch webui/static/index.html # Avoid generating webui
             - PRE_TARGET="" make binary
             - make test-integration
             - df -h
