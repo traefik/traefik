@@ -1745,6 +1745,12 @@ func (s *Server) initialiseAuditStreams() {
 			if err != nil {
 				log.Fatal("Error creating new AMQP Sink: ", err)
 			}
+			log.Info("Created AMQP  Sink")		
+		case "HTTP":
+			as, err = streams.NewHTTPSink("", "https://datastream-right.private.mdtp/write/audit/traefik")
+			if err != nil {
+				log.Fatal("Error creating new AMQP Sink: ", err)
+			}
 			log.Info("Created AMQP Sink")
 		case "Blackhole":
 			as = streams.NewBlackholeSink()
