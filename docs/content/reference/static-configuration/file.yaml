@@ -33,7 +33,7 @@ entryPoints:
       - foobar
       - foobar
     http2:
-      maxConcurrentStreams: 250
+      maxConcurrentStreams: 42
     http3:
       advertisedPort: 42
     udp:
