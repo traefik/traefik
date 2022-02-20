@@ -15,7 +15,7 @@ type Tracable interface {
 	GetTracingInformation() (name string, spanKind ext.SpanKindEnum)
 }
 
-// Wrap adds tracability to an alice.Constructor.
+// Wrap adds traceability to an alice.Constructor.
 func Wrap(ctx context.Context, constructor alice.Constructor) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
 		if constructor == nil {
