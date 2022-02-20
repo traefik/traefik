@@ -3919,7 +3919,7 @@ Same changelog as v2.0.3.
 - **[etcd]** Fix typo in examples ([#2446](https://github.com/traefik/traefik/pull/2446) by [dahefanteng](https://github.com/dahefanteng))
 - **[k8s]** Add note to Kubernetes RBAC docs about RoleBindings and namespaces ([#2498](https://github.com/traefik/traefik/pull/2498) by [jmara](https://github.com/jmara))
 - **[k8s]** k8s guide: Leave note about assumed DaemonSet usage. ([#2634](https://github.com/traefik/traefik/pull/2634) by [timoreimann](https://github.com/timoreimann))
-- **[k8s]** Apply various contentual and stylish improvements to the k8s docs. ([#2677](https://github.com/traefik/traefik/pull/2677) by [timoreimann](https://github.com/timoreimann))
+- **[k8s]** Apply various contextual and stylish improvements to the k8s docs. ([#2677](https://github.com/traefik/traefik/pull/2677) by [timoreimann](https://github.com/timoreimann))
 - **[k8s]** Document rewrite-target annotation. ([#2676](https://github.com/traefik/traefik/pull/2676) by [timoreimann](https://github.com/timoreimann))
 - **[k8s]** Remove obsolete links in k8s docs ([#2465](https://github.com/traefik/traefik/pull/2465) by [marco-jantke](https://github.com/marco-jantke))
 - **[k8s]** Document filename parameter for Kubernetes. ([#2464](https://github.com/traefik/traefik/pull/2464) by [timoreimann](https://github.com/timoreimann))
@@ -3986,7 +3986,7 @@ Same changelog as v2.0.3.
 
 **Documentation:**
 - **[cluster]** Add a clustering example with Docker Swarm ([#2589](https://github.com/traefik/traefik/pull/2589) by [jmaitrehenry](https://github.com/jmaitrehenry))
-- **[k8s]** Apply various contentual and stylish improvements to the k8s docs. ([#2677](https://github.com/traefik/traefik/pull/2677) by [timoreimann](https://github.com/timoreimann))
+- **[k8s]** Apply various contextual and stylish improvements to the k8s docs. ([#2677](https://github.com/traefik/traefik/pull/2677) by [timoreimann](https://github.com/timoreimann))
 - **[k8s]** Document rewrite-target annotation. ([#2676](https://github.com/traefik/traefik/pull/2676) by [timoreimann](https://github.com/timoreimann))
 - **[provider,webui]** Fix redirect problem on dashboard + docs/tests on [web] ([#2686](https://github.com/traefik/traefik/pull/2686) by [Juliens](https://github.com/Juliens))
 
