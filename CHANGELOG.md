@@ -4879,7 +4879,7 @@ Same changelog as v2.0.3.
 
 **Documentation:**
 - [#1578](https://github.com/traefik/traefik/issues/1578) Add Marathon guide. ([Stibbons](https://github.com/Stibbons))
-- [#1602](https://github.com/traefik/traefik/issues/1602) Re Orginise k8s docs to make 1.6 usage easier ([errm](https://github.com/errm))
+- [#1602](https://github.com/traefik/traefik/issues/1602) Re Organise k8s docs to make 1.6 usage easier ([errm](https://github.com/errm))
 - [#1642](https://github.com/traefik/traefik/issues/1642) Update changelog ([ldez](https://github.com/ldez))
 
 ## [v1.3.0-rc2](https://github.com/traefik/traefik/tree/v1.3.0-rc2) (2017-05-16)
