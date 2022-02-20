@@ -5878,7 +5878,7 @@ Same changelog as v2.0.3.
 - Traefik doesn't listen on IPv4 ports [\#434](https://github.com/traefik/traefik/issues/434)
 - Not listening on port 80 [\#432](https://github.com/traefik/traefik/issues/432)
 - docs need updating for new frontend rules format [\#423](https://github.com/traefik/traefik/issues/423)
-- Does traefik supports for Mac? \(For devlelopment\)  [\#417](https://github.com/traefik/traefik/issues/417)
+- Does traefik supports for Mac? \(For development\)  [\#417](https://github.com/traefik/traefik/issues/417)
 
 **Merged pull requests:**
 
