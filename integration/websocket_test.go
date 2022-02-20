@@ -500,7 +500,7 @@ func (s *WebsocketSuite) TestSSLhttp2(c *check.C) {
 	c.Assert(string(msg), checker.Equals, "OK")
 }
 
-func (s *WebsocketSuite) TestHeaderAreForwared(c *check.C) {
+func (s *WebsocketSuite) TestHeaderAreForwarded(c *check.C) {
 	upgrader := gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
