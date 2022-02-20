@@ -2775,7 +2775,7 @@ Same changelog as v2.0.3.
 - **[healthcheck]** Query params in health check ([#4188](https://github.com/traefik/traefik/pull/4188) by [mmatur](https://github.com/mmatur))
 - **[metrics]** Upgraded DD APM library ([#4189](https://github.com/traefik/traefik/pull/4189) by [aantono](https://github.com/aantono))
 - **[middleware]** Fix ssl force host secure middleware ([#4138](https://github.com/traefik/traefik/pull/4138) by [mmatur](https://github.com/mmatur))
-- **[oxy]** Fix unannonced trailers problem when body is empty ([#4258](https://github.com/traefik/traefik/pull/4258) by [juliens](https://github.com/juliens))
+- **[oxy]** Fix unannounced trailers problem when body is empty ([#4258](https://github.com/traefik/traefik/pull/4258) by [juliens](https://github.com/juliens))
 - **[provider,server]** Log configuration errors from providers and keeps listening ([#4230](https://github.com/traefik/traefik/pull/4230) by [geraldcroes](https://github.com/geraldcroes))
 - **[tls]** Implement Case-insensitive SNI matching ([#4132](https://github.com/traefik/traefik/pull/4132) by [dtomcej](https://github.com/dtomcej))
 - Use ParseInt instead of Atoi for parsing durations ([#4263](https://github.com/traefik/traefik/pull/4263) by [mmatur](https://github.com/mmatur))
