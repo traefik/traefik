@@ -144,7 +144,7 @@ func TestAppendRespectsImmutability(t *testing.T) {
 	newChain := chain.Append(tagMiddleware(""))
 
 	if &chain.constructors[0] == &newChain.constructors[0] {
-		t.Error("Apppend does not respect immutability")
+		t.Error("Append does not respect immutability")
 	}
 }
 
