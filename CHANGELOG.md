@@ -4696,7 +4696,7 @@ Same changelog as v2.0.3.
 [All Commits](https://github.com/traefik/traefik/compare/v1.3.7...v1.3.8)
 
 **Bug fixes:**
-- **[middleware]** Compress and Webscocket ([#2079](https://github.com/traefik/traefik/pull/2079) by [ldez](https://github.com/ldez))
+- **[middleware]** Compress and Websocket ([#2079](https://github.com/traefik/traefik/pull/2079) by [ldez](https://github.com/ldez))
 
 ## [v1.3.7](https://github.com/traefik/traefik/tree/v1.3.7) (2017-08-25)
 [All Commits](https://github.com/traefik/traefik/compare/v1.3.6...v1.3.7)
