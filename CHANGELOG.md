@@ -1783,7 +1783,7 @@ Same changelog as v2.0.3.
 - fix: remove extra backtick from routers docs ([#5572](https://github.com/traefik/traefik/pull/5572) by [serpi90](https://github.com/serpi90))
 - document providersThrottleDuration ([#5519](https://github.com/traefik/traefik/pull/5519) by [mpl](https://github.com/mpl))
 - Add a response forwarding section to the service documentation  ([#5517](https://github.com/traefik/traefik/pull/5517) by [jbdoumenjou](https://github.com/jbdoumenjou))
-- Change instances of &#34;dymanic&#34; to &#34;dynamic&#34; ([#5504](https://github.com/traefik/traefik/pull/5504) by [dat-gitto-kid](https://github.com/dat-gitto-kid))
+- Change instances of &#34;dynamic&#34; to &#34;dynamic&#34; ([#5504](https://github.com/traefik/traefik/pull/5504) by [dat-gitto-kid](https://github.com/dat-gitto-kid))
 - Add the pass host header section to the services documentation ([#5500](https://github.com/traefik/traefik/pull/5500) by [jbdoumenjou](https://github.com/jbdoumenjou))
 - fix misspelling on documentation landing page ([#5613](https://github.com/traefik/traefik/pull/5613) by [cthompson527](https://github.com/cthompson527))
 
