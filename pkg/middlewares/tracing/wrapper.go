@@ -10,8 +10,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/tracing"
 )
 
-// Tracable embeds tracing information.
-type Tracable interface {
+// Traceable embeds tracing information.
+type Traceable interface {
 	GetTracingInformation() (name string, spanKind ext.SpanKindEnum)
 }
 
@@ -26,8 +26,8 @@ func Wrap(ctx context.Context, constructor alice.Constructor) alice.Constructor 
 			return nil, err
 		}
 
-		if tracableHandler, ok := handler.(Tracable); ok {
-			name, spanKind := tracableHandler.GetTracingInformation()
+		if traceableHandler, ok := handler.(Traceable); ok {
+			name, spanKind := traceableHandler.GetTracingInformation()
 			log.FromContext(ctx).WithField(log.MiddlewareName, name).Debug("Adding tracing to middleware")
 			return NewWrapper(handler, name, spanKind), nil
 		}
