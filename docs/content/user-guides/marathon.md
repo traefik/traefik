@@ -93,7 +93,7 @@ There are two mitigation efforts:
 The Marathon health check makes sure that applications once deemed dysfunctional are being rescheduled to different slaves.
 However, they might take a while to get triggered and the follow-up processes to complete.
 
-For that reason, the Treafik health check provides an additional check that responds more rapidly and does not require a configuration reload to happen.
+For that reason, the Traefik health check provides an additional check that responds more rapidly and does not require a configuration reload to happen.
 Additionally, it protects from cases that the Marathon health check may not be able to cover, such as a network split.
 
 ### (Non-)Alternatives
