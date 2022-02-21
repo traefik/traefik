@@ -131,7 +131,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		Name: configLastReloadFailureName,
 		Help: "Last config reload failure",
 	}, []string{})
-	tlsCertsNotAfterTimesptamp := newGaugeFrom(promState.collectors, stdprometheus.GaugeOpts{
+	tlsCertsNotAfterTimestamp := newGaugeFrom(promState.collectors, stdprometheus.GaugeOpts{
 		Name: tlsCertsNotAfterTimestamp,
 		Help: "Certificate expiration timestamp",
 	}, []string{"cn", "serial", "sans"})
@@ -141,7 +141,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		configReloadsFailures.cv.Describe,
 		lastConfigReloadSuccess.gv.Describe,
 		lastConfigReloadFailure.gv.Describe,
-		tlsCertsNotAfterTimesptamp.gv.Describe,
+		tlsCertsNotAfterTimestamp.gv.Describe,
 	}
 
 	reg := &standardRegistry{
@@ -152,7 +152,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		configReloadsFailureCounter:    configReloadsFailures,
 		lastConfigReloadSuccessGauge:   lastConfigReloadSuccess,
 		lastConfigReloadFailureGauge:   lastConfigReloadFailure,
-		tlsCertsNotAfterTimestampGauge: tlsCertsNotAfterTimesptamp,
+		tlsCertsNotAfterTimestampGauge: tlsCertsNotAfterTimestamp,
 	}
 
 	if config.AddEntryPointsLabels {

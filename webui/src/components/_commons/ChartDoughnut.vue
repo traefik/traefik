@@ -16,7 +16,7 @@ export default {
   },
   watch: {
     chartdata: function (newData, oldData) {
-      // TODO - bug, 'update()' not update the chart, remplace for renderChart()
+      // TODO - bug, 'update()' not update the chart, replace for renderChart()
       // console.log('new data from watcher...', newData, oldData, isEqual(newData.datasets[0].data, oldData.datasets[0].data))
       if (!isEqual(newData.datasets[0].data, oldData.datasets[0].data)) {
         // this.$data._chart.update()
