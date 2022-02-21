@@ -50,6 +50,58 @@
     kubeerror = "k8s.io/apimachinery/pkg/api/errors"
     composeapi = "github.com/docker/compose/v2/pkg/api"
 
+  [linters-settings.revive]
+    [[linters-settings.revive.rules]]
+      name = "struct-tag"
+    [[linters-settings.rules]]
+      name = "blank-imports"
+    [[linters-settings.rules]]
+      name = "context-as-argument"
+    [[linters-settings.rules]]
+      name = "context-keys-type"
+    [[linters-settings.rules]]
+      name = "dot-imports"
+    [[linters-settings.rules]]
+      name = "error-return"
+    [[linters-settings.rules]]
+      name = "error-strings"
+    [[linters-settings.rules]]
+      name = "error-naming"
+    [[linters-settings.rules]]
+      name = "exported"
+    [[linters-settings.rules]]
+      name = "if-return"
+    [[linters-settings.rules]]
+      name = "increment-decrement"
+    [[linters-settings.rules]]
+      name = "var-naming"
+    [[linters-settings.rules]]
+      name = "var-declaration"
+    [[linters-settings.rules]]
+      name = "package-comments"
+    [[linters-settings.rules]]
+      name = "range"
+    [[linters-settings.rules]]
+      name = "receiver-naming"
+    [[linters-settings.rules]]
+      name = "time-naming"
+    [[linters-settings.rules]]
+      name = "unexported-return"
+    [[linters-settings.rules]]
+      name = "indent-error-flow"
+    [[linters-settings.rules]]
+      name = "errorf"
+    [[linters-settings.rules]]
+      name = "empty-block"
+    [[linters-settings.rules]]
+      name = "superfluous-else"
+    [[linters-settings.rules]]
+      name = "unused-parameter"
+    [[linters-settings.rules]]
+      name = "unreachable-code"
+    [[linters-settings.rules]]
+      name = "redefines-builtin-id"
+
   [linters-settings.gomoddirectives]
     replace-allow-list = [
       "github.com/abbot/go-http-auth",
@@ -159,3 +211,6 @@
  [[issues.exclude-rules]]
     path = "pkg/log/deprecated.go"
     linters = ["godot"]
+ [[issues.exclude-rules]]
+    path = "(.+)\\.go"
+    text = "struct-tag: unknown option 'inline' in JSON tag"
