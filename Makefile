@@ -58,14 +58,18 @@ dist:
 build-webui-image:
 	docker build -t traefik-webui --build-arg ARG_PLATFORM_URL=$(PLATFORM_URL) -f webui/Dockerfile webui
 
+## Clean WebUI static generated assets
+clean-webui:
+	rm -r webui/static
+	mkdir -p webui/static
+	echo 'For more information show `webui/readme.md`' > webui/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md
+
 ## Generate WebUI
 generate-webui:
-	if [ ! -d "webui/static" ]; then \
+	if [ ! -f "webui/static/index.html" ]; then \
 		$(MAKE) build-webui-image; \
-		mkdir -p webui/static; \
 		docker run --rm -v "$$PWD/webui/static":'/src/webui/static' traefik-webui npm run build:nc; \
 		docker run --rm -v "$$PWD/webui/static":'/src/webui/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ./static; \
-		echo 'For more information show `webui/readme.md`' > $$PWD/webui/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md; \
 	fi
 
 ## Build the linux binary
@@ -114,8 +118,7 @@ validate: $(PRE_TARGET)
 	bash $(CURDIR)/script/validate-shell-script.sh
 
 ## Clean up static directory and build a Docker Traefik image
-build-image: binary
-	rm -rf webui/static
+build-image: clean-webui binary
 	docker build -t $(TRAEFIK_IMAGE) .
 
 ## Build a Docker Traefik image
