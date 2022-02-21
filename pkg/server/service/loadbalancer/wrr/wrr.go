@@ -86,7 +86,7 @@ func (b *Balancer) Push(x interface{}) {
 	b.handlers = append(b.handlers, h)
 }
 
-// Pop implements heap.Interface for poping an item from the heap.
+// Pop implements heap.Interface for popping an item from the heap.
 // It panics if b.Len() < 1.
 func (b *Balancer) Pop() interface{} {
 	h := b.handlers[len(b.handlers)-1]
