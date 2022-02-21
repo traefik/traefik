@@ -104,11 +104,11 @@ func TestRetry(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			retryAttemps := 0
+			retryAttempts := 0
 			next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-				retryAttemps++
+				retryAttempts++
 
-				if retryAttemps > test.amountFaultyEndpoints {
+				if retryAttempts > test.amountFaultyEndpoints {
 					// calls WroteHeaders on httptrace.
 					_ = r.Write(io.Discard)
 
@@ -275,11 +275,11 @@ func TestRetryWebsocket(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			retryAttemps := 0
+			retryAttempts := 0
 			next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-				retryAttemps++
+				retryAttempts++
 
-				if retryAttemps > test.amountFaultyEndpoints {
+				if retryAttempts > test.amountFaultyEndpoints {
 					upgrader := websocket.Upgrader{}
 					_, err := upgrader.Upgrade(rw, r, nil)
 					if err != nil {

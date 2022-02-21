@@ -454,7 +454,7 @@ func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient,
 // chunkIDs ECS expects no more than 100 parameters be passed to a API call;
 // thus, pack each string into an array capped at 100 elements.
 func (p *Provider) chunkIDs(ids []*string) [][]*string {
-	var chuncked [][]*string
+	var chunked [][]*string
 	for i := 0; i < len(ids); i += 100 {
 		var sliceEnd int
 		if i+100 < len(ids) {
@@ -462,7 +462,7 @@ func (p *Provider) chunkIDs(ids []*string) [][]*string {
 		} else {
 			sliceEnd = len(ids)
 		}
-		chuncked = append(chuncked, ids[i:sliceEnd])
+		chunked = append(chunked, ids[i:sliceEnd])
 	}
-	return chuncked
+	return chunked
 }

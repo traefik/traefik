@@ -15,7 +15,7 @@ apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
   name: my-gateway-class
 spec:
-  controllerName: unkown.io/gateway-controller
+  controllerName: unknown.io/gateway-controller
 
 ---
 kind: Gateway
