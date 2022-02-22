@@ -114,8 +114,11 @@ Trust only forwarded headers from selected IPs.
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP`:  
 HTTP configuration.
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP2_MAXCONCURRENTSTREAMS`:  
+Specifies the number of concurrent streams that each client may have open at a time. (Default: ```250```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP3`:  
-HTTP3 configuration. (Default: ```false```)
+HTTP/3 configuration. (Default: ```false```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP3_ADVERTISEDPORT`:  
 UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
