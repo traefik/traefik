@@ -20,13 +20,13 @@ make clean-webui generate-webui # Generate static contents in `webui/static/` fo
 
 ## How to build (only for frontend developer)
 
-- prerequisite: [Node 12.11+](https://nodejs.org) [Npm](https://www.npmjs.com/)
+- prerequisite: [Node 12.11+](https://nodejs.org) [Npm](https://www.npmjs.com/) [yarn](https://yarnpkg.com/)
 
 - Go to the `webui/` directory
 
 - To install dependencies, execute the following commands:
 
-  - `npm install`
+  - `yarn install`
 
 - Build static Web UI, execute the following command:
 
@@ -57,6 +57,7 @@ make clean-webui generate-webui # Generate static contents in `webui/static/` fo
 
 - [Node](https://nodejs.org)
 - [Npm](https://www.npmjs.com/)
+- [yarn](https://yarnpkg.com/)
 - [Webpack](https://github.com/webpack/webpack)
 - [Vue](https://vuejs.org/)
 - [Bulma](https://bulma.io)

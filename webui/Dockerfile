@@ -7,9 +7,10 @@ ENV PLATFORM_URL=${ARG_PLATFORM_URL}
 RUN mkdir -p $WEBUI_DIR
 
 COPY package.json $WEBUI_DIR/
-COPY package-lock.json $WEBUI_DIR/
+COPY yarn.lock $WEBUI_DIR/
 
 WORKDIR $WEBUI_DIR
+RUN npm install --quiet --global yarn@1.22.17
 RUN yarn install
 
 COPY . $WEBUI_DIR/
