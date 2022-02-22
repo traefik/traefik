@@ -68,7 +68,7 @@ traefik --configFile=foo/bar/myconfigfile.yml
 
     In order to provide _dynamic configuration_ from a file, you'll need to create an other file,
     reference it in your _static configuration_ file using the [File provider](../providers/file.md).
-    Any _dynamic configuration_ seen in the _static configuration_ file is **discarded without warnings**.
+    Any _dynamic configuration_ seen in the _static configuration_ file is **ignored without warnings**.
 
 ### Arguments
 
