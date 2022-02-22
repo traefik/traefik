@@ -132,7 +132,7 @@ If no default certificate is provided, Traefik generates and uses a self-signed 
 
 ## TLS Options
 
-The TLS options allow one to configure some parameters on TLS connections.
+TLS Options allows to configure parameters on TLS connections.
 
 !!! important "TLSOptions in Kubernetes"
 
@@ -140,10 +140,10 @@ The TLS options allow one to configure some parameters on TLS connections.
 
 !!! important "'default' TLS Option"
 
-    The `default` option is special.
-    When no tls options are specified in a tls router, the `default` option is used.
-    Conversely, for cross-provider references, for example, when referencing the file
-    provider from a docker label, you must specify the provider, for example:
+    When no tls options are specified in a tls router, the `default` option is used.  
+    When specifying the `default` option explicitly, make sure not to specify provider namespace as the `default` option does not have one.  
+    Conversely, for cross-provider references, for example, when referencing the file provider from a docker label,
+    you must specify the provider namespace, for example: 
     `traefik.http.routers.myrouter.tls.options=myoptions@file`
 
 ### Minimum TLS Version
