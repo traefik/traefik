@@ -144,7 +144,7 @@ func TestPopulateUsedBy(t *testing.T) {
 			},
 		},
 		{
-			desc: "2 different Services each used by a disctinct router.",
+			desc: "2 different Services each used by a distinct router.",
 			conf: &runtime.Configuration{
 				Services: map[string]*runtime.ServiceInfo{
 					"foo-service@myprovider": {
@@ -384,7 +384,7 @@ func TestPopulateUsedBy(t *testing.T) {
 			},
 		},
 		{
-			desc: "2 middlewares from 2 disctinct providers both used by 2 Routers",
+			desc: "2 middlewares from 2 distinct providers both used by 2 Routers",
 			conf: &runtime.Configuration{
 				Services: map[string]*runtime.ServiceInfo{
 					"foo-service@myprovider": {
@@ -593,7 +593,7 @@ func TestPopulateUsedBy(t *testing.T) {
 			},
 		},
 		{
-			desc: "TCP, 2 different Services each used by a disctinct router.",
+			desc: "TCP, 2 different Services each used by a distinct router.",
 			conf: &runtime.Configuration{
 				TCPServices: map[string]*runtime.TCPServiceInfo{
 					"foo-service@myprovider": {

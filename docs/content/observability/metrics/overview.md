@@ -61,7 +61,7 @@ traefik_config_last_reload_success
 
 The expiration date of certificates.
 
-Available labels: `cn`, `sans`, `serial`.
+[Labels](#labels): `cn`, `sans`, `serial`.
 
 ```dd tab="Datadog"
 tls.certs.notAfterTimestamp
@@ -93,7 +93,7 @@ traefik_tls_certs_not_after
 
 The total count of HTTP requests received by an entrypoint.
 
-Available labels: `code`, `method`, `protocol`, `entrypoint`.
+[Labels](#labels): `code`, `method`, `protocol`, `entrypoint`.
 
 ```dd tab="Datadog"
 entrypoint.request.total
@@ -116,7 +116,7 @@ traefik_entrypoint_requests_total
 
 The total count of HTTPS requests received by an entrypoint.
 
-Available labels: `tls_version`, `tls_cipher`, `entrypoint`.
+[Labels](#labels): `tls_version`, `tls_cipher`, `entrypoint`.
 
 ```dd tab="Datadog"
 entrypoint.request.tls.total
@@ -139,7 +139,7 @@ traefik_entrypoint_requests_tls_total
 
 Request processing duration histogram on an entrypoint.
 
-Available labels: `code`, `method`, `protocol`, `entrypoint`.
+[Labels](#labels): `code`, `method`, `protocol`, `entrypoint`.
 
 ```dd tab="Datadog"
 entrypoint.request.duration
@@ -162,7 +162,7 @@ traefik_entrypoint_request_duration_seconds
 
 The current count of open connections on an entrypoint.
 
-Available labels: `method`, `protocol`, `entrypoint`.
+[Labels](#labels): `method`, `protocol`, `entrypoint`.
 
 ```dd tab="Datadog"
 entrypoint.connections.open
@@ -194,7 +194,7 @@ traefik_entrypoint_open_connections
 
 The total count of HTTP requests handled by a router.
 
-Available labels: `code`, `method`, `protocol`, `router`, `service`.
+[Labels](#labels): `code`, `method`, `protocol`, `router`, `service`.
 
 ```dd tab="Datadog"
 router.request.total
@@ -217,7 +217,7 @@ traefik_router_requests_total
 
 The total count of HTTPS requests handled by a router.
 
-Available labels: `tls_version`, `tls_cipher`, `router`, `service`.
+[Labels](#labels): `tls_version`, `tls_cipher`, `router`, `service`.
 
 ```dd tab="Datadog"
 router.request.tls.total
@@ -240,7 +240,7 @@ traefik_router_requests_tls_total
 
 Request processing duration histogram on a router.
 
-Available labels: `code`, `method`, `protocol`, `router`, `service`.
+[Labels](#labels): `code`, `method`, `protocol`, `router`, `service`.
 
 ```dd tab="Datadog"
 router.request.duration
@@ -263,7 +263,7 @@ traefik_router_request_duration_seconds
 
 The current count of open connections on a router.
 
-Available labels: `method`, `protocol`, `router`, `service`.
+[Labels](#labels): `method`, `protocol`, `router`, `service`.
 
 ```dd tab="Datadog"
 router.connections.open
@@ -297,7 +297,7 @@ traefik_router_open_connections
 
 The total count of HTTP requests processed on a service.
 
-Available labels: `code`, `method`, `protocol`, `service`.
+[Labels](#labels): `code`, `method`, `protocol`, `service`.
 
 ```dd tab="Datadog"
 service.request.total
@@ -320,7 +320,7 @@ traefik_service_requests_total
 
 The total count of HTTPS requests processed on a service.
 
-Available labels: `tls_version`, `tls_cipher`, `service`.
+[Labels](#labels): `tls_version`, `tls_cipher`, `service`.
 
 ```dd tab="Datadog"
 router.service.tls.total
@@ -343,7 +343,7 @@ traefik_service_requests_tls_total
 
 Request processing duration histogram on a service.
 
-Available labels: `code`, `method`, `protocol`, `service`.
+[Labels](#labels): `code`, `method`, `protocol`, `service`.
 
 ```dd tab="Datadog"
 service.request.duration
@@ -366,7 +366,7 @@ traefik_service_request_duration_seconds
 
 The current count of open connections on a service.
 
-Available labels: `method`, `protocol`, `service`.
+[Labels](#labels): `method`, `protocol`, `service`.
 
 ```dd tab="Datadog"
 service.connections.open
@@ -389,7 +389,7 @@ traefik_service_open_connections
 
 The count of requests retries on a service.
 
-Available labels: `service`.
+[Labels](#labels): `service`.
 
 ```dd tab="Datadog"
 service.retries.total
@@ -412,7 +412,7 @@ traefik_service_retries_total
 
 Current service's server status, described by a gauge with a value of 0 for a down server or a value of 1 for an up server.
 
-Available labels: `service`, `url`.
+[Labels](#labels): `service`, `url`.
 
 ```dd tab="Datadog"
 service.server.up
@@ -430,3 +430,28 @@ traefik_service_server_up
 # Default prefix: "traefik"
 {prefix}.service.server.up
 ```
+
+## Labels
+
+Here is a comprehensive list of labels that are provided by the metrics:
+
+| Label         | Description                           | example                    |
+|---------------|---------------------------------------|----------------------------|
+| `cn`          | Certificate Common Name               | "example.com"              |
+| `code`        | Request code                          | "200"                      |
+| `entrypoint`  | Entrypoint that handled the request   | "example_entrypoint"       |
+| `method`      | Request Method                        | "GET"                      |
+| `protocol`    | Request protocol                      | "http"                     |
+| `router`      | Router that handled the request       | "example_router"           |
+| `sans`        | Certificate Subject Alternative NameS | "example.com"              |
+| `serial`      | Certificate Serial Number             | "123..."                   |
+| `service`     | Service that handled the request      | "example_service@provider" |
+| `tls_cipher`  | TLS cipher used for the request       | "TLS_FALLBACK_SCSV"        |
+| `tls_version` | TLS version used for the request      | "1.0"                      |
+| `url`         | Service server url                    | "http://example.com"       |
+
+!!! info "`method` label value"
+
+    If the HTTP method verb on a request is not one defined in the set of common methods for [`HTTP/1.1`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
+    or the [`PRI`](https://datatracker.ietf.org/doc/html/rfc7540#section-11.6) verb (for `HTTP/2`),
+    then the value for the method label becomes `EXTENSION_METHOD`.

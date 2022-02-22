@@ -23,7 +23,7 @@ jobs:
 
       - name: Build webui
         run: |
-          make generate-webui
+          make clean-webui generate-webui
           tar czvf webui.tar.gz ./webui/static/
 
       - name: Artifact webui

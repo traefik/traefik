@@ -43,8 +43,8 @@ func (f *forwarderMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Reques
 	span, req, finish := tr.StartSpanf(req, ext.SpanKindRPCClientEnum, "forward", opParts, "/")
 	defer finish()
 
-	span.SetTag("service.name", f.service)
-	span.SetTag("router.name", f.router)
+	span.SetTag("traefik.service.name", f.service)
+	span.SetTag("traefik.router.name", f.router)
 	ext.HTTPMethod.Set(span, req.Method)
 	ext.HTTPUrl.Set(span, req.URL.String())
 	span.SetTag("http.host", req.Host)
