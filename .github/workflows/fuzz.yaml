@@ -1,0 +1,32 @@
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+name: Fuzz
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build the target
+        run: |
+          make binary
+
+      - uses: rizaziz/mcode-action@main
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+        with:
+          mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
+          mayhem-url: ${{ secrets.MAYHEM_URL }}       
+          run-cmd: traefik --configfile=/etc/traefik/traefik.toml
+          network-url: tcp://127.0.0.1:8080
+          args: --duration 300
+
+      - name: Upload SARIF file(s)
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: mayhem-out/sarif
