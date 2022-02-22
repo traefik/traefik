@@ -10,7 +10,7 @@ COPY package.json $WEBUI_DIR/
 COPY package-lock.json $WEBUI_DIR/
 
 WORKDIR $WEBUI_DIR
-RUN npm install
+RUN yarn install
 
 COPY . $WEBUI_DIR/
 
