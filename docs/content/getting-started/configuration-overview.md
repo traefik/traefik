@@ -21,7 +21,7 @@ This configuration can change and is seamlessly hot-reloaded, without any reques
 
 ## The Dynamic Configuration
 
-Traefik gets its _dynamic configuration_ from [providers](../providers/overview.md): whether an orchestrator, a service registry, or a plain old configuration file.
+Traefik gets its _dynamic configuration_ from [providers](../providers/overview.md): whether an orchestrator, a service registry, or [additional configuration file](../providers/file.md) dedicated to _dynamic configuration_.
 
 Since this configuration is specific to your infrastructure choices, we invite you to refer to the [dedicated section of this documentation](../routing/overview.md).
 
@@ -51,7 +51,7 @@ Once positioned, this option sets (and resets) all the default values of the sub
 
 ### Configuration File
 
-At startup, Traefik searches for a file named `traefik.yml` (or `traefik.yaml` or `traefik.toml`) in:
+At startup, Traefik searches for a _static configuration_ file named `traefik.yml` (or `traefik.yaml` or `traefik.toml`) in:
 
 - `/etc/traefik/`
 - `$XDG_CONFIG_HOME/`
@@ -63,6 +63,12 @@ You can override this using the `configFile` argument.
 ```bash
 traefik --configFile=foo/bar/myconfigfile.yml
 ```
+
+!!! important "_static_ & _dynamic_ configuration cannot be in the same file"
+
+    In order to provide _dynamic configuration_ from a file, you'll need to create an other file,
+    reference it in your _static configuration_ file using the [File provider](../providers/file.md).
+    Any _dynamic configuration_ seen in the _static configuration_ file is **discarded without warnings**.
 
 ### Arguments
 
