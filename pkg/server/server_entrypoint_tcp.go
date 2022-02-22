@@ -507,6 +507,10 @@ type httpServer struct {
 }
 
 func createHTTPServer(ctx context.Context, ln net.Listener, configuration *static.EntryPoint, withH2c bool, reqDecorator *requestdecorator.RequestDecorator) (*httpServer, error) {
+	if configuration.HTTP2.MaxConcurrentStreams < 0 {
+		return nil, errors.New("max concurrent streams value must be greater than or equal to zero")
+	}
+
 	httpSwitcher := middlewares.NewHandlerSwitcher(router.BuildDefaultHTTPRouter())
 
 	next, err := alice.New(requestdecorator.WrapHandler(reqDecorator)).Then(httpSwitcher)
@@ -524,10 +528,6 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	}
 
 	if withH2c {
-		if configuration.HTTP2.MaxConcurrentStreams < 0 {
-			return nil, errors.New("max concurrent streams value must be greater than or equal to zero")
-		}
-
 		handler = h2c.NewHandler(handler, &http2.Server{
 			MaxConcurrentStreams: uint32(configuration.HTTP2.MaxConcurrentStreams),
 		})
@@ -539,6 +539,17 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		ReadTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
 		WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
 		IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
+	}
+
+	// ConfigureServer configures HTTP/2 with the MaxConcurrentStreams option for the given server.
+	// Also keeping behavior the same as
+	// https://cs.opensource.google/go/go/+/refs/tags/go1.17.7:src/net/http/server.go;l=3262
+	err = http2.ConfigureServer(serverHTTP, &http2.Server{
+		MaxConcurrentStreams: uint32(configuration.HTTP2.MaxConcurrentStreams),
+		NewWriteScheduler:    func() http2.WriteScheduler { return http2.NewPriorityWriteScheduler(nil) },
+	})
+	if err != nil {
+		return nil, fmt.Errorf("configure HTTP/2 server: %w", err)
 	}
 
 	listener := newHTTPForwarder(ln)
