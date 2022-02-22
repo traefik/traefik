@@ -1479,14 +1479,16 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
 Register the `TLSOption` [kind](../../reference/dynamic-configuration/kubernetes-crd.md#definitions) in the Kubernetes cluster before creating `TLSOption` objects
 or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`IngressRouteTCP`](#kind-ingressroutetcp) objects.
 
+With CRDs, one can also redefine the `default` TLSOption, which will be applied to every router that has no TLSOptions explicitly attached, nor a specific TLSOptions defined through the [HTTP TLS](../entrypoints.md#tls) section on the EntryPoint.
+
 !!! info "TLSOption Attributes"
    
     ```yaml tab="TLSOption"
     apiVersion: traefik.containo.us/v1alpha1
     kind: TLSOption
     metadata:
-      name: mytlsoption
-      namespace: default
+      name: default
+      namespace: traefiknamespace
     
     spec:
       minVersion: VersionTLS12                      # [1]
