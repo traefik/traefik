@@ -45,7 +45,7 @@ $ ls dist/
 traefik*
 ```
 
-The following targets can be executed outside Docker by setting the variable `IN_DOCKER` to an empty string (we don't recommend that):
+The following targets can be executed outside Docker by setting the variable `IN_DOCKER` to an empty string (although be aware that some of the tests might fail in that context):
 
 - `test-unit`
 - `test-integration`
