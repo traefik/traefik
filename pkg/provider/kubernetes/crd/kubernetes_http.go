@@ -50,7 +50,12 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			ingressName = ingressRoute.GenerateName
 		}
 
-		cb := configBuilder{client: client, allowCrossNamespace: p.AllowCrossNamespace, allowExternalNameServices: p.AllowExternalNameServices}
+		cb := configBuilder{
+			client:                    client,
+			allowCrossNamespace:       p.AllowCrossNamespace,
+			allowExternalNameServices: p.AllowExternalNameServices,
+			allowEmptyServices:        p.AllowEmptyServices,
+		}
 
 		for _, route := range ingressRoute.Spec.Routes {
 			if route.Kind != "Rule" {
@@ -193,6 +198,7 @@ type configBuilder struct {
 	client                    Client
 	allowCrossNamespace       bool
 	allowExternalNameServices bool
+	allowEmptyServices        bool
 }
 
 // buildTraefikService creates the configuration for the traefik service defined in tService,
@@ -353,7 +359,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc v1alpha1.LoadBala
 	if err != nil {
 		return nil, err
 	}
-	if !exists {
+	if !exists && !c.allowEmptyServices {
 		return nil, fmt.Errorf("kubernetes service not found: %s/%s", namespace, sanitizedName)
 	}
 
@@ -384,11 +390,8 @@ func (c configBuilder) loadServers(parentNamespace string, svc v1alpha1.LoadBala
 	if endpointsErr != nil {
 		return nil, endpointsErr
 	}
-	if !endpointsExists {
+	if !endpointsExists && !c.allowEmptyServices {
 		return nil, fmt.Errorf("endpoints not found for %s/%s", namespace, sanitizedName)
-	}
-	if len(endpoints.Subsets) == 0 {
-		return nil, fmt.Errorf("subset not found for %s/%s", namespace, sanitizedName)
 	}
 
 	var port int32
