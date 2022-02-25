@@ -266,7 +266,7 @@ providers:
 
 ### `allowEmptyServices`
 
-_Optional, Default: false
+_Optional, Default: false_
 
 ```yaml tab="File (YAML)"
 providers:
