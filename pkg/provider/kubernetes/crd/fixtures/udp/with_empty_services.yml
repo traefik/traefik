@@ -1,0 +1,29 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - foo
+
+  routes:
+  - services:
+    - name: empty-udp-service
+      port: 8000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: empty-udp-service
+  namespace: default
+
+spec:
+  ports:
+    - name: myapp
+      port: 8000
+  selector:
+    app: selector-of-non-existing-app
+    task: whoamiudp

@@ -1,0 +1,30 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - foo
+
+  routes:
+  - match: HostSNI(`foo.com`)
+    services:
+    - name: empty-tcp-service
+      port: 8000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: empty-tcp-service
+  namespace: default
+
+spec:
+  ports:
+    - name: myapp
+      port: 8000
+  selector:
+    app: selector-of-non-existing-app
+    task: whoamitcp
