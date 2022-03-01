@@ -140,6 +140,7 @@ TLS Options allows to configure parameters on TLS connections.
 
 !!! important "'default' TLS Option"
 
+    The `default` option is special.
     When no tls options are specified in a tls router, the `default` option is used.  
     When specifying the `default` option explicitly, make sure not to specify provider namespace as the `default` option does not have one.  
     Conversely, for cross-provider references, for example, when referencing the file provider from a docker label,
