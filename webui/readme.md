@@ -39,7 +39,7 @@ make clean-webui generate-webui # Generate static contents in `webui/static/` fo
 - The build allows to:
   - optimize all JavaScript
   - optimize all CSS
-  - add vendor prefixes to CSS (cross-bowser support)
+  - add vendor prefixes to CSS (cross-browser support)
   - add a hash in the file names to prevent browser cache problems
   - optimize all images at build time
   - bundle JavaScript in one file
