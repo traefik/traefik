@@ -9,7 +9,7 @@ COPY ./webui/ $WEBUI_DIR/
 WORKDIR $WEBUI_DIR
 
 RUN yarn install
-RUN npm run build
+RUN yarn build
 
 # BUILD
 FROM golang:1.17-alpine as gobuild

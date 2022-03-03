@@ -68,7 +68,7 @@ clean-webui:
 generate-webui:
 	if [ ! -f "webui/static/index.html" ]; then \
 		$(MAKE) build-webui-image; \
-		docker run --rm -v "$$PWD/webui/static":'/src/webui/static' traefik-webui npm run build:nc; \
+		docker run --rm -v "$$PWD/webui/static":'/src/webui/static' traefik-webui yarn build:nc; \
 		docker run --rm -v "$$PWD/webui/static":'/src/webui/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ./static; \
 	fi
 

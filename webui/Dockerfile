@@ -16,4 +16,4 @@ COPY . $WEBUI_DIR/
 
 EXPOSE 8080
 
-RUN npm run lint
+RUN yarn lint
