@@ -8,7 +8,7 @@ COPY ./webui/ $WEBUI_DIR/
 
 WORKDIR $WEBUI_DIR
 
-RUN npm install
+RUN yarn install
 RUN npm run build
 
 # BUILD
