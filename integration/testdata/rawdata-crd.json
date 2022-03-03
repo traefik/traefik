@@ -75,6 +75,23 @@
 			"using": [
 				"web"
 			]
+		},
+		"other-ns-test6-route-c10c96671de180abe70c@kubernetescrd": {
+			"entryPoints": [
+				"web"
+			],
+			"middlewares": [
+				"other-ns-test-errorpage@kubernetescrd"
+			],
+			"service": "other-ns-test6-route-c10c96671de180abe70c",
+			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/e`)",
+			"error": [
+				"middleware \"other-ns-test-errorpage@kubernetescrd\" does not exist"
+			],
+			"status": "disabled",
+			"using": [
+				"web"
+			]
 		}
 	},
 	"middlewares": {
@@ -240,6 +257,15 @@
 		},
 		"noop@internal": {
 			"status": "enabled"
+		},
+		"other-ns-test6-route-c10c96671de180abe70c@kubernetescrd": {
+			"loadBalancer": {
+				"passHostHeader": true
+			},
+			"status": "enabled",
+			"usedBy": [
+				"other-ns-test6-route-c10c96671de180abe70c@kubernetescrd"
+			]
 		}
 	},
 	"tcpRouters": {
