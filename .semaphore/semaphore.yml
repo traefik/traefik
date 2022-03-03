@@ -41,7 +41,7 @@ blocks:
           commands:
             - make pull-images
             - touch webui/static/index.html # Avoid generating webui
-            - PRE_TARGET="" make binary
+            - IN_DOCKER="" make binary
             - make test-integration
             - df -h
       epilogue:
@@ -65,7 +65,7 @@ blocks:
           value: 1.12.1
         - name: CODENAME
           value: "rocamadour"
-        - name: PRE_TARGET
+        - name: IN_DOCKER
           value: ""
       prologue:
         commands:
