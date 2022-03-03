@@ -11,9 +11,9 @@
     "test-unit": "mocha-webpack --mode=production './src/**/*.spec.js'",
     "dev": "export APP_ENV='development' && quasar dev",
     "build-quasar": "quasar build",
-    "build-staging": "export NODE_ENV='production' && export APP_ENV='development' && npm run build-quasar",
-    "build": "export NODE_ENV='production' && export APP_ENV='production' && npm run build-quasar && npm run transfer spa",
-    "build:nc": "npm run build"
+    "build-staging": "export NODE_ENV='production' && export APP_ENV='development' && yarn build-quasar",
+    "build": "export NODE_ENV='production' && export APP_ENV='production' && yarn build-quasar && yarn transfer spa",
+    "build:nc": "yarn build"
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",
