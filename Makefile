@@ -127,7 +127,7 @@ build-image: clean-webui binary
 build-image-dirty: binary
 	docker build -t $(TRAEFIK_IMAGE) .
 
-## Locally build traefik for linux, then shove it an ubuntu image, with basic tools.
+## Locally build traefik for linux, then shove it an alpine image, with basic tools.
 build-image-debug: binary-debug
 	docker build -t $(TRAEFIK_IMAGE) -f debug.Dockerfile .
 
