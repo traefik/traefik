@@ -1361,7 +1361,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 		},
 		{
 			desc:  "Ingress Route, empty service disallowed",
-			paths: []string{"services.yml", "tcp/with_empty_services.yml"},
+			paths: []string{"tcp/services.yml", "tcp/with_empty_services.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1390,7 +1390,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 		{
 			desc:               "Ingress Route, empty service allowed",
 			AllowEmptyServices: true,
-			paths:              []string{"services.yml", "tcp/with_empty_services.yml"},
+			paths:              []string{"tcp/services.yml", "tcp/with_empty_services.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -4247,7 +4247,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 		},
 		{
 			desc:  "Ingress Route, empty service disallowed",
-			paths: []string{"services.yml", "udp/with_empty_services.yml"},
+			paths: []string{"udp/services.yml", "udp/with_empty_services.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
@@ -4275,7 +4275,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 		{
 			desc:               "Ingress Route, empty service allowed",
 			AllowEmptyServices: true,
-			paths:              []string{"services.yml", "udp/with_empty_services.yml"},
+			paths:              []string{"udp/services.yml", "udp/with_empty_services.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{

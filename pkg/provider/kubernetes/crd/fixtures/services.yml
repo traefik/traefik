@@ -229,3 +229,26 @@ subsets:
     ports:
       - name: web
         port: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami-without-endpoints-subsets
+  namespace: default
+
+spec:
+  ports:
+    - name: myapp
+      port: 80
+
+  selector:
+    app: traefiklabs
+    task: whoami
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoami-without-endpoints-subsets
+  namespace: default

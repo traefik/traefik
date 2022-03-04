@@ -212,7 +212,7 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc v1alpha1.
 		return nil, err
 	}
 
-	if !exists && !p.AllowEmptyServices {
+	if !exists {
 		return nil, errors.New("service not found")
 	}
 
@@ -236,8 +236,12 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc v1alpha1.
 			return nil, endpointsErr
 		}
 
-		if !endpointsExists && !p.AllowEmptyServices {
+		if !endpointsExists {
 			return nil, errors.New("endpoints not found")
+		}
+
+		if len(endpoints.Subsets) == 0 && !p.AllowEmptyServices {
+			return nil, errors.New("subset not found")
 		}
 
 		var port int32

@@ -197,3 +197,26 @@ subsets:
     ports:
       - name: myapp
         port: 8000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamiudp-without-endpoints-subsets
+  namespace: default
+
+spec:
+  ports:
+    - name: myapp
+      port: 8000
+
+  selector:
+    app: traefiklabs
+    task: whoamiudp
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: whoamiudp-without-endpoints-subsets
+  namespace: default
