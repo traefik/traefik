@@ -35,7 +35,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 		desc               string
 		ingressClass       string
 		paths              []string
-		AllowEmptyServices bool
+		allowEmptyServices bool
 		expected           *dynamic.Configuration
 	}{
 		{
@@ -1389,7 +1389,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 		},
 		{
 			desc:               "Ingress Route, empty service allowed",
-			AllowEmptyServices: true,
+			allowEmptyServices: true,
 			paths:              []string{"tcp/services.yml", "tcp/with_empty_services.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
@@ -1436,7 +1436,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				IngressClass:              test.ingressClass,
 				AllowCrossNamespace:       true,
 				AllowExternalNameServices: true,
-				AllowEmptyServices:        test.AllowEmptyServices,
+				AllowEmptyServices:        test.allowEmptyServices,
 			}
 
 			clientMock := newClientMock(test.paths...)
@@ -1452,8 +1452,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 		ingressClass        string
 		paths               []string
 		expected            *dynamic.Configuration
-		AllowCrossNamespace bool
-		AllowEmptyServices  bool
+		allowCrossNamespace bool
+		allowEmptyServices  bool
 	}{
 		{
 			desc: "Empty",
@@ -1521,7 +1521,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		},
 		{
 			desc:                "Simple Ingress Route with middleware",
-			AllowCrossNamespace: true,
+			allowCrossNamespace: true,
 			paths:               []string{"services.yml", "with_middleware.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
@@ -1589,7 +1589,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		},
 		{
 			desc:                "Middlewares in ingress route config are normalized",
-			AllowCrossNamespace: true,
+			allowCrossNamespace: true,
 			paths:               []string{"services.yml", "with_middleware_multiple_hyphens.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
@@ -1640,7 +1640,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		},
 		{
 			desc:                "Simple Ingress Route with middleware crossprovider",
-			AllowCrossNamespace: true,
+			allowCrossNamespace: true,
 			paths:               []string{"services.yml", "with_middleware_crossprovider.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
@@ -2210,7 +2210,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		},
 		{
 			desc:                "services lb, servers lb, and mirror service, all in a wrr with different namespaces",
-			AllowCrossNamespace: true,
+			allowCrossNamespace: true,
 			paths:               []string{"with_namespaces.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
@@ -2916,7 +2916,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		{
 			desc:                "TLS with tls options and specific namespace",
 			paths:               []string{"services.yml", "with_tls_options_and_specific_namespace.yml"},
-			AllowCrossNamespace: true,
+			allowCrossNamespace: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -3111,7 +3111,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		{
 			desc:                "TLS with unknown tls options namespace",
 			paths:               []string{"services.yml", "with_unknown_tls_options_namespace.yml"},
-			AllowCrossNamespace: true,
+			allowCrossNamespace: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -3789,7 +3789,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		},
 		{
 			desc:               "Ingress Route, empty service allowed",
-			AllowEmptyServices: true,
+			allowEmptyServices: true,
 			paths:              []string{"services.yml", "with_empty_services.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
@@ -3836,9 +3836,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 
 			p := Provider{
 				IngressClass:              test.ingressClass,
-				AllowCrossNamespace:       test.AllowCrossNamespace,
+				AllowCrossNamespace:       test.allowCrossNamespace,
 				AllowExternalNameServices: true,
-				AllowEmptyServices:        test.AllowEmptyServices,
+				AllowEmptyServices:        test.allowEmptyServices,
 			}
 
 			clientMock := newClientMock(test.paths...)
@@ -3853,7 +3853,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 		desc               string
 		ingressClass       string
 		paths              []string
-		AllowEmptyServices bool
+		allowEmptyServices bool
 		expected           *dynamic.Configuration
 	}{
 		{
@@ -4274,7 +4274,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 		},
 		{
 			desc:               "Ingress Route, empty service allowed",
-			AllowEmptyServices: true,
+			allowEmptyServices: true,
 			paths:              []string{"udp/services.yml", "udp/with_empty_services.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
@@ -4320,7 +4320,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 				IngressClass:              test.ingressClass,
 				AllowCrossNamespace:       true,
 				AllowExternalNameServices: true,
-				AllowEmptyServices:        test.AllowEmptyServices,
+				AllowEmptyServices:        test.allowEmptyServices,
 			}
 
 			clientMock := newClientMock(test.paths...)
