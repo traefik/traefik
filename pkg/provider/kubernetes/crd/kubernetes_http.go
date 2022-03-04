@@ -359,7 +359,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc v1alpha1.LoadBala
 	if err != nil {
 		return nil, err
 	}
-	if !exists && !c.allowEmptyServices {
+	if !exists {
 		return nil, fmt.Errorf("kubernetes service not found: %s/%s", namespace, sanitizedName)
 	}
 
@@ -390,8 +390,12 @@ func (c configBuilder) loadServers(parentNamespace string, svc v1alpha1.LoadBala
 	if endpointsErr != nil {
 		return nil, endpointsErr
 	}
-	if !endpointsExists && !c.allowEmptyServices {
+	if !endpointsExists {
 		return nil, fmt.Errorf("endpoints not found for %s/%s", namespace, sanitizedName)
+	}
+
+	if len(endpoints.Subsets) == 0 && !c.allowEmptyServices {
+		return nil, fmt.Errorf("subset not found for %s/%s", namespace, sanitizedName)
 	}
 
 	var port int32
