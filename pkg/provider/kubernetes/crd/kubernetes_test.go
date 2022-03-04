@@ -32,10 +32,11 @@ func Bool(v bool) *bool { return &v }
 
 func TestLoadIngressRouteTCPs(t *testing.T) {
 	testCases := []struct {
-		desc         string
-		ingressClass string
-		paths        []string
-		expected     *dynamic.Configuration
+		desc               string
+		ingressClass       string
+		paths              []string
+		AllowEmptyServices bool
+		expected           *dynamic.Configuration
 	}{
 		{
 			desc: "Empty",
@@ -1358,6 +1359,67 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc:  "Ingress Route, empty service disallowed",
+			paths: []string{"tcp/services.yml", "tcp/with_empty_services.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:               "Ingress Route, empty service allowed",
+			AllowEmptyServices: true,
+			paths:              []string{"tcp/services.yml", "tcp/with_empty_services.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -1370,7 +1432,12 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				return
 			}
 
-			p := Provider{IngressClass: test.ingressClass, AllowCrossNamespace: true, AllowExternalNameServices: true}
+			p := Provider{
+				IngressClass:              test.ingressClass,
+				AllowCrossNamespace:       true,
+				AllowExternalNameServices: true,
+				AllowEmptyServices:        test.AllowEmptyServices,
+			}
 
 			clientMock := newClientMock(test.paths...)
 			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)
@@ -1386,6 +1453,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		paths               []string
 		expected            *dynamic.Configuration
 		AllowCrossNamespace bool
+		AllowEmptyServices  bool
 	}{
 		{
 			desc: "Empty",
@@ -3697,6 +3765,64 @@ func TestLoadIngressRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc:  "Ingress Route, empty service disallowed",
+			paths: []string{"services.yml", "with_empty_services.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:               "Ingress Route, empty service allowed",
+			AllowEmptyServices: true,
+			paths:              []string{"services.yml", "with_empty_services.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-6b204d94623b3df4370c": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test-route-6b204d94623b3df4370c",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
+							Priority:    12,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-6b204d94623b3df4370c": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -3708,7 +3834,12 @@ func TestLoadIngressRoutes(t *testing.T) {
 				return
 			}
 
-			p := Provider{IngressClass: test.ingressClass, AllowCrossNamespace: test.AllowCrossNamespace, AllowExternalNameServices: true}
+			p := Provider{
+				IngressClass:              test.ingressClass,
+				AllowCrossNamespace:       test.AllowCrossNamespace,
+				AllowExternalNameServices: true,
+				AllowEmptyServices:        test.AllowEmptyServices,
+			}
 
 			clientMock := newClientMock(test.paths...)
 			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)
@@ -3719,10 +3850,11 @@ func TestLoadIngressRoutes(t *testing.T) {
 
 func TestLoadIngressRouteUDPs(t *testing.T) {
 	testCases := []struct {
-		desc         string
-		ingressClass string
-		paths        []string
-		expected     *dynamic.Configuration
+		desc               string
+		ingressClass       string
+		paths              []string
+		AllowEmptyServices bool
+		expected           *dynamic.Configuration
 	}{
 		{
 			desc: "Empty",
@@ -4113,6 +4245,65 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc:  "Ingress Route, empty service disallowed",
+			paths: []string{"udp/services.yml", "udp/with_empty_services.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-test.route-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-0",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:               "Ingress Route, empty service allowed",
+			AllowEmptyServices: true,
+			paths:              []string{"udp/services.yml", "udp/with_empty_services.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-test.route-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-0",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"default-test.route-0": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -4125,7 +4316,12 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 				return
 			}
 
-			p := Provider{IngressClass: test.ingressClass, AllowCrossNamespace: true, AllowExternalNameServices: true}
+			p := Provider{
+				IngressClass:              test.ingressClass,
+				AllowCrossNamespace:       true,
+				AllowExternalNameServices: true,
+				AllowEmptyServices:        test.AllowEmptyServices,
+			}
 
 			clientMock := newClientMock(test.paths...)
 			conf := p.loadConfigurationFromCRD(context.Background(), clientMock)
