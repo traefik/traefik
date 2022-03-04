@@ -264,6 +264,30 @@ providers:
 --providers.kubernetescrd.throttleDuration=10s
 ```
 
+### `allowEmptyServices`
+
+_Optional, Default: false_
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesCRD:
+    allowEmptyServices: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesCRD]
+  allowEmptyServices = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesCRD.allowEmptyServices=true
+```
+
+Allow the creation of services if there are no endpoints available.
+This results in `503` http responses instead of `404`.
+
 ### `allowCrossNamespace`
 
 _Optional, Default: false_
