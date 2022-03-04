@@ -50,7 +50,7 @@ build-dev-image-no-cache: dist
 
 ## Create the "dist" directory
 dist:
-	mkdir dist
+	mkdir -p dist
 
 ## Build WebUI Docker image
 build-webui-image:
@@ -63,12 +63,12 @@ clean-webui:
 	echo 'For more information show `webui/readme.md`' > webui/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md
 
 ## Generate WebUI
-generate-webui:
-	if [ ! -f "webui/static/index.html" ]; then \
-		$(MAKE) build-webui-image; \
-		docker run --rm -v "$$PWD/webui/static":'/src/webui/static' traefik-webui npm run build:nc; \
-		docker run --rm -v "$$PWD/webui/static":'/src/webui/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ./static; \
-	fi
+webui/static/index.html:
+	$(MAKE) build-webui-image
+	docker run --rm -v "$$PWD/webui/static":'/src/webui/static' traefik-webui npm run build:nc
+	docker run --rm -v "$$PWD/webui/static":'/src/webui/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ./static
+
+generate-webui: webui/static/index.html
 
 ## Build the binary
 binary: generate-webui build-dev-image
