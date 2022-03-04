@@ -314,7 +314,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
 
     | Name     | Rule                                               | Priority |
     |----------|----------------------------------------------------|----------|
-    | Router-1 | ```HostRegexp(`{subdomain:[a-z]+}.traefik.com`)``` | 30       |
+    | Router-1 | ```HostRegexp(`{subdomain:[a-z]+}.traefik.com`)``` | 44       |
     | Router-2 | ```Host(`foobar.traefik.com`)```                   | 26       |
 
     The previous table shows that `Router-1` has a higher priority than `Router-2`.
