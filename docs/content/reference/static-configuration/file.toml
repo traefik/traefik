@@ -121,6 +121,7 @@
     labelSelector = "foobar"
     ingressClass = "foobar"
     throttleDuration = 42
+    allowEmptyServices = true
   [providers.kubernetesGateway]
     endpoint = "foobar"
     token = "foobar"
