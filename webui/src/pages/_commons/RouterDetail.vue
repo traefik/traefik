@@ -62,7 +62,7 @@
             </div>
           </div>
 
-          <div v-if="routerByName.item.service" class="col-12 col-md-3 q-mb-lg path-block">
+          <div v-if="routerByName.item.service" class="service col-12 col-md-3 q-mb-lg path-block" @click="showService(routerByName.item.name)">
             <div class="row no-wrap items-center q-mb-lg app-title">
               <q-icon name="eva-flash"></q-icon>
               <div class="app-title-label">Service</div>
@@ -270,14 +270,21 @@ export default {
         .catch(error => {
           console.log('Error -> routers/byName', error)
         })
+    },
+    showService (serviceName) {
+      const [, type] = this.$route.path.split('/')
+
+      if (type) {
+        this.$router.push({
+          path: `/${type}/services/${serviceName}`
+        })
+      }
     }
   },
   created () {
     this.refreshAll()
   },
-  mounted () {
 
-  },
   beforeDestroy () {
     clearInterval(this.timeOutGetAll)
     this.$store.commit('http/getRouterByNameClear')
@@ -288,15 +295,19 @@ export default {
 </script>
 
 <style scoped lang="scss">
-  @import "../../css/sass/variables";
+@import "../../css/sass/variables";
 
-  .path-block {
-    .arrow {
-      font-size: 40px;
-      margin-top: 20px;
-      margin-left: 20px;
-      color: #b2b2b2;
-    }
+.path-block {
+  .arrow {
+    font-size: 40px;
+    margin-top: 20px;
+    margin-left: 20px;
+    color: #b2b2b2;
   }
+
+  &.service {
+    cursor: pointer;
+  }
+}
 
 </style>
