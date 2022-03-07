@@ -550,11 +550,11 @@ providers:
 
 _Optional, Default=""_
 
-The `constraints` option can be set to an expression that Traefik matches against the container tags to determine whether
-to create any route for that container. If none of the container tags match the expression, no route for that container is
+The `constraints` option can be set to an expression that Traefik matches against the container labels to determine whether
+to create any route for that container. If none of the container labels match the expression, no route for that container is
 created. If the expression is empty, all detected containers are included.
 
-The expression syntax is based on the ```Tag(`tag`)```, and ```TagRegex(`tag`)``` functions,
+The expression syntax is based on the `Label("key", "value")`, and `LabelRegex("key", "value")` functions,
 as well as the usual boolean logic, as shown in examples below.
 
 ??? example "Constraints Expression Examples"
