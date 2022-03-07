@@ -131,6 +131,7 @@ providers:
     labelSelector: foobar
     ingressClass: foobar
     throttleDuration: 42s
+    allowEmptyServices: true
   kubernetesGateway:
     endpoint: foobar
     token: foobar
