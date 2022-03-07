@@ -264,11 +264,38 @@ providers:
 --providers.kubernetescrd.throttleDuration=10s
 ```
 
+### `allowEmptyServices`
+
+_Optional, Default: false_
+
+If the parameter is set to `true`,
+it allows the creation of an empty [servers load balancer](../routing/services/index.md#servers-load-balancer) if the targeted Kubernetes service has no endpoints available.
+With IngressRoute resources,
+this results in `503` HTTP responses instead of `404` ones.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesCRD:
+    allowEmptyServices: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesCRD]
+  allowEmptyServices = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesCRD.allowEmptyServices=true
+```
+
 ### `allowCrossNamespace`
 
 _Optional, Default: false_
 
-If the parameter is set to `true`, IngressRoutes are  able to reference  resources in other namespaces than theirs.
+If the parameter is set to `true`,
+IngressRoute are able to reference resources in namespaces other than theirs.
 
 ```yaml tab="File (YAML)"
 providers:
