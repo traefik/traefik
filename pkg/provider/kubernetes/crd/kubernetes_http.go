@@ -50,7 +50,12 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			ingressName = ingressRoute.GenerateName
 		}
 
-		cb := configBuilder{client: client, allowCrossNamespace: p.AllowCrossNamespace, allowExternalNameServices: p.AllowExternalNameServices}
+		cb := configBuilder{
+			client:                    client,
+			allowCrossNamespace:       p.AllowCrossNamespace,
+			allowExternalNameServices: p.AllowExternalNameServices,
+			allowEmptyServices:        p.AllowEmptyServices,
+		}
 
 		for _, route := range ingressRoute.Spec.Routes {
 			if route.Kind != "Rule" {
@@ -193,6 +198,7 @@ type configBuilder struct {
 	client                    Client
 	allowCrossNamespace       bool
 	allowExternalNameServices bool
+	allowEmptyServices        bool
 }
 
 // buildTraefikService creates the configuration for the traefik service defined in tService,
@@ -387,7 +393,8 @@ func (c configBuilder) loadServers(parentNamespace string, svc v1alpha1.LoadBala
 	if !endpointsExists {
 		return nil, fmt.Errorf("endpoints not found for %s/%s", namespace, sanitizedName)
 	}
-	if len(endpoints.Subsets) == 0 {
+
+	if len(endpoints.Subsets) == 0 && !c.allowEmptyServices {
 		return nil, fmt.Errorf("subset not found for %s/%s", namespace, sanitizedName)
 	}
 

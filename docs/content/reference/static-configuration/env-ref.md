@@ -648,6 +648,9 @@ Enable Kubernetes backend with default settings. (Default: ```false```)
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_ALLOWCROSSNAMESPACE`:  
 Allow cross namespace resource reference. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_KUBERNETESCRD_ALLOWEMPTYSERVICES`:  
+Allow the creation of services without endpoints. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_ALLOWEXTERNALNAMESERVICES`:  
 Allow ExternalName services. (Default: ```false```)
 
