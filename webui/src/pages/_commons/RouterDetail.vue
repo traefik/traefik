@@ -62,7 +62,9 @@
             </div>
           </div>
 
-          <div v-if="routerByName.item.service" class="service col-12 col-md-3 q-mb-lg path-block" @click="showService(routerByName.item.name)">
+          <div v-if="routerByName.item.service"
+               class="service col-12 col-md-3 q-mb-lg path-block"
+               @click="$router.push({ path: `/${protocol}/services/${getServiceId(routerByName.item)}`})">
             <div class="row no-wrap items-center q-mb-lg app-title">
               <q-icon name="eva-flash"></q-icon>
               <div class="app-title-label">Service</div>
@@ -271,14 +273,13 @@ export default {
           console.log('Error -> routers/byName', error)
         })
     },
-    showService (serviceName) {
-      const [, type] = this.$route.path.split('/')
-
-      if (type) {
-        this.$router.push({
-          path: `/${type}/services/${serviceName}`
-        })
+    getServiceId (data) {
+      const words = data.service.split('@')
+      if (words.length === 2) {
+        return data.service
       }
+
+      return `${data.service}@${data.provider}`
     }
   },
   created () {
@@ -295,19 +296,19 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import "../../css/sass/variables";
+  @import "../../css/sass/variables";
 
-.path-block {
-  .arrow {
-    font-size: 40px;
-    margin-top: 20px;
-    margin-left: 20px;
-    color: #b2b2b2;
-  }
+  .path-block {
+    .arrow {
+      font-size: 40px;
+      margin-top: 20px;
+      margin-left: 20px;
+      color: #b2b2b2;
+    }
 
-  &.service {
-    cursor: pointer;
+    &.service {
+      cursor: pointer;
+    }
   }
-}
 
 </style>
