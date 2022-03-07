@@ -62,7 +62,9 @@
             </div>
           </div>
 
-          <div v-if="routerByName.item.service" class="col-12 col-md-3 q-mb-lg path-block">
+          <div v-if="routerByName.item.service"
+               class="service col-12 col-md-3 q-mb-lg path-block"
+               @click="$router.push({ path: `/${protocol}/services/${getServiceId(routerByName.item)}`})">
             <div class="row no-wrap items-center q-mb-lg app-title">
               <q-icon name="eva-flash"></q-icon>
               <div class="app-title-label">Service</div>
@@ -270,6 +272,14 @@ export default {
         .catch(error => {
           console.log('Error -> routers/byName', error)
         })
+    },
+    getServiceId (data) {
+      const words = data.service.split('@')
+      if (words.length === 2) {
+        return data.service
+      }
+
+      return `${data.service}@${data.provider}`
     }
   },
   created () {
@@ -296,6 +306,10 @@ export default {
       margin-top: 20px;
       margin-left: 20px;
       color: #b2b2b2;
+    }
+
+    &.service {
+      cursor: pointer;
     }
   }
 
