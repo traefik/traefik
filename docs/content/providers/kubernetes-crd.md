@@ -268,6 +268,11 @@ providers:
 
 _Optional, Default: false_
 
+If the parameter is set to `true`,
+IngressRoute are able to create an empty [servers load balancer](../routing/services/#servers-load-balancer) if the targeted Kubernetes service has no available endpoint.
+With IngressRoute resources,
+this results in `503` HTTP responses instead of `404`.
+
 ```yaml tab="File (YAML)"
 providers:
   kubernetesCRD:
@@ -285,14 +290,12 @@ providers:
 --providers.kubernetesCRD.allowEmptyServices=true
 ```
 
-Allow the creation of services if there are no endpoints available.
-This results in `503` http responses instead of `404`.
-
 ### `allowCrossNamespace`
 
 _Optional, Default: false_
 
-If the parameter is set to `true`, IngressRoutes are  able to reference  resources in other namespaces than theirs.
+If the parameter is set to `true`,
+IngressRoute are able to reference resources in other namespaces than theirs.
 
 ```yaml tab="File (YAML)"
 providers:
