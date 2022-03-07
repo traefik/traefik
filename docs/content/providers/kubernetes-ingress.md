@@ -449,7 +449,7 @@ _Optional, Default: false_
 
 If the parameter is set to `true`,
 it allows the creation of an empty [servers load balancer](../routing/services/index.md#servers-load-balancer) if the targeted Kubernetes service has no endpoints available.
-This results in `503` HTTP responses instead of `404`.
+This results in `503` HTTP responses instead of `404` ones.
 
 ```yaml tab="File (YAML)"
 providers:

@@ -649,7 +649,7 @@ Enable Kubernetes backend with default settings. (Default: ```false```)
 Allow cross namespace resource reference. (Default: ```false```)
 
 `--providers.kubernetescrd.allowemptyservices`:  
-Allow creation of services without endpoints. (Default: ```false```)
+Allow the creation of services without endpoints. (Default: ```false```)
 
 `--providers.kubernetescrd.allowexternalnameservices`:  
 Allow ExternalName services. (Default: ```false```)

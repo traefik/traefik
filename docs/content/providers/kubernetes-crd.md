@@ -271,7 +271,7 @@ _Optional, Default: false_
 If the parameter is set to `true`,
 it allows the creation of an empty [servers load balancer](../routing/services/index.md#servers-load-balancer) if the targeted Kubernetes service has no endpoints available.
 With IngressRoute resources,
-this results in `503` HTTP responses instead of `404`.
+this results in `503` HTTP responses instead of `404` ones.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -295,7 +295,7 @@ providers:
 _Optional, Default: false_
 
 If the parameter is set to `true`,
-IngressRoute are able to reference resources in other namespaces than theirs.
+IngressRoute are able to reference resources in namespaces other than theirs.
 
 ```yaml tab="File (YAML)"
 providers:
