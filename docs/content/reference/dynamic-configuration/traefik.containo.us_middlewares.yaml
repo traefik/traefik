@@ -54,6 +54,28 @@ spec:
                   secret:
                     type: string
                 type: object
+              branching:
+                description: Branching holds a middleware chain branch configuration.
+                properties:
+                  chain:
+                    description: Chain holds a chain of middlewares.
+                    properties:
+                      middlewares:
+                        items:
+                          description: MiddlewareRef is a ref to the Middleware resources.
+                          properties:
+                            name:
+                              type: string
+                            namespace:
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
+                    type: object
+                  condition:
+                    type: string
+                type: object
               buffering:
                 description: Buffering holds the request/response buffering configuration.
                 properties:

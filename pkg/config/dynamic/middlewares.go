@@ -18,6 +18,7 @@ type Middleware struct {
 	ReplacePath       *ReplacePath       `json:"replacePath,omitempty" toml:"replacePath,omitempty" yaml:"replacePath,omitempty" export:"true"`
 	ReplacePathRegex  *ReplacePathRegex  `json:"replacePathRegex,omitempty" toml:"replacePathRegex,omitempty" yaml:"replacePathRegex,omitempty" export:"true"`
 	Chain             *Chain             `json:"chain,omitempty" toml:"chain,omitempty" yaml:"chain,omitempty" export:"true"`
+	Branching         *Branching         `json:"branching,omitempty" toml:"branching,omitempty" yaml:"branching,omitempty" export:"true"`
 	IPWhiteList       *IPWhiteList       `json:"ipWhiteList,omitempty" toml:"ipWhiteList,omitempty" yaml:"ipWhiteList,omitempty" export:"true"`
 	Headers           *Headers           `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
 	Errors            *ErrorPage         `json:"errors,omitempty" toml:"errors,omitempty" yaml:"errors,omitempty" export:"true"`
@@ -87,6 +88,14 @@ type Buffering struct {
 // Chain holds a chain of middlewares.
 type Chain struct {
 	Middlewares []string `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Branching holds a middleware chain branch configuration.
+type Branching struct {
+	Chain     *Chain `json:"chain,omitempty" toml:"chain,omitempty" yaml:"chain,omitempty" export:"true"`
+	Condition string `json:"condition,omitempty" toml:"condition,omitempty" yaml:"condition,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
