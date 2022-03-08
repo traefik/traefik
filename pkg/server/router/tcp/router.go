@@ -148,8 +148,11 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		return
 	}
 
-	// for real, the handler returned here is always the same: it is the
-	// httpsForwarder that is used for all HTTPS connections that match
+	// for real, the handler returned here is (almost) always the same:
+	// it is the httpsForwarder that is used for all HTTPS connections that match
+	// (which is also incidentally the same used in the last block below for 404s).
+	// The added value from doing Match, is to find and use the specific TLS config
+	// requested for the given HostSNI.
 	handler = r.muxerHTTPS.Match(connData)
 	if handler != nil {
 		handler.ServeTCP(r.GetConn(conn, peeked))
