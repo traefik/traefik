@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -363,18 +362,4 @@ func (m *Manager) buildTCPHandler(ctx context.Context, router *runtime.TCPRouter
 	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
 
 	return tcp.NewChain().Extend(*mHandler).Then(sHandler)
-}
-
-func findTLSOptionName(tlsOptionsForHost map[string]string, host string) string {
-	tlsOptions, ok := tlsOptionsForHost[host]
-	if ok {
-		return tlsOptions
-	}
-
-	tlsOptions, ok = tlsOptionsForHost[strings.ToLower(host)]
-	if ok {
-		return tlsOptions
-	}
-
-	return traefiktls.DefaultTLSConfigName
 }
