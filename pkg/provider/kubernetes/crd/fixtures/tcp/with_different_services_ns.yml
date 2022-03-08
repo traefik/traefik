@@ -27,5 +27,5 @@ spec:
       weight: 4
     # with unknown namespace
     - name: whoamitcp
-      namespace: unknwonns
+      namespace: unknowns
       port: 8080

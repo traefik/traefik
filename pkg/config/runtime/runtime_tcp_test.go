@@ -186,7 +186,6 @@ func TestGetTCPRoutersByEntryPoints(t *testing.T) {
 				"webs": {
 					"bar": {
 						TCPRouter: &dynamic.TCPRouter{
-
 							EntryPoints: []string{"webs"},
 							Service:     "bar-service@myprovider",
 							Rule:        "HostSNI(`foo.bar`)",

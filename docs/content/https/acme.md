@@ -23,6 +23,8 @@ Certificates are requested for domain names retrieved from the router's [dynamic
 
 You can read more about this retrieval mechanism in the following section: [ACME Domain Definition](#domain-definition).
 
+!!! warning "Defining an [ACME challenge type](#the-different-acme-challenges) is a requirement for a certificate resolver to be functional."
+
 !!! important "Defining a certificates resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
 
 ??? note "Configuration Reference"
@@ -157,6 +159,8 @@ When using LetsEncrypt with kubernetes, there are some known caveats with both t
     If you intend to run multiple instances of Traefik with LetsEncrypt, please ensure you read the sections on those provider pages.
 
 ## The Different ACME Challenges
+
+!!! warning "Defining one ACME challenge is a requirement for a certificate resolver to be functional."
 
 !!! important "Defining a certificates resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
 
@@ -329,6 +333,7 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [hosting.de](https://www.hosting.de)                        | `hostingde`    | `HOSTINGDE_API_KEY`, `HOSTINGDE_ZONE_NAME`                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/hostingde)    |
 | [Hosttech](https://www.hosttech.eu)                         | `hosttech`     | `HOSTTECH_API_KEY`                                                                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/hosttech)     |
 | [HyperOne](https://www.hyperone.com)                        | `hyperone`     | `HYPERONE_PASSPORT_LOCATION`, `HYPERONE_LOCATION_ID`                                                                                        | [Additional configuration](https://go-acme.github.io/lego/dns/hyperone)     |
+| [Hurricane Electric](https://dns.he.net)                    | `hurricane`    | `HURRICANE_TOKENS` [^6]                                                                                                                     | [Additional configuration](https://go-acme.github.io/lego/dns/hurricane)    |
 | [IBM Cloud (SoftLayer)](https://www.ibm.com/cloud/)         | `ibmcloud`     | `SOFTLAYER_USERNAME`, `SOFTLAYER_API_KEY`                                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/ibmcloud)     |
 | [IIJ](https://www.iij.ad.jp/)                               | `iij`          | `IIJ_API_ACCESS_KEY`, `IIJ_API_SECRET_KEY`, `IIJ_DO_SERVICE_CODE`                                                                           | [Additional configuration](https://go-acme.github.io/lego/dns/iij)          |
 | [Infoblox](https://www.infoblox.com/)                       | `infoblox`     | `INFOBLOX_USER`, `INFOBLOX_PASSWORD`, `INFOBLOX_HOST`                                                                                       | [Additional configuration](https://go-acme.github.io/lego/dns/infoblox)     |
@@ -387,11 +392,12 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | HTTP request                                                | `httpreq`      | `HTTPREQ_ENDPOINT`, `HTTPREQ_MODE`, `HTTPREQ_USERNAME`, `HTTPREQ_PASSWORD` [^1]                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/httpreq)      |
 | manual                                                      | `manual`       | none, but you need to run Traefik interactively [^4], turn on debug log to see instructions and press <kbd>Enter</kbd>.                     |                                                                             |
 
-[^1]: more information about the HTTP message format can be found [here](https://go-acme.github.io/lego/dns/httpreq/)
-[^2]: [providing_credentials_to_your_application](https://cloud.google.com/docs/authentication/production)
+[^1]: More information about the HTTP message format can be found [here](https://go-acme.github.io/lego/dns/httpreq/).
+[^2]: [Providing credentials to your application](https://cloud.google.com/docs/authentication/production).
 [^3]: [google/default.go](https://github.com/golang/oauth2/blob/36a7019397c4c86cf59eeab3bc0d188bac444277/google/default.go#L61-L76)
 [^4]: `docker stack` remark: there is no way to support terminal attached to container when deploying with `docker stack`, so you might need to run container with `docker run -it` to generate certificates using `manual` provider.
 [^5]: The `Global API Key` needs to be used, not the `Origin CA Key`.
+[^6]: As explained in the [LEGO hurricane configuration](https://go-acme.github.io/lego/dns/hurricane/#credentials), each domain or wildcard (record name) needs a token. So each update of record name must be followed by an update of the `HURRICANE_TOKENS` variable, and a restart of Traefik.
 
 !!! info "`delayBeforeCheck`"
     By default, the `provider` verifies the TXT record _before_ letting ACME verify.

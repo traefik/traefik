@@ -50,7 +50,6 @@ func (reh *resourceEventHandler) OnDelete(obj interface{}) {
 // The stores can then be accessed via the Get* functions.
 type Client interface {
 	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
-
 	GetGatewayClasses() ([]*v1alpha2.GatewayClass, error)
 	UpdateGatewayStatus(gateway *v1alpha2.Gateway, gatewayStatus v1alpha2.GatewayStatus) error
 	UpdateGatewayClassStatus(gatewayClass *v1alpha2.GatewayClass, condition metav1.Condition) error
@@ -58,7 +57,6 @@ type Client interface {
 	GetHTTPRoutes(namespaces []string) ([]*v1alpha2.HTTPRoute, error)
 	GetTCPRoutes(namespaces []string) ([]*v1alpha2.TCPRoute, error)
 	GetTLSRoutes(namespaces []string) ([]*v1alpha2.TLSRoute, error)
-
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
