@@ -30,7 +30,7 @@ var funcs = map[string]func(*mux.Route, ...string) error{
 	"Query":         query,
 }
 
-// Muxer handle routing with rules.
+// Muxer handles routing with rules.
 type Muxer struct {
 	*mux.Router
 	parser predicate.Parser
