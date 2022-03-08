@@ -224,6 +224,7 @@
 | `traefik/http/services/Service03/weighted/services/0/weight` | `42` |
 | `traefik/http/services/Service03/weighted/services/1/name` | `foobar` |
 | `traefik/http/services/Service03/weighted/services/1/weight` | `42` |
+| `traefik/http/services/Service03/weighted/failoverService` | `foobar` |
 | `traefik/http/services/Service03/weighted/sticky/cookie/httpOnly` | `true` |
 | `traefik/http/services/Service03/weighted/sticky/cookie/name` | `foobar` |
 | `traefik/http/services/Service03/weighted/sticky/cookie/sameSite` | `foobar` |
