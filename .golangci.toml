@@ -24,7 +24,7 @@
     locale = "US"
 
   [linters-settings.funlen]
-    lines = -1 # default 60
+    lines = 230 # default 60
     statements = 120 # default 40
 
   [linters-settings.forbidigo]
@@ -214,3 +214,6 @@
  [[issues.exclude-rules]]
     path = "(.+)\\.go"
     text = "struct-tag: unknown option 'inline' in JSON tag"
+ [[issues.exclude-rules]]
+    path = "pkg/server/router/tcp/manager.go"
+    text = "Function 'buildEntryPointHandler' is too long (.+)"
