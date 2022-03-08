@@ -188,6 +188,7 @@ func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace st
 		LoadBalancer: &dynamic.TCPServersLoadBalancer{
 			Servers: servers,
 		},
+		StartTLS: service.StartTLS,
 	}
 
 	if service.ProxyProtocol != nil {

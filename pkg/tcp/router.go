@@ -27,6 +27,7 @@ type Router struct {
 	httpsTLSConfig    *tls.Config // default TLS config
 	catchAllNoTLS     Handler
 	hostHTTPTLSConfig map[string]*tls.Config // TLS configs keyed by SNI
+	preRoutingHook    map[string]func(WriteCloser) (WriteCloser, error)
 }
 
 // GetTLSGetClientInfo is called after a ClientHello is received from a client.
@@ -46,6 +47,18 @@ func (r *Router) ServeTCP(conn WriteCloser) {
 	if r.catchAllNoTLS != nil && len(r.routingTable) == 0 {
 		r.catchAllNoTLS.ServeTCP(conn)
 		return
+	}
+
+	// this peeks into the connection and tries to perform the
+	// StartTLS handshake (postgres). It works in both cases,
+	// no matter if the client sends StartTLS header.
+	for _, filterFunc := range r.preRoutingHook {
+		var err error
+		conn, err = filterFunc(conn)
+		if err != nil {
+			conn.Close()
+			return
+		}
 	}
 
 	br := bufio.NewReader(conn)
@@ -175,6 +188,17 @@ func (r *Router) HTTPHandler(handler http.Handler) {
 func (r *Router) HTTPSHandler(handler http.Handler, config *tls.Config) {
 	r.httpsHandler = handler
 	r.httpsTLSConfig = config
+}
+
+// PreRoutingHook allows to add a filter func to prefilter incoming connections.
+// This can be used for example to peek into the connection and perform a StartTLS handshake.
+// The filter func is registered by a given name. Successive calls with the same name will
+// overwrite existing entries.
+func (r *Router) PreRoutingHook(name string, filterFunc func(WriteCloser) (WriteCloser, error)) {
+	if r.preRoutingHook == nil {
+		r.preRoutingHook = make(map[string]func(WriteCloser) (WriteCloser, error))
+	}
+	r.preRoutingHook[name] = filterFunc
 }
 
 // Conn is a connection proxy that handles Peeked bytes.

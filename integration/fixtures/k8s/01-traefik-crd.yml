@@ -279,6 +279,8 @@ spec:
                               version:
                                 type: integer
                             type: object
+                          startTLS:
+                            type: string
                           terminationDelay:
                             type: integer
                           weight:
