@@ -190,7 +190,7 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 			return nil, err
 		}
 
-		balancer.SetFailover(failOverHandler)
+		balancer.SetFailoverService(failOverHandler)
 	}
 
 	return balancer, nil

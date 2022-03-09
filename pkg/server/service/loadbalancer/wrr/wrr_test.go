@@ -291,11 +291,11 @@ func TestBalancerBias(t *testing.T) {
 	assert.Equal(t, wantSequence, recorder.sequence)
 }
 
-func TestBalancerFallback(t *testing.T) {
+func TestBalancerFailover(t *testing.T) {
 	balancer := New(nil, nil)
 
 	balancer.AddTestService(t, "first", 1)
-	balancer.SetFailover(createHandler(t, "fallback"))
+	balancer.SetFailoverService(createHandler(t, "failover"))
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	for i := 0; i < 4; i++ {
@@ -303,7 +303,7 @@ func TestBalancerFallback(t *testing.T) {
 	}
 
 	assert.Equal(t, 4, recorder.save["first"])
-	assert.Equal(t, 0, recorder.save["fallback"])
+	assert.Equal(t, 0, recorder.save["failover"])
 
 	balancer.SetStatus(context.Background(), "first", false)
 
@@ -313,7 +313,7 @@ func TestBalancerFallback(t *testing.T) {
 	}
 
 	assert.Equal(t, 0, recorder.save["first"])
-	assert.Equal(t, 4, recorder.save["fallback"])
+	assert.Equal(t, 4, recorder.save["failover"])
 	assert.Equal(t, []int{http.StatusOK, http.StatusOK, http.StatusOK, http.StatusOK}, recorder.status)
 }
 
