@@ -69,6 +69,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/services/Service03/weighted/services/0/weight":                                 "42",
 		"traefik/http/services/Service03/weighted/services/1/name":                                   "foobar",
 		"traefik/http/services/Service03/weighted/services/1/weight":                                 "42",
+		"traefik/http/services/Service03/weighted/failoverService":                                   "foobar",
 		"traefik/http/middlewares/Middleware08/forwardAuth/authResponseHeaders/0":                    "foobar",
 		"traefik/http/middlewares/Middleware08/forwardAuth/authResponseHeaders/1":                    "foobar",
 		"traefik/http/middlewares/Middleware08/forwardAuth/authRequestHeaders/0":                     "foobar",
@@ -669,6 +670,7 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 				"Service03": {
 					Weighted: &dynamic.WeightedRoundRobin{
+						FailoverService: "foobar",
 						Services: []dynamic.WRRService{
 							{
 								Name:   "foobar",

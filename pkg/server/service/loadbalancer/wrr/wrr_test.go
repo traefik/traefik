@@ -290,3 +290,44 @@ func TestBalancerBias(t *testing.T) {
 
 	assert.Equal(t, wantSequence, recorder.sequence)
 }
+
+func TestBalancerFailover(t *testing.T) {
+	balancer := New(nil, nil)
+
+	balancer.AddTestService(t, "first", 1)
+	balancer.SetFailoverService(createHandler(t, "failover"))
+
+	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+	for i := 0; i < 4; i++ {
+		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	}
+
+	assert.Equal(t, 4, recorder.save["first"])
+	assert.Equal(t, 0, recorder.save["failover"])
+
+	balancer.SetStatus(context.Background(), "first", false)
+
+	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+	for i := 0; i < 4; i++ {
+		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	}
+
+	assert.Equal(t, 0, recorder.save["first"])
+	assert.Equal(t, 4, recorder.save["failover"])
+	assert.Equal(t, []int{http.StatusOK, http.StatusOK, http.StatusOK, http.StatusOK}, recorder.status)
+}
+
+func (b *Balancer) AddTestService(t *testing.T, name string, weight int) {
+	t.Helper()
+
+	b.AddService(name, createHandler(t, name), Int(weight))
+}
+
+func createHandler(t *testing.T, name string) http.Handler {
+	t.Helper()
+
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", name)
+		rw.WriteHeader(http.StatusOK)
+	})
+}
