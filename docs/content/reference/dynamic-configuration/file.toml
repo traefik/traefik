@@ -80,6 +80,7 @@
           percent = 42
     [http.services.Service03]
       [http.services.Service03.weighted]
+        failoverService = "foobar"
         [http.services.Service03.weighted.healthCheck]
 
         [[http.services.Service03.weighted.services]]

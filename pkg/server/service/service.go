@@ -164,6 +164,7 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 		}
 
 		balancer.AddService(service.Name, serviceHandler, service.Weight)
+
 		if config.HealthCheck == nil {
 			continue
 		}
@@ -181,6 +182,15 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 		}
 
 		log.FromContext(ctx).Debugf("Child service %v will update parent %v on status change", childName, serviceName)
+	}
+
+	if config.FailoverService != "" {
+		failOverHandler, err := m.BuildHTTP(ctx, config.FailoverService)
+		if err != nil {
+			return nil, err
+		}
+
+		balancer.SetFailover(failOverHandler)
 	}
 
 	return balancer, nil
