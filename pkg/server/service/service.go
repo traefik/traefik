@@ -185,12 +185,12 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 	}
 
 	if config.FailoverService != "" {
-		failOverHandler, err := m.BuildHTTP(ctx, config.FailoverService)
+		failoverHandler, err := m.BuildHTTP(ctx, config.FailoverService)
 		if err != nil {
 			return nil, err
 		}
 
-		balancer.SetFailoverService(failOverHandler)
+		balancer.SetFailoverService(failoverHandler)
 	}
 
 	return balancer, nil
