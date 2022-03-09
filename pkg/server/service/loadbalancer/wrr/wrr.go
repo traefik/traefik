@@ -29,10 +29,11 @@ type stickyCookie struct {
 // (https://en.wikipedia.org/wiki/Earliest_deadline_first_scheduling)
 // Each pick from the schedule has the earliest deadline entry selected.
 // Entries have deadlines set at currentDeadline + 1 / weight,
-// providing weighted round robin behavior with floating point weights and an O(log n) pick time.
+// providing weighted round-robin behavior with floating point weights and an O(log n) pick time.
 type Balancer struct {
 	stickyCookie     *stickyCookie
 	wantsHealthCheck bool
+	failoverHandler  http.Handler
 
 	mutex       sync.RWMutex
 	handlers    []*namedHandler
@@ -208,6 +209,11 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	server, err := b.nextServer()
 	if err != nil {
 		if errors.Is(err, errNoAvailableServer) {
+			if b.failoverHandler != nil {
+				b.failoverHandler.ServeHTTP(w, req)
+				return
+			}
+
 			http.Error(w, errNoAvailableServer.Error(), http.StatusServiceUnavailable)
 		} else {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -230,6 +236,7 @@ func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
 	if weight != nil {
 		w = *weight
 	}
+
 	if w <= 0 { // non-positive weight is meaningless
 		return
 	}
@@ -241,4 +248,9 @@ func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
 	heap.Push(b, h)
 	b.status[name] = struct{}{}
 	b.mutex.Unlock()
+}
+
+// SetFailover defines the failover handler for the given balancer.
+func (b *Balancer) SetFailover(failoverHandler http.Handler) {
+	b.failoverHandler = failoverHandler
 }
