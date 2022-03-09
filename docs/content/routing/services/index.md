@@ -1083,9 +1083,9 @@ http:
 
 #### FailoverService
 
-Failover service allows to reference a service that will be use when no servers are available on the loadbalancer.
+Failover service allows referencing a service that will be used when no servers are available on the loadbalancer.
 
-!!! info "This is having effects only when `healthCheck` is set on children"
+!!! info "A failover service can only take over when all the children of the initial service are detected as unavailable. This can only happen if `healthCheck` is enabled for all the children."
 
 ```yaml tab="YAML"
 ## Dynamic configuration

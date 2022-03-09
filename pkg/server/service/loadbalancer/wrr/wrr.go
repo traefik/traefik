@@ -250,7 +250,8 @@ func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
 	b.mutex.Unlock()
 }
 
-// SetFailover defines the failover handler for the given balancer.
-func (b *Balancer) SetFailover(failoverHandler http.Handler) {
+// SetFailoverService defines the failover handler for the given balancer.
+// It is not concurrent safe.
+func (b *Balancer) SetFailoverService(failoverHandler http.Handler) {
 	b.failoverHandler = failoverHandler
 }
