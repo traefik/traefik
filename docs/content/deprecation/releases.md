@@ -1,3 +1,5 @@
+# Releases
+
 ## Versions
 
 Below is non-exhaustive list of versions and their maintenance status:
