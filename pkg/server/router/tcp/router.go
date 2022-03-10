@@ -96,11 +96,14 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		handler := r.muxerTCP.Match(connData)
 		// If there is a handler matching the connection metadata,
 		// we let it handle the connection.
-		// Otherwise, we flow through the clientHelloServerName.
 		if handler != nil {
 			handler.ServeTCP(conn)
 			return
 		}
+		// Otherwise, we keep going because:
+		// 1) we could be in the case where we have HTTP routers.
+		// 2) if it is an HTTPS request, even though we do not have any TLS routers,
+		// we still need to reply with a 404.
 	}
 
 	// FIXME -- Check if ProxyProtocol changes the first bytes of the request
