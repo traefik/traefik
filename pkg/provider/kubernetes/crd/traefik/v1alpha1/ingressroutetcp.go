@@ -17,6 +17,7 @@ type IngressRouteTCPSpec struct {
 // RouteTCP contains the set of routes.
 type RouteTCP struct {
 	Match    string       `json:"match"`
+	Priority int          `json:"priority,omitempty"`
 	Services []ServiceTCP `json:"services,omitempty"`
 	// Middlewares contains references to MiddlewareTCP resources.
 	Middlewares []ObjectReference `json:"middlewares,omitempty"`
