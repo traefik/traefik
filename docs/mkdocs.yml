@@ -196,3 +196,5 @@ nav:
         - 'KV': 'reference/dynamic-configuration/kv.md'
         - 'Marathon': 'reference/dynamic-configuration/marathon.md'
         - 'Rancher': 'reference/dynamic-configuration/rancher.md'
+  - 'Deprecation Notices':
+      - 'Releases': 'deprecation/releases.md'
