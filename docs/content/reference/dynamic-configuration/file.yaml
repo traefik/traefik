@@ -83,7 +83,6 @@ http:
           percent: 42
     Service03:
       weighted:
-        failoverService: foobar
         healthCheck: {}
         services:
         - name: foobar

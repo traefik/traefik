@@ -33,7 +33,6 @@ type stickyCookie struct {
 type Balancer struct {
 	stickyCookie     *stickyCookie
 	wantsHealthCheck bool
-	failoverHandler  http.Handler
 
 	mutex       sync.RWMutex
 	handlers    []*namedHandler
@@ -209,11 +208,6 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	server, err := b.nextServer()
 	if err != nil {
 		if errors.Is(err, errNoAvailableServer) {
-			if b.failoverHandler != nil {
-				b.failoverHandler.ServeHTTP(w, req)
-				return
-			}
-
 			http.Error(w, errNoAvailableServer.Error(), http.StatusServiceUnavailable)
 		} else {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -248,10 +242,4 @@ func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
 	heap.Push(b, h)
 	b.status[name] = struct{}{}
 	b.mutex.Unlock()
-}
-
-// SetFailoverService defines the failover handler for the given balancer.
-// It is not concurrent safe.
-func (b *Balancer) SetFailoverService(failoverHandler http.Handler) {
-	b.failoverHandler = failoverHandler
 }

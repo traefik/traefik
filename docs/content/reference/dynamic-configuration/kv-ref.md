@@ -219,7 +219,6 @@
 | `traefik/http/services/Service02/mirroring/mirrors/1/name` | `foobar` |
 | `traefik/http/services/Service02/mirroring/mirrors/1/percent` | `42` |
 | `traefik/http/services/Service02/mirroring/service` | `foobar` |
-| `traefik/http/services/Service03/weighted/failoverService` | `foobar` |
 | `traefik/http/services/Service03/weighted/healthCheck` | `` |
 | `traefik/http/services/Service03/weighted/services/0/name` | `foobar` |
 | `traefik/http/services/Service03/weighted/services/0/weight` | `42` |

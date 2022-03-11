@@ -86,9 +86,8 @@ type MirrorService struct {
 
 // WeightedRoundRobin is a weighted round robin load-balancer of services.
 type WeightedRoundRobin struct {
-	Services        []WRRService `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
-	FailoverService string       `json:"failoverService,omitempty" toml:"failoverService,omitempty" yaml:"failoverService,omitempty" export:"true"`
-	Sticky          *Sticky      `json:"sticky,omitempty" toml:"sticky,omitempty" yaml:"sticky,omitempty" export:"true"`
+	Services []WRRService `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
+	Sticky   *Sticky      `json:"sticky,omitempty" toml:"sticky,omitempty" yaml:"sticky,omitempty" export:"true"`
 	// HealthCheck enables automatic self-healthcheck for this service, i.e.
 	// whenever one of its children is reported as down, this service becomes aware of it,
 	// and takes it into account (i.e. it ignores the down child) when running the
