@@ -17,15 +17,14 @@ Below is non-exhaustive list of versions and their maintenance status:
 
 ??? example "Active Support / Security Support"
 
-    **Active support**: represents a version that still receives small enchancements to existing features as well as bug fixes. <br>
+    **Active support**: represents a version that still receives small enhancements to existing features as well as bug fixes.  
     **Security support**: represents a version that receives critical bug and security fixes.
 
 This page is maintained and updated periodically to reflect our roadmap and any decisions affecting the end of support for Traefik Proxy.
 
 Please refer to our migration guides for specific instructions on upgrading between versions, an example is the [v1 to v2 migration guide](../migration/v1-to-v2.md).
 
-!!! important "Note:"
-    All target dates on end of support or feature removal announcements may be subject to change.
+!!! important "All target dates for end of support or feature removal announcements may be subject to change."
 
 ## Versioning Scheme
 
