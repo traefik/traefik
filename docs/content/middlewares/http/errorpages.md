@@ -5,7 +5,7 @@ It Has Never Been Easier to Say That Something Went Wrong
 
 ![ErrorPages](../../assets/img/middleware/errorpages.png)
 
-The ErrorPage middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
+The ErrorPage middleware returns a custom page instead of the default, according to configured ranges of HTTP Status codes.
 
 !!! important
 
