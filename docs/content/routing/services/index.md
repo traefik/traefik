@@ -1212,6 +1212,131 @@ http:
         url = "http://private-ip-server-2/"
 ```
 
+### Failover (service)
+
+The failover is able to forward requests sent to a main service to a fallback service when the main service becomes unreachable. 
+
+!!! info "Supported Providers"
+
+    This strategy can be defined currently with the [File](../../providers/file.md).
+
+```yaml tab="YAML"
+## Dynamic configuration
+http:
+  services:
+    app:
+      failover:
+        service: main
+        fallback: backup
+        
+    main:
+      loadBalancer:
+        healthCheck:
+          path: /status
+          interval: 10s
+          timeout: 3s
+        servers:
+        - url: "http://private-ip-server-1/"
+
+    backup:
+      loadBalancer:
+        servers:
+        - url: "http://private-ip-server-2/"
+```
+
+```toml tab="TOML"
+## Dynamic configuration
+[http.services]
+  [http.services.app]
+    [http.services.app.failover]
+      service = "main"
+      fallback = "backup"
+
+  [http.services.main]
+    [http.services.main.loadBalancer]
+      [http.services.main.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.main.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+
+  [http.services.backup]
+    [http.services.backup.loadBalancer]
+      [[http.services.backup.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
+
+#### Health Check
+
+HealthCheck enables automatic self-healthcheck for this service, 
+i.e. if the main and the fallback handlers of the service becomes unreachable, 
+the information is propagated upwards to its parent.
+
+!!! info "All or nothing"
+
+    If HealthCheck is enabled for a given service, but any of its descendants does
+    not have it enabled, the creation of the service will fail.
+
+    HealthCheck on Failover services can be defined currently only with the [File](../../providers/file.md) provider.
+
+```yaml tab="YAML"
+## Dynamic configuration
+http:
+  services:
+    app:
+      failover:
+        healthCheck: {}
+        service: main
+        fallback: backup
+        
+    main:
+      loadBalancer:
+        healthCheck:
+          path: /status
+          interval: 10s
+          timeout: 3s
+        servers:
+        - url: "http://private-ip-server-1/"
+
+    backup:
+      loadBalancer:
+        healthCheck:
+          path: /status
+          interval: 10s
+          timeout: 3s
+        servers:
+        - url: "http://private-ip-server-2/"
+```
+
+```toml tab="TOML"
+## Dynamic configuration
+[http.services]
+  [http.services.app]
+    [http.services.app.failover.healthCheck]
+    [http.services.app.failover]
+      service = "main"
+      fallback = "backup"
+
+  [http.services.main]
+    [http.services.main.loadBalancer]
+      [http.services.main.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.main.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+
+  [http.services.backup]
+    [http.services.backup.loadBalancer]
+      [http.services.backup.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.backup.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
+
 ## Configuring TCP Services
 
 ### General
