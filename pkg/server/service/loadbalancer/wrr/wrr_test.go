@@ -290,3 +290,18 @@ func TestBalancerBias(t *testing.T) {
 
 	assert.Equal(t, wantSequence, recorder.sequence)
 }
+
+func (b *Balancer) AddTestService(t *testing.T, name string, weight int) {
+	t.Helper()
+
+	b.AddService(name, createHandler(t, name), Int(weight))
+}
+
+func createHandler(t *testing.T, name string) http.Handler {
+	t.Helper()
+
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", name)
+		rw.WriteHeader(http.StatusOK)
+	})
+}

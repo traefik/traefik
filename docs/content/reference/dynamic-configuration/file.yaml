@@ -95,6 +95,11 @@ http:
             secure: true
             httpOnly: true
             sameSite: foobar
+    Service04:
+      failover:
+        service: foobar
+        fallback: foobar
+        healthCheck: {}
   middlewares:
     Middleware00:
       addPrefix:
