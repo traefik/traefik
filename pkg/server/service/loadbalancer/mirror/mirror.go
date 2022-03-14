@@ -18,7 +18,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/safe"
 )
 
-// Mirroring is an http.Handler that can mirror requests.
+// Mirroring is a http.Handler that can mirror requests.
 type Mirroring struct {
 	handler        http.Handler
 	mirrorHandlers []*mirrorHandler
