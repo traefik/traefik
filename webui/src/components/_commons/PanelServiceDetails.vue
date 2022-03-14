@@ -81,15 +81,29 @@
         </div>
       </q-card-section>
 
-      <q-card-section v-if="data.weighted && data.weighted.failoverService">
+      <q-card-section v-if="data.failover && data.failover.service">
         <div class="row items-start no-wrap">
           <div class="col">
-            <div class="text-subtitle2">Failover Service</div>
+            <div class="text-subtitle2">Main Service</div>
             <q-chip
               dense
               class="app-chip app-chip-name app-chip-overflow">
-              {{ data.weighted.failoverService }}
-              <q-tooltip>{{ data.weighted.failoverService }}</q-tooltip>
+              {{ data.failover.service }}
+              <q-tooltip>{{ data.failover.service }}</q-tooltip>
+            </q-chip>
+          </div>
+        </div>
+      </q-card-section>
+
+      <q-card-section v-if="data.failover && data.failover.fallback">
+        <div class="row items-start no-wrap">
+          <div class="col">
+            <div class="text-subtitle2">Fallback Service</div>
+            <q-chip
+              dense
+              class="app-chip app-chip-name app-chip-overflow">
+              {{ data.failover.fallback }}
+              <q-tooltip>{{ data.failover.fallback }}</q-tooltip>
             </q-chip>
           </div>
         </div>
