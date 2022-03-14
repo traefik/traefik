@@ -27,6 +27,7 @@ func (r *responseRecorder) WriteHeader(statusCode int) {
 
 func TestFailover(t *testing.T) {
 	failover := New(&dynamic.HealthCheck{})
+
 	status := true
 	require.NoError(t, failover.RegisterStatusUpdater(func(up bool) {
 		status = up
@@ -48,6 +49,7 @@ func TestFailover(t *testing.T) {
 	assert.Equal(t, 1, recorder.save["handler"])
 	assert.Equal(t, 0, recorder.save["fallback"])
 	assert.Equal(t, []int{200}, recorder.status)
+	assert.True(t, status)
 
 	failover.SetHandlerStatus(context.Background(), false)
 

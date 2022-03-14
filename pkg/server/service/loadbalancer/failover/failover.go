@@ -16,8 +16,8 @@ type Failover struct {
 	wantsHealthCheck bool
 	handler          http.Handler
 	fallbackHandler  http.Handler
-	// updaters is the list of hooks that are run (to update the Balancer
-	// parent(s)), whenever the Balancer status changes.
+	// updaters is the list of hooks that are run (to update the Failover
+	// parent(s)), whenever the Failover status changes.
 	updaters []func(bool)
 
 	handlerStatusMu sync.RWMutex

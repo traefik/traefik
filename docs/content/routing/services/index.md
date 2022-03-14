@@ -1218,7 +1218,7 @@ The failover is able to forward requests sent to a main service to a fallback se
 
 !!! info "Supported Providers"
 
-    This strategy can be defined currently with the [File](../../providers/file.md).
+    This strategy can be defined currently only with the [File](../../providers/file.md).
 
 ```yaml tab="YAML"
 ## Dynamic configuration
