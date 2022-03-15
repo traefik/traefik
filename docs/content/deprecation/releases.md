@@ -17,8 +17,8 @@ Below is a non-exhaustive list of versions and their maintenance status:
 
 ??? example "Active Support / Security Support"
 
-    **Active support**: represents a version that still receives small enhancements to existing features as well as bug fixes.  
-    **Security support**: represents a version that receives critical bug and security fixes.
+    **Active support**: receives any bug fixes.
+    **Security support**: receives only critical bug and security fixes.
 
 This page is maintained and updated periodically to reflect our roadmap and any decisions affecting the end of support for Traefik Proxy.
 
