@@ -17,6 +17,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/ecs"
 	"github.com/traefik/traefik/v2/pkg/provider/file"
 	"github.com/traefik/traefik/v2/pkg/provider/http"
+	"github.com/traefik/traefik/v2/pkg/provider/hub"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/gateway"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/ingress"
@@ -78,6 +79,8 @@ type Configuration struct {
 
 	// Deprecated.
 	Pilot *Pilot `description:"Traefik Pilot configuration." json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty" export:"true"`
+
+	Hub *hub.Provider `description:"Traefik Hub configuration." json:"hub,omitempty" toml:"hub,omitempty" yaml:"hub,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	Experimental *Experimental `description:"experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty" export:"true"`
 }
@@ -213,6 +216,21 @@ func (c *Configuration) SetEffectiveConfiguration() {
 			ep.SetDefaults()
 			c.EntryPoints[DefaultInternalEntryPointName] = ep
 		}
+	}
+
+	// Creates the internal Hub entry point if needed
+	if c.Experimental != nil && c.Experimental.Hub && c.Hub != nil && c.Hub.EntryPoint == hub.DefaultEntryPointName {
+		if _, ok := c.EntryPoints[hub.DefaultEntryPointName]; !ok {
+			// TODO: define a better default port.
+			ep := &EntryPoint{Address: ":9900"}
+			ep.SetDefaults()
+			c.EntryPoints[hub.DefaultEntryPointName] = ep
+		}
+	}
+
+	// Disable Hub provider if not enabled in experimental
+	if c.Experimental == nil || !c.Experimental.Hub {
+		c.Hub = nil
 	}
 
 	if c.Providers.Docker != nil {
