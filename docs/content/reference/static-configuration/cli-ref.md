@@ -183,6 +183,9 @@ Timeout defines how long to wait on an idle session before releasing the related
 `--experimental.http3`:  
 Enable HTTP3. (Default: ```false```)
 
+`--experimental.hub`:  
+Allow the Traefik Hub provider usage. (Default: ```false```)
+
 `--experimental.kubernetesgateway`:  
 Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 
@@ -215,6 +218,12 @@ resolv.conf used for DNS resolving (Default: ```/etc/resolv.conf```)
 
 `--hostresolver.resolvdepth`:  
 The maximal depth of DNS recursive resolving (Default: ```5```)
+
+`--hub`:  
+Traefik Hub configuration. (Default: ```false```)
+
+`--hub.entrypoint`:  
+Entrypoint that exposes data for Traefik Hub. (Default: ```traefik-hub```)
 
 `--log`:  
 Traefik log settings. (Default: ```false```)
