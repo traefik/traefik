@@ -2,7 +2,7 @@
 
 ## Versions
 
-Below is non-exhaustive list of versions and their maintenance status:
+Below is a non-exhaustive list of versions and their maintenance status:
 
 | Version | Release Date | Active Support     | Security Support | 
 |---------|--------------|--------------------|------------------|
@@ -28,7 +28,7 @@ Please refer to our migration guides for specific instructions on upgrading betw
 
 ## Versioning Scheme
 
-The Traefik Proxy project follows the [semantic versioning](https://semver.org/) scheme and maintains a separate branch for each minor version, the main branch always represent the next upcoming minor or major version.
+The Traefik Proxy project follows the [semantic versioning](https://semver.org/) scheme and maintains a separate branch for each minor version. The main branch always represents the next upcoming minor or major version.
 
 And these are our guiding rules for version support:
 
