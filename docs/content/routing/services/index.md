@@ -1218,7 +1218,7 @@ The failover is able to forward requests sent to a main service to a fallback se
 
 !!! info "Supported Providers"
 
-    This strategy can be defined currently only with the [File](../../providers/file.md).
+    This strategy can currently only be defined with the [File](../../providers/file.md) provider.
 
 ```yaml tab="YAML"
 ## Dynamic configuration
@@ -1270,7 +1270,7 @@ http:
 #### Health Check
 
 HealthCheck enables automatic self-healthcheck for this service, 
-i.e. if the main and the fallback handlers of the service becomes unreachable, 
+i.e. if the main and the fallback handlers of the service become unreachable, 
 the information is propagated upwards to its parent.
 
 !!! info "All or nothing"
@@ -1278,7 +1278,7 @@ the information is propagated upwards to its parent.
     If HealthCheck is enabled for a given service, but any of its descendants does
     not have it enabled, the creation of the service will fail.
 
-    HealthCheck on Failover services can be defined currently only with the [File](../../providers/file.md) provider.
+    HealthCheck on a Failover service can currently only be defined with the [File](../../providers/file.md) provider.
 
 ```yaml tab="YAML"
 ## Dynamic configuration
