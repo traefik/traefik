@@ -1214,11 +1214,15 @@ http:
 
 ### Failover (service)
 
-The failover is able to forward requests sent to a main service to a fallback service when the main service becomes unreachable. 
+A failover service job is to forward all requests to a fallback service when the main service becomes unreachable.
 
 !!! info "Relation to HealthCheck"
 
-    The failover service relies on the HealthCheck system to get notified when its main service becomes unreachable, which means HealthCheck needs to be enabled and functional on the main service. However, HealthCheck does not need to be enabled on the failover service itself for it to be functional. It is only required in order to propagate upwards the information when the failover itself becomes down (i.e. both its main and its fallback are down too).
+    The failover service relies on the HealthCheck system to get notified when its main service becomes unreachable,
+    which means HealthCheck needs to be enabled and functional on the main service.
+    However, HealthCheck does not need to be enabled on the failover service itself for it to be functional.
+    It is only required in order to propagate upwards the information when the failover itself becomes down
+    (i.e. both its main and its fallback are down too).
 
 !!! info "Supported Providers"
 
@@ -1232,7 +1236,7 @@ http:
       failover:
         service: main
         fallback: backup
-        
+
     main:
       loadBalancer:
         healthCheck:
@@ -1273,8 +1277,8 @@ http:
 
 #### Health Check
 
-HealthCheck enables automatic self-healthcheck for this service, 
-i.e. if the main and the fallback handlers of the service become unreachable, 
+HealthCheck enables automatic self-healthcheck for this service,
+i.e. if the main and the fallback services become unreachable,
 the information is propagated upwards to its parent.
 
 !!! info "All or nothing"
@@ -1293,7 +1297,7 @@ http:
         healthCheck: {}
         service: main
         fallback: backup
-        
+
     main:
       loadBalancer:
         healthCheck:
