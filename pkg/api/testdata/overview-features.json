@@ -2,7 +2,8 @@
 	"features": {
 		"accessLog": false,
 		"metrics": "Prometheus",
-		"tracing": "Jaeger"
+		"tracing": "Jaeger",
+		"hub": true
 	},
 	"http": {
 		"middlewares": {
