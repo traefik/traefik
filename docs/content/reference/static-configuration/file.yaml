@@ -263,7 +263,6 @@ providers:
   plugin:
     Descriptor0: {}
     Descriptor1: {}
-
 api:
   insecure: true
   dashboard: true
