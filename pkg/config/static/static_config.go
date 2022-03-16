@@ -216,17 +216,16 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 	}
 
-	// Creates the internal Hub entry point if needed
+	// Creates the internal Hub entry point if needed.
 	if c.Experimental != nil && c.Experimental.Hub && c.Hub != nil && c.Hub.EntryPoint == hub.DefaultEntryPointName {
 		if _, ok := c.EntryPoints[hub.DefaultEntryPointName]; !ok {
-			// TODO: define a better default port.
 			ep := &EntryPoint{Address: ":9900"}
 			ep.SetDefaults()
 			c.EntryPoints[hub.DefaultEntryPointName] = ep
 		}
 	}
 
-	// Disable Hub provider if not enabled in experimental
+	// Disable Hub provider if not enabled in experimental.
 	if c.Experimental == nil || !c.Experimental.Hub {
 		c.Hub = nil
 	}

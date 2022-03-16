@@ -19,8 +19,7 @@ const DefaultEntryPointName = "traefik-hub"
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	// TODO: rephrase
-	EntryPoint string `description:"Entrypoint that exposes data for Traefik Hub." json:"Entrypoint,omitempty" toml:"Entrypoint,omitempty" yaml:"Entrypoint,omitempty"`
+	EntryPoint string `description:"Entrypoint that exposes data for Traefik Hub." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"`
 
 	server *http.Server
 }
@@ -35,7 +34,7 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-// Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
+// Provide allows the hub provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, _ *safe.Pool) error {
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
