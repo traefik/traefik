@@ -78,7 +78,7 @@ type Configuration struct {
 	CertificatesResolvers map[string]CertificateResolver `description:"Certificates resolvers configuration." json:"certificatesResolvers,omitempty" toml:"certificatesResolvers,omitempty" yaml:"certificatesResolvers,omitempty" export:"true"`
 
 	Pilot *Pilot        `description:"Traefik Pilot configuration." json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty" export:"true"`
-	Hub   *hub.Provider `description:"Traefik Hub configuration." json:"hub,omitempty" toml:"hub,omitempty" yaml:"hub,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Hub   *hub.Provider `description:"Traefik Hub configuration." json:"hub,omitempty" toml:"hub,omitempty" yaml:"hub,omitempty" file:"allowEmpty" export:"true"`
 
 	Experimental *Experimental `description:"experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty" export:"true"`
 }
@@ -216,17 +216,16 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 	}
 
-	// Creates the internal Hub entry point if needed
+	// Creates the internal Hub entry point if needed.
 	if c.Experimental != nil && c.Experimental.Hub && c.Hub != nil && c.Hub.EntryPoint == hub.DefaultEntryPointName {
 		if _, ok := c.EntryPoints[hub.DefaultEntryPointName]; !ok {
-			// TODO: define a better default port.
 			ep := &EntryPoint{Address: ":9900"}
 			ep.SetDefaults()
 			c.EntryPoints[hub.DefaultEntryPointName] = ep
 		}
 	}
 
-	// Disable Hub provider if not enabled in experimental
+	// Disable Hub provider if not enabled in experimental.
 	if c.Experimental == nil || !c.Experimental.Hub {
 		c.Hub = nil
 	}
