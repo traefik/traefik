@@ -9,6 +9,11 @@ This agent can:
 * provide ACME certificates to Traefik 
 * transfer requests from the SaaS Platform to Traefik (and then avoid the users to expose directly their infrastructure on the internet)
 
+!!! warning "Traefik Hub EntryPoint"
+
+    When the Traefik Hub feature is enabled, Traefik exposes some services meant for the Traefik Hub Agent on a dedicated entryPoint (on port `9900` by default).
+    Given their sensitive nature, those services should not be publicly exposed. 
+
 !!! important "Learn More About Traefik Hub"
 
     This section is intended only as a brief overview for Traefik users who are not familiar with Traefik Hub.
@@ -43,32 +48,32 @@ This agent can:
 
 ## Configuration
 
-### `entrypoint`
+### `entryPoint`
 
 _Optional, Default="traefik-hub"_
 
-Defines the entrypoint that exposes data for Traefik Hub Agent.
+Defines the entryPoint that exposes data for Traefik Hub Agent.
 
 !!! info
 
-    * If no entryPoint are configured, a `traefik-hub` entrypoint is created.  
+    * If no entryPoint is configured, a `traefik-hub` entryPoint is created.  
     * If the entryPoint named `traefik-hub` is not configured, it is automatically created on port `9900`.
-    * In any other cases, the option value must match an existing entrypoint name.
+    * In any other cases, the option value must match an existing entryPoint name.
 
 ```yaml tab="File (YAML)"
-entrypoints:
+entryPoints:
     hub-ep: ":9000"
 
 hub:
-  entrypoint: "hub-ep"
+  entryPoint: "hub-ep"
 ```
 
 ```toml tab="File (TOML)"
-[entrypoints.hub-ep]
+[entryPoints.hub-ep]
     address = ":9000"
 
 [hub]
-  entrypoint = "hub-ep"
+  entryPoint = "hub-ep"
 ```
 
 ```bash tab="CLI"
