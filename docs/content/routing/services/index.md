@@ -1217,6 +1217,7 @@ http:
 The failover is able to forward requests sent to a main service to a fallback service when the main service becomes unreachable. 
 
 !!! info "Relation to HealthCheck"
+
     The failover service relies on the HealthCheck system to get notified when its main service becomes unreachable, which means HealthCheck needs to be enabled and functional on the main service. However, HealthCheck does not need to be enabled on the failover service itself for it to be functional. It is only required in order to propagate upwards the information when the failover itself becomes down (i.e. both its main and its fallback are down too).
 
 !!! info "Supported Providers"
