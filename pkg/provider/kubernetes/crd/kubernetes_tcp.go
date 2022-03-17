@@ -98,6 +98,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				EntryPoints: ingressRouteTCP.Spec.EntryPoints,
 				Middlewares: mds,
 				Rule:        route.Match,
+				Priority:    route.Priority,
 				Service:     serviceName,
 			}
 

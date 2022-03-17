@@ -214,3 +214,6 @@
  [[issues.exclude-rules]]
     path = "(.+)\\.go"
     text = "struct-tag: unknown option 'inline' in JSON tag"
+ [[issues.exclude-rules]]
+    path = "pkg/server/router/tcp/manager.go"
+    text = "Function 'buildEntryPointHandler' is too long (.+)"

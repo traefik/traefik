@@ -99,7 +99,8 @@ For example, to change the rule, you could add the tag ```traefik.http.routers.m
     ```
 
 ??? info "`traefik.http.routers.<router_name>.priority`"
-    <!-- TODO doc priority in routers page -->
+
+    See [priority](../routers/index.md#priority) for more information.
     
     ```yaml
     traefik.http.routers.myrouter.priority=42
