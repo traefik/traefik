@@ -905,17 +905,17 @@ func TestParseDomains(t *testing.T) {
 			errorExpected: true,
 		},
 		{
-			description: "Many host rules",
+			description: "Several host rules",
 			expression:  "Host(`foo.bar`,`test.bar`)",
 			domain:      []string{"foo.bar", "test.bar"},
 		},
 		{
-			description: "Many host rules upper",
+			description: "Several host rules upper",
 			expression:  "HOST(`foo.bar`,`test.bar`)",
 			domain:      []string{"foo.bar", "test.bar"},
 		},
 		{
-			description: "Many host rules lower",
+			description: "Several host rules lower",
 			expression:  "host(`foo.bar`,`test.bar`)",
 			domain:      []string{"foo.bar", "test.bar"},
 		},
