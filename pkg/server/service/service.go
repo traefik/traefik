@@ -168,7 +168,7 @@ func (m *Manager) getFailoverServiceHandler(ctx context.Context, serviceName str
 
 	fallbackUpdater, ok := fallbackHandler.(healthcheck.StatusUpdater)
 	if !ok {
-		return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", config.Fallback, serviceName, serviceHandler)
+		return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", config.Fallback, serviceName, fallbackHandler)
 	}
 
 	if err := fallbackUpdater.RegisterStatusUpdater(func(up bool) {
