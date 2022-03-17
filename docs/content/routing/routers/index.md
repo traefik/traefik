@@ -260,9 +260,9 @@ The table below lists all the available matchers:
     The usual AND (`&&`) and OR (`||`) logical operators can be used, with the expected precedence rules,
     as well as parentheses.
 
-!!! info "Invert a matcher"
+!!! info "Inverting a matcher"
 
-    You can invert a matcher by using the `!` operator.
+    One can invert a matcher by using the `!` operator.
 
 !!! important "Rule, Middleware, and Services"
 
