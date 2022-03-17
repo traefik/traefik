@@ -1,7 +1,6 @@
 package http
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -17,7 +16,7 @@ import (
 
 const hostMatcher = "Host"
 
-var funcs = map[string]func(*mux.Route, ...string) error{
+var httpFuncs = map[string]func(*mux.Route, ...string) error{
 	hostMatcher:     host,
 	"HostHeader":    host,
 	"HostRegexp":    hostRegexp,
@@ -39,7 +38,7 @@ type Muxer struct {
 // NewMuxer returns a new muxer instance.
 func NewMuxer() (*Muxer, error) {
 	var matchers []string
-	for matcher := range funcs {
+	for matcher := range httpFuncs {
 		matchers = append(matchers, matcher)
 	}
 
@@ -84,7 +83,7 @@ func (r *Muxer) AddRoute(rule string, priority int, handler http.Handler) error 
 // ParseDomains extract domains from rule.
 func ParseDomains(rule string) ([]string, error) {
 	var matchers []string
-	for matcher := range funcs {
+	for matcher := range httpFuncs {
 		matchers = append(matchers, matcher)
 	}
 
@@ -270,10 +269,10 @@ func addRuleOnRouter(router *mux.Router, rule *rules.Tree) error {
 		}
 
 		if rule.Not {
-			return not(funcs[rule.Matcher])(router.NewRoute(), rule.Value...)
+			return not(httpFuncs[rule.Matcher])(router.NewRoute(), rule.Value...)
 		}
 
-		return funcs[rule.Matcher](router.NewRoute(), rule.Value...)
+		return httpFuncs[rule.Matcher](router.NewRoute(), rule.Value...)
 	}
 }
 
@@ -316,10 +315,10 @@ func addRuleOnRoute(route *mux.Route, rule *rules.Tree) error {
 		}
 
 		if rule.Not {
-			return not(funcs[rule.Matcher])(route, rule.Value...)
+			return not(httpFuncs[rule.Matcher])(route, rule.Value...)
 		}
 
-		return funcs[rule.Matcher](route, rule.Value...)
+		return httpFuncs[rule.Matcher](route, rule.Value...)
 	}
 }
 

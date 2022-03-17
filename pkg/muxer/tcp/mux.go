@@ -16,7 +16,7 @@ import (
 	"github.com/vulcand/predicate"
 )
 
-var funcs = map[string]func(*matchersTree, ...string) error{
+var tcpFuncs = map[string]func(*matchersTree, ...string) error{
 	"HostSNI":  hostSNI,
 	"ClientIP": clientIP,
 }
@@ -25,7 +25,7 @@ var funcs = map[string]func(*matchersTree, ...string) error{
 // This is a first naive implementation used in TCP routing.
 func ParseHostSNI(rule string) ([]string, error) {
 	var matchers []string
-	for matcher := range funcs {
+	for matcher := range tcpFuncs {
 		matchers = append(matchers, matcher)
 	}
 
@@ -80,7 +80,7 @@ type Muxer struct {
 // NewMuxer returns a TCP muxer.
 func NewMuxer() (*Muxer, error) {
 	var matcherNames []string
-	for matcherName := range funcs {
+	for matcherName := range tcpFuncs {
 		matcherNames = append(matcherNames, matcherName)
 	}
 
@@ -164,7 +164,7 @@ func addRule(tree *matchersTree, rule *rules.Tree) error {
 			return err
 		}
 
-		err = funcs[rule.Matcher](tree, rule.Value...)
+		err = tcpFuncs[rule.Matcher](tree, rule.Value...)
 		if err != nil {
 			return err
 		}
