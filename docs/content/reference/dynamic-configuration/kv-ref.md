@@ -237,6 +237,7 @@
 | `traefik/tcp/routers/TCPRouter0/entryPoints/1` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/middlewares/0` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/middlewares/1` | `foobar` |
+| `traefik/tcp/routers/TCPRouter0/priority` | `42` |
 | `traefik/tcp/routers/TCPRouter0/rule` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/service` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/tls/certResolver` | `foobar` |
@@ -252,6 +253,7 @@
 | `traefik/tcp/routers/TCPRouter1/entryPoints/1` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/middlewares/0` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/middlewares/1` | `foobar` |
+| `traefik/tcp/routers/TCPRouter1/priority` | `42` |
 | `traefik/tcp/routers/TCPRouter1/rule` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/service` | `foobar` |
 | `traefik/tcp/routers/TCPRouter1/tls/certResolver` | `foobar` |
