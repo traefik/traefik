@@ -95,6 +95,12 @@
             secure = true
             httpOnly = true
             sameSite = "foobar"
+    [http.services.Service04]
+      [http.services.Service04.failover]
+        service = "foobar"
+        fallback = "foobar"
+
+      [http.services.Service04.failover.healthCheck]
   [http.middlewares]
     [http.middlewares.Middleware00]
       [http.middlewares.Middleware00.addPrefix]
