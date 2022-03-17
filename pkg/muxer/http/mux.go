@@ -110,11 +110,11 @@ func path(route *mux.Route, paths ...string) error {
 	rt := route.Subrouter()
 
 	for _, path := range paths {
-		tmpRt := rt.Path(path)
-		if tmpRt.GetError() != nil {
-			return tmpRt.GetError()
+		if err := rt.Path(path).GetError(); err != nil {
+			return err
 		}
 	}
+
 	return nil
 }
 
@@ -122,11 +122,11 @@ func pathPrefix(route *mux.Route, paths ...string) error {
 	rt := route.Subrouter()
 
 	for _, path := range paths {
-		tmpRt := rt.PathPrefix(path)
-		if tmpRt.GetError() != nil {
-			return tmpRt.GetError()
+		if err := rt.PathPrefix(path).GetError(); err != nil {
+			return err
 		}
 	}
+
 	return nil
 }
 
