@@ -88,7 +88,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	if r.muxerTCP.HasRoutes() && !r.muxerTCPTLS.HasRoutes() && !r.muxerHTTPS.HasRoutes() {
 		connData, err := tcpmuxer.NewConnData("", conn)
 		if err != nil {
-			log.WithoutContext().Errorf("Error while reading TCP connection data : %v", err)
+			log.WithoutContext().Errorf("Error while reading TCP connection data: %v", err)
 			conn.Close()
 			return
 		}
@@ -127,7 +127,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 
 	connData, err := tcpmuxer.NewConnData(serverName, conn)
 	if err != nil {
-		log.WithoutContext().Errorf("Error while reading TCP connection data : %v", err)
+		log.WithoutContext().Errorf("Error while reading TCP connection data: %v", err)
 		conn.Close()
 		return
 	}
