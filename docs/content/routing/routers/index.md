@@ -833,16 +833,18 @@ The table below lists all the available matchers:
 
     It is important to note that the Server Name Indication is an extension of the TLS protocol.
     Hence, only TLS routers will be able to specify a domain name with that rule.
-    However, non-TLS routers will have to explicitly use that rule with `*` (every domain) to state that every non-TLS request will be handled by the router.
+    However, there is one special use case for HostSNI with non-TLS routers:
+    when one wants a non-TLS router that matches all (non-TLS) requests,
+    one should use the specific `HostSNI(*)` syntax.
 
 !!! info "Combining Matchers Using Operators and Parenthesis"
 
     The usual AND (`&&`) and OR (`||`) logical operators can be used, with the expected precedence rules,
     as well as parentheses.
 
-!!! info "Invert a matcher"
+!!! info "Inverting a matcher"
 
-    You can invert a matcher by using the `!` operator.
+    One can invert a matcher by using the `!` operator.
 
 !!! important "Rule, Middleware, and Services"
 
