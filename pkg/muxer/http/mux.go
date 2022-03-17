@@ -100,7 +100,7 @@ func ParseDomains(rule string) ([]string, error) {
 
 	buildTree, ok := parse.(rules.TreeBuilder)
 	if !ok {
-		return nil, errors.New("cannot parse")
+		return nil, fmt.Errorf("error while parsing rule %s", rule)
 	}
 
 	return buildTree().ParseMatchers([]string{hostMatcher}), nil

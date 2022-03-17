@@ -41,7 +41,7 @@ func ParseHostSNI(rule string) ([]string, error) {
 
 	buildTree, ok := parse.(rules.TreeBuilder)
 	if !ok {
-		return nil, errors.New("cannot parse")
+		return nil, fmt.Errorf("error while parsing rule %s", rule)
 	}
 
 	return buildTree().ParseMatchers([]string{"HostSNI"}), nil
@@ -55,7 +55,7 @@ type ConnData struct {
 
 // NewConnData builds a connData struct from the given parameters.
 func NewConnData(serverName string, conn tcp.WriteCloser) (ConnData, error) {
-	ip, _, err := net.SplitHostPort(conn.RemoteAddr().String())
+	remoteIP, _, err := net.SplitHostPort(conn.RemoteAddr().String())
 	if err != nil {
 		return ConnData{}, fmt.Errorf("error while parsing remote address %q: %w", conn.RemoteAddr().String(), err)
 	}
@@ -67,7 +67,7 @@ func NewConnData(serverName string, conn tcp.WriteCloser) (ConnData, error) {
 
 	return ConnData{
 		serverName: types.CanonicalDomain(serverName),
-		remoteIP:   ip,
+		remoteIP:   remoteIP,
 	}, nil
 }
 
@@ -200,9 +200,9 @@ func (r routes) Less(i, j int) bool { return r[i].priority > r[j].priority }
 // route holds the matchers to match TCP route,
 // and the handler that will serve the connection.
 type route struct {
-	// The matchers tree structure reflecting the rule.
+	// matchers tree structure reflecting the rule.
 	matchers matchersTree
-	// The handler responsible for handling the route.
+	// handler responsible for handling the route.
 	handler tcp.Handler
 
 	// Used to disambiguate between two (or more) rules that would both match for a
@@ -265,11 +265,7 @@ func clientIP(tree *matchersTree, clientIPs ...string) error {
 			log.WithoutContext().Warnf("\"ClientIP\" matcher: could not match remote address : %v", err)
 			return false
 		}
-		if ok {
-			return true
-		}
-
-		return false
+		return ok
 	}
 
 	return nil
@@ -280,7 +276,7 @@ var almostFQDN = regexp.MustCompile(`^[[:alnum:]\.-]+$`)
 // hostSNI checks if the SNI Host of the connection match the matcher host.
 func hostSNI(tree *matchersTree, hosts ...string) error {
 	if len(hosts) == 0 {
-		return fmt.Errorf("empty value for \"HostSNI\" matcher is not allowed")
+		return errors.New("empty value for \"HostSNI\" matcher is not allowed")
 	}
 
 	for i, host := range hosts {
@@ -299,7 +295,7 @@ func hostSNI(tree *matchersTree, hosts ...string) error {
 	tree.matcher = func(meta ConnData) bool {
 		// Since a HostSNI(`*`) rule has been provided as catchAll for non-TLS TCP,
 		// it allows matching with an empty serverName.
-		// Which is why we make sure to take that case into account before before
+		// Which is why we make sure to take that case into account before
 		// checking meta.serverName.
 		if hosts[0] == "*" {
 			return true
