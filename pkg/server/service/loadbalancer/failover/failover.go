@@ -10,7 +10,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 )
 
-// Failover is a http.Handler that can forward requests to the fallback handler
+// Failover is an http.Handler that can forward requests to the fallback handler
 // when the main handler status is down.
 type Failover struct {
 	wantsHealthCheck bool
