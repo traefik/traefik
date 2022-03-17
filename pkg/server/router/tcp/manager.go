@@ -172,7 +172,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			//		tlsoptions: myTLSOptions
 			//	# When a request for "/foo" comes, even though it won't be routed by
 			//	httpRouter2, if its SNI is set to foo.com, myTLSOptions will be used for the TLS
-			//	connection. Otherwise it will fallback to the default TLS config.
+			//	connection. Otherwise, it will fallback to the default TLS config.
 			logger.Warnf("No domain found in rule %v, the TLS options applied for this router will depend on the SNI of each request", routerHTTPConfig.Rule)
 		}
 

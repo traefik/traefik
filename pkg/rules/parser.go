@@ -15,7 +15,7 @@ const (
 // TreeBuilder defines the type for a Tree builder.
 type TreeBuilder func() *Tree
 
-// Tree represents the rules tree structure.
+// Tree represents the rules' tree structure.
 type Tree struct {
 	Matcher   string
 	Not       bool
