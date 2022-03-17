@@ -366,6 +366,7 @@ tcp:
       - foobar
       service: foobar
       rule: foobar
+      priority: 42
       tls:
         passthrough: true
         options: foobar
@@ -388,6 +389,7 @@ tcp:
       - foobar
       service: foobar
       rule: foobar
+      priority: 42
       tls:
         passthrough: true
         options: foobar
