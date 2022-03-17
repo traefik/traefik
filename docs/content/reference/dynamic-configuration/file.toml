@@ -326,6 +326,7 @@
       middlewares = ["foobar", "foobar"]
       service = "foobar"
       rule = "foobar"
+      priority = 42
       [tcp.routers.TCPRouter0.tls]
         passthrough = true
         options = "foobar"
@@ -343,6 +344,7 @@
       middlewares = ["foobar", "foobar"]
       service = "foobar"
       rule = "foobar"
+      priority = 42
       [tcp.routers.TCPRouter1.tls]
         passthrough = true
         options = "foobar"
