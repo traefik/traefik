@@ -200,7 +200,7 @@ const routes = [
         props: { default: true, NavBar: true },
         meta: {
           protocol: 'udp',
-          title: 'TCP Routers'
+          title: 'UDP Routers'
         }
       },
       {
@@ -213,7 +213,7 @@ const routes = [
         props: { default: true, NavBar: true },
         meta: {
           protocol: 'udp',
-          title: 'TCP Router Detail'
+          title: 'UDP Router Detail'
         }
       },
       {
@@ -226,7 +226,7 @@ const routes = [
         props: { default: true, NavBar: true },
         meta: {
           protocol: 'udp',
-          title: 'TCP Services'
+          title: 'UDP Services'
         }
       },
       {
@@ -239,7 +239,7 @@ const routes = [
         props: { default: true, NavBar: true },
         meta: {
           protocol: 'udp',
-          title: 'TCP Service Detail'
+          title: 'UDP Service Detail'
         }
       },
       {

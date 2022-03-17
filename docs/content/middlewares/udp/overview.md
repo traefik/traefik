@@ -1,3 +1,8 @@
+---
+title: "Traefik Proxy UDP Middleware Overview"
+description: "Read the official Traefik Proxy documentation for an overview of the available UDP middleware."
+---
+
 # UDP Middlewares
 
 Controlling connections
