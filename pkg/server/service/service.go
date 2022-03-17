@@ -23,6 +23,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/server/cookie"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
+	"github.com/traefik/traefik/v2/pkg/server/service/loadbalancer/failover"
 	"github.com/traefik/traefik/v2/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v2/pkg/server/service/loadbalancer/wrr"
 	"github.com/vulcand/oxy/roundrobin"
@@ -116,6 +117,13 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 			conf.AddError(err, true)
 			return nil, err
 		}
+	case conf.Failover != nil:
+		var err error
+		lb, err = m.getFailoverServiceHandler(ctx, serviceName, conf.Failover)
+		if err != nil {
+			conf.AddError(err, true)
+			return nil, err
+		}
 	default:
 		sErr := fmt.Errorf("the service %q does not have any type defined", serviceName)
 		conf.AddError(sErr, true)
@@ -123,6 +131,53 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	}
 
 	return lb, nil
+}
+
+func (m *Manager) getFailoverServiceHandler(ctx context.Context, serviceName string, config *dynamic.Failover) (http.Handler, error) {
+	f := failover.New(config.HealthCheck)
+
+	serviceHandler, err := m.BuildHTTP(ctx, config.Service)
+	if err != nil {
+		return nil, err
+	}
+
+	f.SetHandler(serviceHandler)
+
+	updater, ok := serviceHandler.(healthcheck.StatusUpdater)
+	if !ok {
+		return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", config.Service, serviceName, serviceHandler)
+	}
+
+	if err := updater.RegisterStatusUpdater(func(up bool) {
+		f.SetHandlerStatus(ctx, up)
+	}); err != nil {
+		return nil, fmt.Errorf("cannot register %v as updater for %v: %w", config.Service, serviceName, err)
+	}
+
+	fallbackHandler, err := m.BuildHTTP(ctx, config.Fallback)
+	if err != nil {
+		return nil, err
+	}
+
+	f.SetFallbackHandler(fallbackHandler)
+
+	// Do not report the health of the fallback handler.
+	if config.HealthCheck == nil {
+		return f, nil
+	}
+
+	fallbackUpdater, ok := fallbackHandler.(healthcheck.StatusUpdater)
+	if !ok {
+		return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", config.Fallback, serviceName, fallbackHandler)
+	}
+
+	if err := fallbackUpdater.RegisterStatusUpdater(func(up bool) {
+		f.SetFallbackHandlerStatus(ctx, up)
+	}); err != nil {
+		return nil, fmt.Errorf("cannot register %v as updater for %v: %w", config.Fallback, serviceName, err)
+	}
+
+	return f, nil
 }
 
 func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.Mirroring) (http.Handler, error) {
@@ -164,6 +219,7 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 		}
 
 		balancer.AddService(service.Name, serviceHandler, service.Weight)
+
 		if config.HealthCheck == nil {
 			continue
 		}

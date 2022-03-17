@@ -29,7 +29,7 @@ type stickyCookie struct {
 // (https://en.wikipedia.org/wiki/Earliest_deadline_first_scheduling)
 // Each pick from the schedule has the earliest deadline entry selected.
 // Entries have deadlines set at currentDeadline + 1 / weight,
-// providing weighted round robin behavior with floating point weights and an O(log n) pick time.
+// providing weighted round-robin behavior with floating point weights and an O(log n) pick time.
 type Balancer struct {
 	stickyCookie     *stickyCookie
 	wantsHealthCheck bool
@@ -230,6 +230,7 @@ func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
 	if weight != nil {
 		w = *weight
 	}
+
 	if w <= 0 { // non-positive weight is meaningless
 		return
 	}
