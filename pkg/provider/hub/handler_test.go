@@ -20,7 +20,7 @@ import (
 func TestHandleConfig(t *testing.T) {
 	cfgChan := make(chan dynamic.Message, 1)
 
-	h := newHandler("traefik-hub-ep", 42, cfgChan)
+	h := newHandler("traefik-hub-ep", 42, cfgChan, nil)
 
 	cfg := emptyDynamicConfiguration()
 	cfg.HTTP.Routers["foo"] = &dynamic.Router{
@@ -43,7 +43,7 @@ func TestHandleConfig(t *testing.T) {
 
 	select {
 	case gotCfgRaw := <-cfgChan:
-		patchDynamicConfiguration(cfg, "traefik-hub-ep", 42)
+		patchDynamicConfiguration(cfg, "traefik-hub-ep", 42, nil)
 		assert.Equal(t, cfg, gotCfgRaw.Configuration)
 
 	case <-time.After(time.Second):
@@ -53,7 +53,7 @@ func TestHandleConfig(t *testing.T) {
 
 func TestHandle_Config_MethodNotAllowed(t *testing.T) {
 	cfgChan := make(chan dynamic.Message, 1)
-	h := newHandler("traefik-hub-ep", 42, cfgChan)
+	h := newHandler("traefik-hub-ep", 42, cfgChan, nil)
 
 	server := httptest.NewServer(h)
 	t.Cleanup(server.Close)
@@ -97,7 +97,7 @@ func TestHandle_DiscoverIP(t *testing.T) {
 	<-rdy
 
 	cfgChan := make(chan dynamic.Message, 1)
-	h := newHandler("traefik-hub-ep", 42, cfgChan)
+	h := newHandler("traefik-hub-ep", 42, cfgChan, nil)
 
 	server := httptest.NewServer(h)
 	t.Cleanup(server.Close)
@@ -134,7 +134,7 @@ func TestHandle_DiscoverIP(t *testing.T) {
 
 func TestHandle_DiscoverIP_MethodNotAllowed(t *testing.T) {
 	cfgChan := make(chan dynamic.Message, 1)
-	h := newHandler("traefik-hub-ep", 42, cfgChan)
+	h := newHandler("traefik-hub-ep", 42, cfgChan, nil)
 
 	server := httptest.NewServer(h)
 	t.Cleanup(server.Close)
