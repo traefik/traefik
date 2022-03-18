@@ -15,6 +15,7 @@
           </q-tabs>
           <div class="right-menu">
             <q-tabs>
+              <q-btn type="a" href="https://hub.traefik.io/" target="_blank" flat no-caps label="Go to Hub Dashboard →" class="btn-menu btn-hub" />
               <q-btn @click="$q.dark.toggle()" stretch flat no-caps icon="invert_colors" :label="`${$q.dark.isActive ? 'Light' : 'Dark'} theme`" class="btn-menu" />
               <q-btn stretch flat icon="eva-question-mark-circle-outline">
                 <q-menu anchor="bottom left" auto-close>
@@ -28,8 +29,6 @@
                 </q-menu>
               </q-btn>
             </q-tabs>
-            <platform-auth-state
-              v-if="pilotEnabled" />
           </div>
         </q-toolbar>
       </div>
@@ -45,12 +44,10 @@
 
 <script>
 import config from '../../../package'
-import PlatformAuthState from '../platform/PlatformAuthState'
 import { mapActions, mapGetters } from 'vuex'
 
 export default {
   name: 'NavBar',
-  components: { PlatformAuthState },
   computed: {
     ...mapGetters('core', { coreVersion: 'version' }),
     version () {
@@ -58,9 +55,6 @@ export default {
       return /^(v?\d+\.\d+)/.test(this.coreVersion.Version)
         ? this.coreVersion.Version
         : this.coreVersion.Version.substring(0, 7)
-    },
-    pilotEnabled () {
-      return this.coreVersion.pilotEnabled
     },
     parsedVersion () {
       if (!this.version) {
@@ -140,6 +134,13 @@ export default {
 
   .btn-menu {
     color: rgba( $app-text-white, .4 );
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .btn-hub {
+    color: #0e204c;
+    background: #deea48;
     font-size: 16px;
     font-weight: 600;
   }
