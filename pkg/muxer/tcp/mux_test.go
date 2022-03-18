@@ -158,6 +158,17 @@ func Test_addTCPRoute(t *testing.T) {
 			serverName: "",
 		},
 		{
+			desc:       "Valid HostSNIRegexp rule with one name",
+			rule:       "HostSNIRegexp(`{dummy}`)",
+			serverName: "toto",
+		},
+		{
+			desc:       "Valid HostSNIRegexp rule with one name 2",
+			rule:       "HostSNIRegexp(`{dummy}`)",
+			serverName: "toto.com",
+			matchErr:   true,
+		},
+		{
 			desc:     "Empty ClientIP rule",
 			rule:     "ClientIP()",
 			routeErr: true,
@@ -679,15 +690,11 @@ func Test_HostSNIRegexp(t *testing.T) {
 			buildErr: true,
 		},
 		{
-			// FIXME(romain): how right this is?
-			desc:    "no braces capturing group",
-			pattern: "subdomain:(foo\\.)?bar\\.com",
+			desc:    "not interpreted as a regexp",
+			pattern: "bar.com",
 			serverNames: map[string]bool{
-				"foo.bar.com": false,
-				"bar.com":     false,
-				"fooubar.com": false,
-				"barucom":     false,
-				"barcom":      false,
+				"bar.com": true,
+				"barucom": false,
 			},
 		},
 		{

@@ -365,7 +365,8 @@ func hostSNIRegexp(tree *matchersTree, templates ...string) error {
 	return nil
 }
 
-// TODO(romain): expose newRouteRegexp in containous/mux fork to get rid of this copied code.
+// TODO: expose more of containous/mux fork to get rid of the following copied code.
+
 // preparePattern builds a regexp pattern from the initial user defined expression.
 // This function reuses the code dedicated to host matching of the newRouteRegexp func from the gorilla/mux library.
 func preparePattern(template string) (string, error) {
@@ -411,6 +412,7 @@ func preparePattern(template string) (string, error) {
 	// Add the remaining.
 	raw := template[end:]
 	pattern.WriteString(regexp.QuoteMeta(raw))
+	pattern.WriteByte('$')
 
 	return pattern.String(), nil
 }
