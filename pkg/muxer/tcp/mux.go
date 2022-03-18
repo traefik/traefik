@@ -353,11 +353,6 @@ func hostSNIRegexp(tree *matchersTree, templates ...string) error {
 	}
 
 	tree.matcher = func(meta ConnData) bool {
-		// FIXME(romain): is it legit ?
-		if meta.serverName == "" {
-			return false
-		}
-
 		for _, regexp := range regexps {
 			if regexp.MatchString(meta.serverName) {
 				return true
@@ -372,7 +367,7 @@ func hostSNIRegexp(tree *matchersTree, templates ...string) error {
 
 // TODO(romain): expose newRouteRegexp in containous/mux fork to get rid of this copied code.
 // preparePattern builds a regexp pattern from the initial user defined expression.
-// this function reuses the code dedicated to host matching of the newRouteRegexp func from the gorilla/mux library.
+// This function reuses the code dedicated to host matching of the newRouteRegexp func from the gorilla/mux library.
 func preparePattern(template string) (string, error) {
 	// Check if it is well-formed.
 	idxs, errBraces := braceIndices(template)
@@ -421,13 +416,13 @@ func preparePattern(template string) (string, error) {
 }
 
 // varGroupName builds a capturing group name for the indexed variable.
-// this function is a copy of varGroupName func from the gorilla/mux library.
+// This function is a copy of varGroupName func from the gorilla/mux library.
 func varGroupName(idx int) string {
 	return "v" + strconv.Itoa(idx)
 }
 
 // braceIndices returns the first level curly brace indices from a string.
-// this function is a copy of braceIndices func from the gorilla/mux library.
+// This function is a copy of braceIndices func from the gorilla/mux library.
 func braceIndices(s string) ([]int, error) {
 	var level, idx int
 	var idxs []int
