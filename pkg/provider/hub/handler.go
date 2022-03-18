@@ -15,8 +15,11 @@ import (
 type handler struct {
 	mux *http.ServeMux
 
+	client http.Client
+
 	entryPoint string
 	port       int
+	tlsCfg     *TLS
 
 	// Accessed atomically.
 	lastCfgUnixNano int64
@@ -24,12 +27,14 @@ type handler struct {
 	cfgChan chan<- dynamic.Message
 }
 
-func newHandler(entryPoint string, port int, cfgChan chan<- dynamic.Message) http.Handler {
+func newHandler(entryPoint string, port int, cfgChan chan<- dynamic.Message, tlsCfg *TLS, client http.Client) http.Handler {
 	h := &handler{
 		mux:        http.NewServeMux(),
 		entryPoint: entryPoint,
 		port:       port,
 		cfgChan:    cfgChan,
+		tlsCfg:     tlsCfg,
+		client:     client,
 	}
 
 	h.mux.HandleFunc("/config", h.handleConfig)
@@ -61,7 +66,7 @@ func (h *handler) handleConfig(rw http.ResponseWriter, req *http.Request) {
 	atomic.StoreInt64(&h.lastCfgUnixNano, payload.UnixNano)
 
 	cfg := payload.Configuration
-	patchDynamicConfiguration(cfg, h.entryPoint, h.port)
+	patchDynamicConfiguration(cfg, h.entryPoint, h.port, h.tlsCfg)
 
 	// We can safely drop messages here if the other end is not ready to receive them
 	// as the agent will re-apply the same configuration.
@@ -81,7 +86,7 @@ func (h *handler) handleDiscoverIP(rw http.ResponseWriter, req *http.Request) {
 	port := req.URL.Query().Get("port")
 	nonce := req.URL.Query().Get("nonce")
 
-	if err := doDiscoveryReq(req.Context(), xff, port, nonce); err != nil {
+	if err := h.doDiscoveryReq(req.Context(), xff, port, nonce); err != nil {
 		err = fmt.Errorf("do discovery request: %w", err)
 		log.WithoutContext().Errorf("Discover ip: %v", err)
 		http.Error(rw, err.Error(), http.StatusBadGateway)
@@ -96,8 +101,13 @@ func (h *handler) handleDiscoverIP(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func doDiscoveryReq(ctx context.Context, ip, port, nonce string) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("http://%s:%s", ip, port), http.NoBody)
+func (h *handler) doDiscoveryReq(ctx context.Context, ip, port, nonce string) error {
+	scheme := "http"
+	if h.tlsCfg != nil {
+		scheme = "https"
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s://%s:%s", scheme, ip, port), http.NoBody)
 	if err != nil {
 		return fmt.Errorf("make request: %w", err)
 	}
@@ -106,9 +116,13 @@ func doDiscoveryReq(ctx context.Context, ip, port, nonce string) error {
 	q.Set("nonce", nonce)
 	req.URL.RawQuery = q.Encode()
 
-	resp, err := http.DefaultClient.Do(req)
+	if h.tlsCfg != nil {
+		req.Host = "agent.traefik"
+	}
+
+	resp, err := h.client.Do(req)
 	if err != nil {
-		return fmt.Errorf("send request: %w", err)
+		return fmt.Errorf("do request: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
