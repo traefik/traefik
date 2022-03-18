@@ -36,8 +36,6 @@ DOCKER_RUN_TRAEFIK_NOTTY := docker run $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INT
 
 IN_DOCKER ?= true
 
-PLATFORM_URL := $(if $(PLATFORM_URL),$(PLATFORM_URL),"https://pilot.traefik.io")
-
 default: binary
 
 ## Build Dev Docker image
@@ -54,7 +52,7 @@ dist:
 
 ## Build WebUI Docker image
 build-webui-image:
-	docker build -t traefik-webui --build-arg ARG_PLATFORM_URL=$(PLATFORM_URL) -f webui/Dockerfile webui
+	docker build -t traefik-webui -f webui/Dockerfile webui
 
 ## Clean WebUI static generated assets
 clean-webui:
