@@ -1,6 +1,6 @@
 # Plugins and Traefik Pilot
 
-!!! warning "Pilot deprecation"
+!!! warning "Traefik Pilot Deprecation"
 
     Traefik Pilot is deprecated and will be removed soon.
     Please check our Blog for migration instructions later this year.
