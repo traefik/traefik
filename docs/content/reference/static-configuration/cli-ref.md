@@ -225,6 +225,18 @@ Traefik Hub configuration. (Default: ```false```)
 `--hub.entrypoint`:  
 Entrypoint that exposes data for Traefik Hub. (Default: ```traefik-hub```)
 
+`--hub.insecure`:  
+Allows the Hub provider to run over an insecure connection for testing purposes. (Default: ```false```)
+
+`--hub.tls.ca`:  
+Certificate authority to use for securing communication with the Agent.
+
+`--hub.tls.cert`:  
+Certificate to use for securing communication with the Agent.
+
+`--hub.tls.key`:  
+Key to use for securing communication with the Agent.
+
 `--log`:  
 Traefik log settings. (Default: ```false```)
 

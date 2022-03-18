@@ -1,5 +1,7 @@
 # Traefik Hub (Experimental)
 
+## Overview
+
 Once the Traefik Hub Experimental feature is enabled in Traefik,
 Traefik and its local agent communicate together.
 This agent can:
@@ -31,19 +33,21 @@ This agent can:
     experimental:
       hub: true
 
-    hub: {}
+    hub:
+      insecure: true
     ```
 
     ```toml tab="File (TOML)"
     [experimental]
-        hub = true
+      hub = true
 
     [hub]
+      insecure = true
     ```
 
     ```bash tab="CLI"
-    --experimental.hub
-    --hub=true
+    --experimental.hub \
+    --hub.insecure=true
     ```
 
 ## Configuration
@@ -62,7 +66,7 @@ Defines the entryPoint that exposes data for Traefik Hub Agent.
 
 ```yaml tab="File (YAML)"
 entryPoints:
-    hub-ep: ":9000"
+  hub-ep: ":8000"
 
 hub:
   entryPoint: "hub-ep"
@@ -70,13 +74,197 @@ hub:
 
 ```toml tab="File (TOML)"
 [entryPoints.hub-ep]
-    address = ":9000"
+  address = ":8000"
 
 [hub]
   entryPoint = "hub-ep"
 ```
 
 ```bash tab="CLI"
---entrypoints.hub-ep.address=:9000
+--entrypoints.hub-ep.address=:8000 \
 --hub.entrypoint=hub-ep
+```
+
+### `tls`
+
+_Optional (one of `insecure` or `tls` must be set), Default=None_
+
+This section allows configuring mutual TLS connection between Traefik Proxy and the Traefik Hub Agent.
+The certificate domain must be `proxy.traefik`.
+
+!!! note "Certificates Definition"
+
+    Certificates can be defined either by their content or their path.
+
+```yaml tab="File (YAML)"
+hub:
+  tls:
+    ca: /path/to/ca.pem
+    cert: /path/to/cert.pem
+    key: /path/to/key.pem
+```
+
+```toml tab="File (TOML)"
+[hub.tls]
+  ca= "/path/to/ca.pem"
+  cert= "/path/to/cert.pem"
+  key= "/path/to/key.pem"
+```
+
+```bash tab="CLI"
+--hub.tls.ca=/path/to/ca.pem \
+--hub.tls.cert=/path/to/cert.pem \
+--hub.tls.key=/path/to/key.pem
+```
+
+### `tls.ca`
+
+Certificate authority to use for securing communication with the Agent.
+
+```yaml tab="File (YAML)"
+hub:
+  tls:
+    ca: |-
+      -----BEGIN CERTIFICATE-----
+      MIIBcjCCARegAwIBAgIQaewCzGdRz5iNnjAiEoO5AzAKBggqhkjOPQQDAjASMRAw
+      DgYDVQQKEwdBY21lIENvMCAXDTIyMDMyMTE2MTY0NFoYDzIxMjIwMjI1MTYxNjQ0
+      WjASMRAwDgYDVQQKEwdBY21lIENvMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE
+      ZaKYPj2G8Hnmju6jbHt+vODwKqNDVQMH5nxhtAgSUZS61mLWwZvvUhIYLNPwHz8a
+      x8C7+cuihEC6Tzvn8DeGeKNNMEswDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoG
+      CCsGAQUFBwMBMAwGA1UdEwEB/wQCMAAwFgYDVR0RBA8wDYILZXhhbXBsZS5jb20w
+      CgYIKoZIzj0EAwIDSQAwRgIhAO8sucDGY+JOrNgQg1a9ZqqYvbxPFnYsSZr7F/vz
+      aUX2AiEAilZ+M5eX4RiMFc3nlm9qVs1LZhV3dZW/u80/mPQ/oaY=
+      -----END CERTIFICATE-----
+```
+
+```toml tab="File (TOML)"
+[hub.tls]
+  ca = """-----BEGIN CERTIFICATE-----
+MIIBcjCCARegAwIBAgIQaewCzGdRz5iNnjAiEoO5AzAKBggqhkjOPQQDAjASMRAw
+DgYDVQQKEwdBY21lIENvMCAXDTIyMDMyMTE2MTY0NFoYDzIxMjIwMjI1MTYxNjQ0
+WjASMRAwDgYDVQQKEwdBY21lIENvMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE
+ZaKYPj2G8Hnmju6jbHt+vODwKqNDVQMH5nxhtAgSUZS61mLWwZvvUhIYLNPwHz8a
+x8C7+cuihEC6Tzvn8DeGeKNNMEswDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoG
+CCsGAQUFBwMBMAwGA1UdEwEB/wQCMAAwFgYDVR0RBA8wDYILZXhhbXBsZS5jb20w
+CgYIKoZIzj0EAwIDSQAwRgIhAO8sucDGY+JOrNgQg1a9ZqqYvbxPFnYsSZr7F/vz
+aUX2AiEAilZ+M5eX4RiMFc3nlm9qVs1LZhV3dZW/u80/mPQ/oaY=
+-----END CERTIFICATE-----"""
+```
+
+```bash tab="CLI"
+--hub.tls.ca=-----BEGIN CERTIFICATE-----
+MIIBcjCCARegAwIBAgIQaewCzGdRz5iNnjAiEoO5AzAKBggqhkjOPQQDAjASMRAw
+DgYDVQQKEwdBY21lIENvMCAXDTIyMDMyMTE2MTY0NFoYDzIxMjIwMjI1MTYxNjQ0
+WjASMRAwDgYDVQQKEwdBY21lIENvMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE
+ZaKYPj2G8Hnmju6jbHt+vODwKqNDVQMH5nxhtAgSUZS61mLWwZvvUhIYLNPwHz8a
+x8C7+cuihEC6Tzvn8DeGeKNNMEswDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoG
+CCsGAQUFBwMBMAwGA1UdEwEB/wQCMAAwFgYDVR0RBA8wDYILZXhhbXBsZS5jb20w
+CgYIKoZIzj0EAwIDSQAwRgIhAO8sucDGY+JOrNgQg1a9ZqqYvbxPFnYsSZr7F/vz
+aUX2AiEAilZ+M5eX4RiMFc3nlm9qVs1LZhV3dZW/u80/mPQ/oaY=
+-----END CERTIFICATE-----
+```
+
+
+### `tls.cert`
+
+Certificate to use for securing communication with the Agent.
+
+```yaml tab="File (YAML)"
+hub:
+  tls:
+    ca: |-
+      -----BEGIN CERTIFICATE-----
+      MIIBcjCCARegAwIBAgIQaewCzGdRz5iNnjAiEoO5AzAKBggqhkjOPQQDAjASMRAw
+      DgYDVQQKEwdBY21lIENvMCAXDTIyMDMyMTE2MTY0NFoYDzIxMjIwMjI1MTYxNjQ0
+      WjASMRAwDgYDVQQKEwdBY21lIENvMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE
+      ZaKYPj2G8Hnmju6jbHt+vODwKqNDVQMH5nxhtAgSUZS61mLWwZvvUhIYLNPwHz8a
+      x8C7+cuihEC6Tzvn8DeGeKNNMEswDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoG
+      CCsGAQUFBwMBMAwGA1UdEwEB/wQCMAAwFgYDVR0RBA8wDYILZXhhbXBsZS5jb20w
+      CgYIKoZIzj0EAwIDSQAwRgIhAO8sucDGY+JOrNgQg1a9ZqqYvbxPFnYsSZr7F/vz
+      aUX2AiEAilZ+M5eX4RiMFc3nlm9qVs1LZhV3dZW/u80/mPQ/oaY=
+      -----END CERTIFICATE-----
+```
+
+```toml tab="File (TOML)"
+[hub.tls]
+  cert = """-----BEGIN CERTIFICATE-----
+MIIBcjCCARegAwIBAgIQaewCzGdRz5iNnjAiEoO5AzAKBggqhkjOPQQDAjASMRAw
+DgYDVQQKEwdBY21lIENvMCAXDTIyMDMyMTE2MTY0NFoYDzIxMjIwMjI1MTYxNjQ0
+WjASMRAwDgYDVQQKEwdBY21lIENvMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE
+ZaKYPj2G8Hnmju6jbHt+vODwKqNDVQMH5nxhtAgSUZS61mLWwZvvUhIYLNPwHz8a
+x8C7+cuihEC6Tzvn8DeGeKNNMEswDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoG
+CCsGAQUFBwMBMAwGA1UdEwEB/wQCMAAwFgYDVR0RBA8wDYILZXhhbXBsZS5jb20w
+CgYIKoZIzj0EAwIDSQAwRgIhAO8sucDGY+JOrNgQg1a9ZqqYvbxPFnYsSZr7F/vz
+aUX2AiEAilZ+M5eX4RiMFc3nlm9qVs1LZhV3dZW/u80/mPQ/oaY=
+-----END CERTIFICATE-----"""
+```
+
+```bash tab="CLI"
+--hub.tls.cert=-----BEGIN CERTIFICATE-----
+MIIBcjCCARegAwIBAgIQaewCzGdRz5iNnjAiEoO5AzAKBggqhkjOPQQDAjASMRAw
+DgYDVQQKEwdBY21lIENvMCAXDTIyMDMyMTE2MTY0NFoYDzIxMjIwMjI1MTYxNjQ0
+WjASMRAwDgYDVQQKEwdBY21lIENvMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE
+ZaKYPj2G8Hnmju6jbHt+vODwKqNDVQMH5nxhtAgSUZS61mLWwZvvUhIYLNPwHz8a
+x8C7+cuihEC6Tzvn8DeGeKNNMEswDgYDVR0PAQH/BAQDAgeAMBMGA1UdJQQMMAoG
+CCsGAQUFBwMBMAwGA1UdEwEB/wQCMAAwFgYDVR0RBA8wDYILZXhhbXBsZS5jb20w
+CgYIKoZIzj0EAwIDSQAwRgIhAO8sucDGY+JOrNgQg1a9ZqqYvbxPFnYsSZr7F/vz
+aUX2AiEAilZ+M5eX4RiMFc3nlm9qVs1LZhV3dZW/u80/mPQ/oaY=
+-----END CERTIFICATE-----
+```
+
+### `tls.key`
+
+Key to use for securing communication with the Agent.
+
+```yaml tab="File (YAML)"
+hub:
+  tls:
+    key: |-
+      -----BEGIN PRIVATE KEY-----
+      MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgm+XJ3LVrTbbirJea
+      O+Crj2ADVsVHjMuiyd72VE3lgxihRANCAARlopg+PYbweeaO7qNse3684PAqo0NV
+      AwfmfGG0CBJRlLrWYtbBm+9SEhgs0/AfPxrHwLv5y6KEQLpPO+fwN4Z4
+      -----END PRIVATE KEY-----
+```
+
+```toml tab="File (TOML)"
+[hub.tls]
+  key = """-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgm+XJ3LVrTbbirJea
+O+Crj2ADVsVHjMuiyd72VE3lgxihRANCAARlopg+PYbweeaO7qNse3684PAqo0NV
+AwfmfGG0CBJRlLrWYtbBm+9SEhgs0/AfPxrHwLv5y6KEQLpPO+fwN4Z4
+-----END PRIVATE KEY-----"""
+```
+
+```bash tab="CLI"
+--hub.tls.key=-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgm+XJ3LVrTbbirJea
+O+Crj2ADVsVHjMuiyd72VE3lgxihRANCAARlopg+PYbweeaO7qNse3684PAqo0NV
+AwfmfGG0CBJRlLrWYtbBm+9SEhgs0/AfPxrHwLv5y6KEQLpPO+fwN4Z4
+-----END PRIVATE KEY-----
+```
+
+### `insecure`
+
+_Optional (one of `insecure` or `tls` must be set), Default=false_
+
+Allows the Hub provider to run over an insecure connection for testing purposes.
+
+!!! warning "Security Consideration"
+    
+    This option implies sensitive data can be exposed to potential malicious third-party programs.   
+    Using the [`tls`](#tls) configuration is **strongly** recommended for anything else than testing. 
+
+```yaml tab="File (YAML)"
+hub:
+  insecure: true
+```
+
+```toml tab="File (TOML)"
+[hub]
+  insecure = true
+```
+
+```bash tab="CLI"
+--hub.insecure=true
 ```
