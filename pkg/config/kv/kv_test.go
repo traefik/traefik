@@ -108,7 +108,7 @@ type sample struct {
 	FieldD []string
 	FieldE *struct {
 		Name string
-	} `label:"allowEmpty"`
+	} `kv:"allowEmpty"`
 	FieldF map[string]string
 	FieldG []sub
 	FieldH string
