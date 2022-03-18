@@ -11,19 +11,19 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
     Use Let's Encrypt staging server with the [`caServer`](#caserver) configuration option
     when experimenting to avoid hitting this limit too fast.
 
-## Certificate Resolvers
+## Certificates Resolvers
 
-Traefik requires you to define "Certificate Resolvers" in the [static configuration](../getting-started/configuration-overview.md#the-static-configuration),
+Traefik requires you to define "Certificates Resolvers" in the [static configuration](../getting-started/configuration-overview.md#the-static-configuration),
 which are responsible for retrieving certificates from an ACME server.
 
 Then, each ["router"](../routing/routers/index.md) is configured to enable TLS,
-and is associated to a certificate resolver through the [`tls.certresolver` configuration option](../routing/routers/index.md#certresolver).
+and is associated to a certificates resolver through the [`tls.certresolver` configuration option](../routing/routers/index.md#certresolver).
 
 Certificates are requested for domain names retrieved from the router's [dynamic configuration](../getting-started/configuration-overview.md#the-dynamic-configuration).
 
 You can read more about this retrieval mechanism in the following section: [ACME Domain Definition](#domain-definition).
 
-!!! warning "Defining an [ACME challenge type](#the-different-acme-challenges) is a requirement for a certificate resolver to be functional."
+!!! warning "Defining an [ACME challenge type](#the-different-acme-challenges) is a requirement for a certificates resolver to be functional."
 
 !!! important "Defining a certificates resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
 
@@ -46,14 +46,14 @@ You can read more about this retrieval mechanism in the following section: [ACME
 
 ## Domain Definition
 
-Certificate resolvers request certificates for a set of the domain names
+Certificates resolvers request certificates for a set of the domain names
 inferred from routers, with the following logic:
 
 - If the router has a [`tls.domains`](../routing/routers/index.md#domains) option set,
-  then the certificate resolver uses the `main` (and optionally `sans`) option of `tls.domains` to know the domain names for this router.
+  then the certificates resolver uses the `main` (and optionally `sans`) option of `tls.domains` to know the domain names for this router.
 
 - If no [`tls.domains`](../routing/routers/index.md#domains) option is set,
-  then the certificate resolver uses the [router's rule](../routing/routers/index.md#rule),
+  then the certificates resolver uses the [router's rule](../routing/routers/index.md#rule),
   by checking the `Host()` matchers.
   Please note that [multiple `Host()` matchers can be used](../routing/routers/index.md#certresolver)) for specifying multiple domain names for this router.
 
@@ -160,7 +160,7 @@ When using LetsEncrypt with kubernetes, there are some known caveats with both t
 
 ## The Different ACME Challenges
 
-!!! warning "Defining one ACME challenge is a requirement for a certificate resolver to be functional."
+!!! warning "Defining one ACME challenge is a requirement for a certificates resolver to be functional."
 
 !!! important "Defining a certificates resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
 
