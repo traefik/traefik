@@ -109,9 +109,63 @@ func Test_addTCPRoute(t *testing.T) {
 			matchErr:   true,
 		},
 		{
+			desc:       "Empty HostSNIRegexp rule",
+			rule:       "HostSNIRegexp()",
+			serverName: "foobar",
+			routeErr:   true,
+		},
+		{
+			desc:       "Empty HostSNIRegexp rule",
+			rule:       "HostSNIRegexp(``)",
+			serverName: "foobar",
+			routeErr:   true,
+		},
+		{
+			desc:       "Valid HostSNIRegexp rule matching",
+			rule:       "HostSNIRegexp(`{subdomain:[a-z]+}.foobar`)",
+			serverName: "sub.foobar",
+		},
+		{
+			desc:       "Valid negative HostSNIRegexp rule matching",
+			rule:       "!HostSNIRegexp(`bar`)",
+			serverName: "foobar",
+		},
+		{
+			desc:       "Valid HostSNIRegexp rule matching with alternative case",
+			rule:       "hostsniregexp(`foobar`)",
+			serverName: "foobar",
+		},
+		{
+			desc:       "Valid HostSNIRegexp rule matching with alternative case",
+			rule:       "HOSTSNIREGEXP(`foobar`)",
+			serverName: "foobar",
+		},
+		{
+			desc:       "Valid HostSNIRegexp rule not matching",
+			rule:       "HostSNIRegexp(`foobar`)",
+			serverName: "bar",
+			matchErr:   true,
+		},
+		{
 			desc:       "Valid negative HostSNI rule not matching",
 			rule:       "!HostSNI(`bar`)",
 			serverName: "bar",
+			matchErr:   true,
+		},
+		{
+			desc:       "Valid HostSNIRegexp rule matching empty servername",
+			rule:       "HostSNIRegexp(`{subdomain:[a-z]*}`)",
+			serverName: "",
+		},
+		{
+			desc:       "Valid HostSNIRegexp rule with one name",
+			rule:       "HostSNIRegexp(`{dummy}`)",
+			serverName: "toto",
+		},
+		{
+			desc:       "Valid HostSNIRegexp rule with one name 2",
+			rule:       "HostSNIRegexp(`{dummy}`)",
+			serverName: "toto.com",
 			matchErr:   true,
 		},
 		{
@@ -604,6 +658,123 @@ func Test_HostSNI(t *testing.T) {
 			}
 
 			assert.Equal(t, test.matchErr, !matcherTree.match(meta))
+		})
+	}
+}
+
+func Test_HostSNIRegexp(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		pattern     string
+		serverNames map[string]bool
+		buildErr    bool
+	}{
+		{
+			desc:     "unbalanced braces",
+			pattern:  "subdomain:(foo\\.)?bar\\.com}",
+			buildErr: true,
+		},
+		{
+			desc:     "empty group name",
+			pattern:  "{:(foo\\.)?bar\\.com}",
+			buildErr: true,
+		},
+		{
+			desc:     "empty capturing group",
+			pattern:  "{subdomain:}",
+			buildErr: true,
+		},
+		{
+			desc:     "malformed capturing group",
+			pattern:  "{subdomain:(foo\\.?bar\\.com}",
+			buildErr: true,
+		},
+		{
+			desc:    "not interpreted as a regexp",
+			pattern: "bar.com",
+			serverNames: map[string]bool{
+				"bar.com": true,
+				"barucom": false,
+			},
+		},
+		{
+			desc:    "capturing group",
+			pattern: "{subdomain:(foo\\.)?bar\\.com}",
+			serverNames: map[string]bool{
+				"foo.bar.com": true,
+				"bar.com":     true,
+				"fooubar.com": false,
+				"barucom":     false,
+				"barcom":      false,
+			},
+		},
+		{
+			desc:    "non capturing group",
+			pattern: "{subdomain:(?:foo\\.)?bar\\.com}",
+			serverNames: map[string]bool{
+				"foo.bar.com": true,
+				"bar.com":     true,
+				"fooubar.com": false,
+				"barucom":     false,
+				"barcom":      false,
+			},
+		},
+		{
+			desc:    "regex insensitive",
+			pattern: "{dummy:[A-Za-z-]+\\.bar\\.com}",
+			serverNames: map[string]bool{
+				"FOO.bar.com": true,
+				"foo.bar.com": true,
+				"fooubar.com": false,
+				"barucom":     false,
+				"barcom":      false,
+			},
+		},
+		{
+			desc:    "insensitive host",
+			pattern: "{dummy:[a-z-]+\\.bar\\.com}",
+			serverNames: map[string]bool{
+				"FOO.bar.com": true,
+				"foo.bar.com": true,
+				"fooubar.com": false,
+				"barucom":     false,
+				"barcom":      false,
+			},
+		},
+		{
+			desc:    "insensitive host simple",
+			pattern: "foo.bar.com",
+			serverNames: map[string]bool{
+				"FOO.bar.com": true,
+				"foo.bar.com": true,
+				"fooubar.com": false,
+				"barucom":     false,
+				"barcom":      false,
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			matchersTree := &matchersTree{}
+			err := hostSNIRegexp(matchersTree, test.pattern)
+			if test.buildErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			for serverName, match := range test.serverNames {
+				meta := ConnData{
+					serverName: serverName,
+				}
+
+				assert.Equal(t, match, matchersTree.match(meta))
+			}
 		})
 	}
 }
