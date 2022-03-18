@@ -2,7 +2,8 @@
 
 !!! warning "Pilot deprecation"
 
-    Traefik Pilot is deprecated and will be removed soon. Please check our Blog for migration instructions later this year.
+    Traefik Pilot is deprecated and will be removed soon.
+    Please check our Blog for migration instructions later this year.
 
 Traefik Pilot is a software-as-a-service (SaaS) platform that connects to Traefik to extend its capabilities.
 It offers a number of features to enhance observability and control of Traefik through a global control plane and dashboard, including:
