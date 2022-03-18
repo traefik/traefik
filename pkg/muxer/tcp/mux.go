@@ -365,10 +365,11 @@ func hostSNIRegexp(tree *matchersTree, templates ...string) error {
 	return nil
 }
 
-// TODO: expose more of containous/mux fork to get rid of the following copied code.
+// TODO: expose more of containous/mux fork to get rid of the following copied code (https://github.com/containous/mux/blob/8ffa4f6d063c/regexp.go).
 
 // preparePattern builds a regexp pattern from the initial user defined expression.
 // This function reuses the code dedicated to host matching of the newRouteRegexp func from the gorilla/mux library.
+// https://github.com/containous/mux/tree/8ffa4f6d063c1e2b834a73be6a1515cca3992618.
 func preparePattern(template string) (string, error) {
 	// Check if it is well-formed.
 	idxs, errBraces := braceIndices(template)
@@ -419,12 +420,14 @@ func preparePattern(template string) (string, error) {
 
 // varGroupName builds a capturing group name for the indexed variable.
 // This function is a copy of varGroupName func from the gorilla/mux library.
+// https://github.com/containous/mux/tree/8ffa4f6d063c1e2b834a73be6a1515cca3992618.
 func varGroupName(idx int) string {
 	return "v" + strconv.Itoa(idx)
 }
 
 // braceIndices returns the first level curly brace indices from a string.
 // This function is a copy of braceIndices func from the gorilla/mux library.
+// https://github.com/containous/mux/tree/8ffa4f6d063c1e2b834a73be6a1515cca3992618.
 func braceIndices(s string) ([]int, error) {
 	var level, idx int
 	var idxs []int
