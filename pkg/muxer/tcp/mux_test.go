@@ -153,6 +153,11 @@ func Test_addTCPRoute(t *testing.T) {
 			matchErr:   true,
 		},
 		{
+			desc:       "Valid HostSNIRegexp rule matching empty servername",
+			rule:       "HostSNIRegexp(`{subdomain:[a-z]*}`)",
+			serverName: "",
+		},
+		{
 			desc:     "Empty ClientIP rule",
 			rule:     "ClientIP()",
 			routeErr: true,
