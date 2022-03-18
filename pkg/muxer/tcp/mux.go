@@ -1,11 +1,13 @@
 package tcp
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"net"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/ip"
@@ -17,8 +19,9 @@ import (
 )
 
 var tcpFuncs = map[string]func(*matchersTree, ...string) error{
-	"HostSNI":  hostSNI,
-	"ClientIP": clientIP,
+	"HostSNI":       hostSNI,
+	"HostSNIRegexp": hostSNIRegexp,
+	"ClientIP":      clientIP,
 }
 
 // ParseHostSNI extracts the HostSNIs declared in a rule.
@@ -325,4 +328,125 @@ func hostSNI(tree *matchersTree, hosts ...string) error {
 	}
 
 	return nil
+}
+
+// hostSNIRegexp checks if the SNI Host of the connection matches the matcher host regexp.
+func hostSNIRegexp(tree *matchersTree, templates ...string) error {
+	if len(templates) == 0 {
+		return fmt.Errorf("empty value for \"HostSNIRegexp\" matcher is not allowed")
+	}
+
+	var regexps []*regexp.Regexp
+
+	for _, template := range templates {
+		preparedPattern, err := preparePattern(template)
+		if err != nil {
+			return fmt.Errorf("invalid pattern value for \"HostSNIRegexp\" matcher, %q is not a valid pattern: %w", template, err)
+		}
+
+		regexp, err := regexp.Compile(preparedPattern)
+		if err != nil {
+			return err
+		}
+
+		regexps = append(regexps, regexp)
+	}
+
+	tree.matcher = func(meta ConnData) bool {
+		for _, regexp := range regexps {
+			if regexp.MatchString(meta.serverName) {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	return nil
+}
+
+// TODO: expose more of containous/mux fork to get rid of the following copied code (https://github.com/containous/mux/blob/8ffa4f6d063c/regexp.go).
+
+// preparePattern builds a regexp pattern from the initial user defined expression.
+// This function reuses the code dedicated to host matching of the newRouteRegexp func from the gorilla/mux library.
+// https://github.com/containous/mux/tree/8ffa4f6d063c1e2b834a73be6a1515cca3992618.
+func preparePattern(template string) (string, error) {
+	// Check if it is well-formed.
+	idxs, errBraces := braceIndices(template)
+	if errBraces != nil {
+		return "", errBraces
+	}
+
+	defaultPattern := "[^.]+"
+	pattern := bytes.NewBufferString("")
+
+	// Host SNI matching is case-insensitive
+	fmt.Fprint(pattern, "(?i)")
+
+	pattern.WriteByte('^')
+	var end int
+	var err error
+	for i := 0; i < len(idxs); i += 2 {
+		// Set all values we are interested in.
+		raw := template[end:idxs[i]]
+		end = idxs[i+1]
+		parts := strings.SplitN(template[idxs[i]+1:end-1], ":", 2)
+		name := parts[0]
+		patt := defaultPattern
+		if len(parts) == 2 {
+			patt = parts[1]
+		}
+		// Name or pattern can't be empty.
+		if name == "" || patt == "" {
+			return "", fmt.Errorf("mux: missing name or pattern in %q",
+				template[idxs[i]:end])
+		}
+		// Build the regexp pattern.
+		fmt.Fprintf(pattern, "%s(?P<%s>%s)", regexp.QuoteMeta(raw), varGroupName(i/2), patt)
+
+		// Append variable name and compiled pattern.
+		if err != nil {
+			return "", err
+		}
+	}
+
+	// Add the remaining.
+	raw := template[end:]
+	pattern.WriteString(regexp.QuoteMeta(raw))
+	pattern.WriteByte('$')
+
+	return pattern.String(), nil
+}
+
+// varGroupName builds a capturing group name for the indexed variable.
+// This function is a copy of varGroupName func from the gorilla/mux library.
+// https://github.com/containous/mux/tree/8ffa4f6d063c1e2b834a73be6a1515cca3992618.
+func varGroupName(idx int) string {
+	return "v" + strconv.Itoa(idx)
+}
+
+// braceIndices returns the first level curly brace indices from a string.
+// This function is a copy of braceIndices func from the gorilla/mux library.
+// https://github.com/containous/mux/tree/8ffa4f6d063c1e2b834a73be6a1515cca3992618.
+func braceIndices(s string) ([]int, error) {
+	var level, idx int
+	var idxs []int
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '{':
+			if level++; level == 1 {
+				idx = i
+			}
+		case '}':
+			if level--; level == 0 {
+				idxs = append(idxs, idx, i+1)
+			} else if level < 0 {
+				return nil, fmt.Errorf("mux: unbalanced braces in %q", s)
+			}
+		}
+	}
+	if level != 0 {
+		return nil, fmt.Errorf("mux: unbalanced braces in %q", s)
+	}
+	return idxs, nil
 }
