@@ -2,6 +2,7 @@ package branching
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -31,6 +32,13 @@ type chainBuilder interface {
 
 // New creates a branching middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.Branching, builder chainBuilder, name string) (http.Handler, error) {
+	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName))
+	logger.Debug("Creating middleware")
+
+	if config.Chain == nil || len(config.Chain.Middlewares) == 0 {
+		return nil, errors.New("empty branch chain")
+	}
+
 	eval, err := bexpr.CreateEvaluator(config.Condition)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create evaluator for expression %q: %w", config.Condition, err)
@@ -42,7 +50,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.Branching, build
 		return nil, fmt.Errorf("failed to create middleware chain %w", err)
 	}
 
-	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Printf("%s created, matching %q", name, config.Condition)
+	logger.Printf("%s created, matching %q", name, config.Condition)
 	return &Branching{
 		name:    name,
 		next:    next,
@@ -54,7 +62,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.Branching, build
 func (e *Branching) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	match, err := e.matcher.Evaluate(req)
 	if err != nil {
-		log.FromContext(middlewares.GetLoggerCtx(context.Background(), e.name, typeName)).Printf("ignoring middleware branch, unable to match request: %v", err)
+		log.FromContext(middlewares.GetLoggerCtx(context.Background(), e.name, typeName)).Printf("ignoring branch, unable to match request: %v", err)
 	}
 
 	if match {

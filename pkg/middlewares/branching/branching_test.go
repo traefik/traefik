@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/middlewares/branching"
@@ -14,24 +16,33 @@ import (
 
 func TestBuilder(t *testing.T) {
 	testCases := []struct {
-		desc      string
-		condition string
-		wantErr   bool
+		desc    string
+		cfg     dynamic.Branching
+		wantErr string
 	}{
 		{
-			desc:      "invalid condition",
-			condition: "HumHum",
-			wantErr:   true,
+			desc:    "invalid condition",
+			cfg:     dynamic.Branching{Condition: "ni", Chain: &dynamic.Chain{Middlewares: []string{"foo", "bar"}}},
+			wantErr: "failed to create evaluator for expression \"ni\"",
+		},
+		{
+			desc:    "valid condition, empty chain",
+			cfg:     dynamic.Branching{Condition: "ni"},
+			wantErr: "empty branch chain",
+		},
+		{
+			desc:    "valid condition, valid chain",
+			cfg:     dynamic.Branching{Condition: "Host == `foo.bar`", Chain: &dynamic.Chain{Middlewares: []string{"some-middleware"}}},
+			wantErr: "",
 		},
 	}
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
-			cfg := dynamic.Branching{}
-			cfg.Condition = test.condition
+			cfg := test.cfg
 
 			availableMiddleware := map[string]*runtime.MiddlewareInfo{
-				"empty": {},
+				"some-middleware": {},
 			}
 			middlewareBuilder := middleware.NewBuilder(availableMiddleware, nil, nil)
 
@@ -42,8 +53,8 @@ func TestBuilder(t *testing.T) {
 				middlewareBuilder,
 				"test-plugin")
 
-			if err != nil && !test.wantErr {
-				t.Fatal("unexpected error", err)
+			if test.wantErr != "" {
+				assert.ErrorContains(t, err, test.wantErr)
 			}
 		})
 	}
@@ -110,16 +121,12 @@ func TestBranching(t *testing.T) {
 
 			ctx := context.Background()
 			plugin, err := branching.New(ctx, backend, cfg, middlewareBuilder, "test-branching")
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			recorder := httptest.NewRecorder()
 
 			req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://localhost", nil)
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			if test.requestModifier != nil {
 				test.requestModifier(req)
@@ -128,14 +135,10 @@ func TestBranching(t *testing.T) {
 			plugin.ServeHTTP(recorder, req)
 
 			response := recorder.Result()
-			if response.StatusCode != http.StatusOK {
-				t.Fatal("failed response")
-			}
+			assert.Equal(t, response.StatusCode, http.StatusOK)
 
 			for hk, hv := range test.wantResponseHeaders {
-				if response.Header.Get(hk) != hv {
-					t.Fatal("unexpected chain header")
-				}
+				assert.Equal(t, response.Header.Get(hk), hv)
 			}
 		})
 	}
