@@ -111,6 +111,7 @@ nav:
         - 'AddPrefix': 'middlewares/http/addprefix.md'
         - 'BasicAuth': 'middlewares/http/basicauth.md'
         - 'Buffering': 'middlewares/http/buffering.md'
+        - 'Branching': 'middlewares/http/branching.md'
         - 'Chain': 'middlewares/http/chain.md'
         - 'CircuitBreaker': 'middlewares/http/circuitbreaker.md'
         - 'Compress': 'middlewares/http/compress.md'
