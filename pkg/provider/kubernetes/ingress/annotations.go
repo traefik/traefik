@@ -26,7 +26,7 @@ type RouterIng struct {
 	EntryPoints []string                 `json:"entryPoints,omitempty"`
 	Middlewares []string                 `json:"middlewares,omitempty"`
 	Priority    int                      `json:"priority,omitempty"`
-	TLS         *dynamic.RouterTLSConfig `json:"tls,omitempty" label:"allowEmpty" kv:"allowEmpty"`
+	TLS         *dynamic.RouterTLSConfig `json:"tls,omitempty" label:"allowEmpty"`
 }
 
 // SetDefaults sets the default values.
@@ -44,7 +44,7 @@ type ServiceIng struct {
 	ServersScheme    string          `json:"serversScheme,omitempty"`
 	ServersTransport string          `json:"serversTransport,omitempty"`
 	PassHostHeader   *bool           `json:"passHostHeader"`
-	Sticky           *dynamic.Sticky `json:"sticky,omitempty" label:"allowEmpty" kv:"allowEmpty"`
+	Sticky           *dynamic.Sticky `json:"sticky,omitempty" label:"allowEmpty"`
 }
 
 // SetDefaults sets the default values.
