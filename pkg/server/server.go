@@ -31,7 +31,8 @@ type Server struct {
 
 // NewServer returns an initialized Server.
 func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, entryPointsUDP UDPEntryPoints, watcher *ConfigurationWatcher,
-	chainBuilder *middleware.ChainBuilder, accessLoggerMiddleware *accesslog.Handler) *Server {
+	chainBuilder *middleware.ChainBuilder, accessLoggerMiddleware *accesslog.Handler,
+) *Server {
 	srv := &Server{
 		watcher:                watcher,
 		tcpEntryPoints:         entryPoints,
