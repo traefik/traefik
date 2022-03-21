@@ -250,6 +250,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			ReplacePath:       middleware.Spec.ReplacePath,
 			ReplacePathRegex:  middleware.Spec.ReplacePathRegex,
 			Chain:             createChainMiddleware(ctxMid, middleware.Namespace, middleware.Spec.Chain),
+			Branching:         createBranchingMiddleware(ctxMid, middleware.Namespace, middleware.Spec.Branching),
 			IPWhiteList:       middleware.Spec.IPWhiteList,
 			Headers:           middleware.Spec.Headers,
 			Errors:            errorPage,
@@ -696,6 +697,17 @@ func loadAuthCredentials(secret *corev1.Secret) ([]string, error) {
 	}
 
 	return credentials, nil
+}
+
+func createBranchingMiddleware(ctx context.Context, namespace string, branching *v1alpha1.Branching) *dynamic.Branching {
+	if branching == nil {
+		return nil
+	}
+
+	return &dynamic.Branching{
+		Condition: branching.Condition,
+		Chain:     createChainMiddleware(ctx, namespace, branching.Chain),
+	}
 }
 
 func createChainMiddleware(ctx context.Context, namespace string, chain *v1alpha1.Chain) *dynamic.Chain {
