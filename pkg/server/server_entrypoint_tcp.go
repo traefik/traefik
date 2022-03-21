@@ -7,6 +7,8 @@ import (
 	stdlog "log"
 	"net"
 	"net/http"
+	"os"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -544,12 +546,15 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	// ConfigureServer configures HTTP/2 with the MaxConcurrentStreams option for the given server.
 	// Also keeping behavior the same as
 	// https://cs.opensource.google/go/go/+/refs/tags/go1.17.7:src/net/http/server.go;l=3262
-	err = http2.ConfigureServer(serverHTTP, &http2.Server{
-		MaxConcurrentStreams: uint32(configuration.HTTP2.MaxConcurrentStreams),
-		NewWriteScheduler:    func() http2.WriteScheduler { return http2.NewPriorityWriteScheduler(nil) },
-	})
-	if err != nil {
-		return nil, fmt.Errorf("configure HTTP/2 server: %w", err)
+	if !strings.Contains(os.Getenv("GODEBUG"), "http2server=0") {
+		err = http2.ConfigureServer(serverHTTP, &http2.Server{
+			MaxConcurrentStreams: uint32(configuration.HTTP2.MaxConcurrentStreams),
+			NewWriteScheduler:    func() http2.WriteScheduler { return http2.NewPriorityWriteScheduler(nil) },
+		})
+
+		if err != nil {
+			return nil, fmt.Errorf("configure HTTP/2 server: %w", err)
+		}
 	}
 
 	listener := newHTTPForwarder(ln)
