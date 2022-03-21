@@ -11,6 +11,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/middlewares/addprefix"
 	"github.com/traefik/traefik/v2/pkg/middlewares/auth"
+	"github.com/traefik/traefik/v2/pkg/middlewares/branching"
 	"github.com/traefik/traefik/v2/pkg/middlewares/buffering"
 	"github.com/traefik/traefik/v2/pkg/middlewares/chain"
 	"github.com/traefik/traefik/v2/pkg/middlewares/circuitbreaker"
@@ -150,6 +151,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		config.Chain.Middlewares = qualifiedNames
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return chain.New(ctx, next, *config.Chain, b, middlewareName)
+		}
+	}
+
+	// Branching
+	if config.Branching != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return branching.New(ctx, next, *config.Branching, b, middlewareName)
 		}
 	}
 

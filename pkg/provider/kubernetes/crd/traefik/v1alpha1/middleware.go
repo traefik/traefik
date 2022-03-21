@@ -29,6 +29,7 @@ type MiddlewareSpec struct {
 	ReplacePath       *dynamic.ReplacePath           `json:"replacePath,omitempty"`
 	ReplacePathRegex  *dynamic.ReplacePathRegex      `json:"replacePathRegex,omitempty"`
 	Chain             *Chain                         `json:"chain,omitempty"`
+	Branching         *Branching                     `json:"branching,omitempty"`
 	IPWhiteList       *dynamic.IPWhiteList           `json:"ipWhiteList,omitempty"`
 	Headers           *dynamic.Headers               `json:"headers,omitempty"`
 	Errors            *ErrorPage                     `json:"errors,omitempty"`
@@ -62,6 +63,14 @@ type ErrorPage struct {
 // Chain holds a chain of middlewares.
 type Chain struct {
 	Middlewares []MiddlewareRef `json:"middlewares,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Branching holds a middleware chain branch configuration.
+type Branching struct {
+	Chain     *Chain `json:"chain,omitempty"`
+	Condition string `json:"condition,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
