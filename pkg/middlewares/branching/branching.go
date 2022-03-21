@@ -18,7 +18,7 @@ const (
 	typeName = "Branching"
 )
 
-// Branching middleware
+// Branching middleware.
 type Branching struct {
 	name    string
 	next    http.Handler
