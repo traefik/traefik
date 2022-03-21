@@ -15,7 +15,7 @@ See the dedicated section in [routing](../routing/providers/kv.md).
 
 _Required, Default="127.0.0.1:8500"_
 
-Defines how to access to Consul.
+Defines how to access Consul.
 
 ```yaml tab="File (YAML)"
 providers:
