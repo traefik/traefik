@@ -7,10 +7,9 @@ import (
 	"net/http"
 
 	"github.com/containous/alice"
-	"github.com/traefik/traefik/v2/pkg/log"
-
 	"github.com/hashicorp/go-bexpr"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 )
 
@@ -18,7 +17,7 @@ const (
 	typeName = "Branching"
 )
 
-// Branching middleware
+// Branching middleware.
 type Branching struct {
 	name    string
 	next    http.Handler
