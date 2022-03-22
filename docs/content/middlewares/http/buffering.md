@@ -167,7 +167,7 @@ http:
 
 The `maxResponseBodyBytes` option configures the maximum allowed response size from the service (in bytes).
 
-If the response exceeds the allowed size, it is not forwarded to the client. The client gets a `413 (Request Entity Too Large) response` instead.
+If the response exceeds the allowed size, it is not forwarded to the client. The client gets a `413` (Request Entity Too Large) response instead.
 
 ```yaml tab="Docker"
 labels:

@@ -15,7 +15,7 @@ See the dedicated section in [routing](../routing/providers/kv.md).
 
 _Required, Default="127.0.0.1:2181"_
 
-Defines how to access to ZooKeeper.
+Defines how to access ZooKeeper.
 
 ```yaml tab="File (YAML)"
 providers:

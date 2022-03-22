@@ -32,7 +32,7 @@ func (s *SimpleSuite) TestInvalidConfigShouldFail(c *check.C) {
 	defer s.killCmd(cmd)
 
 	err = try.Do(500*time.Millisecond, func() error {
-		expected := "Near line 0 (last key parsed ''): bare keys cannot contain '{'"
+		expected := "expected '.' or '=', but got '{' instead"
 		actual := output.String()
 
 		if !strings.Contains(actual, expected) {
