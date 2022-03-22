@@ -27,8 +27,6 @@ You can read more about this retrieval mechanism in the following section: [ACME
 
 !!! important "Defining a certificate resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
 
-!!! important "Certificate resolvers are defined with the `certificatesResolvers` key. Note that the key uses the plural form of `certificates`."
-
 ??? note "Configuration Reference"
 
     There are many available options for ACME.
