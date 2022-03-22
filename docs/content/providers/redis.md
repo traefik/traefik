@@ -15,7 +15,7 @@ See the dedicated section in [routing](../routing/providers/kv.md).
 
 _Required, Default="127.0.0.1:6379"_
 
-Defines how to access to Redis.
+Defines how to access Redis.
 
 ```yaml tab="File (YAML)"
 providers:

@@ -53,7 +53,7 @@ type TCPRouter struct {
 	Service     string              `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
 	Rule        string              `json:"rule,omitempty" toml:"rule,omitempty" yaml:"rule,omitempty"`
 	Priority    int                 `json:"priority,omitempty" toml:"priority,omitempty,omitzero" yaml:"priority,omitempty" export:"true"`
-	TLS         *RouterTCPTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	TLS         *RouterTCPTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -76,7 +76,7 @@ type TCPServersLoadBalancer struct {
 	// connection. It is a duration in milliseconds, defaulting to 100. A negative value
 	// means an infinite deadline (i.e. the reading capability is never closed).
 	TerminationDelay *int           `json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty" export:"true"`
-	ProxyProtocol    *ProxyProtocol `json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	ProxyProtocol    *ProxyProtocol `json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 	Servers          []TCPServer    `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
 }
 
