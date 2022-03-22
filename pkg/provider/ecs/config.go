@@ -173,6 +173,13 @@ func (p *Provider) filterInstance(ctx context.Context, instance ecsInstance) boo
 		return false
 	}
 
+	if !instance.ExtraConf.HealthyByDefault {
+		if instance.machine.healthStatus == "UNKNOWN" {
+			logger.Debugf("Filtering unknown ecs instance %s (%s)", instance.Name, instance.ID)
+			return false
+		}
+	}
+
 	if len(instance.machine.privateIP) == 0 {
 		logger.Debugf("Filtering ecs instance without an ip address %s (%s)", instance.Name, instance.ID)
 		return false
