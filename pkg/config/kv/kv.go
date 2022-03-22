@@ -25,7 +25,7 @@ func Decode(pairs []*store.KVPair, element interface{}, rootName string) error {
 		return err
 	}
 
-	metaOpts := parser.MetadataOpts{TagName: parser.TagLabel, AllowSliceAsStruct: false}
+	metaOpts := parser.MetadataOpts{TagName: "kv", AllowSliceAsStruct: false}
 	err = parser.AddMetadata(element, node, metaOpts)
 	if err != nil {
 		return err
