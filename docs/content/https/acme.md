@@ -25,7 +25,7 @@ You can read more about this retrieval mechanism in the following section: [ACME
 
 !!! warning "Defining an [ACME challenge type](#the-different-acme-challenges) is a requirement for a certificate resolver to be functional."
 
-!!! important "Defining a certificates resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
+!!! important "Defining a certificate resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
 
 ??? note "Configuration Reference"
 
@@ -116,7 +116,7 @@ Please check the [configuration examples below](#configuration-examples) for mor
     --certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web
     ```
 
-!!! important "Defining a certificates resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
+!!! important "Defining a certificate resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
 
 ??? example "Single Domain from Router's Rule Example"
 
@@ -145,7 +145,7 @@ Traefik automatically tracks the expiry date of ACME certificates it generates.
 By default, Traefik manages 90 days certificates,
 and starts to renew certificates 30 days before their expiry.
 
-When using a certificates resolver that issues certificates with custom durations,
+When using a certificate resolver that issues certificates with custom durations,
 one can configure the certificates' duration with the [`certificatesDuration`](#certificatesduration) option.
 
 !!! info ""
@@ -162,7 +162,7 @@ When using LetsEncrypt with kubernetes, there are some known caveats with both t
 
 !!! warning "Defining one ACME challenge is a requirement for a certificate resolver to be functional."
 
-!!! important "Defining a certificates resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
+!!! important "Defining a certificate resolver does not result in all routers automatically using it. Each router that is supposed to use the resolver must [reference](../routing/routers/index.md#certresolver) it."
 
 ### `tlsChallenge`
 
