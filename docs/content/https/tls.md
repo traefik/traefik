@@ -128,6 +128,30 @@ tls:
       keyFile  = "path/to/cert.key"
 ```
 
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSStore
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  defaultCertificate:
+    secretName: default-certificate
+    
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: default-certificate
+  namespace: default
+  
+type: Opaque
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+```
+
 If no default certificate is provided, Traefik generates and uses a self-signed certificate.
 
 ## TLS Options
