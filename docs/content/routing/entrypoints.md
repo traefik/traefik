@@ -258,7 +258,6 @@ In most scenarios, this entryPoint is the same as the one used for TLS traffic.
     ```
     
     ```bash tab="CLI"
-    ## Static configuration
     --experimental.http3=true 
     --entrypoints.name.http3
     ```
@@ -290,7 +289,6 @@ It can be used to override the authority in the `alt-svc` header, for example if
     ```
     
     ```bash tab="CLI"
-    ## Static configuration
     --experimental.http3=true 
     --entrypoints.name.http3.advertisedport=443
     ```
