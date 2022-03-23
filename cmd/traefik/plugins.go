@@ -27,10 +27,10 @@ func initPlugins(staticCfg *static.Configuration) (*plugins.Client, map[string]p
 	var client *plugins.Client
 	plgs := map[string]plugins.Descriptor{}
 
-	if isPilotEnabled(staticCfg) && hasPlugins(staticCfg) {
+	if hasPlugins(staticCfg) {
 		opts := plugins.ClientOptions{
 			Output: outputDir,
-			Token:  staticCfg.Pilot.Token,
+			Token:  getPilotToken(staticCfg),
 		}
 
 		var err error
@@ -77,6 +77,14 @@ func checkUniquePluginNames(e *static.Experimental) error {
 
 func isPilotEnabled(staticCfg *static.Configuration) bool {
 	return staticCfg.Pilot != nil && staticCfg.Pilot.Token != ""
+}
+
+func getPilotToken(staticCfg *static.Configuration) string {
+	if staticCfg.Pilot == nil {
+		return ""
+	}
+
+	return staticCfg.Pilot.Token
 }
 
 func hasPlugins(staticCfg *static.Configuration) bool {
