@@ -303,6 +303,14 @@ func (c *Configuration) initHubProvider() error {
 		return errors.New("no TLS configuration defined for the Hub provider; either set one or use the --hub.insecure flag for quick testing")
 	}
 
+	if c.Hub.Insecure && c.Hub.TLS != nil {
+		return errors.New("TLS configuration defined and --hub.insecure activated; either set one or use the --hub.insecure flag for quick testing")
+	}
+
+	if c.Hub.Insecure {
+		log.WithoutContext().Warn("The Hub provider is in `insecure` mode. Using the `hub.tls` configuration instead is recommended for production purposes.")
+	}
+
 	// Creates the internal Hub entry point if needed.
 	if c.Hub.EntryPoint == hub.DefaultEntryPointName {
 		if _, ok := c.EntryPoints[hub.DefaultEntryPointName]; !ok {
@@ -314,16 +322,8 @@ func (c *Configuration) initHubProvider() error {
 		}
 	}
 
-	if c.Hub.TLS != nil {
-		if c.Hub.TLS.CA == "" || c.Hub.TLS.Cert == "" || c.Hub.TLS.Key == "" {
-			return errors.New("incomplete TLS configuration")
-		}
-
-		c.EntryPoints[c.Hub.EntryPoint].HTTP.TLS = &TLSConfig{
-			Options: "traefik-hub",
-		}
-	} else {
-		log.WithoutContext().Warn("The Hub provider is in `insecure` mode. Using the `hub.tls` configuration instead is recommended for production purposes.")
+	c.EntryPoints[c.Hub.EntryPoint].HTTP.TLS = &TLSConfig{
+		Options: "traefik-hub",
 	}
 
 	return nil

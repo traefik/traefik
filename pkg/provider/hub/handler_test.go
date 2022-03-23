@@ -2,6 +2,7 @@ package hub
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"net"
@@ -15,12 +16,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/tls/generate"
 )
 
 func TestHandleConfig(t *testing.T) {
 	cfgChan := make(chan dynamic.Message, 1)
 
-	h := newHandler("traefik-hub-ep", 42, cfgChan, nil)
+	client, err := createAgentClient(nil)
+	require.NoError(t, err)
+	h := newHandler("traefik-hub-ep", 42, cfgChan, nil, client)
 
 	cfg := emptyDynamicConfiguration()
 	cfg.HTTP.Routers["foo"] = &dynamic.Router{
@@ -53,7 +57,9 @@ func TestHandleConfig(t *testing.T) {
 
 func TestHandle_Config_MethodNotAllowed(t *testing.T) {
 	cfgChan := make(chan dynamic.Message, 1)
-	h := newHandler("traefik-hub-ep", 42, cfgChan, nil)
+	client, err := createAgentClient(nil)
+	require.NoError(t, err)
+	h := newHandler("traefik-hub-ep", 42, cfgChan, nil, client)
 
 	server := httptest.NewServer(h)
 	t.Cleanup(server.Close)
@@ -82,27 +88,38 @@ func TestHandle_DiscoverIP(t *testing.T) {
 		assert.Equal(t, nonce, req.URL.Query().Get("nonce"))
 	})
 
-	s := &http.Server{Handler: mux}
-	t.Cleanup(func() { _ = s.Close() })
+	certificate, err := generate.DefaultCertificate()
+	require.NoError(t, err)
+	agentServer := &http.Server{
+		Handler: mux,
+		TLSConfig: &tls.Config{
+			Certificates:       []tls.Certificate{*certificate},
+			InsecureSkipVerify: true,
+			MinVersion:         tls.VersionTLS13,
+		},
+	}
+	t.Cleanup(func() { _ = agentServer.Close() })
 
 	rdy := make(chan struct{})
 
 	go func(s *http.Server) {
 		close(rdy)
-		if err = s.Serve(listener); errors.Is(err, http.ErrServerClosed) {
+		if err = s.ServeTLS(listener, "", ""); errors.Is(err, http.ErrServerClosed) {
 			return
 		}
-	}(s)
+	}(agentServer)
 
 	<-rdy
 
 	cfgChan := make(chan dynamic.Message, 1)
-	h := newHandler("traefik-hub-ep", 42, cfgChan, nil)
+	client, err := createAgentClient(nil)
+	require.NoError(t, err)
+	h := newHandler("traefik-hub-ep", 42, cfgChan, nil, client)
 
-	server := httptest.NewServer(h)
-	t.Cleanup(server.Close)
+	traefikServer := httptest.NewServer(h)
+	t.Cleanup(traefikServer.Close)
 
-	req, err := http.NewRequest(http.MethodGet, server.URL+"/discover-ip", http.NoBody)
+	req, err := http.NewRequest(http.MethodGet, traefikServer.URL+"/discover-ip", http.NoBody)
 	require.NoError(t, err)
 
 	q := make(url.Values)
@@ -134,7 +151,9 @@ func TestHandle_DiscoverIP(t *testing.T) {
 
 func TestHandle_DiscoverIP_MethodNotAllowed(t *testing.T) {
 	cfgChan := make(chan dynamic.Message, 1)
-	h := newHandler("traefik-hub-ep", 42, cfgChan, nil)
+	client, err := createAgentClient(nil)
+	require.NoError(t, err)
+	h := newHandler("traefik-hub-ep", 42, cfgChan, nil, client)
 
 	server := httptest.NewServer(h)
 	t.Cleanup(server.Close)
