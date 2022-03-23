@@ -199,3 +199,4 @@ nav:
         - 'Rancher': 'reference/dynamic-configuration/rancher.md'
   - 'Deprecation Notices':
       - 'Releases': 'deprecation/releases.md'
+      - 'Features': 'deprecation/features.md'
