@@ -130,6 +130,11 @@ func patchDynamicConfiguration(cfg *dynamic.Configuration, ep string, port int, 
 				KeyFile:  tlsCfg.Key,
 			},
 		})
+		return
+	}
+
+	cfg.TLS.Options["traefik-hub"] = ttls.Options{
+		MinVersion: "VersionTLS13",
 	}
 }
 
@@ -158,37 +163,48 @@ func emptyDynamicConfiguration() *dynamic.Configuration {
 
 func createAgentClient(tlsCfg *TLS) (http.Client, error) {
 	var client http.Client
-	if tlsCfg != nil {
-		roots := x509.NewCertPool()
-		caContent, err := tlsCfg.CA.Read()
-		if err != nil {
-			return client, fmt.Errorf("read CA: %w", err)
-		}
-
-		roots.AppendCertsFromPEM(caContent)
-		certContent, err := tlsCfg.Cert.Read()
-		if err != nil {
-			return client, fmt.Errorf("read Cert: %w", err)
-		}
-		keyContent, err := tlsCfg.Key.Read()
-		if err != nil {
-			return client, fmt.Errorf("read Key: %w", err)
-		}
-
-		certificate, err := tls.X509KeyPair(certContent, keyContent)
-		if err != nil {
-			return client, fmt.Errorf("create key pair: %w", err)
-		}
-
+	if tlsCfg == nil {
+		// insecure TLS
 		client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{
-				RootCAs:      roots,
-				Certificates: []tls.Certificate{certificate},
-				ServerName:   "agent.traefik",
-				ClientAuth:   tls.RequireAndVerifyClientCert,
-				MinVersion:   tls.VersionTLS13,
+				InsecureSkipVerify: true,
+				MinVersion:         tls.VersionTLS13,
 			},
 		}
+
+		return client, nil
+	}
+
+	roots := x509.NewCertPool()
+	caContent, err := tlsCfg.CA.Read()
+	if err != nil {
+		return client, fmt.Errorf("read CA: %w", err)
+	}
+
+	roots.AppendCertsFromPEM(caContent)
+	certContent, err := tlsCfg.Cert.Read()
+	if err != nil {
+		return client, fmt.Errorf("read Cert: %w", err)
+	}
+	keyContent, err := tlsCfg.Key.Read()
+	if err != nil {
+		return client, fmt.Errorf("read Key: %w", err)
+	}
+
+	certificate, err := tls.X509KeyPair(certContent, keyContent)
+	if err != nil {
+		return client, fmt.Errorf("create key pair: %w", err)
+	}
+
+	// mTLS
+	client.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs:      roots,
+			Certificates: []tls.Certificate{certificate},
+			ServerName:   "agent.traefik",
+			ClientAuth:   tls.RequireAndVerifyClientCert,
+			MinVersion:   tls.VersionTLS13,
+		},
 	}
 
 	return client, nil

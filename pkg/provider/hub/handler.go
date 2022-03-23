@@ -102,12 +102,7 @@ func (h *handler) handleDiscoverIP(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (h *handler) doDiscoveryReq(ctx context.Context, ip, port, nonce string) error {
-	scheme := "http"
-	if h.tlsCfg != nil {
-		scheme = "https"
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s://%s:%s", scheme, ip, port), http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("https://%s:%s", ip, port), http.NoBody)
 	if err != nil {
 		return fmt.Errorf("make request: %w", err)
 	}
@@ -115,10 +110,7 @@ func (h *handler) doDiscoveryReq(ctx context.Context, ip, port, nonce string) er
 	q := make(url.Values)
 	q.Set("nonce", nonce)
 	req.URL.RawQuery = q.Encode()
-
-	if h.tlsCfg != nil {
-		req.Host = "agent.traefik"
-	}
+	req.Host = "agent.traefik"
 
 	resp, err := h.client.Do(req)
 	if err != nil {
