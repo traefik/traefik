@@ -34,7 +34,8 @@ This agent can:
       hub: true
 
     hub:
-      insecure: true
+      tls:
+        insecure: true
     ```
 
     ```toml tab="File (TOML)"
@@ -42,12 +43,13 @@ This agent can:
       hub = true
 
     [hub]
-      insecure = true
+      [hub.tls]
+        insecure = true
     ```
 
     ```bash tab="CLI"
     --experimental.hub
-    --hub.insecure=true
+    --hub.tls.insecure=true
     ```
 
 ## Configuration

@@ -109,28 +109,29 @@ func patchDynamicConfiguration(cfg *dynamic.Configuration, ep string, port int, 
 		},
 	}
 
-	if tlsCfg != nil {
+	if tlsCfg == nil {
 		cfg.TLS.Options["traefik-hub"] = ttls.Options{
-			ClientAuth: ttls.ClientAuth{
-				CAFiles:        []ttls.FileOrContent{tlsCfg.CA},
-				ClientAuthType: "RequireAndVerifyClientCert",
-			},
-			SniStrict:  true,
 			MinVersion: "VersionTLS13",
 		}
 
-		cfg.TLS.Certificates = append(cfg.TLS.Certificates, &ttls.CertAndStores{
-			Certificate: ttls.Certificate{
-				CertFile: tlsCfg.Cert,
-				KeyFile:  tlsCfg.Key,
-			},
-		})
 		return
 	}
 
 	cfg.TLS.Options["traefik-hub"] = ttls.Options{
+		ClientAuth: ttls.ClientAuth{
+			CAFiles:        []ttls.FileOrContent{tlsCfg.CA},
+			ClientAuthType: "RequireAndVerifyClientCert",
+		},
+		SniStrict:  true,
 		MinVersion: "VersionTLS13",
 	}
+
+	cfg.TLS.Certificates = append(cfg.TLS.Certificates, &ttls.CertAndStores{
+		Certificate: ttls.Certificate{
+			CertFile: tlsCfg.Cert,
+			KeyFile:  tlsCfg.Key,
+		},
+	})
 }
 
 func emptyDynamicConfiguration() *dynamic.Configuration {

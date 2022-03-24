@@ -1,6 +1,6 @@
 <svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
     <g fill="none" fill-rule="evenodd">
-        <g fill="#FFF">
+        <g fill="#dfdfdf">
             <path d="M128 0H0v128h128V0z"/>
             <path d="M48 0H0v48h48V0zM128 0H80v48h48V0zM128 80H80v48h48V80zM48 80H0v48h48V80z"/>
         </g>
