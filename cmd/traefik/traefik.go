@@ -362,6 +362,11 @@ func getHTTPChallengeHandler(acmeProviders []*acme.Provider, httpChallengeProvid
 func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string {
 	var defaultEntryPoints []string
 	for name, cfg := range staticConfiguration.EntryPoints {
+		// Traefik Hub entryPoint should not be part of the set of default entryPoints.
+		if staticConfiguration.Hub != nil && staticConfiguration.Hub.EntryPoint == name {
+			continue
+		}
+
 		protocol, err := cfg.GetProtocol()
 		if err != nil {
 			// Should never happen because Traefik should not start if protocol is invalid.
