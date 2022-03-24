@@ -419,9 +419,18 @@
   token = "foobar"
   dashboard = true
 
+[hub]
+  entrypoint = "foobar"
+  [hub.tls]
+    insecure = true
+    ca = "foobar"
+    cert = "foobar"
+    key = "foobar"
+
 [experimental]
   kubernetesGateway = true
   http3 = true
+  hub = true
   [experimental.plugins]
     [experimental.plugins.Descriptor0]
       moduleName = "foobar"
