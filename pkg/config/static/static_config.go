@@ -204,6 +204,10 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	if len(c.EntryPoints) == 0 || (c.Hub != nil && len(c.EntryPoints) == 1 && c.EntryPoints[c.Hub.EntryPoint] != nil) {
 		ep := &EntryPoint{Address: ":80"}
 		ep.SetDefaults()
+		// TODO: double check this tomorrow
+		if c.EntryPoints == nil {
+			c.EntryPoints = make(EntryPoints)
+		}
 		c.EntryPoints["http"] = ep
 	}
 
