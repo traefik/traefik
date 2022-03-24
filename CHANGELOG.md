@@ -1,3 +1,25 @@
+## [v2.6.2](https://github.com/traefik/traefik/tree/v2.6.2) (2022-03-24)
+[All Commits](https://github.com/traefik/traefik/compare/v2.6.1...v2.6.2)
+
+**Bug fixes:**
+- **[file]** Bump paerser to v0.1.5 ([#8850](https://github.com/traefik/traefik/pull/8850) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[acme]** Fix certificates resolver typo ([#8859](https://github.com/traefik/traefik/pull/8859) by [NReilingh](https://github.com/NReilingh))
+- **[docker]** doc: fix, docker uses Label(), not Tag() ([#8823](https://github.com/traefik/traefik/pull/8823) by [mpl](https://github.com/mpl))
+- **[http3]** Fix CLI syntax in HTTP/3 documentation ([#8864](https://github.com/traefik/traefik/pull/8864) by [nstankov-bg](https://github.com/nstankov-bg))
+- **[kv]** Fix small typo in Redis provider documentation ([#8858](https://github.com/traefik/traefik/pull/8858) by [lczw](https://github.com/lczw))
+- **[marathon]** Fix brand typo ([#8788](https://github.com/traefik/traefik/pull/8788) by [0xflotus](https://github.com/0xflotus))
+- **[middleware]** Fix fenced code block typo in Buffering middleware page ([#8855](https://github.com/traefik/traefik/pull/8855) by [Wingysam](https://github.com/Wingysam))
+- **[rules]** Adjust rule length in routers documentation ([#8819](https://github.com/traefik/traefik/pull/8819) by [rtribotte](https://github.com/rtribotte))
+- **[rules]** Fix HostRegexp examples ([#8817](https://github.com/traefik/traefik/pull/8817) by [kevinpollet](https://github.com/kevinpollet))
+- **[tls,k8s/crd,k8s]** Add default certificate definition example for Kubernetes ([#8863](https://github.com/traefik/traefik/pull/8863) by [jwausle](https://github.com/jwausle))
+- **[tls,k8s]** Clarify TLS Option documentation ([#8756](https://github.com/traefik/traefik/pull/8756) by [mloiseleur](https://github.com/mloiseleur))
+- Clarify concepts documentation page ([#8836](https://github.com/traefik/traefik/pull/8836) by [NReilingh](https://github.com/NReilingh))
+- Spelling ([#8791](https://github.com/traefik/traefik/pull/8791) by [jsoref](https://github.com/jsoref))
+- Fix routing overview examples ([#8840](https://github.com/traefik/traefik/pull/8840) by [NReilingh](https://github.com/NReilingh))
+- Add a deprecation notices section ([#8829](https://github.com/traefik/traefik/pull/8829) by [ddtmachado](https://github.com/ddtmachado))
+
 ## [v2.6.1](https://github.com/traefik/traefik/tree/v2.6.1) (2022-02-14)
 [All Commits](https://github.com/traefik/traefik/compare/v2.6.0...v2.6.1)
 
