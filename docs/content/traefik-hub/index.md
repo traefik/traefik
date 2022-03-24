@@ -271,7 +271,7 @@ AwfmfGG0CBJRlLrWYtbBm+9SEhgs0/AfPxrHwLv5y6KEQLpPO+fwN4Z4
 _Optional, Default=false_
 
 Enables an insecure TLS connection that uses default credentials,
-and there is no peer authentication between Traefik Proxy and the Traefik Hub Agent.
+and which has no peer authentication between Traefik Proxy and the Traefik Hub Agent.
 The `insecure` option is mutually exclusive with any other option.
 
 !!! warning "Security Consideration"
