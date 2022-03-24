@@ -50,13 +50,13 @@ func (p *Provider) Init() error {
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, _ *safe.Pool) error {
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
-		return fmt.Errorf("listen: %w", err)
+		return fmt.Errorf("listener: %w", err)
 	}
 	port := listener.Addr().(*net.TCPAddr).Port
 
 	client, err := createAgentClient(p.TLS)
 	if err != nil {
-		return fmt.Errorf("create Hub Agent HTTP client: %w", err)
+		return fmt.Errorf("creating Hub Agent HTTP client: %w", err)
 	}
 
 	p.server = &http.Server{Handler: newHandler(p.EntryPoint, port, configurationChan, p.TLS, client)}
@@ -172,26 +172,26 @@ func createAgentClient(tlsCfg *TLS) (http.Client, error) {
 
 	caContent, err := tlsCfg.CA.Read()
 	if err != nil {
-		return client, fmt.Errorf("read CA: %w", err)
+		return client, fmt.Errorf("reading CA: %w", err)
 	}
 
 	roots := x509.NewCertPool()
 	if ok := roots.AppendCertsFromPEM(caContent); !ok {
-		return client, errors.New("append CA error")
+		return client, errors.New("appending CA error")
 	}
 
 	certContent, err := tlsCfg.Cert.Read()
 	if err != nil {
-		return client, fmt.Errorf("read Cert: %w", err)
+		return client, fmt.Errorf("reading Cert: %w", err)
 	}
 	keyContent, err := tlsCfg.Key.Read()
 	if err != nil {
-		return client, fmt.Errorf("read Key: %w", err)
+		return client, fmt.Errorf("reading Key: %w", err)
 	}
 
 	certificate, err := tls.X509KeyPair(certContent, keyContent)
 	if err != nil {
-		return client, fmt.Errorf("create key pair: %w", err)
+		return client, fmt.Errorf("creating key pair: %w", err)
 	}
 
 	// mTLS
