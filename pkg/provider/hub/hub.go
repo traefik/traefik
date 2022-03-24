@@ -17,7 +17,7 @@ import (
 
 var _ provider.Provider = (*Provider)(nil)
 
-// DefaultEntryPointName the name of the default internal entry point.
+// DefaultEntryPointName is the name of the default internal entry point.
 const DefaultEntryPointName = "traefik-hub"
 
 // Provider holds configurations of the provider.
@@ -28,12 +28,12 @@ type Provider struct {
 	server *http.Server
 }
 
-// TLS holds TLS configuration to use mTLS communication between Traefik and Hub Agent.
+// TLS configures the mTLS connection between Traefik Proxy and the Traefik Hub Agent.
 type TLS struct {
-	Insecure bool               `description:"Allows the Hub provider to run over an insecure connection for testing purposes." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
-	CA       ttls.FileOrContent `description:"Certificate authority to use for securing communication with the Agent." json:"ca,omitempty" toml:"ca,omitempty" yaml:"ca,omitempty" loggable:"false"`
-	Cert     ttls.FileOrContent `description:"Certificate to use for securing communication with the Agent." json:"cert,omitempty" toml:"cert,omitempty" yaml:"cert,omitempty" loggable:"false"`
-	Key      ttls.FileOrContent `description:"Key to use for securing communication with the Agent." json:"key,omitempty" toml:"key,omitempty" yaml:"key,omitempty" loggable:"false"`
+	Insecure bool               `description:"Enables an insecure TLS connection that uses default credentials, and which has no peer authentication between Traefik Proxy and the Traefik Hub Agent." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
+	CA       ttls.FileOrContent `description:"The certificate authority authenticates the Traefik Hub Agent certificate." json:"ca,omitempty" toml:"ca,omitempty" yaml:"ca,omitempty" loggable:"false"`
+	Cert     ttls.FileOrContent `description:"The TLS certificate for Traefik Proxy as a TLS client." json:"cert,omitempty" toml:"cert,omitempty" yaml:"cert,omitempty" loggable:"false"`
+	Key      ttls.FileOrContent `description:"The TLS key for Traefik Proxy as a TLS client." json:"key,omitempty" toml:"key,omitempty" yaml:"key,omitempty" loggable:"false"`
 }
 
 // SetDefaults sets the default values.
@@ -61,6 +61,8 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, _ *safe.Poo
 
 	p.server = &http.Server{Handler: newHandler(p.EntryPoint, port, configurationChan, p.TLS, client)}
 
+	// TODO: this is going to be leaky (because no context to make it terminate)
+	// if/when Provide lifecycle differs with Traefik lifecycle.
 	go func() {
 		if err = p.server.Serve(listener); err != nil {
 			log.WithoutContext().WithField(log.ProviderName, "hub").Errorf("Unexpected error while running server: %v", err)
