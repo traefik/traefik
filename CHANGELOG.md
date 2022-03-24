@@ -1,5 +1,5 @@
 ## [v2.7.0-rc1](https://github.com/traefik/traefik/tree/v2.7.0-rc1) (2022-03-24)
-[All Commits](https://github.com/traefik/traefik/compare/v2.6.0-rc3...v2.7.0-rc1)
+[All Commits](https://github.com/traefik/traefik/compare/v2.6.0-rc1...v2.7.0-rc1)
 
 **Enhancements:**
 - **[consulcatalog]** Watch for Consul events to rebuild the dynamic configuration ([#8476](https://github.com/traefik/traefik/pull/8476) by [JasonWangA](https://github.com/JasonWangA))
@@ -28,6 +28,8 @@
 - Merge current v2.6 into master ([#8757](https://github.com/traefik/traefik/pull/8757) by [tomMoulard](https://github.com/tomMoulard))
 - Merge current v2.6 into master ([#8754](https://github.com/traefik/traefik/pull/8754) by [tomMoulard](https://github.com/tomMoulard))
 - Merge current v2.6 into master ([#8736](https://github.com/traefik/traefik/pull/8736) by [kevinpollet](https://github.com/kevinpollet))
+- Merge current v2.6 into master ([#8689](https://github.com/traefik/traefik/pull/8689) by [tomMoulard](https://github.com/tomMoulard))
+- Merge current v2.6 into master ([#8666](https://github.com/traefik/traefik/pull/8666) by [tomMoulard](https://github.com/tomMoulard))
 
 ## [v2.6.2](https://github.com/traefik/traefik/tree/v2.6.2) (2022-03-24)
 [All Commits](https://github.com/traefik/traefik/compare/v2.6.1...v2.6.2)
