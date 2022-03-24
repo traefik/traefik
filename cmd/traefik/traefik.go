@@ -241,6 +241,19 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		}
 	}
 
+	// Traefik Hub
+
+	if staticConfiguration.Hub != nil {
+		if err = providerAggregator.AddProvider(staticConfiguration.Hub); err != nil {
+			return nil, fmt.Errorf("adding Traefik Hub provider: %w", err)
+		}
+
+		// API is mandatory for Traefik Hub to access the dynamic configuration.
+		if staticConfiguration.API == nil {
+			staticConfiguration.API = &static.API{}
+		}
+	}
+
 	// Metrics
 
 	metricRegistries := registerMetricClients(staticConfiguration.Metrics)
@@ -323,7 +336,10 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 				continue
 			}
 
-			if _, ok := resolverNames[rt.TLS.CertResolver]; !ok {
+			if _, ok := resolverNames[rt.TLS.CertResolver]; !ok &&
+				// "traefik-hub" is an allowed certificate resolver name in a Traefik Hub Experimental feature context.
+				// It is used to activate its own certificate resolution, even though it is not a "classical" traefik certificate resolver.
+				(staticConfiguration.Hub == nil || rt.TLS.CertResolver != "traefik-hub") {
 				log.WithoutContext().Errorf("the router %s uses a non-existent resolver: %s", rtName, rt.TLS.CertResolver)
 			}
 		}
