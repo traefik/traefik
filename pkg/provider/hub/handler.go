@@ -59,7 +59,7 @@ func (h *handler) handleConfig(rw http.ResponseWriter, req *http.Request) {
 	if err := json.NewDecoder(req.Body).Decode(payload); err != nil {
 		err = fmt.Errorf("decode config request: %w", err)
 		log.WithoutContext().Errorf("Handle config: %v", err)
-		http.Error(rw, err.Error(), http.StatusBadRequest)
+		http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
@@ -89,14 +89,14 @@ func (h *handler) handleDiscoverIP(rw http.ResponseWriter, req *http.Request) {
 	if err := h.doDiscoveryReq(req.Context(), xff, port, nonce); err != nil {
 		err = fmt.Errorf("do discovery request: %w", err)
 		log.WithoutContext().Errorf("Discover ip: %v", err)
-		http.Error(rw, err.Error(), http.StatusBadGateway)
+		http.Error(rw, http.StatusText(http.StatusBadGateway), http.StatusBadGateway)
 		return
 	}
 
 	if err := json.NewEncoder(rw).Encode(xff); err != nil {
 		err = fmt.Errorf("encode discover ip response: %w", err)
 		log.WithoutContext().Errorf("Discover ip: %v", err)
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 }
@@ -137,7 +137,7 @@ func (h *handler) handleState(rw http.ResponseWriter, req *http.Request) {
 	if err := json.NewEncoder(rw).Encode(resp); err != nil {
 		err = fmt.Errorf("encode last config received response: %w", err)
 		log.WithoutContext().Errorf("Last config received: %v", err)
-		http.Error(rw, err.Error(), http.StatusBadRequest)
+		http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 }

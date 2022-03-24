@@ -244,9 +244,8 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	// Traefik Hub
 
 	if staticConfiguration.Hub != nil {
-		err = providerAggregator.AddProvider(staticConfiguration.Hub)
-		if err != nil {
-			return nil, fmt.Errorf("add Traefik Hub provider: %w", err)
+		if err = providerAggregator.AddProvider(staticConfiguration.Hub); err != nil {
+			return nil, fmt.Errorf("adding Traefik Hub provider: %w", err)
 		}
 
 		// API is mandatory for Traefik Hub to access the dynamic configuration.

@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"errors"
 	"net"
 	"net/http"
 
@@ -21,18 +22,18 @@ const DefaultEntryPointName = "traefik-hub"
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	EntryPoint string `description:"Entrypoint that exposes data for Traefik Hub." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"`
-	Insecure   bool   `description:"Allows the Hub provider to run over an insecure connection for testing purposes." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty"`
-	TLS        *TLS   `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
+	EntryPoint string `description:"Entrypoint that exposes data for Traefik Hub." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
+	Insecure   bool   `description:"Allows the Hub provider to run over an insecure connection for testing purposes." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
+	TLS        *TLS   `description:"TLS configuration for mTLS communication between Traefik and Hub Agent." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
 
 	server *http.Server
 }
 
 // TLS holds TLS configuration to use mTLS communication between Traefik and Hub Agent.
 type TLS struct {
-	CA   ttls.FileOrContent `description:"Certificate authority to use for securing communication with the Agent." json:"ca,omitempty" toml:"ca,omitempty" yaml:"ca,omitempty"`
-	Cert ttls.FileOrContent `description:"Certificate to use for securing communication with the Agent." json:"cert,omitempty" toml:"cert,omitempty" yaml:"cert,omitempty"`
-	Key  ttls.FileOrContent `description:"Key to use for securing communication with the Agent." json:"key,omitempty" toml:"key,omitempty" yaml:"key,omitempty"`
+	CA   ttls.FileOrContent `description:"Certificate authority to use for securing communication with the Agent." json:"ca,omitempty" toml:"ca,omitempty" yaml:"ca,omitempty" loggable:"false"`
+	Cert ttls.FileOrContent `description:"Certificate to use for securing communication with the Agent." json:"cert,omitempty" toml:"cert,omitempty" yaml:"cert,omitempty" loggable:"false"`
+	Key  ttls.FileOrContent `description:"Key to use for securing communication with the Agent." json:"key,omitempty" toml:"key,omitempty" yaml:"key,omitempty" loggable:"false"`
 }
 
 // SetDefaults sets the default values.
@@ -61,14 +62,8 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, _ *safe.Poo
 	p.server = &http.Server{Handler: newHandler(p.EntryPoint, port, configurationChan, p.TLS, client)}
 
 	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				log.WithoutContext().Errorf("Panic recovered: %v", err)
-			}
-		}()
-
 		if err = p.server.Serve(listener); err != nil {
-			log.WithoutContext().Errorf("Unexpected error while running server: %v", err)
+			log.WithoutContext().WithField(log.ProviderName, "hub").Errorf("Unexpected error while running server: %v", err)
 			return
 		}
 	}()
@@ -101,7 +96,7 @@ func patchDynamicConfiguration(cfg *dynamic.Configuration, ep string, port int, 
 	cfg.HTTP.Routers["traefik-hub-agent-service"] = &dynamic.Router{
 		EntryPoints: []string{ep},
 		Service:     "traefik-hub-agent-service",
-		Rule:        "Host(`proxy.traefik`) && (PathPrefix(`/config`) || PathPrefix(`/discover-ip`) || PathPrefix(`/state`))",
+		Rule:        "Host(`proxy.traefik`) && PathPrefix(`/config`, `/discover-ip`, `/state`)",
 	}
 
 	cfg.HTTP.Services["traefik-hub-agent-service"] = &dynamic.Service{
@@ -175,13 +170,16 @@ func createAgentClient(tlsCfg *TLS) (http.Client, error) {
 		return client, nil
 	}
 
-	roots := x509.NewCertPool()
 	caContent, err := tlsCfg.CA.Read()
 	if err != nil {
 		return client, fmt.Errorf("read CA: %w", err)
 	}
 
-	roots.AppendCertsFromPEM(caContent)
+	roots := x509.NewCertPool()
+	if ok := roots.AppendCertsFromPEM(caContent); !ok {
+		return client, errors.New("append CA error")
+	}
+
 	certContent, err := tlsCfg.Cert.Read()
 	if err != nil {
 		return client, fmt.Errorf("read Cert: %w", err)
