@@ -15,6 +15,7 @@ This agent can:
 
     When the Traefik Hub feature is enabled, Traefik exposes some services meant for the Traefik Hub Agent on a dedicated entryPoint (on port `9900` by default).
     Given their sensitive nature, those services should not be publicly exposed.
+    Also this dedicated entryPoint, regardless of how it is created (default, or user-defined), should not be used by anything other than the Hub Agent.
 
 !!! important "Learn More About Traefik Hub"
 
@@ -69,9 +70,9 @@ Defines the entryPoint that exposes data for Traefik Hub Agent.
 
 !!! info
 
-    * If no entryPoint is configured, a `traefik-hub` entryPoint is created.
-    * If the entryPoint named `traefik-hub` is not configured, it is automatically created on port `9900`.
-    * In any other cases, the option value must match an existing entryPoint name.
+    * If no entryPoint is defined, a default `traefik-hub` entryPoint is created (on port `9900`).
+    * If defined, the value must match an existing entryPoint name.
+    * This dedicated Traefik Hub entryPoint should not be used by anything other than Traefik Hub.
 
 ```yaml tab="File (YAML)"
 entryPoints:
