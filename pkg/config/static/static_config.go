@@ -304,7 +304,7 @@ func (c *Configuration) initHubProvider() error {
 	}
 
 	if c.Hub.Insecure && c.Hub.TLS != nil {
-		return errors.New("TLS configuration defined and --hub.insecure activated; either set one or use the --hub.insecure flag for quick testing")
+		return errors.New("TLS configuration defined and --hub.insecure activated; either remove the TLS configuration or remove the --hub.insecure flag")
 	}
 
 	if c.Hub.Insecure {

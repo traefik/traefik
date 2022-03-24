@@ -46,7 +46,7 @@ This agent can:
     ```
 
     ```bash tab="CLI"
-    --experimental.hub \
+    --experimental.hub
     --hub.insecure=true
     ```
 
@@ -81,7 +81,7 @@ hub:
 ```
 
 ```bash tab="CLI"
---entrypoints.hub-ep.address=:8000 \
+--entrypoints.hub-ep.address=:8000
 --hub.entrypoint=hub-ep
 ```
 
@@ -112,8 +112,8 @@ hub:
 ```
 
 ```bash tab="CLI"
---hub.tls.ca=/path/to/ca.pem \
---hub.tls.cert=/path/to/cert.pem \
+--hub.tls.ca=/path/to/ca.pem
+--hub.tls.cert=/path/to/cert.pem
 --hub.tls.key=/path/to/key.pem
 ```
 
@@ -248,12 +248,12 @@ AwfmfGG0CBJRlLrWYtbBm+9SEhgs0/AfPxrHwLv5y6KEQLpPO+fwN4Z4
 
 _Optional (one of `insecure` or `tls` must be set), Default=false_
 
-Allows the Hub provider to run over an insecure connection for testing purposes.
+Allows an insecure connection between Traefik Proxy and the Traefik Hub Agent for testing purposes.
 
 !!! warning "Security Consideration"
     
     This option implies sensitive data can be exposed to potential malicious third-party programs.   
-    Using the [`tls`](#tls) configuration is **strongly** recommended for anything else than testing. 
+    Using the [`tls`](#tls) configuration is **strongly** recommended for anything other than testing. 
 
 ```yaml tab="File (YAML)"
 hub:
