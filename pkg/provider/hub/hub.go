@@ -3,8 +3,8 @@ package hub
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 
@@ -23,17 +23,17 @@ const DefaultEntryPointName = "traefik-hub"
 // Provider holds configurations of the provider.
 type Provider struct {
 	EntryPoint string `description:"Entrypoint that exposes data for Traefik Hub." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
-	Insecure   bool   `description:"Allows the Hub provider to run over an insecure connection for testing purposes." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
-	TLS        *TLS   `description:"TLS configuration for mTLS communication between Traefik and Hub Agent." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
+	TLS        *TLS   `description:"TLS configuration for mTLS communication between Traefik and Hub Agent." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 
 	server *http.Server
 }
 
 // TLS holds TLS configuration to use mTLS communication between Traefik and Hub Agent.
 type TLS struct {
-	CA   ttls.FileOrContent `description:"Certificate authority to use for securing communication with the Agent." json:"ca,omitempty" toml:"ca,omitempty" yaml:"ca,omitempty" loggable:"false"`
-	Cert ttls.FileOrContent `description:"Certificate to use for securing communication with the Agent." json:"cert,omitempty" toml:"cert,omitempty" yaml:"cert,omitempty" loggable:"false"`
-	Key  ttls.FileOrContent `description:"Key to use for securing communication with the Agent." json:"key,omitempty" toml:"key,omitempty" yaml:"key,omitempty" loggable:"false"`
+	Insecure bool               `description:"Allows the Hub provider to run over an insecure connection for testing purposes." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
+	CA       ttls.FileOrContent `description:"Certificate authority to use for securing communication with the Agent." json:"ca,omitempty" toml:"ca,omitempty" yaml:"ca,omitempty" loggable:"false"`
+	Cert     ttls.FileOrContent `description:"Certificate to use for securing communication with the Agent." json:"cert,omitempty" toml:"cert,omitempty" yaml:"cert,omitempty" loggable:"false"`
+	Key      ttls.FileOrContent `description:"Key to use for securing communication with the Agent." json:"key,omitempty" toml:"key,omitempty" yaml:"key,omitempty" loggable:"false"`
 }
 
 // SetDefaults sets the default values.
@@ -158,8 +158,7 @@ func emptyDynamicConfiguration() *dynamic.Configuration {
 
 func createAgentClient(tlsCfg *TLS) (http.Client, error) {
 	var client http.Client
-	if tlsCfg == nil {
-		// insecure TLS
+	if tlsCfg.Insecure {
 		client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,

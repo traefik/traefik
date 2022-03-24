@@ -87,14 +87,23 @@ hub:
 
 ### `tls`
 
-_Optional (one of `insecure` or `tls` must be set), Default=None_
+_Required, Default=None_
 
 This section allows configuring mutual TLS connection between Traefik Proxy and the Traefik Hub Agent.
-The certificate domain must be `proxy.traefik`.
+The key and the certificate are the credentials for Traefik Proxy as a TLS client.
+The certificate authority authenticates the Traefik Hub Agent certificate.
+
+!!! note "Certificate Domain"
+
+    The certificate must be valid for the `proxy.traefik` domain.
 
 !!! note "Certificates Definition"
 
     Certificates can be defined either by their content or their path.
+
+!!! note "Insecure Mode"
+
+    The `insecure` option is mutually exclusive with any other option.
 
 ```yaml tab="File (YAML)"
 hub:
@@ -119,7 +128,7 @@ hub:
 
 ### `tls.ca`
 
-Certificate authority to use for securing communication with the Agent.
+The certificate authority authenticates the Traefik Hub Agent certificate.
 
 ```yaml tab="File (YAML)"
 hub:
@@ -167,7 +176,11 @@ aUX2AiEAilZ+M5eX4RiMFc3nlm9qVs1LZhV3dZW/u80/mPQ/oaY=
 
 ### `tls.cert`
 
-Certificate to use for securing communication with the Agent.
+The TLS certificate for Traefik Proxy as a TLS client.
+
+!!! note "Certificate Domain"
+
+    The certificate must be valid for the `proxy.traefik` domain.
 
 ```yaml tab="File (YAML)"
 hub:
@@ -214,7 +227,7 @@ aUX2AiEAilZ+M5eX4RiMFc3nlm9qVs1LZhV3dZW/u80/mPQ/oaY=
 
 ### `tls.key`
 
-Key to use for securing communication with the Agent.
+The TLS key for Traefik Proxy as a TLS client.
 
 ```yaml tab="File (YAML)"
 hub:
@@ -244,16 +257,18 @@ AwfmfGG0CBJRlLrWYtbBm+9SEhgs0/AfPxrHwLv5y6KEQLpPO+fwN4Z4
 -----END PRIVATE KEY-----
 ```
 
-### `insecure`
+### `tls.insecure`
 
-_Optional (one of `insecure` or `tls` must be set), Default=false_
+_Optional, Default=false_
 
-Allows an insecure connection between Traefik Proxy and the Traefik Hub Agent for testing purposes.
+Enables an insecure TLS connection that uses default credentials, 
+and there is no peer authentication between Traefik Proxy and the Traefik Hub Agent.
+The `insecure` option is mutually exclusive with any other option.
 
 !!! warning "Security Consideration"
-    
-    This option implies sensitive data can be exposed to potential malicious third-party programs.   
-    Using the [`tls`](#tls) configuration is **strongly** recommended for anything other than testing. 
+
+    Do not use this setup in production.
+    This option implies sensitive data can be exposed to potential malicious third-party programs.
 
 ```yaml tab="File (YAML)"
 hub:

@@ -22,7 +22,7 @@ import (
 func TestHandleConfig(t *testing.T) {
 	cfgChan := make(chan dynamic.Message, 1)
 
-	client, err := createAgentClient(nil)
+	client, err := createAgentClient(&TLS{Insecure: true})
 	require.NoError(t, err)
 	h := newHandler("traefik-hub-ep", 42, cfgChan, nil, client)
 
@@ -57,7 +57,7 @@ func TestHandleConfig(t *testing.T) {
 
 func TestHandle_Config_MethodNotAllowed(t *testing.T) {
 	cfgChan := make(chan dynamic.Message, 1)
-	client, err := createAgentClient(nil)
+	client, err := createAgentClient(&TLS{Insecure: true})
 	require.NoError(t, err)
 	h := newHandler("traefik-hub-ep", 42, cfgChan, nil, client)
 
@@ -112,7 +112,7 @@ func TestHandle_DiscoverIP(t *testing.T) {
 	<-rdy
 
 	cfgChan := make(chan dynamic.Message, 1)
-	client, err := createAgentClient(nil)
+	client, err := createAgentClient(&TLS{Insecure: true})
 	require.NoError(t, err)
 	h := newHandler("traefik-hub-ep", 42, cfgChan, nil, client)
 
@@ -151,7 +151,7 @@ func TestHandle_DiscoverIP(t *testing.T) {
 
 func TestHandle_DiscoverIP_MethodNotAllowed(t *testing.T) {
 	cfgChan := make(chan dynamic.Message, 1)
-	client, err := createAgentClient(nil)
+	client, err := createAgentClient(&TLS{Insecure: true})
 	require.NoError(t, err)
 	h := newHandler("traefik-hub-ep", 42, cfgChan, nil, client)
 
