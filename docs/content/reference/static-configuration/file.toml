@@ -421,6 +421,11 @@
 
 [hub]
   entrypoint = "foobar"
+  [hub.tls]
+    insecure = true
+    ca = "foobar"
+    cert = "foobar"
+    key = "foobar"
 
 [experimental]
   kubernetesGateway = true

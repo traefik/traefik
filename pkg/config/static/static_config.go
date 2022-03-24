@@ -296,19 +296,23 @@ func (c *Configuration) initACMEProvider() {
 func (c *Configuration) initHubProvider() error {
 	// Hub provider is an experimental feature. Require the experimental flag to be enabled before continuing.
 	if c.Experimental == nil || !c.Experimental.Hub {
-		return errors.New("experimental flag not set")
+		return errors.New("experimental flag for Hub not set")
 	}
 
-	if c.Hub.TLS == nil && !c.Hub.Insecure {
-		return errors.New("no TLS configuration defined for the Hub provider; either set one or use the --hub.insecure flag for quick testing")
+	if c.Hub.TLS == nil {
+		return errors.New("no TLS configuration defined for Hub")
 	}
 
-	if c.Hub.Insecure && c.Hub.TLS != nil {
-		return errors.New("TLS configuration defined and --hub.insecure activated; either remove the TLS configuration or remove the --hub.insecure flag")
+	if c.Hub.TLS.Insecure && (c.Hub.TLS.CA != "" || c.Hub.TLS.Cert != "" || c.Hub.TLS.Key != "") {
+		return errors.New("mTLS configuration for Hub and insecure TLS for Hub are mutually exclusive")
 	}
 
-	if c.Hub.Insecure {
-		log.WithoutContext().Warn("The Hub provider is in `insecure` mode. Using the `hub.tls` configuration instead is recommended for production purposes.")
+	if !c.Hub.TLS.Insecure && (c.Hub.TLS.CA == "" || c.Hub.TLS.Cert == "" || c.Hub.TLS.Key == "") {
+		return errors.New("incomplete mTLS configuration for Hub")
+	}
+
+	if c.Hub.TLS.Insecure {
+		log.WithoutContext().Warn("Hub is in `insecure` mode. Do not run in production with this setup.")
 	}
 
 	// Creates the internal Hub entry point if needed.

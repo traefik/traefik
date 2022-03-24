@@ -184,7 +184,7 @@ Timeout defines how long to wait on an idle session before releasing the related
 Enable HTTP3. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_HUB`:  
-Allow the Traefik Hub provider usage. (Default: ```false```)
+Enable the Traefik Hub provider. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_KUBERNETESGATEWAY`:  
 Allow the Kubernetes gateway api provider usage. (Default: ```false```)
@@ -225,14 +225,14 @@ Traefik Hub configuration. (Default: ```false```)
 `TRAEFIK_HUB_ENTRYPOINT`:  
 Entrypoint that exposes data for Traefik Hub. (Default: ```traefik-hub```)
 
-`TRAEFIK_HUB_INSECURE`:  
-Allows the Hub provider to run over an insecure connection for testing purposes. (Default: ```false```)
-
 `TRAEFIK_HUB_TLS_CA`:  
 Certificate authority to use for securing communication with the Agent.
 
 `TRAEFIK_HUB_TLS_CERT`:  
 Certificate to use for securing communication with the Agent.
+
+`TRAEFIK_HUB_TLS_INSECURE`:  
+Allows the Hub provider to run over an insecure connection for testing purposes. (Default: ```false```)
 
 `TRAEFIK_HUB_TLS_KEY`:  
 Key to use for securing communication with the Agent.
