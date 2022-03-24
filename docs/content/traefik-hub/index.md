@@ -6,15 +6,15 @@ Once the Traefik Hub Experimental feature is enabled in Traefik,
 Traefik and its local agent communicate together.
 This agent can:
 
-* get the Traefik metrics to display them in the Traefik Hub UI 
-* secure the Traefik routers 
-* provide ACME certificates to Traefik 
+* get the Traefik metrics to display them in the Traefik Hub UI
+* secure the Traefik routers
+* provide ACME certificates to Traefik
 * transfer requests from the SaaS Platform to Traefik (and then avoid the users to expose directly their infrastructure on the internet)
 
 !!! warning "Traefik Hub EntryPoint"
 
     When the Traefik Hub feature is enabled, Traefik exposes some services meant for the Traefik Hub Agent on a dedicated entryPoint (on port `9900` by default).
-    Given their sensitive nature, those services should not be publicly exposed. 
+    Given their sensitive nature, those services should not be publicly exposed.
 
 !!! important "Learn More About Traefik Hub"
 
@@ -60,7 +60,7 @@ Defines the entryPoint that exposes data for Traefik Hub Agent.
 
 !!! info
 
-    * If no entryPoint is configured, a `traefik-hub` entryPoint is created.  
+    * If no entryPoint is configured, a `traefik-hub` entryPoint is created.
     * If the entryPoint named `traefik-hub` is not configured, it is automatically created on port `9900`.
     * In any other cases, the option value must match an existing entryPoint name.
 
@@ -173,7 +173,6 @@ aUX2AiEAilZ+M5eX4RiMFc3nlm9qVs1LZhV3dZW/u80/mPQ/oaY=
 -----END CERTIFICATE-----
 ```
 
-
 ### `tls.cert`
 
 The TLS certificate for Traefik Proxy as a TLS client.
@@ -261,7 +260,7 @@ AwfmfGG0CBJRlLrWYtbBm+9SEhgs0/AfPxrHwLv5y6KEQLpPO+fwN4Z4
 
 _Optional, Default=false_
 
-Enables an insecure TLS connection that uses default credentials, 
+Enables an insecure TLS connection that uses default credentials,
 and there is no peer authentication between Traefik Proxy and the Traefik Hub Agent.
 The `insecure` option is mutually exclusive with any other option.
 
