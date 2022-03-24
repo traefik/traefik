@@ -57,8 +57,8 @@ func (h *handler) handleConfig(rw http.ResponseWriter, req *http.Request) {
 
 	payload := &configRequest{Configuration: emptyDynamicConfiguration()}
 	if err := json.NewDecoder(req.Body).Decode(payload); err != nil {
-		err = fmt.Errorf("decode config request: %w", err)
-		log.WithoutContext().Errorf("Handle config: %v", err)
+		err = fmt.Errorf("decodig config request: %w", err)
+		log.WithoutContext().Errorf("Handling config: %v", err)
 		http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -87,15 +87,15 @@ func (h *handler) handleDiscoverIP(rw http.ResponseWriter, req *http.Request) {
 	nonce := req.URL.Query().Get("nonce")
 
 	if err := h.doDiscoveryReq(req.Context(), xff, port, nonce); err != nil {
-		err = fmt.Errorf("do discovery request: %w", err)
-		log.WithoutContext().Errorf("Discover ip: %v", err)
+		err = fmt.Errorf("doing discovery request: %w", err)
+		log.WithoutContext().Errorf("Handling IP discovery: %v", err)
 		http.Error(rw, http.StatusText(http.StatusBadGateway), http.StatusBadGateway)
 		return
 	}
 
 	if err := json.NewEncoder(rw).Encode(xff); err != nil {
-		err = fmt.Errorf("encode discover ip response: %w", err)
-		log.WithoutContext().Errorf("Discover ip: %v", err)
+		err = fmt.Errorf("encoding discover ip response: %w", err)
+		log.WithoutContext().Errorf("Handling IP discovery: %v", err)
 		http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -104,7 +104,7 @@ func (h *handler) handleDiscoverIP(rw http.ResponseWriter, req *http.Request) {
 func (h *handler) doDiscoveryReq(ctx context.Context, ip, port, nonce string) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("https://%s:%s", ip, port), http.NoBody)
 	if err != nil {
-		return fmt.Errorf("make request: %w", err)
+		return fmt.Errorf("creating request: %w", err)
 	}
 
 	q := make(url.Values)
@@ -114,7 +114,7 @@ func (h *handler) doDiscoveryReq(ctx context.Context, ip, port, nonce string) er
 
 	resp, err := h.client.Do(req)
 	if err != nil {
-		return fmt.Errorf("do request: %w", err)
+		return fmt.Errorf("doing request: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
@@ -135,8 +135,8 @@ func (h *handler) handleState(rw http.ResponseWriter, req *http.Request) {
 		LastConfigUnixNano: atomic.LoadInt64(&h.lastCfgUnixNano),
 	}
 	if err := json.NewEncoder(rw).Encode(resp); err != nil {
-		err = fmt.Errorf("encode last config received response: %w", err)
-		log.WithoutContext().Errorf("Last config received: %v", err)
+		err = fmt.Errorf("encoding last config received response: %w", err)
+		log.WithoutContext().Errorf("Handling state: %v", err)
 		http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
