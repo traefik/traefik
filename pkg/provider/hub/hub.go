@@ -111,6 +111,10 @@ func patchDynamicConfiguration(cfg *dynamic.Configuration, ep string, port int, 
 		},
 	}
 
+	if tlsCfg == nil {
+		return
+	}
+
 	if tlsCfg.Insecure {
 		cfg.TLS.Options["traefik-hub"] = ttls.Options{
 			MinVersion: "VersionTLS13",
