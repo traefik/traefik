@@ -36,6 +36,9 @@ This agent can:
     hub:
       tls:
         insecure: true
+
+    metrics:
+        prometheus: {}
     ```
 
     ```toml tab="File (TOML)"
@@ -45,11 +48,15 @@ This agent can:
     [hub]
       [hub.tls]
         insecure = true
+
+    [metrics]
+      [metrics.prometheus]
     ```
 
     ```bash tab="CLI"
     --experimental.hub
     --hub.tls.insecure=true
+    --metrics.prometheus=true
     ```
 
 ## Configuration
