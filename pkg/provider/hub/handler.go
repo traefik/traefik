@@ -63,7 +63,6 @@ func (h *handler) handleConfig(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-
 	cfg := payload.Configuration
 	patchDynamicConfiguration(cfg, h.entryPoint, h.port, h.tlsCfg)
 

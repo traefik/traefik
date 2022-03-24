@@ -201,10 +201,10 @@ type Providers struct {
 // It also takes care of maintaining backwards compatibility.
 func (c *Configuration) SetEffectiveConfiguration() {
 	// Creates the default entry point if needed
-	if len(c.EntryPoints) == 0 {
+	if len(c.EntryPoints) == 0 || (c.Hub != nil && len(c.EntryPoints) == 1 && c.EntryPoints[c.Hub.EntryPoint] != nil) {
 		ep := &EntryPoint{Address: ":80"}
 		ep.SetDefaults()
-		c.EntryPoints = EntryPoints{"http": ep}
+		c.EntryPoints["http"] = ep
 	}
 
 	// Creates the internal traefik entry point if needed
