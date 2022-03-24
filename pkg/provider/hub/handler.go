@@ -57,13 +57,12 @@ func (h *handler) handleConfig(rw http.ResponseWriter, req *http.Request) {
 
 	payload := &configRequest{Configuration: emptyDynamicConfiguration()}
 	if err := json.NewDecoder(req.Body).Decode(payload); err != nil {
-		err = fmt.Errorf("decodig config request: %w", err)
+		err = fmt.Errorf("decoding config request: %w", err)
 		log.WithoutContext().Errorf("Handling config: %v", err)
 		http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
-	atomic.StoreInt64(&h.lastCfgUnixNano, payload.UnixNano)
 
 	cfg := payload.Configuration
 	patchDynamicConfiguration(cfg, h.entryPoint, h.port, h.tlsCfg)
@@ -72,6 +71,7 @@ func (h *handler) handleConfig(rw http.ResponseWriter, req *http.Request) {
 	// as the agent will re-apply the same configuration.
 	select {
 	case h.cfgChan <- dynamic.Message{ProviderName: "hub", Configuration: cfg}:
+		atomic.StoreInt64(&h.lastCfgUnixNano, payload.UnixNano)
 	default:
 	}
 }
