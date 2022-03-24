@@ -22,7 +22,7 @@ const DefaultEntryPointName = "traefik-hub"
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	EntryPoint string `description:"Entrypoint that exposes data for Traefik Hub." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
+	EntryPoint string `description:"Entrypoint that exposes data for Traefik Hub. It should be a dedicated one, and not used by any router." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
 	TLS        *TLS   `description:"TLS configuration for mTLS communication between Traefik and Hub Agent." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 
 	server *http.Server
@@ -109,7 +109,7 @@ func patchDynamicConfiguration(cfg *dynamic.Configuration, ep string, port int, 
 		},
 	}
 
-	if tlsCfg == nil || tlsCfg.Insecure {
+	if tlsCfg.Insecure {
 		cfg.TLS.Options["traefik-hub"] = ttls.Options{
 			MinVersion: "VersionTLS13",
 		}
