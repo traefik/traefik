@@ -226,16 +226,16 @@ Traefik Hub configuration. (Default: ```false```)
 Entrypoint that exposes data for Traefik Hub. It should be a dedicated one, and not used by any router. (Default: ```traefik-hub```)
 
 `--hub.tls.ca`:  
-Certificate authority to use for securing communication with the Agent.
+The certificate authority authenticates the Traefik Hub Agent certificate.
 
 `--hub.tls.cert`:  
-Certificate to use for securing communication with the Agent.
+The TLS certificate for Traefik Proxy as a TLS client.
 
 `--hub.tls.insecure`:  
-Allows the Hub provider to run over an insecure connection for testing purposes. (Default: ```false```)
+Enables an insecure TLS connection that uses default credentials, and which has no peer authentication between Traefik Proxy and the Traefik Hub Agent. (Default: ```false```)
 
 `--hub.tls.key`:  
-Key to use for securing communication with the Agent.
+The TLS key for Traefik Proxy as a TLS client.
 
 `--log`:  
 Traefik log settings. (Default: ```false```)
