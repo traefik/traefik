@@ -22,6 +22,7 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/donovanhide/eventsource v0.0.0-20170630084216-b8f31a59085e // indirect
 	github.com/fatih/structs v1.1.0
+	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2
 	github.com/go-acme/lego/v4 v4.6.0
 	github.com/go-check/check v0.0.0-00010101000000-000000000000
@@ -40,12 +41,13 @@ require (
 	github.com/instana/go-sensor v1.38.3
 	github.com/klauspost/compress v1.13.0
 	github.com/kvtools/valkeyrie v0.4.0
-	github.com/lucas-clemente/quic-go v0.25.0
+	github.com/lucas-clemente/quic-go v0.26.0
 	github.com/mailgun/ttlmap v0.0.0-20170619185759-c1c17f74874f
 	github.com/miekg/dns v1.1.45
 	github.com/mitchellh/copystructure v1.0.0
 	github.com/mitchellh/hashstructure v1.0.0
 	github.com/mitchellh/mapstructure v1.4.2
+	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/openzipkin-contrib/zipkin-go-opentracing v0.4.5
 	github.com/openzipkin/zipkin-go v0.2.2
@@ -71,11 +73,12 @@ require (
 	github.com/vulcand/predicate v1.1.0
 	go.elastic.co/apm v1.13.1
 	go.elastic.co/apm/module/apmot v1.13.1
-	golang.org/x/mod v0.4.2
-	golang.org/x/net v0.0.0-20211209124913-491a49abca63
-	golang.org/x/sys v0.0.0-20210817190340-bfb29a6856f2 // indirect
+	golang.org/x/crypto v0.0.0-20220321153916-2c7772ba3064 // indirect
+	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3
+	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
+	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
-	golang.org/x/tools v0.1.6-0.20210726203631-07bc1bf47fb2
+	golang.org/x/tools v0.1.10
 	google.golang.org/grpc v1.38.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.19.0
 	gopkg.in/fsnotify.v1 v1.4.7
