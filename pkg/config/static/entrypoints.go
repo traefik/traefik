@@ -61,7 +61,7 @@ type HTTPConfig struct {
 
 // HTTP3Config is the HTTP3 configuration of an entry point.
 type HTTP3Config struct {
-	AdvertisedPort int32 `description:"UDP port to advertise, on which HTTP/3 is available." json:"advertisedPort,omitempty" toml:"advertisedPort,omitempty" yaml:"advertisedPort,omitempty" export:"true"`
+	AdvertisedPort int `description:"UDP port to advertise, on which HTTP/3 is available." json:"advertisedPort,omitempty" toml:"advertisedPort,omitempty" yaml:"advertisedPort,omitempty" export:"true"`
 }
 
 // Redirections is a set of redirection for an entry point.
