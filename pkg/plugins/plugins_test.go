@@ -15,6 +15,11 @@ func Test_stringToSliceHookFunc(t *testing.T) {
 		expected []string
 	}{
 		{
+			desc:     "without separator",
+			data:     "abc",
+			expected: []string{"abc"},
+		},
+		{
 			desc:     "with the file separator",
 			data:     "a║b║c",
 			expected: []string{"a", "b", "c"},

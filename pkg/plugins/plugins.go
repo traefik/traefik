@@ -188,9 +188,5 @@ func stringToSliceHookFunc(f reflect.Kind, t reflect.Kind, data interface{}) (in
 		return values, nil
 	}
 
-	if strings.Contains(raw, ",") {
-		return strings.Split(raw, ","), nil
-	}
-
-	return nil, nil
+	return strings.Split(raw, ","), nil
 }
