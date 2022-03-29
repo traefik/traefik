@@ -93,7 +93,7 @@ func newProvider(builder providerBuilder, config map[string]interface{}, provide
 	}
 
 	cfg := &mapstructure.DecoderConfig{
-		DecodeHook:       mapstructure.StringToSliceHookFunc(","),
+		DecodeHook:       stringToSliceHookFunc,
 		WeaklyTypedInput: true,
 		Result:           vConfig.Interface(),
 	}
