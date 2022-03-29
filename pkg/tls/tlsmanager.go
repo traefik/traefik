@@ -143,7 +143,18 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 		if isACMETLS(clientHello) {
 			certificate := acmeTLSStore.GetBestCertificate(clientHello)
 			if certificate == nil {
-				return nil, fmt.Errorf("no certificate for TLSALPN challenge: %s", domainToCheck)
+				log.WithoutContext().Debugf("TLS: no certificate for TLSALPN challenge: %s", domainToCheck)
+				// We want the user to eventually get the (alertUnrecognizedName) "unrecognized
+				// name" error.
+				// Unfortunately, if we returned an error here, since we can't use
+				// the unexported error (errNoCertificates) that our caller (config.getCertificate
+				// in crypto/tls) uses as a sentinel, it would report an (alertInternalError)
+				// "internal error" instead of an alertUnrecognizedName.
+				// Which is why we return no error, and we let the caller detect that there's
+				// actually no certificate, and fall back into the flow that will report
+				// the desired error.
+				// https://cs.opensource.google/go/go/+/dev.boringcrypto.go1.17:src/crypto/tls/common.go;l=1058
+				return nil, nil
 			}
 
 			return certificate, nil
@@ -155,7 +166,9 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 		}
 
 		if sniStrict {
-			return nil, fmt.Errorf("strict SNI enabled - No certificate found for domain: %q, closing connection", domainToCheck)
+			log.WithoutContext().Debugf("TLS: strict SNI enabled - No certificate found for domain: %q, closing connection", domainToCheck)
+			// Same comment as above, as in the isACMETLS case.
+			return nil, nil
 		}
 
 		log.WithoutContext().Debugf("Serving default certificate for request: %q", domainToCheck)

@@ -1,3 +1,10 @@
+## [v2.6.3](https://github.com/traefik/traefik/tree/v2.6.3) (2022-03-28)
+[All Commits](https://github.com/traefik/traefik/compare/v2.6.2...v2.6.3)
+
+**Bug fixes:**
+- **[plugins]** Fix slice parsing for plugins ([#8886](https://github.com/traefik/traefik/pull/8886) by [ldez](https://github.com/ldez))
+- **[tls]** Return TLS unrecognized_name error when no certificate is available ([#8893](https://github.com/traefik/traefik/pull/8893) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.7.0-rc1](https://github.com/traefik/traefik/tree/v2.7.0-rc1) (2022-03-24)
 [All Commits](https://github.com/traefik/traefik/compare/v2.6.0-rc1...v2.7.0-rc1)
 
