@@ -1,3 +1,9 @@
+## [v2.7.0-rc2](https://github.com/traefik/traefik/tree/v2.7.0-rc2) (2022-03-29)
+[All Commits](https://github.com/traefik/traefik/compare/v2.7.0-rc1...v2.7.0-rc2)
+
+**Documentation:**
+- Fix hub tls documentation ([#8883](https://github.com/traefik/traefik/pull/8883) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
 ## [v2.6.3](https://github.com/traefik/traefik/tree/v2.6.3) (2022-03-28)
 [All Commits](https://github.com/traefik/traefik/compare/v2.6.2...v2.6.3)
 
