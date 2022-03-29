@@ -60,7 +60,7 @@ func (c CertificateStore) GetAllDomains() []string {
 
 	// Get dynamic certificates
 	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
-		for domain := range c.DynamicCerts.Get().(map[string]*tls.Certificate) {
+		for domain := range c.DynamicCerts.Get().(map[string][]*tls.Certificate) {
 			allDomains = append(allDomains, domain)
 		}
 	}
@@ -83,32 +83,62 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 		domainToCheck = strings.TrimSpace(host)
 	}
 
-	if cert, ok := c.CertCache.Get(domainToCheck); ok {
-		return cert.(*tls.Certificate)
+	if certs, ok := c.CertCache.Get(domainToCheck); ok {
+		return selectCert(clientHello, certs.(map[string][]*tls.Certificate))
 	}
 
-	matchedCerts := map[string]*tls.Certificate{}
+	matchedCerts := map[string][]*tls.Certificate{}
 	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
-		for domains, cert := range c.DynamicCerts.Get().(map[string]*tls.Certificate) {
+		for domains, certs := range c.DynamicCerts.Get().(map[string][]*tls.Certificate) {
 			for _, certDomain := range strings.Split(domains, ",") {
 				if MatchDomain(domainToCheck, certDomain) {
-					matchedCerts[certDomain] = cert
+					if _, alreadyExists := matchedCerts[certDomain]; !alreadyExists {
+						matchedCerts[certDomain] = make([]*tls.Certificate, 0, len(certs))
+					}
+
+					matchedCerts[certDomain] = append(matchedCerts[certDomain], certs...)
 				}
 			}
 		}
 	}
 
 	if len(matchedCerts) > 0 {
-		// sort map by keys
-		keys := make([]string, 0, len(matchedCerts))
-		for k := range matchedCerts {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
+		c.CertCache.SetDefault(domainToCheck, matchedCerts)
+		return selectCert(clientHello, matchedCerts)
+	}
 
-		// cache best match
-		c.CertCache.SetDefault(domainToCheck, matchedCerts[keys[len(keys)-1]])
-		return matchedCerts[keys[len(keys)-1]]
+	return nil
+}
+
+func selectCert(clientHello *tls.ClientHelloInfo, matchedCerts map[string][]*tls.Certificate) *tls.Certificate {
+	// sort map by keys
+	keys := make([]string, 0, len(matchedCerts))
+	for k := range matchedCerts {
+		keys = append(keys, k)
+	}
+
+	sort.Sort(sort.Reverse(sort.StringSlice(keys)))
+
+	for _, k := range keys {
+		sort.Slice(matchedCerts[k], func(i, j int) bool {
+			// if one of the two considered certificates is expired, do not consider PublicKeyAlgorithm are sort accordingly
+			iExpired := time.Now().After(matchedCerts[k][i].Leaf.NotAfter)
+			jExpired := time.Now().After(matchedCerts[k][j].Leaf.NotAfter)
+			if iExpired && !jExpired {
+				return false
+			}
+			if jExpired && !iExpired {
+				return true
+			}
+
+			return matchedCerts[k][i].Leaf.PublicKeyAlgorithm > matchedCerts[k][j].Leaf.PublicKeyAlgorithm
+		})
+
+		for _, cert := range matchedCerts[k] {
+			if clientHello.SupportsCertificate(cert) == nil {
+				return cert
+			}
+		}
 	}
 
 	return nil
