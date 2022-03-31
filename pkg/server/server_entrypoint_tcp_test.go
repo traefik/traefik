@@ -236,22 +236,24 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 }
 
 func TestPostgresStartTLS(t *testing.T) {
-	epConfig := &static.EntryPointsTransport{}
-	epConfig.SetDefaults()
-	epConfig.RespondingTimeouts.ReadTimeout = ptypes.Duration(20 * time.Second)
+	epTransport := &static.EntryPointsTransport{}
+	epTransport.SetDefaults()
+	epTransport.RespondingTimeouts.ReadTimeout = ptypes.Duration(20 * time.Second)
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
-		Address:          ":0",
-		Transport:        epConfig,
-		ForwardedHeaders: &static.ForwardedHeaders{},
-	})
+	epConfig := &static.EntryPoint{}
+	epConfig.SetDefaults()
+	epConfig.Address = ":0"
+	epConfig.Transport = epTransport
+	epConfig.ForwardedHeaders = &static.ForwardedHeaders{}
+
+	entryPoint, err := NewTCPEntryPoint(context.Background(), epConfig, nil)
 	require.NoError(t, err)
 
-	router := &tcp.Router{}
+	router := &tcprouter.Router{}
 
 	router.PreRoutingHook("postgres", tcp.StartTLSServerFuncs["postgres"])
 
-	router.HTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	router.SetHTTPHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 
