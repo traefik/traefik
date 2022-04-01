@@ -172,14 +172,14 @@ This behavior cannot be configured.
 ### `CheckPeriod`
 
 The interval used to evaluate `expression` and decide if the state of the circuit breaker must change.
-By default, `CheckPeriod` is 100ms. This value cannot be configured.
+By default, `CheckPeriod` is 100ms.
 
 ### `FallbackDuration`
 
-By default, `FallbackDuration` is 10 seconds. This value cannot be configured.
+By default, `FallbackDuration` is 10 seconds.
 
-### `RecoveringDuration`
+### `RecoveryDuration`
 
 The duration of the recovering mode (recovering state).
 
-By default, `RecoveringDuration` is 10 seconds. This value cannot be configured.
+By default, `RecoveryDuration` is 10 seconds.

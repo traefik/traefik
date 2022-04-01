@@ -3,6 +3,7 @@ package circuitbreaker
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -27,9 +28,25 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 
 	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName))
 	logger.Debug("Creating middleware")
-	logger.Debug("Setting up with expression: %s", expression)
+	logger.Debugf("Setting up with expression: %s", expression)
 
-	oxyCircuitBreaker, err := cbreaker.New(next, expression, createCircuitBreakerOptions(expression))
+	cbOpts := []cbreaker.CircuitBreakerOption{
+		createCircuitBreakerOptionExpression(expression),
+	}
+
+	if confCircuitBreaker.CheckPeriod > 0 {
+		cbOpts = append(cbOpts, createCircuitBreakerOptionCheckPeriod(time.Duration(confCircuitBreaker.CheckPeriod)))
+	}
+
+	if confCircuitBreaker.FallbackDuration > 0 {
+		cbOpts = append(cbOpts, createCircuitBreakerOptionFallbackDuration(time.Duration(confCircuitBreaker.FallbackDuration)))
+	}
+
+	if confCircuitBreaker.RecoveryDuration > 0 {
+		cbOpts = append(cbOpts, createCircuitBreakerOptionRecoveryDuration(time.Duration(confCircuitBreaker.RecoveryDuration)))
+	}
+
+	oxyCircuitBreaker, err := cbreaker.New(next, expression, cbOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +57,7 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 }
 
 // NewCircuitBreakerOptions returns a new CircuitBreakerOption.
-func createCircuitBreakerOptions(expression string) cbreaker.CircuitBreakerOption {
+func createCircuitBreakerOptionExpression(expression string) cbreaker.CircuitBreakerOption {
 	return cbreaker.Fallback(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		tracing.SetErrorWithEvent(req, "blocked by circuit-breaker (%q)", expression)
 		rw.WriteHeader(http.StatusServiceUnavailable)
@@ -49,6 +66,18 @@ func createCircuitBreakerOptions(expression string) cbreaker.CircuitBreakerOptio
 			log.FromContext(req.Context()).Error(err)
 		}
 	}))
+}
+
+func createCircuitBreakerOptionCheckPeriod(duration time.Duration) cbreaker.CircuitBreakerOption {
+	return cbreaker.CheckPeriod(duration)
+}
+
+func createCircuitBreakerOptionFallbackDuration(duration time.Duration) cbreaker.CircuitBreakerOption {
+	return cbreaker.FallbackDuration(duration)
+}
+
+func createCircuitBreakerOptionRecoveryDuration(duration time.Duration) cbreaker.CircuitBreakerOption {
+	return cbreaker.RecoveryDuration(duration)
 }
 
 func (c *circuitBreaker) GetTracingInformation() (string, ext.SpanKindEnum) {
