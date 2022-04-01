@@ -28,7 +28,7 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 
 	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName))
 	logger.Debug("Creating middleware")
-	logger.Debug("Setting up with expression: %s", expression)
+	logger.Debugf("Setting up with expression: %s", expression)
 
 	cbOpts := []cbreaker.CircuitBreakerOption{
 		createCircuitBreakerOptionExpression(expression),
