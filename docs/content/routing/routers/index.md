@@ -827,8 +827,9 @@ The table below lists all the available matchers:
 | Rule                                                                      | Description                                                                                               |
 |---------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
 | ```HostSNI(`domain-1`, ...)```                                            | Check if the Server Name Indication corresponds to the given `domains`.                                   |
-| ```HostSNIRegexp(`example.com`, `{subdomain:[a-z]+}.example.com`, ...)``` | Check if the Server Name Indication matches the given regular expressions. See "Regexp Syntax" below. |
+| ```HostSNIRegexp(`example.com`, `{subdomain:[a-z]+}.example.com`, ...)``` | Check if the Server Name Indication matches the given regular expressions. See "Regexp Syntax" below.     |
 | ```ClientIP(`10.0.0.0/16`, `::1`)```                                      | Check if the request client IP is one of the given IP/CIDR. It accepts IPv4, IPv6 and CIDR formats.       |
+| ```ALPN(`mqtt`, `mosquitto`)```                                           | Check if the Application Level protocol negotiation corresponds to one of the given `protos`.             |
 
 !!! important "Non-ASCII Domain Names"
 
