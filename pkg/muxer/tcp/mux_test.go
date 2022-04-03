@@ -471,7 +471,7 @@ func Test_addTCPRoute(t *testing.T) {
 				remoteAddr: fakeAddr{addr: addr},
 			}
 
-			connData, err := NewConnData(test.serverName, conn)
+			connData, err := NewConnData(test.serverName, conn, make([]string, 0))
 			require.NoError(t, err)
 
 			matchingHandler := router.Match(connData)
