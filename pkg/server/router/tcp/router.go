@@ -86,7 +86,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	// block forever on clientHelloServerName, which is why we want to detect and
 	// handle that case first and foremost.
 	if r.muxerTCP.HasRoutes() && !r.muxerTCPTLS.HasRoutes() && !r.muxerHTTPS.HasRoutes() {
-		connData, err := tcpmuxer.NewConnData("", conn)
+		connData, err := tcpmuxer.NewConnData("", conn, make([]string, 0))
 		if err != nil {
 			log.WithoutContext().Errorf("Error while reading TCP connection data: %v", err)
 			conn.Close()
@@ -108,7 +108,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 
 	// FIXME -- Check if ProxyProtocol changes the first bytes of the request
 	br := bufio.NewReader(conn)
-	serverName, tls, peeked, err := clientHelloServerName(br)
+	serverName, protos, tls, peeked, err := clientHelloInfo(br)
 	if err != nil {
 		conn.Close()
 		return
@@ -125,7 +125,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		log.WithoutContext().Errorf("Error while setting write deadline: %v", err)
 	}
 
-	connData, err := tcpmuxer.NewConnData(serverName, conn)
+	connData, err := tcpmuxer.NewConnData(serverName, conn, protos)
 	if err != nil {
 		log.WithoutContext().Errorf("Error while reading TCP connection data: %v", err)
 		conn.Close()
@@ -300,10 +300,10 @@ func (c *Conn) Read(p []byte) (n int, err error) {
 	return c.WriteCloser.Read(p)
 }
 
-// clientHelloServerName returns the SNI server name inside the TLS ClientHello,
-// without consuming any bytes from br.
-// On any error, the empty string is returned.
-func clientHelloServerName(br *bufio.Reader) (string, bool, string, error) {
+// clientHelloInfo returns the SNI server name and ALPN protocol list
+// inside the TLS ClientHello, without consuming any bytes from br.
+// On any error, the empty string and slice is returned.
+func clientHelloInfo(br *bufio.Reader) (string, []string, bool, string, error) {
 	hdr, err := br.Peek(1)
 	if err != nil {
 		var opErr *net.OpError
@@ -311,7 +311,7 @@ func clientHelloServerName(br *bufio.Reader) (string, bool, string, error) {
 			log.WithoutContext().Errorf("Error while Peeking first byte: %s", err)
 		}
 
-		return "", false, "", err
+		return "", make([]string, 0), false, "", err
 	}
 
 	// No valid TLS record has a type of 0x80, however SSLv2 handshakes
@@ -323,16 +323,16 @@ func clientHelloServerName(br *bufio.Reader) (string, bool, string, error) {
 	if hdr[0] != recordTypeHandshake {
 		if hdr[0] == recordTypeSSLv2 {
 			// we consider SSLv2 as TLS and it will be refused by real TLS handshake.
-			return "", true, getPeeked(br), nil
+			return "", make([]string, 0), true, getPeeked(br), nil
 		}
-		return "", false, getPeeked(br), nil // Not TLS.
+		return "", make([]string, 0), false, getPeeked(br), nil // Not TLS.
 	}
 
 	const recordHeaderLen = 5
 	hdr, err = br.Peek(recordHeaderLen)
 	if err != nil {
 		log.Errorf("Error while Peeking hello: %s", err)
-		return "", false, getPeeked(br), nil
+		return "", make([]string, 0), false, getPeeked(br), nil
 	}
 
 	recLen := int(hdr[3])<<8 | int(hdr[4]) // ignoring version in hdr[1:3]
@@ -344,19 +344,21 @@ func clientHelloServerName(br *bufio.Reader) (string, bool, string, error) {
 	helloBytes, err := br.Peek(recordHeaderLen + recLen)
 	if err != nil {
 		log.Errorf("Error while Hello: %s", err)
-		return "", true, getPeeked(br), nil
+		return "", make([]string, 0), true, getPeeked(br), nil
 	}
 
 	sni := ""
-	server := tls.Server(sniSniffConn{r: bytes.NewReader(helloBytes)}, &tls.Config{
+	protos := make([]string, 0)
+	server := tls.Server(helloSniffConn{r: bytes.NewReader(helloBytes)}, &tls.Config{
 		GetConfigForClient: func(hello *tls.ClientHelloInfo) (*tls.Config, error) {
 			sni = hello.ServerName
+			protos = hello.SupportedProtos
 			return nil, nil
 		},
 	})
 	_ = server.Handshake()
 
-	return sni, true, getPeeked(br), nil
+	return sni, protos, true, getPeeked(br), nil
 }
 
 func getPeeked(br *bufio.Reader) string {
@@ -368,15 +370,15 @@ func getPeeked(br *bufio.Reader) string {
 	return string(peeked)
 }
 
-// sniSniffConn is a net.Conn that reads from r, fails on Writes,
+// helloSniffConn is a net.Conn that reads from r, fails on Writes,
 // and crashes otherwise.
-type sniSniffConn struct {
+type helloSniffConn struct {
 	r        io.Reader
 	net.Conn // nil; crash on any unexpected use
 }
 
 // Read reads from the underlying reader.
-func (c sniSniffConn) Read(p []byte) (int, error) { return c.r.Read(p) }
+func (c helloSniffConn) Read(p []byte) (int, error) { return c.r.Read(p) }
 
 // Write crashes all the time.
-func (sniSniffConn) Write(p []byte) (int, error) { return 0, io.EOF }
+func (helloSniffConn) Write(p []byte) (int, error) { return 0, io.EOF }
