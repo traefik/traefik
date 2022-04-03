@@ -58,6 +58,7 @@ func Test_addTCPRoute(t *testing.T) {
 		rule       string
 		serverName string
 		remoteAddr string
+		protos     []string
 		routeErr   bool
 		matchErr   bool
 	}{
@@ -436,6 +437,54 @@ func Test_addTCPRoute(t *testing.T) {
 			serverName: "bar",
 			remoteAddr: "10.0.0.1:80",
 		},
+		{
+			desc:   "Valid ALPN rule matching single protocol",
+			rule:   "ALPN(`foo`)",
+			protos: []string{"foo"},
+		},
+		{
+			desc:     "Valid ALPN rule not matching single protocol",
+			rule:     "ALPN(`foo`)",
+			protos:   []string{"bar"},
+			matchErr: true,
+		},
+		{
+			desc:   "Valid alternative case ALPN rule matching single protocol without another being supported",
+			rule:   "ALPN(`foo`) && !alpn(`h2`)",
+			protos: []string{"foo", "bar"},
+		},
+		{
+			desc:     "Valid alternative case ALPN rule not matching single protocol because of another being supported",
+			rule:     "ALPN(`foo`) && !alpn(`h2`)",
+			protos:   []string{"foo", "h2", "bar"},
+			matchErr: true,
+		},
+		{
+			desc:       "Valid complex alternative case ALPN and HostSNI rule",
+			rule:       "ALPN(`foo`) && (!alpn(`h2`) || hostsni(`foo`))",
+			protos:     []string{"foo", "bar"},
+			serverName: "foo",
+		},
+		{
+			desc:       "Valid complex alternative case ALPN and HostSNI rule not matching by SNI",
+			rule:       "ALPN(`foo`) && (!alpn(`h2`) || hostsni(`foo`))",
+			protos:     []string{"foo", "bar", "h2"},
+			serverName: "bar",
+			matchErr:   true,
+		},
+		{
+			desc:       "Valid complex alternative case ALPN and HostSNI rule matching by ALPN",
+			rule:       "ALPN(`foo`) && (!alpn(`h2`) || hostsni(`foo`))",
+			protos:     []string{"foo", "bar"},
+			serverName: "bar",
+		},
+		{
+			desc:       "Valid complex alternative case ALPN and HostSNI rule not matching by protos",
+			rule:       "ALPN(`foo`) && (!alpn(`h2`) || hostsni(`foo`))",
+			protos:     []string{"h2", "bar"},
+			serverName: "bar",
+			matchErr:   true,
+		},
 	}
 
 	for _, test := range testCases {
@@ -471,7 +520,7 @@ func Test_addTCPRoute(t *testing.T) {
 				remoteAddr: fakeAddr{addr: addr},
 			}
 
-			connData, err := NewConnData(test.serverName, conn, make([]string, 0))
+			connData, err := NewConnData(test.serverName, conn, test.protos)
 			require.NoError(t, err)
 
 			matchingHandler, _ := router.Match(connData)
