@@ -468,7 +468,7 @@ func braceIndices(s string) ([]int, error) {
 func alpn(tree *matchersTree, protos ...string) error {
 	tree.matcher = func(meta ConnData) bool {
 		for _, proto := range meta.alpnProtos {
-		    for _, filter := range protos {
+			for _, filter := range protos {
 				if filter == "*" {
 					return true
 				}
