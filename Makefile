@@ -1,5 +1,3 @@
-.PHONY: all docs docs-serve
-
 SRCS = $(shell git ls-files '*.go' | grep -v '^vendor/')
 
 TAG_NAME := $(shell git tag -l --contains HEAD)
@@ -38,25 +36,34 @@ IN_DOCKER ?= true
 
 PLATFORM_URL := $(if $(PLATFORM_URL),$(PLATFORM_URL),"https://pilot.traefik.io")
 
+.PHONY: default
 default: binary
-
-## Build Dev Docker image
-build-dev-image: dist
-	$(if $(IN_DOCKER),docker build $(DOCKER_BUILD_ARGS) -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .,)
-
-## Build Dev Docker image without cache
-build-dev-image-no-cache: dist
-	docker build --no-cache -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
 
 ## Create the "dist" directory
 dist:
 	mkdir -p dist
 
+## Build Dev Docker image
+.PHONY: build-dev-image
+build-dev-image: dist
+ifneq ("$(IN_DOCKER)", "")
+	docker build $(DOCKER_BUILD_ARGS) -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
+endif
+
+## Build Dev Docker image without cache
+.PHONY: build-dev-image-no-cache
+build-dev-image-no-cache: dist
+ifneq ("$(IN_DOCKER)", "")
+	docker build $(DOCKER_BUILD_ARGS) --no-cache -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
+endif
+
 ## Build WebUI Docker image
+.PHONY: build-webui-image
 build-webui-image:
 	docker build -t traefik-webui --build-arg ARG_PLATFORM_URL=$(PLATFORM_URL) -f webui/Dockerfile webui
 
 ## Clean WebUI static generated assets
+.PHONY: clean-webui
 clean-webui:
 	rm -r webui/static
 	mkdir -p webui/static
@@ -68,94 +75,119 @@ webui/static/index.html:
 	docker run --rm -v "$$PWD/webui/static":'/src/webui/static' traefik-webui npm run build:nc
 	docker run --rm -v "$$PWD/webui/static":'/src/webui/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ./static
 
+.PHONY: generate-webui
 generate-webui: webui/static/index.html
 
 ## Build the binary
+.PHONY: binary
 binary: generate-webui build-dev-image
 	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh generate binary
 
 ## Build the linux binary locally
+.PHONY: binary-debug
 binary-debug: generate-webui
 	GOOS=linux ./script/make.sh binary
 
 ## Build the binary for the standard platforms (linux, darwin, windows)
+.PHONY: crossbinary-default
 crossbinary-default: generate-webui build-dev-image
 	$(DOCKER_RUN_TRAEFIK_NOTTY) ./script/make.sh generate crossbinary-default
 
 ## Build the binary for the standard platforms (linux, darwin, windows) in parallel
+.PHONY: crossbinary-default-parallel
 crossbinary-default-parallel:
 	$(MAKE) generate-webui
 	$(MAKE) build-dev-image crossbinary-default
 
 ## Run the unit and integration tests
+.PHONY: test
 test: build-dev-image
 	-docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
 	trap 'docker network rm traefik-test-network' EXIT; \
 	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK_TEST),) ./script/make.sh generate test-unit binary test-integration
 
 ## Run the unit tests
+.PHONY: test-unit
 test-unit: build-dev-image
 	-docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
 	trap 'docker network rm traefik-test-network' EXIT; \
 	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK_TEST)) ./script/make.sh generate test-unit
 
 ## Run the integration tests
+.PHONY: test-integration
 test-integration: build-dev-image
 	-docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
 	trap 'docker network rm traefik-test-network' EXIT; \
 	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK_TEST),) ./script/make.sh generate binary test-integration
 
 ## Pull all images for integration tests
+.PHONY: pull-images
 pull-images:
-	grep --no-filename -E '^\s+image:' ./integration/resources/compose/*.yml | awk '{print $$2}' | sort | uniq | xargs -P 6 -n 1 docker pull
+	grep --no-filename -E '^\s+image:' ./integration/resources/compose/*.yml \
+		| awk '{print $$2}' \
+		| sort \
+		| uniq \
+		| xargs -P 6 -n 1 docker pull
 
 ## Validate code and docs
+.PHONY: validate-files
 validate-files: build-dev-image
 	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh generate validate-lint validate-misspell
 	bash $(CURDIR)/script/validate-shell-script.sh
 
 ## Validate code, docs, and vendor
+.PHONY: validate
 validate: build-dev-image
 	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK)) ./script/make.sh generate validate-lint validate-misspell validate-vendor
 	bash $(CURDIR)/script/validate-shell-script.sh
 
 ## Clean up static directory and build a Docker Traefik image
+.PHONY: build-image
 build-image: clean-webui binary
 	docker build -t $(TRAEFIK_IMAGE) .
 
-## Build a Docker Traefik image
+## Build a Docker Traefik image without re-building the webui
+.PHONY: build-image-dirty
 build-image-dirty: binary
 	docker build -t $(TRAEFIK_IMAGE) .
 
 ## Locally build traefik for linux, then shove it an alpine image, with basic tools.
+.PHONY: build-image-debug
 build-image-debug: binary-debug
 	docker build -t $(TRAEFIK_IMAGE) -f debug.Dockerfile .
 
 ## Start a shell inside the build env
+.PHONY: shell
 shell: build-dev-image
 	$(DOCKER_RUN_TRAEFIK) /bin/bash
 
 ## Build documentation site
+.PHONY: docs
 docs:
 	make -C ./docs docs
 
 ## Serve the documentation site locally
+.PHONY: docs-serve
 docs-serve:
 	make -C ./docs docs-serve
 
 ## Pull image for doc building
+.PHONY: docs-pull-images
 docs-pull-images:
 	make -C ./docs docs-pull-images
 
 ## Generate CRD clientset and CRD manifests
+.PHONY: generate-crd
 generate-crd:
 	@$(CURDIR)/script/code-gen.sh
 
 ## Generate code from dynamic configuration https://github.com/traefik/genconf
+.PHONY: generate-genconf
 generate-genconf:
 	go run ./cmd/internal/gen/
 
 ## Create packages for the release
+.PHONY: release-packages
 release-packages: generate-webui build-dev-image
 	rm -rf dist
 	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK_NOTTY)) goreleaser release --skip-publish --timeout="90m"
@@ -169,9 +201,11 @@ release-packages: generate-webui build-dev-image
 	$(if $(IN_DOCKER),$(DOCKER_RUN_TRAEFIK_NOTTY)) chown -R $(shell id -u):$(shell id -g) dist/
 
 ## Format the Code
+.PHONY: fmt
 fmt:
 	gofmt -s -l -w $(SRCS)
 
+.PHONY: run-dev
 run-dev:
 	go generate
 	GO111MODULE=on go build ./cmd/traefik
