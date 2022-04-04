@@ -93,7 +93,10 @@ type Chain struct {
 
 // CircuitBreaker holds the circuit breaker configuration.
 type CircuitBreaker struct {
-	Expression string `json:"expression,omitempty" toml:"expression,omitempty" yaml:"expression,omitempty" export:"true"`
+	Expression       string          `json:"expression,omitempty" toml:"expression,omitempty" yaml:"expression,omitempty" export:"true"`
+	CheckPeriod      ptypes.Duration `json:"checkPeriod,omitempty" toml:"checkPeriod,omitempty" yaml:"checkPeriod,omitempty" export:"true"`
+	FallbackDuration ptypes.Duration `json:"fallbackDuration,omitempty" toml:"fallbackDuration,omitempty" yaml:"fallbackDuration,omitempty" export:"true"`
+	RecoveryDuration ptypes.Duration `json:"recoveryDuration,omitempty" toml:"recoveryDuration,omitempty" yaml:"recoveryDuration,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
