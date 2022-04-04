@@ -263,7 +263,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 			return !lastPage
 		})
 		if err != nil {
-			return nil, fmt.Errorf("list tasks: %w", err)
+			return nil, fmt.Errorf("listing tasks: %w", err)
 		}
 
 		// Skip to the next cluster if there are no tasks found on
@@ -387,7 +387,7 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 			Cluster:            clusterName,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("describe container instances: %w", err)
+			return nil, fmt.Errorf("describing container instances: %w", err)
 		}
 
 		for _, container := range resp.ContainerInstances {
@@ -415,7 +415,7 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 				return !lastPage
 			})
 			if err != nil {
-				return nil, fmt.Errorf("describe instances: %w", err)
+				return nil, fmt.Errorf("describing instances: %w", err)
 			}
 		}
 	}
@@ -436,7 +436,7 @@ func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient,
 				TaskDefinition: task.TaskDefinitionArn,
 			})
 			if err != nil {
-				return nil, fmt.Errorf("describe task definition: %w", err)
+				return nil, fmt.Errorf("describing task definition: %w", err)
 			}
 
 			taskDef[arn] = resp.TaskDefinition
