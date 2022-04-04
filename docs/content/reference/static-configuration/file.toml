@@ -30,6 +30,8 @@
       trustedIPs = ["foobar", "foobar"]
     [entryPoints.EntryPoint0.udp]
       timeout = 42
+    [entryPoints.EntryPoint0.http2]
+      maxConcurrentStreams = 42
     [entryPoints.EntryPoint0.http3]
       advertisedPort = 42
     [entryPoints.EntryPoint0.http]

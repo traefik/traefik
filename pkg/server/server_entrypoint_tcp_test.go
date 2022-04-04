@@ -83,6 +83,7 @@ func testShutdown(t *testing.T, router *tcprouter.Router) {
 		Address:          "127.0.0.1:0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
 	}, nil)
 	require.NoError(t, err)
 
@@ -166,6 +167,7 @@ func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 		Address:          ":0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
 	}, nil)
 	require.NoError(t, err)
 
@@ -202,6 +204,7 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 		Address:          ":0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
 	}, nil)
 	require.NoError(t, err)
 
