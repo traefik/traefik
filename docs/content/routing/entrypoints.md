@@ -234,7 +234,7 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
 
 _Optional, Default=250_
 
-`maxConcurrentStreams` defines the number of maximum concurrent streams for HTTP/2.
+`maxConcurrentStreams` specifies the number of concurrent streams per connection that each client is allowed to initiate.
 The `maxConcurrentStreams` value must be greater than zero.
 
 ```yaml tab="File (YAML)"
