@@ -88,6 +88,7 @@ func TestHTTP3AdvertisedPort(t *testing.T) {
 		Address:          "127.0.0.1:8090",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
+		HTTP2:            &static.HTTP2Config{},
 		HTTP3: &static.HTTP3Config{
 			AdvertisedPort: 8080,
 		},
