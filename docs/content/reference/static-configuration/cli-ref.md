@@ -148,7 +148,7 @@ Subject alternative names.
 Default TLS options for the routers linked to the entry point.
 
 `--entrypoints.<name>.http2.maxconcurrentstreams`:  
-Specifies the number of concurrent streams that each client may have open at a time. (Default: ```250```)
+Specifies the number of concurrent streams per connection that each client is allowed to initiate. (Default: ```250```)
 
 `--entrypoints.<name>.http3`:  
 HTTP/3 configuration. (Default: ```false```)

@@ -115,7 +115,7 @@ Trust only forwarded headers from selected IPs.
 HTTP configuration.
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP2_MAXCONCURRENTSTREAMS`:  
-Specifies the number of concurrent streams that each client may have open at a time. (Default: ```250```)
+Specifies the number of concurrent streams per connection that each client is allowed to initiate. (Default: ```250```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP3`:  
 HTTP/3 configuration. (Default: ```false```)

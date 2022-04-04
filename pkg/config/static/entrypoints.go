@@ -64,7 +64,7 @@ type HTTPConfig struct {
 
 // HTTP2Config is the HTTP2 configuration of an entry point.
 type HTTP2Config struct {
-	MaxConcurrentStreams int32 `description:"Specifies the number of concurrent streams that each client may have open at a time." json:"maxConcurrentStreams,omitempty" toml:"maxConcurrentStreams,omitempty" yaml:"maxConcurrentStreams,omitempty" export:"true"`
+	MaxConcurrentStreams int32 `description:"Specifies the number of concurrent streams per connection that each client is allowed to initiate." json:"maxConcurrentStreams,omitempty" toml:"maxConcurrentStreams,omitempty" yaml:"maxConcurrentStreams,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
