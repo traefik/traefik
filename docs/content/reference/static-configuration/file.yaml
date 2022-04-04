@@ -32,6 +32,8 @@ entryPoints:
       trustedIPs:
       - foobar
       - foobar
+    http2:
+      maxConcurrentStreams: 42
     http3:
       advertisedPort: 42
     udp:
