@@ -128,6 +128,9 @@ http:
     Middleware04:
       circuitBreaker:
         expression: foobar
+        checkPeriod: 42s
+        fallbackDuration: 42s
+        recoveryDuration: 42s
     Middleware05:
       compress:
         excludedContentTypes:
