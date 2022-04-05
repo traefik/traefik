@@ -3,6 +3,7 @@ package circuitbreaker
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -12,9 +13,7 @@ import (
 	"github.com/vulcand/oxy/cbreaker"
 )
 
-const (
-	typeName = "CircuitBreaker"
-)
+const typeName = "CircuitBreaker"
 
 type circuitBreaker struct {
 	circuitBreaker *cbreaker.CircuitBreaker
@@ -27,9 +26,25 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 
 	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName))
 	logger.Debug("Creating middleware")
-	logger.Debug("Setting up with expression: %s", expression)
+	logger.Debugf("Setting up with expression: %s", expression)
 
-	oxyCircuitBreaker, err := cbreaker.New(next, expression, createCircuitBreakerOptions(expression))
+	cbOpts := []cbreaker.CircuitBreakerOption{
+		createCircuitBreakerOptions(expression),
+	}
+
+	if confCircuitBreaker.CheckPeriod > 0 {
+		cbOpts = append(cbOpts, cbreaker.CheckPeriod(time.Duration(confCircuitBreaker.CheckPeriod)))
+	}
+
+	if confCircuitBreaker.FallbackDuration > 0 {
+		cbOpts = append(cbOpts, cbreaker.FallbackDuration(time.Duration(confCircuitBreaker.FallbackDuration)))
+	}
+
+	if confCircuitBreaker.RecoveryDuration > 0 {
+		cbOpts = append(cbOpts, cbreaker.RecoveryDuration(time.Duration(confCircuitBreaker.RecoveryDuration)))
+	}
+
+	oxyCircuitBreaker, err := cbreaker.New(next, expression, cbOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +54,7 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 	}, nil
 }
 
-// NewCircuitBreakerOptions returns a new CircuitBreakerOption.
+// createCircuitBreakerOptions returns a new CircuitBreakerOption.
 func createCircuitBreakerOptions(expression string) cbreaker.CircuitBreakerOption {
 	return cbreaker.Fallback(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		tracing.SetErrorWithEvent(req, "blocked by circuit-breaker (%q)", expression)
