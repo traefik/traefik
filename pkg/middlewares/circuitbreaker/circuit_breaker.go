@@ -29,7 +29,14 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 	logger.Debugf("Setting up with expression: %s", expression)
 
 	cbOpts := []cbreaker.CircuitBreakerOption{
-		createCircuitBreakerOptions(expression),
+		cbreaker.Fallback(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			tracing.SetErrorWithEvent(req, "blocked by circuit-breaker (%q)", expression)
+			rw.WriteHeader(http.StatusServiceUnavailable)
+
+			if _, err := rw.Write([]byte(http.StatusText(http.StatusServiceUnavailable))); err != nil {
+				log.FromContext(req.Context()).Error(err)
+			}
+		})),
 	}
 
 	if confCircuitBreaker.CheckPeriod > 0 {
@@ -52,18 +59,6 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 		circuitBreaker: oxyCircuitBreaker,
 		name:           name,
 	}, nil
-}
-
-// createCircuitBreakerOptions returns a new CircuitBreakerOption.
-func createCircuitBreakerOptions(expression string) cbreaker.CircuitBreakerOption {
-	return cbreaker.Fallback(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		tracing.SetErrorWithEvent(req, "blocked by circuit-breaker (%q)", expression)
-		rw.WriteHeader(http.StatusServiceUnavailable)
-
-		if _, err := rw.Write([]byte(http.StatusText(http.StatusServiceUnavailable))); err != nil {
-			log.FromContext(req.Context()).Error(err)
-		}
-	}))
 }
 
 func (c *circuitBreaker) GetTracingInformation() (string, ext.SpanKindEnum) {
