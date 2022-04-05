@@ -243,6 +243,12 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
+		circuitBreaker, err := createCircuitBreakerMiddleware(middleware.Spec.CircuitBreaker)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading circuit breaker middleware: %v", err)
+			continue
+		}
+
 		conf.HTTP.Middlewares[id] = &dynamic.Middleware{
 			AddPrefix:         middleware.Spec.AddPrefix,
 			StripPrefix:       middleware.Spec.StripPrefix,
@@ -261,7 +267,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			ForwardAuth:       forwardAuth,
 			InFlightReq:       middleware.Spec.InFlightReq,
 			Buffering:         middleware.Spec.Buffering,
-			CircuitBreaker:    middleware.Spec.CircuitBreaker,
+			CircuitBreaker:    circuitBreaker,
 			Compress:          middleware.Spec.Compress,
 			PassTLSClientCert: middleware.Spec.PassTLSClientCert,
 			Retry:             retry,
@@ -423,6 +429,35 @@ func createPluginMiddleware(plugins map[string]apiextensionv1.JSON) (map[string]
 	}
 
 	return pc, nil
+}
+
+func createCircuitBreakerMiddleware(circuitBreaker *v1alpha1.CircuitBreaker) (*dynamic.CircuitBreaker, error) {
+	if circuitBreaker == nil {
+		return nil, nil
+	}
+
+	cb := &dynamic.CircuitBreaker{Expression: circuitBreaker.Expression}
+	cb.SetDefaults()
+
+	if circuitBreaker.CheckPeriod != nil {
+		if err := cb.CheckPeriod.Set(circuitBreaker.CheckPeriod.String()); err != nil {
+			return nil, err
+		}
+	}
+
+	if circuitBreaker.FallbackDuration != nil {
+		if err := cb.FallbackDuration.Set(circuitBreaker.FallbackDuration.String()); err != nil {
+			return nil, err
+		}
+	}
+
+	if circuitBreaker.RecoveryDuration != nil {
+		if err := cb.RecoveryDuration.Set(circuitBreaker.RecoveryDuration.String()); err != nil {
+			return nil, err
+		}
+	}
+
+	return cb, nil
 }
 
 func createRateLimitMiddleware(rateLimit *v1alpha1.RateLimit) (*dynamic.RateLimit, error) {
