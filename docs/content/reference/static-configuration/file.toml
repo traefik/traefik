@@ -7,31 +7,27 @@
   rootCAs = ["foobar", "foobar"]
   maxIdleConnsPerHost = 42
   [serversTransport.forwardingTimeouts]
-    dialTimeout = 42
-    responseHeaderTimeout = 42
-    idleConnTimeout = 42
+    dialTimeout = "42s"
+    responseHeaderTimeout = "42s"
+    idleConnTimeout = "42s"
 
 [entryPoints]
   [entryPoints.EntryPoint0]
     address = "foobar"
     [entryPoints.EntryPoint0.transport]
       [entryPoints.EntryPoint0.transport.lifeCycle]
-        requestAcceptGraceTimeout = 42
-        graceTimeOut = 42
+        requestAcceptGraceTimeout = "42s"
+        graceTimeOut = "42s"
       [entryPoints.EntryPoint0.transport.respondingTimeouts]
-        readTimeout = 42
-        writeTimeout = 42
-        idleTimeout = 42
+        readTimeout = "42s"
+        writeTimeout = "42s"
+        idleTimeout = "42s"
     [entryPoints.EntryPoint0.proxyProtocol]
       insecure = true
       trustedIPs = ["foobar", "foobar"]
     [entryPoints.EntryPoint0.forwardedHeaders]
       insecure = true
       trustedIPs = ["foobar", "foobar"]
-    [entryPoints.EntryPoint0.udp]
-      timeout = 42
-    [entryPoints.EntryPoint0.http3]
-      advertisedPort = 42
     [entryPoints.EntryPoint0.http]
       middlewares = ["foobar", "foobar"]
       [entryPoints.EntryPoint0.http.redirections]
@@ -51,9 +47,13 @@
         [[entryPoints.EntryPoint0.http.tls.domains]]
           main = "foobar"
           sans = ["foobar", "foobar"]
+    [entryPoints.EntryPoint0.http3]
+      advertisedPort = 42
+    [entryPoints.EntryPoint0.udp]
+      timeout = "42s"
 
 [providers]
-  providersThrottleDuration = 42
+  providersThrottleDuration = "42s"
   [providers.docker]
     constraints = "foobar"
     watch = true
@@ -63,8 +63,8 @@
     useBindPortIP = true
     swarmMode = true
     network = "foobar"
-    swarmModeRefreshSeconds = 42
-    httpClientTimeout = 42
+    swarmModeRefreshSeconds = "42s"
+    httpClientTimeout = "42s"
     [providers.docker.tls]
       ca = "foobar"
       caOptional = true
@@ -84,10 +84,10 @@
     defaultRule = "foobar"
     exposedByDefault = true
     dcosToken = "foobar"
-    dialerTimeout = 42
-    responseHeaderTimeout = 42
-    tlsHandshakeTimeout = 42
-    keepAlive = 42
+    dialerTimeout = "42s"
+    responseHeaderTimeout = "42s"
+    tlsHandshakeTimeout = "42s"
+    keepAlive = "42s"
     forceTaskHostname = true
     respectReadinessChecks = true
     [providers.marathon.tls]
@@ -108,6 +108,7 @@
     ingressClass = "foobar"
     throttleDuration = "42s"
     allowEmptyServices = true
+    allowExternalNameServices = true
     [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
       hostname = "foobar"
@@ -118,16 +119,17 @@
     certAuthFilePath = "foobar"
     namespaces = ["foobar", "foobar"]
     allowCrossNamespace = true
+    allowExternalNameServices = true
     labelSelector = "foobar"
     ingressClass = "foobar"
-    throttleDuration = 42
+    throttleDuration = "42s"
   [providers.kubernetesGateway]
     endpoint = "foobar"
     token = "foobar"
     certAuthFilePath = "foobar"
     namespaces = ["foobar", "foobar"]
     labelSelector = "foobar"
-    throttleDuration = 42
+    throttleDuration = "42s"
   [providers.rest]
     insecure = true
   [providers.rancher]
@@ -142,19 +144,22 @@
   [providers.consulCatalog]
     constraints = "foobar"
     prefix = "foobar"
-    refreshInterval = 42
+    refreshInterval = "42s"
     requireConsistent = true
     stale = true
     cache = true
     exposedByDefault = true
     defaultRule = "foobar"
+    connectAware = true
+    connectByDefault = true
+    serviceName = "foobar"
     namespace = "foobar"
     [providers.consulCatalog.endpoint]
       address = "foobar"
       scheme = "foobar"
       datacenter = "foobar"
       token = "foobar"
-      endpointWaitTime = 42
+      endpointWaitTime = "42s"
       [providers.consulCatalog.endpoint.tls]
         ca = "foobar"
         caOptional = true
@@ -179,8 +184,8 @@
     endpoints = ["foobar", "foobar"]
     username = "foobar"
     password = "foobar"
-    namespace = "foobar"
     token = "foobar"
+    namespace = "foobar"
     [providers.consul.tls]
       ca = "foobar"
       caOptional = true
@@ -192,8 +197,8 @@
     endpoints = ["foobar", "foobar"]
     username = "foobar"
     password = "foobar"
-    namespace = "foobar"
     token = "foobar"
+    namespace = "foobar"
     [providers.etcd.tls]
       ca = "foobar"
       caOptional = true
@@ -205,8 +210,8 @@
     endpoints = ["foobar", "foobar"]
     username = "foobar"
     password = "foobar"
-    namespace = "foobar"
     token = "foobar"
+    namespace = "foobar"
     [providers.zooKeeper.tls]
       ca = "foobar"
       caOptional = true
@@ -218,8 +223,8 @@
     endpoints = ["foobar", "foobar"]
     username = "foobar"
     password = "foobar"
-    namespace = "foobar"
     token = "foobar"
+    namespace = "foobar"
     [providers.redis.tls]
       ca = "foobar"
       caOptional = true
@@ -228,8 +233,8 @@
       insecureSkipVerify = true
   [providers.http]
     endpoint = "foobar"
-    pollInterval = 42
-    pollTimeout = 42
+    pollInterval = "42s"
+    pollTimeout = "42s"
     [providers.http.tls]
       ca = "foobar"
       caOptional = true
@@ -298,7 +303,7 @@
   [accessLog.filters]
     statusCodes = ["foobar", "foobar"]
     retryAttempts = true
-    minDuration = 42
+    minDuration = "42s"
   [accessLog.fields]
     defaultMode = "foobar"
     [accessLog.fields.names]
@@ -344,6 +349,7 @@
     localAgentHost = "foobar"
     localAgentPort = 42
     logLevel = "foobar"
+    enableAutoProfile = true
   [tracing.haystack]
     localAgentHost = "foobar"
     localAgentPort = 42
@@ -367,16 +373,16 @@
     [certificatesResolvers.CertificateResolver0.acme]
       email = "foobar"
       caServer = "foobar"
-      certificatesDuration = 2160
       preferredChain = "foobar"
       storage = "foobar"
       keyType = "foobar"
+      certificatesDuration = 42
       [certificatesResolvers.CertificateResolver0.acme.eab]
         kid = "foobar"
         hmacEncoded = "foobar"
       [certificatesResolvers.CertificateResolver0.acme.dnsChallenge]
         provider = "foobar"
-        delayBeforeCheck = 42
+        delayBeforeCheck = "42s"
         resolvers = ["foobar", "foobar"]
         disablePropagationCheck = true
       [certificatesResolvers.CertificateResolver0.acme.httpChallenge]
@@ -386,16 +392,16 @@
     [certificatesResolvers.CertificateResolver1.acme]
       email = "foobar"
       caServer = "foobar"
-      certificatesDuration = 2160
       preferredChain = "foobar"
       storage = "foobar"
       keyType = "foobar"
+      certificatesDuration = 42
       [certificatesResolvers.CertificateResolver1.acme.eab]
         kid = "foobar"
         hmacEncoded = "foobar"
       [certificatesResolvers.CertificateResolver1.acme.dnsChallenge]
         provider = "foobar"
-        delayBeforeCheck = 42
+        delayBeforeCheck = "42s"
         resolvers = ["foobar", "foobar"]
         disablePropagationCheck = true
       [certificatesResolvers.CertificateResolver1.acme.httpChallenge]
