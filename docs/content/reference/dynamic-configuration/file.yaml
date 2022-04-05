@@ -424,7 +424,7 @@ tcp:
           - foobar
           - foobar
     TCPMiddleware01:
-      InFlightConn:
+      inFlightConn:
         amount: 42
 udp:
   routers:

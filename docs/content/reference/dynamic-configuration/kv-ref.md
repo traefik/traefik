@@ -235,7 +235,7 @@
 | `traefik/http/services/Service03/weighted/sticky/cookie/secure` | `true` |
 | `traefik/tcp/middlewares/TCPMiddleware00/ipWhiteList/sourceRange/0` | `foobar` |
 | `traefik/tcp/middlewares/TCPMiddleware00/ipWhiteList/sourceRange/1` | `foobar` |
-| `traefik/tcp/middlewares/TCPMiddleware01/InFlightConn/amount` | `42` |
+| `traefik/tcp/middlewares/TCPMiddleware01/inFlightConn/amount` | `42` |
 | `traefik/tcp/routers/TCPRouter0/entryPoints/0` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/entryPoints/1` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/middlewares/0` | `foobar` |

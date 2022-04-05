@@ -155,6 +155,7 @@
 - "traefik.http.services.service01.loadbalancer.passhostheader=true"
 - "traefik.http.services.service01.loadbalancer.responseforwarding.flushinterval=foobar"
 - "traefik.http.services.service01.loadbalancer.serverstransport=foobar"
+- "traefik.http.services.service01.loadbalancer.sticky.cookie=true"
 - "traefik.http.services.service01.loadbalancer.sticky.cookie.httponly=true"
 - "traefik.http.services.service01.loadbalancer.sticky.cookie.name=foobar"
 - "traefik.http.services.service01.loadbalancer.sticky.cookie.samesite=foobar"

@@ -381,7 +381,7 @@
       [tcp.middlewares.TCPMiddleware00.ipWhiteList]
         sourceRange = ["foobar", "foobar"]
     [tcp.middlewares.TCPMiddleware01]
-      [tcp.middlewares.TCPMiddleware01.InFlightConn]
+      [tcp.middlewares.TCPMiddleware01.inFlightConn]
         amount = 42
 
 [udp]
