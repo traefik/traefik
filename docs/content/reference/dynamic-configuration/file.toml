@@ -125,6 +125,9 @@
     [http.middlewares.Middleware04]
       [http.middlewares.Middleware04.circuitBreaker]
         expression = "foobar"
+        checkPeriod = "42s"
+        fallbackDuration = "42s"
+        recoveryDuration = "42s"
     [http.middlewares.Middleware05]
       [http.middlewares.Middleware05.compress]
         excludedContentTypes = ["foobar", "foobar"]

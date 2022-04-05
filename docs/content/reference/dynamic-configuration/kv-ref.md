@@ -12,7 +12,10 @@
 | `traefik/http/middlewares/Middleware02/buffering/retryExpression` | `foobar` |
 | `traefik/http/middlewares/Middleware03/chain/middlewares/0` | `foobar` |
 | `traefik/http/middlewares/Middleware03/chain/middlewares/1` | `foobar` |
+| `traefik/http/middlewares/Middleware04/circuitBreaker/checkPeriod` | `42s` |
 | `traefik/http/middlewares/Middleware04/circuitBreaker/expression` | `foobar` |
+| `traefik/http/middlewares/Middleware04/circuitBreaker/fallbackDuration` | `42s` |
+| `traefik/http/middlewares/Middleware04/circuitBreaker/recoveryDuration` | `42s` |
 | `traefik/http/middlewares/Middleware05/compress/excludedContentTypes/0` | `foobar` |
 | `traefik/http/middlewares/Middleware05/compress/excludedContentTypes/1` | `foobar` |
 | `traefik/http/middlewares/Middleware05/compress/minResponseBodyBytes` | `42` |
