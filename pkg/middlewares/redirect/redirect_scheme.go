@@ -18,6 +18,8 @@ const (
 	schemeRedirectRegex = `^(https?:\/\/)?(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
 )
 
+var re = regexp.MustCompilePOSIX(`^(https?)://(\[[\w:.]+]|[\w._-]+)?(:\d+)?(.*)$`)
+
 // NewRedirectScheme creates a new RedirectScheme middleware.
 func NewRedirectScheme(ctx context.Context, next http.Handler, conf dynamic.RedirectScheme, name string) (http.Handler, error) {
 	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeSchemeName))
@@ -46,8 +48,6 @@ func rawURLScheme(req *http.Request) string {
 	}
 	uri := req.RequestURI
 
-	schemeRegex := `^(https?):\/\/(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
-	re, _ := regexp.Compile(schemeRegex)
 	if re.Match([]byte(req.RequestURI)) {
 		match := re.FindStringSubmatch(req.RequestURI)
 		scheme = match[1]
