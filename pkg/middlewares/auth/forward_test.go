@@ -59,6 +59,8 @@ func TestForwardAuthSuccess(t *testing.T) {
 		w.Header().Add("X-Auth-Group", "group1")
 		w.Header().Add("X-Auth-Group", "group2")
 		w.Header().Add("Foo-Bar", "auth-value")
+		w.Header().Add("Set-Cookie", "authCookie=Auth")
+		w.Header().Add("Set-Cookie", "authCookieNotAdded=Auth")
 		fmt.Fprintln(w, "Success")
 	}))
 	t.Cleanup(server.Close)
@@ -69,6 +71,9 @@ func TestForwardAuthSuccess(t *testing.T) {
 		assert.Equal(t, []string{"group1", "group2"}, r.Header["X-Auth-Group"])
 		assert.Equal(t, "auth-value", r.Header.Get("Foo-Bar"))
 		assert.Empty(t, r.Header.Get("Foo-Baz"))
+		w.Header().Add("Set-Cookie", "authCookie=Backend")
+		w.Header().Add("Set-Cookie", "backendCookie=Backend")
+		w.Header().Add("Other-Header", "BackendHeaderValue")
 		fmt.Fprintln(w, "traefik")
 	})
 
@@ -76,6 +81,7 @@ func TestForwardAuthSuccess(t *testing.T) {
 		Address:                  server.URL,
 		AuthResponseHeaders:      []string{"X-Auth-User", "X-Auth-Group"},
 		AuthResponseHeadersRegex: "^Foo-",
+		AddAuthCookiesToResponse: []string{"authCookie"},
 	}
 	middleware, err := NewForward(context.Background(), next, auth, "authTest")
 	require.NoError(t, err)
@@ -90,6 +96,8 @@ func TestForwardAuthSuccess(t *testing.T) {
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, res.Header["Set-Cookie"], []string{"backendCookie=Backend", "authCookie=Auth"})
+	assert.Equal(t, res.Header["Other-Header"], []string{"BackendHeaderValue"})
 
 	body, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
