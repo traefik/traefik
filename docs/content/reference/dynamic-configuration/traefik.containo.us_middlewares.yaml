@@ -91,8 +91,25 @@ spec:
               circuitBreaker:
                 description: CircuitBreaker holds the circuit breaker configuration.
                 properties:
+                  checkPeriod:
+                    description: CheckPeriod is the interval between successive checks
+                      of the circuit breaker condition (standby state).
+                    format: int64
+                    type: integer
                   expression:
+                    description: Expression is the condition that triggers the tripped
+                      state.
                     type: string
+                  fallbackDuration:
+                    description: FallbackDuration is the duration for which the circuit
+                      breaker will wait before trying to recover (tripped state).
+                    format: int64
+                    type: integer
+                  recoveryDuration:
+                    description: RecoveryDuration is the duration for which the circuit
+                      breaker will try to recover (recovering state).
+                    format: int64
+                    type: integer
                 type: object
               compress:
                 description: Compress holds the compress configuration.
