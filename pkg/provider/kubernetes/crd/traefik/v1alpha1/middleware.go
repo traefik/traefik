@@ -154,6 +154,8 @@ type ForwardAuth struct {
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty"`
 	// TLS defines the configuration used to secure the connection to the authentication server.
 	TLS *ClientTLS `json:"tls,omitempty"`
+	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
+	AddAuthCookiesToResponse []string   `json:"addAuthCookiesToResponse,omitempty"`
 }
 
 // ClientTLS holds the client TLS configuration.
