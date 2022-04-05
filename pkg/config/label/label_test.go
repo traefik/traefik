@@ -984,9 +984,9 @@ func TestEncodeConfiguration(t *testing.T) {
 				"Middleware4": {
 					CircuitBreaker: &dynamic.CircuitBreaker{
 						Expression:       "foobar",
-						CheckPeriod:      ptypes.Duration(100 * time.Millisecond),
-						FallbackDuration: ptypes.Duration(10 * time.Second),
-						RecoveryDuration: ptypes.Duration(10 * time.Second),
+						CheckPeriod:      ptypes.Duration(time.Second),
+						FallbackDuration: ptypes.Duration(time.Second),
+						RecoveryDuration: ptypes.Duration(time.Second),
 					},
 				},
 				"Middleware5": {
@@ -1194,9 +1194,9 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware2.Buffering.RetryExpression":                           "foobar",
 		"traefik.HTTP.Middlewares.Middleware3.Chain.Middlewares":                                   "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware4.CircuitBreaker.Expression":                           "foobar",
-		"traefik.HTTP.Middlewares.Middleware4.CircuitBreaker.CheckPeriod":                          "100000000",   // 100ms in ns
-		"traefik.HTTP.Middlewares.Middleware4.CircuitBreaker.FallbackDuration":                     "10000000000", // 10s in ns
-		"traefik.HTTP.Middlewares.Middleware4.CircuitBreaker.RecoveryDuration":                     "10000000000", // 10s in ns
+		"traefik.HTTP.Middlewares.Middleware4.CircuitBreaker.CheckPeriod":                          "1000000000",
+		"traefik.HTTP.Middlewares.Middleware4.CircuitBreaker.FallbackDuration":                     "1000000000",
+		"traefik.HTTP.Middlewares.Middleware4.CircuitBreaker.RecoveryDuration":                     "1000000000",
 		"traefik.HTTP.Middlewares.Middleware5.DigestAuth.HeaderField":                              "foobar",
 		"traefik.HTTP.Middlewares.Middleware5.DigestAuth.Realm":                                    "foobar",
 		"traefik.HTTP.Middlewares.Middleware5.DigestAuth.RemoveHeader":                             "true",

@@ -93,10 +93,21 @@ type Chain struct {
 
 // CircuitBreaker holds the circuit breaker configuration.
 type CircuitBreaker struct {
-	Expression       string          `json:"expression,omitempty" toml:"expression,omitempty" yaml:"expression,omitempty" export:"true"`
-	CheckPeriod      ptypes.Duration `json:"checkPeriod,omitempty" toml:"checkPeriod,omitempty" yaml:"checkPeriod,omitempty" export:"true"`
+	// Expression is the condition that triggers the tripped state.
+	Expression string `json:"expression,omitempty" toml:"expression,omitempty" yaml:"expression,omitempty" export:"true"`
+	// CheckPeriod is the interval between successive checks of the circuit breaker condition (standby state).
+	CheckPeriod ptypes.Duration `json:"checkPeriod,omitempty" toml:"checkPeriod,omitempty" yaml:"checkPeriod,omitempty" export:"true"`
+	// FallbackDuration is the duration for which the circuit breaker will wait before trying to recover (tripped state).
 	FallbackDuration ptypes.Duration `json:"fallbackDuration,omitempty" toml:"fallbackDuration,omitempty" yaml:"fallbackDuration,omitempty" export:"true"`
+	// RecoveryDuration is the duration for which the circuit breaker will try to recover (recovering state).
 	RecoveryDuration ptypes.Duration `json:"recoveryDuration,omitempty" toml:"recoveryDuration,omitempty" yaml:"recoveryDuration,omitempty" export:"true"`
+}
+
+// SetDefaults sets the default values on a RateLimit.
+func (c *CircuitBreaker) SetDefaults() {
+	c.CheckPeriod = ptypes.Duration(100 * time.Millisecond)
+	c.FallbackDuration = ptypes.Duration(10 * time.Second)
+	c.RecoveryDuration = ptypes.Duration(10 * time.Second)
 }
 
 // +k8s:deepcopy-gen=true

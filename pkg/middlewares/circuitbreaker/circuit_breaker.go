@@ -13,9 +13,7 @@ import (
 	"github.com/vulcand/oxy/cbreaker"
 )
 
-const (
-	typeName = "CircuitBreaker"
-)
+const typeName = "CircuitBreaker"
 
 type circuitBreaker struct {
 	circuitBreaker *cbreaker.CircuitBreaker
@@ -31,19 +29,19 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 	logger.Debugf("Setting up with expression: %s", expression)
 
 	cbOpts := []cbreaker.CircuitBreakerOption{
-		createCircuitBreakerOptionExpression(expression),
+		createCircuitBreakerOptions(expression),
 	}
 
 	if confCircuitBreaker.CheckPeriod > 0 {
-		cbOpts = append(cbOpts, createCircuitBreakerOptionCheckPeriod(time.Duration(confCircuitBreaker.CheckPeriod)))
+		cbOpts = append(cbOpts, cbreaker.CheckPeriod(time.Duration(confCircuitBreaker.CheckPeriod)))
 	}
 
 	if confCircuitBreaker.FallbackDuration > 0 {
-		cbOpts = append(cbOpts, createCircuitBreakerOptionFallbackDuration(time.Duration(confCircuitBreaker.FallbackDuration)))
+		cbOpts = append(cbOpts, cbreaker.FallbackDuration(time.Duration(confCircuitBreaker.FallbackDuration)))
 	}
 
 	if confCircuitBreaker.RecoveryDuration > 0 {
-		cbOpts = append(cbOpts, createCircuitBreakerOptionRecoveryDuration(time.Duration(confCircuitBreaker.RecoveryDuration)))
+		cbOpts = append(cbOpts, cbreaker.RecoveryDuration(time.Duration(confCircuitBreaker.RecoveryDuration)))
 	}
 
 	oxyCircuitBreaker, err := cbreaker.New(next, expression, cbOpts...)
@@ -56,8 +54,8 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 	}, nil
 }
 
-// NewCircuitBreakerOptions returns a new CircuitBreakerOption.
-func createCircuitBreakerOptionExpression(expression string) cbreaker.CircuitBreakerOption {
+// createCircuitBreakerOptions returns a new CircuitBreakerOption.
+func createCircuitBreakerOptions(expression string) cbreaker.CircuitBreakerOption {
 	return cbreaker.Fallback(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		tracing.SetErrorWithEvent(req, "blocked by circuit-breaker (%q)", expression)
 		rw.WriteHeader(http.StatusServiceUnavailable)
@@ -66,18 +64,6 @@ func createCircuitBreakerOptionExpression(expression string) cbreaker.CircuitBre
 			log.FromContext(req.Context()).Error(err)
 		}
 	}))
-}
-
-func createCircuitBreakerOptionCheckPeriod(duration time.Duration) cbreaker.CircuitBreakerOption {
-	return cbreaker.CheckPeriod(duration)
-}
-
-func createCircuitBreakerOptionFallbackDuration(duration time.Duration) cbreaker.CircuitBreakerOption {
-	return cbreaker.FallbackDuration(duration)
-}
-
-func createCircuitBreakerOptionRecoveryDuration(duration time.Duration) cbreaker.CircuitBreakerOption {
-	return cbreaker.RecoveryDuration(duration)
 }
 
 func (c *circuitBreaker) GetTracingInformation() (string, ext.SpanKindEnum) {
