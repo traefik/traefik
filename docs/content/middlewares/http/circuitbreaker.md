@@ -173,16 +173,16 @@ This behavior cannot be configured.
 
 _Optional, Default="100ms"_
 
-The interval between successive checks of the circuit breaker condition (standby state).
+The interval between successive checks of the circuit breaker condition (when in standby state).
 
 ### `FallbackDuration`
 
 _Optional, Default="10s"_
 
-The duration for which the circuit breaker will wait before trying to recover (tripped state).
+The duration for which the circuit breaker will wait before trying to recover (from a tripped state).
 
 ### `RecoveryDuration`
 
 _Optional, Default="10s"_
 
-The duration for which the circuit breaker will try to recover (recovering state).
+The duration for which the circuit breaker will try to recover (as soon as it is in recovering state).

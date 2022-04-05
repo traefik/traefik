@@ -440,22 +440,19 @@ func createCircuitBreakerMiddleware(circuitBreaker *v1alpha1.CircuitBreaker) (*d
 	cb.SetDefaults()
 
 	if circuitBreaker.CheckPeriod != nil {
-		err := cb.CheckPeriod.Set(circuitBreaker.CheckPeriod.String())
-		if err != nil {
+		if err := cb.CheckPeriod.Set(circuitBreaker.CheckPeriod.String()); err != nil {
 			return nil, err
 		}
 	}
 
 	if circuitBreaker.FallbackDuration != nil {
-		err := cb.FallbackDuration.Set(circuitBreaker.FallbackDuration.String())
-		if err != nil {
+		if err := cb.FallbackDuration.Set(circuitBreaker.FallbackDuration.String()); err != nil {
 			return nil, err
 		}
 	}
 
 	if circuitBreaker.RecoveryDuration != nil {
-		err := cb.RecoveryDuration.Set(circuitBreaker.RecoveryDuration.String())
-		if err != nil {
+		if err := cb.RecoveryDuration.Set(circuitBreaker.RecoveryDuration.String()); err != nil {
 			return nil, err
 		}
 	}
