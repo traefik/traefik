@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/textproto"
 	"regexp"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/middlewares/connectionheader"
+	"github.com/traefik/traefik/v2/pkg/middlewares/headers"
 	"github.com/traefik/traefik/v2/pkg/tracing"
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/utils"
@@ -48,6 +50,11 @@ type forwardAuth struct {
 	client                   http.Client
 	trustForwardHeader       bool
 	authRequestHeaders       []string
+	addAuthCookiesToResponse []string
+}
+
+type copyAuthCookies struct {
+	authResponseCookieHeaders map[string]string
 }
 
 // NewForward creates a forward auth middleware.
@@ -55,12 +62,13 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 	log.FromContext(middlewares.GetLoggerCtx(ctx, name, forwardedTypeName)).Debug("Creating middleware")
 
 	fa := &forwardAuth{
-		address:             config.Address,
-		authResponseHeaders: config.AuthResponseHeaders,
-		next:                next,
-		name:                name,
-		trustForwardHeader:  config.TrustForwardHeader,
-		authRequestHeaders:  config.AuthRequestHeaders,
+		address:                  config.Address,
+		authResponseHeaders:      config.AuthResponseHeaders,
+		next:                     next,
+		name:                     name,
+		trustForwardHeader:       config.TrustForwardHeader,
+		authRequestHeaders:       config.AuthRequestHeaders,
+		addAuthCookiesToResponse: config.AddAuthCookiesToResponse,
 	}
 
 	// Ensure our request client does not follow redirects
@@ -172,6 +180,20 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	cac := copyAuthCookies{
+		authResponseCookieHeaders: make(map[string]string),
+	}
+	forwardedResponseCookieHeaders := forwardResponse.Header["Set-Cookie"]
+	// copy all configured cookies from auth response
+	for _, cookieToAdd := range fa.addAuthCookiesToResponse {
+		for _, header := range forwardedResponseCookieHeaders {
+			cookieName := getCookieName(header)
+			if cookieToAdd == cookieName {
+				cac.authResponseCookieHeaders[cookieName] = header
+			}
+		}
+	}
+
 	for _, headerName := range fa.authResponseHeaders {
 		headerKey := http.CanonicalHeaderKey(headerName)
 		req.Header.Del(headerKey)
@@ -195,7 +217,41 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	req.RequestURI = req.URL.RequestURI()
-	fa.next.ServeHTTP(rw, req)
+	fa.next.ServeHTTP(headers.NewResponseModifier(rw, req, cac.PostRequestModifyResponseHeaders), req)
+}
+
+func (c *copyAuthCookies) PostRequestModifyResponseHeaders(res *http.Response) error {
+	if len(c.authResponseCookieHeaders) > 0 {
+		setCookieHeaders := res.Header["Set-Cookie"]
+		res.Header.Del("Set-Cookie")
+
+		for _, setCookieString := range setCookieHeaders {
+			cookieName := getCookieName(setCookieString)
+			// only add, if not in forward auth response
+			if cookieName != "" && c.authResponseCookieHeaders[cookieName] == "" {
+				res.Header.Add("Set-Cookie", setCookieString)
+			}
+		}
+
+		for _, setCookieString := range c.authResponseCookieHeaders {
+			res.Header.Add("Set-Cookie", setCookieString)
+		}
+	}
+	return nil
+}
+
+func getCookieName(setCookieString string) string {
+	parts := strings.Split(textproto.TrimString(setCookieString), ";")
+	if len(parts) == 1 && parts[0] == "" {
+		return ""
+	}
+	cookiePair := textproto.TrimString(parts[0])
+	j := strings.Index(cookiePair, "=")
+	if j < 0 {
+		return ""
+	}
+	cookieName := cookiePair[:j]
+	return cookieName
 }
 
 func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowedHeaders []string) {
