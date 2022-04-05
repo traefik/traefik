@@ -48,8 +48,8 @@ func rawURLScheme(req *http.Request) string {
 	}
 	uri := req.RequestURI
 
-	if schemeRedirectRegex.Match([]byte(req.RequestURI)) {
-		match := schemeRedirectRegex.FindStringSubmatch(req.RequestURI)
+	if match := schemeRedirectRegex.FindStringSubmatch(req.RequestURI); len(match) > 0 {
+
 		scheme = match[1]
 
 		if len(match[2]) > 0 {
