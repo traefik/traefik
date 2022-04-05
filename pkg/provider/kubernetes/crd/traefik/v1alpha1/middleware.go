@@ -63,11 +63,11 @@ type ErrorPage struct {
 type CircuitBreaker struct {
 	// Expression is the condition that triggers the tripped state.
 	Expression string `json:"expression,omitempty" toml:"expression,omitempty" yaml:"expression,omitempty" export:"true"`
-	// CheckPeriod is the interval between successive checks of the circuit breaker condition (standby state).
+	// CheckPeriod is the interval between successive checks of the circuit breaker condition (when in standby state).
 	CheckPeriod *intstr.IntOrString `json:"checkPeriod,omitempty" toml:"checkPeriod,omitempty" yaml:"checkPeriod,omitempty" export:"true"`
-	// FallbackDuration is the duration for which the circuit breaker will wait before trying to recover (tripped state).
+	// FallbackDuration is the duration for which the circuit breaker will wait before trying to recover (from a tripped state).
 	FallbackDuration *intstr.IntOrString `json:"fallbackDuration,omitempty" toml:"fallbackDuration,omitempty" yaml:"fallbackDuration,omitempty" export:"true"`
-	// RecoveryDuration is the duration for which the circuit breaker will try to recover (recovering state).
+	// RecoveryDuration is the duration for which the circuit breaker will try to recover (as soon as it is in recovering state).
 	RecoveryDuration *intstr.IntOrString `json:"recoveryDuration,omitempty" toml:"recoveryDuration,omitempty" yaml:"recoveryDuration,omitempty" export:"true"`
 }
 
