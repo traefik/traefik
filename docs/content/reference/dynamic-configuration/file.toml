@@ -180,6 +180,7 @@
         publicKey = "foobar"
         referrerPolicy = "foobar"
         featurePolicy = "foobar"
+        permissionsPolicy = "foobar"
         isDevelopment = true
         [http.middlewares.Middleware10.headers.customRequestHeaders]
           name0 = "foobar"
@@ -237,7 +238,7 @@
     [http.middlewares.Middleware15]
       [http.middlewares.Middleware15.rateLimit]
         average = 42
-        period = 42
+        period = "42s"
         burst = 42
         [http.middlewares.Middleware15.rateLimit.sourceCriterion]
           requestHeaderName = "foobar"
@@ -265,7 +266,7 @@
     [http.middlewares.Middleware20]
       [http.middlewares.Middleware20.retry]
         attempts = 42
-        initialInterval = 42
+        initialInterval = "42s"
     [http.middlewares.Middleware21]
       [http.middlewares.Middleware21.stripPrefix]
         prefixes = ["foobar", "foobar"]
@@ -293,6 +294,8 @@
         dialTimeout = "42s"
         responseHeaderTimeout = "42s"
         idleConnTimeout = "42s"
+        readIdleTimeout = "42s"
+        pingTimeout = "42s"
     [http.serversTransports.ServersTransport1]
       serverName = "foobar"
       insecureSkipVerify = true
@@ -312,6 +315,8 @@
         dialTimeout = "42s"
         responseHeaderTimeout = "42s"
         idleConnTimeout = "42s"
+        readIdleTimeout = "42s"
+        pingTimeout = "42s"
 
 [tcp]
   [tcp.routers]
@@ -372,9 +377,12 @@
           name = "foobar"
           weight = 42
   [tcp.middlewares]
-    [tcp.middlewares.Middleware00]
-      [tcp.middlewares.Middleware00.ipWhiteList]
-      sourceRange = ["foobar", "foobar"]
+    [tcp.middlewares.TCPMiddleware00]
+      [tcp.middlewares.TCPMiddleware00.ipWhiteList]
+        sourceRange = ["foobar", "foobar"]
+    [tcp.middlewares.TCPMiddleware01]
+      [tcp.middlewares.TCPMiddleware01.inFlightConn]
+        amount = 42
 
 [udp]
   [udp.routers]
