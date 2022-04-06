@@ -49,6 +49,7 @@ func Test(t *testing.T) {
 	check.Suite(&ErrorPagesSuite{})
 	check.Suite(&EtcdSuite{})
 	check.Suite(&FileSuite{})
+	check.Suite(&ForwardAuthSuite{})
 	check.Suite(&GRPCSuite{})
 	check.Suite(&HeadersSuite{})
 	check.Suite(&HealthCheckSuite{})
