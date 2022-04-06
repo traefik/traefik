@@ -50,6 +50,6 @@ func newSecure(next http.Handler, cfg dynamic.Headers, contextKey string) *secur
 
 func (s secureHeader) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	s.secure.HandlerFuncWithNextForRequestOnly(rw, req, func(writer http.ResponseWriter, request *http.Request) {
-		s.next.ServeHTTP(newResponseModifier(writer, request, s.secure.ModifyResponseHeaders), request)
+		s.next.ServeHTTP(NewResponseModifier(writer, request, s.secure.ModifyResponseHeaders), request)
 	})
 }
