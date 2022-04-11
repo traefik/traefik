@@ -201,6 +201,8 @@ http:
 
 CORS (Cross-Origin Resource Sharing) headers can be added and configured in a manner similar to the custom headers above.
 This functionality allows for more advanced security features to quickly be set.
+If CORS headers are set, then the middleware does not pass preflight requests to any service,
+instead the response will be generated and sent back to the client directly.
 
 ```yaml tab="Docker"
 labels:
