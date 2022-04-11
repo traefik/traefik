@@ -1,4 +1,3 @@
-
 #######
 # This Makefile contains all targets related to the documentation
 #######
@@ -24,7 +23,11 @@ docs-serve: docs-image
 
 ## Pull image for doc building
 docs-pull-images:
-	grep --no-filename -E '^FROM' ./*.Dockerfile | awk '{print $$2}' | sort | uniq | xargs -P 6 -n 1 docker pull
+	grep --no-filename -E '^FROM' ./*.Dockerfile \
+		| awk '{print $$2}' \
+		| sort \
+		| uniq \
+		| xargs -P 6 -n 1 docker pull
 
 # Utilities Targets for each step
 docs-image:
@@ -35,20 +38,20 @@ docs-build: docs-image
 		&& chown -R $(shell id -u):$(shell id -g) ./site"
 
 docs-verify: docs-build
-	@if [ "$(DOCS_VERIFY_SKIP)" != "true" ]; then \
-		docker build -t $(TRAEFIK_DOCS_CHECK_IMAGE) -f check.Dockerfile ./; \
-		docker run --rm -v $(CURDIR):/app $(TRAEFIK_DOCS_CHECK_IMAGE) /verify.sh; \
-	else \
-		echo "DOCS_VERIFY_SKIP is true: no verification done."; \
-	fi
+ifneq ("$(DOCS_VERIFY_SKIP)", "true")
+	docker build -t $(TRAEFIK_DOCS_CHECK_IMAGE) -f check.Dockerfile ./
+	docker run --rm -v $(CURDIR):/app $(TRAEFIK_DOCS_CHECK_IMAGE) /verify.sh
+else
+	echo "DOCS_VERIFY_SKIP is true: no verification done."
+endif
 
 docs-lint:
-	@if [ "$(DOCS_LINT_SKIP)" != "true" ]; then \
-		docker build -t $(TRAEFIK_DOCS_CHECK_IMAGE) -f check.Dockerfile ./ && \
-		docker run --rm -v $(CURDIR):/app $(TRAEFIK_DOCS_CHECK_IMAGE) /lint.sh; \
-	else \
-		echo "DOCS_LINT_SKIP is true: no linting done."; \
-	fi
+ifneq ("$(DOCS_VERIFY_SKIP)", "true")
+	docker build -t $(TRAEFIK_DOCS_CHECK_IMAGE) -f check.Dockerfile ./
+	docker run --rm -v $(CURDIR):/app $(TRAEFIK_DOCS_CHECK_IMAGE) /lint.sh
+else
+	echo "DOCS_LINT_SKIP is true: no linting done."
+endif
 
 docs-clean:
 	rm -rf $(SITE_DIR)
