@@ -4,7 +4,7 @@ PATH_TO_SITE="${1:-/app/site}"
 
 set -eu
 
-[ -d "${PATH_TO_SITE}" ]
+[ ! -d "${PATH_TO_SITE}" ] && echo "= Cannot check HTML content: no site asset found" && exit 1
 
 NUMBER_OF_CPUS="$(grep -c processor /proc/cpuinfo)"
 
