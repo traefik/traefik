@@ -21,7 +21,7 @@ import (
 
 // Compile time validation that the response recorder implements http interfaces correctly.
 var (
-	// TODO: maybe remove at least for codeModifierWithCloseNotify
+	// TODO: maybe remove at least for codeModifierWithCloseNotify.
 	_ middlewares.Stateful = &codeModifierWithCloseNotify{}
 	_ middlewares.Stateful = &codeCatcherWithCloseNotify{}
 )
@@ -102,10 +102,10 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	recorderErrorPage := newCodeModifier(ctx, rw, code)
 	utils.CopyHeaders(pageReq.Header, req.Header)
 
-	c.backendHandler.ServeHTTP(recorderErrorPage, pageReq.WithContext(req.Context()))
+	c.backendHandler.ServeHTTP(newCodeModifier(ctx, rw, code),
+		pageReq.WithContext(req.Context()))
 }
 
 func newRequest(baseURL string) (*http.Request, error) {
