@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -313,7 +312,6 @@ func (r *codeModifierWithoutCloseNotify) WriteHeader(code int) {
 	}
 
 	utils.CopyHeaders(r.responseWriter.Header(), r.Header())
-	spew.Dump(r.responseWriter.Header())
 	r.responseWriter.WriteHeader(r.code)
 	r.headerSent = true
 }
