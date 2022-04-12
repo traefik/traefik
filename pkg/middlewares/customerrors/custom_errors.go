@@ -104,7 +104,7 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	utils.CopyHeaders(pageReq.Header, req.Header)
 
-	c.backendHandler.ServeHTTP(newCodeModifier(ctx, rw, code),
+	c.backendHandler.ServeHTTP(newCodeModifier(rw, code),
 		pageReq.WithContext(req.Context()))
 }
 
@@ -256,7 +256,7 @@ type codeModifier interface {
 }
 
 // newCodeModifier returns a codeModifier that enforces the given code.
-func newCodeModifier(ctx context.Context, rw http.ResponseWriter, code int) codeModifier {
+func newCodeModifier(rw http.ResponseWriter, code int) codeModifier {
 	codeMod := &codeModifierWithoutCloseNotify{
 		headerMap:      make(http.Header),
 		code:           code,
@@ -306,7 +306,7 @@ func (r *codeModifierWithoutCloseNotify) Write(buf []byte) (int, error) {
 
 // WriteHeader sends the headers, with the enforced code (the code in argument
 // is always ignored), if it hasn't already been done.
-func (r *codeModifierWithoutCloseNotify) WriteHeader(code int) {
+func (r *codeModifierWithoutCloseNotify) WriteHeader(_ int) {
 	if r.headerSent {
 		return
 	}

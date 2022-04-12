@@ -194,7 +194,7 @@ func TestNewResponseRecorder(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			rec := newCodeModifier(context.Background(), test.rw, 0)
+			rec := newCodeModifier(test.rw, 0)
 			assert.IsType(t, rec, test.expected)
 		})
 	}
