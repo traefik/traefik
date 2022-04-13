@@ -15,6 +15,8 @@ const (
 	schemeHTTPS = "https"
 )
 
+var redirectRegex = regexp.MustCompile(`^(https?):\/\/(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`)
+
 type redirect struct {
 	next        http.Handler
 	regex       *regexp.Regexp

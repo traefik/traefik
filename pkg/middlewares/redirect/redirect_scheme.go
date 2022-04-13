@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net"
 	"net/http"
-	"regexp"
 	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -17,8 +16,6 @@ const (
 	typeSchemeName        = "RedirectScheme"
 	schemeRedirectPattern = `^(https?:\/\/)?(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
 )
-
-var schemeRedirectRegex = regexp.MustCompile(`^(https?):\/\/(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`)
 
 // NewRedirectScheme creates a new RedirectScheme middleware.
 func NewRedirectScheme(ctx context.Context, next http.Handler, conf dynamic.RedirectScheme, name string) (http.Handler, error) {
@@ -48,7 +45,7 @@ func rawURLScheme(req *http.Request) string {
 	}
 	uri := req.RequestURI
 
-	if match := schemeRedirectRegex.FindStringSubmatch(req.RequestURI); len(match) > 0 {
+	if match := redirectRegex.FindStringSubmatch(req.RequestURI); len(match) > 0 {
 		scheme = match[1]
 
 		if len(match[2]) > 0 {
