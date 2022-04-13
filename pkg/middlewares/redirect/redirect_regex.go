@@ -27,7 +27,7 @@ func rawURL(req *http.Request) string {
 	port := ""
 	uri := req.RequestURI
 
-	if match := redirectRegex.FindStringSubmatch(req.RequestURI); len(match) > 0 {
+	if match := uriRegexp.FindStringSubmatch(req.RequestURI); len(match) > 0 {
 		scheme = match[1]
 
 		if len(match[2]) > 0 {
