@@ -29,7 +29,7 @@ Explain us in which conditions you encountered the issue, what is your context.
 Remain as clear and concise as possible
 
 Take time to polish the format of your message so we'll enjoy reading it and working on it. 
-Help the readers focus on what matters, and help them understand the structure of your message (see the [Github Markdown Syntax](https://help.github.com/articles/github-flavored-markdown)).
+Help the readers focus on what matters, and help them understand the structure of your message (see the [GitHub Markdown Syntax](https://docs.github.com/en/get-started/writing-on-github)).
 
 ## Feature Request
 
