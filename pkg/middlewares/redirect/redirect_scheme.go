@@ -16,6 +16,7 @@ import (
 const (
 	typeSchemeName      = "RedirectScheme"
 	schemeRedirectRegex = `^(https?:\/\/)?(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
+	schemeRedirectRegex = `^(https?):\/\/(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
 )
 
 // NewRedirectScheme creates a new RedirectScheme middleware.
