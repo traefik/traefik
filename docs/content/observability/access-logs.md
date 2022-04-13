@@ -133,7 +133,7 @@ Each field can be set to:
 - `drop` to drop the value
 - `redact` to replace the value with "redacted"
 
-The `defaultMode` for `accessLog.fields` is `keep`.
+The `defaultMode` for `fields.names` is `keep`.
 
 The `defaultMode` for `fields.headers` is `drop`.
 
