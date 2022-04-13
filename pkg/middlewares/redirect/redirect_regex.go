@@ -3,7 +3,6 @@ package redirect
 import (
 	"context"
 	"net/http"
-	"regexp"
 	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -11,9 +10,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 )
 
-const (
-	typeRegexName = "RedirectRegex"
-)
+const typeRegexName = "RedirectRegex"
 
 // NewRedirectRegex creates a redirect middleware.
 func NewRedirectRegex(ctx context.Context, next http.Handler, conf dynamic.RedirectRegex, name string) (http.Handler, error) {
@@ -30,10 +27,7 @@ func rawURL(req *http.Request) string {
 	port := ""
 	uri := req.RequestURI
 
-	schemeRegex := `^(https?):\/\/(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
-	re, _ := regexp.Compile(schemeRegex)
-	if re.Match([]byte(req.RequestURI)) {
-		match := re.FindStringSubmatch(req.RequestURI)
+	if match := uriRegexp.FindStringSubmatch(req.RequestURI); len(match) > 0 {
 		scheme = match[1]
 
 		if len(match[2]) > 0 {
