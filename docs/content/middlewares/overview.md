@@ -1,3 +1,8 @@
+---
+title: "Traefik Proxy Middleware Overview"
+description: "There are several available middleware in Traefik Proxy used to modify requests or headers, take charge of redirections, add authentication, and so on."
+---
+
 # Middlewares
 
 Tweaking the Request

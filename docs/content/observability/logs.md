@@ -1,3 +1,8 @@
+---
+title: "Traefik Logs Documentation"
+description: "Logs are a key part of observability in Traefik Proxy. Read the technical documentation to learn their configurations, rotations, and time zones."
+---
+
 # Logs
 
 Reading What's Happening

@@ -1,3 +1,8 @@
+---
+title: "Routing & Load Balancing Providers: Rancher"
+description: "Traefik Proxy creates a corresponding service and router for each Rancher Service. Read the full documentation to learn more."
+---
+
 # Traefik & Rancher
 
 A Story of Labels, Services & Containers

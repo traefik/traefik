@@ -1,3 +1,8 @@
+---
+title: "Traefik Docker Documentation"
+description: "Learn how to achieve configuration discovery in Traefik through Docker. Read the technical documentation."
+---
+
 # Traefik & Docker
 
 A Story of Labels & Containers

@@ -1,4 +1,4 @@
-site_name: Traefik
+site_name: Traefik Docs
 site_description: Traefik Documentation
 site_author: traefik.io
 site_url: https://doc.traefik.io/traefik
@@ -42,6 +42,7 @@ plugins:
 # https://squidfunk.github.io/mkdocs-material/extensions/admonition/
 # https://facelessuser.github.io/pymdown-extensions/
 markdown_extensions:
+  - meta
   - attr_list
   - admonition
   - footnotes
