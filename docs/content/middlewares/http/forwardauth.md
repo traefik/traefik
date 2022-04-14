@@ -1,3 +1,8 @@
+---
+title: Traefik ForwardAuth Documentation | Traefik Docs
+description: In Traefik Proxy, the HTTP ForwardAuth middleware delegates authentication to an external Service. Read the technical documentation.
+---
+
 # ForwardAuth
 
 Using an External Service to Forward Authentication
