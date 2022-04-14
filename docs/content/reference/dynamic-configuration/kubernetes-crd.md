@@ -1,3 +1,8 @@
+---
+title: "Traefik Kubernetes CRD Documentation"
+description: "Learn about the definitions, resources, and RBAC of dynamic configuration with Kubernetes CRD in Traefik Proxy. Read the technical documentation."
+---
+
 # Kubernetes Configuration Reference
 
 Dynamic configuration with Kubernetes Custom Resource

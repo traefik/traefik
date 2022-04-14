@@ -1,3 +1,8 @@
+---
+title: "Traefik BasicAuth Documentation"
+description: "The HTTP basic authentication (BasicAuth) middleware in Traefik Proxy restricts access to your Services to known users. Read the technical documentation."
+---
+
 # BasicAuth
 
 Adding Basic Authentication

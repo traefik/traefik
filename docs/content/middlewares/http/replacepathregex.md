@@ -1,3 +1,8 @@
+---
+title: "Traefik ReplacePathRegex Documentation"
+description: "In Traefik Proxy's HTTP middleware, ReplacePathRegex updates paths before forwarding requests, using a regex. Read the technical documentation."
+---
+
 # ReplacePathRegex
 
 Updating the Path Before Forwarding the Request (Using a Regex)

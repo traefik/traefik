@@ -1,3 +1,8 @@
+---
+title: "Traefik InFlightReq Documentation"
+description: "Traefik Proxy's HTTP middleware lets you limit the number of simultaneous in-flight requests. Read the technical documentation."
+---
+
 # InFlightReq
 
 Limiting the Number of Simultaneous In-Flight Requests
