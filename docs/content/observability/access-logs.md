@@ -135,9 +135,6 @@ Each field can be set to:
 
 The `defaultMode` for `fields.headers` is `drop`.
 
-  [accessLog.fields]
-    defaultMode = "keep"
-
 ```yaml tab="File (YAML)"
 # Limiting the Logs to Specific Fields
 accessLog:
@@ -161,6 +158,9 @@ accessLog:
   filePath = "/path/to/access.log"
   format = "json"
 
+  [accessLog.fields]
+    defaultMode = "keep"
+    
     [accessLog.fields.names]
       "ClientUsername" = "drop"
 
