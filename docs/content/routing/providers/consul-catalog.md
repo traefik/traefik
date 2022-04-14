@@ -1,3 +1,8 @@
+---
+title: "Traefik Consul Catalog Routing"
+description: "Learn how to use Consul Catalog as a provider for routing configurations in Traefik Proxy. Read the technical documentation."
+---
+
 # Traefik & Consul Catalog
 
 A Story of Tags, Services & Instances

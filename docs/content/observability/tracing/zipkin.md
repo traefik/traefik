@@ -1,3 +1,8 @@
+---
+title: "Traefik Zipkin Documentation"
+description: "Traefik supports several tracing backends, including Zipkin. Learn how to implement it for observability in Traefik Proxy. Read the technical documentation."
+---
+
 # Zipkin
 
 To enable the Zipkin tracer:

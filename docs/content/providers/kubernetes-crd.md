@@ -1,3 +1,8 @@
+---
+title: "Kubernetes IngressRoute & Traefik CRD"
+description: "The Traefik team developed a Custom Resource Definition (CRD) for an IngressRoute type, to provide a better way to configure access to a Kubernetes cluster."
+---
+
 # Traefik & Kubernetes
 
 The Kubernetes Ingress Controller, The Custom Resource Way.
