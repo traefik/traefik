@@ -21,6 +21,7 @@ type TCPConfiguration struct {
 type TCPService struct {
 	LoadBalancer *TCPServersLoadBalancer `json:"loadBalancer,omitempty" toml:"loadBalancer,omitempty" yaml:"loadBalancer,omitempty" export:"true"`
 	Weighted     *TCPWeightedRoundRobin  `json:"weighted,omitempty" toml:"weighted,omitempty" yaml:"weighted,omitempty" label:"-" export:"true"`
+	StartTLS     string                  `json:"startTLS,omitempty" toml:"startTLS,omitempty" yaml:"startTLS,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
