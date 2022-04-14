@@ -23,9 +23,16 @@ RUN curl -sfL https://gist.githubusercontent.com/traefiker/6d7ac019c11d011e4f131
 
 WORKDIR /go/src/github.com/traefik/traefik
 
+# CVE-2022-24765
+ARG VOLUME_TARGET="${VOLUME_TARGET}"
+
+RUN git config --global --add safe.directory /go/src/github.com/traefik/traefik
+RUN git config --global --add safe.directory "${VOLUME_TARGET}"
+
 # Download go modules
 COPY go.mod .
 COPY go.sum .
 RUN GO111MODULE=on GOPROXY=https://proxy.golang.org go mod download
 
 COPY . /go/src/github.com/traefik/traefik
+
