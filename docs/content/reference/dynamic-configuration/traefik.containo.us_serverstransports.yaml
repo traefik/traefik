@@ -19,40 +19,40 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: ServersTransport is a specification for a ServersTransport resource.
+        description: "ServersTransport is a specification for a ServersTransport resource."
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
+            description: "'APIVersion defines the versioned schema of this representation"
               of an object. Servers should convert recognized schemas to the latest
               internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
+            description: "'Kind is a string value representing the REST resource this"
               object represents. Servers may infer this from the endpoint the client
               submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
           spec:
-            description: ServersTransportSpec options to configure communication between
+            description: "ServersTransportSpec options to configure communication between"
               Traefik and the servers.
             properties:
               certificatesSecrets:
-                description: Certificates for mTLS.
+                description: "Certificates for mTLS."
                 items:
                   type: string
                 type: array
               disableHTTP2:
-                description: Disable HTTP/2 for connections with backend servers.
+                description: "Disable HTTP/2 for connections with backend servers."
                 type: boolean
               forwardingTimeouts:
-                description: Timeouts for requests forwarded to the backend servers.
+                description: "Timeouts for requests forwarded to the backend servers."
                 properties:
                   dialTimeout:
                     anyOf:
                     - type: integer
                     - type: string
-                    description: DialTimeout is the amount of time to wait until a
+                    description: "DialTimeout is the amount of time to wait until a"
                       connection to a backend server can be established. If zero,
                       no timeout exists.
                     x-kubernetes-int-or-string: true
@@ -60,7 +60,7 @@ spec:
                     anyOf:
                     - type: integer
                     - type: string
-                    description: IdleConnTimeout is the maximum period for which an
+                    description: "IdleConnTimeout is the maximum period for which an"
                       idle HTTP keep-alive connection will remain open before closing
                       itself.
                     x-kubernetes-int-or-string: true
@@ -68,14 +68,14 @@ spec:
                     anyOf:
                     - type: integer
                     - type: string
-                    description: PingTimeout is the timeout after which the HTTP/2
+                    description: "PingTimeout is the timeout after which the HTTP/2"
                       connection will be closed if a response to ping is not received.
                     x-kubernetes-int-or-string: true
                   readIdleTimeout:
                     anyOf:
                     - type: integer
                     - type: string
-                    description: ReadIdleTimeout is the timeout after which a health
+                    description: "ReadIdleTimeout is the timeout after which a health"
                       check using ping frame will be carried out if no frame is received
                       on the HTTP/2 connection. If zero, no health check is performed.
                     x-kubernetes-int-or-string: true
@@ -83,29 +83,29 @@ spec:
                     anyOf:
                     - type: integer
                     - type: string
-                    description: ResponseHeaderTimeout is the amount of time to wait
+                    description: "ResponseHeaderTimeout is the amount of time to wait"
                       for a server's response headers after fully writing the request
                       (including its body, if any). If zero, no timeout exists.
                     x-kubernetes-int-or-string: true
                 type: object
               insecureSkipVerify:
-                description: Disable SSL certificate verification.
+                description: "Disable SSL certificate verification."
                 type: boolean
               maxIdleConnsPerHost:
-                description: If non-zero, controls the maximum idle (keep-alive) to
+                description: "If non-zero, controls the maximum idle (keep-alive) to"
                   keep per-host. If zero, DefaultMaxIdleConnsPerHost is used.
                 type: integer
               peerCertURI:
-                description: URI used to match against SAN URI during the peer certificate
+                description: "URI used to match against SAN URI during the peer certificate"
                   verification.
                 type: string
               rootCAsSecrets:
-                description: Add cert file for self-signed certificate.
+                description: "Add cert file for self-signed certificate."
                 items:
                   type: string
                 type: array
               serverName:
-                description: ServerName used to contact the server.
+                description: "ServerName used to contact the server."
                 type: string
             type: object
         required:

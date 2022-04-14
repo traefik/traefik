@@ -19,22 +19,22 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: IngressRoute is an Ingress CRD specification.
+        description: "IngressRoute is an Ingress CRD specification."
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
+            description: "'APIVersion defines the versioned schema of this representation"
               of an object. Servers should convert recognized schemas to the latest
               internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
+            description: "'Kind is a string value representing the REST resource this"
               object represents. Servers may infer this from the endpoint the client
               submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
           spec:
-            description: IngressRouteSpec is a specification for a IngressRouteSpec
+            description: "IngressRouteSpec is a specification for a IngressRouteSpec"
               resource.
             properties:
               entryPoints:
@@ -43,7 +43,7 @@ spec:
                 type: array
               routes:
                 items:
-                  description: Route contains the set of routes.
+                  description: "Route contains the set of routes."
                   properties:
                     kind:
                       enum:
@@ -53,7 +53,7 @@ spec:
                       type: string
                     middlewares:
                       items:
-                        description: MiddlewareRef is a ref to the Middleware resources.
+                        description: "MiddlewareRef is a ref to the Middleware resources."
                         properties:
                           name:
                             type: string
@@ -67,7 +67,7 @@ spec:
                       type: integer
                     services:
                       items:
-                        description: Service defines an upstream to proxy traffic.
+                        description: "Service defines an upstream to proxy traffic."
                         properties:
                           kind:
                             enum:
@@ -75,7 +75,7 @@ spec:
                             - TraefikService
                             type: string
                           name:
-                            description: Name is a reference to a Kubernetes Service
+                            description: "Name is a reference to a Kubernetes Service"
                               object (for a load-balancer of servers), or to a TraefikService
                               object (service load-balancer, mirroring, etc). The
                               differentiation between the two is specified in the
@@ -91,7 +91,7 @@ spec:
                             - type: string
                             x-kubernetes-int-or-string: true
                           responseForwarding:
-                            description: ResponseForwarding holds configuration for
+                            description: "ResponseForwarding holds configuration for"
                               the forward of the response.
                             properties:
                               flushInterval:
@@ -102,10 +102,10 @@ spec:
                           serversTransport:
                             type: string
                           sticky:
-                            description: Sticky holds the sticky configuration.
+                            description: "Sticky holds the sticky configuration."
                             properties:
                               cookie:
-                                description: Cookie holds the sticky configuration
+                                description: "Cookie holds the sticky configuration"
                                   based on cookie.
                                 properties:
                                   httpOnly:
@@ -121,7 +121,7 @@ spec:
                           strategy:
                             type: string
                           weight:
-                            description: Weight should only be specified when Name
+                            description: "Weight should only be specified when Name"
                               references a TraefikService object (and to be precise,
                               one that embeds a Weighted Round Robin).
                             type: integer
@@ -135,7 +135,7 @@ spec:
                   type: object
                 type: array
               tls:
-                description: "TLS contains the TLS certificates configuration of the
+                description: ""TLS contains the TLS certificates configuration of the"
                   routes. To enable Let's Encrypt, use an empty TLS struct, e.g. in
                   YAML: \n \t tls: {} # inline format \n \t tls: \t   secretName:
                   # block format"
@@ -144,7 +144,7 @@ spec:
                     type: string
                   domains:
                     items:
-                      description: Domain holds a domain name with SANs.
+                      description: "Domain holds a domain name with SANs."
                       properties:
                         main:
                           type: string
@@ -155,7 +155,7 @@ spec:
                       type: object
                     type: array
                   options:
-                    description: Options is a reference to a TLSOption, that specifies
+                    description: "Options is a reference to a TLSOption, that specifies"
                       the parameters of the TLS connection.
                     properties:
                       name:
@@ -166,11 +166,11 @@ spec:
                     - name
                     type: object
                   secretName:
-                    description: SecretName is the name of the referenced Kubernetes
+                    description: "SecretName is the name of the referenced Kubernetes"
                       Secret to specify the certificate details.
                     type: string
                   store:
-                    description: Store is a reference to a TLSStore, that specifies
+                    description: "Store is a reference to a TLSStore, that specifies"
                       the parameters of the TLS store.
                     properties:
                       name:

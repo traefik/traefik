@@ -19,22 +19,22 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: TLSOption is a specification for a TLSOption resource.
+        description: "TLSOption is a specification for a TLSOption resource."
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
+            description: "'APIVersion defines the versioned schema of this representation"
               of an object. Servers should convert recognized schemas to the latest
               internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
+            description: "'Kind is a string value representing the REST resource this"
               object represents. Servers may infer this from the endpoint the client
               submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
           spec:
-            description: TLSOptionSpec configures TLS for an entry point.
+            description: "TLSOptionSpec configures TLS for an entry point."
             properties:
               alpnProtocols:
                 items:
@@ -45,11 +45,11 @@ spec:
                   type: string
                 type: array
               clientAuth:
-                description: ClientAuth defines the parameters of the client authentication
+                description: "ClientAuth defines the parameters of the client authentication"
                   part of the TLS connection, if any.
                 properties:
                   clientAuthType:
-                    description: ClientAuthType defines the client authentication
+                    description: "ClientAuthType defines the client authentication"
                       type to apply.
                     enum:
                     - NoClientCert
@@ -59,7 +59,7 @@ spec:
                     - RequireAndVerifyClientCert
                     type: string
                   secretNames:
-                    description: SecretName is the name of the referenced Kubernetes
+                    description: "SecretName is the name of the referenced Kubernetes"
                       Secret to specify the certificate details.
                     items:
                       type: string

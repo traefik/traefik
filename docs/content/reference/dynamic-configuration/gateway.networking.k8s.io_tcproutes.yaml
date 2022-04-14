@@ -25,27 +25,27 @@ spec:
     name: v1alpha2
     schema:
       openAPIV3Schema:
-        description: TCPRoute provides a way to route TCP requests. When combined
+        description: "TCPRoute provides a way to route TCP requests. When combined"
           with a Gateway listener, it can be used to forward connections on the port
           specified by the listener to a set of backends specified by the TCPRoute.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
+            description: "'APIVersion defines the versioned schema of this representation"
               of an object. Servers should convert recognized schemas to the latest
               internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
+            description: "'Kind is a string value representing the REST resource this"
               object represents. Servers may infer this from the endpoint the client
               submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
           spec:
-            description: Spec defines the desired state of TCPRoute.
+            description: "Spec defines the desired state of TCPRoute."
             properties:
               parentRefs:
-                description: "ParentRefs references the resources (usually Gateways)
+                description: ""ParentRefs references the resources (usually Gateways)"
                   that a Route wants to be attached to. Note that the referenced parent
                   resource needs to allow this for the attachment to be complete.
                   For Gateways, that means the Gateway needs to allow attachment from
@@ -61,7 +61,7 @@ spec:
                   is the case, the list of routes attached to those resources should
                   also be merged."
                 items:
-                  description: "ParentRef identifies an API object (usually a Gateway)
+                  description: ""ParentRef identifies an API object (usually a Gateway)"
                     that can be considered a parent of this resource (usually a route).
                     The only kind of parent resource with \"Core\" support is Gateway.
                     This API may be extended in the future to support additional kinds
@@ -74,27 +74,27 @@ spec:
                   properties:
                     group:
                       default: gateway.networking.k8s.io
-                      description: "Group is the group of the referent. \n Support:
+                      description: ""Group is the group of the referent. \n Support:"
                         Core"
                       maxLength: 253
                       pattern: ^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
                       type: string
                     kind:
                       default: Gateway
-                      description: "Kind is kind of the referent. \n Support: Core
+                      description: ""Kind is kind of the referent. \n Support: Core"
                         (Gateway) Support: Custom (Other Resources)"
                       maxLength: 63
                       minLength: 1
                       pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
                       type: string
                     name:
-                      description: "Name is the name of the referent. \n Support:
+                      description: ""Name is the name of the referent. \n Support:"
                         Core"
                       maxLength: 253
                       minLength: 1
                       type: string
                     namespace:
-                      description: "Namespace is the namespace of the referent. When
+                      description: ""Namespace is the namespace of the referent. When"
                         unspecified (or empty string), this refers to the local namespace
                         of the Route. \n Support: Core"
                       maxLength: 63
@@ -102,7 +102,7 @@ spec:
                       pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                       type: string
                     sectionName:
-                      description: "SectionName is the name of a section within the
+                      description: ""SectionName is the name of a section within the"
                         target resource. In the following resources, SectionName is
                         interpreted as the following: \n * Gateway: Listener Name
                         \n Implementations MAY choose to support attaching Routes
@@ -128,12 +128,12 @@ spec:
                 maxItems: 32
                 type: array
               rules:
-                description: Rules are a list of TCP matchers and actions.
+                description: "Rules are a list of TCP matchers and actions."
                 items:
-                  description: TCPRouteRule is the configuration for a given rule.
+                  description: "TCPRouteRule is the configuration for a given rule."
                   properties:
                     backendRefs:
-                      description: "BackendRefs defines the backend(s) where matching
+                      description: ""BackendRefs defines the backend(s) where matching"
                         requests should be sent. If unspecified or invalid (refers
                         to a non-existent resource or a Service with no endpoints),
                         the underlying implementation MUST actively reject connection
@@ -143,7 +143,7 @@ spec:
                         \n Support: Core for Kubernetes Service Support: Custom for
                         any other resource \n Support for weight: Extended"
                       items:
-                        description: "BackendRef defines how a Route should forward
+                        description: ""BackendRef defines how a Route should forward"
                           a request to a Kubernetes resource. \n Note that when a
                           namespace is specified, a ReferencePolicy object is required
                           in the referent namespace to allow that namespace's owner
@@ -152,7 +152,7 @@ spec:
                         properties:
                           group:
                             default: ""
-                            description: Group is the group of the referent. For example,
+                            description: "Group is the group of the referent. For example,"
                               "networking.k8s.io". When unspecified (empty string),
                               core API group is inferred.
                             maxLength: 253
@@ -160,19 +160,19 @@ spec:
                             type: string
                           kind:
                             default: Service
-                            description: Kind is kind of the referent. For example
+                            description: "Kind is kind of the referent. For example"
                               "HTTPRoute" or "Service".
                             maxLength: 63
                             minLength: 1
                             pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
                             type: string
                           name:
-                            description: Name is the name of the referent.
+                            description: "Name is the name of the referent."
                             maxLength: 253
                             minLength: 1
                             type: string
                           namespace:
-                            description: "Namespace is the namespace of the backend.
+                            description: ""Namespace is the namespace of the backend."
                               When unspecified, the local namespace is inferred. \n
                               Note that when a namespace is specified, a ReferencePolicy
                               object is required in the referent namespace to allow
@@ -184,7 +184,7 @@ spec:
                             pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                             type: string
                           port:
-                            description: Port specifies the destination port number
+                            description: "Port specifies the destination port number"
                               to use for this resource. Port is required when the
                               referent is a Kubernetes Service. For other resources,
                               destination port might be derived from the referent
@@ -195,7 +195,7 @@ spec:
                             type: integer
                           weight:
                             default: 1
-                            description: "Weight specifies the proportion of requests
+                            description: ""Weight specifies the proportion of requests"
                               forwarded to the referenced backend. This is computed
                               as weight/(sum of all weights in this BackendRefs list).
                               For non-zero values, there may be some epsilon from
@@ -226,10 +226,10 @@ spec:
             - rules
             type: object
           status:
-            description: Status defines the current state of TCPRoute.
+            description: "Status defines the current state of TCPRoute."
             properties:
               parents:
-                description: "Parents is a list of parent resources (usually Gateways)
+                description: ""Parents is a list of parent resources (usually Gateways)"
                   that are associated with the route, and the status of the route
                   with respect to each parent. When this route attaches to a parent,
                   the controller that manages the parent must add an entry to this
@@ -242,11 +242,11 @@ spec:
                   in this list. An empty list means the route has not been attached
                   to any Gateway."
                 items:
-                  description: RouteParentStatus describes the status of a route with
+                  description: "RouteParentStatus describes the status of a route with"
                     respect to an associated Parent.
                   properties:
                     conditions:
-                      description: "Conditions describes the status of the route with
+                      description: ""Conditions describes the status of the route with"
                         respect to the Gateway. Note that the route's availability
                         is also subject to the Gateway's own status conditions and
                         listener status. \n If the Route's ParentRef specifies an
@@ -263,7 +263,7 @@ spec:
                         not support. * The Route is in a namespace the the controller
                         does not have access to."
                       items:
-                        description: "Condition contains details for one aspect of
+                        description: ""Condition contains details for one aspect of"
                           the current state of this API Resource. --- This struct
                           is intended for direct use as an array at the field path
                           .status.conditions.  For example, type FooStatus struct{
@@ -276,7 +276,7 @@ spec:
                           \n     // other fields }"
                         properties:
                           lastTransitionTime:
-                            description: lastTransitionTime is the last time the condition
+                            description: "lastTransitionTime is the last time the condition"
                               transitioned from one status to another. This should
                               be when the underlying condition changed.  If that is
                               not known, then using the time when the API field changed
@@ -284,12 +284,12 @@ spec:
                             format: date-time
                             type: string
                           message:
-                            description: message is a human readable message indicating
+                            description: "message is a human readable message indicating"
                               details about the transition. This may be an empty string.
                             maxLength: 32768
                             type: string
                           observedGeneration:
-                            description: observedGeneration represents the .metadata.generation
+                            description: "observedGeneration represents the .metadata.generation"
                               that the condition was set based upon. For instance,
                               if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration
                               is 9, the condition is out of date with respect to the
@@ -298,7 +298,7 @@ spec:
                             minimum: 0
                             type: integer
                           reason:
-                            description: reason contains a programmatic identifier
+                            description: "reason contains a programmatic identifier"
                               indicating the reason for the condition's last transition.
                               Producers of specific condition types may define expected
                               values and meanings for this field, and whether the
@@ -309,7 +309,7 @@ spec:
                             pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
                             type: string
                           status:
-                            description: status of the condition, one of True, False,
+                            description: "status of the condition, one of True, False,"
                               Unknown.
                             enum:
                             - "True"
@@ -317,7 +317,7 @@ spec:
                             - Unknown
                             type: string
                           type:
-                            description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                            description: "type of condition in CamelCase or in foo.example.com/CamelCase."
                               --- Many .condition.type values are consistent across
                               resources like Available, but because arbitrary conditions
                               can be useful (see .node.status.conditions), the ability
@@ -340,7 +340,7 @@ spec:
                       - type
                       x-kubernetes-list-type: map
                     controllerName:
-                      description: "ControllerName is a domain/path string that indicates
+                      description: ""ControllerName is a domain/path string that indicates"
                         the name of the controller that wrote this status. This corresponds
                         with the controllerName field on GatewayClass. \n Example:
                         \"example.net/gateway-controller\". \n The format of this
@@ -351,32 +351,32 @@ spec:
                       pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*\/[A-Za-z0-9\/\-._~%!$&'()*+,;=:]+$
                       type: string
                     parentRef:
-                      description: ParentRef corresponds with a ParentRef in the spec
+                      description: "ParentRef corresponds with a ParentRef in the spec"
                         that this RouteParentStatus struct describes the status of.
                       properties:
                         group:
                           default: gateway.networking.k8s.io
-                          description: "Group is the group of the referent. \n Support:
+                          description: ""Group is the group of the referent. \n Support:"
                             Core"
                           maxLength: 253
                           pattern: ^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
                           type: string
                         kind:
                           default: Gateway
-                          description: "Kind is kind of the referent. \n Support:
+                          description: ""Kind is kind of the referent. \n Support:"
                             Core (Gateway) Support: Custom (Other Resources)"
                           maxLength: 63
                           minLength: 1
                           pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
                           type: string
                         name:
-                          description: "Name is the name of the referent. \n Support:
+                          description: ""Name is the name of the referent. \n Support:"
                             Core"
                           maxLength: 253
                           minLength: 1
                           type: string
                         namespace:
-                          description: "Namespace is the namespace of the referent.
+                          description: ""Namespace is the namespace of the referent."
                             When unspecified (or empty string), this refers to the
                             local namespace of the Route. \n Support: Core"
                           maxLength: 63
@@ -384,7 +384,7 @@ spec:
                           pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                           type: string
                         sectionName:
-                          description: "SectionName is the name of a section within
+                          description: ""SectionName is the name of a section within"
                             the target resource. In the following resources, SectionName
                             is interpreted as the following: \n * Gateway: Listener
                             Name \n Implementations MAY choose to support attaching
