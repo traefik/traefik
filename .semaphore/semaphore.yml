@@ -18,6 +18,7 @@ auto_cancel:
 global_job_config:
   prologue:
     commands:
+      - git config --global --add safe.directory /home/semaphore/go/src/github.com/traefik/traefik
       - curl -sSfL https://raw.githubusercontent.com/ldez/semgo/master/godownloader.sh | sudo sh -s -- -b "/usr/local/bin"
       - sudo semgo go1.17
       - export "GOPATH=$(go env GOPATH)"
