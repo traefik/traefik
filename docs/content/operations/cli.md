@@ -1,3 +1,8 @@
+---
+title: "Traefik CLI Documentation"
+description: "Learn the basics of the Traefik Proxy command line interface (CLI). Read the technical documentation."
+---
+
 # CLI
 
 The Traefik Command Line
