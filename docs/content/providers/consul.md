@@ -1,3 +1,8 @@
+---
+title: "Traefik Consul Documentation"
+description: "Use Consul as a provider for configuration discovery in Traefik Proxy. Automate and store your configurations with Consul. Read the technical documentation."
+---
+
 # Traefik & Consul
 
 A Story of KV store & Containers

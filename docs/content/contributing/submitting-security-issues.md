@@ -1,3 +1,8 @@
+---
+title: "Traefik Security Documentation"
+description: "Security is a key part of Traefik Proxy. Read the technical documentation to learn about security advisories, CVE, and how to report a vulnerability."
+---
+
 # Security
 
 ## Security Advisories

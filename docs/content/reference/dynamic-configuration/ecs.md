@@ -1,3 +1,8 @@
+---
+title: "Traefik AWS ECS Configuration Documentation"
+description: "Learn how to do dynamic configuration in Traefik Proxy with AWS ECS. Read the technical documentation."
+---
+
 # ECS Configuration Reference
 
 Dynamic configuration with ECS provider

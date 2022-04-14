@@ -19,32 +19,32 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: MiddlewareTCP is a specification for a MiddlewareTCP resource.
+        description: "MiddlewareTCP is a specification for a MiddlewareTCP resource."
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
+            description: "'APIVersion defines the versioned schema of this representation"
               of an object. Servers should convert recognized schemas to the latest
               internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
+            description: "'Kind is a string value representing the REST resource this"
               object represents. Servers may infer this from the endpoint the client
               submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
           spec:
-            description: MiddlewareTCPSpec holds the MiddlewareTCP configuration.
+            description: "MiddlewareTCPSpec holds the MiddlewareTCP configuration."
             properties:
               inFlightConn:
-                description: TCPInFlightConn holds the TCP in flight connection configuration.
+                description: "TCPInFlightConn holds the TCP in flight connection configuration."
                 properties:
                   amount:
                     format: int64
                     type: integer
                 type: object
               ipWhiteList:
-                description: TCPIPWhiteList holds the TCP ip white list configuration.
+                description: "TCPIPWhiteList holds the TCP ip white list configuration."
                 properties:
                   sourceRange:
                     items:

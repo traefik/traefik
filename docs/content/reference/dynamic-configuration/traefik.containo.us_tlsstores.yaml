@@ -19,29 +19,29 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: TLSStore is a specification for a TLSStore resource.
+        description: "TLSStore is a specification for a TLSStore resource."
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
+            description: "'APIVersion defines the versioned schema of this representation"
               of an object. Servers should convert recognized schemas to the latest
               internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
+            description: "'Kind is a string value representing the REST resource this"
               object represents. Servers may infer this from the endpoint the client
               submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
           spec:
-            description: TLSStoreSpec configures a TLSStore resource.
+            description: "TLSStoreSpec configures a TLSStore resource."
             properties:
               defaultCertificate:
-                description: DefaultCertificate holds a secret name for the TLSOption
+                description: "DefaultCertificate holds a secret name for the TLSOption"
                   resource.
                 properties:
                   secretName:
-                    description: SecretName is the name of the referenced Kubernetes
+                    description: "SecretName is the name of the referenced Kubernetes"
                       Secret to specify the certificate details.
                     type: string
                 required:

@@ -19,31 +19,31 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Middleware is a specification for a Middleware resource.
+        description: "Middleware is a specification for a Middleware resource."
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
+            description: "'APIVersion defines the versioned schema of this representation"
               of an object. Servers should convert recognized schemas to the latest
               internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
+            description: "'Kind is a string value representing the REST resource this"
               object represents. Servers may infer this from the endpoint the client
               submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
           spec:
-            description: MiddlewareSpec holds the Middleware configuration.
+            description: "MiddlewareSpec holds the Middleware configuration."
             properties:
               addPrefix:
-                description: AddPrefix holds the AddPrefix configuration.
+                description: "AddPrefix holds the AddPrefix configuration."
                 properties:
                   prefix:
                     type: string
                 type: object
               basicAuth:
-                description: BasicAuth holds the HTTP basic authentication configuration.
+                description: "BasicAuth holds the HTTP basic authentication configuration."
                 properties:
                   headerField:
                     type: string
@@ -55,7 +55,7 @@ spec:
                     type: string
                 type: object
               buffering:
-                description: Buffering holds the request/response buffering configuration.
+                description: "Buffering holds the request/response buffering configuration."
                 properties:
                   maxRequestBodyBytes:
                     format: int64
@@ -73,11 +73,11 @@ spec:
                     type: string
                 type: object
               chain:
-                description: Chain holds a chain of middlewares.
+                description: "Chain holds a chain of middlewares."
                 properties:
                   middlewares:
                     items:
-                      description: MiddlewareRef is a ref to the Middleware resources.
+                      description: "MiddlewareRef is a ref to the Middleware resources."
                       properties:
                         name:
                           type: string
@@ -89,13 +89,13 @@ spec:
                     type: array
                 type: object
               circuitBreaker:
-                description: CircuitBreaker holds the circuit breaker configuration.
+                description: "CircuitBreaker holds the circuit breaker configuration."
                 properties:
                   expression:
                     type: string
                 type: object
               compress:
-                description: Compress holds the compress configuration.
+                description: "Compress holds the compress configuration."
                 properties:
                   excludedContentTypes:
                     items:
@@ -105,7 +105,7 @@ spec:
                     type: integer
                 type: object
               contentType:
-                description: ContentType middleware - or rather its unique `autoDetect`
+                description: "ContentType middleware - or rather its unique `autoDetect`"
                   option - specifies whether to let the `Content-Type` header, if
                   it has not been set by the backend, be automatically set to a value
                   derived from the contents of the response. As a proxy, the default
@@ -120,7 +120,7 @@ spec:
                     type: boolean
                 type: object
               digestAuth:
-                description: DigestAuth holds the Digest HTTP authentication configuration.
+                description: "DigestAuth holds the Digest HTTP authentication configuration."
                 properties:
                   headerField:
                     type: string
@@ -132,12 +132,12 @@ spec:
                     type: string
                 type: object
               errors:
-                description: ErrorPage holds the custom error page configuration.
+                description: "ErrorPage holds the custom error page configuration."
                 properties:
                   query:
                     type: string
                   service:
-                    description: Service defines an upstream to proxy traffic.
+                    description: "Service defines an upstream to proxy traffic."
                     properties:
                       kind:
                         enum:
@@ -145,7 +145,7 @@ spec:
                         - TraefikService
                         type: string
                       name:
-                        description: Name is a reference to a Kubernetes Service object
+                        description: "Name is a reference to a Kubernetes Service object"
                           (for a load-balancer of servers), or to a TraefikService
                           object (service load-balancer, mirroring, etc). The differentiation
                           between the two is specified in the Kind field.
@@ -160,7 +160,7 @@ spec:
                         - type: string
                         x-kubernetes-int-or-string: true
                       responseForwarding:
-                        description: ResponseForwarding holds configuration for the
+                        description: "ResponseForwarding holds configuration for the"
                           forward of the response.
                         properties:
                           flushInterval:
@@ -171,10 +171,10 @@ spec:
                       serversTransport:
                         type: string
                       sticky:
-                        description: Sticky holds the sticky configuration.
+                        description: "Sticky holds the sticky configuration."
                         properties:
                           cookie:
-                            description: Cookie holds the sticky configuration based
+                            description: "Cookie holds the sticky configuration based"
                               on cookie.
                             properties:
                               httpOnly:
@@ -190,7 +190,7 @@ spec:
                       strategy:
                         type: string
                       weight:
-                        description: Weight should only be specified when Name references
+                        description: "Weight should only be specified when Name references"
                           a TraefikService object (and to be precise, one that embeds
                           a Weighted Round Robin).
                         type: integer
@@ -203,7 +203,7 @@ spec:
                     type: array
                 type: object
               forwardAuth:
-                description: ForwardAuth holds the http forward authentication configuration.
+                description: "ForwardAuth holds the http forward authentication configuration."
                 properties:
                   address:
                     type: string
@@ -218,7 +218,7 @@ spec:
                   authResponseHeadersRegex:
                     type: string
                   tls:
-                    description: ClientTLS holds TLS specific configurations as client.
+                    description: "ClientTLS holds TLS specific configurations as client."
                     properties:
                       caOptional:
                         type: boolean
@@ -233,49 +233,49 @@ spec:
                     type: boolean
                 type: object
               headers:
-                description: Headers holds the custom header configuration.
+                description: "Headers holds the custom header configuration."
                 properties:
                   accessControlAllowCredentials:
-                    description: AccessControlAllowCredentials is only valid if true.
+                    description: "AccessControlAllowCredentials is only valid if true."
                       false is ignored.
                     type: boolean
                   accessControlAllowHeaders:
-                    description: AccessControlAllowHeaders must be used in response
+                    description: "AccessControlAllowHeaders must be used in response"
                       to a preflight request with Access-Control-Request-Headers set.
                     items:
                       type: string
                     type: array
                   accessControlAllowMethods:
-                    description: AccessControlAllowMethods must be used in response
+                    description: "AccessControlAllowMethods must be used in response"
                       to a preflight request with Access-Control-Request-Method set.
                     items:
                       type: string
                     type: array
                   accessControlAllowOriginList:
-                    description: AccessControlAllowOriginList is a list of allowable
+                    description: "AccessControlAllowOriginList is a list of allowable"
                       origins. Can also be a wildcard origin "*".
                     items:
                       type: string
                     type: array
                   accessControlAllowOriginListRegex:
-                    description: AccessControlAllowOriginListRegex is a list of allowable
+                    description: "AccessControlAllowOriginListRegex is a list of allowable"
                       origins written following the Regular Expression syntax (https://golang.org/pkg/regexp/).
                     items:
                       type: string
                     type: array
                   accessControlExposeHeaders:
-                    description: AccessControlExposeHeaders sets valid headers for
+                    description: "AccessControlExposeHeaders sets valid headers for"
                       the response.
                     items:
                       type: string
                     type: array
                   accessControlMaxAge:
-                    description: AccessControlMaxAge sets the time that a preflight
+                    description: "AccessControlMaxAge sets the time that a preflight"
                       request may be cached.
                     format: int64
                     type: integer
                   addVaryHeader:
-                    description: AddVaryHeader controls if the Vary header is automatically
+                    description: "AddVaryHeader controls if the Vary header is automatically"
                       added/updated when the AccessControlAllowOriginList is set.
                     type: boolean
                   allowedHosts:
@@ -301,7 +301,7 @@ spec:
                       type: string
                     type: object
                   featurePolicy:
-                    description: 'Deprecated: use PermissionsPolicy instead.'
+                    description: "'Deprecated: use PermissionsPolicy instead.'"
                     type: string
                   forceSTSHeader:
                     type: boolean
@@ -320,21 +320,21 @@ spec:
                   referrerPolicy:
                     type: string
                   sslForceHost:
-                    description: 'Deprecated: use RedirectRegex instead.'
+                    description: "'Deprecated: use RedirectRegex instead.'"
                     type: boolean
                   sslHost:
-                    description: 'Deprecated: use RedirectRegex instead.'
+                    description: "'Deprecated: use RedirectRegex instead.'"
                     type: string
                   sslProxyHeaders:
                     additionalProperties:
                       type: string
                     type: object
                   sslRedirect:
-                    description: 'Deprecated: use EntryPoint redirection or RedirectScheme
+                    description: "'Deprecated: use EntryPoint redirection or RedirectScheme"
                       instead.'
                     type: boolean
                   sslTemporaryRedirect:
-                    description: 'Deprecated: use EntryPoint redirection or RedirectScheme
+                    description: "'Deprecated: use EntryPoint redirection or RedirectScheme"
                       instead.'
                     type: boolean
                   stsIncludeSubdomains:
@@ -346,20 +346,20 @@ spec:
                     type: integer
                 type: object
               inFlightReq:
-                description: InFlightReq limits the number of requests being processed
+                description: "InFlightReq limits the number of requests being processed"
                   and served concurrently.
                 properties:
                   amount:
                     format: int64
                     type: integer
                   sourceCriterion:
-                    description: SourceCriterion defines what criterion is used to
+                    description: "SourceCriterion defines what criterion is used to"
                       group requests as originating from a common source. If none
                       are set, the default is to use the request's remote address
                       field. All fields are mutually exclusive.
                     properties:
                       ipStrategy:
-                        description: IPStrategy holds the ip strategy configuration.
+                        description: "IPStrategy holds the ip strategy configuration."
                         properties:
                           depth:
                             type: integer
@@ -375,10 +375,10 @@ spec:
                     type: object
                 type: object
               ipWhiteList:
-                description: IPWhiteList holds the ip white list configuration.
+                description: "IPWhiteList holds the ip white list configuration."
                 properties:
                   ipStrategy:
-                    description: IPStrategy holds the ip strategy configuration.
+                    description: "IPStrategy holds the ip strategy configuration."
                     properties:
                       depth:
                         type: integer
@@ -393,14 +393,14 @@ spec:
                     type: array
                 type: object
               passTLSClientCert:
-                description: PassTLSClientCert holds the TLS client cert headers configuration.
+                description: "PassTLSClientCert holds the TLS client cert headers configuration."
                 properties:
                   info:
-                    description: TLSClientCertificateInfo holds the client TLS certificate
+                    description: "TLSClientCertificateInfo holds the client TLS certificate"
                       info configuration.
                     properties:
                       issuer:
-                        description: TLSClientCertificateIssuerDNInfo holds the client
+                        description: "TLSClientCertificateIssuerDNInfo holds the client"
                           TLS certificate distinguished name info configuration. cf
                           https://tools.ietf.org/html/rfc3739
                         properties:
@@ -428,7 +428,7 @@ spec:
                       serialNumber:
                         type: boolean
                       subject:
-                        description: TLSClientCertificateSubjectDNInfo holds the client
+                        description: "TLSClientCertificateSubjectDNInfo holds the client"
                           TLS certificate distinguished name info configuration. cf
                           https://tools.ietf.org/html/rfc3739
                         properties:
@@ -458,7 +458,7 @@ spec:
                   x-kubernetes-preserve-unknown-fields: true
                 type: object
               rateLimit:
-                description: RateLimit holds the rate limiting configuration for a
+                description: "RateLimit holds the rate limiting configuration for a"
                   given router.
                 properties:
                   average:
@@ -473,13 +473,13 @@ spec:
                     - type: string
                     x-kubernetes-int-or-string: true
                   sourceCriterion:
-                    description: SourceCriterion defines what criterion is used to
+                    description: "SourceCriterion defines what criterion is used to"
                       group requests as originating from a common source. If none
                       are set, the default is to use the request's remote address
                       field. All fields are mutually exclusive.
                     properties:
                       ipStrategy:
-                        description: IPStrategy holds the ip strategy configuration.
+                        description: "IPStrategy holds the ip strategy configuration."
                         properties:
                           depth:
                             type: integer
@@ -495,7 +495,7 @@ spec:
                     type: object
                 type: object
               redirectRegex:
-                description: RedirectRegex holds the redirection configuration.
+                description: "RedirectRegex holds the redirection configuration."
                 properties:
                   permanent:
                     type: boolean
@@ -505,7 +505,7 @@ spec:
                     type: string
                 type: object
               redirectScheme:
-                description: RedirectScheme holds the scheme redirection configuration.
+                description: "RedirectScheme holds the scheme redirection configuration."
                 properties:
                   permanent:
                     type: boolean
@@ -515,13 +515,13 @@ spec:
                     type: string
                 type: object
               replacePath:
-                description: ReplacePath holds the ReplacePath configuration.
+                description: "ReplacePath holds the ReplacePath configuration."
                 properties:
                   path:
                     type: string
                 type: object
               replacePathRegex:
-                description: ReplacePathRegex holds the ReplacePathRegex configuration.
+                description: "ReplacePathRegex holds the ReplacePathRegex configuration."
                 properties:
                   regex:
                     type: string
@@ -529,7 +529,7 @@ spec:
                     type: string
                 type: object
               retry:
-                description: Retry holds the retry configuration.
+                description: "Retry holds the retry configuration."
                 properties:
                   attempts:
                     type: integer
@@ -540,7 +540,7 @@ spec:
                     x-kubernetes-int-or-string: true
                 type: object
               stripPrefix:
-                description: StripPrefix holds the StripPrefix configuration.
+                description: "StripPrefix holds the StripPrefix configuration."
                 properties:
                   forceSlash:
                     type: boolean
@@ -550,7 +550,7 @@ spec:
                     type: array
                 type: object
               stripPrefixRegex:
-                description: StripPrefixRegex holds the StripPrefixRegex configuration.
+                description: "StripPrefixRegex holds the StripPrefixRegex configuration."
                 properties:
                   regex:
                     items:
