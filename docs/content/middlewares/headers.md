@@ -199,7 +199,8 @@ spec:
       - "GET"
       - "OPTIONS"
       - "PUT"
-    accessControlAllowOrigin: "origin-list-or-null"
+    accessControlAllowOrigin: 
+      - "origin-list-or-null"
     accessControlMaxAge: 100
     addVaryHeader: "true"
 ```
