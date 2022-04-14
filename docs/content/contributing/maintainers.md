@@ -1,3 +1,8 @@
+---
+title: "Traefik Maintainers Documentation"
+description: "Traefik Proxy is an open source software with a thriving community of contributors and maintainers. Read the list of maintainers on this page."
+---
+
 # Maintainers
 
 ## The Team

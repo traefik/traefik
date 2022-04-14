@@ -42,6 +42,7 @@ plugins:
 # https://squidfunk.github.io/mkdocs-material/extensions/admonition/
 # https://facelessuser.github.io/pymdown-extensions/
 markdown_extensions:
+  - meta
   - attr_list
   - admonition
   - footnotes

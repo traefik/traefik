@@ -1,3 +1,8 @@
+---
+title: "Traefik Jaeger Documentation"
+description: "Traefik supports several tracing backends, including Jaeger. Learn how to implement it for observability in Traefik Proxy. Read the technical documentation."
+---
+
 # Jaeger
 
 To enable the Jaeger tracer:

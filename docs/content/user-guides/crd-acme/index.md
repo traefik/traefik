@@ -1,3 +1,8 @@
+---
+title: "Traefik CRD TLS Documentation"
+description: "Learn how to use Traefik Proxy w/ an IngressRoute Custom Resource Definition (CRD) for Kubernetes, and TLS with Let's Encrypt. Read the technical documentation."
+---
+
 # Traefik & CRD & Let's Encrypt
 
 Traefik with an IngressRoute Custom Resource Definition for Kubernetes, and TLS Through Let's Encrypt.

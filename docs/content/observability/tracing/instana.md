@@ -1,3 +1,8 @@
+---
+title: "Traefik Instana Documentation"
+description: "Traefik supports several tracing backends, including Instana. Learn how to implement it for observability in Traefik Proxy. Read the technical documentation."
+---
+
 # Instana
 
 To enable the Instana tracer:

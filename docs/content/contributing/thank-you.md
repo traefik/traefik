@@ -1,3 +1,8 @@
+---
+title: "Traefik Contribution Documentation"
+description: "Thank you to all those who have contributed! Traefik Proxy is an open-source project that thrives with the support of our passionate community."
+---
+
 # Thank You!
 
 _You_ Made It

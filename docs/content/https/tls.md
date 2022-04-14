@@ -1,3 +1,8 @@
+---
+title: "Traefik TLS Documentation"
+description: "Learn how to configure the transport layer security (TLS) connection in Traefik Proxy. Read the technical documentation."
+---
+
 # TLS
 
 Transport Layer Security
