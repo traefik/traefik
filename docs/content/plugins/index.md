@@ -1,3 +1,8 @@
+---
+title: "Traefik Plugins Documentation"
+description: "Learn how to connect Traefik Proxy with Pilot, a SaaS platform that offers features for metrics, alerts, and plugins. Read the technical documentation."
+---
+
 # Plugins and Traefik Pilot
 
 Traefik Pilot is a software-as-a-service (SaaS) platform that connects to Traefik to extend its capabilities.

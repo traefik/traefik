@@ -1,3 +1,8 @@
+---
+title: "Traefik Configuration for Marathon"
+description: "Traefik Proxy can be configured to use Marathon as a provider. Read the technical documentation to learn how."
+---
+
 # Traefik & Marathon
 
 Traefik can be configured to use Marathon as a provider.
