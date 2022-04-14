@@ -28,6 +28,7 @@ global_job_config:
       - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "${GOPATH}/bin" v1.45.0
       - curl -sSfL https://gist.githubusercontent.com/traefiker/6d7ac019c11d011e4f131bb2cca8900e/raw/goreleaser.sh | bash -s -- -b "${GOPATH}/bin"
       - checkout
+      - git config --add directory.sharedrepository 1
       - cache restore traefik-$(checksum go.sum)
 
 blocks:
