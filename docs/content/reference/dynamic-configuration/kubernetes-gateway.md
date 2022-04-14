@@ -1,3 +1,8 @@
+---
+title: "Traefik Kubernetes Routing"
+description: "Reference the dynamic configuration with the Kubernetes Gateway provider in Traefik Proxy. Read the technical documentation."
+---
+
 # Kubernetes Configuration Reference
 
 Dynamic configuration with Kubernetes Gateway provider.

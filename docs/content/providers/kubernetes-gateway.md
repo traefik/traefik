@@ -1,3 +1,8 @@
+---
+title: "Traefik Kubernetes Gateway API Documentation"
+description: "Learn how to use the Kubernetes Gateway API as a provider for configuration discovery in Traefik Proxy. Read the technical documentation."
+---
+
 # Traefik & Kubernetes with Gateway API
 
 The Kubernetes Gateway API, The Experimental Way.

@@ -1,3 +1,8 @@
+---
+title: "Traefik Let's Encrypt Documentation"
+description: "Learn how to configure Traefik Proxy to use an ACME provider like Let's Encrypt for automatic certificate generation. Read the technical documentation."
+---
+
 # Let's Encrypt
 
 Automatic HTTPS
