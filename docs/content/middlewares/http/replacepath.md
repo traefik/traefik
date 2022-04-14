@@ -1,3 +1,8 @@
+---
+title: Traefik ReplacePath Documentation | Traefik Docs
+description: In Traefik Proxy's HTTP middleware, ReplacePath updates paths before forwarding requests. Read the technical documentation.
+---
+
 # ReplacePath
 
 Updating the Path Before Forwarding the Request

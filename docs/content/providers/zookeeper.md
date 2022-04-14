@@ -1,3 +1,8 @@
+---
+title: Traefik Zookeeper Documentation | Traefik Docs
+description: For configuration discovery in Traefik Proxy, you can store your configurations in Zookeeper. Read the technical documentation.
+---
+
 # Traefik & ZooKeeper
 
 A Story of KV Store & Containers

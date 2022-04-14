@@ -1,3 +1,8 @@
+---
+title: Traefik Headers Documentation | Traefik Docs
+description: In Traefik Proxy, the HTTP headers middleware manages the headers of requests and responses. Read the technical documentation.
+---
+
 # Headers
 
 Managing Request/Response headers

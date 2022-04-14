@@ -1,3 +1,8 @@
+---
+title: Traefik Getting Started FAQ | Traefik Docs
+description: Check out our FAQ page for answers to commonly asked questions on getting started with Traefik Proxy. Read the technical documentation.
+---
+
 # FAQ
 
 ## Why is Traefik Answering `XXX` HTTP Response Status Code?

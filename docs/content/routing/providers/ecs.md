@@ -1,3 +1,8 @@
+---
+title: Traefik ECS Documentation | Traefik Docs
+description: AWS ECS is a provider for routing and load balancing in Traefik Proxy. Read the technical documentation to get started.
+---
+
 # Traefik & ECS
 
 A Story of Labels & Elastic Containers
