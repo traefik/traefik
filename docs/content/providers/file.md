@@ -1,3 +1,8 @@
+---
+title: Traefik File Documentation | Traefik Docs
+description: The file provider in Traefik Proxy lets you define the dynamic configuration in a YAML or TOML file. Read the technical documentation.
+---
+
 # Traefik & File
 
 Good Old Configuration File

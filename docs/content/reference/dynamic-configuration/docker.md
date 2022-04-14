@@ -1,3 +1,8 @@
+---
+title: Traefik Docker Configuration Documentation | Traefik Docs
+description: Reference dynamic configuration with Docker labels in Traefik Proxy. Read the technical documentation.
+---
+
 # Docker Configuration Reference
 
 Dynamic configuration with Docker Labels

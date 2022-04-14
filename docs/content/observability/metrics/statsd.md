@@ -1,3 +1,8 @@
+---
+title: Traefik StatsD Documentation | Traefik Docs
+description: Traefik supports several metrics backends, including StatsD. Learn how to implement it for observability in Traefik Proxy. Read the technical documentation.
+---
+
 # StatsD
 
 To enable the Statsd:
