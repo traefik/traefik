@@ -1,3 +1,8 @@
+---
+title: Traefik DigestAuth Documentation | Traefik Docs
+description: Traefik Proxy's HTTP DigestAuth middleware restricts access to your services to known users. Read the technical documentation.
+---
+
 # DigestAuth
 
 Adding Digest Authentication

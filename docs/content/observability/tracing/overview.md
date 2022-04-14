@@ -1,3 +1,8 @@
+---
+title: Traefik Tracing Overview | Traefik Docs
+description: The Traefik Proxy tracing system allows developers to visualize call flows in their infrastructure. read the full documentation.
+---
+
 # Tracing
 
 Visualize the Requests Flow

@@ -1,3 +1,8 @@
+---
+title: Traefik Services Documentation | Traefik Docs
+description: Learn how to configure routing and load balancing in Traefik Proxy to reach Services, which handle incoming requests. Read the technical documentation.
+---
+
 # Services
 
 Configuring How to Reach the Services
