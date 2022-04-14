@@ -72,8 +72,8 @@ clean-webui:
 ## Generate WebUI
 webui/static/index.html:
 	$(MAKE) build-webui-image
-	docker run --rm -v "$$PWD/webui/static":'/src/webui/static' traefik-webui npm run build:nc
-	docker run --rm -v "$$PWD/webui/static":'/src/webui/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ./static
+	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui npm run build:nc
+	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ./static
 
 .PHONY: generate-webui
 generate-webui: webui/static/index.html
