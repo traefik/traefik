@@ -1,3 +1,8 @@
+---
+title: "Traefik Getting Started FAQ"
+description: "Check out our FAQ page for answers to commonly asked questions on getting started with Traefik Proxy. Read the technical documentation."
+---
+
 # FAQ
 
 ## Why is Traefik Answering `XXX` HTTP Response Status Code?

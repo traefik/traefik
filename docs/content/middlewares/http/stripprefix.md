@@ -1,3 +1,8 @@
+---
+title: "Traefik StripPrefix Documentation"
+description: "In Traefik Proxy's HTTP middleware, StripPrefix removes prefixes from paths before forwarding requests. Read the technical documentation."
+---
+
 # StripPrefix
 
 Removing Prefixes From the Path Before Forwarding the Request

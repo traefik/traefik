@@ -1,3 +1,8 @@
+---
+title: "Traefik Data Collection Documentation"
+description: "To learn more about how Traefik is being used and improve it, we collect anonymous usage statistics from running instances. Read the technical documentation."
+---
+
 # Data Collection
 
 Understanding How Traefik is Being Used

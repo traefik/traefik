@@ -1,3 +1,8 @@
+---
+title: ""Traefik Configuration Discovery: Rancher""
+description: "Read the official Traefik documentation to learn how to expose Rancher services by default in Traefik Proxy."
+---
+
 # Traefik & Rancher
 
 A Story of Labels, Services & Containers

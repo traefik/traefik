@@ -1,3 +1,8 @@
+---
+title: "Traefik CircuitBreaker Documentation"
+description: "The HTTP circuit breaker in Traefik Proxy prevents stacking requests to unhealthy Services, resulting in cascading failures. Read the technical documentation."
+---
+
 # CircuitBreaker
 
 Don't Waste Time Calling Unhealthy Services
