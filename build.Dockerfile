@@ -24,6 +24,7 @@ RUN curl -sfL https://gist.githubusercontent.com/traefiker/6d7ac019c11d011e4f131
 WORKDIR /go/src/github.com/traefik/traefik
 
 # CVE-2022-24765
+# https://github.blog/2022-04-12-git-security-vulnerability-announced/
 ARG VOLUME_TARGET="${VOLUME_TARGET}"
 
 RUN git config --global --add safe.directory /go/src/github.com/traefik/traefik
