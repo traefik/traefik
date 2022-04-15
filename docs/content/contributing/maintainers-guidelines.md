@@ -1,3 +1,8 @@
+---
+title: "Traefik Maintainer's Guidelines Documentation"
+description: "Interested in contributing more to the community and becoming a Traefik Proxy maintainer? Read the guide to becoming a part of the core team."
+---
+
 # Maintainer's Guidelines
 
 ![Maintainer's Guidelines](../assets/img/maintainers-guidelines.png)

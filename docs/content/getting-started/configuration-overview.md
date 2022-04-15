@@ -1,3 +1,8 @@
+---
+title: "Traefik Configuration Documentation"
+description: "Get started with Traefik Proxy. This page will introduce you to the dynamic routing and startup configurations. Read the technical documentation."
+---
+
 # Configuration Introduction
 
 How the Magic Happens

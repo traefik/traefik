@@ -1,3 +1,8 @@
+---
+title: "Traefik PassTLSClientCert Documentation"
+description: "In Traefik Proxy's HTTP middleware, the PassTLSClientCert adds selected data from passed client TLS certificates to headers. Read the technical documentation."
+---
+
 # PassTLSClientCert
 
 Adding Client Certificates in a Header

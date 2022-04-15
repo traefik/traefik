@@ -1,3 +1,8 @@
+---
+title: "Traefik Etcd Documentation"
+description: "Use Etcd as a provider for configuration discovery in Traefik Proxy. Automate and store your configurations with Etcd. Read the technical documentation."
+---
+
 # Traefik & Etcd
 
 A Story of KV store & Containers
