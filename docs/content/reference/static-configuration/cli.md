@@ -1,6 +1,6 @@
 ---
-title: "Traefik Static Configuration Documentation"
-description: "Learn how to store Traefik Proxy configurations in static files. Read the technical documentation."
+title: "Traefik CLI Flags Documentation"
+description: "Reference the CLI flags for static configuration in Traefik Proxy. Read the technical documentation."
 ---
 
 # Static Configuration: CLI
