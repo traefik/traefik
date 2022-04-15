@@ -72,6 +72,8 @@ http:
 
 ### `maxRequestBodyBytes`
 
+_Optional, Default=0_
+
 The `maxRequestBodyBytes` option configures the maximum allowed body size for the request (in bytes).
 
 If the request exceeds the allowed size, it is not forwarded to the service, and the client gets a `413 (Request Entity Too Large)` response.
@@ -122,6 +124,8 @@ http:
 
 ### `memRequestBodyBytes`
 
+_Optional, Default=1048576_
+
 You can configure a threshold (in bytes) from which the request will be buffered on disk instead of in memory with the `memRequestBodyBytes` option.
 
 ```yaml tab="Docker"
@@ -169,6 +173,8 @@ http:
 ```
 
 ### `maxResponseBodyBytes`
+
+_Optional, Default=0_
 
 The `maxResponseBodyBytes` option configures the maximum allowed response size from the service (in bytes).
 
@@ -220,6 +226,8 @@ http:
 
 ### `memResponseBodyBytes`
 
+_Optional, Default=0_
+
 You can configure a threshold (in bytes) from which the response will be buffered on disk instead of in memory with the `memResponseBodyBytes` option.
 
 ```yaml tab="Docker"
@@ -267,6 +275,8 @@ http:
 ```
 
 ### `retryExpression`
+
+_Optional, Default=""_
 
 You can have the Buffering middleware replay the request using `retryExpression`.
 
