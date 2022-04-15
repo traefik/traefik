@@ -1,3 +1,8 @@
+---
+title: "Traefik Compress Documentation"
+description: "Traefik Proxy's HTTP middleware lets you compress responses before sending them to the client. Read the technical documentation."
+---
+
 # Compress
 
 Compress Responses before Sending them to the Client

@@ -1,3 +1,8 @@
+---
+title: "Traefik Docker HTTP Challenge Documentation"
+description: "Learn how to create a certificate with the Let's Encrypt HTTP challenge to use HTTPS on a Service exposed with Traefik Proxy. Read the technical documentation."
+---
+
 # Docker-compose with let's encrypt : HTTP Challenge
 
 This guide aim to demonstrate how to create a certificate with the let's encrypt HTTP challenge to use https on a simple service exposed with Traefik.  

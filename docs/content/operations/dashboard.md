@@ -1,3 +1,8 @@
+---
+title: "Traefik Dashboard Documentation"
+description: "The dashboard shows you the current active routes handled by Traefik Proxy in one central place. Read the technical documentation to learn its operations."
+---
+
 # The Dashboard
 
 See What's Going On
