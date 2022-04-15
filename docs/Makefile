@@ -53,7 +53,7 @@ endif
 
 .PHONY: docs-lint
 docs-lint:
-ifneq ("$(DOCS_VERIFY_SKIP)", "true")
+ifneq ("$(DOCS_LINT_SKIP)", "true")
 	docker build -t $(TRAEFIK_DOCS_CHECK_IMAGE) -f check.Dockerfile ./
 	docker run --rm -v $(CURDIR):/app $(TRAEFIK_DOCS_CHECK_IMAGE) /lint.sh
 else
