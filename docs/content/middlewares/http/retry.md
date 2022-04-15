@@ -1,3 +1,8 @@
+---
+title: "Traefik HTTP Retry Documentation"
+description: "Configure Traefik Proxy's HTTP Retry middleware, so you can retry requests to a backend server until it succeeds. Read the technical documentation."
+---
+
 # Retry
 
 Retrying until it Succeeds
