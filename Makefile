@@ -47,14 +47,14 @@ dist:
 .PHONY: build-dev-image
 build-dev-image: dist
 ifneq ("$(IN_DOCKER)", "")
-	docker build $(DOCKER_BUILD_ARGS) -t "$(TRAEFIK_DEV_IMAGE)" --build-arg VOLUME_TARGET="$(PWD)" -f build.Dockerfile .
+	docker build $(DOCKER_BUILD_ARGS) -t "$(TRAEFIK_DEV_IMAGE)" --build-arg HOST_PWD="$(PWD)" -f build.Dockerfile .
 endif
 
 ## Build Dev Docker image without cache
 .PHONY: build-dev-image-no-cache
 build-dev-image-no-cache: dist
 ifneq ("$(IN_DOCKER)", "")
-	docker build $(DOCKER_BUILD_ARGS) --no-cache -t "$(TRAEFIK_DEV_IMAGE)" --build-arg VOLUME_TARGET="$(PWD)" -f build.Dockerfile .
+	docker build $(DOCKER_BUILD_ARGS) --no-cache -t "$(TRAEFIK_DEV_IMAGE)" --build-arg HOST_PWD="$(PWD)" -f build.Dockerfile .
 endif
 
 ## Build WebUI Docker image

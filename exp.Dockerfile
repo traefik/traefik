@@ -27,10 +27,6 @@ RUN GO111MODULE=on GOPROXY=https://proxy.golang.org go mod download
 
 COPY . /go/src/github.com/traefik/traefik
 
-# CVE-2022-24765
-# https://github.blog/2022-04-12-git-security-vulnerability-announced/
-RUN git config --global --add safe.directory /go/src/github.com/traefik/traefik
-
 RUN rm -rf /go/src/github.com/traefik/traefik/webui/static/
 COPY --from=webui /src/webui/static/ /go/src/github.com/traefik/traefik/webui/static/
 
