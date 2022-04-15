@@ -1,16 +1,19 @@
 FROM alpine:3.14 as alpine
 
 RUN apk --no-cache --no-progress add \
+    build-base \
     libcurl \
+    libxml2-dev \
+    libxslt-dev \
     ruby \
     ruby-bigdecimal \
+    ruby-dev \
     ruby-etc \
     ruby-ffi \
     ruby-json \
-    ruby-dev \
-    build-base
+    zlib-dev
 
-RUN gem install 'nokogiri:1.13.3'
+RUN gem install nokogiri --version 1.13.3 --no-document -- --use-system-libraries
 RUN gem install html-proofer --version 3.19.3 --no-document -- --use-system-libraries
 
 # After Ruby, some NodeJS YAY!
