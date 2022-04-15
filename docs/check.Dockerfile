@@ -1,4 +1,3 @@
-
 FROM alpine:3.14 as alpine
 
 RUN apk --no-cache --no-progress add \
@@ -8,11 +7,11 @@ RUN apk --no-cache --no-progress add \
     ruby-etc \
     ruby-ffi \
     ruby-json \
-    ruby-nokogiri \
     ruby-dev \
     build-base
 
-RUN gem install html-proofer --version 3.19.0 --no-document -- --use-system-libraries
+RUN gem install 'nokogiri:1.13.3'
+RUN gem install html-proofer --version 3.19.3 --no-document -- --use-system-libraries
 
 # After Ruby, some NodeJS YAY!
 RUN apk --no-cache --no-progress add \
