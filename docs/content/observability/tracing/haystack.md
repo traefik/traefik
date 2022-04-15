@@ -1,3 +1,8 @@
+---
+title: "Traefik Haystack Documentation"
+description: "Traefik supports several tracing backends, including Haystack. Learn how to implement it for observability in Traefik Proxy. Read the technical documentation."
+---
+
 # Haystack
 
 To enable the Haystack tracer:

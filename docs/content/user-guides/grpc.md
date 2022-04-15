@@ -1,3 +1,8 @@
+---
+title: "Traefik Proxy gRPC Examples"
+description: "This section of the Traefik Proxy documentation explains how to use Traefik as reverse proxy for gRPC applications."
+---
+
 # gRPC Examples
 
 ## With HTTP (h2c)

@@ -1,3 +1,8 @@
+---
+title: "Traefik Access Logs Documentation"
+description: "Access logs are a key part of observability in Traefik Proxy. Read the technical documentation to learn their configurations, rotations, and time zones."
+---
+
 # Access Logs
 
 Who Calls Whom?

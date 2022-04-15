@@ -1,3 +1,8 @@
+---
+title: "Traefik RateLimit Documentation"
+description: "Traefik Proxy's HTTP RateLimit middleware ensures Services receive fair amounts of requests. Read the technical documentation."
+---
+
 # RateLimit
 
 To Control the Number of Requests Going to a Service

@@ -1,3 +1,8 @@
+---
+title: "Traefik Docker Documentation"
+description: "This guide covers a basic docker-compose file exposing a simple service using the docker provider in Traefik Proxy. Read the technical documentation."
+---
+
 # Docker-compose basic example
 
 In this section we quickly go over a basic docker-compose file exposing a simple service using the docker provider.  
