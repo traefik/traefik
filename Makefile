@@ -47,14 +47,14 @@ dist:
 .PHONY: build-dev-image
 build-dev-image: dist
 ifneq ("$(IN_DOCKER)", "")
-	docker build $(DOCKER_BUILD_ARGS) -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
+	docker build $(DOCKER_BUILD_ARGS) -t "$(TRAEFIK_DEV_IMAGE)" --build-arg HOST_PWD="$(PWD)" -f build.Dockerfile .
 endif
 
 ## Build Dev Docker image without cache
 .PHONY: build-dev-image-no-cache
 build-dev-image-no-cache: dist
 ifneq ("$(IN_DOCKER)", "")
-	docker build $(DOCKER_BUILD_ARGS) --no-cache -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
+	docker build $(DOCKER_BUILD_ARGS) --no-cache -t "$(TRAEFIK_DEV_IMAGE)" --build-arg HOST_PWD="$(PWD)" -f build.Dockerfile .
 endif
 
 ## Build WebUI Docker image
@@ -72,8 +72,8 @@ clean-webui:
 ## Generate WebUI
 webui/static/index.html:
 	$(MAKE) build-webui-image
-	docker run --rm -v "$$PWD/webui/static":'/src/webui/static' traefik-webui npm run build:nc
-	docker run --rm -v "$$PWD/webui/static":'/src/webui/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ./static
+	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui npm run build:nc
+	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ./static
 
 .PHONY: generate-webui
 generate-webui: webui/static/index.html
