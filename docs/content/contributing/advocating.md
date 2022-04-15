@@ -1,3 +1,8 @@
+---
+title: "Traefik Advocation Documentation"
+description: "There are many ways to contribute to Traefik Proxy. If you're talking about Traefik, let us know and we'll promote your enthusiasm!"
+---
+
 # Advocating
 
 Spread the Love & Tell Us about It

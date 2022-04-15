@@ -1,3 +1,8 @@
+---
+title: "Traefik Submitting Issues Documentation"
+description: "Help us help you! Learn how to submit an issue, following the guidelines, so the Traefik Proxy team can help. Read the technical documentation."
+---
+
 # Submitting Issues
 
 Help Us Help You!

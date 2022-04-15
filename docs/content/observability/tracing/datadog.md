@@ -1,3 +1,8 @@
+---
+title: "Traefik Datadog Tracing Documentation"
+description: "Traefik Proxy supports Datadog for tracing. Read the technical documentation to enable Datadog for observability."
+---
+
 # Datadog
 
 To enable the Datadog tracer:

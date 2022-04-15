@@ -1,3 +1,8 @@
+---
+title: "Traefik Buffering Documentation"
+description: "The HTTP buffering middleware in Traefik Proxy limits the size of requests that can be forwarded to Services. Read the technical documentation."
+---
+
 # Buffering
 
 How to Read the Request before Forwarding It
