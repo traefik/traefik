@@ -1,6 +1,6 @@
 ---
 title: "Traefik ErrorPage Documentation"
-description: "In Traefik Proxy, The ErrorPage middleware returns custom pages according to configured ranges of HTTP Status codes. Read the technical documentation."
+description: "In Traefik Proxy, the ErrorPage middleware returns custom pages according to configured ranges of HTTP Status codes. Read the technical documentation."
 ---
 
 # ErrorPage
