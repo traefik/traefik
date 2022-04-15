@@ -1,3 +1,8 @@
+---
+title: "Traefik Concepts Documentation"
+description: "Get started with Traefik Proxy. Read the technical documentation for an introduction into the key concepts behind our open source edge router."
+---
+
 # Concepts
 
 Everything You Need to Know

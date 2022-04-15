@@ -1,3 +1,8 @@
+---
+title: "Routing Configuration for Traefik CRD"
+description: "Understand the routing configuration for the Kubernetes IngressRoute & Traefik CRD. Read the technical documentation."
+---
+
 # Traefik & Kubernetes
 
 The Kubernetes Ingress Controller, The Custom Resource Way.

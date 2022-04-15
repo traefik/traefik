@@ -1,3 +1,8 @@
+---
+title: "Traefik AddPrefix Documentation"
+description: "Learn how to implement the HTTP AddPrefix middleware in Traefik Proxy to updates request paths before being forwarded. Read the technical documentation."
+---
+
 # Add Prefix
 
 Prefixing the Path
