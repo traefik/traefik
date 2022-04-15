@@ -1,3 +1,8 @@
+---
+title: "Traefik Elastic Documentation"
+description: "Traefik supports several tracing backends, including Elastic. Learn how to implement it for observability in Traefik Proxy. Read the technical documentation."
+---
+
 # Elastic
 
 To enable the Elastic tracer:
