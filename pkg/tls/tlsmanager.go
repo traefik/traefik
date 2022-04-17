@@ -154,7 +154,7 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 		if bestCertificate != nil {
 			err := bestCertificate.StapleOCSP()
 			if err != nil {
-				log.WithoutContext().Warnf("ocsp - error during stable: %w", err)
+				log.WithoutContext().Warnf("ocsp - error during staple: %w", err)
 			}
 
 			return bestCertificate.Certificate, nil

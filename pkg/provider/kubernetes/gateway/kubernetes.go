@@ -1354,9 +1354,6 @@ func getTLS(k8sClient Client, secretName v1alpha2.ObjectName, namespace string) 
 		Certificate: tls.Certificate{
 			CertFile: tls.FileOrContent(cert),
 			KeyFile:  tls.FileOrContent(key),
-			OCSP: tls.OCSPConfig{
-				DisableStapling: false,
-			},
 		},
 	}, nil
 }
