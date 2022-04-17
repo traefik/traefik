@@ -348,7 +348,8 @@
         "certificates": [
           {
             "certFile": "xxxx",
-            "keyFile": "xxxx"
+            "keyFile": "xxxx",
+            "ocsp": {}
           }
         ],
         "maxIdleConnsPerHost": 42,
@@ -447,6 +448,7 @@
       {
         "certFile": "xxxx",
         "keyFile": "xxxx",
+        "ocsp": {},
         "stores": [
           "foo"
         ]
@@ -471,7 +473,8 @@
       "foo": {
         "defaultCertificate": {
           "certFile": "xxxx",
-          "keyFile": "xxxx"
+          "keyFile": "xxxx",
+          "ocsp": {}
         }
       }
     }

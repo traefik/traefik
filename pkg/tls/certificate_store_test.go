@@ -59,7 +59,7 @@ func TestGetBestCertificate(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			dynamicMap := map[string]*tls.Certificate{}
+			dynamicMap := map[string]*CertificateData{}
 
 			if test.dynamicCert != "" {
 				cert, err := loadTestCert(test.dynamicCert, test.uppercase)
@@ -72,7 +72,7 @@ func TestGetBestCertificate(t *testing.T) {
 				CertCache:    cache.New(1*time.Hour, 10*time.Minute),
 			}
 
-			var expected *tls.Certificate
+			var expected *CertificateData
 			if test.expectedCert != "" {
 				cert, err := loadTestCert(test.expectedCert, test.uppercase)
 				require.NoError(t, err)
@@ -89,7 +89,7 @@ func TestGetBestCertificate(t *testing.T) {
 	}
 }
 
-func loadTestCert(certName string, uppercase bool) (*tls.Certificate, error) {
+func loadTestCert(certName string, uppercase bool) (*CertificateData, error) {
 	replacement := "wildcard"
 	if uppercase {
 		replacement = "uppercase_wildcard"
@@ -103,5 +103,7 @@ func loadTestCert(certName string, uppercase bool) (*tls.Certificate, error) {
 		return nil, err
 	}
 
-	return &staticCert, nil
+	return &CertificateData{
+		Certificate: &staticCert,
+	}, nil
 }

@@ -321,6 +321,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			certs = append(certs, tls.Certificate{
 				CertFile: tls.FileOrContent(tlsSecret),
 				KeyFile:  tls.FileOrContent(tlsKey),
+				OCSP: tls.OCSPConfig{
+					DisableStapling: false,
+				},
 			})
 		}
 
