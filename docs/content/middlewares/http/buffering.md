@@ -226,7 +226,7 @@ http:
 
 ### `memResponseBodyBytes`
 
-_Optional, Default=0_
+_Optional, Default=1048576_
 
 You can configure a threshold (in bytes) from which the response will be buffered on disk instead of in memory with the `memResponseBodyBytes` option.
 
