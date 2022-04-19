@@ -15,8 +15,8 @@ import (
 )
 
 func TestBuffering(t *testing.T) {
-	bigPayload := make([]byte, math.MaxInt8)
-	rand.Read(bigPayload)
+	payload := make([]byte, math.MaxInt8)
+	rand.Read(payload)
 
 	testCases := []struct {
 		desc         string
@@ -26,14 +26,7 @@ func TestBuffering(t *testing.T) {
 	}{
 		{
 			desc:         "Unlimited response and request body size",
-			config:       dynamic.Buffering{},
-			body:         []byte("FOOBAR"),
-			expectedCode: http.StatusOK,
-		},
-		{
-			desc:         "Unlimited response and request body size, with big payload",
-			config:       dynamic.Buffering{},
-			body:         bigPayload,
+			body:         payload,
 			expectedCode: http.StatusOK,
 		},
 		{
@@ -41,15 +34,7 @@ func TestBuffering(t *testing.T) {
 			config: dynamic.Buffering{
 				MaxRequestBodyBytes: 1,
 			},
-			body:         []byte("FOOBAR"),
-			expectedCode: http.StatusRequestEntityTooLarge,
-		},
-		{
-			desc: "Limited request body size, with big payload",
-			config: dynamic.Buffering{
-				MaxRequestBodyBytes: 1,
-			},
-			body:         bigPayload,
+			body:         payload,
 			expectedCode: http.StatusRequestEntityTooLarge,
 		},
 		{
@@ -57,15 +42,7 @@ func TestBuffering(t *testing.T) {
 			config: dynamic.Buffering{
 				MaxResponseBodyBytes: 1,
 			},
-			body:         []byte("FOOBAR"),
-			expectedCode: http.StatusInternalServerError,
-		},
-		{
-			desc: "Limited response body size, with big payload",
-			config: dynamic.Buffering{
-				MaxResponseBodyBytes: 1,
-			},
-			body:         bigPayload,
+			body:         payload,
 			expectedCode: http.StatusInternalServerError,
 		},
 	}
@@ -81,14 +58,13 @@ func TestBuffering(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			bufHandler, err := New(context.Background(), next, test.config, "foo")
+			buffMiddleware, err := New(context.Background(), next, test.config, "foo")
 			require.NoError(t, err)
 
-			req, err := http.NewRequest(http.MethodPost, "", bytes.NewBuffer(test.body))
-			require.NoError(t, err)
+			req := httptest.NewRequest(http.MethodPost, "http://localhost", bytes.NewBuffer(test.body))
 
 			recorder := httptest.NewRecorder()
-			bufHandler.ServeHTTP(recorder, req)
+			buffMiddleware.ServeHTTP(recorder, req)
 
 			assert.Equal(t, test.expectedCode, recorder.Code)
 		})
