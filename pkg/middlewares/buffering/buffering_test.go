@@ -77,14 +77,15 @@ func TestBuffering(t *testing.T) {
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(http.StatusOK)
-				rw.Write(test.body)
+				_, err := rw.Write(test.body)
+				require.NoError(t, err)
 			})
 
 			bufHandler, err := New(context.Background(), next, test.config, "foo")
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			req, err := http.NewRequest(http.MethodPost, "", bytes.NewBuffer(test.body))
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			recorder := httptest.NewRecorder()
 			bufHandler.ServeHTTP(recorder, req)
