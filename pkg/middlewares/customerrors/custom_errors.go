@@ -270,6 +270,7 @@ func newCodeModifier(rw http.ResponseWriter, code int) codeModifier {
 
 type codeModifierWithoutCloseNotify struct {
 	code int // the code enforced in the response.
+
 	// headerSent is whether the headers have already been sent,
 	// either through Write or WriteHeader.
 	headerSent bool
