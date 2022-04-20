@@ -187,22 +187,18 @@ func (cc *codeCatcher) isFilteredCode() bool {
 }
 
 func (cc *codeCatcher) Write(buf []byte) (int, error) {
-	if !cc.firstWrite {
-		if cc.caughtFilteredCode {
-			// We don't care about the contents of the response,
-			// since we want to serve the ones from the error page,
-			// so we just drop them.
-			return len(buf), nil
-		}
-		return cc.responseWriter.Write(buf)
-	}
-	cc.firstWrite = false
+	if cc.firstWrite {
+		cc.firstWrite = false
 
-	// If WriteHeader was already called from the caller, this is a NOOP.
-	// Otherwise, cc.code is actually a 200 here.
-	cc.WriteHeader(cc.code)
+		// If WriteHeader was already called from the caller, this is a NOOP.
+		// Otherwise, cc.code is actually a 200 here.
+		cc.WriteHeader(cc.code)
+	}
 
 	if cc.caughtFilteredCode {
+		// We don't care about the contents of the response,
+		// since we want to serve the ones from the error page,
+		// so we just drop them.
 		return len(buf), nil
 	}
 	return cc.responseWriter.Write(buf)
@@ -217,14 +213,12 @@ func (cc *codeCatcher) WriteHeader(code int) {
 	for _, block := range cc.httpCodeRanges {
 		if cc.code >= block[0] && cc.code <= block[1] {
 			cc.caughtFilteredCode = true
-			break
+			// it will be up to the caller to send the headers,
+			// so it is out of our hands now.
+			return
 		}
 	}
-	// it will be up to the other response recorder to send the headers,
-	// so it is out of our hands now.
-	if cc.caughtFilteredCode {
-		return
-	}
+
 	utils.CopyHeaders(cc.responseWriter.Header(), cc.Header())
 	cc.responseWriter.WriteHeader(cc.code)
 	cc.headersSent = true
