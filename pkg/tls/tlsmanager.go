@@ -34,7 +34,7 @@ var DefaultTLSOptions = Options{
 func goSecureCiphers() []string {
 	gsc := tls.CipherSuites()
 	ciphers := make([]string, len(gsc))
-	for idx, cs := range tls.CipherSuites() {
+	for idx, cs := range gsc {
 		ciphers[idx] = cs.Name
 	}
 	return ciphers
