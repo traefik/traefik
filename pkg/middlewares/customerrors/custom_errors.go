@@ -328,6 +328,8 @@ func (r *codeModifierWithoutCloseNotify) Hijack() (net.Conn, *bufio.ReadWriter, 
 
 // Flush sends any buffered data to the client.
 func (r *codeModifierWithoutCloseNotify) Flush() {
+	r.WriteHeader(r.code)
+
 	if flusher, ok := r.responseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
