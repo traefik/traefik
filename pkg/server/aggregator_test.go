@@ -182,13 +182,7 @@ func Test_mergeConfiguration_tlsOptions(t *testing.T) {
 			desc:  "Nil returns an empty configuration",
 			given: nil,
 			expected: map[string]tls.Options{
-				"default": {
-					ALPNProtocols: []string{
-						"h2",
-						"http/1.1",
-						"acme-tls/1",
-					},
-				},
+				"default": tls.DefaultTLSOptions,
 			},
 		},
 		{
@@ -205,13 +199,7 @@ func Test_mergeConfiguration_tlsOptions(t *testing.T) {
 				},
 			},
 			expected: map[string]tls.Options{
-				"default": {
-					ALPNProtocols: []string{
-						"h2",
-						"http/1.1",
-						"acme-tls/1",
-					},
-				},
+				"default": tls.DefaultTLSOptions,
 				"foo@provider-1": {
 					MinVersion: "VersionTLS12",
 				},
@@ -240,13 +228,7 @@ func Test_mergeConfiguration_tlsOptions(t *testing.T) {
 				},
 			},
 			expected: map[string]tls.Options{
-				"default": {
-					ALPNProtocols: []string{
-						"h2",
-						"http/1.1",
-						"acme-tls/1",
-					},
-				},
+				"default": tls.DefaultTLSOptions,
 				"foo@provider-1": {
 					MinVersion: "VersionTLS13",
 				},
@@ -352,13 +334,7 @@ func Test_mergeConfiguration_tlsOptions(t *testing.T) {
 				},
 			},
 			expected: map[string]tls.Options{
-				"default": {
-					ALPNProtocols: []string{
-						"h2",
-						"http/1.1",
-						"acme-tls/1",
-					},
-				},
+				"default": tls.DefaultTLSOptions,
 				"foo@provider-1": {
 					MinVersion: "VersionTLS12",
 				},
