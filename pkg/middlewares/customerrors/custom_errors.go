@@ -233,14 +233,12 @@ func (cc *codeCatcher) WriteHeader(code int) {
 	for _, block := range cc.httpCodeRanges {
 		if cc.code >= block[0] && cc.code <= block[1] {
 			cc.caughtFilteredCode = true
-			break
+			// it will be up to the caller to send the headers,
+			// so it is out of our hands now.
+			return
 		}
 	}
-	// it will be up to the other response recorder to send the headers,
-	// so it is out of our hands now.
-	if cc.caughtFilteredCode {
-		return
-	}
+
 	utils.CopyHeaders(cc.responseWriter.Header(), cc.Header())
 	cc.responseWriter.WriteHeader(cc.code)
 	cc.headersSent = true
