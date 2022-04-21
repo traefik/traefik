@@ -1,3 +1,8 @@
+---
+title: "Traefik Metrics Overview"
+description: "Traefik Proxy supports four metrics backend systems: Datadog, InfluxDB, Prometheus, and StatsD. Read the full documentation to get started."
+---
+
 # Metrics
 
 Traefik supports 4 metrics backends:

@@ -23,6 +23,12 @@ RUN curl -sfL https://gist.githubusercontent.com/traefiker/6d7ac019c11d011e4f131
 
 WORKDIR /go/src/github.com/traefik/traefik
 
+# Because of CVE-2022-24765 (https://github.blog/2022-04-12-git-security-vulnerability-announced/),
+# we configure git to allow the Traefik codebase path on the Host for docker in docker usages.
+ARG HOST_PWD=""
+
+RUN git config --global --add safe.directory "${HOST_PWD}"
+
 # Download go modules
 COPY go.mod .
 COPY go.sum .

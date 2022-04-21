@@ -1,3 +1,8 @@
+---
+title: "Traefik Access Logs Documentation"
+description: "Access logs are a key part of observability in Traefik Proxy. Read the technical documentation to learn their configurations, rotations, and time zones."
+---
+
 # Access Logs
 
 Who Calls Whom?
@@ -133,10 +138,9 @@ Each field can be set to:
 - `drop` to drop the value
 - `redact` to replace the value with "redacted"
 
-The `defaultMode` for `fields.headers` is `drop`.
+The `defaultMode` for `fields.names` is `keep`.
 
-  [accessLog.fields]
-    defaultMode = "keep"
+The `defaultMode` for `fields.headers` is `drop`.
 
 ```yaml tab="File (YAML)"
 # Limiting the Logs to Specific Fields
@@ -161,6 +165,9 @@ accessLog:
   filePath = "/path/to/access.log"
   format = "json"
 
+  [accessLog.fields]
+    defaultMode = "keep"
+    
     [accessLog.fields.names]
       "ClientUsername" = "drop"
 

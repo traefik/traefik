@@ -1,3 +1,8 @@
+---
+title: "Traefik Kubernetes Gateway"
+description: "The Kubernetes Gateway API can be used as a provider for routing and load balancing in Traefik Proxy. View examples in the technical documentation."
+---
+
 # Traefik & Kubernetes
 
 The Kubernetes Gateway API, The Experimental Way. {: .subtitle }
