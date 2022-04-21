@@ -180,12 +180,12 @@ func TestNewResponseRecorder(t *testing.T) {
 		{
 			desc:     "Without Close Notify",
 			rw:       httptest.NewRecorder(),
-			expected: &responseRecorderWithoutCloseNotify{},
+			expected: &codeModifierWithoutCloseNotify{},
 		},
 		{
 			desc:     "With Close Notify",
 			rw:       &mockRWCloseNotify{},
-			expected: &responseRecorderWithCloseNotify{},
+			expected: &codeModifierWithCloseNotify{},
 		},
 	}
 
@@ -194,7 +194,7 @@ func TestNewResponseRecorder(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			rec := newResponseRecorder(context.Background(), test.rw)
+			rec := newCodeModifier(test.rw, 0)
 			assert.IsType(t, rec, test.expected)
 		})
 	}

@@ -1,3 +1,8 @@
+---
+title: "Kubernetes Ingress Routing Configuration"
+description: "Understand the routing configuration for the Kubernetes Ingress Controller and Traefik Proxy. Read the technical documentation."
+---
+
 # Traefik & Kubernetes
 
 The Kubernetes Ingress Controller.

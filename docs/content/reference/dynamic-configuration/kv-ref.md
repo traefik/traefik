@@ -69,6 +69,7 @@
 | `traefik/http/middlewares/Middleware10/headers/hostsProxyHeaders/0` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/hostsProxyHeaders/1` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/isDevelopment` | `true` |
+| `traefik/http/middlewares/Middleware10/headers/permissionsPolicy` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/publicKey` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/referrerPolicy` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/sslForceHost` | `true` |
@@ -114,7 +115,7 @@
 | `traefik/http/middlewares/Middleware14/plugin/PluginConf/foo` | `bar` |
 | `traefik/http/middlewares/Middleware15/rateLimit/average` | `42` |
 | `traefik/http/middlewares/Middleware15/rateLimit/burst` | `42` |
-| `traefik/http/middlewares/Middleware15/rateLimit/period` | `42` |
+| `traefik/http/middlewares/Middleware15/rateLimit/period` | `42s` |
 | `traefik/http/middlewares/Middleware15/rateLimit/sourceCriterion/ipStrategy/depth` | `42` |
 | `traefik/http/middlewares/Middleware15/rateLimit/sourceCriterion/ipStrategy/excludedIPs/0` | `foobar` |
 | `traefik/http/middlewares/Middleware15/rateLimit/sourceCriterion/ipStrategy/excludedIPs/1` | `foobar` |
@@ -130,7 +131,7 @@
 | `traefik/http/middlewares/Middleware19/replacePathRegex/regex` | `foobar` |
 | `traefik/http/middlewares/Middleware19/replacePathRegex/replacement` | `foobar` |
 | `traefik/http/middlewares/Middleware20/retry/attempts` | `42` |
-| `traefik/http/middlewares/Middleware20/retry/initialInterval` | `42` |
+| `traefik/http/middlewares/Middleware20/retry/initialInterval` | `42s` |
 | `traefik/http/middlewares/Middleware21/stripPrefix/forceSlash` | `true` |
 | `traefik/http/middlewares/Middleware21/stripPrefix/prefixes/0` | `foobar` |
 | `traefik/http/middlewares/Middleware21/stripPrefix/prefixes/1` | `foobar` |
@@ -173,6 +174,8 @@
 | `traefik/http/serversTransports/ServersTransport0/disableHTTP2` | `true` |
 | `traefik/http/serversTransports/ServersTransport0/forwardingTimeouts/dialTimeout` | `42s` |
 | `traefik/http/serversTransports/ServersTransport0/forwardingTimeouts/idleConnTimeout` | `42s` |
+| `traefik/http/serversTransports/ServersTransport0/forwardingTimeouts/pingTimeout` | `42s` |
+| `traefik/http/serversTransports/ServersTransport0/forwardingTimeouts/readIdleTimeout` | `42s` |
 | `traefik/http/serversTransports/ServersTransport0/forwardingTimeouts/responseHeaderTimeout` | `42s` |
 | `traefik/http/serversTransports/ServersTransport0/insecureSkipVerify` | `true` |
 | `traefik/http/serversTransports/ServersTransport0/maxIdleConnsPerHost` | `42` |
@@ -187,6 +190,8 @@
 | `traefik/http/serversTransports/ServersTransport1/disableHTTP2` | `true` |
 | `traefik/http/serversTransports/ServersTransport1/forwardingTimeouts/dialTimeout` | `42s` |
 | `traefik/http/serversTransports/ServersTransport1/forwardingTimeouts/idleConnTimeout` | `42s` |
+| `traefik/http/serversTransports/ServersTransport1/forwardingTimeouts/pingTimeout` | `42s` |
+| `traefik/http/serversTransports/ServersTransport1/forwardingTimeouts/readIdleTimeout` | `42s` |
 | `traefik/http/serversTransports/ServersTransport1/forwardingTimeouts/responseHeaderTimeout` | `42s` |
 | `traefik/http/serversTransports/ServersTransport1/insecureSkipVerify` | `true` |
 | `traefik/http/serversTransports/ServersTransport1/maxIdleConnsPerHost` | `42` |
@@ -231,8 +236,9 @@
 | `traefik/http/services/Service04/failover/fallback` | `foobar` |
 | `traefik/http/services/Service04/failover/healthCheck` | `` |
 | `traefik/http/services/Service04/failover/service` | `foobar` |
-| `traefik/tcp/middlewares/Middleware00/ipWhiteList/sourceRange/0` | `foobar` |
-| `traefik/tcp/middlewares/Middleware00/ipWhiteList/sourceRange/1` | `foobar` |
+| `traefik/tcp/middlewares/TCPMiddleware00/ipWhiteList/sourceRange/0` | `foobar` |
+| `traefik/tcp/middlewares/TCPMiddleware00/ipWhiteList/sourceRange/1` | `foobar` |
+| `traefik/tcp/middlewares/TCPMiddleware01/inFlightConn/amount` | `42` |
 | `traefik/tcp/routers/TCPRouter0/entryPoints/0` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/entryPoints/1` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/middlewares/0` | `foobar` |

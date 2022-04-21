@@ -1,3 +1,8 @@
+---
+title: "Traefik Contribution Documentation"
+description: "Found something unclear in the Traefik Proxy documentation and want to give a try at explaining it better? Read the guide to building documentation."
+---
+
 # Documentation
 
 Features Are Better When You Know How to Use Them

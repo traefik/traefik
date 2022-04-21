@@ -1,3 +1,8 @@
+---
+title: "Traefik Ping Documentation"
+description: "In Traefik Proxy, Ping lets you check the health of your Traefik instances. Read the technical documentation for configuration examples and options."
+---
+
 # Ping
 
 Checking the Health of Your Traefik Instances

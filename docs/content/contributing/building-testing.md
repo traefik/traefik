@@ -1,3 +1,8 @@
+---
+title: "Traefik Building & Testing Documentation"
+description: "Compile and test your own Traefik Proxy! Learn how to build your own Traefik binary from the sources, and read the technical documentation."
+---
+
 # Building and Testing
 
 Compile and Test Your Own Traefik!

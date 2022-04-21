@@ -1,3 +1,8 @@
+---
+title: "Traefik Configuration Discovery Overview"
+description: "Configuration discovery in Traefik is achieved through Providers. The providers are infrastructure components. Read the documentation to learn more."
+---
+
 # Overview
 
 Traefik's Many Friends

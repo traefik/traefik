@@ -1,3 +1,8 @@
+---
+title: "Traefik Getting Started Quickly"
+description: "Looking to get started with Traefik Proxy quickly? Read the technical documentation to learn a simple use case that leverages Docker."
+---
+
 # Quick Start
 
 A Simple Use Case Using Docker
