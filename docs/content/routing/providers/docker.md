@@ -1,3 +1,8 @@
+---
+title: "Traefik Docker Routing Documentation"
+description: "This guide will teach you how to attach labels to your containers, to route traffic and load balance with Traefik and Docker."
+---
+
 # Traefik & Docker
 
 A Story of Labels & Containers

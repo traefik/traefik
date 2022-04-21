@@ -1,3 +1,8 @@
+---
+title: "Traefik Redis Documentation"
+description: "For configuration discovery in Traefik Proxy, you can store your configurations in Redis. Read the technical documentation."
+---
+
 # Traefik & Redis
 
 A Story of KV store & Containers

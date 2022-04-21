@@ -1,3 +1,7 @@
+---
+title: "Traefik Proxy Documentation"
+description: "Traefik Proxy, an open source Edge Router, auto-discovers configurations and supports major orchestrators, like Kubernetes. Read the technical documentation."
+---
 
 # Welcome
 

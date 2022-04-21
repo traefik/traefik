@@ -1,3 +1,8 @@
+---
+title: "Traefik Proxy and Marathon Integration Guide |Traefik Docs"
+description: "This guide explains how to integrate Marathon and operate the cluster in a reliable way from the Traefik Proxy standpoint."
+---
+
 # Marathon
 
 This guide explains how to integrate Marathon and operate the cluster in a reliable way from Traefik's standpoint.

@@ -1,3 +1,8 @@
+---
+title: "Traefik AWS ECS Documentation"
+description: "Configuration discovery in Traefik is achieved through Providers. Read the technical documentation for leveraging AWS ECS in Traefik."
+---
+
 # Traefik & AWS ECS
 
 A Story of Labels & Elastic Containers

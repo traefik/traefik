@@ -1,3 +1,8 @@
+---
+title: "Traefik ContentType Documentation"
+description: "Traefik Proxy's HTTP middleware can automatically specify the content-type header if it has not been defined by the backend. Read the technical documentation."
+---
+
 # ContentType
 
 Handling Content-Type auto-detection

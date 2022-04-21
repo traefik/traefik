@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net"
 	"net/http"
-	"regexp"
 	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -14,8 +13,8 @@ import (
 )
 
 const (
-	typeSchemeName      = "RedirectScheme"
-	schemeRedirectRegex = `^(https?:\/\/)?(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
+	typeSchemeName = "RedirectScheme"
+	uriPattern     = `^(https?:\/\/)?(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
 )
 
 // NewRedirectScheme creates a new RedirectScheme middleware.
@@ -33,7 +32,7 @@ func NewRedirectScheme(ctx context.Context, next http.Handler, conf dynamic.Redi
 		port = ":" + conf.Port
 	}
 
-	return newRedirect(next, schemeRedirectRegex, conf.Scheme+"://${2}"+port+"${4}", conf.Permanent, rawURLScheme, name)
+	return newRedirect(next, uriPattern, conf.Scheme+"://${2}"+port+"${4}", conf.Permanent, rawURLScheme, name)
 }
 
 func rawURLScheme(req *http.Request) string {
@@ -46,10 +45,7 @@ func rawURLScheme(req *http.Request) string {
 	}
 	uri := req.RequestURI
 
-	schemeRegex := `^(https?):\/\/(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
-	re, _ := regexp.Compile(schemeRegex)
-	if re.Match([]byte(req.RequestURI)) {
-		match := re.FindStringSubmatch(req.RequestURI)
+	if match := uriRegexp.FindStringSubmatch(req.RequestURI); len(match) > 0 {
 		scheme = match[1]
 
 		if len(match[2]) > 0 {

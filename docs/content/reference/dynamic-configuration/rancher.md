@@ -1,3 +1,8 @@
+---
+title: "Traefik Dynamic Configuration with Rancher"
+description: "Read the official Traefik documentation to learn more on dynamic configuration in Traefik Proxy with Rancher Labels."
+---
+
 # Rancher Configuration Reference
 
 Dynamic configuration with Rancher Labels

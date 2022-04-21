@@ -1,3 +1,8 @@
+---
+title: "Traefik V2 Migration Documentation"
+description: "Migrate from Traefik Proxy v1 to v2 and update all the necessary configurations to take advantage of all the improvements. Read the technical documentation."
+---
+
 # Migration Guide: From v1 to v2
 
 How to Migrate from Traefik v1 to Traefik v2.

@@ -1,3 +1,8 @@
+---
+title: "Traefik Prometheus Documentation"
+description: "Traefik supports several metrics backends, including Prometheus. Learn how to implement it for observability in Traefik Proxy. Read the technical documentation."
+---
+
 # Prometheus
 
 To enable the Prometheus:
