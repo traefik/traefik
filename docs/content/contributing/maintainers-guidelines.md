@@ -1,3 +1,8 @@
+---
+title: "Traefik Maintainer's Guidelines Documentation"
+description: "Interested in contributing more to the community and becoming a Traefik Proxy maintainer? Read the guide to becoming a part of the core team."
+---
+
 # Maintainer's Guidelines
 
 ![Maintainer's Guidelines](../assets/img/maintainers-guidelines.png)
@@ -25,7 +30,7 @@ We will be happy to answer any questions and explain all your doubts.
 Note: you do not have to meet all the listed requirements,
 but must have achieved several.
 
-- Enabled [2FA](https://docs.github.com/en/github/authenticating-to-github/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication) on your Github account
+- Enabled [2FA](https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication) on your GitHub account
 - The contributor has opened and successfully run medium to large PR’s in the past 6 months.
 - The contributor has participated in multiple code reviews of other PR’s,
   including those of other maintainers and contributors.

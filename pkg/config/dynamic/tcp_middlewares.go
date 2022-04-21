@@ -4,7 +4,7 @@ package dynamic
 
 // TCPMiddleware holds the TCPMiddleware configuration.
 type TCPMiddleware struct {
-	InFlightConn *TCPInFlightConn `json:"InFlightConn,omitempty" toml:"InFlightConn,omitempty" yaml:"InFlightConn,omitempty" export:"true"`
+	InFlightConn *TCPInFlightConn `json:"inFlightConn,omitempty" toml:"inFlightConn,omitempty" yaml:"inFlightConn,omitempty" export:"true"`
 	IPWhiteList  *TCPIPWhiteList  `json:"ipWhiteList,omitempty" toml:"ipWhiteList,omitempty" yaml:"ipWhiteList,omitempty" export:"true"`
 }
 

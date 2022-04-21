@@ -1,3 +1,8 @@
+---
+title: "Traefik Datadog Metrics Documentation"
+description: "Traefik Proxy supports Datadog for backend metrics. Read the technical documentation to enable Datadog for observability."
+---
+
 # Datadog
 
 To enable the Datadog:

@@ -1,3 +1,8 @@
+---
+title: "Traefik API Documentation"
+description: "Traefik Proxy exposes information through API handlers. Learn about the security, configuration, and endpoints of APIs. Read the technical documentation."
+---
+
 # API
 
 Traefik exposes a number of information through an API handler, such as the configuration of all routers, services, middlewares, etc.

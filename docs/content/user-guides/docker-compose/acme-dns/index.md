@@ -1,3 +1,8 @@
+---
+title: "Traefik Docker DNS Challenge Documentation"
+description: "Learn how to create a certificate with the Let's Encrypt DNS challenge to use HTTPS on a Service exposed with Traefik Proxy. Read the tehnical documentation."
+---
+
 # Docker-compose with let's encrypt: DNS Challenge
 
 This guide aim to demonstrate how to create a certificate with the let's encrypt DNS challenge to use https on a simple service exposed with Traefik.  

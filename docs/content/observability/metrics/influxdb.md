@@ -1,3 +1,8 @@
+---
+title: "Traefik InfluxDB Documentation"
+description: "Traefik supports several metrics backends, including InfluxDB. Learn how to implement it for observability in Traefik Proxy. Read the technical documentation."
+---
+
 # InfluxDB
 
 To enable the InfluxDB:

@@ -1,3 +1,8 @@
+---
+title: "Traefik Kubernetes Ingress Documentation"
+description: "Understand the requirements, routing configuration, and how to set up Traefik Proxy as your Kubernetes Ingress Controller. Read the technical documentation."
+---
+
 # Traefik & Kubernetes
 
 The Kubernetes Ingress Controller.

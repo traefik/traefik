@@ -2,11 +2,11 @@ http:
   routers:
     Router0:
       entryPoints:
-      - foobar
-      - foobar
+        - foobar
+        - foobar
       middlewares:
-      - foobar
-      - foobar
+        - foobar
+        - foobar
       service: foobar
       rule: foobar
       priority: 42
@@ -14,21 +14,21 @@ http:
         options: foobar
         certResolver: foobar
         domains:
-        - main: foobar
-          sans:
-          - foobar
-          - foobar
-        - main: foobar
-          sans:
-          - foobar
-          - foobar
+          - main: foobar
+            sans:
+              - foobar
+              - foobar
+          - main: foobar
+            sans:
+              - foobar
+              - foobar
     Router1:
       entryPoints:
-      - foobar
-      - foobar
+        - foobar
+        - foobar
       middlewares:
-      - foobar
-      - foobar
+        - foobar
+        - foobar
       service: foobar
       rule: foobar
       priority: 42
@@ -36,14 +36,14 @@ http:
         options: foobar
         certResolver: foobar
         domains:
-        - main: foobar
-          sans:
-          - foobar
-          - foobar
-        - main: foobar
-          sans:
-          - foobar
-          - foobar
+          - main: foobar
+            sans:
+              - foobar
+              - foobar
+          - main: foobar
+            sans:
+              - foobar
+              - foobar
   services:
     Service01:
       loadBalancer:
@@ -54,8 +54,8 @@ http:
             httpOnly: true
             sameSite: foobar
         servers:
-        - url: foobar
-        - url: foobar
+          - url: foobar
+          - url: foobar
         healthCheck:
           scheme: foobar
           path: foobar
@@ -77,18 +77,18 @@ http:
         maxBodySize: 42
         healthCheck: {}
         mirrors:
-        - name: foobar
-          percent: 42
-        - name: foobar
-          percent: 42
+          - name: foobar
+            percent: 42
+          - name: foobar
+            percent: 42
     Service03:
       weighted:
         healthCheck: {}
         services:
-        - name: foobar
-          weight: 42
-        - name: foobar
-          weight: 42
+          - name: foobar
+            weight: 42
+          - name: foobar
+            weight: 42
         sticky:
           cookie:
             name: foobar
@@ -107,8 +107,8 @@ http:
     Middleware01:
       basicAuth:
         users:
-        - foobar
-        - foobar
+          - foobar
+          - foobar
         usersFile: foobar
         realm: foobar
         removeHeader: true
@@ -123,16 +123,16 @@ http:
     Middleware03:
       chain:
         middlewares:
-        - foobar
-        - foobar
+          - foobar
+          - foobar
     Middleware04:
       circuitBreaker:
         expression: foobar
     Middleware05:
       compress:
         excludedContentTypes:
-        - foobar
-        - foobar
+          - foobar
+          - foobar
         minResponseBodyBytes: 42
     Middleware06:
       contentType:
@@ -140,8 +140,8 @@ http:
     Middleware07:
       digestAuth:
         users:
-        - foobar
-        - foobar
+          - foobar
+          - foobar
         usersFile: foobar
         removeHeader: true
         realm: foobar
@@ -149,8 +149,8 @@ http:
     Middleware08:
       errors:
         status:
-        - foobar
-        - foobar
+          - foobar
+          - foobar
         service: foobar
         query: foobar
     Middleware09:
@@ -164,12 +164,12 @@ http:
           insecureSkipVerify: true
         trustForwardHeader: true
         authResponseHeaders:
-        - foobar
-        - foobar
+          - foobar
+          - foobar
         authResponseHeadersRegex: foobar
         authRequestHeaders:
-        - foobar
-        - foobar
+          - foobar
+          - foobar
     Middleware10:
       headers:
         customRequestHeaders:
@@ -180,28 +180,28 @@ http:
           name1: foobar
         accessControlAllowCredentials: true
         accessControlAllowHeaders:
-        - foobar
-        - foobar
+          - foobar
+          - foobar
         accessControlAllowMethods:
-        - foobar
-        - foobar
+          - foobar
+          - foobar
         accessControlAllowOriginList:
-        - foobar
-        - foobar
+          - foobar
+          - foobar
         accessControlAllowOriginListRegex:
-        - foobar
-        - foobar
+          - foobar
+          - foobar
         accessControlExposeHeaders:
-        - foobar
-        - foobar
+          - foobar
+          - foobar
         accessControlMaxAge: 42
         addVaryHeader: true
         allowedHosts:
-        - foobar
-        - foobar
+          - foobar
+          - foobar
         hostsProxyHeaders:
-        - foobar
-        - foobar
+          - foobar
+          - foobar
         sslRedirect: true
         sslTemporaryRedirect: true
         sslHost: foobar
@@ -222,17 +222,18 @@ http:
         publicKey: foobar
         referrerPolicy: foobar
         featurePolicy: foobar
+        permissionsPolicy: foobar
         isDevelopment: true
     Middleware11:
       ipWhiteList:
         sourceRange:
-        - foobar
-        - foobar
+          - foobar
+          - foobar
         ipStrategy:
           depth: 42
           excludedIPs:
-          - foobar
-          - foobar
+            - foobar
+            - foobar
     Middleware12:
       inFlightReq:
         amount: 42
@@ -240,8 +241,8 @@ http:
           ipStrategy:
             depth: 42
             excludedIPs:
-            - foobar
-            - foobar
+              - foobar
+              - foobar
           requestHeaderName: foobar
           requestHost: true
     Middleware13:
@@ -276,14 +277,14 @@ http:
     Middleware15:
       rateLimit:
         average: 42
-        period: 42
+        period: 42s
         burst: 42
         sourceCriterion:
           ipStrategy:
             depth: 42
             excludedIPs:
-            - foobar
-            - foobar
+              - foobar
+              - foobar
           requestHeaderName: foobar
           requestHost: true
     Middleware16:
@@ -306,64 +307,68 @@ http:
     Middleware20:
       retry:
         attempts: 42
-        initialInterval: 42
+        initialInterval: 42s
     Middleware21:
       stripPrefix:
         prefixes:
-        - foobar
-        - foobar
+          - foobar
+          - foobar
         forceSlash: true
     Middleware22:
       stripPrefixRegex:
         regex:
-        - foobar
-        - foobar
+          - foobar
+          - foobar
   serversTransports:
     ServersTransport0:
       serverName: foobar
       insecureSkipVerify: true
       rootCAs:
-      - foobar
-      - foobar
+        - foobar
+        - foobar
       certificates:
-      - certFile: foobar
-        keyFile: foobar
-      - certFile: foobar
-        keyFile: foobar
+        - certFile: foobar
+          keyFile: foobar
+        - certFile: foobar
+          keyFile: foobar
       maxIdleConnsPerHost: 42
       forwardingTimeouts:
         dialTimeout: 42s
         responseHeaderTimeout: 42s
         idleConnTimeout: 42s
+        readIdleTimeout: 42s
+        pingTimeout: 42s
       disableHTTP2: true
       peerCertURI: foobar
     ServersTransport1:
       serverName: foobar
       insecureSkipVerify: true
       rootCAs:
-      - foobar
-      - foobar
+        - foobar
+        - foobar
       certificates:
-      - certFile: foobar
-        keyFile: foobar
-      - certFile: foobar
-        keyFile: foobar
+        - certFile: foobar
+          keyFile: foobar
+        - certFile: foobar
+          keyFile: foobar
       maxIdleConnsPerHost: 42
       forwardingTimeouts:
         dialTimeout: 42s
         responseHeaderTimeout: 42s
         idleConnTimeout: 42s
+        readIdleTimeout: 42s
+        pingTimeout: 42s
       disableHTTP2: true
       peerCertURI: foobar
 tcp:
   routers:
     TCPRouter0:
       entryPoints:
-      - foobar
-      - foobar
+        - foobar
+        - foobar
       middlewares:
-      - foobar
-      - foobar
+        - foobar
+        - foobar
       service: foobar
       rule: foobar
       priority: 42
@@ -372,21 +377,21 @@ tcp:
         options: foobar
         certResolver: foobar
         domains:
-        - main: foobar
-          sans:
-          - foobar
-          - foobar
-        - main: foobar
-          sans:
-          - foobar
-          - foobar
+          - main: foobar
+            sans:
+              - foobar
+              - foobar
+          - main: foobar
+            sans:
+              - foobar
+              - foobar
     TCPRouter1:
       entryPoints:
-      - foobar
-      - foobar
+        - foobar
+        - foobar
       middlewares:
-      - foobar
-      - foobar
+        - foobar
+        - foobar
       service: foobar
       rule: foobar
       priority: 42
@@ -395,20 +400,14 @@ tcp:
         options: foobar
         certResolver: foobar
         domains:
-        - main: foobar
-          sans:
-          - foobar
-          - foobar
-        - main: foobar
-          sans:
-          - foobar
-          - foobar
-  middlewares:
-    Middleware00:
-      ipWhiteList:
-        sourceRange:
-        - foobar
-        - foobar
+          - main: foobar
+            sans:
+              - foobar
+              - foobar
+          - main: foobar
+            sans:
+              - foobar
+              - foobar
   services:
     TCPService01:
       loadBalancer:
@@ -416,66 +415,75 @@ tcp:
         proxyProtocol:
           version: 42
         servers:
-        - address: foobar
-        - address: foobar
+          - address: foobar
+          - address: foobar
     TCPService02:
       weighted:
         services:
-        - name: foobar
-          weight: 42
-        - name: foobar
-          weight: 42
+          - name: foobar
+            weight: 42
+          - name: foobar
+            weight: 42
+  middlewares:
+    TCPMiddleware00:
+      ipWhiteList:
+        sourceRange:
+          - foobar
+          - foobar
+    TCPMiddleware01:
+      inFlightConn:
+        amount: 42
 udp:
   routers:
     UDPRouter0:
       entryPoints:
-      - foobar
-      - foobar
+        - foobar
+        - foobar
       service: foobar
     UDPRouter1:
       entryPoints:
-      - foobar
-      - foobar
+        - foobar
+        - foobar
       service: foobar
   services:
     UDPService01:
       loadBalancer:
         servers:
-        - address: foobar
-        - address: foobar
+          - address: foobar
+          - address: foobar
     UDPService02:
       weighted:
         services:
-        - name: foobar
-          weight: 42
-        - name: foobar
-          weight: 42
+          - name: foobar
+            weight: 42
+          - name: foobar
+            weight: 42
 tls:
   certificates:
-  - certFile: foobar
-    keyFile: foobar
-    stores:
-    - foobar
-    - foobar
-  - certFile: foobar
-    keyFile: foobar
-    stores:
-    - foobar
-    - foobar
+    - certFile: foobar
+      keyFile: foobar
+      stores:
+        - foobar
+        - foobar
+    - certFile: foobar
+      keyFile: foobar
+      stores:
+        - foobar
+        - foobar
   options:
     Options0:
       minVersion: foobar
       maxVersion: foobar
       cipherSuites:
-      - foobar
-      - foobar
+        - foobar
+        - foobar
       curvePreferences:
-      - foobar
-      - foobar
+        - foobar
+        - foobar
       clientAuth:
         caFiles:
-        - foobar
-        - foobar
+          - foobar
+          - foobar
         clientAuthType: foobar
       sniStrict: true
       preferServerCipherSuites: true
@@ -486,15 +494,15 @@ tls:
       minVersion: foobar
       maxVersion: foobar
       cipherSuites:
-      - foobar
-      - foobar
+        - foobar
+        - foobar
       curvePreferences:
-      - foobar
-      - foobar
+        - foobar
+        - foobar
       clientAuth:
         caFiles:
-        - foobar
-        - foobar
+          - foobar
+          - foobar
         clientAuthType: foobar
       sniStrict: true
       preferServerCipherSuites: true
