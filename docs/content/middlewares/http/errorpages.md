@@ -125,6 +125,13 @@ The service that will serve the new requested error page.
 
 ### `query`
 
-The URL for the error page (hosted by `service`).
-You can use the `{status}` variable in the `query` option in order to insert the status code in the URL.
-You can also use the `{url}` variable in the `query` option to insert the full [PathEscaped](https://pkg.go.dev/net/url#PathEscape) requested URL.
+The URL for the error page (hosted by [`service`](#service))).
+
+There are multiple variables that can be placed in the `query` option to insert values in the URL.
+
+The table below lists all the available variables and their associated values.
+
+|Variable  |Value                                                                      |
+|----------|---------------------------------------------------------------------------|
+|`{status}`|The response status code                                                   |
+|`{url}`   |The full [PathEscaped](https://pkg.go.dev/net/url#PathEscape) requested URL|
