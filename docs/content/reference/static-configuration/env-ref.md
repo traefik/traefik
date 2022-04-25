@@ -357,6 +357,54 @@ InfluxDB retention policy used when protocol is http.
 `TRAEFIK_METRICS_INFLUXDB_USERNAME`:  
 InfluxDB username (only with http).
 
+`TRAEFIK_METRICS_OPENTELEMETRY`:  
+OpenTelemetry metrics exporter type. (Default: ```false```)
+
+`TRAEFIK_METRICS_OPENTELEMETRY_ADDENTRYPOINTSLABELS`:  
+Enable metrics on entry points. (Default: ```true```)
+
+`TRAEFIK_METRICS_OPENTELEMETRY_ADDRESS`:  
+Address of the collector endpoint. (Default: ```localhost:4318```)
+
+`TRAEFIK_METRICS_OPENTELEMETRY_ADDROUTERSLABELS`:  
+Enable metrics on routers. (Default: ```false```)
+
+`TRAEFIK_METRICS_OPENTELEMETRY_ADDSERVICESLABELS`:  
+Enable metrics on services. (Default: ```true```)
+
+`TRAEFIK_METRICS_OPENTELEMETRY_EXPLICITBOUNDARIES`:  
+Boundaries for latency metrics. (Default: ```0.005000, 0.010000, 0.025000, 0.050000, 0.100000, 0.250000, 0.500000, 1.000000, 2.500000, 5.000000, 10.000000```)
+
+`TRAEFIK_METRICS_OPENTELEMETRY_GRPC`:  
+gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
+
+`TRAEFIK_METRICS_OPENTELEMETRY_HEADERS_<NAME>`:  
+Headers sent with payload.
+
+`TRAEFIK_METRICS_OPENTELEMETRY_INSECURE`:  
+Disables client transport security for the exporter. (Default: ```false```)
+
+`TRAEFIK_METRICS_OPENTELEMETRY_PATH`:  
+Set the default URL path for sending traces.
+
+`TRAEFIK_METRICS_OPENTELEMETRY_PUSHINTERVAL`:  
+Period between calls to collect a checkpoint. (Default: ```10```)
+
+`TRAEFIK_METRICS_OPENTELEMETRY_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_METRICS_OPENTELEMETRY_TLS_CAOPTIONAL`:  
+TLS CA.Optional (Default: ```false```)
+
+`TRAEFIK_METRICS_OPENTELEMETRY_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_METRICS_OPENTELEMETRY_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_METRICS_OPENTELEMETRY_TLS_KEY`:  
+TLS key
+
 `TRAEFIK_METRICS_PROMETHEUS`:  
 Prometheus metrics exporter type. (Default: ```false```)
 
@@ -1130,6 +1178,39 @@ Sets the sampling type. (Default: ```const```)
 
 `TRAEFIK_TRACING_JAEGER_TRACECONTEXTHEADERNAME`:  
 Sets the header name used to store the trace ID. (Default: ```uber-trace-id```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY`:  
+Settings for OpenTelemetry. (Default: ```false```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_ADDRESS`:  
+Sets the address of the collector endpoint. (Default: ```localhost:4318```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_GRPC`:  
+gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_HEADERS_<NAME>`:  
+Defines additional headers to be sent with the payloads.
+
+`TRAEFIK_TRACING_OPENTELEMETRY_INSECURE`:  
+Disables client transport security for the exporter. (Default: ```false```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_PATH`:  
+Sets the default URL path for sending traces.
+
+`TRAEFIK_TRACING_OPENTELEMETRY_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_TRACING_OPENTELEMETRY_TLS_CAOPTIONAL`:  
+TLS CA.Optional (Default: ```false```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_TRACING_OPENTELEMETRY_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_TLS_KEY`:  
+TLS key
 
 `TRAEFIK_TRACING_SERVICENAME`:  
 Set the name for this service. (Default: ```traefik```)

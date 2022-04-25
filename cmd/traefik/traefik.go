@@ -508,24 +508,30 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 		logger := log.With().Str(logs.MetricsProviderName, "datadog").Logger()
 
 		registries = append(registries, metrics.RegisterDatadog(logger.WithContext(context.Background()), metricsConfig.Datadog))
-		logger.Debug().Msgf("Configured Datadog metrics: pushing to %s once every %s",
-			metricsConfig.Datadog.Address, metricsConfig.Datadog.PushInterval)
+		logger.Debug().
+			Str("address", metricsConfig.Datadog.Address).
+			Str("pushInterval", metricsConfig.Datadog.PushInterval.String()).
+			Msgf("Configured Datadog metrics")
 	}
 
 	if metricsConfig.StatsD != nil {
 		logger := log.With().Str(logs.MetricsProviderName, "statsd").Logger()
 
 		registries = append(registries, metrics.RegisterStatsd(logger.WithContext(context.Background()), metricsConfig.StatsD))
-		logger.Debug().Msgf("Configured StatsD metrics: pushing to %s once every %s",
-			metricsConfig.StatsD.Address, metricsConfig.StatsD.PushInterval)
+		logger.Debug().
+			Str("address", metricsConfig.StatsD.Address).
+			Str("pushInterval", metricsConfig.StatsD.PushInterval.String()).
+			Msg("Configured StatsD metrics")
 	}
 
 	if metricsConfig.InfluxDB != nil {
 		logger := log.With().Str(logs.MetricsProviderName, "influxdb").Logger()
 
 		registries = append(registries, metrics.RegisterInfluxDB(logger.WithContext(context.Background()), metricsConfig.InfluxDB))
-		logger.Debug().Msgf("Configured InfluxDB metrics: pushing to %s once every %s",
-			metricsConfig.InfluxDB.Address, metricsConfig.InfluxDB.PushInterval)
+		logger.Debug().
+			Str("address", metricsConfig.InfluxDB.Address).
+			Str("pushInterval", metricsConfig.InfluxDB.PushInterval.String()).
+			Msg("Configured InfluxDB metrics")
 	}
 
 	if metricsConfig.InfluxDB2 != nil {
@@ -534,8 +540,25 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 		influxDB2Register := metrics.RegisterInfluxDB2(logger.WithContext(context.Background()), metricsConfig.InfluxDB2)
 		if influxDB2Register != nil {
 			registries = append(registries, influxDB2Register)
-			logger.Debug().Msgf("Configured InfluxDB v2 metrics: pushing to %s (%s org/%s bucket) once every %s",
-				metricsConfig.InfluxDB2.Address, metricsConfig.InfluxDB2.Org, metricsConfig.InfluxDB2.Bucket, metricsConfig.InfluxDB2.PushInterval)
+			logger.Debug().
+				Str("address", metricsConfig.InfluxDB2.Address).
+				Str("bucket", metricsConfig.InfluxDB2.Bucket).
+				Str("organization", metricsConfig.InfluxDB2.Org).
+				Str("pushInterval", metricsConfig.InfluxDB2.PushInterval.String()).
+				Msg("Configured InfluxDB v2 metrics")
+		}
+	}
+
+	if metricsConfig.OpenTelemetry != nil {
+		logger := log.With().Str(logs.MetricsProviderName, "openTelemetry").Logger()
+
+		openTelemetryRegistry := metrics.RegisterOpenTelemetry(logger.WithContext(context.Background()), metricsConfig.OpenTelemetry)
+		if openTelemetryRegistry != nil {
+			registries = append(registries, openTelemetryRegistry)
+			logger.Debug().
+				Str("address", metricsConfig.OpenTelemetry.Address).
+				Str("pushInterval", metricsConfig.OpenTelemetry.PushInterval.String()).
+				Msg("Configured OpenTelemetry metrics")
 		}
 	}
 
@@ -618,6 +641,14 @@ func setupTracing(conf *static.Tracing) *tracing.Tracing {
 			log.Error().Msg("Multiple tracing backend are not supported: cannot create Elastic backend.")
 		} else {
 			backend = conf.Elastic
+		}
+	}
+
+	if conf.OpenTelemetry != nil {
+		if backend != nil {
+			log.Error().Msg("Tracing backends are all mutually exclusive: cannot create OpenTelemetry backend.")
+		} else {
+			backend = conf.OpenTelemetry
 		}
 	}
 
