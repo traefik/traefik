@@ -532,7 +532,7 @@ func (p *Provider) addCertificateForDomain(domain types.Domain, certificate, key
 // The second (RenewInterval) is the interval between renew attempts.
 func getCertificateRenewDurations(certificatesDuration int) (time.Duration, time.Duration) {
 	switch {
-	case certificatesDuration >= 265*24: // >= 1 year
+	case certificatesDuration >= 365*24: // >= 1 year
 		return 4 * 30 * 24 * time.Hour, 7 * 24 * time.Hour // 4 month, 1 week
 	case certificatesDuration >= 3*30*24: // >= 90 days
 		return 30 * 24 * time.Hour, 24 * time.Hour // 30 days, 1 day
