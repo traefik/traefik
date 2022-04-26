@@ -396,6 +396,7 @@
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
+      autoRenewCertificates = true
       [certificatesResolvers.CertificateResolver0.acme.eab]
         kid = "foobar"
         hmacEncoded = "foobar"
@@ -415,6 +416,7 @@
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
+      autoRenewCertificates = false
       [certificatesResolvers.CertificateResolver1.acme.eab]
         kid = "foobar"
         hmacEncoded = "foobar"
