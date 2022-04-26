@@ -51,6 +51,9 @@ Activate API directly on the entryPoint named traefik. (Default: ```false```)
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>`:  
 Certificates resolvers configuration. (Default: ```false```)
 
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_AUTORENEWCERTIFICATES`:
+Automatically renew certificates. (Default: ```true```)
+
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CASERVER`:  
 CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```)
 
