@@ -427,6 +427,7 @@
         "storage": "Storage",
         "keyType": "MyKeyType",
         "certificatesDuration": 42,
+        "autoRenewCertificates": false,
         "dnsChallenge": {
           "provider": "DNSProvider",
           "delayBeforeCheck": "42ns",
