@@ -405,6 +405,9 @@ KV store endpoints (Default: ```127.0.0.1:8500```)
 `--providers.consul.namespace`:  
 KV Namespace
 
+`--providers.consul.namespaces`:  
+Sets the namespaces used to discover the configuration (Consul Enterprise only).
+
 `--providers.consul.password`:  
 KV Password
 
@@ -491,6 +494,9 @@ Expose containers by default. (Default: ```true```)
 
 `--providers.consulcatalog.namespace`:  
 Sets the namespace used to discover services (Consul Enterprise only).
+
+`--providers.consulcatalog.namespaces`:  
+Sets the namespaces used to discover services (Consul Enterprise only).
 
 `--providers.consulcatalog.prefix`:  
 Prefix for consul service tags. Default 'traefik' (Default: ```traefik```)
