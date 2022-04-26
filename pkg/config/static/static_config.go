@@ -257,7 +257,7 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		c.Pilot.SetDefaults()
 	}
 
-	// Disable Gateway API provider if not enabled in experimental
+	// Disable Gateway API provider if not enabled in experimental.
 	if c.Experimental == nil || !c.Experimental.KubernetesGateway {
 		c.Providers.KubernetesGateway = nil
 	}
@@ -326,6 +326,14 @@ func (c *Configuration) ValidateConfiguration() error {
 			return fmt.Errorf("unable to initialize certificates resolver %q, all the acme resolvers must use the same email", name)
 		}
 		acmeEmail = resolver.ACME.Email
+	}
+
+	if c.Providers.ConsulCatalog != nil && c.Providers.ConsulCatalog.Namespace != "" && len(c.Providers.ConsulCatalog.Namespaces) > 0 {
+		return fmt.Errorf("consulCatalog provider cannot have both namespace and namespaces options configured")
+	}
+
+	if c.Providers.Consul != nil && c.Providers.Consul.Namespace != "" && len(c.Providers.Consul.Namespaces) > 0 {
+		return fmt.Errorf("consul provider cannot have both namespace and namespaces options configured")
 	}
 
 	return nil
