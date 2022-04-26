@@ -57,6 +57,9 @@ CA server to use. (Default: ```https://acme-v02.api.letsencrypt.org/directory```
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CERTIFICATESDURATION`:  
 Certificates' duration in hours. (Default: ```2160```)
 
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_AUTORENEWCERTIFICATES`:
+Automatically renew certificates. (Default: ```true```)
+
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE`:  
 Activate DNS-01 Challenge. (Default: ```false```)
 

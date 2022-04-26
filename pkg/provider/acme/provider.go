@@ -34,13 +34,14 @@ var oscpMustStaple = false
 
 // Configuration holds ACME configuration provided by users.
 type Configuration struct {
-	Email                string `description:"Email address used for registration." json:"email,omitempty" toml:"email,omitempty" yaml:"email,omitempty"`
-	CAServer             string `description:"CA server to use." json:"caServer,omitempty" toml:"caServer,omitempty" yaml:"caServer,omitempty"`
-	PreferredChain       string `description:"Preferred chain to use." json:"preferredChain,omitempty" toml:"preferredChain,omitempty" yaml:"preferredChain,omitempty" export:"true"`
-	Storage              string `description:"Storage to use." json:"storage,omitempty" toml:"storage,omitempty" yaml:"storage,omitempty" export:"true"`
-	KeyType              string `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
-	EAB                  *EAB   `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
-	CertificatesDuration int    `description:"Certificates' duration in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
+	Email                 string `description:"Email address used for registration." json:"email,omitempty" toml:"email,omitempty" yaml:"email,omitempty"`
+	CAServer              string `description:"CA server to use." json:"caServer,omitempty" toml:"caServer,omitempty" yaml:"caServer,omitempty"`
+	PreferredChain        string `description:"Preferred chain to use." json:"preferredChain,omitempty" toml:"preferredChain,omitempty" yaml:"preferredChain,omitempty" export:"true"`
+	Storage               string `description:"Storage to use." json:"storage,omitempty" toml:"storage,omitempty" yaml:"storage,omitempty" export:"true"`
+	KeyType               string `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
+	EAB                   *EAB   `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
+	CertificatesDuration  int    `description:"Certificates' duration in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
+	AutoRenewCertificates bool   `description:"Automatically renew certificates." json:"autoRenewCertificates,omitempty" toml:"autoRenewCertificates,omitempty" yaml:"autoRenewCertificates,omitempty" export:"true"`
 
 	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge." json:"dnsChallenge,omitempty" toml:"dnsChallenge,omitempty" yaml:"dnsChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge." json:"httpChallenge,omitempty" toml:"httpChallenge,omitempty" yaml:"httpChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -53,6 +54,7 @@ func (a *Configuration) SetDefaults() {
 	a.Storage = "acme.json"
 	a.KeyType = "RSA4096"
 	a.CertificatesDuration = 3 * 30 * 24 // 90 Days
+	a.AutoRenewCertificates = true
 }
 
 // CertAndStore allows mapping a TLS certificate to a TLS store.
@@ -201,24 +203,29 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	p.configurationChan = configurationChan
 	p.refreshCertificates()
 
-	renewPeriod, renewInterval := getCertificateRenewDurations(p.CertificatesDuration)
-	log.FromContext(ctx).Debugf("Attempt to renew certificates %q before expiry and check every %q",
-		renewPeriod, renewInterval)
+	if p.AutoRenewCertificates {
 
-	p.renewCertificates(ctx, renewPeriod)
+		renewPeriod, renewInterval := getCertificateRenewDurations(p.CertificatesDuration)
+		log.FromContext(ctx).Debugf("Attempt to renew certificates %q before expiry and check every %q",
+			renewPeriod, renewInterval)
 
-	ticker := time.NewTicker(renewInterval)
-	pool.GoCtx(func(ctxPool context.Context) {
-		for {
-			select {
-			case <-ticker.C:
-				p.renewCertificates(ctx, renewPeriod)
-			case <-ctxPool.Done():
-				ticker.Stop()
-				return
+		p.renewCertificates(ctx, renewPeriod)
+
+		ticker := time.NewTicker(renewInterval)
+		pool.GoCtx(func(ctxPool context.Context) {
+			for {
+				select {
+				case <-ticker.C:
+					p.renewCertificates(ctx, renewPeriod)
+				case <-ctxPool.Done():
+					ticker.Stop()
+					return
+				}
 			}
-		}
-	})
+		})
+	} else {
+		log.FromContext(ctx).Debug("Skipping certificate auto renewal as per configuration")
+	}
 
 	return nil
 }
