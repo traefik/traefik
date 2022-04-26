@@ -614,6 +614,12 @@ func Test_getCertificateRenewDurations(t *testing.T) {
 			expectRenewInterval:   time.Hour * 24 * 7,
 		},
 		{
+			desc:                  "265 Days certificates: 30 days renew period, 1 day renew interval",
+			certificatesDurations: 24 * 265,
+			expectRenewPeriod:     time.Hour * 24 * 30,
+			expectRenewInterval:   time.Hour * 24,
+		},
+		{
 			desc:                  "90 Days certificates: 30 days renew period, 1 day renew interval",
 			certificatesDurations: 24 * 90,
 			expectRenewPeriod:     time.Hour * 24 * 30,
