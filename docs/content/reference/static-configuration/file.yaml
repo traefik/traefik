@@ -412,6 +412,7 @@ certificatesResolvers:
       email: foobar
       caServer: foobar
       certificatesDuration: 42
+      autoRenewCertificates: true
       preferredChain: foobar
       storage: foobar
       keyType: foobar
@@ -433,6 +434,7 @@ certificatesResolvers:
       email: foobar
       caServer: foobar
       certificatesDuration: 42
+      autoRenewCertificates: false
       preferredChain: foobar
       storage: foobar
       keyType: foobar

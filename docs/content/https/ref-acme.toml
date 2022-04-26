@@ -30,6 +30,14 @@
   #
   # certificatesDuration=2160
 
+  # Automatically renew certificates.
+  # It defaults to true.
+  #
+  # Optional
+  # Default: true
+  #
+  # autoRenewCertificates=true
+
   # Preferred chain to use.
   #
   # If the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name.

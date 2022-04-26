@@ -153,6 +153,8 @@ and starts to renew certificates 30 days before their expiry.
 When using a certificate resolver that issues certificates with custom durations,
 one can configure the certificates' duration with the [`certificatesDuration`](#certificatesduration) option.
 
+One can also disable automatic renewal of certificates with the [`autoRenewCertificates`](#autorenewcertificates) option.
+
 !!! info ""
     Certificates that are no longer used may still be renewed, as Traefik does not currently check if the certificate is being used before renewing.
 
@@ -593,6 +595,35 @@ certificatesResolvers:
 | >= 7 days            | 1 day             | 1 hour                  |
 | >= 24 hours          | 6 hours           | 10 min                  |
 | < 24 hours           | 20 min            | 1 min                   |
+
+### `autoRenewCertificates`
+
+_Optional, Default=true_
+
+The `autoRenewCertificates` option controls whether certificates should be automatically renewed.
+It defaults to `true`.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      autoRenewCertificates: false
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  autoRenewCertificates=false
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.autorenewcertificates=false
+# ...
+```
 
 ### `preferredChain`
 
