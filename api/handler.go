@@ -21,9 +21,9 @@ type Handler struct {
 	Debug                 bool   `export:"true"`
 	CurrentConfigurations *safe.Safe
 	Statistics            *types.Statistics          `description:"Enable more detailed statistics" export:"true"`
-	Stats                 *thoas_stats.Stats         `json:"-"`
-	StatsRecorder         *middlewares.StatsRecorder `json:"-"`
-	DashboardAssets       *assetfs.AssetFS           `json:"-"`
+	Stats                 *thoas_stats.Stats         `json:"-" hash:"-"`
+	StatsRecorder         *middlewares.StatsRecorder `json:"-" hash:"-"`
+	DashboardAssets       *assetfs.AssetFS           `json:"-" hash:"-"`
 }
 
 var (
