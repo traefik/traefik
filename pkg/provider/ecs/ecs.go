@@ -3,7 +3,6 @@ package ecs
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"strings"
 	"text/template"
 	"time"
@@ -393,10 +392,14 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 
 		for _, container := range resp.ContainerInstances {
 			instanceIds[aws.StringValue(container.Ec2InstanceId)] = aws.StringValue(container.ContainerInstanceArn)
-			matched, err := regexp.MatchString(`^i-[a-z0-9]+$`, aws.StringValue(container.Ec2InstanceId))
-			if matched && err == nil {
-				instanceArns = append(instanceArns, container.Ec2InstanceId)
+			// Disallow Instance IDs of the form mi-*
+			// This prevents considering external instances in ECS Anywhere setups
+			// and getting InvalidInstanceID.Malformed error when calling the describe-instances endpoint.
+			if strings.HasPrefix("mi-", aws.StringValue(container.Ec2InstanceId)) {
+				continue
 			}
+
+			instanceArns = append(instanceArns, container.Ec2InstanceId)
 		}
 	}
 
