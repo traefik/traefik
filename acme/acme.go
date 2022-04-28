@@ -69,7 +69,7 @@ type ACME struct {
 	challengeTLSProvider  *challengeTLSProvider
 	checkOnDemandDomain   func(domain string) bool
 	jobs                  *channels.InfiniteChannel
-	TLSConfig             *tls.Config `description:"TLS config in case wildcard certs are used"`
+	TLSConfig             *tls.Config `description:"TLS config in case wildcard certs are used" hash:"-"`
 	dynamicCerts          *safe.Safe
 	resolvingDomains      map[string]struct{}
 	resolvingDomainsMutex sync.RWMutex
