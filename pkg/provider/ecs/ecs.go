@@ -3,6 +3,7 @@ package ecs
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"text/template"
 	"time"
@@ -392,7 +393,10 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 
 		for _, container := range resp.ContainerInstances {
 			instanceIds[aws.StringValue(container.Ec2InstanceId)] = aws.StringValue(container.ContainerInstanceArn)
-			instanceArns = append(instanceArns, container.Ec2InstanceId)
+			matched, err := regexp.MatchString(`^i-[a-z0-9]+$`, aws.StringValue(container.Ec2InstanceId))
+			if matched && err == nil {
+				instanceArns = append(instanceArns, container.Ec2InstanceId)
+			}
 		}
 	}
 
