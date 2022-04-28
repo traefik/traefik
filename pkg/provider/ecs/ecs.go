@@ -395,7 +395,7 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 			// Disallow Instance IDs of the form mi-*
 			// This prevents considering external instances in ECS Anywhere setups
 			// and getting InvalidInstanceID.Malformed error when calling the describe-instances endpoint.
-			if strings.HasPrefix("mi-", aws.StringValue(container.Ec2InstanceId)) {
+			if strings.HasPrefix(aws.StringValue(container.Ec2InstanceId), "mi-") {
 				continue
 			}
 
