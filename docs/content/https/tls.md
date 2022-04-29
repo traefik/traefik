@@ -364,8 +364,8 @@ spec:
 
 ### Strict SNI Checking
 
-With strict SNI checking enabled, Traefik won't allow connections from clients
-that do not specify a server_name extension or don't match any certificate configured on the tlsOption.
+With strict SNI checking enabled, Traefik won't allow connections from clients that do not specify a server_name extension 
+or don't match any configured certificate (which does not include the DefaultCertificate).
 
 ```yaml tab="File (YAML)"
 # Dynamic configuration

@@ -185,9 +185,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		TCP:  p.loadIngressRouteTCPConfiguration(ctx, client, tlsConfigs),
 		UDP:  p.loadIngressRouteUDPConfiguration(ctx, client),
 		TLS: &dynamic.TLSConfiguration{
+			Stores:       buildTLSStores(ctx, client, tlsConfigs),
 			Certificates: getTLSConfig(tlsConfigs),
 			Options:      buildTLSOptions(ctx, client),
-			Stores:       buildTLSStores(ctx, client),
 		},
 	}
 
@@ -828,49 +828,65 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 	return tlsOptions
 }
 
-func buildTLSStores(ctx context.Context, client Client) map[string]tls.Store {
+func buildTLSStores(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) map[string]tls.Store {
 	tlsStoreCRD := client.GetTLSStores()
-	var tlsStores map[string]tls.Store
-
 	if len(tlsStoreCRD) == 0 {
-		return tlsStores
+		return nil
 	}
-	tlsStores = make(map[string]tls.Store)
+
 	var nsDefault []string
+	tlsStores := make(map[string]tls.Store)
 
-	for _, tlsStore := range tlsStoreCRD {
-		namespace := tlsStore.Namespace
-		secretName := tlsStore.Spec.DefaultCertificate.SecretName
-		logger := log.FromContext(log.With(ctx, log.Str("tlsStore", tlsStore.Name), log.Str("namespace", namespace), log.Str("secretName", secretName)))
+	for _, t := range tlsStoreCRD {
+		logger := log.FromContext(log.With(ctx, log.Str("TLSStore", t.Name), log.Str("namespace", t.Namespace)))
 
-		secret, exists, err := client.GetSecret(namespace, secretName)
-		if err != nil {
-			logger.Errorf("Failed to fetch secret %s/%s: %v", namespace, secretName, err)
-			continue
-		}
-		if !exists {
-			logger.Errorf("Secret %s/%s does not exist", namespace, secretName)
-			continue
-		}
+		id := makeID(t.Namespace, t.Name)
 
-		cert, key, err := getCertificateBlocks(secret, namespace, secretName)
-		if err != nil {
-			logger.Errorf("Could not get certificate blocks: %v", err)
-			continue
-		}
-
-		id := makeID(tlsStore.Namespace, tlsStore.Name)
 		// If the name is default, we override the default config.
-		if tlsStore.Name == tls.DefaultTLSStoreName {
-			id = tlsStore.Name
-			nsDefault = append(nsDefault, tlsStore.Namespace)
+		if t.Name == tls.DefaultTLSStoreName {
+			id = t.Name
+			nsDefault = append(nsDefault, t.Namespace)
 		}
-		tlsStores[id] = tls.Store{
-			DefaultCertificate: &tls.Certificate{
+
+		var tlsStore tls.Store
+
+		if t.Spec.DefaultCertificate != nil {
+			secretName := t.Spec.DefaultCertificate.SecretName
+
+			secret, exists, err := client.GetSecret(t.Namespace, secretName)
+			if err != nil {
+				logger.Errorf("Failed to fetch secret %s/%s: %v", t.Namespace, secretName, err)
+				continue
+			}
+			if !exists {
+				logger.Errorf("Secret %s/%s does not exist", t.Namespace, secretName)
+				continue
+			}
+
+			cert, key, err := getCertificateBlocks(secret, t.Namespace, secretName)
+			if err != nil {
+				logger.Errorf("Could not get certificate blocks: %v", err)
+				continue
+			}
+
+			tlsStore.DefaultCertificate = &tls.Certificate{
 				CertFile: tls.FileOrContent(cert),
 				KeyFile:  tls.FileOrContent(key),
-			},
+			}
 		}
+
+		for _, c := range t.Spec.Certificates {
+			certAndStores, err := getTLS(client, c.SecretName, t.Namespace)
+			if err != nil {
+				logger.Errorf("Unable to read secret %s/%s: %v", t.Namespace, c.SecretName, err)
+				continue
+			}
+
+			certAndStores.Stores = []string{id}
+			tlsConfigs[t.Namespace+"/"+c.SecretName] = certAndStores
+		}
+
+		tlsStores[id] = tlsStore
 	}
 
 	if len(nsDefault) > 1 {
