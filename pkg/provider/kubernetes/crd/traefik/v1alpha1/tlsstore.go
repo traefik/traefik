@@ -20,13 +20,14 @@ type TLSStore struct {
 
 // TLSStoreSpec configures a TLSStore resource.
 type TLSStoreSpec struct {
-	DefaultCertificate DefaultCertificate `json:"defaultCertificate"`
+	DefaultCertificate *Certificate  `json:"defaultCertificate,omitempty"`
+	Certificates       []Certificate `json:"certificates,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// DefaultCertificate holds a secret name for the TLSOption resource.
-type DefaultCertificate struct {
+// Certificate holds a secret name for the TLSOption resource.
+type Certificate struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the certificate details.
 	SecretName string `json:"secretName"`
 }
