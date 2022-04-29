@@ -447,26 +447,7 @@ certificatesResolvers:
         entryPoint: foobar
       tlsChallenge: {}
   CertificateResolver1:
-    acme:
-      email: foobar
-      caServer: foobar
-      certificatesDuration: 42
-      preferredChain: foobar
-      storage: foobar
-      keyType: foobar
-      eab:
-        kid: foobar
-        hmacEncoded: foobar
-      dnsChallenge:
-        provider: foobar
-        delayBeforeCheck: 42s
-        resolvers:
-          - foobar
-          - foobar
-        disablePropagationCheck: true
-      httpChallenge:
-        entryPoint: foobar
-      tlsChallenge: {}
+    tailscale: {}
 hub:
   tls:
     insecure: true
