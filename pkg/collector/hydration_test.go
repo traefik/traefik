@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	slideItemNumber     = 2
+	sliceItemNumber     = 2
 	mapItemNumber       = 2
 	defaultString       = "foobar"
 	defaultNumber       = 42
@@ -17,36 +17,31 @@ const (
 	defaultMapKeyPrefix = "name"
 )
 
-func Fill(element interface{}) error {
+func hydrate(element interface{}) error {
 	field := reflect.ValueOf(element)
-	name := reflect.TypeOf(element).Name()
-	return fill(name, field)
+	return fill(field)
 }
 
-func fill(previous string, field reflect.Value) error {
+func fill(field reflect.Value) error {
 	switch field.Kind() {
 	case reflect.Struct:
-		err := setStruct(previous, field)
-		if err != nil {
+		if err := setStruct(field); err != nil {
 			return err
 		}
 	case reflect.Ptr:
-		err := setPointer(previous, field)
-		if err != nil {
+		if err := setPointer(field); err != nil {
 			return err
 		}
 	case reflect.Slice:
-		err := setSlice(field)
-		if err != nil {
+		if err := setSlice(field); err != nil {
 			return err
 		}
 	case reflect.Map:
-		err := setMap(field)
-		if err != nil {
+		if err := setMap(field); err != nil {
 			return err
 		}
 	case reflect.Interface:
-		if err := fill(previous, field.Elem()); err != nil {
+		if err := fill(field.Elem()); err != nil {
 			return err
 		}
 	case reflect.String:
@@ -106,7 +101,7 @@ func setMap(field reflect.Value) error {
 		// generate value
 		ptrType := reflect.PtrTo(field.Type().Elem())
 		ptrValue := reflect.New(ptrType)
-		if err := fill("", ptrValue); err != nil {
+		if err := fill(ptrValue); err != nil {
 			return err
 		}
 		value := ptrValue.Elem().Elem()
@@ -130,7 +125,7 @@ func makeKeyName(typ reflect.Type) string {
 	}
 }
 
-func setStruct(previous string, field reflect.Value) error {
+func setStruct(field reflect.Value) error {
 	for i := 0; i < field.NumField(); i++ {
 		fld := field.Field(i)
 		stFld := field.Type().Field(i)
@@ -139,12 +134,7 @@ func setStruct(previous string, field reflect.Value) error {
 			continue
 		}
 
-		name := stFld.Name
-		if len(previous) > 0 {
-			name = previous + "." + stFld.Name
-		}
-
-		if err := fill(name, fld); err != nil {
+		if err := fill(fld); err != nil {
 			return err
 		}
 	}
@@ -152,23 +142,23 @@ func setStruct(previous string, field reflect.Value) error {
 }
 
 func setSlice(field reflect.Value) error {
-	field.Set(reflect.MakeSlice(field.Type(), slideItemNumber, slideItemNumber))
+	field.Set(reflect.MakeSlice(field.Type(), sliceItemNumber, sliceItemNumber))
 	for j := 0; j < field.Len(); j++ {
-		if err := fill("", field.Index(j)); err != nil {
+		if err := fill(field.Index(j)); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func setPointer(previous string, field reflect.Value) error {
+func setPointer(field reflect.Value) error {
 	if field.IsNil() {
 		field.Set(reflect.New(field.Type().Elem()))
-		if err := fill(previous, field.Elem()); err != nil {
+		if err := fill(field.Elem()); err != nil {
 			return err
 		}
 	} else {
-		if err := fill(previous, field.Elem()); err != nil {
+		if err := fill(field.Elem()); err != nil {
 			return err
 		}
 	}

@@ -11,7 +11,7 @@ import (
 func Test_createBody(t *testing.T) {
 	var staticConfiguration static.Configuration
 
-	err := Fill(&staticConfiguration)
+	err := hydrate(&staticConfiguration)
 	require.NoError(t, err)
 
 	buffer, err := createBody(&staticConfiguration)
