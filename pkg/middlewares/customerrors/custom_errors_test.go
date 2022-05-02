@@ -133,6 +133,24 @@ func TestHandler(t *testing.T) {
 				assert.Contains(t, recorder.Body.String(), "localhost")
 			},
 		},
+		{
+			desc:        "full query replacement",
+			errorPage:   &dynamic.ErrorPage{Service: "error", Query: "/?status={status}&url={url}", Status: []string{"503"}},
+			backendCode: http.StatusServiceUnavailable,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.RequestURI != "/?status=503&url=http%3A%2F%2Flocalhost%2Ftest%3Ffoo%3Dbar%26baz%3Dbuz" {
+					t.Log(r.RequestURI)
+					return
+				}
+
+				_, _ = fmt.Fprintln(w, "My 503 page.")
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, http.StatusServiceUnavailable, recorder.Code, "HTTP status")
+				assert.Contains(t, recorder.Body.String(), "My 503 page.")
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -153,7 +171,7 @@ func TestHandler(t *testing.T) {
 			errorPageHandler, err := New(context.Background(), handler, *test.errorPage, serviceBuilderMock, "test")
 			require.NoError(t, err)
 
-			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost/test", nil)
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost/test?foo=bar&baz=buz", nil)
 
 			recorder := httptest.NewRecorder()
 			errorPageHandler.ServeHTTP(recorder, req)
