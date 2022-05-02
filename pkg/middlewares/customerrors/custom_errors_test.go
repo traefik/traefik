@@ -138,7 +138,7 @@ func TestHandler(t *testing.T) {
 			errorPage:   &dynamic.ErrorPage{Service: "error", Query: "/{status}-{url}", Status: []string{"503"}},
 			backendCode: http.StatusServiceUnavailable,
 			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.RequestURI != "/503-http:%2F%2Flocalhost%2Ftest%3Ffoo=bar&baz=buz" {
+				if r.RequestURI != "/503-http%3A%2F%2Flocalhost%2Ftest%3Ffoo%3Dbar%26baz%3Dbuz" {
 					return
 				}
 
