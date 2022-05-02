@@ -135,10 +135,11 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			desc:        "full query replacement",
-			errorPage:   &dynamic.ErrorPage{Service: "error", Query: "/{status}-{url}", Status: []string{"503"}},
+			errorPage:   &dynamic.ErrorPage{Service: "error", Query: "/?status={status}&url={url}", Status: []string{"503"}},
 			backendCode: http.StatusServiceUnavailable,
 			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.RequestURI != "/503-http%3A%2F%2Flocalhost%2Ftest%3Ffoo%3Dbar%26baz%3Dbuz" {
+				if r.RequestURI != "/?status=503&url=http%3A%2F%2Flocalhost%2Ftest%3Ffoo%3Dbar%26baz%3Dbuz" {
+					t.Log(r.RequestURI)
 					return
 				}
 
