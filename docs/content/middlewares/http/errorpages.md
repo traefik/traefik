@@ -133,5 +133,5 @@ The table below lists all the available variables and their associated values.
 
 |Variable  | Value                                                                         |
 |----------|-------------------------------------------------------------------------------|
-|`{status}`| The response status code                                                      |
-|`{url}`   | The full [QueryEscaped](https://pkg.go.dev/net/url#QueryEscape) requested URL |
+|`{status}`| The response status code.                                                      |
+|`{url}`   | The full [QueryEscaped](https://pkg.go.dev/net/url#QueryEscape) requested URL. |
