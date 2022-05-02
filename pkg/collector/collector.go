@@ -16,7 +16,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/version"
 )
 
-// collectorURL URL where the stats are send.
+// collectorURL URL where the stats are sent.
 const collectorURL = "https://collect.traefik.io/9vxmmkcdmalbdi635d4jgc5p5rx0h7h8"
 
 // Collected data.
@@ -30,16 +30,30 @@ type data struct {
 
 // Collect anonymous data.
 func Collect(staticConfiguration *static.Configuration) error {
-	anonConfig, err := redactor.Anonymize(staticConfiguration)
+	buf, err := createBody(staticConfiguration)
 	if err != nil {
 		return err
+	}
+
+	resp, err := makeHTTPClient().Post(collectorURL, "application/json; charset=utf-8", buf)
+	if resp != nil {
+		_ = resp.Body.Close()
+	}
+
+	return err
+}
+
+func createBody(staticConfiguration *static.Configuration) (*bytes.Buffer, error) {
+	anonConfig, err := redactor.Anonymize(staticConfiguration)
+	if err != nil {
+		return nil, err
 	}
 
 	log.WithoutContext().Infof("Anonymous stats sent to %s: %s", collectorURL, anonConfig)
 
 	hashConf, err := hashstructure.Hash(staticConfiguration, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	data := &data{
@@ -53,15 +67,10 @@ func Collect(staticConfiguration *static.Configuration) error {
 	buf := new(bytes.Buffer)
 	err = json.NewEncoder(buf).Encode(data)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	resp, err := makeHTTPClient().Post(collectorURL, "application/json; charset=utf-8", buf)
-	if resp != nil {
-		resp.Body.Close()
-	}
-
-	return err
+	return buf, err
 }
 
 func makeHTTPClient() *http.Client {
