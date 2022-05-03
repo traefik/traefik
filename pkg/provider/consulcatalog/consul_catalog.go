@@ -96,6 +96,7 @@ func BuildNamespacedProviders(conf *Provider) []*Provider {
 	var providers []*Provider
 	for _, namespace := range conf.Namespaces {
 		confCopy := *conf
+		confCopy.Namespace = namespace
 		confCopy.name = providerName + "-" + namespace
 		providers = append(providers, &confCopy)
 	}
