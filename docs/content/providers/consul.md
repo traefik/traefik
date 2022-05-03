@@ -70,6 +70,10 @@ The `namespace` option defines the namespace to query.
     The namespace option only works with [Consul Enterprise](https://www.consul.io/docs/enterprise),
     which provides the [Namespaces](https://www.consul.io/docs/enterprise/namespaces) feature.
 
+!!! warning
+
+    One should only define either the `namespaces` option or the `namespace` option.
+
 ```yaml tab="File (YAML)"
 providers:
   consul:
@@ -85,6 +89,46 @@ providers:
 
 ```bash tab="CLI"
 --providers.consul.namespace=production
+```
+
+### `namespaces`
+
+_Optional, Default=""_
+
+The `namespaces` option defines the namespaces to query.
+When using the `namespaces` option, the discovered configuration object names will be suffixed as shown below:
+
+```text
+<resource-name>@consul-<namespace>
+```
+
+!!! warning
+
+    The namespaces option only works with [Consul Enterprise](https://www.consul.io/docs/enterprise),
+    which provides the [Namespaces](https://www.consul.io/docs/enterprise/namespaces) feature.
+
+!!! warning
+
+    One should only define either the `namespaces` option or the `namespace` option.
+
+```yaml tab="File (YAML)"
+providers:
+  consul:
+    namespaces: 
+      - "ns1"
+      - "ns2"
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.consul]
+  namespaces = ["ns1", "ns2"]
+  # ...
+```
+
+```bash tab="CLI"
+--providers.consul.namespaces=ns1,ns2
+# ...
 ```
 
 ### `username`
