@@ -25,6 +25,9 @@ import (
 // DefaultTemplateRule The default template for the default rule.
 const DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 
+// providerName is the ConsulCatalog provider name.
+const providerName = "consulcatalog"
+
 var _ provider.Provider = (*Provider)(nil)
 
 type itemData struct {
@@ -55,9 +58,11 @@ type Provider struct {
 	ConnectAware      bool            `description:"Enable Consul Connect support." json:"connectAware,omitempty" toml:"connectAware,omitempty" yaml:"connectAware,omitempty" export:"true"`
 	ConnectByDefault  bool            `description:"Consider every service as Connect capable by default." json:"connectByDefault,omitempty" toml:"connectByDefault,omitempty" yaml:"connectByDefault,omitempty" export:"true"`
 	ServiceName       string          `description:"Name of the Traefik service in Consul Catalog (needs to be registered via the orchestrator or manually)." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
+	Namespaces        []string        `description:"Sets the namespaces used to discover services (Consul Enterprise only)." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
 	Namespace         string          `description:"Sets the namespace used to discover services (Consul Enterprise only)." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty" export:"true"`
 	Watch             bool            `description:"Watch Consul API events." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
 
+	name              string
 	client            *api.Client
 	defaultRuleTpl    *template.Template
 	certChan          chan *connectCert
@@ -81,6 +86,24 @@ type EndpointHTTPAuthConfig struct {
 	Password string `description:"Basic Auth password" json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
 }
 
+// BuildNamespacedProviders builds ConsulCatalog provider instances for the given namespace configuration.
+func BuildNamespacedProviders(conf *Provider) []*Provider {
+	if len(conf.Namespaces) == 0 {
+		confCopy := *conf
+		return []*Provider{&confCopy}
+	}
+
+	var providers []*Provider
+	for _, namespace := range conf.Namespaces {
+		confCopy := *conf
+		confCopy.Namespace = namespace
+		confCopy.name = providerName + "-" + namespace
+		providers = append(providers, &confCopy)
+	}
+
+	return providers
+}
+
 // SetDefaults sets the default values.
 func (p *Provider) SetDefaults() {
 	endpoint := &EndpointConfig{}
@@ -90,6 +113,7 @@ func (p *Provider) SetDefaults() {
 	p.ExposedByDefault = true
 	p.DefaultRule = DefaultTemplateRule
 	p.ServiceName = "traefik"
+	p.name = providerName
 }
 
 // Init the provider.
@@ -115,7 +139,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	}
 
 	pool.GoCtx(func(routineCtx context.Context) {
-		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "consulcatalog"))
+		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, p.name))
 		logger := log.FromContext(ctxLog)
 
 		operation := func() error {
@@ -210,7 +234,7 @@ func (p *Provider) loadConfiguration(ctx context.Context, certInfo *connectCert,
 	}
 
 	configurationChan <- dynamic.Message{
-		ProviderName:  "consulcatalog",
+		ProviderName:  p.name,
 		Configuration: p.buildConfiguration(ctx, data, certInfo),
 	}
 
