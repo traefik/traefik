@@ -1,5 +1,5 @@
-## [v2.6.5](https://github.com/traefik/traefik/tree/v2.6.5) (2022-05-03)
-[All Commits](https://github.com/traefik/traefik/compare/v2.6.3...v2.6.5)
+## [v2.6.6](https://github.com/traefik/traefik/tree/v2.6.6) (2022-05-03)
+[All Commits](https://github.com/traefik/traefik/compare/v2.6.3...v2.6.6)
 
 **Bug fixes:**
 - **[acme]** Fix RenewInterval computation in ACME provider ([#8969](https://github.com/traefik/traefik/pull/8969) by [smasset-orange](https://github.com/smasset-orange))
@@ -18,6 +18,11 @@
 - **[middleware]** Preflight requests are not forwarded to services ([#8923](https://github.com/traefik/traefik/pull/8923) by [sizief](https://github.com/sizief))
 - Add title and description metadata to documentation pages ([#8941](https://github.com/traefik/traefik/pull/8941) by [ldez](https://github.com/ldez))
 - Update dynamic and static configuration references  ([#8918](https://github.com/traefik/traefik/pull/8918) by [ldez](https://github.com/ldez))
+
+## [v2.6.5](https://github.com/traefik/traefik/tree/v2.6.5) (2022-05-03)
+[All Commits](https://github.com/traefik/traefik/compare/v2.6.3...v2.6.5)
+
+Release canceled.
 
 ## [v2.6.4](https://github.com/traefik/traefik/tree/v2.6.4) (2022-05-03)
 [All Commits](https://github.com/traefik/traefik/compare/v2.6.3...v2.6.4)
