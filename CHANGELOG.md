@@ -1,3 +1,24 @@
+## [v2.6.4](https://github.com/traefik/traefik/tree/v2.6.4) (2022-05-03)
+[All Commits](https://github.com/traefik/traefik/compare/v2.6.3...v2.6.4)
+
+**Bug fixes:**
+- **[acme]** Fix RenewInterval computation in ACME provider ([#8969](https://github.com/traefik/traefik/pull/8969) by [smasset-orange](https://github.com/smasset-orange))
+- **[ecs,logs]** Remove duplicate error logs ([#8916](https://github.com/traefik/traefik/pull/8916) by [rtribotte](https://github.com/rtribotte))
+- **[ecs]** Filter out ECS anywhere instance IDs ([#8973](https://github.com/traefik/traefik/pull/8973) by [JohnPreston](https://github.com/JohnPreston))
+- **[middleware]** Re-add missing writeheader call in flush ([#8957](https://github.com/traefik/traefik/pull/8957) by [mpl](https://github.com/mpl))
+- **[middleware]** Fix bug for when custom page is large enough ([#8932](https://github.com/traefik/traefik/pull/8932) by [mpl](https://github.com/mpl))
+- **[middleware]** Fix regexp handling in redirect middleware  ([#8920](https://github.com/traefik/traefik/pull/8920) by [tomMoulard](https://github.com/tomMoulard))
+- **[plugins]** Update Yaegi to v0.11.3 ([#8954](https://github.com/traefik/traefik/pull/8954) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[k8s/gatewayapi]** Fix certificateRefs in dynamic configuration ([#8940](https://github.com/traefik/traefik/pull/8940) by [kahirokunn](https://github.com/kahirokunn))
+- **[logs]** Move accessLog.fields example to TOML section ([#8944](https://github.com/traefik/traefik/pull/8944) by [major](https://github.com/major))
+- **[logs]** Add default mode for fields.names to access log ([#8933](https://github.com/traefik/traefik/pull/8933) by [aleksvujic](https://github.com/aleksvujic))
+- **[middleware]** Fix default for buffering middleware  ([#8945](https://github.com/traefik/traefik/pull/8945) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Preflight requests are not forwarded to services ([#8923](https://github.com/traefik/traefik/pull/8923) by [sizief](https://github.com/sizief))
+- Add title and description metadata to documentation pages ([#8941](https://github.com/traefik/traefik/pull/8941) by [ldez](https://github.com/ldez))
+- Update dynamic and static configuration references  ([#8918](https://github.com/traefik/traefik/pull/8918) by [ldez](https://github.com/ldez))
+
 ## [v2.6.3](https://github.com/traefik/traefik/tree/v2.6.3) (2022-03-28)
 [All Commits](https://github.com/traefik/traefik/compare/v2.6.2...v2.6.3)
 
