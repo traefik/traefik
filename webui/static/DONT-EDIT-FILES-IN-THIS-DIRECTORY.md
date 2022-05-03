@@ -1,1 +1,1 @@
-For more information show `webui/readme.md`
+For more information see `webui/readme.md`
