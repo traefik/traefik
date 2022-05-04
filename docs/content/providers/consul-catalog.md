@@ -669,36 +669,38 @@ For additional information, refer to [Restrict the Scope of Service Discovery](.
 
 ### `namespace`
 
-_Optional, Default=""_
+??? warning "Deprecated in favor of the [namespaces](#namespaces) option."
 
-The `namespace` option defines the namespace in which the consul catalog services will be discovered.
-
-!!! warning
-
-    The namespace option only works with [Consul Enterprise](https://www.consul.io/docs/enterprise),
-    which provides the [Namespaces](https://www.consul.io/docs/enterprise/namespaces) feature.
-
-!!! warning
-
-    One should only define either the `namespaces` option or the `namespace` option.
-
-```yaml tab="File (YAML)"
-providers:
-  consulCatalog:
-    namespace: "production" 
+    _Optional, Default=""_
+    
+    The `namespace` option defines the namespace in which the consul catalog services will be discovered.
+    
+    !!! warning
+    
+        The namespace option only works with [Consul Enterprise](https://www.consul.io/docs/enterprise),
+        which provides the [Namespaces](https://www.consul.io/docs/enterprise/namespaces) feature.
+    
+    !!! warning
+    
+        One should only define either the `namespaces` option or the `namespace` option.
+    
+    ```yaml tab="File (YAML)"
+    providers:
+      consulCatalog:
+        namespace: "production" 
+        # ...
+    ```
+    
+    ```toml tab="File (TOML)"
+    [providers.consulCatalog]
+      namespace = "production"
+      # ...
+    ```
+    
+    ```bash tab="CLI"
+    --providers.consulcatalog.namespace=production
     # ...
-```
-
-```toml tab="File (TOML)"
-[providers.consulCatalog]
-  namespace = "production"
-  # ...
-```
-
-```bash tab="CLI"
---providers.consulcatalog.namespace=production
-# ...
-```
+    ```
 
 ### `namespaces`
 
