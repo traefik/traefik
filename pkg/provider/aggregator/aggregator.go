@@ -8,9 +8,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/static"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/provider/consulcatalog"
 	"github.com/traefik/traefik/v2/pkg/provider/file"
-	"github.com/traefik/traefik/v2/pkg/provider/kv/consul"
 	"github.com/traefik/traefik/v2/pkg/provider/traefik"
 	"github.com/traefik/traefik/v2/pkg/redactor"
 	"github.com/traefik/traefik/v2/pkg/safe"
@@ -111,13 +109,13 @@ func NewProviderAggregator(conf static.Providers) ProviderAggregator {
 	}
 
 	if conf.ConsulCatalog != nil {
-		for _, pvd := range consulcatalog.BuildNamespacedProviders(conf.ConsulCatalog) {
+		for _, pvd := range conf.ConsulCatalog.BuildProviders() {
 			p.quietAddProvider(pvd)
 		}
 	}
 
 	if conf.Consul != nil {
-		for _, pvd := range consul.BuildNamespacedProviders(conf.Consul) {
+		for _, pvd := range conf.Consul.BuildProviders() {
 			p.quietAddProvider(pvd)
 		}
 	}
