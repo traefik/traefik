@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -40,7 +41,11 @@ const (
 const (
 	providerName               = "kubernetescrd"
 	providerNamespaceSeparator = "@"
+
+	secretURNElems = 3
 )
+
+var secretURNReg = regexp.MustCompile(`^urn:k8s:secret:(?P<namespace>[\w-]+):(?P<secretName>[\w-]+):(?P<secretKey>[\w_]+)`)
 
 // Provider holds configurations of the provider.
 type Provider struct {
@@ -225,7 +230,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			conf.HTTP.Services[serviceName] = errorPageService
 		}
 
-		plugin, err := createPluginMiddleware(middleware.Spec.Plugin)
+		plugin, err := createPluginMiddleware(client, middleware.Spec.Plugin)
 		if err != nil {
 			log.FromContext(ctxMid).Errorf("Error while reading plugins middleware: %v", err)
 			continue
@@ -412,7 +417,7 @@ func getServicePort(svc *corev1.Service, port intstr.IntOrString) (*corev1.Servi
 	return &corev1.ServicePort{Port: port.IntVal}, nil
 }
 
-func createPluginMiddleware(plugins map[string]apiextensionv1.JSON) (map[string]dynamic.PluginConf, error) {
+func createPluginMiddleware(k8sClient Client, plugins map[string]apiextensionv1.JSON) (map[string]dynamic.PluginConf, error) {
 	if plugins == nil {
 		return nil, nil
 	}
@@ -422,13 +427,59 @@ func createPluginMiddleware(plugins map[string]apiextensionv1.JSON) (map[string]
 		return nil, err
 	}
 
-	pc := map[string]dynamic.PluginConf{}
-	err = json.Unmarshal(data, &pc)
+	pcMap := map[string]dynamic.PluginConf{}
+	err = json.Unmarshal(data, &pcMap)
 	if err != nil {
 		return nil, err
 	}
 
-	return pc, nil
+	for _, pc := range pcMap {
+		if err := loadPluginConfigSecret(k8sClient, pc); err != nil {
+			return nil, err
+		}
+	}
+
+	return pcMap, nil
+}
+
+func loadPluginConfigSecret(k8sClient Client, pc map[string]interface{}) error {
+	for k, iv := range pc {
+		switch v := iv.(type) {
+		case string:
+			secret, err := getSecretValue(k8sClient, v)
+			if err != nil {
+				return err
+			}
+			pc[k] = string(secret)
+
+		case map[string]interface{}:
+			if err := loadPluginConfigSecret(k8sClient, v); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func getSecretValue(c Client, secretURN string) ([]byte, error) {
+	match := secretURNReg.FindStringSubmatch(secretURN)
+	if len(match) != secretURNElems+1 {
+		return nil, errors.New("malformed secret urn")
+	}
+
+	ns, secretName, secretKey := match[1], match[2], match[3]
+
+	if ns == "" || secretName == "" || secretKey == "" {
+		return nil, errors.New("malformed secret urn")
+	}
+	secret, ok, err := c.GetSecret(ns, secretName)
+	if err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, errors.New("secret is not found")
+	}
+
+	return secret.Data[secretKey], nil
 }
 
 func createCircuitBreakerMiddleware(circuitBreaker *v1alpha1.CircuitBreaker) (*dynamic.CircuitBreaker, error) {
