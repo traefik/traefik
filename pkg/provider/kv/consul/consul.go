@@ -38,12 +38,20 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 			log.WithoutContext().Warnf("Namespace option is deprecated, please use the Namespaces option instead.")
 		}
 
-		return []*Provider{{Provider: p.Provider, namespace: p.Namespace}}
+		return []*Provider{{
+			Provider:  p.Provider,
+			name:      providerName,
+			namespace: p.Namespace,
+		}}
 	}
 
 	var providers []*Provider
 	for _, namespace := range p.Namespaces {
-		providers = append(providers, &Provider{Provider: p.Provider, namespace: namespace})
+		providers = append(providers, &Provider{
+			Provider:  p.Provider,
+			name:      providerName + "-" + namespace,
+			namespace: namespace,
+		})
 	}
 
 	return providers
@@ -53,6 +61,7 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 type Provider struct {
 	kv.Provider
 
+	name      string
 	namespace string
 }
 
@@ -64,10 +73,9 @@ func (p *Provider) Init() error {
 		return errors.New("wildcard namespace is not supported")
 	}
 
-	name := providerName
-	if p.namespace != "" {
-		name = providerName + "-" + p.namespace
+	if p.name == "" {
+		p.name = providerName
 	}
 
-	return p.Provider.Init(store.CONSUL, name, p.namespace)
+	return p.Provider.Init(store.CONSUL, p.name, p.namespace)
 }
