@@ -66,12 +66,20 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 		if p.Namespace != "" {
 			log.WithoutContext().Warnf("Namespace option is deprecated, please use the Namespaces option instead.")
 		}
-		return []*Provider{{Configuration: p.Configuration, namespace: p.Namespace}}
+		return []*Provider{{
+			Configuration: p.Configuration,
+			name:          providerName,
+			namespace:     p.Namespace,
+		}}
 	}
 
 	var providers []*Provider
 	for _, namespace := range p.Namespaces {
-		providers = append(providers, &Provider{Configuration: p.Configuration, namespace: namespace})
+		providers = append(providers, &Provider{
+			Configuration: p.Configuration,
+			name:          providerName + "-" + namespace,
+			namespace:     namespace,
+		})
 	}
 
 	return providers
@@ -145,9 +153,8 @@ func (p *Provider) Init() error {
 	p.certChan = make(chan *connectCert, 1)
 	p.watchServicesChan = make(chan struct{}, 1)
 
-	p.name = providerName
-	if p.namespace != "" {
-		p.name = providerName + "-" + p.namespace
+	if p.name == "" {
+		p.name = providerName
 	}
 
 	return nil
