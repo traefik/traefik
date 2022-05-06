@@ -1,3 +1,8 @@
+---
+title: "Traefik Routing Configuration with KV stores"
+description: "Read the technical documentation to learn the Traefik Routing Configuration with KV stores."
+---
+
 # Traefik & KV Stores
 
 A Story of key & values

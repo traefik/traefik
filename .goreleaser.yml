@@ -12,7 +12,8 @@ builds:
       - CGO_ENABLED=0
     ldflags:
       - -s -w -X github.com/traefik/traefik/v2/pkg/version.Version={{.Version}} -X github.com/traefik/traefik/v2/pkg/version.Codename={{.Env.CODENAME}} -X github.com/traefik/traefik/v2/pkg/version.BuildDate={{.Date}}
-
+    flags:
+      - -trimpath
     goos:
       - linux
       - darwin

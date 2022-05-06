@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
@@ -165,4 +166,27 @@ func checkLocalPluginManifest(descriptor LocalDescriptor) error {
 	}
 
 	return errs.ErrorOrNil()
+}
+
+func stringToSliceHookFunc(f reflect.Kind, t reflect.Kind, data interface{}) (interface{}, error) {
+	if f != reflect.String || t != reflect.Slice {
+		return data, nil
+	}
+
+	raw := data.(string)
+	if raw == "" {
+		return []string{}, nil
+	}
+
+	if strings.Contains(raw, "║") {
+		values := strings.Split(raw, "║")
+		// Removes the first value if the slice has a length of 2 and a first value empty.
+		// It's a workaround to escape the parsing on `,`.
+		if len(values) == 2 && values[0] == "" {
+			return values[1:], nil
+		}
+		return values, nil
+	}
+
+	return strings.Split(raw, ","), nil
 }

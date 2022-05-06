@@ -16,7 +16,8 @@ import (
 // ClientTLS holds TLS specific configurations as client
 // CA, Cert and Key can be either path or file contents.
 type ClientTLS struct {
-	CA                 string `description:"TLS CA" json:"ca,omitempty" toml:"ca,omitempty" yaml:"ca,omitempty"`
+	CA string `description:"TLS CA" json:"ca,omitempty" toml:"ca,omitempty" yaml:"ca,omitempty"`
+	// Deprecated: TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634).
 	CAOptional         bool   `description:"TLS CA.Optional" json:"caOptional,omitempty" toml:"caOptional,omitempty" yaml:"caOptional,omitempty" export:"true"`
 	Cert               string `description:"TLS cert" json:"cert,omitempty" toml:"cert,omitempty" yaml:"cert,omitempty"`
 	Key                string `description:"TLS key" json:"key,omitempty" toml:"key,omitempty" yaml:"key,omitempty" loggable:"false"`
@@ -30,10 +31,13 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 		return nil, nil
 	}
 
+	if clientTLS.CAOptional {
+		log.FromContext(ctx).Warn("CAOptional is deprecated, TLS client authentication is a server side option.")
+	}
+
 	// Not initialized, to rely on system bundle.
 	var caPool *x509.CertPool
 
-	clientAuth := tls.NoClientCert
 	if clientTLS.CA != "" {
 		var ca []byte
 		if _, errCA := os.Stat(clientTLS.CA); errCA == nil {
@@ -50,12 +54,6 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 		if !caPool.AppendCertsFromPEM(ca) {
 			return nil, errors.New("failed to parse CA")
 		}
-
-		if clientTLS.CAOptional {
-			clientAuth = tls.VerifyClientCertIfGiven
-		} else {
-			clientAuth = tls.RequireAndVerifyClientCert
-		}
 	}
 
 	hasCert := len(clientTLS.Cert) > 0
@@ -69,7 +67,6 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 		return &tls.Config{
 			RootCAs:            caPool,
 			InsecureSkipVerify: clientTLS.InsecureSkipVerify,
-			ClientAuth:         clientAuth,
 		}, nil
 	}
 
@@ -82,7 +79,6 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 		Certificates:       []tls.Certificate{cert},
 		RootCAs:            caPool,
 		InsecureSkipVerify: clientTLS.InsecureSkipVerify,
-		ClientAuth:         clientAuth,
 	}, nil
 }
 

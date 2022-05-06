@@ -1,3 +1,8 @@
+---
+title: "Consul Catalog Configuration Discovery"
+description: "Learn how to use Consul Catalog as a provider for configuration discovery in Traefik Proxy. Read the technical documentation."
+---
+
 # Traefik & Consul Catalog
 
 A Story of Tags, Services & Instances
@@ -386,37 +391,6 @@ providers:
 
 ```bash tab="CLI"
 --providers.consulcatalog.endpoint.tls.ca=path/to/ca.crt
-```
-
-##### `caOptional`
-
-_Optional_
-
-The value of `caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to Consul Catalog.
-
-!!! warning ""
-
-    If `ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
-
-When this option is set to `true`, a client certificate is requested during the handshake but is not required. If a certificate is sent, it is required to be valid.
-
-When this option is set to `false`, a client certificate is requested during the handshake, and at least one valid certificate should be sent by the client.
-
-```yaml tab="File (YAML)"
-providers:
-  consulCatalog:
-    endpoint:
-      tls:
-        caOptional: true
-```
-
-```toml tab="File (TOML)"
-[providers.consulCatalog.endpoint.tls]
-  caOptional = true
-```
-
-```bash tab="CLI"
---providers.consulcatalog.endpoint.tls.caoptional=true
 ```
 
 ##### `cert`

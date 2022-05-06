@@ -40,7 +40,7 @@ require (
 	github.com/instana/go-sensor v1.38.3
 	github.com/klauspost/compress v1.13.0
 	github.com/kvtools/valkeyrie v0.4.0
-	github.com/lucas-clemente/quic-go v0.26.0
+	github.com/lucas-clemente/quic-go v0.27.0
 	github.com/mailgun/ttlmap v0.0.0-20170619185759-c1c17f74874f
 	github.com/miekg/dns v1.1.45
 	github.com/mitchellh/copystructure v1.0.0
@@ -61,7 +61,7 @@ require (
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
 	github.com/tinylib/msgp v1.0.2 // indirect
 	github.com/traefik/paerser v0.1.5
-	github.com/traefik/yaegi v0.11.2
+	github.com/traefik/yaegi v0.11.3
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/unrolled/render v1.0.2
@@ -95,7 +95,7 @@ replace (
 	github.com/go-check/check => github.com/containous/check v0.0.0-20170915194414-ca0bf163426a
 	github.com/gorilla/mux => github.com/containous/mux v0.0.0-20220113180107-8ffa4f6d063c
 	github.com/mailgun/minheap => github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595
-	github.com/mailgun/multibuf => github.com/containous/multibuf v0.0.0-20190809014333-8b6c9a7e6bba
+	github.com/mailgun/multibuf => github.com/containous/multibuf v0.0.0-20220419123348-2d0b12e116c6
 )
 
 // https://github.com/docker/compose/blob/e44222664abd07ce1d1fe6796d84d93cbc7468c3/go.mod#L131

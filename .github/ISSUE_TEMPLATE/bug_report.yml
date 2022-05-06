@@ -7,7 +7,7 @@ body:
       label: Welcome!
       description: |
         The issue tracker is for reporting bugs and feature requests only. For end-user related support questions, please refer to one of the following:
-        - the Traefik community forum: https://community.containo.us/
+        - the Traefik community forum: https://community.traefik.io/
 
         The configurations between 1.X and 2.X are NOT compatible. Please have a look [here](https://doc.traefik.io/traefik/getting-started/configuration-overview/).
 
@@ -15,7 +15,7 @@ body:
       options:
         - label: Yes, I've searched similar issues on [GitHub](https://github.com/traefik/traefik/issues) and didn't find any.
           required: true
-        - label: Yes, I've searched similar issues on the [Traefik community forum](https://community.containo.us) and didn't find any.
+        - label: Yes, I've searched similar issues on the [Traefik community forum](https://community.traefik.io) and didn't find any.
           required: true
 
   - type: textarea

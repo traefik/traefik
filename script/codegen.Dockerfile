@@ -3,7 +3,7 @@ FROM golang:1.17
 ARG USER=$USER
 ARG UID=$UID
 ARG GID=$GID
-RUN useradd -m ${USER} --uid=${UID} && echo "${USER}:" chpasswd
+RUN useradd -l -m ${USER} --uid=${UID} && echo "${USER}:" chpasswd
 USER ${UID}:${GID}
 
 ARG KUBE_VERSION

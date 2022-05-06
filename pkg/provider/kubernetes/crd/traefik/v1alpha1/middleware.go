@@ -40,7 +40,7 @@ type MiddlewareSpec struct {
 	ForwardAuth       *ForwardAuth                   `json:"forwardAuth,omitempty"`
 	InFlightReq       *dynamic.InFlightReq           `json:"inFlightReq,omitempty"`
 	Buffering         *dynamic.Buffering             `json:"buffering,omitempty"`
-	CircuitBreaker    *dynamic.CircuitBreaker        `json:"circuitBreaker,omitempty"`
+	CircuitBreaker    *CircuitBreaker                `json:"circuitBreaker,omitempty"`
 	Compress          *dynamic.Compress              `json:"compress,omitempty"`
 	PassTLSClientCert *dynamic.PassTLSClientCert     `json:"passTLSClientCert,omitempty"`
 	Retry             *Retry                         `json:"retry,omitempty"`
@@ -55,6 +55,20 @@ type ErrorPage struct {
 	Status  []string `json:"status,omitempty"`
 	Service Service  `json:"service,omitempty"`
 	Query   string   `json:"query,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// CircuitBreaker holds the circuit breaker configuration.
+type CircuitBreaker struct {
+	// Expression is the condition that triggers the tripped state.
+	Expression string `json:"expression,omitempty" toml:"expression,omitempty" yaml:"expression,omitempty" export:"true"`
+	// CheckPeriod is the interval between successive checks of the circuit breaker condition (when in standby state).
+	CheckPeriod *intstr.IntOrString `json:"checkPeriod,omitempty" toml:"checkPeriod,omitempty" yaml:"checkPeriod,omitempty" export:"true"`
+	// FallbackDuration is the duration for which the circuit breaker will wait before trying to recover (from a tripped state).
+	FallbackDuration *intstr.IntOrString `json:"fallbackDuration,omitempty" toml:"fallbackDuration,omitempty" yaml:"fallbackDuration,omitempty" export:"true"`
+	// RecoveryDuration is the duration for which the circuit breaker will try to recover (as soon as it is in recovering state).
+	RecoveryDuration *intstr.IntOrString `json:"recoveryDuration,omitempty" toml:"recoveryDuration,omitempty" yaml:"recoveryDuration,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

@@ -1,3 +1,8 @@
+---
+title: "Traefik Configuration for Marathon"
+description: "Traefik Proxy can be configured to use Marathon as a provider. Read the technical documentation to learn how."
+---
+
 # Traefik & Marathon
 
 Traefik can be configured to use Marathon as a provider.
@@ -425,36 +430,6 @@ providers:
 
 ```bash tab="CLI"
 --providers.marathon.tls.ca=path/to/ca.crt
-```
-
-#### `caOptional`
-
-_Optional_
-
-The value of `caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to Marathon.
-
-!!! warning ""
-
-    If `ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
-
-When this option is set to `true`, a client certificate is requested during the handshake but is not required. If a certificate is sent, it is required to be valid.
-
-When this option is set to `false`, a client certificate is requested during the handshake, and at least one valid certificate should be sent by the client.
-
-```yaml tab="File (YAML)"
-providers:
-  marathon:
-    tls:
-      caOptional: true
-```
-
-```toml tab="File (TOML)"
-[providers.marathon.tls]
-  caOptional = true
-```
-
-```bash tab="CLI"
---providers.marathon.tls.caOptional=true
 ```
 
 #### `cert`

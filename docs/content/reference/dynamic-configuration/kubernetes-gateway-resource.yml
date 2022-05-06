@@ -39,9 +39,9 @@ spec:
       port: 9443
       hostname: example.com
       tls:
-        - certificateRefs:
-            - kind: Secret
-              name: mysecret
+        certificateRefs:
+          - kind: Secret
+            name: mysecret
 
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2

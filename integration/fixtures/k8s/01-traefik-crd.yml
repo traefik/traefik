@@ -535,8 +535,32 @@ spec:
               circuitBreaker:
                 description: CircuitBreaker holds the circuit breaker configuration.
                 properties:
+                  checkPeriod:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: CheckPeriod is the interval between successive checks
+                      of the circuit breaker condition (when in standby state).
+                    x-kubernetes-int-or-string: true
                   expression:
+                    description: Expression is the condition that triggers the tripped
+                      state.
                     type: string
+                  fallbackDuration:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: FallbackDuration is the duration for which the circuit
+                      breaker will wait before trying to recover (from a tripped state).
+                    x-kubernetes-int-or-string: true
+                  recoveryDuration:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: RecoveryDuration is the duration for which the circuit
+                      breaker will try to recover (as soon as it is in recovering
+                      state).
+                    x-kubernetes-int-or-string: true
                 type: object
               compress:
                 description: Compress holds the compress configuration.
