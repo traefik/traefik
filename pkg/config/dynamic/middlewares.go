@@ -385,6 +385,7 @@ type ReplacePathRegex struct {
 type Retry struct {
 	Attempts        int             `json:"attempts,omitempty" toml:"attempts,omitempty" yaml:"attempts,omitempty" export:"true"`
 	InitialInterval ptypes.Duration `json:"initialInterval,omitempty" toml:"initialInterval,omitempty" yaml:"initialInterval,omitempty" export:"true"`
+	ExcludedMethods []string        `json:"excludedMethods,omitempty" toml:"excludedMethods,omitempty" yaml:"excludedMethods,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

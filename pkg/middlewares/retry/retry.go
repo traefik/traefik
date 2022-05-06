@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptrace"
+	"strings"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -41,6 +42,7 @@ type Listeners []Listener
 // retry is a middleware that retries requests.
 type retry struct {
 	attempts        int
+	excludedMethods []string
 	initialInterval time.Duration
 	next            http.Handler
 	listener        Listener
@@ -55,8 +57,14 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 		return nil, fmt.Errorf("incorrect (or empty) value for attempt (%d)", config.Attempts)
 	}
 
+	sanitizedExcludedMethods := make([]string, len(config.ExcludedMethods))
+	for i, method := range config.ExcludedMethods {
+		sanitizedExcludedMethods[i] = strings.ToUpper(method)
+	}
+
 	return &retry{
 		attempts:        config.Attempts,
+		excludedMethods: sanitizedExcludedMethods,
 		initialInterval: time.Duration(config.InitialInterval),
 		next:            next,
 		listener:        listener,
@@ -72,6 +80,13 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if r.attempts == 1 {
 		r.next.ServeHTTP(rw, req)
 		return
+	}
+
+	for _, method := range r.excludedMethods {
+		if req.Method == method {
+			r.next.ServeHTTP(rw, req)
+			return
+		}
 	}
 
 	closableBody := req.Body
