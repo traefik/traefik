@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/instana/testify/require"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/types"
 	"go.opentelemetry.io/collector/pdata/pmetric/pmetricotlp"
