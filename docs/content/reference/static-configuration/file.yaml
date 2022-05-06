@@ -424,6 +424,27 @@ tracing:
     serverURL: foobar
     secretToken: foobar
     serviceEnvironment: foobar
+  openTelemetry:
+    compress: true
+    endpoint: foobar
+    headers:
+      name0: foobar
+      name1: foobar
+    retry:
+      initialInterval: 42s
+      maxElapsedTime: 42s
+      maxInterval: 42s
+    timeout: 42s
+    tls:
+      ca: foobar
+      caOptional: true
+      cert: foobar
+      key: foobar
+      insecureSkipVerify: true
+    grpc:
+      insecure: true
+      reconnectionPeriod: 42s
+      serviceConfig: foobar
 hostResolver:
   cnameFlattening: true
   resolvConfig: foobar

@@ -1116,6 +1116,57 @@ Sets the sampling type. (Default: ```const```)
 `TRAEFIK_TRACING_JAEGER_TRACECONTEXTHEADERNAME`:  
 Sets the header name used to store the trace ID. (Default: ```uber-trace-id```)
 
+`TRAEFIK_TRACING_OPENTELEMETRY`:  
+Settings for OpenTelemetry. (Default: ```false```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_COMPRESS`:  
+Enable compression on the sent data. (Default: ```false```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_ENDPOINT`:  
+Address of the collector endpoint. (Default: ```https://localhost:4318/v1/traces```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_GRPC`:  
+GRPC specific configuration for the OpenTelemetry collector. (Default: ```false```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_GRPC_INSECURE`:  
+Connect to endpoint using HTTP. (Default: ```false```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_GRPC_RECONNECTIONPERIOD`:  
+The minimum amount of time between connection attempts to the target endpoint. (Default: ```0s```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_GRPC_SERVICECONFIG`:  
+Defines the default gRPC service config used.
+
+`TRAEFIK_TRACING_OPENTELEMETRY_HEADERS_<NAME>`:  
+Headers sent with payload.
+
+`TRAEFIK_TRACING_OPENTELEMETRY_RETRY_INITIALINTERVAL`:  
+The time to wait after the first failure before retrying. (Default: ```5s```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_RETRY_MAXELAPSEDTIME`:  
+The maximum amount of time (including retries) spent trying to send a request/batch. (Default: ```1m0s```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_RETRY_MAXINTERVAL`:  
+The upper bound on backoff interval. (Default: ```30s```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_TIMEOUT`:  
+The max waiting time for the backend to process each spans batch. (Default: ```10s```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_TRACING_OPENTELEMETRY_TLS_CAOPTIONAL`:  
+TLS CA.Optional (Default: ```false```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_TRACING_OPENTELEMETRY_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_TRACING_OPENTELEMETRY_TLS_KEY`:  
+TLS key
+
 `TRAEFIK_TRACING_SERVICENAME`:  
 Set the name for this service. (Default: ```traefik```)
 
