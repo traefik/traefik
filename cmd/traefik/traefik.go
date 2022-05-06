@@ -481,6 +481,16 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 		}
 	}
 
+	if metricsConfig.OpenTelemetry != nil {
+		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "openTelemetry"))
+		openTelemetryRegister := metrics.RegisterOpenTelemetry(ctx, metricsConfig.OpenTelemetry)
+		if openTelemetryRegister != nil {
+			registries = append(registries, openTelemetryRegister)
+			log.FromContext(ctx).Debugf("Configured OpenTelemetry metrics: pushing to %s once every %s",
+				metricsConfig.OpenTelemetry.Address, metricsConfig.OpenTelemetry.PushInterval)
+		}
+	}
+
 	return registries
 }
 
