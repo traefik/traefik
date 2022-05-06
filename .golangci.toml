@@ -107,9 +107,10 @@
       "github.com/abbot/go-http-auth",
       "github.com/go-check/check",
       "github.com/gorilla/mux",
+      "github.com/jaguilar/vt100",
       "github.com/mailgun/minheap",
       "github.com/mailgun/multibuf",
-      "github.com/jaguilar/vt100",
+      "k8s.io/klog/v2"
     ]
 
 [linters]
