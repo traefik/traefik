@@ -1068,6 +1068,57 @@ Sets the sampling type. (Default: ```const```)
 `--tracing.jaeger.tracecontextheadername`:  
 Sets the header name used to store the trace ID. (Default: ```uber-trace-id```)
 
+`--tracing.opentelemetry`:  
+Settings for OpenTelemetry. (Default: ```false```)
+
+`--tracing.opentelemetry.compress`:  
+Enable compression on the sent data. (Default: ```false```)
+
+`--tracing.opentelemetry.endpoint`:  
+Address of the collector endpoint. (Default: ```https://localhost:4318/v1/traces```)
+
+`--tracing.opentelemetry.grpc`:  
+GRPC specific configuration for the OpenTelemetry collector. (Default: ```false```)
+
+`--tracing.opentelemetry.grpc.insecure`:  
+Connect to endpoint using HTTP. (Default: ```false```)
+
+`--tracing.opentelemetry.grpc.reconnectionperiod`:  
+The minimum amount of time between connection attempts to the target endpoint. (Default: ```0s```)
+
+`--tracing.opentelemetry.grpc.serviceconfig`:  
+Defines the default gRPC service config used.
+
+`--tracing.opentelemetry.headers.<name>`:  
+Headers sent with payload.
+
+`--tracing.opentelemetry.retry.initialinterval`:  
+The time to wait after the first failure before retrying. (Default: ```5s```)
+
+`--tracing.opentelemetry.retry.maxelapsedtime`:  
+The maximum amount of time (including retries) spent trying to send a request/batch. (Default: ```1m0s```)
+
+`--tracing.opentelemetry.retry.maxinterval`:  
+The upper bound on backoff interval. (Default: ```30s```)
+
+`--tracing.opentelemetry.timeout`:  
+The max waiting time for the backend to process each spans batch. (Default: ```10s```)
+
+`--tracing.opentelemetry.tls.ca`:  
+TLS CA
+
+`--tracing.opentelemetry.tls.caoptional`:  
+TLS CA.Optional (Default: ```false```)
+
+`--tracing.opentelemetry.tls.cert`:  
+TLS cert
+
+`--tracing.opentelemetry.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--tracing.opentelemetry.tls.key`:  
+TLS key
+
 `--tracing.servicename`:  
 Set the name for this service. (Default: ```traefik```)
 
