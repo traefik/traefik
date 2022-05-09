@@ -139,6 +139,7 @@ Below is the list of the currently supported providers in Traefik.
 | [Kubernetes Ingress](./kubernetes-ingress.md)     | Orchestrator | Ingress              | `kubernetes`        |
 | [Kubernetes Gateway API](./kubernetes-gateway.md) | Orchestrator | Gateway API Resource | `kubernetesgateway` |
 | [Consul Catalog](./consul-catalog.md)             | Orchestrator | Label                | `consulcatalog`     |
+| [Nomad](./nomad.md)                               | Orchestrator | Label                | `nomad`             |
 | [ECS](./ecs.md)                                   | Orchestrator | Label                | `ecs`               |
 | [Marathon](./marathon.md)                         | Orchestrator | Label                | `marathon`          |
 | [Rancher](./rancher.md)                           | Orchestrator | Label                | `rancher`           |
@@ -213,6 +214,7 @@ List of providers that support these features:
 
 - [Docker](./docker.md#exposedbydefault)
 - [Consul Catalog](./consul-catalog.md#exposedbydefault)
+- [Nomad](./nomad.md#exposedbydefault)
 - [Rancher](./rancher.md#exposedbydefault)
 - [Marathon](./marathon.md#exposedbydefault)
 
@@ -222,6 +224,7 @@ List of providers that support constraints:
 
 - [Docker](./docker.md#constraints)
 - [Consul Catalog](./consul-catalog.md#constraints)
+- [Nomad](./nomad.md#constraints)
 - [Rancher](./rancher.md#constraints)
 - [Marathon](./marathon.md#constraints)
 - [Kubernetes CRD](./kubernetes-crd.md#labelselector)
