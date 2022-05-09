@@ -311,6 +311,7 @@ http:
       retry:
         attempts: 42
         initialInterval: 42s
+        retryNonIdempotent: true
     Middleware21:
       stripPrefix:
         prefixes:

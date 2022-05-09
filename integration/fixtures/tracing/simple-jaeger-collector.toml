@@ -43,6 +43,7 @@
 [http.middlewares]
   [http.middlewares.retry.retry]
     attempts = 3
+    retryNonIdempotent = true
   [http.middlewares.basic-auth.basicAuth]
     users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
   [http.middlewares.ratelimit-1.rateLimit]
