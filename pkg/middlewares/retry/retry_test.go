@@ -309,3 +309,60 @@ func TestRetryWebsocket(t *testing.T) {
 		})
 	}
 }
+
+func TestRetryExcludedMethods(t *testing.T) {
+	tests := []struct {
+		desc            string
+		excludedMethods []string
+		method          string
+		wantRetry       bool
+	}{
+		{
+			desc:            "do not retry excluded methods",
+			excludedMethods: []string{http.MethodConnect, http.MethodPatch, http.MethodPost},
+			method:          http.MethodPost,
+			wantRetry:       false,
+		},
+		{
+			desc:            "retry on non excluded methods",
+			excludedMethods: []string{http.MethodConnect, http.MethodPatch, http.MethodPost},
+			method:          http.MethodGet,
+			wantRetry:       true,
+		},
+		{
+			desc:            "match non upper method",
+			excludedMethods: []string{"post"},
+			method:          http.MethodPost,
+			wantRetry:       false,
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+				rw.WriteHeader(http.StatusBadGateway)
+			})
+
+			config := dynamic.Retry{
+				Attempts:        2,
+				InitialInterval: ptypes.Duration(time.Microsecond * 50),
+				ExcludedMethods: test.excludedMethods,
+			}
+
+			retryListener := &countingRetryListener{}
+			retry, err := New(context.Background(), next, config, retryListener, "traefikTest")
+			require.NoError(t, err)
+
+			recorder := httptest.NewRecorder()
+			req := httptest.NewRequest(test.method, "http://localhost:3000/ok", nil)
+
+			retry.ServeHTTP(recorder, req)
+
+			assert.Equal(t, http.StatusBadGateway, recorder.Code)
+			assert.Equal(t, test.wantRetry, retryListener.timesCalled > 0)
+		})
+	}
+}
