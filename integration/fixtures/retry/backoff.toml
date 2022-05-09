@@ -26,6 +26,8 @@
 [http.middlewares.retry.retry]
   attempts = 4
   initialInterval = "500ms"
+  retryNonIdempotent = true
+
 
 
 [http.services]

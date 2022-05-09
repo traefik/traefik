@@ -25,6 +25,7 @@
 
 [http.middlewares.retry.retry]
   attempts = 3
+  retryNonIdempotent = true
 
 [http.services]
   [http.services.service1]

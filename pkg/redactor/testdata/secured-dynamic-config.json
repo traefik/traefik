@@ -310,7 +310,8 @@
         },
         "retry": {
           "attempts": 42,
-          "initialInterval": "42ns"
+          "initialInterval": "42ns",
+          "retryNonIdempotent": true
         },
         "contentType": {
           "autoDetect": true

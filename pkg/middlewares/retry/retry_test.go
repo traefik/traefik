@@ -309,3 +309,129 @@ func TestRetryWebsocket(t *testing.T) {
 		})
 	}
 }
+
+func TestRetryOnNonIdempotentMethods(t *testing.T) {
+	testCases := []struct {
+		desc                  string
+		config                dynamic.Retry
+		reqMethod             string
+		wantRetryAttempts     int
+		wantResponseStatus    int
+		amountFaultyEndpoints int
+	}{
+		{
+			desc:                  "no retry on success, idempotent method with RetryNonIdempotent enabled",
+			config:                dynamic.Retry{Attempts: 5, RetryNonIdempotent: true},
+			reqMethod:             http.MethodPost,
+			wantResponseStatus:    http.StatusOK,
+			wantRetryAttempts:     0,
+			amountFaultyEndpoints: 0,
+		},
+		{
+			desc:                  "no retry when method isn't idempotent (POST) and override is not enabled",
+			config:                dynamic.Retry{Attempts: 3, RetryNonIdempotent: false},
+			reqMethod:             http.MethodPost,
+			wantResponseStatus:    http.StatusBadGateway,
+			wantRetryAttempts:     0,
+			amountFaultyEndpoints: 2,
+		},
+		{
+			desc:                  "no retry when method isn't idempotent (PATCH) and override is not enabled",
+			config:                dynamic.Retry{Attempts: 5, RetryNonIdempotent: false},
+			reqMethod:             http.MethodPatch,
+			wantResponseStatus:    http.StatusBadGateway,
+			wantRetryAttempts:     0,
+			amountFaultyEndpoints: 3,
+		},
+		{
+			desc:                  "retry when method is not idempotent (PATCH), RetryNonIdempotent is enabled",
+			config:                dynamic.Retry{Attempts: 2, RetryNonIdempotent: true},
+			wantRetryAttempts:     1,
+			reqMethod:             http.MethodPatch,
+			wantResponseStatus:    http.StatusOK,
+			amountFaultyEndpoints: 1,
+		},
+		{
+			desc:                  "retry when method is not idempotent (POST), RetryNonIdempotent is enabled",
+			config:                dynamic.Retry{Attempts: 3, RetryNonIdempotent: true},
+			wantRetryAttempts:     2,
+			reqMethod:             http.MethodPost,
+			wantResponseStatus:    http.StatusOK,
+			amountFaultyEndpoints: 2,
+		},
+		{
+			desc:                  "retry when method is idempotent (GET), RetryNonIdempotent is disabled",
+			config:                dynamic.Retry{Attempts: 2, RetryNonIdempotent: false},
+			reqMethod:             http.MethodGet,
+			wantResponseStatus:    http.StatusOK,
+			wantRetryAttempts:     1,
+			amountFaultyEndpoints: 1,
+		},
+		{
+			desc:                  "retry when method is idempotent (DELETE), RetryNonIdempotent is enabled",
+			config:                dynamic.Retry{Attempts: 3, RetryNonIdempotent: true},
+			reqMethod:             http.MethodDelete,
+			wantResponseStatus:    http.StatusOK,
+			wantRetryAttempts:     2,
+			amountFaultyEndpoints: 2,
+		},
+		{
+			desc:                  "exhaust retries when method is not idempotent (POST), RetryNonIdempotent is enabled",
+			config:                dynamic.Retry{Attempts: 3, RetryNonIdempotent: true, InitialInterval: ptypes.Duration(time.Microsecond * 50)},
+			wantRetryAttempts:     2,
+			reqMethod:             http.MethodPost,
+			wantResponseStatus:    http.StatusBadGateway,
+			amountFaultyEndpoints: 3,
+		},
+		{
+			desc:                  "retry when method is not idempotent (POST), RetryNonIdempotent is enabled and there is backoff",
+			config:                dynamic.Retry{Attempts: 3, RetryNonIdempotent: true, InitialInterval: ptypes.Duration(time.Microsecond * 50)},
+			wantRetryAttempts:     2,
+			reqMethod:             http.MethodPost,
+			wantResponseStatus:    http.StatusOK,
+			amountFaultyEndpoints: 2,
+		},
+		{
+			desc:                  "retry when method is idempotent (DELETE), RetryNonIdempotent is enabled and there is a backoff",
+			config:                dynamic.Retry{Attempts: 2, InitialInterval: ptypes.Duration(time.Microsecond * 50)},
+			reqMethod:             http.MethodDelete,
+			wantResponseStatus:    http.StatusOK,
+			wantRetryAttempts:     1,
+			amountFaultyEndpoints: 1,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			retryAttempts := 0
+			next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+				retryAttempts++
+
+				if retryAttempts > test.amountFaultyEndpoints {
+					// calls WroteHeaders on httptrace.
+					_ = r.Write(io.Discard)
+
+					rw.WriteHeader(http.StatusOK)
+					return
+				}
+
+				rw.WriteHeader(http.StatusBadGateway)
+			})
+
+			retryListener := &countingRetryListener{}
+			retry, err := New(context.Background(), next, test.config, retryListener, "traefikTest")
+			require.NoError(t, err)
+
+			recorder := httptest.NewRecorder()
+			req := httptest.NewRequest(test.reqMethod, "http://localhost:3000/ok", nil)
+
+			retry.ServeHTTP(recorder, req)
+
+			assert.Equal(t, test.wantResponseStatus, recorder.Code)
+			assert.Equal(t, test.wantRetryAttempts, retryListener.timesCalled)
+		})
+	}
+}

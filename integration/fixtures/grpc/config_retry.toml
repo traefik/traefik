@@ -30,6 +30,7 @@
 [http.middlewares]
   [http.middlewares.retryer.retry]
     attempts = 2
+    retryNonIdempotent = true
 
 [http.services]
   [http.services.service1.loadBalancer]

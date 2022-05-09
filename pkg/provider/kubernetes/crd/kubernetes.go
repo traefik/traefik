@@ -498,6 +498,8 @@ func createRetryMiddleware(retry *v1alpha1.Retry) (*dynamic.Retry, error) {
 		return nil, err
 	}
 
+	r.RetryNonIdempotent = true
+
 	return r, nil
 }
 

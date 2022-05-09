@@ -341,8 +341,9 @@ func init() {
 					},
 				},
 				Retry: &dynamic.Retry{
-					Attempts:        42,
-					InitialInterval: 42,
+					Attempts:           42,
+					InitialInterval:    42,
+					RetryNonIdempotent: true,
 				},
 				ContentType: &dynamic.ContentType{
 					AutoDetect: true,

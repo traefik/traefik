@@ -1006,6 +1006,8 @@ spec:
                     - type: integer
                     - type: string
                     x-kubernetes-int-or-string: true
+                  retryNonIdempotent:
+                    type: boolean
                 type: object
               stripPrefix:
                 description: StripPrefix holds the StripPrefix configuration.

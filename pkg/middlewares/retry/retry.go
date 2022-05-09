@@ -40,11 +40,12 @@ type Listeners []Listener
 
 // retry is a middleware that retries requests.
 type retry struct {
-	attempts        int
-	initialInterval time.Duration
-	next            http.Handler
-	listener        Listener
-	name            string
+	attempts           int
+	initialInterval    time.Duration
+	next               http.Handler
+	listener           Listener
+	name               string
+	retryNonIdempotent bool
 }
 
 // New returns a new retry middleware.
@@ -56,11 +57,12 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 	}
 
 	return &retry{
-		attempts:        config.Attempts,
-		initialInterval: time.Duration(config.InitialInterval),
-		next:            next,
-		listener:        listener,
-		name:            name,
+		attempts:           config.Attempts,
+		initialInterval:    time.Duration(config.InitialInterval),
+		next:               next,
+		listener:           listener,
+		name:               name,
+		retryNonIdempotent: config.RetryNonIdempotent,
 	}, nil
 }
 
@@ -69,7 +71,12 @@ func (r *retry) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if r.attempts == 1 {
+	disableOnNonIdempotent := (req.Method == http.MethodPost || req.Method == http.MethodPatch) && !r.retryNonIdempotent
+	if r.attempts > 1 && disableOnNonIdempotent {
+		log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
+			Debugf("Disabling retries on url (%s) as http method is non idempotent, set traefik.http.middlewares.%s.retryNonIdempotent to enable.", req.URL, r.name)
+	}
+	if r.attempts == 1 || disableOnNonIdempotent {
 		r.next.ServeHTTP(rw, req)
 		return
 	}
