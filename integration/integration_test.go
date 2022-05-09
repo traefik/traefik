@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"text/template"
@@ -30,6 +31,7 @@ import (
 )
 
 var (
+	root        = flag.Bool("root", false, "run integration tests that require root")
 	integration = flag.Bool("integration", false, "run integration tests")
 	showLog     = flag.Bool("tlog", false, "always show Traefik logs")
 )
@@ -75,7 +77,24 @@ func Test(t *testing.T) {
 	check.Suite(&WebsocketSuite{})
 	check.Suite(&ZookeeperSuite{})
 
+	if *root && isRoot() {
+		// Nomad cannot [usefully] be run in a docker container or as non-root;
+		// instead we run Nomad directly and just make use of it instead of
+		// docker-compose.
+		//
+		// sudo -E PATH=$PATH go test -root -integration ./...
+		check.Suite(&NomadSuite{})
+	}
+
 	check.TestingT(t)
+}
+
+func isRoot() bool {
+	switch runtime.GOOS {
+	case "linux":
+		return os.Geteuid() == 0
+	}
+	return false
 }
 
 var traefikBinary = "../dist/traefik"
