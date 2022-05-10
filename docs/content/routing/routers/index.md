@@ -673,6 +673,16 @@ If no matching route is found for the TCP routers, then the HTTP routers will ta
 If not specified, TCP routers will accept requests from all defined entry points.
 If you want to limit the router scope to a set of entry points, set the entry points option.
 
+!!! important "Entry points and routing"
+
+    Routers by default accept requests from all defined entry points, meaning that, incoming
+    requests can be a mix of TLS and non-TLS ones. In order to correctly handle the request,
+    Traefik needs to wait for the first few bytes to arrive. For protocols that do not send
+    first, such as SMTP, this may cause a situation where both sides are waiting for data and
+    the connection appears to have "hanged". To avoid this, please ensure that there is only
+    one router assigned to the entry point, in which case Traefik will forward the request
+    immediately.
+
 ??? example "Listens to Every Entry Point"
 
     **Dynamic Configuration**
