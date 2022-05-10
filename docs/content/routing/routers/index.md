@@ -681,8 +681,8 @@ If you want to limit the router scope to a set of entry points, set the entry po
     where both sides are waiting for data and the connection appears to have "hanged". You
     can avoid this ambiguity by letting Traefik know beforehand that an entry point will not
     receive TLS data by ensuring that there are no TLS routers (both TCP and HTTP) attached
-    to it and that there is at least one non-TLS router assigned to the entry point in which
-    case Traefik will forward the request directly to the service.
+    to it and that there is at least one non-TLS TCP router assigned to the entry point in 
+    which case Traefik will forward the request directly to the service.
 
 ??? example "Listens to Every Entry Point"
 
