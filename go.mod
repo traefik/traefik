@@ -61,7 +61,7 @@ require (
 	github.com/unrolled/render v1.0.2
 	github.com/unrolled/secure v1.0.9
 	github.com/vdemeester/shakers v0.1.0
-	github.com/vulcand/oxy v1.4.0
+	github.com/vulcand/oxy v1.4.1
 	github.com/vulcand/predicate v1.2.0
 	go.elastic.co/apm v1.13.1
 	go.elastic.co/apm/module/apmot v1.13.1
@@ -215,7 +215,7 @@ require (
 	github.com/liquidweb/liquidweb-go v1.6.3 // indirect
 	github.com/looplab/fsm v0.1.0 // indirect
 	github.com/mailgun/minheap v0.0.0-20170619185613-3dbe6c6bf55f // indirect
-	github.com/mailgun/multibuf v0.0.0-20150714184110-565402cd71fb // indirect
+	github.com/mailgun/multibuf v0.1.2 // indirect
 	github.com/mailgun/timetools v0.0.0-20141028012446-7e6055773c51 // indirect
 	github.com/marten-seemann/qpack v0.2.1 // indirect
 	github.com/marten-seemann/qtls-go1-16 v0.1.4 // indirect
@@ -327,7 +327,6 @@ replace (
 	github.com/go-check/check => github.com/containous/check v0.0.0-20170915194414-ca0bf163426a
 	github.com/gorilla/mux => github.com/containous/mux v0.0.0-20220113180107-8ffa4f6d063c
 	github.com/mailgun/minheap => github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595
-	github.com/mailgun/multibuf => github.com/containous/multibuf v0.0.0-20220419123348-2d0b12e116c6
 )
 
 // https://github.com/docker/compose/blob/e44222664abd07ce1d1fe6796d84d93cbc7468c3/go.mod#L131
