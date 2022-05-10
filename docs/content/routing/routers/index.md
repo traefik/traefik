@@ -676,12 +676,14 @@ If you want to limit the router scope to a set of entry points, set the entry po
 !!! important "Entry points and routing"
 
     Routers by default accept requests from all defined entry points, meaning that, incoming
-    requests can be a mix of TLS and non-TLS ones. In order to correctly handle the request,
-    Traefik needs to wait for the first few bytes to arrive. For protocols that do not send
-    first, such as SMTP, this may cause a situation where both sides are waiting for data and
-    the connection appears to have "hanged". To avoid this, please ensure that there is only
-    one router assigned to the entry point, in which case Traefik will forward the request
-    immediately.
+    requests can be a mix of TLS and non-TLS ones. In order to correctly handle a request,
+    Traefik needs to wait for the first few bytes to arrive before it can decide what to do
+    with it. For protocols that do not send first, such as SMTP, this may cause a situation
+    where both sides are waiting for data and the connection appears to have "hanged". You
+    can avoid this ambiguity by letting Traefik know beforehand that an entry point will not
+    receive TLS data by ensuring that there are no TLS routers (both TCP and HTTP) attached
+    to it and that there is at least one non-TLS router assigned to the entry point in which
+    case Traefik will forward the request directly to the service.
 
 ??? example "Listens to Every Entry Point"
 
