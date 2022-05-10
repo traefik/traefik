@@ -73,6 +73,18 @@
           </div>
         </div>
       </q-card-section>
+      <q-card-section v-if="data.priority">
+        <div class="row items-start no-wrap">
+          <div class="col">
+            <div class="text-subtitle2">PRIORITY</div>
+            <q-chip
+              dense
+              class="app-chip app-chip-entry-points">
+              {{ data.priority }}
+            </q-chip>
+          </div>
+        </div>
+      </q-card-section>
       <q-card-section v-if="data.error">
         <div class="row items-start no-wrap">
           <div class="col">
