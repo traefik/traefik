@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/tcp"
@@ -960,6 +961,75 @@ func Test_ClientIP(t *testing.T) {
 
 			meta := ConnData{
 				remoteIP: test.remoteIP,
+			}
+
+			assert.Equal(t, test.matchErr, !matchersTree.match(meta))
+		})
+	}
+}
+
+func Test_ALPN(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		ruleALPNProtos []string
+		connProto      string
+		buildErr       bool
+		matchErr       bool
+	}{
+		{
+			desc:     "Empty",
+			buildErr: true,
+		},
+		{
+			desc:           "ACME TLS proto",
+			ruleALPNProtos: []string{tlsalpn01.ACMETLS1Protocol},
+			buildErr:       true,
+		},
+		{
+			desc:           "Not matching empty proto",
+			ruleALPNProtos: []string{"h2"},
+			matchErr:       true,
+		},
+		{
+			desc:           "Not matching ALPN",
+			ruleALPNProtos: []string{"h2"},
+			connProto:      "mqtt",
+			matchErr:       true,
+		},
+		{
+			desc:           "Matching ALPN",
+			ruleALPNProtos: []string{"h2"},
+			connProto:      "h2",
+		},
+		{
+			desc:           "Not matching multiple ALPNs",
+			ruleALPNProtos: []string{"h2", "mqtt"},
+			connProto:      "h2c",
+			matchErr:       true,
+		},
+		{
+			desc:           "Matching multiple ALPNs",
+			ruleALPNProtos: []string{"h2", "h2c", "mqtt"},
+			connProto:      "h2c",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			matchersTree := &matchersTree{}
+			err := alpn(matchersTree, test.ruleALPNProtos...)
+			if test.buildErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			meta := ConnData{
+				alpnProtos: []string{test.connProto},
 			}
 
 			assert.Equal(t, test.matchErr, !matchersTree.match(meta))

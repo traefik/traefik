@@ -86,7 +86,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	// block forever on clientHelloServerName, which is why we want to detect and
 	// handle that case first and foremost.
 	if r.muxerTCP.HasRoutes() && !r.muxerTCPTLS.HasRoutes() && !r.muxerHTTPS.HasRoutes() {
-		connData, err := tcpmuxer.NewConnData("", conn, make([]string, 0))
+		connData, err := tcpmuxer.NewConnData("", conn, nil)
 		if err != nil {
 			log.WithoutContext().Errorf("Error while reading TCP connection data: %v", err)
 			conn.Close()
@@ -300,9 +300,9 @@ func (c *Conn) Read(p []byte) (n int, err error) {
 	return c.WriteCloser.Read(p)
 }
 
-// clientHelloInfo returns the SNI server name and ALPN protocol list
-// inside the TLS ClientHello, without consuming any bytes from br.
-// On any error, the empty string and slice is returned.
+// clientHelloInfo returns the SNI server name, the ALPN protocol list,
+// and if the ClientHello is a TLS handshake, without consuming any bytes from br.
+// On any error, the empty string and a nil slice is returned.
 func clientHelloInfo(br *bufio.Reader) (string, []string, bool, string, error) {
 	hdr, err := br.Peek(1)
 	if err != nil {
@@ -311,7 +311,7 @@ func clientHelloInfo(br *bufio.Reader) (string, []string, bool, string, error) {
 			log.WithoutContext().Errorf("Error while Peeking first byte: %s", err)
 		}
 
-		return "", make([]string, 0), false, "", err
+		return "", nil, false, "", err
 	}
 
 	// No valid TLS record has a type of 0x80, however SSLv2 handshakes
@@ -323,16 +323,16 @@ func clientHelloInfo(br *bufio.Reader) (string, []string, bool, string, error) {
 	if hdr[0] != recordTypeHandshake {
 		if hdr[0] == recordTypeSSLv2 {
 			// we consider SSLv2 as TLS and it will be refused by real TLS handshake.
-			return "", make([]string, 0), true, getPeeked(br), nil
+			return "", nil, true, getPeeked(br), nil
 		}
-		return "", make([]string, 0), false, getPeeked(br), nil // Not TLS.
+		return "", nil, false, getPeeked(br), nil // Not TLS.
 	}
 
 	const recordHeaderLen = 5
 	hdr, err = br.Peek(recordHeaderLen)
 	if err != nil {
 		log.Errorf("Error while Peeking hello: %s", err)
-		return "", make([]string, 0), false, getPeeked(br), nil
+		return "", nil, false, getPeeked(br), nil
 	}
 
 	recLen := int(hdr[3])<<8 | int(hdr[4]) // ignoring version in hdr[1:3]
@@ -344,11 +344,11 @@ func clientHelloInfo(br *bufio.Reader) (string, []string, bool, string, error) {
 	helloBytes, err := br.Peek(recordHeaderLen + recLen)
 	if err != nil {
 		log.Errorf("Error while Hello: %s", err)
-		return "", make([]string, 0), true, getPeeked(br), nil
+		return "", nil, true, getPeeked(br), nil
 	}
 
 	sni := ""
-	protos := make([]string, 0)
+	var protos []string
 	server := tls.Server(helloSniffConn{r: bytes.NewReader(helloBytes)}, &tls.Config{
 		GetConfigForClient: func(hello *tls.ClientHelloInfo) (*tls.Config, error) {
 			sni = hello.ServerName

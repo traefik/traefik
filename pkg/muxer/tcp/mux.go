@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/traefik/traefik/v2/pkg/ip"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/rules"
@@ -287,6 +288,33 @@ func clientIP(tree *matchersTree, clientIPs ...string) error {
 	return nil
 }
 
+// alpn checks if any ALPN protocol of the connection matches any of the matcher protocols.
+func alpn(tree *matchersTree, protos ...string) error {
+	if len(protos) == 0 {
+		return fmt.Errorf("empty value for \"ALPN\" matcher is not allowed")
+	}
+
+	for _, proto := range protos {
+		if proto == tlsalpn01.ACMETLS1Protocol {
+			return fmt.Errorf("invalid protocol value for \"ALPN\" matcher, %q is not allowed", proto)
+		}
+	}
+
+	tree.matcher = func(meta ConnData) bool {
+		for _, proto := range meta.alpnProtos {
+			for _, filter := range protos {
+				if proto == filter {
+					return true
+				}
+			}
+		}
+
+		return false
+	}
+
+	return nil
+}
+
 var almostFQDN = regexp.MustCompile(`^[[:alnum:]\.-]+$`)
 
 // hostSNI checks if the SNI Host of the connection match the matcher host.
@@ -462,25 +490,4 @@ func braceIndices(s string) ([]int, error) {
 		return nil, fmt.Errorf("mux: unbalanced braces in %q", s)
 	}
 	return idxs, nil
-}
-
-// alpn checks if the any ALPN protocol of the connection matches any of matcher protocols.
-func alpn(tree *matchersTree, protos ...string) error {
-	tree.matcher = func(meta ConnData) bool {
-		for _, proto := range meta.alpnProtos {
-			for _, filter := range protos {
-				if filter == "*" {
-					return true
-				}
-
-				if proto == filter {
-					return true
-				}
-			}
-		}
-
-		return false
-	}
-
-	return nil
 }
