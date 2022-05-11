@@ -179,17 +179,24 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 }
 
 func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) *dynamic.Configuration {
-	tlsConfigs := make(map[string]*tls.CertAndStores)
+	stores, tlsConfigs := buildTLSStores(ctx, client)
+	if tlsConfigs == nil {
+		tlsConfigs = make(map[string]*tls.CertAndStores)
+	}
+
 	conf := &dynamic.Configuration{
+		// TODO: choose between mutating and returning tlsConfigs
 		HTTP: p.loadIngressRouteConfiguration(ctx, client, tlsConfigs),
 		TCP:  p.loadIngressRouteTCPConfiguration(ctx, client, tlsConfigs),
 		UDP:  p.loadIngressRouteUDPConfiguration(ctx, client),
 		TLS: &dynamic.TLSConfiguration{
-			Stores:       buildTLSStores(ctx, client, tlsConfigs),
-			Certificates: getTLSConfig(tlsConfigs),
-			Options:      buildTLSOptions(ctx, client),
+			Options: buildTLSOptions(ctx, client),
+			Stores:  stores,
 		},
 	}
+
+	// Done after because tlsConfigs is mutated by the others above.
+	conf.TLS.Certificates = getTLSConfig(tlsConfigs)
 
 	for _, middleware := range client.GetMiddlewares() {
 		id := provider.Normalize(makeID(middleware.Namespace, middleware.Name))
@@ -828,14 +835,15 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 	return tlsOptions
 }
 
-func buildTLSStores(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) map[string]tls.Store {
+func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, map[string]*tls.CertAndStores) {
 	tlsStoreCRD := client.GetTLSStores()
 	if len(tlsStoreCRD) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	var nsDefault []string
 	tlsStores := make(map[string]tls.Store)
+	tlsConfigs := make(map[string]*tls.CertAndStores)
 
 	for _, t := range tlsStoreCRD {
 		logger := log.FromContext(log.With(ctx, log.Str("TLSStore", t.Name), log.Str("namespace", t.Namespace)))
@@ -875,15 +883,9 @@ func buildTLSStores(ctx context.Context, client Client, tlsConfigs map[string]*t
 			}
 		}
 
-		for _, c := range t.Spec.Certificates {
-			certAndStores, err := getTLS(client, c.SecretName, t.Namespace)
-			if err != nil {
-				logger.Errorf("Unable to read secret %s/%s: %v", t.Namespace, c.SecretName, err)
-				continue
-			}
-
-			certAndStores.Stores = []string{id}
-			tlsConfigs[t.Namespace+"/"+c.SecretName] = certAndStores
+		if err := buildCertificates(client, id, t.Namespace, t.Spec.Certificates, tlsConfigs); err != nil {
+			logger.Errorf("Failed to load certificates: %v", err)
+			continue
 		}
 
 		tlsStores[id] = tlsStore
@@ -894,7 +896,25 @@ func buildTLSStores(ctx context.Context, client Client, tlsConfigs map[string]*t
 		log.FromContext(ctx).Errorf("Default TLS Stores defined in multiple namespaces: %v", nsDefault)
 	}
 
-	return tlsStores
+	return tlsStores, tlsConfigs
+}
+
+// buildCertificates loads TLSStore certificates from secrets and sets them into tlsConfigs.
+func buildCertificates(client Client, tlsStore, namespace string, certificates []v1alpha1.Certificate, tlsConfigs map[string]*tls.CertAndStores) error {
+	for _, c := range certificates {
+		configKey := namespace + "/" + c.SecretName
+		if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
+			certAndStores, err := getTLS(client, c.SecretName, namespace)
+			if err != nil {
+				return fmt.Errorf("unable to read secret %s: %v", configKey, err)
+			}
+
+			certAndStores.Stores = []string{tlsStore}
+			tlsConfigs[configKey] = certAndStores
+		}
+	}
+
+	return nil
 }
 
 func makeServiceKey(rule, ingressName string) (string, error) {
