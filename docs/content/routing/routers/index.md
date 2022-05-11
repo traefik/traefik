@@ -865,6 +865,11 @@ The table below lists all the available matchers:
 
     The rule is evaluated "before" any middleware has the opportunity to work, and "before" the request is forwarded to the service.
 
+!!! important "ALPN ACME-TLS/1"
+
+    The `ALPN` matcher cannot be used to match the ACME-TLS/1 protocol.
+    It is not allowed to guarantee that the ACME TLS challenges initiated by Traefik could not be intercepted.
+
 ### Priority
 
 To avoid path overlap, routes are sorted, by default, in descending order using rules length. 
