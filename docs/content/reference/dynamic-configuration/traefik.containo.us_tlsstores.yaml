@@ -52,7 +52,7 @@ spec:
                 type: array
               defaultCertificate:
                 description: DefaultCertificate is the name of the secret holding
-                  the default key/certificate pair for the store
+                  the default key/certificate pair for the store.
                 properties:
                   secretName:
                     description: SecretName is the name of the referenced Kubernetes

@@ -20,7 +20,7 @@ type TLSStore struct {
 
 // TLSStoreSpec configures a TLSStore resource.
 type TLSStoreSpec struct {
-	// DefaultCertificate is the name of the secret holding the default key/certificate pair for the store
+	// DefaultCertificate is the name of the secret holding the default key/certificate pair for the store.
 	DefaultCertificate *Certificate `json:"defaultCertificate,omitempty"`
 	// Certificates is a list of secret names, each secret holding a key/certificate pair to add to the store.
 	Certificates []Certificate `json:"certificates,omitempty"`
