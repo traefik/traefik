@@ -906,7 +906,7 @@ func buildCertificates(client Client, tlsStore, namespace string, certificates [
 		if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
 			certAndStores, err := getTLS(client, c.SecretName, namespace)
 			if err != nil {
-				return fmt.Errorf("unable to read secret %s: %v", configKey, err)
+				return fmt.Errorf("unable to read secret %s: %w", configKey, err)
 			}
 
 			certAndStores.Stores = []string{tlsStore}
