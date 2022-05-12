@@ -2,6 +2,7 @@ package consulcatalog
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/consul/agent/connect"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -52,15 +53,20 @@ func (c *connectCert) equals(other *connectCert) bool {
 }
 
 func (c *connectCert) serversTransport(item itemData) *dynamic.ServersTransport {
+	itemName := item.Name
+	if item.ExtraConf.ConsulNameSuffix != "" {
+		itemName = strings.TrimSuffix(item.Name, "-"+item.ExtraConf.ConsulNameSuffix)
+	}
+
 	spiffeIDService := connect.SpiffeIDService{
 		Namespace:  item.Namespace,
 		Datacenter: item.Datacenter,
-		Service:    item.Name,
+		Service:    itemName,
 	}
 
 	return &dynamic.ServersTransport{
 		// This ensures that the config changes whenever the verifier function changes
-		ServerName: fmt.Sprintf("%s-%s-%s", item.Namespace, item.Datacenter, item.Name),
+		ServerName: fmt.Sprintf("%s-%s-%s", item.Namespace, item.Datacenter, itemName),
 		// InsecureSkipVerify is needed because Go wants to verify a hostname otherwise
 		InsecureSkipVerify: true,
 		RootCAs:            c.getRoot(),
