@@ -60,7 +60,7 @@ but we can suggest you start with activities such as:
       The ability to set up a testing environment in a few minutes,
       using the official documentation,
       is a game changer.
-- You will be listed on our Maintainers Github page
+- You will be listed on our Maintainers GitHub page
   as well as on our website in the section [maintainers](maintainers.md).
 - We will be promoting you on social channels (mostly on Twitter).
 
