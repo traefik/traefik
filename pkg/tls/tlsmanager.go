@@ -125,7 +125,7 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 		err = fmt.Errorf("unknown TLS options: %s", configName)
 	}
 	if err != nil {
-		tlsConfig = &tls.Config{}
+		return nil, err
 	}
 
 	store := m.getStore(storeName)
