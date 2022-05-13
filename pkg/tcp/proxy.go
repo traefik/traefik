@@ -116,7 +116,8 @@ func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 	if errClose != nil {
 		// Calling CloseWrite() on a connection which have a socket which is "not connected" is expected to fail.
 		// It happens notably when the dst connection has ended receiving an RST packet from the peer (within the other connCopy call).
-		// In that case, logging the error is superfluous, as in the first place we should not have needed to call CloseWrite.
+		// In that case, logging the error is superfluous,
+		// as in the first place we should not have needed to call CloseWrite.
 		if !isSocketNotConnectedError(errClose) {
 			log.WithoutContext().Debugf("Error while terminating connection: %v", errClose)
 		}
