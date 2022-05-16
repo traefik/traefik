@@ -399,7 +399,7 @@ func getServicePort(svc *corev1.Service, port intstr.IntOrString) (*corev1.Servi
 
 	if hasValidPort {
 		log.WithoutContext().
-			Warning("The port %d from IngressRoute doesn't match with ports defined in the ExternalName service %s/%s.", port, svc.Namespace, svc.Name)
+			Warnf("The port %s from IngressRoute doesn't match with ports defined in the ExternalName service %s/%s.", port, svc.Namespace, svc.Name)
 	}
 
 	return &corev1.ServicePort{Port: port.IntVal}, nil
