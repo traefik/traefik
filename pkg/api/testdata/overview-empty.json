@@ -2,8 +2,7 @@
 	"features": {
 		"accessLog": false,
 		"metrics": "",
-		"tracing": "",
-		"hub": false
+		"tracing": ""
 	},
 	"http": {
 		"middlewares": {
