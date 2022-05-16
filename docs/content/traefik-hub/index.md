@@ -194,7 +194,7 @@ The TLS certificate for Traefik Proxy as a TLS client.
 ```yaml tab="File (YAML)"
 hub:
   tls:
-    cert: |-
+    ca: |-
       -----BEGIN CERTIFICATE-----
       MIIBcjCCARegAwIBAgIQaewCzGdRz5iNnjAiEoO5AzAKBggqhkjOPQQDAjASMRAw
       DgYDVQQKEwdBY21lIENvMCAXDTIyMDMyMTE2MTY0NFoYDzIxMjIwMjI1MTYxNjQ0
@@ -281,15 +281,14 @@ The `insecure` option is mutually exclusive with any other option.
 
 ```yaml tab="File (YAML)"
 hub:
-  tls:
-    insecure: true
+  insecure: true
 ```
 
 ```toml tab="File (TOML)"
-[hub.tls]
+[hub]
   insecure = true
 ```
 
 ```bash tab="CLI"
---hub.tls.insecure=true
+--hub.insecure=true
 ```
