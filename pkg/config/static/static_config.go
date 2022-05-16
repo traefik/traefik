@@ -1,7 +1,6 @@
 package static
 
 import (
-	"errors"
 	"fmt"
 	stdlog "log"
 	"strings"
@@ -18,7 +17,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/ecs"
 	"github.com/traefik/traefik/v2/pkg/provider/file"
 	"github.com/traefik/traefik/v2/pkg/provider/http"
-	"github.com/traefik/traefik/v2/pkg/provider/hub"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/gateway"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/ingress"
@@ -80,8 +78,6 @@ type Configuration struct {
 
 	// Deprecated.
 	Pilot *Pilot `description:"Traefik Pilot configuration." json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty" export:"true"`
-
-	Hub *hub.Provider `description:"Traefik Hub configuration." json:"hub,omitempty" toml:"hub,omitempty" yaml:"hub,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	Experimental *Experimental `description:"experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty" export:"true"`
 }
@@ -201,14 +197,10 @@ type Providers struct {
 // It also takes care of maintaining backwards compatibility.
 func (c *Configuration) SetEffectiveConfiguration() {
 	// Creates the default entry point if needed
-	if len(c.EntryPoints) == 0 || (c.Hub != nil && len(c.EntryPoints) == 1 && c.EntryPoints[c.Hub.EntryPoint] != nil) {
+	if len(c.EntryPoints) == 0 {
 		ep := &EntryPoint{Address: ":80"}
 		ep.SetDefaults()
-		// TODO: double check this tomorrow
-		if c.EntryPoints == nil {
-			c.EntryPoints = make(EntryPoints)
-		}
-		c.EntryPoints["http"] = ep
+		c.EntryPoints = EntryPoints{"http": ep}
 	}
 
 	// Creates the internal traefik entry point if needed
@@ -220,15 +212,6 @@ func (c *Configuration) SetEffectiveConfiguration() {
 			ep := &EntryPoint{Address: ":8080"}
 			ep.SetDefaults()
 			c.EntryPoints[DefaultInternalEntryPointName] = ep
-		}
-	}
-
-	if c.Hub != nil {
-		if err := c.initHubProvider(); err != nil {
-			c.Hub = nil
-			log.WithoutContext().Errorf("Unable to activate the Hub provider: %v", err)
-		} else {
-			log.WithoutContext().Debugf("Experimental Hub provider has been activated.")
 		}
 	}
 
@@ -295,46 +278,6 @@ func (c *Configuration) initACMEProvider() {
 	}
 
 	legolog.Logger = stdlog.New(log.WithoutContext().WriterLevel(logrus.DebugLevel), "legolog: ", 0)
-}
-
-func (c *Configuration) initHubProvider() error {
-	// Hub provider is an experimental feature. Require the experimental flag to be enabled before continuing.
-	if c.Experimental == nil || !c.Experimental.Hub {
-		return errors.New("experimental flag for Hub not set")
-	}
-
-	if c.Hub.TLS == nil {
-		return errors.New("no TLS configuration defined for Hub")
-	}
-
-	if c.Hub.TLS.Insecure && (c.Hub.TLS.CA != "" || c.Hub.TLS.Cert != "" || c.Hub.TLS.Key != "") {
-		return errors.New("mTLS configuration for Hub and insecure TLS for Hub are mutually exclusive")
-	}
-
-	if !c.Hub.TLS.Insecure && (c.Hub.TLS.CA == "" || c.Hub.TLS.Cert == "" || c.Hub.TLS.Key == "") {
-		return errors.New("incomplete mTLS configuration for Hub")
-	}
-
-	if c.Hub.TLS.Insecure {
-		log.WithoutContext().Warn("Hub is in `insecure` mode. Do not run in production with this setup.")
-	}
-
-	// Creates the internal Hub entry point if needed.
-	if c.Hub.EntryPoint == hub.DefaultEntryPointName {
-		if _, ok := c.EntryPoints[hub.DefaultEntryPointName]; !ok {
-			var ep EntryPoint
-			ep.SetDefaults()
-			ep.Address = ":9900"
-			c.EntryPoints[hub.DefaultEntryPointName] = &ep
-			log.WithoutContext().Infof("The entryPoint %q is created on port 9900 to allow Traefik to communicate with the Hub Agent for Traefik.", hub.DefaultEntryPointName)
-		}
-	}
-
-	c.EntryPoints[c.Hub.EntryPoint].HTTP.TLS = &TLSConfig{
-		Options: "traefik-hub",
-	}
-
-	return nil
 }
 
 // ValidateConfiguration validate that configuration is coherent.

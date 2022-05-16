@@ -26,7 +26,6 @@ type features struct {
 	Tracing   string `json:"tracing"`
 	Metrics   string `json:"metrics"`
 	AccessLog bool   `json:"accessLog"`
-	Hub       bool   `json:"hub"`
 	// TODO add certificates resolvers
 }
 
@@ -248,7 +247,6 @@ func getFeatures(conf static.Configuration) features {
 		Tracing:   getTracing(conf),
 		Metrics:   getMetrics(conf),
 		AccessLog: conf.AccessLog != nil,
-		Hub:       conf.Hub != nil,
 	}
 }
 
