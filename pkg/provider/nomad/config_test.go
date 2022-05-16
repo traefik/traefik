@@ -1,41 +1,103 @@
-package consulcatalog
+package nomad
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
-	"github.com/hashicorp/consul/api"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/tls"
 )
+
+func Test_tagsToLabels(t *testing.T) {
+	cases := []struct {
+		description string
+		tags        []string
+		prefix      string
+		expected    map[string]string
+	}{
+		{
+			description: "no tags",
+			tags:        []string{},
+			prefix:      "traefik",
+			expected:    map[string]string{},
+		},
+		{
+			description: "minimal global config",
+			tags:        []string{"traefik.enable=false"},
+			prefix:      "traefik",
+			expected: map[string]string{
+				"traefik.enable": "false",
+			},
+		},
+		{
+			description: "config with domain",
+			tags: []string{
+				"traefik.enable=true",
+				"traefik.domain=example.com",
+			},
+			prefix: "traefik",
+			expected: map[string]string{
+				"traefik.enable": "true",
+				"traefik.domain": "example.com",
+			},
+		},
+		{
+			description: "config with custom prefix",
+			tags: []string{
+				"custom.enable=true",
+				"custom.domain=example.com",
+			},
+			prefix: "custom",
+			expected: map[string]string{
+				"traefik.enable": "true",
+				"traefik.domain": "example.com",
+			},
+		},
+		{
+			description: "config with spaces in tags",
+			tags: []string{
+				"custom.enable = true",
+				"custom.domain = example.com",
+			},
+			prefix: "custom",
+			expected: map[string]string{
+				"traefik.enable": "true",
+				"traefik.domain": "example.com",
+			},
+		},
+	}
+
+	for _, test := range cases {
+		t.Run(test.description, func(t *testing.T) {
+			result := tagsToLabels(test.tags, test.prefix)
+			require.Equal(t, test.expected, result)
+		})
+	}
+}
 
 func Int(v int) *int    { return &v }
 func Bool(v bool) *bool { return &v }
 
-func TestDefaultRule(t *testing.T) {
-	testCases := []struct {
-		desc        string
-		items       []itemData
-		defaultRule string
+func Test_defaultRule(t *testing.T) {
+	cases := []struct {
+		description string
+		items       []item
+		rule        string
 		expected    *dynamic.Configuration
 	}{
 		{
-			desc: "default rule with no variable",
-			items: []itemData{
+			description: "default rule with no variable",
+			items: []item{
 				{
-					ID:      "id",
-					Node:    "Node1",
-					Name:    "Test",
-					Address: "127.0.0.1",
-					Port:    "80",
-					Labels:  nil,
-					Status:  api.HealthPassing,
+					ID:        "id",
+					Node:      "node1",
+					Name:      "Test",
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
-			defaultRule: "Host(`foo.bar`)",
+			rule: "Host(`example.com`)",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -50,7 +112,7 @@ func TestDefaultRule(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service: "Test",
-							Rule:    "Host(`foo.bar`)",
+							Rule:    "Host(`example.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -59,7 +121,7 @@ func TestDefaultRule(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -71,21 +133,21 @@ func TestDefaultRule(t *testing.T) {
 			},
 		},
 		{
-			desc: "default rule with label",
-			items: []itemData{
+			description: "default rule with label",
+			items: []item{
 				{
 					ID:      "id",
 					Node:    "Node1",
 					Name:    "Test",
 					Address: "127.0.0.1",
-					Port:    "80",
-					Labels: map[string]string{
-						"traefik.domain": "foo.bar",
+					Tags: []string{
+						"traefik.domain=example.com",
 					},
-					Status: api.HealthPassing,
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
-			defaultRule: `Host("{{ .Name }}.{{ index .Labels "traefik.domain" }}")`,
+			rule: `Host("{{ .Name }}.{{ index .Labels "traefik.domain" }}")`,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -100,7 +162,7 @@ func TestDefaultRule(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service: "Test",
-							Rule:    `Host("Test.foo.bar")`,
+							Rule:    `Host("Test.example.com")`,
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -109,7 +171,7 @@ func TestDefaultRule(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -121,19 +183,18 @@ func TestDefaultRule(t *testing.T) {
 			},
 		},
 		{
-			desc: "invalid rule",
-			items: []itemData{
+			description: "invalid rule",
+			items: []item{
 				{
-					ID:      "Test",
-					Node:    "Node1",
-					Name:    "Test",
-					Labels:  map[string]string{},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					ID:        "id",
+					Node:      "Node1",
+					Name:      "Test",
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
-			defaultRule: `Host("{{ .Toto }}")`,
+			rule: `Host"{{ .Invalid }}")`,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -152,7 +213,7 @@ func TestDefaultRule(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -164,62 +225,18 @@ func TestDefaultRule(t *testing.T) {
 			},
 		},
 		{
-			desc: "undefined rule",
-			items: []itemData{
+			description: "default template rule",
+			items: []item{
 				{
-					ID:      "Test",
-					Node:    "Node1",
-					Name:    "Test",
-					Labels:  map[string]string{},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					ID:        "id",
+					Node:      "Node1",
+					Name:      "Test",
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
-			defaultRule: ``,
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
-				},
-				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services: map[string]*dynamic.Service{
-						"Test": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{
-										URL: "http://127.0.0.1:80",
-									},
-								},
-								PassHostHeader: Bool(true),
-							},
-						},
-					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
-				},
-			},
-		},
-		{
-			desc: "default template rule",
-			items: []itemData{
-				{
-					ID:      "Test",
-					Node:    "Node1",
-					Name:    "Test",
-					Labels:  map[string]string{},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
-				},
-			},
-			defaultRule: DefaultTemplateRule,
+			rule: DefaultTemplateRule,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -243,7 +260,7 @@ func TestDefaultRule(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -256,51 +273,38 @@ func TestDefaultRule(t *testing.T) {
 		},
 	}
 
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			p := Provider{
-				ExposedByDefault: true,
-				DefaultRule:      test.defaultRule,
-			}
-
+	for _, test := range cases {
+		t.Run(test.description, func(t *testing.T) {
+			p := new(Provider)
+			p.SetDefaults()
+			p.DefaultRule = test.rule
 			err := p.Init()
 			require.NoError(t, err)
 
-			for i := 0; i < len(test.items); i++ {
-				var err error
-				test.items[i].ExtraConf, err = p.getConfiguration(test.items[i].Labels)
-				require.NoError(t, err)
-			}
-
-			configuration := p.buildConfiguration(context.Background(), test.items, nil)
-
-			assert.Equal(t, test.expected, configuration)
+			ctx := context.TODO()
+			config := p.buildConfig(ctx, test.items)
+			require.Equal(t, test.expected, config)
 		})
 	}
 }
 
-func Test_buildConfiguration(t *testing.T) {
-	testCases := []struct {
-		desc         string
-		items        []itemData
-		constraints  string
-		ConnectAware bool
-		expected     *dynamic.Configuration
+func Test_buildConfig(t *testing.T) {
+	cases := []struct {
+		description string
+		items       []item
+		constraints string
+		expected    *dynamic.Configuration
 	}{
 		{
-			desc: "one container no label",
-			items: []itemData{
+			description: "one service no tags",
+			items: []item{
 				{
-					ID:      "Test",
-					Node:    "Node1",
-					Name:    "dev/Test",
-					Labels:  map[string]string{},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					ID:        "id",
+					Node:      "Node1",
+					Name:      "dev/Test",
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -317,7 +321,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"dev-Test": {
 							Service: "dev-Test",
-							Rule:    "Host(`dev-Test.traefik.wtf`)",
+							Rule:    "Host(`dev-Test.traefik.test`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -326,7 +330,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -338,180 +342,23 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc:         "one connect container",
-			ConnectAware: true,
-			items: []itemData{
+			description: "two services no tags",
+			items: []item{
 				{
-					ID:         "Test",
-					Node:       "Node1",
-					Datacenter: "dc1",
-					Name:       "dev/Test",
-					Namespace:  "ns",
-					Address:    "127.0.0.1",
-					Port:       "443",
-					Status:     api.HealthPassing,
-					Labels: map[string]string{
-						"traefik.consulcatalog.connect": "true",
-					},
-					Tags: nil,
-				},
-			},
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Services:    map[string]*dynamic.TCPService{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-				},
-				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"dev-Test": {
-							Service: "dev-Test",
-							Rule:    "Host(`dev-Test.traefik.wtf`)",
-						},
-					},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services: map[string]*dynamic.Service{
-						"dev-Test": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{
-										URL: "https://127.0.0.1:443",
-									},
-								},
-								PassHostHeader:   Bool(true),
-								ServersTransport: "tls-ns-dc1-dev-Test",
-							},
-						},
-					},
-					ServersTransports: map[string]*dynamic.ServersTransport{
-						"tls-ns-dc1-dev-Test": {
-							ServerName:         "ns-dc1-dev/Test",
-							InsecureSkipVerify: true,
-							RootCAs: []tls.FileOrContent{
-								"root",
-							},
-							Certificates: []tls.Certificate{
-								{
-									CertFile: "cert",
-									KeyFile:  "key",
-								},
-							},
-							PeerCertURI: "spiffe:///ns/ns/dc/dc1/svc/dev/Test",
-						},
-					},
-				},
-			},
-		},
-		{
-			desc:         "two connect containers on same service",
-			ConnectAware: true,
-			items: []itemData{
-				{
-					ID:         "Test1",
-					Node:       "Node1",
-					Datacenter: "dc1",
-					Name:       "dev/Test",
-					Namespace:  "ns",
-					Address:    "127.0.0.1",
-					Port:       "443",
-					Status:     api.HealthPassing,
-					Labels: map[string]string{
-						"traefik.consulcatalog.connect": "true",
-					},
-					Tags: nil,
+					ID:        "id1",
+					Node:      "Node1",
+					Name:      "Test1",
+					Address:   "192.168.1.101",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 				{
-					ID:         "Test2",
-					Node:       "Node2",
-					Datacenter: "dc1",
-					Name:       "dev/Test",
-					Namespace:  "ns",
-					Address:    "127.0.0.2",
-					Port:       "444",
-					Status:     api.HealthPassing,
-					Labels: map[string]string{
-						"traefik.consulcatalog.connect": "true",
-					},
-					Tags: nil,
-				},
-			},
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Services:    map[string]*dynamic.TCPService{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-				},
-				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"dev-Test": {
-							Service: "dev-Test",
-							Rule:    "Host(`dev-Test.traefik.wtf`)",
-						},
-					},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services: map[string]*dynamic.Service{
-						"dev-Test": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{
-										URL: "https://127.0.0.1:443",
-									},
-									{
-										URL: "https://127.0.0.2:444",
-									},
-								},
-								PassHostHeader:   Bool(true),
-								ServersTransport: "tls-ns-dc1-dev-Test",
-							},
-						},
-					},
-					ServersTransports: map[string]*dynamic.ServersTransport{
-						"tls-ns-dc1-dev-Test": {
-							ServerName:         "ns-dc1-dev/Test",
-							InsecureSkipVerify: true,
-							RootCAs: []tls.FileOrContent{
-								"root",
-							},
-							Certificates: []tls.Certificate{
-								{
-									CertFile: "cert",
-									KeyFile:  "key",
-								},
-							},
-							PeerCertURI: "spiffe:///ns/ns/dc/dc1/svc/dev/Test",
-						},
-					},
-				},
-			},
-		},
-		{
-			desc: "two containers no label",
-			items: []itemData{
-				{
-					ID:      "Test",
-					Node:    "Node1",
-					Name:    "Test",
-					Labels:  map[string]string{},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
-				},
-				{
-					ID:      "Test2",
-					Node:    "Node1",
-					Name:    "Test2",
-					Labels:  map[string]string{},
-					Address: "127.0.0.2",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					ID:        "id2",
+					Node:      "Node2",
+					Name:      "Test2",
+					Address:   "192.168.1.102",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -526,22 +373,22 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"Test": {
-							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+						"Test1": {
+							Service: "Test1",
+							Rule:    "Host(`Test1.traefik.test`)",
 						},
 						"Test2": {
 							Service: "Test2",
-							Rule:    "Host(`Test2.traefik.wtf`)",
+							Rule:    "Host(`Test2.traefik.test`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"Test": {
+						"Test1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://192.168.1.101:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -551,7 +398,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.2:80",
+										URL: "http://192.168.1.102:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -563,25 +410,25 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two containers with same service name no label",
-			items: []itemData{
+			description: "two services with same name no label",
+			items: []item{
 				{
-					ID:      "1",
-					Node:    "Node1",
-					Name:    "Test",
-					Labels:  map[string]string{},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					ID:        "id1",
+					Node:      "Node1",
+					Name:      "Test",
+					Tags:      []string{},
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 				{
-					ID:      "2",
-					Node:    "Node1",
-					Name:    "Test",
-					Labels:  map[string]string{},
-					Address: "127.0.0.2",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					ID:        "id2",
+					Node:      "Node2",
+					Name:      "Test",
+					Tags:      []string{},
+					Address:   "127.0.0.2",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -598,7 +445,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Rule:    "Host(`Test.traefik.test`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -607,10 +454,10 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 									{
-										URL: "http://127.0.0.2:80",
+										URL: "http://127.0.0.2:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -622,25 +469,25 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two containers with same service name & id no label on same node",
-			items: []itemData{
+			description: "two services same name and id no label same node",
+			items: []item{
 				{
-					ID:      "1",
-					Node:    "Node1",
-					Name:    "Test",
-					Labels:  map[string]string{},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					ID:        "id1",
+					Node:      "Node1",
+					Name:      "Test",
+					Tags:      []string{},
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 				{
-					ID:      "1",
-					Node:    "Node1",
-					Name:    "Test",
-					Labels:  map[string]string{},
-					Address: "127.0.0.2",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					ID:        "id1",
+					Node:      "Node1",
+					Name:      "Test",
+					Tags:      []string{},
+					Address:   "127.0.0.2",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -657,7 +504,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Rule:    "Host(`Test.traefik.test`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -666,7 +513,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.2:80",
+										URL: "http://127.0.0.2:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -678,25 +525,25 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two containers with same service name & id no label on different nodes",
-			items: []itemData{
+			description: "two services same service name and id no label on different nodes",
+			items: []item{
 				{
-					ID:      "1",
-					Node:    "Node1",
-					Name:    "Test",
-					Labels:  map[string]string{},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					ID:        "id1",
+					Node:      "Node1",
+					Name:      "Test",
+					Tags:      []string{},
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 				{
-					ID:      "1",
-					Node:    "Node2",
-					Name:    "Test",
-					Labels:  map[string]string{},
-					Address: "127.0.0.2",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					ID:        "id1",
+					Node:      "Node2",
+					Name:      "Test",
+					Tags:      []string{},
+					Address:   "127.0.0.2",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -713,7 +560,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Rule:    "Host(`Test.traefik.test`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -722,10 +569,10 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 									{
-										URL: "http://127.0.0.2:80",
+										URL: "http://127.0.0.2:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -737,17 +584,17 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container with label (not on server)",
-			items: []itemData{
+			description: "one service with label (not on server)",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+					Tags: []string{
+						"traefik.http.services.Service1.loadbalancer.passhostheader=true",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -764,7 +611,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service: "Service1",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Rule:    "Host(`Test.traefik.test`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -773,7 +620,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -785,19 +632,19 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container with labels",
-			items: []itemData{
+			description: "one service with labels",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
-						"traefik.http.routers.Router1.rule":                          "Host(`foo.com`)",
-						"traefik.http.routers.Router1.service":                       "Service1",
+					Tags: []string{
+						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"traefik.http.routers.Router1.rule = Host(`foo.com`)",
+						"traefik.http.routers.Router1.service = Service1",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -823,7 +670,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -835,17 +682,17 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container with rule label",
-			items: []itemData{
+			description: "one service with rule label",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
+					Tags: []string{
+						"traefik.http.routers.Router1.rule = Host(`foo.com`)",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -865,7 +712,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -883,18 +730,18 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container with rule label and one service",
-			items: []itemData{
+			description: "one service with rule label and one traefik service",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.routers.Router1.rule":                          "Host(`foo.com`)",
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+					Tags: []string{
+						"traefik.http.routers.Router1.rule = Host(`foo.com`)",
+						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -920,7 +767,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -932,19 +779,19 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container with rule label and two services",
-			items: []itemData{
+			description: "one service with rule label and two traefik services",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.routers.Router1.rule":                          "Host(`foo.com`)",
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
-						"traefik.http.services.Service2.loadbalancer.passhostheader": "true",
+					Tags: []string{
+						"traefik.http.routers.Router1.rule = Host(`foo.com`)",
+						"traefik.http.services.Service1.loadbalancer.passhostheader= true",
+						"traefik.http.services.Service2.loadbalancer.passhostheader = true",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -965,7 +812,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -975,7 +822,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -987,27 +834,27 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two containers with same service name and different passhostheader",
-			items: []itemData{
+			description: "two services with same traefik service and different passhostheader",
+			items: []item{
 				{
-					ID:   "1",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+					Tags: []string{
+						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 				{
-					ID:   "2",
+					ID:   "id2",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "false",
+					Tags: []string{
+						"traefik.http.services.Service1.loadbalancer.passhostheader = false",
 					},
-					Address: "127.0.0.2",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.2",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1024,7 +871,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service: "Service1",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Rule:    "Host(`Test.traefik.test`)",
 						},
 					},
 					Middlewares:       map[string]*dynamic.Middleware{},
@@ -1034,37 +881,37 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "three containers with same service name and different passhostheader",
-			items: []itemData{
+			description: "three services with same name and different passhostheader",
+			items: []item{
 				{
-					ID:   "1",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "false",
+					Tags: []string{
+						"traefik.http.services.Service1.loadbalancer.passhostheader = false",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 				{
-					ID:   "2",
+					ID:   "id2",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+					Tags: []string{
+						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 				{
-					ID:   "3",
+					ID:   "id3",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+					Tags: []string{
+						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
 					},
-					Address: "127.0.0.2",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.2",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1081,7 +928,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service: "Service1",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Rule:    "Host(`Test.traefik.test`)",
 						},
 					},
 					Middlewares:       map[string]*dynamic.Middleware{},
@@ -1091,27 +938,27 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two containers with same service name and same LB methods",
-			items: []itemData{
+			description: "two services with same name and same LB methods",
+			items: []item{
 				{
-					ID:   "1",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+					Tags: []string{
+						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 				{
-					ID:   "2",
+					ID:   "id2",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+					Tags: []string{
+						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
 					},
-					Address: "127.0.0.2",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.2",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1128,7 +975,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service: "Service1",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Rule:    "Host(`Test.traefik.test`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1137,10 +984,10 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 									{
-										URL: "http://127.0.0.2:80",
+										URL: "http://127.0.0.2:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -1152,17 +999,17 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container with InFlightReq in label (default value)",
-			items: []itemData{
+			description: "one service with InFlightReq in label (default value)",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
+					Tags: []string{
+						"traefik.http.middlewares.Middleware1.inflightreq.amount = 42",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1179,7 +1026,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Rule:    "Host(`Test.traefik.test`)",
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -1187,7 +1034,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -1206,27 +1053,27 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two services with two identical middlewares",
-			items: []itemData{
+			description: "two services with same middleware",
+			items: []item{
 				{
-					ID:   "1",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
+					Tags: []string{
+						"traefik.http.middlewares.Middleware1.inflightreq.amount = 42",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 				{
-					ID:   "2",
+					ID:   "id2",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
+					Tags: []string{
+						"traefik.http.middlewares.Middleware1.inflightreq.amount = 42",
 					},
-					Address: "127.0.0.2",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.2",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1243,7 +1090,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Rule:    "Host(`Test.traefik.test`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -1258,10 +1105,10 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 									{
-										URL: "http://127.0.0.2:80",
+										URL: "http://127.0.0.2:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -1273,27 +1120,27 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "two containers with two different middlewares with same name",
-			items: []itemData{
+			description: "two services same name with different middleware",
+			items: []item{
 				{
-					ID:   "1",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
+					Tags: []string{
+						"traefik.http.middlewares.Middleware1.inflightreq.amount = 42",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 				{
-					ID:   "2",
+					ID:   "id2",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount": "41",
+					Tags: []string{
+						"traefik.http.middlewares.Middleware1.inflightreq.amount = 41",
 					},
-					Address: "127.0.0.2",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.2",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1310,7 +1157,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Rule:    "Host(`Test.traefik.test`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1319,10 +1166,10 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 									{
-										URL: "http://127.0.0.2:80",
+										URL: "http://127.0.0.2:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -1334,103 +1181,27 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "three containers with different middlewares with same name",
-			items: []itemData{
+			description: "two services with different routers with same name",
+			items: []item{
 				{
-					ID:   "1",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
+					Tags: []string{
+						"traefik.http.routers.Router1.rule = Host(`foo.com`)",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
-				},
-				{
-					ID: "2",
-
-					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount": "41",
-					},
-					Address: "127.0.0.2",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 				{
-					ID: "3",
-
+					ID:   "id2",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount": "40",
+					Tags: []string{
+						"traefik.http.routers.Router1.rule = Host(`bar.com`)",
 					},
-					Address: "127.0.0.3",
-					Port:    "80",
-					Status:  api.HealthPassing,
-				},
-			},
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
-				},
-				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"Test": {
-							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
-						},
-					},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services: map[string]*dynamic.Service{
-						"Test": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{
-										URL: "http://127.0.0.1:80",
-									},
-									{
-										URL: "http://127.0.0.2:80",
-									},
-									{
-										URL: "http://127.0.0.3:80",
-									},
-								},
-								PassHostHeader: Bool(true),
-							},
-						},
-					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
-				},
-			},
-		},
-		{
-			desc: "two containers with two different routers with same name",
-			items: []itemData{
-				{
-					ID:   "1",
-					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
-					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
-				},
-				{
-					ID:   "2",
-					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.routers.Router1.rule": "Host(`bar.com`)",
-					},
-					Address: "127.0.0.2",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.2",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1451,10 +1222,10 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 									{
-										URL: "http://127.0.0.2:80",
+										URL: "http://127.0.0.2:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -1466,98 +1237,27 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "three containers with different routers with same name",
-			items: []itemData{
+			description: "two services identical routers",
+			items: []item{
 				{
-					ID: "1",
-
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
+					Tags: []string{
+						"traefik.http.routers.Router1.rule = Host(`foo.com`)",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
-				},
-				{
-					ID: "2",
-
-					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.routers.Router1.rule": "Host(`bar.com`)",
-					}, Address: "127.0.0.2",
-					Port:   "80",
-					Status: api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 				{
-					ID: "3",
-
+					ID:   "id2",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.routers.Router1.rule": "Host(`foobar.com`)",
+					Tags: []string{
+						"traefik.http.routers.Router1.rule = Host(`foo.com`)",
 					},
-					Address: "127.0.0.3",
-					Port:    "80",
-					Status:  api.HealthPassing,
-				},
-			},
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
-				},
-				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers:     map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services: map[string]*dynamic.Service{
-						"Test": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Servers: []dynamic.Server{
-									{
-										URL: "http://127.0.0.1:80",
-									},
-									{
-										URL: "http://127.0.0.2:80",
-									},
-									{
-										URL: "http://127.0.0.3:80",
-									},
-								},
-								PassHostHeader: Bool(true),
-							},
-						},
-					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
-				},
-			},
-		},
-		{
-			desc: "two containers with two identical routers",
-			items: []itemData{
-				{
-					ID:   "1",
-					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
-					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
-				},
-				{
-					ID:   "2",
-					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
-					},
-					Address: "127.0.0.2",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.2",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1583,10 +1283,10 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 									{
-										URL: "http://127.0.0.2:80",
+										URL: "http://127.0.0.2:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -1598,17 +1298,17 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container with bad label",
-			items: []itemData{
+			description: "one service with bad label",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.wrong.label": "42",
+					Tags: []string{
+						"traefik.wrong.label = 42",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1625,7 +1325,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Rule:    "Host(`Test.traefik.test`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1634,7 +1334,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -1646,18 +1346,18 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container with label port",
-			items: []itemData{
+			description: "one service with label port",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.services.Service1.LoadBalancer.server.scheme": "h2c",
-						"traefik.http.services.Service1.LoadBalancer.server.port":   "8080",
+					Tags: []string{
+						"traefik.http.services.Service1.LoadBalancer.server.scheme = h2c",
+						"traefik.http.services.Service1.LoadBalancer.server.port = 8080",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1674,7 +1374,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service: "Service1",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Rule:    "Host(`Test.traefik.test`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1695,18 +1395,18 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container with label port on two services",
-			items: []itemData{
+			description: "one service with label port on two services",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.services.Service1.LoadBalancer.server.port": "",
-						"traefik.http.services.Service2.LoadBalancer.server.port": "8080",
+					Tags: []string{
+						"traefik.http.services.Service1.LoadBalancer.server.port = ",
+						"traefik.http.services.Service2.LoadBalancer.server.port = 8080",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1727,7 +1427,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -1749,15 +1449,15 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container without port",
-			items: []itemData{
+			description: "one service without port",
+			items: []item{
 				{
-					ID:      "Test",
-					Node:    "Node1",
-					Name:    "Test",
-					Labels:  map[string]string{},
-					Address: "127.0.0.2",
-					Status:  api.HealthPassing,
+					ID:        "id1",
+					Node:      "Node1",
+					Name:      "Test",
+					Tags:      []string{},
+					Address:   "127.0.0.2",
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1779,16 +1479,16 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container without port with middleware",
-			items: []itemData{
+			description: "one service without port with middleware",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
+					Tags: []string{
+						"traefik.http.middlewares.Middleware1.inflightreq.amount = 42",
 					},
-					Address: "127.0.0.2",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.2",
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1810,16 +1510,17 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container with traefik.enable false",
-			items: []itemData{
+			description: "one service with traefik.enable false",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.enable": "false",
+					Tags: []string{
+						"traefik.enable=false",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: false},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1841,48 +1542,17 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container not healthy",
-			items: []itemData{
+			description: "one service with non matching constraints",
+			items: []item{
 				{
-					ID:      "Test",
-					Node:    "Node1",
-					Name:    "Test",
-					Labels:  map[string]string{},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthCritical,
-				},
-			},
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
-				},
-				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers:           map[string]*dynamic.Router{},
-					Middlewares:       map[string]*dynamic.Middleware{},
-					Services:          map[string]*dynamic.Service{},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
-				},
-			},
-		},
-		{
-			desc: "one container with non matching constraints",
-			items: []itemData{
-				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.tags": "foo",
+					Tags: []string{
+						"traefik.tags=foo",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			constraints: `Tag("traefik.tags=bar")`,
@@ -1905,17 +1575,17 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container with matching constraints",
-			items: []itemData{
+			description: "one service with matching constraints",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.tags": "foo",
+					Tags: []string{
+						"traefik.tags=foo",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			constraints: `Tag("traefik.tags=foo")`,
@@ -1933,7 +1603,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service: "Test",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Rule:    "Host(`Test.traefik.test`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1942,7 +1612,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -1954,18 +1624,18 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "Middlewares used in router",
-			items: []itemData{
+			description: "middleware used in router",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.http.middlewares.Middleware1.basicauth.users": "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						"traefik.http.routers.Test.middlewares":                "Middleware1",
+					Tags: []string{
+						"traefik.http.middlewares.Middleware1.basicauth.users = test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						"traefik.http.routers.Test.middlewares = Middleware1",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1982,7 +1652,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.traefik.test`)",
 							Middlewares: []string{"Middleware1"},
 						},
 					},
@@ -2001,7 +1671,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -2013,19 +1683,19 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "Middlewares used in TCP router",
-			items: []itemData{
+			description: "middleware used in tcp router",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.tcp.routers.Test.rule":                               "HostSNI(`foo.bar`)",
-						"traefik.tcp.middlewares.Middleware1.ipwhitelist.sourcerange": "foobar, fiibar",
-						"traefik.tcp.routers.Test.middlewares":                        "Middleware1",
+					Tags: []string{
+						"traefik.tcp.routers.Test.rule = HostSNI(`foo.bar`)",
+						"traefik.tcp.middlewares.Middleware1.ipwhitelist.sourcerange = foobar, fiibar",
+						"traefik.tcp.routers.Test.middlewares = Middleware1",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2049,7 +1719,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
-										Address: "127.0.0.1:80",
+										Address: "127.0.0.1:9999",
 									},
 								},
 								TerminationDelay: Int(100),
@@ -2070,18 +1740,18 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "tcp with label",
-			items: []itemData{
+			description: "tcp with tags",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.tcp.routers.foo.rule": "HostSNI(`foo.bar`)",
-						"traefik.tcp.routers.foo.tls":  "true",
+					Tags: []string{
+						"traefik.tcp.routers.foo.rule = HostSNI(`foo.bar`)",
+						"traefik.tcp.routers.foo.tls = true",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2099,7 +1769,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
-										Address: "127.0.0.1:80",
+										Address: "127.0.0.1:9999",
 									},
 								},
 								TerminationDelay: Int(100),
@@ -2120,17 +1790,17 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "udp with label",
-			items: []itemData{
+			description: "udp with tags",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.udp.routers.foo.entrypoints": "mydns",
+					Tags: []string{
+						"traefik.udp.routers.foo.entrypoints = mydns",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2146,7 +1816,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{
-										Address: "127.0.0.1:80",
+										Address: "127.0.0.1:9999",
 									},
 								},
 							},
@@ -2167,17 +1837,17 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "tcp with label without rule",
-			items: []itemData{
+			description: "tcp with label without rule",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.tcp.routers.foo.tls": "true",
+					Tags: []string{
+						"traefik.tcp.routers.foo.tls = true",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2189,7 +1859,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
-										Address: "127.0.0.1:80",
+										Address: "127.0.0.1:9999",
 									},
 								},
 								TerminationDelay: Int(100),
@@ -2210,19 +1880,19 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "tcp with label and port",
-			items: []itemData{
+			description: "tcp with tags and port",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.tcp.routers.foo.rule":                      "HostSNI(`foo.bar`)",
-						"traefik.tcp.routers.foo.tls.options":               "foo",
-						"traefik.tcp.services.foo.loadbalancer.server.port": "80",
+					Tags: []string{
+						"traefik.tcp.routers.foo.rule = HostSNI(`foo.bar`)",
+						"traefik.tcp.routers.foo.tls.options = foo",
+						"traefik.tcp.services.foo.loadbalancer.server.port = 80",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2263,18 +1933,18 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "udp with label and port",
-			items: []itemData{
+			description: "udp with label and port",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.udp.routers.foo.entrypoints":               "mydns",
-						"traefik.udp.services.foo.loadbalancer.server.port": "80",
+					Tags: []string{
+						"traefik.udp.routers.foo.entrypoints = mydns",
+						"traefik.udp.services.foo.loadbalancer.server.port = 80",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2311,33 +1981,33 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "tcp with label and port and http service",
-			items: []itemData{
+			description: "tcp with label and port and http service",
+			items: []item{
 				{
-					ID:   "1",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.tcp.routers.foo.rule":                               "HostSNI(`foo.bar`)",
-						"traefik.tcp.routers.foo.tls":                                "true",
-						"traefik.tcp.services.foo.loadbalancer.server.port":          "80",
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+					Tags: []string{
+						"traefik.tcp.routers.foo.rule = HostSNI(`foo.bar`)",
+						"traefik.tcp.routers.foo.tls = true",
+						"traefik.tcp.services.foo.loadbalancer.server.port = 80",
+						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 				{
-					ID:   "2",
+					ID:   "id2",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.tcp.routers.foo.rule":                               "HostSNI(`foo.bar`)",
-						"traefik.tcp.routers.foo.tls":                                "true",
-						"traefik.tcp.services.foo.loadbalancer.server.port":          "80",
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+					Tags: []string{
+						"traefik.tcp.routers.foo.rule = HostSNI(`foo.bar`)",
+						"traefik.tcp.routers.foo.tls = true",
+						"traefik.tcp.services.foo.loadbalancer.server.port = 80",
+						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
 					},
-					Address: "127.0.0.2",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.2",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2374,7 +2044,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service: "Service1",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Rule:    "Host(`Test.traefik.test`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2383,10 +2053,10 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 									{
-										URL: "http://127.0.0.2:80",
+										URL: "http://127.0.0.2:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -2398,31 +2068,31 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "udp with label and port and http service",
-			items: []itemData{
+			description: "udp with label and port and http services",
+			items: []item{
 				{
-					ID:   "1",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.udp.routers.foo.entrypoints":                        "mydns",
-						"traefik.udp.services.foo.loadbalancer.server.port":          "80",
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+					Tags: []string{
+						"traefik.udp.routers.foo.entrypoints = mydns",
+						"traefik.udp.services.foo.loadbalancer.server.port = 80",
+						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 				{
-					ID:   "2",
+					ID:   "id2",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.udp.routers.foo.entrypoints":                        "mydns",
-						"traefik.udp.services.foo.loadbalancer.server.port":          "80",
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+					Tags: []string{
+						"traefik.udp.routers.foo.entrypoints = mydns",
+						"traefik.udp.services.foo.loadbalancer.server.port = 80",
+						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
 					},
-					Address: "127.0.0.2",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.2",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2457,7 +2127,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service: "Service1",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Rule:    "Host(`Test.traefik.test`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2466,10 +2136,10 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://127.0.0.1:80",
+										URL: "http://127.0.0.1:9999",
 									},
 									{
-										URL: "http://127.0.0.2:80",
+										URL: "http://127.0.0.2:9999",
 									},
 								},
 								PassHostHeader: Bool(true),
@@ -2481,17 +2151,17 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "tcp with label for tcp service",
-			items: []itemData{
+			description: "tcp with tag for tcp service",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.tcp.services.foo.loadbalancer.server.port": "80",
+					Tags: []string{
+						"traefik.tcp.services.foo.loadbalancer.server.port = 80",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2524,17 +2194,17 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "udp with label for tcp service",
-			items: []itemData{
+			description: "udp with label for tcp service",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.udp.services.foo.loadbalancer.server.port": "80",
+					Tags: []string{
+						"traefik.udp.services.foo.loadbalancer.server.port = 80",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2566,18 +2236,18 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "tcp with label for tcp service, with termination delay",
-			items: []itemData{
+			description: "tcp with label for tcp service, with termination delay",
+			items: []item{
 				{
-					ID:   "Test",
+					ID:   "id1",
 					Name: "Test",
-					Labels: map[string]string{
-						"traefik.tcp.services.foo.loadbalancer.server.port":      "80",
-						"traefik.tcp.services.foo.loadbalancer.terminationdelay": "200",
+					Tags: []string{
+						"traefik.tcp.services.foo.loadbalancer.server.port = 80",
+						"traefik.tcp.services.foo.loadbalancer.terminationdelay = 200",
 					},
-					Address: "127.0.0.1",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					Address:   "127.0.0.1",
+					Port:      80,
+					ExtraConf: configuration{Enable: true},
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2611,43 +2281,67 @@ func Test_buildConfiguration(t *testing.T) {
 		},
 	}
 
-	for _, test := range testCases {
-		test := test
-
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			p := Provider{
-				ExposedByDefault: true,
-				DefaultRule:      "Host(`{{ normalize .Name }}.traefik.wtf`)",
-				ConnectAware:     test.ConnectAware,
-				Constraints:      test.constraints,
-			}
-
+	for _, test := range cases {
+		t.Run(test.description, func(t *testing.T) {
+			p := new(Provider)
+			p.SetDefaults()
+			p.DefaultRule = "Host(`{{ normalize .Name }}.traefik.test`)"
+			p.Constraints = test.constraints
 			err := p.Init()
 			require.NoError(t, err)
 
-			for i := 0; i < len(test.items); i++ {
-				var err error
-				test.items[i].ExtraConf, err = p.getConfiguration(test.items[i].Labels)
-				require.NoError(t, err)
+			ctx := context.TODO()
+			c := p.buildConfig(ctx, test.items)
+			require.Equal(t, test.expected, c)
+		})
+	}
+}
 
-				var tags []string
-				for k, v := range test.items[i].Labels {
-					tags = append(tags, fmt.Sprintf("%s=%s", k, v))
-				}
-				test.items[i].Tags = tags
-			}
+func Test_keepItem(t *testing.T) {
+	cases := []struct {
+		name        string
+		i           item
+		constraints string
+		exp         bool
+	}{
+		{
+			name: "enable true",
+			i:    item{ExtraConf: configuration{Enable: true}},
+			exp:  true,
+		},
+		{
+			name: "enable false",
+			i:    item{ExtraConf: configuration{Enable: false}},
+			exp:  false,
+		},
+		{
+			name: "constraint matches",
+			i: item{
+				Tags:      []string{"traefik.tags=foo"},
+				ExtraConf: configuration{Enable: true},
+			},
+			constraints: `Tag("traefik.tags=foo")`,
+			exp:         true,
+		},
+		{
+			name: "constraint not match",
+			i: item{
+				Tags:      []string{"traefik.tags=foo"},
+				ExtraConf: configuration{Enable: true},
+			},
+			constraints: `Tag("traefik.tags=bar")`,
+			exp:         false,
+		},
+	}
 
-			configuration := p.buildConfiguration(context.Background(), test.items, &connectCert{
-				root: []string{"root"},
-				leaf: keyPair{
-					cert: "cert",
-					key:  "key",
-				},
-			})
-
-			assert.Equal(t, test.expected, configuration)
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			p := new(Provider)
+			p.SetDefaults()
+			p.Constraints = test.constraints
+			ctx := context.TODO()
+			result := p.keepItem(ctx, test.i)
+			require.Equal(t, test.exp, result)
 		})
 	}
 }
