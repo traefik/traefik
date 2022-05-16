@@ -171,6 +171,11 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 			return nil, nil
 		}
 
+		if store == nil {
+			log.WithoutContext().Debugf("TLS: No certificate store found for domain: %q, closing connection", domainToCheck)
+			return nil, nil
+		}
+
 		log.WithoutContext().Debugf("Serving default certificate for request: %q", domainToCheck)
 		return store.DefaultCertificate, nil
 	}
