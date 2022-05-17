@@ -197,7 +197,11 @@ func TestLookupAddress(t *testing.T) {
 			proxy, err := NewProxy(test.address, 10*time.Millisecond, nil)
 			require.NoError(t, err)
 
-			require.NotNil(t, proxy.target)
+			if test.expectRefresh {
+				require.Nil(t, proxy.target)
+			} else {
+				require.NotNil(t, proxy.target)
+			}
 
 			conn, err := proxy.dialBackend()
 			require.NoError(t, err)
