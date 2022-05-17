@@ -119,6 +119,7 @@
     "interfacer", # Deprecated
     "maligned", # Deprecated
     "golint", # Deprecated
+    "execinquery", # Not relevant (SQL)
     "sqlclosecheck", # Not relevant (SQL)
     "rowserrcheck", # Not relevant (SQL)
     "lll", # Not relevant
@@ -142,6 +143,7 @@
     "paralleltest", # Not relevant
     "exhaustive", # Not relevant
     "exhaustivestruct", # Not relevant
+    "exhaustruct", # duplicate of exhaustivestruct
     "goerr113", # Too strict
     "wrapcheck", # Too strict
     "noctx", # Too strict
@@ -156,6 +158,7 @@
     "contextcheck", # too many false-positive
     "containedctx", # too many false-positive
     "maintidx", # kind of duplicate of gocyclo
+    "nonamedreturns", # not relevant
   ]
 
 [issues]
