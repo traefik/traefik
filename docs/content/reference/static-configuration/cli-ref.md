@@ -147,8 +147,11 @@ Subject alternative names.
 `--entrypoints.<name>.http.tls.options`:  
 Default TLS options for the routers linked to the entry point.
 
+`--entrypoints.<name>.http2.maxconcurrentstreams`:  
+Specifies the number of concurrent streams per connection that each client is allowed to initiate. (Default: ```250```)
+
 `--entrypoints.<name>.http3`:  
-HTTP3 configuration. (Default: ```false```)
+HTTP/3 configuration. (Default: ```false```)
 
 `--entrypoints.<name>.http3.advertisedport`:  
 UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)

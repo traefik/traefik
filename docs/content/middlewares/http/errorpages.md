@@ -1,16 +1,16 @@
 ---
-title: "Traefik ErrorPage Documentation"
-description: "In Traefik Proxy, the ErrorPage middleware returns custom pages according to configured ranges of HTTP Status codes. Read the technical documentation."
+title: "Traefik Errors Documentation"
+description: "In Traefik Proxy, the Errors middleware returns custom pages according to configured ranges of HTTP Status codes. Read the technical documentation."
 ---
 
-# ErrorPage
+# Errors
 
 It Has Never Been Easier to Say That Something Went Wrong
 {: .subtitle }
 
-![ErrorPages](../../assets/img/middleware/errorpages.png)
+![Errors](../../assets/img/middleware/errorpages.png)
 
-The ErrorPage middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
+The Errors middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
 
 !!! important
 
@@ -21,16 +21,16 @@ The ErrorPage middleware returns a custom page in lieu of the default, according
 ```yaml tab="Docker"
 # Dynamic Custom Error Page for 5XX Status Code
 labels:
-  - "traefik.http.middlewares.test-errorpage.errors.status=500-599"
-  - "traefik.http.middlewares.test-errorpage.errors.service=serviceError"
-  - "traefik.http.middlewares.test-errorpage.errors.query=/{status}.html"
+  - "traefik.http.middlewares.test-errors.errors.status=500-599"
+  - "traefik.http.middlewares.test-errors.errors.service=serviceError"
+  - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
 ```
 
 ```yaml tab="Kubernetes"
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
-  name: test-errorpage
+  name: test-errors
 spec:
   errors:
     status:
@@ -43,32 +43,32 @@ spec:
 
 ```yaml tab="Consul Catalog"
 # Dynamic Custom Error Page for 5XX Status Code
-- "traefik.http.middlewares.test-errorpage.errors.status=500-599"
-- "traefik.http.middlewares.test-errorpage.errors.service=serviceError"
-- "traefik.http.middlewares.test-errorpage.errors.query=/{status}.html"
+- "traefik.http.middlewares.test-errors.errors.status=500-599"
+- "traefik.http.middlewares.test-errors.errors.service=serviceError"
+- "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
 ```
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.test-errorpage.errors.status": "500-599",
-  "traefik.http.middlewares.test-errorpage.errors.service": "serviceError",
-  "traefik.http.middlewares.test-errorpage.errors.query": "/{status}.html"
+  "traefik.http.middlewares.test-errors.errors.status": "500-599",
+  "traefik.http.middlewares.test-errors.errors.service": "serviceError",
+  "traefik.http.middlewares.test-errors.errors.query": "/{status}.html"
 }
 ```
 
 ```yaml tab="Rancher"
 # Dynamic Custom Error Page for 5XX Status Code
 labels:
-  - "traefik.http.middlewares.test-errorpage.errors.status=500-599"
-  - "traefik.http.middlewares.test-errorpage.errors.service=serviceError"
-  - "traefik.http.middlewares.test-errorpage.errors.query=/{status}.html"
+  - "traefik.http.middlewares.test-errors.errors.status=500-599"
+  - "traefik.http.middlewares.test-errors.errors.service=serviceError"
+  - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
 ```
 
 ```yaml tab="File (YAML)"
 # Custom Error Page for 5XX
 http:
   middlewares:
-    test-errorpage:
+    test-errors:
       errors:
         status:
           - "500-599"
@@ -82,7 +82,7 @@ http:
 ```toml tab="File (TOML)"
 # Custom Error Page for 5XX
 [http.middlewares]
-  [http.middlewares.test-errorpage.errors]
+  [http.middlewares.test-errors.errors]
     status = ["500-599"]
     service = "serviceError"
     query = "/{status}.html"
@@ -121,8 +121,17 @@ The service that will serve the new requested error page.
 !!! info "Host Header"
 
     By default, the client `Host` header value is forwarded to the configured error [service](#service).
-    To forward the `Host` value corresponding to the configured error service URL, the [passHostHeader](../../../routing/services/#pass-host-header) option must be set to `false`.     
+    To forward the `Host` value corresponding to the configured error service URL, the [passHostHeader](../../../routing/services/#pass-host-header) option must be set to `false`.
 
 ### `query`
 
-The URL for the error page (hosted by `service`). You can use the `{status}` variable in the `query` option in order to insert the status code in the URL.
+The URL for the error page (hosted by [`service`](#service))).
+
+There are multiple variables that can be placed in the `query` option to insert values in the URL.
+
+The table below lists all the available variables and their associated values.
+
+| Variable   | Value                                                              |
+|------------|--------------------------------------------------------------------|
+| `{status}` | The response status code.                                          |
+| `{url}`    | The [escaped](https://pkg.go.dev/net/url#QueryEscape) request URL. |

@@ -16,7 +16,8 @@ type EntryPoint struct {
 	ProxyProtocol    *ProxyProtocol        `description:"Proxy-Protocol configuration." json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	ForwardedHeaders *ForwardedHeaders     `description:"Trust client forwarding headers." json:"forwardedHeaders,omitempty" toml:"forwardedHeaders,omitempty" yaml:"forwardedHeaders,omitempty" export:"true"`
 	HTTP             HTTPConfig            `description:"HTTP configuration." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" export:"true"`
-	HTTP3            *HTTP3Config          `description:"HTTP3 configuration." json:"http3,omitempty" toml:"http3,omitempty" yaml:"http3,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	HTTP2            *HTTP2Config          `description:"HTTP/2 configuration." json:"http2,omitempty" toml:"http2,omitempty" yaml:"http2,omitempty" export:"true"`
+	HTTP3            *HTTP3Config          `description:"HTTP/3 configuration." json:"http3,omitempty" toml:"http3,omitempty" yaml:"http3,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	UDP              *UDPConfig            `description:"UDP configuration." json:"udp,omitempty" toml:"udp,omitempty" yaml:"udp,omitempty"`
 }
 
@@ -50,6 +51,8 @@ func (ep *EntryPoint) SetDefaults() {
 	ep.ForwardedHeaders = &ForwardedHeaders{}
 	ep.UDP = &UDPConfig{}
 	ep.UDP.SetDefaults()
+	ep.HTTP2 = &HTTP2Config{}
+	ep.HTTP2.SetDefaults()
 }
 
 // HTTPConfig is the HTTP configuration of an entry point.
@@ -59,9 +62,19 @@ type HTTPConfig struct {
 	TLS          *TLSConfig    `description:"Default TLS configuration for the routers linked to the entry point." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
+// HTTP2Config is the HTTP2 configuration of an entry point.
+type HTTP2Config struct {
+	MaxConcurrentStreams int32 `description:"Specifies the number of concurrent streams per connection that each client is allowed to initiate." json:"maxConcurrentStreams,omitempty" toml:"maxConcurrentStreams,omitempty" yaml:"maxConcurrentStreams,omitempty" export:"true"`
+}
+
+// SetDefaults sets the default values.
+func (c *HTTP2Config) SetDefaults() {
+	c.MaxConcurrentStreams = 250 // https://cs.opensource.google/go/x/net/+/cd36cc07:http2/server.go;l=58
+}
+
 // HTTP3Config is the HTTP3 configuration of an entry point.
 type HTTP3Config struct {
-	AdvertisedPort int32 `description:"UDP port to advertise, on which HTTP/3 is available." json:"advertisedPort,omitempty" toml:"advertisedPort,omitempty" yaml:"advertisedPort,omitempty" export:"true"`
+	AdvertisedPort int `description:"UDP port to advertise, on which HTTP/3 is available." json:"advertisedPort,omitempty" toml:"advertisedPort,omitempty" yaml:"advertisedPort,omitempty" export:"true"`
 }
 
 // Redirections is a set of redirection for an entry point.

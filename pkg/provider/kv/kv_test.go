@@ -173,6 +173,9 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware03/chain/middlewares/0":                                  "foobar",
 		"traefik/http/middlewares/Middleware03/chain/middlewares/1":                                  "foobar",
 		"traefik/http/middlewares/Middleware04/circuitBreaker/expression":                            "foobar",
+		"traefik/http/middlewares/Middleware04/circuitBreaker/checkPeriod":                           "1s",
+		"traefik/http/middlewares/Middleware04/circuitBreaker/fallbackDuration":                      "1s",
+		"traefik/http/middlewares/Middleware04/circuitBreaker/recoveryDuration":                      "1s",
 		"traefik/http/middlewares/Middleware07/errors/status/0":                                      "foobar",
 		"traefik/http/middlewares/Middleware07/errors/status/1":                                      "foobar",
 		"traefik/http/middlewares/Middleware07/errors/service":                                       "foobar",
@@ -393,7 +396,10 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 				"Middleware04": {
 					CircuitBreaker: &dynamic.CircuitBreaker{
-						Expression: "foobar",
+						Expression:       "foobar",
+						CheckPeriod:      ptypes.Duration(time.Second),
+						FallbackDuration: ptypes.Duration(time.Second),
+						RecoveryDuration: ptypes.Duration(time.Second),
 					},
 				},
 				"Middleware05": {
