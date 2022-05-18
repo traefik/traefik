@@ -17,30 +17,28 @@ type Proxy struct {
 	target           *net.TCPAddr
 	terminationDelay time.Duration
 	proxyProtocol    *dynamic.ProxyProtocol
-	refreshTarget    bool
 }
 
 // NewProxy creates a new Proxy.
 func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dynamic.ProxyProtocol) (*Proxy, error) {
-	tcpAddr, err := net.ResolveTCPAddr("tcp", address)
-	if err != nil {
-		return nil, err
-	}
-
 	if proxyProtocol != nil && (proxyProtocol.Version < 1 || proxyProtocol.Version > 2) {
 		return nil, fmt.Errorf("unknown proxyProtocol version: %d", proxyProtocol.Version)
 	}
 
-	// enable the refresh of the target only if the address in not an IP
-	refreshTarget := false
-	if host, _, err := net.SplitHostPort(address); err == nil && net.ParseIP(host) == nil {
-		refreshTarget = true
+	var target *net.TCPAddr
+	// Creates the target only for IP based addresses,
+	// because there is no need to resolve the name on every new connection,
+	// and building it should happen once.
+	if host, _, err := net.SplitHostPort(address); err == nil && net.ParseIP(host) != nil {
+		target, err = net.ResolveTCPAddr("tcp", address)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &Proxy{
 		address:          address,
-		target:           tcpAddr,
-		refreshTarget:    refreshTarget,
+		target:           target,
 		terminationDelay: terminationDelay,
 		proxyProtocol:    proxyProtocol,
 	}, nil
@@ -83,10 +81,14 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 }
 
 func (p Proxy) dialBackend() (*net.TCPConn, error) {
-	if !p.refreshTarget {
+	// Dial using directly with the target for IP base addresses.
+	if p.target != nil {
 		return net.DialTCP("tcp", nil, p.target)
 	}
 
+	log.WithoutContext().Debugf("Dial with lookup to address %s", p.address)
+
+	// Dial with DNS lookup for host based addresses.
 	conn, err := net.Dial("tcp", p.address)
 	if err != nil {
 		return nil, err
