@@ -121,7 +121,11 @@ func Test_Routing(t *testing.T) {
 				return
 			}
 
-			conn.SetReadDeadline(time.Now().Add(200 * time.Millisecond))
+			err = conn.SetReadDeadline(time.Now().Add(200 * time.Millisecond))
+			if err != nil {
+				return
+			}
+
 			buf := make([]byte, 100)
 			_, err = conn.Read(buf)
 
@@ -732,7 +736,10 @@ func checkTCPClientFirst(port string, timeout time.Duration) (err error) {
 
 	fmt.Fprint(conn, "HELLO")
 
-	conn.SetReadDeadline(time.Now().Add(timeout))
+	err = conn.SetReadDeadline(time.Now().Add(timeout))
+	if err != nil {
+		return
+	}
 
 	var buf bytes.Buffer
 	_, err = io.Copy(&buf, conn)
@@ -761,7 +768,10 @@ func checkTCPServerFirst(port string, timeout time.Duration) (err error) {
 		}
 	}()
 
-	conn.SetReadDeadline(time.Now().Add(timeout))
+	err = conn.SetReadDeadline(time.Now().Add(timeout))
+	if err != nil {
+		return
+	}
 
 	var buf bytes.Buffer
 	_, err = io.Copy(&buf, conn)
@@ -831,7 +841,10 @@ func checkTCPTLS(port string, timeout time.Duration, tlsVersion uint16) (err err
 
 	fmt.Fprint(conn, "HELLO")
 
-	conn.SetReadDeadline(time.Now().Add(timeout))
+	err = conn.SetReadDeadline(time.Now().Add(timeout))
+	if err != nil {
+		return
+	}
 
 	var buf bytes.Buffer
 	_, err = io.Copy(&buf, conn)
