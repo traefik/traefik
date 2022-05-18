@@ -426,7 +426,6 @@
   dashboard = true
 
 [hub]
-  entrypoint = "foobar"
   [hub.tls]
     insecure = true
     ca = "foobar"
