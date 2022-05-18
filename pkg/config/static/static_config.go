@@ -199,7 +199,7 @@ type Providers struct {
 // It also takes care of maintaining backwards compatibility.
 func (c *Configuration) SetEffectiveConfiguration() {
 	// Creates the default entry point if needed
-	if !c.hasEntrypoint() {
+	if !c.hasUserDefinedEntrypoint() {
 		ep := &EntryPoint{Address: ":80"}
 		ep.SetDefaults()
 		// TODO: double check this tomorrow
@@ -285,20 +285,16 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	c.initACMEProvider()
 }
 
-func (c *Configuration) hasEntrypoint() bool {
+func (c *Configuration) hasUserDefinedEntrypoint() bool {
 	if len(c.EntryPoints) == 0 {
 		return false
 	}
 
-	if c.Hub == nil {
-		return true
-	}
-
 	switch len(c.EntryPoints) {
 	case 1:
-		return c.EntryPoints[hub.TunnelEntrypoint] != nil
+		return c.EntryPoints[hub.TunnelEntrypoint] == nil
 	case 2:
-		return c.EntryPoints[hub.TunnelEntrypoint] != nil && c.EntryPoints[hub.APIEntrypoint] != nil
+		return c.EntryPoints[hub.TunnelEntrypoint] == nil || c.EntryPoints[hub.APIEntrypoint] == nil
 	default:
 		return true
 	}
