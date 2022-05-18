@@ -8,9 +8,9 @@ import (
 )
 
 func (c *Configuration) initHubProvider() error {
-	// Hub provider is an experimental feature. Require the experimental flag to be enabled before continuing.
+	// Hub provider is an experimental feature. It requires the experimental flag to be enabled before continuing.
 	if c.Experimental == nil || !c.Experimental.Hub {
-		return errors.New("experimental flag for Hub not set")
+		return errors.New("the experimental flag for Hub is not set")
 	}
 
 	if _, ok := c.EntryPoints[hub.TunnelEntrypoint]; !ok {
@@ -25,14 +25,6 @@ func (c *Configuration) initHubProvider() error {
 		return nil
 	}
 
-	if _, ok := c.EntryPoints[hub.APIEntrypoint]; !ok {
-		var ep EntryPoint
-		ep.SetDefaults()
-		ep.Address = ":9900"
-		c.EntryPoints[hub.APIEntrypoint] = &ep
-		log.WithoutContext().Infof("The entryPoint %q is created on port 9900 to allow Traefik to communicate with the Hub Agent for Traefik.", hub.APIEntrypoint)
-	}
-
 	if c.Hub.TLS.Insecure && (c.Hub.TLS.CA != "" || c.Hub.TLS.Cert != "" || c.Hub.TLS.Key != "") {
 		return errors.New("mTLS configuration for Hub and insecure TLS for Hub are mutually exclusive")
 	}
@@ -43,6 +35,14 @@ func (c *Configuration) initHubProvider() error {
 
 	if c.Hub.TLS.Insecure {
 		log.WithoutContext().Warn("Hub is in `insecure` mode. Do not run in production with this setup.")
+	}
+
+	if _, ok := c.EntryPoints[hub.APIEntrypoint]; !ok {
+		var ep EntryPoint
+		ep.SetDefaults()
+		ep.Address = ":9900"
+		c.EntryPoints[hub.APIEntrypoint] = &ep
+		log.WithoutContext().Infof("The entryPoint %q is created on port 9900 to allow Traefik to communicate with the Hub Agent for Traefik.", hub.APIEntrypoint)
 	}
 
 	c.EntryPoints[hub.APIEntrypoint].HTTP.TLS = &TLSConfig{
