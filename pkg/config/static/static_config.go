@@ -1,7 +1,6 @@
 package static
 
 import (
-	"errors"
 	"fmt"
 	stdlog "log"
 	"strings"
@@ -201,7 +200,7 @@ type Providers struct {
 // It also takes care of maintaining backwards compatibility.
 func (c *Configuration) SetEffectiveConfiguration() {
 	// Creates the default entry point if needed
-	if len(c.EntryPoints) == 0 || (c.Hub != nil && len(c.EntryPoints) == 1 && c.EntryPoints[c.Hub.EntryPoint] != nil) {
+	if c.hasEntrypoint() {
 		ep := &EntryPoint{Address: ":80"}
 		ep.SetDefaults()
 		// TODO: double check this tomorrow
@@ -287,6 +286,25 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	c.initACMEProvider()
 }
 
+func (c *Configuration) hasEntrypoint() bool {
+	if len(c.EntryPoints) == 0 {
+		return false
+	}
+
+	if c.Hub == nil {
+		return true
+	}
+
+	switch len(c.EntryPoints) {
+	case 1:
+		return c.EntryPoints[hub.TunnelEntrypoint] == nil
+	case 2:
+		return c.EntryPoints[hub.TunnelEntrypoint] == nil || c.EntryPoints[hub.APIEntrypoint] == nil
+	default:
+		return true
+	}
+}
+
 func (c *Configuration) initACMEProvider() {
 	for _, resolver := range c.CertificatesResolvers {
 		if resolver.ACME != nil {
@@ -295,46 +313,6 @@ func (c *Configuration) initACMEProvider() {
 	}
 
 	legolog.Logger = stdlog.New(log.WithoutContext().WriterLevel(logrus.DebugLevel), "legolog: ", 0)
-}
-
-func (c *Configuration) initHubProvider() error {
-	// Hub provider is an experimental feature. Require the experimental flag to be enabled before continuing.
-	if c.Experimental == nil || !c.Experimental.Hub {
-		return errors.New("experimental flag for Hub not set")
-	}
-
-	if c.Hub.TLS == nil {
-		return errors.New("no TLS configuration defined for Hub")
-	}
-
-	if c.Hub.TLS.Insecure && (c.Hub.TLS.CA != "" || c.Hub.TLS.Cert != "" || c.Hub.TLS.Key != "") {
-		return errors.New("mTLS configuration for Hub and insecure TLS for Hub are mutually exclusive")
-	}
-
-	if !c.Hub.TLS.Insecure && (c.Hub.TLS.CA == "" || c.Hub.TLS.Cert == "" || c.Hub.TLS.Key == "") {
-		return errors.New("incomplete mTLS configuration for Hub")
-	}
-
-	if c.Hub.TLS.Insecure {
-		log.WithoutContext().Warn("Hub is in `insecure` mode. Do not run in production with this setup.")
-	}
-
-	// Creates the internal Hub entry point if needed.
-	if c.Hub.EntryPoint == hub.DefaultEntryPointName {
-		if _, ok := c.EntryPoints[hub.DefaultEntryPointName]; !ok {
-			var ep EntryPoint
-			ep.SetDefaults()
-			ep.Address = ":9900"
-			c.EntryPoints[hub.DefaultEntryPointName] = &ep
-			log.WithoutContext().Infof("The entryPoint %q is created on port 9900 to allow Traefik to communicate with the Hub Agent for Traefik.", hub.DefaultEntryPointName)
-		}
-	}
-
-	c.EntryPoints[c.Hub.EntryPoint].HTTP.TLS = &TLSConfig{
-		Options: "traefik-hub",
-	}
-
-	return nil
 }
 
 // ValidateConfiguration validate that configuration is coherent.
