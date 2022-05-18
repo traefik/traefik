@@ -222,9 +222,6 @@ The maximal depth of DNS recursive resolving (Default: ```5```)
 `TRAEFIK_HUB`:  
 Traefik Hub configuration. (Default: ```false```)
 
-`TRAEFIK_HUB_ENTRYPOINT`:  
-Entrypoint that exposes data for Traefik Hub. It should be a dedicated one, and not used by any router. (Default: ```traefik-hub```)
-
 `TRAEFIK_HUB_TLS_CA`:  
 The certificate authority authenticates the Traefik Hub Agent certificate.
 
