@@ -34,6 +34,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/pilot"
 	"github.com/traefik/traefik/v2/pkg/provider/acme"
 	"github.com/traefik/traefik/v2/pkg/provider/aggregator"
+	"github.com/traefik/traefik/v2/pkg/provider/hub"
 	"github.com/traefik/traefik/v2/pkg/provider/traefik"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/server"
@@ -363,7 +364,7 @@ func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string 
 	var defaultEntryPoints []string
 	for name, cfg := range staticConfiguration.EntryPoints {
 		// Traefik Hub entryPoint should not be part of the set of default entryPoints.
-		if staticConfiguration.Hub != nil && staticConfiguration.Hub.EntryPoint == name {
+		if hub.APIEntrypoint == name || hub.TunnelEntrypoint == name {
 			continue
 		}
 
