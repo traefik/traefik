@@ -9,73 +9,65 @@ import (
 
 func TestHasEntrypoint(t *testing.T) {
 	tests := []struct {
-		desc   string
-		cfg    *Configuration
-		assert assert.BoolAssertionFunc
+		desc        string
+		entryPoints map[string]*EntryPoint
+		assert      assert.BoolAssertionFunc
 	}{
 		{
 			desc:   "no user defined entryPoints",
-			cfg:    &Configuration{},
 			assert: assert.False,
 		},
 		{
 			desc: "user defined entryPoints",
-			cfg: &Configuration{EntryPoints: map[string]*EntryPoint{
+			entryPoints: map[string]*EntryPoint{
 				"foo": {},
-			}},
-			assert: assert.True,
-		},
-		{
-			desc: "user defined entryPoints with hub",
-			cfg: &Configuration{
-				Hub: &hub.Provider{},
-				EntryPoints: map[string]*EntryPoint{
-					"foo": {},
-				},
 			},
 			assert: assert.True,
 		},
 		{
 			desc: "user defined entryPoints + hub entryPoint (tunnel)",
-			cfg: &Configuration{
-				Hub: &hub.Provider{},
-				EntryPoints: map[string]*EntryPoint{
-					"foo":                {},
-					hub.TunnelEntrypoint: {},
-				},
+			entryPoints: map[string]*EntryPoint{
+				"foo":                {},
+				hub.TunnelEntrypoint: {},
 			},
 			assert: assert.True,
 		},
 		{
 			desc: "hub entryPoint (tunnel)",
-			cfg: &Configuration{
-				Hub: &hub.Provider{},
-				EntryPoints: map[string]*EntryPoint{
-					hub.TunnelEntrypoint: {},
-				},
+			entryPoints: map[string]*EntryPoint{
+				hub.TunnelEntrypoint: {},
 			},
 			assert: assert.False,
 		},
 		{
+			desc: "user defined entryPoints + hub entryPoint (api)",
+			entryPoints: map[string]*EntryPoint{
+				"foo":             {},
+				hub.APIEntrypoint: {},
+			},
+			assert: assert.True,
+		},
+		{
+			desc: "hub entryPoint (api)",
+			entryPoints: map[string]*EntryPoint{
+				hub.APIEntrypoint: {},
+			},
+			assert: assert.True,
+		},
+		{
 			desc: "user defined entryPoints + hub entryPoints (tunnel, api)",
-			cfg: &Configuration{
-				Hub: &hub.Provider{},
-				EntryPoints: map[string]*EntryPoint{
-					"foo":                {},
-					hub.TunnelEntrypoint: {},
-					hub.APIEntrypoint:    {},
-				},
+			entryPoints: map[string]*EntryPoint{
+				"foo":                {},
+				hub.TunnelEntrypoint: {},
+				hub.APIEntrypoint:    {},
 			},
 			assert: assert.True,
 		},
 		{
 			desc: "hub entryPoints (tunnel, api)",
-			cfg: &Configuration{
-				Hub: &hub.Provider{},
-				EntryPoints: map[string]*EntryPoint{
-					hub.TunnelEntrypoint: {},
-					hub.APIEntrypoint:    {},
-				},
+			entryPoints: map[string]*EntryPoint{
+				hub.TunnelEntrypoint: {},
+				hub.APIEntrypoint:    {},
 			},
 			assert: assert.False,
 		},
@@ -86,7 +78,11 @@ func TestHasEntrypoint(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			test.assert(t, test.cfg.hasUserDefinedEntrypoint())
+			cfg := &Configuration{
+				EntryPoints: test.entryPoints,
+			}
+
+			test.assert(t, cfg.hasUserDefinedEntrypoint())
 		})
 	}
 }
