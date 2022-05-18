@@ -118,11 +118,13 @@ module.exports = function (ctx) {
       env: process.env.APP_ENV === 'development'
         ? { // staging:
           APP_ENV: JSON.stringify(process.env.APP_ENV),
-          APP_API: JSON.stringify(process.env.APP_API || '/api')
+          APP_API: JSON.stringify(process.env.APP_API || '/api'),
+          PLATFORM_URL: JSON.stringify(process.env.PLATFORM_URL || 'https://pilot.traefik.io')
         }
         : { // production:
           APP_ENV: JSON.stringify(process.env.APP_ENV),
-          APP_API: JSON.stringify(process.env.APP_API || '/api')
+          APP_API: JSON.stringify(process.env.APP_API || '/api'),
+          PLATFORM_URL: JSON.stringify(process.env.PLATFORM_URL || 'https://pilot.traefik.io')
         },
       uglifyOptions: {
         compress: {
