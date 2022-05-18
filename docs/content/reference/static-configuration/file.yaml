@@ -447,7 +447,6 @@ pilot:
   token: foobar
   dashboard: true
 hub:
-  entrypoint: foobar
   tls:
     insecure: true
     ca: foobar
