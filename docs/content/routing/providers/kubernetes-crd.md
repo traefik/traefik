@@ -1628,7 +1628,6 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
     metadata:
       name: default
       namespace: default
-    
     spec:
       certificates:                            # [1]
         - secretName: foo                      
