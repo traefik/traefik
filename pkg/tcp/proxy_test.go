@@ -176,16 +176,20 @@ func TestLookupAddress(t *testing.T) {
 	testCases := []struct {
 		desc          string
 		address       string
-		expectRefresh bool
+		expectAddr    assert.ComparisonAssertionFunc
+		expectRefresh assert.ValueAssertionFunc
 	}{
 		{
-			desc:    "IP doesn't need refresh",
-			address: "8.8.4.4:53",
+			desc:          "IP doesn't need refresh",
+			address:       "8.8.4.4:53",
+			expectAddr:    assert.Equal,
+			expectRefresh: assert.NotNil,
 		},
 		{
 			desc:          "Hostname needs refresh",
 			address:       "dns.google:53",
-			expectRefresh: true,
+			expectAddr:    assert.NotEqual,
+			expectRefresh: assert.Nil,
 		},
 	}
 
@@ -197,20 +201,12 @@ func TestLookupAddress(t *testing.T) {
 			proxy, err := NewProxy(test.address, 10*time.Millisecond, nil)
 			require.NoError(t, err)
 
-			if test.expectRefresh {
-				require.Nil(t, proxy.tcpAddr)
-			} else {
-				require.NotNil(t, proxy.tcpAddr)
-			}
+			test.expectRefresh(t, proxy.tcpAddr)
 
 			conn, err := proxy.dialBackend()
 			require.NoError(t, err)
 
-			if test.expectRefresh {
-				assert.NotEqual(t, test.address, conn.RemoteAddr().String())
-			} else {
-				assert.Equal(t, test.address, conn.RemoteAddr().String())
-			}
+			test.expectAddr(t, test.address, conn.RemoteAddr().String())
 		})
 	}
 }
