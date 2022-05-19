@@ -14,7 +14,7 @@ import (
 // Proxy forwards a TCP request to a TCP service.
 type Proxy struct {
 	address          string
-	target           *net.TCPAddr
+	tcpAddr          *net.TCPAddr
 	terminationDelay time.Duration
 	proxyProtocol    *dynamic.ProxyProtocol
 }
@@ -25,12 +25,12 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 		return nil, fmt.Errorf("unknown proxyProtocol version: %d", proxyProtocol.Version)
 	}
 
-	var target *net.TCPAddr
-	// Creates the target only for IP based addresses,
+	// Creates the tcpAddr only for IP based addresses,
 	// because there is no need to resolve the name on every new connection,
 	// and building it should happen once.
+	var tcpAddr *net.TCPAddr
 	if host, _, err := net.SplitHostPort(address); err == nil && net.ParseIP(host) != nil {
-		target, err = net.ResolveTCPAddr("tcp", address)
+		tcpAddr, err = net.ResolveTCPAddr("tcp", address)
 		if err != nil {
 			return nil, err
 		}
@@ -38,7 +38,7 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 
 	return &Proxy{
 		address:          address,
-		target:           target,
+		tcpAddr:          tcpAddr,
 		terminationDelay: terminationDelay,
 		proxyProtocol:    proxyProtocol,
 	}, nil
@@ -81,9 +81,9 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 }
 
 func (p Proxy) dialBackend() (*net.TCPConn, error) {
-	// Dial using directly with the target for IP base addresses.
-	if p.target != nil {
-		return net.DialTCP("tcp", nil, p.target)
+	// Dial using directly the TCPAddr for IP based addresses.
+	if p.tcpAddr != nil {
+		return net.DialTCP("tcp", nil, p.tcpAddr)
 	}
 
 	log.WithoutContext().Debugf("Dial with lookup to address %s", p.address)
