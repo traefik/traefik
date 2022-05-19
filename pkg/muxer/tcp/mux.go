@@ -95,15 +95,16 @@ func NewMuxer() (*Muxer, error) {
 	return &Muxer{parser: parser}, nil
 }
 
-// Match returns the handler of the first route matching the connection metadata.
-func (m Muxer) Match(meta ConnData) tcp.Handler {
+// Match returns the handler of the first route matching the connection metadata,
+// and whether the match is exactly from the rule HostSNI(*).
+func (m Muxer) Match(meta ConnData) (tcp.Handler, bool) {
 	for _, route := range m.routes {
 		if route.matchers.match(meta) {
-			return route.handler
+			return route.handler, route.catchAll
 		}
 	}
 
-	return nil
+	return nil, false
 }
 
 // AddRoute adds a new route, associated to the given handler, at the given
@@ -139,8 +140,9 @@ func (m *Muxer) AddRoute(rule string, priority int, handler tcp.Handler) error {
 
 	newRoute := &route{
 		handler:  handler,
-		priority: priority,
 		matchers: matchers,
+		catchAll: rule == "HostSNI(`*`)",
+		priority: priority,
 	}
 	m.routes = append(m.routes, newRoute)
 
@@ -207,8 +209,9 @@ type route struct {
 	matchers matchersTree
 	// handler responsible for handling the route.
 	handler tcp.Handler
-
-	// Used to disambiguate between two (or more) rules that would both match for a
+	// catchAll indicates whether the rule is the catchAll rule (HostSNI(`*`)).
+	catchAll bool
+	// priority is used to disambiguate between two (or more) rules that would both match for a
 	// given request.
 	// Computed from the matching rule length, if not user-set.
 	priority int
