@@ -218,8 +218,8 @@ type route struct {
 	handler tcp.Handler
 	// catchAll indicates whether the route rule has exactly the catchAll value (HostSNI(`*`)).
 	catchAll bool
-	// priority is used to disambiguate between two (or more) rules that would both match for a
-	// given request.
+	// priority is used to disambiguate between two (or more) rules that would
+	// all match for a given request.
 	// Computed from the matching rule length, if not user-set.
 	priority int
 }
