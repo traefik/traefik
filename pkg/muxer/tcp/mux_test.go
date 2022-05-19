@@ -474,7 +474,7 @@ func Test_addTCPRoute(t *testing.T) {
 			connData, err := NewConnData(test.serverName, conn)
 			require.NoError(t, err)
 
-			matchingHandler := router.Match(connData)
+			matchingHandler, _ := router.Match(connData)
 			if test.matchErr {
 				require.Nil(t, matchingHandler)
 				return
@@ -564,6 +564,54 @@ func TestParseHostSNI(t *testing.T) {
 			}
 
 			assert.EqualValues(t, test.domain, domains, "%s: Error parsing domains from expression.", test.expression)
+		})
+	}
+}
+
+func Test_HostSNICatchAll(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		rule       string
+		isCatchAll bool
+	}{
+		{
+			desc: "HostSNI(`foobar`) is not catchAll",
+			rule: "HostSNI(`foobar`)",
+		},
+		{
+			desc:       "HostSNI(`*`) is catchAll",
+			rule:       "HostSNI(`*`)",
+			isCatchAll: true,
+		},
+		{
+			desc:       "HOSTSNI(`*`) is catchAll",
+			rule:       "HOSTSNI(`*`)",
+			isCatchAll: true,
+		},
+		{
+			desc:       `HostSNI("*") is catchAll`,
+			rule:       `HostSNI("*")`,
+			isCatchAll: true,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			muxer, err := NewMuxer()
+			require.NoError(t, err)
+
+			err = muxer.AddRoute(test.rule, 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
+			require.NoError(t, err)
+
+			handler, catchAll := muxer.Match(ConnData{
+				serverName: "foobar",
+			})
+			require.NotNil(t, handler)
+			assert.Equal(t, test.isCatchAll, catchAll)
 		})
 	}
 }
@@ -934,7 +982,7 @@ func Test_Priority(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			handler := muxer.Match(ConnData{
+			handler, _ := muxer.Match(ConnData{
 				serverName: test.serverName,
 				remoteIP:   test.remoteIP,
 			})
