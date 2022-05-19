@@ -79,7 +79,7 @@ func (c Chain) Append(constructors ...Constructor) Chain {
 // 		csrf.SetFailureHandler(aHtmlAfterNosurf.ThenFunc(csrfFail))
 // 		return csrf
 // 	}).Extend(aHtmlAfterNosurf)
-//		// requests to aHtml hitting nosurfs success handler go m1 -> nosurf -> m2 -> target-handler
+//		// requests to aHtml hitting nosurfs success handler go m1 -> nosurf -> m2 -> tcpAddr-handler
 //		// requests to aHtml hitting nosurfs failure handler go m1 -> nosurf -> m2 -> csrfFail
 func (c Chain) Extend(chain Chain) Chain {
 	return c.Append(chain.constructors...)
