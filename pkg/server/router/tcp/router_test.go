@@ -564,10 +564,7 @@ func Test_Routing(t *testing.T) {
 			forwarder := newHTTPForwarder(epListener)
 			go func() {
 				defer close(stoppedHTTP)
-				err := serverHTTP.Serve(forwarder)
-				if err != nil && !errors.Is(err, http.ErrServerClosed) {
-					t.Errorf("http server error: %s", err)
-				}
+				serverHTTP.Serve(forwarder)
 			}()
 
 			router.SetHTTPForwarder(forwarder)
@@ -584,10 +581,7 @@ func Test_Routing(t *testing.T) {
 			httpsForwarder := newHTTPForwarder(epListener)
 			go func() {
 				defer close(stoppedHTTPS)
-				err := serverHTTPS.Serve(httpsForwarder)
-				if err != nil && !errors.Is(err, http.ErrServerClosed) {
-					t.Errorf("https server error: %s", err)
-				}
+				serverHTTPS.Serve(httpsForwarder)
 			}()
 
 			router.SetHTTPSForwarder(httpsForwarder)
