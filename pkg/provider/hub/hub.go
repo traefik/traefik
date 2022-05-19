@@ -45,10 +45,15 @@ func (p *Provider) Init() error {
 
 // Provide allows the hub provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, _ *safe.Pool) error {
+	if p.TLS == nil {
+		return nil
+	}
+
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return fmt.Errorf("listener: %w", err)
 	}
+
 	port := listener.Addr().(*net.TCPAddr).Port
 
 	client, err := createAgentClient(p.TLS)
