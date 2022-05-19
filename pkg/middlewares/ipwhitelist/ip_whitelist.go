@@ -24,6 +24,7 @@ type ipWhiteLister struct {
 	whiteLister *ip.Checker
 	strategy    ip.Strategy
 	name        string
+	errorBody   string
 }
 
 // New builds a new IPWhiteLister given a list of CIDR-Strings to whitelist.
@@ -45,6 +46,11 @@ func New(ctx context.Context, next http.Handler, config dynamic.IPWhiteList, nam
 		return nil, err
 	}
 
+	errorBody := http.StatusText(http.StatusForbidden)
+	if config.ErrorBody != "" {
+		errorBody = config.ErrorBody
+	}
+
 	logger.Debugf("Setting up IPWhiteLister with sourceRange: %s", config.SourceRange)
 
 	return &ipWhiteLister{
@@ -52,6 +58,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.IPWhiteList, nam
 		whiteLister: checker,
 		next:        next,
 		name:        name,
+		errorBody:   errorBody,
 	}, nil
 }
 
@@ -68,7 +75,7 @@ func (wl *ipWhiteLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		logMessage := fmt.Sprintf("rejecting request %+v: %v", req, err)
 		logger.Debug(logMessage)
 		tracing.SetErrorWithEvent(req, logMessage)
-		reject(ctx, rw)
+		reject(ctx, rw, wl.errorBody)
 		return
 	}
 	logger.Debugf("Accept %s: %+v", wl.strategy.GetIP(req), req)
@@ -76,11 +83,11 @@ func (wl *ipWhiteLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	wl.next.ServeHTTP(rw, req)
 }
 
-func reject(ctx context.Context, rw http.ResponseWriter) {
+func reject(ctx context.Context, rw http.ResponseWriter, errorBody string) {
 	statusCode := http.StatusForbidden
 
 	rw.WriteHeader(statusCode)
-	_, err := rw.Write([]byte(http.StatusText(statusCode)))
+	_, err := rw.Write([]byte(errorBody))
 	if err != nil {
 		log.FromContext(ctx).Error(err)
 	}

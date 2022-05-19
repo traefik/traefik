@@ -73,6 +73,10 @@ http:
 
 The `sourceRange` option sets the allowed IPs (or ranges of allowed IPs by using CIDR notation).
 
+### `errorBody`
+
+The `errorBody` option allows you to configure the message to return when an IP is unallowed (default to `Forbidden`).
+
 ### `ipStrategy`
 
 The `ipStrategy` option defines two parameters that set how Traefik determines the client IP: `depth`, and `excludedIPs`.
