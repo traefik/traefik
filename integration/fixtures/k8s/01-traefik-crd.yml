@@ -1356,9 +1356,23 @@ spec:
           spec:
             description: TLSStoreSpec configures a TLSStore resource.
             properties:
+              certificates:
+                description: Certificates is a list of secret names, each secret holding
+                  a key/certificate pair to add to the store.
+                items:
+                  description: Certificate holds a secret name for the TLSStore resource.
+                  properties:
+                    secretName:
+                      description: SecretName is the name of the referenced Kubernetes
+                        Secret to specify the certificate details.
+                      type: string
+                  required:
+                  - secretName
+                  type: object
+                type: array
               defaultCertificate:
-                description: DefaultCertificate holds a secret name for the TLSOption
-                  resource.
+                description: DefaultCertificate is the name of the secret holding
+                  the default key/certificate pair for the store.
                 properties:
                   secretName:
                     description: SecretName is the name of the referenced Kubernetes
@@ -1367,8 +1381,6 @@ spec:
                 required:
                 - secretName
                 type: object
-            required:
-            - defaultCertificate
             type: object
         required:
         - metadata
