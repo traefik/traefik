@@ -1635,10 +1635,10 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
         secretName: secret                     
     ```
 
-| Ref | Attribute            | Purpose                                                                                                                                                   |
-|-----|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1] | `certificates`       | List of Kubernetes [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/), each of them holding a key/certificate pair to add to the store. |
-| [2] | `defaultCertificate` | Name of a Kubernetes [Secret](https://kubernetes.io/docs/concepts/configuration/secret/) that holds the default key/certificate pair for the store.       |
+     | Ref | Attribute            | Purpose                                                                                                                                                   |
+     |-----|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+     | [1] | `certificates`       | List of Kubernetes [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/), each of them holding a key/certificate pair to add to the store. |
+     | [2] | `defaultCertificate` | Name of a Kubernetes [Secret](https://kubernetes.io/docs/concepts/configuration/secret/) that holds the default key/certificate pair for the store.       |
 
 ??? example "Declaring and referencing a TLSStore"
    
