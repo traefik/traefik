@@ -604,8 +604,7 @@ func Test_HostSNICatchAll(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {
-			}))
+			err = muxer.AddRoute(test.rule, 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
 			require.NoError(t, err)
 
 			handler, catchAll := muxer.Match(ConnData{
