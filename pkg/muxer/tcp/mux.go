@@ -209,7 +209,7 @@ type route struct {
 	matchers matchersTree
 	// handler responsible for handling the route.
 	handler tcp.Handler
-	// catchAll indicates whether the rule is the catchAll rule (HostSNI(`*`)).
+	// catchAll indicates whether the route rule has exactly the catchAll value (HostSNI(`*`)).
 	catchAll bool
 	// priority is used to disambiguate between two (or more) rules that would both match for a
 	// given request.
