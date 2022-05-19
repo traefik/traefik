@@ -198,9 +198,9 @@ func TestLookupAddress(t *testing.T) {
 			require.NoError(t, err)
 
 			if test.expectRefresh {
-				require.Nil(t, proxy.target)
+				require.Nil(t, proxy.tcpAddr)
 			} else {
-				require.NotNil(t, proxy.target)
+				require.NotNil(t, proxy.tcpAddr)
 			}
 
 			conn, err := proxy.dialBackend()
