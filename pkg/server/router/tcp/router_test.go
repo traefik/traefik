@@ -25,7 +25,7 @@ import (
 
 type applyRouter func(conf *runtime.Configuration)
 
-type checkRouter func(port string, timeout time.Duration) error
+type checkRouter func(addr string, timeout time.Duration) error
 
 type httpForwarder struct {
 	net.Listener
@@ -72,7 +72,7 @@ func (h *httpForwarder) Accept() (net.Conn, error) {
 //
 // Discrepancies for server sending first bytes support:
 // - On v2.6, it is possible as long as you have one and only one TCP Non-TLS HostSNI(`*`) router (so called CatchAllNoTLS) defined.
-// - On v2.7, is is possible as long as you have zero TLS/HTTPS router defined.
+// - On v2.7, it is possible as long as you have zero TLS/HTTPS router defined.
 //
 // Discrepancies in routing precedence between TCP and HTTP routers:
 // - TCP HostSNI(`*`) and HTTP Host(`foobar`)
@@ -106,9 +106,6 @@ func Test_Routing(t *testing.T) {
 		tcpBackendListener.Close()
 	})
 
-	_, tcpBackendPort, err := net.SplitHostPort(tcpBackendListener.Addr().String())
-	require.NoError(t, err)
-
 	go func() {
 		for {
 			conn, err := tcpBackendListener.Accept()
@@ -131,9 +128,11 @@ func Test_Routing(t *testing.T) {
 
 			var opErr *net.OpError
 			if err == nil {
-				fmt.Fprint(conn, "TCP-CLIENT-FIRST")
+				_, err = fmt.Fprint(conn, "TCP-CLIENT-FIRST")
+				require.NoError(t, err)
 			} else if errors.As(err, &opErr) && opErr.Timeout() {
-				fmt.Fprint(conn, "TCP-SERVER-FIRST")
+				_, err = fmt.Fprint(conn, "TCP-SERVER-FIRST")
+				require.NoError(t, err)
 			}
 
 			err = conn.Close()
@@ -149,7 +148,7 @@ func Test_Routing(t *testing.T) {
 					LoadBalancer: &dynamic.TCPServersLoadBalancer{
 						Servers: []dynamic.TCPServer{
 							{
-								Address: "127.0.0.1:" + tcpBackendPort,
+								Address: tcpBackendListener.Addr().String(),
 							},
 						},
 					},
@@ -553,13 +552,11 @@ func Test_Routing(t *testing.T) {
 			epListener, err := net.Listen("tcp", "127.0.0.1:0")
 			require.NoError(t, err)
 
-			_, epPort, err := net.SplitHostPort(epListener.Addr().String())
-			require.NoError(t, err)
-
 			// serverHTTP handler returns only the "HTTP" value as body for further checks.
 			serverHTTP := &http.Server{
 				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					fmt.Fprint(w, "HTTP")
+					_, err = fmt.Fprint(w, "HTTP")
+					require.NoError(t, err)
 				}),
 			}
 
@@ -578,7 +575,8 @@ func Test_Routing(t *testing.T) {
 			// serverHTTPS handler returns only the "HTTPS" value as body for further checks.
 			serverHTTPS := &http.Server{
 				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					fmt.Fprint(w, "HTTPS")
+					_, err = fmt.Fprint(w, "HTTPS")
+					require.NoError(t, err)
 				}),
 			}
 
@@ -618,7 +616,7 @@ func Test_Routing(t *testing.T) {
 					timeout = check.timeout
 				}
 
-				err := check.checkRouter(epPort, timeout)
+				err := check.checkRouter(epListener.Addr().String(), timeout)
 
 				if check.expectedError != "" {
 					require.NotNil(t, err, check.desc)
@@ -722,8 +720,8 @@ func routerHTTPS(conf *runtime.Configuration) {
 
 // checkTCPClientFirst simulates a TCP client sending first bytes first.
 // It returns an error if it doesn't receive the expected response.
-func checkTCPClientFirst(port string, timeout time.Duration) (err error) {
-	conn, err := net.Dial("tcp", "127.0.0.1:"+port)
+func checkTCPClientFirst(addr string, timeout time.Duration) (err error) {
+	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return err
 	}
@@ -756,8 +754,8 @@ func checkTCPClientFirst(port string, timeout time.Duration) (err error) {
 
 // checkTCPServerFirst simulates a TCP client waiting for the server first bytes.
 // It returns an error if it doesn't receive the expected response.
-func checkTCPServerFirst(port string, timeout time.Duration) (err error) {
-	conn, err := net.Dial("tcp", "127.0.0.1:"+port)
+func checkTCPServerFirst(addr string, timeout time.Duration) (err error) {
+	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return err
 	}
@@ -788,10 +786,10 @@ func checkTCPServerFirst(port string, timeout time.Duration) (err error) {
 
 // checkHTTP simulates an HTTP client.
 // It returns an error if it doesn't receive the expected response.
-func checkHTTP(port string, timeout time.Duration) error {
+func checkHTTP(addr string, timeout time.Duration) error {
 	httpClient := &http.Client{Timeout: timeout}
 
-	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:"+port, nil)
+	req, err := http.NewRequest(http.MethodGet, "http://"+addr, nil)
 	if err != nil {
 		return err
 	}
@@ -817,14 +815,14 @@ func checkHTTP(port string, timeout time.Duration) error {
 
 // checkTCPTLS simulates a TCP client connection.
 // It returns an error if it doesn't receive the expected response.
-func checkTCPTLS(port string, timeout time.Duration, tlsVersion uint16) (err error) {
+func checkTCPTLS(addr string, timeout time.Duration, tlsVersion uint16) (err error) {
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 		ServerName:         "foo.bar",
 		MinVersion:         tls.VersionTLS10,
 		MaxVersion:         tls.VersionTLS12,
 	}
-	conn, err := tls.Dial("tcp", "127.0.0.1:"+port, tlsConfig)
+	conn, err := tls.Dial("tcp", addr, tlsConfig)
 	if err != nil {
 		return err
 	}
@@ -861,20 +859,20 @@ func checkTCPTLS(port string, timeout time.Duration, tlsVersion uint16) (err err
 
 // checkTCPTLS10 simulates a TCP client connection with TLS 1.0.
 // It returns an error if it doesn't receive the expected response.
-func checkTCPTLS10(port string, timeout time.Duration) error {
-	return checkTCPTLS(port, timeout, tls.VersionTLS10)
+func checkTCPTLS10(addr string, timeout time.Duration) error {
+	return checkTCPTLS(addr, timeout, tls.VersionTLS10)
 }
 
 // checkTCPTLS12 simulates a TCP client connection with TLS 1.2.
 // It returns an error if it doesn't receive the expected response.
-func checkTCPTLS12(port string, timeout time.Duration) error {
-	return checkTCPTLS(port, timeout, tls.VersionTLS12)
+func checkTCPTLS12(addr string, timeout time.Duration) error {
+	return checkTCPTLS(addr, timeout, tls.VersionTLS12)
 }
 
 // checkHTTPS makes an HTTPS request and checks the given TLS.
 // It returns an error if it doesn't receive the expected response.
-func checkHTTPS(port string, timeout time.Duration, tlsVersion uint16) error {
-	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:"+port, nil)
+func checkHTTPS(addr string, timeout time.Duration, tlsVersion uint16) error {
+	req, err := http.NewRequest(http.MethodGet, "https://"+addr, nil)
 	if err != nil {
 		return err
 	}
@@ -916,12 +914,12 @@ func checkHTTPS(port string, timeout time.Duration, tlsVersion uint16) error {
 
 // checkHTTPSTLS10 makes an HTTP request with TLS version 1.0.
 // It returns an error if it doesn't receive the expected response.
-func checkHTTPSTLS10(port string, timeout time.Duration) error {
-	return checkHTTPS(port, timeout, tls.VersionTLS10)
+func checkHTTPSTLS10(addr string, timeout time.Duration) error {
+	return checkHTTPS(addr, timeout, tls.VersionTLS10)
 }
 
 // checkHTTPSTLS12 makes an HTTP request with TLS version 1.2.
 // It returns an error if it doesn't receive the expected response.
-func checkHTTPSTLS12(port string, timeout time.Duration) error {
-	return checkHTTPS(port, timeout, tls.VersionTLS12)
+func checkHTTPSTLS12(addr string, timeout time.Duration) error {
+	return checkHTTPS(addr, timeout, tls.VersionTLS12)
 }
