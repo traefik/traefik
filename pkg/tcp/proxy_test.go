@@ -177,15 +177,17 @@ func TestLookupAddress(t *testing.T) {
 		desc          string
 		address       string
 		expectRefresh bool
+		expect        assert.ComparisonAssertionFunc
 	}{
 		{
 			desc:    "IP doesn't need refresh",
 			address: "8.8.4.4:53",
+			expect:  assert.Equal,
 		},
 		{
-			desc:          "Hostname needs refresh",
-			address:       "dns.google:53",
-			expectRefresh: true,
+			desc:    "Hostname needs refresh",
+			address: "dns.google:53",
+			expect:  assert.NotEqual,
 		},
 	}
 
@@ -197,16 +199,16 @@ func TestLookupAddress(t *testing.T) {
 			proxy, err := NewProxy(test.address, 10*time.Millisecond, nil)
 			require.NoError(t, err)
 
-			require.NotNil(t, proxy.target)
+			if test.expectRefresh {
+				require.Nil(t, proxy.tcpAddr)
+			} else {
+				require.NotNil(t, proxy.tcpAddr)
+			}
 
 			conn, err := proxy.dialBackend()
 			require.NoError(t, err)
 
-			if test.expectRefresh {
-				assert.NotEqual(t, test.address, conn.RemoteAddr().String())
-			} else {
-				assert.Equal(t, test.address, conn.RemoteAddr().String())
-			}
+			test.expect(t, test.address, conn.RemoteAddr().String())
 		})
 	}
 }
