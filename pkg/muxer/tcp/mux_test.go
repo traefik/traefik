@@ -583,7 +583,18 @@ func Test_HostSNICatchAll(t *testing.T) {
 			rule:       "HostSNI(`*`)",
 			isCatchAll: true,
 		},
+		{
+			desc:       "HOSTSNI(`*`) is catchAll",
+			rule:       "HOSTSNI(`*`)",
+			isCatchAll: true,
+		},
+		{
+			desc:       `HostSNI("*") is catchAll`,
+			rule:       `HostSNI("*")`,
+			isCatchAll: true,
+		},
 	}
+
 	for _, test := range testCases {
 		test := test
 
