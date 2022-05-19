@@ -145,11 +145,11 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		return
 	}
 
-	// For real, the handler returned here is (almost) always the same:
+	// For real, the handler eventually used for HTTPS is (almost) always the same:
 	// it is the httpsForwarder that is used for all HTTPS connections that match
 	// (which is also incidentally the same used in the last block below for 404s).
 	// The added value from doing Match, is to find and use the specific TLS config
-	// requested for the given HostSNI.
+	// (wrapped inside the returned handler) requested for the given HostSNI.
 	handlerHTTPS, catchAllHTTPS := r.muxerHTTPS.Match(connData)
 	if handlerHTTPS != nil && !catchAllHTTPS {
 		// In order not to depart from the behavior in 2.6, we only allow an HTTPS router
