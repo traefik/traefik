@@ -152,7 +152,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	// requested for the given HostSNI.
 	handlerHTTPS, catchAllHTTPS := r.muxerHTTPS.Match(connData)
 	if handlerHTTPS != nil && !catchAllHTTPS {
-		// In order not to depart from the behaviour in 2.6, we only allow an HTTPS router
+		// In order not to depart from the behavior in 2.6, we only allow an HTTPS router
 		// to take precedence over a TCP-TLS router if it is _not_ an HostSNI(*) router (so
 		// basically any router that has a specific HostSNI based rule).
 		handlerHTTPS.ServeTCP(r.GetConn(conn, peeked))
