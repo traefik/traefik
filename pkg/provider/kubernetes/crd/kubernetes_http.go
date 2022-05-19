@@ -495,6 +495,7 @@ func namespaceOrFallback(lb v1alpha1.LoadBalancerSpec, fallback string) string {
 	return fallback
 }
 
+// getTLSHTTP mutates tlsConfigs.
 func getTLSHTTP(ctx context.Context, ingressRoute *v1alpha1.IngressRoute, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
 	if ingressRoute.Spec.TLS == nil {
 		return nil
