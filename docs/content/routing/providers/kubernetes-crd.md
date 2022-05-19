@@ -1621,7 +1621,6 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
     For the time being, please only configure one TLSStore named default.
 
 !!! info "TLSStore Attributes"
-   
     ```yaml tab="TLSStore"
     apiVersion: traefik.containo.us/v1alpha1
     kind: TLSStore
