@@ -52,26 +52,38 @@ func TestNewIPWhiteLister(t *testing.T) {
 
 func TestIPWhiteLister_ServeHTTP(t *testing.T) {
 	testCases := []struct {
-		desc       string
-		whiteList  dynamic.IPWhiteList
-		remoteAddr string
-		expected   int
+		desc           string
+		whiteList      dynamic.IPWhiteList
+		remoteAddr     string
+		expectedStatus int
+		expectedBody   string
 	}{
 		{
 			desc: "authorized with remote address",
 			whiteList: dynamic.IPWhiteList{
 				SourceRange: []string{"20.20.20.20"},
 			},
-			remoteAddr: "20.20.20.20:1234",
-			expected:   200,
+			remoteAddr:     "20.20.20.20:1234",
+			expectedStatus: 200,
 		},
 		{
 			desc: "non authorized with remote address",
 			whiteList: dynamic.IPWhiteList{
 				SourceRange: []string{"20.20.20.20"},
 			},
-			remoteAddr: "20.20.20.21:1234",
-			expected:   403,
+			remoteAddr:     "20.20.20.21:1234",
+			expectedStatus: 403,
+			expectedBody:   http.StatusText(http.StatusForbidden),
+		},
+		{
+			desc: "non authorized with remote address and custom error message",
+			whiteList: dynamic.IPWhiteList{
+				ErrorBody:   "custom error",
+				SourceRange: []string{"20.20.20.20"},
+			},
+			remoteAddr:     "20.20.20.21:1234",
+			expectedStatus: 403,
+			expectedBody:   "custom error",
 		},
 	}
 
@@ -94,7 +106,8 @@ func TestIPWhiteLister_ServeHTTP(t *testing.T) {
 
 			whiteLister.ServeHTTP(recorder, req)
 
-			assert.Equal(t, test.expected, recorder.Code)
+			assert.Equal(t, test.expectedStatus, recorder.Code)
+			assert.Equal(t, test.expectedBody, recorder.Body.String())
 		})
 	}
 }

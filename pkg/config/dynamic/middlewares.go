@@ -288,6 +288,7 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 
 // IPWhiteList holds the ip white list configuration.
 type IPWhiteList struct {
+	ErrorBody   string      `json:"errorBody,omitempty" toml:"errorBody,omitempty" yaml:"errorBody,omitempty"`
 	SourceRange []string    `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
 	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty"  label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }
