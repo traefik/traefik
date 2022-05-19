@@ -110,18 +110,6 @@ func (m Muxer) Match(meta ConnData) (tcp.Handler, bool) {
 // AddRoute adds a new route, associated to the given handler, at the given
 // priority, to the muxer.
 func (m *Muxer) AddRoute(rule string, priority int, handler tcp.Handler) error {
-	// Special case for when the catchAll fallback is present.
-	// When no user-defined priority is found, the lowest computable priority minus one is used,
-	// in order to make the fallback the last to be evaluated.
-	if priority == 0 && rule == "HostSNI(`*`)" {
-		priority = -1
-	}
-
-	// Default value, which means the user has not set it, so we'll compute it.
-	if priority == 0 {
-		priority = len(rule)
-	}
-
 	parse, err := m.parser.Parse(rule)
 	if err != nil {
 		return fmt.Errorf("error while parsing rule %s: %w", rule, err)
@@ -132,16 +120,35 @@ func (m *Muxer) AddRoute(rule string, priority int, handler tcp.Handler) error {
 		return fmt.Errorf("error while parsing rule %s", rule)
 	}
 
+	ruleTree := buildTree()
+
 	var matchers matchersTree
-	err = addRule(&matchers, buildTree())
+	err = addRule(&matchers, ruleTree)
 	if err != nil {
 		return err
+	}
+
+	var catchAll bool
+	if ruleTree.RuleLeft == nil && ruleTree.RuleRight == nil && len(ruleTree.Value) == 1 {
+		catchAll = ruleTree.Value[0] == "*" && strings.EqualFold(ruleTree.Matcher, "HostSNI")
+	}
+
+	// Special case for when the catchAll fallback is present.
+	// When no user-defined priority is found, the lowest computable priority minus one is used,
+	// in order to make the fallback the last to be evaluated.
+	if priority == 0 && catchAll {
+		priority = -1
+	}
+
+	// Default value, which means the user has not set it, so we'll compute it.
+	if priority == 0 {
+		priority = len(rule)
 	}
 
 	newRoute := &route{
 		handler:  handler,
 		matchers: matchers,
-		catchAll: rule == "HostSNI(`*`)",
+		catchAll: catchAll,
 		priority: priority,
 	}
 	m.routes = append(m.routes, newRoute)
