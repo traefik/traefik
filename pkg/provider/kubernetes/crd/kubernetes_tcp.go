@@ -269,6 +269,7 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc v1alpha1.
 	return servers, nil
 }
 
+// getTLSTCP mutates tlsConfigs.
 func getTLSTCP(ctx context.Context, ingressRoute *v1alpha1.IngressRouteTCP, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
 	if ingressRoute.Spec.TLS == nil {
 		return nil
