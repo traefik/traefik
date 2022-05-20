@@ -3,8 +3,10 @@ package tcp
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/traefik/traefik/v2/pkg/log"
+	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 type server struct {
@@ -22,8 +24,9 @@ type WRRLoadBalancer struct {
 
 // NewWRRLoadBalancer creates a new WRRLoadBalancer.
 func NewWRRLoadBalancer() *WRRLoadBalancer {
+	rand.Seed(time.Now().UnixNano())
 	return &WRRLoadBalancer{
-		index: -1,
+		index: rand.Int() - 1,
 	}
 }
 
