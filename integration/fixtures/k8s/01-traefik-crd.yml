@@ -673,6 +673,10 @@ spec:
               forwardAuth:
                 description: ForwardAuth holds the http forward authentication configuration.
                 properties:
+                  addAuthCookiesToResponse:
+                    items:
+                      type: string
+                    type: array
                   address:
                     type: string
                   authRequestHeaders:
