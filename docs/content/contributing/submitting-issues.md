@@ -44,7 +44,7 @@ Do your best to explain what you're looking for, and why it would improve Traefi
 Be detailed and share the use-case(s) to allow us to see the value of your feature request as quickly as possible.
 Features with a lot of positive interaction (claps, +1s, conversation about how this would impact them) indicate higher community interest and help us to prioritize.  
 
-If you are interested in creating a PR for your feature request, let us know about the issue.  
+If you are interested in creating a PR for your feature request, let us know in the the issue so we can work with you.  
 It can take a lot of work to make sure a PR can integrate with our existing code and planning with the team ahead of time can make sure that your PR can be accepted and merged quickly.
 
 
