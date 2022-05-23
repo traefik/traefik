@@ -165,7 +165,7 @@ metadata:
 spec:
   headers:
     frameDeny: true
-    browserxssfilter: true
+    browserXssFilter: true
 ```
 
 ```yaml tab="Consul Catalog"
