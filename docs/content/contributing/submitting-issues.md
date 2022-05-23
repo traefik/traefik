@@ -5,7 +5,7 @@ description: "Help us help you! Learn how to submit an issue, following the guid
 
 # Submitting Issues
 
-### Help Us Help You!
+Help Us Help You!
 {: .subtitle }
 
 Issues are perfect for requesting a feature/enhancment or reporting a suspected bug. We use the [GitHub issue tracker](https://github.com/traefik/traefik/issues) to keep track of issues in Traefik. 
