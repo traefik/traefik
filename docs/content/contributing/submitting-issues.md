@@ -8,7 +8,8 @@ description: "Help us help you! Learn how to submit an issue, following the guid
 Help Us Help You!
 {: .subtitle }
 
-Issues are perfect for requesting a feature/enhancment or reporting a suspected bug. We use the [GitHub issue tracker](https://github.com/traefik/traefik/issues) to keep track of issues in Traefik. 
+Issues are perfect for requesting a feature/enhancement or reporting a suspected bug.
+We use the [GitHub issue tracker](https://github.com/traefik/traefik/issues) to keep track of issues in Traefik. 
 
 The process of sorting and checking the issues is a daunting task, and requires a lot of work (more than an hour a day ... just for sorting).
 To help us (and other community members) quickly and easily understand what you need, be sure to follow the guidelines below. 
