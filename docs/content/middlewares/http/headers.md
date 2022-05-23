@@ -192,14 +192,14 @@ http:
     testHeader:
       headers:
         frameDeny: true
-        browserxssfilter: true
+        browserXssFilter: true
 ```
 
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     frameDeny = true
-    browserxssfilter = true
+    browserXssFilter = true
 ```
 
 ### CORS Headers
