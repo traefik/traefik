@@ -52,7 +52,8 @@ It can take a lot of work to make sure a PR can integrate with our existing code
 
 Follow the [issue template](https://github.com/traefik/traefik/blob/master/.github/ISSUE_TEMPLATE.md) as much as possible.
 
-Explain the conditions in which you encountered the issue; what is your context? Share any logs you may have and make sure to share the steps it takes to reproduce your issue or bug. 
+Explain the conditions in which you encountered the issue; what is your context?
+Share any logs you may have and make sure to share the steps it takes to reproduce your issue or bug. 
 
 Remain as clear and concise as possible.
 
