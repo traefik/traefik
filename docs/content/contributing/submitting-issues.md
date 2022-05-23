@@ -29,8 +29,8 @@ The title must be short and descriptive. (~60 characters)
 
 Examples:
           
-          * Bug: Duplicate requests in access logs
-          * FR:  Support fastCGI 
+* Bug: Duplicate requests in access logs
+* Feature: Support TCP
             
             
 ## Feature Request
