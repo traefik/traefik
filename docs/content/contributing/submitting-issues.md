@@ -40,7 +40,9 @@ Traefik is an open source project and aims to be the best edge router possible.
 Remember when asking for new features that these must be useful to the majority (and not only useful in edge case scenarios, or hack-like setups).
 Follow the [issue template](https://github.com/traefik/traefik/blob/master/.github/ISSUE_TEMPLATE.md) as much as possible.
 
-Do your best to explain what you're looking for, and why it would improve Traefik for everyone. Be detailed and share the use-case(s) to allow us to see the value of your feature request as quickly as possible. Features with a lot of positive interaction (claps, +1s, conversation about how this would impact them) naturally rise to the top of our to-do list.  
+Do your best to explain what you're looking for, and why it would improve Traefik for everyone.
+Be detailed and share the use-case(s) to allow us to see the value of your feature request as quickly as possible.
+Features with a lot of positive interaction (claps, +1s, conversation about how this would impact them) naturally rise to the top of our to-do list.  
 
 If you are interested in creating a PR for your feature request, let us know in the issue.  It can take a lot of work to make sure a PR can integrate with our existing code and planning with the team ahead of time can make sure that your PR can be accepted and merged quickly.
 
