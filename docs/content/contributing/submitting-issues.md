@@ -22,17 +22,15 @@ be sure to follow the guidelines below.
     For end-user related support questions, try using the [Traefik Community Forum] (https://community.traefik.io/)
  [![Join the chat at https://community.traefik.io/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.traefik.io/)
 
-
 ## Issue Title
 
 The title must be short and descriptive. (~60 characters)
 
 Examples:
-          
+
 * Bug: Duplicate requests in access logs
 * Feature: Support TCP
-            
-            
+
 ## Feature Request
 
 Traefik is an open source project and aims to be the best edge router possible. 
@@ -47,7 +45,6 @@ Features with a lot of positive interaction (claps, +1s, conversation about how 
 If you are interested in creating a PR for your feature request, let us know in the the issue so we can work with you.  
 It can take a lot of work to make sure a PR can integrate with our existing code and planning with the team ahead of time can make sure that your PR can be accepted and merged quickly.
 
-
 ## Issues or Possible Bug Reports
 
 Follow the [issue template](https://github.com/traefik/traefik/blob/master/.github/ISSUE_TEMPLATE.md) as much as possible.
@@ -59,8 +56,6 @@ Remain as clear and concise as possible.
 
 Take time to polish the format of your message so we'll enjoy reading it and working on it. 
 Help your readers focus on what matters and help them understand the structure of your message (see the [GitHub Markdown Syntax](https://docs.github.com/en/get-started/writing-on-github)).
-
-
 
 ## International English
 
