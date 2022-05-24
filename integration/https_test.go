@@ -1072,7 +1072,7 @@ func (s *HTTPSSuite) TestEntryPointHttpsRedirectAndPathModification(c *check.C) 
 			resp.Body.Close()
 
 			location := resp.Header.Get("Location")
-			expected := fmt.Sprintf("https://%s:8443%s", host, test.path)
+			expected := "https://" + net.JoinHostPort(host, "8443") + test.path
 
 			c.Assert(location, checker.Equals, expected)
 		}

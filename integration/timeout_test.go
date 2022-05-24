@@ -2,6 +2,7 @@ package integration
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"time"
@@ -38,7 +39,8 @@ func (s *TimeoutSuite) TestForwardingTimeouts(c *check.C) {
 	c.Assert(response.StatusCode, checker.Equals, http.StatusGatewayTimeout)
 
 	// Check that timeout service is available
-	statusURL := fmt.Sprintf("http://%s:9000/statusTest?status=200", timeoutEndpointIP)
+	statusURL := fmt.Sprintf("http://%s/statusTest?status=200",
+		net.JoinHostPort(timeoutEndpointIP, "9000"))
 	c.Assert(try.GetRequest(statusURL, 60*time.Second, try.StatusCodeIs(http.StatusOK)), checker.IsNil)
 
 	// This simulates a ResponseHeaderTimeout.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"sync/atomic"
@@ -101,7 +102,7 @@ func (h *handler) handleDiscoverIP(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (h *handler) doDiscoveryReq(ctx context.Context, ip, port, nonce string) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("https://%s:%s", ip, port), http.NoBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("https://%s", net.JoinHostPort(ip, port)), http.NoBody)
 	if err != nil {
 		return fmt.Errorf("creating request: %w", err)
 	}
