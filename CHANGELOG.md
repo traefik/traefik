@@ -1,3 +1,18 @@
+## [v2.6.7](https://github.com/traefik/traefik/tree/v2.6.7) (2022-05-23)
+[All Commits](https://github.com/traefik/traefik/compare/v2.6.6...v2.6.7)
+
+**Bug fixes:**
+- **[logs,k8s/crd]** Fix log statement for ExternalName misconfig ([#9014](https://github.com/traefik/traefik/pull/9014) by [kruton](https://github.com/kruton))
+- **[plugins]** Update Yaegi to v0.12.0 ([#9039](https://github.com/traefik/traefik/pull/9039) by [mpl](https://github.com/mpl))
+- **[tcp,service]** Fix initial tcp lookup when address is not available ([#9021](https://github.com/traefik/traefik/pull/9021) by [ddtmachado](https://github.com/ddtmachado))
+- **[tls]** Fix panic when getting certificates with non-existing store ([#9019](https://github.com/traefik/traefik/pull/9019) by [moutoum](https://github.com/moutoum))
+- **[tracing]** Update jaeger-client-go to v2.30.0 ([#9000](https://github.com/traefik/traefik/pull/9000) by [moutoum](https://github.com/moutoum))
+
+**Documentation:**
+- **[middleware]** Updated browserXssFilter key to camel case ([#9038](https://github.com/traefik/traefik/pull/9038) by [karlosmunjos](https://github.com/karlosmunjos))
+- Fix the default priority for the entrypoint redirection ([#9028](https://github.com/traefik/traefik/pull/9028) by [ldez](https://github.com/ldez))
+- Fix typo in maintainers guidelines ([#9011](https://github.com/traefik/traefik/pull/9011) by [eltociear](https://github.com/eltociear))
+
 ## [v2.6.6](https://github.com/traefik/traefik/tree/v2.6.6) (2022-05-03)
 [All Commits](https://github.com/traefik/traefik/compare/v2.6.3...v2.6.6)
 
