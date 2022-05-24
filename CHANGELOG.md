@@ -1,3 +1,47 @@
+## [v2.7.0](https://github.com/traefik/traefik/tree/v2.7.0) (2022-05-24)
+[All Commits](https://github.com/traefik/traefik/compare/v2.7.0-rc1...v2.7.0)
+
+**Enhancements:**
+- **[consulcatalog]** Watch for Consul events to rebuild the dynamic configuration ([#8476](https://github.com/traefik/traefik/pull/8476) by [JasonWangA](https://github.com/JasonWangA))
+- **[healthcheck]** Add Failover service ([#8825](https://github.com/traefik/traefik/pull/8825) by [tomMoulard](https://github.com/tomMoulard))
+- **[http3]** Configure advertised port using h3 server option ([#8778](https://github.com/traefik/traefik/pull/8778) by [kevinpollet](https://github.com/kevinpollet))
+- **[http3]** Upgrade quic-go to v0.25.0 ([#8760](https://github.com/traefik/traefik/pull/8760) by [sylr](https://github.com/sylr))
+- **[hub]** Add Traefik Hub Integration (Experimental Feature) ([#8837](https://github.com/traefik/traefik/pull/8837) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- **[k8s/crd,k8s]** Allow empty services in Kubernetes CRD ([#8802](https://github.com/traefik/traefik/pull/8802) by [tomMoulard](https://github.com/tomMoulard))
+- **[metrics]** Support InfluxDB v2 metrics backend ([#8250](https://github.com/traefik/traefik/pull/8250) by [sh7dm](https://github.com/sh7dm))
+- **[plugins]** Remove Pilot token setup constraint to use plugins ([#8869](https://github.com/traefik/traefik/pull/8869) by [ldez](https://github.com/ldez))
+- **[provider]** Refactor configuration reload/throttling ([#6633](https://github.com/traefik/traefik/pull/6633) by [rkojedzinszky](https://github.com/rkojedzinszky))
+- **[rules,tcp]** Add HostSNIRegexp rule matcher for TCP ([#8849](https://github.com/traefik/traefik/pull/8849) by [rtribotte](https://github.com/rtribotte))
+- **[tcp]** Add muxer for TCP Routers ([#8182](https://github.com/traefik/traefik/pull/8182) by [dtomcej](https://github.com/dtomcej))
+- **[webui,pilot]** Add Traefik Hub access and remove Pilot access ([#8848](https://github.com/traefik/traefik/pull/8848) by [tomMoulard](https://github.com/tomMoulard))
+- **[webui]** Add a link to service on router detail view ([#8821](https://github.com/traefik/traefik/pull/8821) by [Tchoupinax](https://github.com/Tchoupinax))
+
+**Bug fixes:**
+- **[hub]** Skip Provide when TLS is nil ([#9031](https://github.com/traefik/traefik/pull/9031) by [ldez](https://github.com/ldez))
+- **[tcp]** Fix TCP-TLS/HTTPS routing precedence ([#9024](https://github.com/traefik/traefik/pull/9024) by [rtribotte](https://github.com/rtribotte))
+- **[webui,hub]** Use dedicated entrypoint for the tunnels ([#9023](https://github.com/traefik/traefik/pull/9023) by [youkoulayley](https://github.com/youkoulayley))
+
+**Documentation:**
+- **[hub]** Fix Traefik Hub TLS documentation ([#8883](https://github.com/traefik/traefik/pull/8883) by [jbdoumenjou](https://github.com/jbdoumenjou))
+- Add a Feature Deprecation page ([#8868](https://github.com/traefik/traefik/pull/8868) by [ddtmachado](https://github.com/ddtmachado))
+- Prepare release v2.7.0-rc1 ([#8879](https://github.com/traefik/traefik/pull/8879) by [tomMoulard](https://github.com/tomMoulard))
+- Prepare release v2.7.0-rc2 ([#8900](https://github.com/traefik/traefik/pull/8900) by [rtribotte](https://github.com/rtribotte))
+
+**Misc:**
+- Merge current v2.6 into v2.7 ([#8984](https://github.com/traefik/traefik/pull/8984) by [kevinpollet](https://github.com/kevinpollet))
+- Merge current v2.6 into v2.7 ([#8958](https://github.com/traefik/traefik/pull/8958) by [tomMoulard](https://github.com/tomMoulard))
+- Merge current v2.6 into v2.7 ([#8899](https://github.com/traefik/traefik/pull/8899) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.6 into master ([#8877](https://github.com/traefik/traefik/pull/8877) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.6 into master ([#8865](https://github.com/traefik/traefik/pull/8865) by [tomMoulard](https://github.com/tomMoulard))
+- Merge current v2.6 into master ([#8832](https://github.com/traefik/traefik/pull/8832) by [tomMoulard](https://github.com/tomMoulard))
+- Merge current v2.6 into master ([#8793](https://github.com/traefik/traefik/pull/8793) by [tomMoulard](https://github.com/tomMoulard))
+- Merge current v2.6 into master ([#8777](https://github.com/traefik/traefik/pull/8777) by [tomMoulard](https://github.com/tomMoulard))
+- Merge current v2.6 into master ([#8757](https://github.com/traefik/traefik/pull/8757) by [tomMoulard](https://github.com/tomMoulard))
+- Merge current v2.6 into master ([#8754](https://github.com/traefik/traefik/pull/8754) by [tomMoulard](https://github.com/tomMoulard))
+- Merge current v2.6 into master ([#8736](https://github.com/traefik/traefik/pull/8736) by [kevinpollet](https://github.com/kevinpollet))
+- Merge current v2.6 into master ([#8689](https://github.com/traefik/traefik/pull/8689) by [tomMoulard](https://github.com/tomMoulard))
+- Merge current v2.6 into master ([#8666](https://github.com/traefik/traefik/pull/8666) by [tomMoulard](https://github.com/tomMoulard))
+
 ## [v2.6.7](https://github.com/traefik/traefik/tree/v2.6.7) (2022-05-23)
 [All Commits](https://github.com/traefik/traefik/compare/v2.6.6...v2.6.7)
 
