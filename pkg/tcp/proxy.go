@@ -14,33 +14,31 @@ import (
 // Proxy forwards a TCP request to a TCP service.
 type Proxy struct {
 	address          string
-	target           *net.TCPAddr
+	tcpAddr          *net.TCPAddr
 	terminationDelay time.Duration
 	proxyProtocol    *dynamic.ProxyProtocol
-	refreshTarget    bool
 }
 
 // NewProxy creates a new Proxy.
 func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dynamic.ProxyProtocol) (*Proxy, error) {
-	tcpAddr, err := net.ResolveTCPAddr("tcp", address)
-	if err != nil {
-		return nil, err
-	}
-
 	if proxyProtocol != nil && (proxyProtocol.Version < 1 || proxyProtocol.Version > 2) {
 		return nil, fmt.Errorf("unknown proxyProtocol version: %d", proxyProtocol.Version)
 	}
 
-	// enable the refresh of the target only if the address in not an IP
-	refreshTarget := false
-	if host, _, err := net.SplitHostPort(address); err == nil && net.ParseIP(host) == nil {
-		refreshTarget = true
+	// Creates the tcpAddr only for IP based addresses,
+	// because there is no need to resolve the name on every new connection,
+	// and building it should happen once.
+	var tcpAddr *net.TCPAddr
+	if host, _, err := net.SplitHostPort(address); err == nil && net.ParseIP(host) != nil {
+		tcpAddr, err = net.ResolveTCPAddr("tcp", address)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &Proxy{
 		address:          address,
-		target:           tcpAddr,
-		refreshTarget:    refreshTarget,
+		tcpAddr:          tcpAddr,
 		terminationDelay: terminationDelay,
 		proxyProtocol:    proxyProtocol,
 	}, nil
@@ -83,10 +81,14 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 }
 
 func (p Proxy) dialBackend() (*net.TCPConn, error) {
-	if !p.refreshTarget {
-		return net.DialTCP("tcp", nil, p.target)
+	// Dial using directly the TCPAddr for IP based addresses.
+	if p.tcpAddr != nil {
+		return net.DialTCP("tcp", nil, p.tcpAddr)
 	}
 
+	log.WithoutContext().Debugf("Dial with lookup to address %s", p.address)
+
+	// Dial with DNS lookup for host based addresses.
 	conn, err := net.Dial("tcp", p.address)
 	if err != nil {
 		return nil, err
