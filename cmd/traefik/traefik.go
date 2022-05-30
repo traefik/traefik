@@ -501,9 +501,9 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 
 	if metricsConfig.Prometheus != nil {
 		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "prometheus"))
-		prometheusRegister := metrics.RegisterPrometheus(ctx, metricsConfig.Prometheus)
-		if prometheusRegister != nil {
-			registries = append(registries, prometheusRegister)
+		prometheusRegistry := metrics.RegisterPrometheus(ctx, metricsConfig.Prometheus)
+		if prometheusRegistry != nil {
+			registries = append(registries, prometheusRegistry)
 			log.FromContext(ctx).Debug("Configured Prometheus metrics")
 		}
 	}
@@ -531,9 +531,9 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 
 	if metricsConfig.InfluxDB2 != nil {
 		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "influxdb2"))
-		influxDB2Register := metrics.RegisterInfluxDB2(ctx, metricsConfig.InfluxDB2)
-		if influxDB2Register != nil {
-			registries = append(registries, influxDB2Register)
+		influxDB2Registry := metrics.RegisterInfluxDB2(ctx, metricsConfig.InfluxDB2)
+		if influxDB2Registry != nil {
+			registries = append(registries, influxDB2Registry)
 			log.FromContext(ctx).Debugf("Configured InfluxDB v2 metrics: pushing to %s (%s org/%s bucket) once every %s",
 				metricsConfig.InfluxDB2.Address, metricsConfig.InfluxDB2.Org, metricsConfig.InfluxDB2.Bucket, metricsConfig.InfluxDB2.PushInterval)
 		}
@@ -541,9 +541,9 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 
 	if metricsConfig.OpenTelemetry != nil {
 		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "openTelemetry"))
-		openTelemetryRegister := metrics.RegisterOpenTelemetry(ctx, metricsConfig.OpenTelemetry)
-		if openTelemetryRegister != nil {
-			registries = append(registries, openTelemetryRegister)
+		openTelemetryRegistry := metrics.RegisterOpenTelemetry(ctx, metricsConfig.OpenTelemetry)
+		if openTelemetryRegistry != nil {
+			registries = append(registries, openTelemetryRegistry)
 			log.FromContext(ctx).Debugf("Configured OpenTelemetry metrics: pushing to %s once every %s",
 				metricsConfig.OpenTelemetry.Address, metricsConfig.OpenTelemetry.PushInterval)
 		}
