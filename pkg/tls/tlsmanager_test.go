@@ -171,6 +171,36 @@ func TestManager_Get(t *testing.T) {
 	}
 }
 
+func TestManager_Get_GetCertificate(t *testing.T) {
+	testCases := []struct {
+		desc                 string
+		expectedGetConfigErr require.ErrorAssertionFunc
+		expectedCertificate  assert.ValueAssertionFunc
+	}{
+		{
+			desc:                 "Get a default certificate from non-existing store",
+			expectedGetConfigErr: require.Error,
+			expectedCertificate:  assert.Nil,
+		},
+	}
+
+	tlsManager := NewManager()
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			config, err := tlsManager.Get("default", "foo")
+			test.expectedGetConfigErr(t, err)
+
+			certificate, err := config.GetCertificate(&tls.ClientHelloInfo{})
+			require.NoError(t, err)
+			test.expectedCertificate(t, certificate)
+		})
+	}
+}
+
 func TestClientAuth(t *testing.T) {
 	tlsConfigs := map[string]Options{
 		"eca": {

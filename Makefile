@@ -65,7 +65,7 @@ build-webui-image:
 clean-webui:
 	rm -r webui/static
 	mkdir -p webui/static
-	echo 'For more information show `webui/readme.md`' > webui/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md
+	printf 'For more information see `webui/readme.md`' > webui/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md
 
 ## Generate WebUI
 webui/static/index.html:
