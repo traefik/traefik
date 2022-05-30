@@ -13,7 +13,7 @@ We use the [GitHub issue tracker](https://github.com/traefik/traefik/issues) to 
 
 The process of sorting and checking the issues is a daunting task, and requires a lot of work (more than an hour a day ... just for sorting).
 To help us (and other community members) quickly and easily understand what you need,
-be sure to follow the guidelines below. 
+be sure to follow the guidelines below.
 
 !!! important "Getting Help Vs Reporting an Issue"
 
@@ -36,7 +36,7 @@ Examples:
 Traefik is an open source project and aims to be the best edge router possible. 
 
 Remember when asking for new features that these must be useful to the majority (and not only useful in edge case scenarios, or hack-like setups).
-Follow the [issue template](https://github.com/traefik/traefik/blob/master/.github/ISSUE_TEMPLATE.md) as much as possible.
+Follow the [issue template](https://github.com/traefik/traefik/blob/master/.github/ISSUE_TEMPLATE/feature-request.yml) as much as possible.
 
 Do your best to explain what you're looking for, and why it would improve Traefik for everyone.
 Be detailed and share the use-case(s) to allow us to see the value of your feature request as quickly as possible.
@@ -47,7 +47,7 @@ It can take a lot of work to make sure a PR can integrate with our existing code
 
 ## Issues or Possible Bug Reports
 
-Follow the [issue template](https://github.com/traefik/traefik/blob/master/.github/ISSUE_TEMPLATE.md) as much as possible.
+Follow the [issue template](https://github.com/traefik/traefik/blob/master/.github/ISSUE_TEMPLATE/bug_report.yml) as much as possible.
 
 Explain the conditions in which you encountered the issue; what is your context?
 Share any logs you may have and make sure to share the steps it takes to reproduce your issue or bug. 
