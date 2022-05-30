@@ -109,7 +109,7 @@ Then any router can refer to an instance of the wanted middleware.
 
     ```yaml tab="K8s IngressRoute"
     # The definitions below require the definitions for the Middleware and IngressRoute kinds.
-    # https://doc.traefik.io/traefik/v2.6/reference/dynamic-configuration/kubernetes-crd/#definitions
+    # https://doc.traefik.io/traefik/v2.7/reference/dynamic-configuration/kubernetes-crd/#definitions
     apiVersion: traefik.containo.us/v1alpha1
     kind: Middleware
     metadata:

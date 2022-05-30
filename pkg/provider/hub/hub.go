@@ -17,13 +17,15 @@ import (
 
 var _ provider.Provider = (*Provider)(nil)
 
-// DefaultEntryPointName is the name of the default internal entry point.
-const DefaultEntryPointName = "traefik-hub"
+// Entrypoints created for Hub.
+const (
+	APIEntrypoint    = "traefikhub-api"
+	TunnelEntrypoint = "traefikhub-tunl"
+)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	EntryPoint string `description:"Entrypoint that exposes data for Traefik Hub. It should be a dedicated one, and not used by any router." json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
-	TLS        *TLS   `description:"TLS configuration for mTLS communication between Traefik and Hub Agent." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	TLS *TLS `description:"TLS configuration for mTLS communication between Traefik and Hub Agent." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 
 	server *http.Server
 }
@@ -36,11 +38,6 @@ type TLS struct {
 	Key      ttls.FileOrContent `description:"The TLS key for Traefik Proxy as a TLS client." json:"key,omitempty" toml:"key,omitempty" yaml:"key,omitempty" loggable:"false"`
 }
 
-// SetDefaults sets the default values.
-func (p *Provider) SetDefaults() {
-	p.EntryPoint = DefaultEntryPointName
-}
-
 // Init the provider.
 func (p *Provider) Init() error {
 	return nil
@@ -48,10 +45,15 @@ func (p *Provider) Init() error {
 
 // Provide allows the hub provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, _ *safe.Pool) error {
+	if p.TLS == nil {
+		return nil
+	}
+
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return fmt.Errorf("listener: %w", err)
 	}
+
 	port := listener.Addr().(*net.TCPAddr).Port
 
 	client, err := createAgentClient(p.TLS)
@@ -59,7 +61,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, _ *safe.Poo
 		return fmt.Errorf("creating Hub Agent HTTP client: %w", err)
 	}
 
-	p.server = &http.Server{Handler: newHandler(p.EntryPoint, port, configurationChan, p.TLS, client)}
+	p.server = &http.Server{Handler: newHandler(APIEntrypoint, port, configurationChan, p.TLS, client)}
 
 	// TODO: this is going to be leaky (because no context to make it terminate)
 	// if/when Provide lifecycle differs with Traefik lifecycle.
@@ -70,7 +72,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, _ *safe.Poo
 		}
 	}()
 
-	exposeAPIAndMetrics(configurationChan, p.EntryPoint, port, p.TLS)
+	exposeAPIAndMetrics(configurationChan, APIEntrypoint, port, p.TLS)
 
 	return nil
 }

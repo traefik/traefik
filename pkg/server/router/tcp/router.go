@@ -93,7 +93,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 			return
 		}
 
-		handler := r.muxerTCP.Match(connData)
+		handler, _ := r.muxerTCP.Match(connData)
 		// If there is a handler matching the connection metadata,
 		// we let it handle the connection.
 		if handler != nil {
@@ -133,7 +133,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	}
 
 	if !tls {
-		handler := r.muxerTCP.Match(connData)
+		handler, _ := r.muxerTCP.Match(connData)
 		switch {
 		case handler != nil:
 			handler.ServeTCP(r.GetConn(conn, peeked))
@@ -145,20 +145,38 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		return
 	}
 
-	handler := r.muxerTCPTLS.Match(connData)
-	if handler != nil {
-		handler.ServeTCP(r.GetConn(conn, peeked))
+	// For real, the handler eventually used for HTTPS is (almost) always the same:
+	// it is the httpsForwarder that is used for all HTTPS connections that match
+	// (which is also incidentally the same used in the last block below for 404s).
+	// The added value from doing Match is to find and use the specific TLS config
+	// (wrapped inside the returned handler) requested for the given HostSNI.
+	handlerHTTPS, catchAllHTTPS := r.muxerHTTPS.Match(connData)
+	if handlerHTTPS != nil && !catchAllHTTPS {
+		// In order not to depart from the behavior in 2.6, we only allow an HTTPS router
+		// to take precedence over a TCP-TLS router if it is _not_ an HostSNI(*) router (so
+		// basically any router that has a specific HostSNI based rule).
+		handlerHTTPS.ServeTCP(r.GetConn(conn, peeked))
 		return
 	}
 
-	// for real, the handler returned here is (almost) always the same:
-	// it is the httpsForwarder that is used for all HTTPS connections that match
-	// (which is also incidentally the same used in the last block below for 404s).
-	// The added value from doing Match, is to find and use the specific TLS config
-	// requested for the given HostSNI.
-	handler = r.muxerHTTPS.Match(connData)
-	if handler != nil {
-		handler.ServeTCP(r.GetConn(conn, peeked))
+	// Contains also TCP TLS passthrough routes.
+	handlerTCPTLS, catchAllTCPTLS := r.muxerTCPTLS.Match(connData)
+	if handlerTCPTLS != nil && !catchAllTCPTLS {
+		handlerTCPTLS.ServeTCP(r.GetConn(conn, peeked))
+		return
+	}
+
+	// Fallback on HTTPS catchAll.
+	// We end up here for e.g. an HTTPS router that only has a PathPrefix rule,
+	// which under the scenes is counted as an HostSNI(*) rule.
+	if handlerHTTPS != nil {
+		handlerHTTPS.ServeTCP(r.GetConn(conn, peeked))
+		return
+	}
+
+	// Fallback on TCP TLS catchAll.
+	if handlerTCPTLS != nil {
+		handlerTCPTLS.ServeTCP(r.GetConn(conn, peeked))
 		return
 	}
 

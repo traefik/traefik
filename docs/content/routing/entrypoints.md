@@ -805,7 +805,7 @@ This section is a convenience to enable (permanent) redirecting of all incoming 
 
 ??? info "`entryPoint.priority`"
 
-    _Optional, Default=1_
+    _Optional, Default=MaxInt32-1 (2147483646)_
 
     Priority of the generated router.
 
