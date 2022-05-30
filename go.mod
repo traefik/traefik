@@ -34,7 +34,6 @@ require (
 	github.com/influxdata/influxdb-client-go/v2 v2.7.0
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
 	github.com/instana/go-sensor v1.38.3
-	github.com/instana/testify v1.6.2-0.20200721153833-94b1851f4d65
 	github.com/klauspost/compress v1.15.1
 	github.com/kvtools/valkeyrie v0.4.0
 	github.com/lucas-clemente/quic-go v0.27.0
