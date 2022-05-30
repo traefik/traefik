@@ -171,6 +171,13 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 			return nil, nil
 		}
 
+		if store == nil {
+			log.WithoutContext().Errorf("TLS: No certificate store found with this name: %q, closing connection", storeName)
+
+			// Same comment as above, as in the isACMETLS case.
+			return nil, nil
+		}
+
 		log.WithoutContext().Debugf("Serving default certificate for request: %q", domainToCheck)
 		return store.DefaultCertificate, nil
 	}
