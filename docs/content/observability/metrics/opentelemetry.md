@@ -48,28 +48,6 @@ metrics:
 --metrics.openTelemetry.addEntryPointsLabels=true
 ```
 
-#### `address`
-
-_Required, Default="https://localhost:4318/v1/metrics"_
-
-Address instructs exporter to send metrics to OpenTelemetry at this address.
-
-```yaml tab="File (YAML)"
-metrics:
-  openTelemetry:
-    address: https://localhost:4318/v1/metrics
-```
-
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.openTelemetry]
-    address = "https://localhost:4318/v1/metrics"
-```
-
-```bash tab="CLI"
---metrics.openTelemetry.address=https://localhost:4318/v1/metrics
-```
-
 #### `addRoutersLabels`
 
 _Optional, Default=false_
@@ -112,6 +90,28 @@ metrics:
 
 ```bash tab="CLI"
 --metrics.openTelemetry.addServicesLabels=true
+```
+
+#### `address`
+
+_Required, Default="https://localhost:4318/v1/metrics"_
+
+Address instructs exporter to send metrics to OpenTelemetry at this address.
+
+```yaml tab="File (YAML)"
+metrics:
+  openTelemetry:
+    address: https://localhost:4318/v1/metrics
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.openTelemetry]
+    address = "https://localhost:4318/v1/metrics"
+```
+
+```bash tab="CLI"
+--metrics.openTelemetry.address=https://localhost:4318/v1/metrics
 ```
 
 #### `compress`
