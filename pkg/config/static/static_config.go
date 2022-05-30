@@ -17,6 +17,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/ecs"
 	"github.com/traefik/traefik/v2/pkg/provider/file"
 	"github.com/traefik/traefik/v2/pkg/provider/http"
+	"github.com/traefik/traefik/v2/pkg/provider/hub"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/gateway"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/ingress"
@@ -77,6 +78,8 @@ type Configuration struct {
 	CertificatesResolvers map[string]CertificateResolver `description:"Certificates resolvers configuration." json:"certificatesResolvers,omitempty" toml:"certificatesResolvers,omitempty" yaml:"certificatesResolvers,omitempty" export:"true"`
 
 	Pilot *Pilot `description:"Traefik Pilot configuration." json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty" export:"true"`
+
+	Hub *hub.Provider `description:"Traefik Hub configuration." json:"hub,omitempty" toml:"hub,omitempty" yaml:"hub,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	Experimental *Experimental `description:"experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty" export:"true"`
 }
@@ -196,10 +199,14 @@ type Providers struct {
 // It also takes care of maintaining backwards compatibility.
 func (c *Configuration) SetEffectiveConfiguration() {
 	// Creates the default entry point if needed
-	if len(c.EntryPoints) == 0 {
+	if !c.hasUserDefinedEntrypoint() {
 		ep := &EntryPoint{Address: ":80"}
 		ep.SetDefaults()
-		c.EntryPoints = EntryPoints{"http": ep}
+		// TODO: double check this tomorrow
+		if c.EntryPoints == nil {
+			c.EntryPoints = make(EntryPoints)
+		}
+		c.EntryPoints["http"] = ep
 	}
 
 	// Creates the internal traefik entry point if needed
@@ -211,6 +218,15 @@ func (c *Configuration) SetEffectiveConfiguration() {
 			ep := &EntryPoint{Address: ":8080"}
 			ep.SetDefaults()
 			c.EntryPoints[DefaultInternalEntryPointName] = ep
+		}
+	}
+
+	if c.Hub != nil {
+		if err := c.initHubProvider(); err != nil {
+			c.Hub = nil
+			log.WithoutContext().Errorf("Unable to activate the Hub provider: %v", err)
+		} else {
+			log.WithoutContext().Debugf("Experimental Hub provider has been activated.")
 		}
 	}
 
@@ -267,6 +283,21 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	}
 
 	c.initACMEProvider()
+}
+
+func (c *Configuration) hasUserDefinedEntrypoint() bool {
+	if len(c.EntryPoints) == 0 {
+		return false
+	}
+
+	switch len(c.EntryPoints) {
+	case 1:
+		return c.EntryPoints[hub.TunnelEntrypoint] == nil
+	case 2:
+		return c.EntryPoints[hub.TunnelEntrypoint] == nil || c.EntryPoints[hub.APIEntrypoint] == nil
+	default:
+		return true
+	}
 }
 
 func (c *Configuration) initACMEProvider() {

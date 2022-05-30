@@ -95,6 +95,11 @@ http:
             secure: true
             httpOnly: true
             sameSite: foobar
+    Service04:
+      failover:
+        service: foobar
+        fallback: foobar
+        healthCheck: {}
   middlewares:
     Middleware00:
       addPrefix:
@@ -366,6 +371,7 @@ tcp:
         - foobar
       service: foobar
       rule: foobar
+      priority: 42
       tls:
         passthrough: true
         options: foobar
@@ -388,6 +394,7 @@ tcp:
         - foobar
       service: foobar
       rule: foobar
+      priority: 42
       tls:
         passthrough: true
         options: foobar

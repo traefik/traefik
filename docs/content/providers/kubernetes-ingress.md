@@ -450,7 +450,11 @@ providers:
 
 ### `allowEmptyServices`
 
-_Optional, Default: false
+_Optional, Default: false_
+
+If the parameter is set to `true`,
+it allows the creation of an empty [servers load balancer](../routing/services/index.md#servers-load-balancer) if the targeted Kubernetes service has no endpoints available.
+This results in `503` HTTP responses instead of `404` ones.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -469,14 +473,12 @@ providers:
 --providers.kubernetesingress.allowEmptyServices=true
 ```
 
-Allow the creation of services if there are no endpoints available.
-This results in `503` http responses instead of `404`.
-
 ### `allowExternalNameServices`
 
 _Optional, Default: false_
 
-If the parameter is set to `true`, Ingresses are able to reference ExternalName services.
+If the parameter is set to `true`,
+Ingresses are able to reference ExternalName services.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -498,4 +500,4 @@ providers:
 ### Further
 
 To learn more about the various aspects of the Ingress specification that Traefik supports,
-many examples of Ingresses definitions are located in the test [examples](https://github.com/traefik/traefik/tree/v2.6/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
+many examples of Ingresses definitions are located in the test [examples](https://github.com/traefik/traefik/tree/v2.7/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.

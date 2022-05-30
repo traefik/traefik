@@ -122,6 +122,7 @@
     allowExternalNameServices = true
     labelSelector = "foobar"
     ingressClass = "foobar"
+    allowEmptyServices = true
     throttleDuration = "42s"
   [providers.kubernetesGateway]
     endpoint = "foobar"
@@ -154,6 +155,7 @@
     connectByDefault = true
     serviceName = "foobar"
     namespace = "foobar"
+    watch = true
     [providers.consulCatalog.endpoint]
       address = "foobar"
       scheme = "foobar"
@@ -285,6 +287,17 @@
     addServicesLabels = true
     [metrics.influxDB.additionalLabels]
       foobar = "foobar"
+  [metrics.influxDB2]
+    address = "foobar"
+    token = "foobar"
+    pushInterval = "42s"
+    org = "foobar"
+    bucket = "foobar"
+    addEntryPointsLabels = true
+    addRoutersLabels = true
+    addServicesLabels = true
+    [metrics.influxDB2.additionalLabels]
+      foobar = "foobar"
 
 [ping]
   entryPoint = "foobar"
@@ -412,9 +425,17 @@
   token = "foobar"
   dashboard = true
 
+[hub]
+  [hub.tls]
+    insecure = true
+    ca = "foobar"
+    cert = "foobar"
+    key = "foobar"
+
 [experimental]
   kubernetesGateway = true
   http3 = true
+  hub = true
   [experimental.plugins]
     [experimental.plugins.Descriptor0]
       moduleName = "foobar"

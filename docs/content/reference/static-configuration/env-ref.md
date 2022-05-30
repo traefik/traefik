@@ -183,6 +183,9 @@ Timeout defines how long to wait on an idle session before releasing the related
 `TRAEFIK_EXPERIMENTAL_HTTP3`:  
 Enable HTTP3. (Default: ```false```)
 
+`TRAEFIK_EXPERIMENTAL_HUB`:  
+Enable the Traefik Hub provider. (Default: ```false```)
+
 `TRAEFIK_EXPERIMENTAL_KUBERNETESGATEWAY`:  
 Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 
@@ -215,6 +218,21 @@ resolv.conf used for DNS resolving (Default: ```/etc/resolv.conf```)
 
 `TRAEFIK_HOSTRESOLVER_RESOLVDEPTH`:  
 The maximal depth of DNS recursive resolving (Default: ```5```)
+
+`TRAEFIK_HUB`:  
+Traefik Hub configuration. (Default: ```false```)
+
+`TRAEFIK_HUB_TLS_CA`:  
+The certificate authority authenticates the Traefik Hub Agent certificate.
+
+`TRAEFIK_HUB_TLS_CERT`:  
+The TLS certificate for Traefik Proxy as a TLS client.
+
+`TRAEFIK_HUB_TLS_INSECURE`:  
+Enables an insecure TLS connection that uses default credentials, and which has no peer authentication between Traefik Proxy and the Traefik Hub Agent. (Default: ```false```)
+
+`TRAEFIK_HUB_TLS_KEY`:  
+The TLS key for Traefik Proxy as a TLS client.
 
 `TRAEFIK_LOG`:  
 Traefik log settings. (Default: ```false```)
@@ -251,6 +269,36 @@ Datadog push interval. (Default: ```10```)
 
 `TRAEFIK_METRICS_INFLUXDB`:  
 InfluxDB metrics exporter type. (Default: ```false```)
+
+`TRAEFIK_METRICS_INFLUXDB2`:  
+InfluxDB v2 metrics exporter type. (Default: ```false```)
+
+`TRAEFIK_METRICS_INFLUXDB2_ADDENTRYPOINTSLABELS`:  
+Enable metrics on entry points. (Default: ```true```)
+
+`TRAEFIK_METRICS_INFLUXDB2_ADDITIONALLABELS_<NAME>`:  
+Additional labels (influxdb tags) on all metrics
+
+`TRAEFIK_METRICS_INFLUXDB2_ADDRESS`:  
+InfluxDB v2 address. (Default: ```http://localhost:8086```)
+
+`TRAEFIK_METRICS_INFLUXDB2_ADDROUTERSLABELS`:  
+Enable metrics on routers. (Default: ```false```)
+
+`TRAEFIK_METRICS_INFLUXDB2_ADDSERVICESLABELS`:  
+Enable metrics on services. (Default: ```true```)
+
+`TRAEFIK_METRICS_INFLUXDB2_BUCKET`:  
+InfluxDB v2 bucket ID.
+
+`TRAEFIK_METRICS_INFLUXDB2_ORG`:  
+InfluxDB v2 org ID.
+
+`TRAEFIK_METRICS_INFLUXDB2_PUSHINTERVAL`:  
+InfluxDB v2 push interval. (Default: ```10```)
+
+`TRAEFIK_METRICS_INFLUXDB2_TOKEN`:  
+InfluxDB v2 access token.
 
 `TRAEFIK_METRICS_INFLUXDB_ADDENTRYPOINTSLABELS`:  
 Enable metrics on entry points. (Default: ```true```)
@@ -422,6 +470,9 @@ Name of the Traefik service in Consul Catalog (needs to be registered via the or
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_STALE`:  
 Use stale consistency for catalog reads. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_CONSULCATALOG_WATCH`:  
+Watch Consul API events. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_CONSUL_ENDPOINTS`:  
 KV store endpoints (Default: ```127.0.0.1:8500```)
@@ -614,6 +665,9 @@ Enable Kubernetes backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_ALLOWCROSSNAMESPACE`:  
 Allow cross namespace resource reference. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_KUBERNETESCRD_ALLOWEMPTYSERVICES`:  
+Allow the creation of services without endpoints. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESCRD_ALLOWEXTERNALNAMESERVICES`:  
 Allow ExternalName services. (Default: ```false```)

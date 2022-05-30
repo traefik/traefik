@@ -133,6 +133,7 @@ providers:
     labelSelector: foobar
     ingressClass: foobar
     throttleDuration: 42s
+    allowEmptyServices: true
   kubernetesGateway:
     endpoint: foobar
     token: foobar
@@ -166,6 +167,7 @@ providers:
     connectByDefault: true
     serviceName: foobar
     namespace: foobar
+    watch: true
     endpoint:
       address: foobar
       scheme: foobar
@@ -307,6 +309,18 @@ metrics:
     addServicesLabels: true
     additionalLabels:
       foobar: foobar
+  influxDB2:
+    address: foobar
+    token: foobar
+    pushInterval: 42s
+    org: foobar
+    bucket: foobar
+    addEntryPointsLabels: true
+    addRoutersLabels: true
+    addServicesLabels: true
+    additionalLabels:
+      foobar: foobar
+
 ping:
   entryPoint: foobar
   manualRouting: true
@@ -432,9 +446,16 @@ certificatesResolvers:
 pilot:
   token: foobar
   dashboard: true
+hub:
+  tls:
+    insecure: true
+    ca: foobar
+    cert: foobar
+    key: foobar
 experimental:
   kubernetesGateway: true
   http3: true
+  hub: true
   plugins:
     Descriptor0:
       moduleName: foobar
