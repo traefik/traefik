@@ -392,6 +392,13 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, cl
 
 		for _, container := range resp.ContainerInstances {
 			instanceIds[aws.StringValue(container.Ec2InstanceId)] = aws.StringValue(container.ContainerInstanceArn)
+			// Disallow Instance IDs of the form mi-*
+			// This prevents considering external instances in ECS Anywhere setups
+			// and getting InvalidInstanceID.Malformed error when calling the describe-instances endpoint.
+			if strings.HasPrefix(aws.StringValue(container.Ec2InstanceId), "mi-") {
+				continue
+			}
+
 			instanceArns = append(instanceArns, container.Ec2InstanceId)
 		}
 	}
