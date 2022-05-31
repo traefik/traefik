@@ -113,6 +113,14 @@ func setupTracing(conf *static.Tracing) *tracing.Tracing {
 		}
 	}
 
+	if conf.OpenTelemetry != nil {
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create OpenTelemetry backend.")
+		} else {
+			backend = conf.OpenTelemetry
+		}
+	}
+
 	if backend == nil {
 		log.WithoutContext().Debug("Could not initialize tracing, using Jaeger by default")
 		defaultBackend := &jaeger.Config{}

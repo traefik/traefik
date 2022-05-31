@@ -60,10 +60,6 @@ entryPoints:
             sans:
               - foobar
               - foobar
-    http3:
-      advertisedPort: 42
-    udp:
-      timeout: 42s
 providers:
   providersThrottleDuration: 42s
   docker:
@@ -326,6 +322,27 @@ metrics:
     addServicesLabels: true
     additionalLabels:
       foobar: foobar
+  openTelemetry:
+    addEntryPointsLabels: true
+    addRoutersLabels: true
+    addServicesLabels: true
+    collectPeriod: 42s
+    compress: true
+    endpoint: foobar
+    explicitBoundaries:
+      - 42
+      - 42
+    headers:
+      name0: foobar
+      name1: foobar
+    insecure: true
+    tls:
+      ca: foobar
+      caOptional: true
+      cert: foobar
+      insecureSkipVerify: true
+      key: foobar
+    grpc: {}
 
 ping:
   entryPoint: foobar
@@ -402,6 +419,21 @@ tracing:
     serverURL: foobar
     secretToken: foobar
     serviceEnvironment: foobar
+  openTelemetry:
+    compress: true
+    endpoint: foobar
+    insecure: true
+    path: foobar
+    headers:
+      name0: foobar
+      name1: foobar
+    tls:
+      ca: foobar
+      caOptional: true
+      cert: foobar
+      key: foobar
+      insecureSkipVerify: true
+    grpc: {}
 hostResolver:
   cnameFlattening: true
   resolvConfig: foobar
