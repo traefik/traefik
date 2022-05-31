@@ -458,24 +458,18 @@ tracing:
   openTelemetry:
     compress: true
     endpoint: foobar
+    insecure: true
+    path: foobar
     headers:
       name0: foobar
       name1: foobar
-    retry:
-      initialInterval: 42s
-      maxElapsedTime: 42s
-      maxInterval: 42s
-    timeout: 42s
     tls:
       ca: foobar
       caOptional: true
       cert: foobar
       key: foobar
       insecureSkipVerify: true
-    grpc:
-      insecure: true
-      reconnectionPeriod: 42s
-      serviceConfig: foobar
+    grpc: {}
 hostResolver:
   cnameFlattening: true
   resolvConfig: foobar

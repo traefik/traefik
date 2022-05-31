@@ -21,10 +21,7 @@ tracing:
 --tracing.openTelemetry=true
 ```
 
-!!! info ""
-
-    The OpenTelemetry trace reporter will export traces to the collector by using HTTP by default,
-    see the [GRPC Section](#grpc-configuration) to use GRPC.
+!!! info "The OpenTelemetry trace reporter will export traces to the collector using HTTP by default, see the [GRPC Section](#grpc-configuration) to use GRPC."
 
 #### `compress`
 
@@ -50,24 +47,26 @@ tracing:
 
 #### `endpoint`
 
-_Required, Default="https://localhost:4318/v1/traces"_
+_Required, Default="localhost:4318"_
 
-This instructs the reporter to send spans to the OpenTelemetry Collector at this address (host:port).
+Instructs the reporter to send spans to the OpenTelemetry Collector at this address (host:port).
+
+!!! info "Please note that the default endpoint value for GRPC is `localhost:4317`."
 
 ```yaml tab="File (YAML)"
 tracing:
   openTelemetry:
-    endpoint: https://localhost:4318/v1/traces
+    endpoint: localhost:4318
 ```
 
 ```toml tab="File (TOML)"
 [tracing]
   [tracing.openTelemetry]
-    endpoint = "https://localhost:4318/v1/traces"
+    endpoint = "localhost:4318"
 ```
 
 ```bash tab="CLI"
---tracing.openTelemetry.endpoint=https://localhost:4318/v1/traces
+--tracing.openTelemetry.endpoint=localhost:4318
 ```
 
 #### `headers`
@@ -95,116 +94,49 @@ tracing:
 --tracing.openTelemetry.headers.foo=bar --tracing.openTelemetry.headers.baz=buz
 ```
 
-#### `retry`
+#### `insecure`
 
-_Optional_
+_Optional, Default=false_
 
-Enable retries when the reporter sends spans to the OpenTelemetry Collector.
-
-```yaml tab="File (YAML)"
-tracing:
-  openTelemetry:
-    retry: {}
-```
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.openTelemetry.retry]
-```
-
-```bash tab="CLI"
---tracing.openTelemetry.retry=true
-```
-
-##### `initialInterval`
-
-_Optional, Default=5s_
-
-The time to wait after the first failure before retrying.
+Allows reporter to send span to the OpenTelemetry Collector without using a secured protocol.
 
 ```yaml tab="File (YAML)"
 tracing:
   openTelemetry:
-    retry:
-      initialInterval: 10s
-```
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.openTelemetry.retry]
-    initialInterval = "10s"
-```
-
-```bash tab="CLI"
---tracing.openTelemetry.retry.initialInterval=10s
-```
-
-##### `maxElapsedTime`
-
-_Optional, Default=1m_
-
-The maximum amount of time (including retries) spent trying to send a request/batch.
-
-```yaml tab="File (YAML)"
-tracing:
-  openTelemetry:
-    retry:
-      maxElapsedTime: 10s
-```
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.openTelemetry.retry]
-    maxElapsedTime = "10s"
-```
-
-```bash tab="CLI"
---tracing.openTelemetry.retry.maxElapsedTime=10s
-```
-
-##### `maxInterval`
-
-_Optional, Default=30s_
-
-The upper bound on backoff interval.
-
-```yaml tab="File (YAML)"
-tracing:
-  openTelemetry:
-    retry:
-      maxInterval: 10s
-```
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.openTelemetry.retry]
-    maxInterval = "10s"
-```
-
-```bash tab="CLI"
---tracing.openTelemetry.retry.maxInterval=10s
-```
-
-#### `timeout`
-
-_Optional, Default="10s"_
-
-The max waiting time for the backend to process each spans batch.
-
-```yaml tab="File (YAML)"
-tracing:
-  openTelemetry:
-    timeout: 3s
+    insecure: true
 ```
 
 ```toml tab="File (TOML)"
 [tracing]
   [tracing.openTelemetry]
-    timeout = "3s"
+    insecure = true
 ```
 
 ```bash tab="CLI"
---tracing.openTelemetry.timeout=3s
+--tracing.openTelemetry.insecure=true
+```
+
+#### `path`
+
+_Required, Default="/v1/traces"_
+
+Allows to override the default URL path used for sending traces.
+This option has no effect when using GRPC transport.
+
+```yaml tab="File (YAML)"
+tracing:
+  openTelemetry:
+    path: /foo/v1/traces
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.openTelemetry]
+    path = "/foo/v1/traces"
+```
+
+```bash tab="CLI"
+--tracing.openTelemetry.path=/foo/v1/traces
 ```
 
 #### `tls`
@@ -315,7 +247,7 @@ tracing:
 
 _Optional_
 
-This instructs the reporter to send spans to the OpenTelemetry Collector using GRPC:
+This instructs the reporter to send spans to the OpenTelemetry Collector using GRPC.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -330,78 +262,4 @@ tracing:
 
 ```bash tab="CLI"
 --tracing.openTelemetry.grpc=true
-```
-
-##### `insecure`
-
-_Optional, Default=false_
-
-Allows reporter to send span to the OpenTelemetry Collector without using a secured protocol.
-
-```yaml tab="File (YAML)"
-tracing:
-  openTelemetry:
-    grpc:
-      insecure: true
-```
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.openTelemetry.grpc]
-    insecure = true
-```
-
-```bash tab="CLI"
---tracing.openTelemetry.grpc.insecure=true
-```
-
-##### `reconnectionPeriod`
-
-_Optional_
-
-The minimum amount of time between connection attempts to the target endpoint.
-
-```yaml tab="File (YAML)"
-tracing:
-  openTelemetry:
-    grpc:
-      reconnectionPeriod: 30s
-```
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.openTelemetry]
-    [tracing.openTelemetry.grpc]
-      reconnectionPeriod = "30s"
-```
-
-```bash tab="CLI"
---tracing.openTelemetry.grpc.reconnectionPeriod=30s
-```
-
-##### `serviceConfig`
-
-_Optional_
-
-Defines the JSON representation of the default gRPC service config used.
-
-For more information about service configurations,
-see: [https://github.com/grpc/grpc/blob/master/doc/service_config.md](https://github.com/grpc/grpc/blob/master/doc/service_config.md)
-
-```yaml tab="File (YAML)"
-tracing:
-  openTelemetry:
-    grpc:
-      serviceConfig: {}
-```
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.openTelemetry]
-    [tracing.openTelemetry.grpc]
-      serviceConfig = "{}"
-```
-
-```bash tab="CLI"
---tracing.openTelemetry.grpc.serviceConfig={}
 ```
