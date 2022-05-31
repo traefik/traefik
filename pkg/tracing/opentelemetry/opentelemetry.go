@@ -99,7 +99,7 @@ func (c *Config) setupHTTPExporter() (io.Closer, error) {
 	return tpCloser{provider: tracerProvider}, nil
 }
 
-func (c *Config) setupGRPCExporter(grpc *ConfigGRPC) (io.Closer, error) {
+func (c *Config) setupGRPCExporter(grpc *GRPC) (io.Closer, error) {
 	u, err := url.Parse(c.Endpoint)
 	if err != nil {
 		return nil, err

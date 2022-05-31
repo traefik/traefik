@@ -128,9 +128,9 @@ func (i *InfluxDB2) SetDefaults() {
 	i.AddServicesLabels = true
 }
 
-// OpenTelemetry contain specific configuration used by the OpenTelemetry Metrics exporter.
+// OpenTelemetry contains specific configuration used by the OpenTelemetry Metrics exporter.
 type OpenTelemetry struct {
-	GRPC *OTELGRPC `description:"GRPC specific configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
+	GRPC *GRPC `description:"GRPC specific configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 
 	AddEntryPointsLabels bool              `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
 	Address              string            `description:"Address of the collector endpoint." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
@@ -141,7 +141,7 @@ type OpenTelemetry struct {
 	Headers              map[string]string `description:"Headers sent with payload." json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
 	PushInterval         types.Duration    `description:"The interval between calls to Collect a checkpoint." json:"pushInterval,omitempty" toml:"pushInterval,omitempty" yaml:"pushInterval,omitempty" export:"true"`
 	PushTimeout          types.Duration    `description:"Timeout of the Context passed to observer." json:"pushTimeout,omitempty" toml:"pushTimeout,omitempty" yaml:"pushTimeout,omitempty" export:"true"`
-	Retry                *retry            `description:"The retry policy for transient errors that may occurs when exporting traces." json:"retry,omitempty" toml:"retry,omitempty" yaml:"retry,omitempty" export:"true"`
+	Retry                *Retry            `description:"The retry policy for transient errors that may occurs when exporting traces." json:"retry,omitempty" toml:"retry,omitempty" yaml:"retry,omitempty" export:"true"`
 	Timeout              time.Duration     `description:"The max waiting time for the backend to process each spans batch." json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
 	TLS                  *ClientTLS        `description:"Enable TLS support" json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true" `
 	WithMemory           bool              `description:"Controls whether the processor remembers metric instruments and label sets that were previously reported." json:"withMemory,omitempty" toml:"withMemory,omitempty" yaml:"withMemory,omitempty" export:"true"`
@@ -158,25 +158,22 @@ func (o *OpenTelemetry) SetDefaults() {
 	o.Timeout = 10 * time.Second
 }
 
-// OTELGRPC provides configuration settings for an open-telemetry metrics reporter.
-type OTELGRPC struct {
+// GRPC contains gRPC configuration settings for the open-telemetry metrics reporter.
+type GRPC struct {
 	Insecure           bool          `description:"Connect to endpoint using HTTP." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
 	ReconnectionPeriod time.Duration `description:"The minimum amount of time between connection attempts to the target endpoint." json:"reconnectionPeriod,omitempty" toml:"reconnectionPeriod,omitempty" yaml:"reconnectionPeriod,omitempty" export:"true"`
 	ServiceConfig      string        `description:"Defines the default gRPC service config used." json:"serviceConfig,omitempty" toml:"serviceConfig,omitempty" yaml:"serviceConfig,omitempty" export:"true"`
 }
 
-// SetDefaults sets the default values.
-func (o *OTELGRPC) SetDefaults() {
-}
-
-type retry struct {
+// Retry provides retry configuration settings for the open-telemetry metrics reporter.
+type Retry struct {
 	InitialInterval time.Duration `description:"The time to wait after the first failure before retrying." json:"initialInterval,omitempty" toml:"initialInterval,omitempty" yaml:"initialInterval,omitempty" export:"true"`
 	MaxElapsedTime  time.Duration `description:"The maximum amount of time (including retries) spent trying to send a request/batch." json:"maxElapsedTime,omitempty" toml:"maxElapsedTime,omitempty" yaml:"maxElapsedTime,omitempty" export:"true"`
 	MaxInterval     time.Duration `description:"The upper bound on backoff interval." json:"maxInterval,omitempty" toml:"maxInterval,omitempty" yaml:"maxInterval,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
-func (r *retry) SetDefaults() {
+func (r *Retry) SetDefaults() {
 	r.InitialInterval = 5 * time.Second
 	r.MaxElapsedTime = time.Minute
 	r.MaxInterval = 30 * time.Second
