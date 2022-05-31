@@ -110,7 +110,6 @@
       "github.com/jaguilar/vt100",
       "github.com/mailgun/minheap",
       "github.com/mailgun/multibuf",
-      "k8s.io/klog/v2"
     ]
 
 [linters]
