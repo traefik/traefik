@@ -342,53 +342,35 @@ OpenTelemetry metrics exporter type. (Default: ```false```)
 `--metrics.opentelemetry.addentrypointslabels`:  
 Enable metrics on entry points. (Default: ```true```)
 
-`--metrics.opentelemetry.address`:  
-Address of the collector endpoint. (Default: ```https://localhost:4318/v1/metrics```)
-
 `--metrics.opentelemetry.addrouterslabels`:  
 Enable metrics on routers. (Default: ```false```)
 
 `--metrics.opentelemetry.addserviceslabels`:  
 Enable metrics on services. (Default: ```true```)
 
+`--metrics.opentelemetry.collectperiod`:  
+Period between calls to collect a checkpoint. (Default: ```10```)
+
 `--metrics.opentelemetry.compress`:  
 Enable compression on the sent data. (Default: ```false```)
+
+`--metrics.opentelemetry.endpoint`:  
+Address of the collector endpoint.
 
 `--metrics.opentelemetry.explicitboundaries`:  
 Boundaries for latency metrics. (Default: ```0.005000, 0.010000, 0.025000, 0.050000, 0.100000, 0.250000, 0.500000, 1.000000, 2.500000, 5.000000, 10.000000```)
 
 `--metrics.opentelemetry.grpc`:  
-GRPC specific configuration for the OpenTelemetry collector. (Default: ```false```)
-
-`--metrics.opentelemetry.grpc.insecure`:  
-Connect to endpoint using HTTP. (Default: ```false```)
-
-`--metrics.opentelemetry.grpc.reconnectionperiod`:  
-The minimum amount of time between connection attempts to the target endpoint. (Default: ```0```)
-
-`--metrics.opentelemetry.grpc.serviceconfig`:  
-Defines the default gRPC service config used.
+GRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
 
 `--metrics.opentelemetry.headers.<name>`:  
 Headers sent with payload.
 
-`--metrics.opentelemetry.pushinterval`:  
-The interval between calls to Collect a checkpoint. (Default: ```10```)
+`--metrics.opentelemetry.insecure`:  
+Disables client transport security for the exporter. (Default: ```false```)
 
-`--metrics.opentelemetry.pushtimeout`:  
-Timeout of the Context passed to observer. (Default: ```10```)
-
-`--metrics.opentelemetry.retry.initialinterval`:  
-The time to wait after the first failure before retrying. (Default: ```5```)
-
-`--metrics.opentelemetry.retry.maxelapsedtime`:  
-The maximum amount of time (including retries) spent trying to send a request/batch. (Default: ```60```)
-
-`--metrics.opentelemetry.retry.maxinterval`:  
-The upper bound on backoff interval. (Default: ```30```)
-
-`--metrics.opentelemetry.timeout`:  
-The max waiting time for the backend to process each spans batch. (Default: ```10```)
+`--metrics.opentelemetry.path`:  
+Set the default URL path for sending traces.
 
 `--metrics.opentelemetry.tls.ca`:  
 TLS CA
@@ -404,9 +386,6 @@ TLS insecure skip verify (Default: ```false```)
 
 `--metrics.opentelemetry.tls.key`:  
 TLS key
-
-`--metrics.opentelemetry.withmemory`:  
-Controls whether the processor remembers metric instruments and label sets that were previously reported. (Default: ```false```)
 
 `--metrics.prometheus`:  
 Prometheus metrics exporter type. (Default: ```false```)

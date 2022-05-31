@@ -324,9 +324,10 @@ metrics:
       foobar: foobar
   openTelemetry:
     addEntryPointsLabels: true
-    address: foobar
+    endpoint: foobar
     addRoutersLabels: true
     addServicesLabels: true
+    collectPeriod: 42s
     compress: true
     explicitBoundaries:
       - 42
@@ -334,24 +335,13 @@ metrics:
     headers:
       name0: foobar
       name1: foobar
-    pushInterval: 42s
-    pushTimeout: 42s
-    retry:
-      initialInterval: 42s
-      maxElapsedTime: 42s
-      maxInterval: 42s
-    timeout: 42s
     tls:
       ca: foobar
       caOptional: true
       cert: foobar
       insecureSkipVerify: true
       key: foobar
-    withMemory: true
-    grpc:
-      insecure: true
-      reconnectionPeriod: 42s
-      serviceConfig: foobar
+    grpc: {}
 
 ping:
   entryPoint: foobar

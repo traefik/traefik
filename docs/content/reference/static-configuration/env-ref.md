@@ -342,53 +342,35 @@ OpenTelemetry metrics exporter type. (Default: ```false```)
 `TRAEFIK_METRICS_OPENTELEMETRY_ADDENTRYPOINTSLABELS`:  
 Enable metrics on entry points. (Default: ```true```)
 
-`TRAEFIK_METRICS_OPENTELEMETRY_ADDRESS`:  
-Address of the collector endpoint. (Default: ```https://localhost:4318/v1/metrics```)
-
 `TRAEFIK_METRICS_OPENTELEMETRY_ADDROUTERSLABELS`:  
 Enable metrics on routers. (Default: ```false```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_ADDSERVICESLABELS`:  
 Enable metrics on services. (Default: ```true```)
 
+`TRAEFIK_METRICS_OPENTELEMETRY_COLLECTPERIOD`:  
+Period between calls to collect a checkpoint. (Default: ```10```)
+
 `TRAEFIK_METRICS_OPENTELEMETRY_COMPRESS`:  
 Enable compression on the sent data. (Default: ```false```)
+
+`TRAEFIK_METRICS_OPENTELEMETRY_ENDPOINT`:  
+Address of the collector endpoint.
 
 `TRAEFIK_METRICS_OPENTELEMETRY_EXPLICITBOUNDARIES`:  
 Boundaries for latency metrics. (Default: ```0.005000, 0.010000, 0.025000, 0.050000, 0.100000, 0.250000, 0.500000, 1.000000, 2.500000, 5.000000, 10.000000```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_GRPC`:  
-GRPC specific configuration for the OpenTelemetry collector. (Default: ```false```)
-
-`TRAEFIK_METRICS_OPENTELEMETRY_GRPC_INSECURE`:  
-Connect to endpoint using HTTP. (Default: ```false```)
-
-`TRAEFIK_METRICS_OPENTELEMETRY_GRPC_RECONNECTIONPERIOD`:  
-The minimum amount of time between connection attempts to the target endpoint. (Default: ```0```)
-
-`TRAEFIK_METRICS_OPENTELEMETRY_GRPC_SERVICECONFIG`:  
-Defines the default gRPC service config used.
+GRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_HEADERS_<NAME>`:  
 Headers sent with payload.
 
-`TRAEFIK_METRICS_OPENTELEMETRY_PUSHINTERVAL`:  
-The interval between calls to Collect a checkpoint. (Default: ```10```)
+`TRAEFIK_METRICS_OPENTELEMETRY_INSECURE`:  
+Disables client transport security for the exporter. (Default: ```false```)
 
-`TRAEFIK_METRICS_OPENTELEMETRY_PUSHTIMEOUT`:  
-Timeout of the Context passed to observer. (Default: ```10```)
-
-`TRAEFIK_METRICS_OPENTELEMETRY_RETRY_INITIALINTERVAL`:  
-The time to wait after the first failure before retrying. (Default: ```5```)
-
-`TRAEFIK_METRICS_OPENTELEMETRY_RETRY_MAXELAPSEDTIME`:  
-The maximum amount of time (including retries) spent trying to send a request/batch. (Default: ```60```)
-
-`TRAEFIK_METRICS_OPENTELEMETRY_RETRY_MAXINTERVAL`:  
-The upper bound on backoff interval. (Default: ```30```)
-
-`TRAEFIK_METRICS_OPENTELEMETRY_TIMEOUT`:  
-The max waiting time for the backend to process each spans batch. (Default: ```10```)
+`TRAEFIK_METRICS_OPENTELEMETRY_PATH`:  
+Set the default URL path for sending traces.
 
 `TRAEFIK_METRICS_OPENTELEMETRY_TLS_CA`:  
 TLS CA
@@ -404,9 +386,6 @@ TLS insecure skip verify (Default: ```false```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_TLS_KEY`:  
 TLS key
-
-`TRAEFIK_METRICS_OPENTELEMETRY_WITHMEMORY`:  
-Controls whether the processor remembers metric instruments and label sets that were previously reported. (Default: ```false```)
 
 `TRAEFIK_METRICS_PROMETHEUS`:  
 Prometheus metrics exporter type. (Default: ```false```)

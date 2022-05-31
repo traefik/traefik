@@ -306,7 +306,8 @@
       foobar = "foobar"
   [metrics.openTelemetry]
     addEntryPointsLabels = true
-    address = "foobar"
+    collectPeriod = "42s"
+    endpoint = "foobar"
     addRoutersLabels = true
     addServicesLabels = true
     compress = true
@@ -314,24 +315,13 @@
     [metrics.openTelemetry.headers]
       name0 = "foobar"
       name1 = "foobar"
-    pushInterval = "42s"
-    pushTimeout = "42s"
-    [metrics.openTelemetry.retry]
-      initialInterval = "42s"
-      maxElapsedTime = "42s"
-      maxInterval = "42s"
-    timeout = "42s"
     [metrics.openTelemetry.tls]
       ca = "foobar"
       caOptional = true
       cert = "foobar"
       insecureSkipVerify = true
       key = "foobar"
-    withMemory = true
     [metrics.openTelemetry.grpc]
-      insecure = true
-      reconnectionPeriod = "42s"
-      serviceConfig = "foobar"
 
 [ping]
   entryPoint = "foobar"
