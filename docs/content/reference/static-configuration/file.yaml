@@ -335,6 +335,7 @@ metrics:
     headers:
       name0: foobar
       name1: foobar
+    insecure: true
     tls:
       ca: foobar
       caOptional: true

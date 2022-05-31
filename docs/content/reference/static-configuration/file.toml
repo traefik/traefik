@@ -312,6 +312,7 @@
     addServicesLabels = true
     compress = true
     explicitBoundaries =  [42.0, 42.0]
+    insecure = true
     [metrics.openTelemetry.headers]
       name0 = "foobar"
       name1 = "foobar"
