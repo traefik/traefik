@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/url"
+	"time"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -55,7 +56,7 @@ func (c *Config) setupHTTPExporter() (io.Closer, error) {
 	opts := []otlptracehttp.Option{
 		otlptracehttp.WithEndpoint(u.Host),
 		otlptracehttp.WithHeaders(c.Headers),
-		otlptracehttp.WithTimeout(c.Timeout),
+		otlptracehttp.WithTimeout(time.Duration(c.Timeout)),
 		otlptracehttp.WithURLPath(path),
 	}
 
@@ -66,9 +67,9 @@ func (c *Config) setupHTTPExporter() (io.Closer, error) {
 	if c.Retry != nil {
 		opts = append(opts, otlptracehttp.WithRetry(otlptracehttp.RetryConfig{
 			Enabled:         true,
-			InitialInterval: c.Retry.InitialInterval,
-			MaxElapsedTime:  c.Retry.MaxElapsedTime,
-			MaxInterval:     c.Retry.MaxInterval,
+			InitialInterval: time.Duration(c.Retry.InitialInterval),
+			MaxElapsedTime:  time.Duration(c.Retry.MaxElapsedTime),
+			MaxInterval:     time.Duration(c.Retry.MaxInterval),
 		}))
 	}
 
@@ -109,9 +110,9 @@ func (c *Config) setupGRPCExporter(grpc *GRPC) (io.Closer, error) {
 	opts := []otlptracegrpc.Option{
 		otlptracegrpc.WithEndpoint(u.Host),
 		otlptracegrpc.WithHeaders(c.Headers),
-		otlptracegrpc.WithReconnectionPeriod(grpc.ReconnectionPeriod),
+		otlptracegrpc.WithReconnectionPeriod(time.Duration(grpc.ReconnectionPeriod)),
 		otlptracegrpc.WithServiceConfig(grpc.ServiceConfig),
-		otlptracegrpc.WithTimeout(c.Timeout),
+		otlptracegrpc.WithTimeout(time.Duration(c.Timeout)),
 	}
 
 	if c.Compress {
@@ -125,9 +126,9 @@ func (c *Config) setupGRPCExporter(grpc *GRPC) (io.Closer, error) {
 	if c.Retry != nil {
 		opts = append(opts, otlptracegrpc.WithRetry(otlptracegrpc.RetryConfig{
 			Enabled:         true,
-			InitialInterval: c.Retry.InitialInterval,
-			MaxElapsedTime:  c.Retry.MaxElapsedTime,
-			MaxInterval:     c.Retry.MaxInterval,
+			InitialInterval: time.Duration(c.Retry.InitialInterval),
+			MaxElapsedTime:  time.Duration(c.Retry.MaxElapsedTime),
+			MaxInterval:     time.Duration(c.Retry.MaxInterval),
 		}))
 	}
 
