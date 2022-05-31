@@ -367,7 +367,10 @@ Address of the collector endpoint.
 Boundaries for latency metrics. (Default: ```0.005000, 0.010000, 0.025000, 0.050000, 0.100000, 0.250000, 0.500000, 1.000000, 2.500000, 5.000000, 10.000000```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_GRPC`:  
-GRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
+GRPC specific configuration for the OpenTelemetry collector. (Default: ```false```)
+
+`TRAEFIK_METRICS_OPENTELEMETRY_GRPC_GG`:  
+Enable metrics on entry points.
 
 `TRAEFIK_METRICS_OPENTELEMETRY_HEADERS_<NAME>`:  
 Headers sent with payload.
