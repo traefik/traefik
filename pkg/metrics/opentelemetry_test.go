@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strconv"
 	"testing"
 	"time"
@@ -423,4 +424,13 @@ func TestOpenTelemetry(t *testing.T) {
 		<-c
 	}()
 	StopOpenTelemetry()
+}
+
+func TestName(t *testing.T) {
+	u, err := url.Parse("localhost:8080")
+	require.NoError(t, err)
+	fmt.Printf("%v\n", u.Path)
+	fmt.Printf("%v\n", u.RawPath)
+	fmt.Printf("%v\n", u.Host)
+	fmt.Printf("%v\n", u.Hostname())
 }
