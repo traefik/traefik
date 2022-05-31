@@ -411,25 +411,19 @@
     serviceEnvironment = "foobar"
   [tracing.openTelemetry]
     compress = true
-    endpoint = 'foobar'
+    endpoint = "foobar"
+    insecure = true
+    path = "foobar"
     [tracing.openTelemetry.headers]
-    name0 = "foobar"
-    name1 = "foobar"
-    [tracing.openTelemetry.retry]
-      initialInterval = "42s"
-      maxElapsedTime = "42s"
-      maxInterval = "42s"
-    timeout = "42s"
+      name0 = "foobar"
+      name1 = "foobar"
     [tracing.openTelemetry.tls]
-      ca = 'foobar'
+      ca = "foobar"
       caOptional = true
-      cert = 'foobar'
-      key = 'foobar'
+      cert = "foobar"
+      key = "foobar"
       insecureSkipVerify = true
     [tracing.openTelemetry.grpc]
-      insecure = true
-      reconnectionPeriod = "42s"
-      serviceConfig = 'foobar'
 
 [hostResolver]
   cnameFlattening = true
