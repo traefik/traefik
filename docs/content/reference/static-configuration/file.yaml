@@ -324,17 +324,18 @@ metrics:
       foobar: foobar
   openTelemetry:
     addEntryPointsLabels: true
-    endpoint: foobar
     addRoutersLabels: true
     addServicesLabels: true
     collectPeriod: 42s
     compress: true
+    endpoint: foobar
     explicitBoundaries:
       - 42
       - 42
     headers:
       name0: foobar
       name1: foobar
+    insecure: true
     tls:
       ca: foobar
       caOptional: true
