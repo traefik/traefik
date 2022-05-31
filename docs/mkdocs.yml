@@ -149,6 +149,7 @@ nav:
           - 'Datadog': 'observability/metrics/datadog.md'
           - 'InfluxDB': 'observability/metrics/influxdb.md'
           - 'InfluxDB2': 'observability/metrics/influxdb2.md'
+          - 'OpenTelemetry': 'observability/metrics/opentelemetry.md'
           - 'Prometheus': 'observability/metrics/prometheus.md'
           - 'StatsD': 'observability/metrics/statsd.md'
       - 'Tracing':
@@ -159,6 +160,7 @@ nav:
           - 'Instana': 'observability/tracing/instana.md'
           - 'Haystack': 'observability/tracing/haystack.md'
           - 'Elastic': 'observability/tracing/elastic.md'
+          - 'OpenTelemetry': 'observability/tracing/opentelemetry.md'
   - 'User Guides':
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
       - 'gRPC Examples': 'user-guides/grpc.md'

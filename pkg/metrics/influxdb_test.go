@@ -237,7 +237,7 @@ func assertMessage(t *testing.T, msg string, patterns []string) {
 		re := regexp.MustCompile(pattern)
 		match := re.FindStringSubmatch(msg)
 		if len(match) != 2 {
-			t.Errorf("Got %q %v, want %q", msg, match, pattern)
+			t.Errorf("Got '%s' %v, want '%s'", msg, match, pattern)
 		}
 	}
 }
