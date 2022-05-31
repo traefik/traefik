@@ -20,7 +20,7 @@ be sure to follow the guidelines below.
     The issue tracker is not a general support forum, but a place to report bugs and asks for new features.
 
     For end-user related support questions, try using the [Traefik Community Forum](https://community.traefik.io/)
- [![Join the chat at https://community.traefik.io/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.traefik.io/)
+   [![Join the chat at https://community.traefik.io/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Traefik%20Community%20Forum)](https://community.traefik.io/)
 
 ## Issue Title
 
