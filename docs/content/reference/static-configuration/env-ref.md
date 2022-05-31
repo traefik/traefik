@@ -370,7 +370,7 @@ GRPC specific configuration for the OpenTelemetry collector. (Default: ```false`
 Connect to endpoint using HTTP. (Default: ```false```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_GRPC_RECONNECTIONPERIOD`:  
-The minimum amount of time between connection attempts to the target endpoint. (Default: ```0s```)
+The minimum amount of time between connection attempts to the target endpoint. (Default: ```0```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_GRPC_SERVICECONFIG`:  
 Defines the default gRPC service config used.
@@ -385,16 +385,16 @@ The interval between calls to Collect a checkpoint. (Default: ```10```)
 Timeout of the Context passed to observer. (Default: ```10```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_RETRY_INITIALINTERVAL`:  
-The time to wait after the first failure before retrying. (Default: ```5s```)
+The time to wait after the first failure before retrying. (Default: ```5```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_RETRY_MAXELAPSEDTIME`:  
-The maximum amount of time (including retries) spent trying to send a request/batch. (Default: ```1m0s```)
+The maximum amount of time (including retries) spent trying to send a request/batch. (Default: ```60```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_RETRY_MAXINTERVAL`:  
-The upper bound on backoff interval. (Default: ```30s```)
+The upper bound on backoff interval. (Default: ```30```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_TIMEOUT`:  
-The max waiting time for the backend to process each spans batch. (Default: ```10s```)
+The max waiting time for the backend to process each spans batch. (Default: ```10```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_TLS_CA`:  
 TLS CA
@@ -1204,7 +1204,7 @@ GRPC specific configuration for the OpenTelemetry collector. (Default: ```false`
 Connect to endpoint using HTTP. (Default: ```false```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_GRPC_RECONNECTIONPERIOD`:  
-The minimum amount of time between connection attempts to the target endpoint. (Default: ```0s```)
+The minimum amount of time between connection attempts to the target endpoint. (Default: ```0```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_GRPC_SERVICECONFIG`:  
 Defines the default gRPC service config used.
@@ -1213,16 +1213,16 @@ Defines the default gRPC service config used.
 Headers sent with payload.
 
 `TRAEFIK_TRACING_OPENTELEMETRY_RETRY_INITIALINTERVAL`:  
-The time to wait after the first failure before retrying. (Default: ```5s```)
+The time to wait after the first failure before retrying. (Default: ```5```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_RETRY_MAXELAPSEDTIME`:  
-The maximum amount of time (including retries) spent trying to send a request/batch. (Default: ```1m0s```)
+The maximum amount of time (including retries) spent trying to send a request/batch. (Default: ```60```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_RETRY_MAXINTERVAL`:  
-The upper bound on backoff interval. (Default: ```30s```)
+The upper bound on backoff interval. (Default: ```30```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_TIMEOUT`:  
-The max waiting time for the backend to process each spans batch. (Default: ```10s```)
+The max waiting time for the backend to process each spans batch. (Default: ```10```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_TLS_CA`:  
 TLS CA
