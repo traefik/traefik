@@ -370,7 +370,7 @@ GRPC specific configuration for the OpenTelemetry collector. (Default: ```false`
 Connect to endpoint using HTTP. (Default: ```false```)
 
 `--metrics.opentelemetry.grpc.reconnectionperiod`:  
-The minimum amount of time between connection attempts to the target endpoint. (Default: ```0s```)
+The minimum amount of time between connection attempts to the target endpoint. (Default: ```0```)
 
 `--metrics.opentelemetry.grpc.serviceconfig`:  
 Defines the default gRPC service config used.
@@ -385,16 +385,16 @@ The interval between calls to Collect a checkpoint. (Default: ```10```)
 Timeout of the Context passed to observer. (Default: ```10```)
 
 `--metrics.opentelemetry.retry.initialinterval`:  
-The time to wait after the first failure before retrying. (Default: ```5s```)
+The time to wait after the first failure before retrying. (Default: ```5```)
 
 `--metrics.opentelemetry.retry.maxelapsedtime`:  
-The maximum amount of time (including retries) spent trying to send a request/batch. (Default: ```1m0s```)
+The maximum amount of time (including retries) spent trying to send a request/batch. (Default: ```60```)
 
 `--metrics.opentelemetry.retry.maxinterval`:  
-The upper bound on backoff interval. (Default: ```30s```)
+The upper bound on backoff interval. (Default: ```30```)
 
 `--metrics.opentelemetry.timeout`:  
-The max waiting time for the backend to process each spans batch. (Default: ```10s```)
+The max waiting time for the backend to process each spans batch. (Default: ```10```)
 
 `--metrics.opentelemetry.tls.ca`:  
 TLS CA
@@ -1204,7 +1204,7 @@ GRPC specific configuration for the OpenTelemetry collector. (Default: ```false`
 Connect to endpoint using HTTP. (Default: ```false```)
 
 `--tracing.opentelemetry.grpc.reconnectionperiod`:  
-The minimum amount of time between connection attempts to the target endpoint. (Default: ```0s```)
+The minimum amount of time between connection attempts to the target endpoint. (Default: ```0```)
 
 `--tracing.opentelemetry.grpc.serviceconfig`:  
 Defines the default gRPC service config used.
@@ -1213,16 +1213,16 @@ Defines the default gRPC service config used.
 Headers sent with payload.
 
 `--tracing.opentelemetry.retry.initialinterval`:  
-The time to wait after the first failure before retrying. (Default: ```5s```)
+The time to wait after the first failure before retrying. (Default: ```5```)
 
 `--tracing.opentelemetry.retry.maxelapsedtime`:  
-The maximum amount of time (including retries) spent trying to send a request/batch. (Default: ```1m0s```)
+The maximum amount of time (including retries) spent trying to send a request/batch. (Default: ```60```)
 
 `--tracing.opentelemetry.retry.maxinterval`:  
-The upper bound on backoff interval. (Default: ```30s```)
+The upper bound on backoff interval. (Default: ```30```)
 
 `--tracing.opentelemetry.timeout`:  
-The max waiting time for the backend to process each spans batch. (Default: ```10s```)
+The max waiting time for the backend to process each spans batch. (Default: ```10```)
 
 `--tracing.opentelemetry.tls.ca`:  
 TLS CA

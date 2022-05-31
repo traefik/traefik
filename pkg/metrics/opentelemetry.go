@@ -218,7 +218,7 @@ func newHTTPExporter(ctx context.Context, config *types.OpenTelemetry) (export.E
 	opts := []otlpmetrichttp.Option{
 		otlpmetrichttp.WithEndpoint(u.Host),
 		otlpmetrichttp.WithHeaders(config.Headers),
-		otlpmetrichttp.WithTimeout(config.Timeout),
+		otlpmetrichttp.WithTimeout(time.Duration(config.Timeout)),
 		otlpmetrichttp.WithURLPath(path),
 	}
 
@@ -229,9 +229,9 @@ func newHTTPExporter(ctx context.Context, config *types.OpenTelemetry) (export.E
 	if config.Retry != nil {
 		opts = append(opts, otlpmetrichttp.WithRetry(otlpmetrichttp.RetryConfig{
 			Enabled:         true,
-			InitialInterval: config.Retry.InitialInterval,
-			MaxElapsedTime:  config.Retry.MaxElapsedTime,
-			MaxInterval:     config.Retry.MaxInterval,
+			InitialInterval: time.Duration(config.Retry.InitialInterval),
+			MaxElapsedTime:  time.Duration(config.Retry.MaxElapsedTime),
+			MaxInterval:     time.Duration(config.Retry.MaxInterval),
 		}))
 	}
 
@@ -261,9 +261,9 @@ func newGRPCExporter(ctx context.Context, config *types.OpenTelemetry) (export.E
 	opts := []otlpmetricgrpc.Option{
 		otlpmetricgrpc.WithEndpoint(u.Host),
 		otlpmetricgrpc.WithHeaders(config.Headers),
-		otlpmetricgrpc.WithReconnectionPeriod(config.GRPC.ReconnectionPeriod),
+		otlpmetricgrpc.WithReconnectionPeriod(time.Duration(config.GRPC.ReconnectionPeriod)),
 		otlpmetricgrpc.WithServiceConfig(config.GRPC.ServiceConfig),
-		otlpmetricgrpc.WithTimeout(config.Timeout),
+		otlpmetricgrpc.WithTimeout(time.Duration(config.Timeout)),
 	}
 
 	if config.Compress {
@@ -277,9 +277,9 @@ func newGRPCExporter(ctx context.Context, config *types.OpenTelemetry) (export.E
 	if config.Retry != nil {
 		opts = append(opts, otlpmetricgrpc.WithRetry(otlpmetricgrpc.RetryConfig{
 			Enabled:         true,
-			InitialInterval: config.Retry.InitialInterval,
-			MaxElapsedTime:  config.Retry.MaxElapsedTime,
-			MaxInterval:     config.Retry.MaxInterval,
+			InitialInterval: time.Duration(config.Retry.InitialInterval),
+			MaxElapsedTime:  time.Duration(config.Retry.MaxElapsedTime),
+			MaxInterval:     time.Duration(config.Retry.MaxInterval),
 		}))
 	}
 
