@@ -304,6 +304,34 @@
     addServicesLabels = true
     [metrics.influxDB2.additionalLabels]
       foobar = "foobar"
+  [metrics.openTelemetry]
+    addEntryPointsLabels = true
+    address = "foobar"
+    addRoutersLabels = true
+    addServicesLabels = true
+    compress = true
+    explicitBoundaries =  [42.0, 42.0]
+    [metrics.openTelemetry.headers]
+      name0 = "foobar"
+      name1 = "foobar"
+    pushInterval = "42s"
+    pushTimeout = "42s"
+    [metrics.openTelemetry.retry]
+      initialInterval = "42s"
+      maxElapsedTime = "42s"
+      maxInterval = "42s"
+    timeout = "42s"
+    [metrics.openTelemetry.tls]
+      ca = "foobar"
+      caOptional = true
+      cert = "foobar"
+      insecureSkipVerify = true
+      key = "foobar"
+    withMemory = true
+    [metrics.openTelemetry.grpc]
+      insecure = true
+      reconnectionPeriod = "42s"
+      serviceConfig = "foobar"
 
 [ping]
   entryPoint = "foobar"
@@ -381,6 +409,21 @@
     serverURL = "foobar"
     secretToken = "foobar"
     serviceEnvironment = "foobar"
+  [tracing.openTelemetry]
+    compress = true
+    endpoint = "foobar"
+    insecure = true
+    path = "foobar"
+    [tracing.openTelemetry.headers]
+      name0 = "foobar"
+      name1 = "foobar"
+    [tracing.openTelemetry.tls]
+      ca = "foobar"
+      caOptional = true
+      cert = "foobar"
+      key = "foobar"
+      insecureSkipVerify = true
+    [tracing.openTelemetry.grpc]
 
 [hostResolver]
   cnameFlattening = true
