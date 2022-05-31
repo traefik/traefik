@@ -1192,37 +1192,22 @@ Sets the header name used to store the trace ID. (Default: ```uber-trace-id```)
 Settings for OpenTelemetry. (Default: ```false```)
 
 `--tracing.opentelemetry.compress`:  
-Enable compression on the sent data. (Default: ```false```)
+Enables compression of the sent data. (Default: ```false```)
 
 `--tracing.opentelemetry.endpoint`:  
-Address of the collector endpoint. (Default: ```https://localhost:4318/v1/traces```)
+Sets the address of the collector endpoint.
 
 `--tracing.opentelemetry.grpc`:  
-GRPC specific configuration for the OpenTelemetry collector. (Default: ```false```)
-
-`--tracing.opentelemetry.grpc.insecure`:  
-Connect to endpoint using HTTP. (Default: ```false```)
-
-`--tracing.opentelemetry.grpc.reconnectionperiod`:  
-The minimum amount of time between connection attempts to the target endpoint. (Default: ```0```)
-
-`--tracing.opentelemetry.grpc.serviceconfig`:  
-Defines the default gRPC service config used.
+GRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
 
 `--tracing.opentelemetry.headers.<name>`:  
-Headers sent with payload.
+Defines additional headers to be sent with the payloads.
 
-`--tracing.opentelemetry.retry.initialinterval`:  
-The time to wait after the first failure before retrying. (Default: ```5```)
+`--tracing.opentelemetry.insecure`:  
+Disables client transport security for the exporter. (Default: ```false```)
 
-`--tracing.opentelemetry.retry.maxelapsedtime`:  
-The maximum amount of time (including retries) spent trying to send a request/batch. (Default: ```60```)
-
-`--tracing.opentelemetry.retry.maxinterval`:  
-The upper bound on backoff interval. (Default: ```30```)
-
-`--tracing.opentelemetry.timeout`:  
-The max waiting time for the backend to process each spans batch. (Default: ```10```)
+`--tracing.opentelemetry.path`:  
+Sets the default URL path for sending traces.
 
 `--tracing.opentelemetry.tls.ca`:  
 TLS CA

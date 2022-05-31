@@ -1192,37 +1192,22 @@ Sets the header name used to store the trace ID. (Default: ```uber-trace-id```)
 Settings for OpenTelemetry. (Default: ```false```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_COMPRESS`:  
-Enable compression on the sent data. (Default: ```false```)
+Enables compression of the sent data. (Default: ```false```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_ENDPOINT`:  
-Address of the collector endpoint. (Default: ```https://localhost:4318/v1/traces```)
+Sets the address of the collector endpoint.
 
 `TRAEFIK_TRACING_OPENTELEMETRY_GRPC`:  
-GRPC specific configuration for the OpenTelemetry collector. (Default: ```false```)
-
-`TRAEFIK_TRACING_OPENTELEMETRY_GRPC_INSECURE`:  
-Connect to endpoint using HTTP. (Default: ```false```)
-
-`TRAEFIK_TRACING_OPENTELEMETRY_GRPC_RECONNECTIONPERIOD`:  
-The minimum amount of time between connection attempts to the target endpoint. (Default: ```0```)
-
-`TRAEFIK_TRACING_OPENTELEMETRY_GRPC_SERVICECONFIG`:  
-Defines the default gRPC service config used.
+GRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_HEADERS_<NAME>`:  
-Headers sent with payload.
+Defines additional headers to be sent with the payloads.
 
-`TRAEFIK_TRACING_OPENTELEMETRY_RETRY_INITIALINTERVAL`:  
-The time to wait after the first failure before retrying. (Default: ```5```)
+`TRAEFIK_TRACING_OPENTELEMETRY_INSECURE`:  
+Disables client transport security for the exporter. (Default: ```false```)
 
-`TRAEFIK_TRACING_OPENTELEMETRY_RETRY_MAXELAPSEDTIME`:  
-The maximum amount of time (including retries) spent trying to send a request/batch. (Default: ```60```)
-
-`TRAEFIK_TRACING_OPENTELEMETRY_RETRY_MAXINTERVAL`:  
-The upper bound on backoff interval. (Default: ```30```)
-
-`TRAEFIK_TRACING_OPENTELEMETRY_TIMEOUT`:  
-The max waiting time for the backend to process each spans batch. (Default: ```10```)
+`TRAEFIK_TRACING_OPENTELEMETRY_PATH`:  
+Sets the default URL path for sending traces.
 
 `TRAEFIK_TRACING_OPENTELEMETRY_TLS_CA`:  
 TLS CA
