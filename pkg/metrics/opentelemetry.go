@@ -2,8 +2,7 @@ package metrics
 
 import (
 	"context"
-	"errors"
-	"net/url"
+	"fmt"
 	"sync"
 	"time"
 
@@ -26,7 +25,6 @@ import (
 	"go.opentelemetry.io/otel/sdk/metric/export/aggregation"
 	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
 	"go.opentelemetry.io/otel/sdk/metric/selector/simple"
-	"go.opentelemetry.io/otel/sdk/resource"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
 )
@@ -134,14 +132,10 @@ func StopOpenTelemetry() {
 
 // newOpenTelemetryController creates a new controller.Controller.
 func newOpenTelemetryController(ctx context.Context, config *types.OpenTelemetry) (*controller.Controller, error) {
-	if config.PushInterval <= 0 {
-		return nil, errors.New("PushInterval must be greater than zero")
-	}
-
 	factory := processor.NewFactory(
 		simple.NewWithHistogramDistribution(histogramAggregator.WithExplicitBoundaries(config.ExplicitBoundaries)),
 		aggregation.CumulativeTemporalitySelector(),
-		processor.WithMemory(config.WithMemory),
+		processor.WithMemory(true),
 	)
 
 	var (
@@ -154,42 +148,12 @@ func newOpenTelemetryController(ctx context.Context, config *types.OpenTelemetry
 		exporter, err = newHTTPExporter(ctx, config)
 	}
 	if err != nil {
-		return nil, err
-	}
-
-	// TODO add schema URL
-	optsResource := []resource.Option{
-		resource.WithAttributes(),
-		resource.WithContainer(),
-		resource.WithContainerID(),
-		resource.WithDetectors(),
-		resource.WithFromEnv(),
-		resource.WithHost(),
-		resource.WithOS(),
-		resource.WithOSDescription(),
-		resource.WithOSType(),
-		resource.WithProcess(),
-		resource.WithProcessCommandArgs(),
-		resource.WithProcessExecutableName(),
-		resource.WithProcessExecutablePath(),
-		resource.WithProcessOwner(),
-		resource.WithProcessPID(),
-		resource.WithProcessRuntimeDescription(),
-		resource.WithProcessRuntimeName(),
-		resource.WithProcessRuntimeVersion(),
-		resource.WithTelemetrySDK(),
-	}
-
-	r, err := resource.New(ctx, optsResource...)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create exporter: %w", err)
 	}
 
 	optsController := []controller.Option{
-		controller.WithCollectPeriod(time.Duration(config.PushInterval)),
-		controller.WithCollectTimeout(time.Duration(config.PushTimeout)),
+		controller.WithCollectPeriod(time.Duration(config.CollectPeriod)),
 		controller.WithExporter(exporter),
-		controller.WithResource(r),
 	}
 
 	c := controller.New(factory, optsController...)
@@ -204,45 +168,30 @@ func newOpenTelemetryController(ctx context.Context, config *types.OpenTelemetry
 }
 
 func newHTTPExporter(ctx context.Context, config *types.OpenTelemetry) (export.Exporter, error) {
-	u, err := url.Parse(config.Address)
-	if err != nil {
-		return nil, err
-	}
-
-	// https://github.com/open-telemetry/opentelemetry-go/blob/exporters/otlp/otlpmetric/v0.30.0/exporters/otlp/otlpmetric/internal/otlpconfig/options.go#L39
-	path := "/v1/metrics"
-	if u.Path != "" {
-		path = u.Path
-	}
-
 	opts := []otlpmetrichttp.Option{
-		otlpmetrichttp.WithEndpoint(u.Host),
 		otlpmetrichttp.WithHeaders(config.Headers),
-		otlpmetrichttp.WithTimeout(time.Duration(config.Timeout)),
-		otlpmetrichttp.WithURLPath(path),
 	}
 
 	if config.Compress {
 		opts = append(opts, otlpmetrichttp.WithCompression(otlpmetrichttp.GzipCompression))
 	}
 
-	if config.Retry != nil {
-		opts = append(opts, otlpmetrichttp.WithRetry(otlpmetrichttp.RetryConfig{
-			Enabled:         true,
-			InitialInterval: time.Duration(config.Retry.InitialInterval),
-			MaxElapsedTime:  time.Duration(config.Retry.MaxElapsedTime),
-			MaxInterval:     time.Duration(config.Retry.MaxInterval),
-		}))
+	if config.Endpoint != "" {
+		opts = append(opts, otlpmetrichttp.WithEndpoint(config.Endpoint))
 	}
 
-	if u.Scheme == "http" {
+	if config.Insecure {
 		opts = append(opts, otlpmetrichttp.WithInsecure())
+	}
+
+	if config.Path != "" {
+		opts = append(opts, otlpmetrichttp.WithURLPath(config.Path))
 	}
 
 	if config.TLS != nil {
 		tlsConfig, err := config.TLS.CreateTLSConfig(ctx)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("create TLS client config: %w", err)
 		}
 
 		opts = append(opts, otlpmetrichttp.WithTLSClientConfig(tlsConfig))
@@ -252,41 +201,27 @@ func newHTTPExporter(ctx context.Context, config *types.OpenTelemetry) (export.E
 }
 
 func newGRPCExporter(ctx context.Context, config *types.OpenTelemetry) (export.Exporter, error) {
-	u, err := url.Parse(config.Address)
-	if err != nil {
-		return nil, err
-	}
-
 	// TODO: handle DialOption
 	opts := []otlpmetricgrpc.Option{
-		otlpmetricgrpc.WithEndpoint(u.Host),
 		otlpmetricgrpc.WithHeaders(config.Headers),
-		otlpmetricgrpc.WithReconnectionPeriod(time.Duration(config.GRPC.ReconnectionPeriod)),
-		otlpmetricgrpc.WithServiceConfig(config.GRPC.ServiceConfig),
-		otlpmetricgrpc.WithTimeout(time.Duration(config.Timeout)),
 	}
 
 	if config.Compress {
 		opts = append(opts, otlpmetricgrpc.WithCompressor(gzip.Name))
 	}
 
-	if config.GRPC.Insecure {
-		opts = append(opts, otlpmetricgrpc.WithInsecure())
+	if config.Endpoint != "" {
+		opts = append(opts, otlpmetricgrpc.WithEndpoint(config.Endpoint))
 	}
 
-	if config.Retry != nil {
-		opts = append(opts, otlpmetricgrpc.WithRetry(otlpmetricgrpc.RetryConfig{
-			Enabled:         true,
-			InitialInterval: time.Duration(config.Retry.InitialInterval),
-			MaxElapsedTime:  time.Duration(config.Retry.MaxElapsedTime),
-			MaxInterval:     time.Duration(config.Retry.MaxInterval),
-		}))
+	if config.Insecure {
+		opts = append(opts, otlpmetricgrpc.WithInsecure())
 	}
 
 	if config.TLS != nil {
 		tlsConfig, err := config.TLS.CreateTLSConfig(ctx)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("create TLS client config: %w", err)
 		}
 
 		opts = append(opts, otlpmetricgrpc.WithTLSCredentials(credentials.NewTLS(tlsConfig)))

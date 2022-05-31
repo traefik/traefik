@@ -23,7 +23,7 @@ metrics:
 
 !!! info ""
 
-    The OpenTelemetry trace reporter will export traces to the collector by using HTTP by default,
+    The OpenTelemetry exporter will export metrics to the collector by using HTTP by default,
     see the [GRPC Section](#grpc-configuration) to use GRPC.
 
 #### `addEntryPointsLabels`
@@ -48,28 +48,6 @@ metrics:
 --metrics.openTelemetry.addEntryPointsLabels=true
 ```
 
-#### `address`
-
-_Required, Default="https://localhost:4318/v1/metrics"_
-
-Address instructs exporter to send metrics to OpenTelemetry at this address.
-
-```yaml tab="File (YAML)"
-metrics:
-  openTelemetry:
-    address: https://localhost:4318/v1/metrics
-```
-
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.openTelemetry]
-    address = "https://localhost:4318/v1/metrics"
-```
-
-```bash tab="CLI"
---metrics.openTelemetry.address=https://localhost:4318/v1/metrics
-```
-
 #### `addRoutersLabels`
 
 _Optional, Default=false_
@@ -89,7 +67,7 @@ metrics:
 ```
 
 ```bash tab="CLI"
---metrics.openTelemetry.addrouterslabels=true
+--metrics.openTelemetry.addRoutersLabels=true
 ```
 
 #### `addServicesLabels`
@@ -134,6 +112,30 @@ metrics:
 
 ```bash tab="CLI"
 --metrics.openTelemetry.compress=true
+```
+
+#### `endpoint`
+
+_Required, Default="localhost:4318"_
+
+Address instructs exporter to send metrics to OpenTelemetry at this address.
+
+!!! info "Please note that the default endpoint value for GRPC is `localhost:4317`."
+
+```yaml tab="File (YAML)"
+metrics:
+  openTelemetry:
+    address: localhost:4318
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.openTelemetry]
+    address = "localhost:4318"
+```
+
+```bash tab="CLI"
+--metrics.openTelemetry.address=localhost:4318
 ```
 
 #### `explicitBoundaries`
@@ -187,162 +189,49 @@ metrics:
 --metrics.openTelemetry.headers.foo=bar --metrics.openTelemetry.headers.baz=buz
 ```
 
-#### `pushInterval`
+#### `collectPeriod`
 
 _Optional, Default=10s_
 
-The interval used by the exporter to push metrics to OpenTelemetry.
-The interval value must be greater than zero.
+Period between calls to collect a checkpoint.
 
 ```yaml tab="File (YAML)"
 metrics:
   openTelemetry:
-    pushInterval: 10s
+    collectPeriod: 10s
 ```
 
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.openTelemetry]
-    pushInterval = "10s"
+    collectPeriod = "10s"
 ```
 
 ```bash tab="CLI"
---metrics.openTelemetry.pushInterval=10s
+--metrics.openTelemetry.collectPeriod=10s
 ```
 
-#### `pushTimeout`
+#### `path`
 
-_Optional, Default=10s_
+_Required, Default="/v1/traces"_
 
-Timeout defines how long to wait on an idle session before releasing the related resources
-when pushing metrics to OpenTelemetry.
+Allows to override the default URL path used for sending traces.
+This option has no effect when using GRPC transport.
 
 ```yaml tab="File (YAML)"
 metrics:
   openTelemetry:
-    pushTimeout: 10s
+    path: /foo/v1/traces
 ```
 
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.openTelemetry]
-    pushTimeout = "10s"
+    path = "/foo/v1/traces"
 ```
 
 ```bash tab="CLI"
---metrics.openTelemetry.pushTimeout=10s
-```
-
-#### `retry`
-
-_Optional_
-
-Enable retries when the reporter sends metrics to the OpenTelemetry Collector.
-
-```yaml tab="File (YAML)"
-metrics:
-  openTelemetry:
-    retry: {}
-```
-
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.openTelemetry.retry]
-```
-
-```bash tab="CLI"
---metrics.openTelemetry.retry=true
-```
-
-##### `initialInterval`
-
-_Optional, Default=5s_
-
-The time to wait after the first failure before retrying.
-
-```yaml tab="File (YAML)"
-metrics:
-  openTelemetry:
-    retry:
-      initialInterval: 10s
-```
-
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.openTelemetry.retry]
-    initialInterval = "10s"
-```
-
-```bash tab="CLI"
---metrics.openTelemetry.retry.initialInterval=10s
-```
-
-##### `maxElapsedTime`
-
-_Optional, Default=1m_
-
-The maximum amount of time (including retries) spent trying to send a request/batch.
-
-```yaml tab="File (YAML)"
-metrics:
-  openTelemetry:
-    retry:
-      maxElapsedTime: 10s
-```
-
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.openTelemetry.retry]
-    maxElapsedTime = "10s"
-```
-
-```bash tab="CLI"
---metrics.openTelemetry.retry.maxElapsedTime=10s
-```
-
-##### `maxInterval`
-
-_Optional, Default=30s_
-
-The upper bound on backoff interval.
-
-```yaml tab="File (YAML)"
-metrics:
-  openTelemetry:
-    retry:
-      maxInterval: 10s
-```
-
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.openTelemetry.retry]
-    maxInterval = "10s"
-```
-
-```bash tab="CLI"
---metrics.openTelemetry.retry.maxInterval=10s
-```
-
-#### `timeout`
-
-_Optional, Default="10s"_
-
-The max waiting time for the backend to process each metrics batch.
-
-```yaml tab="File (YAML)"
-metrics:
-  openTelemetry:
-    timeout: 3s
-```
-
-```toml tab="File (TOML)"
-[metrics]
-  [metric.openTelemetry]
-    timeout = "3s"
-```
-
-```bash tab="CLI"
---metrics.openTelemetry.timeout=3s
+--metrics.openTelemetry.path=/foo/v1/traces
 ```
 
 #### `tls`
@@ -449,28 +338,6 @@ metrics:
 --metrics.openTelemetry.tls.insecureSkipVerify=true
 ```
 
-#### `withMemory`
-
-_Optional, Default=false_
-
-Controls whether the processor remembers metric instruments and label sets that were previously reported.
-
-```yaml tab="File (YAML)"
-metrics:
-  openTelemetry:
-    withMemory: true
-```
-
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.openTelemetry]
-    withMemory = true
-```
-
-```bash tab="CLI"
---metrics.openTelemetry.withMemory=true
-```
-
 #### GRPC configuration
 
 This instructs the reporter to send metrics to the OpenTelemetry Collector using GRPC:
@@ -488,78 +355,4 @@ metrics:
 
 ```bash tab="CLI"
 --metrics.openTelemetry.grpc=true
-```
-
-##### `insecure`
-
-_Optional, Default=false_
-
-Allows reporter to send metrics to the OpenTelemetry Collector without using a secured protocol.
-
-```yaml tab="File (YAML)"
-metrics:
-  openTelemetry:
-    grpc:
-      insecure: true
-```
-
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.openTelemetry.grpc]
-    insecure = true
-```
-
-```bash tab="CLI"
---metrics.openTelemetry.grpc.insecure=true
-```
-
-##### `reconnectionPeriod`
-
-_Optional_
-
-The minimum amount of time between connection attempts to the target endpoint.
-
-```yaml tab="File (YAML)"
-metrics:
-  openTelemetry:
-    grpc:
-      reconnectionPeriod: 30s
-```
-
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.openTelemetry]
-    [metrics.openTelemetry.grpc]
-      reconnectionPeriod = "30s"
-```
-
-```bash tab="CLI"
---metrics.openTelemetry.grpc.reconnectionPeriod=30s
-```
-
-##### `serviceConfig`
-
-_Optional_
-
-Defines the JSON representation of the default gRPC service config used.
-
-For more information about service configurations,
-see: [https://github.com/grpc/grpc/blob/master/doc/service_config.md](https://github.com/grpc/grpc/blob/master/doc/service_config.md)
-
-```yaml tab="File (YAML)"
-metrics:
-  openTelemetry:
-    grpc:
-      serviceConfig: {}
-```
-
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.openTelemetry]
-    [metrics.openTelemetry.grpc]
-      serviceConfig = "{}"
-```
-
-```bash tab="CLI"
---metrics.openTelemetry.grpc.serviceConfig={}
 ```

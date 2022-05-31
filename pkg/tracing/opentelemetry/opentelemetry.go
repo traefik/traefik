@@ -37,7 +37,6 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 	} else {
 		exporter, err = c.setupHTTPExporter()
 	}
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("setup exporter: %w", err)
 	}
