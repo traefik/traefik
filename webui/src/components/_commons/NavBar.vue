@@ -12,6 +12,7 @@
             <q-route-tab to="/http" icon="eva-globe-outline" no-caps label="HTTP" />
             <q-route-tab to="/tcp" icon="eva-globe-2-outline" no-caps label="TCP" />
             <q-route-tab to="/udp" icon="eva-globe-2-outline" no-caps label="UDP" />
+            <q-btn type="a" href="https://plugins.traefik.io" style="background: #f2f3f5; color: #000000" target="_blank" flat no-caps label="Plugins" class="btn-menu btn-hub" />
           </q-tabs>
           <div class="right-menu">
             <q-tabs>
@@ -46,6 +47,7 @@
 <script>
 import config from '../../../package'
 import PlatformAuthState from '../platform/PlatformAuthState'
+
 import { mapActions, mapGetters } from 'vuex'
 
 export default {
