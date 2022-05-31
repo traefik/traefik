@@ -2,9 +2,8 @@ package opentelemetry
 
 import (
 	"context"
+	"fmt"
 	"io"
-	"net/url"
-	"time"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -26,133 +25,92 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 	bt := oteltracer.NewBridgeTracer()
 
 	// TODO add schema URL
-	bt.SetOpenTelemetryTracer(otel.Tracer(componentName,
-		trace.WithInstrumentationVersion(traefikversion.Version)))
+	bt.SetOpenTelemetryTracer(otel.Tracer(componentName, trace.WithInstrumentationVersion(traefikversion.Version)))
 	opentracing.SetGlobalTracer(bt)
 
-	var closer io.Closer
-	var err error
+	var (
+		err      error
+		exporter *otlptrace.Exporter
+	)
 	if c.GRPC != nil {
-		closer, err = c.setupGRPCExporter(c.GRPC)
+		exporter, err = c.setupGRPCExporter()
 	} else {
-		closer, err = c.setupHTTPExporter()
+		exporter, err = c.setupHTTPExporter()
 	}
 
-	return bt, closer, err
+	if err != nil {
+		return nil, nil, fmt.Errorf("setup exporter: %w", err)
+	}
+
+	tracerProvider := sdktrace.NewTracerProvider(sdktrace.WithBatcher(exporter))
+	otel.SetTracerProvider(tracerProvider)
+
+	log.WithoutContext().Debug("OpenTelemetry tracer configured")
+
+	return bt, tpCloser{provider: tracerProvider}, err
 }
 
-func (c *Config) setupHTTPExporter() (io.Closer, error) {
-	u, err := url.Parse(c.Endpoint)
-	if err != nil {
-		return nil, err
-	}
-
-	// https://github.com/open-telemetry/opentelemetry-go/blob/exporters/otlp/otlpmetric/v0.30.0/exporters/otlp/otlptrace/internal/otlpconfig/options.go#L35
-	path := "/v1/traces"
-	if u.Path != "" {
-		path = u.Path
-	}
-
+func (c *Config) setupHTTPExporter() (*otlptrace.Exporter, error) {
 	opts := []otlptracehttp.Option{
-		otlptracehttp.WithEndpoint(u.Host),
 		otlptracehttp.WithHeaders(c.Headers),
-		otlptracehttp.WithTimeout(time.Duration(c.Timeout)),
-		otlptracehttp.WithURLPath(path),
 	}
 
 	if c.Compress {
 		opts = append(opts, otlptracehttp.WithCompression(otlptracehttp.GzipCompression))
 	}
 
-	if c.Retry != nil {
-		opts = append(opts, otlptracehttp.WithRetry(otlptracehttp.RetryConfig{
-			Enabled:         true,
-			InitialInterval: time.Duration(c.Retry.InitialInterval),
-			MaxElapsedTime:  time.Duration(c.Retry.MaxElapsedTime),
-			MaxInterval:     time.Duration(c.Retry.MaxInterval),
-		}))
+	if c.Endpoint != "" {
+		opts = append(opts, otlptracehttp.WithEndpoint(c.Endpoint))
 	}
 
-	if u.Scheme == "http" {
+	if c.Insecure {
 		opts = append(opts, otlptracehttp.WithInsecure())
+	}
+
+	if c.Path != "" {
+		opts = append(opts, otlptracehttp.WithURLPath(c.Path))
 	}
 
 	if c.TLS != nil {
 		tlsConfig, err := c.TLS.CreateTLSConfig(context.Background())
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("create TLS client config: %w", err)
 		}
 
 		opts = append(opts, otlptracehttp.WithTLSClientConfig(tlsConfig))
 	}
 
-	client := otlptracehttp.NewClient(opts...)
-	exporter, err := otlptrace.New(context.Background(), client)
-	if err != nil {
-		return nil, err
-	}
-
-	tracerProvider := sdktrace.NewTracerProvider(sdktrace.WithBatcher(exporter))
-	otel.SetTracerProvider(tracerProvider)
-
-	log.WithoutContext().Debug("Opentracing HTTP tracer configured")
-
-	return tpCloser{provider: tracerProvider}, nil
+	return otlptrace.New(context.Background(), otlptracehttp.NewClient(opts...))
 }
 
-func (c *Config) setupGRPCExporter(grpc *GRPC) (io.Closer, error) {
-	u, err := url.Parse(c.Endpoint)
-	if err != nil {
-		return nil, err
-	}
-
+func (c *Config) setupGRPCExporter() (*otlptrace.Exporter, error) {
 	// TODO: handle DialOption
 	opts := []otlptracegrpc.Option{
-		otlptracegrpc.WithEndpoint(u.Host),
 		otlptracegrpc.WithHeaders(c.Headers),
-		otlptracegrpc.WithReconnectionPeriod(time.Duration(grpc.ReconnectionPeriod)),
-		otlptracegrpc.WithServiceConfig(grpc.ServiceConfig),
-		otlptracegrpc.WithTimeout(time.Duration(c.Timeout)),
 	}
 
 	if c.Compress {
 		opts = append(opts, otlptracegrpc.WithCompressor(gzip.Name))
 	}
 
-	if grpc.Insecure {
-		opts = append(opts, otlptracegrpc.WithInsecure())
+	if c.Endpoint != "" {
+		opts = append(opts, otlptracegrpc.WithEndpoint(c.Endpoint))
 	}
 
-	if c.Retry != nil {
-		opts = append(opts, otlptracegrpc.WithRetry(otlptracegrpc.RetryConfig{
-			Enabled:         true,
-			InitialInterval: time.Duration(c.Retry.InitialInterval),
-			MaxElapsedTime:  time.Duration(c.Retry.MaxElapsedTime),
-			MaxInterval:     time.Duration(c.Retry.MaxInterval),
-		}))
+	if c.Insecure {
+		opts = append(opts, otlptracegrpc.WithInsecure())
 	}
 
 	if c.TLS != nil {
 		tlsConfig, err := c.TLS.CreateTLSConfig(context.Background())
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("create TLS client config: %w", err)
 		}
 
 		opts = append(opts, otlptracegrpc.WithTLSCredentials(credentials.NewTLS(tlsConfig)))
 	}
 
-	client := otlptracegrpc.NewClient(opts...)
-	exporter, err := otlptrace.New(context.Background(), client)
-	if err != nil {
-		return nil, err
-	}
-
-	tracerProvider := sdktrace.NewTracerProvider(sdktrace.WithBatcher(exporter))
-	otel.SetTracerProvider(tracerProvider)
-
-	log.WithoutContext().Debug("Opentracing GRPC tracer configured")
-
-	return tpCloser{provider: tracerProvider}, nil
+	return otlptrace.New(context.Background(), otlptracegrpc.NewClient(opts...))
 }
 
 // tpCloser converts a TraceProvider into an io.Closer.
