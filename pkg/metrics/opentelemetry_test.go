@@ -353,14 +353,13 @@ func TestOpenTelemetry(t *testing.T) {
 	expectedEntrypoint := []string{
 		`({"name":"traefik_entrypoint_requests_total","description":"How many HTTP requests processed on an entrypoint, partitioned by status code, protocol, and method.","unit":"1","sum":{"dataPoints":\[{"attributes":\[{"key":"code","value":{"stringValue":"200"}},{"key":"entrypoint","value":{"stringValue":"test1"}},{"key":"method","value":{"stringValue":"GET"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":"AGGREGATION_TEMPORALITY_CUMULATIVE","isMonotonic":true}})`,
 		`({"name":"traefik_entrypoint_requests_tls_total","description":"How many HTTP requests with TLS processed on an entrypoint, partitioned by TLS Version and TLS cipher Used.","unit":"1","sum":{"dataPoints":\[{"attributes":\[{"key":"entrypoint","value":{"stringValue":"test2"}},{"key":"tls_cipher","value":{"stringValue":"bar"}},{"key":"tls_version","value":{"stringValue":"foo"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":"AGGREGATION_TEMPORALITY_CUMULATIVE","isMonotonic":true}})`,
-		`({"name":"traefik_entrypoint_request_duration_seconds","description":"How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.","unit":"ms","histogram":{"dataPoints":\[{"attributes":\[{"key":"entrypoint","value":{"stringValue":"test3"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","count":"2","sum":30000,"bucketCounts":\["0","0","0","0","0","0","0","0","0","0","0","2"\],"explicitBounds":\[0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2.5,5,10\]}\],"aggregationTemporality":"AGGREGATION_TEMPORALITY_CUMULATIVE"}})`,
+		`({"name":"traefik_entrypoint_request_duration_seconds","description":"How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.","unit":"ms","histogram":{"dataPoints":\[{"attributes":\[{"key":"entrypoint","value":{"stringValue":"test3"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","count":"1","sum":10000,"bucketCounts":\["0","0","0","0","0","0","0","0","0","0","0","1"\],"explicitBounds":\[0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2.5,5,10\]}\],"aggregationTemporality":"AGGREGATION_TEMPORALITY_CUMULATIVE"}})`,
 		`({"name":"traefik_entrypoint_open_connections","description":"How many open connections exist on an entrypoint, partitioned by method and protocol.","unit":"1","gauge":{"dataPoints":\[{"attributes":\[{"key":"entrypoint","value":{"stringValue":"test4"}}\],"timeUnixNano":"[\d]{19}","asDouble":1}\]}})`,
 	}
 
 	registry.EntryPointReqsCounter().With("entrypoint", "test1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	registry.EntryPointReqsTLSCounter().With("entrypoint", "test2", "tls_version", "foo", "tls_cipher", "bar").Add(1)
 	registry.EntryPointReqDurationHistogram().With("entrypoint", "test3").Observe(10000)
-	registry.EntryPointReqDurationHistogram().With("entrypoint", "test3").Observe(20000)
 	registry.EntryPointOpenConnsGauge().With("entrypoint", "test4").Set(1)
 	msgEntrypoint := <-c
 
@@ -422,6 +421,16 @@ func TestOpenTelemetry(t *testing.T) {
 	msgServiceOpenConns := <-c
 
 	assertMessage(t, *msgServiceOpenConns, expectedServiceOpenConns)
+
+	expectedEntryPointReqDuration := []string{
+		`({"attributes":\[{"key":"entrypoint","value":{"stringValue":"myEntrypoint"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","count":"2","sum":30000,"bucketCounts":\["0","0","0","0","0","0","0","0","0","0","0","2"\],"explicitBounds":\[0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2.5,5,10\]}\],"aggregationTemporality":"AGGREGATION_TEMPORALITY_CUMULATIVE"}})`,
+	}
+
+	registry.EntryPointReqDurationHistogram().With("entrypoint", "myEntrypoint").Observe(10000)
+	registry.EntryPointReqDurationHistogram().With("entrypoint", "myEntrypoint").Observe(20000)
+	msgEntryPointReqDurationHistogram := <-c
+
+	assertMessage(t, *msgEntryPointReqDurationHistogram, expectedEntryPointReqDuration)
 
 	// We need to unlock the HTTP Server for the last export call when stopping
 	// OpenTelemetry.
