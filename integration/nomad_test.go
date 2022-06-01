@@ -172,7 +172,7 @@ func (ns *NomadSuite) install() error {
 	if err != nil {
 		return err
 	}
-	response, err := http.Get(uri)
+	response, _ := http.Get(uri)
 	defer func() {
 		_ = response.Body.Close()
 	}()
@@ -213,10 +213,6 @@ func (ns *NomadSuite) waitForLeader() error {
 	})
 }
 
-func remove(path string) {
-	_ = os.Remove(path)
-}
-
 func (ns *NomadSuite) Test_Defaults(c *check.C) {
 	// start nomad in dev mode (server + client)
 	// traefik will be configured with defaults (except refresh interval)
@@ -240,12 +236,12 @@ func (ns *NomadSuite) Test_Defaults(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	// make request to traefik for whoami2 service, which is disabled
-	req2, err2 := http.NewRequest(http.MethodGet, "http://127.0.0.1:8899/", nil)
-	c.Assert(err2, check.IsNil)
+	req2, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8899/", nil)
+	c.Assert(err, check.IsNil)
 	req.Host = "whoami2"
 
 	// ensure we got an expected response (404)
-	err2 = try.Request(req2, 4*time.Second,
+	err = try.Request(req2, 4*time.Second,
 		try.StatusCodeIs(404))
 	c.Assert(err, check.IsNil)
 

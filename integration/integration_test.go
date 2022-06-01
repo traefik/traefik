@@ -90,8 +90,7 @@ func Test(t *testing.T) {
 }
 
 func isRoot() bool {
-	switch runtime.GOOS {
-	case "linux":
+	if runtime.GOOS == "linux" {
 		return os.Geteuid() == 0
 	}
 	return false
