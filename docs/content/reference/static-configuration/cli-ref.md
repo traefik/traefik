@@ -403,7 +403,10 @@ Enable Consul backend with default settings. (Default: ```false```)
 KV store endpoints (Default: ```127.0.0.1:8500```)
 
 `--providers.consul.namespace`:  
-KV Namespace
+Sets the namespace used to discover the configuration (Consul Enterprise only).
+
+`--providers.consul.namespaces`:  
+Sets the namespaces used to discover the configuration (Consul Enterprise only).
 
 `--providers.consul.password`:  
 KV Password
@@ -492,11 +495,14 @@ Expose containers by default. (Default: ```true```)
 `--providers.consulcatalog.namespace`:  
 Sets the namespace used to discover services (Consul Enterprise only).
 
+`--providers.consulcatalog.namespaces`:  
+Sets the namespaces used to discover services (Consul Enterprise only).
+
 `--providers.consulcatalog.prefix`:  
-Prefix for consul service tags. Default 'traefik' (Default: ```traefik```)
+Prefix for consul service tags. (Default: ```traefik```)
 
 `--providers.consulcatalog.refreshinterval`:  
-Interval for check Consul API. Default 15s (Default: ```15```)
+Interval for check Consul API. (Default: ```15```)
 
 `--providers.consulcatalog.requireconsistent`:  
 Forces the read to be fully consistent. (Default: ```false```)
@@ -593,9 +599,6 @@ Enable Etcd backend with default settings. (Default: ```false```)
 
 `--providers.etcd.endpoints`:  
 KV store endpoints (Default: ```127.0.0.1:2379```)
-
-`--providers.etcd.namespace`:  
-KV Namespace
 
 `--providers.etcd.password`:  
 KV Password
@@ -858,9 +861,6 @@ Enable Redis backend with default settings. (Default: ```false```)
 `--providers.redis.endpoints`:  
 KV store endpoints (Default: ```127.0.0.1:6379```)
 
-`--providers.redis.namespace`:  
-KV Namespace
-
 `--providers.redis.password`:  
 KV Password
 
@@ -899,9 +899,6 @@ Enable ZooKeeper backend with default settings. (Default: ```false```)
 
 `--providers.zookeeper.endpoints`:  
 KV store endpoints (Default: ```127.0.0.1:2181```)
-
-`--providers.zookeeper.namespace`:  
-KV Namespace
 
 `--providers.zookeeper.password`:  
 KV Password
