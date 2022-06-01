@@ -91,7 +91,7 @@ func Test_getNomadServiceData(t *testing.T) {
 	require.NoError(t, err)
 
 	// fudge client, avoid starting up via Provide
-	p.nClient, err = createClient(p.Namespace, p.Endpoint)
+	p.client, err = createClient(p.Namespace, p.Endpoint)
 	require.NoError(t, err)
 
 	// make the query for services
