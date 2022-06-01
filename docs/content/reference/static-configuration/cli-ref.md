@@ -499,10 +499,10 @@ Sets the namespace used to discover services (Consul Enterprise only).
 Sets the namespaces used to discover services (Consul Enterprise only).
 
 `--providers.consulcatalog.prefix`:  
-Prefix for consul service tags. Default 'traefik' (Default: ```traefik```)
+Prefix for consul service tags. (Default: ```traefik```)
 
 `--providers.consulcatalog.refreshinterval`:  
-Interval for check Consul API. Default 15s (Default: ```15```)
+Interval for check Consul API. (Default: ```15```)
 
 `--providers.consulcatalog.requireconsistent`:  
 Forces the read to be fully consistent. (Default: ```false```)
