@@ -18,7 +18,7 @@ The Kubernetes Gateway API, The Experimental Way. {: .subtitle }
     ```yaml tab="Whoami Service"
     --8<-- "content/reference/dynamic-configuration/kubernetes-whoami-svc.yml"
     ```
-    
+
     ```yaml tab="Traefik Service"
     --8<-- "content/reference/dynamic-configuration/kubernetes-gateway-traefik-lb-svc.yml"
     ```
@@ -44,8 +44,8 @@ You can find an excerpt of the supported Kubernetes Gateway API resources in the
 | [GatewayClass](#kind-gatewayclass) | Defines a set of Gateways that share a common configuration and behaviour | [GatewayClass](https://gateway-api.sigs.k8s.io/v1alpha2/api-types/gatewayclass)      |
 | [Gateway](#kind-gateway)           | Describes how traffic can be translated to Services within the cluster    | [Gateway](https://gateway-api.sigs.k8s.io/v1alpha2/api-types/gateway)                |
 | [HTTPRoute](#kind-httproute)       | HTTP rules for mapping requests from a Gateway to Kubernetes Services     | [Route](https://gateway-api.sigs.k8s.io/v1alpha2/api-types/httproute)                |
-| [TCPRoute](#kind-tcproute)         | Allows mapping TCP requests from a Gateway to Kubernetes Services         | [Route](https://gateway-api.sigs.k8s.io/concepts/api-overview/#tcproute-and-udproute)|
-| [TLSRoute](#kind-tlsroute)         | Allows mapping TLS requests from a Gateway to Kubernetes Services         | [Route](https://gateway-api.sigs.k8s.io/concepts/api-overview/#tcproute-and-udproute)|
+| [TCPRoute](#kind-tcproute)         | Allows mapping TCP requests from a Gateway to Kubernetes Services         | [Route](https://gateway-api.sigs.k8s.io/v1alpha2/guides/tcp/)|
+| [TLSRoute](#kind-tlsroute)         | Allows mapping TLS requests from a Gateway to Kubernetes Services         | [Route](https://gateway-api.sigs.k8s.io/v1alpha2/guides/tls/)|
 
 ### Kind: `GatewayClass`
 
@@ -101,7 +101,7 @@ Depending on the Listener Protocol, different modes and Route types are supporte
       gatewayClassName: my-gateway-class        # [1]
       listeners:                                # [2]
         - name: http                            # [3]
-          protocol: HTTP                        # [4] 
+          protocol: HTTP                        # [4]
           port: 80                              # [5]
           allowedRoutes:                        # [9]
             kinds:
@@ -109,7 +109,7 @@ Depending on the Listener Protocol, different modes and Route types are supporte
             namespaces:
               from: Selector                    # [11]
               selector:                         # [12]
-                matchLabels:                    
+                matchLabels:
                   app: foo
     ```
 
@@ -123,7 +123,7 @@ Depending on the Listener Protocol, different modes and Route types are supporte
       gatewayClassName: my-gateway-class        # [1]
       listeners:                                # [2]
         - name: https                           # [3]
-          protocol: HTTPS                       # [4] 
+          protocol: HTTPS                       # [4]
           port: 443                             # [5]
           tls:                                  # [7]
             certificateRefs:                    # [8]
@@ -135,7 +135,7 @@ Depending on the Listener Protocol, different modes and Route types are supporte
             namespaces:
               from: Selector                    # [11]
               selector:                         # [12]
-                matchLabels:                    
+                matchLabels:
                   app: foo
     ```
 
@@ -149,15 +149,15 @@ Depending on the Listener Protocol, different modes and Route types are supporte
       gatewayClassName: my-gateway-class        # [1]
       listeners:                                # [2]
         - name: tcp                             # [3]
-          protocol: TCP                         # [4] 
+          protocol: TCP                         # [4]
           port: 8000                            # [5]
           allowedRoutes:                        # [9]
             kinds:
-              - kind: TCPRoute                  # [10]  
+              - kind: TCPRoute                  # [10]
             namespaces:
               from: Selector                    # [11]
               selector:                         # [12]
-                matchLabels:                    
+                matchLabels:
                   app: footcp
     ```
 
@@ -171,7 +171,7 @@ Depending on the Listener Protocol, different modes and Route types are supporte
       gatewayClassName: my-gateway-class        # [1]
       listeners:                                # [2]
         - name: tls                             # [3]
-          protocol: TLS                         # [4] 
+          protocol: TLS                         # [4]
           port: 443                             # [5]
           hostname: foo.com                     # [6]
           tls:                                  # [7]
@@ -184,7 +184,7 @@ Depending on the Listener Protocol, different modes and Route types are supporte
             namespaces:
               from: Selector                    # [11]
               selector:                         # [12]
-                matchLabels:                    
+                matchLabels:
                   app: footcp
     ```
 
@@ -222,7 +222,7 @@ Kubernetes cluster before creating `HTTPRoute` objects.
       parentRefs:                               # [1]
         - name: my-tcp-gateway                  # [2]
           namespace: default                    # [3]
-          sectionName: tcp                      # [4] 
+          sectionName: tcp                      # [4]
       hostnames:                                # [5]
         - whoami
       rules:                                    # [6]
@@ -329,7 +329,7 @@ Kubernetes cluster before creating `TLSRoute` objects.
           namespace: default                    # [3]
           sectionName: tcp                      # [4]
       hostnames:                                # [5]
-        - whoami                                
+        - whoami
       rules:                                    # [6]
         - backendRefs:                          # [7]
             - name: whoamitcp                   # [8]
