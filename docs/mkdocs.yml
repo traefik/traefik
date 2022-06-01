@@ -77,6 +77,7 @@ nav:
       - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
       - 'Kubernetes Gateway API': 'providers/kubernetes-gateway.md'
       - 'Consul Catalog': 'providers/consul-catalog.md'
+      - 'Nomad': 'providers/nomad.md'
       - 'ECS': 'providers/ecs.md'
       - 'Marathon': 'providers/marathon.md'
       - 'Rancher': 'providers/rancher.md'
@@ -97,6 +98,7 @@ nav:
           - 'Kubernetes Ingress': 'routing/providers/kubernetes-ingress.md'
           - 'Kubernetes Gateway API': 'routing/providers/kubernetes-gateway.md'
           - 'Consul Catalog': 'routing/providers/consul-catalog.md'
+          - 'Nomad': 'routing/providers/nomad.md'
           - 'ECS': 'routing/providers/ecs.md'
           - 'Marathon': 'routing/providers/marathon.md'
           - 'Rancher': 'routing/providers/rancher.md'
@@ -194,6 +196,7 @@ nav:
         - 'Kubernetes CRD': 'reference/dynamic-configuration/kubernetes-crd.md'
         - 'Kubernetes Gateway API': 'reference/dynamic-configuration/kubernetes-gateway.md'
         - 'Consul Catalog': 'reference/dynamic-configuration/consul-catalog.md'
+        - 'Nomad': "reference/dynamic-configuration/nomad.md"
         - 'ECS': 'reference/dynamic-configuration/ecs.md'
         - 'KV': 'reference/dynamic-configuration/kv.md'
         - 'Marathon': 'reference/dynamic-configuration/marathon.md'
