@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/label"
@@ -19,8 +18,8 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 	configurations := make(map[string]*dynamic.Configuration)
 
 	for _, i := range items {
-		normalUnique := provider.Normalize(i.Node + "-" + i.Name + "-" + i.ID)
-		ctxSvc := log.With(ctx, log.Str(log.ServiceName, normalUnique))
+		svcName := provider.Normalize(i.Node + "-" + i.Name + "-" + i.ID)
+		ctxSvc := log.With(ctx, log.Str(log.ServiceName, svcName))
 
 		if !p.keepItem(ctxSvc, i) {
 			continue
@@ -29,9 +28,9 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 		logger := log.FromContext(ctx)
 		labels := tagsToLabels(i.Tags, p.Prefix)
 
-		config, decErr := label.DecodeConfiguration(labels)
-		if decErr != nil {
-			logger.Errorf("failed to decode configuration: %v", decErr)
+		config, err := label.DecodeConfiguration(labels)
+		if err != nil {
+			logger.Errorf("Failed to decode configuration: %v", err)
 			continue
 		}
 
@@ -39,8 +38,8 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 
 		if len(config.TCP.Routers) > 0 || len(config.TCP.Services) > 0 {
 			tcpOrUDP = true
-			if buildErr := p.buildTCPConfig(i, config.TCP); buildErr != nil {
-				logger.Errorf("failed to build tcp service configuration: %v", buildErr)
+			if err := p.buildTCPConfig(i, config.TCP); err != nil {
+				logger.Errorf("Failed to build TCP service configuration: %v", err)
 				continue
 			}
 			provider.BuildTCPRouterConfiguration(ctxSvc, config.TCP)
@@ -48,8 +47,8 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 
 		if len(config.UDP.Routers) > 0 || len(config.UDP.Services) > 0 {
 			tcpOrUDP = true
-			if buildErr := p.buildUDPConfig(i, config.UDP); buildErr != nil {
-				logger.Errorf("failed to build udp service configuration: %v", buildErr)
+			if err := p.buildUDPConfig(i, config.UDP); err != nil {
+				logger.Errorf("Failed to build UDP service configuration: %v", err)
 				continue
 			}
 			provider.BuildUDPRouterConfiguration(ctxSvc, config.UDP)
@@ -59,13 +58,13 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 		if tcpOrUDP && len(config.HTTP.Routers) == 0 &&
 			len(config.HTTP.Middlewares) == 0 &&
 			len(config.HTTP.Services) == 0 {
-			configurations[normalUnique] = config
+			configurations[svcName] = config
 			continue
 		}
 
 		// configure http service
-		if buildErr := p.buildServiceConfig(i, config.HTTP); buildErr != nil {
-			logger.Errorf("failed to build http service configuration: %v", buildErr)
+		if err := p.buildServiceConfig(i, config.HTTP); err != nil {
+			logger.Errorf("Failed to build HTTP service configuration: %v", err)
 			continue
 		}
 
@@ -78,7 +77,7 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 		}
 
 		provider.BuildRouterConfiguration(ctx, config.HTTP, provider.Normalize(i.Name), p.defaultRuleTpl, model)
-		configurations[normalUnique] = config
+		configurations[svcName] = config
 	}
 
 	return provider.Merge(ctx, configurations)
@@ -87,8 +86,10 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 func (p *Provider) buildTCPConfig(i item, configuration *dynamic.TCPConfiguration) error {
 	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.TCPService)
+
 		lb := new(dynamic.TCPServersLoadBalancer)
 		lb.SetDefaults()
+
 		configuration.Services[provider.Normalize(i.Name)] = &dynamic.TCPService{
 			LoadBalancer: lb,
 		}
@@ -106,9 +107,9 @@ func (p *Provider) buildTCPConfig(i item, configuration *dynamic.TCPConfiguratio
 func (p *Provider) buildUDPConfig(i item, configuration *dynamic.UDPConfiguration) error {
 	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.UDPService)
-		lb := new(dynamic.UDPServersLoadBalancer)
+
 		configuration.Services[provider.Normalize(i.Name)] = &dynamic.UDPService{
-			LoadBalancer: lb,
+			LoadBalancer: new(dynamic.UDPServersLoadBalancer),
 		}
 	}
 
@@ -124,8 +125,10 @@ func (p *Provider) buildUDPConfig(i item, configuration *dynamic.UDPConfiguratio
 func (p *Provider) buildServiceConfig(i item, configuration *dynamic.HTTPConfiguration) error {
 	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.Service)
+
 		lb := new(dynamic.ServersLoadBalancer)
 		lb.SetDefaults()
+
 		configuration.Services[provider.Normalize(i.Name)] = &dynamic.Service{
 			LoadBalancer: lb,
 		}
@@ -140,6 +143,7 @@ func (p *Provider) buildServiceConfig(i item, configuration *dynamic.HTTPConfigu
 	return nil
 }
 
+// TODO: check whether it is mandatory to filter again.
 func (p *Provider) keepItem(ctx context.Context, i item) bool {
 	logger := log.FromContext(ctx)
 
@@ -158,7 +162,7 @@ func (p *Provider) keepItem(ctx context.Context, i item) bool {
 		return false
 	}
 
-	// todo filter on health when that information exists (nomad 1.4+)
+	// TODO: filter on health when that information exists (nomad 1.4+)
 
 	return true
 }
@@ -168,13 +172,13 @@ func (p *Provider) addServerTCP(i item, lb *dynamic.TCPServersLoadBalancer) erro
 		return errors.New("load-balancer is missing")
 	}
 
-	if len(lb.Servers) == 0 {
-		lb.Servers = []dynamic.TCPServer{{}}
-	}
-
 	var port string
 	if len(lb.Servers) > 0 {
 		port = lb.Servers[0].Port
+	}
+
+	if len(lb.Servers) == 0 {
+		lb.Servers = []dynamic.TCPServer{{}}
 	}
 
 	if i.Port != 0 && port == "" {
@@ -199,13 +203,13 @@ func (p *Provider) addServerUDP(i item, lb *dynamic.UDPServersLoadBalancer) erro
 		return errors.New("load-balancer is missing")
 	}
 
-	if len(lb.Servers) == 0 {
-		lb.Servers = []dynamic.UDPServer{{}}
-	}
-
 	var port string
 	if len(lb.Servers) > 0 {
 		port = lb.Servers[0].Port
+	}
+
+	if len(lb.Servers) == 0 {
+		lb.Servers = []dynamic.UDPServer{{}}
 	}
 
 	if i.Port != 0 && port == "" {
@@ -230,15 +234,16 @@ func (p *Provider) addServer(i item, lb *dynamic.ServersLoadBalancer) error {
 		return errors.New("load-balancer is missing")
 	}
 
-	if len(lb.Servers) == 0 {
-		server := dynamic.Server{}
-		server.SetDefaults()
-		lb.Servers = []dynamic.Server{server}
-	}
-
 	var port string
 	if len(lb.Servers) > 0 {
 		port = lb.Servers[0].Port
+	}
+
+	if len(lb.Servers) == 0 {
+		server := dynamic.Server{}
+		server.SetDefaults()
+
+		lb.Servers = []dynamic.Server{server}
 	}
 
 	if i.Port != 0 && port == "" {
@@ -259,18 +264,4 @@ func (p *Provider) addServer(i item, lb *dynamic.ServersLoadBalancer) error {
 	lb.Servers[0].URL = fmt.Sprintf("%s://%s", scheme, net.JoinHostPort(i.Address, port))
 
 	return nil
-}
-
-func tagsToLabels(tags []string, prefix string) map[string]string {
-	labels := make(map[string]string, len(tags))
-	for _, tag := range tags {
-		if strings.HasPrefix(tag, prefix) {
-			if parts := strings.SplitN(tag, "=", 2); len(parts) == 2 {
-				left, right := strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
-				key := "traefik" + strings.TrimPrefix(left, prefix)
-				labels[key] = right
-			}
-		}
-	}
-	return labels
 }

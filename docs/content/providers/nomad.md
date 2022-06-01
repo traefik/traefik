@@ -204,6 +204,33 @@ providers:
 # ...
 ```
 
+#### `endpointWaitTime`
+
+_Optional, Default=""_
+
+Limits the duration for which a Watch can block.
+If not provided, the agent default values will be used.
+
+```yaml tab="File (YAML)"
+providers:
+  nomad:
+    endpoint:
+      endpointWaitTime: 15s
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.nomad]
+  [providers.nomad.endpoint]
+    endpointWaitTime = "15s"
+    # ...
+```
+
+```bash tab="CLI"
+--providers.nomad.endpoint.endpointwaittime=15s
+# ...
+```
+
 #### `httpAuth`
 
 _Optional_
