@@ -669,7 +669,7 @@ For additional information, refer to [Restrict the Scope of Service Discovery](.
 
 ### `namespace`
 
-??? warning "Deprecated in favor of the [namespaces](#namespaces) option."
+??? warning "Deprecated in favor of the [`namespaces`](#namespaces) option."
 
     _Optional, Default=""_
     
@@ -709,7 +709,7 @@ _Optional, Default=""_
 The `namespaces` option defines the namespaces in which the consul catalog services will be discovered.
 When using the `namespaces` option, the discovered configuration object names will be suffixed as shown below:
 
-```text
+```
 <resource-name>@consulcatalog-<namespace>
 ```
 
