@@ -187,7 +187,7 @@ type configuration struct {
 	Enable bool // <prefix>.enable
 }
 
-// globalConfig returns a configuration with settings not specific to the dynamic configuration (i.e. "<prefix>.enable")
+// globalConfig returns a configuration with settings not specific to the dynamic configuration (i.e. "<prefix>.enable").
 func (p *Provider) globalConfig(tags []string) configuration {
 	enabled := p.ExposedByDefault
 	labels := tagsToLabels(tags, p.Prefix)
