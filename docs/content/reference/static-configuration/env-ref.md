@@ -865,10 +865,10 @@ Expose Nomad services by default. (Default: ```true```)
 Sets the Nomad namespace used to discover services.
 
 `TRAEFIK_PROVIDERS_NOMAD_PREFIX`:  
-Prefix for nomad service tags. Default 'traefik' (Default: ```traefik```)
+Prefix for nomad service tags. (Default: ```traefik```)
 
 `TRAEFIK_PROVIDERS_NOMAD_REFRESHINTERVAL`:  
-Interval for polling Nomad API. Default 15s (Default: ```15```)
+Interval for polling Nomad API. (Default: ```15```)
 
 `TRAEFIK_PROVIDERS_NOMAD_STALE`:  
 Use stale consistency for catalog reads. (Default: ```false```)

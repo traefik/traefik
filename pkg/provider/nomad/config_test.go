@@ -8,73 +8,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 )
 
-func Test_tagsToLabels(t *testing.T) {
-	cases := []struct {
-		description string
-		tags        []string
-		prefix      string
-		expected    map[string]string
-	}{
-		{
-			description: "no tags",
-			tags:        []string{},
-			prefix:      "traefik",
-			expected:    map[string]string{},
-		},
-		{
-			description: "minimal global config",
-			tags:        []string{"traefik.enable=false"},
-			prefix:      "traefik",
-			expected: map[string]string{
-				"traefik.enable": "false",
-			},
-		},
-		{
-			description: "config with domain",
-			tags: []string{
-				"traefik.enable=true",
-				"traefik.domain=example.com",
-			},
-			prefix: "traefik",
-			expected: map[string]string{
-				"traefik.enable": "true",
-				"traefik.domain": "example.com",
-			},
-		},
-		{
-			description: "config with custom prefix",
-			tags: []string{
-				"custom.enable=true",
-				"custom.domain=example.com",
-			},
-			prefix: "custom",
-			expected: map[string]string{
-				"traefik.enable": "true",
-				"traefik.domain": "example.com",
-			},
-		},
-		{
-			description: "config with spaces in tags",
-			tags: []string{
-				"custom.enable = true",
-				"custom.domain = example.com",
-			},
-			prefix: "custom",
-			expected: map[string]string{
-				"traefik.enable": "true",
-				"traefik.domain": "example.com",
-			},
-		},
-	}
-
-	for _, test := range cases {
-		t.Run(test.description, func(t *testing.T) {
-			result := tagsToLabels(test.tags, test.prefix)
-			require.Equal(t, test.expected, result)
-		})
-	}
-}
-
 func Int(v int) *int    { return &v }
 func Bool(v bool) *bool { return &v }
 
@@ -236,7 +169,7 @@ func Test_defaultRule(t *testing.T) {
 					ExtraConf: configuration{Enable: true},
 				},
 			},
-			rule: DefaultTemplateRule,
+			rule: defaultTemplateRule,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
