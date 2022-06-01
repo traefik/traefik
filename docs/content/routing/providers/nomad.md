@@ -367,7 +367,7 @@ You can declare TCP Routers and/or Services using tags.
     See [options](../routers/index.md#options_1) for more information.
 
     ```yaml
-    traefik.tcp.routers.mytcprouter.tls.options=mysoptions
+    traefik.tcp.routers.mytcprouter.tls.options=myoptions
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.passthrough`"

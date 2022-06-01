@@ -8,18 +8,15 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 )
 
-func Int(v int) *int    { return &v }
-func Bool(v bool) *bool { return &v }
-
 func Test_defaultRule(t *testing.T) {
-	cases := []struct {
-		description string
-		items       []item
-		rule        string
-		expected    *dynamic.Configuration
+	testCases := []struct {
+		desc     string
+		items    []item
+		rule     string
+		expected *dynamic.Configuration
 	}{
 		{
-			description: "default rule with no variable",
+			desc: "default rule with no variable",
 			items: []item{
 				{
 					ID:        "id",
@@ -66,7 +63,7 @@ func Test_defaultRule(t *testing.T) {
 			},
 		},
 		{
-			description: "default rule with label",
+			desc: "default rule with label",
 			items: []item{
 				{
 					ID:      "id",
@@ -116,7 +113,7 @@ func Test_defaultRule(t *testing.T) {
 			},
 		},
 		{
-			description: "invalid rule",
+			desc: "invalid rule",
 			items: []item{
 				{
 					ID:        "id",
@@ -158,7 +155,7 @@ func Test_defaultRule(t *testing.T) {
 			},
 		},
 		{
-			description: "default template rule",
+			desc: "default template rule",
 			items: []item{
 				{
 					ID:        "id",
@@ -206,8 +203,8 @@ func Test_defaultRule(t *testing.T) {
 		},
 	}
 
-	for _, test := range cases {
-		t.Run(test.description, func(t *testing.T) {
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
 			p := new(Provider)
 			p.SetDefaults()
 			p.DefaultRule = test.rule
@@ -222,14 +219,14 @@ func Test_defaultRule(t *testing.T) {
 }
 
 func Test_buildConfig(t *testing.T) {
-	cases := []struct {
-		description string
+	testCases := []struct {
+		desc        string
 		items       []item
 		constraints string
 		expected    *dynamic.Configuration
 	}{
 		{
-			description: "one service no tags",
+			desc: "one service no tags",
 			items: []item{
 				{
 					ID:        "id",
@@ -275,7 +272,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "two services no tags",
+			desc: "two services no tags",
 			items: []item{
 				{
 					ID:        "id1",
@@ -343,7 +340,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "two services with same name no label",
+			desc: "two services with same name no label",
 			items: []item{
 				{
 					ID:        "id1",
@@ -402,7 +399,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "two services same name and id no label same node",
+			desc: "two services same name and id no label same node",
 			items: []item{
 				{
 					ID:        "id1",
@@ -458,7 +455,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "two services same service name and id no label on different nodes",
+			desc: "two services same service name and id no label on different nodes",
 			items: []item{
 				{
 					ID:        "id1",
@@ -517,7 +514,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "one service with label (not on server)",
+			desc: "one service with label (not on server)",
 			items: []item{
 				{
 					ID:   "id1",
@@ -565,7 +562,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "one service with labels",
+			desc: "one service with labels",
 			items: []item{
 				{
 					ID:   "id1",
@@ -615,7 +612,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "one service with rule label",
+			desc: "one service with rule label",
 			items: []item{
 				{
 					ID:   "id1",
@@ -663,7 +660,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "one service with rule label and one traefik service",
+			desc: "one service with rule label and one traefik service",
 			items: []item{
 				{
 					ID:   "id1",
@@ -712,7 +709,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "one service with rule label and two traefik services",
+			desc: "one service with rule label and two traefik services",
 			items: []item{
 				{
 					ID:   "id1",
@@ -767,7 +764,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "two services with same traefik service and different passhostheader",
+			desc: "two services with same traefik service and different passhostheader",
 			items: []item{
 				{
 					ID:   "id1",
@@ -814,7 +811,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "three services with same name and different passhostheader",
+			desc: "three services with same name and different passhostheader",
 			items: []item{
 				{
 					ID:   "id1",
@@ -871,7 +868,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "two services with same name and same LB methods",
+			desc: "two services with same name and same LB methods",
 			items: []item{
 				{
 					ID:   "id1",
@@ -932,7 +929,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "one service with InFlightReq in label (default value)",
+			desc: "one service with InFlightReq in label (default value)",
 			items: []item{
 				{
 					ID:   "id1",
@@ -986,7 +983,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "two services with same middleware",
+			desc: "two services with same middleware",
 			items: []item{
 				{
 					ID:   "id1",
@@ -1053,7 +1050,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "two services same name with different middleware",
+			desc: "two services same name with different middleware",
 			items: []item{
 				{
 					ID:   "id1",
@@ -1114,7 +1111,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "two services with different routers with same name",
+			desc: "two services with different routers with same name",
 			items: []item{
 				{
 					ID:   "id1",
@@ -1170,7 +1167,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "two services identical routers",
+			desc: "two services identical routers",
 			items: []item{
 				{
 					ID:   "id1",
@@ -1231,7 +1228,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "one service with bad label",
+			desc: "one service with bad label",
 			items: []item{
 				{
 					ID:   "id1",
@@ -1279,7 +1276,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "one service with label port",
+			desc: "one service with label port",
 			items: []item{
 				{
 					ID:   "id1",
@@ -1328,7 +1325,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "one service with label port on two services",
+			desc: "one service with label port on two services",
 			items: []item{
 				{
 					ID:   "id1",
@@ -1382,7 +1379,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "one service without port",
+			desc: "one service without port",
 			items: []item{
 				{
 					ID:        "id1",
@@ -1412,7 +1409,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "one service without port with middleware",
+			desc: "one service without port with middleware",
 			items: []item{
 				{
 					ID:   "id1",
@@ -1443,7 +1440,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "one service with traefik.enable false",
+			desc: "one service with traefik.enable false",
 			items: []item{
 				{
 					ID:   "id1",
@@ -1475,7 +1472,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "one service with non matching constraints",
+			desc: "one service with non matching constraints",
 			items: []item{
 				{
 					ID:   "id1",
@@ -1508,7 +1505,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "one service with matching constraints",
+			desc: "one service with matching constraints",
 			items: []item{
 				{
 					ID:   "id1",
@@ -1557,7 +1554,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "middleware used in router",
+			desc: "middleware used in router",
 			items: []item{
 				{
 					ID:   "id1",
@@ -1616,7 +1613,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "middleware used in tcp router",
+			desc: "middleware used in tcp router",
 			items: []item{
 				{
 					ID:   "id1",
@@ -1673,7 +1670,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "tcp with tags",
+			desc: "tcp with tags",
 			items: []item{
 				{
 					ID:   "id1",
@@ -1723,7 +1720,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "udp with tags",
+			desc: "udp with tags",
 			items: []item{
 				{
 					ID:   "id1",
@@ -1770,7 +1767,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "tcp with label without rule",
+			desc: "tcp with label without rule",
 			items: []item{
 				{
 					ID:   "id1",
@@ -1813,7 +1810,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "tcp with tags and port",
+			desc: "tcp with tags and port",
 			items: []item{
 				{
 					ID:   "id1",
@@ -1866,7 +1863,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "udp with label and port",
+			desc: "udp with label and port",
 			items: []item{
 				{
 					ID:   "id1",
@@ -1914,7 +1911,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "tcp with label and port and http service",
+			desc: "tcp with label and port and http service",
 			items: []item{
 				{
 					ID:   "id1",
@@ -2001,7 +1998,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "udp with label and port and http services",
+			desc: "udp with label and port and http services",
 			items: []item{
 				{
 					ID:   "id1",
@@ -2084,7 +2081,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "tcp with tag for tcp service",
+			desc: "tcp with tag for tcp service",
 			items: []item{
 				{
 					ID:   "id1",
@@ -2127,7 +2124,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "udp with label for tcp service",
+			desc: "udp with label for tcp service",
 			items: []item{
 				{
 					ID:   "id1",
@@ -2169,7 +2166,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			description: "tcp with label for tcp service, with termination delay",
+			desc: "tcp with label for tcp service, with termination delay",
 			items: []item{
 				{
 					ID:   "id1",
@@ -2214,8 +2211,8 @@ func Test_buildConfig(t *testing.T) {
 		},
 	}
 
-	for _, test := range cases {
-		t.Run(test.description, func(t *testing.T) {
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
 			p := new(Provider)
 			p.SetDefaults()
 			p.DefaultRule = "Host(`{{ normalize .Name }}.traefik.test`)"
@@ -2231,7 +2228,7 @@ func Test_buildConfig(t *testing.T) {
 }
 
 func Test_keepItem(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
 		name        string
 		i           item
 		constraints string
@@ -2267,7 +2264,7 @@ func Test_keepItem(t *testing.T) {
 		},
 	}
 
-	for _, test := range cases {
+	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
 			p := new(Provider)
 			p.SetDefaults()
@@ -2278,3 +2275,6 @@ func Test_keepItem(t *testing.T) {
 		})
 	}
 }
+
+func Int(v int) *int    { return &v }
+func Bool(v bool) *bool { return &v }
