@@ -213,16 +213,15 @@ func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
 
 	for _, stub := range stubs {
 		for _, service := range stub.Services {
-			name, tags := service.ServiceName, service.Tags
-			logger := log.FromContext(log.With(ctx, log.Str("serviceName", name)))
+			logger := log.FromContext(log.With(ctx, log.Str("serviceName", service.ServiceName)))
 
-			globalCfg := p.globalConfig(tags)
+			globalCfg := p.globalConfig(service.Tags)
 			if !globalCfg.Enable {
 				logger.Debug("Filter Nomad service that is not enabled")
 				continue
 			}
 
-			matches, err := constraints.MatchTags(tags, p.Constraints)
+			matches, err := constraints.MatchTags(service.Tags, p.Constraints)
 			if err != nil {
 				logger.Errorf("Error matching constraint expressions: %v", err)
 				continue
@@ -233,7 +232,7 @@ func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
 				continue
 			}
 
-			instances, err := p.fetchService(ctx, name)
+			instances, err := p.fetchService(ctx, service.ServiceName)
 			if err != nil {
 				return nil, err
 			}

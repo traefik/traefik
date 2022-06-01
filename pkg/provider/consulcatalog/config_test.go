@@ -1004,10 +1004,9 @@ func Test_buildConfiguration(t *testing.T) {
 					Name: "Test",
 					Labels: map[string]string{
 						"traefik.http.services.Service1.loadbalancer.passhostheader": "false",
-					},
-					Address: "127.0.0.2",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					}, Address: "127.0.0.2",
+					Port:   "80",
+					Status: api.HealthPassing,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1223,10 +1222,9 @@ func Test_buildConfiguration(t *testing.T) {
 					Name: "Test",
 					Labels: map[string]string{
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
-					},
-					Address: "127.0.0.2",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					}, Address: "127.0.0.2",
+					Port:   "80",
+					Status: api.HealthPassing,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1290,10 +1288,9 @@ func Test_buildConfiguration(t *testing.T) {
 					Name: "Test",
 					Labels: map[string]string{
 						"traefik.http.middlewares.Middleware1.inflightreq.amount": "41",
-					},
-					Address: "127.0.0.2",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					}, Address: "127.0.0.2",
+					Port:   "80",
+					Status: api.HealthPassing,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1413,7 +1410,8 @@ func Test_buildConfiguration(t *testing.T) {
 			desc: "two containers with two different routers with same name",
 			items: []itemData{
 				{
-					ID:   "1",
+					ID: "1",
+
 					Name: "Test",
 					Labels: map[string]string{
 						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
@@ -1423,14 +1421,14 @@ func Test_buildConfiguration(t *testing.T) {
 					Status:  api.HealthPassing,
 				},
 				{
-					ID:   "2",
+					ID: "2",
+
 					Name: "Test",
 					Labels: map[string]string{
 						"traefik.http.routers.Router1.rule": "Host(`bar.com`)",
-					},
-					Address: "127.0.0.2",
-					Port:    "80",
-					Status:  api.HealthPassing,
+					}, Address: "127.0.0.2",
+					Port:   "80",
+					Status: api.HealthPassing,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -1540,7 +1538,8 @@ func Test_buildConfiguration(t *testing.T) {
 			desc: "two containers with two identical routers",
 			items: []itemData{
 				{
-					ID:   "1",
+					ID: "1",
+
 					Name: "Test",
 					Labels: map[string]string{
 						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
@@ -1550,7 +1549,8 @@ func Test_buildConfiguration(t *testing.T) {
 					Status:  api.HealthPassing,
 				},
 				{
-					ID:   "2",
+					ID: "2",
+
 					Name: "Test",
 					Labels: map[string]string{
 						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
