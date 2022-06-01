@@ -31,10 +31,17 @@ Attach tags to your Nomad services and let Traefik do the rest!
     --providers.nomad=true
     ```
 
-    Attaching tags to services
+    Attaching tags to services:
 
-    ```yaml
-    - traefik.http.routers.my-router.rule=Host(`example.com`)
+    ```
+    ...
+    service {
+      name = "myService"
+      tags = [
+        "traefik.http.routers.my-router.rule=Host(`example.com`)",
+      ]
+    }
+    ...
     ```
 
 ## Routing Configuration
@@ -95,7 +102,7 @@ providers:
 
 _Optional, Default=false_
 
-Use stale consistency for nomad service API reads.
+Use stale consistency for Nomad service API reads.
 
 !!! note ""
 

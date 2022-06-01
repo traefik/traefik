@@ -1,27 +1,27 @@
-job "who" {
-  datacenters = ["dc1"]
+    job "who" {
+      datacenters = ["dc1"]
 
-  group "proxy" {
-    network {
-      mode = "host"
-      port "ingress" {
-        static = 8899
-      }
-    }
+      group "proxy" {
+        network {
+          mode = "host"
+          port "ingress" {
+            static = 8899
+          }
+        }
 
-    task "traefik" {
-      driver = "raw_exec"
-      config {
-        command = "EXECUTABLE"
-        args = [
-          "--log.level=DEBUG",
-          "--entryPoints.web.address=:8899",
-          "--providers=nomad",
-          "--providers.nomad.refreshInterval=1s",
-          "--providers.nomad.endpoint.address=http://127.0.0.3:4646",
-          "--providers.nomad.constraints=Tag(`color=red`)",
-        ]
-      }
+        task "traefik" {
+          driver = "raw_exec"
+          config {
+            command = "EXECUTABLE"
+            args = [
+              "--log.level=DEBUG",
+              "--entryPoints.web.address=:8899",
+              "--providers=nomad",
+              "--providers.nomad.refreshInterval=1s",
+              "--providers.nomad.endpoint.address=http://127.0.0.3:4646",
+              "--providers.nomad.constraints=Tag(`color=red`)",
+            ]
+          }
 
       resources {
         cpu    = 10
