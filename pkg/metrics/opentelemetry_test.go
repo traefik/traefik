@@ -309,11 +309,15 @@ func TestOpenTelemetry(t *testing.T) {
 	}))
 	defer ts.Close()
 
+	sURL, err := url.Parse(ts.URL)
+	require.NoError(t, err)
+
 	var cfg types.OpenTelemetry
 	(&cfg).SetDefaults()
 	cfg.AddRoutersLabels = true
-	cfg.Address = ts.URL
-	cfg.PushInterval = ptypes.Duration(10 * time.Millisecond)
+	cfg.Endpoint = sURL.Host
+	cfg.Insecure = true
+	cfg.CollectPeriod = ptypes.Duration(10 * time.Millisecond)
 
 	registry := RegisterOpenTelemetry(context.Background(), &cfg)
 	require.NotNil(t, registry)
@@ -417,6 +421,16 @@ func TestOpenTelemetry(t *testing.T) {
 	msgServiceOpenConns := <-c
 
 	assertMessage(t, *msgServiceOpenConns, expectedServiceOpenConns)
+
+	expectedEntryPointReqDuration := []string{
+		`({"attributes":\[{"key":"entrypoint","value":{"stringValue":"myEntrypoint"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","count":"2","sum":30000,"bucketCounts":\["0","0","0","0","0","0","0","0","0","0","0","2"\],"explicitBounds":\[0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2.5,5,10\]}\],"aggregationTemporality":"AGGREGATION_TEMPORALITY_CUMULATIVE"}})`,
+	}
+
+	registry.EntryPointReqDurationHistogram().With("entrypoint", "myEntrypoint").Observe(10000)
+	registry.EntryPointReqDurationHistogram().With("entrypoint", "myEntrypoint").Observe(20000)
+	msgEntryPointReqDurationHistogram := <-c
+
+	assertMessage(t, *msgEntryPointReqDurationHistogram, expectedEntryPointReqDuration)
 
 	// We need to unlock the HTTP Server for the last export call when stopping
 	// OpenTelemetry.
