@@ -31,13 +31,13 @@ func (p *ProviderBuilder) SetDefaults() {
 
 // BuildProviders builds Consul provider instances for the given namespaces configuration.
 func (p *ProviderBuilder) BuildProviders() []*Provider {
-	// As the Namespace and Namespaces options are mutually exclusive,
-	// we should create a single provider instance whether the Namespace option is used.
-	if len(p.Namespaces) == 0 {
-		if p.Namespace != "" {
-			log.WithoutContext().Warnf("Namespace option is deprecated, please use the Namespaces option instead.")
-		}
+	if p.Namespace != "" {
+		log.WithoutContext().Warnf("Namespace option is deprecated, please use the Namespaces option instead.")
+	}
 
+	// As the Namespace and Namespaces options are mutually exclusive,
+	// we should create a single provider instance whether the Namespaces option is not used.
+	if len(p.Namespaces) == 0 {
 		return []*Provider{{
 			Provider:  p.Provider,
 			name:      providerName,
