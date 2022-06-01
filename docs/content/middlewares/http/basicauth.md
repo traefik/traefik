@@ -23,6 +23,7 @@ The BasicAuth middleware restricts access to your services to known users.
 #
 # Also note that dollar signs should NOT be doubled when they not evaluated (e.g. Ansible docker_container module).
 labels:
+  - "traefik.http.routers.service-name-here.middlewares=test-auth"
   - "traefik.http.middlewares.test-auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
 ```
 
