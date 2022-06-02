@@ -60,6 +60,8 @@ func (p *ProviderBuilder) SetDefaults() {
 
 // BuildProviders builds Consul Catalog provider instances for the given namespaces configuration.
 func (p *ProviderBuilder) BuildProviders() []*Provider {
+	// We can warn about that, because we've already made sure before that
+	// Namespace and Namespaces are mutually exclusive.
 	if p.Namespace != "" {
 		log.WithoutContext().Warnf("Namespace option is deprecated, please use the Namespaces option instead.")
 	}
