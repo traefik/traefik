@@ -41,6 +41,7 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 		return []*Provider{{
 			Provider:  p.Provider,
 			name:      providerName,
+			// p.Namespace could very well be empty.
 			namespace: p.Namespace,
 		}}
 	}
