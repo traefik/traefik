@@ -22,7 +22,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
-// DefaultTemplateRule The default template for the default rule.
+// defaultTemplateRule is the default template for the default rule.
 const defaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 
 // providerName is the Consul Catalog provider name.
