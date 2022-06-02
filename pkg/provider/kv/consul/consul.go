@@ -39,8 +39,8 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 
 	if len(p.Namespaces) == 0 {
 		return []*Provider{{
-			Provider:  p.Provider,
-			name:      providerName,
+			Provider: p.Provider,
+			name:     providerName,
 			// p.Namespace could very well be empty.
 			namespace: p.Namespace,
 		}}
@@ -74,6 +74,7 @@ func (p *Provider) Init() error {
 		return errors.New("wildcard namespace is not supported")
 	}
 
+	// In case they didn't initialise with BuildProviders.
 	if p.name == "" {
 		p.name = providerName
 	}
