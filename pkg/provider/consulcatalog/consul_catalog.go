@@ -22,8 +22,11 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
-// DefaultTemplateRule The default template for the default rule.
-const DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
+// defaultTemplateRule is the default template for the default rule.
+const defaultTemplateRule = "Host(`{{ normalize .Name }}`)"
+
+// providerName is the Consul Catalog provider name.
+const providerName = "consulcatalog"
 
 var _ provider.Provider = (*Provider)(nil)
 
@@ -41,12 +44,50 @@ type itemData struct {
 	ExtraConf  configuration
 }
 
-// Provider holds configurations of the provider.
-type Provider struct {
+// ProviderBuilder is responsible for constructing namespaced instances of the Consul Catalog provider.
+type ProviderBuilder struct {
+	Configuration `export:"true"`
+
+	// Deprecated: use Namespaces option instead.
+	Namespace  string   `description:"Sets the namespace used to discover services (Consul Enterprise only)." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
+	Namespaces []string `description:"Sets the namespaces used to discover services (Consul Enterprise only)." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty"`
+}
+
+// BuildProviders builds Consul Catalog provider instances for the given namespaces configuration.
+func (p *ProviderBuilder) BuildProviders() []*Provider {
+	// We can warn about that, because we've already made sure before that
+	// Namespace and Namespaces are mutually exclusive.
+	if p.Namespace != "" {
+		log.WithoutContext().Warnf("Namespace option is deprecated, please use the Namespaces option instead.")
+	}
+
+	if len(p.Namespaces) == 0 {
+		return []*Provider{{
+			Configuration: p.Configuration,
+			name:          providerName,
+			// p.Namespace could very well be empty.
+			namespace: p.Namespace,
+		}}
+	}
+
+	var providers []*Provider
+	for _, namespace := range p.Namespaces {
+		providers = append(providers, &Provider{
+			Configuration: p.Configuration,
+			name:          providerName + "-" + namespace,
+			namespace:     namespace,
+		})
+	}
+
+	return providers
+}
+
+// Configuration represents the Consul Catalog provider configuration.
+type Configuration struct {
 	Constraints       string          `description:"Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
 	Endpoint          *EndpointConfig `description:"Consul endpoint settings" json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
-	Prefix            string          `description:"Prefix for consul service tags. Default 'traefik'" json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
-	RefreshInterval   ptypes.Duration `description:"Interval for check Consul API. Default 15s" json:"refreshInterval,omitempty" toml:"refreshInterval,omitempty" yaml:"refreshInterval,omitempty" export:"true"`
+	Prefix            string          `description:"Prefix for consul service tags." json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
+	RefreshInterval   ptypes.Duration `description:"Interval for check Consul API." json:"refreshInterval,omitempty" toml:"refreshInterval,omitempty" yaml:"refreshInterval,omitempty" export:"true"`
 	RequireConsistent bool            `description:"Forces the read to be fully consistent." json:"requireConsistent,omitempty" toml:"requireConsistent,omitempty" yaml:"requireConsistent,omitempty" export:"true"`
 	Stale             bool            `description:"Use stale consistency for catalog reads." json:"stale,omitempty" toml:"stale,omitempty" yaml:"stale,omitempty" export:"true"`
 	Cache             bool            `description:"Use local agent caching for catalog reads." json:"cache,omitempty" toml:"cache,omitempty" yaml:"cache,omitempty" export:"true"`
@@ -55,9 +96,25 @@ type Provider struct {
 	ConnectAware      bool            `description:"Enable Consul Connect support." json:"connectAware,omitempty" toml:"connectAware,omitempty" yaml:"connectAware,omitempty" export:"true"`
 	ConnectByDefault  bool            `description:"Consider every service as Connect capable by default." json:"connectByDefault,omitempty" toml:"connectByDefault,omitempty" yaml:"connectByDefault,omitempty" export:"true"`
 	ServiceName       string          `description:"Name of the Traefik service in Consul Catalog (needs to be registered via the orchestrator or manually)." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
-	Namespace         string          `description:"Sets the namespace used to discover services (Consul Enterprise only)." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty" export:"true"`
 	Watch             bool            `description:"Watch Consul API events." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
+}
 
+// SetDefaults sets the default values.
+func (c *Configuration) SetDefaults() {
+	c.Endpoint = &EndpointConfig{}
+	c.RefreshInterval = ptypes.Duration(15 * time.Second)
+	c.Prefix = "traefik"
+	c.ExposedByDefault = true
+	c.DefaultRule = defaultTemplateRule
+	c.ServiceName = "traefik"
+}
+
+// Provider is the Consul Catalog provider implementation.
+type Provider struct {
+	Configuration
+
+	name              string
+	namespace         string
 	client            *api.Client
 	defaultRuleTpl    *template.Template
 	certChan          chan *connectCert
@@ -81,17 +138,6 @@ type EndpointHTTPAuthConfig struct {
 	Password string `description:"Basic Auth password" json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
 }
 
-// SetDefaults sets the default values.
-func (p *Provider) SetDefaults() {
-	endpoint := &EndpointConfig{}
-	p.Endpoint = endpoint
-	p.RefreshInterval = ptypes.Duration(15 * time.Second)
-	p.Prefix = "traefik"
-	p.ExposedByDefault = true
-	p.DefaultRule = DefaultTemplateRule
-	p.ServiceName = "traefik"
-}
-
 // Init the provider.
 func (p *Provider) Init() error {
 	defaultRuleTpl, err := provider.MakeDefaultRuleTemplate(p.DefaultRule, nil)
@@ -103,19 +149,24 @@ func (p *Provider) Init() error {
 	p.certChan = make(chan *connectCert, 1)
 	p.watchServicesChan = make(chan struct{}, 1)
 
+	// In case they didn't initialize Provider with BuildProviders.
+	if p.name == "" {
+		p.name = providerName
+	}
+
 	return nil
 }
 
 // Provide allows the consul catalog provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	var err error
-	p.client, err = createClient(p.Namespace, p.Endpoint)
+	p.client, err = createClient(p.namespace, p.Endpoint)
 	if err != nil {
 		return fmt.Errorf("failed to create consul client: %w", err)
 	}
 
 	pool.GoCtx(func(routineCtx context.Context) {
-		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "consulcatalog"))
+		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, p.name))
 		logger := log.FromContext(ctxLog)
 
 		operation := func() error {
@@ -210,7 +261,7 @@ func (p *Provider) loadConfiguration(ctx context.Context, certInfo *connectCert,
 	}
 
 	configurationChan <- dynamic.Message{
-		ProviderName:  "consulcatalog",
+		ProviderName:  p.name,
 		Configuration: p.buildConfiguration(ctx, data, certInfo),
 	}
 

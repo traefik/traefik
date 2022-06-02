@@ -206,7 +206,12 @@
       "stale": true,
       "cache": true,
       "exposedByDefault": true,
-      "defaultRule": "xxxx"
+      "defaultRule": "xxxx",
+      "namespace": "xxxx",
+      "namespaces": [
+        "xxxx",
+        "xxxx"
+      ]
     },
     "ecs": {
       "constraints": "Label(\"foo\", \"bar\")",
@@ -232,7 +237,12 @@
         "cert": "xxxx",
         "key": "xxxx",
         "insecureSkipVerify": true
-      }
+      },
+      "namespace": "xxxx",
+      "namespaces": [
+        "xxxx",
+        "xxxx"
+      ]
     },
     "etcd": {
       "rootKey": "xxxx",
