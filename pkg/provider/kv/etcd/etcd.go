@@ -21,5 +21,5 @@ func (p *Provider) SetDefaults() {
 
 // Init the provider.
 func (p *Provider) Init() error {
-	return p.Provider.Init(store.ETCDV3, "etcd")
+	return p.Provider.Init(store.ETCDV3, "etcd", "")
 }
