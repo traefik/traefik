@@ -682,33 +682,37 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Prefix:                    "MyPrefix",
 	}
 
-	config.Providers.ConsulCatalog = &consulcatalog.Provider{
-		Constraints: `Label("foo", "bar")`,
-		Endpoint: &consulcatalog.EndpointConfig{
-			Address:    "MyAddress",
-			Scheme:     "MyScheme",
-			DataCenter: "MyDatacenter",
-			Token:      "MyToken",
-			TLS: &types.ClientTLS{
-				CA:                 "myCa",
-				CAOptional:         true,
-				Cert:               "mycert.pem",
-				Key:                "mycert.key",
-				InsecureSkipVerify: true,
+	config.Providers.ConsulCatalog = &consulcatalog.ProviderBuilder{
+		Configuration: consulcatalog.Configuration{
+			Constraints: `Label("foo", "bar")`,
+			Endpoint: &consulcatalog.EndpointConfig{
+				Address:    "MyAddress",
+				Scheme:     "MyScheme",
+				DataCenter: "MyDatacenter",
+				Token:      "MyToken",
+				TLS: &types.ClientTLS{
+					CA:                 "myCa",
+					CAOptional:         true,
+					Cert:               "mycert.pem",
+					Key:                "mycert.key",
+					InsecureSkipVerify: true,
+				},
+				HTTPAuth: &consulcatalog.EndpointHTTPAuthConfig{
+					Username: "MyUsername",
+					Password: "MyPassword",
+				},
+				EndpointWaitTime: 42,
 			},
-			HTTPAuth: &consulcatalog.EndpointHTTPAuthConfig{
-				Username: "MyUsername",
-				Password: "MyPassword",
-			},
-			EndpointWaitTime: 42,
+			Prefix:            "MyPrefix",
+			RefreshInterval:   42,
+			RequireConsistent: true,
+			Stale:             true,
+			Cache:             true,
+			ExposedByDefault:  true,
+			DefaultRule:       "PathPrefix(`/`)",
 		},
-		Prefix:            "MyPrefix",
-		RefreshInterval:   42,
-		RequireConsistent: true,
-		Stale:             true,
-		Cache:             true,
-		ExposedByDefault:  true,
-		DefaultRule:       "PathPrefix(`/`)",
+		Namespace:  "ns",
+		Namespaces: []string{"ns1", "ns2"},
 	}
 
 	config.Providers.Ecs = &ecs.Provider{
@@ -723,7 +727,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 		SecretAccessKey:      "AwsSecretAccessKey",
 	}
 
-	config.Providers.Consul = &consul.Provider{
+	config.Providers.Consul = &consul.ProviderBuilder{
 		Provider: kv.Provider{
 			RootKey:   "RootKey",
 			Endpoints: nil,
@@ -737,6 +741,8 @@ func TestDo_staticConfiguration(t *testing.T) {
 				InsecureSkipVerify: true,
 			},
 		},
+		Namespace:  "ns",
+		Namespaces: []string{"ns1", "ns2"},
 	}
 
 	config.Providers.Etcd = &etcd.Provider{

@@ -11,8 +11,14 @@ export default {
     getLogoPath () {
       const name = this.name.toLowerCase()
 
-      if (name.includes('plugin-')) {
+      if (name.startsWith('plugin-')) {
         return 'statics/providers/plugin.svg'
+      }
+      if (name.startsWith('consul-')) {
+        return `statics/providers/consul.svg`
+      }
+      if (name.startsWith('consulcatalog-')) {
+        return `statics/providers/consulcatalog.svg`
       }
 
       return `statics/providers/${name}.svg`
