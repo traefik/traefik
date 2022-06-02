@@ -459,11 +459,14 @@ Expose containers by default. (Default: ```true```)
 `TRAEFIK_PROVIDERS_CONSULCATALOG_NAMESPACE`:  
 Sets the namespace used to discover services (Consul Enterprise only).
 
+`TRAEFIK_PROVIDERS_CONSULCATALOG_NAMESPACES`:  
+Sets the namespaces used to discover services (Consul Enterprise only).
+
 `TRAEFIK_PROVIDERS_CONSULCATALOG_PREFIX`:  
-Prefix for consul service tags. Default 'traefik' (Default: ```traefik```)
+Prefix for consul service tags. (Default: ```traefik```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_REFRESHINTERVAL`:  
-Interval for check Consul API. Default 15s (Default: ```15```)
+Interval for check Consul API. (Default: ```15```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_REQUIRECONSISTENT`:  
 Forces the read to be fully consistent. (Default: ```false```)
@@ -481,7 +484,10 @@ Watch Consul API events. (Default: ```false```)
 KV store endpoints (Default: ```127.0.0.1:8500```)
 
 `TRAEFIK_PROVIDERS_CONSUL_NAMESPACE`:  
-KV Namespace
+Sets the namespace used to discover the configuration (Consul Enterprise only).
+
+`TRAEFIK_PROVIDERS_CONSUL_NAMESPACES`:  
+Sets the namespaces used to discover the configuration (Consul Enterprise only).
 
 `TRAEFIK_PROVIDERS_CONSUL_PASSWORD`:  
 KV Password
@@ -593,9 +599,6 @@ Enable Etcd backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ETCD_ENDPOINTS`:  
 KV store endpoints (Default: ```127.0.0.1:2379```)
-
-`TRAEFIK_PROVIDERS_ETCD_NAMESPACE`:  
-KV Namespace
 
 `TRAEFIK_PROVIDERS_ETCD_PASSWORD`:  
 KV Password
@@ -858,9 +861,6 @@ Enable Redis backend with default settings. (Default: ```false```)
 `TRAEFIK_PROVIDERS_REDIS_ENDPOINTS`:  
 KV store endpoints (Default: ```127.0.0.1:6379```)
 
-`TRAEFIK_PROVIDERS_REDIS_NAMESPACE`:  
-KV Namespace
-
 `TRAEFIK_PROVIDERS_REDIS_PASSWORD`:  
 KV Password
 
@@ -899,9 +899,6 @@ Enable ZooKeeper backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER_ENDPOINTS`:  
 KV store endpoints (Default: ```127.0.0.1:2181```)
-
-`TRAEFIK_PROVIDERS_ZOOKEEPER_NAMESPACE`:  
-KV Namespace
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER_PASSWORD`:  
 KV Password

@@ -219,7 +219,7 @@ func TestDefaultRule(t *testing.T) {
 					Status:  api.HealthPassing,
 				},
 			},
-			defaultRule: DefaultTemplateRule,
+			defaultRule: defaultTemplateRule,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -262,8 +262,10 @@ func TestDefaultRule(t *testing.T) {
 			t.Parallel()
 
 			p := Provider{
-				ExposedByDefault: true,
-				DefaultRule:      test.defaultRule,
+				Configuration: Configuration{
+					ExposedByDefault: true,
+					DefaultRule:      test.defaultRule,
+				},
 			}
 
 			err := p.Init()
@@ -2618,10 +2620,12 @@ func Test_buildConfiguration(t *testing.T) {
 			t.Parallel()
 
 			p := Provider{
-				ExposedByDefault: true,
-				DefaultRule:      "Host(`{{ normalize .Name }}.traefik.wtf`)",
-				ConnectAware:     test.ConnectAware,
-				Constraints:      test.constraints,
+				Configuration: Configuration{
+					ExposedByDefault: true,
+					DefaultRule:      "Host(`{{ normalize .Name }}.traefik.wtf`)",
+					ConnectAware:     test.ConnectAware,
+					Constraints:      test.constraints,
+				},
 			}
 
 			err := p.Init()
@@ -2650,4 +2654,56 @@ func Test_buildConfiguration(t *testing.T) {
 			assert.Equal(t, test.expected, configuration)
 		})
 	}
+}
+
+func TestNamespaces(t *testing.T) {
+	testCases := []struct {
+		desc               string
+		namespace          string
+		namespaces         []string
+		expectedNamespaces []string
+	}{
+		{
+			desc:               "no defined namespaces",
+			expectedNamespaces: []string{""},
+		},
+		{
+			desc:               "deprecated: use of defined namespace",
+			namespace:          "test-ns",
+			expectedNamespaces: []string{"test-ns"},
+		},
+		{
+			desc:               "use of 1 defined namespaces",
+			namespaces:         []string{"test-ns"},
+			expectedNamespaces: []string{"test-ns"},
+		},
+		{
+			desc:               "use of multiple defined namespaces",
+			namespaces:         []string{"test-ns1", "test-ns2", "test-ns3", "test-ns4"},
+			expectedNamespaces: []string{"test-ns1", "test-ns2", "test-ns3", "test-ns4"},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			pb := &ProviderBuilder{
+				Namespace:  test.namespace,
+				Namespaces: test.namespaces,
+			}
+
+			assert.Equal(t, test.expectedNamespaces, extractNSFromProvider(pb.BuildProviders()))
+		})
+	}
+}
+
+func extractNSFromProvider(providers []*Provider) []string {
+	res := make([]string, len(providers))
+	for i, p := range providers {
+		res[i] = p.namespace
+	}
+	return res
 }
