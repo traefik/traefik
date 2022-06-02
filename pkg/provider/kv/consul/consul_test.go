@@ -1,6 +1,10 @@
 package consul
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestNamespaces(t *testing.T) {
 	testCases := []struct {
@@ -40,10 +44,8 @@ func TestNamespaces(t *testing.T) {
 				Namespace:  test.namespace,
 				Namespaces: test.namespaces,
 			}
-			ns := extractNSFromProvider(pb.BuildProviders())
 
-			checkNS(t, ns, test.expectedNamespaces)
-			checkNS(t, test.expectedNamespaces, ns)
+			assert.Equal(t, test.expectedNamespaces, extractNSFromProvider(pb.BuildProviders()))
 		})
 	}
 }
@@ -54,22 +56,4 @@ func extractNSFromProvider(providers []*Provider) []string {
 		res[i] = p.namespace
 	}
 	return res
-}
-
-func checkNS(t *testing.T, nsA, nsB []string) {
-	t.Helper()
-
-	for _, nA := range nsA {
-		var nsFound bool
-		for _, nB := range nsB {
-			if nA == nB {
-				nsFound = true
-				break
-			}
-		}
-
-		if !nsFound {
-			t.Errorf("found nothing to handle %q namespace", nA)
-		}
-	}
 }

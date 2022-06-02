@@ -23,7 +23,7 @@ import (
 )
 
 // DefaultTemplateRule The default template for the default rule.
-const DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
+const defaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 
 // providerName is the Consul Catalog provider name.
 const providerName = "consulcatalog"
@@ -53,11 +53,6 @@ type ProviderBuilder struct {
 	Namespaces []string `description:"Sets the namespaces used to discover services (Consul Enterprise only)." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty"`
 }
 
-// SetDefaults sets the default values.
-func (p *ProviderBuilder) SetDefaults() {
-	p.Configuration.SetDefaults()
-}
-
 // BuildProviders builds Consul Catalog provider instances for the given namespaces configuration.
 func (p *ProviderBuilder) BuildProviders() []*Provider {
 	// We can warn about that, because we've already made sure before that
@@ -71,7 +66,7 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 			Configuration: p.Configuration,
 			name:          providerName,
 			// p.Namespace could very well be empty.
-			namespace:     p.Namespace,
+			namespace: p.Namespace,
 		}}
 	}
 
@@ -110,7 +105,7 @@ func (c *Configuration) SetDefaults() {
 	c.RefreshInterval = ptypes.Duration(15 * time.Second)
 	c.Prefix = "traefik"
 	c.ExposedByDefault = true
-	c.DefaultRule = DefaultTemplateRule
+	c.DefaultRule = defaultTemplateRule
 	c.ServiceName = "traefik"
 }
 
