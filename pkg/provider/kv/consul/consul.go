@@ -14,7 +14,7 @@ const providerName = "consul"
 
 var _ provider.Provider = (*Provider)(nil)
 
-// ProviderBuilder is responsible to construct namespaced instances of the Consul provider.
+// ProviderBuilder is responsible for constructing namespaced instances of the Consul provider.
 type ProviderBuilder struct {
 	kv.Provider `export:"true"`
 
@@ -35,8 +35,6 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 		log.WithoutContext().Warnf("Namespace option is deprecated, please use the Namespaces option instead.")
 	}
 
-	// As the Namespace and Namespaces options are mutually exclusive,
-	// we should create a single provider instance whether the Namespaces option is not used.
 	if len(p.Namespaces) == 0 {
 		return []*Provider{{
 			Provider:  p.Provider,

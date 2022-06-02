@@ -44,7 +44,7 @@ type itemData struct {
 	ExtraConf  configuration
 }
 
-// ProviderBuilder is responsible to construct namespaced instances of the Consul Catalog provider.
+// ProviderBuilder is responsible for constructing namespaced instances of the Consul Catalog provider.
 type ProviderBuilder struct {
 	Configuration `export:"true"`
 
@@ -64,12 +64,11 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 		log.WithoutContext().Warnf("Namespace option is deprecated, please use the Namespaces option instead.")
 	}
 
-	// As the Namespace and Namespaces options are mutually exclusive,
-	// we should create a single provider instance whether the Namespaces option is not used.
 	if len(p.Namespaces) == 0 {
 		return []*Provider{{
 			Configuration: p.Configuration,
 			name:          providerName,
+			// p.Namespace could very well be empty.
 			namespace:     p.Namespace,
 		}}
 	}
@@ -105,8 +104,7 @@ type Configuration struct {
 
 // SetDefaults sets the default values.
 func (c *Configuration) SetDefaults() {
-	endpoint := &EndpointConfig{}
-	c.Endpoint = endpoint
+	c.Endpoint = &EndpointConfig{}
 	c.RefreshInterval = ptypes.Duration(15 * time.Second)
 	c.Prefix = "traefik"
 	c.ExposedByDefault = true
@@ -154,6 +152,7 @@ func (p *Provider) Init() error {
 	p.certChan = make(chan *connectCert, 1)
 	p.watchServicesChan = make(chan struct{}, 1)
 
+	// In case they didn't initialise Provider with BuildProviders.
 	if p.name == "" {
 		p.name = providerName
 	}
