@@ -149,7 +149,7 @@ func (p *Provider) Init() error {
 	p.certChan = make(chan *connectCert, 1)
 	p.watchServicesChan = make(chan struct{}, 1)
 
-	// In case they didn't initialise Provider with BuildProviders.
+	// In case they didn't initialize Provider with BuildProviders.
 	if p.name == "" {
 		p.name = providerName
 	}

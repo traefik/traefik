@@ -100,7 +100,7 @@ _Optional, Default=""_
 The `namespaces` option defines the namespaces to query.
 When using the `namespaces` option, the discovered configuration object names will be suffixed as shown below:
 
-```
+```text
 <resource-name>@consul-<namespace>
 ```
 

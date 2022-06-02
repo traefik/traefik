@@ -74,7 +74,7 @@ func (p *Provider) Init() error {
 		return errors.New("wildcard namespace is not supported")
 	}
 
-	// In case they didn't initialise with BuildProviders.
+	// In case they didn't initialize with BuildProviders.
 	if p.name == "" {
 		p.name = providerName
 	}
