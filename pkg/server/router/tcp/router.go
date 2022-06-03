@@ -252,7 +252,7 @@ func (r *Router) SetHTTPSForwarder(handler tcp.Handler) {
 			Config: tlsConf,
 		})
 		if err != nil {
-			log.WithoutContext().Errorf("Error while adding route for host: %w", err)
+			log.WithoutContext().Errorf("Error while adding route for host: %v", err)
 		}
 	}
 
