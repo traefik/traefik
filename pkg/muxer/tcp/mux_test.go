@@ -685,6 +685,11 @@ func Test_HostSNI(t *testing.T) {
 			ruleHosts:  []string{"foo.bar"},
 			serverName: "foo.bar",
 		},
+		{
+			desc:       "Matching hosts with underscore",
+			ruleHosts:  []string{"foo_bar.baz"},
+			serverName: "foo_bar.baz",
+		},
 	}
 
 	for _, test := range testCases {
