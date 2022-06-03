@@ -18,6 +18,8 @@ import (
 	"github.com/vulcand/predicate"
 )
 
+var almostFQDN = regexp.MustCompile(`^[\w.-]+$`)
+
 var tcpFuncs = map[string]func(*matchersTree, ...string) error{
 	"HostSNI":       hostSNI,
 	"HostSNIRegexp": hostSNIRegexp,
@@ -283,8 +285,6 @@ func clientIP(tree *matchersTree, clientIPs ...string) error {
 
 	return nil
 }
-
-var almostFQDN = regexp.MustCompile(`^[[:alnum:]\.-]+$`)
 
 // hostSNI checks if the SNI Host of the connection match the matcher host.
 func hostSNI(tree *matchersTree, hosts ...string) error {
