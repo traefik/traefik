@@ -80,8 +80,10 @@ spec:
                       description: MiddlewareRef is a ref to the Middleware resources.
                       properties:
                         name:
+                          description: Name of the Middleware
                           type: string
                         namespace:
+                          description: Namespace of the Middleware
                           type: string
                       required:
                       - name
@@ -164,6 +166,8 @@ spec:
                     description: Service defines an upstream to proxy traffic.
                     properties:
                       kind:
+                        description: 'Kind of the Service. Supported values: Service
+                          or TraefikService'
                         enum:
                         - Service
                         - TraefikService
@@ -175,27 +179,43 @@ spec:
                           between the two is specified in the Kind field.
                         type: string
                       namespace:
+                        description: Namespace of this reference
                         type: string
                       passHostHeader:
+                        description: The passHostHeader allows to forward client Host
+                          header to server. By default, passHostHeader is true. Can
+                          only be used on a kubernetes Services.
                         type: boolean
                       port:
                         anyOf:
                         - type: integer
                         - type: string
+                        description: Defines the port of a Kubernetes service. This
+                          can be a reference to a named port. Can only be used on
+                          a kubernetes Services
                         x-kubernetes-int-or-string: true
                       responseForwarding:
-                        description: ResponseForwarding holds configuration for the
-                          forward of the response.
+                        description: Defines how Traefik forwards the response from
+                          the backend server to the client. Can only be used on a
+                          kubernetes Services.
                         properties:
                           flushInterval:
                             type: string
                         type: object
                       scheme:
+                        description: 'Define explicitly the scheme. Supported values:
+                          http,https,h2c. Default to https when kubernetes service
+                          port is 443, http otherwise. Can only be used on a kubernetes
+                          Services.'
                         type: string
                       serversTransport:
+                        description: ServersTransport allows to configure the transport
+                          between Traefik and your servers. Can only be used on a
+                          kubernetes Services.
                         type: string
                       sticky:
-                        description: Sticky holds the sticky configuration.
+                        description: 'Enable and configure sticky session on this
+                          service. More info: https://doc.traefik.io/traefik/routing/services/#sticky-sessions'
                         properties:
                           cookie:
                             description: Cookie holds the sticky configuration based
@@ -212,6 +232,10 @@ spec:
                             type: object
                         type: object
                       strategy:
+                        description: Strategy defines the load balancing strategy
+                          between the servers. It defaults to RoundRobin. It's the
+                          only supported value at the moment. Can only be used on
+                          a kubernetes Services.
                         type: string
                       weight:
                         description: Weight should only be specified when Name references
