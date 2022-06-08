@@ -44,19 +44,26 @@ Let's now have a look (in the order they should be applied, if using `kubectl ap
 
 ### IngressRoute Definition
 
-First, the definition of the `IngressRoute` and the `Middleware` kinds.
-Also note the RBAC authorization resources; they'll be referenced through the `serviceAccountName` of the deployment, later on.
+First, you'll need to install Traefik CRDs and RBAC, with the definition of the `IngressRoute` and the `Middleware` kinds.
+One may note the RBAC authorization resources; they'll be referenced through the `serviceAccountName` of the deployment, later on.
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/master/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1alpha1.yml
+
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/master/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml
+```
 
 ```yaml
---8<-- "content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml"
-
----
 --8<-- "content/reference/dynamic-configuration/kubernetes-crd-rbac.yml"
 ```
 
 ### Services
 
 Then, the services. One for Traefik itself, and one for the app it routes for, i.e. in this case our demo HTTP server: [whoami](https://github.com/traefik/whoami).
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/master/docs/content/user-guides/crd-acme/02-services.yml
+```
 
 ```yaml
 --8<-- "content/user-guides/crd-acme/02-services.yml"
@@ -66,6 +73,10 @@ Then, the services. One for Traefik itself, and one for the app it routes for, i
 
 Next, the deployments, i.e. the actual pods behind the services.
 Again, one pod for Traefik, and one for the whoami app.
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/master/docs/content/user-guides/crd-acme/03-deployments.yml
+```
 
 ```yaml
 --8<-- "content/user-guides/crd-acme/03-deployments.yml"
