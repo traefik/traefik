@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ecs"
+	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/patrickmn/go-cache"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -64,6 +65,7 @@ type machine struct {
 type awsClient struct {
 	ecs *ecs.ECS
 	ec2 *ec2.EC2
+	ssm *ssm.SSM
 }
 
 // DefaultTemplateRule The default template for the default rule.
@@ -139,6 +141,7 @@ func (p *Provider) createClient(logger log.Logger) (*awsClient, error) {
 	return &awsClient{
 		ecs.New(sess, cfg),
 		ec2.New(sess, cfg),
+		ssm.New(sess, cfg),
 	}, nil
 }
 
@@ -277,6 +280,12 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 			return nil, err
 		}
 
+		// Try looking up for instances on ECS Anywhere
+		miInstances, err := p.lookupMiInstances(ctx, client, &c, tasks)
+		if err != nil {
+			return nil, err
+		}
+
 		taskDefinitions, err := p.lookupTaskDefinitions(ctx, client, tasks)
 		if err != nil {
 			return nil, err
@@ -284,6 +293,88 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 
 		for key, task := range tasks {
 			containerInstance := ec2Instances[aws.StringValue(task.ContainerInstanceArn)]
+			taskDef := taskDefinitions[key]
+
+			for _, container := range task.Containers {
+				var containerDefinition *ecs.ContainerDefinition
+				for _, def := range taskDef.ContainerDefinitions {
+					if aws.StringValue(container.Name) == aws.StringValue(def.Name) {
+						containerDefinition = def
+						break
+					}
+				}
+
+				if containerDefinition == nil {
+					logger.Debugf("Unable to find container definition for %s", aws.StringValue(container.Name))
+					continue
+				}
+
+				var mach *machine
+				if len(task.Attachments) != 0 {
+					var ports []portMapping
+					for _, mapping := range containerDefinition.PortMappings {
+						if mapping != nil {
+							protocol := "TCP"
+							if aws.StringValue(mapping.Protocol) == "udp" {
+								protocol = "UDP"
+							}
+
+							ports = append(ports, portMapping{
+								hostPort:      aws.Int64Value(mapping.HostPort),
+								containerPort: aws.Int64Value(mapping.ContainerPort),
+								protocol:      protocol,
+							})
+						}
+					}
+					mach = &machine{
+						privateIP:    aws.StringValue(container.NetworkInterfaces[0].PrivateIpv4Address),
+						ports:        ports,
+						state:        aws.StringValue(task.LastStatus),
+						healthStatus: aws.StringValue(task.HealthStatus),
+					}
+				} else {
+					if containerInstance == nil {
+						logger.Errorf("337 - Unable to find container instance information for %s", aws.StringValue(container.Name))
+						continue
+					}
+
+					var ports []portMapping
+					for _, mapping := range container.NetworkBindings {
+						if mapping != nil {
+							ports = append(ports, portMapping{
+								hostPort:      aws.Int64Value(mapping.HostPort),
+								containerPort: aws.Int64Value(mapping.ContainerPort),
+							})
+						}
+					}
+					mach = &machine{
+						privateIP: aws.StringValue(containerInstance.PrivateIpAddress),
+						ports:     ports,
+						state:     aws.StringValue(containerInstance.State.Name),
+					}
+				}
+
+				instance := ecsInstance{
+					Name:                fmt.Sprintf("%s-%s", strings.Replace(aws.StringValue(task.Group), ":", "-", 1), *container.Name),
+					ID:                  key[len(key)-12:],
+					containerDefinition: containerDefinition,
+					machine:             mach,
+					Labels:              aws.StringValueMap(containerDefinition.DockerLabels),
+				}
+
+				extraConf, err := p.getConfiguration(instance)
+				if err != nil {
+					log.FromContext(ctx).Errorf("Skip container %s: %w", getServiceName(instance), err)
+					continue
+				}
+				instance.ExtraConf = extraConf
+
+				instances = append(instances, instance)
+			}
+		}
+
+		for key, task := range tasks {
+			containerInstance := miInstances[aws.StringValue(task.ContainerInstanceArn)]
 			taskDef := taskDefinitions[key]
 
 			for _, container := range task.Containers {
@@ -339,9 +430,9 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 						}
 					}
 					mach = &machine{
-						privateIP: aws.StringValue(containerInstance.PrivateIpAddress),
+						privateIP: aws.StringValue(containerInstance.IPAddress),
 						ports:     ports,
-						state:     aws.StringValue(containerInstance.State.Name),
+						state:     "running",
 					}
 				}
 
@@ -366,6 +457,65 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 	}
 
 	return instances, nil
+}
+
+func (p *Provider) lookupMiInstances(ctx context.Context, client *awsClient, clusterName *string, ecsDatas map[string]*ecs.Task) (map[string]*ssm.InstanceInformation, error) {
+	instanceIds := make(map[string]string)
+	miInstances := make(map[string]*ssm.InstanceInformation)
+
+	var containerInstancesArns []*string
+	var instanceArns []*string
+
+	for _, task := range ecsDatas {
+		if task.ContainerInstanceArn != nil {
+			containerInstancesArns = append(containerInstancesArns, task.ContainerInstanceArn)
+		}
+	}
+
+	for _, arns := range p.chunkIDs(containerInstancesArns) {
+		resp, err := client.ecs.DescribeContainerInstancesWithContext(ctx, &ecs.DescribeContainerInstancesInput{
+			ContainerInstances: arns,
+			Cluster:            clusterName,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("describing container instances: %w", err)
+		}
+
+		for _, container := range resp.ContainerInstances {
+			instanceIds[aws.StringValue(container.Ec2InstanceId)] = aws.StringValue(container.ContainerInstanceArn)
+
+			instanceArns = append(instanceArns, container.Ec2InstanceId)
+		}
+	}
+
+	if len(instanceArns) > 0 {
+		for _, ids := range p.chunkIDs(instanceArns) {
+			input := &ssm.DescribeInstanceInformationInput{
+				Filters: []*ssm.InstanceInformationStringFilter{
+					{
+						Key:    aws.String("InstanceIds"),
+						Values: ids,
+					},
+				},
+			}
+
+			err := client.ssm.DescribeInstanceInformationPagesWithContext(ctx, input, func(page *ssm.DescribeInstanceInformationOutput, lastPage bool) bool {
+				if len(page.InstanceInformationList) > 0 {
+					for _, i := range page.InstanceInformationList {
+						if i.InstanceId != nil {
+							miInstances[instanceIds[aws.StringValue(i.InstanceId)]] = i
+						}
+					}
+				}
+				return !lastPage
+			})
+			if err != nil {
+				return nil, fmt.Errorf("describing instances: %w", err)
+			}
+		}
+	}
+
+	return miInstances, nil
 }
 
 func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, clusterName *string, ecsDatas map[string]*ecs.Task) (map[string]*ec2.Instance, error) {
