@@ -47,6 +47,8 @@
         [[entryPoints.EntryPoint0.http.tls.domains]]
           main = "foobar"
           sans = ["foobar", "foobar"]
+    [entryPoints.EntryPoint0.http2]
+      maxConcurrentStreams = 42
     [entryPoints.EntryPoint0.http3]
       advertisedPort = 42
     [entryPoints.EntryPoint0.udp]
@@ -155,6 +157,7 @@
     connectByDefault = true
     serviceName = "foobar"
     namespace = "foobar"
+    namespaces = ["foobar", "foobar"]
     watch = true
     [providers.consulCatalog.endpoint]
       address = "foobar"
@@ -188,6 +191,7 @@
     password = "foobar"
     token = "foobar"
     namespace = "foobar"
+    namespaces = ["foobar", "foobar"]
     [providers.consul.tls]
       ca = "foobar"
       caOptional = true
@@ -200,7 +204,6 @@
     username = "foobar"
     password = "foobar"
     token = "foobar"
-    namespace = "foobar"
     [providers.etcd.tls]
       ca = "foobar"
       caOptional = true
@@ -213,7 +216,6 @@
     username = "foobar"
     password = "foobar"
     token = "foobar"
-    namespace = "foobar"
     [providers.zooKeeper.tls]
       ca = "foobar"
       caOptional = true
@@ -226,7 +228,6 @@
     username = "foobar"
     password = "foobar"
     token = "foobar"
-    namespace = "foobar"
     [providers.redis.tls]
       ca = "foobar"
       caOptional = true

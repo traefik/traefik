@@ -108,8 +108,12 @@ This HelmChart does not expose the Traefik dashboard by default, for security co
 Thus, there are multiple ways to expose the dashboard.
 For instance, the dashboard access could be achieved through a port-forward:
 
-```shell
+```shell tab="Without dedicated namespace"
 kubectl port-forward $(kubectl get pods --selector "app.kubernetes.io/name=traefik" --output=name) 9000:9000
+```
+
+```shell tab="With dedicated namespace"
+kubectl port-forward $(kubectl get pods --selector "app.kubernetes.io/name=traefik" -n traefik-v2 --output=name) -n traefik-v2 9000:9000
 ```
 
 It can then be reached at: `http://127.0.0.1:9000/dashboard/`

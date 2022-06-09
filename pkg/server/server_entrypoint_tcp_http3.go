@@ -47,7 +47,7 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 	}
 
 	h3.Server = &http3.Server{
-		Port: uint32(configuration.HTTP3.AdvertisedPort),
+		Port: configuration.HTTP3.AdvertisedPort,
 		Server: &http.Server{
 			Addr:         configuration.GetAddress(),
 			Handler:      httpsServer.Server.(*http.Server).Handler,
