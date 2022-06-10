@@ -4,6 +4,11 @@ on:
   pull_request:
     branches:
       - '*'
+    paths-ignore:
+      - 'docs/**'
+      - 'contrib/**'
+      - 'webui/**'
+      - '**.md'
 
 env:
   GO_VERSION: 1.17
