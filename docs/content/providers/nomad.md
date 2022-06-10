@@ -195,19 +195,19 @@ Token is used to provide a per-request ACL token, if Nomad ACLs are enabled.
 providers:
   nomad:
     endpoint:
-      token: 0f187636-c992-4c3e-a983-095031b5a9ee
+      token: test
     # ...
 ```
 
 ```toml tab="File (TOML)"
 [providers.nomad]
   [providers.nomad.endpoint]
-    token = "0f187636-c992-4c3e-a983-095031b5a9ee"
+    token = "test"
     # ...
 ```
 
 ```bash tab="CLI"
---providers.nomad.endpoint.token=0f187636-c992-4c3e-a983-095031b5a9ee
+--providers.nomad.endpoint.token=test
 # ...
 ```
 
