@@ -822,6 +822,57 @@ Display additional provider logs. (Default: ```false```)
 `--providers.marathon.watch`:  
 Watch provider. (Default: ```true```)
 
+`--providers.nomad`:  
+Enable Nomad backend with default settings. (Default: ```false```)
+
+`--providers.nomad.constraints`:  
+Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service.
+
+`--providers.nomad.defaultrule`:  
+Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
+
+`--providers.nomad.endpoint.address`:  
+The address of the Nomad server, including scheme and port.
+
+`--providers.nomad.endpoint.endpointwaittime`:  
+WaitTime limits how long a Watch will block. If not provided, the agent default values will be used (Default: ```0```)
+
+`--providers.nomad.endpoint.region`:  
+Nomad region to use. If not provided, the local agent region is used.
+
+`--providers.nomad.endpoint.tls.ca`:  
+TLS CA
+
+`--providers.nomad.endpoint.tls.caoptional`:  
+TLS CA.Optional (Default: ```false```)
+
+`--providers.nomad.endpoint.tls.cert`:  
+TLS cert
+
+`--providers.nomad.endpoint.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--providers.nomad.endpoint.tls.key`:  
+TLS key
+
+`--providers.nomad.endpoint.token`:  
+Token is used to provide a per-request ACL token.
+
+`--providers.nomad.exposedbydefault`:  
+Expose Nomad services by default. (Default: ```true```)
+
+`--providers.nomad.namespace`:  
+Sets the Nomad namespace used to discover services.
+
+`--providers.nomad.prefix`:  
+Prefix for nomad service tags. (Default: ```traefik```)
+
+`--providers.nomad.refreshinterval`:  
+Interval for polling Nomad API. (Default: ```15```)
+
+`--providers.nomad.stale`:  
+Use stale consistency for catalog reads. (Default: ```false```)
+
 `--providers.plugin.<name>`:  
 Plugins configuration.
 
