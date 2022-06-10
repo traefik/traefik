@@ -51,7 +51,7 @@ You can find an excerpt of the supported Kubernetes Gateway API resources in the
 
 `GatewayClass` is cluster-scoped resource defined by the infrastructure provider. This resource represents a class of
 Gateways that can be instantiated. More details on the
-GatewayClass [official documentation](https://gateway-api.sigs.k8s.io/v1alpha1/api-types/gatewayclass/).
+GatewayClass [official documentation](https://gateway-api.sigs.k8s.io/v1alpha2/api-types/gatewayclass/).
 
 The `GatewayClass` should be declared by the infrastructure provider, otherwise please register the `GatewayClass`
 [definition](../../reference/dynamic-configuration/kubernetes-gateway.md#definitions) in the Kubernetes cluster before
