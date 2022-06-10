@@ -822,6 +822,57 @@ Display additional provider logs. (Default: ```false```)
 `TRAEFIK_PROVIDERS_MARATHON_WATCH`:  
 Watch provider. (Default: ```true```)
 
+`TRAEFIK_PROVIDERS_NOMAD`:  
+Enable Nomad backend with default settings. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_NOMAD_CONSTRAINTS`:  
+Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service.
+
+`TRAEFIK_PROVIDERS_NOMAD_DEFAULTRULE`:  
+Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
+
+`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_ADDRESS`:  
+The address of the Nomad server, including scheme and port.
+
+`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_ENDPOINTWAITTIME`:  
+WaitTime limits how long a Watch will block. If not provided, the agent default values will be used (Default: ```0```)
+
+`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_REGION`:  
+Nomad region to use. If not provided, the local agent region is used.
+
+`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_TLS_CAOPTIONAL`:  
+TLS CA.Optional (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_TLS_KEY`:  
+TLS key
+
+`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_TOKEN`:  
+Token is used to provide a per-request ACL token.
+
+`TRAEFIK_PROVIDERS_NOMAD_EXPOSEDBYDEFAULT`:  
+Expose Nomad services by default. (Default: ```true```)
+
+`TRAEFIK_PROVIDERS_NOMAD_NAMESPACE`:  
+Sets the Nomad namespace used to discover services.
+
+`TRAEFIK_PROVIDERS_NOMAD_PREFIX`:  
+Prefix for nomad service tags. (Default: ```traefik```)
+
+`TRAEFIK_PROVIDERS_NOMAD_REFRESHINTERVAL`:  
+Interval for polling Nomad API. (Default: ```15```)
+
+`TRAEFIK_PROVIDERS_NOMAD_STALE`:  
+Use stale consistency for catalog reads. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_PLUGIN_<NAME>`:  
 Plugins configuration.
 
