@@ -629,11 +629,12 @@ func Test_buildConfiguration(t *testing.T) {
 			ConnectAware: true,
 			items: []itemData{
 				{
-					ID:         "1",
-					Node:       "Node1",
-					Datacenter: "dc1",
-					Name:       "Test",
-					Namespace:  "ns",
+					ID:                "1",
+					Node:              "Node1",
+					Datacenter:        "dc1",
+					Name:              "Test",
+					ConsulServiceName: "Test",
+					Namespace:         "ns",
 					Labels: map[string]string{
 						"traefik.consulcatalog.connect": "true",
 					},
@@ -642,11 +643,12 @@ func Test_buildConfiguration(t *testing.T) {
 					Status:  api.HealthPassing,
 				},
 				{
-					ID:         "2",
-					Node:       "Node1",
-					Datacenter: "dc1",
-					Name:       "Test",
-					Namespace:  "ns",
+					ID:                "2",
+					Node:              "Node1",
+					Datacenter:        "dc1",
+					Name:              "Test",
+					ConsulServiceName: "Test",
+					Namespace:         "ns",
 					Labels: map[string]string{
 						"traefik.consulnamesuffix":      "Canary",
 						"traefik.consulcatalog.connect": "true",

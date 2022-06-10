@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"strings"
 
 	"github.com/hashicorp/consul/api"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -306,7 +305,7 @@ func (p *Provider) addServer(ctx context.Context, item itemData, loadBalancer *d
 func itemServersTransportKey(item itemData) string {
 	itemName := item.Name
 	if item.ExtraConf.ConsulNameSuffix != "" {
-		itemName = strings.TrimSuffix(item.Name, "-"+item.ExtraConf.ConsulNameSuffix)
+		itemName = item.ConsulServiceName
 	}
 	return provider.Normalize("tls-" + item.Namespace + "-" + item.Datacenter + "-" + itemName)
 }

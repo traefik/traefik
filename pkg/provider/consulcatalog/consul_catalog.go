@@ -31,17 +31,18 @@ const providerName = "consulcatalog"
 var _ provider.Provider = (*Provider)(nil)
 
 type itemData struct {
-	ID         string
-	Node       string
-	Datacenter string
-	Name       string
-	Namespace  string
-	Address    string
-	Port       string
-	Status     string
-	Labels     map[string]string
-	Tags       []string
-	ExtraConf  configuration
+	ID                string
+	Node              string
+	Datacenter        string
+	Name              string
+	ConsulServiceName string
+	Namespace         string
+	Address           string
+	Port              string
+	Status            string
+	Labels            map[string]string
+	Tags              []string
+	ExtraConf         configuration
 }
 
 // ProviderBuilder is responsible for constructing namespaced instances of the Consul Catalog provider.
@@ -332,16 +333,17 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 			}
 
 			item := itemData{
-				ID:         consulService.ServiceID,
-				Node:       consulService.Node,
-				Datacenter: consulService.Datacenter,
-				Namespace:  namespace,
-				Name:       name,
-				Address:    address,
-				Port:       strconv.Itoa(consulService.ServicePort),
-				Labels:     tagsToNeutralLabels(consulService.ServiceTags, p.Prefix),
-				Tags:       consulService.ServiceTags,
-				Status:     status,
+				ID:                consulService.ServiceID,
+				Node:              consulService.Node,
+				Datacenter:        consulService.Datacenter,
+				Namespace:         namespace,
+				Name:              name,
+				ConsulServiceName: name,
+				Address:           address,
+				Port:              strconv.Itoa(consulService.ServicePort),
+				Labels:            tagsToNeutralLabels(consulService.ServiceTags, p.Prefix),
+				Tags:              consulService.ServiceTags,
+				Status:            status,
 			}
 
 			extraConf, err := p.getConfiguration(item.Labels)
