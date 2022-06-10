@@ -623,6 +623,107 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 			},
 		},
+
+		{
+			desc:         "two containers with same service name with consul service name suffix and consul connect",
+			ConnectAware: true,
+			items: []itemData{
+				{
+					ID:                "1",
+					Node:              "Node1",
+					Datacenter:        "dc1",
+					Name:              "Test",
+					ConsulServiceName: "Test",
+					Namespace:         "ns",
+					Labels: map[string]string{
+						"traefik.consulcatalog.connect": "true",
+					},
+					Address: "127.0.0.1",
+					Port:    "80",
+					Status:  api.HealthPassing,
+				},
+				{
+					ID:                "2",
+					Node:              "Node1",
+					Datacenter:        "dc1",
+					Name:              "Test",
+					ConsulServiceName: "Test",
+					Namespace:         "ns",
+					Labels: map[string]string{
+						"traefik.consulnamesuffix":      "Canary",
+						"traefik.consulcatalog.connect": "true",
+					},
+					Address: "127.0.0.2",
+					Port:    "80",
+					Status:  api.HealthPassing,
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"Test": {
+							Service: "Test",
+							Rule:    "Host(`Test.traefik.wtf`)",
+						},
+						"Test-Canary": {
+							Service: "Test-Canary",
+							Rule:    "Host(`Test-Canary.traefik.wtf`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Test": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "https://127.0.0.1:80",
+									},
+								},
+								PassHostHeader:   Bool(true),
+								ServersTransport: "tls-ns-dc1-Test",
+							},
+						},
+						"Test-Canary": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "https://127.0.0.2:80",
+									},
+								},
+								PassHostHeader:   Bool(true),
+								ServersTransport: "tls-ns-dc1-Test",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"tls-ns-dc1-Test": {
+							ServerName:         "ns-dc1-Test",
+							InsecureSkipVerify: true,
+							RootCAs: []tls.FileOrContent{
+								"root",
+							},
+							Certificates: []tls.Certificate{
+								{
+									CertFile: "cert",
+									KeyFile:  "key",
+								},
+							},
+							PeerCertURI: "spiffe:///ns/ns/dc/dc1/svc/Test",
+						},
+					},
+				},
+			},
+		},
+
 		{
 			desc: "two containers with same service name & id no label on same node",
 			items: []itemData{

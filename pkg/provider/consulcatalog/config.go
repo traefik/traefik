@@ -18,6 +18,10 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 	configurations := make(map[string]*dynamic.Configuration)
 
 	for _, item := range items {
+		if item.ExtraConf.ConsulNameSuffix != "" {
+			item.Name += "-" + item.ExtraConf.ConsulNameSuffix
+		}
+
 		svcName := provider.Normalize(item.Node + "-" + item.Name + "-" + item.ID)
 		ctxSvc := log.With(ctx, log.Str(log.ServiceName, svcName))
 
@@ -28,6 +32,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 		logger := log.FromContext(ctxSvc)
 
 		confFromLabel, err := label.DecodeConfiguration(item.Labels)
+
 		if err != nil {
 			logger.Error(err)
 			continue
@@ -298,5 +303,9 @@ func (p *Provider) addServer(ctx context.Context, item itemData, loadBalancer *d
 }
 
 func itemServersTransportKey(item itemData) string {
-	return provider.Normalize("tls-" + item.Namespace + "-" + item.Datacenter + "-" + item.Name)
+	itemName := item.Name
+	if item.ExtraConf.ConsulNameSuffix != "" {
+		itemName = item.ConsulServiceName
+	}
+	return provider.Normalize("tls-" + item.Namespace + "-" + item.Datacenter + "-" + itemName)
 }
