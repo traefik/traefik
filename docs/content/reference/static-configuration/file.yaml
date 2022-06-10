@@ -188,6 +188,25 @@ providers:
       httpAuth:
         username: foobar
         password: foobar
+  nomad:
+    constraints: foobar
+    prefix: foobar
+    refreshInterval: 42s
+    stale: true
+    exposedByDefault: true
+    defaultRule: foobar
+    namespace: foobar
+    endpoint:
+      address: foobar
+      region: foobar
+      token: foobar
+      endpointWaitTime: 42s
+      tls:
+        ca: foobar
+        caOptional: true
+        cert: foobar
+        key: foobar
+        insecureSkipVerify: true
   ecs:
     constraints: foobar
     exposedByDefault: true
