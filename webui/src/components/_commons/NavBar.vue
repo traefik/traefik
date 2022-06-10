@@ -12,7 +12,7 @@
             <q-route-tab to="/http" icon="eva-globe-outline" no-caps label="HTTP" />
             <q-route-tab to="/tcp" icon="eva-globe-2-outline" no-caps label="TCP" />
             <q-route-tab to="/udp" icon="eva-globe-2-outline" no-caps label="UDP" />
-            <q-btn type="a" href="https://plugins.traefik.io" target="_blank" flat no-caps class="btn-menu">
+            <q-btn type="a" href="https://plugins.traefik.io/plugins" target="_blank" flat no-caps class="btn-menu">
                <svg
                 xmlns="http://www.w3.org/2000/svg"
                 xmlnsXlink="http://www.w3.org/1999/xlink"
