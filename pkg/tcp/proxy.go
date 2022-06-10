@@ -46,7 +46,7 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 
 // ServeTCP forwards the connection to a service.
 func (p *Proxy) ServeTCP(conn WriteCloser) {
-	log.WithoutContext().Debugf("Handling connection from %s", conn.RemoteAddr())
+	log.WithoutContext().Debugf("Handling connection from %s to %s", conn.RemoteAddr(), p.address)
 
 	// needed because of e.g. server.trackedConnection
 	defer conn.Close()

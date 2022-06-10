@@ -393,37 +393,6 @@ providers:
 --providers.consulcatalog.endpoint.tls.ca=path/to/ca.crt
 ```
 
-##### `caOptional`
-
-_Optional_
-
-The value of `caOptional` defines which policy should be used for the secure connection with TLS Client Authentication to Consul Catalog.
-
-!!! warning ""
-
-    If `ca` is undefined, this option will be ignored, and no client certificate will be requested during the handshake. Any provided certificate will thus never be verified.
-
-When this option is set to `true`, a client certificate is requested during the handshake but is not required. If a certificate is sent, it is required to be valid.
-
-When this option is set to `false`, a client certificate is requested during the handshake, and at least one valid certificate should be sent by the client.
-
-```yaml tab="File (YAML)"
-providers:
-  consulCatalog:
-    endpoint:
-      tls:
-        caOptional: true
-```
-
-```toml tab="File (TOML)"
-[providers.consulCatalog.endpoint.tls]
-  caOptional = true
-```
-
-```bash tab="CLI"
---providers.consulcatalog.endpoint.tls.caoptional=true
-```
-
 ##### `cert`
 
 _Optional_
@@ -556,7 +525,7 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.consulcatalog.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+--providers.consulcatalog.defaultRule=Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)
 # ...
 ```
 
@@ -700,30 +669,76 @@ For additional information, refer to [Restrict the Scope of Service Discovery](.
 
 ### `namespace`
 
+??? warning "Deprecated in favor of the [`namespaces`](#namespaces) option."
+
+    _Optional, Default=""_
+    
+    The `namespace` option defines the namespace in which the consul catalog services will be discovered.
+    
+    !!! warning
+    
+        The namespace option only works with [Consul Enterprise](https://www.consul.io/docs/enterprise),
+        which provides the [Namespaces](https://www.consul.io/docs/enterprise/namespaces) feature.
+    
+    !!! warning
+    
+        One should only define either the `namespaces` option or the `namespace` option.
+    
+    ```yaml tab="File (YAML)"
+    providers:
+      consulCatalog:
+        namespace: "production" 
+        # ...
+    ```
+    
+    ```toml tab="File (TOML)"
+    [providers.consulCatalog]
+      namespace = "production"
+      # ...
+    ```
+    
+    ```bash tab="CLI"
+    --providers.consulcatalog.namespace=production
+    # ...
+    ```
+
+### `namespaces`
+
 _Optional, Default=""_
 
-The `namespace` option defines the namespace in which the consul catalog services will be discovered.
+The `namespaces` option defines the namespaces in which the consul catalog services will be discovered.
+When using the `namespaces` option, the discovered configuration object names will be suffixed as shown below:
+
+```text
+<resource-name>@consulcatalog-<namespace>
+```
 
 !!! warning
 
-    The namespace option only works with [Consul Enterprise](https://www.consul.io/docs/enterprise),
+    The namespaces option only works with [Consul Enterprise](https://www.consul.io/docs/enterprise),
     which provides the [Namespaces](https://www.consul.io/docs/enterprise/namespaces) feature.
+
+!!! warning
+
+    One should only define either the `namespaces` option or the `namespace` option.
 
 ```yaml tab="File (YAML)"
 providers:
   consulCatalog:
-    namespace: "production" 
+    namespaces: 
+      - "ns1"
+      - "ns2"
     # ...
 ```
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
-  namespace = "production"
+  namespaces = ["ns1", "ns2"]
   # ...
 ```
 
 ```bash tab="CLI"
---providers.consulcatalog.namespace=production
+--providers.consulcatalog.namespaces=ns1,ns2
 # ...
 ```
 

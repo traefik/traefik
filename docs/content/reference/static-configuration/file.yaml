@@ -30,8 +30,8 @@ entryPoints:
     forwardedHeaders:
       insecure: true
       trustedIPs:
-        - foobar
-        - foobar
+      - foobar
+      - foobar
     http:
       redirections:
         entryPoint:
@@ -54,6 +54,8 @@ entryPoints:
             sans:
               - foobar
               - foobar
+    http2:
+      maxConcurrentStreams: 42
     http3:
       advertisedPort: 42
     udp:
@@ -167,6 +169,9 @@ providers:
     connectByDefault: true
     serviceName: foobar
     namespace: foobar
+    namespaces:
+      - foobar
+      - foobar
     watch: true
     endpoint:
       address: foobar
@@ -204,6 +209,9 @@ providers:
     password: foobar
     token: foobar
     namespace: foobar
+    namespaces:
+      - foobar
+      - foobar
     tls:
       ca: foobar
       caOptional: true
@@ -218,7 +226,6 @@ providers:
     username: foobar
     password: foobar
     token: foobar
-    namespace: foobar
     tls:
       ca: foobar
       caOptional: true
@@ -233,7 +240,6 @@ providers:
     username: foobar
     password: foobar
     token: foobar
-    namespace: foobar
     tls:
       ca: foobar
       caOptional: true
@@ -248,7 +254,6 @@ providers:
     username: foobar
     password: foobar
     token: foobar
-    namespace: foobar
     tls:
       ca: foobar
       caOptional: true
