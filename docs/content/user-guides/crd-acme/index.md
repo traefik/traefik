@@ -102,7 +102,7 @@ Look it up.
 We can now finally apply the actual ingressRoutes, with:
 
 ```bash
-kubectl apply -f 04-ingressroutes.yml
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/master/docs/content/user-guides/crd-acme/04-ingressroutes.yml
 ```
 
 ```yaml
@@ -121,3 +121,15 @@ curl http://your.example.com:8000/notls
 ```
 
 Note that you'll have to use `-k` as long as you're using the staging server of Let's Encrypt, since it is not an authorized certificate authority on systems where it hasn't been manually added.
+
+### Force TLS v1.2+
+
+Nowadays, TLS v1.0 and v1.1 are deprecated. In order to configure TLS Connection, one can use the TLSOption CRD. In order to force TLS v1.2 or later on all your IngressRoute, you can use a special TLSOption with the name `default`:
+
+```bash
+kubectl apply -fhttps://raw.githubusercontent.com/traefik/traefik/master/docs/content/user-guides/crd-acme/05-tlsoption.yml
+```
+
+```yaml
+--8<-- "content/user-guides/crd-acme/05-tlsoption.yml"
+```
