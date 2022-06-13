@@ -19,7 +19,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: IngressRouteTCP is an Ingress CRD specification.
+        description: IngressRouteTCP is the CRD implementation of a Traefik TCP Router
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,18 +34,23 @@ spec:
           metadata:
             type: object
           spec:
-            description: IngressRouteTCPSpec is a specification for a IngressRouteTCPSpec
-              resource.
+            description: IngressRouteTCPSpec defines the desired state of IngressRouteTCP.
             properties:
               entryPoints:
+                description: 'List of entry points to use on this IngressRouteTCP
+                  They are defined in your static configuration. (Default: use all
+                  entrypoints)'
                 items:
                   type: string
                 type: array
               routes:
+                description: List of routes
                 items:
                   description: RouteTCP contains the set of routes.
                   properties:
                     match:
+                      description: 'Defines the rule of the underlying TCP Router.
+                        More info: https://doc.traefik.io/traefik/routing/routers/#rule_1'
                       type: string
                     middlewares:
                       description: Middlewares contains references to MiddlewareTCP
@@ -63,29 +68,47 @@ spec:
                         type: object
                       type: array
                     priority:
+                      description: Priority is used to disambiguate rules of the same
+                        length, for route matching
                       type: integer
                     services:
+                      description: List of Kubernetes Service
                       items:
                         description: ServiceTCP defines an upstream to proxy traffic.
                         properties:
                           name:
+                            description: Name is a reference to a Kubernetes Service
+                              object
                             type: string
                           namespace:
+                            description: Namespace of the Kubernetes Service object
                             type: string
                           port:
                             anyOf:
                             - type: integer
                             - type: string
+                            description: Defines the port of a Kubernetes service.
+                              This can be a reference to a named port.
                             x-kubernetes-int-or-string: true
                           proxyProtocol:
-                            description: ProxyProtocol holds the ProxyProtocol configuration.
+                            description: 'Defines the PROXY protocol configuration.
+                              More info: https://doc.traefik.io/traefik/routing/services/#proxy-protocol'
                             properties:
                               version:
                                 type: integer
                             type: object
                           terminationDelay:
+                            description: corresponds to the deadline that the proxy
+                              sets, after one of its connected peers indicates it
+                              has closed the writing capability of its connection,
+                              to close the reading capability as well, hence fully
+                              terminating the connection. It is a duration in milliseconds,
+                              defaulting to 100. A negative value means an infinite
+                              deadline (i.e. the reading capability is never closed).
                             type: integer
                           weight:
+                            description: Used when balancing requests between multiple
+                              services
                             type: integer
                         required:
                         - name
@@ -97,14 +120,18 @@ spec:
                   type: object
                 type: array
               tls:
-                description: "TLSTCP contains the TLS certificates configuration of
-                  the routes. To enable Let's Encrypt, use an empty TLS struct, e.g.
-                  in YAML: \n \t tls: {} # inline format \n \t tls: \t   secretName:
+                description: "Define TLS certificate configuration on a layer 4 /
+                  TCP Route To enable Let's Encrypt, use an empty TLS struct, e.g.
+                  in YAML: \n   tls: {} # inline format \n   tls:     secretName:
                   # block format"
                 properties:
                   certResolver:
+                    description: 'Name of certificate resolver to use. They are defined
+                      in static configuration. More info: https://doc.traefik.io/traefik/https/acme/#certificate-resolvers'
                     type: string
                   domains:
+                    description: 'List of Domains. Uses Host in in rule by default.
+                      Useful to get a wildcard certificate. More info: https://doc.traefik.io/traefik/routing/routers/#domains'
                     items:
                       description: Domain holds a domain name with SANs.
                       properties:
@@ -117,8 +144,9 @@ spec:
                       type: object
                     type: array
                   options:
-                    description: Options is a reference to a TLSOption, that specifies
-                      the parameters of the TLS connection.
+                    description: 'Options is a reference to a TLSOption, that specifies
+                      the parameters of the TLS connection. Default: use TLSOption
+                      named ''default''. More info: https://doc.traefik.io/traefik/https/tls/#tls-options'
                     properties:
                       name:
                         type: string
@@ -128,6 +156,10 @@ spec:
                     - name
                     type: object
                   passthrough:
+                    description: 'A TLS router will terminate the TLS connection by
+                      default. However, the passthrough option can be specified to
+                      set whether the requests should be forwarded "as is", keeping
+                      all data encrypted. Default: false'
                     type: boolean
                   secretName:
                     description: SecretName is the name of the referenced Kubernetes

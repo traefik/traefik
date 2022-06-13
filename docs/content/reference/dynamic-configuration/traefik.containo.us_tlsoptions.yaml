@@ -19,7 +19,9 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: TLSOption is a specification for a TLSOption resource.
+        description: 'TLSOption is the CRD implementation of a Traefik "TLS Option",
+          allowing to configure some parameters of the TLS connection. More info:
+          https://doc.traefik.io/traefik/https/tls/#tls-options'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,13 +36,17 @@ spec:
           metadata:
             type: object
           spec:
-            description: TLSOptionSpec configures TLS for an entry point.
+            description: TLSOptionSpec defines the desired state of TLSOption.
             properties:
               alpnProtocols:
+                description: 'List of supported application level protocols for the
+                  TLS handshake, in order of preference. More info: https://doc.traefik.io/traefik/https/tls/#alpn-protocols'
                 items:
                   type: string
                 type: array
               cipherSuites:
+                description: 'List of supported cipher suites for TLS versions up
+                  to TLS 1.2. More info: https://doc.traefik.io/traefik/https/tls/#cipher-suites'
                 items:
                   type: string
                 type: array
@@ -66,16 +72,30 @@ spec:
                     type: array
                 type: object
               curvePreferences:
+                description: 'This option allows to set the preferred elliptic curves
+                  in a specific order. More info: https://doc.traefik.io/traefik/https/tls/#curve-preferences'
                 items:
                   type: string
                 type: array
               maxVersion:
+                description: 'Defines the maximum TLS version that Traefik will accept.
+                  Possible values: VersionTLS10, VersionTLS11, VersionTLS12, VersionTLS13.
+                  Default: None.'
                 type: string
               minVersion:
+                description: 'Defines the minimum TLS version that Traefik will accept.
+                  Possible values: VersionTLS10, VersionTLS11, VersionTLS12, VersionTLS13.
+                  Default: VersionTLS10'
                 type: string
               preferServerCipherSuites:
+                description: This option allows the server to choose its most preferred
+                  cipher suite instead of the client's. It is enabled automatically
+                  when minVersion or maxVersion are set.
                 type: boolean
               sniStrict:
+                description: 'If true, Traefik won''t allow connections from clients
+                  connections that do not specify a server_name extension. Default:
+                  false.'
                 type: boolean
             type: object
         required:
