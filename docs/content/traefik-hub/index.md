@@ -40,7 +40,8 @@ This agent can:
         insecure: true
 
     metrics:
-        prometheus: {}
+      prometheus:
+        addRoutersLabels: true
     ```
 
     ```toml tab="File (TOML)"
@@ -53,12 +54,13 @@ This agent can:
 
     [metrics]
       [metrics.prometheus]
+        addRoutersLabels = true
     ```
 
     ```bash tab="CLI"
     --experimental.hub
     --hub.tls.insecure
-    --metrics.prometheus
+    --metrics.prometheus.addrouterslabels
     ```
 
 !!! example "Minimal Static Configuration to Activate Traefik Hub for Kubernetes"
@@ -70,7 +72,8 @@ This agent can:
     hub: {}
 
     metrics:
-        prometheus: {}
+      prometheus:
+        addRoutersLabels: true
     ```
 
     ```toml tab="File (TOML)"
@@ -81,12 +84,13 @@ This agent can:
 
     [metrics]
       [metrics.prometheus]
+        addRoutersLabels = true
     ```
 
     ```bash tab="CLI"
     --experimental.hub
     --hub
-    --metrics.prometheus
+    --metrics.prometheus.addrouterslabels
     ```
 
 ## Configuration
