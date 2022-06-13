@@ -1317,7 +1317,8 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: MiddlewareTCP is a specification for a MiddlewareTCP resource.
+        description: 'MiddlewareTCP is the CRD implementation of a Traefik TCP middleware.
+          More info: https://doc.traefik.io/traefik/middlewares/overview/'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -1332,7 +1333,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: MiddlewareTCPSpec holds the MiddlewareTCP configuration.
+            description: MiddlewareTCPSpec defines the desired state of MiddlewareTCP.
             properties:
               inFlightConn:
                 description: 'To proactively prevent services from being overwhelmed
@@ -1391,7 +1392,10 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: ServersTransport is a specification for a ServersTransport resource.
+        description: 'ServersTransport is the CRD implementation of a ServersTransport.
+          If no serversTransport is specified, the default@internal will be used.
+          The default@internal serversTransport is created from the static configuration.
+          More info: https://doc.traefik.io/traefik/routing/services/#serverstransport_1'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -1406,8 +1410,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: ServersTransportSpec options to configure communication between
-              Traefik and the servers.
+            description: ServersTransportSpec defines the desired state of ServersTransport.
             properties:
               certificatesSecrets:
                 description: Certificates for mTLS.
@@ -1513,7 +1516,9 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: TLSOption is a specification for a TLSOption resource.
+        description: 'TLSOption is the CRD implementation of a Traefik "TLS Option",
+          allowing to configure some parameters of the TLS connection. More info:
+          https://doc.traefik.io/traefik/https/tls/#tls-options'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -1528,13 +1533,17 @@ spec:
           metadata:
             type: object
           spec:
-            description: TLSOptionSpec configures TLS for an entry point.
+            description: TLSOptionSpec defines the desired state of TLSOption.
             properties:
               alpnProtocols:
+                description: 'List of supported application level protocols for the
+                  TLS handshake, in order of preference. More info: https://doc.traefik.io/traefik/https/tls/#alpn-protocols'
                 items:
                   type: string
                 type: array
               cipherSuites:
+                description: 'List of supported cipher suites for TLS versions up
+                  to TLS 1.2. More info: https://doc.traefik.io/traefik/https/tls/#cipher-suites'
                 items:
                   type: string
                 type: array
@@ -1560,16 +1569,30 @@ spec:
                     type: array
                 type: object
               curvePreferences:
+                description: 'This option allows to set the preferred elliptic curves
+                  in a specific order. More info: https://doc.traefik.io/traefik/https/tls/#curve-preferences'
                 items:
                   type: string
                 type: array
               maxVersion:
+                description: 'Defines the maximum TLS version that Traefik will accept.
+                  Possible values: VersionTLS10, VersionTLS11, VersionTLS12, VersionTLS13.
+                  Default: None.'
                 type: string
               minVersion:
+                description: 'Defines the minimum TLS version that Traefik will accept.
+                  Possible values: VersionTLS10, VersionTLS11, VersionTLS12, VersionTLS13.
+                  Default: VersionTLS10'
                 type: string
               preferServerCipherSuites:
+                description: This option allows the server to choose its most preferred
+                  cipher suite instead of the client's. It is enabled automatically
+                  when minVersion or maxVersion are set.
                 type: boolean
               sniStrict:
+                description: 'If true, Traefik won''t allow connections from clients
+                  connections that do not specify a server_name extension. Default:
+                  false.'
                 type: boolean
             type: object
         required:
@@ -1605,7 +1628,11 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: TLSStore is a specification for a TLSStore resource.
+        description: 'TLSStore is the CRD implementation of a Traefik "TLS Store".
+          Traefik currently only uses the TLS Store named "default". This means that
+          if you have two stores that are named default in different kubernetes namespaces,
+          they may be randomly chosen. For the time being, please only configure one
+          TLSSTore named default. More info: https://doc.traefik.io/traefik/https/tls/#certificates-stores'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -1620,7 +1647,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: TLSStoreSpec configures a TLSStore resource.
+            description: TLSStoreSpec defines the desired state of TLSStore.
             properties:
               defaultCertificate:
                 description: DefaultCertificate holds a secret name for the TLSOption
