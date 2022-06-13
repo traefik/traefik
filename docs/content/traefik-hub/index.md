@@ -14,9 +14,9 @@ This agent can:
 
 !!! warning "Traefik Hub Entrypoints"
 
-    When the Traefik Hub feature is enabled, Traefik exposes some services meant for the Traefik Hub Agent on a dedicated entrypoints (on ports `9900` and `9901` by default).
+    When the Traefik Hub feature is enabled, Traefik exposes some services meant for the Traefik Hub Agent on dedicated entrypoints (on ports `9900` and `9901` by default).
     Given their sensitive nature, those services should not be publicly exposed.
-    Also this dedicated entrypoint, regardless of how it is created (default, or user-defined), should not be used by anything other than the Hub Agent.
+    Also those dedicated entrypoints, regardless of how they are created (default, or user-defined), should not be used by anything other than the Hub Agent.
 
 !!! important "Learn More About Traefik Hub"
 
