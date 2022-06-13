@@ -194,8 +194,6 @@ func (c *client) SendInstanceInfo(ctx context.Context, pilotMetrics []metrics.Pi
 		if err != nil {
 			return fmt.Errorf("failed to create UUID: %w", err)
 		}
-
-		version.UUID = c.uuid
 	}
 
 	info := instanceInfo{

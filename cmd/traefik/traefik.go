@@ -217,8 +217,6 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	if staticConfiguration.Pilot != nil {
 		log.WithoutContext().Warn("Traefik Pilot is deprecated and will be removed soon. Please check our Blog for migration instructions later this year.")
-
-		version.PilotEnabled = staticConfiguration.Pilot.Dashboard
 	}
 
 	// Plugins
