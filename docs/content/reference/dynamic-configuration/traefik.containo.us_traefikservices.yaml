@@ -36,7 +36,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: TraefikServiceSpec defines the desired state of a TraefikService
+            description: TraefikServiceSpec defines the desired state of a TraefikService.
             properties:
               mirroring:
                 description: 'Mirroring defines a mirroring service, which is composed

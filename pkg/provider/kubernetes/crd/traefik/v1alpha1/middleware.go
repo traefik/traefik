@@ -16,13 +16,13 @@ type Middleware struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
 
-  // MiddlewareSpec defines the desired state of Middleware
+	// MiddlewareSpec defines the desired state of Middleware
 	Spec MiddlewareSpec `json:"spec"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// MiddlewareSpec defines the desired state of Middleware
+// MiddlewareSpec defines the desired state of Middleware.
 type MiddlewareSpec struct {
 	AddPrefix         *dynamic.AddPrefix             `json:"addPrefix,omitempty"`
 	StripPrefix       *dynamic.StripPrefix           `json:"stripPrefix,omitempty"`

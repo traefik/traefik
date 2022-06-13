@@ -19,7 +19,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: IngressRoute is the CRD implementation of a Traefik HTTP Router
+        description: IngressRoute is the CRD implementation of a Traefik HTTP Router.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
