@@ -1,3 +1,20 @@
+## [v2.7.1](https://github.com/traefik/traefik/tree/v2.7.1) (2022-06-13)
+[All Commits](https://github.com/traefik/traefik/compare/v2.7.0...v2.7.1)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.7.0 ([#9065](https://github.com/traefik/traefik/pull/9065) by [ldez](https://github.com/ldez))
+- **[logs]** Fix invalid placeholder in log message ([#9084](https://github.com/traefik/traefik/pull/9084) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[hub]** Hub documentation ([#9090](https://github.com/traefik/traefik/pull/9090) by [ldez](https://github.com/ldez))
+- **[k8s,k8s/gatewayapi]** Update Gateway API link from v1alpha1 to v1alpha2 ([#9083](https://github.com/traefik/traefik/pull/9083) by [tomMoulard](https://github.com/tomMoulard))
+- **[k8s,k8s/gatewayapi]** Update Gateway API links ([#9058](https://github.com/traefik/traefik/pull/9058) by [tomMoulard](https://github.com/tomMoulard))
+- **[middleware]** Fix typo in stripPrefix middleware docs ([#9051](https://github.com/traefik/traefik/pull/9051) by [rbarbey](https://github.com/rbarbey))
+- **[rules]** Fix rule expression rendering ([#9076](https://github.com/traefik/traefik/pull/9076) by [ldez](https://github.com/ldez))
+- Update the link for contributor swag ([#9056](https://github.com/traefik/traefik/pull/9056) by [tfny](https://github.com/tfny))
+- Fix Traefik version s/2.6/2.7/ ([#9047](https://github.com/traefik/traefik/pull/9047) by [mpl](https://github.com/mpl))
+- Update the contributing docs for clarity and to encourage community activity ([#9035](https://github.com/traefik/traefik/pull/9035) by [tfny](https://github.com/tfny))
+
 ## [v2.7.0](https://github.com/traefik/traefik/tree/v2.7.0) (2022-05-24)
 [All Commits](https://github.com/traefik/traefik/compare/v2.7.0-rc1...v2.7.0)
 
