@@ -117,6 +117,14 @@ spec:
                               on a kubernetes Services.
                             properties:
                               flushInterval:
+                                description: 'It specifies the interval in between
+                                  flushes to the client while copying the response
+                                  body. It is a duration in milliseconds. A negative
+                                  value means to flush immediately after each write
+                                  to the client. The FlushInterval is ignored when
+                                  ReverseProxy recognizes a response as a streaming
+                                  response; for such responses, writes are flushed
+                                  to the client immediately. Default: 100'
                                 type: string
                             type: object
                           scheme:
@@ -139,12 +147,22 @@ spec:
                                   based on cookie.
                                 properties:
                                   httpOnly:
+                                    description: 'An http-only cookie cannot be accessed
+                                      by client-side APIs, such as JavaScript. Default:
+                                      false'
                                     type: boolean
                                   name:
+                                    description: 'Cookie name. Value will be the destination.
+                                      Default: An abbreviation of a sha1 (ex: _1d52e).'
                                     type: string
                                   sameSite:
+                                    description: 'Supported values: "", none, lax,
+                                      strict. Default: "". More info: https://blog.chromium.org/2019/10/developers-get-ready-for-new.html'
                                     type: string
                                   secure:
+                                    description: 'A secure cookie can only be transmitted
+                                      over an encrypted connection (i.e. HTTPS). Default:
+                                      false'
                                     type: boolean
                                 type: object
                             type: object
