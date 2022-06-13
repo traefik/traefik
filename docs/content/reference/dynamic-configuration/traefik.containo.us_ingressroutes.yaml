@@ -192,8 +192,9 @@ spec:
                       type: object
                     type: array
                   options:
-                    description: Options is a reference to a TLSOption, that specifies
-                      the parameters of the TLS connection.
+                    description: 'Options is a reference to a TLSOption, that specifies
+                      the parameters of the TLS connection. Default: use TLSOption
+                      named ''default''. More info: https://doc.traefik.io/traefik/https/tls/#tls-options'
                     properties:
                       name:
                         description: 'Name of the TLSOption. More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-tlsoption'
