@@ -2,7 +2,7 @@ package dynamic
 
 // +k8s:deepcopy-gen=true
 
-// MiddlewareTCP is the CRD implementation of a Traefik TCP middleware. More info: https://doc.traefik.io/traefik/middlewares/overview/
+// TCPMiddleware holds the TCPMiddleware configuration.
 type TCPMiddleware struct {
 	InFlightConn *TCPInFlightConn `json:"inFlightConn,omitempty" toml:"inFlightConn,omitempty" yaml:"inFlightConn,omitempty" export:"true"`
 	IPWhiteList  *TCPIPWhiteList  `json:"ipWhiteList,omitempty" toml:"ipWhiteList,omitempty" yaml:"ipWhiteList,omitempty" export:"true"`

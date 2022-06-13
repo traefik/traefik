@@ -9,7 +9,7 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
 
-// ServersTransport is a specification for a ServersTransport resource.
+// ServersTransport is the CRD implementation of a ServersTransport. If no serversTransport is specified, the default@internal will be used. The default@internal serversTransport is created from the static configuration. More info: https://doc.traefik.io/traefik/routing/services/#serverstransport_1
 type ServersTransport struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
@@ -19,7 +19,7 @@ type ServersTransport struct {
 
 // +k8s:deepcopy-gen=true
 
-// ServersTransportSpec options to configure communication between Traefik and the servers.
+// ServersTransportSpec defines the desired state of ServersTransport.
 type ServersTransportSpec struct {
 	// ServerName used to contact the server.
 	ServerName string `json:"serverName,omitempty"`

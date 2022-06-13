@@ -10,7 +10,7 @@ import (
 
 // +k8s:deepcopy-gen=true
 
-// Middleware is the CRD implementation of a Traefik middleware. More info: https://doc.traefik.io/traefik/middlewares/overview/
+// Middleware holds the Middleware configuration.
 type Middleware struct {
 	AddPrefix         *AddPrefix         `json:"addPrefix,omitempty" toml:"addPrefix,omitempty" yaml:"addPrefix,omitempty" export:"true"`
 	StripPrefix       *StripPrefix       `json:"stripPrefix,omitempty" toml:"stripPrefix,omitempty" yaml:"stripPrefix,omitempty" export:"true"`
