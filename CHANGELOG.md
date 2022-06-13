@@ -1,3 +1,27 @@
+## [v2.8.0-rc1](https://github.com/traefik/traefik/tree/v2.8.0-rc1) (2022-06-13)
+[All Commits](https://github.com/traefik/traefik/compare/v2.7.0-rc1...v2.8.0-rc1)
+
+**Enhancements:**
+- **[consul,consulcatalog]** Support multiple namespaces for Consul and ConsulCatalog providers ([#8979](https://github.com/traefik/traefik/pull/8979) by [rtribotte](https://github.com/rtribotte))
+- **[http3]** Upgrade quic-go to v0.27.0 ([#8922](https://github.com/traefik/traefik/pull/8922) by [tomMoulard](https://github.com/tomMoulard))
+- **[http3]** Upgrade quic-go to v0.26.0 ([#8874](https://github.com/traefik/traefik/pull/8874) by [sylr](https://github.com/sylr))
+- **[logs]** Add destination address to debug log ([#9032](https://github.com/traefik/traefik/pull/9032) by [qmloong](https://github.com/qmloong))
+- **[middleware,provider,tls]** Deprecate caOptional option in client TLS configuration ([#8960](https://github.com/traefik/traefik/pull/8960) by [kevinpollet](https://github.com/kevinpollet))
+- **[middleware]** Support URL replacement in errors middleware ([#8956](https://github.com/traefik/traefik/pull/8956) by [tomMoulard](https://github.com/tomMoulard))
+- **[middleware]** Allow config of additional CircuitBreaker params ([#8907](https://github.com/traefik/traefik/pull/8907) by [aidy](https://github.com/aidy))
+- **[provider]** Implement Traefik provider for Nomad orchestrator ([#9018](https://github.com/traefik/traefik/pull/9018) by [shoenig](https://github.com/shoenig))
+- **[server]** Allow HTTP/2 max concurrent stream configuration ([#8781](https://github.com/traefik/traefik/pull/8781) by [tomMoulard](https://github.com/tomMoulard))
+- **[tls,k8s/crd]** Support certificates configuration in TLSStore CRD ([#8976](https://github.com/traefik/traefik/pull/8976) by [kevinpollet](https://github.com/kevinpollet))
+- **[webui,pilot,hub]** Add Traefik Hub button and deprecate Pilot ([#9091](https://github.com/traefik/traefik/pull/9091) by [ldez](https://github.com/ldez))
+- **[webui,plugins]** Reach the catalog of plugins from the Traefik dashboard ([#9055](https://github.com/traefik/traefik/pull/9055) by [seedy](https://github.com/seedy))
+
+**Misc:**
+- Merge current v2.7 into master ([#9095](https://github.com/traefik/traefik/pull/9095) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.7 into master ([#9085](https://github.com/traefik/traefik/pull/9085) by [tomMoulard](https://github.com/tomMoulard))
+- Merge current v2.7 into master ([#9060](https://github.com/traefik/traefik/pull/9060) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.7 into master ([#9052](https://github.com/traefik/traefik/pull/9052) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.7 into master ([#8959](https://github.com/traefik/traefik/pull/8959) by [tomMoulard](https://github.com/tomMoulard))
+
 ## [v2.7.1](https://github.com/traefik/traefik/tree/v2.7.1) (2022-06-13)
 [All Commits](https://github.com/traefik/traefik/compare/v2.7.0...v2.7.1)
 
