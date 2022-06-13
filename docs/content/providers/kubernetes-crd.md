@@ -33,13 +33,12 @@ the Traefik engineering team developed a [Custom Resource Definition](https://ku
 
 ??? example "Initializing Resource Definition and RBAC"
 
-    ```yaml tab="Traefik Resource Definition"
-    # All resources definition must be declared
-    --8<-- "content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml"
+    ```bash tab="Traefik Resource Definition"
+    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/master/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1alpha1.yml
     ```
 
-    ```yaml tab="RBAC for Traefik CRD"
-    --8<-- "content/reference/dynamic-configuration/kubernetes-crd-rbac.yml"
+    ```bash tab="RBAC for Traefik CRD"
+    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/master/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml"
     ```
 
 ## Resource Configuration
