@@ -19,7 +19,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: IngressRouteUDP is an Ingress CRD specification.
+        description: IngressRouteUDP is a CRD implementation of a Traefik UDP Router.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,31 +34,42 @@ spec:
           metadata:
             type: object
           spec:
-            description: IngressRouteUDPSpec is a specification for a IngressRouteUDPSpec
-              resource.
+            description: IngressRouteUDPSpec defines the desired state of a IngressRouteUDP.
             properties:
               entryPoints:
+                description: 'List of entry points to use on this IngressRouteTCP
+                  They are defined in your static configuration. (Default: use all
+                  entrypoints)'
                 items:
                   type: string
                 type: array
               routes:
+                description: List of routes
                 items:
                   description: RouteUDP contains the set of routes.
                   properties:
                     services:
+                      description: List of Kubernetes Services
                       items:
                         description: ServiceUDP defines an upstream to proxy traffic.
                         properties:
                           name:
+                            description: Name is a reference to a Kubernetes Service
+                              object
                             type: string
                           namespace:
+                            description: Namespace of the Kubernetes Service object
                             type: string
                           port:
                             anyOf:
                             - type: integer
                             - type: string
+                            description: Defines the port of a Kubernetes service.
+                              This can be a reference to a named port.
                             x-kubernetes-int-or-string: true
                           weight:
+                            description: Used when balancing requests between multiple
+                              services
                             type: integer
                         required:
                         - name

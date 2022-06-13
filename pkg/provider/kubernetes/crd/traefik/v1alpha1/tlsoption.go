@@ -8,7 +8,7 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
 
-// TLSOption is a specification for a TLSOption resource.
+// TLSOption is the CRD implementation of a Traefik "TLS Option", allowing to configure some parameters of the TLS connection. More info: https://doc.traefik.io/traefik/https/tls/#tls-options
 type TLSOption struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
@@ -18,16 +18,24 @@ type TLSOption struct {
 
 // +k8s:deepcopy-gen=true
 
-// TLSOptionSpec configures TLS for an entry point.
+// TLSOptionSpec defines the desired state of TLSOption.
 type TLSOptionSpec struct {
-	MinVersion               string     `json:"minVersion,omitempty"`
-	MaxVersion               string     `json:"maxVersion,omitempty"`
-	CipherSuites             []string   `json:"cipherSuites,omitempty"`
-	CurvePreferences         []string   `json:"curvePreferences,omitempty"`
-	ClientAuth               ClientAuth `json:"clientAuth,omitempty"`
-	SniStrict                bool       `json:"sniStrict,omitempty"`
-	PreferServerCipherSuites bool       `json:"preferServerCipherSuites,omitempty"`
-	ALPNProtocols            []string   `json:"alpnProtocols,omitempty"`
+	// Defines the minimum TLS version that Traefik will accept. Possible values: VersionTLS10, VersionTLS11, VersionTLS12, VersionTLS13. Default: VersionTLS10
+	MinVersion string `json:"minVersion,omitempty"`
+	// Defines the maximum TLS version that Traefik will accept. Possible values: VersionTLS10, VersionTLS11, VersionTLS12, VersionTLS13. Default: None.
+	MaxVersion string `json:"maxVersion,omitempty"`
+	// List of supported cipher suites for TLS versions up to TLS 1.2. More info: https://doc.traefik.io/traefik/https/tls/#cipher-suites
+	CipherSuites []string `json:"cipherSuites,omitempty"`
+	// This option allows to set the preferred elliptic curves in a specific order. More info: https://doc.traefik.io/traefik/https/tls/#curve-preferences
+	CurvePreferences []string   `json:"curvePreferences,omitempty"`
+	ClientAuth       ClientAuth `json:"clientAuth,omitempty"`
+	// If true, Traefik won't allow connections from clients connections that do not specify a server_name extension. Default: false.
+	SniStrict bool `json:"sniStrict,omitempty"`
+	// This option allows the server to choose its most preferred cipher suite instead of the client's.
+	// It is enabled automatically when minVersion or maxVersion are set.
+	PreferServerCipherSuites bool `json:"preferServerCipherSuites,omitempty"`
+	// List of supported application level protocols for the TLS handshake, in order of preference. More info: https://doc.traefik.io/traefik/https/tls/#alpn-protocols
+	ALPNProtocols []string `json:"alpnProtocols,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
