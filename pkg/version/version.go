@@ -23,9 +23,6 @@ var (
 	// StartDate holds the start date of traefik.
 	StartDate = time.Now()
 	// UUID instance uuid.
-	UUID string
-	// PilotEnabled activate integration of pilot into the dashboard.
-	PilotEnabled bool
 )
 
 // Handler expose version routes.
@@ -46,11 +43,9 @@ func (v Handler) Append(router *mux.Router) {
 				UUID         string    `json:"uuid,omitempty"`
 				PilotEnabled bool      `json:"pilotEnabled"`
 			}{
-				Version:      Version,
-				Codename:     Codename,
-				StartDate:    StartDate,
-				UUID:         UUID,
-				PilotEnabled: PilotEnabled,
+				Version:   Version,
+				Codename:  Codename,
+				StartDate: StartDate,
 			}
 
 			if err := templatesRenderer.JSON(response, http.StatusOK, v); err != nil {
