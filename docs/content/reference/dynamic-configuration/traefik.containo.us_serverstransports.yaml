@@ -19,7 +19,10 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: ServersTransport is a specification for a ServersTransport resource.
+        description: 'ServersTransport is the CRD implementation of a ServersTransport.
+          If no serversTransport is specified, the default@internal will be used.
+          The default@internal serversTransport is created from the static configuration.
+          More info: https://doc.traefik.io/traefik/routing/services/#serverstransport_1'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,8 +37,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: ServersTransportSpec options to configure communication between
-              Traefik and the servers.
+            description: ServersTransportSpec defines the desired state of ServersTransport.
             properties:
               certificatesSecrets:
                 description: Certificates for mTLS.

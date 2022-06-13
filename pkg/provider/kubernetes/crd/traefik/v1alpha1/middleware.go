@@ -11,17 +11,18 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
 
-// Middleware is a specification for a Middleware resource.
+// Middleware is the CRD implementation of a Traefik Middleware. More info: https://doc.traefik.io/traefik/middlewares/http/overview/
 type Middleware struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
 
+	// MiddlewareSpec defines the desired state of Middleware
 	Spec MiddlewareSpec `json:"spec"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// MiddlewareSpec holds the Middleware configuration.
+// MiddlewareSpec defines the desired state of Middleware.
 type MiddlewareSpec struct {
 	AddPrefix         *dynamic.AddPrefix             `json:"addPrefix,omitempty"`
 	StripPrefix       *dynamic.StripPrefix           `json:"stripPrefix,omitempty"`

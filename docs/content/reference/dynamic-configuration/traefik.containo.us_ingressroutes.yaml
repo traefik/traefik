@@ -19,7 +19,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: IngressRoute is an Ingress CRD specification.
+        description: IngressRoute is the CRD implementation of a Traefik HTTP Router
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,42 +34,56 @@ spec:
           metadata:
             type: object
           spec:
-            description: IngressRouteSpec is a specification for a IngressRouteSpec
-              resource.
+            description: IngressRouteSpec defines the desired state of IngressRoute.
             properties:
               entryPoints:
+                description: 'List of entry points to use on this IngressRoute They
+                  are defined in your static configuration. (Default: use all entrypoints)'
                 items:
                   type: string
                 type: array
               routes:
+                description: List of routes
                 items:
                   description: Route contains the set of routes.
                   properties:
                     kind:
+                      description: Kind of the route. Rule is the only supported kind.
                       enum:
                       - Rule
                       type: string
                     match:
+                      description: 'Defines the rule of the underlying HTTP Router.
+                        More info: https://doc.traefik.io/traefik/routing/routers/#rule'
                       type: string
                     middlewares:
+                      description: 'List of references to Middleware. More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-middleware'
                       items:
                         description: MiddlewareRef is a ref to the Middleware resources.
                         properties:
                           name:
+                            description: Name of the Middleware
                             type: string
                           namespace:
+                            description: Namespace of the Middleware
                             type: string
                         required:
                         - name
                         type: object
                       type: array
                     priority:
+                      description: Priority is used to disambiguate rules of the same
+                        length, for route matching
                       type: integer
                     services:
+                      description: List of any combination of TraefikService and/or
+                        reference to a kubernetes Service
                       items:
                         description: Service defines an upstream to proxy traffic.
                         properties:
                           kind:
+                            description: 'Kind of the Service. Supported values: Service
+                              or TraefikService'
                             enum:
                             - Service
                             - TraefikService
@@ -82,43 +96,81 @@ spec:
                               Kind field.
                             type: string
                           namespace:
+                            description: Namespace of this reference
                             type: string
                           passHostHeader:
+                            description: The passHostHeader allows to forward client
+                              Host header to server. By default, passHostHeader is
+                              true. Can only be used on a kubernetes Services.
                             type: boolean
                           port:
                             anyOf:
                             - type: integer
                             - type: string
+                            description: Defines the port of a Kubernetes service.
+                              This can be a reference to a named port. Can only be
+                              used on a kubernetes Services
                             x-kubernetes-int-or-string: true
                           responseForwarding:
-                            description: ResponseForwarding holds configuration for
-                              the forward of the response.
+                            description: Defines how Traefik forwards the response
+                              from the backend server to the client. Can only be used
+                              on a kubernetes Services.
                             properties:
                               flushInterval:
+                                description: 'It specifies the interval in between
+                                  flushes to the client while copying the response
+                                  body. It is a duration in milliseconds. A negative
+                                  value means to flush immediately after each write
+                                  to the client. The FlushInterval is ignored when
+                                  ReverseProxy recognizes a response as a streaming
+                                  response; for such responses, writes are flushed
+                                  to the client immediately. Default: 100'
                                 type: string
                             type: object
                           scheme:
+                            description: 'Define explicitly the scheme. Supported
+                              values: http,https,h2c. Default to https when kubernetes
+                              service port is 443, http otherwise. Can only be used
+                              on a kubernetes Services.'
                             type: string
                           serversTransport:
+                            description: ServersTransport allows to configure the
+                              transport between Traefik and your servers. Can only
+                              be used on a kubernetes Services.
                             type: string
                           sticky:
-                            description: Sticky holds the sticky configuration.
+                            description: 'Enable and configure sticky session on this
+                              service. More info: https://doc.traefik.io/traefik/routing/services/#sticky-sessions'
                             properties:
                               cookie:
                                 description: Cookie holds the sticky configuration
                                   based on cookie.
                                 properties:
                                   httpOnly:
+                                    description: 'An http-only cookie cannot be accessed
+                                      by client-side APIs, such as JavaScript. Default:
+                                      false'
                                     type: boolean
                                   name:
+                                    description: 'Cookie name. Value will be the destination.
+                                      Default: An abbreviation of a sha1 (ex: _1d52e).'
                                     type: string
                                   sameSite:
+                                    description: 'Supported values: "", none, lax,
+                                      strict. Default: "". More info: https://blog.chromium.org/2019/10/developers-get-ready-for-new.html'
                                     type: string
                                   secure:
+                                    description: 'A secure cookie can only be transmitted
+                                      over an encrypted connection (i.e. HTTPS). Default:
+                                      false'
                                     type: boolean
                                 type: object
                             type: object
                           strategy:
+                            description: Strategy defines the load balancing strategy
+                              between the servers. It defaults to RoundRobin. It's
+                              the only supported value at the moment. Can only be
+                              used on a kubernetes Services.
                             type: string
                           weight:
                             description: Weight should only be specified when Name
@@ -135,14 +187,17 @@ spec:
                   type: object
                 type: array
               tls:
-                description: "TLS contains the TLS certificates configuration of the
-                  routes. To enable Let's Encrypt, use an empty TLS struct, e.g. in
-                  YAML: \n \t tls: {} # inline format \n \t tls: \t   secretName:
-                  # block format"
+                description: "Define TLS certificate configuration To enable Let's
+                  Encrypt, use an empty TLS struct, e.g. in YAML: \n \t tls: {} #
+                  inline format \n \t tls: \t   secretName: # block format"
                 properties:
                   certResolver:
+                    description: 'Name of certificate resolver to use. They are defined
+                      in static configuration. More info: https://doc.traefik.io/traefik/https/acme/#certificate-resolvers'
                     type: string
                   domains:
+                    description: 'List of Domains. Uses Host in in rule by default.
+                      Useful to get a wildcard certificate. More info: https://doc.traefik.io/traefik/routing/routers/#domains'
                     items:
                       description: Domain holds a domain name with SANs.
                       properties:
@@ -155,12 +210,15 @@ spec:
                       type: object
                     type: array
                   options:
-                    description: Options is a reference to a TLSOption, that specifies
-                      the parameters of the TLS connection.
+                    description: 'Options is a reference to a TLSOption, that specifies
+                      the parameters of the TLS connection. Default: use TLSOption
+                      named ''default''. More info: https://doc.traefik.io/traefik/https/tls/#tls-options'
                     properties:
                       name:
+                        description: 'Name of the TLSOption. More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-tlsoption'
                         type: string
                       namespace:
+                        description: 'Namespace of the TLSOption. More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-tlsoption'
                         type: string
                     required:
                     - name
@@ -174,8 +232,10 @@ spec:
                       the parameters of the TLS store.
                     properties:
                       name:
+                        description: 'Name of the TLSStore. More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-tlsstore'
                         type: string
                       namespace:
+                        description: 'Namespace of the TLSSTore. More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-tlsstore'
                         type: string
                     required:
                     - name
