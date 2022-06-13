@@ -33,7 +33,7 @@ type TraefikServiceList struct {
 
 // +k8s:deepcopy-gen=true
 
-// TraefikServiceSpec defines the desired state of a TraefikService
+// TraefikServiceSpec defines the desired state of a TraefikService.
 type ServiceSpec struct {
 	Weighted  *WeightedRoundRobin `json:"weighted,omitempty"`
 	Mirroring *Mirroring          `json:"mirroring,omitempty"`
@@ -49,9 +49,9 @@ type Mirroring struct {
 	// It is the maximum size allowed for the body of the request.
 	// If the body is larger, the request is not mirrored.
 	// Default value is -1, which means unlimited size.
-	MaxBodySize *int64          `json:"maxBodySize,omitempty"`
+	MaxBodySize *int64 `json:"maxBodySize,omitempty"`
 	// List of mirrors where Traefik will duplicate the traffic.
-	Mirrors     []MirrorService `json:"mirrors,omitempty"`
+	Mirrors []MirrorService `json:"mirrors,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -69,8 +69,8 @@ type MirrorService struct {
 // WeightedRoundRobin allows to apply weight to services on load-balancing.
 type WeightedRoundRobin struct {
 	// Array of Kubernetes Service and/or TraefikService to load-balance, with weight
-	Services []Service       `json:"services,omitempty"`
+	Services []Service `json:"services,omitempty"`
 	// When sticky sessions are enabled, a Set-Cookie header is set on the initial response to let the client know which server handles the first response. On subsequent requests, to keep the session alive with the same server, the client should send the cookie with the value set.
 	// More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
-	Sticky   *dynamic.Sticky `json:"sticky,omitempty"`
+	Sticky *dynamic.Sticky `json:"sticky,omitempty"`
 }
