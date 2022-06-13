@@ -19,7 +19,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: IngressRouteUDP is a CRD implementation of a Traefik UDP Router
+        description: IngressRouteUDP is a CRD implementation of a Traefik UDP Router.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
