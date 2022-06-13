@@ -131,9 +131,13 @@ type Sticky struct {
 
 // Cookie holds the sticky configuration based on cookie.
 type Cookie struct {
+	// Cookie name. Value will be the destination. Default: An abbreviation of a sha1 (ex: _1d52e).
 	Name     string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
+	// A secure cookie can only be transmitted over an encrypted connection (i.e. HTTPS). Default: false
 	Secure   bool   `json:"secure,omitempty" toml:"secure,omitempty" yaml:"secure,omitempty" export:"true"`
+	// An http-only cookie cannot be accessed by client-side APIs, such as JavaScript. Default: false
 	HTTPOnly bool   `json:"httpOnly,omitempty" toml:"httpOnly,omitempty" yaml:"httpOnly,omitempty" export:"true"`
+	// Supported values: "", none, lax, strict. Default: "". More info: https://blog.chromium.org/2019/10/developers-get-ready-for-new.html
 	SameSite string `json:"sameSite,omitempty" toml:"sameSite,omitempty" yaml:"sameSite,omitempty" export:"true"`
 }
 
@@ -180,6 +184,9 @@ func (l *ServersLoadBalancer) SetDefaults() {
 
 // ResponseForwarding holds configuration for the forward of the response.
 type ResponseForwarding struct {
+	// It specifies the interval in between flushes to the client while copying the response body. It is a duration in milliseconds.
+	// A negative value means to flush immediately after each write to the client. The FlushInterval is ignored when ReverseProxy recognizes a response as a streaming response; for such responses, writes are flushed to the client immediately.
+	// Default: 100
 	FlushInterval string `json:"flushInterval,omitempty" toml:"flushInterval,omitempty" yaml:"flushInterval,omitempty" export:"true"`
 }
 
