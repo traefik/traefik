@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/traefik/traefik/v2/pkg/ip"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -284,8 +285,6 @@ func clientIP(tree *matchersTree, clientIPs ...string) error {
 	return nil
 }
 
-var almostFQDN = regexp.MustCompile(`^[[:alnum:]\.-]+$`)
-
 // hostSNI checks if the SNI Host of the connection match the matcher host.
 func hostSNI(tree *matchersTree, hosts ...string) error {
 	if len(hosts) == 0 {
@@ -298,8 +297,8 @@ func hostSNI(tree *matchersTree, hosts ...string) error {
 			continue
 		}
 
-		if !almostFQDN.MatchString(host) {
-			return fmt.Errorf("invalid value for \"HostSNI\" matcher, %q is not a valid hostname", host)
+		if !isASCII(host) {
+			return fmt.Errorf("invalid value for \"HostSNI\" matcher, %q is not punycode", host)
 		}
 
 		hosts[i] = strings.ToLower(host)
@@ -459,4 +458,15 @@ func braceIndices(s string) ([]int, error) {
 		return nil, fmt.Errorf("mux: unbalanced braces in %q", s)
 	}
 	return idxs, nil
+}
+
+// isASCII checks if the given string contains only ASCII characters.
+func isASCII(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] >= utf8.RuneSelf {
+			return false
+		}
+	}
+
+	return true
 }

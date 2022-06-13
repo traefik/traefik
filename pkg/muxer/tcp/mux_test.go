@@ -661,11 +661,6 @@ func Test_HostSNI(t *testing.T) {
 			matchErr:   true,
 		},
 		{
-			desc:      "Not Matching globing host with subdomain",
-			ruleHosts: []string{"*.bar"},
-			buildErr:  true,
-		},
-		{
 			desc:       "Not Matching host with trailing dot with ",
 			ruleHosts:  []string{"foobar."},
 			serverName: "foobar.",
