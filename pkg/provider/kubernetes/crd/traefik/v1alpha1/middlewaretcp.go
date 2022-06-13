@@ -8,7 +8,7 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// MiddlewareTCP is a specification for a MiddlewareTCP resource.
+// MiddlewareTCP is the CRD implementation of a Traefik TCP middleware. More info: https://doc.traefik.io/traefik/middlewares/overview/
 type MiddlewareTCP struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
@@ -18,7 +18,7 @@ type MiddlewareTCP struct {
 
 // +k8s:deepcopy-gen=true
 
-// MiddlewareTCPSpec holds the MiddlewareTCP configuration.
+// MiddlewareTCPSpec defines the desired state of MiddlewareTCP.
 type MiddlewareTCPSpec struct {
 	InFlightConn *dynamic.TCPInFlightConn `json:"inFlightConn,omitempty"`
 	IPWhiteList  *dynamic.TCPIPWhiteList  `json:"ipWhiteList,omitempty"`

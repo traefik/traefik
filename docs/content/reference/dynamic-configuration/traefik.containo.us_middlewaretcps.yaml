@@ -19,7 +19,8 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: MiddlewareTCP is a specification for a MiddlewareTCP resource.
+        description: 'MiddlewareTCP is the CRD implementation of a Traefik TCP middleware.
+          More info: https://doc.traefik.io/traefik/middlewares/overview/'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,7 +35,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: MiddlewareTCPSpec holds the MiddlewareTCP configuration.
+            description: MiddlewareTCPSpec defines the desired state of MiddlewareTCP.
             properties:
               inFlightConn:
                 description: 'To proactively prevent services from being overwhelmed
