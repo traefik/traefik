@@ -19,7 +19,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: IngressRoute is the CRD implementation of a Traefik HTTP Router
+        description: IngressRoute is the CRD implementation of a Traefik HTTP Router.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -277,7 +277,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: IngressRouteTCP is the CRD implementation of a Traefik TCP Router
+        description: IngressRouteTCP is the CRD implementation of a Traefik TCP Router.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -471,7 +471,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: IngressRouteUDP is a CRD implementation of a Traefik UDP Router
+        description: IngressRouteUDP is a CRD implementation of a Traefik UDP Router.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -1785,7 +1785,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: TraefikServiceSpec defines the desired state of a TraefikService
+            description: TraefikServiceSpec defines the desired state of a TraefikService.
             properties:
               mirroring:
                 description: 'Mirroring defines a mirroring service, which is composed
