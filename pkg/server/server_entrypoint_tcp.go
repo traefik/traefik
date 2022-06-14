@@ -22,6 +22,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/server/router"
+	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v2/pkg/tcp"
 	"github.com/traefik/traefik/v2/pkg/types"
 	"golang.org/x/net/http2"
@@ -114,7 +115,7 @@ func (eps TCPEntryPoints) Stop() {
 }
 
 // Switch the TCP routers.
-func (eps TCPEntryPoints) Switch(routersTCP map[string]*tcp.Router) {
+func (eps TCPEntryPoints) Switch(routersTCP map[string]*tcprouter.Router) {
 	for entryPointName, rt := range routersTCP {
 		eps[entryPointName].SwitchRouter(rt)
 	}
@@ -141,28 +142,28 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hos
 		return nil, fmt.Errorf("error preparing server: %w", err)
 	}
 
-	rt := &tcp.Router{}
+	rt := &tcprouter.Router{}
 
 	reqDecorator := requestdecorator.New(hostResolverConfig)
 
 	httpServer, err := createHTTPServer(ctx, listener, configuration, true, reqDecorator)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing httpServer: %w", err)
+		return nil, fmt.Errorf("error preparing http server: %w", err)
 	}
 
-	rt.HTTPForwarder(httpServer.Forwarder)
+	rt.SetHTTPForwarder(httpServer.Forwarder)
 
 	httpsServer, err := createHTTPServer(ctx, listener, configuration, false, reqDecorator)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing httpsServer: %w", err)
+		return nil, fmt.Errorf("error preparing https server: %w", err)
 	}
 
-	h3server, err := newHTTP3Server(ctx, configuration, httpsServer)
+	h3Server, err := newHTTP3Server(ctx, configuration, httpsServer)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error preparing http3 server: %w", err)
 	}
 
-	rt.HTTPSForwarder(httpsServer.Forwarder)
+	rt.SetHTTPSForwarder(httpsServer.Forwarder)
 
 	tcpSwitcher := &tcp.HandlerSwitcher{}
 	tcpSwitcher.Switch(rt)
@@ -174,14 +175,14 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hos
 		tracker:                tracker,
 		httpServer:             httpServer,
 		httpsServer:            httpsServer,
-		http3Server:            h3server,
+		http3Server:            h3Server,
 	}, nil
 }
 
 // Start starts the TCP server.
 func (e *TCPEntryPoint) Start(ctx context.Context) {
 	logger := log.FromContext(ctx)
-	logger.Debugf("Start TCP Server")
+	logger.Debug("Starting TCP Server")
 
 	if e.http3Server != nil {
 		go func() { _ = e.http3Server.Start() }()
@@ -301,8 +302,8 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 }
 
 // SwitchRouter switches the TCP router handler.
-func (e *TCPEntryPoint) SwitchRouter(rt *tcp.Router) {
-	rt.HTTPForwarder(e.httpServer.Forwarder)
+func (e *TCPEntryPoint) SwitchRouter(rt *tcprouter.Router) {
+	rt.SetHTTPForwarder(e.httpServer.Forwarder)
 
 	httpHandler := rt.GetHTTPHandler()
 	if httpHandler == nil {
@@ -311,7 +312,7 @@ func (e *TCPEntryPoint) SwitchRouter(rt *tcp.Router) {
 
 	e.httpServer.Switcher.UpdateHandler(httpHandler)
 
-	rt.HTTPSForwarder(e.httpsServer.Forwarder)
+	rt.SetHTTPSForwarder(e.httpsServer.Forwarder)
 
 	httpsHandler := rt.GetHTTPSHandler()
 	if httpsHandler == nil {

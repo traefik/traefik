@@ -135,6 +135,7 @@ nav:
         - 'Overview': 'middlewares/tcp/overview.md'
         - 'InFlightConn': 'middlewares/tcp/inflightconn.md'
         - 'IpWhitelist': 'middlewares/tcp/ipwhitelist.md'
+  - 'Traefik Hub': 'traefik-hub/index.md'
   - 'Plugins & Traefik Pilot': 'plugins/index.md'
   - 'Operations':
       - 'CLI': 'operations/cli.md'
@@ -148,6 +149,7 @@ nav:
           - 'Overview': 'observability/metrics/overview.md'
           - 'Datadog': 'observability/metrics/datadog.md'
           - 'InfluxDB': 'observability/metrics/influxdb.md'
+          - 'InfluxDB2': 'observability/metrics/influxdb2.md'
           - 'Prometheus': 'observability/metrics/prometheus.md'
           - 'StatsD': 'observability/metrics/statsd.md'
       - 'Tracing':
@@ -199,3 +201,4 @@ nav:
         - 'Rancher': 'reference/dynamic-configuration/rancher.md'
   - 'Deprecation Notices':
       - 'Releases': 'deprecation/releases.md'
+      - 'Features': 'deprecation/features.md'

@@ -183,6 +183,9 @@ Timeout defines how long to wait on an idle session before releasing the related
 `--experimental.http3`:  
 Enable HTTP3. (Default: ```false```)
 
+`--experimental.hub`:  
+Enable the Traefik Hub provider. (Default: ```false```)
+
 `--experimental.kubernetesgateway`:  
 Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 
@@ -215,6 +218,21 @@ resolv.conf used for DNS resolving (Default: ```/etc/resolv.conf```)
 
 `--hostresolver.resolvdepth`:  
 The maximal depth of DNS recursive resolving (Default: ```5```)
+
+`--hub`:  
+Traefik Hub configuration. (Default: ```false```)
+
+`--hub.tls.ca`:  
+The certificate authority authenticates the Traefik Hub Agent certificate.
+
+`--hub.tls.cert`:  
+The TLS certificate for Traefik Proxy as a TLS client.
+
+`--hub.tls.insecure`:  
+Enables an insecure TLS connection that uses default credentials, and which has no peer authentication between Traefik Proxy and the Traefik Hub Agent. (Default: ```false```)
+
+`--hub.tls.key`:  
+The TLS key for Traefik Proxy as a TLS client.
 
 `--log`:  
 Traefik log settings. (Default: ```false```)
@@ -284,6 +302,36 @@ InfluxDB retention policy used when protocol is http.
 
 `--metrics.influxdb.username`:  
 InfluxDB username (only with http).
+
+`--metrics.influxdb2`:  
+InfluxDB v2 metrics exporter type. (Default: ```false```)
+
+`--metrics.influxdb2.addentrypointslabels`:  
+Enable metrics on entry points. (Default: ```true```)
+
+`--metrics.influxdb2.additionallabels.<name>`:  
+Additional labels (influxdb tags) on all metrics
+
+`--metrics.influxdb2.address`:  
+InfluxDB v2 address. (Default: ```http://localhost:8086```)
+
+`--metrics.influxdb2.addrouterslabels`:  
+Enable metrics on routers. (Default: ```false```)
+
+`--metrics.influxdb2.addserviceslabels`:  
+Enable metrics on services. (Default: ```true```)
+
+`--metrics.influxdb2.bucket`:  
+InfluxDB v2 bucket ID.
+
+`--metrics.influxdb2.org`:  
+InfluxDB v2 org ID.
+
+`--metrics.influxdb2.pushinterval`:  
+InfluxDB v2 push interval. (Default: ```10```)
+
+`--metrics.influxdb2.token`:  
+InfluxDB v2 access token.
 
 `--metrics.prometheus`:  
 Prometheus metrics exporter type. (Default: ```false```)
@@ -456,6 +504,9 @@ Name of the Traefik service in Consul Catalog (needs to be registered via the or
 `--providers.consulcatalog.stale`:  
 Use stale consistency for catalog reads. (Default: ```false```)
 
+`--providers.consulcatalog.watch`:  
+Watch Consul API events. (Default: ```false```)
+
 `--providers.docker`:  
 Enable Docker backend with default settings. (Default: ```false```)
 
@@ -614,6 +665,9 @@ Enable Kubernetes backend with default settings. (Default: ```false```)
 
 `--providers.kubernetescrd.allowcrossnamespace`:  
 Allow cross namespace resource reference. (Default: ```false```)
+
+`--providers.kubernetescrd.allowemptyservices`:  
+Allow the creation of services without endpoints. (Default: ```false```)
 
 `--providers.kubernetescrd.allowexternalnameservices`:  
 Allow ExternalName services. (Default: ```false```)

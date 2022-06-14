@@ -112,4 +112,5 @@ func stopMetricsClients() {
 	metrics.StopDatadog()
 	metrics.StopStatsd()
 	metrics.StopInfluxDB()
+	metrics.StopInfluxDB2()
 }
