@@ -288,7 +288,7 @@ func clientIP(tree *matchersTree, clientIPs ...string) error {
 	return nil
 }
 
-// alpn checks if any ALPN protocol of the connection matches any of the matcher protocols.
+// alpn checks if any of the connection ALPN protocols matches one of the matcher protocols.
 func alpn(tree *matchersTree, protos ...string) error {
 	if len(protos) == 0 {
 		return fmt.Errorf("empty value for \"ALPN\" matcher is not allowed")
