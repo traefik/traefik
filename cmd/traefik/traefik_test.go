@@ -9,6 +9,7 @@ import (
 	"github.com/go-kit/kit/metrics"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v2/pkg/config/static"
 )
 
 // FooCert is a PEM-encoded TLS cert.
@@ -111,6 +112,53 @@ func TestAppendCertMetric(t *testing.T) {
 			}
 
 			assert.Equal(t, test.expected, gauge.metrics)
+		})
+	}
+}
+
+func TestGetDefaultsEntrypoints(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		eps           []string
+		defEPsSetting []string
+		expected      []string
+	}{
+		{
+			desc:     "Skips special names",
+			eps:      []string{"traefik", "traefikhub-api", "traefikhub-tunl"},
+			expected: []string{},
+		},
+		{
+			desc:     "All by default",
+			eps:      []string{"name1", "name2", "name3"},
+			expected: []string{"name1", "name2", "name3"},
+		},
+		{
+			desc:          "Only matching setting",
+			eps:           []string{"name1", "name2", "name3"},
+			defEPsSetting: []string{"name1", "name3"},
+			expected:      []string{"name1", "name3"},
+		},
+		{
+			desc:          "Ignores invalid setting",
+			eps:           []string{"name1", "name2"},
+			defEPsSetting: []string{"name1", "name2", "not-defined"},
+			expected:      []string{"name1", "name2"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			eps := make(static.EntryPoints)
+			for _, name := range test.eps {
+				eps[name] = &static.EntryPoint{}
+			}
+			actual := getDefaultsEntrypoints(&static.Configuration{
+				DefaultEntryPoints: test.defEPsSetting,
+				EntryPoints: eps,
+			})
+
+			assert.ElementsMatch(t, test.expected, actual)
 		})
 	}
 }
