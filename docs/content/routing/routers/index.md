@@ -673,17 +673,20 @@ If no matching route is found for the TCP routers, then the HTTP routers will ta
 If not specified, TCP routers will accept requests from all defined entry points.
 If you want to limit the router scope to a set of entry points, set the entry points option.
 
-!!! important "Entry points and routing"
+??? info "How to handle Server First protocols?"
 
-    Routers by default accept requests from all defined entry points, meaning that, incoming
-    requests can be a mix of TLS and non-TLS ones. In order to correctly handle a request,
-    Traefik needs to wait for the first few bytes to arrive before it can decide what to do
-    with it. For protocols that do not send first, such as SMTP, this may cause a situation
-    where both sides are waiting for data and the connection appears to have "hanged". You
-    can avoid this ambiguity by letting Traefik know beforehand that an entry point will not
-    receive TLS data by ensuring that there are no TLS routers (both TCP and HTTP) attached
-    to it and that there is at least one non-TLS TCP router assigned to the entry point in 
-    which case Traefik will forward the request directly to the service.
+    To correctly handle a request, Traefik needs to wait for the first
+    few bytes to arrive before it can decide what to do with it.
+
+    For protocols where the server is expected to send first, such
+    as SMTP, if no specific setup is in place, we could end up in
+    a situation where both sides are waiting for data and the
+    connection appears to have hanged.
+
+    The only way that Traefik can deal with such a case, is to make 
+    sure that on the concerned entry point, there is no TLS router 
+    whatsoever (neither TCP nor HTTP), and there is at least one 
+    non-TLS TCP router that leads to the server in question.
 
 ??? example "Listens to Every Entry Point"
 
