@@ -94,7 +94,7 @@ or act before forwarding the request to the service.
 
 ### EntryPoints
 
-If not specified, HTTP routers will accept requests from all defined entry points.
+If not specified, HTTP routers will accept requests from the defined default entry points.
 If you want to limit the router scope to a set of entry points, set the `entryPoints` option.
 
 ??? example "Listens to Every EntryPoint"
@@ -106,7 +106,7 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
     http:
       routers:
         Router-1:
-          # By default, routers listen to every entry points
+          # By default, routers listen to static config of default entry points
           rule: "Host(`example.com`)"
           service: "service-1"
     ```
@@ -115,7 +115,7 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
     ## Dynamic configuration
     [http.routers]
       [http.routers.Router-1]
-        # By default, routers listen to every entry points
+        # By default, routers listen to static config of default entry points
         rule = "Host(`example.com`)"
         service = "service-1"
     ```
@@ -124,6 +124,7 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
 
     ```yaml tab="File (YAML)"
     ## Static configuration
+    #defaultEntryPoints: [web, websecure, other] # By default, every entry point is used
     entryPoints:
       web:
         address: ":80"
@@ -135,6 +136,7 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
 
     ```toml tab="File (TOML)"
     ## Static configuration
+    #defaultEntryPoints: ["web", "websecure", "other"] # By default, every entry point is used
     [entryPoints]
       [entryPoints.web]
         address = ":80"
@@ -146,6 +148,7 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
 
     ```bash tab="CLI"
     ## Static configuration
+    #--defaultentrypoints=web,websecure,other # By default, every entry point is used
     --entrypoints.web.address=:80
     --entrypoints.websecure.address=:443
     --entrypoints.other.address=:9090
@@ -182,6 +185,7 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
 
     ```yaml tab="File (YAML)"
     ## Static configuration
+    #defaultEntryPoints = [web, websecure, other] # Unused when entry points are specified for a route
     entryPoints:
       web:
         address: ":80"
@@ -193,6 +197,7 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
 
     ```toml tab="File (TOML)"
     ## Static configuration
+    #defaultEntryPoints = ["web", "websecure", "other"] # Unused when entry points are specified for a route
     [entryPoints]
       [entryPoints.web]
         address = ":80"
@@ -204,6 +209,7 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
 
     ```bash tab="CLI"
     ## Static configuration
+    #--defaultentrypoints=web,websecure,other # Unused when entry points are specified for a route
     --entrypoints.web.address=:80
     --entrypoints.websecure.address=:443
     --entrypoints.other.address=:9090
@@ -1323,6 +1329,14 @@ If one wants to limit the router scope to a set of entry points, one should set 
     --entrypoints.other.address=":9090/udp"
     --entrypoints.streaming.address=":9191/udp"
     ```
+
+!!! warning "Configured defaultEntryPoints does not apply for UDP routers"
+
+    The `defaultEntryPoints` config only applies to HTTP/TCP entry points and not
+    to UDP entry points (yet).
+
+    Routes will always use all UDP entry points when no entry points are
+    explicitly specified.
 
 ### Services
 
