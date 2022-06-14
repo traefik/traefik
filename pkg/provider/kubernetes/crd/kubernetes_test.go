@@ -3371,38 +3371,6 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:                "Simple Ingress Route, with test middleware read config from secret allow cross namespace",
-			paths:               []string{"services.yml", "with_plugin_read_secret_cross_namespace.yml"},
-			allowCrossNamespace: true,
-			expected: &dynamic.Configuration{
-				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
-				},
-				TLS: &dynamic.TLSConfiguration{},
-				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{},
-					Middlewares: map[string]*dynamic.Middleware{
-						"default-test-secret": {
-							Plugin: map[string]dynamic.PluginConf{
-								"test-secret": map[string]interface{}{
-									"user":   "admin",
-									"secret": "this_is_the_cross_ns_secret",
-								},
-							},
-						},
-					},
-					Services:          map[string]*dynamic.Service{},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
-				},
-			},
-		},
-		{
 			desc:  "Simple Ingress Route, with test middleware read config from deep secret",
 			paths: []string{"services.yml", "with_plugin_deep_read_secret.yml"},
 			expected: &dynamic.Configuration{
