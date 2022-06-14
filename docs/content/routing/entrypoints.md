@@ -102,6 +102,7 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
 
     ```yaml tab="File (YAML)"
     ## Static configuration
+    defaultEntryPoints = [name1, name2, name3]
     entryPoints:
       name:
         address: ":8888" # same as ":8888/tcp"
@@ -131,6 +132,7 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
 
     ```toml tab="File (TOML)"
     ## Static configuration
+    defaultEntryPoints = ["name1", "name2", "name3"]
     [entryPoints]
       [entryPoints.name]
         address = ":8888" # same as ":8888/tcp"
@@ -156,6 +158,7 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
 
     ```bash tab="CLI"
     ## Static configuration
+    --defaultEntryPoints=name1,name2,name3
     --entryPoints.name.address=:8888 # same as :8888/tcp
     --entryPoints.name.http2.maxConcurrentStreams=42
     --entryPoints.name.http3.advertisedport=8888
@@ -169,6 +172,80 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
     --entryPoints.name.forwardedHeaders.insecure=true
     --entryPoints.name.forwardedHeaders.trustedIPs=127.0.0.1,192.168.0.1
     ```
+
+### Default EntryPoints
+
+Each Traefik [route](./routers/index.md) has a list of entry points associated
+with it. When this list is empty or not defined, Traefik will use the default
+entry points.
+
+By default, all entry points are used as the default entry points, with the
+exception of some special entry points of names: `traefik`,
+[`traefikhub-api`, and `traefikhub-tunl`](../traefik-hub/index.md#entrypoints).
+Specifying any of these special entry point names in the configuration has no
+effect, they will always be excluded from the default entry point behavior.
+
+The list of default entry points can be overridden for TCP & HTTP entry points
+via the static configuration.
+
+??? example "Overriding default entry points"
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    defaultEntryPoints = [name1, name3]
+    # by default, defaultEntryPoints defaults to all entry points, e.g [name1, name2, name3]
+    
+    entryPoints:
+      name1:
+        address: ":8081"
+      name2:
+        address: ":8082"
+      name3:
+        address: ":8083"
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    defaultEntryPoints = ["name1", "name3"]
+    # by default, defaultEntryPoints defaults to all entry points, e.g ["name1", "name2", "name3"]
+    
+    [entryPoints]
+      [entryPoints.name1]
+        address = ":8081"
+      [entryPoints.name2]
+        address = ":8082"
+      [entryPoints.name3]
+        address = ":8083"
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --defaultEntryPoints=name1,name3
+    # by default, defaultEntryPoints defaults to all entry points, e.g name1,name2,name3
+    
+    --entryPoints.name1.address=:8081
+    --entryPoints.name2.address=:8082
+    --entryPoints.name3.address=:8083
+    ```
+
+You cannot disable "default entry points". If you specify no entry points as
+default entry points via the configuration, then the fallback behavior of using
+all entry points will be used instead.
+
+!!! warning "Does not apply for UDP entry points"
+
+    The `defaultEntryPoints` config only applies to HTTP/TCP entry points and not
+    to UDP entry points (yet).
+
+    Routes will always use all UDP entry points when no entry points are
+    explicitly specified.
+
+!!! info "The `defaultEntryPoints` feature was re-introduced in Traefik v2.8.0"
+
+    Traefik v1 had support for specifying default entry points since v1.0.0, but
+    after Traefik v2's overhaul of the code base, this feature has been
+    postponed. All versions from Traefik v2.0.0 up until Traefik v2.8.0 are
+    missing this config feature.
 
 ### Address
 
