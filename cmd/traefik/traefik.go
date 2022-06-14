@@ -378,10 +378,8 @@ func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string 
 			log.WithoutContext().Errorf("Invalid protocol: %v", err)
 		}
 
-		if len(staticConfiguration.DefaultEntryPoints) > 0 {
-			if !containsStr(staticConfiguration.DefaultEntryPoints, name) {
-				continue
-			}
+		if !isConfigIncludingEntrypointAsDefault(staticConfiguration, name) {
+			continue
 		}
 
 		if protocol != "udp" && name != static.DefaultInternalEntryPointName {
@@ -393,9 +391,14 @@ func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string 
 	return defaultEntryPoints
 }
 
-func containsStr(slice []string, str string) bool {
-	for _, v := range slice {
-		if v == str {
+func isConfigIncludingEntrypointAsDefault(staticConfiguration *static.Configuration, epName string) bool {
+	if len(staticConfiguration.DefaultEntryPoints) == 0 {
+		// Empty list of defaults from config means "use all as default"
+		return true
+	}
+
+	for _, v := range staticConfiguration.DefaultEntryPoints {
+		if v == epName {
 			return true
 		}
 	}
