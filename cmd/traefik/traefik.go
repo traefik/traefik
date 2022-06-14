@@ -372,6 +372,10 @@ func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string 
 			log.WithoutContext().Errorf("Invalid protocol: %v", err)
 		}
 
+		if !isConfigIncludingEntrypointAsDefault(staticConfiguration, name) {
+			continue
+		}
+
 		if protocol != "udp" && name != static.DefaultInternalEntryPointName {
 			defaultEntryPoints = append(defaultEntryPoints, name)
 		}
@@ -379,6 +383,20 @@ func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string 
 
 	sort.Strings(defaultEntryPoints)
 	return defaultEntryPoints
+}
+
+func isConfigIncludingEntrypointAsDefault(staticConfiguration *static.Configuration, epName string) bool {
+	if len(staticConfiguration.DefaultEntryPoints) == 0 {
+		// Empty list of defaults from config means "use all as default"
+		return true
+	}
+
+	for _, v := range staticConfiguration.DefaultEntryPoints {
+		if v == epName {
+			return true
+		}
+	}
+	return false
 }
 
 func switchRouter(routerFactory *server.RouterFactory, serverEntryPointsTCP server.TCPEntryPoints, serverEntryPointsUDP server.UDPEntryPoints, aviator *pilot.Pilot) func(conf dynamic.Configuration) {
