@@ -102,6 +102,9 @@ Activate TLS-ALPN-01 Challenge. (Default: ```true```)
 `--certificatesresolvers.<name>.tailscale`:  
 Enables Tailscale certificate resolution. (Default: ```true```)
 
+`--defaultentrypoints`:  
+Default HTTP/TCP entry point names used when none are specified in a router. (Does not apply to UDP entry points)
+
 `--entrypoints.<name>`:  
 Entry points definition. (Default: ```false```)
 
