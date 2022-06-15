@@ -184,20 +184,10 @@ func (hc *HealthCheck) checkServersLB(ctx context.Context, backend *BackendConfi
 
 	backend.disabledURLs = newDisabledURLs
 
-	checkedURLs := make(map[string]error)
-
 	for _, enabledURL := range enabledURLs {
 		serverUpMetricValue := float64(1)
 
-		stringURL := enabledURL.String()
-
-		checkResult, ok := checkedURLs[stringURL]
-		if ok == false {
-			checkResult = checkHealth(enabledURL, backend)
-			checkedURLs[stringURL] = checkResult
-		}
-
-		if checkResult != nil {
+		if err := checkHealth(enabledURL, backend); err != nil {
 			weight := 1
 			rr, ok := backend.LB.(*roundrobin.RoundRobin)
 			if ok {
@@ -209,7 +199,7 @@ func (hc *HealthCheck) checkServersLB(ctx context.Context, backend *BackendConfi
 			}
 
 			logger.Warnf("Health check failed, removing from server list. Backend: %q URL: %q Weight: %d Reason: %s",
-				backend.name, stringURL, weight, checkResult)
+				backend.name, enabledURL.String(), weight, err)
 			if err := backend.LB.RemoveServer(enabledURL); err != nil {
 				logger.Error(err)
 			}
@@ -218,7 +208,7 @@ func (hc *HealthCheck) checkServersLB(ctx context.Context, backend *BackendConfi
 			serverUpMetricValue = 0
 		}
 
-		labelValues := []string{"service", backend.name, "url", stringURL}
+		labelValues := []string{"service", backend.name, "url", enabledURL.String()}
 		hc.metrics.serverUpGauge.With(labelValues...).Set(serverUpMetricValue)
 	}
 }
@@ -385,17 +375,29 @@ func (lb *LbStatusUpdater) UpsertServer(u *url.URL, options ...roundrobin.Server
 // Balancers is a list of Balancers(s) that implements the Balancer interface.
 type Balancers []Balancer
 
-// Servers returns the servers url from all the BalancerHandler.
+// Servers returns the deduplicated server URLs from all the Balancer.
+// As we are only supporting the RoundRobin balancer implementation from oxy we are using the same method to deduplicate
+// the server URLs (see https://github.com/vulcand/oxy/blob/fb2728c857b7973a27f8de2f2190729c0f22cf49/roundrobin/rr.go#L347).
 func (b Balancers) Servers() []*url.URL {
+	uniqServers := make(map[string]struct{})
+
 	var servers []*url.URL
 	for _, lb := range b {
-		servers = append(servers, lb.Servers()...)
+		for _, server := range lb.Servers() {
+			key := serverKey(server)
+			if _, ok := uniqServers[key]; ok {
+				continue
+			}
+
+			servers = append(servers, server)
+			uniqServers[key] = struct{}{}
+		}
 	}
 
 	return servers
 }
 
-// RemoveServer removes the given server from all the BalancerHandler,
+// RemoveServer removes the given server from all the Balancer,
 // and updates the status of the server to "DOWN".
 func (b Balancers) RemoveServer(u *url.URL) error {
 	for _, lb := range b {
@@ -406,7 +408,7 @@ func (b Balancers) RemoveServer(u *url.URL) error {
 	return nil
 }
 
-// UpsertServer adds the given server to all the BalancerHandler,
+// UpsertServer adds the given server to all the Balancer,
 // and updates the status of the server to "UP".
 func (b Balancers) UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error {
 	for _, lb := range b {
@@ -415,4 +417,8 @@ func (b Balancers) UpsertServer(u *url.URL, options ...roundrobin.ServerOption) 
 		}
 	}
 	return nil
+}
+
+func serverKey(u *url.URL) string {
+	return u.Path + u.Host + u.Scheme
 }
