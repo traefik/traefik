@@ -41,6 +41,16 @@ const (
 	kindTLSRoute       = "TLSRoute"
 )
 
+var (
+	// shareableListenerProtocols stores ProtocolType(s) for which
+	// we allow re-using a (protocol,port)-tuple in multiple listeners
+	// belonging to the same gateway.
+	// @see https://github.com/traefik/traefik/issues/9026
+	shareableListenerProtocols []v1alpha2.ProtocolType = []v1alpha2.ProtocolType{
+		v1alpha2.HTTPSProtocolType,
+	}
+)
+
 // Provider holds configurations of the provider.
 type Provider struct {
 	Endpoint         string                `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
@@ -340,16 +350,22 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			continue
 		}
 
-		if _, ok := allocatedPort[listener.Port]; ok {
-			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
-				Type:               string(v1alpha2.ListenerConditionDetached),
-				Status:             metav1.ConditionTrue,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(v1alpha2.ListenerReasonPortUnavailable),
-				Message:            fmt.Sprintf("Port %d unavailable", listener.Port),
-			})
+		if proto, ok := allocatedPort[listener.Port]; ok {
+			// allowing multiple listeners on one (protocol,port)-tuple
+			// for some ProtocolType(s)
+			// @see https://github.com/traefik/traefik/issues/9026
+			equal := listener.Protocol == proto
+			if !equal || !isListenerProtocolShareable(proto) {
+				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
+					Type:               string(v1alpha2.ListenerConditionDetached),
+					Status:             metav1.ConditionTrue,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(v1alpha2.ListenerReasonPortUnavailable),
+					Message:            fmt.Sprintf("Port %d unavailable", listener.Port),
+				})
 
-			continue
+				continue
+			}
 		}
 
 		allocatedPort[listener.Port] = listener.Protocol
@@ -582,6 +598,18 @@ func (p *Provider) entryPointName(port v1alpha2.PortNumber, protocol v1alpha2.Pr
 	}
 
 	return "", fmt.Errorf("no matching entryPoint for port %d and protocol %q", port, protocol)
+}
+
+// isListenerProtocolShareable is used to decide whether the protocol part
+// of a (protocol,port)-tuple is eligible for re-using the (protocol,port)-tuple.
+// @see https://github.com/traefik/traefik/issues/9026
+func isListenerProtocolShareable(t v1alpha2.ProtocolType) bool {
+	for _, lookup := range shareableListenerProtocols {
+		if lookup == t {
+			return true
+		}
+	}
+	return false
 }
 
 func supportedRouteKinds(protocol v1alpha2.ProtocolType) ([]v1alpha2.RouteGroupKind, []metav1.Condition) {
