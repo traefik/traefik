@@ -42,10 +42,6 @@ const (
 )
 
 var (
-	// shareableListenerProtocols stores ProtocolType(s) for which
-	// we allow re-using a (protocol,port)-tuple in multiple listeners
-	// belonging to the same gateway.
-	// @see https://github.com/traefik/traefik/issues/9026
 	shareableListenerProtocols []v1alpha2.ProtocolType = []v1alpha2.ProtocolType{
 		v1alpha2.HTTPSProtocolType,
 	}
@@ -600,9 +596,6 @@ func (p *Provider) entryPointName(port v1alpha2.PortNumber, protocol v1alpha2.Pr
 	return "", fmt.Errorf("no matching entryPoint for port %d and protocol %q", port, protocol)
 }
 
-// isListenerProtocolShareable is used to decide whether the protocol part
-// of a (protocol,port)-tuple is eligible for re-using the (protocol,port)-tuple.
-// @see https://github.com/traefik/traefik/issues/9026
 func isListenerProtocolShareable(t v1alpha2.ProtocolType) bool {
 	for _, lookup := range shareableListenerProtocols {
 		if lookup == t {
