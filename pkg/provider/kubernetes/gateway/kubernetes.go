@@ -41,11 +41,9 @@ const (
 	kindTLSRoute       = "TLSRoute"
 )
 
-var (
-	shareableListenerProtocols []v1alpha2.ProtocolType = []v1alpha2.ProtocolType{
-		v1alpha2.HTTPSProtocolType,
-	}
-)
+var shareableListenerProtocols []v1alpha2.ProtocolType = []v1alpha2.ProtocolType{
+	v1alpha2.HTTPSProtocolType,
+}
 
 // Provider holds configurations of the provider.
 type Provider struct {
