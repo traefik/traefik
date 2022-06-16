@@ -320,9 +320,12 @@ Traefik will consider your servers healthy as long as they return status codes b
 
 To propagate status changes (e.g. all servers of this service are down) upwards, HealthCheck must also be enabled on the parent(s) of this service.
 
-Below are the available options for the health check mechanism:
+_Required configurations_
 
-- `path` is appended to the server URL to set the health check endpoint.
+- `path` is appended to the server URL to set the health check endpoint. Forgetting the parameter filters out the health check configuration but keeps the service alive.
+
+_Optional configurations_
+
 - `scheme`, if defined, will replace the server URL `scheme` for the health check endpoint
 - `hostname`, if defined, will apply `Host` header `hostname` to the health check request.
 - `port`, if defined, will replace the server URL `port` for the health check endpoint.
