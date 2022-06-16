@@ -232,7 +232,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			conf.HTTP.Services[serviceName] = errorPageService
 		}
 
-		plugin, err := createPluginMiddleware(middleware.Spec.Plugin)
+		plugin, err := createPluginMiddleware(client, middleware.Namespace, middleware.Spec.Plugin)
 		if err != nil {
 			log.FromContext(ctxMid).Errorf("Error while reading plugins middleware: %v", err)
 			continue
@@ -419,7 +419,7 @@ func getServicePort(svc *corev1.Service, port intstr.IntOrString) (*corev1.Servi
 	return &corev1.ServicePort{Port: port.IntVal}, nil
 }
 
-func createPluginMiddleware(plugins map[string]apiextensionv1.JSON) (map[string]dynamic.PluginConf, error) {
+func createPluginMiddleware(k8sClient Client, ns string, plugins map[string]apiextensionv1.JSON) (map[string]dynamic.PluginConf, error) {
 	if plugins == nil {
 		return nil, nil
 	}
@@ -429,13 +429,73 @@ func createPluginMiddleware(plugins map[string]apiextensionv1.JSON) (map[string]
 		return nil, err
 	}
 
-	pc := map[string]dynamic.PluginConf{}
-	err = json.Unmarshal(data, &pc)
-	if err != nil {
+	pcMap := map[string]dynamic.PluginConf{}
+	if err = json.Unmarshal(data, &pcMap); err != nil {
 		return nil, err
 	}
 
-	return pc, nil
+	for _, pc := range pcMap {
+		for key := range pc {
+			if pc[key], err = loadSecretKeys(k8sClient, ns, pc[key]); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return pcMap, nil
+}
+
+func loadSecretKeys(k8sClient Client, ns string, i interface{}) (interface{}, error) {
+	var err error
+	switch iv := i.(type) {
+	case string:
+		if !strings.HasPrefix(iv, "urn:k8s:secret:") {
+			return iv, nil
+		}
+
+		return getSecretValue(k8sClient, ns, iv)
+
+	case []interface{}:
+		for i := range iv {
+			if iv[i], err = loadSecretKeys(k8sClient, ns, iv[i]); err != nil {
+				return nil, err
+			}
+		}
+
+	case map[string]interface{}:
+		for k := range iv {
+			if iv[k], err = loadSecretKeys(k8sClient, ns, iv[k]); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return i, nil
+}
+
+func getSecretValue(c Client, ns, urn string) (string, error) {
+	parts := strings.Split(urn, ":")
+	if len(parts) != 5 {
+		return "", fmt.Errorf("malformed secret URN %q", urn)
+	}
+
+	secretName := parts[3]
+	secret, ok, err := c.GetSecret(ns, secretName)
+	if err != nil {
+		return "", err
+	}
+
+	if !ok {
+		return "", fmt.Errorf("secret %s/%s is not found", ns, secretName)
+	}
+
+	secretKey := parts[4]
+	secretValue, ok := secret.Data[secretKey]
+	if !ok {
+		return "", fmt.Errorf("key %q not found in secret %s/%s", secretKey, ns, secretName)
+	}
+
+	return string(secretValue), nil
 }
 
 func createCircuitBreakerMiddleware(circuitBreaker *v1alpha1.CircuitBreaker) (*dynamic.CircuitBreaker, error) {
