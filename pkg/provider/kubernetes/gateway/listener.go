@@ -6,7 +6,7 @@ var shareableListenerProtocols []v1alpha2.ProtocolType = []v1alpha2.ProtocolType
 	v1alpha2.HTTPSProtocolType,
 }
 
-// allocatedPortBlock tracks listeners sharing a common port
+// allocatedPortBlock tracks listeners sharing a common port.
 type allocatedPortBlock []v1alpha2.Listener
 
 func (apb allocatedPortBlock) accepts(l v1alpha2.Listener, shareable []v1alpha2.ProtocolType) bool {
@@ -51,7 +51,7 @@ func newAllocatedPortBlock(l v1alpha2.Listener) allocatedPortBlock {
 	return block
 }
 
-// allocatedListeners tracks listeners belonging to the same gateway
+// allocatedListeners tracks listeners belonging to the same gateway.
 type allocatedListeners map[v1alpha2.PortNumber]allocatedPortBlock
 
 func newAllocatedListeners() allocatedListeners {
