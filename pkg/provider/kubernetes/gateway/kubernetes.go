@@ -317,7 +317,7 @@ func (p *Provider) createGatewayConf(ctx context.Context, client Client, gateway
 func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *v1alpha2.Gateway, conf *dynamic.Configuration, tlsConfigs map[string]*tls.CertAndStores) []v1alpha2.ListenerStatus {
 	logger := log.FromContext(ctx)
 	listenerStatuses := make([]v1alpha2.ListenerStatus, len(gateway.Spec.Listeners))
-	allocatedPort := map[v1alpha2.PortNumber]v1alpha2.ProtocolType{}
+	allocated := newAllocatedListeners()
 
 	for i, listener := range gateway.Spec.Listeners {
 		listenerStatuses[i] = v1alpha2.ListenerStatus{
@@ -340,7 +340,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			continue
 		}
 
-		if _, ok := allocatedPort[listener.Port]; ok {
+		if !allocated.accepts(listener, shareableListenerProtocols) {
 			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
 				Type:               string(v1alpha2.ListenerConditionDetached),
 				Status:             metav1.ConditionTrue,
@@ -348,11 +348,11 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 				Reason:             string(v1alpha2.ListenerReasonPortUnavailable),
 				Message:            fmt.Sprintf("Port %d unavailable", listener.Port),
 			})
-
 			continue
+		} else {
+			allocated.add(listener)
 		}
 
-		allocatedPort[listener.Port] = listener.Protocol
 		ep, err := p.entryPointName(listener.Port, listener.Protocol)
 		if err != nil {
 			// update "Detached" status with "PortUnavailable" reason
