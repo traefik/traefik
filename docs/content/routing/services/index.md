@@ -320,17 +320,14 @@ Traefik will consider your servers healthy as long as they return status codes b
 
 To propagate status changes (e.g. all servers of this service are down) upwards, HealthCheck must also be enabled on the parent(s) of this service.
 
-_Required configurations_
+Below are the available options for the health check mechanism:
 
-- `path` is appended to the server URL to set the health check endpoint. Forgetting the parameter filters out the health check configuration but keeps the service alive.
-
-_Optional configurations_
-
-- `scheme`, if defined, will replace the server URL `scheme` for the health check endpoint
-- `hostname`, if defined, will apply `Host` header `hostname` to the health check request.
-- `port`, if defined, will replace the server URL `port` for the health check endpoint.
-- `interval` defines the frequency of the health check calls.
-- `timeout` defines the maximum duration Traefik will wait for a health check request before considering the server failed (unhealthy).
+- `path`, defines the server URL path for the health check endpoint (required).
+- `scheme`, if defined, replaces the server URL `scheme` for the health check endpoint.
+- `hostname`, if defined, sets the value of `hostname` in the `Host` header of the health check request.
+- `port`, if defined, replaces the server URL `port` for the health check endpoint.
+- `interval` defines the frequency of the health check calls (default: 30s).
+- `timeout` defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy (default: 5s).
 - `headers` defines custom headers to be sent to the health check endpoint.
 - `followRedirects` defines whether redirects should be followed during the health check calls (default: true).
 

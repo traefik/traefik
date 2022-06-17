@@ -318,7 +318,7 @@ func buildHealthCheckOptions(ctx context.Context, lb healthcheck.Balancer, backe
 	logger := log.FromContext(ctx)
 
 	if hc.Path == "" {
-		logger.Errorf("Ignoring heath check configuration: no path provided for '%s'", backend)
+		logger.Errorf("Ignoring heath check configuration for '%s': no path provided", backend)
 		return nil
 	}
 
