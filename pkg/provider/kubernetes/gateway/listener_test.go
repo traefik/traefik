@@ -94,10 +94,6 @@ func Test_allocatedPortBlockAccepts(t *testing.T) {
 					Protocol: v1alpha2.HTTPSProtocolType,
 					Hostname: hostnamePtr("sub2.example.com"),
 				},
-				{
-					Protocol: v1alpha2.HTTPSProtocolType,
-					Hostname: hostnamePtr("sub1.example.com"),
-				},
 			},
 			shareableProtocols: []v1alpha2.ProtocolType{
 				v1alpha2.HTTPSProtocolType,
