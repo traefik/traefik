@@ -8,7 +8,8 @@ import (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// MiddlewareTCP is the CRD implementation of a Traefik TCP middleware. More info: https://doc.traefik.io/traefik/middlewares/overview/
+// MiddlewareTCP is the CRD implementation of a Traefik TCP middleware.
+// More info: https://doc.traefik.io/traefik/middlewares/overview/
 type MiddlewareTCP struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
