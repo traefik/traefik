@@ -10,7 +10,7 @@ import (
 // +kubebuilder:storageversion
 
 // TraefikService is the CRD implementation of a "Traefik Service".
-// TraefikService object allows to :
+// TraefikService object allows to:
 //  (a) Apply weight to Services on load-balancing
 //  (b) Mirror traffic on services
 // More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-traefikservice
@@ -18,7 +18,7 @@ type TraefikService struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
 
-	Spec ServiceSpec `json:"spec"`
+	Spec TraefikServiceSpec `json:"spec"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -34,23 +34,23 @@ type TraefikServiceList struct {
 // +k8s:deepcopy-gen=true
 
 // TraefikServiceSpec defines the desired state of a TraefikService.
-type ServiceSpec struct {
+type TraefikServiceSpec struct {
 	Weighted  *WeightedRoundRobin `json:"weighted,omitempty"`
 	Mirroring *Mirroring          `json:"mirroring,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// Mirroring defines a mirroring service, which is composed of a main
-// load-balancer, and a list of mirrors. More info: https://doc.traefik.io/traefik/routing/services/#mirroring-service
+// Mirroring defines a mirroring service, which is composed of a main load-balancer, and a list of mirrors.
+// More info: https://doc.traefik.io/traefik/routing/services/#mirroring-service
 type Mirroring struct {
 	LoadBalancerSpec `json:",inline"`
 
-	// It is the maximum size allowed for the body of the request.
+	// MaxBodySize defines the maximum size allowed for the body of the request.
 	// If the body is larger, the request is not mirrored.
 	// Default value is -1, which means unlimited size.
 	MaxBodySize *int64 `json:"maxBodySize,omitempty"`
-	// List of mirrors where Traefik will duplicate the traffic.
+	// Mirrors defines the list of mirrors where Traefik will duplicate the traffic.
 	Mirrors []MirrorService `json:"mirrors,omitempty"`
 }
 
@@ -60,7 +60,8 @@ type Mirroring struct {
 type MirrorService struct {
 	LoadBalancerSpec `json:",inline"`
 
-	// Only send a part of the traffic to this mirror. Supported values: 0 to 100
+	// Percent defines the part of the traffic to mirror.
+	// Supported values: 0 to 100.
 	Percent int `json:"percent,omitempty"`
 }
 
@@ -68,9 +69,9 @@ type MirrorService struct {
 
 // WeightedRoundRobin allows to apply weight to services on load-balancing.
 type WeightedRoundRobin struct {
-	// Array of Kubernetes Service and/or TraefikService to load-balance, with weight
+	// Services defines the list of Kubernetes Service and/or TraefikService to load-balance, with weight.
 	Services []Service `json:"services,omitempty"`
-	// When sticky sessions are enabled, a Set-Cookie header is set on the initial response to let the client know which server handles the first response. On subsequent requests, to keep the session alive with the same server, the client should send the cookie with the value set.
+	// Sticky defines whether sticky sessions are enabled.
 	// More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
 	Sticky *dynamic.Sticky `json:"sticky,omitempty"`
 }

@@ -37,19 +37,18 @@ spec:
             description: IngressRouteUDPSpec defines the desired state of a IngressRouteUDP.
             properties:
               entryPoints:
-                description: 'List of entry points to use on this IngressRouteTCP
-                  They are defined in your static configuration. (Default: use all
-                  entrypoints)'
+                description: 'EntryPoints defines the list of entry points to bind
+                  to. Default: all entrypoints.'
                 items:
                   type: string
                 type: array
               routes:
-                description: List of routes
+                description: Routes defines the list of routes.
                 items:
                   description: RouteUDP contains the set of routes.
                   properties:
                     services:
-                      description: List of Kubernetes Services
+                      description: Services defines the list of Kubernetes Services.
                       items:
                         description: ServiceUDP defines an upstream to proxy traffic.
                         properties:
