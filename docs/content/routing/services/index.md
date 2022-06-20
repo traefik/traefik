@@ -322,14 +322,14 @@ To propagate status changes (e.g. all servers of this service are down) upwards,
 
 Below are the available options for the health check mechanism:
 
-- `path`, defines the server URL path for the health check endpoint (required).
-- `scheme`, if defined, replaces the server URL `scheme` for the health check endpoint.
-- `hostname`, if defined, sets the value of `hostname` in the `Host` header of the health check request.
-- `port`, if defined, replaces the server URL `port` for the health check endpoint.
-- `interval` defines the frequency of the health check calls (default: 30s).
-- `timeout` defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy (default: 5s).
-- `headers` defines custom headers to be sent to the health check endpoint.
-- `followRedirects` defines whether redirects should be followed during the health check calls (default: true).
+- `path` (required), defines the server URL path for the health check endpoint .
+- `scheme` (optional), replaces the server URL `scheme` for the health check endpoint.
+- `hostname` (optional), sets the value of `hostname` in the `Host` header of the health check request.
+- `port` (optional), replaces the server URL `port` for the health check endpoint.
+- `interval` (default: 30s), defines the frequency of the health check calls.
+- `timeout` (default: 5s), defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
+- `headers` (optional), defines custom headers to be sent to the health check endpoint.
+- `followRedirects` (default: true), defines whether redirects should be followed during the health check calls.
 
 !!! info "Interval & Timeout Format"
 
