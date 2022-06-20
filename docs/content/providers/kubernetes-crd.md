@@ -31,14 +31,14 @@ the Traefik engineering team developed a [Custom Resource Definition](https://ku
     
     For Kubernetes `v1.16+`, please use the Traefik `apiextensions.k8s.io/v1` CRDs instead.
 
-??? example "Initializing Resource Definition and RBAC"
+!!! example "Installing Resource Definition and RBAC"
 
-    ```bash tab="Traefik Resource Definition"
-    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/master/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1alpha1.yml
-    ```
-
-    ```bash tab="RBAC for Traefik CRD"
-    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/master/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml"
+    ```bash
+    # Install Traefik Resource Definitions:
+    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v2.7/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
+    
+    # Install RBAC for Traefik:
+    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v2.7/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml
     ```
 
 ## Resource Configuration
