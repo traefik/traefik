@@ -164,9 +164,10 @@ func (p *Provider) loadConfiguration(ctx context.Context, configurationC chan<- 
 func createClient(namespace string, endpoint *EndpointConfig) (*api.Client, error) {
 	config := api.Config{
 		Address:   endpoint.Address,
-		Region:    endpoint.Region,
-		WaitTime:  time.Duration(endpoint.EndpointWaitTime),
 		Namespace: namespace,
+		Region:    endpoint.Region,
+		SecretID:  endpoint.Token,
+		WaitTime:  time.Duration(endpoint.EndpointWaitTime),
 	}
 
 	if endpoint.TLS != nil {
