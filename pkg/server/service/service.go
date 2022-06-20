@@ -311,11 +311,16 @@ func (m *Manager) LaunchHealthCheck() {
 }
 
 func buildHealthCheckOptions(ctx context.Context, lb healthcheck.Balancer, backend string, hc *dynamic.ServerHealthCheck) *healthcheck.Options {
-	if hc == nil || hc.Path == "" {
+	if hc == nil {
 		return nil
 	}
 
 	logger := log.FromContext(ctx)
+
+	if hc.Path == "" {
+		logger.Errorf("Ignoring heath check configuration for '%s': no path provided", backend)
+		return nil
+	}
 
 	interval := defaultHealthCheckInterval
 	if hc.Interval != "" {
