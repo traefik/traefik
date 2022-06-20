@@ -7,25 +7,17 @@ import (
 
 // IngressRouteUDPSpec defines the desired state of a IngressRouteUDP.
 type IngressRouteUDPSpec struct {
-	// List of routes
+	// Routes defines the list of routes.
 	Routes []RouteUDP `json:"routes"`
-	// List of entry points to use on this IngressRouteTCP
-	// They are defined in your static configuration. (Default: use all entrypoints)
+	// EntryPoints defines the list of entry points to bind to.
+	// Default: all entrypoints.
 	EntryPoints []string `json:"entryPoints,omitempty"`
 }
 
 // RouteUDP contains the set of routes.
 type RouteUDP struct {
-	// List of Kubernetes Services
+	// Services defines the list of Kubernetes Services.
 	Services []ServiceUDP `json:"services,omitempty"`
-}
-
-// TLSOptionUDPRef is a ref to the TLSOption resources.
-type TLSOptionUDPRef struct {
-	// Name of the TLSOption. More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-tlsoption
-	Name string `json:"name"`
-	// Namespace of the TLSOption. More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-tlsoption
-	Namespace string `json:"namespace,omitempty"`
 }
 
 // ServiceUDP defines an upstream to proxy traffic.

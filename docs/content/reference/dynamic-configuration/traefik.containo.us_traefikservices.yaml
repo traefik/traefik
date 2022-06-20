@@ -20,7 +20,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: 'TraefikService is the CRD implementation of a "Traefik Service".
-          TraefikService object allows to :  (a) Apply weight to Services on load-balancing  (b)
+          TraefikService object allows to:  (a) Apply weight to Services on load-balancing  (b)
           Mirror traffic on services More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-traefikservice'
         properties:
           apiVersion:
@@ -50,14 +50,15 @@ spec:
                     - TraefikService
                     type: string
                   maxBodySize:
-                    description: It is the maximum size allowed for the body of the
-                      request. If the body is larger, the request is not mirrored.
-                      Default value is -1, which means unlimited size.
+                    description: MaxBodySize defines the maximum size allowed for
+                      the body of the request. If the body is larger, the request
+                      is not mirrored. Default value is -1, which means unlimited
+                      size.
                     format: int64
                     type: integer
                   mirrors:
-                    description: List of mirrors where Traefik will duplicate the
-                      traffic.
+                    description: Mirrors defines the list of mirrors where Traefik
+                      will duplicate the traffic.
                     items:
                       description: MirrorService defines one of the mirrors of a Mirroring
                         service.
@@ -84,8 +85,8 @@ spec:
                             Can only be used on a kubernetes Services.
                           type: boolean
                         percent:
-                          description: 'Only send a part of the traffic to this mirror.
-                            Supported values: 0 to 100'
+                          description: 'Percent defines the part of the traffic to
+                            mirror. Supported values: 0 to 100.'
                           type: integer
                         port:
                           anyOf:
@@ -257,8 +258,8 @@ spec:
                   on load-balancing.
                 properties:
                   services:
-                    description: Array of Kubernetes Service and/or TraefikService
-                      to load-balance, with weight
+                    description: Services defines the list of Kubernetes Service and/or
+                      TraefikService to load-balance, with weight.
                     items:
                       description: Service defines an upstream to proxy traffic.
                       properties:
@@ -362,11 +363,8 @@ spec:
                       type: object
                     type: array
                   sticky:
-                    description: 'When sticky sessions are enabled, a Set-Cookie header
-                      is set on the initial response to let the client know which
-                      server handles the first response. On subsequent requests, to
-                      keep the session alive with the same server, the client should
-                      send the cookie with the value set. More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#stickiness-and-load-balancing'
+                    description: 'Sticky defines whether sticky sessions are enabled.
+                      More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#stickiness-and-load-balancing'
                     properties:
                       cookie:
                         description: Cookie holds the sticky configuration based on

@@ -651,10 +651,67 @@ referencing services in the [`IngressRoute`](#kind-ingressroute) objects, or rec
     * `Service` (default value): to reference a [Kubernetes Service](https://kubernetes.io/docs/concepts/services-networking/service/)
     * `TraefikService`: to reference another [Traefik Service](../services/index.md)
 
-`TraefikService` object allows to:
+`TraefikService` object allows to use any (valid) combinations of:
 
-* Apply [weight to Services](#weighted-round-robin) on load-balancing
-* Mirror [traffic](#mirroring) on Services
+* servers [load balancing](#server-load-balancing).  
+* services [Weighted Round Robin](#weighted-round-robin) load balancing.
+* services [mirroring](#mirroring).
+
+#### Server Load Balancing
+
+More information in the dedicated server [load balancing](../services/index.md#load-balancing) section.
+
+??? "Declaring and Using Server Load Balancing"
+
+    ```yaml tab="IngressRoute"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: ingressroutebar
+      namespace: default
+    
+    spec:
+      entryPoints:
+        - web
+      routes:
+      - match: Host(`example.com`) && PathPrefix(`/foo`)
+        kind: Rule
+        services:
+        - name: svc1
+          namespace: default
+        - name: svc2
+          namespace: default
+    ```
+    
+    ```yaml tab="K8s Service"
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: svc1
+      namespace: default
+    
+    spec:
+      ports:
+        - name: http
+          port: 80
+      selector:
+        app: traefiklabs
+        task: app1
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: svc2
+      namespace: default
+    
+    spec:
+      ports:
+        - name: http
+          port: 80
+      selector:
+        app: traefiklabs
+        task: app2
+    ```
 
 #### Weighted Round Robin
 
@@ -1559,9 +1616,8 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
 !!! important "Default TLS Store"
 
     Traefik currently only uses the [TLS Store named "default"](../../https/tls.md#certificates-stores).
-    This means that if you have two stores that are named default in different kubernetes namespaces,
-    they may be randomly chosen.
-    For the time being, please only configure one TLSSTore named default.
+    This means that you cannot have two stores that are named default in different kubernetes namespaces.
+    For the time being, please only configure one TLSStore named default.
 
 !!! info "TLSStore Attributes"
    

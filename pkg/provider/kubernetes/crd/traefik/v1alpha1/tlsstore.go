@@ -9,7 +9,9 @@ import (
 // +kubebuilder:storageversion
 
 // TLSStore is the CRD implementation of a Traefik "TLS Store".
-// Traefik currently only uses the TLS Store named "default". This means that if you have two stores that are named default in different kubernetes namespaces, they may be randomly chosen. For the time being, please only configure one TLSSTore named default.
+// Traefik currently only uses the TLS Store named "default".
+// This means that you cannot have two stores that are named default in different kubernetes namespaces.
+// For the time being, please only configure one TLSStore named default.
 // More info: https://doc.traefik.io/traefik/https/tls/#certificates-stores
 type TLSStore struct {
 	metav1.TypeMeta   `json:",inline"`

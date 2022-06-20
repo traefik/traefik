@@ -40,15 +40,18 @@ spec:
             description: ServersTransportSpec defines the desired state of ServersTransport.
             properties:
               certificatesSecrets:
-                description: Certificates for mTLS.
+                description: CertificatesSecrets defines a list of secret storing
+                  certificates for mTLS.
                 items:
                   type: string
                 type: array
               disableHTTP2:
-                description: Disable HTTP/2 for connections with backend servers.
+                description: DisableHTTP2 disables HTTP/2 for connections with backend
+                  servers.
                 type: boolean
               forwardingTimeouts:
-                description: Timeouts for requests forwarded to the backend servers.
+                description: ForwardingTimeouts defines the timeouts for requests
+                  forwarded to the backend servers.
                 properties:
                   dialTimeout:
                     anyOf:
@@ -91,23 +94,25 @@ spec:
                     x-kubernetes-int-or-string: true
                 type: object
               insecureSkipVerify:
-                description: Disable SSL certificate verification.
+                description: InsecureSkipVerify disables SSL certificate verification.
                 type: boolean
               maxIdleConnsPerHost:
-                description: If non-zero, controls the maximum idle (keep-alive) to
-                  keep per-host. If zero, DefaultMaxIdleConnsPerHost is used.
+                description: MaxIdleConnsPerHost controls the maximum idle (keep-alive)
+                  to keep per-host.
                 type: integer
               peerCertURI:
-                description: URI used to match against SAN URI during the peer certificate
-                  verification.
+                description: PeerCertURI defines the peer cert URI used to match against
+                  SAN URI during the peer certificate verification.
                 type: string
               rootCAsSecrets:
-                description: Add cert file for self-signed certificate.
+                description: RootCAsSecrets defines a list of CA secret for self-signed
+                  certificate.
                 items:
                   type: string
                 type: array
               serverName:
-                description: ServerName used to contact the server.
+                description: ServerName defines the server name used to contact the
+                  server.
                 type: string
             type: object
         required:
