@@ -960,7 +960,6 @@ func TestParseDomains(t *testing.T) {
 }
 
 func TestAbsoluteFormURL(t *testing.T) {
-
 	testCases := []struct {
 		desc     string
 		request  string
@@ -1016,6 +1015,7 @@ func TestAbsoluteFormURL(t *testing.T) {
 			require.NoError(t, err)
 
 			err = muxer.AddRoute(test.rule, 0, handler)
+			require.NoError(t, err)
 
 			// RequestDecorator is necessary for the host rule
 			reqHost := requestdecorator.New(nil)
@@ -1029,5 +1029,4 @@ func TestAbsoluteFormURL(t *testing.T) {
 			assert.Equal(t, test.expected, w.Code)
 		})
 	}
-
 }
