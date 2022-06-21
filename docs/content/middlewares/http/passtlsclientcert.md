@@ -445,6 +445,24 @@ Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TO
 
     If there are more than one certificate, they are separated by a `,`.
 
+#### `info.serialNumber`
+
+Set the `info.serialNumber` option to `true` to add the `Serial Number` information from the certificate.
+
+The data is taken from the following certificate part:
+
+```text
+   Serial Number:
+       6a:2f:20:f8:ce:8d:48:52:ba:d9:bb:be:60:ec:bf:79
+```
+
+And it is formatted as follows in the header:
+
+```text
+SerialNumber="141142874255168551917600297745052909433"
+Note: It is the string representation of 20 bytes serial number data.
+```
+
 #### `info.notAfter`
 
 Set the `info.notAfter` option to `true` to add the `Not After` information from the `Validity` part.
