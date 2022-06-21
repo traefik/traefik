@@ -1,9 +1,2150 @@
---8<-- "content/reference/dynamic-configuration/traefik.containo.us_ingressroutes.yaml"
---8<-- "content/reference/dynamic-configuration/traefik.containo.us_ingressroutetcps.yaml"
---8<-- "content/reference/dynamic-configuration/traefik.containo.us_ingressrouteudps.yaml"
---8<-- "content/reference/dynamic-configuration/traefik.containo.us_middlewares.yaml"
---8<-- "content/reference/dynamic-configuration/traefik.containo.us_middlewaretcps.yaml"
---8<-- "content/reference/dynamic-configuration/traefik.containo.us_serverstransports.yaml"
---8<-- "content/reference/dynamic-configuration/traefik.containo.us_tlsoptions.yaml"
---8<-- "content/reference/dynamic-configuration/traefik.containo.us_tlsstores.yaml"
---8<-- "content/reference/dynamic-configuration/traefik.containo.us_traefikservices.yaml"
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: ingressroutes.traefik.containo.us
+spec:
+  group: traefik.containo.us
+  names:
+    kind: IngressRoute
+    listKind: IngressRouteList
+    plural: ingressroutes
+    singular: ingressroute
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: IngressRoute is the CRD implementation of a Traefik HTTP Router.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: IngressRouteSpec defines the desired state of IngressRoute.
+            properties:
+              entryPoints:
+                description: 'EntryPoints defines the list of entry point names to
+                  bind to. Entry points have to be configured in the static configuration.
+                  More info: https://doc.traefik.io/traefik/routing/entrypoints/ Default:
+                  all.'
+                items:
+                  type: string
+                type: array
+              routes:
+                description: Routes defines the list of routes.
+                items:
+                  description: Route holds the HTTP route configuration.
+                  properties:
+                    kind:
+                      description: Kind defines the kind of the route. Rule is the
+                        only supported kind.
+                      enum:
+                      - Rule
+                      type: string
+                    match:
+                      description: 'Match defines the router''s rule. More info: https://doc.traefik.io/traefik/routing/routers/#rule'
+                      type: string
+                    middlewares:
+                      description: 'Middlewares defines the list of references to
+                        Middleware resources. More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-middleware'
+                      items:
+                        description: MiddlewareRef is a reference to a Middleware
+                          resource.
+                        properties:
+                          name:
+                            description: Name defines the name of the referenced Middleware
+                              resource.
+                            type: string
+                          namespace:
+                            description: Namespace defines the namespace of the referenced
+                              Middleware resource.
+                            type: string
+                        required:
+                        - name
+                        type: object
+                      type: array
+                    priority:
+                      description: 'Priority defines the router''s priority. More
+                        info: https://doc.traefik.io/traefik/routing/routers/#priority'
+                      type: integer
+                    services:
+                      description: Services defines the list of Service. It can contain
+                        any combination of TraefikService and/or reference to a Kubernetes
+                        Service.
+                      items:
+                        description: Service defines an upstream HTTP service to proxy
+                          traffic to.
+                        properties:
+                          kind:
+                            description: Kind defines the kind of the Service.
+                            enum:
+                            - Service
+                            - TraefikService
+                            type: string
+                          name:
+                            description: Name defines the name of the referenced Kubernetes
+                              Service or TraefikService. The differentiation between
+                              the two is specified in the Kind field.
+                            type: string
+                          namespace:
+                            description: Namespace defines the namespace of the referenced
+                              Kubernetes Service or TraefikService.
+                            type: string
+                          passHostHeader:
+                            description: PassHostHeader defines whether the client
+                              Host header is forwarded to the upstream Kubernetes
+                              Service. By default, passHostHeader is true.
+                            type: boolean
+                          port:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Port defines the port of a Kubernetes Service.
+                              This can be a reference to a named port.
+                            x-kubernetes-int-or-string: true
+                          responseForwarding:
+                            description: ResponseForwarding defines how Traefik forwards
+                              the response from the upstream Kubernetes Service to
+                              the client.
+                            properties:
+                              flushInterval:
+                                description: 'FlushInterval defines the interval in
+                                  between flushes to the client while copying the
+                                  response body. It is a duration in milliseconds.
+                                  A negative value means to flush immediately after
+                                  each write to the client. The FlushInterval is ignored
+                                  when ReverseProxy recognizes a response as a streaming
+                                  response; for such responses, writes are flushed
+                                  to the client immediately. Default: 100'
+                                type: string
+                            type: object
+                          scheme:
+                            description: Scheme defines the scheme to use for the
+                              request to the upstream Kubernetes Service. It defaults
+                              to https when Kubernetes Service port is 443, http otherwise.
+                            type: string
+                          serversTransport:
+                            description: ServersTransport defines the name of ServersTransport
+                              resource to use. It allows to configure the transport
+                              between Traefik and your servers. Can only be used on
+                              a Kubernetes Service.
+                            type: string
+                          sticky:
+                            description: 'Sticky defines the sticky sessions configuration.
+                              More info: https://doc.traefik.io/traefik/routing/services/#sticky-sessions'
+                            properties:
+                              cookie:
+                                description: Cookie defines the sticky cookie configuration.
+                                properties:
+                                  httpOnly:
+                                    description: HTTPOnly defines whether the cookie
+                                      can be accessed by client-side APIs, such as
+                                      JavaScript.
+                                    type: boolean
+                                  name:
+                                    description: Name defines the Cookie name.
+                                    type: string
+                                  sameSite:
+                                    description: 'SameSite defines the same site policy.
+                                      More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite'
+                                    type: string
+                                  secure:
+                                    description: Secure defines whether the cookie
+                                      can only be transmitted over an encrypted connection
+                                      (i.e. HTTPS).
+                                    type: boolean
+                                type: object
+                            type: object
+                          strategy:
+                            description: Strategy defines the load balancing strategy
+                              between the servers. RoundRobin is the only supported
+                              value at the moment.
+                            type: string
+                          weight:
+                            description: Weight defines the weight and should only
+                              be specified when Name references a TraefikService object
+                              (and to be precise, one that embeds a Weighted Round
+                              Robin).
+                            type: integer
+                        required:
+                        - name
+                        type: object
+                      type: array
+                  required:
+                  - kind
+                  - match
+                  type: object
+                type: array
+              tls:
+                description: 'TLS defines the TLS configuration. More info: https://doc.traefik.io/traefik/routing/routers/#tls'
+                properties:
+                  certResolver:
+                    description: 'CertResolver defines the name of the certificate
+                      resolver to use. Cert resolvers have to be configured in the
+                      static configuration. More info: https://doc.traefik.io/traefik/https/acme/#certificate-resolvers'
+                    type: string
+                  domains:
+                    description: 'Domains defines the list of domains that will be
+                      used to issue certificates. More info: https://doc.traefik.io/traefik/routing/routers/#domains'
+                    items:
+                      description: Domain holds a domain name with SANs.
+                      properties:
+                        main:
+                          type: string
+                        sans:
+                          items:
+                            type: string
+                          type: array
+                      type: object
+                    type: array
+                  options:
+                    description: 'Options defines the reference to a TLSOption, that
+                      specifies the parameters of the TLS connection. If not defined,
+                      the `default` TLSOption is used. More info: https://doc.traefik.io/traefik/https/tls/#tls-options'
+                    properties:
+                      name:
+                        description: 'Name defines the name of the referenced TLSOption.
+                          More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-tlsoption'
+                        type: string
+                      namespace:
+                        description: 'Namespace defines the namespace of the referenced
+                          TLSOption. More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-tlsoption'
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  secretName:
+                    description: SecretName is the name of the referenced Kubernetes
+                      Secret to specify the certificate details.
+                    type: string
+                  store:
+                    description: Store defines the reference to the TLSStore, that
+                      will be used to store certificates. Please note that only `default`
+                      TLSStore can be used.
+                    properties:
+                      name:
+                        description: 'Name defines the name of the referenced TLSStore.
+                          More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-tlsstore'
+                        type: string
+                      namespace:
+                        description: 'Namespace defines the namespace of the referenced
+                          TLSStore. More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-tlsstore'
+                        type: string
+                    required:
+                    - name
+                    type: object
+                type: object
+            required:
+            - routes
+            type: object
+        required:
+        - metadata
+        - spec
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: ingressroutetcps.traefik.containo.us
+spec:
+  group: traefik.containo.us
+  names:
+    kind: IngressRouteTCP
+    listKind: IngressRouteTCPList
+    plural: ingressroutetcps
+    singular: ingressroutetcp
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: IngressRouteTCP is the CRD implementation of a Traefik TCP Router.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: IngressRouteTCPSpec defines the desired state of IngressRouteTCP.
+            properties:
+              entryPoints:
+                description: 'EntryPoints defines the list of entry point names to
+                  bind to. Entry points have to be configured in the static configuration.
+                  More info: https://doc.traefik.io/traefik/routing/entrypoints/ Default:
+                  all.'
+                items:
+                  type: string
+                type: array
+              routes:
+                description: Routes defines the list of routes.
+                items:
+                  description: RouteTCP holds the TCP route configuration.
+                  properties:
+                    match:
+                      description: 'Match defines the router''s rule. More info: https://doc.traefik.io/traefik/routing/routers/#rule_1'
+                      type: string
+                    middlewares:
+                      description: Middlewares defines the list of references to MiddlewareTCP
+                        resources.
+                      items:
+                        description: ObjectReference is a generic reference to a Traefik
+                          resource.
+                        properties:
+                          name:
+                            description: Name defines the name of the referenced Traefik
+                              resource.
+                            type: string
+                          namespace:
+                            description: Namespace defines the namespace of the referenced
+                              Traefik resource.
+                            type: string
+                        required:
+                        - name
+                        type: object
+                      type: array
+                    priority:
+                      description: 'Priority defines the router''s priority. More
+                        info: https://doc.traefik.io/traefik/routing/routers/#priority_1'
+                      type: integer
+                    services:
+                      description: Services defines the list of TCP services.
+                      items:
+                        description: ServiceTCP defines an upstream TCP service to
+                          proxy traffic to.
+                        properties:
+                          name:
+                            description: Name defines the name of the referenced Kubernetes
+                              Service.
+                            type: string
+                          namespace:
+                            description: Namespace defines the namespace of the referenced
+                              Kubernetes Service.
+                            type: string
+                          port:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Port defines the port of a Kubernetes Service.
+                              This can be a reference to a named port.
+                            x-kubernetes-int-or-string: true
+                          proxyProtocol:
+                            description: 'ProxyProtocol defines the PROXY protocol
+                              configuration. More info: https://doc.traefik.io/traefik/routing/services/#proxy-protocol'
+                            properties:
+                              version:
+                                description: Version defines the PROXY Protocol version
+                                  to use.
+                                type: integer
+                            type: object
+                          terminationDelay:
+                            description: TerminationDelay defines the deadline that
+                              the proxy sets, after one of its connected peers indicates
+                              it has closed the writing capability of its connection,
+                              to close the reading capability as well, hence fully
+                              terminating the connection. It is a duration in milliseconds,
+                              defaulting to 100. A negative value means an infinite
+                              deadline (i.e. the reading capability is never closed).
+                            type: integer
+                          weight:
+                            description: Weight defines the weight used when balancing
+                              requests between multiple Kubernetes Service.
+                            type: integer
+                        required:
+                        - name
+                        - port
+                        type: object
+                      type: array
+                  required:
+                  - match
+                  type: object
+                type: array
+              tls:
+                description: 'TLS defines the TLS configuration on a layer 4 / TCP
+                  Route. More info: https://doc.traefik.io/traefik/routing/routers/#tls_1'
+                properties:
+                  certResolver:
+                    description: 'CertResolver defines the name of the certificate
+                      resolver to use. Cert resolvers have to be configured in the
+                      static configuration. More info: https://doc.traefik.io/traefik/https/acme/#certificate-resolvers'
+                    type: string
+                  domains:
+                    description: 'Domains defines the list of domains that will be
+                      used to issue certificates. More info: https://doc.traefik.io/traefik/routing/routers/#domains'
+                    items:
+                      description: Domain holds a domain name with SANs.
+                      properties:
+                        main:
+                          type: string
+                        sans:
+                          items:
+                            type: string
+                          type: array
+                      type: object
+                    type: array
+                  options:
+                    description: 'Options defines the reference to a TLSOption, that
+                      specifies the parameters of the TLS connection. If not defined,
+                      the `default` TLSOption is used. More info: https://doc.traefik.io/traefik/https/tls/#tls-options'
+                    properties:
+                      name:
+                        description: Name defines the name of the referenced Traefik
+                          resource.
+                        type: string
+                      namespace:
+                        description: Namespace defines the namespace of the referenced
+                          Traefik resource.
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  passthrough:
+                    description: Passthrough defines whether a TLS router will terminate
+                      the TLS connection.
+                    type: boolean
+                  secretName:
+                    description: SecretName is the name of the referenced Kubernetes
+                      Secret to specify the certificate details.
+                    type: string
+                  store:
+                    description: Store defines the reference to the TLSStore, that
+                      will be used to store certificates. Please note that only `default`
+                      TLSStore can be used.
+                    properties:
+                      name:
+                        description: Name defines the name of the referenced Traefik
+                          resource.
+                        type: string
+                      namespace:
+                        description: Namespace defines the namespace of the referenced
+                          Traefik resource.
+                        type: string
+                    required:
+                    - name
+                    type: object
+                type: object
+            required:
+            - routes
+            type: object
+        required:
+        - metadata
+        - spec
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: ingressrouteudps.traefik.containo.us
+spec:
+  group: traefik.containo.us
+  names:
+    kind: IngressRouteUDP
+    listKind: IngressRouteUDPList
+    plural: ingressrouteudps
+    singular: ingressrouteudp
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: IngressRouteUDP is a CRD implementation of a Traefik UDP Router.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: IngressRouteUDPSpec defines the desired state of a IngressRouteUDP.
+            properties:
+              entryPoints:
+                description: 'EntryPoints defines the list of entry point names to
+                  bind to. Entry points have to be configured in the static configuration.
+                  More info: https://doc.traefik.io/traefik/routing/entrypoints/ Default:
+                  all.'
+                items:
+                  type: string
+                type: array
+              routes:
+                description: Routes defines the list of routes.
+                items:
+                  description: RouteUDP holds the UDP route configuration.
+                  properties:
+                    services:
+                      description: Services defines the list of UDP services.
+                      items:
+                        description: ServiceUDP defines an upstream UDP service to
+                          proxy traffic to.
+                        properties:
+                          name:
+                            description: Name defines the name of the referenced Kubernetes
+                              Service.
+                            type: string
+                          namespace:
+                            description: Namespace defines the namespace of the referenced
+                              Kubernetes Service.
+                            type: string
+                          port:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            description: Port defines the port of a Kubernetes Service.
+                              This can be a reference to a named port.
+                            x-kubernetes-int-or-string: true
+                          weight:
+                            description: Weight defines the weight used when balancing
+                              requests between multiple Kubernetes Service.
+                            type: integer
+                        required:
+                        - name
+                        - port
+                        type: object
+                      type: array
+                  type: object
+                type: array
+            required:
+            - routes
+            type: object
+        required:
+        - metadata
+        - spec
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: middlewares.traefik.containo.us
+spec:
+  group: traefik.containo.us
+  names:
+    kind: Middleware
+    listKind: MiddlewareList
+    plural: middlewares
+    singular: middleware
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: 'Middleware is the CRD implementation of a Traefik Middleware.
+          More info: https://doc.traefik.io/traefik/middlewares/http/overview/'
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: MiddlewareSpec defines the desired state of Middleware.
+            properties:
+              addPrefix:
+                description: 'AddPrefix holds the add prefix middleware configuration.
+                  This middleware updates the path of a request before forwarding
+                  it. More info: https://doc.traefik.io/traefik/middlewares/http/addprefix/'
+                properties:
+                  prefix:
+                    description: Prefix is the string to add before the current path
+                      in the requested URL. It should include a leading slash (/).
+                    type: string
+                type: object
+              basicAuth:
+                description: BasicAuth holds the HTTP basic authentication middleware
+                  configuration.
+                properties:
+                  headerField:
+                    type: string
+                  realm:
+                    type: string
+                  removeHeader:
+                    type: boolean
+                  secret:
+                    type: string
+                type: object
+              buffering:
+                description: 'Buffering holds the buffering middleware configuration.
+                  This middleware retries or limits the size of requests that can
+                  be forwarded to services. More info: https://doc.traefik.io/traefik/middlewares/http/buffering/#maxrequestbodybytes'
+                properties:
+                  maxRequestBodyBytes:
+                    description: 'MaxRequestBodyBytes defines the maximum allowed
+                      body size for the request (in bytes). If the request exceeds
+                      the allowed size, it is not forwarded to the service, and the
+                      client gets a 413 (Request Entity Too Large) response. Default:
+                      0 (no maximum).'
+                    format: int64
+                    type: integer
+                  maxResponseBodyBytes:
+                    description: 'MaxResponseBodyBytes defines the maximum allowed
+                      response size from the service (in bytes). If the response exceeds
+                      the allowed size, it is not forwarded to the client. The client
+                      gets a 500 (Internal Server Error) response instead. Default:
+                      0 (no maximum).'
+                    format: int64
+                    type: integer
+                  memRequestBodyBytes:
+                    description: 'MemRequestBodyBytes defines the threshold (in bytes)
+                      from which the request will be buffered on disk instead of in
+                      memory. Default: 1048576 (1Mi).'
+                    format: int64
+                    type: integer
+                  memResponseBodyBytes:
+                    description: 'MemResponseBodyBytes defines the threshold (in bytes)
+                      from which the response will be buffered on disk instead of
+                      in memory. Default: 1048576 (1Mi).'
+                    format: int64
+                    type: integer
+                  retryExpression:
+                    description: 'RetryExpression defines the retry conditions. It
+                      is a logical combination of functions with operators AND (&&)
+                      and OR (||). More info: https://doc.traefik.io/traefik/middlewares/http/buffering/#retryexpression'
+                    type: string
+                type: object
+              chain:
+                description: Chain holds the chain middleware configuration.
+                properties:
+                  middlewares:
+                    items:
+                      description: MiddlewareRef is a reference to a Middleware resource.
+                      properties:
+                        name:
+                          description: Name defines the name of the referenced Middleware
+                            resource.
+                          type: string
+                        namespace:
+                          description: Namespace defines the namespace of the referenced
+                            Middleware resource.
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
+                type: object
+              circuitBreaker:
+                description: 'circuitBreaker protects your system from stacking requests
+                  to unhealthy services, resulting in cascading failures. More info:
+                  https://doc.traefik.io/traefik/middlewares/http/circuitbreaker/'
+                properties:
+                  expression:
+                    type: string
+                type: object
+              compress:
+                description: 'Compress holds the compress middleware configuration.
+                  This middleware compresses responses before sending them to the
+                  client, using gzip compression. More info: https://doc.traefik.io/traefik/middlewares/http/compress/'
+                properties:
+                  excludedContentTypes:
+                    description: ExcludedContentTypes defines the list of content
+                      types to compare the Content-Type header of the incoming requests
+                      and responses before compressing.
+                    items:
+                      type: string
+                    type: array
+                  minResponseBodyBytes:
+                    description: 'MinResponseBodyBytes defines the minimum amount
+                      of bytes a response body must have to be compressed. Default:
+                      1024.'
+                    type: integer
+                type: object
+              contentType:
+                description: ContentType middleware - or rather its unique `autoDetect`
+                  option - specifies whether to let the `Content-Type` header, if
+                  it has not been set by the backend, be automatically set to a value
+                  derived from the contents of the response. As a proxy, the default
+                  behavior should be to leave the header alone, regardless of what
+                  the backend did with it. However, the historic default was to always
+                  auto-detect and set the header if it was nil, and it is going to
+                  be kept that way in order to support users currently relying on
+                  it. This middleware exists to enable the correct behavior until
+                  at least the default one can be changed in a future version.
+                properties:
+                  autoDetect:
+                    type: boolean
+                type: object
+              digestAuth:
+                description: DigestAuth holds the Digest HTTP authentication middleware
+                  configuration.
+                properties:
+                  headerField:
+                    type: string
+                  realm:
+                    type: string
+                  removeHeader:
+                    type: boolean
+                  secret:
+                    type: string
+                type: object
+              errors:
+                description: ErrorPage holds the custom error page middleware configuration.
+                properties:
+                  query:
+                    type: string
+                  service:
+                    description: Service defines an upstream HTTP service to proxy
+                      traffic to.
+                    properties:
+                      kind:
+                        description: Kind defines the kind of the Service.
+                        enum:
+                        - Service
+                        - TraefikService
+                        type: string
+                      name:
+                        description: Name defines the name of the referenced Kubernetes
+                          Service or TraefikService. The differentiation between the
+                          two is specified in the Kind field.
+                        type: string
+                      namespace:
+                        description: Namespace defines the namespace of the referenced
+                          Kubernetes Service or TraefikService.
+                        type: string
+                      passHostHeader:
+                        description: PassHostHeader defines whether the client Host
+                          header is forwarded to the upstream Kubernetes Service.
+                          By default, passHostHeader is true.
+                        type: boolean
+                      port:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: Port defines the port of a Kubernetes Service.
+                          This can be a reference to a named port.
+                        x-kubernetes-int-or-string: true
+                      responseForwarding:
+                        description: ResponseForwarding defines how Traefik forwards
+                          the response from the upstream Kubernetes Service to the
+                          client.
+                        properties:
+                          flushInterval:
+                            description: 'FlushInterval defines the interval in between
+                              flushes to the client while copying the response body.
+                              It is a duration in milliseconds. A negative value means
+                              to flush immediately after each write to the client.
+                              The FlushInterval is ignored when ReverseProxy recognizes
+                              a response as a streaming response; for such responses,
+                              writes are flushed to the client immediately. Default:
+                              100'
+                            type: string
+                        type: object
+                      scheme:
+                        description: Scheme defines the scheme to use for the request
+                          to the upstream Kubernetes Service. It defaults to https
+                          when Kubernetes Service port is 443, http otherwise.
+                        type: string
+                      serversTransport:
+                        description: ServersTransport defines the name of ServersTransport
+                          resource to use. It allows to configure the transport between
+                          Traefik and your servers. Can only be used on a Kubernetes
+                          Service.
+                        type: string
+                      sticky:
+                        description: 'Sticky defines the sticky sessions configuration.
+                          More info: https://doc.traefik.io/traefik/routing/services/#sticky-sessions'
+                        properties:
+                          cookie:
+                            description: Cookie defines the sticky cookie configuration.
+                            properties:
+                              httpOnly:
+                                description: HTTPOnly defines whether the cookie can
+                                  be accessed by client-side APIs, such as JavaScript.
+                                type: boolean
+                              name:
+                                description: Name defines the Cookie name.
+                                type: string
+                              sameSite:
+                                description: 'SameSite defines the same site policy.
+                                  More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite'
+                                type: string
+                              secure:
+                                description: Secure defines whether the cookie can
+                                  only be transmitted over an encrypted connection
+                                  (i.e. HTTPS).
+                                type: boolean
+                            type: object
+                        type: object
+                      strategy:
+                        description: Strategy defines the load balancing strategy
+                          between the servers. RoundRobin is the only supported value
+                          at the moment.
+                        type: string
+                      weight:
+                        description: Weight defines the weight and should only be
+                          specified when Name references a TraefikService object (and
+                          to be precise, one that embeds a Weighted Round Robin).
+                        type: integer
+                    required:
+                    - name
+                    type: object
+                  status:
+                    items:
+                      type: string
+                    type: array
+                type: object
+              forwardAuth:
+                description: ForwardAuth holds the http forward authentication middleware
+                  configuration.
+                properties:
+                  address:
+                    type: string
+                  authRequestHeaders:
+                    items:
+                      type: string
+                    type: array
+                  authResponseHeaders:
+                    items:
+                      type: string
+                    type: array
+                  authResponseHeadersRegex:
+                    type: string
+                  tls:
+                    description: ClientTLS holds TLS specific configurations as client.
+                    properties:
+                      caOptional:
+                        type: boolean
+                      caSecret:
+                        type: string
+                      certSecret:
+                        type: string
+                      insecureSkipVerify:
+                        type: boolean
+                    type: object
+                  trustForwardHeader:
+                    type: boolean
+                type: object
+              headers:
+                description: 'Headers holds the headers middleware configuration.
+                  This middleware manages the headers of requests and responses. More
+                  info: https://doc.traefik.io/traefik/middlewares/http/headers/#customrequestheaders'
+                properties:
+                  accessControlAllowCredentials:
+                    description: AccessControlAllowCredentials is only valid if true.
+                      false is ignored.
+                    type: boolean
+                  accessControlAllowHeaders:
+                    description: AccessControlAllowHeaders must be used in response
+                      to a preflight request with Access-Control-Request-Headers set.
+                    items:
+                      type: string
+                    type: array
+                  accessControlAllowMethods:
+                    description: AccessControlAllowMethods must be used in response
+                      to a preflight request with Access-Control-Request-Method set.
+                    items:
+                      type: string
+                    type: array
+                  accessControlAllowOriginList:
+                    description: AccessControlAllowOriginList is a list of allowable
+                      origins. Can also be a wildcard origin "*".
+                    items:
+                      type: string
+                    type: array
+                  accessControlAllowOriginListRegex:
+                    description: AccessControlAllowOriginListRegex is a list of allowable
+                      origins written following the Regular Expression syntax (https://golang.org/pkg/regexp/).
+                    items:
+                      type: string
+                    type: array
+                  accessControlExposeHeaders:
+                    description: AccessControlExposeHeaders sets valid headers for
+                      the response.
+                    items:
+                      type: string
+                    type: array
+                  accessControlMaxAge:
+                    description: AccessControlMaxAge sets the time that a preflight
+                      request may be cached.
+                    format: int64
+                    type: integer
+                  addVaryHeader:
+                    description: AddVaryHeader controls if the Vary header is automatically
+                      added/updated when the AccessControlAllowOriginList is set.
+                    type: boolean
+                  allowedHosts:
+                    description: Array of fully qualified domain names that are allowed.
+                    items:
+                      type: string
+                    type: array
+                  browserXssFilter:
+                    description: Set browserXssFilter to true to add the X-XSS-Protection
+                      header with the value 1; mode=block.
+                    type: boolean
+                  contentSecurityPolicy:
+                    description: The contentSecurityPolicy option allows the Content-Security-Policy
+                      header value to be set with a custom value.
+                    type: string
+                  contentTypeNosniff:
+                    description: Set contentTypeNosniff to true to add the X-Content-Type-Options
+                      header with the value nosniff.
+                    type: boolean
+                  customBrowserXSSValue:
+                    description: The customBrowserXssValue option allows the X-XSS-Protection
+                      header value to be set with a custom value. This overrides the
+                      BrowserXssFilter option.
+                    type: string
+                  customFrameOptionsValue:
+                    description: The customFrameOptionsValue allows the X-Frame-Options
+                      header value to be set with a custom value. This overrides the
+                      FrameDeny option.
+                    type: string
+                  customRequestHeaders:
+                    additionalProperties:
+                      type: string
+                    description: CustomRequestHeaders defines the header names and
+                      values to apply to the request.
+                    type: object
+                  customResponseHeaders:
+                    additionalProperties:
+                      type: string
+                    description: CustomResponseHeaders defines the header names and
+                      values to apply to the response.
+                    type: object
+                  featurePolicy:
+                    description: 'Deprecated: use PermissionsPolicy instead.'
+                    type: string
+                  forceSTSHeader:
+                    description: Set forceSTSHeader to true to add the STS header
+                      even when the connection is HTTP.
+                    type: boolean
+                  frameDeny:
+                    description: Set frameDeny to true to add the X-Frame-Options
+                      header with the value of DENY.
+                    type: boolean
+                  hostsProxyHeaders:
+                    description: Array of header keys that may hold a proxied hostname
+                      value for the request.
+                    items:
+                      type: string
+                    type: array
+                  isDevelopment:
+                    description: Set isDevelopment to true when developing to mitigate
+                      the unwanted effects of the AllowedHosts, SSL, and STS options.
+                      Usually testing takes place using HTTP, not HTTPS, and on localhost,
+                      not your production domain. If you would like your development
+                      environment to mimic production with complete Host blocking,
+                      SSL redirects, and STS headers, leave this as false.
+                    type: boolean
+                  permissionsPolicy:
+                    description: The permissionsPolicy allows sites to control browser
+                      features.
+                    type: string
+                  publicKey:
+                    description: The publicKey implements HPKP to prevent MITM attacks
+                      with forged certificates.
+                    type: string
+                  referrerPolicy:
+                    description: The referrerPolicy allows sites to control whether
+                      browsers forward the Referer header to other sites.
+                    type: string
+                  sslForceHost:
+                    description: 'Deprecated: use RedirectRegex instead.'
+                    type: boolean
+                  sslHost:
+                    description: 'Deprecated: use RedirectRegex instead.'
+                    type: string
+                  sslProxyHeaders:
+                    additionalProperties:
+                      type: string
+                    description: 'Array of header keys with associated values that
+                      would indicate a valid HTTPS request. It can be useful when
+                      using other proxies (example: "X-Forwarded-Proto": "https").'
+                    type: object
+                  sslRedirect:
+                    description: 'Deprecated: use EntryPoint redirection or RedirectScheme
+                      instead.'
+                    type: boolean
+                  sslTemporaryRedirect:
+                    description: 'Deprecated: use EntryPoint redirection or RedirectScheme
+                      instead.'
+                    type: boolean
+                  stsIncludeSubdomains:
+                    description: If the stsIncludeSubdomains is set to true, the includeSubDomains
+                      directive is appended to the Strict-Transport-Security header.
+                    type: boolean
+                  stsPreload:
+                    description: Set stsPreload to true to have the preload flag appended
+                      to the Strict-Transport-Security header.
+                    type: boolean
+                  stsSeconds:
+                    description: The max-age of the Strict-Transport-Security header.
+                      If set to 0, the header is not set.
+                    format: int64
+                    type: integer
+                type: object
+              inFlightReq:
+                description: 'InFlightReq holds the InFlightReq middleware configuration.
+                  This middleware limits the number of requests being processed and
+                  served concurrently. More info: https://doc.traefik.io/traefik/middlewares/http/inflightreq/'
+                properties:
+                  amount:
+                    description: Amount defines the maximum amount of allowed simultaneous
+                      in-flight request. The middleware responds with HTTP 429 Too
+                      Many Requests if there are already amount requests in progress
+                      (based on the same sourceCriterion strategy).
+                    format: int64
+                    type: integer
+                  sourceCriterion:
+                    description: 'SourceCriterion defines what criterion is used to
+                      group requests as originating from a common source. If several
+                      strategies are defined at the same time, an error will be raised.
+                      If none are set, the default is to use the requestHost. More
+                      info: https://doc.traefik.io/traefik/middlewares/http/inflightreq/#sourcecriterion'
+                    properties:
+                      ipStrategy:
+                        description: 'The ipStrategy option defines two parameters
+                          that configures how Traefik determines the client IP: depth,
+                          and excludedIPs. More info: https://doc.traefik.io/traefik/middlewares/http/inflightreq/#sourcecriterionipstrategy'
+                        properties:
+                          depth:
+                            description: Depth tells Traefik to use the X-Forwarded-For
+                              header and take the IP located at the depth position
+                              (starting from the right).
+                            type: integer
+                          excludedIPs:
+                            description: ExcludedIPs configures Traefik to scan the
+                              X-Forwarded-For header and select the first IP not in
+                              the list.
+                            items:
+                              type: string
+                            type: array
+                        type: object
+                      requestHeaderName:
+                        description: Name of the header used to group incoming requests.
+                        type: string
+                      requestHost:
+                        description: Whether to consider the request host as the source.
+                        type: boolean
+                    type: object
+                type: object
+              ipWhiteList:
+                description: 'IPWhiteList holds the IPWhiteList middleware configuration.
+                  This middleware accepts / refuses requests based on the client IP.
+                  More info: https://doc.traefik.io/traefik/middlewares/http/ipwhitelist/'
+                properties:
+                  ipStrategy:
+                    description: 'IPStrategy holds the ip strategy configuration used
+                      by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/middlewares/http/ipwhitelist/#ipstrategy'
+                    properties:
+                      depth:
+                        description: Depth tells Traefik to use the X-Forwarded-For
+                          header and take the IP located at the depth position (starting
+                          from the right).
+                        type: integer
+                      excludedIPs:
+                        description: ExcludedIPs configures Traefik to scan the X-Forwarded-For
+                          header and select the first IP not in the list.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  sourceRange:
+                    description: SourceRange defines the set of allowed IPs (or ranges
+                      of allowed IPs by using CIDR notation).
+                    items:
+                      type: string
+                    type: array
+                type: object
+              passTLSClientCert:
+                description: 'PassTLSClientCert holds the pass TLS client cert middleware
+                  configuration. This middleware adds the selected data from the passed
+                  client TLS certificate to a header. More info: https://doc.traefik.io/traefik/middlewares/http/passtlsclientcert/'
+                properties:
+                  info:
+                    description: Info selects the specific client certificate details
+                      you want to add to the X-Forwarded-Tls-Client-Cert-Info header.
+                    properties:
+                      issuer:
+                        description: The info.issuer selects the specific client certificate
+                          issuer details you want to add to the X-Forwarded-Tls-Client-Cert-Info
+                          header.
+                        properties:
+                          commonName:
+                            description: Set to true to add the organizationalUnit
+                              information into the subject.
+                            type: boolean
+                          country:
+                            description: Set to true to add the country information
+                              into the subject.
+                            type: boolean
+                          domainComponent:
+                            description: Set to true to add the domainComponent information
+                              into the subject.
+                            type: boolean
+                          locality:
+                            description: Set to true to add the locality information
+                              into the subject.
+                            type: boolean
+                          organization:
+                            description: Set to true to add the organization information
+                              into the subject.
+                            type: boolean
+                          province:
+                            description: Set to true to add the province information
+                              into the subject.
+                            type: boolean
+                          serialNumber:
+                            description: Set to true to add the serialNumber information
+                              into the subject.
+                            type: boolean
+                        type: object
+                      notAfter:
+                        description: Set to true to add the Not After information
+                          from the Validity part.
+                        type: boolean
+                      notBefore:
+                        description: Set to true to add the Not Before information
+                          from the Validity part.
+                        type: boolean
+                      sans:
+                        description: Set to true to add the Subject Alternative Name
+                          information from the Subject Alternative Name part.
+                        type: boolean
+                      serialNumber:
+                        description: Set to true to add the serialNumber information
+                          into the issuer.
+                        type: boolean
+                      subject:
+                        description: Selects the specific client certificate subject
+                          details you want to add to the X-Forwarded-Tls-Client-Cert-Info
+                          header.
+                        properties:
+                          commonName:
+                            description: Set to true to add the organizationalUnit
+                              information into the subject.
+                            type: boolean
+                          country:
+                            description: Set to true to add the country information
+                              into the subject.
+                            type: boolean
+                          domainComponent:
+                            description: Set to true to add the domainComponent information
+                              into the subject.
+                            type: boolean
+                          locality:
+                            description: Set to true to add the locality information
+                              into the subject.
+                            type: boolean
+                          organization:
+                            description: Set to true to add the organization information
+                              into the subject.
+                            type: boolean
+                          organizationalUnit:
+                            description: Set to true to add the organizationalUnit
+                              information into the subject.
+                            type: boolean
+                          province:
+                            description: Set to true to add the province information
+                              into the subject.
+                            type: boolean
+                          serialNumber:
+                            description: Set to true to add the serialNumber information
+                              into the subject.
+                            type: boolean
+                        type: object
+                    type: object
+                  pem:
+                    description: PEM sets the X-Forwarded-Tls-Client-Cert header with
+                      the escaped certificate.
+                    type: boolean
+                type: object
+              plugin:
+                additionalProperties:
+                  x-kubernetes-preserve-unknown-fields: true
+                type: object
+              rateLimit:
+                description: RateLimit holds the rate limiting middleware configuration.
+                properties:
+                  average:
+                    format: int64
+                    type: integer
+                  burst:
+                    format: int64
+                    type: integer
+                  period:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    x-kubernetes-int-or-string: true
+                  sourceCriterion:
+                    description: SourceCriterion defines what criterion is used to
+                      group requests as originating from a common source. If none
+                      are set, the default is to use the request's remote address
+                      field. All fields are mutually exclusive.
+                    properties:
+                      ipStrategy:
+                        description: 'The ipStrategy option defines two parameters
+                          that configures how Traefik determines the client IP: depth,
+                          and excludedIPs. More info: https://doc.traefik.io/traefik/middlewares/http/inflightreq/#sourcecriterionipstrategy'
+                        properties:
+                          depth:
+                            description: Depth tells Traefik to use the X-Forwarded-For
+                              header and take the IP located at the depth position
+                              (starting from the right).
+                            type: integer
+                          excludedIPs:
+                            description: ExcludedIPs configures Traefik to scan the
+                              X-Forwarded-For header and select the first IP not in
+                              the list.
+                            items:
+                              type: string
+                            type: array
+                        type: object
+                      requestHeaderName:
+                        description: Name of the header used to group incoming requests.
+                        type: string
+                      requestHost:
+                        description: Whether to consider the request host as the source.
+                        type: boolean
+                    type: object
+                type: object
+              redirectRegex:
+                description: 'RedirectRegex holds the redirect regex middleware configuration.
+                  This middleware redirects a request using regex matching and replacement.
+                  More info: https://doc.traefik.io/traefik/middlewares/http/redirectregex/#regex'
+                properties:
+                  permanent:
+                    description: Permanent defines whether the redirection is permanent
+                      (301).
+                    type: boolean
+                  regex:
+                    description: Regex defines the regex to match and capture elements
+                      from the request URL.
+                    type: string
+                  replacement:
+                    description: Replacement defines how to modify the URL to have
+                      the new target URL.
+                    type: string
+                type: object
+              redirectScheme:
+                description: 'RedirectScheme holds the redirect scheme middleware
+                  configuration. This middleware redirects requests from a scheme/port
+                  to another. More info: https://doc.traefik.io/traefik/middlewares/http/redirectscheme/'
+                properties:
+                  permanent:
+                    description: Permanent defines whether the redirection is permanent
+                      (301).
+                    type: boolean
+                  port:
+                    description: Port defines the port of the new URL.
+                    type: string
+                  scheme:
+                    description: Scheme defines the scheme of the new URL.
+                    type: string
+                type: object
+              replacePath:
+                description: 'ReplacePath holds the replace path middleware configuration.
+                  This middleware replaces the path of the request URL and store the
+                  original path in a X-Replaced-Path header. More info: https://doc.traefik.io/traefik/middlewares/http/replacepath/'
+                properties:
+                  path:
+                    description: Path defines the path to use as replacement in the
+                      request URL.
+                    type: string
+                type: object
+              replacePathRegex:
+                description: 'ReplacePathRegex holds the replace path regex middleware
+                  configuration. This middleware replaces the path of a URL using
+                  (Golang) regex matching and replacement. More info: https://doc.traefik.io/traefik/middlewares/http/replacepathregex/'
+                properties:
+                  regex:
+                    description: Regex defines regular expression to match and capture
+                      the path from the request URL.
+                    type: string
+                  replacement:
+                    description: Replacement defines the replacement path format,
+                      which can include captured variables.
+                    type: string
+                type: object
+              retry:
+                description: Retry holds the retry middleware configuration.
+                properties:
+                  attempts:
+                    type: integer
+                  initialInterval:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    x-kubernetes-int-or-string: true
+                type: object
+              stripPrefix:
+                description: 'StripPrefix holds the strip prefix middleware configuration.
+                  This middleware removes the specified prefixes from the URL path.
+                  More info: https://doc.traefik.io/traefik/middlewares/http/stripprefix/'
+                properties:
+                  forceSlash:
+                    description: 'ForceSlash ensures that the resulting stripped path
+                      is not the empty string, by replacing it with / when necessary.
+                      Default: true.'
+                    type: boolean
+                  prefixes:
+                    description: Prefixes defines the prefixes to strip from the request
+                      URL.
+                    items:
+                      type: string
+                    type: array
+                type: object
+              stripPrefixRegex:
+                description: 'StripPrefixRegex holds the strip prefix regex middleware
+                  configuration. This middleware removes the matching prefixes from
+                  the URL path. More info: https://doc.traefik.io/traefik/middlewares/http/stripprefixregex/'
+                properties:
+                  regex:
+                    description: Regex defines the (Golang) regular expression to
+                      match the path prefix from the request URL.
+                    items:
+                      type: string
+                    type: array
+                type: object
+            type: object
+        required:
+        - metadata
+        - spec
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: middlewaretcps.traefik.containo.us
+spec:
+  group: traefik.containo.us
+  names:
+    kind: MiddlewareTCP
+    listKind: MiddlewareTCPList
+    plural: middlewaretcps
+    singular: middlewaretcp
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: 'MiddlewareTCP is the CRD implementation of a Traefik TCP middleware.
+          More info: https://doc.traefik.io/traefik/middlewares/overview/'
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: MiddlewareTCPSpec defines the desired state of MiddlewareTCP.
+            properties:
+              inFlightConn:
+                description: 'TCPInFlightConn holds the TCP InflightConn middleware
+                  configuration. This middleware prevents services from being overwhelmed
+                  with high load, by limiting the number of allowed simultaneous connections
+                  for one IP. More info: https://doc.traefik.io/traefik/middlewares/tcp/inflightconn/'
+                properties:
+                  amount:
+                    description: Amount defines the maximum amount of allowed simultaneous
+                      connections. The middleware closes the connection if there are
+                      already amount connections opened.
+                    format: int64
+                    type: integer
+                type: object
+              ipWhiteList:
+                description: TCPIPWhiteList holds the TCP IPWhiteList middleware configuration.
+                  This middleware accepts / refuses connections based on the client
+                  IP.
+                properties:
+                  sourceRange:
+                    description: The sourceRange option sets the allowed IPs (or ranges
+                      of allowed IPs by using CIDR notation).
+                    items:
+                      type: string
+                    type: array
+                type: object
+            type: object
+        required:
+        - metadata
+        - spec
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: serverstransports.traefik.containo.us
+spec:
+  group: traefik.containo.us
+  names:
+    kind: ServersTransport
+    listKind: ServersTransportList
+    plural: serverstransports
+    singular: serverstransport
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: 'ServersTransport is the CRD implementation of a ServersTransport.
+          If no serversTransport is specified, the default@internal will be used.
+          The default@internal serversTransport is created from the static configuration.
+          More info: https://doc.traefik.io/traefik/routing/services/#serverstransport_1'
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ServersTransportSpec defines the desired state of ServersTransport.
+            properties:
+              certificatesSecrets:
+                description: CertificatesSecrets defines a list of secret storing
+                  certificates for mTLS.
+                items:
+                  type: string
+                type: array
+              disableHTTP2:
+                description: DisableHTTP2 disables HTTP/2 for connections with backend
+                  servers.
+                type: boolean
+              forwardingTimeouts:
+                description: ForwardingTimeouts defines the timeouts for requests
+                  forwarded to the backend servers.
+                properties:
+                  dialTimeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: DialTimeout is the amount of time to wait until a
+                      connection to a backend server can be established. If zero,
+                      no timeout exists.
+                    x-kubernetes-int-or-string: true
+                  idleConnTimeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: IdleConnTimeout is the maximum period for which an
+                      idle HTTP keep-alive connection will remain open before closing
+                      itself.
+                    x-kubernetes-int-or-string: true
+                  pingTimeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: PingTimeout is the timeout after which the HTTP/2
+                      connection will be closed if a response to ping is not received.
+                    x-kubernetes-int-or-string: true
+                  readIdleTimeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: ReadIdleTimeout is the timeout after which a health
+                      check using ping frame will be carried out if no frame is received
+                      on the HTTP/2 connection. If zero, no health check is performed.
+                    x-kubernetes-int-or-string: true
+                  responseHeaderTimeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: ResponseHeaderTimeout is the amount of time to wait
+                      for a server's response headers after fully writing the request
+                      (including its body, if any). If zero, no timeout exists.
+                    x-kubernetes-int-or-string: true
+                type: object
+              insecureSkipVerify:
+                description: InsecureSkipVerify disables SSL certificate verification.
+                type: boolean
+              maxIdleConnsPerHost:
+                description: MaxIdleConnsPerHost controls the maximum idle (keep-alive)
+                  to keep per-host.
+                type: integer
+              peerCertURI:
+                description: PeerCertURI defines the peer cert URI used to match against
+                  SAN URI during the peer certificate verification.
+                type: string
+              rootCAsSecrets:
+                description: RootCAsSecrets defines a list of CA secret for self-signed
+                  certificate.
+                items:
+                  type: string
+                type: array
+              serverName:
+                description: ServerName defines the server name used to contact the
+                  server.
+                type: string
+            type: object
+        required:
+        - metadata
+        - spec
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: tlsoptions.traefik.containo.us
+spec:
+  group: traefik.containo.us
+  names:
+    kind: TLSOption
+    listKind: TLSOptionList
+    plural: tlsoptions
+    singular: tlsoption
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: 'TLSOption is the CRD implementation of a Traefik "TLS Option",
+          allowing to configure some parameters of the TLS connection. More info:
+          https://doc.traefik.io/traefik/https/tls/#tls-options'
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: TLSOptionSpec defines the desired state of TLSOption.
+            properties:
+              alpnProtocols:
+                description: 'ALPNProtocols defines the list of supported application
+                  level protocols for the TLS handshake, in order of preference. More
+                  info: https://doc.traefik.io/traefik/https/tls/#alpn-protocols'
+                items:
+                  type: string
+                type: array
+              cipherSuites:
+                description: 'CipherSuites defines the list of supported cipher suites
+                  for TLS versions up to TLS 1.2. More info: https://doc.traefik.io/traefik/https/tls/#cipher-suites'
+                items:
+                  type: string
+                type: array
+              clientAuth:
+                description: ClientAuth defines the server's policy for TLS Client
+                  Authentication.
+                properties:
+                  clientAuthType:
+                    description: ClientAuthType defines the client authentication
+                      type to apply.
+                    enum:
+                    - NoClientCert
+                    - RequestClientCert
+                    - RequireAnyClientCert
+                    - VerifyClientCertIfGiven
+                    - RequireAndVerifyClientCert
+                    type: string
+                  secretNames:
+                    description: SecretNames defines the names of the referenced Kubernetes
+                      Secret storing certificate details.
+                    items:
+                      type: string
+                    type: array
+                type: object
+              curvePreferences:
+                description: 'CurvePreferences defines the preferred elliptic curves
+                  in a specific order. More info: https://doc.traefik.io/traefik/https/tls/#curve-preferences'
+                items:
+                  type: string
+                type: array
+              maxVersion:
+                description: 'MaxVersion defines the maximum TLS version that Traefik
+                  will accept. Possible values: VersionTLS10, VersionTLS11, VersionTLS12,
+                  VersionTLS13. Default: None.'
+                type: string
+              minVersion:
+                description: 'MinVersion defines the minimum TLS version that Traefik
+                  will accept. Possible values: VersionTLS10, VersionTLS11, VersionTLS12,
+                  VersionTLS13. Default: VersionTLS10.'
+                type: string
+              preferServerCipherSuites:
+                description: PreferServerCipherSuites defines whether the server chooses
+                  a cipher suite among his own instead of among the client's. It is
+                  enabled automatically when minVersion or maxVersion are set.
+                type: boolean
+              sniStrict:
+                description: 'SniStrict defines whether Traefik allows connections
+                  from clients connections that do not specify a server_name extension.
+                  Default: false.'
+                type: boolean
+            type: object
+        required:
+        - metadata
+        - spec
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: tlsstores.traefik.containo.us
+spec:
+  group: traefik.containo.us
+  names:
+    kind: TLSStore
+    listKind: TLSStoreList
+    plural: tlsstores
+    singular: tlsstore
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: 'TLSStore is the CRD implementation of a Traefik "TLS Store".
+          Traefik currently only uses the TLS Store named "default". This means that
+          you cannot have two stores that are named default in different kubernetes
+          namespaces. For the time being, please only configure one TLSStore named
+          default. More info: https://doc.traefik.io/traefik/https/tls/#certificates-stores'
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: TLSStoreSpec defines the desired state of TLSStore.
+            properties:
+              defaultCertificate:
+                description: DefaultCertificate holds a secret name for the TLSOption
+                  resource.
+                properties:
+                  secretName:
+                    description: SecretName is the name of the referenced Kubernetes
+                      Secret to specify the certificate details.
+                    type: string
+                required:
+                - secretName
+                type: object
+            required:
+            - defaultCertificate
+            type: object
+        required:
+        - metadata
+        - spec
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: traefikservices.traefik.containo.us
+spec:
+  group: traefik.containo.us
+  names:
+    kind: TraefikService
+    listKind: TraefikServiceList
+    plural: traefikservices
+    singular: traefikservice
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: 'TraefikService is the CRD implementation of a "Traefik Service".
+          TraefikService object allows to:  (a) Apply weight to Services on load-balancing  (b)
+          Mirror traffic on services More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-traefikservice'
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: TraefikServiceSpec defines the desired state of a TraefikService.
+            properties:
+              mirroring:
+                description: 'Mirroring defines a mirroring service, which is composed
+                  of a main load-balancer, and a list of mirrors. More info: https://doc.traefik.io/traefik/routing/services/#mirroring-service'
+                properties:
+                  kind:
+                    description: Kind defines the kind of the Service.
+                    enum:
+                    - Service
+                    - TraefikService
+                    type: string
+                  maxBodySize:
+                    description: MaxBodySize defines the maximum size allowed for
+                      the body of the request. If the body is larger, the request
+                      is not mirrored. Default value is -1, which means unlimited
+                      size.
+                    format: int64
+                    type: integer
+                  mirrors:
+                    description: Mirrors defines the list of mirrors where Traefik
+                      will duplicate the traffic.
+                    items:
+                      description: MirrorService defines one of the mirrors of a Mirroring
+                        service.
+                      properties:
+                        kind:
+                          description: Kind defines the kind of the Service.
+                          enum:
+                          - Service
+                          - TraefikService
+                          type: string
+                        name:
+                          description: Name defines the name of the referenced Kubernetes
+                            Service or TraefikService. The differentiation between
+                            the two is specified in the Kind field.
+                          type: string
+                        namespace:
+                          description: Namespace defines the namespace of the referenced
+                            Kubernetes Service or TraefikService.
+                          type: string
+                        passHostHeader:
+                          description: PassHostHeader defines whether the client Host
+                            header is forwarded to the upstream Kubernetes Service.
+                            By default, passHostHeader is true.
+                          type: boolean
+                        percent:
+                          description: 'Percent defines the part of the traffic to
+                            mirror. Supported values: 0 to 100.'
+                          type: integer
+                        port:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Port defines the port of a Kubernetes Service.
+                            This can be a reference to a named port.
+                          x-kubernetes-int-or-string: true
+                        responseForwarding:
+                          description: ResponseForwarding defines how Traefik forwards
+                            the response from the upstream Kubernetes Service to the
+                            client.
+                          properties:
+                            flushInterval:
+                              description: 'FlushInterval defines the interval in
+                                between flushes to the client while copying the response
+                                body. It is a duration in milliseconds. A negative
+                                value means to flush immediately after each write
+                                to the client. The FlushInterval is ignored when ReverseProxy
+                                recognizes a response as a streaming response; for
+                                such responses, writes are flushed to the client immediately.
+                                Default: 100'
+                              type: string
+                          type: object
+                        scheme:
+                          description: Scheme defines the scheme to use for the request
+                            to the upstream Kubernetes Service. It defaults to https
+                            when Kubernetes Service port is 443, http otherwise.
+                          type: string
+                        serversTransport:
+                          description: ServersTransport defines the name of ServersTransport
+                            resource to use. It allows to configure the transport
+                            between Traefik and your servers. Can only be used on
+                            a Kubernetes Service.
+                          type: string
+                        sticky:
+                          description: 'Sticky defines the sticky sessions configuration.
+                            More info: https://doc.traefik.io/traefik/routing/services/#sticky-sessions'
+                          properties:
+                            cookie:
+                              description: Cookie defines the sticky cookie configuration.
+                              properties:
+                                httpOnly:
+                                  description: HTTPOnly defines whether the cookie
+                                    can be accessed by client-side APIs, such as JavaScript.
+                                  type: boolean
+                                name:
+                                  description: Name defines the Cookie name.
+                                  type: string
+                                sameSite:
+                                  description: 'SameSite defines the same site policy.
+                                    More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite'
+                                  type: string
+                                secure:
+                                  description: Secure defines whether the cookie can
+                                    only be transmitted over an encrypted connection
+                                    (i.e. HTTPS).
+                                  type: boolean
+                              type: object
+                          type: object
+                        strategy:
+                          description: Strategy defines the load balancing strategy
+                            between the servers. RoundRobin is the only supported
+                            value at the moment.
+                          type: string
+                        weight:
+                          description: Weight defines the weight and should only be
+                            specified when Name references a TraefikService object
+                            (and to be precise, one that embeds a Weighted Round Robin).
+                          type: integer
+                      required:
+                      - name
+                      type: object
+                    type: array
+                  name:
+                    description: Name defines the name of the referenced Kubernetes
+                      Service or TraefikService. The differentiation between the two
+                      is specified in the Kind field.
+                    type: string
+                  namespace:
+                    description: Namespace defines the namespace of the referenced
+                      Kubernetes Service or TraefikService.
+                    type: string
+                  passHostHeader:
+                    description: PassHostHeader defines whether the client Host header
+                      is forwarded to the upstream Kubernetes Service. By default,
+                      passHostHeader is true.
+                    type: boolean
+                  port:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: Port defines the port of a Kubernetes Service. This
+                      can be a reference to a named port.
+                    x-kubernetes-int-or-string: true
+                  responseForwarding:
+                    description: ResponseForwarding defines how Traefik forwards the
+                      response from the upstream Kubernetes Service to the client.
+                    properties:
+                      flushInterval:
+                        description: 'FlushInterval defines the interval in between
+                          flushes to the client while copying the response body. It
+                          is a duration in milliseconds. A negative value means to
+                          flush immediately after each write to the client. The FlushInterval
+                          is ignored when ReverseProxy recognizes a response as a
+                          streaming response; for such responses, writes are flushed
+                          to the client immediately. Default: 100'
+                        type: string
+                    type: object
+                  scheme:
+                    description: Scheme defines the scheme to use for the request
+                      to the upstream Kubernetes Service. It defaults to https when
+                      Kubernetes Service port is 443, http otherwise.
+                    type: string
+                  serversTransport:
+                    description: ServersTransport defines the name of ServersTransport
+                      resource to use. It allows to configure the transport between
+                      Traefik and your servers. Can only be used on a Kubernetes Service.
+                    type: string
+                  sticky:
+                    description: 'Sticky defines the sticky sessions configuration.
+                      More info: https://doc.traefik.io/traefik/routing/services/#sticky-sessions'
+                    properties:
+                      cookie:
+                        description: Cookie defines the sticky cookie configuration.
+                        properties:
+                          httpOnly:
+                            description: HTTPOnly defines whether the cookie can be
+                              accessed by client-side APIs, such as JavaScript.
+                            type: boolean
+                          name:
+                            description: Name defines the Cookie name.
+                            type: string
+                          sameSite:
+                            description: 'SameSite defines the same site policy. More
+                              info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite'
+                            type: string
+                          secure:
+                            description: Secure defines whether the cookie can only
+                              be transmitted over an encrypted connection (i.e. HTTPS).
+                            type: boolean
+                        type: object
+                    type: object
+                  strategy:
+                    description: Strategy defines the load balancing strategy between
+                      the servers. RoundRobin is the only supported value at the moment.
+                    type: string
+                  weight:
+                    description: Weight defines the weight and should only be specified
+                      when Name references a TraefikService object (and to be precise,
+                      one that embeds a Weighted Round Robin).
+                    type: integer
+                required:
+                - name
+                type: object
+              weighted:
+                description: WeightedRoundRobin allows to apply weight to services
+                  on load-balancing.
+                properties:
+                  services:
+                    description: Services defines the list of Kubernetes Service and/or
+                      TraefikService to load-balance, with weight.
+                    items:
+                      description: Service defines an upstream HTTP service to proxy
+                        traffic to.
+                      properties:
+                        kind:
+                          description: Kind defines the kind of the Service.
+                          enum:
+                          - Service
+                          - TraefikService
+                          type: string
+                        name:
+                          description: Name defines the name of the referenced Kubernetes
+                            Service or TraefikService. The differentiation between
+                            the two is specified in the Kind field.
+                          type: string
+                        namespace:
+                          description: Namespace defines the namespace of the referenced
+                            Kubernetes Service or TraefikService.
+                          type: string
+                        passHostHeader:
+                          description: PassHostHeader defines whether the client Host
+                            header is forwarded to the upstream Kubernetes Service.
+                            By default, passHostHeader is true.
+                          type: boolean
+                        port:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: Port defines the port of a Kubernetes Service.
+                            This can be a reference to a named port.
+                          x-kubernetes-int-or-string: true
+                        responseForwarding:
+                          description: ResponseForwarding defines how Traefik forwards
+                            the response from the upstream Kubernetes Service to the
+                            client.
+                          properties:
+                            flushInterval:
+                              description: 'FlushInterval defines the interval in
+                                between flushes to the client while copying the response
+                                body. It is a duration in milliseconds. A negative
+                                value means to flush immediately after each write
+                                to the client. The FlushInterval is ignored when ReverseProxy
+                                recognizes a response as a streaming response; for
+                                such responses, writes are flushed to the client immediately.
+                                Default: 100'
+                              type: string
+                          type: object
+                        scheme:
+                          description: Scheme defines the scheme to use for the request
+                            to the upstream Kubernetes Service. It defaults to https
+                            when Kubernetes Service port is 443, http otherwise.
+                          type: string
+                        serversTransport:
+                          description: ServersTransport defines the name of ServersTransport
+                            resource to use. It allows to configure the transport
+                            between Traefik and your servers. Can only be used on
+                            a Kubernetes Service.
+                          type: string
+                        sticky:
+                          description: 'Sticky defines the sticky sessions configuration.
+                            More info: https://doc.traefik.io/traefik/routing/services/#sticky-sessions'
+                          properties:
+                            cookie:
+                              description: Cookie defines the sticky cookie configuration.
+                              properties:
+                                httpOnly:
+                                  description: HTTPOnly defines whether the cookie
+                                    can be accessed by client-side APIs, such as JavaScript.
+                                  type: boolean
+                                name:
+                                  description: Name defines the Cookie name.
+                                  type: string
+                                sameSite:
+                                  description: 'SameSite defines the same site policy.
+                                    More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite'
+                                  type: string
+                                secure:
+                                  description: Secure defines whether the cookie can
+                                    only be transmitted over an encrypted connection
+                                    (i.e. HTTPS).
+                                  type: boolean
+                              type: object
+                          type: object
+                        strategy:
+                          description: Strategy defines the load balancing strategy
+                            between the servers. RoundRobin is the only supported
+                            value at the moment.
+                          type: string
+                        weight:
+                          description: Weight defines the weight and should only be
+                            specified when Name references a TraefikService object
+                            (and to be precise, one that embeds a Weighted Round Robin).
+                          type: integer
+                      required:
+                      - name
+                      type: object
+                    type: array
+                  sticky:
+                    description: 'Sticky defines whether sticky sessions are enabled.
+                      More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#stickiness-and-load-balancing'
+                    properties:
+                      cookie:
+                        description: Cookie defines the sticky cookie configuration.
+                        properties:
+                          httpOnly:
+                            description: HTTPOnly defines whether the cookie can be
+                              accessed by client-side APIs, such as JavaScript.
+                            type: boolean
+                          name:
+                            description: Name defines the Cookie name.
+                            type: string
+                          sameSite:
+                            description: 'SameSite defines the same site policy. More
+                              info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite'
+                            type: string
+                          secure:
+                            description: Secure defines whether the cookie can only
+                              be transmitted over an encrypted connection (i.e. HTTPS).
+                            type: boolean
+                        type: object
+                    type: object
+                type: object
+            type: object
+        required:
+        - metadata
+        - spec
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

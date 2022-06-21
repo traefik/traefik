@@ -472,8 +472,8 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
     There are 3 ways to configure the backend protocol for communication between Traefik and your pods:
 	
     - Setting the scheme explicitly (http/https/h2c)
-    - Configuring the name of the kubernetes service port to start with https (https)
-    - Setting the kubernetes service port to use port 443 (https)
+    - Configuring the name of the Kubernetes service port to start with https (https)
+    - Setting the Kubernetes service port to use port 443 (https)
 
     If you do not configure the above, Traefik will assume an http connection.
     
@@ -626,7 +626,7 @@ Register the `Middleware` [kind](../../reference/dynamic-configuration/kubernete
 
 !!! important "Cross-provider namespace"
 
-    As Kubernetes also has its own notion of namespace, one should not confuse the kubernetes namespace of a resource
+    As Kubernetes also has its own notion of namespace, one should not confuse the Kubernetes namespace of a resource
     (in the reference to the middleware) with the [provider namespace](../../providers/overview.md#provider-namespace),
     when the definition of the middleware comes from another provider.
     In this context, specifying a namespace when referring to the resource does not make any sense, and will be ignored.
@@ -1074,7 +1074,7 @@ and there is a second level because each whoami service is a `replicaset` and is
 
     assuming `10.42.0.6` is the IP address of one of the replicas (a pod then) of the `whoami1` service.
 
-### Kind `IngressRouteTCP`
+### Kind: `IngressRouteTCP`
 
 `IngressRouteTCP` is the CRD implementation of a [Traefik TCP router](../routers/index.md#configuring-tcp-routers).
 
@@ -1327,7 +1327,7 @@ Register the `MiddlewareTCP` [kind](../../reference/dynamic-configuration/kubern
 
 More information about available TCP middlewares in the dedicated [middlewares section](../../middlewares/tcp/overview.md).
 
-### Kind `IngressRouteUDP`
+### Kind: `IngressRouteUDP`
 
 `IngressRouteUDP` is the CRD implementation of a [Traefik UDP router](../routers/index.md#configuring-udp-routers).
 
@@ -1616,9 +1616,8 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
 !!! important "Default TLS Store"
 
     Traefik currently only uses the [TLS Store named "default"](../../https/tls.md#certificates-stores).
-    This means that if you have two stores that are named default in different kubernetes namespaces,
-    they may be randomly chosen.
-    For the time being, please only configure one TLSSTore named default.
+    This means that you cannot have two stores that are named default in different Kubernetes namespaces.
+    For the time being, please only configure one TLSStore named default.
 
 !!! info "TLSStore Attributes"
    
