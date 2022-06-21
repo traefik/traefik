@@ -186,12 +186,11 @@ func (l *ServersLoadBalancer) SetDefaults() {
 
 // ResponseForwarding holds the response forwarding configuration.
 type ResponseForwarding struct {
-	// FlushInterval defines the interval in between flushes to the client while copying the response body.
-	// It is a duration in milliseconds.
+	// FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
 	// A negative value means to flush immediately after each write to the client.
-	// The FlushInterval is ignored when ReverseProxy recognizes a response as a streaming response;
+	// This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
 	// for such responses, writes are flushed to the client immediately.
-	// Default: 100
+	// Default: 100ms
 	FlushInterval string `json:"flushInterval,omitempty" toml:"flushInterval,omitempty" yaml:"flushInterval,omitempty" export:"true"`
 }
 
