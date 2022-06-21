@@ -1708,7 +1708,7 @@ func isInternalService(ref v1alpha2.BackendRef) bool {
 		strings.HasSuffix(string(ref.Name), "@internal")
 }
 
-// gatewayListenerKey joins protocol, host, and port of a 'Gateway API'-listener into a string key
+// gatewayListenerKey joins protocol, host, and port of a 'Gateway API'-listener into a string key.
 func gatewayListenerKey(l v1alpha2.Listener) string {
 	var hostname string
 	if l.Hostname != nil {
