@@ -124,6 +124,7 @@ func (w *WRRService) SetDefaults() {
 
 // Sticky holds the sticky configuration.
 type Sticky struct {
+	// Cookie defines the sticky cookie configuration.
 	Cookie *Cookie `json:"cookie,omitempty" toml:"cookie,omitempty" yaml:"cookie,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }
 
@@ -131,9 +132,14 @@ type Sticky struct {
 
 // Cookie holds the sticky configuration based on cookie.
 type Cookie struct {
-	Name     string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
-	Secure   bool   `json:"secure,omitempty" toml:"secure,omitempty" yaml:"secure,omitempty" export:"true"`
-	HTTPOnly bool   `json:"httpOnly,omitempty" toml:"httpOnly,omitempty" yaml:"httpOnly,omitempty" export:"true"`
+	// Name defines the Cookie name.
+	Name string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
+	// Secure defines whether the cookie can only be transmitted over an encrypted connection (i.e. HTTPS).
+	Secure bool `json:"secure,omitempty" toml:"secure,omitempty" yaml:"secure,omitempty" export:"true"`
+	// HTTPOnly defines whether the cookie can be accessed by client-side APIs, such as JavaScript.
+	HTTPOnly bool `json:"httpOnly,omitempty" toml:"httpOnly,omitempty" yaml:"httpOnly,omitempty" export:"true"`
+	// SameSite defines the same site policy.
+	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
 	SameSite string `json:"sameSite,omitempty" toml:"sameSite,omitempty" yaml:"sameSite,omitempty" export:"true"`
 }
 
@@ -178,8 +184,13 @@ func (l *ServersLoadBalancer) SetDefaults() {
 
 // +k8s:deepcopy-gen=true
 
-// ResponseForwarding holds configuration for the forward of the response.
+// ResponseForwarding holds the response forwarding configuration.
 type ResponseForwarding struct {
+	// FlushInterval defines the interval, in milliseconds, in between flushes to the client while copying the response body.
+	// A negative value means to flush immediately after each write to the client.
+	// This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
+	// for such responses, writes are flushed to the client immediately.
+	// Default: 100ms
 	FlushInterval string `json:"flushInterval,omitempty" toml:"flushInterval,omitempty" yaml:"flushInterval,omitempty" export:"true"`
 }
 

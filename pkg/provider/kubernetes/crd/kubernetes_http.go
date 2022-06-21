@@ -84,7 +84,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			serviceName := normalized
 
 			if len(route.Services) > 1 {
-				spec := v1alpha1.ServiceSpec{
+				spec := v1alpha1.TraefikServiceSpec{
 					Weighted: &v1alpha1.WeightedRoundRobin{
 						Services: route.Services,
 					},
@@ -217,7 +217,7 @@ func (c configBuilder) buildTraefikService(ctx context.Context, tService *v1alph
 
 // buildServicesLB creates the configuration for the load-balancer of services named id, and defined in tService.
 // It adds it to the given conf map.
-func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tService v1alpha1.ServiceSpec, id string, conf map[string]*dynamic.Service) error {
+func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tService v1alpha1.TraefikServiceSpec, id string, conf map[string]*dynamic.Service) error {
 	var wrrServices []dynamic.WRRService
 
 	for _, service := range tService.Weighted.Services {
