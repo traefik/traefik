@@ -58,7 +58,7 @@ See the list of CRDs in the dedicated [routing section](../routing/providers/kub
 ## LetsEncrypt Support with the Custom Resource Definition Provider
 
 By design, Traefik is a stateless application, meaning that it only derives its configuration from the environment it runs in, without additional configuration.
-For this reason, users can run multiple instances of Traefik at the same time to achieve HA, as is a common pattern in the kubernetes ecosystem.
+For this reason, users can run multiple instances of Traefik at the same time to achieve HA, as is a common pattern in the Kubernetes ecosystem.
 
 When using a single instance of Traefik with Let's Encrypt, you should encounter no issues. However, this could be a single point of failure.
 Unfortunately, it is not possible to run multiple instances of Traefik Proxy 2.0 with Let's Encrypt enabled, because there is no way to ensure that the correct instance of Traefik will receive the challenge request and subsequent responses.

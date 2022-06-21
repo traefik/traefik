@@ -1616,7 +1616,7 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
 !!! important "Default TLS Store"
 
     Traefik currently only uses the [TLS Store named "default"](../../https/tls.md#certificates-stores).
-    This means that you cannot have two stores that are named default in different kubernetes namespaces.
+    This means that you cannot have two stores that are named default in different Kubernetes namespaces.
     For the time being, please only configure one TLSStore named default.
 
 !!! info "TLSStore Attributes"
