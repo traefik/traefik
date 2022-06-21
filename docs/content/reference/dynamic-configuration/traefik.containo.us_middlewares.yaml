@@ -104,13 +104,15 @@ spec:
                 properties:
                   middlewares:
                     items:
-                      description: MiddlewareRef is a ref to the Middleware resources.
+                      description: MiddlewareRef is a reference to a Middleware resource.
                       properties:
                         name:
-                          description: Name of the Middleware
+                          description: Name defines the name of the referenced Middleware
+                            resource.
                           type: string
                         namespace:
-                          description: Namespace of the Middleware
+                          description: Namespace defines the namespace of the referenced
+                            Middleware resource.
                           type: string
                       required:
                       - name
@@ -118,7 +120,9 @@ spec:
                     type: array
                 type: object
               circuitBreaker:
-                description: CircuitBreaker holds the circuit breaker middleware configuration.
+                description: 'circuitBreaker protects your system from stacking requests
+                  to unhealthy services, resulting in cascading failures. More info:
+                  https://doc.traefik.io/traefik/middlewares/http/circuitbreaker/'
                 properties:
                   expression:
                     type: string
@@ -175,102 +179,97 @@ spec:
                   query:
                     type: string
                   service:
-                    description: Service defines an upstream to proxy traffic.
+                    description: Service defines an upstream HTTP service to proxy
+                      traffic to.
                     properties:
                       kind:
-                        description: 'Kind of the Service. Supported values: Service
-                          or TraefikService'
+                        description: Kind defines the kind of the Service.
                         enum:
                         - Service
                         - TraefikService
                         type: string
                       name:
-                        description: Name is a reference to a Kubernetes Service object
-                          (for a load-balancer of servers), or to a TraefikService
-                          object (service load-balancer, mirroring, etc). The differentiation
-                          between the two is specified in the Kind field.
+                        description: Name defines the name of the referenced Kubernetes
+                          Service or TraefikService. The differentiation between the
+                          two is specified in the Kind field.
                         type: string
                       namespace:
-                        description: Namespace of this reference
+                        description: Namespace defines the namespace of the referenced
+                          Kubernetes Service or TraefikService.
                         type: string
                       passHostHeader:
-                        description: The passHostHeader allows to forward client Host
-                          header to server. By default, passHostHeader is true. Can
-                          only be used on a kubernetes Services.
+                        description: PassHostHeader defines whether the client Host
+                          header is forwarded to the upstream Kubernetes Service.
+                          By default, passHostHeader is true.
                         type: boolean
                       port:
                         anyOf:
                         - type: integer
                         - type: string
-                        description: Defines the port of a Kubernetes service. This
-                          can be a reference to a named port. Can only be used on
-                          a kubernetes Services
+                        description: Port defines the port of a Kubernetes Service.
+                          This can be a reference to a named port.
                         x-kubernetes-int-or-string: true
                       responseForwarding:
-                        description: Defines how Traefik forwards the response from
-                          the backend server to the client. Can only be used on a
-                          kubernetes Services.
+                        description: ResponseForwarding defines how Traefik forwards
+                          the response from the upstream Kubernetes Service to the
+                          client.
                         properties:
                           flushInterval:
-                            description: 'It specifies the interval in between flushes
-                              to the client while copying the response body. It is
-                              a duration in milliseconds. A negative value means to
-                              flush immediately after each write to the client. The
-                              FlushInterval is ignored when ReverseProxy recognizes
+                            description: 'FlushInterval defines the interval in between
+                              flushes to the client while copying the response body.
+                              It is a duration in milliseconds. A negative value means
+                              to flush immediately after each write to the client.
+                              The FlushInterval is ignored when ReverseProxy recognizes
                               a response as a streaming response; for such responses,
                               writes are flushed to the client immediately. Default:
                               100'
                             type: string
                         type: object
                       scheme:
-                        description: 'Define explicitly the scheme. Supported values:
-                          http,https,h2c. Default to https when kubernetes service
-                          port is 443, http otherwise. Can only be used on a kubernetes
-                          Services.'
+                        description: Scheme defines the scheme to use for the request
+                          to the upstream Kubernetes Service. It defaults to https
+                          when Kubernetes Service port is 443, http otherwise.
                         type: string
                       serversTransport:
-                        description: ServersTransport allows to configure the transport
-                          between Traefik and your servers. Can only be used on a
-                          kubernetes Services.
+                        description: ServersTransport defines the name of ServersTransport
+                          resource to use. It allows to configure the transport between
+                          Traefik and your servers. Can only be used on a Kubernetes
+                          Service.
                         type: string
                       sticky:
-                        description: 'Enable and configure sticky session on this
-                          service. More info: https://doc.traefik.io/traefik/routing/services/#sticky-sessions'
+                        description: 'Sticky defines the sticky sessions configuration.
+                          More info: https://doc.traefik.io/traefik/routing/services/#sticky-sessions'
                         properties:
                           cookie:
-                            description: Cookie holds the sticky configuration based
-                              on cookie.
+                            description: Cookie defines the sticky cookie configuration.
                             properties:
                               httpOnly:
-                                description: 'An http-only cookie cannot be accessed
-                                  by client-side APIs, such as JavaScript. Default:
-                                  false'
+                                description: HTTPOnly defines whether the cookie can
+                                  be accessed by client-side APIs, such as JavaScript.
                                 type: boolean
                               name:
-                                description: 'Cookie name. Value will be the destination.
-                                  Default: An abbreviation of a sha1 (ex: _1d52e).'
+                                description: Name defines the Cookie name.
                                 type: string
                               sameSite:
-                                description: 'Supported values: "", none, lax, strict.
-                                  Default: "". More info: https://blog.chromium.org/2019/10/developers-get-ready-for-new.html'
+                                description: 'SameSite defines the same site policy.
+                                  More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite'
                                 type: string
                               secure:
-                                description: 'A secure cookie can only be transmitted
-                                  over an encrypted connection (i.e. HTTPS). Default:
-                                  false'
+                                description: Secure defines whether the cookie can
+                                  only be transmitted over an encrypted connection
+                                  (i.e. HTTPS).
                                 type: boolean
                             type: object
                         type: object
                       strategy:
                         description: Strategy defines the load balancing strategy
-                          between the servers. It defaults to RoundRobin. It's the
-                          only supported value at the moment. Can only be used on
-                          a kubernetes Services.
+                          between the servers. RoundRobin is the only supported value
+                          at the moment.
                         type: string
                       weight:
-                        description: Weight should only be specified when Name references
-                          a TraefikService object (and to be precise, one that embeds
-                          a Weighted Round Robin).
+                        description: Weight defines the weight and should only be
+                          specified when Name references a TraefikService object (and
+                          to be precise, one that embeds a Weighted Round Robin).
                         type: integer
                     required:
                     - name
