@@ -8,10 +8,9 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
 
-// TLSStore is the CRD implementation of a Traefik "TLS Store".
-// Traefik currently only uses the TLS Store named "default".
-// This means that you cannot have two stores that are named default in different kubernetes namespaces.
-// For the time being, please only configure one TLSStore named default.
+// TLSStore is the CRD implementation of a Traefik TLS Store.
+// For the time being, only the TLSStore named default is supported.
+// This means that you cannot have two stores that are named default in different Kubernetes namespaces.
 // More info: https://doc.traefik.io/traefik/https/tls/#certificates-stores
 type TLSStore struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -22,14 +21,15 @@ type TLSStore struct {
 
 // +k8s:deepcopy-gen=true
 
-// TLSStoreSpec defines the desired state of TLSStore.
+// TLSStoreSpec defines the desired state of a TLSStore.
 type TLSStoreSpec struct {
+	// DefaultCertificate defines the default certificate configuration.
 	DefaultCertificate DefaultCertificate `json:"defaultCertificate"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// DefaultCertificate holds a secret name for the TLSOption resource.
+// DefaultCertificate holds the default certificate configuration.
 type DefaultCertificate struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the certificate details.
 	SecretName string `json:"secretName"`
@@ -37,10 +37,13 @@ type DefaultCertificate struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// TLSStoreList is a list of TLSStore resources.
+// TLSStoreList is a collection of TLSStore resources.
 type TLSStoreList struct {
 	metav1.TypeMeta `json:",inline"`
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ListMeta `json:"metadata"`
 
+	// Items is the list of TLSStore.
 	Items []TLSStore `json:"items"`
 }
