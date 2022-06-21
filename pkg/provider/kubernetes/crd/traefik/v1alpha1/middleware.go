@@ -11,7 +11,8 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
 
-// Middleware is a specification for a Middleware resource.
+// Middleware is the CRD implementation of a Traefik Middleware.
+// More info: https://doc.traefik.io/traefik/middlewares/http/overview/
 type Middleware struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
@@ -21,7 +22,7 @@ type Middleware struct {
 
 // +k8s:deepcopy-gen=true
 
-// MiddlewareSpec holds the Middleware configuration.
+// MiddlewareSpec defines the desired state of Middleware.
 type MiddlewareSpec struct {
 	AddPrefix         *dynamic.AddPrefix             `json:"addPrefix,omitempty"`
 	StripPrefix       *dynamic.StripPrefix           `json:"stripPrefix,omitempty"`
@@ -50,7 +51,7 @@ type MiddlewareSpec struct {
 
 // +k8s:deepcopy-gen=true
 
-// ErrorPage holds the custom error page configuration.
+// ErrorPage holds the custom error page middleware configuration.
 type ErrorPage struct {
 	Status  []string `json:"status,omitempty"`
 	Service Service  `json:"service,omitempty"`
@@ -59,14 +60,14 @@ type ErrorPage struct {
 
 // +k8s:deepcopy-gen=true
 
-// Chain holds a chain of middlewares.
+// Chain holds the chain middleware configuration.
 type Chain struct {
 	Middlewares []MiddlewareRef `json:"middlewares,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// BasicAuth holds the HTTP basic authentication configuration.
+// BasicAuth holds the HTTP basic authentication middleware configuration.
 type BasicAuth struct {
 	Secret       string `json:"secret,omitempty"`
 	Realm        string `json:"realm,omitempty"`
@@ -76,7 +77,7 @@ type BasicAuth struct {
 
 // +k8s:deepcopy-gen=true
 
-// DigestAuth holds the Digest HTTP authentication configuration.
+// DigestAuth holds the Digest HTTP authentication middleware configuration.
 type DigestAuth struct {
 	Secret       string `json:"secret,omitempty"`
 	RemoveHeader bool   `json:"removeHeader,omitempty"`
@@ -86,7 +87,7 @@ type DigestAuth struct {
 
 // +k8s:deepcopy-gen=true
 
-// ForwardAuth holds the http forward authentication configuration.
+// ForwardAuth holds the http forward authentication middleware configuration.
 type ForwardAuth struct {
 	Address                  string     `json:"address,omitempty"`
 	TrustForwardHeader       bool       `json:"trustForwardHeader,omitempty"`
@@ -116,7 +117,7 @@ type MiddlewareList struct {
 
 // +k8s:deepcopy-gen=true
 
-// RateLimit holds the rate limiting configuration for a given router.
+// RateLimit holds the rate limiting middleware configuration.
 type RateLimit struct {
 	Average         int64                    `json:"average,omitempty"`
 	Period          *intstr.IntOrString      `json:"period,omitempty"`
@@ -126,7 +127,7 @@ type RateLimit struct {
 
 // +k8s:deepcopy-gen=true
 
-// Retry holds the retry configuration.
+// Retry holds the retry middleware configuration.
 type Retry struct {
 	Attempts        int                `json:"attempts,omitempty"`
 	InitialInterval intstr.IntOrString `json:"initialInterval,omitempty"`
