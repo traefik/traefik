@@ -41,6 +41,10 @@ const (
 	kindTLSRoute       = "TLSRoute"
 )
 
+var shareableListenerProtocols []v1alpha2.ProtocolType = []v1alpha2.ProtocolType{
+	v1alpha2.HTTPSProtocolType,
+}
+
 // Provider holds configurations of the provider.
 type Provider struct {
 	Endpoint         string                `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
@@ -317,7 +321,8 @@ func (p *Provider) createGatewayConf(ctx context.Context, client Client, gateway
 func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *v1alpha2.Gateway, conf *dynamic.Configuration, tlsConfigs map[string]*tls.CertAndStores) []v1alpha2.ListenerStatus {
 	logger := log.FromContext(ctx)
 	listenerStatuses := make([]v1alpha2.ListenerStatus, len(gateway.Spec.Listeners))
-	allocated := newAllocatedListeners()
+
+	allocated := make(map[string]v1alpha2.Listener)
 
 	for i, listener := range gateway.Spec.Listeners {
 		listenerStatuses[i] = v1alpha2.ListenerStatus{
@@ -340,7 +345,10 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			continue
 		}
 
-		if !allocated.accepts(listener, shareableListenerProtocols) {
+		listenerKey := gatewayListenerKey(listener)
+		isShareable := isShareableListenerProtocol(listener, shareableListenerProtocols)
+
+		if _, ok := allocated[listenerKey]; ok || !isShareable {
 			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
 				Type:               string(v1alpha2.ListenerConditionDetached),
 				Status:             metav1.ConditionTrue,
@@ -349,9 +357,8 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 				Message:            fmt.Sprintf("Port %d unavailable", listener.Port),
 			})
 			continue
-		} else {
-			allocated.add(listener)
 		}
+		allocated[listenerKey] = listener
 
 		ep, err := p.entryPointName(listener.Port, listener.Protocol)
 		if err != nil {
@@ -1699,4 +1706,24 @@ func isInternalService(ref v1alpha2.BackendRef) bool {
 	return *ref.Kind == kindTraefikService &&
 		*ref.Group == traefikv1alpha1.GroupName &&
 		strings.HasSuffix(string(ref.Name), "@internal")
+}
+
+// gatewayListenerKey joins protocol, host, and port of a 'Gateway API'-listener into a string key
+func gatewayListenerKey(l v1alpha2.Listener) string {
+	var hostname string
+	if l.Hostname != nil {
+		hostname = string(*(l.Hostname))
+	}
+	return fmt.Sprintf("%s|%s|%d", l.Protocol, hostname, l.Port)
+}
+
+// isShareableListenerProtocol checks if we allow a 'Gateway API'-listener protocol to be re-used
+// by other listeners of the same 'Gateway API'-gateway.
+func isShareableListenerProtocol(l v1alpha2.Listener, shareable []v1alpha2.ProtocolType) bool {
+	for _, lookup := range shareable {
+		if lookup == l.Protocol {
+			return true
+		}
+	}
+	return false
 }
