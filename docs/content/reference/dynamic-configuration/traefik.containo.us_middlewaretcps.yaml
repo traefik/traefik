@@ -35,13 +35,10 @@ spec:
           metadata:
             type: object
           spec:
-            description: MiddlewareTCPSpec defines the desired state of MiddlewareTCP.
+            description: MiddlewareTCPSpec defines the desired state of a MiddlewareTCP.
             properties:
               inFlightConn:
-                description: 'TCPInFlightConn holds the TCP InflightConn middleware
-                  configuration. This middleware prevents services from being overwhelmed
-                  with high load, by limiting the number of allowed simultaneous connections
-                  for one IP. More info: https://doc.traefik.io/traefik/middlewares/tcp/inflightconn/'
+                description: InFlightConn defines the InFlightConn middleware configuration.
                 properties:
                   amount:
                     description: Amount defines the maximum amount of allowed simultaneous
@@ -51,13 +48,11 @@ spec:
                     type: integer
                 type: object
               ipWhiteList:
-                description: TCPIPWhiteList holds the TCP IPWhiteList middleware configuration.
-                  This middleware accepts / refuses connections based on the client
-                  IP.
+                description: IPWhiteList defines the IPWhiteList middleware configuration.
                 properties:
                   sourceRange:
-                    description: The sourceRange option sets the allowed IPs (or ranges
-                      of allowed IPs by using CIDR notation).
+                    description: SourceRange defines the allowed IPs (or ranges of
+                      allowed IPs by using CIDR notation).
                     items:
                       type: string
                     type: array
