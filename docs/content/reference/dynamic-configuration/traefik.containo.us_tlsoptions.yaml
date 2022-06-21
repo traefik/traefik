@@ -19,7 +19,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: 'TLSOption is the CRD implementation of a Traefik "TLS Option",
+        description: 'TLSOption is the CRD implementation of a Traefik TLS Option,
           allowing to configure some parameters of the TLS connection. More info:
           https://doc.traefik.io/traefik/https/tls/#tls-options'
         properties:
@@ -36,7 +36,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: TLSOptionSpec defines the desired state of TLSOption.
+            description: TLSOptionSpec defines the desired state of a TLSOption.
             properties:
               alpnProtocols:
                 description: 'ALPNProtocols defines the list of supported application
@@ -94,9 +94,8 @@ spec:
                   enabled automatically when minVersion or maxVersion are set.
                 type: boolean
               sniStrict:
-                description: 'SniStrict defines whether Traefik allows connections
+                description: SniStrict defines whether Traefik allows connections
                   from clients connections that do not specify a server_name extension.
-                  Default: false.'
                 type: boolean
             type: object
         required:

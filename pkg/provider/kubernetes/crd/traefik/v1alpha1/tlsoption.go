@@ -8,10 +8,12 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
 
-// TLSOption is the CRD implementation of a Traefik "TLS Option", allowing to configure some parameters of the TLS connection.
+// TLSOption is the CRD implementation of a Traefik TLS Option, allowing to configure some parameters of the TLS connection.
 // More info: https://doc.traefik.io/traefik/https/tls/#tls-options
 type TLSOption struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata"`
 
 	Spec TLSOptionSpec `json:"spec"`
@@ -19,7 +21,7 @@ type TLSOption struct {
 
 // +k8s:deepcopy-gen=true
 
-// TLSOptionSpec defines the desired state of TLSOption.
+// TLSOptionSpec defines the desired state of a TLSOption.
 type TLSOptionSpec struct {
 	// MinVersion defines the minimum TLS version that Traefik will accept.
 	// Possible values: VersionTLS10, VersionTLS11, VersionTLS12, VersionTLS13.
@@ -38,7 +40,6 @@ type TLSOptionSpec struct {
 	// ClientAuth defines the server's policy for TLS Client Authentication.
 	ClientAuth ClientAuth `json:"clientAuth,omitempty"`
 	// SniStrict defines whether Traefik allows connections from clients connections that do not specify a server_name extension.
-	// Default: false.
 	SniStrict bool `json:"sniStrict,omitempty"`
 	// PreferServerCipherSuites defines whether the server chooses a cipher suite among his own instead of among the client's.
 	// It is enabled automatically when minVersion or maxVersion are set.
@@ -50,21 +51,24 @@ type TLSOptionSpec struct {
 
 // +k8s:deepcopy-gen=true
 
-// ClientAuth defines the parameters of the client authentication part of the TLS connection, if any.
+// ClientAuth holds the TLS client authentication configuration.
 type ClientAuth struct {
 	// SecretNames defines the names of the referenced Kubernetes Secret storing certificate details.
 	SecretNames []string `json:"secretNames,omitempty"`
-	// +kubebuilder:validation:Enum=NoClientCert;RequestClientCert;RequireAnyClientCert;VerifyClientCertIfGiven;RequireAndVerifyClientCert
 	// ClientAuthType defines the client authentication type to apply.
+	// +kubebuilder:validation:Enum=NoClientCert;RequestClientCert;RequireAnyClientCert;VerifyClientCertIfGiven;RequireAndVerifyClientCert
 	ClientAuthType string `json:"clientAuthType,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// TLSOptionList is a list of TLSOption resources.
+// TLSOptionList is a collection of TLSOption resources.
 type TLSOptionList struct {
 	metav1.TypeMeta `json:",inline"`
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ListMeta `json:"metadata"`
 
+	// Items is the list of TLSOption.
 	Items []TLSOption `json:"items"`
 }

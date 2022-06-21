@@ -35,7 +35,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: MiddlewareSpec defines the desired state of Middleware.
+            description: MiddlewareSpec defines the desired state of a Middleware.
             properties:
               addPrefix:
                 description: 'AddPrefix holds the add prefix middleware configuration.
@@ -48,22 +48,33 @@ spec:
                     type: string
                 type: object
               basicAuth:
-                description: BasicAuth holds the HTTP basic authentication middleware
-                  configuration.
+                description: 'BasicAuth holds the basic auth middleware configuration.
+                  This middleware restricts access to your services to known users.
+                  More info: https://doc.traefik.io/traefik/middlewares/http/basicauth/'
                 properties:
                   headerField:
+                    description: 'HeaderField defines a header field to store the
+                      authenticated user. More info: https://doc.traefik.io/traefik/middlewares/http/basicauth/#headerfield'
                     type: string
                   realm:
+                    description: 'Realm allows the protected resources on a server
+                      to be partitioned into a set of protection spaces, each with
+                      its own authentication scheme. Default: traefik.'
                     type: string
                   removeHeader:
+                    description: 'RemoveHeader sets the removeHeader option to true
+                      to remove the authorization header before forwarding the request
+                      to your service. Default: false.'
                     type: boolean
                   secret:
+                    description: Secret is the name of the referenced Kubernetes Secret
+                      containing user credentials.
                     type: string
                 type: object
               buffering:
                 description: 'Buffering holds the buffering middleware configuration.
                   This middleware retries or limits the size of requests that can
-                  be forwarded to services. More info: https://doc.traefik.io/traefik/middlewares/http/buffering/#maxrequestbodybytes'
+                  be forwarded to backends. More info: https://doc.traefik.io/traefik/middlewares/http/buffering/#maxrequestbodybytes'
                 properties:
                   maxRequestBodyBytes:
                     description: 'MaxRequestBodyBytes defines the maximum allowed
@@ -100,9 +111,13 @@ spec:
                     type: string
                 type: object
               chain:
-                description: Chain holds the chain middleware configuration.
+                description: 'Chain holds the configuration of the chain middleware.
+                  This middleware enables to define reusable combinations of other
+                  pieces of middleware. More info: https://doc.traefik.io/traefik/middlewares/http/chain/'
                 properties:
                   middlewares:
+                    description: Middlewares is the list of MiddlewareRef which composes
+                      the chain.
                     items:
                       description: MiddlewareRef is a reference to a Middleware resource.
                       properties:
@@ -120,11 +135,15 @@ spec:
                     type: array
                 type: object
               circuitBreaker:
-                description: 'circuitBreaker protects your system from stacking requests
-                  to unhealthy services, resulting in cascading failures. More info:
-                  https://doc.traefik.io/traefik/middlewares/http/circuitbreaker/'
+                description: 'CircuitBreaker holds the circuit breaker middleware
+                  configuration. This middleware protects the system from stacking
+                  requests to unhealthy services, resulting in cascading failures.
+                  More info: https://doc.traefik.io/traefik/middlewares/http/circuitbreaker/'
                 properties:
                   expression:
+                    description: Expression defines the expression that, once matched,
+                      opens the circuit breaker and applies the fallback mechanism
+                      instead of calling the services.
                     type: string
                 type: object
               compress:
@@ -146,41 +165,57 @@ spec:
                     type: integer
                 type: object
               contentType:
-                description: ContentType middleware - or rather its unique `autoDetect`
-                  option - specifies whether to let the `Content-Type` header, if
-                  it has not been set by the backend, be automatically set to a value
-                  derived from the contents of the response. As a proxy, the default
-                  behavior should be to leave the header alone, regardless of what
-                  the backend did with it. However, the historic default was to always
-                  auto-detect and set the header if it was nil, and it is going to
-                  be kept that way in order to support users currently relying on
-                  it. This middleware exists to enable the correct behavior until
-                  at least the default one can be changed in a future version.
+                description: ContentType holds the content-type middleware configuration.
+                  This middleware exists to enable the correct behavior until at least
+                  the default one can be changed in a future version.
                 properties:
                   autoDetect:
+                    description: AutoDetect specifies whether to let the `Content-Type`
+                      header, if it has not been set by the backend, be automatically
+                      set to a value derived from the contents of the response. As
+                      a proxy, the default behavior should be to leave the header
+                      alone, regardless of what the backend did with it. However,
+                      the historic default was to always auto-detect and set the header
+                      if it was nil, and it is going to be kept that way in order
+                      to support users currently relying on it.
                     type: boolean
                 type: object
               digestAuth:
-                description: DigestAuth holds the Digest HTTP authentication middleware
-                  configuration.
+                description: 'DigestAuth holds the digest auth middleware configuration.
+                  This middleware restricts access to your services to known users.
+                  More info: https://doc.traefik.io/traefik/middlewares/http/digestauth/'
                 properties:
                   headerField:
+                    description: 'HeaderField defines a header field to store the
+                      authenticated user. More info: https://doc.traefik.io/traefik/middlewares/http/basicauth/#headerfield'
                     type: string
                   realm:
+                    description: 'Realm allows the protected resources on a server
+                      to be partitioned into a set of protection spaces, each with
+                      its own authentication scheme. Default: traefik.'
                     type: string
                   removeHeader:
+                    description: RemoveHeader defines whether to remove the authorization
+                      header before forwarding the request to the backend.
                     type: boolean
                   secret:
+                    description: Secret is the name of the referenced Kubernetes Secret
+                      containing user credentials.
                     type: string
                 type: object
               errors:
-                description: ErrorPage holds the custom error page middleware configuration.
+                description: 'ErrorPage holds the custom error middleware configuration.
+                  This middleware returns a custom page in lieu of the default, according
+                  to configured ranges of HTTP Status codes. More info: https://doc.traefik.io/traefik/middlewares/http/errorpages/'
                 properties:
                   query:
+                    description: Query defines the URL for the error page (hosted
+                      by service). The {status} variable can be used in order to insert
+                      the status code in the URL.
                     type: string
                   service:
-                    description: Service defines an upstream HTTP service to proxy
-                      traffic to.
+                    description: 'Service defines the reference to a Kubernetes Service
+                      that will serve the error page. More info: https://doc.traefik.io/traefik/middlewares/http/errorpages/#service'
                     properties:
                       kind:
                         description: Kind defines the kind of the Service.
@@ -215,14 +250,13 @@ spec:
                           client.
                         properties:
                           flushInterval:
-                            description: 'FlushInterval defines the interval in between
-                              flushes to the client while copying the response body.
-                              It is a duration in milliseconds. A negative value means
-                              to flush immediately after each write to the client.
-                              The FlushInterval is ignored when ReverseProxy recognizes
-                              a response as a streaming response; for such responses,
-                              writes are flushed to the client immediately. Default:
-                              100'
+                            description: 'FlushInterval defines the interval, in milliseconds,
+                              in between flushes to the client while copying the response
+                              body. A negative value means to flush immediately after
+                              each write to the client. This configuration is ignored
+                              when ReverseProxy recognizes a response as a streaming
+                              response; for such responses, writes are flushed to
+                              the client immediately. Default: 100ms'
                             type: string
                         type: object
                       scheme:
@@ -275,59 +309,87 @@ spec:
                     - name
                     type: object
                   status:
+                    description: Status defines which status or range of statuses
+                      should result in an error page. It can be either a status code
+                      as a number (500), as multiple comma-separated numbers (500,502),
+                      as ranges by separating two codes with a dash (500-599), or
+                      a combination of the two (404,418,500-599).
                     items:
                       type: string
                     type: array
                 type: object
               forwardAuth:
-                description: ForwardAuth holds the http forward authentication middleware
-                  configuration.
+                description: 'ForwardAuth holds the forward auth middleware configuration.
+                  This middleware delegates the request authentication to a Service.
+                  More info: https://doc.traefik.io/traefik/middlewares/http/forwardauth/'
                 properties:
                   address:
+                    description: Address defines the authentication server address.
                     type: string
                   authRequestHeaders:
+                    description: AuthRequestHeaders defines the list of the headers
+                      to copy from the request to the authentication server. If not
+                      set or empty then all request headers are passed.
                     items:
                       type: string
                     type: array
                   authResponseHeaders:
+                    description: AuthResponseHeaders defines the list of headers to
+                      copy from the authentication server response and set on forwarded
+                      request, replacing any existing conflicting headers.
                     items:
                       type: string
                     type: array
                   authResponseHeadersRegex:
+                    description: 'AuthResponseHeadersRegex defines the regex to match
+                      headers to copy from the authentication server response and
+                      set on forwarded request, after stripping all headers that match
+                      the regex. More info: https://doc.traefik.io/traefik/middlewares/http/forwardauth/#authresponseheadersregex'
                     type: string
                   tls:
-                    description: ClientTLS holds TLS specific configurations as client.
+                    description: TLS defines the configuration used to secure the
+                      connection to the authentication server.
                     properties:
                       caOptional:
                         type: boolean
                       caSecret:
+                        description: CASecret is the name of the referenced Kubernetes
+                          Secret containing the CA to validate the server certificate.
+                          The CA certificate is extracted from key `tls.ca` or `ca.crt`.
                         type: string
                       certSecret:
+                        description: CertSecret is the name of the referenced Kubernetes
+                          Secret containing the client certificate. The client certificate
+                          is extracted from the keys `tls.crt` and `tls.key`.
                         type: string
                       insecureSkipVerify:
+                        description: InsecureSkipVerify defines whether the server
+                          certificates should be validated.
                         type: boolean
                     type: object
                   trustForwardHeader:
+                    description: 'TrustForwardHeader defines whether to trust (ie:
+                      forward) all X-Forwarded-* headers.'
                     type: boolean
                 type: object
               headers:
                 description: 'Headers holds the headers middleware configuration.
-                  This middleware manages the headers of requests and responses. More
+                  This middleware manages the requests and responses headers. More
                   info: https://doc.traefik.io/traefik/middlewares/http/headers/#customrequestheaders'
                 properties:
                   accessControlAllowCredentials:
-                    description: AccessControlAllowCredentials is only valid if true.
-                      false is ignored.
+                    description: AccessControlAllowCredentials defines whether the
+                      request can include user credentials.
                     type: boolean
                   accessControlAllowHeaders:
-                    description: AccessControlAllowHeaders must be used in response
-                      to a preflight request with Access-Control-Request-Headers set.
+                    description: AccessControlAllowHeaders defines the Access-Control-Request-Headers
+                      values sent in preflight response.
                     items:
                       type: string
                     type: array
                   accessControlAllowMethods:
-                    description: AccessControlAllowMethods must be used in response
-                      to a preflight request with Access-Control-Request-Method set.
+                    description: AccessControlAllowMethods defines the Access-Control-Request-Method
+                      values sent in preflight response.
                     items:
                       type: string
                     type: array
@@ -344,46 +406,46 @@ spec:
                       type: string
                     type: array
                   accessControlExposeHeaders:
-                    description: AccessControlExposeHeaders sets valid headers for
-                      the response.
+                    description: AccessControlExposeHeaders defines the Access-Control-Expose-Headers
+                      values sent in preflight response.
                     items:
                       type: string
                     type: array
                   accessControlMaxAge:
-                    description: AccessControlMaxAge sets the time that a preflight
+                    description: AccessControlMaxAge defines the time that a preflight
                       request may be cached.
                     format: int64
                     type: integer
                   addVaryHeader:
-                    description: AddVaryHeader controls if the Vary header is automatically
-                      added/updated when the AccessControlAllowOriginList is set.
+                    description: AddVaryHeader defines whether the Vary header is
+                      automatically added/updated when the AccessControlAllowOriginList
+                      is set.
                     type: boolean
                   allowedHosts:
-                    description: Array of fully qualified domain names that are allowed.
+                    description: AllowedHosts defines the fully qualified list of
+                      allowed domain names.
                     items:
                       type: string
                     type: array
                   browserXssFilter:
-                    description: Set browserXssFilter to true to add the X-XSS-Protection
+                    description: BrowserXSSFilter defines whether to add the X-XSS-Protection
                       header with the value 1; mode=block.
                     type: boolean
                   contentSecurityPolicy:
-                    description: The contentSecurityPolicy option allows the Content-Security-Policy
-                      header value to be set with a custom value.
+                    description: ContentSecurityPolicy defines the Content-Security-Policy
+                      header value.
                     type: string
                   contentTypeNosniff:
-                    description: Set contentTypeNosniff to true to add the X-Content-Type-Options
-                      header with the value nosniff.
+                    description: ContentTypeNosniff defines whether to add the X-Content-Type-Options
+                      header with the nosniff value.
                     type: boolean
                   customBrowserXSSValue:
-                    description: The customBrowserXssValue option allows the X-XSS-Protection
-                      header value to be set with a custom value. This overrides the
-                      BrowserXssFilter option.
+                    description: CustomBrowserXSSValue defines the X-XSS-Protection
+                      header value. This overrides the BrowserXssFilter option.
                     type: string
                   customFrameOptionsValue:
-                    description: The customFrameOptionsValue allows the X-Frame-Options
-                      header value to be set with a custom value. This overrides the
-                      FrameDeny option.
+                    description: CustomFrameOptionsValue defines the X-Frame-Options
+                      header value. This overrides the FrameDeny option.
                     type: string
                   customRequestHeaders:
                     additionalProperties:
@@ -401,38 +463,39 @@ spec:
                     description: 'Deprecated: use PermissionsPolicy instead.'
                     type: string
                   forceSTSHeader:
-                    description: Set forceSTSHeader to true to add the STS header
+                    description: ForceSTSHeader defines whether to add the STS header
                       even when the connection is HTTP.
                     type: boolean
                   frameDeny:
-                    description: Set frameDeny to true to add the X-Frame-Options
-                      header with the value of DENY.
+                    description: FrameDeny defines whether to add the X-Frame-Options
+                      header with the DENY value.
                     type: boolean
                   hostsProxyHeaders:
-                    description: Array of header keys that may hold a proxied hostname
-                      value for the request.
+                    description: HostsProxyHeaders defines the header keys that may
+                      hold a proxied hostname value for the request.
                     items:
                       type: string
                     type: array
                   isDevelopment:
-                    description: Set isDevelopment to true when developing to mitigate
-                      the unwanted effects of the AllowedHosts, SSL, and STS options.
+                    description: IsDevelopment defines whether to mitigate the unwanted
+                      effects of the AllowedHosts, SSL, and STS options when developing.
                       Usually testing takes place using HTTP, not HTTPS, and on localhost,
                       not your production domain. If you would like your development
                       environment to mimic production with complete Host blocking,
                       SSL redirects, and STS headers, leave this as false.
                     type: boolean
                   permissionsPolicy:
-                    description: The permissionsPolicy allows sites to control browser
-                      features.
+                    description: PermissionsPolicy defines the Permissions-Policy
+                      header value. This allows sites to control browser features.
                     type: string
                   publicKey:
-                    description: The publicKey implements HPKP to prevent MITM attacks
-                      with forged certificates.
+                    description: PublicKey is the public key that implements HPKP
+                      to prevent MITM attacks with forged certificates.
                     type: string
                   referrerPolicy:
-                    description: The referrerPolicy allows sites to control whether
-                      browsers forward the Referer header to other sites.
+                    description: ReferrerPolicy defines the Referrer-Policy header
+                      value. This allows sites to control whether browsers forward
+                      the Referer header to other sites.
                     type: string
                   sslForceHost:
                     description: 'Deprecated: use RedirectRegex instead.'
@@ -443,9 +506,10 @@ spec:
                   sslProxyHeaders:
                     additionalProperties:
                       type: string
-                    description: 'Array of header keys with associated values that
-                      would indicate a valid HTTPS request. It can be useful when
-                      using other proxies (example: "X-Forwarded-Proto": "https").'
+                    description: 'SSLProxyHeaders defines the header keys with associated
+                      values that would indicate a valid HTTPS request. It can be
+                      useful when using other proxies (example: "X-Forwarded-Proto":
+                      "https").'
                     type: object
                   sslRedirect:
                     description: 'Deprecated: use EntryPoint redirection or RedirectScheme
@@ -456,21 +520,21 @@ spec:
                       instead.'
                     type: boolean
                   stsIncludeSubdomains:
-                    description: If the stsIncludeSubdomains is set to true, the includeSubDomains
+                    description: STSIncludeSubdomains defines whether the includeSubDomains
                       directive is appended to the Strict-Transport-Security header.
                     type: boolean
                   stsPreload:
-                    description: Set stsPreload to true to have the preload flag appended
+                    description: STSPreload defines whether the preload flag is appended
                       to the Strict-Transport-Security header.
                     type: boolean
                   stsSeconds:
-                    description: The max-age of the Strict-Transport-Security header.
-                      If set to 0, the header is not set.
+                    description: STSSeconds defines the max-age of the Strict-Transport-Security
+                      header. If set to 0, the header is not set.
                     format: int64
                     type: integer
                 type: object
               inFlightReq:
-                description: 'InFlightReq holds the InFlightReq middleware configuration.
+                description: 'InFlightReq holds the in-flight request middleware configuration.
                   This middleware limits the number of requests being processed and
                   served concurrently. More info: https://doc.traefik.io/traefik/middlewares/http/inflightreq/'
                 properties:
@@ -489,9 +553,8 @@ spec:
                       info: https://doc.traefik.io/traefik/middlewares/http/inflightreq/#sourcecriterion'
                     properties:
                       ipStrategy:
-                        description: 'The ipStrategy option defines two parameters
-                          that configures how Traefik determines the client IP: depth,
-                          and excludedIPs. More info: https://doc.traefik.io/traefik/middlewares/http/inflightreq/#sourcecriterionipstrategy'
+                        description: 'IPStrategy holds the IP strategy configuration
+                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/middlewares/http/ipwhitelist/#ipstrategy'
                         properties:
                           depth:
                             description: Depth tells Traefik to use the X-Forwarded-For
@@ -507,20 +570,22 @@ spec:
                             type: array
                         type: object
                       requestHeaderName:
-                        description: Name of the header used to group incoming requests.
+                        description: RequestHeaderName defines the name of the header
+                          used to group incoming requests.
                         type: string
                       requestHost:
-                        description: Whether to consider the request host as the source.
+                        description: RequestHost defines whether to consider the request
+                          Host as the source.
                         type: boolean
                     type: object
                 type: object
               ipWhiteList:
-                description: 'IPWhiteList holds the IPWhiteList middleware configuration.
+                description: 'IPWhiteList holds the IP whitelist middleware configuration.
                   This middleware accepts / refuses requests based on the client IP.
                   More info: https://doc.traefik.io/traefik/middlewares/http/ipwhitelist/'
                 properties:
                   ipStrategy:
-                    description: 'IPStrategy holds the ip strategy configuration used
+                    description: 'IPStrategy holds the IP strategy configuration used
                       by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/middlewares/http/ipwhitelist/#ipstrategy'
                     properties:
                       depth:
@@ -552,91 +617,89 @@ spec:
                       you want to add to the X-Forwarded-Tls-Client-Cert-Info header.
                     properties:
                       issuer:
-                        description: The info.issuer selects the specific client certificate
-                          issuer details you want to add to the X-Forwarded-Tls-Client-Cert-Info
-                          header.
+                        description: Issuer defines the client certificate issuer
+                          details to add to the X-Forwarded-Tls-Client-Cert-Info header.
                         properties:
                           commonName:
-                            description: Set to true to add the organizationalUnit
-                              information into the subject.
+                            description: CommonName defines whether to add the organizationalUnit
+                              information into the issuer.
                             type: boolean
                           country:
-                            description: Set to true to add the country information
-                              into the subject.
+                            description: Country defines whether to add the country
+                              information into the issuer.
                             type: boolean
                           domainComponent:
-                            description: Set to true to add the domainComponent information
-                              into the subject.
+                            description: DomainComponent defines whether to add the
+                              domainComponent information into the issuer.
                             type: boolean
                           locality:
-                            description: Set to true to add the locality information
-                              into the subject.
+                            description: Locality defines whether to add the locality
+                              information into the issuer.
                             type: boolean
                           organization:
-                            description: Set to true to add the organization information
-                              into the subject.
+                            description: Organization defines whether to add the organization
+                              information into the issuer.
                             type: boolean
                           province:
-                            description: Set to true to add the province information
-                              into the subject.
+                            description: Province defines whether to add the province
+                              information into the issuer.
                             type: boolean
                           serialNumber:
-                            description: Set to true to add the serialNumber information
-                              into the subject.
+                            description: SerialNumber defines whether to add the serialNumber
+                              information into the issuer.
                             type: boolean
                         type: object
                       notAfter:
-                        description: Set to true to add the Not After information
-                          from the Validity part.
+                        description: NotAfter defines whether to add the Not After
+                          information from the Validity part.
                         type: boolean
                       notBefore:
-                        description: Set to true to add the Not Before information
-                          from the Validity part.
+                        description: NotBefore defines whether to add the Not Before
+                          information from the Validity part.
                         type: boolean
                       sans:
-                        description: Set to true to add the Subject Alternative Name
-                          information from the Subject Alternative Name part.
+                        description: Sans defines whether to add the Subject Alternative
+                          Name information from the Subject Alternative Name part.
                         type: boolean
                       serialNumber:
-                        description: Set to true to add the serialNumber information
-                          into the issuer.
+                        description: SerialNumber defines whether to add the client
+                          serialNumber information.
                         type: boolean
                       subject:
-                        description: Selects the specific client certificate subject
-                          details you want to add to the X-Forwarded-Tls-Client-Cert-Info
-                          header.
+                        description: Subject defines the client certificate subject
+                          details to add to the X-Forwarded-Tls-Client-Cert-Info header.
                         properties:
                           commonName:
-                            description: Set to true to add the organizationalUnit
+                            description: CommonName defines whether to add the organizationalUnit
                               information into the subject.
                             type: boolean
                           country:
-                            description: Set to true to add the country information
-                              into the subject.
-                            type: boolean
-                          domainComponent:
-                            description: Set to true to add the domainComponent information
-                              into the subject.
-                            type: boolean
-                          locality:
-                            description: Set to true to add the locality information
-                              into the subject.
-                            type: boolean
-                          organization:
-                            description: Set to true to add the organization information
-                              into the subject.
-                            type: boolean
-                          organizationalUnit:
-                            description: Set to true to add the organizationalUnit
+                            description: Country defines whether to add the country
                               information into the subject.
                             type: boolean
+                          domainComponent:
+                            description: DomainComponent defines whether to add the
+                              domainComponent information into the subject.
+                            type: boolean
+                          locality:
+                            description: Locality defines whether to add the locality
+                              information into the subject.
+                            type: boolean
+                          organization:
+                            description: Organization defines whether to add the organization
+                              information into the subject.
+                            type: boolean
+                          organizationalUnit:
+                            description: OrganizationalUnit defines whether to add
+                              the organizationalUnit information into the subject.
+                            type: boolean
                           province:
-                            description: Set to true to add the province information
-                              into the subject.
+                            description: Province defines whether to add the province
+                              information into the subject.
                             type: boolean
                           serialNumber:
-                            description: Set to true to add the serialNumber information
-                              into the subject.
+                            description: SerialNumber defines whether to add the serialNumber
+                              information into the subject.
                             type: boolean
                         type: object
                     type: object
@@ -650,29 +713,42 @@ spec:
                   x-kubernetes-preserve-unknown-fields: true
                 type: object
               rateLimit:
-                description: RateLimit holds the rate limiting middleware configuration.
+                description: 'RateLimit holds the rate limit configuration. This middleware
+                  ensures that services will receive a fair amount of requests, and
+                  allows one to define what fair is. More info: https://doc.traefik.io/traefik/middlewares/http/ratelimit/'
                 properties:
                   average:
+                    description: Average is the maximum rate, by default in requests/s,
+                      allowed for the given source. It defaults to 0, which means
+                      no rate limiting. The rate is actually defined by dividing Average
+                      by Period. So for a rate below 1req/s, one needs to define a
+                      Period larger than a second.
                     format: int64
                     type: integer
                   burst:
+                    description: Burst is the maximum number of requests allowed to
+                      arrive in the same arbitrarily small period of time. It defaults
+                      to 1.
                     format: int64
                     type: integer
                   period:
                     anyOf:
                     - type: integer
                     - type: string
+                    description: 'Period, in combination with Average, defines the
+                      actual maximum rate, such as: r = Average / Period. It defaults
+                      to a second.'
                     x-kubernetes-int-or-string: true
                   sourceCriterion:
                     description: SourceCriterion defines what criterion is used to
-                      group requests as originating from a common source. If none
-                      are set, the default is to use the request's remote address
-                      field. All fields are mutually exclusive.
+                      group requests as originating from a common source. If several
+                      strategies are defined at the same time, an error will be raised.
+                      If none are set, the default is to use the request's remote
+                      address field (as an ipStrategy).
                     properties:
                       ipStrategy:
-                        description: 'The ipStrategy option defines two parameters
-                          that configures how Traefik determines the client IP: depth,
-                          and excludedIPs. More info: https://doc.traefik.io/traefik/middlewares/http/inflightreq/#sourcecriterionipstrategy'
+                        description: 'IPStrategy holds the IP strategy configuration
+                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/middlewares/http/ipwhitelist/#ipstrategy'
                         properties:
                           depth:
                             description: Depth tells Traefik to use the X-Forwarded-For
@@ -688,10 +764,12 @@ spec:
                             type: array
                         type: object
                       requestHeaderName:
-                        description: Name of the header used to group incoming requests.
+                        description: RequestHeaderName defines the name of the header
+                          used to group incoming requests.
                         type: string
                       requestHost:
-                        description: Whether to consider the request host as the source.
+                        description: RequestHost defines whether to consider the request
+                          Host as the source.
                         type: boolean
                     type: object
                 type: object
@@ -705,8 +783,8 @@ spec:
                       (301).
                     type: boolean
                   regex:
-                    description: Regex defines the regex to match and capture elements
-                      from the request URL.
+                    description: Regex defines the regex used to match and capture
+                      elements from the request URL.
                     type: string
                   replacement:
                     description: Replacement defines how to modify the URL to have
@@ -732,7 +810,7 @@ spec:
               replacePath:
                 description: 'ReplacePath holds the replace path middleware configuration.
                   This middleware replaces the path of the request URL and store the
-                  original path in a X-Replaced-Path header. More info: https://doc.traefik.io/traefik/middlewares/http/replacepath/'
+                  original path in an X-Replaced-Path header. More info: https://doc.traefik.io/traefik/middlewares/http/replacepath/'
                 properties:
                   path:
                     description: Path defines the path to use as replacement in the
@@ -742,11 +820,11 @@ spec:
               replacePathRegex:
                 description: 'ReplacePathRegex holds the replace path regex middleware
                   configuration. This middleware replaces the path of a URL using
-                  (Golang) regex matching and replacement. More info: https://doc.traefik.io/traefik/middlewares/http/replacepathregex/'
+                  regex matching and replacement. More info: https://doc.traefik.io/traefik/middlewares/http/replacepathregex/'
                 properties:
                   regex:
-                    description: Regex defines regular expression to match and capture
-                      the path from the request URL.
+                    description: Regex defines the regular expression used to match
+                      and capture the path from the request URL.
                     type: string
                   replacement:
                     description: Replacement defines the replacement path format,
@@ -754,14 +832,25 @@ spec:
                     type: string
                 type: object
               retry:
-                description: Retry holds the retry middleware configuration.
+                description: 'Retry holds the retry middleware configuration. This
+                  middleware reissues requests a given number of times to a backend
+                  server if that server does not reply. As soon as the server answers,
+                  the middleware stops retrying, regardless of the response status.
+                  More info: https://doc.traefik.io/traefik/middlewares/http/retry/'
                 properties:
                   attempts:
+                    description: Attempts defines how many times the request should
+                      be retried.
                     type: integer
                   initialInterval:
                     anyOf:
                     - type: integer
                     - type: string
+                    description: InitialInterval defines the first wait time in the
+                      exponential backoff series. The maximum interval is calculated
+                      as twice the initialInterval. If unspecified, requests will
+                      be retried immediately. The value of initialInterval should
+                      be provided in seconds or as a valid duration format, see https://pkg.go.dev/time#ParseDuration.
                     x-kubernetes-int-or-string: true
                 type: object
               stripPrefix:
@@ -787,8 +876,8 @@ spec:
                   the URL path. More info: https://doc.traefik.io/traefik/middlewares/http/stripprefixregex/'
                 properties:
                   regex:
-                    description: Regex defines the (Golang) regular expression to
-                      match the path prefix from the request URL.
+                    description: Regex defines the regular expression to match the
+                      path prefix from the request URL.
                     items:
                       type: string
                     type: array
