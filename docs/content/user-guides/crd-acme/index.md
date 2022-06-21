@@ -44,8 +44,8 @@ Let's now have a look (in the order they should be applied, if using `kubectl ap
 
 ### IngressRoute Definition
 
-First, you will need to install Traefik CRDs and RBAC, with the definition of the `IngressRoute` and the `Middleware` kinds.
-One may note the RBAC authorization resources; they will be referenced through the `serviceAccountName` of the deployment, later on.
+First, you will need to install Traefik CRDs containing the definition of the `IngressRoute` and the `Middleware` kinds, 
+and the RBAC authorization resources which will be referenced through the `serviceAccountName` of the deployment.
 
 ```bash
 # Install Traefik Resource Definitions:
@@ -122,7 +122,8 @@ Note that you'll have to use `-k` as long as you're using the staging server of 
 
 ### Force TLS v1.2+
 
-Nowadays, TLS v1.0 and v1.1 are deprecated. In order to configure TLS Connection, one can use the TLSOption CRD. In order to force TLS v1.2 or later on all your IngressRoute, you can define the `default` TLSOption:
+Nowadays, TLS v1.0 and v1.1 are deprecated.
+In order to force TLS v1.2 or later on all your IngressRoute, you can define the `default` TLSOption:
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v2.7/docs/content/user-guides/crd-acme/05-tlsoption.yml
