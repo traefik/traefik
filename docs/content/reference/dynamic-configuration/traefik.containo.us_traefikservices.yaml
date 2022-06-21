@@ -19,8 +19,8 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: 'TraefikService is the CRD implementation of a "Traefik Service".
-          TraefikService object allows to:  (a) Apply weight to Services on load-balancing  (b)
+        description: 'TraefikService is the CRD implementation of a Traefik Service.
+          TraefikService object allows to:  - Apply weight to Services on load-balancing  -
           Mirror traffic on services More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-traefikservice'
         properties:
           apiVersion:
@@ -39,8 +39,7 @@ spec:
             description: TraefikServiceSpec defines the desired state of a TraefikService.
             properties:
               mirroring:
-                description: 'Mirroring defines a mirroring service, which is composed
-                  of a main load-balancer, and a list of mirrors. More info: https://doc.traefik.io/traefik/routing/services/#mirroring-service'
+                description: Mirroring defines the Mirroring service configuration.
                 properties:
                   kind:
                     description: Kind defines the kind of the Service.
@@ -59,8 +58,7 @@ spec:
                     description: Mirrors defines the list of mirrors where Traefik
                       will duplicate the traffic.
                     items:
-                      description: MirrorService defines one of the mirrors of a Mirroring
-                        service.
+                      description: MirrorService holds the mirror configuration.
                       properties:
                         kind:
                           description: Kind defines the kind of the Service.
@@ -99,14 +97,14 @@ spec:
                             client.
                           properties:
                             flushInterval:
-                              description: 'FlushInterval defines the interval in
-                                between flushes to the client while copying the response
-                                body. It is a duration in milliseconds. A negative
-                                value means to flush immediately after each write
-                                to the client. The FlushInterval is ignored when ReverseProxy
-                                recognizes a response as a streaming response; for
-                                such responses, writes are flushed to the client immediately.
-                                Default: 100'
+                              description: 'FlushInterval defines the interval, in
+                                milliseconds, in between flushes to the client while
+                                copying the response body. A negative value means
+                                to flush immediately after each write to the client.
+                                This configuration is ignored when ReverseProxy recognizes
+                                a response as a streaming response; for such responses,
+                                writes are flushed to the client immediately. Default:
+                                100ms'
                               type: string
                           type: object
                         scheme:
@@ -185,13 +183,13 @@ spec:
                       response from the upstream Kubernetes Service to the client.
                     properties:
                       flushInterval:
-                        description: 'FlushInterval defines the interval in between
-                          flushes to the client while copying the response body. It
-                          is a duration in milliseconds. A negative value means to
-                          flush immediately after each write to the client. The FlushInterval
-                          is ignored when ReverseProxy recognizes a response as a
-                          streaming response; for such responses, writes are flushed
-                          to the client immediately. Default: 100'
+                        description: 'FlushInterval defines the interval, in milliseconds,
+                          in between flushes to the client while copying the response
+                          body. A negative value means to flush immediately after
+                          each write to the client. This configuration is ignored
+                          when ReverseProxy recognizes a response as a streaming response;
+                          for such responses, writes are flushed to the client immediately.
+                          Default: 100ms'
                         type: string
                     type: object
                   scheme:
@@ -241,8 +239,7 @@ spec:
                 - name
                 type: object
               weighted:
-                description: WeightedRoundRobin allows to apply weight to services
-                  on load-balancing.
+                description: Weighted defines the Weighted Round Robin configuration.
                 properties:
                   services:
                     description: Services defines the list of Kubernetes Service and/or
@@ -284,14 +281,14 @@ spec:
                             client.
                           properties:
                             flushInterval:
-                              description: 'FlushInterval defines the interval in
-                                between flushes to the client while copying the response
-                                body. It is a duration in milliseconds. A negative
-                                value means to flush immediately after each write
-                                to the client. The FlushInterval is ignored when ReverseProxy
-                                recognizes a response as a streaming response; for
-                                such responses, writes are flushed to the client immediately.
-                                Default: 100'
+                              description: 'FlushInterval defines the interval, in
+                                milliseconds, in between flushes to the client while
+                                copying the response body. A negative value means
+                                to flush immediately after each write to the client.
+                                This configuration is ignored when ReverseProxy recognizes
+                                a response as a streaming response; for such responses,
+                                writes are flushed to the client immediately. Default:
+                                100ms'
                               type: string
                           type: object
                         scheme:

@@ -10,7 +10,7 @@ type TCPMiddleware struct {
 
 // +k8s:deepcopy-gen=true
 
-// TCPInFlightConn holds the TCP InflightConn middleware configuration.
+// TCPInFlightConn holds the TCP InFlightConn middleware configuration.
 // This middleware prevents services from being overwhelmed with high load,
 // by limiting the number of allowed simultaneous connections for one IP.
 // More info: https://doc.traefik.io/traefik/middlewares/tcp/inflightconn/
@@ -23,8 +23,8 @@ type TCPInFlightConn struct {
 // +k8s:deepcopy-gen=true
 
 // TCPIPWhiteList holds the TCP IPWhiteList middleware configuration.
-// This middleware accepts / refuses connections based on the client IP.
+// This middleware accepts/refuses connections based on the client IP.
 type TCPIPWhiteList struct {
-	// The sourceRange option sets the allowed IPs (or ranges of allowed IPs by using CIDR notation).
+	// SourceRange defines the allowed IPs (or ranges of allowed IPs by using CIDR notation).
 	SourceRange []string `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
 }

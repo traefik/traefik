@@ -37,11 +37,11 @@ spec:
           metadata:
             type: object
           spec:
-            description: ServersTransportSpec defines the desired state of ServersTransport.
+            description: ServersTransportSpec defines the desired state of a ServersTransport.
             properties:
               certificatesSecrets:
                 description: CertificatesSecrets defines a list of secret storing
-                  certificates for mTLS.
+                  client certificates for mTLS.
                 items:
                   type: string
                 type: array
@@ -58,8 +58,7 @@ spec:
                     - type: integer
                     - type: string
                     description: DialTimeout is the amount of time to wait until a
-                      connection to a backend server can be established. If zero,
-                      no timeout exists.
+                      connection to a backend server can be established.
                     x-kubernetes-int-or-string: true
                   idleConnTimeout:
                     anyOf:
@@ -82,7 +81,7 @@ spec:
                     - type: string
                     description: ReadIdleTimeout is the timeout after which a health
                       check using ping frame will be carried out if no frame is received
-                      on the HTTP/2 connection. If zero, no health check is performed.
+                      on the HTTP/2 connection.
                     x-kubernetes-int-or-string: true
                   responseHeaderTimeout:
                     anyOf:
@@ -90,7 +89,7 @@ spec:
                     - type: string
                     description: ResponseHeaderTimeout is the amount of time to wait
                       for a server's response headers after fully writing the request
-                      (including its body, if any). If zero, no timeout exists.
+                      (including its body, if any).
                     x-kubernetes-int-or-string: true
                 type: object
               insecureSkipVerify:
@@ -105,8 +104,8 @@ spec:
                   SAN URI during the peer certificate verification.
                 type: string
               rootCAsSecrets:
-                description: RootCAsSecrets defines a list of CA secret for self-signed
-                  certificate.
+                description: RootCAsSecrets defines a list of CA secret used to validate
+                  self-signed certificate.
                 items:
                   type: string
                 type: array
