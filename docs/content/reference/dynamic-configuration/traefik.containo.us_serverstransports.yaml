@@ -19,7 +19,10 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: ServersTransport is a specification for a ServersTransport resource.
+        description: 'ServersTransport is the CRD implementation of a ServersTransport.
+          If no serversTransport is specified, the default@internal will be used.
+          The default@internal serversTransport is created from the static configuration.
+          More info: https://doc.traefik.io/traefik/v2.7/routing/services/#serverstransport_1'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,27 +37,28 @@ spec:
           metadata:
             type: object
           spec:
-            description: ServersTransportSpec options to configure communication between
-              Traefik and the servers.
+            description: ServersTransportSpec defines the desired state of a ServersTransport.
             properties:
               certificatesSecrets:
-                description: Certificates for mTLS.
+                description: CertificatesSecrets defines a list of secret storing
+                  client certificates for mTLS.
                 items:
                   type: string
                 type: array
               disableHTTP2:
-                description: Disable HTTP/2 for connections with backend servers.
+                description: DisableHTTP2 disables HTTP/2 for connections with backend
+                  servers.
                 type: boolean
               forwardingTimeouts:
-                description: Timeouts for requests forwarded to the backend servers.
+                description: ForwardingTimeouts defines the timeouts for requests
+                  forwarded to the backend servers.
                 properties:
                   dialTimeout:
                     anyOf:
                     - type: integer
                     - type: string
                     description: DialTimeout is the amount of time to wait until a
-                      connection to a backend server can be established. If zero,
-                      no timeout exists.
+                      connection to a backend server can be established.
                     x-kubernetes-int-or-string: true
                   idleConnTimeout:
                     anyOf:
@@ -77,7 +81,7 @@ spec:
                     - type: string
                     description: ReadIdleTimeout is the timeout after which a health
                       check using ping frame will be carried out if no frame is received
-                      on the HTTP/2 connection. If zero, no health check is performed.
+                      on the HTTP/2 connection.
                     x-kubernetes-int-or-string: true
                   responseHeaderTimeout:
                     anyOf:
@@ -85,27 +89,29 @@ spec:
                     - type: string
                     description: ResponseHeaderTimeout is the amount of time to wait
                       for a server's response headers after fully writing the request
-                      (including its body, if any). If zero, no timeout exists.
+                      (including its body, if any).
                     x-kubernetes-int-or-string: true
                 type: object
               insecureSkipVerify:
-                description: Disable SSL certificate verification.
+                description: InsecureSkipVerify disables SSL certificate verification.
                 type: boolean
               maxIdleConnsPerHost:
-                description: If non-zero, controls the maximum idle (keep-alive) to
-                  keep per-host. If zero, DefaultMaxIdleConnsPerHost is used.
+                description: MaxIdleConnsPerHost controls the maximum idle (keep-alive)
+                  to keep per-host.
                 type: integer
               peerCertURI:
-                description: URI used to match against SAN URI during the peer certificate
-                  verification.
+                description: PeerCertURI defines the peer cert URI used to match against
+                  SAN URI during the peer certificate verification.
                 type: string
               rootCAsSecrets:
-                description: Add cert file for self-signed certificate.
+                description: RootCAsSecrets defines a list of CA secret used to validate
+                  self-signed certificate.
                 items:
                   type: string
                 type: array
               serverName:
-                description: ServerName used to contact the server.
+                description: ServerName defines the server name used to contact the
+                  server.
                 type: string
             type: object
         required:
