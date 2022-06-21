@@ -13,7 +13,9 @@ import (
 // This means that you cannot have two stores that are named default in different Kubernetes namespaces.
 // More info: https://doc.traefik.io/traefik/https/tls/#certificates-stores
 type TLSStore struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata"`
 
 	Spec TLSStoreSpec `json:"spec"`

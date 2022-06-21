@@ -9,13 +9,15 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
 
-// TraefikService is the CRD implementation of a "Traefik Service".
+// TraefikService is the CRD implementation of a Traefik Service.
 // TraefikService object allows to:
-//  (a) Apply weight to Services on load-balancing
-//  (b) Mirror traffic on services
+//  - Apply weight to Services on load-balancing
+//  - Mirror traffic on services
 // More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-traefikservice
 type TraefikService struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata"`
 
 	Spec TraefikServiceSpec `json:"spec"`
@@ -23,11 +25,14 @@ type TraefikService struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// TraefikServiceList is a list of TraefikService resources.
+// TraefikServiceList is a collection of TraefikService resources.
 type TraefikServiceList struct {
 	metav1.TypeMeta `json:",inline"`
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ListMeta `json:"metadata"`
 
+	// Items is the list of TraefikService.
 	Items []TraefikService `json:"items"`
 }
 
@@ -35,13 +40,15 @@ type TraefikServiceList struct {
 
 // TraefikServiceSpec defines the desired state of a TraefikService.
 type TraefikServiceSpec struct {
-	Weighted  *WeightedRoundRobin `json:"weighted,omitempty"`
-	Mirroring *Mirroring          `json:"mirroring,omitempty"`
+	// Weighted defines the Weighted Round Robin configuration.
+	Weighted *WeightedRoundRobin `json:"weighted,omitempty"`
+	// Mirroring defines the Mirroring service configuration.
+	Mirroring *Mirroring `json:"mirroring,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// Mirroring defines a mirroring service, which is composed of a main load-balancer, and a list of mirrors.
+// Mirroring holds the mirroring service configuration.
 // More info: https://doc.traefik.io/traefik/routing/services/#mirroring-service
 type Mirroring struct {
 	LoadBalancerSpec `json:",inline"`
@@ -56,7 +63,7 @@ type Mirroring struct {
 
 // +k8s:deepcopy-gen=true
 
-// MirrorService defines one of the mirrors of a Mirroring service.
+// MirrorService holds the mirror configuration.
 type MirrorService struct {
 	LoadBalancerSpec `json:",inline"`
 
@@ -67,7 +74,8 @@ type MirrorService struct {
 
 // +k8s:deepcopy-gen=true
 
-// WeightedRoundRobin allows to apply weight to services on load-balancing.
+// WeightedRoundRobin holds the weighted round-robin configuration.
+// More info: https://doc.traefik.io/traefik/routing/services/#weighted-round-robin-service
 type WeightedRoundRobin struct {
 	// Services defines the list of Kubernetes Service and/or TraefikService to load-balance, with weight.
 	Services []Service `json:"services,omitempty"`
