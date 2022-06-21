@@ -9,15 +9,16 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
 
-// TraefikService is the specification for a service (that an IngressRoute refers
-// to) that is usually not a terminal service (i.e. not a pod of servers), as
-// opposed to a Kubernetes Service. That is to say, it usually refers to other
-// (children) services, which themselves can be TraefikServices or Services.
+// TraefikService is the CRD implementation of a "Traefik Service".
+// TraefikService object allows to:
+//  (a) Apply weight to Services on load-balancing
+//  (b) Mirror traffic on services
+// More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#kind-traefikservice
 type TraefikService struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
 
-	Spec ServiceSpec `json:"spec"`
+	Spec TraefikServiceSpec `json:"spec"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -32,22 +33,25 @@ type TraefikServiceList struct {
 
 // +k8s:deepcopy-gen=true
 
-// ServiceSpec defines whether a TraefikService is a load-balancer of services or a
-// mirroring service.
-type ServiceSpec struct {
+// TraefikServiceSpec defines the desired state of a TraefikService.
+type TraefikServiceSpec struct {
 	Weighted  *WeightedRoundRobin `json:"weighted,omitempty"`
 	Mirroring *Mirroring          `json:"mirroring,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// Mirroring defines a mirroring service, which is composed of a main
-// load-balancer, and a list of mirrors.
+// Mirroring defines a mirroring service, which is composed of a main load-balancer, and a list of mirrors.
+// More info: https://doc.traefik.io/traefik/routing/services/#mirroring-service
 type Mirroring struct {
 	LoadBalancerSpec `json:",inline"`
 
-	MaxBodySize *int64          `json:"maxBodySize,omitempty"`
-	Mirrors     []MirrorService `json:"mirrors,omitempty"`
+	// MaxBodySize defines the maximum size allowed for the body of the request.
+	// If the body is larger, the request is not mirrored.
+	// Default value is -1, which means unlimited size.
+	MaxBodySize *int64 `json:"maxBodySize,omitempty"`
+	// Mirrors defines the list of mirrors where Traefik will duplicate the traffic.
+	Mirrors []MirrorService `json:"mirrors,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -56,13 +60,18 @@ type Mirroring struct {
 type MirrorService struct {
 	LoadBalancerSpec `json:",inline"`
 
+	// Percent defines the part of the traffic to mirror.
+	// Supported values: 0 to 100.
 	Percent int `json:"percent,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// WeightedRoundRobin defines a load-balancer of services.
+// WeightedRoundRobin allows to apply weight to services on load-balancing.
 type WeightedRoundRobin struct {
-	Services []Service       `json:"services,omitempty"`
-	Sticky   *dynamic.Sticky `json:"sticky,omitempty"`
+	// Services defines the list of Kubernetes Service and/or TraefikService to load-balance, with weight.
+	Services []Service `json:"services,omitempty"`
+	// Sticky defines whether sticky sessions are enabled.
+	// More info: https://doc.traefik.io/traefik/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
+	Sticky *dynamic.Sticky `json:"sticky,omitempty"`
 }
