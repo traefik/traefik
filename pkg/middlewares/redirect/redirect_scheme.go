@@ -10,6 +10,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
+	"github.com/vulcand/oxy/forward"
 )
 
 const (
@@ -63,7 +64,11 @@ func rawURLScheme(req *http.Request) string {
 		scheme = schemeHTTPS
 	}
 
-	if scheme == schemeHTTP && port == ":80" || scheme == schemeHTTPS && port == ":443" || port == "" {
+	if value := req.Header.Get(forward.XForwardedProto); value != "" {
+		scheme = value
+	}
+
+	if scheme == schemeHTTP && port == ":80" || scheme == schemeHTTPS && port == ":443" {
 		port = ""
 	}
 

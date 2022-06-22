@@ -47,10 +47,21 @@ func TestRedirectSchemeHandler(t *testing.T) {
 			},
 			url: "http://foo",
 			headers: map[string]string{
-				"X-Forwarded-Proto": "https",
+				"X-Forwarded-Proto": "http",
 			},
 			expectedURL:    "https://foo",
 			expectedStatus: http.StatusFound,
+		},
+		{
+			desc: "HTTP to HTTPS, with X-Forwarded-Proto to HTTPS",
+			config: dynamic.RedirectScheme{
+				Scheme: "https",
+			},
+			url: "http://foo",
+			headers: map[string]string{
+				"X-Forwarded-Proto": "https",
+			},
+			expectedStatus: http.StatusOK,
 		},
 		{
 			desc: "HTTP with port to HTTPS without port",
