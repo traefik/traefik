@@ -362,6 +362,81 @@ func TestAddHeadersAndHost(t *testing.T) {
 	}
 }
 
+func TestBalancers_Servers(t *testing.T) {
+	server1, err := url.Parse("http://foo.com")
+	require.NoError(t, err)
+
+	balancer1, err := roundrobin.New(nil)
+	require.NoError(t, err)
+
+	err = balancer1.UpsertServer(server1)
+	require.NoError(t, err)
+
+	server2, err := url.Parse("http://foo.com")
+	require.NoError(t, err)
+
+	balancer2, err := roundrobin.New(nil)
+	require.NoError(t, err)
+
+	err = balancer2.UpsertServer(server2)
+	require.NoError(t, err)
+
+	balancers := Balancers([]Balancer{balancer1, balancer2})
+
+	want, err := url.Parse("http://foo.com")
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, len(balancers.Servers()))
+	assert.Equal(t, want, balancers.Servers()[0])
+}
+
+func TestBalancers_UpsertServer(t *testing.T) {
+	balancer1, err := roundrobin.New(nil)
+	require.NoError(t, err)
+
+	balancer2, err := roundrobin.New(nil)
+	require.NoError(t, err)
+
+	want, err := url.Parse("http://foo.com")
+	require.NoError(t, err)
+
+	balancers := Balancers([]Balancer{balancer1, balancer2})
+
+	err = balancers.UpsertServer(want)
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, len(balancer1.Servers()))
+	assert.Equal(t, want, balancer1.Servers()[0])
+
+	assert.Equal(t, 1, len(balancer2.Servers()))
+	assert.Equal(t, want, balancer2.Servers()[0])
+}
+
+func TestBalancers_RemoveServer(t *testing.T) {
+	server, err := url.Parse("http://foo.com")
+	require.NoError(t, err)
+
+	balancer1, err := roundrobin.New(nil)
+	require.NoError(t, err)
+
+	err = balancer1.UpsertServer(server)
+	require.NoError(t, err)
+
+	balancer2, err := roundrobin.New(nil)
+	require.NoError(t, err)
+
+	err = balancer2.UpsertServer(server)
+	require.NoError(t, err)
+
+	balancers := Balancers([]Balancer{balancer1, balancer2})
+
+	err = balancers.RemoveServer(server)
+	require.NoError(t, err)
+
+	assert.Equal(t, 0, len(balancer1.Servers()))
+	assert.Equal(t, 0, len(balancer2.Servers()))
+}
+
 type testLoadBalancer struct {
 	// RWMutex needed due to parallel test execution: Both the system-under-test
 	// and the test assertions reference the counters.
