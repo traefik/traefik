@@ -3566,8 +3566,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "Empty caused by mixed routes multiple protocol using same port",
-			paths: []string{"services.yml", "mixed/with_multiple_protocol_using_same_port.yml"},
+			desc:  "Empty caused by mixed routes with multiple listeners using same hostname, port and protocol",
+			paths: []string{"services.yml", "mixed/with_multiple_listeners_using_same_hostname_port_protocol.yml"},
 			entryPoints: map[string]Entrypoint{
 				"web": {Address: ":9080"},
 				"tcp": {Address: ":9000"},
@@ -5206,6 +5206,44 @@ func Test_getAllowedRoutes(t *testing.T) {
 
 			require.Len(t, conditions, 0)
 			assert.Equal(t, test.wantKinds, got)
+		})
+	}
+}
+
+func Test_makeListenerKey(t *testing.T) {
+	tests := []struct {
+		desc     string
+		listener v1alpha2.Listener
+		expected string
+	}{
+		{
+			desc:     "empty",
+			expected: "||0",
+		},
+		{
+			desc: "listener with port, protocol and hostname",
+			listener: v1alpha2.Listener{
+				Port:     443,
+				Protocol: v1alpha2.HTTPSProtocolType,
+				Hostname: hostnamePtr("www.example.com"),
+			},
+			expected: "HTTPS|www.example.com|443",
+		},
+		{
+			desc: "listener with port, protocol and nil hostname",
+			listener: v1alpha2.Listener{
+				Port:     443,
+				Protocol: v1alpha2.HTTPSProtocolType,
+			},
+			expected: "HTTPS||443",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, test.expected, makeListenerKey(test.listener))
 		})
 	}
 }
