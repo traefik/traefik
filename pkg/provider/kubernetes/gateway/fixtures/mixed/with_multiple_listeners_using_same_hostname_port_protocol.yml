@@ -46,6 +46,7 @@ spec:
           - kind: HTTPRoute
         namespaces:
           from: Same
+
 ---
 kind: Gateway
 apiVersion: gateway.networking.k8s.io/v1alpha2
