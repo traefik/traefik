@@ -298,10 +298,10 @@ You can find an excerpt of the available custom resources in the table below:
 | Kind                                       | Purpose                                                            | Concept Behind                                                 |
 |--------------------------------------------|--------------------------------------------------------------------|----------------------------------------------------------------|
 | [IngressRoute](#kind-ingressroute)         | HTTP Routing                                                       | [HTTP router](../routers/index.md#configuring-http-routers)    |
-| [Middleware](#kind-middleware)             | Tweaks the HTTP requests before they are sent to your service      | [HTTP Middlewares](../../middlewares/http/overview.md)              |
+| [Middleware](#kind-middleware)             | Tweaks the HTTP requests before they are sent to your service      | [HTTP Middlewares](../../middlewares/http/overview.md)         |
 | [TraefikService](#kind-traefikservice)     | Abstraction for HTTP loadbalancing/mirroring                       | [HTTP service](../services/index.md#configuring-http-services) |
 | [IngressRouteTCP](#kind-ingressroutetcp)   | TCP Routing                                                        | [TCP router](../routers/index.md#configuring-tcp-routers)      |
-| [MiddlewareTCP](#kind-middlewaretcp)       | Tweaks the TCP requests before they are sent to your service       | [TCP Middlewares](../../middlewares/tcp/overview.md)              |
+| [MiddlewareTCP](#kind-middlewaretcp)       | Tweaks the TCP requests before they are sent to your service       | [TCP Middlewares](../../middlewares/tcp/overview.md)           |
 | [IngressRouteUDP](#kind-ingressrouteudp)   | UDP Routing                                                        | [UDP router](../routers/index.md#configuring-udp-routers)      |
 | [TLSOptions](#kind-tlsoption)              | Allows to configure some parameters of the TLS connection          | [TLSOptions](../../https/tls.md#tls-options)                   |
 | [TLSStores](#kind-tlsstore)                | Allows to configure the default TLS store                          | [TLSStores](../../https/tls.md#certificates-stores)            |
@@ -583,6 +583,62 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
             - port: 80
         ```
 
+#### Load Balancing
+
+More information in the dedicated server [load balancing](../services/index.md#load-balancing) section.
+
+!!! info "Declaring and using Kubernetes Service Load Balancing"
+
+    ```yaml tab="IngressRoute"
+    apiVersion: traefik.containo.us/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: ingressroutebar
+      namespace: default
+    
+    spec:
+      entryPoints:
+        - web
+      routes:
+      - match: Host(`example.com`) && PathPrefix(`/foo`)
+        kind: Rule
+        services:
+        - name: svc1
+          namespace: default
+        - name: svc2
+          namespace: default
+    ```
+    
+    ```yaml tab="K8s Service"
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: svc1
+      namespace: default
+    
+    spec:
+      ports:
+        - name: http
+          port: 80
+      selector:
+        app: traefiklabs
+        task: app1
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: svc2
+      namespace: default
+    
+    spec:
+      ports:
+        - name: http
+          port: 80
+      selector:
+        app: traefiklabs
+        task: app2
+    ```
+
 ### Kind: `Middleware`
 
 `Middleware` is the CRD implementation of a [Traefik middleware](../../middlewares/http/overview.md).
@@ -642,7 +698,7 @@ More information about available middlewares in the dedicated [middlewares secti
 Register the `TraefikService` [kind](../../reference/dynamic-configuration/kubernetes-crd.md#definitions) in the Kubernetes cluster before creating `TraefikService` objects,
 referencing services in the [`IngressRoute`](#kind-ingressroute) objects, or recursively in others `TraefikService` objects.
 
-!!! info "Disambiguate Traefik and Kubernetes Services "
+!!! info "Disambiguate Traefik and Kubernetes Services"
 
     As the field `name` can reference different types of objects, use the field `kind` to avoid any ambiguity.
     
@@ -653,65 +709,8 @@ referencing services in the [`IngressRoute`](#kind-ingressroute) objects, or rec
 
 `TraefikService` object allows to use any (valid) combinations of:
 
-* [Load Balancing](#server-load-balancing) with Kubernetes Service.
-* [Weighted Round Robin](#weighted-round-robin) with TraefikService CRD.
-* [Mirroring](#mirroring) with TraefikService CRD.
-
-#### Load Balancing with Kubernetes Service
-
-More information in the dedicated server [load balancing](../services/index.md#load-balancing) section.
-
-??? "Declaring and Using Server Load Balancing"
-
-    ```yaml tab="IngressRoute"
-    apiVersion: traefik.containo.us/v1alpha1
-    kind: IngressRoute
-    metadata:
-      name: ingressroutebar
-      namespace: default
-    
-    spec:
-      entryPoints:
-        - web
-      routes:
-      - match: Host(`example.com`) && PathPrefix(`/foo`)
-        kind: Rule
-        services:
-        - name: svc1
-          namespace: default
-        - name: svc2
-          namespace: default
-    ```
-    
-    ```yaml tab="K8s Service"
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: svc1
-      namespace: default
-    
-    spec:
-      ports:
-        - name: http
-          port: 80
-      selector:
-        app: traefiklabs
-        task: app1
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: svc2
-      namespace: default
-    
-    spec:
-      ports:
-        - name: http
-          port: 80
-      selector:
-        app: traefiklabs
-        task: app2
-    ```
+* [Weighted Round Robin](#weighted-round-robin) load balancing.
+* [Mirroring](#mirroring).
 
 #### Weighted Round Robin
 
