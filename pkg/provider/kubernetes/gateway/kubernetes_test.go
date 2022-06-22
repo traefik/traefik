@@ -3566,8 +3566,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "Empty caused by mixed routes multiple protocol using same port",
-			paths: []string{"services.yml", "mixed/with_multiple_protocol_using_same_port.yml"},
+			desc:  "Empty caused by mixed routes with multiple listeners using same hostname, port and protocol",
+			paths: []string{"services.yml", "mixed/with_multiple_listeners_using_same_hostname_port_protocol.yml"},
 			entryPoints: map[string]Entrypoint{
 				"web": {Address: ":9080"},
 				"tcp": {Address: ":9000"},
@@ -5210,6 +5210,44 @@ func Test_getAllowedRoutes(t *testing.T) {
 	}
 }
 
+func Test_makeListenerKey(t *testing.T) {
+	tests := []struct {
+		desc     string
+		listener v1alpha2.Listener
+		expected string
+	}{
+		{
+			desc:     "empty",
+			expected: "||0",
+		},
+		{
+			desc: "listener with port, protocol and hostname",
+			listener: v1alpha2.Listener{
+				Port:     443,
+				Protocol: v1alpha2.HTTPSProtocolType,
+				Hostname: hostnamePtr("www.example.com"),
+			},
+			expected: "HTTPS|www.example.com|443",
+		},
+		{
+			desc: "listener with port, protocol and nil hostname",
+			listener: v1alpha2.Listener{
+				Port:     443,
+				Protocol: v1alpha2.HTTPSProtocolType,
+			},
+			expected: "HTTPS||443",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, test.expected, makeListenerKey(test.listener))
+		})
+	}
+}
+
 func hostnamePtr(hostname v1alpha2.Hostname) *v1alpha2.Hostname {
 	return &hostname
 }
@@ -5233,105 +5271,3 @@ func kindPtr(kind v1alpha2.Kind) *v1alpha2.Kind {
 func pathMatchTypePtr(p v1alpha2.PathMatchType) *v1alpha2.PathMatchType { return &p }
 
 func headerMatchTypePtr(h v1alpha2.HeaderMatchType) *v1alpha2.HeaderMatchType { return &h }
-
-func Test_gatewayListenerKey(t *testing.T) {
-	tests := []struct {
-		desc     string
-		listener v1alpha2.Listener
-		expected string
-	}{
-		{
-			desc: "test gateway listener key generator",
-			listener: v1alpha2.Listener{
-				Port:     443,
-				Protocol: v1alpha2.HTTPSProtocolType,
-				Hostname: hostnamePtr("www.example.com"),
-			},
-			expected: "HTTPS|www.example.com|443",
-		},
-		{
-			desc: "test gateway listener key generator with nil hostname",
-			listener: v1alpha2.Listener{
-				Port:     443,
-				Protocol: v1alpha2.HTTPSProtocolType,
-				Hostname: nil,
-			},
-			expected: "HTTPS||443",
-		},
-		{
-			desc: "test gateway listener key generator with empty hostname",
-			listener: v1alpha2.Listener{
-				Port:     443,
-				Protocol: v1alpha2.HTTPSProtocolType,
-				Hostname: hostnamePtr(""),
-			},
-			expected: "HTTPS||443",
-		},
-	}
-
-	for _, test := range tests {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-			assert.Equal(t, test.expected, gatewayListenerKey(test.listener))
-		})
-	}
-}
-
-func Test_isShareableListenerProtocol(t *testing.T) {
-	tests := []struct {
-		desc      string
-		listener  v1alpha2.Listener
-		shareable []v1alpha2.ProtocolType
-		expected  bool
-	}{
-		{
-			desc: "test with empty configuration slice",
-			listener: v1alpha2.Listener{
-				Protocol: v1alpha2.HTTPSProtocolType,
-			},
-			shareable: []v1alpha2.ProtocolType{},
-			expected:  false,
-		},
-		{
-			desc: "test with nil configuration slice",
-			listener: v1alpha2.Listener{
-				Protocol: v1alpha2.HTTPSProtocolType,
-			},
-			shareable: nil,
-			expected:  false,
-		},
-		{
-			desc: "test with matching configuration slice",
-			listener: v1alpha2.Listener{
-				Protocol: v1alpha2.HTTPSProtocolType,
-			},
-			shareable: []v1alpha2.ProtocolType{
-				v1alpha2.HTTPSProtocolType,
-			},
-			expected: true,
-		},
-		{
-			desc: "test with non-matching configuration slice",
-			listener: v1alpha2.Listener{
-				Protocol: v1alpha2.HTTPSProtocolType,
-			},
-			shareable: []v1alpha2.ProtocolType{
-				v1alpha2.HTTPProtocolType,
-			},
-			expected: false,
-		},
-	}
-
-	for _, test := range tests {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-			assert.Equal(
-				t,
-				test.expected,
-				isShareableListenerProtocol(test.listener, test.shareable),
-			)
-		})
-	}
-}
