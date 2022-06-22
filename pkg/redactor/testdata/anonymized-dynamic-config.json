@@ -283,6 +283,7 @@
             "notAfter": true,
             "notBefore": true,
             "sans": true,
+            "serialNumber": true,
             "subject": {
               "country": true,
               "province": true,
@@ -301,8 +302,7 @@
               "commonName": true,
               "serialNumber": true,
               "domainComponent": true
-            },
-            "serialNumber": true
+            }
           }
         },
         "retry": {

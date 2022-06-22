@@ -7,60 +7,88 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-// IngressRouteTCPSpec is a specification for a IngressRouteTCPSpec resource.
+// IngressRouteTCPSpec defines the desired state of IngressRouteTCP.
 type IngressRouteTCPSpec struct {
-	Routes      []RouteTCP `json:"routes"`
-	EntryPoints []string   `json:"entryPoints,omitempty"`
-	TLS         *TLSTCP    `json:"tls,omitempty"`
+	// Routes defines the list of routes.
+	Routes []RouteTCP `json:"routes"`
+	// EntryPoints defines the list of entry point names to bind to.
+	// Entry points have to be configured in the static configuration.
+	// More info: https://doc.traefik.io/traefik/v2.7/routing/entrypoints/
+	// Default: all.
+	EntryPoints []string `json:"entryPoints,omitempty"`
+	// TLS defines the TLS configuration on a layer 4 / TCP Route.
+	// More info: https://doc.traefik.io/traefik/v2.7/routing/routers/#tls_1
+	TLS *TLSTCP `json:"tls,omitempty"`
 }
 
-// RouteTCP contains the set of routes.
+// RouteTCP holds the TCP route configuration.
 type RouteTCP struct {
-	Match    string       `json:"match"`
-	Priority int          `json:"priority,omitempty"`
+	// Match defines the router's rule.
+	// More info: https://doc.traefik.io/traefik/v2.7/routing/routers/#rule_1
+	Match string `json:"match"`
+	// Priority defines the router's priority.
+	// More info: https://doc.traefik.io/traefik/v2.7/routing/routers/#priority_1
+	Priority int `json:"priority,omitempty"`
+	// Services defines the list of TCP services.
 	Services []ServiceTCP `json:"services,omitempty"`
-	// Middlewares contains references to MiddlewareTCP resources.
+	// Middlewares defines the list of references to MiddlewareTCP resources.
 	Middlewares []ObjectReference `json:"middlewares,omitempty"`
 }
 
-// TLSTCP contains the TLS certificates configuration of the routes.
-// To enable Let's Encrypt, use an empty TLS struct,
-// e.g. in YAML:
-//
-//	 tls: {} # inline format
-//
-//	 tls:
-//	   secretName: # block format
+// TLSTCP holds the TLS configuration for an IngressRouteTCP.
+// More info: https://doc.traefik.io/traefik/v2.7/routing/routers/#tls_1
 type TLSTCP struct {
-	// SecretName is the name of the referenced Kubernetes Secret to specify the
-	// certificate details.
-	SecretName  string `json:"secretName,omitempty"`
-	Passthrough bool   `json:"passthrough,omitempty"`
-	// Options is a reference to a TLSOption, that specifies the parameters of the TLS connection.
+	// SecretName is the name of the referenced Kubernetes Secret to specify the certificate details.
+	SecretName string `json:"secretName,omitempty"`
+	// Passthrough defines whether a TLS router will terminate the TLS connection.
+	Passthrough bool `json:"passthrough,omitempty"`
+	// Options defines the reference to a TLSOption, that specifies the parameters of the TLS connection.
+	// If not defined, the `default` TLSOption is used.
+	// More info: https://doc.traefik.io/traefik/v2.7/https/tls/#tls-options
 	Options *ObjectReference `json:"options,omitempty"`
-	// Store is a reference to a TLSStore, that specifies the parameters of the TLS store.
-	Store        *ObjectReference `json:"store,omitempty"`
-	CertResolver string           `json:"certResolver,omitempty"`
-	Domains      []types.Domain   `json:"domains,omitempty"`
+	// Store defines the reference to the TLSStore, that will be used to store certificates.
+	// Please note that only `default` TLSStore can be used.
+	Store *ObjectReference `json:"store,omitempty"`
+	// CertResolver defines the name of the certificate resolver to use.
+	// Cert resolvers have to be configured in the static configuration.
+	// More info: https://doc.traefik.io/traefik/v2.7/https/acme/#certificate-resolvers
+	CertResolver string `json:"certResolver,omitempty"`
+	// Domains defines the list of domains that will be used to issue certificates.
+	// More info: https://doc.traefik.io/traefik/v2.7/routing/routers/#domains
+	Domains []types.Domain `json:"domains,omitempty"`
 }
 
-// ServiceTCP defines an upstream to proxy traffic.
+// ServiceTCP defines an upstream TCP service to proxy traffic to.
 type ServiceTCP struct {
-	Name             string                 `json:"name"`
-	Namespace        string                 `json:"namespace,omitempty"`
-	Port             intstr.IntOrString     `json:"port"`
-	Weight           *int                   `json:"weight,omitempty"`
-	TerminationDelay *int                   `json:"terminationDelay,omitempty"`
-	ProxyProtocol    *dynamic.ProxyProtocol `json:"proxyProtocol,omitempty"`
+	// Name defines the name of the referenced Kubernetes Service.
+	Name string `json:"name"`
+	// Namespace defines the namespace of the referenced Kubernetes Service.
+	Namespace string `json:"namespace,omitempty"`
+	// Port defines the port of a Kubernetes Service.
+	// This can be a reference to a named port.
+	Port intstr.IntOrString `json:"port"`
+	// Weight defines the weight used when balancing requests between multiple Kubernetes Service.
+	Weight *int `json:"weight,omitempty"`
+	// TerminationDelay defines the deadline that the proxy sets, after one of its connected peers indicates
+	// it has closed the writing capability of its connection, to close the reading capability as well,
+	// hence fully terminating the connection.
+	// It is a duration in milliseconds, defaulting to 100.
+	// A negative value means an infinite deadline (i.e. the reading capability is never closed).
+	TerminationDelay *int `json:"terminationDelay,omitempty"`
+	// ProxyProtocol defines the PROXY protocol configuration.
+	// More info: https://doc.traefik.io/traefik/v2.7/routing/services/#proxy-protocol
+	ProxyProtocol *dynamic.ProxyProtocol `json:"proxyProtocol,omitempty"`
 }
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
 
-// IngressRouteTCP is an Ingress CRD specification.
+// IngressRouteTCP is the CRD implementation of a Traefik TCP Router.
 type IngressRouteTCP struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata"`
 
 	Spec IngressRouteTCPSpec `json:"spec"`
@@ -68,9 +96,13 @@ type IngressRouteTCP struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// IngressRouteTCPList is a list of IngressRoutes.
+// IngressRouteTCPList is a collection of IngressRouteTCP.
 type IngressRouteTCPList struct {
 	metav1.TypeMeta `json:",inline"`
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ListMeta `json:"metadata"`
-	Items           []IngressRouteTCP `json:"items"`
+
+	// Items is the list of IngressRouteTCP.
+	Items []IngressRouteTCP `json:"items"`
 }

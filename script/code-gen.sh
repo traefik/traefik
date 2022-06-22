@@ -32,8 +32,9 @@ docker run --rm \
            -w "/go/src/${PROJECT_MODULE}" \
            "${IMAGE_NAME}" $cmd
 
-echo "Concatenate the CRD definitions for the integration tests ..."
-cat $(pwd)/docs/content/reference/dynamic-configuration/traefik.containo.us_*.yaml > $(pwd)/integration/fixtures/k8s/01-traefik-crd.yml
+echo "Concatenate the CRD definitions for publication and integration tests ..."
+cat $(pwd)/docs/content/reference/dynamic-configuration/traefik.containo.us_*.yaml > $(pwd)/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
+cp -f $(pwd)/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml $(pwd)/integration/fixtures/k8s/01-traefik-crd.yml
 
 cp -r $(pwd)/${MODULE_VERSION}/* $(pwd)
 rm -rf $(pwd)/${MODULE_VERSION}
