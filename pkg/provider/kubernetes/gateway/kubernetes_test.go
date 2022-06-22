@@ -4989,7 +4989,7 @@ func Test_shouldAttach(t *testing.T) {
 }
 
 func Test_matchingHostnames(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc      string
 		listener  v1alpha2.Listener
 		hostnames []v1alpha2.Hostname
@@ -5081,7 +5081,7 @@ func Test_matchingHostnames(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -5093,7 +5093,7 @@ func Test_matchingHostnames(t *testing.T) {
 }
 
 func Test_getAllowedRoutes(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc                string
 		listener            v1alpha2.Listener
 		supportedRouteKinds []v1alpha2.RouteGroupKind
@@ -5193,7 +5193,7 @@ func Test_getAllowedRoutes(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
@@ -5211,14 +5211,14 @@ func Test_getAllowedRoutes(t *testing.T) {
 }
 
 func Test_makeListenerKey(t *testing.T) {
-	tests := []struct {
-		desc     string
-		listener v1alpha2.Listener
-		expected string
+	testCases := []struct {
+		desc        string
+		listener    v1alpha2.Listener
+		expectedKey string
 	}{
 		{
-			desc:     "empty",
-			expected: "||0",
+			desc:        "empty",
+			expectedKey: "||0",
 		},
 		{
 			desc: "listener with port, protocol and hostname",
@@ -5227,7 +5227,7 @@ func Test_makeListenerKey(t *testing.T) {
 				Protocol: v1alpha2.HTTPSProtocolType,
 				Hostname: hostnamePtr("www.example.com"),
 			},
-			expected: "HTTPS|www.example.com|443",
+			expectedKey: "HTTPS|www.example.com|443",
 		},
 		{
 			desc: "listener with port, protocol and nil hostname",
@@ -5235,15 +5235,16 @@ func Test_makeListenerKey(t *testing.T) {
 				Port:     443,
 				Protocol: v1alpha2.HTTPSProtocolType,
 			},
-			expected: "HTTPS||443",
+			expectedKey: "HTTPS||443",
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, test.expected, makeListenerKey(test.listener))
+
+			assert.Equal(t, test.expectedKey, makeListenerKey(test.listener))
 		})
 	}
 }
