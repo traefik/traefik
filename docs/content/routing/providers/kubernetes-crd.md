@@ -653,9 +653,9 @@ referencing services in the [`IngressRoute`](#kind-ingressroute) objects, or rec
 
 `TraefikService` object allows to use any (valid) combinations of:
 
-* servers [load balancing](#server-load-balancing).  
-* services [Weighted Round Robin](#weighted-round-robin) load balancing.
-* services [mirroring](#mirroring).
+* [Load Balancing](#server-load-balancing) with Kubernetes Service
+* [Weighted Round Robin](#weighted-round-robin) with TraefikService CRD.
+* [Mirroring](#mirroring) with TraefikService CRD.
 
 #### Server Load Balancing
 
