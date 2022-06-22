@@ -19,7 +19,9 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: TLSOption is a specification for a TLSOption resource.
+        description: 'TLSOption is the CRD implementation of a Traefik TLS Option,
+          allowing to configure some parameters of the TLS connection. More info:
+          https://doc.traefik.io/traefik/v2.7/https/tls/#tls-options'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,19 +36,24 @@ spec:
           metadata:
             type: object
           spec:
-            description: TLSOptionSpec configures TLS for an entry point.
+            description: TLSOptionSpec defines the desired state of a TLSOption.
             properties:
               alpnProtocols:
+                description: 'ALPNProtocols defines the list of supported application
+                  level protocols for the TLS handshake, in order of preference. More
+                  info: https://doc.traefik.io/traefik/v2.7/https/tls/#alpn-protocols'
                 items:
                   type: string
                 type: array
               cipherSuites:
+                description: 'CipherSuites defines the list of supported cipher suites
+                  for TLS versions up to TLS 1.2. More info: https://doc.traefik.io/traefik/v2.7/https/tls/#cipher-suites'
                 items:
                   type: string
                 type: array
               clientAuth:
-                description: ClientAuth defines the parameters of the client authentication
-                  part of the TLS connection, if any.
+                description: ClientAuth defines the server's policy for TLS Client
+                  Authentication.
                 properties:
                   clientAuthType:
                     description: ClientAuthType defines the client authentication
@@ -59,23 +66,36 @@ spec:
                     - RequireAndVerifyClientCert
                     type: string
                   secretNames:
-                    description: SecretName is the name of the referenced Kubernetes
-                      Secret to specify the certificate details.
+                    description: SecretNames defines the names of the referenced Kubernetes
+                      Secret storing certificate details.
                     items:
                       type: string
                     type: array
                 type: object
               curvePreferences:
+                description: 'CurvePreferences defines the preferred elliptic curves
+                  in a specific order. More info: https://doc.traefik.io/traefik/v2.7/https/tls/#curve-preferences'
                 items:
                   type: string
                 type: array
               maxVersion:
+                description: 'MaxVersion defines the maximum TLS version that Traefik
+                  will accept. Possible values: VersionTLS10, VersionTLS11, VersionTLS12,
+                  VersionTLS13. Default: None.'
                 type: string
               minVersion:
+                description: 'MinVersion defines the minimum TLS version that Traefik
+                  will accept. Possible values: VersionTLS10, VersionTLS11, VersionTLS12,
+                  VersionTLS13. Default: VersionTLS10.'
                 type: string
               preferServerCipherSuites:
+                description: PreferServerCipherSuites defines whether the server chooses
+                  a cipher suite among his own instead of among the client's. It is
+                  enabled automatically when minVersion or maxVersion are set.
                 type: boolean
               sniStrict:
+                description: SniStrict defines whether Traefik allows connections
+                  from clients connections that do not specify a server_name extension.
                 type: boolean
             type: object
         required:
