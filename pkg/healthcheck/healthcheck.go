@@ -376,8 +376,10 @@ func (lb *LbStatusUpdater) UpsertServer(u *url.URL, options ...roundrobin.Server
 type Balancers []Balancer
 
 // Servers returns the deduplicated server URLs from all the Balancer.
-// As we are only supporting the RoundRobin balancer implementation from oxy we are using the same method to deduplicate
-// the server URLs (see https://github.com/vulcand/oxy/blob/fb2728c857b7973a27f8de2f2190729c0f22cf49/roundrobin/rr.go#L347).
+// Note that the deduplication is only possible because all the underlying
+// balancers are of the same kind (the oxy implementation). The comparison property
+// is the same as the one found at:
+// https://github.com/vulcand/oxy/blob/fb2728c857b7973a27f8de2f2190729c0f22cf49/roundrobin/rr.go#L347.
 func (b Balancers) Servers() []*url.URL {
 	uniqServers := make(map[string]struct{})
 
