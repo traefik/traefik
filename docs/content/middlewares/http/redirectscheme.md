@@ -19,7 +19,7 @@ The middleware gets the request scheme by analyzing the request. The `X-Forwarde
 network hop is used first, then the scheme from the URL is a fallback.
 
 !!! warning "Security concerns using `X-Forwarded-Proto` header"
-    When the redirection is based on the `X-Forwarded-Proto` header, the previous hop should be [trusted](http://localhost:8000/traefik/routing/entrypoints/#forwarded-headers).
+    When the redirection is based on the `X-Forwarded-Proto` header, the previous hop should be [trusted](../../routing/entrypoints.md#forwarded-headers).
     
     Taking into account a non-trusted hop header can expose to security vulnerabilities.
     It by-passes the redirection and forwards the request to the service defined in the router.
