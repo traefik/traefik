@@ -653,9 +653,9 @@ referencing services in the [`IngressRoute`](#kind-ingressroute) objects, or rec
 
 `TraefikService` object allows to use any (valid) combinations of:
 
-* servers [load balancing](#server-load-balancing).  
-* services [Weighted Round Robin](#weighted-round-robin) load balancing.
-* services [mirroring](#mirroring).
+* [Load Balancing](#server-load-balancing) with Kubernetes Service
+* [Weighted Round Robin](#weighted-round-robin) with TraefikService CRD.
+* [Mirroring](#mirroring) with TraefikService CRD.
 
 #### Server Load Balancing
 
@@ -1074,7 +1074,7 @@ and there is a second level because each whoami service is a `replicaset` and is
 
     assuming `10.42.0.6` is the IP address of one of the replicas (a pod then) of the `whoami1` service.
 
-### Kind `IngressRouteTCP`
+### Kind: `IngressRouteTCP`
 
 `IngressRouteTCP` is the CRD implementation of a [Traefik TCP router](../routers/index.md#configuring-tcp-routers).
 
@@ -1327,7 +1327,7 @@ Register the `MiddlewareTCP` [kind](../../reference/dynamic-configuration/kubern
 
 More information about available TCP middlewares in the dedicated [middlewares section](../../middlewares/tcp/overview.md).
 
-### Kind `IngressRouteUDP`
+### Kind: `IngressRouteUDP`
 
 `IngressRouteUDP` is the CRD implementation of a [Traefik UDP router](../routers/index.md#configuring-udp-routers).
 
@@ -1616,9 +1616,8 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
 !!! important "Default TLS Store"
 
     Traefik currently only uses the [TLS Store named "default"](../../https/tls.md#certificates-stores).
-    This means that if you have two stores that are named default in different kubernetes namespaces,
-    they may be randomly chosen.
-    For the time being, please only configure one TLSSTore named default.
+    This means that you cannot have two stores that are named default in different Kubernetes namespaces.
+    For the time being, please only configure one TLSStore named default.
 
 !!! info "TLSStore Attributes"
    
