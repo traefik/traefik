@@ -5,14 +5,24 @@ description: "In Traefik Proxy's HTTP middleware, RedirectScheme redirects clien
 
 # RedirectScheme
 
-Redirecting the Client to a Different Scheme/Port
+Redirect requests to a specific scheme and port.
 {: .subtitle }
 
 <!--
 TODO: add schema
 -->
 
-RedirectScheme redirects requests from a scheme/port to another.
+The RedirectScheme middleware redirects the request if the request scheme is different from the configured scheme.
+The middleware redirects for requests with `http` and `https` schemes only. 
+
+The middleware gets the request scheme by analyzing the request. The `X-Forwarded-Proto` header set by a previous
+network hop is used first, then the scheme from the URL is a fallback.
+
+!!! warning "Security concerns using `X-Forwarded-Proto` header"
+    When the redirection is based on the `X-Forwarded-Proto` header, the previous hop should be [trusted](../../routing/entrypoints.md#forwarded-headers).
+    
+    Taking into account a non-trusted hop header can expose to security vulnerabilities.
+    It by-passes the redirection and forwards the request to the service defined in the router.
 
 ## Configuration Examples
 
