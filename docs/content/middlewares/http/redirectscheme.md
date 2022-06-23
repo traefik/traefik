@@ -13,16 +13,15 @@ TODO: add schema
 -->
 
 The RedirectScheme middleware redirects the request if the request scheme is different from the configured scheme.
-The middleware redirects for requests with `http` and `https` schemes only. 
+The middleware does not work for websocket requests. 
 
-The middleware gets the request scheme by analyzing the request. The `X-Forwarded-Proto` header set by a previous
-network hop is used first, then the scheme from the URL is a fallback.
+!!! warning "When behind another reverse-proxy"
 
-!!! warning "Security concerns using `X-Forwarded-Proto` header"
-    When the redirection is based on the `X-Forwarded-Proto` header, the previous hop should be [trusted](../../routing/entrypoints.md#forwarded-headers).
+    When there is at least one other reverse-proxy between the client and traefik, 
+    the other reverse-proxy (i.e. the last hop) needs to be a [trusted](../../routing/entrypoints.md#forwarded-headers) one. 
     
-    Taking into account a non-trusted hop header can expose to security vulnerabilities.
-    It by-passes the redirection and forwards the request to the service defined in the router.
+    Otherwise, traefik would clean up the X-Forwarded headers coming from this last hop, 
+    and as the RedirectScheme middleware rely on them to determine the scheme used, it would not function as intended.
 
 ## Configuration Examples
 
