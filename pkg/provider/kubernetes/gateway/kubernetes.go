@@ -317,7 +317,7 @@ func (p *Provider) createGatewayConf(ctx context.Context, client Client, gateway
 func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *v1alpha2.Gateway, conf *dynamic.Configuration, tlsConfigs map[string]*tls.CertAndStores) []v1alpha2.ListenerStatus {
 	logger := log.FromContext(ctx)
 	listenerStatuses := make([]v1alpha2.ListenerStatus, len(gateway.Spec.Listeners))
-	allocatedPort := map[v1alpha2.PortNumber]v1alpha2.ProtocolType{}
+	allocatedListeners := make(map[string]struct{})
 
 	for i, listener := range gateway.Spec.Listeners {
 		listenerStatuses[i] = v1alpha2.ListenerStatus{
@@ -340,19 +340,22 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			continue
 		}
 
-		if _, ok := allocatedPort[listener.Port]; ok {
+		listenerKey := makeListenerKey(listener)
+
+		if _, ok := allocatedListeners[listenerKey]; ok {
 			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
-				Type:               string(v1alpha2.ListenerConditionDetached),
+				Type:               string(v1alpha2.ListenerConditionConflicted),
 				Status:             metav1.ConditionTrue,
 				LastTransitionTime: metav1.Now(),
-				Reason:             string(v1alpha2.ListenerReasonPortUnavailable),
-				Message:            fmt.Sprintf("Port %d unavailable", listener.Port),
+				Reason:             "DuplicateListener",
+				Message:            "A listener with same protocol, port and hostname already exists",
 			})
 
 			continue
 		}
 
-		allocatedPort[listener.Port] = listener.Protocol
+		allocatedListeners[listenerKey] = struct{}{}
+
 		ep, err := p.entryPointName(listener.Port, listener.Protocol)
 		if err != nil {
 			// update "Detached" status with "PortUnavailable" reason
@@ -1699,4 +1702,14 @@ func isInternalService(ref v1alpha2.BackendRef) bool {
 	return *ref.Kind == kindTraefikService &&
 		*ref.Group == traefikv1alpha1.GroupName &&
 		strings.HasSuffix(string(ref.Name), "@internal")
+}
+
+// makeListenerKey joins protocol, hostname, and port of a listener into a string key.
+func makeListenerKey(l v1alpha2.Listener) string {
+	var hostname v1alpha2.Hostname
+	if l.Hostname != nil {
+		hostname = *l.Hostname
+	}
+
+	return fmt.Sprintf("%s|%s|%d", l.Protocol, hostname, l.Port)
 }
