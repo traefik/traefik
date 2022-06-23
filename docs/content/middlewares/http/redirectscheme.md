@@ -5,7 +5,7 @@ description: "In Traefik Proxy's HTTP middleware, RedirectScheme redirects clien
 
 # RedirectScheme
 
-Redirect requests to a specific scheme and port.
+Redirecting the Client to a Different Scheme/Port
 {: .subtitle }
 
 <!--
