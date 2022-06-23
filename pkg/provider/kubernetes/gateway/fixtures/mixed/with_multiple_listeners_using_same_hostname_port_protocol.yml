@@ -21,12 +21,13 @@ spec:
 kind: Gateway
 apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
-  name: my-gateway
+  name: my-gateway-http
   namespace: default
 spec:
   gatewayClassName: my-gateway-class
   listeners: # Use GatewayClass defaults for listener definition.
     - name: http1
+      hostname: foo.bar
       protocol: HTTP
       port: 9080
       allowedRoutes:
@@ -37,6 +38,7 @@ spec:
           from: Same
 
     - name: http2
+      hostname: foo.bar
       protocol: HTTP
       port: 9080
       allowedRoutes:
@@ -45,7 +47,26 @@ spec:
         namespaces:
           from: Same
 
-    - name: tcp
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: my-gateway-tcp
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners: # Use GatewayClass defaults for listener definition.
+    - name: tcp1
+      hostname: foo.bar
+      protocol: TCP
+      port: 9000
+      allowedRoutes:
+        kinds:
+          - kind: TCPRoute
+        namespaces:
+          from: Same
+    - name: tcp2
+      hostname: foo.bar
       protocol: TCP
       port: 9000
       allowedRoutes:
@@ -54,7 +75,17 @@ spec:
         namespaces:
           from: Same
 
-    - name: tls
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: my-gateway-tls
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners: # Use GatewayClass defaults for listener definition.
+    - name: tls1
+      hostname: foo.bar
       protocol: TLS
       port: 9000
       tls:
@@ -66,6 +97,7 @@ spec:
           from: Same
 
     - name: tls2
+      hostname: foo.bar
       protocol: TLS
       port: 9000
       tls:
