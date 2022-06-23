@@ -10,12 +10,12 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/vulcand/oxy/forward"
 )
 
 const (
-	typeSchemeName = "RedirectScheme"
-	uriPattern     = `^(https?:\/\/)?(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
+	typeSchemeName  = "RedirectScheme"
+	uriPattern      = `^(https?:\/\/)?(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
+	xForwardedProto = "X-Forwarded-Proto"
 )
 
 // NewRedirectScheme creates a new RedirectScheme middleware.
@@ -64,7 +64,7 @@ func rawURLScheme(req *http.Request) string {
 		scheme = schemeHTTPS
 	}
 
-	if value := req.Header.Get(forward.XForwardedProto); value != "" {
+	if value := req.Header.Get(xForwardedProto); value != "" {
 		scheme = value
 	}
 
