@@ -79,7 +79,7 @@ spec:
 kind: Gateway
 apiVersion: gateway.networking.k8s.io/v1alpha2
 metadata:
-  name: my-gateway-http
+  name: my-gateway-tls
   namespace: default
 spec:
   gatewayClassName: my-gateway-class
