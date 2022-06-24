@@ -334,7 +334,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 					}
 				} else {
 					if containerInstance == nil {
-						logger.Errorf("337 - Unable to find container instance information for %s", aws.StringValue(container.Name))
+						logger.Errorf("Unable to find container instance information for %s", aws.StringValue(container.Name))
 						continue
 					}
 
