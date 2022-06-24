@@ -47,7 +47,8 @@ Traefik needs the following policy to read ECS information:
                 "ecs:DescribeTasks",
                 "ecs:DescribeContainerInstances",
                 "ecs:DescribeTaskDefinition",
-                "ec2:DescribeInstances"
+                "ec2:DescribeInstances",
+                "ssm:DescribeInstanceInformation"
             ],
             "Resource": [
                 "*"
