@@ -205,7 +205,7 @@ Transfer/sec:      3.14MB
 ## Conclusion
 
 Traefik is obviously slower than Nginx, but not so much: Traefik can serve 28392 requests/sec and Nginx 33591 requests/sec which gives a ratio of 85%.
-Not bad for young project :) !
+Not bad for a young project!
 
 Some areas of possible improvements:
 
