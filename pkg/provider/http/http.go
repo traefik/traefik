@@ -73,39 +73,18 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		logger := log.FromContext(ctxLog)
 
 		operation := func() error {
+			if err := p.updateConfiguration(configurationChan); err != nil {
+				return err
+			}
+
 			ticker := time.NewTicker(time.Duration(p.PollInterval))
 			defer ticker.Stop()
 
 			for {
 				select {
 				case <-ticker.C:
-					configData, err := p.fetchConfigurationData()
-					if err != nil {
-						return fmt.Errorf("cannot fetch configuration data: %w", err)
-					}
-
-					fnvHasher := fnv.New64()
-
-					_, err = fnvHasher.Write(configData)
-					if err != nil {
-						return fmt.Errorf("cannot hash configuration data: %w", err)
-					}
-
-					hash := fnvHasher.Sum64()
-					if hash == p.lastConfigurationHash {
-						continue
-					}
-
-					p.lastConfigurationHash = hash
-
-					configuration, err := decodeConfiguration(configData)
-					if err != nil {
-						return fmt.Errorf("cannot decode configuration data: %w", err)
-					}
-
-					configurationChan <- dynamic.Message{
-						ProviderName:  "http",
-						Configuration: configuration,
+					if err := p.updateConfiguration(configurationChan); err != nil {
+						return err
 					}
 
 				case <-routineCtx.Done():
@@ -122,6 +101,38 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			logger.Errorf("Cannot connect to server endpoint %+v", err)
 		}
 	})
+
+	return nil
+}
+
+func (p *Provider) updateConfiguration(configurationChan chan<- dynamic.Message) error {
+	configData, err := p.fetchConfigurationData()
+	if err != nil {
+		return fmt.Errorf("cannot fetch configuration data: %w", err)
+	}
+
+	fnvHasher := fnv.New64()
+
+	if _, err = fnvHasher.Write(configData); err != nil {
+		return fmt.Errorf("cannot hash configuration data: %w", err)
+	}
+
+	hash := fnvHasher.Sum64()
+	if hash == p.lastConfigurationHash {
+		return nil
+	}
+
+	p.lastConfigurationHash = hash
+
+	configuration, err := decodeConfiguration(configData)
+	if err != nil {
+		return fmt.Errorf("cannot decode configuration data: %w", err)
+	}
+
+	configurationChan <- dynamic.Message{
+		ProviderName:  "http",
+		Configuration: configuration,
+	}
 
 	return nil
 }
