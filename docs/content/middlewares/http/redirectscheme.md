@@ -17,7 +17,7 @@ The middleware does not work for websocket requests.
 
 !!! warning "When behind another reverse-proxy"
 
-    When there is at least one other reverse-proxy between the client and traefik, 
+    When there is at least one other reverse-proxy between the client and Traefik, 
     the other reverse-proxy (i.e. the last hop) needs to be a [trusted](../../routing/entrypoints.md#forwarded-headers) one. 
     
     Otherwise, traefik would clean up the X-Forwarded headers coming from this last hop, 
