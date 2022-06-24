@@ -21,7 +21,8 @@ The middleware does not work for websocket requests.
     the other reverse-proxy (i.e. the last hop) needs to be a [trusted](../../routing/entrypoints.md#forwarded-headers) one. 
     
     Otherwise, traefik would clean up the X-Forwarded headers coming from this last hop, 
-    and as the RedirectScheme middleware rely on them to determine the scheme used, it would not function as intended.
+    and as the RedirectScheme middleware relies on them to determine the scheme used,
+    it would not function as intended.
 
 ## Configuration Examples
 
