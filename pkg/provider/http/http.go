@@ -113,8 +113,7 @@ func (p *Provider) updateConfiguration(configurationChan chan<- dynamic.Message)
 
 	fnvHasher := fnv.New64()
 
-	_, err = fnvHasher.Write(configData)
-	if err != nil {
+	if _, err = fnvHasher.Write(configData); err != nil {
 		return fmt.Errorf("cannot hash configuration data: %w", err)
 	}
 
