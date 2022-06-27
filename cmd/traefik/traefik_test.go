@@ -118,44 +118,73 @@ func TestAppendCertMetric(t *testing.T) {
 
 func TestGetDefaultsEntrypoints(t *testing.T) {
 	testCases := []struct {
-		desc          string
-		eps           []string
-		defEPsSetting []string
-		expected      []string
+		desc     string
+		eps      static.EntryPoints
+		expected []string
 	}{
 		{
-			desc:     "Skips special names",
-			eps:      []string{"traefik", "traefikhub-api", "traefikhub-tunl"},
-			expected: []string{},
+			desc: "Skips special names",
+			eps: map[string]*static.EntryPoint{
+				"web": {
+					Address: ":80",
+				},
+				"traefik": {
+					Address: ":8080",
+				},
+				"traefikhub-api": {
+					Address: ":9900",
+				},
+				"traefikhub-tunl": {
+					Address: ":9901",
+				},
+			},
+			expected: []string{"web"},
 		},
 		{
-			desc:     "All by default",
-			eps:      []string{"name1", "name2", "name3"},
-			expected: []string{"name1", "name2", "name3"},
+			desc: "Two EntryPoints not attachable",
+			eps: map[string]*static.EntryPoint{
+				"web": {
+					Address: ":80",
+				},
+				"websecure": {
+					Address: ":443",
+				},
+			},
+			expected: []string{"web", "websecure"},
 		},
 		{
-			desc:          "Only matching setting",
-			eps:           []string{"name1", "name2", "name3"},
-			defEPsSetting: []string{"name1", "name3"},
-			expected:      []string{"name1", "name3"},
+			desc: "Two EntryPoints only one attachable",
+			eps: map[string]*static.EntryPoint{
+				"web": {
+					Address: ":80",
+				},
+				"websecure": {
+					Address:    ":443",
+					DefaultSet: true,
+				},
+			},
+			expected: []string{"websecure"},
 		},
 		{
-			desc:          "Ignores invalid setting",
-			eps:           []string{"name1", "name2"},
-			defEPsSetting: []string{"name1", "name2", "not-defined"},
-			expected:      []string{"name1", "name2"},
+			desc: "Two attachable EntryPoints",
+			eps: map[string]*static.EntryPoint{
+				"web": {
+					Address:    ":80",
+					DefaultSet: true,
+				},
+				"websecure": {
+					Address:    ":443",
+					DefaultSet: true,
+				},
+			},
+			expected: []string{"web", "websecure"},
 		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			eps := make(static.EntryPoints)
-			for _, name := range test.eps {
-				eps[name] = &static.EntryPoint{}
-			}
 			actual := getDefaultsEntrypoints(&static.Configuration{
-				DefaultEntryPoints: test.defEPsSetting,
-				EntryPoints: eps,
+				EntryPoints: test.eps,
 			})
 
 			assert.ElementsMatch(t, test.expected, actual)
