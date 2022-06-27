@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"time"
 
 	ptypes "github.com/traefik/paerser/types"
@@ -46,7 +47,7 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 
 			outReq.URL.Path = u.Path
 			outReq.URL.RawPath = u.RawPath
-			outReq.URL.RawQuery = u.RawQuery
+			outReq.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
 			outReq.RequestURI = "" // Outgoing request should not have RequestURI
 
 			outReq.Proto = "HTTP/1.1"

@@ -1,0 +1,44 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.webHost]
+    address = ":8000"
+  [entryPoints.webHostRegexp]
+    address = ":8001"
+  [entryPoints.webQuery]
+    address = ":8002"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router1]
+    entryPoints = ["webHost"]
+    service = "service1"
+    rule = "!Host(`test.localhost`)"
+
+  [http.routers.router2]
+    entryPoints = ["webHostRegexp"]
+    service = "service1"
+    rule = "!HostRegexp(`test.localhost`)"
+
+  [http.routers.router3]
+    entryPoints = ["webQuery"]
+    service = "service1"
+    rule = "!Query(`foo=`)"
+
+
+[http.services]
+  [http.services.service1.loadBalancer]
+    [[http.services.service1.loadBalancer.servers]]
+      url = "{{ .Server1 }}"

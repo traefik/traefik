@@ -176,7 +176,6 @@ require (
 	github.com/googleapis/gnostic v0.5.5 // indirect
 	github.com/gophercloud/gophercloud v0.16.0 // indirect
 	github.com/gophercloud/utils v0.0.0-20210216074907-f6de111f2eae // indirect
-	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gravitational/trace v1.1.16-0.20220114165159-14a9a7dd6aaf // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645 // indirect
@@ -334,7 +333,7 @@ require (
 replace (
 	github.com/abbot/go-http-auth => github.com/containous/go-http-auth v0.4.1-0.20200324110947-a37a7636d23e
 	github.com/go-check/check => github.com/containous/check v0.0.0-20170915194414-ca0bf163426a
-	github.com/gorilla/mux => github.com/containous/mux v0.0.0-20220113180107-8ffa4f6d063c
+	github.com/gorilla/mux => github.com/containous/mux v0.0.0-20220627093034-b2dd784e613f
 	github.com/mailgun/minheap => github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595
 )
 
