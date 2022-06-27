@@ -178,3 +178,11 @@ And run it:
 ## Compile your Binary from the Sources
 
 All the details are available in the [Contributing Guide](../contributing/building-testing.md)
+
+!!! question "Using Traefik for Business?"
+
+    If you're using Traefik for commercial applications, 
+    consider the [Enterprise Edition](https://traefik.io/traefik-enterprise/) of Traefik as your [Kubernetes Ingress](https://traefik.io/solutions/kubernetes-ingress/), 
+    your [Docker Swarm Load Balancer](https://traefik.io/solutions/docker-swarm-ingress/), 
+    or your [API gateway](https://traefik.io/solutions/api-gateway/). 
+    Learn more in [this 15-minute technical walkthrough](https://info.traefik.io/watch-traefikee-demo).

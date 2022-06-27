@@ -1,6 +1,8 @@
 package http
 
 import (
+	"bufio"
+	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -953,6 +955,77 @@ func TestParseDomains(t *testing.T) {
 			}
 
 			assert.EqualValues(t, test.domain, domains, "%s: Error parsing domains from expression.", test.expression)
+		})
+	}
+}
+
+func TestAbsoluteFormURL(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		request  string
+		rule     string
+		expected int
+	}{
+		{
+			desc:     "!HostRegexp with absolute-form URL with empty host with non-matching host header",
+			request:  "GET http://@/ HTTP/1.1\r\nHost: test.localhost\r\n\r\n",
+			rule:     "!HostRegexp(`test.localhost`)",
+			expected: http.StatusNotFound,
+		},
+		{
+			desc:     "!Host with absolute-form URL with empty host with non-matching host header",
+			request:  "GET http://@/ HTTP/1.1\r\nHost: test.localhost\r\n\r\n",
+			rule:     "!Host(`test.localhost`)",
+			expected: http.StatusNotFound,
+		},
+		{
+			desc:     "!HostRegexp with absolute-form URL with matching host header",
+			request:  "GET http://test.localhost/ HTTP/1.1\r\nHost: toto.localhost\r\n\r\n",
+			rule:     "!HostRegexp(`test.localhost`)",
+			expected: http.StatusNotFound,
+		},
+		{
+			desc:     "!Host with absolute-form URL with matching host header",
+			request:  "GET http://test.localhost/ HTTP/1.1\r\nHost: toto.localhost\r\n\r\n",
+			rule:     "!Host(`test.localhost`)",
+			expected: http.StatusNotFound,
+		},
+		{
+			desc:     "!HostRegexp with absolute-form URL with non-matching host header",
+			request:  "GET http://test.localhost/ HTTP/1.1\r\nHost: toto.localhost\r\n\r\n",
+			rule:     "!HostRegexp(`toto.localhost`)",
+			expected: http.StatusOK,
+		},
+		{
+			desc:     "!Host with absolute-form URL with non-matching host header",
+			request:  "GET http://test.localhost/ HTTP/1.1\r\nHost: toto.localhost\r\n\r\n",
+			rule:     "!Host(`toto.localhost`)",
+			expected: http.StatusOK,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+			muxer, err := NewMuxer()
+			require.NoError(t, err)
+
+			err = muxer.AddRoute(test.rule, 0, handler)
+			require.NoError(t, err)
+
+			// RequestDecorator is necessary for the host rule
+			reqHost := requestdecorator.New(nil)
+
+			w := httptest.NewRecorder()
+
+			req, err := http.ReadRequest(bufio.NewReader(bytes.NewReader([]byte(test.request))))
+			require.NoError(t, err)
+
+			reqHost.ServeHTTP(w, req, muxer.ServeHTTP)
+			assert.Equal(t, test.expected, w.Code)
 		})
 	}
 }
