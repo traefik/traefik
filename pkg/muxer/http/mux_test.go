@@ -967,38 +967,37 @@ func TestAbsoluteFormURL(t *testing.T) {
 		expected int
 	}{
 		{
-			desc:     "!HostRegexp and absolute-form url with empty host",
+			desc:     "!HostRegexp with absolute-form URL with empty host with non-matching host header",
 			request:  "GET http://@/ HTTP/1.1\r\nHost: test.localhost\r\n\r\n",
 			rule:     "!HostRegexp(`test.localhost`)",
 			expected: http.StatusNotFound,
 		},
 		{
-			desc:     "!Host and absolute-form url with empty host",
+			desc:     "!Host with absolute-form URL with empty host with non-matching host header",
 			request:  "GET http://@/ HTTP/1.1\r\nHost: test.localhost\r\n\r\n",
 			rule:     "!Host(`test.localhost`)",
 			expected: http.StatusNotFound,
 		},
 		{
-			desc:     "!HostRegexp and absolute-form url",
+			desc:     "!HostRegexp with absolute-form URL with matching host header",
 			request:  "GET http://test.localhost/ HTTP/1.1\r\nHost: toto.localhost\r\n\r\n",
 			rule:     "!HostRegexp(`test.localhost`)",
 			expected: http.StatusNotFound,
 		},
 		{
-			desc:     "!Host and absolute-form url",
+			desc:     "!Host with absolute-form URL with matching host header",
 			request:  "GET http://test.localhost/ HTTP/1.1\r\nHost: toto.localhost\r\n\r\n",
 			rule:     "!Host(`test.localhost`)",
 			expected: http.StatusNotFound,
 		},
-
 		{
-			desc:     "!HostRegexp and absolute-form url",
+			desc:     "!HostRegexp with absolute-form URL with non-matching host header",
 			request:  "GET http://test.localhost/ HTTP/1.1\r\nHost: toto.localhost\r\n\r\n",
 			rule:     "!HostRegexp(`toto.localhost`)",
 			expected: http.StatusOK,
 		},
 		{
-			desc:     "!Host and absolute-form url",
+			desc:     "!Host with absolute-form URL with non-matching host header",
 			request:  "GET http://test.localhost/ HTTP/1.1\r\nHost: toto.localhost\r\n\r\n",
 			rule:     "!Host(`toto.localhost`)",
 			expected: http.StatusOK,

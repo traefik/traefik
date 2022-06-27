@@ -1211,50 +1211,67 @@ func (s *SimpleSuite) TestMuxer(c *check.C) {
 		expected int
 	}{
 		{
-			desc:     "!Host with absolute-form url with empty host",
+			desc:     "!Host with absolute-form URL with empty host and host header, no match",
 			request:  "GET http://@/ HTTP/1.1\r\nHost: test.localhost\r\n\r\n",
 			target:   "127.0.0.1:8000",
 			expected: http.StatusNotFound,
 		},
 		{
-			desc:     "!Host with absolute-form url and host header, no match",
+			desc:     "!Host with absolute-form URL with empty host and host header, match",
+			request:  "GET http://@/ HTTP/1.1\r\nHost: toto.localhost\r\n\r\n",
+			target:   "127.0.0.1:8000",
+			expected: http.StatusOK,
+		},
+		{
+			desc:     "!Host with absolute-form URL and host header, no match",
 			request:  "GET http://test.localhost/ HTTP/1.1\r\nHost: toto.localhost\r\n\r\n",
 			target:   "127.0.0.1:8000",
 			expected: http.StatusNotFound,
 		},
 		{
-			desc:     "!Host with absolute-form url and host header, match",
+			desc:     "!Host with absolute-form URL and host header, match",
 			request:  "GET http://toto.localhost/ HTTP/1.1\r\nHost: test.localhost\r\n\r\n",
 			target:   "127.0.0.1:8000",
 			expected: http.StatusOK,
 		},
 		{
-			desc:     "!HostRegexp with absolute-form url with empty host",
+			desc:     "!HostRegexp with absolute-form URL with empty host and host header, no match",
 			request:  "GET http://@/ HTTP/1.1\r\nHost: test.localhost\r\n\r\n",
 			target:   "127.0.0.1:8001",
 			expected: http.StatusNotFound,
 		},
 		{
-			desc:     "!HostRegexp with absolute-form url and host header, no match",
+			desc:     "!HostRegexp with absolute-form URL with empty host and host header, match",
+			request:  "GET http://@/ HTTP/1.1\r\nHost: toto.localhost\r\n\r\n",
+			target:   "127.0.0.1:8001",
+			expected: http.StatusOK,
+		},
+		{
+			desc:     "!HostRegexp with absolute-form URL and host header, no match",
 			request:  "GET http://test.localhost/ HTTP/1.1\r\nHost: toto.localhost\r\n\r\n",
 			target:   "127.0.0.1:8001",
 			expected: http.StatusNotFound,
 		},
 		{
-			desc:     "!HostRegexp with absolute-form url and host header, match",
+			desc:     "!HostRegexp with absolute-form URL and host header, match",
 			request:  "GET http://toto.localhost/ HTTP/1.1\r\nHost: test.localhost\r\n\r\n",
 			target:   "127.0.0.1:8001",
 			expected: http.StatusOK,
 		},
 		{
-			desc:     "!Query",
+			desc:     "!Query with semicolon, no match",
 			request:  "GET /?foo=; HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
 			target:   "127.0.0.1:8002",
 			expected: http.StatusNotFound,
 		},
-
 		{
-			desc:     "Query with semicolumn",
+			desc:     "!Query with semicolon, no match",
+			request:  "GET /?foo=titi;bar=toto HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:   "127.0.0.1:8002",
+			expected: http.StatusNotFound,
+		},
+		{
+			desc:     "!Query with semicolon, match",
 			request:  "GET /?bar=toto;boo=titi HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
 			target:   "127.0.0.1:8002",
 			expected: http.StatusOK,
