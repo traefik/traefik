@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"time"
 
 	ptypes "github.com/traefik/paerser/types"
@@ -38,7 +39,7 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 		Director: func(outReq *http.Request) {
 			u := outReq.URL
 			if outReq.RequestURI != "" {
-				parsedURL, err := url.ParseRequestURI(outReq.RequestURI)
+				parsedURL, err := url.ParseRequestURI(strings.ReplaceAll(outReq.RequestURI, ";", "&"))
 				if err == nil {
 					u = parsedURL
 				}
