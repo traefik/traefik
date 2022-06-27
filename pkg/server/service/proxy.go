@@ -39,7 +39,7 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 		Director: func(outReq *http.Request) {
 			u := outReq.URL
 			if outReq.RequestURI != "" {
-				parsedURL, err := url.ParseRequestURI(strings.ReplaceAll(outReq.RequestURI, ";", "&"))
+				parsedURL, err := url.ParseRequestURI(outReq.RequestURI)
 				if err == nil {
 					u = parsedURL
 				}
@@ -47,7 +47,7 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 
 			outReq.URL.Path = u.Path
 			outReq.URL.RawPath = u.RawPath
-			outReq.URL.RawQuery = u.RawQuery
+			outReq.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
 			outReq.RequestURI = "" // Outgoing request should not have RequestURI
 
 			outReq.Proto = "HTTP/1.1"
