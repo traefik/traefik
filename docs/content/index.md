@@ -26,4 +26,7 @@ Developing Traefik, our main goal is to make it simple to use, and we're sure yo
 
     Join our user friendly and active [Community Forum](https://community.traefik.io) to discuss, learn, and connect with the traefik community.
     
-    Using Traefik for commercial applications? Consider the [Enterprise Edition](https://traefik.io/traefik-enterprise/) of Traefik as your [Kubernetes Ingress](https://traefik.io/solutions/kubernetes-ingress/), your [Docker Swarm Load Balancer](https://traefik.io/solutions/docker-swarm-ingress/), or your [API gateway](https://traefik.io/solutions/api-gateway/). Get started with a [free 30-day trial](https://info.traefik.io/get-traefik-enterprise-free-for-30-days).
+    Using Traefik for commercial applications?
+    Consider the [Enterprise Edition](https://traefik.io/traefik-enterprise/) of Traefik as your [Kubernetes Ingress](https://traefik.io/solutions/kubernetes-ingress/), 
+    your [Docker Swarm Load Balancer](https://traefik.io/solutions/docker-swarm-ingress/), or your [API gateway](https://traefik.io/solutions/api-gateway/). 
+    Get started with a [free 30-day trial](https://info.traefik.io/get-traefik-enterprise-free-for-30-days).
