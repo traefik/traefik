@@ -1,3 +1,12 @@
+## [v2.8.0-rc2](https://github.com/traefik/traefik/tree/v2.8.0-rc2) (2022-06-27)
+[All Commits](https://github.com/traefik/traefik/compare/v2.8.0-rc1...v2.8.0-rc2)
+
+**Bug fixes:**
+- **[nomad]** Use configured token in the Nomad client ([#9111](https://github.com/traefik/traefik/pull/9111) by [kevinpollet](https://github.com/kevinpollet))
+
+**Misc:**
+- Merge current v2.7 into v2.8 ([#9133](https://github.com/traefik/traefik/pull/9133) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.7.2](https://github.com/traefik/traefik/tree/v2.7.2) (2022-06-27)
 [All Commits](https://github.com/traefik/traefik/compare/v2.7.1...v2.7.2)
 
