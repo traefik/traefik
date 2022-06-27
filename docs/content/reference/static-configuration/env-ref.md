@@ -102,14 +102,14 @@ Activate TLS-ALPN-01 Challenge. (Default: ```true```)
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_TAILSCALE`:  
 Enables Tailscale certificate resolution. (Default: ```true```)
 
-`TRAEFIK_DEFAULTENTRYPOINTS`:  
-Default HTTP/TCP entry point names used when none are specified in a router. (Does not apply to UDP entry points)
-
 `TRAEFIK_ENTRYPOINTS_<NAME>`:  
 Entry points definition. (Default: ```false```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_ADDRESS`:  
 Entry point address.
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_DEFAULTSET`:  
+Defines whether to add this EntryPoint to the default set. (Default: ```false```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_FORWARDEDHEADERS_INSECURE`:  
 Trust all forwarded headers. (Default: ```false```)
