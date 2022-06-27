@@ -12,7 +12,17 @@ Redirecting the Client to a Different Scheme/Port
 TODO: add schema
 -->
 
-RedirectScheme redirects requests from a scheme/port to another.
+The RedirectScheme middleware redirects the request if the request scheme is different from the configured scheme.
+The middleware does not work for websocket requests. 
+
+!!! warning "When behind another reverse-proxy"
+
+    When there is at least one other reverse-proxy between the client and Traefik, 
+    the other reverse-proxy (i.e. the last hop) needs to be a [trusted](../../routing/entrypoints.md#forwarded-headers) one. 
+    
+    Otherwise, Traefik would clean up the X-Forwarded headers coming from this last hop, 
+    and as the RedirectScheme middleware relies on them to determine the scheme used,
+    it would not function as intended.
 
 ## Configuration Examples
 

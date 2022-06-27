@@ -445,6 +445,23 @@ Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TO
 
     If there are more than one certificate, they are separated by a `,`.
 
+#### `info.serialNumber`
+
+Set the `info.serialNumber` option to `true` to add the `Serial Number` of the certificate.
+
+The data is taken from the following certificate part:
+
+```text
+Serial Number:
+   6a:2f:20:f8:ce:8d:48:52:ba:d9:bb:be:60:ec:bf:79
+```
+
+And it is formatted as follows in the header (decimal representation):
+
+```text
+SerialNumber="141142874255168551917600297745052909433"
+```
+
 #### `info.notAfter`
 
 Set the `info.notAfter` option to `true` to add the `Not After` information from the `Validity` part.
@@ -452,8 +469,8 @@ Set the `info.notAfter` option to `true` to add the `Not After` information from
 The data is taken from the following certificate part:
 
 ```text
-    Validity
-        Not After : Dec  5 11:10:16 2020 GMT
+Validity
+    Not After : Dec  5 11:10:16 2020 GMT
 ```
 
 And it is formatted as follows in the header:
@@ -486,8 +503,8 @@ Set the `info.sans` option to `true` to add the `Subject Alternative Name` infor
 The data is taken from the following certificate part:
 
 ```text
- X509v3 Subject Alternative Name:
-    DNS:*.example.org, DNS:*.example.net, DNS:*.example.com, IP Address:10.0.1.0, IP Address:10.0.1.2, email:test@example.org, email:test@example.net
+X509v3 Subject Alternative Name:
+   DNS:*.example.org, DNS:*.example.net, DNS:*.example.com, IP Address:10.0.1.0, IP Address:10.0.1.2, email:test@example.org, email:test@example.net
 ```
 
 And it is formatted as follows in the header:

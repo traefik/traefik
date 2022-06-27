@@ -1,3 +1,22 @@
+## [v2.7.2](https://github.com/traefik/traefik/tree/v2.7.2) (2022-06-27)
+[All Commits](https://github.com/traefik/traefik/compare/v2.7.1...v2.7.2)
+
+**Bug fixes:**
+- **[healthcheck,service]** Do not make multiple requests to the same URL for balancer healthcheck  ([#8632](https://github.com/traefik/traefik/pull/8632) by [TPXP](https://github.com/TPXP))
+- **[healthcheck,service]** Add log when missing path in health check ([#9104](https://github.com/traefik/traefik/pull/9104) by [moutoum](https://github.com/moutoum))
+- **[k8s/gatewayapi]** Allow multiple listeners on same port in Gateway API provider ([#9107](https://github.com/traefik/traefik/pull/9107) by [burner-account](https://github.com/burner-account))
+- **[middleware]** RedirectScheme redirects based on X-Forwarded-Proto header ([#9121](https://github.com/traefik/traefik/pull/9121) by [moutoum](https://github.com/moutoum))
+- **[plugins]** Update yaegi to v0.13.0 ([#9118](https://github.com/traefik/traefik/pull/9118) by [kevinpollet](https://github.com/kevinpollet))
+- **[rules]** Fix HostRegexp and Query muxers ([#9131](https://github.com/traefik/traefik/pull/9131) by [juliens](https://github.com/juliens))
+- **[tracing]** Update DataDog tracing dependency to v1.38.1 ([#9105](https://github.com/traefik/traefik/pull/9105) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[acme,k8s/crd]** Add documentation to Traefik CRD properties ([#9096](https://github.com/traefik/traefik/pull/9096) by [mloiseleur](https://github.com/mloiseleur))
+- **[middleware]** Add missing info.serialNumber option to PassTLSClientCert middleware ([#9115](https://github.com/traefik/traefik/pull/9115) by [miteshjadia](https://github.com/miteshjadia))
+- **[tcp]** Add a note on how to handle server first protocols ([#9002](https://github.com/traefik/traefik/pull/9002) by [romantomjak](https://github.com/romantomjak))
+- Update to improve info section relevance ([#9130](https://github.com/traefik/traefik/pull/9130) by [tomatokoolaid](https://github.com/tomatokoolaid))
+- Added useful links for commercial applications ([#9129](https://github.com/traefik/traefik/pull/9129) by [tomatokoolaid](https://github.com/tomatokoolaid))
+
 ## [v2.8.0-rc1](https://github.com/traefik/traefik/tree/v2.8.0-rc1) (2022-06-13)
 [All Commits](https://github.com/traefik/traefik/compare/v2.7.0-rc1...v2.8.0-rc1)
 
