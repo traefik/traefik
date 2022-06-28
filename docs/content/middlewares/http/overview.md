@@ -145,6 +145,7 @@ http:
 | [IPWhiteList](ipwhitelist.md)             | Limits the allowed client IPs                     | Security, Request lifecycle |
 | [InFlightReq](inflightreq.md)             | Limits the number of simultaneous connections     | Security, Request lifecycle |
 | [PassTLSClientCert](passtlsclientcert.md) | Adds Client Certificates in a Header              | Security                    |
+| [Plugin](../../../plugins/index.md)       | Use community plugin                              | All                         |
 | [RateLimit](ratelimit.md)                 | Limits the call frequency                         | Security, Request lifecycle |
 | [RedirectScheme](redirectscheme.md)       | Redirects based on scheme                         | Request lifecycle           |
 | [RedirectRegex](redirectregex.md)         | Redirects based on regex                          | Request lifecycle           |
