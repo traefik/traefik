@@ -48,6 +48,8 @@ type MiddlewareSpec struct {
 	PassTLSClientCert *dynamic.PassTLSClientCert     `json:"passTLSClientCert,omitempty"`
 	Retry             *Retry                         `json:"retry,omitempty"`
 	ContentType       *dynamic.ContentType           `json:"contentType,omitempty"`
+	// Plugin enable and define configuration for a community plugin
+  // More info: https://doc.traefik.io/traefik/plugins/
 	Plugin            map[string]apiextensionv1.JSON `json:"plugin,omitempty"`
 }
 
