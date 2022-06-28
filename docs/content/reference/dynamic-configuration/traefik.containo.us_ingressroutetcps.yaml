@@ -143,12 +143,11 @@ spec:
                       description: Domain holds a domain name with SANs.
                       properties:
                         main:
-                          description: Main defines the main fully qualified domain
-                            name
+                          description: Main defines the main domain name.
                           type: string
                         sans:
-                          description: SANs is a list of alternatives domains to add
-                            in the certificate.
+                          description: SANs defines the subject alternative domain
+                            names.
                           items:
                             type: string
                           type: array
