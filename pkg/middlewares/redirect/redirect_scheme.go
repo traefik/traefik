@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	typeSchemeName = "RedirectScheme"
-	uriPattern     = `^(https?:\/\/)?(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
+	typeSchemeName  = "RedirectScheme"
+	uriPattern      = `^(https?:\/\/)?(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
+	xForwardedProto = "X-Forwarded-Proto"
 )
 
 // NewRedirectScheme creates a new RedirectScheme middleware.
@@ -63,7 +64,11 @@ func rawURLScheme(req *http.Request) string {
 		scheme = schemeHTTPS
 	}
 
-	if scheme == schemeHTTP && port == ":80" || scheme == schemeHTTPS && port == ":443" || port == "" {
+	if value := req.Header.Get(xForwardedProto); value != "" {
+		scheme = value
+	}
+
+	if scheme == schemeHTTP && port == ":80" || scheme == schemeHTTPS && port == ":443" {
 		port = ""
 	}
 

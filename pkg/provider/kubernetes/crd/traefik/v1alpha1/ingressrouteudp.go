@@ -5,38 +5,45 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-// IngressRouteUDPSpec is a specification for a IngressRouteUDPSpec resource.
+// IngressRouteUDPSpec defines the desired state of a IngressRouteUDP.
 type IngressRouteUDPSpec struct {
-	Routes      []RouteUDP `json:"routes"`
-	EntryPoints []string   `json:"entryPoints,omitempty"`
+	// Routes defines the list of routes.
+	Routes []RouteUDP `json:"routes"`
+	// EntryPoints defines the list of entry point names to bind to.
+	// Entry points have to be configured in the static configuration.
+	// More info: https://doc.traefik.io/traefik/v2.7/routing/entrypoints/
+	// Default: all.
+	EntryPoints []string `json:"entryPoints,omitempty"`
 }
 
-// RouteUDP contains the set of routes.
+// RouteUDP holds the UDP route configuration.
 type RouteUDP struct {
+	// Services defines the list of UDP services.
 	Services []ServiceUDP `json:"services,omitempty"`
 }
 
-// TLSOptionUDPRef is a ref to the TLSOption resources.
-type TLSOptionUDPRef struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace,omitempty"`
-}
-
-// ServiceUDP defines an upstream to proxy traffic.
+// ServiceUDP defines an upstream UDP service to proxy traffic to.
 type ServiceUDP struct {
-	Name      string             `json:"name"`
-	Namespace string             `json:"namespace,omitempty"`
-	Port      intstr.IntOrString `json:"port"`
-	Weight    *int               `json:"weight,omitempty"`
+	// Name defines the name of the referenced Kubernetes Service.
+	Name string `json:"name"`
+	// Namespace defines the namespace of the referenced Kubernetes Service.
+	Namespace string `json:"namespace,omitempty"`
+	// Port defines the port of a Kubernetes Service.
+	// This can be a reference to a named port.
+	Port intstr.IntOrString `json:"port"`
+	// Weight defines the weight used when balancing requests between multiple Kubernetes Service.
+	Weight *int `json:"weight,omitempty"`
 }
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:storageversion
 
-// IngressRouteUDP is an Ingress CRD specification.
+// IngressRouteUDP is a CRD implementation of a Traefik UDP Router.
 type IngressRouteUDP struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata"`
 
 	Spec IngressRouteUDPSpec `json:"spec"`
@@ -44,9 +51,13 @@ type IngressRouteUDP struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// IngressRouteUDPList is a list of IngressRoutes.
+// IngressRouteUDPList is a collection of IngressRouteUDP.
 type IngressRouteUDPList struct {
 	metav1.TypeMeta `json:",inline"`
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ListMeta `json:"metadata"`
-	Items           []IngressRouteUDP `json:"items"`
+
+	// Items is the list of IngressRouteUDP.
+	Items []IngressRouteUDP `json:"items"`
 }
