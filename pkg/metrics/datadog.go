@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	datadogClient           *dogstatsd.Dogstatsd
-	datadogTickerCancelFunc context.CancelFunc
+	datadogClient         *dogstatsd.Dogstatsd
+	datadogLoopCancelFunc context.CancelFunc
 )
 
 // Metric names consistent with https://github.com/DataDog/integrations-extras/pull/64
@@ -102,20 +102,20 @@ func initDatadogClient(ctx context.Context, config *types.Datadog) {
 		address = "localhost:8125"
 	}
 
-
-	ctx, datadogTickerCancelFunc = context.WithCancel(ctx)
-	report := time.NewTicker(time.Duration(config.PushInterval))
+	ctx, datadogLoopCancelFunc = context.WithCancel(ctx)
 
 	safe.Go(func() {
-		defer report.Stop()
-		datadogClient.SendLoop(ctx, report.C, "udp", address)
+		ticker := time.NewTicker(time.Duration(config.PushInterval))
+		defer ticker.Stop()
+
+		datadogClient.SendLoop(ctx, ticker.C, "udp", address)
 	})
 }
 
-// StopDatadog stops internal datadogTicker which controls the pushing of metrics to DD Agent and resets it to `nil`.
+// StopDatadog stops the Datadog metrics pusher.
 func StopDatadog() {
-	if datadogTickerCancelFunc != nil {
-		datadogTickerCancelFunc()
-		datadogTickerCancelFunc = nil
+	if datadogLoopCancelFunc != nil {
+		datadogLoopCancelFunc()
+		datadogLoopCancelFunc = nil
 	}
 }
