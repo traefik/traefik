@@ -7,6 +7,7 @@ import (
 	"net"
 	"strings"
 
+	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/go-connections/nat"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/label"
@@ -89,8 +90,6 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 }
 
 func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.TCPConfiguration) error {
-	logger := log.FromContext(ctx)
-
 	serviceName := getServiceName(container)
 
 	if len(configuration.Services) == 0 {
@@ -100,11 +99,6 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container d
 		configuration.Services[serviceName] = &dynamic.TCPService{
 			LoadBalancer: lb,
 		}
-	}
-
-	if container.Health != "" && container.Health != "healthy" {
-		logger.Debug("Filtering unhealthy or starting container")
-		return nil
 	}
 
 	for name, service := range configuration.Services {
@@ -119,8 +113,6 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container d
 }
 
 func (p *Provider) buildUDPServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.UDPConfiguration) error {
-	logger := log.FromContext(ctx)
-
 	serviceName := getServiceName(container)
 
 	if len(configuration.Services) == 0 {
@@ -129,11 +121,6 @@ func (p *Provider) buildUDPServiceConfiguration(ctx context.Context, container d
 		configuration.Services[serviceName] = &dynamic.UDPService{
 			LoadBalancer: lb,
 		}
-	}
-
-	if container.Health != "" && container.Health != "healthy" {
-		logger.Debug("Filtering unhealthy or starting container")
-		return nil
 	}
 
 	for name, service := range configuration.Services {
@@ -148,8 +135,6 @@ func (p *Provider) buildUDPServiceConfiguration(ctx context.Context, container d
 }
 
 func (p *Provider) buildServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.HTTPConfiguration) error {
-	logger := log.FromContext(ctx)
-
 	serviceName := getServiceName(container)
 
 	if len(configuration.Services) == 0 {
@@ -159,11 +144,6 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, container dock
 		configuration.Services[serviceName] = &dynamic.Service{
 			LoadBalancer: lb,
 		}
-	}
-
-	if container.Health != "" && container.Health != "healthy" {
-		logger.Debug("Filtering unhealthy or starting container")
-		return nil
 	}
 
 	for name, service := range configuration.Services {
@@ -195,12 +175,21 @@ func (p *Provider) keepContainer(ctx context.Context, container dockerData) bool
 		return false
 	}
 
+	if !p.AllowEmptyServices && container.Health != "" && container.Health != dockertypes.Healthy {
+		logger.Debug("Filtering unhealthy or starting container")
+		return false
+	}
+
 	return true
 }
 
 func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadBalancer *dynamic.TCPServersLoadBalancer) error {
 	if loadBalancer == nil {
 		return errors.New("load-balancer is not defined")
+	}
+
+	if container.Health != "" && container.Health != dockertypes.Healthy {
+		return nil
 	}
 
 	var serverPort string
@@ -233,6 +222,10 @@ func (p *Provider) addServerUDP(ctx context.Context, container dockerData, loadB
 		return errors.New("load-balancer is not defined")
 	}
 
+	if container.Health != "" && container.Health != dockertypes.Healthy {
+		return nil
+	}
+
 	var serverPort string
 	if len(loadBalancer.Servers) > 0 {
 		serverPort = loadBalancer.Servers[0].Port
@@ -261,6 +254,10 @@ func (p *Provider) addServerUDP(ctx context.Context, container dockerData, loadB
 func (p *Provider) addServer(ctx context.Context, container dockerData, loadBalancer *dynamic.ServersLoadBalancer) error {
 	if loadBalancer == nil {
 		return errors.New("load-balancer is not defined")
+	}
+
+	if container.Health != "" && container.Health != dockertypes.Healthy {
+		return nil
 	}
 
 	var serverPort string
