@@ -102,6 +102,8 @@ func initDatadogClient(ctx context.Context, config *types.Datadog) {
 		address = "localhost:8125"
 	}
 
+
+	ctx, datadogTickerCancelFunc = context.WithCancel(ctx)
 	report := time.NewTicker(time.Duration(config.PushInterval))
 
 	safe.Go(func() {
