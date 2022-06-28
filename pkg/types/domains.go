@@ -10,7 +10,7 @@ import (
 type Domain struct {
 	// Main defines the main fully qualified domain name
 	Main string   `description:"Default subject name." json:"main,omitempty" toml:"main,omitempty" yaml:"main,omitempty"`
-	// SANs is a list of alternatives domains to add in the certificate.
+	// SANs defines the subject alternative domain names.
 	SANs []string `description:"Subject alternative names." json:"sans,omitempty" toml:"sans,omitempty" yaml:"sans,omitempty"`
 }
 
