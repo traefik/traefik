@@ -48,6 +48,7 @@ type MiddlewareSpec struct {
 	PassTLSClientCert *dynamic.PassTLSClientCert     `json:"passTLSClientCert,omitempty"`
 	Retry             *Retry                         `json:"retry,omitempty"`
 	ContentType       *dynamic.ContentType           `json:"contentType,omitempty"`
+	// Plugin is a powerful feature that allows developers to add new functionality to Traefik and define new behaviors. More info: https://doc.traefik.io/traefik/plugins/
 	Plugin            map[string]apiextensionv1.JSON `json:"plugin,omitempty"`
 }
 
