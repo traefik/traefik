@@ -155,6 +155,6 @@ http:
 | [StripPrefixRegex](stripprefixregex.md)   | Changes the path of the request                   | Path Modifier               |
 
 
-## Other Middlewares
+## Community Middlewares
 
-You can browse community-contributed plugins in the [plugin catalog](https://pilot.traefik.io/plugins)
+Please have a look at the community-contributed plugins in the plugin [catalog](https://pilot.traefik.io/plugins).
