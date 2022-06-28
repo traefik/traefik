@@ -158,33 +158,6 @@ providers:
 # ...
 ```
 
-#### `datacenter`
-
-_Optional, Default=""_
-
-Defines the datacenter to use.
-If not provided in Traefik, Nomad uses the agent datacenter.
-
-```yaml tab="File (YAML)"
-providers:
-  nomad:
-    endpoint:
-      datacenter: dc1
-    # ...
-```
-
-```toml tab="File (TOML)"
-[providers.nomad]
-  [providers.nomad.endpoint]
-    datacenter = "dc1"
-    # ...
-```
-
-```bash tab="CLI"
---providers.nomad.endpoint.datacenter=dc1
-# ...
-```
-
 #### `token`
 
 _Optional, Default=""_
@@ -236,58 +209,6 @@ providers:
 ```bash tab="CLI"
 --providers.nomad.endpoint.endpointwaittime=15s
 # ...
-```
-
-#### `httpAuth`
-
-_Optional_
-
-Used to authenticate the HTTP client using HTTP Basic Authentication.
-
-##### `username`
-
-_Optional, Default=""_
-
-Username to use for HTTP Basic Authentication.
-
-```yaml tab="File (YAML)"
-providers:
-  nomad:
-    endpoint:
-      httpAuth:
-        username: admin
-```
-
-```toml tab="File (TOML)"
-[providers.nomad.endpoint.httpAuth]
-  username = "admin"
-```
-
-```bash tab="CLI"
---providers.nomad.endpoint.httpauth.username=admin
-```
-
-##### `password`
-
-_Optional, Default=""_
-
-Password to use for HTTP Basic Authentication.
-
-```yaml tab="File (YAML)"
-providers:
-  nomad:
-    endpoint:
-      httpAuth:
-        password: passw0rd
-```
-
-```toml tab="File (TOML)"
-[providers.nomad.endpoint.httpAuth]
-  password = "passw0rd"
-```
-
-```bash tab="CLI"
---providers.nomad.endpoint.httpauth.password=passw0rd
 ```
 
 #### `tls`

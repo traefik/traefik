@@ -375,17 +375,31 @@ func (lb *LbStatusUpdater) UpsertServer(u *url.URL, options ...roundrobin.Server
 // Balancers is a list of Balancers(s) that implements the Balancer interface.
 type Balancers []Balancer
 
-// Servers returns the servers url from all the BalancerHandler.
+// Servers returns the deduplicated server URLs from all the Balancer.
+// Note that the deduplication is only possible because all the underlying
+// balancers are of the same kind (the oxy implementation).
+// The comparison property is the same as the one found at:
+// https://github.com/vulcand/oxy/blob/fb2728c857b7973a27f8de2f2190729c0f22cf49/roundrobin/rr.go#L347.
 func (b Balancers) Servers() []*url.URL {
+	seen := make(map[string]struct{})
+
 	var servers []*url.URL
 	for _, lb := range b {
-		servers = append(servers, lb.Servers()...)
+		for _, server := range lb.Servers() {
+			key := serverKey(server)
+			if _, ok := seen[key]; ok {
+				continue
+			}
+
+			servers = append(servers, server)
+			seen[key] = struct{}{}
+		}
 	}
 
 	return servers
 }
 
-// RemoveServer removes the given server from all the BalancerHandler,
+// RemoveServer removes the given server from all the Balancer,
 // and updates the status of the server to "DOWN".
 func (b Balancers) RemoveServer(u *url.URL) error {
 	for _, lb := range b {
@@ -396,7 +410,7 @@ func (b Balancers) RemoveServer(u *url.URL) error {
 	return nil
 }
 
-// UpsertServer adds the given server to all the BalancerHandler,
+// UpsertServer adds the given server to all the Balancer,
 // and updates the status of the server to "UP".
 func (b Balancers) UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error {
 	for _, lb := range b {
@@ -405,4 +419,8 @@ func (b Balancers) UpsertServer(u *url.URL, options ...roundrobin.ServerOption) 
 		}
 	}
 	return nil
+}
+
+func serverKey(u *url.URL) string {
+	return u.Path + u.Host + u.Scheme
 }
