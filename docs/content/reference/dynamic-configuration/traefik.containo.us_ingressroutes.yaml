@@ -204,8 +204,11 @@ spec:
                       description: Domain holds a domain name with SANs.
                       properties:
                         main:
+                          description: Main defines the main domain name.
                           type: string
                         sans:
+                          description: SANs defines the subject alternative domain
+                            names.
                           items:
                             type: string
                           type: array
