@@ -63,22 +63,23 @@ entryPoints:
 providers:
   providersThrottleDuration: 42s
   docker:
+    allowEmptyServices: true
     constraints: foobar
-    watch: true
-    endpoint: foobar
     defaultRule: foobar
+    endpoint: foobar
+    exposedByDefault: true
+    httpClientTimeout: 42s
+    network: foobar
+    swarmMode: true
+    swarmModeRefreshSeconds: 42s
     tls:
       ca: foobar
       caOptional: true
       cert: foobar
-      key: foobar
       insecureSkipVerify: true
-    exposedByDefault: true
+      key: foobar
     useBindPortIP: true
-    swarmMode: true
-    network: foobar
-    swarmModeRefreshSeconds: 42s
-    httpClientTimeout: 42s
+    watch: true
   file:
     directory: foobar
     watch: true
