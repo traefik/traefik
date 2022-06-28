@@ -711,6 +711,9 @@ spec:
               plugin:
                 additionalProperties:
                   x-kubernetes-preserve-unknown-fields: true
+                description: 'Plugin is a powerful feature that allows developers
+                  to add new functionality to Traefik and define new behaviors. More
+                  info: https://doc.traefik.io/traefik/plugins/'
                 type: object
               rateLimit:
                 description: 'RateLimit holds the rate limit configuration. This middleware
