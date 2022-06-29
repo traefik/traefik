@@ -204,8 +204,11 @@ spec:
                       description: Domain holds a domain name with SANs.
                       properties:
                         main:
+                          description: Main defines the main domain name.
                           type: string
                         sans:
+                          description: SANs defines the subject alternative domain
+                            names.
                           items:
                             type: string
                           type: array
@@ -408,8 +411,11 @@ spec:
                       description: Domain holds a domain name with SANs.
                       properties:
                         main:
+                          description: Main defines the main domain name.
                           type: string
                         sans:
+                          description: SANs defines the subject alternative domain
+                            names.
                           items:
                             type: string
                           type: array
@@ -1282,6 +1288,8 @@ spec:
               plugin:
                 additionalProperties:
                   x-kubernetes-preserve-unknown-fields: true
+                description: 'Plugin defines the middleware plugin configuration.
+                  More info: https://doc.traefik.io/traefik/plugins/'
                 type: object
               rateLimit:
                 description: 'RateLimit holds the rate limit configuration. This middleware
