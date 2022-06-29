@@ -729,6 +729,8 @@ spec:
               plugin:
                 additionalProperties:
                   x-kubernetes-preserve-unknown-fields: true
+                description: 'Plugin defines the middleware plugin configuration.
+                  More info: https://doc.traefik.io/traefik/plugins/'
                 type: object
               rateLimit:
                 description: 'RateLimit holds the rate limit configuration. This middleware
