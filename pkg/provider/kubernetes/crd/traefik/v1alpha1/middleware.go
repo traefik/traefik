@@ -26,29 +26,31 @@ type Middleware struct {
 
 // MiddlewareSpec defines the desired state of a Middleware.
 type MiddlewareSpec struct {
-	AddPrefix         *dynamic.AddPrefix             `json:"addPrefix,omitempty"`
-	StripPrefix       *dynamic.StripPrefix           `json:"stripPrefix,omitempty"`
-	StripPrefixRegex  *dynamic.StripPrefixRegex      `json:"stripPrefixRegex,omitempty"`
-	ReplacePath       *dynamic.ReplacePath           `json:"replacePath,omitempty"`
-	ReplacePathRegex  *dynamic.ReplacePathRegex      `json:"replacePathRegex,omitempty"`
-	Chain             *Chain                         `json:"chain,omitempty"`
-	IPWhiteList       *dynamic.IPWhiteList           `json:"ipWhiteList,omitempty"`
-	Headers           *dynamic.Headers               `json:"headers,omitempty"`
-	Errors            *ErrorPage                     `json:"errors,omitempty"`
-	RateLimit         *RateLimit                     `json:"rateLimit,omitempty"`
-	RedirectRegex     *dynamic.RedirectRegex         `json:"redirectRegex,omitempty"`
-	RedirectScheme    *dynamic.RedirectScheme        `json:"redirectScheme,omitempty"`
-	BasicAuth         *BasicAuth                     `json:"basicAuth,omitempty"`
-	DigestAuth        *DigestAuth                    `json:"digestAuth,omitempty"`
-	ForwardAuth       *ForwardAuth                   `json:"forwardAuth,omitempty"`
-	InFlightReq       *dynamic.InFlightReq           `json:"inFlightReq,omitempty"`
-	Buffering         *dynamic.Buffering             `json:"buffering,omitempty"`
-	CircuitBreaker    *CircuitBreaker                `json:"circuitBreaker,omitempty"`
-	Compress          *dynamic.Compress              `json:"compress,omitempty"`
-	PassTLSClientCert *dynamic.PassTLSClientCert     `json:"passTLSClientCert,omitempty"`
-	Retry             *Retry                         `json:"retry,omitempty"`
-	ContentType       *dynamic.ContentType           `json:"contentType,omitempty"`
-	Plugin            map[string]apiextensionv1.JSON `json:"plugin,omitempty"`
+	AddPrefix         *dynamic.AddPrefix         `json:"addPrefix,omitempty"`
+	StripPrefix       *dynamic.StripPrefix       `json:"stripPrefix,omitempty"`
+	StripPrefixRegex  *dynamic.StripPrefixRegex  `json:"stripPrefixRegex,omitempty"`
+	ReplacePath       *dynamic.ReplacePath       `json:"replacePath,omitempty"`
+	ReplacePathRegex  *dynamic.ReplacePathRegex  `json:"replacePathRegex,omitempty"`
+	Chain             *Chain                     `json:"chain,omitempty"`
+	IPWhiteList       *dynamic.IPWhiteList       `json:"ipWhiteList,omitempty"`
+	Headers           *dynamic.Headers           `json:"headers,omitempty"`
+	Errors            *ErrorPage                 `json:"errors,omitempty"`
+	RateLimit         *RateLimit                 `json:"rateLimit,omitempty"`
+	RedirectRegex     *dynamic.RedirectRegex     `json:"redirectRegex,omitempty"`
+	RedirectScheme    *dynamic.RedirectScheme    `json:"redirectScheme,omitempty"`
+	BasicAuth         *BasicAuth                 `json:"basicAuth,omitempty"`
+	DigestAuth        *DigestAuth                `json:"digestAuth,omitempty"`
+	ForwardAuth       *ForwardAuth               `json:"forwardAuth,omitempty"`
+	InFlightReq       *dynamic.InFlightReq       `json:"inFlightReq,omitempty"`
+	Buffering         *dynamic.Buffering         `json:"buffering,omitempty"`
+	CircuitBreaker    *CircuitBreaker            `json:"circuitBreaker,omitempty"`
+	Compress          *dynamic.Compress          `json:"compress,omitempty"`
+	PassTLSClientCert *dynamic.PassTLSClientCert `json:"passTLSClientCert,omitempty"`
+	Retry             *Retry                     `json:"retry,omitempty"`
+	ContentType       *dynamic.ContentType       `json:"contentType,omitempty"`
+	// Plugin defines the middleware plugin configuration.
+	// More info: https://doc.traefik.io/traefik/plugins/
+	Plugin map[string]apiextensionv1.JSON `json:"plugin,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
