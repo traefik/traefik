@@ -67,6 +67,7 @@ nav:
   - 'Getting Started':
       - 'Concepts' : 'getting-started/concepts.md'
       - 'Quick Start': 'getting-started/quick-start.md'
+      - 'Quick Start Kubernetes': 'getting-started/quick-start-with-kubernetes.md'
       - 'Configuration Introduction': 'getting-started/configuration-overview.md'
       - 'Install Traefik': 'getting-started/install-traefik.md'
       - 'Frequently Asked Questions': 'getting-started/faq.md'
