@@ -1,3 +1,12 @@
+## [v2.7.3](https://github.com/traefik/traefik/tree/v2.7.3) (2022-06-29)
+[All Commits](https://github.com/traefik/traefik/compare/v2.7.2...v2.7.3)
+
+**Bug fixes:**
+- **[metrics]** Ensure Datadog client is cleanly stopped ([#9137](https://github.com/traefik/traefik/pull/9137) by [jbdoumenjou](https://github.com/jbdoumenjou))
+
+**Documentation:**
+- **[middleware,k8s/crd]** Add documentation for main, SANs and plugin CRD fields ([#9136](https://github.com/traefik/traefik/pull/9136) by [mloiseleur](https://github.com/mloiseleur))
+
 ## [v2.7.2](https://github.com/traefik/traefik/tree/v2.7.2) (2022-06-27)
 [All Commits](https://github.com/traefik/traefik/compare/v2.7.1...v2.7.2)
 
