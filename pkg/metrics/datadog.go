@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	datadogClient *dogstatsd.Dogstatsd
-	datadogTicker *time.Ticker
+	datadogClient         *dogstatsd.Dogstatsd
+	datadogLoopCancelFunc context.CancelFunc
 )
 
 // Metric names consistent with https://github.com/DataDog/integrations-extras/pull/64
@@ -44,6 +44,9 @@ const (
 
 // RegisterDatadog registers the metrics pusher if this didn't happen yet and creates a datadog Registry instance.
 func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
+	// Ensures there is only one DataDog client sending metrics at any given time.
+	StopDatadog()
+
 	// just to be sure there is a prefix defined
 	if config.Prefix == "" {
 		config.Prefix = defaultMetricsPrefix
@@ -54,9 +57,7 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 		return nil
 	}))
 
-	if datadogTicker == nil {
-		datadogTicker = initDatadogClient(ctx, config)
-	}
+	initDatadogClient(ctx, config)
 
 	registry := &standardRegistry{
 		configReloadsCounter:           datadogClient.NewCounter(ddConfigReloadsName, 1.0),
@@ -95,25 +96,26 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 	return registry
 }
 
-func initDatadogClient(ctx context.Context, config *types.Datadog) *time.Ticker {
+func initDatadogClient(ctx context.Context, config *types.Datadog) {
 	address := config.Address
 	if len(address) == 0 {
 		address = "localhost:8125"
 	}
 
-	report := time.NewTicker(time.Duration(config.PushInterval))
+	ctx, datadogLoopCancelFunc = context.WithCancel(ctx)
 
 	safe.Go(func() {
-		datadogClient.SendLoop(ctx, report.C, "udp", address)
-	})
+		ticker := time.NewTicker(time.Duration(config.PushInterval))
+		defer ticker.Stop()
 
-	return report
+		datadogClient.SendLoop(ctx, ticker.C, "udp", address)
+	})
 }
 
-// StopDatadog stops internal datadogTicker which controls the pushing of metrics to DD Agent and resets it to `nil`.
+// StopDatadog stops the Datadog metrics pusher.
 func StopDatadog() {
-	if datadogTicker != nil {
-		datadogTicker.Stop()
+	if datadogLoopCancelFunc != nil {
+		datadogLoopCancelFunc()
+		datadogLoopCancelFunc = nil
 	}
-	datadogTicker = nil
 }
