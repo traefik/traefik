@@ -501,3 +501,7 @@ providers:
 
 To learn more about the various aspects of the Ingress specification that Traefik supports,
 many examples of Ingresses definitions are located in the test [examples](https://github.com/traefik/traefik/tree/v2.8/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
+
+!!! question "Using Traefik for Business Applications?"
+
+    If you're using Traefik for commercial applications, consider the [Enterprise Edition](https://traefik.io/traefik-enterprise/) of Traefik as your [Kubernetes Ingress](https://traefik.io/solutions/kubernetes-ingress/) or your [API gateway](https://traefik.io/solutions/api-gateway/) to enable access management, distributed Let's Encrypt, and other advanced capabilties. Learn more in [this 15-minute technical walkthrough](https://info.traefik.io/watch-traefikee-demo).
