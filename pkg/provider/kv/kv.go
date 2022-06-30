@@ -30,12 +30,12 @@ type Provider struct {
 	Username  string           `description:"KV Username" json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
 	Password  string           `description:"KV Password" json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
 	Token     string           `description:"KV Token" json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
-	Namespace string           `description:"KV Namespace" json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
 	TLS       *types.ClientTLS `description:"Enable TLS support" json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true" `
 
+	name      string
+	namespace string
 	storeType store.Backend
 	kvClient  store.Store
-	name      string
 }
 
 // SetDefaults sets the default values.
@@ -44,11 +44,12 @@ func (p *Provider) SetDefaults() {
 }
 
 // Init the provider.
-func (p *Provider) Init(storeType store.Backend, name string) error {
+func (p *Provider) Init(storeType store.Backend, name, namespace string) error {
 	ctx := log.With(context.Background(), log.Str(log.ProviderName, name))
 
-	p.storeType = storeType
 	p.name = name
+	p.namespace = namespace
+	p.storeType = storeType
 
 	kvClient, err := p.createKVClient(ctx)
 	if err != nil {
@@ -167,7 +168,7 @@ func (p *Provider) createKVClient(ctx context.Context) (store.Store, error) {
 		Username:          p.Username,
 		Password:          p.Password,
 		Token:             p.Token,
-		Namespace:         p.Namespace,
+		Namespace:         p.namespace,
 	}
 
 	if p.TLS != nil {

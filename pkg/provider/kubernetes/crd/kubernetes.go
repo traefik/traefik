@@ -179,17 +179,24 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 }
 
 func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) *dynamic.Configuration {
-	tlsConfigs := make(map[string]*tls.CertAndStores)
+	stores, tlsConfigs := buildTLSStores(ctx, client)
+	if tlsConfigs == nil {
+		tlsConfigs = make(map[string]*tls.CertAndStores)
+	}
+
 	conf := &dynamic.Configuration{
+		// TODO: choose between mutating and returning tlsConfigs
 		HTTP: p.loadIngressRouteConfiguration(ctx, client, tlsConfigs),
 		TCP:  p.loadIngressRouteTCPConfiguration(ctx, client, tlsConfigs),
 		UDP:  p.loadIngressRouteUDPConfiguration(ctx, client),
 		TLS: &dynamic.TLSConfiguration{
-			Certificates: getTLSConfig(tlsConfigs),
-			Options:      buildTLSOptions(ctx, client),
-			Stores:       buildTLSStores(ctx, client),
+			Options: buildTLSOptions(ctx, client),
+			Stores:  stores,
 		},
 	}
+
+	// Done after because tlsConfigs is mutated by the others above.
+	conf.TLS.Certificates = getTLSConfig(tlsConfigs)
 
 	for _, middleware := range client.GetMiddlewares() {
 		id := provider.Normalize(makeID(middleware.Namespace, middleware.Name))
@@ -243,6 +250,12 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
+		circuitBreaker, err := createCircuitBreakerMiddleware(middleware.Spec.CircuitBreaker)
+		if err != nil {
+			log.FromContext(ctxMid).Errorf("Error while reading circuit breaker middleware: %v", err)
+			continue
+		}
+
 		conf.HTTP.Middlewares[id] = &dynamic.Middleware{
 			AddPrefix:         middleware.Spec.AddPrefix,
 			StripPrefix:       middleware.Spec.StripPrefix,
@@ -261,7 +274,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			ForwardAuth:       forwardAuth,
 			InFlightReq:       middleware.Spec.InFlightReq,
 			Buffering:         middleware.Spec.Buffering,
-			CircuitBreaker:    middleware.Spec.CircuitBreaker,
+			CircuitBreaker:    circuitBreaker,
 			Compress:          middleware.Spec.Compress,
 			PassTLSClientCert: middleware.Spec.PassTLSClientCert,
 			Retry:             retry,
@@ -423,6 +436,35 @@ func createPluginMiddleware(plugins map[string]apiextensionv1.JSON) (map[string]
 	}
 
 	return pc, nil
+}
+
+func createCircuitBreakerMiddleware(circuitBreaker *v1alpha1.CircuitBreaker) (*dynamic.CircuitBreaker, error) {
+	if circuitBreaker == nil {
+		return nil, nil
+	}
+
+	cb := &dynamic.CircuitBreaker{Expression: circuitBreaker.Expression}
+	cb.SetDefaults()
+
+	if circuitBreaker.CheckPeriod != nil {
+		if err := cb.CheckPeriod.Set(circuitBreaker.CheckPeriod.String()); err != nil {
+			return nil, err
+		}
+	}
+
+	if circuitBreaker.FallbackDuration != nil {
+		if err := cb.FallbackDuration.Set(circuitBreaker.FallbackDuration.String()); err != nil {
+			return nil, err
+		}
+	}
+
+	if circuitBreaker.RecoveryDuration != nil {
+		if err := cb.RecoveryDuration.Set(circuitBreaker.RecoveryDuration.String()); err != nil {
+			return nil, err
+		}
+	}
+
+	return cb, nil
 }
 
 func createRateLimitMiddleware(rateLimit *v1alpha1.RateLimit) (*dynamic.RateLimit, error) {
@@ -793,49 +835,60 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 	return tlsOptions
 }
 
-func buildTLSStores(ctx context.Context, client Client) map[string]tls.Store {
+func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, map[string]*tls.CertAndStores) {
 	tlsStoreCRD := client.GetTLSStores()
-	var tlsStores map[string]tls.Store
-
 	if len(tlsStoreCRD) == 0 {
-		return tlsStores
+		return nil, nil
 	}
-	tlsStores = make(map[string]tls.Store)
+
 	var nsDefault []string
+	tlsStores := make(map[string]tls.Store)
+	tlsConfigs := make(map[string]*tls.CertAndStores)
 
-	for _, tlsStore := range tlsStoreCRD {
-		namespace := tlsStore.Namespace
-		secretName := tlsStore.Spec.DefaultCertificate.SecretName
-		logger := log.FromContext(log.With(ctx, log.Str("tlsStore", tlsStore.Name), log.Str("namespace", namespace), log.Str("secretName", secretName)))
+	for _, t := range tlsStoreCRD {
+		logger := log.FromContext(log.With(ctx, log.Str("TLSStore", t.Name), log.Str("namespace", t.Namespace)))
 
-		secret, exists, err := client.GetSecret(namespace, secretName)
-		if err != nil {
-			logger.Errorf("Failed to fetch secret %s/%s: %v", namespace, secretName, err)
-			continue
-		}
-		if !exists {
-			logger.Errorf("Secret %s/%s does not exist", namespace, secretName)
-			continue
-		}
+		id := makeID(t.Namespace, t.Name)
 
-		cert, key, err := getCertificateBlocks(secret, namespace, secretName)
-		if err != nil {
-			logger.Errorf("Could not get certificate blocks: %v", err)
-			continue
-		}
-
-		id := makeID(tlsStore.Namespace, tlsStore.Name)
 		// If the name is default, we override the default config.
-		if tlsStore.Name == tls.DefaultTLSStoreName {
-			id = tlsStore.Name
-			nsDefault = append(nsDefault, tlsStore.Namespace)
+		if t.Name == tls.DefaultTLSStoreName {
+			id = t.Name
+			nsDefault = append(nsDefault, t.Namespace)
 		}
-		tlsStores[id] = tls.Store{
-			DefaultCertificate: &tls.Certificate{
+
+		var tlsStore tls.Store
+
+		if t.Spec.DefaultCertificate != nil {
+			secretName := t.Spec.DefaultCertificate.SecretName
+
+			secret, exists, err := client.GetSecret(t.Namespace, secretName)
+			if err != nil {
+				logger.Errorf("Failed to fetch secret %s/%s: %v", t.Namespace, secretName, err)
+				continue
+			}
+			if !exists {
+				logger.Errorf("Secret %s/%s does not exist", t.Namespace, secretName)
+				continue
+			}
+
+			cert, key, err := getCertificateBlocks(secret, t.Namespace, secretName)
+			if err != nil {
+				logger.Errorf("Could not get certificate blocks: %v", err)
+				continue
+			}
+
+			tlsStore.DefaultCertificate = &tls.Certificate{
 				CertFile: tls.FileOrContent(cert),
 				KeyFile:  tls.FileOrContent(key),
-			},
+			}
 		}
+
+		if err := buildCertificates(client, id, t.Namespace, t.Spec.Certificates, tlsConfigs); err != nil {
+			logger.Errorf("Failed to load certificates: %v", err)
+			continue
+		}
+
+		tlsStores[id] = tlsStore
 	}
 
 	if len(nsDefault) > 1 {
@@ -843,7 +896,25 @@ func buildTLSStores(ctx context.Context, client Client) map[string]tls.Store {
 		log.FromContext(ctx).Errorf("Default TLS Stores defined in multiple namespaces: %v", nsDefault)
 	}
 
-	return tlsStores
+	return tlsStores, tlsConfigs
+}
+
+// buildCertificates loads TLSStore certificates from secrets and sets them into tlsConfigs.
+func buildCertificates(client Client, tlsStore, namespace string, certificates []v1alpha1.Certificate, tlsConfigs map[string]*tls.CertAndStores) error {
+	for _, c := range certificates {
+		configKey := namespace + "/" + c.SecretName
+		if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
+			certAndStores, err := getTLS(client, c.SecretName, namespace)
+			if err != nil {
+				return fmt.Errorf("unable to read secret %s: %w", configKey, err)
+			}
+
+			certAndStores.Stores = []string{tlsStore}
+			tlsConfigs[configKey] = certAndStores
+		}
+	}
+
+	return nil
 }
 
 func makeServiceKey(rule, ingressName string) (string, error) {

@@ -8,7 +8,7 @@ description: "Learn how to use Consul Catalog as a provider for routing configur
 A Story of Tags, Services & Instances
 {: .subtitle }
 
-![Rancher](../../assets/img/providers/consul.png)
+![Consul Catalog](../../assets/img/providers/consul.png)
 
 Attach tags to your services and let Traefik do the rest!
 

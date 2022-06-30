@@ -8,7 +8,9 @@ import (
 
 // Domain holds a domain name with SANs.
 type Domain struct {
-	Main string   `description:"Default subject name." json:"main,omitempty" toml:"main,omitempty" yaml:"main,omitempty"`
+	// Main defines the main domain name.
+	Main string `description:"Default subject name." json:"main,omitempty" toml:"main,omitempty" yaml:"main,omitempty"`
+	// SANs defines the subject alternative domain names.
 	SANs []string `description:"Subject alternative names." json:"sans,omitempty" toml:"sans,omitempty" yaml:"sans,omitempty"`
 }
 

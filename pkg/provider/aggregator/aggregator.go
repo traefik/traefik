@@ -109,11 +109,19 @@ func NewProviderAggregator(conf static.Providers) ProviderAggregator {
 	}
 
 	if conf.ConsulCatalog != nil {
-		p.quietAddProvider(conf.ConsulCatalog)
+		for _, pvd := range conf.ConsulCatalog.BuildProviders() {
+			p.quietAddProvider(pvd)
+		}
+	}
+
+	if conf.Nomad != nil {
+		p.quietAddProvider(conf.Nomad)
 	}
 
 	if conf.Consul != nil {
-		p.quietAddProvider(conf.Consul)
+		for _, pvd := range conf.Consul.BuildProviders() {
+			p.quietAddProvider(pvd)
+		}
 	}
 
 	if conf.Etcd != nil {

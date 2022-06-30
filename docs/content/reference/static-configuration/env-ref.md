@@ -114,8 +114,11 @@ Trust only forwarded headers from selected IPs.
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP`:  
 HTTP configuration.
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP2_MAXCONCURRENTSTREAMS`:  
+Specifies the number of concurrent streams per connection that each client is allowed to initiate. (Default: ```250```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP3`:  
-HTTP3 configuration. (Default: ```false```)
+HTTP/3 configuration. (Default: ```false```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP3_ADVERTISEDPORT`:  
 UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
@@ -456,11 +459,14 @@ Expose containers by default. (Default: ```true```)
 `TRAEFIK_PROVIDERS_CONSULCATALOG_NAMESPACE`:  
 Sets the namespace used to discover services (Consul Enterprise only).
 
+`TRAEFIK_PROVIDERS_CONSULCATALOG_NAMESPACES`:  
+Sets the namespaces used to discover services (Consul Enterprise only).
+
 `TRAEFIK_PROVIDERS_CONSULCATALOG_PREFIX`:  
-Prefix for consul service tags. Default 'traefik' (Default: ```traefik```)
+Prefix for consul service tags. (Default: ```traefik```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_REFRESHINTERVAL`:  
-Interval for check Consul API. Default 15s (Default: ```15```)
+Interval for check Consul API. (Default: ```15```)
 
 `TRAEFIK_PROVIDERS_CONSULCATALOG_REQUIRECONSISTENT`:  
 Forces the read to be fully consistent. (Default: ```false```)
@@ -478,7 +484,10 @@ Watch Consul API events. (Default: ```false```)
 KV store endpoints (Default: ```127.0.0.1:8500```)
 
 `TRAEFIK_PROVIDERS_CONSUL_NAMESPACE`:  
-KV Namespace
+Sets the namespace used to discover the configuration (Consul Enterprise only).
+
+`TRAEFIK_PROVIDERS_CONSUL_NAMESPACES`:  
+Sets the namespaces used to discover the configuration (Consul Enterprise only).
 
 `TRAEFIK_PROVIDERS_CONSUL_PASSWORD`:  
 KV Password
@@ -590,9 +599,6 @@ Enable Etcd backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ETCD_ENDPOINTS`:  
 KV store endpoints (Default: ```127.0.0.1:2379```)
-
-`TRAEFIK_PROVIDERS_ETCD_NAMESPACE`:  
-KV Namespace
 
 `TRAEFIK_PROVIDERS_ETCD_PASSWORD`:  
 KV Password
@@ -816,6 +822,57 @@ Display additional provider logs. (Default: ```false```)
 `TRAEFIK_PROVIDERS_MARATHON_WATCH`:  
 Watch provider. (Default: ```true```)
 
+`TRAEFIK_PROVIDERS_NOMAD`:  
+Enable Nomad backend with default settings. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_NOMAD_CONSTRAINTS`:  
+Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service.
+
+`TRAEFIK_PROVIDERS_NOMAD_DEFAULTRULE`:  
+Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
+
+`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_ADDRESS`:  
+The address of the Nomad server, including scheme and port.
+
+`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_ENDPOINTWAITTIME`:  
+WaitTime limits how long a Watch will block. If not provided, the agent default values will be used (Default: ```0```)
+
+`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_REGION`:  
+Nomad region to use. If not provided, the local agent region is used.
+
+`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_TLS_CAOPTIONAL`:  
+TLS CA.Optional (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_TLS_KEY`:  
+TLS key
+
+`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_TOKEN`:  
+Token is used to provide a per-request ACL token.
+
+`TRAEFIK_PROVIDERS_NOMAD_EXPOSEDBYDEFAULT`:  
+Expose Nomad services by default. (Default: ```true```)
+
+`TRAEFIK_PROVIDERS_NOMAD_NAMESPACE`:  
+Sets the Nomad namespace used to discover services.
+
+`TRAEFIK_PROVIDERS_NOMAD_PREFIX`:  
+Prefix for nomad service tags. (Default: ```traefik```)
+
+`TRAEFIK_PROVIDERS_NOMAD_REFRESHINTERVAL`:  
+Interval for polling Nomad API. (Default: ```15```)
+
+`TRAEFIK_PROVIDERS_NOMAD_STALE`:  
+Use stale consistency for catalog reads. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_PLUGIN_<NAME>`:  
 Plugins configuration.
 
@@ -855,9 +912,6 @@ Enable Redis backend with default settings. (Default: ```false```)
 `TRAEFIK_PROVIDERS_REDIS_ENDPOINTS`:  
 KV store endpoints (Default: ```127.0.0.1:6379```)
 
-`TRAEFIK_PROVIDERS_REDIS_NAMESPACE`:  
-KV Namespace
-
 `TRAEFIK_PROVIDERS_REDIS_PASSWORD`:  
 KV Password
 
@@ -896,9 +950,6 @@ Enable ZooKeeper backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER_ENDPOINTS`:  
 KV store endpoints (Default: ```127.0.0.1:2181```)
-
-`TRAEFIK_PROVIDERS_ZOOKEEPER_NAMESPACE`:  
-KV Namespace
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER_PASSWORD`:  
 KV Password

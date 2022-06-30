@@ -147,8 +147,11 @@ Subject alternative names.
 `--entrypoints.<name>.http.tls.options`:  
 Default TLS options for the routers linked to the entry point.
 
+`--entrypoints.<name>.http2.maxconcurrentstreams`:  
+Specifies the number of concurrent streams per connection that each client is allowed to initiate. (Default: ```250```)
+
 `--entrypoints.<name>.http3`:  
-HTTP3 configuration. (Default: ```false```)
+HTTP/3 configuration. (Default: ```false```)
 
 `--entrypoints.<name>.http3.advertisedport`:  
 UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
@@ -400,7 +403,10 @@ Enable Consul backend with default settings. (Default: ```false```)
 KV store endpoints (Default: ```127.0.0.1:8500```)
 
 `--providers.consul.namespace`:  
-KV Namespace
+Sets the namespace used to discover the configuration (Consul Enterprise only).
+
+`--providers.consul.namespaces`:  
+Sets the namespaces used to discover the configuration (Consul Enterprise only).
 
 `--providers.consul.password`:  
 KV Password
@@ -489,11 +495,14 @@ Expose containers by default. (Default: ```true```)
 `--providers.consulcatalog.namespace`:  
 Sets the namespace used to discover services (Consul Enterprise only).
 
+`--providers.consulcatalog.namespaces`:  
+Sets the namespaces used to discover services (Consul Enterprise only).
+
 `--providers.consulcatalog.prefix`:  
-Prefix for consul service tags. Default 'traefik' (Default: ```traefik```)
+Prefix for consul service tags. (Default: ```traefik```)
 
 `--providers.consulcatalog.refreshinterval`:  
-Interval for check Consul API. Default 15s (Default: ```15```)
+Interval for check Consul API. (Default: ```15```)
 
 `--providers.consulcatalog.requireconsistent`:  
 Forces the read to be fully consistent. (Default: ```false```)
@@ -590,9 +599,6 @@ Enable Etcd backend with default settings. (Default: ```false```)
 
 `--providers.etcd.endpoints`:  
 KV store endpoints (Default: ```127.0.0.1:2379```)
-
-`--providers.etcd.namespace`:  
-KV Namespace
 
 `--providers.etcd.password`:  
 KV Password
@@ -816,6 +822,57 @@ Display additional provider logs. (Default: ```false```)
 `--providers.marathon.watch`:  
 Watch provider. (Default: ```true```)
 
+`--providers.nomad`:  
+Enable Nomad backend with default settings. (Default: ```false```)
+
+`--providers.nomad.constraints`:  
+Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service.
+
+`--providers.nomad.defaultrule`:  
+Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
+
+`--providers.nomad.endpoint.address`:  
+The address of the Nomad server, including scheme and port.
+
+`--providers.nomad.endpoint.endpointwaittime`:  
+WaitTime limits how long a Watch will block. If not provided, the agent default values will be used (Default: ```0```)
+
+`--providers.nomad.endpoint.region`:  
+Nomad region to use. If not provided, the local agent region is used.
+
+`--providers.nomad.endpoint.tls.ca`:  
+TLS CA
+
+`--providers.nomad.endpoint.tls.caoptional`:  
+TLS CA.Optional (Default: ```false```)
+
+`--providers.nomad.endpoint.tls.cert`:  
+TLS cert
+
+`--providers.nomad.endpoint.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--providers.nomad.endpoint.tls.key`:  
+TLS key
+
+`--providers.nomad.endpoint.token`:  
+Token is used to provide a per-request ACL token.
+
+`--providers.nomad.exposedbydefault`:  
+Expose Nomad services by default. (Default: ```true```)
+
+`--providers.nomad.namespace`:  
+Sets the Nomad namespace used to discover services.
+
+`--providers.nomad.prefix`:  
+Prefix for nomad service tags. (Default: ```traefik```)
+
+`--providers.nomad.refreshinterval`:  
+Interval for polling Nomad API. (Default: ```15```)
+
+`--providers.nomad.stale`:  
+Use stale consistency for catalog reads. (Default: ```false```)
+
 `--providers.plugin.<name>`:  
 Plugins configuration.
 
@@ -855,9 +912,6 @@ Enable Redis backend with default settings. (Default: ```false```)
 `--providers.redis.endpoints`:  
 KV store endpoints (Default: ```127.0.0.1:6379```)
 
-`--providers.redis.namespace`:  
-KV Namespace
-
 `--providers.redis.password`:  
 KV Password
 
@@ -896,9 +950,6 @@ Enable ZooKeeper backend with default settings. (Default: ```false```)
 
 `--providers.zookeeper.endpoints`:  
 KV store endpoints (Default: ```127.0.0.1:2181```)
-
-`--providers.zookeeper.namespace`:  
-KV Namespace
 
 `--providers.zookeeper.password`:  
 KV Password

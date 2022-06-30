@@ -146,7 +146,7 @@ which in turn will create the resulting routers, services, handlers, etc.
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v2.7
+              image: traefik:v2.8
               args:
                 - --entrypoints.web.address=:80
                 - --providers.kubernetesingress
@@ -537,7 +537,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v2.7
+              image: traefik:v2.8
               args:
                 - --entrypoints.websecure.address=:443
                 - --entrypoints.websecure.http.tls
@@ -746,7 +746,7 @@ For more options, please refer to the available [annotations](#on-ingress).
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v2.7
+              image: traefik:v2.8
               args:
                 - --entrypoints.websecure.address=:443
                 - --providers.kubernetesingress
