@@ -1649,7 +1649,7 @@ udp:
 !!! question "Using Traefik for Business Applications?"
 
 If you're using Traefik for commercial applications, consider the [Enterprise Edition](https://traefik.io/traefik-enterprise/). You can use it as your:
-- [Kubernetes Ingress](https://traefik.io/solutions/kubernetes-ingress/),
+- [Kubernetes Ingress Controller](https://traefik.io/solutions/kubernetes-ingress/),
 - [Load Balancer](https://traefik.io/solutions/docker-swarm-ingress/),
 - [API Gateway](https://traefik.io/solutions/api-gateway/)
 
