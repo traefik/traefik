@@ -25,7 +25,17 @@ func (s *TCPSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *TCPSuite) TestMixed(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/mixed.toml", struct{}{})
+	file := s.adaptFile(c, "fixtures/tcp/mixed.toml", struct {
+		Whoami       string
+		WhoamiA      string
+		WhoamiB      string
+		WhoamiNoCert string
+	}{
+		Whoami:       "http://" + s.getComposeServiceIP(c, "whoami") + ":80",
+		WhoamiA:      s.getComposeServiceIP(c, "whoami-a") + ":8080",
+		WhoamiB:      s.getComposeServiceIP(c, "whoami-b") + ":8080",
+		WhoamiNoCert: s.getComposeServiceIP(c, "whoami-no-cert") + ":8080",
+	})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -75,7 +85,11 @@ func (s *TCPSuite) TestMixed(c *check.C) {
 }
 
 func (s *TCPSuite) TestTLSOptions(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/multi-tls-options.toml", struct{}{})
+	file := s.adaptFile(c, "fixtures/tcp/multi-tls-options.toml", struct {
+		WhoamiNoCert string
+	}{
+		WhoamiNoCert: s.getComposeServiceIP(c, "whoami-no-cert") + ":8080",
+	})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -105,7 +119,17 @@ func (s *TCPSuite) TestTLSOptions(c *check.C) {
 }
 
 func (s *TCPSuite) TestNonTLSFallback(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/non-tls-fallback.toml", struct{}{})
+	file := s.adaptFile(c, "fixtures/tcp/non-tls-fallback.toml", struct {
+		WhoamiA      string
+		WhoamiB      string
+		WhoamiNoCert string
+		WhoamiNoTLS  string
+	}{
+		WhoamiA:      s.getComposeServiceIP(c, "whoami-a") + ":8080",
+		WhoamiB:      s.getComposeServiceIP(c, "whoami-b") + ":8080",
+		WhoamiNoCert: s.getComposeServiceIP(c, "whoami-no-cert") + ":8080",
+		WhoamiNoTLS:  s.getComposeServiceIP(c, "whoami-no-tls") + ":8080",
+	})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -139,7 +163,11 @@ func (s *TCPSuite) TestNonTLSFallback(c *check.C) {
 }
 
 func (s *TCPSuite) TestNonTlsTcp(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/non-tls.toml", struct{}{})
+	file := s.adaptFile(c, "fixtures/tcp/non-tls.toml", struct {
+		WhoamiNoTLS string
+	}{
+		WhoamiNoTLS: s.getComposeServiceIP(c, "whoami-no-tls") + ":8080",
+	})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -159,7 +187,11 @@ func (s *TCPSuite) TestNonTlsTcp(c *check.C) {
 }
 
 func (s *TCPSuite) TestCatchAllNoTLS(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/catch-all-no-tls.toml", struct{}{})
+	file := s.adaptFile(c, "fixtures/tcp/catch-all-no-tls.toml", struct {
+		WhoamiBannerAddress string
+	}{
+		WhoamiBannerAddress: s.getComposeServiceIP(c, "whoami-banner") + ":8080",
+	})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -179,7 +211,13 @@ func (s *TCPSuite) TestCatchAllNoTLS(c *check.C) {
 }
 
 func (s *TCPSuite) TestCatchAllNoTLSWithHTTPS(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/catch-all-no-tls-with-https.toml", struct{}{})
+	file := s.adaptFile(c, "fixtures/tcp/catch-all-no-tls-with-https.toml", struct {
+		WhoamiNoTLSAddress string
+		WhoamiURL          string
+	}{
+		WhoamiNoTLSAddress: s.getComposeServiceIP(c, "whoami-no-tls") + ":8080",
+		WhoamiURL:          "http://" + s.getComposeServiceIP(c, "whoami") + ":80",
+	})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -204,7 +242,13 @@ func (s *TCPSuite) TestCatchAllNoTLSWithHTTPS(c *check.C) {
 }
 
 func (s *TCPSuite) TestMiddlewareWhiteList(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/ip-whitelist.toml", struct{}{})
+	file := s.adaptFile(c, "fixtures/tcp/ip-whitelist.toml", struct {
+		WhoamiA string
+		WhoamiB string
+	}{
+		WhoamiA: s.getComposeServiceIP(c, "whoami-a") + ":8080",
+		WhoamiB: s.getComposeServiceIP(c, "whoami-b") + ":8080",
+	})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -228,7 +272,13 @@ func (s *TCPSuite) TestMiddlewareWhiteList(c *check.C) {
 }
 
 func (s *TCPSuite) TestWRR(c *check.C) {
-	file := s.adaptFile(c, "fixtures/tcp/wrr.toml", struct{}{})
+	file := s.adaptFile(c, "fixtures/tcp/wrr.toml", struct {
+		WhoamiB  string
+		WhoamiAB string
+	}{
+		WhoamiB:  s.getComposeServiceIP(c, "whoami-b") + ":8080",
+		WhoamiAB: s.getComposeServiceIP(c, "whoami-ab") + ":8080",
+	})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
