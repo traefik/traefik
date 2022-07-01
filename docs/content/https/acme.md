@@ -666,3 +666,11 @@ If Let's Encrypt is not reachable, the following certificates will apply:
 
 !!! important
     For new (sub)domains which need Let's Encrypt authentication, the default Traefik certificate will be used until Traefik is restarted.
+    
+!!! question "Using Traefik for Business Applications?"
+
+    If you're using Traefik for commercial applications, consider the [Enterprise Edition](https://traefik.io/traefik-enterprise/) of Traefik as your:
+    - [Kubernetes Ingress](https://traefik.io/solutions/kubernetes-ingress/),
+    - [Docker Swarm Load Balancer](https://traefik.io/solutions/docker-swarm-ingress/),
+    - [API gateway](https://traefik.io/solutions/api-gateway/)
+    With it, you can enable access management, distributed Let's Encrypt, and other advanced capabilties. Learn more in [this 15-minute technical walkthrough](https://info.traefik.io/watch-traefikee-demo).
