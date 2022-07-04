@@ -354,10 +354,10 @@ func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string 
 	var defaultEntryPoints []string
 
 	// Determines if at least one EntryPoint is configured to be in the default set.
-	var userDefinedDefaults bool
+	var hasDefinedDefaults bool
 	for _, ep := range staticConfiguration.EntryPoints {
 		if ep.DefaultSet {
-			userDefinedDefaults = true
+			hasDefinedDefaults = true
 			break
 		}
 	}
@@ -365,7 +365,7 @@ func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string 
 	for name, cfg := range staticConfiguration.EntryPoints {
 		// Ignores EntryPoints that are marked as not part of default set,
 		// if at least one is configured to be in the default set.
-		if userDefinedDefaults && !cfg.DefaultSet {
+		if hasDefinedDefaults && !cfg.DefaultSet {
 			continue
 		}
 
