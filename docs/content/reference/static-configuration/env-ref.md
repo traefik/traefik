@@ -105,6 +105,9 @@ Entry points definition. (Default: ```false```)
 `TRAEFIK_ENTRYPOINTS_<NAME>_ADDRESS`:  
 Entry point address.
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_DEFAULTSET`:  
+Defines whether to add this EntryPoint to the default set. (Default: ```false```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_FORWARDEDHEADERS_INSECURE`:  
 Trust all forwarded headers. (Default: ```false```)
 
