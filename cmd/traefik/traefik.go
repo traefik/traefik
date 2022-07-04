@@ -371,8 +371,8 @@ func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string 
 	}
 
 	for name, cfg := range staticConfiguration.EntryPoints {
-		// Ignores EntryPoints that are marked as not part of default set,
-		// if at least one is configured to be in the default set.
+		// By default all entrypoints are considered.
+		// If at least one is flagged, then only flagged entrypoints are included.
 		if hasDefinedDefaults && !cfg.DefaultSet {
 			continue
 		}
