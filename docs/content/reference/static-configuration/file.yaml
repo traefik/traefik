@@ -14,6 +14,7 @@ serversTransport:
 entryPoints:
   EntryPoint0:
     address: foobar
+    defaultSet: true
     transport:
       lifeCycle:
         requestAcceptGraceTimeout: 42s
