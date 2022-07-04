@@ -1652,8 +1652,8 @@ udp:
     consider the [Enterprise Edition](https://traefik.io/traefik-enterprise/).
     You can use it as your:
 
-    - [Kubernetes Ingress Controller](https://traefik.io/solutions/kubernetes-ingress/),
-    - [Load Balancer](https://traefik.io/solutions/docker-swarm-ingress/),
+    - [Kubernetes Ingress Controller](https://traefik.io/solutions/kubernetes-ingress/)
+    - [Load Balancer](https://traefik.io/solutions/docker-swarm-ingress/)
     - [API Gateway](https://traefik.io/solutions/api-gateway/)
 
     Traefik Enterprise enables centralized access management,
