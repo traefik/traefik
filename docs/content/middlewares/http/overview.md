@@ -153,3 +153,7 @@ http:
 | [Retry](retry.md)                         | Automatically retries in case of error            | Request lifecycle           |
 | [StripPrefix](stripprefix.md)             | Changes the path of the request                   | Path Modifier               |
 | [StripPrefixRegex](stripprefixregex.md)   | Changes the path of the request                   | Path Modifier               |
+
+## Community Middlewares
+
+Please take a look at the community-contributed plugins in the [plugin catalog](https://pilot.traefik.io/plugins).
