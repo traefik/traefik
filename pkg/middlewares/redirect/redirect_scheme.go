@@ -64,8 +64,19 @@ func rawURLScheme(req *http.Request) string {
 		scheme = schemeHTTPS
 	}
 
-	if value := req.Header.Get(xForwardedProto); value != "" {
-		scheme = value
+	if xProto := req.Header.Get(xForwardedProto); xProto != "" {
+		// X-Forwarded-Proto header can be set to ws(s) when the client sends a websocket connection upgrade request
+		// whereas the request is made through the HTTP(S) protocol.
+		// As this middleware is supporting only HTTP(S) request,
+		// we convert websocket protocols into HTTP(S) scheme.
+		switch {
+		case strings.EqualFold(xProto, "ws"):
+			scheme = schemeHTTP
+		case strings.EqualFold(xProto, "wss"):
+			scheme = schemeHTTPS
+		default:
+			scheme = xProto
+		}
 	}
 
 	if scheme == schemeHTTP && port == ":80" || scheme == schemeHTTPS && port == ":443" {
