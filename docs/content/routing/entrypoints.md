@@ -237,19 +237,16 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
 
 _Optional, Default=false_
 
-The `DefaultSet` option defines whether the EntryPoint should be included in the EntryPoints default set.
+The `DefaultSet` option flags the EntryPoint to be used by default when configuring HTTP and TCP routers that do not define the [EntryPoints option](./routers/index.md#entrypoints).
 
-The EntryPoints default set is used to configure HTTP and TCP routers which are not defining the [EntryPoints option](./routers/index.md#entrypoints).
 
 !!! info "How the EntryPoints default set is built"
 
     If no EntryPoint is explicitly included in the EntryPoints default set, 
-    meaning that all EntryPoints have the `DefaultSet` option set to `false`,
-    the EntryPoints default set includes all HTTP/TCP EntryPoints.
+    then it includes all HTTP/TCP EntryPoints.
 
     If at least one EntryPoint is explicitly included in the EntryPoints default set,
-    meaning that at least one EntryPoint have the `DefaultSet` option set to `true`,
-    the EntryPoints default set includes only EntryPoints that have the `DefaultSet` option set to `true`.
+    then only EntryPoints that have the `DefaultSet` option set to `true` are included.
 
 !!! warning "Only TCP and HTTP"
 

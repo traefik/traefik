@@ -109,7 +109,7 @@ Entry points definition. (Default: ```false```)
 Entry point address.
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_DEFAULTSET`:  
-Defines whether to add this EntryPoint to the default set. (Default: ```false```)
+Flags this EntryPoint to be used by default when placing a router configuration that does not specify one. (Default: ```false```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_FORWARDEDHEADERS_INSECURE`:  
 Trust all forwarded headers. (Default: ```false```)

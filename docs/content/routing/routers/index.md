@@ -95,7 +95,7 @@ or act before forwarding the request to the service.
 ### EntryPoints
 
 If not specified, HTTP routers will accept requests from every EntryPoints in the default set.
-If you want to limit the router scope to a set of EntryPoints, set the `entryPoints` option.
+If you want to limit the router scope to specific EntryPoints, set the `entryPoints` option.
 
 ??? example "Listens to Every EntryPoint"
 
