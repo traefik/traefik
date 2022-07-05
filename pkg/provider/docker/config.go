@@ -101,10 +101,13 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container d
 		}
 	}
 
+	if container.Health != "" && container.Health != dockertypes.Healthy {
+		return nil
+	}
+
 	for name, service := range configuration.Services {
-		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
-		err := p.addServerTCP(ctxSvc, container, service.LoadBalancer)
-		if err != nil {
+		ctx := log.With(ctx, log.Str(log.ServiceName, name))
+		if err := p.addServerTCP(ctx, container, service.LoadBalancer); err != nil {
 			return fmt.Errorf("service %q error: %w", name, err)
 		}
 	}
@@ -117,16 +120,18 @@ func (p *Provider) buildUDPServiceConfiguration(ctx context.Context, container d
 
 	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.UDPService)
-		lb := &dynamic.UDPServersLoadBalancer{}
 		configuration.Services[serviceName] = &dynamic.UDPService{
-			LoadBalancer: lb,
+			LoadBalancer: &dynamic.UDPServersLoadBalancer{},
 		}
 	}
 
+	if container.Health != "" && container.Health != dockertypes.Healthy {
+		return nil
+	}
+
 	for name, service := range configuration.Services {
-		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
-		err := p.addServerUDP(ctxSvc, container, service.LoadBalancer)
-		if err != nil {
+		ctx := log.With(ctx, log.Str(log.ServiceName, name))
+		if err := p.addServerUDP(ctx, container, service.LoadBalancer); err != nil {
 			return fmt.Errorf("service %q error: %w", name, err)
 		}
 	}
@@ -146,10 +151,13 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, container dock
 		}
 	}
 
+	if container.Health != "" && container.Health != dockertypes.Healthy {
+		return nil
+	}
+
 	for name, service := range configuration.Services {
-		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
-		err := p.addServer(ctxSvc, container, service.LoadBalancer)
-		if err != nil {
+		ctx := log.With(ctx, log.Str(log.ServiceName, name))
+		if err := p.addServer(ctx, container, service.LoadBalancer); err != nil {
 			return fmt.Errorf("service %q error: %w", name, err)
 		}
 	}
@@ -188,10 +196,6 @@ func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadB
 		return errors.New("load-balancer is not defined")
 	}
 
-	if container.Health != "" && container.Health != dockertypes.Healthy {
-		return nil
-	}
-
 	var serverPort string
 	if len(loadBalancer.Servers) > 0 {
 		serverPort = loadBalancer.Servers[0].Port
@@ -222,10 +226,6 @@ func (p *Provider) addServerUDP(ctx context.Context, container dockerData, loadB
 		return errors.New("load-balancer is not defined")
 	}
 
-	if container.Health != "" && container.Health != dockertypes.Healthy {
-		return nil
-	}
-
 	var serverPort string
 	if len(loadBalancer.Servers) > 0 {
 		serverPort = loadBalancer.Servers[0].Port
@@ -254,10 +254,6 @@ func (p *Provider) addServerUDP(ctx context.Context, container dockerData, loadB
 func (p *Provider) addServer(ctx context.Context, container dockerData, loadBalancer *dynamic.ServersLoadBalancer) error {
 	if loadBalancer == nil {
 		return errors.New("load-balancer is not defined")
-	}
-
-	if container.Health != "" && container.Health != dockertypes.Healthy {
-		return nil
 	}
 
 	var serverPort string

@@ -520,7 +520,7 @@ Watch Consul API events. (Default: ```false```)
 Enable Docker backend with default settings. (Default: ```false```)
 
 `--providers.docker.allowemptyservices`:  
-Allow the creation of services without healthy containers. (Default: ```false```)
+Disregards the docker containers health checks regarding the creation or removal of the corresponding services. (Default: ```false```)
 
 `--providers.docker.constraints`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
