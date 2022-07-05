@@ -46,6 +46,7 @@ rules:
       - networking.k8s.io
     resources:
       - ingresses
+      - ingressclasses
     verbs:
       - get
       - list
@@ -245,7 +246,6 @@ And continue by creating the following `Service` resource in a file called `03-w
 apiVersion: v1
 kind: Service
 metadata:
-  namespace: whoami
   name: whoami
 
 spec:
