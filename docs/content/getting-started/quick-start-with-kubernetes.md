@@ -24,7 +24,7 @@ The first step is to create the role.
 The [`ClusterRole`](https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/cluster-role-v1/#ClusterRole) resource enumerates the resources and actions
 available for the role. In a file called `00-role.yml`, put the following `ClusterRole`:
 
-```yaml tab="00-role.yml" linenums="1"
+```yaml tab="00-role.yml"
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -62,7 +62,7 @@ rules:
 The next step is to create an account for Traefik.
 In a file called `00-account.yml`, put the following [`ClusterAccount`](https://kubernetes.io/docs/reference/kubernetes-api/authentication-resources/service-account-v1/#ServiceAccount) resource:
 
-```yaml tab="00-account.yml" linenums="1"
+```yaml tab="00-account.yml"
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -73,7 +73,7 @@ And then, the last operation consists in binding the role on the account to appl
 permissions and rules on the latter. In a file called `01-role-binding.yml`, put the
 following [`ClusterRoleBinding`](https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/cluster-role-binding-v1/#ClusterRoleBinding) resource:
 
-```yaml tab="01-role-binding.yml" linenums="1"
+```yaml tab="01-role-binding.yml"
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -105,7 +105,7 @@ and scale containers horizontally to support larger workloads.
 
 Start by creating a file called `02-traefik.yml` and paste the following `Deployment` resource:
 
-```yaml tab="02-traefik.yml" linenums="1"
+```yaml tab="02-traefik.yml"
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -157,7 +157,7 @@ to any of the instance: a [`Service`](https://kubernetes.io/docs/reference/kuber
 This process is called load balancing.
 Create a file called `02-traefik-services.yml` and insert the two `Service` resources:
 
-```yaml tab="02-traefik-services.yml" linenums="1"
+```yaml tab="02-traefik-services.yml"
 apiVersion: v1
 kind: Service
 metadata:
