@@ -33,10 +33,10 @@ func NewRedirectScheme(ctx context.Context, next http.Handler, conf dynamic.Redi
 		port = ":" + conf.Port
 	}
 
-	return newRedirect(next, uriPattern, conf.Scheme+"://${2}"+port+"${4}", conf.Permanent, rawURLScheme, name)
+	return newRedirect(next, uriPattern, conf.Scheme+"://${2}"+port+"${4}", conf.Permanent, clientRequestURL, name)
 }
 
-func rawURLScheme(req *http.Request) string {
+func clientRequestURL(req *http.Request) string {
 	scheme := schemeHTTP
 	host, port, err := net.SplitHostPort(req.Host)
 	if err != nil {
