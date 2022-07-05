@@ -64,6 +64,41 @@ func TestRedirectSchemeHandler(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 		{
+			desc: "HTTP to HTTPS, with X-Forwarded-Proto to unknown value",
+			config: dynamic.RedirectScheme{
+				Scheme: "https",
+			},
+			url: "http://foo",
+			headers: map[string]string{
+				"X-Forwarded-Proto": "bar",
+			},
+			expectedURL:    "https://bar://foo",
+			expectedStatus: http.StatusFound,
+		},
+		{
+			desc: "HTTP to HTTPS, with X-Forwarded-Proto to ws",
+			config: dynamic.RedirectScheme{
+				Scheme: "https",
+			},
+			url: "http://foo",
+			headers: map[string]string{
+				"X-Forwarded-Proto": "ws",
+			},
+			expectedURL:    "https://foo",
+			expectedStatus: http.StatusFound,
+		},
+		{
+			desc: "HTTP to HTTPS, with X-Forwarded-Proto to wss",
+			config: dynamic.RedirectScheme{
+				Scheme: "https",
+			},
+			url: "http://foo",
+			headers: map[string]string{
+				"X-Forwarded-Proto": "wss",
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
 			desc: "HTTP with port to HTTPS without port",
 			config: dynamic.RedirectScheme{
 				Scheme: "https",
