@@ -53,7 +53,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 			expectedStatus: http.StatusFound,
 		},
 		{
-			desc: "HTTP to HTTPS, with X-Forwarded-Proto to https",
+			desc: "HTTP to HTTPS, with X-Forwarded-Proto to HTTPS",
 			config: dynamic.RedirectScheme{
 				Scheme: "https",
 			},
@@ -64,9 +64,11 @@ func TestRedirectSchemeHandler(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 		{
-			desc:   "HTTP to HTTPS, with X-Forwarded-Proto to unknown value",
-			config: dynamic.RedirectScheme{Scheme: "https"},
-			url:    "http://foo",
+			desc: "HTTP to HTTPS, with X-Forwarded-Proto to unknown value",
+			config: dynamic.RedirectScheme{
+				Scheme: "https",
+			},
+			url: "http://foo",
 			headers: map[string]string{
 				"X-Forwarded-Proto": "foo",
 			},
@@ -74,9 +76,11 @@ func TestRedirectSchemeHandler(t *testing.T) {
 			expectedStatus: http.StatusFound,
 		},
 		{
-			desc:   "HTTP to HTTPS, with X-Forwarded-Proto to ws",
-			config: dynamic.RedirectScheme{Scheme: "https"},
-			url:    "http://foo",
+			desc: "HTTP to HTTPS, with X-Forwarded-Proto to ws",
+			config: dynamic.RedirectScheme{
+				Scheme: "https",
+			},
+			url: "http://foo",
 			headers: map[string]string{
 				"X-Forwarded-Proto": "ws",
 			},
@@ -84,9 +88,11 @@ func TestRedirectSchemeHandler(t *testing.T) {
 			expectedStatus: http.StatusFound,
 		},
 		{
-			desc:   "HTTP to HTTPS, with X-Forwarded-Proto to wss",
-			config: dynamic.RedirectScheme{Scheme: "https"},
-			url:    "http://foo",
+			desc: "HTTP to HTTPS, with X-Forwarded-Proto to wss",
+			config: dynamic.RedirectScheme{
+				Scheme: "https",
+			},
+			url: "http://foo",
 			headers: map[string]string{
 				"X-Forwarded-Proto": "wss",
 			},
