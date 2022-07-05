@@ -2409,7 +2409,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Labels: map[string]string{
 						"traefik.udp.routers.foo": "true",
 					},
-					Health: "not_healthy",
+					Health: docker.Unhealthy,
 				},
 			},
 			expected: &dynamic.Configuration{
