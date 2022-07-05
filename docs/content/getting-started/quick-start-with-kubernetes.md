@@ -302,6 +302,7 @@ If everything is applied correctly, it should be possible to access to the `whoa
 Try to load the dashboard in a web browser: `http://<external-ip>:8080`.
 
 Then try to access to call the `whoami` application:
+
 ```shell
 curl -v http://<external-ip>/
 ```
