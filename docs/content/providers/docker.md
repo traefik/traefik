@@ -720,10 +720,12 @@ providers:
 _Optional, Default=false_
 
 If the parameter is set to `true`,
-any [servers load balancer](../routing/services/index.md#servers-load-balancer) defined for docker containers is created
+any [servers load balancer](../routing/services/index.md#servers-load-balancer) defined for docker containers is created 
 regardless of the [healthiness](https://docs.docker.com/engine/reference/builder/#healthcheck) of the corresponding containers.
-It also then stays alive and responsive even at times when it becomes empty, i.e. when all its children containers become unhealthy.
-This results in `503` HTTP responses instead of `404` ones, in the above cases.
+It also then stays alive and responsive even at times when it becomes empty,
+i.e. when all its children containers become unhealthy.
+This results in `503` HTTP responses instead of `404` ones,
+in the above cases.
 
 ```yaml tab="File (YAML)"
 providers:
