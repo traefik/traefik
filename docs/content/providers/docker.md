@@ -714,3 +714,27 @@ providers:
 ```bash tab="CLI"
 --providers.docker.tls.insecureSkipVerify=true
 ```
+
+### `allowEmptyServices`
+
+_Optional, Default=false_
+
+If the parameter is set to `true`,
+it allows the creation of an empty [servers load balancer](../routing/services/index.md#servers-load-balancer)
+if the corresponding docker containers are not in a [healthy state](https://docs.docker.com/engine/reference/builder/#healthcheck).
+This results in `503` HTTP responses instead of `404` ones.
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    allowEmptyServices: true
+```
+
+```toml tab="File (TOML)"
+[providers.docker]
+  allowEmptyServices = true
+```
+
+```bash tab="CLI"
+--providers.docker.allowEmptyServices=true
+```

@@ -7,6 +7,7 @@ import (
 	"net"
 	"strings"
 
+	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/go-connections/nat"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/label"
@@ -174,7 +175,7 @@ func (p *Provider) keepContainer(ctx context.Context, container dockerData) bool
 		return false
 	}
 
-	if container.Health != "" && container.Health != "healthy" {
+	if !p.AllowEmptyServices && container.Health != "" && container.Health != dockertypes.Healthy {
 		logger.Debug("Filtering unhealthy or starting container")
 		return false
 	}
@@ -185,6 +186,10 @@ func (p *Provider) keepContainer(ctx context.Context, container dockerData) bool
 func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadBalancer *dynamic.TCPServersLoadBalancer) error {
 	if loadBalancer == nil {
 		return errors.New("load-balancer is not defined")
+	}
+
+	if container.Health != "" && container.Health != dockertypes.Healthy {
+		return nil
 	}
 
 	var serverPort string
@@ -217,6 +222,10 @@ func (p *Provider) addServerUDP(ctx context.Context, container dockerData, loadB
 		return errors.New("load-balancer is not defined")
 	}
 
+	if container.Health != "" && container.Health != dockertypes.Healthy {
+		return nil
+	}
+
 	var serverPort string
 	if len(loadBalancer.Servers) > 0 {
 		serverPort = loadBalancer.Servers[0].Port
@@ -245,6 +254,10 @@ func (p *Provider) addServerUDP(ctx context.Context, container dockerData, loadB
 func (p *Provider) addServer(ctx context.Context, container dockerData, loadBalancer *dynamic.ServersLoadBalancer) error {
 	if loadBalancer == nil {
 		return errors.New("load-balancer is not defined")
+	}
+
+	if container.Health != "" && container.Health != dockertypes.Healthy {
+		return nil
 	}
 
 	var serverPort string

@@ -375,11 +375,12 @@ func TestDefaultRule(t *testing.T) {
 
 func Test_buildConfiguration(t *testing.T) {
 	testCases := []struct {
-		desc          string
-		containers    []dockerData
-		useBindPortIP bool
-		constraints   string
-		expected      *dynamic.Configuration
+		desc               string
+		containers         []dockerData
+		useBindPortIP      bool
+		constraints        string
+		expected           *dynamic.Configuration
+		allowEmptyServices bool
 	}{
 		{
 			desc: "invalid HTTP service definition",
@@ -2234,24 +2235,13 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container not healthy",
+			desc:               "one container not healthy without allowEmpty",
+			allowEmptyServices: false,
 			containers: []dockerData{
 				{
 					ServiceName: "Test",
 					Name:        "Test",
-					Labels:      map[string]string{},
-					NetworkSettings: networkSettings{
-						Ports: nat.PortMap{
-							nat.Port("80/tcp"): []nat.PortBinding{},
-						},
-						Networks: map[string]*networkData{
-							"bridge": {
-								Name: "bridge",
-								Addr: "127.0.0.1",
-							},
-						},
-					},
-					Health: "not_healthy",
+					Health:      "not_healthy",
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2263,6 +2253,126 @@ func Test_buildConfiguration(t *testing.T) {
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
 					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc:               "one HTTP container not healthy",
+			allowEmptyServices: true,
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Health:      "not_healthy",
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"Test": {
+							Service: "Test",
+							Rule:    "Host(`Test.traefik.wtf`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Test": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc:               "one TCP container not healthy",
+			allowEmptyServices: true,
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels: map[string]string{
+						"traefik.tcp.routers.foo.rule": "HostSNI(`foo.bar`)",
+					},
+					Health: "not_healthy",
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"foo": {
+							Service: "Test",
+							Rule:    "HostSNI(`foo.bar`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"Test": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								TerminationDelay: Int(100),
+							},
+						},
+					},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc:               "one UDP container not healthy",
+			allowEmptyServices: true,
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Labels: map[string]string{
+						"traefik.udp.routers.foo": "true",
+					},
+					Health: "not_healthy",
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"foo": {
+							Service: "Test",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"Test": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{},
+						},
+					},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:           map[string]*dynamic.Router{},
@@ -3058,9 +3168,10 @@ func Test_buildConfiguration(t *testing.T) {
 			t.Parallel()
 
 			p := Provider{
-				ExposedByDefault: true,
-				DefaultRule:      "Host(`{{ normalize .Name }}.traefik.wtf`)",
-				UseBindPortIP:    test.useBindPortIP,
+				AllowEmptyServices: test.allowEmptyServices,
+				DefaultRule:        "Host(`{{ normalize .Name }}.traefik.wtf`)",
+				ExposedByDefault:   true,
+				UseBindPortIP:      test.useBindPortIP,
 			}
 			p.Constraints = test.constraints
 
