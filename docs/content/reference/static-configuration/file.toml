@@ -57,23 +57,23 @@
 [providers]
   providersThrottleDuration = "42s"
   [providers.docker]
-    allowEmptyServices = true
     constraints = "foobar"
-    defaultRule = "foobar"
+    watch = true
     endpoint = "foobar"
+    defaultRule = "foobar"
     exposedByDefault = true
-    httpClientTimeout = "42s"
-    network = "foobar"
+    useBindPortIP = true
     swarmMode = true
+    network = "foobar"
     swarmModeRefreshSeconds = "42s"
+    httpClientTimeout = "42s"
+    allowEmptyServices = true
     [providers.docker.tls]
       ca = "foobar"
       caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
-    useBindPortIP = true
-    watch = true
   [providers.file]
     directory = "foobar"
     watch = true
