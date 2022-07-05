@@ -13,9 +13,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 )
 
-func Int(v int) *int    { return &v }
-func Bool(v bool) *bool { return &v }
-
 func TestDefaultRule(t *testing.T) {
 	testCases := []struct {
 		desc        string
@@ -2235,13 +2232,12 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc:               "one container not healthy without allowEmpty",
-			allowEmptyServices: false,
+			desc: "one unhealthy HTTP container",
 			containers: []dockerData{
 				{
 					ServiceName: "Test",
 					Name:        "Test",
-					Health:      "not_healthy",
+					Health:      docker.Unhealthy,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2263,13 +2259,13 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc:               "one HTTP container not healthy",
+			desc:               "one unhealthy HTTP container with allowEmptyServices",
 			allowEmptyServices: true,
 			containers: []dockerData{
 				{
 					ServiceName: "Test",
 					Name:        "Test",
-					Health:      "not_healthy",
+					Health:      docker.Unhealthy,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2302,16 +2298,46 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc:               "one TCP container not healthy",
+			desc: "one unhealthy TCP container",
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Health:      docker.Unhealthy,
+					Labels: map[string]string{
+						"traefik.tcp.routers.foo.rule": "HostSNI(`foo.bar`)",
+					},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc:               "one unhealthy TCP container with allowEmptyServices",
 			allowEmptyServices: true,
 			containers: []dockerData{
 				{
 					ServiceName: "Test",
 					Name:        "Test",
+					Health:      docker.Unhealthy,
 					Labels: map[string]string{
 						"traefik.tcp.routers.foo.rule": "HostSNI(`foo.bar`)",
 					},
-					Health: "not_healthy",
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2344,7 +2370,37 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc:               "one UDP container not healthy",
+			desc: "one unhealthy UDP container",
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Health:      docker.Unhealthy,
+					Labels: map[string]string{
+						"traefik.udp.routers.foo": "true",
+					},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc:               "one unhealthy UDP container with allowEmptyServices",
 			allowEmptyServices: true,
 			containers: []dockerData{
 				{
@@ -3626,3 +3682,7 @@ func TestSwarmGetPort(t *testing.T) {
 		})
 	}
 }
+
+func Int(v int) *int { return &v }
+
+func Bool(v bool) *bool { return &v }
