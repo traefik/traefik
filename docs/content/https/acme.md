@@ -669,7 +669,7 @@ If Let's Encrypt is not reachable, the following certificates will apply:
     
 !!! question "Using Traefik for Business Applications?"
 
-    If you're using Traefik for commercial applications,
+    If you are using Traefik for commercial applications,
     consider the [Enterprise Edition](https://traefik.io/traefik-enterprise/).
     You can use it as your:
 

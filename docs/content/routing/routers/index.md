@@ -1324,7 +1324,7 @@ Services are the target for the router.
 
 !!! question "Using Traefik for Business Applications?"
 
-    If you're using Traefik for commercial applications,
+    If you are using Traefik for commercial applications,
     consider the [Enterprise Edition](https://traefik.io/traefik-enterprise/).
     You can use it as your:
 
