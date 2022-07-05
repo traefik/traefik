@@ -79,6 +79,7 @@ providers:
     network: foobar
     swarmModeRefreshSeconds: 42s
     httpClientTimeout: 42s
+    allowEmptyServices: true
   file:
     directory: foobar
     watch: true
