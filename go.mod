@@ -36,7 +36,7 @@ require (
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
 	github.com/instana/go-sensor v1.38.3
 	github.com/klauspost/compress v1.14.2
-	github.com/kvtools/valkeyrie v0.4.0
+	github.com/kvtools/valkeyrie v0.4.1
 	github.com/lucas-clemente/quic-go v0.27.0
 	github.com/mailgun/ttlmap v0.0.0-20170619185759-c1c17f74874f
 	github.com/miekg/dns v1.1.47
@@ -53,7 +53,7 @@ require (
 	github.com/prometheus/client_model v0.2.0
 	github.com/rancher/go-rancher-metadata v0.0.0-20200311180630-7f4c936a06ac
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.7.5
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
 	github.com/traefik/paerser v0.1.5
 	github.com/traefik/yaegi v0.13.0
@@ -73,7 +73,7 @@ require (
 	google.golang.org/grpc v1.38.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.38.1
 	gopkg.in/fsnotify.v1 v1.4.7
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.22.1
 	k8s.io/apiextensions-apiserver v0.21.3
 	k8s.io/apimachinery v0.22.1
@@ -281,7 +281,7 @@ require (
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/cobra v1.2.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stretchr/objx v0.3.0 // indirect
+	github.com/stretchr/objx v0.4.0 // indirect
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.287 // indirect
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/dnspod v1.0.287 // indirect
 	github.com/theupdateframework/notary v0.6.1 // indirect
