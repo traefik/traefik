@@ -239,7 +239,6 @@ _Optional, Default=false_
 
 The `DefaultSet` option flags the EntryPoint to be used by default when configuring HTTP and TCP routers that do not define the [EntryPoints option](./routers/index.md#entrypoints).
 
-
 !!! info "How the EntryPoints default set is built"
 
     If no EntryPoint is explicitly included in the EntryPoints default set, 
