@@ -7,6 +7,7 @@ import (
 	"net"
 	"strings"
 
+	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/go-connections/nat"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/label"
@@ -100,10 +101,13 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container d
 		}
 	}
 
+	if container.Health != "" && container.Health != dockertypes.Healthy {
+		return nil
+	}
+
 	for name, service := range configuration.Services {
-		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
-		err := p.addServerTCP(ctxSvc, container, service.LoadBalancer)
-		if err != nil {
+		ctx := log.With(ctx, log.Str(log.ServiceName, name))
+		if err := p.addServerTCP(ctx, container, service.LoadBalancer); err != nil {
 			return fmt.Errorf("service %q error: %w", name, err)
 		}
 	}
@@ -116,16 +120,18 @@ func (p *Provider) buildUDPServiceConfiguration(ctx context.Context, container d
 
 	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.UDPService)
-		lb := &dynamic.UDPServersLoadBalancer{}
 		configuration.Services[serviceName] = &dynamic.UDPService{
-			LoadBalancer: lb,
+			LoadBalancer: &dynamic.UDPServersLoadBalancer{},
 		}
 	}
 
+	if container.Health != "" && container.Health != dockertypes.Healthy {
+		return nil
+	}
+
 	for name, service := range configuration.Services {
-		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
-		err := p.addServerUDP(ctxSvc, container, service.LoadBalancer)
-		if err != nil {
+		ctx := log.With(ctx, log.Str(log.ServiceName, name))
+		if err := p.addServerUDP(ctx, container, service.LoadBalancer); err != nil {
 			return fmt.Errorf("service %q error: %w", name, err)
 		}
 	}
@@ -145,10 +151,13 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, container dock
 		}
 	}
 
+	if container.Health != "" && container.Health != dockertypes.Healthy {
+		return nil
+	}
+
 	for name, service := range configuration.Services {
-		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
-		err := p.addServer(ctxSvc, container, service.LoadBalancer)
-		if err != nil {
+		ctx := log.With(ctx, log.Str(log.ServiceName, name))
+		if err := p.addServer(ctx, container, service.LoadBalancer); err != nil {
 			return fmt.Errorf("service %q error: %w", name, err)
 		}
 	}
@@ -174,7 +183,7 @@ func (p *Provider) keepContainer(ctx context.Context, container dockerData) bool
 		return false
 	}
 
-	if container.Health != "" && container.Health != "healthy" {
+	if !p.AllowEmptyServices && container.Health != "" && container.Health != dockertypes.Healthy {
 		logger.Debug("Filtering unhealthy or starting container")
 		return false
 	}
