@@ -60,6 +60,7 @@ type Options struct {
 	Hostname        string
 	Scheme          string
 	Path            string
+	Method          string
 	Port            int
 	FollowRedirects bool
 	Transport       http.RoundTripper
@@ -69,7 +70,7 @@ type Options struct {
 }
 
 func (opt Options) String() string {
-	return fmt.Sprintf("[Hostname: %s Headers: %v Path: %s Port: %d Interval: %s Timeout: %s FollowRedirects: %v]", opt.Hostname, opt.Headers, opt.Path, opt.Port, opt.Interval, opt.Timeout, opt.FollowRedirects)
+	return fmt.Sprintf("[Hostname: %s Headers: %v Path: %s Method: %s Port: %d Interval: %s Timeout: %s FollowRedirects: %v]", opt.Hostname, opt.Headers, opt.Path, opt.Method, opt.Port, opt.Interval, opt.Timeout, opt.FollowRedirects)
 }
 
 type backendURL struct {
@@ -101,8 +102,8 @@ func (b *BackendConfig) newRequest(serverURL *url.URL) (*http.Request, error) {
 	return http.NewRequest(http.MethodGet, u.String(), http.NoBody)
 }
 
-// this function adds additional http headers and hostname to http.request.
-func (b *BackendConfig) addHeadersAndHost(req *http.Request) *http.Request {
+// setRequestOptions sets all request pertinent options present on the BackendConfig.
+func (b *BackendConfig) setRequestOptions(req *http.Request) *http.Request {
 	if b.Options.Hostname != "" {
 		req.Host = b.Options.Hostname
 	}
@@ -110,6 +111,9 @@ func (b *BackendConfig) addHeadersAndHost(req *http.Request) *http.Request {
 	for k, v := range b.Options.Headers {
 		req.Header.Set(k, v)
 	}
+
+	req.Method = b.Options.Method
+
 	return req
 }
 
@@ -246,7 +250,7 @@ func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
 		return fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
-	req = backend.addHeadersAndHost(req)
+	req = backend.setRequestOptions(req)
 
 	client := http.Client{
 		Timeout:   backend.Options.Timeout,
