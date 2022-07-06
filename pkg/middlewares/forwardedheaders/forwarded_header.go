@@ -142,6 +142,9 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 
 	xfProto := unsafeHeader(outreq.Header).Get(xForwardedProto)
 	if xfProto == "" {
+		// TODO: is this expected to set the X-Forwarded-Proto header value to
+		// ws(s) as the underlying request used to upgrade the connection is
+		// made over HTTP(S)?
 		if isWebsocketRequest(outreq) {
 			if outreq.TLS != nil {
 				unsafeHeader(outreq.Header).Set(xForwardedProto, "wss")
