@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"fmt"
 	"net"
 	"testing"
 	"time"
@@ -439,9 +440,21 @@ func Test_addTCPRoute(t *testing.T) {
 			remoteAddr: "10.0.0.1:80",
 		},
 		{
+			desc:     "Invalid ALPN rule matching ACME-TLS/1",
+			rule:     fmt.Sprintf("ALPN(`%s`)", tlsalpn01.ACMETLS1Protocol),
+			protos:   []string{"foo"},
+			routeErr: true,
+		},
+		{
 			desc:   "Valid ALPN rule matching single protocol",
 			rule:   "ALPN(`foo`)",
 			protos: []string{"foo"},
+		},
+		{
+			desc:     "Valid ALPN rule matching ACME-TLS/1 protocol",
+			rule:     "ALPN(`foo`)",
+			protos:   []string{tlsalpn01.ACMETLS1Protocol},
+			matchErr: true,
 		},
 		{
 			desc:     "Valid ALPN rule not matching single protocol",
