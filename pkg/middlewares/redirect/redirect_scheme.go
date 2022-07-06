@@ -69,7 +69,7 @@ func clientRequestURL(req *http.Request) string {
 		// X-Forwarded-Proto header might have been set by a previous hop to ws(s),
 		// even though the actual protocol used so far is HTTP(s).
 		// Given that we're in a middleware that is only used in the context of HTTP(s) requests,
-		// the only possible valid schemes are one of "http" or "https", so we convert back to them.		
+		// the only possible valid schemes are one of "http" or "https", so we convert back to them.
 		switch strings.ToLower(xProto) {
 		case "ws", "http":
 			scheme = schemeHTTP
