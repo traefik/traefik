@@ -467,8 +467,9 @@ func (d *dynamicConfig) hasServerURL(serviceName, serverURL string) bool {
 func newCounterFrom(opts stdprometheus.CounterOpts, labelNames []string) *counter {
 	cv := stdprometheus.NewCounterVec(opts, labelNames)
 	c := &counter{
-		name: opts.Name,
-		cv:   cv,
+		name:             opts.Name,
+		cv:               cv,
+		labelNamesValues: make([]string, 0, 16),
 	}
 	if len(labelNames) == 0 {
 		c.collector = cv.WithLabelValues()
@@ -505,8 +506,9 @@ func (c *counter) Describe(ch chan<- *stdprometheus.Desc) {
 func newGaugeFrom(opts stdprometheus.GaugeOpts, labelNames []string) *gauge {
 	gv := stdprometheus.NewGaugeVec(opts, labelNames)
 	g := &gauge{
-		name: opts.Name,
-		gv:   gv,
+		name:             opts.Name,
+		gv:               gv,
+		labelNamesValues: make([]string, 0, 16),
 	}
 
 	if len(labelNames) == 0 {
@@ -548,8 +550,9 @@ func (g *gauge) Describe(ch chan<- *stdprometheus.Desc) {
 func newHistogramFrom(opts stdprometheus.HistogramOpts, labelNames []string) *histogram {
 	hv := stdprometheus.NewHistogramVec(opts, labelNames)
 	return &histogram{
-		name: opts.Name,
-		hv:   hv,
+		name:             opts.Name,
+		hv:               hv,
+		labelNamesValues: make([]string, 0, 16),
 	}
 }
 
@@ -594,7 +597,7 @@ func (lvs labelNamesValues) With(labelValues ...string) labelNamesValues {
 // ToLabels is a convenience method to convert a labelNamesValues
 // to the native prometheus.Labels.
 func (lvs labelNamesValues) ToLabels() stdprometheus.Labels {
-	labels := stdprometheus.Labels{}
+	labels := make(map[string]string, len(lvs)/2)
 	for i := 0; i < len(lvs); i += 2 {
 		labels[lvs[i]] = lvs[i+1]
 	}
