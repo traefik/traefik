@@ -59,6 +59,7 @@ type Provider struct {
 	Network                 string           `description:"Default Docker network used." json:"network,omitempty" toml:"network,omitempty" yaml:"network,omitempty" export:"true"`
 	SwarmModeRefreshSeconds ptypes.Duration  `description:"Polling interval for swarm mode." json:"swarmModeRefreshSeconds,omitempty" toml:"swarmModeRefreshSeconds,omitempty" yaml:"swarmModeRefreshSeconds,omitempty" export:"true"`
 	HTTPClientTimeout       ptypes.Duration  `description:"Client timeout for HTTP connections." json:"httpClientTimeout,omitempty" toml:"httpClientTimeout,omitempty" yaml:"httpClientTimeout,omitempty" export:"true"`
+	AllowEmptyServices      bool             `description:"Disregards the Docker containers health checks with respect to the creation or removal of the corresponding services." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	defaultRuleTpl          *template.Template
 }
 

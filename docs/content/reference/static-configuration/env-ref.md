@@ -519,6 +519,9 @@ KV Username
 `TRAEFIK_PROVIDERS_DOCKER`:  
 Enable Docker backend with default settings. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_DOCKER_ALLOWEMPTYSERVICES`:  
+Disregards the Docker containers health checks with respect to the creation or removal of the corresponding services. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_DOCKER_CONSTRAINTS`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
 
