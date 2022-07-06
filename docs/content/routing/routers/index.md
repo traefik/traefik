@@ -839,11 +839,12 @@ If the rule is verified, the router becomes active, calls middlewares, and then 
 
 The table below lists all the available matchers:
 
-| Rule                                                                      | Description                                                                                               |
-|---------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
-| ```HostSNI(`domain-1`, ...)```                                            | Check if the Server Name Indication corresponds to the given `domains`.                                   |
-| ```HostSNIRegexp(`example.com`, `{subdomain:[a-z]+}.example.com`, ...)``` | Check if the Server Name Indication matches the given regular expressions. See "Regexp Syntax" below. |
-| ```ClientIP(`10.0.0.0/16`, `::1`)```                                      | Check if the request client IP is one of the given IP/CIDR. It accepts IPv4, IPv6 and CIDR formats.       |
+| Rule                                                                      | Description                                                                                             |
+|---------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| ```HostSNI(`domain-1`, ...)```                                            | Checks if the Server Name Indication corresponds to the given `domains`.                                |
+| ```HostSNIRegexp(`example.com`, `{subdomain:[a-z]+}.example.com`, ...)``` | Checks if the Server Name Indication matches the given regular expressions. See "Regexp Syntax" below.  |
+| ```ClientIP(`10.0.0.0/16`, `::1`)```                                      | Checks if the connection client IP is one of the given IP/CIDR. It accepts IPv4, IPv6 and CIDR formats. |
+| ```ALPN(`mqtt`, `h2c`)```                                                 | Checks if any of the connection ALPN protocols is one of the given protocols.                           |
 
 !!! important "Non-ASCII Domain Names"
 
@@ -878,6 +879,11 @@ The table below lists all the available matchers:
 !!! important "Rule, Middleware, and Services"
 
     The rule is evaluated "before" any middleware has the opportunity to work, and "before" the request is forwarded to the service.
+
+!!! important "ALPN ACME-TLS/1"
+
+    The `ALPN` matcher cannot be used to match the ACME-TLS/1 protocol.
+    It is not allowed to guarantee that the ACME TLS challenges initiated by Traefik could not be intercepted.
 
 ### Priority
 
