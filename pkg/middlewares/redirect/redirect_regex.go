@@ -18,10 +18,10 @@ func NewRedirectRegex(ctx context.Context, next http.Handler, conf dynamic.Redir
 	logger.Debug("Creating middleware")
 	logger.Debugf("Setting up redirection from %s to %s", conf.Regex, conf.Replacement)
 
-	return newRedirect(next, conf.Regex, conf.Replacement, conf.Permanent, rawURLRegex, name)
+	return newRedirect(next, conf.Regex, conf.Replacement, conf.Permanent, rawURL, name)
 }
 
-func rawURLRegex(req *http.Request) string {
+func rawURL(req *http.Request) string {
 	scheme := schemeHTTP
 	host := req.Host
 	port := ""
