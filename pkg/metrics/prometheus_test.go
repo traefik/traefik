@@ -92,10 +92,8 @@ func TestRegisterPromState(t *testing.T) {
 // test run that changes promState internally in order to avoid dependencies
 // between unit tests.
 func (ps *prometheusState) reset() {
-	ps.collectors = make(chan *collector)
-	ps.describers = []func(ch chan<- *prometheus.Desc){}
+	ps.vectors = nil
 	ps.dynamicConfig = newDynamicConfig()
-	ps.state = make(map[string]*collector)
 }
 
 func TestPrometheus(t *testing.T) {
@@ -367,7 +365,23 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true, AddRoutersLabels: true})
 	defer promRegistry.Unregister(promState)
 
-	conf := dynamic.Configuration{
+	conf1 := dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(
+				th.WithRouter("foo@providerName",
+					th.WithServiceName("bar")),
+				th.WithRouter("router2",
+					th.WithServiceName("bar")),
+			),
+			th.WithLoadBalancerServices(
+				th.WithService("bar@providerName", th.WithServers(th.WithServer("http://localhost:9000"))),
+				th.WithService("service1", th.WithServers(th.WithServer("http://localhost:9000"))),
+				th.WithService("service2", th.WithServers(th.WithServer("http://localhost:9000"))),
+			),
+		),
+	}
+
+	conf2 := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(
 				th.WithRouter("foo@providerName",
@@ -376,15 +390,11 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 			th.WithLoadBalancerServices(th.WithService("bar@providerName",
 				th.WithServers(th.WithServer("http://localhost:9000"))),
 			),
-			func(cfg *dynamic.HTTPConfiguration) {
-				cfg.Services["fii"] = &dynamic.Service{
-					Weighted: &dynamic.WeightedRoundRobin{},
-				}
-			},
 		),
 	}
 
-	OnConfigurationUpdate(conf, []string{"entrypoint1"})
+	OnConfigurationUpdate(conf1, []string{"entrypoint1", "entrypoint2"})
+	OnConfigurationUpdate(conf2, []string{"entrypoint1"})
 
 	// Register some metrics manually that are not part of the active configuration.
 	// Those metrics should be part of the /metrics output on the first scrape but
@@ -403,7 +413,7 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 		Set(1)
 	prometheusRegistry.
 		RouterReqsCounter().
-		With("router", "router2", "service", "service2", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		With("router", "router2", "service", "service3", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 
 	assertMetricsExist(t, mustScrape(), entryPointReqsTotalName, serviceReqsTotalName, serviceServerUpName)
@@ -435,6 +445,16 @@ func TestPrometheusRemovedMetricsReset(t *testing.T) {
 
 	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true})
 	defer promRegistry.Unregister(promState)
+
+	conf1 := dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithLoadBalancerServices(th.WithService("service",
+				th.WithServers(th.WithServer("http://localhost:9000"))),
+			),
+		),
+	}
+	OnConfigurationUpdate(conf1, []string{"entrypoint1", "entrypoint2"})
+	OnConfigurationUpdate(dynamic.Configuration{}, nil)
 
 	labelNamesValues := []string{
 		"service", "service",
