@@ -88,16 +88,6 @@ func TestRegisterPromState(t *testing.T) {
 	}
 }
 
-// reset is a utility method for unit testing. It should be called after each
-// test run that changes promState internally in order to avoid dependencies
-// between unit tests.
-func (ps *prometheusState) reset() {
-	ps.collectors = make(chan *collector)
-	ps.describers = []func(ch chan<- *prometheus.Desc){}
-	ps.dynamicConfig = newDynamicConfig()
-	ps.state = make(map[string]*collector)
-}
-
 func TestPrometheus(t *testing.T) {
 	promState = newPrometheusState()
 	promRegistry = prometheus.NewRegistry()
@@ -367,24 +357,35 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true, AddRoutersLabels: true})
 	defer promRegistry.Unregister(promState)
 
-	conf := dynamic.Configuration{
+	conf1 := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(
-				th.WithRouter("foo@providerName",
-					th.WithServiceName("bar")),
+				th.WithRouter("foo@providerName", th.WithServiceName("bar")),
+				th.WithRouter("router2", th.WithServiceName("bar@providerName")),
 			),
-			th.WithLoadBalancerServices(th.WithService("bar@providerName",
-				th.WithServers(th.WithServer("http://localhost:9000"))),
+			th.WithLoadBalancerServices(
+				th.WithService("bar@providerName", th.WithServers(
+					th.WithServer("http://localhost:9000"),
+					th.WithServer("http://localhost:9999"),
+				)),
+				th.WithService("service1", th.WithServers(th.WithServer("http://localhost:9000"))),
 			),
-			func(cfg *dynamic.HTTPConfiguration) {
-				cfg.Services["fii"] = &dynamic.Service{
-					Weighted: &dynamic.WeightedRoundRobin{},
-				}
-			},
 		),
 	}
 
-	OnConfigurationUpdate(conf, []string{"entrypoint1"})
+	conf2 := dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithRouters(
+				th.WithRouter("foo@providerName", th.WithServiceName("bar")),
+			),
+			th.WithLoadBalancerServices(
+				th.WithService("bar@providerName", th.WithServers(th.WithServer("http://localhost:9000"))),
+			),
+		),
+	}
+
+	OnConfigurationUpdate(conf1, []string{"entrypoint1", "entrypoint2"})
+	OnConfigurationUpdate(conf2, []string{"entrypoint1"})
 
 	// Register some metrics manually that are not part of the active configuration.
 	// Those metrics should be part of the /metrics output on the first scrape but
@@ -394,21 +395,20 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 		With("entrypoint", "entrypoint2", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
+		RouterReqsCounter().
+		With("router", "router2", "service", "bar@providerName", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		Add(1)
+	prometheusRegistry.
 		ServiceReqsCounter().
-		With("service", "service2", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		With("service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
 		ServiceServerUpGauge().
-		With("service", "service1", "url", "http://localhost:9999").
+		With("service", "bar@providerName", "url", "http://localhost:9999").
 		Set(1)
-	prometheusRegistry.
-		RouterReqsCounter().
-		With("router", "router2", "service", "service2", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
-		Add(1)
 
-	assertMetricsExist(t, mustScrape(), entryPointReqsTotalName, serviceReqsTotalName, serviceServerUpName)
-	assertMetricsAbsent(t, mustScrape(), entryPointReqsTotalName, serviceReqsTotalName, serviceServerUpName)
-	assertMetricsAbsent(t, mustScrape(), routerReqsTotalName, routerReqDurationName, routerOpenConnsName)
+	assertMetricsExist(t, mustScrape(), entryPointReqsTotalName, routerReqsTotalName, serviceReqsTotalName, serviceServerUpName)
+	assertMetricsAbsent(t, mustScrape(), entryPointReqsTotalName, routerReqsTotalName, serviceReqsTotalName, serviceServerUpName)
 
 	// To verify that metrics belonging to active configurations are not removed
 	// here the counter examples.
@@ -418,15 +418,21 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 		Add(1)
 	prometheusRegistry.
 		RouterReqsCounter().
-		With("router", "foo@providerName", "service", "bar@providerName", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		With("router", "foo@providerName", "service", "bar", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
+	prometheusRegistry.
+		ServiceReqsCounter().
+		With("service", "bar@providerName", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		Add(1)
+	prometheusRegistry.
+		ServiceServerUpGauge().
+		With("service", "bar@providerName", "url", "http://localhost:9000").
+		Set(1)
 
 	delayForTrackingCompletion()
 
-	assertMetricsExist(t, mustScrape(), entryPointReqsTotalName)
-	assertMetricsExist(t, mustScrape(), entryPointReqsTotalName)
-	assertMetricsExist(t, mustScrape(), routerReqsTotalName)
-	assertMetricsExist(t, mustScrape(), routerReqsTotalName)
+	assertMetricsExist(t, mustScrape(), entryPointReqsTotalName, serviceReqsTotalName, serviceServerUpName, routerReqsTotalName)
+	assertMetricsExist(t, mustScrape(), entryPointReqsTotalName, serviceReqsTotalName, serviceServerUpName, routerReqsTotalName)
 }
 
 func TestPrometheusRemovedMetricsReset(t *testing.T) {
@@ -435,6 +441,16 @@ func TestPrometheusRemovedMetricsReset(t *testing.T) {
 
 	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true})
 	defer promRegistry.Unregister(promState)
+
+	conf1 := dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithLoadBalancerServices(th.WithService("service",
+				th.WithServers(th.WithServer("http://localhost:9000"))),
+			),
+		),
+	}
+	OnConfigurationUpdate(conf1, []string{"entrypoint1", "entrypoint2"})
+	OnConfigurationUpdate(dynamic.Configuration{}, nil)
 
 	labelNamesValues := []string{
 		"service", "service",
@@ -465,6 +481,18 @@ func TestPrometheusRemovedMetricsReset(t *testing.T) {
 
 	metricsFamilies = mustScrape()
 	assertCounterValue(t, 1, findMetricFamily(serviceReqsTotalName, metricsFamilies), labelNamesValues...)
+}
+
+// reset is a utility method for unit testing. It should be called after each
+// test run that changes promState internally in order to avoid dependencies
+// between unit tests.
+func (ps *prometheusState) reset() {
+	ps.dynamicConfig = newDynamicConfig()
+	ps.vectors = nil
+	ps.deletedEP = nil
+	ps.deletedRouters = nil
+	ps.deletedServices = nil
+	ps.deletedURLs = make(map[string]string)
 }
 
 // Tracking and gathering the metrics happens concurrently.
