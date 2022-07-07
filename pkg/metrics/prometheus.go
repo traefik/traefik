@@ -413,8 +413,7 @@ func (ps *prometheusState) Collect(ch chan<- stdprometheus.Metric) {
 	ps.deletedURLs = make(map[string]string)
 }
 
-// DeletePartialMatch deletes all metrics where the variable labels contain all of those
-// passed in as labels.
+// DeletePartialMatch deletes all metrics where the variable labels contain all of those passed in as labels.
 // The order of the labels does not matter.
 // It returns the number of metrics deleted.
 func (ps *prometheusState) DeletePartialMatch(labels stdprometheus.Labels) int {
