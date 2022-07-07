@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/traefik/traefik/v2/pkg/ip"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/rules"
@@ -22,6 +23,7 @@ var tcpFuncs = map[string]func(*matchersTree, ...string) error{
 	"HostSNI":       hostSNI,
 	"HostSNIRegexp": hostSNIRegexp,
 	"ClientIP":      clientIP,
+	"ALPN":          alpn,
 }
 
 // ParseHostSNI extracts the HostSNIs declared in a rule.
@@ -54,10 +56,11 @@ func ParseHostSNI(rule string) ([]string, error) {
 type ConnData struct {
 	serverName string
 	remoteIP   string
+	alpnProtos []string
 }
 
 // NewConnData builds a connData struct from the given parameters.
-func NewConnData(serverName string, conn tcp.WriteCloser) (ConnData, error) {
+func NewConnData(serverName string, conn tcp.WriteCloser, alpnProtos []string) (ConnData, error) {
 	remoteIP, _, err := net.SplitHostPort(conn.RemoteAddr().String())
 	if err != nil {
 		return ConnData{}, fmt.Errorf("error while parsing remote address %q: %w", conn.RemoteAddr().String(), err)
@@ -71,6 +74,7 @@ func NewConnData(serverName string, conn tcp.WriteCloser) (ConnData, error) {
 	return ConnData{
 		serverName: types.CanonicalDomain(serverName),
 		remoteIP:   remoteIP,
+		alpnProtos: alpnProtos,
 	}, nil
 }
 
@@ -279,6 +283,33 @@ func clientIP(tree *matchersTree, clientIPs ...string) error {
 			return false
 		}
 		return ok
+	}
+
+	return nil
+}
+
+// alpn checks if any of the connection ALPN protocols matches one of the matcher protocols.
+func alpn(tree *matchersTree, protos ...string) error {
+	if len(protos) == 0 {
+		return errors.New("empty value for \"ALPN\" matcher is not allowed")
+	}
+
+	for _, proto := range protos {
+		if proto == tlsalpn01.ACMETLS1Protocol {
+			return fmt.Errorf("invalid protocol value for \"ALPN\" matcher, %q is not allowed", proto)
+		}
+	}
+
+	tree.matcher = func(meta ConnData) bool {
+		for _, proto := range meta.alpnProtos {
+			for _, filter := range protos {
+				if proto == filter {
+					return true
+				}
+			}
+		}
+
+		return false
 	}
 
 	return nil
