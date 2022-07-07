@@ -358,6 +358,7 @@ func (ps *prometheusState) SetDynamicConfig(dynamicConfig *dynamicConfig) {
 			}
 		}
 	}
+
 	ps.dynamicConfig = dynamicConfig
 }
 
