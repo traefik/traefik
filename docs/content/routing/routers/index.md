@@ -882,8 +882,10 @@ The table below lists all the available matchers:
 
 !!! important "ALPN ACME-TLS/1"
 
-    The `ALPN` matcher cannot be used to match the ACME-TLS/1 protocol.
-    It is not allowed to guarantee that the ACME TLS challenges initiated by Traefik could not be intercepted.
+    It would be a security issue to let a user-defined router catch the response to
+    an ACME TLS challenge previously initiated by Traefik.
+    For this reason, the `ALPN` matcher is not allowed to match the `ACME-TLS/1`
+    protocol, and Traefik returns an error if this is attempted.
 
 ### Priority
 
