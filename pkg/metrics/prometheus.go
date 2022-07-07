@@ -487,12 +487,12 @@ type counter struct {
 }
 
 func (c *counter) With(labelValues ...string) metrics.Counter {
-	lvn := c.labelNamesValues.With(labelValues...)
+	lnv := c.labelNamesValues.With(labelValues...)
 	return &counter{
 		name:             c.name,
 		cv:               c.cv,
-		labelNamesValues: lvn,
-		collector:        c.cv.With(lvn.ToLabels()),
+		labelNamesValues: lnv,
+		collector:        c.cv.With(lnv.ToLabels()),
 	}
 }
 
@@ -527,12 +527,12 @@ type gauge struct {
 }
 
 func (g *gauge) With(labelValues ...string) metrics.Gauge {
-	lvn := g.labelNamesValues.With(labelValues...)
+	lnv := g.labelNamesValues.With(labelValues...)
 	return &gauge{
 		name:             g.name,
 		gv:               g.gv,
-		labelNamesValues: lvn,
-		collector:        g.gv.With(lvn.ToLabels()),
+		labelNamesValues: lnv,
+		collector:        g.gv.With(lnv.ToLabels()),
 	}
 }
 
@@ -565,12 +565,12 @@ type histogram struct {
 }
 
 func (h *histogram) With(labelValues ...string) metrics.Histogram {
-	lvn := h.labelNamesValues.With(labelValues...)
+	lnv := h.labelNamesValues.With(labelValues...)
 	return &histogram{
 		name:             h.name,
 		hv:               h.hv,
-		labelNamesValues: lvn,
-		collector:        h.hv.With(lvn.ToLabels()),
+		labelNamesValues: lnv,
+		collector:        h.hv.With(lnv.ToLabels()),
 	}
 }
 
