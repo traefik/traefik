@@ -479,9 +479,9 @@ func TestPrometheusRemovedMetricsReset(t *testing.T) {
 	assertCounterValue(t, 1, findMetricFamily(serviceReqsTotalName, metricsFamilies), labelNamesValues...)
 }
 
-// reset is a utility method for unit testing. It should be called after each
-// test run that changes promState internally in order to avoid dependencies
-// between unit tests.
+// reset is a utility method for unit testing.
+// It should be called after each test run that changes promState internally
+// in order to avoid dependencies between unit tests.
 func (ps *prometheusState) reset() {
 	ps.dynamicConfig = newDynamicConfig()
 	ps.vectors = nil
@@ -492,11 +492,11 @@ func (ps *prometheusState) reset() {
 }
 
 // Tracking and gathering the metrics happens concurrently.
-// In practice this is no problem, because in case a tracked metric would miss
-// the current scrape, it would just be there in the next one.
-// That we can test reliably the tracking of all metrics here, we sleep
-// for a short amount of time, to make sure the metric will be present
-// in the next scrape.
+// In practice this is no problem, because in case a tracked metric would miss the current scrape,
+// it would just be there in the next one.
+// That we can test reliably the tracking of all metrics here,
+// we sleep for a short amount of time,
+// to make sure the metric will be present in the next scrape.
 func delayForTrackingCompletion() {
 	time.Sleep(250 * time.Millisecond)
 }
