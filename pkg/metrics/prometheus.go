@@ -280,31 +280,31 @@ func registerPromState(ctx context.Context) bool {
 // It then converts the configuration to the optimized package internal format
 // and sets it to the promState.
 func OnConfigurationUpdate(conf dynamic.Configuration, entryPoints []string) {
-	dynamicConfig := newDynamicConfig()
+	dynCfg := newDynamicConfig()
 
 	for _, value := range entryPoints {
-		dynamicConfig.entryPoints[value] = true
+		dynCfg.entryPoints[value] = true
 	}
 
 	if conf.HTTP == nil {
-		promState.SetDynamicConfig(dynamicConfig)
+		promState.SetDynamicConfig(dynCfg)
 		return
 	}
 
 	for name := range conf.HTTP.Routers {
-		dynamicConfig.routers[name] = true
+		dynCfg.routers[name] = true
 	}
 
 	for serviceName, service := range conf.HTTP.Services {
-		dynamicConfig.services[serviceName] = make(map[string]bool)
+		dynCfg.services[serviceName] = make(map[string]bool)
 		if service.LoadBalancer != nil {
 			for _, server := range service.LoadBalancer.Servers {
-				dynamicConfig.services[serviceName][server.URL] = true
+				dynCfg.services[serviceName][server.URL] = true
 			}
 		}
 	}
 
-	promState.SetDynamicConfig(dynamicConfig)
+	promState.SetDynamicConfig(dynCfg)
 }
 
 func newPrometheusState() *prometheusState {
