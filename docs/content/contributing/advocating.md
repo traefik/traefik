@@ -19,7 +19,7 @@ If you are giving a talk that includes or is about Traefik Proxy, [let us know](
 If you have written about Traefik or shared useful information you would like to promote, feel free to add links to the [dedicated wiki page on GitHub](https://github.com/traefik/traefik/wiki/Awesome-Traefik).
 
 **Help community members!** Everyone needs a place to share their cool innovations or get help with that pesky bug that only a different pair of eyes seems to be able to see.
-Join our [Community Forum](https://community.traefik.io/) where you can ask questions, help out other users, and share your neat builds.
+Join our [Community Forum](https://community.traefik.io/) where you can ask questions, help out other users, and share your neat configuration examples or snippets.
 Top contributors will be asked to join the Ambassador program and get unique swag to celebrate!
 
 **Build cool solutions!** Traefik Proxy would be so much better if only it had…
