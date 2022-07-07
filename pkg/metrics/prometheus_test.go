@@ -17,8 +17,7 @@ import (
 )
 
 func TestRegisterPromState(t *testing.T) {
-	// Reset state of global promState.
-	defer promState.reset()
+	t.Cleanup(promState.reset)
 
 	testCases := []struct {
 		desc                 string
@@ -91,8 +90,7 @@ func TestRegisterPromState(t *testing.T) {
 func TestPrometheus(t *testing.T) {
 	promState = newPrometheusState()
 	promRegistry = prometheus.NewRegistry()
-	// Reset state of global promState.
-	defer promState.reset()
+	t.Cleanup(promState.reset)
 
 	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{AddEntryPointsLabels: true, AddRoutersLabels: true, AddServicesLabels: true})
 	defer promRegistry.Unregister(promState)
@@ -351,8 +349,7 @@ func TestPrometheus(t *testing.T) {
 func TestPrometheusMetricRemoval(t *testing.T) {
 	promState = newPrometheusState()
 	promRegistry = prometheus.NewRegistry()
-	// Reset state of global promState.
-	defer promState.reset()
+	t.Cleanup(promState.reset)
 
 	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true, AddRoutersLabels: true})
 	defer promRegistry.Unregister(promState)
@@ -436,8 +433,7 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 }
 
 func TestPrometheusRemovedMetricsReset(t *testing.T) {
-	// Reset state of global promState.
-	defer promState.reset()
+	t.Cleanup(promState.reset)
 
 	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true})
 	defer promRegistry.Unregister(promState)
