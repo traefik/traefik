@@ -83,7 +83,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	// Handling Non-TLS TCP connection early if there is neither HTTP(S) nor TLS
 	// routers on the entryPoint, and if there is at least one non-TLS TCP router.
 	// In the case of a non-TLS TCP client (that does not "send" first), we would
-	// block forever on clientHelloServerName, which is why we want to detect and
+	// block forever on clientHelloInfo, which is why we want to detect and
 	// handle that case first and foremost.
 	if r.muxerTCP.HasRoutes() && !r.muxerTCPTLS.HasRoutes() && !r.muxerHTTPS.HasRoutes() {
 		connData, err := tcpmuxer.NewConnData("", conn, nil)
@@ -108,7 +108,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 
 	// FIXME -- Check if ProxyProtocol changes the first bytes of the request
 	br := bufio.NewReader(conn)
-	serverName, protos, tls, peeked, err := clientHelloInfo(br)
+	hello, err := clientHelloInfo(br)
 	if err != nil {
 		conn.Close()
 		return
@@ -125,20 +125,20 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		log.WithoutContext().Errorf("Error while setting write deadline: %v", err)
 	}
 
-	connData, err := tcpmuxer.NewConnData(serverName, conn, protos)
+	connData, err := tcpmuxer.NewConnData(hello.serverName, conn, hello.protos)
 	if err != nil {
 		log.WithoutContext().Errorf("Error while reading TCP connection data: %v", err)
 		conn.Close()
 		return
 	}
 
-	if !tls {
+	if !hello.isTLS {
 		handler, _ := r.muxerTCP.Match(connData)
 		switch {
 		case handler != nil:
-			handler.ServeTCP(r.GetConn(conn, peeked))
+			handler.ServeTCP(r.GetConn(conn, hello.peeked))
 		case r.httpForwarder != nil:
-			r.httpForwarder.ServeTCP(r.GetConn(conn, peeked))
+			r.httpForwarder.ServeTCP(r.GetConn(conn, hello.peeked))
 		default:
 			conn.Close()
 		}
@@ -155,14 +155,14 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		// In order not to depart from the behavior in 2.6, we only allow an HTTPS router
 		// to take precedence over a TCP-TLS router if it is _not_ an HostSNI(*) router (so
 		// basically any router that has a specific HostSNI based rule).
-		handlerHTTPS.ServeTCP(r.GetConn(conn, peeked))
+		handlerHTTPS.ServeTCP(r.GetConn(conn, hello.peeked))
 		return
 	}
 
 	// Contains also TCP TLS passthrough routes.
 	handlerTCPTLS, catchAllTCPTLS := r.muxerTCPTLS.Match(connData)
 	if handlerTCPTLS != nil && !catchAllTCPTLS {
-		handlerTCPTLS.ServeTCP(r.GetConn(conn, peeked))
+		handlerTCPTLS.ServeTCP(r.GetConn(conn, hello.peeked))
 		return
 	}
 
@@ -170,19 +170,19 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	// We end up here for e.g. an HTTPS router that only has a PathPrefix rule,
 	// which under the scenes is counted as an HostSNI(*) rule.
 	if handlerHTTPS != nil {
-		handlerHTTPS.ServeTCP(r.GetConn(conn, peeked))
+		handlerHTTPS.ServeTCP(r.GetConn(conn, hello.peeked))
 		return
 	}
 
 	// Fallback on TCP TLS catchAll.
 	if handlerTCPTLS != nil {
-		handlerTCPTLS.ServeTCP(r.GetConn(conn, peeked))
+		handlerTCPTLS.ServeTCP(r.GetConn(conn, hello.peeked))
 		return
 	}
 
 	// needed to handle 404s for HTTPS, as well as all non-Host (e.g. PathPrefix) matches.
 	if r.httpsForwarder != nil {
-		r.httpsForwarder.ServeTCP(r.GetConn(conn, peeked))
+		r.httpsForwarder.ServeTCP(r.GetConn(conn, hello.peeked))
 		return
 	}
 
@@ -300,18 +300,24 @@ func (c *Conn) Read(p []byte) (n int, err error) {
 	return c.WriteCloser.Read(p)
 }
 
-// clientHelloInfo returns the SNI server name, the ALPN protocol list,
-// and if the ClientHello is a TLS handshake, without consuming any bytes from br.
-// On any error, the empty string and a nil slice is returned.
-func clientHelloInfo(br *bufio.Reader) (string, []string, bool, string, error) {
+type clientHello struct {
+	serverName string   // SNI server name
+	protos     []string // ALPN protocols list
+	isTLS      bool     // whether we are a TLS handshake
+	peeked     string   // the bytes peeked from the hello while getting the info
+}
+
+// clientHelloInfo returns various data from the clientHello handshake,
+// without consuming any bytes from br.
+// It returns an error if it can't peek the first byte from the connection.
+func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 	hdr, err := br.Peek(1)
 	if err != nil {
 		var opErr *net.OpError
 		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || opErr.Timeout()) {
 			log.WithoutContext().Errorf("Error while Peeking first byte: %s", err)
 		}
-
-		return "", nil, false, "", err
+		return nil, err
 	}
 
 	// No valid TLS record has a type of 0x80, however SSLv2 handshakes
@@ -323,16 +329,23 @@ func clientHelloInfo(br *bufio.Reader) (string, []string, bool, string, error) {
 	if hdr[0] != recordTypeHandshake {
 		if hdr[0] == recordTypeSSLv2 {
 			// we consider SSLv2 as TLS and it will be refused by real TLS handshake.
-			return "", nil, true, getPeeked(br), nil
+			return &clientHello{
+				isTLS:  true,
+				peeked: getPeeked(br),
+			}, nil
 		}
-		return "", nil, false, getPeeked(br), nil // Not TLS.
+		return &clientHello{
+			peeked: getPeeked(br),
+		}, nil // Not TLS.
 	}
 
 	const recordHeaderLen = 5
 	hdr, err = br.Peek(recordHeaderLen)
 	if err != nil {
 		log.Errorf("Error while Peeking hello: %s", err)
-		return "", nil, false, getPeeked(br), nil
+		return &clientHello{
+			peeked: getPeeked(br),
+		}, nil
 	}
 
 	recLen := int(hdr[3])<<8 | int(hdr[4]) // ignoring version in hdr[1:3]
@@ -344,7 +357,10 @@ func clientHelloInfo(br *bufio.Reader) (string, []string, bool, string, error) {
 	helloBytes, err := br.Peek(recordHeaderLen + recLen)
 	if err != nil {
 		log.Errorf("Error while Hello: %s", err)
-		return "", nil, true, getPeeked(br), nil
+		return &clientHello{
+			isTLS:  true,
+			peeked: getPeeked(br),
+		}, nil
 	}
 
 	sni := ""
@@ -358,7 +374,12 @@ func clientHelloInfo(br *bufio.Reader) (string, []string, bool, string, error) {
 	})
 	_ = server.Handshake()
 
-	return sni, protos, true, getPeeked(br), nil
+	return &clientHello{
+		serverName: sni,
+		isTLS:      true,
+		peeked:     getPeeked(br),
+		protos:     protos,
+	}, nil
 }
 
 func getPeeked(br *bufio.Reader) string {
