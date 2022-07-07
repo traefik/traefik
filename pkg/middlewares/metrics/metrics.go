@@ -123,8 +123,7 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	labels = append(labels, "code", strconv.Itoa(recorder.getCode()))
 
-	histograms := m.reqDurationHistogram.With(labels...)
-	histograms.ObserveFromStart(start)
+	m.reqDurationHistogram.With(labels...).ObserveFromStart(start)
 
 	m.reqsCounter.With(labels...).Add(1)
 }
