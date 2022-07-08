@@ -68,6 +68,7 @@
     network = "foobar"
     swarmModeRefreshSeconds = "42s"
     httpClientTimeout = "42s"
+    allowEmptyServices = true
     [providers.docker.tls]
       ca = "foobar"
       caOptional = true
