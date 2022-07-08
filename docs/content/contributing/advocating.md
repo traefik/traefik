@@ -26,6 +26,6 @@ Top contributors will be asked to join the Ambassador program and get unique swa
 We love all the wonderful ideas that our users come up with, but we can only build so much.
 Luckily, as an open source community, our users can help by [building awesome features](https://github.com/orgs/traefik/projects/9/views/7), enhancements, or bug fixes.
 We are a big community, so we do need to prioritize a bit.
-That is why we use the tag `contributor/priority` to let you know which pull requests will make it to the front of the queue for design support and review.
+That is why we use the tag `contributor/wanted` to let you know which pull requests will make it to the front of the queue for design support and review.
 Feel free to grab one of these and run with it.
 Top contributors get unique swag to celebrate. 
