@@ -8,9 +8,10 @@ description: "Looking to get started with Traefik Proxy quickly? Read the techni
 A Simple Use Case Using Kubernetes
 {: .subtitle }
 
-Using Traefik in a Kubernetes environment could be difficult to start with.
-This Getting-Started guide shows how to run an HTTP application in Kubernetes along
-with Traefik as Ingress Controller.
+This guide is an introduction on the use of Traefik in a Kubernetes environment.
+The objective at the end is to know how to run an application behind a Traefik reverse proxy in Kubernetes.
+The guide presents and explains the basic blocks required to start with Traefik such as Ingress Controller,
+Ingresses, Deployments, static and dynamic configuration.
 
 ## Permissions and Accesses
 
@@ -69,8 +70,7 @@ metadata:
   name: traefik-account
 ```
 
-And then, the last operation consists in binding the role on the account to apply the
-permissions and rules on the latter. In a file called `01-role-binding.yml`, put the
+And then, bind the role on the account to apply the permissions and rules on the latter. In a file called `01-role-binding.yml`, put the
 following [`ClusterRoleBinding`](https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/cluster-role-binding-v1/#ClusterRoleBinding) resource:
 
 ```yaml tab="01-role-binding.yml"
@@ -98,7 +98,8 @@ subjects:
 
 ## Deployment and Exposition
 
-The ingress controller (reverse proxy) is a software that runs in the same way as any other application on a cluster.
+The [ingress controller](https://traefik.io/glossary/kubernetes-ingress-and-ingress-controller-101/#what-is-a-kubernetes-ingress-controller)
+is a software that runs in the same way as any other application on a cluster.
 In order to start Traefik on the Kubernetes cluster,
 a [`Deployment`](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/deployment-v1/) resource must exist to describe how to configure
 and scale containers horizontally to support larger workloads.
@@ -258,8 +259,6 @@ spec:
     app: whoami
 ```
 
-Traefik is an ingress controller.
-An ingress controller is a software that understands Ingress resources and adapts to them.
 Thanks to the Kubernetes API, Traefik is notified when an Ingress resource is created, updated or deleted.
 It makes the process very dynamic. The ingresses are, in a way,
 the [dynamic configuration](https://doc.traefik.io/traefik/providers/kubernetes-ingress/) for Traefik.
