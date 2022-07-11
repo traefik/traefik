@@ -411,10 +411,15 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 		if container.NetworkSettings.Networks != nil {
 			dData.NetworkSettings.Networks = make(map[string]*networkData)
 			for name, containerNetwork := range container.NetworkSettings.Networks {
+				addr := containerNetwork.IPAddress
+				if addr == "" {
+					addr = containerNetwork.GlobalIPv6Address
+				}
+
 				dData.NetworkSettings.Networks[name] = &networkData{
 					ID:   containerNetwork.NetworkID,
 					Name: name,
-					Addr: containerNetwork.IPAddress,
+					Addr: addr,
 				}
 			}
 		}

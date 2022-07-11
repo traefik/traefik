@@ -3512,6 +3512,22 @@ func TestDockerGetIPAddress(t *testing.T) {
 			expected: "10.11.12.13",
 		},
 		{
+			desc: "one ipv6 network, network label",
+			container: containerJSON(
+				withNetwork("testnet", ipv6("fd00:1:2:3:4::")),
+			),
+			network:  "testnet",
+			expected: "fd00:1:2:3:4::",
+		},
+		{
+			desc: "two network ipv4 + ipv6, network label",
+			container: containerJSON(
+				withNetwork("testnet", ipv4("10.11.12.13"), ipv6("fd00:1:2:3:4::")),
+			),
+			network:  "testnet",
+			expected: "10.11.12.13",
+		},
+		{
 			desc: "two networks, network label",
 			container: containerJSON(
 				withNetwork("testnet", ipv4("10.11.12.13")),
