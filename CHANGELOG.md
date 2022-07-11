@@ -1,3 +1,16 @@
+## [v2.8.1](https://github.com/traefik/traefik/tree/v2.8.1) (2022-07-11)
+[All Commits](https://github.com/traefik/traefik/compare/v2.8.0...v2.8.1)
+
+**Bug fixes:**
+- **[kv]** Upgrade valkeyrie to v0.4.1 ([#9161](https://github.com/traefik/traefik/pull/9161) by [moutoum](https://github.com/moutoum))
+- **[middleware,metrics]** Improve performances when Prometheus metrics are enabled ([#9168](https://github.com/traefik/traefik/pull/9168) by [juliens](https://github.com/juliens))
+- **[middleware]** Support forwarded websocket protocol in RedirectScheme ([#9159](https://github.com/traefik/traefik/pull/9159) by [moutoum](https://github.com/moutoum))
+
+**Documentation:**
+- Update the language for advocating page ([#9169](https://github.com/traefik/traefik/pull/9169) by [tfny](https://github.com/tfny))
+- Add callout for anyone using Traefik to manage commercial applications ([#9152](https://github.com/traefik/traefik/pull/9152) by [tomatokoolaid](https://github.com/tomatokoolaid))
+- Update deprecation notices ([#9149](https://github.com/traefik/traefik/pull/9149) by [ddtmachado](https://github.com/ddtmachado))
+
 ## [v2.8.0](https://github.com/traefik/traefik/tree/v2.8.0) (2022-06-29)
 [All Commits](https://github.com/traefik/traefik/compare/v2.8.0-rc1...v2.8.0)
 
