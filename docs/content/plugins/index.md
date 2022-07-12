@@ -23,7 +23,7 @@ To learn more about Traefik plugins, consult the [documentation](https://plugins
 
 ## Build Your Own Plugins
 
-Traefik users can create plugins and share them with the community using the Plugin Catalog.
+Traefik users can create their own plugins and share them with the community using the Plugin Catalog.
 
 Traefik will load plugins dynamically.
 They need not be compiled, and no complex toolchain is necessary to build them. 
