@@ -79,7 +79,7 @@ but in short, it looks like this:
       if a PR languishes in code review it is at risk of rejection, 
       or we may take ownership of the PR and the contributor will become a co-author.
 * Merge. 
-  * Success!
+    * Success!
 
 !!! note
 
