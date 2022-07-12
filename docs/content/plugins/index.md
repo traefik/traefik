@@ -6,26 +6,26 @@ description: "Learn how to use Traefik Plugins. Read the technical documentation
 # Traefik Plugins and the Plugin Catalog
 
 Plugins are a powerful feature for extending Traefik with custom features and behaviors.
-The [Plugin Catalog](https://plugins.traefik.io/) is a software-as-a-service (SaaS) platform that provides an exhausting list of the existing plugins.
+The [Plugin Catalog](https://plugins.traefik.io/) is a software-as-a-service (SaaS) platform that provides an exhaustive list of the existing plugins.
 
 ??? note "Plugin Catalog Access"
-    You can easily reach the [Plugin Catalog](https://plugins.traefik.io/) from the Traefik Dashboard using the `Plugins` menu entry.
+    You can reach the [Plugin Catalog](https://plugins.traefik.io/) from the Traefik Dashboard using the `Plugins` menu entry.
 
-To add a new plugin to a Traefik instance, you must modify that instance's static configuration.
-The code to be added is provided in each plugin's **Install** section.
-Many plugins require some additional changes in the Traefik dynamic configuration.
+To add a new plugin to a Traefik instance, you must change that instance's static configuration.
+Each plugin's **Install** section provides a static configuration example.
+Many plugins have their own section in the Traefik dynamic configuration.
 
 To learn more about Traefik plugins, consult the [documentation](https://plugins.traefik.io/install).
 
 !!! danger "Experimental Features"
-    Plugins can potentially modify the behavior of Traefik in unforeseen ways.
+    Plugins can change the behavior of Traefik in unforeseen ways.
     Exercise caution when adding new plugins to production Traefik instances.
 
 ## Build Your Own Plugins
 
-Traefik users can create their own plugins and share them with the community using the Plugin Catalog.
+Traefik users can create plugins and share them with the community using the Plugin Catalog.
 
-Traefik plugins are loaded dynamically. 
+Traefik will load plugins dynamically.
 They need not be compiled, and no complex toolchain is necessary to build them. 
 The experience of implementing a Traefik plugin is comparable to writing a web browser extension.
 
