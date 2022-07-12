@@ -126,7 +126,7 @@ This label can be used when:
 ## Why Was My Pull Request Closed?
 
 Traefik Proxy is made by the community for the community, 
-as such goal is to engage the community to make Traefik the best reverse proxy available. 
+as such the goal is to engage the community to make Traefik the best reverse proxy available. 
 Unfortunately, part of this goal is maintaining a lean codebase and ensuring code velocity. 
 Sometimes, this means that we will not be able to merge a pull request.
 
