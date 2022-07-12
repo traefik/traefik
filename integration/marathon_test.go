@@ -23,7 +23,7 @@ func (s *MarathonSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "marathon")
 	s.composeUp(c)
 
-	s.marathonURL = "http://" + containerNameMarathon + ":8080"
+	s.marathonURL = "http://" + s.getComposeServiceIP(c, containerNameMarathon) + ":8080"
 
 	// Wait for Marathon readiness prior to creating the client so that we
 	// don't run into the "all cluster members down" state right from the
@@ -45,6 +45,7 @@ func (s *MarathonSuite) TestConfigurationUpdate(c *check.C) {
 		MarathonURL string
 	}{s.marathonURL})
 	defer os.Remove(file)
+
 	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
 	err := cmd.Start()
