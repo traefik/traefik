@@ -46,7 +46,7 @@ If you have questions about the Triage process,
   
 ## The Pull Request Submit Process
 
-Merging a PR requires the following steps to be completed before the pull request is merged automatically.
+Merging a PR requires the following steps to be completed before it is merged automatically.
 
 * Make sure your pull request adheres to our best practices. These include:
     * [Following project conventions](https://github.com/traefik/traefik/blob/master/docs/content/contributing/maintainers-guidelines.md); including using the PR Template.
