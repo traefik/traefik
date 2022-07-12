@@ -46,7 +46,7 @@ type itemData struct {
 
 // ProviderBuilder is responsible for constructing namespaced instances of the Consul Catalog provider.
 type ProviderBuilder struct {
-	Configuration `export:"true"`
+	Configuration `yaml:",inline" export:"true"`
 
 	// Deprecated: use Namespaces option instead.
 	Namespace  string   `description:"Sets the namespace used to discover services (Consul Enterprise only)." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
