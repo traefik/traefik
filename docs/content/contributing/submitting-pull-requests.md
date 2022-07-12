@@ -128,7 +128,7 @@ This label can be used when:
 Traefik Proxy is made by the community for the community, 
 as such the goal is to engage the community to make Traefik the best reverse proxy available. 
 Part of this goal is maintaining a lean codebase and ensuring code velocity. 
-Unfortunatly, this means that sometimes we will not be able to merge a pull request.
+unfortunately, this means that sometimes we will not be able to merge a pull request.
 
 Because we respect the work you did, you will always be told why we are closing your pull request. 
 If you do not agree with our decision, do not worry; closed pull requests are easy to recreate, 
