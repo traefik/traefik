@@ -121,8 +121,8 @@ func (c CertificateStore) ResetCache() {
 	}
 }
 
-// matchDomain returns true if the server name matches the cert domain.
-// The server name, from TLS SNI, can't have trailing dots (https://datatracker.ietf.org/doc/html/rfc6066#section-3).
+// matchDomain returns whether the server name matches the cert domain.
+// The server name, from TLS SNI, must not have trailing dots (https://datatracker.ietf.org/doc/html/rfc6066#section-3).
 // This is enforced by https://github.com/golang/go/blob/d3d7998756c33f69706488cade1cd2b9b10a4c7f/src/crypto/tls/handshake_messages.go#L423-L427.
 func matchDomain(serverName, certDomain string) bool {
 	// TODO: assert equality after removing the trailing dots?
