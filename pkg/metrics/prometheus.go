@@ -34,6 +34,10 @@ const (
 	metricsTLSPrefix          = MetricNamePrefix + "tls_"
 	tlsCertsNotAfterTimestamp = metricsTLSPrefix + "certs_not_after"
 
+	// proxy
+	metricProxyPrefix    = MetricNamePrefix + "proxy_"
+	proxyReqDurationName = metricProxyPrefix + "request_duration_seconds"
+
 	// entry point.
 	metricEntryPointPrefix     = MetricNamePrefix + "entrypoint_"
 	entryPointReqsTotalName    = metricEntryPointPrefix + "requests_total"
@@ -145,6 +149,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 	}
 
 	reg := &standardRegistry{
+		proxyEnabled:                   config.AddProxyLabels,
 		epEnabled:                      config.AddEntryPointsLabels,
 		routerEnabled:                  config.AddRoutersLabels,
 		svcEnabled:                     config.AddServicesLabels,
@@ -153,6 +158,20 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		lastConfigReloadSuccessGauge:   lastConfigReloadSuccess,
 		lastConfigReloadFailureGauge:   lastConfigReloadFailure,
 		tlsCertsNotAfterTimestampGauge: tlsCertsNotAfterTimestamp,
+	}
+
+	if config.AddProxyLabels {
+		proxyReqDurations := newHistogramFrom(promState.collectors, stdprometheus.HistogramOpts{
+			Name:    proxyReqDurationName,
+			Help:    "How long it took to process the request in the proxy, partitioned by status code, protocol, and method.",
+			Buckets: buckets,
+		}, []string{"code", "method", "protocol", "entrypoint"})
+
+		promState.describers = append(promState.describers, []func(chan<- *stdprometheus.Desc){
+			proxyReqDurations.hv.Describe,
+		}...)
+
+		reg.proxyReqDurationHistogram, _ = NewHistogramWithScale(proxyReqDurations, time.Second)
 	}
 
 	if config.AddEntryPointsLabels {

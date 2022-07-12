@@ -12,6 +12,8 @@ const defaultMetricsPrefix = "traefik"
 
 // Registry has to implemented by any system that wants to monitor and expose metrics.
 type Registry interface {
+	// IsProxyEnabled shows whether metrics instrumentation is enabled on the proxy.
+	IsProxyEnabled() bool
 	// IsEpEnabled shows whether metrics instrumentation is enabled on entry points.
 	IsEpEnabled() bool
 	// IsRouterEnabled shows whether metrics instrumentation is enabled on routers.
@@ -27,6 +29,9 @@ type Registry interface {
 
 	// TLS
 	TLSCertsNotAfterTimestampGauge() metrics.Gauge
+
+	// proxy metrics
+	ProxyReqDurationHistogram() ScalableHistogram
 
 	// entry point metrics
 	EntryPointReqsCounter() metrics.Counter
@@ -64,6 +69,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var lastConfigReloadSuccessGauge []metrics.Gauge
 	var lastConfigReloadFailureGauge []metrics.Gauge
 	var tlsCertsNotAfterTimestampGauge []metrics.Gauge
+	var proxyReqDurationHistogram []ScalableHistogram
 	var entryPointReqsCounter []metrics.Counter
 	var entryPointReqsTLSCounter []metrics.Counter
 	var entryPointReqDurationHistogram []ScalableHistogram
@@ -94,6 +100,9 @@ func NewMultiRegistry(registries []Registry) Registry {
 		}
 		if r.TLSCertsNotAfterTimestampGauge() != nil {
 			tlsCertsNotAfterTimestampGauge = append(tlsCertsNotAfterTimestampGauge, r.TLSCertsNotAfterTimestampGauge())
+		}
+		if r.ProxyReqDurationHistogram() != nil {
+			proxyReqDurationHistogram = append(proxyReqDurationHistogram, r.ProxyReqDurationHistogram())
 		}
 		if r.EntryPointReqsCounter() != nil {
 			entryPointReqsCounter = append(entryPointReqsCounter, r.EntryPointReqsCounter())
@@ -140,6 +149,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 	}
 
 	return &standardRegistry{
+		proxyEnabled:                   len(proxyReqDurationHistogram) > 0,
 		epEnabled:                      len(entryPointReqsCounter) > 0 || len(entryPointReqDurationHistogram) > 0 || len(entryPointOpenConnsGauge) > 0,
 		svcEnabled:                     len(serviceReqsCounter) > 0 || len(serviceReqDurationHistogram) > 0 || len(serviceOpenConnsGauge) > 0 || len(serviceRetriesCounter) > 0 || len(serviceServerUpGauge) > 0,
 		routerEnabled:                  len(routerReqsCounter) > 0 || len(routerReqDurationHistogram) > 0 || len(routerOpenConnsGauge) > 0,
@@ -148,6 +158,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 		lastConfigReloadSuccessGauge:   multi.NewGauge(lastConfigReloadSuccessGauge...),
 		lastConfigReloadFailureGauge:   multi.NewGauge(lastConfigReloadFailureGauge...),
 		tlsCertsNotAfterTimestampGauge: multi.NewGauge(tlsCertsNotAfterTimestampGauge...),
+		proxyReqDurationHistogram:      NewMultiHistogram(proxyReqDurationHistogram...),
 		entryPointReqsCounter:          multi.NewCounter(entryPointReqsCounter...),
 		entryPointReqsTLSCounter:       multi.NewCounter(entryPointReqsTLSCounter...),
 		entryPointReqDurationHistogram: NewMultiHistogram(entryPointReqDurationHistogram...),
@@ -166,6 +177,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 }
 
 type standardRegistry struct {
+	proxyEnabled                   bool
 	epEnabled                      bool
 	routerEnabled                  bool
 	svcEnabled                     bool
@@ -174,6 +186,7 @@ type standardRegistry struct {
 	lastConfigReloadSuccessGauge   metrics.Gauge
 	lastConfigReloadFailureGauge   metrics.Gauge
 	tlsCertsNotAfterTimestampGauge metrics.Gauge
+	proxyReqDurationHistogram      ScalableHistogram
 	entryPointReqsCounter          metrics.Counter
 	entryPointReqsTLSCounter       metrics.Counter
 	entryPointReqDurationHistogram ScalableHistogram
@@ -188,6 +201,10 @@ type standardRegistry struct {
 	serviceOpenConnsGauge          metrics.Gauge
 	serviceRetriesCounter          metrics.Counter
 	serviceServerUpGauge           metrics.Gauge
+}
+
+func (r *standardRegistry) IsProxyEnabled() bool {
+	return r.proxyEnabled
 }
 
 func (r *standardRegistry) IsEpEnabled() bool {
@@ -220,6 +237,10 @@ func (r *standardRegistry) LastConfigReloadFailureGauge() metrics.Gauge {
 
 func (r *standardRegistry) TLSCertsNotAfterTimestampGauge() metrics.Gauge {
 	return r.tlsCertsNotAfterTimestampGauge
+}
+
+func (r *standardRegistry) ProxyReqDurationHistogram() ScalableHistogram {
+	return r.proxyReqDurationHistogram
 }
 
 func (r *standardRegistry) EntryPointReqsCounter() metrics.Counter {
@@ -283,6 +304,7 @@ func (r *standardRegistry) ServiceServerUpGauge() metrics.Gauge {
 type ScalableHistogram interface {
 	With(labelValues ...string) ScalableHistogram
 	Observe(v float64)
+	ObserveScaled(duration time.Duration)
 	ObserveFromStart(start time.Time)
 }
 
@@ -298,17 +320,21 @@ func (s *HistogramWithScale) With(labelValues ...string) ScalableHistogram {
 	return h
 }
 
-// ObserveFromStart implements ScalableHistogram.
-func (s *HistogramWithScale) ObserveFromStart(start time.Time) {
+func (s *HistogramWithScale) ObserveScaled(duration time.Duration) {
 	if s.unit <= 0 {
 		return
 	}
 
-	d := float64(time.Since(start).Nanoseconds()) / float64(s.unit)
+	d := float64(duration.Nanoseconds()) / float64(s.unit)
 	if d < 0 {
 		d = 0
 	}
 	s.histogram.Observe(d)
+}
+
+// ObserveFromStart implements ScalableHistogram.
+func (s *HistogramWithScale) ObserveFromStart(start time.Time) {
+	s.ObserveScaled(time.Since(start))
 }
 
 // Observe implements ScalableHistogram.
@@ -346,6 +372,13 @@ func (h MultiHistogram) ObserveFromStart(start time.Time) {
 func (h MultiHistogram) Observe(v float64) {
 	for _, histogram := range h {
 		histogram.Observe(v)
+	}
+}
+
+// ObserveScaled implements ScalableHistogram.
+func (h MultiHistogram) ObserveScaled(duration time.Duration) {
+	for _, histogram := range h {
+		histogram.ObserveScaled(duration)
 	}
 }
 

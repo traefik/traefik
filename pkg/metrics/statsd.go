@@ -24,6 +24,8 @@ const (
 
 	statsdTLSCertsNotAfterTimestampName = "tls.certs.notAfterTimestamp"
 
+	statsdProxyReqDurationName = "proxy.request.duration"
+
 	statsdEntryPointReqsName        = "entrypoint.request.total"
 	statsdEntryPointReqsTLSName     = "entrypoint.request.tls.total"
 	statsdEntryPointReqDurationName = "entrypoint.request.duration"
@@ -64,6 +66,11 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 		lastConfigReloadSuccessGauge:   statsdClient.NewGauge(statsdLastConfigReloadSuccessName),
 		lastConfigReloadFailureGauge:   statsdClient.NewGauge(statsdLastConfigReloadFailureName),
 		tlsCertsNotAfterTimestampGauge: statsdClient.NewGauge(statsdTLSCertsNotAfterTimestampName),
+	}
+
+	if config.AddProxyLabels {
+		registry.proxyEnabled = config.AddProxyLabels
+		registry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(statsdClient.NewTiming(statsdProxyReqDurationName, 1.0), time.Millisecond)
 	}
 
 	if config.AddEntryPointsLabels {

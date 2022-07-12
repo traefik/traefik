@@ -29,6 +29,8 @@ const (
 
 	influxDBTLSCertsNotAfterTimestampName = "traefik.tls.certs.notAfterTimestamp"
 
+	influxDBProxyReqDurationName = "traefik.proxy.requests.duration"
+
 	influxDBEntryPointReqsName        = "traefik.entrypoint.requests.total"
 	influxDBEntryPointReqsTLSName     = "traefik.entrypoint.requests.tls.total"
 	influxDBEntryPointReqDurationName = "traefik.entrypoint.request.duration"
@@ -67,6 +69,11 @@ func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 		lastConfigReloadSuccessGauge:   influxDBClient.NewGauge(influxDBLastConfigReloadSuccessName),
 		lastConfigReloadFailureGauge:   influxDBClient.NewGauge(influxDBLastConfigReloadFailureName),
 		tlsCertsNotAfterTimestampGauge: influxDBClient.NewGauge(influxDBTLSCertsNotAfterTimestampName),
+	}
+
+	if config.AddProxyLabels {
+		registry.proxyEnabled = config.AddProxyLabels
+		registry.proxyReqDurationHistogram, _ = NewHistogramWithScale(influxDBClient.NewHistogram(influxDBProxyReqDurationName), time.Second)
 	}
 
 	if config.AddEntryPointsLabels {
