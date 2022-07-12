@@ -50,8 +50,7 @@ func Test(t *testing.T) {
 		useVPN bool
 	)
 	if os.Getenv("IN_DOCKER") != "true" {
-		vpn = setupVPN(nil, "tailscale.secret")
-		if vpn != nil {
+		if vpn = setupVPN(nil, "tailscale.secret"); vpn != nil {
 			defer vpn.TearDownSuite(nil)
 			useVPN = true
 		}
