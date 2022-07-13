@@ -330,11 +330,11 @@ func withConfigFile(file string) string {
 // from composeUp et co., but it is not meant to function as a TestSuite per se.
 type tailscaleNotSuite struct{ BaseSuite }
 
-// setupVPN starts tailscale on the corresponding container, and makes it a subnet
+// setupVPN starts Tailscale on the corresponding container, and makes it a subnet
 // router, for all the other containers (whoamis, etc) subsequently started for the
 // integration tests.
 // It only does so if the file provided as argument exists, and contains a
-// tailscale auth key (an ephemeral, but reusable, one is recommended).
+// Tailscale auth key (an ephemeral, but reusable, one is recommended).
 //
 // Add this section to your tailscale ACLs to auto-approve the routes for the
 // containers in the docker subnet:
