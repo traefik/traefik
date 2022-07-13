@@ -77,6 +77,23 @@ to allow defining:
 - A [router rule](#dashboard-router-rule) for accessing the dashboard,
   through Traefik itself (sometimes referred as "Traefik-ception").
 
+#### Example
+
+```
+$ cat /etc/traefik/traefik.yml
+api: { }
+
+providers:
+  file:
+    filename: /etc/traefik/dynamic_conf.yml
+$ cat /etc/traefik/dynamic_conf.yml
+http:
+  routers:
+    api:
+      rule: Host(`traefik.example.com`)
+      service: api@internal
+```
+
 ### Dashboard Router Rule
 
 As underlined in the [documentation for the `api.dashboard` option](./api.md#dashboard),
