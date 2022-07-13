@@ -159,6 +159,75 @@ data:
 
 If no default certificate is provided, Traefik generates and uses a self-signed certificate.
 
+### ACME Default Certificate
+
+You can configure Traefik to use an ACME provider (like Let's Encrypt) to generate the default certificate.
+The configuration to resolve the default certificate should be defined in a TLS store:
+
+!!! important "Precedence with the `defaultCertificate` option"
+
+    The `defaultCertificate` definition takes precendence on the ACME default certificate configuration.
+
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
+tls:
+  stores:
+    default:
+      defaultCertResolver: myresolver
+      defaultCertDomain:
+        main: foobar
+        sans:
+          - foobar
+          - foobar
+```
+
+```toml tab="File (TOML)"
+# Dynamic configuration
+
+[tls.stores]
+  [tls.stores.default]
+    defaultCertResolver = "myresolver"
+    [tls.stores.default.defaultCertDomain]
+      main = "foobar"
+      sans = ["foobar", "foobar"]
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSStore
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  defaultCertResolver: myresolver
+  defaultCertDomain:
+    main: foobar
+    sans:
+      - foobar
+      - foobar
+
+```
+
+```yaml tab="Docker"
+## Dynamic configuration
+labels:
+  - "traefik.tls.stores.default.defaultCertResolver=myresolver"
+  - "traefik.tls.stores.default.defaultCertDomain.main=foobar"
+  - "traefik.tls.stores.default.defaultCertDomain.sans=foobar, foobar"
+```
+
+```json tab="Marathon"
+labels: {
+  "traefik.tls.stores.default.defaultCertResolver": "myresolver",
+  "traefik.tls.stores.default.defaultCertDomain.main": "foobar",
+  "traefik.tls.stores.default.defaultCertDomain.sans": "foobar, foobar",
+}
+```
+
+If no default certificate is provided, Traefik generates and uses a self-signed certificate.
+
 ## TLS Options
 
 The TLS options allow one to configure some parameters of the TLS connection.
