@@ -32,7 +32,7 @@ services:
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /cgroup:/cgroup -v /sys:/sys \
     -v /usr/local/bin/docker:/usr/local/bin/docker \
-    -e MESOS_HOSTNAME=mesos-slave \
+    -e MESOS_HOSTNAME=$$(hostname -i) \
     -e MESOS_CONTAINERIZERS=docker,mesos \
     -e MESOS_ISOLATOR=cgroups/cpu,cgroups/mem \
     -e MESOS_LOG_DIR=/var/log \
