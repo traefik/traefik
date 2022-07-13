@@ -362,7 +362,8 @@ func setupVPN(c *check.C, keyFile string) *tailscaleNotSuite {
 	vpn.createComposeProject(c, "tailscale")
 	vpn.composeUp(c)
 	time.Sleep(5 * time.Second)
-	// TODO(mpl): make sure this docker subnet stays the same as the one we setup in Makefile.
+	// If we ever change the docker subnet in the Makefile,
+	// we need to change this one below correspondingly.
 	vpn.composeExec(c, "tailscaled", "tailscale", "up", "--authkey="+authKey, "--advertise-routes=172.31.42.0/24")
 	return vpn
 }
