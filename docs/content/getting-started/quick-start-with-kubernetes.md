@@ -20,7 +20,7 @@ Before being able to use the Kubernetes API,
 Traefik needs some permissions.
 This [permission mechanism](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) is based on roles defined by the cluster administrator.
 The role is then bound to an account used by an application,
-Traefik is this case.
+Traefik in this case.
 
 The first step is to create the role.
 The [`ClusterRole`](https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/cluster-role-v1/#ClusterRole) resource enumerates the resources and actions
