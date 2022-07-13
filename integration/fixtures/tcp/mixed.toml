@@ -37,7 +37,7 @@
   [http.services]
     [http.services.whoami.loadBalancer]
       [[http.services.whoami.loadBalancer.servers]]
-        url = "http://whoami:80"
+        url = "{{ .Whoami }}"
 [tcp]
   [tcp.routers]
     [tcp.routers.to-whoami-a]
@@ -62,15 +62,15 @@
 
     [tcp.services.whoami-a.loadBalancer]
       [[tcp.services.whoami-a.loadBalancer.servers]]
-        address = "whoami-a:8080"
+        address = "{{ .WhoamiA }}"
 
     [tcp.services.whoami-b.loadBalancer]
       [[tcp.services.whoami-b.loadBalancer.servers]]
-        address = "whoami-b:8080"
+        address = "{{ .WhoamiB }}"
 
     [tcp.services.whoami-no-cert.loadBalancer]
       [[tcp.services.whoami-no-cert.loadBalancer.servers]]
-        address = "whoami-no-cert:8080"
+        address = "{{ .WhoamiNoCert }}"
 
 [[tls.certificates]]
   certFile = "fixtures/tcp/whoami-c.crt"
