@@ -77,22 +77,6 @@ to allow defining:
 - A [router rule](#dashboard-router-rule) for accessing the dashboard,
   through Traefik itself (sometimes referred as "Traefik-ception").
 
-#### Example
-
-```
-$ cat /etc/traefik/traefik.yml
-api: { }
-
-providers:
-  file:
-    filename: /etc/traefik/dynamic_conf.yml
-$ cat /etc/traefik/dynamic_conf.yml
-http:
-  routers:
-    api:
-      rule: Host(`traefik.example.com`)
-      service: api@internal
-```
 
 ### Dashboard Router Rule
 
@@ -120,6 +104,31 @@ rule = "Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashb
 
 ??? example "Dashboard Dynamic Configuration Examples"
     --8<-- "content/operations/include-dashboard-examples.md"
+    
+
+#### Example
+
+```
+$ cat /etc/traefik/traefik.yml
+api: { }
+
+providers:
+  file:
+    filename: /etc/traefik/dynamic_conf.yml
+
+$ cat /etc/traefik/dynamic_conf.yml
+http:
+  routers:
+    api:
+      rule: Host(`traefik.example.com`)
+      service: api@internal
+    middlewares:
+      - auth
+    basicAuth:
+      users:
+       - "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
+       - "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+```
 
 ## Insecure Mode
 
