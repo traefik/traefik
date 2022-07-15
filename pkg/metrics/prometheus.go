@@ -350,7 +350,6 @@ func (ps *prometheusState) SetDynamicConfig(dynamicConfig *dynamicConfig) {
 		actualService, ok := dynamicConfig.services[service]
 		if !ok {
 			ps.deletedServices = append(ps.deletedServices, service)
-			continue
 		}
 		for url := range serV {
 			if _, ok := actualService[url]; !ok {
