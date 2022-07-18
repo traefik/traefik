@@ -310,7 +310,7 @@ func OnConfigurationUpdate(conf dynamic.Configuration, entryPoints []string) {
 func newPrometheusState() *prometheusState {
 	return &prometheusState{
 		dynamicConfig: newDynamicConfig(),
-		deletedURLs:   make(map[string]string),
+		deletedURLs:   make(map[string][]string),
 	}
 }
 
@@ -327,7 +327,7 @@ type prometheusState struct {
 	deletedEP       []string
 	deletedRouters  []string
 	deletedServices []string
-	deletedURLs     map[string]string
+	deletedURLs     map[string][]string
 }
 
 func (ps *prometheusState) SetDynamicConfig(dynamicConfig *dynamicConfig) {
@@ -350,11 +350,10 @@ func (ps *prometheusState) SetDynamicConfig(dynamicConfig *dynamicConfig) {
 		actualService, ok := dynamicConfig.services[service]
 		if !ok {
 			ps.deletedServices = append(ps.deletedServices, service)
-			continue
 		}
 		for url := range serV {
 			if _, ok := actualService[url]; !ok {
-				ps.deletedURLs[service] = url
+				ps.deletedURLs[service] = append(ps.deletedURLs[service], url)
 			}
 		}
 	}
@@ -401,16 +400,18 @@ func (ps *prometheusState) Collect(ch chan<- stdprometheus.Metric) {
 		}
 	}
 
-	for service, url := range ps.deletedURLs {
-		if !ps.dynamicConfig.hasServerURL(service, url) {
-			ps.DeletePartialMatch(map[string]string{"service": service, "url": url})
+	for service, urls := range ps.deletedURLs {
+		for _, url := range urls {
+			if !ps.dynamicConfig.hasServerURL(service, url) {
+				ps.DeletePartialMatch(map[string]string{"service": service, "url": url})
+			}
 		}
 	}
 
 	ps.deletedEP = nil
 	ps.deletedRouters = nil
 	ps.deletedServices = nil
-	ps.deletedURLs = make(map[string]string)
+	ps.deletedURLs = make(map[string][]string)
 }
 
 // DeletePartialMatch deletes all metrics where the variable labels contain all of those passed in as labels.
