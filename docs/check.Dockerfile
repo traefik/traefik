@@ -1,5 +1,4 @@
-
-FROM alpine:3.10 as alpine
+FROM alpine:3.15 as alpine
 
 RUN apk --no-cache --no-progress add \
     libcurl \
@@ -9,7 +8,7 @@ RUN apk --no-cache --no-progress add \
     ruby-ffi \
     ruby-json \
     ruby-nokogiri
-RUN gem install html-proofer --version 3.13.0 --no-document -- --use-system-libraries
+RUN gem install html-proofer --version 3.19.3 --no-document -- --use-system-libraries
 
 # After Ruby, some NodeJS YAY!
 RUN apk --no-cache --no-progress add \
