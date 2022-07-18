@@ -35,6 +35,10 @@ DOCKER_RUN_TRAEFIK_NOTTY := docker run $(INTEGRATION_OPTS) $(if $(DOCKER_NON_INT
 
 IN_DOCKER ?= true
 
+DOCS_LINT_SKIP ?= false
+TRAEFIK_DOCS_BUILD_IMAGE ?= traefik-docs
+TRAEFIK_DOCS_CHECK_IMAGE ?= $(TRAEFIK_DOCS_BUILD_IMAGE)-check
+
 .PHONY: default
 default: binary
 
@@ -162,7 +166,7 @@ shell: build-dev-image
 
 ## Build documentation site
 .PHONY: docs
-docs:
+docs: docs-lint
 	make -C ./docs docs
 
 ## Serve the documentation site locally
@@ -174,6 +178,16 @@ docs-serve:
 .PHONY: docs-pull-images
 docs-pull-images:
 	make -C ./docs docs-pull-images
+
+# lint documentation
+.PHONY: docs-lint
+docs-lint:
+ifneq ("$(DOCS_LINT_SKIP)", "true")
+	docker build -t $(TRAEFIK_DOCS_CHECK_IMAGE) -f docs/check.Dockerfile ./
+	docker run --rm -v $(CURDIR):/app $(TRAEFIK_DOCS_CHECK_IMAGE) /lint.sh
+else
+	echo "DOCS_LINT_SKIP is true: no linting done."
+endif
 
 ## Generate CRD clientset and CRD manifests
 .PHONY: generate-crd
