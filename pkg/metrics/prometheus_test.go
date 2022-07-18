@@ -364,6 +364,7 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 				th.WithService("bar@providerName", th.WithServers(
 					th.WithServer("http://localhost:9000"),
 					th.WithServer("http://localhost:9999"),
+					th.WithServer("http://localhost:9998"),
 				)),
 				th.WithService("service1", th.WithServers(th.WithServer("http://localhost:9000"))),
 			),
@@ -403,6 +404,10 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 		ServiceServerUpGauge().
 		With("service", "bar@providerName", "url", "http://localhost:9999").
 		Set(1)
+	prometheusRegistry.
+		ServiceServerUpGauge().
+		With("service", "bar@providerName", "url", "http://localhost:9998").
+		Set(1)
 
 	assertMetricsExist(t, mustScrape(), entryPointReqsTotalName, routerReqsTotalName, serviceReqsTotalName, serviceServerUpName)
 	assertMetricsAbsent(t, mustScrape(), entryPointReqsTotalName, routerReqsTotalName, serviceReqsTotalName, serviceServerUpName)
@@ -430,6 +435,47 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 
 	assertMetricsExist(t, mustScrape(), entryPointReqsTotalName, serviceReqsTotalName, serviceServerUpName, routerReqsTotalName)
 	assertMetricsExist(t, mustScrape(), entryPointReqsTotalName, serviceReqsTotalName, serviceServerUpName, routerReqsTotalName)
+}
+
+func TestPrometheusMetricRemoveEndpointForRecoveredService(t *testing.T) {
+	promState = newPrometheusState()
+	promRegistry = prometheus.NewRegistry()
+	t.Cleanup(promState.reset)
+
+	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{AddServicesLabels: true})
+	defer promRegistry.Unregister(promState)
+
+	conf1 := dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithLoadBalancerServices(
+				th.WithService("service1", th.WithServers(th.WithServer("http://localhost:9000"))),
+			),
+		),
+	}
+
+	conf2 := dynamic.Configuration{
+		HTTP: th.BuildConfiguration(),
+	}
+
+	conf3 := dynamic.Configuration{
+		HTTP: th.BuildConfiguration(
+			th.WithLoadBalancerServices(
+				th.WithService("service1", th.WithServers(th.WithServer("http://localhost:9001"))),
+			),
+		),
+	}
+
+	OnConfigurationUpdate(conf1, []string{})
+	OnConfigurationUpdate(conf2, []string{})
+	OnConfigurationUpdate(conf3, []string{})
+
+	prometheusRegistry.
+		ServiceServerUpGauge().
+		With("service", "service1", "url", "http://localhost:9000").
+		Add(1)
+
+	assertMetricsExist(t, mustScrape(), serviceServerUpName)
+	assertMetricsAbsent(t, mustScrape(), serviceServerUpName)
 }
 
 func TestPrometheusRemovedMetricsReset(t *testing.T) {
@@ -488,7 +534,7 @@ func (ps *prometheusState) reset() {
 	ps.deletedEP = nil
 	ps.deletedRouters = nil
 	ps.deletedServices = nil
-	ps.deletedURLs = make(map[string]string)
+	ps.deletedURLs = make(map[string][]string)
 }
 
 // Tracking and gathering the metrics happens concurrently.
