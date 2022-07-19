@@ -133,7 +133,8 @@ the IP address of the host is resolved as follows:
 
 <!-- TODO: verify and document the swarm mode case with container.Node.IPAddress coming from the API -->
 - try a lookup of `host.docker.internal`
-- if the lookup was unsuccessful, fall back to `127.0.0.1`
+- if the lookup was unsuccessful, try a lookup of `host.containers.internal`, ([Podman](https://docs.podman.io/en/latest/) equivalent of `host.docker.internal`)
+- if that lookup was also unsuccessful, fall back to `127.0.0.1`
 
 On Linux, for versions of Docker older than 20.10.0, for `host.docker.internal` to be defined, it should be provided
 as an `extra_host` to the Traefik container, using the `--add-host` flag. For example, to set it to the IP address of

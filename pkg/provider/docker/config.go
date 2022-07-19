@@ -338,6 +338,9 @@ func (p Provider) getIPAddress(ctx context.Context, container dockerData) string
 		if host, err := net.LookupHost("host.docker.internal"); err == nil {
 			return host[0]
 		}
+		if host, err := net.LookupHost("host.containers.internal"); err == nil {
+			return host[0]
+		}
 		return "127.0.0.1"
 	}
 
