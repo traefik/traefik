@@ -24,22 +24,28 @@ const (
 
 	statsdTLSCertsNotAfterTimestampName = "tls.certs.notAfterTimestamp"
 
-	statsdEntryPointReqsName        = "entrypoint.request.total"
-	statsdEntryPointReqsTLSName     = "entrypoint.request.tls.total"
-	statsdEntryPointReqDurationName = "entrypoint.request.duration"
-	statsdEntryPointOpenConnsName   = "entrypoint.connections.open"
+	statsdEntryPointReqsName          = "entrypoint.request.total"
+	statsdEntryPointReqsTLSName       = "entrypoint.request.tls.total"
+	statsdEntryPointReqDurationName   = "entrypoint.request.duration"
+	statsdEntryPointOpenConnsName     = "entrypoint.connections.open"
+	statsdEntryPointBytesReceivedName = "entrypoint.bytes.received.total"
+	statsdEntryPointBytesSentName     = "entrypoint.bytes.sent.total"
 
-	statsdRouterReqsName         = "router.request.total"
-	statsdRouterReqsTLSName      = "router.request.tls.total"
-	statsdRouterReqsDurationName = "router.request.duration"
-	statsdRouterOpenConnsName    = "router.connections.open"
+	statsdRouterReqsName          = "router.request.total"
+	statsdRouterReqsTLSName       = "router.request.tls.total"
+	statsdRouterReqsDurationName  = "router.request.duration"
+	statsdRouterOpenConnsName     = "router.connections.open"
+	statsdRouterBytesReceivedName = "router.bytes.received.total"
+	statsdRouterBytesSentName     = "router.bytes.sent.total"
 
-	statsdServiceReqsName         = "service.request.total"
-	statsdServiceReqsTLSName      = "service.request.tls.total"
-	statsdServiceReqsDurationName = "service.request.duration"
-	statsdServiceRetriesTotalName = "service.retries.total"
-	statsdServiceServerUpName     = "service.server.up"
-	statsdServiceOpenConnsName    = "service.connections.open"
+	statsdServiceReqsName          = "service.request.total"
+	statsdServiceReqsTLSName       = "service.request.tls.total"
+	statsdServiceReqsDurationName  = "service.request.duration"
+	statsdServiceRetriesTotalName  = "service.retries.total"
+	statsdServiceServerUpName      = "service.server.up"
+	statsdServiceOpenConnsName     = "service.connections.open"
+	statsdServiceBytesReceivedName = "service.bytes.received.total"
+	statsdServiceBytesSentName     = "service.bytes.sent.total"
 )
 
 // RegisterStatsd registers the metrics pusher if this didn't happen yet and creates a statsd Registry instance.
@@ -72,6 +78,8 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 		registry.entryPointReqsTLSCounter = statsdClient.NewCounter(statsdEntryPointReqsTLSName, 1.0)
 		registry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(statsdClient.NewTiming(statsdEntryPointReqDurationName, 1.0), time.Millisecond)
 		registry.entryPointOpenConnsGauge = statsdClient.NewGauge(statsdEntryPointOpenConnsName)
+		registry.entryPointBytesReceivedCounter = statsdClient.NewCounter(statsdEntryPointBytesReceivedName, 1.0)
+		registry.entryPointBytesSentCounter = statsdClient.NewCounter(statsdEntryPointBytesSentName, 1.0)
 	}
 
 	if config.AddRoutersLabels {
@@ -80,6 +88,8 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 		registry.routerReqsTLSCounter = statsdClient.NewCounter(statsdRouterReqsTLSName, 1.0)
 		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(statsdClient.NewTiming(statsdRouterReqsDurationName, 1.0), time.Millisecond)
 		registry.routerOpenConnsGauge = statsdClient.NewGauge(statsdRouterOpenConnsName)
+		registry.routerBytesReceivedCounter = statsdClient.NewCounter(statsdRouterBytesReceivedName, 1.0)
+		registry.routerBytesSentCounter = statsdClient.NewCounter(statsdRouterBytesSentName, 1.0)
 	}
 
 	if config.AddServicesLabels {
@@ -90,6 +100,8 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 		registry.serviceRetriesCounter = statsdClient.NewCounter(statsdServiceRetriesTotalName, 1.0)
 		registry.serviceOpenConnsGauge = statsdClient.NewGauge(statsdServiceOpenConnsName)
 		registry.serviceServerUpGauge = statsdClient.NewGauge(statsdServiceServerUpName)
+		registry.serviceBytesReceivedCounter = statsdClient.NewCounter(statsdServiceBytesReceivedName, 1.0)
+		registry.serviceBytesSentCounter = statsdClient.NewCounter(statsdServiceBytesSentName, 1.0)
 	}
 
 	return registry

@@ -94,6 +94,8 @@ traefik_tls_certs_not_after
 | [HTTPS Requests Count](#https-requests-count)             | ✓       | ✓                    | ✓          | ✓      |
 | [Request Duration Histogram](#request-duration-histogram) | ✓       | ✓                    | ✓          | ✓      |
 | [Open Connections Count](#open-connections-count)         | ✓       | ✓                    | ✓          | ✓      |
+| [Requests incoming traffic](#requests-incoming-traffic)   | ✓       | ✓                    | ✓          | ✓      |
+| [Requests outgoing traffic](#requests-outgoing-traffic)   | ✓       | ✓                    | ✓          | ✓      |
 
 ### HTTP Requests Count
 
@@ -187,6 +189,52 @@ traefik_entrypoint_open_connections
 {prefix}.entrypoint.connections.open
 ```
 
+### Requests incoming traffic
+
+The total size of incoming HTTP requests in bytes handled by an entrypoint.
+
+[Labels](#labels): `code`, `method`, `protocol`, `entrypoint`.
+
+```dd tab="Datadog"
+entrypoint.bytes.received.total
+```
+
+```influxdb tab="InfluxDB / InfluxDB2"
+traefik.entrypoint.bytes.received.total
+```
+
+```prom tab="Prometheus"
+traefik_entrypoint_bytes_received_total
+```
+
+```statsd tab="StatsD"
+# Default prefix: "traefik"
+{prefix}.entrypoint.bytes.received.total
+```
+
+### Requests outgoing traffic
+
+The total size of outgoing HTTP requests in bytes handled by an entrypoint.
+
+[Labels](#labels): `code`, `method`, `protocol`, `entrypoint`.
+
+```dd tab="Datadog"
+entrypoint.bytes.sent.total
+```
+
+```influxdb tab="InfluxDB / InfluxDB2"
+traefik.entrypoint.bytes.sent.total
+```
+
+```prom tab="Prometheus"
+traefik_entrypoint_bytes_sent_total
+```
+
+```statsd tab="StatsD"
+# Default prefix: "traefik"
+{prefix}.entrypoint.bytes.sent.total
+```
+
 ## Router Metrics
 
 | Metric                                                      | DataDog | InfluxDB / InfluxDB2 | Prometheus | StatsD |
@@ -195,6 +243,8 @@ traefik_entrypoint_open_connections
 | [HTTPS Requests Count](#https-requests-count_1)             | ✓       | ✓                    | ✓          | ✓      |
 | [Request Duration Histogram](#request-duration-histogram_1) | ✓       | ✓                    | ✓          | ✓      |
 | [Open Connections Count](#open-connections-count_1)         | ✓       | ✓                    | ✓          | ✓      |
+| [Requests incoming traffic](#requests-incoming-traffic_1)   | ✓       | ✓                    | ✓          | ✓      |
+| [Requests outgoing traffic](#requests-outgoing-traffic_1)   | ✓       | ✓                    | ✓          | ✓      |
 
 ### HTTP Requests Count
 
@@ -288,6 +338,52 @@ traefik_router_open_connections
 {prefix}.router.connections.open
 ```
 
+### Requests incoming traffic
+
+The total size of incoming HTTP requests in bytes handled by a router.
+
+[Labels](#labels): `code`, `method`, `protocol`, `service`.
+
+```dd tab="Datadog"
+router.bytes.received.total
+```
+
+```influxdb tab="InfluxDB / InfluxDB2"
+traefik.router.bytes.received.total
+```
+
+```prom tab="Prometheus"
+traefik_router_bytes_received_total
+```
+
+```statsd tab="StatsD"
+# Default prefix: "traefik"
+{prefix}.router.bytes.received.total
+```
+
+### Requests outgoing traffic
+
+The total size of outgoing HTTP requests in bytes handled by a router.
+
+[Labels](#labels): `code`, `method`, `protocol`, `service`.
+
+```dd tab="Datadog"
+router.bytes.sent.total
+```
+
+```influxdb tab="InfluxDB / InfluxDB2"
+traefik.router.bytes.sent.total
+```
+
+```prom tab="Prometheus"
+traefik_router_bytes_sent_total
+```
+
+```statsd tab="StatsD"
+# Default prefix: "traefik"
+{prefix}.router.bytes.sent.total
+```
+
 ## Service Metrics
 
 | Metric                                                      | DataDog | InfluxDB / InfluxDB2 | Prometheus | StatsD |
@@ -298,6 +394,8 @@ traefik_router_open_connections
 | [Open Connections Count](#open-connections-count_2)         | ✓       | ✓                    | ✓          | ✓      |
 | [Requests Retries Count](#requests-retries-count)           | ✓       | ✓                    | ✓          | ✓      |
 | [Service Server UP](#service-server-up)                     | ✓       | ✓                    | ✓          | ✓      |
+| [Requests incoming traffic](#requests-incoming-traffic_2)   | ✓       | ✓                    | ✓          | ✓      |
+| [Requests outgoing traffic](#requests-outgoing-traffic_2)   | ✓       | ✓                    | ✓          | ✓      |
 
 ### HTTP Requests Count
 
@@ -435,6 +533,52 @@ traefik_service_server_up
 ```statsd tab="StatsD"
 # Default prefix: "traefik"
 {prefix}.service.server.up
+```
+
+### Requests incoming traffic
+
+The total size of incoming HTTP requests in bytes handled by a router.
+
+[Labels](#labels): `code`, `method`, `protocol`, `router`, `service`.
+
+```dd tab="Datadog"
+service.bytes.received.total
+```
+
+```influxdb tab="InfluxDB / InfluxDB2"
+traefik.service.bytes.received.total
+```
+
+```prom tab="Prometheus"
+traefik_service_bytes_received_total
+```
+
+```statsd tab="StatsD"
+# Default prefix: "traefik"
+{prefix}.service.bytes.received.total
+```
+
+### Requests outgoing traffic
+
+The total size of outgoing HTTP requests in bytes handled by a router.
+
+[Labels](#labels): `code`, `method`, `protocol`, `router`, `service`.
+
+```dd tab="Datadog"
+service.bytes.sent.total
+```
+
+```influxdb tab="InfluxDB / InfluxDB2"
+traefik.service.bytes.sent.total
+```
+
+```prom tab="Prometheus"
+traefik_service_bytes_sent_total
+```
+
+```statsd tab="StatsD"
+# Default prefix: "traefik"
+{prefix}.service.bytes.sent.total
 ```
 
 ## Labels
