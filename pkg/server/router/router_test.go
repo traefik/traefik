@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/containous/alice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -15,6 +16,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/static"
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
+	"github.com/traefik/traefik/v2/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
 	"github.com/traefik/traefik/v2/pkg/server/middleware"
 	"github.com/traefik/traefik/v2/pkg/server/service"
@@ -315,7 +317,7 @@ func TestRouterManager_Get(t *testing.T) {
 			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
+			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil, nil, nil)
 
 			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
 
@@ -421,7 +423,7 @@ func TestAccessLog(t *testing.T) {
 			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
+			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil, nil, nil)
 
 			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
 
@@ -430,6 +432,9 @@ func TestAccessLog(t *testing.T) {
 			w := httptest.NewRecorder()
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
 
+			captureMiddleware, err := capture.NewHandler()
+			require.NoError(t, err)
+
 			accesslogger, err := accesslog.NewHandler(&types.AccessLog{
 				Format: "json",
 			})
@@ -437,7 +442,10 @@ func TestAccessLog(t *testing.T) {
 
 			reqHost := requestdecorator.New(nil)
 
-			accesslogger.ServeHTTP(w, req, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			chain := alice.New()
+			chain = chain.Append(capture.WrapHandler(captureMiddleware))
+			chain = chain.Append(accesslog.WrapHandler(accesslogger))
+			handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				reqHost.ServeHTTP(w, req, handlers["web"].ServeHTTP)
 
 				data := accesslog.GetLogData(req)
@@ -445,6 +453,9 @@ func TestAccessLog(t *testing.T) {
 
 				assert.Equal(t, test.expected, data.Core[accesslog.RouterName])
 			}))
+			require.NoError(t, err)
+
+			handler.ServeHTTP(w, req)
 		})
 	}
 }
@@ -710,7 +721,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
+			chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil, nil, nil)
 
 			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
 
@@ -793,7 +804,7 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 	serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-	chainBuilder := middleware.NewChainBuilder(staticCfg, nil, nil)
+	chainBuilder := middleware.NewChainBuilder(staticCfg, nil, nil, nil, nil)
 
 	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
 
@@ -861,7 +872,7 @@ func BenchmarkRouterServe(b *testing.B) {
 
 	serviceManager := service.NewManager(rtConf.Services, nil, nil, staticRoundTripperGetter{res})
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-	chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil)
+	chainBuilder := middleware.NewChainBuilder(static.Configuration{}, nil, nil, nil, nil)
 
 	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
 

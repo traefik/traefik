@@ -1,4 +1,4 @@
-package accesslog
+package capture
 
 import (
 	"net/http"
@@ -42,7 +42,7 @@ func TestCloseNotifier(t *testing.T) {
 			_, ok := test.rw.(http.CloseNotifier)
 			assert.Equal(t, test.implementsCloseNotifier, ok)
 
-			rw := newCaptureResponseWriter(test.rw)
+			rw := newResponseWriter(test.rw)
 			_, impl := rw.(http.CloseNotifier)
 			assert.Equal(t, test.implementsCloseNotifier, impl)
 		})
