@@ -133,7 +133,7 @@ the IP address of the host is resolved as follows:
 
 <!-- TODO: verify and document the swarm mode case with container.Node.IPAddress coming from the API -->
 - try a lookup of `host.docker.internal`
-- if the lookup was unsuccessfull, try a lookup of `host.containers.internal`
+- if the lookup was unsuccessful, try a lookup of `host.containers.internal`
 - if that lookup was also unsuccessful, fall back to `127.0.0.1`
 
 On Linux, for versions of Docker older than 20.10.0, for `host.docker.internal` to be defined, it should be provided
