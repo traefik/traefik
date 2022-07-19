@@ -339,12 +339,12 @@ type tailscaleNotSuite struct{ BaseSuite }
 // Add this section to your tailscale ACLs to auto-approve the routes for the
 // containers in the docker subnet:
 //
-// "autoApprovers": {
-//   // Allow myself to automatically advertize routes for docker networks
-//   "routes": {
-//     "172.0.0.0/8": ["your_tailscale_identity"],
-//   },
-// },
+//	"autoApprovers": {
+//	  // Allow myself to automatically advertize routes for docker networks
+//	  "routes": {
+//	    "172.0.0.0/8": ["your_tailscale_identity"],
+//	  },
+//	},
 //
 // TODO(mpl): we could maybe even move this setup to the Makefile, to start it
 // and let it run (forever, or until voluntarily stopped).

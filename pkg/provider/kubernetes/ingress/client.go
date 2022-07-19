@@ -570,7 +570,7 @@ func filterIngressClassByName(ingressClassName string, ics []*networkingv1.Ingre
 	return ingressClasses
 }
 
-//  Ingress in networking.k8s.io/v1 is supported starting 1.19.
+// Ingress in networking.k8s.io/v1 is supported starting 1.19.
 // thus, we query it in K8s starting 1.19.
 func supportsNetworkingV1Ingress(serverVersion *version.Version) bool {
 	ingressNetworkingVersion := version.Must(version.NewVersion("1.19"))
