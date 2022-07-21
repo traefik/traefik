@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptrace"
+	"runtime/debug"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -16,7 +17,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/tracing"
 )
 
@@ -83,7 +83,22 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	attempts := 1
 
-	operation := func() error {
+	operation := func() (err error) {
+		defer func() {
+			if res := recover(); res != nil {
+				if !shouldLogPanic(res) {
+					// aborted requests should not be logged as error https://github.com/traefik/traefik/issues/9188
+					log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
+						Debugf("Request has been aborted [%s - %s]: %v", req.RemoteAddr, req.URL, res)
+					return
+				}
+				logger := log.WithoutContext()
+				logger.Errorf("Error in Go routine: %s", res)
+				logger.Errorf("Stack: %s", debug.Stack())
+				err = fmt.Errorf("panic in operation: %v", res)
+			}
+		}()
+
 		shouldRetry := attempts < r.attempts
 		retryResponseWriter := newResponseWriter(rw, shouldRetry)
 
@@ -118,11 +133,16 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		r.listener.Retried(req, attempts)
 	}
 
-	err := backoff.RetryNotify(safe.OperationWithRecover(operation), backOff, notify)
+	err := backoff.RetryNotify(operation, backOff, notify)
 	if err != nil {
 		log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
 			Debugf("Final retry attempt failed: %v", err.Error())
 	}
+}
+
+func shouldLogPanic(panicValue interface{}) bool {
+	//nolint:errorlint // false-positive because panicValue is an interface.
+	return panicValue != nil && panicValue != http.ErrAbortHandler
 }
 
 func (r *retry) newBackOff() backoff.BackOff {
