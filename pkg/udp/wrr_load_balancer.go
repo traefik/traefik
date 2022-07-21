@@ -2,9 +2,7 @@ package udp
 
 import (
 	"fmt"
-	"math/rand"
 	"sync"
-	"time"
 
 	"github.com/traefik/traefik/v2/pkg/log"
 )
@@ -24,9 +22,8 @@ type WRRLoadBalancer struct {
 
 // NewWRRLoadBalancer creates a new WRRLoadBalancer.
 func NewWRRLoadBalancer() *WRRLoadBalancer {
-	rand.Seed(time.Now().UnixNano())
 	return &WRRLoadBalancer{
-		index: rand.Int() - 1,
+		index: -1,
 	}
 }
 
