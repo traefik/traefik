@@ -24,6 +24,9 @@ Override mode for fields
 `TRAEFIK_ACCESSLOG_FILEPATH`:  
 Access log file path. Stdout is used when omitted or empty.
 
+`TRAEFIK_ACCESSLOG_FILTERS_EXCLUDEDURLSREGEX`:  
+Keep access logs when request URL is not matching the excluded list.
+
 `TRAEFIK_ACCESSLOG_FILTERS_MINDURATION`:  
 Keep access logs when request took longer than the specified duration. (Default: ```0```)
 

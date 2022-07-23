@@ -495,6 +495,32 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
 		},
 		{
+			desc: "ExcludedURLsRegex filter matching",
+			config: &types.AccessLog{
+				FilePath: "",
+				Format:   CommonFormat,
+				Filters: &types.AccessLogFilters{
+					ExcludedURLsRegex: []string{
+						"^http://TestHost/testpath$",
+					},
+				},
+			},
+			expectedLog: ``,
+		},
+		{
+			desc: "ExcludedURLsRegex filter not matching",
+			config: &types.AccessLog{
+				FilePath: "",
+				Format:   CommonFormat,
+				Filters: &types.AccessLogFilters{
+					ExcludedURLsRegex: []string{
+						"not matching string",
+					},
+				},
+			},
+			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
+		},
+		{
 			desc: "Status code filter not matching",
 			config: &types.AccessLog{
 				FilePath: "",
