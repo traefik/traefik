@@ -24,6 +24,9 @@ Override mode for fields
 `--accesslog.filepath`:  
 Access log file path. Stdout is used when omitted or empty.
 
+`--accesslog.filters.excludedurlsregex`:  
+Keep access logs when request URL is not matching the excluded list.
+
 `--accesslog.filters.minduration`:  
 Keep access logs when request took longer than the specified duration. (Default: ```0```)
 

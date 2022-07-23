@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -60,6 +61,7 @@ type Handler struct {
 	file           io.WriteCloser
 	mu             sync.Mutex
 	httpCodeRanges types.HTTPCodeRanges
+	excludedURLs   []*regexp.Regexp
 	logHandlerChan chan handlerParams
 	wg             sync.WaitGroup
 }
@@ -123,6 +125,15 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 	}
 
 	if config.Filters != nil {
+		for _, urlRegex := range config.Filters.ExcludedURLsRegex {
+			re, err := regexp.Compile(urlRegex)
+			if err != nil {
+				log.WithoutContext().Errorf("Failed to parse excluded URL regular expression %q: %s", urlRegex, err)
+				continue
+			}
+			logHandler.excludedURLs = append(logHandler.excludedURLs, re)
+		}
+
 		if httpCodeRanges, err := types.NewHTTPCodeRanges(config.Filters.StatusCodes); err != nil {
 			log.WithoutContext().Errorf("Failed to create new HTTP code ranges: %s", err)
 		} else {
@@ -311,7 +322,14 @@ func (h *Handler) logTheRoundTrip(logDataTable *LogData) {
 	totalDuration := time.Now().UTC().Sub(core[StartUTC].(time.Time))
 	core[Duration] = totalDuration
 
-	if h.keepAccessLog(status, retryAttempts, totalDuration) {
+	requestURL := &url.URL{
+		Scheme: core[RequestScheme].(string),
+		Host:   core[RequestHost].(string),
+		Path:   core[RequestPath].(string),
+	}
+	requestURLString := requestURL.String()
+
+	if h.keepAccessLog(requestURLString, status, retryAttempts, totalDuration) {
 		size := logDataTable.DownstreamResponse.size
 		core[DownstreamContentSize] = size
 		if original, ok := core[OriginContentSize]; ok {
@@ -355,10 +373,16 @@ func (h *Handler) redactHeaders(headers http.Header, fields logrus.Fields, prefi
 	}
 }
 
-func (h *Handler) keepAccessLog(statusCode, retryAttempts int, duration time.Duration) bool {
+func (h *Handler) keepAccessLog(requestURL string, statusCode, retryAttempts int, duration time.Duration) bool {
 	if h.config.Filters == nil {
 		// no filters were specified
 		return true
+	}
+
+	for _, excludedURL := range h.excludedURLs {
+		if excludedURL.MatchString(requestURL) {
+			return false
+		}
 	}
 
 	if len(h.httpCodeRanges) == 0 && !h.config.Filters.RetryAttempts && h.config.Filters.MinDuration == 0 {

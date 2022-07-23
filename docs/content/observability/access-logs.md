@@ -85,11 +85,14 @@ accessLog:
 
 ### Filtering
 
-To filter logs, you can specify a set of filters which are logically "OR-connected".
-Thus, specifying multiple filters will keep more access logs than specifying only one.
+To filter logs, you can specify a set of filters which are logically "OR-connected",
+except for the `excludedURLsRegex` filter which is logically "AND-connected".
+Thus, specifying multiple filters will keep more access logs than specifying only one,
+given they don't match any of the excluded URLs.
 
 The available filters are:
 
+- `excludedURLsRegex`, to exclude the access logs to requests with a URL matching any of the [regular expressions](https://golang.org/pkg/regexp/) in the specified list
 - `statusCodes`, to limit the access logs to requests with a status codes in the specified range
 - `retryAttempts`, to keep the access logs when at least one retry has happened
 - `minDuration`, to keep access logs when requests take longer than the specified duration (provided in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration))
@@ -100,6 +103,8 @@ accessLog:
   filePath: "/path/to/access.log"
   format: json
   filters:
+    excludedURLsRegex:
+      - /ping$
     statusCodes:
       - "200"
       - "300-302"
@@ -114,6 +119,7 @@ accessLog:
   format = "json"
 
   [accessLog.filters]
+    excludedURLsRegex = ["/ping$"]
     statusCodes = ["200", "300-302"]
     retryAttempts = true
     minDuration = "10ms"
@@ -123,6 +129,7 @@ accessLog:
 # Configuring Multiple Filters
 --accesslog.filepath=/path/to/access.log
 --accesslog.format=json
+--accesslog.filters.excludedurlsregex=/ping$
 --accesslog.filters.statuscodes=200,300-302
 --accesslog.filters.retryattempts
 --accesslog.filters.minduration=10ms
