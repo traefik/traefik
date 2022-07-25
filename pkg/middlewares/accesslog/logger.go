@@ -19,6 +19,7 @@ import (
 	"github.com/sirupsen/logrus"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/middlewares/capture"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
@@ -184,12 +185,6 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 
 	reqWithDataTable := req.WithContext(context.WithValue(req.Context(), DataTableKey, logDataTable))
 
-	var crr *captureRequestReader
-	if req.Body != nil {
-		crr = &captureRequestReader{source: req.Body, count: 0}
-		reqWithDataTable.Body = crr
-	}
-
 	core[RequestCount] = nextRequestCount()
 	if req.Host != "" {
 		core[RequestAddr] = req.Host
@@ -222,21 +217,22 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		core[ClientHost] = forwardedFor
 	}
 
-	crw := newCaptureResponseWriter(rw)
-
-	next.ServeHTTP(crw, reqWithDataTable)
+	next.ServeHTTP(rw, reqWithDataTable)
 
 	if _, ok := core[ClientUsername]; !ok {
 		core[ClientUsername] = usernameIfPresent(reqWithDataTable.URL)
 	}
 
+	c := capture.GetResponseWriter(req.Context())
+	crw := c.GetResponseWriter()
 	logDataTable.DownstreamResponse = downstreamResponse{
 		headers: crw.Header().Clone(),
 		status:  crw.Status(),
 		size:    crw.Size(),
 	}
-	if crr != nil {
-		logDataTable.Request.size = crr.count
+
+	if crr := c.GetRequestReader(); crr != nil {
+		logDataTable.Request.size = crr.Size()
 	}
 
 	if h.config.BufferingSize > 0 {

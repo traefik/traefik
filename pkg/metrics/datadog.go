@@ -24,22 +24,28 @@ const (
 	ddLastConfigReloadFailureName   = "config.reload.lastFailureTimestamp"
 	ddTLSCertsNotAfterTimestampName = "tls.certs.notAfterTimestamp"
 
-	ddEntryPointReqsName        = "entrypoint.request.total"
-	ddEntryPointReqsTLSName     = "entrypoint.request.tls.total"
-	ddEntryPointReqDurationName = "entrypoint.request.duration"
-	ddEntryPointOpenConnsName   = "entrypoint.connections.open"
+	ddEntryPointReqsName          = "entrypoint.request.total"
+	ddEntryPointReqsTLSName       = "entrypoint.request.tls.total"
+	ddEntryPointReqDurationName   = "entrypoint.request.duration"
+	ddEntryPointOpenConnsName     = "entrypoint.connections.open"
+	ddEntryPointBytesReceivedName = "entrypoint.bytes.received.total"
+	ddEntryPointBytesSentName     = "entrypoint.bytes.sent.total"
 
-	ddMetricsRouterReqsName         = "router.request.total"
-	ddMetricsRouterReqsTLSName      = "router.request.tls.total"
-	ddMetricsRouterReqsDurationName = "router.request.duration"
-	ddRouterOpenConnsName           = "router.connections.open"
+	ddRouterReqsName          = "router.request.total"
+	ddRouterReqsTLSName       = "router.request.tls.total"
+	ddRouterReqsDurationName  = "router.request.duration"
+	ddRouterOpenConnsName     = "router.connections.open"
+	ddRouterBytesReceivedName = "router.bytes.received.total"
+	ddRouterBytesSentName     = "router.bytes.sent.total"
 
-	ddMetricsServiceReqsName         = "service.request.total"
-	ddMetricsServiceReqsTLSName      = "service.request.tls.total"
-	ddMetricsServiceReqsDurationName = "service.request.duration"
-	ddRetriesTotalName               = "service.retries.total"
-	ddOpenConnsName                  = "service.connections.open"
-	ddServerUpName                   = "service.server.up"
+	ddServiceReqsName          = "service.request.total"
+	ddServiceReqsTLSName       = "service.request.tls.total"
+	ddServiceReqsDurationName  = "service.request.duration"
+	ddServiceRetriesName       = "service.retries.total"
+	ddServiceOpenConnsName     = "service.connections.open"
+	ddServiceServerUpName      = "service.server.up"
+	ddServiceBytesReceivedName = "service.bytes.received.total"
+	ddServiceBytesSentName     = "service.bytes.sent.total"
 )
 
 // RegisterDatadog registers the metrics pusher if this didn't happen yet and creates a datadog Registry instance.
@@ -73,24 +79,30 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 		registry.entryPointReqsTLSCounter = datadogClient.NewCounter(ddEntryPointReqsTLSName, 1.0)
 		registry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddEntryPointReqDurationName, 1.0), time.Second)
 		registry.entryPointOpenConnsGauge = datadogClient.NewGauge(ddEntryPointOpenConnsName)
+		registry.entryPointBytesReceivedCounter = datadogClient.NewCounter(ddEntryPointBytesReceivedName, 1.0)
+		registry.entryPointBytesSentCounter = datadogClient.NewCounter(ddEntryPointBytesSentName, 1.0)
 	}
 
 	if config.AddRoutersLabels {
 		registry.routerEnabled = config.AddRoutersLabels
-		registry.routerReqsCounter = datadogClient.NewCounter(ddMetricsRouterReqsName, 1.0)
-		registry.routerReqsTLSCounter = datadogClient.NewCounter(ddMetricsRouterReqsTLSName, 1.0)
-		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddMetricsRouterReqsDurationName, 1.0), time.Second)
+		registry.routerReqsCounter = datadogClient.NewCounter(ddRouterReqsName, 1.0)
+		registry.routerReqsTLSCounter = datadogClient.NewCounter(ddRouterReqsTLSName, 1.0)
+		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddRouterReqsDurationName, 1.0), time.Second)
 		registry.routerOpenConnsGauge = datadogClient.NewGauge(ddRouterOpenConnsName)
+		registry.routerBytesReceivedCounter = datadogClient.NewCounter(ddRouterBytesReceivedName, 1.0)
+		registry.routerBytesSentCounter = datadogClient.NewCounter(ddRouterBytesSentName, 1.0)
 	}
 
 	if config.AddServicesLabels {
 		registry.svcEnabled = config.AddServicesLabels
-		registry.serviceReqsCounter = datadogClient.NewCounter(ddMetricsServiceReqsName, 1.0)
-		registry.serviceReqsTLSCounter = datadogClient.NewCounter(ddMetricsServiceReqsTLSName, 1.0)
-		registry.serviceReqDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddMetricsServiceReqsDurationName, 1.0), time.Second)
-		registry.serviceRetriesCounter = datadogClient.NewCounter(ddRetriesTotalName, 1.0)
-		registry.serviceOpenConnsGauge = datadogClient.NewGauge(ddOpenConnsName)
-		registry.serviceServerUpGauge = datadogClient.NewGauge(ddServerUpName)
+		registry.serviceReqsCounter = datadogClient.NewCounter(ddServiceReqsName, 1.0)
+		registry.serviceReqsTLSCounter = datadogClient.NewCounter(ddServiceReqsTLSName, 1.0)
+		registry.serviceReqDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddServiceReqsDurationName, 1.0), time.Second)
+		registry.serviceRetriesCounter = datadogClient.NewCounter(ddServiceRetriesName, 1.0)
+		registry.serviceOpenConnsGauge = datadogClient.NewGauge(ddServiceOpenConnsName)
+		registry.serviceServerUpGauge = datadogClient.NewGauge(ddServiceServerUpName)
+		registry.serviceBytesReceivedCounter = datadogClient.NewCounter(ddServiceBytesReceivedName, 1.0)
+		registry.serviceBytesSentCounter = datadogClient.NewCounter(ddServiceBytesSentName, 1.0)
 	}
 
 	return registry
