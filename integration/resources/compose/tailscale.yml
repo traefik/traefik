@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+  tailscaled:
+    hostname: traefik-tests-gw             # This will become the tailscale device name
+    image: tailscale/tailscale:v1.24.0
+    volumes:
+      # TODO: maybe mount the container's /var/lib to keep some state for tailscale?
+      - "/dev/net/tun:/dev/net/tun"       # Required for tailscale to work
+    cap_add:                  # Required for tailscale to work
+      - net_admin
+      - sys_module
+    command: tailscaled
+
+networks:
+  default:
+    name: traefik-test-network
+    external: true

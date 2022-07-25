@@ -6,7 +6,9 @@ Below is a non-exhaustive list of versions and their maintenance status:
 
 | Version | Release Date | Active Support     | Security Support | 
 |---------|--------------|--------------------|------------------|
-| 2.6     | Jan 24, 2022 |      Yes           |       Yes        |
+| 2.8     | Jun 29, 2022 |      Yes           |       Yes        |
+| 2.7     | May 24, 2022 | Ended Jun 29, 2022 |       No         |
+| 2.6     | Jan 24, 2022 | Ended May 24, 2022 |       No         |
 | 2.5     | Aug 17, 2021 | Ended Jan 24, 2022 |       No         |
 | 2.4     | Jan 19, 2021 | Ended Aug 17, 2021 |       No         |
 | 2.3     | Sep 23, 2020 | Ended Jan 19, 2021 |       No         |
