@@ -10,15 +10,15 @@ type haystackLogger struct {
 
 // Error prints the error message.
 func (l haystackLogger) Error(format string, v ...interface{}) {
-	l.logger.Errorf(format, v)
+	l.logger.Errorf(format, v...)
 }
 
 // Info prints the info message.
 func (l haystackLogger) Info(format string, v ...interface{}) {
-	l.logger.Infof(format, v)
+	l.logger.Infof(format, v...)
 }
 
 // Debug prints the info message.
 func (l haystackLogger) Debug(format string, v ...interface{}) {
-	l.logger.Debug(format, v)
+	l.logger.Debugf(format, v...)
 }

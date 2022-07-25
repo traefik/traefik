@@ -1,7 +1,0 @@
-[build]
-# Path relative to the root of the repository
-publish = "site"
-base = "docs"
-
-# Path relative to the "base" directory
-command = "sh -x scripts/netlify-run.sh"
