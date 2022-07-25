@@ -255,6 +255,9 @@ Datadog metrics exporter type. (Default: ```false```)
 `TRAEFIK_METRICS_DATADOG_ADDENTRYPOINTSLABELS`:  
 Enable metrics on entry points. (Default: ```true```)
 
+`TRAEFIK_METRICS_DATADOG_ADDPROXYLABELS`:  
+Enable metrics on the proxy as a whole. (Default: ```false```)
+
 `TRAEFIK_METRICS_DATADOG_ADDRESS`:  
 Datadog's address. (Default: ```localhost:8125```)
 
@@ -282,6 +285,9 @@ Enable metrics on entry points. (Default: ```true```)
 `TRAEFIK_METRICS_INFLUXDB2_ADDITIONALLABELS_<NAME>`:  
 Additional labels (influxdb tags) on all metrics
 
+`TRAEFIK_METRICS_INFLUXDB2_ADDPROXYLABELS`:  
+Enable metrics on the proxy as a whole. (Default: ```false```)
+
 `TRAEFIK_METRICS_INFLUXDB2_ADDRESS`:  
 InfluxDB v2 address. (Default: ```http://localhost:8086```)
 
@@ -308,6 +314,9 @@ Enable metrics on entry points. (Default: ```true```)
 
 `TRAEFIK_METRICS_INFLUXDB_ADDITIONALLABELS_<NAME>`:  
 Additional labels (influxdb tags) on all metrics
+
+`TRAEFIK_METRICS_INFLUXDB_ADDPROXYLABELS`:  
+Enable metrics on the proxy as a whole. (Default: ```false```)
 
 `TRAEFIK_METRICS_INFLUXDB_ADDRESS`:  
 InfluxDB address. (Default: ```localhost:8089```)
@@ -342,6 +351,9 @@ Prometheus metrics exporter type. (Default: ```false```)
 `TRAEFIK_METRICS_PROMETHEUS_ADDENTRYPOINTSLABELS`:  
 Enable metrics on entry points. (Default: ```true```)
 
+`TRAEFIK_METRICS_PROMETHEUS_ADDPROXYLABELS`:  
+Enable metrics on the proxy as a whole. (Default: ```false```)
+
 `TRAEFIK_METRICS_PROMETHEUS_ADDROUTERSLABELS`:  
 Enable metrics on routers. (Default: ```false```)
 
@@ -362,6 +374,9 @@ StatsD metrics exporter type. (Default: ```false```)
 
 `TRAEFIK_METRICS_STATSD_ADDENTRYPOINTSLABELS`:  
 Enable metrics on entry points. (Default: ```true```)
+
+`TRAEFIK_METRICS_STATSD_ADDPROXYLABELS`:  
+Enable metrics on the proxy as a whole. (Default: ```false```)
 
 `TRAEFIK_METRICS_STATSD_ADDRESS`:  
 StatsD address. (Default: ```localhost:8125```)

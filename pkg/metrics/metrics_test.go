@@ -101,6 +101,8 @@ func (c *histogramMock) Start() {}
 
 func (c *histogramMock) ObserveFromStart(t time.Time) {}
 
+func (c *histogramMock) ObserveScaled(duration time.Duration) {}
+
 func (c *histogramMock) Observe(v float64) {
 	c.lastHistogramValue = v
 }

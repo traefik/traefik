@@ -17,6 +17,10 @@ const (
 	pilotConfigLastReloadSuccessName    = pilotConfigPrefix + "LastReloadSuccess"
 	pilotConfigLastReloadFailureName    = pilotConfigPrefix + "LastReloadFailure"
 
+	// proxy.
+	pilotProxyPrefix          = "proxy"
+	pilotProxyReqDurationName = pilotProxyPrefix + "RequestDurationSeconds"
+
 	// entry point.
 	pilotEntryPointPrefix           = "entrypoint"
 	pilotEntryPointReqsTotalName    = pilotEntryPointPrefix + "RequestsTotal"
@@ -39,8 +43,9 @@ const root = "value"
 // RegisterPilot registers all Pilot metrics.
 func RegisterPilot() *PilotRegistry {
 	standardRegistry := &standardRegistry{
-		epEnabled:  true,
-		svcEnabled: true,
+		proxyEnabled: true,
+		epEnabled:    true,
+		svcEnabled:   true,
 	}
 
 	pr := &PilotRegistry{
@@ -54,6 +59,8 @@ func RegisterPilot() *PilotRegistry {
 	standardRegistry.configReloadsFailureCounter = pr.newCounter(pilotConfigReloadsFailuresTotalName)
 	standardRegistry.lastConfigReloadSuccessGauge = pr.newGauge(pilotConfigLastReloadSuccessName)
 	standardRegistry.lastConfigReloadFailureGauge = pr.newGauge(pilotConfigLastReloadFailureName)
+
+	standardRegistry.proxyReqDurationHistogram, _ = NewHistogramWithScale(pr.newHistogram(pilotProxyReqDurationName), time.Millisecond)
 
 	standardRegistry.entryPointReqsCounter = pr.newCounter(pilotEntryPointReqsTotalName)
 	standardRegistry.entryPointReqsTLSCounter = pr.newCounter(pilotEntryPointReqsTLSTotalName)

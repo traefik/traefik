@@ -24,6 +24,8 @@ const (
 	ddLastConfigReloadFailureName   = "config.reload.lastFailureTimestamp"
 	ddTLSCertsNotAfterTimestampName = "tls.certs.notAfterTimestamp"
 
+	ddProxyReqDurationName = "proxy.request.duration"
+
 	ddEntryPointReqsName        = "entrypoint.request.total"
 	ddEntryPointReqsTLSName     = "entrypoint.request.tls.total"
 	ddEntryPointReqDurationName = "entrypoint.request.duration"
@@ -65,6 +67,11 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 		lastConfigReloadSuccessGauge:   datadogClient.NewGauge(ddLastConfigReloadSuccessName),
 		lastConfigReloadFailureGauge:   datadogClient.NewGauge(ddLastConfigReloadFailureName),
 		tlsCertsNotAfterTimestampGauge: datadogClient.NewGauge(ddTLSCertsNotAfterTimestampName),
+	}
+
+	if config.AddProxyLabels {
+		registry.proxyEnabled = config.AddProxyLabels
+		registry.proxyReqDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddProxyReqDurationName, 1.0), time.Second)
 	}
 
 	if config.AddEntryPointsLabels {

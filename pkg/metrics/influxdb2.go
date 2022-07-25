@@ -59,6 +59,11 @@ func RegisterInfluxDB2(ctx context.Context, config *types.InfluxDB2) Registry {
 		tlsCertsNotAfterTimestampGauge: influxDB2Store.NewGauge(influxDBTLSCertsNotAfterTimestampName),
 	}
 
+	if config.AddProxyLabels {
+		registry.proxyEnabled = config.AddProxyLabels
+		registry.proxyReqDurationHistogram, _ = NewHistogramWithScale(influxDB2Store.NewHistogram(influxDBProxyReqDurationName), time.Second)
+	}
+
 	if config.AddEntryPointsLabels {
 		registry.epEnabled = config.AddEntryPointsLabels
 		registry.entryPointReqsCounter = influxDB2Store.NewCounter(influxDBEntryPointReqsName)

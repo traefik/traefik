@@ -255,6 +255,9 @@ Datadog metrics exporter type. (Default: ```false```)
 `--metrics.datadog.addentrypointslabels`:  
 Enable metrics on entry points. (Default: ```true```)
 
+`--metrics.datadog.addproxylabels`:  
+Enable metrics on the proxy as a whole. (Default: ```false```)
+
 `--metrics.datadog.address`:  
 Datadog's address. (Default: ```localhost:8125```)
 
@@ -278,6 +281,9 @@ Enable metrics on entry points. (Default: ```true```)
 
 `--metrics.influxdb.additionallabels.<name>`:  
 Additional labels (influxdb tags) on all metrics
+
+`--metrics.influxdb.addproxylabels`:  
+Enable metrics on the proxy as a whole. (Default: ```false```)
 
 `--metrics.influxdb.address`:  
 InfluxDB address. (Default: ```localhost:8089```)
@@ -315,6 +321,9 @@ Enable metrics on entry points. (Default: ```true```)
 `--metrics.influxdb2.additionallabels.<name>`:  
 Additional labels (influxdb tags) on all metrics
 
+`--metrics.influxdb2.addproxylabels`:  
+Enable metrics on the proxy as a whole. (Default: ```false```)
+
 `--metrics.influxdb2.address`:  
 InfluxDB v2 address. (Default: ```http://localhost:8086```)
 
@@ -342,6 +351,9 @@ Prometheus metrics exporter type. (Default: ```false```)
 `--metrics.prometheus.addentrypointslabels`:  
 Enable metrics on entry points. (Default: ```true```)
 
+`--metrics.prometheus.addproxylabels`:  
+Enable metrics on the proxy as a whole. (Default: ```false```)
+
 `--metrics.prometheus.addrouterslabels`:  
 Enable metrics on routers. (Default: ```false```)
 
@@ -362,6 +374,9 @@ StatsD metrics exporter type. (Default: ```false```)
 
 `--metrics.statsd.addentrypointslabels`:  
 Enable metrics on entry points. (Default: ```true```)
+
+`--metrics.statsd.addproxylabels`:  
+Enable metrics on the proxy as a whole. (Default: ```false```)
 
 `--metrics.statsd.address`:  
 StatsD address. (Default: ```localhost:8125```)

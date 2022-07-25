@@ -17,14 +17,33 @@ import (
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 )
 
+type metricsMetadataKeyType string
+
 const (
-	protoHTTP      = "http"
-	protoSSE       = "sse"
-	protoWebsocket = "websocket"
-	typeName       = "Metrics"
-	nameEntrypoint = "metrics-entrypoint"
-	nameService    = "metrics-service"
+	protoHTTP            = "http"
+	protoSSE             = "sse"
+	protoWebsocket       = "websocket"
+	typeName             = "Metrics"
+	nameEntrypoint       = "metrics-entrypoint"
+	nameRouter           = "metrics-router"
+	nameService          = "metrics-service"
+	metricsMiddlewareKey = metricsMetadataKeyType("metrics_metadata")
 )
+
+type metricsMetadata struct {
+	sendTimestamp    time.Time
+	receiveTimestamp time.Time
+	filled           bool
+}
+
+const (
+	EntryPointMapKey = iota
+	RouterMapKey
+	ServiceMapKey
+	MapSize
+)
+
+type metricsMetadataMap [MapSize]metricsMetadata
 
 type metricsMiddleware struct {
 	next                 http.Handler
@@ -32,12 +51,29 @@ type metricsMiddleware struct {
 	reqsTLSCounter       gokitmetrics.Counter
 	reqDurationHistogram metrics.ScalableHistogram
 	openConnsGauge       gokitmetrics.Gauge
+	onResponse           func(metricsMetadataMap, []string)
+	mapKey               int
 	baseLabels           []string
 }
 
 // NewEntryPointMiddleware creates a new metrics middleware for an Entrypoint.
 func NewEntryPointMiddleware(ctx context.Context, next http.Handler, registry metrics.Registry, entryPointName string) http.Handler {
 	log.FromContext(middlewares.GetLoggerCtx(ctx, nameEntrypoint, typeName)).Debug("Creating middleware")
+	proxyReqDurationHistogram := registry.ProxyReqDurationHistogram()
+	var onResponse func(metricsMetadataMap, []string) = nil
+	if proxyReqDurationHistogram != nil {
+		onResponse = func(metadataMap metricsMetadataMap, labels []string) {
+
+			entryPointMetadata := metadataMap[EntryPointMapKey]
+			var timeSpent time.Duration
+			if serviceMetadata := metadataMap[ServiceMapKey]; serviceMetadata.filled {
+				timeSpent = serviceMetadata.sendTimestamp.Sub(entryPointMetadata.sendTimestamp) + entryPointMetadata.receiveTimestamp.Sub(serviceMetadata.receiveTimestamp)
+			} else {
+				timeSpent = entryPointMetadata.receiveTimestamp.Sub(entryPointMetadata.sendTimestamp)
+			}
+			proxyReqDurationHistogram.With(labels...).ObserveScaled(timeSpent)
+		}
+	}
 
 	return &metricsMiddleware{
 		next:                 next,
@@ -45,6 +81,8 @@ func NewEntryPointMiddleware(ctx context.Context, next http.Handler, registry me
 		reqsTLSCounter:       registry.EntryPointReqsTLSCounter(),
 		reqDurationHistogram: registry.EntryPointReqDurationHistogram(),
 		openConnsGauge:       registry.EntryPointOpenConnsGauge(),
+		onResponse:           onResponse,
+		mapKey:               EntryPointMapKey,
 		baseLabels:           []string{"entrypoint", entryPointName},
 	}
 }
@@ -59,6 +97,7 @@ func NewRouterMiddleware(ctx context.Context, next http.Handler, registry metric
 		reqsTLSCounter:       registry.RouterReqsTLSCounter(),
 		reqDurationHistogram: registry.RouterReqDurationHistogram(),
 		openConnsGauge:       registry.RouterOpenConnsGauge(),
+		mapKey:               RouterMapKey,
 		baseLabels:           []string{"router", routerName, "service", serviceName},
 	}
 }
@@ -73,6 +112,7 @@ func NewServiceMiddleware(ctx context.Context, next http.Handler, registry metri
 		reqsTLSCounter:       registry.ServiceReqsTLSCounter(),
 		reqDurationHistogram: registry.ServiceReqDurationHistogram(),
 		openConnsGauge:       registry.ServiceOpenConnsGauge(),
+		mapKey:               ServiceMapKey,
 		baseLabels:           []string{"service", serviceName},
 	}
 }
@@ -115,15 +155,32 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		m.reqsTLSCounter.With(tlsLabels...).Add(1)
 	}
 
+	// get or create metadata
+	var metadataMap metricsMetadataMap
+	if metricsMetadataMapVal := req.Context().Value(metricsMiddlewareKey); metricsMetadataMapVal == nil {
+		metadataMap = metricsMetadataMap{}
+		ctx := context.WithValue(req.Context(), metricsMiddlewareKey, metadataMap)
+		req = req.WithContext(ctx)
+	} else {
+		metadataMap = metricsMetadataMapVal.(metricsMetadataMap)
+	}
+	metadata := &metadataMap[m.mapKey]
+
 	recorder := newResponseRecorder(rw)
 	start := time.Now()
-
+	metadata.sendTimestamp = start
 	m.next.ServeHTTP(recorder, req)
 
 	labels = append(labels, "code", strconv.Itoa(recorder.getCode()))
-
 	histograms := m.reqDurationHistogram.With(labels...)
 	histograms.ObserveFromStart(start)
+
+	metadata.receiveTimestamp = time.Now()
+	metadata.filled = true
+
+	if m.onResponse != nil {
+		(m.onResponse)(metadataMap, labels)
+	}
 
 	m.reqsCounter.With(labels...).Add(1)
 }
