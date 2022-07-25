@@ -8,7 +8,6 @@
 | mkdocs-material   | [documentation][mkdocs-material]    | [Sources][mkdocs-material-src]    |
 | pymdown-extensions| [documentation][pymdown-extensions] | [Sources][pymdown-extensions-src] |
 
-
 [mkdocs]: https://www.mkdocs.org "Mkdocs"
 [mkdocs-src]: https://github.com/mkdocs/mkdocs "Mkdocs - Sources"
 

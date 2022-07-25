@@ -16,7 +16,7 @@ var _ provider.Provider = (*Provider)(nil)
 
 // ProviderBuilder is responsible for constructing namespaced instances of the Consul provider.
 type ProviderBuilder struct {
-	kv.Provider `export:"true"`
+	kv.Provider `yaml:",inline" export:"true"`
 
 	// Deprecated: use Namespaces instead.
 	Namespace  string   `description:"Sets the namespace used to discover the configuration (Consul Enterprise only)." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`

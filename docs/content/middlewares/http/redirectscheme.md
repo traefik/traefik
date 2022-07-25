@@ -13,7 +13,6 @@ TODO: add schema
 -->
 
 The RedirectScheme middleware redirects the request if the request scheme is different from the configured scheme.
-The middleware does not work for websocket requests. 
 
 !!! warning "When behind another reverse-proxy"
 
