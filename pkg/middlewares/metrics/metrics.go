@@ -103,8 +103,9 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	labels = append(labels, m.baseLabels...)
 	labels = append(labels, "method", getMethod(req), "protocol", getRequestProtocol(req))
 
-	m.openConnsGauge.With(labels...).Add(1)
-	defer m.openConnsGauge.With(labels...).Add(-1)
+	openConnsGauge := m.openConnsGauge.With(labels...)
+	openConnsGauge.Add(1)
+	defer openConnsGauge.Add(-1)
 
 	// TLS metrics
 	if req.TLS != nil {
@@ -122,8 +123,7 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	labels = append(labels, "code", strconv.Itoa(recorder.getCode()))
 
-	histograms := m.reqDurationHistogram.With(labels...)
-	histograms.ObserveFromStart(start)
+	m.reqDurationHistogram.With(labels...).ObserveFromStart(start)
 
 	m.reqsCounter.With(labels...).Add(1)
 }

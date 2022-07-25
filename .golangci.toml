@@ -179,7 +179,7 @@
   ]
  [[issues.exclude-rules]]
     path = "(.+)_test.go"
-    linters = ["goconst", "funlen", "godot"]
+    linters = ["goconst", "funlen", "godot", "nosnakecase"]
  [[issues.exclude-rules]]
     path = "integration/.+_test.go"
     text = "Error return value of `cmd\\.Process\\.Kill` is not checked"
@@ -222,3 +222,15 @@
  [[issues.exclude-rules]]
     path = "pkg/server/router/tcp/manager.go"
     text = "Function 'buildEntryPointHandler' is too long (.+)"
+ [[issues.exclude-rules]]
+    path = "integration/fake_dns_server.go"
+    linters = ["nosnakecase"]
+ [[issues.exclude-rules]]
+    path = "pkg/plugins/providers.go"
+    linters = ["nosnakecase"]
+ [[issues.exclude-rules]]
+    path = "pkg/tls/cipher.go"
+    linters = ["nosnakecase"]
+ [[issues.exclude-rules]]
+    text = "O_WRONLY|O_RDWR|O_CREATE|O_TRUNC|O_APPEND"
+    linters = ["nosnakecase"]
