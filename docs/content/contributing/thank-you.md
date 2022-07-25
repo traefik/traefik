@@ -8,11 +8,11 @@ description: "Thank you to all those who have contributed! Traefik Proxy is an o
 _You_ Made It
 {: .subtitle}
 
-Traefik truly is an [open-source project](https://github.com/traefik/traefik/),
+Traefik Proxy truly is an [open-source project](https://github.com/traefik/traefik/),
 and wouldn't have become what it is today without the help of our [many contributors](https://github.com/traefik/traefik/graphs/contributors) (at the time of writing this),
-not accounting for people having helped with issues, tests, comments, articles, ... or just enjoying it and letting others know.
+not accounting for people having helped with issues, tests, comments, articles, ... or just enjoy using Traefik Proxy and share with others.
 
-So once again, thank you for your invaluable help on making Traefik such a good product.
+So once again, thank you for your invaluable help in making Traefik such a good product!
 
 !!! question "Where to Go Next?"
     If you want to:

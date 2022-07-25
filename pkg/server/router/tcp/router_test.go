@@ -94,7 +94,6 @@ func (h *httpForwarder) Accept() (net.Conn, error) {
 //
 // - TCP-TLS HostSNI(`foobar`) and HTTPS PathPrefix(`/`)
 //   - On v2.6 and v2.7, the TCP-TLS one takes precedence.
-//
 func Test_Routing(t *testing.T) {
 	// This listener simulates the backend service.
 	// It is capable of switching into server first communication mode,
