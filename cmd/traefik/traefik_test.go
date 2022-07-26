@@ -157,27 +157,27 @@ func TestGetDefaultsEntrypoints(t *testing.T) {
 			eps: map[string]*static.EntryPoint{
 				"web": {
 					Address: ":80",
+					ExplicitUseOnly: true,
 				},
 				"websecure": {
 					Address:    ":443",
-					DefaultSet: true,
 				},
 			},
 			expected: []string{"websecure"},
 		},
 		{
-			desc: "Two attachable EntryPoints",
+			desc: "Two EntryPoints none attachable",
 			eps: map[string]*static.EntryPoint{
 				"web": {
 					Address:    ":80",
-					DefaultSet: true,
+					ExplicitUseOnly: true,
 				},
 				"websecure": {
 					Address:    ":443",
-					DefaultSet: true,
+					ExplicitUseOnly: true,
 				},
 			},
-			expected: []string{"web", "websecure"},
+			expected: []string{},
 		},
 	}
 
