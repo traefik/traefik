@@ -76,7 +76,7 @@ func (s *UDPSuite) TestWRR(c *check.C) {
 	stop := make(chan struct{})
 	go func() {
 		call := map[string]int{}
-		for i := 0; i < 4; i++ {
+		for i := 0; i < 8; i++ {
 			out, err := guessWhoUDP("127.0.0.1:8093")
 			c.Assert(err, checker.IsNil)
 			switch {
@@ -90,7 +90,7 @@ func (s *UDPSuite) TestWRR(c *check.C) {
 				call["unknown"]++
 			}
 		}
-		c.Assert(call, checker.DeepEquals, map[string]int{"whoami-a": 2, "whoami-b": 1, "whoami-c": 1})
+		c.Assert(call, checker.DeepEquals, map[string]int{"whoami-a": 3, "whoami-b": 2, "whoami-c": 3})
 		close(stop)
 	}()
 
