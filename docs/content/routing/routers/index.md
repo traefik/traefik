@@ -94,8 +94,8 @@ or act before forwarding the request to the service.
 
 ### EntryPoints
 
-If not specified, HTTP routers will accept requests from all defined entry points.
-If you want to limit the router scope to a set of entry points, set the `entryPoints` option.
+If not specified, HTTP routers will accept requests from all EntryPoints (except for those with `explicitUseOnly` set to true).
+If you want to limit the router scope to specific EntryPoints, set the `entryPoints` option.
 
 ??? example "Listens to Every EntryPoint"
 
@@ -106,7 +106,7 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
     http:
       routers:
         Router-1:
-          # By default, routers listen to every entry points
+          # By default, routers listen to every EntryPoint.
           rule: "Host(`example.com`)"
           service: "service-1"
     ```
@@ -115,7 +115,7 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
     ## Dynamic configuration
     [http.routers]
       [http.routers.Router-1]
-        # By default, routers listen to every entry points
+        # By default, routers listen to every EntryPoint.
         rule = "Host(`example.com`)"
         service = "service-1"
     ```
@@ -665,13 +665,13 @@ The [supported `provider` table](../../https/acme.md#providers) indicates if the
 
 ### General
 
-If both HTTP routers and TCP routers listen to the same entry points, the TCP routers will apply *before* the HTTP routers.
+If both HTTP routers and TCP routers listen to the same EntryPoint, the TCP routers will apply *before* the HTTP routers.
 If no matching route is found for the TCP routers, then the HTTP routers will take over.
 
 ### EntryPoints
 
-If not specified, TCP routers will accept requests from all defined entry points.
-If you want to limit the router scope to a set of entry points, set the entry points option.
+If not specified, TCP routers will accept requests from all EntryPoints (except for those with `explicitUseOnly` set to true).
+If you want to limit the router scope to a set of EntryPoints, set the `entryPoints` option.
 
 ??? info "How to handle Server First protocols?"
 
@@ -698,7 +698,7 @@ If you want to limit the router scope to a set of entry points, set the entry po
     tcp:
       routers:
         Router-1:
-          # By default, routers listen to every entrypoints
+          # By default, routers listen to every EntryPoints.
           rule: "HostSNI(`example.com`)"
           service: "service-1"
           # will route TLS requests (and ignore non tls requests)
@@ -710,7 +710,7 @@ If you want to limit the router scope to a set of entry points, set the entry po
 
     [tcp.routers]
       [tcp.routers.Router-1]
-        # By default, routers listen to every entrypoints
+        # By default, routers listen to every EntryPoints.
         rule = "HostSNI(`example.com`)"
         service = "service-1"
         # will route TLS requests (and ignore non tls requests)
@@ -750,7 +750,7 @@ If you want to limit the router scope to a set of entry points, set the entry po
     --entrypoints.other.address=:9090
     ```
 
-??? example "Listens to Specific Entry Points"
+??? example "Listens to Specific EntryPoints"
 
     **Dynamic Configuration**
 
@@ -1197,12 +1197,12 @@ So UDP "routers" at this time are pretty much only load-balancers in one form or
 	As expected, a `timeout` is associated to each of these sessions,
 	so that they get cleaned out if they go through a period of inactivity longer than a given duration. 
 	Timeout can be configured using the `entryPoints.name.udp.timeout` option as described 
-	under [entry points](../entrypoints/#udp-options).
+	under [EntryPoints](../entrypoints/#udp-options).
 
 ### EntryPoints
 
-If not specified, UDP routers will accept packets from all defined (UDP) entry points.
-If one wants to limit the router scope to a set of entry points, one should set the entry points option.
+If not specified, UDP routers will accept packets from all defined (UDP) EntryPoints.
+If one wants to limit the router scope to a set of EntryPoints, one should set the `entryPoints` option.
 
 ??? example "Listens to Every Entry Point"
 
@@ -1266,7 +1266,7 @@ If one wants to limit the router scope to a set of entry points, one should set 
     --entrypoints.streaming.address=":9191/udp"
     ```
 
-??? example "Listens to Specific Entry Points"
+??? example "Listens to Specific EntryPoints"
 
     **Dynamic Configuration**
 
