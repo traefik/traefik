@@ -11,8 +11,8 @@ import (
 
 // TraefikService is the CRD implementation of a Traefik Service.
 // TraefikService object allows to:
-//  - Apply weight to Services on load-balancing
-//  - Mirror traffic on services
+// - Apply weight to Services on load-balancing
+// - Mirror traffic on services
 // More info: https://doc.traefik.io/traefik/v2.8/routing/providers/kubernetes-crd/#kind-traefikservice
 type TraefikService struct {
 	metav1.TypeMeta `json:",inline"`

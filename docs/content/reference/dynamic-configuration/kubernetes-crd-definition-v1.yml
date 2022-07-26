@@ -1904,8 +1904,8 @@ spec:
     schema:
       openAPIV3Schema:
         description: 'TraefikService is the CRD implementation of a Traefik Service.
-          TraefikService object allows to:  - Apply weight to Services on load-balancing  -
-          Mirror traffic on services More info: https://doc.traefik.io/traefik/v2.8/routing/providers/kubernetes-crd/#kind-traefikservice'
+          TraefikService object allows to: - Apply weight to Services on load-balancing
+          - Mirror traffic on services More info: https://doc.traefik.io/traefik/v2.8/routing/providers/kubernetes-crd/#kind-traefikservice'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation

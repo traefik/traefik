@@ -26,4 +26,4 @@ CGO_ENABLED=0 GOGC=off go build ${FLAGS[*]} -ldflags "-s -w \
     -X github.com/traefik/traefik/v2/pkg/version.Version=$VERSION \
     -X github.com/traefik/traefik/v2/pkg/version.Codename=$CODENAME \
     -X github.com/traefik/traefik/v2/pkg/version.BuildDate=$DATE" \
-    -a -installsuffix nocgo -o dist/traefik ./cmd/traefik
+    -installsuffix nocgo -o dist/traefik ./cmd/traefik
