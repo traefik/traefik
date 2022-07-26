@@ -274,8 +274,8 @@ The `DefaultSet` option flags the EntryPoint to be used by default when configur
 
     ```bash tab="CLI"
     --entrypoints.web.address=:80
-    --entrypoints.web.address=:443
-    --entrypoints.web.defaultset=true
+    --entrypoints.websecure.address=:443
+    --entrypoints.websecure.defaultSet=true
     ```
 
 ### HTTP/2
