@@ -3,6 +3,7 @@ package consulcatalog
 import (
 	"context"
 	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/hashicorp/consul/api"
@@ -2611,6 +2612,253 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc:         "two HTTP service instances with one canary",
+			ConnectAware: true,
+			items: []itemData{
+				{
+					ID:         "1",
+					Node:       "Node1",
+					Datacenter: "dc1",
+					Name:       "Test",
+					Namespace:  "ns",
+					Labels: map[string]string{
+						"traefik.consulcatalog.connect": "true",
+					},
+					Address: "127.0.0.1",
+					Port:    "80",
+					Status:  api.HealthPassing,
+				},
+				{
+					ID:         "2",
+					Node:       "Node1",
+					Datacenter: "dc1",
+					Name:       "Test",
+					Namespace:  "ns",
+					Labels: map[string]string{
+						"traefik.consulcatalog.connect": "true",
+						"traefik.consulcatalog.canary":  "true",
+					},
+					Address: "127.0.0.2",
+					Port:    "80",
+					Status:  api.HealthPassing,
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"Test": {
+							Service: "Test",
+							Rule:    "Host(`Test.traefik.wtf`)",
+						},
+						"Test-9063865763995334845": {
+							Service: "Test-9063865763995334845",
+							Rule:    "Host(`Test.traefik.wtf`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Test": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "https://127.0.0.1:80",
+									},
+								},
+								PassHostHeader:   Bool(true),
+								ServersTransport: "tls-ns-dc1-Test",
+							},
+						},
+						"Test-9063865763995334845": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "https://127.0.0.2:80",
+									},
+								},
+								PassHostHeader:   Bool(true),
+								ServersTransport: "tls-ns-dc1-Test",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"tls-ns-dc1-Test": {
+							ServerName:         "ns-dc1-Test",
+							InsecureSkipVerify: true,
+							RootCAs: []tls.FileOrContent{
+								"root",
+							},
+							Certificates: []tls.Certificate{
+								{
+									CertFile: "cert",
+									KeyFile:  "key",
+								},
+							},
+							PeerCertURI: "spiffe:///ns/ns/dc/dc1/svc/Test",
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:         "two TCP service instances with one canary",
+			ConnectAware: true,
+			items: []itemData{
+				{
+					ID:         "1",
+					Node:       "Node1",
+					Datacenter: "dc1",
+					Name:       "Test",
+					Namespace:  "ns",
+					Labels: map[string]string{
+						"traefik.tcp.routers.test.rule": "HostSNI(`foobar`)",
+					},
+					Address: "127.0.0.1",
+					Port:    "80",
+					Status:  api.HealthPassing,
+				},
+				{
+					ID:         "2",
+					Node:       "Node1",
+					Datacenter: "dc1",
+					Name:       "Test",
+					Namespace:  "ns",
+					Labels: map[string]string{
+						"traefik.consulcatalog.canary":         "true",
+						"traefik.tcp.routers.test-canary.rule": "HostSNI(`canary.foobar`)",
+					},
+					Address: "127.0.0.2",
+					Port:    "80",
+					Status:  api.HealthPassing,
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"test": {
+							Service: "Test",
+							Rule:    "HostSNI(`foobar`)",
+						},
+						"test-canary": {
+							Service: "Test-17894695160126753176",
+							Rule:    "HostSNI(`canary.foobar`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"Test": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{Address: "127.0.0.1:80"},
+								},
+								TerminationDelay: Int(100),
+							},
+						},
+						"Test-17894695160126753176": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{Address: "127.0.0.2:80"},
+								},
+								TerminationDelay: Int(100),
+							},
+						},
+					},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc:         "two UDP service instances with one canary",
+			ConnectAware: true,
+			items: []itemData{
+				{
+					ID:         "1",
+					Node:       "Node1",
+					Datacenter: "dc1",
+					Name:       "Test",
+					Namespace:  "ns",
+					Labels: map[string]string{
+						"traefik.udp.routers.test.entrypoints": "udp",
+					},
+					Address: "127.0.0.1",
+					Port:    "80",
+					Status:  api.HealthPassing,
+				},
+				{
+					ID:         "2",
+					Node:       "Node1",
+					Datacenter: "dc1",
+					Name:       "Test",
+					Namespace:  "ns",
+					Labels: map[string]string{
+						"traefik.consulcatalog.canary":                "true",
+						"traefik.udp.routers.test-canary.entrypoints": "udp",
+					},
+					Address: "127.0.0.2",
+					Port:    "80",
+					Status:  api.HealthPassing,
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"test": {
+							EntryPoints: []string{"udp"},
+							Service:     "Test",
+						},
+						"test-canary": {
+							EntryPoints: []string{"udp"},
+							Service:     "Test-1346847178227676570",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"Test": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{Address: "127.0.0.1:80"},
+								},
+							},
+						},
+						"Test-1346847178227676570": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{Address: "127.0.0.2:80"},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -2640,6 +2888,7 @@ func Test_buildConfiguration(t *testing.T) {
 				for k, v := range test.items[i].Labels {
 					tags = append(tags, fmt.Sprintf("%s=%s", k, v))
 				}
+				sort.Strings(tags)
 				test.items[i].Tags = tags
 			}
 

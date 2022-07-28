@@ -11,7 +11,8 @@ type configuration struct {
 }
 
 type specificConfiguration struct {
-	Connect bool
+	Connect bool // <prefix>.consulcatalog.connect
+	Canary  bool // <prefix>.consulcatalog.canary
 }
 
 func (p *Provider) getConfiguration(labels map[string]string) (configuration, error) {

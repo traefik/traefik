@@ -186,18 +186,24 @@ func createClient(namespace string, endpoint *EndpointConfig) (*api.Client, erro
 // (not specific to the dynamic configuration).
 type configuration struct {
 	Enable bool // <prefix>.enable
+	Canary bool // <prefix>.nomad.canary
 }
 
 // globalConfig returns a configuration with settings not specific to the dynamic configuration (i.e. "<prefix>.enable").
 func (p *Provider) globalConfig(tags []string) configuration {
-	enabled := p.ExposedByDefault
 	labels := tagsToLabels(tags, p.Prefix)
 
+	enabled := p.ExposedByDefault
 	if v, exists := labels["traefik.enable"]; exists {
 		enabled = strings.EqualFold(v, "true")
 	}
 
-	return configuration{Enable: enabled}
+	var canary bool
+	if v, exists := labels["traefik.nomad.canary"]; exists {
+		canary = strings.EqualFold(v, "true")
+	}
+
+	return configuration{Enable: enabled, Canary: canary}
 }
 
 func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
