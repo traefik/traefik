@@ -159,6 +159,8 @@
     "containedctx", # too many false-positive
     "maintidx", # kind of duplicate of gocyclo
     "nonamedreturns", # not relevant
+    "nosnakecase", # not relevant
+    "asasalint", # not relevant
   ]
 
 [issues]
