@@ -1,0 +1,33 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traefik-static-config
+data:
+  static.yaml: |
+    entryPoints:
+      web:
+        address: ':80'
+      websecure:
+        address: ':443'
+        http:
+          tls:
+            certResolver: myresolver
+
+    log:
+      level: INFO
+
+    api:
+      dashboard: true
+
+    providers:
+      kubernetesCRD: {}
+      kubernetesIngress: {}
+
+    certificatesResolvers:
+      myresolver:
+        acme:
+          email: you@example.com
+          storage: acme.json
+          dnsChallenge:
+            provider: cloudflare

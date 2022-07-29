@@ -12,8 +12,14 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
 
 ??? example "Configuring KubernetesCRD and Deploying/Exposing Services"
 
+    ```yaml tab="Static Configuration"
+    providers:
+      kubernetesCRD: {}
+    ```
+
     ```yaml tab="Resource Definition"
     # All resources definition must be declared
+    # This file can also be downloaded here: https://raw.githubusercontent.com/traefik/traefik/v2.8/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
     --8<-- "content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml"
     ```
     

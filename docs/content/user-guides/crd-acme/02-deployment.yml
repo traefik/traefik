@@ -1,0 +1,33 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: traefik
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traefik
+  template:
+    metadata:
+      labels:
+        app: traefik
+    spec:
+      serviceAccountName: traefik-ingress-controller
+      containers:
+        - name: traefik
+          image: traefik:v2.8
+          args:
+            - --configfile=/config/static.yaml
+          ports:
+            - name: web
+              containerPort: 80
+            - name: websecure
+              containerPort: 443
+          volumeMounts:
+            - name: static-config
+              mountPath: "/config"
+      volumes:
+        - name: static-config
+          configMap:
+            name: traefik-static-config
