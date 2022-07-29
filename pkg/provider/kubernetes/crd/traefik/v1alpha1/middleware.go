@@ -166,7 +166,8 @@ type ClientTLS struct {
 	CertSecret string `json:"certSecret,omitempty"`
 	// InsecureSkipVerify defines whether the server certificates should be validated.
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
-	CAOptional         bool `json:"caOptional,omitempty"`
+	// Deprecated: TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634).
+	CAOptional bool `json:"caOptional,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
