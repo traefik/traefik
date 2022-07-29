@@ -233,7 +233,7 @@ level=info msg=Register... providerName=myresolver.acme
 !!! warning
 
     This deployment is simplified.
-    On production, you should follow Kubernetes security recommandations and secure your API
+    On production, you should follow Kubernetes security recommendations and secure your API
     token, at least in a `secret`. You may also deploy Traefik on a statefulset, in order to
     keep your Certificates when pod restart.
 
