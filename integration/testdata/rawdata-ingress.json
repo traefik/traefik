@@ -28,7 +28,7 @@
 				"traefik"
 			]
 		},
-		"test-ingress-default-whoami-test-whoami@kubernetes": {
+		"default-test-ingress-whoami-test-whoami@kubernetes": {
 			"entryPoints": [
 				"web"
 			],
@@ -39,7 +39,7 @@
 				"web"
 			]
 		},
-		"test-ingress-https-default-whoami-test-https-whoami@kubernetes": {
+		"https-default-test-ingress-whoami-test-https-whoami@kubernetes": {
 			"entryPoints": [
 				"web"
 			],
@@ -147,8 +147,8 @@
 			},
 			"status": "enabled",
 			"usedBy": [
-				"test-ingress-default-whoami-test-whoami@kubernetes",
-				"test-ingress-https-default-whoami-test-https-whoami@kubernetes"
+				"default-test-ingress-whoami-test-whoami@kubernetes",
+				"https-default-test-ingress-whoami-test-https-whoami@kubernetes"
 			],
 			"serverStatus": {
 				"http://10.42.0.10:80": "UP",
