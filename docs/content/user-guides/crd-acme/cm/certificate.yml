@@ -1,0 +1,13 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: whoami
+spec:
+  secretName: whoami-tls
+  dnsNames:
+    - whoami.example.com
+  issuerRef:
+    name: cloudflare
+    kind: ClusterIssuer
+    group: cert-manager.io
