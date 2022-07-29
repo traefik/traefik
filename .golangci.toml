@@ -159,6 +159,8 @@
     "containedctx", # too many false-positive
     "maintidx", # kind of duplicate of gocyclo
     "nonamedreturns", # not relevant
+    "nosnakecase", # not relevant
+    "asasalint", # not relevant
   ]
 
 [issues]
@@ -176,6 +178,7 @@
     "SA1019: cfg.FeaturePolicy is deprecated",
     "SA1019: c.Providers.ConsulCatalog.Namespace is deprecated",
     "SA1019: c.Providers.Consul.Namespace is deprecated",
+    "SA1019: auth.TLS.CAOptional is deprecated",
   ]
  [[issues.exclude-rules]]
     path = "(.+)_test.go"

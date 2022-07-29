@@ -369,6 +369,8 @@ spec:
                       connection to the authentication server.
                     properties:
                       caOptional:
+                        description: 'Deprecated: TLS client authentication is a server
+                          side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634).'
                         type: boolean
                       caSecret:
                         description: CASecret is the name of the referenced Kubernetes

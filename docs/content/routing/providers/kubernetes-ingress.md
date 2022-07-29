@@ -18,53 +18,13 @@ which in turn will create the resulting routers, services, handlers, etc.
 
 ??? example "Configuring Kubernetes Ingress Controller"
 
-    ```yaml tab="RBAC"
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      name: traefik-ingress-controller
-    rules:
-      - apiGroups:
-          - ""
-        resources:
-          - services
-          - endpoints
-          - secrets
-        verbs:
-          - get
-          - list
-          - watch
-      - apiGroups:
-          - extensions
-          - networking.k8s.io
-        resources:
-          - ingresses
-          - ingressclasses
-        verbs:
-          - get
-          - list
-          - watch
-      - apiGroups:
-          - extensions
-        resources:
-          - ingresses/status
-        verbs:
-          - update
+    ```yaml tab="Static Configuration"
+    providers:
+      kubernetesIngress: {}
+    ```
 
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRoleBinding
-    metadata:
-      name: traefik-ingress-controller
-    roleRef:
-      apiGroup: rbac.authorization.k8s.io
-      kind: ClusterRole
-      name: traefik-ingress-controller
-    subjects:
-      - kind: ServiceAccount
-        name: traefik-ingress-controller
-        namespace: default
+    ```yaml tab="RBAC"
+    --8<-- "content/user-guides/crd-acme/ingress/01-rbac.yml
     ```
 
     ```yaml tab="Ingress"
