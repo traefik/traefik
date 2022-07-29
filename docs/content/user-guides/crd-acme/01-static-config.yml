@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traefik-static-config
+data:
+  static.yaml: |
+    entryPoints:
+      web:
+        address: ':80'
+      websecure:
+        address: ':443'
+
+    log:
+      level: INFO
+
+    api:
+      dashboard: true
+
+    providers:
+      kubernetesCRD: {}
+      kubernetesIngress: {}
