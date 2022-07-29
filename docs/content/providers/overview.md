@@ -136,7 +136,7 @@ Below is the list of the currently supported providers in Traefik.
 |---------------------------------------------------|--------------|----------------------|---------------------|
 | [Docker](./docker.md)                             | Orchestrator | Label                | `docker`            |
 | [Kubernetes IngressRoute](./kubernetes-crd.md)    | Orchestrator | Custom Resource      | `kubernetescrd`     |
-| [Kubernetes Ingress](./kubernetes-ingress.md)     | Orchestrator | Ingress              | `kubernetes`        |
+| [Kubernetes Ingress](./kubernetes-ingress.md)     | Orchestrator | Ingress              | `kubernetesingress` |
 | [Kubernetes Gateway API](./kubernetes-gateway.md) | Orchestrator | Gateway API Resource | `kubernetesgateway` |
 | [Consul Catalog](./consul-catalog.md)             | Orchestrator | Label                | `consulcatalog`     |
 | [Nomad](./nomad.md)                               | Orchestrator | Label                | `nomad`             |
