@@ -4,8 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"net"
+	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/label"
@@ -76,7 +79,7 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 			Labels: labels,
 		}
 
-		provider.BuildRouterConfiguration(ctx, config.HTTP, provider.Normalize(i.Name), p.defaultRuleTpl, model)
+		provider.BuildRouterConfiguration(ctx, config.HTTP, getName(i), p.defaultRuleTpl, model)
 		configurations[svcName] = config
 	}
 
@@ -90,7 +93,7 @@ func (p *Provider) buildTCPConfig(i item, configuration *dynamic.TCPConfiguratio
 		lb := new(dynamic.TCPServersLoadBalancer)
 		lb.SetDefaults()
 
-		configuration.Services[provider.Normalize(i.Name)] = &dynamic.TCPService{
+		configuration.Services[getName(i)] = &dynamic.TCPService{
 			LoadBalancer: lb,
 		}
 	}
@@ -108,7 +111,7 @@ func (p *Provider) buildUDPConfig(i item, configuration *dynamic.UDPConfiguratio
 	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.UDPService)
 
-		configuration.Services[provider.Normalize(i.Name)] = &dynamic.UDPService{
+		configuration.Services[getName(i)] = &dynamic.UDPService{
 			LoadBalancer: new(dynamic.UDPServersLoadBalancer),
 		}
 	}
@@ -129,7 +132,7 @@ func (p *Provider) buildServiceConfig(i item, configuration *dynamic.HTTPConfigu
 		lb := new(dynamic.ServersLoadBalancer)
 		lb.SetDefaults()
 
-		configuration.Services[provider.Normalize(i.Name)] = &dynamic.Service{
+		configuration.Services[getName(i)] = &dynamic.Service{
 			LoadBalancer: lb,
 		}
 	}
@@ -264,4 +267,19 @@ func (p *Provider) addServer(i item, lb *dynamic.ServersLoadBalancer) error {
 	lb.Servers[0].URL = fmt.Sprintf("%s://%s", scheme, net.JoinHostPort(i.Address, port))
 
 	return nil
+}
+
+func getName(i item) string {
+	if !i.ExtraConf.Canary {
+		return provider.Normalize(i.Name)
+	}
+
+	tags := make([]string, len(i.Tags))
+	copy(tags, i.Tags)
+
+	sort.Strings(tags)
+
+	hasher := fnv.New64()
+	hasher.Write([]byte(strings.Join(tags, "")))
+	return provider.Normalize(fmt.Sprintf("%s-%d", i.Name, hasher.Sum64()))
 }

@@ -470,6 +470,20 @@ You can tell Traefik to consider (or not) the service as a Connect capable one b
 
 This option overrides the value of `connectByDefault`.
 
+#### `traefik.consulcatalog.canary`
+
+```yaml
+traefik.consulcatalog.canary=true
+```
+
+When ConsulCatalog, in the context of a Nomad orchestrator,
+is a provider (of service registration) for Traefik,
+one might have the need to distinguish within Traefik between a [Canary](https://learn.hashicorp.com/tutorials/nomad/job-blue-green-and-canary-deployments#deploy-with-canaries) instance of a service, or a production one.
+For example if one does not want them to be part of the same load-balancer.
+
+Therefore, this option, which is meant to be provided as one of the values of the `canary_tags` field in the Nomad [service stanza](https://www.nomadproject.io/docs/job-specification/service#canary_tags),
+allows Traefik to identify that the associated instance is a canary one.
+
 #### Port Lookup
 
 Traefik is capable of detecting the port to use, by following the default consul Catalog flow.
