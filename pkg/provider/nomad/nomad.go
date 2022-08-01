@@ -189,7 +189,7 @@ type configuration struct {
 	Canary bool // <prefix>.nomad.canary is the corresponding label.
 }
 
-// getExtraConf returns a configuration with settings not specific to the dynamic configuration (i.e. "<prefix>.enable").
+// getExtraConf returns a configuration with settings which are not part of the dynamic configuration (e.g. "<prefix>.enable").
 func (p *Provider) getExtraConf(tags []string) configuration {
 	labels := tagsToLabels(tags, p.Prefix)
 

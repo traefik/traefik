@@ -15,6 +15,7 @@ type specificConfiguration struct {
 	Canary  bool // <prefix>.consulcatalog.canary is the corresponding label.
 }
 
+// getExtraConf returns a configuration with settings which are not part of the dynamic configuration (e.g. "<prefix>.enable").
 func (p *Provider) getExtraConf(labels map[string]string) (configuration, error) {
 	conf := configuration{
 		Enable:        p.ExposedByDefault,
