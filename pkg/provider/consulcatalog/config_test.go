@@ -273,7 +273,7 @@ func TestDefaultRule(t *testing.T) {
 
 			for i := 0; i < len(test.items); i++ {
 				var err error
-				test.items[i].ExtraConf, err = p.getConfiguration(test.items[i].Labels)
+				test.items[i].ExtraConf, err = p.getExtraConf(test.items[i].Labels)
 				require.NoError(t, err)
 			}
 
@@ -2659,8 +2659,8 @@ func Test_buildConfiguration(t *testing.T) {
 							Service: "Test",
 							Rule:    "Host(`Test.traefik.wtf`)",
 						},
-						"Test-9063865763995334845": {
-							Service: "Test-9063865763995334845",
+						"Test-97077516270503695": {
+							Service: "Test-97077516270503695",
 							Rule:    "Host(`Test.traefik.wtf`)",
 						},
 					},
@@ -2677,7 +2677,7 @@ func Test_buildConfiguration(t *testing.T) {
 								ServersTransport: "tls-ns-dc1-Test",
 							},
 						},
-						"Test-9063865763995334845": {
+						"Test-97077516270503695": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -2748,7 +2748,7 @@ func Test_buildConfiguration(t *testing.T) {
 							Rule:    "HostSNI(`foobar`)",
 						},
 						"test-canary": {
-							Service: "Test-17894695160126753176",
+							Service: "Test-17573747155436217342",
 							Rule:    "HostSNI(`canary.foobar`)",
 						},
 					},
@@ -2762,7 +2762,7 @@ func Test_buildConfiguration(t *testing.T) {
 								TerminationDelay: Int(100),
 							},
 						},
-						"Test-17894695160126753176": {
+						"Test-17573747155436217342": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{Address: "127.0.0.2:80"},
@@ -2830,7 +2830,7 @@ func Test_buildConfiguration(t *testing.T) {
 						},
 						"test-canary": {
 							EntryPoints: []string{"udp"},
-							Service:     "Test-1346847178227676570",
+							Service:     "Test-12825244908842506376",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
@@ -2841,7 +2841,7 @@ func Test_buildConfiguration(t *testing.T) {
 								},
 							},
 						},
-						"Test-1346847178227676570": {
+						"Test-12825244908842506376": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{Address: "127.0.0.2:80"},
@@ -2880,7 +2880,7 @@ func Test_buildConfiguration(t *testing.T) {
 
 			for i := 0; i < len(test.items); i++ {
 				var err error
-				test.items[i].ExtraConf, err = p.getConfiguration(test.items[i].Labels)
+				test.items[i].ExtraConf, err = p.getExtraConf(test.items[i].Labels)
 				require.NoError(t, err)
 
 				var tags []string

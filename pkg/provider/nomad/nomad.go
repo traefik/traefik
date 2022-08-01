@@ -185,12 +185,12 @@ func createClient(namespace string, endpoint *EndpointConfig) (*api.Client, erro
 // configuration contains information from the service's tags that are globals
 // (not specific to the dynamic configuration).
 type configuration struct {
-	Enable bool // <prefix>.enable
-	Canary bool // <prefix>.nomad.canary
+	Enable bool // <prefix>.enable is the corresponding label.
+	Canary bool // <prefix>.nomad.canary is the corresponding label.
 }
 
-// globalConfig returns a configuration with settings not specific to the dynamic configuration (i.e. "<prefix>.enable").
-func (p *Provider) globalConfig(tags []string) configuration {
+// getExtraConf returns a configuration with settings not specific to the dynamic configuration (i.e. "<prefix>.enable").
+func (p *Provider) getExtraConf(tags []string) configuration {
 	labels := tagsToLabels(tags, p.Prefix)
 
 	enabled := p.ExposedByDefault
@@ -222,8 +222,8 @@ func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
 		for _, service := range stub.Services {
 			logger := log.FromContext(log.With(ctx, log.Str("serviceName", service.ServiceName)))
 
-			globalCfg := p.globalConfig(service.Tags)
-			if !globalCfg.Enable {
+			extraConf := p.getExtraConf(service.Tags)
+			if !extraConf.Enable {
 				logger.Debug("Filter Nomad service that is not enabled")
 				continue
 			}
@@ -254,7 +254,7 @@ func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
 					Address:    i.Address,
 					Port:       i.Port,
 					Tags:       i.Tags,
-					ExtraConf:  p.globalConfig(i.Tags),
+					ExtraConf:  p.getExtraConf(i.Tags),
 				})
 			}
 		}

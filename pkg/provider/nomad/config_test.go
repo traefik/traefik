@@ -2330,7 +2330,7 @@ func Test_buildConfig(t *testing.T) {
 							Rule:    "HostSNI(`foobar`)",
 						},
 						"test-canary": {
-							Service: "Test-9726919899690485944",
+							Service: "Test-8769860286750522282",
 							Rule:    "HostSNI(`canary.foobar`)",
 						},
 					},
@@ -2344,7 +2344,7 @@ func Test_buildConfig(t *testing.T) {
 								TerminationDelay: Int(100),
 							},
 						},
-						"Test-9726919899690485944": {
+						"Test-8769860286750522282": {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{Address: "127.0.0.2:80"},
@@ -2414,7 +2414,7 @@ func Test_buildConfig(t *testing.T) {
 						},
 						"test-canary": {
 							EntryPoints: []string{"udp"},
-							Service:     "Test-10874264889956497526",
+							Service:     "Test-1611429260986126224",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
@@ -2425,7 +2425,7 @@ func Test_buildConfig(t *testing.T) {
 								},
 							},
 						},
-						"Test-10874264889956497526": {
+						"Test-1611429260986126224": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{Address: "127.0.0.2:80"},

@@ -306,6 +306,6 @@ func getName(i itemData) string {
 	sort.Strings(tags)
 
 	hasher := fnv.New64()
-	hasher.Write([]byte(strings.Join(tags, ",")))
+	hasher.Write([]byte(strings.Join(tags, "")))
 	return provider.Normalize(fmt.Sprintf("%s-%d", i.Name, hasher.Sum64()))
 }
