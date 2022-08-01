@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"net"
+	"sort"
 	"strings"
 
 	"github.com/hashicorp/consul/api"
@@ -299,7 +300,12 @@ func getName(i itemData) string {
 		return provider.Normalize(i.Name)
 	}
 
+	tags := make([]string, len(i.Tags))
+	copy(tags, i.Tags)
+
+	sort.Strings(tags)
+
 	hasher := fnv.New64()
-	hasher.Write([]byte(strings.Join(i.Tags, ",")))
+	hasher.Write([]byte(strings.Join(tags, ",")))
 	return provider.Normalize(fmt.Sprintf("%s-%d", i.Name, hasher.Sum64()))
 }

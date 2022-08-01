@@ -3,7 +3,6 @@ package consulcatalog
 import (
 	"context"
 	"fmt"
-	"sort"
 	"testing"
 
 	"github.com/hashicorp/consul/api"
@@ -2888,7 +2887,6 @@ func Test_buildConfiguration(t *testing.T) {
 				for k, v := range test.items[i].Labels {
 					tags = append(tags, fmt.Sprintf("%s=%s", k, v))
 				}
-				sort.Strings(tags)
 				test.items[i].Tags = tags
 			}
 
