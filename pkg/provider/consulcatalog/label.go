@@ -4,17 +4,18 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/label"
 )
 
-// configuration Contains information from the labels that are globals (not related to the dynamic configuration) or specific to the provider.
+// configuration contains information from the labels that are globals (not related to the dynamic configuration) or specific to the provider.
 type configuration struct {
 	Enable        bool
 	ConsulCatalog specificConfiguration
 }
 
 type specificConfiguration struct {
-	Connect bool
+	Connect bool // <prefix>.consulcatalog.connect is the corresponding label.
+	Canary  bool // <prefix>.consulcatalog.canary is the corresponding label.
 }
 
-func (p *Provider) getConfiguration(labels map[string]string) (configuration, error) {
+func (p *Provider) getExtraConf(labels map[string]string) (configuration, error) {
 	conf := configuration{
 		Enable:        p.ExposedByDefault,
 		ConsulCatalog: specificConfiguration{Connect: p.ConnectByDefault},
