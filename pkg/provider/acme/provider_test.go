@@ -15,13 +15,13 @@ import (
 func TestGetUncheckedCertificates(t *testing.T) {
 	t.Skip("Needs TLS Manager")
 	wildcardMap := make(map[string][]*tls.Certificate)
-	wildcardMap["*.traefik.wtf"] = []*tls.Certificate{&tls.Certificate{}}
+	wildcardMap["*.traefik.wtf"] = []*tls.Certificate{{}}
 
 	wildcardSafe := &safe.Safe{}
 	wildcardSafe.Set(wildcardMap)
 
 	domainMap := make(map[string][]*tls.Certificate)
-	domainMap["traefik.wtf"] = []*tls.Certificate{&tls.Certificate{}}
+	domainMap["traefik.wtf"] = []*tls.Certificate{{}}
 
 	domainSafe := &safe.Safe{}
 	domainSafe.Set(domainMap)
