@@ -84,60 +84,43 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 	}
 
 	if certs, ok := c.CertCache.Get(serverName); ok {
-		return selectCert(clientHello, certs.(map[string][]*tls.Certificate))
+		return selectCert(clientHello, certs.([]*tls.Certificate))
 	}
 
-	matchedCerts := map[string][]*tls.Certificate{}
+	var matchedCerts []*tls.Certificate
 	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
 		for domains, certs := range c.DynamicCerts.Get().(map[string][]*tls.Certificate) {
 			for _, certDomain := range strings.Split(domains, ",") {
 				if matchDomain(serverName, certDomain) {
-					if _, alreadyExists := matchedCerts[certDomain]; !alreadyExists {
-						matchedCerts[certDomain] = make([]*tls.Certificate, 0, len(certs))
-					}
-
-					matchedCerts[certDomain] = append(matchedCerts[certDomain], certs...)
+					matchedCerts = append(matchedCerts, certs...)
 				}
 			}
 		}
 	}
 
-	if len(matchedCerts) > 0 {
-		c.CertCache.SetDefault(serverName, matchedCerts)
-		return selectCert(clientHello, matchedCerts)
-	}
+	sort.Slice(matchedCerts, func(i, j int) bool {
+		return matchedCerts[i].Leaf.PublicKeyAlgorithm > matchedCerts[j].Leaf.PublicKeyAlgorithm ||
+			matchedCerts[i].Leaf.NotAfter.Before(matchedCerts[j].Leaf.NotAfter)
+	})
 
-	return nil
+	c.CertCache.SetDefault(serverName, matchedCerts)
+	return selectCert(clientHello, matchedCerts)
 }
 
-func selectCert(clientHello *tls.ClientHelloInfo, matchedCerts map[string][]*tls.Certificate) *tls.Certificate {
-	// sort map by keys
-	keys := make([]string, 0, len(matchedCerts))
-	for k := range matchedCerts {
-		keys = append(keys, k)
-	}
+func selectCert(clientHello *tls.ClientHelloInfo, matchedCerts []*tls.Certificate) *tls.Certificate {
+	// Disables the servername checks into SupportsCertificate.
+	// If not disabled, it would break today's behavior,
+	// which is to select certificate with a matching Common Name.
+	// TODO: remove and do not support Common Name anymore?
+	serverName := clientHello.ServerName
+	clientHello.ServerName = ""
+	defer func() {
+		clientHello.ServerName = serverName
+	}()
 
-	sort.Sort(sort.Reverse(sort.StringSlice(keys)))
-
-	for _, k := range keys {
-		sort.Slice(matchedCerts[k], func(i, j int) bool {
-			// if one of the two considered certificates is expired, do not consider PublicKeyAlgorithm are sort accordingly
-			iExpired := time.Now().After(matchedCerts[k][i].Leaf.NotAfter)
-			jExpired := time.Now().After(matchedCerts[k][j].Leaf.NotAfter)
-			if iExpired && !jExpired {
-				return false
-			}
-			if jExpired && !iExpired {
-				return true
-			}
-
-			return matchedCerts[k][i].Leaf.PublicKeyAlgorithm > matchedCerts[k][j].Leaf.PublicKeyAlgorithm
-		})
-
-		for _, cert := range matchedCerts[k] {
-			if clientHello.SupportsCertificate(cert) == nil {
-				return cert
-			}
+	for _, cert := range matchedCerts {
+		if clientHello.SupportsCertificate(cert) == nil {
+			return cert
 		}
 	}
 

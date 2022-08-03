@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/tls/generate"
 )
 
 var (
@@ -101,40 +100,6 @@ func (f FileOrContent) Read() ([]byte, error) {
 	return content, nil
 }
 
-// CreateTLSConfig creates a TLS config from Certificate structures.
-func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, error) {
-	config := &tls.Config{}
-	domainsCertificates := make(map[string]map[string][]*tls.Certificate)
-
-	if c.isEmpty() {
-		config.Certificates = []tls.Certificate{}
-
-		cert, err := generate.DefaultCertificate()
-		if err != nil {
-			return nil, err
-		}
-
-		config.Certificates = append(config.Certificates, *cert)
-	} else {
-		for _, certificate := range *c {
-			err := certificate.AppendCertificate(domainsCertificates, entryPointName)
-			if err != nil {
-				log.Errorf("Unable to add a certificate to the entryPoint %q : %v", entryPointName, err)
-				continue
-			}
-
-			for _, certDom := range domainsCertificates {
-				for _, certs := range certDom {
-					for _, cert := range certs {
-						config.Certificates = append(config.Certificates, *cert)
-					}
-				}
-			}
-		}
-	}
-	return config, nil
-}
-
 // isEmpty checks if the certificates list is empty.
 func (c *Certificates) isEmpty() bool {
 	if len(*c) == 0 {
@@ -195,17 +160,7 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string][]*tls.Certi
 	}
 
 	log.Debugf("Adding certificate for domain(s) %s", certKey)
-	if len(certs[ep][certKey]) == 0 {
-		certs[ep][certKey] = []*tls.Certificate{&tlsCert}
-	} else {
-		certs[ep][certKey] = append(certs[ep][certKey], &tlsCert)
-
-		// sorting certificates that has the same DNSNames according to their PublicKeyAlgorithms
-		// traefik will returns optimized certificates first (such as ed25519 and ECDSA, over RSA ones)
-		sort.Slice(certs[ep][certKey], func(i, j int) bool {
-			return certs[ep][certKey][i].Leaf.PublicKeyAlgorithm > certs[ep][certKey][j].Leaf.PublicKeyAlgorithm
-		})
-	}
+	certs[ep][certKey] = append(certs[ep][certKey], &tlsCert)
 
 	return err
 }
