@@ -201,7 +201,7 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string][]*tls.Certi
 		certs[ep][certKey] = append(certs[ep][certKey], &tlsCert)
 
 		// sorting certificates that has the same DNSNames according to their PublicKeyAlgorithms
-		// traefik will returns optimised certificates first (such as ed25519 and ECDSA, over RSA ones)
+		// traefik will returns optimized certificates first (such as ed25519 and ECDSA, over RSA ones)
 		sort.Slice(certs[ep][certKey], func(i, j int) bool {
 			return certs[ep][certKey][i].Leaf.PublicKeyAlgorithm > certs[ep][certKey][j].Leaf.PublicKeyAlgorithm
 		})
