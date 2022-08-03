@@ -1,6 +1,6 @@
 module github.com/traefik/traefik/v2
 
-go 1.17
+go 1.19
 
 require (
 	github.com/BurntSushi/toml v1.1.0
@@ -56,7 +56,7 @@ require (
 	github.com/stretchr/testify v1.8.0
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
 	github.com/traefik/paerser v0.1.6
-	github.com/traefik/yaegi v0.13.0
+	github.com/traefik/yaegi v0.14.0
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/unrolled/render v1.0.2
