@@ -220,6 +220,14 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     - "traefik.http.services.myservice.loadbalancer.healthcheck.path=/foo"
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.method`"
+    
+    See [health check](../services/index.md#health-check) for more information.
+    
+    ```yaml
+    - "traefik.http.services.myservice.loadbalancer.healthcheck.method=foobar"
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.port`"
     
     See [health check](../services/index.md#health-check) for more information.
