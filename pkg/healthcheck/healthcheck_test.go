@@ -306,6 +306,7 @@ func TestRequestOptions(t *testing.T) {
 			},
 			expectedHostname: "myhost",
 			expectedHeader:   "",
+			expectedMethod:   http.MethodGet,
 		},
 		{
 			desc:      "not override hostname",
@@ -316,6 +317,7 @@ func TestRequestOptions(t *testing.T) {
 			},
 			expectedHostname: "backend1:80",
 			expectedHeader:   "",
+			expectedMethod:   http.MethodGet,
 		},
 		{
 			desc:      "custom header",
@@ -327,6 +329,7 @@ func TestRequestOptions(t *testing.T) {
 			},
 			expectedHostname: "backend1:80",
 			expectedHeader:   "foo",
+			expectedMethod:   http.MethodGet,
 		},
 		{
 			desc:      "custom header with hostname override",
@@ -338,16 +341,17 @@ func TestRequestOptions(t *testing.T) {
 			},
 			expectedHostname: "myhost",
 			expectedHeader:   "foo",
+			expectedMethod:   http.MethodGet,
 		},
 		{
 			desc:      "custom method",
 			serverURL: "http://backend1:80",
 			options: Options{
 				Path:   "/",
-				Method: "HEAD",
+				Method: http.MethodHead,
 			},
 			expectedHostname: "backend1:80",
-			expectedMethod:   "HEAD",
+			expectedMethod:   http.MethodHead,
 		},
 	}
 
