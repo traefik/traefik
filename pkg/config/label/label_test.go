@@ -150,6 +150,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service0.loadbalancer.healthcheck.hostname":             "foobar",
 		"traefik.http.services.Service0.loadbalancer.healthcheck.interval":             "foobar",
 		"traefik.http.services.Service0.loadbalancer.healthcheck.path":                 "foobar",
+		"traefik.http.services.Service0.loadbalancer.healthcheck.method":               "foobar",
 		"traefik.http.services.Service0.loadbalancer.healthcheck.port":                 "42",
 		"traefik.http.services.Service0.loadbalancer.healthcheck.scheme":               "foobar",
 		"traefik.http.services.Service0.loadbalancer.healthcheck.timeout":              "foobar",
@@ -165,6 +166,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service1.loadbalancer.healthcheck.hostname":             "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.interval":             "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.path":                 "foobar",
+		"traefik.http.services.Service1.loadbalancer.healthcheck.method":               "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.port":                 "42",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.scheme":               "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.timeout":              "foobar",
@@ -649,6 +651,7 @@ func TestDecodeConfiguration(t *testing.T) {
 						HealthCheck: &dynamic.ServerHealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
+							Method:   "foobar",
 							Port:     42,
 							Interval: "foobar",
 							Timeout:  "foobar",
@@ -676,6 +679,7 @@ func TestDecodeConfiguration(t *testing.T) {
 						HealthCheck: &dynamic.ServerHealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
+							Method:   "foobar",
 							Port:     42,
 							Interval: "foobar",
 							Timeout:  "foobar",
@@ -1138,6 +1142,7 @@ func TestEncodeConfiguration(t *testing.T) {
 						HealthCheck: &dynamic.ServerHealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
+							Method:   "foobar",
 							Port:     42,
 							Interval: "foobar",
 							Timeout:  "foobar",
@@ -1164,6 +1169,7 @@ func TestEncodeConfiguration(t *testing.T) {
 						HealthCheck: &dynamic.ServerHealthCheck{
 							Scheme:   "foobar",
 							Path:     "foobar",
+							Method:   "foobar",
 							Port:     42,
 							Interval: "foobar",
 							Timeout:  "foobar",
@@ -1324,6 +1330,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Hostname":             "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Interval":             "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Path":                 "foobar",
+		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Method":               "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Port":                 "42",
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Scheme":               "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Timeout":              "foobar",
@@ -1339,6 +1346,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Hostname":             "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Interval":             "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Path":                 "foobar",
+		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Method":               "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Port":                 "42",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Scheme":               "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Timeout":              "foobar",

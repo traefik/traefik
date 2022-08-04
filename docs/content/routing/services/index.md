@@ -330,6 +330,7 @@ Below are the available options for the health check mechanism:
 - `timeout` (default: 5s), defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
 - `headers` (optional), defines custom headers to be sent to the health check endpoint.
 - `followRedirects` (default: true), defines whether redirects should be followed during the health check calls.
+- `method` (default: GET), defines the HTTP method that will be used while connecting to the endpoint.
 
 !!! info "Interval & Timeout Format"
 
