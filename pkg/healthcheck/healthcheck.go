@@ -102,7 +102,7 @@ func (b *BackendConfig) newRequest(serverURL *url.URL) (*http.Request, error) {
 	return http.NewRequest(http.MethodGet, u.String(), http.NoBody)
 }
 
-// setRequestOptions sets all request pertinent options present on the BackendConfig.
+// setRequestOptions sets all request options present on the BackendConfig.
 func (b *BackendConfig) setRequestOptions(req *http.Request) *http.Request {
 	if b.Options.Hostname != "" {
 		req.Host = b.Options.Hostname
@@ -112,7 +112,9 @@ func (b *BackendConfig) setRequestOptions(req *http.Request) *http.Request {
 		req.Header.Set(k, v)
 	}
 
-	req.Method = b.Options.Method
+	if b.Options.Method != "" {
+		req.Method = b.Options.Method
+	}
 
 	return req
 }
