@@ -54,6 +54,7 @@
         [http.services.Service01.loadBalancer.healthCheck]
           scheme = "foobar"
           path = "foobar"
+          method = "foobar"
           port = 42
           interval = "foobar"
           timeout = "foobar"

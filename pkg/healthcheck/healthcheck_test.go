@@ -288,13 +288,14 @@ func TestNewRequest(t *testing.T) {
 	}
 }
 
-func TestAddHeadersAndHost(t *testing.T) {
+func TestRequestOptions(t *testing.T) {
 	testCases := []struct {
 		desc             string
 		serverURL        string
 		options          Options
 		expectedHostname string
 		expectedHeader   string
+		expectedMethod   string
 	}{
 		{
 			desc:      "override hostname",
@@ -305,6 +306,7 @@ func TestAddHeadersAndHost(t *testing.T) {
 			},
 			expectedHostname: "myhost",
 			expectedHeader:   "",
+			expectedMethod:   http.MethodGet,
 		},
 		{
 			desc:      "not override hostname",
@@ -315,6 +317,7 @@ func TestAddHeadersAndHost(t *testing.T) {
 			},
 			expectedHostname: "backend1:80",
 			expectedHeader:   "",
+			expectedMethod:   http.MethodGet,
 		},
 		{
 			desc:      "custom header",
@@ -326,6 +329,7 @@ func TestAddHeadersAndHost(t *testing.T) {
 			},
 			expectedHostname: "backend1:80",
 			expectedHeader:   "foo",
+			expectedMethod:   http.MethodGet,
 		},
 		{
 			desc:      "custom header with hostname override",
@@ -337,6 +341,17 @@ func TestAddHeadersAndHost(t *testing.T) {
 			},
 			expectedHostname: "myhost",
 			expectedHeader:   "foo",
+			expectedMethod:   http.MethodGet,
+		},
+		{
+			desc:      "custom method",
+			serverURL: "http://backend1:80",
+			options: Options{
+				Path:   "/",
+				Method: http.MethodHead,
+			},
+			expectedHostname: "backend1:80",
+			expectedMethod:   http.MethodHead,
 		},
 	}
 
@@ -353,11 +368,12 @@ func TestAddHeadersAndHost(t *testing.T) {
 			req, err := backend.newRequest(u)
 			require.NoError(t, err, "failed to create new backend request")
 
-			req = backend.addHeadersAndHost(req)
+			req = backend.setRequestOptions(req)
 
 			assert.Equal(t, "http://backend1:80/", req.URL.String())
 			assert.Equal(t, test.expectedHostname, req.Host)
 			assert.Equal(t, test.expectedHeader, req.Header.Get("Custom-Header"))
+			assert.Equal(t, test.expectedMethod, req.Method)
 		})
 	}
 }
