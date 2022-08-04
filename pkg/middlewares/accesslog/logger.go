@@ -218,6 +218,9 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		core[RequestScheme] = "https"
 		core[TLSVersion] = traefiktls.GetVersion(req.TLS)
 		core[TLSCipher] = traefiktls.GetCipherName(req.TLS)
+		if certificates := req.TLS.PeerCertificates; len(certificates) > 0 {
+			core[TLSClientSubject] = certificates[0].Subject.String()
+		}
 	}
 
 	core[ClientAddr] = req.RemoteAddr
