@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -113,7 +114,7 @@ func (b *BackendConfig) setRequestOptions(req *http.Request) *http.Request {
 	}
 
 	if b.Options.Method != "" {
-		req.Method = b.Options.Method
+		req.Method = strings.ToUpper(b.Options.Method)
 	}
 
 	return req
