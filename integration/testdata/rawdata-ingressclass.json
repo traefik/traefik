@@ -28,7 +28,7 @@
 				"traefik"
 			]
 		},
-		"whoami-keep-route-default-whoami-test-keep-keep@kubernetes": {
+		"default-whoami-keep-route-whoami-test-keep-keep@kubernetes": {
 			"entryPoints": [
 				"web"
 			],
@@ -92,7 +92,7 @@
 			},
 			"status": "enabled",
 			"usedBy": [
-				"whoami-keep-route-default-whoami-test-keep-keep@kubernetes"
+				"default-whoami-keep-route-whoami-test-keep-keep@kubernetes"
 			],
 			"serverStatus": {
 				"http://10.42.0.4:80": "UP",
