@@ -360,6 +360,7 @@ func buildHealthCheckOptions(ctx context.Context, lb healthcheck.Balancer, backe
 	return &healthcheck.Options{
 		Scheme:          hc.Scheme,
 		Path:            hc.Path,
+		Method:          hc.Method,
 		Port:            hc.Port,
 		Interval:        interval,
 		Timeout:         timeout,
