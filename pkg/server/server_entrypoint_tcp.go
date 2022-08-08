@@ -7,6 +7,7 @@ import (
 	stdlog "log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -197,6 +198,11 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 
 			var opErr *net.OpError
 			if errors.As(err, &opErr) && opErr.Temporary() {
+				continue
+			}
+
+			var urlErr *url.Error
+			if errors.As(err, &urlErr) && urlErr.Temporary() {
 				continue
 			}
 
