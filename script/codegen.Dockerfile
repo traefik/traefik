@@ -1,4 +1,5 @@
-FROM golang:1.19
+# TODO rewrite this to be able to use go1.19.
+FROM golang:1.17
 
 ARG USER=$USER
 ARG UID=$UID
