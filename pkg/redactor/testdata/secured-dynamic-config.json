@@ -471,8 +471,7 @@
           ],
           "clientAuthType": "RequireAndVerifyClientCert"
         },
-        "sniStrict": true,
-        "preferServerCipherSuites": true
+        "sniStrict": true
       }
     },
     "stores": {
