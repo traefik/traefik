@@ -60,7 +60,7 @@ func (c CertificateStore) GetAllDomains() []string {
 
 	// Get dynamic certificates
 	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
-		for domain := range c.DynamicCerts.Get().(map[string]*tls.Certificate) {
+		for domain := range c.DynamicCerts.Get().(map[string][]*tls.Certificate) {
 			allDomains = append(allDomains, domain)
 		}
 	}
@@ -83,32 +83,45 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 		serverName = strings.TrimSpace(host)
 	}
 
-	if cert, ok := c.CertCache.Get(serverName); ok {
-		return cert.(*tls.Certificate)
+	if certs, ok := c.CertCache.Get(serverName); ok {
+		return selectCert(clientHello, certs.([]*tls.Certificate))
 	}
 
-	matchedCerts := map[string]*tls.Certificate{}
+	var matchedCerts []*tls.Certificate
 	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
-		for domains, cert := range c.DynamicCerts.Get().(map[string]*tls.Certificate) {
+		for domains, certs := range c.DynamicCerts.Get().(map[string][]*tls.Certificate) {
 			for _, certDomain := range strings.Split(domains, ",") {
 				if matchDomain(serverName, certDomain) {
-					matchedCerts[certDomain] = cert
+					matchedCerts = append(matchedCerts, certs...)
 				}
 			}
 		}
 	}
 
-	if len(matchedCerts) > 0 {
-		// sort map by keys
-		keys := make([]string, 0, len(matchedCerts))
-		for k := range matchedCerts {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
+	sort.Slice(matchedCerts, func(i, j int) bool {
+		return matchedCerts[i].Leaf.PublicKeyAlgorithm > matchedCerts[j].Leaf.PublicKeyAlgorithm ||
+			matchedCerts[i].Leaf.NotAfter.Before(matchedCerts[j].Leaf.NotAfter)
+	})
 
-		// cache best match
-		c.CertCache.SetDefault(serverName, matchedCerts[keys[len(keys)-1]])
-		return matchedCerts[keys[len(keys)-1]]
+	c.CertCache.SetDefault(serverName, matchedCerts)
+	return selectCert(clientHello, matchedCerts)
+}
+
+func selectCert(clientHello *tls.ClientHelloInfo, matchedCerts []*tls.Certificate) *tls.Certificate {
+	// Disables the servername checks into SupportsCertificate.
+	// If not disabled, it would break today's behavior,
+	// which is to select certificate with a matching Common Name.
+	// TODO: remove and do not support Common Name anymore?
+	serverName := clientHello.ServerName
+	clientHello.ServerName = ""
+	defer func() {
+		clientHello.ServerName = serverName
+	}()
+
+	for _, cert := range matchedCerts {
+		if clientHello.SupportsCertificate(cert) == nil {
+			return cert
+		}
 	}
 
 	return nil

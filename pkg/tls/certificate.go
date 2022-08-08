@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/tls/generate"
 )
 
 var (
@@ -101,38 +100,6 @@ func (f FileOrContent) Read() ([]byte, error) {
 	return content, nil
 }
 
-// CreateTLSConfig creates a TLS config from Certificate structures.
-func (c *Certificates) CreateTLSConfig(entryPointName string) (*tls.Config, error) {
-	config := &tls.Config{}
-	domainsCertificates := make(map[string]map[string]*tls.Certificate)
-
-	if c.isEmpty() {
-		config.Certificates = []tls.Certificate{}
-
-		cert, err := generate.DefaultCertificate()
-		if err != nil {
-			return nil, err
-		}
-
-		config.Certificates = append(config.Certificates, *cert)
-	} else {
-		for _, certificate := range *c {
-			err := certificate.AppendCertificate(domainsCertificates, entryPointName)
-			if err != nil {
-				log.Errorf("Unable to add a certificate to the entryPoint %q : %v", entryPointName, err)
-				continue
-			}
-
-			for _, certDom := range domainsCertificates {
-				for _, cert := range certDom {
-					config.Certificates = append(config.Certificates, *cert)
-				}
-			}
-		}
-	}
-	return config, nil
-}
-
 // isEmpty checks if the certificates list is empty.
 func (c *Certificates) isEmpty() bool {
 	if len(*c) == 0 {
@@ -149,7 +116,7 @@ func (c *Certificates) isEmpty() bool {
 }
 
 // AppendCertificate appends a Certificate to a certificates map keyed by entrypoint.
-func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certificate, ep string) error {
+func (c *Certificate) AppendCertificate(certs map[string]map[string][]*tls.Certificate, ep string) error {
 	certContent, err := c.CertFile.Read()
 	if err != nil {
 		return fmt.Errorf("unable to read CertFile : %w", err)
@@ -165,6 +132,7 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 	}
 
 	parsedCert, _ := x509.ParseCertificate(tlsCert.Certificate[0])
+	tlsCert.Leaf = parsedCert
 
 	var SANs []string
 	if parsedCert.Subject.CommonName != "" {
@@ -187,23 +155,12 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 	}
 	certKey := strings.Join(SANs, ",")
 
-	certExists := false
 	if certs[ep] == nil {
-		certs[ep] = make(map[string]*tls.Certificate)
-	} else {
-		for domains := range certs[ep] {
-			if domains == certKey {
-				certExists = true
-				break
-			}
-		}
+		certs[ep] = make(map[string][]*tls.Certificate)
 	}
-	if certExists {
-		log.Debugf("Skipping addition of certificate for domain(s) %q, to EntryPoint %s, as it already exists for this Entrypoint.", certKey, ep)
-	} else {
-		log.Debugf("Adding certificate for domain(s) %s", certKey)
-		certs[ep][certKey] = &tlsCert
-	}
+
+	log.Debugf("Adding certificate for domain(s) %s", certKey)
+	certs[ep][certKey] = append(certs[ep][certKey], &tlsCert)
 
 	return err
 }
