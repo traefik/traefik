@@ -159,6 +159,7 @@
     "containedctx", # too many false-positive
     "maintidx", # kind of duplicate of gocyclo
     "nonamedreturns", # not relevant
+    "structcheck", # duplicate of unused
   ]
 
 [issues]
