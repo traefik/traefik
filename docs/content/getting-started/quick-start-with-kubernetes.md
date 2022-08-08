@@ -65,8 +65,8 @@ rules:
 
 !!! info "You can find the reference for this file [there](../../reference/dynamic-configuration/kubernetes-crd/#rbac)."
 
-The next step is to create an account for Traefik.
-In a file called `00-account.yml`, put the following [`ClusterAccount`](https://kubernetes.io/docs/reference/kubernetes-api/authentication-resources/service-account-v1/#ServiceAccount) resource:
+The next step is to create a dedicated service account for Traefik.
+In a file called `00-account.yml`, put the following [`ServiceAccount`](https://kubernetes.io/docs/reference/kubernetes-api/authentication-resources/service-account-v1/#ServiceAccount) resource:
 
 ```yaml tab="00-account.yml"
 apiVersion: v1
