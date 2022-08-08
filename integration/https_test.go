@@ -142,7 +142,7 @@ func (s *HTTPSSuite) TestWithTLSOptions(c *check.C) {
 	tr1 := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
-			MaxVersion:         tls.VersionTLS11,
+			MaxVersion:         tls.VersionTLS12,
 			ServerName:         "snitest.com",
 		},
 	}
