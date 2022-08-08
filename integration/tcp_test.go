@@ -115,7 +115,7 @@ func (s *TCPSuite) TestTLSOptions(c *check.C) {
 	// Check that we cannot use a client tls version <= 1.1 with hostSNI 'whoami-d.test'
 	_, err = guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-d.test", true, tls.VersionTLS11)
 	c.Assert(err, checker.NotNil)
-	c.Assert(err.Error(), checker.Contains, "protocol version not supported")
+	c.Assert(err.Error(), checker.Contains, "tls: no supported versions satisfy MinVersion and MaxVersion")
 }
 
 func (s *TCPSuite) TestNonTLSFallback(c *check.C) {
