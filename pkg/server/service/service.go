@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -51,6 +52,7 @@ func NewManager(configs map[string]*runtime.ServiceInfo, metricsRegistry metrics
 		roundTripperManager: roundTripperManager,
 		balancers:           make(map[string]healthcheck.Balancers),
 		configs:             configs,
+		rand:                rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
 
@@ -66,6 +68,7 @@ type Manager struct {
 	// which is why there is not just one Balancer per service name.
 	balancers map[string]healthcheck.Balancers
 	configs   map[string]*runtime.ServiceInfo
+	rand      *rand.Rand
 }
 
 // BuildHTTP Creates a http.Handler for a service configuration.
@@ -211,8 +214,12 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 		config.Sticky.Cookie.Name = cookie.GetName(config.Sticky.Cookie.Name, serviceName)
 	}
 
+	shuffledServices := make([]dynamic.WRRService, len(config.Services))
+	copy(shuffledServices, config.Services)
+	m.rand.Shuffle(len(shuffledServices), func(i, j int) { shuffledServices[i], shuffledServices[j] = shuffledServices[j], shuffledServices[i] })
+
 	balancer := wrr.New(config.Sticky, config.HealthCheck)
-	for _, service := range config.Services {
+	for _, service := range shuffledServices {
 		serviceHandler, err := m.BuildHTTP(ctx, service.Name)
 		if err != nil {
 			return nil, err
@@ -413,7 +420,11 @@ func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, servi
 func (m *Manager) upsertServers(ctx context.Context, lb healthcheck.BalancerHandler, servers []dynamic.Server) error {
 	logger := log.FromContext(ctx)
 
-	for name, srv := range servers {
+	shuffledServers := make([]dynamic.Server, len(servers))
+	copy(shuffledServers, servers)
+	m.rand.Shuffle(len(shuffledServers), func(i, j int) { shuffledServers[i], shuffledServers[j] = shuffledServers[j], shuffledServers[i] })
+
+	for name, srv := range shuffledServers {
 		u, err := url.Parse(srv.URL)
 		if err != nil {
 			return fmt.Errorf("error parsing server URL %s: %w", srv.URL, err)
