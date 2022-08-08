@@ -10,23 +10,19 @@ A Simple Use Case of Traefik Proxy and Kubernetes
 
 This guide is an introduction to using Traefik Proxy in a Kubernetes environment.
 The objective is to learn how to run an application behind a Traefik reverse proxy in Kubernetes.
-This guide presents and explains the basic blocks required to start with Traefik such as Ingress Controller, Ingresses, Deployments, static, and dynamic configuration.
+It presents and explains the basic blocks required to start with Traefik such as Ingress Controller, Ingresses, Deployments, static, and dynamic configuration.
 
 ## Permissions and Accesses
 
 Traefik uses the Kubernetes API to discover running services.
 
-In order to use the Kubernetes API,
-Traefik needs some permissions.
+In order to use the Kubernetes API, Traefik needs some permissions.
 This [permission mechanism](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) is based on roles defined by the cluster administrator.
-The role is then bound to an account used by an application,
-in this case, Traefik Proxy.
+The role is then bound to an account used by an application, in this case, Traefik Proxy.
 
 The first step is to create the role.
-The [`ClusterRole`](https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/cluster-role-v1/#ClusterRole) resource enumerates the resources and actions
-available for the role.
-In a file called `00-role.yml`,
-put the following `ClusterRole`:
+The [`ClusterRole`](https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/cluster-role-v1/#ClusterRole) resource enumerates the resources and actions available for the role.
+In a file called `00-role.yml`, put the following `ClusterRole`:
 
 ```yaml tab="00-role.yml"
 kind: ClusterRole
@@ -91,7 +87,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: traefik-account
-    namespace: default # Using "default" because we didn't specify a namespace when creating the ClusterAccount.
+    namespace: default # Using "default" because we did not specify a namespace when creating the ClusterAccount.
 ```
 
 !!! info "`roleRef` is the Kubernetes reference to the role created in `00-role.yml`."
@@ -152,8 +148,8 @@ select dynamic configuration providers,
 and [more](../reference/static-configuration/cli.md)...
 
 In this deployment,
-the static configuration enables the Traefik dashboard
-and uses Kubernetes native ingress resources as router definitions to route incoming requests.
+the static configuration enables the Traefik dashboard,
+and uses Kubernetes native Ingress resources as router definitions to route incoming requests.
 
 !!! info "When there is no entry points in the static configuration"
 
@@ -163,7 +159,7 @@ and uses Kubernetes native ingress resources as router definitions to route inco
 
 A deployment manages scaling and then can create lots of containers, called [Pods](https://kubernetes.io/docs/concepts/workloads/pods/).
 Each Pod is configured following the `spec` field in the deployment.
-Given that a Deployment can run multiple Traefik Proxy Pods,
+Given that, a Deployment can run multiple Traefik Proxy Pods,
 a piece is required to forward the traffic to any of the instance:
 namely a [`Service`](https://kubernetes.io/docs/reference/kubernetes-api/service-resources/service-v1/#Service).
 Create a file called `02-traefik-services.yml` and insert the two `Service` resources:
@@ -198,8 +194,7 @@ spec:
 
 !!! warning "It is possible to expose a service in different ways."
 
-    Depending on your working environment and use case,
-    the `spec.type` might change.
+    Depending on your working environment and use case, the `spec.type` might change.
     It is strongly recommended to understand the available [service types](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types) before proceeding to the next step.
 
 It is now time to apply those files on your cluster to start Traefik.
@@ -219,8 +214,7 @@ For this guide, we use the example application [traefik/whoami](https://github.c
 but the principles are applicable to any other application.
 
 The `whoami` application is a simple HTTP server running on port 80 which answers host-related information to the incoming requests.
-As usual, start by creating a file called `03-whoami.yml` and
-paste the following `Deployment` resource:
+As usual, start by creating a file called `03-whoami.yml` and paste the following `Deployment` resource:
 
 ```yaml tab="03-whoami.yml"
 kind: Deployment
@@ -272,8 +266,9 @@ This makes the process dynamic.
 The ingresses are, in a way, the [dynamic configuration](../../providers/kubernetes-ingress/) for Traefik.
 
 !!! tip
-    Find more information on [IngressController](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/) and
-    [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) in the official Kubernetes documentation.
+
+    Find more information on [ingress controller](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/),
+    and [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) in the official Kubernetes documentation.
 
 Create a file called `04-whoami-ingress.yml` and insert the `Ingress` resource:
 
@@ -316,6 +311,7 @@ curl -v http://localhost/
 ```
 
 !!! question "Going further"
+
     - [Filter the ingresses](../providers/kubernetes-ingress.md#ingressclass) to use with [IngressClass](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class)
     - Use [IngressRoute CRD](../providers/kubernetes-crd.md)
     - Protect [ingresses with TLS](../routing/providers/kubernetes-ingress.md#enabling-tls-via-annotations)
