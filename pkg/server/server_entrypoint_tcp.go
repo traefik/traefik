@@ -195,8 +195,8 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 		if err != nil {
 			logger.Error(err)
 
-			var netErr net.Error
-			if errors.As(err, &netErr) && netErr.Temporary() {
+			var opErr *net.OpError
+			if errors.As(err, &opErr) && opErr.Temporary() {
 				continue
 			}
 
