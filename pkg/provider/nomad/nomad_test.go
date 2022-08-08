@@ -65,7 +65,7 @@ func Test_globalConfig(t *testing.T) {
 	for _, test := range cases {
 		t.Run(test.Name, func(t *testing.T) {
 			p := Provider{ExposedByDefault: test.ExposedByDefault, Prefix: test.Prefix}
-			result := p.globalConfig(test.Tags)
+			result := p.getExtraConf(test.Tags)
 			require.Equal(t, test.exp, result)
 		})
 	}

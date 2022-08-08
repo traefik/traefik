@@ -283,13 +283,13 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 	for name, tags := range serviceNames {
 		logger := log.FromContext(log.With(ctx, log.Str("serviceName", name)))
 
-		svcCfg, err := p.getConfiguration(tagsToNeutralLabels(tags, p.Prefix))
+		extraConf, err := p.getExtraConf(tagsToNeutralLabels(tags, p.Prefix))
 		if err != nil {
 			logger.Errorf("Skip service: %v", err)
 			continue
 		}
 
-		if !svcCfg.Enable {
+		if !extraConf.Enable {
 			logger.Debug("Filtering disabled item")
 			continue
 		}
@@ -305,12 +305,12 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 			continue
 		}
 
-		if !p.ConnectAware && svcCfg.ConsulCatalog.Connect {
+		if !p.ConnectAware && extraConf.ConsulCatalog.Connect {
 			logger.Debugf("Filtering out Connect aware item, Connect support is not enabled")
 			continue
 		}
 
-		consulServices, statuses, err := p.fetchService(ctx, name, svcCfg.ConsulCatalog.Connect)
+		consulServices, statuses, err := p.fetchService(ctx, name, extraConf.ConsulCatalog.Connect)
 		if err != nil {
 			return nil, err
 		}
@@ -344,7 +344,7 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 				Status:     status,
 			}
 
-			extraConf, err := p.getConfiguration(item.Labels)
+			extraConf, err := p.getExtraConf(item.Labels)
 			if err != nil {
 				log.FromContext(ctx).Errorf("Skip item %s: %v", item.Name, err)
 				continue
