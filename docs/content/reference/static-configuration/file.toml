@@ -420,8 +420,7 @@
       [certificatesResolvers.CertificateResolver0.acme.httpChallenge]
         entryPoint = "foobar"
       [certificatesResolvers.CertificateResolver0.acme.tlsChallenge]
-  [certificatesResolvers.CertificateResolver1]
-    tailscale = {}
+  [certificatesResolvers.CertificateResolver1.tailscale]
 
 [hub]
   [hub.tls]

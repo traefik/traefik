@@ -28,8 +28,7 @@ certificatesResolvers:
 ```
 
 ```toml tab="File (TOML)"
-[certificatesResolvers.myresolver]
-    tailscale = {}
+[certificatesResolvers.myresolver.tailscale]
 ```
 
 ```bash tab="CLI"
@@ -76,8 +75,7 @@ A certificate resolver requests certificates for a set of domain names inferred 
       [entryPoints.websecure]
         address = ":443"
 
-    [certificatesResolvers.myresolver]
-      tailscale = {}
+    [certificatesResolvers.myresolver.tailscale]
     ```
 
     ```bash tab="CLI"
