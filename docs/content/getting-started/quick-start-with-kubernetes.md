@@ -151,7 +151,7 @@ In this deployment,
 the static configuration enables the Traefik dashboard,
 and uses Kubernetes native Ingress resources as router definitions to route incoming requests.
 
-!!! info "When there is no entry points in the static configuration"
+!!! info "When there is no entry point in the static configuration"
 
     Traefik creates a default one called `web` using the port `80` routing HTTP requests.
 
