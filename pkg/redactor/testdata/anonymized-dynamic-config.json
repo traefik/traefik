@@ -463,8 +463,7 @@
           "foo"
         ],
         "clientAuth": {},
-        "sniStrict": true,
-        "preferServerCipherSuites": true
+        "sniStrict": true
       }
     },
     "stores": {

@@ -1,3 +1,4 @@
+# TODO rewrite this to be able to use go1.19.
 FROM golang:1.17
 
 ARG USER=$USER

@@ -827,7 +827,7 @@ func BenchmarkRouterServe(b *testing.B) {
 	b.Cleanup(func() { server.Close() })
 
 	res := &http.Response{
-		StatusCode: 200,
+		StatusCode: http.StatusOK,
 		Body:       io.NopCloser(strings.NewReader("")),
 	}
 
@@ -879,7 +879,7 @@ func BenchmarkRouterServe(b *testing.B) {
 
 func BenchmarkService(b *testing.B) {
 	res := &http.Response{
-		StatusCode: 200,
+		StatusCode: http.StatusOK,
 		Body:       io.NopCloser(strings.NewReader("")),
 	}
 
