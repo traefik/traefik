@@ -99,6 +99,9 @@ Storage to use. (Default: ```acme.json```)
 `--certificatesresolvers.<name>.acme.tlschallenge`:  
 Activate TLS-ALPN-01 Challenge. (Default: ```true```)
 
+`--certificatesresolvers.<name>.tailscale`:  
+Enables Tailscale certificate resolution. (Default: ```true```)
+
 `--entrypoints.<name>`:  
 Entry points definition. (Default: ```false```)
 
