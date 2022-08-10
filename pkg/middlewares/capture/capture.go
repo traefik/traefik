@@ -55,7 +55,6 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		c.rr = requestReader
 		req.Body = requestReader
 	}
-
 	responseWriter := newResponseWriter(rw)
 	c.rw = responseWriter
 	ctx = context.WithValue(ctx, capturedData, c)

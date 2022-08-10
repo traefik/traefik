@@ -274,8 +274,12 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
 	tracer := setupTracing(staticConfiguration.Tracing)
-	captureMiddleware := setupCapture()
-	chainBuilder := middleware.NewChainBuilder(*staticConfiguration, metricsRegistry, accessLog, tracer, captureMiddleware)
+
+	var captureMiddleware *capture.Handler
+	if staticConfiguration.AccessLog != nil || staticConfiguration.Metrics != nil {
+		captureMiddleware = setupCapture()
+	}
+	chainBuilder := middleware.NewChainBuilder(metricsRegistry, accessLog, tracer, captureMiddleware)
 	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder, metricsRegistry)
 
 	// Watcher

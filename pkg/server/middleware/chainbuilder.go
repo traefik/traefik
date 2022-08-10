@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/containous/alice"
-	"github.com/traefik/traefik/v2/pkg/config/static"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
@@ -23,7 +22,7 @@ type ChainBuilder struct {
 }
 
 // NewChainBuilder Creates a new ChainBuilder.
-func NewChainBuilder(staticConfiguration static.Configuration, metricsRegistry metrics.Registry, accessLoggerMiddleware *accesslog.Handler, tracer *tracing.Tracing, captureMiddleware *capture.Handler) *ChainBuilder {
+func NewChainBuilder(metricsRegistry metrics.Registry, accessLoggerMiddleware *accesslog.Handler, tracer *tracing.Tracing, captureMiddleware *capture.Handler) *ChainBuilder {
 	return &ChainBuilder{
 		metricsRegistry:        metricsRegistry,
 		accessLoggerMiddleware: accessLoggerMiddleware,
@@ -36,7 +35,7 @@ func NewChainBuilder(staticConfiguration static.Configuration, metricsRegistry m
 func (c *ChainBuilder) Build(ctx context.Context, entryPointName string) alice.Chain {
 	chain := alice.New()
 
-	if c.accessLoggerMiddleware != nil || c.metricsRegistry != nil && c.metricsRegistry.IsEpEnabled() {
+	if c.captureMiddleware != nil {
 		chain = chain.Append(capture.WrapHandler(c.captureMiddleware))
 	}
 
