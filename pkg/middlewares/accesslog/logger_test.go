@@ -253,6 +253,9 @@ func TestLoggerCLFWithBufferingSize(t *testing.T) {
 	config := &types.AccessLog{FilePath: logFilePath, Format: CommonFormat, BufferingSize: 1024}
 	doLogging(t, config)
 
+	// wait a bit for the buffer to be written in the file.
+	time.Sleep(50 * time.Millisecond)
+
 	logData, err := os.ReadFile(logFilePath)
 	require.NoError(t, err)
 
