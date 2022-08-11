@@ -318,7 +318,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	// TLS challenge
 	watcher.AddListener(tlsChallengeProvider.ListenConfiguration)
 
-	// Certificates Resolvers.
+	// Certificate Resolvers
 
 	resolverNames := map[string]struct{}{}
 
