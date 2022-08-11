@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net"
 	"net/http"
@@ -33,6 +34,7 @@ func (s *RedisSuite) setupStore(c *check.C) {
 	s.redisAddr = net.JoinHostPort(s.getComposeServiceIP(c, "redis"), "6379")
 	redis.Register()
 	kv, err := valkeyrie.NewStore(
+		context.Background(),
 		store.REDIS,
 		[]string{s.redisAddr},
 		&store.Config{
@@ -102,7 +104,7 @@ func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 	}
 
 	for k, v := range data {
-		err := s.kvClient.Put(k, []byte(v), nil)
+		err := s.kvClient.Put(context.Background(), k, []byte(v), nil)
 		c.Assert(err, checker.IsNil)
 	}
 
