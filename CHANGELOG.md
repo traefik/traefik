@@ -1,3 +1,23 @@
+## [v2.8.2](https://github.com/traefik/traefik/tree/v2.8.2) (2022-08-11)
+[All Commits](https://github.com/traefik/traefik/compare/v2.8.1...v2.8.2)
+
+**Bug fixes:**
+- **[k8s/ingress,k8s]** Place namespace before name in router key for Ingress ([#9221](https://github.com/traefik/traefik/pull/9221) by [longshine](https://github.com/longshine))
+- **[kv]** Update valkeyrie to a9a70ee ([#9243](https://github.com/traefik/traefik/pull/9243) by [kevinpollet](https://github.com/kevinpollet))
+- **[logs,middleware,tracing]** Remove request dump from IPWhitelist debug log and tracing message ([#9244](https://github.com/traefik/traefik/pull/9244) by [rtribotte](https://github.com/rtribotte))
+- **[metrics]** Control allocation and copy of labelNamesValues type ([#9241](https://github.com/traefik/traefik/pull/9241) by [rtribotte](https://github.com/rtribotte))
+- **[metrics]** Fix service up gauge for Prometheus metrics ([#9197](https://github.com/traefik/traefik/pull/9197) by [juliens](https://github.com/juliens))
+- **[plugins]** Bump paerser to v0.1.6 ([#9224](https://github.com/traefik/traefik/pull/9224) by [ldez](https://github.com/ldez))
+- **[yaml]** Add missing inline tag for YAML serialization ([#9182](https://github.com/traefik/traefik/pull/9182) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[k8s]** Fix wording of default behavior for namespaces option ([#9222](https://github.com/traefik/traefik/pull/9222) by [markormesher](https://github.com/markormesher))
+- **[k8s]** Add getting started guide for Kubernetes ([#9163](https://github.com/traefik/traefik/pull/9163) by [moutoum](https://github.com/moutoum))
+- **[plugins]** Remove Traefik Pilot and add a Traefik Plugins Catalog page ([#9171](https://github.com/traefik/traefik/pull/9171) by [sdelicata](https://github.com/sdelicata))
+- Update Thank You page with proper branding and grammar fixes ([#9203](https://github.com/traefik/traefik/pull/9203) by [tfny](https://github.com/tfny))
+- Update CONTRIBUTING.md to contain all information in one place ([#9192](https://github.com/traefik/traefik/pull/9192) by [tfny](https://github.com/tfny))
+- Update the PR guidelines in Contributing docs ([#9179](https://github.com/traefik/traefik/pull/9179) by [tfny](https://github.com/tfny))
+
 ## [v2.8.1](https://github.com/traefik/traefik/tree/v2.8.1) (2022-07-11)
 [All Commits](https://github.com/traefik/traefik/compare/v2.8.0...v2.8.1)
 
