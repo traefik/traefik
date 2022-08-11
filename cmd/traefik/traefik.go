@@ -327,6 +327,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	watcher.AddListener(tlsChallengeProvider.ListenConfiguration)
 
 	// Certificates Resolvers.
+
 	resolverNames := map[string]struct{}{}
 
 	// ACME
