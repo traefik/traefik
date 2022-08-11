@@ -55,7 +55,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.8.0
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
-	github.com/traefik/paerser v0.1.6
+	github.com/traefik/paerser v0.1.7
 	github.com/traefik/yaegi v0.14.1
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	github.com/uber/jaeger-lib v2.2.0+incompatible
