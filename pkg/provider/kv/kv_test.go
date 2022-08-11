@@ -283,7 +283,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/tls/certificates/1/stores/1":                                                        "foobar",
 	}))
 
-	cfg, err := provider.buildConfiguration()
+	cfg, err := provider.buildConfiguration(context.Background())
 	require.NoError(t, err)
 
 	expected := &dynamic.Configuration{
@@ -929,7 +929,7 @@ func Test_buildConfiguration_KV_error(t *testing.T) {
 		},
 	}
 
-	cfg, err := provider.buildConfiguration()
+	cfg, err := provider.buildConfiguration(context.Background())
 	require.Error(t, err)
 	assert.Nil(t, cfg)
 }
