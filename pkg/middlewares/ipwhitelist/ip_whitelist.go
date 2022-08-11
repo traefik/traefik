@@ -63,15 +63,16 @@ func (wl *ipWhiteLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	ctx := middlewares.GetLoggerCtx(req.Context(), wl.name, typeName)
 	logger := log.FromContext(ctx)
 
-	err := wl.whiteLister.IsAuthorized(wl.strategy.GetIP(req))
+	clientIP := wl.strategy.GetIP(req)
+	err := wl.whiteLister.IsAuthorized(clientIP)
 	if err != nil {
-		logMessage := fmt.Sprintf("rejecting request %+v: %v", req, err)
-		logger.Debug(logMessage)
-		tracing.SetErrorWithEvent(req, logMessage)
+		msg := fmt.Sprintf("Rejecting IP %s: %v", clientIP, err)
+		logger.Debug(msg)
+		tracing.SetErrorWithEvent(req, msg)
 		reject(ctx, rw)
 		return
 	}
-	logger.Debugf("Accept %s: %+v", wl.strategy.GetIP(req), req)
+	logger.Debugf("Accepting IP %s", clientIP)
 
 	wl.next.ServeHTTP(rw, req)
 }
