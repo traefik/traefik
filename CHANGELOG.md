@@ -1,3 +1,10 @@
+## [v2.8.3](https://github.com/traefik/traefik/tree/v2.8.3) (2022-08-12)
+[All Commits](https://github.com/traefik/traefik/compare/v2.8.2...v2.8.3)
+
+**Bug fixes:**
+- **[file]** Update paerser to v0.1.8 ([#9258](https://github.com/traefik/traefik/pull/9258) by [ldez](https://github.com/ldez))
+- **[marathon]** Add missing context in backoff for Marathon ([#9246](https://github.com/traefik/traefik/pull/9246) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.8.2](https://github.com/traefik/traefik/tree/v2.8.2) (2022-08-11)
 [All Commits](https://github.com/traefik/traefik/compare/v2.8.1...v2.8.2)
 
