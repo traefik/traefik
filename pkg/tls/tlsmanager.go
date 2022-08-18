@@ -299,18 +299,13 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 		}
 	}
 
-	// Set PreferServerCipherSuites.
-	conf.PreferServerCipherSuites = tlsOption.PreferServerCipherSuites
-
 	// Set the minimum TLS version if set in the config
 	if minConst, exists := MinVersion[tlsOption.MinVersion]; exists {
-		conf.PreferServerCipherSuites = true
 		conf.MinVersion = minConst
 	}
 
 	// Set the maximum TLS version if set in the config TOML
 	if maxConst, exists := MaxVersion[tlsOption.MaxVersion]; exists {
-		conf.PreferServerCipherSuites = true
 		conf.MaxVersion = maxConst
 	}
 

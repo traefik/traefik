@@ -442,8 +442,7 @@ func init() {
 					CAFiles:        []traefiktls.FileOrContent{"ca.pem"},
 					ClientAuthType: "RequireAndVerifyClientCert",
 				},
-				SniStrict:                true,
-				PreferServerCipherSuites: true,
+				SniStrict: true,
 			},
 		},
 		Certificates: []*traefiktls.CertAndStores{

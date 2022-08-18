@@ -8,7 +8,6 @@ import (
 	"flag"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -349,7 +348,7 @@ type tailscaleNotSuite struct{ BaseSuite }
 // TODO(mpl): we could maybe even move this setup to the Makefile, to start it
 // and let it run (forever, or until voluntarily stopped).
 func setupVPN(c *check.C, keyFile string) *tailscaleNotSuite {
-	data, err := ioutil.ReadFile(keyFile)
+	data, err := os.ReadFile(keyFile)
 	if err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
 			log.Fatal(err)

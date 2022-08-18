@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/vulcand/predicate"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 const (
@@ -41,7 +43,7 @@ func NewParser(matchers []string) (predicate.Parser, error) {
 		parserFuncs[matcherName] = fn
 		parserFuncs[strings.ToLower(matcherName)] = fn
 		parserFuncs[strings.ToUpper(matcherName)] = fn
-		parserFuncs[strings.Title(strings.ToLower(matcherName))] = fn
+		parserFuncs[cases.Title(language.Und).String(strings.ToLower(matcherName))] = fn
 	}
 
 	return predicate.NewParser(predicate.Def{

@@ -20,7 +20,7 @@ func (t *staticTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 
 func BenchmarkProxy(b *testing.B) {
 	res := &http.Response{
-		StatusCode: 200,
+		StatusCode: http.StatusOK,
 		Body:       io.NopCloser(strings.NewReader("")),
 	}
 

@@ -469,9 +469,8 @@ func (d *dynamicConfig) hasServerURL(serviceName, serverURL string) bool {
 func newCounterFrom(opts stdprometheus.CounterOpts, labelNames []string) *counter {
 	cv := stdprometheus.NewCounterVec(opts, labelNames)
 	c := &counter{
-		name:             opts.Name,
-		cv:               cv,
-		labelNamesValues: make([]string, 0, 16),
+		name: opts.Name,
+		cv:   cv,
 	}
 	if len(labelNames) == 0 {
 		c.collector = cv.WithLabelValues()
@@ -508,9 +507,8 @@ func (c *counter) Describe(ch chan<- *stdprometheus.Desc) {
 func newGaugeFrom(opts stdprometheus.GaugeOpts, labelNames []string) *gauge {
 	gv := stdprometheus.NewGaugeVec(opts, labelNames)
 	g := &gauge{
-		name:             opts.Name,
-		gv:               gv,
-		labelNamesValues: make([]string, 0, 16),
+		name: opts.Name,
+		gv:   gv,
 	}
 
 	if len(labelNames) == 0 {
@@ -552,9 +550,8 @@ func (g *gauge) Describe(ch chan<- *stdprometheus.Desc) {
 func newHistogramFrom(opts stdprometheus.HistogramOpts, labelNames []string) *histogram {
 	hv := stdprometheus.NewHistogramVec(opts, labelNames)
 	return &histogram{
-		name:             opts.Name,
-		hv:               hv,
-		labelNamesValues: make([]string, 0, 16),
+		name: opts.Name,
+		hv:   hv,
 	}
 }
 
@@ -593,7 +590,12 @@ func (lvs labelNamesValues) With(labelValues ...string) labelNamesValues {
 	if len(labelValues)%2 != 0 {
 		labelValues = append(labelValues, "unknown")
 	}
-	return append(lvs, labelValues...)
+
+	labels := make([]string, len(lvs)+len(labelValues))
+	n := copy(labels, lvs)
+	copy(labels[n:], labelValues)
+
+	return labels
 }
 
 // ToLabels is a convenience method to convert a labelNamesValues

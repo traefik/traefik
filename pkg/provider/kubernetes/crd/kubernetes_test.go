@@ -666,8 +666,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								},
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
-							SniStrict:                true,
-							PreferServerCipherSuites: true,
+							SniStrict: true,
 							ALPNProtocols: []string{
 								"h2",
 								"http/1.1",
@@ -2748,8 +2747,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
-							SniStrict:                true,
-							PreferServerCipherSuites: true,
+							SniStrict: true,
 							ALPNProtocols: []string{
 								"h2",
 								"http/1.1",
@@ -2862,8 +2860,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 								},
 								ClientAuthType: "VerifyClientCertIfGiven",
 							},
-							SniStrict:                true,
-							PreferServerCipherSuites: true,
+							SniStrict: true,
 							ALPNProtocols: []string{
 								"h2",
 								"http/1.1",

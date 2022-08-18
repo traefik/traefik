@@ -119,6 +119,7 @@
     "interfacer", # Deprecated
     "maligned", # Deprecated
     "golint", # Deprecated
+    "nosnakecase", # Deprecated
     "execinquery", # Not relevant (SQL)
     "sqlclosecheck", # Not relevant (SQL)
     "rowserrcheck", # Not relevant (SQL)
@@ -159,6 +160,7 @@
     "containedctx", # too many false-positive
     "maintidx", # kind of duplicate of gocyclo
     "nonamedreturns", # not relevant
+    "structcheck", # duplicate of unused
   ]
 
 [issues]
@@ -223,14 +225,9 @@
     path = "pkg/server/router/tcp/manager.go"
     text = "Function 'buildEntryPointHandler' is too long (.+)"
  [[issues.exclude-rules]]
-    path = "integration/fake_dns_server.go"
-    linters = ["nosnakecase"]
+    path = "pkg/tls/tlsmanager_test.go"
+    text = "SA1019: config.ClientCAs.Subjects has been deprecated since Go 1.18"
  [[issues.exclude-rules]]
-    path = "pkg/plugins/providers.go"
-    linters = ["nosnakecase"]
- [[issues.exclude-rules]]
-    path = "pkg/tls/cipher.go"
-    linters = ["nosnakecase"]
- [[issues.exclude-rules]]
-    text = "O_WRONLY|O_RDWR|O_CREATE|O_TRUNC|O_APPEND"
-    linters = ["nosnakecase"]
+    path = "pkg/types/tls_test.go"
+    text = "SA1019: tlsConfig.RootCAs.Subjects has been deprecated since Go 1.18"
+
