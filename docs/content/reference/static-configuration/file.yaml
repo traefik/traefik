@@ -398,6 +398,9 @@ tracing:
   datadog:
     localAgentHostPort: foobar
     globalTag: foobar
+    globalTags:
+      tag1: foobar
+      tag2: foobar
     debug: true
     prioritySampling: true
     traceIDHeaderName: foobar
