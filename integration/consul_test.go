@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -36,6 +37,7 @@ func (s *ConsulSuite) setupStore(c *check.C) {
 
 	consul.Register()
 	kv, err := valkeyrie.NewStore(
+		context.Background(),
 		store.CONSUL,
 		[]string{consulAddr},
 		&store.Config{
@@ -105,7 +107,7 @@ func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
 	}
 
 	for k, v := range data {
-		err := s.kvClient.Put(k, []byte(v), nil)
+		err := s.kvClient.Put(context.Background(), k, []byte(v), nil)
 		c.Assert(err, checker.IsNil)
 	}
 

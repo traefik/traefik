@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net"
 	"net/http"
@@ -36,6 +37,7 @@ func (s *ZookeeperSuite) setupStore(c *check.C) {
 
 	var err error
 	s.kvClient, err = valkeyrie.NewStore(
+		context.Background(),
 		store.ZK,
 		[]string{s.zookeeperAddr},
 		&store.Config{
@@ -104,7 +106,7 @@ func (s *ZookeeperSuite) TestSimpleConfiguration(c *check.C) {
 	}
 
 	for k, v := range data {
-		err := s.kvClient.Put(k, []byte(v), nil)
+		err := s.kvClient.Put(context.Background(), k, []byte(v), nil)
 		c.Assert(err, checker.IsNil)
 	}
 

@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net"
 	"net/http"
@@ -35,6 +36,7 @@ func (s *EtcdSuite) SetUpSuite(c *check.C) {
 	var err error
 	s.etcdAddr = net.JoinHostPort(s.getComposeServiceIP(c, "etcd"), "2379")
 	s.kvClient, err = valkeyrie.NewStore(
+		context.Background(),
 		store.ETCDV3,
 		[]string{s.etcdAddr},
 		&store.Config{
@@ -101,7 +103,7 @@ func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
 	}
 
 	for k, v := range data {
-		err := s.kvClient.Put(k, []byte(v), nil)
+		err := s.kvClient.Put(context.Background(), k, []byte(v), nil)
 		c.Assert(err, checker.IsNil)
 	}
 

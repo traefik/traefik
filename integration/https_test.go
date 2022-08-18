@@ -142,7 +142,7 @@ func (s *HTTPSSuite) TestWithTLSOptions(c *check.C) {
 	tr1 := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
-			MaxVersion:         tls.VersionTLS11,
+			MaxVersion:         tls.VersionTLS12,
 			ServerName:         "snitest.com",
 		},
 	}
@@ -194,7 +194,7 @@ func (s *HTTPSSuite) TestWithTLSOptions(c *check.C) {
 	}
 	_, err = client.Do(req)
 	c.Assert(err, checker.NotNil)
-	c.Assert(err.Error(), checker.Contains, "protocol version not supported")
+	c.Assert(err.Error(), checker.Contains, "tls: no supported versions satisfy MinVersion and MaxVersion")
 
 	//	with unknown tls option
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("unknown TLS options: unknown@file"))
@@ -262,7 +262,7 @@ func (s *HTTPSSuite) TestWithConflictingTLSOptions(c *check.C) {
 	}
 	_, err = client.Do(req)
 	c.Assert(err, checker.NotNil)
-	c.Assert(err.Error(), checker.Contains, "protocol version not supported")
+	c.Assert(err.Error(), checker.Contains, "tls: no supported versions satisfy MinVersion and MaxVersion")
 
 	// with unknown tls option
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains(fmt.Sprintf("found different TLS options for routers on the same host %v, so using the default TLS options instead", tr4.TLSClientConfig.ServerName)))

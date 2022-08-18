@@ -1696,7 +1696,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"example-com-testing-bar": {
+						"testing-example-com-bar": {
 							Rule:    "PathPrefix(`/bar`)",
 							Service: "testing-service-bar-8080",
 						},
@@ -1724,7 +1724,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"example-com-testing-foo": {
+						"testing-example-com-foo": {
 							Rule:    "PathPrefix(`/foo`)",
 							Service: "testing-service-foo-8080",
 						},
