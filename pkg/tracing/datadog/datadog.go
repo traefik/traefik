@@ -49,12 +49,7 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 	if c.GlobalTag != "" {
 		log.WithoutContext().Warn(`Datadog: option "globalTag" is deprecated, please use "globalTags" instead.`)
 
-		parts := strings.SplitN(c.GlobalTag, ":", 2)
-
-		key, value := parts[0], ""
-		if len(parts) == 2 {
-			value = parts[1]
-		}
+		key, value, _ := strings.Cut(c.GlobalTag, ":")
 
 		// Don't override a tag already defined with the new option.
 		if _, ok := c.GlobalTags[key]; !ok {
