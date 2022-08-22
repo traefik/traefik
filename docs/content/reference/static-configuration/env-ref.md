@@ -1014,6 +1014,9 @@ Enables Datadog debug. (Default: ```false```)
 `TRAEFIK_TRACING_DATADOG_GLOBALTAG`:  
 Sets a key:value tag on all spans.
 
+`TRAEFIK_TRACING_DATADOG_GLOBALTAGS_<NAME>`:  
+Sets a list of key:value tags on all spans.
+
 `TRAEFIK_TRACING_DATADOG_LOCALAGENTHOSTPORT`:  
 Sets the Datadog Agent host:port. (Default: ```localhost:8126```)
 
