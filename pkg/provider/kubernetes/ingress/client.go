@@ -39,7 +39,7 @@ type marshaler interface {
 // WatchAll starts the watch of the Provider resources and updates the stores.
 // The stores can then be accessed via the Get* functions.
 type Client interface {
-	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
+	WatchAll(disableIngressClassLookup bool, namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
 	GetIngresses() []*networkingv1.Ingress
 	GetIngressClasses() ([]*networkingv1.IngressClass, error)
 	GetService(namespace, name string) (*corev1.Service, bool, error)
@@ -135,7 +135,7 @@ func newClientImpl(clientset kubernetes.Interface) *clientWrapper {
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
-func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
+func (c *clientWrapper) WatchAll(disableIngressClassLookup bool, namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	// Get and store the serverVersion for future use.
 	serverVersionInfo, err := c.clientset.Discovery().ServerVersion()
 	if err != nil {
@@ -214,7 +214,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		}
 	}
 
-	if supportsIngressClass(serverVersion) {
+	if supportsIngressClass(serverVersion) && !disableIngressClassLookup {
 		c.clusterFactory = informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod)
 
 		if supportsNetworkingV1Ingress(serverVersion) {
