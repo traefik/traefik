@@ -153,8 +153,8 @@ This functionality makes it possible to easily use security features by adding h
 
 ```yaml tab="Docker"
 labels:
-  - "traefik.http.middlewares.testHeader.headers.framedeny=true"
-  - "traefik.http.middlewares.testHeader.headers.browserxssfilter=true"
+  - "traefik.http.middlewares.testHeader.headers.customresponseheaders.framedeny=true"
+  - "traefik.http.middlewares.testHeader.headers.customresponseheaders.browserxssfilter=true"
 ```
 
 ```yaml tab="Kubernetes"
@@ -164,26 +164,27 @@ metadata:
   name: test-header
 spec:
   headers:
-    frameDeny: true
-    browserXssFilter: true
+    customResponseHeaders:
+      frameDeny: true
+      browserXssFilter: true
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.testheader.headers.framedeny=true"
-- "traefik.http.middlewares.testheader.headers.browserxssfilter=true"
+- "traefik.http.middlewares.testheader.headers.customresponseheaders.framedeny=true"
+- "traefik.http.middlewares.testheader.headers.customresponseheaders.browserxssfilter=true"
 ```
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.testheader.headers.framedeny": "true",
-  "traefik.http.middlewares.testheader.headers.browserxssfilter": "true"
+  "traefik.http.middlewares.testheader.headers.customresponseheaders.framedeny": "true",
+  "traefik.http.middlewares.testheader.headers.customresponseheaders.browserxssfilter": "true"
 }
 ```
 
 ```yaml tab="Rancher"
 labels:
-  - "traefik.http.middlewares.testheader.headers.framedeny=true"
-  - "traefik.http.middlewares.testheader.headers.browserxssfilter=true"
+  - "traefik.http.middlewares.testheader.headers.customresponseheaders.framedeny=true"
+  - "traefik.http.middlewares.testheader.headers.customresponseheaders.browserxssfilter=true"
 ```
 
 ```yaml tab="File (YAML)"
@@ -191,13 +192,14 @@ http:
   middlewares:
     testHeader:
       headers:
-        frameDeny: true
-        browserXssFilter: true
+        customResponseHeaders:
+          frameDeny: true
+          browserXssFilter: true
 ```
 
 ```toml tab="File (TOML)"
 [http.middlewares]
-  [http.middlewares.testHeader.headers]
+  [http.middlewares.testHeader.headers.customresponseheaders]
     frameDeny = true
     browserXssFilter = true
 ```
@@ -211,10 +213,10 @@ instead the response will be generated and sent back to the client directly.
 
 ```yaml tab="Docker"
 labels:
-  - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
-  - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
+  - "traefik.http.middlewares.testheader.headers.customresponseheaders.accesscontrolallowmethods=GET,OPTIONS,PUT"
+  - "traefik.http.middlewares.testheader.headers.customresponseheaders.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
+  - "traefik.http.middlewares.testheader.headers.customresponseheaders.accesscontrolmaxage=100"
+  - "traefik.http.middlewares.testheader.headers.customresponseheaders.addvaryheader=true"
 ```
 
 ```yaml tab="Kubernetes"
@@ -224,39 +226,40 @@ metadata:
   name: test-header
 spec:
   headers:
-    accessControlAllowMethods:
-      - "GET"
-      - "OPTIONS"
-      - "PUT"
-    accessControlAllowOriginList:
-      - "https://foo.bar.org"
-      - "https://example.org"
-    accessControlMaxAge: 100
-    addVaryHeader: true
+    customResponseHeaders:
+      accessControlAllowMethods:
+        - "GET"
+        - "OPTIONS"
+        - "PUT"
+      accessControlAllowOriginList:
+        - "https://foo.bar.org"
+        - "https://example.org"
+      accessControlMaxAge: 100
+      addVaryHeader: true
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-- "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
-- "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
-- "traefik.http.middlewares.testheader.headers.addvaryheader=true"
+- "traefik.http.middlewares.testheader.headers.customresponseheaders.accesscontrolallowmethods=GET,OPTIONS,PUT"
+- "traefik.http.middlewares.testheader.headers.customresponseheaders.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
+- "traefik.http.middlewares.testheader.headers.customresponseheaders.accesscontrolmaxage=100"
+- "traefik.http.middlewares.testheader.headers.customresponseheaders.addvaryheader=true"
 ```
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods": "GET,OPTIONS,PUT",
-  "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist": "https://foo.bar.org,https://example.org",
-  "traefik.http.middlewares.testheader.headers.accesscontrolmaxage": "100",
-  "traefik.http.middlewares.testheader.headers.addvaryheader": "true"
+  "traefik.http.middlewares.testheader.headers.customresponseheaders.accesscontrolallowmethods": "GET,OPTIONS,PUT",
+  "traefik.http.middlewares.testheader.headers.customresponseheaders.accesscontrolalloworiginlist": "https://foo.bar.org,https://example.org",
+  "traefik.http.middlewares.testheader.headers.customresponseheaders.accesscontrolmaxage": "100",
+  "traefik.http.middlewares.testheader.headers.customresponseheaders.addvaryheader": "true"
 }
 ```
 
 ```yaml tab="Rancher"
 labels:
-  - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
-  - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
+  - "traefik.http.middlewares.testheader.headers.customresponseheaders.accesscontrolallowmethods=GET,OPTIONS,PUT"
+  - "traefik.http.middlewares.testheader.headers.customresponseheaders.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
+  - "traefik.http.middlewares.testheader.headers.customresponseheaders.accesscontrolmaxage=100"
+  - "traefik.http.middlewares.testheader.headers.customresponseheaders.addvaryheader=true"
 ```
 
 ```yaml tab="File (YAML)"
@@ -264,20 +267,21 @@ http:
   middlewares:
     testHeader:
       headers:
-        accessControlAllowMethods:
-          - GET
-          - OPTIONS
-          - PUT
-        accessControlAllowOriginList:
-          - https://foo.bar.org
-          - https://example.org
-        accessControlMaxAge: 100
-        addVaryHeader: true
+        customResponseHeaders:
+          accessControlAllowMethods:
+            - GET
+            - OPTIONS
+            - PUT
+          accessControlAllowOriginList:
+            - https://foo.bar.org
+            - https://example.org
+          accessControlMaxAge: 100
+          addVaryHeader: true
 ```
 
 ```toml tab="File (TOML)"
 [http.middlewares]
-  [http.middlewares.testHeader.headers]
+  [http.middlewares.testHeader.headers.customresponseheaders]
     accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
     accessControlAllowOriginList = ["https://foo.bar.org","https://example.org"]
     accessControlMaxAge = 100
