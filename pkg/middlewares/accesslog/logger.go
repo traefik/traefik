@@ -1,6 +1,7 @@
 package accesslog
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -102,6 +103,10 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 		Formatter: formatter,
 		Hooks:     make(logrus.LevelHooks),
 		Level:     logrus.InfoLevel,
+	}
+
+	if config.FileCacheSize > 0 {
+		logger.Out = bufio.NewWriterSize(file, config.FileCacheSize)
 	}
 
 	// Transform headers names in config to a canonical form, to be used as is without further transformations.
@@ -240,8 +245,12 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 	}
 
 	if h.config.BufferingSize > 0 {
-		h.logHandlerChan <- handlerParams{
+		select {
+		case h.logHandlerChan <- handlerParams{
 			logDataTable: logDataTable,
+		}:
+		default:
+			h.logTheRoundTrip(logDataTable)
 		}
 	} else {
 		h.logTheRoundTrip(logDataTable)
