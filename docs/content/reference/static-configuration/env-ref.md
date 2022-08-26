@@ -9,6 +9,9 @@ Access log settings. (Default: ```false```)
 `TRAEFIK_ACCESSLOG_BUFFERINGSIZE`:  
 Number of access log lines to process in a buffered way. (Default: ```0```)
 
+`TRAEFIK_ACCESSLOG_FILECACHESIZE`:  
+Size of access log underlying buffer in bytes. (Default: ```0```)
+
 `TRAEFIK_ACCESSLOG_FIELDS_DEFAULTMODE`:  
 Default mode for fields: keep | drop (Default: ```keep```)
 

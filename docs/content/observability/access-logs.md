@@ -83,6 +83,32 @@ accessLog:
 --accesslog.bufferingsize=100
 ```
 
+### `fileCacheSize`
+
+This option represents the bytes of log size Traefik will keep in memory before writing them to the selected output.
+In some cases, this option can reduce IOPS on writing log.
+
+```yaml tab="File (YAML)"
+# Configuring a cache of 100KB
+accessLog:
+  filePath: "/path/to/access.log"
+  fileCacheSize: 102400
+```
+
+```toml tab="File (TOML)"
+# Configuring a buffer of 100 lines
+[accessLog]
+  filePath = "/path/to/access.log"
+  fileCacheSize = 102400
+```
+
+```bash tab="CLI"
+# Configuring a cache of 100KB
+--accesslog.filepath=/path/to/access.log
+--accesslog.fileCacheSize=102400
+```
+
+
 ### Filtering
 
 To filter logs, you can specify a set of filters which are logically "OR-connected".
