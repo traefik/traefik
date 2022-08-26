@@ -1349,6 +1349,19 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc:                      "v18 Ingress without ingressClasses filter and disabledIngressClassLookup",
+			serverVersion:             "v1.18",
+			disableIngressClassLookup: true,
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers:     map[string]*dynamic.Router{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
 			desc:          "v19 Ingress with prefix pathType",
 			serverVersion: "v1.19",
 			expected: &dynamic.Configuration{
