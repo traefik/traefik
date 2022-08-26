@@ -26,11 +26,12 @@ func Bool(v bool) *bool { return &v }
 
 func TestLoadConfigurationFromIngresses(t *testing.T) {
 	testCases := []struct {
-		desc               string
-		ingressClass       string
-		serverVersion      string
-		expected           *dynamic.Configuration
-		allowEmptyServices bool
+		desc                      string
+		ingressClass              string
+		serverVersion             string
+		expected                  *dynamic.Configuration
+		allowEmptyServices        bool
+		disableIngressClassLookup bool
 	}{
 		{
 			desc: "Empty ingresses",
@@ -1050,6 +1051,34 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc:                      "Ingress with default traefik ingressClass and disabledIngressClassLookup",
+			disableIngressClassLookup: true,
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-bar": {
+							Rule:    "PathPrefix(`/bar`)",
+							Service: "testing-service1-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc: "Ingress without provider traefik ingressClass and unknown annotation",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
@@ -1783,7 +1812,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			}
 
 			clientMock := newClientMock(serverVersion, paths...)
-			p := Provider{IngressClass: test.ingressClass, AllowEmptyServices: test.allowEmptyServices}
+			p := Provider{IngressClass: test.ingressClass, AllowEmptyServices: test.allowEmptyServices, DisableIngressClassLookup: test.disableIngressClassLookup}
 			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
