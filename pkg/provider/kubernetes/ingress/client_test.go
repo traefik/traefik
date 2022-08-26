@@ -163,7 +163,7 @@ func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 
 	stopCh := make(chan struct{})
 
-	eventCh, err := client.WatchAll(nil, stopCh)
+	eventCh, err := client.WatchAll(false, nil, stopCh)
 	require.NoError(t, err)
 
 	select {
@@ -232,7 +232,7 @@ func TestClientIgnoresEmptyEndpointUpdates(t *testing.T) {
 
 	stopCh := make(chan struct{})
 
-	eventCh, err := client.WatchAll(nil, stopCh)
+	eventCh, err := client.WatchAll(false, nil, stopCh)
 	require.NoError(t, err)
 
 	select {
@@ -316,7 +316,7 @@ func TestClientUsesCorrectServerVersion(t *testing.T) {
 
 	client := newClientImpl(kubeClient)
 
-	eventCh, err := client.WatchAll(nil, stopCh)
+	eventCh, err := client.WatchAll(false, nil, stopCh)
 	require.NoError(t, err)
 
 	select {
@@ -339,7 +339,7 @@ func TestClientUsesCorrectServerVersion(t *testing.T) {
 		GitVersion: "v1.19",
 	}
 
-	eventCh, err = client.WatchAll(nil, stopCh)
+	eventCh, err = client.WatchAll(false, nil, stopCh)
 	require.NoError(t, err)
 
 	select {
