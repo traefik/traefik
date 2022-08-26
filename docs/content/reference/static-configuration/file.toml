@@ -334,6 +334,7 @@
   filePath = "foobar"
   format = "foobar"
   bufferingSize = 42
+  fileCacheSize = 102400
   [accessLog.filters]
     statusCodes = ["foobar", "foobar"]
     retryAttempts = true

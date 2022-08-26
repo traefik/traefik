@@ -374,6 +374,7 @@ accessLog:
         name0: foobar
         name1: foobar
   bufferingSize: 42
+  fileCacheSize: 102400
 tracing:
   serviceName: foobar
   spanNameLimit: 42

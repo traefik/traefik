@@ -9,6 +9,9 @@ Access log settings. (Default: ```false```)
 `--accesslog.bufferingsize`:  
 Number of access log lines to process in a buffered way. (Default: ```0```)
 
+`--accesslog.fileCacheSize`:  
+Size of access log underlying buffer in bytes. (Default: ```0```)
+
 `--accesslog.fields.defaultmode`:  
 Default mode for fields: keep | drop (Default: ```keep```)
 
