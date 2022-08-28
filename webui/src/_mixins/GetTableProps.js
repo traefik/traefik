@@ -94,7 +94,12 @@ const allColumns = [
     label: 'Priority',
     component: QChip,
     fieldToProps: () => ({ class: 'app-chip app-chip-accent', dense: true }),
-    content: row => row.priority
+    content: row => {
+      if (row.priority === undefined) {
+        return row.rule.length
+      }
+      return row.priority
+    }
   }
 ]
 
