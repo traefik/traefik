@@ -87,6 +87,19 @@ const allColumns = [
     label: 'Provider',
     fieldToProps: row => ({ name: row.provider }),
     component: ProviderIcon
+  },
+  {
+    name: 'priority',
+    align: 'left',
+    label: 'Priority',
+    component: QChip,
+    fieldToProps: () => ({ class: 'app-chip app-chip-accent', dense: true }),
+    content: row => {
+      if (row.priority === undefined) {
+        return row.rule.length
+      }
+      return row.priority
+    }
   }
 ]
 
@@ -98,7 +111,8 @@ const columnsByResource = {
     'name',
     'service',
     'tls',
-    'provider'
+    'provider',
+    'priority'
   ],
   udpRouters: ['status', 'entryPoints', 'name', 'service', 'provider'],
   services: ['status', 'name', 'type', 'servers', 'provider'],
