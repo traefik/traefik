@@ -46,7 +46,7 @@ metadata:
 
 data:
   ca.crt: VEVTVFJPT1RDQVM0
-  tls.ca: VEVTVFJPT1RDQVM1 # <-- This should be the prefered one.
+  tls.ca: VEVTVFJPT1RDQVM1 # <-- This should be the preferred one.
 
 ---
 apiVersion: v1
