@@ -26,7 +26,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 	domainSafe := &safe.Safe{}
 	domainSafe.Set(domainMap)
 
-	// FIXME Add a test for DefaultCertificate
+	// TODO Add a test for DefaultCertificate
 	testCases := []struct {
 		desc             string
 		dynamicCerts     *safe.Safe

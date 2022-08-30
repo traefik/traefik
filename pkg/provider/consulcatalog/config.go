@@ -37,7 +37,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 		if len(confFromLabel.TCP.Routers) > 0 || len(confFromLabel.TCP.Services) > 0 {
 			tcpOrUDP = true
 
-			err := p.buildTCPServiceConfiguration(ctxSvc, item, confFromLabel.TCP)
+			err := p.buildTCPServiceConfiguration(item, confFromLabel.TCP)
 			if err != nil {
 				logger.Error(err)
 				continue
@@ -49,7 +49,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 		if len(confFromLabel.UDP.Routers) > 0 || len(confFromLabel.UDP.Services) > 0 {
 			tcpOrUDP = true
 
-			err := p.buildUDPServiceConfiguration(ctxSvc, item, confFromLabel.UDP)
+			err := p.buildUDPServiceConfiguration(item, confFromLabel.UDP)
 			if err != nil {
 				logger.Error(err)
 				continue
@@ -75,7 +75,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 			}
 		}
 
-		err = p.buildServiceConfiguration(ctxSvc, item, confFromLabel.HTTP)
+		err = p.buildServiceConfiguration(item, confFromLabel.HTTP)
 		if err != nil {
 			logger.Error(err)
 			continue
@@ -128,7 +128,7 @@ func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
 	return true
 }
 
-func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, item itemData, configuration *dynamic.TCPConfiguration) error {
+func (p *Provider) buildTCPServiceConfiguration(item itemData, configuration *dynamic.TCPConfiguration) error {
 	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.TCPService)
 
@@ -141,17 +141,16 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, item itemDa
 	}
 
 	for name, service := range configuration.Services {
-		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
-		err := p.addServerTCP(ctxSvc, item, service.LoadBalancer)
+		err := p.addServerTCP(item, service.LoadBalancer)
 		if err != nil {
-			return err
+			return fmt.Errorf("%s: %w", name, err)
 		}
 	}
 
 	return nil
 }
 
-func (p *Provider) buildUDPServiceConfiguration(ctx context.Context, item itemData, configuration *dynamic.UDPConfiguration) error {
+func (p *Provider) buildUDPServiceConfiguration(item itemData, configuration *dynamic.UDPConfiguration) error {
 	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.UDPService)
 
@@ -163,17 +162,16 @@ func (p *Provider) buildUDPServiceConfiguration(ctx context.Context, item itemDa
 	}
 
 	for name, service := range configuration.Services {
-		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
-		err := p.addServerUDP(ctxSvc, item, service.LoadBalancer)
+		err := p.addServerUDP(item, service.LoadBalancer)
 		if err != nil {
-			return err
+			return fmt.Errorf("%s: %w", name, err)
 		}
 	}
 
 	return nil
 }
 
-func (p *Provider) buildServiceConfiguration(ctx context.Context, item itemData, configuration *dynamic.HTTPConfiguration) error {
+func (p *Provider) buildServiceConfiguration(item itemData, configuration *dynamic.HTTPConfiguration) error {
 	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.Service)
 
@@ -186,17 +184,16 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, item itemData,
 	}
 
 	for name, service := range configuration.Services {
-		ctxSvc := log.With(ctx, log.Str(log.ServiceName, name))
-		err := p.addServer(ctxSvc, item, service.LoadBalancer)
+		err := p.addServer(item, service.LoadBalancer)
 		if err != nil {
-			return err
+			return fmt.Errorf("%s: %w", name, err)
 		}
 	}
 
 	return nil
 }
 
-func (p *Provider) addServerTCP(ctx context.Context, item itemData, loadBalancer *dynamic.TCPServersLoadBalancer) error {
+func (p *Provider) addServerTCP(item itemData, loadBalancer *dynamic.TCPServersLoadBalancer) error {
 	if loadBalancer == nil {
 		return errors.New("load-balancer is not defined")
 	}
@@ -227,7 +224,7 @@ func (p *Provider) addServerTCP(ctx context.Context, item itemData, loadBalancer
 	return nil
 }
 
-func (p *Provider) addServerUDP(ctx context.Context, item itemData, loadBalancer *dynamic.UDPServersLoadBalancer) error {
+func (p *Provider) addServerUDP(item itemData, loadBalancer *dynamic.UDPServersLoadBalancer) error {
 	if loadBalancer == nil {
 		return errors.New("load-balancer is not defined")
 	}
@@ -254,7 +251,7 @@ func (p *Provider) addServerUDP(ctx context.Context, item itemData, loadBalancer
 	return nil
 }
 
-func (p *Provider) addServer(ctx context.Context, item itemData, loadBalancer *dynamic.ServersLoadBalancer) error {
+func (p *Provider) addServer(item itemData, loadBalancer *dynamic.ServersLoadBalancer) error {
 	if loadBalancer == nil {
 		return errors.New("load-balancer is not defined")
 	}
