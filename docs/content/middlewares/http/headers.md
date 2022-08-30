@@ -469,3 +469,18 @@ The `permissionsPolicy` allows sites to control browser features.
 Set `isDevelopment` to `true` when developing to mitigate the unwanted effects of the `AllowedHosts`, SSL, and STS options.
 Usually testing takes place using HTTP, not HTTPS, and on `localhost`, not your production domain.
 If you would like your development environment to mimic production with complete Host blocking, SSL redirects, and STS headers, leave this as `false`.
+
+!!! question "Using Traefik for Business Applications?"
+
+    If you are using Traefik for commercial applications,
+    consider the [Enterprise Edition](https://traefik.io/traefik-enterprise/).
+    You can use it as your:
+
+    - [Kubernetes Ingress Controller](https://traefik.io/solutions/kubernetes-ingress/)
+    - [Load Balancer](https://traefik.io/solutions/docker-swarm-ingress/)
+    - [API Gateway](https://traefik.io/solutions/api-gateway/)
+
+    Traefik Enterprise enables centralized access management,
+    distributed Let's Encrypt,
+    and other advanced capabilities.
+    Learn more in [this 15-minute technical walkthrough](https://info.traefik.io/watch-traefikee-demo).
