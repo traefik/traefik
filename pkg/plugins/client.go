@@ -164,7 +164,12 @@ func (c *Client) Download(ctx context.Context, pName, pVersion string) (string, 
 
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode == http.StatusOK {
+	switch resp.StatusCode {
+	case http.StatusNotModified:
+		// noop
+		return hash, nil
+
+	case http.StatusOK:
 		err = os.MkdirAll(filepath.Dir(filename), 0o755)
 		if err != nil {
 			return "", fmt.Errorf("failed to create directory: %w", err)
@@ -189,15 +194,11 @@ func (c *Client) Download(ctx context.Context, pName, pVersion string) (string, 
 		}
 
 		return hash, nil
-	}
 
-	if resp.StatusCode == http.StatusNotModified {
-		// noop
-		return hash, nil
+	default:
+		data, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("error: %d: %s", resp.StatusCode, string(data))
 	}
-
-	data, _ := io.ReadAll(resp.Body)
-	return "", fmt.Errorf("error: %d: %s", resp.StatusCode, string(data))
 }
 
 // Check checks the plugin archive integrity.
