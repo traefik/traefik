@@ -1797,4 +1797,3 @@ Also see the [full example](../../user-guides/crd-acme/index.md) with Let's Encr
     distributed Let's Encrypt,
     and other advanced capabilities.
     Learn more in [this 15-minute technical walkthrough](https://info.traefik.io/watch-traefikee-demo).
-
