@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 	"strings"
 
 	"github.com/containous/alice"
@@ -340,7 +341,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	}
 
 	// Plugin
-	if config.Plugin != nil {
+	if config.Plugin != nil && !reflect.ValueOf(b.pluginBuilder).IsNil() { // Using "reflect" because "b.pluginBuilder" is an interface.
 		if middleware != nil {
 			return nil, badConf
 		}
