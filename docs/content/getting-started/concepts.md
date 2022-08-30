@@ -40,7 +40,7 @@ You no longer need to create and synchronize configuration files cluttered with 
 
     Traefik is able to use your cluster API to discover the services and read the attached information. In Traefik, these connectors are called [providers](../providers/overview.md) because they _provide_ the configuration to Traefik. To learn more about them, read the [provider overview](../providers/overview.md) section.
     
- !!! question "Using Traefik for Business Applications?"
+!!! question "Using Traefik for Business Applications?"
 
     If you are using Traefik for commercial applications,
     consider the [Enterprise Edition](https://traefik.io/traefik-enterprise/).
@@ -54,4 +54,3 @@ You no longer need to create and synchronize configuration files cluttered with 
     distributed Let's Encrypt,
     and other advanced capabilities.
     Learn more in [this 15-minute technical walkthrough](https://info.traefik.io/watch-traefikee-demo).
-
