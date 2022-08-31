@@ -47,6 +47,7 @@ which in turn will create the resulting routers, services, handlers, etc.
           - watch
       - apiGroups:
           - extensions
+          - networking.k8s.io
         resources:
           - ingresses/status
         verbs:
