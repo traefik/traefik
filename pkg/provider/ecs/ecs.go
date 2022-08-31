@@ -17,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/patrickmn/go-cache"
+	"github.com/scaleway/scaleway-sdk-go/logger"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/job"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -213,9 +214,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 	logger := log.FromContext(ctx)
 
 	var clustersArn []*string
-	var servicesArns []*string
 	var clusters []string
-	var services []string
 
 	if p.AutoDiscoverClusters {
 		input := &ecs.ListClustersInput{}
@@ -237,74 +236,26 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 		for _, cArn := range clustersArn {
 			clusters = append(clusters, *cArn)
 		}
-		for _, sArn := range servicesArns {
-			services = append(services, *sArn)
-		}
 	} else {
 		clusters = p.Clusters
-		services = p.Services
 	}
 
 	var instances []ecsInstance
 
 	logger.Debugf("ECS Clusters: %s", clusters)
-	logger.Debugf("ECS Services: %s", services)
-	for _, c := range clusters {
-		cluster := c
-		var input *ecs.ListTasksInput
-		tasks := make(map[string]*ecs.Task)
-		if len(services) > 0 {
-			for _, s := range services {
-				service := s
-				input = &ecs.ListTasksInput{
-					Cluster:     &cluster,
-					ServiceName: &service,
-				}
-				taskArray, err := p.listTasks(ctx, client, input)
-				if err != nil {
-					var snfe *ecs.ServiceNotFoundException
-					var cnfe *ecs.ClusterNotFoundException
-					// Don't want to stop operations if a cluster or service was misstyped or went down so we just log it and move on
-					switch {
-					case errors.As(err, &snfe):
-						logger.Errorf("Service not found: %s", service)
-					case errors.As(err, &cnfe):
-						logger.Errorf("Cluster not found: %s", cluster)
-					default:
-						return nil, err
-					}
-				}
-				for _, t := range taskArray {
-					tasks[aws.StringValue(t.TaskArn)] = t
-				}
-			}
-		} else {
-			input = &ecs.ListTasksInput{
-				Cluster: &cluster,
-			}
-			taskArray, err := p.listTasks(ctx, client, input)
-			if err != nil {
-				var cnfe *ecs.ClusterNotFoundException
-				// Don't want to stop operations if a cluster or service was misstyped or went down so we just log it and move on
-				switch {
-				case errors.As(err, &cnfe):
-					logger.Errorf("Cluster not found: %s", cluster)
-				default:
-					return nil, err
-				}
-			}
-			for _, t := range taskArray {
-				tasks[aws.StringValue(t.TaskArn)] = t
-			}
+	for _, cluster := range clusters {
+		tasks, err := p.listClusterTasks(ctx, client, cluster)
+		if err != nil {
+			logger.Errorf("Failed to list tasks for cluster %q: %s", cluster, err)
+			continue
 		}
 
-		// Skip to the next cluster if there are no tasks found on
-		// this cluster.
+		// Skip to the next cluster if there are no tasks found on this cluster.
 		if len(tasks) == 0 {
 			continue
 		}
 
-		ec2Instances, err := p.lookupEc2Instances(ctx, client, &c, tasks)
+		ec2Instances, err := p.lookupEc2Instances(ctx, client, &cluster, tasks)
 		if err != nil {
 			return nil, err
 		}
@@ -400,36 +351,83 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 	return instances, nil
 }
 
-func (p *Provider) listTasks(ctx context.Context, client *awsClient, input *ecs.ListTasksInput) ([]*ecs.Task, error) {
+func (p *Provider) listClusterTasks(ctx context.Context, client *awsClient, cluster string) (map[string]*ecs.Task, error) {
+	var inputs []*ecs.ListTasksInput
+	for _, s := range p.Services {
+		service := s
+		inputs = append(inputs, &ecs.ListTasksInput{
+			Cluster:     &cluster,
+			ServiceName: &service,
+		})
+	}
+
+	if len(inputs) == 0 {
+		inputs = append(inputs, &ecs.ListTasksInput{
+			Cluster: &cluster,
+		})
+	}
+
+	tasks := make(map[string]*ecs.Task)
+	for _, input := range inputs {
+		inputTasks, err := p.listTasks(ctx, client, input)
+		if err != nil {
+			var snfe *ecs.ServiceNotFoundException
+			var cnfe *ecs.ClusterNotFoundException
+			switch {
+			// Failover on not found services to give a chance to gather tasks from other services.
+			case errors.As(err, &snfe):
+				logger.Errorf("Service not found: %s", input.ServiceName)
+
+			// If the cluster is not found, we can stop fetching tasks right away.
+			case errors.As(err, &cnfe):
+				logger.Errorf("Cluster not found: %s", input.Cluster)
+				return nil, nil
+
+			default:
+				return nil, err
+			}
+		}
+
+		for arn, task := range inputTasks {
+			tasks[arn] = task
+		}
+	}
+
+	return tasks, nil
+}
+
+func (p *Provider) listTasks(ctx context.Context, client *awsClient, input *ecs.ListTasksInput) (map[string]*ecs.Task, error) {
 	logger := log.FromContext(ctx)
-	var tasks []*ecs.Task
-	err := client.ecs.ListTasksPagesWithContext(ctx, input, func(page *ecs.ListTasksOutput, lastPage bool) bool {
-		if len(page.TaskArns) > 0 {
-			resp, err := client.ecs.DescribeTasksWithContext(ctx, &ecs.DescribeTasksInput{
-				Tasks:   page.TaskArns,
-				Cluster: input.Cluster,
-			})
-			if err != nil {
-				logger.Errorf("Unable to describe tasks for %v", page.TaskArns)
-			} else {
-				for _, t := range resp.Tasks {
-					if aws.StringValue(t.LastStatus) == ecs.DesiredStatusRunning {
-						if p.RequireHealthyTask {
-							if aws.StringValue(t.HealthStatus) != ecs.HealthStatusHealthy {
-								logger.Debugf("Task %s not HealthStatus Healthy - skipping", *t.TaskArn)
-								continue
+	tasks := make(map[string]*ecs.Task)
+	err := client.ecs.ListTasksPagesWithContext(ctx, input,
+		func(page *ecs.ListTasksOutput, lastPage bool) bool {
+			if len(page.TaskArns) > 0 {
+				resp, err := client.ecs.DescribeTasksWithContext(ctx, &ecs.DescribeTasksInput{
+					Tasks:   page.TaskArns,
+					Cluster: input.Cluster,
+				})
+				if err != nil {
+					logger.Errorf("Unable to describe tasks for %v", page.TaskArns)
+				} else {
+					for _, t := range resp.Tasks {
+						if aws.StringValue(t.LastStatus) == ecs.DesiredStatusRunning {
+							if p.RequireHealthyTask {
+								if aws.StringValue(t.HealthStatus) != ecs.HealthStatusHealthy {
+									logger.Debugf("Task %s not HealthStatus Healthy - skipping", *t.TaskArn)
+									continue
+								}
 							}
+							tasks[aws.StringValue(t.TaskArn)] = t
 						}
-						tasks = append(tasks, t)
 					}
 				}
 			}
-		}
-		return !lastPage
-	})
+			return !lastPage
+		})
 	if err != nil {
 		return nil, err
 	}
+
 	return tasks, nil
 }
 
