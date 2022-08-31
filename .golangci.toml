@@ -119,7 +119,12 @@
     "interfacer", # Deprecated
     "maligned", # Deprecated
     "golint", # Deprecated
+    "exhaustivestruct",# Deprecated
     "nosnakecase", # Deprecated
+    "ifshort", # Deprecated
+    "structcheck", # Deprecated
+    "varcheck", # Deprecated
+    "deadcode", # Deprecated
     "execinquery", # Not relevant (SQL)
     "sqlclosecheck", # Not relevant (SQL)
     "rowserrcheck", # Not relevant (SQL)
@@ -130,7 +135,6 @@
     "nestif", # Too many false-positive.
     "prealloc", # Too many false-positive.
     "makezero", # Not relevant
-    "ifshort", # Not relevant
     "dupl", # Too strict
     "gosec", # Too strict
     "gochecknoinits",
@@ -143,14 +147,11 @@
     "tparallel", # Not relevant
     "paralleltest", # Not relevant
     "exhaustive", # Not relevant
-    "exhaustivestruct", # Not relevant
     "exhaustruct", # duplicate of exhaustivestruct
     "goerr113", # Too strict
     "wrapcheck", # Too strict
     "noctx", # Too strict
     "bodyclose", # Too many false-positive and panics.
-    "unparam", # Too strict
-    "godox", # Too strict
     "forcetypeassert", # Too strict
     "tagliatelle", # Not compatible with current tags.
     "varnamelen", # not relevant
@@ -160,7 +161,6 @@
     "containedctx", # too many false-positive
     "maintidx", # kind of duplicate of gocyclo
     "nonamedreturns", # not relevant
-    "structcheck", # duplicate of unused
   ]
 
 [issues]
@@ -182,6 +182,10 @@
  [[issues.exclude-rules]]
     path = "(.+)_test.go"
     linters = ["goconst", "funlen", "godot", "nosnakecase"]
+ [[issues.exclude-rules]]
+    path = "(.+)_test.go"
+    text = " always receives "
+    linters = [ "unparam" ]
  [[issues.exclude-rules]]
     path = "integration/.+_test.go"
     text = "Error return value of `cmd\\.Process\\.Kill` is not checked"
@@ -230,4 +234,13 @@
  [[issues.exclude-rules]]
     path = "pkg/types/tls_test.go"
     text = "SA1019: tlsConfig.RootCAs.Subjects has been deprecated since Go 1.18"
+ [[issues.exclude-rules]]
+    path = "pkg/provider/kubernetes/(crd|gateway)/client.go"
+    linters = ["interfacebloat"]
+ [[issues.exclude-rules]]
+    path = "pkg/metrics/metrics.go"
+    linters = ["interfacebloat"]
+ [[issues.exclude-rules]]
+    path = "pkg/provider/acme/provider.go"
+    text = "\\(\\*Provider\\)\\.resolveCertificate - result 0 \\(\\*github.com/go-acme/lego/v4/certificate.Resource\\) is never used"
 

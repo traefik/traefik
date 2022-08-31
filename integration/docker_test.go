@@ -78,7 +78,7 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	req.Host = fmt.Sprintf("simple-%s.docker.localhost", s.composeProject.Name)
 
-	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
+	// TODO Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
 	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
 	c.Assert(err, checker.IsNil)
 
@@ -147,7 +147,7 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	req.Host = "my-super.host"
 
-	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
+	// TODO Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
 	_, err = try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
 	c.Assert(err, checker.IsNil)
 
@@ -155,7 +155,7 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	req.Host = "my.super.host"
 
-	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
+	// TODO Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
 	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
 	c.Assert(err, checker.IsNil)
 
@@ -194,7 +194,7 @@ func (s *DockerSuite) TestDockerContainersWithOneMissingLabels(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	req.Host = "my.super.host"
 
-	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
+	// TODO Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
 	// TODO validate : run on 80
 	// Expected a 404 as we did not configure anything
 	err = try.Request(req, 1500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
@@ -227,7 +227,7 @@ func (s *DockerSuite) TestRestartDockerContainers(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	req.Host = "my.super.host"
 
-	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
+	// TODO Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
 	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
 	c.Assert(err, checker.IsNil)
 

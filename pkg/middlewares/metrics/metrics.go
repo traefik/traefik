@@ -166,6 +166,8 @@ func containsHeader(req *http.Request, name, value string) bool {
 // values that are not part of the set of HTTP verbs are replaced with EXTENSION_METHOD.
 // See https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
 // https://datatracker.ietf.org/doc/html/rfc2616/#section-5.1.1.
+//
+//nolint:usestdlibvars
 func getMethod(r *http.Request) string {
 	if !utf8.ValidString(r.Method) {
 		log.WithoutContext().Warnf("Invalid HTTP method encoding: %s", r.Method)

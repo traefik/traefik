@@ -140,9 +140,9 @@ func (p *Provider) buildTCPServiceConfiguration(item itemData, configuration *dy
 		}
 	}
 
-	for _, service := range configuration.Services {
+	for name, service := range configuration.Services {
 		if err := p.addServerTCP(item, service.LoadBalancer); err != nil {
-			return err
+			return fmt.Errorf("%s: %w", name, err)
 		}
 	}
 
@@ -160,9 +160,9 @@ func (p *Provider) buildUDPServiceConfiguration(item itemData, configuration *dy
 		}
 	}
 
-	for _, service := range configuration.Services {
+	for name, service := range configuration.Services {
 		if err := p.addServerUDP(item, service.LoadBalancer); err != nil {
-			return err
+			return fmt.Errorf("%s: %w", name, err)
 		}
 	}
 
@@ -181,9 +181,9 @@ func (p *Provider) buildServiceConfiguration(item itemData, configuration *dynam
 		}
 	}
 
-	for _, service := range configuration.Services {
+	for name, service := range configuration.Services {
 		if err := p.addServer(item, service.LoadBalancer); err != nil {
-			return err
+			return fmt.Errorf("%s: %w", name, err)
 		}
 	}
 

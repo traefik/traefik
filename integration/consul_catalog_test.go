@@ -603,7 +603,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithOneMissingLabels(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	req.Host = "my.super.host"
 
-	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
+	// TODO Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
 	// TODO validate : run on 80
 	// Expected a 404 as we did not configure anything
 	err = try.Request(req, 1500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
@@ -681,7 +681,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithHealthCheck(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	req.Host = "whoami"
 
-	// FIXME Need to wait for up to 10 seconds (for consul discovery or traefik to boot up ?)
+	// TODO Need to wait for up to 10 seconds (for consul discovery or traefik to boot up ?)
 	err = try.Request(req, 10*time.Second, try.StatusCodeIs(200), try.BodyContainsOr("Hostname: whoami2"))
 	c.Assert(err, checker.IsNil)
 

@@ -20,27 +20,32 @@ type Registry interface {
 	IsSvcEnabled() bool
 
 	// server metrics
+
 	ConfigReloadsCounter() metrics.Counter
 	ConfigReloadsFailureCounter() metrics.Counter
 	LastConfigReloadSuccessGauge() metrics.Gauge
 	LastConfigReloadFailureGauge() metrics.Gauge
 
 	// TLS
+
 	TLSCertsNotAfterTimestampGauge() metrics.Gauge
 
 	// entry point metrics
+
 	EntryPointReqsCounter() metrics.Counter
 	EntryPointReqsTLSCounter() metrics.Counter
 	EntryPointReqDurationHistogram() ScalableHistogram
 	EntryPointOpenConnsGauge() metrics.Gauge
 
 	// router metrics
+
 	RouterReqsCounter() metrics.Counter
 	RouterReqsTLSCounter() metrics.Counter
 	RouterReqDurationHistogram() ScalableHistogram
 	RouterOpenConnsGauge() metrics.Gauge
 
 	// service metrics
+
 	ServiceReqsCounter() metrics.Counter
 	ServiceReqsTLSCounter() metrics.Counter
 	ServiceReqDurationHistogram() ScalableHistogram
