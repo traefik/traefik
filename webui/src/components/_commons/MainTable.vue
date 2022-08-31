@@ -29,8 +29,16 @@
                   v-bind:is="getColumn(column.name).component"
                   v-bind="getColumn(column.name).fieldToProps(row)"
                 >
-                  <template v-if="getColumn(column.name).content">
+                  <template v-if="getColumn(column.name).content && column.name !== 'priority'">
                     {{ getColumn(column.name).content(row) }}
+                  </template>
+                  <template v-if="getColumn(column.name).content && column.name === 'priority'">
+                      <div v-if="getColumn(column.name).content(row).toString().length > 4 && !hover" @mouseover="hover = true">
+                      {{ getColumn(column.name).content(row).toString().substring(0,4) }}...
+                      </div>
+                      <div v-else @mouseleave="hover=false">
+                        {{ getColumn(column.name).content(row) }}
+                      </div>
                   </template>
                 </component>
               </td>
@@ -59,6 +67,7 @@
         Back to top
       </q-btn>
     </q-page-scroller>
+    <pre>{{hover}}</pre>
   </div>
 </template>
 
@@ -78,7 +87,8 @@ export default {
     return {
       currentSort: 'priority',
       currentSortDir: 'desc',
-      sortedData: this.data
+      sortedData: this.data,
+      hover: false
     }
   },
   watch: {
