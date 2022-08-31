@@ -106,7 +106,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		// we still need to reply with a 404.
 	}
 
-	// FIXME -- Check if ProxyProtocol changes the first bytes of the request
+	// TODO -- Check if ProxyProtocol changes the first bytes of the request
 	br := bufio.NewReader(conn)
 	serverName, tls, peeked, err := clientHelloServerName(br)
 	if err != nil {
@@ -218,7 +218,7 @@ func (r *Router) AddHTTPTLSConfig(sniHost string, config *tls.Config) {
 
 // GetConn creates a connection proxy with a peeked string.
 func (r *Router) GetConn(conn tcp.WriteCloser, peeked string) tcp.WriteCloser {
-	// FIXME should it really be on Router ?
+	// TODO should it really be on Router ?
 	conn = &Conn{
 		Peeked:      []byte(peeked),
 		WriteCloser: conn,
