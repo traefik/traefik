@@ -14,7 +14,7 @@ import (
 )
 
 func TestGetBestCertificate(t *testing.T) {
-	// FIXME Add tests for defaultCert
+	// TODO Add tests for defaultCert
 	testCases := []struct {
 		desc          string
 		domainToCheck string

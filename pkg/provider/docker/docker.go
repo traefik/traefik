@@ -206,6 +206,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 				logger.Errorf("Failed to create a client for docker, error: %s", err)
 				return err
 			}
+			defer dockerClient.Close()
 
 			serverVersion, err := dockerClient.ServerVersion(ctx)
 			if err != nil {
@@ -250,7 +251,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 							case <-ticker.C:
 								services, err := p.listServices(ctx, dockerClient)
 								if err != nil {
-									logger.Errorf("Failed to list services for docker, error %s", err)
+									logger.Errorf("Failed to list services for docker swarm mode, error %s", err)
 									errChan <- err
 									return
 								}
