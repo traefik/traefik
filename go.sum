@@ -1903,8 +1903,8 @@ github.com/tonistiigi/units v0.0.0-20180711220420-6950e57a87ea h1:SXhTLE6pb6eld/
 github.com/tonistiigi/units v0.0.0-20180711220420-6950e57a87ea/go.mod h1:WPnis/6cRcDZSUvVmezrxJPkiO87ThFYsoUiMwWNDJk=
 github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305 h1:y/1cL5AL2oRcfzz8CAHHhR6kDDfIOT0WEyH5k40sccM=
 github.com/tonistiigi/vt100 v0.0.0-20190402012908-ad4c4a574305/go.mod h1:gXOLibKqQTRAVuVZ9gX7G9Ykky8ll8yb4slxsEMoY0c=
-github.com/traefik/paerser v0.1.8 h1:DmX/v9KwWAFvRr5A/XQzLLfd1BSWgh710q+dZJmjZ+c=
-github.com/traefik/paerser v0.1.8/go.mod h1:Dk3Bfz6Zyj13/S8pJyRdx/FNvXlsVRVbtp0UK4ZSiA0=
+github.com/traefik/paerser v0.1.9 h1:x5hZafOt/yogLvr6upoSOYIAn2nh2GsnLb236MOzd4I=
+github.com/traefik/paerser v0.1.9/go.mod h1:Dk3Bfz6Zyj13/S8pJyRdx/FNvXlsVRVbtp0UK4ZSiA0=
 github.com/traefik/yaegi v0.14.1 h1:t0ssyzeZCWTFGd/JnVuDxH/slMQfYg+2CDD4dLW/rU0=
 github.com/traefik/yaegi v0.14.1/go.mod h1:AVRxhaI2G+nUsaM1zyktzwXn69G3t/AuTDrCiTds9p0=
 github.com/transip/gotransip/v6 v6.6.1 h1:nsCU1ErZS5G0FeOpgGXc4FsWvBff9GPswSMggsC4564=

@@ -166,7 +166,7 @@ func (rl *rateLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	delay := res.Delay()
 	if delay > rl.maxDelay {
 		res.Cancel()
-		rl.serveDelayError(ctx, w, r, delay)
+		rl.serveDelayError(ctx, w, delay)
 		return
 	}
 
@@ -174,7 +174,7 @@ func (rl *rateLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rl.next.ServeHTTP(w, r)
 }
 
-func (rl *rateLimiter) serveDelayError(ctx context.Context, w http.ResponseWriter, r *http.Request, delay time.Duration) {
+func (rl *rateLimiter) serveDelayError(ctx context.Context, w http.ResponseWriter, delay time.Duration) {
 	w.Header().Set("Retry-After", fmt.Sprintf("%.0f", math.Ceil(delay.Seconds())))
 	w.Header().Set("X-Retry-In", delay.String())
 	w.WriteHeader(http.StatusTooManyRequests)
