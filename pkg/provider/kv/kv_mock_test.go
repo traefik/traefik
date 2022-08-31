@@ -97,7 +97,7 @@ func (s *Mock) List(ctx context.Context, prefix string, options *store.ReadOptio
 	}
 	var kv []*store.KVPair
 	for _, kvPair := range s.KVPairs {
-		if strings.HasPrefix(kvPair.Key, prefix) { // FIXME && !strings.ContainsAny(strings.TrimPrefix(kvPair.Key, prefix), "/") {
+		if strings.HasPrefix(kvPair.Key, prefix) {
 			kv = append(kv, kvPair)
 		}
 	}

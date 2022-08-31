@@ -72,22 +72,16 @@ func NewCentrifuge(rootPkg string) (*Centrifuge, error) {
 
 // Run runs the code extraction and the code generation.
 func (c Centrifuge) Run(dest string, pkgName string) error {
-	files, err := c.run(c.pkg.Scope(), c.rootPkg, pkgName)
-	if err != nil {
-		return err
-	}
+	files := c.run(c.pkg.Scope(), c.rootPkg, pkgName)
 
-	err = fileWriter{baseDir: dest}.Write(files)
+	err := fileWriter{baseDir: dest}.Write(files)
 	if err != nil {
 		return err
 	}
 
 	for _, p := range c.pkg.Imports() {
 		if contains(c.IncludedImports, p.Path()) {
-			fls, err := c.run(p.Scope(), p.Path(), p.Name())
-			if err != nil {
-				return err
-			}
+			fls := c.run(p.Scope(), p.Path(), p.Name())
 
 			err = fileWriter{baseDir: filepath.Join(dest, p.Name())}.Write(fls)
 			if err != nil {
@@ -99,7 +93,7 @@ func (c Centrifuge) Run(dest string, pkgName string) error {
 	return err
 }
 
-func (c Centrifuge) run(sc *types.Scope, rootPkg string, pkgName string) (map[string]*File, error) {
+func (c Centrifuge) run(sc *types.Scope, rootPkg string, pkgName string) map[string]*File {
 	files := map[string]*File{}
 
 	for _, name := range sc.Names() {
@@ -158,7 +152,7 @@ func (c Centrifuge) run(sc *types.Scope, rootPkg string, pkgName string) (map[st
 		}
 	}
 
-	return files, nil
+	return files
 }
 
 func (c Centrifuge) writeStruct(name string, obj *types.Struct, rootPkg string, elt *File) string {

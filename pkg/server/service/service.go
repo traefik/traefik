@@ -426,7 +426,7 @@ func (m *Manager) upsertServers(ctx context.Context, lb healthcheck.BalancerHand
 			return fmt.Errorf("error adding server %s to load balancer: %w", srv.URL, err)
 		}
 
-		// FIXME Handle Metrics
+		// TODO Handle Metrics
 	}
 	return nil
 }

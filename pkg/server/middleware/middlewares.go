@@ -314,7 +314,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			// FIXME missing metrics / accessLog
+			// TODO missing metrics / accessLog
 			return retry.New(ctx, next, *config.Retry, retry.Listeners{}, middlewareName)
 		}
 	}

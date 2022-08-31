@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	// FIXME Goroutines2 -> Goroutines
+	// TODO Goroutines2 -> Goroutines
 	expvar.Publish("Goroutines2", expvar.Func(goroutines))
 }
 
