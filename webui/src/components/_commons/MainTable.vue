@@ -67,7 +67,6 @@
         Back to top
       </q-btn>
     </q-page-scroller>
-    <pre>{{hover}}</pre>
   </div>
 </template>
 
