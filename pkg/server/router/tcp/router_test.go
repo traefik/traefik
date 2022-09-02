@@ -922,3 +922,89 @@ func checkHTTPSTLS10(addr string, timeout time.Duration) error {
 func checkHTTPSTLS12(addr string, timeout time.Duration) error {
 	return checkHTTPS(addr, timeout, tls.VersionTLS12)
 }
+
+func TestPostGreSQL(t *testing.T) {
+	router, err := NewRouter()
+	require.NoError(t, err)
+
+	err = router.AddRouteTLS("HostSNI(`test.localhost`)", 0, tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
+		_, _ = conn.Write([]byte("OK"))
+		_ = conn.Close()
+	}), &tls.Config{})
+	require.NoError(t, err)
+
+	err = router.AddRoute("HostSNI(`*`)", 0, tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
+		_, _ = conn.Write([]byte("OK"))
+		_ = conn.Close()
+	}))
+	require.NoError(t, err)
+
+	mockConn := NewMockConn()
+	go router.ServeTCP(mockConn)
+
+	mockConn.dataRead <- PostgresStartTLSMsg
+	b := <-mockConn.dataWrite
+	require.Equal(t, PostgresStartTLSReply, b)
+
+	mockConn = NewMockConn()
+	go router.ServeTCP(mockConn)
+
+	mockConn.dataRead <- []byte("HTTP")
+	b = <-mockConn.dataWrite
+	require.Equal(t, []byte("OK"), b)
+}
+
+func NewMockConn() *MockConn {
+	return &MockConn{
+		dataRead:  make(chan []byte),
+		dataWrite: make(chan []byte),
+	}
+}
+
+type MockConn struct {
+	dataRead  chan []byte
+	dataWrite chan []byte
+}
+
+func (m *MockConn) Read(b []byte) (n int, err error) {
+	temp := <-m.dataRead
+	copy(b, temp)
+	return len(temp), nil
+}
+
+func (m *MockConn) Write(b []byte) (n int, err error) {
+	m.dataWrite <- b
+	return len(b), nil
+}
+
+func (m *MockConn) Close() error {
+	close(m.dataRead)
+	close(m.dataWrite)
+	return nil
+}
+
+func (m *MockConn) LocalAddr() net.Addr {
+	return nil
+}
+
+func (m *MockConn) RemoteAddr() net.Addr {
+	return &net.TCPAddr{}
+}
+
+func (m *MockConn) SetDeadline(t time.Time) error {
+	return nil
+}
+
+func (m *MockConn) SetReadDeadline(t time.Time) error {
+	return nil
+}
+
+func (m *MockConn) SetWriteDeadline(t time.Time) error {
+	return nil
+}
+
+func (m *MockConn) CloseWrite() error {
+	close(m.dataRead)
+	close(m.dataWrite)
+	return nil
+}
