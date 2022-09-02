@@ -17,6 +17,11 @@ import (
 
 const defaultBufSize = 4096
 
+var (
+	PostgresStartTLSReply = []byte{83}                         // S
+	PostgresStartTLSMsg   = []byte{0, 0, 0, 8, 4, 210, 22, 47} // int32(8) + int32(80877103)
+)
+
 // Router is a TCP router.
 type Router struct {
 	// Contains TCP routes.
@@ -108,6 +113,18 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 
 	// TODO -- Check if ProxyProtocol changes the first bytes of the request
 	br := bufio.NewReader(conn)
+
+	postgres, err := isPostGRESql(br)
+	if err != nil {
+		conn.Close()
+		return
+	}
+
+	if postgres {
+		r.servePostGreSQL(r.GetConn(conn, getPeeked(br)))
+		return
+	}
+
 	hello, err := clientHelloInfo(br)
 	if err != nil {
 		conn.Close()
@@ -403,3 +420,45 @@ func (c helloSniffConn) Read(p []byte) (int, error) { return c.r.Read(p) }
 
 // Write crashes all the time.
 func (helloSniffConn) Write(p []byte) (int, error) { return 0, io.EOF }
+
+type postgresConn struct {
+	// Conn is the underlying connection.
+	// It can be type asserted against *net.TCPConn or other types
+	// as needed. It should not be read from directly unless
+	// Peeked is nil.
+	tcp.WriteCloser
+
+	alreadyWrite bool
+	alreadyRead  bool
+	waiter       chan error
+}
+
+// Read reads bytes from the connection (using the buffer prior to actually reading).
+func (c *postgresConn) Read(p []byte) (n int, err error) {
+	if c.alreadyRead {
+		err := <-c.waiter
+		if err != nil {
+			return 0, err
+		}
+		return c.WriteCloser.Read(p)
+	}
+	c.waiter = make(chan error)
+	c.alreadyRead = true
+	copy(p, PostgresStartTLSMsg)
+	return len(PostgresStartTLSMsg), nil
+}
+
+func (c *postgresConn) Write(p []byte) (n int, err error) {
+	if c.alreadyWrite {
+		return c.WriteCloser.Write(p)
+	}
+
+	c.alreadyWrite = true
+	if len(p) != 1 || p[0] != PostgresStartTLSReply[0] {
+		err := errors.New("invalid response from PostGreSQL server")
+		c.waiter <- err
+		return 1, nil
+	}
+	close(c.waiter)
+	return 1, nil
+}
