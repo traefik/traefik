@@ -223,12 +223,16 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	pluginBuilder, err := createPluginBuilder(staticConfiguration)
 	if err != nil {
-		return nil, err
+		log.WithoutContext().WithError(err).Error("Plugins are disabled because an error has occurred.")
 	}
 
 	// Providers plugins
 
 	for name, conf := range staticConfiguration.Providers.Plugin {
+		if pluginBuilder == nil {
+			break
+		}
+
 		p, err := pluginBuilder.BuildProvider(name, conf)
 		if err != nil {
 			return nil, fmt.Errorf("plugin: failed to build provider: %w", err)
