@@ -62,32 +62,35 @@ func TestBuilder(t *testing.T) {
 
 func TestBranching(t *testing.T) {
 	testCases := []struct {
-		desc                string
-		condition           string
-		requestModifier     func(req *http.Request)
-		wantResponseHeaders map[string]string
+		desc            string
+		condition       string
+		requestModifier func(req *http.Request)
+		wantedHeaders   []string
+		unwantedHeaders []string
 	}{
 		{
 			desc:      "match alt chain",
-			condition: "Header[`Foo`].0 == `bar`",
+			condition: "Header[`X-Chain`].0 == `B`",
 			requestModifier: func(req *http.Request) {
-				req.Header.Add("foo", "bar")
+				req.Header.Add("X-Chain", "B")
 			},
-			wantResponseHeaders: map[string]string{"chain": "foo"},
+			wantedHeaders: []string{"X-Chain-A", "X-Chain-B", "X-Chain-C"},
 		},
 		{
 			desc:      "no match, default chain",
-			condition: "Header[`Foo`].0 == `bar`",
+			condition: "Header[`X-Chain`].0 == `Z`",
 			requestModifier: func(req *http.Request) {
-				req.Header.Add("foo", "notbar")
+				req.Header.Add("X-Chain", "B")
 			},
-			wantResponseHeaders: map[string]string{"chain": "default"},
+			wantedHeaders:   []string{"X-Chain-A", "X-Chain-C"},
+			unwantedHeaders: []string{"X-Chain-B"},
 		},
 		{
-			desc:                "no match, field not found ",
-			condition:           "Header[`Bar`].0 == `foo`",
-			requestModifier:     nil,
-			wantResponseHeaders: map[string]string{"chain": "default"},
+			desc:            "no match, field not found ",
+			condition:       "Header[`Z-Chain`].0 == `foo`",
+			requestModifier: nil,
+			wantedHeaders:   []string{"X-Chain-A", "X-Chain-C"},
+			unwantedHeaders: []string{"X-Chain-B"},
 		},
 	}
 
@@ -95,15 +98,40 @@ func TestBranching(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			backend := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-				rw.Header().Set("chain", "default")
 				rw.WriteHeader(http.StatusOK)
 			})
 
 			availableMiddleware := map[string]*runtime.MiddlewareInfo{
-				"foo-middleware": {
+				"A-middleware": {
 					Middleware: &dynamic.Middleware{
 						Headers: &dynamic.Headers{
-							CustomResponseHeaders: map[string]string{"chain": "foo"},
+							CustomResponseHeaders: map[string]string{"X-Chain-A": "A"},
+						},
+					},
+				},
+				"B-middleware": {
+					Middleware: &dynamic.Middleware{
+						Headers: &dynamic.Headers{
+							CustomResponseHeaders: map[string]string{"X-Chain-B": "B"},
+						},
+					},
+				},
+				"C-middleware": {
+					Middleware: &dynamic.Middleware{
+						Headers: &dynamic.Headers{
+							CustomResponseHeaders: map[string]string{"X-Chain-C": "C"},
+						},
+					},
+				},
+				"branch-middleware": {
+					Middleware: &dynamic.Middleware{
+						Branching: &dynamic.Branching{
+							Condition: test.condition,
+							Chain: &dynamic.Chain{
+								Middlewares: []string{
+									"B-middleware",
+								},
+							},
 						},
 					},
 				},
@@ -111,16 +139,9 @@ func TestBranching(t *testing.T) {
 			}
 			middlewareBuilder := middleware.NewBuilder(availableMiddleware, nil, nil)
 
-			cfg := dynamic.Branching{}
-			cfg.Condition = test.condition
-			cfg.Chain = &dynamic.Chain{
-				Middlewares: []string{
-					"foo-middleware",
-				},
-			}
-
 			ctx := context.Background()
-			plugin, err := branching.New(ctx, backend, cfg, middlewareBuilder, "test-branching")
+			chain := middlewareBuilder.BuildChain(ctx, []string{"A-middleware", "branch-middleware", "C-middleware"})
+			handler, err := chain.Then(backend)
 			require.NoError(t, err)
 
 			recorder := httptest.NewRecorder()
@@ -132,13 +153,16 @@ func TestBranching(t *testing.T) {
 				test.requestModifier(req)
 			}
 
-			plugin.ServeHTTP(recorder, req)
+			handler.ServeHTTP(recorder, req)
 
 			response := recorder.Result()
 			assert.Equal(t, response.StatusCode, http.StatusOK)
 
-			for hk, hv := range test.wantResponseHeaders {
-				assert.Equal(t, response.Header.Get(hk), hv)
+			for _, hk := range test.wantedHeaders {
+				assert.NotEmpty(t, response.Header.Get(hk))
+			}
+			for _, hk := range test.unwantedHeaders {
+				assert.Empty(t, response.Header.Get(hk))
 			}
 		})
 	}
