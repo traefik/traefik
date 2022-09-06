@@ -18,7 +18,7 @@ import (
 // Manager is the TCPHandlers factory.
 type Manager struct {
 	configs map[string]*runtime.TCPServiceInfo
-	rand    *rand.Rand
+	rand    *rand.Rand // for the initial shuffling of load-balancers
 }
 
 // NewManager creates a new manager.
