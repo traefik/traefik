@@ -320,7 +320,10 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 
 	try.Sleep(time.Second)
 
-	// Verify load-balancing on root still works, and that we're getting wsp2, wsp4, wsp2, wsp4, etc.
+	want2 := `IP: ` + s.whoami2IP
+	want4 := `IP: ` + s.whoami4IP
+
+	// Verify load-balancing on root still works, and that we're getting an alternation between wsp2, and wsp4.
 	reachedServers := make(map[string]int)
 	for i := 0; i < 4; i++ {
 		resp, err := client.Do(rootReq)
@@ -329,6 +332,19 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 		body, err := io.ReadAll(resp.Body)
 		c.Assert(err, checker.IsNil)
 
+		if reachedServers[s.whoami4IP] > reachedServers[s.whoami2IP] {
+			c.Assert(string(body), checker.Contains, want2)
+			reachedServers[s.whoami2IP]++
+			continue
+		}
+
+		if reachedServers[s.whoami2IP] > reachedServers[s.whoami4IP] {
+			c.Assert(string(body), checker.Contains, want4)
+			reachedServers[s.whoami4IP]++
+			continue
+		}
+
+		// First iteration, so we can't tell whether it's going to be wsp2, or wsp4.
 		if strings.Contains(string(body), `IP: `+s.whoami4IP) {
 			reachedServers[s.whoami4IP]++
 			continue
