@@ -274,11 +274,8 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
 	tracer := setupTracing(staticConfiguration.Tracing)
+	captureMiddleware := setupCapture(staticConfiguration)
 
-	var captureMiddleware *capture.Handler
-	if staticConfiguration.AccessLog != nil || staticConfiguration.Metrics != nil {
-		captureMiddleware = setupCapture()
-	}
 	chainBuilder := middleware.NewChainBuilder(metricsRegistry, accessLog, tracer, captureMiddleware)
 	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder, metricsRegistry)
 
@@ -586,14 +583,11 @@ func setupTracing(conf *static.Tracing) *tracing.Tracing {
 	return tracer
 }
 
-func setupCapture() *capture.Handler {
-	captureMiddleware, err := capture.NewHandler()
-	if err != nil {
-		log.WithoutContext().Warnf("Unable to create capture middleware: %v", err)
+func setupCapture(staticConfiguration *static.Configuration) *capture.Handler {
+	if staticConfiguration.AccessLog == nil && staticConfiguration.Metrics == nil {
 		return nil
 	}
-
-	return captureMiddleware
+	return &capture.Handler{}
 }
 
 func configureLogging(staticConfiguration *static.Configuration) {

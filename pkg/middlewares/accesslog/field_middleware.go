@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares/capture"
 	"github.com/vulcand/oxy/utils"
 )
@@ -56,11 +57,18 @@ func AddOriginFields(rw http.ResponseWriter, req *http.Request, next http.Handle
 
 	// use UTC to handle switchover of daylight saving correctly
 	data.Core[OriginDuration] = time.Now().UTC().Sub(start)
-	crw := capture.GetResponseWriter(req.Context()).GetResponseWriter()
-	data.Core[OriginStatus] = crw.Status()
 	// make copy of headers, so we can ensure there is no subsequent mutation
 	// during response processing
 	data.OriginResponse = make(http.Header)
-	utils.CopyHeaders(data.OriginResponse, crw.Header())
-	data.Core[OriginContentSize] = crw.Size()
+	utils.CopyHeaders(data.OriginResponse, rw.Header())
+
+	ctx := req.Context()
+	capt, err := capture.FromContext(ctx)
+	if err != nil {
+		log.FromContext(log.With(ctx, log.Str(log.MiddlewareType, "AccessLogs"))).Errorf("Could not get Capture: %w", err)
+		return
+	}
+
+	data.Core[OriginStatus] = capt.StatusCode()
+	data.Core[OriginContentSize] = capt.ResponseSize()
 }
