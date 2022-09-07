@@ -2,6 +2,7 @@ package ecs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"text/template"
@@ -16,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/patrickmn/go-cache"
+	"github.com/scaleway/scaleway-sdk-go/logger"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/job"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -31,8 +33,10 @@ type Provider struct {
 	DefaultRule      string `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 
 	// Provider lookup parameters.
-	Clusters             []string `description:"ECS Clusters name" json:"clusters,omitempty" toml:"clusters,omitempty" yaml:"clusters,omitempty" export:"true"`
+	Clusters             []string `description:"ECS Cluster names" json:"clusters,omitempty" toml:"clusters,omitempty" yaml:"clusters,omitempty" export:"true"`
+	Services             []string `description:"ECS Service names" json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
 	AutoDiscoverClusters bool     `description:"Auto discover cluster" json:"autoDiscoverClusters,omitempty" toml:"autoDiscoverClusters,omitempty" yaml:"autoDiscoverClusters,omitempty" export:"true"`
+	RequireHealthyTask   bool     `description:"Require a task to be in the healthy state" json:"requireHealthyTask,omitempty" toml:"requireHealthyTask,omitempty" yaml:"requireHealthyTask,omitempty" export:"true"`
 	Region               string   `description:"The AWS region to use for requests"  json:"region,omitempty" toml:"region,omitempty" yaml:"region,omitempty" export:"true"`
 	AccessKeyID          string   `description:"The AWS credentials access key to use for making requests" json:"accessKeyID,omitempty" toml:"accessKeyID,omitempty" yaml:"accessKeyID,omitempty" loggable:"false"`
 	SecretAccessKey      string   `description:"The AWS credentials access key to use for making requests" json:"secretAccessKey,omitempty" toml:"secretAccessKey,omitempty" yaml:"secretAccessKey,omitempty" loggable:"false"`
@@ -77,7 +81,9 @@ var (
 // SetDefaults sets the default values.
 func (p *Provider) SetDefaults() {
 	p.Clusters = []string{"default"}
+	p.Services = []string{}
 	p.AutoDiscoverClusters = false
+	p.RequireHealthyTask = false
 	p.ExposedByDefault = true
 	p.RefreshSeconds = 15
 	p.DefaultRule = DefaultTemplateRule
@@ -237,42 +243,19 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 	var instances []ecsInstance
 
 	logger.Debugf("ECS Clusters: %s", clusters)
-	for _, c := range clusters {
-		input := &ecs.ListTasksInput{
-			Cluster:       &c,
-			DesiredStatus: aws.String(ecs.DesiredStatusRunning),
-		}
-
-		tasks := make(map[string]*ecs.Task)
-		err := client.ecs.ListTasksPagesWithContext(ctx, input, func(page *ecs.ListTasksOutput, lastPage bool) bool {
-			if len(page.TaskArns) > 0 {
-				resp, err := client.ecs.DescribeTasksWithContext(ctx, &ecs.DescribeTasksInput{
-					Tasks:   page.TaskArns,
-					Cluster: &c,
-				})
-				if err != nil {
-					logger.Errorf("Unable to describe tasks for %v", page.TaskArns)
-				} else {
-					for _, t := range resp.Tasks {
-						if aws.StringValue(t.LastStatus) == ecs.DesiredStatusRunning {
-							tasks[aws.StringValue(t.TaskArn)] = t
-						}
-					}
-				}
-			}
-			return !lastPage
-		})
+	for _, cluster := range clusters {
+		tasks, err := p.listClusterTasks(ctx, client, cluster)
 		if err != nil {
-			return nil, fmt.Errorf("listing tasks: %w", err)
+			logger.Errorf("Failed to list tasks for cluster %q: %s", cluster, err)
+			continue
 		}
 
-		// Skip to the next cluster if there are no tasks found on
-		// this cluster.
+		// Skip to the next cluster if there are no tasks found on this cluster.
 		if len(tasks) == 0 {
 			continue
 		}
 
-		ec2Instances, err := p.lookupEc2Instances(ctx, client, &c, tasks)
+		ec2Instances, err := p.lookupEc2Instances(ctx, client, &cluster, tasks)
 		if err != nil {
 			return nil, err
 		}
@@ -366,6 +349,86 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 	}
 
 	return instances, nil
+}
+
+func (p *Provider) listClusterTasks(ctx context.Context, client *awsClient, cluster string) (map[string]*ecs.Task, error) {
+	var inputs []*ecs.ListTasksInput
+	for _, s := range p.Services {
+		service := s
+		inputs = append(inputs, &ecs.ListTasksInput{
+			Cluster:     &cluster,
+			ServiceName: &service,
+		})
+	}
+
+	if len(inputs) == 0 {
+		inputs = append(inputs, &ecs.ListTasksInput{
+			Cluster: &cluster,
+		})
+	}
+
+	tasks := make(map[string]*ecs.Task)
+	for _, input := range inputs {
+		inputTasks, err := p.listTasks(ctx, client, input)
+		if err != nil {
+			var snfe *ecs.ServiceNotFoundException
+			var cnfe *ecs.ClusterNotFoundException
+			switch {
+			// Failover on not found services to give a chance to gather tasks from other services.
+			case errors.As(err, &snfe):
+				logger.Errorf("Service not found: %s", input.ServiceName)
+
+			// If the cluster is not found, we can stop fetching tasks right away.
+			case errors.As(err, &cnfe):
+				logger.Errorf("Cluster not found: %s", input.Cluster)
+				return nil, nil
+
+			default:
+				return nil, err
+			}
+		}
+
+		for arn, task := range inputTasks {
+			tasks[arn] = task
+		}
+	}
+
+	return tasks, nil
+}
+
+func (p *Provider) listTasks(ctx context.Context, client *awsClient, input *ecs.ListTasksInput) (map[string]*ecs.Task, error) {
+	logger := log.FromContext(ctx)
+	tasks := make(map[string]*ecs.Task)
+	err := client.ecs.ListTasksPagesWithContext(ctx, input,
+		func(page *ecs.ListTasksOutput, lastPage bool) bool {
+			if len(page.TaskArns) > 0 {
+				resp, err := client.ecs.DescribeTasksWithContext(ctx, &ecs.DescribeTasksInput{
+					Tasks:   page.TaskArns,
+					Cluster: input.Cluster,
+				})
+				if err != nil {
+					logger.Errorf("Unable to describe tasks for %v", page.TaskArns)
+				} else {
+					for _, t := range resp.Tasks {
+						if aws.StringValue(t.LastStatus) == ecs.DesiredStatusRunning {
+							if p.RequireHealthyTask {
+								if aws.StringValue(t.HealthStatus) != ecs.HealthStatusHealthy {
+									logger.Debugf("Task %s not HealthStatus Healthy - skipping", *t.TaskArn)
+									continue
+								}
+							}
+							tasks[aws.StringValue(t.TaskArn)] = t
+						}
+					}
+				}
+			}
+			return !lastPage
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
 }
 
 func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, clusterName *string, ecsDatas map[string]*ecs.Task) (map[string]*ec2.Instance, error) {
