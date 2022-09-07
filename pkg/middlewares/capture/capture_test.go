@@ -16,16 +16,15 @@ import (
 func TestCapture(t *testing.T) {
 	wrapMiddleware := func(next http.Handler) (http.Handler, error) {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			c := GetResponseWriter(req.Context())
-			crr := c.GetRequestReader()
-			crw := c.GetResponseWriter()
+			capt, err := FromContext(req.Context())
+			require.NoError(t, err)
 
-			_, err := fmt.Fprintf(rw, "%d,%d,%d,", crr.Size(), crw.Size(), crw.Status())
+			_, err = fmt.Fprintf(rw, "%d,%d,%d,", capt.RequestSize(), capt.ResponseSize(), capt.StatusCode())
 			require.NoError(t, err)
 
 			next.ServeHTTP(rw, req)
 
-			_, err = fmt.Fprintf(rw, ",%d,%d,%d", crr.Size(), crw.Size(), crw.Status())
+			_, err = fmt.Fprintf(rw, ",%d,%d,%d", capt.RequestSize(), capt.ResponseSize(), capt.StatusCode())
 			require.NoError(t, err)
 		}), nil
 	}
@@ -39,12 +38,7 @@ func TestCapture(t *testing.T) {
 		assert.Equal(t, "bar", string(all))
 	})
 
-	captureHandler, err := NewHandler()
-	require.NotNil(t, captureHandler)
-	require.NoError(t, err)
-
-	wrapped := WrapHandler(captureHandler)
-
+	wrapped := WrapHandler(&Handler{})
 	chain := alice.New()
 	chain = chain.Append(wrapped)
 	chain = chain.Append(wrapMiddleware)
@@ -148,11 +142,7 @@ func BenchmarkCapture(b *testing.B) {
 
 			chain := alice.New()
 			if test.capture || test.body {
-				captureHandler, err := NewHandler()
-				require.NotNil(b, captureHandler)
-				require.NoError(b, err)
-
-				captureWrapped := WrapHandler(captureHandler)
+				captureWrapped := WrapHandler(&Handler{})
 				chain = chain.Append(captureWrapped)
 			}
 			handlers, err := chain.Then(next)
@@ -186,4 +176,59 @@ func generateBytes(length int) []byte {
 		value = append(value, 0x61+byte(i%26))
 	}
 	return value
+}
+
+func TestRequestReader(t *testing.T) {
+	buff := bytes.NewBuffer([]byte("foo"))
+	rr := readCounter{source: io.NopCloser(buff)}
+	assert.Equal(t, int64(0), rr.size)
+
+	n, err := rr.Read([]byte("bar"))
+	require.NoError(t, err)
+	assert.Equal(t, 3, n)
+
+	err = rr.Close()
+	require.NoError(t, err)
+	assert.Equal(t, int64(3), rr.size)
+}
+
+type rwWithCloseNotify struct {
+	*httptest.ResponseRecorder
+}
+
+func (r *rwWithCloseNotify) CloseNotify() <-chan bool {
+	panic("implement me")
+}
+
+func TestCloseNotifier(t *testing.T) {
+	testCases := []struct {
+		rw                      http.ResponseWriter
+		desc                    string
+		implementsCloseNotifier bool
+	}{
+		{
+			rw:                      httptest.NewRecorder(),
+			desc:                    "does not implement CloseNotifier",
+			implementsCloseNotifier: false,
+		},
+		{
+			rw:                      &rwWithCloseNotify{httptest.NewRecorder()},
+			desc:                    "implements CloseNotifier",
+			implementsCloseNotifier: true,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			_, ok := test.rw.(http.CloseNotifier)
+			assert.Equal(t, test.implementsCloseNotifier, ok)
+
+			rw := newResponseWriter(test.rw)
+			_, impl := rw.(http.CloseNotifier)
+			assert.Equal(t, test.implementsCloseNotifier, impl)
+		})
+	}
 }

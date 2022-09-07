@@ -431,9 +431,6 @@ func TestAccessLog(t *testing.T) {
 			w := httptest.NewRecorder()
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
 
-			captureMiddleware, err := capture.NewHandler()
-			require.NoError(t, err)
-
 			accesslogger, err := accesslog.NewHandler(&types.AccessLog{
 				Format: "json",
 			})
@@ -442,7 +439,7 @@ func TestAccessLog(t *testing.T) {
 			reqHost := requestdecorator.New(nil)
 
 			chain := alice.New()
-			chain = chain.Append(capture.WrapHandler(captureMiddleware))
+			chain = chain.Append(capture.WrapHandler(&capture.Handler{}))
 			chain = chain.Append(accesslog.WrapHandler(accesslogger))
 			handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				reqHost.ServeHTTP(w, req, handlers["web"].ServeHTTP)

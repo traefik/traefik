@@ -48,9 +48,6 @@ func TestLogRotation(t *testing.T) {
 	fileName := filepath.Join(t.TempDir(), "traefik.log")
 	rotatedFileName := fileName + ".rotated"
 
-	captureMiddleware, err := capture.NewHandler()
-	require.NoError(t, err)
-
 	config := &types.AccessLog{FilePath: fileName, Format: CommonFormat}
 	logHandler, err := NewHandler(config)
 	require.NoError(t, err)
@@ -60,7 +57,7 @@ func TestLogRotation(t *testing.T) {
 	})
 
 	chain := alice.New()
-	chain = chain.Append(capture.WrapHandler(captureMiddleware))
+	chain = chain.Append(capture.WrapHandler(&capture.Handler{}))
 	chain = chain.Append(WrapHandler(logHandler))
 	handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
@@ -180,9 +177,6 @@ func TestLoggerHeaderFields(t *testing.T) {
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
-			captureMiddleware, err := capture.NewHandler()
-			require.NoError(t, err)
-
 			logFile, err := os.CreateTemp(t.TempDir(), "*.log")
 			require.NoError(t, err)
 
@@ -216,7 +210,7 @@ func TestLoggerHeaderFields(t *testing.T) {
 			}
 
 			chain := alice.New()
-			chain = chain.Append(capture.WrapHandler(captureMiddleware))
+			chain = chain.Append(capture.WrapHandler(&capture.Handler{}))
 			chain = chain.Append(WrapHandler(logger))
 			handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(http.StatusOK)
@@ -755,10 +749,6 @@ func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {
 
 func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
 	t.Helper()
-
-	captureMiddleware, err := capture.NewHandler()
-	require.NoError(t, err)
-
 	logger, err := NewHandler(config)
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -794,7 +784,7 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
 	}
 
 	chain := alice.New()
-	chain = chain.Append(capture.WrapHandler(captureMiddleware))
+	chain = chain.Append(capture.WrapHandler(&capture.Handler{}))
 	chain = chain.Append(WrapHandler(logger))
 	handler, err := chain.Then(http.HandlerFunc(logWriterTestHandlerFunc))
 	require.NoError(t, err)
