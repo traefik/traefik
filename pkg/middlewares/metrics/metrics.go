@@ -128,17 +128,19 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	start := time.Now()
 
 	m.next.ServeHTTP(rw, req)
-
-	c := capture.GetResponseWriter(req.Context())
-	crw := c.GetResponseWriter()
-	labels = append(labels, "code", strconv.Itoa(crw.Status()))
-	m.bytesSentCounter.With(labels...).Add(float64(crw.Size()))
-
-	m.bytesReceivedCounter.With(labels...).Add(float64(c.GetRequestReader().Size()))
-
 	m.reqDurationHistogram.With(labels...).ObserveFromStart(start)
-
 	m.reqsCounter.With(labels...).Add(1)
+
+	ctx := req.Context()
+	capt, err := capture.FromContext(ctx)
+	if err != nil {
+		log.FromContext(middlewares.GetLoggerCtx(ctx, nameEntrypoint, typeName)).Errorf("Could not get Capture: %w", err)
+		return
+	}
+
+	labels = append(labels, "code", strconv.Itoa(capt.StatusCode()))
+	m.bytesSentCounter.With(labels...).Add(float64(capt.ResponseSize()))
+	m.bytesReceivedCounter.With(labels...).Add(float64(capt.RequestSize()))
 }
 
 func getRequestProtocol(req *http.Request) string {
