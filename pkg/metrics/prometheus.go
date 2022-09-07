@@ -194,7 +194,6 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		reg.entryPointReqsTLSCounter = entryPointReqsTLS
 		reg.entryPointReqDurationHistogram, _ = NewHistogramWithScale(entryPointReqDurations, time.Second)
 		reg.entryPointOpenConnsGauge = entryPointOpenConns
-		reg.entryPointOpenConnsGauge = entryPointOpenConns
 		reg.entryPointBytesReceivedCounter = entryPointBytesReceivedTotal
 		reg.entryPointBytesSentCounter = entryPointBytesSendTotal
 	}
