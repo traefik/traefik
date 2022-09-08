@@ -7,7 +7,7 @@ This page is maintained and updated periodically to reflect our roadmap and any 
 | [Pilot Dashboard (Metrics)](#pilot-dashboard-metrics)       | 2.7        | 2.8            | 3.0     |
 | [Pilot Plugins](#pilot-plugins)                             | 2.7        | 2.8            | 3.0     |
 | [Consul Enterprise Namespace](#consul-enterprise-namespace) | 2.8        | N/A            | 3.0     |
-| [TLS 1.0 and 1.1 Support](#tls-10-and-11)                   | -          | 2.8            | TBD     |
+| [TLS 1.0 and 1.1 Support](#tls-10-and-11)                   | N/A        | 2.8            | N/A     |
 
 ## Impact
 
@@ -28,4 +28,4 @@ please use the `namespaces` options instead.
 
 ### TLS 1.0 and 1.1
 
-Starting on 2.7 the default TLS options will use the minimum version of TLS 1.2. Of course, it can still be overridden with custom configuration.  
+Starting on 2.8 the default TLS options will use the minimum version of TLS 1.2. Of course, it can still be overridden with custom configuration.  
