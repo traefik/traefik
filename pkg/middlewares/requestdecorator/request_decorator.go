@@ -52,10 +52,6 @@ func parseHost(addr string) string {
 		return addr
 	}
 
-	if addr[0] == '[' && addr[len(addr)-1] == ']' {
-		return addr[1 : len(addr)-1]
-	}
-
 	host, _, err := net.SplitHostPort(addr)
 	if err != nil {
 		return addr
