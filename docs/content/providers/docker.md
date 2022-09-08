@@ -144,7 +144,7 @@ the bridge interface (`docker0` by default): `--add-host=host.docker.internal:17
 
 When using a docker stack that uses IPv6,
 Traefik will use the IPv4 container IP before its IPv6 counterpart.
-Therefore, on an IPv6 docker stack,
+Therefore, on an IPv6 Docker stack,
 Traefik will use the IPv6 container IP.
 
 ### Docker API Access
