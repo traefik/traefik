@@ -77,6 +77,12 @@ func ipv4(ip string) func(*network.EndpointSettings) {
 	}
 }
 
+func ipv6(ip string) func(*network.EndpointSettings) {
+	return func(s *network.EndpointSettings) {
+		s.GlobalIPv6Address = ip
+	}
+}
+
 func swarmTask(id string, ops ...func(*swarm.Task)) swarm.Task {
 	task := &swarm.Task{
 		ID: id,

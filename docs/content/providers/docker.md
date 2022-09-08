@@ -140,6 +140,13 @@ On Linux, for versions of Docker older than 20.10.0, for `host.docker.internal` 
 as an `extra_host` to the Traefik container, using the `--add-host` flag. For example, to set it to the IP address of
 the bridge interface (`docker0` by default): `--add-host=host.docker.internal:172.17.0.1`
 
+### IPv4 && IPv6
+
+When using a docker stack that uses IPv6,
+Traefik will use the IPv4 container IP before its IPv6 counterpart.
+Therefore, on an IPv6 Docker stack,
+Traefik will use the IPv6 container IP.
+
 ### Docker API Access
 
 Traefik requires access to the docker socket to get its dynamic configuration.
