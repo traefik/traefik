@@ -12,7 +12,7 @@ This page is maintained and updated periodically to reflect our roadmap and any 
 
 ### Pilot Dashboard (Metrics)
 
-Metrics will continue to function normally up to 2.9, when they will be disabled.  
+Metrics will continue to function normally up to 2.8, when they will be disabled.  
 In 3.0, the Pilot platform and all Traefik integration code will be permanently removed.
 
 ### Pilot Plugins 
