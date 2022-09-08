@@ -7,7 +7,7 @@ This page is maintained and updated periodically to reflect our roadmap and any 
 | [Pilot Dashboard (Metrics)](#pilot-dashboard-metrics)       | 2.7        | 2.8            | 3.0     |
 | [Pilot Plugins](#pilot-plugins)                             | 2.7        | 2.8            | 3.0     |
 | [Consul Enterprise Namespace](#consul-enterprise-namespace) | 2.8        | N/A            | 3.0     |
-| [TLS 1.0 and 1.1 Support](#tls-10-and-11)                   | 2.8        | 2.9            | TBD     |
+| [TLS 1.0 and 1.1 Support](#tls-10-and-11)                   | -          | 2.8            | TBD     |
 
 ## Impact
 
@@ -28,5 +28,4 @@ please use the `namespaces` options instead.
 
 ### TLS 1.0 and 1.1
 
-Starting on 2.7 the default TLS options will use the minimum version of TLS 1.2. Of course it can still be overridden with custom configuration.  
-In 2.8, a warning log will be presented for client connections attempting to use deprecated TLS versions.
+Starting on 2.7 the default TLS options will use the minimum version of TLS 1.2. Of course, it can still be overridden with custom configuration.  

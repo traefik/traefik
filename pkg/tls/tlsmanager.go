@@ -28,10 +28,10 @@ var DefaultTLSOptions = Options{
 	// ensure http2 enabled
 	ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
 	MinVersion:    "VersionTLS12",
-	CipherSuites:  goSecureCiphers(),
+	CipherSuites:  getCipherSuites(),
 }
 
-func goSecureCiphers() []string {
+func getCipherSuites() []string {
 	gsc := tls.CipherSuites()
 	ciphers := make([]string, len(gsc))
 	for idx, cs := range gsc {

@@ -348,7 +348,7 @@ func TestClientAuth(t *testing.T) {
 	}
 }
 
-func TestManager_DefaultValues(t *testing.T) {
+func TestManager_Get_DefaultValues(t *testing.T) {
 	tlsManager := NewManager()
 
 	// Ensures we won't break things for Traefik users when updating Go
