@@ -27,6 +27,17 @@ const (
 var DefaultTLSOptions = Options{
 	// ensure http2 enabled
 	ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+	MinVersion:    "VersionTLS12",
+	CipherSuites:  getCipherSuites(),
+}
+
+func getCipherSuites() []string {
+	gsc := tls.CipherSuites()
+	ciphers := make([]string, len(gsc))
+	for idx, cs := range gsc {
+		ciphers[idx] = cs.Name
+	}
+	return ciphers
 }
 
 // Manager is the TLS option/store/configuration factory.
