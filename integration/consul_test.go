@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/go-check/check"
+	"github.com/kvtools/consul"
 	"github.com/kvtools/valkeyrie"
 	"github.com/kvtools/valkeyrie/store"
-	"github.com/kvtools/valkeyrie/store/consul"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/api"
@@ -35,12 +35,11 @@ func (s *ConsulSuite) setupStore(c *check.C) {
 	consulAddr := net.JoinHostPort(s.getComposeServiceIP(c, "consul"), "8500")
 	s.consulURL = fmt.Sprintf("http://%s", consulAddr)
 
-	consul.Register()
 	kv, err := valkeyrie.NewStore(
 		context.Background(),
-		store.CONSUL,
+		consul.StoreName,
 		[]string{consulAddr},
-		&store.Config{
+		&consul.Config{
 			ConnectionTimeout: 10 * time.Second,
 		},
 	)

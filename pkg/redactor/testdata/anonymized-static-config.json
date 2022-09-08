@@ -229,8 +229,7 @@
     },
     "consul": {
       "rootKey": "xxxx",
-      "username": "xxxx",
-      "password": "xxxx",
+      "token": "xxxx",
       "tls": {
         "ca": "xxxx",
         "caOptional": true,
@@ -246,39 +245,32 @@
     },
     "etcd": {
       "rootKey": "xxxx",
-      "username": "xxxx",
-      "password": "xxxx",
       "tls": {
         "ca": "xxxx",
         "caOptional": true,
         "cert": "xxxx",
         "key": "xxxx",
         "insecureSkipVerify": true
-      }
+      },
+      "username": "xxxx",
+      "password": "xxxx"
     },
     "zooKeeper": {
       "rootKey": "xxxx",
       "username": "xxxx",
-      "password": "xxxx",
-      "tls": {
-        "ca": "xxxx",
-        "caOptional": true,
-        "cert": "xxxx",
-        "key": "xxxx",
-        "insecureSkipVerify": true
-      }
+      "password": "xxxx"
     },
     "redis": {
       "rootKey": "xxxx",
-      "username": "xxxx",
-      "password": "xxxx",
       "tls": {
         "ca": "xxxx",
         "caOptional": true,
         "cert": "xxxx",
         "key": "xxxx",
         "insecureSkipVerify": true
-      }
+      },
+      "username": "xxxx",
+      "password": "xxxx"
     },
     "http": {
       "endpoint": "xxxx",
