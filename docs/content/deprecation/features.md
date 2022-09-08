@@ -7,7 +7,7 @@ This page is maintained and updated periodically to reflect our roadmap and any 
 | [Pilot Dashboard (Metrics)](#pilot-dashboard-metrics)       | 2.7        | 2.8            | 3.0     |
 | [Pilot Plugins](#pilot-plugins)                             | 2.7        | 2.8            | 3.0     |
 | [Consul Enterprise Namespace](#consul-enterprise-namespace) | 2.8        | N/A            | 3.0     |
-| [TLS 1.0 and 1.1 Support](#tls-10-and-11)                   | -          | 2.8            | TBD     |
+| [TLS 1.0 and 1.1 Support](#tls-10-and-11)                   | N/A        | 2.8            | N/A     |
 
 ## Impact
 
