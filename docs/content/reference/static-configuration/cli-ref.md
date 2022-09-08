@@ -408,9 +408,6 @@ Sets the namespace used to discover the configuration (Consul Enterprise only).
 `--providers.consul.namespaces`:  
 Sets the namespaces used to discover the configuration (Consul Enterprise only).
 
-`--providers.consul.password`:  
-KV Password
-
 `--providers.consul.rootkey`:  
 Root key used for KV store (Default: ```traefik```)
 
@@ -430,10 +427,7 @@ TLS insecure skip verify (Default: ```false```)
 TLS key
 
 `--providers.consul.token`:  
-KV Token
 
-`--providers.consul.username`:  
-KV Username
 
 `--providers.consulcatalog`:  
 Enable ConsulCatalog backend with default settings. (Default: ```false```)
@@ -604,7 +598,7 @@ Enable Etcd backend with default settings. (Default: ```false```)
 KV store endpoints (Default: ```127.0.0.1:2379```)
 
 `--providers.etcd.password`:  
-KV Password
+
 
 `--providers.etcd.rootkey`:  
 Root key used for KV store (Default: ```traefik```)
@@ -624,11 +618,8 @@ TLS insecure skip verify (Default: ```false```)
 `--providers.etcd.tls.key`:  
 TLS key
 
-`--providers.etcd.token`:  
-KV Token
-
 `--providers.etcd.username`:  
-KV Username
+
 
 `--providers.file.debugloggeneratedtemplate`:  
 Enable debug logging of generated configuration template. (Default: ```false```)
@@ -912,11 +903,14 @@ Watch provider. (Default: ```true```)
 `--providers.redis`:  
 Enable Redis backend with default settings. (Default: ```false```)
 
+`--providers.redis.db`:  
+ (Default: ```0```)
+
 `--providers.redis.endpoints`:  
 KV store endpoints (Default: ```127.0.0.1:6379```)
 
 `--providers.redis.password`:  
-KV Password
+
 
 `--providers.redis.rootkey`:  
 Root key used for KV store (Default: ```traefik```)
@@ -936,11 +930,8 @@ TLS insecure skip verify (Default: ```false```)
 `--providers.redis.tls.key`:  
 TLS key
 
-`--providers.redis.token`:  
-KV Token
-
 `--providers.redis.username`:  
-KV Username
+
 
 `--providers.rest`:  
 Enable Rest backend with default settings. (Default: ```false```)
@@ -955,31 +946,13 @@ Enable ZooKeeper backend with default settings. (Default: ```false```)
 KV store endpoints (Default: ```127.0.0.1:2181```)
 
 `--providers.zookeeper.password`:  
-KV Password
+
 
 `--providers.zookeeper.rootkey`:  
 Root key used for KV store (Default: ```traefik```)
 
-`--providers.zookeeper.tls.ca`:  
-TLS CA
-
-`--providers.zookeeper.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
-
-`--providers.zookeeper.tls.cert`:  
-TLS cert
-
-`--providers.zookeeper.tls.insecureskipverify`:  
-TLS insecure skip verify (Default: ```false```)
-
-`--providers.zookeeper.tls.key`:  
-TLS key
-
-`--providers.zookeeper.token`:  
-KV Token
-
 `--providers.zookeeper.username`:  
-KV Username
+
 
 `--serverstransport.forwardingtimeouts.dialtimeout`:  
 The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)

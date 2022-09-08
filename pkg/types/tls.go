@@ -25,29 +25,29 @@ type ClientTLS struct {
 }
 
 // CreateTLSConfig creates a TLS config from ClientTLS structures.
-func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, error) {
-	if clientTLS == nil {
+func (c *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, error) {
+	if c == nil {
 		log.FromContext(ctx).Warnf("clientTLS is nil")
 		return nil, nil
 	}
 
-	if clientTLS.CAOptional {
+	if c.CAOptional {
 		log.FromContext(ctx).Warn("CAOptional is deprecated, TLS client authentication is a server side option.")
 	}
 
 	// Not initialized, to rely on system bundle.
 	var caPool *x509.CertPool
 
-	if clientTLS.CA != "" {
+	if c.CA != "" {
 		var ca []byte
-		if _, errCA := os.Stat(clientTLS.CA); errCA == nil {
+		if _, errCA := os.Stat(c.CA); errCA == nil {
 			var err error
-			ca, err = os.ReadFile(clientTLS.CA)
+			ca, err = os.ReadFile(c.CA)
 			if err != nil {
 				return nil, fmt.Errorf("failed to read CA. %w", err)
 			}
 		} else {
-			ca = []byte(clientTLS.CA)
+			ca = []byte(c.CA)
 		}
 
 		caPool = x509.NewCertPool()
@@ -56,8 +56,8 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 		}
 	}
 
-	hasCert := len(clientTLS.Cert) > 0
-	hasKey := len(clientTLS.Key) > 0
+	hasCert := len(c.Cert) > 0
+	hasKey := len(c.Key) > 0
 
 	if hasCert != hasKey {
 		return nil, errors.New("both TLS cert and key must be defined")
@@ -66,11 +66,11 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 	if !hasCert || !hasKey {
 		return &tls.Config{
 			RootCAs:            caPool,
-			InsecureSkipVerify: clientTLS.InsecureSkipVerify,
+			InsecureSkipVerify: c.InsecureSkipVerify,
 		}, nil
 	}
 
-	cert, err := loadKeyPair(clientTLS.Cert, clientTLS.Key)
+	cert, err := loadKeyPair(c.Cert, c.Key)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (clientTLS *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, e
 	return &tls.Config{
 		Certificates:       []tls.Certificate{cert},
 		RootCAs:            caPool,
-		InsecureSkipVerify: clientTLS.InsecureSkipVerify,
+		InsecureSkipVerify: c.InsecureSkipVerify,
 	}, nil
 }
 
