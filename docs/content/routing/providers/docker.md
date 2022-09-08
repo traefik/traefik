@@ -368,7 +368,7 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
     See [health check](../services/index.md#health-check) for more information.
 
     ```yaml
-    - "traefik.http.services.myservice.loadbalancer.healthcheck.timeout=10"
+    - "traefik.http.services.myservice.loadbalancer.healthcheck.timeout=10s"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.followredirects`"

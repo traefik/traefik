@@ -1,3 +1,19 @@
+## [v2.8.4](https://github.com/traefik/traefik/tree/v2.8.4) (2022-09-02)
+[All Commits](https://github.com/traefik/traefik/compare/v2.8.3...v2.8.4)
+
+**Bug fixes:**
+- **[docker,docker/swarm]** Fix Docker provider mem leak on operation retries ([#9288](https://github.com/traefik/traefik/pull/9288) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Fix retry middleware on panic ([#9284](https://github.com/traefik/traefik/pull/9284) by [ldez](https://github.com/ldez))
+- **[plugins]** Allow Traefik starting even if plugin service is unavailable ([#9287](https://github.com/traefik/traefik/pull/9287) by [ldez](https://github.com/ldez))
+- chore: update paerser to v0.1.9 ([#9270](https://github.com/traefik/traefik/pull/9270) by [tomMoulard](https://github.com/tomMoulard))
+
+**Documentation:**
+- **[acme]** Fix infoblox acme provider documentation ([#9277](https://github.com/traefik/traefik/pull/9277) by [ldez](https://github.com/ldez))
+- **[k8s/crd]** Fix serversTransport CRD documentation ([#9283](https://github.com/traefik/traefik/pull/9283) by [cuishuang](https://github.com/cuishuang))
+- **[k8s/crd]** Fix k8s for example for rootCAs serversTransport ([#9274](https://github.com/traefik/traefik/pull/9274) by [ben-krieger](https://github.com/ben-krieger))
+- **[k8s]** Add missing networking apiGroup in Kubernetes RBACs examples and references ([#9295](https://github.com/traefik/traefik/pull/9295) by [fibsifan](https://github.com/fibsifan))
+- Update deprecation notes about Pilot ([#9300](https://github.com/traefik/traefik/pull/9300) by [nmengin](https://github.com/nmengin))
+
 ## [v2.8.3](https://github.com/traefik/traefik/tree/v2.8.3) (2022-08-12)
 [All Commits](https://github.com/traefik/traefik/compare/v2.8.2...v2.8.3)
 

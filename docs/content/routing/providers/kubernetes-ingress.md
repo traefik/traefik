@@ -47,6 +47,7 @@ which in turn will create the resulting routers, services, handlers, etc.
           - watch
       - apiGroups:
           - extensions
+          - networking.k8s.io
         resources:
           - ingresses/status
         verbs:
@@ -438,6 +439,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
           - watch
       - apiGroups:
           - extensions
+          - networking.k8s.io
         resources:
           - ingresses/status
         verbs:
@@ -645,6 +647,7 @@ For more options, please refer to the available [annotations](#on-ingress).
           - watch
       - apiGroups:
           - extensions
+          - networking.k8s.io
         resources:
           - ingresses/status
         verbs:
