@@ -13,7 +13,7 @@ import (
 	"github.com/go-check/check"
 	"github.com/kvtools/valkeyrie"
 	"github.com/kvtools/valkeyrie/store"
-	"github.com/kvtools/valkeyrie/store/zookeeper"
+	"github.com/kvtools/zookeeper"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/api"

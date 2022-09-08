@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/go-check/check"
+	"github.com/kvtools/etcdv3"
 	"github.com/kvtools/valkeyrie"
 	"github.com/kvtools/valkeyrie/store"
-	etcdv3 "github.com/kvtools/valkeyrie/store/etcd/v3"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/api"
