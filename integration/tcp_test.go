@@ -102,18 +102,18 @@ func (s *TCPSuite) TestTLSOptions(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-c.test`)"))
 	c.Assert(err, checker.IsNil)
 
-	// Check that we can use a client tls version <= 1.1 with hostSNI 'whoami-c.test'
-	out, err := guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-c.test", true, tls.VersionTLS11)
+	// Check that we can use a client tls version <= 1.2 with hostSNI 'whoami-c.test'
+	out, err := guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-c.test", true, tls.VersionTLS12)
 	c.Assert(err, checker.IsNil)
 	c.Assert(out, checker.Contains, "whoami-no-cert")
 
-	// Check that we can use a client tls version <= 1.2 with hostSNI 'whoami-d.test'
-	out, err = guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-d.test", true, tls.VersionTLS12)
+	// Check that we can use a client tls version <= 1.3 with hostSNI 'whoami-d.test'
+	out, err = guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-d.test", true, tls.VersionTLS13)
 	c.Assert(err, checker.IsNil)
 	c.Assert(out, checker.Contains, "whoami-no-cert")
 
-	// Check that we cannot use a client tls version <= 1.1 with hostSNI 'whoami-d.test'
-	_, err = guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-d.test", true, tls.VersionTLS11)
+	// Check that we cannot use a client tls version <= 1.2 with hostSNI 'whoami-d.test'
+	_, err = guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-d.test", true, tls.VersionTLS12)
 	c.Assert(err, checker.NotNil)
 	c.Assert(err.Error(), checker.Contains, "protocol version not supported")
 }

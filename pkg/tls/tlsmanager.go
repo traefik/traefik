@@ -27,6 +27,17 @@ const (
 var DefaultTLSOptions = Options{
 	// ensure http2 enabled
 	ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+	MinVersion:    "VersionTLS12",
+	CipherSuites:  getCipherSuites(),
+}
+
+func getCipherSuites() []string {
+	gsc := tls.CipherSuites()
+	ciphers := make([]string, len(gsc))
+	for idx, cs := range gsc {
+		ciphers[idx] = cs.Name
+	}
+	return ciphers
 }
 
 // Manager is the TLS option/store/configuration factory.
@@ -299,18 +310,13 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 		}
 	}
 
-	// Set PreferServerCipherSuites.
-	conf.PreferServerCipherSuites = tlsOption.PreferServerCipherSuites
-
 	// Set the minimum TLS version if set in the config
 	if minConst, exists := MinVersion[tlsOption.MinVersion]; exists {
-		conf.PreferServerCipherSuites = true
 		conf.MinVersion = minConst
 	}
 
 	// Set the maximum TLS version if set in the config TOML
 	if maxConst, exists := MaxVersion[tlsOption.MaxVersion]; exists {
-		conf.PreferServerCipherSuites = true
 		conf.MaxVersion = maxConst
 	}
 

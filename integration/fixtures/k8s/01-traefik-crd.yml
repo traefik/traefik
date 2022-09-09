@@ -1783,9 +1783,10 @@ spec:
                   VersionTLS13. Default: VersionTLS10.'
                 type: string
               preferServerCipherSuites:
-                description: PreferServerCipherSuites defines whether the server chooses
-                  a cipher suite among his own instead of among the client's. It is
-                  enabled automatically when minVersion or maxVersion are set.
+                description: 'PreferServerCipherSuites defines whether the server
+                  chooses a cipher suite among his own instead of among the client''s.
+                  It is enabled automatically when minVersion or maxVersion is set.
+                  Deprecated: https://github.com/golang/go/issues/45430'
                 type: boolean
               sniStrict:
                 description: SniStrict defines whether Traefik allows connections

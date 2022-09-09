@@ -401,7 +401,7 @@ func BenchmarkCompress(b *testing.B) {
 			})
 			handler, _ := New(context.Background(), next, dynamic.Compress{}, "testing")
 
-			req, _ := http.NewRequest("GET", "/whatever", nil)
+			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
 			req.Header.Set("Accept-Encoding", "gzip")
 
 			b.ReportAllocs()

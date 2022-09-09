@@ -35,7 +35,6 @@ spec:
       - secret-ca-default1
       - secret-ca-default2
     clientAuthType: VerifyClientCertIfGiven
-  preferServerCipherSuites: true
 
 ---
 apiVersion: traefik.containo.us/v1alpha1

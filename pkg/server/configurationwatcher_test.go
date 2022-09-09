@@ -95,13 +95,7 @@ func TestNewConfigurationWatcher(t *testing.T) {
 			},
 			TLS: &dynamic.TLSConfiguration{
 				Options: map[string]tls.Options{
-					"default": {
-						ALPNProtocols: []string{
-							"h2",
-							"http/1.1",
-							"acme-tls/1",
-						},
-					},
+					"default": tls.DefaultTLSOptions,
 				},
 				Stores: map[string]tls.Store{},
 			},
@@ -238,13 +232,7 @@ func TestIgnoreTransientConfiguration(t *testing.T) {
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Options: map[string]tls.Options{
-				"default": {
-					ALPNProtocols: []string{
-						"h2",
-						"http/1.1",
-						"acme-tls/1",
-					},
-				},
+				"default": tls.DefaultTLSOptions,
 			},
 			Stores: map[string]tls.Store{},
 		},
@@ -408,13 +396,7 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Options: map[string]tls.Options{
-				"default": {
-					ALPNProtocols: []string{
-						"h2",
-						"http/1.1",
-						"acme-tls/1",
-					},
-				},
+				"default": tls.DefaultTLSOptions,
 			},
 			Stores: map[string]tls.Store{},
 		},
@@ -503,13 +485,7 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Options: map[string]tls.Options{
-				"default": {
-					ALPNProtocols: []string{
-						"h2",
-						"http/1.1",
-						"acme-tls/1",
-					},
-				},
+				"default": tls.DefaultTLSOptions,
 			},
 			Stores: map[string]tls.Store{},
 		},
@@ -642,13 +618,7 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Options: map[string]tls.Options{
-				"default": {
-					ALPNProtocols: []string{
-						"h2",
-						"http/1.1",
-						"acme-tls/1",
-					},
-				},
+				"default": tls.DefaultTLSOptions,
 			},
 			Stores: map[string]tls.Store{},
 		},
@@ -710,13 +680,7 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Options: map[string]tls.Options{
-				"default": {
-					ALPNProtocols: []string{
-						"h2",
-						"http/1.1",
-						"acme-tls/1",
-					},
-				},
+				"default": tls.DefaultTLSOptions,
 			},
 			Stores: map[string]tls.Store{},
 		},

@@ -12,7 +12,7 @@ RUN yarn install
 RUN yarn build
 
 # BUILD
-FROM golang:1.17-alpine as gobuild
+FROM golang:1.19-alpine as gobuild
 
 RUN apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar ca-certificates tzdata \
     && update-ca-certificates \

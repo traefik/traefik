@@ -8,7 +8,6 @@ import (
 	"flag"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -210,14 +209,14 @@ func (s *BaseSuite) traefikCmd(args ...string) (*exec.Cmd, func(*check.C)) {
 	cmd, out := s.cmdTraefik(args...)
 	return cmd, func(c *check.C) {
 		if c.Failed() || *showLog {
-			s.displayLogK3S(c)
+			s.displayLogK3S()
 			s.displayLogCompose(c)
 			s.displayTraefikLog(c, out)
 		}
 	}
 }
 
-func (s *BaseSuite) displayLogK3S(c *check.C) {
+func (s *BaseSuite) displayLogK3S() {
 	filePath := "./fixtures/k8s/config.skip/k3s.log"
 	if _, err := os.Stat(filePath); err == nil {
 		content, errR := os.ReadFile(filePath)
@@ -349,7 +348,7 @@ type tailscaleNotSuite struct{ BaseSuite }
 // TODO(mpl): we could maybe even move this setup to the Makefile, to start it
 // and let it run (forever, or until voluntarily stopped).
 func setupVPN(c *check.C, keyFile string) *tailscaleNotSuite {
-	data, err := ioutil.ReadFile(keyFile)
+	data, err := os.ReadFile(keyFile)
 	if err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
 			log.Fatal(err)

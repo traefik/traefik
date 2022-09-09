@@ -222,7 +222,7 @@ func (l *countingRetryListener) Retried(req *http.Request, attempt int) {
 
 func TestRetryWithFlush(t *testing.T) {
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.WriteHeader(200)
+		rw.WriteHeader(http.StatusOK)
 		_, err := rw.Write([]byte("FULL "))
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)

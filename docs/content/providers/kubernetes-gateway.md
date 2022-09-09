@@ -193,7 +193,7 @@ providers:
 _Optional, Default: []_
 
 Array of namespaces to watch.
-If left empty, watches all namespaces if the value of `namespaces`.
+If left empty, Traefik watches all namespaces.
 
 ```yaml tab="File (YAML)"
 providers:

@@ -456,7 +456,7 @@ func TestWebSocketUpgradeFailed(t *testing.T) {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", func(w http.ResponseWriter, req *http.Request) {
-		w.WriteHeader(400)
+		w.WriteHeader(http.StatusBadRequest)
 	})
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		mux.ServeHTTP(w, req)
@@ -472,7 +472,7 @@ func TestWebSocketUpgradeFailed(t *testing.T) {
 			req.URL.Path = path
 			f.ServeHTTP(w, req)
 		} else {
-			w.WriteHeader(200)
+			w.WriteHeader(http.StatusOK)
 		}
 	}))
 	defer proxy.Close()
