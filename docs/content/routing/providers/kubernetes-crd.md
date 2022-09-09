@@ -1782,3 +1782,5 @@ If the ServersTransport CRD is defined in another provider the cross-provider fo
 ## Further
 
 Also see the [full example](../../user-guides/crd-acme/index.md) with Let's Encrypt.
+
+{!traefik-for-business-applications.md!}
