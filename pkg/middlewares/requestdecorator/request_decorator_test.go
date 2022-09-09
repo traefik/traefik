@@ -153,12 +153,17 @@ func Test_parseHost(t *testing.T) {
 		{
 			desc:     "invalid IPv6: missing [",
 			host:     "fe80::215:5dff:fe20:cd6a]",
-			expected: "fe80::215:5dff:fe20:cd6a",
+			expected: "fe80::215:5dff:fe20:cd6a]",
 		},
 		{
 			desc:     "invalid IPv6: missing ]",
 			host:     "[fe80::215:5dff:fe20:cd6a",
-			expected: "fe80::215:5dff:fe20:cd6a",
+			expected: "[fe80::215:5dff:fe20:cd6a",
+		},
+		{
+			desc:     "empty address",
+			host:     "",
+			expected: "",
 		},
 	}
 
