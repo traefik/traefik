@@ -165,6 +165,11 @@ func Test_parseHost(t *testing.T) {
 			host:     "",
 			expected: "",
 		},
+		{
+			desc:     "only :",
+			host:     ":",
+			expected: "",
+		},
 	}
 
 	for _, test := range testCases {
