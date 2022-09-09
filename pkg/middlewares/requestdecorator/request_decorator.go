@@ -54,7 +54,7 @@ func parseHost(addr string) string {
 
 	host, _, err := net.SplitHostPort(addr)
 	if err != nil {
-		return addr
+		return strings.TrimSuffix(strings.TrimPrefix(addr, "["), "]")
 	}
 	return host
 }
