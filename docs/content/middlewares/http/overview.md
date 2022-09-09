@@ -157,3 +157,5 @@ http:
 ## Community Middlewares
 
 Please take a look at the community-contributed plugins in the [plugin catalog](https://pilot.traefik.io/plugins).
+
+{!traefik-for-business-applications.md!}

@@ -947,3 +947,5 @@ This will allow users to create a "default router" that will match all unmatched
     to avoid this global ingress from satisfying requests that could match other ingresses.
 
     To do this, use the `traefik.ingress.kubernetes.io/router.priority` annotation (as seen in [Annotations on Ingress](#on-ingress)) on your ingresses accordingly.
+
+{!traefik-for-business-applications.md!}
