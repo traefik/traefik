@@ -1014,6 +1014,9 @@ Enables Datadog debug. (Default: ```false```)
 `--tracing.datadog.globaltag`:  
 Sets a key:value tag on all spans.
 
+`--tracing.datadog.globaltags.<name>`:  
+Sets a list of key:value tags on all spans.
+
 `--tracing.datadog.localagenthostport`:  
 Sets the Datadog Agent host:port. (Default: ```localhost:8126```)
 
