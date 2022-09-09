@@ -244,14 +244,8 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		return
 	}
 
-	//	c := capture.GetResponseWriter(req.Context())
-	//	crw := c.GetResponseWriter()
 	logDataTable.DownstreamResponse.status = capt.StatusCode()
 	logDataTable.DownstreamResponse.size = capt.ResponseSize()
-
-	//	if crr := c.GetRequestReader(); crr != nil {
-	//		logDataTable.Request.size = crr.Size()
-	//	}
 	logDataTable.Request.size = capt.RequestSize()
 }
 
