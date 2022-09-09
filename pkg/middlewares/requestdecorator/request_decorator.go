@@ -49,12 +49,14 @@ func (r *RequestDecorator) ServeHTTP(rw http.ResponseWriter, req *http.Request, 
 
 func parseHost(addr string) string {
 	if !strings.Contains(addr, ":") {
+		// IPv4 without port
 		return addr
 	}
 
+	// IPv4 with port or IPv6
 	host, _, err := net.SplitHostPort(addr)
 	if err != nil {
-		return addr
+		return strings.TrimSuffix(strings.TrimPrefix(addr, "["), "]")
 	}
 	return host
 }
