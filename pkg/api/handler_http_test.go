@@ -224,6 +224,52 @@ func TestHandler_HTTP(t *testing.T) {
 			},
 		},
 		{
+			desc: "one router by id, implicitly using default TLS options",
+			path: "/api/http/routers/baz@myprovider",
+			conf: runtime.Configuration{
+				Routers: map[string]*runtime.RouterInfo{
+					"baz@myprovider": {
+						Router: &dynamic.Router{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.baz`)",
+							Middlewares: []string{"auth", "addPrefixTest@anotherprovider"},
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+						Status: "enabled",
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				jsonFile:   "testdata/router-baz-default-tls-options.json",
+			},
+		},
+		{
+			desc: "one router by id, using specific TLS options",
+			path: "/api/http/routers/baz@myprovider",
+			conf: runtime.Configuration{
+				Routers: map[string]*runtime.RouterInfo{
+					"baz@myprovider": {
+						Router: &dynamic.Router{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.baz`)",
+							Middlewares: []string{"auth", "addPrefixTest@anotherprovider"},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "myTLS",
+							},
+						},
+						Status: "enabled",
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				jsonFile:   "testdata/router-baz-custom-tls-options.json",
+			},
+		},
+		{
 			desc: "one router by id, that does not exist",
 			path: "/api/http/routers/foo@myprovider",
 			conf: runtime.Configuration{
@@ -811,6 +857,7 @@ func TestHandler_HTTP(t *testing.T) {
 			// To lazily initialize the Statuses.
 			rtConf.PopulateUsedBy()
 			rtConf.GetRoutersByEntryPoints(context.Background(), []string{"web"}, false)
+			rtConf.GetRoutersByEntryPoints(context.Background(), []string{"web"}, true)
 
 			handler := New(static.Configuration{API: &static.API{}, Global: &static.Global{}}, rtConf)
 			server := httptest.NewServer(handler.createRouter())
