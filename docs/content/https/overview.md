@@ -20,17 +20,4 @@ That is to say, how to obtain [TLS certificates](./tls.md#certificates-definitio
 either through a definition in the dynamic configuration, or through [Let's Encrypt](./acme.md) (ACME).
 And how to configure [TLS options](./tls.md#tls-options), and [certificates stores](./tls.md#certificates-stores).
 
-!!! question "Using Traefik for Business Applications?"
-
-    If you are using Traefik for commercial applications,
-    consider the [Enterprise Edition](https://traefik.io/traefik-enterprise/).
-    You can use it as your:
-
-    - [Kubernetes Ingress Controller](https://traefik.io/solutions/kubernetes-ingress/)
-    - [Load Balancer](https://traefik.io/solutions/docker-swarm-ingress/)
-    - [API Gateway](https://traefik.io/solutions/api-gateway/)
-
-    Traefik Enterprise enables centralized access management,
-    distributed Let's Encrypt,
-    and other advanced capabilities.
-    Learn more in [this 15-minute technical walkthrough](https://info.traefik.io/watch-traefikee-demo).
+{!traefik-for-business-applications.md!}
