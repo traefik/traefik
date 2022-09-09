@@ -231,17 +231,4 @@ List of providers that support constraints:
 - [Kubernetes Ingress](./kubernetes-ingress.md#labelselector)
 - [Kubernetes Gateway](./kubernetes-gateway.md#labelselector)
 
-!!! question "Using Traefik for Business Applications?"
-
-    If you are using Traefik for commercial applications,
-    consider the [Enterprise Edition](https://traefik.io/traefik-enterprise/).
-    It's orchestrator agnostic and you can use it as your:
-
-    - [Kubernetes Ingress Controller](https://traefik.io/solutions/kubernetes-ingress/)
-    - [Load Balancer](https://traefik.io/solutions/docker-swarm-ingress/)
-    - [API Gateway](https://traefik.io/solutions/api-gateway/)
-
-    Traefik Enterprise enables centralized access management,
-    distributed Let's Encrypt,
-    and other advanced capabilities.
-    Learn more in [this 15-minute technical walkthrough](https://info.traefik.io/watch-traefikee-demo).
+{!traefik-for-business-applications.md!}

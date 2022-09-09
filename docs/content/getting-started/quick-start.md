@@ -116,17 +116,4 @@ IP: 172.27.0.4
 
     Now that you have a basic understanding of how Traefik can automatically create the routes to your services and load balance them, it is time to dive into [the documentation](/) and let Traefik work for you!
 
-!!! question "Using Traefik for Business Applications?"
-
-    If you are using Traefik for commercial applications,
-    consider the [Enterprise Edition](https://traefik.io/traefik-enterprise/).
-    You can use it as your:
-
-    - [Kubernetes Ingress Controller](https://traefik.io/solutions/kubernetes-ingress/)
-    - [Load Balancer](https://traefik.io/solutions/docker-swarm-ingress/)
-    - [API Gateway](https://traefik.io/solutions/api-gateway/)
-
-    Traefik Enterprise enables centralized access management,
-    distributed Let's Encrypt,
-    and other advanced capabilities.
-    Learn more in [this 15-minute technical walkthrough](https://info.traefik.io/watch-traefikee-demo).
+{!traefik-for-business-applications.md!}
