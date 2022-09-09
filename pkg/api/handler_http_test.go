@@ -224,7 +224,7 @@ func TestHandler_HTTP(t *testing.T) {
 			},
 		},
 		{
-			desc: "one router by id, using default TLS options",
+			desc: "one router by id, implicitly using default TLS options",
 			path: "/api/http/routers/baz@myprovider",
 			conf: runtime.Configuration{
 				Routers: map[string]*runtime.RouterInfo{
@@ -243,6 +243,30 @@ func TestHandler_HTTP(t *testing.T) {
 			expected: expected{
 				statusCode: http.StatusOK,
 				jsonFile:   "testdata/router-baz-default-tls-options.json",
+			},
+		},
+		{
+			desc: "one router by id, using specific TLS options",
+			path: "/api/http/routers/baz@myprovider",
+			conf: runtime.Configuration{
+				Routers: map[string]*runtime.RouterInfo{
+					"baz@myprovider": {
+						Router: &dynamic.Router{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.baz`)",
+							Middlewares: []string{"auth", "addPrefixTest@anotherprovider"},
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "myTLS",
+							},
+						},
+						Status: "enabled",
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				jsonFile:   "testdata/router-baz-custom-tls-options.json",
 			},
 		},
 		{
