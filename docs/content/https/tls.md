@@ -490,3 +490,5 @@ spec:
       - secretCA
     clientAuthType: RequireAndVerifyClientCert
 ```
+
+{!traefik-for-business-applications.md!}

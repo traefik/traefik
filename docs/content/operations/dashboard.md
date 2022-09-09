@@ -128,3 +128,5 @@ api:
 
 You can now access the dashboard on the port `8080` of the Traefik instance,
 at the following URL: `http://<Traefik IP>:8080/dashboard/` (trailing slash is mandatory).
+
+{!traefik-for-business-applications.md!}
