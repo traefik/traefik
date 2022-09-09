@@ -1,0 +1,20 @@
+{
+	"entryPoints": [
+		"web"
+	],
+	"middlewares": [
+		"auth",
+		"addPrefixTest@anotherprovider"
+	],
+	"name": "baz@myprovider",
+	"provider": "myprovider",
+	"rule": "Host(`foo.baz`)",
+	"service": "foo-service@myprovider",
+	"tls": {
+		"options": "myTLS"
+	},
+	"status": "enabled",
+	"using": [
+		"web"
+	]
+}
