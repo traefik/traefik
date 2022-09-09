@@ -99,16 +99,16 @@ Applies a list of shared key:value tags on all spans.
 tracing:
   datadog:
     globalTags:
-        tag1: foo
-        tag2: bar
+      tag1: foo
+      tag2: bar
 ```
 
 ```toml tab="File (TOML)"
 [tracing]
   [tracing.datadog]
     [tracing.datadog.globalTags]
-        tag1 = "foo"
-        tag2 = "bar"
+      tag1 = "foo"
+      tag2 = "bar"
 ```
 
 ```bash tab="CLI"
