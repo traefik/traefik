@@ -31,6 +31,15 @@ the static configuration of an `entryPoint` does not give any hint whatsoever ab
 Or whether it's even going to be routed at all,
 i.e. whether there is a Router matching the kind of traffic going through it.
 
+### `400 Connection Refused`
+
+Traefik returns a `400` response code when a Server cannot process
+request due to client error.
+
+Common steps to fixing this issue include:
+- Make sure the host is not blocked 
+- Make sure that the port is reachable
+
 ### `404 Not found`
 
 Traefik returns a `404` response code in the following situations:
@@ -65,9 +74,25 @@ hence it's not possible to assume at any moment that a specific route should be 
 
     Extract from [rfc7231#section-6.6.4](https://datatracker.ietf.org/doc/html/rfc7231#section-6.6.4).
 
+### `500 Internal Server Error`
+
+Traefik returns a `500` response code when the server 
+is unable to fufill the request due to some condtion.
+
+Common steps to fixing this issue include:
+- Check the configuration for errors
+- Check load balancer for servers
+
 ### `502 Bad Gateway`
 
 Traefik returns a `502` response code when an error happens while contacting the upstream service.
+Response code `502` refers to a bad gateway and is related to network issues.
+
+Common steps to fixing this issue include:
+- Reload the page
+- Check firewall configurations
+- Check DNS for changes
+- Check if API is insecure mode
 
 ### `503 Service Unavailable`
 
@@ -76,6 +101,17 @@ but there are no servers ready to handle the request.
 
 This situation is encountered when a service has been explicitly configured without servers,
 or when a service has healthcheck enabled and all servers are unhealthy.
+Since this is a server side issue there is not much user can do to fix this error.
+
+### `504 Gateway Timeout`
+
+Traefik returns a `504` response code when a server did not get a 
+timely response from an upstream server.
+ 
+Common steps to fixing this issue include:
+- Change DNS Server
+- Check networking to the container
+- Check webserver service networks
 
 ### `XXX` Instead of `404`
 
