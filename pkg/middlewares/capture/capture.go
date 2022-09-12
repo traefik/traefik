@@ -3,20 +3,20 @@
 // For another middleware to get those attributes of a requests, this middleware
 // should be added before in the middleware chain.
 //
-//     	handler, _ := NewHandler()
-//     	chain := alice.New().
-//     	     Append(WrapHandler(handler)).
-//     	     Append(myOtherMiddleware).
-//     	     then(...)
+//	handler, _ := NewHandler()
+//	chain := alice.New().
+//	     Append(WrapHandler(handler)).
+//	     Append(myOtherMiddleware).
+//	     then(...)
 //
 // As this middleware stores those data in the request's context, the data can
 // be retrieved at anytime after the ServerHTTP.
 //
-//     func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http.Handler) {
-//     ...
-//     	crw := capture.GetResponseWriter(req.Context())
-//     	fmt.Println(crw.Size)
-//     }
+//	func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http.Handler) {
+//	...
+//		crw := capture.GetResponseWriter(req.Context())
+//		fmt.Println(crw.Size)
+//	}
 package capture
 
 import (
@@ -74,11 +74,11 @@ func FromContext(ctx context.Context) (*Capture, error) {
 	if c == nil {
 		return nil, io.EOF
 	}
-	cap, ok := c.(*Capture)
+	capt, ok := c.(*Capture)
 	if !ok {
 		return nil, errors.New("value stored in Context is not a *Capture")
 	}
-	return cap, nil
+	return capt, nil
 }
 
 func (c Capture) ResponseSize() int64 {
