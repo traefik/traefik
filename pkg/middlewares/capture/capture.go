@@ -1,6 +1,6 @@
-// Package capture is a middleware that captures requests/responses size, status and headers.
+// Package capture is a middleware that captures requests/responses size, and status.
 //
-// For another middleware to get those attributes of a requests, this middleware
+// For another middleware to get those attributes of a request/response, this middleware
 // should be added before in the middleware chain.
 //
 //	handler, _ := NewHandler()
@@ -13,9 +13,14 @@
 // be retrieved at anytime after the ServerHTTP.
 //
 //	func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http.Handler) {
-//	...
-//		crw := capture.GetResponseWriter(req.Context())
-//		fmt.Println(crw.Size)
+//		capt, err := capture.FromContext(req.Context())
+// 		if err != nil {
+// 		...
+// 		}
+//
+//		fmt.Println(capt.Status())
+//		fmt.Println(capt.ResponseSize())
+//		fmt.Println(capt.RequestSize())
 //	}
 package capture
 
