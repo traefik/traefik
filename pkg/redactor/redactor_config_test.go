@@ -730,15 +730,14 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Provider: kv.Provider{
 			RootKey:   "RootKey",
 			Endpoints: nil,
-			Username:  "username",
-			Password:  "password",
-			TLS: &types.ClientTLS{
-				CA:                 "myCa",
-				CAOptional:         true,
-				Cert:               "mycert.pem",
-				Key:                "mycert.key",
-				InsecureSkipVerify: true,
-			},
+		},
+		Token: "secret",
+		TLS: &types.ClientTLS{
+			CA:                 "myCa",
+			CAOptional:         true,
+			Cert:               "mycert.pem",
+			Key:                "mycert.key",
+			InsecureSkipVerify: true,
 		},
 		Namespace:  "ns",
 		Namespaces: []string{"ns1", "ns2"},
@@ -748,15 +747,15 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Provider: kv.Provider{
 			RootKey:   "RootKey",
 			Endpoints: nil,
-			Username:  "username",
-			Password:  "password",
-			TLS: &types.ClientTLS{
-				CA:                 "myCa",
-				CAOptional:         true,
-				Cert:               "mycert.pem",
-				Key:                "mycert.key",
-				InsecureSkipVerify: true,
-			},
+		},
+		Username: "username",
+		Password: "password",
+		TLS: &types.ClientTLS{
+			CA:                 "myCa",
+			CAOptional:         true,
+			Cert:               "mycert.pem",
+			Key:                "mycert.key",
+			InsecureSkipVerify: true,
 		},
 	}
 
@@ -764,31 +763,24 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Provider: kv.Provider{
 			RootKey:   "RootKey",
 			Endpoints: nil,
-			Username:  "username",
-			Password:  "password",
-			TLS: &types.ClientTLS{
-				CA:                 "myCa",
-				CAOptional:         true,
-				Cert:               "mycert.pem",
-				Key:                "mycert.key",
-				InsecureSkipVerify: true,
-			},
 		},
+		Username: "username",
+		Password: "password",
 	}
 
 	config.Providers.Redis = &redis.Provider{
 		Provider: kv.Provider{
 			RootKey:   "RootKey",
 			Endpoints: nil,
-			Username:  "username",
-			Password:  "password",
-			TLS: &types.ClientTLS{
-				CA:                 "myCa",
-				CAOptional:         true,
-				Cert:               "mycert.pem",
-				Key:                "mycert.key",
-				InsecureSkipVerify: true,
-			},
+		},
+		Username: "username",
+		Password: "password",
+		TLS: &types.ClientTLS{
+			CA:                 "myCa",
+			CAOptional:         true,
+			Cert:               "mycert.pem",
+			Key:                "mycert.key",
+			InsecureSkipVerify: true,
 		},
 	}
 
