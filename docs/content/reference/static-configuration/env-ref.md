@@ -489,9 +489,6 @@ Sets the namespace used to discover the configuration (Consul Enterprise only).
 `TRAEFIK_PROVIDERS_CONSUL_NAMESPACES`:  
 Sets the namespaces used to discover the configuration (Consul Enterprise only).
 
-`TRAEFIK_PROVIDERS_CONSUL_PASSWORD`:  
-KV Password
-
 `TRAEFIK_PROVIDERS_CONSUL_ROOTKEY`:  
 Root key used for KV store (Default: ```traefik```)
 
@@ -511,10 +508,7 @@ TLS insecure skip verify (Default: ```false```)
 TLS key
 
 `TRAEFIK_PROVIDERS_CONSUL_TOKEN`:  
-KV Token
-
-`TRAEFIK_PROVIDERS_CONSUL_USERNAME`:  
-KV Username
+Per-request ACL token.
 
 `TRAEFIK_PROVIDERS_DOCKER`:  
 Enable Docker backend with default settings. (Default: ```false```)
@@ -604,7 +598,7 @@ Enable Etcd backend with default settings. (Default: ```false```)
 KV store endpoints (Default: ```127.0.0.1:2379```)
 
 `TRAEFIK_PROVIDERS_ETCD_PASSWORD`:  
-KV Password
+Password for authentication.
 
 `TRAEFIK_PROVIDERS_ETCD_ROOTKEY`:  
 Root key used for KV store (Default: ```traefik```)
@@ -624,11 +618,8 @@ TLS insecure skip verify (Default: ```false```)
 `TRAEFIK_PROVIDERS_ETCD_TLS_KEY`:  
 TLS key
 
-`TRAEFIK_PROVIDERS_ETCD_TOKEN`:  
-KV Token
-
 `TRAEFIK_PROVIDERS_ETCD_USERNAME`:  
-KV Username
+Username for authentication.
 
 `TRAEFIK_PROVIDERS_FILE_DEBUGLOGGENERATEDTEMPLATE`:  
 Enable debug logging of generated configuration template. (Default: ```false```)
@@ -912,11 +903,14 @@ Watch provider. (Default: ```true```)
 `TRAEFIK_PROVIDERS_REDIS`:  
 Enable Redis backend with default settings. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_REDIS_DB`:  
+Database to be selected after connecting to the server. (Default: ```0```)
+
 `TRAEFIK_PROVIDERS_REDIS_ENDPOINTS`:  
 KV store endpoints (Default: ```127.0.0.1:6379```)
 
 `TRAEFIK_PROVIDERS_REDIS_PASSWORD`:  
-KV Password
+Password for authentication.
 
 `TRAEFIK_PROVIDERS_REDIS_ROOTKEY`:  
 Root key used for KV store (Default: ```traefik```)
@@ -936,11 +930,8 @@ TLS insecure skip verify (Default: ```false```)
 `TRAEFIK_PROVIDERS_REDIS_TLS_KEY`:  
 TLS key
 
-`TRAEFIK_PROVIDERS_REDIS_TOKEN`:  
-KV Token
-
 `TRAEFIK_PROVIDERS_REDIS_USERNAME`:  
-KV Username
+Username for authentication.
 
 `TRAEFIK_PROVIDERS_REST`:  
 Enable Rest backend with default settings. (Default: ```false```)
@@ -955,31 +946,13 @@ Enable ZooKeeper backend with default settings. (Default: ```false```)
 KV store endpoints (Default: ```127.0.0.1:2181```)
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER_PASSWORD`:  
-KV Password
+Password for authentication.
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER_ROOTKEY`:  
 Root key used for KV store (Default: ```traefik```)
 
-`TRAEFIK_PROVIDERS_ZOOKEEPER_TLS_CA`:  
-TLS CA
-
-`TRAEFIK_PROVIDERS_ZOOKEEPER_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_ZOOKEEPER_TLS_CERT`:  
-TLS cert
-
-`TRAEFIK_PROVIDERS_ZOOKEEPER_TLS_INSECURESKIPVERIFY`:  
-TLS insecure skip verify (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_ZOOKEEPER_TLS_KEY`:  
-TLS key
-
-`TRAEFIK_PROVIDERS_ZOOKEEPER_TOKEN`:  
-KV Token
-
 `TRAEFIK_PROVIDERS_ZOOKEEPER_USERNAME`:  
-KV Username
+Username for authentication.
 
 `TRAEFIK_SERVERSTRANSPORT_FORWARDINGTIMEOUTS_DIALTIMEOUT`:  
 The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
