@@ -33,11 +33,15 @@ const (
 	influxDBEntryPointReqsTLSName     = "traefik.entrypoint.requests.tls.total"
 	influxDBEntryPointReqDurationName = "traefik.entrypoint.request.duration"
 	influxDBEntryPointOpenConnsName   = "traefik.entrypoint.connections.open"
+	influxDBEntryPointReqsBytesName   = "traefik.entrypoint.requests.bytes.total"
+	influxDBEntryPointRespsBytesName  = "traefik.entrypoint.responses.bytes.total"
 
 	influxDBRouterReqsName         = "traefik.router.requests.total"
 	influxDBRouterReqsTLSName      = "traefik.router.requests.tls.total"
 	influxDBRouterReqsDurationName = "traefik.router.request.duration"
 	influxDBORouterOpenConnsName   = "traefik.router.connections.open"
+	influxDBRouterReqsBytesName    = "traefik.router.requests.bytes.total"
+	influxDBRouterRespsBytesName   = "traefik.router.responses.bytes.total"
 
 	influxDBServiceReqsName         = "traefik.service.requests.total"
 	influxDBServiceReqsTLSName      = "traefik.service.requests.tls.total"
@@ -45,6 +49,8 @@ const (
 	influxDBServiceRetriesTotalName = "traefik.service.retries.total"
 	influxDBServiceOpenConnsName    = "traefik.service.connections.open"
 	influxDBServiceServerUpName     = "traefik.service.server.up"
+	influxDBServiceReqsBytesName    = "traefik.service.requests.bytes.total"
+	influxDBServiceRespsBytesName   = "traefik.service.responses.bytes.total"
 )
 
 const (
@@ -75,6 +81,8 @@ func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 		registry.entryPointReqsTLSCounter = influxDBClient.NewCounter(influxDBEntryPointReqsTLSName)
 		registry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(influxDBClient.NewHistogram(influxDBEntryPointReqDurationName), time.Second)
 		registry.entryPointOpenConnsGauge = influxDBClient.NewGauge(influxDBEntryPointOpenConnsName)
+		registry.entryPointReqsBytesCounter = influxDBClient.NewCounter(influxDBEntryPointReqsBytesName)
+		registry.entryPointRespsBytesCounter = influxDBClient.NewCounter(influxDBEntryPointRespsBytesName)
 	}
 
 	if config.AddRoutersLabels {
@@ -83,6 +91,8 @@ func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 		registry.routerReqsTLSCounter = influxDBClient.NewCounter(influxDBRouterReqsTLSName)
 		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(influxDBClient.NewHistogram(influxDBRouterReqsDurationName), time.Second)
 		registry.routerOpenConnsGauge = influxDBClient.NewGauge(influxDBORouterOpenConnsName)
+		registry.routerReqsBytesCounter = influxDBClient.NewCounter(influxDBRouterReqsBytesName)
+		registry.routerRespsBytesCounter = influxDBClient.NewCounter(influxDBRouterRespsBytesName)
 	}
 
 	if config.AddServicesLabels {
@@ -93,6 +103,8 @@ func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 		registry.serviceRetriesCounter = influxDBClient.NewCounter(influxDBServiceRetriesTotalName)
 		registry.serviceOpenConnsGauge = influxDBClient.NewGauge(influxDBServiceOpenConnsName)
 		registry.serviceServerUpGauge = influxDBClient.NewGauge(influxDBServiceServerUpName)
+		registry.serviceReqsBytesCounter = influxDBClient.NewCounter(influxDBServiceReqsBytesName)
+		registry.serviceRespsBytesCounter = influxDBClient.NewCounter(influxDBServiceRespsBytesName)
 	}
 
 	return registry
