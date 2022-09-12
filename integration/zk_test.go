@@ -13,7 +13,7 @@ import (
 	"github.com/go-check/check"
 	"github.com/kvtools/valkeyrie"
 	"github.com/kvtools/valkeyrie/store"
-	"github.com/kvtools/valkeyrie/store/zookeeper"
+	"github.com/kvtools/zookeeper"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/api"
@@ -31,16 +31,14 @@ func (s *ZookeeperSuite) setupStore(c *check.C) {
 	s.createComposeProject(c, "zookeeper")
 	s.composeUp(c)
 
-	zookeeper.Register()
-
 	s.zookeeperAddr = net.JoinHostPort(s.getComposeServiceIP(c, "zookeeper"), "2181")
 
 	var err error
 	s.kvClient, err = valkeyrie.NewStore(
 		context.Background(),
-		store.ZK,
+		zookeeper.StoreName,
 		[]string{s.zookeeperAddr},
-		&store.Config{
+		&zookeeper.Config{
 			ConnectionTimeout: 10 * time.Second,
 		},
 	)
