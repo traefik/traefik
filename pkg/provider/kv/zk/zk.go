@@ -14,8 +14,8 @@ var _ provider.Provider = (*Provider)(nil)
 type Provider struct {
 	kv.Provider `yaml:",inline" export:"true"`
 
-	Username string `json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
-	Password string `json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
+	Username string `description:"Username for authentication." json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
+	Password string `description:"Password for authentication." json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
 }
 
 // SetDefaults sets the default values.
