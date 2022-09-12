@@ -94,6 +94,8 @@ traefik_tls_certs_not_after
 | [HTTPS Requests Count](#https-requests-count)             | ✓       | ✓                    | ✓          | ✓      |
 | [Request Duration Histogram](#request-duration-histogram) | ✓       | ✓                    | ✓          | ✓      |
 | [Open Connections Count](#open-connections-count)         | ✓       | ✓                    | ✓          | ✓      |
+| [Requests Bytes Count](#requests-bytes-count)             | ✓       | ✓                    | ✓          | ✓      |
+| [Responses Bytes Count](#responses-bytes-count)           | ✓       | ✓                    | ✓          | ✓      |
 
 ### HTTP Requests Count
 
@@ -187,6 +189,52 @@ traefik_entrypoint_open_connections
 {prefix}.entrypoint.connections.open
 ```
 
+### Requests Bytes Count
+
+The total size of HTTP requests in bytes handled by an entrypoint.
+
+[Labels](#labels): `code`, `method`, `protocol`, `entrypoint`.
+
+```dd tab="Datadog"
+entrypoint.requests.bytes.total
+```
+
+```influxdb tab="InfluxDB / InfluxDB2"
+traefik.entrypoint.requests.bytes.total
+```
+
+```prom tab="Prometheus"
+traefik_entrypoint_requests_bytes_total
+```
+
+```statsd tab="StatsD"
+# Default prefix: "traefik"
+{prefix}.entrypoint.requests.bytes.total
+```
+
+### Responses Bytes Count
+
+The total size of HTTP responses in bytes handled by an entrypoint.
+
+[Labels](#labels): `code`, `method`, `protocol`, `entrypoint`.
+
+```dd tab="Datadog"
+entrypoint.responses.bytes.total
+```
+
+```influxdb tab="InfluxDB / InfluxDB2"
+traefik.entrypoint.responses.bytes.total
+```
+
+```prom tab="Prometheus"
+traefik_entrypoint_responses_bytes_total
+```
+
+```statsd tab="StatsD"
+# Default prefix: "traefik"
+{prefix}.entrypoint.responses.bytes.total
+```
+
 ## Router Metrics
 
 | Metric                                                      | DataDog | InfluxDB / InfluxDB2 | Prometheus | StatsD |
@@ -195,6 +243,8 @@ traefik_entrypoint_open_connections
 | [HTTPS Requests Count](#https-requests-count_1)             | ✓       | ✓                    | ✓          | ✓      |
 | [Request Duration Histogram](#request-duration-histogram_1) | ✓       | ✓                    | ✓          | ✓      |
 | [Open Connections Count](#open-connections-count_1)         | ✓       | ✓                    | ✓          | ✓      |
+| [Requests Bytes Count](#requests-bytes-count_1)             | ✓       | ✓                    | ✓          | ✓      |
+| [Responses Bytes Count](#responses-bytes-count_1)           | ✓       | ✓                    | ✓          | ✓      |
 
 ### HTTP Requests Count
 
@@ -288,6 +338,52 @@ traefik_router_open_connections
 {prefix}.router.connections.open
 ```
 
+### Requests Bytes Count
+
+The total size of HTTP requests in bytes handled by a router.
+
+[Labels](#labels): `code`, `method`, `protocol`, `router`, `service`.
+
+```dd tab="Datadog"
+router.requests.bytes.total
+```
+
+```influxdb tab="InfluxDB / InfluxDB2"
+traefik.router.requests.bytes.total
+```
+
+```prom tab="Prometheus"
+traefik_router_requests_bytes_total
+```
+
+```statsd tab="StatsD"
+# Default prefix: "traefik"
+{prefix}.router.requests.bytes.total
+```
+
+### Responses Bytes Count
+
+The total size of HTTP responses in bytes handled by a router.
+
+[Labels](#labels): `code`, `method`, `protocol`, `router`, `service`.
+
+```dd tab="Datadog"
+router.responses.bytes.total
+```
+
+```influxdb tab="InfluxDB / InfluxDB2"
+traefik.router.responses.bytes.total
+```
+
+```prom tab="Prometheus"
+traefik_router_responses_bytes_total
+```
+
+```statsd tab="StatsD"
+# Default prefix: "traefik"
+{prefix}.router.responses.bytes.total
+```
+
 ## Service Metrics
 
 | Metric                                                      | DataDog | InfluxDB / InfluxDB2 | Prometheus | StatsD |
@@ -298,6 +394,8 @@ traefik_router_open_connections
 | [Open Connections Count](#open-connections-count_2)         | ✓       | ✓                    | ✓          | ✓      |
 | [Requests Retries Count](#requests-retries-count)           | ✓       | ✓                    | ✓          | ✓      |
 | [Service Server UP](#service-server-up)                     | ✓       | ✓                    | ✓          | ✓      |
+| [Requests Bytes Count](#requests-bytes-count_2)             | ✓       | ✓                    | ✓          | ✓      |
+| [Responses outgoing traffic](#responses-bytes-count_2)      | ✓       | ✓                    | ✓          | ✓      |
 
 ### HTTP Requests Count
 
@@ -435,6 +533,52 @@ traefik_service_server_up
 ```statsd tab="StatsD"
 # Default prefix: "traefik"
 {prefix}.service.server.up
+```
+
+### Requests Bytes Count
+
+The total size of requests in bytes received by a service.
+
+[Labels](#labels): `code`, `method`, `protocol`, `service`.
+
+```dd tab="Datadog"
+service.requests.bytes.total
+```
+
+```influxdb tab="InfluxDB / InfluxDB2"
+traefik.service.requests.bytes.total
+```
+
+```prom tab="Prometheus"
+traefik_service_requests_bytes_total
+```
+
+```statsd tab="StatsD"
+# Default prefix: "traefik"
+{prefix}.service.requests.bytes.total
+```
+
+### Responses Bytes Count
+
+The total size of responses in bytes returned by a service.
+
+[Labels](#labels): `code`, `method`, `protocol`, `service`.
+
+```dd tab="Datadog"
+service.responses.bytes.total
+```
+
+```influxdb tab="InfluxDB / InfluxDB2"
+traefik.service.responses.bytes.total
+```
+
+```prom tab="Prometheus"
+traefik_service_responses_bytes_total
+```
+
+```statsd tab="StatsD"
+# Default prefix: "traefik"
+{prefix}.service.responses.bytes.total
 ```
 
 ## Labels
