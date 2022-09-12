@@ -24,28 +24,28 @@ const (
 	ddLastConfigReloadFailureName   = "config.reload.lastFailureTimestamp"
 	ddTLSCertsNotAfterTimestampName = "tls.certs.notAfterTimestamp"
 
-	ddEntryPointReqsName          = "entrypoint.request.total"
-	ddEntryPointReqsTLSName       = "entrypoint.request.tls.total"
-	ddEntryPointReqDurationName   = "entrypoint.request.duration"
-	ddEntryPointOpenConnsName     = "entrypoint.connections.open"
-	ddEntryPointBytesReceivedName = "entrypoint.bytes.received.total"
-	ddEntryPointBytesSentName     = "entrypoint.bytes.sent.total"
+	ddEntryPointReqsName        = "entrypoint.request.total"
+	ddEntryPointReqsTLSName     = "entrypoint.request.tls.total"
+	ddEntryPointReqDurationName = "entrypoint.request.duration"
+	ddEntryPointOpenConnsName   = "entrypoint.connections.open"
+	ddEntryPointReqsBytesName   = "entrypoint.requests.bytes.total"
+	ddEntryPointRespsBytesName  = "entrypoint.responses.bytes.total"
 
-	ddRouterReqsName          = "router.request.total"
-	ddRouterReqsTLSName       = "router.request.tls.total"
-	ddRouterReqsDurationName  = "router.request.duration"
-	ddRouterOpenConnsName     = "router.connections.open"
-	ddRouterBytesReceivedName = "router.bytes.received.total"
-	ddRouterBytesSentName     = "router.bytes.sent.total"
+	ddRouterReqsName         = "router.request.total"
+	ddRouterReqsTLSName      = "router.request.tls.total"
+	ddRouterReqsDurationName = "router.request.duration"
+	ddRouterOpenConnsName    = "router.connections.open"
+	ddRouterReqsBytesName    = "router.requests.bytes.total"
+	ddRouterRespsBytesName   = "router.responses.bytes.total"
 
-	ddServiceReqsName          = "service.request.total"
-	ddServiceReqsTLSName       = "service.request.tls.total"
-	ddServiceReqsDurationName  = "service.request.duration"
-	ddServiceRetriesName       = "service.retries.total"
-	ddServiceOpenConnsName     = "service.connections.open"
-	ddServiceServerUpName      = "service.server.up"
-	ddServiceBytesReceivedName = "service.bytes.received.total"
-	ddServiceBytesSentName     = "service.bytes.sent.total"
+	ddServiceReqsName         = "service.request.total"
+	ddServiceReqsTLSName      = "service.request.tls.total"
+	ddServiceReqsDurationName = "service.request.duration"
+	ddServiceRetriesName      = "service.retries.total"
+	ddServiceOpenConnsName    = "service.connections.open"
+	ddServiceServerUpName     = "service.server.up"
+	ddServiceReqsBytesName    = "service.requests.bytes.total"
+	ddServiceRespsBytesName   = "service.responses.bytes.total"
 )
 
 // RegisterDatadog registers the metrics pusher if this didn't happen yet and creates a datadog Registry instance.
@@ -79,8 +79,8 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 		registry.entryPointReqsTLSCounter = datadogClient.NewCounter(ddEntryPointReqsTLSName, 1.0)
 		registry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddEntryPointReqDurationName, 1.0), time.Second)
 		registry.entryPointOpenConnsGauge = datadogClient.NewGauge(ddEntryPointOpenConnsName)
-		registry.entryPointBytesReceivedCounter = datadogClient.NewCounter(ddEntryPointBytesReceivedName, 1.0)
-		registry.entryPointBytesSentCounter = datadogClient.NewCounter(ddEntryPointBytesSentName, 1.0)
+		registry.entryPointReqsBytesCounter = datadogClient.NewCounter(ddEntryPointReqsBytesName, 1.0)
+		registry.entryPointRespsBytesCounter = datadogClient.NewCounter(ddEntryPointRespsBytesName, 1.0)
 	}
 
 	if config.AddRoutersLabels {
@@ -89,8 +89,8 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 		registry.routerReqsTLSCounter = datadogClient.NewCounter(ddRouterReqsTLSName, 1.0)
 		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddRouterReqsDurationName, 1.0), time.Second)
 		registry.routerOpenConnsGauge = datadogClient.NewGauge(ddRouterOpenConnsName)
-		registry.routerBytesReceivedCounter = datadogClient.NewCounter(ddRouterBytesReceivedName, 1.0)
-		registry.routerBytesSentCounter = datadogClient.NewCounter(ddRouterBytesSentName, 1.0)
+		registry.routerReqsBytesCounter = datadogClient.NewCounter(ddRouterReqsBytesName, 1.0)
+		registry.routerRespsBytesCounter = datadogClient.NewCounter(ddRouterRespsBytesName, 1.0)
 	}
 
 	if config.AddServicesLabels {
@@ -101,8 +101,8 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 		registry.serviceRetriesCounter = datadogClient.NewCounter(ddServiceRetriesName, 1.0)
 		registry.serviceOpenConnsGauge = datadogClient.NewGauge(ddServiceOpenConnsName)
 		registry.serviceServerUpGauge = datadogClient.NewGauge(ddServiceServerUpName)
-		registry.serviceBytesReceivedCounter = datadogClient.NewCounter(ddServiceBytesReceivedName, 1.0)
-		registry.serviceBytesSentCounter = datadogClient.NewCounter(ddServiceBytesSentName, 1.0)
+		registry.serviceReqsBytesCounter = datadogClient.NewCounter(ddServiceReqsBytesName, 1.0)
+		registry.serviceRespsBytesCounter = datadogClient.NewCounter(ddServiceRespsBytesName, 1.0)
 	}
 
 	return registry
