@@ -81,8 +81,8 @@ func TestInfluxDB2(t *testing.T) {
 	influxDB2Registry.EntryPointReqsTLSCounter().With("entrypoint", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
 	influxDB2Registry.EntryPointReqDurationHistogram().With("entrypoint", "test").Observe(10000)
 	influxDB2Registry.EntryPointOpenConnsGauge().With("entrypoint", "test").Set(1)
-	influxDB2Registry.EntryPointBytesReceivedCounter().With("entrypoint", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
-	influxDB2Registry.EntryPointBytesSentCounter().With("entrypoint", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+	influxDB2Registry.EntryPointReqsBytesCounter().With("entrypoint", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+	influxDB2Registry.EntryPointRespsBytesCounter().With("entrypoint", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	msgEntrypoint := <-c
 
 	assertMessage(t, *msgEntrypoint, expectedEntrypoint)
@@ -102,8 +102,8 @@ func TestInfluxDB2(t *testing.T) {
 	influxDB2Registry.RouterReqsTLSCounter().With("router", "demo", "service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
 	influxDB2Registry.RouterReqDurationHistogram().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 	influxDB2Registry.RouterOpenConnsGauge().With("router", "demo", "service", "test").Set(1)
-	influxDB2Registry.RouterBytesReceivedCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
-	influxDB2Registry.RouterBytesSentCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+	influxDB2Registry.RouterReqsBytesCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+	influxDB2Registry.RouterRespsBytesCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	msgRouter := <-c
 
 	assertMessage(t, *msgRouter, expectedRouter)
@@ -123,8 +123,8 @@ func TestInfluxDB2(t *testing.T) {
 	influxDB2Registry.ServiceReqsTLSCounter().With("service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
 	influxDB2Registry.ServiceReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 	influxDB2Registry.ServiceServerUpGauge().With("service", "test", "url", "http://127.0.0.1").Set(1)
-	influxDB2Registry.ServiceBytesReceivedCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
-	influxDB2Registry.ServiceBytesSentCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+	influxDB2Registry.ServiceReqsBytesCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+	influxDB2Registry.ServiceRespsBytesCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	msgService := <-c
 
 	assertMessage(t, *msgService, expectedService)

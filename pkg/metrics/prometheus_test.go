@@ -122,11 +122,11 @@ func TestPrometheus(t *testing.T) {
 		With("method", http.MethodGet, "protocol", "http", "entrypoint", "http").
 		Set(1)
 	prometheusRegistry.
-		EntryPointBytesSentCounter().
+		EntryPointRespsBytesCounter().
 		With("code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "http").
 		Add(1)
 	prometheusRegistry.
-		EntryPointBytesReceivedCounter().
+		EntryPointReqsBytesCounter().
 		With("code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "http").
 		Add(1)
 
@@ -147,11 +147,11 @@ func TestPrometheus(t *testing.T) {
 		With("router", "demo", "service", "service1", "method", http.MethodGet, "protocol", "http").
 		Set(1)
 	prometheusRegistry.
-		RouterBytesSentCounter().
+		RouterRespsBytesCounter().
 		With("router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
-		RouterBytesReceivedCounter().
+		RouterReqsBytesCounter().
 		With("router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 
@@ -180,11 +180,11 @@ func TestPrometheus(t *testing.T) {
 		With("service", "service1", "url", "http://127.0.0.10:80").
 		Set(1)
 	prometheusRegistry.
-		ServiceBytesSentCounter().
+		ServiceRespsBytesCounter().
 		With("service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
-		ServiceBytesReceivedCounter().
+		ServiceReqsBytesCounter().
 		With("service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 
@@ -252,24 +252,24 @@ func TestPrometheus(t *testing.T) {
 			assert: buildGaugeAssert(t, entryPointOpenConnsName, 1),
 		},
 		{
-			name: entryPointBytesReceivedTotalName,
+			name: entryPointReqsBytesTotalName,
 			labels: map[string]string{
 				"code":       "200",
 				"method":     http.MethodGet,
 				"protocol":   "http",
 				"entrypoint": "http",
 			},
-			assert: buildCounterAssert(t, entryPointBytesReceivedTotalName, 1),
+			assert: buildCounterAssert(t, entryPointReqsBytesTotalName, 1),
 		},
 		{
-			name: entryPointBytesSentTotalName,
+			name: entryPointRespsBytesTotalName,
 			labels: map[string]string{
 				"code":       "200",
 				"method":     http.MethodGet,
 				"protocol":   "http",
 				"entrypoint": "http",
 			},
-			assert: buildCounterAssert(t, entryPointBytesSentTotalName, 1),
+			assert: buildCounterAssert(t, entryPointRespsBytesTotalName, 1),
 		},
 		{
 			name: routerReqsTotalName,
@@ -314,7 +314,7 @@ func TestPrometheus(t *testing.T) {
 			assert: buildGaugeAssert(t, routerOpenConnsName, 1),
 		},
 		{
-			name: routerBytesReceivedTotalName,
+			name: routerReqsBytesTotalName,
 			labels: map[string]string{
 				"code":     "200",
 				"method":   http.MethodGet,
@@ -322,10 +322,10 @@ func TestPrometheus(t *testing.T) {
 				"service":  "service1",
 				"router":   "demo",
 			},
-			assert: buildCounterAssert(t, routerBytesReceivedTotalName, 1),
+			assert: buildCounterAssert(t, routerReqsBytesTotalName, 1),
 		},
 		{
-			name: routerBytesSentTotalName,
+			name: routerRespsBytesTotalName,
 			labels: map[string]string{
 				"code":     "200",
 				"method":   http.MethodGet,
@@ -333,7 +333,7 @@ func TestPrometheus(t *testing.T) {
 				"service":  "service1",
 				"router":   "demo",
 			},
-			assert: buildCounterAssert(t, routerBytesSentTotalName, 1),
+			assert: buildCounterAssert(t, routerRespsBytesTotalName, 1),
 		},
 		{
 			name: serviceReqsTotalName,
@@ -389,24 +389,24 @@ func TestPrometheus(t *testing.T) {
 			assert: buildGaugeAssert(t, serviceServerUpName, 1),
 		},
 		{
-			name: serviceBytesReceivedTotalName,
+			name: serviceReqsBytesTotalName,
 			labels: map[string]string{
 				"code":     "200",
 				"method":   http.MethodGet,
 				"protocol": "http",
 				"service":  "service1",
 			},
-			assert: buildCounterAssert(t, serviceBytesReceivedTotalName, 1),
+			assert: buildCounterAssert(t, serviceReqsBytesTotalName, 1),
 		},
 		{
-			name: serviceBytesSentTotalName,
+			name: serviceRespsBytesTotalName,
 			labels: map[string]string{
 				"code":     "200",
 				"method":   http.MethodGet,
 				"protocol": "http",
 				"service":  "service1",
 			},
-			assert: buildCounterAssert(t, serviceBytesSentTotalName, 1),
+			assert: buildCounterAssert(t, serviceRespsBytesTotalName, 1),
 		},
 	}
 
