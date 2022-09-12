@@ -347,15 +347,16 @@ providers:
 
 ### `defaultRule`
 
-_Optional, Default=```Host(`{{ normalize .Name }}`)```_
+_Optional, Default=```Host(`{{ normalize .DefaultName }}`)"```_
 
 The default host rule for all services.
 
 For a given service, if no routing rule was defined by a tag, it is defined by this `defaultRule` instead.
 The `defaultRule` must be set to a valid [Go template](https://pkg.go.dev/text/template/),
 and can include [sprig template functions](https://masterminds.github.io/sprig/).
-The service name can be accessed with the `Name` identifier,
-and the template has access to all the labels (i.e. tags beginning with the `prefix`) defined on this service.
+The service name can be accessed with the `Name` identifier and the service namespace with `Namespace`. The `DefaultName`
+identifier is the service name, prefixed with the service namespace if the [discovery namespace](#namespace) is `*`.
+The template also has access to all the labels (i.e. tags beginning with the `prefix`) defined on this service.
 
 The option can be overridden on an instance basis with the `traefik.http.routers.{name-of-your-choice}.rule` tag.
 
