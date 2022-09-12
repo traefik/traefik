@@ -37,10 +37,8 @@ func (p *Provider) Init() error {
 	}
 
 	if p.TLS != nil {
-		ctx := context.Background()
-
 		var err error
-		config.TLS, err = p.TLS.CreateTLSConfig(ctx)
+		config.TLS, err = p.TLS.CreateTLSConfig(context.Background())
 		if err != nil {
 			return fmt.Errorf("unable to create client TLS configuration: %w", err)
 		}

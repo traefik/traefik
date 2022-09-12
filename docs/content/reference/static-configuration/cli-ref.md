@@ -400,7 +400,7 @@ Terminating status code (Default: ```503```)
 Enable Consul backend with default settings. (Default: ```false```)
 
 `--providers.consul.endpoints`:  
-KV store endpoints (Default: ```127.0.0.1:8500```)
+KV store endpoints. (Default: ```127.0.0.1:8500```)
 
 `--providers.consul.namespace`:  
 Sets the namespace used to discover the configuration (Consul Enterprise only).
@@ -409,7 +409,7 @@ Sets the namespace used to discover the configuration (Consul Enterprise only).
 Sets the namespaces used to discover the configuration (Consul Enterprise only).
 
 `--providers.consul.rootkey`:  
-Root key used for KV store (Default: ```traefik```)
+Root key used for KV store. (Default: ```traefik```)
 
 `--providers.consul.tls.ca`:  
 TLS CA
@@ -595,13 +595,13 @@ The AWS credentials access key to use for making requests
 Enable Etcd backend with default settings. (Default: ```false```)
 
 `--providers.etcd.endpoints`:  
-KV store endpoints (Default: ```127.0.0.1:2379```)
+KV store endpoints. (Default: ```127.0.0.1:2379```)
 
 `--providers.etcd.password`:  
 Password for authentication.
 
 `--providers.etcd.rootkey`:  
-Root key used for KV store (Default: ```traefik```)
+Root key used for KV store. (Default: ```traefik```)
 
 `--providers.etcd.tls.ca`:  
 TLS CA
@@ -907,13 +907,13 @@ Enable Redis backend with default settings. (Default: ```false```)
 Database to be selected after connecting to the server. (Default: ```0```)
 
 `--providers.redis.endpoints`:  
-KV store endpoints (Default: ```127.0.0.1:6379```)
+KV store endpoints. (Default: ```127.0.0.1:6379```)
 
 `--providers.redis.password`:  
 Password for authentication.
 
 `--providers.redis.rootkey`:  
-Root key used for KV store (Default: ```traefik```)
+Root key used for KV store. (Default: ```traefik```)
 
 `--providers.redis.tls.ca`:  
 TLS CA
@@ -943,13 +943,13 @@ Activate REST Provider directly on the entryPoint named traefik. (Default: ```fa
 Enable ZooKeeper backend with default settings. (Default: ```false```)
 
 `--providers.zookeeper.endpoints`:  
-KV store endpoints (Default: ```127.0.0.1:2181```)
+KV store endpoints. (Default: ```127.0.0.1:2181```)
 
 `--providers.zookeeper.password`:  
 Password for authentication.
 
 `--providers.zookeeper.rootkey`:  
-Root key used for KV store (Default: ```traefik```)
+Root key used for KV store. (Default: ```traefik```)
 
 `--providers.zookeeper.username`:  
 Username for authentication.
