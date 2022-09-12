@@ -32,9 +32,8 @@ func (p *Provider) SetDefaults() {
 func (p *Provider) Init() error {
 	config := &etcdv3.Config{
 		ConnectionTimeout: 3 * time.Second,
-		// SyncPeriod:        0,
-		Username: p.Username,
-		Password: p.Password,
+		Username:          p.Username,
+		Password:          p.Password,
 	}
 
 	if p.TLS != nil {
