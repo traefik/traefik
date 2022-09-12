@@ -53,6 +53,22 @@ spec:
                   - secretName
                   type: object
                 type: array
+              defaultCertDomain:
+                description: DefaultCertDomain is the domain definition for the DefaultCertificate.
+                properties:
+                  main:
+                    description: Main defines the main domain name.
+                    type: string
+                  sans:
+                    description: SANs defines the subject alternative domain names.
+                    items:
+                      type: string
+                    type: array
+                type: object
+              defaultCertResolver:
+                description: DefaultCertResolver is the name of the resolver that
+                  will be used to issue the DefaultCertificate.
+                type: string
               defaultCertificate:
                 description: DefaultCertificate defines the default certificate configuration.
                 properties:
