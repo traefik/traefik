@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/hashicorp/nomad/api"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/label"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -72,14 +73,18 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 		}
 
 		model := struct {
-			Name   string
-			Labels map[string]string
+			Name        string
+			Namespace   string
+			DefaultName string
+			Labels      map[string]string
 		}{
-			Name:   i.Name,
-			Labels: labels,
+			Name:        i.Name,
+			Namespace:   i.Namespace,
+			DefaultName: getName(i, p.prefixNamespace()),
+			Labels:      labels,
 		}
 
-		provider.BuildRouterConfiguration(ctx, config.HTTP, getName(i), p.defaultRuleTpl, model)
+		provider.BuildRouterConfiguration(ctx, config.HTTP, getName(i, p.prefixNamespace()), p.defaultRuleTpl, model)
 		configurations[svcName] = config
 	}
 
@@ -93,7 +98,7 @@ func (p *Provider) buildTCPConfig(i item, configuration *dynamic.TCPConfiguratio
 		lb := new(dynamic.TCPServersLoadBalancer)
 		lb.SetDefaults()
 
-		configuration.Services[getName(i)] = &dynamic.TCPService{
+		configuration.Services[getName(i, p.prefixNamespace())] = &dynamic.TCPService{
 			LoadBalancer: lb,
 		}
 	}
@@ -111,7 +116,7 @@ func (p *Provider) buildUDPConfig(i item, configuration *dynamic.UDPConfiguratio
 	if len(configuration.Services) == 0 {
 		configuration.Services = make(map[string]*dynamic.UDPService)
 
-		configuration.Services[getName(i)] = &dynamic.UDPService{
+		configuration.Services[getName(i, p.prefixNamespace())] = &dynamic.UDPService{
 			LoadBalancer: new(dynamic.UDPServersLoadBalancer),
 		}
 	}
@@ -132,7 +137,7 @@ func (p *Provider) buildServiceConfig(i item, configuration *dynamic.HTTPConfigu
 		lb := new(dynamic.ServersLoadBalancer)
 		lb.SetDefaults()
 
-		configuration.Services[getName(i)] = &dynamic.Service{
+		configuration.Services[getName(i, p.prefixNamespace())] = &dynamic.Service{
 			LoadBalancer: lb,
 		}
 	}
@@ -269,9 +274,20 @@ func (p *Provider) addServer(i item, lb *dynamic.ServersLoadBalancer) error {
 	return nil
 }
 
-func getName(i item) string {
+func (p *Provider) prefixNamespace() bool {
+	return p.Namespace == api.AllNamespacesNamespace
+}
+
+func getName(i item, prefixNamespace bool) string {
+	var name string
+	if prefixNamespace {
+		name = fmt.Sprintf("%s-%s", i.Namespace, i.Name)
+	} else {
+		name = i.Name
+	}
+
 	if !i.ExtraConf.Canary {
-		return provider.Normalize(i.Name)
+		return provider.Normalize(name)
 	}
 
 	tags := make([]string, len(i.Tags))
@@ -281,5 +297,5 @@ func getName(i item) string {
 
 	hasher := fnv.New64()
 	hasher.Write([]byte(strings.Join(tags, "")))
-	return provider.Normalize(fmt.Sprintf("%s-%d", i.Name, hasher.Sum64()))
+	return provider.Normalize(fmt.Sprintf("%s-%d", name, hasher.Sum64()))
 }

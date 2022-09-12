@@ -76,9 +76,9 @@ func Test_getNomadServiceData(t *testing.T) {
 		switch {
 		case strings.HasSuffix(r.RequestURI, "/v1/services"):
 			_, _ = w.Write([]byte(services))
-		case strings.HasSuffix(r.RequestURI, "/v1/service/redis"):
+		case strings.HasSuffix(r.RequestURI, "/v1/service/redis?namespace=default"):
 			_, _ = w.Write([]byte(redis))
-		case strings.HasSuffix(r.RequestURI, "/v1/service/hello-nomad"):
+		case strings.HasSuffix(r.RequestURI, "/v1/service/hello-nomad?namespace=default"):
 			_, _ = w.Write([]byte(hello))
 		}
 	}))

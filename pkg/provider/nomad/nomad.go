@@ -24,7 +24,7 @@ const (
 	providerName = "nomad"
 
 	// defaultTemplateRule is the default template for the default rule.
-	defaultTemplateRule = "Host(`{{ normalize .Name }}`)"
+	defaultTemplateRule = "Host(`{{ normalize .DefaultName }}`)"
 
 	// defaultPrefix is the default prefix used in tag values indicating the service
 	// should be consumed and exposed via traefik.
@@ -239,7 +239,7 @@ func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
 				continue
 			}
 
-			instances, err := p.fetchService(ctx, service.ServiceName)
+			instances, err := p.fetchService(ctx, stub.Namespace, service.ServiceName)
 			if err != nil {
 				return nil, err
 			}
@@ -265,7 +265,7 @@ func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
 
 // fetchService queries Nomad API for services matching name,
 // that also have the  <prefix>.enable=true set in its tags.
-func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.ServiceRegistration, error) {
+func (p *Provider) fetchService(ctx context.Context, namespace string, name string) ([]*api.ServiceRegistration, error) {
 	var tagFilter string
 	if !p.ExposedByDefault {
 		tagFilter = fmt.Sprintf(`Tags contains %q`, fmt.Sprintf("%s.enable=true", p.Prefix))
@@ -274,7 +274,7 @@ func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.Servic
 	// TODO: Nomad currently (v1.3.0) does not support health checks,
 	//  and as such does not yet return health status information.
 	//  When it does, refactor this section to include health status.
-	opts := &api.QueryOptions{AllowStale: p.Stale, Filter: tagFilter}
+	opts := &api.QueryOptions{AllowStale: p.Stale, Filter: tagFilter, Namespace: namespace}
 	opts = opts.WithContext(ctx)
 
 	services, _, err := p.client.Services().Get(name, opts)
