@@ -301,7 +301,7 @@ func (p *Provider) getIPPort(instance ecsInstance, serverPort string) (string, s
 	return ip, port, nil
 }
 
-func (p Provider) getIPAddress(instance ecsInstance) string {
+func (p *Provider) getIPAddress(instance ecsInstance) string {
 	return instance.machine.privateIP
 }
 
