@@ -7,7 +7,7 @@
     You can use it as your:
 
     - [Kubernetes Ingress Controller](https://traefik.io/solutions/kubernetes-ingress/)
-    - [Docker Swarm Load Balancer](https://traefik.io/solutions/docker-swarm-ingress/)
+    - [Docker Swarm Ingress Controller](https://traefik.io/solutions/docker-swarm-ingress/)
     - [API Gateway](https://traefik.io/solutions/api-gateway/)
 
     Traefik Enterprise enables centralized access management,
