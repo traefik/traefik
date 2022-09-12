@@ -59,15 +59,15 @@ func testRegistry(t *testing.T, metricsPrefix string, registry Registry) {
 		metricsPrefix + ".entrypoint.request.tls.total:1.000000|c\n",
 		metricsPrefix + ".entrypoint.request.duration:10000.000000|ms",
 		metricsPrefix + ".entrypoint.connections.open:1.000000|g\n",
-		metricsPrefix + ".entrypoint.bytes.received.total:1.000000|c\n",
-		metricsPrefix + ".entrypoint.bytes.sent.total:1.000000|c\n",
+		metricsPrefix + ".entrypoint.requests.bytes.total:1.000000|c\n",
+		metricsPrefix + ".entrypoint.responses.bytes.total:1.000000|c\n",
 
 		metricsPrefix + ".router.request.total:2.000000|c\n",
 		metricsPrefix + ".router.request.tls.total:1.000000|c\n",
 		metricsPrefix + ".router.request.duration:10000.000000|ms",
 		metricsPrefix + ".router.connections.open:1.000000|g\n",
-		metricsPrefix + ".router.bytes.received.total:1.000000|c\n",
-		metricsPrefix + ".router.bytes.sent.total:1.000000|c\n",
+		metricsPrefix + ".router.requests.bytes.total:1.000000|c\n",
+		metricsPrefix + ".router.responses.bytes.total:1.000000|c\n",
 
 		metricsPrefix + ".service.request.total:2.000000|c\n",
 		metricsPrefix + ".service.request.tls.total:1.000000|c\n",
@@ -75,8 +75,8 @@ func testRegistry(t *testing.T, metricsPrefix string, registry Registry) {
 		metricsPrefix + ".service.connections.open:1.000000|g\n",
 		metricsPrefix + ".service.retries.total:2.000000|c\n",
 		metricsPrefix + ".service.server.up:1.000000|g\n",
-		metricsPrefix + ".service.bytes.received.total:1.000000|c\n",
-		metricsPrefix + ".service.bytes.sent.total:1.000000|c\n",
+		metricsPrefix + ".service.requests.bytes.total:1.000000|c\n",
+		metricsPrefix + ".service.responses.bytes.total:1.000000|c\n",
 	}
 
 	udp.ShouldReceiveAll(t, expected, func() {

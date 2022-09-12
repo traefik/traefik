@@ -73,8 +73,8 @@ func TestInfluxDB2(t *testing.T) {
 		`(traefik\.entrypoint\.requests\.tls\.total,entrypoint=test,tls_cipher=bar,tls_version=foo count=1) [\d]{19}`,
 		`(traefik\.entrypoint\.request\.duration(?:,code=[\d]{3})?,entrypoint=test p50=10000,p90=10000,p95=10000,p99=10000) [\d]{19}`,
 		`(traefik\.entrypoint\.connections\.open,entrypoint=test value=1) [\d]{19}`,
-		`(traefik\.entrypoint\.bytes\.received\.total,code=200,entrypoint=test,method=GET count=1) [\d]{19}`,
-		`(traefik\.entrypoint\.bytes\.sent\.total,code=200,entrypoint=test,method=GET count=1) [\d]{19}`,
+		`(traefik\.entrypoint\.requests\.bytes\.total,code=200,entrypoint=test,method=GET count=1) [\d]{19}`,
+		`(traefik\.entrypoint\.responses\.bytes\.total,code=200,entrypoint=test,method=GET count=1) [\d]{19}`,
 	}
 
 	influxDB2Registry.EntryPointReqsCounter().With("entrypoint", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
@@ -93,8 +93,8 @@ func TestInfluxDB2(t *testing.T) {
 		`(traefik\.router\.requests\.tls\.total,router=demo,service=test,tls_cipher=bar,tls_version=foo count=1) [\d]{19}`,
 		`(traefik\.router\.request\.duration,code=200,router=demo,service=test p50=10000,p90=10000,p95=10000,p99=10000) [\d]{19}`,
 		`(traefik\.router\.connections\.open,router=demo,service=test value=1) [\d]{19}`,
-		`(traefik\.router\.bytes\.received\.total,code=200,method=GET,router=demo,service=test count=1) [\d]{19}`,
-		`(traefik\.router\.bytes\.sent\.total,code=200,method=GET,router=demo,service=test count=1) [\d]{19}`,
+		`(traefik\.router\.requests\.bytes\.total,code=200,method=GET,router=demo,service=test count=1) [\d]{19}`,
+		`(traefik\.router\.responses\.bytes\.total,code=200,method=GET,router=demo,service=test count=1) [\d]{19}`,
 	}
 
 	influxDB2Registry.RouterReqsCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
@@ -114,8 +114,8 @@ func TestInfluxDB2(t *testing.T) {
 		`(traefik\.service\.requests\.tls\.total,service=test,tls_cipher=bar,tls_version=foo count=1) [\d]{19}`,
 		`(traefik\.service\.request\.duration,code=200,service=test p50=10000,p90=10000,p95=10000,p99=10000) [\d]{19}`,
 		`(traefik\.service\.server\.up,service=test,url=http://127.0.0.1 value=1) [\d]{19}`,
-		`(traefik\.service\.bytes\.received\.total,code=200,method=GET,service=test count=1) [\d]{19}`,
-		`(traefik\.service\.bytes\.sent\.total,code=200,method=GET,service=test count=1) [\d]{19}`,
+		`(traefik\.service\.requests\.bytes\.total,code=200,method=GET,service=test count=1) [\d]{19}`,
+		`(traefik\.service\.responses\.bytes\.total,code=200,method=GET,service=test count=1) [\d]{19}`,
 	}
 
 	influxDB2Registry.ServiceReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
