@@ -14,9 +14,9 @@
 //
 //	func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http.Handler) {
 //		capt, err := capture.FromContext(req.Context())
-// 		if err != nil {
-// 		...
-// 		}
+//		if err != nil {
+//		...
+//		}
 //
 //		fmt.Println(capt.Status())
 //		fmt.Println(capt.ResponseSize())
@@ -77,7 +77,7 @@ type Capture struct {
 func FromContext(ctx context.Context) (*Capture, error) {
 	c := ctx.Value(capturedData)
 	if c == nil {
-		return nil, io.EOF
+		return nil, errors.New("value not found")
 	}
 	capt, ok := c.(*Capture)
 	if !ok {
