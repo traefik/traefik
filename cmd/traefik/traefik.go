@@ -31,6 +31,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
+	"github.com/traefik/traefik/v2/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v2/pkg/pilot"
 	"github.com/traefik/traefik/v2/pkg/provider/acme"
 	"github.com/traefik/traefik/v2/pkg/provider/aggregator"
@@ -41,6 +42,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/server/middleware"
 	"github.com/traefik/traefik/v2/pkg/server/service"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v2/pkg/tracing"
+	"github.com/traefik/traefik/v2/pkg/tracing/jaeger"
 	"github.com/traefik/traefik/v2/pkg/types"
 	"github.com/traefik/traefik/v2/pkg/version"
 	"github.com/vulcand/oxy/roundrobin"
@@ -270,7 +273,10 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	// Router factory
 
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
-	chainBuilder := middleware.NewChainBuilder(*staticConfiguration, metricsRegistry, accessLog)
+	tracer := setupTracing(staticConfiguration.Tracing)
+	captureMiddleware := setupCapture(staticConfiguration)
+
+	chainBuilder := middleware.NewChainBuilder(metricsRegistry, accessLog, tracer, captureMiddleware)
 	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder, metricsRegistry)
 
 	// Watcher
@@ -504,11 +510,84 @@ func setupAccessLog(conf *types.AccessLog) *accesslog.Handler {
 
 	accessLoggerMiddleware, err := accesslog.NewHandler(conf)
 	if err != nil {
-		log.WithoutContext().Warnf("Unable to create access logger : %v", err)
+		log.WithoutContext().Warnf("Unable to create access logger: %v", err)
 		return nil
 	}
 
 	return accessLoggerMiddleware
+}
+
+func setupTracing(conf *static.Tracing) *tracing.Tracing {
+	if conf == nil {
+		return nil
+	}
+
+	var backend tracing.Backend
+
+	if conf.Jaeger != nil {
+		backend = conf.Jaeger
+	}
+
+	if conf.Zipkin != nil {
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Zipkin backend.")
+		} else {
+			backend = conf.Zipkin
+		}
+	}
+
+	if conf.Datadog != nil {
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Datadog backend.")
+		} else {
+			backend = conf.Datadog
+		}
+	}
+
+	if conf.Instana != nil {
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Instana backend.")
+		} else {
+			backend = conf.Instana
+		}
+	}
+
+	if conf.Haystack != nil {
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Haystack backend.")
+		} else {
+			backend = conf.Haystack
+		}
+	}
+
+	if conf.Elastic != nil {
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Elastic backend.")
+		} else {
+			backend = conf.Elastic
+		}
+	}
+
+	if backend == nil {
+		log.WithoutContext().Debug("Could not initialize tracing, using Jaeger by default")
+		defaultBackend := &jaeger.Config{}
+		defaultBackend.SetDefaults()
+		backend = defaultBackend
+	}
+
+	tracer, err := tracing.NewTracing(conf.ServiceName, conf.SpanNameLimit, backend)
+	if err != nil {
+		log.WithoutContext().Warnf("Unable to create tracer: %v", err)
+		return nil
+	}
+	return tracer
+}
+
+func setupCapture(staticConfiguration *static.Configuration) *capture.Handler {
+	if staticConfiguration.AccessLog == nil && staticConfiguration.Metrics == nil {
+		return nil
+	}
+	return &capture.Handler{}
 }
 
 func configureLogging(staticConfiguration *static.Configuration) {
