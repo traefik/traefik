@@ -317,8 +317,16 @@
 | `traefik/tls/options/Options1/minVersion` | `foobar` |
 | `traefik/tls/options/Options1/preferServerCipherSuites` | `true` |
 | `traefik/tls/options/Options1/sniStrict` | `true` |
+| `traefik/tls/stores/Store0/defaultCertDomain/main` | `foobar` |
+| `traefik/tls/stores/Store0/defaultCertDomain/sans/0` | `foobar` |
+| `traefik/tls/stores/Store0/defaultCertDomain/sans/1` | `foobar` |
+| `traefik/tls/stores/Store0/defaultCertResolver` | `foobar` |
 | `traefik/tls/stores/Store0/defaultCertificate/certFile` | `foobar` |
 | `traefik/tls/stores/Store0/defaultCertificate/keyFile` | `foobar` |
+| `traefik/tls/stores/Store1/defaultCertDomain/main` | `foobar` |
+| `traefik/tls/stores/Store1/defaultCertDomain/sans/0` | `foobar` |
+| `traefik/tls/stores/Store1/defaultCertDomain/sans/1` | `foobar` |
+| `traefik/tls/stores/Store1/defaultCertResolver` | `foobar` |
 | `traefik/tls/stores/Store1/defaultCertificate/certFile` | `foobar` |
 | `traefik/tls/stores/Store1/defaultCertificate/keyFile` | `foobar` |
 | `traefik/udp/routers/UDPRouter0/entryPoints/0` | `foobar` |
