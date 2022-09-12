@@ -400,7 +400,7 @@ Terminating status code (Default: ```503```)
 Enable Consul backend with default settings. (Default: ```false```)
 
 `--providers.consul.endpoints`:  
-KV store endpoints (Default: ```127.0.0.1:8500```)
+KV store endpoints. (Default: ```127.0.0.1:8500```)
 
 `--providers.consul.namespace`:  
 Sets the namespace used to discover the configuration (Consul Enterprise only).
@@ -408,11 +408,8 @@ Sets the namespace used to discover the configuration (Consul Enterprise only).
 `--providers.consul.namespaces`:  
 Sets the namespaces used to discover the configuration (Consul Enterprise only).
 
-`--providers.consul.password`:  
-KV Password
-
 `--providers.consul.rootkey`:  
-Root key used for KV store (Default: ```traefik```)
+Root key used for KV store. (Default: ```traefik```)
 
 `--providers.consul.tls.ca`:  
 TLS CA
@@ -430,10 +427,7 @@ TLS insecure skip verify (Default: ```false```)
 TLS key
 
 `--providers.consul.token`:  
-KV Token
-
-`--providers.consul.username`:  
-KV Username
+Per-request ACL token.
 
 `--providers.consulcatalog`:  
 Enable ConsulCatalog backend with default settings. (Default: ```false```)
@@ -601,13 +595,13 @@ The AWS credentials access key to use for making requests
 Enable Etcd backend with default settings. (Default: ```false```)
 
 `--providers.etcd.endpoints`:  
-KV store endpoints (Default: ```127.0.0.1:2379```)
+KV store endpoints. (Default: ```127.0.0.1:2379```)
 
 `--providers.etcd.password`:  
-KV Password
+Password for authentication.
 
 `--providers.etcd.rootkey`:  
-Root key used for KV store (Default: ```traefik```)
+Root key used for KV store. (Default: ```traefik```)
 
 `--providers.etcd.tls.ca`:  
 TLS CA
@@ -624,11 +618,8 @@ TLS insecure skip verify (Default: ```false```)
 `--providers.etcd.tls.key`:  
 TLS key
 
-`--providers.etcd.token`:  
-KV Token
-
 `--providers.etcd.username`:  
-KV Username
+Username for authentication.
 
 `--providers.file.debugloggeneratedtemplate`:  
 Enable debug logging of generated configuration template. (Default: ```false```)
@@ -912,14 +903,17 @@ Watch provider. (Default: ```true```)
 `--providers.redis`:  
 Enable Redis backend with default settings. (Default: ```false```)
 
+`--providers.redis.db`:  
+Database to be selected after connecting to the server. (Default: ```0```)
+
 `--providers.redis.endpoints`:  
-KV store endpoints (Default: ```127.0.0.1:6379```)
+KV store endpoints. (Default: ```127.0.0.1:6379```)
 
 `--providers.redis.password`:  
-KV Password
+Password for authentication.
 
 `--providers.redis.rootkey`:  
-Root key used for KV store (Default: ```traefik```)
+Root key used for KV store. (Default: ```traefik```)
 
 `--providers.redis.tls.ca`:  
 TLS CA
@@ -936,11 +930,8 @@ TLS insecure skip verify (Default: ```false```)
 `--providers.redis.tls.key`:  
 TLS key
 
-`--providers.redis.token`:  
-KV Token
-
 `--providers.redis.username`:  
-KV Username
+Username for authentication.
 
 `--providers.rest`:  
 Enable Rest backend with default settings. (Default: ```false```)
@@ -952,34 +943,16 @@ Activate REST Provider directly on the entryPoint named traefik. (Default: ```fa
 Enable ZooKeeper backend with default settings. (Default: ```false```)
 
 `--providers.zookeeper.endpoints`:  
-KV store endpoints (Default: ```127.0.0.1:2181```)
+KV store endpoints. (Default: ```127.0.0.1:2181```)
 
 `--providers.zookeeper.password`:  
-KV Password
+Password for authentication.
 
 `--providers.zookeeper.rootkey`:  
-Root key used for KV store (Default: ```traefik```)
-
-`--providers.zookeeper.tls.ca`:  
-TLS CA
-
-`--providers.zookeeper.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
-
-`--providers.zookeeper.tls.cert`:  
-TLS cert
-
-`--providers.zookeeper.tls.insecureskipverify`:  
-TLS insecure skip verify (Default: ```false```)
-
-`--providers.zookeeper.tls.key`:  
-TLS key
-
-`--providers.zookeeper.token`:  
-KV Token
+Root key used for KV store. (Default: ```traefik```)
 
 `--providers.zookeeper.username`:  
-KV Username
+Username for authentication.
 
 `--serverstransport.forwardingtimeouts.dialtimeout`:  
 The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)

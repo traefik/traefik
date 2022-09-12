@@ -1,12 +1,16 @@
 package consul
 
 import (
+	"context"
 	"errors"
+	"fmt"
+	"time"
 
-	"github.com/kvtools/valkeyrie/store"
+	"github.com/kvtools/consul"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/kv"
+	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 // providerName is the Consul provider name.
@@ -17,6 +21,9 @@ var _ provider.Provider = (*Provider)(nil)
 // ProviderBuilder is responsible for constructing namespaced instances of the Consul provider.
 type ProviderBuilder struct {
 	kv.Provider `yaml:",inline" export:"true"`
+
+	Token string           `description:"Per-request ACL token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
+	TLS   *types.ClientTLS `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 
 	// Deprecated: use Namespaces instead.
 	Namespace  string   `description:"Sets the namespace used to discover the configuration (Consul Enterprise only)." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
@@ -43,6 +50,8 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 			name:     providerName,
 			// p.Namespace could very well be empty.
 			namespace: p.Namespace,
+			token:     p.Token,
+			tls:       p.TLS,
 		}}
 	}
 
@@ -52,6 +61,8 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 			Provider:  p.Provider,
 			name:      providerName + "-" + namespace,
 			namespace: namespace,
+			token:     p.Token,
+			tls:       p.TLS,
 		})
 	}
 
@@ -64,6 +75,8 @@ type Provider struct {
 
 	name      string
 	namespace string
+	token     string
+	tls       *types.ClientTLS
 }
 
 // Init the provider.
@@ -79,5 +92,19 @@ func (p *Provider) Init() error {
 		p.name = providerName
 	}
 
-	return p.Provider.Init(store.CONSUL, p.name, p.namespace)
+	config := &consul.Config{
+		ConnectionTimeout: 3 * time.Second,
+		Token:             p.token,
+		Namespace:         p.namespace,
+	}
+
+	if p.tls != nil {
+		var err error
+		config.TLS, err = p.tls.CreateTLSConfig(context.Background())
+		if err != nil {
+			return fmt.Errorf("unable to create client TLS configuration: %w", err)
+		}
+	}
+
+	return p.Provider.Init(consul.StoreName, p.name, config)
 }
