@@ -458,9 +458,9 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 				}
 
 				for tlsStoreName, tlsStore := range config.TLS.Stores {
-					// FIXME: warn something or enforce elsewhere ?
 					// Gives precedence to the user defined default certificate.
 					if tlsStore.DefaultCertificate != nil {
+						// TODO: warn something or enforce elsewhere?
 						continue
 					}
 
@@ -474,11 +474,6 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 
 					ctxTLSStore := log.With(ctx, log.Str(log.TLSStoreName, tlsStoreName))
 					logger := log.FromContext(ctxTLSStore)
-
-					if len(deleteUnnecessaryDomains(ctxTLSStore, []types.Domain{*tlsStore.DefaultCertDomain})) == 0 {
-						logger.Debugf("Unable to obtain default ACME certificate: overlap definition in domain configuration: %s", tlsStore.DefaultCertDomain.ToStrArray())
-						continue
-					}
 
 					if p.certExists(ctxTLSStore, *tlsStore.DefaultCertDomain) {
 						logger.Debug("Default ACME certificate generation is not required.")
@@ -508,13 +503,25 @@ func (p *Provider) resolveDefaultCertificate(ctx context.Context, domain types.D
 		return nil, err
 	}
 
-	// Continue only if no domains of the default cert are being resolved at the moment.
-	if p.containsResolvingDomains(domains) {
+	p.resolvingDomainsMutex.Lock()
+
+	// FIXME domains
+	domainKey := strings.Join(domains, ",")
+
+	if _, ok := p.resolvingDomains[domainKey]; ok {
+		p.resolvingDomainsMutex.Unlock()
 		return nil, nil
 	}
 
-	p.addResolvingDomains(domains)
-	defer p.removeResolvingDomains(domains)
+	p.resolvingDomains[domainKey] = struct{}{}
+
+	for _, certDomain := range domains {
+		p.resolvingDomains[certDomain] = struct{}{}
+	}
+
+	p.resolvingDomainsMutex.Unlock()
+
+	defer p.removeResolvingDomains(append(domains, domainKey))
 
 	logger.Debugf("Loading ACME certificates %+v...", domains)
 
@@ -607,30 +614,6 @@ func (p *Provider) removeResolvingDomains(resolvingDomains []string) {
 	for _, domain := range resolvingDomains {
 		delete(p.resolvingDomains, domain)
 	}
-}
-
-// addResolvingDomains adds domains to the resolving domains list.
-func (p *Provider) addResolvingDomains(resolvingDomains []string) {
-	p.resolvingDomainsMutex.Lock()
-	defer p.resolvingDomainsMutex.Unlock()
-
-	for _, domain := range resolvingDomains {
-		p.resolvingDomains[domain] = struct{}{}
-	}
-}
-
-// containsResolvingDomains returns whether one of the given domains is resolving.
-func (p *Provider) containsResolvingDomains(certDomains []string) bool {
-	p.resolvingDomainsMutex.Lock()
-	defer p.resolvingDomainsMutex.Unlock()
-
-	for _, certDomain := range certDomains {
-		if _, ok := p.resolvingDomains[certDomain]; ok {
-			return true
-		}
-	}
-
-	return false
 }
 
 func (p *Provider) addCertificateForDomain(domain types.Domain, certificate, key []byte, tlsStore string) {
@@ -891,6 +874,7 @@ func (p *Provider) getValidDomains(ctx context.Context, domain types.Domain) ([]
 		return nil, errors.New("unable to generate a certificate in ACME provider when no domain is given")
 	}
 
+	// FIXME
 	if strings.HasPrefix(domain.Main, "*") {
 		if p.DNSChallenge == nil {
 			return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domain %q : ACME needs a DNSChallenge", strings.Join(domains, ","))
@@ -921,10 +905,9 @@ func (p *Provider) certExists(ctx context.Context, domain types.Domain) bool {
 		return false
 	}
 
+	domain = types.Domain{Main: validDomains[0]}
 	if len(validDomains) > 1 {
-		domain = types.Domain{Main: validDomains[0], SANs: validDomains[1:]}
-	} else {
-		domain = types.Domain{Main: validDomains[0]}
+		domain.SANs = validDomains[1:]
 	}
 
 	for _, cert := range p.certificates {
