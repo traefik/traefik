@@ -19,6 +19,7 @@ import (
 	"github.com/sirupsen/logrus"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/middlewares/capture"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
@@ -182,13 +183,17 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		},
 	}
 
-	reqWithDataTable := req.WithContext(context.WithValue(req.Context(), DataTableKey, logDataTable))
+	defer func() {
+		if h.config.BufferingSize > 0 {
+			h.logHandlerChan <- handlerParams{
+				logDataTable: logDataTable,
+			}
+			return
+		}
+		h.logTheRoundTrip(logDataTable)
+	}()
 
-	var crr *captureRequestReader
-	if req.Body != nil {
-		crr = &captureRequestReader{source: req.Body, count: 0}
-		reqWithDataTable.Body = crr
-	}
+	reqWithDataTable := req.WithContext(context.WithValue(req.Context(), DataTableKey, logDataTable))
 
 	core[RequestCount] = nextRequestCount()
 	if req.Host != "" {
@@ -222,30 +227,26 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		core[ClientHost] = forwardedFor
 	}
 
-	crw := newCaptureResponseWriter(rw)
-
-	next.ServeHTTP(crw, reqWithDataTable)
+	next.ServeHTTP(rw, reqWithDataTable)
 
 	if _, ok := core[ClientUsername]; !ok {
 		core[ClientUsername] = usernameIfPresent(reqWithDataTable.URL)
 	}
 
 	logDataTable.DownstreamResponse = downstreamResponse{
-		headers: crw.Header().Clone(),
-		status:  crw.Status(),
-		size:    crw.Size(),
-	}
-	if crr != nil {
-		logDataTable.Request.size = crr.count
+		headers: rw.Header().Clone(),
 	}
 
-	if h.config.BufferingSize > 0 {
-		h.logHandlerChan <- handlerParams{
-			logDataTable: logDataTable,
-		}
-	} else {
-		h.logTheRoundTrip(logDataTable)
+	ctx := req.Context()
+	capt, err := capture.FromContext(ctx)
+	if err != nil {
+		log.FromContext(log.With(ctx, log.Str(log.MiddlewareType, "AccessLogs"))).Errorf("Could not get Capture: %v", err)
+		return
 	}
+
+	logDataTable.DownstreamResponse.status = capt.StatusCode()
+	logDataTable.DownstreamResponse.size = capt.ResponseSize()
+	logDataTable.Request.size = capt.RequestSize()
 }
 
 // Close closes the Logger (i.e. the file, drain logHandlerChan, etc).

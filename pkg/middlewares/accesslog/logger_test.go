@@ -1,9 +1,11 @@
 package accesslog
 
 import (
+	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -14,9 +16,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containous/alice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v2/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
@@ -46,23 +50,29 @@ func TestLogRotation(t *testing.T) {
 
 	config := &types.AccessLog{FilePath: fileName, Format: CommonFormat}
 	logHandler, err := NewHandler(config)
-	if err != nil {
-		t.Fatalf("Error creating new log handler: %s", err)
-	}
-	defer logHandler.Close()
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		err := logHandler.Close()
+		require.NoError(t, err)
+	})
+
+	chain := alice.New()
+	chain = chain.Append(capture.WrapHandler(&capture.Handler{}))
+	chain = chain.Append(WrapHandler(logHandler))
+	handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+	require.NoError(t, err)
 
 	recorder := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "http://localhost", nil)
-	next := func(rw http.ResponseWriter, req *http.Request) {
-		rw.WriteHeader(http.StatusOK)
-	}
 
 	iterations := 20
 	halfDone := make(chan bool)
 	writeDone := make(chan bool)
 	go func() {
 		for i := 0; i < iterations; i++ {
-			logHandler.ServeHTTP(recorder, req, http.HandlerFunc(next))
+			handler.ServeHTTP(recorder, req)
 			if i == iterations/2 {
 				halfDone <- true
 			}
@@ -178,7 +188,10 @@ func TestLoggerHeaderFields(t *testing.T) {
 
 			logger, err := NewHandler(config)
 			require.NoError(t, err)
-			defer logger.Close()
+			t.Cleanup(func() {
+				err := logger.Close()
+				require.NoError(t, err)
+			})
 
 			if config.FilePath != "" {
 				_, err = os.Stat(config.FilePath)
@@ -196,9 +209,14 @@ func TestLoggerHeaderFields(t *testing.T) {
 				req.Header.Add(test.header, s)
 			}
 
-			logger.ServeHTTP(httptest.NewRecorder(), req, http.HandlerFunc(func(writer http.ResponseWriter, r *http.Request) {
-				writer.WriteHeader(http.StatusOK)
+			chain := alice.New()
+			chain = chain.Append(capture.WrapHandler(&capture.Handler{}))
+			chain = chain.Append(WrapHandler(logger))
+			handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
 			}))
+			require.NoError(t, err)
+			handler.ServeHTTP(httptest.NewRecorder(), req)
 
 			logData, err := os.ReadFile(logFile.Name())
 			require.NoError(t, err)
@@ -224,10 +242,13 @@ func TestLoggerCLF(t *testing.T) {
 	assertValidLogData(t, expectedLog, logData)
 }
 
-func TestAsyncLoggerCLF(t *testing.T) {
+func TestLoggerCLFWithBufferingSize(t *testing.T) {
 	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
 	config := &types.AccessLog{FilePath: logFilePath, Format: CommonFormat, BufferingSize: 1024}
 	doLogging(t, config)
+
+	// wait a bit for the buffer to be written in the file.
+	time.Sleep(50 * time.Millisecond)
 
 	logData, err := os.ReadFile(logFilePath)
 	require.NoError(t, err)
@@ -691,9 +712,7 @@ func assertValidLogData(t *testing.T, expected string, logData []byte) {
 	resultExpected, err := ParseAccessLog(expected)
 	require.NoError(t, err)
 
-	formatErrMessage := fmt.Sprintf(`
-	Expected: %s
-	Actual:   %s`, expected, string(logData))
+	formatErrMessage := fmt.Sprintf("Expected:\t%q\nActual:\t%q", expected, string(logData))
 
 	require.Equal(t, len(resultExpected), len(result), formatErrMessage)
 	assert.Equal(t, resultExpected[ClientHost], result[ClientHost], formatErrMessage)
@@ -722,7 +741,7 @@ func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {
 
 	restoreStdout = func() {
 		os.Stdout = original
-		os.RemoveAll(file.Name())
+		_ = os.RemoveAll(file.Name())
 	}
 
 	return file, restoreStdout
@@ -730,10 +749,12 @@ func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {
 
 func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
 	t.Helper()
-
 	logger, err := NewHandler(config)
 	require.NoError(t, err)
-	defer logger.Close()
+	t.Cleanup(func() {
+		err := logger.Close()
+		require.NoError(t, err)
+	})
 
 	if config.FilePath != "" {
 		_, err = os.Stat(config.FilePath)
@@ -753,6 +774,7 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
 			User: url.UserPassword(testUsername, ""),
 			Path: testPath,
 		},
+		Body: io.NopCloser(bytes.NewReader([]byte("bar"))),
 	}
 	if enableTLS {
 		req.TLS = &tls.ConnectionState{
@@ -761,7 +783,13 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
 		}
 	}
 
-	logger.ServeHTTP(httptest.NewRecorder(), req, http.HandlerFunc(logWriterTestHandlerFunc))
+	chain := alice.New()
+	chain = chain.Append(capture.WrapHandler(&capture.Handler{}))
+	chain = chain.Append(WrapHandler(logger))
+	handler, err := chain.Then(http.HandlerFunc(logWriterTestHandlerFunc))
+	require.NoError(t, err)
+
+	handler.ServeHTTP(httptest.NewRecorder(), req)
 }
 
 func doLoggingTLS(t *testing.T, config *types.AccessLog) {
