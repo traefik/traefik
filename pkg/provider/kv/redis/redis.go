@@ -16,10 +16,10 @@ var _ provider.Provider = (*Provider)(nil)
 type Provider struct {
 	kv.Provider `yaml:",inline" export:"true"`
 
-	TLS      *types.ClientTLS `description:"Enable TLS support" json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
-	Username string           `json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
-	Password string           `json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
-	DB       int              `json:"db,omitempty" toml:"db,omitempty" yaml:"db,omitempty"`
+	TLS      *types.ClientTLS `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	Username string           `description:"Username for authentication." json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
+	Password string           `description:"Password for authentication." json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
+	DB       int              `description:"Database to be selected after connecting to the server." json:"db,omitempty" toml:"db,omitempty" yaml:"db,omitempty"`
 }
 
 // SetDefaults sets the default values.

@@ -22,8 +22,8 @@ var _ provider.Provider = (*Provider)(nil)
 type ProviderBuilder struct {
 	kv.Provider `yaml:",inline" export:"true"`
 
-	Token string           `json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
-	TLS   *types.ClientTLS `description:"Enable TLS support" json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	Token string           `description:"Per-request ACL token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
+	TLS   *types.ClientTLS `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 
 	// Deprecated: use Namespaces instead.
 	Namespace  string   `description:"Sets the namespace used to discover the configuration (Consul Enterprise only)." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`

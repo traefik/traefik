@@ -508,7 +508,7 @@ TLS insecure skip verify (Default: ```false```)
 TLS key
 
 `TRAEFIK_PROVIDERS_CONSUL_TOKEN`:  
-
+Per-request ACL token.
 
 `TRAEFIK_PROVIDERS_DOCKER`:  
 Enable Docker backend with default settings. (Default: ```false```)
@@ -598,7 +598,7 @@ Enable Etcd backend with default settings. (Default: ```false```)
 KV store endpoints (Default: ```127.0.0.1:2379```)
 
 `TRAEFIK_PROVIDERS_ETCD_PASSWORD`:  
-
+Password for authentication.
 
 `TRAEFIK_PROVIDERS_ETCD_ROOTKEY`:  
 Root key used for KV store (Default: ```traefik```)
@@ -619,7 +619,7 @@ TLS insecure skip verify (Default: ```false```)
 TLS key
 
 `TRAEFIK_PROVIDERS_ETCD_USERNAME`:  
-
+Username for authentication.
 
 `TRAEFIK_PROVIDERS_FILE_DEBUGLOGGENERATEDTEMPLATE`:  
 Enable debug logging of generated configuration template. (Default: ```false```)
@@ -904,13 +904,13 @@ Watch provider. (Default: ```true```)
 Enable Redis backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_REDIS_DB`:  
- (Default: ```0```)
+Database to be selected after connecting to the server. (Default: ```0```)
 
 `TRAEFIK_PROVIDERS_REDIS_ENDPOINTS`:  
 KV store endpoints (Default: ```127.0.0.1:6379```)
 
 `TRAEFIK_PROVIDERS_REDIS_PASSWORD`:  
-
+Password for authentication.
 
 `TRAEFIK_PROVIDERS_REDIS_ROOTKEY`:  
 Root key used for KV store (Default: ```traefik```)
@@ -931,7 +931,7 @@ TLS insecure skip verify (Default: ```false```)
 TLS key
 
 `TRAEFIK_PROVIDERS_REDIS_USERNAME`:  
-
+Username for authentication.
 
 `TRAEFIK_PROVIDERS_REST`:  
 Enable Rest backend with default settings. (Default: ```false```)
@@ -946,13 +946,13 @@ Enable ZooKeeper backend with default settings. (Default: ```false```)
 KV store endpoints (Default: ```127.0.0.1:2181```)
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER_PASSWORD`:  
-
+Password for authentication.
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER_ROOTKEY`:  
 Root key used for KV store (Default: ```traefik```)
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER_USERNAME`:  
-
+Username for authentication.
 
 `TRAEFIK_SERVERSTRANSPORT_FORWARDINGTIMEOUTS_DIALTIMEOUT`:  
 The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)

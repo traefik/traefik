@@ -427,7 +427,7 @@ TLS insecure skip verify (Default: ```false```)
 TLS key
 
 `--providers.consul.token`:  
-
+Per-request ACL token.
 
 `--providers.consulcatalog`:  
 Enable ConsulCatalog backend with default settings. (Default: ```false```)
@@ -598,7 +598,7 @@ Enable Etcd backend with default settings. (Default: ```false```)
 KV store endpoints (Default: ```127.0.0.1:2379```)
 
 `--providers.etcd.password`:  
-
+Password for authentication.
 
 `--providers.etcd.rootkey`:  
 Root key used for KV store (Default: ```traefik```)
@@ -619,7 +619,7 @@ TLS insecure skip verify (Default: ```false```)
 TLS key
 
 `--providers.etcd.username`:  
-
+Username for authentication.
 
 `--providers.file.debugloggeneratedtemplate`:  
 Enable debug logging of generated configuration template. (Default: ```false```)
@@ -904,13 +904,13 @@ Watch provider. (Default: ```true```)
 Enable Redis backend with default settings. (Default: ```false```)
 
 `--providers.redis.db`:  
- (Default: ```0```)
+Database to be selected after connecting to the server. (Default: ```0```)
 
 `--providers.redis.endpoints`:  
 KV store endpoints (Default: ```127.0.0.1:6379```)
 
 `--providers.redis.password`:  
-
+Password for authentication.
 
 `--providers.redis.rootkey`:  
 Root key used for KV store (Default: ```traefik```)
@@ -931,7 +931,7 @@ TLS insecure skip verify (Default: ```false```)
 TLS key
 
 `--providers.redis.username`:  
-
+Username for authentication.
 
 `--providers.rest`:  
 Enable Rest backend with default settings. (Default: ```false```)
@@ -946,13 +946,13 @@ Enable ZooKeeper backend with default settings. (Default: ```false```)
 KV store endpoints (Default: ```127.0.0.1:2181```)
 
 `--providers.zookeeper.password`:  
-
+Password for authentication.
 
 `--providers.zookeeper.rootkey`:  
 Root key used for KV store (Default: ```traefik```)
 
 `--providers.zookeeper.username`:  
-
+Username for authentication.
 
 `--serverstransport.forwardingtimeouts.dialtimeout`:  
 The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
