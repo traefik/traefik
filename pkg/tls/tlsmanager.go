@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/go-acme/lego/v4/challenge/dns01"
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
-	"github.com/sirupsen/logrus"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/tls/generate"
 	"github.com/traefik/traefik/v2/pkg/types"
@@ -95,11 +95,9 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 	storesCertificates := make(map[string]map[string]*tls.Certificate)
 	for _, conf := range certs {
 		if len(conf.Stores) == 0 {
-			if log.GetLevel() >= logrus.DebugLevel {
-				log.FromContext(ctx).Debugf("No store is defined to add the certificate %s, it will be added to the default store.",
-					conf.Certificate.GetTruncatedCertificateName())
-			}
-			conf.Stores = []string{"default"}
+			log.FromContext(ctx).Debugf("No store is defined to add the certificate %s, it will be added to the default store.",
+				conf.Certificate.GetTruncatedCertificateName())
+			conf.Stores = []string{DefaultTLSStoreName}
 		}
 		for _, store := range conf.Stores {
 			ctxStore := log.With(ctx, log.Str(log.TLSStoreName, store))
@@ -116,7 +114,57 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 			m.stores[storeName] = st
 		}
 		st.DynamicCerts.Set(certs)
+
+		storeCtx := log.With(ctx, log.Str("TLSStore", storeName))
+		logger := log.FromContext(storeCtx)
+
+		if storeConfig, ok := m.storesConfig[storeName]; ok {
+			if storeConfig.DefaultCertificate != nil {
+				continue
+			}
+
+			if storeConfig.DefaultCertDomain != nil {
+				domain := storeConfig.DefaultCertDomain
+				domains, err := getValidDomains(*domain)
+				if err != nil {
+					logger.Errorf("Setting-up default cert: invalid domains: %v", err)
+					continue
+				}
+
+				if len(domains) == 0 {
+					logger.Error("Setting-up default cert: no valid domains")
+					continue
+				}
+
+				defaultACMECert := st.GetDomainsCertificate(domains)
+				if defaultACMECert == nil {
+					logger.Errorf("Setting-up default cert: unable to find certificate for domains %q", domain.ToStrArray())
+					continue
+				}
+
+				st.DefaultCertificate = defaultACMECert
+			}
+		}
 	}
+}
+
+// getValidDomains sanitizes the domain definition Main and SANS,
+// and returns them as a slice.
+// This func apply the same sanitization as the ACME provider do before resolving certificates.
+func getValidDomains(domain types.Domain) ([]string, error) {
+	domains := domain.ToStrArray()
+	if len(domains) == 0 {
+		return nil, errors.New("unable validate domains when no domain is given")
+	}
+
+	var cleanDomains []string
+	for _, domain := range domains {
+		canonicalDomain := types.CanonicalDomain(domain)
+		cleanDomain := dns01.UnFqdn(canonicalDomain)
+		cleanDomains = append(cleanDomains, cleanDomain)
+	}
+
+	return cleanDomains, nil
 }
 
 // Get gets the TLS configuration to use for a given store / configuration.

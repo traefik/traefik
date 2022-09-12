@@ -114,6 +114,45 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 	return nil
 }
 
+// GetDomainsCertificate returns the first certificate matching all the given domains.
+func (c *CertificateStore) GetDomainsCertificate(domains []string) *tls.Certificate {
+	if c == nil {
+		return nil
+	}
+
+	sort.Strings(domains)
+	domainsKey := strings.Join(domains, ",")
+
+	if cert, ok := c.CertCache.Get(domainsKey); ok {
+		return cert.(*tls.Certificate)
+	}
+
+	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
+		for certDomains, cert := range c.DynamicCerts.Get().(map[string]*tls.Certificate) {
+			if domainsKey == certDomains {
+				c.CertCache.SetDefault(domainsKey, cert)
+				return cert
+			}
+
+			var matchedDomains []string
+			for _, certDomain := range strings.Split(certDomains, ",") {
+				for _, checkDomain := range domains {
+					if certDomain == checkDomain {
+						matchedDomains = append(matchedDomains, certDomain)
+					}
+				}
+			}
+
+			if len(matchedDomains) == len(domains) {
+				c.CertCache.SetDefault(domainsKey, cert)
+				return cert
+			}
+		}
+	}
+
+	return nil
+}
+
 // ResetCache clears the cache in the store.
 func (c CertificateStore) ResetCache() {
 	if c.CertCache != nil {
