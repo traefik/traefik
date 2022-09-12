@@ -65,7 +65,7 @@ func AddOriginFields(rw http.ResponseWriter, req *http.Request, next http.Handle
 	ctx := req.Context()
 	capt, err := capture.FromContext(ctx)
 	if err != nil {
-		log.FromContext(log.With(ctx, log.Str(log.MiddlewareType, "AccessLogs"))).Errorf("Could not get Capture: %w", err)
+		log.FromContext(log.With(ctx, log.Str(log.MiddlewareType, "AccessLogs"))).Errorf("Could not get Capture: %v", err)
 		return
 	}
 

@@ -33,8 +33,8 @@ type metricsMiddleware struct {
 	reqsTLSCounter       gokitmetrics.Counter
 	reqDurationHistogram metrics.ScalableHistogram
 	openConnsGauge       gokitmetrics.Gauge
-	bytesReceivedCounter gokitmetrics.Counter
-	bytesSentCounter     gokitmetrics.Counter
+	reqsBytesCounter     gokitmetrics.Counter
+	respsBytesCounter    gokitmetrics.Counter
 	baseLabels           []string
 }
 
@@ -48,8 +48,8 @@ func NewEntryPointMiddleware(ctx context.Context, next http.Handler, registry me
 		reqsTLSCounter:       registry.EntryPointReqsTLSCounter(),
 		reqDurationHistogram: registry.EntryPointReqDurationHistogram(),
 		openConnsGauge:       registry.EntryPointOpenConnsGauge(),
-		bytesSentCounter:     registry.EntryPointBytesSentCounter(),
-		bytesReceivedCounter: registry.EntryPointBytesReceivedCounter(),
+		reqsBytesCounter:     registry.EntryPointReqsBytesCounter(),
+		respsBytesCounter:    registry.EntryPointRespsBytesCounter(),
 		baseLabels:           []string{"entrypoint", entryPointName},
 	}
 }
@@ -64,8 +64,8 @@ func NewRouterMiddleware(ctx context.Context, next http.Handler, registry metric
 		reqsTLSCounter:       registry.RouterReqsTLSCounter(),
 		reqDurationHistogram: registry.RouterReqDurationHistogram(),
 		openConnsGauge:       registry.RouterOpenConnsGauge(),
-		bytesSentCounter:     registry.RouterBytesSentCounter(),
-		bytesReceivedCounter: registry.RouterBytesReceivedCounter(),
+		reqsBytesCounter:     registry.RouterReqsBytesCounter(),
+		respsBytesCounter:    registry.RouterRespsBytesCounter(),
 		baseLabels:           []string{"router", routerName, "service", serviceName},
 	}
 }
@@ -80,8 +80,8 @@ func NewServiceMiddleware(ctx context.Context, next http.Handler, registry metri
 		reqsTLSCounter:       registry.ServiceReqsTLSCounter(),
 		reqDurationHistogram: registry.ServiceReqDurationHistogram(),
 		openConnsGauge:       registry.ServiceOpenConnsGauge(),
-		bytesSentCounter:     registry.ServiceBytesSentCounter(),
-		bytesReceivedCounter: registry.ServiceBytesReceivedCounter(),
+		reqsBytesCounter:     registry.ServiceReqsBytesCounter(),
+		respsBytesCounter:    registry.ServiceRespsBytesCounter(),
 		baseLabels:           []string{"service", serviceName},
 	}
 }
@@ -139,8 +139,8 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	}
 
 	labels = append(labels, "code", strconv.Itoa(capt.StatusCode()))
-	m.bytesSentCounter.With(labels...).Add(float64(capt.ResponseSize()))
-	m.bytesReceivedCounter.With(labels...).Add(float64(capt.RequestSize()))
+	m.respsBytesCounter.With(labels...).Add(float64(capt.ResponseSize()))
+	m.reqsBytesCounter.With(labels...).Add(float64(capt.RequestSize()))
 }
 
 func getRequestProtocol(req *http.Request) string {
