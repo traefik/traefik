@@ -17,7 +17,7 @@ var _ provider.Provider = (*Provider)(nil)
 type Provider struct {
 	kv.Provider `yaml:",inline" export:"true"`
 
-	TLS      *types.ClientTLS `description:"Enable TLS support" json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	TLS      *types.ClientTLS `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 	Username string           `description:"Username for authentication." json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
 	Password string           `description:"Password for authentication." json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
 }
@@ -37,10 +37,8 @@ func (p *Provider) Init() error {
 	}
 
 	if p.TLS != nil {
-		ctx := context.Background()
-
 		var err error
-		config.TLS, err = p.TLS.CreateTLSConfig(ctx)
+		config.TLS, err = p.TLS.CreateTLSConfig(context.Background())
 		if err != nil {
 			return fmt.Errorf("unable to create client TLS configuration: %w", err)
 		}
