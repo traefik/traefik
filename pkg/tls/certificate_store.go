@@ -22,8 +22,11 @@ type CertificateStore struct {
 
 // NewCertificateStore create a store for dynamic certificates.
 func NewCertificateStore() *CertificateStore {
+	s := &safe.Safe{}
+	s.Set(make(map[string]*tls.Certificate))
+
 	return &CertificateStore{
-		DynamicCerts: &safe.Safe{},
+		DynamicCerts: s,
 		CertCache:    cache.New(1*time.Hour, 10*time.Minute),
 	}
 }
