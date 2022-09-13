@@ -157,7 +157,75 @@ data:
   tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
 ```
 
-If no default certificate is provided, Traefik generates and uses a self-signed certificate.
+If no `defaultCertificate` is provided, Traefik will use the generated one.
+
+### ACME Default Certificate
+
+You can configure Traefik to use an ACME provider (like Let's Encrypt) to generate the default certificate.
+The configuration to resolve the default certificate should be defined in a TLS store:
+
+!!! important "Precedence with the `defaultGeneratedCert` option"
+
+    The `defaultGeneratedCert` definition takes precedence over the ACME default certificate configuration.
+
+```yaml tab="File (YAML)"
+# Dynamic configuration
+
+tls:
+  stores:
+    default:
+      defaultGeneratedCert:
+        resolver: myresolver
+        domain:
+          main: example.org
+          sans:
+            - foo.example.org
+            - bar.example.org
+```
+
+```toml tab="File (TOML)"
+# Dynamic configuration
+
+[tls.stores]
+  [tls.stores.default.defaultGeneratedCert]
+    resolver = "myresolver"
+    [tls.stores.default.defaultGeneratedCert.domain]
+      main = "example.org"
+      sans = ["foo.example.org", "bar.example.org"]
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSStore
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  defaultGeneratedCert:
+    resolver: myresolver
+    domain:
+      main: example.org
+      sans:
+        - foo.example.org
+        - bar.example.org
+```
+
+```yaml tab="Docker"
+## Dynamic configuration
+labels:
+  - "traefik.tls.stores.default.defaultgeneratedcert.resolver=myresolver"
+  - "traefik.tls.stores.default.defaultgeneratedcert.domain.main=example.org"
+  - "traefik.tls.stores.default.defaultgeneratedcert.domain.sans=foo.example.org, bar.example.org"
+```
+
+```json tab="Marathon"
+labels: {
+  "traefik.tls.stores.default.defaultgeneratedcert.resolver": "myresolver",
+  "traefik.tls.stores.default.defaultgeneratedcert.domain.main": "example.org",
+  "traefik.tls.stores.default.defaultgeneratedcert.domain.sans": "foo.example.org, bar.example.org",
+}
+```
 
 ## TLS Options
 
