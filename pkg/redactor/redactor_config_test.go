@@ -956,10 +956,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		},
 	}
 
-	config.Pilot = &static.Pilot{
-		Token: "token",
-	}
-
 	config.Experimental = &static.Experimental{
 		Plugins: map[string]plugins.Descriptor{
 			"Descriptor0": {
