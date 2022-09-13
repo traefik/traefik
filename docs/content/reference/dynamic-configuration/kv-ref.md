@@ -319,8 +319,16 @@
 | `traefik/tls/options/Options1/sniStrict` | `true` |
 | `traefik/tls/stores/Store0/defaultCertificate/certFile` | `foobar` |
 | `traefik/tls/stores/Store0/defaultCertificate/keyFile` | `foobar` |
+| `traefik/tls/stores/Store0/defaultGeneratedCert/domain/main` | `foobar` |
+| `traefik/tls/stores/Store0/defaultGeneratedCert/domain/sans/0` | `foobar` |
+| `traefik/tls/stores/Store0/defaultGeneratedCert/domain/sans/1` | `foobar` |
+| `traefik/tls/stores/Store0/defaultGeneratedCert/resolver` | `foobar` |
 | `traefik/tls/stores/Store1/defaultCertificate/certFile` | `foobar` |
 | `traefik/tls/stores/Store1/defaultCertificate/keyFile` | `foobar` |
+| `traefik/tls/stores/Store1/defaultGeneratedCert/domain/main` | `foobar` |
+| `traefik/tls/stores/Store1/defaultGeneratedCert/domain/sans/0` | `foobar` |
+| `traefik/tls/stores/Store1/defaultGeneratedCert/domain/sans/1` | `foobar` |
+| `traefik/tls/stores/Store1/defaultGeneratedCert/resolver` | `foobar` |
 | `traefik/udp/routers/UDPRouter0/entryPoints/0` | `foobar` |
 | `traefik/udp/routers/UDPRouter0/entryPoints/1` | `foobar` |
 | `traefik/udp/routers/UDPRouter0/service` | `foobar` |
