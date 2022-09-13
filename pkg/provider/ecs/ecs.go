@@ -146,7 +146,7 @@ func (p *Provider) createClient(logger log.Logger) (*awsClient, error) {
 }
 
 // Provide configuration to traefik from ECS.
-func (p Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
+func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
 		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "ecs"))
 		logger := log.FromContext(ctxLog)
@@ -333,7 +333,8 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 						healthStatus: aws.StringValue(task.HealthStatus),
 					}
 				} else {
-					if containerInstance == nil {
+					miContainerInstances := miInstances[aws.StringValue(task.ContainerInstanceArn)]
+					if containerInstance == nil && miContainerInstances == nil {
 						logger.Errorf("Unable to find container instance information for %s", aws.StringValue(container.Name))
 						continue
 					}
@@ -347,92 +348,19 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 							})
 						}
 					}
+					var privateIPAddress, stateName string
+					if containerInstance != nil {
+						privateIPAddress = aws.StringValue(containerInstance.PrivateIpAddress)
+						stateName = aws.StringValue(containerInstance.State.Name)
+					} else if miContainerInstances != nil {
+						privateIPAddress = aws.StringValue(miContainerInstances.IPAddress)
+						stateName = aws.StringValue(task.LastStatus)
+					}
+
 					mach = &machine{
-						privateIP: aws.StringValue(containerInstance.PrivateIpAddress),
+						privateIP: privateIPAddress,
 						ports:     ports,
-						state:     aws.StringValue(containerInstance.State.Name),
-					}
-				}
-
-				instance := ecsInstance{
-					Name:                fmt.Sprintf("%s-%s", strings.Replace(aws.StringValue(task.Group), ":", "-", 1), *container.Name),
-					ID:                  key[len(key)-12:],
-					containerDefinition: containerDefinition,
-					machine:             mach,
-					Labels:              aws.StringValueMap(containerDefinition.DockerLabels),
-				}
-
-				extraConf, err := p.getConfiguration(instance)
-				if err != nil {
-					log.FromContext(ctx).Errorf("Skip container %s: %w", getServiceName(instance), err)
-					continue
-				}
-				instance.ExtraConf = extraConf
-
-				instances = append(instances, instance)
-			}
-		}
-
-		for key, task := range tasks {
-			containerInstance := miInstances[aws.StringValue(task.ContainerInstanceArn)]
-			taskDef := taskDefinitions[key]
-
-			for _, container := range task.Containers {
-				var containerDefinition *ecs.ContainerDefinition
-				for _, def := range taskDef.ContainerDefinitions {
-					if aws.StringValue(container.Name) == aws.StringValue(def.Name) {
-						containerDefinition = def
-						break
-					}
-				}
-
-				if containerDefinition == nil {
-					logger.Debugf("Unable to find container definition for %s", aws.StringValue(container.Name))
-					continue
-				}
-
-				var mach *machine
-				if len(task.Attachments) != 0 {
-					var ports []portMapping
-					for _, mapping := range containerDefinition.PortMappings {
-						if mapping != nil {
-							protocol := "TCP"
-							if aws.StringValue(mapping.Protocol) == "udp" {
-								protocol = "UDP"
-							}
-
-							ports = append(ports, portMapping{
-								hostPort:      aws.Int64Value(mapping.HostPort),
-								containerPort: aws.Int64Value(mapping.ContainerPort),
-								protocol:      protocol,
-							})
-						}
-					}
-					mach = &machine{
-						privateIP:    aws.StringValue(container.NetworkInterfaces[0].PrivateIpv4Address),
-						ports:        ports,
-						state:        aws.StringValue(task.LastStatus),
-						healthStatus: aws.StringValue(task.HealthStatus),
-					}
-				} else {
-					if containerInstance == nil {
-						logger.Errorf("Unable to find container instance information for %s", aws.StringValue(container.Name))
-						continue
-					}
-
-					var ports []portMapping
-					for _, mapping := range container.NetworkBindings {
-						if mapping != nil {
-							ports = append(ports, portMapping{
-								hostPort:      aws.Int64Value(mapping.HostPort),
-								containerPort: aws.Int64Value(mapping.ContainerPort),
-							})
-						}
-					}
-					mach = &machine{
-						privateIP: aws.StringValue(containerInstance.IPAddress),
-						ports:     ports,
-						state:     "running",
+						state:     stateName,
 					}
 				}
 
