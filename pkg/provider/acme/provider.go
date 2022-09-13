@@ -631,6 +631,7 @@ func (p *Provider) resolveCertificate(ctx context.Context, domain types.Domain, 
 
 	logger.Debugf("Certificates obtained for domains %+v", uncheckedDomains)
 
+	// FIXME
 	domain = types.Domain{Main: uncheckedDomains[0]}
 	if len(uncheckedDomains) > 1 {
 		domain.SANs = uncheckedDomains[1:]
@@ -650,7 +651,6 @@ func (p *Provider) removeResolvingDomains(resolvingDomains []string) {
 
 func (p *Provider) addCertificateForDomain(domain types.Domain, certificate, key []byte, tlsStore string) error {
 	p.certificatesMu.Lock()
-	defer p.certificatesMu.Unlock()
 
 	cert := Certificate{Certificate: certificate, Key: key, Domain: domain}
 
@@ -667,9 +667,18 @@ func (p *Provider) addCertificateForDomain(domain types.Domain, certificate, key
 		p.certificates = append(p.certificates, &CertAndStore{Certificate: cert, Store: tlsStore})
 	}
 
+	p.certificatesMu.Unlock()
+
 	p.refreshCertificates()
 
-	return p.Store.SaveCertificates(p.ResolverName, p.certificates)
+	p.certificatesMu.Lock()
+	err := p.Store.SaveCertificates(p.ResolverName, p.certificates)
+	if err != nil {
+		return err
+	}
+	p.certificatesMu.Unlock()
+
+	return nil
 }
 
 // getCertificateRenewDurations returns renew durations calculated from the given certificatesDuration in hours.
