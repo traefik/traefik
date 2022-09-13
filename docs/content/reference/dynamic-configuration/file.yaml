@@ -518,19 +518,21 @@ tls:
       defaultCertificate:
         certFile: foobar
         keyFile: foobar
-      defaultCertResolver: foobar
-      defaultCertDomain:
-        main: foobar
-        sans:
-          - foobar
-          - foobar
+      defaultGeneratedCert:
+        resolver: foobar
+        domain:
+          main: foobar
+          sans:
+            - foobar
+            - foobar
     Store1:
       defaultCertificate:
         certFile: foobar
         keyFile: foobar
-      defaultCertResolver: foobar
-      defaultCertDomain:
-        main: foobar
-        sans:
-          - foobar
-          - foobar
+      defaultGeneratedCert:
+        resolver: foobar
+        domain:
+          main: foobar
+          sans:
+            - foobar
+            - foobar

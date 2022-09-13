@@ -51,9 +51,9 @@
     [http.routers.test.tls]
 
 [tls.stores]
-  [tls.stores.default]
-    defaultCertResolver = "default"
-    [tls.stores.default.defaultCertDomain]
+  [tls.stores.default.defaultGeneratedCert]
+    resolver = "default"
+    [tls.stores.default.defaultGeneratedCert.domain]
       main = "{{ .Domain.Main }}"
       sans = [{{range .Domain.SANs }}
         "{{.}}",

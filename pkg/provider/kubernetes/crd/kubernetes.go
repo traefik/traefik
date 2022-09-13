@@ -917,10 +917,6 @@ func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, m
 
 		var tlsStore tls.Store
 
-		// FIXME missing part
-		tlsStore.DefaultCertResolver = t.Spec.DefaultCertResolver
-		tlsStore.DefaultCertDomain = t.Spec.DefaultCertDomain
-
 		if t.Spec.DefaultCertificate != nil {
 			secretName := t.Spec.DefaultCertificate.SecretName
 
@@ -943,6 +939,13 @@ func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, m
 			tlsStore.DefaultCertificate = &tls.Certificate{
 				CertFile: tls.FileOrContent(cert),
 				KeyFile:  tls.FileOrContent(key),
+			}
+		}
+
+		if t.Spec.DefaultGeneratedCert != nil && (t.Spec.DefaultGeneratedCert.Resolver != "" || t.Spec.DefaultGeneratedCert.Domain != nil) {
+			tlsStore.DefaultGeneratedCert = &tls.GeneratedCert{
+				Resolver: t.Spec.DefaultGeneratedCert.Resolver,
+				Domain:   t.Spec.DefaultGeneratedCert.Domain,
 			}
 		}
 

@@ -40,9 +40,6 @@ func (o *Options) SetDefaults() {
 type Store struct {
 	DefaultCertificate   *Certificate   `json:"defaultCertificate,omitempty" toml:"defaultCertificate,omitempty" yaml:"defaultCertificate,omitempty" export:"true"`
 	DefaultGeneratedCert *GeneratedCert `json:"defaultGeneratedCert,omitempty" toml:"defaultGeneratedCert,omitempty" yaml:"defaultGeneratedCert,omitempty" export:"true"`
-
-	DefaultCertResolver string        `json:"defaultCertResolver,omitempty" toml:"defaultCertResolver,omitempty" yaml:"defaultCertResolver,omitempty" export:"true"`
-	DefaultCertDomain   *types.Domain `json:"defaultCertDomain,omitempty" toml:"defaultCertDomain,omitempty" yaml:"defaultCertDomain,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
