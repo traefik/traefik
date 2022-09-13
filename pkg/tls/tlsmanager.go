@@ -6,8 +6,10 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 
+	"github.com/go-acme/lego/v4/challenge/dns01"
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -81,17 +83,6 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 		m.storesConfig[tlsalpn01.ACMETLS1Protocol] = Store{}
 	}
 
-	m.stores = make(map[string]*CertificateStore)
-	for storeName, storeConfig := range m.storesConfig {
-		ctxStore := log.With(ctx, log.Str(log.TLSStoreName, storeName))
-		store, err := buildCertificateStore(ctxStore, storeConfig, storeName)
-		if err != nil {
-			log.FromContext(ctxStore).Errorf("Error while creating certificate store: %v", err)
-			continue
-		}
-		m.stores[storeName] = store
-	}
-
 	storesCertificates := make(map[string]map[string]*tls.Certificate)
 	for _, conf := range certs {
 		if len(conf.Stores) == 0 {
@@ -99,24 +90,66 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 				log.FromContext(ctx).Debugf("No store is defined to add the certificate %s, it will be added to the default store.",
 					conf.Certificate.GetTruncatedCertificateName())
 			}
-			conf.Stores = []string{"default"}
+			conf.Stores = []string{DefaultTLSStoreName}
 		}
+
 		for _, store := range conf.Stores {
 			ctxStore := log.With(ctx, log.Str(log.TLSStoreName, store))
-			if err := conf.Certificate.AppendCertificate(storesCertificates, store); err != nil {
+
+			if _, ok := m.storesConfig[store]; !ok {
+				m.storesConfig[store] = Store{}
+			}
+
+			err := conf.Certificate.AppendCertificate(storesCertificates, store)
+			if err != nil {
 				log.FromContext(ctxStore).Errorf("Unable to append certificate %s to store: %v", conf.Certificate.GetTruncatedCertificateName(), err)
 			}
 		}
 	}
 
-	for storeName, certs := range storesCertificates {
-		st, ok := m.stores[storeName]
-		if !ok {
-			st, _ = buildCertificateStore(context.Background(), Store{}, storeName)
-			m.stores[storeName] = st
+	m.stores = make(map[string]*CertificateStore)
+
+	for storeName, storeConfig := range m.storesConfig {
+		st := NewCertificateStore()
+		m.stores[storeName] = st
+
+		if certs, ok := storesCertificates[storeName]; ok {
+			st.DynamicCerts.Set(certs)
 		}
-		st.DynamicCerts.Set(certs)
+
+		// a default cert for the ACME store does not make any sense, so generating one is a waste.
+		if storeName == tlsalpn01.ACMETLS1Protocol {
+			continue
+		}
+
+		ctxStore := log.With(ctx, log.Str(log.TLSStoreName, storeName))
+
+		certificate, err := getDefaultCertificate(ctxStore, storeConfig, st)
+		if err != nil {
+			log.FromContext(ctxStore).Errorf("Error while creating certificate store: %v", err)
+		}
+
+		st.DefaultCertificate = certificate
 	}
+}
+
+// sanitizeDomains sanitizes the domain definition Main and SANS,
+// and returns them as a slice.
+// This func apply the same sanitization as the ACME provider do before resolving certificates.
+func sanitizeDomains(domain types.Domain) ([]string, error) {
+	domains := domain.ToStrArray()
+	if len(domains) == 0 {
+		return nil, errors.New("no domain was given")
+	}
+
+	var cleanDomains []string
+	for _, domain := range domains {
+		canonicalDomain := types.CanonicalDomain(domain)
+		cleanDomain := dns01.UnFqdn(canonicalDomain)
+		cleanDomains = append(cleanDomains, cleanDomain)
+	}
+
+	return cleanDomains, nil
 }
 
 // Get gets the TLS configuration to use for a given store / configuration.
@@ -234,32 +267,37 @@ func (m *Manager) GetStore(storeName string) *CertificateStore {
 	return m.getStore(storeName)
 }
 
-func buildCertificateStore(ctx context.Context, tlsStore Store, storename string) (*CertificateStore, error) {
-	certificateStore := NewCertificateStore()
-	certificateStore.DynamicCerts.Set(make(map[string]*tls.Certificate))
-
+func getDefaultCertificate(ctx context.Context, tlsStore Store, st *CertificateStore) (*tls.Certificate, error) {
 	if tlsStore.DefaultCertificate != nil {
 		cert, err := buildDefaultCertificate(tlsStore.DefaultCertificate)
 		if err != nil {
-			return certificateStore, err
+			return nil, err
 		}
-		certificateStore.DefaultCertificate = cert
-		return certificateStore, nil
+
+		return cert, nil
 	}
 
-	// a default cert for the ACME store does not make any sense, so generating one
-	// is a waste.
-	if storename == tlsalpn01.ACMETLS1Protocol {
-		return certificateStore, nil
-	}
-
-	log.FromContext(ctx).Debug("No default certificate, generating one")
-	cert, err := generate.DefaultCertificate()
+	defaultCert, err := generate.DefaultCertificate()
 	if err != nil {
-		return certificateStore, err
+		return nil, err
 	}
-	certificateStore.DefaultCertificate = cert
-	return certificateStore, nil
+
+	if tlsStore.DefaultGeneratedCert != nil && tlsStore.DefaultGeneratedCert.Domain != nil && tlsStore.DefaultGeneratedCert.Resolver != "" {
+		domains, err := sanitizeDomains(*tlsStore.DefaultGeneratedCert.Domain)
+		if err != nil {
+			return defaultCert, fmt.Errorf("falling back to the internal generated certificate because invalid domains: %w", err)
+		}
+
+		defaultACMECert := st.GetCertificate(domains)
+		if defaultACMECert == nil {
+			return defaultCert, fmt.Errorf("unable to find certificate for domains %q: falling back to the internal generated certificate", strings.Join(domains, ","))
+		}
+
+		return defaultACMECert, nil
+	}
+
+	log.FromContext(ctx).Debug("No default certificate, fallback to the internal generated certificate")
+	return defaultCert, nil
 }
 
 // creates a TLS config that allows terminating HTTPS for multiple domains using SNI.
