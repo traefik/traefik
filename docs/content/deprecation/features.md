@@ -14,12 +14,12 @@ This page is maintained and updated periodically to reflect our roadmap and any 
 ### Pilot Dashboard (Metrics)
 
 Metrics will continue to function normally up to 2.8, when they will be disabled.  
-In 2.9, the Pilot platform and all Traefik integration code will be permanently removed.
+In 3.0, the Pilot platform and all Traefik integration code will be permanently removed.
 
 ### Pilot Plugins 
 
 Starting on 2.7 the pilot token will not be a requirement anymore.  
-At 2.9, a new plugin catalog home should be available, decoupled from pilot.
+Since 2.8, a [new plugin catalog](https://plugins.traefik.io) is available, decoupled from pilot.
 
 ### Consul Enterprise Namespace
 

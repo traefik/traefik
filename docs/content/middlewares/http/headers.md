@@ -469,3 +469,5 @@ The `permissionsPolicy` allows sites to control browser features.
 Set `isDevelopment` to `true` when developing to mitigate the unwanted effects of the `AllowedHosts`, SSL, and STS options.
 Usually testing takes place using HTTP, not HTTPS, and on `localhost`, not your production domain.
 If you would like your development environment to mimic production with complete Host blocking, SSL redirects, and STS headers, leave this as `false`.
+
+{!traefik-for-business-applications.md!}

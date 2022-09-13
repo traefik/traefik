@@ -39,3 +39,5 @@ You no longer need to create and synchronize configuration files cluttered with 
 !!! question "How does Traefik discover the services?"
 
     Traefik is able to use your cluster API to discover the services and read the attached information. In Traefik, these connectors are called [providers](../providers/overview.md) because they _provide_ the configuration to Traefik. To learn more about them, read the [provider overview](../providers/overview.md) section.
+
+{!traefik-for-business-applications.md!}

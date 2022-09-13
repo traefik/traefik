@@ -406,3 +406,5 @@ serversTransport:
 ## Static configuration
 --serversTransport.forwardingTimeouts.idleConnTimeout=1s
 ```
+
+{!traefik-for-business-applications.md!}
