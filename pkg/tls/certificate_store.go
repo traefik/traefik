@@ -22,8 +22,11 @@ type CertificateStore struct {
 
 // NewCertificateStore create a store for dynamic certificates.
 func NewCertificateStore() *CertificateStore {
+	s := &safe.Safe{}
+	s.Set(make(map[string]*tls.Certificate))
+
 	return &CertificateStore{
-		DynamicCerts: &safe.Safe{},
+		DynamicCerts: s,
 		CertCache:    cache.New(1*time.Hour, 10*time.Minute),
 	}
 }
@@ -109,6 +112,45 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 		// cache best match
 		c.CertCache.SetDefault(serverName, matchedCerts[keys[len(keys)-1]])
 		return matchedCerts[keys[len(keys)-1]]
+	}
+
+	return nil
+}
+
+// GetCertificate returns the first certificate matching all the given domains.
+func (c *CertificateStore) GetCertificate(domains []string) *tls.Certificate {
+	if c == nil {
+		return nil
+	}
+
+	sort.Strings(domains)
+	domainsKey := strings.Join(domains, ",")
+
+	if cert, ok := c.CertCache.Get(domainsKey); ok {
+		return cert.(*tls.Certificate)
+	}
+
+	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
+		for certDomains, cert := range c.DynamicCerts.Get().(map[string]*tls.Certificate) {
+			if domainsKey == certDomains {
+				c.CertCache.SetDefault(domainsKey, cert)
+				return cert
+			}
+
+			var matchedDomains []string
+			for _, certDomain := range strings.Split(certDomains, ",") {
+				for _, checkDomain := range domains {
+					if certDomain == checkDomain {
+						matchedDomains = append(matchedDomains, certDomain)
+					}
+				}
+			}
+
+			if len(matchedDomains) == len(domains) {
+				c.CertCache.SetDefault(domainsKey, cert)
+				return cert
+			}
+		}
 	}
 
 	return nil
