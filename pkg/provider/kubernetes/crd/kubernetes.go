@@ -942,7 +942,7 @@ func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, m
 			}
 		}
 
-		if t.Spec.DefaultGeneratedCert != nil && (t.Spec.DefaultGeneratedCert.Resolver != "" || t.Spec.DefaultGeneratedCert.Domain != nil) {
+		if t.Spec.DefaultGeneratedCert != nil {
 			tlsStore.DefaultGeneratedCert = &tls.GeneratedCert{
 				Resolver: t.Spec.DefaultGeneratedCert.Resolver,
 				Domain:   t.Spec.DefaultGeneratedCert.Domain,

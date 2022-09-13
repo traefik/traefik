@@ -590,10 +590,10 @@ func (p *Provider) resolveDefaultCertificate(ctx context.Context, domains []stri
 		return nil, fmt.Errorf("unable to generate a certificate for the domains %v: %w", domains, err)
 	}
 	if cert == nil {
-		return nil, fmt.Errorf("domains %v did not generate a certificate", domains)
+		return nil, fmt.Errorf("unable to generate a certificate for the domains %v", domains)
 	}
 	if len(cert.Certificate) == 0 || len(cert.PrivateKey) == 0 {
-		return nil, fmt.Errorf("domains %v generated a certificate with no value: %v", domains, cert)
+		return nil, fmt.Errorf("certificate for domains %v is empty: %v", domains, cert)
 	}
 
 	logger.Debugf("Default certificate obtained for domains %+v", domains)
@@ -635,10 +635,10 @@ func (p *Provider) resolveCertificate(ctx context.Context, domain types.Domain, 
 		return types.Domain{}, nil, fmt.Errorf("unable to generate a certificate for the domains %v: %w", uncheckedDomains, err)
 	}
 	if cert == nil {
-		return types.Domain{}, nil, fmt.Errorf("domains %v did not generate a certificate", uncheckedDomains)
+		return types.Domain{}, nil, fmt.Errorf("unable to generate a certificate for the domains %v", uncheckedDomains)
 	}
 	if len(cert.Certificate) == 0 || len(cert.PrivateKey) == 0 {
-		return types.Domain{}, nil, fmt.Errorf("domains %v generated a certificate with no value: %v", uncheckedDomains, cert)
+		return types.Domain{}, nil, fmt.Errorf("certificate for domains %v is empty: %v", uncheckedDomains, cert)
 	}
 
 	logger.Debugf("Certificates obtained for domains %+v", uncheckedDomains)
