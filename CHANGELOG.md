@@ -1,3 +1,16 @@
+## [v2.8.5](https://github.com/traefik/traefik/tree/v2.8.5) (2022-09-13)
+[All Commits](https://github.com/traefik/traefik/compare/v2.8.4...v2.8.5)
+
+**Bug fixes:**
+- **[plugins]** Update Yaegi to v0.14.2 ([#9327](https://github.com/traefik/traefik/pull/9327) by [kevinpollet](https://github.com/kevinpollet))
+- **[server]** Fix IPv6 addr with square brackets ([#9313](https://github.com/traefik/traefik/pull/9313) by [moonlightwatch](https://github.com/moonlightwatch))
+- **[webui,api]** Display default TLS options in the dashboard ([#9312](https://github.com/traefik/traefik/pull/9312) by [skwair](https://github.com/skwair))
+
+**Documentation:**
+- **[docker]** Add healthcheck timeout seconds to value ([#9306](https://github.com/traefik/traefik/pull/9306) by [fty4](https://github.com/fty4))
+- Update deprecation notes about Pilot ([#9314](https://github.com/traefik/traefik/pull/9314) by [nmengin](https://github.com/nmengin))
+- Added resources for businesses ([#9268](https://github.com/traefik/traefik/pull/9268) by [tomatokoolaid](https://github.com/tomatokoolaid))
+
 ## [v2.8.4](https://github.com/traefik/traefik/tree/v2.8.4) (2022-09-02)
 [All Commits](https://github.com/traefik/traefik/compare/v2.8.3...v2.8.4)
 
