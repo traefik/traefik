@@ -463,7 +463,17 @@
       [tls.stores.Store0.defaultCertificate]
         certFile = "foobar"
         keyFile = "foobar"
+      [tls.stores.Store0.defaultGeneratedCert]
+        resolver = "foobar"
+        [tls.stores.Store0.defaultGeneratedCert.domain]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
     [tls.stores.Store1]
       [tls.stores.Store1.defaultCertificate]
         certFile = "foobar"
         keyFile = "foobar"
+      [tls.stores.Store1.defaultGeneratedCert]
+        resolver = "foobar"
+        [tls.stores.Store1.defaultGeneratedCert.domain]
+          main = "foobar"
+          sans = ["foobar", "foobar"]

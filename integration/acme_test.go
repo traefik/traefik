@@ -40,6 +40,7 @@ type acmeTestCase struct {
 }
 
 type templateModel struct {
+	Domain    types.Domain
 	Domains   []types.Domain
 	PortHTTP  string
 	PortHTTPS string
@@ -138,6 +139,29 @@ func (s *AcmeSuite) TestHTTP01Domains(c *check.C) {
 			Domains: []types.Domain{{
 				Main: "traefik.acme.wtf",
 			}},
+			Acme: map[string]static.CertificateResolver{
+				"default": {ACME: &acme.Configuration{
+					HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
+				}},
+			},
+		},
+	}
+
+	s.retrieveAcmeCertificate(c, testCase)
+}
+
+func (s *AcmeSuite) TestHTTP01StoreDomains(c *check.C) {
+	testCase := acmeTestCase{
+		traefikConfFilePath: "fixtures/acme/acme_store_domains.toml",
+		subCases: []subCases{{
+			host:               acmeDomain,
+			expectedCommonName: acmeDomain,
+			expectedAlgorithm:  x509.RSA,
+		}},
+		template: templateModel{
+			Domain: types.Domain{
+				Main: "traefik.acme.wtf",
+			},
 			Acme: map[string]static.CertificateResolver{
 				"default": {ACME: &acme.Configuration{
 					HTTPChallenge: &acme.HTTPChallenge{EntryPoint: "web"},
