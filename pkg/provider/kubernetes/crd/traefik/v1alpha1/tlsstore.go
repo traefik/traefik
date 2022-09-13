@@ -38,8 +38,6 @@ type TLSStoreSpec struct {
 
 // +k8s:deepcopy-gen=true
 
-// +k8s:deepcopy-gen=true
-
 // Certificate holds a secret name for the TLSStore resource.
 type Certificate struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the certificate details.
