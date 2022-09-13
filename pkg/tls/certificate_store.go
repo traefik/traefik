@@ -117,8 +117,8 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 	return nil
 }
 
-// GetDomainsCertificate returns the first certificate matching all the given domains.
-func (c *CertificateStore) GetDomainsCertificate(domains []string) *tls.Certificate {
+// GetCertificate returns the first certificate matching all the given domains.
+func (c *CertificateStore) GetCertificate(domains []string) *tls.Certificate {
 	if c == nil {
 		return nil
 	}

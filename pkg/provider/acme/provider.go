@@ -511,7 +511,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 						continue
 					}
 
-					validDomains, err := p.getValidDomains(ctx, *tlsStore.DefaultGeneratedCert.Domain)
+					validDomains, err := p.sanitizeDomains(ctx, *tlsStore.DefaultGeneratedCert.Domain)
 					if err != nil {
 						logger.WithError(err).Errorf("domains validation: %s", strings.Join(tlsStore.DefaultGeneratedCert.Domain.ToStrArray(), ","))
 					}
@@ -602,7 +602,7 @@ func (p *Provider) resolveDefaultCertificate(ctx context.Context, domains []stri
 }
 
 func (p *Provider) resolveCertificate(ctx context.Context, domain types.Domain, tlsStore string) (types.Domain, *certificate.Resource, error) {
-	domains, err := p.getValidDomains(ctx, domain)
+	domains, err := p.sanitizeDomains(ctx, domain)
 	if err != nil {
 		return types.Domain{}, nil, err
 	}
@@ -909,11 +909,11 @@ func getX509Certificate(ctx context.Context, cert *Certificate) (*x509.Certifica
 	return crt, err
 }
 
-// getValidDomains checks if given domain is allowed to generate a ACME certificate and return it.
-func (p *Provider) getValidDomains(ctx context.Context, domain types.Domain) ([]string, error) {
+// sanitizeDomains checks if given domain is allowed to generate a ACME certificate and return it.
+func (p *Provider) sanitizeDomains(ctx context.Context, domain types.Domain) ([]string, error) {
 	domains := domain.ToStrArray()
 	if len(domains) == 0 {
-		return nil, errors.New("unable to generate a certificate in ACME provider when no domain is given")
+		return nil, errors.New("no domain was given")
 	}
 
 	var cleanDomains []string

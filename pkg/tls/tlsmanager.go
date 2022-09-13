@@ -133,13 +133,13 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 	}
 }
 
-// getValidDomains sanitizes the domain definition Main and SANS,
+// sanitizeDomains sanitizes the domain definition Main and SANS,
 // and returns them as a slice.
 // This func apply the same sanitization as the ACME provider do before resolving certificates.
-func getValidDomains(domain types.Domain) ([]string, error) {
+func sanitizeDomains(domain types.Domain) ([]string, error) {
 	domains := domain.ToStrArray()
 	if len(domains) == 0 {
-		return nil, errors.New("unable validate domains when no domain is given")
+		return nil, errors.New("no domain was given")
 	}
 
 	var cleanDomains []string
@@ -283,18 +283,14 @@ func getDefaultCertificate(ctx context.Context, tlsStore Store, st *CertificateS
 	}
 
 	if tlsStore.DefaultGeneratedCert != nil && tlsStore.DefaultGeneratedCert.Domain != nil && tlsStore.DefaultGeneratedCert.Resolver != "" {
-		domains, err := getValidDomains(*tlsStore.DefaultGeneratedCert.Domain)
+		domains, err := sanitizeDomains(*tlsStore.DefaultGeneratedCert.Domain)
 		if err != nil {
-			return defaultCert, fmt.Errorf("fallback to the internal generated certificate: invalid domains: %w", err)
+			return defaultCert, fmt.Errorf("falling back to the internal generated certificate because invalid domains: %w", err)
 		}
 
-		if len(domains) == 0 {
-			return defaultCert, errors.New("fallback to the internal generated certificate: no valid domains")
-		}
-
-		defaultACMECert := st.GetDomainsCertificate(domains)
+		defaultACMECert := st.GetCertificate(domains)
 		if defaultACMECert == nil {
-			return defaultCert, fmt.Errorf("fallback to the internal generated certificate: unable to find certificate for domains %q", strings.Join(domains, ","))
+			return defaultCert, fmt.Errorf("unable to find certificate for domains %q: falling back to the internal generated certificate", strings.Join(domains, ","))
 		}
 
 		return defaultACMECert, nil
