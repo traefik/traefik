@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/url"
 	"reflect"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -99,10 +100,11 @@ type Provider struct {
 	TLSChallengeProvider  challenge.Provider
 	HTTPChallengeProvider challenge.Provider
 
-	certificates           []*CertAndStore
+	certificates   []*CertAndStore
+	certificatesMu sync.RWMutex
+
 	account                *Account
 	client                 *lego.Client
-	certsChan              chan *CertAndStore
 	configurationChan      chan<- dynamic.Message
 	tlsManager             *traefiktls.Manager
 	clientMutex            sync.Mutex
@@ -152,7 +154,10 @@ func (p *Provider) Init() error {
 		p.account = nil
 	}
 
+	p.certificatesMu.Lock()
 	p.certificates, err = p.Store.GetCertificates(p.ResolverName)
+	p.certificatesMu.Unlock()
+
 	if err != nil {
 		return fmt.Errorf("unable to get ACME certificates : %w", err)
 	}
@@ -195,7 +200,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	p.pool = pool
 
-	p.watchCertificate(ctx)
 	p.watchNewDomains(ctx)
 
 	p.configurationChan = configurationChan
@@ -365,12 +369,14 @@ func (p *Provider) register(ctx context.Context, client *lego.Client) (*registra
 }
 
 func (p *Provider) resolveDomains(ctx context.Context, domains []string, tlsStore string) {
+	logger := log.FromContext(ctx)
+
 	if len(domains) == 0 {
-		log.FromContext(ctx).Debug("No domain parsed in provider ACME")
+		logger.Debug("No domain parsed in provider ACME")
 		return
 	}
 
-	log.FromContext(ctx).Debugf("Try to challenge certificate for domain %v found in HostSNI rule", domains)
+	logger.Debugf("Try to challenge certificate for domain %v found in HostSNI rule", domains)
 
 	var domain types.Domain
 	if len(domains) > 0 {
@@ -380,14 +386,22 @@ func (p *Provider) resolveDomains(ctx context.Context, domains []string, tlsStor
 		}
 
 		safe.Go(func() {
-			if _, err := p.resolveCertificate(ctx, domain, tlsStore); err != nil {
-				log.FromContext(ctx).Errorf("Unable to obtain ACME certificate for domains %q: %v", strings.Join(domains, ","), err)
+			cert, err := p.resolveCertificate(ctx, domain, tlsStore)
+			if err != nil {
+				logger.Errorf("Unable to obtain ACME certificate for domains %q: %v", strings.Join(domains, ","), err)
+				return
+			}
+
+			err = p.addCertificateForDomain(domain, cert.Certificate, cert.PrivateKey, tlsStore)
+			if err != nil {
+				logger.WithError(err).Error("add certificate for domain")
 			}
 		})
 	}
 }
 
 func (p *Provider) watchNewDomains(ctx context.Context) {
+	ctx = log.With(ctx, log.Str(log.ProviderName, p.ResolverName+".acme"))
 	p.pool.GoCtx(func(ctxPool context.Context) {
 		for {
 			select {
@@ -402,24 +416,19 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 						logger := log.FromContext(ctxRouter)
 
 						if len(route.TLS.Domains) > 0 {
-							for _, domain := range route.TLS.Domains {
-								if domain.Main != dns01.UnFqdn(domain.Main) {
-									logger.Warnf("FQDN detected, please remove the trailing dot: %s", domain.Main)
-								}
-								for _, san := range domain.SANs {
-									if san != dns01.UnFqdn(san) {
-										logger.Warnf("FQDN detected, please remove the trailing dot: %s", san)
-									}
-								}
-							}
-
 							domains := deleteUnnecessaryDomains(ctxRouter, route.TLS.Domains)
 							for i := 0; i < len(domains); i++ {
 								domain := domains[i]
 								safe.Go(func() {
-									if _, err := p.resolveCertificate(ctx, domain, traefiktls.DefaultTLSStoreName); err != nil {
-										log.WithoutContext().WithField(log.ProviderName, p.ResolverName+".acme").
-											Errorf("Unable to obtain ACME certificate for domains %q : %v", strings.Join(domain.ToStrArray(), ","), err)
+									cert, err := p.resolveCertificate(ctx, domain, traefiktls.DefaultTLSStoreName)
+									if err != nil {
+										logger.Errorf("Unable to obtain ACME certificate for domains %q : %v", strings.Join(domain.ToStrArray(), ","), err)
+										return
+									}
+
+									err = p.addCertificateForDomain(domain, cert.Certificate, cert.PrivateKey, traefiktls.DefaultTLSStoreName)
+									if err != nil {
+										logger.WithError(err).Error("add certificate for domain")
 									}
 								})
 							}
@@ -434,38 +443,150 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 					}
 				}
 
-				for routerName, route := range config.HTTP.Routers {
-					if route.TLS == nil || route.TLS.CertResolver != p.ResolverName {
+				if config.HTTP != nil {
+					for routerName, route := range config.HTTP.Routers {
+						if route.TLS == nil || route.TLS.CertResolver != p.ResolverName {
+							continue
+						}
+
+						ctxRouter := log.With(ctx, log.Str(log.RouterName, routerName), log.Str(log.Rule, route.Rule))
+						logger := log.FromContext(ctxRouter)
+
+						if len(route.TLS.Domains) > 0 {
+							domains := deleteUnnecessaryDomains(ctxRouter, route.TLS.Domains)
+							for i := 0; i < len(domains); i++ {
+								domain := domains[i]
+								safe.Go(func() {
+									cert, err := p.resolveCertificate(ctx, domain, traefiktls.DefaultTLSStoreName)
+									if err != nil {
+										logger.Errorf("Unable to obtain ACME certificate for domains %q : %v", strings.Join(domain.ToStrArray(), ","), err)
+										return
+									}
+
+									err = p.addCertificateForDomain(domain, cert.Certificate, cert.PrivateKey, traefiktls.DefaultTLSStoreName)
+									if err != nil {
+										logger.WithError(err).Error("add certificate for domain")
+									}
+								})
+							}
+						} else {
+							domains, err := httpmuxer.ParseDomains(route.Rule)
+							if err != nil {
+								logger.Errorf("Error parsing domains in provider ACME: %v", err)
+								continue
+							}
+							p.resolveDomains(ctxRouter, domains, traefiktls.DefaultTLSStoreName)
+						}
+					}
+				}
+
+				if config.TLS == nil {
+					continue
+				}
+
+				for tlsStoreName, tlsStore := range config.TLS.Stores {
+					// Gives precedence to the user defined default certificate.
+					if tlsStore.DefaultCertificate != nil {
+						// TODO: warn something or enforce elsewhere?
 						continue
 					}
 
-					ctxRouter := log.With(ctx, log.Str(log.RouterName, routerName), log.Str(log.Rule, route.Rule))
-
-					if len(route.TLS.Domains) > 0 {
-						domains := deleteUnnecessaryDomains(ctxRouter, route.TLS.Domains)
-						for i := 0; i < len(domains); i++ {
-							domain := domains[i]
-							safe.Go(func() {
-								if _, err := p.resolveCertificate(ctx, domain, traefiktls.DefaultTLSStoreName); err != nil {
-									log.WithoutContext().WithField(log.ProviderName, p.ResolverName+".acme").
-										Errorf("Unable to obtain ACME certificate for domains %q : %v", strings.Join(domain.ToStrArray(), ","), err)
-								}
-							})
-						}
-					} else {
-						domains, err := httpmuxer.ParseDomains(route.Rule)
-						if err != nil {
-							log.FromContext(ctxRouter).Errorf("Error parsing domains in provider ACME: %v", err)
-							continue
-						}
-						p.resolveDomains(ctxRouter, domains, traefiktls.DefaultTLSStoreName)
+					if tlsStore.DefaultGeneratedCert == nil ||
+						tlsStore.DefaultGeneratedCert.Domain == nil || tlsStore.DefaultGeneratedCert.Resolver != p.ResolverName {
+						continue
 					}
+
+					ctxTLSStore := log.With(ctx, log.Str(log.TLSStoreName, tlsStoreName))
+					logger := log.FromContext(ctxTLSStore)
+
+					validDomains, err := p.getValidDomains(ctx, *tlsStore.DefaultGeneratedCert.Domain)
+					if err != nil {
+						logger.WithError(err).Errorf("domains validation: %s", strings.Join(tlsStore.DefaultGeneratedCert.Domain.ToStrArray(), ","))
+					}
+
+					if p.certExists(validDomains) {
+						logger.Debug("Default ACME certificate generation is not required.")
+						continue
+					}
+
+					safe.Go(func() {
+						cert, err := p.resolveDefaultCertificate(ctx, validDomains)
+						if err != nil {
+							logger.Errorf("Unable to obtain ACME certificate for domain %q : %v", strings.Join(validDomains, ","), err)
+							return
+						}
+
+						domain := types.Domain{
+							Main: validDomains[0],
+						}
+						if len(validDomains) > 0 {
+							domain.SANs = validDomains[1:]
+						}
+
+						err = p.addCertificateForDomain(domain, cert.Certificate, cert.PrivateKey, traefiktls.DefaultTLSStoreName)
+						if err != nil {
+							logger.WithError(err).Error("add certificate for domain")
+						}
+					})
 				}
 			case <-ctxPool.Done():
 				return
 			}
 		}
 	})
+}
+
+func (p *Provider) resolveDefaultCertificate(ctx context.Context, domains []string) (*certificate.Resource, error) {
+	logger := log.FromContext(ctx)
+
+	p.resolvingDomainsMutex.Lock()
+
+	sort.Strings(domains)
+	domainKey := strings.Join(domains, ",")
+
+	if _, ok := p.resolvingDomains[domainKey]; ok {
+		p.resolvingDomainsMutex.Unlock()
+		return nil, nil
+	}
+
+	p.resolvingDomains[domainKey] = struct{}{}
+
+	for _, certDomain := range domains {
+		p.resolvingDomains[certDomain] = struct{}{}
+	}
+
+	p.resolvingDomainsMutex.Unlock()
+
+	defer p.removeResolvingDomains(append(domains, domainKey))
+
+	logger.Debugf("Loading ACME certificates %+v...", domains)
+
+	client, err := p.getClient()
+	if err != nil {
+		return nil, fmt.Errorf("cannot get ACME client %w", err)
+	}
+
+	request := certificate.ObtainRequest{
+		Domains:        domains,
+		Bundle:         true,
+		MustStaple:     oscpMustStaple,
+		PreferredChain: p.PreferredChain,
+	}
+
+	cert, err := client.Certificate.Obtain(request)
+	if err != nil {
+		return nil, fmt.Errorf("unable to generate a certificate for the domains %v: %w", domains, err)
+	}
+	if cert == nil {
+		return nil, fmt.Errorf("domains %v did not generate a certificate", domains)
+	}
+	if len(cert.Certificate) == 0 || len(cert.PrivateKey) == 0 {
+		return nil, fmt.Errorf("domains %v generated a certificate with no value: %v", domains, cert)
+	}
+
+	logger.Debugf("Default certificate obtained for domains %+v", domains)
+
+	return cert, nil
 }
 
 func (p *Provider) resolveCertificate(ctx context.Context, domain types.Domain, tlsStore string) (*certificate.Resource, error) {
@@ -510,12 +631,10 @@ func (p *Provider) resolveCertificate(ctx context.Context, domain types.Domain, 
 
 	logger.Debugf("Certificates obtained for domains %+v", uncheckedDomains)
 
+	domain = types.Domain{Main: uncheckedDomains[0]}
 	if len(uncheckedDomains) > 1 {
-		domain = types.Domain{Main: uncheckedDomains[0], SANs: uncheckedDomains[1:]}
-	} else {
-		domain = types.Domain{Main: uncheckedDomains[0]}
+		domain.SANs = uncheckedDomains[1:]
 	}
-	p.addCertificateForDomain(domain, cert.Certificate, cert.PrivateKey, tlsStore)
 
 	return cert, nil
 }
@@ -529,8 +648,28 @@ func (p *Provider) removeResolvingDomains(resolvingDomains []string) {
 	}
 }
 
-func (p *Provider) addCertificateForDomain(domain types.Domain, certificate, key []byte, tlsStore string) {
-	p.certsChan <- &CertAndStore{Certificate: Certificate{Certificate: certificate, Key: key, Domain: domain}, Store: tlsStore}
+func (p *Provider) addCertificateForDomain(domain types.Domain, certificate, key []byte, tlsStore string) error {
+	p.certificatesMu.Lock()
+	defer p.certificatesMu.Unlock()
+
+	cert := Certificate{Certificate: certificate, Key: key, Domain: domain}
+
+	certUpdated := false
+	for _, domainsCertificate := range p.certificates {
+		if reflect.DeepEqual(domain, domainsCertificate.Certificate.Domain) {
+			domainsCertificate.Certificate = cert
+			certUpdated = true
+			break
+		}
+	}
+
+	if !certUpdated {
+		p.certificates = append(p.certificates, &CertAndStore{Certificate: cert, Store: tlsStore})
+	}
+
+	p.refreshCertificates()
+
+	return p.Store.SaveCertificates(p.ResolverName, p.certificates)
 }
 
 // getCertificateRenewDurations returns renew durations calculated from the given certificatesDuration in hours.
@@ -608,44 +747,6 @@ func deleteUnnecessaryDomains(ctx context.Context, domains []types.Domain) []typ
 	return newDomains
 }
 
-func (p *Provider) watchCertificate(ctx context.Context) {
-	p.certsChan = make(chan *CertAndStore)
-
-	p.pool.GoCtx(func(ctxPool context.Context) {
-		for {
-			select {
-			case cert := <-p.certsChan:
-				certUpdated := false
-				for _, domainsCertificate := range p.certificates {
-					if reflect.DeepEqual(cert.Domain, domainsCertificate.Certificate.Domain) {
-						domainsCertificate.Certificate = cert.Certificate
-						certUpdated = true
-						break
-					}
-				}
-				if !certUpdated {
-					p.certificates = append(p.certificates, cert)
-				}
-
-				err := p.saveCertificates()
-				if err != nil {
-					log.FromContext(ctx).Error(err)
-				}
-			case <-ctxPool.Done():
-				return
-			}
-		}
-	})
-}
-
-func (p *Provider) saveCertificates() error {
-	err := p.Store.SaveCertificates(p.ResolverName, p.certificates)
-
-	p.refreshCertificates()
-
-	return err
-}
-
 func (p *Provider) refreshCertificates() {
 	conf := dynamic.Message{
 		ProviderName: p.ResolverName + ".acme",
@@ -659,6 +760,8 @@ func (p *Provider) refreshCertificates() {
 		},
 	}
 
+	p.certificatesMu.RLock()
+
 	for _, cert := range p.certificates {
 		certConf := &traefiktls.CertAndStores{
 			Certificate: traefiktls.Certificate{
@@ -670,6 +773,8 @@ func (p *Provider) refreshCertificates() {
 		conf.Configuration.TLS.Certificates = append(conf.Configuration.TLS.Certificates, certConf)
 	}
 
+	p.certificatesMu.RUnlock()
+
 	p.configurationChan <- conf
 }
 
@@ -677,34 +782,47 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 	logger := log.FromContext(ctx)
 
 	logger.Info("Testing certificate renew...")
+
+	p.certificatesMu.RLock()
+
+	var certificates []*CertAndStore
 	for _, cert := range p.certificates {
 		crt, err := getX509Certificate(ctx, &cert.Certificate)
 		// If there's an error, we assume the cert is broken, and needs update
 		if err != nil || crt == nil || crt.NotAfter.Before(time.Now().Add(renewPeriod)) {
-			client, err := p.getClient()
-			if err != nil {
-				logger.Infof("Error renewing certificate from LE : %+v, %v", cert.Domain, err)
-				continue
-			}
+			certificates = append(certificates, cert)
+		}
+	}
 
-			logger.Infof("Renewing certificate from LE : %+v", cert.Domain)
+	p.certificatesMu.RUnlock()
 
-			renewedCert, err := client.Certificate.Renew(certificate.Resource{
-				Domain:      cert.Domain.Main,
-				PrivateKey:  cert.Key,
-				Certificate: cert.Certificate.Certificate,
-			}, true, oscpMustStaple, p.PreferredChain)
-			if err != nil {
-				logger.Errorf("Error renewing certificate from LE: %v, %v", cert.Domain, err)
-				continue
-			}
+	for _, cert := range certificates {
+		client, err := p.getClient()
+		if err != nil {
+			logger.Infof("Error renewing certificate from LE : %+v, %v", cert.Domain, err)
+			continue
+		}
 
-			if len(renewedCert.Certificate) == 0 || len(renewedCert.PrivateKey) == 0 {
-				logger.Errorf("domains %v renew certificate with no value: %v", cert.Domain.ToStrArray(), cert)
-				continue
-			}
+		logger.Infof("Renewing certificate from LE : %+v", cert.Domain)
 
-			p.addCertificateForDomain(cert.Domain, renewedCert.Certificate, renewedCert.PrivateKey, cert.Store)
+		renewedCert, err := client.Certificate.Renew(certificate.Resource{
+			Domain:      cert.Domain.Main,
+			PrivateKey:  cert.Key,
+			Certificate: cert.Certificate.Certificate,
+		}, true, oscpMustStaple, p.PreferredChain)
+		if err != nil {
+			logger.Errorf("Error renewing certificate from LE: %v, %v", cert.Domain, err)
+			continue
+		}
+
+		if len(renewedCert.Certificate) == 0 || len(renewedCert.PrivateKey) == 0 {
+			logger.Errorf("domains %v renew certificate with no value: %v", cert.Domain.ToStrArray(), cert)
+			continue
+		}
+
+		err = p.addCertificateForDomain(cert.Domain, renewedCert.Certificate, renewedCert.PrivateKey, cert.Store)
+		if err != nil {
+			logger.WithError(err).Error("add certificate for domain")
 		}
 	}
 }
@@ -712,17 +830,24 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 // Get provided certificate which check a domains list (Main and SANs)
 // from static and dynamic provided certificates.
 func (p *Provider) getUncheckedDomains(ctx context.Context, domainsToCheck []string, tlsStore string) []string {
-	p.resolvingDomainsMutex.Lock()
-	defer p.resolvingDomainsMutex.Unlock()
-
 	log.FromContext(ctx).Debugf("Looking for provided certificate(s) to validate %q...", domainsToCheck)
 
-	allDomains := p.tlsManager.GetStore(tlsStore).GetAllDomains()
+	var allDomains []string
+	store := p.tlsManager.GetStore(tlsStore)
+	if store != nil {
+		allDomains = append(allDomains, store.GetAllDomains()...)
+	}
 
 	// Get ACME certificates
+
+	p.certificatesMu.RLock()
 	for _, cert := range p.certificates {
 		allDomains = append(allDomains, strings.Join(cert.Domain.ToStrArray(), ","))
 	}
+	p.certificatesMu.RUnlock()
+
+	p.resolvingDomainsMutex.Lock()
+	defer p.resolvingDomainsMutex.Unlock()
 
 	// Get currently resolved domains
 	for domain := range p.resolvingDomains {
@@ -783,27 +908,46 @@ func (p *Provider) getValidDomains(ctx context.Context, domain types.Domain) ([]
 		return nil, errors.New("unable to generate a certificate in ACME provider when no domain is given")
 	}
 
-	if strings.HasPrefix(domain.Main, "*") {
-		if p.DNSChallenge == nil {
-			return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domain %q : ACME needs a DNSChallenge", strings.Join(domains, ","))
-		}
-
-		if strings.HasPrefix(domain.Main, "*.*") {
-			return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domain %q : ACME does not allow '*.*' wildcard domain", strings.Join(domains, ","))
-		}
-	}
-
 	var cleanDomains []string
-	for _, domain := range domains {
-		canonicalDomain := types.CanonicalDomain(domain)
+	for _, dom := range domains {
+		if strings.HasPrefix(dom, "*") {
+			if p.DNSChallenge == nil {
+				return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domain %q : ACME needs a DNSChallenge", strings.Join(domains, ","))
+			}
+
+			if strings.HasPrefix(dom, "*.*") {
+				return nil, fmt.Errorf("unable to generate a wildcard certificate in ACME provider for domain %q : ACME does not allow '*.*' wildcard domain", strings.Join(domains, ","))
+			}
+		}
+
+		canonicalDomain := types.CanonicalDomain(dom)
 		cleanDomain := dns01.UnFqdn(canonicalDomain)
 		if canonicalDomain != cleanDomain {
 			log.FromContext(ctx).Warnf("FQDN detected, please remove the trailing dot: %s", canonicalDomain)
 		}
+
 		cleanDomains = append(cleanDomains, cleanDomain)
 	}
 
 	return cleanDomains, nil
+}
+
+// certExists returns whether a certificate exists for the given domain.
+func (p *Provider) certExists(validDomains []string) bool {
+	p.certificatesMu.RLock()
+	defer p.certificatesMu.RUnlock()
+
+	sort.Strings(validDomains)
+
+	for _, cert := range p.certificates {
+		domains := cert.Certificate.Domain.ToStrArray()
+		sort.Strings(domains)
+		if reflect.DeepEqual(domains, validDomains) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func isDomainAlreadyChecked(domainToCheck string, existentDomains []string) bool {
