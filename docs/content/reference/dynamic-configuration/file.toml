@@ -460,18 +460,20 @@
         clientAuthType = "foobar"
   [tls.stores]
     [tls.stores.Store0]
-      defaultCertResolver = "foobar"
       [tls.stores.Store0.defaultCertificate]
         certFile = "foobar"
         keyFile = "foobar"
-      [tls.stores.Store0.defaultCertDomain]
-        main = "foobar"
-        sans = ["foobar", "foobar"]
+      [tls.stores.Store0.defaultGeneratedCert]
+        resolver = "foobar"
+        [tls.stores.Store0.defaultGeneratedCert.domain]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
     [tls.stores.Store1]
-      defaultCertResolver = "foobar"
       [tls.stores.Store1.defaultCertificate]
         certFile = "foobar"
         keyFile = "foobar"
-      [tls.stores.Store1.defaultCertDomain]
-        main = "foobar"
-        sans = ["foobar", "foobar"]
+      [tls.stores.Store1.defaultGeneratedCert]
+        resolver = "foobar"
+        [tls.stores.Store1.defaultGeneratedCert.domain]
+          main = "foobar"
+          sans = ["foobar", "foobar"]

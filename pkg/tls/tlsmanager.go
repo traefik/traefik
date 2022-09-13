@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/go-acme/lego/v4/challenge/dns01"
@@ -281,9 +282,8 @@ func getDefaultCertificate(ctx context.Context, tlsStore Store, st *CertificateS
 		return nil, err
 	}
 
-	if tlsStore.DefaultCertDomain != nil {
-		domain := tlsStore.DefaultCertDomain
-		domains, err := getValidDomains(*domain)
+	if tlsStore.DefaultGeneratedCert != nil && tlsStore.DefaultGeneratedCert.Domain != nil {
+		domains, err := getValidDomains(*tlsStore.DefaultGeneratedCert.Domain)
 		if err != nil {
 			return defaultCert, fmt.Errorf("fallback to the internal generated certificate: invalid domains: %w", err)
 		}
@@ -294,7 +294,7 @@ func getDefaultCertificate(ctx context.Context, tlsStore Store, st *CertificateS
 
 		defaultACMECert := st.GetDomainsCertificate(domains)
 		if defaultACMECert == nil {
-			return defaultCert, fmt.Errorf("fallback to the internal generated certificate: unable to find certificate for domains %q", domain.ToStrArray())
+			return defaultCert, fmt.Errorf("fallback to the internal generated certificate: unable to find certificate for domains %q", strings.Join(domains, ","))
 		}
 
 		return defaultACMECert, nil

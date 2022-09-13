@@ -35,5 +35,5 @@
 
 [tls.stores]
   [tls.stores.default]
-    [tls.stores.default.defaultCertDomain]
+    [tls.stores.default.defaultGeneratedCert.domain]
       main = "www.snitest.com"
