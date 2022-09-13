@@ -164,9 +164,9 @@ If no default certificate is provided, Traefik generates and uses a self-signed 
 You can configure Traefik to use an ACME provider (like Let's Encrypt) to generate the default certificate.
 The configuration to resolve the default certificate should be defined in a TLS store:
 
-!!! important "Precedence with the `defaultCertificate` option"
+!!! important "Precedence with the `defaultGeneratedCert` option"
 
-    The `defaultCertificate` definition takes precedence on the ACME default certificate configuration.
+    The `defaultGeneratedCert` definition takes precedence over the ACME default certificate configuration.
 
 ```yaml tab="File (YAML)"
 # Dynamic configuration
@@ -174,23 +174,24 @@ The configuration to resolve the default certificate should be defined in a TLS 
 tls:
   stores:
     default:
-      defaultCertResolver: myresolver
-      defaultCertDomain:
-        main: foobar
-        sans:
-          - foobar
-          - foobar
+      defaultGeneratedCert:
+        resolver: myresolver
+        domain:
+          main: example.org
+          sans:
+            - foo.example.org
+            - bar.example.org
 ```
 
 ```toml tab="File (TOML)"
 # Dynamic configuration
 
 [tls.stores]
-  [tls.stores.default]
-    defaultCertResolver = "myresolver"
-    [tls.stores.default.defaultCertDomain]
-      main = "foobar"
-      sans = ["foobar", "foobar"]
+  [tls.stores.default.defaultGeneratedCert]
+    resolver = "myresolver"
+    [tls.stores.default.defaultGeneratedCert.Domain]
+      main = "example.org"
+      sans = ["foo.example.org", "bar.example.org"]
 ```
 
 ```yaml tab="Kubernetes"
@@ -201,28 +202,28 @@ metadata:
   namespace: default
 
 spec:
-  defaultCertResolver: myresolver
-  defaultCertDomain:
-    main: foobar
-    sans:
-      - foobar
-      - foobar
-
+  defaultGeneratedCert:
+    resolver: myresolver
+    domain:
+      main: example.org
+      sans:
+        - foo.example.org
+        - bar.example.org
 ```
 
 ```yaml tab="Docker"
 ## Dynamic configuration
 labels:
-  - "traefik.tls.stores.default.defaultCertResolver=myresolver"
-  - "traefik.tls.stores.default.defaultCertDomain.main=foobar"
-  - "traefik.tls.stores.default.defaultCertDomain.sans=foobar, foobar"
+  - "traefik.tls.stores.default.defaultgeneratedcert.resolver=myresolver"
+  - "traefik.tls.stores.default.defaultgeneratedcert.domain.main=example.org"
+  - "traefik.tls.stores.default.defaultgeneratedcert.domain.sans=foo.example.org, bar.example.org"
 ```
 
 ```json tab="Marathon"
 labels: {
-  "traefik.tls.stores.default.defaultCertResolver": "myresolver",
-  "traefik.tls.stores.default.defaultCertDomain.main": "foobar",
-  "traefik.tls.stores.default.defaultCertDomain.sans": "foobar, foobar",
+  "traefik.tls.stores.default.defaultgeneratedcert.resolver": "myresolver",
+  "traefik.tls.stores.default.defaultgeneratedcert.domain.main": "example.org",
+  "traefik.tls.stores.default.defaultgeneratedcert.domain.sans": "foo.example.org, bar.example.org",
 }
 ```
 

@@ -28,12 +28,22 @@ type TLSStore struct {
 type TLSStoreSpec struct {
 	// DefaultCertificate defines the default certificate configuration.
 	DefaultCertificate *Certificate `json:"defaultCertificate,omitempty"`
+
+	// DefaultGeneratedCert defines the default generated certificate configuration.
+	DefaultGeneratedCert *GeneratedCert `json:"defaultGeneratedCert,omitempty"`
+
 	// Certificates is a list of secret names, each secret holding a key/certificate pair to add to the store.
 	Certificates []Certificate `json:"certificates,omitempty"`
-	// DefaultCertResolver is the name of the resolver that will be used to issue the DefaultCertificate.
-	DefaultCertResolver string `json:"defaultCertResolver,omitempty"`
-	// DefaultCertDomain is the domain definition for the DefaultCertificate.
-	DefaultCertDomain *types.Domain `json:"defaultCertDomain,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// GeneratedCert defines the default generated certificate configuration.
+type GeneratedCert struct {
+	// Resolver is the name of the resolver that will be used to issue the DefaultCertificate.
+	Resolver string `json:"resolver,omitempty" toml:"resolver,omitempty" yaml:"resolver,omitempty" export:"true"`
+	// Domain is the domain definition for the DefaultCertificate.
+	Domain *types.Domain `json:"domain,omitempty" toml:"domain,omitempty" yaml:"domain,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
