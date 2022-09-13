@@ -4,7 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"math/rand"
 	"net"
+	"time"
 
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -15,12 +18,14 @@ import (
 // Manager handles UDP services creation.
 type Manager struct {
 	configs map[string]*runtime.UDPServiceInfo
+	rand    *rand.Rand
 }
 
 // NewManager creates a new manager.
 func NewManager(conf *runtime.Configuration) *Manager {
 	return &Manager{
 		configs: conf.UDPServices,
+		rand:    rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
 
@@ -46,7 +51,11 @@ func (m *Manager) BuildUDP(rootCtx context.Context, serviceName string) (udp.Han
 	case conf.LoadBalancer != nil:
 		loadBalancer := udp.NewWRRLoadBalancer()
 
-		for name, server := range conf.LoadBalancer.Servers {
+		shuffledServers := make([]dynamic.UDPServer, len(conf.LoadBalancer.Servers))
+		copy(shuffledServers, conf.LoadBalancer.Servers)
+		m.rand.Shuffle(len(shuffledServers), func(i, j int) { shuffledServers[i], shuffledServers[j] = shuffledServers[j], shuffledServers[i] })
+
+		for name, server := range shuffledServers {
 			if _, _, err := net.SplitHostPort(server.Address); err != nil {
 				logger.Errorf("In udp service %q: %v", serviceQualifiedName, err)
 				continue
@@ -64,7 +73,12 @@ func (m *Manager) BuildUDP(rootCtx context.Context, serviceName string) (udp.Han
 		return loadBalancer, nil
 	case conf.Weighted != nil:
 		loadBalancer := udp.NewWRRLoadBalancer()
-		for _, service := range conf.Weighted.Services {
+
+		shuffledServices := make([]dynamic.UDPWRRService, len(conf.Weighted.Services))
+		copy(shuffledServices, conf.Weighted.Services)
+		m.rand.Shuffle(len(shuffledServices), func(i, j int) { shuffledServices[i], shuffledServices[j] = shuffledServices[j], shuffledServices[i] })
+
+		for _, service := range shuffledServices {
 			handler, err := m.BuildUDP(rootCtx, service.Name)
 			if err != nil {
 				logger.Errorf("In udp service %q: %v", serviceQualifiedName, err)
