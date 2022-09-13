@@ -366,43 +366,6 @@ func (s *HTTPSSuite) TestWithDefaultCertificateNoSNI(c *check.C) {
 	c.Assert(proto, checker.Equals, "h2")
 }
 
-// TestWithDefaultCertificateSANs involves a client sending a request with no ServerName
-// which does not match the CN of 'snitest.com.crt'.
-// The test verifies that traefik returns the default certificate satisfying the defaultCertSANs option,
-// and not a generated default certificate.
-func (s *HTTPSSuite) TestWithDefaultCertificateSANs(c *check.C) {
-	file := s.adaptFile(c, "fixtures/https/https_default_cert_sans.toml", struct{}{})
-	defer os.Remove(file)
-	cmd, display := s.traefikCmd(withConfigFile(file))
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	time.Sleep(5 * time.Second)
-	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`*`)"))
-	c.Assert(err, checker.IsNil)
-
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: true,
-		NextProtos:         []string{"h2", "http/1.1"},
-	}
-	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
-	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
-
-	defer conn.Close()
-	err = conn.Handshake()
-	c.Assert(err, checker.IsNil, check.Commentf("TLS handshake error"))
-
-	cs := conn.ConnectionState()
-	err = cs.PeerCertificates[0].VerifyHostname("www.snitest.com")
-	c.Assert(err, checker.IsNil, check.Commentf("server did not serve correct default certificate"))
-
-	proto := cs.NegotiatedProtocol
-	c.Assert(proto, checker.Equals, "h2")
-}
-
 // TestWithOverlappingCertificate involves a client sending a SNI hostname of
 // "www.snitest.com", which matches the CN of two static certificates:
 // 'wildcard.snitest.com.crt', and `www.snitest.com.crt`. The test
