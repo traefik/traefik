@@ -189,7 +189,7 @@ tls:
 [tls.stores]
   [tls.stores.default.defaultGeneratedCert]
     resolver = "myresolver"
-    [tls.stores.default.defaultGeneratedCert.Domain]
+    [tls.stores.default.defaultGeneratedCert.domain]
       main = "example.org"
       sans = ["foo.example.org", "bar.example.org"]
 ```
