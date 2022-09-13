@@ -333,6 +333,10 @@ func (c *Configuration) ValidateConfiguration() error {
 		return fmt.Errorf("consul provider cannot have both namespace and namespaces options configured")
 	}
 
+	if c.Providers.Nomad != nil && c.Providers.Nomad.Namespace != "" && len(c.Providers.Nomad.Namespaces) > 0 {
+		return fmt.Errorf("nomad provider cannot have both namespace and namespaces options configured")
+	}
+
 	return nil
 }
 

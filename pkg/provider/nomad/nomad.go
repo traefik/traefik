@@ -2,6 +2,7 @@ package nomad
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"text/template"
@@ -126,6 +127,11 @@ type EndpointConfig struct {
 
 // Init the Nomad Traefik Provider.
 func (p *Provider) Init() error {
+
+	if p.namespace == api.AllNamespacesNamespace {
+		return errors.New("wildcard namespace not supported")
+	}
+
 	defaultRuleTpl, err := provider.MakeDefaultRuleTemplate(p.DefaultRule, nil)
 	if err != nil {
 		return fmt.Errorf("error while parsing default rule: %w", err)
