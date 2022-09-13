@@ -188,7 +188,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 	}
 }
 
-func TestGetValidDomain(t *testing.T) {
+func TestProvider_sanitizeDomains(t *testing.T) {
 	testCases := []struct {
 		desc            string
 		domains         types.Domain
@@ -214,7 +214,7 @@ func TestGetValidDomain(t *testing.T) {
 			desc:            "no domain",
 			domains:         types.Domain{},
 			dnsChallenge:    nil,
-			expectedErr:     "unable to generate a certificate in ACME provider when no domain is given",
+			expectedErr:     "no domain was given",
 			expectedDomains: nil,
 		},
 		{

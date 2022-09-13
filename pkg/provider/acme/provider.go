@@ -381,7 +381,7 @@ func (p *Provider) resolveDomains(ctx context.Context, domains []string, tlsStor
 		return
 	}
 
-	logger.Debugf("Try to challenge certificate for domain %v found in HostSNI rule", domains)
+	logger.Debugf("Trying to challenge certificate for domain %v found in HostSNI rule", domains)
 
 	var domain types.Domain
 	if len(domains) > 0 {
