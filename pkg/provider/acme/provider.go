@@ -30,8 +30,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/version"
 )
 
-// oscpMustStaple enables OSCP stapling as from https://github.com/go-acme/lego/issues/270.
-var oscpMustStaple = false
+// ocspMustStaple enables OCSP stapling as from https://github.com/go-acme/lego/issues/270.
+var ocspMustStaple = false
 
 // Configuration holds ACME configuration provided by users.
 type Configuration struct {
@@ -581,7 +581,7 @@ func (p *Provider) resolveDefaultCertificate(ctx context.Context, domains []stri
 	request := certificate.ObtainRequest{
 		Domains:        domains,
 		Bundle:         true,
-		MustStaple:     oscpMustStaple,
+		MustStaple:     ocspMustStaple,
 		PreferredChain: p.PreferredChain,
 	}
 
@@ -626,7 +626,7 @@ func (p *Provider) resolveCertificate(ctx context.Context, domain types.Domain, 
 	request := certificate.ObtainRequest{
 		Domains:        domains,
 		Bundle:         true,
-		MustStaple:     oscpMustStaple,
+		MustStaple:     ocspMustStaple,
 		PreferredChain: p.PreferredChain,
 	}
 
@@ -817,7 +817,7 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 			Domain:      cert.Domain.Main,
 			PrivateKey:  cert.Key,
 			Certificate: cert.Certificate.Certificate,
-		}, true, oscpMustStaple, p.PreferredChain)
+		}, true, ocspMustStaple, p.PreferredChain)
 		if err != nil {
 			logger.WithError(err).Errorf("Error renewing certificate from LE: %v", cert.Domain)
 			continue
@@ -940,7 +940,7 @@ func (p *Provider) sanitizeDomains(ctx context.Context, domain types.Domain) ([]
 	return cleanDomains, nil
 }
 
-// certExists returns whether a certificate exists for the given domain.
+// certExists returns whether a certificate already exists for given domains.
 func (p *Provider) certExists(validDomains []string) bool {
 	p.certificatesMu.RLock()
 	defer p.certificatesMu.RUnlock()

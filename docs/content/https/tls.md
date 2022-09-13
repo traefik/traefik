@@ -227,8 +227,6 @@ labels: {
 }
 ```
 
-If no default certificate is provided, Traefik generates and uses a self-signed certificate.
-
 ## TLS Options
 
 The TLS options allow one to configure some parameters of the TLS connection.
