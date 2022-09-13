@@ -282,7 +282,7 @@ func getDefaultCertificate(ctx context.Context, tlsStore Store, st *CertificateS
 		return nil, err
 	}
 
-	if tlsStore.DefaultGeneratedCert != nil && tlsStore.DefaultGeneratedCert.Domain != nil {
+	if tlsStore.DefaultGeneratedCert != nil && tlsStore.DefaultGeneratedCert.Domain != nil && tlsStore.DefaultGeneratedCert.Resolver != "" {
 		domains, err := getValidDomains(*tlsStore.DefaultGeneratedCert.Domain)
 		if err != nil {
 			return defaultCert, fmt.Errorf("fallback to the internal generated certificate: invalid domains: %w", err)

@@ -490,19 +490,26 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 				}
 
 				for tlsStoreName, tlsStore := range config.TLS.Stores {
-					// Gives precedence to the user defined default certificate.
-					if tlsStore.DefaultCertificate != nil {
-						// TODO: warn something or enforce elsewhere?
-						continue
-					}
-
-					if tlsStore.DefaultGeneratedCert == nil ||
-						tlsStore.DefaultGeneratedCert.Domain == nil || tlsStore.DefaultGeneratedCert.Resolver != p.ResolverName {
-						continue
-					}
-
 					ctxTLSStore := log.With(ctx, log.Str(log.TLSStoreName, tlsStoreName))
 					logger := log.FromContext(ctxTLSStore)
+
+					if tlsStore.DefaultCertificate != nil && tlsStore.DefaultGeneratedCert != nil {
+						logger.Warn("defaultCertificate and defaultGeneratedCert cannot be defined at the same time.")
+					}
+
+					// Gives precedence to the user defined default certificate.
+					if tlsStore.DefaultCertificate != nil || tlsStore.DefaultGeneratedCert == nil {
+						continue
+					}
+
+					if tlsStore.DefaultGeneratedCert.Domain == nil || tlsStore.DefaultGeneratedCert.Resolver == "" {
+						logger.Warn("default generated certificate domain or resolver is missing.")
+						continue
+					}
+
+					if tlsStore.DefaultGeneratedCert.Resolver != p.ResolverName {
+						continue
+					}
 
 					validDomains, err := p.getValidDomains(ctx, *tlsStore.DefaultGeneratedCert.Domain)
 					if err != nil {
