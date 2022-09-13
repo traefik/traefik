@@ -157,7 +157,7 @@ data:
   tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
 ```
 
-If no default certificate is provided, Traefik generates and uses a self-signed certificate.
+If no `defaultCertificate` is provided, Traefik will use the generated one.
 
 ### ACME Default Certificate
 
