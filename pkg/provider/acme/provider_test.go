@@ -188,7 +188,7 @@ func TestGetUncheckedCertificates(t *testing.T) {
 	}
 }
 
-func TestGetValidDomain(t *testing.T) {
+func TestProvider_sanitizeDomains(t *testing.T) {
 	testCases := []struct {
 		desc            string
 		domains         types.Domain
@@ -214,7 +214,7 @@ func TestGetValidDomain(t *testing.T) {
 			desc:            "no domain",
 			domains:         types.Domain{},
 			dnsChallenge:    nil,
-			expectedErr:     "unable to generate a certificate in ACME provider when no domain is given",
+			expectedErr:     "no domain was given",
 			expectedDomains: nil,
 		},
 		{
@@ -254,7 +254,7 @@ func TestGetValidDomain(t *testing.T) {
 
 			acmeProvider := Provider{Configuration: &Configuration{DNSChallenge: test.dnsChallenge}}
 
-			domains, err := acmeProvider.getValidDomains(context.Background(), test.domains)
+			domains, err := acmeProvider.sanitizeDomains(context.Background(), test.domains)
 
 			if len(test.expectedErr) > 0 {
 				assert.EqualError(t, err, test.expectedErr, "Unexpected error.")
