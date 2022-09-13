@@ -250,14 +250,8 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	}
 
 	// Enable anonymous usage when pilot is enabled.
-	if c.Pilot != nil && c.Pilot.Token != "" {
+	if c.Pilot != nil {
 		c.Global.SendAnonymousUsage = true
-	}
-
-	// Create Pilot struct to apply default value on undefined configuration.
-	if c.Pilot == nil {
-		c.Pilot = &Pilot{}
-		c.Pilot.SetDefaults()
 	}
 
 	// Disable Gateway API provider if not enabled in experimental.
