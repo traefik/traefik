@@ -47,6 +47,7 @@ which in turn will create the resulting routers, services, handlers, etc.
           - watch
       - apiGroups:
           - extensions
+          - networking.k8s.io
         resources:
           - ingresses/status
         verbs:
@@ -438,6 +439,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
           - watch
       - apiGroups:
           - extensions
+          - networking.k8s.io
         resources:
           - ingresses/status
         verbs:
@@ -645,6 +647,7 @@ For more options, please refer to the available [annotations](#on-ingress).
           - watch
       - apiGroups:
           - extensions
+          - networking.k8s.io
         resources:
           - ingresses/status
         verbs:
@@ -944,3 +947,5 @@ This will allow users to create a "default router" that will match all unmatched
     to avoid this global ingress from satisfying requests that could match other ingresses.
 
     To do this, use the `traefik.ingress.kubernetes.io/router.priority` annotation (as seen in [Annotations on Ingress](#on-ingress)) on your ingresses accordingly.
+
+{!traefik-for-business-applications.md!}

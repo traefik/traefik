@@ -19,3 +19,5 @@ The next sections of this documentation explain how to configure the TLS connect
 That is to say, how to obtain [TLS certificates](./tls.md#certificates-definition):
 either through a definition in the dynamic configuration, or through [Let's Encrypt](./acme.md) (ACME).
 And how to configure [TLS options](./tls.md#tls-options), and [certificates stores](./tls.md#certificates-stores).
+
+{!traefik-for-business-applications.md!}
