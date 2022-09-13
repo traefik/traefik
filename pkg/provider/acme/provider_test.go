@@ -254,7 +254,7 @@ func TestGetValidDomain(t *testing.T) {
 
 			acmeProvider := Provider{Configuration: &Configuration{DNSChallenge: test.dnsChallenge}}
 
-			domains, err := acmeProvider.getValidDomains(context.Background(), test.domains)
+			domains, err := acmeProvider.sanitizeDomains(context.Background(), test.domains)
 
 			if len(test.expectedErr) > 0 {
 				assert.EqualError(t, err, test.expectedErr, "Unexpected error.")
