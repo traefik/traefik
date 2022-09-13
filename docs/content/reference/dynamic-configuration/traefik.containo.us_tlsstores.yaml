@@ -63,6 +63,27 @@ spec:
                 required:
                 - secretName
                 type: object
+              defaultGeneratedCert:
+                description: DefaultGeneratedCert defines the default generated certificate
+                  configuration.
+                properties:
+                  domain:
+                    description: Domain is the domain definition for the DefaultCertificate.
+                    properties:
+                      main:
+                        description: Main defines the main domain name.
+                        type: string
+                      sans:
+                        description: SANs defines the subject alternative domain names.
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  resolver:
+                    description: Resolver is the name of the resolver that will be
+                      used to issue the DefaultCertificate.
+                    type: string
+                type: object
             type: object
         required:
         - metadata
