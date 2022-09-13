@@ -30,7 +30,6 @@ func initPlugins(staticCfg *static.Configuration) (*plugins.Client, map[string]p
 	if hasPlugins(staticCfg) {
 		opts := plugins.ClientOptions{
 			Output: outputDir,
-			Token:  getPilotToken(staticCfg),
 		}
 
 		var err error
@@ -73,18 +72,6 @@ func checkUniquePluginNames(e *static.Experimental) error {
 	}
 
 	return nil
-}
-
-func isPilotEnabled(staticCfg *static.Configuration) bool {
-	return staticCfg.Pilot != nil && staticCfg.Pilot.Token != ""
-}
-
-func getPilotToken(staticCfg *static.Configuration) string {
-	if staticCfg.Pilot == nil {
-		return ""
-	}
-
-	return staticCfg.Pilot.Token
 }
 
 func hasPlugins(staticCfg *static.Configuration) bool {
