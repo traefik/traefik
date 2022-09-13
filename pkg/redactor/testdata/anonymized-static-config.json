@@ -445,9 +445,6 @@
       }
     }
   },
-  "pilot": {
-    "token": "xxxx"
-  },
   "experimental": {
     "plugins": {
       "Descriptor0": {
