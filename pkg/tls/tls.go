@@ -44,9 +44,12 @@ type Store struct {
 
 // +k8s:deepcopy-gen=true
 
+// GeneratedCert defines the default generated certificate configuration.
 type GeneratedCert struct {
-	Resolver string        `json:"resolver,omitempty" toml:"resolver,omitempty" yaml:"resolver,omitempty" export:"true"`
-	Domain   *types.Domain `json:"domain,omitempty" toml:"domain,omitempty" yaml:"domain,omitempty" export:"true"`
+	// Resolver is the name of the resolver that will be used to issue the DefaultCertificate.
+	Resolver string `json:"resolver,omitempty" toml:"resolver,omitempty" yaml:"resolver,omitempty" export:"true"`
+	// Domain is the domain definition for the DefaultCertificate.
+	Domain *types.Domain `json:"domain,omitempty" toml:"domain,omitempty" yaml:"domain,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
