@@ -8,7 +8,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
@@ -57,11 +56,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 		}
 		duration := time.Duration(*conf.LoadBalancer.TerminationDelay) * time.Millisecond
 
-		shuffledServers := make([]dynamic.TCPServer, len(conf.LoadBalancer.Servers))
-		copy(shuffledServers, conf.LoadBalancer.Servers)
-		m.rand.Shuffle(len(shuffledServers), func(i, j int) { shuffledServers[i], shuffledServers[j] = shuffledServers[j], shuffledServers[i] })
-
-		for name, server := range shuffledServers {
+		for name, server := range shuffle(conf.LoadBalancer.Servers, m.rand) {
 			if _, _, err := net.SplitHostPort(server.Address); err != nil {
 				logger.Errorf("In service %q: %v", serviceQualifiedName, err)
 				continue
@@ -80,11 +75,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 	case conf.Weighted != nil:
 		loadBalancer := tcp.NewWRRLoadBalancer()
 
-		shuffledServices := make([]dynamic.TCPWRRService, len(conf.Weighted.Services))
-		copy(shuffledServices, conf.Weighted.Services)
-		m.rand.Shuffle(len(shuffledServices), func(i, j int) { shuffledServices[i], shuffledServices[j] = shuffledServices[j], shuffledServices[i] })
-
-		for _, service := range shuffledServices {
+		for _, service := range shuffle(conf.Weighted.Services, m.rand) {
 			handler, err := m.BuildTCP(rootCtx, service.Name)
 			if err != nil {
 				logger.Errorf("In service %q: %v", serviceQualifiedName, err)
@@ -98,4 +89,12 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 		conf.AddError(err, true)
 		return nil, err
 	}
+}
+
+func shuffle[T any](values []T, r *rand.Rand) []T {
+	shuffled := make([]T, len(values))
+	copy(shuffled, values)
+	r.Shuffle(len(shuffled), func(i, j int) { shuffled[i], shuffled[j] = shuffled[j], shuffled[i] })
+
+	return shuffled
 }
