@@ -47,7 +47,7 @@ type item struct {
 	ExtraConf configuration // global options
 }
 
-// BuildProviders builds Nomad provider instances for the given namespaces configuration.
+// ProviderBuilder is responsible for constructing namespaced instances of the Nomad provider.
 type ProviderBuilder struct {
 	Configuration `yaml:",inline" export:"true"`
 
@@ -56,6 +56,7 @@ type ProviderBuilder struct {
 	Namespaces []string `description:"Sets the Nomad namespaces used to discover services." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty"`
 }
 
+// BuildProviders builds Nomad provider instances for the given namespaces configuration.
 func (p *ProviderBuilder) BuildProviders() []*Provider {
 	if p.Namespace != "" {
 		log.WithoutContext().Warnf("Namespace option is deprecated, please use the Namespaces option instead.")
@@ -82,6 +83,7 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 	return providers
 }
 
+// Configuration represents the Nomad provider configuration.
 type Configuration struct {
 	DefaultRule      string          `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 	Constraints      string          `description:"Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
@@ -101,7 +103,7 @@ func (c *Configuration) SetDefaults() {
 	c.DefaultRule = defaultTemplateRule
 }
 
-// Provider holds configurations of the provider.
+// Provider holds configuration along with the namespace it will discover services in.
 type Provider struct {
 	Configuration
 
