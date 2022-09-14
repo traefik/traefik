@@ -37,11 +37,10 @@ func (v Handler) Append(router *mux.Router) {
 	router.Methods(http.MethodGet).Path("/api/version").
 		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 			v := struct {
-				Version      string
-				Codename     string
-				StartDate    time.Time `json:"startDate"`
-				UUID         string    `json:"uuid,omitempty"`
-				PilotEnabled bool      `json:"pilotEnabled"`
+				Version   string
+				Codename  string
+				StartDate time.Time `json:"startDate"`
+				UUID      string    `json:"uuid,omitempty"`
 			}{
 				Version:   Version,
 				Codename:  Codename,

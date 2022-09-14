@@ -462,9 +462,6 @@ certificatesResolvers:
       httpChallenge:
         entryPoint: foobar
       tlsChallenge: {}
-pilot:
-  token: foobar
-  dashboard: true
 hub:
   tls:
     insecure: true
