@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"net"
+	"time"
 
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -15,12 +17,14 @@ import (
 // Manager handles UDP services creation.
 type Manager struct {
 	configs map[string]*runtime.UDPServiceInfo
+	rand    *rand.Rand // For the initial shuffling of load-balancers.
 }
 
 // NewManager creates a new manager.
 func NewManager(conf *runtime.Configuration) *Manager {
 	return &Manager{
 		configs: conf.UDPServices,
+		rand:    rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
 
@@ -46,7 +50,7 @@ func (m *Manager) BuildUDP(rootCtx context.Context, serviceName string) (udp.Han
 	case conf.LoadBalancer != nil:
 		loadBalancer := udp.NewWRRLoadBalancer()
 
-		for name, server := range conf.LoadBalancer.Servers {
+		for name, server := range shuffle(conf.LoadBalancer.Servers, m.rand) {
 			if _, _, err := net.SplitHostPort(server.Address); err != nil {
 				logger.Errorf("In udp service %q: %v", serviceQualifiedName, err)
 				continue
@@ -64,7 +68,8 @@ func (m *Manager) BuildUDP(rootCtx context.Context, serviceName string) (udp.Han
 		return loadBalancer, nil
 	case conf.Weighted != nil:
 		loadBalancer := udp.NewWRRLoadBalancer()
-		for _, service := range conf.Weighted.Services {
+
+		for _, service := range shuffle(conf.Weighted.Services, m.rand) {
 			handler, err := m.BuildUDP(rootCtx, service.Name)
 			if err != nil {
 				logger.Errorf("In udp service %q: %v", serviceQualifiedName, err)
@@ -78,4 +83,12 @@ func (m *Manager) BuildUDP(rootCtx context.Context, serviceName string) (udp.Han
 		conf.AddError(err, true)
 		return nil, err
 	}
+}
+
+func shuffle[T any](values []T, r *rand.Rand) []T {
+	shuffled := make([]T, len(values))
+	copy(shuffled, values)
+	r.Shuffle(len(shuffled), func(i, j int) { shuffled[i], shuffled[j] = shuffled[j], shuffled[i] })
+
+	return shuffled
 }
