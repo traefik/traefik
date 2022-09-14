@@ -4,11 +4,11 @@ set -e
 rm -f dist/traefik
 
 FLAGS=()
-if [ -n "$VERBOSE" ]; then
+if [ -n "${VERBOSE}" ]; then
     FLAGS+=(-v)
 fi
 
-if [ -z "$VERSION" ]; then
+if [ -z "${VERSION}" ]; then
     VERSION=$(git rev-parse HEAD)
 fi
 
@@ -22,6 +22,7 @@ fi
 
 # Build binaries
 # shellcheck disable=SC2086
+# shellcheck disable=SC2048
 CGO_ENABLED=0 GOGC=off go build ${FLAGS[*]} -ldflags "-s -w \
     -X github.com/traefik/traefik/v2/pkg/version.Version=$VERSION \
     -X github.com/traefik/traefik/v2/pkg/version.Codename=$CODENAME \
