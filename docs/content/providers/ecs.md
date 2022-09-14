@@ -47,7 +47,8 @@ Traefik needs the following policy to read ECS information:
                 "ecs:DescribeTasks",
                 "ecs:DescribeContainerInstances",
                 "ecs:DescribeTaskDefinition",
-                "ec2:DescribeInstances"
+                "ec2:DescribeInstances",
+                "ssm:DescribeInstanceInformation"
             ],
             "Resource": [
                 "*"
@@ -56,6 +57,10 @@ Traefik needs the following policy to read ECS information:
     ]
 }
 ```
+
+!!! info "ECS Anywhere"
+
+    Please note that the `ssm:DescribeInstanceInformation` action is required for ECS anywhere instances discovery.
 
 ## Provider Configuration
 
@@ -83,6 +88,33 @@ providers:
 
 ```bash tab="CLI"
 --providers.ecs.autoDiscoverClusters=true
+# ...
+```
+
+### `ecsAnywhere`
+
+_Optional, Default=false_
+
+Enable ECS Anywhere support.
+
+- If set to `true` service discovery is enabled for ECS Anywhere instances.
+- If set to `false` service discovery is disabled for ECS Anywhere instances.
+
+```yaml tab="File (YAML)"
+providers:
+  ecs:
+    ecsAnywhere: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.ecs]
+  ecsAnywhere = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.ecs.ecsAnywhere=true
 # ...
 ```
 
