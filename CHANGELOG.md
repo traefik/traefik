@@ -1,5 +1,5 @@
-## [v2.9.0-rc1](https://github.com/traefik/traefik/tree/v2.9.0-rc1) (2022-09-14)
-[All Commits](https://github.com/traefik/traefik/compare/v2.8.0-rc1...v2.9.0-rc1)
+## [v2.9.0-rc1](https://github.com/traefik/traefik/tree/v2.9.0-rc2) (2022-09-14)
+[All Commits](https://github.com/traefik/traefik/compare/v2.8.0-rc1...v2.9.0-rc2)
 
 **Enhancements:**
 - **[acme,tls]** ACME Default Certificate ([#9189](https://github.com/traefik/traefik/pull/9189) by [rtribotte](https://github.com/rtribotte))
@@ -29,6 +29,11 @@
 - Merge current v2.8 into master ([#9209](https://github.com/traefik/traefik/pull/9209) by [kevinpollet](https://github.com/kevinpollet))
 - Merge current v2.8 into master ([#9146](https://github.com/traefik/traefik/pull/9146) by [kevinpollet](https://github.com/kevinpollet))
 - Merge current v2.8 into master ([#9135](https://github.com/traefik/traefik/pull/9135) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v2.9.0-rc1](https://github.com/traefik/traefik/tree/v2.9.0-rc1) (2022-09-14)
+[All Commits](https://github.com/traefik/traefik/compare/v2.8.0-rc1...v2.9.0-rc1)
+
+Release canceled.
 
 ## [v2.8.5](https://github.com/traefik/traefik/tree/v2.8.5) (2022-09-13)
 [All Commits](https://github.com/traefik/traefik/compare/v2.8.4...v2.8.5)
