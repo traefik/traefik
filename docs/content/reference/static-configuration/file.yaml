@@ -220,6 +220,7 @@ providers:
     region: foobar
     accessKeyID: foobar
     secretAccessKey: foobar
+    ecsAnywhere: true
   consul:
     rootKey: foobar
     endpoints:
