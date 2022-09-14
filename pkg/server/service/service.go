@@ -214,9 +214,7 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 		config.Sticky.Cookie.Name = cookie.GetName(config.Sticky.Cookie.Name, serviceName)
 	}
 
-	shuffledServices := make([]dynamic.WRRService, len(config.Services))
-	copy(shuffledServices, config.Services)
-	m.rand.Shuffle(len(shuffledServices), func(i, j int) { shuffledServices[i], shuffledServices[j] = shuffledServices[j], shuffledServices[i] })
+	shuffledServices := shuffle(config.Services, m.rand)
 
 	balancer := wrr.New(config.Sticky, config.HealthCheck)
 	for _, service := range shuffledServices {
@@ -421,9 +419,7 @@ func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, servi
 func (m *Manager) upsertServers(ctx context.Context, lb healthcheck.BalancerHandler, servers []dynamic.Server) error {
 	logger := log.FromContext(ctx)
 
-	shuffledServers := make([]dynamic.Server, len(servers))
-	copy(shuffledServers, servers)
-	m.rand.Shuffle(len(shuffledServers), func(i, j int) { shuffledServers[i], shuffledServers[j] = shuffledServers[j], shuffledServers[i] })
+	shuffledServers := shuffle(servers, m.rand)
 
 	for name, srv := range shuffledServers {
 		u, err := url.Parse(srv.URL)
@@ -453,4 +449,12 @@ func convertSameSite(sameSite string) http.SameSite {
 	default:
 		return 0
 	}
+}
+
+func shuffle[T any](values []T, r *rand.Rand) []T {
+	shuffled := make([]T, len(values))
+	copy(shuffled, values)
+	r.Shuffle(len(shuffled), func(i, j int) { shuffled[i], shuffled[j] = shuffled[j], shuffled[i] })
+
+	return shuffled
 }
