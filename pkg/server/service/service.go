@@ -68,7 +68,7 @@ type Manager struct {
 	// which is why there is not just one Balancer per service name.
 	balancers map[string]healthcheck.Balancers
 	configs   map[string]*runtime.ServiceInfo
-	rand      *rand.Rand // for the initial shuffling of load-balancers
+	rand      *rand.Rand // For the initial shuffling of load-balancers.
 }
 
 // BuildHTTP Creates a http.Handler for a service configuration.

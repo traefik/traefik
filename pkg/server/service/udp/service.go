@@ -17,7 +17,7 @@ import (
 // Manager handles UDP services creation.
 type Manager struct {
 	configs map[string]*runtime.UDPServiceInfo
-	rand    *rand.Rand
+	rand    *rand.Rand // For the initial shuffling of load-balancers.
 }
 
 // NewManager creates a new manager.
