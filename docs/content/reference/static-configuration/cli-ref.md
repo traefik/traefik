@@ -573,6 +573,9 @@ Constraints is an expression that Traefik matches against the container's labels
 `--providers.ecs.defaultrule`:  
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
+`--providers.ecs.ecsanywhere`:  
+Enable ECS Anywhere support (Default: ```false```)
+
 `--providers.ecs.exposedbydefault`:  
 Expose services by default (Default: ```true```)
 

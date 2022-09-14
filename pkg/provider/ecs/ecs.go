@@ -34,6 +34,7 @@ type Provider struct {
 	// Provider lookup parameters.
 	Clusters             []string `description:"ECS Clusters name" json:"clusters,omitempty" toml:"clusters,omitempty" yaml:"clusters,omitempty" export:"true"`
 	AutoDiscoverClusters bool     `description:"Auto discover cluster" json:"autoDiscoverClusters,omitempty" toml:"autoDiscoverClusters,omitempty" yaml:"autoDiscoverClusters,omitempty" export:"true"`
+	ECSAnywhere          bool     `description:"Enable ECS Anywhere support" json:"ecsAnywhere,omitempty" toml:"ecsAnywhere,omitempty" yaml:"ecsAnywhere,omitempty" export:"true"`
 	Region               string   `description:"The AWS region to use for requests"  json:"region,omitempty" toml:"region,omitempty" yaml:"region,omitempty" export:"true"`
 	AccessKeyID          string   `description:"The AWS credentials access key to use for making requests" json:"accessKeyID,omitempty" toml:"accessKeyID,omitempty" yaml:"accessKeyID,omitempty" loggable:"false"`
 	SecretAccessKey      string   `description:"The AWS credentials access key to use for making requests" json:"secretAccessKey,omitempty" toml:"secretAccessKey,omitempty" yaml:"secretAccessKey,omitempty" loggable:"false"`
@@ -280,10 +281,13 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 			return nil, err
 		}
 
-		// Try looking up for instances on ECS Anywhere
-		miInstances, err := p.lookupMiInstances(ctx, client, &c, tasks)
-		if err != nil {
-			return nil, err
+		miInstances := make(map[string]*ssm.InstanceInformation)
+		if p.ECSAnywhere {
+			// Try looking up for instances on ECS Anywhere
+			miInstances, err = p.lookupMiInstances(ctx, client, &c, tasks)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		taskDefinitions, err := p.lookupTaskDefinitions(ctx, client, tasks)
@@ -411,6 +415,13 @@ func (p *Provider) lookupMiInstances(ctx context.Context, client *awsClient, clu
 
 		for _, container := range resp.ContainerInstances {
 			instanceIds[aws.StringValue(container.Ec2InstanceId)] = aws.StringValue(container.ContainerInstanceArn)
+
+			// Disallow EC2 Instance IDs
+			// This prevents considering EC2 instances in ECS
+			// and getting InvalidInstanceID.Malformed error when calling the describe-instances endpoint.
+			if !strings.HasPrefix(aws.StringValue(container.Ec2InstanceId), "mi-") {
+				continue
+			}
 
 			instanceArns = append(instanceArns, container.Ec2InstanceId)
 		}
