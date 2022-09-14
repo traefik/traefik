@@ -57,10 +57,10 @@ Traefik needs the following policy to read ECS information:
     ]
 }
 ```
+
 !!! info "ECS Anywhere"
 
     Please note that the `ssm:DescribeInstanceInformation` action is required for ECS anywhere instances discovery.
-
 
 ## Provider Configuration
 
