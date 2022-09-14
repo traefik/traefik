@@ -57,7 +57,6 @@ type ProviderBuilder struct {
 }
 
 func (p *ProviderBuilder) BuildProviders() []*Provider {
-
 	if p.Namespace != "" {
 		log.WithoutContext().Warnf("Namespace option is deprecated, please use the Namespaces option instead.")
 	}
@@ -127,7 +126,6 @@ type EndpointConfig struct {
 
 // Init the Nomad Traefik Provider.
 func (p *Provider) Init() error {
-
 	if p.namespace == api.AllNamespacesNamespace {
 		return errors.New("wildcard namespace not supported")
 	}

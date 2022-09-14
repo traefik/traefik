@@ -855,7 +855,7 @@ Expose Nomad services by default. (Default: ```true```)
 `--providers.nomad.namespace`:  
 Sets the Nomad namespace used to discover services.
 
-`--providers.nomad.namespaces`:
+`--providers.nomad.namespaces`:  
 Sets the Nomad namespaces used to discover services.
 
 `--providers.nomad.prefix`:  
