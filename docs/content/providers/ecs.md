@@ -87,6 +87,33 @@ providers:
 # ...
 ```
 
+### `ecsAnywhere`
+
+_Optional, Default=false_
+
+Enable ECS Anywhere support.
+
+- If set to `true` service discovery is enabled for ECS Anywhere instances.
+- If set to `false` service discovery is disabled for ECS Anywhere instances.
+
+```yaml tab="File (YAML)"
+providers:
+  ecs:
+    ecsAnywhere: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.ecs]
+  ecsAnywhere = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.ecs.ecsAnywhere=true
+# ...
+```
+
 ### `clusters`
 
 _Optional, Default=["default"]_
