@@ -61,8 +61,6 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 		log.WithoutContext().Warnf("Namespace option is deprecated, please use the Namespaces option instead.")
 	}
 
-	// TODO warn and skip the `*` namespace?
-
 	if len(p.Namespaces) == 0 {
 		return []*Provider{{
 			Configuration: p.Configuration,
