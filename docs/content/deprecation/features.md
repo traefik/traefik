@@ -4,22 +4,19 @@ This page is maintained and updated periodically to reflect our roadmap and any 
 
 | Feature                                                     | Deprecated | End of Support | Removal |
 |-------------------------------------------------------------|------------|----------------|---------|
-| [Pilot Dashboard (Metrics)](#pilot-dashboard-metrics)       | 2.7        | 2.8            | 3.0     |
-| [Pilot Plugins](#pilot-plugins)                             | 2.7        | 2.8            | 3.0     |
+| [Pilot](#pilot)                                             | 2.7        | 2.8            | 2.9     |
 | [Consul Enterprise Namespace](#consul-enterprise-namespace) | 2.8        | N/A            | 3.0     |
 | [TLS 1.0 and 1.1 Support](#tls-10-and-11)                   | N/A        | 2.8            | N/A     |
 
 ## Impact
 
-### Pilot Dashboard (Metrics)
+### Pilot
 
 Metrics will continue to function normally up to 2.8, when they will be disabled.  
-In 3.0, the Pilot platform and all Traefik integration code will be permanently removed.
+In 2.9, the Pilot platform and all Traefik integration code will be permanently removed.
 
-### Pilot Plugins 
-
-Starting on 2.7 the pilot token will not be a requirement anymore.  
-Since 2.8, a [new plugin catalog](https://plugins.traefik.io) is available, decoupled from pilot.
+Starting on 2.7 the pilot token will not be a requirement anymore for plugins.  
+Since 2.8, a [new plugin catalog](https://plugins.traefik.io) is available, decoupled from Pilot.
 
 ### Consul Enterprise Namespace
 
