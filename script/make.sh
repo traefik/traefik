@@ -18,9 +18,9 @@ SCRIPT_DIR="$(cd "$(dirname "${0}")" && pwd -P)"
 
 bundle() {
     local bundle="$1"; shift
-    echo "---> Making bundle: $(basename "$bundle") (in $SCRIPT_DIR)"
+    echo "---> Making bundle: $(basename "${bundle}") (in $SCRIPT_DIR)"
     # shellcheck source=/dev/null
-    source "${SCRIPT_DIR}/$bundle"
+    source "${SCRIPT_DIR}/${bundle}"
 }
 
 if [ $# -lt 1 ]; then
@@ -28,7 +28,8 @@ if [ $# -lt 1 ]; then
 else
     bundles=${*}
 fi
+# shellcheck disable=SC2048
 for bundle in ${bundles[*]}; do
-    bundle "$bundle"
+    bundle "${bundle}"
     echo
 done
