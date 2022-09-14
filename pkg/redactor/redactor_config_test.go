@@ -721,6 +721,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 		DefaultRule:          "PathPrefix(`/`)",
 		Clusters:             []string{"Cluster1", "Cluster2"},
 		AutoDiscoverClusters: true,
+		ECSAnywhere:          true,
 		Region:               "Awsregion",
 		AccessKeyID:          "AwsAccessKeyID",
 		SecretAccessKey:      "AwsSecretAccessKey",
