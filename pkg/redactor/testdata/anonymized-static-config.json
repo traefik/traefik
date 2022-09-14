@@ -223,6 +223,7 @@
         "Cluster2"
       ],
       "autoDiscoverClusters": true,
+      "ecsAnywhere": true,
       "region": "Awsregion",
       "accessKeyID": "xxxx",
       "secretAccessKey": "xxxx"
