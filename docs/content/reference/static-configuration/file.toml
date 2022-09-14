@@ -204,6 +204,7 @@
     region = "foobar"
     accessKeyID = "foobar"
     secretAccessKey = "foobar"
+    ecsAnywhere = true
   [providers.consul]
     rootKey = "foobar"
     endpoints = ["foobar", "foobar"]
