@@ -333,8 +333,8 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 						healthStatus: aws.StringValue(task.HealthStatus),
 					}
 				} else {
-					miContainerInstances := miInstances[aws.StringValue(task.ContainerInstanceArn)]
-					if containerInstance == nil && miContainerInstances == nil {
+					miContainerInstance := miInstances[aws.StringValue(task.ContainerInstanceArn)]
+					if containerInstance == nil && miContainerInstance == nil {
 						logger.Errorf("Unable to find container instance information for %s", aws.StringValue(container.Name))
 						continue
 					}
@@ -352,8 +352,8 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 					if containerInstance != nil {
 						privateIPAddress = aws.StringValue(containerInstance.PrivateIpAddress)
 						stateName = aws.StringValue(containerInstance.State.Name)
-					} else if miContainerInstances != nil {
-						privateIPAddress = aws.StringValue(miContainerInstances.IPAddress)
+					} else if miContainerInstance != nil {
+						privateIPAddress = aws.StringValue(miContainerInstance.IPAddress)
 						stateName = aws.StringValue(task.LastStatus)
 					}
 
