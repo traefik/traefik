@@ -1,3 +1,35 @@
+## [v2.9.0-rc1](https://github.com/traefik/traefik/tree/v2.9.0-rc1) (2022-09-14)
+[All Commits](https://github.com/traefik/traefik/compare/v2.8.0-rc1...v2.9.0-rc1)
+
+**Enhancements:**
+- **[acme,tls]** ACME Default Certificate ([#9189](https://github.com/traefik/traefik/pull/9189) by [rtribotte](https://github.com/rtribotte))
+- **[consul,etcd,zk,kv,redis]** Update valkeyrie to v1.0.0 ([#9316](https://github.com/traefik/traefik/pull/9316) by [ldez](https://github.com/ldez))
+- **[consulcatalog,nomad]** Support Nomad canary deployment ([#9216](https://github.com/traefik/traefik/pull/9216) by [rtribotte](https://github.com/rtribotte))
+- **[consulcatalog]** Move consulcatalog provider to only use health apis ([#9140](https://github.com/traefik/traefik/pull/9140) by [kevinpollet](https://github.com/kevinpollet))
+- **[docker]** Add support for reaching containers using host networking on Podman ([#9190](https://github.com/traefik/traefik/pull/9190) by [freundTech](https://github.com/freundTech))
+- **[docker]** Use IPv6 address ([#9183](https://github.com/traefik/traefik/pull/9183) by [tomMoulard](https://github.com/tomMoulard))
+- **[docker]** Add allowEmptyServices for Docker provider ([#8690](https://github.com/traefik/traefik/pull/8690) by [jvasseur](https://github.com/jvasseur))
+- **[ecs]**  Add support for ECS Anywhere ([#9324](https://github.com/traefik/traefik/pull/9324) by [tuxpower](https://github.com/tuxpower))
+- **[healthcheck]** Add a method option to the service Health Check ([#9165](https://github.com/traefik/traefik/pull/9165) by [ddtmachado](https://github.com/ddtmachado))
+- **[http3]** Upgrade quic-go to v0.28.0 ([#9187](https://github.com/traefik/traefik/pull/9187) by [tomMoulard](https://github.com/tomMoulard))
+- **[http]** Start polling HTTP provider at the beginning ([#9116](https://github.com/traefik/traefik/pull/9116) by [moutoum](https://github.com/moutoum))
+- **[k8s/crd,plugins]** Load plugin configuration field value from Kubernetes Secret ([#9103](https://github.com/traefik/traefik/pull/9103) by [rtribotte](https://github.com/rtribotte))
+- **[logs,tcp]** Quiet down TCP RST packet error on read operation ([#9007](https://github.com/traefik/traefik/pull/9007) by [rtribotte](https://github.com/rtribotte))
+- **[metrics]** Add traffic size metrics ([#9208](https://github.com/traefik/traefik/pull/9208) by [tomMoulard](https://github.com/tomMoulard))
+- **[middleware,pilot]** Remove Pilot support ([#9330](https://github.com/traefik/traefik/pull/9330) by [ldez](https://github.com/ldez))
+- **[rules,tcp]** Support ALPN for TCP + TLS routers ([#8913](https://github.com/traefik/traefik/pull/8913) by [sh7dm](https://github.com/sh7dm))
+- **[tcp,service,udp]** Make the loadbalancers servers order random ([#9037](https://github.com/traefik/traefik/pull/9037) by [qmloong](https://github.com/qmloong))
+- **[tls]** Change default TLS options for more security ([#8951](https://github.com/traefik/traefik/pull/8951) by [ddtmachado](https://github.com/ddtmachado))
+- **[tracing]** Add Datadog GlobalTags support ([#9266](https://github.com/traefik/traefik/pull/9266) by [sdelicata](https://github.com/sdelicata))
+
+**Misc:**
+- Merge v2.8.5 into master ([#9329](https://github.com/traefik/traefik/pull/9329) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.8 into master ([#9291](https://github.com/traefik/traefik/pull/9291) by [rtribotte](https://github.com/rtribotte))
+- Merge current v2.8 into master ([#9265](https://github.com/traefik/traefik/pull/9265) by [kevinpollet](https://github.com/kevinpollet))
+- Merge current v2.8 into master ([#9209](https://github.com/traefik/traefik/pull/9209) by [kevinpollet](https://github.com/kevinpollet))
+- Merge current v2.8 into master ([#9146](https://github.com/traefik/traefik/pull/9146) by [kevinpollet](https://github.com/kevinpollet))
+- Merge current v2.8 into master ([#9135](https://github.com/traefik/traefik/pull/9135) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v2.8.5](https://github.com/traefik/traefik/tree/v2.8.5) (2022-09-13)
 [All Commits](https://github.com/traefik/traefik/compare/v2.8.4...v2.8.5)
 
