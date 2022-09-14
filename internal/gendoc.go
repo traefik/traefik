@@ -64,6 +64,10 @@ THIS FILE MUST NOT BE EDITED BY HAND
 			continue
 		}
 
+		if strings.HasPrefix(flat.Name, "pilot.") || strings.HasPrefix(flat.Name, "TRAEFIK_PILOT_") {
+			continue
+		}
+
 		if prefix == "" {
 			w.writeln("`" + prefix + strings.ReplaceAll(flat.Name, "[0]", "_n") + "`:  ")
 		} else {
