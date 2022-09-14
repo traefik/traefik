@@ -437,10 +437,6 @@
         entryPoint = "foobar"
       [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]
 
-[pilot]
-  token = "foobar"
-  dashboard = true
-
 [hub]
   [hub.tls]
     insecure = true
