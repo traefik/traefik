@@ -29,7 +29,7 @@ const (
 	pluginManifest = ".traefik.yml"
 )
 
-const pluginsURL = "https://plugin.pilot.traefik.io/public/"
+const pluginsURL = "https://plugins.traefik.io/public/"
 
 const (
 	hashHeader  = "X-Plugin-Hash"
