@@ -29,20 +29,19 @@ const (
 	pluginManifest = ".traefik.yml"
 )
 
-const pilotURL = "https://plugin.pilot.traefik.io/public/"
+const pluginsURL = "https://plugins.traefik.io/public/"
 
 const (
 	hashHeader  = "X-Plugin-Hash"
 	tokenHeader = "X-Token"
 )
 
-// ClientOptions the options of a Traefik Pilot client.
+// ClientOptions the options of a Traefik plugins client.
 type ClientOptions struct {
 	Output string
-	Token  string
 }
 
-// Client a Traefik Pilot client.
+// Client a Traefik plugins client.
 type Client struct {
 	HTTPClient *http.Client
 	baseURL    *url.URL
@@ -54,9 +53,9 @@ type Client struct {
 	sources   string
 }
 
-// NewClient creates a new Traefik Pilot client.
+// NewClient creates a new Traefik plugins client.
 func NewClient(opts ClientOptions) (*Client, error) {
-	baseURL, err := url.Parse(pilotURL)
+	baseURL, err := url.Parse(pluginsURL)
 	if err != nil {
 		return nil, err
 	}
@@ -87,8 +86,6 @@ func NewClient(opts ClientOptions) (*Client, error) {
 
 		goPath:  goPath,
 		sources: filepath.Join(goPath, goPathSrc),
-
-		token: opts.Token,
 	}, nil
 }
 
