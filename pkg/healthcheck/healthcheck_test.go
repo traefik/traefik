@@ -246,7 +246,7 @@ func TestSetGrpcBackendsConfiguration(t *testing.T) {
 
 			lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
 			backend := NewBackendConfig(Options{
-				Scheme:   "grpc",
+				Mode:     "grpc",
 				Path:     "check",
 				Interval: gRPChealthCheckInterval,
 				Timeout:  healthCheckTimeout,
