@@ -167,6 +167,7 @@ error: field not found, node: -badField-
 The "field not found" error occurs when an unknown property is found, in the dynamic or static configuration.
 
 One easy way to check whether a configuration file is well-formed, is to validate it with:
+
 - [JSON Schema of the static configuration](https://json.schemastore.org/traefik-v2.json)
 - [JSON Schema of the dynamic configuration](https://json.schemastore.org/traefik-v2-file-provider.json)
 
