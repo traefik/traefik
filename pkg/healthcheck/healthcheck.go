@@ -64,6 +64,7 @@ type Options struct {
 	Headers         map[string]string
 	Hostname        string
 	Scheme          string
+	Mode            string
 	Path            string
 	Method          string
 	Port            int
@@ -295,8 +296,11 @@ func checkHealthGrpc(serverURL *url.URL, backend *BackendConfig) error {
 	}
 	grpcSrvAddr := u.Hostname() + ":" + u.Port()
 
-	opts := []grpc.DialOption{
-		grpc.WithInsecure(),
+	opts := []grpc.DialOption{}
+	for _, insecureScheme := range []string{"http", "h2c", ""} {
+		if strings.Compare(backend.Options.Scheme, insecureScheme) == 0 {
+			opts = append(opts, grpc.WithInsecure())
+		}
 	}
 
 	grpcCtx, grpcCancel := context.WithTimeout(context.Background(), backend.Options.Timeout)
@@ -333,7 +337,7 @@ func checkHealthGrpc(serverURL *url.URL, backend *BackendConfig) error {
 // scheme declared in the backend config options.
 // defaults to HTTP.
 func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
-	if strings.Compare(backend.Options.Scheme, "grpc") == 0 {
+	if strings.Compare(backend.Options.Mode, "grpc") == 0 {
 		return checkHealthGrpc(serverURL, backend)
 	}
 	return checkHealthHTTP(serverURL, backend)

@@ -422,6 +422,7 @@
           url = "foobar"
         [http.services.Service0.loadBalancer.healthCheck]
           scheme = "foobar"
+          mode = "foobar"
           path = "foobar"
           port = 42
           interval = "foobar"
