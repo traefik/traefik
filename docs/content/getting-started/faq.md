@@ -158,17 +158,17 @@ By default, the following headers are automatically added when proxying requests
 For more details,
 please check out the [forwarded header](../routing/entrypoints.md#forwarded-headers) documentation.
 
-## Why Traefik is not starting because of a "field not found" error?
-
-Traefik will fail to start if the given static configuration contains an unknown property,
-with an error like the following:
+## What means the "field not found" error?
 
 ```shell
 error: field not found, node: -badField-
 ```
 
-When using a YAML file,
-one easy way to check if the static configuration is well-formed is to validate it with the [JSON Schema of the static configuration](https://json.schemastore.org/traefik-v2.json).
+The "field not found" error occurs when an unknown property is found, in the dynamic or static configuration.
+
+One easy way to check whether a configuration file is well-formed, is to validate it with:
+- [JSON Schema of the static configuration](https://json.schemastore.org/traefik-v2.json)
+- [JSON Schema of the dynamic configuration](https://json.schemastore.org/traefik-v2-file-provider.json)
 
 ## Why some resources (routers, middlewares, services...) are not created/applied?
 
@@ -178,5 +178,5 @@ one should look up for an error in the logs.
 If found, the error obviously confirms that something went wrong while creating the resource,
 and the reason can help to correct a bad configuration.
 
-When using the file provider with YAML,
+When using the file provider,
 one easy way to check if the dynamic configuration is well-formed is to validate it with the [JSON Schema of the dynamic configuration](https://json.schemastore.org/traefik-v2-file-provider.json).
