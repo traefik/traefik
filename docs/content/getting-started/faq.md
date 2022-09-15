@@ -168,7 +168,7 @@ error: field not found, node: -badField-
 ```
 
 When using a YAML file,
-one easy way to check if the static configuration is well-formed is to validate it with the JSON Schema [available here](https://json.schemastore.org/traefik-v2.json).
+one easy way to check if the static configuration is well-formed is to validate it with the [JSON Schema of the static configuration](https://json.schemastore.org/traefik-v2.json).
 
 ## Why some resources (routers, middlewares, services...) are not created/applied?
 
@@ -179,4 +179,4 @@ If found, the error obviously confirms that something went wrong while creating 
 and the reason can help to correct a bad configuration.
 
 When using the file provider with YAML,
-one easy way to check if the dynamic configuration is well-formed is to validate it with the JSON Schema [available here](https://json.schemastore.org/traefik-v2-file-provider.json).
+one easy way to check if the dynamic configuration is well-formed is to validate it with the [JSON Schema of the dynamic configuration](https://json.schemastore.org/traefik-v2-file-provider.json).
