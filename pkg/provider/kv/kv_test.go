@@ -48,6 +48,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/services/Service01/loadBalancer/healthCheck/headers/name0":                     "foobar",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/headers/name1":                     "foobar",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/scheme":                            "foobar",
+		"traefik/http/services/Service01/loadBalancer/healthCheck/mode":                              "foobar",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/followredirects":                   "true",
 		"traefik/http/services/Service01/loadBalancer/responseForwarding/flushInterval":              "foobar",
 		"traefik/http/services/Service01/loadBalancer/passHostHeader":                                "true",
@@ -642,6 +643,7 @@ func Test_buildConfiguration(t *testing.T) {
 						},
 						HealthCheck: &dynamic.ServerHealthCheck{
 							Scheme:          "foobar",
+							Mode:            "foobar",
 							Path:            "foobar",
 							Port:            42,
 							Interval:        "foobar",
