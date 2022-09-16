@@ -158,26 +158,26 @@ By default, the following headers are automatically added when proxying requests
 For more details,
 please check out the [forwarded header](../routing/entrypoints.md#forwarded-headers) documentation.
 
-## What means the "field not found" error?
+## What does the "field not found" error mean?
 
 ```shell
 error: field not found, node: -badField-
 ```
 
-The "field not found" error occurs when an unknown property is found, in the dynamic or static configuration.
+The "field not found" error occurs, when an unknown property is encountered in the dynamic or static configuration.
 
 One easy way to check whether a configuration file is well-formed, is to validate it with:
 
 - [JSON Schema of the static configuration](https://json.schemastore.org/traefik-v2.json)
 - [JSON Schema of the dynamic configuration](https://json.schemastore.org/traefik-v2-file-provider.json)
 
-## Why some resources (routers, middlewares, services...) are not created/applied?
+## Why are some resources (routers, middlewares, services...) not created/applied?
 
-As a common tip, if a resource is dropped/not created by Traefik after evaluating the dynamic configuration,
-one should look up for an error in the logs.
+As a common tip, if a resource is dropped/not created by Traefik after the dynamic configuration was evaluated,
+one should look for an error in the logs.
 
 If found, the error obviously confirms that something went wrong while creating the resource,
-and the reason can help to correct a bad configuration.
+and the message should help in figuring out the mistake(s) in the configuration, and how to fix it.
 
 When using the file provider,
 one easy way to check if the dynamic configuration is well-formed is to validate it with the [JSON Schema of the dynamic configuration](https://json.schemastore.org/traefik-v2-file-provider.json).
