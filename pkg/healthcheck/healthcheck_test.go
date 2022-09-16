@@ -20,28 +20,102 @@ import (
 )
 
 const (
-	healthCheckInterval     = 200 * time.Millisecond
-	gRPChealthCheckInterval = 500 * time.Millisecond
-	healthCheckTimeout      = 100 * time.Millisecond
+	healthCheckInterval = 200 * time.Millisecond
+	healthCheckTimeout  = 100 * time.Millisecond
 )
 
-type gRPCCheckStatus = healthpb.HealthCheckResponse_ServingStatus
+func newTestGrpcServer(t *testing.T, done func(), healthSequence []int) string {
+	t.Helper()
 
-type GrpcHealthChecker struct {
-	mu        sync.RWMutex
-	status    []gRPCCheckStatus
-	statusIdx int
+	gRPCListener, err := net.Listen("tcp4", "127.0.0.1:0")
+	assert.NoError(t, err)
+	t.Cleanup(func() { gRPCListener.Close() })
+
+	server := grpc.NewServer()
+	t.Cleanup(server.Stop)
+
+	gRPCService := &HealthChecker{
+		done:           done,
+		healthSequence: healthSequence,
+	}
+
+	healthpb.RegisterHealthServer(server, gRPCService)
+	go func() {
+		err := server.Serve(gRPCListener)
+		assert.NoError(t, err)
+	}()
+
+	return "http://" + gRPCListener.Addr().String()
 }
 
-type testHandler struct {
+func newTestServer(t *testing.T, done func(), healthSequence []int) string {
+	t.Helper()
+
+	handler := &HealthChecker{
+		done:           done,
+		healthSequence: healthSequence,
+	}
+	ts := httptest.NewServer(handler)
+	t.Cleanup(ts.Close)
+
+	return ts.URL
+}
+
+type HealthChecker struct {
 	done           func()
 	healthSequence []int
+}
+
+func (s *HealthChecker) popStatus() int {
+	if len(s.healthSequence) == 0 {
+		panic("received unexpected request")
+	}
+
+	stat := s.healthSequence[0]
+	s.healthSequence = s.healthSequence[1:]
+
+	return stat
+}
+
+func (s *HealthChecker) Check(ctx context.Context, req *healthpb.HealthCheckRequest) (*healthpb.HealthCheckResponse, error) {
+	stat := s.popStatus()
+	if len(s.healthSequence) == 0 {
+		s.done()
+	}
+
+	return &healthpb.HealthCheckResponse{
+		Status: healthpb.HealthCheckResponse_ServingStatus(stat),
+	}, nil
+}
+
+func (s *HealthChecker) Watch(req *healthpb.HealthCheckRequest, server healthpb.Health_WatchServer) error {
+	stat := s.popStatus()
+	if len(s.healthSequence) == 0 {
+		s.done()
+	}
+
+	return server.Send(&healthpb.HealthCheckResponse{
+		Status: healthpb.HealthCheckResponse_ServingStatus(stat),
+	})
+}
+
+// ServeHTTP returns HTTP response codes following a status sequences.
+// It calls the given 'done' function once all request health indicators have been depleted.
+func (s *HealthChecker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	stat := s.popStatus()
+
+	w.WriteHeader(stat)
+
+	if len(s.healthSequence) == 0 {
+		s.done()
+	}
 }
 
 func TestSetBackendsConfiguration(t *testing.T) {
 	testCases := []struct {
 		desc                       string
 		startHealthy               bool
+		grpc                       bool
 		healthSequence             []int
 		expectedNumRemovedServers  int
 		expectedNumUpsertedServers int
@@ -103,6 +177,62 @@ func TestSetBackendsConfiguration(t *testing.T) {
 			expectedNumUpsertedServers: 1,
 			expectedGaugeValue:         1,
 		},
+		{
+			desc:         "healthy grpc server staying healthy",
+			grpc:         true,
+			startHealthy: true,
+			healthSequence: []int{
+				int(healthpb.HealthCheckResponse_SERVING),
+			},
+			expectedNumRemovedServers:  0,
+			expectedNumUpsertedServers: 0,
+			expectedGaugeValue:         1,
+		},
+		{
+			desc:         "healthy grpc server becoming sick",
+			grpc:         true,
+			startHealthy: true,
+			healthSequence: []int{
+				int(healthpb.HealthCheckResponse_NOT_SERVING),
+			},
+			expectedNumRemovedServers:  1,
+			expectedNumUpsertedServers: 0,
+			expectedGaugeValue:         0,
+		},
+		{
+			desc:         "sick grpc server becoming healthy",
+			grpc:         true,
+			startHealthy: false,
+			healthSequence: []int{
+				int(healthpb.HealthCheckResponse_SERVING),
+			},
+			expectedNumRemovedServers:  0,
+			expectedNumUpsertedServers: 1,
+			expectedGaugeValue:         1,
+		},
+		{
+			desc:         "sick grpc server staying sick",
+			grpc:         true,
+			startHealthy: false,
+			healthSequence: []int{
+				int(healthpb.HealthCheckResponse_NOT_SERVING),
+			},
+			expectedNumRemovedServers:  0,
+			expectedNumUpsertedServers: 0,
+			expectedGaugeValue:         0,
+		},
+		{
+			desc:         "healthy grpc server toggling to sick and back to healthy",
+			grpc:         true,
+			startHealthy: true,
+			healthSequence: []int{
+				int(healthpb.HealthCheckResponse_NOT_SERVING),
+				int(healthpb.HealthCheckResponse_SERVING),
+			},
+			expectedNumRemovedServers:  1,
+			expectedNumUpsertedServers: 1,
+			expectedGaugeValue:         1,
+		},
 	}
 
 	for _, test := range testCases {
@@ -112,10 +242,6 @@ func TestSetBackendsConfiguration(t *testing.T) {
 
 			// The context is passed to the health check and canonically canceled by
 			// the test server once all expected requests have been received.
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			ts := newTestServer(cancel, test.healthSequence)
-			defer ts.Close()
 
 			lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
 			backend := NewBackendConfig(Options{
@@ -125,7 +251,19 @@ func TestSetBackendsConfiguration(t *testing.T) {
 				LB:       lb,
 			}, "backendName")
 
-			serverURL := testhelpers.MustParseURL(ts.URL)
+			ctx, cancel := context.WithCancel(context.Background())
+			t.Cleanup(cancel)
+
+			var url string
+			if test.grpc {
+				backend.Mode = "grpc"
+				url = newTestGrpcServer(t, cancel, test.healthSequence)
+			} else {
+				url = newTestServer(t, cancel, test.healthSequence)
+
+			}
+
+			serverURL := testhelpers.MustParseURL(url)
 			if test.startHealthy {
 				lb.servers = append(lb.servers, serverURL)
 			} else {
@@ -156,133 +294,6 @@ func TestSetBackendsConfiguration(t *testing.T) {
 				wg.Wait()
 			}
 
-			lb.Lock()
-			defer lb.Unlock()
-
-			assert.Equal(t, test.expectedNumRemovedServers, lb.numRemovedServers, "removed servers")
-			assert.Equal(t, test.expectedNumUpsertedServers, lb.numUpsertedServers, "upserted servers")
-			assert.Equal(t, test.expectedGaugeValue, collectingMetrics.GaugeValue, "ServerUp Gauge")
-		})
-	}
-}
-
-func TestSetGrpcBackendsConfiguration(t *testing.T) {
-	testCases := []struct {
-		desc                       string
-		startHealthy               bool
-		healthSequence             []gRPCCheckStatus
-		expectedNumRemovedServers  int
-		expectedNumUpsertedServers int
-		expectedGaugeValue         float64
-	}{
-		{
-			desc:         "healthy server staying healthy",
-			startHealthy: true,
-			healthSequence: []gRPCCheckStatus{
-				healthpb.HealthCheckResponse_SERVING,
-			},
-			expectedNumRemovedServers:  0,
-			expectedNumUpsertedServers: 0,
-			expectedGaugeValue:         1,
-		},
-		{
-			desc:         "healthy server becoming sick",
-			startHealthy: true,
-			healthSequence: []gRPCCheckStatus{
-				healthpb.HealthCheckResponse_NOT_SERVING,
-			},
-			expectedNumRemovedServers:  1,
-			expectedNumUpsertedServers: 0,
-			expectedGaugeValue:         0,
-		},
-		{
-			desc:         "sick server becoming healthy",
-			startHealthy: false,
-			healthSequence: []gRPCCheckStatus{
-				healthpb.HealthCheckResponse_SERVING,
-			},
-			expectedNumRemovedServers:  0,
-			expectedNumUpsertedServers: 1,
-			expectedGaugeValue:         1,
-		},
-		{
-			desc:         "sick server staying sick",
-			startHealthy: false,
-			healthSequence: []gRPCCheckStatus{
-				healthpb.HealthCheckResponse_NOT_SERVING,
-			},
-			expectedNumRemovedServers:  0,
-			expectedNumUpsertedServers: 0,
-			expectedGaugeValue:         0,
-		},
-		{
-			desc:         "healthy server toggling to sick and back to healthy",
-			startHealthy: true,
-			healthSequence: []gRPCCheckStatus{
-				healthpb.HealthCheckResponse_NOT_SERVING,
-				healthpb.HealthCheckResponse_SERVING,
-			},
-			expectedNumRemovedServers:  1,
-			expectedNumUpsertedServers: 1,
-			expectedGaugeValue:         1,
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			// The context is passed to the health check and canonically canceled by
-			// the test server once all expected requests have been received.
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			gRPCListener, err := net.Listen("tcp4", "127.0.0.1:0")
-			assert.NoError(t, err)
-			defer gRPCListener.Close()
-			ts := newTestServerGrpc(t, test.healthSequence, &gRPCListener, cancel)
-			defer ts.Stop()
-			addr := gRPCListener.Addr().String()
-
-			lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
-			backend := NewBackendConfig(Options{
-				Mode:     "grpc",
-				Path:     "check",
-				Interval: gRPChealthCheckInterval,
-				Timeout:  healthCheckTimeout,
-				LB:       lb,
-			}, "gRPCbackendName")
-
-			serverURL := testhelpers.MustParseURL("http://" + addr)
-			if test.startHealthy {
-				lb.servers = append(lb.servers, serverURL)
-			} else {
-				backend.disabledURLs = append(backend.disabledURLs, backendURL{url: serverURL, weight: 1})
-			}
-
-			collectingMetrics := &testhelpers.CollectingGauge{}
-			check := HealthCheck{
-				Backends: make(map[string]*BackendConfig),
-				metrics:  metricsHealthcheck{serverUpGauge: collectingMetrics},
-			}
-
-			wg := sync.WaitGroup{}
-			wg.Add(1)
-
-			go func() {
-				check.execute(ctx, backend)
-				wg.Done()
-			}()
-
-			// Make test timeout dependent on number of expected requests, health
-			// check interval, and a safety margin.
-			timeout := time.Duration(len(test.healthSequence)*int(gRPChealthCheckInterval) + int(time.Second))
-			select {
-			case <-time.After(timeout):
-				t.Fatal("test did not complete in time")
-			case <-ctx.Done():
-				wg.Wait()
-			}
 			lb.Lock()
 			defer lb.Unlock()
 
@@ -647,78 +658,6 @@ func (lb *testLoadBalancer) removeServer(u *url.URL) {
 	}
 
 	lb.servers = append(lb.servers[:i], lb.servers[i+1:]...)
-}
-
-func newTestServer(done func(), healthSequence []int) *httptest.Server {
-	handler := &testHandler{
-		done:           done,
-		healthSequence: healthSequence,
-	}
-	return httptest.NewServer(handler)
-}
-
-func (s *GrpcHealthChecker) Check(ctx context.Context, req *healthpb.HealthCheckRequest) (*healthpb.HealthCheckResponse, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	stat := s.status[s.statusIdx]
-	if s.statusIdx < len(s.status)-1 {
-		s.statusIdx++
-	}
-	return &healthpb.HealthCheckResponse{
-		Status: stat,
-	}, nil
-}
-
-func (s *GrpcHealthChecker) Watch(req *healthpb.HealthCheckRequest, server healthpb.Health_WatchServer) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	stat := s.status[s.statusIdx]
-	if s.statusIdx < len(s.status)-1 {
-		s.statusIdx++
-	}
-	return server.Send(&healthpb.HealthCheckResponse{
-		Status: stat,
-	})
-}
-
-func newTestServerGrpc(t *testing.T, healthSequence []gRPCCheckStatus, gRPCListener *net.Listener, done func()) *grpc.Server {
-	t.Helper()
-	server := grpc.NewServer()
-	gRPCService := &GrpcHealthChecker{status: healthSequence, statusIdx: 0}
-	healthpb.RegisterHealthServer(server, gRPCService)
-	go func() {
-		err := server.Serve((*gRPCListener))
-		assert.NoError(t, err)
-	}()
-	// Wait for gRPC server to be ready
-	time.Sleep(800 * time.Millisecond)
-	// Once the test server received the expected number of queries, cancel the context
-	go func() {
-		for {
-			time.Sleep(gRPChealthCheckInterval + healthCheckTimeout)
-			gRPCService.mu.RLock()
-			if gRPCService.statusIdx == len(gRPCService.status)-1 {
-				done()
-			}
-			gRPCService.mu.RUnlock()
-		}
-	}()
-	return server
-}
-
-// ServeHTTP returns HTTP response codes following a status sequences.
-// It calls the given 'done' function once all request health indicators have been depleted.
-func (th *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if len(th.healthSequence) == 0 {
-		panic("received unexpected request")
-	}
-
-	w.WriteHeader(th.healthSequence[0])
-
-	th.healthSequence = th.healthSequence[1:]
-	if len(th.healthSequence) == 0 {
-		th.done()
-	}
 }
 
 func TestLBStatusUpdater(t *testing.T) {
