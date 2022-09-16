@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/plugins"
@@ -28,10 +27,6 @@ func findPluginConfig(rawConfig map[string]dynamic.PluginConf) (string, map[stri
 
 	if pluginType == "" {
 		return "", nil, errors.New("missing plugin type")
-	}
-
-	if len(rawPluginConfig) == 0 {
-		return "", nil, fmt.Errorf("missing plugin configuration: %s", pluginType)
 	}
 
 	return pluginType, rawPluginConfig, nil
