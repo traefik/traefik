@@ -298,7 +298,7 @@ func checkHealthGrpc(serverURL *url.URL, backend *BackendConfig) error {
 
 	opts := []grpc.DialOption{}
 	for _, insecureScheme := range []string{"http", "h2c", ""} {
-		if strings.Compare(backend.Options.Scheme, insecureScheme) == 0 {
+		if backend.Options.Scheme == insecureScheme {
 			opts = append(opts, grpc.WithInsecure())
 		}
 	}
@@ -337,7 +337,7 @@ func checkHealthGrpc(serverURL *url.URL, backend *BackendConfig) error {
 // scheme declared in the backend config options.
 // defaults to HTTP.
 func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
-	if strings.Compare(backend.Options.Mode, "grpc") == 0 {
+	if backend.Options.Mode == "grpc" {
 		return checkHealthGrpc(serverURL, backend)
 	}
 	return checkHealthHTTP(serverURL, backend)
