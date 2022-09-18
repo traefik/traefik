@@ -105,10 +105,13 @@ const allColumns = [
     component: QChip,
     fieldToProps: () => ({ class: 'app-chip app-chip-accent', dense: true }),
     content: row => {
-      return {
+      return (row.priority !== undefined ? {
         short: Number.parseFloat(row.priority).toExponential(2),
         long: row.priority
-      }
+      } : {
+        short: '',
+        long: ''
+      })
     }
   }
 ]
