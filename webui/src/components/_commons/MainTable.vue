@@ -37,7 +37,9 @@
                         {{ getColumn(column.name).content(row).short }}
                       </div>
                       <q-tooltip anchor="top middle" self="bottom middle" :offset="[10, 10]">
-                        {{ getColumn(column.name).content(row).long }}
+                        <div class="priority-tooltip">
+                          {{ getColumn(column.name).content(row).long }}
+                        </div>
                       </q-tooltip>
                   </template>
                 </component>
@@ -150,5 +152,9 @@ export default {
   .servers-label {
     font-size: 14px;
     font-weight: 600;
+  }
+
+  .priority-tooltip{
+    font-size: larger;
   }
 </style>
