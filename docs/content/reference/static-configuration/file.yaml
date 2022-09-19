@@ -31,8 +31,8 @@ entryPoints:
     forwardedHeaders:
       insecure: true
       trustedIPs:
-      - foobar
-      - foobar
+        - foobar
+        - foobar
     http:
       redirections:
         entryPoint:
@@ -170,11 +170,11 @@ providers:
     connectAware: true
     connectByDefault: true
     serviceName: foobar
+    watch: true
     namespace: foobar
     namespaces:
       - foobar
       - foobar
-    watch: true
     endpoint:
       address: foobar
       scheme: foobar
@@ -191,13 +191,13 @@ providers:
         username: foobar
         password: foobar
   nomad:
+    defaultRule: foobar
     constraints: foobar
     prefix: foobar
-    refreshInterval: 42s
     stale: true
-    exposedByDefault: true
-    defaultRule: foobar
     namespace: foobar
+    exposedByDefault: true
+    refreshInterval: 42s
     endpoint:
       address: foobar
       region: foobar
@@ -221,13 +221,12 @@ providers:
     region: foobar
     accessKeyID: foobar
     secretAccessKey: foobar
+    ecsAnywhere: true
   consul:
     rootKey: foobar
     endpoints:
       - foobar
       - foobar
-    username: foobar
-    password: foobar
     token: foobar
     namespace: foobar
     namespaces:
@@ -246,7 +245,6 @@ providers:
       - foobar
     username: foobar
     password: foobar
-    token: foobar
     tls:
       ca: foobar
       caOptional: true
@@ -260,13 +258,6 @@ providers:
       - foobar
     username: foobar
     password: foobar
-    token: foobar
-    tls:
-      ca: foobar
-      caOptional: true
-      cert: foobar
-      key: foobar
-      insecureSkipVerify: true
   redis:
     rootKey: foobar
     endpoints:
@@ -274,7 +265,7 @@ providers:
       - foobar
     username: foobar
     password: foobar
-    token: foobar
+    db: 42
     tls:
       ca: foobar
       caOptional: true
@@ -334,7 +325,8 @@ metrics:
     addRoutersLabels: true
     addServicesLabels: true
     additionalLabels:
-      foobar: foobar
+      name0: foobar
+      name1: foobar
   influxDB2:
     address: foobar
     token: foobar
@@ -345,8 +337,8 @@ metrics:
     addRoutersLabels: true
     addServicesLabels: true
     additionalLabels:
-      foobar: foobar
-
+      name0: foobar
+      name1: foobar
 ping:
   entryPoint: foobar
   manualRouting: true
@@ -399,6 +391,9 @@ tracing:
   datadog:
     localAgentHostPort: foobar
     globalTag: foobar
+    globalTags:
+      tag1: foobar
+      tag2: foobar
     debug: true
     prioritySampling: true
     traceIDHeaderName: foobar
@@ -469,9 +464,6 @@ certificatesResolvers:
       httpChallenge:
         entryPoint: foobar
       tlsChallenge: {}
-pilot:
-  token: foobar
-  dashboard: true
 hub:
   tls:
     insecure: true

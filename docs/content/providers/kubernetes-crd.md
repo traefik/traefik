@@ -35,10 +35,10 @@ the Traefik engineering team developed a [Custom Resource Definition](https://ku
 
     ```bash
     # Install Traefik Resource Definitions:
-    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v2.8/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
+    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v2.9/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
     
     # Install RBAC for Traefik:
-    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v2.8/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml
+    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v2.9/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml
     ```
 
 ## Resource Configuration
@@ -344,3 +344,5 @@ providers:
 ## Full Example
 
 For additional information, refer to the [full example](../user-guides/crd-acme/index.md) with Let's Encrypt.
+
+{!traefik-for-business-applications.md!}

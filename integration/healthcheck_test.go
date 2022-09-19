@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/go-check/check"
@@ -319,30 +320,51 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 
 	try.Sleep(time.Second)
 
-	// Verify load-balancing on root still works, and that we're getting wsp2, wsp4, wsp2, wsp4, etc.
-	var want string
-	for i := 0; i < 4; i++ {
-		if i%2 == 0 {
-			want = `IP: ` + s.whoami4IP
-		} else {
-			want = `IP: ` + s.whoami2IP
-		}
+	want2 := `IP: ` + s.whoami2IP
+	want4 := `IP: ` + s.whoami4IP
 
+	// Verify load-balancing on root still works, and that we're getting an alternation between wsp2, and wsp4.
+	reachedServers := make(map[string]int)
+	for i := 0; i < 4; i++ {
 		resp, err := client.Do(rootReq)
 		c.Assert(err, checker.IsNil)
 
 		body, err := io.ReadAll(resp.Body)
 		c.Assert(err, checker.IsNil)
 
-		c.Assert(string(body), checker.Contains, want)
+		if reachedServers[s.whoami4IP] > reachedServers[s.whoami2IP] {
+			c.Assert(string(body), checker.Contains, want2)
+			reachedServers[s.whoami2IP]++
+			continue
+		}
+
+		if reachedServers[s.whoami2IP] > reachedServers[s.whoami4IP] {
+			c.Assert(string(body), checker.Contains, want4)
+			reachedServers[s.whoami4IP]++
+			continue
+		}
+
+		// First iteration, so we can't tell whether it's going to be wsp2, or wsp4.
+		if strings.Contains(string(body), `IP: `+s.whoami4IP) {
+			reachedServers[s.whoami4IP]++
+			continue
+		}
+
+		if strings.Contains(string(body), `IP: `+s.whoami2IP) {
+			reachedServers[s.whoami2IP]++
+			continue
+		}
 	}
+
+	c.Assert(reachedServers[s.whoami2IP], checker.Equals, 2)
+	c.Assert(reachedServers[s.whoami4IP], checker.Equals, 2)
 
 	fooReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
 	c.Assert(err, checker.IsNil)
 	fooReq.Host = "foo.localhost"
 
 	// Verify load-balancing on foo still works, and that we're getting wsp2, wsp2, wsp2, wsp2, etc.
-	want = `IP: ` + s.whoami2IP
+	want := `IP: ` + s.whoami2IP
 	for i := 0; i < 4; i++ {
 		resp, err := client.Do(fooReq)
 		c.Assert(err, checker.IsNil)
@@ -407,43 +429,109 @@ func (s *HealthCheckSuite) TestPropagate(c *check.C) {
 	try.Sleep(time.Second)
 
 	// Verify everything is up on root router.
-	wantIPs := []string{s.whoami3IP, s.whoami1IP, s.whoami4IP, s.whoami2IP}
+	reachedServers = make(map[string]int)
 	for i := 0; i < 4; i++ {
-		want := `IP: ` + wantIPs[i]
 		resp, err := client.Do(rootReq)
 		c.Assert(err, checker.IsNil)
 
 		body, err := io.ReadAll(resp.Body)
 		c.Assert(err, checker.IsNil)
 
-		c.Assert(string(body), checker.Contains, want)
+		if strings.Contains(string(body), `IP: `+s.whoami1IP) {
+			reachedServers[s.whoami1IP]++
+			continue
+		}
+
+		if strings.Contains(string(body), `IP: `+s.whoami2IP) {
+			reachedServers[s.whoami2IP]++
+			continue
+		}
+
+		if strings.Contains(string(body), `IP: `+s.whoami3IP) {
+			reachedServers[s.whoami3IP]++
+			continue
+		}
+
+		if strings.Contains(string(body), `IP: `+s.whoami4IP) {
+			reachedServers[s.whoami4IP]++
+			continue
+		}
 	}
 
+	c.Assert(reachedServers[s.whoami1IP], checker.Equals, 1)
+	c.Assert(reachedServers[s.whoami2IP], checker.Equals, 1)
+	c.Assert(reachedServers[s.whoami3IP], checker.Equals, 1)
+	c.Assert(reachedServers[s.whoami4IP], checker.Equals, 1)
+
 	// Verify everything is up on foo router.
-	wantIPs = []string{s.whoami1IP, s.whoami1IP, s.whoami3IP, s.whoami2IP}
+	reachedServers = make(map[string]int)
 	for i := 0; i < 4; i++ {
-		want := `IP: ` + wantIPs[i]
 		resp, err := client.Do(fooReq)
 		c.Assert(err, checker.IsNil)
 
 		body, err := io.ReadAll(resp.Body)
 		c.Assert(err, checker.IsNil)
 
-		c.Assert(string(body), checker.Contains, want)
+		if strings.Contains(string(body), `IP: `+s.whoami1IP) {
+			reachedServers[s.whoami1IP]++
+			continue
+		}
+
+		if strings.Contains(string(body), `IP: `+s.whoami2IP) {
+			reachedServers[s.whoami2IP]++
+			continue
+		}
+
+		if strings.Contains(string(body), `IP: `+s.whoami3IP) {
+			reachedServers[s.whoami3IP]++
+			continue
+		}
+
+		if strings.Contains(string(body), `IP: `+s.whoami4IP) {
+			reachedServers[s.whoami4IP]++
+			continue
+		}
 	}
 
+	c.Assert(reachedServers[s.whoami1IP], checker.Equals, 2)
+	c.Assert(reachedServers[s.whoami2IP], checker.Equals, 1)
+	c.Assert(reachedServers[s.whoami3IP], checker.Equals, 1)
+	c.Assert(reachedServers[s.whoami4IP], checker.Equals, 0)
+
 	// Verify everything is up on bar router.
-	wantIPs = []string{s.whoami1IP, s.whoami1IP, s.whoami3IP, s.whoami2IP}
+	reachedServers = make(map[string]int)
 	for i := 0; i < 4; i++ {
-		want := `IP: ` + wantIPs[i]
 		resp, err := client.Do(barReq)
 		c.Assert(err, checker.IsNil)
 
 		body, err := io.ReadAll(resp.Body)
 		c.Assert(err, checker.IsNil)
 
-		c.Assert(string(body), checker.Contains, want)
+		if strings.Contains(string(body), `IP: `+s.whoami1IP) {
+			reachedServers[s.whoami1IP]++
+			continue
+		}
+
+		if strings.Contains(string(body), `IP: `+s.whoami2IP) {
+			reachedServers[s.whoami2IP]++
+			continue
+		}
+
+		if strings.Contains(string(body), `IP: `+s.whoami3IP) {
+			reachedServers[s.whoami3IP]++
+			continue
+		}
+
+		if strings.Contains(string(body), `IP: `+s.whoami4IP) {
+			reachedServers[s.whoami4IP]++
+			continue
+		}
 	}
+
+	c.Assert(reachedServers[s.whoami1IP], checker.Equals, 2)
+	c.Assert(reachedServers[s.whoami2IP], checker.Equals, 1)
+	c.Assert(reachedServers[s.whoami3IP], checker.Equals, 1)
+	c.Assert(reachedServers[s.whoami4IP], checker.Equals, 0)
 }
 
 func (s *HealthCheckSuite) TestPropagateNoHealthCheck(c *check.C) {

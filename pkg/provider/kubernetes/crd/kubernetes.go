@@ -942,6 +942,13 @@ func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, m
 			}
 		}
 
+		if t.Spec.DefaultGeneratedCert != nil {
+			tlsStore.DefaultGeneratedCert = &tls.GeneratedCert{
+				Resolver: t.Spec.DefaultGeneratedCert.Resolver,
+				Domain:   t.Spec.DefaultGeneratedCert.Domain,
+			}
+		}
+
 		if err := buildCertificates(client, id, t.Namespace, t.Spec.Certificates, tlsConfigs); err != nil {
 			logger.Errorf("Failed to load certificates: %v", err)
 			continue

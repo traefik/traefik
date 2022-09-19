@@ -230,3 +230,5 @@ List of providers that support constraints:
 - [Kubernetes CRD](./kubernetes-crd.md#labelselector)
 - [Kubernetes Ingress](./kubernetes-ingress.md#labelselector)
 - [Kubernetes Gateway](./kubernetes-gateway.md#labelselector)
+
+{!traefik-for-business-applications.md!}

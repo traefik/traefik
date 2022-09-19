@@ -79,7 +79,7 @@ type Configuration struct {
 	CertificatesResolvers map[string]CertificateResolver `description:"Certificates resolvers configuration." json:"certificatesResolvers,omitempty" toml:"certificatesResolvers,omitempty" yaml:"certificatesResolvers,omitempty" export:"true"`
 
 	// Deprecated.
-	Pilot *Pilot `description:"Traefik Pilot configuration." json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty" export:"true"`
+	Pilot *Pilot `description:"Traefik Pilot configuration (Deprecated)." json:"pilot,omitempty" toml:"pilot,omitempty" yaml:"pilot,omitempty" export:"true"`
 
 	Hub *hub.Provider `description:"Traefik Hub configuration." json:"hub,omitempty" toml:"hub,omitempty" yaml:"hub,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
@@ -250,14 +250,8 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	}
 
 	// Enable anonymous usage when pilot is enabled.
-	if c.Pilot != nil && c.Pilot.Token != "" {
+	if c.Pilot != nil {
 		c.Global.SendAnonymousUsage = true
-	}
-
-	// Create Pilot struct to apply default value on undefined configuration.
-	if c.Pilot == nil {
-		c.Pilot = &Pilot{}
-		c.Pilot.SetDefaults()
 	}
 
 	// Disable Gateway API provider if not enabled in experimental.

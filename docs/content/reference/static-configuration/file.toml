@@ -126,8 +126,8 @@
     allowExternalNameServices = true
     labelSelector = "foobar"
     ingressClass = "foobar"
-    allowEmptyServices = true
     throttleDuration = "42s"
+    allowEmptyServices = true
   [providers.kubernetesGateway]
     endpoint = "foobar"
     token = "foobar"
@@ -158,9 +158,9 @@
     connectAware = true
     connectByDefault = true
     serviceName = "foobar"
+    watch = true
     namespace = "foobar"
     namespaces = ["foobar", "foobar"]
-    watch = true
     [providers.consulCatalog.endpoint]
       address = "foobar"
       scheme = "foobar"
@@ -177,13 +177,13 @@
         username = "foobar"
         password = "foobar"
   [providers.nomad]
+    defaultRule = "foobar"
     constraints = "foobar"
     prefix = "foobar"
-    refreshInterval = "42s"
     stale = true
-    exposedByDefault = true
-    defaultRule = "foobar"
     namespace = "foobar"
+    exposedByDefault = true
+    refreshInterval = "42s"
     [providers.nomad.endpoint]
       address = "foobar"
       region = "foobar"
@@ -205,11 +205,10 @@
     region = "foobar"
     accessKeyID = "foobar"
     secretAccessKey = "foobar"
+    ecsAnywhere = true
   [providers.consul]
     rootKey = "foobar"
     endpoints = ["foobar", "foobar"]
-    username = "foobar"
-    password = "foobar"
     token = "foobar"
     namespace = "foobar"
     namespaces = ["foobar", "foobar"]
@@ -224,7 +223,6 @@
     endpoints = ["foobar", "foobar"]
     username = "foobar"
     password = "foobar"
-    token = "foobar"
     [providers.etcd.tls]
       ca = "foobar"
       caOptional = true
@@ -236,19 +234,12 @@
     endpoints = ["foobar", "foobar"]
     username = "foobar"
     password = "foobar"
-    token = "foobar"
-    [providers.zooKeeper.tls]
-      ca = "foobar"
-      caOptional = true
-      cert = "foobar"
-      key = "foobar"
-      insecureSkipVerify = true
   [providers.redis]
     rootKey = "foobar"
     endpoints = ["foobar", "foobar"]
     username = "foobar"
     password = "foobar"
-    token = "foobar"
+    db = 42
     [providers.redis.tls]
       ca = "foobar"
       caOptional = true
@@ -308,7 +299,8 @@
     addRoutersLabels = true
     addServicesLabels = true
     [metrics.influxDB.additionalLabels]
-      foobar = "foobar"
+      name0 = "foobar"
+      name1 = "foobar"
   [metrics.influxDB2]
     address = "foobar"
     token = "foobar"
@@ -319,7 +311,8 @@
     addRoutersLabels = true
     addServicesLabels = true
     [metrics.influxDB2.additionalLabels]
-      foobar = "foobar"
+      name0 = "foobar"
+      name1 = "foobar"
 
 [ping]
   entryPoint = "foobar"
@@ -374,6 +367,9 @@
   [tracing.datadog]
     localAgentHostPort = "foobar"
     globalTag = "foobar"
+    [tracing.datadog.globalTags]
+      tag1 = "foobar"
+      tag2 = "foobar"
     debug = true
     prioritySampling = true
     traceIDHeaderName = "foobar"
@@ -442,10 +438,6 @@
       [certificatesResolvers.CertificateResolver1.acme.httpChallenge]
         entryPoint = "foobar"
       [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]
-
-[pilot]
-  token = "foobar"
-  dashboard = true
 
 [hub]
   [hub.tls]

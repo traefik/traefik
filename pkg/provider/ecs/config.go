@@ -292,17 +292,13 @@ func (p *Provider) addServer(instance ecsInstance, loadBalancer *dynamic.Servers
 func (p *Provider) getIPPort(instance ecsInstance, serverPort string) (string, string, error) {
 	var ip, port string
 
-	ip = p.getIPAddress(instance)
+	ip = instance.machine.privateIP
 	port = getPort(instance, serverPort)
 	if len(ip) == 0 {
 		return "", "", fmt.Errorf("unable to find the IP address for the instance %q: the server is ignored", instance.Name)
 	}
 
 	return ip, port, nil
-}
-
-func (p Provider) getIPAddress(instance ecsInstance) string {
-	return instance.machine.privateIP
 }
 
 func getPort(instance ecsInstance, serverPort string) string {

@@ -1,9 +1,11 @@
 package tcp
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net"
+	"syscall"
 	"time"
 
 	"github.com/pires/go-proxyproto"
@@ -74,7 +76,14 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 
 	err = <-errChan
 	if err != nil {
-		log.WithoutContext().Errorf("Error during connection: %v", err)
+		// Treat connection reset error during a read operation with a lower log level.
+		// This allows to not report an RST packet sent by the peer as an error,
+		// as it is an abrupt but possible end for the TCP session
+		if isReadConnResetError(err) {
+			log.WithoutContext().Debugf("Error during connection: %v", err)
+		} else {
+			log.WithoutContext().Errorf("Error during connection: %v", err)
+		}
 	}
 
 	<-errChan
@@ -101,9 +110,18 @@ func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 	_, err := io.Copy(dst, src)
 	errCh <- err
 
+	// Ends the connection with the dst connection peer.
+	// It corresponds to sending a FIN packet to gracefully end the TCP session.
 	errClose := dst.CloseWrite()
 	if errClose != nil {
-		log.WithoutContext().Debugf("Error while terminating connection: %v", errClose)
+		// Calling CloseWrite() on a connection which have a socket which is "not connected" is expected to fail.
+		// It happens notably when the dst connection has ended receiving an RST packet from the peer (within the other connCopy call).
+		// In that case, logging the error is superfluous,
+		// as in the first place we should not have needed to call CloseWrite.
+		if !isSocketNotConnectedError(errClose) {
+			log.WithoutContext().Debugf("Error while terminating connection: %v", errClose)
+		}
+
 		return
 	}
 
@@ -113,4 +131,10 @@ func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 			log.WithoutContext().Debugf("Error while setting deadline: %v", err)
 		}
 	}
+}
+
+// isSocketNotConnectedError reports whether err is a socket not connected error.
+func isSocketNotConnectedError(err error) bool {
+	var oerr *net.OpError
+	return errors.As(err, &oerr) && errors.Is(err, syscall.ENOTCONN)
 }

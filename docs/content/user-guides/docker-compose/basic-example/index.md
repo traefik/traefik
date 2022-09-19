@@ -93,3 +93,5 @@ whoami:
     # Allow request only from the predefined entry point named "web"
     - "traefik.http.routers.whoami.entrypoints=web"
 ```
+
+{!traefik-for-business-applications.md!}

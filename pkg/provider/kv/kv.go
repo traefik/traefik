@@ -10,32 +10,21 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/kvtools/valkeyrie"
 	"github.com/kvtools/valkeyrie/store"
-	"github.com/kvtools/valkeyrie/store/consul"
-	etcdv3 "github.com/kvtools/valkeyrie/store/etcd/v3"
-	"github.com/kvtools/valkeyrie/store/redis"
-	"github.com/kvtools/valkeyrie/store/zookeeper"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/kv"
 	"github.com/traefik/traefik/v2/pkg/job"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/types"
 )
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	RootKey string `description:"Root key used for KV store" json:"rootKey,omitempty" toml:"rootKey,omitempty" yaml:"rootKey,omitempty"`
+	RootKey string `description:"Root key used for KV store." json:"rootKey,omitempty" toml:"rootKey,omitempty" yaml:"rootKey,omitempty"`
 
-	Endpoints []string         `description:"KV store endpoints" json:"endpoints,omitempty" toml:"endpoints,omitempty" yaml:"endpoints,omitempty"`
-	Username  string           `description:"KV Username" json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
-	Password  string           `description:"KV Password" json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
-	Token     string           `description:"KV Token" json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
-	TLS       *types.ClientTLS `description:"Enable TLS support" json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true" `
+	Endpoints []string `description:"KV store endpoints." json:"endpoints,omitempty" toml:"endpoints,omitempty" yaml:"endpoints,omitempty"`
 
-	name      string
-	namespace string
-	storeType store.Backend
-	kvClient  store.Store
+	name     string
+	kvClient store.Store
 }
 
 // SetDefaults sets the default values.
@@ -44,14 +33,12 @@ func (p *Provider) SetDefaults() {
 }
 
 // Init the provider.
-func (p *Provider) Init(storeType store.Backend, name, namespace string) error {
+func (p *Provider) Init(storeType, name string, config valkeyrie.Config) error {
 	ctx := log.With(context.Background(), log.Str(log.ProviderName, name))
 
 	p.name = name
-	p.namespace = namespace
-	p.storeType = storeType
 
-	kvClient, err := p.createKVClient(ctx)
+	kvClient, err := p.createKVClient(ctx, storeType, config)
 	if err != nil {
 		return fmt.Errorf("failed to Connect to KV store: %w", err)
 	}
@@ -161,36 +148,8 @@ func (p *Provider) buildConfiguration(ctx context.Context) (*dynamic.Configurati
 	return cfg, nil
 }
 
-func (p *Provider) createKVClient(ctx context.Context) (store.Store, error) {
-	storeConfig := &store.Config{
-		ConnectionTimeout: 3 * time.Second,
-		Bucket:            "traefik",
-		Username:          p.Username,
-		Password:          p.Password,
-		Token:             p.Token,
-		Namespace:         p.namespace,
-	}
-
-	if p.TLS != nil {
-		var err error
-		storeConfig.TLS, err = p.TLS.CreateTLSConfig(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("unable to create client TLS configuration: %w", err)
-		}
-	}
-
-	switch p.storeType {
-	case store.CONSUL:
-		consul.Register()
-	case store.ETCDV3:
-		etcdv3.Register()
-	case store.ZK:
-		zookeeper.Register()
-	case store.REDIS:
-		redis.Register()
-	}
-
-	kvStore, err := valkeyrie.NewStore(ctx, p.storeType, p.Endpoints, storeConfig)
+func (p *Provider) createKVClient(ctx context.Context, storeType string, config valkeyrie.Config) (store.Store, error) {
+	kvStore, err := valkeyrie.NewStore(ctx, storeType, p.Endpoints, config)
 	if err != nil {
 		return nil, err
 	}
