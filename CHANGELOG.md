@@ -1,3 +1,9 @@
+## [v2.9.0-rc3](https://github.com/traefik/traefik/tree/v2.9.0-rc3) (2022-09-16)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.0-rc2...v2.9.0-rc3)
+
+**Misc:**
+- Merge current v2.8 into v2.9 ([#9343](https://github.com/traefik/traefik/pull/9343) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v2.9.0-rc1](https://github.com/traefik/traefik/tree/v2.9.0-rc2) (2022-09-14)
 [All Commits](https://github.com/traefik/traefik/compare/v2.8.0-rc1...v2.9.0-rc2)
 
