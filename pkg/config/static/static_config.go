@@ -326,15 +326,15 @@ func (c *Configuration) ValidateConfiguration() error {
 	}
 
 	if c.Providers.ConsulCatalog != nil && c.Providers.ConsulCatalog.Namespace != "" && len(c.Providers.ConsulCatalog.Namespaces) > 0 {
-		return fmt.Errorf("consul catalog provider cannot have both namespace and namespaces options configured")
+		return fmt.Errorf("Consul Catalog provider cannot have both namespace and namespaces options configured")
 	}
 
 	if c.Providers.Consul != nil && c.Providers.Consul.Namespace != "" && len(c.Providers.Consul.Namespaces) > 0 {
-		return fmt.Errorf("consul provider cannot have both namespace and namespaces options configured")
+		return fmt.Errorf("Consul provider cannot have both namespace and namespaces options configured")
 	}
 
 	if c.Providers.Nomad != nil && c.Providers.Nomad.Namespace != "" && len(c.Providers.Nomad.Namespaces) > 0 {
-		return fmt.Errorf("nomad provider cannot have both namespace and namespaces options configured")
+		return fmt.Errorf("Nomad provider cannot have both namespace and namespaces options configured")
 	}
 
 	return nil
