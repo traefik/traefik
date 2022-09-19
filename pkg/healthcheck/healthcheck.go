@@ -302,7 +302,7 @@ func checkHealthHTTP(serverURL *url.URL, backend *BackendConfig) error {
 func checkHealthGRPC(serverURL *url.URL, backend *BackendConfig) error {
 	u, err := serverURL.Parse(backend.Path)
 	if err != nil {
-		return fmt.Errorf("failed to parse serverURL: %w", err)
+		return fmt.Errorf("failed to parse server URL: %w", err)
 	}
 
 	grpcSrvAddr := u.Hostname() + ":" + u.Port()
@@ -311,6 +311,7 @@ func checkHealthGRPC(serverURL *url.URL, backend *BackendConfig) error {
 	for _, insecureScheme := range []string{"http", "h2c", ""} {
 		if backend.Options.Scheme == insecureScheme {
 			opts = append(opts, grpc.WithInsecure())
+			break
 		}
 	}
 
