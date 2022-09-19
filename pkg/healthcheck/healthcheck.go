@@ -250,9 +250,19 @@ func NewBackendConfig(options Options, backendName string) *BackendConfig {
 	}
 }
 
+// checkHealth calls the proper health check function depending on the
+// scheme declared in the backend config options.
+// defaults to HTTP.
+func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
+	if backend.Options.Mode == "grpc" {
+		return checkHealthGRPC(serverURL, backend)
+	}
+	return checkHealthHTTP(serverURL, backend)
+}
+
 // checkHealthHTTP returns a nil error in case it was successful and otherwise
 // a non-nil error with a meaningful description why the health check failed.
-// Dedicatted to HTTP servers.
+// Dedicated to HTTP servers.
 func checkHealthHTTP(serverURL *url.URL, backend *BackendConfig) error {
 	req, err := backend.newRequest(serverURL)
 	if err != nil {
@@ -286,43 +296,47 @@ func checkHealthHTTP(serverURL *url.URL, backend *BackendConfig) error {
 	return nil
 }
 
-// checkHealthGrpc returns a nil error in case it was successful and otherwise
+// checkHealthGRPC returns a nil error in case it was successful and otherwise
 // a non-nil error with a meaningful description why the health check failed.
-// Dedicatted to gRPC servers implementing gRPC Health Checking Protocol v1.
-func checkHealthGrpc(serverURL *url.URL, backend *BackendConfig) error {
+// Dedicated to gRPC servers implementing gRPC Health Checking Protocol v1.
+func checkHealthGRPC(serverURL *url.URL, backend *BackendConfig) error {
 	u, err := serverURL.Parse(backend.Path)
 	if err != nil {
 		return fmt.Errorf("failed to parse serverURL: %w", err)
 	}
+
 	grpcSrvAddr := u.Hostname() + ":" + u.Port()
 
-	opts := []grpc.DialOption{}
+	var opts []grpc.DialOption
 	for _, insecureScheme := range []string{"http", "h2c", ""} {
 		if backend.Options.Scheme == insecureScheme {
 			opts = append(opts, grpc.WithInsecure())
 		}
 	}
 
-	grpcCtx, grpcCancel := context.WithTimeout(context.Background(), backend.Options.Timeout)
-	defer grpcCancel()
+	ctx, cancel := context.WithTimeout(context.Background(), backend.Options.Timeout)
+	defer cancel()
 
-	conn, err := grpc.DialContext(grpcCtx, grpcSrvAddr, opts...)
+	conn, err := grpc.DialContext(ctx, grpcSrvAddr, opts...)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
-			return fmt.Errorf("fail to connect to %s within %s", grpcSrvAddr, backend.Options.Timeout)
+			return fmt.Errorf("fail to connect to %s within %s: %w", grpcSrvAddr, backend.Options.Timeout, err)
 		}
 		return fmt.Errorf("fail to connect to %s: %w", grpcSrvAddr, err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
-	resp, err := healthpb.NewHealthClient(conn).Check(grpcCtx, &healthpb.HealthCheckRequest{})
+	resp, err := healthpb.NewHealthClient(conn).Check(ctx, &healthpb.HealthCheckRequest{})
 	if err != nil {
-		if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unimplemented {
-			return fmt.Errorf("the server doesn't implement the gRPC health protocol")
+		if stat, ok := status.FromError(err); ok {
+			switch stat.Code() {
+			case codes.Unimplemented:
+				return fmt.Errorf("the server doesn't implement the gRPC health protocol: %w", err)
+			case codes.DeadlineExceeded:
+				return fmt.Errorf("gRPC health check timeout: %w", err)
+			}
 		}
-		if stat, ok := status.FromError(err); ok && stat.Code() == codes.DeadlineExceeded {
-			return fmt.Errorf("gRPC health check timeout")
-		}
+
 		return fmt.Errorf("gRPC request failed %w", err)
 	}
 
@@ -331,16 +345,6 @@ func checkHealthGrpc(serverURL *url.URL, backend *BackendConfig) error {
 	}
 
 	return nil
-}
-
-// checkHealth calls the proper health check function depending on the
-// scheme declared in the backend config options.
-// defaults to HTTP.
-func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
-	if backend.Options.Mode == "grpc" {
-		return checkHealthGrpc(serverURL, backend)
-	}
-	return checkHealthHTTP(serverURL, backend)
 }
 
 // StatusUpdater should be implemented by a service that, when its status
