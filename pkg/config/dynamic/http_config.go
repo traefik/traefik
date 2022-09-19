@@ -230,6 +230,7 @@ type ServerHealthCheck struct {
 func (h *ServerHealthCheck) SetDefaults() {
 	fr := true
 	h.FollowRedirects = &fr
+	h.Mode = "http"
 }
 
 // +k8s:deepcopy-gen=true

@@ -302,27 +302,28 @@ func checkHealthHTTP(serverURL *url.URL, backend *BackendConfig) error {
 func checkHealthGRPC(serverURL *url.URL, backend *BackendConfig) error {
 	u, err := serverURL.Parse(backend.Path)
 	if err != nil {
-		return fmt.Errorf("failed to parse serverURL: %w", err)
+		return fmt.Errorf("failed to parse server URL: %w", err)
 	}
 
-	grpcSrvAddr := u.Hostname() + ":" + u.Port()
+	serverAddr := u.Hostname() + ":" + u.Port()
 
 	var opts []grpc.DialOption
 	for _, insecureScheme := range []string{"http", "h2c", ""} {
 		if backend.Options.Scheme == insecureScheme {
 			opts = append(opts, grpc.WithInsecure())
+			break
 		}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), backend.Options.Timeout)
 	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, grpcSrvAddr, opts...)
+	conn, err := grpc.DialContext(ctx, serverAddr, opts...)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
-			return fmt.Errorf("fail to connect to %s within %s: %w", grpcSrvAddr, backend.Options.Timeout, err)
+			return fmt.Errorf("fail to connect to %s within %s: %w", serverAddr, backend.Options.Timeout, err)
 		}
-		return fmt.Errorf("fail to connect to %s: %w", grpcSrvAddr, err)
+		return fmt.Errorf("fail to connect to %s: %w", serverAddr, err)
 	}
 	defer func() { _ = conn.Close() }()
 

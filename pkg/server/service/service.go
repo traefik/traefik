@@ -361,12 +361,10 @@ func buildHealthCheckOptions(ctx context.Context, lb healthcheck.Balancer, backe
 	}
 
 	mode := "http"
-	if hc.Mode != "" {
-		if hc.Mode != "grpc" && hc.Mode != "http" {
-			logger.Errorf("Illegal health check mode for backend '%s'", backend)
-		} else {
-			mode = hc.Mode
-		}
+	if hc.Mode != "" && hc.Mode != "grpc" && hc.Mode != "http" {
+		logger.Errorf("Illegal health check mode for backend '%s'", backend)
+	} else {
+		mode = hc.Mode
 	}
 
 	return &healthcheck.Options{
