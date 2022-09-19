@@ -58,6 +58,7 @@ http:
           - url: foobar
         healthCheck:
           scheme: foobar
+          mode: foobar
           path: foobar
           method: foobar
           port: 42
