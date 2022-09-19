@@ -64,7 +64,7 @@ blocks:
         - name: GH_VERSION
           value: 1.12.1
         - name: CODENAME
-          value: "beaufort"
+          value: "banon"
         - name: IN_DOCKER
           value: ""
       prologue:
