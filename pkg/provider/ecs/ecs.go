@@ -2,7 +2,6 @@ package ecs
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"text/template"
@@ -395,18 +394,13 @@ func (p *Provider) listClusterTasks(ctx context.Context, client *awsClient, clus
 	for _, input := range inputs {
 		inputTasks, err := p.listTasks(ctx, client, input)
 		if err != nil {
-			var snfe *ecs.ServiceNotFoundException
-			var cnfe *ecs.ClusterNotFoundException
-			switch {
-			// Failover on not found services to give a chance to gather tasks from other services.
-			case errors.As(err, &snfe):
+			switch err.(type) {
+			// Fail over not found services to give a chance to gather tasks from other services.
+			case *ecs.ServiceNotFoundException:
 				logger.Errorf("Service not found: %s", input.ServiceName)
 
-			// If the cluster is not found, we can stop fetching tasks right away.
-			case errors.As(err, &cnfe):
-				logger.Errorf("Cluster not found: %s", input.Cluster)
-				return nil, nil
-
+			// If the cluster is not found, or whatever reason,
+			// we can stop looking for other tasks right away.
 			default:
 				return nil, err
 			}
@@ -425,27 +419,28 @@ func (p *Provider) listTasks(ctx context.Context, client *awsClient, input *ecs.
 	tasks := make(map[string]*ecs.Task)
 	err := client.ecs.ListTasksPagesWithContext(ctx, input,
 		func(page *ecs.ListTasksOutput, lastPage bool) bool {
-			if len(page.TaskArns) > 0 {
-				resp, err := client.ecs.DescribeTasksWithContext(ctx, &ecs.DescribeTasksInput{
-					Tasks:   page.TaskArns,
-					Cluster: input.Cluster,
-				})
-				if err != nil {
-					logger.Errorf("Unable to describe tasks for %v", page.TaskArns)
-				} else {
-					for _, t := range resp.Tasks {
-						if aws.StringValue(t.LastStatus) == ecs.DesiredStatusRunning {
-							if p.RequireHealthyTask {
-								if aws.StringValue(t.HealthStatus) != ecs.HealthStatusHealthy {
-									logger.Debugf("Task %s not HealthStatus Healthy - skipping", *t.TaskArn)
-									continue
-								}
-							}
-							tasks[aws.StringValue(t.TaskArn)] = t
-						}
-					}
-				}
+			if len(page.TaskArns) == 0 {
+				return !lastPage
 			}
+
+			resp, err := client.ecs.DescribeTasksWithContext(ctx, &ecs.DescribeTasksInput{
+				Tasks:   page.TaskArns,
+				Cluster: input.Cluster,
+			})
+			if err != nil {
+				logger.Errorf("Unable to describe tasks for %v", page.TaskArns)
+				return !lastPage
+			}
+
+			for _, t := range resp.Tasks {
+				if p.RequireHealthyTask && aws.StringValue(t.HealthStatus) != ecs.HealthStatusHealthy {
+					logger.Debugf("Skipping unhealthy task %s", aws.StringValue(t.TaskArn))
+					continue
+				}
+
+				tasks[aws.StringValue(t.TaskArn)] = t
+			}
+
 			return !lastPage
 		})
 	if err != nil {
