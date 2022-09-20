@@ -30,6 +30,11 @@ const (
 	serverDown = "DOWN"
 )
 
+const (
+	HTTPMode = "http"
+	GRPCMode = "grpc"
+)
+
 var (
 	singleton *HealthCheck
 	once      sync.Once
@@ -251,17 +256,15 @@ func NewBackendConfig(options Options, backendName string) *BackendConfig {
 }
 
 // checkHealth calls the proper health check function depending on the
-// scheme declared in the backend config options.
-// defaults to HTTP.
+// backend config mode, defaults to HTTP.
 func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
-	if backend.Options.Mode == "grpc" {
+	if backend.Options.Mode == GRPCMode {
 		return checkHealthGRPC(serverURL, backend)
 	}
 	return checkHealthHTTP(serverURL, backend)
 }
 
-// checkHealthHTTP returns a nil error in case it was successful and otherwise
-// a non-nil error with a meaningful description why the health check failed.
+// checkHealthHTTP returns an error with a meaningful description if the health check failed.
 // Dedicated to HTTP servers.
 func checkHealthHTTP(serverURL *url.URL, backend *BackendConfig) error {
 	req, err := backend.newRequest(serverURL)
@@ -296,8 +299,7 @@ func checkHealthHTTP(serverURL *url.URL, backend *BackendConfig) error {
 	return nil
 }
 
-// checkHealthGRPC returns a nil error in case it was successful and otherwise
-// a non-nil error with a meaningful description why the health check failed.
+// checkHealthGRPC returns an error with a meaningful description if the health check failed.
 // Dedicated to gRPC servers implementing gRPC Health Checking Protocol v1.
 func checkHealthGRPC(serverURL *url.URL, backend *BackendConfig) error {
 	u, err := serverURL.Parse(backend.Path)
@@ -305,14 +307,17 @@ func checkHealthGRPC(serverURL *url.URL, backend *BackendConfig) error {
 		return fmt.Errorf("failed to parse server URL: %w", err)
 	}
 
-	serverAddr := u.Hostname() + ":" + u.Port()
+	port := u.Port()
+	if backend.Options.Port != 0 {
+		port = strconv.Itoa(backend.Options.Port)
+	}
+
+	serverAddr := net.JoinHostPort(u.Hostname(), port)
 
 	var opts []grpc.DialOption
-	for _, insecureScheme := range []string{"http", "h2c", ""} {
-		if backend.Options.Scheme == insecureScheme {
-			opts = append(opts, grpc.WithInsecure())
-			break
-		}
+	switch backend.Options.Scheme {
+	case "http", "h2c", "":
+		opts = append(opts, grpc.WithInsecure())
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), backend.Options.Timeout)
@@ -332,13 +337,13 @@ func checkHealthGRPC(serverURL *url.URL, backend *BackendConfig) error {
 		if stat, ok := status.FromError(err); ok {
 			switch stat.Code() {
 			case codes.Unimplemented:
-				return fmt.Errorf("the server doesn't implement the gRPC health protocol: %w", err)
+				return fmt.Errorf("gRPC server does not implement the health protocol: %w", err)
 			case codes.DeadlineExceeded:
 				return fmt.Errorf("gRPC health check timeout: %w", err)
 			}
 		}
 
-		return fmt.Errorf("gRPC request failed %w", err)
+		return fmt.Errorf("gRPC health check failed: %w", err)
 	}
 
 	if resp.Status != healthpb.HealthCheckResponse_SERVING {
