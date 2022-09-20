@@ -19,11 +19,20 @@ import (
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/vulcand/oxy/roundrobin"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/status"
 )
 
 const (
 	serverUp   = "UP"
 	serverDown = "DOWN"
+)
+
+const (
+	HTTPMode = "http"
+	GRPCMode = "grpc"
 )
 
 var (
@@ -60,6 +69,7 @@ type Options struct {
 	Headers         map[string]string
 	Hostname        string
 	Scheme          string
+	Mode            string
 	Path            string
 	Method          string
 	Port            int
@@ -245,9 +255,18 @@ func NewBackendConfig(options Options, backendName string) *BackendConfig {
 	}
 }
 
-// checkHealth returns a nil error in case it was successful and otherwise
-// a non-nil error with a meaningful description why the health check failed.
+// checkHealth calls the proper health check function depending on the
+// backend config mode, defaults to HTTP.
 func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
+	if backend.Options.Mode == GRPCMode {
+		return checkHealthGRPC(serverURL, backend)
+	}
+	return checkHealthHTTP(serverURL, backend)
+}
+
+// checkHealthHTTP returns an error with a meaningful description if the health check failed.
+// Dedicated to HTTP servers.
+func checkHealthHTTP(serverURL *url.URL, backend *BackendConfig) error {
 	req, err := backend.newRequest(serverURL)
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP request: %w", err)
@@ -275,6 +294,60 @@ func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
 
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
 		return fmt.Errorf("received error status code: %v", resp.StatusCode)
+	}
+
+	return nil
+}
+
+// checkHealthGRPC returns an error with a meaningful description if the health check failed.
+// Dedicated to gRPC servers implementing gRPC Health Checking Protocol v1.
+func checkHealthGRPC(serverURL *url.URL, backend *BackendConfig) error {
+	u, err := serverURL.Parse(backend.Path)
+	if err != nil {
+		return fmt.Errorf("failed to parse server URL: %w", err)
+	}
+
+	port := u.Port()
+	if backend.Options.Port != 0 {
+		port = strconv.Itoa(backend.Options.Port)
+	}
+
+	serverAddr := net.JoinHostPort(u.Hostname(), port)
+
+	var opts []grpc.DialOption
+	switch backend.Options.Scheme {
+	case "http", "h2c", "":
+		opts = append(opts, grpc.WithInsecure())
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), backend.Options.Timeout)
+	defer cancel()
+
+	conn, err := grpc.DialContext(ctx, serverAddr, opts...)
+	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return fmt.Errorf("fail to connect to %s within %s: %w", serverAddr, backend.Options.Timeout, err)
+		}
+		return fmt.Errorf("fail to connect to %s: %w", serverAddr, err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	resp, err := healthpb.NewHealthClient(conn).Check(ctx, &healthpb.HealthCheckRequest{})
+	if err != nil {
+		if stat, ok := status.FromError(err); ok {
+			switch stat.Code() {
+			case codes.Unimplemented:
+				return fmt.Errorf("gRPC server does not implement the health protocol: %w", err)
+			case codes.DeadlineExceeded:
+				return fmt.Errorf("gRPC health check timeout: %w", err)
+			}
+		}
+
+		return fmt.Errorf("gRPC health check failed: %w", err)
+	}
+
+	if resp.Status != healthpb.HealthCheckResponse_SERVING {
+		return fmt.Errorf("received gRPC status code: %v", resp.Status)
 	}
 
 	return nil
