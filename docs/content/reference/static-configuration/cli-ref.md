@@ -559,13 +559,13 @@ Watch Docker Swarm events. (Default: ```true```)
 Enable AWS ECS backend with default settings. (Default: ```false```)
 
 `--providers.ecs.accesskeyid`:  
-The AWS credentials access key to use for making requests
+AWS credentials access key ID to use for making requests.
 
 `--providers.ecs.autodiscoverclusters`:  
-Auto discover cluster (Default: ```false```)
+Auto discover cluster. (Default: ```false```)
 
 `--providers.ecs.clusters`:  
-ECS Cluster names (Default: ```default```)
+ECS Cluster names. (Default: ```default```)
 
 `--providers.ecs.constraints`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
@@ -574,25 +574,22 @@ Constraints is an expression that Traefik matches against the container's labels
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
 `--providers.ecs.ecsanywhere`:  
-Enable ECS Anywhere support (Default: ```false```)
+Enable ECS Anywhere support. (Default: ```false```)
 
 `--providers.ecs.exposedbydefault`:  
-Expose services by default (Default: ```true```)
+Expose services by default. (Default: ```true```)
 
 `--providers.ecs.refreshseconds`:  
-Polling interval (in seconds) (Default: ```15```)
+Polling interval (in seconds). (Default: ```15```)
 
 `--providers.ecs.region`:  
-The AWS region to use for requests
+AWS region to use for requests.
 
 `--providers.ecs.requirehealthytask`:  
-Require a task to be in the healthy state (Default: ```false```)
+Require a task to be in the healthy state. (Default: ```false```)
 
 `--providers.ecs.secretaccesskey`:  
-The AWS credentials access key to use for making requests
-
-`--providers.ecs.services`:  
-ECS Service names
+AWS credentials access key to use for making requests.
 
 `--providers.etcd`:  
 Enable Etcd backend with default settings. (Default: ```false```)
