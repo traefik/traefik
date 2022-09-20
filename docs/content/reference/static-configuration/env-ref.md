@@ -559,13 +559,13 @@ Watch Docker Swarm events. (Default: ```true```)
 Enable AWS ECS backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ECS_ACCESSKEYID`:  
-The AWS credentials access key to use for making requests
+AWS credentials access key ID to use for making requests.
 
 `TRAEFIK_PROVIDERS_ECS_AUTODISCOVERCLUSTERS`:  
-Auto discover cluster (Default: ```false```)
+Auto discover cluster. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ECS_CLUSTERS`:  
-ECS Clusters name (Default: ```default```)
+ECS Cluster names. (Default: ```default```)
 
 `TRAEFIK_PROVIDERS_ECS_CONSTRAINTS`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
@@ -574,19 +574,22 @@ Constraints is an expression that Traefik matches against the container's labels
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
 `TRAEFIK_PROVIDERS_ECS_ECSANYWHERE`:  
-Enable ECS Anywhere support (Default: ```false```)
+Enable ECS Anywhere support. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ECS_EXPOSEDBYDEFAULT`:  
-Expose services by default (Default: ```true```)
+Expose services by default. (Default: ```true```)
 
 `TRAEFIK_PROVIDERS_ECS_REFRESHSECONDS`:  
-Polling interval (in seconds) (Default: ```15```)
+Polling interval (in seconds). (Default: ```15```)
 
 `TRAEFIK_PROVIDERS_ECS_REGION`:  
-The AWS region to use for requests
+AWS region to use for requests.
+
+`TRAEFIK_PROVIDERS_ECS_REQUIREHEALTHYTASK`:  
+Require a task to be in the healthy state. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ECS_SECRETACCESSKEY`:  
-The AWS credentials access key to use for making requests
+AWS credentials access key to use for making requests.
 
 `TRAEFIK_PROVIDERS_ETCD`:  
 Enable Etcd backend with default settings. (Default: ```false```)
