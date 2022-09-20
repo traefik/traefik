@@ -397,7 +397,7 @@ func (p *Provider) listClusterTasks(ctx context.Context, client *awsClient, clus
 			switch err.(type) {
 			// Fail over not found services to give a chance to gather tasks from other services.
 			case *ecs.ServiceNotFoundException:
-				logger.Errorf("Service not found: %s", input.ServiceName)
+				logger.Errorf("Service not found: %s", aws.StringValue(input.ServiceName))
 
 			// If the cluster is not found, or whatever reason,
 			// we can stop looking for other tasks right away.
