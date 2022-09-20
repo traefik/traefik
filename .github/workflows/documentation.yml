@@ -10,6 +10,9 @@ env:
   STRUCTOR_VERSION: v1.11.2
   MIXTUS_VERSION: v0.4.1
 
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
 jobs:
 
   docs:
