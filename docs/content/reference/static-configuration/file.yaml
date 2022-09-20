@@ -224,6 +224,7 @@ providers:
     accessKeyID: foobar
     secretAccessKey: foobar
     ecsAnywhere: true
+    healthyTasksOnly: true
   consul:
     rootKey: foobar
     endpoints:

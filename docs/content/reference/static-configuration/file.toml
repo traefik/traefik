@@ -206,6 +206,7 @@
     accessKeyID = "foobar"
     secretAccessKey = "foobar"
     ecsAnywhere = true
+    healthyTasksOnly = true
   [providers.consul]
     rootKey = "foobar"
     endpoints = ["foobar", "foobar"]
