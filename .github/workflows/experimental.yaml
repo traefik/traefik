@@ -6,6 +6,9 @@ on:
       - master
       - v*
 
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
 jobs:
 
   experimental:
