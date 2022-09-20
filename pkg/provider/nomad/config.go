@@ -172,29 +172,30 @@ func (p *Provider) addServerTCP(i item, lb *dynamic.TCPServersLoadBalancer) erro
 		return errors.New("load-balancer is missing")
 	}
 
+	if i.Address == "" {
+		return errors.New("address is missing")
+	}
+
 	var port string
-	if len(lb.Servers) > 0 {
+	if i.Port > 0 {
+		port = strconv.Itoa(i.Port)
+	}
+
+	if len(lb.Servers) > 0 && lb.Servers[0].Port != "" {
 		port = lb.Servers[0].Port
+		lb.Servers[0].Port = ""
+	}
+
+	if port == "" {
+		return errors.New("port is missing")
 	}
 
 	if len(lb.Servers) == 0 {
 		lb.Servers = []dynamic.TCPServer{{}}
 	}
 
-	if i.Port != 0 && port == "" {
-		port = strconv.Itoa(i.Port)
-	}
-	lb.Servers[0].Port = ""
-
-	if port == "" {
-		return errors.New("port is missing")
-	}
-
-	if i.Address == "" {
-		return errors.New("address is missing")
-	}
-
 	lb.Servers[0].Address = net.JoinHostPort(i.Address, port)
+
 	return nil
 }
 
@@ -203,29 +204,30 @@ func (p *Provider) addServerUDP(i item, lb *dynamic.UDPServersLoadBalancer) erro
 		return errors.New("load-balancer is missing")
 	}
 
+	if i.Address == "" {
+		return errors.New("address is missing")
+	}
+
 	var port string
-	if len(lb.Servers) > 0 {
+	if i.Port > 0 {
+		port = strconv.Itoa(i.Port)
+	}
+
+	if len(lb.Servers) > 0 && lb.Servers[0].Port != "" {
 		port = lb.Servers[0].Port
+		lb.Servers[0].Port = ""
+	}
+
+	if port == "" {
+		return errors.New("port is missing")
 	}
 
 	if len(lb.Servers) == 0 {
 		lb.Servers = []dynamic.UDPServer{{}}
 	}
 
-	if i.Port != 0 && port == "" {
-		port = strconv.Itoa(i.Port)
-	}
-	lb.Servers[0].Port = ""
-
-	if port == "" {
-		return errors.New("port is missing")
-	}
-
-	if i.Address == "" {
-		return errors.New("address is missing")
-	}
-
 	lb.Servers[0].Address = net.JoinHostPort(i.Address, port)
+
 	return nil
 }
 
@@ -234,9 +236,22 @@ func (p *Provider) addServer(i item, lb *dynamic.ServersLoadBalancer) error {
 		return errors.New("load-balancer is missing")
 	}
 
+	if i.Address == "" {
+		return errors.New("address is missing")
+	}
+
 	var port string
-	if len(lb.Servers) > 0 {
+	if i.Port > 0 {
+		port = strconv.Itoa(i.Port)
+	}
+
+	if len(lb.Servers) > 0 && lb.Servers[0].Port != "" {
 		port = lb.Servers[0].Port
+		lb.Servers[0].Port = ""
+	}
+
+	if port == "" {
+		return errors.New("port is missing")
 	}
 
 	if len(lb.Servers) == 0 {
@@ -244,19 +259,6 @@ func (p *Provider) addServer(i item, lb *dynamic.ServersLoadBalancer) error {
 		server.SetDefaults()
 
 		lb.Servers = []dynamic.Server{server}
-	}
-
-	if i.Port != 0 && port == "" {
-		port = strconv.Itoa(i.Port)
-	}
-	lb.Servers[0].Port = ""
-
-	if port == "" {
-		return errors.New("port is missing")
-	}
-
-	if i.Address == "" {
-		return errors.New("address is missing")
 	}
 
 	scheme := lb.Servers[0].Scheme
