@@ -213,6 +213,7 @@ func (s *Server) SetDefaults() {
 // ServerHealthCheck holds the HealthCheck configuration.
 type ServerHealthCheck struct {
 	Scheme string `json:"scheme,omitempty" toml:"scheme,omitempty" yaml:"scheme,omitempty" export:"true"`
+	Mode   string `json:"mode,omitempty" toml:"mode,omitempty" yaml:"mode,omitempty" export:"true"`
 	Path   string `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
 	Method string `json:"method,omitempty" toml:"method,omitempty" yaml:"method,omitempty" export:"true"`
 	Port   int    `json:"port,omitempty" toml:"port,omitempty,omitzero" yaml:"port,omitempty" export:"true"`
@@ -229,6 +230,7 @@ type ServerHealthCheck struct {
 func (h *ServerHealthCheck) SetDefaults() {
 	fr := true
 	h.FollowRedirects = &fr
+	h.Mode = "http"
 }
 
 // +k8s:deepcopy-gen=true
