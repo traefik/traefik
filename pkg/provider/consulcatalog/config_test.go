@@ -2886,13 +2886,13 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
-						"test": {
+						"test-udp-label": {
 							EntryPoints: []string{"udp"},
-							Service:     "Test",
+							Service:     "test-udp-label-service",
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
-						"Test": {
+						"test-udp-label-service": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{Address: "127.0.0.1:21116"},
