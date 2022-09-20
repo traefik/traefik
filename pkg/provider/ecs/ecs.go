@@ -2,6 +2,7 @@ package ecs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"text/template"
@@ -393,17 +394,16 @@ func (p *Provider) listClusterTasks(ctx context.Context, client *awsClient, clus
 	tasks := make(map[string]*ecs.Task)
 	for _, input := range inputs {
 		inputTasks, err := p.listTasks(ctx, client, input)
-		if err != nil {
-			switch err.(type) {
+		var snfe *ecs.ServiceNotFoundException
+		if errors.As(err, &snfe) {
 			// Fail over not found services to give a chance to gather tasks from other services.
-			case *ecs.ServiceNotFoundException:
-				logger.Errorf("Service not found: %s", aws.StringValue(input.ServiceName))
-
+			logger.Errorf("Service not found: %s", aws.StringValue(input.ServiceName))
+			continue
+		}
+		if err != nil {
 			// If the cluster is not found, or whatever reason,
 			// we can stop looking for other tasks right away.
-			default:
-				return nil, err
-			}
+			return nil, err
 		}
 
 		for arn, task := range inputTasks {
