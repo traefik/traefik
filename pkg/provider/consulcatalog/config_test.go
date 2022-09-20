@@ -2611,6 +2611,57 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc:         "UDP service with labels only",
+			ConnectAware: true,
+			items: []itemData{
+				{
+					ID:         "1",
+					Node:       "Node1",
+					Datacenter: "dc1",
+					Name:       "Test",
+					Namespace:  "ns",
+					Labels: map[string]string{
+						"traefik.udp.routers.test-udp-label.service":                           "test-udp-label-service",
+						"traefik.udp.routers.test-udp-label.entryPoints":                       "udp",
+						"traefik.udp.services.test-udp-label-service.loadBalancer.server.port": "21116",
+					},
+					Address: "127.0.0.1",
+					Port:    "80",
+					Status:  api.HealthPassing,
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"test": {
+							EntryPoints: []string{"udp"},
+							Service:     "Test",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"Test": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{Address: "127.0.0.1:21116"},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
