@@ -246,7 +246,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 
 	logger.Debugf("ECS Clusters: %s", clusters)
 	for _, cluster := range clusters {
-		tasks, err := p.listClusterTasks(ctx, client, cluster)
+		tasks, err := p.listClusterTasks(ctx, client, &cluster)
 		if err != nil {
 			logger.Errorf("Failed to list tasks for cluster %q: %s", cluster, err)
 			continue
@@ -265,7 +265,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 		miInstances := make(map[string]*ssm.InstanceInformation)
 		if p.ECSAnywhere {
 			// Try looking up for instances on ECS Anywhere
-			miInstances, err = p.lookupMiInstances(ctx, client, &c, tasks)
+			miInstances, err = p.lookupMiInstances(ctx, client, &cluster, tasks)
 			if err != nil {
 				return nil, err
 			}
@@ -372,21 +372,21 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 	return instances, nil
 }
 
-func (p *Provider) listClusterTasks(ctx context.Context, client *awsClient, cluster string) (map[string]*ecs.Task, error) {
+func (p *Provider) listClusterTasks(ctx context.Context, client *awsClient, cluster *string) (map[string]*ecs.Task, error) {
 	logger := log.FromContext(ctx)
 
 	var inputs []*ecs.ListTasksInput
 	for _, s := range p.Services {
 		service := s
 		inputs = append(inputs, &ecs.ListTasksInput{
-			Cluster:     &cluster,
+			Cluster:     cluster,
 			ServiceName: &service,
 		})
 	}
 
 	if len(inputs) == 0 {
 		inputs = append(inputs, &ecs.ListTasksInput{
-			Cluster: &cluster,
+			Cluster: cluster,
 		})
 	}
 
