@@ -190,9 +190,7 @@ func (p *Provider) addServerTCP(ctx context.Context, service rancherData, loadBa
 	}
 
 	if len(loadBalancer.Servers) == 0 {
-		server := dynamic.TCPServer{}
-
-		loadBalancer.Servers = []dynamic.TCPServer{server}
+		loadBalancer.Servers = []dynamic.TCPServer{{}}
 	}
 
 	port := getServicePort(service)
@@ -226,9 +224,7 @@ func (p *Provider) addServerUDP(ctx context.Context, service rancherData, loadBa
 	}
 
 	if len(loadBalancer.Servers) == 0 {
-		server := dynamic.UDPServer{}
-
-		loadBalancer.Servers = []dynamic.UDPServer{server}
+		loadBalancer.Servers = []dynamic.UDPServer{{}}
 	}
 
 	port := getServicePort(service)
