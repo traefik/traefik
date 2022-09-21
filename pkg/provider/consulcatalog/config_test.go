@@ -2220,7 +2220,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Labels: map[string]string{
 						"traefik.tcp.routers.foo.rule":                      "HostSNI(`foo.bar`)",
 						"traefik.tcp.routers.foo.tls.options":               "foo",
-						"traefik.tcp.services.foo.loadbalancer.server.port": "80",
+						"traefik.tcp.services.foo.loadbalancer.server.port": "8080",
 					},
 					Address: "127.0.0.1",
 					Port:    "80",
@@ -2244,7 +2244,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
-										Address: "127.0.0.1:80",
+										Address: "127.0.0.1:8080",
 									},
 								},
 								TerminationDelay: Int(100),
