@@ -187,21 +187,16 @@ func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadB
 		return errors.New("load-balancer is not defined")
 	}
 
-	var serverPort string
-	if len(loadBalancer.Servers) > 0 {
-		serverPort = loadBalancer.Servers[0].Port
-		loadBalancer.Servers[0].Port = ""
+	if len(loadBalancer.Servers) == 0 {
+		loadBalancer.Servers = []dynamic.TCPServer{{}}
 	}
+
+	serverPort := loadBalancer.Servers[0].Port
+	loadBalancer.Servers[0].Port = ""
 
 	ip, port, err := p.getIPPort(ctx, container, serverPort)
 	if err != nil {
 		return err
-	}
-
-	if len(loadBalancer.Servers) == 0 {
-		server := dynamic.TCPServer{}
-
-		loadBalancer.Servers = []dynamic.TCPServer{server}
 	}
 
 	if port == "" {
@@ -209,6 +204,7 @@ func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadB
 	}
 
 	loadBalancer.Servers[0].Address = net.JoinHostPort(ip, port)
+
 	return nil
 }
 
@@ -217,21 +213,16 @@ func (p *Provider) addServerUDP(ctx context.Context, container dockerData, loadB
 		return errors.New("load-balancer is not defined")
 	}
 
-	var serverPort string
-	if len(loadBalancer.Servers) > 0 {
-		serverPort = loadBalancer.Servers[0].Port
-		loadBalancer.Servers[0].Port = ""
+	if len(loadBalancer.Servers) == 0 {
+		loadBalancer.Servers = []dynamic.UDPServer{{}}
 	}
+
+	serverPort := loadBalancer.Servers[0].Port
+	loadBalancer.Servers[0].Port = ""
 
 	ip, port, err := p.getIPPort(ctx, container, serverPort)
 	if err != nil {
 		return err
-	}
-
-	if len(loadBalancer.Servers) == 0 {
-		server := dynamic.UDPServer{}
-
-		loadBalancer.Servers = []dynamic.UDPServer{server}
 	}
 
 	if port == "" {
@@ -239,6 +230,7 @@ func (p *Provider) addServerUDP(ctx context.Context, container dockerData, loadB
 	}
 
 	loadBalancer.Servers[0].Address = net.JoinHostPort(ip, port)
+
 	return nil
 }
 
@@ -247,22 +239,19 @@ func (p *Provider) addServer(ctx context.Context, container dockerData, loadBala
 		return errors.New("load-balancer is not defined")
 	}
 
-	var serverPort string
-	if len(loadBalancer.Servers) > 0 {
-		serverPort = loadBalancer.Servers[0].Port
-		loadBalancer.Servers[0].Port = ""
-	}
-
-	ip, port, err := p.getIPPort(ctx, container, serverPort)
-	if err != nil {
-		return err
-	}
-
 	if len(loadBalancer.Servers) == 0 {
 		server := dynamic.Server{}
 		server.SetDefaults()
 
 		loadBalancer.Servers = []dynamic.Server{server}
+	}
+
+	serverPort := loadBalancer.Servers[0].Port
+	loadBalancer.Servers[0].Port = ""
+
+	ip, port, err := p.getIPPort(ctx, container, serverPort)
+	if err != nil {
+		return err
 	}
 
 	if port == "" {

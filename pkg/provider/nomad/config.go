@@ -172,29 +172,27 @@ func (p *Provider) addServerTCP(i item, lb *dynamic.TCPServersLoadBalancer) erro
 		return errors.New("load-balancer is missing")
 	}
 
-	var port string
-	if len(lb.Servers) > 0 {
-		port = lb.Servers[0].Port
-	}
-
 	if len(lb.Servers) == 0 {
 		lb.Servers = []dynamic.TCPServer{{}}
-	}
-
-	if i.Port != 0 && port == "" {
-		port = strconv.Itoa(i.Port)
-	}
-	lb.Servers[0].Port = ""
-
-	if port == "" {
-		return errors.New("port is missing")
 	}
 
 	if i.Address == "" {
 		return errors.New("address is missing")
 	}
 
+	port := lb.Servers[0].Port
+	lb.Servers[0].Port = ""
+
+	if port == "" && i.Port > 0 {
+		port = strconv.Itoa(i.Port)
+	}
+
+	if port == "" {
+		return errors.New("port is missing")
+	}
+
 	lb.Servers[0].Address = net.JoinHostPort(i.Address, port)
+
 	return nil
 }
 
@@ -203,40 +201,33 @@ func (p *Provider) addServerUDP(i item, lb *dynamic.UDPServersLoadBalancer) erro
 		return errors.New("load-balancer is missing")
 	}
 
-	var port string
-	if len(lb.Servers) > 0 {
-		port = lb.Servers[0].Port
-	}
-
 	if len(lb.Servers) == 0 {
 		lb.Servers = []dynamic.UDPServer{{}}
-	}
-
-	if i.Port != 0 && port == "" {
-		port = strconv.Itoa(i.Port)
-	}
-	lb.Servers[0].Port = ""
-
-	if port == "" {
-		return errors.New("port is missing")
 	}
 
 	if i.Address == "" {
 		return errors.New("address is missing")
 	}
 
+	port := lb.Servers[0].Port
+	lb.Servers[0].Port = ""
+
+	if port == "" && i.Port > 0 {
+		port = strconv.Itoa(i.Port)
+	}
+
+	if port == "" {
+		return errors.New("port is missing")
+	}
+
 	lb.Servers[0].Address = net.JoinHostPort(i.Address, port)
+
 	return nil
 }
 
 func (p *Provider) addServer(i item, lb *dynamic.ServersLoadBalancer) error {
 	if lb == nil {
 		return errors.New("load-balancer is missing")
-	}
-
-	var port string
-	if len(lb.Servers) > 0 {
-		port = lb.Servers[0].Port
 	}
 
 	if len(lb.Servers) == 0 {
@@ -246,17 +237,19 @@ func (p *Provider) addServer(i item, lb *dynamic.ServersLoadBalancer) error {
 		lb.Servers = []dynamic.Server{server}
 	}
 
-	if i.Port != 0 && port == "" {
+	if i.Address == "" {
+		return errors.New("address is missing")
+	}
+
+	port := lb.Servers[0].Port
+	lb.Servers[0].Port = ""
+
+	if port == "" && i.Port > 0 {
 		port = strconv.Itoa(i.Port)
 	}
-	lb.Servers[0].Port = ""
 
 	if port == "" {
 		return errors.New("port is missing")
-	}
-
-	if i.Address == "" {
-		return errors.New("address is missing")
 	}
 
 	scheme := lb.Servers[0].Scheme
