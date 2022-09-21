@@ -206,10 +206,11 @@ func (p *Provider) addServerTCP(item itemData, loadBalancer *dynamic.TCPServersL
 		return errors.New("address is missing")
 	}
 
-	port := item.Port
-	if loadBalancer.Servers[0].Port != "" {
-		port = loadBalancer.Servers[0].Port
-		loadBalancer.Servers[0].Port = ""
+	port := loadBalancer.Servers[0].Port
+	loadBalancer.Servers[0].Port = ""
+
+	if port == "" {
+		port = item.Port
 	}
 
 	if port == "" {
@@ -234,10 +235,11 @@ func (p *Provider) addServerUDP(item itemData, loadBalancer *dynamic.UDPServersL
 		return errors.New("address is missing")
 	}
 
-	port := item.Port
-	if loadBalancer.Servers[0].Port != "" {
-		port = loadBalancer.Servers[0].Port
-		loadBalancer.Servers[0].Port = ""
+	port := loadBalancer.Servers[0].Port
+	loadBalancer.Servers[0].Port = ""
+
+	if port == "" {
+		port = item.Port
 	}
 
 	if port == "" {
@@ -265,15 +267,17 @@ func (p *Provider) addServer(item itemData, loadBalancer *dynamic.ServersLoadBal
 		return errors.New("address is missing")
 	}
 
-	port := item.Port
-	if loadBalancer.Servers[0].Port != "" {
-		port = loadBalancer.Servers[0].Port
-		loadBalancer.Servers[0].Port = ""
+	port := loadBalancer.Servers[0].Port
+	loadBalancer.Servers[0].Port = ""
+
+	if port == "" {
+		port = item.Port
 	}
 
 	if port == "" {
 		return errors.New("port is missing")
 	}
+
 	scheme := loadBalancer.Servers[0].Scheme
 	loadBalancer.Servers[0].Scheme = ""
 
