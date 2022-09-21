@@ -198,22 +198,22 @@ func (p *Provider) addServerTCP(item itemData, loadBalancer *dynamic.TCPServersL
 		return errors.New("load-balancer is not defined")
 	}
 
+	if len(loadBalancer.Servers) == 0 {
+		loadBalancer.Servers = []dynamic.TCPServer{{}}
+	}
+
 	if item.Address == "" {
 		return errors.New("address is missing")
 	}
 
 	port := item.Port
-	if len(loadBalancer.Servers) > 0 && loadBalancer.Servers[0].Port != "" {
+	if loadBalancer.Servers[0].Port != "" {
 		port = loadBalancer.Servers[0].Port
 		loadBalancer.Servers[0].Port = ""
 	}
 
 	if port == "" {
 		return errors.New("port is missing")
-	}
-
-	if len(loadBalancer.Servers) == 0 {
-		loadBalancer.Servers = []dynamic.TCPServer{{}}
 	}
 
 	loadBalancer.Servers[0].Address = net.JoinHostPort(item.Address, port)
@@ -226,22 +226,22 @@ func (p *Provider) addServerUDP(item itemData, loadBalancer *dynamic.UDPServersL
 		return errors.New("load-balancer is not defined")
 	}
 
+	if len(loadBalancer.Servers) == 0 {
+		loadBalancer.Servers = []dynamic.UDPServer{{}}
+	}
+
 	if item.Address == "" {
 		return errors.New("address is missing")
 	}
 
 	port := item.Port
-	if len(loadBalancer.Servers) > 0 && loadBalancer.Servers[0].Port != "" {
+	if loadBalancer.Servers[0].Port != "" {
 		port = loadBalancer.Servers[0].Port
 		loadBalancer.Servers[0].Port = ""
 	}
 
 	if port == "" {
 		return errors.New("port is missing")
-	}
-
-	if len(loadBalancer.Servers) == 0 {
-		loadBalancer.Servers = []dynamic.UDPServer{{}}
 	}
 
 	loadBalancer.Servers[0].Address = net.JoinHostPort(item.Address, port)
@@ -254,20 +254,6 @@ func (p *Provider) addServer(item itemData, loadBalancer *dynamic.ServersLoadBal
 		return errors.New("load-balancer is not defined")
 	}
 
-	if item.Address == "" {
-		return errors.New("address is missing")
-	}
-
-	port := item.Port
-	if len(loadBalancer.Servers) > 0 && loadBalancer.Servers[0].Port != "" {
-		port = loadBalancer.Servers[0].Port
-		loadBalancer.Servers[0].Port = ""
-	}
-
-	if port == "" {
-		return errors.New("port is missing")
-	}
-
 	if len(loadBalancer.Servers) == 0 {
 		server := dynamic.Server{}
 		server.SetDefaults()
@@ -275,6 +261,19 @@ func (p *Provider) addServer(item itemData, loadBalancer *dynamic.ServersLoadBal
 		loadBalancer.Servers = []dynamic.Server{server}
 	}
 
+	if item.Address == "" {
+		return errors.New("address is missing")
+	}
+
+	port := item.Port
+	if loadBalancer.Servers[0].Port != "" {
+		port = loadBalancer.Servers[0].Port
+		loadBalancer.Servers[0].Port = ""
+	}
+
+	if port == "" {
+		return errors.New("port is missing")
+	}
 	scheme := loadBalancer.Servers[0].Scheme
 	loadBalancer.Servers[0].Scheme = ""
 
