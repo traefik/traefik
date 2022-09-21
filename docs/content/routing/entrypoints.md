@@ -233,27 +233,29 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
 
     Full details for how to specify `address` can be found in [net.Listen](https://golang.org/pkg/net/#Listen) (and [net.Dial](https://golang.org/pkg/net/#Dial)) of the doc for go.
 
-### DefaultSet
+### AsDefault
 
 _Optional, Default=false_
 
-The `DefaultSet` option flags the EntryPoint to be used by default when configuring HTTP and TCP routers that do not define the [EntryPoints option](./routers/index.md#entrypoints).
+The `AsDefault` option flags the EntryPoint to be used by default when configuring HTTP and TCP routers that do not define the [EntryPoints option](./routers/index.md#entrypoints).
 
-!!! info "How the EntryPoints default set is built"
+!!! info "How the list of default EntryPoints is built"
 
-    If no EntryPoint is explicitly included in the EntryPoints default set, 
+    If no EntryPoint sets `AsDefault` to `true`, 
     then it includes all HTTP/TCP EntryPoints.
 
-    If at least one EntryPoint is explicitly included in the EntryPoints default set,
-    then only EntryPoints that have the `DefaultSet` option set to `true` are included.
+    If at least one EntryPoint sets `AsDefault` to `true`,
+    then only EntryPoints that have the `AsDefault` option set to `true` are included.
+
+    Some built-in EntryPoints will always be excluded, namely: `traefik`, `traefikhub-api`, and `traefikhub-tunl`.
 
 !!! warning "Only TCP and HTTP"
 
-    The `DefaultSet` option has no effect on UDP EntryPoints.
+    The `AsDefault` option has no effect on UDP EntryPoints.
     When UDP routers are not defining the [EntryPoints option](./routers/index.md#entrypoints_2),
     they are attached to all UDP EntryPoints by default.
 
-??? example "Defining only one entryPoint in the default set"
+??? example "Defining only one entryPoint as default"
 
     ```yaml tab="File (yaml)"
     entryPoints:
@@ -261,7 +263,7 @@ The `DefaultSet` option flags the EntryPoint to be used by default when configur
         address: ":80"
       websecure:
         address: ":443"
-        defaultSet: true
+        asDefault: true
     ```
 
     ```toml tab="File (TOML)"
@@ -269,13 +271,13 @@ The `DefaultSet` option flags the EntryPoint to be used by default when configur
       address = ":80"
     [entryPoints.websecure]
       address = ":443"
-      defaultSet = true
+      asDefault = true
     ```
 
     ```bash tab="CLI"
     --entrypoints.web.address=:80
     --entrypoints.websecure.address=:443
-    --entrypoints.websecure.defaultSet=true
+    --entrypoints.websecure.asDefault=true
     ```
 
 ### HTTP/2

@@ -94,7 +94,8 @@ or act before forwarding the request to the service.
 
 ### EntryPoints
 
-If not specified, HTTP routers will accept requests from every EntryPoints in the default set.
+If not specified, HTTP routers will accept requests from all EntryPoints that are configured with `asDefault=true`
+(or all EntryPoints if none are configured with `asDefault=true`, see [AsDefault](../entrypoints.md#asdefault) for more info)
 If you want to limit the router scope to specific EntryPoints, set the `entryPoints` option.
 
 ??? example "Listens to Every EntryPoint"
@@ -106,7 +107,7 @@ If you want to limit the router scope to specific EntryPoints, set the `entryPoi
     http:
       routers:
         Router-1:
-          # By default, routers listen to every EntryPoints in the default set.
+          # By default, routers listen to every EntryPoints.
           rule: "Host(`example.com`)"
           service: "service-1"
     ```
@@ -115,7 +116,7 @@ If you want to limit the router scope to specific EntryPoints, set the `entryPoi
     ## Dynamic configuration
     [http.routers]
       [http.routers.Router-1]
-        # By default, routers listen to every EntryPoints in the default set.
+        # By default, routers listen to every EntryPoints.
         rule = "Host(`example.com`)"
         service = "service-1"
     ```
@@ -671,7 +672,8 @@ If no matching route is found for the TCP routers, then the HTTP routers will ta
 
 ### EntryPoints
 
-If not specified, TCP routers will accept requests from every EntryPoints in the default set.
+If not specified, TCP routers will accept requests from all EntryPoints that are configured with `asDefault=true`
+(or all EntryPoints if none are configured with `asDefault=true`, see [AsDefault](../entrypoints.md#asdefault) for more info)
 If you want to limit the router scope to a set of EntryPoints, set the `entryPoints` option.
 
 ??? info "How to handle Server First protocols?"
@@ -699,7 +701,7 @@ If you want to limit the router scope to a set of EntryPoints, set the `entryPoi
     tcp:
       routers:
         Router-1:
-          # By default, routers listen to every EntryPoints in the default set.
+          # By default, routers listen to every EntryPoints.
           rule: "HostSNI(`example.com`)"
           service: "service-1"
           # will route TLS requests (and ignore non tls requests)
@@ -711,7 +713,7 @@ If you want to limit the router scope to a set of EntryPoints, set the `entryPoi
 
     [tcp.routers]
       [tcp.routers.Router-1]
-        # By default, routers listen to every EntryPoints in the default set.
+        # By default, routers listen to every EntryPoints.
         rule = "HostSNI(`example.com`)"
         service = "service-1"
         # will route TLS requests (and ignore non tls requests)
