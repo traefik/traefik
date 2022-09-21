@@ -160,7 +160,7 @@ func (p *Provider) keepService(ctx context.Context, service rancherData) bool {
 
 	matches, err := constraints.MatchLabels(service.Labels, p.Constraints)
 	if err != nil {
-		logger.Errorf("Error matching constraints expression: %v", err)
+		logger.Errorf("Error matching constraint expression: %v", err)
 		return false
 	}
 	if !matches {
@@ -185,27 +185,25 @@ func (p *Provider) keepService(ctx context.Context, service rancherData) bool {
 func (p *Provider) addServerTCP(ctx context.Context, service rancherData, loadBalancer *dynamic.TCPServersLoadBalancer) error {
 	log.FromContext(ctx).Debugf("Trying to add servers for service  %s \n", service.Name)
 
-	serverPort := ""
-
-	if loadBalancer != nil && len(loadBalancer.Servers) > 0 {
-		serverPort = loadBalancer.Servers[0].Port
+	if loadBalancer == nil {
+		return errors.New("load-balancer is not defined")
 	}
 
 	port := getServicePort(service)
 
-	if len(loadBalancer.Servers) == 0 {
-		server := dynamic.TCPServer{}
-
-		loadBalancer.Servers = []dynamic.TCPServer{server}
-	}
-
-	if serverPort != "" {
-		port = serverPort
+	if len(loadBalancer.Servers) > 0 && loadBalancer.Servers[0].Port != "" {
+		port = loadBalancer.Servers[0].Port
 		loadBalancer.Servers[0].Port = ""
 	}
 
 	if port == "" {
 		return errors.New("port is missing")
+	}
+
+	if len(loadBalancer.Servers) == 0 {
+		server := dynamic.TCPServer{}
+
+		loadBalancer.Servers = []dynamic.TCPServer{server}
 	}
 
 	var servers []dynamic.TCPServer
@@ -216,33 +214,32 @@ func (p *Provider) addServerTCP(ctx context.Context, service rancherData, loadBa
 	}
 
 	loadBalancer.Servers = servers
+
 	return nil
 }
 
 func (p *Provider) addServerUDP(ctx context.Context, service rancherData, loadBalancer *dynamic.UDPServersLoadBalancer) error {
 	log.FromContext(ctx).Debugf("Trying to add servers for service  %s \n", service.Name)
 
-	serverPort := ""
-
-	if loadBalancer != nil && len(loadBalancer.Servers) > 0 {
-		serverPort = loadBalancer.Servers[0].Port
+	if loadBalancer == nil {
+		return errors.New("load-balancer is not defined")
 	}
 
 	port := getServicePort(service)
 
-	if len(loadBalancer.Servers) == 0 {
-		server := dynamic.UDPServer{}
-
-		loadBalancer.Servers = []dynamic.UDPServer{server}
-	}
-
-	if serverPort != "" {
-		port = serverPort
+	if len(loadBalancer.Servers) > 0 && loadBalancer.Servers[0].Port != "" {
+		port = loadBalancer.Servers[0].Port
 		loadBalancer.Servers[0].Port = ""
 	}
 
 	if port == "" {
 		return errors.New("port is missing")
+	}
+
+	if len(loadBalancer.Servers) == 0 {
+		server := dynamic.UDPServer{}
+
+		loadBalancer.Servers = []dynamic.UDPServer{server}
 	}
 
 	var servers []dynamic.UDPServer
@@ -253,29 +250,33 @@ func (p *Provider) addServerUDP(ctx context.Context, service rancherData, loadBa
 	}
 
 	loadBalancer.Servers = servers
+
 	return nil
 }
 
 func (p *Provider) addServers(ctx context.Context, service rancherData, loadBalancer *dynamic.ServersLoadBalancer) error {
 	log.FromContext(ctx).Debugf("Trying to add servers for service  %s \n", service.Name)
 
-	serverPort := getLBServerPort(loadBalancer)
+	if loadBalancer == nil {
+		return errors.New("load-balancer is not defined")
+	}
+
 	port := getServicePort(service)
+
+	if len(loadBalancer.Servers) > 0 && loadBalancer.Servers[0].Port != "" {
+		port = loadBalancer.Servers[0].Port
+		loadBalancer.Servers[0].Port = ""
+	}
+
+	if port == "" {
+		return errors.New("port is missing")
+	}
 
 	if len(loadBalancer.Servers) == 0 {
 		server := dynamic.Server{}
 		server.SetDefaults()
 
 		loadBalancer.Servers = []dynamic.Server{server}
-	}
-
-	if serverPort != "" {
-		port = serverPort
-		loadBalancer.Servers[0].Port = ""
-	}
-
-	if port == "" {
-		return errors.New("port is missing")
 	}
 
 	var servers []dynamic.Server
@@ -286,14 +287,8 @@ func (p *Provider) addServers(ctx context.Context, service rancherData, loadBala
 	}
 
 	loadBalancer.Servers = servers
-	return nil
-}
 
-func getLBServerPort(loadBalancer *dynamic.ServersLoadBalancer) string {
-	if loadBalancer != nil && len(loadBalancer.Servers) > 0 {
-		return loadBalancer.Servers[0].Port
-	}
-	return ""
+	return nil
 }
 
 func getServicePort(data rancherData) string {

@@ -212,14 +212,14 @@ func (p *Provider) addServerTCP(instance ecsInstance, loadBalancer *dynamic.TCPS
 		return err
 	}
 
+	if port == "" {
+		return errors.New("port is missing")
+	}
+
 	if len(loadBalancer.Servers) == 0 {
 		server := dynamic.TCPServer{}
 
 		loadBalancer.Servers = []dynamic.TCPServer{server}
-	}
-
-	if port == "" {
-		return errors.New("port is missing")
 	}
 
 	loadBalancer.Servers[0].Address = net.JoinHostPort(ip, port)
@@ -242,17 +242,18 @@ func (p *Provider) addServerUDP(instance ecsInstance, loadBalancer *dynamic.UDPS
 		return err
 	}
 
+	if port == "" {
+		return errors.New("port is missing")
+	}
+
 	if len(loadBalancer.Servers) == 0 {
 		server := dynamic.UDPServer{}
 
 		loadBalancer.Servers = []dynamic.UDPServer{server}
 	}
 
-	if port == "" {
-		return errors.New("port is missing")
-	}
-
 	loadBalancer.Servers[0].Address = net.JoinHostPort(ip, port)
+
 	return nil
 }
 
@@ -272,15 +273,15 @@ func (p *Provider) addServer(instance ecsInstance, loadBalancer *dynamic.Servers
 		return err
 	}
 
+	if port == "" {
+		return errors.New("port is missing")
+	}
+
 	if len(loadBalancer.Servers) == 0 {
 		server := dynamic.Server{}
 		server.SetDefaults()
 
 		loadBalancer.Servers = []dynamic.Server{server}
-	}
-
-	if port == "" {
-		return errors.New("port is missing")
 	}
 
 	loadBalancer.Servers[0].URL = fmt.Sprintf("%s://%s", loadBalancer.Servers[0].Scheme, net.JoinHostPort(ip, port))
