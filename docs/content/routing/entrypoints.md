@@ -233,15 +233,23 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
 
     Full details for how to specify `address` can be found in [net.Listen](https://golang.org/pkg/net/#Listen) (and [net.Dial](https://golang.org/pkg/net/#Dial)) of the doc for go.
 
-### ExplicitUseOnly
+### DefaultSet
 
 _Optional, Default=false_
 
-The `ExplicitUseOnly` option flags the EntryPoint to be skipped by default when configuring HTTP and TCP routers that do not define the [EntryPoints option](./routers/index.md#entrypoints).
+The `DefaultSet` option flags the EntryPoint to be used by default when configuring HTTP and TCP routers that do not define the [EntryPoints option](./routers/index.md#entrypoints).
+
+!!! info "How the EntryPoints default set is built"
+
+    If no EntryPoint is explicitly included in the EntryPoints default set, 
+    then it includes all HTTP/TCP EntryPoints.
+
+    If at least one EntryPoint is explicitly included in the EntryPoints default set,
+    then only EntryPoints that have the `DefaultSet` option set to `true` are included.
 
 !!! warning "Only TCP and HTTP"
 
-    The `ExplicitUseOnly` option has no effect on UDP EntryPoints.
+    The `DefaultSet` option has no effect on UDP EntryPoints.
     When UDP routers are not defining the [EntryPoints option](./routers/index.md#entrypoints_2),
     they are attached to all UDP EntryPoints by default.
 
@@ -251,23 +259,23 @@ The `ExplicitUseOnly` option flags the EntryPoint to be skipped by default when 
     entryPoints:
       web:
         address: ":80"
-        explicitUseOnly: true
       websecure:
         address: ":443"
+        defaultSet: true
     ```
 
     ```toml tab="File (TOML)"
     [entryPoints.web]
       address = ":80"
-      explicitUseOnly = true
     [entryPoints.websecure]
       address = ":443"
+      defaultSet = true
     ```
 
     ```bash tab="CLI"
     --entrypoints.web.address=:80
-    --entrypoints.web.explicitUseOnly=true
     --entrypoints.websecure.address=:443
+    --entrypoints.websecure.defaultSet=true
     ```
 
 ### HTTP/2
