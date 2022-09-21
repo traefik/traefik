@@ -14,7 +14,7 @@
 [entryPoints]
   [entryPoints.EntryPoint0]
     address = "foobar"
-    defaultSet = true
+    asDefault = true
     [entryPoints.EntryPoint0.transport]
       [entryPoints.EntryPoint0.transport.lifeCycle]
         requestAcceptGraceTimeout = "42s"

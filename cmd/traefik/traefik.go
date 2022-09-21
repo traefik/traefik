@@ -353,10 +353,10 @@ func getHTTPChallengeHandler(acmeProviders []*acme.Provider, httpChallengeProvid
 func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string {
 	var defaultEntryPoints []string
 
-	// Determines if at least one EntryPoint is configured to be in the default set.
+	// Determines if at least one EntryPoint is configured to be used by default.
 	var hasDefinedDefaults bool
 	for _, ep := range staticConfiguration.EntryPoints {
-		if ep.DefaultSet {
+		if ep.AsDefault {
 			hasDefinedDefaults = true
 			break
 		}
@@ -365,11 +365,11 @@ func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string 
 	for name, cfg := range staticConfiguration.EntryPoints {
 		// By default all entrypoints are considered.
 		// If at least one is flagged, then only flagged entrypoints are included.
-		if hasDefinedDefaults && !cfg.DefaultSet {
+		if hasDefinedDefaults && !cfg.AsDefault {
 			continue
 		}
 
-		// Traefik Hub entryPoint should not be part of the set of default entryPoints.
+		// Traefik Hub entryPoint should not be used as a default entryPoint.
 		if hub.APIEntrypoint == name || hub.TunnelEntrypoint == name {
 			continue
 		}
