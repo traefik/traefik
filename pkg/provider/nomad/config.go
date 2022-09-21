@@ -180,14 +180,11 @@ func (p *Provider) addServerTCP(i item, lb *dynamic.TCPServersLoadBalancer) erro
 		return errors.New("address is missing")
 	}
 
-	var port string
-	if i.Port > 0 {
-		port = strconv.Itoa(i.Port)
-	}
+	port := lb.Servers[0].Port
+	lb.Servers[0].Port = ""
 
-	if lb.Servers[0].Port != "" {
-		port = lb.Servers[0].Port
-		lb.Servers[0].Port = ""
+	if port == "" && i.Port > 0 {
+		port = strconv.Itoa(i.Port)
 	}
 
 	if port == "" {
@@ -212,14 +209,11 @@ func (p *Provider) addServerUDP(i item, lb *dynamic.UDPServersLoadBalancer) erro
 		return errors.New("address is missing")
 	}
 
-	var port string
-	if i.Port > 0 {
-		port = strconv.Itoa(i.Port)
-	}
+	port := lb.Servers[0].Port
+	lb.Servers[0].Port = ""
 
-	if lb.Servers[0].Port != "" {
-		port = lb.Servers[0].Port
-		lb.Servers[0].Port = ""
+	if port == "" && i.Port > 0 {
+		port = strconv.Itoa(i.Port)
 	}
 
 	if port == "" {
@@ -247,14 +241,11 @@ func (p *Provider) addServer(i item, lb *dynamic.ServersLoadBalancer) error {
 		return errors.New("address is missing")
 	}
 
-	var port string
-	if i.Port > 0 {
-		port = strconv.Itoa(i.Port)
-	}
+	port := lb.Servers[0].Port
+	lb.Servers[0].Port = ""
 
-	if lb.Servers[0].Port != "" {
-		port = lb.Servers[0].Port
-		lb.Servers[0].Port = ""
+	if port == "" && i.Port > 0 {
+		port = strconv.Itoa(i.Port)
 	}
 
 	if port == "" {

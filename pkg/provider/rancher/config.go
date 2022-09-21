@@ -193,11 +193,11 @@ func (p *Provider) addServerTCP(ctx context.Context, service rancherData, loadBa
 		loadBalancer.Servers = []dynamic.TCPServer{{}}
 	}
 
-	port := getServicePort(service)
+	port := loadBalancer.Servers[0].Port
+	loadBalancer.Servers[0].Port = ""
 
-	if loadBalancer.Servers[0].Port != "" {
-		port = loadBalancer.Servers[0].Port
-		loadBalancer.Servers[0].Port = ""
+	if port == "" {
+		port = getServicePort(service)
 	}
 
 	if port == "" {
@@ -227,11 +227,11 @@ func (p *Provider) addServerUDP(ctx context.Context, service rancherData, loadBa
 		loadBalancer.Servers = []dynamic.UDPServer{{}}
 	}
 
-	port := getServicePort(service)
+	port := loadBalancer.Servers[0].Port
+	loadBalancer.Servers[0].Port = ""
 
-	if loadBalancer.Servers[0].Port != "" {
-		port = loadBalancer.Servers[0].Port
-		loadBalancer.Servers[0].Port = ""
+	if port == "" {
+		port = getServicePort(service)
 	}
 
 	if port == "" {
@@ -264,16 +264,17 @@ func (p *Provider) addServers(ctx context.Context, service rancherData, loadBala
 		loadBalancer.Servers = []dynamic.Server{server}
 	}
 
-	port := getServicePort(service)
+	port := loadBalancer.Servers[0].Port
+	loadBalancer.Servers[0].Port = ""
 
-	if loadBalancer.Servers[0].Port != "" {
-		port = loadBalancer.Servers[0].Port
-		loadBalancer.Servers[0].Port = ""
+	if port == "" {
+		port = getServicePort(service)
 	}
 
 	if port == "" {
 		return errors.New("port is missing")
 	}
+
 	var servers []dynamic.Server
 	for _, containerIP := range service.Containers {
 		servers = append(servers, dynamic.Server{
