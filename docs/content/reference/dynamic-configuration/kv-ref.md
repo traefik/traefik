@@ -208,6 +208,7 @@
 | `traefik/http/services/Service01/loadBalancer/healthCheck/hostname` | `foobar` |
 | `traefik/http/services/Service01/loadBalancer/healthCheck/interval` | `foobar` |
 | `traefik/http/services/Service01/loadBalancer/healthCheck/method` | `foobar` |
+| `traefik/http/services/Service01/loadBalancer/healthCheck/mode` | `foobar` |
 | `traefik/http/services/Service01/loadBalancer/healthCheck/path` | `foobar` |
 | `traefik/http/services/Service01/loadBalancer/healthCheck/port` | `42` |
 | `traefik/http/services/Service01/loadBalancer/healthCheck/scheme` | `foobar` |

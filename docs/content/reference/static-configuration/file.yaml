@@ -196,6 +196,9 @@ providers:
     prefix: foobar
     stale: true
     namespace: foobar
+    namespaces:
+      - foobar
+      - foobar
     exposedByDefault: true
     refreshInterval: 42s
     endpoint:
@@ -222,6 +225,7 @@ providers:
     accessKeyID: foobar
     secretAccessKey: foobar
     ecsAnywhere: true
+    healthyTasksOnly: true
   consul:
     rootKey: foobar
     endpoints:
