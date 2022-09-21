@@ -367,9 +367,19 @@ func getHTTPChallengeHandler(acmeProviders []*acme.Provider, httpChallengeProvid
 func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string {
 	var defaultEntryPoints []string
 
+	// Determines if at least one EntryPoint is configured to be in the default set.
+	var hasDefinedDefaults bool
+	for _, ep := range staticConfiguration.EntryPoints {
+		if ep.DefaultSet {
+			hasDefinedDefaults = true
+			break
+		}
+	}
+
 	for name, cfg := range staticConfiguration.EntryPoints {
 		// By default all entrypoints are considered.
-		if cfg.ExplicitUseOnly {
+		// If at least one is flagged, then only flagged entrypoints are included.
+		if hasDefinedDefaults && !cfg.DefaultSet {
 			continue
 		}
 
