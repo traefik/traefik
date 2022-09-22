@@ -84,6 +84,8 @@ type Configuration struct {
 	Hub *hub.Provider `description:"Traefik Hub configuration." json:"hub,omitempty" toml:"hub,omitempty" yaml:"hub,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	Experimental *Experimental `description:"experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty" export:"true"`
+
+	Spiffe *SpiffeConfig `description:"SPIFFE integration configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" export:"true"`
 }
 
 // CertificateResolver contains the configuration for the different types of certificates resolver.
@@ -172,6 +174,11 @@ type Tracing struct {
 func (t *Tracing) SetDefaults() {
 	t.ServiceName = "traefik"
 	t.SpanNameLimit = 0
+}
+
+// SpiffeConfig configures the spiffe integration in Traefik.
+type SpiffeConfig struct {
+	WorkloadAPIAddr string `description:"Address of the SPIFFE workload API to use." json:"workloadAPIAddr,omitempty" toml:"workloadAPIAddr,omitempty" yaml:"workloadAPIAddr,omitempty" export:"true"`
 }
 
 // Providers contains providers configuration.
