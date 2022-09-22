@@ -397,6 +397,10 @@ func (p *Provider) resolveDomains(ctx context.Context, domains []string, tlsStor
 				return
 			}
 
+			if cert == nil {
+				return
+			}
+
 			err = p.addCertificateForDomain(dom, cert.Certificate, cert.PrivateKey, tlsStore)
 			if err != nil {
 				logger.WithError(err).Error("Error adding certificate for domain")
@@ -428,6 +432,10 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 									dom, cert, err := p.resolveCertificate(ctx, domain, traefiktls.DefaultTLSStoreName)
 									if err != nil {
 										logger.WithError(err).Errorf("Unable to obtain ACME certificate for domains %q", strings.Join(domain.ToStrArray(), ","))
+										return
+									}
+
+									if cert == nil {
 										return
 									}
 
@@ -465,6 +473,10 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 									dom, cert, err := p.resolveCertificate(ctx, domain, traefiktls.DefaultTLSStoreName)
 									if err != nil {
 										logger.WithError(err).Errorf("Unable to obtain ACME certificate for domains %q", strings.Join(domain.ToStrArray(), ","))
+										return
+									}
+
+									if cert == nil {
 										return
 									}
 
