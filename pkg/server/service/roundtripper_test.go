@@ -1,14 +1,24 @@
 package service
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
+	"crypto/x509/pkix"
+	"math/big"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"sync/atomic"
 	"testing"
+	"time"
 
+	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
+	"github.com/spiffe/go-spiffe/v2/spiffeid"
+	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
+	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -129,7 +139,7 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 	srv.TLS = &tls.Config{Certificates: []tls.Certificate{cert}}
 	srv.StartTLS()
 
-	rtManager := NewRoundTripperManager()
+	rtManager := NewRoundTripperManager(nil)
 
 	dynamicConf := map[string]*dynamic.ServersTransport{
 		"test": {
@@ -197,7 +207,7 @@ func TestMTLS(t *testing.T) {
 	}
 	srv.StartTLS()
 
-	rtManager := NewRoundTripperManager()
+	rtManager := NewRoundTripperManager(nil)
 
 	dynamicConf := map[string]*dynamic.ServersTransport{
 		"test": {
@@ -226,6 +236,139 @@ func TestMTLS(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
+func TestSpiffeMTLS(t *testing.T) {
+	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+
+	trustDomain := spiffeid.RequireTrustDomainFromString("spiffe://traefik.test")
+
+	pki, err := newFakeSpiffePKI(trustDomain)
+	require.NoError(t, err)
+
+	clientSVID, err := pki.genSVID(spiffeid.RequireFromPath(trustDomain, "/client"))
+	require.NoError(t, err)
+
+	serverSVID, err := pki.genSVID(spiffeid.RequireFromPath(trustDomain, "/server"))
+	require.NoError(t, err)
+
+	serverSource := fakeSpiffeSource{
+		svid:   serverSVID,
+		bundle: pki.bundle,
+	}
+
+	// TLS config built with go-spiffe `tlsconfig.MTLSServerConfig` does not set a certificate on
+	// the tls.Config struct, and relies instead on `GetCertificate` being always called.
+	// Turns out that, `StartTLS` from the httptest.Server, enforces a default certificate
+	// if no certificate is set on the TLS config in use.
+	// It makes the server always serve the https default certificate, and not the SPIFFE certificate,
+	// as GetCertificate is never called (There's a default cert, and SNI is not used).
+	// To bypass this, we're manually extracting the server ceritificate from the server SVID
+	// and use another initialization method that forces serving the server SPIFFE certificate.
+	serverCert, err := tlsconfig.GetCertificate(&serverSource)(nil)
+	require.NoError(t, err)
+	srv.TLS = tlsconfig.MTLSWebServerConfig(
+		serverCert,
+		&serverSource,
+		tlsconfig.AuthorizeAny(),
+	)
+	srv.StartTLS()
+	defer srv.Close()
+
+	testCases := []struct {
+		desc             string
+		config           dynamic.ServersTransport
+		wantStatusCode   int
+		wantErrorMessage string
+	}{
+		{
+			desc: "supports SPIFFE mTLS",
+			config: dynamic.ServersTransport{
+				EnableSpiffeMTLS: true,
+			},
+			wantStatusCode: http.StatusOK,
+		},
+		{
+			desc: "allows expected server SPIFFE ID",
+			config: dynamic.ServersTransport{
+				EnableSpiffeMTLS: true,
+				ServerSpiffeIDs: []string{
+					"spiffe://traefik.test/server",
+				},
+			},
+			wantStatusCode: http.StatusOK,
+		},
+		{
+			desc: "blocks unexpected server SPIFFE ID",
+			config: dynamic.ServersTransport{
+				EnableSpiffeMTLS: true,
+				ServerSpiffeIDs: []string{
+					"spiffe://traefik.test/not-server",
+				},
+			},
+			wantErrorMessage: `unexpected ID "spiffe://traefik.test/server"`,
+		},
+		{
+			desc: "allows expected server trust domain",
+			config: dynamic.ServersTransport{
+				EnableSpiffeMTLS:        true,
+				ServerSpiffeTrustDomain: "spiffe://traefik.test",
+			},
+			wantStatusCode: http.StatusOK,
+		},
+		{
+			desc: "denies unexpected server trust domain",
+			config: dynamic.ServersTransport{
+				EnableSpiffeMTLS:        true,
+				ServerSpiffeTrustDomain: "spiffe://not-traefik.test",
+			},
+			wantErrorMessage: `unexpected trust domain "traefik.test"`,
+		},
+		{
+			desc: "spiffe IDs allowlist takes precedence",
+			config: dynamic.ServersTransport{
+				EnableSpiffeMTLS: true,
+				ServerSpiffeIDs: []string{
+					"spiffe://traefik.test/not-server",
+				},
+				ServerSpiffeTrustDomain: "spiffe://traefik.test",
+			},
+			wantErrorMessage: `unexpected ID "spiffe://traefik.test/server"`,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.desc, func(t *testing.T) {
+			rtManager := NewRoundTripperManager(
+				&fakeSpiffeSource{
+					svid:   clientSVID,
+					bundle: pki.bundle,
+				},
+			)
+
+			dynamicConf := map[string]*dynamic.ServersTransport{
+				"test": &testCase.config,
+			}
+
+			rtManager.Update(dynamicConf)
+
+			tr, err := rtManager.Get("test")
+			require.NoError(t, err)
+
+			client := http.Client{Transport: tr}
+
+			resp, err := client.Get(srv.URL)
+			if testCase.wantErrorMessage != "" {
+				assert.ErrorContains(t, err, testCase.wantErrorMessage)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, testCase.wantStatusCode, resp.StatusCode)
+		})
+	}
 }
 
 func TestDisableHTTP2(t *testing.T) {
@@ -269,7 +412,7 @@ func TestDisableHTTP2(t *testing.T) {
 			srv.EnableHTTP2 = test.serverHTTP2
 			srv.StartTLS()
 
-			rtManager := NewRoundTripperManager()
+			rtManager := NewRoundTripperManager(nil)
 
 			dynamicConf := map[string]*dynamic.ServersTransport{
 				"test": {
@@ -292,4 +435,117 @@ func TestDisableHTTP2(t *testing.T) {
 			assert.Equal(t, test.expectedProto, resp.Proto)
 		})
 	}
+}
+
+// fakeSpiffePKI simulates a SPIFFE aware PKI and allows generating multiple valid SVIDs.
+type fakeSpiffePKI struct {
+	caPrivateKey *rsa.PrivateKey
+
+	bundle *x509bundle.Bundle
+}
+
+func newFakeSpiffePKI(trustDomain spiffeid.TrustDomain) (fakeSpiffePKI, error) {
+	caPrivateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return fakeSpiffePKI{}, err
+	}
+
+	caTemplate := x509.Certificate{
+		SerialNumber: big.NewInt(2000),
+		Subject: pkix.Name{
+			Organization: []string{"spiffe"},
+		},
+		URIs:         []*url.URL{spiffeid.RequireFromPath(trustDomain, "/ca").URL()},
+		NotBefore:    time.Now(),
+		NotAfter:     time.Now().Add(time.Hour),
+		SubjectKeyId: []byte("ca"),
+		KeyUsage: x509.KeyUsageCertSign |
+			x509.KeyUsageCRLSign,
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+		PublicKey:             caPrivateKey.Public(),
+	}
+	if err != nil {
+		return fakeSpiffePKI{}, err
+	}
+
+	caCertDER, err := x509.CreateCertificate(
+		rand.Reader,
+		&caTemplate,
+		&caTemplate,
+		caPrivateKey.Public(),
+		caPrivateKey,
+	)
+	if err != nil {
+		return fakeSpiffePKI{}, err
+	}
+
+	bundle, err := x509bundle.ParseRaw(
+		trustDomain,
+		caCertDER,
+	)
+	if err != nil {
+		return fakeSpiffePKI{}, err
+	}
+
+	return fakeSpiffePKI{
+		bundle:       bundle,
+		caPrivateKey: caPrivateKey,
+	}, nil
+}
+
+func (f *fakeSpiffePKI) genSVID(id spiffeid.ID) (*x509svid.SVID, error) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, err
+	}
+
+	template := x509.Certificate{
+		SerialNumber: big.NewInt(200001),
+		URIs:         []*url.URL{id.URL()},
+		NotBefore:    time.Now(),
+		NotAfter:     time.Now().Add(time.Hour),
+		SubjectKeyId: []byte("svid"),
+		KeyUsage: x509.KeyUsageKeyEncipherment |
+			x509.KeyUsageKeyAgreement |
+			x509.KeyUsageDigitalSignature,
+		ExtKeyUsage: []x509.ExtKeyUsage{
+			x509.ExtKeyUsageServerAuth,
+			x509.ExtKeyUsageClientAuth,
+		},
+		BasicConstraintsValid: true,
+		PublicKey:             privateKey.PublicKey,
+	}
+
+	certDER, err := x509.CreateCertificate(
+		rand.Reader,
+		&template,
+		f.bundle.X509Authorities()[0],
+		privateKey.Public(),
+		f.caPrivateKey,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	keyPKCS8, err := x509.MarshalPKCS8PrivateKey(privateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return x509svid.ParseRaw(certDER, keyPKCS8)
+}
+
+// fakeSpiffeSource allows retrieving staticly an SVID and its associated bundle.
+type fakeSpiffeSource struct {
+	bundle *x509bundle.Bundle
+	svid   *x509svid.SVID
+}
+
+func (s *fakeSpiffeSource) GetX509BundleForTrustDomain(trustDomain spiffeid.TrustDomain) (*x509bundle.Bundle, error) {
+	return s.bundle, nil
+}
+
+func (s *fakeSpiffeSource) GetX509SVID() (*x509svid.SVID, error) {
+	return s.svid, nil
 }
