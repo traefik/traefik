@@ -1,3 +1,17 @@
+## [v2.9.0-rc4](https://github.com/traefik/traefik/tree/v2.9.0-rc4) (2022-09-23)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.0-rc3...v2.9.0-rc4)
+
+**Bug fixes:**
+- **[acme]** Fix ACME panic ([#9365](https://github.com/traefik/traefik/pull/9365) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[metrics]** Rework metrics overview page ([#9366](https://github.com/traefik/traefik/pull/9366) by [ddtmachado](https://github.com/ddtmachado))
+
+**Misc:**
+- Merge current v2.8 into v2.9 ([#9371](https://github.com/traefik/traefik/pull/9371) by [ldez](https://github.com/ldez))
+- Merge current v2.8 into v2.9 ([#9367](https://github.com/traefik/traefik/pull/9367) by [ldez](https://github.com/ldez))
+- Merge current v2.8 into v2.9 ([#9350](https://github.com/traefik/traefik/pull/9350) by [ldez](https://github.com/ldez))
+
 ## [v2.8.6](https://github.com/traefik/traefik/tree/v2.8.6) (2022-09-23)
 [All Commits](https://github.com/traefik/traefik/compare/v2.8.5...v2.8.6)
 
