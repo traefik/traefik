@@ -253,6 +253,14 @@ func Test_addRoute(t *testing.T) {
 			},
 		},
 		{
+			desc: "Query with multiple equals",
+			rule: "Query(`foo=b=ar`)",
+			expected: map[string]int{
+				"http://localhost/foo?foo=b=ar": http.StatusOK,
+				"http://localhost/foo?foo=bar":  http.StatusNotFound,
+			},
+		},
+		{
 			desc: "Rule with simple path",
 			rule: `Path("/a")`,
 			expected: map[string]int{
