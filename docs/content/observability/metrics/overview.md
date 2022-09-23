@@ -15,31 +15,27 @@ Traefik supports these metrics backends:
 
 ## Global Metrics
 
-| Metric                                      | Type    | Description                                            |
-|---------------------------------------------|---------|--------------------------------------------------------|
-| Config reload total                         | Count   | The total count of configuration reloads               |
-| Config reload last success                  | Gauge   | The timestamp of the last configuration reload success |
-| Config reload last failure                  | Gauge   | The timestamp of the last configuration reload failure |
-| TLS certificates not after                  | Gauge   | The expiration date of certificates                    |
+| Metric                                      | Type    | Description                                             |
+|---------------------------------------------|---------|---------------------------------------------------------|
+| Config reload total                         | Count   | The total count of configuration reloads.               |
+| Config reload last success                  | Gauge   | The timestamp of the last configuration reload success. |
+| TLS certificates not after                  | Gauge   | The expiration date of certificates.                    |
 
 ```prom tab="Prometheus"
 traefik_config_reloads_total
 traefik_config_last_reload_success
-traefik_config_last_reload_failure
 traefik_tls_certs_not_after
 ```
 
 ```dd tab="Datadog"
 config.reload.total
 config.reload.lastSuccessTimestamp
-config.reload.lastFailureTimestamp
 tls.certs.notAfterTimestamp
 ```
 
 ```influxdb tab="InfluxDB / InfluxDB2"
 traefik.config.reload.total
 traefik.config.reload.lastSuccessTimestamp
-traefik.config.reload.lastFailureTimestamp
 traefik.tls.certs.notAfterTimestamp
 ```
 
@@ -47,20 +43,19 @@ traefik.tls.certs.notAfterTimestamp
 # Default prefix: "traefik"
 {prefix}.config.reload.total
 {prefix}.config.reload.lastSuccessTimestamp
-{prefix}.config.reload.lastFailureTimestamp
 {prefix}.tls.certs.notAfterTimestamp
 ```
 
 ## EntryPoint Metrics
 
-| Metric                | Type      | [Labels](#labels)                          | Description                                                        |
-|-----------------------|-----------|--------------------------------------------|--------------------------------------------------------------------|
-| Requests total        | Count     | `code`, `method`, `protocol`, `entrypoint` | The total count of HTTP requests received by an entrypoint         |
-| Requests TLS total    | Count     | `tls_version`, `tls_cipher`, `entrypoint`  | The total count of HTTPS requests received by an entrypoint        |
-| Request duration      | Histogram | `code`, `method`, `protocol`, `entrypoint` | Request processing duration histogram on an entrypoint             |
-| Open connections      | Count     | `method`, `protocol`, `entrypoint`         | The current count of open connections on an entrypoint             |
-| Requests bytes total  | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP requests in bytes handled by an entrypoint  |
-| Responses bytes total | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP responses in bytes handled by an entrypoint |
+| Metric                | Type      | [Labels](#labels)                          | Description                                                         |
+|-----------------------|-----------|--------------------------------------------|---------------------------------------------------------------------|
+| Requests total        | Count     | `code`, `method`, `protocol`, `entrypoint` | The total count of HTTP requests received by an entrypoint.         |
+| Requests TLS total    | Count     | `tls_version`, `tls_cipher`, `entrypoint`  | The total count of HTTPS requests received by an entrypoint.        |
+| Request duration      | Histogram | `code`, `method`, `protocol`, `entrypoint` | Request processing duration histogram on an entrypoint.             |
+| Open connections      | Count     | `method`, `protocol`, `entrypoint`         | The current count of open connections on an entrypoint.             |
+| Requests bytes total  | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP requests in bytes handled by an entrypoint.  |
+| Responses bytes total | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP responses in bytes handled by an entrypoint. |
 
 ```prom tab="Prometheus"
 traefik_entrypoint_requests_total
@@ -101,14 +96,14 @@ traefik.entrypoint.responses.bytes.total
 
 ## Router Metrics
 
-| Metric                | Type      | [Labels](#labels)                                 | Description                                                   |
-|-----------------------|-----------|---------------------------------------------------|---------------------------------------------------------------|
-| Requests total        | Count     | `code`, `method`, `protocol`, `router`, `service` | The total count of HTTP requests handled by a router          |
-| Requests TLS total    | Count     | `tls_version`, `tls_cipher`, `router`, `service`  | The total count of HTTPS requests handled by a router         |
-| Request duration      | Histogram | `code`, `method`, `protocol`, `router`, `service` | Request processing duration histogram on a router             |
-| Open connections      | Count     | `method`, `protocol`, `router`, `service`         | The current count of open connections on a router             |
-| Requests bytes total  | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP requests in bytes handled by a router  |
-| Responses bytes total | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP responses in bytes handled by a router |
+| Metric                | Type      | [Labels](#labels)                                 | Description                                                    |
+|-----------------------|-----------|---------------------------------------------------|----------------------------------------------------------------|
+| Requests total        | Count     | `code`, `method`, `protocol`, `router`, `service` | The total count of HTTP requests handled by a router.          |
+| Requests TLS total    | Count     | `tls_version`, `tls_cipher`, `router`, `service`  | The total count of HTTPS requests handled by a router.         |
+| Request duration      | Histogram | `code`, `method`, `protocol`, `router`, `service` | Request processing duration histogram on a router.             |
+| Open connections      | Count     | `method`, `protocol`, `router`, `service`         | The current count of open connections on a router.             |
+| Requests bytes total  | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP requests in bytes handled by a router.  |
+| Responses bytes total | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP responses in bytes handled by a router. |
 
 ```prom tab="Prometheus"
 traefik_router_requests_total
@@ -149,16 +144,16 @@ traefik.router.responses.bytes.total
 
 ## Service Metrics
 
-| Metric                | Type      | Labels                                  | Description                                                |
-|-----------------------|-----------|-----------------------------------------|------------------------------------------------------------|
-| Requests total        | Count     | `code`, `method`, `protocol`, `service` | The total count of HTTP requests processed on a service    |
-| Requests TLS total    | Count     | `tls_version`, `tls_cipher`, `service`  | The total count of HTTPS requests processed on a service   |
-| Request duration      | Histogram | `code`, `method`, `protocol`, `service` | Request processing duration histogram on a service         |
-| Open connections      | Count     | `method`, `protocol`, `service`         | The current count of open connections on a service         |
-| Retries total         | Count     | `service`                               | The count of requests retries on a service                 |
-| Server UP             | Gauge     | `service`, `url`                        | Current service's server status, 0 for a down or 1 for up  |
-| Requests bytes total  | Count     | `code`, `method`, `protocol`, `service` | The total size of requests in bytes received by a service  |
-| Responses bytes total | Count     | `code`, `method`, `protocol`, `service` | The total size of responses in bytes returned by a service |
+| Metric                | Type      | Labels                                  | Description                                                 |
+|-----------------------|-----------|-----------------------------------------|-------------------------------------------------------------|
+| Requests total        | Count     | `code`, `method`, `protocol`, `service` | The total count of HTTP requests processed on a service.    |
+| Requests TLS total    | Count     | `tls_version`, `tls_cipher`, `service`  | The total count of HTTPS requests processed on a service.   |
+| Request duration      | Histogram | `code`, `method`, `protocol`, `service` | Request processing duration histogram on a service.         |
+| Open connections      | Count     | `method`, `protocol`, `service`         | The current count of open connections on a service.         |
+| Retries total         | Count     | `service`                               | The count of requests retries on a service.                 |
+| Server UP             | Gauge     | `service`, `url`                        | Current service's server status, 0 for a down or 1 for up.  |
+| Requests bytes total  | Count     | `code`, `method`, `protocol`, `service` | The total size of requests in bytes received by a service.  |
+| Responses bytes total | Count     | `code`, `method`, `protocol`, `service` | The total size of responses in bytes returned by a service. |
 
 ```prom tab="Prometheus"
 traefik_service_requests_total
