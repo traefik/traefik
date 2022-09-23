@@ -1,5 +1,5 @@
-## [v2.8.6](https://github.com/traefik/traefik/tree/v2.8.6) (2022-09-23)
-[All Commits](https://github.com/traefik/traefik/compare/v2.8.5...v2.8.6)
+## [v2.8.7](https://github.com/traefik/traefik/tree/v2.8.7) (2022-09-23)
+[All Commits](https://github.com/traefik/traefik/compare/v2.8.5...v2.8.7)
 
 **Bug fixes:**
 - **[consulcatalog]** Fix UDP loadbalancer tags not being used with Consul Catalog ([#9357](https://github.com/traefik/traefik/pull/9357) by [t3hchipmunk](https://github.com/t3hchipmunk))
@@ -13,6 +13,11 @@
 - **[k8s/gatewayapi]** Fix link to RouteNamespaces ([#9349](https://github.com/traefik/traefik/pull/9349) by [ldez](https://github.com/ldez))
 - Add documentation for json schema usage to validate config in the FAQ ([#9340](https://github.com/traefik/traefik/pull/9340) by [rtribotte](https://github.com/rtribotte))
 - Add a note on case insensitive regex matching ([#9322](https://github.com/traefik/traefik/pull/9322) by [NEwa-05](https://github.com/NEwa-05))
+
+## [v2.8.6](https://github.com/traefik/traefik/tree/v2.8.6) (2022-09-23)
+[All Commits](https://github.com/traefik/traefik/compare/v2.8.5...v2.8.6)
+
+Release canceled.
 
 ## [v2.8.5](https://github.com/traefik/traefik/tree/v2.8.5) (2022-09-13)
 [All Commits](https://github.com/traefik/traefik/compare/v2.8.4...v2.8.5)
