@@ -42,6 +42,12 @@ type ServersTransportSpec struct {
 	DisableHTTP2 bool `json:"disableHTTP2,omitempty"`
 	// PeerCertURI defines the peer cert URI used to match against SAN URI during the peer certificate verification.
 	PeerCertURI string `json:"peerCertURI,omitempty"`
+	// EnableSpiffeMTLS turns on MTLS using spiffe for this transport.
+	EnableSpiffeMTLS bool `json:"enableSpiffeMTLS,omitempty"`
+	// ServerSpiffeIDs lists all allowed server SpiffeIDs. Takes precedences over ServerSpiffeTrustDomain.
+	ServerSpiffeIDs []string `json:"serverSpiffeIDs,omitempty"`
+	// ServerSpiffeTrustDomain specifies an allowed Spiffe trust domain for the server.
+	ServerSpiffeTrustDomain string `json:"serverSpiffeTrustDomain,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
