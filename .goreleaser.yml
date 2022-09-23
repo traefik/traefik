@@ -40,6 +40,8 @@ builds:
         goarch: arm64
       - goos: freebsd
         goarch: arm64
+      - goos: windows
+        goarch: arm
 
 changelog:
   skip: true
