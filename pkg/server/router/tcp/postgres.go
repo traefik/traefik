@@ -15,7 +15,7 @@ var (
 	PostgresStartTLSMsg   = []byte{0, 0, 0, 8, 4, 210, 22, 47} // int32(8) + int32(80877103)
 )
 
-// isPostGRESql determines whether the buffer contains the PostGRES STARTTLS message.
+// isPostGRESql determines whether the buffer contains the Postgres STARTTLS message.
 func isPostGRESql(br *bufio.Reader) (bool, error) {
 	for i := 0; i < len(PostgresStartTLSMsg); i++ {
 		peeked, err := br.Peek(i)
@@ -31,7 +31,7 @@ func isPostGRESql(br *bufio.Reader) (bool, error) {
 	return true, nil
 }
 
-// servePostGreSQL serves a connection with a PostGRES client negotiating a STARTTLS session.
+// servePostGreSQL serves a connection with a Postgres client negotiating a STARTTLS session.
 // It handles TCP TLS routing, after accepting to start the STARTTLS session.
 func (r *Router) servePostGreSQL(conn tcp.WriteCloser) {
 	_, err := conn.Write(PostgresStartTLSReply)
@@ -97,6 +97,7 @@ type postgresConn struct {
 // Read reads bytes from the underlying connection (tcp.WriteCloser).
 // On first call, it actually only reads the content the PostgresStartTLSMsg message.
 // This is done to behave as a Postgres TLS client that ask to initiate a TLS session.
+// Not thread safe.
 func (c *postgresConn) Read(p []byte) (n int, err error) {
 	if c.alreadyRead {
 		if err := <-c.waiter; err != nil {
@@ -110,7 +111,10 @@ func (c *postgresConn) Read(p []byte) (n int, err error) {
 		c.waiter = make(chan error)
 	}
 
-	c.alreadyRead = true
+	defer func() {
+		c.alreadyRead = true
+	}()
+
 	copy(p, PostgresStartTLSMsg)
 	return len(PostgresStartTLSMsg), nil
 }
@@ -120,6 +124,7 @@ func (c *postgresConn) Read(p []byte) (n int, err error) {
 // If the check is successful, it does nothing (no actual write on the connection),
 // otherwise an error is raised and transmitted to a second Read call through c.waiter.
 // It is done to enforce that the STARTTLS negotiation is successful.
+// Not thread safe.
 func (c *postgresConn) Write(p []byte) (n int, err error) {
 	if c.alreadyWritten {
 		return c.WriteCloser.Write(p)
@@ -129,9 +134,11 @@ func (c *postgresConn) Write(p []byte) (n int, err error) {
 		return 0, errors.New("initial read never happened")
 	}
 
-	c.alreadyWritten = true
+	defer func() {
+		c.alreadyWritten = true
+	}()
 
-	// TODO(romain): the two assertions are split to be more accurate when returning the number of written bytes, but does it it worth it?
+	// TODO(romain): the two assertions are split to be more accurate when returning the number of written bytes, but is it worth it?
 	if len(p) != 1 {
 		c.waiter <- errors.New("invalid response from PostGreSQL server")
 		return len(p), nil
