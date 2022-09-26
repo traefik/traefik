@@ -108,6 +108,17 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 
 	// TODO -- Check if ProxyProtocol changes the first bytes of the request
 	br := bufio.NewReader(conn)
+	postgres, err := isPostGRESql(br)
+	if err != nil {
+		conn.Close()
+		return
+	}
+
+	if postgres {
+		r.servePostGreSQL(r.GetConn(conn, getPeeked(br)))
+		return
+	}
+
 	hello, err := clientHelloInfo(br)
 	if err != nil {
 		conn.Close()
