@@ -94,9 +94,8 @@ or act before forwarding the request to the service.
 
 ### EntryPoints
 
-If not specified, HTTP routers will accept requests from all EntryPoints that are configured with `asDefault=true`
-(or all EntryPoints if none are configured with `asDefault=true`, see [AsDefault](../entrypoints.md#asdefault) for more info)
-If you want to limit the router scope to specific EntryPoints, set the `entryPoints` option.
+If not specified, HTTP routers will accept requests from all EntryPoints in the [list of default EntryPoints](../entrypoints.md#asdefault).
+If you want to limit the router scope to a set of entry points, set the `entryPoints` option.
 
 ??? example "Listens to Every EntryPoint"
 
@@ -672,9 +671,8 @@ If no matching route is found for the TCP routers, then the HTTP routers will ta
 
 ### EntryPoints
 
-If not specified, TCP routers will accept requests from all EntryPoints that are configured with `asDefault=true`
-(or all EntryPoints if none are configured with `asDefault=true`, see [AsDefault](../entrypoints.md#asdefault) for more info)
-If you want to limit the router scope to a set of EntryPoints, set the `entryPoints` option.
+If not specified, TCP routers will accept requests from all EntryPoints in the [list of default EntryPoints](../entrypoints.md#asdefault)..
+If you want to limit the router scope to a set of entry points, set the entry points option.
 
 ??? info "How to handle Server First protocols?"
 
