@@ -316,7 +316,8 @@ On subsequent requests, to keep the session alive with the same server, the clie
 #### Health Check
 
 Configure health check to remove unhealthy servers from the load balancing rotation.
-Traefik will consider your servers healthy as long as they return status codes between `2XX` and `3XX` to the health check requests (carried out every `interval`).
+Traefik will consider your HTTP(s) servers healthy as long as they return status codes between `2XX` and `3XX` to the health check requests (carried out every `interval`).
+For gRPC servers, Traefik will consider them healthy as long as they return `SERVING` to [gRPC health check v1](https://github.com/grpc/grpc/blob/master/doc/health-checking.md) requests.
 
 To propagate status changes (e.g. all servers of this service are down) upwards, HealthCheck must also be enabled on the parent(s) of this service.
 
@@ -324,6 +325,7 @@ Below are the available options for the health check mechanism:
 
 - `path` (required), defines the server URL path for the health check endpoint .
 - `scheme` (optional), replaces the server URL `scheme` for the health check endpoint.
+- `mode` (default: http), if defined to `grpc`, will use the gRPC health check protocol to probe the server.
 - `hostname` (optional), sets the value of `hostname` in the `Host` header of the health check request.
 - `port` (optional), replaces the server URL `port` for the health check endpoint.
 - `interval` (default: 30s), defines the frequency of the health check calls.
@@ -678,7 +680,7 @@ metadata:
   name: myca
 
   data:
-    tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+    ca.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
 ```
 
 #### `maxIdleConnsPerHost`
@@ -1647,17 +1649,4 @@ udp:
         address = "private-ip-server-2:8080/"
 ```
 
-!!! question "Using Traefik for Business Applications?"
-
-    If you are using Traefik for commercial applications,
-    consider the [Enterprise Edition](https://traefik.io/traefik-enterprise/).
-    You can use it as your:
-
-    - [Kubernetes Ingress Controller](https://traefik.io/solutions/kubernetes-ingress/)
-    - [Load Balancer](https://traefik.io/solutions/docker-swarm-ingress/)
-    - [API Gateway](https://traefik.io/solutions/api-gateway/)
-
-    Traefik Enterprise enables centralized access management,
-    distributed Let's Encrypt,
-    and other advanced capabilities.
-    Learn more in [this 15-minute technical walkthrough](https://info.traefik.io/watch-traefikee-demo).
+{!traefik-for-business-applications.md!}

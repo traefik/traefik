@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/tls"
 )
 
 type routerRepresentation struct {
@@ -20,6 +21,10 @@ type routerRepresentation struct {
 }
 
 func newRouterRepresentation(name string, rt *runtime.RouterInfo) routerRepresentation {
+	if rt.TLS != nil && rt.TLS.Options == "" {
+		rt.TLS.Options = tls.DefaultTLSConfigName
+	}
+
 	return routerRepresentation{
 		RouterInfo: rt,
 		Name:       name,

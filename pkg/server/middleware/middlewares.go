@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 	"strings"
 
 	"github.com/containous/alice"
@@ -314,7 +315,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			// FIXME missing metrics / accessLog
+			// TODO missing metrics / accessLog
 			return retry.New(ctx, next, *config.Retry, retry.Listeners{}, middlewareName)
 		}
 	}
@@ -340,7 +341,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	}
 
 	// Plugin
-	if config.Plugin != nil {
+	if config.Plugin != nil && !reflect.ValueOf(b.pluginBuilder).IsNil() { // Using "reflect" because "b.pluginBuilder" is an interface.
 		if middleware != nil {
 			return nil, badConf
 		}

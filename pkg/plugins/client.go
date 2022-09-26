@@ -29,20 +29,19 @@ const (
 	pluginManifest = ".traefik.yml"
 )
 
-const pilotURL = "https://plugin.pilot.traefik.io/public/"
+const pluginsURL = "https://plugins.traefik.io/public/"
 
 const (
 	hashHeader  = "X-Plugin-Hash"
 	tokenHeader = "X-Token"
 )
 
-// ClientOptions the options of a Traefik Pilot client.
+// ClientOptions the options of a Traefik plugins client.
 type ClientOptions struct {
 	Output string
-	Token  string
 }
 
-// Client a Traefik Pilot client.
+// Client a Traefik plugins client.
 type Client struct {
 	HTTPClient *http.Client
 	baseURL    *url.URL
@@ -54,9 +53,9 @@ type Client struct {
 	sources   string
 }
 
-// NewClient creates a new Traefik Pilot client.
+// NewClient creates a new Traefik plugins client.
 func NewClient(opts ClientOptions) (*Client, error) {
-	baseURL, err := url.Parse(pilotURL)
+	baseURL, err := url.Parse(pluginsURL)
 	if err != nil {
 		return nil, err
 	}
@@ -87,8 +86,6 @@ func NewClient(opts ClientOptions) (*Client, error) {
 
 		goPath:  goPath,
 		sources: filepath.Join(goPath, goPathSrc),
-
-		token: opts.Token,
 	}, nil
 }
 
@@ -164,7 +161,12 @@ func (c *Client) Download(ctx context.Context, pName, pVersion string) (string, 
 
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode == http.StatusOK {
+	switch resp.StatusCode {
+	case http.StatusNotModified:
+		// noop
+		return hash, nil
+
+	case http.StatusOK:
 		err = os.MkdirAll(filepath.Dir(filename), 0o755)
 		if err != nil {
 			return "", fmt.Errorf("failed to create directory: %w", err)
@@ -189,15 +191,11 @@ func (c *Client) Download(ctx context.Context, pName, pVersion string) (string, 
 		}
 
 		return hash, nil
-	}
 
-	if resp.StatusCode == http.StatusNotModified {
-		// noop
-		return hash, nil
+	default:
+		data, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("error: %d: %s", resp.StatusCode, string(data))
 	}
-
-	data, _ := io.ReadAll(resp.Body)
-	return "", fmt.Errorf("error: %d: %s", resp.StatusCode, string(data))
 }
 
 // Check checks the plugin archive integrity.

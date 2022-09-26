@@ -31,7 +31,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
-	"github.com/traefik/traefik/v2/pkg/pilot"
+	"github.com/traefik/traefik/v2/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v2/pkg/provider/acme"
 	"github.com/traefik/traefik/v2/pkg/provider/aggregator"
 	"github.com/traefik/traefik/v2/pkg/provider/hub"
@@ -41,6 +41,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/server/middleware"
 	"github.com/traefik/traefik/v2/pkg/server/service"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v2/pkg/tracing"
+	"github.com/traefik/traefik/v2/pkg/tracing/jaeger"
 	"github.com/traefik/traefik/v2/pkg/types"
 	"github.com/traefik/traefik/v2/pkg/version"
 	"github.com/vulcand/oxy/roundrobin"
@@ -201,34 +203,24 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		return nil, err
 	}
 
-	// Pilot
-
-	var aviator *pilot.Pilot
-	var pilotRegistry *metrics.PilotRegistry
-	if isPilotEnabled(staticConfiguration) {
-		pilotRegistry = metrics.RegisterPilot()
-
-		aviator = pilot.New(staticConfiguration.Pilot.Token, pilotRegistry, routinesPool)
-
-		routinesPool.GoCtx(func(ctx context.Context) {
-			aviator.Tick(ctx)
-		})
-	}
-
 	if staticConfiguration.Pilot != nil {
-		log.WithoutContext().Warn("Traefik Pilot is deprecated and will be removed soon. Please check our Blog for migration instructions later this year.")
+		log.WithoutContext().Warn("Traefik Pilot has been removed.")
 	}
 
 	// Plugins
 
 	pluginBuilder, err := createPluginBuilder(staticConfiguration)
 	if err != nil {
-		return nil, err
+		log.WithoutContext().WithError(err).Error("Plugins are disabled because an error has occurred.")
 	}
 
 	// Providers plugins
 
 	for name, conf := range staticConfiguration.Providers.Plugin {
+		if pluginBuilder == nil {
+			break
+		}
+
 		p, err := pluginBuilder.BuildProvider(name, conf)
 		if err != nil {
 			return nil, fmt.Errorf("plugin: failed to build provider: %w", err)
@@ -256,9 +248,6 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	// Metrics
 
 	metricRegistries := registerMetricClients(staticConfiguration.Metrics)
-	if pilotRegistry != nil {
-		metricRegistries = append(metricRegistries, pilotRegistry)
-	}
 	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
 
 	// Service manager factory
@@ -270,7 +259,10 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	// Router factory
 
 	accessLog := setupAccessLog(staticConfiguration.AccessLog)
-	chainBuilder := middleware.NewChainBuilder(*staticConfiguration, metricsRegistry, accessLog)
+	tracer := setupTracing(staticConfiguration.Tracing)
+	captureMiddleware := setupCapture(staticConfiguration)
+
+	chainBuilder := middleware.NewChainBuilder(metricsRegistry, accessLog, tracer, captureMiddleware)
 	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder, metricsRegistry)
 
 	// Watcher
@@ -305,7 +297,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	})
 
 	// Switch router
-	watcher.AddListener(switchRouter(routerFactory, serverEntryPointsTCP, serverEntryPointsUDP, aviator))
+	watcher.AddListener(switchRouter(routerFactory, serverEntryPointsTCP, serverEntryPointsUDP))
 
 	// Metrics
 	if metricsRegistry.IsEpEnabled() || metricsRegistry.IsSvcEnabled() {
@@ -381,15 +373,11 @@ func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string 
 	return defaultEntryPoints
 }
 
-func switchRouter(routerFactory *server.RouterFactory, serverEntryPointsTCP server.TCPEntryPoints, serverEntryPointsUDP server.UDPEntryPoints, aviator *pilot.Pilot) func(conf dynamic.Configuration) {
+func switchRouter(routerFactory *server.RouterFactory, serverEntryPointsTCP server.TCPEntryPoints, serverEntryPointsUDP server.UDPEntryPoints) func(conf dynamic.Configuration) {
 	return func(conf dynamic.Configuration) {
 		rtConf := runtime.NewConfig(conf)
 
 		routers, udpRouters := routerFactory.CreateRouters(rtConf)
-
-		if aviator != nil {
-			aviator.SetDynamicConfiguration(conf)
-		}
 
 		serverEntryPointsTCP.Switch(routers)
 		serverEntryPointsUDP.Switch(udpRouters)
@@ -504,11 +492,84 @@ func setupAccessLog(conf *types.AccessLog) *accesslog.Handler {
 
 	accessLoggerMiddleware, err := accesslog.NewHandler(conf)
 	if err != nil {
-		log.WithoutContext().Warnf("Unable to create access logger : %v", err)
+		log.WithoutContext().Warnf("Unable to create access logger: %v", err)
 		return nil
 	}
 
 	return accessLoggerMiddleware
+}
+
+func setupTracing(conf *static.Tracing) *tracing.Tracing {
+	if conf == nil {
+		return nil
+	}
+
+	var backend tracing.Backend
+
+	if conf.Jaeger != nil {
+		backend = conf.Jaeger
+	}
+
+	if conf.Zipkin != nil {
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Zipkin backend.")
+		} else {
+			backend = conf.Zipkin
+		}
+	}
+
+	if conf.Datadog != nil {
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Datadog backend.")
+		} else {
+			backend = conf.Datadog
+		}
+	}
+
+	if conf.Instana != nil {
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Instana backend.")
+		} else {
+			backend = conf.Instana
+		}
+	}
+
+	if conf.Haystack != nil {
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Haystack backend.")
+		} else {
+			backend = conf.Haystack
+		}
+	}
+
+	if conf.Elastic != nil {
+		if backend != nil {
+			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Elastic backend.")
+		} else {
+			backend = conf.Elastic
+		}
+	}
+
+	if backend == nil {
+		log.WithoutContext().Debug("Could not initialize tracing, using Jaeger by default")
+		defaultBackend := &jaeger.Config{}
+		defaultBackend.SetDefaults()
+		backend = defaultBackend
+	}
+
+	tracer, err := tracing.NewTracing(conf.ServiceName, conf.SpanNameLimit, backend)
+	if err != nil {
+		log.WithoutContext().Warnf("Unable to create tracer: %v", err)
+		return nil
+	}
+	return tracer
+}
+
+func setupCapture(staticConfiguration *static.Configuration) *capture.Handler {
+	if staticConfiguration.AccessLog == nil && staticConfiguration.Metrics == nil {
+		return nil
+	}
+	return &capture.Handler{}
 }
 
 func configureLogging(staticConfiguration *static.Configuration) {

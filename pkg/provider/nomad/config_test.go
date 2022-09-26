@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 )
@@ -2507,6 +2508,58 @@ func Test_keepItem(t *testing.T) {
 			require.Equal(t, test.exp, result)
 		})
 	}
+}
+
+func TestNamespaces(t *testing.T) {
+	testCases := []struct {
+		desc               string
+		namespace          string
+		namespaces         []string
+		expectedNamespaces []string
+	}{
+		{
+			desc:               "no defined namespaces",
+			expectedNamespaces: []string{""},
+		},
+		{
+			desc:               "deprecated: use of defined namespace",
+			namespace:          "test-ns",
+			expectedNamespaces: []string{"test-ns"},
+		},
+		{
+			desc:               "use of 1 defined namespaces",
+			namespaces:         []string{"test-ns"},
+			expectedNamespaces: []string{"test-ns"},
+		},
+		{
+			desc:               "use of multiple defined namespaces",
+			namespaces:         []string{"test-ns1", "test-ns2", "test-ns3", "test-ns4"},
+			expectedNamespaces: []string{"test-ns1", "test-ns2", "test-ns3", "test-ns4"},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			pb := &ProviderBuilder{
+				Namespace:  test.namespace,
+				Namespaces: test.namespaces,
+			}
+
+			assert.Equal(t, test.expectedNamespaces, extractNamespacesFromProvider(pb.BuildProviders()))
+		})
+	}
+}
+
+func extractNamespacesFromProvider(providers []*Provider) []string {
+	res := make([]string, len(providers))
+	for i, p := range providers {
+		res[i] = p.namespace
+	}
+	return res
 }
 
 func Int(v int) *int    { return &v }

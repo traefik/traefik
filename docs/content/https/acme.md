@@ -342,7 +342,7 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [IBM Cloud (SoftLayer)](https://www.ibm.com/cloud/)                                                | `ibmcloud`     | `SOFTLAYER_USERNAME`, `SOFTLAYER_API_KEY`                                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/ibmcloud)     |
 | [IIJ DNS Platform Service](https://www.iij.ad.jp)                                                  | `iijdpf`       | `IIJ_DPF_API_TOKEN` , `IIJ_DPF_DPM_SERVICE_CODE`                                                                                            | [Additional configuration](https://go-acme.github.io/lego/dns/iijdpf)       |
 | [IIJ](https://www.iij.ad.jp/)                                                                      | `iij`          | `IIJ_API_ACCESS_KEY`, `IIJ_API_SECRET_KEY`, `IIJ_DO_SERVICE_CODE`                                                                           | [Additional configuration](https://go-acme.github.io/lego/dns/iij)          |
-| [Infoblox](https://www.infoblox.com/)                                                              | `infoblox`     | `INFOBLOX_USER`, `INFOBLOX_PASSWORD`, `INFOBLOX_HOST`                                                                                       | [Additional configuration](https://go-acme.github.io/lego/dns/infoblox)     |
+| [Infoblox](https://www.infoblox.com/)                                                              | `infoblox`     | `INFOBLOX_USERNAME`, `INFOBLOX_PASSWORD`, `INFOBLOX_HOST`                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/infoblox)     |
 | [Infomaniak](https://www.infomaniak.com)                                                           | `infomaniak`   | `INFOMANIAK_ACCESS_TOKEN`                                                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/infomaniak)   |
 | [Internet.bs](https://internetbs.net)                                                              | `internetbs`   | `INTERNET_BS_API_KEY`, `INTERNET_BS_PASSWORD`                                                                                               | [Additional configuration](https://go-acme.github.io/lego/dns/internetbs)   |
 | [INWX](https://www.inwx.de/en)                                                                     | `inwx`         | `INWX_USERNAME`, `INWX_PASSWORD`                                                                                                            | [Additional configuration](https://go-acme.github.io/lego/dns/inwx)         |
@@ -661,23 +661,10 @@ certificatesResolvers:
 If Let's Encrypt is not reachable, the following certificates will apply:
 
   1. Previously generated ACME certificates (before downtime)
-  1. Expired ACME certificates
-  1. Provided certificates
+  2. Expired ACME certificates
+  3. Provided certificates
 
 !!! important
     For new (sub)domains which need Let's Encrypt authentication, the default Traefik certificate will be used until Traefik is restarted.
-    
-!!! question "Using Traefik for Business Applications?"
 
-    If you are using Traefik for commercial applications,
-    consider the [Enterprise Edition](https://traefik.io/traefik-enterprise/).
-    You can use it as your:
-
-    - [Kubernetes Ingress Controller](https://traefik.io/solutions/kubernetes-ingress/)
-    - [Load Balancer](https://traefik.io/solutions/docker-swarm-ingress/)
-    - [API Gateway](https://traefik.io/solutions/api-gateway/)
-
-    Traefik Enterprise enables centralized access management,
-    distributed Let's Encrypt,
-    and other advanced capabilities.
-    Learn more in [this 15-minute technical walkthrough](https://info.traefik.io/watch-traefikee-demo).
+{!traefik-for-business-applications.md!}

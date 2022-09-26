@@ -378,12 +378,6 @@ Prefix to use for metrics collection. (Default: ```traefik```)
 `TRAEFIK_METRICS_STATSD_PUSHINTERVAL`:  
 StatsD push interval. (Default: ```10```)
 
-`TRAEFIK_PILOT_DASHBOARD`:  
-Enable Traefik Pilot in the dashboard. (Default: ```true```)
-
-`TRAEFIK_PILOT_TOKEN`:  
-Traefik Pilot token.
-
 `TRAEFIK_PING`:  
 Enable ping. (Default: ```false```)
 
@@ -481,7 +475,7 @@ Use stale consistency for catalog reads. (Default: ```false```)
 Watch Consul API events. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_CONSUL_ENDPOINTS`:  
-KV store endpoints (Default: ```127.0.0.1:8500```)
+KV store endpoints. (Default: ```127.0.0.1:8500```)
 
 `TRAEFIK_PROVIDERS_CONSUL_NAMESPACE`:  
 Sets the namespace used to discover the configuration (Consul Enterprise only).
@@ -489,11 +483,8 @@ Sets the namespace used to discover the configuration (Consul Enterprise only).
 `TRAEFIK_PROVIDERS_CONSUL_NAMESPACES`:  
 Sets the namespaces used to discover the configuration (Consul Enterprise only).
 
-`TRAEFIK_PROVIDERS_CONSUL_PASSWORD`:  
-KV Password
-
 `TRAEFIK_PROVIDERS_CONSUL_ROOTKEY`:  
-Root key used for KV store (Default: ```traefik```)
+Root key used for KV store. (Default: ```traefik```)
 
 `TRAEFIK_PROVIDERS_CONSUL_TLS_CA`:  
 TLS CA
@@ -511,10 +502,7 @@ TLS insecure skip verify (Default: ```false```)
 TLS key
 
 `TRAEFIK_PROVIDERS_CONSUL_TOKEN`:  
-KV Token
-
-`TRAEFIK_PROVIDERS_CONSUL_USERNAME`:  
-KV Username
+Per-request ACL token.
 
 `TRAEFIK_PROVIDERS_DOCKER`:  
 Enable Docker backend with default settings. (Default: ```false```)
@@ -571,13 +559,13 @@ Watch Docker Swarm events. (Default: ```true```)
 Enable AWS ECS backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ECS_ACCESSKEYID`:  
-The AWS credentials access key to use for making requests
+AWS credentials access key ID to use for making requests.
 
 `TRAEFIK_PROVIDERS_ECS_AUTODISCOVERCLUSTERS`:  
-Auto discover cluster (Default: ```false```)
+Auto discover cluster. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ECS_CLUSTERS`:  
-ECS Clusters name (Default: ```default```)
+ECS Cluster names. (Default: ```default```)
 
 `TRAEFIK_PROVIDERS_ECS_CONSTRAINTS`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
@@ -585,29 +573,35 @@ Constraints is an expression that Traefik matches against the container's labels
 `TRAEFIK_PROVIDERS_ECS_DEFAULTRULE`:  
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
+`TRAEFIK_PROVIDERS_ECS_ECSANYWHERE`:  
+Enable ECS Anywhere support. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_ECS_EXPOSEDBYDEFAULT`:  
-Expose services by default (Default: ```true```)
+Expose services by default. (Default: ```true```)
+
+`TRAEFIK_PROVIDERS_ECS_HEALTHYTASKSONLY`:  
+Determines whether to discover only healthy tasks. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ECS_REFRESHSECONDS`:  
-Polling interval (in seconds) (Default: ```15```)
+Polling interval (in seconds). (Default: ```15```)
 
 `TRAEFIK_PROVIDERS_ECS_REGION`:  
-The AWS region to use for requests
+AWS region to use for requests.
 
 `TRAEFIK_PROVIDERS_ECS_SECRETACCESSKEY`:  
-The AWS credentials access key to use for making requests
+AWS credentials access key to use for making requests.
 
 `TRAEFIK_PROVIDERS_ETCD`:  
 Enable Etcd backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ETCD_ENDPOINTS`:  
-KV store endpoints (Default: ```127.0.0.1:2379```)
+KV store endpoints. (Default: ```127.0.0.1:2379```)
 
 `TRAEFIK_PROVIDERS_ETCD_PASSWORD`:  
-KV Password
+Password for authentication.
 
 `TRAEFIK_PROVIDERS_ETCD_ROOTKEY`:  
-Root key used for KV store (Default: ```traefik```)
+Root key used for KV store. (Default: ```traefik```)
 
 `TRAEFIK_PROVIDERS_ETCD_TLS_CA`:  
 TLS CA
@@ -624,11 +618,8 @@ TLS insecure skip verify (Default: ```false```)
 `TRAEFIK_PROVIDERS_ETCD_TLS_KEY`:  
 TLS key
 
-`TRAEFIK_PROVIDERS_ETCD_TOKEN`:  
-KV Token
-
 `TRAEFIK_PROVIDERS_ETCD_USERNAME`:  
-KV Username
+Username for authentication.
 
 `TRAEFIK_PROVIDERS_FILE_DEBUGLOGGENERATEDTEMPLATE`:  
 Enable debug logging of generated configuration template. (Default: ```false```)
@@ -867,6 +858,9 @@ Expose Nomad services by default. (Default: ```true```)
 `TRAEFIK_PROVIDERS_NOMAD_NAMESPACE`:  
 Sets the Nomad namespace used to discover services.
 
+`TRAEFIK_PROVIDERS_NOMAD_NAMESPACES`:  
+Sets the Nomad namespaces used to discover services.
+
 `TRAEFIK_PROVIDERS_NOMAD_PREFIX`:  
 Prefix for nomad service tags. (Default: ```traefik```)
 
@@ -912,14 +906,17 @@ Watch provider. (Default: ```true```)
 `TRAEFIK_PROVIDERS_REDIS`:  
 Enable Redis backend with default settings. (Default: ```false```)
 
+`TRAEFIK_PROVIDERS_REDIS_DB`:  
+Database to be selected after connecting to the server. (Default: ```0```)
+
 `TRAEFIK_PROVIDERS_REDIS_ENDPOINTS`:  
-KV store endpoints (Default: ```127.0.0.1:6379```)
+KV store endpoints. (Default: ```127.0.0.1:6379```)
 
 `TRAEFIK_PROVIDERS_REDIS_PASSWORD`:  
-KV Password
+Password for authentication.
 
 `TRAEFIK_PROVIDERS_REDIS_ROOTKEY`:  
-Root key used for KV store (Default: ```traefik```)
+Root key used for KV store. (Default: ```traefik```)
 
 `TRAEFIK_PROVIDERS_REDIS_TLS_CA`:  
 TLS CA
@@ -936,11 +933,8 @@ TLS insecure skip verify (Default: ```false```)
 `TRAEFIK_PROVIDERS_REDIS_TLS_KEY`:  
 TLS key
 
-`TRAEFIK_PROVIDERS_REDIS_TOKEN`:  
-KV Token
-
 `TRAEFIK_PROVIDERS_REDIS_USERNAME`:  
-KV Username
+Username for authentication.
 
 `TRAEFIK_PROVIDERS_REST`:  
 Enable Rest backend with default settings. (Default: ```false```)
@@ -952,34 +946,16 @@ Activate REST Provider directly on the entryPoint named traefik. (Default: ```fa
 Enable ZooKeeper backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER_ENDPOINTS`:  
-KV store endpoints (Default: ```127.0.0.1:2181```)
+KV store endpoints. (Default: ```127.0.0.1:2181```)
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER_PASSWORD`:  
-KV Password
+Password for authentication.
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER_ROOTKEY`:  
-Root key used for KV store (Default: ```traefik```)
-
-`TRAEFIK_PROVIDERS_ZOOKEEPER_TLS_CA`:  
-TLS CA
-
-`TRAEFIK_PROVIDERS_ZOOKEEPER_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_ZOOKEEPER_TLS_CERT`:  
-TLS cert
-
-`TRAEFIK_PROVIDERS_ZOOKEEPER_TLS_INSECURESKIPVERIFY`:  
-TLS insecure skip verify (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_ZOOKEEPER_TLS_KEY`:  
-TLS key
-
-`TRAEFIK_PROVIDERS_ZOOKEEPER_TOKEN`:  
-KV Token
+Root key used for KV store. (Default: ```traefik```)
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER_USERNAME`:  
-KV Username
+Username for authentication.
 
 `TRAEFIK_SERVERSTRANSPORT_FORWARDINGTIMEOUTS_DIALTIMEOUT`:  
 The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
@@ -1013,6 +989,9 @@ Enables Datadog debug. (Default: ```false```)
 
 `TRAEFIK_TRACING_DATADOG_GLOBALTAG`:  
 Sets a key:value tag on all spans.
+
+`TRAEFIK_TRACING_DATADOG_GLOBALTAGS_<NAME>`:  
+Sets a list of key:value tags on all spans.
 
 `TRAEFIK_TRACING_DATADOG_LOCALAGENTHOSTPORT`:  
 Sets the Datadog Agent host:port. (Default: ```localhost:8126```)

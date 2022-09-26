@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ecs"
+	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/patrickmn/go-cache"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -26,16 +27,18 @@ import (
 // Provider holds configurations of the provider.
 type Provider struct {
 	Constraints      string `description:"Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
-	ExposedByDefault bool   `description:"Expose services by default" json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
-	RefreshSeconds   int    `description:"Polling interval (in seconds)" json:"refreshSeconds,omitempty" toml:"refreshSeconds,omitempty" yaml:"refreshSeconds,omitempty" export:"true"`
+	ExposedByDefault bool   `description:"Expose services by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
+	RefreshSeconds   int    `description:"Polling interval (in seconds)." json:"refreshSeconds,omitempty" toml:"refreshSeconds,omitempty" yaml:"refreshSeconds,omitempty" export:"true"`
 	DefaultRule      string `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 
 	// Provider lookup parameters.
-	Clusters             []string `description:"ECS Clusters name" json:"clusters,omitempty" toml:"clusters,omitempty" yaml:"clusters,omitempty" export:"true"`
-	AutoDiscoverClusters bool     `description:"Auto discover cluster" json:"autoDiscoverClusters,omitempty" toml:"autoDiscoverClusters,omitempty" yaml:"autoDiscoverClusters,omitempty" export:"true"`
-	Region               string   `description:"The AWS region to use for requests"  json:"region,omitempty" toml:"region,omitempty" yaml:"region,omitempty" export:"true"`
-	AccessKeyID          string   `description:"The AWS credentials access key to use for making requests" json:"accessKeyID,omitempty" toml:"accessKeyID,omitempty" yaml:"accessKeyID,omitempty" loggable:"false"`
-	SecretAccessKey      string   `description:"The AWS credentials access key to use for making requests" json:"secretAccessKey,omitempty" toml:"secretAccessKey,omitempty" yaml:"secretAccessKey,omitempty" loggable:"false"`
+	Clusters             []string `description:"ECS Cluster names." json:"clusters,omitempty" toml:"clusters,omitempty" yaml:"clusters,omitempty" export:"true"`
+	AutoDiscoverClusters bool     `description:"Auto discover cluster." json:"autoDiscoverClusters,omitempty" toml:"autoDiscoverClusters,omitempty" yaml:"autoDiscoverClusters,omitempty" export:"true"`
+	HealthyTasksOnly     bool     `description:"Determines whether to discover only healthy tasks." json:"healthyTasksOnly,omitempty" toml:"healthyTasksOnly,omitempty" yaml:"healthyTasksOnly,omitempty" export:"true"`
+	ECSAnywhere          bool     `description:"Enable ECS Anywhere support." json:"ecsAnywhere,omitempty" toml:"ecsAnywhere,omitempty" yaml:"ecsAnywhere,omitempty" export:"true"`
+	Region               string   `description:"AWS region to use for requests."  json:"region,omitempty" toml:"region,omitempty" yaml:"region,omitempty" export:"true"`
+	AccessKeyID          string   `description:"AWS credentials access key ID to use for making requests." json:"accessKeyID,omitempty" toml:"accessKeyID,omitempty" yaml:"accessKeyID,omitempty" loggable:"false"`
+	SecretAccessKey      string   `description:"AWS credentials access key to use for making requests." json:"secretAccessKey,omitempty" toml:"secretAccessKey,omitempty" yaml:"secretAccessKey,omitempty" loggable:"false"`
 	defaultRuleTpl       *template.Template
 }
 
@@ -64,6 +67,7 @@ type machine struct {
 type awsClient struct {
 	ecs *ecs.ECS
 	ec2 *ec2.EC2
+	ssm *ssm.SSM
 }
 
 // DefaultTemplateRule The default template for the default rule.
@@ -78,6 +82,7 @@ var (
 func (p *Provider) SetDefaults() {
 	p.Clusters = []string{"default"}
 	p.AutoDiscoverClusters = false
+	p.HealthyTasksOnly = false
 	p.ExposedByDefault = true
 	p.RefreshSeconds = 15
 	p.DefaultRule = DefaultTemplateRule
@@ -139,11 +144,12 @@ func (p *Provider) createClient(logger log.Logger) (*awsClient, error) {
 	return &awsClient{
 		ecs.New(sess, cfg),
 		ec2.New(sess, cfg),
+		ssm.New(sess, cfg),
 	}, nil
 }
 
 // Provide configuration to traefik from ECS.
-func (p Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
+func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
 		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "ecs"))
 		logger := log.FromContext(ctxLog)
@@ -254,9 +260,12 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 					logger.Errorf("Unable to describe tasks for %v", page.TaskArns)
 				} else {
 					for _, t := range resp.Tasks {
-						if aws.StringValue(t.LastStatus) == ecs.DesiredStatusRunning {
-							tasks[aws.StringValue(t.TaskArn)] = t
+						if p.HealthyTasksOnly && aws.StringValue(t.HealthStatus) != ecs.HealthStatusHealthy {
+							logger.Debugf("Skipping unhealthy task %s", aws.StringValue(t.TaskArn))
+							continue
 						}
+
+						tasks[aws.StringValue(t.TaskArn)] = t
 					}
 				}
 			}
@@ -275,6 +284,15 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 		ec2Instances, err := p.lookupEc2Instances(ctx, client, &c, tasks)
 		if err != nil {
 			return nil, err
+		}
+
+		miInstances := make(map[string]*ssm.InstanceInformation)
+		if p.ECSAnywhere {
+			// Try looking up for instances on ECS Anywhere
+			miInstances, err = p.lookupMiInstances(ctx, client, &c, tasks)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		taskDefinitions, err := p.lookupTaskDefinitions(ctx, client, tasks)
@@ -324,7 +342,8 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 						healthStatus: aws.StringValue(task.HealthStatus),
 					}
 				} else {
-					if containerInstance == nil {
+					miContainerInstance := miInstances[aws.StringValue(task.ContainerInstanceArn)]
+					if containerInstance == nil && miContainerInstance == nil {
 						logger.Errorf("Unable to find container instance information for %s", aws.StringValue(container.Name))
 						continue
 					}
@@ -338,10 +357,19 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 							})
 						}
 					}
+					var privateIPAddress, stateName string
+					if containerInstance != nil {
+						privateIPAddress = aws.StringValue(containerInstance.PrivateIpAddress)
+						stateName = aws.StringValue(containerInstance.State.Name)
+					} else if miContainerInstance != nil {
+						privateIPAddress = aws.StringValue(miContainerInstance.IPAddress)
+						stateName = aws.StringValue(task.LastStatus)
+					}
+
 					mach = &machine{
-						privateIP: aws.StringValue(containerInstance.PrivateIpAddress),
+						privateIP: privateIPAddress,
 						ports:     ports,
-						state:     aws.StringValue(containerInstance.State.Name),
+						state:     stateName,
 					}
 				}
 
@@ -366,6 +394,72 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 	}
 
 	return instances, nil
+}
+
+func (p *Provider) lookupMiInstances(ctx context.Context, client *awsClient, clusterName *string, ecsDatas map[string]*ecs.Task) (map[string]*ssm.InstanceInformation, error) {
+	instanceIds := make(map[string]string)
+	miInstances := make(map[string]*ssm.InstanceInformation)
+
+	var containerInstancesArns []*string
+	var instanceArns []*string
+
+	for _, task := range ecsDatas {
+		if task.ContainerInstanceArn != nil {
+			containerInstancesArns = append(containerInstancesArns, task.ContainerInstanceArn)
+		}
+	}
+
+	for _, arns := range p.chunkIDs(containerInstancesArns) {
+		resp, err := client.ecs.DescribeContainerInstancesWithContext(ctx, &ecs.DescribeContainerInstancesInput{
+			ContainerInstances: arns,
+			Cluster:            clusterName,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("describing container instances: %w", err)
+		}
+
+		for _, container := range resp.ContainerInstances {
+			instanceIds[aws.StringValue(container.Ec2InstanceId)] = aws.StringValue(container.ContainerInstanceArn)
+
+			// Disallow EC2 Instance IDs
+			// This prevents considering EC2 instances in ECS
+			// and getting InvalidInstanceID.Malformed error when calling the describe-instances endpoint.
+			if !strings.HasPrefix(aws.StringValue(container.Ec2InstanceId), "mi-") {
+				continue
+			}
+
+			instanceArns = append(instanceArns, container.Ec2InstanceId)
+		}
+	}
+
+	if len(instanceArns) > 0 {
+		for _, ids := range p.chunkIDs(instanceArns) {
+			input := &ssm.DescribeInstanceInformationInput{
+				Filters: []*ssm.InstanceInformationStringFilter{
+					{
+						Key:    aws.String("InstanceIds"),
+						Values: ids,
+					},
+				},
+			}
+
+			err := client.ssm.DescribeInstanceInformationPagesWithContext(ctx, input, func(page *ssm.DescribeInstanceInformationOutput, lastPage bool) bool {
+				if len(page.InstanceInformationList) > 0 {
+					for _, i := range page.InstanceInformationList {
+						if i.InstanceId != nil {
+							miInstances[instanceIds[aws.StringValue(i.InstanceId)]] = i
+						}
+					}
+				}
+				return !lastPage
+			})
+			if err != nil {
+				return nil, fmt.Errorf("describing instances: %w", err)
+			}
+		}
+	}
+
+	return miInstances, nil
 }
 
 func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, clusterName *string, ecsDatas map[string]*ecs.Task) (map[string]*ec2.Instance, error) {

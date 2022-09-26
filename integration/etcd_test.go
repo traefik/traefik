@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/go-check/check"
+	"github.com/kvtools/etcdv3"
 	"github.com/kvtools/valkeyrie"
 	"github.com/kvtools/valkeyrie/store"
-	etcdv3 "github.com/kvtools/valkeyrie/store/etcd/v3"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/api"
@@ -31,15 +31,13 @@ func (s *EtcdSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "etcd")
 	s.composeUp(c)
 
-	etcdv3.Register()
-
 	var err error
 	s.etcdAddr = net.JoinHostPort(s.getComposeServiceIP(c, "etcd"), "2379")
 	s.kvClient, err = valkeyrie.NewStore(
 		context.Background(),
-		store.ETCDV3,
+		etcdv3.StoreName,
 		[]string{s.etcdAddr},
-		&store.Config{
+		&etcdv3.Config{
 			ConnectionTimeout: 10 * time.Second,
 		},
 	)

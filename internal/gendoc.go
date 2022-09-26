@@ -64,6 +64,10 @@ THIS FILE MUST NOT BE EDITED BY HAND
 			continue
 		}
 
+		if strings.HasPrefix(flat.Name, "pilot.") || strings.HasPrefix(flat.Name, "TRAEFIK_PILOT_") {
+			continue
+		}
+
 		if prefix == "" {
 			w.writeln("`" + prefix + strings.ReplaceAll(flat.Name, "[0]", "_n") + "`:  ")
 		} else {
@@ -135,7 +139,7 @@ type storeWriter struct {
 	data map[string]string
 }
 
-func (f storeWriter) Put(key string, value []byte, options []string) error {
+func (f storeWriter) Put(key string, value []byte, _ []string) error {
 	f.data[key] = string(value)
 	return nil
 }

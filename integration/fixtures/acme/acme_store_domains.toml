@@ -1,0 +1,60 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web]
+    address = "{{ .PortHTTP }}"
+  [entryPoints.websecure]
+    address = "{{ .PortHTTPS }}"
+
+{{range $name, $resolvers := .Acme }}
+
+[certificatesResolvers.{{ $name }}.acme]
+  email = "test@traefik.io"
+  storage = "/tmp/acme.json"
+  keyType = "{{ $resolvers.ACME.KeyType }}"
+  caServer = "{{ $resolvers.ACME.CAServer }}"
+
+  {{if $resolvers.ACME.HTTPChallenge }}
+  [certificatesResolvers.{{ $name }}.acme.httpChallenge]
+    entryPoint = "{{ $resolvers.ACME.HTTPChallenge.EntryPoint }}"
+  {{end}}
+
+  {{if $resolvers.ACME.TLSChallenge }}
+  [certificatesResolvers.{{ $name }}.acme.tlsChallenge]
+  {{end}}
+
+{{end}}
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.services]
+  [http.services.test.loadBalancer]
+    [[http.services.test.loadBalancer.servers]]
+      url = "http://127.0.0.1:9010"
+
+[http.routers]
+  [http.routers.test]
+    entryPoints = ["websecure"]
+    rule = "PathPrefix(`/`)"
+    service = "test"
+    [http.routers.test.tls]
+
+[tls.stores]
+  [tls.stores.default.defaultGeneratedCert]
+    resolver = "default"
+    [tls.stores.default.defaultGeneratedCert.domain]
+      main = "{{ .Domain.Main }}"
+      sans = [{{range .Domain.SANs }}
+        "{{.}}",
+        {{end}}]

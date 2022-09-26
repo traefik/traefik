@@ -325,7 +325,7 @@ func (s *HTTPSSuite) TestWithDefaultCertificate(c *check.C) {
 
 	cs := conn.ConnectionState()
 	err = cs.PeerCertificates[0].VerifyHostname("snitest.com")
-	c.Assert(err, checker.IsNil, check.Commentf("certificate did not serve correct default certificate"))
+	c.Assert(err, checker.IsNil, check.Commentf("server did not serve correct default certificate"))
 
 	proto := cs.NegotiatedProtocol
 	c.Assert(proto, checker.Equals, "h2")
@@ -360,7 +360,7 @@ func (s *HTTPSSuite) TestWithDefaultCertificateNoSNI(c *check.C) {
 
 	cs := conn.ConnectionState()
 	err = cs.PeerCertificates[0].VerifyHostname("snitest.com")
-	c.Assert(err, checker.IsNil, check.Commentf("certificate did not serve correct default certificate"))
+	c.Assert(err, checker.IsNil, check.Commentf("server did not serve correct default certificate"))
 
 	proto := cs.NegotiatedProtocol
 	c.Assert(proto, checker.Equals, "h2")
@@ -397,7 +397,7 @@ func (s *HTTPSSuite) TestWithOverlappingStaticCertificate(c *check.C) {
 
 	cs := conn.ConnectionState()
 	err = cs.PeerCertificates[0].VerifyHostname("www.snitest.com")
-	c.Assert(err, checker.IsNil, check.Commentf("certificate did not serve correct default certificate"))
+	c.Assert(err, checker.IsNil, check.Commentf("server did not serve correct default certificate"))
 
 	proto := cs.NegotiatedProtocol
 	c.Assert(proto, checker.Equals, "h2")
@@ -434,7 +434,7 @@ func (s *HTTPSSuite) TestWithOverlappingDynamicCertificate(c *check.C) {
 
 	cs := conn.ConnectionState()
 	err = cs.PeerCertificates[0].VerifyHostname("www.snitest.com")
-	c.Assert(err, checker.IsNil, check.Commentf("certificate did not serve correct default certificate"))
+	c.Assert(err, checker.IsNil, check.Commentf("server did not serve correct default certificate"))
 
 	proto := cs.NegotiatedProtocol
 	c.Assert(proto, checker.Equals, "h2")

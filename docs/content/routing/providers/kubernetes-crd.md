@@ -48,7 +48,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v2.8
+              image: traefik:v2.9
               args:
                 - --log.level=DEBUG
                 - --api
@@ -1782,3 +1782,5 @@ If the ServersTransport CRD is defined in another provider the cross-provider fo
 ## Further
 
 Also see the [full example](../../user-guides/crd-acme/index.md) with Let's Encrypt.
+
+{!traefik-for-business-applications.md!}

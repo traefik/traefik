@@ -16,7 +16,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/tracing"
 )
 
@@ -118,7 +117,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		r.listener.Retried(req, attempts)
 	}
 
-	err := backoff.RetryNotify(safe.OperationWithRecover(operation), backOff, notify)
+	err := backoff.RetryNotify(operation, backOff, notify)
 	if err != nil {
 		log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
 			Debugf("Final retry attempt failed: %v", err.Error())

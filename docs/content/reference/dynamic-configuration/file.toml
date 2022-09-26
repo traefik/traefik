@@ -53,6 +53,7 @@
           url = "foobar"
         [http.services.Service01.loadBalancer.healthCheck]
           scheme = "foobar"
+          mode = "foobar"
           path = "foobar"
           method = "foobar"
           port = 42
@@ -463,7 +464,17 @@
       [tls.stores.Store0.defaultCertificate]
         certFile = "foobar"
         keyFile = "foobar"
+      [tls.stores.Store0.defaultGeneratedCert]
+        resolver = "foobar"
+        [tls.stores.Store0.defaultGeneratedCert.domain]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
     [tls.stores.Store1]
       [tls.stores.Store1.defaultCertificate]
         certFile = "foobar"
         keyFile = "foobar"
+      [tls.stores.Store1.defaultGeneratedCert]
+        resolver = "foobar"
+        [tls.stores.Store1.defaultGeneratedCert.domain]
+          main = "foobar"
+          sans = ["foobar", "foobar"]

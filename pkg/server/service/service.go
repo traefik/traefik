@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -51,6 +52,7 @@ func NewManager(configs map[string]*runtime.ServiceInfo, metricsRegistry metrics
 		roundTripperManager: roundTripperManager,
 		balancers:           make(map[string]healthcheck.Balancers),
 		configs:             configs,
+		rand:                rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
 
@@ -66,6 +68,7 @@ type Manager struct {
 	// which is why there is not just one Balancer per service name.
 	balancers map[string]healthcheck.Balancers
 	configs   map[string]*runtime.ServiceInfo
+	rand      *rand.Rand // For the initial shuffling of load-balancers.
 }
 
 // BuildHTTP Creates a http.Handler for a service configuration.
@@ -212,7 +215,7 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 	}
 
 	balancer := wrr.New(config.Sticky, config.HealthCheck)
-	for _, service := range config.Services {
+	for _, service := range shuffle(config.Services, m.rand) {
 		serviceHandler, err := m.BuildHTTP(ctx, service.Name)
 		if err != nil {
 			return nil, err
@@ -357,8 +360,19 @@ func buildHealthCheckOptions(ctx context.Context, lb healthcheck.Balancer, backe
 		followRedirects = *hc.FollowRedirects
 	}
 
+	mode := healthcheck.HTTPMode
+	switch hc.Mode {
+	case "":
+		mode = healthcheck.HTTPMode
+	case healthcheck.GRPCMode, healthcheck.HTTPMode:
+		mode = hc.Mode
+	default:
+		logger.Errorf("Illegal health check mode for backend '%s'", backend)
+	}
+
 	return &healthcheck.Options{
 		Scheme:          hc.Scheme,
+		Mode:            mode,
 		Path:            hc.Path,
 		Method:          hc.Method,
 		Port:            hc.Port,
@@ -414,7 +428,7 @@ func (m *Manager) getLoadBalancer(ctx context.Context, serviceName string, servi
 func (m *Manager) upsertServers(ctx context.Context, lb healthcheck.BalancerHandler, servers []dynamic.Server) error {
 	logger := log.FromContext(ctx)
 
-	for name, srv := range servers {
+	for name, srv := range shuffle(servers, m.rand) {
 		u, err := url.Parse(srv.URL)
 		if err != nil {
 			return fmt.Errorf("error parsing server URL %s: %w", srv.URL, err)
@@ -426,7 +440,7 @@ func (m *Manager) upsertServers(ctx context.Context, lb healthcheck.BalancerHand
 			return fmt.Errorf("error adding server %s to load balancer: %w", srv.URL, err)
 		}
 
-		// FIXME Handle Metrics
+		// TODO Handle Metrics
 	}
 	return nil
 }
@@ -442,4 +456,12 @@ func convertSameSite(sameSite string) http.SameSite {
 	default:
 		return 0
 	}
+}
+
+func shuffle[T any](values []T, r *rand.Rand) []T {
+	shuffled := make([]T, len(values))
+	copy(shuffled, values)
+	r.Shuffle(len(shuffled), func(i, j int) { shuffled[i], shuffled[j] = shuffled[j], shuffled[i] })
+
+	return shuffled
 }

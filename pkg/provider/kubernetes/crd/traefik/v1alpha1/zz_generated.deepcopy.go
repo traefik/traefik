@@ -31,6 +31,7 @@ package v1alpha1
 
 import (
 	dynamic "github.com/traefik/traefik/v2/pkg/config/dynamic"
+	tls "github.com/traefik/traefik/v2/pkg/tls"
 	types "github.com/traefik/traefik/v2/pkg/types"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -1449,6 +1450,11 @@ func (in *TLSStoreSpec) DeepCopyInto(out *TLSStoreSpec) {
 		in, out := &in.DefaultCertificate, &out.DefaultCertificate
 		*out = new(Certificate)
 		**out = **in
+	}
+	if in.DefaultGeneratedCert != nil {
+		in, out := &in.DefaultGeneratedCert, &out.DefaultGeneratedCert
+		*out = new(tls.GeneratedCert)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Certificates != nil {
 		in, out := &in.Certificates, &out.Certificates
