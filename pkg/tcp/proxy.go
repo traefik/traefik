@@ -24,7 +24,7 @@ type Proxy struct {
 }
 
 // NewProxy creates a new Proxy.
-func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dynamic.ProxyProtocol, config *dynamic.ServersTransportTCP) (*Proxy, error) {
+func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dynamic.ProxyProtocol) (*Proxy, error) {
 	if proxyProtocol != nil && (proxyProtocol.Version < 1 || proxyProtocol.Version > 2) {
 		return nil, fmt.Errorf("unknown proxyProtocol version: %d", proxyProtocol.Version)
 	}
@@ -44,7 +44,6 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 		tcpAddr:          tcpAddr,
 		terminationDelay: terminationDelay,
 		proxyProtocol:    proxyProtocol,
-		config:           config,
 	}, nil
 }
 
