@@ -238,14 +238,14 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
 _Optional, Default=false_
 
 The `AsDefault` option flags the EntryPoint to be in the list of default EntryPoints.
-The EntryPoints in this list are used (by default) on HTTP and TCP routers that do not define the [EntryPoints option](./routers/index.md#entrypoints).
+EntryPoints in this list are used (by default) on HTTP and TCP routers that do not define the [EntryPoints option](./routers/index.md#entrypoints).
 
 !!! info "List of default EntryPoints"
 
-    If no EntryPoint has the `AsDefault` option set to `true`, 
+    If there is no EntryPoint with the `AsDefault` option set to `true`, 
     then the list of default EntryPoints includes all HTTP/TCP EntryPoints.
 
-    If at least one EntryPoint has the `AsDefault` option set to `true`,
+    If at least one EntryPoint have the `AsDefault` option set to `true`,
     then the list of default EntryPoints includes only EntryPoints that have the `AsDefault` option set to `true`.
 
     Some built-in EntryPoints are always excluded from the list, namely: `traefik`, `traefikhub-api`, and `traefikhub-tunl`.
