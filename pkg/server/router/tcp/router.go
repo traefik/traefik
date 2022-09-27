@@ -288,7 +288,7 @@ func (r *Router) SetHTTPSHandler(handler http.Handler, config *tls.Config) {
 type Conn struct {
 	// Peeked are the bytes that have been read from Conn for the
 	// purposes of route matching, but have not yet been consumed
-	// by Read calls. It set to nil by Read when fully consumed.
+	// by Read calls. It is set to nil by Read when fully consumed.
 	Peeked []byte
 
 	// Conn is the underlying connection.
