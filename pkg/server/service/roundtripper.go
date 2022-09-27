@@ -107,6 +107,10 @@ func createRoundTripper(cfg *dynamic.ServersTransport) (http.RoundTripper, error
 		return nil, errors.New("no transport configuration given")
 	}
 
+	if cfg.FastCGI != nil {
+		return NewFastCgiRoundTripper(cfg.FastCGI[0].Address, cfg.FastCGI[0].Index)
+	}
+
 	dialer := &net.Dialer{
 		Timeout:   30 * time.Second,
 		KeepAlive: 30 * time.Second,
