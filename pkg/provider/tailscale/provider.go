@@ -20,8 +20,8 @@ import (
 
 // Provider is the Tailscale certificates provider implementation. It receives
 // configuration updates (e.g. new router, with new domain) from Traefik core,
-// fetches the corresponding TLS certificates from the Tailscale daemon, and sends
-// back to Traefik core a configuration updated with the certificates.
+// fetches the corresponding TLS certificates from the Tailscale daemon, and
+// sends back to Traefik core a configuration updated with the certificates.
 type Provider struct {
 	ResolverName string
 
@@ -42,6 +42,7 @@ func (p *Provider) ThrottleDuration() time.Duration {
 func (p *Provider) Init() error {
 	p.dynConfigs = make(chan dynamic.Configuration)
 	p.certByDomain = make(map[string]traefiktls.Certificate)
+
 	return nil
 }
 
@@ -50,8 +51,8 @@ func (p *Provider) HandleConfigUpdate(cfg dynamic.Configuration) {
 	p.dynConfigs <- cfg
 }
 
-// Provide starts the provider, which will henceforth send configuration updates on
-// dynMessages.
+// Provide starts the provider, which will henceforth send configuration
+// updates on dynMessages.
 func (p *Provider) Provide(dynMessages chan<- dynamic.Message, pool *safe.Pool) error {
 	p.dynMessages = dynMessages
 
@@ -68,8 +69,8 @@ func (p *Provider) Provide(dynMessages chan<- dynamic.Message, pool *safe.Pool) 
 	return nil
 }
 
-// watchDomains watches for Tailscale domain certificates that should be fetched
-// from the Tailscale daemon.
+// watchDomains watches for Tailscale domain certificates that should be
+// fetched from the Tailscale daemon.
 func (p *Provider) watchDomains(ctx context.Context) {
 	for {
 		select {
@@ -92,8 +93,8 @@ func (p *Provider) watchDomains(ctx context.Context) {
 	}
 }
 
-// renewCertificates routinely renews previously resolved Tailscale certificates
-// before they expire.
+// renewCertificates routinely renews previously resolved Tailscale
+// certificates before they expire.
 func (p *Provider) renewCertificates(ctx context.Context) {
 	// TODO(kp): discuss and check renewal interval.
 	ticker := time.NewTicker(12 * time.Hour)
@@ -121,6 +122,7 @@ func (p *Provider) renewCertificates(ctx context.Context) {
 				if isValidCert(tlsCert, domain, time.Now().AddDate(0, 0, 14)) {
 					continue
 				}
+
 				domainsToRenew = append(domainsToRenew, domain)
 			}
 			p.certByDomainMu.RUnlock()
@@ -148,13 +150,14 @@ func (p *Provider) findDomains(ctx context.Context, cfg dynamic.Configuration) [
 				continue
 			}
 
-			// As a domain list is explicitly defined we are only using the configured domains.
-			// Only the Main domain is considered as Tailscale domain certificate does not
-			// support multiple SANs.
+			// As a domain list is explicitly defined we are only using the
+			// configured domains. Only the Main domain is considered as
+			// Tailscale domain certificate does not support multiple SANs.
 			if len(router.TLS.Domains) > 0 {
 				for _, domain := range router.TLS.Domains {
 					domains = append(domains, domain.Main)
 				}
+
 				continue
 			}
 
@@ -174,13 +177,14 @@ func (p *Provider) findDomains(ctx context.Context, cfg dynamic.Configuration) [
 				continue
 			}
 
-			// As a domain list is explicitly defined we are only using the configured domains.
-			// Only the Main domain is considered as Tailscale domain certificate does not
-			// support multiple SANs.
+			// As a domain list is explicitly defined we are only using the
+			// configured domains. Only the Main domain is considered as
+			// Tailscale domain certificate does not support multiple SANs.
 			if len(router.TLS.Domains) > 0 {
 				for _, domain := range router.TLS.Domains {
 					domains = append(domains, domain.Main)
 				}
+
 				continue
 			}
 
@@ -197,8 +201,8 @@ func (p *Provider) findDomains(ctx context.Context, cfg dynamic.Configuration) [
 	return sanitizeDomains(ctx, domains)
 }
 
-// findNewDomains returns the domains that have not already been fetched from the
-// Tailscale daemon.
+// findNewDomains returns the domains that have not already been fetched from
+// the Tailscale daemon.
 func (p *Provider) findNewDomains(domains []string) []string {
 	p.certByDomainMu.RLock()
 	defer p.certByDomainMu.RUnlock()
@@ -208,8 +212,10 @@ func (p *Provider) findNewDomains(domains []string) []string {
 		if _, ok := p.certByDomain[domain]; ok {
 			continue
 		}
+
 		newDomains = append(newDomains, domain)
 	}
+
 	return newDomains
 }
 
@@ -229,22 +235,23 @@ func (p *Provider) purgeUnusedCerts(domains []string) bool {
 	purged := len(p.certByDomain) > len(newCertByDomain)
 
 	p.certByDomain = newCertByDomain
+
 	return purged
 }
 
-// fetchCerts fetches the certificates for the provided domains from the Tailscale
-// daemon.
+// fetchCerts fetches the certificates for the provided domains from the
+// Tailscale daemon.
 func (p *Provider) fetchCerts(ctx context.Context, domains []string) {
 	logger := log.FromContext(ctx)
 
 	for _, domain := range domains {
 		cert, key, err := tscert.CertPair(ctx, domain)
 		if err != nil {
-			logger.WithError(err).Errorf("Unable to fetch certificate for domain %s", domain)
+			logger.WithError(err).Errorf("Unable to fetch certificate for domain %q", domain)
 			continue
 		}
 
-		logger.Debugf("Fetched certificate for domain %s", domain)
+		logger.Debugf("Fetched certificate for domain %q", domain)
 
 		p.certByDomainMu.Lock()
 		p.certByDomain[domain] = traefiktls.Certificate{
@@ -261,12 +268,13 @@ func (p *Provider) sendDynamicConfig() {
 	p.certByDomainMu.RLock()
 	defer p.certByDomainMu.RUnlock()
 
-	// TODO: we always send back to traefik core the set of certificates sorted, to
-	// make sure that two identical sets, that would be sorted differently, do not
-	// trigger a(nother) configuration update because of the mismatch. But in reality
-	// we should not end up sending a certificates update if there was no new certs to
-	// generate or renew in the first place, so this scenario should never happen, and
-	// the sorting might actually not be needed.
+	// TODO: we always send back to traefik core the set of certificates
+	// sorted, to make sure that two identical sets, that would be sorted
+	// differently, do not trigger another configuration update because of the
+	// mismatch. But in reality we should not end up sending a certificates
+	// update if there was no new certs to generate or renew in the first
+	// place, so this scenario should never happen, and the sorting might
+	// actually not be needed.
 	var sortedDomains []string
 	for domain := range p.certByDomain {
 		sortedDomains = append(sortedDomains, domain)
@@ -290,8 +298,8 @@ func (p *Provider) sendDynamicConfig() {
 	}
 }
 
-// sanitizeDomains removes duplicated and invalid Tailscale subdomains, from the
-// provided list.
+// sanitizeDomains removes duplicated and invalid Tailscale subdomains, from
+// the provided list.
 func sanitizeDomains(ctx context.Context, domains []string) []string {
 	logger := log.FromContext(ctx)
 
@@ -314,12 +322,14 @@ func sanitizeDomains(ctx context.Context, domains []string) []string {
 	return sanitizedDomains
 }
 
-// isTailscaleDomain returns whether the given domain is a valid Tailscale domain.
-// A valid Tailscale domain has the following form: machine-name.domains-alias.ts.net.
+// isTailscaleDomain returns whether the given domain is a valid Tailscale
+// domain. A valid Tailscale domain has the following form:
+// machine-name.domains-alias.ts.net.
 func isTailscaleDomain(domain string) bool {
-	// TODO: extra check, against the actual list of allowed domains names, provided
-	// by the Tailscale daemon status?
+	// TODO: extra check, against the actual list of allowed domains names,
+	// provided by the Tailscale daemon status?
 	labels := strings.Split(domain, ".")
+
 	return len(labels) == 4 && labels[2] == "ts" && labels[3] == "net"
 }
 
@@ -352,5 +362,6 @@ func isValidCert(cert tls.Certificate, domain string, now time.Time) bool {
 		Intermediates: intermediates,
 		CurrentTime:   now,
 	})
+
 	return err == nil
 }

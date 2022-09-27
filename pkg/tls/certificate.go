@@ -178,6 +178,7 @@ func (c *Certificate) GetCertificate() (tls.Certificate, error) {
 	if err != nil {
 		return tls.Certificate{}, fmt.Errorf("unable to parse TLS certificate: %w", err)
 	}
+
 	return cert, nil
 }
 
@@ -188,6 +189,7 @@ func (c *Certificate) GetCertificateFromBytes() (tls.Certificate, error) {
 	if err != nil {
 		return tls.Certificate{}, fmt.Errorf("unable to parse TLS certificate: %w", err)
 	}
+
 	return cert, nil
 }
 
