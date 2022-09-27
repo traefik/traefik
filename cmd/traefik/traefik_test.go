@@ -118,13 +118,13 @@ func TestAppendCertMetric(t *testing.T) {
 
 func TestGetDefaultsEntrypoints(t *testing.T) {
 	testCases := []struct {
-		desc     string
-		eps      static.EntryPoints
-		expected []string
+		desc        string
+		entrypoints static.EntryPoints
+		expected    []string
 	}{
 		{
 			desc: "Skips special names",
-			eps: map[string]*static.EntryPoint{
+			entrypoints: map[string]*static.EntryPoint{
 				"web": {
 					Address: ":80",
 				},
@@ -142,7 +142,7 @@ func TestGetDefaultsEntrypoints(t *testing.T) {
 		},
 		{
 			desc: "Two EntryPoints not attachable",
-			eps: map[string]*static.EntryPoint{
+			entrypoints: map[string]*static.EntryPoint{
 				"web": {
 					Address: ":80",
 				},
@@ -154,7 +154,7 @@ func TestGetDefaultsEntrypoints(t *testing.T) {
 		},
 		{
 			desc: "Two EntryPoints only one attachable",
-			eps: map[string]*static.EntryPoint{
+			entrypoints: map[string]*static.EntryPoint{
 				"web": {
 					Address: ":80",
 				},
@@ -167,7 +167,7 @@ func TestGetDefaultsEntrypoints(t *testing.T) {
 		},
 		{
 			desc: "Two attachable EntryPoints",
-			eps: map[string]*static.EntryPoint{
+			entrypoints: map[string]*static.EntryPoint{
 				"web": {
 					Address:   ":80",
 					AsDefault: true,
@@ -184,7 +184,7 @@ func TestGetDefaultsEntrypoints(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			actual := getDefaultsEntrypoints(&static.Configuration{
-				EntryPoints: test.eps,
+				EntryPoints: test.entrypoints,
 			})
 
 			assert.ElementsMatch(t, test.expected, actual)
