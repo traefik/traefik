@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
+	"sync"
 
 	"github.com/traefik/traefik/v2/pkg/log"
 	tcpmuxer "github.com/traefik/traefik/v2/pkg/muxer/tcp"
@@ -11,8 +12,8 @@ import (
 )
 
 var (
-	PostgresStartTLSReply = []byte{83}                         // S
 	PostgresStartTLSMsg   = []byte{0, 0, 0, 8, 4, 210, 22, 47} // int32(8) + int32(80877103)
+	PostgresStartTLSReply = []byte{83}                         // S
 )
 
 // isPostGRESql determines whether the buffer contains the Postgres STARTTLS message.
@@ -74,7 +75,7 @@ func (r *Router) servePostGreSQL(conn tcp.WriteCloser) {
 		return
 	}
 
-	// We are in TLS mode and if the handler is not TLSHandler, we are in passthrough
+	// We are in TLS mode and if the handler is not TLSHandler, we are in passthrough.
 	proxiedConn := r.GetConn(conn, hello.peeked)
 	if _, ok := handlerTCPTLS.(*tcp.TLSHandler); !ok {
 		proxiedConn = &postgresConn{WriteCloser: proxiedConn}
@@ -89,30 +90,35 @@ func (r *Router) servePostGreSQL(conn tcp.WriteCloser) {
 type postgresConn struct {
 	tcp.WriteCloser
 
-	alreadyWritten bool
-	alreadyRead    bool
-	waiter         chan error
+	starttlsMsgSent       bool // whether we have already sent the STARTTLS handshake to the backend.
+	starttlsReplyReceived bool // whether we have already received the STARTTLS handshake reply from the backend.
+
+	// errChan is used to make sure that a read (and not a write) is the first ever
+	// operation to happen on a postgresConn, and that an error message sent by the
+	// backend (such as a connection rejected by pg_hba.conf) makes its way back to the
+	// client.
+	errChanMu sync.Mutex
+	errChan   chan error
 }
 
 // Read reads bytes from the underlying connection (tcp.WriteCloser).
-// On first call, it actually only reads the content the PostgresStartTLSMsg message.
-// This is done to behave as a Postgres TLS client that ask to initiate a TLS session.
-// Not thread safe.
+// On first call, it actually only injects the PostgresStartTLSMsg,
+// in order to behave as a Postgres TLS client that initiates a STARTTLS handshake.
+// Read does not support concurrent calls.
 func (c *postgresConn) Read(p []byte) (n int, err error) {
-	if c.alreadyRead {
-		if err := <-c.waiter; err != nil {
+	if c.starttlsMsgSent {
+		if err := <-c.errChan; err != nil {
 			return 0, err
 		}
 
 		return c.WriteCloser.Read(p)
 	}
 
-	if c.waiter == nil {
-		c.waiter = make(chan error)
-	}
-
 	defer func() {
-		c.alreadyRead = true
+		c.starttlsMsgSent = true
+		c.errChanMu.Lock()
+		c.errChan = make(chan error)
+		c.errChanMu.Unlock()
 	}()
 
 	copy(p, PostgresStartTLSMsg)
@@ -120,36 +126,33 @@ func (c *postgresConn) Read(p []byte) (n int, err error) {
 }
 
 // Write writes bytes to the underlying connection (tcp.WriteCloser).
-// On first call, it checks that the bytes to write are matching the PostgresStartTLSReply.
-// If the check is successful, it does nothing (no actual write on the connection),
-// otherwise an error is raised and transmitted to a second Read call through c.waiter.
-// It is done to enforce that the STARTTLS negotiation is successful.
-// Not thread safe.
+// On first call, it checks that the bytes to write (the ones provided by the backend)
+// match the PostgresStartTLSReply, and if yes, and it drops them (as the STARTTLS
+// handshake between the client and traefik has already taken place). Otherwise, an
+// error is transmitted through c.errChan, so that the second Read call gets it and
+// returns it up the stack.
+// Write does not support concurrent calls.
 func (c *postgresConn) Write(p []byte) (n int, err error) {
-	if c.alreadyWritten {
+	if c.starttlsReplyReceived {
 		return c.WriteCloser.Write(p)
 	}
 
-	if c.waiter == nil {
+	c.errChanMu.Lock()
+	if c.errChan == nil {
 		return 0, errors.New("initial read never happened")
 	}
+	c.errChanMu.Unlock()
 
 	defer func() {
-		c.alreadyWritten = true
+		c.starttlsReplyReceived = true
 	}()
 
-	// TODO(romain): the two assertions are split to be more accurate when returning the number of written bytes, but is it worth it?
-	if len(p) != 1 {
-		c.waiter <- errors.New("invalid response from PostGreSQL server")
+	if len(p) != 1 || p[0] != PostgresStartTLSReply[0] {
+		c.errChan <- errors.New("invalid response from PostGreSQL server")
 		return len(p), nil
 	}
 
-	if p[0] != PostgresStartTLSReply[0] {
-		c.waiter <- errors.New("invalid response from PostGreSQL server")
-		return 1, nil
-	}
-
-	close(c.waiter)
+	close(c.errChan)
 
 	return 1, nil
 }
