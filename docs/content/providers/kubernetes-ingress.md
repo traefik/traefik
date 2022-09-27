@@ -374,7 +374,7 @@ providers:
 
 _Optional, Default: ""_
 
-IP used for Kubernetes Ingress endpoints.
+This IP will get copied to ingress status.loadbalancer.ip and currently only supports one IPv4 or IPv6 address.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -399,6 +399,8 @@ providers:
 _Optional, Default: ""_
 
 Published Kubernetes Service to copy status from.
+It will use the services IPs to copy to ingress loadbalancer status, useful for example External-DNS.
+
 Format: `namespace/servicename`.
 
 ```yaml tab="File (YAML)"
