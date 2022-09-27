@@ -250,12 +250,11 @@ type ServersTransport struct {
 	ForwardingTimeouts  *ForwardingTimeouts        `description:"Timeouts for requests forwarded to the backend servers." json:"forwardingTimeouts,omitempty" toml:"forwardingTimeouts,omitempty" yaml:"forwardingTimeouts,omitempty" export:"true"`
 	DisableHTTP2        bool                       `description:"Disable HTTP/2 for connections with backend servers." json:"disableHTTP2,omitempty" toml:"disableHTTP2,omitempty" yaml:"disableHTTP2,omitempty" export:"true"`
 	PeerCertURI         string                     `description:"URI used to match against SAN URI during the peer certificate verification." json:"peerCertURI,omitempty" toml:"peerCertURI,omitempty" yaml:"peerCertURI,omitempty" export:"true"`
-	FastCGI             []FastCGI                  `json:"fastCgi,omitempty" toml:"fastCgi,omitempty" yaml:"fastCgi,omitempty" export:"true"`
+	FastCGI             *FastCGI                   `description:"Parameters for FastCGI connection" json:"fastCgi,omitempty" toml:"fastCgi,omitempty" yaml:"fastCgi,omitempty" export:"true"`
 }
 
 type FastCGI struct {
-	Address string `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty" label:"-"`
-	Index   string `json:"index,omitempty" toml:"index,omitempty" yaml:"index,omitempty" label:"-"`
+	Filename string `json:"index,omitempty" toml:"index,omitempty" yaml:"index,omitempty" label:"-"`
 }
 
 // +k8s:deepcopy-gen=true

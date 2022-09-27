@@ -108,7 +108,7 @@ func createRoundTripper(cfg *dynamic.ServersTransport) (http.RoundTripper, error
 	}
 
 	if cfg.FastCGI != nil {
-		return NewFastCgiRoundTripper(cfg.FastCGI[0].Address, cfg.FastCGI[0].Index)
+		return NewFastCgiRoundTripper(cfg.FastCGI.Filename)
 	}
 
 	dialer := &net.Dialer{

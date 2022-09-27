@@ -8,22 +8,21 @@ import (
 	"net/http/httptest"
 	"strings"
 
+	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/yookoala/gofast"
 )
 
 type FastCgiRoundTripper struct {
-	client  gofast.Client
+	client  *gofast.Client
 	handler gofast.SessionHandler
 }
 
-func NewFastCgiRoundTripper(addr, filename string) (*FastCgiRoundTripper, error) {
-	connFactory := gofast.SimpleConnFactory("tcp", addr)
+func makeClient(proto, addr string) (gofast.Client, error) {
+	connFactory := gofast.SimpleConnFactory(proto, addr)
+	return gofast.SimpleClientFactory(connFactory)()
+}
 
-	client, err := gofast.SimpleClientFactory(connFactory)()
-	if err != nil {
-		return nil, fmt.Errorf("FastCGI connection failed: %w", err)
-	}
-
+func NewFastCgiRoundTripper(filename string) (*FastCgiRoundTripper, error) {
 	chain := gofast.Chain(
 		gofast.BasicParamsMap,
 		gofast.MapHeader,
@@ -42,24 +41,32 @@ func NewFastCgiRoundTripper(addr, filename string) (*FastCgiRoundTripper, error)
 	)
 
 	return &FastCgiRoundTripper{
-		client:  client,
+		client:  nil,
 		handler: chain(gofast.BasicSession),
 	}, nil
 }
 
 func (rt *FastCgiRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	defer func() {
-		if rt.client == nil {
-			return
+		// TODO: Close the client only when the server shuts down.
+		if rt.client != nil {
+			if err := (*rt.client).Close(); err != nil {
+				log.WithoutContext().Errorf("gofast: error closing client: %s", err.Error())
+			}
+			rt.client = nil
 		}
-
-		// TODO: when close ?
-		//if err := rt.client.Close(); err != nil {
-		//		log.WithoutContext().Errorf("gofast: error closing client: %s", err.Error())
-		//}
 	}()
 
-	resp, err := rt.handler(rt.client, gofast.NewRequest(req))
+	if rt.client == nil {
+		client, err := makeClient("tcp", req.URL.Host)
+		if err != nil {
+			return nil, fmt.Errorf("FastCGI connection failed: %w", err)
+		}
+
+		rt.client = &client
+	}
+
+	resp, err := rt.handler(*rt.client, gofast.NewRequest(req))
 	if err != nil {
 		return nil, fmt.Errorf("failed to process request: %w", err)
 	}
