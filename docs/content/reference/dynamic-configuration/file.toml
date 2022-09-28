@@ -328,6 +328,9 @@
         idleConnTimeout = "42s"
         readIdleTimeout = "42s"
         pingTimeout = "42s"
+    [http.serversTransports.ServersTransport2]
+      [http.serversTransports.ServersTransport2.fastCGI]
+        filename = "index.php"
 
 [tcp]
   [tcp.routers]

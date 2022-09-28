@@ -408,3 +408,28 @@ serversTransport:
 ```
 
 {!traefik-for-business-applications.md!}
+
+### `fastCGI`
+
+`forwardingTimeouts` configures fastCGI transport.
+
+#### `fastCGI.filename`
+
+_Optional_
+
+`filename` is a FastCGI script filename.
+
+Dynamic configuration:
+
+```yaml tab="File (YAML)"
+## Static configuration
+serversTransport:
+  fastCGI:
+    filename: index.php
+```
+
+```toml tab="File (TOML)"
+## Static configuration
+[serversTransport.fastCGI]
+  filename = "index.php"
+```
