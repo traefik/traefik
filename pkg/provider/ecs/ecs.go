@@ -22,6 +22,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/safe"
+	"k8s.io/utils/strings/slices"
 )
 
 // Provider holds configurations of the provider.
@@ -234,7 +235,12 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 			}
 		}
 		for _, cArn := range clustersArn {
-			clusters = append(clusters, *cArn)
+			if len(p.Clusters) > 0 {
+				clusterName := strings.Split(*cArn, "/")[1]
+				if !slices.Contains(p.Clusters, clusterName) {
+					clusters = append(clusters, *cArn)
+				}
+			}
 		}
 	} else {
 		clusters = p.Clusters
