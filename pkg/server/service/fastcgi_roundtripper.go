@@ -29,7 +29,6 @@ func NewFastCgiRoundTripper(filename string) (*FastCgiRoundTripper, error) {
 		gofast.MapEndpoint(filename),
 		func(handler gofast.SessionHandler) gofast.SessionHandler {
 			return func(client gofast.Client, req *gofast.Request) (*gofast.ResponsePipe, error) {
-				req.Params["HTTP_HOST"] = req.Params["SERVER_NAME"]
 				req.Params["SERVER_SOFTWARE"] = "Traefik"
 
 				// Gofast sets this param to `fastcgi` which is not what the backend will expect.
