@@ -96,8 +96,7 @@ func (p *Provider) watchDomains(ctx context.Context) {
 // renewCertificates routinely renews previously resolved Tailscale
 // certificates before they expire.
 func (p *Provider) renewCertificates(ctx context.Context) {
-	// TODO(kp): discuss and check renewal interval.
-	ticker := time.NewTicker(12 * time.Hour)
+	ticker := time.NewTicker(24 * time.Hour)
 	defer ticker.Stop()
 
 	for {
