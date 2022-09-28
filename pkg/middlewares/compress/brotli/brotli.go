@@ -2,9 +2,19 @@ package brotli
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/andybalholm/brotli"
+)
+
+var (
+	// DefaultMinSize is the default minimum size until we enable gzip compression.
+	// 1500 bytes is the MTU size for the internet since that is the largest size allowed at the network layer.
+	// If you take a file that is 1300 bytes and compress it to 800 bytes, it’s still transmitted in that same 1500 byte packet regardless, so you’ve gained nothing.
+	// That being the case, you should restrict the gzip compression to files with a size (plus header) greater than a single packet,
+	// 1024 bytes (1KB) is therefore default.
+	DefaultMinSize = 1024
 )
 
 type bWriter struct {
@@ -12,6 +22,7 @@ type bWriter struct {
 	*brotli.Writer
 
 	minSize int
+	written bool
 }
 
 func (b *bWriter) Header() http.Header {
@@ -22,13 +33,17 @@ func (b *bWriter) WriteHeader(statusCode int) {
 	b.rw.WriteHeader(statusCode)
 }
 
-func (b *bWriter) Write(p []byte) (n int, err error) {
+func (b *bWriter) Write(p []byte) (int, error) {
 	if len(p) < b.minSize {
 		b.rw.Header().Del("Vary")
 		b.rw.Header().Set("Content-Encoding", "identity")
-		return b.rw.Write(p)
+
+		n, err := b.rw.Write(p)
+		b.rw.Header().Add("Content-Length", strconv.Itoa(n))
+		return n, err
 	}
 
+	b.written = true
 	return b.Writer.Write(p)
 }
 
@@ -54,7 +69,7 @@ func WithCompressionLevel(compression int) option {
 // Default is 1024 bytes.
 func WithMinSize(minSize int) option {
 	return func(c *config) {
-		c.minSize = 1024
+		c.minSize = DefaultMinSize
 		if minSize >= 0 {
 			c.minSize = minSize
 		}
@@ -65,6 +80,7 @@ func WithMinSize(minSize int) option {
 func NewMiddleware(opts ...option) func(http.Handler) http.HandlerFunc {
 	cfg := config{
 		compression: brotli.DefaultCompression,
+		minSize:     DefaultMinSize,
 	}
 
 	for _, o := range opts {
@@ -93,7 +109,11 @@ func NewMiddleware(opts ...option) func(http.Handler) http.HandlerFunc {
 				minSize: cfg.minSize,
 			}
 
-			defer bw.Close()
+			defer func() {
+				if bw.written {
+					bw.Close()
+				}
+			}()
 
 			h.ServeHTTP(bw, r)
 		}
@@ -103,8 +123,8 @@ func NewMiddleware(opts ...option) func(http.Handler) http.HandlerFunc {
 // acceptsBr is a naive method of checking if "br" was set as an accepted encoding
 func acceptsBr(acceptEncoding string) bool {
 	for _, v := range strings.Split(acceptEncoding, ",") {
-		for i, e := range strings.Split(v, ";") {
-			if i == 0 && strings.Contains(e, "br") {
+		for i, e := range strings.Split(strings.TrimSpace(v), ";") {
+			if i == 0 && (e == "br" || e == "*") {
 				return true
 			}
 		}

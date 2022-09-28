@@ -19,6 +19,7 @@ const (
 	acceptEncodingHeader  = "Accept-Encoding"
 	contentEncodingHeader = "Content-Encoding"
 	contentTypeHeader     = "Content-Type"
+	contentLengthHeader   = "Content-Length"
 	varyHeader            = "Vary"
 	gzipValue             = "gzip"
 	brotliValue           = "br"
@@ -96,8 +97,8 @@ func TestShouldNotCompressBrWhenNoContentEncodingHeaderSmallSize(t *testing.T) {
 
 	assert.Equal(t, identityValue, rw.Header().Get(contentEncodingHeader))
 	assert.Equal(t, "", rw.Header().Get(varyHeader))
-
-	// todo(glinton): determine why brotli encoding appends an `;` to rw.Body.Bytes()
+	assert.Equal(t, "10", rw.Header().Get(contentLengthHeader))
+	assert.Equal(t, "text/plain; charset=utf-8", rw.Header().Get(contentTypeHeader))
 	assert.EqualValues(t, baseBody, rw.Body.Bytes())
 }
 
