@@ -7,6 +7,7 @@ require (
 	github.com/ExpediaDotCom/haystack-client-go v0.0.0-20190315171017-e7edbdf53a61
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/abbot/go-http-auth v0.0.0-00010101000000-000000000000
+	github.com/andybalholm/brotli v1.0.2
 	github.com/aws/aws-sdk-go v1.44.47
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/compose-spec/compose-go v1.0.3
@@ -62,6 +63,7 @@ require (
 	github.com/stretchr/testify v1.8.0
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
 	github.com/tailscale/tscert v0.0.0-20220316030059-54bbcb9f74e2
+	github.com/timewasted/go-accept-headers v0.0.0-20130320203746-c78f304b1b09
 	github.com/traefik/paerser v0.1.9
 	github.com/traefik/yaegi v0.14.3
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
