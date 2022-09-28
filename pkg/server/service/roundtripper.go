@@ -102,9 +102,14 @@ func (r *RoundTripperManager) Get(name string) (http.RoundTripper, error) {
 // For the settings that can't be configured in Traefik it uses the default http.Transport settings.
 // An exception to this is the MaxIdleConns setting as we only provide the option MaxIdleConnsPerHost in Traefik at this point in time.
 // Setting this value to the default of 100 could lead to confusing behavior and backwards compatibility issues.
+// If FastCGI is enabled, HTTP transport options are ignored.
 func createRoundTripper(cfg *dynamic.ServersTransport) (http.RoundTripper, error) {
 	if cfg == nil {
 		return nil, errors.New("no transport configuration given")
+	}
+
+	if cfg.FastCGI != nil {
+		return NewFastCgiRoundTripper(cfg.FastCGI.Filename)
 	}
 
 	dialer := &net.Dialer{

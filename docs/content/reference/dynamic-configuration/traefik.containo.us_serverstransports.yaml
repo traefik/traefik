@@ -113,6 +113,13 @@ spec:
                 description: ServerName defines the server name used to contact the
                   server.
                 type: string
+              fastCGI:
+                description: Defines fastCGI connection parameters
+                type: object
+                properties:
+                  filename:
+                    description: fastCGI script filename
+                    type: string
             type: object
         required:
         - metadata

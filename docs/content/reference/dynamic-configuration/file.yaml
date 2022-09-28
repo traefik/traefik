@@ -365,6 +365,9 @@ http:
         pingTimeout: 42s
       disableHTTP2: true
       peerCertURI: foobar
+    ServersTransport2:
+      fastCGI:
+        filename: index.php
 tcp:
   routers:
     TCPRouter0:

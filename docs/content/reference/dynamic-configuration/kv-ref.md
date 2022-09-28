@@ -202,6 +202,7 @@
 | `traefik/http/serversTransports/ServersTransport1/rootCAs/0` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/rootCAs/1` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/serverName` | `foobar` |
+| `traefik/http/serversTransports/ServersTransport2/fastCGI/filename` | `index.php` |
 | `traefik/http/services/Service01/loadBalancer/healthCheck/followRedirects` | `true` |
 | `traefik/http/services/Service01/loadBalancer/healthCheck/headers/name0` | `foobar` |
 | `traefik/http/services/Service01/loadBalancer/healthCheck/headers/name1` | `foobar` |
