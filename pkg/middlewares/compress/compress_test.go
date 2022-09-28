@@ -10,6 +10,7 @@ import (
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	accept "github.com/timewasted/go-accept-headers"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/testhelpers"
 )
@@ -20,7 +21,14 @@ const (
 	contentTypeHeader     = "Content-Type"
 	varyHeader            = "Vary"
 	gzipValue             = "gzip"
+	brotliValue           = "br"
+	identityValue         = "identity"
 )
+
+func TestNegotiate(t *testing.T) {
+	encoding, err := accept.Negotiate("stuff", supportedEncodings...)
+	t.Log(encoding, err)
+}
 
 func TestShouldCompressWhenNoContentEncodingHeader(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
@@ -44,6 +52,53 @@ func TestShouldCompressWhenNoContentEncodingHeader(t *testing.T) {
 	if assert.ObjectsAreEqualValues(rw.Body.Bytes(), baseBody) {
 		assert.Fail(t, "expected a compressed body", "got %v", rw.Body.Bytes())
 	}
+}
+
+func TestShouldCompressBrWhenNoContentEncodingHeader(t *testing.T) {
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+	req.Header.Add(acceptEncodingHeader, brotliValue)
+
+	baseBody := generateBytes(gzhttp.DefaultMinSize)
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		_, err := rw.Write(baseBody)
+		assert.NoError(t, err)
+	})
+	handler, err := New(context.Background(), next, dynamic.Compress{}, "testing")
+	require.NoError(t, err)
+
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req)
+
+	assert.Equal(t, brotliValue, rw.Header().Get(contentEncodingHeader))
+	assert.Equal(t, acceptEncodingHeader, rw.Header().Get(varyHeader))
+
+	if assert.ObjectsAreEqualValues(rw.Body.Bytes(), baseBody) {
+		assert.Fail(t, "expected a compressed body", "got %v", rw.Body.Bytes())
+	}
+}
+
+func TestShouldNotCompressBrWhenNoContentEncodingHeaderSmallSize(t *testing.T) {
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+	req.Header.Add(acceptEncodingHeader, brotliValue)
+
+	baseBody := generateBytes(10)
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		_, err := rw.Write(baseBody)
+		assert.NoError(t, err)
+	})
+	handler, err := New(context.Background(), next, dynamic.Compress{}, "testing")
+	require.NoError(t, err)
+
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req)
+
+	assert.Equal(t, identityValue, rw.Header().Get(contentEncodingHeader))
+	assert.Equal(t, "", rw.Header().Get(varyHeader))
+
+	// todo(glinton): determine why brotli encoding appends an `;` to rw.Body.Bytes()
+	assert.EqualValues(t, baseBody, rw.Body.Bytes())
 }
 
 func TestShouldNotCompressWhenContentEncodingHeader(t *testing.T) {
