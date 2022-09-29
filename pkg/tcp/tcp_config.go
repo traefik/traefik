@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"fmt"
 
 	//"errors"
 	//"fmt"
@@ -144,6 +145,21 @@ func createTcptransport(cfg *dynamic.ServersTransport) (*http.Transport, error) 
 		return transport, nil
 	}
 	return transport, nil
+}
+
+// Get get a roundtripper by name.
+func (t *TcpManager) Get(name string) (http.RoundTripper, error) {
+	if len(name) == 0 {
+		name = "default@internal"
+	}
+
+	t.rtLock.RLock()
+	defer t.rtLock.RUnlock()
+
+	if rt, ok := t.transport[name]; ok {
+		return rt, nil
+	}
+	return nil, fmt.Errorf("servers transport not found %s", name)
 }
 
 func createRootCACertPool(rootCAs []traefiktls.FileOrContent) *x509.CertPool {
