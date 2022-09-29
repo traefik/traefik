@@ -233,18 +233,18 @@ If the rule is verified, the router becomes active, calls middlewares, and then 
 
 The table below lists all the available matchers:
 
-| Rule                                                                                       | Description                                                                                                    |
-|--------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
-| ```Headers(`key`, `value`)```                                                              | Check if there is a key `key`defined in the headers, with the value `value`                                    |
-| ```HeadersRegexp(`key`, `regexp`)```                                                       | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp` |
-| ```Host(`example.com`, ...)```                                                             | Check if the request domain (host header value) targets one of the given `domains`.                            |
-| ```HostHeader(`example.com`, ...)```                                                       | Same as `Host`, only exists for historical reasons.                                                            |
-| ```HostRegexp(`example.com`, `{subdomain:[a-z]+}.example.com`, ...)```                     | Match the request domain. See "Regexp Syntax" below.                                                           |
-| ```Method(`GET`, ...)```                                                                   | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `HEAD`)    |
-| ```Path(`/path`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`, ...)```                             | Match exact request path. See "Regexp Syntax" below.                                                           |
-| ```PathPrefix(`/products/`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`)```                       | Match request prefix path. See "Regexp Syntax" below.                                                          |
-| ```Query(`foo=bar`, `bar=baz`)```                                                          | Match Query String parameters. It accepts a sequence of key=value pairs.                                       |
-| ```ClientIP(`10.0.0.0/16`, `::1`)```                                                       | Match if the request client IP is one of the given IP/CIDR. It accepts IPv4, IPv6 and CIDR formats.            |
+| Rule                                                                   | Description                                                                                                    |
+|------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
+| ```Headers(`key`, `value`)```                                          | Check if there is a key `key`defined in the headers, with the value `value`                                    |
+| ```HeadersRegexp(`key`, `regexp`)```                                   | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp` |
+| ```Host(`example.com`, ...)```                                         | Check if the request domain (host header value) targets one of the given `domains`.                            |
+| ```HostHeader(`example.com`, ...)```                                   | Same as `Host`, only exists for historical reasons.                                                            |
+| ```HostRegexp(`example.com`, `{subdomain:[a-z]+}.example.com`, ...)``` | Match the request domain. See "Regexp Syntax" below.                                                           |
+| ```Method(`GET`, ...)```                                               | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `HEAD`)    |
+| ```Path(`/path`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`, ...)```         | Match exact request path. See "Regexp Syntax" below.                                                           |
+| ```PathPrefix(`/products/`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`)```   | Match request prefix path. See "Regexp Syntax" below.                                                          |
+| ```Query(`foo=bar`, `bar=baz`)```                                      | Match Query String parameters. It accepts a sequence of key=value pairs.                                       |
+| ```ClientIP(`10.0.0.0/16`, `::1`)```                                   | Match if the request client IP is one of the given IP/CIDR. It accepts IPv4, IPv6 and CIDR formats.            |
 
 !!! important "Non-ASCII Domain Names"
 
@@ -1040,6 +1040,30 @@ By default, a router with a TLS section will terminate the TLS connections, mean
         # will terminate the TLS request by default
         [tcp.routers.Router-1.tls]
     ```
+
+??? info "Postgres STARTTLS"
+
+    Traefik supports the Postgres STARTTLS protocol,
+    which allows TLS routing for Postgres connections.
+
+    To do so, Traefik reads the first bytes sent by a Postgres client,
+    identifies if they correspond to the message of a STARTTLS negotiation,
+    and, if so, acknowledges and signals the client that it can start the TLS handshake.
+
+    Please note/remember that there are subtleties inherent to STARTTLS in whether
+    the connection ends up being a TLS one or not. These subtleties depend on the
+    `sslmode` value in the client configuration (and on the server authentication
+    rules). Therefore, it is recommended to use the `require` value for the
+    `sslmode`.
+
+    Afterwards, the TLS handshake, and routing based on TLS, can proceed as expected.
+
+    !!! warning "Postgres STARTTLS with TCP TLS PassThrough routers"
+
+        As mentioned above, the `sslmode` configuration parameter does have an impact on
+        whether a STARTTLS session will succeed. In particular in the context of TCP TLS
+        PassThrough, some of the values (such as `allow`) do not even make sense. Which
+        is why, once more it is recommended to use the `require` value.
 
 #### `passthrough`
 
