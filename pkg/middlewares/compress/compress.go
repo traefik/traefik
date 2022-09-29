@@ -9,7 +9,6 @@ import (
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/opentracing/opentracing-go/ext"
 	accept "github.com/timewasted/go-accept-headers"
-
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
@@ -77,7 +76,7 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	ctx := middlewares.GetLoggerCtx(req.Context(), c.name, typeName)
 	switch encoding {
 	case encodingBrotli:
-		c.brotliHandler(ctx).ServeHTTP(rw, req)
+		c.brotliHandler().ServeHTTP(rw, req)
 	default:
 		c.gzipHandler(ctx).ServeHTTP(rw, req)
 	}
@@ -99,7 +98,7 @@ func (c *compress) gzipHandler(ctx context.Context) http.Handler {
 	return wrapper(c.next)
 }
 
-func (c *compress) brotliHandler(ctx context.Context) http.Handler {
+func (c *compress) brotliHandler() http.Handler {
 	return brotli.NewMiddleware(
 		brotli.WithMinSize(c.minSize),
 	)(c.next)
