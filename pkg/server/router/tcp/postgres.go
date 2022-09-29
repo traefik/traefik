@@ -139,6 +139,7 @@ func (c *postgresConn) Write(p []byte) (n int, err error) {
 
 	c.errChanMu.Lock()
 	if c.errChan == nil {
+		c.errChanMu.Unlock()
 		return 0, errors.New("initial read never happened")
 	}
 	c.errChanMu.Unlock()
