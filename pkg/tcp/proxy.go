@@ -20,7 +20,7 @@ type Proxy struct {
 	tcpAddr          *net.TCPAddr
 	terminationDelay time.Duration
 	proxyProtocol    *dynamic.ProxyProtocol
-	//tcpmanager       *TcpManager
+	tcpmanager       *TcpManager
 }
 
 // NewProxy creates a new Proxy.
@@ -40,15 +40,13 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 		}
 
 	}
-	//service.NewRoundTripperManager()
-	//:w
-	//	tcpmanager := NewTcpManager()
+	tcpmanager := NewTcpManager()
 	return &Proxy{
 		address:          address,
 		tcpAddr:          tcpAddr,
 		terminationDelay: terminationDelay,
 		proxyProtocol:    proxyProtocol,
-		//tcpmanager:       tcpmanager,
+		tcpmanager:       tcpmanager,
 	}, nil
 }
 
@@ -100,7 +98,6 @@ func (p Proxy) dialBackend() (*net.TCPConn, error) {
 	if p.tcpAddr != nil {
 		return net.DialTCP("tcp", nil, p.tcpAddr)
 	}
-	//tls.Dial("tcp",p.address,CreateRootCACertPool())
 	log.WithoutContext().Debugf("Dial with lookup to address %s", p.address)
 	// Dial with DNS lookup for host based addresses.
 	conn, err := net.Dial("tcp", p.address)
