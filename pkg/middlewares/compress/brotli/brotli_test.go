@@ -50,7 +50,9 @@ func TestBWriter(t *testing.T) {
 				rw:      trw,
 				minSize: testCase.minSize,
 			}
-			bw.Write(testCase.writeData)
+			_, err := bw.Write(testCase.writeData)
+			assert.Nil(t, err)
+
 			if testCase.compression {
 				assert.Less(t, len(trw.Body.Bytes()), len(testCase.writeData))
 			} else {
@@ -168,7 +170,7 @@ func TestNewMiddleware(t *testing.T) {
 			method:       http.MethodGet,
 			acceptHeader: "gzip",
 			expCompress:  false,
-			expEncoding:  "identity",
+			expEncoding:  "",
 			writeData:    generateBytes(1024),
 		},
 	}
