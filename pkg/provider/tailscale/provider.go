@@ -108,7 +108,7 @@ func (p *Provider) renewCertificates(ctx context.Context) {
 			p.certByDomainMu.RLock()
 			var domainsToRenew []string
 			for domain, cert := range p.certByDomain {
-				tlsCert, err := cert.GetCertificateFromBytes()
+				tlsCert, err := cert.GetCertificate()
 				if err != nil {
 					log.FromContext(ctx).
 						WithError(err).

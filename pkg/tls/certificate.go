@@ -182,17 +182,6 @@ func (c *Certificate) GetCertificate() (tls.Certificate, error) {
 	return cert, nil
 }
 
-// GetCertificateFromBytes returns a tls.Certificate matching the configured CertFile and KeyFile.
-// It assumes that the configured CertFile and KeyFile are of byte type.
-func (c *Certificate) GetCertificateFromBytes() (tls.Certificate, error) {
-	cert, err := tls.X509KeyPair([]byte(c.CertFile), []byte(c.KeyFile))
-	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to parse TLS certificate: %w", err)
-	}
-
-	return cert, nil
-}
-
 // GetTruncatedCertificateName truncates the certificate name.
 func (c *Certificate) GetTruncatedCertificateName() string {
 	certName := c.CertFile.String()
