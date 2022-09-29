@@ -981,6 +981,9 @@ If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, D
 `--serverstransport.rootcas`:  
 Add cert file for self-signed certificate.
 
+`--spiffe.workloadapiaddr`:  
+Address of the SPIFFE workload API to use.
+
 `--tracing`:  
 OpenTracing configuration. (Default: ```false```)
 
