@@ -162,21 +162,21 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 	return err
 }
 
-// GetCertificate retrieves Certificate as tls.Certificate.
+// GetCertificate returns a tls.Certificate matching the configured CertFile and KeyFile.
 func (c *Certificate) GetCertificate() (tls.Certificate, error) {
 	certContent, err := c.CertFile.Read()
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to read CertFile : %w", err)
+		return tls.Certificate{}, fmt.Errorf("unable to read CertFile: %w", err)
 	}
 
 	keyContent, err := c.KeyFile.Read()
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to read KeyFile : %w", err)
+		return tls.Certificate{}, fmt.Errorf("unable to read KeyFile: %w", err)
 	}
 
 	cert, err := tls.X509KeyPair(certContent, keyContent)
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to generate TLS certificate : %w", err)
+		return tls.Certificate{}, fmt.Errorf("unable to parse TLS certificate: %w", err)
 	}
 
 	return cert, nil
