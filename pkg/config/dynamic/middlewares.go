@@ -18,6 +18,7 @@ type Middleware struct {
 	ReplacePath       *ReplacePath       `json:"replacePath,omitempty" toml:"replacePath,omitempty" yaml:"replacePath,omitempty" export:"true"`
 	ReplacePathRegex  *ReplacePathRegex  `json:"replacePathRegex,omitempty" toml:"replacePathRegex,omitempty" yaml:"replacePathRegex,omitempty" export:"true"`
 	Chain             *Chain             `json:"chain,omitempty" toml:"chain,omitempty" yaml:"chain,omitempty" export:"true"`
+	IPBlackList       *IPBlackList       `json:"ipBlackList,omitempty" toml:"ipBlackList,omitempty" yaml:"ipBlackList,omitempty" export:"true"`
 	IPWhiteList       *IPWhiteList       `json:"ipWhiteList,omitempty" toml:"ipWhiteList,omitempty" yaml:"ipWhiteList,omitempty" export:"true"`
 	Headers           *Headers           `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
 	Errors            *ErrorPage         `json:"errors,omitempty" toml:"errors,omitempty" yaml:"errors,omitempty" export:"true"`
@@ -390,6 +391,17 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 // More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipwhitelist/
 type IPWhiteList struct {
 	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation).
+	SourceRange []string    `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
+	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty"  label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// IPBlackList holds the IP blacklist middleware configuration.
+// This middleware accepts / refuses requests based on the client IP.
+// More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/ipblacklist/
+type IPBlackList struct {
+	// SourceRange defines the set of blacklisted IPs (or ranges of denied IPs by using CIDR notation).
 	SourceRange []string    `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
 	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty"  label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }
