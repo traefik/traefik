@@ -312,7 +312,7 @@ func TestRouterManager_Get(t *testing.T) {
 				},
 			})
 
-			roundTripperManager := service.NewRoundTripperManager()
+			roundTripperManager := service.NewRoundTripperManager(nil)
 			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
@@ -418,7 +418,7 @@ func TestAccessLog(t *testing.T) {
 				},
 			})
 
-			roundTripperManager := service.NewRoundTripperManager()
+			roundTripperManager := service.NewRoundTripperManager(nil)
 			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
@@ -713,7 +713,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 				},
 			})
 
-			roundTripperManager := service.NewRoundTripperManager()
+			roundTripperManager := service.NewRoundTripperManager(nil)
 			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
@@ -788,7 +788,7 @@ func TestProviderOnMiddlewares(t *testing.T) {
 		},
 	})
 
-	roundTripperManager := service.NewRoundTripperManager()
+	roundTripperManager := service.NewRoundTripperManager(nil)
 	roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 	serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)

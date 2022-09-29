@@ -1142,6 +1142,11 @@ func (in *ServersTransportSpec) DeepCopyInto(out *ServersTransportSpec) {
 		*out = new(ForwardingTimeouts)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.ServerSpiffeIDs != nil {
+		in, out := &in.ServerSpiffeIDs, &out.ServerSpiffeIDs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
