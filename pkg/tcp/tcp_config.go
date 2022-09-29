@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"golang.org/x/net/http2"
 	//	"github.com/traefik/traefik/v2/pkg/server/service"
 
 	"github.com/traefik/traefik/v2/pkg/log"
@@ -143,6 +144,10 @@ func createTcptransport(cfg *dynamic.ServersTransport) (*http.Transport, error) 
 	// Return directly HTTP/1.1 transport when HTTP/2 is disabled
 	if cfg.DisableHTTP2 {
 		return transport, nil
+	}
+	err := http2.ConfigureTransport(transport)
+	if err != nil {
+		return nil, err
 	}
 	return transport, nil
 }
