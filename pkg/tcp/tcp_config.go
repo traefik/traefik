@@ -40,24 +40,32 @@ func NewTcpManager() *TcpManager {
 
 // RoundTripperManager handles roundtripper for the reverse proxy.
 type TcpManager struct {
-	rtLock  sync.RWMutex
-	configs map[string]*dynamic.ServersTransport
+	rtLock    sync.RWMutex
+	configs   map[string]*dynamic.ServersTransport
+	transport map[string]http.RoundTripper
 }
 
 // Update updates the roundtrippers configurations.
 func (r *TcpManager) Update(newConfigs map[string]*dynamic.ServersTransport) {
 	r.rtLock.Lock()
 	defer r.rtLock.Unlock()
-
 	for configName, config := range r.configs {
 		newConfig, ok := newConfigs[configName]
 		if !ok {
 			delete(r.configs, configName)
+			delete(r.transport, configName)
+
 			continue
 		}
 		// manager := service.NewRoundTripperManager()
 		if reflect.DeepEqual(newConfig, config) {
 			continue
+		}
+		var err error
+		r.transport[configName], err = createTcptransport(newConfig)
+		if err != nil {
+			log.WithoutContext().Errorf("Could not configure HTTP Transport %s, fallback on default transport: %v", configName, err)
+			r.transport[configName] = http.DefaultTransport
 		}
 
 	}
@@ -68,6 +76,19 @@ func (r *TcpManager) Update(newConfigs map[string]*dynamic.ServersTransport) {
 
 		}
 	}
+	for newConfigName, newConfig := range newConfigs {
+		if _, ok := r.configs[newConfigName]; ok {
+			continue
+		}
+
+		var err error
+		r.transport[newConfigName], err = createTcptransport(newConfig)
+		if err != nil {
+			log.WithoutContext().Errorf("Could not configure HTTP Transport %s, fallback on default transport: %v", newConfigName, err)
+			r.transport[newConfigName] = http.DefaultTransport
+		}
+	}
+
 	r.configs = newConfigs
 }
 

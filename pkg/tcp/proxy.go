@@ -41,7 +41,6 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 
 	}
 	//service.NewRoundTripperManager()
-
 	//:w
 	//	tcpmanager := NewTcpManager()
 	return &Proxy{
