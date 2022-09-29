@@ -11,6 +11,7 @@ import (
 	"github.com/pires/go-proxyproto"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
+	//"github.com/traefik/traefik/v2/pkg/server/service"
 )
 
 // Proxy forwards a TCP request to a TCP service.
@@ -19,6 +20,7 @@ type Proxy struct {
 	tcpAddr          *net.TCPAddr
 	terminationDelay time.Duration
 	proxyProtocol    *dynamic.ProxyProtocol
+	tcpmanager       *TcpManager
 }
 
 // NewProxy creates a new Proxy.
@@ -26,23 +28,25 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 	if proxyProtocol != nil && (proxyProtocol.Version < 1 || proxyProtocol.Version > 2) {
 		return nil, fmt.Errorf("unknown proxyProtocol version: %d", proxyProtocol.Version)
 	}
-
 	// Creates the tcpAddr only for IP based addresses,
 	// because there is no need to resolve the name on every new connection,
 	// and building it should happen once.
 	var tcpAddr *net.TCPAddr
+
 	if host, _, err := net.SplitHostPort(address); err == nil && net.ParseIP(host) != nil {
 		tcpAddr, err = net.ResolveTCPAddr("tcp", address)
 		if err != nil {
 			return nil, err
 		}
-	}
 
+	}
+	tcpmanager := NewTcpManager()
 	return &Proxy{
 		address:          address,
 		tcpAddr:          tcpAddr,
 		terminationDelay: terminationDelay,
 		proxyProtocol:    proxyProtocol,
+		tcpmanager:       tcpmanager,
 	}, nil
 }
 
@@ -94,9 +98,7 @@ func (p Proxy) dialBackend() (*net.TCPConn, error) {
 	if p.tcpAddr != nil {
 		return net.DialTCP("tcp", nil, p.tcpAddr)
 	}
-
 	log.WithoutContext().Debugf("Dial with lookup to address %s", p.address)
-
 	// Dial with DNS lookup for host based addresses.
 	conn, err := net.Dial("tcp", p.address)
 	if err != nil {
