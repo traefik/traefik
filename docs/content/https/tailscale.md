@@ -19,7 +19,7 @@ a Tailscale certificate resolver needs to be configured as below.
 !!! info "Referencing a certificate resolver"
 
     Defining a certificate resolver does not imply that routers are going to use it automatically.
-    Each router that is meant to use the resolver must explicitly [reference](../routing/routers/index.md#certresolver) it.
+    Each router or entrypoint that is meant to use the resolver must explicitly [reference](../routing/routers/index.md#certresolver) it.
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
