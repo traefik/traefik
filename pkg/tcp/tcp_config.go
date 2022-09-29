@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 
-	//"errors"
-	//"fmt"
 	"net"
 	"net/http"
 	"reflect"
@@ -16,23 +14,12 @@ import (
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"golang.org/x/net/http2"
-	//	"github.com/traefik/traefik/v2/pkg/server/service"
 
 	"github.com/traefik/traefik/v2/pkg/log"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
-	// "golang.org/x/net/http2"
 )
 
-// type h2cTransportWrapper struct {
-// 	*http2.Transport
-// }
-
-// func (t *h2cTransportWrapper) RoundTrip(req *http.Request) (*http.Response, error) {
-// 	req.URL.Scheme = "http"
-// 	return t.Transport.RoundTrip(req)
-// }
-
-// NewRoundTripperManager creates a new RoundTripperManager.
+// NewTcpManager creates a new RoundTripperManager.
 func NewTcpManager() *TcpManager {
 	return &TcpManager{
 		transport: make(map[string]http.RoundTripper),
@@ -40,7 +27,7 @@ func NewTcpManager() *TcpManager {
 	}
 }
 
-// RoundTripperManager handles roundtripper for the reverse proxy.
+// TcpManager handles roundtripper for the reverse proxy.
 type TcpManager struct {
 	rtLock    sync.RWMutex
 	configs   map[string]*dynamic.ServersTransport

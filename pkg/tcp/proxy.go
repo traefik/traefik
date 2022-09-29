@@ -11,7 +11,6 @@ import (
 	"github.com/pires/go-proxyproto"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
-	//"github.com/traefik/traefik/v2/pkg/server/service"
 )
 
 // Proxy forwards a TCP request to a TCP service.
