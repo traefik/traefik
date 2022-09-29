@@ -374,7 +374,7 @@ providers:
 
 _Optional, Default: ""_
 
-This IP will get copied to Ingress `status.loadbalancer.ip` and currently only supports one IP value (IPv4 or IPv6).
+This IP will get copied to Ingress `status.loadbalancer.ip`, and currently only supports one IP value (IPv4 or IPv6).
 
 ```yaml tab="File (YAML)"
 providers:
