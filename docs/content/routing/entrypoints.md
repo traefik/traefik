@@ -256,7 +256,7 @@ EntryPoints in this list are used (by default) on HTTP and TCP routers that do n
     When a UDP router does not define the [EntryPoints option](./routers/index.md#entrypoints_2),
     it is attached to all available UDP EntryPoints.
 
-??? example "Defining only one entryPoint as default"
+??? example "Defining only one EntryPoint as default"
 
     ```yaml tab="File (yaml)"
     entryPoints:
