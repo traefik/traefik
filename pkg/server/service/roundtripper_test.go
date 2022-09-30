@@ -259,13 +259,13 @@ func TestSpiffeMTLS(t *testing.T) {
 		bundle: pki.bundle,
 	}
 
-	// TLS config built with go-spiffe `tlsconfig.MTLSServerConfig` does not set a certificate on
-	// the tls.Config struct, and relies instead on `GetCertificate` being always called.
-	// Turns out that, `StartTLS` from the httptest.Server, enforces a default certificate
-	// if no certificate is set on the TLS config in use.
-	// It makes the server always serve the https default certificate, and not the SPIFFE certificate,
-	// as GetCertificate is never called (There's a default cert, and SNI is not used).
-	// To bypass this, we're manually extracting the server ceritificate from the server SVID
+	// go-spiffe's `tlsconfig.MTLSServerConfig` (that should be used here) does not set a certificate on
+	// the returned `tls.Config` and relies instead on `GetCertificate` being always called.
+	// But it turns out that `StartTLS` from `httptest.Server`, enforces a default certificate
+	// if no certificate is previously set on the configured TLS config.
+	// It makes the test server always serve the httptest default certificate, and not the SPIFFE certificate,
+	// as GetCertificate is in that case never called (there's a default cert, and SNI is not used).
+	// To bypass this issue, we're manually extracting the server ceritificate from the server SVID
 	// and use another initialization method that forces serving the server SPIFFE certificate.
 	serverCert, err := tlsconfig.GetCertificate(&serverSource)(nil)
 	require.NoError(t, err)
@@ -277,9 +277,15 @@ func TestSpiffeMTLS(t *testing.T) {
 	srv.StartTLS()
 	defer srv.Close()
 
+	clientSource := fakeSpiffeSource{
+		svid:   clientSVID,
+		bundle: pki.bundle,
+	}
+
 	testCases := []struct {
 		desc             string
 		config           dynamic.ServersTransport
+		clientSource     SpiffeX509Source
 		wantStatusCode   int
 		wantErrorMessage string
 	}{
@@ -288,6 +294,7 @@ func TestSpiffeMTLS(t *testing.T) {
 			config: dynamic.ServersTransport{
 				EnableSpiffeMTLS: true,
 			},
+			clientSource:   &clientSource,
 			wantStatusCode: http.StatusOK,
 		},
 		{
@@ -298,6 +305,7 @@ func TestSpiffeMTLS(t *testing.T) {
 					"spiffe://traefik.test/server",
 				},
 			},
+			clientSource:   &clientSource,
 			wantStatusCode: http.StatusOK,
 		},
 		{
@@ -308,6 +316,7 @@ func TestSpiffeMTLS(t *testing.T) {
 					"spiffe://traefik.test/not-server",
 				},
 			},
+			clientSource:     &clientSource,
 			wantErrorMessage: `unexpected ID "spiffe://traefik.test/server"`,
 		},
 		{
@@ -316,6 +325,7 @@ func TestSpiffeMTLS(t *testing.T) {
 				EnableSpiffeMTLS:        true,
 				ServerSpiffeTrustDomain: "spiffe://traefik.test",
 			},
+			clientSource:   &clientSource,
 			wantStatusCode: http.StatusOK,
 		},
 		{
@@ -324,6 +334,7 @@ func TestSpiffeMTLS(t *testing.T) {
 				EnableSpiffeMTLS:        true,
 				ServerSpiffeTrustDomain: "spiffe://not-traefik.test",
 			},
+			clientSource:     &clientSource,
 			wantErrorMessage: `unexpected trust domain "traefik.test"`,
 		},
 		{
@@ -335,18 +346,22 @@ func TestSpiffeMTLS(t *testing.T) {
 				},
 				ServerSpiffeTrustDomain: "spiffe://traefik.test",
 			},
+			clientSource:     &clientSource,
 			wantErrorMessage: `unexpected ID "spiffe://traefik.test/server"`,
+		},
+		{
+			desc: "raises an error when spiffe is enabled on the transport but no workloadapi address is given",
+			config: dynamic.ServersTransport{
+				EnableSpiffeMTLS: true,
+			},
+			clientSource:     nil,
+			wantErrorMessage: `remote error: tls: bad certificate`,
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.desc, func(t *testing.T) {
-			rtManager := NewRoundTripperManager(
-				&fakeSpiffeSource{
-					svid:   clientSVID,
-					bundle: pki.bundle,
-				},
-			)
+			rtManager := NewRoundTripperManager(testCase.clientSource)
 
 			dynamicConf := map[string]*dynamic.ServersTransport{
 				"test": &testCase.config,
