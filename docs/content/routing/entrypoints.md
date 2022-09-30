@@ -233,6 +233,54 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
 
     Full details for how to specify `address` can be found in [net.Listen](https://golang.org/pkg/net/#Listen) (and [net.Dial](https://golang.org/pkg/net/#Dial)) of the doc for go.
 
+### AsDefault
+
+_Optional, Default=false_
+
+The `AsDefault` option marks the EntryPoint to be in the list of default EntryPoints.
+EntryPoints in this list are used (by default) on HTTP and TCP routers that do not define their own [EntryPoints option](./routers/index.md#entrypoints).
+
+!!! info "List of default EntryPoints"
+
+    If there is no EntryPoint with the `AsDefault` option set to `true`, 
+    then the list of default EntryPoints includes all HTTP/TCP EntryPoints.
+
+    If at least one EntryPoint has the `AsDefault` option set to `true`,
+    then the list of default EntryPoints includes only EntryPoints that have the `AsDefault` option set to `true`.
+
+    Some built-in EntryPoints are always excluded from the list, namely: `traefik`, `traefikhub-api`, and `traefikhub-tunl`.
+
+!!! warning "Only TCP and HTTP"
+
+    The `AsDefault` option has no effect on UDP EntryPoints.
+    When a UDP router does not define the [EntryPoints option](./routers/index.md#entrypoints_2),
+    it is attached to all available UDP EntryPoints.
+
+??? example "Defining only one entryPoint as default"
+
+    ```yaml tab="File (yaml)"
+    entryPoints:
+      web:
+        address: ":80"
+      websecure:
+        address: ":443"
+        asDefault: true
+    ```
+
+    ```toml tab="File (TOML)"
+    [entryPoints.web]
+      address = ":80"
+    [entryPoints.websecure]
+      address = ":443"
+      asDefault = true
+    ```
+
+    ```bash tab="CLI"
+    --entrypoints.web.address=:80
+    --entrypoints.websecure.address=:443
+    --entrypoints.websecure.asDefault=true
+    ```
+
 ### HTTP/2
 
 #### `maxConcurrentStreams`
