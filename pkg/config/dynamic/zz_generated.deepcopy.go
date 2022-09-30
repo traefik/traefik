@@ -1161,6 +1161,11 @@ func (in *ServersTransport) DeepCopyInto(out *ServersTransport) {
 		*out = new(ForwardingTimeouts)
 		**out = **in
 	}
+	if in.ServerSpiffeIDs != nil {
+		in, out := &in.ServerSpiffeIDs, &out.ServerSpiffeIDs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
