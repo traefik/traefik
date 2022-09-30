@@ -67,7 +67,7 @@ require (
 	go.elastic.co/apm v1.13.1
 	go.elastic.co/apm/module/apmot v1.13.1
 	golang.org/x/mod v0.4.2
-	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e
+	golang.org/x/net v0.0.0-20220927171203-f486391704dc
 	golang.org/x/text v0.3.7
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11
 	golang.org/x/tools v0.1.6-0.20210726203631-07bc1bf47fb2
@@ -313,7 +313,7 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20220704084225-05e143d24a9e // indirect
+	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/api v0.44.0 // indirect
