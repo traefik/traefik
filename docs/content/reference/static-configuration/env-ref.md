@@ -99,6 +99,9 @@ Storage to use. (Default: ```acme.json```)
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_TLSCHALLENGE`:  
 Activate TLS-ALPN-01 Challenge. (Default: ```true```)
 
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_TAILSCALE`:  
+Enables Tailscale certificate resolution. (Default: ```true```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>`:  
 Entry points definition. (Default: ```false```)
 
