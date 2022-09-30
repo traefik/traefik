@@ -56,11 +56,6 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 }
 
 func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	mediaType, _, err := mime.ParseMediaType(req.Header.Get("Content-Type"))
-	if err != nil {
-		log.FromContext(middlewares.GetLoggerCtx(context.Background(), c.name, typeName)).Debug(err)
-	}
-
 	acceptEncoding := req.Header.Get("Accept-Encoding")
 	// Set a default encoding value so `Negotiate` doesn't pick a compression method where none was desired.
 	if acceptEncoding == "" {
@@ -74,7 +69,7 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		log.FromContext(middlewares.GetLoggerCtx(context.Background(), c.name, typeName)).Debug(err)
 	}
 
-	if contains(c.excludes, mediaType) || encoding == "" {
+	if encoding == "" || contains(c.excludes, parseMediaTypeOrLog(req.Header.Get("Content-Type"), c.name)) {
 		c.next.ServeHTTP(rw, req)
 		return
 	}
@@ -90,6 +85,14 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 func (c *compress) GetTracingInformation() (string, ext.SpanKindEnum) {
 	return c.name, tracing.SpanKindNoneEnum
+}
+
+func parseMediaTypeOrLog(contentType, name string) string {
+	mediaType, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		log.FromContext(middlewares.GetLoggerCtx(context.Background(), name, typeName)).Debug(err)
+	}
+	return mediaType
 }
 
 func (c *compress) gzipHandler(ctx context.Context) http.Handler {
