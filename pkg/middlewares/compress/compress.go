@@ -8,15 +8,22 @@ import (
 
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/opentracing/opentracing-go/ext"
+	accept "github.com/timewasted/go-accept-headers"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
+	"github.com/traefik/traefik/v2/pkg/middlewares/compress/brotli"
 	"github.com/traefik/traefik/v2/pkg/tracing"
 )
 
 const (
 	typeName = "Compress"
+
+	encodingBrotli = "br"
+	encodingGzip   = "gzip"
 )
+
+var supportedEncodings = []string{encodingBrotli, encodingGzip}
 
 // Compress is a middleware that allows to compress the response.
 type compress struct {
@@ -54,10 +61,29 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		log.FromContext(middlewares.GetLoggerCtx(context.Background(), c.name, typeName)).Debug(err)
 	}
 
-	if contains(c.excludes, mediaType) {
+	acceptEncoding := req.Header.Get("Accept-Encoding")
+	// Set a default encoding value so `Negotiate` doesn't pick a compression method where none was desired.
+	if acceptEncoding == "" {
+		acceptEncoding = "identity"
+	}
+
+	// If no `Accept-Encoding` header was set, or it was set to `*` encoding will be `supportedEncodings[0]`.
+	// If a header was set to a value we don't know about, the negotiated encoding will be "".
+	encoding, err := accept.Negotiate(acceptEncoding, supportedEncodings...)
+	if err != nil {
+		log.FromContext(middlewares.GetLoggerCtx(context.Background(), c.name, typeName)).Debug(err)
+	}
+
+	if contains(c.excludes, mediaType) || encoding == "" {
 		c.next.ServeHTTP(rw, req)
-	} else {
-		ctx := middlewares.GetLoggerCtx(req.Context(), c.name, typeName)
+		return
+	}
+
+	ctx := middlewares.GetLoggerCtx(req.Context(), c.name, typeName)
+	switch encoding {
+	case encodingBrotli:
+		c.brotliHandler().ServeHTTP(rw, req)
+	default:
 		c.gzipHandler(ctx).ServeHTTP(rw, req)
 	}
 }
@@ -76,6 +102,12 @@ func (c *compress) gzipHandler(ctx context.Context) http.Handler {
 	}
 
 	return wrapper(c.next)
+}
+
+func (c *compress) brotliHandler() http.Handler {
+	return brotli.NewMiddleware(
+		brotli.WithMinSize(c.minSize),
+	)(c.next)
 }
 
 func contains(values []string, val string) bool {
