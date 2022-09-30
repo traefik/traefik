@@ -65,7 +65,7 @@ _Optional, Default=false_
 
 Search for services in cluster list.
 
-- If set to `true` service discovery is disabled on configured clusters, but enabled for all other clusters.
+- If set to `true` service discovery is enabled for all clusters.
 - If set to `false` service discovery is enabled on configured clusters only.
 
 ```yaml tab="File (YAML)"
@@ -91,6 +91,7 @@ providers:
 _Optional, Default=["default"]_
 
 Search for services in cluster list.
+This option is ignored if `autoDiscoverClusters` is set to `true`.
 
 ```yaml tab="File (YAML)"
 providers:
