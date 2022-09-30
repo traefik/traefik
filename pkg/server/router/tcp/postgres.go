@@ -93,10 +93,8 @@ type postgresConn struct {
 	starttlsMsgSent       bool // whether we have already sent the STARTTLS handshake to the backend.
 	starttlsReplyReceived bool // whether we have already received the STARTTLS handshake reply from the backend.
 
-	// errChan is used to make sure that a read (and not a write) is the first ever
-	// operation to happen on a postgresConn, and that an error message sent by the
-	// backend (such as a connection rejected by pg_hba.conf) makes its way back to the
-	// client.
+	// errChan makes sure that an error is returned if the first operation to ever
+	// happen on a postgresConn is a Write (because it should instead be a Read).
 	errChanMu sync.Mutex
 	errChan   chan error
 }
