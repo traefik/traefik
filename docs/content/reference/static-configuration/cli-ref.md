@@ -108,6 +108,9 @@ Entry points definition. (Default: ```false```)
 `--entrypoints.<name>.address`:  
 Entry point address.
 
+`--entrypoints.<name>.asdefault`:  
+Flag Entrypoint to be use by default on routers that don't have any Entrypoint defined. (Default: ```false```)
+
 `--entrypoints.<name>.forwardedheaders.insecure`:  
 Trust all forwarded headers. (Default: ```false```)
 
