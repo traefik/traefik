@@ -237,8 +237,8 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
 
 _Optional, Default=false_
 
-The `AsDefault` option flags the EntryPoint to be in the list of default EntryPoints.
-EntryPoints in this list are used (by default) on HTTP and TCP routers that do not define the [EntryPoints option](./routers/index.md#entrypoints).
+The `AsDefault` option marks the EntryPoint to be in the list of default EntryPoints.
+EntryPoints in this list are used (by default) on HTTP and TCP routers that do not define their own [EntryPoints option](./routers/index.md#entrypoints).
 
 !!! info "List of default EntryPoints"
 
