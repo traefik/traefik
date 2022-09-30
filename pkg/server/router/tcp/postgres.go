@@ -16,8 +16,8 @@ var (
 	PostgresStartTLSReply = []byte{83}                         // S
 )
 
-// isPostGRESql determines whether the buffer contains the Postgres STARTTLS message.
-func isPostGRESql(br *bufio.Reader) (bool, error) {
+// isPostgres determines whether the buffer contains the Postgres STARTTLS message.
+func isPostgres(br *bufio.Reader) (bool, error) {
 	for i := 0; i < len(PostgresStartTLSMsg); i++ {
 		peeked, err := br.Peek(i)
 		if err != nil {
@@ -32,9 +32,9 @@ func isPostGRESql(br *bufio.Reader) (bool, error) {
 	return true, nil
 }
 
-// servePostGreSQL serves a connection with a Postgres client negotiating a STARTTLS session.
+// servePostgres serves a connection with a Postgres client negotiating a STARTTLS session.
 // It handles TCP TLS routing, after accepting to start the STARTTLS session.
-func (r *Router) servePostGreSQL(conn tcp.WriteCloser) {
+func (r *Router) servePostgres(conn tcp.WriteCloser) {
 	_, err := conn.Write(PostgresStartTLSReply)
 	if err != nil {
 		conn.Close()
