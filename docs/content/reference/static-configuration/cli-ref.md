@@ -553,7 +553,7 @@ TLS key
 Use the ip address from the bound port, rather than from the inner network. (Default: ```false```)
 
 `--providers.docker.watch`:  
-Watch Docker Swarm events. (Default: ```true```)
+Watch Docker events. (Default: ```true```)
 
 `--providers.ecs`:  
 Enable AWS ECS backend with default settings. (Default: ```false```)
