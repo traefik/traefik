@@ -19,12 +19,11 @@ import (
 const (
 	typeName = "Compress"
 
-	encodingIdentity = "identity"
-	encodingBrotli   = "br"
-	encodingGzip     = "gzip"
+	encodingBrotli = "br"
+	encodingGzip   = "gzip"
 )
 
-var supportedEncodings = []string{encodingIdentity, encodingGzip, encodingBrotli}
+var supportedEncodings = []string{encodingBrotli, encodingGzip}
 
 // Compress is a middleware that allows to compress the response.
 type compress struct {
@@ -62,13 +61,20 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		log.FromContext(middlewares.GetLoggerCtx(context.Background(), c.name, typeName)).Debug(err)
 	}
 
-	// encoding will be "identity" if no header was set, it will be "" if an unsupported encoding is requested
-	encoding, err := accept.Negotiate(req.Header.Get("Accept-Encoding"), supportedEncodings...)
+	acceptEncoding := req.Header.Get("Accept-Encoding")
+	// Set a default encoding value so `Negotiate` doesn't pick a compression method where none was desired.
+	if acceptEncoding == "" {
+		acceptEncoding = "identity"
+	}
+
+	// If no `Accept-Encoding` header was set, or it was set to `*` encoding will be `supportedEncodings[0]`.
+	// If a header was set to a value we don't know about, the negotiated encoding will be "".
+	encoding, err := accept.Negotiate(acceptEncoding, supportedEncodings...)
 	if err != nil {
 		log.FromContext(middlewares.GetLoggerCtx(context.Background(), c.name, typeName)).Debug(err)
 	}
 
-	if contains(c.excludes, mediaType) || encoding == "identity" || encoding == "" {
+	if contains(c.excludes, mediaType) || encoding == "" {
 		c.next.ServeHTTP(rw, req)
 		return
 	}

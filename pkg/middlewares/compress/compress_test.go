@@ -10,7 +10,6 @@ import (
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	accept "github.com/timewasted/go-accept-headers"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/testhelpers"
 )
@@ -26,9 +25,76 @@ const (
 	identityValue         = "identity"
 )
 
-func TestNegotiate(t *testing.T) {
-	encoding, err := accept.Negotiate("stuff", supportedEncodings...)
-	t.Log(encoding, err)
+func TestNegotiation(t *testing.T) {
+	writeData := generateBytes(10)
+
+	type test struct {
+		name         string
+		acceptHeader string
+		expEncoding  string
+	}
+	testCases := []test{
+		{
+			name: "no accept header",
+		},
+		{
+			name:         "bad accept header",
+			acceptHeader: "notreal",
+			expEncoding:  "",
+		},
+		{
+			name:         "accept any header",
+			acceptHeader: "*",
+			expEncoding:  "br", // gzip likely preferred, but the handler doesn't support it
+		},
+		{
+			name:         "gzip accept header",
+			acceptHeader: "gzip",
+			expEncoding:  "gzip",
+		},
+		{
+			name:         "br accept header",
+			acceptHeader: "br",
+			expEncoding:  "br",
+		},
+		{
+			name:         "multi accept header, prefer gzip",
+			acceptHeader: "br;q=0.8, gzip;q=1.0",
+			expEncoding:  "gzip",
+		},
+		{
+			name:         "multi accept header, prefer br",
+			acceptHeader: "br;q=0.8, gzip;q=0.6",
+			expEncoding:  "br",
+		},
+		{
+			name:         "multi accept header list, prefer gzip",
+			acceptHeader: "gzip, br",
+			expEncoding:  "gzip",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+
+			if testCase.acceptHeader != "" {
+				req.Header.Add(acceptEncodingHeader, testCase.acceptHeader)
+			}
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+				_, err := rw.Write(writeData)
+				assert.NoError(t, err)
+			})
+			handler, err := New(context.Background(), next, dynamic.Compress{MinResponseBodyBytes: 1}, "testing")
+			require.NoError(t, err)
+
+			rw := httptest.NewRecorder()
+			handler.ServeHTTP(rw, req)
+
+			assert.Equal(t, testCase.expEncoding, rw.Header().Get(contentEncodingHeader))
+		})
+	}
 }
 
 func TestShouldCompressWhenNoContentEncodingHeader(t *testing.T) {
