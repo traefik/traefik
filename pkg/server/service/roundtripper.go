@@ -140,10 +140,16 @@ func (r *RoundTripperManager) createRoundTripper(cfg *dynamic.ServersTransport) 
 		WriteBufferSize:       64 * 1024,
 	}
 
-	if cfg.EnableSpiffeMTLS && r.spiffeX509Source != nil {
+	if cfg.EnableSpiffeMTLS {
+		if r.spiffeX509Source == nil {
+			return nil, errors.New(
+				"SPIFFE mTLS is enabled for this transport, but no workload API address is given to Traefik",
+			)
+		}
+
 		spiffeAuthorizer, err := buildSpiffeAuthorizer(cfg)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to build spiffe authorizer: %w", err)
+			return nil, fmt.Errorf("unable to build spiffe authorizer: %w", err)
 		}
 
 		transport.TLSClientConfig = tlsconfig.MTLSClientConfig(
@@ -211,7 +217,7 @@ func buildSpiffeAuthorizer(cfg *dynamic.ServersTransport) (tlsconfig.Authorizer,
 		for i, rawID := range cfg.ServerSpiffeIDs {
 			spiffeIDs[i], err = spiffeid.FromString(rawID)
 			if err != nil {
-				return nil, fmt.Errorf("Invalid server spiffeID provided: %w", err)
+				return nil, fmt.Errorf("invalid server spiffeID provided: %w", err)
 			}
 		}
 
@@ -219,7 +225,7 @@ func buildSpiffeAuthorizer(cfg *dynamic.ServersTransport) (tlsconfig.Authorizer,
 	case cfg.ServerSpiffeTrustDomain != "":
 		trustDomain, err := spiffeid.TrustDomainFromString(cfg.ServerSpiffeTrustDomain)
 		if err != nil {
-			return nil, fmt.Errorf("Invalid spiffe trust domain provided: %w", err)
+			return nil, fmt.Errorf("invalid spiffe trust domain provided: %w", err)
 		}
 
 		return tlsconfig.AuthorizeMemberOf(trustDomain), nil
