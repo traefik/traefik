@@ -531,7 +531,7 @@ providers:
 
 _Optional, Default=true_
 
-Watch Docker Swarm events.
+Watch Docker events.
 
 ```yaml tab="File (YAML)"
 providers:
