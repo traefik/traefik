@@ -18,9 +18,84 @@ const (
 	acceptEncodingHeader  = "Accept-Encoding"
 	contentEncodingHeader = "Content-Encoding"
 	contentTypeHeader     = "Content-Type"
+	contentLengthHeader   = "Content-Length"
 	varyHeader            = "Vary"
 	gzipValue             = "gzip"
+	brotliValue           = "br"
+	identityValue         = "identity"
 )
+
+func TestNegotiation(t *testing.T) {
+	writeData := generateBytes(10)
+
+	type test struct {
+		name         string
+		acceptHeader string
+		expEncoding  string
+	}
+	testCases := []test{
+		{
+			name: "no accept header",
+		},
+		{
+			name:         "bad accept header",
+			acceptHeader: "notreal",
+			expEncoding:  "",
+		},
+		{
+			name:         "accept any header",
+			acceptHeader: "*",
+			expEncoding:  "br", // gzip likely preferred, but the handler doesn't support it
+		},
+		{
+			name:         "gzip accept header",
+			acceptHeader: "gzip",
+			expEncoding:  "gzip",
+		},
+		{
+			name:         "br accept header",
+			acceptHeader: "br",
+			expEncoding:  "br",
+		},
+		{
+			name:         "multi accept header, prefer gzip",
+			acceptHeader: "br;q=0.8, gzip;q=1.0",
+			expEncoding:  "gzip",
+		},
+		{
+			name:         "multi accept header, prefer br",
+			acceptHeader: "br;q=0.8, gzip;q=0.6",
+			expEncoding:  "br",
+		},
+		{
+			name:         "multi accept header list, prefer gzip",
+			acceptHeader: "gzip, br",
+			expEncoding:  "gzip",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+
+			if testCase.acceptHeader != "" {
+				req.Header.Add(acceptEncodingHeader, testCase.acceptHeader)
+			}
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+				_, err := rw.Write(writeData)
+				assert.NoError(t, err)
+			})
+			handler, err := New(context.Background(), next, dynamic.Compress{MinResponseBodyBytes: 1}, "testing")
+			require.NoError(t, err)
+
+			rw := httptest.NewRecorder()
+			handler.ServeHTTP(rw, req)
+
+			assert.Equal(t, testCase.expEncoding, rw.Header().Get(contentEncodingHeader))
+		})
+	}
+}
 
 func TestShouldCompressWhenNoContentEncodingHeader(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
@@ -44,6 +119,53 @@ func TestShouldCompressWhenNoContentEncodingHeader(t *testing.T) {
 	if assert.ObjectsAreEqualValues(rw.Body.Bytes(), baseBody) {
 		assert.Fail(t, "expected a compressed body", "got %v", rw.Body.Bytes())
 	}
+}
+
+func TestShouldCompressBrWhenNoContentEncodingHeader(t *testing.T) {
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+	req.Header.Add(acceptEncodingHeader, brotliValue)
+
+	baseBody := generateBytes(gzhttp.DefaultMinSize)
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		_, err := rw.Write(baseBody)
+		assert.NoError(t, err)
+	})
+	handler, err := New(context.Background(), next, dynamic.Compress{}, "testing")
+	require.NoError(t, err)
+
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req)
+
+	assert.Equal(t, brotliValue, rw.Header().Get(contentEncodingHeader))
+	assert.Equal(t, acceptEncodingHeader, rw.Header().Get(varyHeader))
+
+	if assert.ObjectsAreEqualValues(rw.Body.Bytes(), baseBody) {
+		assert.Fail(t, "expected a compressed body", "got %v", rw.Body.Bytes())
+	}
+}
+
+func TestShouldNotCompressBrWhenNoContentEncodingHeaderSmallSize(t *testing.T) {
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+	req.Header.Add(acceptEncodingHeader, brotliValue)
+
+	baseBody := generateBytes(10)
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		_, err := rw.Write(baseBody)
+		assert.NoError(t, err)
+	})
+	handler, err := New(context.Background(), next, dynamic.Compress{}, "testing")
+	require.NoError(t, err)
+
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req)
+
+	assert.Equal(t, identityValue, rw.Header().Get(contentEncodingHeader))
+	assert.Equal(t, "", rw.Header().Get(varyHeader))
+	assert.Equal(t, "10", rw.Header().Get(contentLengthHeader))
+	assert.Equal(t, "text/plain; charset=utf-8", rw.Header().Get(contentTypeHeader))
+	assert.EqualValues(t, baseBody, rw.Body.Bytes())
 }
 
 func TestShouldNotCompressWhenContentEncodingHeader(t *testing.T) {
