@@ -91,7 +91,7 @@ providers:
 _Optional, Default=["default"]_
 
 Search for services in cluster list.
-This option is overridden if `autoDiscoverClusters` is set to `true`.
+This option is ignored if `autoDiscoverClusters` is set to `true`.
 
 ```yaml tab="File (YAML)"
 providers:
