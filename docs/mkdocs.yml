@@ -109,6 +109,7 @@ nav:
       - 'Overview': 'https/overview.md'
       - 'TLS': 'https/tls.md'
       - 'Let''s Encrypt': 'https/acme.md'
+      - 'Tailscale': 'https/tailscale.md'
   - 'Middlewares':
     - 'Overview': 'middlewares/overview.md'
     - 'HTTP':
