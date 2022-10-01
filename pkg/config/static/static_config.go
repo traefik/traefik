@@ -88,7 +88,8 @@ type Configuration struct {
 
 // CertificateResolver contains the configuration for the different types of certificates resolver.
 type CertificateResolver struct {
-	ACME *acmeprovider.Configuration `description:"Enable ACME (Let's Encrypt): automatic SSL." json:"acme,omitempty" toml:"acme,omitempty" yaml:"acme,omitempty" export:"true"`
+	ACME      *acmeprovider.Configuration `description:"Enables ACME (Let's Encrypt) automatic SSL." json:"acme,omitempty" toml:"acme,omitempty" yaml:"acme,omitempty" export:"true"`
+	Tailscale *struct{}                   `description:"Enables Tailscale certificate resolution." json:"tailscale,omitempty" toml:"tailscale,omitempty" yaml:"tailscale,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // Global holds the global configuration.
@@ -311,6 +312,10 @@ func (c *Configuration) initACMEProvider() {
 func (c *Configuration) ValidateConfiguration() error {
 	var acmeEmail string
 	for name, resolver := range c.CertificatesResolvers {
+		if resolver.ACME != nil && resolver.Tailscale != nil {
+			return fmt.Errorf("unable to initialize certificates resolver %q, as ACME and Tailscale providers are mutually exclusive", name)
+		}
+
 		if resolver.ACME == nil {
 			continue
 		}
@@ -320,7 +325,7 @@ func (c *Configuration) ValidateConfiguration() error {
 		}
 
 		if acmeEmail != "" && resolver.ACME.Email != acmeEmail {
-			return fmt.Errorf("unable to initialize certificates resolver %q, all the acme resolvers must use the same email", name)
+			return fmt.Errorf("unable to initialize certificates resolver %q, as all ACME resolvers must use the same email", name)
 		}
 		acmeEmail = resolver.ACME.Email
 	}
