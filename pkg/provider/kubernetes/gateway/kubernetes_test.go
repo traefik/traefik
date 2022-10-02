@@ -1468,6 +1468,135 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc:  "Simple HTTPRoute, redirect HTTP to HTTPS",
+			paths: []string{"services.yml", "httproute/filter_http_to_https.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-http-app-1-my-gateway-web-74471866db6e94e08d00": {
+							EntryPoints: []string{"web"},
+							Service:     "default-http-app-1-my-gateway-web-74471866db6e94e08d00-wrr",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/`)",
+							Middlewares: []string{"default-http-app-1-my-gateway-requestredirect"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-http-app-1-my-gateway-requestredirect": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:    "https",
+								Permanent: true,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-http-app-1-my-gateway-web-74471866db6e94e08d00-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: func(i int) *int { return &i }(1),
+									},
+								},
+							},
+						},
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: pointer.Bool(true),
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Simple HTTPRoute, HTTP header filters",
+			paths: []string{"services.yml", "httproute/filter_http_headers.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-http-app-1-my-gateway-web-74471866db6e94e08d00": {
+							EntryPoints: []string{"web"},
+							Service:     "default-http-app-1-my-gateway-web-74471866db6e94e08d00-wrr",
+							Rule:        "Host(`foo.com`) && PathPrefix(`/`)",
+							Middlewares: []string{"default-http-app-1-my-gateway-requestheadermodifier"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-http-app-1-my-gateway-requestheadermodifier": {
+							Headers: &dynamic.Headers{
+								CustomRequestHeaders: map[string]string{
+									"X-My-Header":       "foo",
+									"X-My-Other-Header": "bar",
+									"X-Another-Header":  "",
+								},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-http-app-1-my-gateway-web-74471866db6e94e08d00-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-80",
+										Weight: func(i int) *int { return &i }(1),
+									},
+								},
+							},
+						},
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: pointer.Bool(true),
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {

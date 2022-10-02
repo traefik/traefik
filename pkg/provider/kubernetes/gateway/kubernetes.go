@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"sort"
 	"strconv"
@@ -751,6 +752,30 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha
 
 				// TODO update the RouteStatus condition / deduplicate conditions on listener
 				continue
+			}
+
+			if len(routeRule.Filters) > 0 {
+				prefix := makeID(route.Namespace, route.Name+"-"+gateway.Name+"-")
+
+				middlewares, err := loadMiddlewares(prefix, routeRule.Filters)
+				if err != nil {
+					// update "ResolvedRefs" status true with "InvalidFilters" reason
+					conditions = append(conditions, metav1.Condition{
+						Type:               string(v1alpha2.ListenerConditionResolvedRefs),
+						Status:             metav1.ConditionFalse,
+						LastTransitionTime: metav1.Now(),
+						Reason:             "InvalidFilters", // TODO check the spec if a proper reason is introduced at some point
+						Message:            fmt.Sprintf("Cannot load HTTPRoute service %s/%s: %v", route.Namespace, route.Name, err),
+					})
+
+					// TODO update the RouteStatus condition / deduplicate conditions on listener
+					continue
+				}
+
+				for middlewareName, middleware := range middlewares {
+					conf.HTTP.Middlewares[middlewareName] = middleware
+					router.Middlewares = append(router.Middlewares, middlewareName)
+				}
 			}
 
 			if len(routeRule.BackendRefs) == 0 {
@@ -1653,6 +1678,42 @@ func loadTCPServices(client Client, namespace string, backendRefs []v1alpha2.Bac
 	}
 
 	return wrrSvc, services, nil
+}
+
+func loadMiddlewares(prefix string, filters []v1alpha2.HTTPRouteFilter) (map[string]*dynamic.Middleware, error) {
+	middlewares := make(map[string]*dynamic.Middleware)
+
+	for _, filter := range filters {
+		middlewareName := provider.Normalize(prefix + "-" + strings.ToLower(string(filter.Type)))
+
+		switch filter.Type {
+		case v1alpha2.HTTPRouteFilterRequestRedirect:
+			middlewares[middlewareName] = &dynamic.Middleware{
+				RedirectScheme: &dynamic.RedirectScheme{
+					Scheme:    *filter.RequestRedirect.Scheme,
+					Permanent: *filter.RequestRedirect.StatusCode == http.StatusMovedPermanently,
+				},
+			}
+		case v1alpha2.HTTPRouteFilterRequestHeaderModifier:
+			headers := make(map[string]string)
+			for _, h := range filter.RequestHeaderModifier.Add {
+				headers[http.CanonicalHeaderKey(string(h.Name))] = h.Value
+			}
+			for _, h := range filter.RequestHeaderModifier.Set {
+				headers[http.CanonicalHeaderKey(string(h.Name))] = h.Value
+			}
+			for _, h := range filter.RequestHeaderModifier.Remove {
+				headers[http.CanonicalHeaderKey(h)] = ""
+			}
+			middlewares[middlewareName] = &dynamic.Middleware{
+				Headers: &dynamic.Headers{
+					CustomRequestHeaders: headers,
+				},
+			}
+		}
+	}
+
+	return middlewares, nil
 }
 
 func getProtocol(portSpec corev1.ServicePort) string {
