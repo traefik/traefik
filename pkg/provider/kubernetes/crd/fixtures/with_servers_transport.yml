@@ -112,6 +112,11 @@ spec:
     idleConnTimeout: 42ms
     readIdleTimeout: 42s
     pingTimeout: 42s
+  enableSpiffeMTLS: true
+  serverSpiffeIDs:
+    - spiffe://foo/buz
+    - spiffe://bar/biz
+  serverSpiffeTrustDomain: spiffe://lol
 
 ---
 apiVersion: traefik.containo.us/v1alpha1
@@ -144,4 +149,3 @@ spec:
         - name: whoamitls
           port: 443
           serversTransport: default-test
-
