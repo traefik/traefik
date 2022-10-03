@@ -47,7 +47,7 @@
 - Merge current v2.8 into master ([#9146](https://github.com/traefik/traefik/pull/9146) by [kevinpollet](https://github.com/kevinpollet))
 - Merge current v2.8 into master ([#9135](https://github.com/traefik/traefik/pull/9135) by [kevinpollet](https://github.com/kevinpollet))
 
-## [v2.9.0](https://github.com/traefik/traefik/tree/v2.9.0) (2022-09-30)
+## [v2.9.0](https://github.com/traefik/traefik/tree/v2.9.0) (2022-10-03)
 [All Commits](https://github.com/traefik/traefik/compare/v2.9.0-rc1...v2.9.0)
 
 Release canceled.
