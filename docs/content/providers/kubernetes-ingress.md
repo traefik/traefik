@@ -502,6 +502,6 @@ providers:
 ### Further
 
 To learn more about the various aspects of the Ingress specification that Traefik supports,
-many examples of Ingresses definitions are located in the test [examples](https://github.com/traefik/traefik/tree/v2.8/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
+many examples of Ingresses definitions are located in the test [examples](https://github.com/traefik/traefik/tree/v2.9/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
 
 {!traefik-for-business-applications.md!}
