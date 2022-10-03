@@ -250,7 +250,7 @@ type ServersTransport struct {
 	ForwardingTimeouts      *ForwardingTimeouts        `description:"Timeouts for requests forwarded to the backend servers." json:"forwardingTimeouts,omitempty" toml:"forwardingTimeouts,omitempty" yaml:"forwardingTimeouts,omitempty" export:"true"`
 	DisableHTTP2            bool                       `description:"Disable HTTP/2 for connections with backend servers." json:"disableHTTP2,omitempty" toml:"disableHTTP2,omitempty" yaml:"disableHTTP2,omitempty" export:"true"`
 	PeerCertURI             string                     `description:"URI used to match against SAN URI during the peer certificate verification." json:"peerCertURI,omitempty" toml:"peerCertURI,omitempty" yaml:"peerCertURI,omitempty" export:"true"`
-	EnableSpiffeMTLS        bool                       `description:"Use certificates provided by spiffe for mTLS." json:"enableSpireMtls,omitempty" toml:"enableSpireMtls,omitempty" yaml:"enableSpireMtls,omitempty" export:"true"`
+	EnableSpiffeMTLS        bool                       `description:"Use certificates provided by spiffe for mTLS." json:"enableSpiffeMtls,omitempty" toml:"enableSpiffeMtls,omitempty" yaml:"enableSpiffeMtls,omitempty" export:"true"`
 	ServerSpiffeIDs         []string                   `description:"Lists all allowed server spiffeIDs. Takes precedences over ServerSpiffeTrustDomain." json:"serverSpiffeIDs,omitempty" toml:"serverSpiffeIDs,omitempty" yaml:"serverSpiffeIDs,omitempty" export:"true"`
 	ServerSpiffeTrustDomain string                     `description:"Specifies an allowed Spiffe trust domain for the server." json:"serverSpiffeTrustDomain,omitempty" yaml:"serverSpiffeTrustDomain,omitempty" toml:"serverSpiffeTrustDomain,omitempty"`
 }
