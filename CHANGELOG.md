@@ -1,5 +1,5 @@
-## [v2.9.0](https://github.com/traefik/traefik/tree/v2.9.0) (2022-09-30)
-[All Commits](https://github.com/traefik/traefik/compare/v2.9.0-rc1...v2.9.0)
+## [v2.9.1](https://github.com/traefik/traefik/tree/v2.9.1) (2022-10-03)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.0-rc1...v2.9.1)
 
 **Enhancements:**
 - **[acme,tls]** ACME Default Certificate ([#9189](https://github.com/traefik/traefik/pull/9189) by [rtribotte](https://github.com/rtribotte))
@@ -26,6 +26,7 @@
 - **[acme]** Fix ACME panic ([#9365](https://github.com/traefik/traefik/pull/9365) by [ldez](https://github.com/ldez))
 
 **Documentation:**
+- Prepare release v2.9.0 ([#9409](https://github.com/traefik/traefik/pull/9409) by [tomMoulard](https://github.com/tomMoulard))
 - **[metrics]** Rework metrics overview page ([#9366](https://github.com/traefik/traefik/pull/9366) by [ddtmachado](https://github.com/ddtmachado))
 - Prepare release v2.9.0-rc5 ([#9402](https://github.com/traefik/traefik/pull/9402) by [ldez](https://github.com/ldez))
 - Prepare release v2.9.0-rc4 ([#9372](https://github.com/traefik/traefik/pull/9372) by [kevinpollet](https://github.com/kevinpollet))
@@ -45,6 +46,11 @@
 - Merge current v2.8 into master ([#9209](https://github.com/traefik/traefik/pull/9209) by [kevinpollet](https://github.com/kevinpollet))
 - Merge current v2.8 into master ([#9146](https://github.com/traefik/traefik/pull/9146) by [kevinpollet](https://github.com/kevinpollet))
 - Merge current v2.8 into master ([#9135](https://github.com/traefik/traefik/pull/9135) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v2.9.0](https://github.com/traefik/traefik/tree/v2.9.0) (2022-10-03)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.0-rc1...v2.9.0)
+
+Release canceled.
 
 ## [v2.9.0-rc5](https://github.com/traefik/traefik/tree/v2.9.0-rc5) (2022-09-30)
 [All Commits](https://github.com/traefik/traefik/compare/v2.9.0-rc4...v2.9.0-rc5)
