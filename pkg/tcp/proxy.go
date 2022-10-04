@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"syscall"
 	"time"
 
@@ -19,11 +20,11 @@ type Proxy struct {
 	tcpAddr          *net.TCPAddr
 	terminationDelay time.Duration
 	proxyProtocol    *dynamic.ProxyProtocol
-	tcpmanager       *TcpManager
+	transport        *http.RoundTripper
 }
 
 // NewProxy creates a new Proxy.
-func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dynamic.ProxyProtocol) (*Proxy, error) {
+func NewProxy(address string, terminationDelay time.Duration, roundtrip http.RoundTripper, proxyProtocol *dynamic.ProxyProtocol) (*Proxy, error) {
 	if proxyProtocol != nil && (proxyProtocol.Version < 1 || proxyProtocol.Version > 2) {
 		return nil, fmt.Errorf("unknown proxyProtocol version: %d", proxyProtocol.Version)
 	}
@@ -31,7 +32,6 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 	// because there is no need to resolve the name on every new connection,
 	// and building it should happen once.
 	var tcpAddr *net.TCPAddr
-
 	if host, _, err := net.SplitHostPort(address); err == nil && net.ParseIP(host) != nil {
 		tcpAddr, err = net.ResolveTCPAddr("tcp", address)
 		if err != nil {
@@ -39,13 +39,13 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 		}
 
 	}
-	tcpmanager := NewTcpManager()
+
 	return &Proxy{
 		address:          address,
 		tcpAddr:          tcpAddr,
 		terminationDelay: terminationDelay,
 		proxyProtocol:    proxyProtocol,
-		tcpmanager:       tcpmanager,
+		transport:        &roundtrip,
 	}, nil
 }
 
@@ -103,7 +103,6 @@ func (p Proxy) dialBackend() (*net.TCPConn, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return conn.(*net.TCPConn), nil
 }
 
