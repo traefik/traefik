@@ -24,6 +24,7 @@ const (
 	protoWebsocket = "websocket"
 	typeName       = "Metrics"
 	nameEntrypoint = "metrics-entrypoint"
+	nameRouter     = "metrics-router"
 	nameService    = "metrics-service"
 )
 
@@ -56,7 +57,7 @@ func NewEntryPointMiddleware(ctx context.Context, next http.Handler, registry me
 
 // NewRouterMiddleware creates a new metrics middleware for a Router.
 func NewRouterMiddleware(ctx context.Context, next http.Handler, registry metrics.Registry, routerName string, serviceName string) http.Handler {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, nameEntrypoint, typeName)).Debug("Creating middleware")
+	log.FromContext(middlewares.GetLoggerCtx(ctx, nameRouter, typeName)).Debug("Creating middleware")
 
 	return &metricsMiddleware{
 		next:                 next,
@@ -125,22 +126,29 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		m.reqsTLSCounter.With(tlsLabels...).Add(1)
 	}
 
-	start := time.Now()
-
-	m.next.ServeHTTP(rw, req)
-
 	ctx := req.Context()
-	capt, err := capture.FromContext(ctx)
+	c, err := capture.FromContext(req.Context())
 	if err != nil {
-		log.FromContext(middlewares.GetLoggerCtx(ctx, nameEntrypoint, typeName)).Errorf("Could not get Capture: %w", err)
+		for i := 0; i < len(m.baseLabels); i += 2 {
+			ctx = log.With(ctx, log.Str(m.baseLabels[i], m.baseLabels[i+1]))
+		}
+		log.FromContext(ctx).Errorf("Could not get Capture: %v", err)
 		return
 	}
 
-	labels = append(labels, "code", strconv.Itoa(capt.StatusCode()))
+	next := m.next
+	if c.NeedsReset(rw) {
+		next = c.Reset(m.next)
+	}
+
+	start := time.Now()
+	next.ServeHTTP(rw, req)
+
+	labels = append(labels, "code", strconv.Itoa(c.StatusCode()))
 	m.reqDurationHistogram.With(labels...).ObserveFromStart(start)
 	m.reqsCounter.With(labels...).Add(1)
-	m.respsBytesCounter.With(labels...).Add(float64(capt.ResponseSize()))
-	m.reqsBytesCounter.With(labels...).Add(float64(capt.RequestSize()))
+	m.respsBytesCounter.With(labels...).Add(float64(c.ResponseSize()))
+	m.reqsBytesCounter.With(labels...).Add(float64(c.RequestSize()))
 }
 
 func getRequestProtocol(req *http.Request) string {
