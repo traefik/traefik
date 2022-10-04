@@ -11,20 +11,24 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
+	"github.com/traefik/traefik/v2/pkg/server/service"
 	"github.com/traefik/traefik/v2/pkg/tcp"
 )
 
 // Manager is the TCPHandlers factory.
 type Manager struct {
-	configs map[string]*runtime.TCPServiceInfo
-	rand    *rand.Rand // For the initial shuffling of load-balancers.
+	configs      map[string]*runtime.TCPServiceInfo
+	rand         *rand.Rand // For the initial shuffling of load-balancers.
+	tcproundtrip service.RoundTripperGetter
 }
 
 // NewManager creates a new manager.
 func NewManager(conf *runtime.Configuration) *Manager {
+	tcp := tcp.NewTcpManager()
 	return &Manager{
-		configs: conf.TCPServices,
-		rand:    rand.New(rand.NewSource(time.Now().UnixNano())),
+		configs:      conf.TCPServices,
+		rand:         rand.New(rand.NewSource(time.Now().UnixNano())),
+		tcproundtrip: tcp,
 	}
 }
 
@@ -61,8 +65,11 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 				logger.Errorf("In service %q: %v", serviceQualifiedName, err)
 				continue
 			}
-
-			handler, err := tcp.NewProxy(server.Address, duration, conf.LoadBalancer.ProxyProtocol)
+			tcpserverstransport, err := m.tcproundtrip.Get(conf.TCPService.LoadBalancer.ServersTransport)
+			if err != nil {
+				return nil, err
+			}
+			handler, err := tcp.NewProxy(server.Address, duration, tcpserverstransport, conf.LoadBalancer.ProxyProtocol)
 			if err != nil {
 				logger.Errorf("In service %q server %q: %v", serviceQualifiedName, server.Address, err)
 				continue
