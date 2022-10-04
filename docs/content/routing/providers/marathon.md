@@ -294,14 +294,6 @@ For example, to change the passHostHeader behavior, you'd add the label `"traefi
     "traefik.http.services.myservice.loadbalancer.sticky.cookie.samesite": "none"
     ```
 
-??? info "`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`"
-    
-    See [response forwarding](../services/index.md#response-forwarding) for more information.
-
-    ```json
-    "traefik.http.services.myservice.loadbalancer.responseforwarding.flushinterval": "10"
-    ```
-
 ### Middleware
 
 You can declare pieces of middleware using labels starting with `traefik.http.middlewares.{middleware-name-of-your-choice}.`, followed by the middleware type/options.

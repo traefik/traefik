@@ -4,15 +4,6 @@
   checkNewVersion = true
   sendAnonymousUsage = true
 
-[serversTransport]
-  insecureSkipVerify = true
-  rootCAs = ["foobar", "foobar"]
-  maxIdleConnsPerHost = 42
-  [serversTransport.forwardingTimeouts]
-    dialTimeout = 42
-    responseHeaderTimeout = 42
-    idleConnTimeout = 42
-
 [entryPoints]
   [entryPoints.EntryPoint0]
     address = "foobar"
@@ -411,7 +402,6 @@
   [http.services]
     [http.services.Service0]
       [http.services.Service0.loadBalancer]
-        passHostHeader = true
         [http.services.Service0.loadBalancer.sticky.cookie]
           name = "foobar"
 
@@ -431,8 +421,38 @@
           [http.services.Service0.loadBalancer.healthCheck.headers]
             name0 = "foobar"
             name1 = "foobar"
-        [http.services.Service0.loadBalancer.responseForwarding]
-          flushInterval = "10s"
+
+  [http.serversTransports]
+    [http.serversTransports.ServersTransport0]
+      [http.serversTransports.ServersTransport0.http]
+        passHostHeader = true
+        maxIdleConnsPerHost = 42
+        enableHTTP2 = true
+
+      [http.serversTransports.ServersTransport0.http.forwardingTimeouts]
+        dialTimeout = "42s"
+        responseHeaderTimeout = "42s"
+        idleConnTimeout = "42s"
+        readIdleTimeout = "42s"
+        pingTimeout = "42s"
+
+      [http.serversTransports.ServersTransport0.tls]
+        serverName = "foobar"
+        insecureSkipVerify = true
+        rootCAs = ["foobar", "foobar"]
+        peerCertURI = "foobar"
+
+      [http.serversTransports.ServersTransport0.tls.spiffe]
+        ids = ["foobar", "foobar"]
+        trustDomain = "foobar"
+
+      [[http.serversTransports.ServersTransport0.tls.certificates]]
+        certFile = "foobar"
+        keyFile = "foobar"
+
+      [[http.serversTransports.ServersTransport0.tls.certificates]]
+        certFile = "foobar"
+        keyFile = "foobar"
 
 [tcp]
   [tcp.routers]

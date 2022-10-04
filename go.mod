@@ -8,6 +8,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/abbot/go-http-auth v0.0.0-00010101000000-000000000000
 	github.com/andybalholm/brotli v1.0.4
+	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
 	github.com/aws/aws-sdk-go v1.44.47
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/compose-spec/compose-go v1.0.3
@@ -37,7 +38,7 @@ require (
 	github.com/influxdata/influxdb-client-go/v2 v2.7.0
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
 	github.com/instana/go-sensor v1.38.3
-	github.com/klauspost/compress v1.14.2
+	github.com/klauspost/compress v1.15.9
 	github.com/kvtools/consul v1.0.2
 	github.com/kvtools/etcdv3 v1.0.2
 	github.com/kvtools/redis v1.0.2
@@ -71,6 +72,7 @@ require (
 	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/unrolled/render v1.0.2
 	github.com/unrolled/secure v1.0.9
+	github.com/valyala/fasthttp v1.41.0
 	github.com/vdemeester/shakers v0.1.0
 	github.com/vulcand/oxy/v2 v2.0.0-20221121151423-d5cb734e4467
 	github.com/vulcand/predicate v1.2.0
@@ -310,6 +312,7 @@ require (
 	github.com/tonistiigi/units v0.0.0-20180711220420-6950e57a87ea // indirect
 	github.com/transip/gotransip/v6 v6.17.0 // indirect
 	github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926 // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/vinyldns/go-vinyldns v0.9.16 // indirect
 	github.com/vultr/govultr/v2 v2.17.2 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect

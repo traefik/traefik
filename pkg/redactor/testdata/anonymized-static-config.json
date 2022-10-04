@@ -3,20 +3,6 @@
     "checkNewVersion": true,
     "sendAnonymousUsage": true
   },
-  "serversTransport": {
-    "insecureSkipVerify": true,
-    "rootCAs": [
-      "xxxx",
-      "xxxx",
-      "xxxx"
-    ],
-    "maxIdleConnsPerHost": 111,
-    "forwardingTimeouts": {
-      "dialTimeout": "1m51s",
-      "responseHeaderTimeout": "1m51s",
-      "idleConnTimeout": "1m51s"
-    }
-  },
   "entryPoints": {
     "foobar": {
       "address": "xxxx",
