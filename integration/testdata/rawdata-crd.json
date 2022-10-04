@@ -141,11 +141,7 @@
 					{
 						"url": "http://10.42.0.7:80"
 					}
-				],
-				"passHostHeader": true,
-				"responseForwarding": {
-					"flushInterval": "100ms"
-				}
+				]
 			},
 			"status": "enabled",
 			"usedBy": [
@@ -165,11 +161,7 @@
 					{
 						"url": "http://10.42.0.7:80"
 					}
-				],
-				"passHostHeader": true,
-				"responseForwarding": {
-					"flushInterval": "100ms"
-				}
+				]
 			},
 			"status": "enabled",
 			"usedBy": [
@@ -190,10 +182,6 @@
 						"url": "http://10.42.0.7:80"
 					}
 				],
-				"passHostHeader": true,
-				"responseForwarding": {
-					"flushInterval": "100ms"
-				},
 				"serversTransport": "default-mytransport@kubernetescrd"
 			},
 			"status": "enabled",
@@ -214,11 +202,7 @@
 					{
 						"url": "http://10.42.0.7:80"
 					}
-				],
-				"passHostHeader": true,
-				"responseForwarding": {
-					"flushInterval": "100ms"
-				}
+				]
 			},
 			"status": "enabled",
 			"serverStatus": {

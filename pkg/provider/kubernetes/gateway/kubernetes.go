@@ -1474,8 +1474,6 @@ func loadServices(client Client, namespace string, backendRefs []v1alpha2.HTTPBa
 		}
 
 		lb := &dynamic.ServersLoadBalancer{}
-		lb.SetDefaults()
-
 		svc := dynamic.Service{LoadBalancer: lb}
 
 		// TODO support cross namespace through ReferencePolicy
