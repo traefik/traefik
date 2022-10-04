@@ -87,6 +87,8 @@ func TestNewConfigurationWatcher(t *testing.T) {
 						th.WithServiceName("scv"))),
 				th.WithMiddlewares(),
 				th.WithLoadBalancerServices(),
+				th.WithServersTransports(
+					th.WithDefaultServersTransport()),
 			),
 			TCP: &dynamic.TCPConfiguration{
 				Routers:           map[string]*dynamic.TCPRouter{},
@@ -223,6 +225,7 @@ func TestIgnoreTransientConfiguration(t *testing.T) {
 			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("defaultEP"))),
 			th.WithLoadBalancerServices(th.WithService("bar@mock")),
 			th.WithMiddlewares(),
+			th.WithServersTransports(th.WithDefaultServersTransport()),
 		),
 		TCP: &dynamic.TCPConfiguration{
 			Routers:           map[string]*dynamic.TCPRouter{},
@@ -392,6 +395,7 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("defaultEP"))),
 			th.WithLoadBalancerServices(th.WithService("bar@mock")),
 			th.WithMiddlewares(),
+			th.WithServersTransports(th.WithDefaultServersTransport()),
 		),
 		TCP: &dynamic.TCPConfiguration{
 			Routers:           map[string]*dynamic.TCPRouter{},
@@ -482,6 +486,7 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("defaultEP"))),
 			th.WithLoadBalancerServices(th.WithService("bar@mock")),
 			th.WithMiddlewares(),
+			th.WithServersTransports(th.WithDefaultServersTransport()),
 		),
 		TCP: &dynamic.TCPConfiguration{
 			Routers:           map[string]*dynamic.TCPRouter{},
@@ -617,6 +622,7 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 			th.WithRouters(th.WithRouter("final@mock", th.WithEntryPoints("defaultEP"))),
 			th.WithLoadBalancerServices(th.WithService("final@mock")),
 			th.WithMiddlewares(),
+			th.WithServersTransports(th.WithDefaultServersTransport()),
 		),
 		TCP: &dynamic.TCPConfiguration{
 			Routers:           map[string]*dynamic.TCPRouter{},
@@ -685,6 +691,7 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 				th.WithService("bar@mock2"),
 			),
 			th.WithMiddlewares(),
+			th.WithServersTransports(th.WithDefaultServersTransport()),
 		),
 		TCP: &dynamic.TCPConfiguration{
 			Routers:           map[string]*dynamic.TCPRouter{},
