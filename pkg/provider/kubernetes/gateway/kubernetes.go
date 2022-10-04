@@ -1688,12 +1688,21 @@ func loadMiddlewares(prefix string, filters []v1alpha2.HTTPRouteFilter) (map[str
 
 		switch filter.Type {
 		case v1alpha2.HTTPRouteFilterRequestRedirect:
+			if _, ok := middlewares[middlewareName]; ok {
+				// According to spec, RequestRedirect filters cannot be combined
+				return nil, fmt.Errorf("multiple RequestRedirect filters specified")
+			}
+
 			middlewares[middlewareName] = &dynamic.Middleware{
 				RedirectScheme: &dynamic.RedirectScheme{
 					Scheme:    *filter.RequestRedirect.Scheme,
 					Permanent: *filter.RequestRedirect.StatusCode == http.StatusMovedPermanently,
 				},
 			}
+		default:
+			// According to spec, all implementations must add a warning condition
+			// when incompatible or unsupported filters are specified.
+			return nil, fmt.Errorf("unsupported filter %s", filter.Type)
 		}
 	}
 
