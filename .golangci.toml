@@ -244,4 +244,10 @@
  [[issues.exclude-rules]]
     path = "pkg/provider/acme/provider.go"
     text = "\\(\\*Provider\\)\\.resolveCertificate - result 0 \\(\\*github.com/go-acme/lego/v4/certificate.Resource\\) is never used"
+ [[issues.exclude-rules]]
+    path = "integration/healthcheck_test.go"
+    text = "Duplicate words \\(wsp2,\\) found"
+ [[issues.exclude-rules]]
+    path = "pkg/types/domain_test.go"
+    text = "Duplicate words \\(sub\\) found"
 
