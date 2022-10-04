@@ -1694,22 +1694,6 @@ func loadMiddlewares(prefix string, filters []v1alpha2.HTTPRouteFilter) (map[str
 					Permanent: *filter.RequestRedirect.StatusCode == http.StatusMovedPermanently,
 				},
 			}
-		case v1alpha2.HTTPRouteFilterRequestHeaderModifier:
-			headers := make(map[string]string)
-			for _, h := range filter.RequestHeaderModifier.Add {
-				headers[http.CanonicalHeaderKey(string(h.Name))] = h.Value
-			}
-			for _, h := range filter.RequestHeaderModifier.Set {
-				headers[http.CanonicalHeaderKey(string(h.Name))] = h.Value
-			}
-			for _, h := range filter.RequestHeaderModifier.Remove {
-				headers[http.CanonicalHeaderKey(h)] = ""
-			}
-			middlewares[middlewareName] = &dynamic.Middleware{
-				Headers: &dynamic.Headers{
-					CustomRequestHeaders: headers,
-				},
-			}
 		}
 	}
 
