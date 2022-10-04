@@ -267,16 +267,6 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     traefik.http.services.myservice.loadbalancer.sticky.cookie.samesite=none
     ```
 
-??? info "`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`"
-    
-    See [response forwarding](../services/index.md#response-forwarding) for more information.
-        
-    FlushInterval specifies the flush interval to flush to the client while copying the response body.
-    
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.responseforwarding.flushinterval=10
-    ```
-
 ### Middleware
 
 You can declare pieces of middleware using labels starting with `traefik.http.middlewares.{name-of-your-choice}.`, followed by the middleware type/options.

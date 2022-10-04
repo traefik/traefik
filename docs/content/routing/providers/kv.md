@@ -236,14 +236,6 @@ A Story of key & values
     |-----------------------------------------------------------------------|--------|
     | `traefik/http/services/myservice/loadbalancer/sticky/cookie/samesite` | `none` |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/responseforwarding/flushinterval`"
-
-    See [response forwarding](../services/index.md#response-forwarding) for more information.
-
-    | Key (Path)                                                                      | Value |
-    |---------------------------------------------------------------------------------|-------|
-    | `traefik/http/services/myservice/loadbalancer/responseforwarding/flushinterval` | `10`  |
-
 ??? info "`traefik/http/services/<service_name>/mirroring/service`"
 
     | Key (Path)                                               | Value    |

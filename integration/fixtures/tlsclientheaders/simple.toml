@@ -5,9 +5,6 @@
 [log]
   level = "DEBUG"
 
-[serversTransport]
-  rootCAs = [ """{{ .RootCertContent }}""" ]
-
 [entryPoints]
   [entryPoints.websecure]
     address = ":8443"
@@ -23,6 +20,9 @@
     filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
+
+[http.serversTransports.default.tls]
+  rootCAs = [ """{{ .RootCertContent }}""" ]
 
 [tls.options]
   [tls.options.default.clientAuth]

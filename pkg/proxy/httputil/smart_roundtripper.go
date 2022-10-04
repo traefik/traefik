@@ -1,4 +1,4 @@
-package service
+package httputil
 
 import (
 	"crypto/tls"
@@ -10,6 +10,13 @@ import (
 	"golang.org/x/net/http/httpguts"
 	"golang.org/x/net/http2"
 )
+
+// smartRoundTripper implements RoundTrip while making sure that HTTP/2 is not used
+// with protocols that start with a Connection Upgrade, such as SPDY or Websocket.
+type smartRoundTripper struct {
+	http2 *http.Transport
+	http  *http.Transport
+}
 
 func newSmartRoundTripper(transport *http.Transport, forwardingTimeouts *dynamic.ForwardingTimeouts) (http.RoundTripper, error) {
 	transportHTTP1 := transport.Clone()
@@ -44,13 +51,6 @@ func newSmartRoundTripper(transport *http.Transport, forwardingTimeouts *dynamic
 		http2: transport,
 		http:  transportHTTP1,
 	}, nil
-}
-
-// smartRoundTripper implements RoundTrip while making sure that HTTP/2 is not used
-// with protocols that start with a Connection Upgrade, such as SPDY or Websocket.
-type smartRoundTripper struct {
-	http2 *http.Transport
-	http  *http.Transport
 }
 
 func (m *smartRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
