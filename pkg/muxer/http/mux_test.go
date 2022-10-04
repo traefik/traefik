@@ -481,7 +481,7 @@ func Test_addRoute(t *testing.T) {
 			},
 		},
 		{
-			desc: "Rule with not on multiple route with and and another not",
+			desc: "Rule with not on multiple route with and another not",
 			rule: `!(Host("tchouk") && !Path("/titi"))`,
 			expected: map[string]int{
 				"http://tchouk/titi": http.StatusOK,
