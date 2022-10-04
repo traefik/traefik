@@ -156,8 +156,8 @@ func (s *HTTPServer) Start(t *testing.T, done func()) (*url.URL, time.Duration) 
 }
 
 type testLoadBalancer struct {
-	// RWMutex needed due to parallel test execution: Both the system-under-test
-	// and the test assertions reference the counters.
+	// 	RWMutex needed due to parallel test execution: Both the system-under-test
+	// 	and the test assertions reference the counters.
 	*sync.RWMutex
 	numRemovedServers  int
 	numUpsertedServers int

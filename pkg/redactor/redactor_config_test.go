@@ -90,10 +90,6 @@ func init() {
 							"foo": "bar",
 						},
 					},
-					PassHostHeader: boolPtr(true),
-					ResponseForwarding: &dynamic.ResponseForwarding{
-						FlushInterval: ptypes.Duration(111 * time.Second),
-					},
 					ServersTransport: "foo",
 					Servers: []dynamic.Server{
 						{
@@ -135,22 +131,26 @@ func init() {
 		},
 		ServersTransports: map[string]*dynamic.ServersTransport{
 			"foo": {
-				ServerName:         "foo",
-				InsecureSkipVerify: true,
-				RootCAs:            []traefiktls.FileOrContent{"rootca.pem"},
-				Certificates: []traefiktls.Certificate{
-					{
-						CertFile: "cert.pem",
-						KeyFile:  "key.pem",
+				TLS: &dynamic.TLSClientConfig{
+					ServerName:         "foo",
+					InsecureSkipVerify: true,
+					RootCAs:            []traefiktls.FileOrContent{"rootca.pem"},
+					Certificates: []traefiktls.Certificate{
+						{
+							CertFile: "cert.pem",
+							KeyFile:  "key.pem",
+						},
 					},
 				},
-				MaxIdleConnsPerHost: 42,
-				ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-					DialTimeout:           42,
-					ResponseHeaderTimeout: 42,
-					IdleConnTimeout:       42,
-					ReadIdleTimeout:       42,
-					PingTimeout:           42,
+				HTTP: &dynamic.HTTPClientConfig{
+					MaxIdleConnsPerHost: 42,
+					ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+						DialTimeout:           42,
+						ResponseHeaderTimeout: 42,
+						IdleConnTimeout:       42,
+						ReadIdleTimeout:       42,
+						PingTimeout:           42,
+					},
 				},
 			},
 		},
@@ -509,17 +509,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		SendAnonymousUsage: true,
 	}
 
-	config.ServersTransport = &static.ServersTransport{
-		InsecureSkipVerify:  true,
-		RootCAs:             []traefiktls.FileOrContent{"root.ca"},
-		MaxIdleConnsPerHost: 42,
-		ForwardingTimeouts: &static.ForwardingTimeouts{
-			DialTimeout:           42,
-			ResponseHeaderTimeout: 42,
-			IdleConnTimeout:       42,
-		},
-	}
-
 	config.EntryPoints = static.EntryPoints{
 		"foobar": {
 			Address: "foo Address",
@@ -565,17 +554,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 
 	config.Providers = &static.Providers{
 		ProvidersThrottleDuration: ptypes.Duration(111 * time.Second),
-	}
-
-	config.ServersTransport = &static.ServersTransport{
-		InsecureSkipVerify:  true,
-		RootCAs:             []traefiktls.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
-		MaxIdleConnsPerHost: 111,
-		ForwardingTimeouts: &static.ForwardingTimeouts{
-			DialTimeout:           ptypes.Duration(111 * time.Second),
-			ResponseHeaderTimeout: ptypes.Duration(111 * time.Second),
-			IdleConnTimeout:       ptypes.Duration(111 * time.Second),
-		},
 	}
 
 	config.Providers.File = &file.Provider{
