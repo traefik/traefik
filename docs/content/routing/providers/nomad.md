@@ -257,14 +257,6 @@ you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.pass
     traefik.http.services.myservice.loadbalancer.sticky.cookie.samesite=none
     ```
 
-??? info "`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`"
-
-    See [response forwarding](../services/index.md#response-forwarding) for more information.
-
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.responseforwarding.flushinterval=10
-    ```
-
 ### Middleware
 
 You can declare pieces of middleware using tags starting with `traefik.http.middlewares.{name-of-your-choice}.`, followed by the middleware type/options.

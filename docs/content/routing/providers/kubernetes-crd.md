@@ -337,8 +337,6 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
           namespace: default
           passHostHeader: true
           port: 80                      # [9]
-          responseForwarding:
-            flushInterval: 1ms
           scheme: https
           serversTransport: transport   # [10]
           sticky:
@@ -409,8 +407,6 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
           namespace: default
           passHostHeader: true
           port: 80
-          responseForwarding:
-            flushInterval: 1ms
           scheme: https
           sticky:
             cookie:

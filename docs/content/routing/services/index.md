@@ -497,38 +497,6 @@ By default, `passHostHeader` is true.
     If no serversTransport is specified, the `default@internal` will be used.
     The `default@internal` serversTransport is created from the [static configuration](../overview.md#transport-configuration).
 
-#### Response Forwarding
-
-This section is about configuring how Traefik forwards the response from the backend server to the client.
-
-Below are the available options for the Response Forwarding mechanism:
-
-- `FlushInterval` specifies the interval in between flushes to the client while copying the response body.
-  It is a duration in milliseconds, defaulting to 100.
-  A negative value means to flush immediately after each write to the client.
-  The FlushInterval is ignored when ReverseProxy recognizes a response as a streaming response;
-  for such responses, writes are flushed to the client immediately.
-
-??? example "Using a custom FlushInterval -- Using the [File Provider](../../providers/file.md)"
-
-    ```yaml tab="YAML"
-    ## Dynamic configuration
-    http:
-      services:
-        Service-1:
-          loadBalancer:
-            responseForwarding:
-              flushInterval: 1s
-    ```
-
-    ```toml tab="TOML"
-    ## Dynamic configuration
-    [http.services]
-      [http.services.Service-1]
-        [http.services.Service-1.loadBalancer.responseForwarding]
-          flushInterval = "1s"
-    ```
-
 ### ServersTransport
 
 ServersTransport allows to configure the transport between Traefik and your servers.
