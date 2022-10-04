@@ -24,7 +24,7 @@ type middlewareBuilder interface {
 
 type serviceManager interface {
 	BuildHTTP(rootCtx context.Context, serviceName string) (http.Handler, error)
-	LaunchHealthCheck()
+	LaunchHealthCheck(ctx context.Context)
 }
 
 // Manager A route/router manager.

@@ -11,127 +11,324 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/testhelpers"
-	"github.com/vulcand/oxy/roundrobin"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
-const (
-	healthCheckInterval = 200 * time.Millisecond
-	healthCheckTimeout  = 100 * time.Millisecond
-)
-
-func TestSetBackendsConfiguration(t *testing.T) {
+func TestServiceHealthChecker_newRequest(t *testing.T) {
 	testCases := []struct {
-		desc                       string
-		startHealthy               bool
-		mode                       string
-		server                     StartTestServer
-		expectedNumRemovedServers  int
-		expectedNumUpsertedServers int
-		expectedGaugeValue         float64
+		desc        string
+		targetURL   string
+		config      dynamic.ServerHealthCheck
+		expTarget   string
+		expError    bool
+		expHostname string
+		expHeader   string
+		expMethod   string
 	}{
 		{
-			desc:                       "healthy server staying healthy",
-			startHealthy:               true,
-			server:                     newHTTPServer(http.StatusOK),
-			expectedNumRemovedServers:  0,
-			expectedNumUpsertedServers: 0,
-			expectedGaugeValue:         1,
+			desc:      "no port override",
+			targetURL: "http://backend1:80",
+			config: dynamic.ServerHealthCheck{
+				Path: "/test",
+				Port: 0,
+			},
+			expError:    false,
+			expTarget:   "http://backend1:80/test",
+			expHostname: "backend1:80",
+			expMethod:   http.MethodGet,
 		},
 		{
-			desc:                       "healthy server staying healthy (StatusNoContent)",
-			startHealthy:               true,
-			server:                     newHTTPServer(http.StatusNoContent),
-			expectedNumRemovedServers:  0,
-			expectedNumUpsertedServers: 0,
-			expectedGaugeValue:         1,
+			desc:      "port override",
+			targetURL: "http://backend2:80",
+			config: dynamic.ServerHealthCheck{
+				Path: "/test",
+				Port: 8080,
+			},
+			expError:    false,
+			expTarget:   "http://backend2:8080/test",
+			expHostname: "backend2:8080",
+			expMethod:   http.MethodGet,
 		},
 		{
-			desc:                       "healthy server staying healthy (StatusPermanentRedirect)",
-			startHealthy:               true,
-			server:                     newHTTPServer(http.StatusPermanentRedirect),
-			expectedNumRemovedServers:  0,
-			expectedNumUpsertedServers: 0,
-			expectedGaugeValue:         1,
+			desc:      "no port override with no port in server URL",
+			targetURL: "http://backend1",
+			config: dynamic.ServerHealthCheck{
+				Path: "/health",
+				Port: 0,
+			},
+			expError:    false,
+			expTarget:   "http://backend1/health",
+			expHostname: "backend1",
+			expMethod:   http.MethodGet,
 		},
 		{
-			desc:                       "healthy server becoming sick",
-			startHealthy:               true,
-			server:                     newHTTPServer(http.StatusServiceUnavailable),
-			expectedNumRemovedServers:  1,
-			expectedNumUpsertedServers: 0,
-			expectedGaugeValue:         0,
+			desc:      "port override with no port in server URL",
+			targetURL: "http://backend2",
+			config: dynamic.ServerHealthCheck{
+				Path: "/health",
+				Port: 8080,
+			},
+			expError:    false,
+			expTarget:   "http://backend2:8080/health",
+			expHostname: "backend2:8080",
+			expMethod:   http.MethodGet,
 		},
 		{
-			desc:                       "sick server becoming healthy",
-			startHealthy:               false,
-			server:                     newHTTPServer(http.StatusOK),
-			expectedNumRemovedServers:  0,
-			expectedNumUpsertedServers: 1,
-			expectedGaugeValue:         1,
+			desc:      "scheme override",
+			targetURL: "https://backend1:80",
+			config: dynamic.ServerHealthCheck{
+				Scheme: "http",
+				Path:   "/test",
+				Port:   0,
+			},
+			expError:    false,
+			expTarget:   "http://backend1:80/test",
+			expHostname: "backend1:80",
+			expMethod:   http.MethodGet,
 		},
 		{
-			desc:                       "sick server staying sick",
-			startHealthy:               false,
-			server:                     newHTTPServer(http.StatusServiceUnavailable),
-			expectedNumRemovedServers:  0,
-			expectedNumUpsertedServers: 0,
-			expectedGaugeValue:         0,
+			desc:      "path with param",
+			targetURL: "http://backend1:80",
+			config: dynamic.ServerHealthCheck{
+				Path: "/health?powpow=do",
+				Port: 0,
+			},
+			expError:    false,
+			expTarget:   "http://backend1:80/health?powpow=do",
+			expHostname: "backend1:80",
+			expMethod:   http.MethodGet,
 		},
 		{
-			desc:                       "healthy server toggling to sick and back to healthy",
-			startHealthy:               true,
-			server:                     newHTTPServer(http.StatusServiceUnavailable, http.StatusOK),
-			expectedNumRemovedServers:  1,
-			expectedNumUpsertedServers: 1,
-			expectedGaugeValue:         1,
+			desc:      "path with params",
+			targetURL: "http://backend1:80",
+			config: dynamic.ServerHealthCheck{
+				Path: "/health?powpow=do&do=powpow",
+				Port: 0,
+			},
+			expError:    false,
+			expTarget:   "http://backend1:80/health?powpow=do&do=powpow",
+			expHostname: "backend1:80",
+			expMethod:   http.MethodGet,
 		},
 		{
-			desc:                       "healthy grpc server staying healthy",
-			mode:                       "grpc",
-			startHealthy:               true,
-			server:                     newGRPCServer(healthpb.HealthCheckResponse_SERVING),
-			expectedNumRemovedServers:  0,
-			expectedNumUpsertedServers: 0,
-			expectedGaugeValue:         1,
+			desc:      "path with invalid path",
+			targetURL: "http://backend1:80",
+			config: dynamic.ServerHealthCheck{
+				Path: ":",
+				Port: 0,
+			},
+			expError:    true,
+			expTarget:   "",
+			expHostname: "backend1:80",
+			expMethod:   http.MethodGet,
 		},
 		{
-			desc:                       "healthy grpc server becoming sick",
-			mode:                       "grpc",
-			startHealthy:               true,
-			server:                     newGRPCServer(healthpb.HealthCheckResponse_NOT_SERVING),
-			expectedNumRemovedServers:  1,
-			expectedNumUpsertedServers: 0,
-			expectedGaugeValue:         0,
+			desc:      "override hostname",
+			targetURL: "http://backend1:80",
+			config: dynamic.ServerHealthCheck{
+				Hostname: "myhost",
+				Path:     "/",
+			},
+			expTarget:   "http://backend1:80/",
+			expHostname: "myhost",
+			expHeader:   "",
+			expMethod:   http.MethodGet,
 		},
 		{
-			desc:                       "sick grpc server becoming healthy",
-			mode:                       "grpc",
-			startHealthy:               false,
-			server:                     newGRPCServer(healthpb.HealthCheckResponse_SERVING),
-			expectedNumRemovedServers:  0,
-			expectedNumUpsertedServers: 1,
-			expectedGaugeValue:         1,
+			desc:      "not override hostname",
+			targetURL: "http://backend1:80",
+			config: dynamic.ServerHealthCheck{
+				Hostname: "",
+				Path:     "/",
+			},
+			expTarget:   "http://backend1:80/",
+			expHostname: "backend1:80",
+			expHeader:   "",
+			expMethod:   http.MethodGet,
 		},
 		{
-			desc:                       "sick grpc server staying sick",
-			mode:                       "grpc",
-			startHealthy:               false,
-			server:                     newGRPCServer(healthpb.HealthCheckResponse_NOT_SERVING),
-			expectedNumRemovedServers:  0,
-			expectedNumUpsertedServers: 0,
-			expectedGaugeValue:         0,
+			desc:      "custom header",
+			targetURL: "http://backend1:80",
+			config: dynamic.ServerHealthCheck{
+				Headers:  map[string]string{"Custom-Header": "foo"},
+				Hostname: "",
+				Path:     "/",
+			},
+			expTarget:   "http://backend1:80/",
+			expHostname: "backend1:80",
+			expHeader:   "foo",
+			expMethod:   http.MethodGet,
 		},
 		{
-			desc:                       "healthy grpc server toggling to sick and back to healthy",
-			mode:                       "grpc",
-			startHealthy:               true,
-			server:                     newGRPCServer(healthpb.HealthCheckResponse_NOT_SERVING, healthpb.HealthCheckResponse_SERVING),
-			expectedNumRemovedServers:  1,
-			expectedNumUpsertedServers: 1,
-			expectedGaugeValue:         1,
+			desc:      "custom header with hostname override",
+			targetURL: "http://backend1:80",
+			config: dynamic.ServerHealthCheck{
+				Headers:  map[string]string{"Custom-Header": "foo"},
+				Hostname: "myhost",
+				Path:     "/",
+			},
+			expTarget:   "http://backend1:80/",
+			expHostname: "myhost",
+			expHeader:   "foo",
+			expMethod:   http.MethodGet,
+		},
+		{
+			desc:      "custom method",
+			targetURL: "http://backend1:80",
+			config: dynamic.ServerHealthCheck{
+				Path:   "/",
+				Method: http.MethodHead,
+			},
+			expTarget:   "http://backend1:80/",
+			expHostname: "backend1:80",
+			expMethod:   http.MethodHead,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			shc := ServiceHealthChecker{config: &test.config}
+
+			u := testhelpers.MustParseURL(test.targetURL)
+			req, err := shc.newRequest(context.Background(), u)
+
+			if test.expError {
+				require.Error(t, err)
+				assert.Nil(t, req)
+			} else {
+				require.NoError(t, err, "failed to create new request")
+				require.NotNil(t, req)
+
+				assert.Equal(t, test.expTarget, req.URL.String())
+				assert.Equal(t, test.expHeader, req.Header.Get("Custom-Header"))
+				assert.Equal(t, test.expHostname, req.Host)
+				assert.Equal(t, test.expMethod, req.Method)
+			}
+		})
+	}
+}
+
+func TestServiceHealthChecker_checkHealthHTTP_NotFollowingRedirects(t *testing.T) {
+	redirectServerCalled := false
+	redirectTestServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		redirectServerCalled = true
+	}))
+	defer redirectTestServer.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(dynamic.DefaultHealthCheckTimeout))
+	defer cancel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Add("location", redirectTestServer.URL)
+		rw.WriteHeader(http.StatusSeeOther)
+	}))
+	defer server.Close()
+
+	config := &dynamic.ServerHealthCheck{
+		Path:            "/path",
+		FollowRedirects: Bool(false),
+		Interval:        dynamic.DefaultHealthCheckInterval,
+		Timeout:         dynamic.DefaultHealthCheckTimeout,
+	}
+	healthChecker := NewServiceHealthChecker(ctx, nil, config, nil, nil, http.DefaultTransport, nil)
+
+	err := healthChecker.checkHealthHTTP(ctx, testhelpers.MustParseURL(server.URL))
+	require.NoError(t, err)
+
+	assert.False(t, redirectServerCalled, "HTTP redirect must not be followed")
+}
+
+func TestServiceHealthChecker_Launch(t *testing.T) {
+	testCases := []struct {
+		desc                  string
+		mode                  string
+		server                StartTestServer
+		expNumRemovedServers  int
+		expNumUpsertedServers int
+		expGaugeValue         float64
+		targetStatus          string
+	}{
+		{
+			desc:                  "healthy server staying healthy",
+			server:                newHTTPServer(http.StatusOK),
+			expNumRemovedServers:  0,
+			expNumUpsertedServers: 1,
+			expGaugeValue:         1,
+			targetStatus:          runtime.StatusUp,
+		},
+		{
+			desc:                  "healthy server staying healthy (StatusNoContent)",
+			server:                newHTTPServer(http.StatusNoContent),
+			expNumRemovedServers:  0,
+			expNumUpsertedServers: 1,
+			expGaugeValue:         1,
+			targetStatus:          runtime.StatusUp,
+		},
+		{
+			desc:                  "healthy server staying healthy (StatusPermanentRedirect)",
+			server:                newHTTPServer(http.StatusPermanentRedirect),
+			expNumRemovedServers:  0,
+			expNumUpsertedServers: 1,
+			expGaugeValue:         1,
+			targetStatus:          runtime.StatusUp,
+		},
+		{
+			desc:                  "healthy server becoming sick",
+			server:                newHTTPServer(http.StatusServiceUnavailable),
+			expNumRemovedServers:  1,
+			expNumUpsertedServers: 0,
+			expGaugeValue:         0,
+			targetStatus:          runtime.StatusDown,
+		},
+		{
+			desc:                  "healthy server toggling to sick and back to healthy",
+			server:                newHTTPServer(http.StatusServiceUnavailable, http.StatusOK),
+			expNumRemovedServers:  1,
+			expNumUpsertedServers: 1,
+			expGaugeValue:         1,
+			targetStatus:          runtime.StatusUp,
+		},
+		{
+			desc:                  "healthy server toggling to healthy and go to sick",
+			server:                newHTTPServer(http.StatusOK, http.StatusServiceUnavailable),
+			expNumRemovedServers:  1,
+			expNumUpsertedServers: 1,
+			expGaugeValue:         0,
+			targetStatus:          runtime.StatusDown,
+		},
+		{
+			desc:                  "healthy grpc server staying healthy",
+			mode:                  "grpc",
+			server:                newGRPCServer(healthpb.HealthCheckResponse_SERVING),
+			expNumRemovedServers:  0,
+			expNumUpsertedServers: 1,
+			expGaugeValue:         1,
+			targetStatus:          runtime.StatusUp,
+		},
+		{
+			desc:                  "healthy grpc server becoming sick",
+			mode:                  "grpc",
+			server:                newGRPCServer(healthpb.HealthCheckResponse_NOT_SERVING),
+			expNumRemovedServers:  1,
+			expNumUpsertedServers: 0,
+			expGaugeValue:         0,
+			targetStatus:          runtime.StatusDown,
+		},
+		{
+			desc:                  "healthy grpc server toggling to sick and back to healthy",
+			mode:                  "grpc",
+			server:                newGRPCServer(healthpb.HealthCheckResponse_NOT_SERVING, healthpb.HealthCheckResponse_SERVING),
+			expNumRemovedServers:  1,
+			expNumUpsertedServers: 1,
+			expGaugeValue:         1,
+			targetStatus:          runtime.StatusUp,
 		},
 	}
 
@@ -145,37 +342,26 @@ func TestSetBackendsConfiguration(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
 
-			serverURL, timeout := test.server.Start(t, cancel)
+			targetURL, timeout := test.server.Start(t, cancel)
 
 			lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
 
-			options := Options{
+			config := &dynamic.ServerHealthCheck{
 				Mode:     test.mode,
 				Path:     "/path",
-				Interval: healthCheckInterval,
-				Timeout:  healthCheckTimeout,
-				LB:       lb,
-			}
-			backend := NewBackendConfig(options, "backendName")
-
-			if test.startHealthy {
-				lb.servers = append(lb.servers, serverURL)
-			} else {
-				backend.disabledURLs = append(backend.disabledURLs, backendURL{url: serverURL, weight: 1})
+				Interval: ptypes.Duration(500 * time.Millisecond),
+				Timeout:  ptypes.Duration(499 * time.Millisecond),
 			}
 
-			collectingMetrics := &testhelpers.CollectingGauge{}
-
-			check := HealthCheck{
-				Backends: make(map[string]*BackendConfig),
-				metrics:  metricsHealthcheck{serverUpGauge: collectingMetrics},
-			}
+			gauge := &testhelpers.CollectingGauge{}
+			serviceInfo := &runtime.ServiceInfo{}
+			hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, map[string]*url.URL{"test": targetURL})
 
 			wg := sync.WaitGroup{}
 			wg.Add(1)
 
 			go func() {
-				check.execute(ctx, backend)
+				hc.Launch(ctx)
 				wg.Done()
 			}()
 
@@ -189,392 +375,14 @@ func TestSetBackendsConfiguration(t *testing.T) {
 			lb.Lock()
 			defer lb.Unlock()
 
-			assert.Equal(t, test.expectedNumRemovedServers, lb.numRemovedServers, "removed servers")
-			assert.Equal(t, test.expectedNumUpsertedServers, lb.numUpsertedServers, "upserted servers")
-			assert.Equal(t, test.expectedGaugeValue, collectingMetrics.GaugeValue, "ServerUp Gauge")
+			assert.Equal(t, test.expNumRemovedServers, lb.numRemovedServers, "removed servers")
+			assert.Equal(t, test.expNumUpsertedServers, lb.numUpsertedServers, "upserted servers")
+			assert.Equal(t, test.expGaugeValue, gauge.GaugeValue, "ServerUp Gauge")
+			assert.Equal(t, serviceInfo.GetAllStatus(), map[string]string{targetURL.String(): test.targetStatus})
 		})
 	}
 }
 
-func TestNewRequest(t *testing.T) {
-	type expected struct {
-		err   bool
-		value string
-	}
-
-	testCases := []struct {
-		desc      string
-		serverURL string
-		options   Options
-		expected  expected
-	}{
-		{
-			desc:      "no port override",
-			serverURL: "http://backend1:80",
-			options: Options{
-				Path: "/test",
-				Port: 0,
-			},
-			expected: expected{
-				err:   false,
-				value: "http://backend1:80/test",
-			},
-		},
-		{
-			desc:      "port override",
-			serverURL: "http://backend2:80",
-			options: Options{
-				Path: "/test",
-				Port: 8080,
-			},
-			expected: expected{
-				err:   false,
-				value: "http://backend2:8080/test",
-			},
-		},
-		{
-			desc:      "no port override with no port in server URL",
-			serverURL: "http://backend1",
-			options: Options{
-				Path: "/health",
-				Port: 0,
-			},
-			expected: expected{
-				err:   false,
-				value: "http://backend1/health",
-			},
-		},
-		{
-			desc:      "port override with no port in server URL",
-			serverURL: "http://backend2",
-			options: Options{
-				Path: "/health",
-				Port: 8080,
-			},
-			expected: expected{
-				err:   false,
-				value: "http://backend2:8080/health",
-			},
-		},
-		{
-			desc:      "scheme override",
-			serverURL: "https://backend1:80",
-			options: Options{
-				Scheme: "http",
-				Path:   "/test",
-				Port:   0,
-			},
-			expected: expected{
-				err:   false,
-				value: "http://backend1:80/test",
-			},
-		},
-		{
-			desc:      "path with param",
-			serverURL: "http://backend1:80",
-			options: Options{
-				Path: "/health?powpow=do",
-				Port: 0,
-			},
-			expected: expected{
-				err:   false,
-				value: "http://backend1:80/health?powpow=do",
-			},
-		},
-		{
-			desc:      "path with params",
-			serverURL: "http://backend1:80",
-			options: Options{
-				Path: "/health?powpow=do&do=powpow",
-				Port: 0,
-			},
-			expected: expected{
-				err:   false,
-				value: "http://backend1:80/health?powpow=do&do=powpow",
-			},
-		},
-		{
-			desc:      "path with invalid path",
-			serverURL: "http://backend1:80",
-			options: Options{
-				Path: ":",
-				Port: 0,
-			},
-			expected: expected{
-				err:   true,
-				value: "",
-			},
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			backend := NewBackendConfig(test.options, "backendName")
-
-			u := testhelpers.MustParseURL(test.serverURL)
-
-			req, err := backend.newRequest(u)
-
-			if test.expected.err {
-				require.Error(t, err)
-				assert.Nil(t, nil)
-			} else {
-				require.NoError(t, err, "failed to create new backend request")
-				require.NotNil(t, req)
-				assert.Equal(t, test.expected.value, req.URL.String())
-			}
-		})
-	}
-}
-
-func TestRequestOptions(t *testing.T) {
-	testCases := []struct {
-		desc             string
-		serverURL        string
-		options          Options
-		expectedHostname string
-		expectedHeader   string
-		expectedMethod   string
-	}{
-		{
-			desc:      "override hostname",
-			serverURL: "http://backend1:80",
-			options: Options{
-				Hostname: "myhost",
-				Path:     "/",
-			},
-			expectedHostname: "myhost",
-			expectedHeader:   "",
-			expectedMethod:   http.MethodGet,
-		},
-		{
-			desc:      "not override hostname",
-			serverURL: "http://backend1:80",
-			options: Options{
-				Hostname: "",
-				Path:     "/",
-			},
-			expectedHostname: "backend1:80",
-			expectedHeader:   "",
-			expectedMethod:   http.MethodGet,
-		},
-		{
-			desc:      "custom header",
-			serverURL: "http://backend1:80",
-			options: Options{
-				Headers:  map[string]string{"Custom-Header": "foo"},
-				Hostname: "",
-				Path:     "/",
-			},
-			expectedHostname: "backend1:80",
-			expectedHeader:   "foo",
-			expectedMethod:   http.MethodGet,
-		},
-		{
-			desc:      "custom header with hostname override",
-			serverURL: "http://backend1:80",
-			options: Options{
-				Headers:  map[string]string{"Custom-Header": "foo"},
-				Hostname: "myhost",
-				Path:     "/",
-			},
-			expectedHostname: "myhost",
-			expectedHeader:   "foo",
-			expectedMethod:   http.MethodGet,
-		},
-		{
-			desc:      "custom method",
-			serverURL: "http://backend1:80",
-			options: Options{
-				Path:   "/",
-				Method: http.MethodHead,
-			},
-			expectedHostname: "backend1:80",
-			expectedMethod:   http.MethodHead,
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			backend := NewBackendConfig(test.options, "backendName")
-
-			u, err := url.Parse(test.serverURL)
-			require.NoError(t, err)
-
-			req, err := backend.newRequest(u)
-			require.NoError(t, err, "failed to create new backend request")
-
-			req = backend.setRequestOptions(req)
-
-			assert.Equal(t, "http://backend1:80/", req.URL.String())
-			assert.Equal(t, test.expectedHostname, req.Host)
-			assert.Equal(t, test.expectedHeader, req.Header.Get("Custom-Header"))
-			assert.Equal(t, test.expectedMethod, req.Method)
-		})
-	}
-}
-
-func TestBalancers_Servers(t *testing.T) {
-	server1, err := url.Parse("http://foo.com")
-	require.NoError(t, err)
-
-	balancer1, err := roundrobin.New(nil)
-	require.NoError(t, err)
-
-	err = balancer1.UpsertServer(server1)
-	require.NoError(t, err)
-
-	server2, err := url.Parse("http://foo.com")
-	require.NoError(t, err)
-
-	balancer2, err := roundrobin.New(nil)
-	require.NoError(t, err)
-
-	err = balancer2.UpsertServer(server2)
-	require.NoError(t, err)
-
-	balancers := Balancers([]Balancer{balancer1, balancer2})
-
-	want, err := url.Parse("http://foo.com")
-	require.NoError(t, err)
-
-	assert.Equal(t, 1, len(balancers.Servers()))
-	assert.Equal(t, want, balancers.Servers()[0])
-}
-
-func TestBalancers_UpsertServer(t *testing.T) {
-	balancer1, err := roundrobin.New(nil)
-	require.NoError(t, err)
-
-	balancer2, err := roundrobin.New(nil)
-	require.NoError(t, err)
-
-	want, err := url.Parse("http://foo.com")
-	require.NoError(t, err)
-
-	balancers := Balancers([]Balancer{balancer1, balancer2})
-
-	err = balancers.UpsertServer(want)
-	require.NoError(t, err)
-
-	assert.Equal(t, 1, len(balancer1.Servers()))
-	assert.Equal(t, want, balancer1.Servers()[0])
-
-	assert.Equal(t, 1, len(balancer2.Servers()))
-	assert.Equal(t, want, balancer2.Servers()[0])
-}
-
-func TestBalancers_RemoveServer(t *testing.T) {
-	server, err := url.Parse("http://foo.com")
-	require.NoError(t, err)
-
-	balancer1, err := roundrobin.New(nil)
-	require.NoError(t, err)
-
-	err = balancer1.UpsertServer(server)
-	require.NoError(t, err)
-
-	balancer2, err := roundrobin.New(nil)
-	require.NoError(t, err)
-
-	err = balancer2.UpsertServer(server)
-	require.NoError(t, err)
-
-	balancers := Balancers([]Balancer{balancer1, balancer2})
-
-	err = balancers.RemoveServer(server)
-	require.NoError(t, err)
-
-	assert.Equal(t, 0, len(balancer1.Servers()))
-	assert.Equal(t, 0, len(balancer2.Servers()))
-}
-
-func TestLBStatusUpdater(t *testing.T) {
-	lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
-	svInfo := &runtime.ServiceInfo{}
-	lbsu := NewLBStatusUpdater(lb, svInfo, nil)
-	newServer, err := url.Parse("http://foo.com")
-	assert.NoError(t, err)
-	err = lbsu.UpsertServer(newServer, roundrobin.Weight(1))
-	assert.NoError(t, err)
-	assert.Equal(t, len(lbsu.Servers()), 1)
-	assert.Equal(t, len(lbsu.BalancerHandler.(*testLoadBalancer).Options()), 1)
-	statuses := svInfo.GetAllStatus()
-	assert.Equal(t, len(statuses), 1)
-	for k, v := range statuses {
-		assert.Equal(t, k, newServer.String())
-		assert.Equal(t, v, serverUp)
-		break
-	}
-	err = lbsu.RemoveServer(newServer)
-	assert.NoError(t, err)
-	assert.Equal(t, len(lbsu.Servers()), 0)
-	statuses = svInfo.GetAllStatus()
-	assert.Equal(t, len(statuses), 1)
-	for k, v := range statuses {
-		assert.Equal(t, k, newServer.String())
-		assert.Equal(t, v, serverDown)
-		break
-	}
-}
-
-func TestNotFollowingRedirects(t *testing.T) {
-	redirectServerCalled := false
-	redirectTestServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		redirectServerCalled = true
-	}))
-	defer redirectTestServer.Close()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.Header().Add("location", redirectTestServer.URL)
-		rw.WriteHeader(http.StatusSeeOther)
-		cancel()
-	}))
-	defer server.Close()
-
-	lb := &testLoadBalancer{
-		RWMutex: &sync.RWMutex{},
-		servers: []*url.URL{testhelpers.MustParseURL(server.URL)},
-	}
-
-	backend := NewBackendConfig(Options{
-		Path:            "/path",
-		Interval:        healthCheckInterval,
-		Timeout:         healthCheckTimeout,
-		LB:              lb,
-		FollowRedirects: false,
-	}, "backendName")
-
-	collectingMetrics := &testhelpers.CollectingGauge{}
-	check := HealthCheck{
-		Backends: make(map[string]*BackendConfig),
-		metrics:  metricsHealthcheck{serverUpGauge: collectingMetrics},
-	}
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-
-	go func() {
-		check.execute(ctx, backend)
-		wg.Done()
-	}()
-
-	timeout := time.Duration(int(healthCheckInterval) + 500)
-	select {
-	case <-time.After(timeout):
-		t.Fatal("test did not complete in time")
-	case <-ctx.Done():
-		wg.Wait()
-	}
-
-	assert.False(t, redirectServerCalled, "HTTP redirect must not be followed")
+func Bool(b bool) *bool {
+	return &b
 }

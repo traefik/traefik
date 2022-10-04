@@ -3575,7 +3575,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader:     Bool(false),
-								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: "10s"},
+								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: ptypes.Duration(10 * time.Second)},
 							},
 						},
 					},
