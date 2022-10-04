@@ -227,6 +227,13 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		core[ClientHost] = forwardedFor
 	}
 
+	ctx := req.Context()
+	capt, err := capture.FromContext(ctx)
+	if err != nil {
+		log.FromContext(log.With(ctx, log.Str(log.MiddlewareType, "AccessLogs"))).Errorf("Could not get Capture: %v", err)
+		return
+	}
+
 	next.ServeHTTP(rw, reqWithDataTable)
 
 	if _, ok := core[ClientUsername]; !ok {
@@ -235,13 +242,6 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 
 	logDataTable.DownstreamResponse = downstreamResponse{
 		headers: rw.Header().Clone(),
-	}
-
-	ctx := req.Context()
-	capt, err := capture.FromContext(ctx)
-	if err != nil {
-		log.FromContext(log.With(ctx, log.Str(log.MiddlewareType, "AccessLogs"))).Errorf("Could not get Capture: %v", err)
-		return
 	}
 
 	logDataTable.DownstreamResponse.status = capt.StatusCode()
