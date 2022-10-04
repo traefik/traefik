@@ -22,7 +22,7 @@ import (
 // NewTcpManager creates a new RoundTripperManager.
 func NewTcpManager() *TcpManager {
 	return &TcpManager{
-		transport: make(map[string]http.RoundTripper),
+		Transport: make(map[string]http.RoundTripper),
 		configs:   make(map[string]*dynamic.ServersTransport),
 	}
 }
@@ -31,7 +31,7 @@ func NewTcpManager() *TcpManager {
 type TcpManager struct {
 	rtLock    sync.RWMutex
 	configs   map[string]*dynamic.ServersTransport
-	transport map[string]http.RoundTripper
+	Transport map[string]http.RoundTripper
 }
 
 // Update updates the roundtrippers configurations.
@@ -42,7 +42,7 @@ func (r *TcpManager) Update(newConfigs map[string]*dynamic.ServersTransport) {
 		newConfig, ok := newConfigs[configName]
 		if !ok {
 			delete(r.configs, configName)
-			delete(r.transport, configName)
+			delete(r.Transport, configName)
 
 			continue
 		}
@@ -51,10 +51,10 @@ func (r *TcpManager) Update(newConfigs map[string]*dynamic.ServersTransport) {
 			continue
 		}
 		var err error
-		r.transport[configName], err = createTcptransport(newConfig)
+		r.Transport[configName], err = createTcptransport(newConfig)
 		if err != nil {
 			log.WithoutContext().Errorf("Could not configure HTTP Transport %s, fallback on default transport: %v", configName, err)
-			r.transport[configName] = http.DefaultTransport
+			r.Transport[configName] = http.DefaultTransport
 		}
 
 	}
@@ -71,10 +71,10 @@ func (r *TcpManager) Update(newConfigs map[string]*dynamic.ServersTransport) {
 		}
 
 		var err error
-		r.transport[newConfigName], err = createTcptransport(newConfig)
+		r.Transport[newConfigName], err = createTcptransport(newConfig)
 		if err != nil {
 			log.WithoutContext().Errorf("Could not configure HTTP Transport %s, fallback on default transport: %v", newConfigName, err)
-			r.transport[newConfigName] = http.DefaultTransport
+			r.Transport[newConfigName] = http.DefaultTransport
 		}
 	}
 
@@ -148,7 +148,7 @@ func (t *TcpManager) Get(name string) (http.RoundTripper, error) {
 	t.rtLock.RLock()
 	defer t.rtLock.RUnlock()
 
-	if rt, ok := t.transport[name]; ok {
+	if rt, ok := t.Transport[name]; ok {
 		return rt, nil
 	}
 	return nil, fmt.Errorf("servers transport not found %s", name)

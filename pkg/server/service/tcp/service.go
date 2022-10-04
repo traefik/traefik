@@ -23,12 +23,11 @@ type Manager struct {
 }
 
 // NewManager creates a new manager.
-func NewManager(conf *runtime.Configuration) *Manager {
-	tcp := tcp.NewTcpManager()
+func NewManager(conf *runtime.Configuration, tcprt service.RoundTripperGetter) *Manager {
 	return &Manager{
 		configs:      conf.TCPServices,
 		rand:         rand.New(rand.NewSource(time.Now().UnixNano())),
-		tcproundtrip: tcp,
+		tcproundtrip: tcprt,
 	}
 }
 
