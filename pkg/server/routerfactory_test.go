@@ -9,6 +9,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/proxy"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/tcp"
@@ -48,9 +49,12 @@ func TestReuseService(t *testing.T) {
 		),
 	)
 
-	roundTripperManager := service.NewRoundTripperManager(nil)
-	roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
-	managerFactory := service.NewManagerFactory(staticConfig, nil, nil, roundTripperManager, nil)
+	transportManager := service.NewTransportManager(nil)
+	transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+
+	builder := proxy.NewBuilder(transportManager, nil, false)
+	builder.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+	managerFactory := service.NewManagerFactory(staticConfig, nil, nil, transportManager, builder, nil)
 	tlsManager := tls.NewManager()
 
 	dialerManager := tcp.NewDialerManager(nil)
@@ -184,9 +188,11 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 				},
 			}
 
-			roundTripperManager := service.NewRoundTripperManager(nil)
-			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
-			managerFactory := service.NewManagerFactory(staticConfig, nil, nil, roundTripperManager, nil)
+			transportManager := service.NewTransportManager(nil)
+			transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+
+			builder := proxy.NewBuilder(transportManager, nil, false)
+			managerFactory := service.NewManagerFactory(staticConfig, nil, nil, transportManager, builder, nil)
 			tlsManager := tls.NewManager()
 
 			dialerManager := tcp.NewDialerManager(nil)
@@ -228,9 +234,10 @@ func TestInternalServices(t *testing.T) {
 		),
 	)
 
-	roundTripperManager := service.NewRoundTripperManager(nil)
-	roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
-	managerFactory := service.NewManagerFactory(staticConfig, nil, nil, roundTripperManager, nil)
+	transportManager := service.NewTransportManager(nil)
+	transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
+
+	managerFactory := service.NewManagerFactory(staticConfig, nil, nil, transportManager, nil, nil)
 	tlsManager := tls.NewManager()
 
 	dialerManager := tcp.NewDialerManager(nil)

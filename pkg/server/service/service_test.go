@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"crypto/tls"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -14,13 +15,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/proxy"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
 func TestGetLoadBalancer(t *testing.T) {
 	sm := Manager{
-		roundTripperManager: newRtMock(),
+		transportManager: &transportManagerMock{},
 	}
 
 	testCases := []struct {
@@ -79,11 +81,8 @@ func TestGetLoadBalancer(t *testing.T) {
 }
 
 func TestGetLoadBalancerServiceHandler(t *testing.T) {
-	sm := NewManager(nil, nil, nil, &RoundTripperManager{
-		roundTrippers: map[string]http.RoundTripper{
-			"default@internal": http.DefaultTransport,
-		},
-	})
+	builder := proxy.NewBuilder(&transportManagerMock{}, nil, false)
+	sm := NewManager(nil, nil, nil, &transportManagerMock{}, builder)
 
 	server1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-From", "first")
@@ -359,11 +358,8 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 
 // This test is an adapted version of net/http/httputil.Test1xxResponses test.
 func Test1xxResponses(t *testing.T) {
-	sm := NewManager(nil, nil, nil, &RoundTripperManager{
-		roundTrippers: map[string]http.RoundTripper{
-			"default@internal": http.DefaultTransport,
-		},
-	})
+	builder := proxy.NewBuilder(&transportManagerMock{}, nil, false)
+	sm := NewManager(nil, nil, nil, &transportManagerMock{}, builder)
 
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()
@@ -499,11 +495,7 @@ func TestManager_Build(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			manager := NewManager(test.configs, nil, nil, &RoundTripperManager{
-				roundTrippers: map[string]http.RoundTripper{
-					"default@internal": http.DefaultTransport,
-				},
-			})
+			manager := NewManager(test.configs, nil, nil, &transportManagerMock{}, nil)
 
 			ctx := context.Background()
 			if len(test.providerName) > 0 {
@@ -526,11 +518,7 @@ func TestMultipleTypeOnBuildHTTP(t *testing.T) {
 		},
 	}
 
-	manager := NewManager(services, nil, nil, &RoundTripperManager{
-		roundTrippers: map[string]http.RoundTripper{
-			"default@internal": http.DefaultTransport,
-		},
-	})
+	manager := NewManager(services, nil, nil, &transportManagerMock{}, nil)
 
 	_, err := manager.BuildHTTP(context.Background(), "test@file")
 	assert.Error(t, err, "cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
@@ -544,12 +532,16 @@ func (MockForwarder) ServeHTTP(http.ResponseWriter, *http.Request) {
 	panic("not available")
 }
 
-type rtMock struct{}
+type transportManagerMock struct{}
 
-func newRtMock() RoundTripperGetter {
-	return &rtMock{}
+func (t *transportManagerMock) GetRoundTripper(_ string) (http.RoundTripper, error) {
+	return &http.Transport{}, nil
 }
 
-func (r *rtMock) Get(_ string) (http.RoundTripper, error) {
-	return http.DefaultTransport, nil
+func (t *transportManagerMock) GetTLSConfig(_ string) (*tls.Config, error) {
+	return nil, nil
+}
+
+func (t *transportManagerMock) Get(_ string) (*dynamic.ServersTransport, error) {
+	return &dynamic.ServersTransport{}, nil
 }
