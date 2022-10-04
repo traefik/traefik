@@ -131,7 +131,6 @@ func (p *Provider) buildServiceConfig(i item, configuration *dynamic.HTTPConfigu
 		configuration.Services = make(map[string]*dynamic.Service)
 
 		lb := new(dynamic.ServersLoadBalancer)
-		lb.SetDefaults()
 
 		configuration.Services[getName(i)] = &dynamic.Service{
 			LoadBalancer: lb,
