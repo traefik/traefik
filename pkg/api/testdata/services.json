@@ -1,7 +1,6 @@
 [
 	{
 		"loadBalancer": {
-			"passHostHeader": true,
 			"servers": [
 				{
 					"url": "http://127.0.0.1"
@@ -22,7 +21,6 @@
 	},
 	{
 		"loadBalancer": {
-			"passHostHeader": true,
 			"servers": [
 				{
 					"url": "http://127.0.0.2"
