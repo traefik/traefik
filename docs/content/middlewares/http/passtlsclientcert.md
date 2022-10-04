@@ -17,7 +17,6 @@ PassTLSClientCert adds the selected data from the passed client TLS certificate 
 ## Configuration Examples
 
 Pass the pem in the `X-Forwarded-Tls-Client-Cert` header.
-Pass the pem in the `X-Forwarded-Tls-Client-Cert` header.
 
 ```yaml tab="Docker"
 # Pass the pem in the `X-Forwarded-Tls-Client-Cert` header.
