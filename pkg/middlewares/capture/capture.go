@@ -33,11 +33,25 @@ import (
 	"net/http"
 
 	"github.com/traefik/traefik/v2/pkg/middlewares"
+	"google.golang.org/grpc/codes"
 )
 
 type key string
 
 const capturedData key = "capturedData"
+
+// httpStatusToGRPCCode is the mapping from HTTP Status to gRPC Code.
+// More info: https://github.com/grpc/grpc/blob/master/doc/http-grpc-status-mapping.md.
+var httpStatusToGRPCCode = map[int]codes.Code{
+	http.StatusBadRequest:         codes.Internal,
+	http.StatusUnauthorized:       codes.Unauthenticated,
+	http.StatusForbidden:          codes.PermissionDenied,
+	http.StatusNotFound:           codes.Unimplemented,
+	http.StatusTooManyRequests:    codes.Unavailable,
+	http.StatusBadGateway:         codes.Unavailable,
+	http.StatusServiceUnavailable: codes.Unavailable,
+	http.StatusGatewayTimeout:     codes.Unavailable,
+}
 
 // Wrap returns a new handler that inserts a Capture into the given handler.
 // It satisfies the alice.Constructor type.
@@ -95,6 +109,21 @@ func (c *Capture) ResponseSize() int64 {
 
 func (c *Capture) StatusCode() int {
 	return c.rw.Status()
+}
+
+func (c Capture) GRPCStatusCode() codes.Code {
+	if grpcStatus := c.rw.Header().Get("Grpc-Status"); grpcStatus != "" {
+		code := codes.Unknown
+		if err := code.UnmarshalJSON([]byte(grpcStatus)); err == nil {
+			return code
+		}
+	}
+
+	if code, ok := httpStatusToGRPCCode[c.rw.Status()]; ok {
+		return code
+	}
+
+	return codes.Unknown
 }
 
 // RequestSize returns the size of the request's body if it applies,
