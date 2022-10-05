@@ -757,7 +757,7 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha
 			if len(routeRule.Filters) > 0 {
 				prefix := makeID(route.Namespace, route.Name+"-"+gateway.Name+"-")
 
-				middlewares, err := loadMiddlewares(prefix, routeRule.Filters)
+				middlewares, err := loadMiddlewares(listener, prefix, routeRule.Filters)
 				if err != nil {
 					// update "ResolvedRefs" status true with "InvalidFilters" reason
 					conditions = append(conditions, metav1.Condition{
@@ -1680,7 +1680,7 @@ func loadTCPServices(client Client, namespace string, backendRefs []v1alpha2.Bac
 	return wrrSvc, services, nil
 }
 
-func loadMiddlewares(prefix string, filters []v1alpha2.HTTPRouteFilter) (map[string]*dynamic.Middleware, error) {
+func loadMiddlewares(listener v1alpha2.Listener, prefix string, filters []v1alpha2.HTTPRouteFilter) (map[string]*dynamic.Middleware, error) {
 	middlewares := make(map[string]*dynamic.Middleware)
 
 	for _, filter := range filters {
@@ -1688,15 +1688,61 @@ func loadMiddlewares(prefix string, filters []v1alpha2.HTTPRouteFilter) (map[str
 
 		switch filter.Type {
 		case v1alpha2.HTTPRouteFilterRequestRedirect:
+			filter := filter.RequestRedirect
+
+			// Combining RequestRedirect filters is not allowed.
 			if _, ok := middlewares[middlewareName]; ok {
-				// According to spec, RequestRedirect filters cannot be combined
 				return nil, fmt.Errorf("multiple RequestRedirect filters specified")
+			}
+
+			// The spec allows for an empty string in which case we should use the
+			// scheme of the request which in this case is the listener scheme.
+			var scheme string
+			switch listener.Protocol {
+			case v1alpha2.HTTPProtocolType:
+				scheme = "http"
+			case v1alpha2.HTTPSProtocolType:
+				scheme = "https"
+			default:
+				return nil, fmt.Errorf("invalid listener protocol %s", listener.Protocol)
+			}
+
+			// Override the default scheme if a value was provided.
+			if filter.Scheme != nil {
+				scheme = *filter.Scheme
+			}
+
+			if scheme != "http" && scheme != "https" {
+				return nil, fmt.Errorf("invalid scheme %s", scheme)
+			}
+
+			// The redirect scheme middleware currently does not support changing
+			// the hostname.
+			if filter.Hostname != nil && *filter.Hostname != "" {
+				return nil, fmt.Errorf("unsupported value Hostname")
+			}
+
+			port := ""
+			if filter.Port != nil {
+				port = strconv.FormatInt(int64(*filter.Port), 10)
+			}
+
+			statusCode := http.StatusFound
+			if filter.StatusCode != nil {
+				statusCode = *filter.StatusCode
+			}
+
+			// The redirect scheme middleware currently does not support changing
+			// the status code. It can only be a 301 or a 302 status code.
+			if statusCode != http.StatusMovedPermanently && statusCode != http.StatusFound {
+				return nil, fmt.Errorf("invalid status code %d", statusCode)
 			}
 
 			middlewares[middlewareName] = &dynamic.Middleware{
 				RedirectScheme: &dynamic.RedirectScheme{
-					Scheme:    *filter.RequestRedirect.Scheme,
-					Permanent: *filter.RequestRedirect.StatusCode == http.StatusMovedPermanently,
+					Scheme:    scheme,
+					Port:      port,
+					Permanent: statusCode == http.StatusMovedPermanently,
 				},
 			}
 		default:
