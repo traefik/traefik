@@ -21,6 +21,7 @@ import (
 const (
 	protoHTTP      = "http"
 	protoGRPC      = "grpc"
+	protoGRPCWeb   = "grpcweb"
 	protoSSE       = "sse"
 	protoWebsocket = "websocket"
 	typeName       = "Metrics"
@@ -148,7 +149,7 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	start := time.Now()
 	next.ServeHTTP(rw, req)
 
-	if reqProtocol == protoGRPC {
+	if reqProtocol == protoGRPC || reqProtocol == protoGRPCWeb {
 		labels = append(labels, "code", capt.GRPCStatusCode().String())
 	} else {
 		labels = append(labels, "code", strconv.Itoa(capt.StatusCode()))
@@ -166,6 +167,8 @@ func getRequestProtocol(req *http.Request) string {
 		return protoWebsocket
 	case isSSERequest(req):
 		return protoSSE
+	case isGRPCWebRequest(req):
+		return protoGRPCWeb
 	case isGRPCRequest(req):
 		return protoGRPC
 	default:
@@ -181,6 +184,12 @@ func isWebsocketRequest(req *http.Request) bool {
 // isSSERequest determines if the specified HTTP request is a request for an event subscription.
 func isSSERequest(req *http.Request) bool {
 	return containsHeader(req, "Accept", "text/event-stream")
+}
+
+// isGRPCWebRequest determines if the specified HTTP request is a gRPC-Web
+// request.
+func isGRPCWebRequest(req *http.Request) bool {
+	return strings.HasPrefix(req.Header.Get("Content-Type"), "application/grpc-web")
 }
 
 // isGRPCRequest determines if the specified HTTP request is a gRPC request.
