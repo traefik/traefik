@@ -20,6 +20,7 @@ import (
 
 const (
 	protoHTTP      = "http"
+	protoGRPC      = "grpc"
 	protoSSE       = "sse"
 	protoWebsocket = "websocket"
 	typeName       = "Metrics"
@@ -111,7 +112,9 @@ func WrapServiceHandler(ctx context.Context, registry metrics.Registry, serviceN
 func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	var labels []string
 	labels = append(labels, m.baseLabels...)
-	labels = append(labels, "method", getMethod(req), "protocol", getRequestProtocol(req))
+	labels = append(labels, "method", getMethod(req))
+	reqProtocol := getRequestProtocol(req)
+	labels = append(labels, "protocol", reqProtocol)
 
 	openConnsGauge := m.openConnsGauge.With(labels...)
 	openConnsGauge.Add(1)
@@ -145,7 +148,12 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	start := time.Now()
 	next.ServeHTTP(rw, req)
 
-	labels = append(labels, "code", strconv.Itoa(capt.StatusCode()))
+	if reqProtocol == protoGRPC {
+		labels = append(labels, "code", capt.GRPCStatusCode().String())
+	} else {
+		labels = append(labels, "code", strconv.Itoa(capt.StatusCode()))
+	}
+
 	m.reqDurationHistogram.With(labels...).ObserveFromStart(start)
 	m.reqsCounter.With(labels...).Add(1)
 	m.respsBytesCounter.With(labels...).Add(float64(capt.ResponseSize()))
@@ -158,6 +166,8 @@ func getRequestProtocol(req *http.Request) string {
 		return protoWebsocket
 	case isSSERequest(req):
 		return protoSSE
+	case isGRPCRequest(req):
+		return protoGRPC
 	default:
 		return protoHTTP
 	}
@@ -171,6 +181,11 @@ func isWebsocketRequest(req *http.Request) bool {
 // isSSERequest determines if the specified HTTP request is a request for an event subscription.
 func isSSERequest(req *http.Request) bool {
 	return containsHeader(req, "Accept", "text/event-stream")
+}
+
+// isGRPCRequest determines if the specified HTTP request is a gRPC request.
+func isGRPCRequest(req *http.Request) bool {
+	return strings.HasPrefix(req.Header.Get("Content-Type"), "application/grpc")
 }
 
 func containsHeader(req *http.Request, name, value string) bool {
