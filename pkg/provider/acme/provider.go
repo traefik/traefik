@@ -397,7 +397,7 @@ func (p *Provider) resolveDomains(ctx context.Context, domains []string, tlsStor
 				return
 			}
 
-			err = p.addCertificateForDomain(dom, cert.Certificate, cert.PrivateKey, tlsStore)
+			err = p.addCertificateForDomain(dom, cert, tlsStore)
 			if err != nil {
 				logger.WithError(err).Error("Error adding certificate for domain")
 			}
@@ -431,7 +431,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 										return
 									}
 
-									err = p.addCertificateForDomain(dom, cert.Certificate, cert.PrivateKey, traefiktls.DefaultTLSStoreName)
+									err = p.addCertificateForDomain(dom, cert, traefiktls.DefaultTLSStoreName)
 									if err != nil {
 										logger.WithError(err).Error("Error adding certificate for domain")
 									}
@@ -468,7 +468,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 										return
 									}
 
-									err = p.addCertificateForDomain(dom, cert.Certificate, cert.PrivateKey, traefiktls.DefaultTLSStoreName)
+									err = p.addCertificateForDomain(dom, cert, traefiktls.DefaultTLSStoreName)
 									if err != nil {
 										logger.WithError(err).Error("Error adding certificate for domain")
 									}
@@ -535,7 +535,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 							domain.SANs = validDomains[1:]
 						}
 
-						err = p.addCertificateForDomain(domain, cert.Certificate, cert.PrivateKey, traefiktls.DefaultTLSStoreName)
+						err = p.addCertificateForDomain(domain, cert, traefiktls.DefaultTLSStoreName)
 						if err != nil {
 							logger.WithError(err).Error("Error adding certificate for domain")
 						}
@@ -660,11 +660,15 @@ func (p *Provider) removeResolvingDomains(resolvingDomains []string) {
 	}
 }
 
-func (p *Provider) addCertificateForDomain(domain types.Domain, certificate, key []byte, tlsStore string) error {
+func (p *Provider) addCertificateForDomain(domain types.Domain, crt *certificate.Resource, tlsStore string) error {
+	if crt == nil {
+		return nil
+	}
+
 	p.certificatesMu.Lock()
 	defer p.certificatesMu.Unlock()
 
-	cert := Certificate{Certificate: certificate, Key: key, Domain: domain}
+	cert := Certificate{Certificate: crt.Certificate, Key: crt.PrivateKey, Domain: domain}
 
 	certUpdated := false
 	for _, domainsCertificate := range p.certificates {
@@ -828,7 +832,7 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 			continue
 		}
 
-		err = p.addCertificateForDomain(cert.Domain, renewedCert.Certificate, renewedCert.PrivateKey, cert.Store)
+		err = p.addCertificateForDomain(cert.Domain, renewedCert, cert.Store)
 		if err != nil {
 			logger.WithError(err).Error("Error adding certificate for domain")
 		}
