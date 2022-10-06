@@ -4031,6 +4031,16 @@ func TestLoadIngressRoutes(t *testing.T) {
 								PassHostHeader: Bool(true),
 							},
 						},
+						"default-tr-svc-es": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "tr-svc-es",
+										Weight: func(i int) *int { return &i }(1),
+									},
+								},
+							},
+						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
