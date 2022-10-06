@@ -5,9 +5,11 @@
 Package helloworld is a generated protocol buffer package.
 
 It is generated from these files:
+
 	helloworld.proto
 
 It has these top-level messages:
+
 	HelloRequest
 	HelloReply
 	StreamExampleRequest

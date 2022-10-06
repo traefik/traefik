@@ -253,6 +253,14 @@ func Test_addRoute(t *testing.T) {
 			},
 		},
 		{
+			desc: "Query with multiple equals",
+			rule: "Query(`foo=b=ar`)",
+			expected: map[string]int{
+				"http://localhost/foo?foo=b=ar": http.StatusOK,
+				"http://localhost/foo?foo=bar":  http.StatusNotFound,
+			},
+		},
+		{
 			desc: "Rule with simple path",
 			rule: `Path("/a")`,
 			expected: map[string]int{
@@ -473,7 +481,7 @@ func Test_addRoute(t *testing.T) {
 			},
 		},
 		{
-			desc: "Rule with not on multiple route with and and another not",
+			desc: "Rule with not on multiple route with and another not",
 			rule: `!(Host("tchouk") && !Path("/titi"))`,
 			expected: map[string]int{
 				"http://tchouk/titi": http.StatusOK,

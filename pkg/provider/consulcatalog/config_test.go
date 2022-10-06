@@ -2220,7 +2220,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Labels: map[string]string{
 						"traefik.tcp.routers.foo.rule":                      "HostSNI(`foo.bar`)",
 						"traefik.tcp.routers.foo.tls.options":               "foo",
-						"traefik.tcp.services.foo.loadbalancer.server.port": "80",
+						"traefik.tcp.services.foo.loadbalancer.server.port": "8080",
 					},
 					Address: "127.0.0.1",
 					Port:    "80",
@@ -2244,7 +2244,7 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
-										Address: "127.0.0.1:80",
+										Address: "127.0.0.1:8080",
 									},
 								},
 								TerminationDelay: Int(100),
@@ -2845,6 +2845,57 @@ func Test_buildConfiguration(t *testing.T) {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
 								Servers: []dynamic.UDPServer{
 									{Address: "127.0.0.2:80"},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+			},
+		},
+		{
+			desc:         "UDP service with labels only",
+			ConnectAware: true,
+			items: []itemData{
+				{
+					ID:         "1",
+					Node:       "Node1",
+					Datacenter: "dc1",
+					Name:       "Test",
+					Namespace:  "ns",
+					Labels: map[string]string{
+						"traefik.udp.routers.test-udp-label.service":                           "test-udp-label-service",
+						"traefik.udp.routers.test-udp-label.entryPoints":                       "udp",
+						"traefik.udp.services.test-udp-label-service.loadBalancer.server.port": "21116",
+					},
+					Address: "127.0.0.1",
+					Port:    "80",
+					Status:  api.HealthPassing,
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"test-udp-label": {
+							EntryPoints: []string{"udp"},
+							Service:     "test-udp-label-service",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"test-udp-label-service": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{Address: "127.0.0.1:21116"},
 								},
 							},
 						},

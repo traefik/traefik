@@ -1,11 +1,11 @@
 ---
 title: "Traefik Metrics Overview"
-description: "Traefik Proxy supports four metrics backend systems: Datadog, InfluxDB, Prometheus, and StatsD. Read the full documentation to get started."
+description: "Traefik Proxy supports these metrics backend systems: Datadog, InfluxDB, Prometheus, and StatsD. Read the full documentation to get started."
 ---
 
 # Metrics
 
-Traefik supports 4 metrics backends:
+Traefik supports these metrics backends:
 
 - [Datadog](./datadog.md)
 - [InfluxDB](./influxdb.md)
@@ -15,569 +15,188 @@ Traefik supports 4 metrics backends:
 
 ## Global Metrics
 
-| Metric                                                                  | DataDog | InfluxDB / InfluxDB2 | Prometheus | StatsD |
-|-------------------------------------------------------------------------|---------|----------------------|------------|--------|
-| [Configuration reloads](#configuration-reloads)                         | ✓       | ✓                    | ✓          | ✓      |
-| [Last Configuration Reload Success](#last-configuration-reload-success) | ✓       | ✓                    | ✓          | ✓      |
-| [TLS certificates expiration](#tls-certificates-expiration)             | ✓       | ✓                    | ✓          | ✓      |
+| Metric                                      | Type    | Description                                             |
+|---------------------------------------------|---------|---------------------------------------------------------|
+| Config reload total                         | Count   | The total count of configuration reloads.               |
+| Config reload last success                  | Gauge   | The timestamp of the last configuration reload success. |
+| TLS certificates not after                  | Gauge   | The expiration date of certificates.                    |
 
-### Configuration Reloads
-
-The total count of configuration reloads.
+```prom tab="Prometheus"
+traefik_config_reloads_total
+traefik_config_last_reload_success
+traefik_tls_certs_not_after
+```
 
 ```dd tab="Datadog"
 config.reload.total
+config.reload.lastSuccessTimestamp
+tls.certs.notAfterTimestamp
 ```
 
 ```influxdb tab="InfluxDB / InfluxDB2"
 traefik.config.reload.total
-```
-
-```prom tab="Prometheus"
-traefik_config_reloads_total
+traefik.config.reload.lastSuccessTimestamp
+traefik.tls.certs.notAfterTimestamp
 ```
 
 ```statsd tab="StatsD"
 # Default prefix: "traefik"
 {prefix}.config.reload.total
-```
-
-### Last Configuration Reload Success
-
-The timestamp of the last configuration reload success.
-
-```dd tab="Datadog"
-config.reload.lastSuccessTimestamp
-```
-
-```influxdb tab="InfluxDB / InfluxDB2"
-traefik.config.reload.lastSuccessTimestamp
-```
-
-```prom tab="Prometheus"
-traefik_config_last_reload_success
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
 {prefix}.config.reload.lastSuccessTimestamp
-```
-
-### TLS certificates expiration
-
-The expiration date of certificates.
-
-[Labels](#labels): `cn`, `sans`, `serial`.
-
-```dd tab="Datadog"
-tls.certs.notAfterTimestamp
-```
-
-```influxdb tab="InfluxDB / InfluxDB2"
-traefik.tls.certs.notAfterTimestamp
-```
-
-```prom tab="Prometheus"
-traefik_tls_certs_not_after
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
 {prefix}.tls.certs.notAfterTimestamp
 ```
 
 ## EntryPoint Metrics
 
-| Metric                                                    | DataDog | InfluxDB / InfluxDB2 | Prometheus | StatsD |
-|-----------------------------------------------------------|---------|----------------------|------------|--------|
-| [HTTP Requests Count](#http-requests-count)               | ✓       | ✓                    | ✓          | ✓      |
-| [HTTPS Requests Count](#https-requests-count)             | ✓       | ✓                    | ✓          | ✓      |
-| [Request Duration Histogram](#request-duration-histogram) | ✓       | ✓                    | ✓          | ✓      |
-| [Open Connections Count](#open-connections-count)         | ✓       | ✓                    | ✓          | ✓      |
-| [Requests Bytes Count](#requests-bytes-count)             | ✓       | ✓                    | ✓          | ✓      |
-| [Responses Bytes Count](#responses-bytes-count)           | ✓       | ✓                    | ✓          | ✓      |
+| Metric                | Type      | [Labels](#labels)                          | Description                                                         |
+|-----------------------|-----------|--------------------------------------------|---------------------------------------------------------------------|
+| Requests total        | Count     | `code`, `method`, `protocol`, `entrypoint` | The total count of HTTP requests received by an entrypoint.         |
+| Requests TLS total    | Count     | `tls_version`, `tls_cipher`, `entrypoint`  | The total count of HTTPS requests received by an entrypoint.        |
+| Request duration      | Histogram | `code`, `method`, `protocol`, `entrypoint` | Request processing duration histogram on an entrypoint.             |
+| Open connections      | Count     | `method`, `protocol`, `entrypoint`         | The current count of open connections on an entrypoint.             |
+| Requests bytes total  | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP requests in bytes handled by an entrypoint.  |
+| Responses bytes total | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP responses in bytes handled by an entrypoint. |
 
-### HTTP Requests Count
-
-The total count of HTTP requests received by an entrypoint.
-
-[Labels](#labels): `code`, `method`, `protocol`, `entrypoint`.
+```prom tab="Prometheus"
+traefik_entrypoint_requests_total
+traefik_entrypoint_requests_tls_total
+traefik_entrypoint_request_duration_seconds
+traefik_entrypoint_open_connections
+traefik_entrypoint_requests_bytes_total
+traefik_entrypoint_responses_bytes_total
+```
 
 ```dd tab="Datadog"
 entrypoint.request.total
+entrypoint.request.tls.total
+entrypoint.request.duration
+entrypoint.connections.open
+entrypoint.requests.bytes.total
+entrypoint.responses.bytes.total
 ```
 
 ```influxdb tab="InfluxDB / InfluxDB2"
 traefik.entrypoint.requests.total
-```
-
-```prom tab="Prometheus"
-traefik_entrypoint_requests_total
+traefik.entrypoint.requests.tls.total
+traefik.entrypoint.request.duration
+traefik.entrypoint.connections.open
+traefik.entrypoint.requests.bytes.total
+traefik.entrypoint.responses.bytes.total
 ```
 
 ```statsd tab="StatsD"
 # Default prefix: "traefik"
 {prefix}.entrypoint.request.total
-```
-
-### HTTPS Requests Count
-
-The total count of HTTPS requests received by an entrypoint.
-
-[Labels](#labels): `tls_version`, `tls_cipher`, `entrypoint`.
-
-```dd tab="Datadog"
-entrypoint.request.tls.total
-```
-
-```influxdb tab="InfluxDB / InfluxDB2"
-traefik.entrypoint.requests.tls.total
-```
-
-```prom tab="Prometheus"
-traefik_entrypoint_requests_tls_total
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
 {prefix}.entrypoint.request.tls.total
-```
-
-### Request Duration Histogram
-
-Request processing duration histogram on an entrypoint.
-
-[Labels](#labels): `code`, `method`, `protocol`, `entrypoint`.
-
-```dd tab="Datadog"
-entrypoint.request.duration
-```
-
-```influxdb tab="InfluxDB / InfluxDB2"
-traefik.entrypoint.request.duration
-```
-
-```prom tab="Prometheus"
-traefik_entrypoint_request_duration_seconds
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
 {prefix}.entrypoint.request.duration
-```
-
-### Open Connections Count
-
-The current count of open connections on an entrypoint.
-
-[Labels](#labels): `method`, `protocol`, `entrypoint`.
-
-```dd tab="Datadog"
-entrypoint.connections.open
-```
-
-```influxdb tab="InfluxDB / InfluxDB2"
-traefik.entrypoint.connections.open
-```
-
-```prom tab="Prometheus"
-traefik_entrypoint_open_connections
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
 {prefix}.entrypoint.connections.open
-```
-
-### Requests Bytes Count
-
-The total size of HTTP requests in bytes handled by an entrypoint.
-
-[Labels](#labels): `code`, `method`, `protocol`, `entrypoint`.
-
-```dd tab="Datadog"
-entrypoint.requests.bytes.total
-```
-
-```influxdb tab="InfluxDB / InfluxDB2"
-traefik.entrypoint.requests.bytes.total
-```
-
-```prom tab="Prometheus"
-traefik_entrypoint_requests_bytes_total
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
 {prefix}.entrypoint.requests.bytes.total
-```
-
-### Responses Bytes Count
-
-The total size of HTTP responses in bytes handled by an entrypoint.
-
-[Labels](#labels): `code`, `method`, `protocol`, `entrypoint`.
-
-```dd tab="Datadog"
-entrypoint.responses.bytes.total
-```
-
-```influxdb tab="InfluxDB / InfluxDB2"
-traefik.entrypoint.responses.bytes.total
-```
-
-```prom tab="Prometheus"
-traefik_entrypoint_responses_bytes_total
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
 {prefix}.entrypoint.responses.bytes.total
 ```
 
 ## Router Metrics
 
-| Metric                                                      | DataDog | InfluxDB / InfluxDB2 | Prometheus | StatsD |
-|-------------------------------------------------------------|---------|----------------------|------------|--------|
-| [HTTP Requests Count](#http-requests-count_1)               | ✓       | ✓                    | ✓          | ✓      |
-| [HTTPS Requests Count](#https-requests-count_1)             | ✓       | ✓                    | ✓          | ✓      |
-| [Request Duration Histogram](#request-duration-histogram_1) | ✓       | ✓                    | ✓          | ✓      |
-| [Open Connections Count](#open-connections-count_1)         | ✓       | ✓                    | ✓          | ✓      |
-| [Requests Bytes Count](#requests-bytes-count_1)             | ✓       | ✓                    | ✓          | ✓      |
-| [Responses Bytes Count](#responses-bytes-count_1)           | ✓       | ✓                    | ✓          | ✓      |
+| Metric                | Type      | [Labels](#labels)                                 | Description                                                    |
+|-----------------------|-----------|---------------------------------------------------|----------------------------------------------------------------|
+| Requests total        | Count     | `code`, `method`, `protocol`, `router`, `service` | The total count of HTTP requests handled by a router.          |
+| Requests TLS total    | Count     | `tls_version`, `tls_cipher`, `router`, `service`  | The total count of HTTPS requests handled by a router.         |
+| Request duration      | Histogram | `code`, `method`, `protocol`, `router`, `service` | Request processing duration histogram on a router.             |
+| Open connections      | Count     | `method`, `protocol`, `router`, `service`         | The current count of open connections on a router.             |
+| Requests bytes total  | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP requests in bytes handled by a router.  |
+| Responses bytes total | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP responses in bytes handled by a router. |
 
-### HTTP Requests Count
-
-The total count of HTTP requests handled by a router.
-
-[Labels](#labels): `code`, `method`, `protocol`, `router`, `service`.
+```prom tab="Prometheus"
+traefik_router_requests_total
+traefik_router_requests_tls_total
+traefik_router_request_duration_seconds
+traefik_router_open_connections
+traefik_router_requests_bytes_total
+traefik_router_responses_bytes_total
+```
 
 ```dd tab="Datadog"
 router.request.total
+router.request.tls.total
+router.request.duration
+router.connections.open
+router.requests.bytes.total
+router.responses.bytes.total
 ```
 
 ```influxdb tab="InfluxDB / InfluxDB2"
 traefik.router.requests.total
-```
-
-```prom tab="Prometheus"
-traefik_router_requests_total
+traefik.router.requests.tls.total
+traefik.router.request.duration
+traefik.router.connections.open
+traefik.router.requests.bytes.total
+traefik.router.responses.bytes.total
 ```
 
 ```statsd tab="StatsD"
 # Default prefix: "traefik"
 {prefix}.router.request.total
-```
-
-### HTTPS Requests Count
-
-The total count of HTTPS requests handled by a router.
-
-[Labels](#labels): `tls_version`, `tls_cipher`, `router`, `service`.
-
-```dd tab="Datadog"
-router.request.tls.total
-```
-
-```influxdb tab="InfluxDB / InfluxDB2"
-traefik.router.requests.tls.total
-```
-
-```prom tab="Prometheus"
-traefik_router_requests_tls_total
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
 {prefix}.router.request.tls.total
-```
-
-### Request Duration Histogram
-
-Request processing duration histogram on a router.
-
-[Labels](#labels): `code`, `method`, `protocol`, `router`, `service`.
-
-```dd tab="Datadog"
-router.request.duration
-```
-
-```influxdb tab="InfluxDB / InfluxDB2"
-traefik.router.request.duration
-```
-
-```prom tab="Prometheus"
-traefik_router_request_duration_seconds
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
 {prefix}.router.request.duration
-```
-
-### Open Connections Count
-
-The current count of open connections on a router.
-
-[Labels](#labels): `method`, `protocol`, `router`, `service`.
-
-```dd tab="Datadog"
-router.connections.open
-```
-
-```influxdb tab="InfluxDB / InfluxDB2"
-traefik.router.connections.open
-```
-
-```prom tab="Prometheus"
-traefik_router_open_connections
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
 {prefix}.router.connections.open
-```
-
-### Requests Bytes Count
-
-The total size of HTTP requests in bytes handled by a router.
-
-[Labels](#labels): `code`, `method`, `protocol`, `router`, `service`.
-
-```dd tab="Datadog"
-router.requests.bytes.total
-```
-
-```influxdb tab="InfluxDB / InfluxDB2"
-traefik.router.requests.bytes.total
-```
-
-```prom tab="Prometheus"
-traefik_router_requests_bytes_total
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
 {prefix}.router.requests.bytes.total
-```
-
-### Responses Bytes Count
-
-The total size of HTTP responses in bytes handled by a router.
-
-[Labels](#labels): `code`, `method`, `protocol`, `router`, `service`.
-
-```dd tab="Datadog"
-router.responses.bytes.total
-```
-
-```influxdb tab="InfluxDB / InfluxDB2"
-traefik.router.responses.bytes.total
-```
-
-```prom tab="Prometheus"
-traefik_router_responses_bytes_total
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
 {prefix}.router.responses.bytes.total
 ```
 
 ## Service Metrics
 
-| Metric                                                      | DataDog | InfluxDB / InfluxDB2 | Prometheus | StatsD |
-|-------------------------------------------------------------|---------|----------------------|------------|--------|
-| [HTTP Requests Count](#http-requests-count_2)               | ✓       | ✓                    | ✓          | ✓      |
-| [HTTPS Requests Count](#https-requests-count_2)             | ✓       | ✓                    | ✓          | ✓      |
-| [Request Duration Histogram](#request-duration-histogram_2) | ✓       | ✓                    | ✓          | ✓      |
-| [Open Connections Count](#open-connections-count_2)         | ✓       | ✓                    | ✓          | ✓      |
-| [Requests Retries Count](#requests-retries-count)           | ✓       | ✓                    | ✓          | ✓      |
-| [Service Server UP](#service-server-up)                     | ✓       | ✓                    | ✓          | ✓      |
-| [Requests Bytes Count](#requests-bytes-count_2)             | ✓       | ✓                    | ✓          | ✓      |
-| [Responses outgoing traffic](#responses-bytes-count_2)      | ✓       | ✓                    | ✓          | ✓      |
+| Metric                | Type      | Labels                                  | Description                                                 |
+|-----------------------|-----------|-----------------------------------------|-------------------------------------------------------------|
+| Requests total        | Count     | `code`, `method`, `protocol`, `service` | The total count of HTTP requests processed on a service.    |
+| Requests TLS total    | Count     | `tls_version`, `tls_cipher`, `service`  | The total count of HTTPS requests processed on a service.   |
+| Request duration      | Histogram | `code`, `method`, `protocol`, `service` | Request processing duration histogram on a service.         |
+| Open connections      | Count     | `method`, `protocol`, `service`         | The current count of open connections on a service.         |
+| Retries total         | Count     | `service`                               | The count of requests retries on a service.                 |
+| Server UP             | Gauge     | `service`, `url`                        | Current service's server status, 0 for a down or 1 for up.  |
+| Requests bytes total  | Count     | `code`, `method`, `protocol`, `service` | The total size of requests in bytes received by a service.  |
+| Responses bytes total | Count     | `code`, `method`, `protocol`, `service` | The total size of responses in bytes returned by a service. |
 
-### HTTP Requests Count
-
-The total count of HTTP requests processed on a service.
-
-[Labels](#labels): `code`, `method`, `protocol`, `service`.
+```prom tab="Prometheus"
+traefik_service_requests_total
+traefik_service_requests_tls_total
+traefik_service_request_duration_seconds
+traefik_service_open_connections
+traefik_service_retries_total
+traefik_service_server_up
+traefik_service_requests_bytes_total
+traefik_service_responses_bytes_total
+```
 
 ```dd tab="Datadog"
 service.request.total
+router.service.tls.total
+service.request.duration
+service.connections.open
+service.retries.total
+service.server.up
+service.requests.bytes.total
+service.responses.bytes.total
 ```
 
 ```influxdb tab="InfluxDB / InfluxDB2"
 traefik.service.requests.total
-```
-
-```prom tab="Prometheus"
-traefik_service_requests_total
+traefik.service.requests.tls.total
+traefik.service.request.duration
+traefik.service.connections.open
+traefik.service.retries.total
+traefik.service.server.up
+traefik.service.requests.bytes.total
+traefik.service.responses.bytes.total
 ```
 
 ```statsd tab="StatsD"
 # Default prefix: "traefik"
 {prefix}.service.request.total
-```
-
-### HTTPS Requests Count
-
-The total count of HTTPS requests processed on a service.
-
-[Labels](#labels): `tls_version`, `tls_cipher`, `service`.
-
-```dd tab="Datadog"
-router.service.tls.total
-```
-
-```influxdb tab="InfluxDB / InfluxDB2"
-traefik.service.requests.tls.total
-```
-
-```prom tab="Prometheus"
-traefik_service_requests_tls_total
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
 {prefix}.service.request.tls.total
-```
-
-### Request Duration Histogram
-
-Request processing duration histogram on a service.
-
-[Labels](#labels): `code`, `method`, `protocol`, `service`.
-
-```dd tab="Datadog"
-service.request.duration
-```
-
-```influxdb tab="InfluxDB / InfluxDB2"
-traefik.service.request.duration
-```
-
-```prom tab="Prometheus"
-traefik_service_request_duration_seconds
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
 {prefix}.service.request.duration
-```
-
-### Open Connections Count
-
-The current count of open connections on a service.
-
-[Labels](#labels): `method`, `protocol`, `service`.
-
-```dd tab="Datadog"
-service.connections.open
-```
-
-```influxdb tab="InfluxDB / InfluxDB2"
-traefik.service.connections.open
-```
-
-```prom tab="Prometheus"
-traefik_service_open_connections
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
 {prefix}.service.connections.open
-```
-
-### Requests Retries Count
-
-The count of requests retries on a service.
-
-[Labels](#labels): `service`.
-
-```dd tab="Datadog"
-service.retries.total
-```
-
-```influxdb tab="InfluxDB / InfluxDB2"
-traefik.service.retries.total
-```
-
-```prom tab="Prometheus"
-traefik_service_retries_total
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
 {prefix}.service.retries.total
-```
-
-### Service Server UP
-
-Current service's server status, described by a gauge with a value of 0 for a down server or a value of 1 for an up server.
-
-[Labels](#labels): `service`, `url`.
-
-```dd tab="Datadog"
-service.server.up
-```
-
-```influxdb tab="InfluxDB / InfluxDB2"
-traefik.service.server.up
-```
-
-```prom tab="Prometheus"
-traefik_service_server_up
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
 {prefix}.service.server.up
-```
-
-### Requests Bytes Count
-
-The total size of requests in bytes received by a service.
-
-[Labels](#labels): `code`, `method`, `protocol`, `service`.
-
-```dd tab="Datadog"
-service.requests.bytes.total
-```
-
-```influxdb tab="InfluxDB / InfluxDB2"
-traefik.service.requests.bytes.total
-```
-
-```prom tab="Prometheus"
-traefik_service_requests_bytes_total
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
 {prefix}.service.requests.bytes.total
-```
-
-### Responses Bytes Count
-
-The total size of responses in bytes returned by a service.
-
-[Labels](#labels): `code`, `method`, `protocol`, `service`.
-
-```dd tab="Datadog"
-service.responses.bytes.total
-```
-
-```influxdb tab="InfluxDB / InfluxDB2"
-traefik.service.responses.bytes.total
-```
-
-```prom tab="Prometheus"
-traefik_service_responses_bytes_total
-```
-
-```statsd tab="StatsD"
-# Default prefix: "traefik"
 {prefix}.service.responses.bytes.total
 ```
 
