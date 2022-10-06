@@ -723,7 +723,7 @@ spec:
                     type: object
                   pem:
                     description: PEM sets the X-Forwarded-Tls-Client-Cert header with
-                      the escaped certificate.
+                      the certificate.
                     type: boolean
                 type: object
               plugin:
