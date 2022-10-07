@@ -279,6 +279,9 @@ providers:
     endpoint: foobar
     pollInterval: 42s
     pollTimeout: 42s
+    headers:
+      name0: foobar
+      name1: foobar
     tls:
       ca: foobar
       caOptional: true

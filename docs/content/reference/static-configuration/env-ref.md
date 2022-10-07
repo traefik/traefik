@@ -642,6 +642,9 @@ Enable HTTP backend with default settings. (Default: ```false```)
 `TRAEFIK_PROVIDERS_HTTP_ENDPOINT`:  
 Load configuration from this endpoint.
 
+`TRAEFIK_PROVIDERS_HTTP_HEADERS_<NAME>`:  
+Define custom headers to be sent to the endpoint.
+
 `TRAEFIK_PROVIDERS_HTTP_POLLINTERVAL`:  
 Polling interval for endpoint. (Default: ```5```)
 
