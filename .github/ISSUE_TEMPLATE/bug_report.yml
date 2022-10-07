@@ -12,6 +12,8 @@ body:
         The configurations between 1.X and 2.X are NOT compatible. Please have a look [here](https://doc.traefik.io/traefik/getting-started/configuration-overview/).
 
         DO NOT FILE ISSUES FOR GENERAL SUPPORT QUESTIONS.
+        ALL NEW/UPDATED ISSUES ARE TRIAGED REGULARLY BY THE MAINTAINERS.
+        ALL ISSUES CLOSED BY THE BOT ARE SUBSEQUENTLY DOUBLE-CHECKED BY THE MAINTAINERS.
       options:
         - label: Yes, I've searched similar issues on [GitHub](https://github.com/traefik/traefik/issues) and didn't find any.
           required: true
