@@ -12,19 +12,27 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
 	"github.com/traefik/traefik/v2/pkg/tcp"
+	"golang.org/x/net/proxy"
 )
+
+// DialerGetter is a dialer getter interface.
+type DialerGetter interface {
+	Get(name string) (proxy.Dialer, error)
+}
 
 // Manager is the TCPHandlers factory.
 type Manager struct {
-	configs map[string]*runtime.TCPServiceInfo
-	rand    *rand.Rand // For the initial shuffling of load-balancers.
+	dialerManager DialerGetter
+	configs       map[string]*runtime.TCPServiceInfo
+	rand          *rand.Rand // For the initial shuffling of load-balancers.
 }
 
 // NewManager creates a new manager.
-func NewManager(conf *runtime.Configuration) *Manager {
+func NewManager(conf *runtime.Configuration, dialerManager DialerGetter) *Manager {
 	return &Manager{
-		configs: conf.TCPServices,
-		rand:    rand.New(rand.NewSource(time.Now().UnixNano())),
+		dialerManager: dialerManager,
+		configs:       conf.TCPServices,
+		rand:          rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
 
@@ -62,7 +70,16 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 				continue
 			}
 
-			handler, err := tcp.NewProxy(server.Address, duration, conf.LoadBalancer.ProxyProtocol)
+			if len(conf.LoadBalancer.ServersTransport) > 0 {
+				conf.LoadBalancer.ServersTransport = provider.GetQualifiedName(ctx, conf.LoadBalancer.ServersTransport)
+			}
+
+			dialer, err := m.dialerManager.Get(conf.LoadBalancer.ServersTransport)
+			if err != nil {
+				return nil, err
+			}
+
+			handler, err := tcp.NewProxy(server.Address, duration, conf.LoadBalancer.ProxyProtocol, dialer)
 			if err != nil {
 				logger.Errorf("In service %q server %q: %v", serviceQualifiedName, server.Address, err)
 				continue

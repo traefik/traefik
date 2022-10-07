@@ -12,6 +12,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/server/middleware"
 	"github.com/traefik/traefik/v2/pkg/server/service"
+	"github.com/traefik/traefik/v2/pkg/server/service/tcp"
 	th "github.com/traefik/traefik/v2/pkg/testhelpers"
 	"github.com/traefik/traefik/v2/pkg/tls"
 )
@@ -53,7 +54,7 @@ func TestReuseService(t *testing.T) {
 	managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry(), roundTripperManager, nil)
 	tlsManager := tls.NewManager()
 
-	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(nil, nil, nil, nil), nil, metrics.NewVoidRegistry())
+	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(nil, nil, nil, nil), nil, metrics.NewVoidRegistry(), tcp.NewDialerManager())
 
 	entryPointsHandlers, _ := factory.CreateRouters(runtime.NewConfig(dynamic.Configuration{HTTP: dynamicConfigs}))
 
@@ -189,7 +190,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry(), roundTripperManager, nil)
 			tlsManager := tls.NewManager()
 
-			factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(nil, nil, nil, nil), nil, metrics.NewVoidRegistry())
+			factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(nil, nil, nil, nil), nil, metrics.NewVoidRegistry(), tcp.NewDialerManager())
 
 			entryPointsHandlers, _ := factory.CreateRouters(runtime.NewConfig(dynamic.Configuration{HTTP: test.config(testServer.URL)}))
 
@@ -232,7 +233,7 @@ func TestInternalServices(t *testing.T) {
 
 	voidRegistry := metrics.NewVoidRegistry()
 
-	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(voidRegistry, nil, nil, nil), nil, voidRegistry)
+	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(voidRegistry, nil, nil, nil), nil, voidRegistry, tcp.NewDialerManager())
 
 	entryPointsHandlers, _ := factory.CreateRouters(runtime.NewConfig(dynamic.Configuration{HTTP: dynamicConfigs}))
 

@@ -31,11 +31,13 @@ type RouterFactory struct {
 
 	chainBuilder *middleware.ChainBuilder
 	tlsManager   *tls.Manager
+
+	dialerManager *tcp.DialerManager
 }
 
 // NewRouterFactory creates a new RouterFactory.
 func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *service.ManagerFactory, tlsManager *tls.Manager,
-	chainBuilder *middleware.ChainBuilder, pluginBuilder middleware.PluginsBuilder, metricsRegistry metrics.Registry,
+	chainBuilder *middleware.ChainBuilder, pluginBuilder middleware.PluginsBuilder, metricsRegistry metrics.Registry, dialerManager *tcp.DialerManager,
 ) *RouterFactory {
 	var entryPointsTCP, entryPointsUDP []string
 	for name, cfg := range staticConfiguration.EntryPoints {
@@ -60,6 +62,7 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 		tlsManager:      tlsManager,
 		chainBuilder:    chainBuilder,
 		pluginBuilder:   pluginBuilder,
+		dialerManager:   dialerManager,
 	}
 }
 
@@ -80,7 +83,7 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 	serviceManager.LaunchHealthCheck()
 
 	// TCP
-	svcTCPManager := tcp.NewManager(rtConf)
+	svcTCPManager := tcp.NewManager(rtConf, f.dialerManager)
 
 	middlewaresTCPBuilder := tcpmiddleware.NewBuilder(rtConf.TCPMiddlewares)
 

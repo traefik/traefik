@@ -95,7 +95,7 @@ func (r *RoundTripperManager) Update(newConfigs map[string]*dynamic.ServersTrans
 	r.configs = newConfigs
 }
 
-// Get get a roundtripper by name.
+// Get gets a roundtripper by name.
 func (r *RoundTripperManager) Get(name string) (http.RoundTripper, error) {
 	if len(name) == 0 {
 		name = "default@internal"

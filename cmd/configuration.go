@@ -28,6 +28,10 @@ func NewTraefikConfiguration() *TraefikCmdConfiguration {
 			ServersTransport: &static.ServersTransport{
 				MaxIdleConnsPerHost: 200,
 			},
+			TCPServersTransport: &static.TCPServersTransport{
+				DialTimeout:   ptypes.Duration(30 * time.Second),
+				DialKeepAlive: ptypes.Duration(15 * time.Second),
+			},
 		},
 		ConfigFile: "",
 	}
