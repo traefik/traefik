@@ -158,7 +158,8 @@ func TestProvider_decodeConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.TCPRouter{
 						"foo": {},
 					},
-					Services: make(map[string]*dynamic.TCPService),
+					Services:          make(map[string]*dynamic.TCPService),
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Stores:  make(map[string]tls.Store),
@@ -214,8 +215,9 @@ func TestProvider_Provide(t *testing.T) {
 			ServersTransports: make(map[string]*dynamic.ServersTransport),
 		},
 		TCP: &dynamic.TCPConfiguration{
-			Routers:  make(map[string]*dynamic.TCPRouter),
-			Services: make(map[string]*dynamic.TCPService),
+			Routers:           make(map[string]*dynamic.TCPRouter),
+			Services:          make(map[string]*dynamic.TCPService),
+			ServersTransports: map[string]*dynamic.TCPServersTransport{},
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Stores:  make(map[string]tls.Store),
