@@ -62,8 +62,9 @@ func (i *Provider) createConfiguration(ctx context.Context) *dynamic.Configurati
 			ServersTransports: make(map[string]*dynamic.ServersTransport),
 		},
 		TCP: &dynamic.TCPConfiguration{
-			Routers:  make(map[string]*dynamic.TCPRouter),
-			Services: make(map[string]*dynamic.TCPService),
+			Routers:           make(map[string]*dynamic.TCPRouter),
+			Services:          make(map[string]*dynamic.TCPService),
+			ServersTransports: make(map[string]*dynamic.TCPServersTransport),
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Stores:  make(map[string]tls.Store),
@@ -78,6 +79,7 @@ func (i *Provider) createConfiguration(ctx context.Context) *dynamic.Configurati
 	i.entryPointModels(cfg)
 	i.redirection(ctx, cfg)
 	i.serverTransport(cfg)
+	i.serverTransportTCP(cfg)
 
 	i.acme(cfg)
 
@@ -338,4 +340,19 @@ func (i *Provider) serverTransport(cfg *dynamic.Configuration) {
 	}
 
 	cfg.HTTP.ServersTransports["default"] = st
+}
+
+func (i *Provider) serverTransportTCP(cfg *dynamic.Configuration) {
+	if i.staticCfg.TCPServersTransport == nil {
+		return
+	}
+
+	st := &dynamic.TCPServersTransport{
+		InsecureSkipVerify: i.staticCfg.TCPServersTransport.InsecureSkipVerify,
+		RootCAs:            i.staticCfg.TCPServersTransport.RootCAs,
+		DialTimeout:        i.staticCfg.TCPServersTransport.DialTimeout,
+		DialKeepAlive:      i.staticCfg.TCPServersTransport.DialKeepAlive,
+	}
+
+	cfg.TCP.ServersTransports["default"] = st
 }
