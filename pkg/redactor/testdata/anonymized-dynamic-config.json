@@ -406,8 +406,26 @@
             {
               "address": "xxxx"
             }
-          ]
+          ],
+          "serversTransport": "foo"
         }
+      }
+    },
+    "serversTransports": {
+      "foo": {
+        "serverName": "xxxx",
+        "insecureSkipVerify": true,
+        "rootCAs": [
+          "xxxx"
+        ],
+        "certificates": [
+          {
+            "certFile": "xxxx",
+            "keyFile": "xxxx"
+          }
+        ],
+        "dialTimeout": "42ns",
+        "dialKeepAlive": "42ns"
       }
     }
   },
