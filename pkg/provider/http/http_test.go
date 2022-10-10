@@ -100,13 +100,9 @@ func TestProvider_fetchConfigurationData(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			var gotHeaders map[string]string
 			srv := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-				for k := range test.headers {
-					if gotHeaders == nil {
-						gotHeaders = map[string]string{}
-					}
-					gotHeaders[k] = req.Header.Get(k)
+				for k, v := range test.headers {
+					assert.Equal(t, v, req.Header.Get(k))
 				}
 
 				rw.WriteHeader(test.statusCode)
@@ -127,7 +123,6 @@ func TestProvider_fetchConfigurationData(t *testing.T) {
 			configData, err := provider.fetchConfigurationData()
 			test.expErr(t, err)
 
-			assert.Equal(t, test.headers, gotHeaders)
 			assert.Equal(t, test.expData, configData)
 		})
 	}
