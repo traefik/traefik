@@ -251,6 +251,9 @@
     endpoint = "foobar"
     pollInterval = "42s"
     pollTimeout = "42s"
+    [providers.http.headers]
+      name0 = "foobar"
+      name1 = "foobar"
     [providers.http.tls]
       ca = "foobar"
       caOptional = true

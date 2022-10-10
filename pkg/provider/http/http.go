@@ -24,10 +24,12 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider is a provider.Provider implementation that queries an HTTP(s) endpoint for a configuration.
 type Provider struct {
-	Endpoint              string           `description:"Load configuration from this endpoint." json:"endpoint" toml:"endpoint" yaml:"endpoint"`
-	PollInterval          ptypes.Duration  `description:"Polling interval for endpoint." json:"pollInterval,omitempty" toml:"pollInterval,omitempty" yaml:"pollInterval,omitempty" export:"true"`
-	PollTimeout           ptypes.Duration  `description:"Polling timeout for endpoint." json:"pollTimeout,omitempty" toml:"pollTimeout,omitempty" yaml:"pollTimeout,omitempty" export:"true"`
-	TLS                   *types.ClientTLS `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	Endpoint     string            `description:"Load configuration from this endpoint." json:"endpoint" toml:"endpoint" yaml:"endpoint"`
+	PollInterval ptypes.Duration   `description:"Polling interval for endpoint." json:"pollInterval,omitempty" toml:"pollInterval,omitempty" yaml:"pollInterval,omitempty" export:"true"`
+	PollTimeout  ptypes.Duration   `description:"Polling timeout for endpoint." json:"pollTimeout,omitempty" toml:"pollTimeout,omitempty" yaml:"pollTimeout,omitempty" export:"true"`
+	Headers      map[string]string `description:"Define custom headers to be sent to the endpoint." json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
+	TLS          *types.ClientTLS  `description:"Enable TLS support." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+
 	httpClient            *http.Client
 	lastConfigurationHash uint64
 }
@@ -139,9 +141,18 @@ func (p *Provider) updateConfiguration(configurationChan chan<- dynamic.Message)
 
 // fetchConfigurationData fetches the configuration data from the configured endpoint.
 func (p *Provider) fetchConfigurationData() ([]byte, error) {
-	res, err := p.httpClient.Get(p.Endpoint)
+	req, err := http.NewRequest(http.MethodGet, p.Endpoint, http.NoBody)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create fetch request: %w", err)
+	}
+
+	for k, v := range p.Headers {
+		req.Header.Set(k, v)
+	}
+
+	res, err := p.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("do fetch request: %w", err)
 	}
 
 	defer res.Body.Close()
