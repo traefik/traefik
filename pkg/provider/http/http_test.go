@@ -100,7 +100,10 @@ func TestProvider_fetchConfigurationData(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			handlerCalled := false
 			srv := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				handlerCalled = true
+
 				for k, v := range test.headers {
 					assert.Equal(t, v, req.Header.Get(k))
 				}
@@ -123,6 +126,7 @@ func TestProvider_fetchConfigurationData(t *testing.T) {
 			configData, err := provider.fetchConfigurationData()
 			test.expErr(t, err)
 
+			assert.True(t, handlerCalled)
 			assert.Equal(t, test.expData, configData)
 		})
 	}
