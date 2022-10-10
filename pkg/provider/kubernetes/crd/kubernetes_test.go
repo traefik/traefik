@@ -4034,7 +4034,6 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"default-whoami-without-endpoints-subsets-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								PassHostHeader: Bool(true),
-
 							},
 						},
 					},
