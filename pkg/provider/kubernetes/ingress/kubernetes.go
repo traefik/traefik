@@ -517,11 +517,10 @@ func (p *Provider) loadService(client Client, namespace string, backend networki
 		return nil, errors.New("service port not found")
 	}
 
-	svc := &dynamic.Service{
-		LoadBalancer: &dynamic.ServersLoadBalancer{
-			PassHostHeader: func(v bool) *bool { return &v }(true),
-		},
-	}
+	lb := &dynamic.ServersLoadBalancer{}
+	lb.SetDefaults()
+
+	svc := &dynamic.Service{LoadBalancer: lb}
 
 	svcConfig, err := parseServiceConfig(service.Annotations)
 	if err != nil {
