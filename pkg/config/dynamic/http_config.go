@@ -9,6 +9,16 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
+const (
+	// DefaultHealthCheckInterval is the default value for the ServerHealthCheck interval.
+	DefaultHealthCheckInterval = ptypes.Duration(30 * time.Second)
+	// DefaultHealthCheckTimeout is the default value for the ServerHealthCheck timeout.
+	DefaultHealthCheckTimeout = ptypes.Duration(5 * time.Second)
+
+	// DefaultPassHostHeader is the default value for the ServersLoadBalancer passHostHeader.
+	DefaultPassHostHeader = true
+)
+
 // +k8s:deepcopy-gen=true
 
 // HTTPConfiguration contains all the HTTP configuration parameters.
@@ -178,7 +188,7 @@ func (l *ServersLoadBalancer) Mergeable(loadBalancer *ServersLoadBalancer) bool 
 
 // SetDefaults Default values for a ServersLoadBalancer.
 func (l *ServersLoadBalancer) SetDefaults() {
-	defaultPassHostHeader := true
+	defaultPassHostHeader := DefaultPassHostHeader
 	l.PassHostHeader = &defaultPassHostHeader
 }
 
@@ -191,7 +201,12 @@ type ResponseForwarding struct {
 	// This configuration is ignored when ReverseProxy recognizes a response as a streaming response;
 	// for such responses, writes are flushed to the client immediately.
 	// Default: 100ms
-	FlushInterval string `json:"flushInterval,omitempty" toml:"flushInterval,omitempty" yaml:"flushInterval,omitempty" export:"true"`
+	FlushInterval ptypes.Duration `json:"flushInterval,omitempty" toml:"flushInterval,omitempty" yaml:"flushInterval,omitempty" export:"true"`
+}
+
+// SetDefaults Default values for a ResponseForwarding.
+func (r *ResponseForwarding) SetDefaults() {
+	r.FlushInterval = ptypes.Duration(100 * time.Millisecond)
 }
 
 // +k8s:deepcopy-gen=true
@@ -212,15 +227,13 @@ func (s *Server) SetDefaults() {
 
 // ServerHealthCheck holds the HealthCheck configuration.
 type ServerHealthCheck struct {
-	Scheme string `json:"scheme,omitempty" toml:"scheme,omitempty" yaml:"scheme,omitempty" export:"true"`
-	Mode   string `json:"mode,omitempty" toml:"mode,omitempty" yaml:"mode,omitempty" export:"true"`
-	Path   string `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
-	Method string `json:"method,omitempty" toml:"method,omitempty" yaml:"method,omitempty" export:"true"`
-	Port   int    `json:"port,omitempty" toml:"port,omitempty,omitzero" yaml:"port,omitempty" export:"true"`
-	// TODO change string to ptypes.Duration
-	Interval string `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty" export:"true"`
-	// TODO change string to ptypes.Duration
-	Timeout         string            `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
+	Scheme          string            `json:"scheme,omitempty" toml:"scheme,omitempty" yaml:"scheme,omitempty" export:"true"`
+	Mode            string            `json:"mode,omitempty" toml:"mode,omitempty" yaml:"mode,omitempty" export:"true"`
+	Path            string            `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
+	Method          string            `json:"method,omitempty" toml:"method,omitempty" yaml:"method,omitempty" export:"true"`
+	Port            int               `json:"port,omitempty" toml:"port,omitempty,omitzero" yaml:"port,omitempty" export:"true"`
+	Interval        ptypes.Duration   `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty" export:"true"`
+	Timeout         ptypes.Duration   `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
 	Hostname        string            `json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
 	FollowRedirects *bool             `json:"followRedirects" toml:"followRedirects" yaml:"followRedirects" export:"true"`
 	Headers         map[string]string `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
@@ -231,6 +244,8 @@ func (h *ServerHealthCheck) SetDefaults() {
 	fr := true
 	h.FollowRedirects = &fr
 	h.Mode = "http"
+	h.Interval = DefaultHealthCheckInterval
+	h.Timeout = DefaultHealthCheckTimeout
 }
 
 // +k8s:deepcopy-gen=true
