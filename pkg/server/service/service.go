@@ -304,6 +304,8 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		}
 
 		lb.AddService(proxyName, proxy, nil)
+		// Server are considered UP by default
+		info.UpdateServerStatus(target.String(), runtime.StatusUp)
 		healthCheckTargets[proxyName] = target
 	}
 

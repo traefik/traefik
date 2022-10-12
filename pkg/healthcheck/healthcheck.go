@@ -22,11 +22,6 @@ import (
 
 const modeGRPC = "grpc"
 
-const (
-	statusUp   = "UP"
-	statusDown = "DOWN"
-)
-
 // StatusSetter should be implemented by a service that, when the status of a
 // registered target change, needs to be notified of that change.
 type StatusSetter interface {
@@ -131,9 +126,9 @@ func (shc *ServiceHealthChecker) Launch(ctx context.Context) {
 
 				shc.balancer.SetStatus(ctx, proxyName, up)
 
-				statusStr := statusDown
+				statusStr := runtime.StatusDown
 				if up {
-					statusStr = statusUp
+					statusStr = runtime.StatusUp
 				}
 
 				shc.info.UpdateServerStatus(target.String(), statusStr)

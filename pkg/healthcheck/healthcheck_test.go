@@ -261,7 +261,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			expNumRemovedServers:  0,
 			expNumUpsertedServers: 1,
 			expGaugeValue:         1,
-			targetStatus:          statusUp,
+			targetStatus:          runtime.StatusUp,
 		},
 		{
 			desc:                  "healthy server staying healthy (StatusNoContent)",
@@ -269,7 +269,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			expNumRemovedServers:  0,
 			expNumUpsertedServers: 1,
 			expGaugeValue:         1,
-			targetStatus:          statusUp,
+			targetStatus:          runtime.StatusUp,
 		},
 		{
 			desc:                  "healthy server staying healthy (StatusPermanentRedirect)",
@@ -277,7 +277,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			expNumRemovedServers:  0,
 			expNumUpsertedServers: 1,
 			expGaugeValue:         1,
-			targetStatus:          statusUp,
+			targetStatus:          runtime.StatusUp,
 		},
 		{
 			desc:                  "healthy server becoming sick",
@@ -285,7 +285,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			expNumRemovedServers:  1,
 			expNumUpsertedServers: 0,
 			expGaugeValue:         0,
-			targetStatus:          statusDown,
+			targetStatus:          runtime.StatusDown,
 		},
 		{
 			desc:                  "healthy server toggling to sick and back to healthy",
@@ -293,7 +293,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			expNumRemovedServers:  1,
 			expNumUpsertedServers: 1,
 			expGaugeValue:         1,
-			targetStatus:          statusUp,
+			targetStatus:          runtime.StatusUp,
 		},
 		{
 			desc:                  "healthy server toggling to healthy and go to sick",
@@ -301,7 +301,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			expNumRemovedServers:  1,
 			expNumUpsertedServers: 1,
 			expGaugeValue:         0,
-			targetStatus:          statusDown,
+			targetStatus:          runtime.StatusDown,
 		},
 		{
 			desc:                  "healthy grpc server staying healthy",
@@ -310,7 +310,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			expNumRemovedServers:  0,
 			expNumUpsertedServers: 1,
 			expGaugeValue:         1,
-			targetStatus:          statusUp,
+			targetStatus:          runtime.StatusUp,
 		},
 		{
 			desc:                  "healthy grpc server becoming sick",
@@ -319,7 +319,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			expNumRemovedServers:  1,
 			expNumUpsertedServers: 0,
 			expGaugeValue:         0,
-			targetStatus:          statusDown,
+			targetStatus:          runtime.StatusDown,
 		},
 		{
 			desc:                  "healthy grpc server toggling to sick and back to healthy",
@@ -328,7 +328,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			expNumRemovedServers:  1,
 			expNumUpsertedServers: 1,
 			expGaugeValue:         1,
-			targetStatus:          statusUp,
+			targetStatus:          runtime.StatusUp,
 		},
 	}
 
