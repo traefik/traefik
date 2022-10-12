@@ -62,8 +62,8 @@ http:
           path: foobar
           method: foobar
           port: 42
-          interval: foobar
-          timeout: foobar
+          interval: 42s
+          timeout: 42s
           hostname: foobar
           followRedirects: true
           headers:
@@ -71,7 +71,7 @@ http:
             name1: foobar
         passHostHeader: true
         responseForwarding:
-          flushInterval: foobar
+          flushInterval: 42s
         serversTransport: foobar
     Service02:
       mirroring:
