@@ -15,6 +15,12 @@ const (
 	StatusWarning  = "warning"
 )
 
+// Status of the servers.
+const (
+	StatusUp   = "UP"
+	StatusDown = "DOWN"
+)
+
 // Configuration holds the information about the currently running traefik instance.
 type Configuration struct {
 	Routers        map[string]*RouterInfo        `json:"routers,omitempty"`
