@@ -4,7 +4,6 @@ import (
 	"container/heap"
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"sync"
 
@@ -48,10 +47,10 @@ type Balancer struct {
 }
 
 // New creates a new load balancer.
-func New(sticky *dynamic.Sticky, hc *dynamic.HealthCheck) *Balancer {
+func New(sticky *dynamic.Sticky, wantHealthCheck bool) *Balancer {
 	balancer := &Balancer{
 		status:           make(map[string]struct{}),
-		wantsHealthCheck: hc != nil,
+		wantsHealthCheck: wantHealthCheck,
 	}
 	if sticky != nil && sticky.Cookie != nil {
 		balancer.stickyCookie = &stickyCookie{
@@ -150,10 +149,7 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
-	if len(b.handlers) == 0 {
-		return nil, fmt.Errorf("no servers in the pool")
-	}
-	if len(b.status) == 0 {
+	if len(b.handlers) == 0 || len(b.status) == 0 {
 		return nil, errNoAvailableServer
 	}
 
