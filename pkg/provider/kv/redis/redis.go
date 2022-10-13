@@ -30,7 +30,7 @@ func (p *Provider) SetDefaults() {
 
 // Init the provider.
 func (p *Provider) Init() error {
-	config := redis.Config{
+	config := &redis.Config{
 		Username: p.Username,
 		Password: p.Password,
 		DB:       p.DB,
