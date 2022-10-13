@@ -16,10 +16,10 @@ PassTLSClientCert adds the selected data from the passed client TLS certificate 
 
 ## Configuration Examples
 
-Pass the escaped pem in the `X-Forwarded-Tls-Client-Cert` header.
+Pass the pem in the `X-Forwarded-Tls-Client-Cert` header.
 
 ```yaml tab="Docker"
-# Pass the escaped pem in the `X-Forwarded-Tls-Client-Cert` header.
+# Pass the pem in the `X-Forwarded-Tls-Client-Cert` header.
 labels:
   - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.pem=true"
 ```
@@ -35,7 +35,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-# Pass the escaped pem in the `X-Forwarded-Tls-Client-Cert` header
+# Pass the pem in the `X-Forwarded-Tls-Client-Cert` header
 - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.pem=true"
 ```
 
@@ -46,13 +46,13 @@ spec:
 ```
 
 ```yaml tab="Rancher"
-# Pass the escaped pem in the `X-Forwarded-Tls-Client-Cert` header.
+# Pass the pem in the `X-Forwarded-Tls-Client-Cert` header.
 labels:
   - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.pem=true"
 ```
 
 ```yaml tab="File (YAML)"
-# Pass the escaped pem in the `X-Forwarded-Tls-Client-Cert` header.
+# Pass the pem in the `X-Forwarded-Tls-Client-Cert` header.
 http:
   middlewares:
     test-passtlsclientcert:
@@ -61,13 +61,13 @@ http:
 ```
 
 ```toml tab="File (TOML)"
-# Pass the escaped pem in the `X-Forwarded-Tls-Client-Cert` header.
+# Pass the pem in the `X-Forwarded-Tls-Client-Cert` header.
 [http.middlewares]
   [http.middlewares.test-passtlsclientcert.passTLSClientCert]
     pem = true
 ```
 
-??? example "Pass the escaped pem in the `X-Forwarded-Tls-Client-Cert` header"
+??? example "Pass the pem in the `X-Forwarded-Tls-Client-Cert` header"
 
     ```yaml tab="Docker"
     # Pass all the available info in the `X-Forwarded-Tls-Client-Cert-Info` header
@@ -254,12 +254,12 @@ http:
 
 PassTLSClientCert can add two headers to the request:
 
-- `X-Forwarded-Tls-Client-Cert` that contains the escaped pem.
+- `X-Forwarded-Tls-Client-Cert` that contains the pem.
 - `X-Forwarded-Tls-Client-Cert-Info` that contains all the selected certificate information in an escaped string.
 
 !!! info
 
-    * Each header value is a string that has been escaped in order to be a valid URL query.
+    * `X-Forwarded-Tls-Client-Cert-Info` header value is a string that has been escaped in order to be a valid URL query.
     * These options only work accordingly to the [MutualTLS configuration](../../https/tls.md#client-authentication-mtls).
     That is to say, only the certificates that match the `clientAuth.clientAuthType` policy are passed.
 
@@ -371,7 +371,7 @@ The following example shows a complete certificate and explains each of the midd
 
 ### `pem`
 
-The `pem` option sets the `X-Forwarded-Tls-Client-Cert` header with the escaped certificate.
+The `pem` option sets the `X-Forwarded-Tls-Client-Cert` header with the certificate.
 
 In the example, it is the part between `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----` delimiters:
 
