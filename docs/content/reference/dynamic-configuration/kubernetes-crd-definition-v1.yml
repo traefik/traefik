@@ -918,6 +918,12 @@ spec:
                   This middleware delegates the request authentication to a Service.
                   More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/forwardauth/'
                 properties:
+                  addAuthCookiesToResponse:
+                    description: AddAuthCookiesToResponse defines the list of cookies
+                      to copy from the authentication server response to the response.
+                    items:
+                      type: string
+                    type: array
                   address:
                     description: Address defines the authentication server address.
                     type: string
