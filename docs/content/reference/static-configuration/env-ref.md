@@ -984,8 +984,17 @@ If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, D
 `TRAEFIK_SERVERSTRANSPORT_ROOTCAS`:  
 Add cert file for self-signed certificate.
 
+`TRAEFIK_SERVERSTRANSPORT_SPIFFE`:  
+Defines the SPIFFE configuration. (Default: ```false```)
+
+`TRAEFIK_SERVERSTRANSPORT_SPIFFE_IDS`:  
+Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
+
+`TRAEFIK_SERVERSTRANSPORT_SPIFFE_TRUSTDOMAIN`:  
+Defines the allowed SPIFFE trust domain.
+
 `TRAEFIK_SPIFFE_WORKLOADAPIADDR`:  
-Address of the SPIFFE workload API to use.
+Defines the workload API address.
 
 `TRAEFIK_TRACING`:  
 OpenTracing configuration. (Default: ```false```)
