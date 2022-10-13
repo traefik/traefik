@@ -217,7 +217,12 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	req.RequestURI = req.URL.RequestURI()
-	fa.next.ServeHTTP(headers.NewResponseModifier(rw, req, cac.PostRequestModifyResponseHeaders), req)
+	switch len(cac.authResponseCookieHeaders) {
+	case 0:
+		fa.next.ServeHTTP(rw, req)
+	default:
+		fa.next.ServeHTTP(headers.NewResponseModifier(rw, req, cac.PostRequestModifyResponseHeaders), req)
+	}
 }
 
 func (c *copyAuthCookies) PostRequestModifyResponseHeaders(res *http.Response) error {
