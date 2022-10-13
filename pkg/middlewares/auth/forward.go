@@ -226,22 +226,21 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (c *copyAuthCookies) PostRequestModifyResponseHeaders(res *http.Response) error {
-	if len(c.authResponseCookieHeaders) > 0 {
-		setCookieHeaders := res.Header["Set-Cookie"]
-		res.Header.Del("Set-Cookie")
+	setCookieHeaders := res.Header["Set-Cookie"]
+	res.Header.Del("Set-Cookie")
 
-		for _, setCookieString := range setCookieHeaders {
-			cookieName := getCookieName(setCookieString)
-			// only add, if not in forward auth response
-			if cookieName != "" && c.authResponseCookieHeaders[cookieName] == "" {
-				res.Header.Add("Set-Cookie", setCookieString)
-			}
-		}
-
-		for _, setCookieString := range c.authResponseCookieHeaders {
+	for _, setCookieString := range setCookieHeaders {
+		cookieName := getCookieName(setCookieString)
+		// only add, if not in forward auth response
+		if cookieName != "" && c.authResponseCookieHeaders[cookieName] == "" {
 			res.Header.Add("Set-Cookie", setCookieString)
 		}
 	}
+
+	for _, setCookieString := range c.authResponseCookieHeaders {
+		res.Header.Add("Set-Cookie", setCookieString)
+	}
+
 	return nil
 }
 
