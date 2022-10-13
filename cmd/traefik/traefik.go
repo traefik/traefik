@@ -259,9 +259,8 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	// Service manager factory
 
 	var spiffeX509Source *workloadapi.X509Source
-
 	if staticConfiguration.Spiffe != nil && staticConfiguration.Spiffe.WorkloadAPIAddr != "" {
-		log.WithoutContext().Infof("Listening for spiffe certificates at address %q. Traefik will wait for the first SVID to be delivered before starting. If Traefik is hanging here, please double check that it is correctly registered as workload in your SPIFFE infrastructure.", staticConfiguration.Spiffe.WorkloadAPIAddr)
+		log.WithoutContext().Infof("Listening for SPIFFE certificates at address %q. Traefik will wait for the first SVID to be delivered before starting. If Traefik is hanging here, please double check that it is correctly registered as workload in your SPIFFE infrastructure.", staticConfiguration.Spiffe.WorkloadAPIAddr)
 
 		spiffeX509Source, err = workloadapi.NewX509Source(
 			ctx,
@@ -272,7 +271,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 			),
 		)
 		if err != nil {
-			return nil, fmt.Errorf("unable to create spiffe x509 source: %w", err)
+			return nil, fmt.Errorf("unable to create SPIFFE x509 source: %w", err)
 		}
 
 		log.WithoutContext().Info("Successfully obtained SPIFFE SVID.")
