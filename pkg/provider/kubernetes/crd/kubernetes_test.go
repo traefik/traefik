@@ -3915,13 +3915,14 @@ func TestLoadIngressRoutes(t *testing.T) {
 								ReadIdleTimeout:       ptypes.Duration(42 * time.Second),
 								PingTimeout:           ptypes.Duration(42 * time.Second),
 							},
-							PeerCertURI:      "foo://bar",
-							EnableSpiffeMTLS: true,
-							ServerSpiffeIDs: []string{
-								"spiffe://foo/buz",
-								"spiffe://bar/biz",
+							PeerCertURI: "foo://bar",
+							Spiffe: &dynamic.Spiffe{
+								IDs: []string{
+									"spiffe://foo/buz",
+									"spiffe://bar/biz",
+								},
+								TrustDomain: "spiffe://lol",
 							},
-							ServerSpiffeTrustDomain: "spiffe://lol",
 						},
 						"default-test": {
 							ServerName: "test",
