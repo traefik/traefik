@@ -49,10 +49,6 @@ spec:
                 description: DisableHTTP2 disables HTTP/2 for connections with backend
                   servers.
                 type: boolean
-              enableSpiffeMTLS:
-                description: EnableSpiffeMTLS turns on MTLS using spiffe for this
-                  transport.
-                type: boolean
               forwardingTimeouts:
                 description: ForwardingTimeouts defines the timeouts for requests
                   forwarded to the backend servers.
@@ -117,16 +113,19 @@ spec:
                 description: ServerName defines the server name used to contact the
                   server.
                 type: string
-              serverSpiffeIDs:
-                description: ServerSpiffeIDs lists all allowed server SpiffeIDs. Takes
-                  precedences over ServerSpiffeTrustDomain.
-                items:
-                  type: string
-                type: array
-              serverSpiffeTrustDomain:
-                description: ServerSpiffeTrustDomain specifies an allowed Spiffe trust
-                  domain for the server.
-                type: string
+              spiffe:
+                description: Spiffe defines the SPIFFE configuration.
+                properties:
+                  ids:
+                    description: IDs defines the allowed SPIFFE IDs (takes precedences
+                      over the SPIFFE TrustDomain).
+                    items:
+                      type: string
+                    type: array
+                  trustDomain:
+                    description: TrustDomain defines the allowed SPIFFE trust domain.
+                    type: string
+                type: object
             type: object
         required:
         - metadata
