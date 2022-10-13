@@ -284,87 +284,74 @@ func TestSpiffeMTLS(t *testing.T) {
 
 	testCases := []struct {
 		desc             string
-		config           dynamic.ServersTransport
+		config           dynamic.Spiffe
 		clientSource     SpiffeX509Source
 		wantStatusCode   int
 		wantErrorMessage string
 	}{
 		{
-			desc: "supports SPIFFE mTLS",
-			config: dynamic.ServersTransport{
-				EnableSpiffeMTLS: true,
-			},
+			desc:           "supports SPIFFE mTLS",
+			config:         dynamic.Spiffe{},
 			clientSource:   &clientSource,
 			wantStatusCode: http.StatusOK,
 		},
 		{
 			desc: "allows expected server SPIFFE ID",
-			config: dynamic.ServersTransport{
-				EnableSpiffeMTLS: true,
-				ServerSpiffeIDs: []string{
-					"spiffe://traefik.test/server",
-				},
+			config: dynamic.Spiffe{
+				IDs: []string{"spiffe://traefik.test/server"},
 			},
 			clientSource:   &clientSource,
 			wantStatusCode: http.StatusOK,
 		},
 		{
 			desc: "blocks unexpected server SPIFFE ID",
-			config: dynamic.ServersTransport{
-				EnableSpiffeMTLS: true,
-				ServerSpiffeIDs: []string{
-					"spiffe://traefik.test/not-server",
-				},
+			config: dynamic.Spiffe{
+				IDs: []string{"spiffe://traefik.test/not-server"},
 			},
 			clientSource:     &clientSource,
 			wantErrorMessage: `unexpected ID "spiffe://traefik.test/server"`,
 		},
 		{
 			desc: "allows expected server trust domain",
-			config: dynamic.ServersTransport{
-				EnableSpiffeMTLS:        true,
-				ServerSpiffeTrustDomain: "spiffe://traefik.test",
+			config: dynamic.Spiffe{
+				TrustDomain: "spiffe://traefik.test",
 			},
 			clientSource:   &clientSource,
 			wantStatusCode: http.StatusOK,
 		},
 		{
 			desc: "denies unexpected server trust domain",
-			config: dynamic.ServersTransport{
-				EnableSpiffeMTLS:        true,
-				ServerSpiffeTrustDomain: "spiffe://not-traefik.test",
+			config: dynamic.Spiffe{
+				TrustDomain: "spiffe://not-traefik.test",
 			},
 			clientSource:     &clientSource,
 			wantErrorMessage: `unexpected trust domain "traefik.test"`,
 		},
 		{
 			desc: "spiffe IDs allowlist takes precedence",
-			config: dynamic.ServersTransport{
-				EnableSpiffeMTLS: true,
-				ServerSpiffeIDs: []string{
-					"spiffe://traefik.test/not-server",
-				},
-				ServerSpiffeTrustDomain: "spiffe://traefik.test",
+			config: dynamic.Spiffe{
+				IDs:         []string{"spiffe://traefik.test/not-server"},
+				TrustDomain: "spiffe://not-traefik.test",
 			},
 			clientSource:     &clientSource,
 			wantErrorMessage: `unexpected ID "spiffe://traefik.test/server"`,
 		},
 		{
-			desc: "raises an error when spiffe is enabled on the transport but no workloadapi address is given",
-			config: dynamic.ServersTransport{
-				EnableSpiffeMTLS: true,
-			},
+			desc:             "raises an error when spiffe is enabled on the transport but no workloadapi address is given",
+			config:           dynamic.Spiffe{},
 			clientSource:     nil,
 			wantErrorMessage: `remote error: tls: bad certificate`,
 		},
 	}
 
-	for _, testCase := range testCases {
-		t.Run(testCase.desc, func(t *testing.T) {
-			rtManager := NewRoundTripperManager(testCase.clientSource)
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			rtManager := NewRoundTripperManager(test.clientSource)
 
 			dynamicConf := map[string]*dynamic.ServersTransport{
-				"test": &testCase.config,
+				"test": {
+					Spiffe: &test.config,
+				},
 			}
 
 			rtManager.Update(dynamicConf)
@@ -375,13 +362,13 @@ func TestSpiffeMTLS(t *testing.T) {
 			client := http.Client{Transport: tr}
 
 			resp, err := client.Get(srv.URL)
-			if testCase.wantErrorMessage != "" {
-				assert.ErrorContains(t, err, testCase.wantErrorMessage)
+			if test.wantErrorMessage != "" {
+				assert.ErrorContains(t, err, test.wantErrorMessage)
 				return
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, testCase.wantStatusCode, resp.StatusCode)
+			assert.Equal(t, test.wantStatusCode, resp.StatusCode)
 		})
 	}
 }
