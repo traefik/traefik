@@ -1679,6 +1679,19 @@ spec:
                 description: ServerName defines the server name used to contact the
                   server.
                 type: string
+              spiffe:
+                description: Spiffe defines the SPIFFE configuration.
+                properties:
+                  ids:
+                    description: IDs defines the allowed SPIFFE IDs (takes precedences
+                      over the SPIFFE TrustDomain).
+                    items:
+                      type: string
+                    type: array
+                  trustDomain:
+                    description: TrustDomain defines the allowed SPIFFE trust domain.
+                    type: string
+                type: object
             type: object
         required:
         - metadata

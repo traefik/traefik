@@ -325,6 +325,61 @@ serversTransport:
 --serversTransport.maxIdleConnsPerHost=7
 ```
 
+### `spiffe`
+
+Please note that [SPIFFE](../https/spiffe.md) must be enabled in the static configuration 
+before using it to secure the connection between Traefik and the backends.  
+
+#### `spiffe.ids`
+
+_Optional_
+
+`ids` defines the allowed SPIFFE IDs.
+This takes precedence over the SPIFFE TrustDomain.
+
+```yaml tab="File (YAML)"
+## Static configuration
+serversTransport:
+    spiffe:
+      ids:
+        - spiffe://trust-domain/id1
+        - spiffe://trust-domain/id2
+```
+
+```toml tab="File (TOML)"
+## Static configuration
+[serversTransport.spiffe]
+  ids = ["spiffe://trust-domain/id1", "spiffe://trust-domain/id2"]
+```
+
+```bash tab="CLI"
+## Static configuration
+--serversTransport.spiffe.ids=spiffe://trust-domain/id1",spiffe://trust-domain/id2
+```
+
+#### `spiffe.trustDomain`
+
+_Optional_
+
+`trustDomain` defines the allowed SPIFFE trust domain.
+
+```yaml tab="File (YAML)"
+## Static configuration
+serversTransport:
+  trustDomain: spiffe://trust-domain
+```
+
+```toml tab="File (TOML)"
+## Static configuration
+[serversTransport.spiffe]
+  trustDomain = "spiffe://trust-domain"
+```
+
+```bash tab="CLI"
+## Static configuration
+--serversTransport.spiffe.trustDomain=spiffe://trust-domain
+```
+
 ### `forwardingTimeouts`
 
 `forwardingTimeouts` is about a number of timeouts relevant to when forwarding requests to the backend servers.
