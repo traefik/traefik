@@ -95,7 +95,7 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	<-errChan
 }
 
-func (p Proxy) dialBackend() (*net.TCPConn, error) {
+func (p Proxy) dialBackend() (WriteCloser, error) {
 	var addr string
 	if p.tcpAddr != nil { // Dial using directly the TCPAddr for IP based addresses.
 		addr = p.tcpAddr.String()
@@ -109,7 +109,7 @@ func (p Proxy) dialBackend() (*net.TCPConn, error) {
 		return nil, err
 	}
 
-	return conn.(*net.TCPConn), nil
+	return conn.(WriteCloser), nil
 }
 
 func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
