@@ -12,7 +12,7 @@ Secure the backend connection with SPIFFE.
 provides a secure identity in the form of a specially crafted X.509 certificate, 
 to every workload in an environment.
 
-Traefik is able to connect to the Workload API to obtain its SPIFFE ID used to secure the connection with SPIFFE enabled backends.
+Traefik is able to connect to the Workload API to obtain an x509-SVID used to secure the connection with SPIFFE enabled backends.
 
 ## Workload API
 
