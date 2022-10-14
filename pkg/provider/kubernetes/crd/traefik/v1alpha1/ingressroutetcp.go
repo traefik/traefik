@@ -78,6 +78,10 @@ type ServiceTCP struct {
 	// ProxyProtocol defines the PROXY protocol configuration.
 	// More info: https://doc.traefik.io/traefik/v2.9/routing/services/#proxy-protocol
 	ProxyProtocol *dynamic.ProxyProtocol `json:"proxyProtocol,omitempty"`
+	// ServersTransport defines the name of ServersTransport resource to use.
+	// It allows to configure the transport between Traefik and your servers.
+	// Can only be used on a Kubernetes Service.
+	ServersTransport string `json:"serversTransport,omitempty"`
 }
 
 // +genclient

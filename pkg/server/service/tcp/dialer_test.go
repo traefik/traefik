@@ -5,16 +5,13 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"io"
 	"net"
 	"testing"
-	"time"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 )
 
 // LocalhostCert is a PEM-encoded TLS cert
@@ -109,12 +106,10 @@ PtvuNc5EImfSkuPBYLBslNxtjbBvAYgacEdY+gRhn2TeIUApnND58lCWsKbNHLFZ
 ajIPbTY+Fe9OTOFTN48ujXNn
 -----END PRIVATE KEY-----`)
 
-func fakeRedis(t *testing.T, listener net.Listener, wait time.Duration) {
+func fakeRedis(t *testing.T, listener net.Listener) {
 	t.Helper()
 
 	for {
-		time.Sleep(wait)
-
 		conn, err := listener.Accept()
 		fmt.Println("Accept on server")
 		require.NoError(t, err)
@@ -151,7 +146,7 @@ func TestTLS(t *testing.T) {
 	tlsListener := tls.NewListener(backendListener, &tls.Config{Certificates: []tls.Certificate{cert}})
 	defer tlsListener.Close()
 
-	go fakeRedis(t, tlsListener, 1*time.Millisecond)
+	go fakeRedis(t, tlsListener)
 	_, port, err := net.SplitHostPort(tlsListener.Addr().String())
 	require.NoError(t, err)
 
@@ -181,7 +176,6 @@ func TestTLS(t *testing.T) {
 	var buf []byte
 	buffer := bytes.NewBuffer(buf)
 	n, err := io.Copy(buffer, conn)
-	fmt.Println(buffer.String())
 	require.NoError(t, err)
 
 	assert.Equal(t, int64(4), n)
@@ -198,7 +192,7 @@ func TestTLSWithInsecureSkipVerify(t *testing.T) {
 	tlsListener := tls.NewListener(backendListener, &tls.Config{Certificates: []tls.Certificate{cert}})
 	defer tlsListener.Close()
 
-	go fakeRedis(t, tlsListener, 1*time.Millisecond)
+	go fakeRedis(t, tlsListener)
 	_, port, err := net.SplitHostPort(tlsListener.Addr().String())
 	require.NoError(t, err)
 
@@ -229,7 +223,6 @@ func TestTLSWithInsecureSkipVerify(t *testing.T) {
 	var buf []byte
 	buffer := bytes.NewBuffer(buf)
 	n, err := io.Copy(buffer, conn)
-	fmt.Println(buffer.String())
 	require.NoError(t, err)
 
 	assert.Equal(t, int64(4), n)
@@ -256,7 +249,7 @@ func TestMTLS(t *testing.T) {
 	})
 	defer tlsListener.Close()
 
-	go fakeRedis(t, tlsListener, 1*time.Millisecond)
+	go fakeRedis(t, tlsListener)
 	_, port, err := net.SplitHostPort(tlsListener.Addr().String())
 	require.NoError(t, err)
 
@@ -295,36 +288,8 @@ func TestMTLS(t *testing.T) {
 	var buf []byte
 	buffer := bytes.NewBuffer(buf)
 	n, err := io.Copy(buffer, conn)
-	fmt.Println(buffer.String())
 	require.NoError(t, err)
 
 	assert.Equal(t, int64(4), n)
 	assert.Equal(t, "PONG", buffer.String())
-}
-
-func TestDialTimeout(t *testing.T) { // FIXME
-	backendListener, err := net.Listen("tcp", ":0")
-	require.NoError(t, err)
-
-	defer backendListener.Close()
-
-	go fakeRedis(t, backendListener, 10*time.Second)
-	_, port, err := net.SplitHostPort(backendListener.Addr().String())
-	require.NoError(t, err)
-
-	dialerManager := NewDialerManager()
-
-	dynamicConf := map[string]*dynamic.TCPServersTransport{
-		"test": {
-			DialTimeout: ptypes.Duration(1 * time.Millisecond),
-		},
-	}
-
-	dialerManager.Update(dynamicConf)
-
-	dialer, err := dialerManager.Get("test")
-	require.NoError(t, err)
-
-	_, err = dialer.Dial("tcp", ":"+port)
-	require.Error(t, err)
 }
