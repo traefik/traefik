@@ -14,10 +14,24 @@ to every workload in an environment.
 
 Traefik is able to connect to the Workload API to obtain an x509-SVID used to secure the connection with SPIFFE enabled backends.
 
-## Workload API
+When using SPIFFE,
+Traefik will wait for the first SVID to be delivered before starting.
+If Traefik is hanging when waiting on SPIFFE SVID delivery,
+please double check that it is correctly registered as workload in your SPIFFE infrastructure.
 
-To connect to the SPIFFE [Workload API](https://spiffe.io/docs/latest/spiffe-about/spiffe-concepts/#spiffe-workload-api),
-its address have to be configured in the static configuration.
+## Configuration
+
+### General
+
+Enabling SPIFFE is part of the [static configuration](../getting-started/configuration-overview.md#the-static-configuration).
+It can be defined by using a file (YAML or TOML) or CLI arguments.
+It is mandatory to define this configuration to [use SPIFFE](../routing/overview.md#spiffe) to provide identity to every workload in your environment.
+
+See the complete reference for the SPIFFE configuration options below.
+
+### Workload API
+
+The `workloadAPIAddr` configuration defines the address of the SPIFFE [Workload API](https://spiffe.io/docs/latest/spiffe-about/spiffe-concepts/#spiffe-workload-api).
 
 !!! info "Enabling SPIFFE in ServersTransports"
 
