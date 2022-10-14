@@ -182,35 +182,14 @@
   ]
  [[issues.exclude-rules]]
     path = "(.+)_test.go"
-    linters = ["goconst", "funlen", "godot", "nosnakecase"]
+    linters = ["goconst", "funlen", "godot"]
  [[issues.exclude-rules]]
     path = "(.+)_test.go"
     text = " always receives "
     linters = [ "unparam" ]
  [[issues.exclude-rules]]
-    path = "integration/.+_test.go"
-    text = "Error return value of `cmd\\.Process\\.Kill` is not checked"
- [[issues.exclude-rules]]
-    path = "integration/(consul_catalog_test|constraint_test).go"
-    text = "Error return value of `(s.deregisterService|s.deregisterAgentService)` is not checked"
- [[issues.exclude-rules]]
-    path = "integration/grpc_test.go"
-    text = "Error return value of `closer` is not checked"
- [[issues.exclude-rules]]
-    path = "pkg/h2c/h2c.go"
-    text = "Error return value of `rw.Write` is not checked"
- [[issues.exclude-rules]]
-    path = "pkg/provider/docker/builder_test.go"
-    text = "(U1000: func )?`(.+)` is unused"
- [[issues.exclude-rules]]
-    path = "pkg/provider/kubernetes/builder_(endpoint|service)_test.go"
-    text = "(U1000: func )?`(.+)` is unused"
- [[issues.exclude-rules]]
     path = "pkg/server/service/bufferpool.go"
     text = "SA6002: argument should be pointer-like to avoid allocations"
- [[issues.exclude-rules]]
-    path = "cmd/configuration.go"
-    text = "string `traefik` has (\\d) occurrences, make it a constant"
  [[issues.exclude-rules]]
     path = "pkg/server/middleware/middlewares.go"
     text = "Function 'buildConstructor' has too many statements"
@@ -220,9 +199,6 @@
  [[issues.exclude-rules]]
     path = "pkg/tracing/tracing.go"
     text = "printf-like formatting function 'SetErrorWithEvent' should be named 'SetErrorWithEventf'"
- [[issues.exclude-rules]]
-    path = "pkg/log/deprecated.go"
-    linters = ["godot"]
  [[issues.exclude-rules]]
     path = "(.+)\\.go"
     text = "struct-tag: unknown option 'inline' in JSON tag"
@@ -241,13 +217,3 @@
  [[issues.exclude-rules]]
     path = "pkg/metrics/metrics.go"
     linters = ["interfacebloat"]
- [[issues.exclude-rules]]
-    path = "pkg/provider/acme/provider.go"
-    text = "\\(\\*Provider\\)\\.resolveCertificate - result 0 \\(\\*github.com/go-acme/lego/v4/certificate.Resource\\) is never used"
- [[issues.exclude-rules]]
-    path = "integration/healthcheck_test.go"
-    text = "Duplicate words \\(wsp2,\\) found"
- [[issues.exclude-rules]]
-    path = "pkg/types/domain_test.go"
-    text = "Duplicate words \\(sub\\) found"
-
