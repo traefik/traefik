@@ -996,6 +996,18 @@ Defines the allowed SPIFFE trust domain.
 `TRAEFIK_SPIFFE_WORKLOADAPIADDR`:  
 Defines the workload API address.
 
+`TRAEFIK_TCPSERVERSTRANSPORT_DIALKEEPALIVE`:  
+The interval between keep-alive probes for an active network connection. If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled (Default: ```15```)
+
+`TRAEFIK_TCPSERVERSTRANSPORT_DIALTIMEOUT`:  
+The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
+
+`TRAEFIK_TCPSERVERSTRANSPORT_INSECURESKIPVERIFY`:  
+Disable SSL certificate verification. (Default: ```false```)
+
+`TRAEFIK_TCPSERVERSTRANSPORT_ROOTCAS`:  
+Add cert file for self-signed certificate.
+
 `TRAEFIK_TRACING`:  
 OpenTracing configuration. (Default: ```false```)
 
