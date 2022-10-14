@@ -1142,6 +1142,11 @@ func (in *ServersTransportSpec) DeepCopyInto(out *ServersTransportSpec) {
 		*out = new(ForwardingTimeouts)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.Spiffe != nil {
+		in, out := &in.Spiffe, &out.Spiffe
+		*out = new(dynamic.Spiffe)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
