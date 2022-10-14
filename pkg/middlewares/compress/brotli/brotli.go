@@ -8,7 +8,7 @@ import (
 	"github.com/andybalholm/brotli"
 )
 
-// DefaultMinSize is the default minimum size until we enable gzip compression.
+// DefaultMinSize is the default minimum size until we enable brotli compression.
 // 1500 bytes is the MTU size for the internet since that is the largest size allowed at the network layer.
 // If you take a file that is 1300 bytes and compress it to 800 bytes, it’s still transmitted in that same 1500 byte packet regardless, so you’ve gained nothing.
 // That being the case, you should restrict the gzip compression to files with a size (plus header) greater than a single packet,
@@ -88,16 +88,6 @@ func NewMiddleware(opts ...option) func(http.Handler) http.HandlerFunc {
 
 	return func(h http.Handler) http.HandlerFunc {
 		return func(rw http.ResponseWriter, r *http.Request) {
-			if r.Method == http.MethodHead {
-				h.ServeHTTP(rw, r)
-				return
-			}
-
-			if !acceptsBr(r.Header.Get("Accept-Encoding")) {
-				h.ServeHTTP(rw, r)
-				return
-			}
-
 			rw.Header().Add("Vary", "Accept-Encoding")
 			rw.Header().Set("Content-Encoding", "br")
 			bw := &bWriter{
@@ -119,15 +109,7 @@ func NewMiddleware(opts ...option) func(http.Handler) http.HandlerFunc {
 	}
 }
 
-// acceptsBr is a naive method of checking if "br" was set as an accepted encoding.
-func acceptsBr(acceptEncoding string) bool {
-	for _, v := range strings.Split(acceptEncoding, ",") {
-		for i, e := range strings.Split(strings.TrimSpace(v), ";") {
-			if i == 0 && (e == "br" || e == "*") {
-				return true
-			}
-		}
-	}
-
-	return false
+// AcceptsBr is a naive method to check whether brotli is an accepted encoding.
+func AcceptsBr(acceptEncoding string) bool {
+	return strings.Contains(acceptEncoding, "*") || strings.Contains(acceptEncoding, "br")
 }
