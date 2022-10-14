@@ -3,6 +3,7 @@ package brotli
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/andybalholm/brotli"
@@ -249,7 +250,36 @@ func TestAcceptsBr(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			assert.Equal(t, testCase.accepted, acceptsBr(testCase.encoding))
+			assert.Equal(t, testCase.accepted, AcceptsBr(testCase.encoding))
 		})
 	}
+}
+
+func BenchmarkAcceptsBr(b *testing.B) {
+
+	b.Run("AcceptBR", func(b *testing.B) {
+		b.ReportAllocs()
+		AcceptsBr("gzip;q=0.8, *;q=0.1")
+	})
+
+	b.Run("AcceptBR 2", func(b *testing.B) {
+		b.ReportAllocs()
+		AcceptsBr("gzip;q=0.8, br;q=0.1")
+	})
+
+	b.Run("Contains", func(b *testing.B) {
+		b.ReportAllocs()
+		if strings.Contains("gzip;q=0.8, *;q=0.1", "*") ||
+			strings.Contains("gzip;q=0.8, *;q=0.1", "br") {
+
+		}
+	})
+
+	b.Run("Contains 2", func(b *testing.B) {
+		b.ReportAllocs()
+		if strings.Contains("gzip;q=0.8, br;q=0.1", "*") ||
+			strings.Contains("gzip;q=0.8, br;q=0.1", "br") {
+
+		}
+	})
 }

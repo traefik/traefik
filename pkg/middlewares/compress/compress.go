@@ -5,10 +5,10 @@ import (
 	"context"
 	"mime"
 	"net/http"
+	"strings"
 
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/opentracing/opentracing-go/ext"
-	accept "github.com/timewasted/go-accept-headers"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
@@ -18,12 +18,7 @@ import (
 
 const (
 	typeName = "Compress"
-
-	encodingBrotli = "br"
-	encodingGzip   = "gzip"
 )
-
-var supportedEncodings = []string{encodingBrotli, encodingGzip}
 
 // Compress is a middleware that allows to compress the response.
 type compress struct {
@@ -56,43 +51,38 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 }
 
 func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	acceptEncoding := req.Header.Get("Accept-Encoding")
-	// Set a default encoding value so `Negotiate` doesn't pick a compression method where none was desired.
-	if acceptEncoding == "" {
-		acceptEncoding = "identity"
-	}
-
-	// If no `Accept-Encoding` header was set, or it was set to `*` encoding will be `supportedEncodings[0]`.
-	// If a header was set to a value we don't know about, the negotiated encoding will be "".
-	encoding, err := accept.Negotiate(acceptEncoding, supportedEncodings...)
-	if err != nil {
-		log.FromContext(middlewares.GetLoggerCtx(context.Background(), c.name, typeName)).Debug(err)
-	}
-
-	if encoding == "" || contains(c.excludes, parseMediaTypeOrLog(req.Header.Get("Content-Type"), c.name)) {
+	if req.Method == http.MethodHead {
 		c.next.ServeHTTP(rw, req)
 		return
 	}
 
 	ctx := middlewares.GetLoggerCtx(req.Context(), c.name, typeName)
-	switch encoding {
-	case encodingBrotli:
-		c.brotliHandler().ServeHTTP(rw, req)
-	default:
-		c.gzipHandler(ctx).ServeHTTP(rw, req)
+	mediaType, _, err := mime.ParseMediaType(req.Header.Get("Content-Type"))
+	if err != nil {
+		log.FromContext(ctx).Debug(err)
 	}
+
+	if contains(c.excludes, mediaType) {
+		c.next.ServeHTTP(rw, req)
+		return
+	}
+
+	acceptEncoding := strings.TrimSpace(req.Header.Get("Accept-Encoding"))
+	if acceptEncoding == "" {
+		c.next.ServeHTTP(rw, req)
+		return
+	}
+
+	if brotli.AcceptsBr(acceptEncoding) {
+		c.brotliHandler().ServeHTTP(rw, req)
+		return
+	}
+
+	c.gzipHandler(ctx).ServeHTTP(rw, req)
 }
 
 func (c *compress) GetTracingInformation() (string, ext.SpanKindEnum) {
 	return c.name, tracing.SpanKindNoneEnum
-}
-
-func parseMediaTypeOrLog(contentType, name string) string {
-	mediaType, _, err := mime.ParseMediaType(contentType)
-	if err != nil {
-		log.FromContext(middlewares.GetLoggerCtx(context.Background(), name, typeName)).Debug(err)
-	}
-	return mediaType
 }
 
 func (c *compress) gzipHandler(ctx context.Context) http.Handler {
