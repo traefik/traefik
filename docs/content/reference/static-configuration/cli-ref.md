@@ -645,6 +645,9 @@ Enable HTTP backend with default settings. (Default: ```false```)
 `--providers.http.endpoint`:  
 Load configuration from this endpoint.
 
+`--providers.http.headers.<name>`:  
+Define custom headers to be sent to the endpoint.
+
 `--providers.http.pollinterval`:  
 Polling interval for endpoint. (Default: ```5```)
 
