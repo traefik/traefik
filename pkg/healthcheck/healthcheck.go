@@ -21,6 +21,7 @@ import (
 	"github.com/vulcand/oxy/roundrobin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
 )
@@ -317,7 +318,7 @@ func checkHealthGRPC(serverURL *url.URL, backend *BackendConfig) error {
 	var opts []grpc.DialOption
 	switch backend.Options.Scheme {
 	case "http", "h2c", "":
-		opts = append(opts, grpc.WithInsecure())
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), backend.Options.Timeout)
