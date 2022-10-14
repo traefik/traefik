@@ -354,7 +354,7 @@ serversTransport:
 
 ```bash tab="CLI"
 ## Static configuration
---serversTransport.spiffe.ids=spiffe://trust-domain/id1",spiffe://trust-domain/id2
+--serversTransport.spiffe.ids=spiffe://trust-domain/id1,spiffe://trust-domain/id2
 ```
 
 #### `spiffe.trustDomain`
