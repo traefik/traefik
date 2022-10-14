@@ -261,7 +261,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	var spiffeX509Source *workloadapi.X509Source
 	if staticConfiguration.Spiffe != nil && staticConfiguration.Spiffe.WorkloadAPIAddr != "" {
 		log.WithoutContext().
-			WithField("SPIFFE client addr", staticConfiguration.Spiffe.WorkloadAPIAddr).
+			WithField("workloadAPIAddr", staticConfiguration.Spiffe.WorkloadAPIAddr).
 			Info("Waiting on SPIFFE SVID delivery")
 
 		spiffeX509Source, err = workloadapi.NewX509Source(
