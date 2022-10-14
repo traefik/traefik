@@ -110,6 +110,7 @@ nav:
       - 'TLS': 'https/tls.md'
       - 'Let''s Encrypt': 'https/acme.md'
       - 'Tailscale': 'https/tailscale.md'
+      - 'SPIFFE': 'https/spiffe.md'
   - 'Middlewares':
     - 'Overview': 'middlewares/overview.md'
     - 'HTTP':
