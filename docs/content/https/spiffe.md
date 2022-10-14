@@ -20,7 +20,6 @@ Traefik is able to connect to the Workload API to obtain an x509-SVID used to se
 
 Enabling SPIFFE is part of the [static configuration](../getting-started/configuration-overview.md#the-static-configuration).
 It can be defined by using a file (YAML or TOML) or CLI arguments.
-It is mandatory to define this configuration to [use SPIFFE](../routing/overview.md#spiffe) to provide identity to every workload in your environment.
 
 ### Workload API
 
