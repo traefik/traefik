@@ -345,6 +345,12 @@ http:
         pingTimeout: 42s
       disableHTTP2: true
       peerCertURI: foobar
+      spiffe:
+        ids:
+          - foobar
+          - foobar
+        trustDomain: foobar
+
     ServersTransport1:
       serverName: foobar
       insecureSkipVerify: true
@@ -365,6 +371,12 @@ http:
         pingTimeout: 42s
       disableHTTP2: true
       peerCertURI: foobar
+      spiffe:
+        ids:
+          - foobar
+          - foobar
+        trustDomain: foobar
+
 tcp:
   routers:
     TCPRouter0:
