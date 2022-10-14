@@ -6,16 +6,17 @@ Below is a non-exhaustive list of versions and their maintenance status:
 
 | Version | Release Date | Active Support     | Security Support | 
 |---------|--------------|--------------------|------------------|
-| 2.8     | Jun 29, 2022 |      Yes           |       Yes        |
-| 2.7     | May 24, 2022 | Ended Jun 29, 2022 |       No         |
-| 2.6     | Jan 24, 2022 | Ended May 24, 2022 |       No         |
-| 2.5     | Aug 17, 2021 | Ended Jan 24, 2022 |       No         |
-| 2.4     | Jan 19, 2021 | Ended Aug 17, 2021 |       No         |
-| 2.3     | Sep 23, 2020 | Ended Jan 19, 2021 |       No         |
-| 2.2     | Mar 25, 2020 | Ended Sep 23, 2020 |       No         |
-| 2.1     | Dec 11, 2019 | Ended Mar 25, 2020 |       No         |
-| 2.0     | Sep 16, 2019 | Ended Dec 11, 2019 |       No         |
-| 1.7     | Sep 24, 2018 | Ended Dec 31, 2021 |  Contact Support |
+| 2.9     | Oct 03, 2022 | Yes                | Yes              |
+| 2.8     | Jun 29, 2022 | Ended Oct 03, 2022 | No               |
+| 2.7     | May 24, 2022 | Ended Jun 29, 2022 | No               |
+| 2.6     | Jan 24, 2022 | Ended May 24, 2022 | No               |
+| 2.5     | Aug 17, 2021 | Ended Jan 24, 2022 | No               |
+| 2.4     | Jan 19, 2021 | Ended Aug 17, 2021 | No               |
+| 2.3     | Sep 23, 2020 | Ended Jan 19, 2021 | No               |
+| 2.2     | Mar 25, 2020 | Ended Sep 23, 2020 | No               |
+| 2.1     | Dec 11, 2019 | Ended Mar 25, 2020 | No               |
+| 2.0     | Sep 16, 2019 | Ended Dec 11, 2019 | No               |
+| 1.7     | Sep 24, 2018 | Ended Dec 31, 2021 | Contact Support  |
 
 ??? example "Active Support / Security Support"
 
