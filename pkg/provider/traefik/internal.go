@@ -322,6 +322,13 @@ func (i *Provider) serverTransport(cfg *dynamic.Configuration) {
 		MaxIdleConnsPerHost: i.staticCfg.ServersTransport.MaxIdleConnsPerHost,
 	}
 
+	if i.staticCfg.Spiffe != nil {
+		st.Spiffe = &dynamic.Spiffe{
+			IDs:         i.staticCfg.ServersTransport.Spiffe.IDs,
+			TrustDomain: i.staticCfg.ServersTransport.Spiffe.TrustDomain,
+		}
+	}
+
 	if i.staticCfg.ServersTransport.ForwardingTimeouts != nil {
 		st.ForwardingTimeouts = &dynamic.ForwardingTimeouts{
 			DialTimeout:           i.staticCfg.ServersTransport.ForwardingTimeouts.DialTimeout,
