@@ -186,6 +186,9 @@
 | `traefik/http/serversTransports/ServersTransport0/rootCAs/0` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport0/rootCAs/1` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport0/serverName` | `foobar` |
+| `traefik/http/serversTransports/ServersTransport0/spiffe/ids/0` | `foobar` |
+| `traefik/http/serversTransports/ServersTransport0/spiffe/ids/1` | `foobar` |
+| `traefik/http/serversTransports/ServersTransport0/spiffe/trustDomain` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/certificates/0/certFile` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/certificates/0/keyFile` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/certificates/1/certFile` | `foobar` |
@@ -202,6 +205,9 @@
 | `traefik/http/serversTransports/ServersTransport1/rootCAs/0` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/rootCAs/1` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/serverName` | `foobar` |
+| `traefik/http/serversTransports/ServersTransport1/spiffe/ids/0` | `foobar` |
+| `traefik/http/serversTransports/ServersTransport1/spiffe/ids/1` | `foobar` |
+| `traefik/http/serversTransports/ServersTransport1/spiffe/trustDomain` | `foobar` |
 | `traefik/http/services/Service01/loadBalancer/healthCheck/followRedirects` | `true` |
 | `traefik/http/services/Service01/loadBalancer/healthCheck/headers/name0` | `foobar` |
 | `traefik/http/services/Service01/loadBalancer/healthCheck/headers/name1` | `foobar` |
