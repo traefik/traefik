@@ -472,9 +472,9 @@ By default, `passHostHeader` is true.
 
 #### ServersTransport
 
-`serversTransport` allows to reference a [ServersTransport](./index.md#serverstransport_1) configuration for the communication between Traefik and your servers.
+`serversTransport` allows to reference an [HTTP ServersTransport](./index.md#serverstransport_1) configuration for the communication between Traefik and your servers.
 
-??? example "Specify a transport -- Using the [File Provider](../../providers/file.md)"
+??? example "Specify an HTTP transport -- Using the [File Provider](../../providers/file.md)"
 
     ```yaml tab="YAML"
     ## Dynamic configuration
@@ -493,9 +493,9 @@ By default, `passHostHeader` is true.
           serversTransport = "mytransport"
     ```
 
-!!! info default serversTransport
+!!! info Default Servers Transport
     If no serversTransport is specified, the `default@internal` will be used.
-    The `default@internal` serversTransport is created from the [static configuration](../overview.md#transport-configuration).
+    The `default@internal` serversTransport is created from the [static configuration](../overview.md#http-servers-transports).
 
 #### Response Forwarding
 
@@ -529,11 +529,11 @@ Below are the available options for the Response Forwarding mechanism:
           flushInterval = "1s"
     ```
 
-### ServersTransport
+### Servers Transport
 
-ServersTransport allows to configure the transport between Traefik and your servers.
+ServersTransport allows to configure the transport between Traefik and your HTTP servers.
 
-#### `ServerName`
+#### `serverName`
 
 _Optional_
 
@@ -561,10 +561,10 @@ metadata:
   namespace: default
 
 spec:
-    serverName: "test"
+  serverName: "test"
 ```
 
-#### `Certificates`
+#### `certificates`
 
 _Optional_
 
@@ -596,7 +596,7 @@ metadata:
   namespace: default
 
 spec:
-    certificatesSecrets:
+  certificatesSecrets:
     - mycert
 
 ---
@@ -605,9 +605,9 @@ kind: Secret
 metadata:
   name: mycert
 
-  data:
-    tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
-    tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
 ```
 
 #### `insecureSkipVerify`
@@ -638,7 +638,7 @@ metadata:
   namespace: default
 
 spec:
-    insecureSkipVerify: true
+  insecureSkipVerify: true
 ```
 
 #### `rootCAs`
@@ -671,7 +671,7 @@ metadata:
   namespace: default
 
 spec:
-    rootCAsSecrets:
+  rootCAsSecrets:
     - myca
 ---
 apiVersion: v1
@@ -679,8 +679,8 @@ kind: Secret
 metadata:
   name: myca
 
-  data:
-    ca.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+data:
+  ca.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
 ```
 
 #### `maxIdleConnsPerHost`
@@ -711,7 +711,7 @@ metadata:
   namespace: default
 
 spec:
-    maxIdleConnsPerHost: 7
+  maxIdleConnsPerHost: 7
 ```
 
 #### `disableHTTP2`
@@ -719,12 +719,6 @@ spec:
 _Optional, Default=false_
 
 `disableHTTP2` disables HTTP/2 for connections with servers.
-
-```toml tab="File (TOML)"
-## Dynamic configuration
-[http.serversTransports.mytransport]
-  disableHTTP2 = true
-```
 
 ```yaml tab="File (YAML)"
 ## Dynamic configuration
@@ -734,6 +728,12 @@ http:
       disableHTTP2: true
 ```
 
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport]
+  disableHTTP2 = true
+```
+
 ```yaml tab="Kubernetes"
 apiVersion: traefik.containo.us/v1alpha1
 kind: ServersTransport
@@ -742,7 +742,7 @@ metadata:
   namespace: default
 
 spec:
-    disableHTTP2: true
+  disableHTTP2: true
 ```
 
 #### `peerCertURI`
@@ -750,12 +750,6 @@ spec:
 _Optional, Default=false_
 
 `peerCertURI` defines the URI used to match against SAN URIs during the server's certificate verification.
-
-```toml tab="File (TOML)"
-## Dynamic configuration
-[http.serversTransports.mytransport]
-  peerCertURI = "foobar"
-```
 
 ```yaml tab="File (YAML)"
 ## Dynamic configuration
@@ -765,6 +759,12 @@ http:
       peerCertURI: foobar
 ```
 
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport]
+  peerCertURI = "foobar"
+```
+
 ```yaml tab="Kubernetes"
 apiVersion: traefik.containo.us/v1alpha1
 kind: ServersTransport
@@ -773,7 +773,7 @@ metadata:
   namespace: default
 
 spec:
-    peerCertURI: foobar
+  peerCertURI: foobar
 ```
 
 #### `spiffe`
@@ -922,8 +922,8 @@ metadata:
   namespace: default
 
 spec:
-    forwardingTimeouts:
-      responseHeaderTimeout: "1s"
+  forwardingTimeouts:
+    responseHeaderTimeout: "1s"
 ```
 
 ##### `forwardingTimeouts.idleConnTimeout`
@@ -956,8 +956,8 @@ metadata:
   namespace: default
 
 spec:
-    forwardingTimeouts:
-      idleConnTimeout: "1s"
+  forwardingTimeouts:
+    idleConnTimeout: "1s"
 ```
 
 ##### `forwardingTimeouts.readIdleTimeout`
@@ -994,8 +994,8 @@ metadata:
   namespace: default
 
 spec:
-    forwardingTimeouts:
-      readIdleTimeout: "1s"
+  forwardingTimeouts:
+    readIdleTimeout: "1s"
 ```
 
 ##### `forwardingTimeouts.pingTimeout`
@@ -1028,8 +1028,8 @@ metadata:
   namespace: default
 
 spec:
-    forwardingTimeouts:
-      pingTimeout: "1s"
+  forwardingTimeouts:
+    pingTimeout: "1s"
 ```
 
 ### Weighted Round Robin (service)
@@ -1490,6 +1490,33 @@ The `address` option (IP:Port) point to a specific instance.
           address = "xx.xx.xx.xx:xx"
     ```
 
+#### ServersTransport
+
+`serversTransport` allows to reference a [TCP ServersTransport](./index.md#serverstransport_3) configuration for the communication between Traefik and your servers.
+
+??? example "Specify a TCP transport -- Using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    tcp:
+      services:
+        Service01:
+          loadBalancer:
+            serversTransport: mytransport
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [tcp.services]
+      [tcp.services.Service01]
+        [tcp.services.Service01.loadBalancer]
+          serversTransport = "mytransport"
+    ```
+
+!!! info Default Servers Transport
+    If no serversTransport is specified, the `default@internal` will be used.
+    The `default@internal` serversTransport is created from the [static configuration](../overview.md#tcp-servers-transports).
+
 #### PROXY Protocol
 
 Traefik supports [PROXY Protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2 on TCP Services.
@@ -1609,6 +1636,256 @@ tcp:
     [tcp.services.appv2.loadBalancer]
       [[tcp.services.appv2.loadBalancer.servers]]
         address = "private-ip-server-2:8080/"
+```
+
+### Servers Transport
+
+ServersTransport allows to configure the transport between Traefik and your TCP servers.
+
+#### `serverName`
+
+_Optional_
+
+`serverName` configure the server name that will be used for SNI.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+tcp:
+  serversTransports:
+    mytransport:
+      serverName: "myhost"
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[tcp.serversTransports.mytransport]
+  serverName = "myhost"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  serverName: "test"
+```
+
+#### `certificates`
+
+_Optional_
+
+`certificates` is the list of certificates (as file paths, or data bytes)
+that will be set as client certificates for mTLS.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+tcp:
+  serversTransports:
+    mytransport:
+      certificates:
+        - certFile: foo.crt
+          keyFile: bar.crt
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[[tcp.serversTransports.mytransport.certificates]]
+  certFile = "foo.crt"
+  keyFile = "bar.crt"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  certificatesSecrets:
+    - mycert
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mycert
+
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+```
+
+#### `insecureSkipVerify`
+
+_Optional_
+
+`insecureSkipVerify` controls whether the server's certificate chain and host name is verified.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+tcp:
+  serversTransports:
+    mytransport:
+      insecureSkipVerify: true
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[tcp.serversTransports.mytransport]
+  insecureSkipVerify = true
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  insecureSkipVerify: true
+```
+
+#### `rootCAs`
+
+_Optional_
+
+`rootCAs` defines the set of root certificate authorities (as file paths, or data bytes) to use when verifying server certificates.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+tcp:
+  serversTransports:
+    mytransport:
+      rootCAs:
+        - foo.crt
+        - bar.crt
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[tcp.serversTransports.mytransport]
+  rootCAs = ["foo.crt", "bar.crt"]
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  rootCAsSecrets:
+    - myca
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: myca
+
+data:
+  ca.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+```
+
+#### `peerCertURI`
+
+_Optional, Default=false_
+
+`peerCertURI` defines the URI used to match against SAN URIs during the server's certificate verification.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+tcp:
+  serversTransports:
+    mytransport:
+      peerCertURI: foobar
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[tcp.serversTransports.mytransport]
+  peerCertURI = "foobar"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  peerCertURI: foobar
+```
+
+#### `dialTimeout`
+
+_Optional, Default="30s"_
+
+`dialTimeout` defines the timeout when dialing the backend TCP service. If zero, no timeout exists.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+tcp:
+  serversTransports:
+    mytransport:
+      dialTimeout: 30s
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[tcp.serversTransports.mytransport]
+  dialTimeout = "30s"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  dialTimeout: 30s
+```
+
+#### `dialKeepAlive`
+
+_Optional, Default="15s"_
+
+`dialKeepAlive` defines the interval between keep-alive probes for an active network connection.
+If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and
+operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative,
+keep-alive probes are disabled.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+tcp:
+  serversTransports:
+    mytransport:
+      dialKeepAlive: 30s
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[tcp.serversTransports.mytransport]
+  dialKeepAlive = "30s"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  dialKeepAlive: 30s
 ```
 
 ## Configuring UDP Services
