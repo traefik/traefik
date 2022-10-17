@@ -46,56 +46,26 @@ func (b *bWriter) Write(p []byte) (int, error) {
 	return b.Writer.Write(p)
 }
 
-type config struct {
-	compression int
-	minSize     int
-}
-
-type option func(c *config)
-
-// WithCompressionLevel allows setting the compression level for brotli.
-// 0 for speed, 11 for compression.
-func WithCompressionLevel(compression int) option {
-	return func(c *config) {
-		c.compression = brotli.DefaultCompression
-		if compression >= brotli.BestSpeed && compression <= brotli.BestCompression {
-			c.compression = compression
-		}
-	}
-}
-
-// WithMinSize allows setting the minimum size to compress a response.
-// Default is 1024 bytes.
-func WithMinSize(minSize int) option {
-	return func(c *config) {
-		c.minSize = DefaultMinSize
-		if minSize >= 0 {
-			c.minSize = minSize
-		}
-	}
+// Config is the brotli middleware configuration.
+type Config struct {
+	// Compression level.
+	Compression int
+	// MinSize is the minimum size until we enable brotli compression.
+	MinSize int
 }
 
 // NewMiddleware returns a new brotli compressing middleware.
-func NewMiddleware(opts ...option) func(http.Handler) http.HandlerFunc {
-	cfg := config{
-		compression: brotli.DefaultCompression,
-		minSize:     DefaultMinSize,
-	}
-
-	for _, o := range opts {
-		o(&cfg)
-	}
-
+func NewMiddleware(cfg Config) func(http.Handler) http.HandlerFunc {
 	return func(h http.Handler) http.HandlerFunc {
 		return func(rw http.ResponseWriter, r *http.Request) {
 			rw.Header().Add("Vary", "Accept-Encoding")
 			rw.Header().Set("Content-Encoding", "br")
 			bw := &bWriter{
 				Writer: brotli.NewWriterOptions(rw, brotli.WriterOptions{
-					Quality: cfg.compression,
+					Quality: cfg.Compression,
 				}),
 				rw:      rw,
-				minSize: cfg.minSize,
+				minSize: cfg.MinSize,
 			}
 
 			defer func() {
@@ -111,5 +81,15 @@ func NewMiddleware(opts ...option) func(http.Handler) http.HandlerFunc {
 
 // AcceptsBr is a naive method to check whether brotli is an accepted encoding.
 func AcceptsBr(acceptEncoding string) bool {
-	return strings.Contains(acceptEncoding, "*") || strings.Contains(acceptEncoding, "br")
+	for _, v := range strings.Split(acceptEncoding, ",") {
+		for i, e := range strings.Split(strings.TrimSpace(v), ";") {
+			if i == 0 && (e == "br" || e == "*") {
+				return true
+			}
+
+			break
+		}
+	}
+
+	return false
 }

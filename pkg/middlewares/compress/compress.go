@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	abbrotli "github.com/andybalholm/brotli"
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
@@ -42,12 +43,7 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 		excludes = append(excludes, mediaType)
 	}
 
-	minSize := gzhttp.DefaultMinSize
-	if conf.MinResponseBodyBytes > 0 {
-		minSize = conf.MinResponseBodyBytes
-	}
-
-	return &compress{next: next, name: name, excludes: excludes, minSize: minSize}, nil
+	return &compress{next: next, name: name, excludes: excludes, minSize: conf.MinResponseBodyBytes}, nil
 }
 
 func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -86,10 +82,15 @@ func (c *compress) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (c *compress) gzipHandler(ctx context.Context) http.Handler {
+	minSize := gzhttp.DefaultMinSize
+	if c.minSize > 0 {
+		minSize = c.minSize
+	}
+
 	wrapper, err := gzhttp.NewWrapper(
 		gzhttp.ExceptContentTypes(c.excludes),
 		gzhttp.CompressionLevel(gzip.DefaultCompression),
-		gzhttp.MinSize(c.minSize))
+		gzhttp.MinSize(minSize))
 	if err != nil {
 		log.FromContext(ctx).Error(err)
 	}
@@ -98,8 +99,16 @@ func (c *compress) gzipHandler(ctx context.Context) http.Handler {
 }
 
 func (c *compress) brotliHandler() http.Handler {
+	minSize := brotli.DefaultMinSize
+	if c.minSize > 0 {
+		minSize = c.minSize
+	}
+
 	return brotli.NewMiddleware(
-		brotli.WithMinSize(c.minSize),
+		brotli.Config{
+			Compression: abbrotli.DefaultCompression,
+			MinSize:     minSize,
+		},
 	)(c.next)
 }
 

@@ -73,64 +73,6 @@ func TestBWriter(t *testing.T) {
 	assert.Equal(t, "rocks", bw.Header().Get("traefik"))
 }
 
-func TestWithCompressionLevel(t *testing.T) {
-	type testCompressionLevel struct {
-		name         string
-		compression  int
-		expectedComp int
-	}
-	testCases := []testCompressionLevel{
-		{
-			name:         "bad level",
-			compression:  -1,
-			expectedComp: brotli.DefaultCompression,
-		},
-		{
-			name:         "good level",
-			compression:  1,
-			expectedComp: 1,
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			cfg := &config{}
-			fn := WithCompressionLevel(testCase.compression)
-			fn(cfg)
-			assert.Equal(t, testCase.expectedComp, cfg.compression)
-		})
-	}
-}
-
-func TestWithMinSize(t *testing.T) {
-	type testCompressionLevel struct {
-		name         string
-		size         int
-		expectedSize int
-	}
-	testCases := []testCompressionLevel{
-		{
-			name:         "bad level",
-			size:         -1,
-			expectedSize: DefaultMinSize,
-		},
-		{
-			name:         "good level",
-			size:         1,
-			expectedSize: 1,
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			cfg := &config{}
-			fn := WithMinSize(testCase.size)
-			fn(cfg)
-			assert.Equal(t, testCase.expectedSize, cfg.minSize)
-		})
-	}
-}
-
 func TestNewMiddleware(t *testing.T) {
 	type test struct {
 		name        string
@@ -163,7 +105,7 @@ func TestNewMiddleware(t *testing.T) {
 			})
 
 			rw := httptest.NewRecorder()
-			NewMiddleware(WithMinSize(DefaultMinSize))(next).ServeHTTP(rw, req)
+			NewMiddleware(Config{MinSize: DefaultMinSize})(next).ServeHTTP(rw, req)
 
 			if testCase.expCompress {
 				assert.Equal(t, "Accept-Encoding", rw.Header().Get("Vary"))
