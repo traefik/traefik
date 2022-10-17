@@ -58,9 +58,9 @@ func TestNegotiation(t *testing.T) {
 			expEncoding:  "br",
 		},
 		{
-			name:         "multi accept header, prefer gzip",
+			name:         "multi accept header, prefer br",
 			acceptHeader: "br;q=0.8, gzip;q=1.0",
-			expEncoding:  "gzip",
+			expEncoding:  "br",
 		},
 		{
 			name:         "multi accept header, prefer br",
@@ -68,9 +68,9 @@ func TestNegotiation(t *testing.T) {
 			expEncoding:  "br",
 		},
 		{
-			name:         "multi accept header list, prefer gzip",
+			name:         "multi accept header list, prefer br",
 			acceptHeader: "gzip, br",
-			expEncoding:  "gzip",
+			expEncoding:  "br",
 		},
 	}
 
@@ -210,6 +210,27 @@ func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 	handler.ServeHTTP(rw, req)
 
 	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
+	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+}
+
+func TestShouldNotCompressHeadRequest(t *testing.T) {
+	req := testhelpers.MustNewRequest(http.MethodHead, "http://localhost", nil)
+	req.Header.Add(acceptEncodingHeader, gzipValue)
+
+	fakeBody := generateBytes(gzhttp.DefaultMinSize)
+	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		_, err := rw.Write(fakeBody)
+		require.NoError(t, err)
+	})
+	handler, err := New(context.Background(), next, dynamic.Compress{}, "testing")
+	require.NoError(t, err)
+
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req)
+
+	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
+	assert.Empty(t, rw.Header().Get(varyHeader))
+
 	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
 }
 
