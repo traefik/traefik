@@ -430,6 +430,15 @@ You can declare TCP Routers and/or Services using KV.
     |------------------------------------------------------------------------|-------|
     | `traefik/tcp/services/mytcpservice/loadbalancer/proxyprotocol/version` | `1`   |
 
+??? info "`traefik/tcp/services/<service_name>/loadbalancer/serverstransport`"
+
+    Allows to reference a ServersTransport resource that is defined either with the File provider or the Kubernetes CRD one.
+    See [serverstransport](../services/index.md#serverstransport_2) for more information.
+
+    | Key (Path)                                                      | Value         |
+    |-----------------------------------------------------------------|---------------|
+    | `traefik/http/services/myservice/loadbalancer/serverstransport` | `foobar@file` |
+
 ??? info "`traefik/tcp/services/<service_name>/weighted/services/<n>/name`"
 
     | Key (Path)                                                          | Value    |
