@@ -210,6 +210,13 @@ func logConfiguration(logger log.Logger, configMsg dynamic.Message) {
 		}
 	}
 
+	if copyConf.TCP != nil {
+		for _, transport := range copyConf.TCP.ServersTransports {
+			transport.Certificates = tls.Certificates{}
+			transport.RootCAs = []tls.FileOrContent{}
+		}
+	}
+
 	jsonConf, err := json.Marshal(copyConf)
 	if err != nil {
 		logger.Errorf("Could not marshal dynamic configuration: %v", err)

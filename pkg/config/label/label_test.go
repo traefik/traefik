@@ -162,6 +162,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service0.loadbalancer.server.port":                      "8080",
 		"traefik.http.services.Service0.loadbalancer.sticky.cookie.name":               "foobar",
 		"traefik.http.services.Service0.loadbalancer.sticky.cookie.secure":             "true",
+		"traefik.http.services.Service0.loadbalancer.serversTransport":                 "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.headers.name0":        "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.headers.name1":        "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.hostname":             "foobar",
@@ -179,6 +180,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service1.loadbalancer.server.port":                      "8080",
 		"traefik.http.services.Service1.loadbalancer.sticky":                           "false",
 		"traefik.http.services.Service1.loadbalancer.sticky.cookie.name":               "fui",
+		"traefik.http.services.Service1.loadbalancer.serversTransport":                 "foobar",
 
 		"traefik.tcp.middlewares.Middleware0.ipallowlist.sourcerange":      "foobar, fiibar",
 		"traefik.tcp.middlewares.Middleware2.inflightconn.amount":          "42",
@@ -197,9 +199,11 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.tcp.services.Service0.loadbalancer.server.Port":           "42",
 		"traefik.tcp.services.Service0.loadbalancer.TerminationDelay":      "42",
 		"traefik.tcp.services.Service0.loadbalancer.proxyProtocol.version": "42",
+		"traefik.tcp.services.Service0.loadbalancer.serversTransport":      "foo",
 		"traefik.tcp.services.Service1.loadbalancer.server.Port":           "42",
 		"traefik.tcp.services.Service1.loadbalancer.TerminationDelay":      "42",
 		"traefik.tcp.services.Service1.loadbalancer.proxyProtocol":         "true",
+		"traefik.tcp.services.Service1.loadbalancer.serversTransport":      "foo",
 
 		"traefik.udp.routers.Router0.entrypoints":                "foobar, fiibar",
 		"traefik.udp.routers.Router0.service":                    "foobar",
@@ -264,6 +268,7 @@ func TestDecodeConfiguration(t *testing.T) {
 						},
 						TerminationDelay: func(i int) *int { return &i }(42),
 						ProxyProtocol:    &dynamic.ProxyProtocol{Version: 42},
+						ServersTransport: "foo",
 					},
 				},
 				"Service1": {
@@ -275,6 +280,7 @@ func TestDecodeConfiguration(t *testing.T) {
 						},
 						TerminationDelay: func(i int) *int { return &i }(42),
 						ProxyProtocol:    &dynamic.ProxyProtocol{Version: 2},
+						ServersTransport: "foo",
 					},
 				},
 			},
@@ -669,6 +675,7 @@ func TestDecodeConfiguration(t *testing.T) {
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: ptypes.Duration(time.Second),
 						},
+						ServersTransport: "foobar",
 					},
 				},
 				"Service1": {
@@ -698,6 +705,7 @@ func TestDecodeConfiguration(t *testing.T) {
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: ptypes.Duration(time.Second),
 						},
+						ServersTransport: "foobar",
 					},
 				},
 			},
@@ -705,6 +713,7 @@ func TestDecodeConfiguration(t *testing.T) {
 	}
 
 	assert.Nil(t, configuration.HTTP.ServersTransports)
+	assert.Nil(t, configuration.TCP.ServersTransports)
 	assert.Equal(t, expected, configuration)
 }
 
@@ -760,6 +769,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							},
 						},
 						TerminationDelay: func(i int) *int { return &i }(42),
+						ServersTransport: "foo",
 					},
 				},
 				"Service1": {
@@ -770,6 +780,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							},
 						},
 						TerminationDelay: func(i int) *int { return &i }(42),
+						ServersTransport: "foo",
 					},
 				},
 			},
@@ -1160,6 +1171,7 @@ func TestEncodeConfiguration(t *testing.T) {
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: ptypes.Duration(time.Second),
 						},
+						ServersTransport: "foobar",
 					},
 				},
 				"Service1": {
@@ -1187,6 +1199,7 @@ func TestEncodeConfiguration(t *testing.T) {
 						ResponseForwarding: &dynamic.ResponseForwarding{
 							FlushInterval: ptypes.Duration(time.Second),
 						},
+						ServersTransport: "foobar",
 					},
 				},
 			},
@@ -1330,6 +1343,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Routers.Router1.Rule":        "foobar",
 		"traefik.HTTP.Routers.Router1.Service":     "foobar",
 
+		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Headers.name1":        "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Hostname":             "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Interval":             "1000000000",
@@ -1345,6 +1359,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Name":               "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.HTTPOnly":           "true",
 		"traefik.HTTP.Services.Service0.LoadBalancer.Sticky.Cookie.Secure":             "false",
+		"traefik.HTTP.Services.Service0.LoadBalancer.ServersTransport":                 "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Headers.name1":        "foobar",
 		"traefik.HTTP.Services.Service1.LoadBalancer.HealthCheck.Hostname":             "foobar",
@@ -1358,7 +1373,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service1.LoadBalancer.ResponseForwarding.FlushInterval": "1000000000",
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.Port":                      "8080",
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.Scheme":                    "foobar",
-		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
+		"traefik.HTTP.Services.Service1.LoadBalancer.ServersTransport":                 "foobar",
 
 		"traefik.TCP.Middlewares.Middleware0.IPAllowList.SourceRange": "foobar, fiibar",
 		"traefik.TCP.Middlewares.Middleware2.InFlightConn.Amount":     "42",
@@ -1376,8 +1391,10 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.TCP.Routers.Router1.TLS.Options":                     "foo",
 		"traefik.TCP.Services.Service0.LoadBalancer.server.Port":      "42",
 		"traefik.TCP.Services.Service0.LoadBalancer.TerminationDelay": "42",
+		"traefik.TCP.Services.Service0.LoadBalancer.ServersTransport": "foo",
 		"traefik.TCP.Services.Service1.LoadBalancer.server.Port":      "42",
 		"traefik.TCP.Services.Service1.LoadBalancer.TerminationDelay": "42",
+		"traefik.TCP.Services.Service1.LoadBalancer.ServersTransport": "foo",
 
 		"traefik.UDP.Routers.Router0.EntryPoints":                "foobar, fiibar",
 		"traefik.UDP.Routers.Router0.Service":                    "foobar",
