@@ -161,8 +161,7 @@ func Test_Routing(t *testing.T) {
 			},
 		},
 	}
-
-	serviceManager := tcp.NewManager(conf)
+	serviceManager := tcp.NewManager(conf,nil)
 
 	// Creates the tlsManager and defines the TLS 1.0 and 1.2 TLSOptions.
 	tlsManager := traefiktls.NewManager()

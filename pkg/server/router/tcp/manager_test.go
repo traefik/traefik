@@ -3,7 +3,7 @@ package tcp
 import (
 	"context"
 	"crypto/tls"
-	"net/http"
+		"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -13,6 +13,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	tcpmiddleware "github.com/traefik/traefik/v2/pkg/server/middleware/tcp"
 	"github.com/traefik/traefik/v2/pkg/server/service/tcp"
+	
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 )
 
@@ -311,7 +312,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 				TCPServices: test.tcpServiceConfig,
 				TCPRouters:  test.tcpRouterConfig,
 			}
-			serviceManager := tcp.NewManager(conf)
+			serviceManager := tcp.NewManager(conf, nil)
 			tlsManager := traefiktls.NewManager()
 			tlsManager.UpdateConfigs(
 				context.Background(),
@@ -622,7 +623,7 @@ func TestDomainFronting(t *testing.T) {
 				Routers: test.routers,
 			}
 
-			serviceManager := tcp.NewManager(conf)
+			serviceManager := tcp.NewManager(conf, nil)
 
 			tlsManager := traefiktls.NewManager()
 			tlsManager.UpdateConfigs(context.Background(), map[string]traefiktls.Store{}, test.tlsOptions, []*traefiktls.CertAndStores{})

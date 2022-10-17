@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	// "net/http"
 	"strconv"
 	"sync"
 	"testing"
@@ -225,6 +226,7 @@ func TestIgnoreTransientConfiguration(t *testing.T) {
 			Routers:     map[string]*dynamic.TCPRouter{},
 			Middlewares: map[string]*dynamic.TCPMiddleware{},
 			Services:    map[string]*dynamic.TCPService{},
+			//	ServersTransports: map[string]*dynamic.ServersTransport{},
 		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  map[string]*dynamic.UDPRouter{},

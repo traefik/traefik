@@ -180,8 +180,7 @@ func TestManager_BuildTCP(t *testing.T) {
 
 			manager := NewManager(&runtime.Configuration{
 				TCPServices: test.configs,
-			})
-
+			}, nil)
 			ctx := context.Background()
 			if len(test.providerName) > 0 {
 				ctx = provider.AddInContext(ctx, "foobar@"+test.providerName)

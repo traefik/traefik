@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"syscall"
 	"time"
 
@@ -19,14 +20,14 @@ type Proxy struct {
 	tcpAddr          *net.TCPAddr
 	terminationDelay time.Duration
 	proxyProtocol    *dynamic.ProxyProtocol
+	transport        *http.RoundTripper
 }
 
 // NewProxy creates a new Proxy.
-func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dynamic.ProxyProtocol) (*Proxy, error) {
+func NewProxy(address string, terminationDelay time.Duration, roundtrip http.RoundTripper, proxyProtocol *dynamic.ProxyProtocol) (*Proxy, error) {
 	if proxyProtocol != nil && (proxyProtocol.Version < 1 || proxyProtocol.Version > 2) {
 		return nil, fmt.Errorf("unknown proxyProtocol version: %d", proxyProtocol.Version)
 	}
-
 	// Creates the tcpAddr only for IP based addresses,
 	// because there is no need to resolve the name on every new connection,
 	// and building it should happen once.
@@ -36,6 +37,7 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 		if err != nil {
 			return nil, err
 		}
+
 	}
 
 	return &Proxy{
@@ -43,6 +45,7 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 		tcpAddr:          tcpAddr,
 		terminationDelay: terminationDelay,
 		proxyProtocol:    proxyProtocol,
+		transport:        &roundtrip,
 	}, nil
 }
 
@@ -94,15 +97,12 @@ func (p Proxy) dialBackend() (*net.TCPConn, error) {
 	if p.tcpAddr != nil {
 		return net.DialTCP("tcp", nil, p.tcpAddr)
 	}
-
 	log.WithoutContext().Debugf("Dial with lookup to address %s", p.address)
-
 	// Dial with DNS lookup for host based addresses.
 	conn, err := net.Dial("tcp", p.address)
 	if err != nil {
 		return nil, err
 	}
-
 	return conn.(*net.TCPConn), nil
 }
 

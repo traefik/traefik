@@ -2,7 +2,9 @@ package dynamic
 
 import (
 	"reflect"
+	// "time"
 
+	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
@@ -10,9 +12,10 @@ import (
 
 // TCPConfiguration contains all the TCP configuration parameters.
 type TCPConfiguration struct {
-	Routers     map[string]*TCPRouter     `json:"routers,omitempty" toml:"routers,omitempty" yaml:"routers,omitempty" export:"true"`
-	Services    map[string]*TCPService    `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
-	Middlewares map[string]*TCPMiddleware `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	Routers           map[string]*TCPRouter           `json:"routers,omitempty" toml:"routers,omitempty" yaml:"routers,omitempty" export:"true"`
+	Services          map[string]*TCPService          `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
+	Middlewares       map[string]*TCPMiddleware       `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	ServersTransports map[string]*TCPServersTransport `json:"serversTransports,omitempty" toml:"serversTransports,omitempty" yaml:"serversTransports,omitempty" label:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -68,6 +71,18 @@ type RouterTCPTLSConfig struct {
 
 // +k8s:deepcopy-gen=true
 
+// TCPServersTransport holds the TCP configuration
+type TCPServersTransport struct {
+	ServerAddress         string                     `description:"ServerAddress used to contact the server." json:"serverName,omitempty" toml:"serverName,omitempty" yaml:"serverName,omitempty"`
+	InsecureSkipVerify bool                       `description:"Disable SSL certificate verification." json:"insecureSkipVerify,omitempty" toml:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" export:"true"`
+	KeepAlive          bool                       `description:"Enable KeepAlive to ensure that a link outage is detected quickly, even when the link is idle." json:"KeepAlive,omitempty" toml:"KeepAlive,omitempty" yaml:"KeepAlive,omitempty"`
+	RootCAs            []traefiktls.FileOrContent `description:"Add cert file for self-signed certificate." json:"rootCAs,omitempty" toml:"rootCAs,omitempty" yaml:"rootCAs,omitempty"`
+	Certificates       traefiktls.Certificates    `description:"Certificates for mTLS." json:"certificates,omitempty" toml:"certificates,omitempty" yaml:"certificates,omitempty" export:"true"`
+	// ConnectionTimeout time.Duration              `description:"ConnectionTimeout used to determine how long transmitted data may remain unacknowledged before a connection is forcefully closed." json:"ConnectionTimeout,omitempty" toml:"ConnectionTimeout,omitempty" yaml:"ConnectionTimeout,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
 // TCPServersLoadBalancer holds the LoadBalancerService configuration.
 type TCPServersLoadBalancer struct {
 	// TerminationDelay, corresponds to the deadline that the proxy sets, after one
@@ -78,6 +93,7 @@ type TCPServersLoadBalancer struct {
 	TerminationDelay *int           `json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty" export:"true"`
 	ProxyProtocol    *ProxyProtocol `json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 	Servers          []TCPServer    `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
+	ServersTransport string         `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
 }
 
 // SetDefaults Default values for a TCPServersLoadBalancer.
