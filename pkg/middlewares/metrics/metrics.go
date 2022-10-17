@@ -127,7 +127,8 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	}
 
 	ctx := req.Context()
-	c, err := capture.FromContext(req.Context())
+
+	capt, err := capture.FromContext(ctx)
 	if err != nil {
 		for i := 0; i < len(m.baseLabels); i += 2 {
 			ctx = log.With(ctx, log.Str(m.baseLabels[i], m.baseLabels[i+1]))
@@ -137,18 +138,18 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	}
 
 	next := m.next
-	if c.NeedsReset(rw) {
-		next = c.Reset(m.next)
+	if capt.NeedsReset(rw) {
+		next = capt.Reset(m.next)
 	}
 
 	start := time.Now()
 	next.ServeHTTP(rw, req)
 
-	labels = append(labels, "code", strconv.Itoa(c.StatusCode()))
+	labels = append(labels, "code", strconv.Itoa(capt.StatusCode()))
 	m.reqDurationHistogram.With(labels...).ObserveFromStart(start)
 	m.reqsCounter.With(labels...).Add(1)
-	m.respsBytesCounter.With(labels...).Add(float64(c.ResponseSize()))
-	m.reqsBytesCounter.With(labels...).Add(float64(c.RequestSize()))
+	m.respsBytesCounter.With(labels...).Add(float64(capt.ResponseSize()))
+	m.reqsBytesCounter.With(labels...).Add(float64(capt.RequestSize()))
 }
 
 func getRequestProtocol(req *http.Request) string {
