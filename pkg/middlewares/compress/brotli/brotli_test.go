@@ -134,54 +134,29 @@ func TestWithMinSize(t *testing.T) {
 
 func TestNewMiddleware(t *testing.T) {
 	type test struct {
-		name         string
-		method       string
-		acceptHeader string
-		writeData    []byte
-		expCompress  bool
-		expEncoding  string
+		name        string
+		writeData   []byte
+		expCompress bool
+		expEncoding string
 	}
 	testCases := []test{
 		{
-			name:         "happy path",
-			method:       http.MethodGet,
-			acceptHeader: "br",
-			expCompress:  true,
-			expEncoding:  "br",
-			writeData:    generateBytes(1024),
+			name:        "big request",
+			expCompress: true,
+			expEncoding: "br",
+			writeData:   generateBytes(DefaultMinSize),
 		},
 		{
-			name:         "head request",
-			method:       http.MethodHead,
-			acceptHeader: "br",
-			expCompress:  false,
-			expEncoding:  "",
-			writeData:    generateBytes(1024),
-		},
-		{
-			name:         "small request",
-			method:       http.MethodGet,
-			acceptHeader: "br",
-			expCompress:  false,
-			expEncoding:  "identity",
-			writeData:    generateBytes(102),
-		},
-		{
-			name:         "gzip only request",
-			method:       http.MethodGet,
-			acceptHeader: "gzip",
-			expCompress:  false,
-			expEncoding:  "",
-			writeData:    generateBytes(1024),
+			name:        "small request",
+			expCompress: false,
+			expEncoding: "identity",
+			writeData:   generateBytes(DefaultMinSize - 1),
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			req := testhelpers.MustNewRequest(testCase.method, "http://localhost", nil)
-			if testCase.acceptHeader != "" {
-				req.Header.Add("Accept-Encoding", testCase.acceptHeader)
-			}
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 				_, err := rw.Write(testCase.writeData)
