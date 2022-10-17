@@ -1,0 +1,190 @@
+run:
+  timeout: 10m
+  skip-files: []
+  skip-dirs:
+    - pkg/provider/kubernetes/crd/generated/
+
+linters-settings:
+  govet:
+    check-shadowing: false
+  golint:
+    min-confidence: 0
+  gocyclo:
+    min-complexity: 14
+  goconst:
+    min-len: 3
+    min-occurrences: 4
+  misspell:
+    locale: US
+  funlen:
+    lines: -1
+    statements: 120
+  forbidigo:
+    forbid:
+      - ^print(ln)?$
+      - ^spew\.Print(f|ln)?$
+      - ^spew\.Dump$
+  depguard:
+    list-type: denylist
+    include-go-root: false
+    packages:
+      - github.com/pkg/errors
+  godox:
+    keywords:
+      - FIXME
+  importas:
+    corev1: k8s.io/api/core/v1
+    networkingv1beta1: k8s.io/api/networking/v1beta1
+    extensionsv1beta1: k8s.io/api/extensions/v1beta1
+    metav1: k8s.io/apimachinery/pkg/apis/meta/v1
+    kubeerror: k8s.io/apimachinery/pkg/api/errors
+    composeapi: github.com/docker/compose/v2/pkg/api
+  revive:
+    rules:
+      - name: struct-tag
+  rules:
+    - name: blank-imports
+    - name: context-as-argument
+    - name: context-keys-type
+    - name: dot-imports
+    - name: error-return
+    - name: error-strings
+    - name: error-naming
+    - name: exported
+    - name: if-return
+    - name: increment-decrement
+    - name: var-naming
+    - name: var-declaration
+    - name: package-comments
+    - name: range
+    - name: receiver-naming
+    - name: time-naming
+    - name: unexported-return
+    - name: indent-error-flow
+    - name: errorf
+    - name: empty-block
+    - name: superfluous-else
+    - name: unused-parameter
+    - name: unreachable-code
+    - name: redefines-builtin-id
+  gomoddirectives:
+    replace-allow-list:
+      - github.com/abbot/go-http-auth
+      - github.com/go-check/check
+      - github.com/gorilla/mux
+      - github.com/mailgun/minheap
+      - github.com/mailgun/multibuf
+      - github.com/jaguilar/vt100
+      - github.com/BurntSushi/toml
+
+linters:
+  enable-all: true
+  disable:
+    - deadcode # deprecated
+    - exhaustivestruct # deprecated
+    - golint # deprecated
+    - ifshort # deprecated
+    - interfacer # deprecated
+    - maligned # deprecated
+    - nosnakecase # deprecated
+    - scopelint # deprecated
+    - scopelint # deprecated
+    - structcheck # deprecated
+    - varcheck # deprecated
+    - sqlclosecheck # not relevant (SQL)
+    - rowserrcheck # not relevant (SQL)
+    - execinquery # not relevant (SQL)
+    - cyclop # duplicate of gocyclo
+    - lll # Not relevant
+    - gocyclo # FIXME must be fixed
+    - gocognit # Too strict
+    - nestif # Too many false-positive.
+    - prealloc # Too many false-positive.
+    - makezero # Not relevant
+    - dupl # Too strict
+    - gosec # Too strict
+    - gochecknoinits
+    - gochecknoglobals
+    - wsl # Too strict
+    - nlreturn # Not relevant
+    - gomnd # Too strict
+    - stylecheck # skip because report issues related to some generated files.
+    - testpackage # Too strict
+    - tparallel # Not relevant
+    - paralleltest # Not relevant
+    - exhaustive # Not relevant
+    - exhaustruct # Not relevant
+    - goerr113 # Too strict
+    - wrapcheck # Too strict
+    - noctx # Too strict
+    - bodyclose # too many false-positive
+    - forcetypeassert # Too strict
+    - tagliatelle # Too strict
+    - varnamelen # Not relevant
+    - nilnil # Not relevant
+    - ireturn # Not relevant
+    - contextcheck # too many false-positive
+    - containedctx # too many false-positive
+    - maintidx # kind of duplicate of gocyclo
+    - nonamedreturns # Too strict
+
+issues:
+  exclude-use-default: false
+  max-per-linter: 0
+  max-same-issues: 0
+  exclude:
+    - 'Error return value of .((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*printf?|os\.(Un)?Setenv). is not checked'
+    - "should have a package comment, unless it's in another file for this package"
+    - 'SA1019: http.CloseNotifier has been deprecated' # FIXME must be fixed
+    - 'SA1019: cfg.SSLRedirect is deprecated'
+    - 'SA1019: cfg.SSLTemporaryRedirect is deprecated'
+    - 'SA1019: cfg.SSLHost is deprecated'
+    - 'SA1019: cfg.SSLForceHost is deprecated'
+    - 'SA1019: cfg.FeaturePolicy is deprecated'
+    - 'SA1019: c.Providers.ConsulCatalog.Namespace is deprecated'
+    - 'SA1019: c.Providers.Consul.Namespace is deprecated'
+  exclude-rules:
+    - path: '(.+)_test.go'
+      linters:
+        - goconst
+        - funlen
+        - godot
+    - path: '(.+)_test.go'
+      text: ' always receives '
+      linters:
+        - unparam
+    - path: '(.+)\.go'
+      text: 'struct-tag: unknown option ''inline'' in JSON tag'
+      linters:
+        - revive
+    - path: pkg/server/service/bufferpool.go
+      text: 'SA6002: argument should be pointer-like to avoid allocations'
+    - path: pkg/server/middleware/middlewares.go
+      text: "Function 'buildConstructor' has too many statements"
+      linters:
+        - funlen
+    - path: pkg/tracing/haystack/logger.go
+      linters:
+        - goprintffuncname
+    - path: pkg/tracing/tracing.go
+      text: "printf-like formatting function 'SetErrorWithEvent' should be named 'SetErrorWithEventf'"
+      linters:
+        - goprintffuncname
+    - path: pkg/tls/tlsmanager_test.go
+      text: 'SA1019: config.ClientCAs.Subjects has been deprecated since Go 1.18'
+    - path: pkg/types/tls_test.go
+      text: 'SA1019: tlsConfig.RootCAs.Subjects has been deprecated since Go 1.18'
+    - path: pkg/provider/kubernetes/(crd|gateway)/client.go
+      linters:
+        - interfacebloat
+    - path: pkg/metrics/metrics.go
+      linters:
+        - interfacebloat
+    - path: integration/healthcheck_test.go
+      text: 'Duplicate words \(wsp2,\) found'
+      linters:
+        - dupword
+    - path: pkg/types/domain_test.go
+      text: 'Duplicate words \(sub\) found'
+      linters:
+        - dupword
