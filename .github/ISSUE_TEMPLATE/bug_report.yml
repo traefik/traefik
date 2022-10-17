@@ -6,12 +6,14 @@ body:
     attributes:
       label: Welcome!
       description: |
-        The issue tracker is for reporting bugs and feature requests only. For end-user related support questions, please refer to one of the following:
-        - the Traefik community forum: https://community.traefik.io/
+        The issue tracker is for reporting bugs and feature requests only.
+        For end-user related support questions, please use the [Traefik community forum](https://community.traefik.io/).
 
-        The configurations between 1.X and 2.X are NOT compatible. Please have a look [here](https://doc.traefik.io/traefik/getting-started/configuration-overview/).
+        All new/updated issues are triaged regularly by the maintainers.
+        All issues closed by a bot are subsequently double-checked by the maintainers.
 
         DO NOT FILE ISSUES FOR GENERAL SUPPORT QUESTIONS.
+
       options:
         - label: Yes, I've searched similar issues on [GitHub](https://github.com/traefik/traefik/issues) and didn't find any.
           required: true

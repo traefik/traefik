@@ -47,12 +47,6 @@ func nodeIP(ip string) func(*docker.ContainerJSON) {
 	}
 }
 
-func labels(labels map[string]string) func(*docker.ContainerJSON) {
-	return func(c *docker.ContainerJSON) {
-		c.Config.Labels = labels
-	}
-}
-
 func ports(portMap nat.PortMap) func(*docker.ContainerJSON) {
 	return func(c *docker.ContainerJSON) {
 		c.NetworkSettings.NetworkSettingsBase.Ports = portMap
