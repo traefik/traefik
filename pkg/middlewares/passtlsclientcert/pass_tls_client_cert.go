@@ -325,13 +325,11 @@ func writePart(ctx context.Context, content io.StringWriter, entry, prefix strin
 
 // sanitize As we pass the raw certificates, remove the useless data and make it http request compliant.
 func sanitize(cert []byte) string {
-	cleaned := strings.NewReplacer(
+	return strings.NewReplacer(
 		"-----BEGIN CERTIFICATE-----", "",
 		"-----END CERTIFICATE-----", "",
 		"\n", "",
 	).Replace(string(cert))
-
-	return url.QueryEscape(cleaned)
 }
 
 // getCertificates Build a string with the client certificates.

@@ -416,7 +416,7 @@ type InFlightReq struct {
 // This middleware adds the selected data from the passed client TLS certificate to a header.
 // More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/passtlsclientcert/
 type PassTLSClientCert struct {
-	// PEM sets the X-Forwarded-Tls-Client-Cert header with the escaped certificate.
+	// PEM sets the X-Forwarded-Tls-Client-Cert header with the certificate.
 	PEM bool `json:"pem,omitempty" toml:"pem,omitempty" yaml:"pem,omitempty" export:"true"`
 	// Info selects the specific client certificate details you want to add to the X-Forwarded-Tls-Client-Cert-Info header.
 	Info *TLSClientCertificateInfo `json:"info,omitempty" toml:"info,omitempty" yaml:"info,omitempty" export:"true"`
