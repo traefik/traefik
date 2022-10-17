@@ -2211,14 +2211,19 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "tcp with label",
+			desc:         "tcp with label",
+			ConnectAware: true,
 			items: []itemData{
 				{
-					ID:   "Test",
-					Name: "Test",
+					ID:         "Test",
+					Node:       "Node1",
+					Datacenter: "dc1",
+					Name:       "Test",
+					Namespace:  "ns",
 					Labels: map[string]string{
-						"traefik.tcp.routers.foo.rule": "HostSNI(`foo.bar`)",
-						"traefik.tcp.routers.foo.tls":  "true",
+						"traefik.tcp.routers.foo.rule":  "HostSNI(`foo.bar`)",
+						"traefik.tcp.routers.foo.tls":   "true",
+						"traefik.consulcatalog.connect": "true",
 					},
 					Address: "127.0.0.1",
 					Port:    "80",
@@ -2244,10 +2249,26 @@ func Test_buildConfiguration(t *testing.T) {
 									},
 								},
 								TerminationDelay: Int(100),
+								ServersTransport: "tls-ns-dc1-Test",
 							},
 						},
 					},
-					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{
+						"tls-ns-dc1-Test": {
+							ServerName:         "ns-dc1-Test",
+							InsecureSkipVerify: true,
+							RootCAs: []tls.FileOrContent{
+								"root",
+							},
+							Certificates: []tls.Certificate{
+								{
+									CertFile: "cert",
+									KeyFile:  "key",
+								},
+							},
+							PeerCertURI: "spiffe:///ns/ns/dc/dc1/svc/Test",
+						},
+					},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
