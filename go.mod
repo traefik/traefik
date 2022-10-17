@@ -36,11 +36,11 @@ require (
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
 	github.com/instana/go-sensor v1.38.3
 	github.com/klauspost/compress v1.14.2
-	github.com/kvtools/consul v1.0.1
-	github.com/kvtools/etcdv3 v1.0.1
-	github.com/kvtools/redis v1.0.1
+	github.com/kvtools/consul v1.0.2
+	github.com/kvtools/etcdv3 v1.0.2
+	github.com/kvtools/redis v1.0.2
 	github.com/kvtools/valkeyrie v1.0.0
-	github.com/kvtools/zookeeper v1.0.1
+	github.com/kvtools/zookeeper v1.0.2
 	github.com/lucas-clemente/quic-go v0.28.1
 	github.com/mailgun/ttlmap v0.0.0-20170619185759-c1c17f74874f
 	github.com/miekg/dns v1.1.50

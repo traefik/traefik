@@ -78,7 +78,7 @@ This provider is proposed as an experimental feature and partially supports the 
 
 The Kubernetes Gateway API project provides several guides on how to use the APIs.
 These guides can help you to go further than the example above.
-The [getting started guide](https://gateway-api.sigs.k8s.io/v1alpha2/guides/getting-started/) details how to install the CRDs from their repository.
+The [getting started guide](https://gateway-api.sigs.k8s.io/v1alpha2/guides/) details how to install the CRDs from their repository.
 
 !!! note ""
 
