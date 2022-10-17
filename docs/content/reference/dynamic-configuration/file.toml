@@ -381,7 +381,8 @@
   [tcp.services]
     [tcp.services.TCPService01]
       [tcp.services.TCPService01.loadBalancer]
-        terminationDelay = 42
+      serversTransport = "foobar"
+      terminationDelay = 42
         [tcp.services.TCPService01.loadBalancer.proxyProtocol]
           version = 42
 
@@ -407,6 +408,38 @@
     [tcp.middlewares.TCPMiddleware01]
       [tcp.middlewares.TCPMiddleware01.inFlightConn]
         amount = 42
+  [tcp.serversTransports]
+    [tcp.serversTransports.TCPServersTransport0]
+      serverName = "foobar"
+      insecureSkipVerify = true
+      rootCAs = ["foobar", "foobar"]
+      peerCertURI = "foobar"
+      dialTimeout = "42s"
+      dialKeepAlive = "42s"
+
+      [[tcp.serversTransports.TCPServersTransport0.certificates]]
+        certFile = "foobar"
+        keyFile = "foobar"
+
+      [[tcp.serversTransports.TCPServersTransport0.certificates]]
+        certFile = "foobar"
+        keyFile = "foobar"
+
+    [tcp.serversTransports.TCPServersTransport1]
+      serverName = "foobar"
+      insecureSkipVerify = true
+      rootCAs = ["foobar", "foobar"]
+      peerCertURI = "foobar"
+      dialTimeout = "42s"
+      dialKeepAlive = "42s"
+
+      [[tcp.serversTransports.TCPServersTransport1.certificates]]
+        certFile = "foobar"
+        keyFile = "foobar"
+
+      [[tcp.serversTransports.TCPServersTransport1.certificates]]
+        certFile = "foobar"
+        keyFile = "foobar"
 
 [udp]
   [udp.routers]

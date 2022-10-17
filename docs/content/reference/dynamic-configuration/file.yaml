@@ -428,6 +428,7 @@ tcp:
   services:
     TCPService01:
       loadBalancer:
+        serversTransport: foobar
         terminationDelay: 42
         proxyProtocol:
           version: 42
@@ -450,6 +451,35 @@ tcp:
     TCPMiddleware01:
       inFlightConn:
         amount: 42
+  serversTransports:
+    TCPServersTransport0:
+      serverName: foobar
+      insecureSkipVerify: true
+      rootCAs:
+        - foobar
+        - foobar
+      certificates:
+        - certFile: foobar
+          keyFile: foobar
+        - certFile: foobar
+          keyFile: foobar
+      dialTimeout: 42s
+      dialKeepAlive: 42s
+      peerCertURI: foobar
+    TCPServersTransport1:
+      serverName: foobar
+      insecureSkipVerify: true
+      rootCAs:
+        - foobar
+        - foobar
+      certificates:
+        - certFile: foobar
+          keyFile: foobar
+        - certFile: foobar
+          keyFile: foobar
+      dialTimeout: 42s
+      dialKeepAlive: 42s
+      peerCertURI: foobar
 udp:
   routers:
     UDPRouter0:
