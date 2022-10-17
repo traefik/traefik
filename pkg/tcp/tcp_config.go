@@ -7,13 +7,12 @@ import (
 	"fmt"
 
 	"net"
-	"net/http"
 	"reflect"
 	"sync"
-	"time"
+	// "time"
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"golang.org/x/net/http2"
+	// "golang.org/x/net/http2"
 
 	"github.com/traefik/traefik/v2/pkg/log"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
@@ -22,20 +21,20 @@ import (
 // NewTcpManager creates a new RoundTripperManager.
 func NewTcpManager() *TcpManager {
 	return &TcpManager{
-		Transport: make(map[string]http.RoundTripper),
-		configs:   make(map[string]*dynamic.ServersTransport),
+		Transport: make(map[string]*net.Conn),
+		configs:   make(map[string]*dynamic.TCPServersTransport),
 	}
 }
 
 // TcpManager handles roundtripper for the reverse proxy.
 type TcpManager struct {
 	rtLock    sync.RWMutex
-	configs   map[string]*dynamic.ServersTransport
-	Transport map[string]http.RoundTripper
+	configs   map[string]*dynamic.TCPServersTransport
+	Transport map[string]*net.Conn
 }
 
 // Update updates the roundtrippers configurations.
-func (r *TcpManager) Update(newConfigs map[string]*dynamic.ServersTransport) {
+func (r *TcpManager) Update(address string, newConfigs map[string]*dynamic.TCPServersTransport) {
 	r.rtLock.Lock()
 	defer r.rtLock.Unlock()
 	for configName, config := range r.configs {
@@ -51,10 +50,13 @@ func (r *TcpManager) Update(newConfigs map[string]*dynamic.ServersTransport) {
 			continue
 		}
 		var err error
-		r.Transport[configName], err = createTcptransport(newConfig)
+		r.Transport[configName], err = createTcptransport(address, newConfig)
 		if err != nil {
-			log.WithoutContext().Errorf("Could not configure HTTP Transport %s, fallback on default transport: %v", configName, err)
-			r.Transport[configName] = http.DefaultTransport
+			log.WithoutContext().Errorf("Could not configure TCP %s, fallback on default transport: %v", configName, err)
+			*r.Transport[configName], err = net.Dial("tcp", address)
+			if err != nil {
+				return
+			}
 		}
 
 	}
@@ -71,10 +73,13 @@ func (r *TcpManager) Update(newConfigs map[string]*dynamic.ServersTransport) {
 		}
 
 		var err error
-		r.Transport[newConfigName], err = createTcptransport(newConfig)
+		r.Transport[newConfigName], err = createTcptransport(address, newConfig)
 		if err != nil {
-			log.WithoutContext().Errorf("Could not configure HTTP Transport %s, fallback on default transport: %v", newConfigName, err)
-			r.Transport[newConfigName] = http.DefaultTransport
+			log.WithoutContext().Errorf("Could not configure TCP Transport %s, fallback on default transport: %v", newConfigName, err)
+			*r.Transport[newConfigName], err = net.Dial("tcp", address)
+			if err != nil {
+				return
+			}
 		}
 	}
 
@@ -85,62 +90,49 @@ func (r *TcpManager) Update(newConfigs map[string]*dynamic.ServersTransport) {
 // For the settings that can't be configured in Traefik it uses the default http.Transport settings.
 // An exception to this is the MaxIdleConns setting as we only provide the option MaxIdleConnsPerHost in Traefik at this point in time.
 // Setting this value to the default of 100 could lead to confusing behavior and backwards compatibility issues.
-func createTcptransport(cfg *dynamic.ServersTransport) (*http.Transport, error) {
-	if cfg == nil {
-		return nil, errors.New("no transport configuration given")
-	}
-	dialer := &net.Dialer{
-		Timeout:   30 * time.Second,
-		KeepAlive: 30 * time.Second,
-	}
-
-	if cfg.ForwardingTimeouts != nil {
-		dialer.Timeout = time.Duration(cfg.ForwardingTimeouts.DialTimeout)
-	}
-	transport := &http.Transport{
-		Proxy:                 http.ProxyFromEnvironment,
-		DialContext:           dialer.DialContext,
-		MaxIdleConnsPerHost:   cfg.MaxIdleConnsPerHost,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		ReadBufferSize:        64 * 1024,
-		WriteBufferSize:       64 * 1024,
-	}
-
-	if cfg.ForwardingTimeouts != nil {
-		transport.ResponseHeaderTimeout = time.Duration(cfg.ForwardingTimeouts.ResponseHeaderTimeout)
-		transport.IdleConnTimeout = time.Duration(cfg.ForwardingTimeouts.IdleConnTimeout)
-	}
-
-	if cfg.InsecureSkipVerify || len(cfg.RootCAs) > 0 || len(cfg.ServerName) > 0 || len(cfg.Certificates) > 0 || cfg.PeerCertURI != "" {
-		transport.TLSClientConfig = &tls.Config{
-			ServerName:         cfg.ServerName,
-			InsecureSkipVerify: cfg.InsecureSkipVerify,
-			RootCAs:            createRootCACertPool(cfg.RootCAs),
-			Certificates:       cfg.Certificates.GetCertificates(),
-		}
-
-		if cfg.PeerCertURI != "" {
-			transport.TLSClientConfig.VerifyPeerCertificate = func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
-				return traefiktls.VerifyPeerCertificate(cfg.PeerCertURI, transport.TLSClientConfig, rawCerts)
-			}
-		}
-	}
-
-	// Return directly HTTP/1.1 transport when HTTP/2 is disabled
-	if cfg.DisableHTTP2 {
-		return transport, nil
-	}
-	err := http2.ConfigureTransport(transport)
+func createTcptransport(address string, cfg *dynamic.TCPServersTransport) (*net.Conn, error) {
+	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		return nil, err
 	}
-	return transport, nil
+	if cfg == nil {
+		return &conn, errors.New("no transport configuration given")
+	}
+	addr, err := net.ResolveTCPAddr("tcp", address)
+	if err != nil {
+		return nil, err
+	}
+	// dialer := &net.Dialer{
+	// 	Timeout:   30 * time.Second,
+	// 	KeepAlive: 30 * time.Second,
+	// }
+	listen, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return nil, err
+	}
+	defer listen.Close()
+
+	for {
+		conntcp, err := listen.AcceptTCP()
+		if err != nil {
+			return nil, err
+		}
+		err = conntcp.SetKeepAlive(cfg.KeepAlive)
+		if err != nil {
+			return nil, err
+		}
+		conn = tls.Server(conntcp, &tls.Config{
+			ServerName:         cfg.ServerAddress,
+			InsecureSkipVerify: cfg.InsecureSkipVerify,
+			RootCAs:            createRootCACertPool(cfg.RootCAs),
+			Certificates:       cfg.Certificates.GetCertificates(),
+		})
+		return &conn, nil
+	}
 }
 
 // Get get a roundtripper by name.
-func (t *TcpManager) Get(name string) (http.RoundTripper, error) {
+func (t *TcpManager) Get(name string) (*net.Conn, error) {
 	if len(name) == 0 {
 		name = "default@internal"
 	}

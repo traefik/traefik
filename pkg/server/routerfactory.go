@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/config/static"
@@ -16,7 +15,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/server/service"
 	"github.com/traefik/traefik/v2/pkg/server/service/tcp"
 	"github.com/traefik/traefik/v2/pkg/server/service/udp"
-	defaulttranport "github.com/traefik/traefik/v2/pkg/tcp"
 	"github.com/traefik/traefik/v2/pkg/tls"
 	udptypes "github.com/traefik/traefik/v2/pkg/udp"
 )
@@ -82,12 +80,7 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 	serviceManager.LaunchHealthCheck()
 
 	// TCP
-	svcTCPManager := tcp.NewManager(rtConf, &defaulttranport.TcpManager{
-		Transport: map[string]http.RoundTripper{
-			"default@internal": http.DefaultTransport,
-		},
-	},
-	)
+	svcTCPManager := tcp.NewManager(rtConf, nil)
 
 	middlewaresTCPBuilder := tcpmiddleware.NewBuilder(rtConf.TCPMiddlewares)
 

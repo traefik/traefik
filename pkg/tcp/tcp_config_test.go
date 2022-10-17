@@ -4,8 +4,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"net"
-	"net/http"
-	"net/http/httptest"
+	// "net/http"
+	// "net/http/httptest"
 	"sync/atomic"
 	"testing"
 
@@ -19,6 +19,7 @@ func Int32(i int32) *int32 {
 	return &i
 }
 
+// TODO: Fix TEST
 // LocalhostCert is a PEM-encoded TLS cert
 // for host example.com, www.example.com
 // expiring at Jan 29 16:00:00 2084 GMT.
@@ -112,74 +113,76 @@ ajIPbTY+Fe9OTOFTN48ujXNn
 -----END PRIVATE KEY-----`)
 
 func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
-	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.WriteHeader(http.StatusOK)
-	}))
-
+	address := ":3000"
 	connCount := Int32(0)
-	srv.Config.ConnState = func(conn net.Conn, state http.ConnState) {
-		if state == http.StateNew {
-			atomic.AddInt32(connCount, 1)
+	var conn net.Conn
+	var err error
+	go func() {
+		conn, err = net.Dial("tcp", address)
+		require.Negative(t, err)
+		defer conn.Close()
+	}()
+
+	l, err := net.Listen("tcp", address)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer l.Close()
+	for {
+		conn, err := l.Accept()
+		require.NoError(t, err)
+		defer conn.Close()
+		cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+		conf := &tls.Config{Certificates: []tls.Certificate{cert}}
+		require.NoError(t, err) // Done
+		tls.Listen("tcp", address, conf)
+
+		tcpManager := NewTcpManager()
+
+		dynamicConf := map[string]*dynamic.TCPServersTransport{
+			"test": {
+				ServerAddress: "localhost:3000",
+				RootCAs:       []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
+			},
 		}
-	}
 
-	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
-	require.NoError(t, err)
+		for i := 0; i < 10; i++ {
+			tcpManager.Update(address, dynamicConf)
 
-	srv.TLS = &tls.Config{Certificates: []tls.Certificate{cert}}
-	srv.StartTLS()
+			_, err := tcpManager.Get("test")
+			require.NoError(t, err)
+			client, err := net.Dial("tcp", address)
+			require.NoError(t, err)
+			require.NotEmpty(t, client)
+			//	resp, err := client.(srv.URL)
+			require.NoError(t, err)
+			//require.Equal(t, client, resp.StatusCode)
+		}
 
-	tcpManager := NewTcpManager()
+		count := atomic.LoadInt32(connCount)
+		require.EqualValues(t, 1, count)
 
-	dynamicConf := map[string]*dynamic.ServersTransport{
-		"test": {
-			ServerName: "example.com",
-			RootCAs:    []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
-		},
-	}
+		dynamicConf = map[string]*dynamic.TCPServersTransport{
+			"test": {
+				ServerAddress: "localhost:2000",
+				RootCAs:       []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
+			},
+		}
 
-	for i := 0; i < 10; i++ {
-		tcpManager.Update(dynamicConf)
+		tcpManager.Update(address, dynamicConf)
 
 		tr, err := tcpManager.Get("test")
 		require.NoError(t, err)
-
-		client := http.Client{Transport: tr}
-
-		resp, err := client.Get(srv.URL)
+		conn, err = net.Dial("tcp", ":2000")
 		require.NoError(t, err)
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		require.Equal(t, tr, conn)
+		count = atomic.LoadInt32(connCount)
+		assert.EqualValues(t, 2, count)
+		return
 	}
-
-	count := atomic.LoadInt32(connCount)
-	require.EqualValues(t, 1, count)
-
-	dynamicConf = map[string]*dynamic.ServersTransport{
-		"test": {
-			ServerName: "www.example.com",
-			RootCAs:    []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
-		},
-	}
-
-	tcpManager.Update(dynamicConf)
-
-	tr, err := tcpManager.Get("test")
-	require.NoError(t, err)
-
-	client := http.Client{Transport: tr}
-
-	resp, err := client.Get(srv.URL)
-	require.NoError(t, err)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-
-	count = atomic.LoadInt32(connCount)
-	assert.EqualValues(t, 2, count)
 }
 
 func TestMTLS(t *testing.T) {
-	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.WriteHeader(http.StatusOK)
-	}))
 
 	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
 	require.NoError(t, err)
@@ -187,20 +190,20 @@ func TestMTLS(t *testing.T) {
 	clientPool := x509.NewCertPool()
 	clientPool.AppendCertsFromPEM(mTLSCert)
 
-	srv.TLS = &tls.Config{
+	config := &tls.Config{
 		// For TLS
 		Certificates: []tls.Certificate{cert},
-
 		// For mTLS
 		ClientAuth: tls.RequireAndVerifyClientCert,
 		ClientCAs:  clientPool,
 	}
-	srv.StartTLS()
+	//srv.StartTLS()
 
 	tcp := NewTcpManager()
-	dynamicConf := map[string]*dynamic.ServersTransport{
+	dynamicConf := map[string]*dynamic.TCPServersTransport{
 		"test": {
-			ServerName: "example.com",
+			ServerAddress: "localhost:9000",
+			KeepAlive:     true,
 			// For TLS
 			RootCAs: []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
 
@@ -213,82 +216,13 @@ func TestMTLS(t *testing.T) {
 			},
 		},
 	}
+	tcp.Update("localhost:9000", dynamicConf)
 
-	tcp.Update(dynamicConf)
-
-	tr, err := tcp.Get("test")
+	//_, err := tcp.Get("test")
 	require.NoError(t, err)
-
-	client := http.Client{Transport: tr}
-
-	resp, err := client.Get(srv.URL)
+	listener, err := tls.Listen("tcp", ":9000", config)
 	require.NoError(t, err)
-
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-}
-
-func TestDisableHTTP2(t *testing.T) {
-	testCases := []struct {
-		desc          string
-		disableHTTP2  bool
-		serverHTTP2   bool
-		expectedProto string
-	}{
-		{
-			desc:          "HTTP1 capable client with HTTP1 server",
-			disableHTTP2:  true,
-			expectedProto: "HTTP/1.1",
-		},
-		{
-			desc:          "HTTP1 capable client with HTTP2 server",
-			disableHTTP2:  true,
-			serverHTTP2:   true,
-			expectedProto: "HTTP/1.1",
-		},
-		{
-			desc:          "HTTP2 capable client with HTTP1 server",
-			expectedProto: "HTTP/1.1",
-		},
-		{
-			desc:          "HTTP2 capable client with HTTP2 server",
-			serverHTTP2:   true,
-			expectedProto: "HTTP/2.0",
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-				rw.WriteHeader(http.StatusOK)
-			}))
-
-			srv.EnableHTTP2 = test.serverHTTP2
-			srv.StartTLS()
-
-			tcpmanage := NewTcpManager()
-
-			dynamicConf := map[string]*dynamic.ServersTransport{
-				"test": {
-					DisableHTTP2:       test.disableHTTP2,
-					InsecureSkipVerify: true,
-				},
-			}
-
-			tcpmanage.Update(dynamicConf)
-
-			tr, err := tcpmanage.Get("test")
-			require.NoError(t, err)
-
-			client := http.Client{Transport: tr}
-
-			resp, err := client.Get(srv.URL)
-			require.NoError(t, err)
-
-			assert.Equal(t, http.StatusOK, resp.StatusCode)
-			assert.Equal(t, test.expectedProto, resp.Proto)
-		})
-	}
+	conn, err := listener.Accept()
+	require.NoError(t, err)
+	require.NotEmpty(t, conn)
 }

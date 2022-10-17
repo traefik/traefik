@@ -161,11 +161,7 @@ func Test_Routing(t *testing.T) {
 			},
 		},
 	}
-	serviceManager := tcp.NewManager(conf, &tcp2.TcpManager{
-		Transport: map[string]http.RoundTripper{
-			"default@internal": http.DefaultTransport,
-		},
-	})
+	serviceManager := tcp.NewManager(conf,nil)
 
 	// Creates the tlsManager and defines the TLS 1.0 and 1.2 TLSOptions.
 	tlsManager := traefiktls.NewManager()

@@ -2,7 +2,6 @@ package tcp
 
 import (
 	"context"
-	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,7 +9,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
-	"github.com/traefik/traefik/v2/pkg/tcp"
 )
 
 func TestManager_BuildTCP(t *testing.T) {
@@ -182,11 +180,7 @@ func TestManager_BuildTCP(t *testing.T) {
 
 			manager := NewManager(&runtime.Configuration{
 				TCPServices: test.configs,
-			}, &tcp.TcpManager{
-				Transport: map[string]http.RoundTripper{
-					"default@internal": http.DefaultTransport,
-				},
-			})
+			}, nil)
 			ctx := context.Background()
 			if len(test.providerName) > 0 {
 				ctx = provider.AddInContext(ctx, "foobar@"+test.providerName)
