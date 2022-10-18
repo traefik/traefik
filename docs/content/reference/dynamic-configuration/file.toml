@@ -285,6 +285,9 @@
     [http.middlewares.Middleware22]
       [http.middlewares.Middleware22.stripPrefixRegex]
         regex = ["foobar", "foobar"]
+    [http.middlewares.Middleware23]
+      [http.middlewares.Middleware23.grpcWeb]
+        allowOrigins = ["foobar", "foobar"]
   [http.serversTransports]
     [http.serversTransports.ServersTransport0]
       serverName = "foobar"
