@@ -1889,6 +1889,82 @@ spec:
   dialKeepAlive: 30s
 ```
 
+#### `spiffe`
+
+Please note that [SPIFFE](../../https/spiffe.md) must be enabled in the static configuration
+before using it to secure the connection between Traefik and the backends.
+
+##### `spiffe.ids`
+
+_Optional_
+
+`ids` defines the allowed SPIFFE IDs.
+This takes precedence over the SPIFFE TrustDomain.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+tcp:
+  serversTransports:
+    mytransport:
+      spiffe:
+        ids:
+          - spiffe://trust-domain/id1
+          - spiffe://trust-domain/id2
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[tcp.serversTransports.mytransport.spiffe]
+  ids = ["spiffe://trust-domain/id1", "spiffe://trust-domain/id2"]
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    spiffe:
+      ids:
+        - spiffe://trust-domain/id1
+        - spiffe://trust-domain/id2
+```
+
+##### `spiffe.trustDomain`
+
+_Optional_
+
+`trustDomain` defines the allowed SPIFFE trust domain.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+tcp:
+  serversTransports:
+    mytransport:
+        spiffe:
+          trustDomain: spiffe://trust-domain
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[tcp.serversTransports.mytransport.spiffe]
+  trustDomain = "spiffe://trust-domain"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    spiffe:
+      trustDomain: "spiffe://trust-domain"
+```
+
 ## Configuring UDP Services
 
 ### General
