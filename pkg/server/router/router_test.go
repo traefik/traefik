@@ -7,10 +7,12 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/containous/alice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/metrics"
@@ -478,7 +480,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 							},
 						},
 						HealthCheck: &dynamic.ServerHealthCheck{
-							Interval: "500ms",
+							Interval: ptypes.Duration(500 * time.Millisecond),
 							Path:     "/health",
 						},
 					},
