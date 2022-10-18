@@ -162,7 +162,7 @@ func Test_Routing(t *testing.T) {
 		},
 	}
 
-	dialerManager := tcp.NewDialerManager()
+	dialerManager := tcp.NewDialerManager(nil)
 	dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
 	serviceManager := tcp.NewManager(conf, dialerManager)
 

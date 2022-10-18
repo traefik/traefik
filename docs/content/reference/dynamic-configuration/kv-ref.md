@@ -296,6 +296,9 @@
 | `traefik/tcp/serversTransports/TCPServersTransport0/rootCAs/0` | `foobar` |
 | `traefik/tcp/serversTransports/TCPServersTransport0/rootCAs/1` | `foobar` |
 | `traefik/tcp/serversTransports/TCPServersTransport0/serverName` | `foobar` |
+| `traefik/tcp/serversTransports/TCPServersTransport0/spiffe/ids/0` | `foobar` |
+| `traefik/tcp/serversTransports/TCPServersTransport0/spiffe/ids/1` | `foobar` |
+| `traefik/tcp/serversTransports/TCPServersTransport0/spiffe/trustDomain` | `foobar` |
 | `traefik/tcp/serversTransports/TCPServersTransport1/certificates/0/certFile` | `foobar` |
 | `traefik/tcp/serversTransports/TCPServersTransport1/certificates/0/keyFile` | `foobar` |
 | `traefik/tcp/serversTransports/TCPServersTransport1/certificates/1/certFile` | `foobar` |
@@ -307,6 +310,9 @@
 | `traefik/tcp/serversTransports/TCPServersTransport1/rootCAs/0` | `foobar` |
 | `traefik/tcp/serversTransports/TCPServersTransport1/rootCAs/1` | `foobar` |
 | `traefik/tcp/serversTransports/TCPServersTransport1/serverName` | `foobar` |
+| `traefik/tcp/serversTransports/TCPServersTransport1/spiffe/ids/0` | `foobar` |
+| `traefik/tcp/serversTransports/TCPServersTransport1/spiffe/ids/1` | `foobar` |
+| `traefik/tcp/serversTransports/TCPServersTransport1/spiffe/trustDomain` | `foobar` |
 | `traefik/tcp/services/TCPService01/loadBalancer/proxyProtocol/version` | `42` |
 | `traefik/tcp/services/TCPService01/loadBalancer/servers/0/address` | `foobar` |
 | `traefik/tcp/services/TCPService01/loadBalancer/servers/1/address` | `foobar` |

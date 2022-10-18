@@ -355,5 +355,12 @@ func (i *Provider) serverTransportTCP(cfg *dynamic.Configuration) {
 		DialKeepAlive:      i.staticCfg.TCPServersTransport.DialKeepAlive,
 	}
 
+	if i.staticCfg.TCPServersTransport.Spiffe != nil {
+		st.Spiffe = &dynamic.Spiffe{
+			IDs:         i.staticCfg.ServersTransport.Spiffe.IDs,
+			TrustDomain: i.staticCfg.ServersTransport.Spiffe.TrustDomain,
+		}
+	}
+
 	cfg.TCP.ServersTransports["default"] = st
 }
