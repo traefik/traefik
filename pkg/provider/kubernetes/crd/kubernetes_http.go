@@ -307,7 +307,13 @@ func (c configBuilder) buildServersLB(namespace string, svc v1alpha1.LoadBalance
 		passHostHeader := true
 		lb.PassHostHeader = &passHostHeader
 	}
-	lb.ResponseForwarding = conf.ResponseForwarding
+
+	if conf.ResponseForwarding != nil && conf.ResponseForwarding.FlushInterval != "" {
+		err := lb.ResponseForwarding.FlushInterval.Set(conf.ResponseForwarding.FlushInterval)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse flushInterval: %w", err)
+		}
+	}
 
 	lb.Sticky = svc.Sticky
 
