@@ -1023,6 +1023,15 @@ Disable SSL certificate verification. (Default: ```false```)
 `--tcpserverstransport.rootcas`:  
 Add cert file for self-signed certificate.
 
+`--tcpserverstransport.spiffe`:  
+Defines the SPIFFE configuration. (Default: ```false```)
+
+`--tcpserverstransport.spiffe.ids`:  
+Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
+
+`--tcpserverstransport.spiffe.trustdomain`:  
+Defines the allowed SPIFFE trust domain.
+
 `--tracing`:  
 OpenTracing configuration. (Default: ```false```)
 

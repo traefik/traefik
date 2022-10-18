@@ -472,6 +472,11 @@ tcp:
       dialTimeout: 42s
       dialKeepAlive: 42s
       peerCertURI: foobar
+      spiffe:
+        ids:
+          - foobar
+          - foobar
+        trustDomain: foobar
     TCPServersTransport1:
       serverName: foobar
       insecureSkipVerify: true
@@ -486,6 +491,11 @@ tcp:
       dialTimeout: 42s
       dialKeepAlive: 42s
       peerCertURI: foobar
+      spiffe:
+        ids:
+          - foobar
+          - foobar
+        trustDomain: foobar
 udp:
   routers:
     UDPRouter0:

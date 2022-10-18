@@ -274,7 +274,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	}
 
 	roundTripperManager := service.NewRoundTripperManager(spiffeX509Source)
-	dialerManager := tcp.NewDialerManager()
+	dialerManager := tcp.NewDialerManager(spiffeX509Source)
 	acmeHTTPHandler := getHTTPChallengeHandler(acmeProviders, httpChallengeProvider)
 	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, roundTripperManager, acmeHTTPHandler)
 
