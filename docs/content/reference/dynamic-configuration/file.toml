@@ -428,6 +428,10 @@
         certFile = "foobar"
         keyFile = "foobar"
 
+      [tcp.serversTransports.TCPServersTransport0.spiffe]
+        ids = ["foobar", "foobar"]
+        trustDomain = "foobar"
+
     [tcp.serversTransports.TCPServersTransport1]
       serverName = "foobar"
       insecureSkipVerify = true
@@ -443,6 +447,10 @@
       [[tcp.serversTransports.TCPServersTransport1.certificates]]
         certFile = "foobar"
         keyFile = "foobar"
+
+      [tcp.serversTransports.TCPServersTransport0.spiffe]
+        ids = ["foobar", "foobar"]
+        trustDomain = "foobar"
 
 [udp]
   [udp.routers]

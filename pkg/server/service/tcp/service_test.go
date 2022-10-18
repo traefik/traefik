@@ -178,7 +178,7 @@ func TestManager_BuildTCP(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			dialerManager := NewDialerManager()
+			dialerManager := NewDialerManager(nil)
 			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
 
 			manager := NewManager(&runtime.Configuration{

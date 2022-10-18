@@ -106,6 +106,11 @@ spec:
     - allcerts
   dialTimeout: 42
   dialKeepAlive: 42
+  spiffe:
+    ids:
+      - spiffe://foo/buz
+      - spiffe://bar/biz
+    trustDomain: spiffe://lol
 
 ---
 apiVersion: traefik.containo.us/v1alpha1

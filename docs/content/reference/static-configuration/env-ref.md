@@ -1023,6 +1023,15 @@ Disable SSL certificate verification. (Default: ```false```)
 `TRAEFIK_TCPSERVERSTRANSPORT_ROOTCAS`:  
 Add cert file for self-signed certificate.
 
+`TRAEFIK_TCPSERVERSTRANSPORT_SPIFFE`:  
+Defines the SPIFFE configuration. (Default: ```false```)
+
+`TRAEFIK_TCPSERVERSTRANSPORT_SPIFFE_IDS`:  
+Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
+
+`TRAEFIK_TCPSERVERSTRANSPORT_SPIFFE_TRUSTDOMAIN`:  
+Defines the allowed SPIFFE trust domain.
+
 `TRAEFIK_TRACING`:  
 OpenTracing configuration. (Default: ```false```)
 
