@@ -17,6 +17,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/middlewares/circuitbreaker"
 	"github.com/traefik/traefik/v2/pkg/middlewares/compress"
 	"github.com/traefik/traefik/v2/pkg/middlewares/customerrors"
+	"github.com/traefik/traefik/v2/pkg/middlewares/grpcweb"
 	"github.com/traefik/traefik/v2/pkg/middlewares/headers"
 	"github.com/traefik/traefik/v2/pkg/middlewares/inflightreq"
 	"github.com/traefik/traefik/v2/pkg/middlewares/ipwhitelist"
@@ -216,6 +217,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return auth.NewForward(ctx, next, *config.ForwardAuth, middlewareName)
+		}
+	}
+
+	// GrpcWeb
+	if config.GrpcWeb != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return grpcweb.New(ctx, next, *config.GrpcWeb, middlewareName), nil
 		}
 	}
 
