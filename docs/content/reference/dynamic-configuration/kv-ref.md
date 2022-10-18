@@ -140,6 +140,8 @@
 | `traefik/http/middlewares/Middleware21/stripPrefix/prefixes/1` | `foobar` |
 | `traefik/http/middlewares/Middleware22/stripPrefixRegex/regex/0` | `foobar` |
 | `traefik/http/middlewares/Middleware22/stripPrefixRegex/regex/1` | `foobar` |
+| `traefik/http/middlewares/Middleware23/grpcWeb/allowOrigins/0` | `foobar` |
+| `traefik/http/middlewares/Middleware23/grpcWeb/allowOrigins/1` | `foobar` |
 | `traefik/http/routers/Router0/entryPoints/0` | `foobar` |
 | `traefik/http/routers/Router0/entryPoints/1` | `foobar` |
 | `traefik/http/routers/Router0/middlewares/0` | `foobar` |
