@@ -1264,6 +1264,11 @@ func (in *ServersTransportTCPSpec) DeepCopyInto(out *ServersTransportTCPSpec) {
 		*out = new(intstr.IntOrString)
 		**out = **in
 	}
+	if in.Spiffe != nil {
+		in, out := &in.Spiffe, &out.Spiffe
+		*out = new(dynamic.Spiffe)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
