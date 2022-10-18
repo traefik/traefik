@@ -421,6 +421,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		tcpServerTransport.RootCAs = rootCAs
 		tcpServerTransport.Certificates = certs
 		tcpServerTransport.PeerCertURI = serversTransportTCP.Spec.PeerCertURI
+		tcpServerTransport.Spiffe = serversTransportTCP.Spec.Spiffe
 
 		if serversTransportTCP.Spec.DialTimeout != nil {
 			err := tcpServerTransport.DialTimeout.Set(serversTransportTCP.Spec.DialTimeout.String())

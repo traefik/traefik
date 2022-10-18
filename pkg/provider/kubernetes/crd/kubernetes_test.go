@@ -1408,6 +1408,13 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							PeerCertURI:   "foo://bar",
 							DialTimeout:   ptypes.Duration(42 * time.Second),
 							DialKeepAlive: ptypes.Duration(42 * time.Second),
+							Spiffe: &dynamic.Spiffe{
+								IDs: []string{
+									"spiffe://foo/buz",
+									"spiffe://bar/biz",
+								},
+								TrustDomain: "spiffe://lol",
+							},
 						},
 						"default-test": {
 							ServerName:    "test",

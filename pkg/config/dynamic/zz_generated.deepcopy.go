@@ -1550,6 +1550,11 @@ func (in *TCPServersTransport) DeepCopyInto(out *TCPServersTransport) {
 		*out = make(tls.Certificates, len(*in))
 		copy(*out, *in)
 	}
+	if in.Spiffe != nil {
+		in, out := &in.Spiffe, &out.Spiffe
+		*out = new(Spiffe)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 
