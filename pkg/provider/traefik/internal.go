@@ -322,7 +322,7 @@ func (i *Provider) serverTransport(cfg *dynamic.Configuration) {
 		MaxIdleConnsPerHost: i.staticCfg.ServersTransport.MaxIdleConnsPerHost,
 	}
 
-	if i.staticCfg.Spiffe != nil {
+	if i.staticCfg.ServersTransport.Spiffe != nil {
 		st.Spiffe = &dynamic.Spiffe{
 			IDs:         i.staticCfg.ServersTransport.Spiffe.IDs,
 			TrustDomain: i.staticCfg.ServersTransport.Spiffe.TrustDomain,
