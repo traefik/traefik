@@ -34,8 +34,19 @@ type Middleware struct {
 	PassTLSClientCert *PassTLSClientCert `json:"passTLSClientCert,omitempty" toml:"passTLSClientCert,omitempty" yaml:"passTLSClientCert,omitempty" export:"true"`
 	Retry             *Retry             `json:"retry,omitempty" toml:"retry,omitempty" yaml:"retry,omitempty" export:"true"`
 	ContentType       *ContentType       `json:"contentType,omitempty" toml:"contentType,omitempty" yaml:"contentType,omitempty" export:"true"`
+	GrpcWeb           *GrpcWeb           `json:"grpcWeb,omitempty" toml:"grpcWeb,omitempty" yaml:"grpcWeb,omitempty" export:"true"`
 
 	Plugin map[string]PluginConf `json:"plugin,omitempty" toml:"plugin,omitempty" yaml:"plugin,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// GrpcWeb holds the gRPC web middleware configuration.
+// This middleware converts a gRPC web request to an HTTP/2 gRPC request.
+type GrpcWeb struct {
+	// AllowOrigins is a list of allowable origins.
+	// Can also be a wildcard origin "*".
+	AllowOrigins []string `json:"allowOrigins,omitempty" toml:"allowOrigins,omitempty" yaml:"allowOrigins,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
