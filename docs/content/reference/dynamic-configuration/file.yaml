@@ -324,6 +324,11 @@ http:
         regex:
           - foobar
           - foobar
+    Middleware23:
+      grpcWeb:
+        allowOrigins:
+          - foobar
+          - foobar
   serversTransports:
     ServersTransport0:
       serverName: foobar
