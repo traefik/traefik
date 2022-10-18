@@ -125,6 +125,7 @@ nav:
         - 'DigestAuth': 'middlewares/http/digestauth.md'
         - 'Errors': 'middlewares/http/errorpages.md'
         - 'ForwardAuth': 'middlewares/http/forwardauth.md'
+        - 'GrpcWeb': 'middlewares/http/grpcweb.md'
         - 'Headers': 'middlewares/http/headers.md'
         - 'IpWhitelist': 'middlewares/http/ipwhitelist.md'
         - 'InFlightReq': 'middlewares/http/inflightreq.md'
