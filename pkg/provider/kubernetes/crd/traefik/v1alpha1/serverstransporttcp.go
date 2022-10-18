@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -41,6 +42,8 @@ type ServersTransportTCPSpec struct {
 	DialTimeout *intstr.IntOrString `json:"dialTimeout,omitempty"`
 	// DialKeepAlive is the interval between keep-alive probes for an active network connection. If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled.
 	DialTKeepAlive *intstr.IntOrString `json:"dialKeepAlive,omitempty"`
+	// Spiffe defines the SPIFFE configuration.
+	Spiffe *dynamic.Spiffe `json:"spiffe,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
