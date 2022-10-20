@@ -439,7 +439,7 @@ func TestAccessLog(t *testing.T) {
 			reqHost := requestdecorator.New(nil)
 
 			chain := alice.New()
-			chain = chain.Append(capture.WrapHandler)
+			chain = chain.Append(capture.Wrap)
 			chain = chain.Append(accesslog.WrapHandler(accesslogger))
 			handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				reqHost.ServeHTTP(w, req, handlers["web"].ServeHTTP)

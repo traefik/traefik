@@ -39,7 +39,7 @@ func TestCapture(t *testing.T) {
 	})
 
 	chain := alice.New()
-	chain = chain.Append(WrapHandler)
+	chain = chain.Append(Wrap)
 	chain = chain.Append(wrapMiddleware)
 	handlers, err := chain.Then(handler)
 	require.NoError(t, err)
@@ -141,7 +141,7 @@ func BenchmarkCapture(b *testing.B) {
 
 			chain := alice.New()
 			if test.capture || test.body {
-				chain = chain.Append(WrapHandler)
+				chain = chain.Append(Wrap)
 			}
 			handlers, err := chain.Then(next)
 			require.NoError(b, err)
