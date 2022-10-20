@@ -179,7 +179,10 @@
             "url": "http://10.0.1.1:8889"
           }
         ],
-        "passHostHeader": true
+        "passHostHeader": true,
+        "responseForwarding": {
+          "flushInterval": "100ms"
+        }
       },
       "status": "enabled",
       "usedBy": [
@@ -201,7 +204,10 @@
             "url": "http://10.0.1.2:8889"
           }
         ],
-        "passHostHeader": true
+        "passHostHeader": true,
+        "responseForwarding": {
+          "flushInterval": "100ms"
+        }
       },
       "status": "enabled"
     },
@@ -215,7 +221,10 @@
             "url": "http://10.0.1.3:8889"
           }
         ],
-        "passHostHeader": true
+        "passHostHeader": true,
+        "responseForwarding": {
+          "flushInterval": "100ms"
+        }
       },
       "status": "enabled"
     }
