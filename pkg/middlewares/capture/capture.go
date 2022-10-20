@@ -3,9 +3,8 @@
 // For another middleware to get those attributes of a request/response, this middleware
 // should be added before in the middleware chain.
 //
-//	handler, _ := NewHandler()
 //	chain := alice.New().
-//	     Append(WrapHandler(handler)).
+//	     Append(capture.Wrap).
 //	     Append(myOtherMiddleware).
 //	     then(...)
 //
@@ -40,9 +39,9 @@ type key string
 
 const capturedData key = "capturedData"
 
-// WrapHandler wraps the given handler with a capture handler.
-// WrapHandler satisfies the alice.Constructor type.
-func WrapHandler(handler http.Handler) (http.Handler, error) {
+// Wrap returns a new handler that inserts a Capture into the given handler.
+// It satisfies the alice.Constructor type.
+func Wrap(handler http.Handler) (http.Handler, error) {
 	c := Capture{}
 	return c.Reset(handler), nil
 }
@@ -72,7 +71,8 @@ func (c *Capture) NeedsReset(rw http.ResponseWriter) bool {
 	return c.rw != rw
 }
 
-// Reset wraps the given handler with a capture handler and populates the capture with new probes.
+// Reset returns a new handler that renews the Capture's probes, and inserts
+// them when deferring to next.
 func (c *Capture) Reset(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := context.WithValue(req.Context(), capturedData, c)

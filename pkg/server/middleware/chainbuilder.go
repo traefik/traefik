@@ -34,7 +34,7 @@ func (c *ChainBuilder) Build(ctx context.Context, entryPointName string) alice.C
 	chain := alice.New()
 
 	if c.accessLoggerMiddleware != nil || c.metricsRegistry != nil && (c.metricsRegistry.IsEpEnabled() || c.metricsRegistry.IsRouterEnabled() || c.metricsRegistry.IsSvcEnabled()) {
-		chain = chain.Append(capture.WrapHandler)
+		chain = chain.Append(capture.Wrap)
 	}
 
 	if c.accessLoggerMiddleware != nil {
