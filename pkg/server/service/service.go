@@ -223,7 +223,7 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 			return nil, err
 		}
 
-		balancer.AddService(service.Name, serviceHandler, service.Weight)
+		balancer.Add(service.Name, serviceHandler, service.Weight)
 
 		if config.HealthCheck == nil {
 			continue
@@ -286,6 +286,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		_, _ = hasher.Write([]byte(server.URL)) // this will never return an error.
 
 		proxyName := fmt.Sprintf("%x", hasher.Sum(nil))
+
 		target, err := url.Parse(server.URL)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing server URL %s: %w", server.URL, err)
@@ -303,9 +304,9 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			proxy = metricsMiddle.NewServiceMiddleware(ctx, proxy, m.metricsRegistry, serviceName)
 		}
 
-		lb.AddService(proxyName, proxy, nil)
-		// Server are considered UP by default
-		info.UpdateServerStatus(target.String(), runtime.StatusUp)
+		lb.Add(proxyName, proxy, nil)
+		info.UpdateServerStatus(target.String(), runtime.StatusUp) // servers are considered UP by default.
+
 		healthCheckTargets[proxyName] = target
 	}
 
