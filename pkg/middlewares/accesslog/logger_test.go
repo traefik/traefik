@@ -57,7 +57,7 @@ func TestLogRotation(t *testing.T) {
 	})
 
 	chain := alice.New()
-	chain = chain.Append(capture.WrapHandler(&capture.Handler{}))
+	chain = chain.Append(capture.Wrap)
 	chain = chain.Append(WrapHandler(logHandler))
 	handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
@@ -210,7 +210,7 @@ func TestLoggerHeaderFields(t *testing.T) {
 			}
 
 			chain := alice.New()
-			chain = chain.Append(capture.WrapHandler(&capture.Handler{}))
+			chain = chain.Append(capture.Wrap)
 			chain = chain.Append(WrapHandler(logger))
 			handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(http.StatusOK)
@@ -784,7 +784,7 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
 	}
 
 	chain := alice.New()
-	chain = chain.Append(capture.WrapHandler(&capture.Handler{}))
+	chain = chain.Append(capture.Wrap)
 	chain = chain.Append(WrapHandler(logger))
 	handler, err := chain.Then(http.HandlerFunc(logWriterTestHandlerFunc))
 	require.NoError(t, err)
