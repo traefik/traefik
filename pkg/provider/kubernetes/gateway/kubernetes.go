@@ -1443,11 +1443,10 @@ func loadServices(client Client, namespace string, backendRefs []v1alpha2.HTTPBa
 			return nil, nil, fmt.Errorf("unsupported HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
 		}
 
-		svc := dynamic.Service{
-			LoadBalancer: &dynamic.ServersLoadBalancer{
-				PassHostHeader: pointer.Bool(true),
-			},
-		}
+		lb := &dynamic.ServersLoadBalancer{}
+		lb.SetDefaults()
+
+		svc := dynamic.Service{LoadBalancer: lb}
 
 		// TODO support cross namespace through ReferencePolicy
 		service, exists, err := client.GetService(namespace, string(backendRef.Name))
