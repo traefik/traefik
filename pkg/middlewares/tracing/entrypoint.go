@@ -48,7 +48,7 @@ func (e *entryPointMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Reque
 
 	req = req.WithContext(tracing.WithTracing(req.Context(), e.Tracing))
 
-	recorder := newStatusCodeRecoder(rw, http.StatusOK)
+	recorder := newStatusCodeRecorder(rw, http.StatusOK)
 	e.next.ServeHTTP(recorder, req)
 
 	tracing.LogResponseCode(span, recorder.Status())

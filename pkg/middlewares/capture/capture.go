@@ -60,17 +60,16 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		c.rr = readCounter
 		req.Body = readCounter
 	}
-	responseWriter := newResponseWriter(rw)
-	c.rw = responseWriter
+	c.rw = &captureResponseWriter{rw: rw}
 	ctx := context.WithValue(req.Context(), capturedData, &c)
-	next.ServeHTTP(responseWriter, req.WithContext(ctx))
+	next.ServeHTTP(c.rw, req.WithContext(ctx))
 }
 
 // Capture is the object populated by the capture middleware,
 // allowing to gather information about the request and response.
 type Capture struct {
 	rr *readCounter
-	rw responseWriter
+	rw *captureResponseWriter
 }
 
 // FromContext returns the Capture value found in ctx, or an empty Capture otherwise.
@@ -120,22 +119,7 @@ func (r *readCounter) Close() error {
 	return r.source.Close()
 }
 
-var _ middlewares.Stateful = &responseWriterWithCloseNotify{}
-
-type responseWriter interface {
-	http.ResponseWriter
-	Size() int64
-	Status() int
-}
-
-func newResponseWriter(rw http.ResponseWriter) responseWriter {
-	capt := &captureResponseWriter{rw: rw}
-	if _, ok := rw.(http.CloseNotifier); !ok {
-		return capt
-	}
-
-	return &responseWriterWithCloseNotify{capt}
-}
+var _ middlewares.Stateful = &captureResponseWriter{}
 
 // captureResponseWriter is a wrapper of type http.ResponseWriter
 // that tracks response status and size.
@@ -185,14 +169,4 @@ func (crw *captureResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) 
 	}
 
 	return nil, nil, fmt.Errorf("not a hijacker: %T", crw.rw)
-}
-
-type responseWriterWithCloseNotify struct {
-	*captureResponseWriter
-}
-
-// CloseNotify returns a channel that receives at most a
-// single value (true) when the client connection has gone away.
-func (r *responseWriterWithCloseNotify) CloseNotify() <-chan bool {
-	return r.rw.(http.CloseNotifier).CloseNotify()
 }

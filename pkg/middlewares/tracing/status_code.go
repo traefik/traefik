@@ -6,52 +6,35 @@ import (
 	"net/http"
 )
 
-type statusCodeRecoder interface {
-	http.ResponseWriter
-	Status() int
+// newStatusCodeRecorder returns an initialized statusCodeRecoder.
+func newStatusCodeRecorder(rw http.ResponseWriter, status int) *statusCodeRecorder {
+	return &statusCodeRecorder{rw, status}
 }
 
-// newStatusCodeRecoder returns an initialized statusCodeRecoder.
-func newStatusCodeRecoder(rw http.ResponseWriter, status int) statusCodeRecoder {
-	recorder := &statusCodeWithoutCloseNotify{rw, status}
-	if _, ok := rw.(http.CloseNotifier); ok {
-		return &statusCodeWithCloseNotify{recorder}
-	}
-	return recorder
-}
-
-type statusCodeWithoutCloseNotify struct {
+type statusCodeRecorder struct {
 	http.ResponseWriter
 	status int
 }
 
 // WriteHeader captures the status code for later retrieval.
-func (s *statusCodeWithoutCloseNotify) WriteHeader(status int) {
+func (s *statusCodeRecorder) WriteHeader(status int) {
 	s.status = status
 	s.ResponseWriter.WriteHeader(status)
 }
 
 // Status get response status.
-func (s *statusCodeWithoutCloseNotify) Status() int {
+func (s *statusCodeRecorder) Status() int {
 	return s.status
 }
 
 // Hijack hijacks the connection.
-func (s *statusCodeWithoutCloseNotify) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+func (s *statusCodeRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return s.ResponseWriter.(http.Hijacker).Hijack()
 }
 
 // Flush sends any buffered data to the client.
-func (s *statusCodeWithoutCloseNotify) Flush() {
+func (s *statusCodeRecorder) Flush() {
 	if flusher, ok := s.ResponseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
-}
-
-type statusCodeWithCloseNotify struct {
-	*statusCodeWithoutCloseNotify
-}
-
-func (s *statusCodeWithCloseNotify) CloseNotify() <-chan bool {
-	return s.ResponseWriter.(http.CloseNotifier).CloseNotify()
 }
