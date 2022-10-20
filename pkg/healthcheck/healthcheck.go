@@ -117,10 +117,16 @@ func (shc *ServiceHealthChecker) Launch(ctx context.Context) {
 				serverUpMetricValue := float64(1)
 
 				if err := shc.executeHealthCheck(ctx, shc.config, target); err != nil {
+					// The context is canceled when the dynamic configuration is refreshed.
 					if errors.Is(err, context.Canceled) {
 						return
 					}
-					log.FromContext(ctx).WithField("targetURL", target.String()).WithError(err).Warn("Health check failed.")
+
+					log.FromContext(ctx).
+						WithField("targetURL", target.String()).
+						WithError(err).
+						Warn("Health check failed.")
+
 					up = false
 					serverUpMetricValue = float64(0)
 				}
@@ -134,8 +140,10 @@ func (shc *ServiceHealthChecker) Launch(ctx context.Context) {
 
 				shc.info.UpdateServerStatus(target.String(), statusStr)
 
-				labelValues := []string{"service", proxyName, "url", target.String()}
-				shc.metrics.ServiceServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
+				shc.metrics.ServiceServerUpGauge().
+					With("service", proxyName).
+					With("url", target.String()).
+					Set(serverUpMetricValue)
 			}
 		}
 	}

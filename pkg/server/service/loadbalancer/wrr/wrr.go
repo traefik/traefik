@@ -38,7 +38,7 @@ type Balancer struct {
 	curDeadline float64
 	// status is a record of which child services of the Balancer are healthy, keyed
 	// by name of child service. A service is initially added to the map when it is
-	// created via AddService, and it is later removed or added to the map as needed,
+	// created via Add, and it is later removed or added to the map as needed,
 	// through the SetStatus method.
 	status map[string]struct{}
 	// updaters is the list of hooks that are run (to update the Balancer
@@ -219,9 +219,9 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	server.ServeHTTP(w, req)
 }
 
-// AddService adds a handler.
+// Add adds a handler.
 // A handler with a non-positive weight is ignored.
-func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
+func (b *Balancer) Add(name string, handler http.Handler, weight *int) {
 	w := 1
 	if weight != nil {
 		w = *weight
