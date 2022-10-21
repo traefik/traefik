@@ -19,7 +19,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/middlewares/customerrors"
 	"github.com/traefik/traefik/v2/pkg/middlewares/headers"
 	"github.com/traefik/traefik/v2/pkg/middlewares/inflightreq"
-	"github.com/traefik/traefik/v2/pkg/middlewares/ipwhitelist"
+	"github.com/traefik/traefik/v2/pkg/middlewares/ipallowlist"
 	"github.com/traefik/traefik/v2/pkg/middlewares/passtlsclientcert"
 	"github.com/traefik/traefik/v2/pkg/middlewares/ratelimiter"
 	"github.com/traefik/traefik/v2/pkg/middlewares/redirect"
@@ -229,13 +229,13 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
-	// IPWhiteList
-	if config.IPWhiteList != nil {
+	// IPAllowList
+	if config.IPAllowList != nil {
 		if middleware != nil {
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return ipwhitelist.New(ctx, next, *config.IPWhiteList, middlewareName)
+			return ipallowlist.New(ctx, next, *config.IPAllowList, middlewareName)
 		}
 	}
 
