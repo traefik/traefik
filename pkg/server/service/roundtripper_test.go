@@ -340,7 +340,7 @@ func TestSpiffeMTLS(t *testing.T) {
 			desc:             "raises an error when spiffe is enabled on the transport but no workloadapi address is given",
 			config:           dynamic.Spiffe{},
 			clientSource:     nil,
-			wantErrorMessage: `remote error: tls: bad certificate`,
+			wantErrorMessage: `certificate signed by unknown authority`,
 		},
 	}
 
@@ -517,6 +517,7 @@ func (f *fakeSpiffePKI) genSVID(id spiffeid.ID) (*x509svid.SVID, error) {
 		},
 		BasicConstraintsValid: true,
 		PublicKey:             privateKey.PublicKey,
+		IPAddresses:           []net.IP{net.ParseIP("127.0.0.1")},
 	}
 
 	certDER, err := x509.CreateCertificate(
