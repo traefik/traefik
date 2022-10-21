@@ -175,7 +175,7 @@ func TestHandler_Overview(t *testing.T) {
 				TCPMiddlewares: map[string]*runtime.TCPMiddlewareInfo{
 					"ipwhitelist1@myprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
@@ -183,14 +183,14 @@ func TestHandler_Overview(t *testing.T) {
 					},
 					"ipwhitelist2@myprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 					},
 					"ipwhitelist3@myprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},

@@ -94,10 +94,10 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
-	// IPWhiteList
-	if config.IPWhiteList != nil {
+	// IPAllowList
+	if config.IPAllowList != nil {
 		middleware = func(next tcp.Handler) (tcp.Handler, error) {
-			return ipwhitelist.New(ctx, next, *config.IPWhiteList, middlewareName)
+			return ipwhitelist.New(ctx, next, *config.IPAllowList, middlewareName)
 		}
 	}
 
