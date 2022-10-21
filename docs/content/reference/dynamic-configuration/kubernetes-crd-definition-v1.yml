@@ -1174,8 +1174,8 @@ spec:
                         type: boolean
                     type: object
                 type: object
-              ipWhiteList:
-                description: 'IPWhiteList holds the IP whitelist middleware configuration.
+              ipAllowList:
+                description: 'IPAllowList holds the IP whitelist middleware configuration.
                   This middleware accepts / refuses requests based on the client IP.
                   More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipwhitelist/'
                 properties:
@@ -1541,8 +1541,8 @@ spec:
                     format: int64
                     type: integer
                 type: object
-              ipWhiteList:
-                description: IPWhiteList defines the IPWhiteList middleware configuration.
+              ipAllowList:
+                description: IPAllowList defines the IPAllowList middleware configuration.
                 properties:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of
