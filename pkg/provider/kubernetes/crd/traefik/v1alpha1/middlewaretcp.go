@@ -25,7 +25,7 @@ type MiddlewareTCP struct {
 type MiddlewareTCPSpec struct {
 	// InFlightConn defines the InFlightConn middleware configuration.
 	InFlightConn *dynamic.TCPInFlightConn `json:"inFlightConn,omitempty"`
-	// IPWhiteList defines the IPWhiteList middleware configuration.
+	// IPAllowList defines the IPAllowList middleware configuration.
 	IPAllowList *dynamic.TCPIPAllowList `json:"ipAllowList,omitempty"`
 }
 

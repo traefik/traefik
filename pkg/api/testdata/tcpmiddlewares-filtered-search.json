@@ -3,7 +3,7 @@
 		"ipAllowList": {
 			"sourceRange": ["127.0.0.1/32"]
 		},
-		"name": "ipwhitelist@anotherprovider",
+		"name": "ipallowlist@anotherprovider",
 		"provider": "anotherprovider",
 		"status": "enabled",
 		"type": "ipallowlist",
@@ -15,7 +15,7 @@
 		"ipAllowList": {
 			"sourceRange": ["127.0.0.1/32"]
 		},
-		"name": "ipwhitelist@myprovider",
+		"name": "ipallowlist@myprovider",
 		"provider": "myprovider",
 		"status": "disabled",
 		"type": "ipallowlist",

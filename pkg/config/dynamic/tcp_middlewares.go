@@ -4,8 +4,8 @@ package dynamic
 
 // TCPMiddleware holds the TCPMiddleware configuration.
 type TCPMiddleware struct {
-	InFlightConn *TCPInFlightConn    `json:"inFlightConn,omitempty" toml:"inFlightConn,omitempty" yaml:"inFlightConn,omitempty" export:"true"`
-	IPAllowList  *TCPIPAllowList `json:"ipAllowList,omitempty" toml:"ipAllowList,omitempty" yaml:"ipAllowList,omitempty" export:"true"`
+	InFlightConn *TCPInFlightConn `json:"inFlightConn,omitempty" toml:"inFlightConn,omitempty" yaml:"inFlightConn,omitempty" export:"true"`
+	IPAllowList  *TCPIPAllowList  `json:"ipAllowList,omitempty" toml:"ipAllowList,omitempty" yaml:"ipAllowList,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -22,7 +22,7 @@ type TCPInFlightConn struct {
 
 // +k8s:deepcopy-gen=true
 
-// TCPIPAllowList holds the TCP IPWhiteList middleware configuration.
+// TCPIPAllowList holds the TCP IPAllowList middleware configuration.
 // This middleware accepts/refuses connections based on the client IP.
 type TCPIPAllowList struct {
 	// SourceRange defines the allowed IPs (or ranges of allowed IPs by using CIDR notation).
