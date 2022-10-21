@@ -8,7 +8,7 @@ description: "Learn how to use ipallowList in HTTP middleware for limiting clien
 Limiting Clients to Specific IPs
 {: .subtitle }
 
-![ipallowList](../../assets/img/middleware/ipwhitelist.png)
+![ipallowList](../../assets/img/middleware/ipallowlist.png)
 
 ipallowlist accepts / refuses requests based on the client IP.
 

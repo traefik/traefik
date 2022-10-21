@@ -26,7 +26,7 @@ type MiddlewareTCPSpec struct {
 	// InFlightConn defines the InFlightConn middleware configuration.
 	InFlightConn *dynamic.TCPInFlightConn `json:"inFlightConn,omitempty"`
 	// IPWhiteList defines the IPWhiteList middleware configuration.
-	IPAllowList *dynamic.TCPIPAllowList `json:"ipWhiteList,omitempty"`
+	IPAllowList *dynamic.TCPIPAllowList `json:"ipAllowList,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
