@@ -1,4 +1,4 @@
-package tcpipwhitelist
+package tcpipallowlist
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/tcp"
 )
 
-func TestNewIPWhiteLister(t *testing.T) {
+func TestNewIPAllowLister(t *testing.T) {
 	testCases := []struct {
 		desc          string
 		whiteList     dynamic.TCPIPAllowList
@@ -56,7 +56,7 @@ func TestNewIPWhiteLister(t *testing.T) {
 	}
 }
 
-func TestIPWhiteLister_ServeHTTP(t *testing.T) {
+func TestIPAllowLister_ServeHTTP(t *testing.T) {
 	testCases := []struct {
 		desc       string
 		whiteList  dynamic.TCPIPAllowList
