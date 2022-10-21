@@ -261,7 +261,7 @@ func (s *TCPSuite) TestMiddlewareWhiteList(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-a.test`)"))
 	c.Assert(err, checker.IsNil)
 
-	// Traefik not passes through, ipWhitelist closes connection
+	// Traefik not passes through, ipAllowlist closes connection
 	_, err = guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-a.test")
 	c.Assert(err, checker.ErrorMatches, "EOF")
 

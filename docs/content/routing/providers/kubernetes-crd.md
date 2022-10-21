@@ -1287,9 +1287,9 @@ Register the `MiddlewareTCP` [kind](../../reference/dynamic-configuration/kubern
     apiVersion: traefik.containo.us/v1alpha1
     kind: MiddlewareTCP
     metadata:
-      name: ipwhitelist
+      name: ipallowlist
     spec:
-      ipWhiteList:
+      ipAllowList:
         sourceRange:
           - 127.0.0.1/32
           - 192.168.1.7
@@ -1311,7 +1311,7 @@ Register the `MiddlewareTCP` [kind](../../reference/dynamic-configuration/kubern
         - name: whoami
           port: 80
         middlewares:
-        - name: ipwhitelist
+        - name: ipallowlist
           namespace: foo
     ```
 
