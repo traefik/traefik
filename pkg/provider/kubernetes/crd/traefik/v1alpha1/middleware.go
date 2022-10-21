@@ -32,7 +32,7 @@ type MiddlewareSpec struct {
 	ReplacePath       *dynamic.ReplacePath       `json:"replacePath,omitempty"`
 	ReplacePathRegex  *dynamic.ReplacePathRegex  `json:"replacePathRegex,omitempty"`
 	Chain             *Chain                     `json:"chain,omitempty"`
-	IPWhiteList       *dynamic.IPWhiteList       `json:"ipWhiteList,omitempty"`
+	IPAllowList       *dynamic.IPAllowList       `json:"ipWhiteList,omitempty"`
 	Headers           *dynamic.Headers           `json:"headers,omitempty"`
 	Errors            *ErrorPage                 `json:"errors,omitempty"`
 	RateLimit         *RateLimit                 `json:"rateLimit,omitempty"`

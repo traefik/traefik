@@ -229,13 +229,13 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
-	// IPWhiteList
-	if config.IPWhiteList != nil {
+	// IPAllowList
+	if config.IPAllowList != nil {
 		if middleware != nil {
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return ipwhitelist.New(ctx, next, *config.IPWhiteList, middlewareName)
+			return ipwhitelist.New(ctx, next, *config.IPAllowList, middlewareName)
 		}
 	}
 

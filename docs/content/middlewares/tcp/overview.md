@@ -19,7 +19,7 @@ whoami:
   image: traefik/whoami
   labels:
     # Create a middleware named `foo-ip-whitelist`
-    - "traefik.tcp.middlewares.foo-ip-whitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
+    - "traefik.tcp.middlewares.foo-ip-whitelist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
     # Apply the middleware named `foo-ip-whitelist` to the router named `router1`
     - "traefik.tcp.routers.router1.middlewares=foo-ip-whitelist@docker"
 ```
@@ -45,7 +45,7 @@ kind: MiddlewareTCP
 metadata:
   name: foo-ip-whitelist
 spec:
-  ipWhiteList:
+  ipAllowList:
     sourcerange:
       - 127.0.0.1/32
       - 192.168.1.7
@@ -65,14 +65,14 @@ spec:
 
 ```yaml tab="Consul Catalog"
 # Create a middleware named `foo-ip-whitelist`
-- "traefik.tcp.middlewares.foo-ip-whitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
+- "traefik.tcp.middlewares.foo-ip-whitelist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
 # Apply the middleware named `foo-ip-whitelist` to the router named `router1`
 - "traefik.tcp.routers.router1.middlewares=foo-ip-whitelist@consulcatalog"
 ```
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.tcp.middlewares.foo-ip-whitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7",
+  "traefik.tcp.middlewares.foo-ip-whitelist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7",
   "traefik.tcp.routers.router1.middlewares=foo-ip-whitelist@marathon"
 }
 ```
@@ -81,7 +81,7 @@ spec:
 # As a Rancher Label
 labels:
   # Create a middleware named `foo-ip-whitelist`
-  - "traefik.tcp.middlewares.foo-ip-whitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
+  - "traefik.tcp.middlewares.foo-ip-whitelist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
   # Apply the middleware named `foo-ip-whitelist` to the router named `router1`
   - "traefik.tcp.routers.router1.middlewares=foo-ip-whitelist@rancher"
 ```
@@ -95,7 +95,7 @@ labels:
     rule = "Host(`example.com`)"
 
 [tcp.middlewares]
-  [tcp.middlewares.foo-ip-whitelist.ipWhiteList]
+  [tcp.middlewares.foo-ip-whitelist.ipAllowList]
     sourceRange = ["127.0.0.1/32", "192.168.1.7"]
 
 [tcp.services]
@@ -119,7 +119,7 @@ tcp:
 
   middlewares:
     foo-ip-whitelist:
-      ipWhiteList:
+      ipAllowList:
         sourceRange:
           - "127.0.0.1/32"
           - "192.168.1.7"
@@ -137,4 +137,4 @@ tcp:
 | Middleware                                | Purpose                                           | Area                        |
 |-------------------------------------------|---------------------------------------------------|-----------------------------|
 | [InFlightConn](inflightconn.md)           | Limits the number of simultaneous connections.    | Security, Request lifecycle |
-| [IPWhiteList](ipwhitelist.md)             | Limit the allowed client IPs.                     | Security, Request lifecycle |
+| [IPAllowList](ipallowlist.md)             | Limit the allowed client IPs.                     | Security, Request lifecycle |
