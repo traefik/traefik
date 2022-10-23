@@ -375,6 +375,7 @@ func buildHealthCheckOptions(ctx context.Context, lb healthcheck.Balancer, backe
 		Mode:            mode,
 		Path:            hc.Path,
 		Method:          hc.Method,
+		Status:          hc.Status,
 		Port:            hc.Port,
 		Interval:        interval,
 		Timeout:         timeout,
