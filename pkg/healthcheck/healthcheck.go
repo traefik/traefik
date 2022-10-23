@@ -73,6 +73,7 @@ type Options struct {
 	Mode            string
 	Path            string
 	Method          string
+	Status          int
 	Port            int
 	FollowRedirects bool
 	Transport       http.RoundTripper
@@ -82,7 +83,7 @@ type Options struct {
 }
 
 func (opt Options) String() string {
-	return fmt.Sprintf("[Hostname: %s Headers: %v Path: %s Method: %s Port: %d Interval: %s Timeout: %s FollowRedirects: %v]", opt.Hostname, opt.Headers, opt.Path, opt.Method, opt.Port, opt.Interval, opt.Timeout, opt.FollowRedirects)
+	return fmt.Sprintf("[Hostname: %s Headers: %v Path: %s Method: %s Status: %d Port: %d Interval: %s Timeout: %s FollowRedirects: %v]", opt.Hostname, opt.Headers, opt.Path, opt.Method, opt.Status, opt.Port, opt.Interval, opt.Timeout, opt.FollowRedirects)
 }
 
 type backendURL struct {
@@ -293,8 +294,12 @@ func checkHealthHTTP(serverURL *url.URL, backend *BackendConfig) error {
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
-		return fmt.Errorf("received error status code: %v", resp.StatusCode)
+	if backend.Status == 0 {
+		if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
+			return fmt.Errorf("received error status code: %v", resp.StatusCode)
+		}
+	} else if backend.Status != resp.StatusCode {
+		return fmt.Errorf("received error status code: %v expected status code: %v", resp.StatusCode, backend.Status)
 	}
 
 	return nil

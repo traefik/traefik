@@ -338,6 +338,7 @@ func TestRequestOptions(t *testing.T) {
 		expectedHostname string
 		expectedHeader   string
 		expectedMethod   string
+		expectedStatus   int
 	}{
 		{
 			desc:      "override hostname",
@@ -386,14 +387,28 @@ func TestRequestOptions(t *testing.T) {
 			expectedMethod:   http.MethodGet,
 		},
 		{
-			desc:      "custom method",
+			desc:      "custom method with custom status code",
 			serverURL: "http://backend1:80",
 			options: Options{
 				Path:   "/",
 				Method: http.MethodHead,
+				Status: http.StatusForbidden,
 			},
 			expectedHostname: "backend1:80",
 			expectedMethod:   http.MethodHead,
+			expectedStatus:   http.StatusForbidden,
+		},
+		{
+			desc:      "custom status code",
+			serverURL: "http://backend1:80",
+			options: Options{
+				Path:   "/",
+				Method: http.MethodHead,
+				Status: http.StatusUnauthorized,
+			},
+			expectedHostname: "backend1:80",
+			expectedMethod:   http.MethodHead,
+			expectedStatus:   http.StatusUnauthorized,
 		},
 	}
 
@@ -416,6 +431,7 @@ func TestRequestOptions(t *testing.T) {
 			assert.Equal(t, test.expectedHostname, req.Host)
 			assert.Equal(t, test.expectedHeader, req.Header.Get("Custom-Header"))
 			assert.Equal(t, test.expectedMethod, req.Method)
+			assert.Equal(t, test.expectedStatus, backend.Status)
 		})
 	}
 }
