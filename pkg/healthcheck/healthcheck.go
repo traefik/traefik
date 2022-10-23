@@ -173,8 +173,12 @@ func (shc *ServiceHealthChecker) checkHealthHTTP(ctx context.Context, target *ur
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
-		return fmt.Errorf("received error status code: %v", resp.StatusCode)
+	if shc.config.Status == 0 {
+		if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
+			return fmt.Errorf("received error status code: %v", resp.StatusCode)
+		}
+	} else if shc.config.Status != resp.StatusCode {
+		return fmt.Errorf("received error status code: %v expected status code: %v", resp.StatusCode, shc.config.Status)
 	}
 
 	return nil

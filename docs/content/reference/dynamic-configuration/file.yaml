@@ -61,6 +61,7 @@ http:
           mode: foobar
           path: foobar
           method: foobar
+          status: 401
           port: 42
           interval: 42s
           timeout: 42s
