@@ -529,7 +529,7 @@ Below are the available options for the Response Forwarding mechanism:
           flushInterval = "1s"
     ```
 
-### Servers Transport
+### ServersTransport
 
 ServersTransport allows to configure the transport between Traefik and your HTTP servers.
 
@@ -1638,7 +1638,7 @@ tcp:
         address = "private-ip-server-2:8080/"
 ```
 
-### Servers Transport
+### ServersTransport
 
 ServersTransport allows to configure the transport between Traefik and your TCP servers.
 
