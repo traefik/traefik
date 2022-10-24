@@ -1,16 +1,16 @@
 ---
-title: "Traefik HTTP Middlewares ipallowList"
-description: "Learn how to use ipallowList in HTTP middleware for limiting clients to specific IPs in Traefik Proxy. Read the technical documentation."
+title: "Traefik HTTP Middlewares ipAllowList"
+description: "Learn how to use ipAllowList in HTTP middleware for limiting clients to specific IPs in Traefik Proxy. Read the technical documentation."
 ---
 
-# ipallowList
+# IPAllowList
 
 Limiting Clients to Specific IPs
 {: .subtitle }
 
-![ipallowList](../../assets/img/middleware/ipallowlist.png)
+![IPAllowList](../../assets/img/middleware/ipallowlist.png)
 
-ipallowlist accepts / refuses requests based on the client IP.
+IPAllowList accepts / refuses requests based on the client IP.
 
 ## Configuration Examples
 
@@ -26,7 +26,7 @@ kind: Middleware
 metadata:
   name: test-ipallowlist
 spec:
-  ipallowList:
+  ipAllowList:
     sourceRange:
       - 127.0.0.1/32
       - 192.168.1.7
@@ -108,7 +108,7 @@ kind: Middleware
 metadata:
   name: test-ipallowlist
 spec:
-  ipallowList:
+  ipAllowList:
     sourceRange:
       - 127.0.0.1/32
       - 192.168.1.7
@@ -141,7 +141,7 @@ labels:
 http:
   middlewares:
     test-ipallowlist:
-      ipallowList:
+      ipAllowList:
         sourceRange:
           - "127.0.0.1/32"
           - "192.168.1.7"
@@ -187,7 +187,7 @@ kind: Middleware
 metadata:
   name: test-ipallowlist
 spec:
-  ipallowList:
+  ipAllowList:
     ipStrategy:
       excludedIPs:
         - 127.0.0.1/32
@@ -216,7 +216,7 @@ labels:
 http:
   middlewares:
     test-ipallowlist:
-      ipallowList:
+      ipAllowList:
         ipStrategy:
           excludedIPs:
             - "127.0.0.1/32"
