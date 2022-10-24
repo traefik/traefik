@@ -382,11 +382,11 @@ serversTransport:
 --serversTransport.spiffe.trustDomain=spiffe://trust-domain
 ```
 
-### `forwardingTimeouts`
+#### `forwardingTimeouts`
 
 `forwardingTimeouts` is about a number of timeouts relevant to when forwarding requests to the backend servers.
 
-##### `forwardingTimeouts.dialTimeout`
+#### `forwardingTimeouts.dialTimeout`
 
 _Optional, Default=30s_
 
@@ -411,7 +411,7 @@ serversTransport:
 --serversTransport.forwardingTimeouts.dialTimeout=1s
 ```
 
-##### `forwardingTimeouts.responseHeaderTimeout`
+#### `forwardingTimeouts.responseHeaderTimeout`
 
 _Optional, Default=0s_
 
@@ -438,7 +438,7 @@ serversTransport:
 --serversTransport.forwardingTimeouts.responseHeaderTimeout=1s
 ```
 
-##### `forwardingTimeouts.idleConnTimeout`
+#### `forwardingTimeouts.idleConnTimeout`
 
 _Optional, Default=90s_
 

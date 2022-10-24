@@ -1692,7 +1692,7 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
 
 !!! important "Default serversTransport"
     If no `serversTransport` is specified, the `default@internal` will be used. 
-    The `default@internal` serversTransport is created from the [static configuration](../overview.md#http_servers_transports). 
+    The `default@internal` serversTransport is created from the [static configuration](../overview.md#http-servers-transports). 
 
 !!! info "ServersTransport Attributes"
    
