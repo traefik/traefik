@@ -75,7 +75,6 @@ linters-settings:
       - github.com/mailgun/minheap
       - github.com/mailgun/multibuf
       - github.com/jaguilar/vt100
-      - github.com/BurntSushi/toml
 
 linters:
   enable-all: true
