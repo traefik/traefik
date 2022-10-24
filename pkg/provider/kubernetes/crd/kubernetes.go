@@ -385,6 +385,62 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		}
 	}
 
+	for _, serversTransportTCP := range client.GetServersTransportTCPs() {
+		logger := log.FromContext(ctx).WithField(log.ServersTransportName, serversTransportTCP.Name)
+
+		var rootCAs []tls.FileOrContent
+		for _, secret := range serversTransportTCP.Spec.RootCAsSecrets {
+			caSecret, err := loadCASecret(serversTransportTCP.Namespace, secret, client)
+			if err != nil {
+				logger.Errorf("Error while loading rootCAs %s: %v", secret, err)
+				continue
+			}
+
+			rootCAs = append(rootCAs, tls.FileOrContent(caSecret))
+		}
+
+		var certs tls.Certificates
+		for _, secret := range serversTransportTCP.Spec.CertificatesSecrets {
+			tlsSecret, tlsKey, err := loadAuthTLSSecret(serversTransportTCP.Namespace, secret, client)
+			if err != nil {
+				logger.Errorf("Error while loading certificates %s: %v", secret, err)
+				continue
+			}
+
+			certs = append(certs, tls.Certificate{
+				CertFile: tls.FileOrContent(tlsSecret),
+				KeyFile:  tls.FileOrContent(tlsKey),
+			})
+		}
+
+		var tcpServerTransport dynamic.TCPServersTransport
+		tcpServerTransport.SetDefaults()
+
+		tcpServerTransport.ServerName = serversTransportTCP.Spec.ServerName
+		tcpServerTransport.InsecureSkipVerify = serversTransportTCP.Spec.InsecureSkipVerify
+		tcpServerTransport.RootCAs = rootCAs
+		tcpServerTransport.Certificates = certs
+		tcpServerTransport.PeerCertURI = serversTransportTCP.Spec.PeerCertURI
+		tcpServerTransport.Spiffe = serversTransportTCP.Spec.Spiffe
+
+		if serversTransportTCP.Spec.DialTimeout != nil {
+			err := tcpServerTransport.DialTimeout.Set(serversTransportTCP.Spec.DialTimeout.String())
+			if err != nil {
+				logger.Errorf("Error while reading DialTimeout: %v", err)
+			}
+		}
+
+		if serversTransportTCP.Spec.DialKeepAlive != nil {
+			err := tcpServerTransport.DialKeepAlive.Set(serversTransportTCP.Spec.DialKeepAlive.String())
+			if err != nil {
+				logger.Errorf("Error while reading DialKeepAlive: %v", err)
+			}
+		}
+
+		id := provider.Normalize(makeID(serversTransportTCP.Namespace, serversTransportTCP.Name))
+		conf.TCP.ServersTransports[id] = &tcpServerTransport
+	}
+
 	return conf
 }
 

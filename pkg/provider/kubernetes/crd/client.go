@@ -40,6 +40,7 @@ type Client interface {
 	GetTraefikServices() []*v1alpha1.TraefikService
 	GetTLSOptions() []*v1alpha1.TLSOption
 	GetServersTransports() []*v1alpha1.ServersTransport
+	GetServersTransportTCPs() []*v1alpha1.ServersTransportTCP
 	GetTLSStores() []*v1alpha1.TLSStore
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
@@ -170,6 +171,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		factoryCrd.Traefik().V1alpha1().IngressRouteUDPs().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().TLSOptions().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().ServersTransports().Informer().AddEventHandler(eventHandler)
+		factoryCrd.Traefik().V1alpha1().ServersTransportTCPs().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().TLSStores().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().TraefikServices().Informer().AddEventHandler(eventHandler)
 
@@ -310,7 +312,7 @@ func (c *clientWrapper) GetTraefikServices() []*v1alpha1.TraefikService {
 	return result
 }
 
-// GetServersTransport returns all ServersTransport.
+// GetServersTransports returns all ServersTransport.
 func (c *clientWrapper) GetServersTransports() []*v1alpha1.ServersTransport {
 	var result []*v1alpha1.ServersTransport
 
@@ -318,6 +320,21 @@ func (c *clientWrapper) GetServersTransports() []*v1alpha1.ServersTransport {
 		serversTransports, err := factory.Traefik().V1alpha1().ServersTransports().Lister().List(labels.Everything())
 		if err != nil {
 			log.Errorf("Failed to list servers transport in namespace %s: %v", ns, err)
+		}
+		result = append(result, serversTransports...)
+	}
+
+	return result
+}
+
+// GetServersTransportTCPs returns all ServersTransportTCP.
+func (c *clientWrapper) GetServersTransportTCPs() []*v1alpha1.ServersTransportTCP {
+	var result []*v1alpha1.ServersTransportTCP
+
+	for ns, factory := range c.factoriesCrd {
+		serversTransports, err := factory.Traefik().V1alpha1().ServersTransportTCPs().Lister().List(labels.Everything())
+		if err != nil {
+			log.Errorf("Failed to list servers transport TCP in namespace %s: %v", ns, err)
 		}
 		result = append(result, serversTransports...)
 	}

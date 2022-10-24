@@ -250,10 +250,12 @@ and then between Traefik and the backend servers, is configured through the
 
 In addition, a few parameters are dedicated to configuring globally
 what happens with the connections between Traefik and the backends.
-This is done through the `serversTransport` section of the configuration,
-which features these options:
+This is done through the `serversTransport` and `tcpServersTransport`
+sections of the configuration, which features these options:
 
-### `insecureSkipVerify`
+### HTTP Servers Transports
+
+#### `insecureSkipVerify`
 
 _Optional, Default=false_
 
@@ -276,7 +278,7 @@ serversTransport:
 --serversTransport.insecureSkipVerify=true
 ```
 
-### `rootCAs`
+#### `rootCAs`
 
 _Optional_
 
@@ -302,7 +304,7 @@ serversTransport:
 --serversTransport.rootCAs=foo.crt,bar.crt
 ```
 
-### `maxIdleConnsPerHost`
+#### `maxIdleConnsPerHost`
 
 _Optional, Default=2_
 
@@ -325,7 +327,7 @@ serversTransport:
 --serversTransport.maxIdleConnsPerHost=7
 ```
 
-### `spiffe`
+#### `spiffe`
 
 Please note that [SPIFFE](../https/spiffe.md) must be enabled in the static configuration 
 before using it to secure the connection between Traefik and the backends.  
@@ -380,7 +382,7 @@ serversTransport:
 --serversTransport.spiffe.trustDomain=spiffe://trust-domain
 ```
 
-### `forwardingTimeouts`
+#### `forwardingTimeouts`
 
 `forwardingTimeouts` is about a number of timeouts relevant to when forwarding requests to the backend servers.
 
@@ -460,6 +462,85 @@ serversTransport:
 ```bash tab="CLI"
 ## Static configuration
 --serversTransport.forwardingTimeouts.idleConnTimeout=1s
+```
+
+### TCP Servers Transports
+
+#### `insecureSkipVerify`
+
+_Optional_
+
+`insecureSkipVerify` controls whether the server's certificate chain and host name is verified.
+
+```yaml tab="File (YAML)"
+## Static configuration
+tcpServersTransports:
+  insecureSkipVerify: true
+```
+
+```toml tab="File (TOML)"
+## Static configuration
+[tcpServersTransports]
+  insecureSkipVerify = true
+```
+
+#### `rootCAs`
+
+_Optional_
+
+`rootCAs` defines the set of root certificate authorities (as file paths, or data bytes) to use when verifying server certificates.
+
+```yaml tab="File (YAML)"
+## Static configuration
+tcpServersTransports:
+  rootCAs:
+    - foo.crt
+    - bar.crt
+```
+
+```toml tab="File (TOML)"
+## Static configuration
+[tcpServersTransports]
+  rootCAs = ["foo.crt", "bar.crt"]
+```
+
+#### `dialTimeout`
+
+_Optional, Default="30s"_
+
+`dialTimeout` defines the timeout when dialing the backend TCP service. If zero, no timeout exists.
+
+```yaml tab="File (YAML)"
+## Static configuration
+tcpServersTransports:
+  dialTimeout: 30s
+```
+
+```toml tab="File (TOML)"
+## Static configuration
+[tcpServersTransports]
+  dialTimeout = "30s"
+```
+
+#### `dialKeepAlive`
+
+_Optional, Default="15s"_
+
+`dialKeepAlive` defines the interval between keep-alive probes for an active network connection.
+If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and
+operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative,
+keep-alive probes are disabled.
+
+```yaml tab="File (YAML)"
+## Static configuration
+tcpServersTransports:
+  dialKeepAlive: 30s
+```
+
+```toml tab="File (TOML)"
+## Static configuration
+[tcpServersTransports]
+  dialKeepAlive = "30s"
 ```
 
 {!traefik-for-business-applications.md!}
