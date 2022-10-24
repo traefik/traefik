@@ -203,9 +203,9 @@
           name0 = "foobar"
           name1 = "foobar"
     [http.middlewares.Middleware11]
-      [http.middlewares.Middleware11.ipWhiteList]
+      [http.middlewares.Middleware11.ipAllowList]
         sourceRange = ["foobar", "foobar"]
-        [http.middlewares.Middleware11.ipWhiteList.ipStrategy]
+        [http.middlewares.Middleware11.ipAllowList.ipStrategy]
           depth = 42
           excludedIPs = ["foobar", "foobar"]
     [http.middlewares.Middleware12]
@@ -402,7 +402,7 @@
           weight = 42
   [tcp.middlewares]
     [tcp.middlewares.TCPMiddleware00]
-      [tcp.middlewares.TCPMiddleware00.ipWhiteList]
+      [tcp.middlewares.TCPMiddleware00.ipAllowList]
         sourceRange = ["foobar", "foobar"]
     [tcp.middlewares.TCPMiddleware01]
       [tcp.middlewares.TCPMiddleware01.inFlightConn]

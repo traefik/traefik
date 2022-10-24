@@ -1149,7 +1149,7 @@ spec:
                     properties:
                       ipStrategy:
                         description: 'IPStrategy holds the IP strategy configuration
-                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipwhitelist/#ipstrategy'
+                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipallowlist/#ipstrategy'
                         properties:
                           depth:
                             description: Depth tells Traefik to use the X-Forwarded-For
@@ -1174,14 +1174,14 @@ spec:
                         type: boolean
                     type: object
                 type: object
-              ipWhiteList:
-                description: 'IPWhiteList holds the IP whitelist middleware configuration.
+              ipAllowList:
+                description: 'IPAllowList holds the IP whitelist middleware configuration.
                   This middleware accepts / refuses requests based on the client IP.
-                  More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipwhitelist/'
+                  More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipallowlist/'
                 properties:
                   ipStrategy:
                     description: 'IPStrategy holds the IP strategy configuration used
-                      by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipwhitelist/#ipstrategy'
+                      by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipallowlist/#ipstrategy'
                     properties:
                       depth:
                         description: Depth tells Traefik to use the X-Forwarded-For
@@ -1345,7 +1345,7 @@ spec:
                     properties:
                       ipStrategy:
                         description: 'IPStrategy holds the IP strategy configuration
-                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipwhitelist/#ipstrategy'
+                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipallowlist/#ipstrategy'
                         properties:
                           depth:
                             description: Depth tells Traefik to use the X-Forwarded-For
@@ -1541,8 +1541,8 @@ spec:
                     format: int64
                     type: integer
                 type: object
-              ipWhiteList:
-                description: IPWhiteList defines the IPWhiteList middleware configuration.
+              ipAllowList:
+                description: IPAllowList defines the IPAllowList middleware configuration.
                 properties:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of

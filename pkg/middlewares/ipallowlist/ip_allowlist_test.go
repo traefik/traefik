@@ -1,4 +1,4 @@
-package ipwhitelist
+package ipallowlist
 
 import (
 	"context"
@@ -11,22 +11,22 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 )
 
-func TestNewIPWhiteLister(t *testing.T) {
+func TestNewIPAllowLister(t *testing.T) {
 	testCases := []struct {
 		desc          string
-		whiteList     dynamic.IPWhiteList
+		whiteList     dynamic.IPAllowList
 		expectedError bool
 	}{
 		{
 			desc: "invalid IP",
-			whiteList: dynamic.IPWhiteList{
+			whiteList: dynamic.IPAllowList{
 				SourceRange: []string{"foo"},
 			},
 			expectedError: true,
 		},
 		{
 			desc: "valid IP",
-			whiteList: dynamic.IPWhiteList{
+			whiteList: dynamic.IPAllowList{
 				SourceRange: []string{"10.10.10.10"},
 			},
 		},
@@ -50,16 +50,16 @@ func TestNewIPWhiteLister(t *testing.T) {
 	}
 }
 
-func TestIPWhiteLister_ServeHTTP(t *testing.T) {
+func TestIPAllowLister_ServeHTTP(t *testing.T) {
 	testCases := []struct {
 		desc       string
-		whiteList  dynamic.IPWhiteList
+		whiteList  dynamic.IPAllowList
 		remoteAddr string
 		expected   int
 	}{
 		{
 			desc: "authorized with remote address",
-			whiteList: dynamic.IPWhiteList{
+			whiteList: dynamic.IPAllowList{
 				SourceRange: []string{"20.20.20.20"},
 			},
 			remoteAddr: "20.20.20.20:1234",
@@ -67,7 +67,7 @@ func TestIPWhiteLister_ServeHTTP(t *testing.T) {
 		},
 		{
 			desc: "non authorized with remote address",
-			whiteList: dynamic.IPWhiteList{
+			whiteList: dynamic.IPAllowList{
 				SourceRange: []string{"20.20.20.20"},
 			},
 			remoteAddr: "20.20.20.21:1234",
