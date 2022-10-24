@@ -438,8 +438,8 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			}
 		}
 
-		if serversTransportTCP.Spec.DialTKeepAlive != nil {
-			err := tcpServerTransport.DialKeepAlive.Set(serversTransportTCP.Spec.DialTKeepAlive.String())
+		if serversTransportTCP.Spec.DialKeepAlive != nil {
+			err := tcpServerTransport.DialKeepAlive.Set(serversTransportTCP.Spec.DialKeepAlive.String())
 			if err != nil {
 				logger.Errorf("Error while reading DialKeepAlive: %v", err)
 			}
