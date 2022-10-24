@@ -11,8 +11,8 @@ import (
 // +kubebuilder:storageversion
 
 // ServersTransportTCP is the CRD implementation of a TCPServersTransport.
-// If no tcpServersTransport is specified, the default@internal will be used.
-// The default@internal tcpServersTransport is created from the static configuration.
+// If no tcpServersTransport is specified, a default one named default@internal will be used.
+// The default@internal tcpServersTransport can be configured in the static configuration.
 // More info: https://doc.traefik.io/traefik/v2.9/routing/services/#serverstransport_3
 type ServersTransportTCP struct {
 	metav1.TypeMeta `json:",inline"`
@@ -29,7 +29,7 @@ type ServersTransportTCP struct {
 type ServersTransportTCPSpec struct {
 	// ServerName defines the server name used to contact the server.
 	ServerName string `json:"serverName,omitempty"`
-	// InsecureSkipVerify disables SSL certificate verification.
+	// InsecureSkipVerify disables TLS certificate verification.
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 	// RootCAsSecrets defines a list of CA secret used to validate self-signed certificate.
 	RootCAsSecrets []string `json:"rootCAsSecrets,omitempty"`
@@ -41,7 +41,7 @@ type ServersTransportTCPSpec struct {
 	// DialTimeout is the amount of time to wait until a connection to a backend server can be established.
 	DialTimeout *intstr.IntOrString `json:"dialTimeout,omitempty"`
 	// DialKeepAlive is the interval between keep-alive probes for an active network connection. If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled.
-	DialTKeepAlive *intstr.IntOrString `json:"dialKeepAlive,omitempty"`
+	DialKeepAlive *intstr.IntOrString `json:"dialKeepAlive,omitempty"`
 	// Spiffe defines the SPIFFE configuration.
 	Spiffe *dynamic.Spiffe `json:"spiffe,omitempty"`
 }

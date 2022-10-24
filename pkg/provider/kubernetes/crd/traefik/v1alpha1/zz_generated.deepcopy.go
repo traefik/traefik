@@ -1238,8 +1238,8 @@ func (in *ServersTransportTCPSpec) DeepCopyInto(out *ServersTransportTCPSpec) {
 		*out = new(intstr.IntOrString)
 		**out = **in
 	}
-	if in.DialTKeepAlive != nil {
-		in, out := &in.DialTKeepAlive, &out.DialTKeepAlive
+	if in.DialKeepAlive != nil {
+		in, out := &in.DialKeepAlive, &out.DialKeepAlive
 		*out = new(intstr.IntOrString)
 		**out = **in
 	}

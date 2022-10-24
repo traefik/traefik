@@ -106,7 +106,7 @@ spec:
                                 type: integer
                             type: object
                           serversTransport:
-                            description: ServersTransport defines the name of ServersTransport
+                            description: ServersTransport defines the name of TCPServersTransport
                               resource to use. It allows to configure the transport
                               between Traefik and your servers. Can only be used on
                               a Kubernetes Service.
