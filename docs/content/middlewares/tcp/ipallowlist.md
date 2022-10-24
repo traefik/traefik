@@ -24,7 +24,7 @@ kind: MiddlewareTCP
 metadata:
   name: test-ipallowlist
 spec:
-  ipallowList:
+  ipAllowList:
     sourceRange:
       - 127.0.0.1/32
       - 192.168.1.7

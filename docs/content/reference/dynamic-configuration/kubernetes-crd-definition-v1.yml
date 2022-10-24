@@ -1149,7 +1149,7 @@ spec:
                     properties:
                       ipStrategy:
                         description: 'IPStrategy holds the IP strategy configuration
-                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipwhitelist/#ipstrategy'
+                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipallowlist/#ipstrategy'
                         properties:
                           depth:
                             description: Depth tells Traefik to use the X-Forwarded-For
@@ -1177,11 +1177,11 @@ spec:
               ipAllowList:
                 description: 'IPAllowList holds the IP whitelist middleware configuration.
                   This middleware accepts / refuses requests based on the client IP.
-                  More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipwhitelist/'
+                  More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipallowlist/'
                 properties:
                   ipStrategy:
                     description: 'IPStrategy holds the IP strategy configuration used
-                      by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipwhitelist/#ipstrategy'
+                      by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipallowlist/#ipstrategy'
                     properties:
                       depth:
                         description: Depth tells Traefik to use the X-Forwarded-For
@@ -1345,7 +1345,7 @@ spec:
                     properties:
                       ipStrategy:
                         description: 'IPStrategy holds the IP strategy configuration
-                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipwhitelist/#ipstrategy'
+                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipallowlist/#ipstrategy'
                         properties:
                           depth:
                             description: Depth tells Traefik to use the X-Forwarded-For
