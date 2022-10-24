@@ -448,7 +448,7 @@
         certFile = "foobar"
         keyFile = "foobar"
 
-      [tcp.serversTransports.TCPServersTransport0.spiffe]
+      [tcp.serversTransports.TCPServersTransport1.spiffe]
         ids = ["foobar", "foobar"]
         trustDomain = "foobar"
 
