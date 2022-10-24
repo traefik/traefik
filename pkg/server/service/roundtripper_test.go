@@ -283,11 +283,11 @@ func TestSpiffeMTLS(t *testing.T) {
 	}
 
 	testCases := []struct {
-		desc             string
-		config           dynamic.Spiffe
-		clientSource     SpiffeX509Source
-		wantStatusCode   int
-		wantErrorMessage string
+		desc           string
+		config         dynamic.Spiffe
+		clientSource   SpiffeX509Source
+		wantStatusCode int
+		wantError      bool
 	}{
 		{
 			desc:           "supports SPIFFE mTLS",
@@ -308,8 +308,8 @@ func TestSpiffeMTLS(t *testing.T) {
 			config: dynamic.Spiffe{
 				IDs: []string{"spiffe://traefik.test/not-server"},
 			},
-			clientSource:     &clientSource,
-			wantErrorMessage: `unexpected ID "spiffe://traefik.test/server"`,
+			clientSource: &clientSource,
+			wantError:    true,
 		},
 		{
 			desc: "allows expected server trust domain",
@@ -324,8 +324,8 @@ func TestSpiffeMTLS(t *testing.T) {
 			config: dynamic.Spiffe{
 				TrustDomain: "spiffe://not-traefik.test",
 			},
-			clientSource:     &clientSource,
-			wantErrorMessage: `unexpected trust domain "traefik.test"`,
+			clientSource: &clientSource,
+			wantError:    true,
 		},
 		{
 			desc: "spiffe IDs allowlist takes precedence",
@@ -333,14 +333,14 @@ func TestSpiffeMTLS(t *testing.T) {
 				IDs:         []string{"spiffe://traefik.test/not-server"},
 				TrustDomain: "spiffe://not-traefik.test",
 			},
-			clientSource:     &clientSource,
-			wantErrorMessage: `unexpected ID "spiffe://traefik.test/server"`,
+			clientSource: &clientSource,
+			wantError:    true,
 		},
 		{
-			desc:             "raises an error when spiffe is enabled on the transport but no workloadapi address is given",
-			config:           dynamic.Spiffe{},
-			clientSource:     nil,
-			wantErrorMessage: `remote error: tls: bad certificate`,
+			desc:         "raises an error when spiffe is enabled on the transport but no workloadapi address is given",
+			config:       dynamic.Spiffe{},
+			clientSource: nil,
+			wantError:    true,
 		},
 	}
 
@@ -362,8 +362,8 @@ func TestSpiffeMTLS(t *testing.T) {
 			client := http.Client{Transport: tr}
 
 			resp, err := client.Get(srv.URL)
-			if test.wantErrorMessage != "" {
-				assert.ErrorContains(t, err, test.wantErrorMessage)
+			if test.wantError {
+				require.Error(t, err)
 				return
 			}
 
