@@ -255,7 +255,7 @@ func AddMiddlewareTCP(configuration *dynamic.TCPConfiguration, middlewareName st
 	return reflect.DeepEqual(configuration.Middlewares[middlewareName], middleware)
 }
 
-// AddTransportTCP Adds a transport to a configurations.
+// AddTransportTCP adds a transport to a configurations.
 func AddTransportTCP(configuration *dynamic.TCPConfiguration, transportName string, transport *dynamic.TCPServersTransport) bool {
 	if _, ok := configuration.ServersTransports[transportName]; !ok {
 		configuration.ServersTransports[transportName] = transport
