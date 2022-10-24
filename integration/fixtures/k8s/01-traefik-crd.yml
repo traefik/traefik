@@ -374,7 +374,7 @@ spec:
                                 type: integer
                             type: object
                           serversTransport:
-                            description: ServersTransport defines the name of ServersTransport
+                            description: ServersTransport defines the name of ServersTransportTCP
                               resource to use. It allows to configure the transport
                               between Traefik and your servers. Can only be used on
                               a Kubernetes Service.
@@ -1745,9 +1745,9 @@ spec:
     schema:
       openAPIV3Schema:
         description: 'ServersTransportTCP is the CRD implementation of a TCPServersTransport.
-          If no tcpServersTransport is specified, the default@internal will be used.
-          The default@internal tcpServersTransport is created from the static configuration.
-          More info: https://doc.traefik.io/traefik/v2.9/routing/services/#serverstransport_3'
+          If no tcpServersTransport is specified, a default one named default@internal
+          will be used. The default@internal tcpServersTransport can be configured
+          in the static configuration. More info: https://doc.traefik.io/traefik/v2.9/routing/services/#serverstransport_3'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -1789,7 +1789,7 @@ spec:
                   to a backend server can be established.
                 x-kubernetes-int-or-string: true
               insecureSkipVerify:
-                description: InsecureSkipVerify disables SSL certificate verification.
+                description: InsecureSkipVerify disables TLS certificate verification.
                 type: boolean
               peerCertURI:
                 description: MaxIdleConnsPerHost controls the maximum idle (keep-alive)
@@ -1798,7 +1798,7 @@ spec:
                 type: string
               rootCAsSecrets:
                 description: RootCAsSecrets defines a list of CA secret used to validate
-                  self-signed certificate.
+                  self-signed certificates.
                 items:
                   type: string
                 type: array

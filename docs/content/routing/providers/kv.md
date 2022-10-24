@@ -429,7 +429,7 @@ You can declare TCP Routers and/or Services using KV.
 
     | Key (Path)                                                      | Value         |
     |-----------------------------------------------------------------|---------------|
-    | `traefik/http/services/myservice/loadbalancer/serverstransport` | `foobar@file` |
+    | `traefik/tcp/services/myservice/loadbalancer/serverstransport` | `foobar@file` |
 
 ??? info "`traefik/tcp/services/<service_name>/weighted/services/<n>/name`"
 
