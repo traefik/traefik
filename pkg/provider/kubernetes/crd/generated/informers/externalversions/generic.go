@@ -73,6 +73,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Traefik().V1alpha1().MiddlewareTCPs().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("serverstransports"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Traefik().V1alpha1().ServersTransports().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("serverstransporttcps"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Traefik().V1alpha1().ServersTransportTCPs().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("tlsoptions"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Traefik().V1alpha1().TLSOptions().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("tlsstores"):

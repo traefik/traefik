@@ -40,6 +40,17 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 		if len(confFromLabel.TCP.Routers) > 0 || len(confFromLabel.TCP.Services) > 0 {
 			tcpOrUDP = true
 
+			if item.ExtraConf.ConsulCatalog.Connect {
+				if confFromLabel.TCP.ServersTransports == nil {
+					confFromLabel.TCP.ServersTransports = make(map[string]*dynamic.TCPServersTransport)
+				}
+
+				serversTransportKey := itemServersTransportKey(item)
+				if confFromLabel.TCP.ServersTransports[serversTransportKey] == nil {
+					confFromLabel.TCP.ServersTransports[serversTransportKey] = certInfo.tcpServersTransport(item)
+				}
+			}
+
 			if err := p.buildTCPServiceConfiguration(item, confFromLabel.TCP); err != nil {
 				logger.Error(err)
 				continue
@@ -212,6 +223,14 @@ func (p *Provider) addServerTCP(item itemData, loadBalancer *dynamic.TCPServersL
 
 	if port == "" {
 		return errors.New("port is missing")
+	}
+
+	if item.Address == "" {
+		return errors.New("address is missing")
+	}
+
+	if item.ExtraConf.ConsulCatalog.Connect {
+		loadBalancer.ServersTransport = itemServersTransportKey(item)
 	}
 
 	loadBalancer.Servers[0].Address = net.JoinHostPort(item.Address, port)

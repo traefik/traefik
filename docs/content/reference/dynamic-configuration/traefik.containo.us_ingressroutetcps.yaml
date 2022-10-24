@@ -105,6 +105,12 @@ spec:
                                   to use.
                                 type: integer
                             type: object
+                          serversTransport:
+                            description: ServersTransport defines the name of TCPServersTransport
+                              resource to use. It allows to configure the transport
+                              between Traefik and your servers. Can only be used on
+                              a Kubernetes Service.
+                            type: string
                           terminationDelay:
                             description: TerminationDelay defines the deadline that
                               the proxy sets, after one of its connected peers indicates

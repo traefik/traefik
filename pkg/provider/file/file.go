@@ -214,7 +214,7 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 		}
 	}
 
-	// ServersTransport
+	// HTTP ServersTransport
 	if configuration.HTTP != nil && len(configuration.HTTP.ServersTransports) > 0 {
 		for name, st := range configuration.HTTP.ServersTransports {
 			var certificates []tls.Certificate
@@ -237,6 +237,45 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 			}
 
 			configuration.HTTP.ServersTransports[name].Certificates = certificates
+
+			var rootCAs []tls.FileOrContent
+			for _, rootCA := range st.RootCAs {
+				content, err := rootCA.Read()
+				if err != nil {
+					log.FromContext(ctx).Error(err)
+					continue
+				}
+
+				rootCAs = append(rootCAs, tls.FileOrContent(content))
+			}
+
+			st.RootCAs = rootCAs
+		}
+	}
+
+	// TCP ServersTransport
+	if configuration.TCP != nil && len(configuration.TCP.ServersTransports) > 0 {
+		for name, st := range configuration.TCP.ServersTransports {
+			var certificates []tls.Certificate
+			for _, cert := range st.Certificates {
+				content, err := cert.CertFile.Read()
+				if err != nil {
+					log.FromContext(ctx).Error(err)
+					continue
+				}
+				cert.CertFile = tls.FileOrContent(content)
+
+				content, err = cert.KeyFile.Read()
+				if err != nil {
+					log.FromContext(ctx).Error(err)
+					continue
+				}
+				cert.KeyFile = tls.FileOrContent(content)
+
+				certificates = append(certificates, cert)
+			}
+
+			configuration.TCP.ServersTransports[name].Certificates = certificates
 
 			var rootCAs []tls.FileOrContent
 			for _, rootCA := range st.RootCAs {
@@ -294,9 +333,10 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 				ServersTransports: make(map[string]*dynamic.ServersTransport),
 			},
 			TCP: &dynamic.TCPConfiguration{
-				Routers:     make(map[string]*dynamic.TCPRouter),
-				Services:    make(map[string]*dynamic.TCPService),
-				Middlewares: make(map[string]*dynamic.TCPMiddleware),
+				Routers:           make(map[string]*dynamic.TCPRouter),
+				Services:          make(map[string]*dynamic.TCPService),
+				Middlewares:       make(map[string]*dynamic.TCPMiddleware),
+				ServersTransports: make(map[string]*dynamic.TCPServersTransport),
 			},
 			TLS: &dynamic.TLSConfiguration{
 				Stores:  make(map[string]tls.Store),
@@ -388,6 +428,14 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 				logger.WithField(log.ServiceName, name).Warn("TCP service already configured, skipping")
 			} else {
 				configuration.TCP.Services[name] = conf
+			}
+		}
+
+		for name, conf := range c.TCP.ServersTransports {
+			if _, exists := configuration.TCP.ServersTransports[name]; exists {
+				logger.WithField(log.ServersTransportName, name).Warn("TCP servers transport already configured, skipping")
+			} else {
+				configuration.TCP.ServersTransports[name] = conf
 			}
 		}
 
@@ -505,9 +553,10 @@ func (p *Provider) decodeConfiguration(filePath, content string) (*dynamic.Confi
 			ServersTransports: make(map[string]*dynamic.ServersTransport),
 		},
 		TCP: &dynamic.TCPConfiguration{
-			Routers:     make(map[string]*dynamic.TCPRouter),
-			Services:    make(map[string]*dynamic.TCPService),
-			Middlewares: make(map[string]*dynamic.TCPMiddleware),
+			Routers:           make(map[string]*dynamic.TCPRouter),
+			Services:          make(map[string]*dynamic.TCPService),
+			Middlewares:       make(map[string]*dynamic.TCPMiddleware),
+			ServersTransports: make(map[string]*dynamic.TCPServersTransport),
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Stores:  make(map[string]tls.Store),

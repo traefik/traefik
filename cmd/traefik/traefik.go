@@ -42,6 +42,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/server"
 	"github.com/traefik/traefik/v2/pkg/server/middleware"
 	"github.com/traefik/traefik/v2/pkg/server/service"
+	"github.com/traefik/traefik/v2/pkg/server/service/tcp"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"github.com/traefik/traefik/v2/pkg/tracing"
 	"github.com/traefik/traefik/v2/pkg/tracing/jaeger"
@@ -280,6 +281,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	}
 
 	roundTripperManager := service.NewRoundTripperManager(spiffeX509Source)
+	dialerManager := tcp.NewDialerManager(spiffeX509Source)
 	acmeHTTPHandler := getHTTPChallengeHandler(acmeProviders, httpChallengeProvider)
 	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, roundTripperManager, acmeHTTPHandler)
 
@@ -290,7 +292,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	captureMiddleware := setupCapture(staticConfiguration)
 
 	chainBuilder := middleware.NewChainBuilder(metricsRegistry, accessLog, tracer, captureMiddleware)
-	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder, metricsRegistry)
+	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder, metricsRegistry, dialerManager)
 
 	// Watcher
 
@@ -321,6 +323,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	// Server Transports
 	watcher.AddListener(func(conf dynamic.Configuration) {
 		roundTripperManager.Update(conf.HTTP.ServersTransports)
+		dialerManager.Update(conf.TCP.ServersTransports)
 	})
 
 	// Switch router
