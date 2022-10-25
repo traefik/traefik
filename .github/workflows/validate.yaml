@@ -33,7 +33,7 @@ jobs:
           fetch-depth: 0
 
       - name: Cache Go modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/go/pkg/mod
@@ -73,7 +73,7 @@ jobs:
           fetch-depth: 0
 
       - name: Cache Go modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/go/pkg/mod
