@@ -15,7 +15,7 @@ It makes reusing the same groups easier.
 
 ## Configuration Example
 
-Below is an example of a Chain containing `WhiteList`, `BasicAuth`, and `RedirectScheme`.
+Below is an example of a Chain containing `AllowList`, `BasicAuth`, and `RedirectScheme`.
 
 ```yaml tab="Docker"
 labels:
