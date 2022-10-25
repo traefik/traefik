@@ -126,7 +126,7 @@ nav:
         - 'Errors': 'middlewares/http/errorpages.md'
         - 'ForwardAuth': 'middlewares/http/forwardauth.md'
         - 'Headers': 'middlewares/http/headers.md'
-        - 'IpWhitelist': 'middlewares/http/ipwhitelist.md'
+        - 'IpAllowlist': 'middlewares/http/ipallowlist.md'
         - 'InFlightReq': 'middlewares/http/inflightreq.md'
         - 'PassTLSClientCert': 'middlewares/http/passtlsclientcert.md'
         - 'RateLimit': 'middlewares/http/ratelimit.md'
@@ -140,7 +140,7 @@ nav:
     - 'TCP':
         - 'Overview': 'middlewares/tcp/overview.md'
         - 'InFlightConn': 'middlewares/tcp/inflightconn.md'
-        - 'IpWhitelist': 'middlewares/tcp/ipwhitelist.md'
+        - 'IpAllowlist': 'middlewares/tcp/ipallowlist.md'
   - 'Traefik Hub': 'traefik-hub/index.md'
   - 'Plugins & Plugin Catalog': 'plugins/index.md'
   - 'Operations':
