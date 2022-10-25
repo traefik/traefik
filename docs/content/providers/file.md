@@ -18,7 +18,7 @@ It supports providing configuration through a [single configuration file](#filen
 
 !!! tip
 
-    The file provider can be a good solution for reusing common elements from other providers (e.g. declaring whitelist middlewares, basic authentication, ...)
+    The file provider can be a good solution for reusing common elements from other providers (e.g. declaring allowlist middlewares, basic authentication, ...)
 
 ## Configuration Examples
 

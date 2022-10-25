@@ -1305,7 +1305,7 @@ Register the `MiddlewareTCP` [kind](../../reference/dynamic-configuration/kubern
       entryPoints:
         - web
       routes:
-      - match: Host(`example.com`) && PathPrefix(`/whitelist`)
+      - match: Host(`example.com`) && PathPrefix(`/allowlist`)
         kind: Rule
         services:
         - name: whoami

@@ -86,7 +86,7 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
 
 !!! example "Examples of Depth & X-Forwarded-For"
 
-    If `depth` is set to 2, and the request `X-Forwarded-For` header is `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` then the "real" client IP is `"10.0.0.1"` (at depth 4) but the IP used for the whitelisting is `"12.0.0.1"` (`depth=2`).
+    If `depth` is set to 2, and the request `X-Forwarded-For` header is `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` then the "real" client IP is `"10.0.0.1"` (at depth 4) but the IP used for the allowlisting is `"12.0.0.1"` (`depth=2`).
 
     | `X-Forwarded-For`                       | `depth` | clientIP     |
     |-----------------------------------------|---------|--------------|
@@ -95,14 +95,14 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `5`     | `""`         |
 
 ```yaml tab="Docker"
-# Whitelisting Based on `X-Forwarded-For` with `depth=2`
+# Allowlisting Based on `X-Forwarded-For` with `depth=2`
 labels:
   - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
   - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.depth=2"
 ```
 
 ```yaml tab="Kubernetes"
-# Whitelisting Based on `X-Forwarded-For` with `depth=2`
+# Allowlisting Based on `X-Forwarded-For` with `depth=2`
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
@@ -117,7 +117,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-# Whitelisting Based on `X-Forwarded-For` with `depth=2`
+# Allowlisting Based on `X-Forwarded-For` with `depth=2`
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.depth=2"
 ```
@@ -130,14 +130,14 @@ spec:
 ```
 
 ```yaml tab="Rancher"
-# Whitelisting Based on `X-Forwarded-For` with `depth=2`
+# Allowlisting Based on `X-Forwarded-For` with `depth=2`
 labels:
   - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
   - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.depth=2"
 ```
 
 ```yaml tab="File (YAML)"
-# Whitelisting Based on `X-Forwarded-For` with `depth=2`
+# Allowlisting Based on `X-Forwarded-For` with `depth=2`
 http:
   middlewares:
     test-ipallowlist:
@@ -150,7 +150,7 @@ http:
 ```
 
 ```toml tab="File (TOML)"
-# Whitelisting Based on `X-Forwarded-For` with `depth=2`
+# Allowlisting Based on `X-Forwarded-For` with `depth=2`
 [http.middlewares]
   [http.middlewares.test-ipallowlist.ipAllowList]
     sourceRange = ["127.0.0.1/32", "192.168.1.7"]

@@ -18,10 +18,10 @@ whoami:
   #  A container that exposes an API to show its IP address
   image: traefik/whoami
   labels:
-    # Create a middleware named `foo-ip-whitelist`
-    - "traefik.tcp.middlewares.foo-ip-whitelist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
-    # Apply the middleware named `foo-ip-whitelist` to the router named `router1`
-    - "traefik.tcp.routers.router1.middlewares=foo-ip-whitelist@docker"
+    # Create a middleware named `foo-ip-allowlist`
+    - "traefik.tcp.middlewares.foo-ip-allowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
+    # Apply the middleware named `foo-ip-allowlist` to the router named `router1`
+    - "traefik.tcp.routers.router1.middlewares=foo-ip-allowlist@docker"
 ```
 
 ```yaml tab="Kubernetes IngressRoute"
@@ -43,7 +43,7 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: MiddlewareTCP
 metadata:
-  name: foo-ip-whitelist
+  name: foo-ip-allowlist
 spec:
   ipAllowList:
     sourcerange:
@@ -60,30 +60,30 @@ spec:
   routes:
     # more fields...
     middlewares:
-      - name: foo-ip-whitelist
+      - name: foo-ip-allowlist
 ```
 
 ```yaml tab="Consul Catalog"
-# Create a middleware named `foo-ip-whitelist`
-- "traefik.tcp.middlewares.foo-ip-whitelist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
-# Apply the middleware named `foo-ip-whitelist` to the router named `router1`
-- "traefik.tcp.routers.router1.middlewares=foo-ip-whitelist@consulcatalog"
+# Create a middleware named `foo-ip-allowlist`
+- "traefik.tcp.middlewares.foo-ip-allowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
+# Apply the middleware named `foo-ip-allowlist` to the router named `router1`
+- "traefik.tcp.routers.router1.middlewares=foo-ip-allowlist@consulcatalog"
 ```
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.tcp.middlewares.foo-ip-whitelist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7",
-  "traefik.tcp.routers.router1.middlewares=foo-ip-whitelist@marathon"
+  "traefik.tcp.middlewares.foo-ip-allowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7",
+  "traefik.tcp.routers.router1.middlewares=foo-ip-allowlist@marathon"
 }
 ```
 
 ```yaml tab="Rancher"
 # As a Rancher Label
 labels:
-  # Create a middleware named `foo-ip-whitelist`
-  - "traefik.tcp.middlewares.foo-ip-whitelist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
-  # Apply the middleware named `foo-ip-whitelist` to the router named `router1`
-  - "traefik.tcp.routers.router1.middlewares=foo-ip-whitelist@rancher"
+  # Create a middleware named `foo-ip-allowlist`
+  - "traefik.tcp.middlewares.foo-ip-allowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
+  # Apply the middleware named `foo-ip-allowlist` to the router named `router1`
+  - "traefik.tcp.routers.router1.middlewares=foo-ip-allowlist@rancher"
 ```
 
 ```toml tab="File (TOML)"
@@ -91,11 +91,11 @@ labels:
 [tcp.routers]
   [tcp.routers.router1]
     service = "myService"
-    middlewares = ["foo-ip-whitelist"]
+    middlewares = ["foo-ip-allowlist"]
     rule = "Host(`example.com`)"
 
 [tcp.middlewares]
-  [tcp.middlewares.foo-ip-whitelist.ipAllowList]
+  [tcp.middlewares.foo-ip-allowlist.ipAllowList]
     sourceRange = ["127.0.0.1/32", "192.168.1.7"]
 
 [tcp.services]
@@ -114,11 +114,11 @@ tcp:
     router1:
       service: myService
       middlewares:
-        - "foo-ip-whitelist"
+        - "foo-ip-allowlist"
       rule: "Host(`example.com`)"
 
   middlewares:
-    foo-ip-whitelist:
+    foo-ip-allowlist:
       ipAllowList:
         sourceRange:
           - "127.0.0.1/32"
