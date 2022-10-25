@@ -230,7 +230,7 @@ http:
         permissionsPolicy: foobar
         isDevelopment: true
     Middleware11:
-      ipWhiteList:
+      ipAllowList:
         sourceRange:
           - foobar
           - foobar
@@ -443,7 +443,7 @@ tcp:
             weight: 42
   middlewares:
     TCPMiddleware00:
-      ipWhiteList:
+      ipAllowList:
         sourceRange:
           - foobar
           - foobar
