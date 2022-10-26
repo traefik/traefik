@@ -1,4 +1,4 @@
-package tcpipwhitelist
+package ipwhitelist
 
 import (
 	"context"
