@@ -34,7 +34,7 @@ func New(ctx context.Context, next tcp.Handler, config dynamic.TCPIPAllowList, n
 
 	checker, err := ip.NewChecker(config.SourceRange)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse CIDR whitelist %s: %w", config.SourceRange, err)
+		return nil, fmt.Errorf("cannot parse CIDRs %s: %w", config.SourceRange, err)
 	}
 
 	logger.Debugf("Setting up IPAllowLister with sourceRange: %s", config.SourceRange)

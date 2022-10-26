@@ -15,24 +15,24 @@ import (
 func TestNewIPAllowLister(t *testing.T) {
 	testCases := []struct {
 		desc          string
-		whiteList     dynamic.TCPIPAllowList
+		allowList     dynamic.TCPIPAllowList
 		expectedError bool
 	}{
 		{
 			desc:          "Empty config",
-			whiteList:     dynamic.TCPIPAllowList{},
+			allowList:     dynamic.TCPIPAllowList{},
 			expectedError: true,
 		},
 		{
 			desc: "invalid IP",
-			whiteList: dynamic.TCPIPAllowList{
+			allowList: dynamic.TCPIPAllowList{
 				SourceRange: []string{"foo"},
 			},
 			expectedError: true,
 		},
 		{
 			desc: "valid IP",
-			whiteList: dynamic.TCPIPAllowList{
+			allowList: dynamic.TCPIPAllowList{
 				SourceRange: []string{"10.10.10.10"},
 			},
 		},
@@ -44,13 +44,13 @@ func TestNewIPAllowLister(t *testing.T) {
 			t.Parallel()
 
 			next := tcp.HandlerFunc(func(conn tcp.WriteCloser) {})
-			whiteLister, err := New(context.Background(), next, test.whiteList, "traefikTest")
+			allowLister, err := New(context.Background(), next, test.allowList, "traefikTest")
 
 			if test.expectedError {
 				assert.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				assert.NotNil(t, whiteLister)
+				assert.NotNil(t, allowLister)
 			}
 		})
 	}
@@ -59,13 +59,13 @@ func TestNewIPAllowLister(t *testing.T) {
 func TestIPAllowLister_ServeHTTP(t *testing.T) {
 	testCases := []struct {
 		desc       string
-		whiteList  dynamic.TCPIPAllowList
+		allowList  dynamic.TCPIPAllowList
 		remoteAddr string
 		expected   string
 	}{
 		{
 			desc: "authorized with remote address",
-			whiteList: dynamic.TCPIPAllowList{
+			allowList: dynamic.TCPIPAllowList{
 				SourceRange: []string{"20.20.20.20"},
 			},
 			remoteAddr: "20.20.20.20:1234",
@@ -73,7 +73,7 @@ func TestIPAllowLister_ServeHTTP(t *testing.T) {
 		},
 		{
 			desc: "non authorized with remote address",
-			whiteList: dynamic.TCPIPAllowList{
+			allowList: dynamic.TCPIPAllowList{
 				SourceRange: []string{"20.20.20.20"},
 			},
 			remoteAddr: "20.20.20.21:1234",
@@ -94,13 +94,13 @@ func TestIPAllowLister_ServeHTTP(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			whiteLister, err := New(context.Background(), next, test.whiteList, "traefikTest")
+			allowLister, err := New(context.Background(), next, test.allowList, "traefikTest")
 			require.NoError(t, err)
 
 			server, client := net.Pipe()
 
 			go func() {
-				whiteLister.ServeTCP(&contextWriteCloser{client, addr{test.remoteAddr}})
+				allowLister.ServeTCP(&contextWriteCloser{client, addr{test.remoteAddr}})
 			}()
 
 			read, err := io.ReadAll(server)

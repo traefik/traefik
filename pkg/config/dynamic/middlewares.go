@@ -385,7 +385,7 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 
 // +k8s:deepcopy-gen=true
 
-// IPAllowList holds the IP whitelist middleware configuration.
+// IPAllowList holds the IP allowlist middleware configuration.
 // This middleware accepts / refuses requests based on the client IP.
 // More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipallowlist/
 type IPAllowList struct {

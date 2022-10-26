@@ -1175,7 +1175,7 @@ spec:
                     type: object
                 type: object
               ipAllowList:
-                description: 'IPAllowList holds the IP whitelist middleware configuration.
+                description: 'IPAllowList holds the IP allowlist middleware configuration.
                   This middleware accepts / refuses requests based on the client IP.
                   More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipallowlist/'
                 properties:
