@@ -8,7 +8,7 @@ description: "Learn how to use IPAllowList in TCP middleware for limiting client
 Limiting Clients to Specific IPs
 {: .subtitle }
 
-IPAllowlist accepts / refuses connections based on the client IP.
+IPAllowList accepts / refuses connections based on the client IP.
 
 ## Configuration Examples
 
@@ -59,7 +59,7 @@ labels:
 tcp:
   middlewares:
     test-ipallowlist:
-      ipallowList:
+      ipAllowList:
         sourceRange:
           - "127.0.0.1/32"
           - "192.168.1.7"

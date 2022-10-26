@@ -18,7 +18,7 @@ const (
 	typeName = "IPAllowLister"
 )
 
-// ipAllowLister is a middleware that provides Checks of the Requesting IP against a set of Whitelists.
+// ipAllowLister is a middleware that provides Checks of the Requesting IP against a set of Allowlists.
 type ipAllowLister struct {
 	next        http.Handler
 	allowLister *ip.Checker
@@ -26,7 +26,7 @@ type ipAllowLister struct {
 	name        string
 }
 
-// New builds a new IPAllowLister given a list of CIDR-Strings to whitelist.
+// New builds a new IPAllowLister given a list of CIDR-Strings to allow.
 func New(ctx context.Context, next http.Handler, config dynamic.IPAllowList, name string) (http.Handler, error) {
 	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName))
 	logger.Debug("Creating middleware")
