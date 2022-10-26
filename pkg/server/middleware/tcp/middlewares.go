@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	inflightconn "github.com/traefik/traefik/v2/pkg/middlewares/tcp/inflightconn"
-	ipwhitelist "github.com/traefik/traefik/v2/pkg/middlewares/tcp/ipwhitelist"
+	"github.com/traefik/traefik/v2/pkg/middlewares/tcp/inflightconn"
+	"github.com/traefik/traefik/v2/pkg/middlewares/tcp/ipwhitelist"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
 	"github.com/traefik/traefik/v2/pkg/tcp"
 )
