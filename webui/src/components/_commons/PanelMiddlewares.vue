@@ -675,8 +675,8 @@
             </div>
           </q-card-section>
 
-          <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipWhiteList] - sourceRange -->
-          <q-card-section v-if="middleware.ipWhiteList">
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipAllowList] - sourceRange -->
+          <q-card-section v-if="middleware.ipAllowList">
             <div class="row items-start no-wrap">
               <div class="col">
                 <div class="text-subtitle2">Source Range</div>
@@ -689,8 +689,8 @@
               </div>
             </div>
           </q-card-section>
-          <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipWhiteList] - ipStrategy -->
-          <q-card-section v-if="middleware.ipWhiteList">
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipAllowList] - ipStrategy -->
+          <q-card-section v-if="middleware.ipAllowList">
             <div class="row items-start">
               <div class="col-12">
                 <div class="text-subtitle2">IP Strategy</div>
@@ -1076,8 +1076,8 @@
         </q-card-section>
 
         <q-card-section v-if="protocol === 'tcp'">
-          <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipWhiteList] - sourceRange -->
-          <q-card-section v-if="middleware.ipWhiteList">
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipAllowList] - sourceRange -->
+          <q-card-section v-if="middleware.ipAllowList">
             <div class="row items-start no-wrap">
               <div class="col">
                 <div class="text-subtitle2">Source Range</div>
