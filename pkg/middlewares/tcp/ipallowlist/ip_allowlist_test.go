@@ -1,4 +1,4 @@
-package tcpipallowlist
+package ipallowlist
 
 import (
 	"context"
