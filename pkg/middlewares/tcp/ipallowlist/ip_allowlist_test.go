@@ -1,4 +1,4 @@
-package tcpipwhitelist
+package tcpipallowlist
 
 import (
 	"context"
@@ -12,27 +12,27 @@ import (
 	"github.com/traefik/traefik/v2/pkg/tcp"
 )
 
-func TestNewIPWhiteLister(t *testing.T) {
+func TestNewIPAllowLister(t *testing.T) {
 	testCases := []struct {
 		desc          string
-		whiteList     dynamic.TCPIPWhiteList
+		whiteList     dynamic.TCPIPAllowList
 		expectedError bool
 	}{
 		{
 			desc:          "Empty config",
-			whiteList:     dynamic.TCPIPWhiteList{},
+			whiteList:     dynamic.TCPIPAllowList{},
 			expectedError: true,
 		},
 		{
 			desc: "invalid IP",
-			whiteList: dynamic.TCPIPWhiteList{
+			whiteList: dynamic.TCPIPAllowList{
 				SourceRange: []string{"foo"},
 			},
 			expectedError: true,
 		},
 		{
 			desc: "valid IP",
-			whiteList: dynamic.TCPIPWhiteList{
+			whiteList: dynamic.TCPIPAllowList{
 				SourceRange: []string{"10.10.10.10"},
 			},
 		},
@@ -56,16 +56,16 @@ func TestNewIPWhiteLister(t *testing.T) {
 	}
 }
 
-func TestIPWhiteLister_ServeHTTP(t *testing.T) {
+func TestIPAllowLister_ServeHTTP(t *testing.T) {
 	testCases := []struct {
 		desc       string
-		whiteList  dynamic.TCPIPWhiteList
+		whiteList  dynamic.TCPIPAllowList
 		remoteAddr string
 		expected   string
 	}{
 		{
 			desc: "authorized with remote address",
-			whiteList: dynamic.TCPIPWhiteList{
+			whiteList: dynamic.TCPIPAllowList{
 				SourceRange: []string{"20.20.20.20"},
 			},
 			remoteAddr: "20.20.20.20:1234",
@@ -73,7 +73,7 @@ func TestIPWhiteLister_ServeHTTP(t *testing.T) {
 		},
 		{
 			desc: "non authorized with remote address",
-			whiteList: dynamic.TCPIPWhiteList{
+			whiteList: dynamic.TCPIPAllowList{
 				SourceRange: []string{"20.20.20.20"},
 			},
 			remoteAddr: "20.20.20.21:1234",
