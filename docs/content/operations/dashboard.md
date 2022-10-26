@@ -72,7 +72,7 @@ to allow defining:
 
 - One or more security features through [middlewares](../middlewares/overview.md)
   like authentication ([basicAuth](../middlewares/http/basicauth.md) , [digestAuth](../middlewares/http/digestauth.md),
-  [forwardAuth](../middlewares/http/forwardauth.md)) or [whitelisting](../middlewares/http/ipwhitelist.md).
+  [forwardAuth](../middlewares/http/forwardauth.md)) or [allowlisting](../middlewares/http/ipallowlist.md).
 
 - A [router rule](#dashboard-router-rule) for accessing the dashboard,
   through Traefik itself (sometimes referred as "Traefik-ception").

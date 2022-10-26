@@ -173,24 +173,24 @@ func TestHandler_Overview(t *testing.T) {
 					},
 				},
 				TCPMiddlewares: map[string]*runtime.TCPMiddlewareInfo{
-					"ipwhitelist1@myprovider": {
+					"ipallowlist1@myprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 						Status: runtime.StatusEnabled,
 					},
-					"ipwhitelist2@myprovider": {
+					"ipallowlist2@myprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 					},
-					"ipwhitelist3@myprovider": {
+					"ipallowlist3@myprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
