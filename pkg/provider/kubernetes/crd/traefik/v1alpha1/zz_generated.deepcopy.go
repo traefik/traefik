@@ -769,6 +769,11 @@ func (in *MiddlewareSpec) DeepCopyInto(out *MiddlewareSpec) {
 		*out = new(dynamic.ContentType)
 		**out = **in
 	}
+	if in.GrpcWeb != nil {
+		in, out := &in.GrpcWeb, &out.GrpcWeb
+		*out = new(dynamic.GrpcWeb)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.Plugin != nil {
 		in, out := &in.Plugin, &out.Plugin
 		*out = make(map[string]v1.JSON, len(*in))
