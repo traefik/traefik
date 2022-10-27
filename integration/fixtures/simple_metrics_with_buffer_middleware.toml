@@ -1,0 +1,66 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.webA]
+    address = ":8001"
+  [entryPoints.webB]
+    address = ":8002"
+  [entryPoints.webC]
+    address = ":8003"
+
+[api]
+  insecure = true
+
+[metrics]
+  [metrics.prometheus]
+    buckets = "0.1,0.3,1.2,5.0"
+
+[providers]
+  [providers.file]
+    filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+
+  [http.routers.router-without]
+    entrypoints = ["webA"]
+    service = "service-without"
+    rule = "PathPrefix(`/without`)"
+
+  [http.routers.router-req]
+    entrypoints = ["webB"]
+    service = "service-req"
+    rule = "PathPrefix(`/with-req`)"
+    middlewares = ["buffer-req"]
+
+  [http.routers.router-resp]
+    entrypoints = ["webC"]
+    service = "service-resp"
+    rule = "PathPrefix(`/with-resp`)"
+    middlewares = ["buffer-resp"]
+
+[http.middlewares]
+  [http.middlewares.buffer-req.buffering]
+    maxRequestBodyBytes = 10
+
+  [http.middlewares.buffer-resp.buffering]
+    maxResponseBodyBytes = 10
+
+[http.services]
+  [http.services.service-without.loadBalancer]
+    [[http.services.service-without.loadBalancer.servers]]
+      url = "http://{{ .IP }}"
+
+  [http.services.service-req.loadBalancer]
+    [[http.services.service-req.loadBalancer.servers]]
+      url = "http://{{ .IP }}"
+
+  [http.services.service-resp.loadBalancer]
+    [[http.services.service-resp.loadBalancer.servers]]
+      url = "http://{{ .IP }}"
