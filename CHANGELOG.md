@@ -1,5 +1,5 @@
-## [v2.9.2](https://github.com/traefik/traefik/tree/v2.9.2) (2022-10-27)
-[All Commits](https://github.com/traefik/traefik/compare/v2.9.1...v2.9.2)
+## [v2.9.3](https://github.com/traefik/traefik/tree/v2.9.3) (2022-10-27)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.1...v2.9.3)
 
 **Bug fixes:**
 - **[acme]** Update go-acme/lego to v4.9.0 ([#9413](https://github.com/traefik/traefik/pull/9413) by [tony-defa](https://github.com/tony-defa))
@@ -13,6 +13,11 @@
 - **[k8s]** Fix links to gateway API guides ([#9445](https://github.com/traefik/traefik/pull/9445) by [kevinpollet](https://github.com/kevinpollet))
 - Simplify dashboard rule example ([#9454](https://github.com/traefik/traefik/pull/9454) by [sosoba](https://github.com/sosoba))
 - Add v2.9 to release page ([#9438](https://github.com/traefik/traefik/pull/9438) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v2.9.2](https://github.com/traefik/traefik/tree/v2.9.2) (2022-10-27)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.1...v2.9.2)
+
+Release canceled.
 
 ## [v2.9.1](https://github.com/traefik/traefik/tree/v2.9.1) (2022-10-03)
 [All Commits](https://github.com/traefik/traefik/compare/v2.9.0-rc1...v2.9.1)
