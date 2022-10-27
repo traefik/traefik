@@ -409,45 +409,42 @@ func (s *SimpleSuite) TestMetricsWithBufferingMiddleware(c *check.C) {
 	err = try.Request(req, 1*time.Second, try.StatusCodeIs(http.StatusRequestEntityTooLarge))
 	c.Assert(err, checker.IsNil)
 
-	// The resquest should fail because the response exceeds the configured limit.
+	// The request should fail because the response exceeds the configured limit.
 	err = try.GetRequest("http://127.0.0.1:8003/with-resp", 1*time.Second, try.StatusCodeIs(http.StatusInternalServerError))
 	c.Assert(err, checker.IsNil)
 
-	// adding a loop to test if metrics are not deleted
-	for i := 0; i < 10; i++ {
-		request, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/metrics", nil)
-		c.Assert(err, checker.IsNil)
+	request, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/metrics", nil)
+	c.Assert(err, checker.IsNil)
 
-		response, err := http.DefaultClient.Do(request)
-		c.Assert(err, checker.IsNil)
-		c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
+	response, err := http.DefaultClient.Do(request)
+	c.Assert(err, checker.IsNil)
+	c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
 
-		body, err := io.ReadAll(response.Body)
-		c.Assert(err, checker.IsNil)
+	body, err := io.ReadAll(response.Body)
+	c.Assert(err, checker.IsNil)
 
-		// For allowed requests and responses, the entrypoint and service metrics have the same status code
-		c.Assert(string(body), checker.Contains, "traefik_entrypoint_requests_total{code=\"200\",entrypoint=\"webA\",method=\"GET\",protocol=\"http\"} 1")
-		c.Assert(string(body), checker.Contains, "traefik_entrypoint_requests_bytes_total{code=\"200\",entrypoint=\"webA\",method=\"GET\",protocol=\"http\"} 0")
-		c.Assert(string(body), checker.Contains, "traefik_entrypoint_responses_bytes_total{code=\"200\",entrypoint=\"webA\",method=\"GET\",protocol=\"http\"} 31")
+	// For allowed requests and responses, the entrypoint and service metrics have the same status code.
+	c.Assert(string(body), checker.Contains, "traefik_entrypoint_requests_total{code=\"200\",entrypoint=\"webA\",method=\"GET\",protocol=\"http\"} 1")
+	c.Assert(string(body), checker.Contains, "traefik_entrypoint_requests_bytes_total{code=\"200\",entrypoint=\"webA\",method=\"GET\",protocol=\"http\"} 0")
+	c.Assert(string(body), checker.Contains, "traefik_entrypoint_responses_bytes_total{code=\"200\",entrypoint=\"webA\",method=\"GET\",protocol=\"http\"} 31")
 
-		c.Assert(string(body), checker.Contains, "traefik_service_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",service=\"service-without@file\"} 1")
-		c.Assert(string(body), checker.Contains, "traefik_service_requests_bytes_total{code=\"200\",method=\"GET\",protocol=\"http\",service=\"service-without@file\"} 0")
-		c.Assert(string(body), checker.Contains, "traefik_service_responses_bytes_total{code=\"200\",method=\"GET\",protocol=\"http\",service=\"service-without@file\"} 31")
+	c.Assert(string(body), checker.Contains, "traefik_service_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",service=\"service-without@file\"} 1")
+	c.Assert(string(body), checker.Contains, "traefik_service_requests_bytes_total{code=\"200\",method=\"GET\",protocol=\"http\",service=\"service-without@file\"} 0")
+	c.Assert(string(body), checker.Contains, "traefik_service_responses_bytes_total{code=\"200\",method=\"GET\",protocol=\"http\",service=\"service-without@file\"} 31")
 
-		// For forbidden requests, the entrypoints have metrics, the services don't
-		c.Assert(string(body), checker.Contains, "traefik_entrypoint_requests_total{code=\"413\",entrypoint=\"webB\",method=\"GET\",protocol=\"http\"} 1")
-		c.Assert(string(body), checker.Contains, "traefik_entrypoint_requests_bytes_total{code=\"413\",entrypoint=\"webB\",method=\"GET\",protocol=\"http\"} 0")
-		c.Assert(string(body), checker.Contains, "traefik_entrypoint_responses_bytes_total{code=\"413\",entrypoint=\"webB\",method=\"GET\",protocol=\"http\"} 24")
+	// For forbidden requests, the entrypoints have metrics, the services don't.
+	c.Assert(string(body), checker.Contains, "traefik_entrypoint_requests_total{code=\"413\",entrypoint=\"webB\",method=\"GET\",protocol=\"http\"} 1")
+	c.Assert(string(body), checker.Contains, "traefik_entrypoint_requests_bytes_total{code=\"413\",entrypoint=\"webB\",method=\"GET\",protocol=\"http\"} 0")
+	c.Assert(string(body), checker.Contains, "traefik_entrypoint_responses_bytes_total{code=\"413\",entrypoint=\"webB\",method=\"GET\",protocol=\"http\"} 24")
 
-		// For disallowed responses, the entrypoint and service metrics don't have the same status code
-		c.Assert(string(body), checker.Contains, "traefik_entrypoint_requests_bytes_total{code=\"500\",entrypoint=\"webC\",method=\"GET\",protocol=\"http\"} 0")
-		c.Assert(string(body), checker.Contains, "traefik_entrypoint_requests_total{code=\"500\",entrypoint=\"webC\",method=\"GET\",protocol=\"http\"} 1")
-		c.Assert(string(body), checker.Contains, "traefik_entrypoint_responses_bytes_total{code=\"500\",entrypoint=\"webC\",method=\"GET\",protocol=\"http\"} 21")
+	// For disallowed responses, the entrypoint and service metrics don't have the same status code.
+	c.Assert(string(body), checker.Contains, "traefik_entrypoint_requests_bytes_total{code=\"500\",entrypoint=\"webC\",method=\"GET\",protocol=\"http\"} 0")
+	c.Assert(string(body), checker.Contains, "traefik_entrypoint_requests_total{code=\"500\",entrypoint=\"webC\",method=\"GET\",protocol=\"http\"} 1")
+	c.Assert(string(body), checker.Contains, "traefik_entrypoint_responses_bytes_total{code=\"500\",entrypoint=\"webC\",method=\"GET\",protocol=\"http\"} 21")
 
-		c.Assert(string(body), checker.Contains, "traefik_service_requests_bytes_total{code=\"200\",method=\"GET\",protocol=\"http\",service=\"service-resp@file\"} 0")
-		c.Assert(string(body), checker.Contains, "traefik_service_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",service=\"service-resp@file\"} 1")
-		c.Assert(string(body), checker.Contains, "traefik_service_responses_bytes_total{code=\"200\",method=\"GET\",protocol=\"http\",service=\"service-resp@file\"} 31")
-	}
+	c.Assert(string(body), checker.Contains, "traefik_service_requests_bytes_total{code=\"200\",method=\"GET\",protocol=\"http\",service=\"service-resp@file\"} 0")
+	c.Assert(string(body), checker.Contains, "traefik_service_requests_total{code=\"200\",method=\"GET\",protocol=\"http\",service=\"service-resp@file\"} 1")
+	c.Assert(string(body), checker.Contains, "traefik_service_responses_bytes_total{code=\"200\",method=\"GET\",protocol=\"http\",service=\"service-resp@file\"} 31")
 }
 
 func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
