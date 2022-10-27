@@ -18,16 +18,14 @@ type ChainBuilder struct {
 	metricsRegistry        metrics.Registry
 	accessLoggerMiddleware *accesslog.Handler
 	tracer                 *tracing.Tracing
-	captureMiddleware      *capture.Handler
 }
 
 // NewChainBuilder Creates a new ChainBuilder.
-func NewChainBuilder(metricsRegistry metrics.Registry, accessLoggerMiddleware *accesslog.Handler, tracer *tracing.Tracing, captureMiddleware *capture.Handler) *ChainBuilder {
+func NewChainBuilder(metricsRegistry metrics.Registry, accessLoggerMiddleware *accesslog.Handler, tracer *tracing.Tracing) *ChainBuilder {
 	return &ChainBuilder{
 		metricsRegistry:        metricsRegistry,
 		accessLoggerMiddleware: accessLoggerMiddleware,
 		tracer:                 tracer,
-		captureMiddleware:      captureMiddleware,
 	}
 }
 
@@ -35,8 +33,8 @@ func NewChainBuilder(metricsRegistry metrics.Registry, accessLoggerMiddleware *a
 func (c *ChainBuilder) Build(ctx context.Context, entryPointName string) alice.Chain {
 	chain := alice.New()
 
-	if c.captureMiddleware != nil {
-		chain = chain.Append(capture.WrapHandler(c.captureMiddleware))
+	if c.accessLoggerMiddleware != nil || c.metricsRegistry != nil && (c.metricsRegistry.IsEpEnabled() || c.metricsRegistry.IsRouterEnabled() || c.metricsRegistry.IsSvcEnabled()) {
+		chain = chain.Append(capture.Wrap)
 	}
 
 	if c.accessLoggerMiddleware != nil {
