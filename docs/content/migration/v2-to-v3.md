@@ -16,3 +16,7 @@ feature by feature, of how the configuration looked like in v2, and how it now l
 ## IPWhiteList
 
 In v3, we renamed the `IPWhiteList` middleware to `IPAllowList` without changing anything to the configuration. 
+
+## gRPC Metrics
+
+In v3, the reported status code for gRPC requests is now the value of the `Grpc-Status` header.    
