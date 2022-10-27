@@ -50,7 +50,7 @@ func Wrap(handler http.Handler) (http.Handler, error) {
 func FromContext(ctx context.Context) (Capture, error) {
 	c := ctx.Value(capturedData)
 	if c == nil {
-		return Capture{}, errors.New("value not found")
+		return Capture{}, errors.New("value not found in Context")
 	}
 	capt, ok := c.(*Capture)
 	if !ok {

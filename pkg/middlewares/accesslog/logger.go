@@ -230,7 +230,9 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 	ctx := req.Context()
 	capt, err := capture.FromContext(ctx)
 	if err != nil {
-		log.FromContext(log.With(ctx, log.Str(log.MiddlewareType, "AccessLogs"))).Errorf("Could not get Capture: %v", err)
+		log.FromContext(log.With(ctx, log.Str(log.MiddlewareType, "AccessLogs"))).
+			WithError(err).
+			Errorf("Could not get Capture")
 		return
 	}
 

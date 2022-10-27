@@ -133,7 +133,7 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		for i := 0; i < len(m.baseLabels); i += 2 {
 			ctx = log.With(ctx, log.Str(m.baseLabels[i], m.baseLabels[i+1]))
 		}
-		log.FromContext(ctx).Errorf("Could not get Capture: %v", err)
+		log.FromContext(ctx).WithError(err).Errorf("Could not get Capture")
 		return
 	}
 
