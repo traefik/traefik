@@ -316,7 +316,8 @@ On subsequent requests, to keep the session alive with the same server, the clie
 #### Health Check
 
 Configure health check to remove unhealthy servers from the load balancing rotation.
-Traefik will consider your servers healthy as long as they return status codes between `2XX` and `3XX` to the health check requests (carried out every `interval`).
+Traefik will consider your HTTP(s) servers healthy as long as they return status codes between `2XX` and `3XX` to the health check requests (carried out every `interval`).
+For gRPC servers, Traefik will consider them healthy as long as they return `SERVING` to [gRPC health check v1](https://github.com/grpc/grpc/blob/master/doc/health-checking.md) requests.
 
 To propagate status changes (e.g. all servers of this service are down) upwards, HealthCheck must also be enabled on the parent(s) of this service.
 
@@ -324,6 +325,7 @@ Below are the available options for the health check mechanism:
 
 - `path` (required), defines the server URL path for the health check endpoint .
 - `scheme` (optional), replaces the server URL `scheme` for the health check endpoint.
+- `mode` (default: http), if defined to `grpc`, will use the gRPC health check protocol to probe the server.
 - `hostname` (optional), sets the value of `hostname` in the `Host` header of the health check request.
 - `port` (optional), replaces the server URL `port` for the health check endpoint.
 - `interval` (default: 30s), defines the frequency of the health check calls.
@@ -772,6 +774,82 @@ metadata:
 
 spec:
     peerCertURI: foobar
+```
+
+#### `spiffe`
+
+Please note that [SPIFFE](../../https/spiffe.md) must be enabled in the static configuration
+before using it to secure the connection between Traefik and the backends.
+
+##### `spiffe.ids`
+
+_Optional_
+
+`ids` defines the allowed SPIFFE IDs. 
+This takes precedence over the SPIFFE TrustDomain.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      spiffe:
+        ids:
+          - spiffe://trust-domain/id1
+          - spiffe://trust-domain/id2
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport.spiffe]
+  ids = ["spiffe://trust-domain/id1", "spiffe://trust-domain/id2"]
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    spiffe:
+      ids:
+        - spiffe://trust-domain/id1
+        - spiffe://trust-domain/id2
+```
+
+##### `spiffe.trustDomain`
+
+_Optional_
+
+`trustDomain` defines the allowed SPIFFE trust domain.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+        spiffe:
+          trustDomain: spiffe://trust-domain
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport.spiffe]
+  trustDomain = "spiffe://trust-domain"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    spiffe:
+      trustDomain: "spiffe://trust-domain"
 ```
 
 #### `forwardingTimeouts`

@@ -1,4 +1,4 @@
-package ipwhitelist
+package ipallowlist
 
 import (
 	"context"
@@ -15,29 +15,29 @@ import (
 )
 
 const (
-	typeName = "IPWhiteLister"
+	typeName = "IPAllowLister"
 )
 
-// ipWhiteLister is a middleware that provides Checks of the Requesting IP against a set of Whitelists.
-type ipWhiteLister struct {
+// ipAllowLister is a middleware that provides Checks of the Requesting IP against a set of Allowlists.
+type ipAllowLister struct {
 	next        http.Handler
-	whiteLister *ip.Checker
+	allowLister *ip.Checker
 	strategy    ip.Strategy
 	name        string
 }
 
-// New builds a new IPWhiteLister given a list of CIDR-Strings to whitelist.
-func New(ctx context.Context, next http.Handler, config dynamic.IPWhiteList, name string) (http.Handler, error) {
+// New builds a new IPAllowLister given a list of CIDR-Strings to allow.
+func New(ctx context.Context, next http.Handler, config dynamic.IPAllowList, name string) (http.Handler, error) {
 	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName))
 	logger.Debug("Creating middleware")
 
 	if len(config.SourceRange) == 0 {
-		return nil, errors.New("sourceRange is empty, IPWhiteLister not created")
+		return nil, errors.New("sourceRange is empty, IPAllowLister not created")
 	}
 
 	checker, err := ip.NewChecker(config.SourceRange)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse CIDR whitelist %s: %w", config.SourceRange, err)
+		return nil, fmt.Errorf("cannot parse CIDRs %s: %w", config.SourceRange, err)
 	}
 
 	strategy, err := config.IPStrategy.Get()
@@ -45,26 +45,26 @@ func New(ctx context.Context, next http.Handler, config dynamic.IPWhiteList, nam
 		return nil, err
 	}
 
-	logger.Debugf("Setting up IPWhiteLister with sourceRange: %s", config.SourceRange)
+	logger.Debugf("Setting up IPAllowLister with sourceRange: %s", config.SourceRange)
 
-	return &ipWhiteLister{
+	return &ipAllowLister{
 		strategy:    strategy,
-		whiteLister: checker,
+		allowLister: checker,
 		next:        next,
 		name:        name,
 	}, nil
 }
 
-func (wl *ipWhiteLister) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return wl.name, tracing.SpanKindNoneEnum
+func (al *ipAllowLister) GetTracingInformation() (string, ext.SpanKindEnum) {
+	return al.name, tracing.SpanKindNoneEnum
 }
 
-func (wl *ipWhiteLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	ctx := middlewares.GetLoggerCtx(req.Context(), wl.name, typeName)
+func (al *ipAllowLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	ctx := middlewares.GetLoggerCtx(req.Context(), al.name, typeName)
 	logger := log.FromContext(ctx)
 
-	clientIP := wl.strategy.GetIP(req)
-	err := wl.whiteLister.IsAuthorized(clientIP)
+	clientIP := al.strategy.GetIP(req)
+	err := al.allowLister.IsAuthorized(clientIP)
 	if err != nil {
 		msg := fmt.Sprintf("Rejecting IP %s: %v", clientIP, err)
 		logger.Debug(msg)
@@ -74,7 +74,7 @@ func (wl *ipWhiteLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 	logger.Debugf("Accepting IP %s", clientIP)
 
-	wl.next.ServeHTTP(rw, req)
+	al.next.ServeHTTP(rw, req)
 }
 
 func reject(ctx context.Context, rw http.ResponseWriter) {

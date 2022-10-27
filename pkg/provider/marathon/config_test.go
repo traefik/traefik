@@ -196,14 +196,14 @@ func TestBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "TCP with IP whitelist",
+			desc: "TCP with IP allowlist",
 			applications: withApplications(
 				application(
 					appID("/app"),
 					appPorts(80),
 
 					withLabel("traefik.tcp.routers.Test.rule", "HostSNI(`foo.bar`)"),
-					withLabel("traefik.tcp.middlewares.Middleware1.ipwhitelist.sourcerange", "foobar, fiibar"),
+					withLabel("traefik.tcp.middlewares.Middleware1.ipallowlist.sourcerange", "foobar, fiibar"),
 					withLabel("traefik.tcp.routers.Test.middlewares", "Middleware1"),
 					withTasks(localhostTask(taskPorts(80))),
 				)),
@@ -218,7 +218,7 @@ func TestBuildConfiguration(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{
 						"Middleware1": {
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"foobar", "fiibar"},
 							},
 						},

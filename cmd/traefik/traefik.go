@@ -19,6 +19,7 @@ import (
 	"github.com/go-acme/lego/v4/challenge"
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/sirupsen/logrus"
+	"github.com/spiffe/go-spiffe/v2/workloadapi"
 	"github.com/traefik/paerser/cli"
 	"github.com/traefik/traefik/v2/cmd"
 	"github.com/traefik/traefik/v2/cmd/healthcheck"
@@ -35,6 +36,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/acme"
 	"github.com/traefik/traefik/v2/pkg/provider/aggregator"
 	"github.com/traefik/traefik/v2/pkg/provider/hub"
+	"github.com/traefik/traefik/v2/pkg/provider/tailscale"
 	"github.com/traefik/traefik/v2/pkg/provider/traefik"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/server"
@@ -191,6 +193,10 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	acmeProviders := initACMEProvider(staticConfiguration, &providerAggregator, tlsManager, httpChallengeProvider, tlsChallengeProvider)
 
+	// Tailscale
+
+	tsProviders := initTailscaleProviders(staticConfiguration, &providerAggregator)
+
 	// Entrypoints
 
 	serverEntryPointsTCP, err := server.NewTCPEntryPoints(staticConfiguration.EntryPoints, staticConfiguration.HostResolver)
@@ -252,7 +258,28 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	// Service manager factory
 
-	roundTripperManager := service.NewRoundTripperManager()
+	var spiffeX509Source *workloadapi.X509Source
+	if staticConfiguration.Spiffe != nil && staticConfiguration.Spiffe.WorkloadAPIAddr != "" {
+		log.WithoutContext().
+			WithField("workloadAPIAddr", staticConfiguration.Spiffe.WorkloadAPIAddr).
+			Info("Waiting on SPIFFE SVID delivery")
+
+		spiffeX509Source, err = workloadapi.NewX509Source(
+			ctx,
+			workloadapi.WithClientOptions(
+				workloadapi.WithAddr(
+					staticConfiguration.Spiffe.WorkloadAPIAddr,
+				),
+			),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create SPIFFE x509 source: %w", err)
+		}
+
+		log.WithoutContext().Info("Successfully obtained SPIFFE SVID.")
+	}
+
+	roundTripperManager := service.NewRoundTripperManager(spiffeX509Source)
 	acmeHTTPHandler := getHTTPChallengeHandler(acmeProviders, httpChallengeProvider)
 	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, roundTripperManager, acmeHTTPHandler)
 
@@ -313,11 +340,20 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	// TLS challenge
 	watcher.AddListener(tlsChallengeProvider.ListenConfiguration)
 
-	// ACME
+	// Certificate Resolvers
+
 	resolverNames := map[string]struct{}{}
+
+	// ACME
 	for _, p := range acmeProviders {
 		resolverNames[p.ResolverName] = struct{}{}
 		watcher.AddListener(p.ListenConfiguration)
+	}
+
+	// Tailscale
+	for _, p := range tsProviders {
+		resolverNames[p.ResolverName] = struct{}{}
+		watcher.AddListener(p.HandleConfigUpdate)
 	}
 
 	// Certificate resolver logs
@@ -331,7 +367,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 				// "traefik-hub" is an allowed certificate resolver name in a Traefik Hub Experimental feature context.
 				// It is used to activate its own certificate resolution, even though it is not a "classical" traefik certificate resolver.
 				(staticConfiguration.Hub == nil || rt.TLS.CertResolver != "traefik-hub") {
-				log.WithoutContext().Errorf("the router %s uses a non-existent resolver: %s", rtName, rt.TLS.CertResolver)
+				log.WithoutContext().Errorf("Router %s uses a non-existent certificate resolver: %s", rtName, rt.TLS.CertResolver)
 			}
 		}
 	})
@@ -352,8 +388,24 @@ func getHTTPChallengeHandler(acmeProviders []*acme.Provider, httpChallengeProvid
 
 func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string {
 	var defaultEntryPoints []string
+
+	// Determines if at least one EntryPoint is configured to be used by default.
+	var hasDefinedDefaults bool
+	for _, ep := range staticConfiguration.EntryPoints {
+		if ep.AsDefault {
+			hasDefinedDefaults = true
+			break
+		}
+	}
+
 	for name, cfg := range staticConfiguration.EntryPoints {
-		// Traefik Hub entryPoint should not be part of the set of default entryPoints.
+		// By default all entrypoints are considered.
+		// If at least one is flagged, then only flagged entrypoints are included.
+		if hasDefinedDefaults && !cfg.AsDefault {
+			continue
+		}
+
+		// Traefik Hub entryPoint should not be used as a default entryPoint.
 		if hub.APIEntrypoint == name || hub.TunnelEntrypoint == name {
 			continue
 		}
@@ -384,7 +436,7 @@ func switchRouter(routerFactory *server.RouterFactory, serverEntryPointsTCP serv
 	}
 }
 
-// initACMEProvider creates an acme provider from the ACME part of globalConfiguration.
+// initACMEProvider creates and registers acme.Provider instances corresponding to the configured ACME certificate resolvers.
 func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.ProviderAggregator, tlsManager *traefiktls.Manager, httpChallengeProvider, tlsChallengeProvider challenge.Provider) []*acme.Provider {
 	localStores := map[string]*acme.LocalStore{}
 
@@ -419,6 +471,27 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 	}
 
 	return resolvers
+}
+
+// initTailscaleProviders creates and registers tailscale.Provider instances corresponding to the configured Tailscale certificate resolvers.
+func initTailscaleProviders(cfg *static.Configuration, providerAggregator *aggregator.ProviderAggregator) []*tailscale.Provider {
+	var providers []*tailscale.Provider
+	for name, resolver := range cfg.CertificatesResolvers {
+		if resolver.Tailscale == nil {
+			continue
+		}
+
+		tsProvider := &tailscale.Provider{ResolverName: name}
+
+		if err := providerAggregator.AddProvider(tsProvider); err != nil {
+			log.WithoutContext().Errorf("Unable to create Tailscale provider %s: %v", name, err)
+			continue
+		}
+
+		providers = append(providers, tsProvider)
+	}
+
+	return providers
 }
 
 func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {

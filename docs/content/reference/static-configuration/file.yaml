@@ -14,6 +14,7 @@ serversTransport:
 entryPoints:
   EntryPoint0:
     address: foobar
+    asDefault: true
     transport:
       lifeCycle:
         requestAcceptGraceTimeout: 42s
@@ -195,6 +196,9 @@ providers:
     prefix: foobar
     stale: true
     namespace: foobar
+    namespaces:
+      - foobar
+      - foobar
     exposedByDefault: true
     refreshInterval: 42s
     endpoint:
@@ -221,6 +225,7 @@ providers:
     accessKeyID: foobar
     secretAccessKey: foobar
     ecsAnywhere: true
+    healthyTasksOnly: true
   consul:
     rootKey: foobar
     endpoints:
@@ -275,6 +280,9 @@ providers:
     endpoint: foobar
     pollInterval: 42s
     pollTimeout: 42s
+    headers:
+      name0: foobar
+      name1: foobar
     tls:
       ca: foobar
       caOptional: true
@@ -443,26 +451,7 @@ certificatesResolvers:
         entryPoint: foobar
       tlsChallenge: {}
   CertificateResolver1:
-    acme:
-      email: foobar
-      caServer: foobar
-      certificatesDuration: 42
-      preferredChain: foobar
-      storage: foobar
-      keyType: foobar
-      eab:
-        kid: foobar
-        hmacEncoded: foobar
-      dnsChallenge:
-        provider: foobar
-        delayBeforeCheck: 42s
-        resolvers:
-          - foobar
-          - foobar
-        disablePropagationCheck: true
-      httpChallenge:
-        entryPoint: foobar
-      tlsChallenge: {}
+    tailscale: {}
 hub:
   tls:
     insecure: true

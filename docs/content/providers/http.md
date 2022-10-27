@@ -76,6 +76,26 @@ providers:
 --providers.http.pollTimeout=5s
 ```
 
+### `headers`
+
+_Optional_
+
+Defines custom headers to be sent to the endpoint.
+
+```yaml tab="File (YAML)"
+providers:
+  headers:
+    name: value
+```
+
+```toml tab="File (TOML)"
+[providers.http.headers]
+  name = "value"
+```
+
+```bash tab="CLI"
+--providers.http.headers.name=value
+
 ### `tls`
 
 _Optional_

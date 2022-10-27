@@ -48,6 +48,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/services/Service01/loadBalancer/healthCheck/headers/name0":                     "foobar",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/headers/name1":                     "foobar",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/scheme":                            "foobar",
+		"traefik/http/services/Service01/loadBalancer/healthCheck/mode":                              "foobar",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/followredirects":                   "true",
 		"traefik/http/services/Service01/loadBalancer/responseForwarding/flushInterval":              "foobar",
 		"traefik/http/services/Service01/loadBalancer/passHostHeader":                                "true",
@@ -139,11 +140,11 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware09/headers/customRequestHeaders/name0":                   "foobar",
 		"traefik/http/middlewares/Middleware09/headers/customRequestHeaders/name1":                   "foobar",
 		"traefik/http/middlewares/Middleware09/headers/browserXssFilter":                             "true",
-		"traefik/http/middlewares/Middleware10/ipWhiteList/sourceRange/0":                            "foobar",
-		"traefik/http/middlewares/Middleware10/ipWhiteList/sourceRange/1":                            "foobar",
-		"traefik/http/middlewares/Middleware10/ipWhiteList/ipStrategy/excludedIPs/0":                 "foobar",
-		"traefik/http/middlewares/Middleware10/ipWhiteList/ipStrategy/excludedIPs/1":                 "foobar",
-		"traefik/http/middlewares/Middleware10/ipWhiteList/ipStrategy/depth":                         "42",
+		"traefik/http/middlewares/Middleware10/ipAllowList/sourceRange/0":                            "foobar",
+		"traefik/http/middlewares/Middleware10/ipAllowList/sourceRange/1":                            "foobar",
+		"traefik/http/middlewares/Middleware10/ipAllowList/ipStrategy/excludedIPs/0":                 "foobar",
+		"traefik/http/middlewares/Middleware10/ipAllowList/ipStrategy/excludedIPs/1":                 "foobar",
+		"traefik/http/middlewares/Middleware10/ipAllowList/ipStrategy/depth":                         "42",
 		"traefik/http/middlewares/Middleware11/inFlightReq/amount":                                   "42",
 		"traefik/http/middlewares/Middleware11/inFlightReq/sourceCriterion/requestHost":              "true",
 		"traefik/http/middlewares/Middleware11/inFlightReq/sourceCriterion/ipStrategy/depth":         "42",
@@ -339,7 +340,7 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 			Middlewares: map[string]*dynamic.Middleware{
 				"Middleware10": {
-					IPWhiteList: &dynamic.IPWhiteList{
+					IPAllowList: &dynamic.IPAllowList{
 						SourceRange: []string{
 							"foobar",
 							"foobar",
@@ -642,6 +643,7 @@ func Test_buildConfiguration(t *testing.T) {
 						},
 						HealthCheck: &dynamic.ServerHealthCheck{
 							Scheme:          "foobar",
+							Mode:            "foobar",
 							Path:            "foobar",
 							Port:            42,
 							Interval:        "foobar",
