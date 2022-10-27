@@ -48,6 +48,7 @@ type MiddlewareSpec struct {
 	PassTLSClientCert *dynamic.PassTLSClientCert `json:"passTLSClientCert,omitempty"`
 	Retry             *Retry                     `json:"retry,omitempty"`
 	ContentType       *dynamic.ContentType       `json:"contentType,omitempty"`
+	GrpcWeb           *dynamic.GrpcWeb           `json:"grpcWeb,omitempty"`
 	// Plugin defines the middleware plugin configuration.
 	// More info: https://doc.traefik.io/traefik/plugins/
 	Plugin map[string]apiextensionv1.JSON `json:"plugin,omitempty"`
