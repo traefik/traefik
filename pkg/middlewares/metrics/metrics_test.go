@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-kit/kit/metrics"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/codes"
 )
 
 // CollectingCounter is a metrics.Counter implementation that enables access to the CounterValue and LastLabelValues.
@@ -126,6 +127,100 @@ func Test_getMethod(t *testing.T) {
 
 			request := httptest.NewRequest(test.method, "http://example.com", nil)
 			assert.Equal(t, test.expected, getMethod(request))
+		})
+	}
+}
+
+func Test_getRequestProtocol(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		headers  http.Header
+		expected string
+	}{
+		{
+			desc:     "default",
+			expected: protoHTTP,
+		},
+		{
+			desc: "websocket",
+			headers: http.Header{
+				"Connection": []string{"upgrade"},
+				"Upgrade":    []string{"websocket"},
+			},
+			expected: protoWebsocket,
+		},
+		{
+			desc: "SSE",
+			headers: http.Header{
+				"Accept": []string{"text/event-stream"},
+			},
+			expected: protoSSE,
+		},
+		{
+			desc: "grpc web",
+			headers: http.Header{
+				"Content-Type": []string{"application/grpc-web-text"},
+			},
+			expected: protoGRPCWeb,
+		},
+		{
+			desc: "grpc",
+			headers: http.Header{
+				"Content-Type": []string{"application/grpc-text"},
+			},
+			expected: protoGRPC,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			req := httptest.NewRequest(http.MethodGet, "https://localhost", http.NoBody)
+			req.Header = test.headers
+
+			protocol := getRequestProtocol(req)
+
+			assert.Equal(t, test.expected, protocol)
+		})
+	}
+}
+
+func Test_grpcStatusCode(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		status   string
+		expected codes.Code
+	}{
+		{
+			desc:     "invalid",
+			status:   "foo",
+			expected: codes.Unknown,
+		},
+		{
+			desc:     "number",
+			status:   "1",
+			expected: codes.Canceled,
+		},
+		{
+			desc:     "sting",
+			status:   `"OK"`,
+			expected: codes.OK,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rw := httptest.NewRecorder()
+			rw.Header().Set("Grpc-Status", test.status)
+
+			code := grpcStatusCode(rw)
+
+			assert.EqualValues(t, test.expected, code)
 		})
 	}
 }
