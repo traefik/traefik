@@ -1,3 +1,29 @@
+## [v2.9.4](https://github.com/traefik/traefik/tree/v2.9.4) (2022-10-27)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.1...v2.9.4)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.9.0 ([#9413](https://github.com/traefik/traefik/pull/9413) by [tony-defa](https://github.com/tony-defa))
+- **[kv,redis]** Fix Redis configuration type ([#9435](https://github.com/traefik/traefik/pull/9435) by [ldez](https://github.com/ldez))
+- **[logs,middleware,metrics]** Handle capture on redefined http.responseWriters ([#9440](https://github.com/traefik/traefik/pull/9440) by [rtribotte](https://github.com/rtribotte))
+- **[middleware,k8s]** Remove raw cert escape in PassTLSClientCert middleware ([#9412](https://github.com/traefik/traefik/pull/9412) by [rtribotte](https://github.com/rtribotte))
+- **[plugins]** Update Yaegi to v0.14.3 ([#9468](https://github.com/traefik/traefik/pull/9468) by [ldez](https://github.com/ldez))
+- Remove side effect on default transport tests ([#9460](https://github.com/traefik/traefik/pull/9460) by [sdelicata](https://github.com/sdelicata))
+
+**Documentation:**
+- **[k8s]** Fix links to gateway API guides ([#9445](https://github.com/traefik/traefik/pull/9445) by [kevinpollet](https://github.com/kevinpollet))
+- Simplify dashboard rule example ([#9454](https://github.com/traefik/traefik/pull/9454) by [sosoba](https://github.com/sosoba))
+- Add v2.9 to release page ([#9438](https://github.com/traefik/traefik/pull/9438) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v2.9.3](https://github.com/traefik/traefik/tree/v2.9.3) (2022-10-27)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.1...v2.9.3)
+
+Release canceled.
+
+## [v2.9.2](https://github.com/traefik/traefik/tree/v2.9.2) (2022-10-27)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.1...v2.9.2)
+
+Release canceled.
+
 ## [v2.9.1](https://github.com/traefik/traefik/tree/v2.9.1) (2022-10-03)
 [All Commits](https://github.com/traefik/traefik/compare/v2.9.0-rc1...v2.9.1)
 
