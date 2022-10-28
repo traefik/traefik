@@ -3,9 +3,8 @@
 // For another middleware to get those attributes of a request/response, this middleware
 // should be added before in the middleware chain.
 //
-//	handler, _ := NewHandler()
 //	chain := alice.New().
-//	     Append(WrapHandler(handler)).
+//	     Append(capture.Wrap).
 //	     Append(myOtherMiddleware).
 //	     then(...)
 //
@@ -33,7 +32,6 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/containous/alice"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 )
 
@@ -41,62 +39,67 @@ type key string
 
 const capturedData key = "capturedData"
 
-// Handler will store each request data to its context.
-type Handler struct{}
-
-// WrapHandler wraps capture handler into an Alice Constructor.
-func WrapHandler(handler *Handler) alice.Constructor {
-	return func(next http.Handler) (http.Handler, error) {
-		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			handler.ServeHTTP(rw, req, next)
-		}), nil
-	}
+// Wrap returns a new handler that inserts a Capture into the given handler.
+// It satisfies the alice.Constructor type.
+func Wrap(handler http.Handler) (http.Handler, error) {
+	c := Capture{}
+	return c.Reset(handler), nil
 }
 
-func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http.Handler) {
-	c := Capture{}
-	if req.Body != nil {
-		readCounter := &readCounter{source: req.Body}
-		c.rr = readCounter
-		req.Body = readCounter
+// FromContext returns the Capture value found in ctx, or an empty Capture otherwise.
+func FromContext(ctx context.Context) (Capture, error) {
+	c := ctx.Value(capturedData)
+	if c == nil {
+		return Capture{}, errors.New("value not found in context")
 	}
-	responseWriter := newResponseWriter(rw)
-	c.rw = responseWriter
-	ctx := context.WithValue(req.Context(), capturedData, &c)
-	next.ServeHTTP(responseWriter, req.WithContext(ctx))
+	capt, ok := c.(*Capture)
+	if !ok {
+		return Capture{}, errors.New("value stored in context is not a *Capture")
+	}
+	return *capt, nil
 }
 
 // Capture is the object populated by the capture middleware,
-// allowing to gather information about the request and response.
+// holding probes that allow to gather information about the request and response.
 type Capture struct {
 	rr *readCounter
 	rw responseWriter
 }
 
-// FromContext returns the Capture value found in ctx, or an empty Capture otherwise.
-func FromContext(ctx context.Context) (*Capture, error) {
-	c := ctx.Value(capturedData)
-	if c == nil {
-		return nil, errors.New("value not found")
-	}
-	capt, ok := c.(*Capture)
-	if !ok {
-		return nil, errors.New("value stored in Context is not a *Capture")
-	}
-	return capt, nil
+// NeedsReset returns whether the given http.ResponseWriter is the capture's probe.
+func (c *Capture) NeedsReset(rw http.ResponseWriter) bool {
+	return c.rw != rw
 }
 
-func (c Capture) ResponseSize() int64 {
+// Reset returns a new handler that renews the Capture's probes, and inserts
+// them when deferring to next.
+func (c *Capture) Reset(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		ctx := context.WithValue(req.Context(), capturedData, c)
+		newReq := req.WithContext(ctx)
+
+		if newReq.Body != nil {
+			readCounter := &readCounter{source: newReq.Body}
+			c.rr = readCounter
+			newReq.Body = readCounter
+		}
+		c.rw = newResponseWriter(rw)
+
+		next.ServeHTTP(c.rw, newReq)
+	})
+}
+
+func (c *Capture) ResponseSize() int64 {
 	return c.rw.Size()
 }
 
-func (c Capture) StatusCode() int {
+func (c *Capture) StatusCode() int {
 	return c.rw.Status()
 }
 
 // RequestSize returns the size of the request's body if it applies,
 // zero otherwise.
-func (c Capture) RequestSize() int64 {
+func (c *Capture) RequestSize() int64 {
 	if c.rr == nil {
 		return 0
 	}
