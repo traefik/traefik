@@ -46,6 +46,7 @@ type Provider struct {
 	ThrottleDuration          ptypes.Duration  `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	AllowEmptyServices        bool             `description:"Allow creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	AllowExternalNameServices bool             `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
+	DisableIngressClassLookup bool             `description:"Disables the lookup of ingress class resources." json:"disableIngressClassLookup,omitempty" toml:"disableIngressClassLookup,omitempty" yaml:"disableIngressClassLookup,omitempty" export:"true"`
 	lastConfiguration         safe.Safe
 }
 
@@ -114,7 +115,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
-			eventsChan, err := k8sClient.WatchAll(p.Namespaces, ctxPool.Done())
+			eventsChan, err := k8sClient.WatchAll(p.DisableIngressClassLookup, p.Namespaces, ctxPool.Done())
 			if err != nil {
 				logger.Errorf("Error watching kubernetes events: %v", err)
 				timer := time.NewTimer(1 * time.Second)
@@ -193,7 +194,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 	var ingressClasses []*networkingv1.IngressClass
 
-	if supportsIngressClass(serverVersion) {
+	if supportsIngressClass(serverVersion) && !p.DisableIngressClassLookup {
 		ics, err := client.GetIngressClasses()
 		if err != nil {
 			log.FromContext(ctx).Warnf("Failed to list ingress classes: %v", err)
