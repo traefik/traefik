@@ -435,7 +435,7 @@ func (s *AccessLogSuite) TestAccessLogBackendNotFound(c *check.C) {
 	checkNoOtherTraefikProblems(c)
 }
 
-func (s *AccessLogSuite) TestAccessLogFrontendWhitelist(c *check.C) {
+func (s *AccessLogSuite) TestAccessLogFrontendAllowlist(c *check.C) {
 	ensureWorkingDirectoryIsClean()
 
 	expected := []accessLogValue{
@@ -443,7 +443,7 @@ func (s *AccessLogSuite) TestAccessLogFrontendWhitelist(c *check.C) {
 			formatOnly: false,
 			code:       "403",
 			user:       "-",
-			routerName: "rt-frontendWhitelist",
+			routerName: "rt-frontendAllowlist",
 			serviceURL: "-",
 		},
 	}
@@ -458,7 +458,7 @@ func (s *AccessLogSuite) TestAccessLogFrontendWhitelist(c *check.C) {
 
 	checkStatsForLogFile(c)
 
-	waitForTraefik(c, "frontendWhitelist")
+	waitForTraefik(c, "frontendAllowlist")
 
 	// Verify Traefik started OK
 	checkTraefikStarted(c)
@@ -466,7 +466,7 @@ func (s *AccessLogSuite) TestAccessLogFrontendWhitelist(c *check.C) {
 	// Test rate limit
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	c.Assert(err, checker.IsNil)
-	req.Host = "frontend.whitelist.docker.local"
+	req.Host = "frontend.allowlist.docker.local"
 
 	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusForbidden), try.HasBody())
 	c.Assert(err, checker.IsNil)

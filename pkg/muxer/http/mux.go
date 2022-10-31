@@ -237,7 +237,7 @@ func headersRegexp(route *mux.Route, headers ...string) error {
 func query(route *mux.Route, query ...string) error {
 	var queries []string
 	for _, elem := range query {
-		queries = append(queries, strings.Split(elem, "=")...)
+		queries = append(queries, strings.SplitN(elem, "=", 2)...)
 	}
 
 	route.Queries(queries...)

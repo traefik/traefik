@@ -14,6 +14,7 @@
 [entryPoints]
   [entryPoints.EntryPoint0]
     address = "foobar"
+    asDefault = true
     [entryPoints.EntryPoint0.transport]
       [entryPoints.EntryPoint0.transport.lifeCycle]
         requestAcceptGraceTimeout = "42s"
@@ -251,6 +252,9 @@
     endpoint = "foobar"
     pollInterval = "42s"
     pollTimeout = "42s"
+    [providers.http.headers]
+      name0 = "foobar"
+      name1 = "foobar"
     [providers.http.tls]
       ca = "foobar"
       caOptional = true
@@ -420,25 +424,7 @@
       [certificatesResolvers.CertificateResolver0.acme.httpChallenge]
         entryPoint = "foobar"
       [certificatesResolvers.CertificateResolver0.acme.tlsChallenge]
-  [certificatesResolvers.CertificateResolver1]
-    [certificatesResolvers.CertificateResolver1.acme]
-      email = "foobar"
-      caServer = "foobar"
-      preferredChain = "foobar"
-      storage = "foobar"
-      keyType = "foobar"
-      certificatesDuration = 42
-      [certificatesResolvers.CertificateResolver1.acme.eab]
-        kid = "foobar"
-        hmacEncoded = "foobar"
-      [certificatesResolvers.CertificateResolver1.acme.dnsChallenge]
-        provider = "foobar"
-        delayBeforeCheck = "42s"
-        resolvers = ["foobar", "foobar"]
-        disablePropagationCheck = true
-      [certificatesResolvers.CertificateResolver1.acme.httpChallenge]
-        entryPoint = "foobar"
-      [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]
+  [certificatesResolvers.CertificateResolver1.tailscale]
 
 [hub]
   [hub.tls]

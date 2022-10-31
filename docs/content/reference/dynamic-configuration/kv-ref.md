@@ -84,11 +84,11 @@
 | `traefik/http/middlewares/Middleware10/headers/stsIncludeSubdomains` | `true` |
 | `traefik/http/middlewares/Middleware10/headers/stsPreload` | `true` |
 | `traefik/http/middlewares/Middleware10/headers/stsSeconds` | `42` |
-| `traefik/http/middlewares/Middleware11/ipWhiteList/ipStrategy/depth` | `42` |
-| `traefik/http/middlewares/Middleware11/ipWhiteList/ipStrategy/excludedIPs/0` | `foobar` |
-| `traefik/http/middlewares/Middleware11/ipWhiteList/ipStrategy/excludedIPs/1` | `foobar` |
-| `traefik/http/middlewares/Middleware11/ipWhiteList/sourceRange/0` | `foobar` |
-| `traefik/http/middlewares/Middleware11/ipWhiteList/sourceRange/1` | `foobar` |
+| `traefik/http/middlewares/Middleware11/ipAllowList/ipStrategy/depth` | `42` |
+| `traefik/http/middlewares/Middleware11/ipAllowList/ipStrategy/excludedIPs/0` | `foobar` |
+| `traefik/http/middlewares/Middleware11/ipAllowList/ipStrategy/excludedIPs/1` | `foobar` |
+| `traefik/http/middlewares/Middleware11/ipAllowList/sourceRange/0` | `foobar` |
+| `traefik/http/middlewares/Middleware11/ipAllowList/sourceRange/1` | `foobar` |
 | `traefik/http/middlewares/Middleware12/inFlightReq/amount` | `42` |
 | `traefik/http/middlewares/Middleware12/inFlightReq/sourceCriterion/ipStrategy/depth` | `42` |
 | `traefik/http/middlewares/Middleware12/inFlightReq/sourceCriterion/ipStrategy/excludedIPs/0` | `foobar` |
@@ -140,6 +140,8 @@
 | `traefik/http/middlewares/Middleware21/stripPrefix/prefixes/1` | `foobar` |
 | `traefik/http/middlewares/Middleware22/stripPrefixRegex/regex/0` | `foobar` |
 | `traefik/http/middlewares/Middleware22/stripPrefixRegex/regex/1` | `foobar` |
+| `traefik/http/middlewares/Middleware23/grpcWeb/allowOrigins/0` | `foobar` |
+| `traefik/http/middlewares/Middleware23/grpcWeb/allowOrigins/1` | `foobar` |
 | `traefik/http/routers/Router0/entryPoints/0` | `foobar` |
 | `traefik/http/routers/Router0/entryPoints/1` | `foobar` |
 | `traefik/http/routers/Router0/middlewares/0` | `foobar` |
@@ -186,6 +188,9 @@
 | `traefik/http/serversTransports/ServersTransport0/rootCAs/0` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport0/rootCAs/1` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport0/serverName` | `foobar` |
+| `traefik/http/serversTransports/ServersTransport0/spiffe/ids/0` | `foobar` |
+| `traefik/http/serversTransports/ServersTransport0/spiffe/ids/1` | `foobar` |
+| `traefik/http/serversTransports/ServersTransport0/spiffe/trustDomain` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/certificates/0/certFile` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/certificates/0/keyFile` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/certificates/1/certFile` | `foobar` |
@@ -202,6 +207,9 @@
 | `traefik/http/serversTransports/ServersTransport1/rootCAs/0` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/rootCAs/1` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/serverName` | `foobar` |
+| `traefik/http/serversTransports/ServersTransport1/spiffe/ids/0` | `foobar` |
+| `traefik/http/serversTransports/ServersTransport1/spiffe/ids/1` | `foobar` |
+| `traefik/http/serversTransports/ServersTransport1/spiffe/trustDomain` | `foobar` |
 | `traefik/http/services/Service01/loadBalancer/healthCheck/followRedirects` | `true` |
 | `traefik/http/services/Service01/loadBalancer/healthCheck/headers/name0` | `foobar` |
 | `traefik/http/services/Service01/loadBalancer/healthCheck/headers/name1` | `foobar` |
@@ -241,8 +249,8 @@
 | `traefik/http/services/Service04/failover/fallback` | `foobar` |
 | `traefik/http/services/Service04/failover/healthCheck` | `` |
 | `traefik/http/services/Service04/failover/service` | `foobar` |
-| `traefik/tcp/middlewares/TCPMiddleware00/ipWhiteList/sourceRange/0` | `foobar` |
-| `traefik/tcp/middlewares/TCPMiddleware00/ipWhiteList/sourceRange/1` | `foobar` |
+| `traefik/tcp/middlewares/TCPMiddleware00/ipAllowList/sourceRange/0` | `foobar` |
+| `traefik/tcp/middlewares/TCPMiddleware00/ipAllowList/sourceRange/1` | `foobar` |
 | `traefik/tcp/middlewares/TCPMiddleware01/inFlightConn/amount` | `42` |
 | `traefik/tcp/routers/TCPRouter0/entryPoints/0` | `foobar` |
 | `traefik/tcp/routers/TCPRouter0/entryPoints/1` | `foobar` |

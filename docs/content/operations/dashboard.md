@@ -72,7 +72,7 @@ to allow defining:
 
 - One or more security features through [middlewares](../middlewares/overview.md)
   like authentication ([basicAuth](../middlewares/http/basicauth.md) , [digestAuth](../middlewares/http/digestauth.md),
-  [forwardAuth](../middlewares/http/forwardauth.md)) or [whitelisting](../middlewares/http/ipwhitelist.md).
+  [forwardAuth](../middlewares/http/forwardauth.md)) or [allowlisting](../middlewares/http/ipallowlist.md).
 
 - A [router rule](#dashboard-router-rule) for accessing the dashboard,
   through Traefik itself (sometimes referred as "Traefik-ception").
@@ -93,12 +93,12 @@ rule = "Host(`traefik.example.com`)"
 
 ```bash tab="Path Prefix Rule"
 # The dashboard can be accessed on http://example.com/dashboard/ or http://traefik.example.com/dashboard/
-rule = "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
+rule = "PathPrefix(`/api`, `/dashboard`)"
 ```
 
 ```bash tab="Combination of Rules"
 # The dashboard can be accessed on http://traefik.example.com/dashboard/
-rule = "Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+rule = "Host(`traefik.example.com`) && PathPrefix(`/api`, `/dashboard`)"
 ```
 
 ??? example "Dashboard Dynamic Configuration Examples"

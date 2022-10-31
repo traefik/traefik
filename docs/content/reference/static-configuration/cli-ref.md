@@ -99,11 +99,17 @@ Storage to use. (Default: ```acme.json```)
 `--certificatesresolvers.<name>.acme.tlschallenge`:  
 Activate TLS-ALPN-01 Challenge. (Default: ```true```)
 
+`--certificatesresolvers.<name>.tailscale`:  
+Enables Tailscale certificate resolution. (Default: ```true```)
+
 `--entrypoints.<name>`:  
 Entry points definition. (Default: ```false```)
 
 `--entrypoints.<name>.address`:  
 Entry point address.
+
+`--entrypoints.<name>.asdefault`:  
+Adds this EntryPoint to the list of default EntryPoints to be used on routers that don't have any Entrypoint defined. (Default: ```false```)
 
 `--entrypoints.<name>.forwardedheaders.insecure`:  
 Trust all forwarded headers. (Default: ```false```)
@@ -553,7 +559,7 @@ TLS key
 Use the ip address from the bound port, rather than from the inner network. (Default: ```false```)
 
 `--providers.docker.watch`:  
-Watch Docker Swarm events. (Default: ```true```)
+Watch Docker events. (Default: ```true```)
 
 `--providers.ecs`:  
 Enable AWS ECS backend with default settings. (Default: ```false```)
@@ -638,6 +644,9 @@ Enable HTTP backend with default settings. (Default: ```false```)
 
 `--providers.http.endpoint`:  
 Load configuration from this endpoint.
+
+`--providers.http.headers.<name>`:  
+Define custom headers to be sent to the endpoint.
 
 `--providers.http.pollinterval`:  
 Polling interval for endpoint. (Default: ```5```)
@@ -974,6 +983,18 @@ If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, D
 
 `--serverstransport.rootcas`:  
 Add cert file for self-signed certificate.
+
+`--serverstransport.spiffe`:  
+Defines the SPIFFE configuration. (Default: ```false```)
+
+`--serverstransport.spiffe.ids`:  
+Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
+
+`--serverstransport.spiffe.trustdomain`:  
+Defines the allowed SPIFFE trust domain.
+
+`--spiffe.workloadapiaddr`:  
+Defines the workload API address.
 
 `--tracing`:  
 OpenTracing configuration. (Default: ```false```)

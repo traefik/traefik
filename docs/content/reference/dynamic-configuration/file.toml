@@ -203,9 +203,9 @@
           name0 = "foobar"
           name1 = "foobar"
     [http.middlewares.Middleware11]
-      [http.middlewares.Middleware11.ipWhiteList]
+      [http.middlewares.Middleware11.ipAllowList]
         sourceRange = ["foobar", "foobar"]
-        [http.middlewares.Middleware11.ipWhiteList.ipStrategy]
+        [http.middlewares.Middleware11.ipAllowList.ipStrategy]
           depth = 42
           excludedIPs = ["foobar", "foobar"]
     [http.middlewares.Middleware12]
@@ -285,6 +285,9 @@
     [http.middlewares.Middleware22]
       [http.middlewares.Middleware22.stripPrefixRegex]
         regex = ["foobar", "foobar"]
+    [http.middlewares.Middleware23]
+      [http.middlewares.Middleware23.grpcWeb]
+        allowOrigins = ["foobar", "foobar"]
   [http.serversTransports]
     [http.serversTransports.ServersTransport0]
       serverName = "foobar"
@@ -301,12 +304,18 @@
       [[http.serversTransports.ServersTransport0.certificates]]
         certFile = "foobar"
         keyFile = "foobar"
+
       [http.serversTransports.ServersTransport0.forwardingTimeouts]
         dialTimeout = "42s"
         responseHeaderTimeout = "42s"
         idleConnTimeout = "42s"
         readIdleTimeout = "42s"
         pingTimeout = "42s"
+
+      [http.serversTransports.ServersTransport0.spiffe]
+        ids = ["foobar", "foobar"]
+        trustDomain = "foobar"
+
     [http.serversTransports.ServersTransport1]
       serverName = "foobar"
       insecureSkipVerify = true
@@ -322,12 +331,17 @@
       [[http.serversTransports.ServersTransport1.certificates]]
         certFile = "foobar"
         keyFile = "foobar"
+
       [http.serversTransports.ServersTransport1.forwardingTimeouts]
         dialTimeout = "42s"
         responseHeaderTimeout = "42s"
         idleConnTimeout = "42s"
         readIdleTimeout = "42s"
         pingTimeout = "42s"
+
+      [http.serversTransports.ServersTransport1.spiffe]
+        ids = ["foobar", "foobar"]
+        trustDomain = "foobar"
 
 [tcp]
   [tcp.routers]
@@ -391,7 +405,7 @@
           weight = 42
   [tcp.middlewares]
     [tcp.middlewares.TCPMiddleware00]
-      [tcp.middlewares.TCPMiddleware00.ipWhiteList]
+      [tcp.middlewares.TCPMiddleware00.ipAllowList]
         sourceRange = ["foobar", "foobar"]
     [tcp.middlewares.TCPMiddleware01]
       [tcp.middlewares.TCPMiddleware01.inFlightConn]
