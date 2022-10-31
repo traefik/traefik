@@ -835,8 +835,21 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 			continue
 		}
 
+		hostname := matchingHostnames(listener, nil)
+		rule, err := hostSNIRule(hostname)
+		if err != nil {
+			// update "ResolvedRefs" status true with "DroppedRoutes" reason
+			conditions = append(conditions, metav1.Condition{
+				Type:               string(v1alpha2.ListenerConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				LastTransitionTime: metav1.Now(),
+				Reason:             "InvalidHostnames", // TODO check the spec if a proper reason is introduced at some point
+				Message:            fmt.Sprintf("Skipping TLSRoute %s: cannot make route's SNI match: %v", route.Name, err),
+			})
+		}
+
 		router := dynamic.TCPRouter{
-			Rule:        "HostSNI(`*`)", // Gateway listener hostname not available in TCP
+			Rule:        rule,
 			EntryPoints: []string{ep},
 		}
 
@@ -967,8 +980,17 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 
 		hostnames := matchingHostnames(listener, route.Spec.Hostnames)
 		if len(hostnames) == 0 && listener.Hostname != nil && *listener.Hostname != "" && len(route.Spec.Hostnames) > 0 {
-			// TODO update the corresponding route parent status
-			// https://gateway-api.sigs.k8s.io/v1alpha2/references/spec/#gateway.networking.k8s.io/v1alpha2.TLSRoute
+
+			for _, parent := range route.Status.Parents {
+				parent.Conditions = append(parent.Conditions, metav1.Condition{
+					Type:               string(v1alpha2.GatewayClassConditionStatusAccepted),
+					Status:             metav1.ConditionFalse,
+					Reason:             string(v1alpha2.ListenerReasonRouteConflict),
+					Message:            fmt.Sprintf("No hostname match between listener: %v and route: %v", listener.Hostname, route.Spec.Hostnames),
+					LastTransitionTime: metav1.Now(),
+				})
+			}
+
 			continue
 		}
 
@@ -1212,9 +1234,8 @@ func hostRule(hostnames []v1alpha2.Hostname) (string, error) {
 }
 
 func hostSNIRule(hostnames []v1alpha2.Hostname) (string, error) {
-	var matchers []string
+	matchers := map[string][]string{}
 	uniqHostnames := map[v1alpha2.Hostname]struct{}{}
-
 	for _, hostname := range hostnames {
 		if len(hostname) == 0 {
 			continue
@@ -1226,20 +1247,36 @@ func hostSNIRule(hostnames []v1alpha2.Hostname) (string, error) {
 
 		h := string(hostname)
 
-		// TODO support wildcard hostnames with an HostSNI regexp matcher
-		if strings.Contains(h, "*") {
-			return "", fmt.Errorf("wildcard hostname is not supported: %q", h)
+		wildcard := strings.Count(h, "*")
+		switch wildcard {
+		case 0:
+			matchers["HostSNI("] = append(matchers["HostSNI("], "`"+h+"`")
+		case 1:
+			if strings.HasPrefix(h, "*.") {
+				matchers["HostSNIRegexp("] = append(matchers["HostSNIRegexp("], "`"+strings.Replace(h, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1)+"`")
+				break
+			}
+			fallthrough
+		default:
+			return "", fmt.Errorf("invalid rule: %q", h)
 		}
 
-		matchers = append(matchers, "`"+h+"`")
 		uniqHostnames[hostname] = struct{}{}
 	}
 
-	if len(matchers) == 0 {
+	if len(hostnames) == 0 || len(matchers) == 0 {
 		return "HostSNI(`*`)", nil
 	}
 
-	return "HostSNI(" + strings.Join(matchers, ",") + ")", nil
+	var rules []string
+	for k, v := range matchers {
+		rules = append(rules, k+strings.Join(v, ",")+")")
+	}
+
+	// Sort the rules so we can write predictable unit tests and be consistent with log output
+	sort.Strings(rules)
+
+	return strings.Join(rules, " || "), nil
 }
 
 func extractRule(routeRule v1alpha2.HTTPRouteRule, hostRule string) (string, error) {
