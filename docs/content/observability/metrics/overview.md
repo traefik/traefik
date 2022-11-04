@@ -13,6 +13,8 @@ Traefik supports these metrics backends:
 - [Prometheus](./prometheus.md)
 - [StatsD](./statsd.md)
 
+TraefikLabs provides official Grafana dashboard for [Standalone](https://grafana.com/grafana/dashboards/17346) or [Kubernetes](https://grafana.com/grafana/dashboards/17347) deployment.
+
 ## Global Metrics
 
 | Metric                                      | Type    | Description                                             |
