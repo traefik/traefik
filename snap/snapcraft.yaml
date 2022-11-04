@@ -1,0 +1,82 @@
+name: traefik
+adopt-info: traefik
+summary: The Cloud Native Application Proxy
+description: |
+  Traefik (pronounced traffic) is a modern HTTP reverse proxy
+  and load balancer that makes deploying microservices easy.
+  Traefik integrates with your existing infrastructure components
+  (Docker, Swarm mode, Kubernetes, Marathon, Consul, Etcd, Rancher, Amazon ECS, ...)
+  and configures itself automatically and dynamically.
+  Pointing Traefik at your orchestrator should be the only configuration step you need.
+  As described in https://doc.traefik.io/traefik/getting-started/configuration-overview/#configuration-file
+  Traefik will search for static configuration file named traefik.yml or traefik.toml but $XDG_CONFIG_HOME
+  is replaced by $SNAP_COMMON (/var/snap/traefik/common).
+  To read configuration from /etc/traefik the config plug must be connected.
+  To use the docker provider this snap uses two plugs: docker for the docker snap, and docker-sys
+  if docker is installed other way than snap.
+
+confinement: strict
+base: core22
+
+plugs:
+  docker-sys:
+    interface: system-files
+    write:
+      - /run/docker.sock
+      - /var/run/docker.sock
+  config:
+    interface: system-files
+    read:
+      - /etc/traefik
+
+environment:
+  XDG_CONFIG_HOME: $SNAP_COMMON
+
+apps:
+  traefik:
+    command: /bin/traefik
+    daemon: simple
+    restart-condition: always
+    plugs:
+      - network
+      - network-bind
+      - docker
+      - docker-sys
+      - config
+
+parts:
+  traefik:
+    plugin: go
+    source: .
+    build-packages:
+      - npm
+    build-snaps:
+      - go
+    build-environment:
+      - GO111MODULE: 'on'
+      - CGO_ENABLED: '0'
+      - GOGC: 'off'
+    override-pull: |
+      craftctl default
+      VERSION=`git tag --points-at HEAD`
+      if [ -z $VERSION ]; then
+        craftctl set version="dev-$(git rev-parse --short HEAD)"
+        craftctl set grade='devel'
+      else
+        craftctl set version=${VERSION:1}
+        craftctl set grade='stable'
+      fi
+    override-build: |
+      npm install --global yarn
+      rm -rf $CRAFT_PART_BUILD/webui/static
+      mkdir -p $CRAFT_PART_BUILD/webui/static
+      cd $CRAFT_PART_BUILD/webui
+      yarn install
+      yarn build
+      cd $CRAFT_PART_BUILD
+      CODENAME=`grep -e 'CODENAME=' script/binary | cut -d '=' -f 2`
+      DATE=`date -u '+%Y-%m-%d_%I:%M:%S%p'`
+      go generate
+      go install -ldflags="-s -w -X github.com/traefik/traefik/v2/pkg/version.Version=$(craftctl get version) -X github.com/traefik/traefik/v2/pkg/version.Codename=$CODENAME -X github.com/traefik/traefik/v2/pkg/version.BuildDate=$DATE" -p $CRAFT_PARALLEL_BUILD_COUNT ./cmd/traefik
+    prime:
+      - bin/traefik
