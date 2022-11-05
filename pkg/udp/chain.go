@@ -48,10 +48,10 @@ func (c Chain) Then(h Handler) (Handler, error) {
 //
 // Append returns a new chain, leaving the original one untouched.
 //
-//     stdChain := udp.NewChain(m1, m2)
-//     extChain := stdChain.Append(m3, m4)
-//     // requests in stdChain go m1 -> m2
-//     // requests in extChain go m1 -> m2 -> m3 -> m4
+//	stdChain := udp.NewChain(m1, m2)
+//	extChain := stdChain.Append(m3, m4)
+//	// requests in stdChain go m1 -> m2
+//	// requests in extChain go m1 -> m2 -> m3 -> m4
 func (c Chain) Append(constructors ...Constructor) Chain {
 	newCons := make([]Constructor, 0, len(c.constructors)+len(constructors))
 	newCons = append(newCons, c.constructors...)
@@ -65,12 +65,12 @@ func (c Chain) Append(constructors ...Constructor) Chain {
 //
 // Extend returns a new chain, leaving the original one untouched.
 //
-//     stdChain := udp.NewChain(m1, m2)
-//     ext1Chain := udp.NewChain(m3, m4)
-//     ext2Chain := stdChain.Extend(ext1Chain)
-//     // requests in stdChain go  m1 -> m2
-//     // requests in ext1Chain go m3 -> m4
-//     // requests in ext2Chain go m1 -> m2 -> m3 -> m4
+//	stdChain := udp.NewChain(m1, m2)
+//	ext1Chain := udp.NewChain(m3, m4)
+//	ext2Chain := stdChain.Extend(ext1Chain)
+//	// requests in stdChain go  m1 -> m2
+//	// requests in ext1Chain go m3 -> m4
+//	// requests in ext2Chain go m1 -> m2 -> m3 -> m4
 func (c Chain) Extend(chain Chain) Chain {
 	return c.Append(chain.constructors...)
 }

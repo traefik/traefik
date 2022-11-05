@@ -345,10 +345,10 @@
 | `traefik/udp/routers/UDPRouter0/middlewares/0` | `foobar` |
 | `traefik/udp/routers/UDPRouter0/middlewares/1` | `foobar` |
 | `traefik/udp/routers/UDPRouter0/service` | `foobar` |
-| `traefik/udp/routers/UDPRouter1/middlewares/0` | `foobar` |
-| `traefik/udp/routers/UDPRouter1/middlewares/1` | `foobar` |
 | `traefik/udp/routers/UDPRouter1/entryPoints/0` | `foobar` |
 | `traefik/udp/routers/UDPRouter1/entryPoints/1` | `foobar` |
+| `traefik/udp/routers/UDPRouter1/middlewares/0` | `foobar` |
+| `traefik/udp/routers/UDPRouter1/middlewares/1` | `foobar` |
 | `traefik/udp/routers/UDPRouter1/service` | `foobar` |
 | `traefik/udp/services/UDPService01/loadBalancer/servers/0/address` | `foobar` |
 | `traefik/udp/services/UDPService01/loadBalancer/servers/1/address` | `foobar` |

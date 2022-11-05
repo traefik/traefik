@@ -138,10 +138,10 @@ func (s *UDPSuite) TestMiddlewareAllowList(c *check.C) {
 
 	stop := make(chan struct{})
 	go func() {
-		out, err := guessWhoUDP("127.0.0.1:8093")
+		_, err := guessWhoUDP("127.0.0.1:8093")
 		c.Assert(err, checker.ErrorMatches, "timeout")
 
-		out, err = guessWhoUDP("127.0.0.1:8094")
+		out, err := guessWhoUDP("127.0.0.1:8094")
 		c.Assert(err, checker.IsNil)
 		c.Assert(out, checker.Contains, "whoami-b")
 		close(stop)

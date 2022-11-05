@@ -2698,8 +2698,9 @@ func Test_buildConfiguration(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 				},
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
@@ -2821,8 +2822,9 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 				},
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:           map[string]*dynamic.Router{},
@@ -2881,6 +2883,7 @@ func Test_buildConfiguration(t *testing.T) {
 							Service:     "Test-12825244908842506376",
 						},
 					},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
 					Services: map[string]*dynamic.UDPService{
 						"Test": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
@@ -2920,6 +2923,7 @@ func Test_buildConfiguration(t *testing.T) {
 						"traefik.udp.routers.test-udp-label.service":                           "test-udp-label-service",
 						"traefik.udp.routers.test-udp-label.entryPoints":                       "udp",
 						"traefik.udp.services.test-udp-label-service.loadBalancer.server.port": "21116",
+						"traefik.udp.middlewares.test-udp-label.ipallowlist.sourcerange":       "127.0.0.1/32",
 					},
 					Address: "127.0.0.1",
 					Port:    "80",
@@ -2937,6 +2941,13 @@ func Test_buildConfiguration(t *testing.T) {
 						"test-udp-label": {
 							EntryPoints: []string{"udp"},
 							Service:     "test-udp-label-service",
+						},
+					},
+					Middlewares: map[string]*dynamic.UDPMiddleware{
+						"test-udp-label": {
+							IPAllowList: &dynamic.UDPIPAllowList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
 						},
 					},
 					Services: map[string]*dynamic.UDPService{
