@@ -42,8 +42,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			desc: "Empty",
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -64,8 +65,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/simple.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:           map[string]*dynamic.Router{},
@@ -105,8 +107,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_middleware.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:           map[string]*dynamic.Router{},
@@ -158,8 +161,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_middleware_multiple_hyphens.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:           map[string]*dynamic.Router{},
@@ -206,8 +210,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_middleware_crossprovider.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:           map[string]*dynamic.Router{},
@@ -259,8 +264,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_two_rules.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
@@ -317,8 +323,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_two_identical_rules.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
@@ -358,8 +365,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_two_services.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
@@ -425,8 +433,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_different_services_ns.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
@@ -509,8 +518,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			ingressClass: "tchouk",
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -531,8 +541,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_no_rule_value.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -553,8 +564,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_tls.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
@@ -604,8 +616,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_tls_passthrough.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
@@ -648,8 +661,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_tls_options.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
@@ -715,8 +729,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_tls_options_and_specific_namespace.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
@@ -782,8 +797,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_bad_tls_options.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
@@ -848,8 +864,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_unknown_tls_options.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
@@ -903,8 +920,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_unknown_tls_options_namespace.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
@@ -958,8 +976,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_tls_acme.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
@@ -1001,8 +1020,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			expected: &dynamic.Configuration{
 				TLS: &dynamic.TLSConfiguration{},
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
@@ -1077,8 +1097,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					},
 				},
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:           map[string]*dynamic.Router{},
@@ -1093,8 +1114,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_externalname.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
@@ -1131,8 +1153,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_externalname_with_port.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
@@ -1169,8 +1192,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_externalname_without_ports.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
@@ -1207,6 +1231,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							Service:     "default-test.route-0",
 						},
 					},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
 					Services: map[string]*dynamic.UDPService{
 						"default-test.route-0": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
@@ -1322,8 +1347,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			expected: &dynamic.Configuration{
 				TLS: &dynamic.TLSConfiguration{},
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
@@ -1458,8 +1484,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			desc: "Empty",
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -1480,8 +1507,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "simple.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -1524,8 +1552,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths:               []string{"services.yml", "with_middleware.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -1592,8 +1621,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths:               []string{"services.yml", "with_middleware_multiple_hyphens.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -1643,8 +1673,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths:               []string{"services.yml", "with_middleware_crossprovider.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
@@ -1698,8 +1729,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_two_rules.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -1760,8 +1792,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_two_services.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
@@ -1830,8 +1863,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"with_services_lb0.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
@@ -1883,8 +1917,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"with_services_only.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
@@ -1929,8 +1964,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"with_services_lb1.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
@@ -2053,8 +2089,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"with_services_lb2.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
@@ -2120,8 +2157,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"with_services_lb3.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
@@ -2213,8 +2251,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths:               []string{"with_namespaces.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
@@ -2391,8 +2430,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"with_mirroring.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
@@ -2455,8 +2495,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"with_mirroring2.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
@@ -2539,8 +2580,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_two_services_weight.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
@@ -2610,8 +2652,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			ingressClass: "tchouk",
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
@@ -2632,8 +2675,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_no_rule_value.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
@@ -2654,8 +2698,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_wrong_rule_kind.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
@@ -2676,8 +2721,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_tls.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Certificates: []*tls.CertAndStores{
@@ -2729,8 +2775,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_tls_options.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
@@ -2798,8 +2845,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_default_tls_options.yml", "with_default_tls_options_default_namespace.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{},
@@ -2870,8 +2918,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 				},
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -2916,8 +2965,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			allowCrossNamespace: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
@@ -2985,8 +3035,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_bad_tls_options.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
@@ -3053,8 +3104,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_unknown_tls_options.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
@@ -3111,8 +3163,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			allowCrossNamespace: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Options: map[string]tls.Options{
@@ -3168,8 +3221,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_tls_acme.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
@@ -3212,8 +3266,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_https_default.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
@@ -3255,8 +3310,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_https_scheme.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
@@ -3298,8 +3354,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_auth.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
@@ -3501,8 +3558,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_error_page.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 				TCP: &dynamic.TCPConfiguration{
@@ -3545,8 +3603,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_options.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -3599,8 +3658,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 					},
 				},
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -3702,8 +3762,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Stores: map[string]tls.Store{},
 				},
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -3748,8 +3809,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_externalname.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -3787,8 +3849,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_externalname_with_http.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -3826,8 +3889,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_externalname_with_https.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -3865,8 +3929,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_externalname_without_ports.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -3887,8 +3952,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 			paths: []string{"services.yml", "with_servers_transport.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -4081,8 +4147,9 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			desc: "Empty",
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -4109,6 +4176,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Service:     "default-test.route-0",
 						},
 					},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
 					Services: map[string]*dynamic.UDPService{
 						"default-test.route-0": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
@@ -4153,6 +4221,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Service:     "default-test.route-1",
 						},
 					},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
 					Services: map[string]*dynamic.UDPService{
 						"default-test.route-0": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
@@ -4205,6 +4274,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Service:     "default-test.route-0",
 						},
 					},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
 					Services: map[string]*dynamic.UDPService{
 						"default-test.route-0": {
 							Weighted: &dynamic.UDPWeightedRoundRobin{
@@ -4271,6 +4341,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Service:     "default-test.route-0",
 						},
 					},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
 					Services: map[string]*dynamic.UDPService{
 						"default-test.route-0": {
 							Weighted: &dynamic.UDPWeightedRoundRobin{
@@ -4353,6 +4424,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Service:     "default-test.route-0",
 						},
 					},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
 					Services: map[string]*dynamic.UDPService{
 						"default-test.route-0": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
@@ -4390,6 +4462,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Service:     "default-test.route-0",
 						},
 					},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
 					Services: map[string]*dynamic.UDPService{
 						"default-test.route-0": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
@@ -4427,7 +4500,8 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 							Service:     "default-test.route-0",
 						},
 					},
-					Services: map[string]*dynamic.UDPService{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -4449,8 +4523,163 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			ingressClass: "tchouk",
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Simple Ingress Route, with foo entrypoint and middleware",
+			paths: []string{"udp/services.yml", "udp/with_middleware.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-test.route-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-0",
+							Middlewares: []string{"default-ipallowlist", "foo-ipallowlist"},
+						},
+					},
+					Middlewares: map[string]*dynamic.UDPMiddleware{
+						"default-ipallowlist": {
+							IPAllowList: &dynamic.UDPIPAllowList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						"foo-ipallowlist": {
+							IPAllowList: &dynamic.UDPIPAllowList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"default-test.route-0": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "10.10.0.1:8000",
+									},
+									{
+										Address: "10.10.0.2:8000",
+									},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Middlewares in ingress route config are normalized",
+			paths: []string{"udp/services.yml", "udp/with_middleware_multiple_hyphens.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-test.route-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-0",
+							Middlewares: []string{"default-multiple-hyphens"},
+						},
+					},
+					Middlewares: map[string]*dynamic.UDPMiddleware{
+						"default-multiple-hyphens": {
+							IPAllowList: &dynamic.UDPIPAllowList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"default-test.route-0": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "10.10.0.1:8000",
+									},
+									{
+										Address: "10.10.0.2:8000",
+									},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Simple Ingress Route, with foo entrypoint and crossprovider middleware",
+			paths: []string{"udp/services.yml", "udp/with_middleware_crossprovider.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-test.route-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-0",
+							Middlewares: []string{"default-ipallowlist", "ipallowlist@file"},
+						},
+					},
+					Middlewares: map[string]*dynamic.UDPMiddleware{
+						"default-ipallowlist": {
+							IPAllowList: &dynamic.UDPIPAllowList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						"foo-ipallowlist": {
+							IPAllowList: &dynamic.UDPIPAllowList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"default-test.route-0": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "10.10.0.1:8000",
+									},
+									{
+										Address: "10.10.0.2:8000",
+									},
+								},
+							},
+						},
+					},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -4863,8 +5092,9 @@ func TestCrossNamespace(t *testing.T) {
 			desc: "Empty",
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -4885,8 +5115,9 @@ func TestCrossNamespace(t *testing.T) {
 			paths: []string{"services.yml", "with_middleware_cross_namespace.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -4937,8 +5168,9 @@ func TestCrossNamespace(t *testing.T) {
 			allowCrossNamespace: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -5051,8 +5283,9 @@ func TestCrossNamespace(t *testing.T) {
 			allowCrossNamespace: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -5194,8 +5427,9 @@ func TestCrossNamespace(t *testing.T) {
 			paths: []string{"services.yml", "with_cross_namespace.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -5265,8 +5499,9 @@ func TestCrossNamespace(t *testing.T) {
 			allowCrossNamespace: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -5320,8 +5555,9 @@ func TestCrossNamespace(t *testing.T) {
 			paths: []string{"services.yml", "with_servers_transport_cross_namespace.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -5354,8 +5590,9 @@ func TestCrossNamespace(t *testing.T) {
 			allowCrossNamespace: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -5408,8 +5645,9 @@ func TestCrossNamespace(t *testing.T) {
 			allowCrossNamespace: false,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -5451,8 +5689,9 @@ func TestCrossNamespace(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_middleware_with_cross_namespace.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
@@ -5500,13 +5739,138 @@ func TestCrossNamespace(t *testing.T) {
 			},
 		},
 		{
+			desc:  "UDP middleware with cross namespace disallowed",
+			paths: []string{"udp/services.yml", "udp/with_middleware_with_cross_namespace.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-test.route-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-0",
+							Middlewares: []string{"default-ipallowlist"},
+						},
+					},
+					Middlewares: map[string]*dynamic.UDPMiddleware{
+						"default-ipallowlist": {
+							IPAllowList: &dynamic.UDPIPAllowList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						"cross-ns-ipallowlist": {
+							IPAllowList: &dynamic.UDPIPAllowList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"default-test.route-0": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "10.10.0.1:8000",
+									},
+									{
+										Address: "10.10.0.2:8000",
+									},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                "UDP middleware cross namespace allowed",
+			paths:               []string{"udp/services.yml", "udp/with_middleware_with_cross_namespace.yml"},
+			allowCrossNamespace: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-test.route-0": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-0",
+							Middlewares: []string{"default-ipallowlist"},
+						},
+						"default-test.route-1": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-1",
+							Middlewares: []string{"cross-ns-ipallowlist"},
+						},
+					},
+					Middlewares: map[string]*dynamic.UDPMiddleware{
+						"default-ipallowlist": {
+							IPAllowList: &dynamic.UDPIPAllowList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						"cross-ns-ipallowlist": {
+							IPAllowList: &dynamic.UDPIPAllowList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"default-test.route-0": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "10.10.0.1:8000",
+									},
+									{
+										Address: "10.10.0.2:8000",
+									},
+								},
+							},
+						},
+						"default-test.route-1": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "10.10.0.1:8000",
+									},
+									{
+										Address: "10.10.0.2:8000",
+									},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:     map[string]*dynamic.TCPRouter{},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services:    map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:                "TCP middleware cross namespace allowed",
 			paths:               []string{"tcp/services.yml", "tcp/with_middleware_with_cross_namespace.yml"},
 			allowCrossNamespace: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
@@ -5577,8 +5941,9 @@ func TestCrossNamespace(t *testing.T) {
 			allowCrossNamespace: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:           map[string]*dynamic.Router{},
@@ -5618,8 +5983,9 @@ func TestCrossNamespace(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_cross_namespace.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					// The router that references the invalid service will be discarded.
@@ -5648,8 +6014,9 @@ func TestCrossNamespace(t *testing.T) {
 			allowCrossNamespace: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:           map[string]*dynamic.Router{},
@@ -5700,8 +6067,9 @@ func TestCrossNamespace(t *testing.T) {
 			allowCrossNamespace: false,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:           map[string]*dynamic.Router{},
@@ -5749,6 +6117,7 @@ func TestCrossNamespace(t *testing.T) {
 							Service:     "default-test.route-0",
 						},
 					},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
 					Services: map[string]*dynamic.UDPService{
 						"default-test.route-0": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
@@ -5790,7 +6159,8 @@ func TestCrossNamespace(t *testing.T) {
 							Service:     "default-test.route-0",
 						},
 					},
-					Services: map[string]*dynamic.UDPService{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -5836,6 +6206,8 @@ func TestCrossNamespace(t *testing.T) {
 					case *v1alpha1.Middleware:
 						crdObjects = append(crdObjects, o)
 					case *v1alpha1.MiddlewareTCP:
+						crdObjects = append(crdObjects, o)
+					case *v1alpha1.MiddlewareUDP:
 						crdObjects = append(crdObjects, o)
 					case *v1alpha1.TraefikService:
 						crdObjects = append(crdObjects, o)
@@ -5885,8 +6257,9 @@ func TestExternalNameService(t *testing.T) {
 			desc: "Empty",
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -5908,8 +6281,9 @@ func TestExternalNameService(t *testing.T) {
 			allowExternalNameService: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -5948,8 +6322,9 @@ func TestExternalNameService(t *testing.T) {
 			paths: []string{"services.yml", "with_externalname_with_http.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},
@@ -5971,8 +6346,9 @@ func TestExternalNameService(t *testing.T) {
 			allowExternalNameService: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					ServersTransports: map[string]*dynamic.ServersTransport{},
@@ -6010,8 +6386,9 @@ func TestExternalNameService(t *testing.T) {
 			paths: []string{"tcp/services.yml", "tcp/with_externalname_with_port.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
+					Routers:     map[string]*dynamic.UDPRouter{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					// The router that references the invalid service will be discarded.
@@ -6046,6 +6423,7 @@ func TestExternalNameService(t *testing.T) {
 							Service:     "default-test.route-0",
 						},
 					},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
 					Services: map[string]*dynamic.UDPService{
 						"default-test.route-0": {
 							LoadBalancer: &dynamic.UDPServersLoadBalancer{
@@ -6085,7 +6463,8 @@ func TestExternalNameService(t *testing.T) {
 							Service:     "default-test.route-0",
 						},
 					},
-					Services: map[string]*dynamic.UDPService{},
+					Middlewares: map[string]*dynamic.UDPMiddleware{},
+					Services:    map[string]*dynamic.UDPService{},
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers:     map[string]*dynamic.TCPRouter{},

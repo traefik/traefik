@@ -39,6 +39,7 @@ type TraefikV1alpha1Interface interface {
 	IngressRouteUDPsGetter
 	MiddlewaresGetter
 	MiddlewareTCPsGetter
+	MiddlewareUDPsGetter
 	ServersTransportsGetter
 	TLSOptionsGetter
 	TLSStoresGetter
@@ -68,6 +69,10 @@ func (c *TraefikV1alpha1Client) Middlewares(namespace string) MiddlewareInterfac
 
 func (c *TraefikV1alpha1Client) MiddlewareTCPs(namespace string) MiddlewareTCPInterface {
 	return newMiddlewareTCPs(c, namespace)
+}
+
+func (c *TraefikV1alpha1Client) MiddlewareUDPs(namespace string) MiddlewareUDPInterface {
+	return newMiddlewareUDPs(c, namespace)
 }
 
 func (c *TraefikV1alpha1Client) ServersTransports(namespace string) ServersTransportInterface {

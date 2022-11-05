@@ -49,6 +49,19 @@ spec:
                 items:
                   description: RouteUDP holds the UDP route configuration.
                   properties:
+                    middlewares:
+                      items:
+                        description: ObjectReference is a generic reference to a Traefik
+                          resource.
+                        properties:
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                        required:
+                        - name
+                        type: object
+                      type: array
                     services:
                       description: Services defines the list of UDP services.
                       items:
