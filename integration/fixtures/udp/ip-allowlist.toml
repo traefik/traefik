@@ -24,12 +24,12 @@
     [udp.routers.to-whoami-a]
       entryPoints = ["udp-a"]
       service = "whoami-a"
-      middlewares = ["blocking-ipwhitelist"]
+      middlewares = ["blocking-ipallowlist"]
 
     [udp.routers.to-whoami-b]
       entryPoints = ["udp-b"]
       service = "whoami-b"
-      middlewares = ["allowing-ipwhitelist"]
+      middlewares = ["allowing-ipallowlist"]
 
   [udp.services]
     [udp.services.whoami-a.loadBalancer]
@@ -41,7 +41,7 @@
         address = "{{ .WhoamiBIP}}:8080"
 
   [udp.middlewares]
-    [udp.middlewares.allowing-ipwhitelist.ipWhiteList]
+    [udp.middlewares.allowing-ipallowlist.ipAllowList]
       sourceRange = ["127.0.0.1/32"]
-    [udp.middlewares.blocking-ipwhitelist.ipWhiteList]
+    [udp.middlewares.blocking-ipallowlist.ipAllowList]
       sourceRange = ["127.127.127.127/32"]

@@ -1,4 +1,4 @@
-package udpipwhitelist
+package udpipallowlist
 
 import (
 	"context"
@@ -12,27 +12,27 @@ import (
 	"github.com/traefik/traefik/v2/pkg/udp"
 )
 
-func TestNewIPWhiteLister(t *testing.T) {
+func TestNewIPAllowLister(t *testing.T) {
 	testCases := []struct {
 		desc          string
-		whiteList     dynamic.UDPIPWhiteList
+		allowList     dynamic.UDPIPAllowList
 		expectedError bool
 	}{
 		{
 			desc:          "Empty config",
-			whiteList:     dynamic.UDPIPWhiteList{},
+			allowList:     dynamic.UDPIPAllowList{},
 			expectedError: true,
 		},
 		{
 			desc: "invalid IP",
-			whiteList: dynamic.UDPIPWhiteList{
+			allowList: dynamic.UDPIPAllowList{
 				SourceRange: []string{"foo"},
 			},
 			expectedError: true,
 		},
 		{
 			desc: "valid IP",
-			whiteList: dynamic.UDPIPWhiteList{
+			allowList: dynamic.UDPIPAllowList{
 				SourceRange: []string{"10.10.10.10"},
 			},
 		},
@@ -44,28 +44,28 @@ func TestNewIPWhiteLister(t *testing.T) {
 			t.Parallel()
 
 			next := udp.HandlerFunc(func(conn *udp.Conn) {})
-			whiteLister, err := New(context.Background(), next, test.whiteList, "traefikTest")
+			allowLister, err := New(context.Background(), next, test.allowList, "traefikTest")
 
 			if test.expectedError {
 				assert.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				assert.NotNil(t, whiteLister)
+				assert.NotNil(t, allowLister)
 			}
 		})
 	}
 }
 
-func TestIPWhiteLister_ServeUDP(t *testing.T) {
+func TestIPAllowLister_ServeUDP(t *testing.T) {
 	testCases := []struct {
 		desc       string
-		whiteList  dynamic.UDPIPWhiteList
+		allowList  dynamic.UDPIPAllowList
 		listenAddr string
 		expected   string
 	}{
 		{
 			desc: "authorized with remote address",
-			whiteList: dynamic.UDPIPWhiteList{
+			allowList: dynamic.UDPIPAllowList{
 				SourceRange: []string{"127.0.0.1"},
 			},
 			listenAddr: "127.0.0.1:20200",
@@ -73,7 +73,7 @@ func TestIPWhiteLister_ServeUDP(t *testing.T) {
 		},
 		{
 			desc: "non authorized with remote address",
-			whiteList: dynamic.UDPIPWhiteList{
+			allowList: dynamic.UDPIPAllowList{
 				SourceRange: []string{"10.10.10.10"},
 			},
 			listenAddr: "127.0.0.1:30300",
@@ -94,7 +94,7 @@ func TestIPWhiteLister_ServeUDP(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			whiteLister, err := New(context.Background(), next, test.whiteList, "traefikTest")
+			allowLister, err := New(context.Background(), next, test.allowList, "traefikTest")
 			require.NoError(t, err)
 
 			listenAddr, err := net.ResolveUDPAddr("udp", test.listenAddr)
@@ -106,7 +106,7 @@ func TestIPWhiteLister_ServeUDP(t *testing.T) {
 			go func() {
 				rConn, err := ln.Accept()
 				require.NoError(t, err)
-				whiteLister.ServeUDP(rConn)
+				allowLister.ServeUDP(rConn)
 			}()
 
 			lConn, err := net.DialUDP("udp", nil, listenAddr)

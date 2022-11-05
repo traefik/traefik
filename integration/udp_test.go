@@ -116,8 +116,8 @@ func (s *UDPSuite) TestWRR(c *check.C) {
 	}
 }
 
-func (s *UDPSuite) TestMiddlewareWhiteList(c *check.C) {
-	file := s.adaptFile(c, "fixtures/udp/ip-whitelist.toml", struct {
+func (s *UDPSuite) TestMiddlewareAllowList(c *check.C) {
+	file := s.adaptFile(c, "fixtures/udp/ip-allowlist.toml", struct {
 		WhoamiAIP string
 		WhoamiBIP string
 	}{

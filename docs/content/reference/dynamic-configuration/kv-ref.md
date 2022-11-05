@@ -338,8 +338,8 @@
 | `traefik/tls/stores/Store1/defaultGeneratedCert/domain/sans/0` | `foobar` |
 | `traefik/tls/stores/Store1/defaultGeneratedCert/domain/sans/1` | `foobar` |
 | `traefik/tls/stores/Store1/defaultGeneratedCert/resolver` | `foobar` |
-| `traefik/udp/middlewares/Middleware00/ipWhiteList/sourceRange/0` | `foobar` |
-| `traefik/udp/middlewares/Middleware00/ipWhiteList/sourceRange/1` | `foobar` |
+| `traefik/udp/middlewares/Middleware00/ipAllowList/sourceRange/0` | `foobar` |
+| `traefik/udp/middlewares/Middleware00/ipAllowList/sourceRange/1` | `foobar` |
 | `traefik/udp/routers/UDPRouter0/entryPoints/0` | `foobar` |
 | `traefik/udp/routers/UDPRouter0/entryPoints/1` | `foobar` |
 | `traefik/udp/routers/UDPRouter0/middlewares/0` | `foobar` |

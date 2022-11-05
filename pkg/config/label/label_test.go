@@ -201,7 +201,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.tcp.services.Service1.loadbalancer.TerminationDelay":      "42",
 		"traefik.tcp.services.Service1.loadbalancer.proxyProtocol":         "true",
 
-		"traefik.udp.middlewares.Middleware0.ipwhitelist.sourcerange": "foobar, fiibar",
+		"traefik.udp.middlewares.Middleware0.ipallowlist.sourcerange": "foobar, fiibar",
 		"traefik.udp.routers.Router0.entrypoints":                     "foobar, fiibar",
 		"traefik.udp.routers.Router0.service":                         "foobar",
 		"traefik.udp.routers.Router1.entrypoints":                     "foobar, fiibar",
@@ -299,7 +299,7 @@ func TestDecodeConfiguration(t *testing.T) {
 			},
 			Middlewares: map[string]*dynamic.UDPMiddleware{
 				"Middleware0": {
-					IPWhiteList: &dynamic.UDPIPWhiteList{
+					IPAllowList: &dynamic.UDPIPAllowList{
 						SourceRange: []string{"foobar", "fiibar"},
 					},
 				},
@@ -801,7 +801,7 @@ func TestEncodeConfiguration(t *testing.T) {
 			},
 			Middlewares: map[string]*dynamic.UDPMiddleware{
 				"Middleware0": {
-					IPWhiteList: &dynamic.UDPIPWhiteList{
+					IPAllowList: &dynamic.UDPIPAllowList{
 						SourceRange: []string{"foobar", "fiibar"},
 					},
 				},
@@ -1394,7 +1394,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.TCP.Services.Service1.LoadBalancer.server.Port":      "42",
 		"traefik.TCP.Services.Service1.LoadBalancer.TerminationDelay": "42",
 
-		"traefik.UDP.Middlewares.Middleware0.IPWhiteList.SourceRange": "foobar, fiibar",
+		"traefik.UDP.Middlewares.Middleware0.IPAllowList.SourceRange": "foobar, fiibar",
 		"traefik.UDP.Routers.Router0.EntryPoints":                     "foobar, fiibar",
 		"traefik.UDP.Routers.Router0.Service":                         "foobar",
 		"traefik.UDP.Routers.Router1.EntryPoints":                     "foobar, fiibar",

@@ -489,25 +489,25 @@ func TestHandler_UDP(t *testing.T) {
 			path: "/api/udp/middlewares",
 			conf: runtime.Configuration{
 				UDPMiddlewares: map[string]*runtime.UDPMiddlewareInfo{
-					"ipwhitelist1@myprovider": {
+					"ipallowlist1@myprovider": {
 						UDPMiddleware: &dynamic.UDPMiddleware{
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 						UsedBy: []string{"bar@myprovider", "test@myprovider"},
 					},
-					"ipwhitelist2@myprovider": {
+					"ipallowlist2@myprovider": {
 						UDPMiddleware: &dynamic.UDPMiddleware{
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.2/32"},
 							},
 						},
 						UsedBy: []string{"test@myprovider"},
 					},
-					"ipwhitelist1@anotherprovider": {
+					"ipallowlist1@anotherprovider": {
 						UDPMiddleware: &dynamic.UDPMiddleware{
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
@@ -526,27 +526,27 @@ func TestHandler_UDP(t *testing.T) {
 			path: "/api/udp/middlewares?status=enabled",
 			conf: runtime.Configuration{
 				UDPMiddlewares: map[string]*runtime.UDPMiddlewareInfo{
-					"ipwhitelist@myprovider": {
+					"ipallowlist@myprovider": {
 						UDPMiddleware: &dynamic.UDPMiddleware{
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 						UsedBy: []string{"bar@myprovider", "test@myprovider"},
 						Status: runtime.StatusEnabled,
 					},
-					"ipwhitelist2@myprovider": {
+					"ipallowlist2@myprovider": {
 						UDPMiddleware: &dynamic.UDPMiddleware{
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.2/32"},
 							},
 						},
 						UsedBy: []string{"test@myprovider"},
 						Status: runtime.StatusDisabled,
 					},
-					"ipwhitelist@anotherprovider": {
+					"ipallowlist@anotherprovider": {
 						UDPMiddleware: &dynamic.UDPMiddleware{
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
@@ -563,30 +563,30 @@ func TestHandler_UDP(t *testing.T) {
 		},
 		{
 			desc: "middlewares filtered by search",
-			path: "/api/udp/middlewares?search=ipwhitelist",
+			path: "/api/udp/middlewares?search=ipallowlist",
 			conf: runtime.Configuration{
 				UDPMiddlewares: map[string]*runtime.UDPMiddlewareInfo{
 					"bad@myprovider": {
 						UDPMiddleware: &dynamic.UDPMiddleware{
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 						UsedBy: []string{"bar@myprovider", "test@myprovider"},
 						Status: runtime.StatusEnabled,
 					},
-					"ipwhitelist@myprovider": {
+					"ipallowlist@myprovider": {
 						UDPMiddleware: &dynamic.UDPMiddleware{
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 						UsedBy: []string{"test@myprovider"},
 						Status: runtime.StatusDisabled,
 					},
-					"ipwhitelist@anotherprovider": {
+					"ipallowlist@anotherprovider": {
 						UDPMiddleware: &dynamic.UDPMiddleware{
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
@@ -606,25 +606,25 @@ func TestHandler_UDP(t *testing.T) {
 			path: "/api/udp/middlewares?page=2&per_page=1",
 			conf: runtime.Configuration{
 				UDPMiddlewares: map[string]*runtime.UDPMiddlewareInfo{
-					"ipwhitelist@myprovider": {
+					"ipallowlist@myprovider": {
 						UDPMiddleware: &dynamic.UDPMiddleware{
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 						UsedBy: []string{"bar@myprovider", "test@myprovider"},
 					},
-					"ipwhitelist2@myprovider": {
+					"ipallowlist2@myprovider": {
 						UDPMiddleware: &dynamic.UDPMiddleware{
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.2/32"},
 							},
 						},
 						UsedBy: []string{"test@myprovider"},
 					},
-					"ipwhitelist@anotherprovider": {
+					"ipallowlist@anotherprovider": {
 						UDPMiddleware: &dynamic.UDPMiddleware{
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
@@ -640,28 +640,28 @@ func TestHandler_UDP(t *testing.T) {
 		},
 		{
 			desc: "one middleware by id",
-			path: "/api/udp/middlewares/ipwhitelist@myprovider",
+			path: "/api/udp/middlewares/ipallowlist@myprovider",
 			conf: runtime.Configuration{
 				UDPMiddlewares: map[string]*runtime.UDPMiddlewareInfo{
-					"ipwhitelist@myprovider": {
+					"ipallowlist@myprovider": {
 						UDPMiddleware: &dynamic.UDPMiddleware{
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 						UsedBy: []string{"bar@myprovider", "test@myprovider"},
 					},
-					"ipwhitelist2@myprovider": {
+					"ipallowlist2@myprovider": {
 						UDPMiddleware: &dynamic.UDPMiddleware{
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.2/32"},
 							},
 						},
 						UsedBy: []string{"test@myprovider"},
 					},
-					"ipwhitelist@anotherprovider": {
+					"ipallowlist@anotherprovider": {
 						UDPMiddleware: &dynamic.UDPMiddleware{
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
@@ -671,7 +671,7 @@ func TestHandler_UDP(t *testing.T) {
 			},
 			expected: expected{
 				statusCode: http.StatusOK,
-				jsonFile:   "testdata/udpmiddleware-ipwhitelist.json",
+				jsonFile:   "testdata/udpmiddleware-ipallowlist.json",
 			},
 		},
 		{
@@ -679,9 +679,9 @@ func TestHandler_UDP(t *testing.T) {
 			path: "/api/udp/middlewares/foo@myprovider",
 			conf: runtime.Configuration{
 				UDPMiddlewares: map[string]*runtime.UDPMiddlewareInfo{
-					"ipwhitelist@myprovider": {
+					"ipallowlist@myprovider": {
 						UDPMiddleware: &dynamic.UDPMiddleware{
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},

@@ -1093,8 +1093,8 @@
         </q-card-section>
 
         <q-card-section v-if="protocol === 'udp'">
-          <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipWhiteList] - sourceRange -->
-          <q-card-section v-if="middleware.ipWhiteList">
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [ipAllowList] - sourceRange -->
+          <q-card-section v-if="middleware.ipAllowList">
             <div class="row items-start no-wrap">
               <div class="col">
                 <div class="text-subtitle2">Source Range</div>

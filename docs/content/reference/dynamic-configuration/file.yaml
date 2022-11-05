@@ -475,7 +475,7 @@ udp:
       service: foobar
   middlewares:
     Middleware00:
-      ipWhiteList:
+      ipAllowList:
         sourceRange:
         - foobar
         - foobar

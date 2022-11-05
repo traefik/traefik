@@ -4550,17 +4550,17 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 						"default-test.route-0": {
 							EntryPoints: []string{"foo"},
 							Service:     "default-test.route-0",
-							Middlewares: []string{"default-ipwhitelist", "foo-ipwhitelist"},
+							Middlewares: []string{"default-ipallowlist", "foo-ipallowlist"},
 						},
 					},
 					Middlewares: map[string]*dynamic.UDPMiddleware{
-						"default-ipwhitelist": {
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+						"default-ipallowlist": {
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
-						"foo-ipwhitelist": {
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+						"foo-ipallowlist": {
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
@@ -4608,7 +4608,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.UDPMiddleware{
 						"default-multiple-hyphens": {
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
@@ -4651,17 +4651,17 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 						"default-test.route-0": {
 							EntryPoints: []string{"foo"},
 							Service:     "default-test.route-0",
-							Middlewares: []string{"default-ipwhitelist", "ipwhitelist@file"},
+							Middlewares: []string{"default-ipallowlist", "ipallowlist@file"},
 						},
 					},
 					Middlewares: map[string]*dynamic.UDPMiddleware{
-						"default-ipwhitelist": {
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+						"default-ipallowlist": {
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
-						"foo-ipwhitelist": {
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+						"foo-ipallowlist": {
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
@@ -5747,17 +5747,17 @@ func TestCrossNamespace(t *testing.T) {
 						"default-test.route-0": {
 							EntryPoints: []string{"foo"},
 							Service:     "default-test.route-0",
-							Middlewares: []string{"default-ipwhitelist"},
+							Middlewares: []string{"default-ipallowlist"},
 						},
 					},
 					Middlewares: map[string]*dynamic.UDPMiddleware{
-						"default-ipwhitelist": {
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+						"default-ipallowlist": {
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
-						"cross-ns-ipwhitelist": {
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+						"cross-ns-ipallowlist": {
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
@@ -5801,22 +5801,22 @@ func TestCrossNamespace(t *testing.T) {
 						"default-test.route-0": {
 							EntryPoints: []string{"foo"},
 							Service:     "default-test.route-0",
-							Middlewares: []string{"default-ipwhitelist"},
+							Middlewares: []string{"default-ipallowlist"},
 						},
 						"default-test.route-1": {
 							EntryPoints: []string{"foo"},
 							Service:     "default-test.route-1",
-							Middlewares: []string{"cross-ns-ipwhitelist"},
+							Middlewares: []string{"cross-ns-ipallowlist"},
 						},
 					},
 					Middlewares: map[string]*dynamic.UDPMiddleware{
-						"default-ipwhitelist": {
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+						"default-ipallowlist": {
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
-						"cross-ns-ipwhitelist": {
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+						"cross-ns-ipallowlist": {
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},

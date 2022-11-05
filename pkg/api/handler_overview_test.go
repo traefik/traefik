@@ -224,24 +224,24 @@ func TestHandler_Overview(t *testing.T) {
 					},
 				},
 				UDPMiddlewares: map[string]*runtime.UDPMiddlewareInfo{
-					"ipwhitelist1@myprovider": {
+					"ipallowlist1@myprovider": {
 						UDPMiddleware: &dynamic.UDPMiddleware{
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 						Status: runtime.StatusEnabled,
 					},
-					"ipwhitelist2@myprovider": {
+					"ipallowlist2@myprovider": {
 						UDPMiddleware: &dynamic.UDPMiddleware{
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 					},
-					"ipwhitelist3@myprovider": {
+					"ipallowlist3@myprovider": {
 						UDPMiddleware: &dynamic.UDPMiddleware{
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},

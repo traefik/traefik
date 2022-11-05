@@ -1,4 +1,4 @@
-package udpipwhitelist
+package udpipallowlist
 
 import (
 	"context"
@@ -13,46 +13,46 @@ import (
 )
 
 const (
-	typeName = "IPWhiteListerUDP"
+	typeName = "IPAllowListerUDP"
 )
 
-// ipWhiteLister is a middleware that provides Checks of the Requesting IP against a set of Whitelists.
-type ipWhiteLister struct {
+// ipAllowLister is a middleware that provides Checks of the Requesting IP against a set of Allowlists.
+type ipAllowLister struct {
 	next        udp.Handler
-	whiteLister *ip.Checker
+	allowLister *ip.Checker
 	name        string
 }
 
-// New builds a new UDP IPWhiteLister given a list of CIDR-Strings to whitelist.
-func New(ctx context.Context, next udp.Handler, config dynamic.UDPIPWhiteList, name string) (udp.Handler, error) {
+// New builds a new UDP IPAllowLister given a list of CIDR-Strings to allowlist.
+func New(ctx context.Context, next udp.Handler, config dynamic.UDPIPAllowList, name string) (udp.Handler, error) {
 	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName))
 	logger.Debug("Creating middleware")
 
 	if len(config.SourceRange) == 0 {
-		return nil, errors.New("sourceRange is empty, IPWhiteLister not created")
+		return nil, errors.New("sourceRange is empty, IPAllowLister not created")
 	}
 
 	checker, err := ip.NewChecker(config.SourceRange)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse CIDR whitelist %s: %w", config.SourceRange, err)
+		return nil, fmt.Errorf("cannot parse CIDR allowlist %s: %w", config.SourceRange, err)
 	}
 
-	logger.Debugf("Setting up IPWhiteLister with sourceRange: %s", config.SourceRange)
+	logger.Debugf("Setting up IPAllowLister with sourceRange: %s", config.SourceRange)
 
-	return &ipWhiteLister{
-		whiteLister: checker,
+	return &ipAllowLister{
+		allowLister: checker,
 		next:        next,
 		name:        name,
 	}, nil
 }
 
-func (wl *ipWhiteLister) ServeUDP(conn *udp.Conn) {
+func (wl *ipAllowLister) ServeUDP(conn *udp.Conn) {
 	ctx := middlewares.GetLoggerCtx(context.Background(), wl.name, typeName)
 	logger := log.FromContext(ctx)
 
 	addr := conn.RemoteAddr().String()
 
-	err := wl.whiteLister.IsAuthorized(addr)
+	err := wl.allowLister.IsAuthorized(addr)
 	if err != nil {
 		logger.Errorf("Connection from %s rejected: %v", addr, err)
 		conn.Close()

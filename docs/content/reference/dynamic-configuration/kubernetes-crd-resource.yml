@@ -171,7 +171,7 @@ spec:
         - name: whoamiudp
           port: 8080
       middlewares:
-        - name: ipwhitelist
+        - name: ipallowlist
 
 ---
 apiVersion: traefik.containo.us/v1alpha1

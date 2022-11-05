@@ -442,7 +442,7 @@
           weight = 42
   [udp.middlewares]
     [udp.middlewares.Middleware00]
-      [udp.middlewares.Middleware00.ipWhiteList]
+      [udp.middlewares.Middleware00.ipAllowList]
         sourceRange = ["foobar", "foobar"]
 
 [tls]

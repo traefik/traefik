@@ -1,10 +1,10 @@
 apiVersion: traefik.containo.us/v1alpha1
 kind: MiddlewareUDP
 metadata:
-  name: ipwhitelist
+  name: ipallowlist
   namespace: default
 spec:
-  ipWhiteList:
+  ipAllowList:
     sourceRange:
       - 127.0.0.1/32
 
@@ -12,10 +12,10 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: MiddlewareUDP
 metadata:
-  name: ipwhitelist
+  name: ipallowlist
   namespace: cross-ns
 spec:
-  ipWhiteList:
+  ipAllowList:
     sourceRange:
       - 127.0.0.1/32
 
@@ -36,12 +36,12 @@ spec:
           port: 8000
 
       middlewares:
-        - name: ipwhitelist
+        - name: ipallowlist
 
     - services:
         - name: whoamiudp
           port: 8000
 
       middlewares:
-        - name: ipwhitelist
+        - name: ipallowlist
           namespace: cross-ns

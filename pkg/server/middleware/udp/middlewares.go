@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	ipwhitelist "github.com/traefik/traefik/v2/pkg/middlewares/udp/ipwhitelist"
+	ipallowlist "github.com/traefik/traefik/v2/pkg/middlewares/udp/ipallowlist"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
 	"github.com/traefik/traefik/v2/pkg/udp"
 )
@@ -86,10 +86,10 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 
 	var middleware udp.Constructor
 
-	// IPWhiteList
-	if config.IPWhiteList != nil {
+	// IPAllowList
+	if config.IPAllowList != nil {
 		middleware = func(next udp.Handler) (udp.Handler, error) {
-			return ipwhitelist.New(ctx, next, *config.IPWhiteList, middlewareName)
+			return ipallowlist.New(ctx, next, *config.IPAllowList, middlewareName)
 		}
 	}
 

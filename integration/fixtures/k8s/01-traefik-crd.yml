@@ -1626,8 +1626,8 @@ spec:
           spec:
             description: MiddlewareUDPSpec holds the MiddlewareUDPSpec configuration.
             properties:
-              ipWhiteList:
-                description: UDPIPWhiteList holds the UDP ip white list configuration.
+              ipAllowList:
+                description: UDPIPAllowList holds the UDP ip allow list configuration.
                 properties:
                   sourceRange:
                     items:

@@ -20,7 +20,7 @@ type MiddlewareUDP struct {
 
 // MiddlewareUDPSpec holds the MiddlewareUDPSpec configuration.
 type MiddlewareUDPSpec struct {
-	IPWhiteList *dynamic.UDPIPWhiteList `json:"ipWhiteList,omitempty"`
+	IPAllowList *dynamic.UDPIPAllowList `json:"ipAllowList,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

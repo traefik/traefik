@@ -4,12 +4,12 @@ package dynamic
 
 // UDPMiddleware holds the UDPMiddleware configuration.
 type UDPMiddleware struct {
-	IPWhiteList *UDPIPWhiteList `json:"ipWhiteList,omitempty" toml:"ipWhiteList,omitempty" yaml:"ipWhiteList,omitempty" export:"true"`
+	IPAllowList *UDPIPAllowList `json:"ipAllowList,omitempty" toml:"ipAllowList,omitempty" yaml:"ipAllowList,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
 
-// UDPIPWhiteList holds the UDP ip white list configuration.
-type UDPIPWhiteList struct {
+// UDPIPAllowList holds the UDP ip allow list configuration.
+type UDPIPAllowList struct {
 	SourceRange []string `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
 }

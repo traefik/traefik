@@ -1342,7 +1342,7 @@ The middlewares will take effect on every incoming UDP packets from the entry po
     [udp.routers]
       [udp.routers.my-router]
         # declared elsewhere
-        middlewares = ["ipwhitelist"]
+        middlewares = ["ipallowlist"]
         service = "service-foo"
     ```
 
@@ -1353,7 +1353,7 @@ The middlewares will take effect on every incoming UDP packets from the entry po
         my-router:
           # declared elsewhere
           middlewares:
-          - ipwhitelist
+          - ipallowlist
           service: service-foo
     ```
 

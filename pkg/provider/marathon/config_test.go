@@ -254,13 +254,13 @@ func TestBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "UDP with IP whitelist",
+			desc: "UDP with IP allowlist",
 			applications: withApplications(
 				application(
 					appID("/app"),
 					appPorts(80),
 					withLabel("traefik.udp.services.app.loadbalancer.server.port", "80"),
-					withLabel("traefik.udp.middlewares.Middleware1.ipwhitelist.sourcerange", "foobar, fiibar"),
+					withLabel("traefik.udp.middlewares.Middleware1.ipallowlist.sourcerange", "foobar, fiibar"),
 					withTasks(localhostTask(taskPorts(80))),
 				)),
 			expected: &dynamic.Configuration{
@@ -273,7 +273,7 @@ func TestBuildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.UDPRouter{},
 					Middlewares: map[string]*dynamic.UDPMiddleware{
 						"Middleware1": {
-							IPWhiteList: &dynamic.UDPIPWhiteList{
+							IPAllowList: &dynamic.UDPIPAllowList{
 								SourceRange: []string{"foobar", "fiibar"},
 							},
 						},
