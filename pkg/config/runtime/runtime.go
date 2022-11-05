@@ -20,6 +20,7 @@ type Configuration struct {
 	Routers        map[string]*RouterInfo        `json:"routers,omitempty"`
 	Middlewares    map[string]*MiddlewareInfo    `json:"middlewares,omitempty"`
 	TCPMiddlewares map[string]*TCPMiddlewareInfo `json:"tcpMiddlewares,omitempty"`
+	UDPMiddlewares map[string]*UDPMiddlewareInfo `json:"udpMiddlewares,omitempty"`
 	Services       map[string]*ServiceInfo       `json:"services,omitempty"`
 	TCPRouters     map[string]*TCPRouterInfo     `json:"tcpRouters,omitempty"`
 	TCPServices    map[string]*TCPServiceInfo    `json:"tcpServices,omitempty"`
@@ -96,6 +97,13 @@ func NewConfig(conf dynamic.Configuration) *Configuration {
 			runtimeConfig.UDPServices = make(map[string]*UDPServiceInfo, len(conf.UDP.Services))
 			for k, v := range conf.UDP.Services {
 				runtimeConfig.UDPServices[k] = &UDPServiceInfo{UDPService: v, Status: StatusEnabled}
+			}
+		}
+
+		if len(conf.UDP.Middlewares) > 0 {
+			runtimeConfig.UDPMiddlewares = make(map[string]*UDPMiddlewareInfo, len(conf.UDP.Middlewares))
+			for k, v := range conf.UDP.Middlewares {
+				runtimeConfig.UDPMiddlewares[k] = &UDPMiddlewareInfo{UDPMiddleware: v, Status: StatusEnabled}
 			}
 		}
 	}
@@ -220,6 +228,15 @@ func (c *Configuration) PopulateUsedBy() {
 		}
 
 		sort.Strings(c.UDPServices[k].UsedBy)
+	}
+
+	for midName, mid := range c.UDPMiddlewares {
+		// lazily initialize Status in case caller forgot to do it
+		if mid.Status == "" {
+			mid.Status = StatusEnabled
+		}
+
+		sort.Strings(c.UDPMiddlewares[midName].UsedBy)
 	}
 }
 

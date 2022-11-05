@@ -280,6 +280,11 @@ func (c *Conn) Write(p []byte) (n int, err error) {
 	return c.listener.pConn.WriteTo(p, c.rAddr)
 }
 
+// RemoteAddr returns the remote network address.
+func (c *Conn) RemoteAddr() net.Addr {
+	return c.rAddr
+}
+
 func (c *Conn) close() {
 	c.doneOnce.Do(func() {
 		close(c.doneCh)

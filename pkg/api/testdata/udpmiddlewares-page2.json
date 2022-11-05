@@ -1,0 +1,14 @@
+[
+	{
+		"ipAllowList": {
+			"sourceRange": ["127.0.0.1/32"]
+		},
+		"name": "ipallowlist@anotherprovider",
+		"provider": "anotherprovider",
+		"status": "enabled",
+		"type": "ipallowlist",
+		"usedBy": [
+			"bar@myprovider"
+		]
+	}
+]
