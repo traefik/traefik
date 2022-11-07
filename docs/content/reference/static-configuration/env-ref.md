@@ -348,29 +348,23 @@ OpenTelemetry metrics exporter type. (Default: ```false```)
 `TRAEFIK_METRICS_OPENTELEMETRY_ADDENTRYPOINTSLABELS`:  
 Enable metrics on entry points. (Default: ```true```)
 
+`TRAEFIK_METRICS_OPENTELEMETRY_ADDRESS`:  
+Address of the collector endpoint.
+
 `TRAEFIK_METRICS_OPENTELEMETRY_ADDROUTERSLABELS`:  
 Enable metrics on routers. (Default: ```false```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_ADDSERVICESLABELS`:  
 Enable metrics on services. (Default: ```true```)
 
-`TRAEFIK_METRICS_OPENTELEMETRY_COLLECTPERIOD`:  
-Period between calls to collect a checkpoint. (Default: ```10```)
-
 `TRAEFIK_METRICS_OPENTELEMETRY_COMPRESS`:  
 Enable compression on the sent data. (Default: ```false```)
-
-`TRAEFIK_METRICS_OPENTELEMETRY_ENDPOINT`:  
-Address of the collector endpoint.
 
 `TRAEFIK_METRICS_OPENTELEMETRY_EXPLICITBOUNDARIES`:  
 Boundaries for latency metrics. (Default: ```0.005000, 0.010000, 0.025000, 0.050000, 0.100000, 0.250000, 0.500000, 1.000000, 2.500000, 5.000000, 10.000000```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_GRPC`:  
-GRPC specific configuration for the OpenTelemetry collector. (Default: ```false```)
-
-`TRAEFIK_METRICS_OPENTELEMETRY_GRPC_GG`:  
-Enable metrics on entry points.
+gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_HEADERS_<NAME>`:  
 Headers sent with payload.
@@ -380,6 +374,9 @@ Disables client transport security for the exporter. (Default: ```false```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_PATH`:  
 Set the default URL path for sending traces.
+
+`TRAEFIK_METRICS_OPENTELEMETRY_PUSHINTERVAL`:  
+Period between calls to collect a checkpoint. (Default: ```10```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_TLS_CA`:  
 TLS CA
@@ -1173,14 +1170,14 @@ Sets the header name used to store the trace ID. (Default: ```uber-trace-id```)
 `TRAEFIK_TRACING_OPENTELEMETRY`:  
 Settings for OpenTelemetry. (Default: ```false```)
 
+`TRAEFIK_TRACING_OPENTELEMETRY_ADDRESS`:  
+Sets the address of the collector endpoint.
+
 `TRAEFIK_TRACING_OPENTELEMETRY_COMPRESS`:  
 Enables compression of the sent data. (Default: ```false```)
 
-`TRAEFIK_TRACING_OPENTELEMETRY_ENDPOINT`:  
-Sets the address of the collector endpoint.
-
 `TRAEFIK_TRACING_OPENTELEMETRY_GRPC`:  
-GRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
+gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_HEADERS_<NAME>`:  
 Defines additional headers to be sent with the payloads.

@@ -322,7 +322,7 @@
     addEntryPointsLabels = true
     addRoutersLabels = true
     addServicesLabels = true
-    collectPeriod = "42s"
+    pushInterval = "42s"
     compress = true
     endpoint = "foobar"
     explicitBoundaries =  [42.0, 42.0]

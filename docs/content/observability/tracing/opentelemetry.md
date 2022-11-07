@@ -21,7 +21,7 @@ tracing:
 --tracing.openTelemetry=true
 ```
 
-!!! info "The OpenTelemetry trace reporter will export traces to the collector using HTTP by default, see the [GRPC Section](#grpc-configuration) to use GRPC."
+!!! info "The OpenTelemetry trace reporter will export traces to the collector using HTTP by default, see the [gRPC Section](#grpc-configuration) to use gRPC."
 
 #### `compress`
 
@@ -45,28 +45,26 @@ tracing:
 --tracing.openTelemetry.compress=true
 ```
 
-#### `endpoint`
+#### `address`
 
-_Required, Default="localhost:4318"_
+_Required, Default="", Format="`<host>:<port>`"_
 
-Instructs the reporter to send spans to the OpenTelemetry Collector at this address (host:port).
-
-!!! info "Please note that the default endpoint value for GRPC is `localhost:4317`."
+Address of the OpenTelemetry Collector to send spans to.
 
 ```yaml tab="File (YAML)"
 tracing:
   openTelemetry:
-    endpoint: localhost:4318
+    address: localhost:4318
 ```
 
 ```toml tab="File (TOML)"
 [tracing]
   [tracing.openTelemetry]
-    endpoint = "localhost:4318"
+    address = "localhost:4318"
 ```
 
 ```bash tab="CLI"
---tracing.openTelemetry.endpoint=localhost:4318
+--tracing.openTelemetry.address=localhost:4318
 ```
 
 #### `headers`
@@ -121,7 +119,7 @@ tracing:
 _Required, Default="/v1/traces"_
 
 Allows to override the default URL path used for sending traces.
-This option has no effect when using GRPC transport.
+This option has no effect when using gRPC transport.
 
 ```yaml tab="File (YAML)"
 tracing:
@@ -243,11 +241,11 @@ tracing:
 --tracing.openTelemetry.tls.insecureSkipVerify=true
 ```
 
-#### GRPC configuration
+#### gRPC configuration
 
 _Optional_
 
-This instructs the reporter to send spans to the OpenTelemetry Collector using GRPC.
+This instructs the reporter to send spans to the OpenTelemetry Collector using gRPC.
 
 ```yaml tab="File (YAML)"
 tracing:
