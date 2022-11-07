@@ -72,7 +72,7 @@ func TestComputeHash(t *testing.T) {
 	}{
 		{
 			desc:     "hashing",
-			text:     "some very long pice of text",
+			text:     "some very long piece of text",
 			expected: "0258ea1c",
 		},
 		{
@@ -109,7 +109,7 @@ func TestTruncateString(t *testing.T) {
 		},
 		{
 			desc:     "basic truncate with limit 10",
-			text:     "some very long pice of text",
+			text:     "some very long piece of text",
 			limit:    10,
 			expected: "some ve...",
 		},

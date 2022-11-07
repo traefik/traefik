@@ -24,7 +24,29 @@ metrics:
 !!! info ""
 
     The OpenTelemetry exporter will export metrics to the collector by using HTTP by default,
-    see the [GRPC Section](#grpc-configuration) to use GRPC.
+    see the [gRPC Section](#grpc-configuration) to use gRPC.
+
+#### `address`
+
+_Required, Default="", Format="`<host>:<port>`"_
+
+Address of the OpenTelemetry Collector to send metric to.
+
+```yaml tab="File (YAML)"
+metrics:
+  openTelemetry:
+    address: localhost:4318
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.openTelemetry]
+    address = "localhost:4318"
+```
+
+```bash tab="CLI"
+--metrics.openTelemetry.address=localhost:4318
+```
 
 #### `addEntryPointsLabels`
 
@@ -114,30 +136,6 @@ metrics:
 --metrics.openTelemetry.compress=true
 ```
 
-#### `endpoint`
-
-_Required, Default="localhost:4318"_
-
-Address instructs exporter to send metrics to OpenTelemetry at this address.
-
-!!! info "Please note that the default endpoint value for GRPC is `localhost:4317`."
-
-```yaml tab="File (YAML)"
-metrics:
-  openTelemetry:
-    address: localhost:4318
-```
-
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.openTelemetry]
-    address = "localhost:4318"
-```
-
-```bash tab="CLI"
---metrics.openTelemetry.address=localhost:4318
-```
-
 #### `explicitBoundaries`
 
 _Optional, Default=".005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10"_
@@ -189,7 +187,7 @@ metrics:
 --metrics.openTelemetry.headers.foo=bar --metrics.openTelemetry.headers.baz=buz
 ```
 
-#### `collectPeriod`
+#### `pushInterval`
 
 _Optional, Default=10s_
 
@@ -198,17 +196,17 @@ Period between calls to collect a checkpoint.
 ```yaml tab="File (YAML)"
 metrics:
   openTelemetry:
-    collectPeriod: 10s
+    pushInterval: 10s
 ```
 
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.openTelemetry]
-    collectPeriod = "10s"
+    pushInterval = "10s"
 ```
 
 ```bash tab="CLI"
---metrics.openTelemetry.collectPeriod=10s
+--metrics.openTelemetry.pushInterval=10s
 ```
 
 #### `path`
@@ -216,7 +214,7 @@ metrics:
 _Required, Default="/v1/traces"_
 
 Allows to override the default URL path used for sending traces.
-This option has no effect when using GRPC transport.
+This option has no effect when using gRPC transport.
 
 ```yaml tab="File (YAML)"
 metrics:
@@ -338,9 +336,9 @@ metrics:
 --metrics.openTelemetry.tls.insecureSkipVerify=true
 ```
 
-#### GRPC configuration
+#### gRPC configuration
 
-This instructs the reporter to send metrics to the OpenTelemetry Collector using GRPC:
+This instructs the reporter to send metrics to the OpenTelemetry Collector using gRPC:
 
 ```yaml tab="File (YAML)"
 metrics:

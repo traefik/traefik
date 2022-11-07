@@ -348,29 +348,23 @@ OpenTelemetry metrics exporter type. (Default: ```false```)
 `--metrics.opentelemetry.addentrypointslabels`:  
 Enable metrics on entry points. (Default: ```true```)
 
+`--metrics.opentelemetry.address`:  
+Address of the collector endpoint.
+
 `--metrics.opentelemetry.addrouterslabels`:  
 Enable metrics on routers. (Default: ```false```)
 
 `--metrics.opentelemetry.addserviceslabels`:  
 Enable metrics on services. (Default: ```true```)
 
-`--metrics.opentelemetry.collectperiod`:  
-Period between calls to collect a checkpoint. (Default: ```10```)
-
 `--metrics.opentelemetry.compress`:  
 Enable compression on the sent data. (Default: ```false```)
-
-`--metrics.opentelemetry.endpoint`:  
-Address of the collector endpoint.
 
 `--metrics.opentelemetry.explicitboundaries`:  
 Boundaries for latency metrics. (Default: ```0.005000, 0.010000, 0.025000, 0.050000, 0.100000, 0.250000, 0.500000, 1.000000, 2.500000, 5.000000, 10.000000```)
 
 `--metrics.opentelemetry.grpc`:  
-GRPC specific configuration for the OpenTelemetry collector. (Default: ```false```)
-
-`--metrics.opentelemetry.grpc.gg`:  
-Enable metrics on entry points.
+gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
 
 `--metrics.opentelemetry.headers.<name>`:  
 Headers sent with payload.
@@ -380,6 +374,9 @@ Disables client transport security for the exporter. (Default: ```false```)
 
 `--metrics.opentelemetry.path`:  
 Set the default URL path for sending traces.
+
+`--metrics.opentelemetry.pushinterval`:  
+Period between calls to collect a checkpoint. (Default: ```10```)
 
 `--metrics.opentelemetry.tls.ca`:  
 TLS CA
@@ -1173,14 +1170,14 @@ Sets the header name used to store the trace ID. (Default: ```uber-trace-id```)
 `--tracing.opentelemetry`:  
 Settings for OpenTelemetry. (Default: ```false```)
 
+`--tracing.opentelemetry.address`:  
+Sets the address of the collector endpoint.
+
 `--tracing.opentelemetry.compress`:  
 Enables compression of the sent data. (Default: ```false```)
 
-`--tracing.opentelemetry.endpoint`:  
-Sets the address of the collector endpoint.
-
 `--tracing.opentelemetry.grpc`:  
-GRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
+gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
 
 `--tracing.opentelemetry.headers.<name>`:  
 Defines additional headers to be sent with the payloads.

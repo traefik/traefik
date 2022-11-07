@@ -350,7 +350,7 @@ metrics:
     addEntryPointsLabels: true
     addRoutersLabels: true
     addServicesLabels: true
-    collectPeriod: 42s
+    pushInterval: 42s
     compress: true
     endpoint: foobar
     explicitBoundaries:
