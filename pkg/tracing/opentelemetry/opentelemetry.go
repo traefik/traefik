@@ -2,6 +2,7 @@ package opentelemetry
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 
@@ -21,7 +22,10 @@ import (
 
 // Setup sets up the tracer.
 func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, error) {
-	// Tracer
+	if c.Address == "" {
+		return nil, nil, errors.New("address property is missing")
+	}
+
 	bt := oteltracer.NewBridgeTracer()
 
 	// TODO add schema URL
@@ -51,15 +55,12 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 
 func (c *Config) setupHTTPExporter() (*otlptrace.Exporter, error) {
 	opts := []otlptracehttp.Option{
+		otlptracehttp.WithEndpoint(c.Address),
 		otlptracehttp.WithHeaders(c.Headers),
 	}
 
 	if c.Compress {
 		opts = append(opts, otlptracehttp.WithCompression(otlptracehttp.GzipCompression))
-	}
-
-	if c.Endpoint != "" {
-		opts = append(opts, otlptracehttp.WithEndpoint(c.Endpoint))
 	}
 
 	if c.Insecure {
@@ -85,15 +86,12 @@ func (c *Config) setupHTTPExporter() (*otlptrace.Exporter, error) {
 func (c *Config) setupGRPCExporter() (*otlptrace.Exporter, error) {
 	// TODO: handle DialOption
 	opts := []otlptracegrpc.Option{
+		otlptracegrpc.WithEndpoint(c.Address),
 		otlptracegrpc.WithHeaders(c.Headers),
 	}
 
 	if c.Compress {
 		opts = append(opts, otlptracegrpc.WithCompressor(gzip.Name))
-	}
-
-	if c.Endpoint != "" {
-		opts = append(opts, otlptracegrpc.WithEndpoint(c.Endpoint))
 	}
 
 	if c.Insecure {
