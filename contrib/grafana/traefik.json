@@ -1499,13 +1499,13 @@
     ]
   },
   "time": {
-    "from": "2022-11-03T14:12:50.717Z",
-    "to": "2022-11-03T14:54:00.056Z"
+    "from": "now-6h",
+    "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Traefik Official Standalone Dashboard",
   "uid": "n5bu_kv4k",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }
