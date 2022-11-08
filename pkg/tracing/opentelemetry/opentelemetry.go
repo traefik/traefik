@@ -8,12 +8,13 @@ import (
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/traefik/traefik/v2/pkg/log"
-	traefikversion "github.com/traefik/traefik/v2/pkg/version"
+	"github.com/traefik/traefik/v2/pkg/version"
 	"go.opentelemetry.io/otel"
 	oteltracer "go.opentelemetry.io/otel/bridge/opentracing"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/propagation"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/credentials"
@@ -27,9 +28,9 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 	}
 
 	bt := oteltracer.NewBridgeTracer()
+	bt.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 
-	// TODO add schema URL
-	bt.SetOpenTelemetryTracer(otel.Tracer(componentName, trace.WithInstrumentationVersion(traefikversion.Version)))
+	bt.SetOpenTelemetryTracer(otel.Tracer(componentName, trace.WithInstrumentationVersion(version.Version)))
 	opentracing.SetGlobalTracer(bt)
 
 	var (
@@ -45,7 +46,10 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 		return nil, nil, fmt.Errorf("setup exporter: %w", err)
 	}
 
-	tracerProvider := sdktrace.NewTracerProvider(sdktrace.WithBatcher(exporter))
+	tracerProvider := sdktrace.NewTracerProvider(
+		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		sdktrace.WithBatcher(exporter),
+	)
 	otel.SetTracerProvider(tracerProvider)
 
 	log.WithoutContext().Debug("OpenTelemetry tracer configured")
