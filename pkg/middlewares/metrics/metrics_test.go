@@ -194,7 +194,7 @@ func Test_grpcStatusCode(t *testing.T) {
 		expected codes.Code
 	}{
 		{
-			desc:     "invalid",
+			desc:     "invalid number",
 			status:   "foo",
 			expected: codes.Unknown,
 		},
@@ -204,7 +204,12 @@ func Test_grpcStatusCode(t *testing.T) {
 			expected: codes.Canceled,
 		},
 		{
-			desc:     "sting",
+			desc:     "invalid string",
+			status:   `"foo"`,
+			expected: codes.Unknown,
+		},
+		{
+			desc:     "string",
 			status:   `"OK"`,
 			expected: codes.OK,
 		},
