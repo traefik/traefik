@@ -73,7 +73,7 @@ func TestComputeHash(t *testing.T) {
 		{
 			desc:     "hashing",
 			text:     "some very long piece of text",
-			expected: "0258ea1c",
+			expected: "0c6e798b",
 		},
 		{
 			desc:     "short text less than limit 10",
