@@ -152,6 +152,9 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OpenTeleme
 			Boundaries: config.ExplicitBoundaries,
 		}),
 	)
+	if err != nil {
+		return nil, fmt.Errorf("create histogram view: %w", err)
+	}
 
 	meterProvider := sdkmetric.NewMeterProvider(sdkmetric.WithReader(
 		sdkmetric.NewPeriodicReader(exporter, opts...),
