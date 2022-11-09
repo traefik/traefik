@@ -1,6 +1,7 @@
 package opentelemetry
 
 import (
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"io"
@@ -20,7 +21,10 @@ func TestTraceContextPropagation(t *testing.T) {
 	t.Parallel()
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, err := io.ReadAll(r.Body)
+		gzr, err := gzip.NewReader(r.Body)
+		require.NoError(t, err)
+
+		body, err := io.ReadAll(gzr)
 		require.NoError(t, err)
 
 		req := ptraceotlp.NewRequest()

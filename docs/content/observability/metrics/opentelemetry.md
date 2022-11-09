@@ -169,7 +169,7 @@ metrics:
 
 _Optional, Default=10s_
 
-Period between calls to collect a checkpoint.
+Interval at which metrics are sent to the OpenTelemetry Collector.
 
 ```yaml tab="File (YAML)"
 metrics:
