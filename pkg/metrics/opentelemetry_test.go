@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -291,7 +292,10 @@ func TestOpenTelemetry(t *testing.T) {
 	c := make(chan *string)
 	defer close(c)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, err := io.ReadAll(r.Body)
+		gzr, err := gzip.NewReader(r.Body)
+		require.NoError(t, err)
+
+		body, err := io.ReadAll(gzr)
 		require.NoError(t, err)
 
 		req := pmetricotlp.NewRequest()
