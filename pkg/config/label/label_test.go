@@ -63,8 +63,14 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware8.headers.customframeoptionsvalue":                     "foobar",
 		"traefik.http.middlewares.Middleware8.headers.customrequestheaders.name0":                  "foobar",
 		"traefik.http.middlewares.Middleware8.headers.customrequestheaders.name1":                  "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.appendrequestheaders.name0":                  "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.replacerequestheaders.name1":                 "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.deleterequestheaders.name2":                  "foobar",
 		"traefik.http.middlewares.Middleware8.headers.customresponseheaders.name0":                 "foobar",
 		"traefik.http.middlewares.Middleware8.headers.customresponseheaders.name1":                 "foobar",
+		"traefik.http.middlewares.Middleware8.headers.appendresponseheaders.name0":                 "foobar",
+		"traefik.http.middlewares.Middleware8.headers.replaceresponseheaders.name1":                "foobar",
+		"traefik.http.middlewares.Middleware8.headers.deleteresponseheaders.name2":                 "foobar",
 		"traefik.http.middlewares.Middleware8.headers.forcestsheader":                              "true",
 		"traefik.http.middlewares.Middleware8.headers.framedeny":                                   "true",
 		"traefik.http.middlewares.Middleware8.headers.hostsproxyheaders":                           "foobar, fiibar",
@@ -553,6 +559,24 @@ func TestDecodeConfiguration(t *testing.T) {
 						CustomResponseHeaders: map[string]string{
 							"name0": "foobar",
 							"name1": "foobar",
+						},
+						AppendRequestHeaders: map[string]string{
+							"name0": "foobar",
+						},
+						ReplaceRequestHeaders: map[string]string{
+							"name1": "foobar",
+						},
+						DeleteRequestHeaders: map[string]string{
+							"name2": "foobar",
+						},
+						AppendResponseHeaders: map[string]string{
+							"name0": "foobar",
+						},
+						ReplaceResponseHeaders: map[string]string{
+							"name1": "foobar",
+						},
+						DeleteResponseHeaders: map[string]string{
+							"name2": "foobar",
 						},
 						AccessControlAllowCredentials: true,
 						AccessControlAllowHeaders: []string{
@@ -1056,6 +1080,24 @@ func TestEncodeConfiguration(t *testing.T) {
 							"name0": "foobar",
 							"name1": "foobar",
 						},
+						AppendRequestHeaders: map[string]string{
+							"name0": "foobar",
+						},
+						ReplaceRequestHeaders: map[string]string{
+							"name1": "foobar",
+						},
+						DeleteRequestHeaders: map[string]string{
+							"name2": "foobar",
+						},
+						AppendResponseHeaders: map[string]string{
+							"name0": "foobar",
+						},
+						ReplaceResponseHeaders: map[string]string{
+							"name1": "foobar",
+						},
+						DeleteResponseHeaders: map[string]string{
+							"name2": "foobar",
+						},
 						AccessControlAllowCredentials: true,
 						AccessControlAllowHeaders: []string{
 							"X-foobar",
@@ -1248,6 +1290,12 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomRequestHeaders.name1":                  "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomResponseHeaders.name0":                 "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomResponseHeaders.name1":                 "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AppendRequestHeaders.name0":                  "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.ReplaceRequestHeaders.name1":                 "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.DeleteRequestHeaders.name2":                  "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.AppendResponseHeaders.name0":                 "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.ReplaceResponseHeaders.name1":                "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.DeleteResponseHeaders.name2":                 "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.ForceSTSHeader":                              "true",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.FrameDeny":                                   "true",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.HostsProxyHeaders":                           "foobar, fiibar",

@@ -51,10 +51,11 @@ func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name strin
 	handleDeprecation(mCtx, &cfg)
 
 	hasSecureHeaders := cfg.HasSecureHeadersDefined()
-	hasCustomHeaders := cfg.HasCustomHeadersDefined()
+	hasOldStyleCustomHeaders := cfg.HasOldStyleCustomRequestHeadersDefined()
+	hasNewStyleCustomHeaders := cfg.HasNewStyleCustomRequestHeadersDefined()
 	hasCorsHeaders := cfg.HasCorsHeadersDefined()
 
-	if !hasSecureHeaders && !hasCustomHeaders && !hasCorsHeaders {
+	if !hasSecureHeaders && !hasOldStyleCustomHeaders && !hasNewStyleCustomHeaders && !hasCorsHeaders {
 		return nil, errors.New("headers configuration not valid")
 	}
 
@@ -67,7 +68,7 @@ func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name strin
 		nextHandler = handler
 	}
 
-	if hasCustomHeaders || hasCorsHeaders {
+	if hasOldStyleCustomHeaders || hasNewStyleCustomHeaders || hasCorsHeaders {
 		logger.Debugf("Setting up customHeaders/Cors from %v", cfg)
 		h, err := NewHeader(nextHandler, cfg)
 		if err != nil {

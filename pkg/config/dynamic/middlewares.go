@@ -234,8 +234,25 @@ type ForwardAuth struct {
 // This middleware manages the requests and responses headers.
 // More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/headers/#customrequestheaders
 type Headers struct {
+	// AppendRequestHeaders defines the header names and values to append to the request.
+	AppendRequestHeaders map[string]string `json:"appendRequestHeaders,omitempty" toml:"appendRequestHeaders,omitempty" yaml:"appendRequestHeaders,omitempty" export:"true"`
+	// ReplaceRequestHeaders defines the header names and values to replace in the request.
+	ReplaceRequestHeaders map[string]string `json:"replaceRequestHeaders,omitempty" toml:"replaceRequestHeaders,omitempty" yaml:"replaceRequestHeaders,omitempty" export:"true"`
+	// DeleteRequestHeaders defines the header names and values to append to the request.
+	DeleteRequestHeaders map[string]string `json:"deleteRequestHeaders,omitempty" toml:"deleteRequestHeaders,omitempty" yaml:"deleteRequestHeaders,omitempty" export:"true"`
+
+	// AppendResponseHeaders defines the header names and values to append to the response.
+	AppendResponseHeaders map[string]string `json:"appendResponseHeaders,omitempty" toml:"appendResponseHeaders,omitempty" yaml:"appendResponseHeaders,omitempty" export:"true"`
+	// ReplaceResponseHeaders defines the header names and values to replace in the response.
+	ReplaceResponseHeaders map[string]string `json:"replaceResponseHeaders,omitempty" toml:"replaceResponseHeaders,omitempty" yaml:"replaceResponseHeaders,omitempty" export:"true"`
+	// DeleteResponseHeaders defines the header names and values to append to the response.
+	DeleteResponseHeaders map[string]string `json:"deleteResponseHeaders,omitempty" toml:"deleteResponseHeaders,omitempty" yaml:"deleteResponseHeaders,omitempty" export:"true"`
+
+	// Deprecated: use AppendRequestHeaders/ReplaceResponseHeaders/DeleteResponseHeaders.
 	// CustomRequestHeaders defines the header names and values to apply to the request.
 	CustomRequestHeaders map[string]string `json:"customRequestHeaders,omitempty" toml:"customRequestHeaders,omitempty" yaml:"customRequestHeaders,omitempty" export:"true"`
+
+	// Deprecated: use AppendResponseHeaders/ReplaceRequestHeaders/DeleteRequestHeaders.
 	// CustomResponseHeaders defines the header names and values to apply to the response.
 	CustomResponseHeaders map[string]string `json:"customResponseHeaders,omitempty" toml:"customResponseHeaders,omitempty" yaml:"customResponseHeaders,omitempty" export:"true"`
 
@@ -310,10 +327,27 @@ type Headers struct {
 	IsDevelopment bool `json:"isDevelopment,omitempty" toml:"isDevelopment,omitempty" yaml:"isDevelopment,omitempty" export:"true"`
 }
 
-// HasCustomHeadersDefined checks to see if any of the custom header elements have been set.
-func (h *Headers) HasCustomHeadersDefined() bool {
+// HasOldStyleCustomRequestHeadersDefined checks to see if any of the custom header elements have been set.
+func (h *Headers) HasOldStyleCustomRequestHeadersDefined() bool {
 	return h != nil && (len(h.CustomResponseHeaders) != 0 ||
 		len(h.CustomRequestHeaders) != 0)
+}
+
+// HasNewStyleCustomRequestHeadersDefined checks to see if any of the custom header elements have been set.
+func (h *Headers) HasNewStyleCustomRequestHeadersDefined() bool {
+	return h != nil && (len(h.AppendRequestHeaders) != 0 ||
+		len(h.ReplaceRequestHeaders) != 0 || len(h.DeleteRequestHeaders) != 0)
+}
+
+// HasOldStyleCustomResponseHeadersDefined checks to see if any of the custom header elements have been set.
+func (h *Headers) HasOldStyleCustomResponseHeadersDefined() bool {
+	return h != nil && (len(h.CustomResponseHeaders) != 0)
+}
+
+// HasNewStyleCustomResponseHeadersDefined checks to see if any of the custom header elements have been set.
+func (h *Headers) HasNewStyleCustomResponseHeadersDefined() bool {
+	return h != nil && (len(h.AppendResponseHeaders) != 0 ||
+		len(h.ReplaceResponseHeaders) != 0 || len(h.DeleteResponseHeaders) != 0)
 }
 
 // HasCorsHeadersDefined checks to see if any of the cors header elements have been set.
