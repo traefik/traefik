@@ -103,11 +103,13 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 				}
 			}
 
-			log.Debugf("'%d %s' caused by: %v", statusCode, statusText(statusCode), err)
+			logger := log.FromContext(request.Context())
+
+			logger.Errorf("'%d %s' caused by: %v", statusCode, statusText(statusCode), err)
 			w.WriteHeader(statusCode)
 			_, werr := w.Write([]byte(statusText(statusCode)))
 			if werr != nil {
-				log.Debugf("Error while writing status code", werr)
+				logger.Errorf("Error while writing status code", werr)
 			}
 		},
 	}
