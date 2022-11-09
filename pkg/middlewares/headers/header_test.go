@@ -10,7 +10,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 )
 
-func TestNewHeader_customRequestHeader(t *testing.T) {
+func TestNewHeader_oldStyleCustomRequestHeader(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		cfg      dynamic.Headers
@@ -41,6 +41,61 @@ func TestNewHeader_customRequestHeader(t *testing.T) {
 				CustomRequestHeaders: map[string]string{
 					"Foo": "test",
 				},
+			},
+			expected: http.Header{"Foo": []string{"test"}},
+		},
+	}
+
+	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			mid, err := NewHeader(emptyHandler, test.cfg)
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "/foo", nil)
+			req.Header.Set("Foo", "bar")
+
+			rw := httptest.NewRecorder()
+
+			mid.ServeHTTP(rw, req)
+
+			assert.Equal(t, http.StatusOK, rw.Code)
+			assert.Equal(t, test.expected, req.Header)
+		})
+	}
+}
+
+func TestNewHeader_newStyleCustomRequestHeader(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		cfg      dynamic.Headers
+		expected http.Header
+	}{
+		{
+			desc: "adds a header",
+			cfg: dynamic.Headers{
+				AppendRequestHeaders: map[string]string{"X-Custom-Request-Header": "test_request"},
+			},
+			expected: http.Header{"Foo": []string{"bar"}, "X-Custom-Request-Header": []string{"test_request"}},
+		},
+		{
+			desc: "delete a header",
+			cfg: dynamic.Headers{
+				DeleteRequestHeaders: map[string]string{
+					"X-Custom-Request-Header": "",
+					"Foo":                     "",
+				},
+			},
+			expected: http.Header{},
+		},
+		{
+			desc: "override a header",
+			cfg: dynamic.Headers{
+				ReplaceRequestHeaders: map[string]string{"Foo": "test"},
 			},
 			expected: http.Header{"Foo": []string{"test"}},
 		},

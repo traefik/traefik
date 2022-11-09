@@ -234,6 +234,12 @@ type ForwardAuth struct {
 // This middleware manages the requests and responses headers.
 // More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/headers/#customrequestheaders
 type Headers struct {
+	// AppendRequestHeader defines the header names and values to append to the request.
+	AppendRequestHeaders map[string]string `json:"appendRequestHeaders,omitempty" toml:"appendRequestHeaders,omitempty" yaml:"appendRequestHeaders,omitempty" export:"true"`
+	// ReplaceRequestHeader defines the header names and values to replace in the request.
+	ReplaceRequestHeaders map[string]string `json:"replaceRequestHeaders,omitempty" toml:"replaceRequestHeaders,omitempty" yaml:"replaceRequestHeaders,omitempty" export:"true"`
+	// DeleteRequestHeader defines the header names and values to append to the request.
+	DeleteRequestHeaders map[string]string `json:"deleteRequestHeaders,omitempty" toml:"deleteRequestHeaders,omitempty" yaml:"deleteRequestHeaders,omitempty" export:"true"`
 	// CustomRequestHeaders defines the header names and values to apply to the request.
 	CustomRequestHeaders map[string]string `json:"customRequestHeaders,omitempty" toml:"customRequestHeaders,omitempty" yaml:"customRequestHeaders,omitempty" export:"true"`
 	// CustomResponseHeaders defines the header names and values to apply to the response.
@@ -310,10 +316,21 @@ type Headers struct {
 	IsDevelopment bool `json:"isDevelopment,omitempty" toml:"isDevelopment,omitempty" yaml:"isDevelopment,omitempty" export:"true"`
 }
 
-// HasCustomHeadersDefined checks to see if any of the custom header elements have been set.
-func (h *Headers) HasCustomHeadersDefined() bool {
+// HasOldStyleCustomRequestHeadersDefined checks to see if any of the custom header elements have been set.
+func (h *Headers) HasOldStyleCustomRequestHeadersDefined() bool {
 	return h != nil && (len(h.CustomResponseHeaders) != 0 ||
 		len(h.CustomRequestHeaders) != 0)
+}
+
+// HasNewStyleCustomRequestHeadersDefined checks to see if any of the custom header elements have been set.
+func (h *Headers) HasNewStyleCustomRequestHeadersDefined() bool {
+	return h != nil && (len(h.AppendRequestHeaders) != 0 ||
+		len(h.ReplaceRequestHeaders) != 0 || len(h.DeleteRequestHeaders) != 0)
+}
+
+// HasCustomResponseHeadersDefined checks to see if any of the custom header elements have been set.
+func (h *Headers) HasCustomResponseHeadersDefined() bool {
+	return h != nil && (len(h.CustomResponseHeaders) != 0)
 }
 
 // HasCorsHeadersDefined checks to see if any of the cors header elements have been set.

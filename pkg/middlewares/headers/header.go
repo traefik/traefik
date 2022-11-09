@@ -16,16 +16,20 @@ import (
 // A single headerOptions struct can be provided to configure which features should be enabled,
 // and the ability to override a few of the default values.
 type Header struct {
-	next               http.Handler
-	hasCustomHeaders   bool
-	hasCorsHeaders     bool
-	headers            *dynamic.Headers
-	allowOriginRegexes []*regexp.Regexp
+	next                         http.Handler
+	hasCustomResponseHeaders     bool
+	hasCorsHeaders               bool
+	hasOldStyleRequestMiddleware bool
+	hasNewStyleHeaderMiddleware  bool
+	headers                      *dynamic.Headers
+	allowOriginRegexes           []*regexp.Regexp
 }
 
 // NewHeader constructs a new header instance from supplied frontend header struct.
 func NewHeader(next http.Handler, cfg dynamic.Headers) (*Header, error) {
-	hasCustomHeaders := cfg.HasCustomHeadersDefined()
+	hasCustomResponseHeaders := cfg.HasCustomResponseHeadersDefined()
+	hasOldStyleCustomHeaders := cfg.HasOldStyleCustomRequestHeadersDefined()
+	hasNewStyleCustomHeaders := cfg.HasNewStyleCustomRequestHeadersDefined()
 	hasCorsHeaders := cfg.HasCorsHeadersDefined()
 
 	ctx := log.With(context.Background(), log.Str(log.MiddlewareType, typeName))
@@ -41,11 +45,13 @@ func NewHeader(next http.Handler, cfg dynamic.Headers) (*Header, error) {
 	}
 
 	return &Header{
-		next:               next,
-		headers:            &cfg,
-		hasCustomHeaders:   hasCustomHeaders,
-		hasCorsHeaders:     hasCorsHeaders,
-		allowOriginRegexes: regexes,
+		next:                         next,
+		headers:                      &cfg,
+		hasOldStyleRequestMiddleware: hasOldStyleCustomHeaders,
+		hasNewStyleHeaderMiddleware:  hasNewStyleCustomHeaders,
+		hasCustomResponseHeaders:     hasCustomResponseHeaders,
+		hasCorsHeaders:               hasCorsHeaders,
+		allowOriginRegexes:           regexes,
 	}, nil
 }
 
@@ -55,8 +61,12 @@ func (s *Header) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if s.hasCustomHeaders {
+	if s.hasOldStyleRequestMiddleware {
 		s.modifyCustomRequestHeaders(req)
+	}
+
+	if s.hasNewStyleHeaderMiddleware {
+		s.modifyNewStyleCustomRequestHeaders(req)
 	}
 
 	// If there is a next, call it.
@@ -78,6 +88,27 @@ func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
 
 		default:
 			req.Header.Set(header, value)
+		}
+	}
+}
+
+func (s *Header) modifyNewStyleCustomRequestHeaders(req *http.Request) {
+	// Loop through Custom request headers
+	for header, value := range s.headers.AppendRequestHeaders {
+		if strings.EqualFold(header, "Host") {
+			req.Host = value
+		}
+		req.Header.Add(header, value)
+	}
+
+	for header, value := range s.headers.ReplaceRequestHeaders {
+		req.Header.Set(header, value)
+	}
+
+	for header, value := range s.headers.DeleteRequestHeaders {
+		req.Header.Set(header, value)
+		if req.Header.Get(header) == "" {
+			req.Header.Del(header)
 		}
 	}
 }
