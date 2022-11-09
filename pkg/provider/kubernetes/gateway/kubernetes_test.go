@@ -4630,6 +4630,11 @@ func Test_hostSNIRule(t *testing.T) {
 			expectError: true,
 		},
 		{
+			desc:         "Supported wildcard",
+			hostnames:    []v1alpha2.Hostname{"*.foo"},
+			expectedRule: "HostSNIRegexp(`{subdomain:[a-zA-Z0-9-]+}.foo`)",
+		},
+		{
 			desc:        "Multiple malformed wildcard",
 			hostnames:   []v1alpha2.Hostname{"*.foo.*"},
 			expectError: true,
@@ -4648,6 +4653,11 @@ func Test_hostSNIRule(t *testing.T) {
 			desc:         "Multiple valid hostnames",
 			hostnames:    []v1alpha2.Hostname{"foo", "bar"},
 			expectedRule: "HostSNI(`foo`,`bar`)",
+		},
+		{
+			desc:         "Multiple valid hostnames with wildcard",
+			hostnames:    []v1alpha2.Hostname{"bar.foo", "foo.foo", "*.foo"},
+			expectedRule: "HostSNI(`bar.foo`,`foo.foo`) || HostSNIRegexp(`{subdomain:[a-zA-Z0-9-]+}.foo`)",
 		},
 		{
 			desc:         "Multiple overlapping hostnames",
