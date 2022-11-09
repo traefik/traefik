@@ -357,9 +357,6 @@ Enable metrics on routers. (Default: ```false```)
 `TRAEFIK_METRICS_OPENTELEMETRY_ADDSERVICESLABELS`:  
 Enable metrics on services. (Default: ```true```)
 
-`TRAEFIK_METRICS_OPENTELEMETRY_COMPRESS`:  
-Enable compression on the sent data. (Default: ```false```)
-
 `TRAEFIK_METRICS_OPENTELEMETRY_EXPLICITBOUNDARIES`:  
 Boundaries for latency metrics. (Default: ```0.005000, 0.010000, 0.025000, 0.050000, 0.100000, 0.250000, 0.500000, 1.000000, 2.500000, 5.000000, 10.000000```)
 
@@ -1172,9 +1169,6 @@ Settings for OpenTelemetry. (Default: ```false```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_ADDRESS`:  
 Sets the address of the collector endpoint.
-
-`TRAEFIK_TRACING_OPENTELEMETRY_COMPRESS`:  
-Enables compression of the sent data. (Default: ```false```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_GRPC`:  
 gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
