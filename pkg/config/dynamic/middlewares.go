@@ -240,9 +240,20 @@ type Headers struct {
 	ReplaceRequestHeaders map[string]string `json:"replaceRequestHeaders,omitempty" toml:"replaceRequestHeaders,omitempty" yaml:"replaceRequestHeaders,omitempty" export:"true"`
 	// DeleteRequestHeader defines the header names and values to append to the request.
 	DeleteRequestHeaders map[string]string `json:"deleteRequestHeaders,omitempty" toml:"deleteRequestHeaders,omitempty" yaml:"deleteRequestHeaders,omitempty" export:"true"`
+
+	// AppendResponseHeader defines the header names and values to append to the response.
+	AppendResponseHeaders map[string]string `json:"appendResponseHeaders,omitempty" toml:"appendResponseHeaders,omitempty" yaml:"appendResponseHeaders,omitempty" export:"true"`
+	// ReplaceResponseHeader defines the header names and values to replace in the response.
+	ReplaceResponseHeaders map[string]string `json:"replaceResponseHeaders,omitempty" toml:"replaceResponseHeaders,omitempty" yaml:"replaceResponseHeaders,omitempty" export:"true"`
+	// DeleteResponseHeader defines the header names and values to append to the response.
+	DeleteResponseHeaders map[string]string `json:"deleteResponseHeaders,omitempty" toml:"deleteResponseHeaders,omitempty" yaml:"deleteResponseHeaders,omitempty" export:"true"`
+
+	// Deprecated: use AppendRequestHeaders/ReplaceResponseHeaders/DeleteResponseHeaders.
 	// CustomRequestHeaders defines the header names and values to apply to the request.
 	CustomRequestHeaders map[string]string `json:"customRequestHeaders,omitempty" toml:"customRequestHeaders,omitempty" yaml:"customRequestHeaders,omitempty" export:"true"`
-	// CustomResponseHeaders defines the header names and values to apply to the response.
+
+	// Deprecated: use AppendResponseHeaders/ReplaceRequestHeaders/DeleteRequestHeaders.
+	//CustomResponseHeaders defines the header names and values to apply to the response.
 	CustomResponseHeaders map[string]string `json:"customResponseHeaders,omitempty" toml:"customResponseHeaders,omitempty" yaml:"customResponseHeaders,omitempty" export:"true"`
 
 	// AccessControlAllowCredentials defines whether the request can include user credentials.
@@ -328,9 +339,15 @@ func (h *Headers) HasNewStyleCustomRequestHeadersDefined() bool {
 		len(h.ReplaceRequestHeaders) != 0 || len(h.DeleteRequestHeaders) != 0)
 }
 
-// HasCustomResponseHeadersDefined checks to see if any of the custom header elements have been set.
-func (h *Headers) HasCustomResponseHeadersDefined() bool {
+// HasOldStyleCustomResponseHeadersDefined checks to see if any of the custom header elements have been set.
+func (h *Headers) HasOldStyleCustomResponseHeadersDefined() bool {
 	return h != nil && (len(h.CustomResponseHeaders) != 0)
+}
+
+// HasNewStyleCustomResponseHeadersDefined checks to see if any of the custom header elements have been set.
+func (h *Headers) HasNewStyleCustomResponseHeadersDefined() bool {
+	return h != nil && (len(h.AppendResponseHeaders) != 0 ||
+		len(h.ReplaceResponseHeaders) != 0 || len(h.DeleteResponseHeaders) != 0)
 }
 
 // HasCorsHeadersDefined checks to see if any of the cors header elements have been set.

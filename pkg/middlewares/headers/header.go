@@ -16,20 +16,24 @@ import (
 // A single headerOptions struct can be provided to configure which features should be enabled,
 // and the ability to override a few of the default values.
 type Header struct {
-	next                         http.Handler
-	hasCustomResponseHeaders     bool
-	hasCorsHeaders               bool
-	hasOldStyleRequestMiddleware bool
-	hasNewStyleHeaderMiddleware  bool
-	headers                      *dynamic.Headers
-	allowOriginRegexes           []*regexp.Regexp
+	next                                http.Handler
+	hasCustomRequestHeaders             bool
+	hasCustomResponseHeaders            bool
+	hasCorsHeaders                      bool
+	hasNewStyleRequestHeaderMiddleware  bool
+	hasNewStyleResponseHeaderMiddleware bool
+	headers                             *dynamic.Headers
+	allowOriginRegexes                  []*regexp.Regexp
 }
 
 // NewHeader constructs a new header instance from supplied frontend header struct.
 func NewHeader(next http.Handler, cfg dynamic.Headers) (*Header, error) {
-	hasCustomResponseHeaders := cfg.HasCustomResponseHeadersDefined()
-	hasOldStyleCustomHeaders := cfg.HasOldStyleCustomRequestHeadersDefined()
-	hasNewStyleCustomHeaders := cfg.HasNewStyleCustomRequestHeadersDefined()
+
+	hasOldStyleCustomRequestHeaders := cfg.HasOldStyleCustomRequestHeadersDefined()
+	hasNewStyleCustomRequestHeaders := cfg.HasNewStyleCustomRequestHeadersDefined()
+
+	hasOldStyleCustomResponseHeaders := cfg.HasOldStyleCustomResponseHeadersDefined()
+	hasNewStyleCustomResponseHeaders := cfg.HasNewStyleCustomResponseHeadersDefined()
 	hasCorsHeaders := cfg.HasCorsHeadersDefined()
 
 	ctx := log.With(context.Background(), log.Str(log.MiddlewareType, typeName))
@@ -45,13 +49,14 @@ func NewHeader(next http.Handler, cfg dynamic.Headers) (*Header, error) {
 	}
 
 	return &Header{
-		next:                         next,
-		headers:                      &cfg,
-		hasOldStyleRequestMiddleware: hasOldStyleCustomHeaders,
-		hasNewStyleHeaderMiddleware:  hasNewStyleCustomHeaders,
-		hasCustomResponseHeaders:     hasCustomResponseHeaders,
-		hasCorsHeaders:               hasCorsHeaders,
-		allowOriginRegexes:           regexes,
+		next:                                next,
+		headers:                             &cfg,
+		hasCustomRequestHeaders:             hasOldStyleCustomRequestHeaders,
+		hasNewStyleRequestHeaderMiddleware:  hasNewStyleCustomRequestHeaders,
+		hasCustomResponseHeaders:            hasOldStyleCustomResponseHeaders,
+		hasNewStyleResponseHeaderMiddleware: hasNewStyleCustomResponseHeaders,
+		hasCorsHeaders:                      hasCorsHeaders,
+		allowOriginRegexes:                  regexes,
 	}, nil
 }
 
@@ -61,17 +66,23 @@ func (s *Header) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if s.hasOldStyleRequestMiddleware {
+	// Old style only used without new style header.
+	if s.hasCustomRequestHeaders && !s.hasNewStyleRequestHeaderMiddleware {
 		s.modifyCustomRequestHeaders(req)
 	}
 
-	if s.hasNewStyleHeaderMiddleware {
+	if s.hasNewStyleRequestHeaderMiddleware {
 		s.modifyNewStyleCustomRequestHeaders(req)
 	}
 
 	// If there is a next, call it.
 	if s.next != nil {
-		s.next.ServeHTTP(newResponseModifier(rw, req, s.PostRequestModifyResponseHeaders), req)
+		if s.hasNewStyleResponseHeaderMiddleware {
+			s.next.ServeHTTP(newResponseModifier(rw, req, s.NewStylePostRequestModifyResponseHeaders), req)
+		} else {
+			s.next.ServeHTTP(newResponseModifier(rw, req, s.PostRequestModifyResponseHeaders), req)
+		}
+
 	}
 }
 
@@ -131,6 +142,69 @@ func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 		} else {
 			res.Header.Set(header, value)
 		}
+	}
+
+	if res != nil && res.Request != nil {
+		originHeader := res.Request.Header.Get("Origin")
+		allowed, match := s.isOriginAllowed(originHeader)
+
+		if allowed {
+			res.Header.Set("Access-Control-Allow-Origin", match)
+		}
+	}
+
+	if s.headers.AccessControlAllowCredentials {
+		res.Header.Set("Access-Control-Allow-Credentials", "true")
+	}
+
+	if len(s.headers.AccessControlExposeHeaders) > 0 {
+		exposeHeaders := strings.Join(s.headers.AccessControlExposeHeaders, ",")
+		res.Header.Set("Access-Control-Expose-Headers", exposeHeaders)
+	}
+
+	if !s.headers.AddVaryHeader {
+		return nil
+	}
+
+	varyHeader := res.Header.Get("Vary")
+	if varyHeader == "Origin" {
+		return nil
+	}
+
+	if varyHeader != "" {
+		varyHeader += ","
+	}
+	varyHeader += "Origin"
+
+	res.Header.Set("Vary", varyHeader)
+	return nil
+}
+
+// NewStylePostRequestModifyResponseHeaders set or delete response headers.
+// This method is called AFTER the response is generated from the backend
+// and can merge/override headers from the backend response.
+func (s *Header) NewStylePostRequestModifyResponseHeaders(res *http.Response) error {
+	// Loop through Custom response headers
+	for header, value := range s.headers.AppendResponseHeaders {
+		res.Header.Add(header, value)
+	}
+
+	for header, value := range s.headers.ReplaceResponseHeaders {
+		res.Header.Set(header, value)
+	}
+
+	// Support delete header key value instead of delete all.
+	for header, value := range s.headers.DeleteResponseHeaders {
+		values := res.Header.Values(header)
+		res.Header.Del(header)
+		if value != "" {
+			for _, v := range values {
+				if v != value {
+					res.Header.Add(header, v)
+				}
+			}
+		}
+
 	}
 
 	if res != nil && res.Request != nil {
