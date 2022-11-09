@@ -78,19 +78,28 @@ func TestNewHeader_newStyleCustomRequestHeader(t *testing.T) {
 		{
 			desc: "adds a header",
 			cfg: dynamic.Headers{
-				AppendRequestHeaders: map[string]string{"X-Custom-Request-Header": "test_request"},
+				AppendRequestHeaders: map[string]string{
+					"Foo":                     "baz",
+					"X-Custom-Request-Header": "test_request",
+				},
 			},
-			expected: http.Header{"Foo": []string{"bar"}, "X-Custom-Request-Header": []string{"test_request"}},
+			expected: http.Header{"Foo": []string{"bar", "baz"}, "X-Custom-Request-Header": []string{"test_request"}},
 		},
 		{
 			desc: "delete a header",
 			cfg: dynamic.Headers{
+				AppendRequestHeaders: map[string]string{
+					"Foo":                     "baz",
+					"X-Custom-Request-Header": "test_request",
+				},
 				DeleteRequestHeaders: map[string]string{
 					"X-Custom-Request-Header": "",
-					"Foo":                     "",
+					"Foo":                     "bar",
 				},
 			},
-			expected: http.Header{},
+			expected: http.Header{
+				"Foo": []string{"baz"},
+			},
 		},
 		{
 			desc: "override a header",

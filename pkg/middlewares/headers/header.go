@@ -105,11 +105,18 @@ func (s *Header) modifyNewStyleCustomRequestHeaders(req *http.Request) {
 		req.Header.Set(header, value)
 	}
 
+	// Support delete header key value instead of delete all.
 	for header, value := range s.headers.DeleteRequestHeaders {
-		req.Header.Set(header, value)
-		if req.Header.Get(header) == "" {
-			req.Header.Del(header)
+		values := req.Header.Values(header)
+		req.Header.Del(header)
+		if value != "" {
+			for _, v := range values {
+				if v != value {
+					req.Header.Add(header, v)
+				}
+			}
 		}
+
 	}
 }
 
