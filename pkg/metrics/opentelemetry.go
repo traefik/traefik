@@ -170,10 +170,7 @@ func newHTTPExporter(ctx context.Context, config *types.OpenTelemetry) (sdkmetri
 	opts := []otlpmetrichttp.Option{
 		otlpmetrichttp.WithEndpoint(config.Address),
 		otlpmetrichttp.WithHeaders(config.Headers),
-	}
-
-	if config.Compress {
-		opts = append(opts, otlpmetrichttp.WithCompression(otlpmetrichttp.GzipCompression))
+		otlpmetrichttp.WithCompression(otlpmetrichttp.GzipCompression),
 	}
 
 	if config.Insecure {
@@ -197,14 +194,10 @@ func newHTTPExporter(ctx context.Context, config *types.OpenTelemetry) (sdkmetri
 }
 
 func newGRPCExporter(ctx context.Context, config *types.OpenTelemetry) (sdkmetric.Exporter, error) {
-	// TODO: handle DialOption
 	opts := []otlpmetricgrpc.Option{
 		otlpmetricgrpc.WithEndpoint(config.Address),
 		otlpmetricgrpc.WithHeaders(config.Headers),
-	}
-
-	if config.Compress {
-		opts = append(opts, otlpmetricgrpc.WithCompressor(gzip.Name))
+		otlpmetricgrpc.WithCompressor(gzip.Name),
 	}
 
 	if config.Insecure {

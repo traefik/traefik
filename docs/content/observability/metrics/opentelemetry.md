@@ -114,28 +114,6 @@ metrics:
 --metrics.openTelemetry.addServicesLabels=true
 ```
 
-#### `compress`
-
-_Optional, Default=false_
-
-Allows reporter to send metrics to the OpenTelemetry Collector using gzip compression.
-
-```yaml tab="File (YAML)"
-metrics:
-  openTelemetry:
-    compress: true
-```
-
-```toml tab="File (TOML)"
-[metrics]
-  [metrics.openTelemetry]
-    compress = true
-```
-
-```bash tab="CLI"
---metrics.openTelemetry.compress=true
-```
-
 #### `explicitBoundaries`
 
 _Optional, Default=".005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10"_

@@ -8,6 +8,7 @@ import (
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/types"
 	"github.com/traefik/traefik/v2/pkg/version"
 	"go.opentelemetry.io/otel"
 	oteltracer "go.opentelemetry.io/otel/bridge/opentracing"
@@ -20,6 +21,18 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
 )
+
+// Config provides configuration settings for the open-telemetry tracer.
+type Config struct {
+	// NOTE: as no gRPC option is implemented yet, the type is empty and is used as a boolean for upward compatibility purposes.
+	GRPC *struct{} `description:"gRPC specific configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
+
+	Address  string            `description:"Sets the address of the collector endpoint." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
+	Path     string            `description:"Sets the default URL path for sending traces." json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
+	Insecure bool              `description:"Disables client transport security for the exporter." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
+	Headers  map[string]string `description:"Defines additional headers to be sent with the payloads." json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
+	TLS      *types.ClientTLS  `description:"Defines client transport security parameters." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+}
 
 // Setup sets up the tracer.
 func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, error) {
@@ -61,10 +74,7 @@ func (c *Config) setupHTTPExporter() (*otlptrace.Exporter, error) {
 	opts := []otlptracehttp.Option{
 		otlptracehttp.WithEndpoint(c.Address),
 		otlptracehttp.WithHeaders(c.Headers),
-	}
-
-	if c.Compress {
-		opts = append(opts, otlptracehttp.WithCompression(otlptracehttp.GzipCompression))
+		otlptracehttp.WithCompression(otlptracehttp.GzipCompression),
 	}
 
 	if c.Insecure {
@@ -88,14 +98,10 @@ func (c *Config) setupHTTPExporter() (*otlptrace.Exporter, error) {
 }
 
 func (c *Config) setupGRPCExporter() (*otlptrace.Exporter, error) {
-	// TODO: handle DialOption
 	opts := []otlptracegrpc.Option{
 		otlptracegrpc.WithEndpoint(c.Address),
 		otlptracegrpc.WithHeaders(c.Headers),
-	}
-
-	if c.Compress {
-		opts = append(opts, otlptracegrpc.WithCompressor(gzip.Name))
+		otlptracegrpc.WithCompressor(gzip.Name),
 	}
 
 	if c.Insecure {
