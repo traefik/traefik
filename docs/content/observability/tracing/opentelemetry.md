@@ -23,28 +23,6 @@ tracing:
 
 !!! info "The OpenTelemetry trace reporter will export traces to the collector using HTTP by default, see the [gRPC Section](#grpc-configuration) to use gRPC."
 
-#### `compress`
-
-_Optional, Default=false_
-
-Allows reporter to send span to the OpenTelemetry Collector using gzip compression.
-
-```yaml tab="File (YAML)"
-tracing:
-  openTelemetry:
-    compress: true
-```
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.openTelemetry]
-    compress = true
-```
-
-```bash tab="CLI"
---tracing.openTelemetry.compress=true
-```
-
 #### `address`
 
 _Required, Default="", Format="`<host>:<port>`"_
