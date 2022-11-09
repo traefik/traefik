@@ -234,18 +234,18 @@ type ForwardAuth struct {
 // This middleware manages the requests and responses headers.
 // More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/headers/#customrequestheaders
 type Headers struct {
-	// AppendRequestHeader defines the header names and values to append to the request.
+	// AppendRequestHeaders defines the header names and values to append to the request.
 	AppendRequestHeaders map[string]string `json:"appendRequestHeaders,omitempty" toml:"appendRequestHeaders,omitempty" yaml:"appendRequestHeaders,omitempty" export:"true"`
-	// ReplaceRequestHeader defines the header names and values to replace in the request.
+	// ReplaceRequestHeaders defines the header names and values to replace in the request.
 	ReplaceRequestHeaders map[string]string `json:"replaceRequestHeaders,omitempty" toml:"replaceRequestHeaders,omitempty" yaml:"replaceRequestHeaders,omitempty" export:"true"`
-	// DeleteRequestHeader defines the header names and values to append to the request.
+	// DeleteRequestHeaders defines the header names and values to append to the request.
 	DeleteRequestHeaders map[string]string `json:"deleteRequestHeaders,omitempty" toml:"deleteRequestHeaders,omitempty" yaml:"deleteRequestHeaders,omitempty" export:"true"`
 
-	// AppendResponseHeader defines the header names and values to append to the response.
+	// AppendResponseHeaders defines the header names and values to append to the response.
 	AppendResponseHeaders map[string]string `json:"appendResponseHeaders,omitempty" toml:"appendResponseHeaders,omitempty" yaml:"appendResponseHeaders,omitempty" export:"true"`
-	// ReplaceResponseHeader defines the header names and values to replace in the response.
+	// ReplaceResponseHeaders defines the header names and values to replace in the response.
 	ReplaceResponseHeaders map[string]string `json:"replaceResponseHeaders,omitempty" toml:"replaceResponseHeaders,omitempty" yaml:"replaceResponseHeaders,omitempty" export:"true"`
-	// DeleteResponseHeader defines the header names and values to append to the response.
+	// DeleteResponseHeaders defines the header names and values to append to the response.
 	DeleteResponseHeaders map[string]string `json:"deleteResponseHeaders,omitempty" toml:"deleteResponseHeaders,omitempty" yaml:"deleteResponseHeaders,omitempty" export:"true"`
 
 	// Deprecated: use AppendRequestHeaders/ReplaceResponseHeaders/DeleteResponseHeaders.
@@ -253,7 +253,7 @@ type Headers struct {
 	CustomRequestHeaders map[string]string `json:"customRequestHeaders,omitempty" toml:"customRequestHeaders,omitempty" yaml:"customRequestHeaders,omitempty" export:"true"`
 
 	// Deprecated: use AppendResponseHeaders/ReplaceRequestHeaders/DeleteRequestHeaders.
-	//CustomResponseHeaders defines the header names and values to apply to the response.
+	// CustomResponseHeaders defines the header names and values to apply to the response.
 	CustomResponseHeaders map[string]string `json:"customResponseHeaders,omitempty" toml:"customResponseHeaders,omitempty" yaml:"customResponseHeaders,omitempty" export:"true"`
 
 	// AccessControlAllowCredentials defines whether the request can include user credentials.
