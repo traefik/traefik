@@ -36,7 +36,7 @@ func TestNegotiation(t *testing.T) {
 			expEncoding: "br",
 		},
 		{
-			desc:            "bad accept header",
+			desc:            "unsupported accept header",
 			acceptEncHeader: "notreal",
 			expEncoding:     "",
 		},
@@ -57,12 +57,12 @@ func TestNegotiation(t *testing.T) {
 		},
 		{
 			desc:            "multi accept header, prefer br",
-			acceptEncHeader: "br;q=0.8, gzip;q=1.0",
+			acceptEncHeader: "br;q=0.8, gzip;q=0.6",
 			expEncoding:     "br",
 		},
 		{
 			desc:            "multi accept header, prefer br",
-			acceptEncHeader: "br;q=0.8, gzip;q=0.6",
+			acceptEncHeader: "gzip;q=1.0, br;q=0.8",
 			expEncoding:     "br",
 		},
 		{
@@ -74,6 +74,7 @@ func TestNegotiation(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
+
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -455,54 +456,6 @@ func TestMinResponseBodyBytes(t *testing.T) {
 
 			assert.Empty(t, rw.Header().Get(contentEncodingHeader))
 			assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
-		})
-	}
-}
-
-func Test_encodingAccepts(t *testing.T) {
-	testCases := []struct {
-		desc           string
-		acceptEncoding string
-		accepted       bool
-	}{
-		{
-			desc:           "br requested, br accepted",
-			acceptEncoding: "br",
-			accepted:       true,
-		},
-		{
-			desc:           "gzip requested, br not accepted",
-			acceptEncoding: "gzip",
-			accepted:       false,
-		},
-		{
-			desc:           "any requested, br accepted",
-			acceptEncoding: "*",
-			accepted:       true,
-		},
-		{
-			desc:           "gzip and br requested, br accepted",
-			acceptEncoding: "gzip, br",
-			accepted:       true,
-		},
-		{
-			desc:           "gzip and any requested, br accepted",
-			acceptEncoding: "gzip, *",
-			accepted:       true,
-		},
-		{
-			desc:           "gzip and identity requested, br not accepted",
-			acceptEncoding: "gzip, identity",
-			accepted:       false,
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			assert.Equal(t, test.accepted, encodingAccepts([]string{test.acceptEncoding}, "br"))
 		})
 	}
 }

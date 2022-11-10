@@ -41,9 +41,8 @@ func Test_SmallBodyNoCompression(t *testing.T) {
 	h.ServeHTTP(rw, req)
 
 	// With less than 1024 bytes the response should not be compressed.
-
 	assert.Equal(t, http.StatusOK, rw.Code)
-	assert.Equal(t, "", rw.Header().Get(contentEncoding))
+	assert.Empty(t, rw.Header().Get(contentEncoding))
 	assert.Equal(t, smallTestBody, rw.Body.Bytes())
 }
 
@@ -61,34 +60,29 @@ func Test_AlreadyCompressed(t *testing.T) {
 
 func Test_NoBody(t *testing.T) {
 	testCases := []struct {
-		desc            string
-		statusCode      int
-		contentEncoding string
-		body            []byte
+		desc       string
+		statusCode int
+		body       []byte
 	}{
 		{
-			desc:            "status no content",
-			statusCode:      http.StatusNoContent,
-			contentEncoding: "",
-			body:            nil,
+			desc:       "status no content",
+			statusCode: http.StatusNoContent,
+			body:       nil,
 		},
 		{
-			desc:            "status not modified",
-			statusCode:      http.StatusNotModified,
-			contentEncoding: "",
-			body:            nil,
+			desc:       "status not modified",
+			statusCode: http.StatusNotModified,
+			body:       nil,
 		},
 		{
-			desc:            "status OK with empty body",
-			statusCode:      http.StatusOK,
-			contentEncoding: "",
-			body:            []byte{},
+			desc:       "status OK with empty body",
+			statusCode: http.StatusOK,
+			body:       []byte{},
 		},
 		{
-			desc:            "status OK with nil body",
-			statusCode:      http.StatusOK,
-			contentEncoding: "",
-			body:            nil,
+			desc:       "status OK with nil body",
+			statusCode: http.StatusOK,
+			body:       nil,
 		},
 	}
 
@@ -97,11 +91,11 @@ func Test_NoBody(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			h := newMiddleware(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			h := mustNewWrapper(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(test.statusCode)
-				if _, err := rw.Write(test.body); err != nil {
-					http.Error(rw, err.Error(), http.StatusInternalServerError)
-				}
+
+				_, err := rw.Write(test.body)
+				require.NoError(t, err)
 			}))
 
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -113,23 +107,26 @@ func Test_NoBody(t *testing.T) {
 			body, err := io.ReadAll(rw.Body)
 			require.NoError(t, err)
 
-			assert.Equal(t, test.contentEncoding, rw.Header().Get(contentEncoding))
-			assert.Equal(t, 0, len(body))
+			assert.Empty(t, rw.Header().Get(contentEncoding))
+			assert.Empty(t, body)
 		})
 	}
 }
 
 func Test_MinSize(t *testing.T) {
-	bodySize := 0
-	h := newMiddleware(t, Config{MinSize: 128})(http.HandlerFunc(
+	cfg := Config{
+		MinSize: 128,
+	}
+
+	var bodySize int
+	h := mustNewWrapper(t, cfg)(http.HandlerFunc(
 		func(rw http.ResponseWriter, req *http.Request) {
 			for i := 0; i < bodySize; i++ {
 				// We make sure to Write at least once less than minSize so that both
 				// cases below go through the same algo: i.e. they start buffering
 				// because they haven't reached minSize.
-				if _, err := rw.Write([]byte{'x'}); err != nil {
-					http.Error(rw, err.Error(), http.StatusInternalServerError)
-				}
+				_, err := rw.Write([]byte{'x'})
+				require.NoError(t, err)
 			}
 		},
 	))
@@ -138,22 +135,22 @@ func Test_MinSize(t *testing.T) {
 	req.Header.Add(acceptEncoding, "br")
 
 	// Short response is not compressed
-	bodySize = 127
+	bodySize = cfg.MinSize - 1
 	rw := httptest.NewRecorder()
 	h.ServeHTTP(rw, req)
 
-	assert.Equal(t, "", rw.Result().Header.Get(contentEncoding))
+	assert.Empty(t, rw.Result().Header.Get(contentEncoding))
 
 	// Long response is compressed
-	bodySize = 128
+	bodySize = cfg.MinSize
 	rw = httptest.NewRecorder()
 	h.ServeHTTP(rw, req)
 
 	assert.Equal(t, "br", rw.Result().Header.Get(contentEncoding))
 }
 
-func Test_WriteHeader(t *testing.T) {
-	h := newMiddleware(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+func Test_MultipleWriteHeader(t *testing.T) {
+	h := mustNewWrapper(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		// We ensure that the subsequent call to WriteHeader is a noop.
 		rw.WriteHeader(http.StatusInternalServerError)
 		rw.WriteHeader(http.StatusNotFound)
@@ -169,13 +166,12 @@ func Test_WriteHeader(t *testing.T) {
 }
 
 func Test_FlushBeforeWrite(t *testing.T) {
-	srv := httptest.NewServer(newMiddleware(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	srv := httptest.NewServer(mustNewWrapper(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 		rw.(http.Flusher).Flush()
 
-		if _, err := rw.Write(bigTestBody); err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-		}
+		_, err := rw.Write(bigTestBody)
+		require.NoError(t, err)
 	})))
 	defer srv.Close()
 
@@ -198,18 +194,16 @@ func Test_FlushBeforeWrite(t *testing.T) {
 }
 
 func Test_FlushAfterWrite(t *testing.T) {
-	b := bigTestBody[:1024]
-	srv := httptest.NewServer(newMiddleware(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	srv := httptest.NewServer(mustNewWrapper(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
-		if _, err := rw.Write(b[0:1]); err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-		}
+
+		_, err := rw.Write(bigTestBody[0:1])
+		require.NoError(t, err)
 
 		rw.(http.Flusher).Flush()
-		for i := range b[1:] {
-			if _, err := rw.Write(b[i+1 : i+2]); err != nil {
-				http.Error(rw, err.Error(), http.StatusInternalServerError)
-			}
+		for i := range bigTestBody[1:] {
+			_, err := rw.Write(bigTestBody[i : i+1])
+			require.NoError(t, err)
 		}
 	})))
 	defer srv.Close()
@@ -229,15 +223,15 @@ func Test_FlushAfterWrite(t *testing.T) {
 
 	got, err := io.ReadAll(brotli.NewReader(res.Body))
 	require.NoError(t, err)
-	assert.Equal(t, b, got)
+	assert.Equal(t, bigTestBody, got)
 }
 
 func Test_FlushAfterWriteNil(t *testing.T) {
-	srv := httptest.NewServer(newMiddleware(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	srv := httptest.NewServer(mustNewWrapper(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
-		if _, err := rw.Write(nil); err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-		}
+
+		_, err := rw.Write(nil)
+		require.NoError(t, err)
 
 		rw.(http.Flusher).Flush()
 	})))
@@ -254,20 +248,18 @@ func Test_FlushAfterWriteNil(t *testing.T) {
 	defer res.Body.Close()
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Equal(t, "", res.Header.Get(contentEncoding))
+	assert.Empty(t, res.Header.Get(contentEncoding))
 
 	got, err := io.ReadAll(brotli.NewReader(res.Body))
 	require.NoError(t, err)
-	assert.Len(t, got, 0)
+	assert.Empty(t, got)
 }
 
 func Test_FlushAfterAllWrites(t *testing.T) {
-	b := bigTestBody[:1050]
-	srv := httptest.NewServer(newMiddleware(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		for i := range b {
-			if _, err := rw.Write(b[i : i+1]); err != nil {
-				http.Error(rw, err.Error(), http.StatusInternalServerError)
-			}
+	srv := httptest.NewServer(mustNewWrapper(t, Config{MinSize: 1024})(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		for i := range bigTestBody {
+			_, err := rw.Write(bigTestBody[i : i+1])
+			require.NoError(t, err)
 		}
 		rw.(http.Flusher).Flush()
 	})))
@@ -288,7 +280,7 @@ func Test_FlushAfterAllWrites(t *testing.T) {
 
 	got, err := io.ReadAll(brotli.NewReader(res.Body))
 	require.NoError(t, err)
-	assert.Equal(t, b, got)
+	assert.Equal(t, bigTestBody, got)
 }
 
 func Test_ExcludedContentTypes(t *testing.T) {
@@ -363,13 +355,13 @@ func Test_ExcludedContentTypes(t *testing.T) {
 				MinSize:              1024,
 				ExcludedContentTypes: test.excludedContentTypes,
 			}
-			h := newMiddleware(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			h := mustNewWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
 
 				rw.WriteHeader(http.StatusOK)
-				if _, err := rw.Write(bigTestBody); err != nil {
-					http.Error(rw, err.Error(), http.StatusInternalServerError)
-				}
+
+				_, err := rw.Write(bigTestBody)
+				require.NoError(t, err)
 			}))
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
@@ -469,7 +461,7 @@ func Test_FlushExcludedContentTypes(t *testing.T) {
 				MinSize:              1024,
 				ExcludedContentTypes: test.excludedContentTypes,
 			}
-			h := newMiddleware(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			h := mustNewWrapper(t, cfg)(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set(contentType, test.contentType)
 				rw.WriteHeader(http.StatusOK)
 
@@ -482,9 +474,8 @@ func Test_FlushExcludedContentTypes(t *testing.T) {
 						toWrite = len(tb)
 					}
 
-					if _, err := rw.Write(tb[:toWrite]); err != nil {
-						http.Error(rw, err.Error(), http.StatusInternalServerError)
-					}
+					_, err := rw.Write(tb[:toWrite])
+					require.NoError(t, err)
 
 					// Flush between each write
 					rw.(http.Flusher).Flush()
@@ -518,26 +509,110 @@ func Test_FlushExcludedContentTypes(t *testing.T) {
 	}
 }
 
-func newMiddleware(t *testing.T, cfg Config) func(http.Handler) http.HandlerFunc {
+func mustNewWrapper(t *testing.T, cfg Config) func(http.Handler) http.HandlerFunc {
 	t.Helper()
 
-	m, err := NewMiddleware(cfg)
+	w, err := NewWrapper(cfg)
 	require.NoError(t, err)
 
-	return m
+	return w
 }
 
 func newTestHandler(t *testing.T, body []byte) http.Handler {
 	t.Helper()
 
-	return newMiddleware(t, Config{MinSize: 1024})(
+	return mustNewWrapper(t, Config{MinSize: 1024})(
 		http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			if req.URL.Path == "/compressed" {
 				rw.Header().Set("Content-Encoding", "br")
 			}
-			if _, err := rw.Write(body); err != nil {
-				http.Error(rw, err.Error(), http.StatusInternalServerError)
-			}
+
+			_, err := rw.Write(body)
+			require.NoError(t, err)
 		}),
 	)
+}
+
+func TestParseContentType_equals(t *testing.T) {
+	testCases := []struct {
+		desc      string
+		pct       parsedContentType
+		mediaType string
+		params    map[string]string
+		expect    assert.BoolAssertionFunc
+	}{
+		{
+			desc:   "empty parsed content type",
+			expect: assert.True,
+		},
+		{
+			desc: "simple content type",
+			pct: parsedContentType{
+				mediaType: "plain/text",
+			},
+			mediaType: "plain/text",
+			expect:    assert.True,
+		},
+		{
+			desc: "content type with params",
+			pct: parsedContentType{
+				mediaType: "plain/text",
+				params: map[string]string{
+					"charset": "utf8",
+				},
+			},
+			mediaType: "plain/text",
+			params: map[string]string{
+				"charset": "utf8",
+			},
+			expect: assert.True,
+		},
+		{
+			desc: "different content type",
+			pct: parsedContentType{
+				mediaType: "plain/text",
+			},
+			mediaType: "application/json",
+			expect:    assert.False,
+		},
+		{
+			desc: "content type with params",
+			pct: parsedContentType{
+				mediaType: "plain/text",
+				params: map[string]string{
+					"charset": "utf8",
+				},
+			},
+			mediaType: "plain/text",
+			params: map[string]string{
+				"charset": "latin-1",
+			},
+			expect: assert.False,
+		},
+		{
+			desc: "different number of parameters",
+			pct: parsedContentType{
+				mediaType: "plain/text",
+				params: map[string]string{
+					"charset": "utf8",
+				},
+			},
+			mediaType: "plain/text",
+			params: map[string]string{
+				"charset": "utf8",
+				"q":       "0.8",
+			},
+			expect: assert.False,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			test.expect(t, test.pct.equals(test.mediaType, test.params))
+		})
+	}
 }

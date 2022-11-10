@@ -19,33 +19,46 @@ const (
 	contentType     = "Content-Type"
 )
 
-// parsedContentType is the parsed representation of one of the inputs to ContentTypes.
-// From https://github.com/klauspost/compress/blob/master/gzhttp/compress.go#L401.
-type parsedContentType struct {
-	mediaType string
-	params    map[string]string
+// Config is the Brotli handler configuration.
+type Config struct {
+	// ExcludedContentTypes is the list of content types for which we should not compress.
+	ExcludedContentTypes []string
+	// MinSize is the minimum size (in bytes) required to enable compression.
+	MinSize int
 }
 
-// equals returns whether this content type matches another content type.
-func (p parsedContentType) equals(mediaType string, params map[string]string) bool {
-	if p.mediaType != mediaType {
-		return false
-	}
-	// if p has no params, don't care about other's params
-	if len(p.params) == 0 {
-		return true
+// NewWrapper returns a new Brotli compressing wrapper.
+func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
+	if cfg.MinSize < 0 {
+		return nil, fmt.Errorf("minimum size must be greater than or equal to zero")
 	}
 
-	// if p has any params, they must be identical to other's.
-	if len(p.params) != len(params) {
-		return false
-	}
-	for k, v := range p.params {
-		if w, ok := params[k]; !ok || v != w {
-			return false
+	var contentTypes []parsedContentType
+	for _, v := range cfg.ExcludedContentTypes {
+		mediaType, params, err := mime.ParseMediaType(v)
+		if err != nil {
+			return nil, fmt.Errorf("parse media type: %w", err)
 		}
+
+		contentTypes = append(contentTypes, parsedContentType{mediaType, params})
 	}
-	return true
+
+	return func(h http.Handler) http.HandlerFunc {
+		return func(rw http.ResponseWriter, r *http.Request) {
+			rw.Header().Add(vary, acceptEncoding)
+
+			brw := &responseWriter{
+				rw:                   rw,
+				bw:                   brotli.NewWriter(rw),
+				minSize:              cfg.MinSize,
+				statusCode:           http.StatusOK,
+				excludedContentTypes: contentTypes,
+			}
+			defer brw.close()
+
+			h.ServeHTTP(brw, r)
+		}
+	}, nil
 }
 
 // TODO: check whether we want to implement content-type sniffing (as gzip does)
@@ -133,7 +146,7 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 	// and we are going to send headers right away.
 	r.compressionStarted = true
 
-	// Since we know we are going to compress we will not ever be able to know what the actual length is.
+	// Since we know we are going to compress we will never be able to know the actual length.
 	r.rw.Header().Del(contentLength)
 
 	r.rw.Header().Set(contentEncoding, "br")
@@ -148,6 +161,7 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 		// Return zero because we haven't taken care of the bytes in argument yet.
 		return 0, err
 	}
+
 	// If we wrote less than what we wanted, we need to reclaim the leftovers + the bytes in argument,
 	// and keep them for a subsequent Write.
 	if n < len(r.buf) {
@@ -155,6 +169,7 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 		r.buf = append(r.buf, p...)
 		return len(p), nil
 	}
+
 	// Otherwise just reset the buffer.
 	r.buf = r.buf[:0]
 
@@ -162,7 +177,8 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 	return r.bw.Write(p)
 }
 
-// Flush flushes data to the appropriate underlying writer(s).
+// Flush flushes data to the appropriate underlying writer(s), although it does
+// not guarantee that all buffered data will be sent.
 // If not enough bytes have been written to determine whether to enable compression,
 // no flushing will take place.
 func (r *responseWriter) Flush() {
@@ -172,12 +188,13 @@ func (r *responseWriter) Flush() {
 		return
 	}
 
-	// It was already established by Write that do not compress, we only
+	// It was already established by Write that compression is disabled, we only
 	// have to flush the uncompressed writer.
 	if r.compressionDisabled {
 		if rw, ok := r.rw.(http.Flusher); ok {
 			rw.Flush()
 		}
+
 		return
 	}
 
@@ -194,7 +211,8 @@ func (r *responseWriter) Flush() {
 	// Also, since we know that bw writes to rw, but (apparently) never flushes it,
 	// we have to do it ourselves.
 	defer func() {
-		r.bw.Flush()
+		// because we also ignore the error returned by Write anyway
+		_ = r.bw.Flush()
 
 		if rw, ok := r.rw.(http.Flusher); ok {
 			rw.Flush()
@@ -206,11 +224,13 @@ func (r *responseWriter) Flush() {
 	if err != nil {
 		return
 	}
+
 	// And just like in Write we also handle "short writes".
 	if n < len(r.buf) {
 		r.buf = r.buf[n:]
 		return
 	}
+
 	r.buf = r.buf[:0]
 }
 
@@ -222,6 +242,7 @@ func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 		r.hijacked = true
 		return hijacker.Hijack()
 	}
+
 	return nil, nil, fmt.Errorf("%T is not a http.Hijacker", r.rw)
 }
 
@@ -253,10 +274,7 @@ func (r *responseWriter) close() error {
 	}
 
 	if len(r.buf) == 0 {
-		if !r.compressionStarted {
-			return nil
-		}
-
+		// If we got here we know compression has started, so we can safely flush on bw.
 		return r.bw.Close()
 	}
 
@@ -274,7 +292,7 @@ func (r *responseWriter) close() error {
 	}
 
 	// There is still data in the buffer, simply because Write did not take care of it all.
-	// We keep on flushing it to the compressed writer.
+	// We flush it to the compressed writer.
 	n, err := r.bw.Write(r.buf)
 	if err != nil {
 		r.bw.Close()
@@ -287,44 +305,34 @@ func (r *responseWriter) close() error {
 	return r.bw.Close()
 }
 
-// Config is the brotli middleware configuration.
-type Config struct {
-	// MinSize is the minimum size (in bytes) required to enable compression.
-	MinSize int
-	// ExcludedContentTypes is the list of content types for which we should not compress.
-	ExcludedContentTypes []string
+// parsedContentType is the parsed representation of one of the inputs to ContentTypes.
+// From https://github.com/klauspost/compress/blob/master/gzhttp/compress.go#L401.
+type parsedContentType struct {
+	mediaType string
+	params    map[string]string
 }
 
-// NewMiddleware returns a new brotli compressing middleware.
-func NewMiddleware(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
-	if cfg.MinSize < 0 {
-		return nil, fmt.Errorf("minimum size must be greater than or equal to zero")
+// equals returns whether this content type matches another content type.
+func (p parsedContentType) equals(mediaType string, params map[string]string) bool {
+	if p.mediaType != mediaType {
+		return false
 	}
 
-	var contentTypes []parsedContentType
-	for _, v := range cfg.ExcludedContentTypes {
-		mediaType, params, err := mime.ParseMediaType(v)
-		if err != nil {
-			return nil, fmt.Errorf("parse media type: %w", err)
-		}
-
-		contentTypes = append(contentTypes, parsedContentType{mediaType, params})
+	// if p has no params, don't care about other's params
+	if len(p.params) == 0 {
+		return true
 	}
 
-	return func(h http.Handler) http.HandlerFunc {
-		return func(rw http.ResponseWriter, r *http.Request) {
-			rw.Header().Add(vary, acceptEncoding)
+	// if p has any params, they must be identical to other's.
+	if len(p.params) != len(params) {
+		return false
+	}
 
-			brw := &responseWriter{
-				rw:                   rw,
-				bw:                   brotli.NewWriterLevel(rw, brotli.DefaultCompression),
-				minSize:              cfg.MinSize, // already has a default in the caller (compress)
-				statusCode:           http.StatusOK,
-				excludedContentTypes: contentTypes,
-			}
-			defer brw.close()
-
-			h.ServeHTTP(brw, r)
+	for k, v := range p.params {
+		if w, ok := params[k]; !ok || v != w {
+			return false
 		}
-	}, nil
+	}
+
+	return true
 }

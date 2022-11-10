@@ -1,7 +1,6 @@
 package compress
 
 import (
-	"compress/gzip"
 	"context"
 	"fmt"
 	"mime"
@@ -61,7 +60,6 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 	}
 
 	var err error
-
 	c.brotliHandler, err = c.newBrotliHandler()
 	if err != nil {
 		return nil, err
@@ -76,7 +74,7 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 }
 
 func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	ctx := middlewares.GetLoggerCtx(req.Context(), c.name, typeName)
+	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), c.name, typeName))
 
 	if req.Method == http.MethodHead {
 		c.next.ServeHTTP(rw, req)
@@ -85,7 +83,7 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	mediaType, _, err := mime.ParseMediaType(req.Header.Get("Content-Type"))
 	if err != nil {
-		log.FromContext(ctx).Debug(err)
+		logger.WithError(err).Debug("Unable to parse MIME type")
 	}
 
 	// Notably for text/event-stream requests the response should not be compressed.
@@ -123,10 +121,10 @@ func (c *compress) GetTracingInformation() (string, ext.SpanKindEnum) {
 func (c *compress) newGzipHandler() (http.Handler, error) {
 	wrapper, err := gzhttp.NewWrapper(
 		gzhttp.ExceptContentTypes(c.excludes),
-		gzhttp.CompressionLevel(gzip.DefaultCompression),
-		gzhttp.MinSize(c.minSize))
+		gzhttp.MinSize(c.minSize),
+	)
 	if err != nil {
-		return nil, fmt.Errorf("new gzip handler: %w", err)
+		return nil, fmt.Errorf("new gzip wrapper: %w", err)
 	}
 
 	return wrapper(c.next), nil
@@ -138,33 +136,34 @@ func (c *compress) newBrotliHandler() (http.Handler, error) {
 		MinSize:              c.minSize,
 	}
 
-	m, err := brotli.NewMiddleware(cfg)
+	wrapper, err := brotli.NewWrapper(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("new brotli handler: %w", err)
+		return nil, fmt.Errorf("new brotli wrapper: %w", err)
 	}
 
-	return m(c.next), nil
+	return wrapper(c.next), nil
+}
+
+func encodingAccepts(acceptEncoding []string, typ string) bool {
+	for _, ae := range acceptEncoding {
+		for _, e := range strings.Split(ae, ",") {
+			parsed := strings.Split(strings.TrimSpace(e), ";")
+			if len(parsed) == 0 {
+				continue
+			}
+			if parsed[0] == typ || parsed[0] == "*" {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func contains(values []string, val string) bool {
 	for _, v := range values {
 		if v == val {
 			return true
-		}
-	}
-	return false
-}
-
-func encodingAccepts(acceptEncoding []string, encoding string) bool {
-	for _, want := range acceptEncoding {
-		for _, v := range strings.Split(want, ",") {
-			encodings := strings.Split(strings.TrimSpace(v), ";")
-			if len(encodings) == 0 {
-				continue
-			}
-			if encodings[0] == encoding || encodings[0] == "*" {
-				return true
-			}
 		}
 	}
 
