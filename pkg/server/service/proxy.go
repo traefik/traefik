@@ -62,23 +62,38 @@ func directorBuilder(target *url.URL, passHostHeader bool) func(req *http.Reques
 			outReq.Host = outReq.URL.Host
 		}
 
-		// Even if the websocket RFC says that headers should be case-insensitive,
-		// some servers need Sec-WebSocket-Key, Sec-WebSocket-Extensions, Sec-WebSocket-Accept,
-		// Sec-WebSocket-Protocol and Sec-WebSocket-Version to be case-sensitive.
-		// https://tools.ietf.org/html/rfc6455#page-20
-		if isWebSocketUpgrade(outReq) {
-			outReq.Header["Sec-WebSocket-Key"] = outReq.Header["Sec-Websocket-Key"]
-			outReq.Header["Sec-WebSocket-Extensions"] = outReq.Header["Sec-Websocket-Extensions"]
-			outReq.Header["Sec-WebSocket-Accept"] = outReq.Header["Sec-Websocket-Accept"]
-			outReq.Header["Sec-WebSocket-Protocol"] = outReq.Header["Sec-Websocket-Protocol"]
-			outReq.Header["Sec-WebSocket-Version"] = outReq.Header["Sec-Websocket-Version"]
-			delete(outReq.Header, "Sec-Websocket-Key")
-			delete(outReq.Header, "Sec-Websocket-Extensions")
-			delete(outReq.Header, "Sec-Websocket-Accept")
-			delete(outReq.Header, "Sec-Websocket-Protocol")
-			delete(outReq.Header, "Sec-Websocket-Version")
-		}
+		cleanWebSocketHeaders(outReq)
 	}
+}
+
+// cleanWebSocketHeaders Even if the websocket RFC says that headers should be case-insensitive,
+// some servers need Sec-WebSocket-Key, Sec-WebSocket-Extensions, Sec-WebSocket-Accept,
+// Sec-WebSocket-Protocol and Sec-WebSocket-Version to be case-sensitive.
+// https://tools.ietf.org/html/rfc6455#page-20
+func cleanWebSocketHeaders(req *http.Request) {
+	if !isWebSocketUpgrade(req) {
+		return
+	}
+
+	req.Header["Sec-WebSocket-Key"] = req.Header["Sec-Websocket-Key"]
+	delete(req.Header, "Sec-Websocket-Key")
+
+	req.Header["Sec-WebSocket-Extensions"] = req.Header["Sec-Websocket-Extensions"]
+	delete(req.Header, "Sec-Websocket-Extensions")
+
+	req.Header["Sec-WebSocket-Accept"] = req.Header["Sec-Websocket-Accept"]
+	delete(req.Header, "Sec-Websocket-Accept")
+
+	req.Header["Sec-WebSocket-Protocol"] = req.Header["Sec-Websocket-Protocol"]
+	delete(req.Header, "Sec-Websocket-Protocol")
+
+	req.Header["Sec-WebSocket-Version"] = req.Header["Sec-Websocket-Version"]
+	delete(req.Header, "Sec-Websocket-Version")
+}
+
+func isWebSocketUpgrade(req *http.Request) bool {
+	return httpguts.HeaderValuesContainsToken(req.Header["Connection"], "Upgrade") &&
+		strings.EqualFold(req.Header.Get("Upgrade"), "websocket")
 }
 
 func errorHandler(w http.ResponseWriter, req *http.Request, err error) {
@@ -107,14 +122,6 @@ func errorHandler(w http.ResponseWriter, req *http.Request, err error) {
 	if _, werr := w.Write([]byte(statusText(statusCode))); werr != nil {
 		logger.Debugf("Error while writing status code", werr)
 	}
-}
-
-func isWebSocketUpgrade(req *http.Request) bool {
-	if !httpguts.HeaderValuesContainsToken(req.Header["Connection"], "Upgrade") {
-		return false
-	}
-
-	return strings.EqualFold(req.Header.Get("Upgrade"), "websocket")
 }
 
 func statusText(statusCode int) string {
