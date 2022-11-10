@@ -18,7 +18,11 @@ var (
 
 // isPostgres determines whether the buffer contains the Postgres STARTTLS message.
 func isPostgres(br *bufio.Reader) (bool, error) {
-	for i := 0; i < len(PostgresStartTLSMsg); i++ {
+	// Peek the first 8 bytes individually to prevent blocking on peek
+	// if the underlying conn does not send enough bytes.
+	// It could happen if a protocol start by sending less than 8 bytes,
+	// and expect a response before proceeding.
+	for i := 1; i < len(PostgresStartTLSMsg)+1; i++ {
 		peeked, err := br.Peek(i)
 		if err != nil {
 			log.WithoutContext().Errorf("Error while Peeking first bytes: %s", err)
