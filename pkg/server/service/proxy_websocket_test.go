@@ -77,9 +77,7 @@ func TestWebSocketPingPong(t *testing.T) {
 		_, _, _ = ws.ReadMessage()
 	})
 
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		mux.ServeHTTP(w, req)
-	}))
+	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
 	proxy := createProxyWithForwarder(t, srv.URL, http.DefaultTransport)
@@ -128,9 +126,7 @@ func TestWebSocketEcho(t *testing.T) {
 		require.NoError(t, err)
 	}))
 
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		mux.ServeHTTP(w, req)
-	}))
+	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
 	proxy := createProxyWithForwarder(t, srv.URL, http.DefaultTransport)
@@ -193,9 +189,7 @@ func TestWebSocketPassHost(t *testing.T) {
 				require.NoError(t, err)
 			}))
 
-			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-				mux.ServeHTTP(w, req)
-			}))
+			srv := httptest.NewServer(mux)
 			defer srv.Close()
 
 			proxy := createProxyWithForwarder(t, srv.URL, http.DefaultTransport)
@@ -344,9 +338,7 @@ func TestWebSocketRequestWithHeadersInResponseWriter(t *testing.T) {
 	mux.Handle("/ws", websocket.Handler(func(conn *websocket.Conn) {
 		conn.Close()
 	}))
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		mux.ServeHTTP(w, req)
-	}))
+	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
 	f := buildSingleHostProxy(parseURI(t, srv.URL), true, 0, http.DefaultTransport, nil)
@@ -362,6 +354,7 @@ func TestWebSocketRequestWithHeadersInResponseWriter(t *testing.T) {
 	headers := http.Header{}
 	webSocketURL := "ws://" + serverAddr + "/ws"
 	headers.Add("Origin", webSocketURL)
+
 	conn, resp, err := gorillawebsocket.DefaultDialer.Dial(webSocketURL, headers)
 	require.NoError(t, err, "Error during Dial with response: %+v", err, resp)
 	defer conn.Close()
@@ -411,9 +404,7 @@ func TestWebSocketUpgradeFailed(t *testing.T) {
 	mux.HandleFunc("/ws", func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	})
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		mux.ServeHTTP(w, req)
-	}))
+	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
 	f := buildSingleHostProxy(parseURI(t, srv.URL), true, 0, http.DefaultTransport, nil)
@@ -463,9 +454,7 @@ func TestForwardsWebsocketTraffic(t *testing.T) {
 		err = conn.Close()
 		require.NoError(t, err)
 	}))
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		mux.ServeHTTP(w, req)
-	}))
+	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
 	proxy := createProxyWithForwarder(t, srv.URL, http.DefaultTransport)
