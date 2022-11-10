@@ -51,7 +51,7 @@ func (f *forwarderMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Reques
 
 	tracing.InjectRequestHeaders(req)
 
-	recorder := newStatusCodeRecoder(rw, 200)
+	recorder := newStatusCodeRecorder(rw, 200)
 
 	f.next.ServeHTTP(recorder, req)
 
