@@ -10,9 +10,8 @@ Compress Allows Compressing Responses before Sending them to the Client
 
 ![Compress](../../assets/img/middleware/compress.png)
 
-The Compress middleware supports gzip and brotli compression.
-The activation of compression, and the compression method choice
-rely (among other things) on the request's `Accept-Encoding` header.
+The Compress middleware supports gzip and Brotli compression.
+The activation of compression, and the compression method choice rely (among other things) on the request's `Accept-Encoding` header.
 
 ## Configuration Examples
 
@@ -67,14 +66,18 @@ http:
 
     Responses are compressed when the following criteria are all met:
 
-    * The `Accept-Encoding` request header contains `gzip`, `*`, and/or `br` with or without [quality values](https://developer.mozilla.org/en-US/docs/Glossary/Quality_values). If the `Accept-Encoding` request header is absent, it is meant as br compression is requested. If it is present, but its value is the empty string, then compression is disabled.
+    * The `Accept-Encoding` request header contains `gzip`, `*`, and/or `br` with or without [quality values](https://developer.mozilla.org/en-US/docs/Glossary/Quality_values).
+    If the `Accept-Encoding` request header is absent, it is meant as br compression is requested.
+    If it is present, but its value is the empty string, then compression is disabled.
     * The response is not already compressed, i.e. the `Content-Encoding` response header is not already set.
-    * The response`Content-Type` header is not one among the excludedContentTypes options described below.
-    * The response body is larger than the configured minimum amount of bytes (default is `1024`).
+    * The response`Content-Type` header is not one among the [excludedContentTypes options](#excludedcontenttypes).
+    * The response body is larger than the [configured minimum amount of bytes](#minresponsebodybytes) (default is `1024`).
 
 ## Configuration Options
 
 ### `excludedContentTypes`
+
+_Optional, Default=""_ 
 
 `excludedContentTypes` specifies a list of content types to compare the `Content-Type` header of the incoming requests and responses before compressing.
 
@@ -86,6 +89,10 @@ Content types are compared in a case-insensitive, whitespace-ignored manner.
 
     If the `Content-Type` header is not defined, or empty, the compress middleware will automatically [detect](https://mimesniff.spec.whatwg.org/) a content type.
     It will also set the `Content-Type` header according to the detected MIME type.
+
+!!! info "gRPC"
+
+    Note that `application/grpc` is never compressed.
 
 ```yaml tab="Docker"
 labels:
@@ -135,9 +142,9 @@ http:
 
 ### `minResponseBodyBytes`
 
-`minResponseBodyBytes` specifies the minimum amount of bytes a response body must have to be compressed.
+_Optional, Default=1024_
 
-The default value is `1024`, which should be a reasonable value for most cases.
+`minResponseBodyBytes` specifies the minimum amount of bytes a response body must have to be compressed.
 
 Responses smaller than the specified values will not be compressed.
 
