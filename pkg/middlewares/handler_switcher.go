@@ -19,8 +19,7 @@ func NewHandlerSwitcher(newHandler http.Handler) (hs *HTTPHandlerSwitcher) {
 }
 
 func (h *HTTPHandlerSwitcher) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	handlerBackup := h.handler.Get().(http.Handler)
-	handlerBackup.ServeHTTP(rw, req)
+	h.handler.Get().(http.Handler).ServeHTTP(rw, req)
 }
 
 // GetHandler returns the current http.ServeMux.
