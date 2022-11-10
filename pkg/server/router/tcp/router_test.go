@@ -923,7 +923,7 @@ func checkHTTPSTLS12(addr string, timeout time.Duration) error {
 	return checkHTTPS(addr, timeout, tls.VersionTLS12)
 }
 
-func TestPostGreSQL(t *testing.T) {
+func TestPostgres(t *testing.T) {
 	router, err := NewRouter()
 	require.NoError(t, err)
 
