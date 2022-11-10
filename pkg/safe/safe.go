@@ -1,27 +1,30 @@
 package safe
 
 import (
-	"sync/atomic"
+	"sync"
 )
 
 // Safe contains a thread-safe value.
 type Safe struct {
-	atomic.Value
+	value interface{}
+	lock  sync.RWMutex
 }
 
 // New create a new Safe instance given a value.
 func New(value interface{}) *Safe {
-	v := atomic.Value{}
-	v.Store(value)
-	return &Safe{v}
+	return &Safe{value: value, lock: sync.RWMutex{}}
 }
 
 // Get returns the value.
 func (s *Safe) Get() interface{} {
-	return s.Load()
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	return s.value
 }
 
 // Set sets a new value.
 func (s *Safe) Set(value interface{}) {
-	s.Store(value)
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.value = value
 }
