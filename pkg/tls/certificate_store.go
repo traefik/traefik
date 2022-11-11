@@ -15,15 +15,14 @@ import (
 
 // CertificateStore store for dynamic certificates.
 type CertificateStore struct {
-	DynamicCerts       *safe.Safe
+	DynamicCerts       *safe.Sync[map[string]*tls.Certificate]
 	DefaultCertificate *tls.Certificate
 	CertCache          *cache.Cache
 }
 
 // NewCertificateStore create a store for dynamic certificates.
 func NewCertificateStore() *CertificateStore {
-	s := &safe.Safe{}
-	s.Set(make(map[string]*tls.Certificate))
+	s := safe.NewSync(make(map[string]*tls.Certificate))
 
 	return &CertificateStore{
 		DynamicCerts: s,

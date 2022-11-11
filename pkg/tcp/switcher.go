@@ -6,7 +6,7 @@ import (
 
 // HandlerSwitcher is a TCP handler switcher.
 type HandlerSwitcher struct {
-	router safe.Safe
+	router safe.Atomic[any]
 }
 
 // ServeTCP forwards the TCP connection to the current active handler.
