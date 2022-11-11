@@ -8,25 +8,23 @@ import (
 
 // HTTPHandlerSwitcher allows hot switching of http.ServeMux.
 type HTTPHandlerSwitcher struct {
-	handler *safe.Safe
+	handler *safe.Atomic[http.Handler]
 }
 
 // NewHandlerSwitcher builds a new instance of HTTPHandlerSwitcher.
 func NewHandlerSwitcher(newHandler http.Handler) (hs *HTTPHandlerSwitcher) {
 	return &HTTPHandlerSwitcher{
-		handler: safe.New(newHandler),
+		handler: safe.NewAtomic[http.Handler](newHandler),
 	}
 }
 
 func (h *HTTPHandlerSwitcher) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	handlerBackup := h.handler.Get().(http.Handler)
-	handlerBackup.ServeHTTP(rw, req)
+	h.handler.Get().ServeHTTP(rw, req)
 }
 
 // GetHandler returns the current http.ServeMux.
 func (h *HTTPHandlerSwitcher) GetHandler() (newHandler http.Handler) {
-	handler := h.handler.Get().(http.Handler)
-	return handler
+	return h.handler.Get()
 }
 
 // UpdateHandler safely updates the current http.ServeMux with a new one.
