@@ -41,9 +41,9 @@ type Atomic[T any] struct {
 
 // New create a new Atomic instance given a value.
 func NewAtomic[T any](value T) *Atomic[T] {
-	v := atomic.Pointer[T]{}
-	v.Store(&value)
-	return &Atomic[T]{v}
+	p := Atomic[T]{atomic.Pointer[T]{}}
+	p.Store(&value)
+	return &p
 }
 
 // Get returns the value.
