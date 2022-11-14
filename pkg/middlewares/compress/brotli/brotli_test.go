@@ -201,8 +201,8 @@ func Test_FlushAfterWrite(t *testing.T) {
 		require.NoError(t, err)
 
 		rw.(http.Flusher).Flush()
-		for i := range bigTestBody[1:] {
-			_, err := rw.Write(bigTestBody[i : i+1])
+		for _, b := range bigTestBody[1:] {
+			_, err := rw.Write([]byte{b})
 			require.NoError(t, err)
 		}
 	})))
