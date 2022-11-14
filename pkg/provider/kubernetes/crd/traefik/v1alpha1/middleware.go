@@ -32,7 +32,7 @@ type MiddlewareSpec struct {
 	ReplacePath       *dynamic.ReplacePath       `json:"replacePath,omitempty"`
 	ReplacePathRegex  *dynamic.ReplacePathRegex  `json:"replacePathRegex,omitempty"`
 	Chain             *Chain                     `json:"chain,omitempty"`
-	IPWhiteList       *dynamic.IPWhiteList       `json:"ipWhiteList,omitempty"`
+	IPAllowList       *dynamic.IPAllowList       `json:"ipAllowList,omitempty"`
 	Headers           *dynamic.Headers           `json:"headers,omitempty"`
 	Errors            *ErrorPage                 `json:"errors,omitempty"`
 	RateLimit         *RateLimit                 `json:"rateLimit,omitempty"`
@@ -48,6 +48,7 @@ type MiddlewareSpec struct {
 	PassTLSClientCert *dynamic.PassTLSClientCert `json:"passTLSClientCert,omitempty"`
 	Retry             *Retry                     `json:"retry,omitempty"`
 	ContentType       *dynamic.ContentType       `json:"contentType,omitempty"`
+	GrpcWeb           *dynamic.GrpcWeb           `json:"grpcWeb,omitempty"`
 	// Plugin defines the middleware plugin configuration.
 	// More info: https://doc.traefik.io/traefik/plugins/
 	Plugin map[string]apiextensionv1.JSON `json:"plugin,omitempty"`

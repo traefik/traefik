@@ -1,30 +1,30 @@
 ---
-title: "Traefik TCP Middlewares IPWhiteList"
-description: "Learn how to use IPWhiteList in TCP middleware for limiting clients to specific IPs in Traefik Proxy. Read the technical documentation."
+title: "Traefik TCP Middlewares IPAllowList"
+description: "Learn how to use IPAllowList in TCP middleware for limiting clients to specific IPs in Traefik Proxy. Read the technical documentation."
 ---
 
-# IPWhiteList
+# IPAllowList
 
 Limiting Clients to Specific IPs
 {: .subtitle }
 
-IPWhitelist accepts / refuses connections based on the client IP.
+IPAllowList accepts / refuses connections based on the client IP.
 
 ## Configuration Examples
 
 ```yaml tab="Docker"
 # Accepts connections from defined IP
 labels:
-  - "traefik.tcp.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
+  - "traefik.tcp.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="Kubernetes"
 apiVersion: traefik.containo.us/v1alpha1
 kind: MiddlewareTCP
 metadata:
-  name: test-ipwhitelist
+  name: test-ipallowlist
 spec:
-  ipWhiteList:
+  ipAllowList:
     sourceRange:
       - 127.0.0.1/32
       - 192.168.1.7
@@ -32,25 +32,25 @@ spec:
 
 ```yaml tab="Consul Catalog"
 # Accepts request from defined IP
-- "traefik.tcp.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
+- "traefik.tcp.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.tcp.middlewares.test-ipwhitelist.ipwhitelist.sourcerange": "127.0.0.1/32,192.168.1.7"
+  "traefik.tcp.middlewares.test-ipallowlist.ipallowlist.sourcerange": "127.0.0.1/32,192.168.1.7"
 }
 ```
 
 ```yaml tab="Rancher"
 # Accepts request from defined IP
 labels:
-  - "traefik.tcp.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
+  - "traefik.tcp.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```toml tab="File (TOML)"
 # Accepts request from defined IP
 [tcp.middlewares]
-  [tcp.middlewares.test-ipwhitelist.ipWhiteList]
+  [tcp.middlewares.test-ipallowlist.ipAllowList]
     sourceRange = ["127.0.0.1/32", "192.168.1.7"]
 ```
 
@@ -58,8 +58,8 @@ labels:
 # Accepts request from defined IP
 tcp:
   middlewares:
-    test-ipwhitelist:
-      ipWhiteList:
+    test-ipallowlist:
+      ipAllowList:
         sourceRange:
           - "127.0.0.1/32"
           - "192.168.1.7"

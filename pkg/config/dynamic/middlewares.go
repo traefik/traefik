@@ -18,7 +18,7 @@ type Middleware struct {
 	ReplacePath       *ReplacePath       `json:"replacePath,omitempty" toml:"replacePath,omitempty" yaml:"replacePath,omitempty" export:"true"`
 	ReplacePathRegex  *ReplacePathRegex  `json:"replacePathRegex,omitempty" toml:"replacePathRegex,omitempty" yaml:"replacePathRegex,omitempty" export:"true"`
 	Chain             *Chain             `json:"chain,omitempty" toml:"chain,omitempty" yaml:"chain,omitempty" export:"true"`
-	IPWhiteList       *IPWhiteList       `json:"ipWhiteList,omitempty" toml:"ipWhiteList,omitempty" yaml:"ipWhiteList,omitempty" export:"true"`
+	IPAllowList       *IPAllowList       `json:"ipAllowList,omitempty" toml:"ipAllowList,omitempty" yaml:"ipAllowList,omitempty" export:"true"`
 	Headers           *Headers           `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
 	Errors            *ErrorPage         `json:"errors,omitempty" toml:"errors,omitempty" yaml:"errors,omitempty" export:"true"`
 	RateLimit         *RateLimit         `json:"rateLimit,omitempty" toml:"rateLimit,omitempty" yaml:"rateLimit,omitempty" export:"true"`
@@ -34,8 +34,19 @@ type Middleware struct {
 	PassTLSClientCert *PassTLSClientCert `json:"passTLSClientCert,omitempty" toml:"passTLSClientCert,omitempty" yaml:"passTLSClientCert,omitempty" export:"true"`
 	Retry             *Retry             `json:"retry,omitempty" toml:"retry,omitempty" yaml:"retry,omitempty" export:"true"`
 	ContentType       *ContentType       `json:"contentType,omitempty" toml:"contentType,omitempty" yaml:"contentType,omitempty" export:"true"`
+	GrpcWeb           *GrpcWeb           `json:"grpcWeb,omitempty" toml:"grpcWeb,omitempty" yaml:"grpcWeb,omitempty" export:"true"`
 
 	Plugin map[string]PluginConf `json:"plugin,omitempty" toml:"plugin,omitempty" yaml:"plugin,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// GrpcWeb holds the gRPC web middleware configuration.
+// This middleware converts a gRPC web request to an HTTP/2 gRPC request.
+type GrpcWeb struct {
+	// AllowOrigins is a list of allowable origins.
+	// Can also be a wildcard origin "*".
+	AllowOrigins []string `json:"allowOrigins,omitempty" toml:"allowOrigins,omitempty" yaml:"allowOrigins,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -346,7 +357,7 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 // +k8s:deepcopy-gen=true
 
 // IPStrategy holds the IP strategy configuration used by Traefik to determine the client IP.
-// More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipwhitelist/#ipstrategy
+// More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipallowlist/#ipstrategy
 type IPStrategy struct {
 	// Depth tells Traefik to use the X-Forwarded-For header and take the IP located at the depth position (starting from the right).
 	Depth int `json:"depth,omitempty" toml:"depth,omitempty" yaml:"depth,omitempty" export:"true"`
@@ -385,10 +396,10 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 
 // +k8s:deepcopy-gen=true
 
-// IPWhiteList holds the IP whitelist middleware configuration.
+// IPAllowList holds the IP allowlist middleware configuration.
 // This middleware accepts / refuses requests based on the client IP.
-// More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipwhitelist/
-type IPWhiteList struct {
+// More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipallowlist/
+type IPAllowList struct {
 	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation).
 	SourceRange []string    `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
 	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty"  label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
