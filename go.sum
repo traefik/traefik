@@ -1641,8 +1641,9 @@ github.com/opencontainers/runc v1.0.0-rc9/go.mod h1:qT5XzbpPznkRYVz/mWwUaVBUv2rm
 github.com/opencontainers/runc v1.0.0-rc92/go.mod h1:X1zlU4p7wOlX4+WRCz+hvlRv8phdL7UqbYD+vQwNMmE=
 github.com/opencontainers/runc v1.0.0-rc93/go.mod h1:3NOsor4w32B2tC0Zbl8Knk4Wg84SM2ImC1fxBuqJ/H0=
 github.com/opencontainers/runc v1.0.1/go.mod h1:aTaHFFwQXuA71CiyxOdFFIorAoemI04suvGRQFzWTD0=
-github.com/opencontainers/runc v1.0.2 h1:opHZMaswlyxz1OuGpBE53Dwe4/xF7EZTY0A2L/FpCOg=
 github.com/opencontainers/runc v1.0.2/go.mod h1:aTaHFFwQXuA71CiyxOdFFIorAoemI04suvGRQFzWTD0=
+github.com/opencontainers/runc v1.0.3 h1:1hbqejyQWCJBvtKAfdO0b1FmaEf2z/bxnjqbARass5k=
+github.com/opencontainers/runc v1.0.3/go.mod h1:aTaHFFwQXuA71CiyxOdFFIorAoemI04suvGRQFzWTD0=
 github.com/opencontainers/runtime-spec v0.1.2-0.20190507144316-5b71a03e2700/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/opencontainers/runtime-spec v1.0.1/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/opencontainers/runtime-spec v1.0.2-0.20190207185410-29686dbc5559/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
@@ -2055,8 +2056,8 @@ github.com/vmihailenco/tagparser v0.1.1/go.mod h1:OeAg3pn3UbLjkWt+rN9oFYB6u/cQgq
 github.com/vmihailenco/tagparser v0.1.2/go.mod h1:OeAg3pn3UbLjkWt+rN9oFYB6u/cQgqMEUPoW2WPyhdI=
 github.com/vmihailenco/tagparser/v2 v2.0.0/go.mod h1:Wri+At7QHww0WTrCBeu4J6bNtoV6mEfg5OIWRZA9qds=
 github.com/vmware/govmomi v0.18.0/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59bHWk6aFU=
-github.com/vulcand/oxy v1.4.1 h1:8FUsbr5xhSJqNlSrpUBcw93WuZIEI9JUyvThB9YqqF8=
-github.com/vulcand/oxy v1.4.1/go.mod h1:Yq8OBb0XWU/7nPSglwUH5LS2Pcp4yvad8SVayobZbSo=
+github.com/vulcand/oxy v1.4.2 h1:KibUVdKrwy7eXR3uHS2pYoZ9dCzKVcgDNHD2jkPZmxU=
+github.com/vulcand/oxy v1.4.2/go.mod h1:Yq8OBb0XWU/7nPSglwUH5LS2Pcp4yvad8SVayobZbSo=
 github.com/vulcand/predicate v1.2.0 h1:uFsW1gcnnR7R+QTID+FVcs0sSYlIGntoGOTb3rQJt50=
 github.com/vulcand/predicate v1.2.0/go.mod h1:VipoNYXny6c8N381zGUWkjuuNHiRbeAZhE7Qm9c+2GA=
 github.com/vultr/govultr/v2 v2.17.2 h1:gej/rwr91Puc/tgh+j33p/BLR16UrIPnSr+AIwYWZQs=
