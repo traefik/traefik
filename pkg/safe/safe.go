@@ -18,7 +18,7 @@ func NewSync[T any](value T) *Sync[T] {
 }
 
 // Get returns the value.
-func (s *Sync[T]) Get() interface{} {
+func (s *Sync[T]) Get() T {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	return s.value

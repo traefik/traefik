@@ -62,7 +62,7 @@ func (c CertificateStore) GetAllDomains() []string {
 
 	// Get dynamic certificates
 	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
-		for domain := range c.DynamicCerts.Get().(map[string]*tls.Certificate) {
+		for domain := range c.DynamicCerts.Get() {
 			allDomains = append(allDomains, domain)
 		}
 	}
@@ -91,7 +91,7 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 
 	matchedCerts := map[string]*tls.Certificate{}
 	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
-		for domains, cert := range c.DynamicCerts.Get().(map[string]*tls.Certificate) {
+		for domains, cert := range c.DynamicCerts.Get() {
 			for _, certDomain := range strings.Split(domains, ",") {
 				if matchDomain(serverName, certDomain) {
 					matchedCerts[certDomain] = cert
@@ -130,7 +130,7 @@ func (c *CertificateStore) GetCertificate(domains []string) *tls.Certificate {
 	}
 
 	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
-		for certDomains, cert := range c.DynamicCerts.Get().(map[string]*tls.Certificate) {
+		for certDomains, cert := range c.DynamicCerts.Get() {
 			if domainsKey == certDomains {
 				c.CertCache.SetDefault(domainsKey, cert)
 				return cert
