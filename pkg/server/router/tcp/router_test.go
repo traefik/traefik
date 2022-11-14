@@ -927,10 +927,10 @@ func TestPostgres(t *testing.T) {
 	router, err := NewRouter()
 	require.NoError(t, err)
 
-	err = router.AddRouteTLS("HostSNI(`test.localhost`)", 0, tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
-		_, _ = conn.Write([]byte("OK"))
-		_ = conn.Close()
-	}), &tls.Config{})
+	// This test requires to have a TLS route, but does not actually check the
+	// content of the handler. It would require to code a TLS handshake to
+	// check the SNI and content of the handlerFunc.
+	err = router.AddRouteTLS("HostSNI(`test.localhost`)", 0, nil, &tls.Config{})
 	require.NoError(t, err)
 
 	err = router.AddRoute("HostSNI(`*`)", 0, tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
