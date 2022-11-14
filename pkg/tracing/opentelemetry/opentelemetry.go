@@ -60,7 +60,6 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 	}
 
 	tracerProvider := sdktrace.NewTracerProvider(
-		sdktrace.WithSampler(sdktrace.AlwaysSample()),
 		sdktrace.WithBatcher(exporter),
 	)
 	otel.SetTracerProvider(tracerProvider)
