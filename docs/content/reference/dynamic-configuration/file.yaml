@@ -58,6 +58,7 @@ http:
           - url: foobar
         healthCheck:
           scheme: foobar
+          mode: foobar
           path: foobar
           method: foobar
           port: 42
@@ -229,7 +230,7 @@ http:
         permissionsPolicy: foobar
         isDevelopment: true
     Middleware11:
-      ipWhiteList:
+      ipAllowList:
         sourceRange:
           - foobar
           - foobar
@@ -323,6 +324,11 @@ http:
         regex:
           - foobar
           - foobar
+    Middleware23:
+      grpcWeb:
+        allowOrigins:
+          - foobar
+          - foobar
   serversTransports:
     ServersTransport0:
       serverName: foobar
@@ -344,6 +350,12 @@ http:
         pingTimeout: 42s
       disableHTTP2: true
       peerCertURI: foobar
+      spiffe:
+        ids:
+          - foobar
+          - foobar
+        trustDomain: foobar
+
     ServersTransport1:
       serverName: foobar
       insecureSkipVerify: true
@@ -364,6 +376,12 @@ http:
         pingTimeout: 42s
       disableHTTP2: true
       peerCertURI: foobar
+      spiffe:
+        ids:
+          - foobar
+          - foobar
+        trustDomain: foobar
+
 tcp:
   routers:
     TCPRouter0:
@@ -430,7 +448,7 @@ tcp:
             weight: 42
   middlewares:
     TCPMiddleware00:
-      ipWhiteList:
+      ipAllowList:
         sourceRange:
           - foobar
           - foobar

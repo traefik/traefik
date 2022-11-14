@@ -109,6 +109,8 @@ nav:
       - 'Overview': 'https/overview.md'
       - 'TLS': 'https/tls.md'
       - 'Let''s Encrypt': 'https/acme.md'
+      - 'Tailscale': 'https/tailscale.md'
+      - 'SPIFFE': 'https/spiffe.md'
   - 'Middlewares':
     - 'Overview': 'middlewares/overview.md'
     - 'HTTP':
@@ -123,8 +125,9 @@ nav:
         - 'DigestAuth': 'middlewares/http/digestauth.md'
         - 'Errors': 'middlewares/http/errorpages.md'
         - 'ForwardAuth': 'middlewares/http/forwardauth.md'
+        - 'GrpcWeb': 'middlewares/http/grpcweb.md'
         - 'Headers': 'middlewares/http/headers.md'
-        - 'IpWhitelist': 'middlewares/http/ipwhitelist.md'
+        - 'IpAllowList': 'middlewares/http/ipallowlist.md'
         - 'InFlightReq': 'middlewares/http/inflightreq.md'
         - 'PassTLSClientCert': 'middlewares/http/passtlsclientcert.md'
         - 'RateLimit': 'middlewares/http/ratelimit.md'
@@ -138,7 +141,7 @@ nav:
     - 'TCP':
         - 'Overview': 'middlewares/tcp/overview.md'
         - 'InFlightConn': 'middlewares/tcp/inflightconn.md'
-        - 'IpWhitelist': 'middlewares/tcp/ipwhitelist.md'
+        - 'IpAllowList': 'middlewares/tcp/ipallowlist.md'
   - 'Traefik Hub': 'traefik-hub/index.md'
   - 'Plugins & Plugin Catalog': 'plugins/index.md'
   - 'Operations':
@@ -175,6 +178,7 @@ nav:
           - 'HTTP Challenge': 'user-guides/docker-compose/acme-http/index.md'
           - 'DNS Challenge': 'user-guides/docker-compose/acme-dns/index.md'
   - 'Migration':
+      - 'Traefik v2 to v3': 'migration/v2-to-v3.md'
       - 'Traefik v2 minor migrations': 'migration/v2.md'
       - 'Traefik v1 to v2': 'migration/v1-to-v2.md'
   - 'Contributing':

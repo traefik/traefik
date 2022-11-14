@@ -32,6 +32,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/nomad/api v0.0.0-20220506174431-b5665129cd1f
+	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/influxdata/influxdb-client-go/v2 v2.7.0
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
 	github.com/instana/go-sensor v1.38.3
@@ -57,8 +58,10 @@ require (
 	github.com/prometheus/client_model v0.2.0
 	github.com/rancher/go-rancher-metadata v0.0.0-20200311180630-7f4c936a06ac
 	github.com/sirupsen/logrus v1.8.1
+	github.com/spiffe/go-spiffe/v2 v2.1.1
 	github.com/stretchr/testify v1.8.0
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
+	github.com/tailscale/tscert v0.0.0-20220316030059-54bbcb9f74e2
 	github.com/traefik/paerser v0.1.9
 	github.com/traefik/yaegi v0.14.3
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
@@ -75,7 +78,7 @@ require (
 	golang.org/x/text v0.3.7
 	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65
 	golang.org/x/tools v0.1.6-0.20210726203631-07bc1bf47fb2
-	google.golang.org/grpc v1.41.0
+	google.golang.org/grpc v1.46.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.38.1
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.1
@@ -110,7 +113,7 @@ require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect
-	github.com/Microsoft/go-winio v0.5.1 // indirect
+	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/Microsoft/hcsshim v0.8.23 // indirect
 	github.com/OpenDNS/vegadns2client v0.0.0-20180418235048-a3fa4a771d87 // indirect
 	github.com/Shopify/sarama v1.23.1 // indirect
@@ -140,6 +143,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/cpu/goacmedns v0.1.1 // indirect
 	github.com/deepmap/oapi-codegen v1.9.1 // indirect
+	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/dgraph-io/ristretto v0.1.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
@@ -187,7 +191,7 @@ require (
 	github.com/gophercloud/gophercloud v1.0.0 // indirect
 	github.com/gophercloud/utils v0.0.0-20210216074907-f6de111f2eae // indirect
 	github.com/gravitational/trace v1.1.16-0.20220114165159-14a9a7dd6aaf // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0 // indirect
+	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2 // indirect
 	github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645 // indirect
 	github.com/hashicorp/consul/sdk v0.10.0 // indirect
 	github.com/hashicorp/cronexpr v1.1.1 // indirect
@@ -246,6 +250,7 @@ require (
 	github.com/miekg/pkcs11 v1.0.3 // indirect
 	github.com/mimuret/golang-iij-dpf v0.7.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
+	github.com/mitchellh/go-ps v1.0.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/mitchellh/reflectwalk v1.0.1 // indirect
 	github.com/moby/buildkit v0.8.2-0.20210401015549-df49b648c8bf // indirect
@@ -277,6 +282,7 @@ require (
 	github.com/pquerna/otp v1.3.0 // indirect
 	github.com/prometheus/common v0.35.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/rs/cors v1.7.0 // indirect
 	github.com/sacloud/api-client-go v0.2.1 // indirect
 	github.com/sacloud/go-http v0.1.2 // indirect
 	github.com/sacloud/iaas-api-go v1.3.2 // indirect
@@ -309,6 +315,7 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/yandex-cloud/go-genproto v0.0.0-20220805142335-27b56ddae16f // indirect
 	github.com/yandex-cloud/go-sdk v0.0.0-20220805164847-cf028e604997 // indirect
+	github.com/zeebo/errs v1.2.2 // indirect
 	go.elastic.co/apm/module/apmhttp v1.13.1 // indirect
 	go.elastic.co/fastjson v1.1.0 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.4 // indirect
@@ -339,6 +346,7 @@ require (
 	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect
 	k8s.io/klog/v2 v2.10.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20210421082810-95288971da7e // indirect
+	nhooyr.io/websocket v1.8.7 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )

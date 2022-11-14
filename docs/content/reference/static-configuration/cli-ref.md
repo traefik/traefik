@@ -99,11 +99,17 @@ Storage to use. (Default: ```acme.json```)
 `--certificatesresolvers.<name>.acme.tlschallenge`:  
 Activate TLS-ALPN-01 Challenge. (Default: ```true```)
 
+`--certificatesresolvers.<name>.tailscale`:  
+Enables Tailscale certificate resolution. (Default: ```true```)
+
 `--entrypoints.<name>`:  
 Entry points definition. (Default: ```false```)
 
 `--entrypoints.<name>.address`:  
 Entry point address.
+
+`--entrypoints.<name>.asdefault`:  
+Adds this EntryPoint to the list of default EntryPoints to be used on routers that don't have any Entrypoint defined. (Default: ```false```)
 
 `--entrypoints.<name>.forwardedheaders.insecure`:  
 Trust all forwarded headers. (Default: ```false```)
@@ -559,13 +565,13 @@ Watch Docker events. (Default: ```true```)
 Enable AWS ECS backend with default settings. (Default: ```false```)
 
 `--providers.ecs.accesskeyid`:  
-The AWS credentials access key to use for making requests
+AWS credentials access key ID to use for making requests.
 
 `--providers.ecs.autodiscoverclusters`:  
-Auto discover cluster (Default: ```false```)
+Auto discover cluster. (Default: ```false```)
 
 `--providers.ecs.clusters`:  
-ECS Clusters name (Default: ```default```)
+ECS Cluster names. (Default: ```default```)
 
 `--providers.ecs.constraints`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
@@ -574,19 +580,22 @@ Constraints is an expression that Traefik matches against the container's labels
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
 `--providers.ecs.ecsanywhere`:  
-Enable ECS Anywhere support (Default: ```false```)
+Enable ECS Anywhere support. (Default: ```false```)
 
 `--providers.ecs.exposedbydefault`:  
-Expose services by default (Default: ```true```)
+Expose services by default. (Default: ```true```)
+
+`--providers.ecs.healthytasksonly`:  
+Determines whether to discover only healthy tasks. (Default: ```false```)
 
 `--providers.ecs.refreshseconds`:  
-Polling interval (in seconds) (Default: ```15```)
+Polling interval (in seconds). (Default: ```15```)
 
 `--providers.ecs.region`:  
-The AWS region to use for requests
+AWS region to use for requests.
 
 `--providers.ecs.secretaccesskey`:  
-The AWS credentials access key to use for making requests
+AWS credentials access key to use for making requests.
 
 `--providers.etcd`:  
 Enable Etcd backend with default settings. (Default: ```false```)
@@ -635,6 +644,9 @@ Enable HTTP backend with default settings. (Default: ```false```)
 
 `--providers.http.endpoint`:  
 Load configuration from this endpoint.
+
+`--providers.http.headers.<name>`:  
+Define custom headers to be sent to the endpoint.
 
 `--providers.http.pollinterval`:  
 Polling interval for endpoint. (Default: ```5```)
@@ -855,6 +867,9 @@ Expose Nomad services by default. (Default: ```true```)
 `--providers.nomad.namespace`:  
 Sets the Nomad namespace used to discover services.
 
+`--providers.nomad.namespaces`:  
+Sets the Nomad namespaces used to discover services.
+
 `--providers.nomad.prefix`:  
 Prefix for nomad service tags. (Default: ```traefik```)
 
@@ -968,6 +983,18 @@ If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, D
 
 `--serverstransport.rootcas`:  
 Add cert file for self-signed certificate.
+
+`--serverstransport.spiffe`:  
+Defines the SPIFFE configuration. (Default: ```false```)
+
+`--serverstransport.spiffe.ids`:  
+Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
+
+`--serverstransport.spiffe.trustdomain`:  
+Defines the allowed SPIFFE trust domain.
+
+`--spiffe.workloadapiaddr`:  
+Defines the workload API address.
 
 `--tracing`:  
 OpenTracing configuration. (Default: ```false```)

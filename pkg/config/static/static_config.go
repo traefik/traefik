@@ -84,11 +84,19 @@ type Configuration struct {
 	Hub *hub.Provider `description:"Traefik Hub configuration." json:"hub,omitempty" toml:"hub,omitempty" yaml:"hub,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	Experimental *Experimental `description:"experimental features." json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty" export:"true"`
+
+	Spiffe *SpiffeClientConfig `description:"SPIFFE integration configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" export:"true"`
+}
+
+// SpiffeClientConfig defines the SPIFFE client configuration.
+type SpiffeClientConfig struct {
+	WorkloadAPIAddr string `description:"Defines the workload API address." json:"workloadAPIAddr,omitempty" toml:"workloadAPIAddr,omitempty" yaml:"workloadAPIAddr,omitempty"`
 }
 
 // CertificateResolver contains the configuration for the different types of certificates resolver.
 type CertificateResolver struct {
-	ACME *acmeprovider.Configuration `description:"Enable ACME (Let's Encrypt): automatic SSL." json:"acme,omitempty" toml:"acme,omitempty" yaml:"acme,omitempty" export:"true"`
+	ACME      *acmeprovider.Configuration `description:"Enables ACME (Let's Encrypt) automatic SSL." json:"acme,omitempty" toml:"acme,omitempty" yaml:"acme,omitempty" export:"true"`
+	Tailscale *struct{}                   `description:"Enables Tailscale certificate resolution." json:"tailscale,omitempty" toml:"tailscale,omitempty" yaml:"tailscale,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // Global holds the global configuration.
@@ -103,6 +111,13 @@ type ServersTransport struct {
 	RootCAs             []tls.FileOrContent `description:"Add cert file for self-signed certificate." json:"rootCAs,omitempty" toml:"rootCAs,omitempty" yaml:"rootCAs,omitempty"`
 	MaxIdleConnsPerHost int                 `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, DefaultMaxIdleConnsPerHost is used" json:"maxIdleConnsPerHost,omitempty" toml:"maxIdleConnsPerHost,omitempty" yaml:"maxIdleConnsPerHost,omitempty" export:"true"`
 	ForwardingTimeouts  *ForwardingTimeouts `description:"Timeouts for requests forwarded to the backend servers." json:"forwardingTimeouts,omitempty" toml:"forwardingTimeouts,omitempty" yaml:"forwardingTimeouts,omitempty" export:"true"`
+	Spiffe              *Spiffe             `description:"Defines the SPIFFE configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+}
+
+// Spiffe holds the SPIFFE configuration.
+type Spiffe struct {
+	IDs         []string `description:"Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain)." json:"ids,omitempty" toml:"ids,omitempty" yaml:"ids,omitempty"`
+	TrustDomain string   `description:"Defines the allowed SPIFFE trust domain." json:"trustDomain,omitempty" yaml:"trustDomain,omitempty" toml:"trustDomain,omitempty"`
 }
 
 // API holds the API configuration.
@@ -186,7 +201,7 @@ type Providers struct {
 	Rest              *rest.Provider                 `description:"Enable Rest backend with default settings." json:"rest,omitempty" toml:"rest,omitempty" yaml:"rest,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	Rancher           *rancher.Provider              `description:"Enable Rancher backend with default settings." json:"rancher,omitempty" toml:"rancher,omitempty" yaml:"rancher,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	ConsulCatalog     *consulcatalog.ProviderBuilder `description:"Enable ConsulCatalog backend with default settings." json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	Nomad             *nomad.Provider                `description:"Enable Nomad backend with default settings." json:"nomad,omitempty" toml:"nomad,omitempty" yaml:"nomad,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Nomad             *nomad.ProviderBuilder         `description:"Enable Nomad backend with default settings." json:"nomad,omitempty" toml:"nomad,omitempty" yaml:"nomad,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Ecs               *ecs.Provider                  `description:"Enable AWS ECS backend with default settings." json:"ecs,omitempty" toml:"ecs,omitempty" yaml:"ecs,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	Consul    *consul.ProviderBuilder `description:"Enable Consul backend with default settings." json:"consul,omitempty" toml:"consul,omitempty" yaml:"consul,omitempty" label:"allowEmpty" file:"allowEmpty"  export:"true"`
@@ -311,6 +326,10 @@ func (c *Configuration) initACMEProvider() {
 func (c *Configuration) ValidateConfiguration() error {
 	var acmeEmail string
 	for name, resolver := range c.CertificatesResolvers {
+		if resolver.ACME != nil && resolver.Tailscale != nil {
+			return fmt.Errorf("unable to initialize certificates resolver %q, as ACME and Tailscale providers are mutually exclusive", name)
+		}
+
 		if resolver.ACME == nil {
 			continue
 		}
@@ -320,17 +339,21 @@ func (c *Configuration) ValidateConfiguration() error {
 		}
 
 		if acmeEmail != "" && resolver.ACME.Email != acmeEmail {
-			return fmt.Errorf("unable to initialize certificates resolver %q, all the acme resolvers must use the same email", name)
+			return fmt.Errorf("unable to initialize certificates resolver %q, as all ACME resolvers must use the same email", name)
 		}
 		acmeEmail = resolver.ACME.Email
 	}
 
 	if c.Providers.ConsulCatalog != nil && c.Providers.ConsulCatalog.Namespace != "" && len(c.Providers.ConsulCatalog.Namespaces) > 0 {
-		return fmt.Errorf("consul catalog provider cannot have both namespace and namespaces options configured")
+		return fmt.Errorf("Consul Catalog provider cannot have both namespace and namespaces options configured")
 	}
 
 	if c.Providers.Consul != nil && c.Providers.Consul.Namespace != "" && len(c.Providers.Consul.Namespaces) > 0 {
-		return fmt.Errorf("consul provider cannot have both namespace and namespaces options configured")
+		return fmt.Errorf("Consul provider cannot have both namespace and namespaces options configured")
+	}
+
+	if c.Providers.Nomad != nil && c.Providers.Nomad.Namespace != "" && len(c.Providers.Nomad.Namespaces) > 0 {
+		return fmt.Errorf("Nomad provider cannot have both namespace and namespaces options configured")
 	}
 
 	return nil

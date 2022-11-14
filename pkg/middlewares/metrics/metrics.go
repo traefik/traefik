@@ -16,10 +16,13 @@ import (
 	"github.com/traefik/traefik/v2/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v2/pkg/middlewares/retry"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
+	"google.golang.org/grpc/codes"
 )
 
 const (
 	protoHTTP      = "http"
+	protoGRPC      = "grpc"
+	protoGRPCWeb   = "grpc-web"
 	protoSSE       = "sse"
 	protoWebsocket = "websocket"
 	typeName       = "Metrics"
@@ -109,9 +112,12 @@ func WrapServiceHandler(ctx context.Context, registry metrics.Registry, serviceN
 }
 
 func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	proto := getRequestProtocol(req)
+
 	var labels []string
 	labels = append(labels, m.baseLabels...)
-	labels = append(labels, "method", getMethod(req), "protocol", getRequestProtocol(req))
+	labels = append(labels, "method", getMethod(req))
+	labels = append(labels, "protocol", proto)
 
 	openConnsGauge := m.openConnsGauge.With(labels...)
 	openConnsGauge.Add(1)
@@ -145,7 +151,12 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	start := time.Now()
 	next.ServeHTTP(rw, req)
 
-	labels = append(labels, "code", strconv.Itoa(capt.StatusCode()))
+	code := capt.StatusCode()
+	if proto == protoGRPC || proto == protoGRPCWeb {
+		code = grpcStatusCode(rw)
+	}
+
+	labels = append(labels, "code", strconv.Itoa(code))
 	m.reqDurationHistogram.With(labels...).ObserveFromStart(start)
 	m.reqsCounter.With(labels...).Add(1)
 	m.respsBytesCounter.With(labels...).Add(float64(capt.ResponseSize()))
@@ -158,6 +169,10 @@ func getRequestProtocol(req *http.Request) string {
 		return protoWebsocket
 	case isSSERequest(req):
 		return protoSSE
+	case isGRPCWebRequest(req):
+		return protoGRPCWeb
+	case isGRPCRequest(req):
+		return protoGRPC
 	default:
 		return protoHTTP
 	}
@@ -171,6 +186,27 @@ func isWebsocketRequest(req *http.Request) bool {
 // isSSERequest determines if the specified HTTP request is a request for an event subscription.
 func isSSERequest(req *http.Request) bool {
 	return containsHeader(req, "Accept", "text/event-stream")
+}
+
+// isGRPCWebRequest determines if the specified HTTP request is a gRPC-Web request.
+func isGRPCWebRequest(req *http.Request) bool {
+	return strings.HasPrefix(req.Header.Get("Content-Type"), "application/grpc-web")
+}
+
+// isGRPCRequest determines if the specified HTTP request is a gRPC request.
+func isGRPCRequest(req *http.Request) bool {
+	return strings.HasPrefix(req.Header.Get("Content-Type"), "application/grpc")
+}
+
+// grpcStatusCode parses and returns the gRPC status code from the Grpc-Status header.
+func grpcStatusCode(rw http.ResponseWriter) int {
+	code := codes.Unknown
+	if status := rw.Header().Get("Grpc-Status"); status != "" {
+		if err := code.UnmarshalJSON([]byte(status)); err != nil {
+			return int(code)
+		}
+	}
+	return int(code)
 }
 
 func containsHeader(req *http.Request, name, value string) bool {

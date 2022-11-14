@@ -119,18 +119,18 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						"default-test.route-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
 							Service:     "default-test.route-fdd3e9338e47a45efefc",
-							Middlewares: []string{"default-ipwhitelist", "foo-ipwhitelist"},
+							Middlewares: []string{"default-ipallowlist", "foo-ipallowlist"},
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{
-						"default-ipwhitelist": {
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+						"default-ipallowlist": {
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
-						"foo-ipwhitelist": {
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+						"foo-ipallowlist": {
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
@@ -178,7 +178,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{
 						"default-multiple-hyphens": {
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
@@ -220,18 +220,18 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 						"default-test.route-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
 							Service:     "default-test.route-fdd3e9338e47a45efefc",
-							Middlewares: []string{"default-ipwhitelist", "foo-ipwhitelist", "ipwhitelist@file", "ipwhitelist-foo@file"},
+							Middlewares: []string{"default-ipallowlist", "foo-ipallowlist", "ipallowlist@file", "ipallowlist-foo@file"},
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{
-						"default-ipwhitelist": {
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+						"default-ipallowlist": {
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
-						"foo-ipwhitelist": {
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+						"foo-ipallowlist": {
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
@@ -3916,6 +3916,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 								PingTimeout:           ptypes.Duration(42 * time.Second),
 							},
 							PeerCertURI: "foo://bar",
+							Spiffe: &dynamic.Spiffe{
+								IDs: []string{
+									"spiffe://foo/buz",
+									"spiffe://bar/biz",
+								},
+								TrustDomain: "spiffe://lol",
+							},
 						},
 						"default-test": {
 							ServerName: "test",
@@ -5452,18 +5459,18 @@ func TestCrossNamespace(t *testing.T) {
 						"default-test.route-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
 							Service:     "default-test.route-fdd3e9338e47a45efefc",
-							Middlewares: []string{"default-ipwhitelist"},
+							Middlewares: []string{"default-ipallowlist"},
 							Rule:        "HostSNI(`foo.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{
-						"default-ipwhitelist": {
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+						"default-ipallowlist": {
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
-						"cross-ns-ipwhitelist": {
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+						"cross-ns-ipallowlist": {
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
@@ -5506,24 +5513,24 @@ func TestCrossNamespace(t *testing.T) {
 						"default-test.route-fdd3e9338e47a45efefc": {
 							EntryPoints: []string{"foo"},
 							Service:     "default-test.route-fdd3e9338e47a45efefc",
-							Middlewares: []string{"default-ipwhitelist"},
+							Middlewares: []string{"default-ipallowlist"},
 							Rule:        "HostSNI(`foo.com`)",
 						},
 						"default-test.route-f44ce589164e656d231c": {
 							EntryPoints: []string{"foo"},
 							Service:     "default-test.route-f44ce589164e656d231c",
-							Middlewares: []string{"cross-ns-ipwhitelist"},
+							Middlewares: []string{"cross-ns-ipallowlist"},
 							Rule:        "HostSNI(`bar.com`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{
-						"default-ipwhitelist": {
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+						"default-ipallowlist": {
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
-						"cross-ns-ipwhitelist": {
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+						"cross-ns-ipallowlist": {
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
