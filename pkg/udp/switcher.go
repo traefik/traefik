@@ -6,7 +6,7 @@ import (
 
 // HandlerSwitcher is a switcher implementation of the Handler interface.
 type HandlerSwitcher struct {
-	handler safe.Safe
+	handler safe.Sync[any]
 }
 
 // ServeUDP implements the Handler interface.

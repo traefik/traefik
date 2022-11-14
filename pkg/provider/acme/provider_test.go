@@ -17,19 +17,17 @@ func TestGetUncheckedCertificates(t *testing.T) {
 	wildcardMap := make(map[string]*tls.Certificate)
 	wildcardMap["*.traefik.wtf"] = &tls.Certificate{}
 
-	wildcardSafe := &safe.Safe{}
-	wildcardSafe.Set(wildcardMap)
+	wildcardSafe := safe.NewSync(wildcardMap)
 
 	domainMap := make(map[string]*tls.Certificate)
 	domainMap["traefik.wtf"] = &tls.Certificate{}
 
-	domainSafe := &safe.Safe{}
-	domainSafe.Set(domainMap)
+	domainSafe := safe.NewSync(domainMap)
 
 	// TODO Add a test for DefaultCertificate
 	testCases := []struct {
 		desc             string
-		dynamicCerts     *safe.Safe
+		dynamicCerts     *safe.Sync[map[string]*tls.Certificate]
 		resolvingDomains map[string]struct{}
 		acmeCertificates []*CertAndStore
 		domains          []string

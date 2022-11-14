@@ -51,7 +51,7 @@ type Provider struct {
 	ThrottleDuration ptypes.Duration       `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	EntryPoints      map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
-	lastConfiguration safe.Safe
+	lastConfiguration safe.Sync[uint64]
 }
 
 // Entrypoint defines the available entry points.
