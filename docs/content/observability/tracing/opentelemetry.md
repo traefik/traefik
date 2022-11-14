@@ -23,6 +23,11 @@ tracing:
 
 !!! info "The OpenTelemetry trace reporter will export traces to the collector using HTTP by default, see the [gRPC Section](#grpc-configuration) to use gRPC."
 
+!!! info "Trace sampling"
+
+	By default, the OpenTelemetry trace reporter will sample 100% of traces.
+	See [OpenTelemetry's SDK configuration](https://opentelemetry.io/docs/reference/specification/sdk-environment-variables/#general-sdk-configuration) to customize the sampling strategy.
+
 #### `address`
 
 _Required, Default="", Format="`<host>:<port>`"_
