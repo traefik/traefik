@@ -1,4 +1,4 @@
-package ipwhitelist
+package ipallowlist
 
 import (
 	"context"
@@ -11,22 +11,22 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 )
 
-func TestNewIPWhiteLister(t *testing.T) {
+func TestNewIPAllowLister(t *testing.T) {
 	testCases := []struct {
 		desc          string
-		whiteList     dynamic.IPWhiteList
+		allowList     dynamic.IPAllowList
 		expectedError bool
 	}{
 		{
 			desc: "invalid IP",
-			whiteList: dynamic.IPWhiteList{
+			allowList: dynamic.IPAllowList{
 				SourceRange: []string{"foo"},
 			},
 			expectedError: true,
 		},
 		{
 			desc: "valid IP",
-			whiteList: dynamic.IPWhiteList{
+			allowList: dynamic.IPAllowList{
 				SourceRange: []string{"10.10.10.10"},
 			},
 		},
@@ -38,28 +38,28 @@ func TestNewIPWhiteLister(t *testing.T) {
 			t.Parallel()
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			whiteLister, err := New(context.Background(), next, test.whiteList, "traefikTest")
+			allowLister, err := New(context.Background(), next, test.allowList, "traefikTest")
 
 			if test.expectedError {
 				assert.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				assert.NotNil(t, whiteLister)
+				assert.NotNil(t, allowLister)
 			}
 		})
 	}
 }
 
-func TestIPWhiteLister_ServeHTTP(t *testing.T) {
+func TestIPAllowLister_ServeHTTP(t *testing.T) {
 	testCases := []struct {
 		desc       string
-		whiteList  dynamic.IPWhiteList
+		allowList  dynamic.IPAllowList
 		remoteAddr string
 		expected   int
 	}{
 		{
 			desc: "authorized with remote address",
-			whiteList: dynamic.IPWhiteList{
+			allowList: dynamic.IPAllowList{
 				SourceRange: []string{"20.20.20.20"},
 			},
 			remoteAddr: "20.20.20.20:1234",
@@ -67,7 +67,7 @@ func TestIPWhiteLister_ServeHTTP(t *testing.T) {
 		},
 		{
 			desc: "non authorized with remote address",
-			whiteList: dynamic.IPWhiteList{
+			allowList: dynamic.IPAllowList{
 				SourceRange: []string{"20.20.20.20"},
 			},
 			remoteAddr: "20.20.20.21:1234",
@@ -81,7 +81,7 @@ func TestIPWhiteLister_ServeHTTP(t *testing.T) {
 			t.Parallel()
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			whiteLister, err := New(context.Background(), next, test.whiteList, "traefikTest")
+			allowLister, err := New(context.Background(), next, test.allowList, "traefikTest")
 			require.NoError(t, err)
 
 			recorder := httptest.NewRecorder()
@@ -92,7 +92,7 @@ func TestIPWhiteLister_ServeHTTP(t *testing.T) {
 				req.RemoteAddr = test.remoteAddr
 			}
 
-			whiteLister.ServeHTTP(recorder, req)
+			allowLister.ServeHTTP(recorder, req)
 
 			assert.Equal(t, test.expected, recorder.Code)
 		})

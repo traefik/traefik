@@ -390,6 +390,17 @@ spec:
                       forward) all X-Forwarded-* headers.'
                     type: boolean
                 type: object
+              grpcWeb:
+                description: GrpcWeb holds the gRPC web middleware configuration.
+                  This middleware converts a gRPC web request to an HTTP/2 gRPC request.
+                properties:
+                  allowOrigins:
+                    description: AllowOrigins is a list of allowable origins. Can
+                      also be a wildcard origin "*".
+                    items:
+                      type: string
+                    type: array
+                type: object
               headers:
                 description: 'Headers holds the headers middleware configuration.
                   This middleware manages the requests and responses headers. More
@@ -572,7 +583,7 @@ spec:
                     properties:
                       ipStrategy:
                         description: 'IPStrategy holds the IP strategy configuration
-                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipwhitelist/#ipstrategy'
+                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipallowlist/#ipstrategy'
                         properties:
                           depth:
                             description: Depth tells Traefik to use the X-Forwarded-For
@@ -597,14 +608,14 @@ spec:
                         type: boolean
                     type: object
                 type: object
-              ipWhiteList:
-                description: 'IPWhiteList holds the IP whitelist middleware configuration.
+              ipAllowList:
+                description: 'IPAllowList holds the IP allowlist middleware configuration.
                   This middleware accepts / refuses requests based on the client IP.
-                  More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipwhitelist/'
+                  More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipallowlist/'
                 properties:
                   ipStrategy:
                     description: 'IPStrategy holds the IP strategy configuration used
-                      by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipwhitelist/#ipstrategy'
+                      by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipallowlist/#ipstrategy'
                     properties:
                       depth:
                         description: Depth tells Traefik to use the X-Forwarded-For
@@ -768,7 +779,7 @@ spec:
                     properties:
                       ipStrategy:
                         description: 'IPStrategy holds the IP strategy configuration
-                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipwhitelist/#ipstrategy'
+                          used by Traefik to determine the client IP. More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/ipallowlist/#ipstrategy'
                         properties:
                           depth:
                             description: Depth tells Traefik to use the X-Forwarded-For

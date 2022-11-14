@@ -689,9 +689,9 @@ func (in *MiddlewareSpec) DeepCopyInto(out *MiddlewareSpec) {
 		*out = new(Chain)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.IPWhiteList != nil {
-		in, out := &in.IPWhiteList, &out.IPWhiteList
-		*out = new(dynamic.IPWhiteList)
+	if in.IPAllowList != nil {
+		in, out := &in.IPAllowList, &out.IPAllowList
+		*out = new(dynamic.IPAllowList)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.Headers != nil {
@@ -768,6 +768,11 @@ func (in *MiddlewareSpec) DeepCopyInto(out *MiddlewareSpec) {
 		in, out := &in.ContentType, &out.ContentType
 		*out = new(dynamic.ContentType)
 		**out = **in
+	}
+	if in.GrpcWeb != nil {
+		in, out := &in.GrpcWeb, &out.GrpcWeb
+		*out = new(dynamic.GrpcWeb)
+		(*in).DeepCopyInto(*out)
 	}
 	if in.Plugin != nil {
 		in, out := &in.Plugin, &out.Plugin
@@ -857,9 +862,9 @@ func (in *MiddlewareTCPSpec) DeepCopyInto(out *MiddlewareTCPSpec) {
 		*out = new(dynamic.TCPInFlightConn)
 		**out = **in
 	}
-	if in.IPWhiteList != nil {
-		in, out := &in.IPWhiteList, &out.IPWhiteList
-		*out = new(dynamic.TCPIPWhiteList)
+	if in.IPAllowList != nil {
+		in, out := &in.IPAllowList, &out.IPAllowList
+		*out = new(dynamic.TCPIPAllowList)
 		(*in).DeepCopyInto(*out)
 	}
 	return
@@ -1140,6 +1145,11 @@ func (in *ServersTransportSpec) DeepCopyInto(out *ServersTransportSpec) {
 	if in.ForwardingTimeouts != nil {
 		in, out := &in.ForwardingTimeouts, &out.ForwardingTimeouts
 		*out = new(ForwardingTimeouts)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.Spiffe != nil {
+		in, out := &in.Spiffe, &out.Spiffe
+		*out = new(dynamic.Spiffe)
 		(*in).DeepCopyInto(*out)
 	}
 	return

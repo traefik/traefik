@@ -142,6 +142,7 @@ issues:
     - 'SA1019: cfg.FeaturePolicy is deprecated'
     - 'SA1019: c.Providers.ConsulCatalog.Namespace is deprecated'
     - 'SA1019: c.Providers.Consul.Namespace is deprecated'
+    - 'SA1019: c.Providers.Nomad.Namespace is deprecated'
   exclude-rules:
     - path: '(.+)_test.go'
       linters:

@@ -82,9 +82,9 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware8.headers.stsincludesubdomains":                        "true",
 		"traefik.http.middlewares.Middleware8.headers.stspreload":                                  "true",
 		"traefik.http.middlewares.Middleware8.headers.stsseconds":                                  "42",
-		"traefik.http.middlewares.Middleware9.ipwhitelist.ipstrategy.depth":                        "42",
-		"traefik.http.middlewares.Middleware9.ipwhitelist.ipstrategy.excludedips":                  "foobar, fiibar",
-		"traefik.http.middlewares.Middleware9.ipwhitelist.sourcerange":                             "foobar, fiibar",
+		"traefik.http.middlewares.Middleware9.ipallowlist.ipstrategy.depth":                        "42",
+		"traefik.http.middlewares.Middleware9.ipallowlist.ipstrategy.excludedips":                  "foobar, fiibar",
+		"traefik.http.middlewares.Middleware9.ipallowlist.sourcerange":                             "foobar, fiibar",
 		"traefik.http.middlewares.Middleware10.inflightreq.amount":                                 "42",
 		"traefik.http.middlewares.Middleware10.inflightreq.sourcecriterion.ipstrategy.depth":       "42",
 		"traefik.http.middlewares.Middleware10.inflightreq.sourcecriterion.ipstrategy.excludedips": "foobar, fiibar",
@@ -153,6 +153,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service0.loadbalancer.healthcheck.method":               "foobar",
 		"traefik.http.services.Service0.loadbalancer.healthcheck.port":                 "42",
 		"traefik.http.services.Service0.loadbalancer.healthcheck.scheme":               "foobar",
+		"traefik.http.services.Service0.loadbalancer.healthcheck.mode":                 "foobar",
 		"traefik.http.services.Service0.loadbalancer.healthcheck.timeout":              "foobar",
 		"traefik.http.services.Service0.loadbalancer.healthcheck.followredirects":      "true",
 		"traefik.http.services.Service0.loadbalancer.passhostheader":                   "true",
@@ -169,6 +170,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service1.loadbalancer.healthcheck.method":               "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.port":                 "42",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.scheme":               "foobar",
+		"traefik.http.services.Service1.loadbalancer.healthcheck.mode":                 "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.timeout":              "foobar",
 		"traefik.http.services.Service1.loadbalancer.healthcheck.followredirects":      "true",
 		"traefik.http.services.Service1.loadbalancer.passhostheader":                   "true",
@@ -178,7 +180,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.services.Service1.loadbalancer.sticky":                           "false",
 		"traefik.http.services.Service1.loadbalancer.sticky.cookie.name":               "fui",
 
-		"traefik.tcp.middlewares.Middleware0.ipwhitelist.sourcerange":      "foobar, fiibar",
+		"traefik.tcp.middlewares.Middleware0.ipallowlist.sourcerange":      "foobar, fiibar",
 		"traefik.tcp.middlewares.Middleware2.inflightconn.amount":          "42",
 		"traefik.tcp.routers.Router0.rule":                                 "foobar",
 		"traefik.tcp.routers.Router0.priority":                             "42",
@@ -242,7 +244,7 @@ func TestDecodeConfiguration(t *testing.T) {
 			},
 			Middlewares: map[string]*dynamic.TCPMiddleware{
 				"Middleware0": {
-					IPWhiteList: &dynamic.TCPIPWhiteList{
+					IPAllowList: &dynamic.TCPIPAllowList{
 						SourceRange: []string{"foobar", "fiibar"},
 					},
 				},
@@ -609,7 +611,7 @@ func TestDecodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware9": {
-					IPWhiteList: &dynamic.IPWhiteList{
+					IPAllowList: &dynamic.IPAllowList{
 						SourceRange: []string{
 							"foobar",
 							"fiibar",
@@ -650,6 +652,7 @@ func TestDecodeConfiguration(t *testing.T) {
 						},
 						HealthCheck: &dynamic.ServerHealthCheck{
 							Scheme:   "foobar",
+							Mode:     "foobar",
 							Path:     "foobar",
 							Method:   "foobar",
 							Port:     42,
@@ -678,6 +681,7 @@ func TestDecodeConfiguration(t *testing.T) {
 						},
 						HealthCheck: &dynamic.ServerHealthCheck{
 							Scheme:   "foobar",
+							Mode:     "foobar",
 							Path:     "foobar",
 							Method:   "foobar",
 							Port:     42,
@@ -737,7 +741,7 @@ func TestEncodeConfiguration(t *testing.T) {
 			},
 			Middlewares: map[string]*dynamic.TCPMiddleware{
 				"Middleware0": {
-					IPWhiteList: &dynamic.TCPIPWhiteList{
+					IPAllowList: &dynamic.TCPIPAllowList{
 						SourceRange: []string{"foobar", "fiibar"},
 					},
 				},
@@ -1109,7 +1113,7 @@ func TestEncodeConfiguration(t *testing.T) {
 					},
 				},
 				"Middleware9": {
-					IPWhiteList: &dynamic.IPWhiteList{
+					IPAllowList: &dynamic.IPAllowList{
 						SourceRange: []string{
 							"foobar",
 							"fiibar",
@@ -1261,9 +1265,9 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware8.Headers.STSIncludeSubdomains":                        "true",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.STSPreload":                                  "true",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.STSSeconds":                                  "42",
-		"traefik.HTTP.Middlewares.Middleware9.IPWhiteList.IPStrategy.Depth":                        "42",
-		"traefik.HTTP.Middlewares.Middleware9.IPWhiteList.IPStrategy.ExcludedIPs":                  "foobar, fiibar",
-		"traefik.HTTP.Middlewares.Middleware9.IPWhiteList.SourceRange":                             "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware9.IPAllowList.IPStrategy.Depth":                        "42",
+		"traefik.HTTP.Middlewares.Middleware9.IPAllowList.IPStrategy.ExcludedIPs":                  "foobar, fiibar",
+		"traefik.HTTP.Middlewares.Middleware9.IPAllowList.SourceRange":                             "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware10.InFlightReq.Amount":                                 "42",
 		"traefik.HTTP.Middlewares.Middleware10.InFlightReq.SourceCriterion.IPStrategy.Depth":       "42",
 		"traefik.HTTP.Middlewares.Middleware10.InFlightReq.SourceCriterion.IPStrategy.ExcludedIPs": "foobar, fiibar",
@@ -1356,7 +1360,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Services.Service1.LoadBalancer.server.Scheme":                    "foobar",
 		"traefik.HTTP.Services.Service0.LoadBalancer.HealthCheck.Headers.name0":        "foobar",
 
-		"traefik.TCP.Middlewares.Middleware0.IPWhiteList.SourceRange": "foobar, fiibar",
+		"traefik.TCP.Middlewares.Middleware0.IPAllowList.SourceRange": "foobar, fiibar",
 		"traefik.TCP.Middlewares.Middleware2.InFlightConn.Amount":     "42",
 		"traefik.TCP.Routers.Router0.Rule":                            "foobar",
 		"traefik.TCP.Routers.Router0.Priority":                        "42",
