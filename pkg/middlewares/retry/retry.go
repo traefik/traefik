@@ -20,11 +20,9 @@ import (
 )
 
 // Compile time validation that the response writer implements http interfaces correctly.
-var _ middlewares.Stateful = &responseWriterWithCloseNotify{}
+var _ middlewares.Stateful = &responseWriter{}
 
-const (
-	typeName = "Retry"
-)
+const typeName = "Retry"
 
 // Listener is used to inform about retry attempts.
 type Listener interface {
@@ -149,57 +147,44 @@ func (l Listeners) Retried(req *http.Request, attempt int) {
 	}
 }
 
-type responseWriter interface {
-	http.ResponseWriter
-	http.Flusher
-	ShouldRetry() bool
-	DisableRetries()
-}
-
-func newResponseWriter(rw http.ResponseWriter, shouldRetry bool) responseWriter {
-	responseWriter := &responseWriterWithoutCloseNotify{
+func newResponseWriter(rw http.ResponseWriter, shouldRetry bool) *responseWriter {
+	return &responseWriter{
 		responseWriter: rw,
 		headers:        make(http.Header),
 		shouldRetry:    shouldRetry,
 	}
-	if _, ok := rw.(http.CloseNotifier); ok {
-		return &responseWriterWithCloseNotify{
-			responseWriterWithoutCloseNotify: responseWriter,
-		}
-	}
-	return responseWriter
 }
 
-type responseWriterWithoutCloseNotify struct {
+type responseWriter struct {
 	responseWriter http.ResponseWriter
 	headers        http.Header
 	shouldRetry    bool
 	written        bool
 }
 
-func (r *responseWriterWithoutCloseNotify) ShouldRetry() bool {
+func (r *responseWriter) ShouldRetry() bool {
 	return r.shouldRetry
 }
 
-func (r *responseWriterWithoutCloseNotify) DisableRetries() {
+func (r *responseWriter) DisableRetries() {
 	r.shouldRetry = false
 }
 
-func (r *responseWriterWithoutCloseNotify) Header() http.Header {
+func (r *responseWriter) Header() http.Header {
 	if r.written {
 		return r.responseWriter.Header()
 	}
 	return r.headers
 }
 
-func (r *responseWriterWithoutCloseNotify) Write(buf []byte) (int, error) {
+func (r *responseWriter) Write(buf []byte) (int, error) {
 	if r.ShouldRetry() {
 		return len(buf), nil
 	}
 	return r.responseWriter.Write(buf)
 }
 
-func (r *responseWriterWithoutCloseNotify) WriteHeader(code int) {
+func (r *responseWriter) WriteHeader(code int) {
 	if r.ShouldRetry() && code == http.StatusServiceUnavailable {
 		// We get a 503 HTTP Status Code when there is no backend server in the pool
 		// to which the request could be sent.  Also, note that r.ShouldRetry()
@@ -226,7 +211,7 @@ func (r *responseWriterWithoutCloseNotify) WriteHeader(code int) {
 	r.written = true
 }
 
-func (r *responseWriterWithoutCloseNotify) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	hijacker, ok := r.responseWriter.(http.Hijacker)
 	if !ok {
 		return nil, nil, fmt.Errorf("%T is not a http.Hijacker", r.responseWriter)
@@ -234,16 +219,8 @@ func (r *responseWriterWithoutCloseNotify) Hijack() (net.Conn, *bufio.ReadWriter
 	return hijacker.Hijack()
 }
 
-func (r *responseWriterWithoutCloseNotify) Flush() {
+func (r *responseWriter) Flush() {
 	if flusher, ok := r.responseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
-}
-
-type responseWriterWithCloseNotify struct {
-	*responseWriterWithoutCloseNotify
-}
-
-func (r *responseWriterWithCloseNotify) CloseNotify() <-chan bool {
-	return r.responseWriter.(http.CloseNotifier).CloseNotify()
 }
