@@ -54,7 +54,6 @@ Please make sure you have the following requirements installed:
 - [Python](https://www.python.org/ "Link to website of Python")
 - [pip](https://pypi.org/project/pip/ "Link to the website of pip on PyPI")
 
-
 ```bash
 $ python --version
 Python 2.7.2
