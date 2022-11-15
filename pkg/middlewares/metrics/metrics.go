@@ -138,8 +138,11 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	}
 
 	next := m.next
-	if capt.NeedsReset(rw) {
-		next = capt.Reset(m.next)
+	if capture.NeedsWrap(rw, capt) {
+		next, err = capture.Wrap(m.next)
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Errorf("Could not wrap with a new Capture")
+		}
 	}
 
 	start := time.Now()
