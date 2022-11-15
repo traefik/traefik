@@ -172,7 +172,8 @@ spec:
                   excludedContentTypes:
                     description: ExcludedContentTypes defines the list of content
                       types to compare the Content-Type header of the incoming requests
-                      and responses before compressing.
+                      and responses before compressing. `application/grpc` is always
+                      excluded.
                     items:
                       type: string
                     type: array
