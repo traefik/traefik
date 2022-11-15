@@ -39,11 +39,13 @@ type key string
 
 const capturedData key = "capturedData"
 
-// Wrap returns a new handler that inserts a Capture into the given handler.
+// Wrap returns a new handler that inserts a Capture into the given handler for each incoming request.
 // It satisfies the alice.Constructor type.
-func Wrap(handler http.Handler) (http.Handler, error) {
-	c := Capture{}
-	return c.Reset(handler), nil
+func Wrap(next http.Handler) (http.Handler, error) {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		c := &Capture{}
+		c.serveHTTP(rw, req, next)
+	}), nil
 }
 
 // FromContext returns the Capture value found in ctx, or an empty Capture otherwise.
@@ -68,6 +70,7 @@ type Capture struct {
 
 // NeedsReset returns whether the given http.ResponseWriter is the capture's probe.
 func (c *Capture) NeedsReset(rw http.ResponseWriter) bool {
+	// This comparison is naive
 	return c.rw != rw
 }
 
@@ -75,18 +78,22 @@ func (c *Capture) NeedsReset(rw http.ResponseWriter) bool {
 // them when deferring to next.
 func (c *Capture) Reset(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		ctx := context.WithValue(req.Context(), capturedData, c)
-		newReq := req.WithContext(ctx)
-
-		if newReq.Body != nil {
-			readCounter := &readCounter{source: newReq.Body}
-			c.rr = readCounter
-			newReq.Body = readCounter
-		}
-		c.rw = newResponseWriter(rw)
-
-		next.ServeHTTP(c.rw, newReq)
+		c.serveHTTP(rw, req, next)
 	})
+}
+
+func (c *Capture) serveHTTP(rw http.ResponseWriter, req *http.Request, next http.Handler) {
+	ctx := context.WithValue(req.Context(), capturedData, c)
+	newReq := req.WithContext(ctx)
+
+	if newReq.Body != nil {
+		readCounter := &readCounter{source: newReq.Body}
+		c.rr = readCounter
+		newReq.Body = readCounter
+	}
+	c.rw = newResponseWriter(rw)
+
+	next.ServeHTTP(c.rw, newReq)
 }
 
 func (c *Capture) ResponseSize() int64 {
