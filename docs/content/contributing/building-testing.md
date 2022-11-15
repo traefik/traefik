@@ -21,7 +21,7 @@ For changes to its dependencies, the `dep` dependency management tool is require
 Run make with the `binary` target.
 
 ```bash
-$ make binary
+make binary
 ```
 
 This will create binaries for the Linux platform in the `dist` folder.
