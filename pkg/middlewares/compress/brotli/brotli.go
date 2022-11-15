@@ -37,7 +37,7 @@ func NewWrapper(cfg Config) (func(http.Handler) http.HandlerFunc, error) {
 	for _, v := range cfg.ExcludedContentTypes {
 		mediaType, params, err := mime.ParseMediaType(v)
 		if err != nil {
-			return nil, fmt.Errorf("parse media type: %w", err)
+			return nil, fmt.Errorf("parsing media type: %w", err)
 		}
 
 		contentTypes = append(contentTypes, parsedContentType{mediaType, params})
@@ -125,7 +125,7 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 	if ct := r.rw.Header().Get(contentType); ct != "" {
 		mediaType, params, err := mime.ParseMediaType(ct)
 		if err != nil {
-			return 0, fmt.Errorf("unable to parse media type: %w", err)
+			return 0, fmt.Errorf("parsing media type: %w", err)
 		}
 
 		for _, excludedContentType := range r.excludedContentTypes {
