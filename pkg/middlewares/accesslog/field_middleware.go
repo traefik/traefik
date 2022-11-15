@@ -1,6 +1,7 @@
 package accesslog
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
