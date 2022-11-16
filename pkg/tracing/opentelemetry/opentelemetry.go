@@ -56,7 +56,7 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 		exporter, err = c.setupHTTPExporter()
 	}
 	if err != nil {
-		return nil, nil, fmt.Errorf("setup exporter: %w", err)
+		return nil, nil, fmt.Errorf("setting up exporter: %w", err)
 	}
 
 	tracerProvider := sdktrace.NewTracerProvider(
@@ -87,7 +87,7 @@ func (c *Config) setupHTTPExporter() (*otlptrace.Exporter, error) {
 	if c.TLS != nil {
 		tlsConfig, err := c.TLS.CreateTLSConfig(context.Background())
 		if err != nil {
-			return nil, fmt.Errorf("create TLS client config: %w", err)
+			return nil, fmt.Errorf("creating TLS client config: %w", err)
 		}
 
 		opts = append(opts, otlptracehttp.WithTLSClientConfig(tlsConfig))
@@ -110,7 +110,7 @@ func (c *Config) setupGRPCExporter() (*otlptrace.Exporter, error) {
 	if c.TLS != nil {
 		tlsConfig, err := c.TLS.CreateTLSConfig(context.Background())
 		if err != nil {
-			return nil, fmt.Errorf("create TLS client config: %w", err)
+			return nil, fmt.Errorf("creating TLS client config: %w", err)
 		}
 
 		opts = append(opts, otlptracegrpc.WithTLSCredentials(credentials.NewTLS(tlsConfig)))

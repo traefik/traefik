@@ -54,7 +54,7 @@ func RegisterOpenTelemetry(ctx context.Context, config *types.OpenTelemetry) Reg
 		routerEnabled:                  config.AddRoutersLabels,
 		svcEnabled:                     config.AddServicesLabels,
 		configReloadsCounter:           newOTLPCounterFrom(meter, configReloadsTotalName, "Config reloads"),
-		configReloadsFailureCounter:    newOTLPCounterFrom(meter, configReloadsFailuresTotalName, "Config failure reloads"),
+		configReloadsFailureCounter:    newOTLPCounterFrom(meter, configReloadsFailuresTotalName, "Config reload failures"),
 		lastConfigReloadSuccessGauge:   newOTLPGaugeFrom(meter, configLastReloadSuccessName, "Last config reload success", unit.Milliseconds),
 		lastConfigReloadFailureGauge:   newOTLPGaugeFrom(meter, configLastReloadFailureName, "Last config reload failure", unit.Milliseconds),
 		tlsCertsNotAfterTimestampGauge: newOTLPGaugeFrom(meter, tlsCertsNotAfterTimestamp, "Certificate expiration timestamp", unit.Milliseconds),
@@ -136,7 +136,7 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OpenTeleme
 		exporter, err = newHTTPExporter(ctx, config)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("create exporter: %w", err)
+		return nil, fmt.Errorf("creating exporter: %w", err)
 	}
 
 	opts := []sdkmetric.PeriodicReaderOption{
@@ -153,7 +153,7 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OpenTeleme
 		}),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("create histogram view: %w", err)
+		return nil, fmt.Errorf("creating histogram view: %w", err)
 	}
 
 	meterProvider := sdkmetric.NewMeterProvider(sdkmetric.WithReader(
