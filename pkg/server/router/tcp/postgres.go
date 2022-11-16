@@ -151,7 +151,7 @@ func (c *postgresConn) Write(p []byte) (n int, err error) {
 	}()
 
 	if len(p) != 1 || p[0] != PostgresStartTLSReply[0] {
-		c.errChan <- errors.New("invalid response from PostGreSQL server")
+		c.errChan <- errors.New("invalid response from Postgres server")
 		return len(p), nil
 	}
 
