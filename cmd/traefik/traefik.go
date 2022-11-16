@@ -632,7 +632,7 @@ func setupTracing(conf *static.Tracing) *tracing.Tracing {
 
 	if conf.OpenTelemetry != nil {
 		if backend != nil {
-			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create OpenTelemetry backend.")
+			log.WithoutContext().Error("Tracing backends are all mutually exclusive: cannot create OpenTelemetry backend.")
 		} else {
 			backend = conf.OpenTelemetry
 		}

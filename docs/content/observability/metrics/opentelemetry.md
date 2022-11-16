@@ -30,7 +30,7 @@ metrics:
 
 _Required, Default="", Format="`<host>:<port>`"_
 
-Address of the OpenTelemetry Collector to send metric to.
+Address of the OpenTelemetry Collector to send metrics to.
 
 ```yaml tab="File (YAML)"
 metrics:
@@ -316,7 +316,7 @@ metrics:
 
 #### gRPC configuration
 
-This instructs the reporter to send metrics to the OpenTelemetry Collector using gRPC:
+This instructs the reporter to send metrics to the OpenTelemetry Collector using gRPC.
 
 ```yaml tab="File (YAML)"
 metrics:
