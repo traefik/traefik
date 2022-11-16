@@ -44,7 +44,8 @@ const capturedData key = "capturedData"
 func Wrap(next http.Handler) (http.Handler, error) {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		c := &Capture{}
-		c.serveHTTP(rw, req, next)
+		newRW, newReq := c.renew(rw, req)
+		next.ServeHTTP(newRW, newReq)
 	}), nil
 }
 
@@ -70,7 +71,7 @@ type Capture struct {
 
 // NeedsReset returns whether the given http.ResponseWriter is the capture's probe.
 func (c *Capture) NeedsReset(rw http.ResponseWriter) bool {
-	// This comparison is naive
+	// This comparison is naive.
 	return c.rw != rw
 }
 
@@ -78,11 +79,12 @@ func (c *Capture) NeedsReset(rw http.ResponseWriter) bool {
 // them when deferring to next.
 func (c *Capture) Reset(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		c.serveHTTP(rw, req, next)
+		newRW, newReq := c.renew(rw, req)
+		next.ServeHTTP(newRW, newReq)
 	})
 }
 
-func (c *Capture) serveHTTP(rw http.ResponseWriter, req *http.Request, next http.Handler) {
+func (c *Capture) renew(rw http.ResponseWriter, req *http.Request) (http.ResponseWriter, *http.Request) {
 	ctx := context.WithValue(req.Context(), capturedData, c)
 	newReq := req.WithContext(ctx)
 
@@ -93,7 +95,7 @@ func (c *Capture) serveHTTP(rw http.ResponseWriter, req *http.Request, next http
 	}
 	c.rw = newResponseWriter(rw)
 
-	next.ServeHTTP(c.rw, newReq)
+	return c.rw, newReq
 }
 
 func (c *Capture) ResponseSize() int64 {
