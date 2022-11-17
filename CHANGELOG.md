@@ -1,3 +1,15 @@
+## [v2.9.5](https://github.com/traefik/traefik/tree/v2.9.5) (2022-11-17)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.4...v2.9.5)
+
+**Bug fixes:**
+- **[logs,middleware]** Create a new capture instance for each incoming request ([#9510](https://github.com/traefik/traefik/pull/9510) by [sdelicata](https://github.com/sdelicata))
+
+**Documentation:**
+- **[k8s/helm]** Update helm repository ([#9506](https://github.com/traefik/traefik/pull/9506) by [charlie-haley](https://github.com/charlie-haley))
+- Enhance wording of building-testing page ([#9509](https://github.com/traefik/traefik/pull/9509) by [svx](https://github.com/svx))
+- Add link descriptions and update wording ([#9507](https://github.com/traefik/traefik/pull/9507) by [svx](https://github.com/svx))
+- Removes the experimental tag on the Traefik Hub header ([#9498](https://github.com/traefik/traefik/pull/9498) by [tfny](https://github.com/tfny))
+
 ## [v2.9.4](https://github.com/traefik/traefik/tree/v2.9.4) (2022-10-27)
 [All Commits](https://github.com/traefik/traefik/compare/v2.9.1...v2.9.4)
 
