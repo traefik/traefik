@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -291,23 +292,11 @@ func assertFloat64NotZero() func(t *testing.T, actual interface{}) {
 }
 
 func TestLoggerJSON(t *testing.T) {
-	// Load Client TLS key pair
-	cert, err := tls.LoadX509KeyPair("../../../integration/fixtures/https/clientca/client1.crt", "../../../integration/fixtures/https/clientca/client1.key")
-	if err != nil {
-		t.Fatalf("Error loading client key pair: %s", err)
-	}
-	testClientCert, err := x509.ParseCertificate(cert.Certificate[0])
-	if err != nil {
-		t.Fatalf("Error parsing client certificate: %s", err)
-	}
-	testExpectedSubject := testClientCert.Subject.String()
-
 	testCases := []struct {
-		desc       string
-		config     *types.AccessLog
-		tls        bool
-		clientcert *x509.Certificate
-		expected   map[string]func(t *testing.T, value interface{})
+		desc     string
+		config   *types.AccessLog
+		tls      bool
+		expected map[string]func(t *testing.T, value interface{})
 	}{
 		{
 			desc: "default config",
@@ -383,50 +372,7 @@ func TestLoggerJSON(t *testing.T) {
 				Duration:                  assertFloat64NotZero(),
 				Overhead:                  assertFloat64NotZero(),
 				RetryAttempts:             assertFloat64(float64(testRetryAttempts)),
-				TLSVersion:                assertString("1.3"),
-				TLSCipher:                 assertString("TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"),
-				"time":                    assertNotEmpty(),
-				StartLocal:                assertNotEmpty(),
-				StartUTC:                  assertNotEmpty(),
-			},
-		},
-		{
-			desc: "default config with mutual auth TLS request",
-			config: &types.AccessLog{
-				FilePath: "",
-				Format:   JSONFormat,
-			},
-			tls:        true,
-			clientcert: testClientCert,
-			expected: map[string]func(t *testing.T, value interface{}){
-				RequestContentSize:        assertFloat64(0),
-				RequestHost:               assertString(testHostname),
-				RequestAddr:               assertString(testHostname),
-				RequestMethod:             assertString(testMethod),
-				RequestPath:               assertString(testPath),
-				RequestProtocol:           assertString(testProto),
-				RequestScheme:             assertString("https"),
-				RequestPort:               assertString("-"),
-				DownstreamStatus:          assertFloat64(float64(testStatus)),
-				DownstreamContentSize:     assertFloat64(float64(len(testContent))),
-				OriginContentSize:         assertFloat64(float64(len(testContent))),
-				OriginStatus:              assertFloat64(float64(testStatus)),
-				RequestRefererHeader:      assertString(testReferer),
-				RequestUserAgentHeader:    assertString(testUserAgent),
-				RouterName:                assertString(testRouterName),
-				ServiceURL:                assertString(testServiceName),
-				ClientUsername:            assertString(testUsername),
-				ClientHost:                assertString(testHostname),
-				ClientPort:                assertString(fmt.Sprintf("%d", testPort)),
-				ClientAddr:                assertString(fmt.Sprintf("%s:%d", testHostname, testPort)),
-				"level":                   assertString("info"),
-				"msg":                     assertString(""),
-				"downstream_Content-Type": assertString("text/plain; charset=utf-8"),
-				RequestCount:              assertFloat64NotZero(),
-				Duration:                  assertFloat64NotZero(),
-				Overhead:                  assertFloat64NotZero(),
-				RetryAttempts:             assertFloat64(float64(testRetryAttempts)),
-				TLSClientSubject:          assertString(testExpectedSubject),
+				TLSClientSubject:          assertString("CN=foobar"),
 				TLSVersion:                assertString("1.3"),
 				TLSCipher:                 assertString("TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"),
 				"time":                    assertNotEmpty(),
@@ -528,7 +474,7 @@ func TestLoggerJSON(t *testing.T) {
 
 			test.config.FilePath = logFilePath
 			if test.tls {
-				doLoggingTLS(t, test.config, test.clientcert)
+				doLoggingTLS(t, test.config)
 			} else {
 				doLogging(t, test.config)
 			}
@@ -804,7 +750,7 @@ func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {
 	return file, restoreStdout
 }
 
-func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool, clientCert *x509.Certificate) {
+func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool) {
 	t.Helper()
 	logger, err := NewHandler(config)
 	require.NoError(t, err)
@@ -837,9 +783,9 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool, clie
 		req.TLS = &tls.ConnectionState{
 			Version:     tls.VersionTLS13,
 			CipherSuite: tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-		}
-		if clientCert != nil {
-			req.TLS.PeerCertificates = []*x509.Certificate{clientCert}
+			PeerCertificates: []*x509.Certificate{{
+				Subject: pkix.Name{CommonName: "foobar"},
+			}},
 		}
 	}
 
@@ -852,16 +798,16 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS bool, clie
 	handler.ServeHTTP(httptest.NewRecorder(), req)
 }
 
-func doLoggingTLS(t *testing.T, config *types.AccessLog, clientCert *x509.Certificate) {
+func doLoggingTLS(t *testing.T, config *types.AccessLog) {
 	t.Helper()
 
-	doLoggingTLSOpt(t, config, true, clientCert)
+	doLoggingTLSOpt(t, config, true)
 }
 
 func doLogging(t *testing.T, config *types.AccessLog) {
 	t.Helper()
 
-	doLoggingTLSOpt(t, config, false, nil)
+	doLoggingTLSOpt(t, config, false)
 }
 
 func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {
