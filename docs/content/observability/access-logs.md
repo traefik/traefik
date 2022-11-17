@@ -229,6 +229,7 @@ accessLog:
     | `RetryAttempts`         | The amount of attempts the request was retried.                                                                                                                     |
     | `TLSVersion`            | The TLS version used by the connection (e.g. `1.2`) (if connection is TLS).                                                                                         |
     | `TLSCipher`             | The TLS cipher used by the connection (e.g. `TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA`) (if connection is TLS)                                                           |
+    | `TLSClientSubject`      | The string representation of the TLS client certificate's Subject (e.g. `CN=username,O=organization`)                                                               |
 
 ## Log Rotation
 
