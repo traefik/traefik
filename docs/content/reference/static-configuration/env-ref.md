@@ -349,7 +349,7 @@ OpenTelemetry metrics exporter type. (Default: ```false```)
 Enable metrics on entry points. (Default: ```true```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_ADDRESS`:  
-Address of the collector endpoint.
+Address of the collector endpoint. (Default: ```localhost:4318```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_ADDROUTERSLABELS`:  
 Enable metrics on routers. (Default: ```false```)
@@ -1168,7 +1168,7 @@ Sets the header name used to store the trace ID. (Default: ```uber-trace-id```)
 Settings for OpenTelemetry. (Default: ```false```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_ADDRESS`:  
-Sets the address of the collector endpoint.
+Sets the address of the collector endpoint. (Default: ```localhost:4318```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_GRPC`:  
 gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
