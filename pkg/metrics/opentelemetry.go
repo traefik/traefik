@@ -37,7 +37,10 @@ func RegisterOpenTelemetry(ctx context.Context, config *types.OpenTelemetry) Reg
 	if openTelemetryMeterProvider == nil {
 		var err error
 		if openTelemetryMeterProvider, err = newOpenTelemetryMeterProvider(ctx, config); err != nil {
-			log.FromContext(ctx).Error(err)
+			log.FromContext(ctx).
+				WithError(err).
+				Error("Unable to create OpenTelemetry meter provider")
+
 			return nil
 		}
 	}
@@ -180,7 +183,7 @@ func newHTTPExporter(ctx context.Context, config *types.OpenTelemetry) (sdkmetri
 	if config.TLS != nil {
 		tlsConfig, err := config.TLS.CreateTLSConfig(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("create TLS client config: %w", err)
+			return nil, fmt.Errorf("creating TLS client config: %w", err)
 		}
 
 		opts = append(opts, otlpmetrichttp.WithTLSClientConfig(tlsConfig))
@@ -203,7 +206,7 @@ func newGRPCExporter(ctx context.Context, config *types.OpenTelemetry) (sdkmetri
 	if config.TLS != nil {
 		tlsConfig, err := config.TLS.CreateTLSConfig(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("create TLS client config: %w", err)
+			return nil, fmt.Errorf("creating TLS client config: %w", err)
 		}
 
 		opts = append(opts, otlpmetricgrpc.WithTLSCredentials(credentials.NewTLS(tlsConfig)))
@@ -312,8 +315,8 @@ func newOTLPGaugeFrom(meter metric.Meter, name, desc string, u unit.Unit) *otelG
 		openTelemetryGaugeCollector.mu.Lock()
 		defer openTelemetryGaugeCollector.mu.Unlock()
 
-		values, exist := openTelemetryGaugeCollector.values[name]
-		if !exist {
+		values, exists := openTelemetryGaugeCollector.values[name]
+		if !exists {
 			return
 		}
 
@@ -322,7 +325,9 @@ func newOTLPGaugeFrom(meter metric.Meter, name, desc string, u unit.Unit) *otelG
 		}
 	})
 	if err != nil {
-		log.WithoutContext().Error(err)
+		log.WithoutContext().
+			WithError(err).
+			Error("Unable to register OpenTelemetry meter callback")
 	}
 
 	return &otelGauge{
@@ -400,8 +405,8 @@ func (lvs otelLabelNamesValues) With(labelValues ...string) otelLabelNamesValues
 // to the native attribute.KeyValue.
 func (lvs otelLabelNamesValues) ToLabels() []attribute.KeyValue {
 	labels := make([]attribute.KeyValue, len(lvs)/2)
-	for i := 0; i < len(labels); i++ {
-		labels[i] = attribute.String(lvs[2*i], lvs[2*i+1])
+	for i := 0; i < len(labels); i += 2 {
+		labels[i] = attribute.String(lvs[i], lvs[i+1])
 	}
 	return labels
 }
