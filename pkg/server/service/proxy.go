@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http/httpguts"
 )
 
@@ -115,12 +115,12 @@ func errorHandler(w http.ResponseWriter, req *http.Request, err error) {
 		}
 	}
 
-	logger := log.FromContext(req.Context())
-	logger.Debugf("'%d %s' caused by: %v", statusCode, statusText(statusCode), err)
+	logger := log.Ctx(req.Context())
+	logger.Debug().Err(err).Msgf("'%d %s' caused by", statusCode, statusText(statusCode))
 
 	w.WriteHeader(statusCode)
 	if _, werr := w.Write([]byte(statusText(statusCode))); werr != nil {
-		logger.Debugf("Error while writing status code", werr)
+		logger.Debug().Err(werr).Msg("Error while writing status code")
 	}
 }
 

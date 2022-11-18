@@ -162,7 +162,7 @@ issues:
       text: "Function 'buildConstructor' has too many statements"
       linters:
         - funlen
-    - path: pkg/tracing/haystack/logger.go
+    - path: pkg/logs/haystack.go
       linters:
         - goprintffuncname
     - path: pkg/tracing/tracing.go
