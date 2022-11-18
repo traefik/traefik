@@ -3,9 +3,9 @@ package server
 import (
 	"context"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/server/middleware"
 	tcpmiddleware "github.com/traefik/traefik/v2/pkg/server/middleware/tcp"
@@ -44,7 +44,7 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 		protocol, err := cfg.GetProtocol()
 		if err != nil {
 			// Should never happen because Traefik should not start if protocol is invalid.
-			log.WithoutContext().Errorf("Invalid protocol: %v", err)
+			log.Error().Err(err).Msg("Invalid protocol")
 		}
 
 		if protocol == "udp" {
