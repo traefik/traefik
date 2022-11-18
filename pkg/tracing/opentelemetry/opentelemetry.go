@@ -2,7 +2,6 @@ package opentelemetry
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 
@@ -34,12 +33,13 @@ type Config struct {
 	TLS      *types.ClientTLS  `description:"Defines client transport security parameters." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 }
 
+// SetDefaults sets the default values.
+func (c *Config) SetDefaults() {
+	c.Address = "localhost:4318"
+}
+
 // Setup sets up the tracer.
 func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, error) {
-	if c.Address == "" {
-		return nil, nil, errors.New("address property is missing")
-	}
-
 	bt := oteltracer.NewBridgeTracer()
 	bt.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 
