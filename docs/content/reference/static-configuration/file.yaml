@@ -350,8 +350,6 @@ metrics:
     addEntryPointsLabels: true
     addRoutersLabels: true
     addServicesLabels: true
-    pushInterval: 42s
-    compress: true
     endpoint: foobar
     explicitBoundaries:
       - 42
@@ -360,6 +358,8 @@ metrics:
       name0: foobar
       name1: foobar
     insecure: true
+    path: foobar
+    pushInterval: 42s
     tls:
       ca: foobar
       caOptional: true
@@ -447,13 +447,13 @@ tracing:
     secretToken: foobar
     serviceEnvironment: foobar
   openTelemetry:
-    compress: true
     endpoint: foobar
-    insecure: true
-    path: foobar
     headers:
       name0: foobar
       name1: foobar
+    insecure: true
+    path: foobar
+    pushInterval: 42s
     tls:
       ca: foobar
       caOptional: true
