@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	kitlog "github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics/statsd"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
@@ -55,10 +55,7 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 		config.Prefix = defaultMetricsPrefix
 	}
 
-	statsdClient = statsd.New(config.Prefix+".", kitlog.LoggerFunc(func(keyvals ...interface{}) error {
-		log.WithoutContext().WithField(log.MetricsProviderName, "statsd").Info(keyvals...)
-		return nil
-	}))
+	statsdClient = statsd.New(config.Prefix+".", logs.NewGoKitWrapper(*log.Ctx(ctx)))
 
 	if statsdTicker == nil {
 		statsdTicker = initStatsdTicker(ctx, config)

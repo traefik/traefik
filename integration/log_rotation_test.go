@@ -12,15 +12,12 @@ import (
 	"time"
 
 	"github.com/go-check/check"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/log"
 	checker "github.com/vdemeester/shakers"
 )
 
-const (
-	traefikTestLogFileRotated       = traefikTestLogFile + ".rotated"
-	traefikTestAccessLogFileRotated = traefikTestAccessLogFile + ".rotated"
-)
+const traefikTestAccessLogFileRotated = traefikTestAccessLogFile + ".rotated"
 
 // Log rotation integration test suite.
 type LogRotationSuite struct{ BaseSuite }
@@ -35,14 +32,13 @@ func (s *LogRotationSuite) TearDownSuite(c *check.C) {
 
 	generatedFiles := []string{
 		traefikTestLogFile,
-		traefikTestLogFileRotated,
 		traefikTestAccessLogFile,
 		traefikTestAccessLogFileRotated,
 	}
 
 	for _, filename := range generatedFiles {
 		if err := os.Remove(filename); err != nil {
-			log.WithoutContext().Warning(err)
+			log.Warn().Err(err).Send()
 		}
 	}
 }
@@ -102,48 +98,6 @@ func (s *LogRotationSuite) TestAccessLogRotation(c *check.C) {
 	c.Assert(lineCount, checker.Equals, 3)
 
 	verifyEmptyErrorLog(c, traefikTestLogFile)
-}
-
-func (s *LogRotationSuite) TestTraefikLogRotation(c *check.C) {
-	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/traefik_log_config.toml"))
-	defer display(c)
-	defer displayTraefikLogFile(c, traefikTestLogFile)
-
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
-
-	waitForTraefik(c, "server1")
-
-	// Rename traefik log
-	err = os.Rename(traefikTestLogFile, traefikTestLogFileRotated)
-	c.Assert(err, checker.IsNil)
-
-	// issue SIGUSR1 signal to server process
-	err = cmd.Process.Signal(syscall.SIGUSR1)
-	c.Assert(err, checker.IsNil)
-
-	err = cmd.Process.Signal(syscall.SIGTERM)
-	c.Assert(err, checker.IsNil)
-
-	// Allow time for switch to be processed
-	err = try.Do(3*time.Second, func() error {
-		_, err = os.Stat(traefikTestLogFile)
-		return err
-	})
-	c.Assert(err, checker.IsNil)
-
-	// we have at least 6 lines in traefik.log.rotated
-	lineCount := verifyLogLines(c, traefikTestLogFileRotated, 0, false)
-
-	// GreaterOrEqualThan used to ensure test doesn't break
-	// If more log entries are output on startup
-	c.Assert(lineCount, checker.GreaterOrEqualThan, 5)
-
-	// Verify traefik.log output as expected
-	lineCount = verifyLogLines(c, traefikTestLogFile, lineCount, false)
-	c.Assert(lineCount, checker.GreaterOrEqualThan, 7)
 }
 
 func logAccessLogFile(c *check.C, fileName string) {

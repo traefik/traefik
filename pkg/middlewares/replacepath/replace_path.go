@@ -7,7 +7,6 @@ import (
 
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/tracing"
 )
@@ -27,7 +26,7 @@ type replacePath struct {
 
 // New creates a new replace path middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.ReplacePath, name string) (http.Handler, error) {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
+	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
 	return &replacePath{
 		next: next,
@@ -52,7 +51,7 @@ func (r *replacePath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	var err error
 	req.URL.Path, err = url.PathUnescape(req.URL.RawPath)
 	if err != nil {
-		log.FromContext(middlewares.GetLoggerCtx(context.Background(), r.name, typeName)).Error(err)
+		middlewares.GetLogger(context.Background(), r.name, typeName).Error().Err(err).Send()
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
