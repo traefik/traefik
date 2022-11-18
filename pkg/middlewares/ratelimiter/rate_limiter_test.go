@@ -14,7 +14,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/testhelpers"
-	"github.com/vulcand/oxy/utils"
+	"github.com/vulcand/oxy/v2/utils"
 )
 
 func TestNewRateLimiter(t *testing.T) {

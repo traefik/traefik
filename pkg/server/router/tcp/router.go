@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 	tcpmuxer "github.com/traefik/traefik/v2/pkg/muxer/tcp"
 	"github.com/traefik/traefik/v2/pkg/tcp"
 )
@@ -88,7 +88,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	if r.muxerTCP.HasRoutes() && !r.muxerTCPTLS.HasRoutes() && !r.muxerHTTPS.HasRoutes() {
 		connData, err := tcpmuxer.NewConnData("", conn, nil)
 		if err != nil {
-			log.WithoutContext().Errorf("Error while reading TCP connection data: %v", err)
+			log.Error().Err(err).Msg("Error while reading TCP connection data")
 			conn.Close()
 			return
 		}
@@ -128,17 +128,17 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	// Remove read/write deadline and delegate this to underlying tcp server (for now only handled by HTTP Server)
 	err = conn.SetReadDeadline(time.Time{})
 	if err != nil {
-		log.WithoutContext().Errorf("Error while setting read deadline: %v", err)
+		log.Error().Err(err).Msg("Error while setting read deadline")
 	}
 
 	err = conn.SetWriteDeadline(time.Time{})
 	if err != nil {
-		log.WithoutContext().Errorf("Error while setting write deadline: %v", err)
+		log.Error().Err(err).Msg("Error while setting write deadline")
 	}
 
 	connData, err := tcpmuxer.NewConnData(hello.serverName, conn, hello.protos)
 	if err != nil {
-		log.WithoutContext().Errorf("Error while reading TCP connection data: %v", err)
+		log.Error().Err(err).Msg("Error while reading TCP connection data")
 		conn.Close()
 		return
 	}
@@ -263,7 +263,7 @@ func (r *Router) SetHTTPSForwarder(handler tcp.Handler) {
 			Config: tlsConf,
 		})
 		if err != nil {
-			log.WithoutContext().Errorf("Error while adding route for host: %v", err)
+			log.Error().Err(err).Msg("Error while adding route for host")
 		}
 	}
 
@@ -326,7 +326,7 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 	if err != nil {
 		var opErr *net.OpError
 		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || opErr.Timeout()) {
-			log.WithoutContext().Errorf("Error while Peeking first byte: %s", err)
+			log.Error().Err(err).Msg("Error while Peeking first byte")
 		}
 		return nil, err
 	}
@@ -353,7 +353,7 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 	const recordHeaderLen = 5
 	hdr, err = br.Peek(recordHeaderLen)
 	if err != nil {
-		log.Errorf("Error while Peeking hello: %s", err)
+		log.Error().Err(err).Msg("Error while Peeking hello")
 		return &clientHello{
 			peeked: getPeeked(br),
 		}, nil
@@ -367,7 +367,7 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 
 	helloBytes, err := br.Peek(recordHeaderLen + recLen)
 	if err != nil {
-		log.Errorf("Error while Hello: %s", err)
+		log.Error().Err(err).Msg("Error while Hello")
 		return &clientHello{
 			isTLS:  true,
 			peeked: getPeeked(br),
@@ -396,7 +396,7 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 func getPeeked(br *bufio.Reader) string {
 	peeked, err := br.Peek(br.Buffered())
 	if err != nil {
-		log.Errorf("Could not get anything: %s", err)
+		log.Error().Err(err).Msg("Could not get anything")
 		return ""
 	}
 	return string(peeked)

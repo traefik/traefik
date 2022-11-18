@@ -6,7 +6,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 )
 
 type responseModifier struct {
@@ -55,7 +55,7 @@ func (r *responseModifier) WriteHeader(code int) {
 		// we are propagating when we are called in Write, but we're logging anyway,
 		// because we could be called from another place which does not take care of
 		// checking w.modifierErr.
-		log.WithoutContext().Errorf("Error when applying response modifier: %v", err)
+		log.Error().Err(err).Msg("Error when applying response modifier")
 		r.rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
