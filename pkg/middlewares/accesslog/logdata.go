@@ -75,7 +75,7 @@ const (
 	TLSVersion = "TLSVersion"
 	// TLSCipher is the cipher used in the request.
 	TLSCipher = "TLSCipher"
-	// TLSClientSubject is the string representation of the TLS client certificate's Subject
+	// TLSClientSubject is the string representation of the TLS client certificate's Subject.
 	TLSClientSubject = "TLSClientSubject"
 )
 
