@@ -11,11 +11,12 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gambol99/go-marathon"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/job"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/types"
@@ -108,23 +109,25 @@ func (p *Provider) Init() error {
 // Provide allows the marathon provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	ctx := log.With(context.Background(), log.Str(log.ProviderName, "marathon"))
-	logger := log.FromContext(ctx)
+	logger := log.With().Str(logs.ProviderName, "marathon").Logger()
+	ctx := logger.WithContext(context.Background())
 
 	operation := func() error {
 		confg := marathon.NewDefaultConfig()
 		confg.URL = p.Endpoint
 		confg.EventsTransport = marathon.EventsTransportSSE
+
 		if p.Trace {
-			confg.LogOutput = log.CustomWriterLevel(logrus.DebugLevel, traceMaxScanTokenSize)
+			confg.LogOutput = logs.NoLevel(logger, zerolog.DebugLevel)
 		}
+
 		if p.Basic != nil {
 			confg.HTTPBasicAuthUser = p.Basic.HTTPBasicAuthUser
 			confg.HTTPBasicPassword = p.Basic.HTTPBasicPassword
 		}
 		var rc *readinessChecker
 		if p.RespectReadinessChecks {
-			logger.Debug("Enabling Marathon readiness checker")
+			logger.Debug().Msg("Enabling Marathon readiness checker")
 			rc = defaultReadinessChecker(p.Trace)
 		}
 		p.readyChecker = rc
@@ -149,7 +152,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 		client, err := marathon.NewClient(confg)
 		if err != nil {
-			logger.Errorf("Failed to create a client for marathon, error: %s", err)
+			logger.Error().Err(err).Msg("Failed to create a client for marathon")
 			return err
 		}
 		p.marathonClient = client
@@ -157,7 +160,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		if p.Watch {
 			update, err := client.AddEventsListener(marathonEventIDs)
 			if err != nil {
-				logger.Errorf("Failed to register for events, %s", err)
+				logger.Error().Err(err).Msg("Failed to register for events")
 				return err
 			}
 			pool.GoCtx(func(ctxPool context.Context) {
@@ -167,7 +170,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					case <-ctxPool.Done():
 						return
 					case event := <-update:
-						logger.Debugf("Received provider event %s", event)
+						logger.Debug().Msgf("Received provider event %s", event)
 
 						conf := p.getConfigurations(ctx)
 						if conf != nil {
@@ -190,11 +193,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	}
 
 	notify := func(err error, time time.Duration) {
-		logger.Errorf("Provider connection error %+v, retrying in %s", err, time)
+		logger.Error().Err(err).Msgf("Provider connection error, retrying in %s", time)
 	}
 	err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctx), notify)
 	if err != nil {
-		logger.Errorf("Cannot connect to Provider server: %+v", err)
+		logger.Error().Err(err).Msg("Cannot connect to Provider server")
 	}
 	return nil
 }
@@ -202,7 +205,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 func (p *Provider) getConfigurations(ctx context.Context) *dynamic.Configuration {
 	applications, err := p.getApplications()
 	if err != nil {
-		log.FromContext(ctx).Errorf("Failed to retrieve Marathon applications: %v", err)
+		log.Ctx(ctx).Error().Err(err).Msg("Failed to retrieve Marathon applications")
 		return nil
 	}
 

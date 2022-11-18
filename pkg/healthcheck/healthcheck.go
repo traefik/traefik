@@ -11,9 +11,9 @@ import (
 	"time"
 
 	gokitmetrics "github.com/go-kit/kit/metrics"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -55,22 +55,22 @@ type ServiceHealthChecker struct {
 }
 
 func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, config *dynamic.ServerHealthCheck, service StatusSetter, info *runtime.ServiceInfo, transport http.RoundTripper, targets map[string]*url.URL) *ServiceHealthChecker {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	interval := time.Duration(config.Interval)
 	if interval <= 0 {
-		logger.Error("Health check interval smaller than zero")
+		logger.Error().Msg("Health check interval smaller than zero")
 		interval = time.Duration(dynamic.DefaultHealthCheckInterval)
 	}
 
 	timeout := time.Duration(config.Timeout)
 	if timeout <= 0 {
-		logger.Error("Health check timeout smaller than zero")
+		logger.Error().Msg("Health check timeout smaller than zero")
 		timeout = time.Duration(dynamic.DefaultHealthCheckTimeout)
 	}
 
 	if timeout >= interval {
-		logger.Warnf("Health check timeout should be lower than the health check interval. Interval set to timeout + 1 second (%s).", interval)
+		logger.Warn().Msgf("Health check timeout should be lower than the health check interval. Interval set to timeout + 1 second (%s).", interval)
 		interval = timeout + time.Second
 	}
 
@@ -122,10 +122,10 @@ func (shc *ServiceHealthChecker) Launch(ctx context.Context) {
 						return
 					}
 
-					log.FromContext(ctx).
-						WithField("targetURL", target.String()).
-						WithError(err).
-						Warn("Health check failed.")
+					log.Ctx(ctx).Warn().
+						Str("targetURL", target.String()).
+						Err(err).
+						Msg("Health check failed.")
 
 					up = false
 					serverUpMetricValue = float64(0)
