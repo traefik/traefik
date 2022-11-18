@@ -21,10 +21,7 @@ metrics:
 --metrics.openTelemetry=true
 ```
 
-!!! info ""
-
-    The OpenTelemetry exporter will export metrics to the collector by using HTTP by default,
-    see the [gRPC Section](#grpc-configuration) to use gRPC.
+!!! info "The OpenTelemetry exporter will export metrics to the collector by using HTTP by default, see the [gRPC Section](#grpc-configuration) to use gRPC."
 
 #### `address`
 
@@ -157,8 +154,8 @@ metrics:
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.openTelemetry.headers]
-    foo = bar
-    baz = buz
+    foo = "bar"
+    baz = "buz"
 ```
 
 ```bash tab="CLI"

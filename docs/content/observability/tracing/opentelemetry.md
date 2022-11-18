@@ -67,8 +67,8 @@ tracing:
 ```toml tab="File (TOML)"
 [tracing]
   [tracing.openTelemetry.headers]
-    foo = bar
-    baz = buz
+    foo = "bar"
+    baz = "buz"
 ```
 
 ```bash tab="CLI"
