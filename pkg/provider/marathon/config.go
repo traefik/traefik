@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/gambol99/go-marathon"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/label"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/constraints"
 )
@@ -21,12 +21,12 @@ func (p *Provider) buildConfiguration(ctx context.Context, applications *maratho
 	configurations := make(map[string]*dynamic.Configuration)
 
 	for _, app := range applications.Apps {
-		ctxApp := log.With(ctx, log.Str("applicationID", app.ID))
-		logger := log.FromContext(ctxApp)
+		logger := log.Ctx(ctx).With().Str("applicationID", app.ID).Logger()
+		ctxApp := logger.WithContext(ctx)
 
 		extraConf, err := p.getConfiguration(app)
 		if err != nil {
-			logger.Errorf("Skip application: %v", err)
+			logger.Error().Err(err).Msg("Skip application")
 			continue
 		}
 
@@ -45,7 +45,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, applications *maratho
 
 		confFromLabel, err := label.DecodeConfiguration(labels)
 		if err != nil {
-			logger.Error(err)
+			logger.Error().Err(err).Send()
 			continue
 		}
 
@@ -55,7 +55,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, applications *maratho
 
 			err := p.buildTCPServiceConfiguration(ctxApp, app, extraConf, confFromLabel.TCP)
 			if err != nil {
-				logger.Error(err)
+				logger.Error().Err(err).Send()
 				continue
 			}
 			provider.BuildTCPRouterConfiguration(ctxApp, confFromLabel.TCP)
@@ -66,7 +66,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, applications *maratho
 
 			err := p.buildUDPServiceConfiguration(ctxApp, app, extraConf, confFromLabel.UDP)
 			if err != nil {
-				logger.Error(err)
+				logger.Error().Err(err).Send()
 			} else {
 				provider.BuildUDPRouterConfiguration(ctxApp, confFromLabel.UDP)
 			}
@@ -81,7 +81,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, applications *maratho
 
 		err = p.buildServiceConfiguration(ctxApp, app, extraConf, confFromLabel.HTTP)
 		if err != nil {
-			logger.Error(err)
+			logger.Error().Err(err).Send()
 			continue
 		}
 
@@ -109,7 +109,8 @@ func getServiceName(app marathon.Application) string {
 
 func (p *Provider) buildServiceConfiguration(ctx context.Context, app marathon.Application, extraConf configuration, conf *dynamic.HTTPConfiguration) error {
 	appName := getServiceName(app)
-	appCtx := log.With(ctx, log.Str("ApplicationID", appName))
+
+	logger := log.Ctx(ctx).With().Str("applicationName", appName).Logger()
 
 	if len(conf.Services) == 0 {
 		conf.Services = make(map[string]*dynamic.Service)
@@ -136,7 +137,7 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, app marathon.A
 			}
 			server, err := p.getServer(app, *task, extraConf, defaultServer)
 			if err != nil {
-				log.FromContext(appCtx).Errorf("Skip task: %v", err)
+				logger.Error().Err(err).Msg("Skip task")
 				continue
 			}
 			servers = append(servers, server)
@@ -152,7 +153,8 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, app marathon.A
 
 func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, app marathon.Application, extraConf configuration, conf *dynamic.TCPConfiguration) error {
 	appName := getServiceName(app)
-	appCtx := log.With(ctx, log.Str("ApplicationID", appName))
+
+	logger := log.Ctx(ctx).With().Str("applicationName", appName).Logger()
 
 	if len(conf.Services) == 0 {
 		conf.Services = make(map[string]*dynamic.TCPService)
@@ -176,7 +178,7 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, app maratho
 			if p.taskFilter(ctx, *task, app) {
 				server, err := p.getTCPServer(app, *task, extraConf, defaultServer)
 				if err != nil {
-					log.FromContext(appCtx).Errorf("Skip task: %v", err)
+					logger.Error().Err(err).Msg("Skip task")
 					continue
 				}
 				servers = append(servers, server)
@@ -193,7 +195,7 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, app maratho
 
 func (p *Provider) buildUDPServiceConfiguration(ctx context.Context, app marathon.Application, extraConf configuration, conf *dynamic.UDPConfiguration) error {
 	appName := getServiceName(app)
-	appCtx := log.With(ctx, log.Str("ApplicationID", appName))
+	logger := log.Ctx(ctx).With().Str("applicationName", appName).Logger()
 
 	if len(conf.Services) == 0 {
 		conf.Services = make(map[string]*dynamic.UDPService)
@@ -217,7 +219,7 @@ func (p *Provider) buildUDPServiceConfiguration(ctx context.Context, app maratho
 			if p.taskFilter(ctx, *task, app) {
 				server, err := p.getUDPServer(app, *task, extraConf, defaultServer)
 				if err != nil {
-					log.FromContext(appCtx).Errorf("Skip task: %v", err)
+					logger.Error().Err(err).Msg("Skip task")
 					continue
 				}
 				servers = append(servers, server)
@@ -233,22 +235,22 @@ func (p *Provider) buildUDPServiceConfiguration(ctx context.Context, app maratho
 }
 
 func (p *Provider) keepApplication(ctx context.Context, extraConf configuration, labels map[string]string) bool {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	// Filter disabled application.
 	if !extraConf.Enable {
-		logger.Debug("Filtering disabled Marathon application")
+		logger.Debug().Msg("Filtering disabled Marathon application")
 		return false
 	}
 
 	// Filter by constraints.
 	matches, err := constraints.MatchLabels(labels, p.Constraints)
 	if err != nil {
-		logger.Errorf("Error matching constraints expression: %v", err)
+		logger.Error().Err(err).Msg("Error matching constraints expression")
 		return false
 	}
 	if !matches {
-		logger.Debugf("Marathon application filtered by constraint expression: %q", p.Constraints)
+		logger.Debug().Msgf("Marathon application filtered by constraint expression: %q", p.Constraints)
 		return false
 	}
 
@@ -261,7 +263,7 @@ func (p *Provider) taskFilter(ctx context.Context, task marathon.Task, applicati
 	}
 
 	if ready := p.readyChecker.Do(task, application); !ready {
-		log.FromContext(ctx).Infof("Filtering unready task %s from application %s", task.ID, application.ID)
+		log.Ctx(ctx).Info().Msgf("Filtering unready task %s from application %s", task.ID, application.ID)
 		return false
 	}
 

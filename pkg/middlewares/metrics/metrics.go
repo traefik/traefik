@@ -10,7 +10,7 @@ import (
 
 	"github.com/containous/alice"
 	gokitmetrics "github.com/go-kit/kit/metrics"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/middlewares/capture"
@@ -44,7 +44,7 @@ type metricsMiddleware struct {
 
 // NewEntryPointMiddleware creates a new metrics middleware for an Entrypoint.
 func NewEntryPointMiddleware(ctx context.Context, next http.Handler, registry metrics.Registry, entryPointName string) http.Handler {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, nameEntrypoint, typeName)).Debug("Creating middleware")
+	middlewares.GetLogger(ctx, nameEntrypoint, typeName).Debug().Msg("Creating middleware")
 
 	return &metricsMiddleware{
 		next:                 next,
@@ -60,7 +60,7 @@ func NewEntryPointMiddleware(ctx context.Context, next http.Handler, registry me
 
 // NewRouterMiddleware creates a new metrics middleware for a Router.
 func NewRouterMiddleware(ctx context.Context, next http.Handler, registry metrics.Registry, routerName string, serviceName string) http.Handler {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, nameRouter, typeName)).Debug("Creating middleware")
+	middlewares.GetLogger(ctx, nameRouter, typeName).Debug().Msg("Creating middleware")
 
 	return &metricsMiddleware{
 		next:                 next,
@@ -76,7 +76,7 @@ func NewRouterMiddleware(ctx context.Context, next http.Handler, registry metric
 
 // NewServiceMiddleware creates a new metrics middleware for a Service.
 func NewServiceMiddleware(ctx context.Context, next http.Handler, registry metrics.Registry, serviceName string) http.Handler {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, nameService, typeName)).Debug("Creating middleware")
+	middlewares.GetLogger(ctx, nameService, typeName).Debug().Msg("Creating middleware")
 
 	return &metricsMiddleware{
 		next:                 next,
@@ -129,10 +129,12 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	capt, err := capture.FromContext(ctx)
 	if err != nil {
+		with := log.Ctx(ctx).With()
 		for i := 0; i < len(m.baseLabels); i += 2 {
-			ctx = log.With(ctx, log.Str(m.baseLabels[i], m.baseLabels[i+1]))
+			with = with.Str(m.baseLabels[i], m.baseLabels[i+1])
 		}
-		log.FromContext(ctx).WithError(err).Errorf("Could not get Capture")
+		logger := with.Logger()
+		logger.Error().Err(err).Msg("Could not get Capture")
 		return
 	}
 
@@ -223,7 +225,7 @@ func containsHeader(req *http.Request, name, value string) bool {
 //nolint:usestdlibvars
 func getMethod(r *http.Request) string {
 	if !utf8.ValidString(r.Method) {
-		log.WithoutContext().Warnf("Invalid HTTP method encoding: %s", r.Method)
+		log.Warn().Msgf("Invalid HTTP method encoding: %s", r.Method)
 		return "NON_UTF8_HTTP_METHOD"
 	}
 
