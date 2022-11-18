@@ -7,7 +7,6 @@ import (
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/ip"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/tcp"
 )
@@ -25,8 +24,8 @@ type ipAllowLister struct {
 
 // New builds a new TCP IPAllowLister given a list of CIDR-Strings to allow.
 func New(ctx context.Context, next tcp.Handler, config dynamic.TCPIPAllowList, name string) (tcp.Handler, error) {
-	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName))
-	logger.Debug("Creating middleware")
+	logger := middlewares.GetLogger(ctx, name, typeName)
+	logger.Debug().Msg("Creating middleware")
 
 	if len(config.SourceRange) == 0 {
 		return nil, errors.New("sourceRange is empty, IPAllowLister not created")
@@ -37,7 +36,7 @@ func New(ctx context.Context, next tcp.Handler, config dynamic.TCPIPAllowList, n
 		return nil, fmt.Errorf("cannot parse CIDRs %s: %w", config.SourceRange, err)
 	}
 
-	logger.Debugf("Setting up IPAllowLister with sourceRange: %s", config.SourceRange)
+	logger.Debug().Msgf("Setting up IPAllowLister with sourceRange: %s", config.SourceRange)
 
 	return &ipAllowLister{
 		allowLister: checker,
@@ -47,19 +46,18 @@ func New(ctx context.Context, next tcp.Handler, config dynamic.TCPIPAllowList, n
 }
 
 func (al *ipAllowLister) ServeTCP(conn tcp.WriteCloser) {
-	ctx := middlewares.GetLoggerCtx(context.Background(), al.name, typeName)
-	logger := log.FromContext(ctx)
+	logger := middlewares.GetLogger(context.Background(), al.name, typeName)
 
 	addr := conn.RemoteAddr().String()
 
 	err := al.allowLister.IsAuthorized(addr)
 	if err != nil {
-		logger.Errorf("Connection from %s rejected: %v", addr, err)
+		logger.Error().Err(err).Msgf("Connection from %s rejected", addr)
 		conn.Close()
 		return
 	}
 
-	logger.Debugf("Connection from %s accepted", addr)
+	logger.Debug().Msgf("Connection from %s accepted", addr)
 
 	al.next.ServeTCP(conn)
 }
