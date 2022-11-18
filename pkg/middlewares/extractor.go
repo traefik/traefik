@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/vulcand/oxy/utils"
+	"github.com/vulcand/oxy/v2/utils"
 )
 
 // GetSourceExtractor returns the SourceExtractor function corresponding to the given sourceMatcher.
@@ -35,26 +35,26 @@ func GetSourceExtractor(ctx context.Context, sourceMatcher *dynamic.SourceCriter
 		}
 	}
 
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 	if sourceMatcher.IPStrategy != nil {
 		strategy, err := sourceMatcher.IPStrategy.Get()
 		if err != nil {
 			return nil, err
 		}
 
-		logger.Debug("Using IPStrategy")
+		logger.Debug().Msg("Using IPStrategy")
 		return utils.ExtractorFunc(func(req *http.Request) (string, int64, error) {
 			return strategy.GetIP(req), 1, nil
 		}), nil
 	}
 
 	if sourceMatcher.RequestHeaderName != "" {
-		logger.Debug("Using RequestHeaderName")
+		logger.Debug().Msg("Using RequestHeaderName")
 		return utils.NewExtractor(fmt.Sprintf("request.header.%s", sourceMatcher.RequestHeaderName))
 	}
 
 	if sourceMatcher.RequestHost {
-		logger.Debug("Using RequestHost")
+		logger.Debug().Msg("Using RequestHost")
 		return utils.NewExtractor("request.host")
 	}
 
