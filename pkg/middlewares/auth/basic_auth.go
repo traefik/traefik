@@ -10,7 +10,6 @@ import (
 	goauth "github.com/abbot/go-http-auth"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v2/pkg/tracing"
@@ -31,7 +30,8 @@ type basicAuth struct {
 
 // NewBasic creates a basicAuth middleware.
 func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAuth, name string) (http.Handler, error) {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, name, basicTypeName)).Debug("Creating middleware")
+	middlewares.GetLogger(ctx, name, basicTypeName).Debug().Msg("Creating middleware")
+
 	users, err := getUsers(authConfig.UsersFile, authConfig.Users, basicUserParser)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (b *basicAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), b.name, basicTypeName))
+	logger := middlewares.GetLogger(req.Context(), b.name, basicTypeName)
 
 	user, password, ok := req.BasicAuth()
 	if ok {
@@ -76,14 +76,14 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if !ok {
-		logger.Debug("Authentication failed")
+		logger.Debug().Msg("Authentication failed")
 		tracing.SetErrorWithEvent(req, "Authentication failed")
 
 		b.auth.RequireAuth(rw, req)
 		return
 	}
 
-	logger.Debug("Authentication succeeded")
+	logger.Debug().Msg("Authentication succeeded")
 	req.URL.User = url.User(user)
 
 	if b.headerField != "" {
@@ -91,7 +91,7 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if b.removeHeader {
-		logger.Debug("Removing authorization header")
+		logger.Debug().Msg("Removing authorization header")
 		req.Header.Del(authorizationHeader)
 	}
 	b.next.ServeHTTP(rw, req)
