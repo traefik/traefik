@@ -319,12 +319,12 @@
       name0 = "foobar"
       name1 = "foobar"
   [metrics.openTelemetry]
+    address = "foobar"
     addEntryPointsLabels = true
     addRoutersLabels = true
     addServicesLabels = true
     pushInterval = "42s"
     path = "foobar"
-    endpoint = "foobar"
     explicitBoundaries =  [42.0, 42.0]
     insecure = true
     [metrics.openTelemetry.headers]
@@ -418,7 +418,7 @@
     secretToken = "foobar"
     serviceEnvironment = "foobar"
   [tracing.openTelemetry]
-    endpoint = "foobar"
+    address = "foobar"
     insecure = true
     path = "foobar"
     [tracing.openTelemetry.headers]

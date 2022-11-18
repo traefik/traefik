@@ -347,10 +347,10 @@ metrics:
       name0: foobar
       name1: foobar
   openTelemetry:
+    address: foobar
     addEntryPointsLabels: true
     addRoutersLabels: true
     addServicesLabels: true
-    endpoint: foobar
     explicitBoundaries:
       - 42
       - 42
@@ -447,7 +447,7 @@ tracing:
     secretToken: foobar
     serviceEnvironment: foobar
   openTelemetry:
-    endpoint: foobar
+    address: foobar
     headers:
       name0: foobar
       name1: foobar
