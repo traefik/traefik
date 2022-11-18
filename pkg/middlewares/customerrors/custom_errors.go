@@ -12,11 +12,10 @@ import (
 
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/tracing"
 	"github.com/traefik/traefik/v2/pkg/types"
-	"github.com/vulcand/oxy/utils"
+	"github.com/vulcand/oxy/v2/utils"
 )
 
 // Compile time validation that the response recorder implements http interfaces correctly.
@@ -42,7 +41,7 @@ type customErrors struct {
 
 // New creates a new custom error pages middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, serviceBuilder serviceBuilder, name string) (http.Handler, error) {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
+	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
 	httpCodeRanges, err := types.NewHTTPCodeRanges(config.Status)
 	if err != nil {
@@ -68,11 +67,10 @@ func (c *customErrors) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	ctx := middlewares.GetLoggerCtx(req.Context(), c.name, typeName)
-	logger := log.FromContext(ctx)
+	logger := middlewares.GetLogger(req.Context(), c.name, typeName)
 
 	if c.backendHandler == nil {
-		logger.Error("Error pages: no backend handler.")
+		logger.Error().Msg("Error pages: no backend handler.")
 		tracing.SetErrorWithEvent(req, "Error pages: no backend handler.")
 		c.next.ServeHTTP(rw, req)
 		return
@@ -86,7 +84,7 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	// check the recorder code against the configured http status code ranges
 	code := catcher.getCode()
-	logger.Debugf("Caught HTTP Status Code %d, returning error page", code)
+	logger.Debug().Msgf("Caught HTTP Status Code %d, returning error page", code)
 
 	var query string
 	if len(c.backendQuery) > 0 {
@@ -97,7 +95,7 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	pageReq, err := newRequest("http://" + req.Host + query)
 	if err != nil {
-		logger.Error(err)
+		logger.Error().Err(err).Send()
 		http.Error(rw, http.StatusText(code), code)
 		return
 	}
