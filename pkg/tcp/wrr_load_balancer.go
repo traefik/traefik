@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 )
 
 type server struct {
@@ -34,7 +34,7 @@ func (b *WRRLoadBalancer) ServeTCP(conn WriteCloser) {
 	b.lock.Unlock()
 
 	if err != nil {
-		log.WithoutContext().Errorf("Error during load balancing: %v", err)
+		log.Error().Err(err).Msg("Error during load balancing")
 		conn.Close()
 		return
 	}

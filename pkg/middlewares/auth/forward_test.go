@@ -16,7 +16,7 @@ import (
 	tracingMiddleware "github.com/traefik/traefik/v2/pkg/middlewares/tracing"
 	"github.com/traefik/traefik/v2/pkg/testhelpers"
 	"github.com/traefik/traefik/v2/pkg/tracing"
-	"github.com/vulcand/oxy/forward"
+	"github.com/vulcand/oxy/v2/forward"
 )
 
 func TestForwardAuthFail(t *testing.T) {

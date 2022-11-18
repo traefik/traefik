@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 )
@@ -28,7 +28,7 @@ func MustParseYaml(content []byte) []runtime.Object {
 		}
 
 		if !acceptedK8sTypes.MatchString(groupVersionKind.Kind) {
-			log.WithoutContext().Debugf("The custom-roles configMap contained K8s object types which are not supported! Skipping object with type: %s", groupVersionKind.Kind)
+			log.Debug().Msgf("The custom-roles configMap contained K8s object types which are not supported! Skipping object with type: %s", groupVersionKind.Kind)
 		} else {
 			retVal = append(retVal, obj)
 		}

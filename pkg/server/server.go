@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v2/pkg/safe"
@@ -53,9 +53,9 @@ func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, entryPointsU
 func (s *Server) Start(ctx context.Context) {
 	go func() {
 		<-ctx.Done()
-		logger := log.FromContext(ctx)
-		logger.Info("I have to go...")
-		logger.Info("Stopping server gracefully")
+		logger := log.Ctx(ctx)
+		logger.Info().Msg("I have to go...")
+		logger.Info().Msg("Stopping server gracefully")
 		s.Stop()
 	}()
 
@@ -73,7 +73,7 @@ func (s *Server) Wait() {
 
 // Stop stops the server.
 func (s *Server) Stop() {
-	defer log.WithoutContext().Info("Server stopped")
+	defer log.Info().Msg("Server stopped")
 
 	s.tcpEntryPoints.Stop()
 	s.udpEntryPoints.Stop()
