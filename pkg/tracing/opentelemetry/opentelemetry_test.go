@@ -27,7 +27,7 @@ func TestTraceContextPropagation(t *testing.T) {
 		body, err := io.ReadAll(gzr)
 		require.NoError(t, err)
 
-		req := ptraceotlp.NewRequest()
+		req := ptraceotlp.NewExportRequest()
 		err = req.UnmarshalProto(body)
 		require.NoError(t, err)
 
