@@ -9,9 +9,10 @@ import (
 
 	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/go-connections/nat"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/label"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/constraints"
 )
@@ -21,17 +22,17 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 
 	for _, container := range containersInspected {
 		containerName := getServiceName(container) + "-" + container.ID
-		ctxContainer := log.With(ctx, log.Str("container", containerName))
+
+		logger := log.Ctx(ctx).With().Str("container", containerName).Logger()
+		ctxContainer := logger.WithContext(ctx)
 
 		if !p.keepContainer(ctxContainer, container) {
 			continue
 		}
 
-		logger := log.FromContext(ctxContainer)
-
 		confFromLabel, err := label.DecodeConfiguration(container.Labels)
 		if err != nil {
-			logger.Error(err)
+			logger.Error().Err(err).Send()
 			continue
 		}
 
@@ -41,7 +42,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 
 			err := p.buildTCPServiceConfiguration(ctxContainer, container, confFromLabel.TCP)
 			if err != nil {
-				logger.Error(err)
+				logger.Error().Err(err).Send()
 				continue
 			}
 			provider.BuildTCPRouterConfiguration(ctxContainer, confFromLabel.TCP)
@@ -52,7 +53,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 
 			err := p.buildUDPServiceConfiguration(ctxContainer, container, confFromLabel.UDP)
 			if err != nil {
-				logger.Error(err)
+				logger.Error().Err(err).Send()
 				continue
 			}
 			provider.BuildUDPRouterConfiguration(ctxContainer, confFromLabel.UDP)
@@ -67,7 +68,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 
 		err = p.buildServiceConfiguration(ctxContainer, container, confFromLabel.HTTP)
 		if err != nil {
-			logger.Error(err)
+			logger.Error().Err(err).Send()
 			continue
 		}
 
@@ -106,7 +107,7 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container d
 	}
 
 	for name, service := range configuration.Services {
-		ctx := log.With(ctx, log.Str(log.ServiceName, name))
+		ctx := log.Ctx(ctx).With().Str(logs.ServiceName, name).Logger().WithContext(ctx)
 		if err := p.addServerTCP(ctx, container, service.LoadBalancer); err != nil {
 			return fmt.Errorf("service %q error: %w", name, err)
 		}
@@ -130,7 +131,7 @@ func (p *Provider) buildUDPServiceConfiguration(ctx context.Context, container d
 	}
 
 	for name, service := range configuration.Services {
-		ctx := log.With(ctx, log.Str(log.ServiceName, name))
+		ctx := log.Ctx(ctx).With().Str(logs.ServiceName, name).Logger().WithContext(ctx)
 		if err := p.addServerUDP(ctx, container, service.LoadBalancer); err != nil {
 			return fmt.Errorf("service %q error: %w", name, err)
 		}
@@ -156,7 +157,7 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, container dock
 	}
 
 	for name, service := range configuration.Services {
-		ctx := log.With(ctx, log.Str(log.ServiceName, name))
+		ctx := log.Ctx(ctx).With().Str(logs.ServiceName, name).Logger().WithContext(ctx)
 		if err := p.addServer(ctx, container, service.LoadBalancer); err != nil {
 			return fmt.Errorf("service %q error: %w", name, err)
 		}
@@ -166,25 +167,25 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, container dock
 }
 
 func (p *Provider) keepContainer(ctx context.Context, container dockerData) bool {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	if !container.ExtraConf.Enable {
-		logger.Debug("Filtering disabled container")
+		logger.Debug().Msg("Filtering disabled container")
 		return false
 	}
 
 	matches, err := constraints.MatchLabels(container.Labels, p.Constraints)
 	if err != nil {
-		logger.Errorf("Error matching constraints expression: %v", err)
+		logger.Error().Err(err).Msg("Error matching constraints expression")
 		return false
 	}
 	if !matches {
-		logger.Debugf("Container pruned by constraint expression: %q", p.Constraints)
+		logger.Debug().Msgf("Container pruned by constraint expression: %q", p.Constraints)
 		return false
 	}
 
 	if !p.AllowEmptyServices && container.Health != "" && container.Health != dockertypes.Healthy {
-		logger.Debug("Filtering unhealthy or starting container")
+		logger.Debug().Msg("Filtering unhealthy or starting container")
 		return false
 	}
 
@@ -274,7 +275,7 @@ func (p *Provider) addServer(ctx context.Context, container dockerData, loadBala
 }
 
 func (p *Provider) getIPPort(ctx context.Context, container dockerData, serverPort string) (string, string, error) {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	var ip, port string
 	usedBound := false
@@ -283,9 +284,9 @@ func (p *Provider) getIPPort(ctx context.Context, container dockerData, serverPo
 		portBinding, err := p.getPortBinding(container, serverPort)
 		switch {
 		case err != nil:
-			logger.Infof("Unable to find a binding for container %q, falling back on its internal IP/Port.", container.Name)
+			logger.Info().Msgf("Unable to find a binding for container %q, falling back on its internal IP/Port.", container.Name)
 		case portBinding.HostIP == "0.0.0.0" || len(portBinding.HostIP) == 0:
-			logger.Infof("Cannot determine the IP address (got %q) for %q's binding, falling back on its internal IP/Port.", portBinding.HostIP, container.Name)
+			logger.Info().Msgf("Cannot determine the IP address (got %q) for %q's binding, falling back on its internal IP/Port.", portBinding.HostIP, container.Name)
 		default:
 			ip = portBinding.HostIP
 			port = portBinding.HostPort
@@ -306,7 +307,7 @@ func (p *Provider) getIPPort(ctx context.Context, container dockerData, serverPo
 }
 
 func (p Provider) getIPAddress(ctx context.Context, container dockerData) string {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	if container.ExtraConf.Docker.Network != "" {
 		settings := container.NetworkSettings
@@ -316,7 +317,7 @@ func (p Provider) getIPAddress(ctx context.Context, container dockerData) string
 				return network.Addr
 			}
 
-			logger.Warnf("Could not find network named '%s' for container '%s'! Maybe you're missing the project's prefix in the label? Defaulting to first available network.", container.ExtraConf.Docker.Network, container.Name)
+			logger.Warn().Msgf("Could not find network named '%s' for container '%s'! Maybe you're missing the project's prefix in the label? Defaulting to first available network.", container.ExtraConf.Docker.Network, container.Name)
 		}
 	}
 
@@ -336,14 +337,14 @@ func (p Provider) getIPAddress(ctx context.Context, container dockerData) string
 	if container.NetworkSettings.NetworkMode.IsContainer() {
 		dockerClient, err := p.createClient()
 		if err != nil {
-			logger.Warnf("Unable to get IP address: %s", err)
+			logger.Warn().Err(err).Msg("Unable to get IP address")
 			return ""
 		}
 
 		connectedContainer := container.NetworkSettings.NetworkMode.ConnectedContainer()
 		containerInspected, err := dockerClient.ContainerInspect(context.Background(), connectedContainer)
 		if err != nil {
-			logger.Warnf("Unable to get IP address for container %s : Failed to inspect container ID %s, error: %s", container.Name, connectedContainer, err)
+			logger.Warn().Err(err).Msgf("Unable to get IP address for container %s: failed to inspect container ID %s", container.Name, connectedContainer)
 			return ""
 		}
 
@@ -352,7 +353,7 @@ func (p Provider) getIPAddress(ctx context.Context, container dockerData) string
 		containerParsed := parseContainer(containerInspected)
 		extraConf, err := p.getConfiguration(containerParsed)
 		if err != nil {
-			logger.Warnf("Unable to get IP address for container %s : failed to get extra configuration for container %s: %s", container.Name, containerInspected.Name, err)
+			logger.Warn().Err(err).Msgf("Unable to get IP address for container %s : failed to get extra configuration for container %s", container.Name, containerInspected.Name)
 			return ""
 		}
 
@@ -368,7 +369,7 @@ func (p Provider) getIPAddress(ctx context.Context, container dockerData) string
 		return network.Addr
 	}
 
-	logger.Warn("Unable to find the IP address.")
+	logger.Warn().Msg("Unable to find the IP address.")
 	return ""
 }
 

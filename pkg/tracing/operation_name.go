@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 )
 
 // TraceNameHashLength defines the number of characters to use from the head of the generated hash.
@@ -22,7 +22,7 @@ func generateOperationName(prefix string, parts []string, sep string, spanLimit 
 
 	if spanLimit > 0 && len(name) > spanLimit {
 		if spanLimit < maxLength {
-			log.WithoutContext().Warnf("SpanNameLimit cannot be lesser than %d: falling back on %d, maxLength, maxLength+3", maxLength)
+			log.Warn().Msgf("SpanNameLimit cannot be lesser than %d: falling back on %d", maxLength, maxLength+3)
 			spanLimit = maxLength + 3
 		}
 
@@ -58,7 +58,7 @@ func computeHash(name string) string {
 	hash := sha256.New()
 	if _, err := hash.Write(data); err != nil {
 		// Impossible case
-		log.WithoutContext().WithField("OperationName", name).Errorf("Failed to create Span name hash for %s: %v", name, err)
+		log.Error().Str("OperationName", name).Err(err).Msgf("Failed to create Span name hash for %s", name)
 	}
 
 	return fmt.Sprintf("%x", hash.Sum(nil))[:TraceNameHashLength]
