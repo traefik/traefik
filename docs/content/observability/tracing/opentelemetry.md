@@ -30,7 +30,7 @@ tracing:
 
 #### `address`
 
-_Required, Default="", Format="`<host>:<port>`"_
+_Required, Default="localhost:4318", Format="`<host>:<port>`"_
 
 Address of the OpenTelemetry Collector to send spans to.
 

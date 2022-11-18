@@ -147,6 +147,7 @@ type OpenTelemetry struct {
 
 // SetDefaults sets the default values.
 func (o *OpenTelemetry) SetDefaults() {
+	o.Address = "localhost:4318"
 	o.AddEntryPointsLabels = true
 	o.AddServicesLabels = true
 	o.ExplicitBoundaries = []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10}

@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -122,10 +121,6 @@ func StopOpenTelemetry() {
 
 // newOpenTelemetryMeterProvider creates a new controller.Controller.
 func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OpenTelemetry) (*sdkmetric.MeterProvider, error) {
-	if config.Address == "" {
-		return nil, errors.New("address property is missing")
-	}
-
 	var (
 		exporter sdkmetric.Exporter
 		err      error
