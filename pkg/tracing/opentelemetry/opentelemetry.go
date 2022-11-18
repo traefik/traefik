@@ -40,12 +40,6 @@ func (c *Config) SetDefaults() {
 
 // Setup sets up the tracer.
 func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, error) {
-	bt := oteltracer.NewBridgeTracer()
-	bt.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
-
-	bt.SetOpenTelemetryTracer(otel.Tracer(componentName, trace.WithInstrumentationVersion(version.Version)))
-	opentracing.SetGlobalTracer(bt)
-
 	var (
 		err      error
 		exporter *otlptrace.Exporter
@@ -59,9 +53,13 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 		return nil, nil, fmt.Errorf("setting up exporter: %w", err)
 	}
 
-	tracerProvider := sdktrace.NewTracerProvider(
-		sdktrace.WithBatcher(exporter),
-	)
+	bt := oteltracer.NewBridgeTracer()
+	bt.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
+
+	bt.SetOpenTelemetryTracer(otel.Tracer(componentName, trace.WithInstrumentationVersion(version.Version)))
+	opentracing.SetGlobalTracer(bt)
+
+	tracerProvider := sdktrace.NewTracerProvider(sdktrace.WithBatcher(exporter))
 	otel.SetTracerProvider(tracerProvider)
 
 	log.WithoutContext().Debug("OpenTelemetry tracer configured")
