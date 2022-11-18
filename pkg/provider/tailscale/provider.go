@@ -9,9 +9,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/tailscale/tscert"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/muxer/http"
 	"github.com/traefik/traefik/v2/pkg/muxer/tcp"
 	"github.com/traefik/traefik/v2/pkg/safe"
@@ -56,21 +57,20 @@ func (p *Provider) HandleConfigUpdate(cfg dynamic.Configuration) {
 func (p *Provider) Provide(dynMessages chan<- dynamic.Message, pool *safe.Pool) error {
 	p.dynMessages = dynMessages
 
-	fields := log.Str(log.ProviderName, p.ResolverName+".tailscale")
+	logger := log.With().Str(logs.ProviderName, p.ResolverName+".tailscale").Logger()
 
 	pool.GoCtx(func(ctx context.Context) {
-		p.watchDomains(log.With(ctx, fields))
+		p.watchDomains(logger.WithContext(ctx))
 	})
 
 	pool.GoCtx(func(ctx context.Context) {
-		p.renewCertificates(log.With(ctx, fields))
+		p.renewCertificates(logger.WithContext(ctx))
 	})
 
 	return nil
 }
 
-// watchDomains watches for Tailscale domain certificates that should be
-// fetched from the Tailscale daemon.
+// watchDomains watches for Tailscale domain certificates that should be fetched from the Tailscale daemon.
 func (p *Provider) watchDomains(ctx context.Context) {
 	for {
 		select {
@@ -110,9 +110,9 @@ func (p *Provider) renewCertificates(ctx context.Context) {
 			for domain, cert := range p.certByDomain {
 				tlsCert, err := cert.GetCertificateFromBytes()
 				if err != nil {
-					log.FromContext(ctx).
-						WithError(err).
-						Errorf("Unable to get certificate for domain %s", domain)
+					log.Ctx(ctx).
+						Err(err).
+						Msgf("Unable to get certificate for domain %s", domain)
 					continue
 				}
 
@@ -139,7 +139,7 @@ func (p *Provider) renewCertificates(ctx context.Context) {
 // findDomains goes through the given dynamic.Configuration and returns all
 // Tailscale-specific domains found.
 func (p *Provider) findDomains(ctx context.Context, cfg dynamic.Configuration) []string {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	var domains []string
 
@@ -162,7 +162,7 @@ func (p *Provider) findDomains(ctx context.Context, cfg dynamic.Configuration) [
 
 			parsedDomains, err := http.ParseDomains(router.Rule)
 			if err != nil {
-				logger.Errorf("Unable to parse HTTP router domains: %v", err)
+				logger.Error().Err(err).Msg("Unable to parse HTTP router domains")
 				continue
 			}
 
@@ -189,7 +189,7 @@ func (p *Provider) findDomains(ctx context.Context, cfg dynamic.Configuration) [
 
 			parsedDomains, err := tcp.ParseHostSNI(router.Rule)
 			if err != nil {
-				logger.Errorf("Unable to parse TCP router domains: %v", err)
+				logger.Error().Err(err).Msg("Unable to parse TCP router domains")
 				continue
 			}
 
@@ -241,16 +241,16 @@ func (p *Provider) purgeUnusedCerts(domains []string) bool {
 // fetchCerts fetches the certificates for the provided domains from the
 // Tailscale daemon.
 func (p *Provider) fetchCerts(ctx context.Context, domains []string) {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	for _, domain := range domains {
 		cert, key, err := tscert.CertPair(ctx, domain)
 		if err != nil {
-			logger.WithError(err).Errorf("Unable to fetch certificate for domain %q", domain)
+			logger.Error().Err(err).Msgf("Unable to fetch certificate for domain %q", domain)
 			continue
 		}
 
-		logger.Debugf("Fetched certificate for domain %q", domain)
+		logger.Debug().Msgf("Fetched certificate for domain %q", domain)
 
 		p.certByDomainMu.Lock()
 		p.certByDomain[domain] = traefiktls.Certificate{
@@ -300,7 +300,7 @@ func (p *Provider) sendDynamicConfig() {
 // sanitizeDomains removes duplicated and invalid Tailscale subdomains, from
 // the provided list.
 func sanitizeDomains(ctx context.Context, domains []string) []string {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	seen := map[string]struct{}{}
 
@@ -311,7 +311,7 @@ func sanitizeDomains(ctx context.Context, domains []string) []string {
 		}
 
 		if !isTailscaleDomain(domain) {
-			logger.Errorf("Domain %s is not a valid Tailscale domain", domain)
+			logger.Error().Msgf("Domain %s is not a valid Tailscale domain", domain)
 			continue
 		}
 

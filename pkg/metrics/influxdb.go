@@ -8,10 +8,10 @@ import (
 	"regexp"
 	"time"
 
-	kitlog "github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics/influx"
 	influxdb "github.com/influxdata/influxdb1-client/v2"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
@@ -112,30 +112,30 @@ func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 
 // initInfluxDBClient creates a influxDBClient.
 func initInfluxDBClient(ctx context.Context, config *types.InfluxDB) *influx.Influx {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	// TODO deprecated: move this switch into configuration.SetEffectiveConfiguration when web provider will be removed.
 	switch config.Protocol {
 	case protocolUDP:
 		if len(config.Database) > 0 || len(config.RetentionPolicy) > 0 {
-			logger.Warn("Database and RetentionPolicy options have no effect with UDP.")
+			logger.Warn().Msg("Database and RetentionPolicy options have no effect with UDP.")
 			config.Database = ""
 			config.RetentionPolicy = ""
 		}
 	case protocolHTTP:
 		if u, err := url.Parse(config.Address); err == nil {
 			if u.Scheme != "http" && u.Scheme != "https" {
-				logger.Warnf("InfluxDB address %s should specify a scheme (http or https): falling back on HTTP.", config.Address)
+				logger.Warn().Msgf("InfluxDB address %s should specify a scheme (http or https): falling back on HTTP.", config.Address)
 				config.Address = "http://" + config.Address
 			}
 		} else {
-			logger.Errorf("Unable to parse the InfluxDB address %v: falling back on UDP.", err)
+			logger.Error().Err(err).Msg("Unable to parse the InfluxDB address: falling back on UDP.")
 			config.Protocol = protocolUDP
 			config.Database = ""
 			config.RetentionPolicy = ""
 		}
 	default:
-		logger.Warnf("Unsupported protocol %s: falling back on UDP.", config.Protocol)
+		logger.Warn().Msgf("Unsupported protocol %s: falling back on UDP.", config.Protocol)
 		config.Protocol = protocolUDP
 		config.Database = ""
 		config.RetentionPolicy = ""
@@ -147,10 +147,8 @@ func initInfluxDBClient(ctx context.Context, config *types.InfluxDB) *influx.Inf
 			Database:        config.Database,
 			RetentionPolicy: config.RetentionPolicy,
 		},
-		kitlog.LoggerFunc(func(keyvals ...interface{}) error {
-			log.WithoutContext().WithField(log.MetricsProviderName, "influxdb").Info(keyvals...)
-			return nil
-		}))
+		logs.NewGoKitWrapper(*logger),
+	)
 }
 
 // initInfluxDBTicker initializes metrics pusher.
@@ -190,10 +188,10 @@ func (w *influxDBWriter) Write(bp influxdb.BatchPoints) error {
 	defer c.Close()
 
 	if writeErr := c.Write(bp); writeErr != nil {
-		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "influxdb"))
-		log.FromContext(ctx).Errorf("Error while writing to InfluxDB: %s", writeErr.Error())
+		logger := log.With().Str(logs.MetricsProviderName, "influxdb").Logger()
+		logger.Error().Err(writeErr).Msg("Error while writing to InfluxDB")
 
-		if handleErr := w.handleWriteError(ctx, c, writeErr); handleErr != nil {
+		if handleErr := w.handleWriteError(logger.WithContext(context.Background()), c, writeErr); handleErr != nil {
 			return handleErr
 		}
 		// Retry write after successful handling of writeErr
@@ -232,9 +230,9 @@ func (w *influxDBWriter) handleWriteError(ctx context.Context, c influxdb.Client
 		qStr = fmt.Sprintf("%s WITH NAME \"%s\"", qStr, w.config.RetentionPolicy)
 	}
 
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
-	logger.Debugf("InfluxDB database not found: attempting to create one with %s", qStr)
+	logger.Debug().Msgf("InfluxDB database not found: attempting to create one with %s", qStr)
 
 	q := influxdb.NewQuery(qStr, "", "")
 	response, queryErr := c.Query(q)
@@ -242,10 +240,10 @@ func (w *influxDBWriter) handleWriteError(ctx context.Context, c influxdb.Client
 		queryErr = response.Error()
 	}
 	if queryErr != nil {
-		logger.Errorf("Error while creating the InfluxDB database %s", queryErr)
+		logger.Error().Err(queryErr).Msg("Error while creating the InfluxDB database")
 		return queryErr
 	}
 
-	logger.Debugf("Successfully created the InfluxDB database %s", w.config.Database)
+	logger.Debug().Msgf("Successfully created the InfluxDB database %s", w.config.Database)
 	return nil
 }

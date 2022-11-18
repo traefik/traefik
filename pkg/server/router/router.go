@@ -6,8 +6,9 @@ import (
 	"net/http"
 
 	"github.com/containous/alice"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
 	metricsMiddle "github.com/traefik/traefik/v2/pkg/middlewares/metrics"
@@ -63,19 +64,21 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 
 	for entryPointName, routers := range m.getHTTPRouters(rootCtx, entryPoints, tls) {
 		entryPointName := entryPointName
-		ctx := log.With(rootCtx, log.Str(log.EntryPointName, entryPointName))
+
+		logger := log.Ctx(rootCtx).With().Str(logs.EntryPointName, entryPointName).Logger()
+		ctx := logger.WithContext(rootCtx)
 
 		handler, err := m.buildEntryPointHandler(ctx, routers)
 		if err != nil {
-			log.FromContext(ctx).Error(err)
+			logger.Error().Err(err).Send()
 			continue
 		}
 
 		handlerWithAccessLog, err := alice.New(func(next http.Handler) (http.Handler, error) {
-			return accesslog.NewFieldHandler(next, log.EntryPointName, entryPointName, accesslog.AddOriginFields), nil
+			return accesslog.NewFieldHandler(next, logs.EntryPointName, entryPointName, accesslog.AddOriginFields), nil
 		}).Then(handler)
 		if err != nil {
-			log.FromContext(ctx).Error(err)
+			logger.Error().Err(err).Send()
 			entryPointHandlers[entryPointName] = handler
 		} else {
 			entryPointHandlers[entryPointName] = handlerWithAccessLog
@@ -83,7 +86,8 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 	}
 
 	for _, entryPointName := range entryPoints {
-		ctx := log.With(rootCtx, log.Str(log.EntryPointName, entryPointName))
+		logger := log.Ctx(rootCtx).With().Str(logs.EntryPointName, entryPointName).Logger()
+		ctx := logger.WithContext(rootCtx)
 
 		handler, ok := entryPointHandlers[entryPointName]
 		if !ok || handler == nil {
@@ -92,7 +96,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 
 		handlerWithMiddlewares, err := m.chainBuilder.Build(ctx, entryPointName).Then(handler)
 		if err != nil {
-			log.FromContext(ctx).Error(err)
+			logger.Error().Err(err).Send()
 			continue
 		}
 		entryPointHandlers[entryPointName] = handlerWithMiddlewares
@@ -108,20 +112,20 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	}
 
 	for routerName, routerConfig := range configs {
-		ctxRouter := log.With(provider.AddInContext(ctx, routerName), log.Str(log.RouterName, routerName))
-		logger := log.FromContext(ctxRouter)
+		logger := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
+		ctxRouter := logger.WithContext(provider.AddInContext(ctx, routerName))
 
 		handler, err := m.buildRouterHandler(ctxRouter, routerName, routerConfig)
 		if err != nil {
 			routerConfig.AddError(err, true)
-			logger.Error(err)
+			logger.Error().Err(err).Send()
 			continue
 		}
 
 		err = muxer.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
 		if err != nil {
 			routerConfig.AddError(err, true)
-			logger.Error(err)
+			logger.Error().Err(err).Send()
 			continue
 		}
 	}
@@ -150,7 +154,7 @@ func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, rou
 		return accesslog.NewFieldHandler(next, accesslog.RouterName, routerName, nil), nil
 	}).Then(handler)
 	if err != nil {
-		log.FromContext(ctx).Error(err)
+		log.Ctx(ctx).Error().Err(err).Send()
 		m.routerHandlers[routerName] = handler
 	} else {
 		m.routerHandlers[routerName] = handlerWithAccessLog
