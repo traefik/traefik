@@ -10,7 +10,6 @@ import (
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/middlewares/compress/brotli"
 	"github.com/traefik/traefik/v2/pkg/tracing"
@@ -35,7 +34,7 @@ type compress struct {
 
 // New creates a new compress middleware.
 func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name string) (http.Handler, error) {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
+	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
 	excludes := []string{"application/grpc"}
 	for _, v := range conf.ExcludedContentTypes {
@@ -74,7 +73,7 @@ func New(ctx context.Context, next http.Handler, conf dynamic.Compress, name str
 }
 
 func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), c.name, typeName))
+	logger := middlewares.GetLogger(req.Context(), c.name, typeName)
 
 	if req.Method == http.MethodHead {
 		c.next.ServeHTTP(rw, req)
@@ -83,7 +82,7 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	mediaType, _, err := mime.ParseMediaType(req.Header.Get("Content-Type"))
 	if err != nil {
-		logger.WithError(err).Debug("Unable to parse MIME type")
+		logger.Debug().Err(err).Msg("Unable to parse MIME type")
 	}
 
 	// Notably for text/event-stream requests the response should not be compressed.

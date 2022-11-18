@@ -1,4 +1,4 @@
-package log
+package logs
 
 // Log entry names.
 const (
@@ -12,6 +12,7 @@ const (
 	MetricsProviderName  = "metricsProviderName"
 	TracingProviderName  = "tracingProviderName"
 	ServerName           = "serverName"
+	ServerIndex          = "serverIndex"
 	TLSStoreName         = "tlsStoreName"
 	ServersTransportName = "serversTransport"
 )
