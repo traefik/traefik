@@ -323,7 +323,6 @@
     addRoutersLabels = true
     addServicesLabels = true
     pushInterval = "42s"
-    compress = true
     endpoint = "foobar"
     explicitBoundaries =  [42.0, 42.0]
     insecure = true
