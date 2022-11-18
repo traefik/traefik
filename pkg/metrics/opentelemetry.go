@@ -3,6 +3,7 @@ package metrics
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -254,15 +255,22 @@ func newOpenTelemetryGaugeCollector() *gaugeCollector {
 	}
 }
 
-func (c *gaugeCollector) add(delta float64, name string, attributes otelLabelNamesValues) {
+func (c *gaugeCollector) add(name string, delta float64, attributes otelLabelNamesValues) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, exist := c.values[name]; !exist {
-		c.values[name] = make(map[string]gaugeValue)
+	str := strings.Join(attributes, "")
+
+	if _, exists := c.values[name]; !exists {
+		c.values[name] = map[string]gaugeValue{
+			str: {
+				attributes: attributes,
+				value:      delta,
+			},
+		}
+		return
 	}
 
-	str := attributes.ToString()
 	v, exists := c.values[name][str]
 	if !exists {
 		c.values[name][str] = gaugeValue{
@@ -278,15 +286,15 @@ func (c *gaugeCollector) add(delta float64, name string, attributes otelLabelNam
 	}
 }
 
-func (c *gaugeCollector) set(value float64, name string, attributes otelLabelNamesValues) {
+func (c *gaugeCollector) set(name string, value float64, attributes otelLabelNamesValues) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, exist := c.values[name]; !exist {
+	if _, exists := c.values[name]; !exists {
 		c.values[name] = make(map[string]gaugeValue)
 	}
 
-	c.values[name][attributes.ToString()] = gaugeValue{
+	c.values[name][strings.Join(attributes, "")] = gaugeValue{
 		attributes: attributes,
 		value:      value,
 	}
@@ -338,11 +346,11 @@ func (g *otelGauge) With(labelValues ...string) metrics.Gauge {
 }
 
 func (g *otelGauge) Add(delta float64) {
-	openTelemetryGaugeCollector.add(delta, g.name, g.labelNamesValues)
+	openTelemetryGaugeCollector.add(g.name, delta, g.labelNamesValues)
 }
 
 func (g *otelGauge) Set(value float64) {
-	openTelemetryGaugeCollector.set(value, g.name, g.labelNamesValues)
+	openTelemetryGaugeCollector.set(g.name, value, g.labelNamesValues)
 }
 
 func newOTLPHistogramFrom(meter metric.Meter, name, desc string, u unit.Unit) *otelHistogram {
@@ -386,15 +394,6 @@ func (lvs otelLabelNamesValues) With(labelValues ...string) otelLabelNamesValues
 		labelValues = append(labelValues, "unknown")
 	}
 	return append(lvs, labelValues...)
-}
-
-// ToString convert the otelLabelNamesValues to String.
-func (lvs otelLabelNamesValues) ToString() string {
-	var res string
-	for _, lv := range lvs {
-		res += lv
-	}
-	return res
 }
 
 // ToLabels is a convenience method to convert a otelLabelNamesValues

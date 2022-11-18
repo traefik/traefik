@@ -185,7 +185,7 @@ func TestOpenTelemetry_GaugeCollectorAdd(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			test.gc.add(test.delta, test.name, test.attributes)
+			test.gc.add(test.name, test.delta, test.attributes)
 
 			assert.Equal(t, test.expect, test.gc.values)
 		})
@@ -279,7 +279,7 @@ func TestOpenTelemetry_GaugeCollectorSet(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			test.gc.set(test.value, test.name, test.attributes)
+			test.gc.set(test.name, test.value, test.attributes)
 
 			assert.Equal(t, test.expect, test.gc.values)
 		})
