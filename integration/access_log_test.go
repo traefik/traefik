@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/go-check/check"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
 	checker "github.com/vdemeester/shakers"
 )
@@ -54,7 +54,7 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	defer func() {
 		traefikLog, err := os.ReadFile(traefikTestLogFile)
 		c.Assert(err, checker.IsNil)
-		log.WithoutContext().Info(string(traefikLog))
+		log.Info().Msg(string(traefikLog))
 	}()
 
 	err := cmd.Start()
@@ -262,7 +262,7 @@ func digestParts(resp *http.Response) map[string]string {
 func getMD5(data string) string {
 	digest := md5.New()
 	if _, err := digest.Write([]byte(data)); err != nil {
-		log.WithoutContext().Error(err)
+		log.Error().Err(err).Send()
 	}
 	return fmt.Sprintf("%x", digest.Sum(nil))
 }
@@ -270,7 +270,7 @@ func getMD5(data string) string {
 func getCnonce() string {
 	b := make([]byte, 8)
 	if _, err := io.ReadFull(rand.Reader, b); err != nil {
-		log.WithoutContext().Error(err)
+		log.Error().Err(err).Send()
 	}
 	return fmt.Sprintf("%x", b)[:16]
 }

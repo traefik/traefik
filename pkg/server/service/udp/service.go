@@ -8,8 +8,9 @@ import (
 	"net"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
 	"github.com/traefik/traefik/v2/pkg/udp"
 )
@@ -31,8 +32,9 @@ func NewManager(conf *runtime.Configuration) *Manager {
 // BuildUDP creates the UDP handler for the given service name.
 func (m *Manager) BuildUDP(rootCtx context.Context, serviceName string) (udp.Handler, error) {
 	serviceQualifiedName := provider.GetQualifiedName(rootCtx, serviceName)
-	ctx := provider.AddInContext(rootCtx, serviceQualifiedName)
-	ctx = log.With(ctx, log.Str(log.ServiceName, serviceName))
+
+	logger := log.Ctx(rootCtx).With().Str(logs.ServiceName, serviceName).Logger()
+	ctx := logger.WithContext(provider.AddInContext(rootCtx, serviceQualifiedName))
 
 	conf, ok := m.configs[serviceQualifiedName]
 	if !ok {
@@ -45,34 +47,34 @@ func (m *Manager) BuildUDP(rootCtx context.Context, serviceName string) (udp.Han
 		return nil, err
 	}
 
-	logger := log.FromContext(ctx)
 	switch {
 	case conf.LoadBalancer != nil:
 		loadBalancer := udp.NewWRRLoadBalancer()
 
-		for name, server := range shuffle(conf.LoadBalancer.Servers, m.rand) {
+		for index, server := range shuffle(conf.LoadBalancer.Servers, m.rand) {
 			if _, _, err := net.SplitHostPort(server.Address); err != nil {
-				logger.Errorf("In udp service %q: %v", serviceQualifiedName, err)
+				logger.Error().Err(err).Msgf("In udp service %q", serviceQualifiedName)
 				continue
 			}
 
 			handler, err := udp.NewProxy(server.Address)
 			if err != nil {
-				logger.Errorf("In udp service %q server %q: %v", serviceQualifiedName, server.Address, err)
+				logger.Error().Err(err).Msgf("In udp service %q server %q", serviceQualifiedName, server.Address)
 				continue
 			}
 
 			loadBalancer.AddServer(handler)
-			logger.WithField(log.ServerName, name).Debugf("Creating UDP server %d at %s", name, server.Address)
+			logger.Debug().Int(logs.ServerIndex, index).Str("serverAddress", server.Address).
+				Msg("Creating UDP server")
 		}
 		return loadBalancer, nil
 	case conf.Weighted != nil:
 		loadBalancer := udp.NewWRRLoadBalancer()
 
 		for _, service := range shuffle(conf.Weighted.Services, m.rand) {
-			handler, err := m.BuildUDP(rootCtx, service.Name)
+			handler, err := m.BuildUDP(ctx, service.Name)
 			if err != nil {
-				logger.Errorf("In udp service %q: %v", serviceQualifiedName, err)
+				logger.Error().Err(err).Msgf("In udp service %q", serviceQualifiedName)
 				return nil, err
 			}
 			loadBalancer.AddWeightedServer(handler, service.Weight)

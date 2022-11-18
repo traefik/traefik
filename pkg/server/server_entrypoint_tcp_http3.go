@@ -10,8 +10,8 @@ import (
 	"sync"
 
 	"github.com/lucas-clemente/quic-go/http3"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/log"
 	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
 )
 
@@ -56,7 +56,7 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 
 	httpsServer.Server.(*http.Server).Handler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		if err := h3.Server.SetQuicHeaders(rw.Header()); err != nil {
-			log.FromContext(ctx).Errorf("Failed to set HTTP3 headers: %v", err)
+			log.Ctx(ctx).Error().Err(err).Msg("Failed to set HTTP3 headers")
 		}
 
 		previousHandler.ServeHTTP(rw, req)
