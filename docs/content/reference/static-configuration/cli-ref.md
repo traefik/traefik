@@ -342,6 +342,54 @@ InfluxDB v2 push interval. (Default: ```10```)
 `--metrics.influxdb2.token`:  
 InfluxDB v2 access token.
 
+`--metrics.opentelemetry`:  
+OpenTelemetry metrics exporter type. (Default: ```false```)
+
+`--metrics.opentelemetry.addentrypointslabels`:  
+Enable metrics on entry points. (Default: ```true```)
+
+`--metrics.opentelemetry.address`:  
+Address of the collector endpoint. (Default: ```localhost:4318```)
+
+`--metrics.opentelemetry.addrouterslabels`:  
+Enable metrics on routers. (Default: ```false```)
+
+`--metrics.opentelemetry.addserviceslabels`:  
+Enable metrics on services. (Default: ```true```)
+
+`--metrics.opentelemetry.explicitboundaries`:  
+Boundaries for latency metrics. (Default: ```0.005000, 0.010000, 0.025000, 0.050000, 0.100000, 0.250000, 0.500000, 1.000000, 2.500000, 5.000000, 10.000000```)
+
+`--metrics.opentelemetry.grpc`:  
+gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
+
+`--metrics.opentelemetry.headers.<name>`:  
+Headers sent with payload.
+
+`--metrics.opentelemetry.insecure`:  
+Disables client transport security for the exporter. (Default: ```false```)
+
+`--metrics.opentelemetry.path`:  
+Set the default URL path for sending traces.
+
+`--metrics.opentelemetry.pushinterval`:  
+Period between calls to collect a checkpoint. (Default: ```10```)
+
+`--metrics.opentelemetry.tls.ca`:  
+TLS CA
+
+`--metrics.opentelemetry.tls.caoptional`:  
+TLS CA.Optional (Default: ```false```)
+
+`--metrics.opentelemetry.tls.cert`:  
+TLS cert
+
+`--metrics.opentelemetry.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--metrics.opentelemetry.tls.key`:  
+TLS key
+
 `--metrics.prometheus`:  
 Prometheus metrics exporter type. (Default: ```false```)
 
@@ -1115,6 +1163,39 @@ Sets the sampling type. (Default: ```const```)
 
 `--tracing.jaeger.tracecontextheadername`:  
 Sets the header name used to store the trace ID. (Default: ```uber-trace-id```)
+
+`--tracing.opentelemetry`:  
+Settings for OpenTelemetry. (Default: ```false```)
+
+`--tracing.opentelemetry.address`:  
+Sets the address of the collector endpoint. (Default: ```localhost:4318```)
+
+`--tracing.opentelemetry.grpc`:  
+gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
+
+`--tracing.opentelemetry.headers.<name>`:  
+Defines additional headers to be sent with the payloads.
+
+`--tracing.opentelemetry.insecure`:  
+Disables client transport security for the exporter. (Default: ```false```)
+
+`--tracing.opentelemetry.path`:  
+Sets the default URL path for sending traces.
+
+`--tracing.opentelemetry.tls.ca`:  
+TLS CA
+
+`--tracing.opentelemetry.tls.caoptional`:  
+TLS CA.Optional (Default: ```false```)
+
+`--tracing.opentelemetry.tls.cert`:  
+TLS cert
+
+`--tracing.opentelemetry.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--tracing.opentelemetry.tls.key`:  
+TLS key
 
 `--tracing.servicename`:  
 Set the name for this service. (Default: ```traefik```)
