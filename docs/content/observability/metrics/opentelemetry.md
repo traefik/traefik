@@ -184,11 +184,33 @@ metrics:
 --metrics.openTelemetry.pushInterval=10s
 ```
 
+#### `insecure`
+
+_Optional, Default=false_
+
+Allows reporter to send metrics to the OpenTelemetry Collector without using a secured protocol.
+
+```yaml tab="File (YAML)"
+metrics:
+  openTelemetry:
+    insecure: true
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.openTelemetry]
+    insecure = true
+```
+
+```bash tab="CLI"
+--metrics.openTelemetry.insecure=true
+```
+
 #### `path`
 
 _Required, Default="/v1/traces"_
 
-Allows to override the default URL path used for sending traces.
+Allows to override the default URL path used for sending metrics.
 This option has no effect when using gRPC transport.
 
 ```yaml tab="File (YAML)"
