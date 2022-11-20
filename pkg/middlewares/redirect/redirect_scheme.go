@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 )
 
@@ -20,9 +19,9 @@ const (
 
 // NewRedirectScheme creates a new RedirectScheme middleware.
 func NewRedirectScheme(ctx context.Context, next http.Handler, conf dynamic.RedirectScheme, name string) (http.Handler, error) {
-	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeSchemeName))
-	logger.Debug("Creating middleware")
-	logger.Debugf("Setting up redirection to %s %s", conf.Scheme, conf.Port)
+	logger := middlewares.GetLogger(ctx, name, typeSchemeName)
+	logger.Debug().Msg("Creating middleware")
+	logger.Debug().Msgf("Setting up redirection to %s %s", conf.Scheme, conf.Port)
 
 	if len(conf.Scheme) == 0 {
 		return nil, errors.New("you must provide a target scheme")

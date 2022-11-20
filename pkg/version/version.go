@@ -9,7 +9,7 @@ import (
 	"github.com/google/go-github/v28/github"
 	"github.com/gorilla/mux"
 	goversion "github.com/hashicorp/go-version"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 	"github.com/unrolled/render"
 )
 
@@ -48,7 +48,7 @@ func (v Handler) Append(router *mux.Router) {
 			}
 
 			if err := templatesRenderer.JSON(response, http.StatusOK, v); err != nil {
-				log.WithoutContext().Error(err)
+				log.Error().Err(err).Send()
 			}
 		})
 }
@@ -59,38 +59,36 @@ func CheckNewVersion() {
 		return
 	}
 
-	logger := log.WithoutContext()
-
 	client := github.NewClient(nil)
 
 	updateURL, err := url.Parse("https://update.traefik.io/")
 	if err != nil {
-		logger.Warnf("Error checking new version: %s", err)
+		log.Warn().Err(err).Msg("Error checking new version")
 		return
 	}
 	client.BaseURL = updateURL
 
 	releases, resp, err := client.Repositories.ListReleases(context.Background(), "traefik", "traefik", nil)
 	if err != nil {
-		logger.Warnf("Error checking new version: %s", err)
+		log.Warn().Err(err).Msg("Error checking new version")
 		return
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		logger.Warnf("Error checking new version: status=%s", resp.Status)
+		log.Warn().Msgf("Error checking new version: status=%s", resp.Status)
 		return
 	}
 
 	currentVersion, err := goversion.NewVersion(Version)
 	if err != nil {
-		logger.Warnf("Error checking new version: %s", err)
+		log.Warn().Err(err).Msg("Error checking new version")
 		return
 	}
 
 	for _, release := range releases {
 		releaseVersion, err := goversion.NewVersion(*release.TagName)
 		if err != nil {
-			logger.Warnf("Error checking new version: %s", err)
+			log.Warn().Err(err).Msg("Error checking new version")
 			return
 		}
 
@@ -99,7 +97,7 @@ func CheckNewVersion() {
 		}
 
 		if releaseVersion.GreaterThan(currentVersion) {
-			logger.Warnf("A new release has been found: %s. Please consider updating.", releaseVersion.String())
+			log.Warn().Err(err).Msgf("A new release has been found: %s. Please consider updating.", releaseVersion.String())
 			return
 		}
 	}

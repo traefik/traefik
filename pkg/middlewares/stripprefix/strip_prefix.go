@@ -7,7 +7,6 @@ import (
 
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/tracing"
 )
@@ -28,7 +27,7 @@ type stripPrefix struct {
 
 // New creates a new strip prefix middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.StripPrefix, name string) (http.Handler, error) {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
+	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 	return &stripPrefix{
 		prefixes:   config.Prefixes,
 		forceSlash: config.ForceSlash,

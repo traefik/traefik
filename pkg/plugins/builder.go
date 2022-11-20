@@ -6,8 +6,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/sirupsen/logrus"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"
 )
@@ -35,12 +36,13 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 			return nil, fmt.Errorf("%s: failed to read manifest: %w", desc.ModuleName, err)
 		}
 
-		logger := log.WithoutContext().WithFields(logrus.Fields{"plugin": "plugin-" + pName, "module": desc.ModuleName})
+		logger := log.With().Str("plugin", "plugin-"+pName).Str("module", desc.ModuleName).Logger()
+
 		i := interp.New(interp.Options{
 			GoPath: client.GoPath(),
 			Env:    os.Environ(),
-			Stdout: logger.WriterLevel(logrus.DebugLevel),
-			Stderr: logger.WriterLevel(logrus.ErrorLevel),
+			Stdout: logs.NoLevel(logger, zerolog.DebugLevel),
+			Stderr: logs.NoLevel(logger, zerolog.ErrorLevel),
 		})
 
 		err = i.Use(stdlib.Symbols)
@@ -83,12 +85,13 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 			return nil, fmt.Errorf("%s: failed to read manifest: %w", desc.ModuleName, err)
 		}
 
-		logger := log.WithoutContext().WithFields(logrus.Fields{"plugin": "plugin-" + pName, "module": desc.ModuleName})
+		logger := log.With().Str("plugin", "plugin-"+pName).Str("module", desc.ModuleName).Logger()
+
 		i := interp.New(interp.Options{
 			GoPath: localGoPath,
 			Env:    os.Environ(),
-			Stdout: logger.WriterLevel(logrus.DebugLevel),
-			Stderr: logger.WriterLevel(logrus.ErrorLevel),
+			Stdout: logs.NoLevel(logger, zerolog.DebugLevel),
+			Stderr: logs.NoLevel(logger, zerolog.ErrorLevel),
 		})
 
 		err = i.Use(stdlib.Symbols)
