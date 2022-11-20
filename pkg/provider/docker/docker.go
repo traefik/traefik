@@ -23,10 +23,11 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-connections/sockets"
+	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/job"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/types"
@@ -162,7 +163,7 @@ func (p *Provider) getClientOpts() ([]client.Opt, error) {
 	}
 
 	if p.TLS != nil {
-		ctx := log.With(context.Background(), log.Str(log.ProviderName, "docker"))
+		ctx := log.With().Str(logs.ProviderName, "docker").Logger().WithContext(context.Background())
 
 		conf, err := p.TLS.CreateTLSConfig(ctx)
 		if err != nil {
@@ -191,40 +192,41 @@ func (p *Provider) getClientOpts() ([]client.Opt, error) {
 // Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
-		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "docker"))
-		logger := log.FromContext(ctxLog)
+		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, "docker").Logger()
+		ctxLog := logger.WithContext(routineCtx)
 
 		operation := func() error {
 			var err error
 			ctx, cancel := context.WithCancel(ctxLog)
 			defer cancel()
-
-			ctx = log.With(ctx, log.Str(log.ProviderName, "docker"))
+			ctx = log.Ctx(ctx).With().Str(logs.ProviderName, "docker").Logger().WithContext(ctx)
 
 			dockerClient, err := p.createClient()
 			if err != nil {
-				logger.Errorf("Failed to create a client for docker, error: %s", err)
+				logger.Error().Err(err).Msg("Failed to create a client for docker, error")
 				return err
 			}
 			defer dockerClient.Close()
 
 			serverVersion, err := dockerClient.ServerVersion(ctx)
 			if err != nil {
-				logger.Errorf("Failed to retrieve information of the docker client and server host: %s", err)
+				logger.Error().Err(err).Msg("Failed to retrieve information of the docker client and server host")
 				return err
 			}
-			logger.Debugf("Provider connection established with docker %s (API %s)", serverVersion.Version, serverVersion.APIVersion)
+
+			logger.Debug().Msgf("Provider connection established with docker %s (API %s)", serverVersion.Version, serverVersion.APIVersion)
+
 			var dockerDataList []dockerData
 			if p.SwarmMode {
 				dockerDataList, err = p.listServices(ctx, dockerClient)
 				if err != nil {
-					logger.Errorf("Failed to list services for docker swarm mode, error %s", err)
+					logger.Error().Err(err).Msg("Failed to list services for docker swarm mode")
 					return err
 				}
 			} else {
 				dockerDataList, err = p.listContainers(ctx, dockerClient)
 				if err != nil {
-					logger.Errorf("Failed to list containers for docker, error %s", err)
+					logger.Error().Err(err).Msg("Failed to list containers for docker")
 					return err
 				}
 			}
@@ -242,8 +244,8 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					ticker := time.NewTicker(time.Duration(p.SwarmModeRefreshSeconds))
 
 					pool.GoCtx(func(ctx context.Context) {
-						ctx = log.With(ctx, log.Str(log.ProviderName, "docker"))
-						logger := log.FromContext(ctx)
+						logger := log.Ctx(ctx).With().Str(logs.ProviderName, "docker").Logger()
+						ctx = logger.WithContext(ctx)
 
 						defer close(errChan)
 						for {
@@ -251,7 +253,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 							case <-ticker.C:
 								services, err := p.listServices(ctx, dockerClient)
 								if err != nil {
-									logger.Errorf("Failed to list services for docker swarm mode, error %s", err)
+									logger.Error().Err(err).Msg("Failed to list services for docker swarm mode")
 									errChan <- err
 									return
 								}
@@ -282,10 +284,10 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					}
 
 					startStopHandle := func(m eventtypes.Message) {
-						logger.Debugf("Provider event received %+v", m)
+						logger.Debug().Msgf("Provider event received %+v", m)
 						containers, err := p.listContainers(ctx, dockerClient)
 						if err != nil {
-							logger.Errorf("Failed to list containers for docker, error %s", err)
+							logger.Error().Err(err).Msg("Failed to list containers for docker")
 							// Call cancel to get out of the monitor
 							return
 						}
@@ -314,7 +316,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 							}
 						case err := <-errc:
 							if errors.Is(err, io.EOF) {
-								logger.Debug("Provider event stream closed")
+								logger.Debug().Msg("Provider event stream closed")
 							}
 							return err
 						case <-ctx.Done():
@@ -327,11 +329,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 
 		notify := func(err error, time time.Duration) {
-			logger.Errorf("Provider connection error %+v, retrying in %s", err, time)
+			logger.Error().Err(err).Msgf("Provider connection error, retrying in %s", time)
 		}
 		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxLog), notify)
 		if err != nil {
-			logger.Errorf("Cannot connect to docker server %+v", err)
+			logger.Error().Err(err).Msg("Cannot connect to docker server")
 		}
 	})
 
@@ -354,7 +356,7 @@ func (p *Provider) listContainers(ctx context.Context, dockerClient client.Conta
 
 		extraConf, err := p.getConfiguration(dData)
 		if err != nil {
-			log.FromContext(ctx).Errorf("Skip container %s: %v", getServiceName(dData), err)
+			log.Ctx(ctx).Error().Err(err).Msgf("Skip container %s", getServiceName(dData))
 			continue
 		}
 		dData.ExtraConf = extraConf
@@ -367,7 +369,7 @@ func (p *Provider) listContainers(ctx context.Context, dockerClient client.Conta
 func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClient, containerID string) dockerData {
 	containerInspected, err := dockerClient.ContainerInspect(ctx, containerID)
 	if err != nil {
-		log.FromContext(ctx).Warnf("Failed to inspect container %s, error: %s", containerID, err)
+		log.Ctx(ctx).Warn().Err(err).Msgf("Failed to inspect container %s", containerID)
 		return dockerData{}
 	}
 
@@ -428,7 +430,7 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 }
 
 func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	serviceList, err := dockerClient.ServiceList(ctx, dockertypes.ServiceListOptions{})
 	if err != nil {
@@ -450,7 +452,7 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 
 	networkList, err := dockerClient.NetworkList(ctx, dockertypes.NetworkListOptions{Filters: networkListArgs})
 	if err != nil {
-		logger.Debugf("Failed to network inspect on client for docker, error: %s", err)
+		logger.Debug().Err(err).Msg("Failed to network inspect on client for docker")
 		return nil, err
 	}
 
@@ -466,7 +468,7 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 	for _, service := range serviceList {
 		dData, err := p.parseService(ctx, service, networkMap)
 		if err != nil {
-			logger.Errorf("Skip container %s: %v", getServiceName(dData), err)
+			logger.Error().Err(err).Msgf("Skip container %s", getServiceName(dData))
 			continue
 		}
 
@@ -478,7 +480,7 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 			isGlobalSvc := service.Spec.Mode.Global != nil
 			dockerDataListTasks, err = listTasks(ctx, dockerClient, service.ID, dData, networkMap, isGlobalSvc)
 			if err != nil {
-				logger.Warn(err)
+				logger.Warn().Err(err).Send()
 			} else {
 				dockerDataList = append(dockerDataList, dockerDataListTasks...)
 			}
@@ -488,7 +490,7 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 }
 
 func (p *Provider) parseService(ctx context.Context, service swarmtypes.Service, networkMap map[string]*dockertypes.NetworkResource) (dockerData, error) {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	dData := dockerData{
 		ID:              service.ID,
@@ -507,7 +509,7 @@ func (p *Provider) parseService(ctx context.Context, service swarmtypes.Service,
 	if service.Spec.EndpointSpec != nil {
 		if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeDNSRR {
 			if dData.ExtraConf.Docker.LBSwarm {
-				logger.Warnf("Ignored %s endpoint-mode not supported, service name: %s. Fallback to Traefik load balancing", swarmtypes.ResolutionModeDNSRR, service.Spec.Annotations.Name)
+				logger.Warn().Msgf("Ignored %s endpoint-mode not supported, service name: %s. Fallback to Traefik load balancing", swarmtypes.ResolutionModeDNSRR, service.Spec.Annotations.Name)
 			}
 		} else if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeVIP {
 			dData.NetworkSettings.Networks = make(map[string]*networkData)
@@ -523,10 +525,10 @@ func (p *Provider) parseService(ctx context.Context, service swarmtypes.Service,
 						}
 						dData.NetworkSettings.Networks[network.Name] = network
 					} else {
-						logger.Debugf("No virtual IPs found in network %s", virtualIP.NetworkID)
+						logger.Debug().Msgf("No virtual IPs found in network %s", virtualIP.NetworkID)
 					}
 				} else {
-					logger.Debugf("Network not found, id: %s", virtualIP.NetworkID)
+					logger.Debug().Msgf("Network not found, id: %s", virtualIP.NetworkID)
 				}
 			}
 		}
@@ -591,7 +593,7 @@ func parseTasks(ctx context.Context, task swarmtypes.Task, serviceDockerData doc
 						dData.NetworkSettings.Networks[network.Name] = network
 					}
 				} else {
-					log.FromContext(ctx).Debugf("No IP addresses found for network %s", virtualIP.Network.ID)
+					log.Ctx(ctx).Debug().Msgf("No IP addresses found for network %s", virtualIP.Network.ID)
 				}
 			}
 		}

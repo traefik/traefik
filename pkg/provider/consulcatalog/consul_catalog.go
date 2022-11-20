@@ -11,11 +11,12 @@ import (
 	"github.com/hashicorp/consul/api"
 	"github.com/hashicorp/consul/api/watch"
 	"github.com/hashicorp/go-hclog"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/job"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/constraints"
 	"github.com/traefik/traefik/v2/pkg/safe"
@@ -58,7 +59,7 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 	// We can warn about that, because we've already made sure before that
 	// Namespace and Namespaces are mutually exclusive.
 	if p.Namespace != "" {
-		log.WithoutContext().Warnf("Namespace option is deprecated, please use the Namespaces option instead.")
+		log.Warn().Msg("Namespace option is deprecated, please use the Namespaces option instead.")
 	}
 
 	if len(p.Namespaces) == 0 {
@@ -166,8 +167,8 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	}
 
 	pool.GoCtx(func(routineCtx context.Context) {
-		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, p.name))
-		logger := log.FromContext(ctxLog)
+		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, p.name).Logger()
+		ctxLog := logger.WithContext(routineCtx)
 
 		operation := func() error {
 			ctx, cancel := context.WithCancel(ctxLog)
@@ -194,7 +195,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			// that gets resolved before the certificates are available
 			// will cause an error condition.
 			if p.ConnectAware && !certInfo.isReady() {
-				logger.Infof("Waiting for Connect certificate before building first configuration")
+				logger.Info().Msg("Waiting for Connect certificate before building first configuration")
 				select {
 				case <-ctx.Done():
 					return nil
@@ -242,12 +243,12 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 
 		notify := func(err error, time time.Duration) {
-			logger.Errorf("Provider connection error %+v, retrying in %s", err, time)
+			logger.Error().Err(err).Msgf("Provider connection error, retrying in %s", time)
 		}
 
 		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxLog), notify)
 		if err != nil {
-			logger.Errorf("Cannot connect to consul catalog server %+v", err)
+			logger.Error().Err(err).Msg("Cannot connect to consul catalog server")
 		}
 	})
 
@@ -281,32 +282,32 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 
 	var data []itemData
 	for name, tags := range serviceNames {
-		logger := log.FromContext(log.With(ctx, log.Str("serviceName", name)))
+		logger := log.Ctx(ctx).With().Str("serviceName", name).Logger()
 
 		extraConf, err := p.getExtraConf(tagsToNeutralLabels(tags, p.Prefix))
 		if err != nil {
-			logger.Errorf("Skip service: %v", err)
+			logger.Error().Err(err).Msg("Skip service")
 			continue
 		}
 
 		if !extraConf.Enable {
-			logger.Debug("Filtering disabled item")
+			logger.Debug().Msg("Filtering disabled item")
 			continue
 		}
 
 		matches, err := constraints.MatchTags(tags, p.Constraints)
 		if err != nil {
-			logger.Errorf("Error matching constraint expressions: %v", err)
+			logger.Error().Err(err).Msg("Error matching constraint expressions")
 			continue
 		}
 
 		if !matches {
-			logger.Debugf("Container pruned by constraint expressions: %q", p.Constraints)
+			logger.Debug().Msgf("Container pruned by constraint expressions: %q", p.Constraints)
 			continue
 		}
 
 		if !p.ConnectAware && extraConf.ConsulCatalog.Connect {
-			logger.Debugf("Filtering out Connect aware item, Connect support is not enabled")
+			logger.Debug().Msg("Filtering out Connect aware item, Connect support is not enabled")
 			continue
 		}
 
@@ -346,7 +347,7 @@ func (p *Provider) getConsulServicesData(ctx context.Context) ([]itemData, error
 
 			extraConf, err := p.getExtraConf(item.Labels)
 			if err != nil {
-				log.FromContext(ctx).Errorf("Skip item %s: %v", item.Name, err)
+				log.Ctx(ctx).Error().Err(err).Msgf("Skip item %s", item.Name)
 				continue
 			}
 			item.ExtraConf = extraConf
@@ -424,8 +425,9 @@ func (p *Provider) watchServices(ctx context.Context) error {
 
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:       "consulcatalog",
-		Level:      hclog.LevelFromString(logrus.GetLevel().String()),
+		Level:      hclog.LevelFromString(log.Logger.GetLevel().String()),
 		JSONFormat: true,
+		Output:     logs.NoLevel(log.Logger, zerolog.DebugLevel),
 	})
 
 	errChan := make(chan error, 2)
@@ -455,13 +457,13 @@ func (p *Provider) watchServices(ctx context.Context) error {
 func rootsWatchHandler(ctx context.Context, dest chan<- []string) func(watch.BlockingParamVal, interface{}) {
 	return func(_ watch.BlockingParamVal, raw interface{}) {
 		if raw == nil {
-			log.FromContext(ctx).Errorf("Root certificate watcher called with nil")
+			log.Ctx(ctx).Error().Msg("Root certificate watcher called with nil")
 			return
 		}
 
 		v, ok := raw.(*api.CARootList)
 		if !ok || v == nil {
-			log.FromContext(ctx).Errorf("Invalid result for root certificate watcher")
+			log.Ctx(ctx).Error().Msg("Invalid result for root certificate watcher")
 			return
 		}
 
@@ -485,13 +487,13 @@ type keyPair struct {
 func leafWatcherHandler(ctx context.Context, dest chan<- keyPair) func(watch.BlockingParamVal, interface{}) {
 	return func(_ watch.BlockingParamVal, raw interface{}) {
 		if raw == nil {
-			log.FromContext(ctx).Errorf("Leaf certificate watcher called with nil")
+			log.Ctx(ctx).Error().Msg("Leaf certificate watcher called with nil")
 			return
 		}
 
 		v, ok := raw.(*api.LeafCert)
 		if !ok || v == nil {
-			log.FromContext(ctx).Errorf("Invalid result for leaf certificate watcher")
+			log.Ctx(ctx).Error().Msg("Invalid result for leaf certificate watcher")
 			return
 		}
 
@@ -531,8 +533,9 @@ func (p *Provider) watchConnectTLS(ctx context.Context) error {
 
 	hclogger := hclog.New(&hclog.LoggerOptions{
 		Name:       "consulcatalog",
-		Level:      hclog.LevelFromString(logrus.GetLevel().String()),
+		Level:      hclog.LevelFromString(log.Logger.GetLevel().String()),
 		JSONFormat: true,
+		Output:     logs.NoLevel(log.Logger, zerolog.DebugLevel),
 	})
 
 	errChan := make(chan error, 2)
@@ -573,7 +576,7 @@ func (p *Provider) watchConnectTLS(ctx context.Context) error {
 			leaf: leafCerts,
 		}
 		if newCertInfo.isReady() && !newCertInfo.equals(certInfo) {
-			log.FromContext(ctx).Debugf("Updating connect certs for service %s", p.ServiceName)
+			log.Ctx(ctx).Debug().Msgf("Updating connect certs for service %s", p.ServiceName)
 
 			certInfo = newCertInfo
 

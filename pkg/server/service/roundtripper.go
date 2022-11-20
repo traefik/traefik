@@ -11,12 +11,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
 	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"golang.org/x/net/http2"
 )
@@ -74,7 +74,7 @@ func (r *RoundTripperManager) Update(newConfigs map[string]*dynamic.ServersTrans
 		var err error
 		r.roundTrippers[configName], err = r.createRoundTripper(newConfig)
 		if err != nil {
-			log.WithoutContext().Errorf("Could not configure HTTP Transport %s, fallback on default transport: %v", configName, err)
+			log.Error().Err(err).Msgf("Could not configure HTTP Transport %s, fallback on default transport", configName)
 			r.roundTrippers[configName] = http.DefaultTransport
 		}
 	}
@@ -87,7 +87,7 @@ func (r *RoundTripperManager) Update(newConfigs map[string]*dynamic.ServersTrans
 		var err error
 		r.roundTrippers[newConfigName], err = r.createRoundTripper(newConfig)
 		if err != nil {
-			log.WithoutContext().Errorf("Could not configure HTTP Transport %s, fallback on default transport: %v", newConfigName, err)
+			log.Error().Err(err).Msgf("Could not configure HTTP Transport %s, fallback on default transport", newConfigName)
 			r.roundTrippers[newConfigName] = http.DefaultTransport
 		}
 	}
@@ -95,7 +95,7 @@ func (r *RoundTripperManager) Update(newConfigs map[string]*dynamic.ServersTrans
 	r.configs = newConfigs
 }
 
-// Get get a roundtripper by name.
+// Get gets a roundtripper by name.
 func (r *RoundTripperManager) Get(name string) (http.RoundTripper, error) {
 	if len(name) == 0 {
 		name = "default@internal"
@@ -195,7 +195,7 @@ func createRootCACertPool(rootCAs []traefiktls.FileOrContent) *x509.CertPool {
 	for _, cert := range rootCAs {
 		certContent, err := cert.Read()
 		if err != nil {
-			log.WithoutContext().Error("Error while read RootCAs", err)
+			log.Error().Err(err).Msg("Error while read RootCAs")
 			continue
 		}
 		roots.AppendCertsFromPEM(certContent)
