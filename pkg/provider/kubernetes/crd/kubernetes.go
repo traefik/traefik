@@ -17,10 +17,11 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/mitchellh/hashstructure"
+	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/job"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/traefik/traefik/v2/pkg/safe"
@@ -62,7 +63,7 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
 	}
-	log.FromContext(ctx).Infof("label selector is: %q", p.LabelSelector)
+	log.Ctx(ctx).Info().Msgf("label selector is: %q", p.LabelSelector)
 
 	withEndpoint := ""
 	if p.Endpoint != "" {
@@ -72,13 +73,13 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	var client *clientWrapper
 	switch {
 	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
-		log.FromContext(ctx).Infof("Creating in-cluster Provider client%s", withEndpoint)
+		log.Ctx(ctx).Info().Msgf("Creating in-cluster Provider client%s", withEndpoint)
 		client, err = newInClusterClient(p.Endpoint)
 	case os.Getenv("KUBECONFIG") != "":
-		log.FromContext(ctx).Infof("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
+		log.Ctx(ctx).Info().Msgf("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
 		client, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
 	default:
-		log.FromContext(ctx).Infof("Creating cluster-external Provider client%s", withEndpoint)
+		log.Ctx(ctx).Info().Msgf("Creating cluster-external Provider client%s", withEndpoint)
 		client, err = newExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
 	}
 
@@ -98,8 +99,8 @@ func (p *Provider) Init() error {
 // Provide allows the k8s provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	ctxLog := log.With(context.Background(), log.Str(log.ProviderName, providerName))
-	logger := log.FromContext(ctxLog)
+	logger := log.With().Str(logs.ProviderName, providerName).Logger()
+	ctxLog := logger.WithContext(context.Background())
 
 	k8sClient, err := p.newK8sClient(ctxLog)
 	if err != nil {
@@ -107,18 +108,18 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	}
 
 	if p.AllowCrossNamespace {
-		logger.Warn("Cross-namespace reference between IngressRoutes and resources is enabled, please ensure that this is expected (see AllowCrossNamespace option)")
+		logger.Warn().Msg("Cross-namespace reference between IngressRoutes and resources is enabled, please ensure that this is expected (see AllowCrossNamespace option)")
 	}
 
 	if p.AllowExternalNameServices {
-		logger.Warn("ExternalName service loading is enabled, please ensure that this is expected (see AllowExternalNameServices option)")
+		logger.Warn().Msg("ExternalName service loading is enabled, please ensure that this is expected (see AllowExternalNameServices option)")
 	}
 
 	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
 			eventsChan, err := k8sClient.WatchAll(p.Namespaces, ctxPool.Done())
 			if err != nil {
-				logger.Errorf("Error watching kubernetes events: %v", err)
+				logger.Error().Err(err).Msg("Error watching kubernetes events")
 				timer := time.NewTimer(1 * time.Second)
 				select {
 				case <-timer.C:
@@ -147,9 +148,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					confHash, err := hashstructure.Hash(conf, nil)
 					switch {
 					case err != nil:
-						logger.Error("Unable to hash the configuration")
+						logger.Error().Err(err).Msg("Unable to hash the configuration")
 					case p.lastConfiguration.Get() == confHash:
-						logger.Debugf("Skipping Kubernetes event kind %T", event)
+						logger.Debug().Msgf("Skipping Kubernetes event kind %T", event)
 					default:
 						p.lastConfiguration.Set(confHash)
 						configurationChan <- dynamic.Message{
@@ -167,11 +168,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 
 		notify := func(err error, time time.Duration) {
-			logger.Errorf("Provider connection error: %v; retrying in %s", err, time)
+			logger.Error().Err(err).Msgf("Provider connection error, retrying in %s", time)
 		}
 		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxPool), notify)
 		if err != nil {
-			logger.Errorf("Cannot connect to Provider: %v", err)
+			logger.Error().Err(err).Msg("Cannot connect to Provider")
 		}
 	})
 
@@ -200,29 +201,30 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 	for _, middleware := range client.GetMiddlewares() {
 		id := provider.Normalize(makeID(middleware.Namespace, middleware.Name))
-		ctxMid := log.With(ctx, log.Str(log.MiddlewareName, id))
+		logger := log.Ctx(ctx).With().Str(logs.MiddlewareName, id).Logger()
+		ctxMid := logger.WithContext(ctx)
 
 		basicAuth, err := createBasicAuthMiddleware(client, middleware.Namespace, middleware.Spec.BasicAuth)
 		if err != nil {
-			log.FromContext(ctxMid).Errorf("Error while reading basic auth middleware: %v", err)
+			logger.Error().Err(err).Msg("Error while reading basic auth middleware")
 			continue
 		}
 
 		digestAuth, err := createDigestAuthMiddleware(client, middleware.Namespace, middleware.Spec.DigestAuth)
 		if err != nil {
-			log.FromContext(ctxMid).Errorf("Error while reading digest auth middleware: %v", err)
+			logger.Error().Err(err).Msg("Error while reading digest auth middleware")
 			continue
 		}
 
 		forwardAuth, err := createForwardAuthMiddleware(client, middleware.Namespace, middleware.Spec.ForwardAuth)
 		if err != nil {
-			log.FromContext(ctxMid).Errorf("Error while reading forward auth middleware: %v", err)
+			logger.Error().Err(err).Msg("Error while reading forward auth middleware")
 			continue
 		}
 
 		errorPage, errorPageService, err := p.createErrorPageMiddleware(client, middleware.Namespace, middleware.Spec.Errors)
 		if err != nil {
-			log.FromContext(ctxMid).Errorf("Error while reading error page middleware: %v", err)
+			logger.Error().Err(err).Msg("Error while reading error page middleware")
 			continue
 		}
 
@@ -234,25 +236,25 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 		plugin, err := createPluginMiddleware(client, middleware.Namespace, middleware.Spec.Plugin)
 		if err != nil {
-			log.FromContext(ctxMid).Errorf("Error while reading plugins middleware: %v", err)
+			logger.Error().Err(err).Msg("Error while reading plugins middleware")
 			continue
 		}
 
 		rateLimit, err := createRateLimitMiddleware(middleware.Spec.RateLimit)
 		if err != nil {
-			log.FromContext(ctxMid).Errorf("Error while reading rateLimit middleware: %v", err)
+			logger.Error().Err(err).Msg("Error while reading rateLimit middleware")
 			continue
 		}
 
 		retry, err := createRetryMiddleware(middleware.Spec.Retry)
 		if err != nil {
-			log.FromContext(ctxMid).Errorf("Error while reading retry middleware: %v", err)
+			logger.Error().Err(err).Msg("Error while reading retry middleware")
 			continue
 		}
 
 		circuitBreaker, err := createCircuitBreakerMiddleware(middleware.Spec.CircuitBreaker)
 		if err != nil {
-			log.FromContext(ctxMid).Errorf("Error while reading circuit breaker middleware: %v", err)
+			logger.Error().Err(err).Msg("Error while reading circuit breaker middleware")
 			continue
 		}
 
@@ -298,20 +300,20 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	for _, service := range client.GetTraefikServices() {
 		err := cb.buildTraefikService(ctx, service, conf.HTTP.Services)
 		if err != nil {
-			log.FromContext(ctx).WithField(log.ServiceName, service.Name).
-				Errorf("Error while building TraefikService: %v", err)
+			log.Ctx(ctx).Error().Str(logs.ServiceName, service.Name).Err(err).
+				Msg("Error while building TraefikService")
 			continue
 		}
 	}
 
 	for _, serversTransport := range client.GetServersTransports() {
-		logger := log.FromContext(ctx).WithField(log.ServersTransportName, serversTransport.Name)
+		logger := log.Ctx(ctx).With().Str(logs.ServersTransportName, serversTransport.Name).Logger()
 
 		var rootCAs []tls.FileOrContent
 		for _, secret := range serversTransport.Spec.RootCAsSecrets {
 			caSecret, err := loadCASecret(serversTransport.Namespace, secret, client)
 			if err != nil {
-				logger.Errorf("Error while loading rootCAs %s: %v", secret, err)
+				logger.Error().Err(err).Msgf("Error while loading rootCAs %s", secret)
 				continue
 			}
 
@@ -322,7 +324,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		for _, secret := range serversTransport.Spec.CertificatesSecrets {
 			tlsSecret, tlsKey, err := loadAuthTLSSecret(serversTransport.Namespace, secret, client)
 			if err != nil {
-				logger.Errorf("Error while loading certificates %s: %v", secret, err)
+				logger.Error().Err(err).Msgf("Error while loading certificates %s", secret)
 				continue
 			}
 
@@ -339,35 +341,35 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			if serversTransport.Spec.ForwardingTimeouts.DialTimeout != nil {
 				err := forwardingTimeout.DialTimeout.Set(serversTransport.Spec.ForwardingTimeouts.DialTimeout.String())
 				if err != nil {
-					logger.Errorf("Error while reading DialTimeout: %v", err)
+					logger.Error().Err(err).Msg("Error while reading DialTimeout")
 				}
 			}
 
 			if serversTransport.Spec.ForwardingTimeouts.ResponseHeaderTimeout != nil {
 				err := forwardingTimeout.ResponseHeaderTimeout.Set(serversTransport.Spec.ForwardingTimeouts.ResponseHeaderTimeout.String())
 				if err != nil {
-					logger.Errorf("Error while reading ResponseHeaderTimeout: %v", err)
+					logger.Error().Err(err).Msg("Error while reading ResponseHeaderTimeout")
 				}
 			}
 
 			if serversTransport.Spec.ForwardingTimeouts.IdleConnTimeout != nil {
 				err := forwardingTimeout.IdleConnTimeout.Set(serversTransport.Spec.ForwardingTimeouts.IdleConnTimeout.String())
 				if err != nil {
-					logger.Errorf("Error while reading IdleConnTimeout: %v", err)
+					logger.Error().Err(err).Msg("Error while reading IdleConnTimeout")
 				}
 			}
 
 			if serversTransport.Spec.ForwardingTimeouts.ReadIdleTimeout != nil {
 				err := forwardingTimeout.ReadIdleTimeout.Set(serversTransport.Spec.ForwardingTimeouts.ReadIdleTimeout.String())
 				if err != nil {
-					logger.Errorf("Error while reading ReadIdleTimeout: %v", err)
+					logger.Error().Err(err).Msg("Error while reading ReadIdleTimeout")
 				}
 			}
 
 			if serversTransport.Spec.ForwardingTimeouts.PingTimeout != nil {
 				err := forwardingTimeout.PingTimeout.Set(serversTransport.Spec.ForwardingTimeouts.PingTimeout.String())
 				if err != nil {
-					logger.Errorf("Error while reading PingTimeout: %v", err)
+					logger.Error().Err(err).Msg("Error while reading PingTimeout")
 				}
 			}
 		}
@@ -414,8 +416,8 @@ func getServicePort(svc *corev1.Service, port intstr.IntOrString) (*corev1.Servi
 	}
 
 	if hasValidPort {
-		log.WithoutContext().
-			Warnf("The port %s from IngressRoute doesn't match with ports defined in the ExternalName service %s/%s.", port, svc.Namespace, svc.Name)
+		log.Warn().Msgf("The port %s from IngressRoute doesn't match with ports defined in the ExternalName service %s/%s.",
+			&port, svc.Namespace, svc.Name)
 	}
 
 	return &corev1.ServicePort{Port: port.IntVal}, nil
@@ -811,8 +813,7 @@ func createChainMiddleware(ctx context.Context, namespace string, chain *v1alpha
 	for _, mi := range chain.Middlewares {
 		if strings.Contains(mi.Name, providerNamespaceSeparator) {
 			if len(mi.Namespace) > 0 {
-				log.FromContext(ctx).
-					Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
+				log.Ctx(ctx).Warn().Msgf("namespace %q is ignored in cross-provider context", mi.Namespace)
 			}
 			mds = append(mds, mi.Name)
 			continue
@@ -838,24 +839,24 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 	var nsDefault []string
 
 	for _, tlsOption := range tlsOptionsCRD {
-		logger := log.FromContext(log.With(ctx, log.Str("tlsOption", tlsOption.Name), log.Str("namespace", tlsOption.Namespace)))
+		logger := log.Ctx(ctx).With().Str("tlsOption", tlsOption.Name).Str("namespace", tlsOption.Namespace).Logger()
 		var clientCAs []tls.FileOrContent
 
 		for _, secretName := range tlsOption.Spec.ClientAuth.SecretNames {
 			secret, exists, err := client.GetSecret(tlsOption.Namespace, secretName)
 			if err != nil {
-				logger.Errorf("Failed to fetch secret %s/%s: %v", tlsOption.Namespace, secretName, err)
+				logger.Error().Err(err).Msgf("Failed to fetch secret %s/%s", tlsOption.Namespace, secretName)
 				continue
 			}
 
 			if !exists {
-				logger.Warnf("Secret %s/%s does not exist", tlsOption.Namespace, secretName)
+				logger.Warn().Msgf("Secret %s/%s does not exist", tlsOption.Namespace, secretName)
 				continue
 			}
 
 			cert, err := getCABlocks(secret, tlsOption.Namespace, secretName)
 			if err != nil {
-				logger.Errorf("Failed to extract CA from secret %s/%s: %v", tlsOption.Namespace, secretName, err)
+				logger.Error().Err(err).Msgf("Failed to extract CA from secret %s/%s", tlsOption.Namespace, secretName)
 				continue
 			}
 
@@ -890,7 +891,7 @@ func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options 
 
 	if len(nsDefault) > 1 {
 		delete(tlsOptions, tls.DefaultTLSConfigName)
-		log.FromContext(ctx).Errorf("Default TLS Options defined in multiple namespaces: %v", nsDefault)
+		log.Ctx(ctx).Error().Msgf("Default TLS Options defined in multiple namespaces: %v", nsDefault)
 	}
 
 	return tlsOptions
@@ -907,7 +908,7 @@ func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, m
 	tlsConfigs := make(map[string]*tls.CertAndStores)
 
 	for _, t := range tlsStoreCRD {
-		logger := log.FromContext(log.With(ctx, log.Str("TLSStore", t.Name), log.Str("namespace", t.Namespace)))
+		logger := log.Ctx(ctx).With().Str("TLSStore", t.Name).Str("namespace", t.Namespace).Logger()
 
 		id := makeID(t.Namespace, t.Name)
 
@@ -924,17 +925,17 @@ func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, m
 
 			secret, exists, err := client.GetSecret(t.Namespace, secretName)
 			if err != nil {
-				logger.Errorf("Failed to fetch secret %s/%s: %v", t.Namespace, secretName, err)
+				logger.Error().Err(err).Msgf("Failed to fetch secret %s/%s", t.Namespace, secretName)
 				continue
 			}
 			if !exists {
-				logger.Errorf("Secret %s/%s does not exist", t.Namespace, secretName)
+				logger.Error().Msgf("Secret %s/%s does not exist", t.Namespace, secretName)
 				continue
 			}
 
 			cert, key, err := getCertificateBlocks(secret, t.Namespace, secretName)
 			if err != nil {
-				logger.Errorf("Could not get certificate blocks: %v", err)
+				logger.Error().Err(err).Msg("Could not get certificate blocks")
 				continue
 			}
 
@@ -952,7 +953,7 @@ func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, m
 		}
 
 		if err := buildCertificates(client, id, t.Namespace, t.Spec.Certificates, tlsConfigs); err != nil {
-			logger.Errorf("Failed to load certificates: %v", err)
+			logger.Error().Err(err).Msg("Failed to load certificates")
 			continue
 		}
 
@@ -961,7 +962,7 @@ func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, m
 
 	if len(nsDefault) > 1 {
 		delete(tlsStores, tls.DefaultTLSStoreName)
-		log.FromContext(ctx).Errorf("Default TLS Stores defined in multiple namespaces: %v", nsDefault)
+		log.Ctx(ctx).Error().Msgf("Default TLS Stores defined in multiple namespaces: %v", nsDefault)
 	}
 
 	return tlsStores, tlsConfigs
@@ -1117,7 +1118,7 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 				default:
 					// We already have an event in eventsChanBuffered, so we'll do a refresh as soon as our throttle allows us to.
 					// It's fine to drop the event and keep whatever's in the buffer -- we don't do different things for different events
-					log.FromContext(ctx).Debugf("Dropping event kind %T due to throttling", nextEvent)
+					log.Ctx(ctx).Debug().Msgf("Dropping event kind %T due to throttling", nextEvent)
 				}
 			}
 		}

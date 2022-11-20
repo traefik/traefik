@@ -8,8 +8,9 @@ import (
 	"net"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
 	"github.com/traefik/traefik/v2/pkg/tcp"
 )
@@ -31,8 +32,9 @@ func NewManager(conf *runtime.Configuration) *Manager {
 // BuildTCP Creates a tcp.Handler for a service configuration.
 func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Handler, error) {
 	serviceQualifiedName := provider.GetQualifiedName(rootCtx, serviceName)
-	ctx := provider.AddInContext(rootCtx, serviceQualifiedName)
-	ctx = log.With(ctx, log.Str(log.ServiceName, serviceName))
+
+	logger := log.Ctx(rootCtx).With().Str(logs.ServiceName, serviceName).Logger()
+	ctx := logger.WithContext(provider.AddInContext(rootCtx, serviceQualifiedName))
 
 	conf, ok := m.configs[serviceQualifiedName]
 	if !ok {
@@ -45,7 +47,6 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 		return nil, err
 	}
 
-	logger := log.FromContext(ctx)
 	switch {
 	case conf.LoadBalancer != nil:
 		loadBalancer := tcp.NewWRRLoadBalancer()
@@ -56,29 +57,30 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 		}
 		duration := time.Duration(*conf.LoadBalancer.TerminationDelay) * time.Millisecond
 
-		for name, server := range shuffle(conf.LoadBalancer.Servers, m.rand) {
+		for index, server := range shuffle(conf.LoadBalancer.Servers, m.rand) {
 			if _, _, err := net.SplitHostPort(server.Address); err != nil {
-				logger.Errorf("In service %q: %v", serviceQualifiedName, err)
+				logger.Error().Err(err).Msgf("In service %q", serviceQualifiedName)
 				continue
 			}
 
 			handler, err := tcp.NewProxy(server.Address, duration, conf.LoadBalancer.ProxyProtocol)
 			if err != nil {
-				logger.Errorf("In service %q server %q: %v", serviceQualifiedName, server.Address, err)
+				logger.Error().Err(err).Msgf("In service %q server %q", serviceQualifiedName, server.Address)
 				continue
 			}
 
 			loadBalancer.AddServer(handler)
-			logger.WithField(log.ServerName, name).Debugf("Creating TCP server %d at %s", name, server.Address)
+			logger.Debug().Int(logs.ServerIndex, index).Str("serverAddress", server.Address).
+				Msg("Creating TCP server")
 		}
 		return loadBalancer, nil
 	case conf.Weighted != nil:
 		loadBalancer := tcp.NewWRRLoadBalancer()
 
 		for _, service := range shuffle(conf.Weighted.Services, m.rand) {
-			handler, err := m.BuildTCP(rootCtx, service.Name)
+			handler, err := m.BuildTCP(ctx, service.Name)
 			if err != nil {
-				logger.Errorf("In service %q: %v", serviceQualifiedName, err)
+				logger.Error().Err(err).Msgf("In service %q", serviceQualifiedName)
 				return nil, err
 			}
 			loadBalancer.AddWeightServer(handler, service.Weight)

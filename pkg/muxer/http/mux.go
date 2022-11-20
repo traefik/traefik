@@ -7,8 +7,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/ip"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
 	"github.com/traefik/traefik/v2/pkg/rules"
 	"github.com/vulcand/predicate"
@@ -143,7 +143,7 @@ func host(route *mux.Route, hosts ...string) error {
 		if len(reqHost) == 0 {
 			// If the request is an HTTP/1.0 request, then a Host may not be defined.
 			if req.ProtoAtLeast(1, 1) {
-				log.FromContext(req.Context()).Warnf("Could not retrieve CanonizedHost, rejecting %s", req.Host)
+				log.Ctx(req.Context()).Warn().Msgf("Could not retrieve CanonizedHost, rejecting %s", req.Host)
 			}
 
 			return false
@@ -155,7 +155,7 @@ func host(route *mux.Route, hosts ...string) error {
 				if strings.EqualFold(reqHost, host) || strings.EqualFold(flatH, host) {
 					return true
 				}
-				log.FromContext(req.Context()).Debugf("CNAMEFlattening: request %s which resolved to %s, is not matched to route %s", reqHost, flatH, host)
+				log.Ctx(req.Context()).Debug().Msgf("CNAMEFlattening: request %s which resolved to %s, is not matched to route %s", reqHost, flatH, host)
 			}
 			return false
 		}
@@ -197,7 +197,7 @@ func clientIP(route *mux.Route, clientIPs ...string) error {
 	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
 		ok, err := checker.Contains(strategy.GetIP(req))
 		if err != nil {
-			log.FromContext(req.Context()).Warnf("\"ClientIP\" matcher: could not match remote address : %w", err)
+			log.Ctx(req.Context()).Warn().Err(err).Msg("\"ClientIP\" matcher: could not match remote address")
 			return false
 		}
 

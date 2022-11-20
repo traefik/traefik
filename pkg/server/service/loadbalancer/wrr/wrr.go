@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 type namedHandler struct {
@@ -105,7 +105,9 @@ func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 	if up {
 		status = "UP"
 	}
-	log.FromContext(ctx).Debugf("Setting status of %s to %v", childName, status)
+
+	log.Ctx(ctx).Debug().Msgf("Setting status of %s to %v", childName, status)
+
 	if up {
 		b.status[childName] = struct{}{}
 	} else {
@@ -121,12 +123,12 @@ func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 	// No Status Change
 	if upBefore == upAfter {
 		// We're still with the same status, no need to propagate
-		log.FromContext(ctx).Debugf("Still %s, no need to propagate", status)
+		log.Ctx(ctx).Debug().Msgf("Still %s, no need to propagate", status)
 		return
 	}
 
 	// Status Change
-	log.FromContext(ctx).Debugf("Propagating new %s status", status)
+	log.Ctx(ctx).Debug().Msgf("Propagating new %s status", status)
 	for _, fn := range b.updaters {
 		fn(upAfter)
 	}
@@ -168,7 +170,7 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 		}
 	}
 
-	log.WithoutContext().Debugf("Service selected by WRR: %s", handler.name)
+	log.Debug().Msgf("Service selected by WRR: %s", handler.name)
 	return handler, nil
 }
 
@@ -177,7 +179,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		cookie, err := req.Cookie(b.stickyCookie.name)
 
 		if err != nil && !errors.Is(err, http.ErrNoCookie) {
-			log.WithoutContext().Warnf("Error while reading cookie: %v", err)
+			log.Warn().Err(err).Msg("Error while reading cookie")
 		}
 
 		if err == nil && cookie != nil {
