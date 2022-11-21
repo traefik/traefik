@@ -21,6 +21,24 @@ function getRouterByName (name) {
     })
 }
 
+function getAllMiddlewares (params) {
+  return APP.api.get(`${apiBase}/middlewares?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}`)
+    .then(response => {
+      const { data = [], headers } = response
+      const total = getTotal(headers, params)
+      console.log('Success -> UdpService -> getAllMiddlewares', response.data)
+      return { data, total }
+    })
+}
+
+function getMiddlewareByName (name) {
+  return APP.api.get(`${apiBase}/middlewares/${name}`)
+    .then(body => {
+      console.log('Success -> UdpService -> getMiddlewareByName', body.data)
+      return body.data
+    })
+}
+
 function getAllServices (params) {
   return APP.api.get(`${apiBase}/services?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}`)
     .then(response => {
@@ -42,6 +60,8 @@ function getServiceByName (name) {
 export default {
   getAllRouters,
   getRouterByName,
+  getAllMiddlewares,
+  getMiddlewareByName,
   getAllServices,
   getServiceByName
 }

@@ -36,6 +36,7 @@ rules:
     resources:
       - middlewares
       - middlewaretcps
+      - middlewareudps
       - ingressroutes
       - traefikservices
       - ingressroutetcps

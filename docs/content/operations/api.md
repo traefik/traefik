@@ -158,6 +158,8 @@ All the following endpoints must be accessed with a `GET` HTTP request.
 | `/api/udp/routers/{name}`      | Returns the information of the UDP router specified by `name`.                              |
 | `/api/udp/services`            | Lists all the UDP services information.                                                     |
 | `/api/udp/services/{name}`     | Returns the information of the UDP service specified by `name`.                             |
+| `/api/udp/middlewares`         | Lists all the UDP middlewares information.                                                  |
+| `/api/udp/middlewares/{name}`  | Returns the information of the UDP middleware specified by `name`.                          |
 | `/api/entrypoints`             | Lists all the entry points information.                                                     |
 | `/api/entrypoints/{name}`      | Returns the information of the entry point specified by `name`.                             |
 | `/api/overview`                | Returns statistic information about http and tcp as well as enabled features and providers. |

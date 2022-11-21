@@ -1,0 +1,39 @@
+[
+	{
+		"ipAllowList": {
+			"sourceRange": ["127.0.0.1/32"]
+		},
+		"name": "ipallowlist1@anotherprovider",
+		"provider": "anotherprovider",
+		"status": "enabled",
+		"type": "ipallowlist",
+		"usedBy": [
+			"bar@myprovider"
+		]
+	},
+	{
+		"ipAllowList": {
+			"sourceRange": ["127.0.0.1/32"]
+		},
+		"name": "ipallowlist1@myprovider",
+		"provider": "myprovider",
+		"status": "enabled",
+		"type": "ipallowlist",
+		"usedBy": [
+			"bar@myprovider",
+			"test@myprovider"
+		]
+	},
+	{
+		"ipAllowList": {
+			"sourceRange": ["127.0.0.2/32"]
+		},
+		"name": "ipallowlist2@myprovider",
+		"provider": "myprovider",
+		"status": "enabled",
+		"type": "ipallowlist",
+		"usedBy": [
+			"test@myprovider"
+		]
+	}
+]

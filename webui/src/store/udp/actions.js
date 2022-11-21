@@ -51,3 +51,29 @@ export function getServiceByName ({ commit }, name) {
       return Promise.reject(error)
     })
 }
+
+export function getAllMiddlewares ({ commit }, params) {
+  commit('getAllMiddlewaresRequest')
+  return UdpService.getAllMiddlewares(params)
+    .then(body => {
+      commit('getAllMiddlewaresSuccess', { body, ...params })
+      return body
+    })
+    .catch(error => {
+      commit('getAllMiddlewaresFailure', error)
+      return Promise.reject(error)
+    })
+}
+
+export function getMiddlewareByName ({ commit }, name) {
+  commit('getMiddlewareByNameRequest')
+  return UdpService.getMiddlewareByName(name)
+    .then(body => {
+      commit('getMiddlewareByNameSuccess', body)
+      return body
+    })
+    .catch(error => {
+      commit('getMiddlewareByNameFailure', error)
+      return Promise.reject(error)
+    })
+}

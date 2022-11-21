@@ -112,3 +112,32 @@ func (s *UDPServiceInfo) AddError(err error, critical bool) {
 		s.Status = StatusWarning
 	}
 }
+
+// UDPMiddlewareInfo holds information about a currently running middleware.
+type UDPMiddlewareInfo struct {
+	*dynamic.UDPMiddleware          // dynamic configuration
+	Err                    []string `json:"error,omitempty"` // contains all the errors that occurred during service creation.
+	Status                 string   `json:"status,omitempty"`
+	UsedBy                 []string `json:"usedBy,omitempty"` // list of UDP routers and services using that middleware.
+}
+
+// AddError adds err to s.Err, if it does not already exist.
+// If critical is set, m is marked as disabled.
+func (m *UDPMiddlewareInfo) AddError(err error, critical bool) {
+	for _, value := range m.Err {
+		if value == err.Error() {
+			return
+		}
+	}
+
+	m.Err = append(m.Err, err.Error())
+	if critical {
+		m.Status = StatusDisabled
+		return
+	}
+
+	// only set it to "warning" if not already in a worse state
+	if m.Status != StatusDisabled {
+		m.Status = StatusWarning
+	}
+}

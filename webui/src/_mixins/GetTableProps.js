@@ -129,6 +129,9 @@ const propsByType = {
   },
   'tcp-middlewares': {
     columns: columnsByResource.middlewares
+  },
+  'udp-middlewares': {
+    columns: columnsByResource.middlewares
   }
 }
 
