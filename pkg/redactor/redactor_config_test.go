@@ -903,7 +903,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 		},
 		Datadog: &datadog.Config{
 			LocalAgentHostPort:         "foobar",
-			GlobalTag:                  "foobar",
+			GlobalTags:                 map[string]string{"foobar": "foobar"},
 			Debug:                      true,
 			PrioritySampling:           true,
 			TraceIDHeaderName:          "foobar",

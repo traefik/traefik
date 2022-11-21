@@ -1023,9 +1023,6 @@ Sets the header name prefix used to store baggage items in a map.
 `--tracing.datadog.debug`:  
 Enables Datadog debug. (Default: ```false```)
 
-`--tracing.datadog.globaltag`:  
-Sets a key:value tag on all spans.
-
 `--tracing.datadog.globaltags.<name>`:  
 Sets a list of key:value tags on all spans.
 
