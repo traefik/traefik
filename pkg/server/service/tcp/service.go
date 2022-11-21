@@ -34,7 +34,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 	serviceQualifiedName := provider.GetQualifiedName(rootCtx, serviceName)
 
 	logger := log.Ctx(rootCtx).With().Str(logs.ServiceName, serviceQualifiedName).Logger()
-	ctx := logger.WithContext(provider.AddInContext(rootCtx, serviceQualifiedName))
+	ctx := provider.AddInContext(rootCtx, serviceQualifiedName)
 
 	conf, ok := m.configs[serviceQualifiedName]
 	if !ok {

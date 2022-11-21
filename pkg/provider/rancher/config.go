@@ -153,7 +153,7 @@ func (p *Provider) keepService(ctx context.Context, service rancherData) bool {
 	logger := log.Ctx(ctx)
 
 	if !service.ExtraConf.Enable {
-		logger.Debug().Msg("Filtering disabled service.")
+		logger.Debug().Msg("Filtering disabled service")
 		return false
 	}
 

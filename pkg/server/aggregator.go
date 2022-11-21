@@ -44,7 +44,7 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 					log.Debug().
 						Str(logs.RouterName, routerName).
 						Strs(logs.EntryPointName, defaultEntryPoints).
-						Msgf("No entryPoint defined for this router, using the default one(s) instead")
+						Msg("No entryPoint defined for this router, using the default one(s) instead")
 					router.EntryPoints = defaultEntryPoints
 				}
 

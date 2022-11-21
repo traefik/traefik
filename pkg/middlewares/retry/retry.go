@@ -117,7 +117,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	err := backoff.RetryNotify(operation, backOff, notify)
 	if err != nil {
-		logger.Debug().Err(err).Msgf("Final retry attempt failed")
+		logger.Debug().Err(err).Msg("Final retry attempt failed")
 	}
 }
 

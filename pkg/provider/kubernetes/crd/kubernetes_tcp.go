@@ -277,7 +277,7 @@ func getTLSTCP(ctx context.Context, ingressRoute *v1alpha1.IngressRouteTCP, k8sC
 		return nil
 	}
 	if ingressRoute.Spec.TLS.SecretName == "" {
-		log.Ctx(ctx).Debug().Msgf("No secret name provided")
+		log.Ctx(ctx).Debug().Msg("No secret name provided")
 		return nil
 	}
 

@@ -17,7 +17,7 @@ const (
 func AddInContext(ctx context.Context, elementName string) context.Context {
 	parts := strings.Split(elementName, "@")
 	if len(parts) == 1 {
-		log.Ctx(ctx).Debug().Msgf("Could not find a provider for %s.", elementName)
+		log.Ctx(ctx).Debug().Msgf("Could not find a provider for %s", elementName)
 		return ctx
 	}
 

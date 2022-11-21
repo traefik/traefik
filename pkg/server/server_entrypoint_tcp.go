@@ -109,7 +109,7 @@ func (eps TCPEntryPoints) Stop() {
 			logger := log.With().Str(logs.EntryPointName, entryPointName).Logger()
 			entryPoint.Shutdown(logger.WithContext(context.Background()))
 
-			logger.Debug().Msgf("Entrypoint closed")
+			logger.Debug().Msg("Entrypoint closed")
 		}(epn, ep)
 	}
 
