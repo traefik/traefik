@@ -246,6 +246,9 @@ The TLS key for Traefik Proxy as a TLS client.
 `TRAEFIK_LOG`:  
 Traefik log settings. (Default: ```false```)
 
+`TRAEFIK_LOG_COMPRESS`:  
+Determines if the rotated log files should be compressed using gzip. (Default: ```false```)
+
 `TRAEFIK_LOG_FILEPATH`:  
 Traefik log file path. Stdout is used when omitted or empty.
 
@@ -254,6 +257,18 @@ Traefik log format: json | common (Default: ```common```)
 
 `TRAEFIK_LOG_LEVEL`:  
 Log level set to traefik logs. (Default: ```ERROR```)
+
+`TRAEFIK_LOG_MAXAGE`:  
+Maximum number of days to retain old log files based on the timestamp encoded in their filename. (Default: ```0```)
+
+`TRAEFIK_LOG_MAXBACKUPS`:  
+Maximum number of old log files to retain. (Default: ```0```)
+
+`TRAEFIK_LOG_MAXSIZE`:  
+Maximum size in megabytes of the log file before it gets rotated. (Default: ```0```)
+
+`TRAEFIK_LOG_NOCOLOR`:  
+When using the 'common' format, disables the colorized output. (Default: ```false```)
 
 `TRAEFIK_METRICS_DATADOG`:  
 Datadog metrics exporter type. (Default: ```false```)

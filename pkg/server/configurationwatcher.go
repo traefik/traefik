@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"reflect"
 
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/tls"
@@ -68,14 +69,12 @@ func (c *ConfigurationWatcher) AddListener(listener func(dynamic.Configuration))
 }
 
 func (c *ConfigurationWatcher) startProviderAggregator() {
-	logger := log.WithoutContext()
-
-	logger.Infof("Starting provider aggregator %T", c.providerAggregator)
+	log.Info().Msgf("Starting provider aggregator %T", c.providerAggregator)
 
 	safe.Go(func() {
 		err := c.providerAggregator.Provide(c.allProvidersConfigs, c.routinesPool)
 		if err != nil {
-			logger.Errorf("Error starting provider aggregator %T: %s", c.providerAggregator, err)
+			log.Error().Err(err).Msgf("Error starting provider aggregator %T", c.providerAggregator)
 		}
 	})
 }
@@ -108,15 +107,15 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 					return
 				}
 
-				logger := log.WithoutContext().WithField(log.ProviderName, configMsg.ProviderName)
+				logger := log.Ctx(ctx).With().Str(logs.ProviderName, configMsg.ProviderName).Logger()
 
 				if configMsg.Configuration == nil {
-					logger.Debug("Skipping nil configuration.")
+					logger.Debug().Msg("Skipping nil configuration")
 					continue
 				}
 
 				if isEmptyConfiguration(configMsg.Configuration) {
-					logger.Debug("Skipping empty configuration.")
+					logger.Debug().Msg("Skipping empty configuration")
 					continue
 				}
 
@@ -124,7 +123,7 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 
 				if reflect.DeepEqual(newConfigurations[configMsg.ProviderName], configMsg.Configuration) {
 					// no change, do nothing
-					logger.Debug("Skipping unchanged configuration.")
+					logger.Debug().Msg("Skipping unchanged configuration")
 					continue
 				}
 
@@ -177,8 +176,8 @@ func (c *ConfigurationWatcher) applyConfigurations(ctx context.Context) {
 	}
 }
 
-func logConfiguration(logger log.Logger, configMsg dynamic.Message) {
-	if log.GetLevel() != logrus.DebugLevel {
+func logConfiguration(logger zerolog.Logger, configMsg dynamic.Message) {
+	if logger.GetLevel() > zerolog.DebugLevel {
 		return
 	}
 
@@ -212,10 +211,10 @@ func logConfiguration(logger log.Logger, configMsg dynamic.Message) {
 
 	jsonConf, err := json.Marshal(copyConf)
 	if err != nil {
-		logger.Errorf("Could not marshal dynamic configuration: %v", err)
-		logger.Debugf("Configuration received: [struct] %#v", copyConf)
+		logger.Error().Err(err).Msg("Could not marshal dynamic configuration")
+		logger.Debug().Msgf("Configuration received: [struct] %#v", copyConf)
 	} else {
-		logger.Debugf("Configuration received: %s", string(jsonConf))
+		logger.Debug().RawJSON("config", jsonConf).Msg("Configuration received")
 	}
 }
 
