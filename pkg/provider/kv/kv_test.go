@@ -79,7 +79,6 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware08/forwardAuth/tls/key":                                  "foobar",
 		"traefik/http/middlewares/Middleware08/forwardAuth/tls/insecureSkipVerify":                   "true",
 		"traefik/http/middlewares/Middleware08/forwardAuth/tls/ca":                                   "foobar",
-		"traefik/http/middlewares/Middleware08/forwardAuth/tls/caOptional":                           "true",
 		"traefik/http/middlewares/Middleware08/forwardAuth/tls/cert":                                 "foobar",
 		"traefik/http/middlewares/Middleware08/forwardAuth/address":                                  "foobar",
 		"traefik/http/middlewares/Middleware08/forwardAuth/trustForwardHeader":                       "true",
@@ -413,7 +412,6 @@ func Test_buildConfiguration(t *testing.T) {
 						Address: "foobar",
 						TLS: &types.ClientTLS{
 							CA:                 "foobar",
-							CAOptional:         true,
 							Cert:               "foobar",
 							Key:                "foobar",
 							InsecureSkipVerify: true,

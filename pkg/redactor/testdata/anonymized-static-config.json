@@ -83,7 +83,6 @@
       "defaultRule": "xxxx",
       "tls": {
         "ca": "xxxx",
-        "caOptional": true,
         "cert": "xxxx",
         "key": "xxxx",
         "insecureSkipVerify": true
@@ -111,7 +110,6 @@
       "dcosToken": "xxxx",
       "tls": {
         "ca": "xxxx",
-        "caOptional": true,
         "cert": "xxxx",
         "key": "xxxx",
         "insecureSkipVerify": true
@@ -189,7 +187,6 @@
         "token": "xxxx",
         "tls": {
           "ca": "xxxx",
-          "caOptional": true,
           "cert": "xxxx",
           "key": "xxxx",
           "insecureSkipVerify": true
@@ -232,7 +229,6 @@
       "token": "xxxx",
       "tls": {
         "ca": "xxxx",
-        "caOptional": true,
         "cert": "xxxx",
         "key": "xxxx",
         "insecureSkipVerify": true
@@ -246,7 +242,6 @@
       "rootKey": "xxxx",
       "tls": {
         "ca": "xxxx",
-        "caOptional": true,
         "cert": "xxxx",
         "key": "xxxx",
         "insecureSkipVerify": true
@@ -263,7 +258,6 @@
       "rootKey": "xxxx",
       "tls": {
         "ca": "xxxx",
-        "caOptional": true,
         "cert": "xxxx",
         "key": "xxxx",
         "insecureSkipVerify": true
@@ -277,7 +271,6 @@
       "pollTimeout": "42ns",
       "tls": {
         "ca": "xxxx",
-        "caOptional": true,
         "cert": "xxxx",
         "key": "xxxx",
         "insecureSkipVerify": true

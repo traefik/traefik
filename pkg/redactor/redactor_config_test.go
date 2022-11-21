@@ -278,7 +278,6 @@ func init() {
 					Address: "127.0.0.1",
 					TLS: &types.ClientTLS{
 						CA:                 "ca.pem",
-						CAOptional:         true,
 						Cert:               "cert.pem",
 						Key:                "cert.pem",
 						InsecureSkipVerify: true,
@@ -592,7 +591,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		DefaultRule: "PathPrefix(`/`)",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
-			CAOptional:         true,
 			Cert:               "mycert.pem",
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
@@ -615,7 +613,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		DCOSToken:        "foobar",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
-			CAOptional:         true,
 			Cert:               "mycert.pem",
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
@@ -691,7 +688,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 				Token:      "MyToken",
 				TLS: &types.ClientTLS{
 					CA:                 "myCa",
-					CAOptional:         true,
 					Cert:               "mycert.pem",
 					Key:                "mycert.key",
 					InsecureSkipVerify: true,
@@ -734,7 +730,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Token: "secret",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
-			CAOptional:         true,
 			Cert:               "mycert.pem",
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
@@ -751,7 +746,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Password: "password",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
-			CAOptional:         true,
 			Cert:               "mycert.pem",
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
@@ -776,7 +770,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Password: "password",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
-			CAOptional:         true,
 			Cert:               "mycert.pem",
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
@@ -789,7 +782,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		PollTimeout:  42,
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
-			CAOptional:         true,
 			Cert:               "mycert.pem",
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,

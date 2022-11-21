@@ -31,7 +31,6 @@
 "traefik.http.middlewares.middleware09.forwardauth.authresponseheaders": "foobar, foobar",
 "traefik.http.middlewares.middleware09.forwardauth.authresponseheadersregex": "foobar",
 "traefik.http.middlewares.middleware09.forwardauth.tls.ca": "foobar",
-"traefik.http.middlewares.middleware09.forwardauth.tls.caoptional": "true",
 "traefik.http.middlewares.middleware09.forwardauth.tls.cert": "foobar",
 "traefik.http.middlewares.middleware09.forwardauth.tls.insecureskipverify": "true",
 "traefik.http.middlewares.middleware09.forwardauth.tls.key": "foobar",

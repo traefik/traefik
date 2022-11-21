@@ -426,9 +426,6 @@ Root key used for KV store. (Default: ```traefik```)
 `--providers.consul.tls.ca`:  
 TLS CA
 
-`--providers.consul.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
-
 `--providers.consul.tls.cert`:  
 TLS cert
 
@@ -479,9 +476,6 @@ The URI scheme for the Consul server
 
 `--providers.consulcatalog.endpoint.tls.ca`:  
 TLS CA
-
-`--providers.consulcatalog.endpoint.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
 
 `--providers.consulcatalog.endpoint.tls.cert`:  
 TLS cert
@@ -552,9 +546,6 @@ Polling interval for swarm mode. (Default: ```15```)
 `--providers.docker.tls.ca`:  
 TLS CA
 
-`--providers.docker.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
-
 `--providers.docker.tls.cert`:  
 TLS cert
 
@@ -621,9 +612,6 @@ Root key used for KV store. (Default: ```traefik```)
 `--providers.etcd.tls.ca`:  
 TLS CA
 
-`--providers.etcd.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
-
 `--providers.etcd.tls.cert`:  
 TLS cert
 
@@ -665,9 +653,6 @@ Polling timeout for endpoint. (Default: ```5```)
 
 `--providers.http.tls.ca`:  
 TLS CA
-
-`--providers.http.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
 
 `--providers.http.tls.cert`:  
 TLS cert
@@ -813,9 +798,6 @@ Set a response header timeout for Marathon. (Default: ```60```)
 `--providers.marathon.tls.ca`:  
 TLS CA
 
-`--providers.marathon.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
-
 `--providers.marathon.tls.cert`:  
 TLS cert
 
@@ -854,9 +836,6 @@ Nomad region to use. If not provided, the local agent region is used.
 
 `--providers.nomad.endpoint.tls.ca`:  
 TLS CA
-
-`--providers.nomad.endpoint.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
 
 `--providers.nomad.endpoint.tls.cert`:  
 TLS cert
@@ -935,9 +914,6 @@ Root key used for KV store. (Default: ```traefik```)
 
 `--providers.redis.tls.ca`:  
 TLS CA
-
-`--providers.redis.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
 
 `--providers.redis.tls.cert`:  
 TLS cert

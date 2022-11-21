@@ -71,7 +71,6 @@
     allowEmptyServices = true
     [providers.docker.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -96,7 +95,6 @@
     respectReadinessChecks = true
     [providers.marathon.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -168,7 +166,6 @@
       endpointWaitTime = "42s"
       [providers.consulCatalog.endpoint.tls]
         ca = "foobar"
-        caOptional = true
         cert = "foobar"
         key = "foobar"
         insecureSkipVerify = true
@@ -190,7 +187,6 @@
       endpointWaitTime = "42s"
       [providers.nomad.endpoint.tls]
         ca = "foobar"
-        caOptional = true
         cert = "foobar"
         key = "foobar"
         insecureSkipVerify = true
@@ -213,7 +209,6 @@
     namespaces = ["foobar", "foobar"]
     [providers.consul.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -224,7 +219,6 @@
     password = "foobar"
     [providers.etcd.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -241,7 +235,6 @@
     db = 42
     [providers.redis.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -254,7 +247,6 @@
       name1 = "foobar"
     [providers.http.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true

@@ -369,8 +369,6 @@ spec:
                     description: TLS defines the configuration used to secure the
                       connection to the authentication server.
                     properties:
-                      caOptional:
-                        type: boolean
                       caSecret:
                         description: CASecret is the name of the referenced Kubernetes
                           Secret containing the CA to validate the server certificate.
