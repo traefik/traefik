@@ -7,8 +7,8 @@ import (
 	"net"
 	"strconv"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -20,7 +20,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 	}
 
 	for _, ingressRouteUDP := range client.GetIngressRouteUDPs() {
-		logger := log.FromContext(log.With(ctx, log.Str("ingress", ingressRouteUDP.Name), log.Str("namespace", ingressRouteUDP.Namespace)))
+		logger := log.Ctx(ctx).With().Str("ingress", ingressRouteUDP.Name).Str("namespace", ingressRouteUDP.Namespace).Logger()
 
 		if !shouldProcessIngress(p.IngressClass, ingressRouteUDP.Annotations[annotationKubernetesIngressClass]) {
 			continue
@@ -38,10 +38,11 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 			for _, service := range route.Services {
 				balancerServerUDP, err := p.createLoadBalancerServerUDP(client, ingressRouteUDP.Namespace, service)
 				if err != nil {
-					logger.
-						WithField("serviceName", service.Name).
-						WithField("servicePort", service.Port).
-						Errorf("Cannot create service: %v", err)
+					logger.Error().
+						Str("serviceName", service.Name).
+						Stringer("servicePort", &service.Port).
+						Err(err).
+						Msg("Cannot create service")
 					continue
 				}
 
