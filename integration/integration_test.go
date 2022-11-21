@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"io/fs"
+	stdlog "log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -27,7 +28,10 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/fatih/structs"
 	"github.com/go-check/check"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/sirupsen/logrus"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -38,12 +42,22 @@ var (
 
 func Test(t *testing.T) {
 	if !*integration {
-		log.WithoutContext().Info("Integration tests disabled.")
+		log.Info().Msg("Integration tests disabled.")
 		return
 	}
 
-	// TODO(mpl): very niche optimization: do not start tailscale if none of the
-	// wanted tests actually need it (e.g. KeepAliveSuite does not).
+	log.Logger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339}).
+		With().Timestamp().Caller().Logger()
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+
+	// Global logrus replacement
+	logrus.StandardLogger().Out = logs.NoLevel(log.Logger, zerolog.DebugLevel)
+
+	// configure default standard log.
+	stdlog.SetFlags(stdlog.Lshortfile | stdlog.LstdFlags)
+	stdlog.SetOutput(logs.NoLevel(log.Logger, zerolog.DebugLevel))
+
+	// TODO(mpl): very niche optimization: do not start tailscale if none of the wanted tests actually need it (e.g. KeepAliveSuite does not).
 	var (
 		vpn    *tailscaleNotSuite
 		useVPN bool
@@ -199,7 +213,7 @@ func (s *BaseSuite) cmdTraefik(args ...string) (*exec.Cmd, *bytes.Buffer) {
 func (s *BaseSuite) killCmd(cmd *exec.Cmd) {
 	err := cmd.Process.Kill()
 	if err != nil {
-		log.WithoutContext().Errorf("Kill: %v", err)
+		log.Error().Err(err).Msg("Kill")
 	}
 
 	time.Sleep(100 * time.Millisecond)
@@ -221,40 +235,39 @@ func (s *BaseSuite) displayLogK3S() {
 	if _, err := os.Stat(filePath); err == nil {
 		content, errR := os.ReadFile(filePath)
 		if errR != nil {
-			log.WithoutContext().Error(errR)
+			log.Error().Err(errR).Send()
 		}
-		log.WithoutContext().Println(string(content))
+		log.Print(string(content))
 	}
-	log.WithoutContext().Println()
-	log.WithoutContext().Println("################################")
-	log.WithoutContext().Println()
+	log.Print()
+	log.Print("################################")
+	log.Print()
 }
 
 func (s *BaseSuite) displayLogCompose(c *check.C) {
 	if s.dockerComposeService == nil || s.composeProject == nil {
-		log.WithoutContext().Infof("%s: No docker compose logs.", c.TestName())
+		log.Info().Str("testName", c.TestName()).Msg("No docker compose logs.")
 		return
 	}
 
-	log.WithoutContext().Infof("%s: docker compose logs: ", c.TestName())
+	log.Info().Str("testName", c.TestName()).Msg("docker compose logs")
 
-	logWriter := log.WithoutContext().WriterLevel(log.GetLevel())
-	logConsumer := formatter.NewLogConsumer(context.Background(), logWriter, false, true)
+	logConsumer := formatter.NewLogConsumer(context.Background(), logs.NoLevel(log.Logger, zerolog.InfoLevel), false, true)
 
 	err := s.dockerComposeService.Logs(context.Background(), s.composeProject.Name, logConsumer, composeapi.LogOptions{})
 	c.Assert(err, checker.IsNil)
 
-	log.WithoutContext().Println()
-	log.WithoutContext().Println("################################")
-	log.WithoutContext().Println()
+	log.Print()
+	log.Print("################################")
+	log.Print()
 }
 
 func (s *BaseSuite) displayTraefikLog(c *check.C, output *bytes.Buffer) {
 	if output == nil || output.Len() == 0 {
-		log.WithoutContext().Infof("%s: No Traefik logs.", c.TestName())
+		log.Info().Str("testName", c.TestName()).Msg("No Traefik logs.")
 	} else {
-		log.WithoutContext().Infof("%s: Traefik logs: ", c.TestName())
-		log.WithoutContext().Infof(output.String())
+		log.Info().Str("testName", c.TestName()).
+			Str("logs", output.String()).Msg("Traefik logs")
 	}
 }
 
@@ -351,7 +364,7 @@ func setupVPN(c *check.C, keyFile string) *tailscaleNotSuite {
 	data, err := os.ReadFile(keyFile)
 	if err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
-			log.Fatal(err)
+			log.Fatal().Err(err).Send()
 		}
 		return nil
 	}

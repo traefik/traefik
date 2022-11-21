@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/tcp"
 )
@@ -26,8 +25,8 @@ type inFlightConn struct {
 // New creates a max connections middleware.
 // The connections are identified and grouped by remote IP.
 func New(ctx context.Context, next tcp.Handler, config dynamic.TCPInFlightConn, name string) (tcp.Handler, error) {
-	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName))
-	logger.Debug("Creating middleware")
+	logger := middlewares.GetLogger(ctx, name, typeName)
+	logger.Debug().Msg("Creating middleware")
 
 	return &inFlightConn{
 		name:           name,
@@ -39,18 +38,17 @@ func New(ctx context.Context, next tcp.Handler, config dynamic.TCPInFlightConn, 
 
 // ServeTCP serves the given TCP connection.
 func (i *inFlightConn) ServeTCP(conn tcp.WriteCloser) {
-	ctx := middlewares.GetLoggerCtx(context.Background(), i.name, typeName)
-	logger := log.FromContext(ctx)
+	logger := middlewares.GetLogger(context.Background(), i.name, typeName)
 
 	ip, _, err := net.SplitHostPort(conn.RemoteAddr().String())
 	if err != nil {
-		logger.Errorf("Cannot parse IP from remote addr: %v", err)
+		logger.Error().Err(err).Msg("Cannot parse IP from remote addr")
 		conn.Close()
 		return
 	}
 
 	if err = i.increment(ip); err != nil {
-		logger.Errorf("Connection rejected: %v", err)
+		logger.Error().Err(err).Msg("Connection rejected")
 		conn.Close()
 		return
 	}

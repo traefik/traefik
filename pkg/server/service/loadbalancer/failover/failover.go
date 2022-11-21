@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 // Failover is an http.Handler that can forward requests to the fallback handler
@@ -90,11 +90,11 @@ func (f *Failover) SetHandlerStatus(ctx context.Context, up bool) {
 
 	if up == f.handlerStatus {
 		// We're still with the same status, no need to propagate.
-		log.FromContext(ctx).Debugf("Still %s, no need to propagate", status)
+		log.Ctx(ctx).Debug().Msgf("Still %s, no need to propagate", status)
 		return
 	}
 
-	log.FromContext(ctx).Debugf("Propagating new %s status", status)
+	log.Ctx(ctx).Debug().Msgf("Propagating new %s status", status)
 	f.handlerStatus = up
 
 	for _, fn := range f.updaters {
@@ -125,11 +125,11 @@ func (f *Failover) SetFallbackHandlerStatus(ctx context.Context, up bool) {
 
 	if up == f.fallbackStatus {
 		// We're still with the same status, no need to propagate.
-		log.FromContext(ctx).Debugf("Still %s, no need to propagate", status)
+		log.Ctx(ctx).Debug().Msgf("Still %s, no need to propagate", status)
 		return
 	}
 
-	log.FromContext(ctx).Debugf("Propagating new %s status", status)
+	log.Ctx(ctx).Debug().Msgf("Propagating new %s status", status)
 	f.fallbackStatus = up
 
 	for _, fn := range f.updaters {
