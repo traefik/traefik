@@ -33,7 +33,7 @@ func NewManager(conf *runtime.Configuration) *Manager {
 func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Handler, error) {
 	serviceQualifiedName := provider.GetQualifiedName(rootCtx, serviceName)
 
-	logger := log.Ctx(rootCtx).With().Str(logs.ServiceName, serviceName).Logger()
+	logger := log.Ctx(rootCtx).With().Str(logs.ServiceName, serviceQualifiedName).Logger()
 	ctx := logger.WithContext(provider.AddInContext(rootCtx, serviceQualifiedName))
 
 	conf, ok := m.configs[serviceQualifiedName]
@@ -58,34 +58,42 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 		duration := time.Duration(*conf.LoadBalancer.TerminationDelay) * time.Millisecond
 
 		for index, server := range shuffle(conf.LoadBalancer.Servers, m.rand) {
+			srvLogger := logger.With().
+				Int(logs.ServerIndex, index).
+				Str("serverAddress", server.Address).Logger()
+
 			if _, _, err := net.SplitHostPort(server.Address); err != nil {
-				logger.Error().Err(err).Msgf("In service %q", serviceQualifiedName)
+				srvLogger.Error().Err(err).Msg("Failed to split host port")
 				continue
 			}
 
 			handler, err := tcp.NewProxy(server.Address, duration, conf.LoadBalancer.ProxyProtocol)
 			if err != nil {
-				logger.Error().Err(err).Msgf("In service %q server %q", serviceQualifiedName, server.Address)
+				srvLogger.Error().Err(err).Msg("Failed to create server")
 				continue
 			}
 
 			loadBalancer.AddServer(handler)
-			logger.Debug().Int(logs.ServerIndex, index).Str("serverAddress", server.Address).
-				Msg("Creating TCP server")
+			logger.Debug().Msg("Creating TCP server")
 		}
+
 		return loadBalancer, nil
+
 	case conf.Weighted != nil:
 		loadBalancer := tcp.NewWRRLoadBalancer()
 
 		for _, service := range shuffle(conf.Weighted.Services, m.rand) {
 			handler, err := m.BuildTCP(ctx, service.Name)
 			if err != nil {
-				logger.Error().Err(err).Msgf("In service %q", serviceQualifiedName)
+				logger.Error().Err(err).Msg("Failed to build TCP handler")
 				return nil, err
 			}
+
 			loadBalancer.AddWeightServer(handler, service.Weight)
 		}
+
 		return loadBalancer, nil
+
 	default:
 		err := fmt.Errorf("the service %q does not have any type defined", serviceQualifiedName)
 		conf.AddError(err, true)

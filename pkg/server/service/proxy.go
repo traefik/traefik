@@ -116,7 +116,7 @@ func errorHandler(w http.ResponseWriter, req *http.Request, err error) {
 	}
 
 	logger := log.Ctx(req.Context())
-	logger.Debug().Err(err).Msgf("'%d %s' caused by", statusCode, statusText(statusCode))
+	logger.Debug().Err(err).Msgf("%d %s", statusCode, statusText(statusCode))
 
 	w.WriteHeader(statusCode)
 	if _, werr := w.Write([]byte(statusText(statusCode))); werr != nil {
