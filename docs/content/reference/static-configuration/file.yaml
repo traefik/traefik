@@ -352,8 +352,13 @@ ping:
   terminatingStatusCode: 42
 log:
   level: foobar
-  filePath: foobar
   format: foobar
+  noColor: true
+  filePath: foobar
+  maxSize: 42
+  maxBackups: 42
+  maxAge: 42
+  compress: true
 accessLog:
   filePath: foobar
   format: foobar

@@ -336,8 +336,12 @@
   },
   "log": {
     "level": "Level",
+    "format": "json",
     "filePath": "xxxx",
-    "format": "json"
+    "maxSize": 5,
+    "maxAge": 3,
+    "maxBackups": 4,
+    "compress": true
   },
   "accessLog": {
     "filePath": "xxxx",

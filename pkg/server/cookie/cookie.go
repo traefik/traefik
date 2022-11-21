@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 )
 
 const cookieNameLength = 6
@@ -27,7 +27,7 @@ func GenerateName(backendName string) string {
 	_, err := hash.Write(data)
 	if err != nil {
 		// Impossible case
-		log.WithoutContext().Errorf("Fail to create cookie name: %v", err)
+		log.Error().Err(err).Msg("Fail to create cookie name")
 	}
 
 	return fmt.Sprintf("_%x", hash.Sum(nil))[:cookieNameLength]

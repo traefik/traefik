@@ -14,7 +14,6 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/tracing"
 )
@@ -46,7 +45,7 @@ type retry struct {
 
 // New returns a new retry middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener Listener, name string) (http.Handler, error) {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
+	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
 	if config.Attempts <= 0 {
 		return nil, fmt.Errorf("incorrect (or empty) value for attempt (%d)", config.Attempts)
@@ -106,19 +105,19 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return fmt.Errorf("attempt %d failed", attempts-1)
 	}
 
+	logger := middlewares.GetLogger(req.Context(), r.name, typeName)
+
 	backOff := backoff.WithContext(r.newBackOff(), req.Context())
 
 	notify := func(err error, d time.Duration) {
-		log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
-			Debugf("New attempt %d for request: %v", attempts, req.URL)
+		logger.Debug().Msgf("New attempt %d for request: %v", attempts, req.URL)
 
 		r.listener.Retried(req, attempts)
 	}
 
 	err := backoff.RetryNotify(operation, backOff, notify)
 	if err != nil {
-		log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
-			Debugf("Final retry attempt failed: %v", err.Error())
+		logger.Debug().Err(err).Msg("Final retry attempt failed")
 	}
 }
 

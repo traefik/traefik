@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	kitlog "github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics/dogstatsd"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
@@ -58,10 +58,7 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 		config.Prefix = defaultMetricsPrefix
 	}
 
-	datadogClient = dogstatsd.New(config.Prefix+".", kitlog.LoggerFunc(func(keyvals ...interface{}) error {
-		log.WithoutContext().WithField(log.MetricsProviderName, "datadog").Info(keyvals...)
-		return nil
-	}))
+	datadogClient = dogstatsd.New(config.Prefix+".", logs.NewGoKitWrapper(log.Logger.With().Str(logs.MetricsProviderName, "datadog").Logger()))
 
 	initDatadogClient(ctx, config)
 
