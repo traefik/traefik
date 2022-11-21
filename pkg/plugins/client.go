@@ -35,8 +35,7 @@ const (
 const pluginsURL = "https://plugins.traefik.io/public/"
 
 const (
-	hashHeader  = "X-Plugin-Hash"
-	tokenHeader = "X-Token"
+	hashHeader = "X-Plugin-Hash"
 )
 
 // ClientOptions the options of a Traefik plugins client.
@@ -49,7 +48,6 @@ type Client struct {
 	HTTPClient *http.Client
 	baseURL    *url.URL
 
-	token     string
 	archives  string
 	stateFile string
 	goPath    string
@@ -158,10 +156,6 @@ func (c *Client) Download(ctx context.Context, pName, pVersion string) (string, 
 		req.Header.Set(hashHeader, hash)
 	}
 
-	if c.token != "" {
-		req.Header.Set(tokenHeader, c.token)
-	}
-
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to call service: %w", err)
@@ -220,10 +214,6 @@ func (c *Client) Check(ctx context.Context, pName, pVersion, hash string) error 
 
 	if hash != "" {
 		req.Header.Set(hashHeader, hash)
-	}
-
-	if c.token != "" {
-		req.Header.Set(tokenHeader, c.token)
 	}
 
 	resp, err := c.HTTPClient.Do(req)

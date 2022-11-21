@@ -19,4 +19,8 @@ In v3, we renamed the `IPWhiteList` middleware to `IPAllowList` without changing
 
 ## gRPC Metrics
 
-In v3, the reported status code for gRPC requests is now the value of the `Grpc-Status` header.    
+In v3, the reported status code for gRPC requests is now the value of the `Grpc-Status` header.  
+
+## Deprecated options removal
+
+The `pilot` option has been removed from the static configuration, and you should not use it anymore.
