@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/middlewares/connectionheader"
@@ -17,26 +16,6 @@ import (
 const (
 	typeName = "Headers"
 )
-
-func handleDeprecation(ctx context.Context, cfg *dynamic.Headers) {
-	logger := log.Ctx(ctx).Warn()
-
-	if cfg.SSLRedirect {
-		logger.Msg("SSLRedirect is deprecated, please use entrypoint redirection instead.")
-	}
-	if cfg.SSLTemporaryRedirect {
-		logger.Msg("SSLTemporaryRedirect is deprecated, please use entrypoint redirection instead.")
-	}
-	if cfg.SSLHost != "" {
-		logger.Msg("SSLHost is deprecated, please use RedirectRegex middleware instead.")
-	}
-	if cfg.SSLForceHost {
-		logger.Msg("SSLForceHost is deprecated, please use RedirectScheme middleware instead.")
-	}
-	if cfg.FeaturePolicy != "" {
-		logger.Msg("FeaturePolicy is deprecated, please use PermissionsPolicy header instead.")
-	}
-}
 
 type headers struct {
 	name    string
@@ -48,10 +27,6 @@ func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name strin
 	// HeaderMiddleware -> SecureMiddleWare -> next
 	logger := middlewares.GetLogger(ctx, name, typeName)
 	logger.Debug().Msg("Creating middleware")
-
-	mCtx := logger.WithContext(ctx)
-
-	handleDeprecation(mCtx, &cfg)
 
 	hasSecureHeaders := cfg.HasSecureHeadersDefined()
 	hasCustomHeaders := cfg.HasCustomHeadersDefined()
