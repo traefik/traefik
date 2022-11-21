@@ -11,9 +11,10 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/paerser/file"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/tls"
@@ -75,7 +76,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 // BuildConfiguration loads configuration either from file or a directory
 // specified by 'Filename'/'Directory' and returns a 'Configuration' object.
 func (p *Provider) BuildConfiguration() (*dynamic.Configuration, error) {
-	ctx := log.With(context.Background(), log.Str(log.ProviderName, providerName))
+	ctx := log.With().Str(logs.ProviderName, providerName).Logger().WithContext(context.Background())
 
 	if len(p.Directory) > 0 {
 		return p.loadFileConfigFromDirectory(ctx, p.Directory, nil)
@@ -117,7 +118,7 @@ func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationCh
 					callback(configurationChan, evt)
 				}
 			case err := <-watcher.Errors:
-				log.WithoutContext().WithField(log.ProviderName, providerName).Errorf("Watcher event error: %s", err)
+				log.Error().Str(logs.ProviderName, providerName).Err(err).Msg("Watcher event error")
 			}
 		}
 	})
@@ -130,16 +131,16 @@ func (p *Provider) watcherCallback(configurationChan chan<- dynamic.Message, eve
 		watchItem = p.Directory
 	}
 
-	logger := log.WithoutContext().WithField(log.ProviderName, providerName)
+	logger := log.With().Str(logs.ProviderName, providerName).Logger()
 
 	if _, err := os.Stat(watchItem); err != nil {
-		logger.Errorf("Unable to watch %s : %v", watchItem, err)
+		logger.Error().Err(err).Msgf("Unable to watch %s", watchItem)
 		return
 	}
 
 	configuration, err := p.BuildConfiguration()
 	if err != nil {
-		logger.Errorf("Error occurred during watcher callback: %s", err)
+		logger.Error().Err(err).Msg("Error occurred during watcher callback")
 		return
 	}
 
@@ -176,7 +177,7 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 				for _, caFile := range options.ClientAuth.CAFiles {
 					content, err := caFile.Read()
 					if err != nil {
-						log.FromContext(ctx).Error(err)
+						log.Ctx(ctx).Error().Err(err).Send()
 						continue
 					}
 
@@ -197,14 +198,14 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 
 				content, err := store.DefaultCertificate.CertFile.Read()
 				if err != nil {
-					log.FromContext(ctx).Error(err)
+					log.Ctx(ctx).Error().Err(err).Send()
 					continue
 				}
 				store.DefaultCertificate.CertFile = tls.FileOrContent(content)
 
 				content, err = store.DefaultCertificate.KeyFile.Read()
 				if err != nil {
-					log.FromContext(ctx).Error(err)
+					log.Ctx(ctx).Error().Err(err).Send()
 					continue
 				}
 				store.DefaultCertificate.KeyFile = tls.FileOrContent(content)
@@ -221,14 +222,14 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 			for _, cert := range st.Certificates {
 				content, err := cert.CertFile.Read()
 				if err != nil {
-					log.FromContext(ctx).Error(err)
+					log.Ctx(ctx).Error().Err(err).Send()
 					continue
 				}
 				cert.CertFile = tls.FileOrContent(content)
 
 				content, err = cert.KeyFile.Read()
 				if err != nil {
-					log.FromContext(ctx).Error(err)
+					log.Ctx(ctx).Error().Err(err).Send()
 					continue
 				}
 				cert.KeyFile = tls.FileOrContent(content)
@@ -242,7 +243,7 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 			for _, rootCA := range st.RootCAs {
 				content, err := rootCA.Read()
 				if err != nil {
-					log.FromContext(ctx).Error(err)
+					log.Ctx(ctx).Error().Err(err).Send()
 					continue
 				}
 
@@ -261,14 +262,14 @@ func flattenCertificates(ctx context.Context, tlsConfig *dynamic.TLSConfiguratio
 	for _, cert := range tlsConfig.Certificates {
 		content, err := cert.Certificate.CertFile.Read()
 		if err != nil {
-			log.FromContext(ctx).Error(err)
+			log.Ctx(ctx).Error().Err(err).Send()
 			continue
 		}
 		cert.Certificate.CertFile = tls.FileOrContent(string(content))
 
 		content, err = cert.Certificate.KeyFile.Read()
 		if err != nil {
-			log.FromContext(ctx).Error(err)
+			log.Ctx(ctx).Error().Err(err).Send()
 			continue
 		}
 		cert.Certificate.KeyFile = tls.FileOrContent(string(content))
@@ -312,10 +313,10 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 	configTLSMaps := make(map[*tls.CertAndStores]struct{})
 
 	for _, item := range fileList {
-		logger := log.FromContext(log.With(ctx, log.Str("filename", item.Name())))
+		logger := log.Ctx(ctx).With().Str("filename", item.Name()).Logger()
 
 		if item.IsDir() {
-			configuration, err = p.loadFileConfigFromDirectory(ctx, filepath.Join(directory, item.Name()), configuration)
+			configuration, err = p.loadFileConfigFromDirectory(logger.WithContext(ctx), filepath.Join(directory, item.Name()), configuration)
 			if err != nil {
 				return configuration, fmt.Errorf("unable to load content configuration from subdirectory %s: %w", item, err)
 			}
@@ -330,14 +331,14 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 		}
 
 		var c *dynamic.Configuration
-		c, err = p.loadFileConfig(ctx, filepath.Join(directory, item.Name()), true)
+		c, err = p.loadFileConfig(logger.WithContext(ctx), filepath.Join(directory, item.Name()), true)
 		if err != nil {
 			return configuration, fmt.Errorf("%s: %w", filepath.Join(directory, item.Name()), err)
 		}
 
 		for name, conf := range c.HTTP.Routers {
 			if _, exists := configuration.HTTP.Routers[name]; exists {
-				logger.WithField(log.RouterName, name).Warn("HTTP router already configured, skipping")
+				logger.Warn().Str(logs.RouterName, name).Msg("HTTP router already configured, skipping")
 			} else {
 				configuration.HTTP.Routers[name] = conf
 			}
@@ -345,7 +346,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 
 		for name, conf := range c.HTTP.Middlewares {
 			if _, exists := configuration.HTTP.Middlewares[name]; exists {
-				logger.WithField(log.MiddlewareName, name).Warn("HTTP middleware already configured, skipping")
+				logger.Warn().Str(logs.MiddlewareName, name).Msg("HTTP middleware already configured, skipping")
 			} else {
 				configuration.HTTP.Middlewares[name] = conf
 			}
@@ -353,7 +354,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 
 		for name, conf := range c.HTTP.Services {
 			if _, exists := configuration.HTTP.Services[name]; exists {
-				logger.WithField(log.ServiceName, name).Warn("HTTP service already configured, skipping")
+				logger.Warn().Str(logs.ServiceName, name).Msg("HTTP service already configured, skipping")
 			} else {
 				configuration.HTTP.Services[name] = conf
 			}
@@ -361,7 +362,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 
 		for name, conf := range c.HTTP.ServersTransports {
 			if _, exists := configuration.HTTP.ServersTransports[name]; exists {
-				logger.WithField(log.ServersTransportName, name).Warn("HTTP servers transport already configured, skipping")
+				logger.Warn().Str(logs.ServersTransportName, name).Msg("HTTP servers transport already configured, skipping")
 			} else {
 				configuration.HTTP.ServersTransports[name] = conf
 			}
@@ -369,7 +370,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 
 		for name, conf := range c.TCP.Routers {
 			if _, exists := configuration.TCP.Routers[name]; exists {
-				logger.WithField(log.RouterName, name).Warn("TCP router already configured, skipping")
+				logger.Warn().Str(logs.RouterName, name).Msg("TCP router already configured, skipping")
 			} else {
 				configuration.TCP.Routers[name] = conf
 			}
@@ -377,7 +378,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 
 		for name, conf := range c.TCP.Middlewares {
 			if _, exists := configuration.TCP.Middlewares[name]; exists {
-				logger.WithField(log.MiddlewareName, name).Warn("TCP middleware already configured, skipping")
+				logger.Warn().Str(logs.MiddlewareName, name).Msg("TCP middleware already configured, skipping")
 			} else {
 				configuration.TCP.Middlewares[name] = conf
 			}
@@ -385,7 +386,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 
 		for name, conf := range c.TCP.Services {
 			if _, exists := configuration.TCP.Services[name]; exists {
-				logger.WithField(log.ServiceName, name).Warn("TCP service already configured, skipping")
+				logger.Warn().Str(logs.ServiceName, name).Msg("TCP service already configured, skipping")
 			} else {
 				configuration.TCP.Services[name] = conf
 			}
@@ -393,7 +394,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 
 		for name, conf := range c.UDP.Routers {
 			if _, exists := configuration.UDP.Routers[name]; exists {
-				logger.WithField(log.RouterName, name).Warn("UDP router already configured, skipping")
+				logger.Warn().Str(logs.RouterName, name).Msg("UDP router already configured, skipping")
 			} else {
 				configuration.UDP.Routers[name] = conf
 			}
@@ -401,7 +402,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 
 		for name, conf := range c.UDP.Services {
 			if _, exists := configuration.UDP.Services[name]; exists {
-				logger.WithField(log.ServiceName, name).Warn("UDP service already configured, skipping")
+				logger.Warn().Str(logs.ServiceName, name).Msg("UDP service already configured, skipping")
 			} else {
 				configuration.UDP.Services[name] = conf
 			}
@@ -409,7 +410,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 
 		for _, conf := range c.TLS.Certificates {
 			if _, exists := configTLSMaps[conf]; exists {
-				logger.Warnf("TLS configuration %v already configured, skipping", conf)
+				logger.Warn().Msgf("TLS configuration %v already configured, skipping", conf)
 			} else {
 				configTLSMaps[conf] = struct{}{}
 			}
@@ -417,7 +418,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 
 		for name, conf := range c.TLS.Options {
 			if _, exists := configuration.TLS.Options[name]; exists {
-				logger.Warnf("TLS options %v already configured, skipping", name)
+				logger.Warn().Msgf("TLS options %v already configured, skipping", name)
 			} else {
 				if configuration.TLS.Options == nil {
 					configuration.TLS.Options = map[string]tls.Options{}
@@ -428,7 +429,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 
 		for name, conf := range c.TLS.Stores {
 			if _, exists := configuration.TLS.Stores[name]; exists {
-				logger.Warnf("TLS store %v already configured, skipping", name)
+				logger.Warn().Msgf("TLS store %v already configured, skipping", name)
 			} else {
 				if configuration.TLS.Stores == nil {
 					configuration.TLS.Stores = map[string]tls.Store{}
@@ -478,9 +479,9 @@ func (p *Provider) CreateConfiguration(ctx context.Context, filename string, fun
 
 	renderedTemplate := buffer.String()
 	if p.DebugLogGeneratedTemplate {
-		logger := log.FromContext(ctx)
-		logger.Debugf("Template content: %s", tmplContent)
-		logger.Debugf("Rendering results: %s", renderedTemplate)
+		logger := log.Ctx(ctx)
+		logger.Debug().Msgf("Template content: %s", tmplContent)
+		logger.Debug().Msgf("Rendering results: %s", renderedTemplate)
 	}
 
 	return p.decodeConfiguration(filename, renderedTemplate)

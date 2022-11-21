@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/informers/externalversions"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
@@ -220,7 +220,7 @@ func (c *clientWrapper) GetIngressRoutes() []*v1alpha1.IngressRoute {
 	for ns, factory := range c.factoriesCrd {
 		ings, err := factory.Traefik().V1alpha1().IngressRoutes().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("Failed to list ingress routes in namespace %s: %v", ns, err)
+			log.Error().Err(err).Msgf("Failed to list ingress routes in namespace %s", ns)
 		}
 		result = append(result, ings...)
 	}
@@ -234,7 +234,7 @@ func (c *clientWrapper) GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP {
 	for ns, factory := range c.factoriesCrd {
 		ings, err := factory.Traefik().V1alpha1().IngressRouteTCPs().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("Failed to list tcp ingress routes in namespace %s: %v", ns, err)
+			log.Error().Err(err).Msgf("Failed to list tcp ingress routes in namespace %s", ns)
 		}
 		result = append(result, ings...)
 	}
@@ -248,7 +248,7 @@ func (c *clientWrapper) GetIngressRouteUDPs() []*v1alpha1.IngressRouteUDP {
 	for ns, factory := range c.factoriesCrd {
 		ings, err := factory.Traefik().V1alpha1().IngressRouteUDPs().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("Failed to list udp ingress routes in namespace %s: %v", ns, err)
+			log.Error().Err(err).Msgf("Failed to list udp ingress routes in namespace %s", ns)
 		}
 		result = append(result, ings...)
 	}
@@ -262,7 +262,7 @@ func (c *clientWrapper) GetMiddlewares() []*v1alpha1.Middleware {
 	for ns, factory := range c.factoriesCrd {
 		middlewares, err := factory.Traefik().V1alpha1().Middlewares().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("Failed to list middlewares in namespace %s: %v", ns, err)
+			log.Error().Err(err).Msgf("Failed to list middlewares in namespace %s", ns)
 		}
 		result = append(result, middlewares...)
 	}
@@ -276,7 +276,7 @@ func (c *clientWrapper) GetMiddlewareTCPs() []*v1alpha1.MiddlewareTCP {
 	for ns, factory := range c.factoriesCrd {
 		middlewares, err := factory.Traefik().V1alpha1().MiddlewareTCPs().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("Failed to list TCP middlewares in namespace %s: %v", ns, err)
+			log.Error().Err(err).Msgf("Failed to list TCP middlewares in namespace %s", ns)
 		}
 		result = append(result, middlewares...)
 	}
@@ -302,7 +302,7 @@ func (c *clientWrapper) GetTraefikServices() []*v1alpha1.TraefikService {
 	for ns, factory := range c.factoriesCrd {
 		ings, err := factory.Traefik().V1alpha1().TraefikServices().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("Failed to list Traefik services in namespace %s: %v", ns, err)
+			log.Error().Err(err).Msgf("Failed to list Traefik services in namespace %s", ns)
 		}
 		result = append(result, ings...)
 	}
@@ -310,14 +310,14 @@ func (c *clientWrapper) GetTraefikServices() []*v1alpha1.TraefikService {
 	return result
 }
 
-// GetServersTransport returns all ServersTransport.
+// GetServersTransports returns all ServersTransport.
 func (c *clientWrapper) GetServersTransports() []*v1alpha1.ServersTransport {
 	var result []*v1alpha1.ServersTransport
 
 	for ns, factory := range c.factoriesCrd {
 		serversTransports, err := factory.Traefik().V1alpha1().ServersTransports().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("Failed to list servers transport in namespace %s: %v", ns, err)
+			log.Error().Err(err).Msgf("Failed to list servers transport in namespace %s", ns)
 		}
 		result = append(result, serversTransports...)
 	}
@@ -332,7 +332,7 @@ func (c *clientWrapper) GetTLSOptions() []*v1alpha1.TLSOption {
 	for ns, factory := range c.factoriesCrd {
 		options, err := factory.Traefik().V1alpha1().TLSOptions().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("Failed to list tls options in namespace %s: %v", ns, err)
+			log.Error().Err(err).Msgf("Failed to list tls options in namespace %s", ns)
 		}
 		result = append(result, options...)
 	}
@@ -347,7 +347,7 @@ func (c *clientWrapper) GetTLSStores() []*v1alpha1.TLSStore {
 	for ns, factory := range c.factoriesCrd {
 		stores, err := factory.Traefik().V1alpha1().TLSStores().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("Failed to list tls stores in namespace %s: %v", ns, err)
+			log.Error().Err(err).Msgf("Failed to list tls stores in namespace %s", ns)
 		}
 		result = append(result, stores...)
 	}

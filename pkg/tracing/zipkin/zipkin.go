@@ -8,7 +8,7 @@ import (
 	zipkinot "github.com/openzipkin-contrib/zipkin-go-opentracing"
 	"github.com/openzipkin/zipkin-go"
 	"github.com/openzipkin/zipkin-go/reporter/http"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 )
 
 // Name sets the name of this tracer.
@@ -65,7 +65,7 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 	// Without this, child spans are getting the NOOP tracer
 	opentracing.SetGlobalTracer(tracer)
 
-	log.WithoutContext().Debug("Zipkin tracer configured")
+	log.Debug().Msg("Zipkin tracer configured")
 
 	return tracer, reporter, nil
 }
