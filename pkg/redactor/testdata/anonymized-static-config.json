@@ -207,7 +207,6 @@
       "cache": true,
       "exposedByDefault": true,
       "defaultRule": "xxxx",
-      "namespace": "xxxx",
       "namespaces": [
         "xxxx",
         "xxxx"
@@ -238,7 +237,6 @@
         "key": "xxxx",
         "insecureSkipVerify": true
       },
-      "namespace": "xxxx",
       "namespaces": [
         "xxxx",
         "xxxx"
