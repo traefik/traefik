@@ -21,7 +21,7 @@ func (*FlagLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 		return false, fmt.Errorf("failed to decode configuration from flags: %w", err)
 	}
 
-	log.Print("Configuration loaded from flags.")
+	log.Print("Configuration loaded from flags")
 
 	return true, nil
 }

@@ -243,7 +243,7 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 		}
 
 		log.Ctx(ctx).Debug().Str("parent", serviceName).Str("child", childName).
-			Msgf("Child service %v will update parent %v on status change", childName, serviceName)
+			Msg("Child service will update parent on status change")
 	}
 
 	return balancer, nil
@@ -333,7 +333,8 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 // LaunchHealthCheck launches the health checks.
 func (m *Manager) LaunchHealthCheck(ctx context.Context) {
 	for serviceName, hc := range m.healthCheckers {
-		go hc.Launch(log.Ctx(ctx).With().Str(logs.ServiceName, serviceName).Logger().WithContext(ctx))
+		logger := log.Ctx(ctx).With().Str(logs.ServiceName, serviceName).Logger()
+		go hc.Launch(logger.WithContext(ctx))
 	}
 }
 

@@ -358,7 +358,7 @@ log:
   maxSize: 42
   maxBackups: 42
   maxAge: 42
-  Compress: true
+  compress: true
 accessLog:
   filePath: foobar
   format: foobar

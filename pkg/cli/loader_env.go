@@ -25,7 +25,7 @@ func (e *EnvLoader) Load(_ []string, cmd *cli.Command) (bool, error) {
 		return false, fmt.Errorf("failed to decode configuration from environment variables: %w", err)
 	}
 
-	log.Print("Configuration loaded from environment variables.")
+	log.Print("Configuration loaded from environment variables")
 
 	return true, nil
 }

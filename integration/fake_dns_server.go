@@ -104,7 +104,7 @@ func startFakeDNSServer(traefikIP string) *dns.Server {
 	}
 
 	go func() {
-		log.Info().Msgf("Start a fake DNS server.")
+		log.Info().Msg("Start a fake DNS server.")
 		if err := srv.ListenAndServe(); err != nil {
 			log.Fatal().Err(err).Msg("Failed to set udp listener")
 		}

@@ -110,12 +110,12 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 				logger := log.Ctx(ctx).With().Str(logs.ProviderName, configMsg.ProviderName).Logger()
 
 				if configMsg.Configuration == nil {
-					logger.Debug().Msg("Skipping nil configuration.")
+					logger.Debug().Msg("Skipping nil configuration")
 					continue
 				}
 
 				if isEmptyConfiguration(configMsg.Configuration) {
-					logger.Debug().Msg("Skipping empty configuration.")
+					logger.Debug().Msg("Skipping empty configuration")
 					continue
 				}
 
@@ -123,7 +123,7 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 
 				if reflect.DeepEqual(newConfigurations[configMsg.ProviderName], configMsg.Configuration) {
 					// no change, do nothing
-					logger.Debug().Msg("Skipping unchanged configuration.")
+					logger.Debug().Msg("Skipping unchanged configuration")
 					continue
 				}
 
@@ -214,7 +214,7 @@ func logConfiguration(logger zerolog.Logger, configMsg dynamic.Message) {
 		logger.Error().Err(err).Msg("Could not marshal dynamic configuration")
 		logger.Debug().Msgf("Configuration received: [struct] %#v", copyConf)
 	} else {
-		logger.Debug().RawJSON("config", jsonConf).Msgf("Configuration received")
+		logger.Debug().RawJSON("config", jsonConf).Msg("Configuration received")
 	}
 }
 

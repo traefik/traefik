@@ -46,7 +46,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/tracing/jaeger"
 	"github.com/traefik/traefik/v2/pkg/types"
 	"github.com/traefik/traefik/v2/pkg/version"
-	"github.com/vulcand/oxy/v2/roundrobin"
 )
 
 func main() {
@@ -91,10 +90,6 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	setupLogger(staticConfiguration)
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
-
-	if err := roundrobin.SetDefaultWeight(0); err != nil {
-		log.Error().Err(err).Msg("Could not set round-robin default weight")
-	}
 
 	staticConfiguration.SetEffectiveConfiguration()
 	if err := staticConfiguration.ValidateConfiguration(); err != nil {
@@ -364,8 +359,8 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 				// "traefik-hub" is an allowed certificate resolver name in a Traefik Hub Experimental feature context.
 				// It is used to activate its own certificate resolution, even though it is not a "classical" traefik certificate resolver.
 				(staticConfiguration.Hub == nil || rt.TLS.CertResolver != "traefik-hub") {
-				log.Error().Err(err).Str(logs.RouterName, rtName).
-					Msgf("Router %s uses a non-existent certificate resolver: %s", rtName, rt.TLS.CertResolver)
+				log.Error().Err(err).Str(logs.RouterName, rtName).Str("certificateResolver", rt.TLS.CertResolver).
+					Msg("Router uses a non-existent certificate resolver")
 			}
 		}
 	})
@@ -457,7 +452,7 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 		}
 
 		if err := providerAggregator.AddProvider(p); err != nil {
-			log.Error().Err(err).Str("resolver", name).Msgf("The ACME resolver %q is skipped from the resolvers list", name)
+			log.Error().Err(err).Str("resolver", name).Msg("The ACME resolve is skipped from the resolvers list")
 			continue
 		}
 
@@ -673,7 +668,7 @@ func collect(staticConfiguration *static.Configuration) {
 	safe.Go(func() {
 		for time.Sleep(10 * time.Minute); ; <-ticker {
 			if err := collector.Collect(staticConfiguration); err != nil {
-				log.Error().Err(err).Send()
+				log.Debug().Err(err).Send()
 			}
 		}
 	})
