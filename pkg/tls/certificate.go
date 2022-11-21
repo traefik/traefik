@@ -10,7 +10,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -63,7 +63,7 @@ func (c Certificates) GetCertificates() []tls.Certificate {
 	for _, certificate := range c {
 		cert, err := certificate.GetCertificate()
 		if err != nil {
-			log.WithoutContext().Debugf("Error while getting certificate: %v", err)
+			log.Debug().Err(err).Msg("Error while getting certificate")
 			continue
 		}
 
@@ -153,9 +153,9 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 		}
 	}
 	if certExists {
-		log.Debugf("Skipping addition of certificate for domain(s) %q, to TLS Store %s, as it already exists for this store.", certKey, storeName)
+		log.Debug().Msgf("Skipping addition of certificate for domain(s) %q, to TLS Store %s, as it already exists for this store.", certKey, storeName)
 	} else {
-		log.Debugf("Adding certificate for domain(s) %s", certKey)
+		log.Debug().Msgf("Adding certificate for domain(s) %s", certKey)
 		certs[storeName][certKey] = &tlsCert
 	}
 

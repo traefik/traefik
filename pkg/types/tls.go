@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 )
 
 // +k8s:deepcopy-gen=true
@@ -27,12 +27,12 @@ type ClientTLS struct {
 // CreateTLSConfig creates a TLS config from ClientTLS structures.
 func (c *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, error) {
 	if c == nil {
-		log.FromContext(ctx).Warnf("clientTLS is nil")
+		log.Ctx(ctx).Warn().Msg("clientTLS is nil")
 		return nil, nil
 	}
 
 	if c.CAOptional {
-		log.FromContext(ctx).Warn("CAOptional is deprecated, TLS client authentication is a server side option.")
+		log.Ctx(ctx).Warn().Msg("CAOptional is deprecated, TLS client authentication is a server side option.")
 	}
 
 	// Not initialized, to rely on system bundle.

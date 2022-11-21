@@ -8,9 +8,10 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/tls"
@@ -37,7 +38,7 @@ func (i Provider) ThrottleDuration() time.Duration {
 
 // Provide allows the provider to provide configurations to traefik using the given configuration channel.
 func (i *Provider) Provide(configurationChan chan<- dynamic.Message, _ *safe.Pool) error {
-	ctx := log.With(context.Background(), log.Str(log.ProviderName, "internal"))
+	ctx := log.With().Str(logs.ProviderName, "internal").Logger().WithContext(context.Background())
 
 	configurationChan <- dynamic.Message{
 		ProviderName:  "internal",
@@ -118,17 +119,17 @@ func (i *Provider) redirection(ctx context.Context, cfg *dynamic.Configuration) 
 			continue
 		}
 
-		logger := log.FromContext(log.With(ctx, log.Str(log.EntryPointName, name)))
+		logger := log.Ctx(ctx).With().Str(logs.EntryPointName, name).Logger()
 
 		def := ep.HTTP.Redirections
 		if def.EntryPoint == nil || def.EntryPoint.To == "" {
-			logger.Error("Unable to create redirection: the entry point or the port is missing")
+			logger.Error().Msg("Unable to create redirection: the entry point or the port is missing")
 			continue
 		}
 
 		port, err := i.getRedirectPort(name, def)
 		if err != nil {
-			logger.Error(err)
+			logger.Error().Err(err).Send()
 			continue
 		}
 
