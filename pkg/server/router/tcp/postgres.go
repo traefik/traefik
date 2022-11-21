@@ -6,7 +6,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 	tcpmuxer "github.com/traefik/traefik/v2/pkg/muxer/tcp"
 	"github.com/traefik/traefik/v2/pkg/tcp"
 )
@@ -25,7 +25,7 @@ func isPostgres(br *bufio.Reader) (bool, error) {
 	for i := 1; i < len(PostgresStartTLSMsg)+1; i++ {
 		peeked, err := br.Peek(i)
 		if err != nil {
-			log.WithoutContext().Errorf("Error while Peeking first bytes: %s", err)
+			log.Error().Err(err).Msg("Error while Peeking first bytes")
 			return false, err
 		}
 
@@ -67,7 +67,7 @@ func (r *Router) servePostgres(conn tcp.WriteCloser) {
 
 	connData, err := tcpmuxer.NewConnData(hello.serverName, conn, hello.protos)
 	if err != nil {
-		log.WithoutContext().Errorf("Error while reading TCP connection data: %v", err)
+		log.Error().Err(err).Msg("Error while reading TCP connection data")
 		conn.Close()
 		return
 	}

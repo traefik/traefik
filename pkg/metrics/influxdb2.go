@@ -5,14 +5,14 @@ import (
 	"errors"
 	"time"
 
-	kitlog "github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics/influx"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	influxdb2api "github.com/influxdata/influxdb-client-go/v2/api"
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
 	influxdb2log "github.com/influxdata/influxdb-client-go/v2/log"
 	influxdb "github.com/influxdata/influxdb1-client/v2"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
@@ -25,10 +25,12 @@ var (
 
 // RegisterInfluxDB2 creates metrics exporter for InfluxDB2.
 func RegisterInfluxDB2(ctx context.Context, config *types.InfluxDB2) Registry {
+	logger := log.Ctx(ctx)
+
 	if influxDB2Client == nil {
 		var err error
 		if influxDB2Client, err = newInfluxDB2Client(config); err != nil {
-			log.FromContext(ctx).Error(err)
+			logger.Error().Err(err).Send()
 			return nil
 		}
 	}
@@ -37,10 +39,7 @@ func RegisterInfluxDB2(ctx context.Context, config *types.InfluxDB2) Registry {
 		influxDB2Store = influx.New(
 			config.AdditionalLabels,
 			influxdb.BatchPointsConfig{},
-			kitlog.LoggerFunc(func(kv ...interface{}) error {
-				log.FromContext(ctx).Error(kv...)
-				return nil
-			}),
+			logs.NewGoKitWrapper(*logger),
 		)
 
 		influxDB2Ticker = time.NewTicker(time.Duration(config.PushInterval))
@@ -127,14 +126,13 @@ type influxDB2Writer struct {
 }
 
 func (w influxDB2Writer) Write(bp influxdb.BatchPoints) error {
-	ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "influxdb2"))
-	logger := log.FromContext(ctx)
+	logger := log.With().Str(logs.MetricsProviderName, "influxdb2").Logger()
 
 	wps := make([]*write.Point, 0, len(bp.Points()))
 	for _, p := range bp.Points() {
 		fields, err := p.Fields()
 		if err != nil {
-			logger.Errorf("Error while getting %s point fields: %s", p.Name(), err)
+			logger.Error().Err(err).Msgf("Error while getting %s point fields", p.Name())
 			continue
 		}
 
@@ -145,6 +143,8 @@ func (w influxDB2Writer) Write(bp influxdb.BatchPoints) error {
 			p.Time(),
 		))
 	}
+
+	ctx := logger.WithContext(context.Background())
 
 	return w.wc.WritePoint(ctx, wps...)
 }

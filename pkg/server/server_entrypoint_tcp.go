@@ -16,10 +16,11 @@ import (
 
 	"github.com/containous/alice"
 	"github.com/pires/go-proxyproto"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/static"
 	"github.com/traefik/traefik/v2/pkg/ip"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/middlewares/forwardedheaders"
 	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
@@ -31,8 +32,6 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
-
-var httpServerLogger = stdlog.New(log.WithoutContext().WriterLevel(logrus.DebugLevel), "", 0)
 
 type httpForwarder struct {
 	net.Listener
@@ -79,7 +78,7 @@ func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig 
 			continue
 		}
 
-		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
+		ctx := log.With().Str(logs.EntryPointName, entryPointName).Logger().WithContext(context.Background())
 
 		serverEntryPointsTCP[entryPointName], err = NewTCPEntryPoint(ctx, config, hostResolverConfig)
 		if err != nil {
@@ -92,7 +91,7 @@ func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig 
 // Start the server entry points.
 func (eps TCPEntryPoints) Start() {
 	for entryPointName, serverEntryPoint := range eps {
-		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
+		ctx := log.With().Str(logs.EntryPointName, entryPointName).Logger().WithContext(context.Background())
 		go serverEntryPoint.Start(ctx)
 	}
 }
@@ -107,10 +106,10 @@ func (eps TCPEntryPoints) Stop() {
 		go func(entryPointName string, entryPoint *TCPEntryPoint) {
 			defer wg.Done()
 
-			ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
-			entryPoint.Shutdown(ctx)
+			logger := log.With().Str(logs.EntryPointName, entryPointName).Logger()
+			entryPoint.Shutdown(logger.WithContext(context.Background()))
 
-			log.FromContext(ctx).Debugf("Entry point %s closed", entryPointName)
+			logger.Debug().Msg("Entrypoint closed")
 		}(epn, ep)
 	}
 
@@ -184,8 +183,8 @@ func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hos
 
 // Start starts the TCP server.
 func (e *TCPEntryPoint) Start(ctx context.Context) {
-	logger := log.FromContext(ctx)
-	logger.Debug("Starting TCP Server")
+	logger := log.Ctx(ctx)
+	logger.Debug().Msg("Starting TCP Server")
 
 	if e.http3Server != nil {
 		go func() { _ = e.http3Server.Start() }()
@@ -194,7 +193,7 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 	for {
 		conn, err := e.listener.Accept()
 		if err != nil {
-			logger.Error(err)
+			logger.Error().Err(err).Send()
 
 			var opErr *net.OpError
 			if errors.As(err, &opErr) && opErr.Temporary() {
@@ -224,14 +223,14 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 			if e.transportConfiguration.RespondingTimeouts.ReadTimeout > 0 {
 				err := writeCloser.SetReadDeadline(time.Now().Add(time.Duration(e.transportConfiguration.RespondingTimeouts.ReadTimeout)))
 				if err != nil {
-					logger.Errorf("Error while setting read deadline: %v", err)
+					logger.Error().Err(err).Msg("Error while setting read deadline")
 				}
 			}
 
 			if e.transportConfiguration.RespondingTimeouts.WriteTimeout > 0 {
 				err = writeCloser.SetWriteDeadline(time.Now().Add(time.Duration(e.transportConfiguration.RespondingTimeouts.WriteTimeout)))
 				if err != nil {
-					logger.Errorf("Error while setting write deadline: %v", err)
+					logger.Error().Err(err).Msg("Error while setting write deadline")
 				}
 			}
 
@@ -242,17 +241,17 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 
 // Shutdown stops the TCP connections.
 func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	reqAcceptGraceTimeOut := time.Duration(e.transportConfiguration.LifeCycle.RequestAcceptGraceTimeout)
 	if reqAcceptGraceTimeOut > 0 {
-		logger.Infof("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
+		logger.Info().Msgf("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
 		time.Sleep(reqAcceptGraceTimeOut)
 	}
 
 	graceTimeOut := time.Duration(e.transportConfiguration.LifeCycle.GraceTimeOut)
 	ctx, cancel := context.WithTimeout(ctx, graceTimeOut)
-	logger.Debugf("Waiting %s seconds before killing connections.", graceTimeOut)
+	logger.Debug().Msgf("Waiting %s seconds before killing connections", graceTimeOut)
 
 	var wg sync.WaitGroup
 
@@ -263,13 +262,15 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 			return
 		}
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			logger.Debugf("Server failed to shutdown within deadline because: %s", err)
+			logger.Debug().Err(err).Msg("Server failed to shutdown within deadline")
 			if err = server.Close(); err != nil {
-				logger.Error(err)
+				logger.Error().Err(err).Send()
 			}
 			return
 		}
-		logger.Error(err)
+
+		logger.Error().Err(err).Send()
+
 		// We expect Close to fail again because Shutdown most likely failed when trying to close a listener.
 		// We still call it however, to make sure that all connections get closed as well.
 		server.Close()
@@ -299,7 +300,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 				return
 			}
 			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-				logger.Debugf("Server failed to shutdown before deadline because: %s", err)
+				logger.Debug().Err(err).Msg("Server failed to shutdown before deadline")
 			}
 			e.tracker.Close()
 		}()
@@ -381,8 +382,7 @@ func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
 	}
 
 	if err := tc.SetKeepAlivePeriod(3 * time.Minute); err != nil {
-		// Some systems, such as OpenBSD, have no user-settable per-socket TCP
-		// keepalive options.
+		// Some systems, such as OpenBSD, have no user-settable per-socket TCP keepalive options.
 		if !errors.Is(err, syscall.ENOPROTOOPT) {
 			return nil, err
 		}
@@ -395,7 +395,7 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 	proxyListener := &proxyproto.Listener{Listener: listener}
 
 	if entryPoint.ProxyProtocol.Insecure {
-		log.FromContext(ctx).Infof("Enabling ProxyProtocol without trusted IPs: Insecure")
+		log.Ctx(ctx).Info().Msg("Enabling ProxyProtocol without trusted IPs: Insecure")
 		return proxyListener, nil
 	}
 
@@ -411,13 +411,13 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 		}
 
 		if !checker.ContainsIP(ipAddr.IP) {
-			log.FromContext(ctx).Debugf("IP %s is not in trusted IPs list, ignoring ProxyProtocol Headers and bypass connection", ipAddr.IP)
+			log.Ctx(ctx).Debug().Msgf("IP %s is not in trusted IPs list, ignoring ProxyProtocol Headers and bypass connection", ipAddr.IP)
 			return proxyproto.IGNORE, nil
 		}
 		return proxyproto.USE, nil
 	}
 
-	log.FromContext(ctx).Infof("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
+	log.Ctx(ctx).Info().Msgf("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
 
 	return proxyListener, nil
 }
@@ -492,7 +492,7 @@ func (c *connectionTracker) Close() {
 	defer c.lock.Unlock()
 	for conn := range c.conns {
 		if err := conn.Close(); err != nil {
-			log.WithoutContext().Errorf("Error while closing connection: %v", err)
+			log.Error().Err(err).Msg("Error while closing connection")
 		}
 		delete(c.conns, conn)
 	}
@@ -545,7 +545,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	serverHTTP := &http.Server{
 		Handler:      handler,
-		ErrorLog:     httpServerLogger,
+		ErrorLog:     stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
 		ReadTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
 		WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
 		IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
@@ -569,7 +569,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	go func() {
 		err := serverHTTP.Serve(listener)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.FromContext(ctx).Errorf("Error while starting server: %v", err)
+			log.Ctx(ctx).Error().Err(err).Msg("Error while starting server")
 		}
 	}()
 	return &httpServer{
