@@ -11,7 +11,6 @@ import (
 
 	"github.com/go-acme/lego/v4/challenge/dns01"
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/tls/generate"
@@ -87,10 +86,10 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 	storesCertificates := make(map[string]map[string]*tls.Certificate)
 	for _, conf := range certs {
 		if len(conf.Stores) == 0 {
-			if log.Logger.GetLevel() <= zerolog.DebugLevel {
-				log.Ctx(ctx).Debug().Msgf("No store is defined to add the certificate %s, it will be added to the default store.",
+			log.Ctx(ctx).Debug().MsgFunc(func() string {
+				return fmt.Sprintf("No store is defined to add the certificate %s, it will be added to the default store",
 					conf.Certificate.GetTruncatedCertificateName())
-			}
+			})
 			conf.Stores = []string{DefaultTLSStoreName}
 		}
 
