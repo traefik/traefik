@@ -3,9 +3,9 @@ package cli
 import (
 	"fmt"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/paerser/cli"
 	"github.com/traefik/paerser/flag"
-	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 // FlagLoader loads configuration from flags.
@@ -21,7 +21,7 @@ func (*FlagLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 		return false, fmt.Errorf("failed to decode configuration from flags: %w", err)
 	}
 
-	log.WithoutContext().Println("Configuration loaded from flags.")
+	log.Print("Configuration loaded from flags")
 
 	return true, nil
 }
