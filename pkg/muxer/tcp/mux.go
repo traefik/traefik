@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/ip"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/rules"
 	"github.com/traefik/traefik/v2/pkg/tcp"
 	"github.com/traefik/traefik/v2/pkg/types"
@@ -246,7 +246,7 @@ type matchersTree struct {
 func (m *matchersTree) match(meta ConnData) bool {
 	if m == nil {
 		// This should never happen as it should have been detected during parsing.
-		log.WithoutContext().Warnf("Rule matcher is nil")
+		log.Warn().Msg("Rule matcher is nil")
 		return false
 	}
 
@@ -261,7 +261,7 @@ func (m *matchersTree) match(meta ConnData) bool {
 		return m.left.match(meta) && m.right.match(meta)
 	default:
 		// This should never happen as it should have been detected during parsing.
-		log.WithoutContext().Warnf("Invalid rule operator %s", m.operator)
+		log.Warn().Msgf("Invalid rule operator %s", m.operator)
 		return false
 	}
 }
@@ -279,7 +279,7 @@ func clientIP(tree *matchersTree, clientIPs ...string) error {
 
 		ok, err := checker.Contains(meta.remoteIP)
 		if err != nil {
-			log.WithoutContext().Warnf("\"ClientIP\" matcher: could not match remote address: %v", err)
+			log.Warn().Err(err).Msg("\"ClientIP\" matcher: could not match remote address")
 			return false
 		}
 		return ok

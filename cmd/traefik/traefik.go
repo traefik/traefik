@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"sort"
 	"strings"
 	"syscall"
@@ -18,6 +17,7 @@ import (
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/go-acme/lego/v4/challenge"
 	gokitmetrics "github.com/go-kit/kit/metrics"
+	"github.com/rs/zerolog/log"
 	"github.com/sirupsen/logrus"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
 	"github.com/traefik/paerser/cli"
@@ -29,7 +29,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v2/pkg/provider/acme"
@@ -46,7 +46,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/tracing/jaeger"
 	"github.com/traefik/traefik/v2/pkg/types"
 	"github.com/traefik/traefik/v2/pkg/version"
-	"github.com/vulcand/oxy/roundrobin"
 )
 
 func main() {
@@ -88,27 +87,24 @@ Complete documentation is available at https://traefik.io`,
 }
 
 func runCmd(staticConfiguration *static.Configuration) error {
-	configureLogging(staticConfiguration)
+	setupLogger(staticConfiguration)
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
-
-	if err := roundrobin.SetDefaultWeight(0); err != nil {
-		log.WithoutContext().Errorf("Could not set round robin default weight: %v", err)
-	}
 
 	staticConfiguration.SetEffectiveConfiguration()
 	if err := staticConfiguration.ValidateConfiguration(); err != nil {
 		return err
 	}
 
-	log.WithoutContext().Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
+	log.Info().Str("version", version.Version).
+		Msgf("Traefik version %s built on %s", version.Version, version.BuildDate)
 
 	jsonConf, err := json.Marshal(staticConfiguration)
 	if err != nil {
-		log.WithoutContext().Errorf("Could not marshal static configuration: %v", err)
-		log.WithoutContext().Debugf("Static configuration loaded [struct] %#v", staticConfiguration)
+		log.Error().Err(err).Msg("Could not marshal static configuration")
+		log.Debug().Interface("staticConfiguration", staticConfiguration).Msg("Static configuration loaded [struct]")
 	} else {
-		log.WithoutContext().Debugf("Static configuration loaded %s", string(jsonConf))
+		log.Debug().RawJSON("staticConfiguration", jsonConf).Msg("Static configuration loaded [json]")
 	}
 
 	if staticConfiguration.Global.CheckNewVersion {
@@ -133,16 +129,16 @@ func runCmd(staticConfiguration *static.Configuration) error {
 
 	sent, err := daemon.SdNotify(false, "READY=1")
 	if !sent && err != nil {
-		log.WithoutContext().Errorf("Failed to notify: %v", err)
+		log.Error().Err(err).Msg("Failed to notify")
 	}
 
 	t, err := daemon.SdWatchdogEnabled(false)
 	if err != nil {
-		log.WithoutContext().Errorf("Could not enable Watchdog: %v", err)
+		log.Error().Err(err).Msg("Could not enable Watchdog")
 	} else if t != 0 {
 		// Send a ping each half time given
 		t /= 2
-		log.WithoutContext().Infof("Watchdog activated with timer duration %s", t)
+		log.Info().Msgf("Watchdog activated with timer duration %s", t)
 		safe.Go(func() {
 			tick := time.Tick(t)
 			for range tick {
@@ -153,17 +149,17 @@ func runCmd(staticConfiguration *static.Configuration) error {
 
 				if staticConfiguration.Ping == nil || errHealthCheck == nil {
 					if ok, _ := daemon.SdNotify(false, "WATCHDOG=1"); !ok {
-						log.WithoutContext().Error("Fail to tick watchdog")
+						log.Error().Msg("Fail to tick watchdog")
 					}
 				} else {
-					log.WithoutContext().Error(errHealthCheck)
+					log.Error().Err(errHealthCheck).Send()
 				}
 			}
 		})
 	}
 
 	svr.Wait()
-	log.WithoutContext().Info("Shutting down")
+	log.Info().Msg("Shutting down")
 	return nil
 }
 
@@ -209,14 +205,14 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	}
 
 	if staticConfiguration.Pilot != nil {
-		log.WithoutContext().Warn("Traefik Pilot has been removed.")
+		log.Warn().Msg("Traefik Pilot has been removed.")
 	}
 
 	// Plugins
 
 	pluginBuilder, err := createPluginBuilder(staticConfiguration)
 	if err != nil {
-		log.WithoutContext().WithError(err).Error("Plugins are disabled because an error has occurred.")
+		log.Error().Err(err).Msg("Plugins are disabled because an error has occurred.")
 	}
 
 	// Providers plugins
@@ -259,9 +255,8 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	var spiffeX509Source *workloadapi.X509Source
 	if staticConfiguration.Spiffe != nil && staticConfiguration.Spiffe.WorkloadAPIAddr != "" {
-		log.WithoutContext().
-			WithField("workloadAPIAddr", staticConfiguration.Spiffe.WorkloadAPIAddr).
-			Info("Waiting on SPIFFE SVID delivery")
+		log.Info().Str("workloadAPIAddr", staticConfiguration.Spiffe.WorkloadAPIAddr).
+			Msg("Waiting on SPIFFE SVID delivery")
 
 		spiffeX509Source, err = workloadapi.NewX509Source(
 			ctx,
@@ -274,8 +269,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		if err != nil {
 			return nil, fmt.Errorf("unable to create SPIFFE x509 source: %w", err)
 		}
-
-		log.WithoutContext().Info("Successfully obtained SPIFFE SVID.")
+		log.Info().Msg("Successfully obtained SPIFFE SVID.")
 	}
 
 	roundTripperManager := service.NewRoundTripperManager(spiffeX509Source)
@@ -365,7 +359,8 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 				// "traefik-hub" is an allowed certificate resolver name in a Traefik Hub Experimental feature context.
 				// It is used to activate its own certificate resolution, even though it is not a "classical" traefik certificate resolver.
 				(staticConfiguration.Hub == nil || rt.TLS.CertResolver != "traefik-hub") {
-				log.WithoutContext().Errorf("Router %s uses a non-existent certificate resolver: %s", rtName, rt.TLS.CertResolver)
+				log.Error().Err(err).Str(logs.RouterName, rtName).Str("certificateResolver", rt.TLS.CertResolver).
+					Msg("Router uses a non-existent certificate resolver")
 			}
 		}
 	})
@@ -411,7 +406,7 @@ func getDefaultsEntrypoints(staticConfiguration *static.Configuration) []string 
 		protocol, err := cfg.GetProtocol()
 		if err != nil {
 			// Should never happen because Traefik should not start if protocol is invalid.
-			log.WithoutContext().Errorf("Invalid protocol: %v", err)
+			log.Error().Err(err).Msg("Invalid protocol")
 		}
 
 		if protocol != "udp" && name != static.DefaultInternalEntryPointName {
@@ -457,7 +452,7 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 		}
 
 		if err := providerAggregator.AddProvider(p); err != nil {
-			log.WithoutContext().Errorf("The ACME resolver %q is skipped from the resolvers list because: %v", name, err)
+			log.Error().Err(err).Str("resolver", name).Msg("The ACME resolve is skipped from the resolvers list")
 			continue
 		}
 
@@ -482,7 +477,7 @@ func initTailscaleProviders(cfg *static.Configuration, providerAggregator *aggre
 		tsProvider := &tailscale.Provider{ResolverName: name}
 
 		if err := providerAggregator.AddProvider(tsProvider); err != nil {
-			log.WithoutContext().Errorf("Unable to create Tailscale provider %s: %v", name, err)
+			log.Error().Err(err).Str(logs.ProviderName, name).Msg("Unable to create Tailscale provider")
 			continue
 		}
 
@@ -500,41 +495,46 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 	var registries []metrics.Registry
 
 	if metricsConfig.Prometheus != nil {
-		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "prometheus"))
-		prometheusRegister := metrics.RegisterPrometheus(ctx, metricsConfig.Prometheus)
+		logger := log.With().Str(logs.MetricsProviderName, "prometheus").Logger()
+
+		prometheusRegister := metrics.RegisterPrometheus(logger.WithContext(context.Background()), metricsConfig.Prometheus)
 		if prometheusRegister != nil {
 			registries = append(registries, prometheusRegister)
-			log.FromContext(ctx).Debug("Configured Prometheus metrics")
+			logger.Debug().Msg("Configured Prometheus metrics")
 		}
 	}
 
 	if metricsConfig.Datadog != nil {
-		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "datadog"))
-		registries = append(registries, metrics.RegisterDatadog(ctx, metricsConfig.Datadog))
-		log.FromContext(ctx).Debugf("Configured Datadog metrics: pushing to %s once every %s",
+		logger := log.With().Str(logs.MetricsProviderName, "datadog").Logger()
+
+		registries = append(registries, metrics.RegisterDatadog(logger.WithContext(context.Background()), metricsConfig.Datadog))
+		logger.Debug().Msgf("Configured Datadog metrics: pushing to %s once every %s",
 			metricsConfig.Datadog.Address, metricsConfig.Datadog.PushInterval)
 	}
 
 	if metricsConfig.StatsD != nil {
-		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "statsd"))
-		registries = append(registries, metrics.RegisterStatsd(ctx, metricsConfig.StatsD))
-		log.FromContext(ctx).Debugf("Configured StatsD metrics: pushing to %s once every %s",
+		logger := log.With().Str(logs.MetricsProviderName, "statsd").Logger()
+
+		registries = append(registries, metrics.RegisterStatsd(logger.WithContext(context.Background()), metricsConfig.StatsD))
+		logger.Debug().Msgf("Configured StatsD metrics: pushing to %s once every %s",
 			metricsConfig.StatsD.Address, metricsConfig.StatsD.PushInterval)
 	}
 
 	if metricsConfig.InfluxDB != nil {
-		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "influxdb"))
-		registries = append(registries, metrics.RegisterInfluxDB(ctx, metricsConfig.InfluxDB))
-		log.FromContext(ctx).Debugf("Configured InfluxDB metrics: pushing to %s once every %s",
+		logger := log.With().Str(logs.MetricsProviderName, "influxdb").Logger()
+
+		registries = append(registries, metrics.RegisterInfluxDB(logger.WithContext(context.Background()), metricsConfig.InfluxDB))
+		logger.Debug().Msgf("Configured InfluxDB metrics: pushing to %s once every %s",
 			metricsConfig.InfluxDB.Address, metricsConfig.InfluxDB.PushInterval)
 	}
 
 	if metricsConfig.InfluxDB2 != nil {
-		ctx := log.With(context.Background(), log.Str(log.MetricsProviderName, "influxdb2"))
-		influxDB2Register := metrics.RegisterInfluxDB2(ctx, metricsConfig.InfluxDB2)
+		logger := log.With().Str(logs.MetricsProviderName, "influxdb2").Logger()
+
+		influxDB2Register := metrics.RegisterInfluxDB2(logger.WithContext(context.Background()), metricsConfig.InfluxDB2)
 		if influxDB2Register != nil {
 			registries = append(registries, influxDB2Register)
-			log.FromContext(ctx).Debugf("Configured InfluxDB v2 metrics: pushing to %s (%s org/%s bucket) once every %s",
+			logger.Debug().Msgf("Configured InfluxDB v2 metrics: pushing to %s (%s org/%s bucket) once every %s",
 				metricsConfig.InfluxDB2.Address, metricsConfig.InfluxDB2.Org, metricsConfig.InfluxDB2.Bucket, metricsConfig.InfluxDB2.PushInterval)
 		}
 	}
@@ -563,7 +563,7 @@ func setupAccessLog(conf *types.AccessLog) *accesslog.Handler {
 
 	accessLoggerMiddleware, err := accesslog.NewHandler(conf)
 	if err != nil {
-		log.WithoutContext().Warnf("Unable to create access logger: %v", err)
+		log.Warn().Err(err).Msg("Unable to create access logger")
 		return nil
 	}
 
@@ -583,7 +583,7 @@ func setupTracing(conf *static.Tracing) *tracing.Tracing {
 
 	if conf.Zipkin != nil {
 		if backend != nil {
-			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Zipkin backend.")
+			log.Error().Msg("Multiple tracing backend are not supported: cannot create Zipkin backend.")
 		} else {
 			backend = conf.Zipkin
 		}
@@ -591,7 +591,7 @@ func setupTracing(conf *static.Tracing) *tracing.Tracing {
 
 	if conf.Datadog != nil {
 		if backend != nil {
-			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Datadog backend.")
+			log.Error().Msg("Multiple tracing backend are not supported: cannot create Datadog backend.")
 		} else {
 			backend = conf.Datadog
 		}
@@ -599,7 +599,7 @@ func setupTracing(conf *static.Tracing) *tracing.Tracing {
 
 	if conf.Instana != nil {
 		if backend != nil {
-			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Instana backend.")
+			log.Error().Msg("Multiple tracing backend are not supported: cannot create Instana backend.")
 		} else {
 			backend = conf.Instana
 		}
@@ -607,7 +607,7 @@ func setupTracing(conf *static.Tracing) *tracing.Tracing {
 
 	if conf.Haystack != nil {
 		if backend != nil {
-			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Haystack backend.")
+			log.Error().Msg("Multiple tracing backend are not supported: cannot create Haystack backend.")
 		} else {
 			backend = conf.Haystack
 		}
@@ -615,14 +615,14 @@ func setupTracing(conf *static.Tracing) *tracing.Tracing {
 
 	if conf.Elastic != nil {
 		if backend != nil {
-			log.WithoutContext().Error("Multiple tracing backend are not supported: cannot create Elastic backend.")
+			log.Error().Msg("Multiple tracing backend are not supported: cannot create Elastic backend.")
 		} else {
 			backend = conf.Elastic
 		}
 	}
 
 	if backend == nil {
-		log.WithoutContext().Debug("Could not initialize tracing, using Jaeger by default")
+		log.Debug().Msg("Could not initialize tracing, using Jaeger by default")
 		defaultBackend := &jaeger.Config{}
 		defaultBackend.SetDefaults()
 		backend = defaultBackend
@@ -630,63 +630,10 @@ func setupTracing(conf *static.Tracing) *tracing.Tracing {
 
 	tracer, err := tracing.NewTracing(conf.ServiceName, conf.SpanNameLimit, backend)
 	if err != nil {
-		log.WithoutContext().Warnf("Unable to create tracer: %v", err)
+		log.Warn().Err(err).Msg("Unable to create tracer")
 		return nil
 	}
 	return tracer
-}
-
-func configureLogging(staticConfiguration *static.Configuration) {
-	// configure default log flags
-	stdlog.SetFlags(stdlog.Lshortfile | stdlog.LstdFlags)
-
-	// configure log level
-	// an explicitly defined log level always has precedence. if none is
-	// given and debug mode is disabled, the default is ERROR, and DEBUG
-	// otherwise.
-	levelStr := "error"
-	if staticConfiguration.Log != nil && staticConfiguration.Log.Level != "" {
-		levelStr = strings.ToLower(staticConfiguration.Log.Level)
-	}
-
-	level, err := logrus.ParseLevel(levelStr)
-	if err != nil {
-		log.WithoutContext().Errorf("Error getting level: %v", err)
-	}
-	log.SetLevel(level)
-
-	var logFile string
-	if staticConfiguration.Log != nil && len(staticConfiguration.Log.FilePath) > 0 {
-		logFile = staticConfiguration.Log.FilePath
-	}
-
-	// configure log format
-	var formatter logrus.Formatter
-	if staticConfiguration.Log != nil && staticConfiguration.Log.Format == "json" {
-		formatter = &logrus.JSONFormatter{}
-	} else {
-		disableColors := len(logFile) > 0
-		formatter = &logrus.TextFormatter{DisableColors: disableColors, FullTimestamp: true, DisableSorting: true}
-	}
-	log.SetFormatter(formatter)
-
-	if len(logFile) > 0 {
-		dir := filepath.Dir(logFile)
-
-		if err := os.MkdirAll(dir, 0o755); err != nil {
-			log.WithoutContext().Errorf("Failed to create log path %s: %s", dir, err)
-		}
-
-		err = log.OpenFile(logFile)
-		logrus.RegisterExitHandler(func() {
-			if err := log.CloseFile(); err != nil {
-				log.WithoutContext().Errorf("Error while closing log: %v", err)
-			}
-		})
-		if err != nil {
-			log.WithoutContext().Errorf("Error while opening log file %s: %v", logFile, err)
-		}
-	}
 }
 
 func checkNewVersion() {
@@ -699,16 +646,16 @@ func checkNewVersion() {
 }
 
 func stats(staticConfiguration *static.Configuration) {
-	logger := log.WithoutContext()
+	logger := log.Info()
 
 	if staticConfiguration.Global.SendAnonymousUsage {
-		logger.Info(`Stats collection is enabled.`)
-		logger.Info(`Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.`)
-		logger.Info(`Help us improve Traefik by leaving this feature on :)`)
-		logger.Info(`More details on: https://doc.traefik.io/traefik/contributing/data-collection/`)
+		logger.Msg(`Stats collection is enabled.`)
+		logger.Msg(`Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.`)
+		logger.Msg(`Help us improve Traefik by leaving this feature on :)`)
+		logger.Msg(`More details on: https://doc.traefik.io/traefik/contributing/data-collection/`)
 		collect(staticConfiguration)
 	} else {
-		logger.Info(`
+		logger.Msg(`
 Stats collection is disabled.
 Help us improve Traefik by turning this feature on :)
 More details on: https://doc.traefik.io/traefik/contributing/data-collection/
@@ -721,7 +668,7 @@ func collect(staticConfiguration *static.Configuration) {
 	safe.Go(func() {
 		for time.Sleep(10 * time.Minute); ; <-ticker {
 			if err := collector.Collect(staticConfiguration); err != nil {
-				log.WithoutContext().Debug(err)
+				log.Error().Err(err).Send()
 			}
 		}
 	})
