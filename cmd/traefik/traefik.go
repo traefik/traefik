@@ -46,7 +46,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/tracing/jaeger"
 	"github.com/traefik/traefik/v2/pkg/types"
 	"github.com/traefik/traefik/v2/pkg/version"
-	"github.com/vulcand/oxy/v2/roundrobin"
 )
 
 func main() {
@@ -91,10 +90,6 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	setupLogger(staticConfiguration)
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
-
-	if err := roundrobin.SetDefaultWeight(0); err != nil {
-		log.Error().Err(err).Msg("Could not set round-robin default weight")
-	}
 
 	staticConfiguration.SetEffectiveConfiguration()
 	if err := staticConfiguration.ValidateConfiguration(); err != nil {
