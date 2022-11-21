@@ -2,14 +2,14 @@ package static
 
 import (
 	"fmt"
-	stdlog "log"
 	"strings"
 	"time"
 
 	legolog "github.com/go-acme/lego/v4/log"
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/ping"
 	acmeprovider "github.com/traefik/traefik/v2/pkg/provider/acme"
 	"github.com/traefik/traefik/v2/pkg/provider/consulcatalog"
@@ -242,9 +242,9 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	if c.Hub != nil {
 		if err := c.initHubProvider(); err != nil {
 			c.Hub = nil
-			log.WithoutContext().Errorf("Unable to activate the Hub provider: %v", err)
+			log.Error().Err(err).Msg("Unable to activate the Hub provider")
 		} else {
-			log.WithoutContext().Debugf("Experimental Hub provider has been activated.")
+			log.Debug().Msg("Experimental Hub provider has been activated")
 		}
 	}
 
@@ -278,14 +278,15 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		for epName, ep := range c.EntryPoints {
 			if ep.HTTP3 != nil {
 				ep.HTTP3 = nil
-				log.WithoutContext().Debugf("Disabling HTTP3 configuration for entryPoint %q: HTTP3 is disabled in the experimental configuration section", epName)
+				log.Debug().Str(logs.EntryPointName, epName).
+					Msgf("Disabling HTTP3 configuration for entryPoint %q: HTTP3 is disabled in the experimental configuration section", epName)
 			}
 		}
 	}
 
 	// Configure Gateway API provider
 	if c.Providers.KubernetesGateway != nil {
-		log.WithoutContext().Debugf("Experimental Kubernetes Gateway provider has been activated")
+		log.Debug().Msg("Experimental Kubernetes Gateway provider has been activated")
 		entryPoints := make(map[string]gateway.Entrypoint)
 		for epName, entryPoint := range c.EntryPoints {
 			entryPoints[epName] = gateway.Entrypoint{Address: entryPoint.GetAddress(), HasHTTPTLSConf: entryPoint.HTTP.TLS != nil}
@@ -319,7 +320,8 @@ func (c *Configuration) initACMEProvider() {
 		}
 	}
 
-	legolog.Logger = stdlog.New(log.WithoutContext().WriterLevel(logrus.DebugLevel), "legolog: ", 0)
+	logger := logs.NoLevel(log.Logger, zerolog.DebugLevel).With().Str("lib", "lego").Logger()
+	legolog.Logger = logs.NewLogrusWrapper(logger)
 }
 
 // ValidateConfiguration validate that configuration is coherent.
@@ -366,15 +368,13 @@ func getSafeACMECAServer(caServerSrc string) string {
 
 	if strings.HasPrefix(caServerSrc, "https://acme-v01.api.letsencrypt.org") {
 		caServer := strings.Replace(caServerSrc, "v01", "v02", 1)
-		log.WithoutContext().
-			Warnf("The CA server %[1]q refers to a v01 endpoint of the ACME API, please change to %[2]q. Fallback to %[2]q.", caServerSrc, caServer)
+		log.Warn().Msgf("The CA server %[1]q refers to a v01 endpoint of the ACME API, please change to %[2]q. Fallback to %[2]q.", caServerSrc, caServer)
 		return caServer
 	}
 
 	if strings.HasPrefix(caServerSrc, "https://acme-staging.api.letsencrypt.org") {
 		caServer := strings.Replace(caServerSrc, "https://acme-staging.api.letsencrypt.org", "https://acme-staging-v02.api.letsencrypt.org", 1)
-		log.WithoutContext().
-			Warnf("The CA server %[1]q refers to a v01 endpoint of the ACME API, please change to %[2]q. Fallback to %[2]q.", caServerSrc, caServer)
+		log.Warn().Msgf("The CA server %[1]q refers to a v01 endpoint of the ACME API, please change to %[2]q. Fallback to %[2]q.", caServerSrc, caServer)
 		return caServer
 	}
 

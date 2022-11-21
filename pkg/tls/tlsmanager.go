@@ -11,8 +11,8 @@ import (
 
 	"github.com/go-acme/lego/v4/challenge/dns01"
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
-	"github.com/sirupsen/logrus"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/tls/generate"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
@@ -86,15 +86,15 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 	storesCertificates := make(map[string]map[string]*tls.Certificate)
 	for _, conf := range certs {
 		if len(conf.Stores) == 0 {
-			if log.GetLevel() >= logrus.DebugLevel {
-				log.FromContext(ctx).Debugf("No store is defined to add the certificate %s, it will be added to the default store.",
+			log.Ctx(ctx).Debug().MsgFunc(func() string {
+				return fmt.Sprintf("No store is defined to add the certificate %s, it will be added to the default store",
 					conf.Certificate.GetTruncatedCertificateName())
-			}
+			})
 			conf.Stores = []string{DefaultTLSStoreName}
 		}
 
 		for _, store := range conf.Stores {
-			ctxStore := log.With(ctx, log.Str(log.TLSStoreName, store))
+			logger := log.Ctx(ctx).With().Str(logs.TLSStoreName, store).Logger()
 
 			if _, ok := m.storesConfig[store]; !ok {
 				m.storesConfig[store] = Store{}
@@ -102,7 +102,7 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 
 			err := conf.Certificate.AppendCertificate(storesCertificates, store)
 			if err != nil {
-				log.FromContext(ctxStore).Errorf("Unable to append certificate %s to store: %v", conf.Certificate.GetTruncatedCertificateName(), err)
+				logger.Error().Err(err).Msgf("Unable to append certificate %s to store", conf.Certificate.GetTruncatedCertificateName())
 			}
 		}
 	}
@@ -122,11 +122,12 @@ func (m *Manager) UpdateConfigs(ctx context.Context, stores map[string]Store, co
 			continue
 		}
 
-		ctxStore := log.With(ctx, log.Str(log.TLSStoreName, storeName))
+		logger := log.Ctx(ctx).With().Str(logs.TLSStoreName, storeName).Logger()
+		ctxStore := logger.WithContext(ctx)
 
 		certificate, err := getDefaultCertificate(ctxStore, storeConfig, st)
 		if err != nil {
-			log.FromContext(ctxStore).Errorf("Error while creating certificate store: %v", err)
+			logger.Error().Err(err).Msg("Error while creating certificate store")
 		}
 
 		st.DefaultCertificate = certificate
@@ -187,7 +188,7 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 		if isACMETLS(clientHello) {
 			certificate := acmeTLSStore.GetBestCertificate(clientHello)
 			if certificate == nil {
-				log.WithoutContext().Debugf("TLS: no certificate for TLSALPN challenge: %s", domainToCheck)
+				log.Debug().Msgf("TLS: no certificate for TLSALPN challenge: %s", domainToCheck)
 				// We want the user to eventually get the (alertUnrecognizedName) "unrecognized
 				// name" error.
 				// Unfortunately, if we returned an error here, since we can't use
@@ -210,19 +211,19 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 		}
 
 		if sniStrict {
-			log.WithoutContext().Debugf("TLS: strict SNI enabled - No certificate found for domain: %q, closing connection", domainToCheck)
+			log.Debug().Msgf("TLS: strict SNI enabled - No certificate found for domain: %q, closing connection", domainToCheck)
 			// Same comment as above, as in the isACMETLS case.
 			return nil, nil
 		}
 
 		if store == nil {
-			log.WithoutContext().Errorf("TLS: No certificate store found with this name: %q, closing connection", storeName)
+			log.Error().Msgf("TLS: No certificate store found with this name: %q, closing connection", storeName)
 
 			// Same comment as above, as in the isACMETLS case.
 			return nil, nil
 		}
 
-		log.WithoutContext().Debugf("Serving default certificate for request: %q", domainToCheck)
+		log.Debug().Msgf("Serving default certificate for request: %q", domainToCheck)
 		return store.DefaultCertificate, nil
 	}
 
@@ -296,7 +297,7 @@ func getDefaultCertificate(ctx context.Context, tlsStore Store, st *CertificateS
 		return defaultACMECert, nil
 	}
 
-	log.FromContext(ctx).Debug("No default certificate, fallback to the internal generated certificate")
+	log.Ctx(ctx).Debug().Msg("No default certificate, fallback to the internal generated certificate")
 	return defaultCert, nil
 }
 

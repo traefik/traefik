@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 )
 
 // GetUDPRoutersByEntryPoints returns all the UDP routers by entry points name and routers name.
@@ -13,11 +14,11 @@ func (c *Configuration) GetUDPRoutersByEntryPoints(ctx context.Context, entryPoi
 	entryPointsRouters := make(map[string]map[string]*UDPRouterInfo)
 
 	for rtName, rt := range c.UDPRouters {
-		logger := log.FromContext(log.With(ctx, log.Str(log.RouterName, rtName)))
+		logger := log.Ctx(ctx).With().Str(logs.RouterName, rtName).Logger()
 
 		eps := rt.EntryPoints
 		if len(eps) == 0 {
-			logger.Debugf("No entryPoint defined for this router, using the default one(s) instead: %+v", entryPoints)
+			logger.Debug().Msgf("No entryPoint defined for this router, using the default one(s) instead: %+v", entryPoints)
 			eps = entryPoints
 		}
 
@@ -25,8 +26,8 @@ func (c *Configuration) GetUDPRoutersByEntryPoints(ctx context.Context, entryPoi
 		for _, entryPointName := range eps {
 			if !contains(entryPoints, entryPointName) {
 				rt.AddError(fmt.Errorf("entryPoint %q doesn't exist", entryPointName), false)
-				logger.WithField(log.EntryPointName, entryPointName).
-					Errorf("entryPoint %q doesn't exist", entryPointName)
+				logger.Error().Str(logs.EntryPointName, entryPointName).
+					Msg("EntryPoint doesn't exist")
 				continue
 			}
 
@@ -42,7 +43,7 @@ func (c *Configuration) GetUDPRoutersByEntryPoints(ctx context.Context, entryPoi
 
 		if entryPointsCount == 0 {
 			rt.AddError(fmt.Errorf("no valid entryPoint for this router"), true)
-			logger.Error("no valid entryPoint for this router")
+			logger.Error().Msg("No valid entryPoint for this router")
 		}
 	}
 

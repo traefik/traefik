@@ -6,11 +6,12 @@ import (
 	"net/http"
 
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/rs/zerolog"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/tracing"
-	"github.com/vulcand/oxy/connlimit"
+	"github.com/vulcand/oxy/v2/connlimit"
 )
 
 const (
@@ -25,8 +26,10 @@ type inFlightReq struct {
 // New creates a max request middleware.
 // If no source criterion is provided in the config, it defaults to RequestHost.
 func New(ctx context.Context, next http.Handler, config dynamic.InFlightReq, name string) (http.Handler, error) {
-	ctxLog := log.With(ctx, log.Str(log.MiddlewareName, name), log.Str(log.MiddlewareType, typeName))
-	log.FromContext(ctxLog).Debug("Creating middleware")
+	logger := middlewares.GetLogger(ctx, name, typeName)
+	logger.Debug().Msg("Creating middleware")
+
+	ctxLog := logger.WithContext(ctx)
 
 	if config.SourceCriterion == nil ||
 		config.SourceCriterion.IPStrategy == nil &&
@@ -41,7 +44,9 @@ func New(ctx context.Context, next http.Handler, config dynamic.InFlightReq, nam
 		return nil, fmt.Errorf("error creating requests limiter: %w", err)
 	}
 
-	handler, err := connlimit.New(next, sourceMatcher, config.Amount)
+	handler, err := connlimit.New(next, sourceMatcher, config.Amount,
+		connlimit.Logger(logs.NewOxyWrapper(*logger)),
+		connlimit.Verbose(logger.GetLevel() == zerolog.TraceLevel))
 	if err != nil {
 		return nil, fmt.Errorf("error creating connection limit: %w", err)
 	}
