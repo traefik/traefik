@@ -8,9 +8,10 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	rancher "github.com/rancher/go-rancher-metadata/metadata"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/job"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/safe"
 )
@@ -86,7 +87,7 @@ func (p *Provider) createClient(ctx context.Context) (rancher.Client, error) {
 	metadataServiceURL := fmt.Sprintf("http://rancher-metadata.rancher.internal/%s", p.Prefix)
 	client, err := rancher.NewClientAndWait(metadataServiceURL)
 	if err != nil {
-		log.FromContext(ctx).Errorf("Failed to create Rancher metadata service client: %v", err)
+		log.Ctx(ctx).Error().Err(err).Msg("Failed to create Rancher metadata service client")
 		return nil, err
 	}
 
@@ -96,20 +97,20 @@ func (p *Provider) createClient(ctx context.Context) (rancher.Client, error) {
 // Provide allows the rancher provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
-		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "rancher"))
-		logger := log.FromContext(ctxLog)
+		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, "rancher").Logger()
+		ctxLog := logger.WithContext(routineCtx)
 
 		operation := func() error {
 			client, err := p.createClient(ctxLog)
 			if err != nil {
-				logger.Errorf("Failed to create the metadata client metadata service: %v", err)
+				logger.Error().Err(err).Msg("Failed to create the metadata client metadata service")
 				return err
 			}
 
 			updateConfiguration := func(_ string) {
 				stacks, err := client.GetStacks()
 				if err != nil {
-					logger.Errorf("Failed to query Rancher metadata service: %v", err)
+					logger.Error().Err(err).Msg("Failed to query Rancher metadata service")
 					return
 				}
 
@@ -139,11 +140,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 
 		notify := func(err error, time time.Duration) {
-			logger.Errorf("Provider connection error %+v, retrying in %s", err, time)
+			logger.Error().Err(err).Msgf("Provider connection error, retrying in %s", time)
 		}
 		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxLog), notify)
 		if err != nil {
-			logger.Errorf("Cannot connect to Provider server: %+v", err)
+			logger.Error().Err(err).Msg("Cannot connect to Provider server")
 		}
 	})
 
@@ -160,7 +161,7 @@ func (p *Provider) intervalPoll(ctx context.Context, client rancher.Client, upda
 		case <-ticker.C:
 			newVersion, err := client.GetVersion()
 			if err != nil {
-				log.FromContext(ctx).Errorf("Failed to create Rancher metadata service client: %v", err)
+				log.Ctx(ctx).Error().Err(err).Msg("Failed to create Rancher metadata service client")
 			} else if version != newVersion {
 				version = newVersion
 				updateConfiguration(version)
@@ -174,15 +175,15 @@ func (p *Provider) intervalPoll(ctx context.Context, client rancher.Client, upda
 func (p *Provider) parseMetadataSourcedRancherData(ctx context.Context, stacks []rancher.Stack) (rancherDataList []rancherData) {
 	for _, stack := range stacks {
 		for _, service := range stack.Services {
-			ctxSvc := log.With(ctx, log.Str("stack", stack.Name), log.Str("service", service.Name))
-			logger := log.FromContext(ctxSvc)
+			logger := log.Ctx(ctx).With().Str("stack", stack.Name).Str("service", service.Name).Logger()
+			ctxSvc := logger.WithContext(ctx)
 
 			servicePort := ""
 			if len(service.Ports) > 0 {
 				servicePort = service.Ports[0]
 			}
 			for _, port := range service.Ports {
-				logger.Debugf("Set Port %s", port)
+				logger.Debug().Msgf("Set Port %s", port)
 			}
 
 			var containerIPAddresses []string
@@ -202,7 +203,7 @@ func (p *Provider) parseMetadataSourcedRancherData(ctx context.Context, stacks [
 
 			extraConf, err := p.getConfiguration(service)
 			if err != nil {
-				logger.Errorf("Skip container %s: %v", service.Name, err)
+				logger.Error().Err(err).Msgf("Skip container %s", service.Name)
 				continue
 			}
 
@@ -215,15 +216,15 @@ func (p *Provider) parseMetadataSourcedRancherData(ctx context.Context, stacks [
 }
 
 func containerFilter(ctx context.Context, name, healthState, state string) bool {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	if healthState != "" && healthState != healthy && healthState != updatingHealthy {
-		logger.Debugf("Filtering container %s with healthState of %s", name, healthState)
+		logger.Debug().Msgf("Filtering container %s with healthState of %s", name, healthState)
 		return false
 	}
 
 	if state != "" && state != running && state != updatingRunning && state != upgraded {
-		logger.Debugf("Filtering container %s with state of %s", name, state)
+		logger.Debug().Msgf("Filtering container %s with state of %s", name, state)
 		return false
 	}
 
