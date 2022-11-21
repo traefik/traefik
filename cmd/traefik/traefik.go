@@ -359,8 +359,8 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 				// "traefik-hub" is an allowed certificate resolver name in a Traefik Hub Experimental feature context.
 				// It is used to activate its own certificate resolution, even though it is not a "classical" traefik certificate resolver.
 				(staticConfiguration.Hub == nil || rt.TLS.CertResolver != "traefik-hub") {
-				log.Error().Err(err).Str(logs.RouterName, rtName).
-					Msgf("Router %s uses a non-existent certificate resolver: %s", rtName, rt.TLS.CertResolver)
+				log.Error().Err(err).Str(logs.RouterName, rtName).Str("certificateResolver", rt.TLS.CertResolver).
+					Msg("Router uses a non-existent certificate resolver")
 			}
 		}
 	})
@@ -452,7 +452,7 @@ func initACMEProvider(c *static.Configuration, providerAggregator *aggregator.Pr
 		}
 
 		if err := providerAggregator.AddProvider(p); err != nil {
-			log.Error().Err(err).Str("resolver", name).Msgf("The ACME resolver %q is skipped from the resolvers list", name)
+			log.Error().Err(err).Str("resolver", name).Msg("The ACME resolve is skipped from the resolvers list")
 			continue
 		}
 
