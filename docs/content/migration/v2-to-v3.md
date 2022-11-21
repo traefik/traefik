@@ -27,3 +27,4 @@ In v3, the reported status code for gRPC requests is now the value of the `Grpc-
 - The `tracing.datadog.globaltag` option has been removed.
 - The `namespace` option of Consul, Consul Catalog and Nomad providers has been removed.
 - The `tls.caOptional` option has been removed from the ForwardAuth middleware, as well as from the HTTP, Consul, Etcd, Redis, ZooKeeper, Marathon, Consul Catalog, and Docker providers.
+- `sslRedirect`, `sslTemporaryRedirect`, `sslHost`, `sslForceHost` and `featurePolicy` options of the Headers middleware have been removed.
