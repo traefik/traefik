@@ -7,8 +7,8 @@ import (
 	"net/http"
 
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/middlewares/connectionheader"
 	"github.com/traefik/traefik/v2/pkg/tracing"
@@ -19,20 +19,22 @@ const (
 )
 
 func handleDeprecation(ctx context.Context, cfg *dynamic.Headers) {
+	logger := log.Ctx(ctx).Warn()
+
 	if cfg.SSLRedirect {
-		log.FromContext(ctx).Warn("SSLRedirect is deprecated, please use entrypoint redirection instead.")
+		logger.Msg("SSLRedirect is deprecated, please use entrypoint redirection instead.")
 	}
 	if cfg.SSLTemporaryRedirect {
-		log.FromContext(ctx).Warn("SSLTemporaryRedirect is deprecated, please use entrypoint redirection instead.")
+		logger.Msg("SSLTemporaryRedirect is deprecated, please use entrypoint redirection instead.")
 	}
 	if cfg.SSLHost != "" {
-		log.FromContext(ctx).Warn("SSLHost is deprecated, please use RedirectRegex middleware instead.")
+		logger.Msg("SSLHost is deprecated, please use RedirectRegex middleware instead.")
 	}
 	if cfg.SSLForceHost {
-		log.FromContext(ctx).Warn("SSLForceHost is deprecated, please use RedirectScheme middleware instead.")
+		logger.Msg("SSLForceHost is deprecated, please use RedirectScheme middleware instead.")
 	}
 	if cfg.FeaturePolicy != "" {
-		log.FromContext(ctx).Warn("FeaturePolicy is deprecated, please use PermissionsPolicy header instead.")
+		logger.Msg("FeaturePolicy is deprecated, please use PermissionsPolicy header instead.")
 	}
 }
 
@@ -44,9 +46,10 @@ type headers struct {
 // New creates a Headers middleware.
 func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name string) (http.Handler, error) {
 	// HeaderMiddleware -> SecureMiddleWare -> next
-	mCtx := middlewares.GetLoggerCtx(ctx, name, typeName)
-	logger := log.FromContext(mCtx)
-	logger.Debug("Creating middleware")
+	logger := middlewares.GetLogger(ctx, name, typeName)
+	logger.Debug().Msg("Creating middleware")
+
+	mCtx := logger.WithContext(ctx)
 
 	handleDeprecation(mCtx, &cfg)
 
@@ -62,13 +65,13 @@ func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name strin
 	nextHandler := next
 
 	if hasSecureHeaders {
-		logger.Debugf("Setting up secureHeaders from %v", cfg)
+		logger.Debug().Msgf("Setting up secureHeaders from %v", cfg)
 		handler = newSecure(next, cfg, name)
 		nextHandler = handler
 	}
 
 	if hasCustomHeaders || hasCorsHeaders {
-		logger.Debugf("Setting up customHeaders/Cors from %v", cfg)
+		logger.Debug().Msgf("Setting up customHeaders/Cors from %v", cfg)
 		h, err := NewHeader(nextHandler, cfg)
 		if err != nil {
 			return nil, err

@@ -9,11 +9,12 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/paerser/file"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/job"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/tls"
@@ -71,8 +72,8 @@ func (p *Provider) Init() error {
 // Provide allows the provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
-		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, "http"))
-		logger := log.FromContext(ctxLog)
+		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, "http").Logger()
+		ctxLog := logger.WithContext(routineCtx)
 
 		operation := func() error {
 			if err := p.updateConfiguration(configurationChan); err != nil {
@@ -96,11 +97,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 
 		notify := func(err error, time time.Duration) {
-			logger.Errorf("Provider connection error %+v, retrying in %s", err, time)
+			logger.Error().Err(err).Msgf("Provider connection error, retrying in %s", time)
 		}
 		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxLog), notify)
 		if err != nil {
-			logger.Errorf("Cannot connect to server endpoint %+v", err)
+			logger.Error().Err(err).Msg("Cannot connect to server endpoint")
 		}
 	})
 

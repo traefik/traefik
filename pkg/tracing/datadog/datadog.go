@@ -7,7 +7,8 @@ import (
 	"strings"
 
 	"github.com/opentracing/opentracing-go"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	ddtracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/opentracer"
 	datadog "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
@@ -46,6 +47,8 @@ func (c *Config) SetDefaults() {
 
 // Setup sets up the tracer.
 func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
+	logger := log.With().Str(logs.TracingProviderName, Name).Logger()
+
 	opts := []datadog.StartOption{
 		datadog.WithAgentAddr(c.LocalAgentHostPort),
 		datadog.WithServiceName(serviceName),
@@ -56,6 +59,7 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 			PriorityHeader: c.SamplingPriorityHeaderName,
 			BaggagePrefix:  c.BagagePrefixHeaderName,
 		})),
+		datadog.WithLogger(logs.NewDatadogLogger(logger)),
 	}
 
 	for k, v := range c.GlobalTags {
@@ -63,7 +67,7 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 	}
 
 	if c.GlobalTag != "" {
-		log.WithoutContext().Warn(`Datadog: option "globalTag" is deprecated, please use "globalTags" instead.`)
+		logger.Warn().Msg(`Datadog: option "globalTag" is deprecated, please use "globalTags" instead.`)
 
 		key, value, _ := strings.Cut(c.GlobalTag, ":")
 
@@ -76,12 +80,13 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 	if c.PrioritySampling {
 		opts = append(opts, datadog.WithPrioritySampling())
 	}
+
 	tracer := ddtracer.New(opts...)
 
 	// Without this, child spans are getting the NOOP tracer
 	opentracing.SetGlobalTracer(tracer)
 
-	log.WithoutContext().Debug("Datadog tracer configured")
+	logger.Debug().Msg("Datadog tracer configured")
 
 	return tracer, nil, nil
 }
