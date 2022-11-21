@@ -163,7 +163,6 @@ http:
         address: foobar
         tls:
           ca: foobar
-          caOptional: true
           cert: foobar
           key: foobar
           insecureSkipVerify: true

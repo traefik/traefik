@@ -70,7 +70,6 @@ providers:
     defaultRule: foobar
     tls:
       ca: foobar
-      caOptional: true
       cert: foobar
       key: foobar
       insecureSkipVerify: true
@@ -96,7 +95,6 @@ providers:
     dcosToken: foobar
     tls:
       ca: foobar
-      caOptional: true
       cert: foobar
       key: foobar
       insecureSkipVerify: true
@@ -182,7 +180,6 @@ providers:
       endpointWaitTime: 42s
       tls:
         ca: foobar
-        caOptional: true
         cert: foobar
         key: foobar
         insecureSkipVerify: true
@@ -206,7 +203,6 @@ providers:
       endpointWaitTime: 42s
       tls:
         ca: foobar
-        caOptional: true
         cert: foobar
         key: foobar
         insecureSkipVerify: true
@@ -235,7 +231,6 @@ providers:
       - foobar
     tls:
       ca: foobar
-      caOptional: true
       cert: foobar
       key: foobar
       insecureSkipVerify: true
@@ -248,7 +243,6 @@ providers:
     password: foobar
     tls:
       ca: foobar
-      caOptional: true
       cert: foobar
       key: foobar
       insecureSkipVerify: true
@@ -269,7 +263,6 @@ providers:
     db: 42
     tls:
       ca: foobar
-      caOptional: true
       cert: foobar
       key: foobar
       insecureSkipVerify: true
@@ -282,7 +275,6 @@ providers:
       name1: foobar
     tls:
       ca: foobar
-      caOptional: true
       cert: foobar
       key: foobar
       insecureSkipVerify: true

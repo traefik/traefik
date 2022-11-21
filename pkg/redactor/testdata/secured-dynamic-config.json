@@ -238,7 +238,6 @@
           "address": "127.0.0.1",
           "tls": {
             "ca": "ca.pem",
-            "caOptional": true,
             "cert": "cert.pem",
             "key": "xxxx",
             "insecureSkipVerify": true

@@ -235,7 +235,6 @@
           "address": "xxxx",
           "tls": {
             "ca": "xxxx",
-            "caOptional": true,
             "cert": "xxxx",
             "key": "xxxx",
             "insecureSkipVerify": true

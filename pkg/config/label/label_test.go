@@ -42,7 +42,6 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware7.forwardauth.authresponseheaders":                     "foobar, fiibar",
 		"traefik.http.middlewares.Middleware7.forwardauth.authrequestheaders":                      "foobar, fiibar",
 		"traefik.http.middlewares.Middleware7.forwardauth.tls.ca":                                  "foobar",
-		"traefik.http.middlewares.Middleware7.forwardauth.tls.caoptional":                          "true",
 		"traefik.http.middlewares.Middleware7.forwardauth.tls.cert":                                "foobar",
 		"traefik.http.middlewares.Middleware7.forwardauth.tls.insecureskipverify":                  "true",
 		"traefik.http.middlewares.Middleware7.forwardauth.tls.key":                                 "foobar",
@@ -528,7 +527,6 @@ func TestDecodeConfiguration(t *testing.T) {
 						Address: "foobar",
 						TLS: &types.ClientTLS{
 							CA:                 "foobar",
-							CAOptional:         true,
 							Cert:               "foobar",
 							Key:                "foobar",
 							InsecureSkipVerify: true,
@@ -1030,7 +1028,6 @@ func TestEncodeConfiguration(t *testing.T) {
 						Address: "foobar",
 						TLS: &types.ClientTLS{
 							CA:                 "foobar",
-							CAOptional:         true,
 							Cert:               "foobar",
 							Key:                "foobar",
 							InsecureSkipVerify: true,
@@ -1225,7 +1222,6 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.AuthResponseHeaders":                     "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.AuthRequestHeaders":                      "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.CA":                                  "foobar",
-		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.CAOptional":                          "true",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.Cert":                                "foobar",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.InsecureSkipVerify":                  "true",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.Key":                                 "foobar",
