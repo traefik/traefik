@@ -276,10 +276,11 @@ The table below lists all the available matchers:
 
 !!! info "Path Vs PathPrefix"
 
-    Use `Path` if your service listens on the exact path only. For instance, `Path: /products` would match `/products` but not `/products/shoes`.
+    Use `Path` if your service listens on the exact path only. For instance, ```Path(`/products`)``` would match `/products` but not `/products/shoes`.
 
     Use a `*Prefix*` matcher if your service listens on a particular base path but also serves requests on sub-paths.
-    For instance, `PathPrefix: /products` would match `/products` but also `/products/shoes` and `/products/shirts`.
+    For instance, ```PathPrefix(`/products`)``` would match `/products` and `/products/shoes`,
+    as well as `/productsforsale`, and `/productsforsale/shoes`.
     Since the path is forwarded as-is, your service is expected to listen on `/products`.
 
 !!! info "ClientIP matcher"
