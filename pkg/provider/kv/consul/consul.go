@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/kvtools/consul"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/kv"
 	"github.com/traefik/traefik/v2/pkg/types"
@@ -41,7 +41,7 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 	// We can warn about that, because we've already made sure before that
 	// Namespace and Namespaces are mutually exclusive.
 	if p.Namespace != "" {
-		log.WithoutContext().Warnf("Namespace option is deprecated, please use the Namespaces option instead.")
+		log.Warn().Msg("Namespace option is deprecated, please use the Namespaces option instead.")
 	}
 
 	if len(p.Namespaces) == 0 {

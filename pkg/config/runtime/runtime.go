@@ -4,8 +4,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 )
 
 // Status of the router/service.
@@ -116,8 +117,6 @@ func (c *Configuration) PopulateUsedBy() {
 		return
 	}
 
-	logger := log.WithoutContext()
-
 	for routerName, routerInfo := range c.Routers {
 		// lazily initialize Status in case caller forgot to do it
 		if routerInfo.Status == "" {
@@ -126,7 +125,7 @@ func (c *Configuration) PopulateUsedBy() {
 
 		providerName := getProviderName(routerName)
 		if providerName == "" {
-			logger.WithField(log.RouterName, routerName).Error("router name is not fully qualified")
+			log.Error().Str(logs.RouterName, routerName).Msg("router name is not fully qualified")
 			continue
 		}
 
@@ -171,7 +170,7 @@ func (c *Configuration) PopulateUsedBy() {
 
 		providerName := getProviderName(routerName)
 		if providerName == "" {
-			logger.WithField(log.RouterName, routerName).Error("tcp router name is not fully qualified")
+			log.Error().Str(logs.RouterName, routerName).Msg("TCP router name is not fully qualified")
 			continue
 		}
 
@@ -208,7 +207,7 @@ func (c *Configuration) PopulateUsedBy() {
 
 		providerName := getProviderName(routerName)
 		if providerName == "" {
-			logger.WithField(log.RouterName, routerName).Error("udp router name is not fully qualified")
+			log.Error().Str(logs.RouterName, routerName).Msg("UDP router name is not fully qualified")
 			continue
 		}
 
