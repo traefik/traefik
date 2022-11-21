@@ -85,15 +85,15 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := log.Ctx(req.Context())
 	rr, bytesRead, err := newReusableRequest(req, m.maxBodySize)
 	if err != nil && !errors.Is(err, errBodyTooLarge) {
-		http.Error(rw, http.StatusText(http.StatusInternalServerError)+
-			fmt.Sprintf("error creating reusable request: %v", err), http.StatusInternalServerError)
+		http.Error(rw, fmt.Sprintf("%s: creating reusable request: %v",
+			http.StatusText(http.StatusInternalServerError), err), http.StatusInternalServerError)
 		return
 	}
 
 	if errors.Is(err, errBodyTooLarge) {
 		req.Body = io.NopCloser(io.MultiReader(bytes.NewReader(bytesRead), req.Body))
 		m.handler.ServeHTTP(rw, req)
-		logger.Debug().Msg("no mirroring, request body larger than allowed size")
+		logger.Debug().Msg("No mirroring, request body larger than allowed size")
 		return
 	}
 
@@ -102,7 +102,7 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	select {
 	case <-req.Context().Done():
 		// No mirroring if request has been canceled during main handler ServeHTTP
-		logger.Warn().Msg("no mirroring, request has been canceled during main handler ServeHTTP")
+		logger.Warn().Msg("No mirroring, request has been canceled during main handler ServeHTTP")
 		return
 	default:
 	}
