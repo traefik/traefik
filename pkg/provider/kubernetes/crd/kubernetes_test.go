@@ -4055,19 +4055,60 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"default-test-route-6b204d94623b3df4370c": {
 							EntryPoints: []string{"foo"},
-							Service:     "default-tr-svc-es",
+							Middlewares: []string{"default-test-errorpage"},
+							Service:     "default-test-route-6b204d94623b3df4370c",
 							Rule:        "Host(`foo.com`) && PathPrefix(`/bar`)",
 							Priority:    12,
 						},
 					},
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-test-errorpage": {
+							Errors: &dynamic.ErrorPage{
+								Service: "default-test-errorpage-errorpage-service",
+							},
+						},
+					},
 					Services: map[string]*dynamic.Service{
-						"default-tr-svc-es": {
+						"default-test-route-6b204d94623b3df4370c": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-test-weighted",
+										Weight: func(i int) *int { return &i }(1),
+									},
+									{
+										Name:   "default-test-mirror",
+										Weight: func(i int) *int { return &i }(1),
+									},
+								},
+							},
+						},
+						"default-test-errorpage-errorpage-service": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+							},
+						},
+						"default-test-weighted": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
 										Name:   "default-whoami-without-endpoints-subsets-80",
 										Weight: func(i int) *int { return &i }(1),
+									},
+								},
+							},
+						},
+						"default-test-mirror": {
+							Mirroring: &dynamic.Mirroring{
+								Service: "default-whoami-without-endpoints-subsets-80",
+								Mirrors: []dynamic.MirrorService{
+									{
+										Name:    "default-whoami-without-endpoints-subsets-80",
+										Percent: 20,
+									},
+									{
+										Name:    "default-test-weighted",
+										Percent: 20,
 									},
 								},
 							},
