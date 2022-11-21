@@ -46,7 +46,6 @@
     httpClientTimeout = 42
     [providers.docker.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -71,7 +70,6 @@
     respectReadinessChecks = true
     [providers.marathon.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -291,7 +289,6 @@
         authRequestHeaders = ["foobar", "foobar"]
         [http.middlewares.Middleware15.forwardAuth.tls]
           ca = "foobar"
-          caOptional = true
           cert = "foobar"
           key = "foobar"
           insecureSkipVerify = true

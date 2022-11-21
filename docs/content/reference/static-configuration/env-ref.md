@@ -453,9 +453,6 @@ The URI scheme for the Consul server
 `TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_CA`:  
 TLS CA
 
-`TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
-
 `TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_TLS_CERT`:  
 TLS cert
 
@@ -504,9 +501,6 @@ Root key used for KV store. (Default: ```traefik```)
 `TRAEFIK_PROVIDERS_CONSUL_TLS_CA`:  
 TLS CA
 
-`TRAEFIK_PROVIDERS_CONSUL_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
-
 `TRAEFIK_PROVIDERS_CONSUL_TLS_CERT`:  
 TLS cert
 
@@ -551,9 +545,6 @@ Polling interval for swarm mode. (Default: ```15```)
 
 `TRAEFIK_PROVIDERS_DOCKER_TLS_CA`:  
 TLS CA
-
-`TRAEFIK_PROVIDERS_DOCKER_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_DOCKER_TLS_CERT`:  
 TLS cert
@@ -621,9 +612,6 @@ Root key used for KV store. (Default: ```traefik```)
 `TRAEFIK_PROVIDERS_ETCD_TLS_CA`:  
 TLS CA
 
-`TRAEFIK_PROVIDERS_ETCD_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
-
 `TRAEFIK_PROVIDERS_ETCD_TLS_CERT`:  
 TLS cert
 
@@ -665,9 +653,6 @@ Polling timeout for endpoint. (Default: ```5```)
 
 `TRAEFIK_PROVIDERS_HTTP_TLS_CA`:  
 TLS CA
-
-`TRAEFIK_PROVIDERS_HTTP_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_HTTP_TLS_CERT`:  
 TLS cert
@@ -816,9 +801,6 @@ Set a TLS handshake timeout for Marathon. (Default: ```5```)
 `TRAEFIK_PROVIDERS_MARATHON_TLS_CA`:  
 TLS CA
 
-`TRAEFIK_PROVIDERS_MARATHON_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
-
 `TRAEFIK_PROVIDERS_MARATHON_TLS_CERT`:  
 TLS cert
 
@@ -854,9 +836,6 @@ Nomad region to use. If not provided, the local agent region is used.
 
 `TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_TLS_CA`:  
 TLS CA
-
-`TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_TLS_CERT`:  
 TLS cert
@@ -935,9 +914,6 @@ Root key used for KV store. (Default: ```traefik```)
 
 `TRAEFIK_PROVIDERS_REDIS_TLS_CA`:  
 TLS CA
-
-`TRAEFIK_PROVIDERS_REDIS_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_REDIS_TLS_CERT`:  
 TLS cert
