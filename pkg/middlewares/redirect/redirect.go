@@ -7,7 +7,7 @@ import (
 
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/tracing"
-	"github.com/vulcand/oxy/utils"
+	"github.com/vulcand/oxy/v2/utils"
 )
 
 const (

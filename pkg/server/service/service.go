@@ -13,10 +13,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/healthcheck"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
 	metricsMiddle "github.com/traefik/traefik/v2/pkg/middlewares/metrics"
@@ -64,10 +65,10 @@ func NewManager(configs map[string]*runtime.ServiceInfo, metricsRegistry metrics
 
 // BuildHTTP Creates a http.Handler for a service configuration.
 func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.Handler, error) {
-	ctx := log.With(rootCtx, log.Str(log.ServiceName, serviceName))
+	serviceName = provider.GetQualifiedName(rootCtx, serviceName)
 
-	serviceName = provider.GetQualifiedName(ctx, serviceName)
-	ctx = provider.AddInContext(ctx, serviceName)
+	ctx := log.Ctx(rootCtx).With().Str(logs.ServiceName, serviceName).Logger().
+		WithContext(provider.AddInContext(rootCtx, serviceName))
 
 	handler, ok := m.services[serviceName]
 	if ok {
@@ -241,7 +242,8 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 			return nil, fmt.Errorf("cannot register %v as updater for %v: %w", childName, serviceName, err)
 		}
 
-		log.FromContext(ctx).Debugf("Child service %v will update parent %v on status change", childName, serviceName)
+		log.Ctx(ctx).Debug().Str("parent", serviceName).Str("child", childName).
+			Msg("Child service will update parent on status change")
 	}
 
 	return balancer, nil
@@ -250,8 +252,8 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName string, info *runtime.ServiceInfo) (http.Handler, error) {
 	service := info.LoadBalancer
 
-	logger := log.FromContext(ctx)
-	logger.Debug("Creating load-balancer")
+	logger := log.Ctx(ctx)
+	logger.Debug().Msg("Creating load-balancer")
 
 	// TODO: should we keep this config value as Go is now handling stream response correctly?
 	flushInterval := dynamic.DefaultFlushInterval
@@ -292,7 +294,8 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			return nil, fmt.Errorf("error parsing server URL %s: %w", server.URL, err)
 		}
 
-		logger.WithField(log.ServerName, proxyName).Debugf("Creating server %s", target)
+		logger.Debug().Str(logs.ServerName, proxyName).Stringer("target", target).
+			Msg("Creating server")
 
 		proxy := buildSingleHostProxy(target, passHostHeader, time.Duration(flushInterval), roundTripper, m.bufferPool)
 
@@ -330,8 +333,8 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 // LaunchHealthCheck launches the health checks.
 func (m *Manager) LaunchHealthCheck(ctx context.Context) {
 	for serviceName, hc := range m.healthCheckers {
-		ctx = log.With(ctx, log.Str(log.ServiceName, serviceName))
-		go hc.Launch(ctx)
+		logger := log.Ctx(ctx).With().Str(logs.ServiceName, serviceName).Logger()
+		go hc.Launch(logger.WithContext(ctx))
 	}
 }
 
