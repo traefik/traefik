@@ -668,7 +668,7 @@ func collect(staticConfiguration *static.Configuration) {
 	safe.Go(func() {
 		for time.Sleep(10 * time.Minute); ; <-ticker {
 			if err := collector.Collect(staticConfiguration); err != nil {
-				log.Error().Err(err).Send()
+				log.Debug().Err(err).Send()
 			}
 		}
 	})
