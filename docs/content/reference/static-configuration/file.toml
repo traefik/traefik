@@ -159,7 +159,6 @@
     connectByDefault = true
     serviceName = "foobar"
     watch = true
-    namespace = "foobar"
     namespaces = ["foobar", "foobar"]
     [providers.consulCatalog.endpoint]
       address = "foobar"
@@ -181,7 +180,6 @@
     constraints = "foobar"
     prefix = "foobar"
     stale = true
-    namespace = "foobar"
     namespaces = ["foobar", "foobar"]
     exposedByDefault = true
     refreshInterval = "42s"
@@ -212,7 +210,6 @@
     rootKey = "foobar"
     endpoints = ["foobar", "foobar"]
     token = "foobar"
-    namespace = "foobar"
     namespaces = ["foobar", "foobar"]
     [providers.consul.tls]
       ca = "foobar"

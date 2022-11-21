@@ -171,7 +171,6 @@ providers:
     connectByDefault: true
     serviceName: foobar
     watch: true
-    namespace: foobar
     namespaces:
       - foobar
       - foobar
@@ -195,7 +194,6 @@ providers:
     constraints: foobar
     prefix: foobar
     stale: true
-    namespace: foobar
     namespaces:
       - foobar
       - foobar
@@ -232,7 +230,6 @@ providers:
       - foobar
       - foobar
     token: foobar
-    namespace: foobar
     namespaces:
       - foobar
       - foobar

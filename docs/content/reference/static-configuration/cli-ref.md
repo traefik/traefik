@@ -417,9 +417,6 @@ Enable Consul backend with default settings. (Default: ```false```)
 `--providers.consul.endpoints`:  
 KV store endpoints. (Default: ```127.0.0.1:8500```)
 
-`--providers.consul.namespace`:  
-Sets the namespace used to discover the configuration (Consul Enterprise only).
-
 `--providers.consul.namespaces`:  
 Sets the namespaces used to discover the configuration (Consul Enterprise only).
 
@@ -500,9 +497,6 @@ Token is used to provide a per-request ACL token which overrides the agent's def
 
 `--providers.consulcatalog.exposedbydefault`:  
 Expose containers by default. (Default: ```true```)
-
-`--providers.consulcatalog.namespace`:  
-Sets the namespace used to discover services (Consul Enterprise only).
 
 `--providers.consulcatalog.namespaces`:  
 Sets the namespaces used to discover services (Consul Enterprise only).
@@ -878,9 +872,6 @@ Token is used to provide a per-request ACL token.
 
 `--providers.nomad.exposedbydefault`:  
 Expose Nomad services by default. (Default: ```true```)
-
-`--providers.nomad.namespace`:  
-Sets the Nomad namespace used to discover services.
 
 `--providers.nomad.namespaces`:  
 Sets the Nomad namespaces used to discover services.

@@ -25,3 +25,4 @@ In v3, the reported status code for gRPC requests is now the value of the `Grpc-
 
 - The `pilot` option has been removed from the static configuration.
 - The `tracing.datadog.globaltag` option has been removed.
+- The `namespace` option of Consul, Consul Catalog and Nomad providers has been removed.
