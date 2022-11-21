@@ -130,7 +130,7 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	source, amount, err := rl.sourceMatcher.Extract(req)
 	if err != nil {
-		logger.Error().Err(err).Msg("could not extract source of request")
+		logger.Error().Err(err).Msg("Could not extract source of request")
 		http.Error(rw, "could not extract source of request", http.StatusInternalServerError)
 		return
 	}
@@ -150,7 +150,7 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// because we want to update the expiryTime everytime we get the source,
 	// as the expiryTime is supposed to reflect the activity (or lack thereof) on that source.
 	if err := rl.buckets.Set(source, bucket, rl.ttl); err != nil {
-		logger.Error().Err(err).Msg("could not insert/update bucket")
+		logger.Error().Err(err).Msg("Could not insert/update bucket")
 		http.Error(rw, "could not insert/update bucket", http.StatusInternalServerError)
 		return
 	}
@@ -182,6 +182,6 @@ func (rl *rateLimiter) serveDelayError(ctx context.Context, w http.ResponseWrite
 	w.WriteHeader(http.StatusTooManyRequests)
 
 	if _, err := w.Write([]byte(http.StatusText(http.StatusTooManyRequests))); err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("could not serve 429")
+		log.Ctx(ctx).Error().Err(err).Msg("Could not serve 429")
 	}
 }
