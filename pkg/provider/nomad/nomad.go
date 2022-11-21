@@ -10,10 +10,11 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/hashicorp/nomad/api"
+	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/job"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/constraints"
 	"github.com/traefik/traefik/v2/pkg/safe"
@@ -59,7 +60,7 @@ type ProviderBuilder struct {
 // BuildProviders builds Nomad provider instances for the given namespaces configuration.
 func (p *ProviderBuilder) BuildProviders() []*Provider {
 	if p.Namespace != "" {
-		log.WithoutContext().Warnf("Namespace option is deprecated, please use the Namespaces option instead.")
+		log.Warn().Msg("Namespace option is deprecated, please use the Namespaces option instead.")
 	}
 
 	if len(p.Namespaces) == 0 {
@@ -154,8 +155,8 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	}
 
 	pool.GoCtx(func(routineCtx context.Context) {
-		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, p.name))
-		logger := log.FromContext(ctxLog)
+		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, p.name).Logger()
+		ctxLog := logger.WithContext(routineCtx)
 
 		operation := func() error {
 			ctx, cancel := context.WithCancel(ctxLog)
@@ -186,7 +187,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 
 		failure := func(err error, d time.Duration) {
-			logger.Errorf("Provider connection error %+v, retrying in %s", err, d)
+			logger.Error().Err(err).Msgf("Provider connection error, retrying in %s", d)
 		}
 
 		if retryErr := backoff.RetryNotify(
@@ -194,7 +195,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxLog),
 			failure,
 		); retryErr != nil {
-			logger.Errorf("Cannot connect to Nomad server %+v", retryErr)
+			logger.Error().Err(retryErr).Msg("Cannot connect to Nomad server")
 		}
 	})
 
@@ -273,22 +274,22 @@ func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
 
 	for _, stub := range stubs {
 		for _, service := range stub.Services {
-			logger := log.FromContext(log.With(ctx, log.Str("serviceName", service.ServiceName)))
+			logger := log.Ctx(ctx).With().Str("serviceName", service.ServiceName).Logger()
 
 			extraConf := p.getExtraConf(service.Tags)
 			if !extraConf.Enable {
-				logger.Debug("Filter Nomad service that is not enabled")
+				logger.Debug().Msg("Filter Nomad service that is not enabled")
 				continue
 			}
 
 			matches, err := constraints.MatchTags(service.Tags, p.Constraints)
 			if err != nil {
-				logger.Errorf("Error matching constraint expressions: %v", err)
+				logger.Error().Err(err).Msg("Error matching constraint expressions")
 				continue
 			}
 
 			if !matches {
-				logger.Debugf("Filter Nomad service not matching constraints: %q", p.Constraints)
+				logger.Debug().Msgf("Filter Nomad service not matching constraints: %q", p.Constraints)
 				continue
 			}
 
