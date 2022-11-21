@@ -372,10 +372,6 @@
         addVaryHeader = true
         allowedHosts = ["foobar", "foobar"]
         hostsProxyHeaders = ["foobar", "foobar"]
-        sslRedirect = true
-        sslTemporaryRedirect = true
-        sslHost = "foobar"
-        sslForceHost = true
         stsSeconds = 42
         stsIncludeSubdomains = true
         stsPreload = true
@@ -388,7 +384,6 @@
         contentSecurityPolicy = "foobar"
         publicKey = "foobar"
         referrerPolicy = "foobar"
-        featurePolicy = "foobar"
         isDevelopment = true
         [http.middlewares.Middleware8.headers.customRequestHeaders]
           name0 = "foobar"

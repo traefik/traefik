@@ -65,7 +65,6 @@
 | `traefik/http/middlewares/Middleware10/headers/customRequestHeaders/name1` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/customResponseHeaders/name0` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/customResponseHeaders/name1` | `foobar` |
-| `traefik/http/middlewares/Middleware10/headers/featurePolicy` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/forceSTSHeader` | `true` |
 | `traefik/http/middlewares/Middleware10/headers/frameDeny` | `true` |
 | `traefik/http/middlewares/Middleware10/headers/hostsProxyHeaders/0` | `foobar` |
@@ -74,12 +73,8 @@
 | `traefik/http/middlewares/Middleware10/headers/permissionsPolicy` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/publicKey` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/referrerPolicy` | `foobar` |
-| `traefik/http/middlewares/Middleware10/headers/sslForceHost` | `true` |
-| `traefik/http/middlewares/Middleware10/headers/sslHost` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/sslProxyHeaders/name0` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/sslProxyHeaders/name1` | `foobar` |
-| `traefik/http/middlewares/Middleware10/headers/sslRedirect` | `true` |
-| `traefik/http/middlewares/Middleware10/headers/sslTemporaryRedirect` | `true` |
 | `traefik/http/middlewares/Middleware10/headers/stsIncludeSubdomains` | `true` |
 | `traefik/http/middlewares/Middleware10/headers/stsPreload` | `true` |
 | `traefik/http/middlewares/Middleware10/headers/stsSeconds` | `42` |

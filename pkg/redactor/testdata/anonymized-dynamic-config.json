@@ -161,10 +161,6 @@
           "hostsProxyHeaders": [
             "foo"
           ],
-          "sslRedirect": true,
-          "sslTemporaryRedirect": true,
-          "sslHost": "xxxx",
-          "sslForceHost": true,
           "stsSeconds": 42,
           "stsIncludeSubdomains": true,
           "stsPreload": true,
@@ -177,7 +173,6 @@
           "contentSecurityPolicy": "xxxx",
           "publicKey": "xxxx",
           "referrerPolicy": "foo",
-          "featurePolicy": "foo",
           "permissionsPolicy": "foo",
           "isDevelopment": true
         },

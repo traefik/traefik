@@ -260,17 +260,9 @@ type Headers struct {
 	AllowedHosts []string `json:"allowedHosts,omitempty" toml:"allowedHosts,omitempty" yaml:"allowedHosts,omitempty"`
 	// HostsProxyHeaders defines the header keys that may hold a proxied hostname value for the request.
 	HostsProxyHeaders []string `json:"hostsProxyHeaders,omitempty" toml:"hostsProxyHeaders,omitempty" yaml:"hostsProxyHeaders,omitempty" export:"true"`
-	// Deprecated: use EntryPoint redirection or RedirectScheme instead.
-	SSLRedirect bool `json:"sslRedirect,omitempty" toml:"sslRedirect,omitempty" yaml:"sslRedirect,omitempty" export:"true"`
-	// Deprecated: use EntryPoint redirection or RedirectScheme instead.
-	SSLTemporaryRedirect bool `json:"sslTemporaryRedirect,omitempty" toml:"sslTemporaryRedirect,omitempty" yaml:"sslTemporaryRedirect,omitempty" export:"true"`
-	// Deprecated: use RedirectRegex instead.
-	SSLHost string `json:"sslHost,omitempty" toml:"sslHost,omitempty" yaml:"sslHost,omitempty"`
 	// SSLProxyHeaders defines the header keys with associated values that would indicate a valid HTTPS request.
 	// It can be useful when using other proxies (example: "X-Forwarded-Proto": "https").
 	SSLProxyHeaders map[string]string `json:"sslProxyHeaders,omitempty" toml:"sslProxyHeaders,omitempty" yaml:"sslProxyHeaders,omitempty"`
-	// Deprecated: use RedirectRegex instead.
-	SSLForceHost bool `json:"sslForceHost,omitempty" toml:"sslForceHost,omitempty" yaml:"sslForceHost,omitempty" export:"true"`
 	// STSSeconds defines the max-age of the Strict-Transport-Security header.
 	// If set to 0, the header is not set.
 	STSSeconds int64 `json:"stsSeconds,omitempty" toml:"stsSeconds,omitempty" yaml:"stsSeconds,omitempty" export:"true"`
@@ -299,8 +291,6 @@ type Headers struct {
 	// ReferrerPolicy defines the Referrer-Policy header value.
 	// This allows sites to control whether browsers forward the Referer header to other sites.
 	ReferrerPolicy string `json:"referrerPolicy,omitempty" toml:"referrerPolicy,omitempty" yaml:"referrerPolicy,omitempty" export:"true"`
-	// Deprecated: use PermissionsPolicy instead.
-	FeaturePolicy string `json:"featurePolicy,omitempty" toml:"featurePolicy,omitempty" yaml:"featurePolicy,omitempty" export:"true"`
 	// PermissionsPolicy defines the Permissions-Policy header value.
 	// This allows sites to control browser features.
 	PermissionsPolicy string `json:"permissionsPolicy,omitempty" toml:"permissionsPolicy,omitempty" yaml:"permissionsPolicy,omitempty" export:"true"`
@@ -333,10 +323,6 @@ func (h *Headers) HasCorsHeadersDefined() bool {
 func (h *Headers) HasSecureHeadersDefined() bool {
 	return h != nil && (len(h.AllowedHosts) != 0 ||
 		len(h.HostsProxyHeaders) != 0 ||
-		h.SSLRedirect ||
-		h.SSLTemporaryRedirect ||
-		h.SSLForceHost ||
-		h.SSLHost != "" ||
 		len(h.SSLProxyHeaders) != 0 ||
 		h.STSSeconds != 0 ||
 		h.STSIncludeSubdomains ||
@@ -350,7 +336,6 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 		h.ContentSecurityPolicy != "" ||
 		h.PublicKey != "" ||
 		h.ReferrerPolicy != "" ||
-		h.FeaturePolicy != "" ||
 		h.PermissionsPolicy != "" ||
 		h.IsDevelopment)
 }

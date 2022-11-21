@@ -1064,9 +1064,6 @@ spec:
                     description: CustomResponseHeaders defines the header names and
                       values to apply to the response.
                     type: object
-                  featurePolicy:
-                    description: 'Deprecated: use PermissionsPolicy instead.'
-                    type: string
                   forceSTSHeader:
                     description: ForceSTSHeader defines whether to add the STS header
                       even when the connection is HTTP.
@@ -1102,12 +1099,6 @@ spec:
                       value. This allows sites to control whether browsers forward
                       the Referer header to other sites.
                     type: string
-                  sslForceHost:
-                    description: 'Deprecated: use RedirectRegex instead.'
-                    type: boolean
-                  sslHost:
-                    description: 'Deprecated: use RedirectRegex instead.'
-                    type: string
                   sslProxyHeaders:
                     additionalProperties:
                       type: string
@@ -1116,14 +1107,6 @@ spec:
                       useful when using other proxies (example: "X-Forwarded-Proto":
                       "https").'
                     type: object
-                  sslRedirect:
-                    description: 'Deprecated: use EntryPoint redirection or RedirectScheme
-                      instead.'
-                    type: boolean
-                  sslTemporaryRedirect:
-                    description: 'Deprecated: use EntryPoint redirection or RedirectScheme
-                      instead.'
-                    type: boolean
                   stsIncludeSubdomains:
                     description: STSIncludeSubdomains defines whether the includeSubDomains
                       directive is appended to the Strict-Transport-Security header.
