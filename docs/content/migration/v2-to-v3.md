@@ -23,4 +23,5 @@ In v3, the reported status code for gRPC requests is now the value of the `Grpc-
 
 ## Deprecated options removal
 
-The `pilot` option has been removed from the static configuration, and you should not use it anymore.
+- The `pilot` option has been removed from the static configuration.
+- The `tracing.datadog.globaltag` option has been removed.

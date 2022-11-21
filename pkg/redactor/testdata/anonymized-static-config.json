@@ -394,7 +394,9 @@
     },
     "datadog": {
       "localAgentHostPort": "xxxx",
-      "globalTag": "foobar",
+      "globalTags": {
+        "foobar": "foobar"
+      },
       "debug": true,
       "prioritySampling": true,
       "traceIDHeaderName": "foobar",
