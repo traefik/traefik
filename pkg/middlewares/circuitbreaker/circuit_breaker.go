@@ -40,7 +40,7 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 			}
 		})),
 		cbreaker.Logger(logs.NewOxyWrapper(*logger)),
-		cbreaker.Debug(logger.GetLevel() == zerolog.TraceLevel),
+		cbreaker.Verbose(logger.GetLevel() == zerolog.TraceLevel),
 	}
 
 	if confCircuitBreaker.CheckPeriod > 0 {

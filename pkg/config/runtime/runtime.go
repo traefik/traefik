@@ -125,7 +125,7 @@ func (c *Configuration) PopulateUsedBy() {
 
 		providerName := getProviderName(routerName)
 		if providerName == "" {
-			log.Error().Str(logs.RouterName, routerName).Msg("router name is not fully qualified")
+			log.Error().Str(logs.RouterName, routerName).Msg("Router name is not fully qualified")
 			continue
 		}
 

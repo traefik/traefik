@@ -69,23 +69,18 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	}
 
 	logger := log.Ctx(ctx)
-	logger.Info().Msgf("label selector is: %q", p.LabelSelector)
-
-	withEndpoint := ""
-	if p.Endpoint != "" {
-		withEndpoint = fmt.Sprintf(" with endpoint %s", p.Endpoint)
-	}
+	logger.Info().Msgf("Label selector is: %q", p.LabelSelector)
 
 	var client *clientWrapper
 	switch {
 	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
-		logger.Info().Msgf("Creating in-cluster Provider client%s", withEndpoint)
+		logger.Info().Str("endpoint", p.Endpoint).Msg("Creating in-cluster Provider client")
 		client, err = newInClusterClient(p.Endpoint)
 	case os.Getenv("KUBECONFIG") != "":
 		logger.Info().Msgf("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
 		client, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
 	default:
-		logger.Info().Msgf("Creating cluster-external Provider client%s", withEndpoint)
+		logger.Info().Str("endpoint", p.Endpoint).Msg("Creating cluster-external Provider client")
 		client, err = newExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
 	}
 

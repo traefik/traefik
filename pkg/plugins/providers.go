@@ -159,7 +159,7 @@ func (p *Provider) Init() error {
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Error().Str(logs.ProviderName, p.name).Msgf("panic inside the plugin %v", err)
+			log.Error().Str(logs.ProviderName, p.name).Msgf("Panic inside the plugin %v", err)
 		}
 	}()
 
@@ -173,7 +173,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			case <-ctx.Done():
 				err := p.pp.Stop()
 				if err != nil {
-					logger.Error().Err(err).Msg("failed to stop the provider")
+					logger.Error().Err(err).Msg("Failed to stop the provider")
 				}
 
 				return
@@ -181,14 +181,14 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			case cfgPg := <-cfgChan:
 				marshalJSON, err := cfgPg.MarshalJSON()
 				if err != nil {
-					logger.Error().Err(err).Msg("failed to marshal configuration")
+					logger.Error().Err(err).Msg("Failed to marshal configuration")
 					continue
 				}
 
 				cfg := &dynamic.Configuration{}
 				err = json.Unmarshal(marshalJSON, cfg)
 				if err != nil {
-					logger.Error().Err(err).Msg("failed to unmarshal configuration")
+					logger.Error().Err(err).Msg("Failed to unmarshal configuration")
 					continue
 				}
 

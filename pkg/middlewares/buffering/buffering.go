@@ -36,7 +36,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.Buffering, name 
 		oxybuffer.MemResponseBodyBytes(config.MemResponseBodyBytes),
 		oxybuffer.MaxResponseBodyBytes(config.MaxResponseBodyBytes),
 		oxybuffer.Logger(logs.NewOxyWrapper(*logger)),
-		oxybuffer.Debug(logger.GetLevel() == zerolog.TraceLevel),
+		oxybuffer.Verbose(logger.GetLevel() == zerolog.TraceLevel),
 		oxybuffer.Cond(len(config.RetryExpression) > 0, oxybuffer.Retry(config.RetryExpression)),
 	)
 	if err != nil {

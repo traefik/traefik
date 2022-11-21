@@ -151,7 +151,7 @@ func (p *Provider) makeMiddlewareTCPKeys(ctx context.Context, ingRouteTCPNamespa
 			if len(mi.Namespace) > 0 {
 				log.Ctx(ctx).Warn().
 					Str(logs.MiddlewareName, mi.Name).
-					Msgf("namespace %q is ignored in cross-provider context", mi.Namespace)
+					Msgf("Namespace %q is ignored in cross-provider context", mi.Namespace)
 			}
 			mds = append(mds, mi.Name)
 			continue
@@ -277,7 +277,7 @@ func getTLSTCP(ctx context.Context, ingressRoute *v1alpha1.IngressRouteTCP, k8sC
 		return nil
 	}
 	if ingressRoute.Spec.TLS.SecretName == "" {
-		log.Ctx(ctx).Debug().Msgf("No secret name provided")
+		log.Ctx(ctx).Debug().Msg("No secret name provided")
 		return nil
 	}
 

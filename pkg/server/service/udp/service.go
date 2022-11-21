@@ -33,12 +33,12 @@ func NewManager(conf *runtime.Configuration) *Manager {
 func (m *Manager) BuildUDP(rootCtx context.Context, serviceName string) (udp.Handler, error) {
 	serviceQualifiedName := provider.GetQualifiedName(rootCtx, serviceName)
 
-	logger := log.Ctx(rootCtx).With().Str(logs.ServiceName, serviceName).Logger()
-	ctx := logger.WithContext(provider.AddInContext(rootCtx, serviceQualifiedName))
+	logger := log.Ctx(rootCtx).With().Str(logs.ServiceName, serviceQualifiedName).Logger()
+	ctx := provider.AddInContext(rootCtx, serviceQualifiedName)
 
 	conf, ok := m.configs[serviceQualifiedName]
 	if !ok {
-		return nil, fmt.Errorf("the udp service %q does not exist", serviceQualifiedName)
+		return nil, fmt.Errorf("the UDP service %q does not exist", serviceQualifiedName)
 	}
 
 	if conf.LoadBalancer != nil && conf.Weighted != nil {
@@ -52,36 +52,44 @@ func (m *Manager) BuildUDP(rootCtx context.Context, serviceName string) (udp.Han
 		loadBalancer := udp.NewWRRLoadBalancer()
 
 		for index, server := range shuffle(conf.LoadBalancer.Servers, m.rand) {
+			srvLogger := logger.With().
+				Int(logs.ServerIndex, index).
+				Str("serverAddress", server.Address).Logger()
+
 			if _, _, err := net.SplitHostPort(server.Address); err != nil {
-				logger.Error().Err(err).Msgf("In udp service %q", serviceQualifiedName)
+				srvLogger.Error().Err(err).Msg("Failed to split host port")
 				continue
 			}
 
 			handler, err := udp.NewProxy(server.Address)
 			if err != nil {
-				logger.Error().Err(err).Msgf("In udp service %q server %q", serviceQualifiedName, server.Address)
+				srvLogger.Error().Err(err).Msg("Failed to create server")
 				continue
 			}
 
 			loadBalancer.AddServer(handler)
-			logger.Debug().Int(logs.ServerIndex, index).Str("serverAddress", server.Address).
-				Msg("Creating UDP server")
+			srvLogger.Debug().Msg("Creating UDP server")
 		}
+
 		return loadBalancer, nil
+
 	case conf.Weighted != nil:
 		loadBalancer := udp.NewWRRLoadBalancer()
 
 		for _, service := range shuffle(conf.Weighted.Services, m.rand) {
 			handler, err := m.BuildUDP(ctx, service.Name)
 			if err != nil {
-				logger.Error().Err(err).Msgf("In udp service %q", serviceQualifiedName)
+				logger.Error().Err(err).Msg("Failed to build UDP handler")
 				return nil, err
 			}
+
 			loadBalancer.AddWeightedServer(handler, service.Weight)
 		}
+
 		return loadBalancer, nil
+
 	default:
-		err := fmt.Errorf("the udp service %q does not have any type defined", serviceQualifiedName)
+		err := fmt.Errorf("the UDP service %q does not have any type defined", serviceQualifiedName)
 		conf.AddError(err, true)
 		return nil, err
 	}

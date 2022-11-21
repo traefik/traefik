@@ -111,7 +111,7 @@ func (s *storeWrapper) AtomicDelete(ctx context.Context, key string, previous *s
 }
 
 func (s *storeWrapper) Close() error {
-	log.Debug().Msgf("Close")
+	log.Debug().Msg("Close")
 
 	if s.Store == nil {
 		return nil

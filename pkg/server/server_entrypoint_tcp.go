@@ -109,7 +109,7 @@ func (eps TCPEntryPoints) Stop() {
 			logger := log.With().Str(logs.EntryPointName, entryPointName).Logger()
 			entryPoint.Shutdown(logger.WithContext(context.Background()))
 
-			logger.Debug().Msgf("Entrypoint closed")
+			logger.Debug().Msg("Entrypoint closed")
 		}(epn, ep)
 	}
 
@@ -251,7 +251,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 
 	graceTimeOut := time.Duration(e.transportConfiguration.LifeCycle.GraceTimeOut)
 	ctx, cancel := context.WithTimeout(ctx, graceTimeOut)
-	logger.Debug().Msgf("Waiting %s seconds before killing connections.", graceTimeOut)
+	logger.Debug().Msgf("Waiting %s seconds before killing connections", graceTimeOut)
 
 	var wg sync.WaitGroup
 
@@ -262,7 +262,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 			return
 		}
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			logger.Debug().Err(err).Msg("Server failed to shutdown within deadline because")
+			logger.Debug().Err(err).Msg("Server failed to shutdown within deadline")
 			if err = server.Close(); err != nil {
 				logger.Error().Err(err).Send()
 			}
@@ -300,7 +300,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 				return
 			}
 			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-				logger.Debug().Err(err).Msg("Server failed to shutdown before deadline because")
+				logger.Debug().Err(err).Msg("Server failed to shutdown before deadline")
 			}
 			e.tracker.Close()
 		}()
@@ -382,8 +382,7 @@ func (ln tcpKeepAliveListener) Accept() (net.Conn, error) {
 	}
 
 	if err := tc.SetKeepAlivePeriod(3 * time.Minute); err != nil {
-		// Some systems, such as OpenBSD, have no user-settable per-socket TCP
-		// keepalive options.
+		// Some systems, such as OpenBSD, have no user-settable per-socket TCP keepalive options.
 		if !errors.Is(err, syscall.ENOPROTOOPT) {
 			return nil, err
 		}

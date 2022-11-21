@@ -27,7 +27,7 @@ func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints
 			if !contains(entryPoints, entryPointName) {
 				rt.AddError(fmt.Errorf("entryPoint %q doesn't exist", entryPointName), false)
 				logger.Error().Str(logs.EntryPointName, entryPointName).
-					Msgf("entryPoint %q doesn't exist", entryPointName)
+					Msg("EntryPoint doesn't exist")
 				continue
 			}
 
@@ -43,7 +43,7 @@ func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints
 
 		if entryPointsCount == 0 {
 			rt.AddError(fmt.Errorf("no valid entryPoint for this router"), true)
-			logger.Error().Msg("no valid entryPoint for this router")
+			logger.Error().Msg("No valid entryPoint for this router")
 		}
 
 		rt.Using = unique(rt.Using)

@@ -23,7 +23,7 @@ type forwarderMiddleware struct {
 // NewForwarder creates a new forwarder middleware that traces the outgoing request.
 func NewForwarder(ctx context.Context, router, service string, next http.Handler) http.Handler {
 	middlewares.GetLogger(ctx, "tracing", forwarderTypeName).
-		Debug().Str(logs.ServiceName, service).Msgf("Added outgoing tracing middleware")
+		Debug().Str(logs.ServiceName, service).Msg("Added outgoing tracing middleware")
 
 	return &forwarderMiddleware{
 		router:  router,

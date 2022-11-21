@@ -119,7 +119,7 @@ func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 		// In that case, logging the error is superfluous,
 		// as in the first place we should not have needed to call CloseWrite.
 		if !isSocketNotConnectedError(errClose) {
-			log.Debug().Err(errClose).Msg("Error while terminating connection: %v")
+			log.Debug().Err(errClose).Msg("Error while terminating connection")
 		}
 
 		return
@@ -128,7 +128,7 @@ func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 	if p.terminationDelay >= 0 {
 		err := dst.SetReadDeadline(time.Now().Add(p.terminationDelay))
 		if err != nil {
-			log.Debug().Err(err).Msg("Error while setting deadline: %v")
+			log.Debug().Err(err).Msg("Error while setting deadline")
 		}
 	}
 }
