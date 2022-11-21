@@ -151,7 +151,7 @@ func (p *Provider) makeMiddlewareTCPKeys(ctx context.Context, ingRouteTCPNamespa
 			if len(mi.Namespace) > 0 {
 				log.Ctx(ctx).Warn().
 					Str(logs.MiddlewareName, mi.Name).
-					Msgf("namespace %q is ignored in cross-provider context", mi.Namespace)
+					Msgf("Namespace %q is ignored in cross-provider context", mi.Namespace)
 			}
 			mds = append(mds, mi.Name)
 			continue
