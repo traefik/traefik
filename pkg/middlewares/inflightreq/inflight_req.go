@@ -46,7 +46,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.InFlightReq, nam
 
 	handler, err := connlimit.New(next, sourceMatcher, config.Amount,
 		connlimit.Logger(logs.NewOxyWrapper(*logger)),
-		connlimit.Debug(logger.GetLevel() == zerolog.TraceLevel))
+		connlimit.Verbose(logger.GetLevel() == zerolog.TraceLevel))
 	if err != nil {
 		return nil, fmt.Errorf("error creating connection limit: %w", err)
 	}

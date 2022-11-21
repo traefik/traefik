@@ -2065,8 +2065,8 @@ github.com/vmihailenco/tagparser v0.1.1/go.mod h1:OeAg3pn3UbLjkWt+rN9oFYB6u/cQgq
 github.com/vmihailenco/tagparser v0.1.2/go.mod h1:OeAg3pn3UbLjkWt+rN9oFYB6u/cQgqMEUPoW2WPyhdI=
 github.com/vmihailenco/tagparser/v2 v2.0.0/go.mod h1:Wri+At7QHww0WTrCBeu4J6bNtoV6mEfg5OIWRZA9qds=
 github.com/vmware/govmomi v0.18.0/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59bHWk6aFU=
-github.com/vulcand/oxy/v2 v2.0.0-20221119122641-9f6188a800a9 h1:4dTnn8QxqlnAZ2CiLCErlZUpPljpe7iDG8MoRcIiYiM=
-github.com/vulcand/oxy/v2 v2.0.0-20221119122641-9f6188a800a9/go.mod h1:0kOEB8mKzSeGHknF53gTM47UEvQnPoAPnM+58baqn2o=
+github.com/vulcand/oxy/v2 v2.0.0-20221121151423-d5cb734e4467 h1:Dbv3KJLgwtDKLpCZzTf1ISeG5ZYudPaLfTdYi4O2dSU=
+github.com/vulcand/oxy/v2 v2.0.0-20221121151423-d5cb734e4467/go.mod h1:0kOEB8mKzSeGHknF53gTM47UEvQnPoAPnM+58baqn2o=
 github.com/vulcand/predicate v1.2.0 h1:uFsW1gcnnR7R+QTID+FVcs0sSYlIGntoGOTb3rQJt50=
 github.com/vulcand/predicate v1.2.0/go.mod h1:VipoNYXny6c8N381zGUWkjuuNHiRbeAZhE7Qm9c+2GA=
 github.com/vultr/govultr/v2 v2.17.2 h1:gej/rwr91Puc/tgh+j33p/BLR16UrIPnSr+AIwYWZQs=

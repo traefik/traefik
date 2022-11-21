@@ -400,7 +400,7 @@ func (p *Provider) resolveDomains(ctx context.Context, domains []string, tlsStor
 
 			err = p.addCertificateForDomain(dom, cert, tlsStore)
 			if err != nil {
-				logger.Error().Err(err).Msg("Error adding certificate for domain")
+				logger.Error().Err(err).Strs("domains", dom.ToStrArray()).Msg("Error adding certificate for domains")
 			}
 		})
 	}
