@@ -710,7 +710,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 			ExposedByDefault:  true,
 			DefaultRule:       "PathPrefix(`/`)",
 		},
-		Namespace:  "ns",
 		Namespaces: []string{"ns1", "ns2"},
 	}
 
@@ -740,7 +739,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
 		},
-		Namespace:  "ns",
 		Namespaces: []string{"ns1", "ns2"},
 	}
 
