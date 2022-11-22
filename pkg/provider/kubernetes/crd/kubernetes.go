@@ -583,12 +583,14 @@ func (p *Provider) createErrorPageMiddleware(client Client, namespace string, er
 		Query:  errorPage.Query,
 	}
 
-	balancerServerHTTP, err := configBuilder{
+	cb := configBuilder{
 		client:                    client,
 		allowCrossNamespace:       p.AllowCrossNamespace,
 		allowExternalNameServices: p.AllowExternalNameServices,
 		allowEmptyServices:        p.AllowEmptyServices,
-	}.buildServersLB(namespace, errorPage.Service.LoadBalancerSpec)
+	}
+
+	balancerServerHTTP, err := cb.buildServersLB(namespace, errorPage.Service.LoadBalancerSpec)
 	if err != nil {
 		return nil, nil, err
 	}
