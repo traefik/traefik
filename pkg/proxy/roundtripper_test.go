@@ -10,10 +10,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/testhelpers"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
-	"github.com/traefik/traefik/v2/pkg/tls/client"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/testhelpers"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/tls/client"
 )
 
 func Int32(i int32) *int32 {
@@ -73,13 +73,14 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 
 	srv.TLS = &tls.Config{Certificates: []tls.Certificate{cert}}
 	srv.StartTLS()
+	t.Cleanup(srv.Close)
 
-	tlsClientConfigGetter := client.NewTLSConfigManager(nil)
+	tlsClientConfigGetter := client.NewTLSConfigManager[*dynamic.ServersTransport](nil)
 	proxyBuilder := NewBuilder(tlsClientConfigGetter)
 
 	dynamicConf := map[string]*dynamic.ServersTransport{
 		"test": {
-			HTTP: &dynamic.HTTPClientConfig{EnableHTTP2: true},
+			EnableHTTP2: true,
 			TLS: &dynamic.TLSClientConfig{
 				ServerName: "example.com",
 				RootCAs:    []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
@@ -107,7 +108,6 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 
 	dynamicConf = map[string]*dynamic.ServersTransport{
 		"test": {
-			HTTP: &dynamic.HTTPClientConfig{},
 			TLS: &dynamic.TLSClientConfig{
 				ServerName: "www.example.com",
 				RootCAs:    []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
@@ -173,15 +173,14 @@ func TestDisableHTTP2(t *testing.T) {
 
 			srv.EnableHTTP2 = test.serverHTTP2
 			srv.StartTLS()
+			t.Cleanup(srv.Close)
 
-			tlsClientConfigGetter := client.NewTLSConfigManager(nil)
+			tlsClientConfigGetter := client.NewTLSConfigManager[*dynamic.ServersTransport](nil)
 			proxyBuilder := NewBuilder(tlsClientConfigGetter)
 
 			dynamicConf := map[string]*dynamic.ServersTransport{
 				"test": {
-					HTTP: &dynamic.HTTPClientConfig{
-						EnableHTTP2: !test.disableHTTP2,
-					},
+					EnableHTTP2: !test.disableHTTP2,
 					TLS: &dynamic.TLSClientConfig{
 						InsecureSkipVerify: true,
 					},

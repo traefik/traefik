@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	proxyhttputil "github.com/traefik/traefik/v2/pkg/proxy/httputil"
+	proxyhttputil "github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/valyala/fasthttp"
 	"golang.org/x/net/http/httpguts"
 )
@@ -77,6 +77,7 @@ func (w *writeDetector) Write(p []byte) (int, error) {
 	if n > 0 {
 		w.written = true
 	}
+
 	return n, err
 }
 
@@ -89,6 +90,7 @@ func (w *writeFlusher) Write(b []byte) (int, error) {
 	if f, ok := w.Writer.(http.Flusher); ok {
 		f.Flush()
 	}
+
 	return n, err
 }
 
@@ -106,7 +108,7 @@ func (t timeoutError) Temporary() bool {
 
 // ReverseProxy is the FastHTTP reverse proxy implementation.
 type ReverseProxy struct {
-	connPool *connPool
+	connPool *ConnPool
 
 	bufferPool      pool[[]byte]
 	readerPool      pool[*bufio.Reader]
@@ -121,9 +123,9 @@ type ReverseProxy struct {
 }
 
 // NewReverseProxy creates a new ReverseProxy.
-func NewReverseProxy(targetURL *url.URL, proxyURL *url.URL, passHostHeader bool, responseHeaderTimeout time.Duration, connPool *connPool) (*ReverseProxy, error) {
+func NewReverseProxy(targetURL *url.URL, proxyURL *url.URL, passHostHeader bool, responseHeaderTimeout time.Duration, connPool *ConnPool) (*ReverseProxy, error) {
 	var proxyAuth string
-	if proxyURL != nil && proxyURL.User != nil && proxyURL.Scheme != schemeSocks5 && targetURL.Scheme == schemeHTTP {
+	if proxyURL != nil && proxyURL.User != nil && targetURL.Scheme == "http" {
 		username := proxyURL.User.Username()
 		password, _ := proxyURL.User.Password()
 		proxyAuth = "Basic " + base64.StdEncoding.EncodeToString([]byte(username+":"+password))
@@ -170,13 +172,14 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	// TODO: removes after the beta, this allows to identity that the stack used to forward requests is the FastHTTP one.
-	outReq.Header.Set("FastHTTP", "enabled")
+	outReq.Header.Set("X-Traefik-FastHTTP", "enabled")
 
 	reqUpType := upgradeType(req.Header)
-	if !isPrint(reqUpType) {
+	if !isGraphic(reqUpType) {
 		proxyhttputil.ErrorHandler(rw, req, fmt.Errorf("client tried to switch to invalid protocol %q", reqUpType))
 		return
 	}
+
 	if reqUpType != "" {
 		outReq.Header.Set("Connection", "Upgrade")
 		outReq.Header.Set("Upgrade", reqUpType)
@@ -220,10 +223,11 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		// X-Forwarded-For information as a comma+space
 		// separated list and fold multiple headers into one.
 		prior, ok := req.Header["X-Forwarded-For"]
-		omit := ok && prior == nil // Go Issue 38079: nil now means don't populate the header
 		if len(prior) > 0 {
 			clientIP = strings.Join(prior, ", ") + ", " + clientIP
 		}
+
+		omit := ok && prior == nil // Go Issue 38079: nil now means don't populate the header
 		if !omit {
 			outReq.Header.Set("X-Forwarded-For", clientIP)
 		}
@@ -243,7 +247,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 	ctx := req.Context()
 	trace := httptrace.ContextClientTrace(ctx)
 
-	var co *conn
+	var co *Conn
 	for {
 		select {
 		case <-ctx.Done():
@@ -255,7 +259,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 		var err error
 		co, err = p.connPool.AcquireConn()
 		if err != nil {
-			return fmt.Errorf("acquire conn: %w", err)
+			return fmt.Errorf("acquire connection: %w", err)
 		}
 
 		wd := &writeDetector{Conn: co}
@@ -291,30 +295,63 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 
 	res.Header.SetNoDefaultContentType(true)
 
-	var timer *time.Timer
-	errTimeout := atomic.Pointer[timeoutError]{}
-	if p.responseHeaderTimeout > 0 {
-		timer = time.AfterFunc(p.responseHeaderTimeout, func() {
-			errTimeout.Store(&timeoutError{errors.New("timeout awaiting response headers")})
-			co.Close()
-		})
-	}
-
-	res.Header.SetNoDefaultContentType(true)
-	if err := res.Header.Read(br); err != nil {
+	for {
+		var timer *time.Timer
+		errTimeout := atomic.Pointer[timeoutError]{}
 		if p.responseHeaderTimeout > 0 {
-			if errT := errTimeout.Load(); errT != nil {
-				return errT
-			}
+			timer = time.AfterFunc(p.responseHeaderTimeout, func() {
+				errTimeout.Store(&timeoutError{errors.New("timeout awaiting response headers")})
+				co.Close()
+			})
 		}
-		co.Close()
-		return err
-	}
-	if timer != nil {
-		timer.Stop()
-	}
 
-	fixPragmaCacheControl(&res.Header)
+		res.Header.SetNoDefaultContentType(true)
+		if err := res.Header.Read(br); err != nil {
+			if p.responseHeaderTimeout > 0 {
+				if errT := errTimeout.Load(); errT != nil {
+					return errT
+				}
+			}
+			co.Close()
+			return err
+		}
+
+		if timer != nil {
+			timer.Stop()
+		}
+
+		fixPragmaCacheControl(&res.Header)
+
+		resCode := res.StatusCode()
+		is1xx := 100 <= resCode && resCode <= 199
+		// treat 101 as a terminal status, see issue 26161
+		is1xxNonTerminal := is1xx && resCode != http.StatusSwitchingProtocols
+		if is1xxNonTerminal {
+			removeConnectionHeaders(&res.Header)
+			h := rw.Header()
+
+			for _, header := range hopHeaders {
+				res.Header.Del(header)
+			}
+
+			res.Header.VisitAll(func(key, value []byte) {
+				rw.Header().Add(string(key), string(value))
+			})
+
+			rw.WriteHeader(res.StatusCode())
+			// Clear headers, it's not automatically done by ResponseWriter.WriteHeader() for 1xx responses
+			for k := range h {
+				delete(h, k)
+			}
+
+			res.Reset()
+			res.Header.Reset()
+			res.Header.SetNoDefaultContentType(true)
+
+			continue
+		}
+		break
+	}
 
 	announcedTrailers := res.Header.Peek("Trailer")
 
@@ -368,6 +405,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 			if len(announcedTrailers) > 0 {
 				announcedTrailersKey = strings.Split(string(announcedTrailers), ",")
 			}
+
 			res.Header.VisitAll(func(key, value []byte) {
 				for _, s := range announcedTrailersKey {
 					if strings.EqualFold(s, strings.TrimSpace(string(key))) {
@@ -375,32 +413,38 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 						return
 					}
 				}
+
 				rw.Header().Add(http.TrailerPrefix+string(key), string(value))
 			})
 		}
-	} else {
-		brl := p.limitReaderPool.Get()
-		if brl == nil {
-			brl = &io.LimitedReader{}
-		}
-		defer p.limitReaderPool.Put(brl)
 
-		brl.R = br
-		brl.N = int64(res.Header.ContentLength())
+		p.connPool.ReleaseConn(co)
 
-		b := p.bufferPool.Get()
-		if b == nil {
-			b = make([]byte, bufferSize)
-		}
-		defer p.bufferPool.Put(b)
+		return nil
+	}
 
-		if _, err := io.CopyBuffer(rw, brl, b); err != nil {
-			co.Close()
-			return err
-		}
+	brl := p.limitReaderPool.Get()
+	if brl == nil {
+		brl = &io.LimitedReader{}
+	}
+	defer p.limitReaderPool.Put(brl)
+
+	brl.R = br
+	brl.N = int64(res.Header.ContentLength())
+
+	b := p.bufferPool.Get()
+	if b == nil {
+		b = make([]byte, bufferSize)
+	}
+	defer p.bufferPool.Put(b)
+
+	if _, err := io.CopyBuffer(rw, brl, b); err != nil {
+		co.Close()
+		return err
 	}
 
 	p.connPool.ReleaseConn(co)
+
 	return nil
 }
 
@@ -416,6 +460,7 @@ func (p *ReverseProxy) writeRequest(co net.Conn, outReq *fasthttp.Request) error
 	if err := outReq.Write(bw); err != nil {
 		return err
 	}
+
 	return bw.Flush()
 }
 
@@ -426,36 +471,40 @@ func isReplayable(req *http.Request) bool {
 		case http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodTrace:
 			return true
 		}
+
 		// The Idempotency-Key, while non-standard, is widely used to
 		// mean a POST or other request is idempotent. See
 		// https://golang.org/issue/19943#issuecomment-421092421
 		if _, ok := req.Header["Idempotency-Key"]; ok {
 			return true
 		}
+
 		if _, ok := req.Header["X-Idempotency-Key"]; ok {
 			return true
 		}
 	}
+
 	return false
 }
 
-// isPrint returns whether s is ASCII and printable according to
+// isGraphic returns whether s is ASCII and printable according to
 // https://tools.ietf.org/html/rfc20#section-4.2.
-func isPrint(s string) bool {
+func isGraphic(s string) bool {
 	for i := 0; i < len(s); i++ {
 		if s[i] < ' ' || s[i] > '~' {
 			return false
 		}
 	}
+
 	return true
 }
 
 type fasthttpHeader interface {
-	Peek(string) []byte
-	Set(string, string)
-	SetBytesV(string, []byte)
-	DelBytes([]byte)
-	Del(string)
+	Peek(key string) []byte
+	Set(key string, value string)
+	SetBytesV(key string, value []byte)
+	DelBytes(key []byte)
+	Del(key string)
 }
 
 // removeConnectionHeaders removes hop-by-hop headers listed in the "Connection" header of h.

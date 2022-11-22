@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/traefik/traefik/v2/pkg/proxy/httputil"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/valyala/fasthttp"
 	"golang.org/x/net/http/httpguts"
 )
@@ -79,6 +79,7 @@ func handleUpgradeResponse(rw http.ResponseWriter, req *http.Request, reqUpType 
 		httputil.ErrorHandler(rw, req, fmt.Errorf("response flush: %w", err))
 		return
 	}
+
 	errc := make(chan error, 1)
 	spc := switchProtocolCopier{user: conn, backend: backConn}
 	go spc.copyToBackend(errc)
@@ -90,6 +91,7 @@ func upgradeType(h http.Header) string {
 	if !httpguts.HeaderValuesContainsToken(h["Connection"], "Upgrade") {
 		return ""
 	}
+
 	return h.Get("Upgrade")
 }
 
@@ -97,5 +99,6 @@ func upgradeTypeFastHTTP(h fasthttpHeader) string {
 	if !bytes.Contains(h.Peek("Connection"), []byte("Upgrade")) {
 		return ""
 	}
+
 	return string(h.Peek("Upgrade"))
 }

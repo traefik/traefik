@@ -21,7 +21,7 @@
 
 ## dynamic configuration ##
 
-[http.serversTransports.default.http.forwardingTimeouts]
+[http.serversTransports.default.forwardingTimeouts]
   dialTimeout = "300ms"
   responseHeaderTimeout = "300ms"
 

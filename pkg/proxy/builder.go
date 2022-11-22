@@ -1,17 +1,22 @@
 package proxy
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"reflect"
 	"sync"
 
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/proxy/fasthttp"
-	"github.com/traefik/traefik/v2/pkg/proxy/httputil"
-	"github.com/traefik/traefik/v2/pkg/tls/client"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/proxy/fasthttp"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 )
+
+type TLSConfigManager interface {
+	GetTLSConfig(name string) (*tls.Config, error)
+}
 
 // Builder is a proxy builder which returns a fasthttp or httputil proxy corresponding
 // to the ServersTransport configuration.
@@ -19,14 +24,14 @@ type Builder struct {
 	fasthttpBuilder *fasthttp.ProxyBuilder
 	httputilBuilder *httputil.ProxyBuilder
 
-	tlsClientConfigManager *client.TLSConfigManager
+	tlsClientConfigManager TLSConfigManager
 
 	configsLock sync.RWMutex
 	configs     map[string]*dynamic.ServersTransport
 }
 
 // NewBuilder creates and returns a new Builder instance.
-func NewBuilder(tlsClientConfigManager *client.TLSConfigManager) *Builder {
+func NewBuilder(tlsClientConfigManager TLSConfigManager) *Builder {
 	return &Builder{
 		fasthttpBuilder:        fasthttp.NewProxyBuilder(),
 		httputilBuilder:        httputil.NewProxyBuilder(),
@@ -77,9 +82,9 @@ func (b *Builder) Build(configName string, targetURL *url.URL) (http.Handler, er
 		return nil, err
 	}
 
-	if config.HTTP != nil && config.HTTP.EnableHTTP2 && targetURL.Scheme == "https" || targetURL.Scheme == "h2c" {
-		return b.httputilBuilder.Build(configName, config.HTTP, tlsConfig, targetURL)
+	if config.EnableHTTP2 && targetURL.Scheme == "https" || targetURL.Scheme == "h2c" || os.Getenv("TRAEFIK_FASTHTTP_DISABLE") == "1" {
+		return b.httputilBuilder.Build(configName, config, tlsConfig, targetURL)
 	}
 
-	return b.fasthttpBuilder.Build(configName, config.HTTP, tlsConfig, targetURL)
+	return b.fasthttpBuilder.Build(configName, config, tlsConfig, targetURL)
 }

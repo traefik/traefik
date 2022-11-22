@@ -17,9 +17,9 @@ import (
 	"github.com/armon/go-socks5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/testhelpers"
-	"github.com/traefik/traefik/v2/pkg/tls/generate"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/testhelpers"
+	"github.com/traefik/traefik/v3/pkg/tls/generate"
 )
 
 const (
@@ -214,6 +214,7 @@ func TestProxyFromEnvironment(t *testing.T) {
 				if test.auth != nil {
 					u.User = url.UserPassword(test.auth.user, test.auth.password)
 				}
+
 				return u, nil
 			}
 
@@ -231,7 +232,7 @@ func TestProxyFromEnvironment(t *testing.T) {
 				RootCAs: certPool,
 			}
 
-			reverseProxy, err := builder.Build("foo", &dynamic.HTTPClientConfig{}, tlsConfig, testhelpers.MustParseURL(backendURL))
+			reverseProxy, err := builder.Build("foo", &dynamic.ServersTransport{}, tlsConfig, testhelpers.MustParseURL(backendURL))
 			require.NoError(t, err)
 
 			reverseProxyServer := httptest.NewServer(reverseProxy)
@@ -253,25 +254,23 @@ func TestProxyFromEnvironment(t *testing.T) {
 	}
 }
 
-func newCertificate(domain string) (*tls.Certificate, error) {
+func newCertificate(t *testing.T, domain string) *tls.Certificate {
+	t.Helper()
+
 	certPEM, keyPEM, err := generate.KeyPair(domain, time.Time{})
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	certificate, err := tls.X509KeyPair(certPEM, keyPEM)
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
-	return &certificate, nil
+	return &certificate
 }
 
 func newBackendServer(t *testing.T, isTLS bool, handler http.Handler) (string, *tls.Certificate) {
 	t.Helper()
 
-	var err error
 	var ln net.Listener
+	var err error
 	var cert *tls.Certificate
 
 	scheme := "http"
@@ -279,8 +278,7 @@ func newBackendServer(t *testing.T, isTLS bool, handler http.Handler) (string, *
 	if isTLS {
 		scheme = "https"
 
-		cert, err = newCertificate(domain)
-		require.NoError(t, err)
+		cert = newCertificate(t, domain)
 
 		ln, err = tls.Listen("tcp", ":0", &tls.Config{Certificates: []tls.Certificate{*cert}})
 		require.NoError(t, err)
@@ -289,15 +287,15 @@ func newBackendServer(t *testing.T, isTLS bool, handler http.Handler) (string, *
 		require.NoError(t, err)
 	}
 
-	_, port, err := net.SplitHostPort(ln.Addr().String())
-	require.NoError(t, err)
-
-	backendURL := fmt.Sprintf("%s://%s:%s", scheme, domain, port)
-
 	srv := &http.Server{Handler: handler}
 	go func() { _ = srv.Serve(ln) }()
 
 	t.Cleanup(func() { _ = srv.Close() })
+
+	_, port, err := net.SplitHostPort(ln.Addr().String())
+	require.NoError(t, err)
+
+	backendURL := fmt.Sprintf("%s://%s:%s", scheme, domain, port)
 
 	return backendURL, cert
 }
