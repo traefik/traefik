@@ -501,7 +501,6 @@ tls:
           - foobar
         clientAuthType: foobar
       sniStrict: true
-      preferServerCipherSuites: true
       alpnProtocols:
         - foobar
         - foobar
@@ -520,7 +519,6 @@ tls:
           - foobar
         clientAuthType: foobar
       sniStrict: true
-      preferServerCipherSuites: true
       alpnProtocols:
         - foobar
         - foobar
