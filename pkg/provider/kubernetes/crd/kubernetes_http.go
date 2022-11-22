@@ -298,23 +298,7 @@ func (c configBuilder) buildServersLB(namespace string, svc v1alpha1.LoadBalance
 	}
 
 	lb := &dynamic.ServersLoadBalancer{}
-	lb.SetDefaults()
 	lb.Servers = servers
-
-	conf := svc
-	lb.PassHostHeader = conf.PassHostHeader
-	if lb.PassHostHeader == nil {
-		passHostHeader := true
-		lb.PassHostHeader = &passHostHeader
-	}
-
-	if conf.ResponseForwarding != nil && conf.ResponseForwarding.FlushInterval != "" {
-		err := lb.ResponseForwarding.FlushInterval.Set(conf.ResponseForwarding.FlushInterval)
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse flushInterval: %w", err)
-		}
-	}
-
 	lb.Sticky = svc.Sticky
 
 	lb.ServersTransport, err = c.makeServersTransportKey(namespace, svc.ServersTransport)

@@ -315,14 +315,6 @@ which in turn will create the resulting routers, services, handlers, etc.
     traefik.ingress.kubernetes.io/service.serverstransport: foobar@file
     ```
 
-??? info "`traefik.ingress.kubernetes.io/service.passhostheader`"
-
-    See [pass Host header](../services/index.md#pass-host-header) for more information.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/service.passhostheader: "true"
-    ```
-
 ??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.

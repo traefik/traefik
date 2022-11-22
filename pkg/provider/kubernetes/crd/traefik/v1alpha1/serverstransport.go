@@ -11,9 +11,7 @@ import (
 // +kubebuilder:storageversion
 
 // ServersTransport is the CRD implementation of a ServersTransport.
-// If no serversTransport is specified, the default@internal will be used.
-// The default@internal serversTransport is created from the static configuration.
-// More info: https://doc.traefik.io/traefik/v2.9/routing/services/#serverstransport_1
+// If no serversTransport is specified, the default will be used.
 type ServersTransport struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
@@ -27,6 +25,14 @@ type ServersTransport struct {
 
 // ServersTransportSpec defines the desired state of a ServersTransport.
 type ServersTransportSpec struct {
+	TLS  *TLSClientConfig  `json:"tls,omitempty"`
+	HTTP *HTTPClientConfig `json:"http,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// TLSClientConfig holds the TLS configuration to be used between Traefik and the servers.
+type TLSClientConfig struct {
 	// ServerName defines the server name used to contact the server.
 	ServerName string `json:"serverName,omitempty"`
 	// InsecureSkipVerify disables SSL certificate verification.
@@ -35,16 +41,25 @@ type ServersTransportSpec struct {
 	RootCAsSecrets []string `json:"rootCAsSecrets,omitempty"`
 	// CertificatesSecrets defines a list of secret storing client certificates for mTLS.
 	CertificatesSecrets []string `json:"certificatesSecrets,omitempty"`
-	// MaxIdleConnsPerHost controls the maximum idle (keep-alive) to keep per-host.
-	MaxIdleConnsPerHost int `json:"maxIdleConnsPerHost,omitempty"`
-	// ForwardingTimeouts defines the timeouts for requests forwarded to the backend servers.
-	ForwardingTimeouts *ForwardingTimeouts `json:"forwardingTimeouts,omitempty"`
-	// DisableHTTP2 disables HTTP/2 for connections with backend servers.
-	DisableHTTP2 bool `json:"disableHTTP2,omitempty"`
 	// PeerCertURI defines the peer cert URI used to match against SAN URI during the peer certificate verification.
 	PeerCertURI string `json:"peerCertURI,omitempty"`
 	// Spiffe defines the SPIFFE configuration.
 	Spiffe *dynamic.Spiffe `json:"spiffe,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// HTTPClientConfig holds the HTTP configuration to be used between Traefik and the servers.
+type HTTPClientConfig struct {
+	// PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
+	// By default, passHostHeader is true.
+	PassHostHeader *bool `json:"passHostHeader,omitempty"`
+	// MaxIdleConnsPerHost controls the maximum idle (keep-alive) to keep per-host.
+	MaxIdleConnsPerHost int `json:"maxIdleConnsPerHost,omitempty"`
+	// ForwardingTimeouts defines the timeouts for requests forwarded to the backend servers.
+	ForwardingTimeouts *ForwardingTimeouts `json:"forwardingTimeouts,omitempty"`
+	// EnableHTTP2 enables HTTP/2 or connections with backend servers.
+	EnableHTTP2 bool `json:"enableHTTP2,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

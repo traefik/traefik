@@ -6,9 +6,6 @@
   level = "DEBUG"
   noColor = true
 
-[serversTransport.forwardingTimeouts]
-  idleConnTimeout = "{{ .IdleConnTimeout }}"
-
 [entryPoints]
   [entryPoints.web]
     address = ":8000"
@@ -21,6 +18,9 @@
 
 ## dynamic configuration ##
 
+[http.serversTransports.default.http.forwardingTimeouts]
+  idleConnTimeout = "{{ .IdleConnTimeout }}"
+
 [http.routers]
   [http.routers.router1]
     service = "keepalive"
@@ -29,6 +29,5 @@
 [http.services]
   [http.services.keepalive]
     [http.services.keepalive.loadBalancer]
-      passHostHeader = true
       [[http.services.keepalive.loadBalancer.servers]]
         url = "{{ .KeepAliveServer }}"

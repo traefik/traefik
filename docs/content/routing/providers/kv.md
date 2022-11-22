@@ -124,14 +124,6 @@ A Story of key & values
     |-----------------------------------------------------------------|---------------|
     | `traefik/http/services/myservice/loadbalancer/serverstransport` | `foobar@file` |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/passhostheader`"
-
-    See [pass Host header](../services/index.md#pass-host-header) for more information.
-
-    | Key (Path)                                                      | Value  |
-    |-----------------------------------------------------------------|--------|
-    | `traefik/http/services/myservice/loadbalancer/passhostheader`   | `true` |
-
 ??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/headers/<header_name>`"
 
     See [health check](../services/index.md#health-check) for more information.
@@ -235,14 +227,6 @@ A Story of key & values
     | Key (Path)                                                            | Value  |
     |-----------------------------------------------------------------------|--------|
     | `traefik/http/services/myservice/loadbalancer/sticky/cookie/samesite` | `none` |
-
-??? info "`traefik/http/services/<service_name>/loadbalancer/responseforwarding/flushinterval`"
-
-    See [response forwarding](../services/index.md#response-forwarding) for more information.
-
-    | Key (Path)                                                                      | Value |
-    |---------------------------------------------------------------------------------|-------|
-    | `traefik/http/services/myservice/loadbalancer/responseforwarding/flushinterval` | `10`  |
 
 ??? info "`traefik/http/services/<service_name>/mirroring/service`"
 
