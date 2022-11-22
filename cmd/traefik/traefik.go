@@ -204,10 +204,6 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		return nil, err
 	}
 
-	if staticConfiguration.Pilot != nil {
-		log.Warn().Msg("Traefik Pilot has been removed.")
-	}
-
 	// Plugins
 
 	pluginBuilder, err := createPluginBuilder(staticConfiguration)

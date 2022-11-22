@@ -52,23 +52,15 @@ type item struct {
 type ProviderBuilder struct {
 	Configuration `yaml:",inline" export:"true"`
 
-	// Deprecated: Use Namespaces option instead
-	Namespace  string   `description:"Sets the Nomad namespace used to discover services." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
 	Namespaces []string `description:"Sets the Nomad namespaces used to discover services." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty"`
 }
 
 // BuildProviders builds Nomad provider instances for the given namespaces configuration.
 func (p *ProviderBuilder) BuildProviders() []*Provider {
-	if p.Namespace != "" {
-		log.Warn().Msg("Namespace option is deprecated, please use the Namespaces option instead.")
-	}
-
 	if len(p.Namespaces) == 0 {
 		return []*Provider{{
 			Configuration: p.Configuration,
 			name:          providerName,
-			// p.Namespace could be empty
-			namespace: p.Namespace,
 		}}
 	}
 
