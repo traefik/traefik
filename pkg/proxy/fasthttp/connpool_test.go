@@ -11,20 +11,20 @@ import (
 func TestConnPool_ConnReuse(t *testing.T) {
 	testCases := []struct {
 		desc     string
-		poolFn   func(pool *connPool)
+		poolFn   func(pool *ConnPool)
 		expected int
 	}{
 		{
-			desc: "Simple case",
-			poolFn: func(pool *connPool) {
+			desc: "One connection",
+			poolFn: func(pool *ConnPool) {
 				c1, _ := pool.AcquireConn()
 				pool.ReleaseConn(c1)
 			},
 			expected: 1,
 		},
 		{
-			desc: "Simple with reuse",
-			poolFn: func(pool *connPool) {
+			desc: "Two connections with release",
+			poolFn: func(pool *ConnPool) {
 				c1, _ := pool.AcquireConn()
 				pool.ReleaseConn(c1)
 
@@ -34,8 +34,8 @@ func TestConnPool_ConnReuse(t *testing.T) {
 			expected: 1,
 		},
 		{
-			desc: "Two connection at the same time",
-			poolFn: func(pool *connPool) {
+			desc: "Two concurrent connections",
+			poolFn: func(pool *ConnPool) {
 				c1, _ := pool.AcquireConn()
 				c2, _ := pool.AcquireConn()
 
@@ -50,11 +50,13 @@ func TestConnPool_ConnReuse(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			var connAlloc int
 			dialer := func() (net.Conn, error) {
 				connAlloc++
 				return &net.TCPConn{}, nil
 			}
+
 			pool := NewConnPool(2, 0, dialer)
 			test.poolFn(pool)
 
@@ -66,13 +68,13 @@ func TestConnPool_ConnReuse(t *testing.T) {
 func TestConnPool_MaxIdleConn(t *testing.T) {
 	testCases := []struct {
 		desc        string
-		poolFn      func(pool *connPool)
+		poolFn      func(pool *ConnPool)
 		maxIdleConn int
 		expected    int
 	}{
 		{
-			desc: "Simple case",
-			poolFn: func(pool *connPool) {
+			desc: "One connection",
+			poolFn: func(pool *ConnPool) {
 				c1, _ := pool.AcquireConn()
 				pool.ReleaseConn(c1)
 			},
@@ -80,8 +82,8 @@ func TestConnPool_MaxIdleConn(t *testing.T) {
 			expected:    1,
 		},
 		{
-			desc: "Multiple conn with release",
-			poolFn: func(pool *connPool) {
+			desc: "Multiple connections with defered release",
+			poolFn: func(pool *ConnPool) {
 				for i := 0; i < 7; i++ {
 					c, _ := pool.AcquireConn()
 					defer pool.ReleaseConn(c)
@@ -105,6 +107,7 @@ func TestConnPool_MaxIdleConn(t *testing.T) {
 					return nil
 				}}, nil
 			}
+
 			pool := NewConnPool(test.maxIdleConn, 0, dialer)
 			test.poolFn(pool)
 

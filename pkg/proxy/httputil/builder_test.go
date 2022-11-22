@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/testhelpers"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
 func BenchmarkProxy(b *testing.B) {
@@ -23,7 +23,7 @@ func BenchmarkProxy(b *testing.B) {
 	builder := NewProxyBuilder()
 	builder.roundTrippers = map[string]http.RoundTripper{"bench": &staticTransport{res: res}}
 
-	proxy, err := builder.Build("bench", &dynamic.HTTPClientConfig{}, nil, req.URL)
+	proxy, err := builder.Build("bench", &dynamic.ServersTransport{}, nil, req.URL)
 	require.NoError(b, err)
 
 	w := httptest.NewRecorder()
@@ -40,12 +40,10 @@ func TestEscapedPath(t *testing.T) {
 		gotEscapedPath = req.URL.EscapedPath()
 	}))
 
-	p, err := NewProxyBuilder().Build("default", &dynamic.HTTPClientConfig{PassHostHeader: true}, nil, testhelpers.MustParseURL(srv.URL))
+	p, err := NewProxyBuilder().Build("default", &dynamic.ServersTransport{PassHostHeader: true}, nil, testhelpers.MustParseURL(srv.URL))
 	require.NoError(t, err)
 
-	proxy := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		p.ServeHTTP(rw, req)
-	}))
+	proxy := httptest.NewServer(http.HandlerFunc(p.ServeHTTP))
 
 	_, err = http.Get(proxy.URL + "/%3A%2F%2F")
 	require.NoError(t, err)

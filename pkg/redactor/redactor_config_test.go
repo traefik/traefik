@@ -140,15 +140,13 @@ func init() {
 						},
 					},
 				},
-				HTTP: &dynamic.HTTPClientConfig{
-					MaxIdleConnsPerHost: 42,
-					ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-						DialTimeout:           42,
-						ResponseHeaderTimeout: 42,
-						IdleConnTimeout:       42,
-						ReadIdleTimeout:       42,
-						PingTimeout:           42,
-					},
+				MaxIdleConnsPerHost: 42,
+				ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+					DialTimeout:           42,
+					ResponseHeaderTimeout: 42,
+					IdleConnTimeout:       42,
+					ReadIdleTimeout:       42,
+					PingTimeout:           42,
 				},
 			},
 		},
@@ -561,15 +559,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 
 	config.Providers = &static.Providers{
 		ProvidersThrottleDuration: ptypes.Duration(111 * time.Second),
-	}
-
-	config.TCPServersTransport = &static.TCPServersTransport{
-		DialTimeout:   ptypes.Duration(111 * time.Second),
-		DialKeepAlive: ptypes.Duration(111 * time.Second),
-		TLS: &static.TLSClientConfig{
-			InsecureSkipVerify: true,
-			RootCAs:            []traefiktls.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
-		},
 	}
 
 	config.Providers.File = &file.Provider{

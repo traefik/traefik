@@ -9,43 +9,43 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/proxy/fasthttp"
-	"github.com/traefik/traefik/v2/pkg/proxy/httputil"
-	"github.com/traefik/traefik/v2/pkg/testhelpers"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/proxy/fasthttp"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
+	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
 func Test_PassHostHeader(t *testing.T) {
 	testCases := []struct {
 		desc         string
-		cfg          dynamic.HTTPClientConfig
-		proxyBuilder func(*testing.T, *url.URL, *dynamic.HTTPClientConfig) http.Handler
+		cfg          dynamic.ServersTransport
+		proxyBuilder func(*testing.T, *url.URL, *dynamic.ServersTransport) http.Handler
 	}{
 		{
 			desc:         "FastHTTP proxy with passHostHeader",
 			proxyBuilder: buildFastHTTPProxy,
-			cfg: dynamic.HTTPClientConfig{
+			cfg: dynamic.ServersTransport{
 				PassHostHeader: true,
 			},
 		},
 		{
 			desc:         "FastHTTP proxy without passHostHeader",
 			proxyBuilder: buildFastHTTPProxy,
-			cfg: dynamic.HTTPClientConfig{
+			cfg: dynamic.ServersTransport{
 				PassHostHeader: false,
 			},
 		},
 		{
 			desc:         "HTTPUtil proxy with passHostHeader",
 			proxyBuilder: buildHTTPProxy,
-			cfg: dynamic.HTTPClientConfig{
+			cfg: dynamic.ServersTransport{
 				PassHostHeader: true,
 			},
 		},
 		{
 			desc:         "HTTPUtil proxy without passHostHeader",
 			proxyBuilder: buildHTTPProxy,
-			cfg: dynamic.HTTPClientConfig{
+			cfg: dynamic.ServersTransport{
 				PassHostHeader: false,
 			},
 		},
@@ -57,9 +57,10 @@ func Test_PassHostHeader(t *testing.T) {
 			t.Parallel()
 
 			var gotHostHeader string
-			backendServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			backendServer := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, req *http.Request) {
 				gotHostHeader = req.Host
 			}))
+			t.Cleanup(backendServer.Close)
 
 			u := testhelpers.MustParseURL(backendServer.URL)
 			handler := test.proxyBuilder(t, u, &test.cfg)
@@ -84,8 +85,8 @@ func Test_PassHostHeader(t *testing.T) {
 func Test_EscapedPath(t *testing.T) {
 	testCases := []struct {
 		desc         string
-		proxyBuilder func(*testing.T, *url.URL, *dynamic.HTTPClientConfig) http.Handler
-		cfg          dynamic.HTTPClientConfig
+		proxyBuilder func(*testing.T, *url.URL, *dynamic.ServersTransport) http.Handler
+		cfg          dynamic.ServersTransport
 	}{
 		{
 			desc:         "FastHTTP proxy",
@@ -103,9 +104,10 @@ func Test_EscapedPath(t *testing.T) {
 			t.Parallel()
 
 			var gotEscapedPath string
-			backendServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			backendServer := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, req *http.Request) {
 				gotEscapedPath = req.URL.EscapedPath()
 			}))
+			t.Cleanup(backendServer.Close)
 
 			u := testhelpers.MustParseURL(backendServer.URL)
 			h := test.proxyBuilder(t, u, &test.cfg)
@@ -125,7 +127,7 @@ func Test_EscapedPath(t *testing.T) {
 	}
 }
 
-func buildFastHTTPProxy(t *testing.T, u *url.URL, cfg *dynamic.HTTPClientConfig) http.Handler {
+func buildFastHTTPProxy(t *testing.T, u *url.URL, cfg *dynamic.ServersTransport) http.Handler {
 	t.Helper()
 
 	f, err := fasthttp.NewReverseProxy(u, nil, cfg.PassHostHeader, 0, fasthttp.NewConnPool(200, 0, func() (net.Conn, error) {
@@ -136,7 +138,7 @@ func buildFastHTTPProxy(t *testing.T, u *url.URL, cfg *dynamic.HTTPClientConfig)
 	return f
 }
 
-func buildHTTPProxy(t *testing.T, u *url.URL, cfg *dynamic.HTTPClientConfig) http.Handler {
+func buildHTTPProxy(t *testing.T, u *url.URL, cfg *dynamic.ServersTransport) http.Handler {
 	t.Helper()
 
 	f, err := httputil.NewProxyBuilder().Build("default", cfg, nil, u)

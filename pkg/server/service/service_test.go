@@ -14,10 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/proxy"
+	"github.com/traefik/traefik/v3/pkg/proxy"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
-	"github.com/traefik/traefik/v2/pkg/tls/client"
+	"github.com/traefik/traefik/v3/pkg/tls/client"
 )
 
 func TestGetLoadBalancer(t *testing.T) {
@@ -76,9 +76,9 @@ func TestGetLoadBalancer(t *testing.T) {
 }
 
 func TestGetLoadBalancerServiceHandler(t *testing.T) {
-	configs := map[string]*dynamic.ServersTransport{"default": {HTTP: &dynamic.HTTPClientConfig{}}}
+	configs := map[string]*dynamic.ServersTransport{"default": {}}
 
-	tlsClientConfigManager := client.NewTLSConfigManager(nil)
+	tlsClientConfigManager := client.NewTLSConfigManager[*dynamic.ServersTransport](nil)
 	tlsClientConfigManager.Update(configs)
 	proxyBuilder := proxy.NewBuilder(tlsClientConfigManager)
 	proxyBuilder.Update(configs)
@@ -321,11 +321,14 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 
 // This test is an adapted version of net/http/httputil.Test1xxResponses test.
 func Test1xxResponses(t *testing.T) {
-	sm := NewManager(nil, nil, nil, &RoundTripperManager{
-		roundTrippers: map[string]http.RoundTripper{
-			"default@internal": http.DefaultTransport,
-		},
-	})
+	tlsClientConfigManager := client.NewTLSConfigManager[*dynamic.ServersTransport](nil)
+	proxyBuilder := proxy.NewBuilder(tlsClientConfigManager)
+
+	configs := map[string]*dynamic.ServersTransport{"default": {}}
+	tlsClientConfigManager.Update(configs)
+	proxyBuilder.Update(configs)
+
+	sm := NewManager(nil, nil, nil, proxyBuilder, nil)
 
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()

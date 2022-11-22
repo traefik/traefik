@@ -398,16 +398,14 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"tls-ns-dc1-dev-Test": {
-							HTTP: &dynamic.HTTPClientConfig{
-								PassHostHeader:      true,
-								MaxIdleConnsPerHost: 200,
-								ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-									DialTimeout:           ptypes.Duration(30 * time.Second),
-									ResponseHeaderTimeout: 0,
-									IdleConnTimeout:       ptypes.Duration(90 * time.Second),
-									ReadIdleTimeout:       0,
-									PingTimeout:           ptypes.Duration(15 * time.Second),
-								},
+							PassHostHeader:      true,
+							MaxIdleConnsPerHost: 200,
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:           ptypes.Duration(30 * time.Second),
+								ResponseHeaderTimeout: 0,
+								IdleConnTimeout:       ptypes.Duration(90 * time.Second),
+								ReadIdleTimeout:       0,
+								PingTimeout:           ptypes.Duration(15 * time.Second),
 							},
 							TLS: &dynamic.TLSClientConfig{
 								ServerName:         "ns-dc1-dev/Test",
@@ -499,16 +497,14 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"tls-ns-dc1-dev-Test": {
-							HTTP: &dynamic.HTTPClientConfig{
-								PassHostHeader:      true,
-								MaxIdleConnsPerHost: 200,
-								ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-									DialTimeout:           ptypes.Duration(30 * time.Second),
-									ResponseHeaderTimeout: 0,
-									IdleConnTimeout:       ptypes.Duration(90 * time.Second),
-									ReadIdleTimeout:       0,
-									PingTimeout:           ptypes.Duration(15 * time.Second),
-								},
+							PassHostHeader:      true,
+							MaxIdleConnsPerHost: 200,
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:           ptypes.Duration(30 * time.Second),
+								ResponseHeaderTimeout: 0,
+								IdleConnTimeout:       ptypes.Duration(90 * time.Second),
+								ReadIdleTimeout:       0,
+								PingTimeout:           ptypes.Duration(15 * time.Second),
 							},
 							TLS: &dynamic.TLSClientConfig{
 								ServerName:         "ns-dc1-dev/Test",
@@ -2786,16 +2782,14 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"tls-ns-dc1-Test": {
-							HTTP: &dynamic.HTTPClientConfig{
-								PassHostHeader:      true,
-								MaxIdleConnsPerHost: 200,
-								ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-									DialTimeout:           ptypes.Duration(30 * time.Second),
-									ResponseHeaderTimeout: 0,
-									IdleConnTimeout:       ptypes.Duration(90 * time.Second),
-									ReadIdleTimeout:       0,
-									PingTimeout:           ptypes.Duration(15 * time.Second),
-								},
+							PassHostHeader:      true,
+							MaxIdleConnsPerHost: 200,
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:           ptypes.Duration(30 * time.Second),
+								ResponseHeaderTimeout: 0,
+								IdleConnTimeout:       ptypes.Duration(90 * time.Second),
+								ReadIdleTimeout:       0,
+								PingTimeout:           ptypes.Duration(15 * time.Second),
 							},
 							TLS: &dynamic.TLSClientConfig{
 								ServerName:         "ns-dc1-Test",

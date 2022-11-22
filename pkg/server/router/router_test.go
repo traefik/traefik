@@ -17,12 +17,12 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
-	"github.com/traefik/traefik/v2/pkg/proxy"
+	"github.com/traefik/traefik/v3/pkg/proxy"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v2/pkg/tls/client"
+	"github.com/traefik/traefik/v3/pkg/tls/client"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
@@ -315,10 +315,10 @@ func TestRouterManager_Get(t *testing.T) {
 				},
 			})
 
-			tlsClientConfigManager := client.NewTLSConfigManager(nil)
+			tlsClientConfigManager := client.NewTLSConfigManager[*dynamic.ServersTransport](nil)
 			proxyBuilder := proxy.NewBuilder(tlsClientConfigManager)
 
-			configs := map[string]*dynamic.ServersTransport{"default": {HTTP: &dynamic.HTTPClientConfig{}}}
+			configs := map[string]*dynamic.ServersTransport{"default": {}}
 			tlsClientConfigManager.Update(configs)
 			proxyBuilder.Update(configs)
 
@@ -428,10 +428,10 @@ func TestAccessLog(t *testing.T) {
 				},
 			})
 
-			tlsClientConfigManager := client.NewTLSConfigManager(nil)
+			tlsClientConfigManager := client.NewTLSConfigManager[*dynamic.ServersTransport](nil)
 			proxyBuilder := proxy.NewBuilder(tlsClientConfigManager)
 
-			configs := map[string]*dynamic.ServersTransport{"default": {HTTP: &dynamic.HTTPClientConfig{}}}
+			configs := map[string]*dynamic.ServersTransport{"default": {}}
 			tlsClientConfigManager.Update(configs)
 			proxyBuilder.Update(configs)
 
@@ -795,10 +795,10 @@ func TestRuntimeConfiguration(t *testing.T) {
 				},
 			})
 
-			tlsClientConfigManager := client.NewTLSConfigManager(nil)
+			tlsClientConfigManager := client.NewTLSConfigManager[*dynamic.ServersTransport](nil)
 			proxyBuilder := proxy.NewBuilder(tlsClientConfigManager)
 
-			configs := map[string]*dynamic.ServersTransport{"default": {HTTP: &dynamic.HTTPClientConfig{}}}
+			configs := map[string]*dynamic.ServersTransport{"default": {}}
 			tlsClientConfigManager.Update(configs)
 			proxyBuilder.Update(configs)
 
@@ -878,10 +878,10 @@ func TestProviderOnMiddlewares(t *testing.T) {
 		},
 	})
 
-	tlsClientConfigManager := client.NewTLSConfigManager(nil)
+	tlsClientConfigManager := client.NewTLSConfigManager[*dynamic.ServersTransport](nil)
 	proxyBuilder := proxy.NewBuilder(tlsClientConfigManager)
 
-	configs := map[string]*dynamic.ServersTransport{"default": {HTTP: &dynamic.HTTPClientConfig{}}}
+	configs := map[string]*dynamic.ServersTransport{"default": {}}
 	tlsClientConfigManager.Update(configs)
 	proxyBuilder.Update(configs)
 

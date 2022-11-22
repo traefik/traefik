@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"golang.org/x/net/http/httpguts"
 	"golang.org/x/net/http2"
 )
@@ -54,7 +54,7 @@ func (r *ProxyBuilder) Delete(cfgName string) {
 }
 
 // Build builds a new httputil.ReverseProxy with the given configuration.
-func (r *ProxyBuilder) Build(cfgName string, cfg *dynamic.HTTPClientConfig, tlsConfig *tls.Config, targetURL *url.URL) (http.Handler, error) {
+func (r *ProxyBuilder) Build(cfgName string, cfg *dynamic.ServersTransport, tlsConfig *tls.Config, targetURL *url.URL) (http.Handler, error) {
 	roundTripper, ok := r.roundTrippers[cfgName]
 	if !ok {
 		var err error
@@ -79,11 +79,11 @@ func (r *ProxyBuilder) Build(cfgName string, cfg *dynamic.HTTPClientConfig, tlsC
 				parsedURL, err := url.ParseRequestURI(outReq.RequestURI)
 				if err == nil {
 					u = parsedURL
+					outReq.URL.Path = u.Path
+					outReq.URL.RawPath = u.RawPath
 				}
 			}
 
-			outReq.URL.Path = u.Path
-			outReq.URL.RawPath = u.RawPath
 			outReq.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
 			outReq.RequestURI = "" // Outgoing request should not have RequestURI
 
@@ -109,7 +109,7 @@ func (r *ProxyBuilder) Build(cfgName string, cfg *dynamic.HTTPClientConfig, tlsC
 // For the settings that can't be configured in Traefik it uses the default http.Transport settings.
 // An exception to this is the MaxIdleConns setting as we only provide the option MaxIdleConnsPerHost in Traefik at this point in time.
 // Setting this value to the default of 100 could lead to confusing behavior and backwards compatibility issues.
-func createRoundTripper(cfg *dynamic.HTTPClientConfig, tlsConfig *tls.Config) (http.RoundTripper, error) {
+func createRoundTripper(cfg *dynamic.ServersTransport, tlsConfig *tls.Config) (http.RoundTripper, error) {
 	if cfg == nil {
 		return nil, errors.New("no transport configuration given")
 	}
@@ -194,7 +194,10 @@ func ErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
 	}
 
 	logger := log.Ctx(req.Context())
-	logger.Debug().Err(err).Msgf("%d %s", statusCode, statusText(statusCode))
+	logger.Debug().Err(err).
+		Str("Status", statusText(statusCode)).
+		Int("StatusCode", statusCode).
+		Send()
 
 	w.WriteHeader(statusCode)
 	if _, werr := w.Write([]byte(statusText(statusCode))); werr != nil {
@@ -206,5 +209,6 @@ func statusText(statusCode int) string {
 	if statusCode == StatusClientClosedRequest {
 		return StatusClientClosedRequestText
 	}
+
 	return http.StatusText(statusCode)
 }

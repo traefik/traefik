@@ -353,7 +353,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			for _, secret := range serversTransport.Spec.TLS.RootCAsSecrets {
 				caSecret, err := loadCASecret(serversTransport.Namespace, secret, client)
 				if err != nil {
-					logger.Error().Err(err).Msgf("Error while loading rootCAs %s", secret)
+					logger.Error().Err(err).
+						Str("secret", secret).
+						Msgf("Error while loading rootCAs")
 					continue
 				}
 
@@ -363,7 +365,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			for _, secret := range serversTransport.Spec.TLS.CertificatesSecrets {
 				tlsSecret, tlsKey, err := loadAuthTLSSecret(serversTransport.Namespace, secret, client)
 				if err != nil {
-					logger.Error().Err(err).Msgf("Error while loading certificates %s", secret)
+					logger.Error().Err(err).
+						Str("secret", secret).
+						Msgf("Error while loading certificates")
 					continue
 				}
 
@@ -374,51 +378,48 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			}
 		}
 
-		if serversTransport.Spec.HTTP != nil {
-			st.HTTP = &dynamic.HTTPClientConfig{}
-			st.HTTP.SetDefaults()
+		st.EnableHTTP2 = serversTransport.Spec.EnableHTTP2
+		if serversTransport.Spec.MaxIdleConnsPerHost != nil {
+			st.MaxIdleConnsPerHost = *serversTransport.Spec.MaxIdleConnsPerHost
+		}
 
-			st.HTTP.EnableHTTP2 = serversTransport.Spec.HTTP.EnableHTTP2
-			st.HTTP.MaxIdleConnsPerHost = serversTransport.Spec.HTTP.MaxIdleConnsPerHost
+		if serversTransport.Spec.PassHostHeader != nil {
+			st.PassHostHeader = *serversTransport.Spec.PassHostHeader
+		}
 
-			if serversTransport.Spec.HTTP.PassHostHeader != nil {
-				st.HTTP.PassHostHeader = *serversTransport.Spec.HTTP.PassHostHeader
+		if serversTransport.Spec.ForwardingTimeouts != nil {
+			if serversTransport.Spec.ForwardingTimeouts.DialTimeout != nil {
+				err := st.ForwardingTimeouts.DialTimeout.Set(serversTransport.Spec.ForwardingTimeouts.DialTimeout.String())
+				if err != nil {
+					logger.Error().Err(err).Msg("Error while reading DialTimeout")
+				}
 			}
 
-			if serversTransport.Spec.HTTP.ForwardingTimeouts != nil {
-				if serversTransport.Spec.HTTP.ForwardingTimeouts.DialTimeout != nil {
-					err := st.HTTP.ForwardingTimeouts.DialTimeout.Set(serversTransport.Spec.HTTP.ForwardingTimeouts.DialTimeout.String())
-					if err != nil {
-						logger.Error().Err(err).Msg("Error while reading DialTimeout")
-					}
+			if serversTransport.Spec.ForwardingTimeouts.ResponseHeaderTimeout != nil {
+				err := st.ForwardingTimeouts.ResponseHeaderTimeout.Set(serversTransport.Spec.ForwardingTimeouts.ResponseHeaderTimeout.String())
+				if err != nil {
+					logger.Error().Err(err).Msg("Error while reading ResponseHeaderTimeout")
 				}
+			}
 
-				if serversTransport.Spec.HTTP.ForwardingTimeouts.ResponseHeaderTimeout != nil {
-					err := st.HTTP.ForwardingTimeouts.ResponseHeaderTimeout.Set(serversTransport.Spec.HTTP.ForwardingTimeouts.ResponseHeaderTimeout.String())
-					if err != nil {
-						logger.Error().Err(err).Msg("Error while reading ResponseHeaderTimeout")
-					}
+			if serversTransport.Spec.ForwardingTimeouts.IdleConnTimeout != nil {
+				err := st.ForwardingTimeouts.IdleConnTimeout.Set(serversTransport.Spec.ForwardingTimeouts.IdleConnTimeout.String())
+				if err != nil {
+					logger.Error().Err(err).Msg("Error while reading IdleConnTimeout")
 				}
+			}
 
-				if serversTransport.Spec.HTTP.ForwardingTimeouts.IdleConnTimeout != nil {
-					err := st.HTTP.ForwardingTimeouts.IdleConnTimeout.Set(serversTransport.Spec.HTTP.ForwardingTimeouts.IdleConnTimeout.String())
-					if err != nil {
-						logger.Error().Err(err).Msg("Error while reading IdleConnTimeout")
-					}
+			if serversTransport.Spec.ForwardingTimeouts.ReadIdleTimeout != nil {
+				err := st.ForwardingTimeouts.ReadIdleTimeout.Set(serversTransport.Spec.ForwardingTimeouts.ReadIdleTimeout.String())
+				if err != nil {
+					logger.Error().Err(err).Msg("Error while reading ReadIdleTimeout")
 				}
+			}
 
-				if serversTransport.Spec.HTTP.ForwardingTimeouts.ReadIdleTimeout != nil {
-					err := st.HTTP.ForwardingTimeouts.ReadIdleTimeout.Set(serversTransport.Spec.HTTP.ForwardingTimeouts.ReadIdleTimeout.String())
-					if err != nil {
-						logger.Error().Err(err).Msg("Error while reading ReadIdleTimeout")
-					}
-				}
-
-				if serversTransport.Spec.HTTP.ForwardingTimeouts.PingTimeout != nil {
-					err := st.HTTP.ForwardingTimeouts.PingTimeout.Set(serversTransport.Spec.HTTP.ForwardingTimeouts.PingTimeout.String())
-					if err != nil {
-						logger.Error().Err(err).Msg("Error while reading PingTimeout")
-					}
+			if serversTransport.Spec.ForwardingTimeouts.PingTimeout != nil {
+				err := st.ForwardingTimeouts.PingTimeout.Set(serversTransport.Spec.ForwardingTimeouts.PingTimeout.String())
+				if err != nil {
+					logger.Error().Err(err).Msg("Error while reading PingTimeout")
 				}
 			}
 		}
@@ -434,7 +435,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 	if len(nsDefault) > 1 {
 		delete(conf.HTTP.ServersTransports, "default")
-		log.Ctx(ctx).Error().Msgf("Default serversTransport defined in multiple namespaces: %v", nsDefault)
+		log.Ctx(ctx).Error().
+			Strs("namespaces", nsDefault).
+			Msgf("Default serversTransport defined in multiple namespaces")
 	}
 
 	for _, serversTransportTCP := range client.GetServersTransportTCPs() {

@@ -94,7 +94,7 @@ func TestNewConfigurationWatcher(t *testing.T) {
 				Routers:           map[string]*dynamic.TCPRouter{},
 				Middlewares:       map[string]*dynamic.TCPMiddleware{},
 				Services:          map[string]*dynamic.TCPService{},
-				ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				ServersTransports: map[string]*dynamic.TCPServersTransport{"default": defaultServersTransportTCP()},
 			},
 			TLS: &dynamic.TLSConfiguration{
 				Options: map[string]tls.Options{
@@ -231,7 +231,7 @@ func TestIgnoreTransientConfiguration(t *testing.T) {
 			Routers:           map[string]*dynamic.TCPRouter{},
 			Middlewares:       map[string]*dynamic.TCPMiddleware{},
 			Services:          map[string]*dynamic.TCPService{},
-			ServersTransports: map[string]*dynamic.TCPServersTransport{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{"default": defaultServersTransportTCP()},
 		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  map[string]*dynamic.UDPRouter{},
@@ -401,7 +401,7 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 			Routers:           map[string]*dynamic.TCPRouter{},
 			Middlewares:       map[string]*dynamic.TCPMiddleware{},
 			Services:          map[string]*dynamic.TCPService{},
-			ServersTransports: map[string]*dynamic.TCPServersTransport{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{"default": defaultServersTransportTCP()},
 		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  map[string]*dynamic.UDPRouter{},
@@ -492,7 +492,7 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 			Routers:           map[string]*dynamic.TCPRouter{},
 			Middlewares:       map[string]*dynamic.TCPMiddleware{},
 			Services:          map[string]*dynamic.TCPService{},
-			ServersTransports: map[string]*dynamic.TCPServersTransport{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{"default": defaultServersTransportTCP()},
 		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  map[string]*dynamic.UDPRouter{},
@@ -628,7 +628,7 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 			Routers:           map[string]*dynamic.TCPRouter{},
 			Middlewares:       map[string]*dynamic.TCPMiddleware{},
 			Services:          map[string]*dynamic.TCPService{},
-			ServersTransports: map[string]*dynamic.TCPServersTransport{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{"default": defaultServersTransportTCP()},
 		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  map[string]*dynamic.UDPRouter{},
@@ -697,7 +697,7 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 			Routers:           map[string]*dynamic.TCPRouter{},
 			Middlewares:       map[string]*dynamic.TCPMiddleware{},
 			Services:          map[string]*dynamic.TCPService{},
-			ServersTransports: map[string]*dynamic.TCPServersTransport{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{"default": defaultServersTransportTCP()},
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Options: map[string]tls.Options{
