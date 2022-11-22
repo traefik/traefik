@@ -193,7 +193,6 @@ spec:
       - foobar
     clientAuthType: RequireAndVerifyClientCert
   sniStrict: true
-  preferServerCipherSuites: true
   alpnProtocols:
     - foobar
     - foobar
