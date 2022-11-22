@@ -1,0 +1,65 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - foo
+
+  routes:
+    - match: Host(`foo.com`) && PathPrefix(`/bar`)
+      kind: Rule
+      priority: 12
+      services:
+        - name: test-weighted
+          kind: TraefikService
+        - name: test-mirror
+          kind: TraefikService
+      middlewares:
+        - name: test-errorpage
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: test-weighted
+  namespace: default
+
+spec:
+  weighted:
+    services:
+      - name: whoami-without-endpoints-subsets
+        weight: 1
+        port: 80
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TraefikService
+metadata:
+  name: test-mirror
+  namespace: default
+
+spec:
+  mirroring:
+    name: whoami-without-endpoints-subsets
+    port: 80
+    mirrors:
+      - name: whoami-without-endpoints-subsets
+        port: 80
+      - name: test-weighted
+        kind: TraefikService
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-errorpage
+  namespace: default
+
+spec:
+  errors:
+    service:
+      name: whoami-without-endpoints-subsets
+      port: 80
