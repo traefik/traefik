@@ -450,7 +450,6 @@
       cipherSuites = ["foobar", "foobar"]
       curvePreferences = ["foobar", "foobar"]
       sniStrict = true
-      preferServerCipherSuites = true
       alpnProtocols = ["foobar", "foobar"]
       [tls.options.Options0.clientAuth]
         caFiles = ["foobar", "foobar"]
@@ -461,7 +460,6 @@
       cipherSuites = ["foobar", "foobar"]
       curvePreferences = ["foobar", "foobar"]
       sniStrict = true
-      preferServerCipherSuites = true
       alpnProtocols = ["foobar", "foobar"]
       [tls.options.Options1.clientAuth]
         caFiles = ["foobar", "foobar"]
