@@ -336,7 +336,6 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
         - kind: Service
           name: foo
           namespace: default
-          passHostHeader: true
           port: 80                      # [9]
           scheme: https
           serversTransport: transport   # [10]
@@ -406,7 +405,6 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
         - kind: Service
           name: foo
           namespace: default
-          passHostHeader: true
           port: 80
           scheme: https
           sticky:
@@ -1679,9 +1677,15 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
 
 `ServersTransport` is the CRD implementation of a [ServersTransport](../services/index.md#serverstransport).
 
-!!! important "Default serversTransport"
-    If no `serversTransport` is specified, the `default@internal` will be used. 
-    The `default@internal` serversTransport is created from the [static configuration](../overview.md#http-servers-transports). 
+!!! important "Default ServersTransport"
+
+    When using the ServersTransport resource in Kubernetes, 
+    one might setup a default set of options that should apply to communications between Traefik and the servers.  
+    To achieve that, you will have to create a ServersTransport resource with the name `default`.
+    There may exist only one ServersTransport with the name `default` (across all namespaces) - otherwise they will be dropped.  
+    To explicitly use a different ServersTransport (and using the Kubernetes Service resources)
+    you will have to add an annotation to the Kubernetes Service in the following form:
+    `traefik.ingress.kubernetes.io/service.serverstransport: <resource-namespace>-<resource-name>@kubernetescrd`
 
 !!! info "ServersTransport Attributes"
    
@@ -1689,25 +1693,36 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
     apiVersion: traefik.containo.us/v1alpha1
     kind: ServersTransport
     metadata:
-      name: mytransport
+      name: mytransport                    # [1]
       namespace: default
     
     spec:
-      serverName: foobar                        # [1]
-      insecureSkipVerify: true                  # [2]
-      rootCAsSecrets:                           # [3]
-        - foobar
-        - foobar
-      certificatesSecrets:                      # [4]
-        - foobar
-        - foobar
-      maxIdleConnsPerHost: 1                    # [5]
-      forwardingTimeouts:                       # [6]
-        dialTimeout: 42s                        # [7]
-        responseHeaderTimeout: 42s              # [8]
-        idleConnTimeout: 42s                    # [9]
-      peerCertURI: foobar                       # [10]
-      disableHTTP2: true                        # [11]
+        tls:
+          serverName: foobar               # [2]
+          insecureSkipVerify: true         # [3]
+          rootCAsSecrets:                  # [4]
+            - foobar
+            - foobar
+          certificatesSecrets:             # [5]
+            - foobar
+            - foobar
+          peerCertURI: foobar              # [6]
+          spiffe:                          # [7] 
+            trustDomain: foobar            # [8] 
+            ids:                           # [9]
+              - spiffe://domain/foobar
+              - spiffe://domain/foobar
+
+        http:
+          enableHTTP2: true                # [10]
+          passHostHeader: true             # [11]
+          maxIdleConnsPerHost: 1           # [12]
+          forwardingTimeouts:              # [13]
+            dialTimeout: 42s               # [14]
+            responseHeaderTimeout: 42s     # [15]
+            idleConnTimeout: 42s           # [16]
+            readIdleTimeout: 42s           # [17]
+            pingTimeout: 42s               # [18]
       spiffe:                                   # [12] 
         ids:                                    # [13]
         - spiffe://trust-domain/id1
@@ -1715,19 +1730,26 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
         trustDomain: "spiffe://trust-domain"    # [14]
     ```
 
-| Ref  | Attribute               | Purpose                                                                                                                                                                 |
-|------|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1]  | `serverName`            | ServerName used to contact the server.                                                                                                                                  |
-| [2]  | `insecureSkipVerify`    | Controls whether the server's certificate chain and host name is verified.                                                                                              |
-| [3]  | `rootCAsSecrets`        | Defines the set of root certificate authorities to use when verifying server certificates. The secret must contain a certificate under either a tls.ca or a ca.crt key. |
-| [4]  | `certificatesSecrets`   | Certificates to present to the server for mTLS.                                                                                                                         |
-| [5]  | `maxIdleConnsPerHost`   | Controls the maximum idle (keep-alive) connections to keep per-host. If zero, `defaultMaxIdleConnsPerHost` is used.                                                     |
-| [6]  | `forwardingTimeouts`    | Timeouts for requests forwarded to the servers.                                                                                                                         |
-| [7]  | `dialTimeout`           | The amount of time to wait until a connection to a server can be established. If zero, no timeout exists.                                                               |
-| [8]  | `responseHeaderTimeout` | The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists.                    |
-| [9]  | `idleConnTimeout`       | The maximum amount of time an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout exists.                                          |
-| [10] | `peerCertURI`           | URI used to match against SAN URIs during the server's certificate verification.                                                                                        |
-| [11] | `disableHTTP2`          | Disables HTTP/2 for connections with servers.                                                                                                                           |
+| Ref  | Attribute                                  | Purpose                                                                                                                                                                 |
+|------|--------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [1]  | `name`                                     | Defines the name of the ServersTransport resource. One can use `default` as name to redefine the default ServersTransport.                                              |
+| [2]  | `tls.serverName`                           | ServerName used to contact the server.                                                                                                                                  |
+| [3]  | `tls.insecureSkipVerify`                   | Controls whether the server's certificate chain and host name is verified.                                                                                              |
+| [4]  | `tls.rootCAsSecrets`                       | Defines the set of root certificate authorities to use when verifying server certificates. The secret must contain a certificate under either a tls.ca or a ca.crt key. |
+| [5]  | `tls.certificatesSecrets`                  | Certificates to present to the server for mTLS.                                                                                                                         |
+| [6]  | `tls.peerCertURI`                          | URI used to match against SAN URIs during the server's certificate verification.                                                                                        |
+| [7]  | `tls.spiffe`                               | Configures SPIFFE authentication. Please note that [SPIFFE](../../https/spiffe.md) must be enabled in the static configuration before using it.                         |
+| [8]  | `spiffe.trustDomain`                       | Defines the allowed SPIFFE trust domain.                                                                                                                                |
+| [9]  | `spiffe.ids`                               | Defines the allowed SPIFFE IDs. This takes precedence over the SPIFFE TrustDomain.                                                                                      |
+| [10] | `http.enableHTTP2`                         | Enables HTTP/2 for connections with servers.                                                                                                                            |
+| [11] | `http.passHostHeader`                      | Forward client Host header to server.                                                                                                                                   |
+| [12] | `http.maxIdleConnsPerHost`                 | Controls the maximum idle (keep-alive) connections to keep per-host. If zero, `defaultMaxIdleConnsPerHost` is used.                                                     |
+| [13] | `http.forwardingTimeouts`                  | Timeouts for requests forwarded to the servers.                                                                                                                         |
+| [14] | `forwardingTimeouts.dialTimeout`           | The amount of time to wait until a connection to a server can be established. If zero, no timeout exists.                                                               |
+| [15] | `forwardingTimeouts.responseHeaderTimeout` | The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists.                    |
+| [16] | `forwardingTimeouts.idleConnTimeout`       | The maximum amount of time an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout exists.                                          |
+| [17] | `forwardingTimeouts.readIdleTimeout`       | Timeout after which a health check using ping frame will be carried out if no frame is received on the HTTP/2 connection.                                               |
+| [18] | `forwardingTimeouts.pingTimeout`           | Timeout after which the HTTP/2 connection will be closed if a response to ping is not received.                                                                         |
 | [12] | `spiffe`                | The spiffe configuration.                                                                                                                                               |
 | [13] | `ids`                   | Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).                                                                                          |
 | [14] | `trustDomain`           | Defines the allowed SPIFFE trust domain.                                                                                                                                |
@@ -1746,8 +1768,9 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
       namespace: default
     
     spec:
-      serverName: example.org
-      insecureSkipVerify: true
+        tls:
+          serverName: example.org
+          insecureSkipVerify: true
     ```
     
     ```yaml tab="IngressRoute"

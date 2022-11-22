@@ -116,8 +116,8 @@ For example, to change the rule, you could add the label ```traefik.http.routers
 To update the configuration of the Service automatically attached to the service,
 add labels starting with `traefik.http.services.{name-of-your-choice}.`, followed by the option you want to change.
 
-For example, to change the `passHostHeader` behavior,
-you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.passhostheader=false`.
+For example, to change the server `scheme`,
+you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.server.scheme=https`.
 
 !!! warning "The character `@` is not authorized in the service name `<service_name>`."
 
@@ -145,14 +145,6 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
     
     ```yaml
     traefik.http.services.<service_name>.loadbalancer.serverstransport=foobar@file
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.passhostheader`"
-
-    See [pass Host header](../services/index.md#pass-host-header) for more information.
-
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.passhostheader=true
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.headers.<header_name>`"
