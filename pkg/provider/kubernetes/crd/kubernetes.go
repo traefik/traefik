@@ -611,7 +611,6 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alp
 	}
 
 	forwardAuth.TLS = &types.ClientTLS{
-		CAOptional:         auth.TLS.CAOptional,
 		InsecureSkipVerify: auth.TLS.InsecureSkipVerify,
 	}
 

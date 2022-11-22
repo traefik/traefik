@@ -163,7 +163,6 @@ http:
         address: foobar
         tls:
           ca: foobar
-          caOptional: true
           cert: foobar
           key: foobar
           insecureSkipVerify: true
@@ -207,13 +206,9 @@ http:
         hostsProxyHeaders:
           - foobar
           - foobar
-        sslRedirect: true
-        sslTemporaryRedirect: true
-        sslHost: foobar
         sslProxyHeaders:
           name0: foobar
           name1: foobar
-        sslForceHost: true
         stsSeconds: 42
         stsIncludeSubdomains: true
         stsPreload: true
@@ -226,7 +221,6 @@ http:
         contentSecurityPolicy: foobar
         publicKey: foobar
         referrerPolicy: foobar
-        featurePolicy: foobar
         permissionsPolicy: foobar
         isDevelopment: true
     Middleware11:
@@ -318,7 +312,6 @@ http:
         prefixes:
           - foobar
           - foobar
-        forceSlash: true
     Middleware22:
       stripPrefixRegex:
         regex:
@@ -508,7 +501,6 @@ tls:
           - foobar
         clientAuthType: foobar
       sniStrict: true
-      preferServerCipherSuites: true
       alpnProtocols:
         - foobar
         - foobar
@@ -527,7 +519,6 @@ tls:
           - foobar
         clientAuthType: foobar
       sniStrict: true
-      preferServerCipherSuites: true
       alpnProtocols:
         - foobar
         - foobar
