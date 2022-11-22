@@ -16,6 +16,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/go-retryablehttp"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"golang.org/x/mod/module"
 	"golang.org/x/mod/zip"
 	"gopkg.in/yaml.v3"
@@ -77,8 +80,13 @@ func NewClient(opts ClientOptions) (*Client, error) {
 		return nil, fmt.Errorf("failed to create archives directory %s: %w", archivesPath, err)
 	}
 
+	client := retryablehttp.NewClient()
+	client.Logger = logs.NewRetryableHTTPLogger(log.Logger)
+	client.HTTPClient = &http.Client{Timeout: 10 * time.Second}
+	client.RetryMax = 3
+
 	return &Client{
-		HTTPClient: &http.Client{Timeout: 5 * time.Second},
+		HTTPClient: client.StandardClient(),
 		baseURL:    baseURL,
 
 		archives:  archivesPath,
