@@ -50,3 +50,21 @@ and should be explicitly combined using logical operators to mimic previous beha
 
 In v3, the `Content-Type` header is not auto-detected anymore when it is not set by the backend.
 One should use the `ContentType` middleware to enable the `Content-Type` header value auto-detection.
+
+## PassHostHeader
+
+In v3, the `PassHostHeader` config option has been moved to the [ServersTransport](../routing/services/index.md#passhostheader) resource.
+
+## ResponseForwarding.flushInterval
+
+In v3, the `ResponseForwarding.flushInterval` config option has been removed as chunked responses are now handled automatically.
+
+## HTTP/2
+
+In v3, HTTP/2 is disabled by default between Traefik and the backends unless it is enabled in the configured [ServersTransport](../routing/services/index.md#passhostheader) 
+or the backend URL uses the `h2c` scheme.
+
+## ServersTransport
+
+In v3, the `default` [ServersTransport](../routing/services/index.md) should now be configured in the dynamic configuration.
+The ServersTransport resource now contains the [tls](../routing/services/index.md#tls) and [http](../routing/services/index.md#http) top level config options.  
