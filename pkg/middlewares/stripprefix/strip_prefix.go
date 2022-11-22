@@ -19,20 +19,18 @@ const (
 
 // stripPrefix is a middleware used to strip prefix from an URL request.
 type stripPrefix struct {
-	next       http.Handler
-	prefixes   []string
-	forceSlash bool // TODO Must be removed (breaking), the default behavior must be forceSlash=false
-	name       string
+	next     http.Handler
+	prefixes []string
+	name     string
 }
 
 // New creates a new strip prefix middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.StripPrefix, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 	return &stripPrefix{
-		prefixes:   config.Prefixes,
-		forceSlash: config.ForceSlash,
-		next:       next,
-		name:       name,
+		prefixes: config.Prefixes,
+		next:     next,
+		name:     name,
 	}, nil
 }
 
@@ -61,13 +59,6 @@ func (s *stripPrefix) serveRequest(rw http.ResponseWriter, req *http.Request, pr
 }
 
 func (s *stripPrefix) getPrefixStripped(urlPath, prefix string) string {
-	if s.forceSlash {
-		// Only for compatibility reason with the previous behavior,
-		// but the previous behavior is wrong.
-		// This needs to be removed in the next breaking version.
-		return "/" + strings.TrimPrefix(strings.TrimPrefix(urlPath, prefix), "/")
-	}
-
 	return ensureLeadingSlash(strings.TrimPrefix(urlPath, prefix))
 }
 

@@ -313,7 +313,6 @@ http:
         prefixes:
           - foobar
           - foobar
-        forceSlash: true
     Middleware22:
       stripPrefixRegex:
         regex:
