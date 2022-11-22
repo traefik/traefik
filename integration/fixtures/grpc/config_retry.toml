@@ -6,9 +6,6 @@
   level = "DEBUG"
   noColor = true
 
-[serversTransport]
-  rootCAs = [ """{{ .CertContent }}""" ]
-
 [entryPoints]
   [entryPoints.websecure]
     address = ":4443"
@@ -20,6 +17,13 @@
   filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
+
+[http.serversTransports.default]
+  [http.serversTransports.default.http]
+    enableHTTP2 = true
+
+  [http.serversTransports.default.tls]
+    rootCAs = [ """{{ .CertContent }}""" ]
 
 [http.routers]
   [http.routers.router1]
@@ -34,8 +38,6 @@
 
 [http.services]
   [http.services.service1.loadBalancer]
-  [http.services.service1.loadBalancer.responseForwarding]
-    flushInterval = "1ms"
     [[http.services.service1.loadBalancer.servers]]
       url = "https://127.0.0.1:{{ .GRPCServerPort }}"
 
