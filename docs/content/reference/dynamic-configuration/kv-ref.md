@@ -304,7 +304,6 @@
 | `traefik/tls/options/Options0/curvePreferences/1` | `foobar` |
 | `traefik/tls/options/Options0/maxVersion` | `foobar` |
 | `traefik/tls/options/Options0/minVersion` | `foobar` |
-| `traefik/tls/options/Options0/preferServerCipherSuites` | `true` |
 | `traefik/tls/options/Options0/sniStrict` | `true` |
 | `traefik/tls/options/Options1/alpnProtocols/0` | `foobar` |
 | `traefik/tls/options/Options1/alpnProtocols/1` | `foobar` |
@@ -317,7 +316,6 @@
 | `traefik/tls/options/Options1/curvePreferences/1` | `foobar` |
 | `traefik/tls/options/Options1/maxVersion` | `foobar` |
 | `traefik/tls/options/Options1/minVersion` | `foobar` |
-| `traefik/tls/options/Options1/preferServerCipherSuites` | `true` |
 | `traefik/tls/options/Options1/sniStrict` | `true` |
 | `traefik/tls/stores/Store0/defaultCertificate/certFile` | `foobar` |
 | `traefik/tls/stores/Store0/defaultCertificate/keyFile` | `foobar` |
