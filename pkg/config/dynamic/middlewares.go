@@ -538,14 +538,6 @@ type Retry struct {
 type StripPrefix struct {
 	// Prefixes defines the prefixes to strip from the request URL.
 	Prefixes []string `json:"prefixes,omitempty" toml:"prefixes,omitempty" yaml:"prefixes,omitempty" export:"true"`
-	// ForceSlash ensures that the resulting stripped path is not the empty string, by replacing it with / when necessary.
-	// Default: true.
-	ForceSlash bool `json:"forceSlash,omitempty" toml:"forceSlash,omitempty" yaml:"forceSlash,omitempty" export:"true"` // Deprecated
-}
-
-// SetDefaults Default values for a StripPrefix.
-func (s *StripPrefix) SetDefaults() {
-	s.ForceSlash = true
 }
 
 // +k8s:deepcopy-gen=true
