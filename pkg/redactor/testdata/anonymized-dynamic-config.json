@@ -99,8 +99,7 @@
         "stripPrefix": {
           "prefixes": [
             "foo"
-          ],
-          "forceSlash": true
+          ]
         },
         "stripPrefixRegex": {
           "regex": [

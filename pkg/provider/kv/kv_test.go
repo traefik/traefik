@@ -200,7 +200,6 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware18/retry/attempts":                                       "42",
 		"traefik/http/middlewares/Middleware19/stripPrefix/prefixes/0":                               "foobar",
 		"traefik/http/middlewares/Middleware19/stripPrefix/prefixes/1":                               "foobar",
-		"traefik/http/middlewares/Middleware19/stripPrefix/forceSlash":                               "true",
 		"traefik/tcp/routers/TCPRouter0/entryPoints/0":                                               "foobar",
 		"traefik/tcp/routers/TCPRouter0/entryPoints/1":                                               "foobar",
 		"traefik/tcp/routers/TCPRouter0/service":                                                     "foobar",
@@ -372,7 +371,6 @@ func Test_buildConfiguration(t *testing.T) {
 							"foobar",
 							"foobar",
 						},
-						ForceSlash: true,
 					},
 				},
 				"Middleware00": {

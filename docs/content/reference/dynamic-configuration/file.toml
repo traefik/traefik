@@ -275,7 +275,6 @@
     [http.middlewares.Middleware21]
       [http.middlewares.Middleware21.stripPrefix]
         prefixes = ["foobar", "foobar"]
-        forceSlash = true
     [http.middlewares.Middleware22]
       [http.middlewares.Middleware22.stripPrefixRegex]
         regex = ["foobar", "foobar"]
