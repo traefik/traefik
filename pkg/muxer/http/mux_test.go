@@ -229,7 +229,6 @@ func TestMuxer(t *testing.T) {
 
 			results := make(map[string]int)
 			for calledURL := range test.expected {
-
 				req := testhelpers.MustNewRequest(http.MethodGet, calledURL, http.NoBody)
 
 				// Useful for the ClientIP matcher
@@ -243,6 +242,7 @@ func TestMuxer(t *testing.T) {
 				reqHost.ServeHTTP(w, req, muxer.ServeHTTP)
 				results[calledURL] = w.Code
 			}
+
 			assert.Equal(t, test.expected, results)
 		})
 	}
