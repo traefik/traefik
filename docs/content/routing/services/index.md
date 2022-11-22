@@ -445,31 +445,6 @@ Below are the available options for the health check mechanism:
             My-Header = "bar"
     ```
 
-#### Pass Host Header
-
-The `passHostHeader` allows to forward client Host header to server.
-
-By default, `passHostHeader` is true.
-
-??? example "Don't forward the host header -- Using the [File Provider](../../providers/file.md)"
-
-    ```yaml tab="YAML"
-    ## Dynamic configuration
-    http:
-      services:
-        Service01:
-          loadBalancer:
-            passHostHeader: false
-    ```
-
-    ```toml tab="TOML"
-    ## Dynamic configuration
-    [http.services]
-      [http.services.Service01]
-        [http.services.Service01.loadBalancer]
-          passHostHeader = false
-    ```
-
 #### ServersTransport
 
 `serversTransport` allows to reference a [ServersTransport](./index.md#serverstransport_1) configuration for the communication between Traefik and your servers.
@@ -494,14 +469,23 @@ By default, `passHostHeader` is true.
     ```
 
 !!! info default serversTransport
-    If no serversTransport is specified, the `default@internal` will be used.
-    The `default@internal` serversTransport is created from the [static configuration](../overview.md#transport-configuration).
 
+    If no serversTransport is specified, the `default` will be used.
+    
 ### ServersTransport
 
 ServersTransport allows to configure the transport between Traefik and your servers.
 
-#### `ServerName`
+!!! important "Default ServersTransport"
+
+    The `default` ServersTransport is used when no servers transport is configured in a servers load-balancer.
+    When specifying the `default` servers transport explicitly, make sure to not specify the provider namespace as the `default` servers transport does not have one.  
+    Conversely, for cross-provider references, for example, when referencing the file provider from a docker label,
+    the provider namespace must be specified, for example: `traefik.http.services.myservice.loadbalancer.serverstransport=mytransport@file`
+
+#### TLS
+
+##### `serverName`
 
 _Optional_
 
@@ -512,12 +496,13 @@ _Optional_
 http:
   serversTransports:
     mytransport:
-      serverName: "myhost"
+      tls:
+        serverName: myhost
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[http.serversTransports.mytransport]
+[http.serversTransports.mytransport.tls]
   serverName = "myhost"
 ```
 
@@ -529,10 +514,88 @@ metadata:
   namespace: default
 
 spec:
-    serverName: "test"
+    tls:
+      serverName: "test"
 ```
 
-#### `Certificates`
+##### `insecureSkipVerify`
+
+_Optional_
+
+`insecureSkipVerify` controls whether the server's certificate chain and host name is verified.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      tls:
+        insecureSkipVerify: true
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport.tls]
+  insecureSkipVerify = true
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    tls:
+      insecureSkipVerify: true
+```
+
+##### `rootCAs`
+
+_Optional_
+
+`rootCAs` defines the set of root certificate authorities (as file paths, or data bytes) to use when verifying server certificates.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      tls:
+        rootCAs:
+          - foo.crt
+          - bar.crt
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport.tls]
+  rootCAs = ["foo.crt", "bar.crt"]
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    tls:
+      rootCAsSecrets:
+      - myca
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: myca
+
+  data:
+    ca.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+```
+
+##### `certificates`
 
 _Optional_
 
@@ -544,14 +607,15 @@ that will be set as client certificates for mTLS.
 http:
   serversTransports:
     mytransport:
-      certificates:
-        - certFile: foo.crt
-          keyFile: bar.crt
+      tls:
+        certificates:
+          - certFile: foo.crt
+            keyFile: bar.crt
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[[http.serversTransports.mytransport.certificates]]
+[[http.serversTransports.mytransport.certificates.tls]]
   certFile = "foo.crt"
   keyFile = "bar.crt"
 ```
@@ -564,8 +628,9 @@ metadata:
   namespace: default
 
 spec:
-    certificatesSecrets:
-    - mycert
+    tls:
+      certificatesSecrets:
+      - mycert
 
 ---
 apiVersion: v1
@@ -578,159 +643,25 @@ metadata:
     tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
 ```
 
-#### `insecureSkipVerify`
-
-_Optional_
-
-`insecureSkipVerify` controls whether the server's certificate chain and host name is verified.
-
-```yaml tab="File (YAML)"
-## Dynamic configuration
-http:
-  serversTransports:
-    mytransport:
-      insecureSkipVerify: true
-```
-
-```toml tab="File (TOML)"
-## Dynamic configuration
-[http.serversTransports.mytransport]
-  insecureSkipVerify = true
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
-kind: ServersTransport
-metadata:
-  name: mytransport
-  namespace: default
-
-spec:
-    insecureSkipVerify: true
-```
-
-#### `rootCAs`
-
-_Optional_
-
-`rootCAs` defines the set of root certificate authorities (as file paths, or data bytes) to use when verifying server certificates.
-
-```yaml tab="File (YAML)"
-## Dynamic configuration
-http:
-  serversTransports:
-    mytransport:
-      rootCAs:
-        - foo.crt
-        - bar.crt
-```
-
-```toml tab="File (TOML)"
-## Dynamic configuration
-[http.serversTransports.mytransport]
-  rootCAs = ["foo.crt", "bar.crt"]
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
-kind: ServersTransport
-metadata:
-  name: mytransport
-  namespace: default
-
-spec:
-    rootCAsSecrets:
-    - myca
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: myca
-
-  data:
-    ca.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
-```
-
-#### `maxIdleConnsPerHost`
-
-_Optional, Default=2_
-
-If non-zero, `maxIdleConnsPerHost` controls the maximum idle (keep-alive) connections to keep per-host.
-
-```yaml tab="File (YAML)"
-## Dynamic configuration
-http:
-  serversTransports:
-    mytransport:
-      maxIdleConnsPerHost: 7
-```
-
-```toml tab="File (TOML)"
-## Dynamic configuration
-[http.serversTransports.mytransport]
-  maxIdleConnsPerHost = 7
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
-kind: ServersTransport
-metadata:
-  name: mytransport
-  namespace: default
-
-spec:
-    maxIdleConnsPerHost: 7
-```
-
-#### `disableHTTP2`
-
-_Optional, Default=false_
-
-`disableHTTP2` disables HTTP/2 for connections with servers.
-
-```toml tab="File (TOML)"
-## Dynamic configuration
-[http.serversTransports.mytransport]
-  disableHTTP2 = true
-```
-
-```yaml tab="File (YAML)"
-## Dynamic configuration
-http:
-  serversTransports:
-    mytransport:
-      disableHTTP2: true
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
-kind: ServersTransport
-metadata:
-  name: mytransport
-  namespace: default
-
-spec:
-    disableHTTP2: true
-```
-
-#### `peerCertURI`
+##### `peerCertURI`
 
 _Optional, Default=false_
 
 `peerCertURI` defines the URI used to match against SAN URIs during the server's certificate verification.
 
-```toml tab="File (TOML)"
-## Dynamic configuration
-[http.serversTransports.mytransport]
-  peerCertURI = "foobar"
-```
-
 ```yaml tab="File (YAML)"
 ## Dynamic configuration
 http:
   serversTransports:
     mytransport:
-      peerCertURI: foobar
+      tls:
+        peerCertURI: foobar
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport.tls]
+  peerCertURI = "foobar"
 ```
 
 ```yaml tab="Kubernetes"
@@ -741,19 +672,20 @@ metadata:
   namespace: default
 
 spec:
-    peerCertURI: foobar
+    tls:
+      peerCertURI: foobar
 ```
 
-#### `spiffe`
+##### `spiffe`
 
 Please note that [SPIFFE](../../https/spiffe.md) must be enabled in the static configuration
 before using it to secure the connection between Traefik and the backends.
 
-##### `spiffe.ids`
+###### `spiffe.ids`
 
 _Optional_
 
-`ids` defines the allowed SPIFFE IDs. 
+`ids` defines the allowed SPIFFE IDs.
 This takes precedence over the SPIFFE TrustDomain.
 
 ```yaml tab="File (YAML)"
@@ -761,15 +693,16 @@ This takes precedence over the SPIFFE TrustDomain.
 http:
   serversTransports:
     mytransport:
-      spiffe:
-        ids:
-          - spiffe://trust-domain/id1
-          - spiffe://trust-domain/id2
+      tls:
+        spiffe:
+          ids:
+            - spiffe://trust-domain/id1
+            - spiffe://trust-domain/id2
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[http.serversTransports.mytransport.spiffe]
+[http.serversTransports.mytransport.tls.spiffe]
   ids = ["spiffe://trust-domain/id1", "spiffe://trust-domain/id2"]
 ```
 
@@ -781,13 +714,14 @@ metadata:
   namespace: default
 
 spec:
-    spiffe:
-      ids:
-        - spiffe://trust-domain/id1
-        - spiffe://trust-domain/id2
+    tls:
+      spiffe:
+        ids:
+          - spiffe://trust-domain/id1
+          - spiffe://trust-domain/id2
 ```
 
-##### `spiffe.trustDomain`
+###### `spiffe.trustDomain`
 
 _Optional_
 
@@ -798,13 +732,14 @@ _Optional_
 http:
   serversTransports:
     mytransport:
-        spiffe:
-          trustDomain: spiffe://trust-domain
+        tls:
+          spiffe:
+            trustDomain: spiffe://trust-domain
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[http.serversTransports.mytransport.spiffe]
+[http.serversTransports.mytransport.tls.spiffe]
   trustDomain = "spiffe://trust-domain"
 ```
 
@@ -816,15 +751,117 @@ metadata:
   namespace: default
 
 spec:
-    spiffe:
-      trustDomain: "spiffe://trust-domain"
+    tls:
+      spiffe:
+        trustDomain: "spiffe://trust-domain"
 ```
 
-#### `forwardingTimeouts`
+#### HTTP
+
+##### `enableHTTP2`
+
+_Optional, Default=false_
+
+`enableHTTP2` enables HTTP/2 for connections with servers.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      http:
+        enableHTTP2: true
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport.http]
+  enableHTTP2 = true
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    http:
+      enableHTTP2: true
+```
+
+##### `passHostHeader`
+
+_Optional, Default=true_
+
+`passHostHeader` allows to forward client Host header to the server.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      http:
+        passHostHeader: true
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport.http]
+  passHostHeader = true
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    http:
+      passHostHeader: true
+```
+
+##### `maxIdleConnsPerHost`
+
+_Optional, Default=2_
+
+If non-zero, `maxIdleConnsPerHost` controls the maximum idle (keep-alive) connections to keep per-host.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      http:
+        maxIdleConnsPerHost: 7
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport.http]
+  maxIdleConnsPerHost = 7
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+    http:
+      maxIdleConnsPerHost: 7
+```
+
+##### `forwardingTimeouts`
 
 `forwardingTimeouts` are the timeouts applied when forwarding requests to the servers.
 
-##### `forwardingTimeouts.dialTimeout`
+###### `forwardingTimeouts.dialTimeout`
 
 _Optional, Default=30s_
 
@@ -836,13 +873,14 @@ Zero means no timeout.
 http:
   serversTransports:
     mytransport:
-      forwardingTimeouts:
-        dialTimeout: "1s"
+      http:    
+        forwardingTimeouts:
+          dialTimeout: "1s"
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[http.serversTransports.mytransport.forwardingTimeouts]
+[http.serversTransports.mytransport.http.forwardingTimeouts]
   dialTimeout = "1s"
 ```
 
@@ -854,11 +892,12 @@ metadata:
   namespace: default
 
 spec:
-    forwardingTimeouts:
-      dialTimeout: "1s"
+    http:
+      forwardingTimeouts:
+        dialTimeout: "1s"
 ```
 
-##### `forwardingTimeouts.responseHeaderTimeout`
+###### `forwardingTimeouts.responseHeaderTimeout`
 
 _Optional, Default=0s_
 
@@ -872,13 +911,14 @@ Zero means no timeout.
 http:
   serversTransports:
     mytransport:
-      forwardingTimeouts:
-        responseHeaderTimeout: "1s"
+      http:
+        forwardingTimeouts:
+          responseHeaderTimeout: "1s"
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[http.serversTransports.mytransport.forwardingTimeouts]
+[http.serversTransports.mytransport.http.forwardingTimeouts]
   responseHeaderTimeout = "1s"
 ```
 
@@ -890,11 +930,12 @@ metadata:
   namespace: default
 
 spec:
-    forwardingTimeouts:
-      responseHeaderTimeout: "1s"
+    http:
+      forwardingTimeouts:
+        responseHeaderTimeout: "1s"
 ```
 
-##### `forwardingTimeouts.idleConnTimeout`
+###### `forwardingTimeouts.idleConnTimeout`
 
 _Optional, Default=90s_
 
@@ -906,13 +947,14 @@ Zero means no limit.
 http:
   serversTransports:
     mytransport:
-      forwardingTimeouts:
-        idleConnTimeout: "1s"
+      http:
+        forwardingTimeouts:
+          idleConnTimeout: "1s"
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[http.serversTransports.mytransport.forwardingTimeouts]
+[http.serversTransports.mytransport.http.forwardingTimeouts]
   idleConnTimeout = "1s"
 ```
 
@@ -924,11 +966,12 @@ metadata:
   namespace: default
 
 spec:
-    forwardingTimeouts:
-      idleConnTimeout: "1s"
+    http:
+      forwardingTimeouts:
+        idleConnTimeout: "1s"
 ```
 
-##### `forwardingTimeouts.readIdleTimeout`
+###### `forwardingTimeouts.readIdleTimeout`
 
 _Optional, Default=0s_
 
@@ -944,13 +987,14 @@ If zero, no health check is performed.
 http:
   serversTransports:
     mytransport:
-      forwardingTimeouts:
-        readIdleTimeout: "1s"
+      http:    
+        forwardingTimeouts:
+          readIdleTimeout: "1s"
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[http.serversTransports.mytransport.forwardingTimeouts]
+[http.serversTransports.mytransport.http.forwardingTimeouts]
   readIdleTimeout = "1s"
 ```
 
@@ -962,11 +1006,12 @@ metadata:
   namespace: default
 
 spec:
-    forwardingTimeouts:
-      readIdleTimeout: "1s"
+    http:
+      forwardingTimeouts:
+        readIdleTimeout: "1s"
 ```
 
-##### `forwardingTimeouts.pingTimeout`
+###### `forwardingTimeouts.pingTimeout`
 
 _Optional, Default=15s_
 
@@ -978,13 +1023,14 @@ if a response to ping is not received.
 http:
   serversTransports:
     mytransport:
-      forwardingTimeouts:
-        pingTimeout: "1s"
+      http:  
+        forwardingTimeouts:
+          pingTimeout: "1s"
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[http.serversTransports.mytransport.forwardingTimeouts]
+[http.serversTransports.mytransport.http.forwardingTimeouts]
   pingTimeout = "1s"
 ```
 
@@ -996,8 +1042,9 @@ metadata:
   namespace: default
 
 spec:
-    forwardingTimeouts:
-      pingTimeout: "1s"
+    http:
+      forwardingTimeouts:
+        pingTimeout: "1s"
 ```
 
 ### Weighted Round Robin (service)

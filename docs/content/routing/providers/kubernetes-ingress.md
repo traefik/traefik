@@ -315,14 +315,6 @@ which in turn will create the resulting routers, services, handlers, etc.
     traefik.ingress.kubernetes.io/service.serverstransport: foobar@file
     ```
 
-??? info "`traefik.ingress.kubernetes.io/service.passhostheader`"
-
-    See [pass Host header](../services/index.md#pass-host-header) for more information.
-
-    ```yaml
-    traefik.ingress.kubernetes.io/service.passhostheader: "true"
-    ```
-
 ??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
@@ -906,7 +898,7 @@ and will connect via TLS automatically.
     Please note that by enabling TLS communication between traefik and your pods,
     you will have to have trusted certificates that have the proper trust chain and IP subject name.
     If this is not an option, you may need to skip TLS certificate verification.
-    See the [insecureSkipVerify](../../routing/overview.md#insecureskipverify) setting for more details.
+    See the [insecureSkipVerify](../../routing/services/index.md#insecureskipverify) setting for more details.
 
 ## Global Default Backend Ingresses
 
