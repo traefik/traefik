@@ -25,5 +25,6 @@ metadata:
   namespace: cross-ns
 
 spec:
-  disableHTTP2: true
+  http:
+    enableHTTP2: true
 

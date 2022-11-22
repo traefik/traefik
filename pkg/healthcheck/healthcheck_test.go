@@ -237,7 +237,7 @@ func TestServiceHealthChecker_checkHealthHTTP_NotFollowingRedirects(t *testing.T
 		Interval:        dynamic.DefaultHealthCheckInterval,
 		Timeout:         dynamic.DefaultHealthCheckTimeout,
 	}
-	healthChecker := NewServiceHealthChecker(ctx, nil, config, nil, nil, http.DefaultTransport, nil)
+	healthChecker := NewServiceHealthChecker(ctx, nil, config, nil, nil, nil, nil)
 
 	err := healthChecker.checkHealthHTTP(ctx, testhelpers.MustParseURL(server.URL))
 	require.NoError(t, err)
@@ -355,7 +355,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 
 			gauge := &testhelpers.CollectingGauge{}
 			serviceInfo := &runtime.ServiceInfo{}
-			hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, map[string]*url.URL{"test": targetURL})
+			hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, nil, map[string]*url.URL{"test": targetURL})
 
 			wg := sync.WaitGroup{}
 			wg.Add(1)
