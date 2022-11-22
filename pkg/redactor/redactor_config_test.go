@@ -175,8 +175,7 @@ func init() {
 					Prefix: "foo",
 				},
 				StripPrefix: &dynamic.StripPrefix{
-					Prefixes:   []string{"foo"},
-					ForceSlash: true,
+					Prefixes: []string{"foo"},
 				},
 				StripPrefixRegex: &dynamic.StripPrefixRegex{
 					Regex: []string{"foo"},

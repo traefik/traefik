@@ -871,11 +871,6 @@ spec:
                   This middleware removes the specified prefixes from the URL path.
                   More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/stripprefix/'
                 properties:
-                  forceSlash:
-                    description: 'ForceSlash ensures that the resulting stripped path
-                      is not the empty string, by replacing it with / when necessary.
-                      Default: true.'
-                    type: boolean
                   prefixes:
                     description: Prefixes defines the prefixes to strip from the request
                       URL.
