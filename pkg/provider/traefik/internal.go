@@ -78,7 +78,6 @@ func (i *Provider) createConfiguration(ctx context.Context) *dynamic.Configurati
 	i.prometheusConfiguration(cfg)
 	i.entryPointModels(cfg)
 	i.redirection(ctx, cfg)
-	i.serverTransport(cfg)
 
 	i.acme(cfg)
 
@@ -310,33 +309,4 @@ func (i *Provider) prometheusConfiguration(cfg *dynamic.Configuration) {
 	}
 
 	cfg.HTTP.Services["prometheus"] = &dynamic.Service{}
-}
-
-func (i *Provider) serverTransport(cfg *dynamic.Configuration) {
-	if i.staticCfg.ServersTransport == nil {
-		return
-	}
-
-	st := &dynamic.ServersTransport{
-		InsecureSkipVerify:  i.staticCfg.ServersTransport.InsecureSkipVerify,
-		RootCAs:             i.staticCfg.ServersTransport.RootCAs,
-		MaxIdleConnsPerHost: i.staticCfg.ServersTransport.MaxIdleConnsPerHost,
-	}
-
-	if i.staticCfg.ServersTransport.Spiffe != nil {
-		st.Spiffe = &dynamic.Spiffe{
-			IDs:         i.staticCfg.ServersTransport.Spiffe.IDs,
-			TrustDomain: i.staticCfg.ServersTransport.Spiffe.TrustDomain,
-		}
-	}
-
-	if i.staticCfg.ServersTransport.ForwardingTimeouts != nil {
-		st.ForwardingTimeouts = &dynamic.ForwardingTimeouts{
-			DialTimeout:           i.staticCfg.ServersTransport.ForwardingTimeouts.DialTimeout,
-			ResponseHeaderTimeout: i.staticCfg.ServersTransport.ForwardingTimeouts.ResponseHeaderTimeout,
-			IdleConnTimeout:       i.staticCfg.ServersTransport.ForwardingTimeouts.IdleConnTimeout,
-		}
-	}
-
-	cfg.HTTP.ServersTransports["default"] = st
 }

@@ -1,4 +1,4 @@
-package service
+package httputil
 
 import (
 	"bufio"
@@ -8,13 +8,14 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 	"time"
 
 	gorillawebsocket "github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v2/pkg/testhelpers"
 	"golang.org/x/net/websocket"
 )
 
@@ -114,12 +115,10 @@ func TestWebSocketEcho(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.Handle("/ws", websocket.Handler(func(conn *websocket.Conn) {
 		msg := make([]byte, 4)
-		_, err := conn.Read(msg)
+		n, err := conn.Read(msg)
 		require.NoError(t, err)
 
-		fmt.Println(string(msg))
-
-		_, err = conn.Write(msg)
+		_, err = conn.Write(msg[:n])
 		require.NoError(t, err)
 
 		err = conn.Close()
@@ -142,7 +141,10 @@ func TestWebSocketEcho(t *testing.T) {
 	err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
 	require.NoError(t, err)
 
-	fmt.Println(conn.ReadMessage())
+	_, msg, err := conn.ReadMessage()
+	require.NoError(t, err)
+
+	assert.Equal(t, "OK", string(msg))
 
 	err = conn.Close()
 	require.NoError(t, err)
@@ -178,11 +180,10 @@ func TestWebSocketPassHost(t *testing.T) {
 				}
 
 				msg := make([]byte, 4)
-				_, err := conn.Read(msg)
+				n, err := conn.Read(msg)
 				require.NoError(t, err)
 
-				fmt.Println(string(msg))
-				_, err = conn.Write(msg)
+				_, err = conn.Write(msg[:n])
 				require.NoError(t, err)
 
 				err = conn.Close()
@@ -207,7 +208,10 @@ func TestWebSocketPassHost(t *testing.T) {
 			err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
 			require.NoError(t, err)
 
-			fmt.Println(conn.ReadMessage())
+			_, msg, err := conn.ReadMessage()
+			require.NoError(t, err)
+
+			assert.Equal(t, "OK", string(msg))
 
 			err = conn.Close()
 			require.NoError(t, err)
@@ -341,11 +345,13 @@ func TestWebSocketRequestWithHeadersInResponseWriter(t *testing.T) {
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
-	f := buildSingleHostProxy(parseURI(t, srv.URL), true, 0, http.DefaultTransport, nil)
+	p, err := NewProxyBuilder().Build("default", &dynamic.HTTPClientConfig{PassHostHeader: true}, nil, testhelpers.MustParseURL(srv.URL))
+	require.NoError(t, err)
+
 	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		req.URL = parseURI(t, srv.URL)
+		req.URL = testhelpers.MustParseURL(srv.URL)
 		w.Header().Set("HEADER-KEY", "HEADER-VALUE")
-		f.ServeHTTP(w, req)
+		p.ServeHTTP(w, req)
 	}))
 	defer proxy.Close()
 
@@ -407,15 +413,17 @@ func TestWebSocketUpgradeFailed(t *testing.T) {
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
-	f := buildSingleHostProxy(parseURI(t, srv.URL), true, 0, http.DefaultTransport, nil)
+	p, err := NewProxyBuilder().Build("default", &dynamic.HTTPClientConfig{PassHostHeader: true}, nil, testhelpers.MustParseURL(srv.URL))
+	require.NoError(t, err)
+
 	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		path := req.URL.Path // keep the original path
 
 		if path == "/ws" {
 			// Set new backend URL
-			req.URL = parseURI(t, srv.URL)
+			req.URL = testhelpers.MustParseURL(srv.URL)
 			req.URL.Path = path
-			f.ServeHTTP(w, req)
+			p.ServeHTTP(w, req)
 		} else {
 			w.WriteHeader(http.StatusOK)
 		}
@@ -629,26 +637,24 @@ func (w *websocketRequest) open() (*websocket.Conn, net.Conn, error) {
 	return conn, client, err
 }
 
-func parseURI(t *testing.T, uri string) *url.URL {
-	t.Helper()
-
-	out, err := url.ParseRequestURI(uri)
-	require.NoError(t, err)
-	return out
-}
-
 func createProxyWithForwarder(t *testing.T, uri string, transport http.RoundTripper) *httptest.Server {
 	t.Helper()
 
-	u := parseURI(t, uri)
-	proxy := buildSingleHostProxy(u, true, 0, transport, nil)
+	u := testhelpers.MustParseURL(uri)
+
+	builder := NewProxyBuilder()
+	builder.roundTrippers = map[string]http.RoundTripper{"fwd": transport}
+
+	p, err := builder.Build("fwd", &dynamic.HTTPClientConfig{PassHostHeader: true}, nil, u)
+	require.NoError(t, err)
+
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		path := req.URL.Path // keep the original path
 		// Set new backend URL
 		req.URL = u
 		req.URL.Path = path
 
-		proxy.ServeHTTP(w, req)
+		p.ServeHTTP(w, req)
 	}))
 	t.Cleanup(srv.Close)
 	return srv

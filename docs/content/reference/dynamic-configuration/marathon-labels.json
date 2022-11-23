@@ -157,8 +157,6 @@
 "traefik.http.services.service01.loadbalancer.healthcheck.scheme": "foobar",
 "traefik.http.services.service01.loadbalancer.healthcheck.mode": "foobar",
 "traefik.http.services.service01.loadbalancer.healthcheck.timeout": "42s",
-"traefik.http.services.service01.loadbalancer.passhostheader": "true",
-"traefik.http.services.service01.loadbalancer.responseforwarding.flushinterval": "42s",
 "traefik.http.services.service01.loadbalancer.serverstransport": "foobar",
 "traefik.http.services.service01.loadbalancer.sticky.cookie": "true",
 "traefik.http.services.service01.loadbalancer.sticky.cookie.httponly": "true",

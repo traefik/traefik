@@ -10,10 +10,12 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/config/static"
 	"github.com/traefik/traefik/v2/pkg/metrics"
+	"github.com/traefik/traefik/v2/pkg/proxy"
 	"github.com/traefik/traefik/v2/pkg/server/middleware"
 	"github.com/traefik/traefik/v2/pkg/server/service"
 	th "github.com/traefik/traefik/v2/pkg/testhelpers"
 	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v2/pkg/tls/client"
 )
 
 func TestReuseService(t *testing.T) {
@@ -48,9 +50,14 @@ func TestReuseService(t *testing.T) {
 		),
 	)
 
-	roundTripperManager := service.NewRoundTripperManager(nil)
-	roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
-	managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry(), roundTripperManager, nil)
+	tlsClientConfigManager := client.NewTLSConfigManager(nil)
+	proxyBuilder := proxy.NewBuilder(tlsClientConfigManager)
+
+	configs := map[string]*dynamic.ServersTransport{"default": {HTTP: &dynamic.HTTPClientConfig{}}}
+	tlsClientConfigManager.Update(configs)
+	proxyBuilder.Update(configs)
+
+	managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry(), proxyBuilder, tlsClientConfigManager, nil)
 	tlsManager := tls.NewManager()
 
 	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(nil, nil, nil), nil, metrics.NewVoidRegistry())
@@ -184,9 +191,14 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 				},
 			}
 
-			roundTripperManager := service.NewRoundTripperManager(nil)
-			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
-			managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry(), roundTripperManager, nil)
+			tlsClientConfigManager := client.NewTLSConfigManager(nil)
+			proxyBuilder := proxy.NewBuilder(tlsClientConfigManager)
+
+			configs := map[string]*dynamic.ServersTransport{"default": {HTTP: &dynamic.HTTPClientConfig{}}}
+			tlsClientConfigManager.Update(configs)
+			proxyBuilder.Update(configs)
+
+			managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry(), proxyBuilder, tlsClientConfigManager, nil)
 			tlsManager := tls.NewManager()
 
 			factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(nil, nil, nil), nil, metrics.NewVoidRegistry())
@@ -225,9 +237,14 @@ func TestInternalServices(t *testing.T) {
 		),
 	)
 
-	roundTripperManager := service.NewRoundTripperManager(nil)
-	roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
-	managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry(), roundTripperManager, nil)
+	tlsClientConfigManager := client.NewTLSConfigManager(nil)
+	proxyBuilder := proxy.NewBuilder(tlsClientConfigManager)
+
+	configs := map[string]*dynamic.ServersTransport{"default": {HTTP: &dynamic.HTTPClientConfig{}}}
+	tlsClientConfigManager.Update(configs)
+	proxyBuilder.Update(configs)
+
+	managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry(), proxyBuilder, tlsClientConfigManager, nil)
 	tlsManager := tls.NewManager()
 
 	voidRegistry := metrics.NewVoidRegistry()

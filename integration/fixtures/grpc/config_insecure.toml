@@ -6,9 +6,6 @@
   level = "DEBUG"
   noColor = true
 
-[serversTransport]
-  insecureSkipVerify = true
-
 [entryPoints]
   [entryPoints.websecure]
     address = ":4443"
@@ -20,6 +17,13 @@
   filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
+
+[http.serversTransports.default]
+  [http.serversTransports.default.http]
+    enableHTTP2 = true
+
+  [http.serversTransports.default.tls]
+    insecureSkipVerify = true
 
 [http.routers]
   [http.routers.router1]
