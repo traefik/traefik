@@ -1092,7 +1092,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicCaseInsensitive(c *check.C) {
 	defer s.killCmd(cmd)
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("HostRegexp(`{subdomain:[a-z1-9-]+}.www.snitest.com`)"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("HostRegexp(`[a-z1-9-]+\\\\.www\\\\.snitest\\\\.com`)"))
 	c.Assert(err, checker.IsNil)
 
 	tlsConfig := &tls.Config{

@@ -4,6 +4,7 @@
 
 [log]
   level = "DEBUG"
+  noColor = true
 
 [entryPoints]
   [entryPoints.webHost]
@@ -30,12 +31,12 @@
   [http.routers.router2]
     entryPoints = ["webHostRegexp"]
     service = "service1"
-    rule = "!HostRegexp(`test.localhost`)"
+    rule = "!HostRegexp(`test\\.localhost`)"
 
   [http.routers.router3]
     entryPoints = ["webQuery"]
     service = "service1"
-    rule = "!Query(`foo=`)"
+    rule = "!QueryRegexp(`foo`, `.*`)"
 
 
 [http.services]

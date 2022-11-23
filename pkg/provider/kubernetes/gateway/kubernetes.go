@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -1186,19 +1187,35 @@ func hostRule(hostnames []v1alpha2.Hostname) (string, error) {
 			return "", fmt.Errorf("invalid rule: %q", host)
 		}
 
-		hostRegexNames = append(hostRegexNames, strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1))
+		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-zA-Z0-9-]+\.`, 1)
+		hostRegexNames = append(hostRegexNames, fmt.Sprintf("^%s$", host))
 	}
 
 	var res string
-	if len(hostNames) > 0 {
-		res = "Host(`" + strings.Join(hostNames, "`, `") + "`)"
+	if len(hostNames) == 1 {
+		res = "Host(`" + hostNames[0] + "`)"
+	} else if len(hostNames) > 1 {
+		res = "(Host(`" + hostNames[0] + "`)"
+		for _, matcher := range hostNames[1:] {
+			res += " || Host(`" + matcher + "`)"
+		}
+		res += ")"
 	}
 
 	if len(hostRegexNames) == 0 {
 		return res, nil
 	}
 
-	hostRegexp := "HostRegexp(`" + strings.Join(hostRegexNames, "`, `") + "`)"
+	var hostRegexp string
+	if len(hostRegexNames) == 1 {
+		hostRegexp = "HostRegexp(`" + hostRegexNames[0] + "`)"
+	} else if len(hostRegexNames) > 1 {
+		hostRegexp = "(HostRegexp(`" + hostRegexNames[0] + "`)"
+		for _, matcher := range hostRegexNames[1:] {
+			hostRegexp += " || HostRegexp(`" + matcher + "`)"
+		}
+		hostRegexp += ")"
+	}
 
 	if len(res) > 0 {
 		return "(" + res + " || " + hostRegexp + ")", nil
@@ -1235,7 +1252,16 @@ func hostSNIRule(hostnames []v1alpha2.Hostname) (string, error) {
 		return "HostSNI(`*`)", nil
 	}
 
-	return "HostSNI(" + strings.Join(matchers, ",") + ")", nil
+	if len(matchers) == 1 {
+		return "HostSNI(" + matchers[0] + ")", nil
+	}
+
+	rule := "(HostSNI(" + matchers[0] + ")"
+	for _, matcher := range matchers[1:] {
+		rule += " || HostSNI(" + matcher + ")"
+	}
+
+	return rule + ")", nil
 }
 
 func extractRule(routeRule v1alpha2.HTTPRouteRule, hostRule string) (string, error) {
