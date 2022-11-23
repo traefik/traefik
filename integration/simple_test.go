@@ -1337,7 +1337,7 @@ func (s *SimpleSuite) TestMuxer(c *check.C) {
 			expected: http.StatusOK,
 		},
 		{
-			desc:     "!Query with semicolon, no match",
+			desc:     "!Query with semicolon and empty query param value, no match",
 			request:  "GET /?foo=; HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
 			target:   "127.0.0.1:8002",
 			expected: http.StatusNotFound,
@@ -1367,9 +1367,7 @@ func (s *SimpleSuite) TestMuxer(c *check.C) {
 		resp, err := http.ReadResponse(bufio.NewReader(conn), nil)
 		c.Assert(err, checker.IsNil)
 
-		if resp.StatusCode != test.expected {
-			c.Errorf("%s failed with %d instead of %d", test.desc, resp.StatusCode, test.expected)
-		}
+		c.Assert(resp.StatusCode, checker.Equals, test.expected, check.Commentf(test.desc))
 
 		if test.body != "" {
 			body, err := io.ReadAll(resp.Body)

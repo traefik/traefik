@@ -214,77 +214,224 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
 Rules are a set of matchers configured with values, that determine if a particular request matches specific criteria.
 If the rule is verified, the router becomes active, calls middlewares, and then forwards the request to the service.
 
-??? tip "Backticks or Quotes?"
-    To set the value of a rule, use [backticks](https://en.wiktionary.org/wiki/backtick) ``` ` ``` or escaped double-quotes `\"`.
-
-    Single quotes `'` are not accepted since the values are [Golang's String Literals](https://golang.org/ref/spec#String_literals).
-
-!!! example "Host is example.com"
-
-    ```toml
-    rule = "Host(`example.com`)"
-    ```
-
-!!! example "Host is example.com OR Host is example.org AND path is /traefik"
-
-    ```toml
-    rule = "Host(`example.com`) || (Host(`example.org`) && Path(`/traefik`))"
-    ```
-
 The table below lists all the available matchers:
 
-| Rule                                                                   | Description                                                                                                    |
-|------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
-| ```Headers(`key`, `value`)```                                          | Check if there is a key `key`defined in the headers, with the value `value`                                    |
-| ```HeadersRegexp(`key`, `regexp`)```                                   | Check if there is a key `key`defined in the headers, with a value that matches the regular expression `regexp` |
-| ```Host(`example.com`, ...)```                                         | Check if the request domain (host header value) targets one of the given `domains`.                            |
-| ```HostHeader(`example.com`, ...)```                                   | Same as `Host`, only exists for historical reasons.                                                            |
-| ```HostRegexp(`example.com`, `{subdomain:[a-z]+}.example.com`, ...)``` | Match the request domain. See "Regexp Syntax" below.                                                           |
-| ```Method(`GET`, ...)```                                               | Check if the request method is one of the given `methods` (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `HEAD`)    |
-| ```Path(`/path`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`, ...)```         | Match exact request path. See "Regexp Syntax" below.                                                           |
-| ```PathPrefix(`/products/`, `/articles/{cat:[a-z]+}/{id:[0-9]+}`)```   | Match request prefix path. See "Regexp Syntax" below.                                                          |
-| ```Query(`foo=bar`, `bar=baz`)```                                      | Match Query String parameters. It accepts a sequence of key=value pairs.                                       |
-| ```ClientIP(`10.0.0.0/16`, `::1`)```                                   | Match if the request client IP is one of the given IP/CIDR. It accepts IPv4, IPv6 and CIDR formats.            |
+| Rule                                                            | Description                                                                    |
+|-----------------------------------------------------------------|:-------------------------------------------------------------------------------|
+| [```Header(`key`, `value`)```](#header-and-headerregexp)        | Matches requests containing a header named `key` set to `value`.               |
+| [```HeaderRegexp(`key`, `regexp`)```](#header-and-headerregexp) | Matches requests containing a header named `key` matching `regexp`.            |
+| [```Host(`domain`)```](#host-and-hostregexp)                    | Matches requests host set to `domain`.                                         |
+| [```HostRegexp(`regexp`)```](#host-and-hostregexp)              | Matches requests host matching `regexp`.                                       |
+| [```Method(`method`)```](#method)                               | Matches requests method set to `method`.                                       |
+| [```Path(`path`)```](#path-pathprefix-and-pathregexp)           | Matches requests path set to `path`.                                           |
+| [```PathPrefix(`prefix`)```](#path-pathprefix-and-pathregexp)   | Matches requests path prefix set to `prefix`.                                  |
+| [```PathRegexp(`regexp`)```](#path-pathprefix-and-pathregexp)   | Matches request path using `regexp`.                                           |
+| [```Query(`key`, `value`)```](#query-and-queryregexp)           | Matches requests query parameters named `key` set to `value`.                  |
+| [```QueryRegexp(`key`, `regexp`)```](#query-and-queryregexp)    | Matches requests query parameters named `key` matching `regexp`.               |
+| [```ClientIP(`ip`)```](#clientip)                               | Matches requests client IP using `ip`. It accepts IPv4, IPv6 and CIDR formats. |
 
-!!! important "Non-ASCII Domain Names"
+!!! tip "Backticks or Quotes?"
 
-    Non-ASCII characters are not supported in `Host` and `HostRegexp` expressions, and by doing so the associated router will be invalid.
-    For the `Host` expression, domain names containing non-ASCII characters must be provided as punycode encoded values ([rfc 3492](https://tools.ietf.org/html/rfc3492)).
-    As well, when using the `HostRegexp` expressions, in order to match domain names containing non-ASCII characters, the regular expression should match a punycode encoded domain name.
+    To set the value of a rule, use [backticks](https://en.wiktionary.org/wiki/backtick) ``` ` ``` or escaped double-quotes `\"`.
+
+    Single quotes `'` are not accepted since the values are [Go's String Literals](https://golang.org/ref/spec#String_literals).
 
 !!! important "Regexp Syntax"
 
-    `HostRegexp`, `PathPrefix`, and `Path` accept an expression with zero or more groups enclosed by curly braces, which are called named regexps.
-    Named regexps, of the form `{name:regexp}`, are the only expressions considered for regexp matching.
-    The regexp name (`name` in the above example) is an arbitrary value, that exists only for historical reasons.
+    Matchers that accept a regexp as their value use a [Go](https://golang.org/pkg/regexp/) flavored syntax.
 
-    Any `regexp` supported by [Go's regexp package](https://golang.org/pkg/regexp/) may be used.
-    For example, here is a case insensitive path matcher syntax: ```Path(`/{path:(?i:Products)}`)```.
-
-!!! info "Combining Matchers Using Operators and Parenthesis"
+!!! info "Expressing Complex Rules Using Operators and Parenthesis"
 
     The usual AND (`&&`) and OR (`||`) logical operators can be used, with the expected precedence rules,
     as well as parentheses.
+    
+    One can invert a matcher by using the NOT (`!`) operator.
+    
+    The following rule matches requests where:
+    
+    - either host is `example.com` OR,
+    - host is `example.org` AND path is NOT `/traefik`
+    
+    ```yaml
+    Host(`example.com`) || (Host(`example.org`) && !Path(`/traefik`))
+    ```
 
-!!! info "Inverting a matcher"
+#### Header and HeaderRegexp
 
-    One can invert a matcher by using the `!` operator.
+The `Header` and `HeaderRegexp` matchers allow to match requests that contain specific header.
 
-!!! important "Rule, Middleware, and Services"
+!!! example "Examples"
+    
+    Match requests with a `Content-Type` header set to `application/yaml`:
+    
+    ```yaml
+    Header(`Content-Type`, `application/yaml`)
+    ```
+    
+    Match requests with a `Content-Type` header set to either `application/json` or `application/yaml`:
+    
+    ```yaml
+    HeaderRegexp(`Content-Type`, `^application/(json|yaml)$`)
+    ```
+    
+    To match headers [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity), use the `(?i)` option:
+    
+    ```yaml
+    HeaderRegexp(`Content-Type`, `(?i)^application/(json|yaml)$`)
+    ```
 
-    The rule is evaluated "before" any middleware has the opportunity to work, and "before" the request is forwarded to the service.
+#### Host and HostRegexp
 
-!!! info "Path Vs PathPrefix"
+The `Host` and `HostRegexp` matchers allow to match requests that are targeted to a given host.
 
-    Use `Path` if your service listens on the exact path only. For instance, `Path: /products` would match `/products` but not `/products/shoes`.
+These matchers do not support non-ASCII characters, use punycode encoded values ([rfc 3492](https://tools.ietf.org/html/rfc3492)) to match such domains.
 
-    Use a `*Prefix*` matcher if your service listens on a particular base path but also serves requests on sub-paths.
-    For instance, `PathPrefix: /products` would match `/products` but also `/products/shoes` and `/products/shirts`.
-    Since the path is forwarded as-is, your service is expected to listen on `/products`.
+If no Host is set in the request URL (e.g., it's an IP address), these matchers will look at the `Host` header.
 
-!!! info "ClientIP matcher"
+!!! example "Examples"
 
-    The `ClientIP` matcher will only match the request client IP and does not use the `X-Forwarded-For` header for matching.
+    Match requests with `Host` set to `example.com`:
+    
+    ```yaml
+    Host(`example.com`)
+    ```
+ 
+    Match requests sent to any subdomain of `example.com`:
+    
+    ```yaml
+    HostRegexp(`^.+\.example\.com$`)
+    ```
+
+    Match requests with `Host` set to either `example.com` or `example.org`:
+    
+    ```yaml
+    HostRegexp(`^example\.(com|org)$`)
+    ```
+
+    To match domains [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity), use the `(?i)` option:
+
+    ```yaml
+    HostRegexp(`(?i)^example\.(com|org)$`)
+    ```
+
+#### Method
+
+The `Method` matchers allows to match requests sent with the given method.
+
+!!! example "Example"
+
+    Match `OPTIONS` requests:
+    
+    ```yaml
+    Method(`OPTIONS`)
+    ```
+
+#### Path, PathPrefix, and PathRegexp
+
+These matchers allow matching requests based on their URL path.
+
+For exact matches, use `Path` and its prefixed alternative `PathPrefix`, for regexp matches, use `PathRegexp`.
+
+Path are always starting with a `/`, except for `PathRegexp`.
+
+!!! example "Examples"
+
+    Match `/products` but neither `/products/shoes` nor `/products/`:
+    
+    ```yaml
+    Path(`/products`)
+    ```
+    
+    Match `/products` as well as everything under `/products`,
+    such as `/products/shoes`, `/products/` but also `/products-for-sale`:
+    
+    ```yaml
+    PathPrefix(`/products`)
+    ```
+
+    Match both `/products/shoes` and `/products/socks` with and ID like `/products/shoes/57`:
+
+    ```yaml
+    PathRegexp(`^/products/(shoes|socks)/[0-9]+$`)
+    ```
+
+    Match requests with a path ending in either `.jpeg`, `.jpg` or `.png`:
+
+    ```yaml
+    PathRegexp(`\.(jpeg|jpg|png)$`)
+    ```
+
+    Match `/products` as well as everything under `/products`,
+    such as `/products/shoes`, `/products/` but also `/products-for-sale`,
+    [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity):
+
+    ```yaml
+    HostRegexp(`(?i)^/products`)
+    ```
+
+#### Query and QueryRegexp
+
+The `Query` and `QueryRegexp` matchers allow to match requests based on query parameters.
+
+!!! example "Examples"
+
+    Match requests with a `mobile` query parameter set to `true`, such as in `/search?mobile=true`:
+    
+    ```yaml
+    Query(`mobile`, `true`)
+    ```
+
+    To match requests with a query parameter `mobile` that has no value, such as in `/search?mobile`, use:
+
+    ```yaml
+    Query(`mobile`)
+    ```
+
+    Match requests with a `mobile` query parameter set to either `true` or `yes`:
+    
+    ```yaml
+    QueryRegexp(`mobile`, `^(true|yes)$`)
+    ```
+
+    Match requests with a `mobile` query parameter set to any value (including the empty value):
+    
+    ```yaml
+    QueryRegexp(`mobile`, `^.*$`)
+    ```
+
+    To match query parameters [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity), use the `(?i)` option:
+
+    ```yaml
+    QueryRegexp(`mobile`, `(?i)^(true|yes)$`)
+    ```
+
+#### ClientIP
+
+The `ClientIP` matcher allows matching requests sent from the given client IP.
+
+It only matches the request client IP and does not use the `X-Forwarded-For` header for matching.
+
+!!! example "Examples"
+
+    Match requests coming from a given IP:
+    
+    ```yaml tab="IPv4"
+    ClientIP(`10.76.105.11`)
+    ```
+    
+    ```yaml tab="IPv6"
+    ClientIP(`::1`)
+    ```
+    
+    Match requests coming from a given subnet:
+
+    ```yaml tab="IPv4"
+    ClientIP(`192.168.1.0/24`)
+    ```
+
+    ```yaml tab="IPv6"
+    ClientIP(`fe80::/10`)
+    ```
 
 ### Priority
 
@@ -299,7 +446,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     http:
       routers:
         Router-1:
-          rule: "HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
+          rule: "HostRegexp(`[a-z]+\.traefik\.com`)"
           # ...
         Router-2:
           rule: "Host(`foobar.traefik.com`)"
@@ -310,7 +457,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     ## Dynamic configuration
     [http.routers]
       [http.routers.Router-1]
-        rule = "HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
+        rule = "HostRegexp(`[a-z]+\\.traefik\\.com`)"
         # ...
       [http.routers.Router-2]
         rule = "Host(`foobar.traefik.com`)"
@@ -319,10 +466,10 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
 
     In this case, all requests with host `foobar.traefik.com` will be routed through `Router-1` instead of `Router-2`.
 
-    | Name     | Rule                                               | Priority |
-    |----------|----------------------------------------------------|----------|
-    | Router-1 | ```HostRegexp(`{subdomain:[a-z]+}.traefik.com`)``` | 44       |
-    | Router-2 | ```Host(`foobar.traefik.com`)```                   | 26       |
+    | Name     | Rule                                     | Priority |
+    |----------|------------------------------------------|----------|
+    | Router-1 | ```HostRegexp(`[a-z]+\.traefik\.com`)``` | 44       |
+    | Router-2 | ```Host(`foobar.traefik.com`)```         | 26       |
 
     The previous table shows that `Router-1` has a higher priority than `Router-2`.
 
@@ -335,7 +482,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     http:
       routers:
         Router-1:
-          rule: "HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
+          rule: "HostRegexp(`[a-z]+\\.traefik\\.com`)"
           entryPoints:
           - "web"
           service: service-1
@@ -352,7 +499,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     ## Dynamic configuration
     [http.routers]
       [http.routers.Router-1]
-        rule = "HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
+        rule = "HostRegexp(`[a-z]+\\.traefik\\.com`)"
         entryPoints = ["web"]
         service = "service-1"
         priority = 1
@@ -817,48 +964,49 @@ If you want to limit the router scope to a set of entry points, set the entry po
 
 ### Rule
 
-Rules are a set of matchers configured with values, that determine if a particular request matches specific criteria.
+Rules are a set of matchers configured with values, that determine if a particular connection matches specific criteria.
 If the rule is verified, the router becomes active, calls middlewares, and then forwards the request to the service.
-
-??? tip "Backticks or Quotes?"
-
-     To set the value of a rule, use [backticks](https://en.wiktionary.org/wiki/backtick) ``` ` ``` or escaped double-quotes `\"`.
-
-    Single quotes `'` are not accepted since the values are [Golang's String Literals](https://golang.org/ref/spec#String_literals).
-
-!!! example "HostSNI is example.com"
-
-    ```toml
-    rule = "HostSNI(`example.com`)"
-    ```
-
-!!! example "HostSNI is example.com OR HostSNI is example.org AND ClientIP is 0.0.0.0"
-
-    ```toml
-    rule = "HostSNI(`example.com`) || (HostSNI(`example.org`) && ClientIP(`0.0.0.0`))"
-    ```
 
 The table below lists all the available matchers:
 
-| Rule                                                                      | Description                                                                                             |
-|---------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| ```HostSNI(`domain-1`, ...)```                                            | Checks if the Server Name Indication corresponds to the given `domains`.                                |
-| ```HostSNIRegexp(`example.com`, `{subdomain:[a-z]+}.example.com`, ...)``` | Checks if the Server Name Indication matches the given regular expressions. See "Regexp Syntax" below.  |
-| ```ClientIP(`10.0.0.0/16`, `::1`)```                                      | Checks if the connection client IP is one of the given IP/CIDR. It accepts IPv4, IPv6 and CIDR formats. |
-| ```ALPN(`mqtt`, `h2c`)```                                                 | Checks if any of the connection ALPN protocols is one of the given protocols.                           |
+| Rule                                                        | Description                                                                                      |
+|-------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|
+| [```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)       | Checks if the connection's Server Name Indication is equal to `domain`.                          |
+| [```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp) | Checks if the connection's Server Name Indication matches `regexp`.                              |
+| [```ClientIP(`ip`)```](#clientip_1)                         | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats. |
+| [```ALPN(`protocol`)```](#alpn)                             | Checks if the connection's ALPN protocol equals `protocol`.                                      |
 
-!!! important "Non-ASCII Domain Names"
+!!! tip "Backticks or Quotes?"
 
-    Non-ASCII characters are not supported in the `HostSNI` and `HostSNIRegexp` expressions, and so using them would invalidate the associated TCP router.
-    Domain names containing non-ASCII characters must be provided as punycode encoded values ([rfc 3492](https://tools.ietf.org/html/rfc3492)).
+     To set the value of a rule, use [backticks](https://en.wiktionary.org/wiki/backtick) ``` ` ``` or escaped double-quotes `\"`.
+
+    Single quotes `'` are not accepted since the values are [Go's String Literals](https://golang.org/ref/spec#String_literals).
 
 !!! important "Regexp Syntax"
 
-    `HostSNIRegexp` accepts an expression with zero or more groups enclosed by curly braces, which are called named regexps.
-    Named regexps, of the form `{name:regexp}`, are the only expressions considered for regexp matching.
-    The regexp name (`name` in the above example) is an arbitrary value, that exists only for historical reasons.
+    Matchers that accept a regexp as their value use a [Go](https://golang.org/pkg/regexp/) flavored syntax.
 
-    Any `regexp` supported by [Go's regexp package](https://golang.org/pkg/regexp/) may be used.
+!!! info "Expressing Complex Rules Using Operators and Parenthesis"
+
+    The usual AND (`&&`) and OR (`||`) logical operators can be used, with the expected precedence rules,
+    as well as parentheses.
+    
+    One can invert a matcher by using the NOT (`!`) operator.
+    
+    The following rule matches connections where:
+    
+    - either Server Name Indication is `example.com` OR,
+    - Server Name Indication is `example.org` AND ALPN protocol is NOT `h2`
+    
+    ```yaml
+    HostSNI(`example.com`) || (HostSNI(`example.org`) && !ALPN(`h2`))
+    ```
+
+#### HostSNI and HostSNIRegexp
+
+`HostSNI` and `HostSNIRegexp` matchers allow to match connections targeted to a given domain.
+
+These matchers do not support non-ASCII characters, use punycode encoded values ([rfc 3492](https://tools.ietf.org/html/rfc3492)) to match such domains.
 
 !!! important "HostSNI & TLS"
 
@@ -868,25 +1016,72 @@ The table below lists all the available matchers:
     when one wants a non-TLS router that matches all (non-TLS) requests,
     one should use the specific ```HostSNI(`*`)``` syntax.
 
-!!! info "Combining Matchers Using Operators and Parenthesis"
+!!! example "Examples"
 
-    The usual AND (`&&`) and OR (`||`) logical operators can be used, with the expected precedence rules,
-    as well as parentheses.
+    Match all connections:
+    
+    ```yaml tab="HostSNI"
+    HostSNI(`*`)
+    ```
+    
+    ```yaml tab="HostSNIRegexp"
+    HostSNIRegexp(`^.*$`)
+    ```
 
-!!! info "Inverting a matcher"
+    Match TCP connections sent to `example.com`:
+    
+    ```yaml
+    HostSNI(`example.com`)
+    ```
 
-    One can invert a matcher by using the `!` operator.
+    Match TCP connections openned on any subdomain of `example.com`:
+    
+    ```yaml
+    HostSNIRegexp(`^.+\.example\.com$`)
+    ```
 
-!!! important "Rule, Middleware, and Services"
+#### ClientIP
 
-    The rule is evaluated "before" any middleware has the opportunity to work, and "before" the request is forwarded to the service.
+The `ClientIP` matcher allows matching connections opened by a client with the given IP.
 
-!!! important "ALPN ACME-TLS/1"
+!!! example "Examples"
 
-    It would be a security issue to let a user-defined router catch the response to
-    an ACME TLS challenge previously initiated by Traefik.
-    For this reason, the `ALPN` matcher is not allowed to match the `ACME-TLS/1`
-    protocol, and Traefik returns an error if this is attempted.
+    Match connections opened by a given IP:
+    
+    ```yaml tab="IPv4"
+    ClientIP(`10.76.105.11`)
+    ```
+    
+    ```yaml tab="IPv6"
+    ClientIP(`::1`)
+    ```
+    
+    Match connections coming from a given subnet:
+    
+    ```yaml tab="IPv4"
+    ClientIP(`192.168.1.0/24`)
+    ```
+
+    ```yaml tab="IPv6"
+    ClientIP(`fe80::/10`)
+    ```
+
+#### ALPN
+
+The `ALPN` matcher allows matching connections the given protocol.
+
+It would be a security issue to let a user-defined router catch the response to
+an ACME TLS challenge previously initiated by Traefik.
+For this reason, the `ALPN` matcher is not allowed to match the `ACME-TLS/1`
+protocol, and Traefik returns an error if this is attempted.
+
+!!! example "Example"
+
+    Match connections using the ALPN protocol `h2`:
+    
+    ```yaml
+    ALPN(`h2`)
+    ```
 
 ### Priority
 

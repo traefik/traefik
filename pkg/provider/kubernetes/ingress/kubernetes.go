@@ -8,6 +8,7 @@ import (
 	"math"
 	"net"
 	"os"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -400,7 +401,8 @@ func (p *Provider) shouldProcessIngress(ingress *networkingv1.Ingress, ingressCl
 
 func buildHostRule(host string) string {
 	if strings.HasPrefix(host, "*.") {
-		return "HostRegexp(`" + strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1) + "`)"
+		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-zA-Z0-9-]+\.`, 1)
+		return "HostRegexp(`^" + host + "$`)"
 	}
 
 	return "Host(`" + host + "`)"
