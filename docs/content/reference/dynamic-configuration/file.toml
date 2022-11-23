@@ -37,7 +37,6 @@
   [http.services]
     [http.services.Service01]
       [http.services.Service01.loadBalancer]
-        passHostHeader = true
         serversTransport = "foobar"
         [http.services.Service01.loadBalancer.sticky]
           [http.services.Service01.loadBalancer.sticky.cookie]
@@ -64,8 +63,6 @@
           [http.services.Service01.loadBalancer.healthCheck.headers]
             name0 = "foobar"
             name1 = "foobar"
-        [http.services.Service01.loadBalancer.responseForwarding]
-          flushInterval = "42s"
     [http.services.Service02]
       [http.services.Service02.mirroring]
         service = "foobar"
@@ -290,58 +287,66 @@
         allowOrigins = ["foobar", "foobar"]
   [http.serversTransports]
     [http.serversTransports.ServersTransport0]
-      serverName = "foobar"
-      insecureSkipVerify = true
-      rootCAs = ["foobar", "foobar"]
-      maxIdleConnsPerHost = 42
-      disableHTTP2 = true
-      peerCertURI = "foobar"
+      [http.serversTransports.ServersTransport0.http]
+        passHostHeader = true
+        maxIdleConnsPerHost = 42
+        enableHTTP2 = true
 
-      [[http.serversTransports.ServersTransport0.certificates]]
-        certFile = "foobar"
-        keyFile = "foobar"
-
-      [[http.serversTransports.ServersTransport0.certificates]]
-        certFile = "foobar"
-        keyFile = "foobar"
-
-      [http.serversTransports.ServersTransport0.forwardingTimeouts]
+      [http.serversTransports.ServersTransport0.http.forwardingTimeouts]
         dialTimeout = "42s"
         responseHeaderTimeout = "42s"
         idleConnTimeout = "42s"
         readIdleTimeout = "42s"
         pingTimeout = "42s"
 
-      [http.serversTransports.ServersTransport0.spiffe]
-        ids = ["foobar", "foobar"]
-        trustDomain = "foobar"
+      [http.serversTransports.ServersTransport0.tls]
+        serverName = "foobar"
+        insecureSkipVerify = true
+        rootCAs = ["foobar", "foobar"]
+        peerCertURI = "foobar"
+
+        [http.serversTransports.ServersTransport0.tls.spiffe]
+          ids = ["foobar", "foobar"]
+          trustDomain = "foobar"
+
+        [[http.serversTransports.ServersTransport0.tls.certificates]]
+          certFile = "foobar"
+          keyFile = "foobar"
+
+        [[http.serversTransports.ServersTransport0.tls.certificates]]
+          certFile = "foobar"
+          keyFile = "foobar"
 
     [http.serversTransports.ServersTransport1]
-      serverName = "foobar"
-      insecureSkipVerify = true
-      rootCAs = ["foobar", "foobar"]
-      maxIdleConnsPerHost = 42
-      disableHTTP2 = true
-      peerCertURI = "foobar"
+      [http.serversTransports.ServersTransport1.http]
+        passHostHeader = true
+        maxIdleConnsPerHost = 42
+        enableHTTP2 = true
 
-      [[http.serversTransports.ServersTransport1.certificates]]
-        certFile = "foobar"
-        keyFile = "foobar"
+        [http.serversTransports.ServersTransport1.http.forwardingTimeouts]
+          dialTimeout = "42s"
+          responseHeaderTimeout = "42s"
+          idleConnTimeout = "42s"
+          readIdleTimeout = "42s"
+          pingTimeout = "42s"
 
-      [[http.serversTransports.ServersTransport1.certificates]]
-        certFile = "foobar"
-        keyFile = "foobar"
+      [http.serversTransports.ServersTransport1.tls]
+        serverName = "foobar"
+        insecureSkipVerify = true
+        rootCAs = ["foobar", "foobar"]
+        peerCertURI = "foobar"
 
-      [http.serversTransports.ServersTransport1.forwardingTimeouts]
-        dialTimeout = "42s"
-        responseHeaderTimeout = "42s"
-        idleConnTimeout = "42s"
-        readIdleTimeout = "42s"
-        pingTimeout = "42s"
+        [http.serversTransports.ServersTransport1.tls.spiffe]
+          ids = ["foobar", "foobar"]
+          trustDomain = "foobar"
 
-      [http.serversTransports.ServersTransport1.spiffe]
-        ids = ["foobar", "foobar"]
-        trustDomain = "foobar"
+        [[http.serversTransports.ServersTransport1.tls.certificates]]
+          certFile = "foobar"
+          keyFile = "foobar"
+
+        [[http.serversTransports.ServersTransport1.tls.certificates]]
+          certFile = "foobar"
+          keyFile = "foobar"
 
 [tcp]
   [tcp.routers]
