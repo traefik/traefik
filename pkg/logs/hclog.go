@@ -9,7 +9,7 @@ import (
 )
 
 // RetryableHTTPLogger wraps our logger and implements retryablehttp.LeveledLogger.
-// The retry library we're using structured logging but sends fields as pairs of keys and values,
+// The retry library sends fields as pairs of keys and values as structured logging,
 // so we need to adapt them to our logger.
 type RetryableHTTPLogger struct {
 	logger zerolog.Logger
@@ -48,6 +48,7 @@ func logWithLevel(ev *zerolog.Event, msg string, kvs ...interface{}) {
 			if !ok {
 				continue
 			}
+
 			val := kvs[i+1]
 
 			var s fmt.Stringer
@@ -66,6 +67,7 @@ func logWithLevel(ev *zerolog.Event, msg string, kvs ...interface{}) {
 			first = false
 			return unicode.ToTitle(r)
 		}
+
 		return r
 	}, msg)
 
