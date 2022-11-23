@@ -981,33 +981,6 @@ Root key used for KV store. (Default: ```traefik```)
 `TRAEFIK_PROVIDERS_ZOOKEEPER_USERNAME`:  
 Username for authentication.
 
-`TRAEFIK_SERVERSTRANSPORT_FORWARDINGTIMEOUTS_DIALTIMEOUT`:  
-The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
-
-`TRAEFIK_SERVERSTRANSPORT_FORWARDINGTIMEOUTS_IDLECONNTIMEOUT`:  
-The maximum period for which an idle HTTP keep-alive connection will remain open before closing itself (Default: ```90```)
-
-`TRAEFIK_SERVERSTRANSPORT_FORWARDINGTIMEOUTS_RESPONSEHEADERTIMEOUT`:  
-The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists. (Default: ```0```)
-
-`TRAEFIK_SERVERSTRANSPORT_INSECURESKIPVERIFY`:  
-Disable SSL certificate verification. (Default: ```false```)
-
-`TRAEFIK_SERVERSTRANSPORT_MAXIDLECONNSPERHOST`:  
-If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, DefaultMaxIdleConnsPerHost is used (Default: ```200```)
-
-`TRAEFIK_SERVERSTRANSPORT_ROOTCAS`:  
-Add cert file for self-signed certificate.
-
-`TRAEFIK_SERVERSTRANSPORT_SPIFFE`:  
-Defines the SPIFFE configuration. (Default: ```false```)
-
-`TRAEFIK_SERVERSTRANSPORT_SPIFFE_IDS`:  
-Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
-
-`TRAEFIK_SERVERSTRANSPORT_SPIFFE_TRUSTDOMAIN`:  
-Defines the allowed SPIFFE trust domain.
-
 `TRAEFIK_SPIFFE_WORKLOADAPIADDR`:  
 Defines the workload API address.
 
