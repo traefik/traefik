@@ -178,7 +178,7 @@ A Story of key & values
 
     | Key (Path)                                                        | Value |
     |-------------------------------------------------------------------|-------|
-    | `traefik/http/services/myservice/loadbalancer/healthcheck/status` | `401` |
+    | `traefik/http/services/myservice/loadbalancer/healthcheck/status` | `42`  |
 
 ??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/port`"
 
