@@ -32,7 +32,6 @@ func Test_HostSNICatchAll(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -139,7 +138,6 @@ func Test_HostSNI(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -223,7 +221,6 @@ func Test_HostSNIRegexp(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -296,7 +293,6 @@ func Test_ClientIP(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -361,7 +357,6 @@ func Test_ALPN(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
