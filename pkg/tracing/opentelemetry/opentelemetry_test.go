@@ -35,7 +35,9 @@ func TestTraceContextPropagation(t *testing.T) {
 		require.NoError(t, err)
 
 		bodyStr := string(marshalledReq)
-		assert.Regexp(t, `("spans":\[{"traceId":"00000000000000000000000000000001","spanId":"[0-9a-f]{16}","traceState":"foo=bar","parentSpanId":"0000000000000001","name":"EntryPoint test www.test.com","kind":"SPAN_KIND_SERVER","startTimeUnixNano":"[\d]{19}","endTimeUnixNano":"[\d]{19}","attributes":\[{"key":"component","value":{"stringValue":""}},{"key":"http.method","value":{"stringValue":"GET"}},{"key":"http.url","value":{"stringValue":"http://www.test.com"}},{"key":"http.host","value":{"stringValue":"www.test.com"}},{"key":"http.status_code","value":{"intValue":"200"}}\],"status":{}}\])`, bodyStr)
+		assert.Regexp(t, `("traceId":"00000000000000000000000000000001")`, bodyStr)
+		assert.Regexp(t, `("parentSpanId":"0000000000000001")`, bodyStr)
+		assert.Regexp(t, `("traceState":"foo=bar")`, bodyStr)
 	}))
 	defer ts.Close()
 
