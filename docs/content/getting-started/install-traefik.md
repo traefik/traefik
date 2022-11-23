@@ -50,7 +50,7 @@ Ensure that the following requirements are met:
 Add Traefik's chart repository to Helm:
 
 ```bash
-helm repo add traefik https://helm.traefik.io/traefik
+helm repo add traefik https://traefik.github.io/charts
 ```
 
 You can update the chart repository by running:

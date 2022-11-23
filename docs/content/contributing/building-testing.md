@@ -8,17 +8,22 @@ description: "Compile and test your own Traefik Proxy! Learn how to build your o
 Compile and Test Your Own Traefik!
 {: .subtitle }
 
-So you want to build your own Traefik binary from the sources?
+You want to build your own Traefik binary from the sources?
 Let's see how.
 
 ## Building
 
-You need either [Docker](https://github.com/docker/docker) and `make` (Method 1), or `go` (Method 2) in order to build Traefik.
+You need either [Docker](https://github.com/docker/docker "Link to website of Docker") and `make` (Method 1), or [Go](https://go.dev/ "Link to website of Go") (Method 2) in order to build Traefik.
 For changes to its dependencies, the `dep` dependency management tool is required.
 
 ### Method 1: Using `Docker` and `Makefile`
 
 Run make with the `binary` target.
+
+```bash
+make binary
+```
+
 This will create binaries for the Linux platform in the `dist` folder.
 
 In case when you run build on CI, you may probably want to run docker in non-interactive mode. To achieve that define `DOCKER_NON_INTERACTIVE=true` environment variable.
@@ -160,7 +165,7 @@ TESTFLAGS="-check.f MyTestSuite.My" make test-integration
 TESTFLAGS="-check.f MyTestSuite.*Test" make test-integration
 ```
 
-More: https://labix.org/gocheck
+Check [gocheck](https://labix.org/gocheck "Link to website of gocheck") for more information.
 
 ### Method 2: `go`
 
