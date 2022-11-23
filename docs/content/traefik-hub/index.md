@@ -1,4 +1,4 @@
-# Traefik Hub (Experimental)
+# Traefik Hub
 
 ## Overview
 
