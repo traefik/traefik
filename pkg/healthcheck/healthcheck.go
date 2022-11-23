@@ -141,8 +141,7 @@ func (shc *ServiceHealthChecker) Launch(ctx context.Context) {
 				shc.info.UpdateServerStatus(target.String(), statusStr)
 
 				shc.metrics.ServiceServerUpGauge().
-					With("service", proxyName).
-					With("url", target.String()).
+					With("service", proxyName, "url", target.String()).
 					Set(serverUpMetricValue)
 			}
 		}
