@@ -21,7 +21,7 @@ In v3, we renamed the `IPWhiteList` middleware to `IPAllowList` without changing
 
 In v3, the reported status code for gRPC requests is now the value of the `Grpc-Status` header.  
 
-## Deprecated options removal
+## Deprecated Options Removal
 
 - The `pilot` option has been removed from the static configuration.
 - The `tracing.datadog.globaltag` option has been removed.
