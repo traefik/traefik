@@ -802,15 +802,15 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-http-app-1-my-gateway-web-7102665db928c14638dc": {
+						"default-http-app-1-my-gateway-web-3b78e2feb3295ddd87f0": {
 							EntryPoints: []string{"web"},
-							Service:     "default-http-app-1-my-gateway-web-7102665db928c14638dc-wrr",
-							Rule:        "(Host(`foo.com`) || HostRegexp(`[a-zA-Z0-9-]+\\.bar\\.com`)) && PathPrefix(`/`)",
+							Service:     "default-http-app-1-my-gateway-web-3b78e2feb3295ddd87f0-wrr",
+							Rule:        "(Host(`foo.com`) || HostRegexp(`^[a-zA-Z0-9-]+\\.bar\\.com$`)) && PathPrefix(`/`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-http-app-1-my-gateway-web-7102665db928c14638dc-wrr": {
+						"default-http-app-1-my-gateway-web-3b78e2feb3295ddd87f0-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
@@ -860,15 +860,15 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-http-app-1-my-gateway-web-015e911bf23afb4408a2": {
+						"default-http-app-1-my-gateway-web-b0521a61fb43068694b4": {
 							EntryPoints: []string{"web"},
-							Service:     "default-http-app-1-my-gateway-web-015e911bf23afb4408a2-wrr",
-							Rule:        "(Host(`foo.com`) || HostRegexp(`[a-zA-Z0-9-]+\\.foo\\.com`)) && PathPrefix(`/`)",
+							Service:     "default-http-app-1-my-gateway-web-b0521a61fb43068694b4-wrr",
+							Rule:        "(Host(`foo.com`) || HostRegexp(`^[a-zA-Z0-9-]+\\.foo\\.com$`)) && PathPrefix(`/`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-http-app-1-my-gateway-web-015e911bf23afb4408a2-wrr": {
+						"default-http-app-1-my-gateway-web-b0521a61fb43068694b4-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
@@ -4389,14 +4389,14 @@ func Test_hostRule(t *testing.T) {
 				"bar.foo",
 				"foo.foo",
 			},
-			expectedRule: "((Host(`bar.foo`) || Host(`foo.foo`)) || HostRegexp(`[a-zA-Z0-9-]+\\.bar\\.foo`))",
+			expectedRule: "((Host(`bar.foo`) || Host(`foo.foo`)) || HostRegexp(`^[a-zA-Z0-9-]+\\.bar\\.foo$`))",
 		},
 		{
 			desc: "Host with wildcard",
 			hostnames: []v1alpha2.Hostname{
 				"*.bar.foo",
 			},
-			expectedRule: "HostRegexp(`[a-zA-Z0-9-]+\\.bar\\.foo`)",
+			expectedRule: "HostRegexp(`^[a-zA-Z0-9-]+\\.bar\\.foo$`)",
 		},
 		{
 			desc: "Alone wildcard",

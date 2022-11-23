@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -1186,10 +1187,8 @@ func hostRule(hostnames []v1alpha2.Hostname) (string, error) {
 			return "", fmt.Errorf("invalid rule: %q", host)
 		}
 
-		host = strings.ReplaceAll(host, `.`, `\.`)
-		host = strings.Replace(host, `*\.`, `[a-zA-Z0-9-]+\.`, 1)
-
-		hostRegexNames = append(hostRegexNames, host)
+		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-zA-Z0-9-]+\.`, 1)
+		hostRegexNames = append(hostRegexNames, fmt.Sprintf("^%s$", host))
 	}
 
 	var res string
