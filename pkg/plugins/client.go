@@ -78,7 +78,7 @@ func NewClient(opts ClientOptions) (*Client, error) {
 	}
 
 	return &Client{
-		HTTPClient: &http.Client{Timeout: 5 * time.Second},
+		HTTPClient: &http.Client{Timeout: 10 * time.Second},
 		baseURL:    baseURL,
 
 		archives:  archivesPath,

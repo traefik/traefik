@@ -295,7 +295,12 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		}
 	}
 
-	cb := configBuilder{client: client, allowCrossNamespace: p.AllowCrossNamespace, allowExternalNameServices: p.AllowExternalNameServices}
+	cb := configBuilder{
+		client:                    client,
+		allowCrossNamespace:       p.AllowCrossNamespace,
+		allowExternalNameServices: p.AllowExternalNameServices,
+		allowEmptyServices:        p.AllowEmptyServices,
+	}
 
 	for _, service := range client.GetTraefikServices() {
 		err := cb.buildTraefikService(ctx, service, conf.HTTP.Services)
@@ -582,7 +587,14 @@ func (p *Provider) createErrorPageMiddleware(client Client, namespace string, er
 		Query:  errorPage.Query,
 	}
 
-	balancerServerHTTP, err := configBuilder{client: client, allowCrossNamespace: p.AllowCrossNamespace, allowExternalNameServices: p.AllowExternalNameServices}.buildServersLB(namespace, errorPage.Service.LoadBalancerSpec)
+	cb := configBuilder{
+		client:                    client,
+		allowCrossNamespace:       p.AllowCrossNamespace,
+		allowExternalNameServices: p.AllowExternalNameServices,
+		allowEmptyServices:        p.AllowEmptyServices,
+	}
+
+	balancerServerHTTP, err := cb.buildServersLB(namespace, errorPage.Service.LoadBalancerSpec)
 	if err != nil {
 		return nil, nil, err
 	}
