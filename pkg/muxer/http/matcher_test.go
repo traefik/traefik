@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
-	"github.com/traefik/traefik/v2/pkg/testhelpers"
 )
 
 func TestClientIPMatcher(t *testing.T) {
@@ -66,7 +65,6 @@ func TestClientIPMatcher(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -86,7 +84,7 @@ func TestClientIPMatcher(t *testing.T) {
 			for remoteAddr := range test.expected {
 				w := httptest.NewRecorder()
 
-				req := testhelpers.MustNewRequest(http.MethodGet, "https://example.com", http.NoBody)
+				req := httptest.NewRequest(http.MethodGet, "https://example.com", http.NoBody)
 				req.RemoteAddr = remoteAddr
 
 				muxer.ServeHTTP(w, req)
@@ -139,7 +137,6 @@ func TestMethodMatcher(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -159,7 +156,7 @@ func TestMethodMatcher(t *testing.T) {
 			for method := range test.expected {
 				w := httptest.NewRecorder()
 
-				req := testhelpers.MustNewRequest(method, "https://example.com", http.NoBody)
+				req := httptest.NewRequest(method, "https://example.com", http.NoBody)
 
 				muxer.ServeHTTP(w, req)
 				results[method] = w.Code
@@ -246,7 +243,6 @@ func TestHostMatcher(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -269,7 +265,7 @@ func TestHostMatcher(t *testing.T) {
 			for calledURL := range test.expected {
 				w := httptest.NewRecorder()
 
-				req := testhelpers.MustNewRequest(http.MethodGet, calledURL, http.NoBody)
+				req := httptest.NewRequest(http.MethodGet, calledURL, http.NoBody)
 
 				reqHost.ServeHTTP(w, req, muxer.ServeHTTP)
 				results[calledURL] = w.Code
@@ -335,7 +331,6 @@ func TestHostRegexpMatcher(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -355,7 +350,7 @@ func TestHostRegexpMatcher(t *testing.T) {
 			for calledURL := range test.expected {
 				w := httptest.NewRecorder()
 
-				req := testhelpers.MustNewRequest(http.MethodGet, calledURL, http.NoBody)
+				req := httptest.NewRequest(http.MethodGet, calledURL, http.NoBody)
 
 				muxer.ServeHTTP(w, req)
 				results[calledURL] = w.Code
@@ -408,7 +403,6 @@ func TestPathMatcher(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -428,7 +422,7 @@ func TestPathMatcher(t *testing.T) {
 			for calledURL := range test.expected {
 				w := httptest.NewRecorder()
 
-				req := testhelpers.MustNewRequest(http.MethodGet, calledURL, http.NoBody)
+				req := httptest.NewRequest(http.MethodGet, calledURL, http.NoBody)
 
 				muxer.ServeHTTP(w, req)
 				results[calledURL] = w.Code
@@ -502,7 +496,6 @@ func TestPathRegexpMatcher(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -522,7 +515,7 @@ func TestPathRegexpMatcher(t *testing.T) {
 			for calledURL := range test.expected {
 				w := httptest.NewRecorder()
 
-				req := testhelpers.MustNewRequest(http.MethodGet, calledURL, http.NoBody)
+				req := httptest.NewRequest(http.MethodGet, calledURL, http.NoBody)
 
 				muxer.ServeHTTP(w, req)
 				results[calledURL] = w.Code
@@ -575,7 +568,6 @@ func TestPathPrefixMatcher(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -595,7 +587,7 @@ func TestPathPrefixMatcher(t *testing.T) {
 			for calledURL := range test.expected {
 				w := httptest.NewRecorder()
 
-				req := testhelpers.MustNewRequest(http.MethodGet, calledURL, http.NoBody)
+				req := httptest.NewRequest(http.MethodGet, calledURL, http.NoBody)
 
 				muxer.ServeHTTP(w, req)
 				results[calledURL] = w.Code
@@ -671,7 +663,7 @@ func TestHeaderMatcher(t *testing.T) {
 			for headers := range test.expected {
 				w := httptest.NewRecorder()
 
-				req := testhelpers.MustNewRequest(http.MethodGet, "https://example.com", http.NoBody)
+				req := httptest.NewRequest(http.MethodGet, "https://example.com", http.NoBody)
 				req.Header = *headers
 
 				muxer.ServeHTTP(w, req)
@@ -749,7 +741,6 @@ func TestHeaderRegexpMatcher(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -768,7 +759,7 @@ func TestHeaderRegexpMatcher(t *testing.T) {
 			for headers := range test.expected {
 				w := httptest.NewRecorder()
 
-				req := testhelpers.MustNewRequest(http.MethodGet, "https://example.com", http.NoBody)
+				req := httptest.NewRequest(http.MethodGet, "https://example.com", http.NoBody)
 				req.Header = *headers
 
 				muxer.ServeHTTP(w, req)
@@ -839,7 +830,6 @@ func TestQueryMatcher(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -859,7 +849,7 @@ func TestQueryMatcher(t *testing.T) {
 			for calledURL := range test.expected {
 				w := httptest.NewRecorder()
 
-				req := testhelpers.MustNewRequest(http.MethodGet, calledURL, http.NoBody)
+				req := httptest.NewRequest(http.MethodGet, calledURL, http.NoBody)
 
 				muxer.ServeHTTP(w, req)
 				results[calledURL] = w.Code
@@ -954,7 +944,6 @@ func TestQueryRegexpMatcher(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -974,7 +963,7 @@ func TestQueryRegexpMatcher(t *testing.T) {
 			for calledURL := range test.expected {
 				w := httptest.NewRecorder()
 
-				req := testhelpers.MustNewRequest(http.MethodGet, calledURL, http.NoBody)
+				req := httptest.NewRequest(http.MethodGet, calledURL, http.NoBody)
 
 				muxer.ServeHTTP(w, req)
 				results[calledURL] = w.Code
