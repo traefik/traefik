@@ -144,7 +144,8 @@ For example, to change the routing rule, you could add the label ```"traefik.htt
 To update the configuration of the Service automatically attached to the container,
 add labels starting with `traefik.http.services.{service-name-of-your-choice}.`, followed by the option you want to change.
 
-For example, to change the passHostHeader behavior, you'd add the label `"traefik.http.services.servicename.loadbalancer.passhostheader": "false"`.
+For example, to change the server `scheme`,
+you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.server.scheme=https`.
 
 !!! warning "The character `@` is not authorized in the service name `<service_name>`."
 
@@ -172,14 +173,6 @@ For example, to change the passHostHeader behavior, you'd add the label `"traefi
     
     ```json
     "traefik.http.services.<service_name>.loadbalancer.serverstransport": "foobar@file"
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.passhostheader`"
-    
-    See [pass Host header](../services/index.md#pass-host-header) for more information.
-    
-    ```json
-    "traefik.http.services.myservice.loadbalancer.passhostheader": "true"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.headers.<header_name>`"
@@ -292,14 +285,6 @@ For example, to change the passHostHeader behavior, you'd add the label `"traefi
     
     ```json
     "traefik.http.services.myservice.loadbalancer.sticky.cookie.samesite": "none"
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`"
-    
-    See [response forwarding](../services/index.md#response-forwarding) for more information.
-
-    ```json
-    "traefik.http.services.myservice.loadbalancer.responseforwarding.flushinterval": "10"
     ```
 
 ### Middleware

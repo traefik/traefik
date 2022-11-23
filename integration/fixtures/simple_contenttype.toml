@@ -51,7 +51,6 @@
 [http.services]
   [http.services.service1]
     [http.services.service1.loadBalancer]
-      passHostHeader = true
       [[http.services.service1.loadBalancer.servers]]
         url = "{{ .Server }}"
 

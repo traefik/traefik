@@ -43,13 +43,11 @@ type ServiceConfig struct {
 type ServiceIng struct {
 	ServersScheme    string          `json:"serversScheme,omitempty"`
 	ServersTransport string          `json:"serversTransport,omitempty"`
-	PassHostHeader   *bool           `json:"passHostHeader"`
 	Sticky           *dynamic.Sticky `json:"sticky,omitempty" label:"allowEmpty"`
 }
 
 // SetDefaults sets the default values.
 func (s *ServiceIng) SetDefaults() {
-	s.PassHostHeader = func(v bool) *bool { return &v }(true)
 }
 
 func parseRouterConfig(annotations map[string]string) (*RouterConfig, error) {
