@@ -227,7 +227,7 @@ For example, to change the passHostHeader behavior, you'd add the label `"traefi
     See [health check](../services/index.md#health-check) for more information.
     
     ```json
-    "traefik.http.services.myservice.loadbalancer.healthcheck.status": "401"
+    "traefik.http.services.myservice.loadbalancer.healthcheck.status": "42"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.port`"

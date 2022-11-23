@@ -153,7 +153,7 @@
 - "traefik.http.services.service01.loadbalancer.healthcheck.interval=foobar"
 - "traefik.http.services.service01.loadbalancer.healthcheck.path=foobar"
 - "traefik.http.services.service01.loadbalancer.healthcheck.method=foobar"
-- "traefik.http.services.service01.loadbalancer.healthcheck.status=401"
+- "traefik.http.services.service01.loadbalancer.healthcheck.status=42"
 - "traefik.http.services.service01.loadbalancer.healthcheck.port=42"
 - "traefik.http.services.service01.loadbalancer.healthcheck.scheme=foobar"
 - "traefik.http.services.service01.loadbalancer.healthcheck.mode=foobar"
