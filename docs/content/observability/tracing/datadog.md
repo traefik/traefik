@@ -65,30 +65,6 @@ tracing:
 --tracing.datadog.debug=true
 ```
 
-#### `globalTag`
-
-??? warning "Deprecated in favor of the [`globalTags`](#globaltags) option."
-
-    _Optional, Default=empty_
-    
-    Applies a shared key:value tag on all spans.
-    
-    ```yaml tab="File (YAML)"
-    tracing:
-      datadog:
-        globalTag: sample
-    ```
-    
-    ```toml tab="File (TOML)"
-    [tracing]
-      [tracing.datadog]
-        globalTag = "sample"
-    ```
-    
-    ```bash tab="CLI"
-    --tracing.datadog.globalTag=sample
-    ```
-
 #### `globalTags`
 
 _Optional, Default=empty_

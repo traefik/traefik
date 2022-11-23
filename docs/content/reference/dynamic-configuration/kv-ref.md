@@ -37,7 +37,6 @@
 | `traefik/http/middlewares/Middleware09/forwardAuth/authResponseHeaders/1` | `foobar` |
 | `traefik/http/middlewares/Middleware09/forwardAuth/authResponseHeadersRegex` | `foobar` |
 | `traefik/http/middlewares/Middleware09/forwardAuth/tls/ca` | `foobar` |
-| `traefik/http/middlewares/Middleware09/forwardAuth/tls/caOptional` | `true` |
 | `traefik/http/middlewares/Middleware09/forwardAuth/tls/cert` | `foobar` |
 | `traefik/http/middlewares/Middleware09/forwardAuth/tls/insecureSkipVerify` | `true` |
 | `traefik/http/middlewares/Middleware09/forwardAuth/tls/key` | `foobar` |
@@ -66,7 +65,6 @@
 | `traefik/http/middlewares/Middleware10/headers/customRequestHeaders/name1` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/customResponseHeaders/name0` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/customResponseHeaders/name1` | `foobar` |
-| `traefik/http/middlewares/Middleware10/headers/featurePolicy` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/forceSTSHeader` | `true` |
 | `traefik/http/middlewares/Middleware10/headers/frameDeny` | `true` |
 | `traefik/http/middlewares/Middleware10/headers/hostsProxyHeaders/0` | `foobar` |
@@ -75,12 +73,8 @@
 | `traefik/http/middlewares/Middleware10/headers/permissionsPolicy` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/publicKey` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/referrerPolicy` | `foobar` |
-| `traefik/http/middlewares/Middleware10/headers/sslForceHost` | `true` |
-| `traefik/http/middlewares/Middleware10/headers/sslHost` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/sslProxyHeaders/name0` | `foobar` |
 | `traefik/http/middlewares/Middleware10/headers/sslProxyHeaders/name1` | `foobar` |
-| `traefik/http/middlewares/Middleware10/headers/sslRedirect` | `true` |
-| `traefik/http/middlewares/Middleware10/headers/sslTemporaryRedirect` | `true` |
 | `traefik/http/middlewares/Middleware10/headers/stsIncludeSubdomains` | `true` |
 | `traefik/http/middlewares/Middleware10/headers/stsPreload` | `true` |
 | `traefik/http/middlewares/Middleware10/headers/stsSeconds` | `42` |
@@ -135,7 +129,6 @@
 | `traefik/http/middlewares/Middleware19/replacePathRegex/replacement` | `foobar` |
 | `traefik/http/middlewares/Middleware20/retry/attempts` | `42` |
 | `traefik/http/middlewares/Middleware20/retry/initialInterval` | `42s` |
-| `traefik/http/middlewares/Middleware21/stripPrefix/forceSlash` | `true` |
 | `traefik/http/middlewares/Middleware21/stripPrefix/prefixes/0` | `foobar` |
 | `traefik/http/middlewares/Middleware21/stripPrefix/prefixes/1` | `foobar` |
 | `traefik/http/middlewares/Middleware22/stripPrefixRegex/regex/0` | `foobar` |
@@ -311,7 +304,6 @@
 | `traefik/tls/options/Options0/curvePreferences/1` | `foobar` |
 | `traefik/tls/options/Options0/maxVersion` | `foobar` |
 | `traefik/tls/options/Options0/minVersion` | `foobar` |
-| `traefik/tls/options/Options0/preferServerCipherSuites` | `true` |
 | `traefik/tls/options/Options0/sniStrict` | `true` |
 | `traefik/tls/options/Options1/alpnProtocols/0` | `foobar` |
 | `traefik/tls/options/Options1/alpnProtocols/1` | `foobar` |
@@ -324,7 +316,6 @@
 | `traefik/tls/options/Options1/curvePreferences/1` | `foobar` |
 | `traefik/tls/options/Options1/maxVersion` | `foobar` |
 | `traefik/tls/options/Options1/minVersion` | `foobar` |
-| `traefik/tls/options/Options1/preferServerCipherSuites` | `true` |
 | `traefik/tls/options/Options1/sniStrict` | `true` |
 | `traefik/tls/stores/Store0/defaultCertificate/certFile` | `foobar` |
 | `traefik/tls/stores/Store0/defaultCertificate/keyFile` | `foobar` |
