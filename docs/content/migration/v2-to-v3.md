@@ -30,3 +30,18 @@ In v3, the reported status code for gRPC requests is now the value of the `Grpc-
 - `sslRedirect`, `sslTemporaryRedirect`, `sslHost`, `sslForceHost` and `featurePolicy` options of the Headers middleware have been removed.
 - The `forceSlash` option of the StripPrefix middleware has been removed.
 - the `preferServerCipherSuites` option has been removed.
+
+## Matchers
+
+In v3, the `Headers` and `HeadersRegexp` matchers have been renamed to `Header` and `HeaderRegexp` respectively.
+
+`QueryRegexp` has been introduced to match query values using a regular expression.
+
+`HeaderRegexp`, `HostRegexp`, `PathRegexp`, `QueryRegexp`, and `HostSNIRegexp` matchers now uses the [Go regexp syntax](https://golang.org/pkg/regexp/syntax/).
+
+All matchers now take a single value (except `Headers`, `HeaderRegexp`, `Query`, and `QueryRegexp` which take two)
+and should be explicitly combined using logical operators to mimic previous behavior.
+
+`Query` can take a single value to match is the query value that has no value (e.g. `/search?mobile`).
+
+`HostHeader` has been removed, use `Host` instead.
