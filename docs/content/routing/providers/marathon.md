@@ -222,6 +222,14 @@ For example, to change the passHostHeader behavior, you'd add the label `"traefi
     "traefik.http.services.myservice.loadbalancer.healthcheck.method": "foobar"
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.status`"
+    
+    See [health check](../services/index.md#health-check) for more information.
+    
+    ```json
+    "traefik.http.services.myservice.loadbalancer.healthcheck.status": "42"
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.port`"
     
     See [health check](../services/index.md#health-check) for more information.
