@@ -11,6 +11,13 @@ serversTransport:
     dialTimeout: 42s
     responseHeaderTimeout: 42s
     idleConnTimeout: 42s
+tcpServersTransport:
+  insecureSkipVerify: true
+  rootCAs:
+    - foobar
+    - foobar
+  dialTimeout: 42s
+  dialKeepAlive: 42s
 entryPoints:
   EntryPoint0:
     address: foobar
