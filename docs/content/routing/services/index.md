@@ -316,8 +316,7 @@ On subsequent requests, to keep the session alive with the same server, the clie
 #### Health Check
 
 Configure health check to remove unhealthy servers from the load balancing rotation.
-If no specific status to check has been defined, Traefik will consider your HTTP(s) servers healthy as long as they return status codes between `2XX` and `3XX` to the health check requests (carried out every `interval`).
-Otherwise, Traefik will consider your HTTP(s) servers healthy only if the return status code matches the defined status code.
+Traefik will consider HTTP(s) servers healthy as long as they return a status code to the health check request (carried out every `interval`) between `2XX` and `3XX`, or matching the configured status.
 For gRPC servers, Traefik will consider them healthy as long as they return `SERVING` to [gRPC health check v1](https://github.com/grpc/grpc/blob/master/doc/health-checking.md) requests.
 
 To propagate status changes (e.g. all servers of this service are down) upwards, HealthCheck must also be enabled on the parent(s) of this service.
@@ -328,13 +327,13 @@ Below are the available options for the health check mechanism:
 - `scheme` (optional), replaces the server URL `scheme` for the health check endpoint.
 - `mode` (default: http), if defined to `grpc`, will use the gRPC health check protocol to probe the server.
 - `hostname` (optional), sets the value of `hostname` in the `Host` header of the health check request.
-- `status` (optional), the HTTP status code of the health check request to expect from a service.
 - `port` (optional), replaces the server URL `port` for the health check endpoint.
 - `interval` (default: 30s), defines the frequency of the health check calls.
 - `timeout` (default: 5s), defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
 - `headers` (optional), defines custom headers to be sent to the health check endpoint.
 - `followRedirects` (default: true), defines whether redirects should be followed during the health check calls.
 - `method` (default: GET), defines the HTTP method that will be used while connecting to the endpoint.
+- `status` (optional), defines the expected HTTP status code of the response to the health check request.
 
 !!! info "Interval & Timeout Format"
 
