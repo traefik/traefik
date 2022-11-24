@@ -28,7 +28,6 @@ func TestServiceHealthChecker_newRequest(t *testing.T) {
 		expHostname string
 		expHeader   string
 		expMethod   string
-		expStatus   int
 	}{
 		{
 			desc:      "no port override",
@@ -188,18 +187,6 @@ func TestServiceHealthChecker_newRequest(t *testing.T) {
 			expHostname: "backend1:80",
 			expMethod:   http.MethodHead,
 		},
-		{
-			desc:      "custom status code",
-			targetURL: "http://backend1:80",
-			config: dynamic.ServerHealthCheck{
-				Path:   "/",
-				Status: http.StatusUnauthorized,
-			},
-			expTarget:   "http://backend1:80/",
-			expHostname: "backend1:80",
-			expMethod:   http.MethodGet,
-			expStatus:   http.StatusUnauthorized,
-		},
 	}
 
 	for _, test := range testCases {
@@ -223,7 +210,6 @@ func TestServiceHealthChecker_newRequest(t *testing.T) {
 				assert.Equal(t, test.expHeader, req.Header.Get("Custom-Header"))
 				assert.Equal(t, test.expHostname, req.Host)
 				assert.Equal(t, test.expMethod, req.Method)
-				assert.Equal(t, test.expStatus, shc.config.Status)
 			}
 		})
 	}
