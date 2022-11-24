@@ -261,14 +261,14 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 			for _, cert := range st.Certificates {
 				content, err := cert.CertFile.Read()
 				if err != nil {
-					log.FromContext(ctx).Error(err)
+					log.Ctx(ctx).Error().Err(err).Send()
 					continue
 				}
 				cert.CertFile = tls.FileOrContent(content)
 
 				content, err = cert.KeyFile.Read()
 				if err != nil {
-					log.FromContext(ctx).Error(err)
+					log.Ctx(ctx).Error().Err(err).Send()
 					continue
 				}
 				cert.KeyFile = tls.FileOrContent(content)
@@ -282,7 +282,7 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 			for _, rootCA := range st.RootCAs {
 				content, err := rootCA.Read()
 				if err != nil {
-					log.FromContext(ctx).Error(err)
+					log.Ctx(ctx).Error().Err(err).Send()
 					continue
 				}
 
@@ -434,7 +434,7 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 
 		for name, conf := range c.TCP.ServersTransports {
 			if _, exists := configuration.TCP.ServersTransports[name]; exists {
-				logger.WithField(log.ServersTransportName, name).Warn("TCP servers transport already configured, skipping")
+				logger.Warn().Str(logs.ServersTransportName, name).Msg("TCP servers transport already configured, skipping")
 			} else {
 				configuration.TCP.ServersTransports[name] = conf
 			}

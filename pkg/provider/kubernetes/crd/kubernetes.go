@@ -394,13 +394,16 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	}
 
 	for _, serversTransportTCP := range client.GetServersTransportTCPs() {
-		logger := log.FromContext(ctx).WithField(log.ServersTransportName, serversTransportTCP.Name)
+		logger := log.Ctx(ctx).With().Str(logs.ServersTransportName, serversTransportTCP.Name).Logger()
 
 		var rootCAs []tls.FileOrContent
 		for _, secret := range serversTransportTCP.Spec.RootCAsSecrets {
 			caSecret, err := loadCASecret(serversTransportTCP.Namespace, secret, client)
 			if err != nil {
-				logger.Errorf("Error while loading rootCAs %s: %v", secret, err)
+				logger.Error().
+					Err(err).
+					Str("rootCAs", secret).
+					Msg("Error while loading rootCAs")
 				continue
 			}
 
@@ -411,7 +414,10 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		for _, secret := range serversTransportTCP.Spec.CertificatesSecrets {
 			tlsSecret, tlsKey, err := loadAuthTLSSecret(serversTransportTCP.Namespace, secret, client)
 			if err != nil {
-				logger.Errorf("Error while loading certificates %s: %v", secret, err)
+				logger.Error().
+					Err(err).
+					Str("certificates", secret).
+					Msg("Error while loading certificates")
 				continue
 			}
 
@@ -434,14 +440,14 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		if serversTransportTCP.Spec.DialTimeout != nil {
 			err := tcpServerTransport.DialTimeout.Set(serversTransportTCP.Spec.DialTimeout.String())
 			if err != nil {
-				logger.Errorf("Error while reading DialTimeout: %v", err)
+				logger.Error().Err(err).Msg("Error while reading DialTimeout")
 			}
 		}
 
 		if serversTransportTCP.Spec.DialKeepAlive != nil {
 			err := tcpServerTransport.DialKeepAlive.Set(serversTransportTCP.Spec.DialKeepAlive.String())
 			if err != nil {
-				logger.Errorf("Error while reading DialKeepAlive: %v", err)
+				logger.Error().Err(err).Msg("Error while reading DialKeepAlive")
 			}
 		}
 
