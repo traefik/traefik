@@ -32,16 +32,19 @@ func TestShutdownUDPConn(t *testing.T) {
 		for {
 			b := make([]byte, 1024*1024)
 			n, err := conn.Read(b)
-			require.NoError(t, err)
-			// We control the termination, otherwise we would block on the Read above, until
-			// conn is closed by a timeout. Which means we would get an error, and even though
-			// we are in a goroutine and the current test might be over, go test would still
-			// yell at us if this happens while other tests are still running.
+			if err != nil {
+				return
+			}
+
+			// We control the termination, otherwise we would block on the Read above,
+			// until conn is closed by a timeout.
+			// Which means we would get an error,
+			// and even though we are in a goroutine and the current test might be over,
+			// go test would still yell at us if this happens while other tests are still running.
 			if string(b[:n]) == "CLOSE" {
 				return
 			}
-			_, err = conn.Write(b[:n])
-			require.NoError(t, err)
+			_, _ = conn.Write(b[:n])
 		}
 	}))
 
@@ -68,9 +71,9 @@ func TestShutdownUDPConn(t *testing.T) {
 	// Packet is accepted, but dropped
 	require.NoError(t, err)
 
-	// Make sure that our session is yet again still live. This is specifically to
-	// make sure we don't create a regression in listener's readLoop, i.e. that we only
-	// terminate the listener's readLoop goroutine by closing its pConn.
+	// Make sure that our session is yet again still live.
+	// This is specifically to make sure we don't create a regression in listener's readLoop,
+	// i.e. that we only terminate the listener's readLoop goroutine by closing its pConn.
 	requireEcho(t, "TEST3", conn, time.Second)
 
 	done := make(chan bool)
@@ -101,10 +104,11 @@ func TestShutdownUDPConn(t *testing.T) {
 	}
 }
 
-// requireEcho tests that the conn session is live and functional, by writing
-// data through it, and expecting the same data as a response when reading on it.
-// It fatals if the read blocks longer than timeout, which is useful to detect
-// regressions that would make a test wait forever.
+// requireEcho tests that conn session is live and functional,
+// by writing data through it,
+// and expecting the same data as a response when reading on it.
+// It fatals if the read blocks longer than timeout,
+// which is useful to detect regressions that would make a test wait forever.
 func requireEcho(t *testing.T, data string, conn io.ReadWriter, timeout time.Duration) {
 	t.Helper()
 
