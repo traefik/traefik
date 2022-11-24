@@ -3,7 +3,6 @@ package tcp
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"net"
 	"testing"
@@ -20,7 +19,7 @@ func fakeRedis(t *testing.T, listener net.Listener) {
 
 	for {
 		conn, err := listener.Accept()
-		fmt.Println("Accept on server")
+		t.Log("Accept on server")
 		require.NoError(t, err)
 
 		for {
