@@ -783,7 +783,7 @@ func TestPublishConfigUpdatedByConfigWatcherListener(t *testing.T) {
 		publishedConfigCount++
 
 		// Modify the provided configuration.
-		// This should not modify the configuration stored in the configuration watcher and cause a new publishing.
+		// This should not modify the configuration stored in the configuration watcher and therefore there will be no new publishing.
 		configuration.TCP.Routers["foo@mock"].Rule = "bar"
 	})
 
