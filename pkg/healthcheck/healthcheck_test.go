@@ -28,6 +28,7 @@ func TestServiceHealthChecker_newRequest(t *testing.T) {
 		expHostname string
 		expHeader   string
 		expMethod   string
+		expStatus   int
 	}{
 		{
 			desc:      "no port override",
@@ -187,6 +188,18 @@ func TestServiceHealthChecker_newRequest(t *testing.T) {
 			expHostname: "backend1:80",
 			expMethod:   http.MethodHead,
 		},
+		{
+			desc:      "custom status code",
+			targetURL: "http://backend1:80",
+			config: dynamic.ServerHealthCheck{
+				Path:   "/",
+				Status: http.StatusUnauthorized,
+			},
+			expTarget:   "http://backend1:80/",
+			expHostname: "backend1:80",
+			expMethod:   http.MethodGet,
+			expStatus:   http.StatusUnauthorized,
+		},
 	}
 
 	for _, test := range testCases {
@@ -210,6 +223,7 @@ func TestServiceHealthChecker_newRequest(t *testing.T) {
 				assert.Equal(t, test.expHeader, req.Header.Get("Custom-Header"))
 				assert.Equal(t, test.expHostname, req.Host)
 				assert.Equal(t, test.expMethod, req.Method)
+				assert.Equal(t, test.expStatus, shc.config.Status)
 			}
 		})
 	}
@@ -249,6 +263,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 	testCases := []struct {
 		desc                  string
 		mode                  string
+		status                int
 		server                StartTestServer
 		expNumRemovedServers  int
 		expNumUpsertedServers int
@@ -258,6 +273,15 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 		{
 			desc:                  "healthy server staying healthy",
 			server:                newHTTPServer(http.StatusOK),
+			expNumRemovedServers:  0,
+			expNumUpsertedServers: 1,
+			expGaugeValue:         1,
+			targetStatus:          runtime.StatusUp,
+		},
+		{
+			desc:                  "healthy server staying healthy, with custom code status check",
+			server:                newHTTPServer(http.StatusNotFound),
+			status:                http.StatusNotFound,
 			expNumRemovedServers:  0,
 			expNumUpsertedServers: 1,
 			expGaugeValue:         1,
@@ -282,6 +306,15 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 		{
 			desc:                  "healthy server becoming sick",
 			server:                newHTTPServer(http.StatusServiceUnavailable),
+			expNumRemovedServers:  1,
+			expNumUpsertedServers: 0,
+			expGaugeValue:         0,
+			targetStatus:          runtime.StatusDown,
+		},
+		{
+			desc:                  "healthy server becoming sick, with custom code status check",
+			server:                newHTTPServer(http.StatusOK),
+			status:                http.StatusServiceUnavailable,
 			expNumRemovedServers:  1,
 			expNumUpsertedServers: 0,
 			expGaugeValue:         0,
@@ -348,6 +381,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 
 			config := &dynamic.ServerHealthCheck{
 				Mode:     test.mode,
+				Status:   test.status,
 				Path:     "/path",
 				Interval: ptypes.Duration(500 * time.Millisecond),
 				Timeout:  ptypes.Duration(499 * time.Millisecond),
