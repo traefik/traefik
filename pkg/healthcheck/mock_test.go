@@ -135,6 +135,8 @@ func newHTTPServer(healthSequence ...int) *HTTPServer {
 func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 	if s.status.IsEmpty() {
 		s.done()
+		// This ensures that the health-checker will handle the context cancellation error before handling the HTTP response.
+		time.Sleep(500 * time.Millisecond)
 		return
 	}
 
