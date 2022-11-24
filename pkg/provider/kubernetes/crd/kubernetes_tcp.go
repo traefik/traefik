@@ -19,9 +19,10 @@ import (
 
 func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.TCPConfiguration {
 	conf := &dynamic.TCPConfiguration{
-		Routers:     map[string]*dynamic.TCPRouter{},
-		Middlewares: map[string]*dynamic.TCPMiddleware{},
-		Services:    map[string]*dynamic.TCPService{},
+		Routers:           map[string]*dynamic.TCPRouter{},
+		Middlewares:       map[string]*dynamic.TCPMiddleware{},
+		Services:          map[string]*dynamic.TCPService{},
+		ServersTransports: map[string]*dynamic.TCPServersTransport{},
 	}
 
 	for _, ingressRouteTCP := range client.GetIngressRouteTCPs() {
@@ -206,6 +207,13 @@ func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace st
 		tcpService.LoadBalancer.TerminationDelay = service.TerminationDelay
 	}
 
+	if service.ServersTransport != "" {
+		tcpService.LoadBalancer.ServersTransport, err = p.makeTCPServersTransportKey(parentNamespace, service.ServersTransport)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return tcpService, nil
 }
 
@@ -269,6 +277,25 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc v1alpha1.
 	}
 
 	return servers, nil
+}
+
+func (p *Provider) makeTCPServersTransportKey(parentNamespace string, serversTransportName string) (string, error) {
+	if serversTransportName == "" {
+		return "", nil
+	}
+
+	if !p.AllowCrossNamespace && strings.HasSuffix(serversTransportName, providerNamespaceSeparator+providerName) {
+		// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
+		// if the provider namespace kubernetescrd is used,
+		// we don't allow this format to avoid cross namespace references.
+		return "", fmt.Errorf("invalid reference to serversTransport %s: namespace-name@kubernetescrd format is not allowed when crossnamespace is disallowed", serversTransportName)
+	}
+
+	if strings.Contains(serversTransportName, providerNamespaceSeparator) {
+		return serversTransportName, nil
+	}
+
+	return provider.Normalize(makeID(parentNamespace, serversTransportName)), nil
 }
 
 // getTLSTCP mutates tlsConfigs.

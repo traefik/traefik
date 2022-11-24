@@ -3,7 +3,6 @@ package tcp
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"net"
 	"testing"
@@ -20,7 +19,7 @@ func fakeRedis(t *testing.T, listener net.Listener) {
 
 	for {
 		conn, err := listener.Accept()
-		fmt.Println("Accept on server")
+		t.Log("Accept on server")
 		require.NoError(t, err)
 
 		for {
@@ -54,7 +53,7 @@ func TestCloseWrite(t *testing.T) {
 	_, port, err := net.SplitHostPort(backendListener.Addr().String())
 	require.NoError(t, err)
 
-	proxy, err := NewProxy(":"+port, 10*time.Millisecond, nil)
+	proxy, err := NewProxy(":"+port, 10*time.Millisecond, nil, &net.Dialer{})
 	require.NoError(t, err)
 
 	proxyListener, err := net.Listen("tcp", ":0")
@@ -133,7 +132,7 @@ func TestProxyProtocol(t *testing.T) {
 			_, port, err := net.SplitHostPort(proxyBackendListener.Addr().String())
 			require.NoError(t, err)
 
-			proxy, err := NewProxy(":"+port, 10*time.Millisecond, &dynamic.ProxyProtocol{Version: test.version})
+			proxy, err := NewProxy(":"+port, 10*time.Millisecond, &dynamic.ProxyProtocol{Version: test.version}, &net.Dialer{})
 			require.NoError(t, err)
 
 			proxyListener, err := net.Listen("tcp", ":0")
@@ -198,7 +197,7 @@ func TestLookupAddress(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			proxy, err := NewProxy(test.address, 10*time.Millisecond, nil)
+			proxy, err := NewProxy(test.address, 10*time.Millisecond, nil, &net.Dialer{})
 			require.NoError(t, err)
 
 			test.expectRefresh(t, proxy.tcpAddr)
