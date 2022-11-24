@@ -7,7 +7,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"fmt"
 	"io"
 	"math/big"
 	"net"
@@ -122,7 +121,7 @@ func fakeRedis(t *testing.T, listener net.Listener) {
 
 	for {
 		conn, err := listener.Accept()
-		fmt.Println("Accept on server")
+		t.Log("Accept on server")
 		require.NoError(t, err)
 
 		for {
@@ -153,11 +152,13 @@ func TestTLS(t *testing.T) {
 
 	backendListener, err := net.Listen("tcp", ":0")
 	require.NoError(t, err)
+	defer backendListener.Close()
 
 	tlsListener := tls.NewListener(backendListener, &tls.Config{Certificates: []tls.Certificate{cert}})
 	defer tlsListener.Close()
 
 	go fakeRedis(t, tlsListener)
+
 	_, port, err := net.SplitHostPort(tlsListener.Addr().String())
 	require.NoError(t, err)
 
@@ -199,11 +200,13 @@ func TestTLSWithInsecureSkipVerify(t *testing.T) {
 
 	backendListener, err := net.Listen("tcp", ":0")
 	require.NoError(t, err)
+	defer backendListener.Close()
 
 	tlsListener := tls.NewListener(backendListener, &tls.Config{Certificates: []tls.Certificate{cert}})
 	defer tlsListener.Close()
 
 	go fakeRedis(t, tlsListener)
+
 	_, port, err := net.SplitHostPort(tlsListener.Addr().String())
 	require.NoError(t, err)
 
@@ -249,6 +252,7 @@ func TestMTLS(t *testing.T) {
 
 	backendListener, err := net.Listen("tcp", ":0")
 	require.NoError(t, err)
+	defer backendListener.Close()
 
 	tlsListener := tls.NewListener(backendListener, &tls.Config{
 		// For TLS
@@ -261,6 +265,7 @@ func TestMTLS(t *testing.T) {
 	defer tlsListener.Close()
 
 	go fakeRedis(t, tlsListener)
+
 	_, port, err := net.SplitHostPort(tlsListener.Addr().String())
 	require.NoError(t, err)
 
@@ -308,16 +313,13 @@ func TestMTLS(t *testing.T) {
 func TestSpiffeMTLS(t *testing.T) {
 	backendListener, err := net.Listen("tcp", ":0")
 	require.NoError(t, err)
+	defer backendListener.Close()
 
 	trustDomain := spiffeid.RequireTrustDomainFromString("spiffe://traefik.test")
 
-	pki, err := newFakeSpiffePKI(trustDomain)
-	require.NoError(t, err)
+	pki := newFakeSpiffePKI(t, trustDomain)
 
-	clientSVID, err := pki.genSVID(spiffeid.RequireFromPath(trustDomain, "/client"))
-	require.NoError(t, err)
-
-	serverSVID, err := pki.genSVID(spiffeid.RequireFromPath(trustDomain, "/server"))
+	serverSVID := pki.genSVID(t, spiffeid.RequireFromPath(trustDomain, "/server"))
 	require.NoError(t, err)
 
 	serverSource := fakeSpiffeSource{
@@ -342,6 +344,11 @@ func TestSpiffeMTLS(t *testing.T) {
 		tlsconfig.AuthorizeAny(),
 	))
 	defer tlsListener.Close()
+
+	_, port, err := net.SplitHostPort(tlsListener.Addr().String())
+	require.NoError(t, err)
+
+	clientSVID := pki.genSVID(t, spiffeid.RequireFromPath(trustDomain, "/client"))
 
 	clientSource := fakeSpiffeSource{
 		svid:   clientSVID,
@@ -403,8 +410,6 @@ func TestSpiffeMTLS(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			go fakeRedis(t, tlsListener)
-			_, port, err := net.SplitHostPort(tlsListener.Addr().String())
-			require.NoError(t, err)
 
 			dialerManager := NewDialerManager(test.clientSource)
 
@@ -452,11 +457,11 @@ type fakeSpiffePKI struct {
 	bundle *x509bundle.Bundle
 }
 
-func newFakeSpiffePKI(trustDomain spiffeid.TrustDomain) (fakeSpiffePKI, error) {
+func newFakeSpiffePKI(t *testing.T, trustDomain spiffeid.TrustDomain) fakeSpiffePKI {
+	t.Helper()
+
 	caPrivateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return fakeSpiffePKI{}, err
-	}
+	require.NoError(t, err)
 
 	caTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(2000),
@@ -473,9 +478,6 @@ func newFakeSpiffePKI(trustDomain spiffeid.TrustDomain) (fakeSpiffePKI, error) {
 		IsCA:                  true,
 		PublicKey:             caPrivateKey.Public(),
 	}
-	if err != nil {
-		return fakeSpiffePKI{}, err
-	}
 
 	caCertDER, err := x509.CreateCertificate(
 		rand.Reader,
@@ -484,29 +486,25 @@ func newFakeSpiffePKI(trustDomain spiffeid.TrustDomain) (fakeSpiffePKI, error) {
 		caPrivateKey.Public(),
 		caPrivateKey,
 	)
-	if err != nil {
-		return fakeSpiffePKI{}, err
-	}
+	require.NoError(t, err)
 
 	bundle, err := x509bundle.ParseRaw(
 		trustDomain,
 		caCertDER,
 	)
-	if err != nil {
-		return fakeSpiffePKI{}, err
-	}
+	require.NoError(t, err)
 
 	return fakeSpiffePKI{
 		bundle:       bundle,
 		caPrivateKey: caPrivateKey,
-	}, nil
+	}
 }
 
-func (f *fakeSpiffePKI) genSVID(id spiffeid.ID) (*x509svid.SVID, error) {
+func (f *fakeSpiffePKI) genSVID(t *testing.T, id spiffeid.ID) *x509svid.SVID {
+	t.Helper()
+
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	template := x509.Certificate{
 		SerialNumber: big.NewInt(200001),
@@ -533,16 +531,15 @@ func (f *fakeSpiffePKI) genSVID(id spiffeid.ID) (*x509svid.SVID, error) {
 		privateKey.Public(),
 		f.caPrivateKey,
 	)
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
 	keyPKCS8, err := x509.MarshalPKCS8PrivateKey(privateKey)
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(t, err)
 
-	return x509svid.ParseRaw(certDER, keyPKCS8)
+	svid, err := x509svid.ParseRaw(certDER, keyPKCS8)
+	require.NoError(t, err)
+
+	return svid
 }
 
 // fakeSpiffeSource allows retrieving staticly an SVID and its associated bundle.
