@@ -97,9 +97,11 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 
 func (p Proxy) dialBackend() (WriteCloser, error) {
 	var addr string
-	if p.tcpAddr != nil { // Dial using directly the TCPAddr for IP based addresses.
+	if p.tcpAddr != nil {
+		// Dial using directly the TCPAddr for IP based addresses.
 		addr = p.tcpAddr.String()
-	} else { // Dial with DNS lookup for host based addresses.
+	} else {
+		// Dial with DNS lookup for host based addresses.
 		addr = p.address
 		log.Debug().Str("address", addr).Msg("Dial with lookup")
 	}
