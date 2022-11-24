@@ -149,61 +149,71 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 
 	for serviceName := range servicesToDelete {
 		logger.Error().Str(logs.ServiceName, serviceName).
-			Msgf("Service defined multiple times with different configurations in %v", services[serviceName])
+			Interface("configuration", services[serviceName]).
+			Msg("Service defined multiple times with different configurations")
 		delete(configuration.HTTP.Services, serviceName)
 	}
 
 	for routerName := range routersToDelete {
 		logger.Error().Str(logs.RouterName, routerName).
-			Msgf("Router defined multiple times with different configurations in %v", routers[routerName])
+			Interface("configuration", routers[routerName]).
+			Msg("Router defined multiple times with different configurations")
 		delete(configuration.HTTP.Routers, routerName)
 	}
 
 	for transportName := range transportsToDelete {
 		logger.Error().Str(logs.ServersTransportName, transportName).
-			Msgf("ServersTransport defined multiple times with different configurations in %v", transports[transportName])
+			Interface("configuration", transports[transportName]).
+			Msg("ServersTransport defined multiple times with different configurations")
 		delete(configuration.HTTP.ServersTransports, transportName)
 	}
 
 	for serviceName := range servicesTCPToDelete {
 		logger.Error().Str(logs.ServiceName, serviceName).
-			Msgf("Service TCP defined multiple times with different configurations in %v", servicesTCP[serviceName])
+			Interface("configuration", servicesTCP[serviceName]).
+			Msg("Service TCP defined multiple times with different configurations")
 		delete(configuration.TCP.Services, serviceName)
 	}
 
 	for routerName := range routersTCPToDelete {
 		logger.Error().Str(logs.RouterName, routerName).
-			Msgf("Router TCP defined multiple times with different configurations in %v", routersTCP[routerName])
+			Interface("configuration", routersTCP[routerName]).
+			Msg("Router TCP defined multiple times with different configurations")
 		delete(configuration.TCP.Routers, routerName)
 	}
 
 	for transportName := range transportsTCPToDelete {
-		logger.WithField(log.ServersTransportName, transportName).
-			Errorf("ServersTransport TCP defined multiple times with different configurations in %v", transportsTCP[transportName])
+		logger.Error().Str(logs.ServersTransportName, transportName).
+			Interface("configuration", transportsTCP[transportName]).
+			Msg("ServersTransport TCP defined multiple times with different configurations")
 		delete(configuration.TCP.ServersTransports, transportName)
 	}
 
 	for serviceName := range servicesUDPToDelete {
 		logger.Error().Str(logs.ServiceName, serviceName).
-			Msgf("UDP service defined multiple times with different configurations in %v", servicesUDP[serviceName])
+			Interface("configuration", servicesUDP[serviceName]).
+			Msg("UDP service defined multiple times with different configurations")
 		delete(configuration.UDP.Services, serviceName)
 	}
 
 	for routerName := range routersUDPToDelete {
 		logger.Error().Str(logs.RouterName, routerName).
-			Msgf("UDP router defined multiple times with different configurations in %v", routersUDP[routerName])
+			Interface("configuration", routersUDP[routerName]).
+			Msg("UDP router defined multiple times with different configurations")
 		delete(configuration.UDP.Routers, routerName)
 	}
 
 	for middlewareName := range middlewaresToDelete {
 		logger.Error().Str(logs.MiddlewareName, middlewareName).
-			Msgf("Middleware defined multiple times with different configurations in %v", middlewares[middlewareName])
+			Interface("configuration", middlewares[middlewareName]).
+			Msg("Middleware defined multiple times with different configurations")
 		delete(configuration.HTTP.Middlewares, middlewareName)
 	}
 
 	for middlewareName := range middlewaresTCPToDelete {
 		logger.Error().Str(logs.MiddlewareName, middlewareName).
-			Msgf("TCP Middleware defined multiple times with different configurations in %v", middlewaresTCP[middlewareName])
+			Interface("configuration", middlewaresTCP[middlewareName]).
+			Msg("TCP Middleware defined multiple times with different configurations")
 		delete(configuration.TCP.Middlewares, middlewareName)
 	}
 
