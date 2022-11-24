@@ -10,12 +10,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
 	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"golang.org/x/net/proxy"
 )
@@ -63,7 +63,10 @@ func (d *DialerManager) Update(newConfigs map[string]*dynamic.TCPServersTranspor
 		var err error
 		d.dialers[configName], err = d.createDialer(newConfig)
 		if err != nil {
-			log.WithoutContext().Errorf("Could not configure TCP Dialer %s, fallback on default dialer: %v", configName, err)
+			log.Error().
+				Str("dialer", configName).
+				Err(err).
+				Msg("Could not configure TCP Dialer, fallback on default dialer")
 			d.dialers[configName] = &net.Dialer{}
 		}
 	}
@@ -76,7 +79,10 @@ func (d *DialerManager) Update(newConfigs map[string]*dynamic.TCPServersTranspor
 		var err error
 		d.dialers[newConfigName], err = d.createDialer(newConfig)
 		if err != nil {
-			log.WithoutContext().Errorf("Could not configure TCP Dialer %s, fallback on default dialer: %v", newConfigName, err)
+			log.Error().
+				Str("dialer", newConfigName).
+				Err(err).
+				Msg("Could not configure TCP Dialer, fallback on default dialer")
 			d.dialers[newConfigName] = &net.Dialer{}
 		}
 	}
@@ -165,7 +171,7 @@ func createRootCACertPool(rootCAs []traefiktls.FileOrContent) *x509.CertPool {
 	for _, cert := range rootCAs {
 		certContent, err := cert.Read()
 		if err != nil {
-			log.WithoutContext().Error("Error while read RootCAs", err)
+			log.Err(err).Msg("Error while read RootCAs")
 			continue
 		}
 		roots.AppendCertsFromPEM(certContent)

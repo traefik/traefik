@@ -334,7 +334,10 @@ func (c *clientWrapper) GetServersTransportTCPs() []*v1alpha1.ServersTransportTC
 	for ns, factory := range c.factoriesCrd {
 		serversTransports, err := factory.Traefik().V1alpha1().ServersTransportTCPs().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("Failed to list servers transport TCP in namespace %s: %v", ns, err)
+			log.Error().
+				Err(err).
+				Str("namespace", ns).
+				Msg("Failed to list servers transport TCP in namespace")
 		}
 		result = append(result, serversTransports...)
 	}
