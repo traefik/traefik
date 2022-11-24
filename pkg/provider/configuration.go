@@ -27,9 +27,10 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 			ServersTransports: make(map[string]*dynamic.ServersTransport),
 		},
 		TCP: &dynamic.TCPConfiguration{
-			Routers:     make(map[string]*dynamic.TCPRouter),
-			Services:    make(map[string]*dynamic.TCPService),
-			Middlewares: make(map[string]*dynamic.TCPMiddleware),
+			Routers:           make(map[string]*dynamic.TCPRouter),
+			Services:          make(map[string]*dynamic.TCPService),
+			Middlewares:       make(map[string]*dynamic.TCPMiddleware),
+			ServersTransports: make(map[string]*dynamic.TCPServersTransport),
 		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  make(map[string]*dynamic.UDPRouter),
@@ -63,6 +64,9 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 
 	transportsToDelete := map[string]struct{}{}
 	transports := map[string][]string{}
+
+	transportsTCPToDelete := map[string]struct{}{}
+	transportsTCP := map[string][]string{}
 
 	var sortedKeys []string
 	for key := range configurations {
@@ -107,6 +111,13 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 			}
 		}
 
+		for transportName, transport := range conf.TCP.ServersTransports {
+			transports[transportName] = append(transports[transportName], root)
+			if !AddTransportTCP(configuration.TCP, transportName, transport) {
+				transportsToDelete[transportName] = struct{}{}
+			}
+		}
+
 		for serviceName, service := range conf.UDP.Services {
 			servicesUDP[serviceName] = append(servicesUDP[serviceName], root)
 			if !AddServiceUDP(configuration.UDP, serviceName, service) {
@@ -138,55 +149,71 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 
 	for serviceName := range servicesToDelete {
 		logger.Error().Str(logs.ServiceName, serviceName).
-			Msgf("Service defined multiple times with different configurations in %v", services[serviceName])
+			Interface("configuration", services[serviceName]).
+			Msg("Service defined multiple times with different configurations")
 		delete(configuration.HTTP.Services, serviceName)
 	}
 
 	for routerName := range routersToDelete {
 		logger.Error().Str(logs.RouterName, routerName).
-			Msgf("Router defined multiple times with different configurations in %v", routers[routerName])
+			Interface("configuration", routers[routerName]).
+			Msg("Router defined multiple times with different configurations")
 		delete(configuration.HTTP.Routers, routerName)
 	}
 
 	for transportName := range transportsToDelete {
 		logger.Error().Str(logs.ServersTransportName, transportName).
-			Msgf("ServersTransport defined multiple times with different configurations in %v", transports[transportName])
+			Interface("configuration", transports[transportName]).
+			Msg("ServersTransport defined multiple times with different configurations")
 		delete(configuration.HTTP.ServersTransports, transportName)
 	}
 
 	for serviceName := range servicesTCPToDelete {
 		logger.Error().Str(logs.ServiceName, serviceName).
-			Msgf("Service TCP defined multiple times with different configurations in %v", servicesTCP[serviceName])
+			Interface("configuration", servicesTCP[serviceName]).
+			Msg("Service TCP defined multiple times with different configurations")
 		delete(configuration.TCP.Services, serviceName)
 	}
 
 	for routerName := range routersTCPToDelete {
 		logger.Error().Str(logs.RouterName, routerName).
-			Msgf("Router TCP defined multiple times with different configurations in %v", routersTCP[routerName])
+			Interface("configuration", routersTCP[routerName]).
+			Msg("Router TCP defined multiple times with different configurations")
 		delete(configuration.TCP.Routers, routerName)
+	}
+
+	for transportName := range transportsTCPToDelete {
+		logger.Error().Str(logs.ServersTransportName, transportName).
+			Interface("configuration", transportsTCP[transportName]).
+			Msg("ServersTransport TCP defined multiple times with different configurations")
+		delete(configuration.TCP.ServersTransports, transportName)
 	}
 
 	for serviceName := range servicesUDPToDelete {
 		logger.Error().Str(logs.ServiceName, serviceName).
-			Msgf("UDP service defined multiple times with different configurations in %v", servicesUDP[serviceName])
+			Interface("configuration", servicesUDP[serviceName]).
+			Msg("UDP service defined multiple times with different configurations")
 		delete(configuration.UDP.Services, serviceName)
 	}
 
 	for routerName := range routersUDPToDelete {
 		logger.Error().Str(logs.RouterName, routerName).
-			Msgf("UDP router defined multiple times with different configurations in %v", routersUDP[routerName])
+			Interface("configuration", routersUDP[routerName]).
+			Msg("UDP router defined multiple times with different configurations")
 		delete(configuration.UDP.Routers, routerName)
 	}
 
 	for middlewareName := range middlewaresToDelete {
 		logger.Error().Str(logs.MiddlewareName, middlewareName).
-			Msgf("Middleware defined multiple times with different configurations in %v", middlewares[middlewareName])
+			Interface("configuration", middlewares[middlewareName]).
+			Msg("Middleware defined multiple times with different configurations")
 		delete(configuration.HTTP.Middlewares, middlewareName)
 	}
 
 	for middlewareName := range middlewaresTCPToDelete {
 		logger.Error().Str(logs.MiddlewareName, middlewareName).
-			Msgf("TCP Middleware defined multiple times with different configurations in %v", middlewaresTCP[middlewareName])
+			Interface("configuration", middlewaresTCP[middlewareName]).
+			Msg("TCP Middleware defined multiple times with different configurations")
 		delete(configuration.TCP.Middlewares, middlewareName)
 	}
 
@@ -236,6 +263,16 @@ func AddMiddlewareTCP(configuration *dynamic.TCPConfiguration, middlewareName st
 	}
 
 	return reflect.DeepEqual(configuration.Middlewares[middlewareName], middleware)
+}
+
+// AddTransportTCP adds a transport to a configurations.
+func AddTransportTCP(configuration *dynamic.TCPConfiguration, transportName string, transport *dynamic.TCPServersTransport) bool {
+	if _, ok := configuration.ServersTransports[transportName]; !ok {
+		configuration.ServersTransports[transportName] = transport
+		return true
+	}
+
+	return reflect.DeepEqual(configuration.ServersTransports[transportName], transport)
 }
 
 // AddServiceUDP adds a service to a configuration.
