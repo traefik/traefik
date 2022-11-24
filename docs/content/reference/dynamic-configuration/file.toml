@@ -384,8 +384,8 @@
   [tcp.services]
     [tcp.services.TCPService01]
       [tcp.services.TCPService01.loadBalancer]
-      serversTransport = "foobar"
-      terminationDelay = 42
+        serversTransport = "foobar"
+        terminationDelay = 42
         [tcp.services.TCPService01.loadBalancer.proxyProtocol]
           version = 42
 

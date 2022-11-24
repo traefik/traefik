@@ -250,7 +250,7 @@ and then between Traefik and the backend servers, is configured through the
 
 In addition, a few parameters are dedicated to configuring globally
 what happens with the connections between Traefik and the backends.
-This is done through the `serversTransport` and `tcpServersTransport`
+This is done through the [`serversTransport`](#http-servers-transports) and [`tcpServersTransport`](#tcp-servers-transports)
 sections of the configuration, which features these options:
 
 ### HTTP Servers Transports
@@ -470,7 +470,7 @@ serversTransport:
 
 _Optional_
 
-`insecureSkipVerify` controls whether the server's certificate chain and host name is verified.
+`insecureSkipVerify` disables the server's certificate chain and host name verification.
 
 ```yaml tab="File (YAML)"
 ## Static configuration
@@ -488,7 +488,8 @@ tcpServersTransports:
 
 _Optional_
 
-`rootCAs` defines the set of root certificate authorities (as file paths, or data bytes) to use when verifying server certificates.
+`rootCAs` defines the set of Root Certificate Authorities (as file paths, or data bytes)
+to use when verifying self-signed TLS server certificates.
 
 ```yaml tab="File (YAML)"
 ## Static configuration
@@ -508,7 +509,8 @@ tcpServersTransports:
 
 _Optional, Default="30s"_
 
-`dialTimeout` defines the timeout when dialing the backend TCP service. If zero, no timeout exists.
+`dialTimeout` is the maximum duration allowed for a connection to a backend server to be established.
+Zero means no timeout.
 
 ```yaml tab="File (YAML)"
 ## Static configuration
@@ -526,7 +528,7 @@ tcpServersTransports:
 
 _Optional, Default="15s"_
 
-`dialKeepAlive` defines the interval between keep-alive probes for an active network connection.
+`dialKeepAlive` defines the interval between keep-alive probes sent on an active network connection.
 If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and
 operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative,
 keep-alive probes are disabled.

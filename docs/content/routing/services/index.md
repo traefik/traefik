@@ -1513,7 +1513,8 @@ The `address` option (IP:Port) point to a specific instance.
           serversTransport = "mytransport"
     ```
 
-!!! info Default Servers Transport
+!!! info "Default Servers Transport"
+
     If no serversTransport is specified, the `default@internal` will be used.
     The `default@internal` serversTransport is created from the [static configuration](../overview.md#tcp-servers-transports).
 
