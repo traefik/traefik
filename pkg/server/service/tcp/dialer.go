@@ -174,6 +174,7 @@ func createRootCACertPool(rootCAs []traefiktls.FileOrContent) *x509.CertPool {
 			log.Err(err).Msg("Error while read RootCAs")
 			continue
 		}
+
 		roots.AppendCertsFromPEM(certContent)
 	}
 
