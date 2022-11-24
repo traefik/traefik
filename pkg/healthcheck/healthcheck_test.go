@@ -249,6 +249,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 	testCases := []struct {
 		desc                  string
 		mode                  string
+		status                int
 		server                StartTestServer
 		expNumRemovedServers  int
 		expNumUpsertedServers int
@@ -258,6 +259,15 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 		{
 			desc:                  "healthy server staying healthy",
 			server:                newHTTPServer(http.StatusOK),
+			expNumRemovedServers:  0,
+			expNumUpsertedServers: 1,
+			expGaugeValue:         1,
+			targetStatus:          runtime.StatusUp,
+		},
+		{
+			desc:                  "healthy server staying healthy, with custom code status check",
+			server:                newHTTPServer(http.StatusNotFound),
+			status:                http.StatusNotFound,
 			expNumRemovedServers:  0,
 			expNumUpsertedServers: 1,
 			expGaugeValue:         1,
@@ -282,6 +292,15 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 		{
 			desc:                  "healthy server becoming sick",
 			server:                newHTTPServer(http.StatusServiceUnavailable),
+			expNumRemovedServers:  1,
+			expNumUpsertedServers: 0,
+			expGaugeValue:         0,
+			targetStatus:          runtime.StatusDown,
+		},
+		{
+			desc:                  "healthy server becoming sick, with custom code status check",
+			server:                newHTTPServer(http.StatusOK),
+			status:                http.StatusServiceUnavailable,
 			expNumRemovedServers:  1,
 			expNumUpsertedServers: 0,
 			expGaugeValue:         0,
@@ -348,6 +367,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 
 			config := &dynamic.ServerHealthCheck{
 				Mode:     test.mode,
+				Status:   test.status,
 				Path:     "/path",
 				Interval: ptypes.Duration(500 * time.Millisecond),
 				Timeout:  ptypes.Duration(499 * time.Millisecond),
