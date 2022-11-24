@@ -158,7 +158,6 @@
         authRequestHeaders = ["foobar", "foobar"]
         [http.middlewares.Middleware09.forwardAuth.tls]
           ca = "foobar"
-          caOptional = true
           cert = "foobar"
           key = "foobar"
           insecureSkipVerify = true
@@ -174,10 +173,6 @@
         addVaryHeader = true
         allowedHosts = ["foobar", "foobar"]
         hostsProxyHeaders = ["foobar", "foobar"]
-        sslRedirect = true
-        sslTemporaryRedirect = true
-        sslHost = "foobar"
-        sslForceHost = true
         stsSeconds = 42
         stsIncludeSubdomains = true
         stsPreload = true
@@ -190,7 +185,6 @@
         contentSecurityPolicy = "foobar"
         publicKey = "foobar"
         referrerPolicy = "foobar"
-        featurePolicy = "foobar"
         permissionsPolicy = "foobar"
         isDevelopment = true
         [http.middlewares.Middleware10.headers.customRequestHeaders]
@@ -281,7 +275,6 @@
     [http.middlewares.Middleware21]
       [http.middlewares.Middleware21.stripPrefix]
         prefixes = ["foobar", "foobar"]
-        forceSlash = true
     [http.middlewares.Middleware22]
       [http.middlewares.Middleware22.stripPrefixRegex]
         regex = ["foobar", "foobar"]
@@ -457,7 +450,6 @@
       cipherSuites = ["foobar", "foobar"]
       curvePreferences = ["foobar", "foobar"]
       sniStrict = true
-      preferServerCipherSuites = true
       alpnProtocols = ["foobar", "foobar"]
       [tls.options.Options0.clientAuth]
         caFiles = ["foobar", "foobar"]
@@ -468,7 +460,6 @@
       cipherSuites = ["foobar", "foobar"]
       curvePreferences = ["foobar", "foobar"]
       sniStrict = true
-      preferServerCipherSuites = true
       alpnProtocols = ["foobar", "foobar"]
       [tls.options.Options1.clientAuth]
         caFiles = ["foobar", "foobar"]

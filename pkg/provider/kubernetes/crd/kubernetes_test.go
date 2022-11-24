@@ -5144,8 +5144,7 @@ func TestCrossNamespace(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"cross-ns-stripprefix": {
 							StripPrefix: &dynamic.StripPrefix{
-								Prefixes:   []string{"/stripit"},
-								ForceSlash: false,
+								Prefixes: []string{"/stripit"},
 							},
 						},
 					},
@@ -5215,8 +5214,7 @@ func TestCrossNamespace(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"cross-ns-stripprefix": {
 							StripPrefix: &dynamic.StripPrefix{
-								Prefixes:   []string{"/stripit"},
-								ForceSlash: false,
+								Prefixes: []string{"/stripit"},
 							},
 						},
 						"default-test-errorpage": {
