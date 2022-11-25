@@ -16,6 +16,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/middlewares/chain"
 	"github.com/traefik/traefik/v2/pkg/middlewares/circuitbreaker"
 	"github.com/traefik/traefik/v2/pkg/middlewares/compress"
+	"github.com/traefik/traefik/v2/pkg/middlewares/contenttype"
 	"github.com/traefik/traefik/v2/pkg/middlewares/customerrors"
 	"github.com/traefik/traefik/v2/pkg/middlewares/grpcweb"
 	"github.com/traefik/traefik/v2/pkg/middlewares/headers"
@@ -181,12 +182,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-				if !config.ContentType.AutoDetect {
-					rw.Header()["Content-Type"] = nil
-				}
-				next.ServeHTTP(rw, req)
-			}), nil
+			return contenttype.New(ctx, next, middlewareName)
 		}
 	}
 
