@@ -380,8 +380,6 @@ func Test_addRoutePriority(t *testing.T) {
 				require.NoError(t, err, route.rule)
 			}
 
-			muxer.SortRoutes()
-
 			w := httptest.NewRecorder()
 			req := testhelpers.MustNewRequest(http.MethodGet, test.path, http.NoBody)
 
