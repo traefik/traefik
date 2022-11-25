@@ -10,7 +10,7 @@ A Simple Use Case Using Docker
 
 ![quickstart-diagram](../assets/img/quickstart-diagram.png)
 
-## Launch Traefik With the Docker Provider and Network
+## Launch Traefik With the Docker Provider
 
 Create a `docker-compose.yml` file where you will define a `reverse-proxy` service that uses the official Traefik image:
 
@@ -31,21 +31,7 @@ services:
     volumes:
       # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock
-    networks:
-      traefik:
-
-networks:
-  traefik:
-    external: true
 ```
-
-### Networking
-Traefik need's to be in the same network as the Container. Because we want the network to still exist after stoping the services we have to specify that it is exernal.
-You can create a docker network with the following command:
-```shell
-docker network create traefik
-```
-
 
 **That's it. Now you can launch Traefik!**
 
@@ -64,18 +50,17 @@ Now that we have a Traefik instance up and running, we will deploy new services.
 Edit your `docker-compose.yml` file and add the following at the end of your file.
 
 ```yaml
-# ...
 version: '3'
 
 services:
+
+  ...
+
   whoami:
     # A container that exposes an API to show its IP address
     image: traefik/whoami
     labels:
       - "traefik.http.routers.whoami.rule=Host(`whoami.docker.localhost`)"
-networks:
-  traefik:
-    external: true
 ```
 
 The above defines `whoami`: a simple web service that outputs information about the machine it is deployed on (its IP address, host, and so on).
