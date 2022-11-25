@@ -1223,25 +1223,13 @@ func (s *SimpleSuite) TestContentTypeDisableAutoDetect(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/pdf/ct/nomiddlewareauto", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8000/css/ct/middlewarenoauto", time.Second, try.HasHeaderValue("Content-Type", "text/css", false))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/pdf/ct/nomiddlewarenoauto", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/css/noct/nomiddleware", time.Second, try.HasHeaderValue("Content-Type", "text/plain; charset=utf-8", false))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/pdf/noct/nomiddleware", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
-	c.Assert(err, checker.IsNil)
-
 	err = try.GetRequest("http://127.0.0.1:8000/css/noct/middlewareauto", time.Second, try.HasHeaderValue("Content-Type", "text/plain; charset=utf-8", false))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8000/pdf/noct/nomiddlewareauto", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
+	err = try.GetRequest("http://127.0.0.1:8000/pdf/noct/middlewareauto", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8000/css/noct/middlewarenoauto", time.Second, func(res *http.Response) error {
+	err = try.GetRequest("http://127.0.0.1:8000/css/noct/nomiddleware", time.Second, func(res *http.Response) error {
 		if ct, ok := res.Header["Content-Type"]; ok {
 			return fmt.Errorf("should have no content type and %s is present", ct)
 		}
@@ -1249,7 +1237,7 @@ func (s *SimpleSuite) TestContentTypeDisableAutoDetect(c *check.C) {
 	})
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8000/pdf/noct/middlewarenoauto", time.Second, func(res *http.Response) error {
+	err = try.GetRequest("http://127.0.0.1:8000/pdf/noct/nomiddleware", time.Second, func(res *http.Response) error {
 		if ct, ok := res.Header["Content-Type"]; ok {
 			return fmt.Errorf("should have no content type and %s is present", ct)
 		}
