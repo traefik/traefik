@@ -369,8 +369,6 @@ spec:
                     description: TLS defines the configuration used to secure the
                       connection to the authentication server.
                     properties:
-                      caOptional:
-                        type: boolean
                       caSecret:
                         description: CASecret is the name of the referenced Kubernetes
                           Secret containing the CA to validate the server certificate.
@@ -489,9 +487,6 @@ spec:
                     description: CustomResponseHeaders defines the header names and
                       values to apply to the response.
                     type: object
-                  featurePolicy:
-                    description: 'Deprecated: use PermissionsPolicy instead.'
-                    type: string
                   forceSTSHeader:
                     description: ForceSTSHeader defines whether to add the STS header
                       even when the connection is HTTP.
@@ -527,12 +522,6 @@ spec:
                       value. This allows sites to control whether browsers forward
                       the Referer header to other sites.
                     type: string
-                  sslForceHost:
-                    description: 'Deprecated: use RedirectRegex instead.'
-                    type: boolean
-                  sslHost:
-                    description: 'Deprecated: use RedirectRegex instead.'
-                    type: string
                   sslProxyHeaders:
                     additionalProperties:
                       type: string
@@ -541,14 +530,6 @@ spec:
                       useful when using other proxies (example: "X-Forwarded-Proto":
                       "https").'
                     type: object
-                  sslRedirect:
-                    description: 'Deprecated: use EntryPoint redirection or RedirectScheme
-                      instead.'
-                    type: boolean
-                  sslTemporaryRedirect:
-                    description: 'Deprecated: use EntryPoint redirection or RedirectScheme
-                      instead.'
-                    type: boolean
                   stsIncludeSubdomains:
                     description: STSIncludeSubdomains defines whether the includeSubDomains
                       directive is appended to the Strict-Transport-Security header.
@@ -890,11 +871,6 @@ spec:
                   This middleware removes the specified prefixes from the URL path.
                   More info: https://doc.traefik.io/traefik/v2.9/middlewares/http/stripprefix/'
                 properties:
-                  forceSlash:
-                    description: 'ForceSlash ensures that the resulting stripped path
-                      is not the empty string, by replacing it with / when necessary.
-                      Default: true.'
-                    type: boolean
                   prefixes:
                     description: Prefixes defines the prefixes to strip from the request
                       URL.

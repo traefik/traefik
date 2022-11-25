@@ -41,10 +41,6 @@ type TLSOptionSpec struct {
 	ClientAuth ClientAuth `json:"clientAuth,omitempty"`
 	// SniStrict defines whether Traefik allows connections from clients connections that do not specify a server_name extension.
 	SniStrict bool `json:"sniStrict,omitempty"`
-	// PreferServerCipherSuites defines whether the server chooses a cipher suite among his own instead of among the client's.
-	// It is enabled automatically when minVersion or maxVersion is set.
-	// Deprecated: https://github.com/golang/go/issues/45430
-	PreferServerCipherSuites bool `json:"preferServerCipherSuites,omitempty"`
 	// ALPNProtocols defines the list of supported application level protocols for the TLS handshake, in order of preference.
 	// More info: https://doc.traefik.io/traefik/v2.9/https/tls/#alpn-protocols
 	ALPNProtocols []string `json:"alpnProtocols,omitempty"`

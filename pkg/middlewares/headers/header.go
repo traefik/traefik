@@ -1,16 +1,13 @@
 package headers
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/logs"
 )
 
 // Header is a middleware that helps setup a few basic security features.
@@ -28,10 +25,6 @@ type Header struct {
 func NewHeader(next http.Handler, cfg dynamic.Headers) (*Header, error) {
 	hasCustomHeaders := cfg.HasCustomHeadersDefined()
 	hasCorsHeaders := cfg.HasCorsHeadersDefined()
-
-	ctx := log.With().Str(logs.MiddlewareType, typeName).Logger().WithContext(context.Background())
-
-	handleDeprecation(ctx, &cfg)
 
 	regexes := make([]*regexp.Regexp, len(cfg.AccessControlAllowOriginListRegex))
 	for i, str := range cfg.AccessControlAllowOriginListRegex {
