@@ -113,7 +113,7 @@
     throttleDuration = "42s"
     allowEmptyServices = true
     allowExternalNameServices = true
-    ignoreIngressClass = true
+    disableIngressClassLookup = true
     [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
       hostname = "foobar"
