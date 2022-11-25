@@ -49,25 +49,15 @@ type itemData struct {
 type ProviderBuilder struct {
 	Configuration `yaml:",inline" export:"true"`
 
-	// Deprecated: use Namespaces option instead.
-	Namespace  string   `description:"Sets the namespace used to discover services (Consul Enterprise only)." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
 	Namespaces []string `description:"Sets the namespaces used to discover services (Consul Enterprise only)." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty"`
 }
 
 // BuildProviders builds Consul Catalog provider instances for the given namespaces configuration.
 func (p *ProviderBuilder) BuildProviders() []*Provider {
-	// We can warn about that, because we've already made sure before that
-	// Namespace and Namespaces are mutually exclusive.
-	if p.Namespace != "" {
-		log.Warn().Msg("Namespace option is deprecated, please use the Namespaces option instead.")
-	}
-
 	if len(p.Namespaces) == 0 {
 		return []*Provider{{
 			Configuration: p.Configuration,
 			name:          providerName,
-			// p.Namespace could very well be empty.
-			namespace: p.Namespace,
 		}}
 	}
 

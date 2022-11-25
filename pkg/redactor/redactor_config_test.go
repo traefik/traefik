@@ -175,8 +175,7 @@ func init() {
 					Prefix: "foo",
 				},
 				StripPrefix: &dynamic.StripPrefix{
-					Prefixes:   []string{"foo"},
-					ForceSlash: true,
+					Prefixes: []string{"foo"},
 				},
 				StripPrefixRegex: &dynamic.StripPrefixRegex{
 					Regex: []string{"foo"},
@@ -211,11 +210,7 @@ func init() {
 					AddVaryHeader:                     true,
 					AllowedHosts:                      []string{"foo"},
 					HostsProxyHeaders:                 []string{"foo"},
-					SSLRedirect:                       true,
-					SSLTemporaryRedirect:              true,
-					SSLHost:                           "foo",
 					SSLProxyHeaders:                   map[string]string{"foo": "bar"},
-					SSLForceHost:                      true,
 					STSSeconds:                        42,
 					STSIncludeSubdomains:              true,
 					STSPreload:                        true,
@@ -228,7 +223,6 @@ func init() {
 					ContentSecurityPolicy:             "foo",
 					PublicKey:                         "foo",
 					ReferrerPolicy:                    "foo",
-					FeaturePolicy:                     "foo",
 					PermissionsPolicy:                 "foo",
 					IsDevelopment:                     true,
 				},
@@ -278,7 +272,6 @@ func init() {
 					Address: "127.0.0.1",
 					TLS: &types.ClientTLS{
 						CA:                 "ca.pem",
-						CAOptional:         true,
 						Cert:               "cert.pem",
 						Key:                "cert.pem",
 						InsecureSkipVerify: true,
@@ -592,7 +585,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		DefaultRule: "PathPrefix(`/`)",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
-			CAOptional:         true,
 			Cert:               "mycert.pem",
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
@@ -615,7 +607,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		DCOSToken:        "foobar",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
-			CAOptional:         true,
 			Cert:               "mycert.pem",
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
@@ -691,7 +682,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 				Token:      "MyToken",
 				TLS: &types.ClientTLS{
 					CA:                 "myCa",
-					CAOptional:         true,
 					Cert:               "mycert.pem",
 					Key:                "mycert.key",
 					InsecureSkipVerify: true,
@@ -710,7 +700,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 			ExposedByDefault:  true,
 			DefaultRule:       "PathPrefix(`/`)",
 		},
-		Namespace:  "ns",
 		Namespaces: []string{"ns1", "ns2"},
 	}
 
@@ -735,12 +724,10 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Token: "secret",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
-			CAOptional:         true,
 			Cert:               "mycert.pem",
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
 		},
-		Namespace:  "ns",
 		Namespaces: []string{"ns1", "ns2"},
 	}
 
@@ -753,7 +740,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Password: "password",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
-			CAOptional:         true,
 			Cert:               "mycert.pem",
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
@@ -778,7 +764,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Password: "password",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
-			CAOptional:         true,
 			Cert:               "mycert.pem",
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
@@ -791,7 +776,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		PollTimeout:  42,
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
-			CAOptional:         true,
 			Cert:               "mycert.pem",
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
@@ -903,7 +887,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 		},
 		Datadog: &datadog.Config{
 			LocalAgentHostPort:         "foobar",
-			GlobalTag:                  "foobar",
+			GlobalTags:                 map[string]string{"foobar": "foobar"},
 			Debug:                      true,
 			PrioritySampling:           true,
 			TraceIDHeaderName:          "foobar",

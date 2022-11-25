@@ -417,9 +417,6 @@ Enable Consul backend with default settings. (Default: ```false```)
 `--providers.consul.endpoints`:  
 KV store endpoints. (Default: ```127.0.0.1:8500```)
 
-`--providers.consul.namespace`:  
-Sets the namespace used to discover the configuration (Consul Enterprise only).
-
 `--providers.consul.namespaces`:  
 Sets the namespaces used to discover the configuration (Consul Enterprise only).
 
@@ -428,9 +425,6 @@ Root key used for KV store. (Default: ```traefik```)
 
 `--providers.consul.tls.ca`:  
 TLS CA
-
-`--providers.consul.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
 
 `--providers.consul.tls.cert`:  
 TLS cert
@@ -483,9 +477,6 @@ The URI scheme for the Consul server
 `--providers.consulcatalog.endpoint.tls.ca`:  
 TLS CA
 
-`--providers.consulcatalog.endpoint.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
-
 `--providers.consulcatalog.endpoint.tls.cert`:  
 TLS cert
 
@@ -500,9 +491,6 @@ Token is used to provide a per-request ACL token which overrides the agent's def
 
 `--providers.consulcatalog.exposedbydefault`:  
 Expose containers by default. (Default: ```true```)
-
-`--providers.consulcatalog.namespace`:  
-Sets the namespace used to discover services (Consul Enterprise only).
 
 `--providers.consulcatalog.namespaces`:  
 Sets the namespaces used to discover services (Consul Enterprise only).
@@ -557,9 +545,6 @@ Polling interval for swarm mode. (Default: ```15```)
 
 `--providers.docker.tls.ca`:  
 TLS CA
-
-`--providers.docker.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
 
 `--providers.docker.tls.cert`:  
 TLS cert
@@ -627,9 +612,6 @@ Root key used for KV store. (Default: ```traefik```)
 `--providers.etcd.tls.ca`:  
 TLS CA
 
-`--providers.etcd.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
-
 `--providers.etcd.tls.cert`:  
 TLS cert
 
@@ -671,9 +653,6 @@ Polling timeout for endpoint. (Default: ```5```)
 
 `--providers.http.tls.ca`:  
 TLS CA
-
-`--providers.http.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
 
 `--providers.http.tls.cert`:  
 TLS cert
@@ -819,9 +798,6 @@ Set a response header timeout for Marathon. (Default: ```60```)
 `--providers.marathon.tls.ca`:  
 TLS CA
 
-`--providers.marathon.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
-
 `--providers.marathon.tls.cert`:  
 TLS cert
 
@@ -861,9 +837,6 @@ Nomad region to use. If not provided, the local agent region is used.
 `--providers.nomad.endpoint.tls.ca`:  
 TLS CA
 
-`--providers.nomad.endpoint.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
-
 `--providers.nomad.endpoint.tls.cert`:  
 TLS cert
 
@@ -878,9 +851,6 @@ Token is used to provide a per-request ACL token.
 
 `--providers.nomad.exposedbydefault`:  
 Expose Nomad services by default. (Default: ```true```)
-
-`--providers.nomad.namespace`:  
-Sets the Nomad namespace used to discover services.
 
 `--providers.nomad.namespaces`:  
 Sets the Nomad namespaces used to discover services.
@@ -944,9 +914,6 @@ Root key used for KV store. (Default: ```traefik```)
 
 `--providers.redis.tls.ca`:  
 TLS CA
-
-`--providers.redis.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
 
 `--providers.redis.tls.cert`:  
 TLS cert
@@ -1022,9 +989,6 @@ Sets the header name prefix used to store baggage items in a map.
 
 `--tracing.datadog.debug`:  
 Enables Datadog debug. (Default: ```false```)
-
-`--tracing.datadog.globaltag`:  
-Sets a key:value tag on all spans.
 
 `--tracing.datadog.globaltags.<name>`:  
 Sets a list of key:value tags on all spans.

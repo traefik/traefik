@@ -71,7 +71,6 @@
     allowEmptyServices = true
     [providers.docker.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -96,7 +95,6 @@
     respectReadinessChecks = true
     [providers.marathon.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -159,7 +157,6 @@
     connectByDefault = true
     serviceName = "foobar"
     watch = true
-    namespace = "foobar"
     namespaces = ["foobar", "foobar"]
     [providers.consulCatalog.endpoint]
       address = "foobar"
@@ -169,7 +166,6 @@
       endpointWaitTime = "42s"
       [providers.consulCatalog.endpoint.tls]
         ca = "foobar"
-        caOptional = true
         cert = "foobar"
         key = "foobar"
         insecureSkipVerify = true
@@ -181,7 +177,6 @@
     constraints = "foobar"
     prefix = "foobar"
     stale = true
-    namespace = "foobar"
     namespaces = ["foobar", "foobar"]
     exposedByDefault = true
     refreshInterval = "42s"
@@ -192,7 +187,6 @@
       endpointWaitTime = "42s"
       [providers.nomad.endpoint.tls]
         ca = "foobar"
-        caOptional = true
         cert = "foobar"
         key = "foobar"
         insecureSkipVerify = true
@@ -212,11 +206,9 @@
     rootKey = "foobar"
     endpoints = ["foobar", "foobar"]
     token = "foobar"
-    namespace = "foobar"
     namespaces = ["foobar", "foobar"]
     [providers.consul.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -227,7 +219,6 @@
     password = "foobar"
     [providers.etcd.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -244,7 +235,6 @@
     db = 42
     [providers.redis.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -257,7 +247,6 @@
       name1 = "foobar"
     [providers.http.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -376,7 +365,6 @@
     sampleRate = 42.0
   [tracing.datadog]
     localAgentHostPort = "foobar"
-    globalTag = "foobar"
     [tracing.datadog.globalTags]
       tag1 = "foobar"
       tag2 = "foobar"

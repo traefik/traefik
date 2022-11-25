@@ -4,7 +4,6 @@ import (
 	"io"
 	"net"
 	"os"
-	"strings"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog/log"
@@ -18,9 +17,7 @@ const Name = "datadog"
 
 // Config provides configuration settings for a datadog tracer.
 type Config struct {
-	LocalAgentHostPort string `description:"Sets the Datadog Agent host:port." json:"localAgentHostPort,omitempty" toml:"localAgentHostPort,omitempty" yaml:"localAgentHostPort,omitempty"`
-	// Deprecated: use GlobalTags instead.
-	GlobalTag                  string            `description:"Sets a key:value tag on all spans." json:"globalTag,omitempty" toml:"globalTag,omitempty" yaml:"globalTag,omitempty" export:"true"`
+	LocalAgentHostPort         string            `description:"Sets the Datadog Agent host:port." json:"localAgentHostPort,omitempty" toml:"localAgentHostPort,omitempty" yaml:"localAgentHostPort,omitempty"`
 	GlobalTags                 map[string]string `description:"Sets a list of key:value tags on all spans." json:"globalTags,omitempty" toml:"globalTags,omitempty" yaml:"globalTags,omitempty" export:"true"`
 	Debug                      bool              `description:"Enables Datadog debug." json:"debug,omitempty" toml:"debug,omitempty" yaml:"debug,omitempty" export:"true"`
 	PrioritySampling           bool              `description:"Enables priority sampling. When using distributed tracing, this option must be enabled in order to get all the parts of a distributed trace sampled." json:"prioritySampling,omitempty" toml:"prioritySampling,omitempty" yaml:"prioritySampling,omitempty" export:"true"`
@@ -64,17 +61,6 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 
 	for k, v := range c.GlobalTags {
 		opts = append(opts, datadog.WithGlobalTag(k, v))
-	}
-
-	if c.GlobalTag != "" {
-		logger.Warn().Msg(`Datadog: option "globalTag" is deprecated, please use "globalTags" instead.`)
-
-		key, value, _ := strings.Cut(c.GlobalTag, ":")
-
-		// Don't override a tag already defined with the new option.
-		if _, ok := c.GlobalTags[key]; !ok {
-			opts = append(opts, datadog.WithGlobalTag(key, value))
-		}
 	}
 
 	if c.PrioritySampling {

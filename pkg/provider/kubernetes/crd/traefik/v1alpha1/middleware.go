@@ -167,7 +167,6 @@ type ClientTLS struct {
 	CertSecret string `json:"certSecret,omitempty"`
 	// InsecureSkipVerify defines whether the server certificates should be validated.
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
-	CAOptional         bool `json:"caOptional,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

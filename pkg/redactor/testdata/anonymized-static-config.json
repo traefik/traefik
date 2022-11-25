@@ -83,7 +83,6 @@
       "defaultRule": "xxxx",
       "tls": {
         "ca": "xxxx",
-        "caOptional": true,
         "cert": "xxxx",
         "key": "xxxx",
         "insecureSkipVerify": true
@@ -111,7 +110,6 @@
       "dcosToken": "xxxx",
       "tls": {
         "ca": "xxxx",
-        "caOptional": true,
         "cert": "xxxx",
         "key": "xxxx",
         "insecureSkipVerify": true
@@ -189,7 +187,6 @@
         "token": "xxxx",
         "tls": {
           "ca": "xxxx",
-          "caOptional": true,
           "cert": "xxxx",
           "key": "xxxx",
           "insecureSkipVerify": true
@@ -207,7 +204,6 @@
       "cache": true,
       "exposedByDefault": true,
       "defaultRule": "xxxx",
-      "namespace": "xxxx",
       "namespaces": [
         "xxxx",
         "xxxx"
@@ -233,12 +229,10 @@
       "token": "xxxx",
       "tls": {
         "ca": "xxxx",
-        "caOptional": true,
         "cert": "xxxx",
         "key": "xxxx",
         "insecureSkipVerify": true
       },
-      "namespace": "xxxx",
       "namespaces": [
         "xxxx",
         "xxxx"
@@ -248,7 +242,6 @@
       "rootKey": "xxxx",
       "tls": {
         "ca": "xxxx",
-        "caOptional": true,
         "cert": "xxxx",
         "key": "xxxx",
         "insecureSkipVerify": true
@@ -265,7 +258,6 @@
       "rootKey": "xxxx",
       "tls": {
         "ca": "xxxx",
-        "caOptional": true,
         "cert": "xxxx",
         "key": "xxxx",
         "insecureSkipVerify": true
@@ -279,7 +271,6 @@
       "pollTimeout": "42ns",
       "tls": {
         "ca": "xxxx",
-        "caOptional": true,
         "cert": "xxxx",
         "key": "xxxx",
         "insecureSkipVerify": true
@@ -394,7 +385,9 @@
     },
     "datadog": {
       "localAgentHostPort": "xxxx",
-      "globalTag": "foobar",
+      "globalTags": {
+        "foobar": "foobar"
+      },
       "debug": true,
       "prioritySampling": true,
       "traceIDHeaderName": "foobar",

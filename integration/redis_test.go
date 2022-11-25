@@ -98,7 +98,6 @@ func (s *RedisSuite) TestSimpleConfiguration(c *check.C) {
 		"traefik/http/middlewares/compressor/compress":            "true",
 		"traefik/http/middlewares/striper/stripPrefix/prefixes/0": "foo",
 		"traefik/http/middlewares/striper/stripPrefix/prefixes/1": "bar",
-		"traefik/http/middlewares/striper/stripPrefix/forceSlash": "true",
 	}
 
 	for k, v := range data {

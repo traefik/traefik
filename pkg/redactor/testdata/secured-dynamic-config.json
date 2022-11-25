@@ -99,8 +99,7 @@
         "stripPrefix": {
           "prefixes": [
             "foo"
-          ],
-          "forceSlash": true
+          ]
         },
         "stripPrefixRegex": {
           "regex": [
@@ -161,13 +160,9 @@
           "hostsProxyHeaders": [
             "foo"
           ],
-          "sslRedirect": true,
-          "sslTemporaryRedirect": true,
-          "sslHost": "foo",
           "sslProxyHeaders": {
             "foo": "bar"
           },
-          "sslForceHost": true,
           "stsSeconds": 42,
           "stsIncludeSubdomains": true,
           "stsPreload": true,
@@ -180,7 +175,6 @@
           "contentSecurityPolicy": "foo",
           "publicKey": "foo",
           "referrerPolicy": "foo",
-          "featurePolicy": "foo",
           "permissionsPolicy": "foo",
           "isDevelopment": true
         },
@@ -238,7 +232,6 @@
           "address": "127.0.0.1",
           "tls": {
             "ca": "ca.pem",
-            "caOptional": true,
             "cert": "cert.pem",
             "key": "xxxx",
             "insecureSkipVerify": true
