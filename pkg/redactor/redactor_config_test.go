@@ -337,9 +337,7 @@ func init() {
 					Attempts:        42,
 					InitialInterval: 42,
 				},
-				ContentType: &dynamic.ContentType{
-					AutoDetect: true,
-				},
+				ContentType: &dynamic.ContentType{},
 				Plugin: map[string]dynamic.PluginConf{
 					"foo": {
 						"answer": struct{ Answer int }{

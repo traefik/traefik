@@ -22,6 +22,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/ip"
 	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
+	"github.com/traefik/traefik/v2/pkg/middlewares/contenttype"
 	"github.com/traefik/traefik/v2/pkg/middlewares/forwardedheaders"
 	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
 	"github.com/traefik/traefik/v2/pkg/safe"
@@ -536,6 +537,8 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	}
 
 	handler = http.AllowQuerySemicolons(handler)
+
+	handler = contenttype.DisableAutoDetection(handler)
 
 	if withH2c {
 		handler = h2c.NewHandler(handler, &http2.Server{
