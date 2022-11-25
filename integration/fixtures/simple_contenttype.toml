@@ -30,22 +30,12 @@
 
   [http.routers.router3]
     service = "service1"
-    middlewares = ["noautodetect"]
-    rule = "PathPrefix(`/css/ct/middlewarenoauto`) || PathPrefix(`/pdf/ct/middlewarenoauto`)"
+    rule = "PathPrefix(`/css/noct/nomiddleware`) || PathPrefix(`/pdf/noct/nomiddleware`)"
 
   [http.routers.router4]
     service = "service1"
-    rule = "PathPrefix(`/css/noct/nomiddleware`) || PathPrefix(`/pdf/noct/nomiddleware`)"
-
-  [http.routers.router5]
-    service = "service1"
     middlewares = ["autodetect"]
     rule = "PathPrefix(`/css/noct/middlewareauto`) || PathPrefix(`/pdf/noct/middlewareauto`)"
-
-  [http.routers.router6]
-    service = "service1"
-    middlewares = ["noautodetect"]
-    rule = "PathPrefix(`/css/noct/middlewarenoauto`) || PathPrefix(`/pdf/noct/middlewarenoauto`)"
 
 
 [http.services]
@@ -56,7 +46,3 @@
         url = "{{ .Server }}"
 
 [http.middlewares.autodetect.contentType]
-autoDetect=true
-
-[http.middlewares.noautodetect.contentType]
-autoDetect=false
