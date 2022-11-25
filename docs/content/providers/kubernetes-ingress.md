@@ -499,6 +499,33 @@ providers:
 --providers.kubernetesingress.allowexternalnameservices=true
 ```
 
+### `disableIngressClassLookup`
+
+_Optional, Default: false_
+
+If the parameter is set to `true`,
+Traefik will not discover IngressClasses in the cluster.
+By doing so, it alleviates the requirement of giving Traefik the rights to lookup for IngressClasses.
+Furthermore, when this option is set to `true`,
+Traefik is not able to handle Ingresses with IngressClass references.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    disableIngressClassLookup: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  disableIngressClassLookup = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.disableingressclasslookup=true
+```
+
 ### Further
 
 To learn more about the various aspects of the Ingress specification that Traefik supports,

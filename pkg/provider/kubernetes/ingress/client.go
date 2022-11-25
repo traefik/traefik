@@ -50,15 +50,16 @@ type Client interface {
 }
 
 type clientWrapper struct {
-	clientset            kubernetes.Interface
-	factoriesKube        map[string]informers.SharedInformerFactory
-	factoriesSecret      map[string]informers.SharedInformerFactory
-	factoriesIngress     map[string]informers.SharedInformerFactory
-	clusterFactory       informers.SharedInformerFactory
-	ingressLabelSelector string
-	isNamespaceAll       bool
-	watchedNamespaces    []string
-	serverVersion        *version.Version
+	clientset                   kubernetes.Interface
+	factoriesKube               map[string]informers.SharedInformerFactory
+	factoriesSecret             map[string]informers.SharedInformerFactory
+	factoriesIngress            map[string]informers.SharedInformerFactory
+	clusterFactory              informers.SharedInformerFactory
+	ingressLabelSelector        string
+	isNamespaceAll              bool
+	disableIngressClassInformer bool
+	watchedNamespaces           []string
+	serverVersion               *version.Version
 }
 
 // newInClusterClient returns a new Provider client that is expected to run
@@ -214,7 +215,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		}
 	}
 
-	if supportsIngressClass(serverVersion) {
+	if !c.disableIngressClassInformer && supportsIngressClass(serverVersion) {
 		c.clusterFactory = informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod)
 
 		if supportsNetworkingV1Ingress(serverVersion) {
