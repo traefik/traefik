@@ -3,6 +3,7 @@ package http
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -121,16 +122,18 @@ func TestMethodMatcher(t *testing.T) {
 			desc: "valid Method matcher",
 			rule: "Method(`GET`)",
 			expected: map[string]int{
-				http.MethodGet:  http.StatusOK,
-				http.MethodPost: http.StatusMethodNotAllowed,
+				http.MethodGet:                  http.StatusOK,
+				http.MethodPost:                 http.StatusNotFound,
+				strings.ToLower(http.MethodGet): http.StatusNotFound,
 			},
 		},
 		{
 			desc: "valid Method matcher (lower case)",
 			rule: "Method(`get`)",
 			expected: map[string]int{
-				http.MethodGet:  http.StatusOK,
-				http.MethodPost: http.StatusMethodNotAllowed,
+				http.MethodGet:                  http.StatusOK,
+				http.MethodPost:                 http.StatusNotFound,
+				strings.ToLower(http.MethodGet): http.StatusNotFound,
 			},
 		},
 	}
@@ -200,6 +203,7 @@ func TestHostMatcher(t *testing.T) {
 				"https://example.com":      http.StatusOK,
 				"https://example.com:8080": http.StatusOK,
 				"https://example.com/path": http.StatusOK,
+				"https://EXAMPLE.COM/path": http.StatusOK,
 				"https://example.org":      http.StatusNotFound,
 				"https://example.org/path": http.StatusNotFound,
 			},
