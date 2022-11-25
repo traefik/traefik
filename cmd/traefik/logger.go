@@ -27,16 +27,15 @@ func setupLogger(staticConfiguration *static.Configuration) {
 	// configure log level
 	logLevel := getLogLevel(staticConfiguration)
 
-	zerolog.SetGlobalLevel(logLevel)
-
 	// create logger
 	logCtx := zerolog.New(w).With().Timestamp()
 	if logLevel <= zerolog.DebugLevel {
 		logCtx = logCtx.Caller()
 	}
 
-	log.Logger = logCtx.Logger()
+	log.Logger = logCtx.Logger().Level(logLevel)
 	zerolog.DefaultContextLogger = &log.Logger
+	zerolog.SetGlobalLevel(logLevel)
 
 	// Global logrus replacement (related to lib like go-rancher-metadata, docker, etc.)
 	logrus.StandardLogger().Out = logs.NoLevel(log.Logger, zerolog.DebugLevel)
