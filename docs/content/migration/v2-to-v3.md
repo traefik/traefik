@@ -20,3 +20,8 @@ In v3, we renamed the `IPWhiteList` middleware to `IPAllowList` without changing
 ## gRPC Metrics
 
 In v3, the reported status code for gRPC requests is now the value of the `Grpc-Status` header.    
+
+## Content-Type Auto-Detection
+
+In v3, the `Content-Type` header is not auto-detected anymore if it has not been set by the backend.
+You can use the `ContentType` middleware if you want to enable the auto-detection. 
