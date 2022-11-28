@@ -16,7 +16,7 @@ import (
 
 var httpFuncs = map[string]func(*mux.Route, ...string) error{
 	"ClientIP":     expectNParameters(clientIP, 1),
-	"Method":       expectNParameters(methods, 1),
+	"Method":       expectNParameters(method, 1),
 	"Host":         expectNParameters(host, 1),
 	"HostRegexp":   expectNParameters(hostRegexp, 1),
 	"Path":         expectNParameters(path, 1),
@@ -59,7 +59,7 @@ func clientIP(route *mux.Route, clientIP ...string) error {
 	return nil
 }
 
-func methods(route *mux.Route, methods ...string) error {
+func method(route *mux.Route, methods ...string) error {
 	return route.Methods(methods...).GetError()
 }
 
