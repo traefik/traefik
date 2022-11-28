@@ -101,7 +101,7 @@ func patchDynamicConfiguration(cfg *dynamic.Configuration, ep string, port int, 
 	cfg.HTTP.Routers["traefik-hub-agent-service"] = &dynamic.Router{
 		EntryPoints: []string{ep},
 		Service:     "traefik-hub-agent-service",
-		Rule:        "Host(`proxy.traefik`) && PathPrefix(`/config`, `/discover-ip`, `/state`)",
+		Rule:        "Host(`proxy.traefik`) && (PathPrefix(`/config`) || PathPrefix(`/discover-ip`) || PathPrefix(`/state`))",
 	}
 
 	cfg.HTTP.Services["traefik-hub-agent-service"] = &dynamic.Service{

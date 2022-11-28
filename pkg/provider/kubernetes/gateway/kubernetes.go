@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -1163,8 +1164,7 @@ func getRouteBindingSelectorNamespace(client Client, gatewayNamespace string, ro
 }
 
 func hostRule(hostnames []v1alpha2.Hostname) (string, error) {
-	var hostNames []string
-	var hostRegexNames []string
+	var rules []string
 
 	for _, hostname := range hostnames {
 		host := string(hostname)
@@ -1177,7 +1177,7 @@ func hostRule(hostnames []v1alpha2.Hostname) (string, error) {
 
 		wildcard := strings.Count(host, "*")
 		if wildcard == 0 {
-			hostNames = append(hostNames, host)
+			rules = append(rules, fmt.Sprintf("Host(`%s`)", host))
 			continue
 		}
 
@@ -1186,25 +1186,18 @@ func hostRule(hostnames []v1alpha2.Hostname) (string, error) {
 			return "", fmt.Errorf("invalid rule: %q", host)
 		}
 
-		hostRegexNames = append(hostRegexNames, strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1))
+		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-zA-Z0-9-]+\.`, 1)
+		rules = append(rules, fmt.Sprintf("HostRegexp(`^%s$`)", host))
 	}
 
-	var res string
-	if len(hostNames) > 0 {
-		res = "Host(`" + strings.Join(hostNames, "`, `") + "`)"
+	switch len(rules) {
+	case 0:
+		return "", nil
+	case 1:
+		return rules[0], nil
+	default:
+		return fmt.Sprintf("(%s)", strings.Join(rules, " || ")), nil
 	}
-
-	if len(hostRegexNames) == 0 {
-		return res, nil
-	}
-
-	hostRegexp := "HostRegexp(`" + strings.Join(hostRegexNames, "`, `") + "`)"
-
-	if len(res) > 0 {
-		return "(" + res + " || " + hostRegexp + ")", nil
-	}
-
-	return hostRegexp, nil
 }
 
 func hostSNIRule(hostnames []v1alpha2.Hostname) (string, error) {
@@ -1227,15 +1220,18 @@ func hostSNIRule(hostnames []v1alpha2.Hostname) (string, error) {
 			return "", fmt.Errorf("wildcard hostname is not supported: %q", h)
 		}
 
-		matchers = append(matchers, "`"+h+"`")
+		matchers = append(matchers, fmt.Sprintf("HostSNI(`%s`)", h))
 		uniqHostnames[hostname] = struct{}{}
 	}
 
-	if len(matchers) == 0 {
+	switch len(matchers) {
+	case 0:
 		return "HostSNI(`*`)", nil
+	case 1:
+		return matchers[0], nil
+	default:
+		return fmt.Sprintf("(%s)", strings.Join(matchers, " || ")), nil
 	}
-
-	return "HostSNI(" + strings.Join(matchers, ",") + ")", nil
 }
 
 func extractRule(routeRule v1alpha2.HTTPRouteRule, hostRule string) (string, error) {
