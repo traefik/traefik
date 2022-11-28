@@ -19,7 +19,7 @@
 | `traefik/http/middlewares/Middleware05/compress/excludedContentTypes/0` | `foobar` |
 | `traefik/http/middlewares/Middleware05/compress/excludedContentTypes/1` | `foobar` |
 | `traefik/http/middlewares/Middleware05/compress/minResponseBodyBytes` | `42` |
-| `traefik/http/middlewares/Middleware06/contentType/autoDetect` | `true` |
+| `traefik/http/middlewares/Middleware06/contentType` | `` |
 | `traefik/http/middlewares/Middleware07/digestAuth/headerField` | `foobar` |
 | `traefik/http/middlewares/Middleware07/digestAuth/realm` | `foobar` |
 | `traefik/http/middlewares/Middleware07/digestAuth/removeHeader` | `true` |

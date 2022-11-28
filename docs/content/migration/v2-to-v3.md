@@ -33,5 +33,5 @@ In v3, the reported status code for gRPC requests is now the value of the `Grpc-
 
 ## Content-Type Auto-Detection
 
-In v3, the `Content-Type` header is not auto-detected anymore if it has not been set by the backend.
-You can use the `ContentType` middleware if you want to enable the auto-detection.
+In v3, the `Content-Type` header is not auto-detected anymore when it is not set by the backend.
+One should use the `ContentType` middleware to enable the `Content-Type` header value auto-detection.
