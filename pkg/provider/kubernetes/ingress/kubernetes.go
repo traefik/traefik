@@ -8,6 +8,7 @@ import (
 	"math"
 	"net"
 	"os"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -400,10 +401,11 @@ func (p *Provider) shouldProcessIngress(ingress *networkingv1.Ingress, ingressCl
 
 func buildHostRule(host string) string {
 	if strings.HasPrefix(host, "*.") {
-		return "HostRegexp(`" + strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1) + "`)"
+		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-zA-Z0-9-]+\.`, 1)
+		return fmt.Sprintf("HostRegexp(`^%s$`)", host)
 	}
 
-	return "Host(`" + host + "`)"
+	return fmt.Sprintf("Host(`%s`)", host)
 }
 
 func getCertificates(ctx context.Context, ingress *networkingv1.Ingress, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
