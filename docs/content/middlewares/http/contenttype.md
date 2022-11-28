@@ -1,6 +1,6 @@
 ---
 title: "Traefik ContentType Documentation"
-description: "Traefik Proxy's HTTP middleware automatically specifies the content-type header if it has not been defined by the backend. Read the technical documentation."
+description: "Traefik Proxy's HTTP middleware automatically sets the `Content-Type` header value when it is not set by the backend. Read the technical documentation."
 ---
 
 # ContentType
@@ -8,9 +8,8 @@ description: "Traefik Proxy's HTTP middleware automatically specifies the conten
 Handling Content-Type auto-detection
 {: .subtitle }
 
-The Content-Type middleware enables the `Content-Type` header auto-detection,
-if it has not been defined by the backend.
-The `Content-Type` header will be automatically set to a value derived from the content of the response.
+The Content-Type middleware sets the `Content-Type` header value to the media type detected from the response content,
+when it is not set by the backend.
 
 !!! info
 
@@ -42,7 +41,7 @@ spec:
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.autodetect.contenttype": {}
+  "traefik.http.middlewares.autodetect.contenttype": "true"
 }
 ```
 

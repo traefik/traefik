@@ -141,8 +141,7 @@ http:
           - foobar
         minResponseBodyBytes: 42
     Middleware06:
-      contentType:
-        autoDetect: true
+      contentType: {}
     Middleware07:
       digestAuth:
         users:
