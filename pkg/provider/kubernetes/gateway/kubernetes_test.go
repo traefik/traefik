@@ -4389,7 +4389,7 @@ func Test_hostRule(t *testing.T) {
 				"bar.foo",
 				"foo.foo",
 			},
-			expectedRule: "((Host(`bar.foo`) || Host(`foo.foo`)) || HostRegexp(`^[a-zA-Z0-9-]+\\.bar\\.foo$`))",
+			expectedRule: "(HostRegexp(`^[a-zA-Z0-9-]+\\.bar\\.foo$`) || Host(`bar.foo`) || Host(`foo.foo`))",
 		},
 		{
 			desc: "Host with wildcard",

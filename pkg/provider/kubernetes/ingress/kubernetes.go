@@ -402,10 +402,10 @@ func (p *Provider) shouldProcessIngress(ingress *networkingv1.Ingress, ingressCl
 func buildHostRule(host string) string {
 	if strings.HasPrefix(host, "*.") {
 		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-zA-Z0-9-]+\.`, 1)
-		return "HostRegexp(`^" + host + "$`)"
+		return fmt.Sprintf("HostRegexp(`^%s$`)", host)
 	}
 
-	return "Host(`" + host + "`)"
+	return fmt.Sprintf("Host(`%s`)", host)
 }
 
 func getCertificates(ctx context.Context, ingress *networkingv1.Ingress, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
