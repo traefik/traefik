@@ -137,7 +137,6 @@
         minResponseBodyBytes = 42
     [http.middlewares.Middleware06]
       [http.middlewares.Middleware06.contentType]
-        autoDetect = true
     [http.middlewares.Middleware07]
       [http.middlewares.Middleware07.digestAuth]
         users = ["foobar", "foobar"]

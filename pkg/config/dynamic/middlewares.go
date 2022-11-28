@@ -52,8 +52,8 @@ type GrpcWeb struct {
 // +k8s:deepcopy-gen=true
 
 // ContentType holds the content-type middleware configuration.
-// This middleware enables the `Content-Type` auto-detection if it has not been set by the backend.
-// It will be automatically set to a value derived from the content of the response.
+// This middleware sets the `Content-Type` header value to the media type detected from the response content,
+// when it is not set by the backend.
 type ContentType struct{}
 
 // +k8s:deepcopy-gen=true
