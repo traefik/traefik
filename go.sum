@@ -669,8 +669,8 @@ github.com/gin-gonic/gin v1.7.4/go.mod h1:jD2toBW3GZUr5UMcdrwQA10I7RuaFOl/SGeDjX
 github.com/gin-gonic/gin v1.7.7 h1:3DoBmSbJbZAWqXJC3SLjAPfutPJJRN1U5pALB7EeTTs=
 github.com/gliderlabs/ssh v0.1.1/go.mod h1:U7qILu1NlMHj9FlMhZLlkCdDnU1DBEAqr0aevW3Awn0=
 github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8/go.mod h1:xkRDCp4j0OGD1HRkm4kmhM+pmpv3AKq5SU7GMg4oO/Q=
-github.com/go-acme/lego/v4 v4.9.0 h1:8Hjj44IqRS7cigshMyFQ+0pIZvwgkG/+9A0UnNh7G8A=
-github.com/go-acme/lego/v4 v4.9.0/go.mod h1:g3JRUyWS3L/VObpp4bCxzJftKyf/Wba8QrSSnoiqjg4=
+github.com/go-acme/lego/v4 v4.9.1 h1:n9Z5MQwANeGSQKlVE3bEh9SDvAySK9oVYOKCGCESqQE=
+github.com/go-acme/lego/v4 v4.9.1/go.mod h1:g3JRUyWS3L/VObpp4bCxzJftKyf/Wba8QrSSnoiqjg4=
 github.com/go-asn1-ber/asn1-ber v1.3.1/go.mod h1:hEBeB/ic+5LoWskz+yKT7vGhhPYkProFKoKdwZRWMe0=
 github.com/go-chi/chi/v5 v5.0.0/go.mod h1:BBug9lr0cqtdAhsu6R4AAdvufI0/XBzAQSsUqJpoZOs=
 github.com/go-cmd/cmd v1.0.5/go.mod h1:y8q8qlK5wQibcw63djSl/ntiHUHXHGdCkPk0j4QeW4s=
