@@ -831,9 +831,15 @@
                 <div class="text-subtitle2">Not Before</div>
                 <boolean-state :value="!!exData(middleware).info.notBefore"/>
               </div>
+            </div>
+            <div class="row items-start no-wrap">
               <div class="col">
                 <div class="text-subtitle2">Sans</div>
                 <boolean-state :value="!!exData(middleware).info.sans"/>
+              </div>
+              <div class="col">
+                <div class="text-subtitle2">Serial Number</div>
+                <boolean-state :value="!!exData(middleware).info.serialNumber"/>
               </div>
             </div>
           </q-card-section>
