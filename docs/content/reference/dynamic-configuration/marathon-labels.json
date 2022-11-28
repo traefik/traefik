@@ -17,7 +17,7 @@
 "traefik.http.middlewares.middleware05.compress": "true",
 "traefik.http.middlewares.middleware05.compress.excludedcontenttypes": "foobar, foobar",
 "traefik.http.middlewares.middleware05.compress.minresponsebodybytes": "42",
-"traefik.http.middlewares.middleware06.contenttype.autodetect": "true",
+"traefik.http.middlewares.middleware06.contenttype": "true",
 "traefik.http.middlewares.middleware07.digestauth.headerfield": "foobar",
 "traefik.http.middlewares.middleware07.digestauth.realm": "foobar",
 "traefik.http.middlewares.middleware07.digestauth.removeheader": "true",

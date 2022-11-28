@@ -30,3 +30,8 @@ In v3, the reported status code for gRPC requests is now the value of the `Grpc-
 - `sslRedirect`, `sslTemporaryRedirect`, `sslHost`, `sslForceHost` and `featurePolicy` options of the Headers middleware have been removed.
 - The `forceSlash` option of the StripPrefix middleware has been removed.
 - the `preferServerCipherSuites` option has been removed.
+
+## Content-Type Auto-Detection
+
+In v3, the `Content-Type` header is not auto-detected anymore when it is not set by the backend.
+One should use the `ContentType` middleware to enable the `Content-Type` header value auto-detection.
