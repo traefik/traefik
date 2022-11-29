@@ -3,6 +3,7 @@ package metrics
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -167,8 +168,13 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OpenTeleme
 }
 
 func newHTTPExporter(ctx context.Context, config *types.OpenTelemetry) (sdkmetric.Exporter, error) {
+	endpoint, err := url.Parse(config.Address)
+	if err != nil {
+		return nil, fmt.Errorf("invalid collector address %q: %w", config.Address, err)
+	}
+
 	opts := []otlpmetrichttp.Option{
-		otlpmetrichttp.WithEndpoint(config.Address),
+		otlpmetrichttp.WithEndpoint(endpoint.Host),
 		otlpmetrichttp.WithHeaders(config.Headers),
 		otlpmetrichttp.WithCompression(otlpmetrichttp.GzipCompression),
 	}
@@ -194,8 +200,13 @@ func newHTTPExporter(ctx context.Context, config *types.OpenTelemetry) (sdkmetri
 }
 
 func newGRPCExporter(ctx context.Context, config *types.OpenTelemetry) (sdkmetric.Exporter, error) {
+	endpoint, err := url.Parse(config.Address)
+	if err != nil {
+		return nil, fmt.Errorf("invalid collector address %q: %w", config.Address, err)
+	}
+
 	opts := []otlpmetricgrpc.Option{
-		otlpmetricgrpc.WithEndpoint(config.Address),
+		otlpmetricgrpc.WithEndpoint(endpoint.Host),
 		otlpmetricgrpc.WithHeaders(config.Headers),
 		otlpmetricgrpc.WithCompressor(gzip.Name),
 	}

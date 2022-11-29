@@ -364,7 +364,7 @@ OpenTelemetry metrics exporter type. (Default: ```false```)
 Enable metrics on entry points. (Default: ```true```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_ADDRESS`:  
-Address of the collector endpoint. (Default: ```localhost:4318```)
+Address (host:port) of the collector endpoint. (Default: ```localhost:4318```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_ADDROUTERSLABELS`:  
 Enable metrics on routers. (Default: ```false```)
@@ -385,16 +385,13 @@ Headers sent with payload.
 Disables client transport security for the exporter. (Default: ```false```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_PATH`:  
-Set the default URL path for sending traces.
+Set the URL path of the collector endpoint.
 
 `TRAEFIK_METRICS_OPENTELEMETRY_PUSHINTERVAL`:  
 Period between calls to collect a checkpoint. (Default: ```10```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_TLS_CA`:  
 TLS CA
-
-`TRAEFIK_METRICS_OPENTELEMETRY_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
 
 `TRAEFIK_METRICS_OPENTELEMETRY_TLS_CERT`:  
 TLS cert
@@ -1147,7 +1144,7 @@ Sets the header name used to store the trace ID. (Default: ```uber-trace-id```)
 Settings for OpenTelemetry. (Default: ```false```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_ADDRESS`:  
-Sets the address of the collector endpoint. (Default: ```localhost:4318```)
+Sets the address (host:port) of the collector endpoint. (Default: ```localhost:4318```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_GRPC`:  
 gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
@@ -1159,13 +1156,10 @@ Defines additional headers to be sent with the payloads.
 Disables client transport security for the exporter. (Default: ```false```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_PATH`:  
-Sets the default URL path for sending traces.
+Sets the URL path of the collector endpoint.
 
 `TRAEFIK_TRACING_OPENTELEMETRY_TLS_CA`:  
 TLS CA
-
-`TRAEFIK_TRACING_OPENTELEMETRY_TLS_CAOPTIONAL`:  
-TLS CA.Optional (Default: ```false```)
 
 `TRAEFIK_TRACING_OPENTELEMETRY_TLS_CERT`:  
 TLS cert
