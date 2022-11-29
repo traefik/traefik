@@ -49,9 +49,9 @@ func TestTLSCertificateContent(t *testing.T) {
   certFile = "` + fileTLS.Name() + `"
   keyFile = "` + fileTLSKey.Name() + `"
 
-[http.serversTransports.default]
+[http.serversTransports.default.tls]
   rootCAs = ["` + fileTLS.Name() + `"]
-  [[http.serversTransports.default.certificates]]
+  [[http.serversTransports.default.tls.certificates]]
     certFile = "` + fileTLS.Name() + `"
     keyFile = "` + fileTLSKey.Name() + `"
 `
@@ -71,9 +71,9 @@ func TestTLSCertificateContent(t *testing.T) {
 	require.Equal(t, "CONTENT", configuration.TLS.Stores["default"].DefaultCertificate.CertFile.String())
 	require.Equal(t, "CONTENTKEY", configuration.TLS.Stores["default"].DefaultCertificate.KeyFile.String())
 
-	require.Equal(t, "CONTENT", configuration.HTTP.ServersTransports["default"].Certificates[0].CertFile.String())
-	require.Equal(t, "CONTENTKEY", configuration.HTTP.ServersTransports["default"].Certificates[0].KeyFile.String())
-	require.Equal(t, "CONTENT", configuration.HTTP.ServersTransports["default"].RootCAs[0].String())
+	require.Equal(t, "CONTENT", configuration.HTTP.ServersTransports["default"].TLS.Certificates[0].CertFile.String())
+	require.Equal(t, "CONTENTKEY", configuration.HTTP.ServersTransports["default"].TLS.Certificates[0].KeyFile.String())
+	require.Equal(t, "CONTENT", configuration.HTTP.ServersTransports["default"].TLS.RootCAs[0].String())
 }
 
 func TestErrorWhenEmptyConfig(t *testing.T) {

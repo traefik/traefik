@@ -217,9 +217,13 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 
 	// ServersTransport
 	if configuration.HTTP != nil && len(configuration.HTTP.ServersTransports) > 0 {
-		for name, st := range configuration.HTTP.ServersTransports {
+		for _, st := range configuration.HTTP.ServersTransports {
+			if st.TLS == nil {
+				continue
+			}
+
 			var certificates []tls.Certificate
-			for _, cert := range st.Certificates {
+			for _, cert := range st.TLS.Certificates {
 				content, err := cert.CertFile.Read()
 				if err != nil {
 					log.Ctx(ctx).Error().Err(err).Send()
@@ -237,10 +241,10 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 				certificates = append(certificates, cert)
 			}
 
-			configuration.HTTP.ServersTransports[name].Certificates = certificates
+			st.TLS.Certificates = certificates
 
 			var rootCAs []tls.FileOrContent
-			for _, rootCA := range st.RootCAs {
+			for _, rootCA := range st.TLS.RootCAs {
 				content, err := rootCA.Read()
 				if err != nil {
 					log.Ctx(ctx).Error().Err(err).Send()
@@ -250,7 +254,7 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 				rootCAs = append(rootCAs, tls.FileOrContent(content))
 			}
 
-			st.RootCAs = rootCAs
+			st.TLS.RootCAs = rootCAs
 		}
 	}
 

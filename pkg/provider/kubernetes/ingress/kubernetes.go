@@ -524,8 +524,6 @@ func (p *Provider) loadService(client Client, namespace string, backend networki
 	}
 
 	lb := &dynamic.ServersLoadBalancer{}
-	lb.SetDefaults()
-
 	svc := &dynamic.Service{LoadBalancer: lb}
 
 	svcConfig, err := parseServiceConfig(service.Annotations)
@@ -535,10 +533,6 @@ func (p *Provider) loadService(client Client, namespace string, backend networki
 
 	if svcConfig != nil && svcConfig.Service != nil {
 		svc.LoadBalancer.Sticky = svcConfig.Service.Sticky
-
-		if svcConfig.Service.PassHostHeader != nil {
-			svc.LoadBalancer.PassHostHeader = svcConfig.Service.PassHostHeader
-		}
 
 		if svcConfig.Service.ServersTransport != "" {
 			svc.LoadBalancer.ServersTransport = svcConfig.Service.ServersTransport
