@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/url"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog/log"
@@ -26,8 +27,8 @@ type Config struct {
 	// NOTE: as no gRPC option is implemented yet, the type is empty and is used as a boolean for upward compatibility purposes.
 	GRPC *struct{} `description:"gRPC specific configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 
-	Address  string            `description:"Sets the address of the collector endpoint." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
-	Path     string            `description:"Sets the default URL path for sending traces." json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
+	Address  string            `description:"Sets the address (host:port) of the collector endpoint." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
+	Path     string            `description:"Sets the URL path of the collector endpoint." json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
 	Insecure bool              `description:"Disables client transport security for the exporter." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
 	Headers  map[string]string `description:"Defines additional headers to be sent with the payloads." json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
 	TLS      *types.ClientTLS  `description:"Defines client transport security parameters." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
@@ -68,8 +69,13 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 }
 
 func (c *Config) setupHTTPExporter() (*otlptrace.Exporter, error) {
+	endpoint, err := url.Parse(c.Address)
+	if err != nil {
+		return nil, fmt.Errorf("invalid collector address %q: %w", c.Address, err)
+	}
+
 	opts := []otlptracehttp.Option{
-		otlptracehttp.WithEndpoint(c.Address),
+		otlptracehttp.WithEndpoint(endpoint.Host),
 		otlptracehttp.WithHeaders(c.Headers),
 		otlptracehttp.WithCompression(otlptracehttp.GzipCompression),
 	}
@@ -95,8 +101,13 @@ func (c *Config) setupHTTPExporter() (*otlptrace.Exporter, error) {
 }
 
 func (c *Config) setupGRPCExporter() (*otlptrace.Exporter, error) {
+	endpoint, err := url.Parse(c.Address)
+	if err != nil {
+		return nil, fmt.Errorf("invalid collector address %q: %w", c.Address, err)
+	}
+
 	opts := []otlptracegrpc.Option{
-		otlptracegrpc.WithEndpoint(c.Address),
+		otlptracegrpc.WithEndpoint(endpoint.Host),
 		otlptracegrpc.WithHeaders(c.Headers),
 		otlptracegrpc.WithCompressor(gzip.Name),
 	}

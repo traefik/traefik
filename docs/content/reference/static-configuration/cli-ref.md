@@ -364,7 +364,7 @@ OpenTelemetry metrics exporter type. (Default: ```false```)
 Enable metrics on entry points. (Default: ```true```)
 
 `--metrics.opentelemetry.address`:  
-Address of the collector endpoint. (Default: ```localhost:4318```)
+Address (host:port) of the collector endpoint. (Default: ```localhost:4318```)
 
 `--metrics.opentelemetry.addrouterslabels`:  
 Enable metrics on routers. (Default: ```false```)
@@ -385,16 +385,13 @@ Headers sent with payload.
 Disables client transport security for the exporter. (Default: ```false```)
 
 `--metrics.opentelemetry.path`:  
-Set the default URL path for sending traces.
+Set the URL path of the collector endpoint.
 
 `--metrics.opentelemetry.pushinterval`:  
 Period between calls to collect a checkpoint. (Default: ```10```)
 
 `--metrics.opentelemetry.tls.ca`:  
 TLS CA
-
-`--metrics.opentelemetry.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
 
 `--metrics.opentelemetry.tls.cert`:  
 TLS cert
@@ -1147,7 +1144,7 @@ Sets the header name used to store the trace ID. (Default: ```uber-trace-id```)
 Settings for OpenTelemetry. (Default: ```false```)
 
 `--tracing.opentelemetry.address`:  
-Sets the address of the collector endpoint. (Default: ```localhost:4318```)
+Sets the address (host:port) of the collector endpoint. (Default: ```localhost:4318```)
 
 `--tracing.opentelemetry.grpc`:  
 gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
@@ -1159,13 +1156,10 @@ Defines additional headers to be sent with the payloads.
 Disables client transport security for the exporter. (Default: ```false```)
 
 `--tracing.opentelemetry.path`:  
-Sets the default URL path for sending traces.
+Sets the URL path of the collector endpoint.
 
 `--tracing.opentelemetry.tls.ca`:  
 TLS CA
-
-`--tracing.opentelemetry.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
 
 `--tracing.opentelemetry.tls.cert`:  
 TLS cert
