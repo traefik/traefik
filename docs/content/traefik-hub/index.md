@@ -29,6 +29,12 @@ This agent can:
     * The Traefik Hub Agent must be installed to connect to the Traefik Hub platform.
     * Activate this feature in the experimental section of the static configuration.
 
+!!! information "Configuration Discovery"
+
+    The Traefik Hub Agent discovers the Docker containers and Kubernetes services by listening directly to the Docker and Kubernetes APIs (according to the installation options).
+
+    It doesn't support the routers discovered by Traefik Proxy using another provider, such as the File provider.
+
 !!! example "Minimal Static Configuration to Activate Traefik Hub for Docker"
 
     ```yaml tab="File (YAML)"
