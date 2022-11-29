@@ -18,8 +18,8 @@ This will also be used as a starting point for the other docker-compose guides.
 
 ??? Networking
 
-    Your Traefik container has to be attached to the same network as the containers to expose.
-    If no network are specified in the docker-compose file, Docker creates a default one that allows Traefik to reach the containers defined in the same file.
+    The Traefik container has to be attached to the same network as the containers to be exposed.
+    If no networks are specified in the docker-compose file, Docker creates a default one that allows Traefik to reach the containers defined in the same file.
     You can [customize the network](https://docs.docker.com/compose/networking/#specify-custom-networks) as described in the example below.
     You can use a [pre-existing network](https://docs.docker.com/compose/networking/#use-a-pre-existing-network) too.
 
