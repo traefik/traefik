@@ -198,6 +198,7 @@ func TestHostMatcher(t *testing.T) {
 			rule: "Host(`example.com`)",
 			expected: map[string]int{
 				"https://example.com":      http.StatusOK,
+				"https://example.com:8080": http.StatusOK,
 				"https://example.com/path": http.StatusOK,
 				"https://example.org":      http.StatusNotFound,
 				"https://example.org/path": http.StatusNotFound,
@@ -258,7 +259,7 @@ func TestHostMatcher(t *testing.T) {
 
 			require.NoError(t, err)
 
-			// RequestDecorator is necessary for the host rule
+			// RequestDecorator is necessary for the Host matcher
 			reqHost := requestdecorator.New(nil)
 
 			results := make(map[string]int)
@@ -312,6 +313,7 @@ func TestHostRegexpMatcher(t *testing.T) {
 			rule: "HostRegexp(`^[a-zA-Z-]+\\.com$`)",
 			expected: map[string]int{
 				"https://example.com":      http.StatusOK,
+				"https://example.com:8080": http.StatusOK,
 				"https://example.com/path": http.StatusOK,
 				"https://example.org":      http.StatusNotFound,
 				"https://example.org/path": http.StatusNotFound,
@@ -343,8 +345,10 @@ func TestHostRegexpMatcher(t *testing.T) {
 				require.Error(t, err)
 				return
 			}
-
 			require.NoError(t, err)
+
+			// RequestDecorator is necessary for the HostRegexp matcher
+			reqHost := requestdecorator.New(nil)
 
 			results := make(map[string]int)
 			for calledURL := range test.expected {
@@ -352,7 +356,7 @@ func TestHostRegexpMatcher(t *testing.T) {
 
 				req := httptest.NewRequest(http.MethodGet, calledURL, http.NoBody)
 
-				muxer.ServeHTTP(w, req)
+				reqHost.ServeHTTP(w, req, muxer.ServeHTTP)
 				results[calledURL] = w.Code
 			}
 			assert.Equal(t, test.expected, results)
