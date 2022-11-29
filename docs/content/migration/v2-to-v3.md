@@ -45,3 +45,8 @@ and should be explicitly combined using logical operators to mimic previous beha
 `Query` can take a single value to match is the query value that has no value (e.g. `/search?mobile`).
 
 `HostHeader` has been removed, use `Host` instead.
+
+## Content-Type Auto-Detection
+
+In v3, the `Content-Type` header is not auto-detected anymore when it is not set by the backend.
+One should use the `ContentType` middleware to enable the `Content-Type` header value auto-detection.
