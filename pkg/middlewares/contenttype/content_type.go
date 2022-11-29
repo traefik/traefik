@@ -24,11 +24,10 @@ func New(ctx context.Context, next http.Handler, name string) (http.Handler, err
 }
 
 func (c *contentType) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := middlewares.GetLogger(req.Context(), c.name, typeName)
-
 	// Re-enable auto-detection.
 	if ct, ok := rw.Header()["Content-Type"]; ok && ct == nil {
-		logger.Debug().Msgf("Enable Content-Type auto-detection.")
+		middlewares.GetLogger(req.Context(), c.name, typeName).
+			Debug().Msg("Enable Content-Type auto-detection.")
 		delete(rw.Header(), "Content-Type")
 	}
 
