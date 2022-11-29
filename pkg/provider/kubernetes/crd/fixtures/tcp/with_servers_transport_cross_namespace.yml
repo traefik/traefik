@@ -10,7 +10,6 @@ spec:
 
   routes:
   - match: HostSNI(`foo.com`)
-    kind: Rule
     priority: 12
     services:
     - name: whoamitcp

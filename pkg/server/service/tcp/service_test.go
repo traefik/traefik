@@ -136,6 +136,24 @@ func TestManager_BuildTCP(t *testing.T) {
 			providerName: "provider-1",
 		},
 		{
+			desc:        "empty server address, server is skipped, error is logged",
+			serviceName: "serviceName",
+			configs: map[string]*runtime.TCPServiceInfo{
+				"serviceName@provider-1": {
+					TCPService: &dynamic.TCPService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
+							Servers: []dynamic.TCPServer{
+								{
+									Address: "",
+								},
+							},
+						},
+					},
+				},
+			},
+			providerName: "provider-1",
+		},
+		{
 			desc:        "missing port in address with hostname, server is skipped, error is logged",
 			serviceName: "serviceName",
 			configs: map[string]*runtime.TCPServiceInfo{
