@@ -20,6 +20,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/server/middleware"
 	"github.com/traefik/traefik/v2/pkg/server/service"
 	"github.com/traefik/traefik/v2/pkg/testhelpers"
+	"github.com/traefik/traefik/v2/pkg/tls"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
@@ -317,8 +318,9 @@ func TestRouterManager_Get(t *testing.T) {
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
+			tlsManager := tls.NewManager()
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -423,8 +425,9 @@ func TestAccessLog(t *testing.T) {
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
+			tlsManager := tls.NewManager()
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -718,8 +721,9 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
+			tlsManager := tls.NewManager()
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
 
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
@@ -793,8 +797,9 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 	chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
+	tlsManager := tls.NewManager()
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
 
 	_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
@@ -861,8 +866,9 @@ func BenchmarkRouterServe(b *testing.B) {
 	serviceManager := service.NewManager(rtConf.Services, nil, nil, staticRoundTripperGetter{res})
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 	chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
+	tlsManager := tls.NewManager()
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
 
 	handlers := routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
