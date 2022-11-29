@@ -77,7 +77,10 @@ func host(route *mux.Route, hosts ...string) error {
 		if len(reqHost) == 0 {
 			// If the request is an HTTP/1.0 request, then a Host may not be defined.
 			if req.ProtoAtLeast(1, 1) {
-				log.Ctx(req.Context()).Warn().Str("host", req.Host).Msg("Could not retrieve CanonizedHost, rejecting")
+				log.Ctx(req.Context()).Warn().
+					Str("host", req.Host).
+					Str("matcher", "Host").
+					Msg("Could not retrieve CanonizedHost, rejecting")
 			}
 
 			return false
@@ -92,7 +95,8 @@ func host(route *mux.Route, hosts ...string) error {
 			log.Ctx(req.Context()).Debug().
 				Str("host", reqHost).
 				Str("flattenHost", flatH).
-				Str("matcher", host).
+				Str("domain", host).
+				Str("matcher", "Host").
 				Msg("CNAMEFlattening: resolved Host does not match")
 			return false
 		}
@@ -136,7 +140,36 @@ func hostRegexp(route *mux.Route, hosts ...string) error {
 	}
 
 	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
-		return re.MatchString(req.Host)
+		reqHost := requestdecorator.GetCanonizedHost(req.Context())
+		if len(reqHost) == 0 {
+			// If the request is an HTTP/1.0 request, then a Host may not be defined.
+			if req.ProtoAtLeast(1, 1) {
+				log.Ctx(req.Context()).Warn().
+					Str("host", req.Host).
+					Str("matcher", "HostRegexp").
+					Msg("Could not retrieve CanonizedHost, rejecting")
+			}
+
+			return false
+		}
+
+		if re.MatchString(reqHost) {
+			return true
+		}
+
+		flatH := requestdecorator.GetCNAMEFlatten(req.Context())
+		if re.MatchString(flatH) {
+			return true
+		}
+
+		log.Ctx(req.Context()).Debug().
+			Str("host", reqHost).
+			Str("flattenHost", flatH).
+			Str("regexp", host).
+			Str("matcher", "HostRegexp").
+			Msg("CNAMEFlattening: resolved Host does not match")
+
+		return false
 	})
 
 	return nil
