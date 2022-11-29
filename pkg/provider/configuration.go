@@ -220,7 +220,7 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 	return configuration
 }
 
-// AddServiceTCP Adds a service to a configurations.
+// AddServiceTCP adds a service to a configuration.
 func AddServiceTCP(configuration *dynamic.TCPConfiguration, serviceName string, service *dynamic.TCPService) bool {
 	if _, ok := configuration.Services[serviceName]; !ok {
 		configuration.Services[serviceName] = service
@@ -245,7 +245,7 @@ func AddServiceTCP(configuration *dynamic.TCPConfiguration, serviceName string, 
 	return true
 }
 
-// AddRouterTCP Adds a router to a configurations.
+// AddRouterTCP adds a router to a configuration.
 func AddRouterTCP(configuration *dynamic.TCPConfiguration, routerName string, router *dynamic.TCPRouter) bool {
 	if _, ok := configuration.Routers[routerName]; !ok {
 		configuration.Routers[routerName] = router
@@ -255,7 +255,7 @@ func AddRouterTCP(configuration *dynamic.TCPConfiguration, routerName string, ro
 	return reflect.DeepEqual(configuration.Routers[routerName], router)
 }
 
-// AddMiddlewareTCP Adds a middleware to a configurations.
+// AddMiddlewareTCP adds a middleware to a configuration.
 func AddMiddlewareTCP(configuration *dynamic.TCPConfiguration, middlewareName string, middleware *dynamic.TCPMiddleware) bool {
 	if _, ok := configuration.Middlewares[middlewareName]; !ok {
 		configuration.Middlewares[middlewareName] = middleware
@@ -265,7 +265,7 @@ func AddMiddlewareTCP(configuration *dynamic.TCPConfiguration, middlewareName st
 	return reflect.DeepEqual(configuration.Middlewares[middlewareName], middleware)
 }
 
-// AddTransportTCP adds a transport to a configurations.
+// AddTransportTCP adds a servers transport to a configuration.
 func AddTransportTCP(configuration *dynamic.TCPConfiguration, transportName string, transport *dynamic.TCPServersTransport) bool {
 	if _, ok := configuration.ServersTransports[transportName]; !ok {
 		configuration.ServersTransports[transportName] = transport
@@ -310,7 +310,7 @@ func AddRouterUDP(configuration *dynamic.UDPConfiguration, routerName string, ro
 	return reflect.DeepEqual(configuration.Routers[routerName], router)
 }
 
-// AddService Adds a service to a configurations.
+// AddService adds a service to a configuration.
 func AddService(configuration *dynamic.HTTPConfiguration, serviceName string, service *dynamic.Service) bool {
 	if _, ok := configuration.Services[serviceName]; !ok {
 		configuration.Services[serviceName] = service
@@ -335,7 +335,7 @@ func AddService(configuration *dynamic.HTTPConfiguration, serviceName string, se
 	return true
 }
 
-// AddRouter Adds a router to a configurations.
+// AddRouter adds a router to a configuration.
 func AddRouter(configuration *dynamic.HTTPConfiguration, routerName string, router *dynamic.Router) bool {
 	if _, ok := configuration.Routers[routerName]; !ok {
 		configuration.Routers[routerName] = router
@@ -345,7 +345,7 @@ func AddRouter(configuration *dynamic.HTTPConfiguration, routerName string, rout
 	return reflect.DeepEqual(configuration.Routers[routerName], router)
 }
 
-// AddTransport Adds a transport to a configurations.
+// AddTransport adds a servers transport to a configuration.
 func AddTransport(configuration *dynamic.HTTPConfiguration, transportName string, transport *dynamic.ServersTransport) bool {
 	if _, ok := configuration.ServersTransports[transportName]; !ok {
 		configuration.ServersTransports[transportName] = transport
@@ -355,7 +355,7 @@ func AddTransport(configuration *dynamic.HTTPConfiguration, transportName string
 	return reflect.DeepEqual(configuration.ServersTransports[transportName], transport)
 }
 
-// AddMiddleware Adds a middleware to a configurations.
+// AddMiddleware adds a middleware to a configuration.
 func AddMiddleware(configuration *dynamic.HTTPConfiguration, middlewareName string, middleware *dynamic.Middleware) bool {
 	if _, ok := configuration.Middlewares[middlewareName]; !ok {
 		configuration.Middlewares[middlewareName] = middleware

@@ -17,7 +17,6 @@ import (
 // Proxy forwards a TCP request to a TCP service.
 type Proxy struct {
 	address          string
-	tcpAddr          *net.TCPAddr
 	terminationDelay time.Duration
 	proxyProtocol    *dynamic.ProxyProtocol
 	dialer           proxy.Dialer
@@ -29,20 +28,8 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 		return nil, fmt.Errorf("unknown proxyProtocol version: %d", proxyProtocol.Version)
 	}
 
-	// Creates the tcpAddr only for IP based addresses,
-	// because there is no need to resolve the name on every new connection,
-	// and building it should happen once.
-	var tcpAddr *net.TCPAddr
-	if host, _, err := net.SplitHostPort(address); err == nil && net.ParseIP(host) != nil {
-		tcpAddr, err = net.ResolveTCPAddr("tcp", address)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return &Proxy{
 		address:          address,
-		tcpAddr:          tcpAddr,
 		terminationDelay: terminationDelay,
 		proxyProtocol:    proxyProtocol,
 		dialer:           dialer,
@@ -96,17 +83,7 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 }
 
 func (p Proxy) dialBackend() (WriteCloser, error) {
-	var addr string
-	if p.tcpAddr != nil {
-		// Dial using directly the TCPAddr for IP based addresses.
-		addr = p.tcpAddr.String()
-	} else {
-		// Dial with DNS lookup for host based addresses.
-		addr = p.address
-		log.Debug().Str("address", addr).Msg("Dial with lookup")
-	}
-
-	conn, err := p.dialer.Dial("tcp", addr)
+	conn, err := p.dialer.Dial("tcp", p.address)
 	if err != nil {
 		return nil, err
 	}

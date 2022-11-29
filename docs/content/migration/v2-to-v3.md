@@ -55,3 +55,8 @@ One should use the `ContentType` middleware to enable the `Content-Type` header 
 
 In v3, HTTP/3 is no longer an experimental feature.
 The `experimental.http3` option has been removed from the static configuration.
+
+## TCP ServersTransport
+
+In v3, the support of `TCPServersTransport` has been introduced.
+When using the KubernetesCRD provider, it is therefore necessary to update [RBAC](../reference/dynamic-configuration/kubernetes-crd.md#rbac) and [CRD](../reference/dynamic-configuration/kubernetes-crd.md) manifests.
