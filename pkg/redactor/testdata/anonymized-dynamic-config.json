@@ -302,9 +302,7 @@
           "attempts": 42,
           "initialInterval": "42ns"
         },
-        "contentType": {
-          "autoDetect": true
-        },
+        "contentType": {},
         "plugin": {
           "foo": {
             "answer": {}
