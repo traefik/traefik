@@ -223,7 +223,8 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tS
 	for _, service := range tService.Weighted.Services {
 		fullName, k8sService, err := c.nameAndService(ctx, namespace, service.LoadBalancerSpec)
 		if err != nil {
-			return err
+			log.Ctx(ctx).Error().Err(err).Msgf("Skip service: %s/%s", service.Namespace, service.Name)
+			continue
 		}
 
 		if k8sService != nil {
