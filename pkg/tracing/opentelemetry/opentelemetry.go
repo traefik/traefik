@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/url"
+	"net"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog/log"
@@ -69,13 +69,13 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 }
 
 func (c *Config) setupHTTPExporter() (*otlptrace.Exporter, error) {
-	endpoint, err := url.Parse(c.Address)
+	host, port, err := net.SplitHostPort(c.Address)
 	if err != nil {
 		return nil, fmt.Errorf("invalid collector address %q: %w", c.Address, err)
 	}
 
 	opts := []otlptracehttp.Option{
-		otlptracehttp.WithEndpoint(endpoint.Host),
+		otlptracehttp.WithEndpoint(fmt.Sprintf("%s:%s", host, port)),
 		otlptracehttp.WithHeaders(c.Headers),
 		otlptracehttp.WithCompression(otlptracehttp.GzipCompression),
 	}
@@ -101,13 +101,13 @@ func (c *Config) setupHTTPExporter() (*otlptrace.Exporter, error) {
 }
 
 func (c *Config) setupGRPCExporter() (*otlptrace.Exporter, error) {
-	endpoint, err := url.Parse(c.Address)
+	host, port, err := net.SplitHostPort(c.Address)
 	if err != nil {
 		return nil, fmt.Errorf("invalid collector address %q: %w", c.Address, err)
 	}
 
 	opts := []otlptracegrpc.Option{
-		otlptracegrpc.WithEndpoint(endpoint.Host),
+		otlptracegrpc.WithEndpoint(fmt.Sprintf("%s:%s", host, port)),
 		otlptracegrpc.WithHeaders(c.Headers),
 		otlptracegrpc.WithCompressor(gzip.Name),
 	}

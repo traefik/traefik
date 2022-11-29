@@ -3,7 +3,7 @@ package metrics
 import (
 	"context"
 	"fmt"
-	"net/url"
+	"net"
 	"strings"
 	"sync"
 	"time"
@@ -168,13 +168,13 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OpenTeleme
 }
 
 func newHTTPExporter(ctx context.Context, config *types.OpenTelemetry) (sdkmetric.Exporter, error) {
-	endpoint, err := url.Parse(config.Address)
+	host, port, err := net.SplitHostPort(config.Address)
 	if err != nil {
 		return nil, fmt.Errorf("invalid collector address %q: %w", config.Address, err)
 	}
 
 	opts := []otlpmetrichttp.Option{
-		otlpmetrichttp.WithEndpoint(endpoint.Host),
+		otlpmetrichttp.WithEndpoint(fmt.Sprintf("%s:%s", host, port)),
 		otlpmetrichttp.WithHeaders(config.Headers),
 		otlpmetrichttp.WithCompression(otlpmetrichttp.GzipCompression),
 	}
@@ -200,13 +200,13 @@ func newHTTPExporter(ctx context.Context, config *types.OpenTelemetry) (sdkmetri
 }
 
 func newGRPCExporter(ctx context.Context, config *types.OpenTelemetry) (sdkmetric.Exporter, error) {
-	endpoint, err := url.Parse(config.Address)
+	host, port, err := net.SplitHostPort(config.Address)
 	if err != nil {
 		return nil, fmt.Errorf("invalid collector address %q: %w", config.Address, err)
 	}
 
 	opts := []otlpmetricgrpc.Option{
-		otlpmetricgrpc.WithEndpoint(endpoint.Host),
+		otlpmetricgrpc.WithEndpoint(fmt.Sprintf("%s:%s", host, port)),
 		otlpmetricgrpc.WithHeaders(config.Headers),
 		otlpmetricgrpc.WithCompressor(gzip.Name),
 	}
