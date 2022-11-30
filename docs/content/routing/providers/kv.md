@@ -413,14 +413,6 @@ You can declare TCP Routers and/or Services using KV.
     | Key (Path)                                                         | Value            |
     |--------------------------------------------------------------------|------------------|
     | `traefik/tcp/services/mytcpservice/loadbalancer/servers/0/address` | `xx.xx.xx.xx:xx` |
-
-??? info "`traefik/tcp/services/<service_name>/loadbalancer/terminationdelay`"
-
-    See [termination delay](../services/index.md#termination-delay) for more information.
-
-    | Key (Path)                                                        | Value |
-    |-------------------------------------------------------------------|-------|
-    | `traefik/tcp/services/mytcpservice/loadbalancer/terminationdelay` | `100` |
     
 ??? info "`traefik/tcp/services/<service_name>/loadbalancer/proxyprotocol/version`"
 

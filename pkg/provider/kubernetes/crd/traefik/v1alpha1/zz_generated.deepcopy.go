@@ -1269,6 +1269,11 @@ func (in *ServersTransportTCPSpec) DeepCopyInto(out *ServersTransportTCPSpec) {
 		*out = new(dynamic.Spiffe)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.TerminationDelay != nil {
+		in, out := &in.TerminationDelay, &out.TerminationDelay
+		*out = new(intstr.IntOrString)
+		**out = **in
+	}
 	return
 }
 
@@ -1305,11 +1310,6 @@ func (in *ServiceTCP) DeepCopyInto(out *ServiceTCP) {
 	out.Port = in.Port
 	if in.Weight != nil {
 		in, out := &in.Weight, &out.Weight
-		*out = new(int)
-		**out = **in
-	}
-	if in.TerminationDelay != nil {
-		in, out := &in.TerminationDelay, &out.TerminationDelay
 		*out = new(int)
 		**out = **in
 	}

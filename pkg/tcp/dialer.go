@@ -20,6 +20,21 @@ import (
 	"golang.org/x/net/proxy"
 )
 
+type Dialer interface {
+	proxy.Dialer
+
+	TerminationDelay() time.Duration
+}
+
+type dialerTCP struct {
+	proxy.Dialer
+	terminationDelay time.Duration
+}
+
+func (d dialerTCP) TerminationDelay() time.Duration {
+	return d.terminationDelay
+}
+
 // SpiffeX509Source allows to retrieve a x509 SVID and bundle.
 type SpiffeX509Source interface {
 	x509svid.Source
@@ -29,7 +44,7 @@ type SpiffeX509Source interface {
 // DialerManager handles dialer for the reverse proxy.
 type DialerManager struct {
 	rtLock           sync.RWMutex
-	dialers          map[string]proxy.Dialer
+	dialers          map[string]Dialer
 	configs          map[string]*dynamic.TCPServersTransport
 	spiffeX509Source SpiffeX509Source
 }
@@ -37,7 +52,7 @@ type DialerManager struct {
 // NewDialerManager creates a new DialerManager.
 func NewDialerManager(spiffeX509Source SpiffeX509Source) *DialerManager {
 	return &DialerManager{
-		dialers:          make(map[string]proxy.Dialer),
+		dialers:          make(map[string]Dialer),
 		configs:          make(map[string]*dynamic.TCPServersTransport),
 		spiffeX509Source: spiffeX509Source,
 	}
@@ -67,7 +82,8 @@ func (d *DialerManager) Update(newConfigs map[string]*dynamic.TCPServersTranspor
 				Str("dialer", configName).
 				Err(err).
 				Msg("Could not configure TCP Dialer, fallback on default dialer")
-			d.dialers[configName] = &net.Dialer{}
+			// TODO: rework.
+			//d.dialers[configName] = &net.Dialer{}
 		}
 	}
 
@@ -83,7 +99,8 @@ func (d *DialerManager) Update(newConfigs map[string]*dynamic.TCPServersTranspor
 				Str("dialer", newConfigName).
 				Err(err).
 				Msg("Could not configure TCP Dialer, fallback on default dialer")
-			d.dialers[newConfigName] = &net.Dialer{}
+			// TODO: rework.
+			//d.dialers[newConfigName] = &net.Dialer{}
 		}
 	}
 
@@ -91,7 +108,7 @@ func (d *DialerManager) Update(newConfigs map[string]*dynamic.TCPServersTranspor
 }
 
 // Get gets a dialer by name.
-func (d *DialerManager) Get(name string) (proxy.Dialer, error) {
+func (d *DialerManager) Get(name string) (Dialer, error) {
 	if len(name) == 0 {
 		name = "default@internal"
 	}
@@ -106,8 +123,8 @@ func (d *DialerManager) Get(name string) (proxy.Dialer, error) {
 	return nil, fmt.Errorf("TCP dialer not found %s", name)
 }
 
-// createDialer creates a proxy.Dialer with the TLS configuration settings if needed.
-func (d *DialerManager) createDialer(cfg *dynamic.TCPServersTransport) (proxy.Dialer, error) {
+// createDialer creates a Dialer with the TLS configuration settings if needed.
+func (d *DialerManager) createDialer(cfg *dynamic.TCPServersTransport) (Dialer, error) {
 	if cfg == nil {
 		return nil, errors.New("no transport configuration given")
 	}
@@ -152,13 +169,15 @@ func (d *DialerManager) createDialer(cfg *dynamic.TCPServersTransport) (proxy.Di
 	}
 
 	if tlsConfig == nil {
-		return dialer, nil
+		return dialerTCP{dialer, time.Duration(cfg.TerminationDelay)}, nil
 	}
 
-	return &tls.Dialer{
+	tlsDialer := &tls.Dialer{
 		NetDialer: dialer,
 		Config:    tlsConfig,
-	}, nil
+	}
+
+	return dialerTCP{tlsDialer, time.Duration(cfg.TerminationDelay)}, nil
 }
 
 func createRootCACertPool(rootCAs []traefiktls.FileOrContent) *x509.CertPool {

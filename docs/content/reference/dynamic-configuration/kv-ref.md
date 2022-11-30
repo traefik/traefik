@@ -292,6 +292,7 @@
 | `traefik/tcp/serversTransports/TCPServersTransport0/spiffe/ids/0` | `foobar` |
 | `traefik/tcp/serversTransports/TCPServersTransport0/spiffe/ids/1` | `foobar` |
 | `traefik/tcp/serversTransports/TCPServersTransport0/spiffe/trustDomain` | `foobar` |
+| `traefik/tcp/serversTransports/TCPServersTransport0/terminationDelay` | `42s` |
 | `traefik/tcp/serversTransports/TCPServersTransport1/certificates/0/certFile` | `foobar` |
 | `traefik/tcp/serversTransports/TCPServersTransport1/certificates/0/keyFile` | `foobar` |
 | `traefik/tcp/serversTransports/TCPServersTransport1/certificates/1/certFile` | `foobar` |
@@ -306,11 +307,11 @@
 | `traefik/tcp/serversTransports/TCPServersTransport1/spiffe/ids/0` | `foobar` |
 | `traefik/tcp/serversTransports/TCPServersTransport1/spiffe/ids/1` | `foobar` |
 | `traefik/tcp/serversTransports/TCPServersTransport1/spiffe/trustDomain` | `foobar` |
+| `traefik/tcp/serversTransports/TCPServersTransport1/terminationDelay` | `42s` |
 | `traefik/tcp/services/TCPService01/loadBalancer/proxyProtocol/version` | `42` |
 | `traefik/tcp/services/TCPService01/loadBalancer/servers/0/address` | `foobar` |
 | `traefik/tcp/services/TCPService01/loadBalancer/servers/1/address` | `foobar` |
 | `traefik/tcp/services/TCPService01/loadBalancer/serversTransport` | `foobar` |
-| `traefik/tcp/services/TCPService01/loadBalancer/terminationDelay` | `42` |
 | `traefik/tcp/services/TCPService02/weighted/services/0/name` | `foobar` |
 | `traefik/tcp/services/TCPService02/weighted/services/0/weight` | `42` |
 | `traefik/tcp/services/TCPService02/weighted/services/1/name` | `foobar` |

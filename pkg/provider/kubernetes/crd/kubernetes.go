@@ -451,6 +451,13 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			}
 		}
 
+		if serversTransportTCP.Spec.TerminationDelay != nil {
+			err := tcpServerTransport.TerminationDelay.Set(serversTransportTCP.Spec.TerminationDelay.String())
+			if err != nil {
+				logger.Error().Err(err).Msg("Error while reading TerminationDelay")
+			}
+		}
+
 		id := provider.Normalize(makeID(serversTransportTCP.Namespace, serversTransportTCP.Name))
 		conf.TCP.ServersTransports[id] = &tcpServerTransport
 	}
