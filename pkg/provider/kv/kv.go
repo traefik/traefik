@@ -85,7 +85,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 		err := p.watchKv(ctxLog, configurationChan)
 		if err != nil {
-			logger.Error().Err(err).Msg("Cannot watch KV store")
+			logger.Error().Err(err).Msg("Cannot retrieve data")
 		}
 	})
 
@@ -124,15 +124,11 @@ func (p *Provider) watchKv(ctx context.Context, configurationChan chan<- dynamic
 	}
 
 	notify := func(err error, time time.Duration) {
-		log.Ctx(ctx).Error().Err(err).Msgf("KV connection error, retrying in %s", time)
+		log.Ctx(ctx).Error().Err(err).Msgf("Provider error, retrying in %s", time)
 	}
 
-	err := backoff.RetryNotify(safe.OperationWithRecover(operation),
+	return backoff.RetryNotify(safe.OperationWithRecover(operation),
 		backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctx), notify)
-	if err != nil {
-		return fmt.Errorf("cannot connect to KV server: %w", err)
-	}
-	return nil
 }
 
 func (p *Provider) buildConfiguration(ctx context.Context) (*dynamic.Configuration, error) {
