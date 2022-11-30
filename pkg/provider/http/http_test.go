@@ -146,7 +146,7 @@ func TestProvider_decodeConfiguration(t *testing.T) {
 		},
 		{
 			desc:       "should return the decoded dynamic configuration",
-			configData: []byte("{\"tcp\":{\"routers\":{\"foo\":{}}}}"),
+			configData: []byte(`{"tcp":{"routers":{"foo":{}}}}`),
 			expConfig: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:           make(map[string]*dynamic.Router),
