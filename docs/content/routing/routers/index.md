@@ -244,14 +244,14 @@ The table below lists all the available matchers:
 
     The usual AND (`&&`) and OR (`||`) logical operators can be used, with the expected precedence rules,
     as well as parentheses.
-    
+
     One can invert a matcher by using the NOT (`!`) operator.
-    
+
     The following rule matches requests where:
-    
+
     - either host is `example.com` OR,
     - host is `example.org` AND path is NOT `/traefik`
-    
+
     ```yaml
     Host(`example.com`) || (Host(`example.org`) && !Path(`/traefik`))
     ```
@@ -261,21 +261,21 @@ The table below lists all the available matchers:
 The `Header` and `HeaderRegexp` matchers allow to match requests that contain specific header.
 
 !!! example "Examples"
-    
+
     Match requests with a `Content-Type` header set to `application/yaml`:
-    
+
     ```yaml
     Header(`Content-Type`, `application/yaml`)
     ```
-    
+
     Match requests with a `Content-Type` header set to either `application/json` or `application/yaml`:
-    
+
     ```yaml
     HeaderRegexp(`Content-Type`, `^application/(json|yaml)$`)
     ```
-    
+
     To match headers [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity), use the `(?i)` option:
-    
+
     ```yaml
     HeaderRegexp(`Content-Type`, `(?i)^application/(json|yaml)$`)
     ```
@@ -288,22 +288,24 @@ These matchers do not support non-ASCII characters, use punycode encoded values 
 
 If no Host is set in the request URL (e.g., it's an IP address), these matchers will look at the `Host` header.
 
+These matchers will match the request's host in lowercase.
+
 !!! example "Examples"
 
     Match requests with `Host` set to `example.com`:
-    
+
     ```yaml
     Host(`example.com`)
     ```
- 
+
     Match requests sent to any subdomain of `example.com`:
-    
+
     ```yaml
     HostRegexp(`^.+\.example\.com$`)
     ```
 
     Match requests with `Host` set to either `example.com` or `example.org`:
-    
+
     ```yaml
     HostRegexp(`^example\.(com|org)$`)
     ```
@@ -321,7 +323,7 @@ The `Method` matchers allows to match requests sent with the given method.
 !!! example "Example"
 
     Match `OPTIONS` requests:
-    
+
     ```yaml
     Method(`OPTIONS`)
     ```
@@ -337,14 +339,14 @@ Path are always starting with a `/`, except for `PathRegexp`.
 !!! example "Examples"
 
     Match `/products` but neither `/products/shoes` nor `/products/`:
-    
+
     ```yaml
     Path(`/products`)
     ```
-    
+
     Match `/products` as well as everything under `/products`,
     such as `/products/shoes`, `/products/` but also `/products-for-sale`:
-    
+
     ```yaml
     PathPrefix(`/products`)
     ```
@@ -376,7 +378,7 @@ The `Query` and `QueryRegexp` matchers allow to match requests based on query pa
 !!! example "Examples"
 
     Match requests with a `mobile` query parameter set to `true`, such as in `/search?mobile=true`:
-    
+
     ```yaml
     Query(`mobile`, `true`)
     ```
@@ -388,13 +390,13 @@ The `Query` and `QueryRegexp` matchers allow to match requests based on query pa
     ```
 
     Match requests with a `mobile` query parameter set to either `true` or `yes`:
-    
+
     ```yaml
     QueryRegexp(`mobile`, `^(true|yes)$`)
     ```
 
     Match requests with a `mobile` query parameter set to any value (including the empty value):
-    
+
     ```yaml
     QueryRegexp(`mobile`, `^.*$`)
     ```
@@ -414,15 +416,15 @@ It only matches the request client IP and does not use the `X-Forwarded-For` hea
 !!! example "Examples"
 
     Match requests coming from a given IP:
-    
+
     ```yaml tab="IPv4"
     ClientIP(`10.76.105.11`)
     ```
-    
+
     ```yaml tab="IPv6"
     ClientIP(`::1`)
     ```
-    
+
     Match requests coming from a given subnet:
 
     ```yaml tab="IPv4"
@@ -831,9 +833,9 @@ If you want to limit the router scope to a set of entry points, set the entry po
     a situation where both sides are waiting for data and the
     connection appears to have hanged.
 
-    The only way that Traefik can deal with such a case, is to make 
-    sure that on the concerned entry point, there is no TLS router 
-    whatsoever (neither TCP nor HTTP), and there is at least one 
+    The only way that Traefik can deal with such a case, is to make
+    sure that on the concerned entry point, there is no TLS router
+    whatsoever (neither TCP nor HTTP), and there is at least one
     non-TLS TCP router that leads to the server in question.
 
 ??? example "Listens to Every Entry Point"
@@ -990,14 +992,14 @@ The table below lists all the available matchers:
 
     The usual AND (`&&`) and OR (`||`) logical operators can be used, with the expected precedence rules,
     as well as parentheses.
-    
+
     One can invert a matcher by using the NOT (`!`) operator.
-    
+
     The following rule matches connections where:
-    
+
     - either Server Name Indication is `example.com` OR,
     - Server Name Indication is `example.org` AND ALPN protocol is NOT `h2`
-    
+
     ```yaml
     HostSNI(`example.com`) || (HostSNI(`example.org`) && !ALPN(`h2`))
     ```
@@ -1019,23 +1021,23 @@ These matchers do not support non-ASCII characters, use punycode encoded values 
 !!! example "Examples"
 
     Match all connections:
-    
+
     ```yaml tab="HostSNI"
     HostSNI(`*`)
     ```
-    
+
     ```yaml tab="HostSNIRegexp"
     HostSNIRegexp(`^.*$`)
     ```
 
     Match TCP connections sent to `example.com`:
-    
+
     ```yaml
     HostSNI(`example.com`)
     ```
 
     Match TCP connections openned on any subdomain of `example.com`:
-    
+
     ```yaml
     HostSNIRegexp(`^.+\.example\.com$`)
     ```
@@ -1047,17 +1049,17 @@ The `ClientIP` matcher allows matching connections opened by a client with the g
 !!! example "Examples"
 
     Match connections opened by a given IP:
-    
+
     ```yaml tab="IPv4"
     ClientIP(`10.76.105.11`)
     ```
-    
+
     ```yaml tab="IPv6"
     ClientIP(`::1`)
     ```
-    
+
     Match connections coming from a given subnet:
-    
+
     ```yaml tab="IPv4"
     ClientIP(`192.168.1.0/24`)
     ```
@@ -1078,14 +1080,14 @@ protocol, and Traefik returns an error if this is attempted.
 !!! example "Example"
 
     Match connections using the ALPN protocol `h2`:
-    
+
     ```yaml
     ALPN(`h2`)
     ```
 
 ### Priority
 
-To avoid path overlap, routes are sorted, by default, in descending order using rules length. 
+To avoid path overlap, routes are sorted, by default, in descending order using rules length.
 The priority is directly equal to the length of the rule, and so the longest length has the highest priority.
 
 A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
@@ -1415,8 +1417,8 @@ So UDP "routers" at this time are pretty much only load-balancers in one form or
 	It basically means that some state is kept about an ongoing communication between a client and a backend,
 	notably so that the proxy knows where to forward a response packet from a backend.
 	As expected, a `timeout` is associated to each of these sessions,
-	so that they get cleaned out if they go through a period of inactivity longer than a given duration. 
-	Timeout can be configured using the `entryPoints.name.udp.timeout` option as described 
+	so that they get cleaned out if they go through a period of inactivity longer than a given duration.
+	Timeout can be configured using the `entryPoints.name.udp.timeout` option as described
 	under [EntryPoints](../entrypoints/#udp-options).
 
 ### EntryPoints

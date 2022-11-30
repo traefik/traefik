@@ -86,7 +86,7 @@ func host(route *mux.Route, hosts ...string) error {
 			return false
 		}
 
-		if strings.EqualFold(reqHost, host) {
+		if reqHost == host {
 			return true
 		}
 
@@ -134,7 +134,7 @@ func hostRegexp(route *mux.Route, hosts ...string) error {
 		return fmt.Errorf("invalid value %q for HostRegexp matcher, non-ASCII characters are not allowed", host)
 	}
 
-	re, err := regexp.Compile(host)
+	re, err := regexp.Compile("(?i)" + host)
 	if err != nil {
 		return fmt.Errorf("compiling HostRegexp matcher: %w", err)
 	}
