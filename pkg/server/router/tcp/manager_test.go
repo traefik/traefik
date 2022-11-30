@@ -13,6 +13,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	tcpmiddleware "github.com/traefik/traefik/v2/pkg/server/middleware/tcp"
 	"github.com/traefik/traefik/v2/pkg/server/service/tcp"
+	tcp2 "github.com/traefik/traefik/v2/pkg/tcp"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 )
 
@@ -311,7 +312,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 				TCPServices: test.tcpServiceConfig,
 				TCPRouters:  test.tcpRouterConfig,
 			}
-			dialerManager := tcp.NewDialerManager(nil)
+			dialerManager := tcp2.NewDialerManager(nil)
 			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
 			serviceManager := tcp.NewManager(conf, dialerManager)
 			tlsManager := traefiktls.NewManager()
@@ -624,7 +625,7 @@ func TestDomainFronting(t *testing.T) {
 				Routers: test.routers,
 			}
 
-			serviceManager := tcp.NewManager(conf, tcp.NewDialerManager(nil))
+			serviceManager := tcp.NewManager(conf, tcp2.NewDialerManager(nil))
 
 			tlsManager := traefiktls.NewManager()
 			tlsManager.UpdateConfigs(context.Background(), map[string]traefiktls.Store{}, test.tlsOptions, []*traefiktls.CertAndStores{})

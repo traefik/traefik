@@ -39,7 +39,8 @@ tcpServersTransport:
       keyFile: foobar
   dialTimeout: 42s
   dialKeepAlive: 42s
-  peerCertURI: foobar
+  peerCertURI: foobargo
+  terminationDelay: 42s
   spiffe:
     ids:
       - foobar

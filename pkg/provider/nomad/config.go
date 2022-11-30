@@ -89,13 +89,10 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 
 func (p *Provider) buildTCPConfig(i item, configuration *dynamic.TCPConfiguration) error {
 	if len(configuration.Services) == 0 {
-		configuration.Services = make(map[string]*dynamic.TCPService)
-
-		lb := new(dynamic.TCPServersLoadBalancer)
-		lb.SetDefaults()
-
-		configuration.Services[getName(i)] = &dynamic.TCPService{
-			LoadBalancer: lb,
+		configuration.Services = map[string]*dynamic.TCPService{
+			getName(i): {
+				LoadBalancer: new(dynamic.TCPServersLoadBalancer),
+			},
 		}
 	}
 

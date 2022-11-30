@@ -1552,39 +1552,6 @@ Below are the available options for the PROXY protocol:
           version = 1
     ```
 
-#### Termination Delay
-
-As a proxy between a client and a server, it can happen that either side (e.g. client side) decides to terminate its writing capability on the connection (i.e. issuance of a FIN packet).
-The proxy needs to propagate that intent to the other side, and so when that happens, it also does the same on its connection with the other side (e.g. backend side).
-
-However, if for some reason (bad implementation, or malicious intent) the other side does not eventually do the same as well,
-the connection would stay half-open, which would lock resources for however long.
-
-To that end, as soon as the proxy enters this termination sequence, it sets a deadline on fully terminating the connections on both sides.
-
-The termination delay controls that deadline.
-It is a duration in milliseconds, defaulting to 100.
-A negative value means an infinite deadline (i.e. the connection is never fully terminated by the proxy itself).
-
-??? example "A Service with a termination delay -- Using the [File Provider](../../providers/file.md)"
-
-    ```yaml tab="YAML"
-    ## Dynamic configuration
-    tcp:
-      services:
-        my-service:
-          loadBalancer:
-            terminationDelay: 200
-    ```
-
-    ```toml tab="TOML"
-    ## Dynamic configuration
-    [tcp.services]
-      [tcp.services.my-service.loadBalancer]
-        [[tcp.services.my-service.loadBalancer]]
-          terminationDelay = 200
-    ```
-
 ### Weighted Round Robin
 
 The Weighted Round Robin (alias `WRR`) load-balancer of services is in charge of balancing the requests between multiple services based on provided weights.
@@ -1888,6 +1855,46 @@ metadata:
 
 spec:
   dialKeepAlive: 30s
+```
+
+#### `terminationDelay`
+
+_Optional, Default="100ms"_
+
+As a proxy between a client and a server, it can happen that either side (e.g. client side) decides to terminate its writing capability on the connection (i.e. issuance of a FIN packet).
+The proxy needs to propagate that intent to the other side, and so when that happens, it also does the same on its connection with the other side (e.g. backend side).
+
+However, if for some reason (bad implementation, or malicious intent) the other side does not eventually do the same as well,
+the connection would stay half-open, which would lock resources for however long.
+
+To that end, as soon as the proxy enters this termination sequence, it sets a deadline on fully terminating the connections on both sides.
+
+The termination delay controls that deadline.
+A negative value means an infinite deadline (i.e. the connection is never fully terminated by the proxy itself).
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+tcp:
+  serversTransports:
+    mytransport:
+      terminationDelay: 100ms
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[tcp.serversTransports.mytransport]
+  terminationDelay = "100ms"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  terminationDelay: 100ms
 ```
 
 #### `spiffe`

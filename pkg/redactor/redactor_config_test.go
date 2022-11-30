@@ -370,7 +370,6 @@ func init() {
 		Services: map[string]*dynamic.TCPService{
 			"foo": {
 				LoadBalancer: &dynamic.TCPServersLoadBalancer{
-					TerminationDelay: intPtr(42),
 					ProxyProtocol: &dynamic.ProxyProtocol{
 						Version: 42,
 					},
