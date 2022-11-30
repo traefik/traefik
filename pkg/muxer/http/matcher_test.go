@@ -229,6 +229,16 @@ func TestHostMatcher(t *testing.T) {
 			},
 		},
 		{
+			desc: "valid Host matcher - matcher with UPPER case",
+			rule: "Host(`EXAMPLE.COM`)",
+			expected: map[string]int{
+				"https://example.com":      http.StatusOK,
+				"https://example.com/path": http.StatusOK,
+				"https://example.org":      http.StatusNotFound,
+				"https://example.org/path": http.StatusNotFound,
+			},
+		},
+		{
 			desc: "valid Host matcher - puny-coded emoji",
 			rule: "Host(`xn--9t9h.com`)",
 			expected: map[string]int{
@@ -315,6 +325,17 @@ func TestHostRegexpMatcher(t *testing.T) {
 				"https://example.com":      http.StatusOK,
 				"https://example.com:8080": http.StatusOK,
 				"https://example.com/path": http.StatusOK,
+				"https://example.org":      http.StatusNotFound,
+				"https://example.org/path": http.StatusNotFound,
+			},
+		},
+		{
+			desc: "valid HostRegexp matcher with case sensitive regexp",
+			rule: "HostRegexp(`^[A-Z]+\\.com$`)",
+			expected: map[string]int{
+				"https://example.com":      http.StatusNotFound,
+				"https://EXAMPLE.com":      http.StatusNotFound,
+				"https://example.com/path": http.StatusNotFound,
 				"https://example.org":      http.StatusNotFound,
 				"https://example.org/path": http.StatusNotFound,
 			},
