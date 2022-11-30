@@ -1,16 +1,51 @@
 global:
   checkNewVersion: true
   sendAnonymousUsage: true
-serversTransport:
+serversTransports:
+  serverName: foobar
   insecureSkipVerify: true
   rootCAs:
     - foobar
     - foobar
+  certificates:
+    - certFile: foobar
+      keyFile: foobar
+    - certFile: foobar
+      keyFile: foobar
   maxIdleConnsPerHost: 42
   forwardingTimeouts:
     dialTimeout: 42s
     responseHeaderTimeout: 42s
     idleConnTimeout: 42s
+    readIdleTimeout: 42s
+    pingTimeout: 42s
+  disableHTTP2: true
+  peerCertURI: foobar
+  spiffe:
+    ids:
+      - foobar
+      - foobar
+    trustDomain: foobar
+tcpServersTransport:
+  serverName: foobar
+  insecureSkipVerify: true
+  rootCAs:
+    - foobar
+    - foobar
+  certificates:
+    - certFile: foobar
+      keyFile: foobar
+    - certFile: foobar
+      keyFile: foobar
+  dialTimeout: 42s
+  dialKeepAlive: 42s
+  peerCertURI: foobargo
+  terminationDelay: 42s
+  spiffe:
+    ids:
+      - foobar
+      - foobar
+    trustDomain: foobar
 entryPoints:
   EntryPoint0:
     address: foobar
