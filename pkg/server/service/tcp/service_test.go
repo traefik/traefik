@@ -9,6 +9,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
+	"github.com/traefik/traefik/v2/pkg/tcp"
 )
 
 func TestManager_BuildTCP(t *testing.T) {
@@ -136,6 +137,24 @@ func TestManager_BuildTCP(t *testing.T) {
 			providerName: "provider-1",
 		},
 		{
+			desc:        "empty server address, server is skipped, error is logged",
+			serviceName: "serviceName",
+			configs: map[string]*runtime.TCPServiceInfo{
+				"serviceName@provider-1": {
+					TCPService: &dynamic.TCPService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
+							Servers: []dynamic.TCPServer{
+								{
+									Address: "",
+								},
+							},
+						},
+					},
+				},
+			},
+			providerName: "provider-1",
+		},
+		{
 			desc:        "missing port in address with hostname, server is skipped, error is logged",
 			serviceName: "serviceName",
 			configs: map[string]*runtime.TCPServiceInfo{
@@ -171,6 +190,45 @@ func TestManager_BuildTCP(t *testing.T) {
 			},
 			providerName: "provider-1",
 		},
+		{
+			desc:        "user defined serversTransport reference",
+			serviceName: "serviceName",
+			configs: map[string]*runtime.TCPServiceInfo{
+				"serviceName@provider-1": {
+					TCPService: &dynamic.TCPService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
+							Servers: []dynamic.TCPServer{
+								{
+									Address: "192.168.0.12:80",
+								},
+							},
+							ServersTransport: "default@internal",
+						},
+					},
+				},
+			},
+			providerName: "provider-1",
+		},
+		{
+			desc:        "user defined serversTransport reference not found",
+			serviceName: "serviceName",
+			configs: map[string]*runtime.TCPServiceInfo{
+				"serviceName@provider-1": {
+					TCPService: &dynamic.TCPService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
+							Servers: []dynamic.TCPServer{
+								{
+									Address: "192.168.0.12:80",
+								},
+							},
+							ServersTransport: "unknown",
+						},
+					},
+				},
+			},
+			providerName:  "provider-1",
+			expectedError: "TCP dialer not found unknown@provider-1",
+		},
 	}
 
 	for _, test := range testCases {
@@ -178,9 +236,12 @@ func TestManager_BuildTCP(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
+			dialerManager := tcp.NewDialerManager(nil)
+			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
+
 			manager := NewManager(&runtime.Configuration{
 				TCPServices: test.configs,
-			})
+			}, dialerManager)
 
 			ctx := context.Background()
 			if len(test.providerName) > 0 {

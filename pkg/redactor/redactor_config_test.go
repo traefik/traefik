@@ -370,7 +370,6 @@ func init() {
 		Services: map[string]*dynamic.TCPService{
 			"foo": {
 				LoadBalancer: &dynamic.TCPServersLoadBalancer{
-					TerminationDelay: intPtr(42),
 					ProxyProtocol: &dynamic.ProxyProtocol{
 						Version: 42,
 					},
@@ -379,6 +378,7 @@ func init() {
 							Address: "127.0.0.1:8080",
 						},
 					},
+					ServersTransport: "foo",
 				},
 			},
 			"bar": {
@@ -390,6 +390,21 @@ func init() {
 						},
 					},
 				},
+			},
+		},
+		ServersTransports: map[string]*dynamic.TCPServersTransport{
+			"foo": {
+				ServerName:         "foo",
+				InsecureSkipVerify: true,
+				RootCAs:            []traefiktls.FileOrContent{"rootca.pem"},
+				Certificates: []traefiktls.Certificate{
+					{
+						CertFile: "cert.pem",
+						KeyFile:  "key.pem",
+					},
+				},
+				DialTimeout:   42,
+				DialKeepAlive: 42,
 			},
 		},
 	}
@@ -500,17 +515,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		SendAnonymousUsage: true,
 	}
 
-	config.ServersTransport = &static.ServersTransport{
-		InsecureSkipVerify:  true,
-		RootCAs:             []traefiktls.FileOrContent{"root.ca"},
-		MaxIdleConnsPerHost: 42,
-		ForwardingTimeouts: &static.ForwardingTimeouts{
-			DialTimeout:           42,
-			ResponseHeaderTimeout: 42,
-			IdleConnTimeout:       42,
-		},
-	}
-
 	config.EntryPoints = static.EntryPoints{
 		"foobar": {
 			Address: "foo Address",
@@ -567,6 +571,13 @@ func TestDo_staticConfiguration(t *testing.T) {
 			ResponseHeaderTimeout: ptypes.Duration(111 * time.Second),
 			IdleConnTimeout:       ptypes.Duration(111 * time.Second),
 		},
+	}
+
+	config.TCPServersTransport = &static.TCPServersTransport{
+		InsecureSkipVerify: true,
+		RootCAs:            []traefiktls.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
+		DialTimeout:        ptypes.Duration(111 * time.Second),
+		DialKeepAlive:      ptypes.Duration(111 * time.Second),
 	}
 
 	config.Providers.File = &file.Provider{
