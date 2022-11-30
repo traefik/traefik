@@ -190,6 +190,45 @@ func TestManager_BuildTCP(t *testing.T) {
 			},
 			providerName: "provider-1",
 		},
+		{
+			desc:        "user defined serversTransport reference",
+			serviceName: "serviceName",
+			configs: map[string]*runtime.TCPServiceInfo{
+				"serviceName@provider-1": {
+					TCPService: &dynamic.TCPService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
+							Servers: []dynamic.TCPServer{
+								{
+									Address: "192.168.0.12:80",
+								},
+							},
+							ServersTransport: "default@internal",
+						},
+					},
+				},
+			},
+			providerName: "provider-1",
+		},
+		{
+			desc:        "user defined serversTransport reference not found",
+			serviceName: "serviceName",
+			configs: map[string]*runtime.TCPServiceInfo{
+				"serviceName@provider-1": {
+					TCPService: &dynamic.TCPService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
+							Servers: []dynamic.TCPServer{
+								{
+									Address: "192.168.0.12:80",
+								},
+							},
+							ServersTransport: "unknown",
+						},
+					},
+				},
+			},
+			providerName:  "provider-1",
+			expectedError: "TCP dialer not found unknown@provider-1",
+		},
 	}
 
 	for _, test := range testCases {

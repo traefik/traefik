@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"reflect"
 	"sync"
 	"time"
 
@@ -45,7 +44,6 @@ type SpiffeX509Source interface {
 type DialerManager struct {
 	rtLock           sync.RWMutex
 	dialers          map[string]Dialer
-	configs          map[string]*dynamic.TCPServersTransport
 	spiffeX509Source SpiffeX509Source
 }
 
@@ -53,58 +51,25 @@ type DialerManager struct {
 func NewDialerManager(spiffeX509Source SpiffeX509Source) *DialerManager {
 	return &DialerManager{
 		dialers:          make(map[string]Dialer),
-		configs:          make(map[string]*dynamic.TCPServersTransport),
 		spiffeX509Source: spiffeX509Source,
 	}
 }
 
 // Update updates the dialers configurations.
-func (d *DialerManager) Update(newConfigs map[string]*dynamic.TCPServersTransport) {
+func (d *DialerManager) Update(configs map[string]*dynamic.TCPServersTransport) {
 	d.rtLock.Lock()
 	defer d.rtLock.Unlock()
 
-	for configName, config := range d.configs {
-		newConfig, ok := newConfigs[configName]
-		if !ok {
-			delete(d.configs, configName)
-			delete(d.dialers, configName)
-			continue
-		}
-
-		if reflect.DeepEqual(newConfig, config) {
-			continue
-		}
-
+	for configName, config := range configs {
 		var err error
-		d.dialers[configName], err = d.createDialer(newConfig)
+		d.dialers[configName], err = d.createDialer(config)
 		if err != nil {
-			log.Error().
+			log.Debug().
 				Str("dialer", configName).
 				Err(err).
-				Msg("Could not configure TCP Dialer, fallback on default dialer")
-			// TODO: rework.
-			//d.dialers[configName] = &net.Dialer{}
+				Msg("Create TCP Dialer")
 		}
 	}
-
-	for newConfigName, newConfig := range newConfigs {
-		if _, ok := d.configs[newConfigName]; ok {
-			continue
-		}
-
-		var err error
-		d.dialers[newConfigName], err = d.createDialer(newConfig)
-		if err != nil {
-			log.Error().
-				Str("dialer", newConfigName).
-				Err(err).
-				Msg("Could not configure TCP Dialer, fallback on default dialer")
-			// TODO: rework.
-			//d.dialers[newConfigName] = &net.Dialer{}
-		}
-	}
-
-	d.configs = newConfigs
 }
 
 // Get gets a dialer by name.
