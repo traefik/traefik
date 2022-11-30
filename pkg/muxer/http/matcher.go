@@ -77,28 +77,32 @@ func host(route *mux.Route, hosts ...string) error {
 		if len(reqHost) == 0 {
 			// If the request is an HTTP/1.0 request, then a Host may not be defined.
 			if req.ProtoAtLeast(1, 1) {
-				log.Ctx(req.Context()).Warn().Str("host", req.Host).Msg("Could not retrieve CanonizedHost, rejecting")
+				log.Ctx(req.Context()).Warn().
+					Str("host", req.Host).
+					Str("matcher", "Host").
+					Msg("Could not retrieve CanonizedHost, rejecting")
 			}
 
 			return false
 		}
 
+		if reqHost == host {
+			return true
+		}
+
 		flatH := requestdecorator.GetCNAMEFlatten(req.Context())
 		if len(flatH) > 0 {
-			if strings.EqualFold(reqHost, host) || strings.EqualFold(flatH, host) {
+			if strings.EqualFold(flatH, host) {
 				return true
 			}
 
 			log.Ctx(req.Context()).Debug().
 				Str("host", reqHost).
 				Str("flattenHost", flatH).
-				Str("matcher", host).
+				Str("domain", host).
+				Str("matcher", "Host").
 				Msg("CNAMEFlattening: resolved Host does not match")
 			return false
-		}
-
-		if reqHost == host {
-			return true
 		}
 
 		// Check for match on trailing period on host
@@ -130,13 +134,42 @@ func hostRegexp(route *mux.Route, hosts ...string) error {
 		return fmt.Errorf("invalid value %q for HostRegexp matcher, non-ASCII characters are not allowed", host)
 	}
 
-	re, err := regexp.Compile(host)
+	re, err := regexp.Compile("(?i)" + host)
 	if err != nil {
 		return fmt.Errorf("compiling HostRegexp matcher: %w", err)
 	}
 
 	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
-		return re.MatchString(req.Host)
+		reqHost := requestdecorator.GetCanonizedHost(req.Context())
+		if len(reqHost) == 0 {
+			// If the request is an HTTP/1.0 request, then a Host may not be defined.
+			if req.ProtoAtLeast(1, 1) {
+				log.Ctx(req.Context()).Warn().
+					Str("host", req.Host).
+					Str("matcher", "HostRegexp").
+					Msg("Could not retrieve CanonizedHost, rejecting")
+			}
+
+			return false
+		}
+
+		if re.MatchString(reqHost) {
+			return true
+		}
+
+		flatH := requestdecorator.GetCNAMEFlatten(req.Context())
+		if re.MatchString(flatH) {
+			return true
+		}
+
+		log.Ctx(req.Context()).Debug().
+			Str("host", reqHost).
+			Str("flattenHost", flatH).
+			Str("regexp", host).
+			Str("matcher", "HostRegexp").
+			Msg("CNAMEFlattening: resolved Host does not match")
+
+		return false
 	})
 
 	return nil
