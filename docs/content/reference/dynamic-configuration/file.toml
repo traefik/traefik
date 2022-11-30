@@ -378,7 +378,7 @@
     [tcp.services.TCPService01]
       [tcp.services.TCPService01.loadBalancer]
         serversTransport = "foobar"
-        terminationDelay = 42
+
         [tcp.services.TCPService01.loadBalancer.proxyProtocol]
           version = 42
 
@@ -412,6 +412,7 @@
       peerCertURI = "foobar"
       dialTimeout = "42s"
       dialKeepAlive = "42s"
+      terminationDelay = "42s"
 
       [[tcp.serversTransports.TCPServersTransport0.certificates]]
         certFile = "foobar"
@@ -432,6 +433,7 @@
       peerCertURI = "foobar"
       dialTimeout = "42s"
       dialKeepAlive = "42s"
+      terminationDelay = "42s"
 
       [[tcp.serversTransports.TCPServersTransport1.certificates]]
         certFile = "foobar"

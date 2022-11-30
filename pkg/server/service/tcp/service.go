@@ -13,12 +13,11 @@ import (
 	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
 	"github.com/traefik/traefik/v2/pkg/tcp"
-	"golang.org/x/net/proxy"
 )
 
 // DialerGetter is a dialer getter interface.
 type DialerGetter interface {
-	Get(name string) (proxy.Dialer, error)
+	Get(name string) (tcp.Dialer, error)
 }
 
 // Manager is the TCPHandlers factory.
@@ -59,11 +58,9 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 	case conf.LoadBalancer != nil:
 		loadBalancer := tcp.NewWRRLoadBalancer()
 
-		if conf.LoadBalancer.TerminationDelay == nil {
-			defaultTerminationDelay := 100
-			conf.LoadBalancer.TerminationDelay = &defaultTerminationDelay
+		if len(conf.LoadBalancer.ServersTransport) > 0 {
+			conf.LoadBalancer.ServersTransport = provider.GetQualifiedName(ctx, conf.LoadBalancer.ServersTransport)
 		}
-		duration := time.Duration(*conf.LoadBalancer.TerminationDelay) * time.Millisecond
 
 		for index, server := range shuffle(conf.LoadBalancer.Servers, m.rand) {
 			srvLogger := logger.With().
@@ -75,16 +72,12 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 				continue
 			}
 
-			if len(conf.LoadBalancer.ServersTransport) > 0 {
-				conf.LoadBalancer.ServersTransport = provider.GetQualifiedName(ctx, conf.LoadBalancer.ServersTransport)
-			}
-
 			dialer, err := m.dialerManager.Get(conf.LoadBalancer.ServersTransport)
 			if err != nil {
 				return nil, err
 			}
 
-			handler, err := tcp.NewProxy(server.Address, duration, conf.LoadBalancer.ProxyProtocol, dialer)
+			handler, err := tcp.NewProxy(server.Address, conf.LoadBalancer.ProxyProtocol, dialer)
 			if err != nil {
 				srvLogger.Error().Err(err).Msg("Failed to create server")
 				continue

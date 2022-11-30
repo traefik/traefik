@@ -1043,7 +1043,6 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 										Address: "10.10.0.2:8000",
 									},
 								},
-								TerminationDelay: Int(500),
 							},
 						},
 					},
@@ -1421,11 +1420,13 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								},
 								TrustDomain: "spiffe://lol",
 							},
+							TerminationDelay: ptypes.Duration(100 * time.Millisecond),
 						},
 						"default-test": {
-							ServerName:    "test",
-							DialTimeout:   ptypes.Duration(30 * time.Second),
-							DialKeepAlive: ptypes.Duration(15 * time.Second),
+							ServerName:       "test",
+							DialTimeout:      ptypes.Duration(30 * time.Second),
+							DialKeepAlive:    ptypes.Duration(15 * time.Second),
+							TerminationDelay: ptypes.Duration(100 * time.Millisecond),
 						},
 					},
 					Routers: map[string]*dynamic.TCPRouter{
@@ -6154,8 +6155,9 @@ func TestCrossNamespace(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.TCPServersTransport{
 						"cross-ns-st-cross-ns": {
-							DialTimeout:   30000000000,
-							DialKeepAlive: 0,
+							DialTimeout:      30000000000,
+							DialKeepAlive:    0,
+							TerminationDelay: ptypes.Duration(100 * time.Millisecond),
 						},
 					},
 				},
@@ -6190,8 +6192,9 @@ func TestCrossNamespace(t *testing.T) {
 					Services:    map[string]*dynamic.TCPService{},
 					ServersTransports: map[string]*dynamic.TCPServersTransport{
 						"cross-ns-st-cross-ns": {
-							DialTimeout:   30000000000,
-							DialKeepAlive: 0,
+							DialTimeout:      30000000000,
+							DialKeepAlive:    0,
+							TerminationDelay: ptypes.Duration(100 * time.Millisecond),
 						},
 					},
 				},

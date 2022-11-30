@@ -53,7 +53,9 @@ func TestCloseWrite(t *testing.T) {
 	_, port, err := net.SplitHostPort(backendListener.Addr().String())
 	require.NoError(t, err)
 
-	proxy, err := NewProxy(":"+port, 10*time.Millisecond, nil, &net.Dialer{})
+	dialer := dialerTCP{&net.Dialer{}, 10 * time.Millisecond}
+
+	proxy, err := NewProxy(":"+port, nil, dialer)
 	require.NoError(t, err)
 
 	proxyListener, err := net.Listen("tcp", ":0")
@@ -132,7 +134,9 @@ func TestProxyProtocol(t *testing.T) {
 			_, port, err := net.SplitHostPort(proxyBackendListener.Addr().String())
 			require.NoError(t, err)
 
-			proxy, err := NewProxy(":"+port, 10*time.Millisecond, &dynamic.ProxyProtocol{Version: test.version}, &net.Dialer{})
+			dialer := dialerTCP{&net.Dialer{}, 10 * time.Millisecond}
+
+			proxy, err := NewProxy(":"+port, &dynamic.ProxyProtocol{Version: test.version}, dialer)
 			require.NoError(t, err)
 
 			proxyListener, err := net.Listen("tcp", ":0")

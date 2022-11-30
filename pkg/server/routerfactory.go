@@ -13,10 +13,11 @@ import (
 	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
 	udprouter "github.com/traefik/traefik/v2/pkg/server/router/udp"
 	"github.com/traefik/traefik/v2/pkg/server/service"
-	"github.com/traefik/traefik/v2/pkg/server/service/tcp"
-	"github.com/traefik/traefik/v2/pkg/server/service/udp"
+	tcpsvc "github.com/traefik/traefik/v2/pkg/server/service/tcp"
+	udpsvc "github.com/traefik/traefik/v2/pkg/server/service/udp"
+	"github.com/traefik/traefik/v2/pkg/tcp"
 	"github.com/traefik/traefik/v2/pkg/tls"
-	udptypes "github.com/traefik/traefik/v2/pkg/udp"
+	"github.com/traefik/traefik/v2/pkg/udp"
 )
 
 // RouterFactory the factory of TCP/UDP routers.
@@ -69,7 +70,7 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 }
 
 // CreateRouters creates new TCPRouters and UDPRouters.
-func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string]*tcprouter.Router, map[string]udptypes.Handler) {
+func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string]*tcprouter.Router, map[string]udp.Handler) {
 	if f.cancelPrevState != nil {
 		f.cancelPrevState()
 	}
@@ -90,7 +91,7 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 	serviceManager.LaunchHealthCheck(ctx)
 
 	// TCP
-	svcTCPManager := tcp.NewManager(rtConf, f.dialerManager)
+	svcTCPManager := tcpsvc.NewManager(rtConf, f.dialerManager)
 
 	middlewaresTCPBuilder := tcpmiddleware.NewBuilder(rtConf.TCPMiddlewares)
 
@@ -98,7 +99,7 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 	routersTCP := rtTCPManager.BuildHandlers(ctx, f.entryPointsTCP)
 
 	// UDP
-	svcUDPManager := udp.NewManager(rtConf)
+	svcUDPManager := udpsvc.NewManager(rtConf)
 	rtUDPManager := udprouter.NewManager(rtConf, svcUDPManager)
 	routersUDP := rtUDPManager.BuildHandlers(ctx, f.entryPointsUDP)
 

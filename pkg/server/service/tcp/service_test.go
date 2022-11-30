@@ -9,6 +9,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
+	"github.com/traefik/traefik/v2/pkg/tcp"
 )
 
 func TestManager_BuildTCP(t *testing.T) {
@@ -196,7 +197,7 @@ func TestManager_BuildTCP(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			dialerManager := NewDialerManager(nil)
+			dialerManager := tcp.NewDialerManager(nil)
 			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
 
 			manager := NewManager(&runtime.Configuration{

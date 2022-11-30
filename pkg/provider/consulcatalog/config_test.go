@@ -2192,7 +2192,6 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.1:80",
 									},
 								},
-								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -2248,7 +2247,6 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.1:80",
 									},
 								},
-								TerminationDelay: Int(100),
 								ServersTransport: "tls-ns-dc1-Test",
 							},
 						},
@@ -2356,7 +2354,6 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.1:80",
 									},
 								},
-								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -2410,7 +2407,6 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.1:8080",
 									},
 								},
-								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -2528,7 +2524,6 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.2:80",
 									},
 								},
-								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -2681,7 +2676,6 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.1:80",
 									},
 								},
-								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -2743,14 +2737,14 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			// TODO: replace or delete?
 			desc: "tcp with label for tcp service, with termination delay",
 			items: []itemData{
 				{
 					ID:   "Test",
 					Name: "Test",
 					Labels: map[string]string{
-						"traefik.tcp.services.foo.loadbalancer.server.port":      "80",
-						"traefik.tcp.services.foo.loadbalancer.terminationdelay": "200",
+						"traefik.tcp.services.foo.loadbalancer.server.port": "80",
 					},
 					Address: "127.0.0.1",
 					Port:    "80",
@@ -2769,7 +2763,6 @@ func Test_buildConfiguration(t *testing.T) {
 										Address: "127.0.0.1:80",
 									},
 								},
-								TerminationDelay: Int(200),
 							},
 						},
 					},
@@ -2942,7 +2935,6 @@ func Test_buildConfiguration(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{Address: "127.0.0.1:80"},
 								},
-								TerminationDelay: Int(100),
 							},
 						},
 						"Test-17573747155436217342": {
@@ -2950,7 +2942,6 @@ func Test_buildConfiguration(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{Address: "127.0.0.2:80"},
 								},
-								TerminationDelay: Int(100),
 							},
 						},
 					},

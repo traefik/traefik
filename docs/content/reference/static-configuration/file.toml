@@ -36,6 +36,7 @@
   peerCertURI = "foobar"
   dialTimeout = "42s"
   dialKeepAlive = "42s"
+  terminationDelay = "42s"
 
 [[tcpServersTransport.certificates]]
   certFile = "foobar"

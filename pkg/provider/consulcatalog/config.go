@@ -142,13 +142,10 @@ func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
 
 func (p *Provider) buildTCPServiceConfiguration(item itemData, configuration *dynamic.TCPConfiguration) error {
 	if len(configuration.Services) == 0 {
-		configuration.Services = make(map[string]*dynamic.TCPService)
-
-		lb := &dynamic.TCPServersLoadBalancer{}
-		lb.SetDefaults()
-
-		configuration.Services[getName(item)] = &dynamic.TCPService{
-			LoadBalancer: lb,
+		configuration.Services = map[string]*dynamic.TCPService{
+			getName(item): {
+				LoadBalancer: new(dynamic.TCPServersLoadBalancer),
+			},
 		}
 	}
 

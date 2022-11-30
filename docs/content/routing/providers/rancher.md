@@ -454,14 +454,6 @@ You can declare TCP Routers and/or Services using labels.
     - "traefik.tcp.services.mytcpservice.loadbalancer.server.port=423"
     ```
 
-??? info "`traefik.tcp.services.<service_name>.loadbalancer.terminationdelay`"
-        
-    See [termination delay](../services/index.md#termination-delay) for more information.
-    
-    ```yaml
-    - "traefik.tcp.services.mytcpservice.loadbalancer.terminationdelay=100"
-    ```
-
 ??? info "`traefik.tcp.services.<service_name>.loadbalancer.proxyprotocol.version`"
         
     See [PROXY protocol](../services/index.md#proxy-protocol) for more information.
