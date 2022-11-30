@@ -116,35 +116,35 @@ PtvuNc5EImfSkuPBYLBslNxtjbBvAYgacEdY+gRhn2TeIUApnND58lCWsKbNHLFZ
 ajIPbTY+Fe9OTOFTN48ujXNn
 -----END PRIVATE KEY-----`)
 
-func fakeRedis(t *testing.T, listener net.Listener) {
-	t.Helper()
-
-	for {
-		conn, err := listener.Accept()
-		t.Log("Accept on server")
-		require.NoError(t, err)
-
-		for {
-			withErr := false
-			buf := make([]byte, 64)
-			if _, err := conn.Read(buf); err != nil {
-				withErr = true
-			}
-
-			if string(buf[:4]) == "ping" {
-				if _, err := conn.Write([]byte("PONG")); err != nil {
-					_ = conn.Close()
-					return
-				}
-			}
-
-			if withErr {
-				_ = conn.Close()
-				return
-			}
-		}
-	}
-}
+//func fakeRedis(t *testing.T, listener net.Listener) {
+//	t.Helper()
+//
+//	for {
+//		conn, err := listener.Accept()
+//		t.Log("Accept on server")
+//		require.NoError(t, err)
+//
+//		for {
+//			withErr := false
+//			buf := make([]byte, 64)
+//			if _, err := conn.Read(buf); err != nil {
+//				withErr = true
+//			}
+//
+//			if string(buf[:4]) == "ping" {
+//				if _, err := conn.Write([]byte("PONG")); err != nil {
+//					_ = conn.Close()
+//					return
+//				}
+//			}
+//
+//			if withErr {
+//				_ = conn.Close()
+//				return
+//			}
+//		}
+//	}
+//}
 
 func TestTLS(t *testing.T) {
 	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)

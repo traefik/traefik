@@ -379,15 +379,6 @@ spec:
                               between Traefik and your servers. Can only be used on
                               a Kubernetes Service.
                             type: string
-                          terminationDelay:
-                            description: TerminationDelay defines the deadline that
-                              the proxy sets, after one of its connected peers indicates
-                              it has closed the writing capability of its connection,
-                              to close the reading capability as well, hence fully
-                              terminating the connection. It is a duration in milliseconds,
-                              defaulting to 100. A negative value means an infinite
-                              deadline (i.e. the reading capability is never closed).
-                            type: integer
                           weight:
                             description: Weight defines the weight used when balancing
                               requests between multiple Kubernetes Service.
@@ -1785,6 +1776,14 @@ spec:
                     description: TrustDomain defines the allowed SPIFFE trust domain.
                     type: string
                 type: object
+              terminationDelay:
+                anyOf:
+                - type: integer
+                - type: string
+                description: TerminationDelay defines the delay to wait before fully
+                  terminating the connection, after one connected peer has closed
+                  its writing capability.
+                x-kubernetes-int-or-string: true
             type: object
         required:
         - metadata

@@ -246,7 +246,6 @@ func TestBuildConfiguration(t *testing.T) {
 										Address: "localhost:80",
 									},
 								},
-								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -1601,7 +1600,6 @@ func TestBuildConfiguration(t *testing.T) {
 										Address: "localhost:80",
 									},
 								},
-								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -1683,7 +1681,6 @@ func TestBuildConfiguration(t *testing.T) {
 										Address: "localhost:80",
 									},
 								},
-								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -1730,7 +1727,6 @@ func TestBuildConfiguration(t *testing.T) {
 										Address: "localhost:8080",
 									},
 								},
-								TerminationDelay: Int(100),
 							},
 						},
 					},
@@ -1793,6 +1789,7 @@ func TestBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			// TODO: replace or delete?
 			desc: "one app with tcp labels with port, with termination delay",
 			applications: withApplications(
 				application(
@@ -1802,7 +1799,6 @@ func TestBuildConfiguration(t *testing.T) {
 					withLabel("traefik.tcp.routers.foo.rule", "HostSNI(`foo.bar`)"),
 					withLabel("traefik.tcp.routers.foo.tls", "true"),
 					withLabel("traefik.tcp.services.foo.loadbalancer.server.port", "8080"),
-					withLabel("traefik.tcp.services.foo.loadbalancer.terminationdelay", "200"),
 				)),
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
@@ -1822,7 +1818,6 @@ func TestBuildConfiguration(t *testing.T) {
 										Address: "localhost:8080",
 									},
 								},
-								TerminationDelay: Int(200),
 							},
 						},
 					},
@@ -1870,7 +1865,6 @@ func TestBuildConfiguration(t *testing.T) {
 										Address: "localhost:8080",
 									},
 								},
-								TerminationDelay: Int(100),
 							},
 						},
 					},

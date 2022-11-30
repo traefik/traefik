@@ -392,7 +392,6 @@
       },
       "foo": {
         "loadBalancer": {
-          "terminationDelay": 42,
           "proxyProtocol": {
             "version": 42
           },

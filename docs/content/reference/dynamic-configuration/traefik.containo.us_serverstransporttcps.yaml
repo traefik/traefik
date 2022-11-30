@@ -94,6 +94,14 @@ spec:
                     description: TrustDomain defines the allowed SPIFFE trust domain.
                     type: string
                 type: object
+              terminationDelay:
+                anyOf:
+                - type: integer
+                - type: string
+                description: TerminationDelay defines the delay to wait before fully
+                  terminating the connection, after one connected peer has closed
+                  its writing capability.
+                x-kubernetes-int-or-string: true
             type: object
         required:
         - metadata
