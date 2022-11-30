@@ -86,7 +86,7 @@ func host(route *mux.Route, hosts ...string) error {
 			return false
 		}
 
-		if strings.EqualFold(reqHost, host) {
+		if reqHost == host {
 			return true
 		}
 
