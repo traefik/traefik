@@ -183,11 +183,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 
 		notify := func(err error, time time.Duration) {
-			logger.Error().Err(err).Msgf("Provider connection error, retrying in %s", time)
+			logger.Error().Err(err).Msgf("Provider error, retrying in %s", time)
 		}
 		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), routineCtx), notify)
 		if err != nil {
-			logger.Error().Err(err).Msg("Cannot connect to Provider api")
+			logger.Error().Err(err).Msg("Cannot retrieve data")
 		}
 	})
 
