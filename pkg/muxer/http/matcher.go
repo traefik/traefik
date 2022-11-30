@@ -86,9 +86,13 @@ func host(route *mux.Route, hosts ...string) error {
 			return false
 		}
 
+		if strings.EqualFold(reqHost, host) {
+			return true
+		}
+
 		flatH := requestdecorator.GetCNAMEFlatten(req.Context())
 		if len(flatH) > 0 {
-			if strings.EqualFold(reqHost, host) || strings.EqualFold(flatH, host) {
+			if strings.EqualFold(flatH, host) {
 				return true
 			}
 
@@ -99,10 +103,6 @@ func host(route *mux.Route, hosts ...string) error {
 				Str("matcher", "Host").
 				Msg("CNAMEFlattening: resolved Host does not match")
 			return false
-		}
-
-		if reqHost == host {
-			return true
 		}
 
 		// Check for match on trailing period on host
