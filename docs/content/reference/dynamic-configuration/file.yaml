@@ -427,7 +427,6 @@ tcp:
     TCPService01:
       loadBalancer:
         serversTransport: foobar
-        terminationDelay: 42
         proxyProtocol:
           version: 42
         servers:
@@ -464,6 +463,7 @@ tcp:
       dialTimeout: 42s
       dialKeepAlive: 42s
       peerCertURI: foobar
+      terminationDelay: 42s
       spiffe:
         ids:
           - foobar
@@ -483,6 +483,7 @@ tcp:
       dialTimeout: 42s
       dialKeepAlive: 42s
       peerCertURI: foobar
+      terminationDelay: 42s
       spiffe:
         ids:
           - foobar

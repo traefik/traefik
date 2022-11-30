@@ -69,12 +69,6 @@ type ServiceTCP struct {
 	Port intstr.IntOrString `json:"port"`
 	// Weight defines the weight used when balancing requests between multiple Kubernetes Service.
 	Weight *int `json:"weight,omitempty"`
-	// TerminationDelay defines the deadline that the proxy sets, after one of its connected peers indicates
-	// it has closed the writing capability of its connection, to close the reading capability as well,
-	// hence fully terminating the connection.
-	// It is a duration in milliseconds, defaulting to 100.
-	// A negative value means an infinite deadline (i.e. the reading capability is never closed).
-	TerminationDelay *int `json:"terminationDelay,omitempty"`
 	// ProxyProtocol defines the PROXY protocol configuration.
 	// More info: https://doc.traefik.io/traefik/v3.0/routing/services/#proxy-protocol
 	ProxyProtocol *dynamic.ProxyProtocol `json:"proxyProtocol,omitempty"`

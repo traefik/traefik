@@ -11,28 +11,25 @@ import (
 	"github.com/pires/go-proxyproto"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"golang.org/x/net/proxy"
 )
 
 // Proxy forwards a TCP request to a TCP service.
 type Proxy struct {
-	address          string
-	terminationDelay time.Duration
-	proxyProtocol    *dynamic.ProxyProtocol
-	dialer           proxy.Dialer
+	address       string
+	proxyProtocol *dynamic.ProxyProtocol
+	dialer        Dialer
 }
 
 // NewProxy creates a new Proxy.
-func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dynamic.ProxyProtocol, dialer proxy.Dialer) (*Proxy, error) {
+func NewProxy(address string, proxyProtocol *dynamic.ProxyProtocol, dialer Dialer) (*Proxy, error) {
 	if proxyProtocol != nil && (proxyProtocol.Version < 1 || proxyProtocol.Version > 2) {
 		return nil, fmt.Errorf("unknown proxyProtocol version: %d", proxyProtocol.Version)
 	}
 
 	return &Proxy{
-		address:          address,
-		terminationDelay: terminationDelay,
-		proxyProtocol:    proxyProtocol,
-		dialer:           dialer,
+		address:       address,
+		proxyProtocol: proxyProtocol,
+		dialer:        dialer,
 	}, nil
 }
 
@@ -110,8 +107,8 @@ func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 		return
 	}
 
-	if p.terminationDelay >= 0 {
-		err := dst.SetReadDeadline(time.Now().Add(p.terminationDelay))
+	if p.dialer.TerminationDelay() >= 0 {
+		err := dst.SetReadDeadline(time.Now().Add(p.dialer.TerminationDelay()))
 		if err != nil {
 			log.Debug().Err(err).Msg("Error while setting deadline")
 		}

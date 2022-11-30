@@ -44,6 +44,8 @@ type ServersTransportTCPSpec struct {
 	DialKeepAlive *intstr.IntOrString `json:"dialKeepAlive,omitempty"`
 	// Spiffe defines the SPIFFE configuration.
 	Spiffe *dynamic.Spiffe `json:"spiffe,omitempty"`
+	// TerminationDelay defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability.
+	TerminationDelay *intstr.IntOrString `json:"terminationDelay,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
