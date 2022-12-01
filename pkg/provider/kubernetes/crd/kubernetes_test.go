@@ -1410,9 +1410,10 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								{CertFile: "TESTCERT2", KeyFile: "TESTKEY2"},
 								{CertFile: "TESTCERT3", KeyFile: "TESTKEY3"},
 							},
-							PeerCertURI:   "foo://bar",
-							DialTimeout:   ptypes.Duration(42 * time.Second),
-							DialKeepAlive: ptypes.Duration(42 * time.Second),
+							PeerCertURI:      "foo://bar",
+							DialTimeout:      ptypes.Duration(42 * time.Second),
+							DialKeepAlive:    ptypes.Duration(42 * time.Second),
+							TerminationDelay: ptypes.Duration(42 * time.Second),
 							Spiffe: &dynamic.Spiffe{
 								IDs: []string{
 									"spiffe://foo/buz",
@@ -1420,7 +1421,6 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 								},
 								TrustDomain: "spiffe://lol",
 							},
-							TerminationDelay: ptypes.Duration(100 * time.Millisecond),
 						},
 						"default-test": {
 							ServerName:       "test",
@@ -6155,7 +6155,7 @@ func TestCrossNamespace(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.TCPServersTransport{
 						"cross-ns-st-cross-ns": {
-							DialTimeout:      30000000000,
+							DialTimeout:      ptypes.Duration(30 * time.Second),
 							DialKeepAlive:    0,
 							TerminationDelay: ptypes.Duration(100 * time.Millisecond),
 						},
