@@ -5,7 +5,6 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	stdlog "log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,7 +17,6 @@ import (
 	"github.com/go-acme/lego/v4/challenge"
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/rs/zerolog/log"
-	"github.com/sirupsen/logrus"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
 	"github.com/traefik/paerser/cli"
 	"github.com/traefik/traefik/v2/cmd"
@@ -67,23 +65,23 @@ Complete documentation is available at https://traefik.io`,
 
 	err := cmdTraefik.AddCommand(healthcheck.NewCmd(&tConfig.Configuration, loaders))
 	if err != nil {
-		stdlog.Println(err)
+		log.Error().Err(err).Msg("Error while adding healthcheck command")
 		os.Exit(1)
 	}
 
 	err = cmdTraefik.AddCommand(cmdVersion.NewCmd())
 	if err != nil {
-		stdlog.Println(err)
+		log.Error().Err(err).Msg("Error while adding version command")
 		os.Exit(1)
 	}
 
 	err = cli.Execute(cmdTraefik)
 	if err != nil {
-		stdlog.Println(err)
-		logrus.Exit(1)
+		log.Error().Err(err).Msg("Command error")
+		os.Exit(1)
 	}
 
-	logrus.Exit(0)
+	os.Exit(0)
 }
 
 func runCmd(staticConfiguration *static.Configuration) error {
