@@ -403,8 +403,9 @@ func init() {
 						KeyFile:  "key.pem",
 					},
 				},
-				DialTimeout:   42,
-				DialKeepAlive: 42,
+				DialTimeout:      42,
+				DialKeepAlive:    42,
+				TerminationDelay: 42,
 			},
 		},
 	}

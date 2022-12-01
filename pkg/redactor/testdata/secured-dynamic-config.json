@@ -418,7 +418,8 @@
           }
         ],
         "dialTimeout": "42ns",
-        "dialKeepAlive": "42ns"
+        "dialKeepAlive": "42ns",
+        "terminationDelay": "42ns"
       }
     }
   },
