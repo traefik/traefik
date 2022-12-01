@@ -106,6 +106,7 @@ spec:
     - allcerts
   dialTimeout: 42
   dialKeepAlive: 42
+  terminationDelay: 42
   spiffe:
     ids:
       - spiffe://foo/buz
