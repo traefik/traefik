@@ -31,9 +31,9 @@ This agent can:
 
 !!! information "Configuration Discovery"
 
-    The Traefik Hub Agent discovers the Docker containers and Kubernetes services by listening directly to the Docker and Kubernetes APIs (according to the installation options).
+    According to installation options, the Traefik Hub Agent listens to the Docker or Kubernetes API to discover containers/services.
 
-    It doesn't support the routers discovered by Traefik Proxy using another provider, such as the File provider.
+    It doesn't support the routers discovered by Traefik Proxy using other providers, e.g., using the File provider.
 
 !!! example "Minimal Static Configuration to Activate Traefik Hub for Docker"
 
