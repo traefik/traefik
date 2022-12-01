@@ -48,14 +48,6 @@ spec:
 - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-errors.errors.status": "500-599",
-  "traefik.http.middlewares.test-errors.errors.service": "serviceError",
-  "traefik.http.middlewares.test-errors.errors.query": "/{status}.html"
-}
-```
-
 ```yaml tab="Rancher"
 # Dynamic Custom Error Page for 5XX Status Code
 labels:

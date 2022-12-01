@@ -51,13 +51,6 @@ labels:
   - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme": "https"
-  "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent": "true"
-}
-```
-
 ```yaml tab="Rancher"
 # Redirect to https
 labels:
@@ -115,13 +108,6 @@ labels:
   - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
 ```
 
-```json tab="Marathon"
-"labels": {
-
-  "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent": "true"
-}
-```
-
 ```yaml tab="Rancher"
 # Redirect to https
 labels:
@@ -174,12 +160,6 @@ labels:
   - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme": "https"
-}
-```
-
 ```yaml tab="Rancher"
 # Redirect to https
 labels:
@@ -230,13 +210,6 @@ spec:
 labels:
   # ...
   - "traefik.http.middlewares.test-redirectscheme.redirectscheme.port=443"
-```
-
-```json tab="Marathon"
-"labels": {
-
-  "traefik.http.middlewares.test-redirectscheme.redirectscheme.port": "443"
-}
 ```
 
 ```yaml tab="Rancher"

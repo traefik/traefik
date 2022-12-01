@@ -38,12 +38,6 @@ spec:
 - "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.forwardauth.address": "https://example.com/auth"
-}
-```
-
 ```yaml tab="Rancher"
 # Forward authentication to example.com
 labels:
@@ -103,12 +97,6 @@ spec:
 - "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.forwardauth.address": "https://example.com/auth"
-}
-```
-
 ```yaml tab="Rancher"
 labels:
   - "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
@@ -150,12 +138,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-auth.forwardauth.trustForwardHeader=true"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.forwardauth.trustForwardHeader": "true"
-}
 ```
 
 ```yaml tab="Rancher"
@@ -206,12 +188,6 @@ spec:
 - "traefik.http.middlewares.test-auth.forwardauth.authResponseHeaders=X-Auth-User, X-Secret"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.forwardauth.authResponseHeaders": "X-Auth-User,X-Secret"
-}
-```
-
 ```yaml tab="Rancher"
 labels:
   - "traefik.http.middlewares.test-auth.forwardauth.authResponseHeaders=X-Auth-User, X-Secret"
@@ -260,12 +236,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-auth.forwardauth.authResponseHeadersRegex=^X-"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.forwardauth.authResponseHeadersRegex": "^X-"
-}
 ```
 
 ```yaml tab="Rancher"
@@ -321,12 +291,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-auth.forwardauth.authRequestHeaders=Accept,X-CustomHeader"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.forwardauth.authRequestHeaders": "Accept,X-CustomHeader"
-}
 ```
 
 ```yaml tab="Rancher"
@@ -397,12 +361,6 @@ data:
 - "traefik.http.middlewares.test-auth.forwardauth.tls.ca=path/to/local.crt"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.forwardauth.tls.ca": "path/to/local.crt"
-}
-```
-
 ```yaml tab="Rancher"
 labels:
   - "traefik.http.middlewares.test-auth.forwardauth.tls.ca=path/to/local.crt"
@@ -465,13 +423,6 @@ data:
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
 - "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.forwardauth.tls.cert": "path/to/foo.cert",
-  "traefik.http.middlewares.test-auth.forwardauth.tls.key": "path/to/foo.key"
-}
 ```
 
 ```yaml tab="Rancher"
@@ -545,13 +496,6 @@ data:
 - "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.forwardauth.tls.cert": "path/to/foo.cert",
-  "traefik.http.middlewares.test-auth.forwardauth.tls.key": "path/to/foo.key"
-}
-```
-
 ```yaml tab="Rancher"
 labels:
   - "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
@@ -607,12 +551,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-auth.forwardauth.tls.InsecureSkipVerify=true"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.forwardauth.tls.insecureSkipVerify": "true"
-}
 ```
 
 ```yaml tab="Rancher"
