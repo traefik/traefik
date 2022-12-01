@@ -70,13 +70,6 @@ spec:
 - "traefik.tcp.routers.router1.middlewares=foo-ip-allowlist@consulcatalog"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.tcp.middlewares.foo-ip-allowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7",
-  "traefik.tcp.routers.router1.middlewares=foo-ip-allowlist@marathon"
-}
-```
-
 ```yaml tab="Rancher"
 # As a Rancher Label
 labels:

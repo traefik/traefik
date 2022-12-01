@@ -41,13 +41,6 @@ spec:
 - "traefik.http.middlewares.test-replacepathregex.replacepathregex.replacement=/bar/$1"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-replacepathregex.replacepathregex.regex": "^/foo/(.*)",
-  "traefik.http.middlewares.test-replacepathregex.replacepathregex.replacement": "/bar/$1"
-}
-```
-
 ```yaml tab="Rancher"
 # Replace path with regex
 labels:

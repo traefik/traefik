@@ -35,15 +35,6 @@ spec:
     certResolver: myresolver
 ```
 
-```json tab="Marathon"
-labels: {
-  "traefik.http.routers.blog.rule": "Host(`example.com`) && Path(`/blog`)",
-  "traefik.http.routers.blog.tls": "true",
-  "traefik.http.routers.blog.tls.certresolver": "myresolver",
-  "traefik.http.services.blog-svc.loadbalancer.server.port": "8080"
-}
-```
-
 ```yaml tab="Rancher"
 ## Dynamic configuration
 labels:

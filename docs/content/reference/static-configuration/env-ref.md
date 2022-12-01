@@ -798,66 +798,6 @@ Ingress refresh throttle duration (Default: ```0```)
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_TOKEN`:  
 Kubernetes bearer token (not needed for in-cluster client).
 
-`TRAEFIK_PROVIDERS_MARATHON`:  
-Enable Marathon backend with default settings. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_MARATHON_BASIC_HTTPBASICAUTHUSER`:  
-Basic authentication User.
-
-`TRAEFIK_PROVIDERS_MARATHON_BASIC_HTTPBASICPASSWORD`:  
-Basic authentication Password.
-
-`TRAEFIK_PROVIDERS_MARATHON_CONSTRAINTS`:  
-Constraints is an expression that Traefik matches against the application's labels to determine whether to create any route for that application.
-
-`TRAEFIK_PROVIDERS_MARATHON_DCOSTOKEN`:  
-DCOSToken for DCOS environment, This will override the Authorization header.
-
-`TRAEFIK_PROVIDERS_MARATHON_DEFAULTRULE`:  
-Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
-
-`TRAEFIK_PROVIDERS_MARATHON_DIALERTIMEOUT`:  
-Set a dialer timeout for Marathon. (Default: ```5```)
-
-`TRAEFIK_PROVIDERS_MARATHON_ENDPOINT`:  
-Marathon server endpoint. You can also specify multiple endpoint for Marathon. (Default: ```http://127.0.0.1:8080```)
-
-`TRAEFIK_PROVIDERS_MARATHON_EXPOSEDBYDEFAULT`:  
-Expose Marathon apps by default. (Default: ```true```)
-
-`TRAEFIK_PROVIDERS_MARATHON_FORCETASKHOSTNAME`:  
-Force to use the task's hostname. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_MARATHON_KEEPALIVE`:  
-Set a TCP Keep Alive time. (Default: ```10```)
-
-`TRAEFIK_PROVIDERS_MARATHON_RESPECTREADINESSCHECKS`:  
-Filter out tasks with non-successful readiness checks during deployments. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_MARATHON_RESPONSEHEADERTIMEOUT`:  
-Set a response header timeout for Marathon. (Default: ```60```)
-
-`TRAEFIK_PROVIDERS_MARATHON_TLSHANDSHAKETIMEOUT`:  
-Set a TLS handshake timeout for Marathon. (Default: ```5```)
-
-`TRAEFIK_PROVIDERS_MARATHON_TLS_CA`:  
-TLS CA
-
-`TRAEFIK_PROVIDERS_MARATHON_TLS_CERT`:  
-TLS cert
-
-`TRAEFIK_PROVIDERS_MARATHON_TLS_INSECURESKIPVERIFY`:  
-TLS insecure skip verify (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_MARATHON_TLS_KEY`:  
-TLS key
-
-`TRAEFIK_PROVIDERS_MARATHON_TRACE`:  
-Display additional provider logs. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_MARATHON_WATCH`:  
-Watch provider. (Default: ```true```)
-
 `TRAEFIK_PROVIDERS_NOMAD`:  
 Enable Nomad backend with default settings. (Default: ```false```)
 
