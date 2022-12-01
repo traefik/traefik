@@ -43,17 +43,6 @@ spec:
       - '*.example.org'
 ```
 
-```json tab="Marathon"
-labels: {
-  "traefik.http.routers.blog.rule": "Host(`example.com`) && Path(`/blog`)",
-  "traefik.http.routers.blog.tls": "true",
-  "traefik.http.routers.blog.tls.certresolver": "myresolver",
-  "traefik.http.routers.blog.tls.domains[0].main": "example.com",
-  "traefik.http.routers.blog.tls.domains[0].sans": "*.example.com",
-  "traefik.http.services.blog-svc.loadbalancer.server.port": "8080"
-}
-```
-
 ```yaml tab="File (YAML)"
 ## Dynamic configuration
 http:

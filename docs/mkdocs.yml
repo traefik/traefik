@@ -81,7 +81,6 @@ nav:
       - 'Consul Catalog': 'providers/consul-catalog.md'
       - 'Nomad': 'providers/nomad.md'
       - 'ECS': 'providers/ecs.md'
-      - 'Marathon': 'providers/marathon.md'
       - 'File': 'providers/file.md'
       - 'Consul': 'providers/consul.md'
       - 'Etcd': 'providers/etcd.md'
@@ -101,7 +100,6 @@ nav:
           - 'Consul Catalog': 'routing/providers/consul-catalog.md'
           - 'Nomad': 'routing/providers/nomad.md'
           - 'ECS': 'routing/providers/ecs.md'
-          - 'Marathon': 'routing/providers/marathon.md'
           - 'KV': 'routing/providers/kv.md'
   - 'HTTPS & TLS':
       - 'Overview': 'https/overview.md'
@@ -170,7 +168,6 @@ nav:
   - 'User Guides':
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
       - 'gRPC Examples': 'user-guides/grpc.md'
-      - 'Marathon': 'user-guides/marathon.md'
       - 'Docker':
         - 'Basic Example': 'user-guides/docker-compose/basic-example/index.md'
         - 'HTTPS with Let''s Encrypt':
@@ -206,7 +203,6 @@ nav:
         - 'Nomad': "reference/dynamic-configuration/nomad.md"
         - 'ECS': 'reference/dynamic-configuration/ecs.md'
         - 'KV': 'reference/dynamic-configuration/kv.md'
-        - 'Marathon': 'reference/dynamic-configuration/marathon.md'
   - 'Deprecation Notices':
       - 'Releases': 'deprecation/releases.md'
       - 'Features': 'deprecation/features.md'

@@ -798,66 +798,6 @@ Ingress refresh throttle duration (Default: ```0```)
 `--providers.kubernetesingress.token`:  
 Kubernetes bearer token (not needed for in-cluster client).
 
-`--providers.marathon`:  
-Enable Marathon backend with default settings. (Default: ```false```)
-
-`--providers.marathon.basic.httpbasicauthuser`:  
-Basic authentication User.
-
-`--providers.marathon.basic.httpbasicpassword`:  
-Basic authentication Password.
-
-`--providers.marathon.constraints`:  
-Constraints is an expression that Traefik matches against the application's labels to determine whether to create any route for that application.
-
-`--providers.marathon.dcostoken`:  
-DCOSToken for DCOS environment, This will override the Authorization header.
-
-`--providers.marathon.defaultrule`:  
-Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
-
-`--providers.marathon.dialertimeout`:  
-Set a dialer timeout for Marathon. (Default: ```5```)
-
-`--providers.marathon.endpoint`:  
-Marathon server endpoint. You can also specify multiple endpoint for Marathon. (Default: ```http://127.0.0.1:8080```)
-
-`--providers.marathon.exposedbydefault`:  
-Expose Marathon apps by default. (Default: ```true```)
-
-`--providers.marathon.forcetaskhostname`:  
-Force to use the task's hostname. (Default: ```false```)
-
-`--providers.marathon.keepalive`:  
-Set a TCP Keep Alive time. (Default: ```10```)
-
-`--providers.marathon.respectreadinesschecks`:  
-Filter out tasks with non-successful readiness checks during deployments. (Default: ```false```)
-
-`--providers.marathon.responseheadertimeout`:  
-Set a response header timeout for Marathon. (Default: ```60```)
-
-`--providers.marathon.tls.ca`:  
-TLS CA
-
-`--providers.marathon.tls.cert`:  
-TLS cert
-
-`--providers.marathon.tls.insecureskipverify`:  
-TLS insecure skip verify (Default: ```false```)
-
-`--providers.marathon.tls.key`:  
-TLS key
-
-`--providers.marathon.tlshandshaketimeout`:  
-Set a TLS handshake timeout for Marathon. (Default: ```5```)
-
-`--providers.marathon.trace`:  
-Display additional provider logs. (Default: ```false```)
-
-`--providers.marathon.watch`:  
-Watch provider. (Default: ```true```)
-
 `--providers.nomad`:  
 Enable Nomad backend with default settings. (Default: ```false```)
 

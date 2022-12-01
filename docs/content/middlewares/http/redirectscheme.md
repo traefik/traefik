@@ -51,13 +51,6 @@ labels:
   - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme": "https"
-  "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent": "true"
-}
-```
-
 ```yaml tab="File (YAML)"
 # Redirect to https
 http:
@@ -108,13 +101,6 @@ labels:
   - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
 ```
 
-```json tab="Marathon"
-"labels": {
-
-  "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent": "true"
-}
-```
-
 ```yaml tab="File (YAML)"
 # Redirect to https
 http:
@@ -158,12 +144,6 @@ spec:
 # Redirect to https
 labels:
   - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme": "https"
-}
 ```
 
 ```yaml tab="File (YAML)"
@@ -210,13 +190,6 @@ spec:
 labels:
   # ...
   - "traefik.http.middlewares.test-redirectscheme.redirectscheme.port=443"
-```
-
-```json tab="Marathon"
-"labels": {
-
-  "traefik.http.middlewares.test-redirectscheme.redirectscheme.port": "443"
-}
 ```
 
 ```yaml tab="File (YAML)"

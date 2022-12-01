@@ -65,7 +65,6 @@
   "Docker": null,
   "File": null,
   "Web": null,
-  "Marathon": null,
   "Consul": null,
   "ConsulCatalog": null,
   "Etcd": null,

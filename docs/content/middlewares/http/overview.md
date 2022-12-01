@@ -69,13 +69,6 @@ spec:
 - "traefik.http.routers.router1.middlewares=foo-add-prefix@consulcatalog"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.foo-add-prefix.addprefix.prefix": "/foo",
-  "traefik.http.routers.router1.middlewares": "foo-add-prefix@marathon"
-}
-```
-
 ```toml tab="File (TOML)"
 # As TOML Configuration File
 [http.routers]
