@@ -50,3 +50,13 @@ and should be explicitly combined using logical operators to mimic previous beha
 
 In v3, the `Content-Type` header is not auto-detected anymore when it is not set by the backend.
 One should use the `ContentType` middleware to enable the `Content-Type` header value auto-detection.
+
+## TCP ServersTransport
+
+In v3, the support of `TCPServersTransport` has been introduced.
+When using the KubernetesCRD provider, it is therefore necessary to update [RBAC](../reference/dynamic-configuration/kubernetes-crd.md#rbac) and [CRD](../reference/dynamic-configuration/kubernetes-crd.md) manifests.
+
+### TCP LoadBalancer `terminationDelay` option
+
+The TCP LoadBalancer `terminationDelay` option has been removed.
+This option can now be configured directly on the `TCPServersTransport` level, please take a look at this [documentation](../routing/services/index.md#terminationdelay)

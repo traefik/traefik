@@ -229,7 +229,6 @@
 		},
 		"default-whoamitcp-8080@kubernetesgateway": {
 			"loadBalancer": {
-				"terminationDelay": 100,
 				"servers": [
 					{
 						"address": "10.42.0.2:8080"
