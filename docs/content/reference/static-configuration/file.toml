@@ -3,20 +3,9 @@
   sendAnonymousUsage = true
 
 [serversTransport]
-  serverName = "foobar"
   insecureSkipVerify = true
   rootCAs = ["foobar", "foobar"]
   maxIdleConnsPerHost = 42
-  disableHTTP2 = true
-  peerCertURI = "foobar"
-
-  [[serversTransport.certificates]]
-    certFile = "foobar"
-    keyFile = "foobar"
-
-  [[serversTransport.certificates]]
-    certFile = "foobar"
-    keyFile = "foobar"
 
   [serversTransport.forwardingTimeouts]
     dialTimeout = "42s"
@@ -30,21 +19,10 @@
     trustDomain = "foobar"
 
 [tcpServersTransport]
-  serverName = "foobar"
   insecureSkipVerify = true
   rootCAs = ["foobar", "foobar"]
-  peerCertURI = "foobar"
   dialTimeout = "42s"
   dialKeepAlive = "42s"
-  terminationDelay = "42s"
-
-[[tcpServersTransport.certificates]]
-  certFile = "foobar"
-  keyFile = "foobar"
-
-[[tcpServersTransport.certificates]]
-  certFile = "foobar"
-  keyFile = "foobar"
 
 [tcpServersTransport.spiffe]
   ids = ["foobar", "foobar"]
