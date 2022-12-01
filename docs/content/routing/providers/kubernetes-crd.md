@@ -1700,21 +1700,26 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
       namespace: default
     
     spec:
-      serverName: foobar               # [1]
-      insecureSkipVerify: true         # [2]
-      rootCAsSecrets:                  # [3]
+      serverName: foobar                        # [1]
+      insecureSkipVerify: true                  # [2]
+      rootCAsSecrets:                           # [3]
         - foobar
         - foobar
-      certificatesSecrets:             # [4]
+      certificatesSecrets:                      # [4]
         - foobar
         - foobar
-      maxIdleConnsPerHost: 1           # [5]
-      forwardingTimeouts:              # [6]
-        dialTimeout: 42s               # [7]
-        responseHeaderTimeout: 42s     # [8]
-        idleConnTimeout: 42s           # [9]
-      peerCertURI: foobar              # [10]
-      disableHTTP2: true               # [11]
+      maxIdleConnsPerHost: 1                    # [5]
+      forwardingTimeouts:                       # [6]
+        dialTimeout: 42s                        # [7]
+        responseHeaderTimeout: 42s              # [8]
+        idleConnTimeout: 42s                    # [9]
+      peerCertURI: foobar                       # [10]
+      disableHTTP2: true                        # [11]
+      spiffe:                                   # [12] 
+        ids:                                    # [13]
+        - spiffe://trust-domain/id1
+        - spiffe://trust-domain/id2
+        trustDomain: "spiffe://trust-domain"    # [14]
     ```
 
 | Ref  | Attribute               | Purpose                                                                                                                                                                 |
@@ -1730,6 +1735,9 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
 | [9]  | `idleConnTimeout`       | The maximum amount of time an idle (keep-alive) connection will remain idle before closing itself. If zero, no timeout exists.                                          |
 | [10] | `peerCertURI`           | URI used to match against SAN URIs during the server's certificate verification.                                                                                        |
 | [11] | `disableHTTP2`          | Disables HTTP/2 for connections with servers.                                                                                                                           |
+| [12] | `spiffe`                | The spiffe configuration.                                                                                                                                               |
+| [13] | `ids`                   | Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).                                                                                          |
+| [14] | `trustDomain`           | Defines the allowed SPIFFE trust domain.                                                                                                                                |
 
 !!! info "CA Secret"
 
@@ -1796,28 +1804,38 @@ The `default@internal` serversTransportTCP is created from the [static configura
       namespace: default
     
     spec:
-      serverName: foobar               # [1]
-      insecureSkipVerify: true         # [2]
-      rootCAsSecrets:                  # [3]
+      serverName: foobar                        # [1]
+      insecureSkipVerify: true                  # [2]
+      rootCAsSecrets:                           # [3]
         - foobar
         - foobar
-      certificatesSecrets:             # [4]
+      certificatesSecrets:                      # [4]
         - foobar
         - foobar
-      peerCertURI: foobar              # [5]
-      dialTimeout: 42s                 # [6]
-      dialKeepAlive: 42s               # [7]
+      peerCertURI: foobar                       # [5]
+      dialTimeout: 42s                          # [6]
+      dialKeepAlive: 42s                        # [7]
+      terminationDelay: 42s                     # [8]
+      spiffe:                                   # [9] 
+        ids:                                    # [10]
+        - spiffe://trust-domain/id1
+        - spiffe://trust-domain/id2
+        trustDomain: "spiffe://trust-domain"    # [11]
     ```
 
-| Ref | Attribute             | Purpose                                                                                                                                                                                                                                                                                                                                             |
-|-----|-----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [1] | `serverName`          | ServerName used to contact the server.                                                                                                                                                                                                                                                                                                              |
-| [2] | `insecureSkipVerify`  | Controls whether the server's certificate chain and host name is verified.                                                                                                                                                                                                                                                                          |
-| [3] | `rootCAsSecrets`      | Defines the set of root certificate authorities to use when verifying server certificates. The secret must contain a certificate under either a tls.ca or a ca.crt key.                                                                                                                                                                             |
-| [4] | `certificatesSecrets` | Certificates to present to the server for mTLS.                                                                                                                                                                                                                                                                                                     |
-| [5] | `peerCertURI`         | URI used to match against SAN URIs during the server's certificate verification.                                                                                                                                                                                                                                                                    |
-| [6] | `dialTimeout`         | The amount of time to wait until a connection to a server can be established. If zero, no timeout exists.                                                                                                                                                                                                                                           |
-| [7] | `dialKeepAlive`       | The interval between keep-alive probes for an active network connection. If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled. |
+| Ref  | Attribute             | Purpose                                                                                                                                                                                                                                                                                                                                             |
+|------|-----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [1]  | `serverName`          | ServerName used to contact the server.                                                                                                                                                                                                                                                                                                              |
+| [2]  | `insecureSkipVerify`  | Controls whether the server's certificate chain and host name is verified.                                                                                                                                                                                                                                                                          |
+| [3]  | `rootCAsSecrets`      | Defines the set of root certificate authorities to use when verifying server certificates. The secret must contain a certificate under either a tls.ca or a ca.crt key.                                                                                                                                                                             |
+| [4]  | `certificatesSecrets` | Certificates to present to the server for mTLS.                                                                                                                                                                                                                                                                                                     |
+| [5]  | `peerCertURI`         | URI used to match against SAN URIs during the server's certificate verification.                                                                                                                                                                                                                                                                    |
+| [6]  | `dialTimeout`         | The amount of time to wait until a connection to a server can be established. If zero, no timeout exists.                                                                                                                                                                                                                                           |
+| [7]  | `dialKeepAlive`       | The interval between keep-alive probes for an active network connection. If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled. |
+| [8]  | `terminationDelay`    | Defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability.                                                                                                                                                                                                                      |
+| [9]  | `spiffe`              | The spiffe configuration.                                                                                                                                                                                                                                                                                                                           |
+| [10] | `ids`                 | Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).                                                                                                                                                                                                                                                                      |
+| [11] | `trustDomain`         | Defines the allowed SPIFFE trust domain.                                                                                                                                                                                                                                                                                                            |
 
 !!! info "CA Secret"
 
