@@ -57,9 +57,10 @@ func Test_PassHostHeader(t *testing.T) {
 			t.Parallel()
 
 			var gotHostHeader string
-			backendServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			backendServer := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, req *http.Request) {
 				gotHostHeader = req.Host
 			}))
+			t.Cleanup(backendServer.Close)
 
 			u := testhelpers.MustParseURL(backendServer.URL)
 			handler := test.proxyBuilder(t, u, &test.cfg)
@@ -103,9 +104,10 @@ func Test_EscapedPath(t *testing.T) {
 			t.Parallel()
 
 			var gotEscapedPath string
-			backendServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			backendServer := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, req *http.Request) {
 				gotEscapedPath = req.URL.EscapedPath()
 			}))
+			t.Cleanup(backendServer.Close)
 
 			u := testhelpers.MustParseURL(backendServer.URL)
 			h := test.proxyBuilder(t, u, &test.cfg)

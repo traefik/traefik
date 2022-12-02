@@ -79,11 +79,11 @@ func (r *ProxyBuilder) Build(cfgName string, cfg *dynamic.HTTPClientConfig, tlsC
 				parsedURL, err := url.ParseRequestURI(outReq.RequestURI)
 				if err == nil {
 					u = parsedURL
+					outReq.URL.Path = u.Path
+					outReq.URL.RawPath = u.RawPath
 				}
 			}
 
-			outReq.URL.Path = u.Path
-			outReq.URL.RawPath = u.RawPath
 			outReq.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
 			outReq.RequestURI = "" // Outgoing request should not have RequestURI
 
@@ -194,7 +194,10 @@ func ErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
 	}
 
 	logger := log.Ctx(req.Context())
-	logger.Debug().Err(err).Msgf("%d %s", statusCode, statusText(statusCode))
+	logger.Debug().Err(err).
+		Str("Status", statusText(statusCode)).
+		Int("StatusCode", statusCode).
+		Send()
 
 	w.WriteHeader(statusCode)
 	if _, werr := w.Write([]byte(statusText(statusCode))); werr != nil {
@@ -206,5 +209,6 @@ func statusText(statusCode int) string {
 	if statusCode == StatusClientClosedRequest {
 		return StatusClientClosedRequestText
 	}
+
 	return http.StatusText(statusCode)
 }

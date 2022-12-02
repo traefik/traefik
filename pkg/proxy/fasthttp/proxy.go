@@ -77,6 +77,7 @@ func (w *writeDetector) Write(p []byte) (int, error) {
 	if n > 0 {
 		w.written = true
 	}
+
 	return n, err
 }
 
@@ -89,6 +90,7 @@ func (w *writeFlusher) Write(b []byte) (int, error) {
 	if f, ok := w.Writer.(http.Flusher); ok {
 		f.Flush()
 	}
+
 	return n, err
 }
 
@@ -170,13 +172,14 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	// TODO: removes after the beta, this allows to identity that the stack used to forward requests is the FastHTTP one.
-	outReq.Header.Set("FastHTTP", "enabled")
+	outReq.Header.Set("X-Traefik-FastHTTP", "enabled")
 
 	reqUpType := upgradeType(req.Header)
-	if !isPrint(reqUpType) {
+	if !isGraphic(reqUpType) {
 		proxyhttputil.ErrorHandler(rw, req, fmt.Errorf("client tried to switch to invalid protocol %q", reqUpType))
 		return
 	}
+
 	if reqUpType != "" {
 		outReq.Header.Set("Connection", "Upgrade")
 		outReq.Header.Set("Upgrade", reqUpType)
@@ -220,10 +223,11 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		// X-Forwarded-For information as a comma+space
 		// separated list and fold multiple headers into one.
 		prior, ok := req.Header["X-Forwarded-For"]
-		omit := ok && prior == nil // Go Issue 38079: nil now means don't populate the header
 		if len(prior) > 0 {
 			clientIP = strings.Join(prior, ", ") + ", " + clientIP
 		}
+
+		omit := ok && prior == nil // Go Issue 38079: nil now means don't populate the header
 		if !omit {
 			outReq.Header.Set("X-Forwarded-For", clientIP)
 		}
@@ -243,7 +247,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 	ctx := req.Context()
 	trace := httptrace.ContextClientTrace(ctx)
 
-	var co *conn
+	var conn *conn
 	for {
 		select {
 		case <-ctx.Done():
@@ -253,12 +257,13 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 		}
 
 		var err error
-		co, err = p.connPool.AcquireConn()
+		conn, err = p.connPool.AcquireConn()
 		if err != nil {
 			return fmt.Errorf("acquire conn: %w", err)
 		}
+		defer p.connPool.ReleaseConn(conn)
 
-		wd := &writeDetector{Conn: co}
+		wd := &writeDetector{Conn: conn}
 
 		err = p.writeRequest(wd, outReq)
 		if wd.written && trace != nil && trace.WroteRequest != nil {
@@ -271,7 +276,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 
 		log.Ctx(ctx).Debug().Err(err).Msg("Error while writing request")
 
-		co.Close()
+		conn.Close()
 
 		if wd.written && !isReplayable(req) {
 			return err
@@ -280,11 +285,11 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 
 	br := p.readerPool.Get()
 	if br == nil {
-		br = bufio.NewReaderSize(co, bufioSize)
+		br = bufio.NewReaderSize(conn, bufioSize)
 	}
 	defer p.readerPool.Put(br)
 
-	br.Reset(co)
+	br.Reset(conn)
 
 	res := fasthttp.AcquireResponse()
 	defer fasthttp.ReleaseResponse(res)
@@ -296,7 +301,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 	if p.responseHeaderTimeout > 0 {
 		timer = time.AfterFunc(p.responseHeaderTimeout, func() {
 			errTimeout.Store(&timeoutError{errors.New("timeout awaiting response headers")})
-			co.Close()
+			conn.Close()
 		})
 	}
 
@@ -307,9 +312,10 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 				return errT
 			}
 		}
-		co.Close()
+		conn.Close()
 		return err
 	}
+
 	if timer != nil {
 		timer.Stop()
 	}
@@ -321,7 +327,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 	// Deal with 101 Switching Protocols responses: (WebSocket, h2c, etc)
 	if res.StatusCode() == http.StatusSwitchingProtocols {
 		// As the connection has been hijacked, it cannot be added back to the pool.
-		handleUpgradeResponse(rw, req, reqUpType, res, buffConn{Conn: co, Reader: br})
+		handleUpgradeResponse(rw, req, reqUpType, res, buffConn{Conn: conn, Reader: br})
 		return nil
 	}
 
@@ -352,14 +358,14 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 		defer p.bufferPool.Put(b)
 
 		if _, err := io.CopyBuffer(&writeFlusher{rw}, cbr, b); err != nil {
-			co.Close()
+			conn.Close()
 			return err
 		}
 
 		res.Header.Reset()
 		res.Header.SetNoDefaultContentType(true)
 		if err := res.Header.ReadTrailer(br); err != nil {
-			co.Close()
+			conn.Close()
 			return err
 		}
 
@@ -368,6 +374,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 			if len(announcedTrailers) > 0 {
 				announcedTrailersKey = strings.Split(string(announcedTrailers), ",")
 			}
+
 			res.Header.VisitAll(func(key, value []byte) {
 				for _, s := range announcedTrailersKey {
 					if strings.EqualFold(s, strings.TrimSpace(string(key))) {
@@ -375,32 +382,34 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 						return
 					}
 				}
+
 				rw.Header().Add(http.TrailerPrefix+string(key), string(value))
 			})
 		}
-	} else {
-		brl := p.limitReaderPool.Get()
-		if brl == nil {
-			brl = &io.LimitedReader{}
-		}
-		defer p.limitReaderPool.Put(brl)
 
-		brl.R = br
-		brl.N = int64(res.Header.ContentLength())
-
-		b := p.bufferPool.Get()
-		if b == nil {
-			b = make([]byte, bufferSize)
-		}
-		defer p.bufferPool.Put(b)
-
-		if _, err := io.CopyBuffer(rw, brl, b); err != nil {
-			co.Close()
-			return err
-		}
+		return nil
 	}
 
-	p.connPool.ReleaseConn(co)
+	brl := p.limitReaderPool.Get()
+	if brl == nil {
+		brl = &io.LimitedReader{}
+	}
+	defer p.limitReaderPool.Put(brl)
+
+	brl.R = br
+	brl.N = int64(res.Header.ContentLength())
+
+	b := p.bufferPool.Get()
+	if b == nil {
+		b = make([]byte, bufferSize)
+	}
+	defer p.bufferPool.Put(b)
+
+	if _, err := io.CopyBuffer(rw, brl, b); err != nil {
+		conn.Close()
+		return err
+	}
+
 	return nil
 }
 
@@ -416,6 +425,7 @@ func (p *ReverseProxy) writeRequest(co net.Conn, outReq *fasthttp.Request) error
 	if err := outReq.Write(bw); err != nil {
 		return err
 	}
+
 	return bw.Flush()
 }
 
@@ -426,27 +436,31 @@ func isReplayable(req *http.Request) bool {
 		case http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodTrace:
 			return true
 		}
+
 		// The Idempotency-Key, while non-standard, is widely used to
 		// mean a POST or other request is idempotent. See
 		// https://golang.org/issue/19943#issuecomment-421092421
 		if _, ok := req.Header["Idempotency-Key"]; ok {
 			return true
 		}
+
 		if _, ok := req.Header["X-Idempotency-Key"]; ok {
 			return true
 		}
 	}
+
 	return false
 }
 
-// isPrint returns whether s is ASCII and printable according to
+// isGraphic returns whether s is ASCII and printable according to
 // https://tools.ietf.org/html/rfc20#section-4.2.
-func isPrint(s string) bool {
+func isGraphic(s string) bool {
 	for i := 0; i < len(s); i++ {
 		if s[i] < ' ' || s[i] > '~' {
 			return false
 		}
 	}
+
 	return true
 }
 
