@@ -1083,7 +1083,7 @@ func (s *HTTPSSuite) TestEntryPointHttpsRedirectAndPathModification(c *check.C) 
 // "bar.www.snitest.com", which matches the DNS SAN of '*.WWW.SNITEST.COM'. The test
 // verifies that traefik presents the correct certificate.
 func (s *HTTPSSuite) TestWithSNIDynamicCaseInsensitive(c *check.C) {
-	file := s.adaptFile(c, "fixtures/https/https_sni_case_insensitive_dynamic.toml", struct{}{})
+	file := s.adaptFile(c, "fixtures/https/clientca/https_sni_case_insensitive_dynamic.toml", struct{}{})
 	defer os.Remove(file)
 	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
@@ -1224,5 +1224,55 @@ func (s *HTTPSSuite) TestWithDomainFronting(c *check.C) {
 
 		err = try.RequestWithTransport(req, 500*time.Millisecond, &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true, ServerName: test.serverName}}, try.StatusCodeIs(test.expectedStatusCode), try.BodyContains(test.expectedContent))
 		c.Assert(err, checker.IsNil)
+	}
+}
+
+// TestWithInvalidMTLSConf verifies the behavior when using a bad mTLS configuration.
+func (s *HTTPSSuite) TestWithInvalidMTLSConf(c *check.C) {
+	backend := startTestServer("9010", http.StatusOK, "server1")
+	defer backend.Close()
+
+	file := s.adaptFile(c, "fixtures/https/clientca/https_1ca_invalid_config.toml", struct{}{})
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.BodyContains("Host(`snitest.com`)"))
+	c.Assert(err, checker.IsNil)
+
+	testCases := []struct {
+		desc       string
+		serverName string
+	}{
+		{
+			desc:       "With invalid TLS Options specified",
+			serverName: "snitest.com",
+		},
+		{
+			desc:       "With invalid Default TLS Options",
+			serverName: "snitest.org",
+		},
+		{
+			desc: "With TLS Options without servername (fallback to default)",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: true,
+		}
+		if test.serverName != "" {
+			tlsConfig.ServerName = test.serverName
+		}
+
+		conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+		c.Assert(err, checker.NotNil, check.Commentf("connected to server successfully"))
+		c.Assert(conn, checker.IsNil)
 	}
 }
