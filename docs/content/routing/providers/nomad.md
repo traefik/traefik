@@ -396,20 +396,21 @@ You can declare TCP Routers and/or Services using tags.
     traefik.tcp.services.mytcpservice.loadbalancer.server.port=423
     ```
 
-??? info "`traefik.tcp.services.<service_name>.loadbalancer.terminationdelay`"
-
-    See [termination delay](../services/index.md#termination-delay) for more information.
-
-    ```yaml
-    traefik.tcp.services.mytcpservice.loadbalancer.terminationdelay=100
-    ```
-
 ??? info "`traefik.tcp.services.<service_name>.loadbalancer.proxyprotocol.version`"
 
     See [PROXY protocol](../services/index.md#proxy-protocol) for more information.
 
     ```yaml
     traefik.tcp.services.mytcpservice.loadbalancer.proxyprotocol.version=1
+    ```
+
+??? info "`traefik.tcp.services.<service_name>.loadbalancer.serverstransport`"
+
+    Allows to reference a ServersTransport resource that is defined either with the File provider or the Kubernetes CRD one.
+    See [serverstransport](../services/index.md#serverstransport_2) for more information.
+
+    ```yaml
+    traefik.tcp.services.myservice.loadbalancer.serverstransport=foobar@file
     ```
 
 ### UDP
