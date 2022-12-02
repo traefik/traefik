@@ -320,32 +320,6 @@ In most scenarios, this entryPoint is the same as the one used for TLS traffic.
     As HTTP/3 uses UDP, you can't have a TCP entryPoint with HTTP/3 on the same port as a UDP entryPoint.
     Since HTTP/3 requires the use of TLS, only routers with TLS enabled will be usable with HTTP/3.
 
-!!! warning "Enabling Experimental HTTP/3"
-
-    As the HTTP/3 spec is still in draft, HTTP/3 support in Traefik is an experimental feature and needs to be activated 
-    in the experimental section of the static configuration.
-    
-    ```yaml tab="File (YAML)"
-    experimental:
-      http3: true
-
-    entryPoints:
-      name:
-        http3: {}
-    ```
-
-    ```toml tab="File (TOML)"
-    [experimental]
-      http3 = true
-    
-    [entryPoints.name.http3]
-    ```
-    
-    ```bash tab="CLI"
-    --experimental.http3=true 
-    --entrypoints.name.http3
-    ```
-
 #### `advertisedPort`
 
 `http3.advertisedPort` defines which UDP port to advertise as the HTTP/3 authority.
@@ -355,9 +329,6 @@ It can be used to override the authority in the `alt-svc` header, for example if
 !!! info "http3.advertisedPort"
 
     ```yaml tab="File (YAML)"
-    experimental:
-      http3: true
-
     entryPoints:
       name:
         http3:
@@ -365,15 +336,11 @@ It can be used to override the authority in the `alt-svc` header, for example if
     ```
 
     ```toml tab="File (TOML)"
-    [experimental]
-      http3 = true
-    
     [entryPoints.name.http3]
       advertisedPort = 443
     ```
     
     ```bash tab="CLI"
-    --experimental.http3=true 
     --entrypoints.name.http3.advertisedport=443
     ```
 
