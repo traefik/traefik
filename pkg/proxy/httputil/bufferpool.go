@@ -16,6 +16,7 @@ func newBufferPool() *bufferPool {
 	b.pool.New = func() interface{} {
 		return make([]byte, bufferSize)
 	}
+
 	return b
 }
 

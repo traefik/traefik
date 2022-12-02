@@ -70,21 +70,11 @@ func (r *ProxyBuilder) Build(cfgName string, cfg *dynamic.HTTPClientConfig, tlsC
 func (r *ProxyBuilder) getPool(cfgName string, config *dynamic.HTTPClientConfig, tlsConfig *tls.Config, targetURL *url.URL, proxyURL *url.URL) *connPool {
 	pool, ok := r.pools[cfgName]
 	if !ok {
-		pool = make(map[string]*connPool)
-		r.pools[cfgName] = pool
+		r.pools[cfgName] = make(map[string]*connPool)
 	}
 
 	if connPool, ok := pool[targetURL.String()]; ok {
 		return connPool
-	}
-
-	dialer := &net.Dialer{
-		Timeout:   30 * time.Second,
-		KeepAlive: 30 * time.Second,
-	}
-
-	if config.ForwardingTimeouts != nil {
-		dialer.Timeout = time.Duration(config.ForwardingTimeouts.DialTimeout)
 	}
 
 	idleConnTimeout := time.Duration(dynamic.DefaultIdleConnTimeout)
@@ -97,6 +87,7 @@ func (r *ProxyBuilder) getPool(cfgName string, config *dynamic.HTTPClientConfig,
 	connPool := NewConnPool(config.MaxIdleConnsPerHost, idleConnTimeout, dialFn)
 
 	r.pools[cfgName][targetURL.String()] = connPool
+
 	return connPool
 }
 
@@ -104,8 +95,8 @@ func getDialFn(targetURL *url.URL, proxyURL *url.URL, tlsConfig *tls.Config, con
 	targetAddr := addrFromURL(targetURL)
 
 	if proxyURL == nil {
+		d := getDialer(targetURL.Scheme, tlsConfig, config)
 		return func() (net.Conn, error) {
-			d := getDialer(targetURL.Scheme, tlsConfig, config)
 			return d.Dial("tcp", targetAddr)
 		}
 	}
@@ -138,8 +129,10 @@ func getDialFn(targetURL *url.URL, proxyURL *url.URL, tlsConfig *tls.Config, con
 				if c.ServerName == "" {
 					c.ServerName = targetURL.Hostname()
 				}
+
 				return tls.Client(co, c), nil
 			}
+
 			return co, nil
 		}
 
@@ -186,6 +179,7 @@ func getDialFn(targetURL *url.URL, proxyURL *url.URL, tlsConfig *tls.Config, con
 				br := bufio.NewReader(conn)
 				resp, err = http.ReadResponse(br, connectReq)
 			}()
+
 			select {
 			case <-connectCtx.Done():
 				conn.Close()
@@ -198,13 +192,15 @@ func getDialFn(targetURL *url.URL, proxyURL *url.URL, tlsConfig *tls.Config, con
 				conn.Close()
 				return nil, err
 			}
+
 			if resp.StatusCode != http.StatusOK {
-				_, text, ok := strings.Cut(resp.Status, " ")
+				_, statusText, ok := strings.Cut(resp.Status, " ")
 				conn.Close()
 				if !ok {
 					return nil, errors.New("unknown status code")
 				}
-				return nil, errors.New(text)
+
+				return nil, errors.New(statusText)
 			}
 
 			if targetURL.Scheme == schemeHTTPS {
@@ -216,8 +212,10 @@ func getDialFn(targetURL *url.URL, proxyURL *url.URL, tlsConfig *tls.Config, con
 				if c.ServerName == "" {
 					c.ServerName = targetURL.Hostname()
 				}
+
 				return tls.Client(conn, c), nil
 			}
+
 			return conn, nil
 		}
 	}
@@ -249,10 +247,10 @@ func addrFromURL(u *url.URL) string {
 	addr := u.Host
 
 	if u.Port() == "" {
-		if u.Scheme == schemeHTTP {
+		switch u.Scheme {
+		case schemeHTTP:
 			return addr + ":80"
-		}
-		if u.Scheme == schemeHTTPS {
+		case schemeHTTPS:
 			return addr + ":443"
 		}
 	}
