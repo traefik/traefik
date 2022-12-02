@@ -73,6 +73,7 @@ func TestWebSocketPingPong(t *testing.T) {
 		ws.SetPingHandler(func(appData string) error {
 			err = ws.WriteMessage(gorillawebsocket.PongMessage, []byte(appData+"Pong"))
 			require.NoError(t, err)
+
 			return nil
 		})
 
@@ -101,6 +102,7 @@ func TestWebSocketPingPong(t *testing.T) {
 		if data == "PingPong" {
 			return goodErr
 		}
+
 		return badErr
 	})
 
@@ -313,16 +315,16 @@ func TestWebSocketRequestWithQueryParams(t *testing.T) {
 	upgrader := gorillawebsocket.Upgrader{}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			return
-		}
+		require.NoError(t, err)
 		defer conn.Close()
+
 		assert.Equal(t, "test", r.URL.Query().Get("query"))
 		for {
 			mt, message, err := conn.ReadMessage()
 			if err != nil {
 				break
 			}
+
 			err = conn.WriteMessage(mt, message)
 			if err != nil {
 				break
@@ -349,7 +351,8 @@ func TestWebSocketRequestWithQueryParams(t *testing.T) {
 func TestWebSocketRequestWithHeadersInResponseWriter(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.Handle("/ws", websocket.Handler(func(conn *websocket.Conn) {
-		conn.Close()
+		err := conn.Close()
+		require.NoError(t, err)
 	}))
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		mux.ServeHTTP(w, req)
@@ -438,14 +441,15 @@ func TestWebSocketUpgradeFailed(t *testing.T) {
 	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		path := req.URL.Path // keep the original path
 
-		if path == "/ws" {
-			// Set new backend URL
-			req.URL = parseURI(t, srv.URL)
-			req.URL.Path = path
-			f.ServeHTTP(w, req)
-		} else {
+		if path != "/ws" {
 			w.WriteHeader(http.StatusOK)
+			return
 		}
+
+		// Set new backend URL
+		req.URL = parseURI(t, srv.URL)
+		req.URL.Path = path
+		f.ServeHTTP(w, req)
 	}))
 	defer proxy.Close()
 
@@ -513,6 +517,7 @@ func createTLSWebsocketServer() *httptest.Server {
 			if err != nil {
 				break
 			}
+
 			err = conn.WriteMessage(mt, message)
 			if err != nil {
 				break
@@ -589,12 +594,15 @@ func newWebsocketRequest(opts ...websocketRequestOpt) *websocketRequest {
 	for _, opt := range opts {
 		opt(wsrequest)
 	}
+
 	if wsrequest.Origin == "" {
 		wsrequest.Origin = "http://" + wsrequest.ServerAddr
 	}
+
 	if wsrequest.Config == nil {
 		wsrequest.Config, _ = websocket.NewConfig(fmt.Sprintf("ws://%s%s", wsrequest.ServerAddr, wsrequest.Path), wsrequest.Origin)
 	}
+
 	return wsrequest
 }
 
@@ -612,10 +620,13 @@ func (w *websocketRequest) send() (string, error) {
 		return "", err
 	}
 	defer conn.Close()
+
 	if _, err := conn.Write([]byte(w.Data)); err != nil {
 		return "", err
 	}
+
 	msg := make([]byte, 512)
+
 	var n int
 	n, err = conn.Read(msg)
 	if err != nil {
@@ -631,10 +642,12 @@ func (w *websocketRequest) open() (*websocket.Conn, net.Conn, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+
 	conn, err := websocket.NewClient(w.Config, client)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return conn, client, err
 }
 
@@ -643,6 +656,7 @@ func parseURI(t *testing.T, uri string) *url.URL {
 
 	out, err := url.ParseRequestURI(uri)
 	require.NoError(t, err)
+
 	return out
 }
 
@@ -652,6 +666,7 @@ func createConnectionPool(target string, tlsConfig *tls.Config) *connPool {
 		if tlsConfig != nil {
 			return tls.Dial("tcp", u.Host, tlsConfig)
 		}
+
 		return net.Dial("tcp", u.Host)
 	})
 }
@@ -672,5 +687,6 @@ func createProxyWithForwarder(t *testing.T, uri string, pool *connPool) *httptes
 		proxy.ServeHTTP(w, req)
 	}))
 	t.Cleanup(srv.Close)
+
 	return srv
 }
