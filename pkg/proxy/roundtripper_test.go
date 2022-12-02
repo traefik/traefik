@@ -73,6 +73,7 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 
 	srv.TLS = &tls.Config{Certificates: []tls.Certificate{cert}}
 	srv.StartTLS()
+	t.Cleanup(srv.Close)
 
 	tlsClientConfigGetter := client.NewTLSConfigManager(nil)
 	proxyBuilder := NewBuilder(tlsClientConfigGetter)
@@ -173,6 +174,7 @@ func TestDisableHTTP2(t *testing.T) {
 
 			srv.EnableHTTP2 = test.serverHTTP2
 			srv.StartTLS()
+			t.Cleanup(srv.Close)
 
 			tlsClientConfigGetter := client.NewTLSConfigManager(nil)
 			proxyBuilder := NewBuilder(tlsClientConfigGetter)
