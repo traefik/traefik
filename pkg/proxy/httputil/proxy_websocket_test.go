@@ -28,6 +28,7 @@ func TestWebSocketTCPClose(t *testing.T) {
 			return
 		}
 		defer c.Close()
+
 		for {
 			_, _, err := c.ReadMessage()
 			if err != nil {
@@ -52,7 +53,7 @@ func TestWebSocketTCPClose(t *testing.T) {
 	serverErr := <-errChan
 
 	var wsErr *gorillawebsocket.CloseError
-	require.True(t, errors.As(serverErr, &wsErr))
+	require.ErrorAs(t, serverErr, &wsErr)
 	assert.Equal(t, 1006, wsErr.Code)
 }
 
@@ -72,6 +73,7 @@ func TestWebSocketPingPong(t *testing.T) {
 		ws.SetPingHandler(func(appData string) error {
 			err = ws.WriteMessage(gorillawebsocket.PongMessage, []byte(appData+"Pong"))
 			require.NoError(t, err)
+
 			return nil
 		})
 
@@ -98,6 +100,7 @@ func TestWebSocketPingPong(t *testing.T) {
 		if data == "PingPong" {
 			return goodErr
 		}
+
 		return badErr
 	})
 
@@ -105,7 +108,6 @@ func TestWebSocketPingPong(t *testing.T) {
 	require.NoError(t, err)
 
 	_, _, err = conn.ReadMessage()
-
 	if !errors.Is(err, goodErr) {
 		require.NoError(t, err)
 	}
@@ -220,27 +222,8 @@ func TestWebSocketPassHost(t *testing.T) {
 }
 
 func TestWebSocketServerWithoutCheckOrigin(t *testing.T) {
-	upgrader := gorillawebsocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
-		return true
-	}}
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			return
-		}
-		defer c.Close()
-		for {
-			mt, message, err := c.ReadMessage()
-			if err != nil {
-				break
-			}
-			err = c.WriteMessage(mt, message)
-			if err != nil {
-				break
-			}
-		}
-	}))
-	defer srv.Close()
+	upgrader := gorillawebsocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }}
+	srv := createServer(t, upgrader, func(*http.Request) {})
 
 	proxy := createProxyWithForwarder(t, srv.URL, http.DefaultTransport)
 	defer proxy.Close()
@@ -258,25 +241,7 @@ func TestWebSocketServerWithoutCheckOrigin(t *testing.T) {
 }
 
 func TestWebSocketRequestWithOrigin(t *testing.T) {
-	upgrader := gorillawebsocket.Upgrader{}
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			return
-		}
-		defer c.Close()
-		for {
-			mt, message, err := c.ReadMessage()
-			if err != nil {
-				break
-			}
-			err = c.WriteMessage(mt, message)
-			if err != nil {
-				break
-			}
-		}
-	}))
-	defer srv.Close()
+	srv := createServer(t, gorillawebsocket.Upgrader{}, func(*http.Request) {})
 
 	proxy := createProxyWithForwarder(t, srv.URL, http.DefaultTransport)
 	defer proxy.Close()
@@ -301,26 +266,9 @@ func TestWebSocketRequestWithOrigin(t *testing.T) {
 }
 
 func TestWebSocketRequestWithQueryParams(t *testing.T) {
-	upgrader := gorillawebsocket.Upgrader{}
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		conn, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			return
-		}
-		defer conn.Close()
+	srv := createServer(t, gorillawebsocket.Upgrader{}, func(r *http.Request) {
 		assert.Equal(t, "test", r.URL.Query().Get("query"))
-		for {
-			mt, message, err := conn.ReadMessage()
-			if err != nil {
-				break
-			}
-			err = conn.WriteMessage(mt, message)
-			if err != nil {
-				break
-			}
-		}
-	}))
-	defer srv.Close()
+	})
 
 	proxy := createProxyWithForwarder(t, srv.URL, http.DefaultTransport)
 	defer proxy.Close()
@@ -369,26 +317,9 @@ func TestWebSocketRequestWithHeadersInResponseWriter(t *testing.T) {
 }
 
 func TestWebSocketRequestWithEncodedChar(t *testing.T) {
-	upgrader := gorillawebsocket.Upgrader{}
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		conn, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			return
-		}
-		defer conn.Close()
+	srv := createServer(t, gorillawebsocket.Upgrader{}, func(r *http.Request) {
 		assert.Equal(t, "/%3A%2F%2F", r.URL.EscapedPath())
-		for {
-			mt, message, err := conn.ReadMessage()
-			if err != nil {
-				break
-			}
-			err = conn.WriteMessage(mt, message)
-			if err != nil {
-				break
-			}
-		}
-	}))
-	defer srv.Close()
+	})
 
 	proxy := createProxyWithForwarder(t, srv.URL, http.DefaultTransport)
 	defer proxy.Close()
@@ -649,7 +580,9 @@ func createProxyWithForwarder(t *testing.T, uri string, transport http.RoundTrip
 	require.NoError(t, err)
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		path := req.URL.Path // keep the original path
+		// keep the original path
+		path := req.URL.Path
+
 		// Set new backend URL
 		req.URL = u
 		req.URL.Path = path
@@ -657,5 +590,37 @@ func createProxyWithForwarder(t *testing.T, uri string, transport http.RoundTrip
 		p.ServeHTTP(w, req)
 	}))
 	t.Cleanup(srv.Close)
+
+	return srv
+}
+
+func createServer(t *testing.T, upgrader gorillawebsocket.Upgrader, check func(*http.Request)) *httptest.Server {
+	t.Helper()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			t.Logf("Error during upgrade: %v", err)
+			return
+		}
+		defer conn.Close()
+
+		check(r)
+		for {
+			mt, message, err := conn.ReadMessage()
+			if err != nil {
+				t.Logf("Error during read: %v", err)
+				break
+			}
+
+			err = conn.WriteMessage(mt, message)
+			if err != nil {
+				t.Logf("Error during write: %v", err)
+				break
+			}
+		}
+	}))
+	t.Cleanup(srv.Close)
+
 	return srv
 }
