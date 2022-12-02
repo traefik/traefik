@@ -112,7 +112,7 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 		}
 
 		for transportName, transport := range conf.TCP.ServersTransports {
-			transportsTCP[transportName] = append(transports[transportName], root)
+			transportsTCP[transportName] = append(transportsTCP[transportName], root)
 			if !AddTransportTCP(configuration.TCP, transportName, transport) {
 				transportsTCPToDelete[transportName] = struct{}{}
 			}
