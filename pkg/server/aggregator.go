@@ -151,7 +151,9 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 		d.SetDefaults()
 		conf.HTTP.ServersTransports["default"] = d
 	} else if len(defaultServersTransportProviders) > 1 {
-		log.Error().Msgf("Default ServersTransport defined multiple times in %v", defaultServersTransportProviders)
+		log.Error().
+			Strs("default ServersTransport providers", defaultServersTransportProviders).
+			Msg("Default ServersTransport defined multiple times")
 		delete(conf.HTTP.ServersTransports, "default")
 	}
 

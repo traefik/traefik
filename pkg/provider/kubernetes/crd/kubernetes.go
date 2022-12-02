@@ -334,7 +334,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			for _, secret := range serversTransport.Spec.TLS.RootCAsSecrets {
 				caSecret, err := loadCASecret(serversTransport.Namespace, secret, client)
 				if err != nil {
-					logger.Error().Err(err).Msgf("Error while loading rootCAs %s", secret)
+					logger.Error().Err(err).
+						Str("secret", secret).
+						Msgf("Error while loading rootCAs")
 					continue
 				}
 
@@ -344,7 +346,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			for _, secret := range serversTransport.Spec.TLS.CertificatesSecrets {
 				tlsSecret, tlsKey, err := loadAuthTLSSecret(serversTransport.Namespace, secret, client)
 				if err != nil {
-					logger.Error().Err(err).Msgf("Error while loading certificates %s", secret)
+					logger.Error().Err(err).
+						Str("secret", secret).
+						Msgf("Error while loading certificates")
 					continue
 				}
 
@@ -415,7 +419,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 	if len(nsDefault) > 1 {
 		delete(conf.HTTP.ServersTransports, "default")
-		log.Ctx(ctx).Error().Msgf("Default serversTransport defined in multiple namespaces: %v", nsDefault)
+		log.Ctx(ctx).Error().
+			Strs("namespaces", nsDefault).
+			Msgf("Default serversTransport defined in multiple namespaces")
 	}
 
 	for _, serversTransportTCP := range client.GetServersTransportTCPs() {
