@@ -207,7 +207,9 @@ func TestProxyFromEnvironment(t *testing.T) {
 			builder := NewProxyBuilder()
 			builder.proxy = func(req *http.Request) (*url.URL, error) {
 				u, err := url.Parse(proxyURL)
-				require.NoError(t, err)
+				if err != nil {
+					return nil, err
+				}
 
 				if test.auth != nil {
 					u.User = url.UserPassword(test.auth.user, test.auth.password)
