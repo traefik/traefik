@@ -315,7 +315,9 @@ func TestWebSocketRequestWithQueryParams(t *testing.T) {
 	upgrader := gorillawebsocket.Upgrader{}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
-		require.NoError(t, err)
+		if err != nil {
+			return
+		}
 		defer conn.Close()
 
 		assert.Equal(t, "test", r.URL.Query().Get("query"))
@@ -351,8 +353,7 @@ func TestWebSocketRequestWithQueryParams(t *testing.T) {
 func TestWebSocketRequestWithHeadersInResponseWriter(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.Handle("/ws", websocket.Handler(func(conn *websocket.Conn) {
-		err := conn.Close()
-		require.NoError(t, err)
+		_ = conn.Close()
 	}))
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		mux.ServeHTTP(w, req)
