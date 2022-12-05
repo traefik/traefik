@@ -1,16 +1,6 @@
 global:
   checkNewVersion: true
   sendAnonymousUsage: true
-serversTransport:
-  insecureSkipVerify: true
-  rootCAs:
-    - foobar
-    - foobar
-  maxIdleConnsPerHost: 42
-  forwardingTimeouts:
-    dialTimeout: 42s
-    responseHeaderTimeout: 42s
-    idleConnTimeout: 42s
 entryPoints:
   EntryPoint0:
     address: foobar
