@@ -6,10 +6,6 @@
   level = "DEBUG"
   noColor = true
 
-[serversTransport.forwardingTimeouts]
-  dialTimeout = "300ms"
-  responseHeaderTimeout = "300ms"
-
 [entryPoints]
   [entryPoints.web]
     address = ":8000"
@@ -24,6 +20,10 @@
   filename = "{{ .SelfFilename }}"
 
 ## dynamic configuration ##
+
+[http.serversTransports.default.http.forwardingTimeouts]
+  dialTimeout = "300ms"
+  responseHeaderTimeout = "300ms"
 
 [http.routers]
   [http.routers.router1]
