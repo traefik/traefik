@@ -25,9 +25,6 @@ func NewTraefikConfiguration() *TraefikCmdConfiguration {
 			Providers: &static.Providers{
 				ProvidersThrottleDuration: ptypes.Duration(2 * time.Second),
 			},
-			ServersTransport: &static.ServersTransport{
-				MaxIdleConnsPerHost: 200,
-			},
 		},
 		ConfigFile: "",
 	}
