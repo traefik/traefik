@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v2/pkg/testhelpers"
-	"github.com/vulcand/oxy/roundrobin"
+	"github.com/vulcand/oxy/v2/roundrobin"
 )
 
 func TestEmptyBackendHandler(t *testing.T) {
