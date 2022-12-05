@@ -10,7 +10,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/tracing"
-	"github.com/vulcand/oxy/connlimit"
+	"github.com/vulcand/oxy/v2/connlimit"
 )
 
 const (

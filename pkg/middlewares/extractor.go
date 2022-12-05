@@ -8,7 +8,7 @@ import (
 
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/vulcand/oxy/utils"
+	"github.com/vulcand/oxy/v2/utils"
 )
 
 // GetSourceExtractor returns the SourceExtractor function corresponding to the given sourceMatcher.
