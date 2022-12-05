@@ -129,14 +129,18 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 	}
 
 	if len(defaultTLSStoreProviders) > 1 {
-		log.Error().Msgf("Default TLS Stores defined multiple times in %v", defaultTLSOptionProviders)
+		log.Error().
+			Strs("providers", defaultTLSStoreProviders).
+			Msg("Default TLS Stores defined in multiple provider")
 		delete(conf.TLS.Stores, tls.DefaultTLSStoreName)
 	}
 
 	if len(defaultTLSOptionProviders) == 0 {
 		conf.TLS.Options[tls.DefaultTLSConfigName] = tls.DefaultTLSOptions
 	} else if len(defaultTLSOptionProviders) > 1 {
-		log.Error().Msgf("Default TLS Options defined multiple times in %v", defaultTLSOptionProviders)
+		log.Error().
+			Strs("providers", defaultTLSOptionProviders).
+			Msg("Default TLS Options defined in multiple provider")
 		// We do not set an empty tls.TLS{} as above so that we actually get a "cascading failure" later on,
 		// i.e. routers depending on this missing TLS option will fail to initialize as well.
 		delete(conf.TLS.Options, tls.DefaultTLSConfigName)
@@ -148,8 +152,8 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 		conf.HTTP.ServersTransports["default"] = d
 	} else if len(defaultServersTransportProviders) > 1 {
 		log.Error().
-			Strs("default ServersTransport providers", defaultServersTransportProviders).
-			Msg("Default ServersTransport defined multiple times")
+			Strs("providers", defaultServersTransportProviders).
+			Msg("Default ServersTransport defined in multiple provider")
 		delete(conf.HTTP.ServersTransports, "default")
 	}
 
