@@ -312,13 +312,31 @@ entryPoints:
 #### `http3`
 
 `http3` enables HTTP/3 protocol on the entryPoint.
-HTTP/3 requires a TCP entryPoint, as HTTP/3 always starts as a TCP connection that then gets upgraded to UDP.
-In most scenarios, this entryPoint is the same as the one used for TLS traffic.
+HTTP/3 requires a TCP entryPoint,
+as HTTP/3 always starts as a TCP connection that then gets upgraded to UDP.
+In most scenarios,
+this entryPoint is the same as the one used for TLS traffic.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  name:
+  http3: {}
+```
+
+```toml tab="File (TOML)"
+[entryPoints.name.http3]
+```
+
+```bash tab="CLI"
+--entrypoints.name.http3
+```
 
 ??? info "HTTP/3 uses UDP+TLS"
 
-    As HTTP/3 uses UDP, you can't have a TCP entryPoint with HTTP/3 on the same port as a UDP entryPoint.
-    Since HTTP/3 requires the use of TLS, only routers with TLS enabled will be usable with HTTP/3.
+    As HTTP/3 uses UDP,
+    you can't have a TCP entryPoint with HTTP/3 on the same port as a UDP entryPoint.
+    Since HTTP/3 requires the use of TLS,
+    only routers with TLS enabled will be usable with HTTP/3.
 
 #### `advertisedPort`
 
