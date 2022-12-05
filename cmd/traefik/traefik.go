@@ -79,7 +79,7 @@ Complete documentation is available at https://traefik.io`,
 
 	err = cli.Execute(cmdTraefik)
 	if err != nil {
-		stdlog.Println(err)
+		log.Error().Err(err).Msg("Command error")
 		logrus.Exit(1)
 	}
 
