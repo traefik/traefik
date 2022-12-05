@@ -460,7 +460,7 @@ func TestAccessLog(t *testing.T) {
 }
 
 func TestRuntimeConfiguration(t *testing.T) {
-	var testCases = []struct {
+	testCases := []struct {
 		desc             string
 		serviceConfig    map[string]*dynamic.Service
 		routerConfig     map[string]*dynamic.Router

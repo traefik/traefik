@@ -54,5 +54,5 @@
     minVersion = "VersionTLS13"
 
   [tls.options.invalid.clientAuth]
-    # Missing CA files
+    # Missing CA files to have an invalid mTLS configuration.
     clientAuthType = "RequireAndVerifyClientCert"
