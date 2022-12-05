@@ -60,6 +60,7 @@ func (d *DialerManager) Update(configs map[string]*dynamic.TCPServersTransport) 
 	d.rtLock.Lock()
 	defer d.rtLock.Unlock()
 
+	d.dialers = make(map[string]Dialer)
 	for configName, config := range configs {
 		var err error
 		d.dialers[configName], err = d.createDialer(config)
