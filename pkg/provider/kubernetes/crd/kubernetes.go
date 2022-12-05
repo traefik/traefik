@@ -412,7 +412,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 		var certs tls.Certificates
 		for _, secret := range serversTransportTCP.Spec.CertificatesSecrets {
-			tlsSecret, tlsKey, err := loadAuthTLSSecret(serversTransportTCP.Namespace, secret, client)
+			tlsCert, tlsKey, err := loadAuthTLSSecret(serversTransportTCP.Namespace, secret, client)
 			if err != nil {
 				logger.Error().
 					Err(err).
@@ -422,7 +422,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			}
 
 			certs = append(certs, tls.Certificate{
-				CertFile: tls.FileOrContent(tlsSecret),
+				CertFile: tls.FileOrContent(tlsCert),
 				KeyFile:  tls.FileOrContent(tlsKey),
 			})
 		}
