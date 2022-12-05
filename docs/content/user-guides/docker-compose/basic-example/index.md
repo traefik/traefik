@@ -16,6 +16,35 @@ This will also be used as a starting point for the other docker-compose guides.
 --8<-- "content/user-guides/docker-compose/basic-example/docker-compose.yml"
 ```
 
+??? Networking
+
+    The Traefik container has to be attached to the same network as the containers to be exposed.
+    If no networks are specified in the docker-compose file, Docker creates a default one that allows Traefik to reach the containers defined in the same file.
+    You can [customize the network](https://docs.docker.com/compose/networking/#specify-custom-networks) as described in the example below.
+    You can use a [pre-existing network](https://docs.docker.com/compose/networking/#use-a-pre-existing-network) too.
+
+    ```yaml
+    version: "3.3"
+
+    networks:
+      traefiknet: {}
+
+    services:
+
+      traefik:
+        image: "traefik:v2.9"
+        ...
+        networks:
+          - traefiknet
+
+      whoami:
+        image: "traefik/whoami"
+        ...
+        networks:
+          - traefiknet
+
+    ```
+
 - Replace `whoami.localhost` by your **own domain** within the `traefik.http.routers.whoami.rule` label of the `whoami` service.
 - Run `docker-compose up -d` within the folder where you created the previous file.
 - Wait a bit and visit `http://your_own_domain` to confirm everything went fine.

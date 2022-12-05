@@ -50,7 +50,12 @@ Now that we have a Traefik instance up and running, we will deploy new services.
 Edit your `docker-compose.yml` file and add the following at the end of your file.
 
 ```yaml
-# ...
+version: '3'
+
+services:
+
+  ...
+
   whoami:
     # A container that exposes an API to show its IP address
     image: traefik/whoami
