@@ -1,3 +1,49 @@
+## [v3.0.0-beta1](https://github.com/traefik/traefik/tree/v3.0.0-beta1) (2022-12-05)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.0-rc1...v3.0.0-beta1)
+
+**Enhancements:**
+- **[ecs]** Add option to keep only healthy ECS tasks ([#8027](https://github.com/traefik/traefik/pull/8027) by [Michampt](https://github.com/Michampt))
+- **[healthcheck]** Support gRPC healthcheck ([#8583](https://github.com/traefik/traefik/pull/8583) by [jjacque](https://github.com/jjacque))
+- **[healthcheck]** Add a status option to the service health check ([#9463](https://github.com/traefik/traefik/pull/9463) by [guoard](https://github.com/guoard))
+- **[http]** Support custom headers when fetching configuration through HTTP ([#9421](https://github.com/traefik/traefik/pull/9421) by [kevinpollet](https://github.com/kevinpollet))
+- **[logs,performance]** New logger for the Traefik logs ([#9515](https://github.com/traefik/traefik/pull/9515) by [ldez](https://github.com/ldez))
+- **[logs,plugins]** Retry on plugin API calls ([#9530](https://github.com/traefik/traefik/pull/9530) by [ldez](https://github.com/ldez))
+- **[logs,provider]** Improve provider logs ([#9562](https://github.com/traefik/traefik/pull/9562) by [ldez](https://github.com/ldez))
+- **[logs]** Improve test logger assertions ([#9533](https://github.com/traefik/traefik/pull/9533) by [ldez](https://github.com/ldez))
+- **[metrics]** Support gRPC and gRPC-Web protocol in metrics ([#9483](https://github.com/traefik/traefik/pull/9483) by [longit644](https://github.com/longit644))
+- **[middleware,accesslogs]** Log TLS client subject ([#9285](https://github.com/traefik/traefik/pull/9285) by [xmessi](https://github.com/xmessi))
+- **[middleware,metrics,tracing]** Add OpenTelemetry tracing and metrics support ([#8999](https://github.com/traefik/traefik/pull/8999) by [tomMoulard](https://github.com/tomMoulard))
+- **[middleware]** Disable Content-Type auto-detection by default ([#9546](https://github.com/traefik/traefik/pull/9546) by [sdelicata](https://github.com/sdelicata))
+- **[middleware]** Add gRPC-Web middleware ([#9451](https://github.com/traefik/traefik/pull/9451) by [juliens](https://github.com/juliens))
+- **[middleware]** Add support for Brotli ([#9387](https://github.com/traefik/traefik/pull/9387) by [glinton](https://github.com/glinton))
+- **[middleware]** Renaming IPWhiteList to IPAllowList  ([#9457](https://github.com/traefik/traefik/pull/9457) by [wxmbugu](https://github.com/wxmbugu))
+- **[nomad]** Support multiple namespaces in the Nomad Provider ([#9332](https://github.com/traefik/traefik/pull/9332) by [0teh](https://github.com/0teh))
+- **[rules]** Update routing syntax ([#9531](https://github.com/traefik/traefik/pull/9531) by [skwair](https://github.com/skwair))
+- **[server]** Rework servers load-balancer to use the WRR ([#9431](https://github.com/traefik/traefik/pull/9431) by [juliens](https://github.com/juliens))
+- **[server]** Allow default entrypoints definition ([#9100](https://github.com/traefik/traefik/pull/9100) by [jilleJr](https://github.com/jilleJr))
+- **[tls,service]** Support SPIFFE mTLS between Traefik and Backend servers ([#9394](https://github.com/traefik/traefik/pull/9394) by [jlevesy](https://github.com/jlevesy))
+- **[tls]** Add Tailscale certificate resolver ([#9237](https://github.com/traefik/traefik/pull/9237) by [kevinpollet](https://github.com/kevinpollet))
+- **[tls]** Support SNI routing with Postgres STARTTLS connections ([#9377](https://github.com/traefik/traefik/pull/9377) by [rtribotte](https://github.com/rtribotte))
+- Remove deprecated options ([#9527](https://github.com/traefik/traefik/pull/9527) by [sdelicata](https://github.com/sdelicata))
+
+**Bug fixes:**
+- **[logs]** Fix log level ([#9545](https://github.com/traefik/traefik/pull/9545) by [ldez](https://github.com/ldez))
+- **[metrics]** Fix ServerUp metric ([#9534](https://github.com/traefik/traefik/pull/9534) by [kevinpollet](https://github.com/kevinpollet))
+- **[tls,service]** Enforce default servers transport SPIFFE config ([#9444](https://github.com/traefik/traefik/pull/9444) by [jlevesy](https://github.com/jlevesy))
+
+**Documentation:**
+- **[metrics]** Update and publish official Grafana Dashboard ([#9493](https://github.com/traefik/traefik/pull/9493) by [mloiseleur](https://github.com/mloiseleur))
+
+**Misc:**
+- Merge branch v2.9 into master ([#9554](https://github.com/traefik/traefik/pull/9554) by [ldez](https://github.com/ldez))
+- Merge branch v2.9 into master ([#9536](https://github.com/traefik/traefik/pull/9536) by [ldez](https://github.com/ldez))
+- Merge branch v2.9 into master ([#9532](https://github.com/traefik/traefik/pull/9532) by [ldez](https://github.com/ldez))
+- Merge branch v2.9 into master ([#9482](https://github.com/traefik/traefik/pull/9482) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.9 into master ([#9464](https://github.com/traefik/traefik/pull/9464) by [ldez](https://github.com/ldez))
+- Merge branch v2.9 into master ([#9449](https://github.com/traefik/traefik/pull/9449) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.9 into master ([#9419](https://github.com/traefik/traefik/pull/9419) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.9 into master ([#9351](https://github.com/traefik/traefik/pull/9351) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.9.5](https://github.com/traefik/traefik/tree/v2.9.5) (2022-11-17)
 [All Commits](https://github.com/traefik/traefik/compare/v2.9.4...v2.9.5)
 

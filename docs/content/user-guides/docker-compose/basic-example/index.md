@@ -32,7 +32,7 @@ This will also be used as a starting point for the other docker-compose guides.
     services:
 
       traefik:
-        image: "traefik:v2.9"
+        image: "traefik:v3.0"
         ...
         networks:
           - traefiknet
