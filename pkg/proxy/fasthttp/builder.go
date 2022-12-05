@@ -70,7 +70,8 @@ func (r *ProxyBuilder) Build(cfgName string, cfg *dynamic.HTTPClientConfig, tlsC
 func (r *ProxyBuilder) getPool(cfgName string, config *dynamic.HTTPClientConfig, tlsConfig *tls.Config, targetURL *url.URL, proxyURL *url.URL) *connPool {
 	pool, ok := r.pools[cfgName]
 	if !ok {
-		r.pools[cfgName] = make(map[string]*connPool)
+		pool = make(map[string]*connPool)
+		r.pools[cfgName] = pool
 	}
 
 	if connPool, ok := pool[targetURL.String()]; ok {
