@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	stdlog "log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -66,13 +67,13 @@ Complete documentation is available at https://traefik.io`,
 
 	err := cmdTraefik.AddCommand(healthcheck.NewCmd(&tConfig.Configuration, loaders))
 	if err != nil {
-		log.Error().Err(err).Msg("Error while adding healthcheck command")
+		stdlog.Println(err)
 		os.Exit(1)
 	}
 
 	err = cmdTraefik.AddCommand(cmdVersion.NewCmd())
 	if err != nil {
-		log.Error().Err(err).Msg("Error while adding version command")
+		stdlog.Println(err)
 		os.Exit(1)
 	}
 
