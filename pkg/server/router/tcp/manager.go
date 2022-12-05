@@ -184,7 +184,8 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		// returned) to take special steps when assigning a handler to a route.
 		tlsConf, tlsConfErr := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, tlsOptionsName)
 		if tlsConfErr != nil {
-			routerHTTPConfig.AddError(tlsConfErr, true)
+			// Note: we do not call AddError here because we already did so
+			// when buildRouterHandler errored for the same reason.
 			logger.Error(tlsConfErr)
 		}
 
@@ -344,9 +345,8 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		if err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error(err)
-			handler := &brokenTLSRouter{}
 			logger.Debugf("Adding special TLS closing route for %q because broken TLS options %s", routerConfig.Rule, tlsOptionsName)
-			if err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.Priority, handler); err != nil {
+			if err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.Priority, &brokenTLSRouter{}); err != nil {
 				routerConfig.AddError(err, true)
 				logger.Error(err)
 			}

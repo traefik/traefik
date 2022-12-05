@@ -27,7 +27,7 @@ type Router struct {
 	muxerHTTPS tcpmuxer.Muxer
 
 	// Forwarder handlers.
-	// Handles all HTTP requests.
+	// httpForwarder handles all HTTP requests.
 	httpForwarder tcp.Handler
 	// httpsForwarder handles (indirectly through muxerHTTPS, or directly) all HTTPS requests.
 	httpsForwarder tcp.Handler
