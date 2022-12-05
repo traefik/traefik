@@ -247,7 +247,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 	ctx := req.Context()
 	trace := httptrace.ContextClientTrace(ctx)
 
-	var conn *conn
+	var co *conn
 	for {
 		select {
 		case <-ctx.Done():
@@ -257,13 +257,13 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 		}
 
 		var err error
-		conn, err = p.connPool.AcquireConn()
+		co, err = p.connPool.AcquireConn()
 		if err != nil {
-			return fmt.Errorf("acquire conn: %w", err)
+			return fmt.Errorf("acquire connection: %w", err)
 		}
-		defer p.connPool.ReleaseConn(conn)
+		defer p.connPool.ReleaseConn(co)
 
-		wd := &writeDetector{Conn: conn}
+		wd := &writeDetector{Conn: co}
 
 		err = p.writeRequest(wd, outReq)
 		if wd.written && trace != nil && trace.WroteRequest != nil {
@@ -276,7 +276,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 
 		log.Ctx(ctx).Debug().Err(err).Msg("Error while writing request")
 
-		conn.Close()
+		co.Close()
 
 		if wd.written && !isReplayable(req) {
 			return err
@@ -285,11 +285,11 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 
 	br := p.readerPool.Get()
 	if br == nil {
-		br = bufio.NewReaderSize(conn, bufioSize)
+		br = bufio.NewReaderSize(co, bufioSize)
 	}
 	defer p.readerPool.Put(br)
 
-	br.Reset(conn)
+	br.Reset(co)
 
 	res := fasthttp.AcquireResponse()
 	defer fasthttp.ReleaseResponse(res)
@@ -301,7 +301,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 	if p.responseHeaderTimeout > 0 {
 		timer = time.AfterFunc(p.responseHeaderTimeout, func() {
 			errTimeout.Store(&timeoutError{errors.New("timeout awaiting response headers")})
-			conn.Close()
+			co.Close()
 		})
 	}
 
@@ -312,7 +312,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 				return errT
 			}
 		}
-		conn.Close()
+		co.Close()
 		return err
 	}
 
@@ -327,7 +327,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 	// Deal with 101 Switching Protocols responses: (WebSocket, h2c, etc)
 	if res.StatusCode() == http.StatusSwitchingProtocols {
 		// As the connection has been hijacked, it cannot be added back to the pool.
-		handleUpgradeResponse(rw, req, reqUpType, res, buffConn{Conn: conn, Reader: br})
+		handleUpgradeResponse(rw, req, reqUpType, res, buffConn{Conn: co, Reader: br})
 		return nil
 	}
 
@@ -358,14 +358,14 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 		defer p.bufferPool.Put(b)
 
 		if _, err := io.CopyBuffer(&writeFlusher{rw}, cbr, b); err != nil {
-			conn.Close()
+			co.Close()
 			return err
 		}
 
 		res.Header.Reset()
 		res.Header.SetNoDefaultContentType(true)
 		if err := res.Header.ReadTrailer(br); err != nil {
-			conn.Close()
+			co.Close()
 			return err
 		}
 
@@ -406,7 +406,7 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 	defer p.bufferPool.Put(b)
 
 	if _, err := io.CopyBuffer(rw, brl, b); err != nil {
-		conn.Close()
+		co.Close()
 		return err
 	}
 
