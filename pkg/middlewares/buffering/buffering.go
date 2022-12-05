@@ -9,7 +9,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/tracing"
-	oxybuffer "github.com/vulcand/oxy/buffer"
+	oxybuffer "github.com/vulcand/oxy/v2/buffer"
 )
 
 const (
@@ -34,7 +34,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.Buffering, name 
 		oxybuffer.MaxRequestBodyBytes(config.MaxRequestBodyBytes),
 		oxybuffer.MemResponseBodyBytes(config.MemResponseBodyBytes),
 		oxybuffer.MaxResponseBodyBytes(config.MaxResponseBodyBytes),
-		oxybuffer.CondSetter(len(config.RetryExpression) > 0, oxybuffer.Retry(config.RetryExpression)),
+		oxybuffer.Cond(len(config.RetryExpression) > 0, oxybuffer.Retry(config.RetryExpression)),
 	)
 	if err != nil {
 		return nil, err
