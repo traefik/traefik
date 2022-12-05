@@ -119,8 +119,9 @@ func TestManager_Get(t *testing.T) {
 	}}
 
 	tlsConfigs := map[string]Options{
-		"foo": {MinVersion: "VersionTLS12"},
-		"bar": {MinVersion: "VersionTLS11"},
+		"foo":     {MinVersion: "VersionTLS12"},
+		"bar":     {MinVersion: "VersionTLS11"},
+		"invalid": {CurvePreferences: []string{"42"}},
 	}
 
 	testCases := []struct {
@@ -140,13 +141,18 @@ func TestManager_Get(t *testing.T) {
 			expectedMinVersion: uint16(tls.VersionTLS11),
 		},
 		{
-			desc:           "Get an tls config from an invalid name",
+			desc:           "Get a tls config from an invalid name",
 			tlsOptionsName: "unknown",
 			expectedError:  true,
 		},
 		{
-			desc:           "Get an tls config from unexisting 'default' name",
+			desc:           "Get a tls config from unexisting 'default' name",
 			tlsOptionsName: "default",
+			expectedError:  true,
+		},
+		{
+			desc:           "Get an invalid tls config",
+			tlsOptionsName: "invalid",
 			expectedError:  true,
 		},
 	}
@@ -161,39 +167,13 @@ func TestManager_Get(t *testing.T) {
 
 			config, err := tlsManager.Get("default", test.tlsOptionsName)
 			if test.expectedError {
-				assert.Error(t, err)
+				require.Nil(t, config)
+				require.Error(t, err)
 				return
 			}
 
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, config.MinVersion, test.expectedMinVersion)
-		})
-	}
-}
-
-func TestManager_Get_GetCertificate(t *testing.T) {
-	testCases := []struct {
-		desc                 string
-		expectedGetConfigErr require.ErrorAssertionFunc
-		expectedCertificate  assert.ValueAssertionFunc
-	}{
-		{
-			desc:                 "Get a default certificate from non-existing store",
-			expectedGetConfigErr: require.Error,
-			expectedCertificate:  assert.Nil,
-		},
-	}
-
-	tlsManager := NewManager()
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			config, err := tlsManager.Get("default", "foo")
-			require.Nil(t, config)
-			require.NotNil(t, err)
 		})
 	}
 }
