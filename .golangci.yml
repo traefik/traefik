@@ -179,3 +179,7 @@ issues:
       text: 'Duplicate words \(sub\) found'
       linters:
         - dupword
+    - path: pkg/provider/kubernetes/crd/kubernetes.go
+      text: "Function 'loadConfigurationFromCRD' has too many statements"
+      linters:
+        - funlen
