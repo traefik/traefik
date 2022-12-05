@@ -46,14 +46,6 @@
           </div>
         </div>
       </q-card-section>
-      <q-card-section v-if="data.loadBalancer && $route.meta.protocol !== 'tcp'">
-        <div class="row items-start no-wrap">
-          <div class="col">
-            <div class="text-subtitle2">Pass Host Header</div>
-            <boolean-state :value="data.loadBalancer.passHostHeader"/>
-          </div>
-        </div>
-      </q-card-section>
 
       <q-card-section v-if="data.loadBalancer && data.loadBalancer.terminationDelay">
         <div class="row items-start no-wrap">
@@ -117,14 +109,12 @@
 
 <script>
 import AvatarState from './AvatarState'
-import BooleanState from './BooleanState'
 import StickyServiceDetails from './StickyServiceDetails'
 
 export default {
   name: 'PanelServiceDetails',
   props: ['data', 'dense'],
   components: {
-    BooleanState,
     AvatarState,
     StickyServiceDetails
   },
