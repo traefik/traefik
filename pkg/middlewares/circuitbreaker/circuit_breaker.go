@@ -10,7 +10,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/tracing"
-	"github.com/vulcand/oxy/cbreaker"
+	"github.com/vulcand/oxy/v2/cbreaker"
 )
 
 const typeName = "CircuitBreaker"
@@ -28,7 +28,7 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 	logger.Debug("Creating middleware")
 	logger.Debugf("Setting up with expression: %s", expression)
 
-	cbOpts := []cbreaker.CircuitBreakerOption{
+	cbOpts := []cbreaker.Option{
 		cbreaker.Fallback(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			tracing.SetErrorWithEvent(req, "blocked by circuit-breaker (%q)", expression)
 			rw.WriteHeader(http.StatusServiceUnavailable)
