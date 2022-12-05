@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"regexp"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -1363,5 +1364,38 @@ func (s *SimpleSuite) TestMuxer(c *check.C) {
 			c.Assert(err, checker.IsNil)
 			c.Assert(string(body), checker.Contains, test.body)
 		}
+	}
+}
+
+func (s *SimpleSuite) TestDebugLog(c *check.C) {
+	s.createComposeProject(c, "base")
+
+	s.composeUp(c)
+	defer s.composeDown(c)
+
+	file := s.adaptFile(c, "fixtures/simple_debug_log.toml", struct{}{})
+	defer os.Remove(file)
+
+	cmd, output := s.cmdTraefik(withConfigFile(file))
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix(`/whoami`)"))
+	c.Assert(err, checker.IsNil)
+
+	req, err := http.NewRequest(http.MethodGet, "http://localhost:8000/whoami", http.NoBody)
+	c.Assert(err, checker.IsNil)
+	req.Header.Set("Autorization", "Bearer ThisIsABearerToken")
+
+	response, err := http.DefaultClient.Do(req)
+	c.Assert(err, checker.IsNil)
+	c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
+
+	if regexp.MustCompile("ThisIsABearerToken").MatchReader(output) {
+		c.Logf("Traefik Logs: %s", output.String())
+		c.Log("Found Authorization Header in Traefik DEBUG logs")
+		c.Fail()
 	}
 }

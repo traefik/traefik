@@ -1,0 +1,15 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[api]
+  insecure = true
+
+[providers.docker]
+
+[entryPoints]
+  [entryPoints.webHost]
+    address = ":8000"
