@@ -1227,12 +1227,12 @@ func (s *HTTPSSuite) TestWithDomainFronting(c *check.C) {
 	}
 }
 
-// TestWithInvalidMTLSConf verifies the behavior when using a bad mTLS configuration.
-func (s *HTTPSSuite) TestWithInvalidMTLSConf(c *check.C) {
+// TestWithInvalidTLSOption verifies the behavior when using an invalid tlsOption configuration.
+func (s *HTTPSSuite) TestWithInvalidTLSOption(c *check.C) {
 	backend := startTestServer("9010", http.StatusOK, "server1")
 	defer backend.Close()
 
-	file := s.adaptFile(c, "fixtures/https/clientca/https_1ca_invalid_config.toml", struct{}{})
+	file := s.adaptFile(c, "fixtures/https/https_invalid_tls_options.toml", struct{}{})
 	defer os.Remove(file)
 	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)

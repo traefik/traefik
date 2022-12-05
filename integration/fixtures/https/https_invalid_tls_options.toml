@@ -56,4 +56,5 @@
     clientAuthType = "RequireAndVerifyClientCert"
 
   [tls.options.invalidTLSOptions.clientAuth]
+    # Missing caFile to have an invalid mTLS configuration
     clientAuthType = "RequireAndVerifyClientCert"
