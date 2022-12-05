@@ -261,7 +261,6 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 		if err != nil {
 			return fmt.Errorf("acquire connection: %w", err)
 		}
-		defer p.connPool.ReleaseConn(co)
 
 		wd := &writeDetector{Conn: co}
 
@@ -387,6 +386,8 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 			})
 		}
 
+		p.connPool.ReleaseConn(co)
+
 		return nil
 	}
 
@@ -409,6 +410,8 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 		co.Close()
 		return err
 	}
+
+	p.connPool.ReleaseConn(co)
 
 	return nil
 }
