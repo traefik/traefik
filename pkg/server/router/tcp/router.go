@@ -27,9 +27,9 @@ type Router struct {
 	muxerHTTPS tcpmuxer.Muxer
 
 	// Forwarder handlers.
-	// Handles all HTTP requests.
+	// httpForwarder handles all HTTP requests.
 	httpForwarder tcp.Handler
-	// Handles (indirectly through muxerHTTPS, or directly) all HTTPS requests.
+	// httpsForwarder handles (indirectly through muxerHTTPS, or directly) all HTTPS requests.
 	httpsForwarder tcp.Handler
 
 	// Neither is used directly, but they are held here, and recreated on config
@@ -39,7 +39,9 @@ type Router struct {
 	httpsHandler http.Handler
 
 	// TLS configs.
-	httpsTLSConfig    *tls.Config            // default TLS config
+	httpsTLSConfig *tls.Config // default TLS config
+	// hostHTTPTLSConfig contains TLS configs keyed by SNI.
+	// A nil config is the hint to set up a brokenTLSRouter.
 	hostHTTPTLSConfig map[string]*tls.Config // TLS configs keyed by SNI
 }
 
@@ -180,7 +182,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		return
 	}
 
-	// needed to handle 404s for HTTPS, as well as all non-Host (e.g. PathPrefix) matches.
+	// To handle 404s for HTTPS.
 	if r.httpsForwarder != nil {
 		r.httpsForwarder.ServeTCP(r.GetConn(conn, hello.peeked))
 		return
@@ -192,19 +194,6 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 // AddRoute defines a handler for the given rule.
 func (r *Router) AddRoute(rule string, priority int, target tcp.Handler) error {
 	return r.muxerTCP.AddRoute(rule, priority, target)
-}
-
-// AddRouteTLS defines a handler for a given rule and sets the matching tlsConfig.
-func (r *Router) AddRouteTLS(rule string, priority int, target tcp.Handler, config *tls.Config) error {
-	// TLS PassThrough
-	if config == nil {
-		return r.muxerTCPTLS.AddRoute(rule, priority, target)
-	}
-
-	return r.muxerTCPTLS.AddRoute(rule, priority, &tcp.TLSHandler{
-		Next:   target,
-		Config: config,
-	})
 }
 
 // AddHTTPTLSConfig defines a handler for a given sniHost and sets the matching tlsConfig.
@@ -242,20 +231,44 @@ func (r *Router) SetHTTPForwarder(handler tcp.Handler) {
 	r.httpForwarder = handler
 }
 
+// brokenTLSRouter is associated to a Host(SNI) rule for which we know the TLS
+// conf is broken. It is used to make sure any attempt to connect to that hostname
+// is closed, since we cannot proceed with the intended TLS conf.
+type brokenTLSRouter struct{}
+
+// ServeTCP instantly closes the connection.
+func (t *brokenTLSRouter) ServeTCP(conn tcp.WriteCloser) {
+	conn.Close()
+}
+
 // SetHTTPSForwarder sets the tcp handler that will forward the TLS connections to an http handler.
+// It also sets up each TLS handler (with its TLS config) for each Host(SNI)
+// rule we previously kept track of.
+// It sets up a special handler that closes the connection if a TLS config is nil.
 func (r *Router) SetHTTPSForwarder(handler tcp.Handler) {
 	for sniHost, tlsConf := range r.hostHTTPTLSConfig {
+		var tcpHandler tcp.Handler
+		if tlsConf == nil {
+			tcpHandler = &brokenTLSRouter{}
+		} else {
+			tcpHandler = &tcp.TLSHandler{
+				Next:   handler,
+				Config: tlsConf,
+			}
+		}
+
 		// muxerHTTPS only contains single HostSNI rules (and no other kind of rules),
 		// so there's no need for specifying a priority for them.
-		err := r.muxerHTTPS.AddRoute("HostSNI(`"+sniHost+"`)", 0, &tcp.TLSHandler{
-			Next:   handler,
-			Config: tlsConf,
-		})
+		err := r.muxerHTTPS.AddRoute("HostSNI(`"+sniHost+"`)", 0, tcpHandler)
 		if err != nil {
 			log.WithoutContext().Errorf("Error while adding route for host: %v", err)
 		}
 	}
 
+	if r.httpsTLSConfig == nil {
+		r.httpsForwarder = &brokenTLSRouter{}
+		return
+	}
 	r.httpsForwarder = &tcp.TLSHandler{
 		Next:   handler,
 		Config: r.httpsTLSConfig,

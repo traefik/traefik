@@ -20,6 +20,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/server/middleware"
 	"github.com/traefik/traefik/v2/pkg/server/service"
 	"github.com/traefik/traefik/v2/pkg/testhelpers"
+	"github.com/traefik/traefik/v2/pkg/tls"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
@@ -317,8 +318,9 @@ func TestRouterManager_Get(t *testing.T) {
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
+			tlsManager := tls.NewManager()
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -423,8 +425,9 @@ func TestAccessLog(t *testing.T) {
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
+			tlsManager := tls.NewManager()
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -457,11 +460,12 @@ func TestAccessLog(t *testing.T) {
 }
 
 func TestRuntimeConfiguration(t *testing.T) {
-	testCases := []struct {
+	var testCases = []struct {
 		desc             string
 		serviceConfig    map[string]*dynamic.Service
 		routerConfig     map[string]*dynamic.Router
 		middlewareConfig map[string]*dynamic.Middleware
+		tlsOptions       map[string]tls.Options
 		expectedError    int
 	}{
 		{
@@ -665,7 +669,6 @@ func TestRuntimeConfiguration(t *testing.T) {
 			},
 			expectedError: 1,
 		},
-
 		{
 			desc: "Router with broken middleware",
 			serviceConfig: map[string]*dynamic.Service{
@@ -696,8 +699,71 @@ func TestRuntimeConfiguration(t *testing.T) {
 			},
 			expectedError: 2,
 		},
+		{
+			desc: "Router with broken tlsOption",
+			serviceConfig: map[string]*dynamic.Service{
+				"foo-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
+							{
+								URL: "http://127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			middlewareConfig: map[string]*dynamic.Middleware{},
+			routerConfig: map[string]*dynamic.Router{
+				"bar": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "Host(`foo.bar`)",
+					TLS: &dynamic.RouterTLSConfig{
+						Options: "broken-tlsOption",
+					},
+				},
+			},
+			tlsOptions: map[string]tls.Options{
+				"broken-tlsOption": {
+					ClientAuth: tls.ClientAuth{
+						ClientAuthType: "foobar",
+					},
+				},
+			},
+			expectedError: 1,
+		},
+		{
+			desc: "Router with broken default tlsOption",
+			serviceConfig: map[string]*dynamic.Service{
+				"foo-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{
+							{
+								URL: "http://127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			middlewareConfig: map[string]*dynamic.Middleware{},
+			routerConfig: map[string]*dynamic.Router{
+				"bar": {
+					EntryPoints: []string{"web"},
+					Service:     "foo-service",
+					Rule:        "Host(`foo.bar`)",
+					TLS:         &dynamic.RouterTLSConfig{},
+				},
+			},
+			tlsOptions: map[string]tls.Options{
+				"default": {
+					ClientAuth: tls.ClientAuth{
+						ClientAuthType: "foobar",
+					},
+				},
+			},
+			expectedError: 1,
+		},
 	}
-
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
@@ -711,6 +777,9 @@ func TestRuntimeConfiguration(t *testing.T) {
 					Routers:     test.routerConfig,
 					Middlewares: test.middlewareConfig,
 				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: test.tlsOptions,
+				},
 			})
 
 			roundTripperManager := service.NewRoundTripperManager()
@@ -718,10 +787,13 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
+			tlsManager := tls.NewManager()
+			tlsManager.UpdateConfigs(context.Background(), nil, test.tlsOptions, nil)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
 
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
+			_ = routerManager.BuildHandlers(context.Background(), entryPoints, true)
 
 			// even though rtConf was passed by argument to the manager builders above,
 			// it's ok to use it as the result we check, because everything worth checking
@@ -793,8 +865,9 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 	chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
+	tlsManager := tls.NewManager()
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
 
 	_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
@@ -861,8 +934,9 @@ func BenchmarkRouterServe(b *testing.B) {
 	serviceManager := service.NewManager(rtConf.Services, nil, nil, staticRoundTripperGetter{res})
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 	chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
+	tlsManager := tls.NewManager()
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry())
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
 
 	handlers := routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
