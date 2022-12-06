@@ -237,7 +237,7 @@ type brokenTLSRouter struct{}
 
 // ServeTCP instantly closes the connection.
 func (t *brokenTLSRouter) ServeTCP(conn tcp.WriteCloser) {
-	conn.Close()
+	_ = conn.Close()
 }
 
 // SetHTTPSForwarder sets the tcp handler that will forward the TLS connections to an HTTP handler.
