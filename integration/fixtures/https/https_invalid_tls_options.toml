@@ -1,0 +1,60 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints.websecure]
+  address = ":4443"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+
+  [http.routers.router1]
+    entryPoints = ["websecure"]
+    service = "service1"
+    rule = "Host(`snitest.com`)"
+    [http.routers.router1.tls]
+      options = "invalidTLSOptions"
+
+  [http.routers.router2]
+    entryPoints = ["websecure"]
+    service = "service1"
+    rule = "Host(`snitest.org`)"
+    [http.routers.router2.tls]
+
+  # fallback router
+  [http.routers.router3]
+    entryPoints = ["websecure"]
+    service = "service1"
+    rule = "Path(`/`)"
+    [http.routers.router3.tls]
+
+[[http.services.service1.loadBalancer.servers]]
+  url = "http://127.0.0.1:9010"
+
+[[tls.certificates]]
+  certFile = "fixtures/https/snitest.com.cert"
+  keyFile = "fixtures/https/snitest.com.key"
+
+[[tls.certificates]]
+  certFile = "fixtures/https/snitest.org.cert"
+  keyFile = "fixtures/https/snitest.org.key"
+
+[tls.options]
+
+  [tls.options.default.clientAuth]
+    # Missing caFile to have an invalid mTLS configuration.
+    clientAuthType = "RequireAndVerifyClientCert"
+
+  [tls.options.invalidTLSOptions.clientAuth]
+    # Missing caFile to have an invalid mTLS configuration.
+    clientAuthType = "RequireAndVerifyClientCert"

@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/containous/alice"
@@ -16,6 +17,7 @@ import (
 	httpmuxer "github.com/traefik/traefik/v2/pkg/muxer/http"
 	"github.com/traefik/traefik/v2/pkg/server/middleware"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
+	"github.com/traefik/traefik/v2/pkg/tls"
 )
 
 type middlewareBuilder interface {
@@ -35,10 +37,11 @@ type Manager struct {
 	middlewaresBuilder middlewareBuilder
 	chainBuilder       *middleware.ChainBuilder
 	conf               *runtime.Configuration
+	tlsManager         *tls.Manager
 }
 
-// NewManager Creates a new Manager.
-func NewManager(conf *runtime.Configuration, serviceManager serviceManager, middlewaresBuilder middlewareBuilder, chainBuilder *middleware.ChainBuilder, metricsRegistry metrics.Registry) *Manager {
+// NewManager creates a new Manager.
+func NewManager(conf *runtime.Configuration, serviceManager serviceManager, middlewaresBuilder middlewareBuilder, chainBuilder *middleware.ChainBuilder, metricsRegistry metrics.Registry, tlsManager *tls.Manager) *Manager {
 	return &Manager{
 		routerHandlers:     make(map[string]http.Handler),
 		serviceManager:     serviceManager,
@@ -46,6 +49,7 @@ func NewManager(conf *runtime.Configuration, serviceManager serviceManager, midd
 		middlewaresBuilder: middlewaresBuilder,
 		chainBuilder:       chainBuilder,
 		conf:               conf,
+		tlsManager:         tlsManager,
 	}
 }
 
@@ -139,6 +143,17 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, routerConfig *runtime.RouterInfo) (http.Handler, error) {
 	if handler, ok := m.routerHandlers[routerName]; ok {
 		return handler, nil
+	}
+
+	if routerConfig.TLS != nil {
+		// Don't build the router if the TLSOptions configuration is invalid.
+		tlsOptionsName := tls.DefaultTLSConfigName
+		if len(routerConfig.TLS.Options) > 0 && routerConfig.TLS.Options != tls.DefaultTLSConfigName {
+			tlsOptionsName = provider.GetQualifiedName(ctx, routerConfig.TLS.Options)
+		}
+		if _, err := m.tlsManager.Get(tls.DefaultTLSStoreName, tlsOptionsName); err != nil {
+			return nil, fmt.Errorf("building router handler: %w", err)
+		}
 	}
 
 	handler, err := m.buildHTTPHandler(ctx, routerConfig, routerName)
