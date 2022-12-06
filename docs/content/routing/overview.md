@@ -466,45 +466,6 @@ serversTransport:
 
 ### TCP Servers Transports
 
-#### `insecureSkipVerify`
-
-_Optional_
-
-`insecureSkipVerify` disables the server's certificate chain and host name verification.
-
-```yaml tab="File (YAML)"
-## Static configuration
-tcpServersTransports:
-  insecureSkipVerify: true
-```
-
-```toml tab="File (TOML)"
-## Static configuration
-[tcpServersTransports]
-  insecureSkipVerify = true
-```
-
-#### `rootCAs`
-
-_Optional_
-
-`rootCAs` defines the set of Root Certificate Authorities (as file paths, or data bytes)
-to use when verifying self-signed TLS server certificates.
-
-```yaml tab="File (YAML)"
-## Static configuration
-tcpServersTransports:
-  rootCAs:
-    - foo.crt
-    - bar.crt
-```
-
-```toml tab="File (TOML)"
-## Static configuration
-[tcpServersTransports]
-  rootCAs = ["foo.crt", "bar.crt"]
-```
-
 #### `dialTimeout`
 
 _Optional, Default="30s"_
@@ -514,14 +475,19 @@ Zero means no timeout.
 
 ```yaml tab="File (YAML)"
 ## Static configuration
-tcpServersTransports:
+tcpServersTransport:
   dialTimeout: 30s
 ```
 
 ```toml tab="File (TOML)"
 ## Static configuration
-[tcpServersTransports]
+[tcpServersTransport]
   dialTimeout = "30s"
+```
+
+```bash tab="CLI"
+## Static configuration
+--tcpServersTransport.dialTimeout=30s
 ```
 
 #### `dialKeepAlive`
@@ -535,14 +501,127 @@ keep-alive probes are disabled.
 
 ```yaml tab="File (YAML)"
 ## Static configuration
-tcpServersTransports:
+tcpServersTransport:
   dialKeepAlive: 30s
 ```
 
 ```toml tab="File (TOML)"
 ## Static configuration
-[tcpServersTransports]
+[tcpServersTransport]
   dialKeepAlive = "30s"
+```
+
+```bash tab="CLI"
+## Static configuration
+--tcpServersTransport.dialKeepAlive=30s
+```
+
+#### `tls`
+
+#### `tls.insecureSkipVerify`
+
+_Optional_
+
+`insecureSkipVerify` disables the server's certificate chain and host name verification.
+
+```yaml tab="File (YAML)"
+## Static configuration
+tcpServersTransport:
+  tls:
+    insecureSkipVerify: true
+```
+
+```toml tab="File (TOML)"
+## Static configuration
+[tcpServersTransport.tls]
+  insecureSkipVerify = true
+```
+
+```bash tab="CLI"
+## Static configuration
+--tcpServersTransport.insecureSkipVerify=true
+```
+
+#### `tls.rootCAs`
+
+_Optional_
+
+`rootCAs` defines the set of Root Certificate Authorities (as file paths, or data bytes)
+to use when verifying self-signed TLS server certificates.
+
+```yaml tab="File (YAML)"
+## Static configuration
+tcpServersTransport:
+  tls:
+    rootCAs:
+      - foo.crt
+      - bar.crt
+```
+
+```toml tab="File (TOML)"
+## Static configuration
+[tcpServersTransport.tls]
+  rootCAs = ["foo.crt", "bar.crt"]
+```
+
+```bash tab="CLI"
+## Static configuration
+--tcpServersTransport.tls.rootCAs=foo.crt,bar.crt
+```
+
+#### `spiffe`
+
+Please note that [SPIFFE](../https/spiffe.md) must be enabled in the static configuration
+before using it to secure the connection between Traefik and the backends.
+
+#### `spiffe.ids`
+
+_Optional_
+
+`ids` defines the allowed SPIFFE IDs.
+This takes precedence over the SPIFFE TrustDomain.
+
+```yaml tab="File (YAML)"
+## Static configuration
+tcpServersTransport:
+    spiffe:
+      ids:
+        - spiffe://trust-domain/id1
+        - spiffe://trust-domain/id2
+```
+
+```toml tab="File (TOML)"
+## Static configuration
+[tcpServersTransport.spiffe]
+  ids = ["spiffe://trust-domain/id1", "spiffe://trust-domain/id2"]
+```
+
+```bash tab="CLI"
+## Static configuration
+--tcpServersTransport.spiffe.ids=spiffe://trust-domain/id1,spiffe://trust-domain/id2
+```
+
+#### `spiffe.trustDomain`
+
+_Optional_
+
+`trustDomain` defines the allowed SPIFFE trust domain.
+
+```yaml tab="File (YAML)"
+## Static configuration
+tcpServersTransport:
+  trustDomain: spiffe://trust-domain
+```
+
+```toml tab="File (TOML)"
+## Static configuration
+[tcpServersTransport.spiffe]
+  trustDomain = "spiffe://trust-domain"
+```
+
+```bash tab="CLI"
+## Static configuration
+--tcpServersTransport.spiffe.trustDomain=spiffe://trust-domain
 ```
 
 {!traefik-for-business-applications.md!}
