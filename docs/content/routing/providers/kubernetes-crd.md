@@ -1609,8 +1609,8 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
 
 `TLSStore` is the CRD implementation of a [Traefik "TLS Store"](../../https/tls.md#certificates-stores).
 
-Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore` objects
-or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`IngressRouteTCP`](#kind-ingressroutetcp) objects.
+Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore` objects.
+The _default_ `TLSStore` is used by default on [`IngressRoute`](#kind-ingressroute) and [`IngressRouteTCP`](#kind-ingressroutetcp) objects.
 
 !!! important "Default TLS Store"
 
@@ -1645,8 +1645,8 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
     kind: TLSStore
     metadata:
       name: default
-      namespace: default
-    
+      namespace: traefik
+
     spec:
       defaultCertificate:
         secretName:  supersecret
@@ -1660,16 +1660,13 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
     
     spec:
       entryPoints:
-        - web
+        - websecure
       routes:
       - match: Host(`example.com`) && PathPrefix(`/stripit`)
         kind: Rule
         services:
         - name: whoami
           port: 80
-      tls:
-        store: 
-          name: default
     ```
 
     ```yaml tab="Secret"
