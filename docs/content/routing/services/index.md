@@ -1622,12 +1622,13 @@ _Optional_
 tcp:
   serversTransports:
     mytransport:
-      serverName: "myhost"
+      tls:
+        serverName: "myhost"
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[tcp.serversTransports.mytransport]
+[tcp.serversTransports.mytransport.tls]
   serverName = "myhost"
 ```
 
@@ -1639,7 +1640,8 @@ metadata:
   namespace: default
 
 spec:
-  serverName: "test"
+  tls:
+    serverName: "test"
 ```
 
 #### `certificates`
@@ -1654,14 +1656,15 @@ that will be set as client certificates for mTLS.
 tcp:
   serversTransports:
     mytransport:
-      certificates:
-        - certFile: foo.crt
-          keyFile: bar.crt
+      tls:
+        certificates:
+          - certFile: foo.crt
+            keyFile: bar.crt
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[[tcp.serversTransports.mytransport.certificates]]
+[[tcp.serversTransports.mytransport.tls.certificates]]
   certFile = "foo.crt"
   keyFile = "bar.crt"
 ```
@@ -1674,8 +1677,9 @@ metadata:
   namespace: default
 
 spec:
-  certificatesSecrets:
-    - mycert
+  tls:
+    certificatesSecrets:
+      - mycert
 
 ---
 apiVersion: v1
@@ -1699,12 +1703,13 @@ _Optional_
 tcp:
   serversTransports:
     mytransport:
-      insecureSkipVerify: true
+      tls:
+        insecureSkipVerify: true
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[tcp.serversTransports.mytransport]
+[tcp.serversTransports.mytransport.tls]
   insecureSkipVerify = true
 ```
 
@@ -1716,7 +1721,8 @@ metadata:
   namespace: default
 
 spec:
-  insecureSkipVerify: true
+  tls:
+    insecureSkipVerify: true
 ```
 
 #### `rootCAs`
@@ -1730,14 +1736,15 @@ _Optional_
 tcp:
   serversTransports:
     mytransport:
-      rootCAs:
-        - foo.crt
-        - bar.crt
+      tls:
+        rootCAs:
+          - foo.crt
+          - bar.crt
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[tcp.serversTransports.mytransport]
+[tcp.serversTransports.mytransport.tls]
   rootCAs = ["foo.crt", "bar.crt"]
 ```
 
@@ -1749,8 +1756,9 @@ metadata:
   namespace: default
 
 spec:
-  rootCAsSecrets:
-    - myca
+  tls:
+    rootCAsSecrets:
+      - myca
 ---
 apiVersion: v1
 kind: Secret
@@ -1772,12 +1780,13 @@ _Optional, Default=false_
 tcp:
   serversTransports:
     mytransport:
-      peerCertURI: foobar
+      tls:
+        peerCertURI: foobar
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[tcp.serversTransports.mytransport]
+[tcp.serversTransports.mytransport.tls]
   peerCertURI = "foobar"
 ```
 
@@ -1789,7 +1798,8 @@ metadata:
   namespace: default
 
 spec:
-  peerCertURI: foobar
+  tls:
+    peerCertURI: foobar
 ```
 
 #### `dialTimeout`
