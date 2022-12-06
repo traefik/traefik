@@ -53,4 +53,5 @@ One should use the `ContentType` middleware to enable the `Content-Type` header 
 
 ## HTTP/3
 
-In v3, HTTP/3 is no longer an experimental feature. The `experimental.http3` option has been removed from the static configuration.
+In v3, HTTP/3 is no longer an experimental feature.
+The `experimental.http3` option has been removed from the static configuration.
