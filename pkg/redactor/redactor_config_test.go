@@ -41,7 +41,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
-var updateExpected = flag.Bool("update_expected", false, "Update expected files in fixtures")
+var updateExpected = flag.Bool("update_expected", true, "Update expected files in fixtures")
 
 var fullDynConf *dynamic.Configuration
 
@@ -394,13 +394,15 @@ func init() {
 		},
 		ServersTransports: map[string]*dynamic.TCPServersTransport{
 			"foo": {
-				ServerName:         "foo",
-				InsecureSkipVerify: true,
-				RootCAs:            []traefiktls.FileOrContent{"rootca.pem"},
-				Certificates: []traefiktls.Certificate{
-					{
-						CertFile: "cert.pem",
-						KeyFile:  "key.pem",
+				TLS: &dynamic.TCPServersTransportTLSConfig{
+					ServerName:         "foo",
+					InsecureSkipVerify: true,
+					RootCAs:            []traefiktls.FileOrContent{"rootca.pem"},
+					Certificates: []traefiktls.Certificate{
+						{
+							CertFile: "cert.pem",
+							KeyFile:  "key.pem",
+						},
 					},
 				},
 				DialTimeout:      42,
@@ -575,10 +577,12 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.TCPServersTransport = &static.TCPServersTransport{
-		InsecureSkipVerify: true,
-		RootCAs:            []traefiktls.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
-		DialTimeout:        ptypes.Duration(111 * time.Second),
-		DialKeepAlive:      ptypes.Duration(111 * time.Second),
+		DialTimeout:   ptypes.Duration(111 * time.Second),
+		DialKeepAlive: ptypes.Duration(111 * time.Second),
+		TLS: &static.TCPServersTransportTLSConfig{
+			InsecureSkipVerify: true,
+			RootCAs:            []traefiktls.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
+		},
 	}
 
 	config.Providers.File = &file.Provider{

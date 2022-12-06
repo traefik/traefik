@@ -90,20 +90,21 @@ metadata:
   namespace: foo
 
 spec:
-  serverName: "test"
-  insecureSkipVerify: true
-  peerCertURI: foo://bar
-  rootCAsSecrets:
-    - root-ca0
-    - root-ca1
-    - root-ca2
-    - root-ca3
-    - root-ca4
-    - allcerts
-  certificatesSecrets:
-    - mtls1
-    - mtls2
-    - allcerts
+  tls:
+    serverName: "test"
+    insecureSkipVerify: true
+    peerCertURI: foo://bar
+    rootCAsSecrets:
+      - root-ca0
+      - root-ca1
+      - root-ca2
+      - root-ca3
+      - root-ca4
+      - allcerts
+    certificatesSecrets:
+      - mtls1
+      - mtls2
+      - allcerts
   dialTimeout: 42
   dialKeepAlive: 42
   terminationDelay: 42
@@ -121,7 +122,8 @@ metadata:
   namespace: default
 
 spec:
-  serverName: "test"
+  tls:
+    serverName: "test"
 
 ---
 apiVersion: traefik.containo.us/v1alpha1

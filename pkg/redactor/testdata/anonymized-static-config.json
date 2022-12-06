@@ -18,14 +18,16 @@
     }
   },
   "tcpServersTransport": {
-    "insecureSkipVerify": true,
-    "rootCAs": [
-      "xxxx",
-      "xxxx",
-      "xxxx"
-    ],
+    "dialKeepAlive": "1m51s",
     "dialTimeout": "1m51s",
-    "dialKeepAlive": "1m51s"
+    "tls": {
+      "insecureSkipVerify": true,
+      "rootCAs": [
+        "xxxx",
+        "xxxx",
+        "xxxx"
+      ]
+    }
   },
   "entryPoints": {
     "foobar": {
