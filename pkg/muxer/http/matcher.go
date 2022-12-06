@@ -75,30 +75,16 @@ func host(route *mux.Route, hosts ...string) error {
 	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
 		reqHost := requestdecorator.GetCanonizedHost(req.Context())
 		if len(reqHost) == 0 {
-			// If the request is an HTTP/1.0 request, then a Host may not be defined.
-			if req.ProtoAtLeast(1, 1) {
-				log.Ctx(req.Context()).Warn().Str("host", req.Host).Msg("Could not retrieve CanonizedHost, rejecting")
-			}
-
-			return false
-		}
-
-		flatH := requestdecorator.GetCNAMEFlatten(req.Context())
-		if len(flatH) > 0 {
-			if strings.EqualFold(reqHost, host) || strings.EqualFold(flatH, host) {
-				return true
-			}
-
-			log.Ctx(req.Context()).Debug().
-				Str("host", reqHost).
-				Str("flattenHost", flatH).
-				Str("matcher", host).
-				Msg("CNAMEFlattening: resolved Host does not match")
 			return false
 		}
 
 		if reqHost == host {
 			return true
+		}
+
+		flatH := requestdecorator.GetCNAMEFlatten(req.Context())
+		if len(flatH) > 0 {
+			return strings.EqualFold(flatH, host)
 		}
 
 		// Check for match on trailing period on host
@@ -136,7 +122,8 @@ func hostRegexp(route *mux.Route, hosts ...string) error {
 	}
 
 	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
-		return re.MatchString(req.Host)
+		return re.MatchString(requestdecorator.GetCanonizedHost(req.Context())) ||
+			re.MatchString(requestdecorator.GetCNAMEFlatten(req.Context()))
 	})
 
 	return nil
