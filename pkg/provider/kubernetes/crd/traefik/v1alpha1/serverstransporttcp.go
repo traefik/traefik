@@ -27,6 +27,19 @@ type ServersTransportTCP struct {
 
 // ServersTransportTCPSpec defines the desired state of a ServersTransportTCP.
 type ServersTransportTCPSpec struct {
+	DialTimeout *intstr.IntOrString `json:"dialTimeout,omitempty"`
+	// DialKeepAlive is the interval between keep-alive probes for an active network connection. If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled.
+	DialKeepAlive *intstr.IntOrString `json:"dialKeepAlive,omitempty"`
+	// Spiffe defines the SPIFFE configuration.
+	Spiffe *dynamic.Spiffe `json:"spiffe,omitempty"`
+	// TerminationDelay defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability.
+	TerminationDelay *intstr.IntOrString `json:"terminationDelay,omitempty"`
+	// TLS defines the TLS configuration
+	TLS *TCPServersTransportTLSConfig `description:"Defines the TLS configuration." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+}
+
+// TCPServersTransportTLSConfig defines the desired state of a TCPServersTransportTLSConfig.
+type TCPServersTransportTLSConfig struct {
 	// ServerName defines the server name used to contact the server.
 	ServerName string `json:"serverName,omitempty"`
 	// InsecureSkipVerify disables TLS certificate verification.
@@ -39,13 +52,6 @@ type ServersTransportTCPSpec struct {
 	// PeerCertURI defines the peer cert URI used to match against SAN URI during the peer certificate verification.
 	PeerCertURI string `json:"peerCertURI,omitempty"`
 	// DialTimeout is the amount of time to wait until a connection to a backend server can be established.
-	DialTimeout *intstr.IntOrString `json:"dialTimeout,omitempty"`
-	// DialKeepAlive is the interval between keep-alive probes for an active network connection. If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled.
-	DialKeepAlive *intstr.IntOrString `json:"dialKeepAlive,omitempty"`
-	// Spiffe defines the SPIFFE configuration.
-	Spiffe *dynamic.Spiffe `json:"spiffe,omitempty"`
-	// TerminationDelay defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability.
-	TerminationDelay *intstr.IntOrString `json:"terminationDelay,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

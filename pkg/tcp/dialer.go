@@ -100,6 +100,14 @@ func (d *DialerManager) createDialer(cfg *dynamic.TCPServersTransport) (Dialer, 
 		KeepAlive: time.Duration(cfg.DialKeepAlive),
 	}
 
+	if cfg.TLS == nil && cfg.Spiffe == nil {
+		return dialerTCP{dialer, time.Duration(cfg.TerminationDelay)}, nil
+	}
+
+	if cfg.Spiffe != nil && cfg.TLS != nil {
+		return nil, errors.New("TLS and SPIFFE configuration cannot be defined at the same time")
+	}
+
 	var tlsConfig *tls.Config
 
 	if cfg.Spiffe != nil {
@@ -115,27 +123,19 @@ func (d *DialerManager) createDialer(cfg *dynamic.TCPServersTransport) (Dialer, 
 		tlsConfig = tlsconfig.MTLSClientConfig(d.spiffeX509Source, d.spiffeX509Source, spiffeAuthorizer)
 	}
 
-	if cfg.InsecureSkipVerify || len(cfg.RootCAs) > 0 || len(cfg.ServerName) > 0 || len(cfg.Certificates) > 0 || cfg.PeerCertURI != "" {
-		if tlsConfig != nil {
-			return nil, errors.New("TLS and SPIFFE configuration cannot be defined at the same time")
-		}
-
+	if tlsConfig == nil {
 		tlsConfig = &tls.Config{
-			ServerName:         cfg.ServerName,
-			InsecureSkipVerify: cfg.InsecureSkipVerify,
-			RootCAs:            createRootCACertPool(cfg.RootCAs),
-			Certificates:       cfg.Certificates.GetCertificates(),
+			ServerName:         cfg.TLS.ServerName,
+			InsecureSkipVerify: cfg.TLS.InsecureSkipVerify,
+			RootCAs:            createRootCACertPool(cfg.TLS.RootCAs),
+			Certificates:       cfg.TLS.Certificates.GetCertificates(),
 		}
 
-		if cfg.PeerCertURI != "" {
+		if cfg.TLS.PeerCertURI != "" {
 			tlsConfig.VerifyPeerCertificate = func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
-				return traefiktls.VerifyPeerCertificate(cfg.PeerCertURI, tlsConfig, rawCerts)
+				return traefiktls.VerifyPeerCertificate(cfg.TLS.PeerCertURI, tlsConfig, rawCerts)
 			}
 		}
-	}
-
-	if tlsConfig == nil {
-		return dialerTCP{dialer, time.Duration(cfg.TerminationDelay)}, nil
 	}
 
 	tlsDialer := &tls.Dialer{

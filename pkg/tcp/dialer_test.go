@@ -136,8 +136,10 @@ func TestTLS(t *testing.T) {
 
 	dynamicConf := map[string]*dynamic.TCPServersTransport{
 		"test": {
-			ServerName: "example.com",
-			RootCAs:    []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
+			TLS: &dynamic.TCPServersTransportTLSConfig{
+				ServerName: "example.com",
+				RootCAs:    []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
+			},
 		},
 	}
 
@@ -184,9 +186,11 @@ func TestTLSWithInsecureSkipVerify(t *testing.T) {
 
 	dynamicConf := map[string]*dynamic.TCPServersTransport{
 		"test": {
-			ServerName:         "bad-domain.com",
-			RootCAs:            []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
-			InsecureSkipVerify: true,
+			TLS: &dynamic.TCPServersTransportTLSConfig{
+				ServerName:         "bad-domain.com",
+				RootCAs:            []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
+				InsecureSkipVerify: true,
+			},
 		},
 	}
 
@@ -243,15 +247,17 @@ func TestMTLS(t *testing.T) {
 
 	dynamicConf := map[string]*dynamic.TCPServersTransport{
 		"test": {
-			ServerName: "example.com",
-			// For TLS
-			RootCAs: []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
+			TLS: &dynamic.TCPServersTransportTLSConfig{
+				ServerName: "example.com",
+				// For TLS
+				RootCAs: []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
 
-			// For mTLS
-			Certificates: traefiktls.Certificates{
-				traefiktls.Certificate{
-					CertFile: traefiktls.FileOrContent(mTLSCert),
-					KeyFile:  traefiktls.FileOrContent(mTLSKey),
+				// For mTLS
+				Certificates: traefiktls.Certificates{
+					traefiktls.Certificate{
+						CertFile: traefiktls.FileOrContent(mTLSCert),
+						KeyFile:  traefiktls.FileOrContent(mTLSKey),
+					},
 				},
 			},
 		},
