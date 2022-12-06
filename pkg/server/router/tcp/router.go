@@ -267,6 +267,7 @@ func (r *Router) SetHTTPSForwarder(handler tcp.Handler) {
 		r.httpsForwarder = &brokenTLSRouter{}
 		return
 	}
+
 	r.httpsForwarder = &tcp.TLSHandler{
 		Next:   handler,
 		Config: r.httpsTLSConfig,

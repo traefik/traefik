@@ -174,7 +174,7 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 		err = fmt.Errorf("TLS store %s not found", storeName)
 	}
 	acmeTLSStore := m.getStore(tlsalpn01.ACMETLS1Protocol)
-	if acmeTLSStore == nil {
+	if acmeTLSStore == nil && err == nil {
 		err = fmt.Errorf("ACME TLS store %s not found", tlsalpn01.ACMETLS1Protocol)
 	}
 
