@@ -157,19 +157,16 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 
-	var tlsConfig *tls.Config
-	var err error
-
 	sniStrict := false
 	config, ok := m.configs[configName]
-	if ok {
-		sniStrict = config.SniStrict
-		tlsConfig, err = buildTLSConfig(config)
-	} else {
-		err = fmt.Errorf("unknown TLS options: %s", configName)
+	if !ok {
+		return nil, fmt.Errorf("unknown TLS options: %s", configName)
 	}
+
+	sniStrict = config.SniStrict
+	tlsConfig, err := buildTLSConfig(config)
 	if err != nil {
-		tlsConfig = &tls.Config{}
+		return nil, fmt.Errorf("building TLS config: %w", err)
 	}
 
 	store := m.getStore(storeName)
@@ -177,7 +174,7 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 		err = fmt.Errorf("TLS store %s not found", storeName)
 	}
 	acmeTLSStore := m.getStore(tlsalpn01.ACMETLS1Protocol)
-	if acmeTLSStore == nil {
+	if acmeTLSStore == nil && err == nil {
 		err = fmt.Errorf("ACME TLS store %s not found", tlsalpn01.ACMETLS1Protocol)
 	}
 
@@ -188,15 +185,12 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 			certificate := acmeTLSStore.GetBestCertificate(clientHello)
 			if certificate == nil {
 				log.WithoutContext().Debugf("TLS: no certificate for TLSALPN challenge: %s", domainToCheck)
-				// We want the user to eventually get the (alertUnrecognizedName) "unrecognized
-				// name" error.
-				// Unfortunately, if we returned an error here, since we can't use
-				// the unexported error (errNoCertificates) that our caller (config.getCertificate
-				// in crypto/tls) uses as a sentinel, it would report an (alertInternalError)
-				// "internal error" instead of an alertUnrecognizedName.
-				// Which is why we return no error, and we let the caller detect that there's
-				// actually no certificate, and fall back into the flow that will report
-				// the desired error.
+				// We want the user to eventually get the (alertUnrecognizedName) "unrecognized name" error.
+				// Unfortunately, if we returned an error here,
+				// since we can't use the unexported error (errNoCertificates) that our caller (config.getCertificate in crypto/tls) uses as a sentinel,
+				// it would report an (alertInternalError) "internal error" instead of an alertUnrecognizedName.
+				// Which is why we return no error, and we let the caller detect that there's actually no certificate,
+				// and fall back into the flow that will report the desired error.
 				// https://cs.opensource.google/go/go/+/dev.boringcrypto.go1.17:src/crypto/tls/common.go;l=1058
 				return nil, nil
 			}
