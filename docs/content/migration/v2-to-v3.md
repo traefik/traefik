@@ -50,3 +50,8 @@ and should be explicitly combined using logical operators to mimic previous beha
 
 In v3, the `Content-Type` header is not auto-detected anymore when it is not set by the backend.
 One should use the `ContentType` middleware to enable the `Content-Type` header value auto-detection.
+
+## HTTP/3
+
+In v3, HTTP/3 is no longer an experimental feature.
+The `experimental.http3` option has been removed from the static configuration.
