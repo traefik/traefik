@@ -89,9 +89,10 @@ func TestNewConfigurationWatcher(t *testing.T) {
 				th.WithLoadBalancerServices(),
 			),
 			TCP: &dynamic.TCPConfiguration{
-				Routers:     map[string]*dynamic.TCPRouter{},
-				Middlewares: map[string]*dynamic.TCPMiddleware{},
-				Services:    map[string]*dynamic.TCPService{},
+				Routers:           map[string]*dynamic.TCPRouter{},
+				Middlewares:       map[string]*dynamic.TCPMiddleware{},
+				Services:          map[string]*dynamic.TCPService{},
+				ServersTransports: map[string]*dynamic.TCPServersTransport{},
 			},
 			TLS: &dynamic.TLSConfiguration{
 				Options: map[string]tls.Options{
@@ -224,9 +225,10 @@ func TestIgnoreTransientConfiguration(t *testing.T) {
 			th.WithMiddlewares(),
 		),
 		TCP: &dynamic.TCPConfiguration{
-			Routers:     map[string]*dynamic.TCPRouter{},
-			Middlewares: map[string]*dynamic.TCPMiddleware{},
-			Services:    map[string]*dynamic.TCPService{},
+			Routers:           map[string]*dynamic.TCPRouter{},
+			Middlewares:       map[string]*dynamic.TCPMiddleware{},
+			Services:          map[string]*dynamic.TCPService{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{},
 		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  map[string]*dynamic.UDPRouter{},
@@ -392,9 +394,10 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 			th.WithMiddlewares(),
 		),
 		TCP: &dynamic.TCPConfiguration{
-			Routers:     map[string]*dynamic.TCPRouter{},
-			Middlewares: map[string]*dynamic.TCPMiddleware{},
-			Services:    map[string]*dynamic.TCPService{},
+			Routers:           map[string]*dynamic.TCPRouter{},
+			Middlewares:       map[string]*dynamic.TCPMiddleware{},
+			Services:          map[string]*dynamic.TCPService{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{},
 		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  map[string]*dynamic.UDPRouter{},
@@ -481,9 +484,10 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 			th.WithMiddlewares(),
 		),
 		TCP: &dynamic.TCPConfiguration{
-			Routers:     map[string]*dynamic.TCPRouter{},
-			Middlewares: map[string]*dynamic.TCPMiddleware{},
-			Services:    map[string]*dynamic.TCPService{},
+			Routers:           map[string]*dynamic.TCPRouter{},
+			Middlewares:       map[string]*dynamic.TCPMiddleware{},
+			Services:          map[string]*dynamic.TCPService{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{},
 		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  map[string]*dynamic.UDPRouter{},
@@ -615,9 +619,10 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 			th.WithMiddlewares(),
 		),
 		TCP: &dynamic.TCPConfiguration{
-			Routers:     map[string]*dynamic.TCPRouter{},
-			Middlewares: map[string]*dynamic.TCPMiddleware{},
-			Services:    map[string]*dynamic.TCPService{},
+			Routers:           map[string]*dynamic.TCPRouter{},
+			Middlewares:       map[string]*dynamic.TCPMiddleware{},
+			Services:          map[string]*dynamic.TCPService{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{},
 		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  map[string]*dynamic.UDPRouter{},
@@ -682,9 +687,10 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 			th.WithMiddlewares(),
 		),
 		TCP: &dynamic.TCPConfiguration{
-			Routers:     map[string]*dynamic.TCPRouter{},
-			Middlewares: map[string]*dynamic.TCPMiddleware{},
-			Services:    map[string]*dynamic.TCPService{},
+			Routers:           map[string]*dynamic.TCPRouter{},
+			Middlewares:       map[string]*dynamic.TCPMiddleware{},
+			Services:          map[string]*dynamic.TCPService{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{},
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Options: map[string]tls.Options{
