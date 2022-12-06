@@ -349,10 +349,15 @@ func (i *Provider) serverTransportTCP(cfg *dynamic.Configuration) {
 	}
 
 	st := &dynamic.TCPServersTransport{
-		InsecureSkipVerify: i.staticCfg.TCPServersTransport.InsecureSkipVerify,
-		RootCAs:            i.staticCfg.TCPServersTransport.RootCAs,
-		DialTimeout:        i.staticCfg.TCPServersTransport.DialTimeout,
-		DialKeepAlive:      i.staticCfg.TCPServersTransport.DialKeepAlive,
+		DialTimeout:   i.staticCfg.TCPServersTransport.DialTimeout,
+		DialKeepAlive: i.staticCfg.TCPServersTransport.DialKeepAlive,
+	}
+
+	if i.staticCfg.TCPServersTransport.TLS != nil {
+		st.TLS = &dynamic.TCPServersTransportTLSConfig{
+			InsecureSkipVerify: i.staticCfg.TCPServersTransport.TLS.InsecureSkipVerify,
+			RootCAs:            i.staticCfg.TCPServersTransport.TLS.RootCAs,
+		}
 	}
 
 	if i.staticCfg.TCPServersTransport.Spiffe != nil {

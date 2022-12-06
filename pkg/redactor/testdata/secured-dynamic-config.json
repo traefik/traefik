@@ -406,20 +406,22 @@
     },
     "serversTransports": {
       "foo": {
-        "serverName": "foo",
-        "insecureSkipVerify": true,
-        "rootCAs": [
-          "rootca.pem"
-        ],
-        "certificates": [
-          {
-            "certFile": "cert.pem",
-            "keyFile": "xxxx"
-          }
-        ],
-        "dialTimeout": "42ns",
         "dialKeepAlive": "42ns",
-        "terminationDelay": "42ns"
+        "dialTimeout": "42ns",
+        "terminationDelay": "42ns",
+        "tls": {
+          "serverName": "foo",
+          "insecureSkipVerify": true,
+          "rootCAs": [
+            "rootca.pem"
+          ],
+          "certificates": [
+            {
+              "certFile": "cert.pem",
+              "keyFile": "xxxx"
+            }
+          ]
+        }
       }
     }
   },

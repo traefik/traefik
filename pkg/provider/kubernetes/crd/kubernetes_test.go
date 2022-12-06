@@ -1402,15 +1402,17 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				TCP: &dynamic.TCPConfiguration{
 					ServersTransports: map[string]*dynamic.TCPServersTransport{
 						"foo-test": {
-							ServerName:         "test",
-							InsecureSkipVerify: true,
-							RootCAs:            []tls.FileOrContent{"TESTROOTCAS0", "TESTROOTCAS1", "TESTROOTCAS2", "TESTROOTCAS3", "TESTROOTCAS5", "TESTALLCERTS"},
-							Certificates: tls.Certificates{
-								{CertFile: "TESTCERT1", KeyFile: "TESTKEY1"},
-								{CertFile: "TESTCERT2", KeyFile: "TESTKEY2"},
-								{CertFile: "TESTCERT3", KeyFile: "TESTKEY3"},
+							TLS: &dynamic.TCPServersTransportTLSConfig{
+								ServerName:         "test",
+								InsecureSkipVerify: true,
+								RootCAs:            []tls.FileOrContent{"TESTROOTCAS0", "TESTROOTCAS1", "TESTROOTCAS2", "TESTROOTCAS3", "TESTROOTCAS5", "TESTALLCERTS"},
+								Certificates: tls.Certificates{
+									{CertFile: "TESTCERT1", KeyFile: "TESTKEY1"},
+									{CertFile: "TESTCERT2", KeyFile: "TESTKEY2"},
+									{CertFile: "TESTCERT3", KeyFile: "TESTKEY3"},
+								},
+								PeerCertURI: "foo://bar",
 							},
-							PeerCertURI:      "foo://bar",
 							DialTimeout:      ptypes.Duration(42 * time.Second),
 							DialKeepAlive:    ptypes.Duration(42 * time.Second),
 							TerminationDelay: ptypes.Duration(42 * time.Second),
@@ -1423,7 +1425,9 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 							},
 						},
 						"default-test": {
-							ServerName:       "test",
+							TLS: &dynamic.TCPServersTransportTLSConfig{
+								ServerName: "test",
+							},
 							DialTimeout:      ptypes.Duration(30 * time.Second),
 							DialKeepAlive:    ptypes.Duration(15 * time.Second),
 							TerminationDelay: ptypes.Duration(100 * time.Millisecond),

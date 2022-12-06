@@ -1721,12 +1721,6 @@ spec:
           spec:
             description: ServersTransportTCPSpec defines the desired state of a ServersTransportTCP.
             properties:
-              certificatesSecrets:
-                description: CertificatesSecrets defines a list of secret storing
-                  client certificates for mTLS.
-                items:
-                  type: string
-                type: array
               dialKeepAlive:
                 anyOf:
                 - type: integer
@@ -1742,27 +1736,7 @@ spec:
                 anyOf:
                 - type: integer
                 - type: string
-                description: DialTimeout is the amount of time to wait until a connection
-                  to a backend server can be established.
                 x-kubernetes-int-or-string: true
-              insecureSkipVerify:
-                description: InsecureSkipVerify disables TLS certificate verification.
-                type: boolean
-              peerCertURI:
-                description: MaxIdleConnsPerHost controls the maximum idle (keep-alive)
-                  to keep per-host. PeerCertURI defines the peer cert URI used to
-                  match against SAN URI during the peer certificate verification.
-                type: string
-              rootCAsSecrets:
-                description: RootCAsSecrets defines a list of CA secret used to validate
-                  self-signed certificates.
-                items:
-                  type: string
-                type: array
-              serverName:
-                description: ServerName defines the server name used to contact the
-                  server.
-                type: string
               spiffe:
                 description: Spiffe defines the SPIFFE configuration.
                 properties:
@@ -1784,6 +1758,34 @@ spec:
                   terminating the connection, after one connected peer has closed
                   its writing capability.
                 x-kubernetes-int-or-string: true
+              tls:
+                description: TLS defines the TLS configuration
+                properties:
+                  certificatesSecrets:
+                    description: CertificatesSecrets defines a list of secret storing
+                      client certificates for mTLS.
+                    items:
+                      type: string
+                    type: array
+                  insecureSkipVerify:
+                    description: InsecureSkipVerify disables TLS certificate verification.
+                    type: boolean
+                  peerCertURI:
+                    description: MaxIdleConnsPerHost controls the maximum idle (keep-alive)
+                      to keep per-host. PeerCertURI defines the peer cert URI used
+                      to match against SAN URI during the peer certificate verification.
+                    type: string
+                  rootCAsSecrets:
+                    description: RootCAsSecrets defines a list of CA secret used to
+                      validate self-signed certificates.
+                    items:
+                      type: string
+                    type: array
+                  serverName:
+                    description: ServerName defines the server name used to contact
+                      the server.
+                    type: string
+                type: object
             type: object
         required:
         - metadata

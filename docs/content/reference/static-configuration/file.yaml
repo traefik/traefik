@@ -19,12 +19,13 @@ serversTransports:
       - foobar
     trustDomain: foobar
 tcpServersTransport:
-  insecureSkipVerify: true
-  rootCAs:
-    - foobar
-    - foobar
   dialTimeout: 42s
   dialKeepAlive: 42s
+  tls:
+    insecureSkipVerify: true
+    rootCAs:
+      - foobar
+      - foobar
   spiffe:
     ids:
       - foobar
