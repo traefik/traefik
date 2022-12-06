@@ -247,6 +247,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		if defaultTLSConf == nil {
 			logger.Debugf("Adding special closing route for %s because broken default TLS options", hostSNI)
 		}
+
 		router.AddHTTPTLSConfig(hostSNI, defaultTLSConf)
 	}
 
