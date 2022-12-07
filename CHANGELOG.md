@@ -1,3 +1,22 @@
+## [v2.9.6](https://github.com/traefik/traefik/tree/v2.9.6) (2022-12-07)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.5...v2.9.6)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.9.1 ([#9550](https://github.com/traefik/traefik/pull/9550) by [ldez](https://github.com/ldez))
+- **[k8s/crd]** Support of allowEmptyServices in TraefikService ([#9424](https://github.com/traefik/traefik/pull/9424) by [jeromeguiard](https://github.com/jeromeguiard))
+- **[logs]** Remove logs of the request ([#9574](https://github.com/traefik/traefik/pull/9574) by [ldez](https://github.com/ldez))
+- **[plugins]** Increase the timeout on plugin download ([#9529](https://github.com/traefik/traefik/pull/9529) by [ldez](https://github.com/ldez))
+- **[server]** Update golang.org/x/net ([#9582](https://github.com/traefik/traefik/pull/9582) by [ldez](https://github.com/ldez))
+- **[tls]** Handle broken TLS conf better ([#9572](https://github.com/traefik/traefik/pull/9572) by [mpl](https://github.com/mpl))
+- **[tracing]** Update DataDog tracing dependency to v1.43.1 ([#9526](https://github.com/traefik/traefik/pull/9526) by [rtribotte](https://github.com/rtribotte))
+- **[webui]** Add missing serialNumber passTLSClientCert option to middleware panel ([#9539](https://github.com/traefik/traefik/pull/9539) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- **[docker]** Add networking example ([#9542](https://github.com/traefik/traefik/pull/9542) by [Janik-Haag](https://github.com/Janik-Haag))
+- **[hub]** Add information about the Hub Agent ([#9560](https://github.com/traefik/traefik/pull/9560) by [nmengin](https://github.com/nmengin))
+- **[k8s/helm]** Update Helm installation section ([#9564](https://github.com/traefik/traefik/pull/9564) by [mloiseleur](https://github.com/mloiseleur))
+- **[middleware]** Clarify PathPrefix matcher greediness ([#9519](https://github.com/traefik/traefik/pull/9519) by [mpl](https://github.com/mpl))
+
 ## [v3.0.0-beta1](https://github.com/traefik/traefik/tree/v3.0.0-beta1) (2022-12-05)
 [All Commits](https://github.com/traefik/traefik/compare/v2.9.0-rc1...v3.0.0-beta1)
 

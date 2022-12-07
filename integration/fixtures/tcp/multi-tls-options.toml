@@ -34,6 +34,13 @@
       [tcp.routers.to-whoami-sni-strict.tls]
         options = "bar"
 
+    [tcp.routers.to-whoami-invalid-tls]
+      rule = "HostSNI(`whoami-i.test`)"
+      service = "whoami-no-cert"
+      entryPoints = [ "tcp" ]
+      [tcp.routers.to-whoami-invalid-tls.tls]
+        options = "invalid"
+
     [tcp.services.whoami-no-cert]
       [tcp.services.whoami-no-cert.loadBalancer]
         [[tcp.services.whoami-no-cert.loadBalancer.servers]]
@@ -46,3 +53,7 @@
 
   [tls.options.bar]
     minVersion = "VersionTLS13"
+
+  [tls.options.invalid.clientAuth]
+    # Missing CA files to have an invalid mTLS configuration.
+    clientAuthType = "RequireAndVerifyClientCert"
