@@ -1611,197 +1611,6 @@ tcp:
 
 ServersTransport allows to configure the transport between Traefik and your TCP servers.
 
-#### `serverName`
-
-_Optional_
-
-`serverName` configure the server name that will be used for SNI.
-
-```yaml tab="File (YAML)"
-## Dynamic configuration
-tcp:
-  serversTransports:
-    mytransport:
-      tls:
-        serverName: "myhost"
-```
-
-```toml tab="File (TOML)"
-## Dynamic configuration
-[tcp.serversTransports.mytransport.tls]
-  serverName = "myhost"
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
-kind: ServersTransportTCP
-metadata:
-  name: mytransport
-  namespace: default
-
-spec:
-  tls:
-    serverName: "test"
-```
-
-#### `certificates`
-
-_Optional_
-
-`certificates` is the list of certificates (as file paths, or data bytes)
-that will be set as client certificates for mTLS.
-
-```yaml tab="File (YAML)"
-## Dynamic configuration
-tcp:
-  serversTransports:
-    mytransport:
-      tls:
-        certificates:
-          - certFile: foo.crt
-            keyFile: bar.crt
-```
-
-```toml tab="File (TOML)"
-## Dynamic configuration
-[[tcp.serversTransports.mytransport.tls.certificates]]
-  certFile = "foo.crt"
-  keyFile = "bar.crt"
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
-kind: ServersTransportTCP
-metadata:
-  name: mytransport
-  namespace: default
-
-spec:
-  tls:
-    certificatesSecrets:
-      - mycert
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: mycert
-
-data:
-  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
-  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
-```
-
-#### `insecureSkipVerify`
-
-_Optional_
-
-`insecureSkipVerify` controls whether the server's certificate chain and host name is verified.
-
-```yaml tab="File (YAML)"
-## Dynamic configuration
-tcp:
-  serversTransports:
-    mytransport:
-      tls:
-        insecureSkipVerify: true
-```
-
-```toml tab="File (TOML)"
-## Dynamic configuration
-[tcp.serversTransports.mytransport.tls]
-  insecureSkipVerify = true
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
-kind: ServersTransportTCP
-metadata:
-  name: mytransport
-  namespace: default
-
-spec:
-  tls:
-    insecureSkipVerify: true
-```
-
-#### `rootCAs`
-
-_Optional_
-
-`rootCAs` defines the set of root certificate authorities (as file paths, or data bytes) to use when verifying server certificates.
-
-```yaml tab="File (YAML)"
-## Dynamic configuration
-tcp:
-  serversTransports:
-    mytransport:
-      tls:
-        rootCAs:
-          - foo.crt
-          - bar.crt
-```
-
-```toml tab="File (TOML)"
-## Dynamic configuration
-[tcp.serversTransports.mytransport.tls]
-  rootCAs = ["foo.crt", "bar.crt"]
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
-kind: ServersTransportTCP
-metadata:
-  name: mytransport
-  namespace: default
-
-spec:
-  tls:
-    rootCAsSecrets:
-      - myca
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: myca
-
-data:
-  ca.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
-```
-
-#### `peerCertURI`
-
-_Optional, Default=false_
-
-`peerCertURI` defines the URI used to match against SAN URIs during the server's certificate verification.
-
-```yaml tab="File (YAML)"
-## Dynamic configuration
-tcp:
-  serversTransports:
-    mytransport:
-      tls:
-        peerCertURI: foobar
-```
-
-```toml tab="File (TOML)"
-## Dynamic configuration
-[tcp.serversTransports.mytransport.tls]
-  peerCertURI = "foobar"
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
-kind: ServersTransportTCP
-metadata:
-  name: mytransport
-  namespace: default
-
-spec:
-  tls:
-    peerCertURI: foobar
-```
-
 #### `dialTimeout`
 
 _Optional, Default="30s"_
@@ -1905,6 +1714,229 @@ metadata:
 
 spec:
   terminationDelay: 100ms
+```
+
+#### `tls`
+
+`tls` defines the TLS configuration.
+
+_Optional_
+
+An empty `tls` section enables TLS.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+tcp:
+  serversTransports:
+    mytransport:
+      tls: {}
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[tcp.serversTransports.mytransport.tls]
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  tls: {}
+```
+
+#### `tls.serverName`
+
+_Optional_
+
+`tls.serverName` configure the server name that will be used for SNI.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+tcp:
+  serversTransports:
+    mytransport:
+      tls:
+        serverName: "myhost"
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[tcp.serversTransports.mytransport.tls]
+  serverName = "myhost"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  tls:
+    serverName: "test"
+```
+
+#### `tls.certificates`
+
+_Optional_
+
+`tls.certificates` is the list of certificates (as file paths, or data bytes)
+that will be set as client certificates for mTLS.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+tcp:
+  serversTransports:
+    mytransport:
+      tls:
+        certificates:
+          - certFile: foo.crt
+            keyFile: bar.crt
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[[tcp.serversTransports.mytransport.tls.certificates]]
+  certFile = "foo.crt"
+  keyFile = "bar.crt"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  tls:
+    certificatesSecrets:
+      - mycert
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mycert
+
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0=
+```
+
+#### `tls.insecureSkipVerify`
+
+_Optional_
+
+`tls.insecureSkipVerify` controls whether the server's certificate chain and host name is verified.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+tcp:
+  serversTransports:
+    mytransport:
+      tls:
+        insecureSkipVerify: true
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[tcp.serversTransports.mytransport.tls]
+  insecureSkipVerify = true
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  tls:
+    insecureSkipVerify: true
+```
+
+#### `tls.rootCAs`
+
+_Optional_
+
+`tls.rootCAs` defines the set of root certificate authorities (as file paths, or data bytes) to use when verifying server certificates.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+tcp:
+  serversTransports:
+    mytransport:
+      tls:
+        rootCAs:
+          - foo.crt
+          - bar.crt
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[tcp.serversTransports.mytransport.tls]
+  rootCAs = ["foo.crt", "bar.crt"]
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  tls:
+    rootCAsSecrets:
+      - myca
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: myca
+
+data:
+  ca.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+```
+
+#### `tls.peerCertURI`
+
+_Optional, Default=false_
+
+`tls.peerCertURI` defines the URI used to match against SAN URIs during the server's certificate verification.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+tcp:
+  serversTransports:
+    mytransport:
+      tls:
+        peerCertURI: foobar
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[tcp.serversTransports.mytransport.tls]
+  peerCertURI = "foobar"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: mytransport
+  namespace: default
+
+spec:
+  tls:
+    peerCertURI: foobar
 ```
 
 #### `spiffe`

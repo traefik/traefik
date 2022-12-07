@@ -518,6 +518,28 @@ tcpServersTransport:
 
 #### `tls`
 
+`tls` defines the TLS configuration to connect with TCP backends.
+
+_Optional_
+
+An empty `tls` section enables TLS.
+
+```yaml tab="File (YAML)"
+## Static configuration
+tcpServersTransport:
+  tls: {}
+```
+
+```toml tab="File (TOML)"
+## Static configuration
+[tcpServersTransport.tls]
+```
+
+```bash tab="CLI"
+## Static configuration
+--tcpServersTransport.tls=true
+```
+
 #### `tls.insecureSkipVerify`
 
 _Optional_
@@ -539,7 +561,7 @@ tcpServersTransport:
 
 ```bash tab="CLI"
 ## Static configuration
---tcpServersTransport.insecureSkipVerify=true
+--tcpServersTransport.tls.insecureSkipVerify=true
 ```
 
 #### `tls.rootCAs`
