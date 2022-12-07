@@ -1,3 +1,13 @@
+## [v3.0.0-beta2](https://github.com/traefik/traefik/tree/v3.0.0-beta2) (2022-12-07)
+[All Commits](https://github.com/traefik/traefik/compare/v3.0.0-beta1...v3.0.0-beta2)
+
+**Bug fixes:**
+- **[logs]** Change traefik cmd error log to error level ([#9569](https://github.com/traefik/traefik/pull/9569) by [tomMoulard](https://github.com/tomMoulard))
+- **[rules]** Rework Host and HostRegexp matchers ([#9559](https://github.com/traefik/traefik/pull/9559) by [tomMoulard](https://github.com/tomMoulard))
+
+**Misc:**
+- Merge current v2.9 into master ([#9586](https://github.com/traefik/traefik/pull/9586) by [tomMoulard](https://github.com/tomMoulard))
+
 ## [v2.9.6](https://github.com/traefik/traefik/tree/v2.9.6) (2022-12-07)
 [All Commits](https://github.com/traefik/traefik/compare/v2.9.5...v2.9.6)
 
