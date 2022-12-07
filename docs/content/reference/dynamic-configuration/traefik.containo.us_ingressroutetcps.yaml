@@ -105,15 +105,12 @@ spec:
                                   to use.
                                 type: integer
                             type: object
-                          terminationDelay:
-                            description: TerminationDelay defines the deadline that
-                              the proxy sets, after one of its connected peers indicates
-                              it has closed the writing capability of its connection,
-                              to close the reading capability as well, hence fully
-                              terminating the connection. It is a duration in milliseconds,
-                              defaulting to 100. A negative value means an infinite
-                              deadline (i.e. the reading capability is never closed).
-                            type: integer
+                          serversTransport:
+                            description: ServersTransport defines the name of ServersTransportTCP
+                              resource to use. It allows to configure the transport
+                              between Traefik and your servers. Can only be used on
+                              a Kubernetes Service.
+                            type: string
                           weight:
                             description: Weight defines the weight used when balancing
                               requests between multiple Kubernetes Service.

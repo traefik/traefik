@@ -1,7 +1,7 @@
 global:
   checkNewVersion: true
   sendAnonymousUsage: true
-serversTransport:
+serversTransports:
   insecureSkipVerify: true
   rootCAs:
     - foobar
@@ -11,6 +11,26 @@ serversTransport:
     dialTimeout: 42s
     responseHeaderTimeout: 42s
     idleConnTimeout: 42s
+    readIdleTimeout: 42s
+    pingTimeout: 42s
+  spiffe:
+    ids:
+      - foobar
+      - foobar
+    trustDomain: foobar
+tcpServersTransport:
+  dialTimeout: 42s
+  dialKeepAlive: 42s
+  tls:
+    insecureSkipVerify: true
+    rootCAs:
+      - foobar
+      - foobar
+  spiffe:
+    ids:
+      - foobar
+      - foobar
+    trustDomain: foobar
 entryPoints:
   EntryPoint0:
     address: foobar
