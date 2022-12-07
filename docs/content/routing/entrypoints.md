@@ -312,39 +312,32 @@ entryPoints:
 #### `http3`
 
 `http3` enables HTTP/3 protocol on the entryPoint.
-HTTP/3 requires a TCP entryPoint, as HTTP/3 always starts as a TCP connection that then gets upgraded to UDP.
-In most scenarios, this entryPoint is the same as the one used for TLS traffic.
+HTTP/3 requires a TCP entryPoint,
+as HTTP/3 always starts as a TCP connection that then gets upgraded to UDP.
+In most scenarios,
+this entryPoint is the same as the one used for TLS traffic.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  name:
+  http3: {}
+```
+
+```toml tab="File (TOML)"
+[entryPoints.name.http3]
+```
+
+```bash tab="CLI"
+--entrypoints.name.http3
+```
 
 ??? info "HTTP/3 uses UDP+TLS"
 
-    As HTTP/3 uses UDP, you can't have a TCP entryPoint with HTTP/3 on the same port as a UDP entryPoint.
-    Since HTTP/3 requires the use of TLS, only routers with TLS enabled will be usable with HTTP/3.
-
-!!! warning "Enabling Experimental HTTP/3"
-
-    As the HTTP/3 spec is still in draft, HTTP/3 support in Traefik is an experimental feature and needs to be activated 
-    in the experimental section of the static configuration.
-    
-    ```yaml tab="File (YAML)"
-    experimental:
-      http3: true
-
-    entryPoints:
-      name:
-        http3: {}
-    ```
-
-    ```toml tab="File (TOML)"
-    [experimental]
-      http3 = true
-    
-    [entryPoints.name.http3]
-    ```
-    
-    ```bash tab="CLI"
-    --experimental.http3=true 
-    --entrypoints.name.http3
-    ```
+    As HTTP/3 actually uses UDP, when traefik is configured with a TCP entryPoint on port N with HTTP/3 enabled,
+    the underlying HTTP/3 server that is started automatically listens on UDP port N too. As a consequence,
+    it means port N cannot be used by another UDP entryPoint.
+    Since HTTP/3 requires the use of TLS,
+    only routers with TLS enabled will be usable with HTTP/3.
 
 #### `advertisedPort`
 
@@ -355,9 +348,6 @@ It can be used to override the authority in the `alt-svc` header, for example if
 !!! info "http3.advertisedPort"
 
     ```yaml tab="File (YAML)"
-    experimental:
-      http3: true
-
     entryPoints:
       name:
         http3:
@@ -365,15 +355,11 @@ It can be used to override the authority in the `alt-svc` header, for example if
     ```
 
     ```toml tab="File (TOML)"
-    [experimental]
-      http3 = true
-    
     [entryPoints.name.http3]
       advertisedPort = 443
     ```
     
     ```bash tab="CLI"
-    --experimental.http3=true 
     --entrypoints.name.http3.advertisedport=443
     ```
 
