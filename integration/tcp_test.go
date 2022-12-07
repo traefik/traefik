@@ -116,6 +116,14 @@ func (s *TCPSuite) TestTLSOptions(c *check.C) {
 	_, err = guessWhoTLSMaxVersion("127.0.0.1:8093", "whoami-d.test", true, tls.VersionTLS12)
 	c.Assert(err, checker.NotNil)
 	c.Assert(err.Error(), checker.Contains, "protocol version not supported")
+
+	// Check that we can't reach a route with an invalid mTLS configuration.
+	conn, err := tls.Dial("tcp", "127.0.0.1:8093", &tls.Config{
+		ServerName:         "whoami-i.test",
+		InsecureSkipVerify: true,
+	})
+	c.Assert(conn, checker.IsNil)
+	c.Assert(err, checker.NotNil)
 }
 
 func (s *TCPSuite) TestNonTLSFallback(c *check.C) {
