@@ -333,8 +333,9 @@ entryPoints:
 
 ??? info "HTTP/3 uses UDP+TLS"
 
-    As HTTP/3 uses UDP,
-    you can't have a TCP entryPoint with HTTP/3 on the same port as a UDP entryPoint.
+    As HTTP/3 actually uses UDP, when traefik is configured with a TCP entryPoint on port N with HTTP/3 enabled,
+    the underlying HTTP/3 server that is started automatically listens on UDP port N too. As a consequence,
+    it means port N cannot be used by another UDP entryPoint.
     Since HTTP/3 requires the use of TLS,
     only routers with TLS enabled will be usable with HTTP/3.
 
