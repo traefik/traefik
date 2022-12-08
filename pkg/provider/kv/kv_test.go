@@ -226,7 +226,6 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/tcp/routers/TCPRouter1/tls/passthrough":                                             "true",
 		"traefik/tcp/routers/TCPRouter1/tls/options":                                                 "foobar",
 		"traefik/tcp/routers/TCPRouter1/tls/certResolver":                                            "foobar",
-		"traefik/tcp/services/TCPService01/loadBalancer/terminationDelay":                            "42",
 		"traefik/tcp/services/TCPService01/loadBalancer/servers/0/address":                           "foobar",
 		"traefik/tcp/services/TCPService01/loadBalancer/servers/1/address":                           "foobar",
 		"traefik/tcp/services/TCPService02/weighted/services/0/name":                                 "foobar",
@@ -756,7 +755,6 @@ func Test_buildConfiguration(t *testing.T) {
 			Services: map[string]*dynamic.TCPService{
 				"TCPService01": {
 					LoadBalancer: &dynamic.TCPServersLoadBalancer{
-						TerminationDelay: func(v int) *int { return &v }(42),
 						Servers: []dynamic.TCPServer{
 							{Address: "foobar"},
 							{Address: "foobar"},
