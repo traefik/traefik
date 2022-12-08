@@ -383,9 +383,11 @@
 
         [[tcp.services.TCPService01.loadBalancer.servers]]
           address = "foobar"
+          tls = true
 
         [[tcp.services.TCPService01.loadBalancer.servers]]
           address = "foobar"
+          tls = true
     [tcp.services.TCPService02]
       [tcp.services.TCPService02.weighted]
 

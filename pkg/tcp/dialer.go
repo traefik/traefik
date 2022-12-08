@@ -25,12 +25,12 @@ type Dialer interface {
 	TerminationDelay() time.Duration
 }
 
-type dialerTCP struct {
+type tcpDialer struct {
 	proxy.Dialer
 	terminationDelay time.Duration
 }
 
-func (d dialerTCP) TerminationDelay() time.Duration {
+func (d tcpDialer) TerminationDelay() time.Duration {
 	return d.terminationDelay
 }
 
@@ -44,6 +44,7 @@ type SpiffeX509Source interface {
 type DialerManager struct {
 	rtLock           sync.RWMutex
 	dialers          map[string]Dialer
+	dialersTLS       map[string]Dialer
 	spiffeX509Source SpiffeX509Source
 }
 
@@ -51,6 +52,7 @@ type DialerManager struct {
 func NewDialerManager(spiffeX509Source SpiffeX509Source) *DialerManager {
 	return &DialerManager{
 		dialers:          make(map[string]Dialer),
+		dialersTLS:       make(map[string]Dialer),
 		spiffeX509Source: spiffeX509Source,
 	}
 }
@@ -61,10 +63,9 @@ func (d *DialerManager) Update(configs map[string]*dynamic.TCPServersTransport) 
 	defer d.rtLock.Unlock()
 
 	d.dialers = make(map[string]Dialer)
+	d.dialersTLS = make(map[string]Dialer)
 	for configName, config := range configs {
-		var err error
-		d.dialers[configName], err = d.createDialer(config)
-		if err != nil {
+		if err := d.createDialers(configName, config); err != nil {
 			log.Debug().
 				Str("dialer", configName).
 				Err(err).
@@ -74,13 +75,21 @@ func (d *DialerManager) Update(configs map[string]*dynamic.TCPServersTransport) 
 }
 
 // Get gets a dialer by name.
-func (d *DialerManager) Get(name string) (Dialer, error) {
+func (d *DialerManager) Get(name string, tls bool) (Dialer, error) {
 	if len(name) == 0 {
 		name = "default@internal"
 	}
 
 	d.rtLock.RLock()
 	defer d.rtLock.RUnlock()
+
+	if tls {
+		if rt, ok := d.dialersTLS[name]; ok {
+			return rt, nil
+		}
+
+		return nil, fmt.Errorf("TCP dialer not found %s", name)
+	}
 
 	if rt, ok := d.dialers[name]; ok {
 		return rt, nil
@@ -89,10 +98,14 @@ func (d *DialerManager) Get(name string) (Dialer, error) {
 	return nil, fmt.Errorf("TCP dialer not found %s", name)
 }
 
-// createDialer creates a Dialer with the TLS configuration settings if needed.
-func (d *DialerManager) createDialer(cfg *dynamic.TCPServersTransport) (Dialer, error) {
+// createDialers creates the dialers according to the TCPServersTransport configuration.
+func (d *DialerManager) createDialers(name string, cfg *dynamic.TCPServersTransport) error {
 	if cfg == nil {
-		return nil, errors.New("no transport configuration given")
+		return errors.New("no transport configuration given")
+	}
+
+	if cfg.Spiffe != nil && cfg.TLS != nil {
+		return errors.New("TLS and SPIFFE configuration cannot be defined at the same time")
 	}
 
 	dialer := &net.Dialer{
@@ -100,30 +113,22 @@ func (d *DialerManager) createDialer(cfg *dynamic.TCPServersTransport) (Dialer, 
 		KeepAlive: time.Duration(cfg.DialKeepAlive),
 	}
 
-	if cfg.TLS == nil && cfg.Spiffe == nil {
-		return dialerTCP{dialer, time.Duration(cfg.TerminationDelay)}, nil
-	}
-
-	if cfg.Spiffe != nil && cfg.TLS != nil {
-		return nil, errors.New("TLS and SPIFFE configuration cannot be defined at the same time")
-	}
-
 	var tlsConfig *tls.Config
 
 	if cfg.Spiffe != nil {
 		if d.spiffeX509Source == nil {
-			return nil, errors.New("SPIFFE is enabled for this transport, but not configured")
+			return errors.New("SPIFFE is enabled for this transport, but not configured")
 		}
 
 		spiffeAuthorizer, err := buildSpiffeAuthorizer(cfg.Spiffe)
 		if err != nil {
-			return nil, fmt.Errorf("unable to build SPIFFE authorizer: %w", err)
+			return fmt.Errorf("unable to build SPIFFE authorizer: %w", err)
 		}
 
 		tlsConfig = tlsconfig.MTLSClientConfig(d.spiffeX509Source, d.spiffeX509Source, spiffeAuthorizer)
 	}
 
-	if tlsConfig == nil {
+	if tlsConfig == nil && cfg.TLS != nil {
 		tlsConfig = &tls.Config{
 			ServerName:         cfg.TLS.ServerName,
 			InsecureSkipVerify: cfg.TLS.InsecureSkipVerify,
@@ -143,7 +148,10 @@ func (d *DialerManager) createDialer(cfg *dynamic.TCPServersTransport) (Dialer, 
 		Config:    tlsConfig,
 	}
 
-	return dialerTCP{tlsDialer, time.Duration(cfg.TerminationDelay)}, nil
+	d.dialers[name] = tcpDialer{dialer, time.Duration(cfg.TerminationDelay)}
+	d.dialersTLS[name] = tcpDialer{tlsDialer, time.Duration(cfg.TerminationDelay)}
+
+	return nil
 }
 
 func createRootCACertPool(rootCAs []traefiktls.FileOrContent) *x509.CertPool {

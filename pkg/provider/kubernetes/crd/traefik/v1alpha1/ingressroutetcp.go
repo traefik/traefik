@@ -76,6 +76,8 @@ type ServiceTCP struct {
 	// It allows to configure the transport between Traefik and your servers.
 	// Can only be used on a Kubernetes Service.
 	ServersTransport string `json:"serversTransport,omitempty"`
+	// TLS determines whether to use TLS when dialing with the backend.
+	TLS bool `json:"tls,omitempty"`
 }
 
 // +genclient

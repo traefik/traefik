@@ -451,6 +451,14 @@ You can declare TCP Routers and/or Services using labels.
     "traefik.tcp.services.mytcpservice.loadbalancer.server.port": "423"
     ```
 
+??? info "`traefik.tcp.services.<service_name>.loadbalancer.server.tls`"
+    
+    Determines whether to use TLS when dialing with the backend.
+    
+    ```json
+    "traefik.tcp.services.mytcpservice.loadbalancer.server.tls": "true"
+    ```
+
 ??? info "`traefik.tcp.services.<service_name>.loadbalancer.proxyprotocol.version`"
         
     See [PROXY protocol](../services/index.md#proxy-protocol) for more information.

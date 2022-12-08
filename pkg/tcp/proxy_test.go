@@ -19,7 +19,6 @@ func fakeRedis(t *testing.T, listener net.Listener) {
 
 	for {
 		conn, err := listener.Accept()
-		t.Log("Accept on server")
 		require.NoError(t, err)
 
 		for {
@@ -53,7 +52,7 @@ func TestCloseWrite(t *testing.T) {
 	_, port, err := net.SplitHostPort(backendListener.Addr().String())
 	require.NoError(t, err)
 
-	dialer := dialerTCP{&net.Dialer{}, 10 * time.Millisecond}
+	dialer := tcpDialer{&net.Dialer{}, 10 * time.Millisecond}
 
 	proxy, err := NewProxy(":"+port, nil, dialer)
 	require.NoError(t, err)
@@ -134,7 +133,7 @@ func TestProxyProtocol(t *testing.T) {
 			_, port, err := net.SplitHostPort(proxyBackendListener.Addr().String())
 			require.NoError(t, err)
 
-			dialer := dialerTCP{&net.Dialer{}, 10 * time.Millisecond}
+			dialer := tcpDialer{&net.Dialer{}, 10 * time.Millisecond}
 
 			proxy, err := NewProxy(":"+port, &dynamic.ProxyProtocol{Version: test.version}, dialer)
 			require.NoError(t, err)

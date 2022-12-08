@@ -35,11 +35,11 @@ type ServersTransportTCPSpec struct {
 	// TerminationDelay defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability.
 	TerminationDelay *intstr.IntOrString `json:"terminationDelay,omitempty"`
 	// TLS defines the TLS configuration
-	TLS *TCPServersTransportTLSConfig `description:"Defines the TLS configuration." json:"tls,omitempty"`
+	TLS *TLSClientConfig `description:"Defines the TLS configuration." json:"tls,omitempty"`
 }
 
-// TCPServersTransportTLSConfig defines the desired state of a TCPServersTransportTLSConfig.
-type TCPServersTransportTLSConfig struct {
+// TLSClientConfig defines the desired state of a TLSClientConfig.
+type TLSClientConfig struct {
 	// ServerName defines the server name used to contact the server.
 	ServerName string `json:"serverName,omitempty"`
 	// InsecureSkipVerify disables TLS certificate verification.

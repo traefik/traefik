@@ -2253,7 +2253,7 @@ func Test_buildConfiguration(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.TCPServersTransport{
 						"tls-ns-dc1-Test": {
-							TLS: &dynamic.TCPServersTransportTLSConfig{
+							TLS: &dynamic.TLSClientConfig{
 								ServerName:         "ns-dc1-Test",
 								InsecureSkipVerify: true,
 								RootCAs: []tls.FileOrContent{

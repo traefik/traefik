@@ -379,6 +379,10 @@ spec:
                               between Traefik and your servers. Can only be used on
                               a Kubernetes Service.
                             type: string
+                          tls:
+                            description: TLS determines whether to use TLS when dialing
+                              with the backend.
+                            type: boolean
                           weight:
                             description: Weight defines the weight used when balancing
                               requests between multiple Kubernetes Service.

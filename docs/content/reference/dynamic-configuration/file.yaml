@@ -431,7 +431,9 @@ tcp:
           version: 42
         servers:
           - address: foobar
+            tls: true
           - address: foobar
+            tls: true
     TCPService02:
       weighted:
         services:

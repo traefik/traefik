@@ -79,7 +79,7 @@ func (c *connectCert) tcpServersTransport(item itemData) *dynamic.TCPServersTran
 	}
 
 	return &dynamic.TCPServersTransport{
-		TLS: &dynamic.TCPServersTransportTLSConfig{
+		TLS: &dynamic.TLSClientConfig{
 			// This ensures that the config changes whenever the verifier function changes
 			ServerName: fmt.Sprintf("%s-%s-%s", item.Namespace, item.Datacenter, item.Name),
 			// InsecureSkipVerify is needed because Go wants to verify a hostname otherwise

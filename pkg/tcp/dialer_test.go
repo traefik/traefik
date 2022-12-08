@@ -116,6 +116,46 @@ PtvuNc5EImfSkuPBYLBslNxtjbBvAYgacEdY+gRhn2TeIUApnND58lCWsKbNHLFZ
 ajIPbTY+Fe9OTOFTN48ujXNn
 -----END PRIVATE KEY-----`)
 
+func TestNoTLS(t *testing.T) {
+	backendListener, err := net.Listen("tcp", ":0")
+	require.NoError(t, err)
+	defer backendListener.Close()
+
+	go fakeRedis(t, backendListener)
+
+	_, port, err := net.SplitHostPort(backendListener.Addr().String())
+	require.NoError(t, err)
+
+	dialerManager := NewDialerManager(nil)
+
+	dynamicConf := map[string]*dynamic.TCPServersTransport{
+		"test": {
+			TLS: &dynamic.TLSClientConfig{},
+		},
+	}
+
+	dialerManager.Update(dynamicConf)
+
+	dialer, err := dialerManager.Get("test", false)
+	require.NoError(t, err)
+
+	conn, err := dialer.Dial("tcp", ":"+port)
+	require.NoError(t, err)
+
+	_, err = conn.Write([]byte("ping\n"))
+	require.NoError(t, err)
+
+	buf := make([]byte, 64)
+	n, err := conn.Read(buf)
+	require.NoError(t, err)
+
+	assert.Equal(t, 4, n)
+	assert.Equal(t, "PONG", string(buf[:4]))
+
+	err = conn.Close()
+	require.NoError(t, err)
+}
+
 func TestTLS(t *testing.T) {
 	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
 	require.NoError(t, err)
@@ -136,7 +176,7 @@ func TestTLS(t *testing.T) {
 
 	dynamicConf := map[string]*dynamic.TCPServersTransport{
 		"test": {
-			TLS: &dynamic.TCPServersTransportTLSConfig{
+			TLS: &dynamic.TLSClientConfig{
 				ServerName: "example.com",
 				RootCAs:    []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
 			},
@@ -145,7 +185,7 @@ func TestTLS(t *testing.T) {
 
 	dialerManager.Update(dynamicConf)
 
-	dialer, err := dialerManager.Get("test")
+	dialer, err := dialerManager.Get("test", true)
 	require.NoError(t, err)
 
 	conn, err := dialer.Dial("tcp", ":"+port)
@@ -186,7 +226,7 @@ func TestTLSWithInsecureSkipVerify(t *testing.T) {
 
 	dynamicConf := map[string]*dynamic.TCPServersTransport{
 		"test": {
-			TLS: &dynamic.TCPServersTransportTLSConfig{
+			TLS: &dynamic.TLSClientConfig{
 				ServerName:         "bad-domain.com",
 				RootCAs:            []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
 				InsecureSkipVerify: true,
@@ -196,7 +236,7 @@ func TestTLSWithInsecureSkipVerify(t *testing.T) {
 
 	dialerManager.Update(dynamicConf)
 
-	dialer, err := dialerManager.Get("test")
+	dialer, err := dialerManager.Get("test", true)
 	require.NoError(t, err)
 
 	conn, err := dialer.Dial("tcp", ":"+port)
@@ -247,7 +287,7 @@ func TestMTLS(t *testing.T) {
 
 	dynamicConf := map[string]*dynamic.TCPServersTransport{
 		"test": {
-			TLS: &dynamic.TCPServersTransportTLSConfig{
+			TLS: &dynamic.TLSClientConfig{
 				ServerName: "example.com",
 				// For TLS
 				RootCAs: []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
@@ -265,7 +305,7 @@ func TestMTLS(t *testing.T) {
 
 	dialerManager.Update(dynamicConf)
 
-	dialer, err := dialerManager.Get("test")
+	dialer, err := dialerManager.Get("test", true)
 	require.NoError(t, err)
 
 	conn, err := dialer.Dial("tcp", ":"+port)
@@ -397,7 +437,7 @@ func TestSpiffeMTLS(t *testing.T) {
 
 			dialerManager.Update(dynamicConf)
 
-			dialer, err := dialerManager.Get("test")
+			dialer, err := dialerManager.Get("test", true)
 			require.NoError(t, err)
 
 			conn, err := dialer.Dial("tcp", ":"+port)

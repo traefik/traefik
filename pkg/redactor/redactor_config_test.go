@@ -394,7 +394,7 @@ func init() {
 		},
 		ServersTransports: map[string]*dynamic.TCPServersTransport{
 			"foo": {
-				TLS: &dynamic.TCPServersTransportTLSConfig{
+				TLS: &dynamic.TLSClientConfig{
 					ServerName:         "foo",
 					InsecureSkipVerify: true,
 					RootCAs:            []traefiktls.FileOrContent{"rootca.pem"},
@@ -579,7 +579,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 	config.TCPServersTransport = &static.TCPServersTransport{
 		DialTimeout:   ptypes.Duration(111 * time.Second),
 		DialKeepAlive: ptypes.Duration(111 * time.Second),
-		TLS: &static.TCPServersTransportTLSConfig{
+		TLS: &static.TLSClientConfig{
 			InsecureSkipVerify: true,
 			RootCAs:            []traefiktls.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
 		},
