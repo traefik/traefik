@@ -26,11 +26,11 @@ tcpServersTransport:
     rootCAs:
       - foobar
       - foobar
-  spiffe:
-    ids:
-      - foobar
-      - foobar
-    trustDomain: foobar
+    spiffe:
+      ids:
+        - foobar
+        - foobar
+      trustDomain: foobar
 entryPoints:
   EntryPoint0:
     address: foobar

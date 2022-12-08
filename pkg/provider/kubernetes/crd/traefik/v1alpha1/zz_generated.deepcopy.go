@@ -1254,11 +1254,6 @@ func (in *ServersTransportTCPSpec) DeepCopyInto(out *ServersTransportTCPSpec) {
 		*out = new(intstr.IntOrString)
 		**out = **in
 	}
-	if in.Spiffe != nil {
-		in, out := &in.Spiffe, &out.Spiffe
-		*out = new(dynamic.Spiffe)
-		(*in).DeepCopyInto(*out)
-	}
 	if in.TerminationDelay != nil {
 		in, out := &in.TerminationDelay, &out.TerminationDelay
 		*out = new(intstr.IntOrString)
@@ -1393,6 +1388,11 @@ func (in *TLSClientConfig) DeepCopyInto(out *TLSClientConfig) {
 		in, out := &in.CertificatesSecrets, &out.CertificatesSecrets
 		*out = make([]string, len(*in))
 		copy(*out, *in)
+	}
+	if in.Spiffe != nil {
+		in, out := &in.Spiffe, &out.Spiffe
+		*out = new(dynamic.Spiffe)
+		(*in).DeepCopyInto(*out)
 	}
 	return
 }

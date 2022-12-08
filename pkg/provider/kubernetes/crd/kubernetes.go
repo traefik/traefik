@@ -420,8 +420,6 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			}
 		}
 
-		tcpServerTransport.Spiffe = serversTransportTCP.Spec.Spiffe
-
 		if serversTransportTCP.Spec.TLS != nil {
 			var rootCAs []tls.FileOrContent
 			for _, secret := range serversTransportTCP.Spec.TLS.RootCAsSecrets {
@@ -461,6 +459,8 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 				Certificates:       certs,
 				PeerCertURI:        serversTransportTCP.Spec.TLS.PeerCertURI,
 			}
+
+			tcpServerTransport.TLS.Spiffe = serversTransportTCP.Spec.TLS.Spiffe
 		}
 
 		id := provider.Normalize(makeID(serversTransportTCP.Namespace, serversTransportTCP.Name))
