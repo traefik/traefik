@@ -1365,8 +1365,10 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.TCP.Routers.Router1.TLS.Passthrough":                 "false",
 		"traefik.TCP.Routers.Router1.TLS.Options":                     "foo",
 		"traefik.TCP.Services.Service0.LoadBalancer.server.Port":      "42",
+		"traefik.TCP.Services.Service0.LoadBalancer.server.TLS":       "false",
 		"traefik.TCP.Services.Service0.LoadBalancer.ServersTransport": "foo",
 		"traefik.TCP.Services.Service1.LoadBalancer.server.Port":      "42",
+		"traefik.TCP.Services.Service1.LoadBalancer.server.TLS":       "false",
 		"traefik.TCP.Services.Service1.LoadBalancer.ServersTransport": "foo",
 
 		"traefik.UDP.Routers.Router0.EntryPoints":                "foobar, fiibar",

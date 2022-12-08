@@ -354,7 +354,7 @@ func (i *Provider) serverTransportTCP(cfg *dynamic.Configuration) {
 	}
 
 	if i.staticCfg.TCPServersTransport.TLS != nil {
-		st.TLS = &dynamic.TCPServersTransportTLSConfig{
+		st.TLS = &dynamic.TLSClientConfig{
 			InsecureSkipVerify: i.staticCfg.TCPServersTransport.TLS.InsecureSkipVerify,
 			RootCAs:            i.staticCfg.TCPServersTransport.TLS.RootCAs,
 		}

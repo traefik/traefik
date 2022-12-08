@@ -454,7 +454,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 				})
 			}
 
-			tcpServerTransport.TLS = &dynamic.TCPServersTransportTLSConfig{
+			tcpServerTransport.TLS = &dynamic.TLSClientConfig{
 				ServerName:         serversTransportTCP.Spec.TLS.ServerName,
 				InsecureSkipVerify: serversTransportTCP.Spec.TLS.InsecureSkipVerify,
 				RootCAs:            rootCAs,

@@ -15,20 +15,15 @@ import (
 	"github.com/traefik/traefik/v2/pkg/tcp"
 )
 
-// DialerGetter is a dialer getter interface.
-type DialerGetter interface {
-	Get(name string) (tcp.Dialer, error)
-}
-
 // Manager is the TCPHandlers factory.
 type Manager struct {
-	dialerManager DialerGetter
+	dialerManager *tcp.DialerManager
 	configs       map[string]*runtime.TCPServiceInfo
 	rand          *rand.Rand // For the initial shuffling of load-balancers.
 }
 
 // NewManager creates a new manager.
-func NewManager(conf *runtime.Configuration, dialerManager DialerGetter) *Manager {
+func NewManager(conf *runtime.Configuration, dialerManager *tcp.DialerManager) *Manager {
 	return &Manager{
 		dialerManager: dialerManager,
 		configs:       conf.TCPServices,
@@ -72,7 +67,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 				continue
 			}
 
-			dialer, err := m.dialerManager.Get(conf.LoadBalancer.ServersTransport)
+			dialer, err := m.dialerManager.Get(conf.LoadBalancer.ServersTransport, server.TLS)
 			if err != nil {
 				return nil, err
 			}

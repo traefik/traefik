@@ -1469,6 +1469,9 @@ The servers load balancer is in charge of balancing the requests between the ser
 #### Servers
 
 Servers declare a single instance of your program.
+
+#### `address`
+
 The `address` option (IP:Port) point to a specific instance.
 
 ??? example "A Service with One Server -- Using the [File Provider](../../providers/file.md)"
@@ -1489,6 +1492,32 @@ The `address` option (IP:Port) point to a specific instance.
       [tcp.services.my-service.loadBalancer]
         [[tcp.services.my-service.loadBalancer.servers]]
           address = "xx.xx.xx.xx:xx"
+    ```
+
+#### `tls`
+
+The `tls` determines whether to use TLS when dialing with the backend.
+
+??? example "A Service with One Server Using TLS -- Using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    tcp:
+      services:
+        my-service:
+          loadBalancer:
+            servers:
+              - address: "xx.xx.xx.xx:xx"
+                tls: true
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [tcp.services]
+      [tcp.services.my-service.loadBalancer]
+        [[tcp.services.my-service.loadBalancer.servers]]
+          address = "xx.xx.xx.xx:xx"
+          tls = true
     ```
 
 #### ServersTransport

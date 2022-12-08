@@ -129,12 +129,12 @@ type TCPServersTransport struct {
 	// connection, to close the reading capability as well, hence fully terminating the
 	// connection. It is a duration in milliseconds, defaulting to 100. A negative value
 	// means an infinite deadline (i.e. the reading capability is never closed).
-	TerminationDelay ptypes.Duration               `description:"Defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability." json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty" export:"true"`
-	TLS              *TCPServersTransportTLSConfig `description:"Defines the TLS configuration." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	TerminationDelay ptypes.Duration  `description:"Defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability." json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty" export:"true"`
+	TLS              *TLSClientConfig `description:"Defines the TLS configuration." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }
 
-// TCPServersTransportTLSConfig options to configure TLS communication between Traefik and the servers.
-type TCPServersTransportTLSConfig struct {
+// TLSClientConfig options to configure TLS communication between Traefik and the servers.
+type TLSClientConfig struct {
 	InsecureSkipVerify bool                `description:"Disables SSL certificate verification." json:"insecureSkipVerify,omitempty" toml:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" export:"true"`
 	RootCAs            []tls.FileOrContent `description:"Defines a list of CA secret used to validate self-signed certificate" json:"rootCAs,omitempty" toml:"rootCAs,omitempty" yaml:"rootCAs,omitempty"`
 }
