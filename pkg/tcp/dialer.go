@@ -104,10 +104,6 @@ func (d *DialerManager) createDialers(name string, cfg *dynamic.TCPServersTransp
 		return errors.New("no transport configuration given")
 	}
 
-	if cfg.Spiffe != nil && cfg.TLS != nil {
-		return errors.New("TLS and SPIFFE configuration cannot be defined at the same time")
-	}
-
 	dialer := &net.Dialer{
 		Timeout:   time.Duration(cfg.DialTimeout),
 		KeepAlive: time.Duration(cfg.DialKeepAlive),
@@ -115,30 +111,36 @@ func (d *DialerManager) createDialers(name string, cfg *dynamic.TCPServersTransp
 
 	var tlsConfig *tls.Config
 
-	if cfg.Spiffe != nil {
-		if d.spiffeX509Source == nil {
-			return errors.New("SPIFFE is enabled for this transport, but not configured")
+	if cfg.TLS != nil {
+		if cfg.TLS.Spiffe != nil {
+			if d.spiffeX509Source == nil {
+				return errors.New("SPIFFE is enabled for this transport, but not configured")
+			}
+
+			authorizer, err := buildSpiffeAuthorizer(cfg.TLS.Spiffe)
+			if err != nil {
+				return fmt.Errorf("unable to build SPIFFE authorizer: %w", err)
+			}
+
+			tlsConfig = tlsconfig.MTLSClientConfig(d.spiffeX509Source, d.spiffeX509Source, authorizer)
 		}
 
-		spiffeAuthorizer, err := buildSpiffeAuthorizer(cfg.Spiffe)
-		if err != nil {
-			return fmt.Errorf("unable to build SPIFFE authorizer: %w", err)
-		}
+		if cfg.TLS.InsecureSkipVerify || len(cfg.TLS.RootCAs) > 0 || len(cfg.TLS.ServerName) > 0 || len(cfg.TLS.Certificates) > 0 || cfg.TLS.PeerCertURI != "" {
+			if tlsConfig != nil {
+				return errors.New("TLS and SPIFFE configuration cannot be defined at the same time")
+			}
 
-		tlsConfig = tlsconfig.MTLSClientConfig(d.spiffeX509Source, d.spiffeX509Source, spiffeAuthorizer)
-	}
+			tlsConfig = &tls.Config{
+				ServerName:         cfg.TLS.ServerName,
+				InsecureSkipVerify: cfg.TLS.InsecureSkipVerify,
+				RootCAs:            createRootCACertPool(cfg.TLS.RootCAs),
+				Certificates:       cfg.TLS.Certificates.GetCertificates(),
+			}
 
-	if tlsConfig == nil && cfg.TLS != nil {
-		tlsConfig = &tls.Config{
-			ServerName:         cfg.TLS.ServerName,
-			InsecureSkipVerify: cfg.TLS.InsecureSkipVerify,
-			RootCAs:            createRootCACertPool(cfg.TLS.RootCAs),
-			Certificates:       cfg.TLS.Certificates.GetCertificates(),
-		}
-
-		if cfg.TLS.PeerCertURI != "" {
-			tlsConfig.VerifyPeerCertificate = func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
-				return traefiktls.VerifyPeerCertificate(cfg.TLS.PeerCertURI, tlsConfig, rawCerts)
+			if cfg.TLS.PeerCertURI != "" {
+				tlsConfig.VerifyPeerCertificate = func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
+					return traefiktls.VerifyPeerCertificate(cfg.TLS.PeerCertURI, tlsConfig, rawCerts)
+				}
 			}
 		}
 	}

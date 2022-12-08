@@ -116,6 +116,24 @@ PtvuNc5EImfSkuPBYLBslNxtjbBvAYgacEdY+gRhn2TeIUApnND58lCWsKbNHLFZ
 ajIPbTY+Fe9OTOFTN48ujXNn
 -----END PRIVATE KEY-----`)
 
+func TestConflictingConfig(t *testing.T) {
+	dialerManager := NewDialerManager(nil)
+
+	dynamicConf := map[string]*dynamic.TCPServersTransport{
+		"test": {
+			TLS: &dynamic.TLSClientConfig{
+				ServerName: "foobar",
+				Spiffe:     &dynamic.Spiffe{},
+			},
+		},
+	}
+
+	dialerManager.Update(dynamicConf)
+
+	_, err := dialerManager.Get("test", false)
+	require.Error(t, err)
+}
+
 func TestNoTLS(t *testing.T) {
 	backendListener, err := net.Listen("tcp", ":0")
 	require.NoError(t, err)
@@ -431,7 +449,9 @@ func TestSpiffeMTLS(t *testing.T) {
 
 			dynamicConf := map[string]*dynamic.TCPServersTransport{
 				"test": {
-					Spiffe: &test.config,
+					TLS: &dynamic.TLSClientConfig{
+						Spiffe: &test.config,
+					},
 				},
 			}
 

@@ -1026,15 +1026,6 @@ Defines the interval between keep-alive probes for an active network connection.
 `TRAEFIK_TCPSERVERSTRANSPORT_DIALTIMEOUT`:  
 Defines the amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
 
-`TRAEFIK_TCPSERVERSTRANSPORT_SPIFFE`:  
-Defines the SPIFFE TLS configuration. (Default: ```false```)
-
-`TRAEFIK_TCPSERVERSTRANSPORT_SPIFFE_IDS`:  
-Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
-
-`TRAEFIK_TCPSERVERSTRANSPORT_SPIFFE_TRUSTDOMAIN`:  
-Defines the allowed SPIFFE trust domain.
-
 `TRAEFIK_TCPSERVERSTRANSPORT_TERMINATIONDELAY`:  
 Defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability. (Default: ```0```)
 
@@ -1046,6 +1037,15 @@ Disables SSL certificate verification. (Default: ```false```)
 
 `TRAEFIK_TCPSERVERSTRANSPORT_TLS_ROOTCAS`:  
 Defines a list of CA secret used to validate self-signed certificate
+
+`TRAEFIK_TCPSERVERSTRANSPORT_TLS_SPIFFE`:  
+Defines the SPIFFE TLS configuration. (Default: ```false```)
+
+`TRAEFIK_TCPSERVERSTRANSPORT_TLS_SPIFFE_IDS`:  
+Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
+
+`TRAEFIK_TCPSERVERSTRANSPORT_TLS_SPIFFE_TRUSTDOMAIN`:  
+Defines the allowed SPIFFE trust domain.
 
 `TRAEFIK_TRACING`:  
 OpenTracing configuration. (Default: ```false```)

@@ -26,9 +26,9 @@
     insecureSkipVerify = true
     rootCAs = ["foobar", "foobar"]
 
-  [tcpServersTransport.spiffe]
-    ids = ["foobar", "foobar"]
-    trustDomain = "foobar"
+    [tcpServersTransport.tls.spiffe]
+      ids = ["foobar", "foobar"]
+      trustDomain = "foobar"
 
 [entryPoints]
   [entryPoints.EntryPoint0]

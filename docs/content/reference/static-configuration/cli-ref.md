@@ -1026,15 +1026,6 @@ Defines the interval between keep-alive probes for an active network connection.
 `--tcpserverstransport.dialtimeout`:  
 Defines the amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
 
-`--tcpserverstransport.spiffe`:  
-Defines the SPIFFE TLS configuration. (Default: ```false```)
-
-`--tcpserverstransport.spiffe.ids`:  
-Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
-
-`--tcpserverstransport.spiffe.trustdomain`:  
-Defines the allowed SPIFFE trust domain.
-
 `--tcpserverstransport.terminationdelay`:  
 Defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability. (Default: ```0```)
 
@@ -1046,6 +1037,15 @@ Disables SSL certificate verification. (Default: ```false```)
 
 `--tcpserverstransport.tls.rootcas`:  
 Defines a list of CA secret used to validate self-signed certificate
+
+`--tcpserverstransport.tls.spiffe`:  
+Defines the SPIFFE TLS configuration. (Default: ```false```)
+
+`--tcpserverstransport.tls.spiffe.ids`:  
+Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
+
+`--tcpserverstransport.tls.spiffe.trustdomain`:  
+Defines the allowed SPIFFE trust domain.
 
 `--tracing`:  
 OpenTracing configuration. (Default: ```false```)

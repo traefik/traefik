@@ -1412,17 +1412,17 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 									{CertFile: "TESTCERT3", KeyFile: "TESTKEY3"},
 								},
 								PeerCertURI: "foo://bar",
+								Spiffe: &dynamic.Spiffe{
+									IDs: []string{
+										"spiffe://foo/buz",
+										"spiffe://bar/biz",
+									},
+									TrustDomain: "spiffe://lol",
+								},
 							},
 							DialTimeout:      ptypes.Duration(42 * time.Second),
 							DialKeepAlive:    ptypes.Duration(42 * time.Second),
 							TerminationDelay: ptypes.Duration(42 * time.Second),
-							Spiffe: &dynamic.Spiffe{
-								IDs: []string{
-									"spiffe://foo/buz",
-									"spiffe://bar/biz",
-								},
-								TrustDomain: "spiffe://lol",
-							},
 						},
 						"default-test": {
 							TLS: &dynamic.TLSClientConfig{
