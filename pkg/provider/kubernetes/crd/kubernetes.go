@@ -393,6 +393,80 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		}
 	}
 
+	for _, serversTransportTCP := range client.GetServersTransportTCPs() {
+		logger := log.Ctx(ctx).With().Str(logs.ServersTransportName, serversTransportTCP.Name).Logger()
+
+		var tcpServerTransport dynamic.TCPServersTransport
+		tcpServerTransport.SetDefaults()
+
+		if serversTransportTCP.Spec.DialTimeout != nil {
+			err := tcpServerTransport.DialTimeout.Set(serversTransportTCP.Spec.DialTimeout.String())
+			if err != nil {
+				logger.Error().Err(err).Msg("Error while reading DialTimeout")
+			}
+		}
+
+		if serversTransportTCP.Spec.DialKeepAlive != nil {
+			err := tcpServerTransport.DialKeepAlive.Set(serversTransportTCP.Spec.DialKeepAlive.String())
+			if err != nil {
+				logger.Error().Err(err).Msg("Error while reading DialKeepAlive")
+			}
+		}
+
+		if serversTransportTCP.Spec.TerminationDelay != nil {
+			err := tcpServerTransport.TerminationDelay.Set(serversTransportTCP.Spec.TerminationDelay.String())
+			if err != nil {
+				logger.Error().Err(err).Msg("Error while reading TerminationDelay")
+			}
+		}
+
+		tcpServerTransport.Spiffe = serversTransportTCP.Spec.Spiffe
+
+		if serversTransportTCP.Spec.TLS != nil {
+			var rootCAs []tls.FileOrContent
+			for _, secret := range serversTransportTCP.Spec.TLS.RootCAsSecrets {
+				caSecret, err := loadCASecret(serversTransportTCP.Namespace, secret, client)
+				if err != nil {
+					logger.Error().
+						Err(err).
+						Str("rootCAs", secret).
+						Msg("Error while loading rootCAs")
+					continue
+				}
+
+				rootCAs = append(rootCAs, tls.FileOrContent(caSecret))
+			}
+
+			var certs tls.Certificates
+			for _, secret := range serversTransportTCP.Spec.TLS.CertificatesSecrets {
+				tlsCert, tlsKey, err := loadAuthTLSSecret(serversTransportTCP.Namespace, secret, client)
+				if err != nil {
+					logger.Error().
+						Err(err).
+						Str("certificates", secret).
+						Msg("Error while loading certificates")
+					continue
+				}
+
+				certs = append(certs, tls.Certificate{
+					CertFile: tls.FileOrContent(tlsCert),
+					KeyFile:  tls.FileOrContent(tlsKey),
+				})
+			}
+
+			tcpServerTransport.TLS = &dynamic.TLSClientConfig{
+				ServerName:         serversTransportTCP.Spec.TLS.ServerName,
+				InsecureSkipVerify: serversTransportTCP.Spec.TLS.InsecureSkipVerify,
+				RootCAs:            rootCAs,
+				Certificates:       certs,
+				PeerCertURI:        serversTransportTCP.Spec.TLS.PeerCertURI,
+			}
+		}
+
+		id := provider.Normalize(makeID(serversTransportTCP.Namespace, serversTransportTCP.Name))
+		conf.TCP.ServersTransports[id] = &tcpServerTransport
+	}
+
 	return conf
 }
 

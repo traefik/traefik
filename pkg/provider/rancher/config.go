@@ -87,11 +87,10 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, service ran
 	serviceName := service.Name
 
 	if len(configuration.Services) == 0 {
-		configuration.Services = make(map[string]*dynamic.TCPService)
-		lb := &dynamic.TCPServersLoadBalancer{}
-		lb.SetDefaults()
-		configuration.Services[serviceName] = &dynamic.TCPService{
-			LoadBalancer: lb,
+		configuration.Services = map[string]*dynamic.TCPService{
+			serviceName: {
+				LoadBalancer: new(dynamic.TCPServersLoadBalancer),
+			},
 		}
 	}
 

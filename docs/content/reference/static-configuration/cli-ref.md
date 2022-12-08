@@ -1020,6 +1020,33 @@ Defines the allowed SPIFFE trust domain.
 `--spiffe.workloadapiaddr`:  
 Defines the workload API address.
 
+`--tcpserverstransport.dialkeepalive`:  
+Defines the interval between keep-alive probes for an active network connection. If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled (Default: ```15```)
+
+`--tcpserverstransport.dialtimeout`:  
+Defines the amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
+
+`--tcpserverstransport.spiffe`:  
+Defines the SPIFFE TLS configuration. (Default: ```false```)
+
+`--tcpserverstransport.spiffe.ids`:  
+Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
+
+`--tcpserverstransport.spiffe.trustdomain`:  
+Defines the allowed SPIFFE trust domain.
+
+`--tcpserverstransport.terminationdelay`:  
+Defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability. (Default: ```0```)
+
+`--tcpserverstransport.tls`:  
+Defines the TLS configuration. (Default: ```false```)
+
+`--tcpserverstransport.tls.insecureskipverify`:  
+Disables SSL certificate verification. (Default: ```false```)
+
+`--tcpserverstransport.tls.rootcas`:  
+Defines a list of CA secret used to validate self-signed certificate
+
 `--tracing`:  
 OpenTracing configuration. (Default: ```false```)
 
