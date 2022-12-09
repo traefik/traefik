@@ -47,9 +47,6 @@ type ServiceIng struct {
 	NativeLB         bool            `json:"nativeLB,omitempty"`
 }
 
-// SetDefaults sets the default values.
-func (s *ServiceIng) SetDefaults() {
-}
 
 func parseRouterConfig(annotations map[string]string) (*RouterConfig, error) {
 	labels := convertAnnotations(annotations)
