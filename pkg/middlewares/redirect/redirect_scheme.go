@@ -71,12 +71,10 @@ func clientRequestURL(req *http.Request) string {
 		// Given that we're in a middleware that is only used in the context of HTTP(s) requests,
 		// the only possible valid schemes are one of "http" or "https", so we convert back to them.
 		switch {
-		case strings.EqualFold(xProto, "ws"):
+		case strings.EqualFold(xProto, "ws"), strings.EqualFold(xProto, schemeHTTP):
 			scheme = schemeHTTP
-		case strings.EqualFold(xProto, "wss"):
+		case strings.EqualFold(xProto, "wss"), strings.EqualFold(xProto, schemeHTTPS):
 			scheme = schemeHTTPS
-		default:
-			scheme = xProto
 		}
 	}
 
