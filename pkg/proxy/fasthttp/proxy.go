@@ -125,7 +125,7 @@ type ReverseProxy struct {
 // NewReverseProxy creates a new ReverseProxy.
 func NewReverseProxy(targetURL *url.URL, proxyURL *url.URL, passHostHeader bool, responseHeaderTimeout time.Duration, connPool *connPool) (*ReverseProxy, error) {
 	var proxyAuth string
-	if proxyURL != nil && proxyURL.User != nil && proxyURL.Scheme != schemeSocks5 && targetURL.Scheme == schemeHTTP {
+	if proxyURL != nil && proxyURL.User != nil && targetURL.Scheme == schemeHTTP {
 		username := proxyURL.User.Username()
 		password, _ := proxyURL.User.Password()
 		proxyAuth = "Basic " + base64.StdEncoding.EncodeToString([]byte(username+":"+password))
