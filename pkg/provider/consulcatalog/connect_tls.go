@@ -70,3 +70,25 @@ func (c *connectCert) serversTransport(item itemData) *dynamic.ServersTransport 
 		PeerCertURI: spiffeIDService.URI().String(),
 	}
 }
+
+func (c *connectCert) tcpServersTransport(item itemData) *dynamic.TCPServersTransport {
+	spiffeIDService := connect.SpiffeIDService{
+		Namespace:  item.Namespace,
+		Datacenter: item.Datacenter,
+		Service:    item.Name,
+	}
+
+	return &dynamic.TCPServersTransport{
+		TLS: &dynamic.TLSClientConfig{
+			// This ensures that the config changes whenever the verifier function changes
+			ServerName: fmt.Sprintf("%s-%s-%s", item.Namespace, item.Datacenter, item.Name),
+			// InsecureSkipVerify is needed because Go wants to verify a hostname otherwise
+			InsecureSkipVerify: true,
+			RootCAs:            c.getRoot(),
+			Certificates: traefiktls.Certificates{
+				c.getLeaf(),
+			},
+			PeerCertURI: spiffeIDService.URI().String(),
+		},
+	}
+}

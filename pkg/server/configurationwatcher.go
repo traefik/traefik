@@ -209,6 +209,15 @@ func logConfiguration(logger zerolog.Logger, configMsg dynamic.Message) {
 		}
 	}
 
+	if copyConf.TCP != nil {
+		for _, transport := range copyConf.TCP.ServersTransports {
+			if transport.TLS != nil {
+				transport.TLS.Certificates = tls.Certificates{}
+				transport.TLS.RootCAs = []tls.FileOrContent{}
+			}
+		}
+	}
+
 	jsonConf, err := json.Marshal(copyConf)
 	if err != nil {
 		logger.Error().Err(err).Msg("Could not marshal dynamic configuration")

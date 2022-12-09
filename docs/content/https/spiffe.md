@@ -28,7 +28,9 @@ The `workloadAPIAddr` configuration defines the address of the SPIFFE [Workload 
 !!! info "Enabling SPIFFE in ServersTransports"
 
     Enabling SPIFFE does not imply that backend connections are going to use it automatically.
-    Each [ServersTransport](../routing/services/index.md#serverstransport_1) that is meant to be secured with SPIFFE must [explicitly](../routing/services/index.md#spiffe) enable it.
+    Each [ServersTransport](../routing/services/index.md#serverstransport_1) or [TCPServersTransport](../routing/services/index.md#serverstransport_2),
+	that is meant to be secured with SPIFFE,
+	must explicitly enable it (see [SPIFFE with ServersTransport](../routing/services/index.md#spiffe) or [SPIFFE with TCPServersTransport](../routing/services/index.md#spiffe_1)).
 
 !!! warning "SPIFFE can cause Traefik to stall"
 	When using SPIFFE,

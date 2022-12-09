@@ -17,6 +17,18 @@
       "idleConnTimeout": "1m51s"
     }
   },
+  "tcpServersTransport": {
+    "dialKeepAlive": "1m51s",
+    "dialTimeout": "1m51s",
+    "tls": {
+      "insecureSkipVerify": true,
+      "rootCAs": [
+        "xxxx",
+        "xxxx",
+        "xxxx"
+      ]
+    }
+  },
   "entryPoints": {
     "foobar": {
       "address": "xxxx",
