@@ -29,9 +29,9 @@ whoami:
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: middlewares.traefik.containo.us
+  name: middlewares.traefik.io
 spec:
-  group: traefik.containo.us
+  group: traefik.io
   version: v1alpha1
   names:
     kind: Middleware
@@ -40,7 +40,7 @@ spec:
   scope: Namespaced
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: stripprefix
@@ -50,7 +50,7 @@ spec:
       - /stripit
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: ingressroute

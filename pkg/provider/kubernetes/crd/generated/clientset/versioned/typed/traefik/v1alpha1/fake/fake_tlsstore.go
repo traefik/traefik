@@ -44,9 +44,9 @@ type FakeTLSStores struct {
 	ns   string
 }
 
-var tlsstoresResource = schema.GroupVersionResource{Group: "traefik.containo.us", Version: "v1alpha1", Resource: "tlsstores"}
+var tlsstoresResource = schema.GroupVersionResource{Group: "traefik.io", Version: "v1alpha1", Resource: "tlsstores"}
 
-var tlsstoresKind = schema.GroupVersionKind{Group: "traefik.containo.us", Version: "v1alpha1", Kind: "TLSStore"}
+var tlsstoresKind = schema.GroupVersionKind{Group: "traefik.io", Version: "v1alpha1", Kind: "TLSStore"}
 
 // Get takes name of the tLSStore, and returns the corresponding tLSStore object, and an error if there is any.
 func (c *FakeTLSStores) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.TLSStore, err error) {

@@ -44,9 +44,9 @@ type FakeServersTransportTCPs struct {
 	ns   string
 }
 
-var serverstransporttcpsResource = schema.GroupVersionResource{Group: "traefik.containo.us", Version: "v1alpha1", Resource: "serverstransporttcps"}
+var serverstransporttcpsResource = schema.GroupVersionResource{Group: "traefik.io", Version: "v1alpha1", Resource: "serverstransporttcps"}
 
-var serverstransporttcpsKind = schema.GroupVersionKind{Group: "traefik.containo.us", Version: "v1alpha1", Kind: "ServersTransportTCP"}
+var serverstransporttcpsKind = schema.GroupVersionKind{Group: "traefik.io", Version: "v1alpha1", Kind: "ServersTransportTCP"}
 
 // Get takes name of the serversTransportTCP, and returns the corresponding serversTransportTCP object, and an error if there is any.
 func (c *FakeServersTransportTCPs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.ServersTransportTCP, err error) {

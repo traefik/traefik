@@ -44,9 +44,9 @@ type FakeMiddlewares struct {
 	ns   string
 }
 
-var middlewaresResource = schema.GroupVersionResource{Group: "traefik.containo.us", Version: "v1alpha1", Resource: "middlewares"}
+var middlewaresResource = schema.GroupVersionResource{Group: "traefik.io", Version: "v1alpha1", Resource: "middlewares"}
 
-var middlewaresKind = schema.GroupVersionKind{Group: "traefik.containo.us", Version: "v1alpha1", Kind: "Middleware"}
+var middlewaresKind = schema.GroupVersionKind{Group: "traefik.io", Version: "v1alpha1", Kind: "Middleware"}
 
 // Get takes name of the middleware, and returns the corresponding middleware object, and an error if there is any.
 func (c *FakeMiddlewares) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.Middleware, err error) {

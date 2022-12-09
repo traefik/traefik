@@ -6,9 +6,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
   creationTimestamp: null
-  name: tlsstores.traefik.containo.us
+  name: tlsstores.traefik.io
 spec:
-  group: traefik.containo.us
+  group: traefik.io
   names:
     kind: TLSStore
     listKind: TLSStoreList
