@@ -1668,7 +1668,7 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
         services:
         - name: whoami
           port: 80
-      tls:
+      tls: {}
     ```
 
     ```yaml tab="Secret"
