@@ -46,9 +46,6 @@ type ServiceIng struct {
 	Sticky           *dynamic.Sticky `json:"sticky,omitempty" label:"allowEmpty"`
 }
 
-// SetDefaults sets the default values.
-func (s *ServiceIng) SetDefaults() {
-}
 
 func parseRouterConfig(annotations map[string]string) (*RouterConfig, error) {
 	labels := convertAnnotations(annotations)
