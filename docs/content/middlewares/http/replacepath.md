@@ -24,7 +24,7 @@ labels:
 
 ```yaml tab="Kubernetes"
 # Replace the path with /foo
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1
 kind: Middleware
 metadata:
   name: test-replacepath

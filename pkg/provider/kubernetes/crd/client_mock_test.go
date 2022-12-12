@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
+	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -15,7 +15,7 @@ var _ Client = (*clientMock)(nil)
 
 func init() {
 	// required by k8s.MustParseYaml
-	err := v1alpha1.AddToScheme(scheme.Scheme)
+	err := v1.AddToScheme(scheme.Scheme)
 	if err != nil {
 		panic(err)
 	}
@@ -30,16 +30,16 @@ type clientMock struct {
 	apiSecretError    error
 	apiEndpointsError error
 
-	ingressRoutes        []*v1alpha1.IngressRoute
-	ingressRouteTCPs     []*v1alpha1.IngressRouteTCP
-	ingressRouteUDPs     []*v1alpha1.IngressRouteUDP
-	middlewares          []*v1alpha1.Middleware
-	middlewareTCPs       []*v1alpha1.MiddlewareTCP
-	tlsOptions           []*v1alpha1.TLSOption
-	tlsStores            []*v1alpha1.TLSStore
-	traefikServices      []*v1alpha1.TraefikService
-	serversTransports    []*v1alpha1.ServersTransport
-	serversTransportTCPs []*v1alpha1.ServersTransportTCP
+	ingressRoutes        []*v1.IngressRoute
+	ingressRouteTCPs     []*v1.IngressRouteTCP
+	ingressRouteUDPs     []*v1.IngressRouteUDP
+	middlewares          []*v1.Middleware
+	middlewareTCPs       []*v1.MiddlewareTCP
+	tlsOptions           []*v1.TLSOption
+	tlsStores            []*v1.TLSStore
+	traefikServices      []*v1.TraefikService
+	serversTransports    []*v1.ServersTransport
+	serversTransportTCPs []*v1.ServersTransportTCP
 
 	watchChan chan interface{}
 }
@@ -60,25 +60,25 @@ func newClientMock(paths ...string) clientMock {
 				c.services = append(c.services, o)
 			case *corev1.Endpoints:
 				c.endpoints = append(c.endpoints, o)
-			case *v1alpha1.IngressRoute:
+			case *v1.IngressRoute:
 				c.ingressRoutes = append(c.ingressRoutes, o)
-			case *v1alpha1.IngressRouteTCP:
+			case *v1.IngressRouteTCP:
 				c.ingressRouteTCPs = append(c.ingressRouteTCPs, o)
-			case *v1alpha1.IngressRouteUDP:
+			case *v1.IngressRouteUDP:
 				c.ingressRouteUDPs = append(c.ingressRouteUDPs, o)
-			case *v1alpha1.Middleware:
+			case *v1.Middleware:
 				c.middlewares = append(c.middlewares, o)
-			case *v1alpha1.MiddlewareTCP:
+			case *v1.MiddlewareTCP:
 				c.middlewareTCPs = append(c.middlewareTCPs, o)
-			case *v1alpha1.TraefikService:
+			case *v1.TraefikService:
 				c.traefikServices = append(c.traefikServices, o)
-			case *v1alpha1.TLSOption:
+			case *v1.TLSOption:
 				c.tlsOptions = append(c.tlsOptions, o)
-			case *v1alpha1.ServersTransport:
+			case *v1.ServersTransport:
 				c.serversTransports = append(c.serversTransports, o)
-			case *v1alpha1.ServersTransportTCP:
+			case *v1.ServersTransportTCP:
 				c.serversTransportTCPs = append(c.serversTransportTCPs, o)
-			case *v1alpha1.TLSStore:
+			case *v1.TLSStore:
 				c.tlsStores = append(c.tlsStores, o)
 			case *corev1.Secret:
 				c.secrets = append(c.secrets, o)
@@ -91,27 +91,27 @@ func newClientMock(paths ...string) clientMock {
 	return c
 }
 
-func (c clientMock) GetIngressRoutes() []*v1alpha1.IngressRoute {
+func (c clientMock) GetIngressRoutes() []*v1.IngressRoute {
 	return c.ingressRoutes
 }
 
-func (c clientMock) GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP {
+func (c clientMock) GetIngressRouteTCPs() []*v1.IngressRouteTCP {
 	return c.ingressRouteTCPs
 }
 
-func (c clientMock) GetIngressRouteUDPs() []*v1alpha1.IngressRouteUDP {
+func (c clientMock) GetIngressRouteUDPs() []*v1.IngressRouteUDP {
 	return c.ingressRouteUDPs
 }
 
-func (c clientMock) GetMiddlewares() []*v1alpha1.Middleware {
+func (c clientMock) GetMiddlewares() []*v1.Middleware {
 	return c.middlewares
 }
 
-func (c clientMock) GetMiddlewareTCPs() []*v1alpha1.MiddlewareTCP {
+func (c clientMock) GetMiddlewareTCPs() []*v1.MiddlewareTCP {
 	return c.middlewareTCPs
 }
 
-func (c clientMock) GetTraefikService(namespace, name string) (*v1alpha1.TraefikService, bool, error) {
+func (c clientMock) GetTraefikService(namespace, name string) (*v1.TraefikService, bool, error) {
 	for _, svc := range c.traefikServices {
 		if svc.Namespace == namespace && svc.Name == name {
 			return svc, true, nil
@@ -121,27 +121,27 @@ func (c clientMock) GetTraefikService(namespace, name string) (*v1alpha1.Traefik
 	return nil, false, nil
 }
 
-func (c clientMock) GetTraefikServices() []*v1alpha1.TraefikService {
+func (c clientMock) GetTraefikServices() []*v1.TraefikService {
 	return c.traefikServices
 }
 
-func (c clientMock) GetTLSOptions() []*v1alpha1.TLSOption {
+func (c clientMock) GetTLSOptions() []*v1.TLSOption {
 	return c.tlsOptions
 }
 
-func (c clientMock) GetTLSStores() []*v1alpha1.TLSStore {
+func (c clientMock) GetTLSStores() []*v1.TLSStore {
 	return c.tlsStores
 }
 
-func (c clientMock) GetServersTransports() []*v1alpha1.ServersTransport {
+func (c clientMock) GetServersTransports() []*v1.ServersTransport {
 	return c.serversTransports
 }
 
-func (c clientMock) GetServersTransportTCPs() []*v1alpha1.ServersTransportTCP {
+func (c clientMock) GetServersTransportTCPs() []*v1.ServersTransportTCP {
 	return c.serversTransportTCPs
 }
 
-func (c clientMock) GetTLSOption(namespace, name string) (*v1alpha1.TLSOption, bool, error) {
+func (c clientMock) GetTLSOption(namespace, name string) (*v1.TLSOption, bool, error) {
 	for _, option := range c.tlsOptions {
 		if option.Namespace == namespace && option.Name == name {
 			return option, true, nil

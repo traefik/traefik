@@ -22,7 +22,7 @@ deploy:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1
 kind: IngressRoute
 metadata:
   name: blogtls

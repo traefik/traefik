@@ -65,3 +65,9 @@ When using the KubernetesCRD provider, it is therefore necessary to update [RBAC
 
 The TCP LoadBalancer `terminationDelay` option has been removed.
 This option can now be configured directly on the `TCPServersTransport` level, please take a look at this [documentation](../routing/services/index.md#terminationdelay)
+
+### Kubernetes CRD
+
+In v3, the old api version `traefik.containo.us/v1alpha1` has been replaced by `traefik.io/v1` in the Kubernetes CRD definitions.
+
+It is therefore necessary to update [RBAC](../reference/dynamic-configuration/kubernetes-crd.md#rbac) and [CRD](../reference/dynamic-configuration/kubernetes-crd.md) definitions.
