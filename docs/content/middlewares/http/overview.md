@@ -32,7 +32,7 @@ metadata:
   name: middlewares.traefik.io
 spec:
   group: traefik.io
-  version: v1alpha1
+  version: v1
   names:
     kind: Middleware
     plural: middlewares
@@ -40,7 +40,7 @@ spec:
   scope: Namespaced
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: Middleware
 metadata:
   name: stripprefix
@@ -50,7 +50,7 @@ spec:
       - /stripit
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: IngressRoute
 metadata:
   name: ingressroute

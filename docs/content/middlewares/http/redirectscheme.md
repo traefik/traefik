@@ -34,7 +34,7 @@ labels:
 
 ```yaml tab="Kubernetes"
 # Redirect to https
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: Middleware
 metadata:
   name: test-redirectscheme
@@ -98,7 +98,7 @@ labels:
 
 ```yaml tab="Kubernetes"
 # Redirect to https
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: Middleware
 metadata:
   name: test-redirectscheme
@@ -159,7 +159,7 @@ labels:
 
 ```yaml tab="Kubernetes"
 # Redirect to https
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: Middleware
 metadata:
   name: test-redirectscheme
@@ -215,7 +215,7 @@ labels:
 
 ```yaml tab="Kubernetes"
 # Redirect to https
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.io/v1
 kind: Middleware
 metadata:
   name: test-redirectscheme

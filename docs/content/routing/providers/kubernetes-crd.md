@@ -107,7 +107,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
     ```
     
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRoute
     metadata:
       name: myingressroute
@@ -125,7 +125,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
           port: 80
     
     ---
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRouteTCP
     metadata:
       name: ingressroute.tcp
@@ -141,7 +141,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
             port: 8080
     
     ---
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRouteUDP
     metadata:
       name: ingressroute.udp
@@ -317,7 +317,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
 !!! info "IngressRoute Attributes"
 
     ```yaml
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRoute
     metadata:
       name: foo
@@ -389,7 +389,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
 
     ```yaml tab="IngressRoute"
     # All resources definition must be declared
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRoute
     metadata:
       name: test-name
@@ -436,7 +436,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
     ```yaml tab="Middlewares"
     # All resources definition must be declared
     # Prefixing with /foo
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: Middleware
     metadata:
       name: middleware1
@@ -447,7 +447,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
     ```
 
     ```yaml tab="TLSOption"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: TLSOption
     metadata:
       name: opt
@@ -493,7 +493,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
         
         ```yaml tab="IngressRoute"
         ---
-        apiVersion: traefik.io/v1alpha1
+        apiVersion: traefik.io/v1
         kind: IngressRoute
         metadata:
           name: test.route
@@ -523,7 +523,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
         
         ```yaml tab="ExternalName Service"
         ---
-        apiVersion: traefik.io/v1alpha1
+        apiVersion: traefik.io/v1
         kind: IngressRoute
         metadata:
           name: test.route
@@ -554,7 +554,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
         
         ```yaml tab="Both sides"
         ---
-        apiVersion: traefik.io/v1alpha1
+        apiVersion: traefik.io/v1
         kind: IngressRoute
         metadata:
           name: test.route
@@ -591,7 +591,7 @@ More information in the dedicated server [load balancing](../services/index.md#l
 !!! info "Declaring and using Kubernetes Service Load Balancing"
 
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
@@ -649,7 +649,7 @@ Register the `Middleware` [kind](../../reference/dynamic-configuration/kubernete
 ??? "Declaring and Referencing a Middleware"
     
     ```yaml tab="Middleware"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: Middleware
     metadata:
       name: stripprefix
@@ -662,7 +662,7 @@ Register the `Middleware` [kind](../../reference/dynamic-configuration/kubernete
     ```
     
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
@@ -720,7 +720,7 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
 ??? "Declaring and Using Weighted Round Robin"
 
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
@@ -739,7 +739,7 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
     ```
     
     ```yaml tab="Weighted Round Robin"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: TraefikService
     metadata:
       name: wrr1
@@ -759,7 +759,7 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
             weight: 1
 
     ---
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: TraefikService
     metadata:
       name: wrr2
@@ -827,7 +827,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
 ??? "Declaring and Using Mirroring"
 
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
@@ -847,7 +847,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
     
     ```yaml tab="Mirroring k8s Service"
     # Mirroring from a k8s Service
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: TraefikService
     metadata:
       name: mirror1
@@ -868,7 +868,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
     
     ```yaml tab="Mirroring Traefik Service"
     # Mirroring from a Traefik Service
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: TraefikService
     metadata:
       name: mirror1
@@ -937,7 +937,7 @@ and there is a second level because each whoami service is a `replicaset` and is
 ??? "Stickiness on two load-balancing levels"
 
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
@@ -956,7 +956,7 @@ and there is a second level because each whoami service is a `replicaset` and is
     ```
 
     ```yaml tab="Weighted Round Robin"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: TraefikService
     metadata:
       name: wrr1
@@ -1083,7 +1083,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
 !!! info "IngressRouteTCP Attributes"
 
     ```yaml
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRouteTCP
     metadata:
       name: ingressroutetcpfoo
@@ -1147,7 +1147,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
 ??? example "Declaring an IngressRouteTCP"
 
     ```yaml tab="IngressRouteTCP"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRouteTCP
     metadata:
       name: ingressroutetcpfoo
@@ -1181,7 +1181,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
     ```
     
     ```yaml tab="TLSOption"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: TLSOption
     metadata:
       name: opt
@@ -1216,7 +1216,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
         
         ```yaml tab="Only on IngressRouteTCP"
         ---
-        apiVersion: traefik.io/v1alpha1
+        apiVersion: traefik.io/v1
         kind: IngressRouteTCP
         metadata:
           name: test.route
@@ -1245,7 +1245,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
         
         ```yaml tab="On both sides"
         ---
-        apiVersion: traefik.io/v1alpha1
+        apiVersion: traefik.io/v1
         kind: IngressRouteTCP
         metadata:
           name: test.route
@@ -1283,7 +1283,7 @@ Register the `MiddlewareTCP` [kind](../../reference/dynamic-configuration/kubern
 ??? "Declaring and Referencing a MiddlewareTCP "
 
     ```yaml tab="Middleware"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: MiddlewareTCP
     metadata:
       name: ipallowlist
@@ -1295,7 +1295,7 @@ Register the `MiddlewareTCP` [kind](../../reference/dynamic-configuration/kubern
     ```
     
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
@@ -1334,7 +1334,7 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
 !!! info "IngressRouteUDP Attributes"
 
     ```yaml
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRouteUDP
     metadata:
       name: ingressrouteudpfoo
@@ -1361,7 +1361,7 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
 ??? example "Declaring an IngressRouteUDP"
 
     ```yaml
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRouteUDP
     metadata:
       name: ingressrouteudpfoo
@@ -1393,7 +1393,7 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
         
         ```yaml tab="IngressRouteUDP"
         ---
-        apiVersion: traefik.io/v1alpha1
+        apiVersion: traefik.io/v1
         kind: IngressRouteUDP
         metadata:
           name: test.route
@@ -1421,7 +1421,7 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
         
         ```yaml tab="ExternalName Service"
         ---
-        apiVersion: traefik.io/v1alpha1
+        apiVersion: traefik.io/v1
         kind: IngressRouteUDP
         metadata:
           name: test.route
@@ -1450,7 +1450,7 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
         
         ```yaml tab="Both sides"
         ---
-        apiVersion: traefik.io/v1alpha1
+        apiVersion: traefik.io/v1
         kind: IngressRouteUDP
         metadata:
           name: test.route
@@ -1488,7 +1488,7 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
 !!! info "TLSOption Attributes"
    
     ```yaml tab="TLSOption"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: TLSOption
     metadata:
       name: mytlsoption                             # [1]
@@ -1533,7 +1533,7 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
 ??? example "Declaring and referencing a TLSOption"
    
     ```yaml tab="TLSOption"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: TLSOption
     metadata:
       name: mytlsoption
@@ -1553,7 +1553,7 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
     ```
     
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
@@ -1619,7 +1619,7 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
 
 !!! info "TLSStore Attributes"
     ```yaml tab="TLSStore"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: TLSStore
     metadata:
       name: default
@@ -1640,7 +1640,7 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
 ??? example "Declaring and referencing a TLSStore"
    
     ```yaml tab="TLSStore"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: TLSStore
     metadata:
       name: default
@@ -1652,7 +1652,7 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
     ```
     
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
@@ -1693,7 +1693,7 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
 !!! info "ServersTransport Attributes"
    
     ```yaml tab="ServersTransport"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: ServersTransport
     metadata:
       name: mytransport
@@ -1746,7 +1746,7 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
 ??? example "Declaring and referencing a ServersTransport"
    
     ```yaml tab="ServersTransport"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: ServersTransport
     metadata:
       name: mytransport
@@ -1758,7 +1758,7 @@ or referencing TLS stores in the [`IngressRoute`](#kind-ingressroute) / [`Ingres
     ```
     
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRoute
     metadata:
       name: testroute
@@ -1797,7 +1797,7 @@ The `default@internal` serversTransportTCP is created from the [static configura
 !!! info "ServersTransportTCP Attributes"
 
     ```yaml tab="ServersTransportTCP"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: ServersTransportTCP
     metadata:
       name: mytransport
@@ -1846,7 +1846,7 @@ The `default@internal` serversTransportTCP is created from the [static configura
 ??? example "Declaring and referencing a ServersTransportTCP"
 
     ```yaml tab="ServersTransportTCP"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: ServersTransportTCP
     metadata:
       name: mytransport
@@ -1859,7 +1859,7 @@ The `default@internal` serversTransportTCP is created from the [static configura
     ```
     
     ```yaml tab="IngressRouteTCP"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRouteTCP
     metadata:
       name: testroute

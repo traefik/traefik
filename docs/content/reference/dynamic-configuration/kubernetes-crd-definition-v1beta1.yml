@@ -5,7 +5,7 @@ metadata:
 
 spec:
   group: traefik.io
-  version: v1alpha1
+  version: v1
   names:
     kind: IngressRoute
     plural: ingressroutes
@@ -20,7 +20,7 @@ metadata:
 
 spec:
   group: traefik.io
-  version: v1alpha1
+  version: v1
   names:
     kind: Middleware
     plural: middlewares
@@ -35,7 +35,7 @@ metadata:
 
 spec:
   group: traefik.io
-  version: v1alpha1
+  version: v1
   names:
     kind: MiddlewareTCP
     plural: middlewaretcps
@@ -50,7 +50,7 @@ metadata:
 
 spec:
   group: traefik.io
-  version: v1alpha1
+  version: v1
   names:
     kind: IngressRouteTCP
     plural: ingressroutetcps
@@ -65,7 +65,7 @@ metadata:
 
 spec:
   group: traefik.io
-  version: v1alpha1
+  version: v1
   names:
     kind: IngressRouteUDP
     plural: ingressrouteudps
@@ -80,7 +80,7 @@ metadata:
 
 spec:
   group: traefik.io
-  version: v1alpha1
+  version: v1
   names:
     kind: TLSOption
     plural: tlsoptions
@@ -95,7 +95,7 @@ metadata:
 
 spec:
   group: traefik.io
-  version: v1alpha1
+  version: v1
   names:
     kind: TLSStore
     plural: tlsstores
@@ -110,7 +110,7 @@ metadata:
 
 spec:
   group: traefik.io
-  version: v1alpha1
+  version: v1
   names:
     kind: TraefikService
     plural: traefikservices
@@ -125,7 +125,7 @@ metadata:
 
 spec:
   group: traefik.io
-  version: v1alpha1
+  version: v1
   names:
     kind: ServersTransport
     plural: serverstransports

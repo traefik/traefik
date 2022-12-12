@@ -16,7 +16,7 @@ spec:
     singular: ingressrouteudp
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: IngressRouteUDP is a CRD implementation of a Traefik UDP Router.
