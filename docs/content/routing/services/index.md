@@ -1607,8 +1607,7 @@ The `tls` determines whether to use TLS when dialing with the backend.
 
 !!! info "Default Servers Transport"
 
-    If no serversTransport is specified, the `default@internal` will be used.
-    The `default@internal` serversTransport is created from the [static configuration](../overview.md#tcp-servers-transports).
+    If no serversTransport is specified, the `default` will be used.
 
 #### PROXY Protocol
 
