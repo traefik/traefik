@@ -14,9 +14,15 @@ import (
 
 const (
 	typeSchemeName  = "RedirectScheme"
-	uriPattern      = `^(https?:\/\/)?(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
+	uriPattern      = `^(https?:\/\/)(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`
 	xForwardedProto = "X-Forwarded-Proto"
 )
+
+type redirectScheme struct {
+	http.Handler
+
+	name string
+}
 
 // NewRedirectScheme creates a new RedirectScheme middleware.
 func NewRedirectScheme(ctx context.Context, next http.Handler, conf dynamic.RedirectScheme, name string) (http.Handler, error) {
@@ -33,10 +39,19 @@ func NewRedirectScheme(ctx context.Context, next http.Handler, conf dynamic.Redi
 		port = ":" + conf.Port
 	}
 
-	return newRedirect(next, uriPattern, conf.Scheme+"://${2}"+port+"${4}", conf.Permanent, clientRequestURL, name)
+	rs := &redirectScheme{name: name}
+
+	handler, err := newRedirect(next, uriPattern, conf.Scheme+"://${2}"+port+"${4}", conf.Permanent, rs.clientRequestURL, name)
+	if err != nil {
+		return nil, err
+	}
+
+	rs.Handler = handler
+
+	return rs, nil
 }
 
-func clientRequestURL(req *http.Request) string {
+func (r *redirectScheme) clientRequestURL(req *http.Request) string {
 	scheme := schemeHTTP
 	host, port, err := net.SplitHostPort(req.Host)
 	if err != nil {
@@ -71,12 +86,12 @@ func clientRequestURL(req *http.Request) string {
 		// Given that we're in a middleware that is only used in the context of HTTP(s) requests,
 		// the only possible valid schemes are one of "http" or "https", so we convert back to them.
 		switch {
-		case strings.EqualFold(xProto, "ws"):
+		case strings.EqualFold(xProto, "ws"), strings.EqualFold(xProto, schemeHTTP):
 			scheme = schemeHTTP
-		case strings.EqualFold(xProto, "wss"):
+		case strings.EqualFold(xProto, "wss"), strings.EqualFold(xProto, schemeHTTPS):
 			scheme = schemeHTTPS
 		default:
-			scheme = xProto
+			log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeSchemeName)).Debugf("invalid X-Forwarded-Proto: %s", xProto)
 		}
 	}
 
