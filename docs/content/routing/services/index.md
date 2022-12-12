@@ -770,13 +770,12 @@ _Optional, Default=false_
 http:
   serversTransports:
     mytransport:
-      http:
-        enableHTTP2: true
+    enableHTTP2: true
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[http.serversTransports.mytransport.http]
+[http.serversTransports.mytransport]
   enableHTTP2 = true
 ```
 
@@ -788,8 +787,7 @@ metadata:
   namespace: default
 
 spec:
-    http:
-      enableHTTP2: true
+  enableHTTP2: true
 ```
 
 ##### `passHostHeader`
@@ -803,13 +801,12 @@ _Optional, Default=true_
 http:
   serversTransports:
     mytransport:
-      http:
-        passHostHeader: true
+      passHostHeader: true
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[http.serversTransports.mytransport.http]
+[http.serversTransports.mytransport]
   passHostHeader = true
 ```
 
@@ -821,8 +818,7 @@ metadata:
   namespace: default
 
 spec:
-    http:
-      passHostHeader: true
+  passHostHeader: true
 ```
 
 ##### `maxIdleConnsPerHost`
@@ -836,13 +832,12 @@ If non-zero, `maxIdleConnsPerHost` controls the maximum idle (keep-alive) connec
 http:
   serversTransports:
     mytransport:
-      http:
-        maxIdleConnsPerHost: 7
+      maxIdleConnsPerHost: 7
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[http.serversTransports.mytransport.http]
+[http.serversTransports.mytransport]
   maxIdleConnsPerHost = 7
 ```
 
@@ -854,8 +849,7 @@ metadata:
   namespace: default
 
 spec:
-    http:
-      maxIdleConnsPerHost: 7
+  maxIdleConnsPerHost: 7
 ```
 
 ##### `forwardingTimeouts`
@@ -874,14 +868,13 @@ Zero means no timeout.
 http:
   serversTransports:
     mytransport:
-      http:    
-        forwardingTimeouts:
-          dialTimeout: "1s"
+      forwardingTimeouts:
+        dialTimeout: "1s"
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[http.serversTransports.mytransport.http.forwardingTimeouts]
+[http.serversTransports.mytransport.forwardingTimeouts]
   dialTimeout = "1s"
 ```
 
@@ -893,9 +886,8 @@ metadata:
   namespace: default
 
 spec:
-    http:
-      forwardingTimeouts:
-        dialTimeout: "1s"
+  forwardingTimeouts:
+    dialTimeout: "1s"
 ```
 
 ###### `forwardingTimeouts.responseHeaderTimeout`
@@ -912,14 +904,13 @@ Zero means no timeout.
 http:
   serversTransports:
     mytransport:
-      http:
-        forwardingTimeouts:
-          responseHeaderTimeout: "1s"
+      forwardingTimeouts:
+        responseHeaderTimeout: "1s"
 ```
 
 ```toml tab="File (TOML)"
 ## Dynamic configuration
-[http.serversTransports.mytransport.http.forwardingTimeouts]
+[http.serversTransports.mytransport.forwardingTimeouts]
   responseHeaderTimeout = "1s"
 ```
 
@@ -931,9 +922,8 @@ metadata:
   namespace: default
 
 spec:
-  http:
-      forwardingTimeouts:
-        responseHeaderTimeout: "1s"
+  forwardingTimeouts:
+    responseHeaderTimeout: "1s"
 ```
 
 ###### `forwardingTimeouts.idleConnTimeout`
@@ -948,9 +938,8 @@ Zero means no limit.
 http:
   serversTransports:
     mytransport:
-      http:
-        forwardingTimeouts:
-          idleConnTimeout: "1s"
+      forwardingTimeouts:
+        idleConnTimeout: "1s"
 ```
 
 ```toml tab="File (TOML)"

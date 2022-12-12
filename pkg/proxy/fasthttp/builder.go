@@ -53,7 +53,7 @@ func (r *ProxyBuilder) Delete(cfgName string) {
 }
 
 // Build builds a new ReverseProxy with the given configuration.
-func (r *ProxyBuilder) Build(cfgName string, cfg *dynamic.HTTPClientConfig, tlsConfig *tls.Config, targetURL *url.URL) (http.Handler, error) {
+func (r *ProxyBuilder) Build(cfgName string, cfg *dynamic.ServersTransport, tlsConfig *tls.Config, targetURL *url.URL) (http.Handler, error) {
 	proxyURL, err := r.proxy(&http.Request{URL: targetURL})
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (r *ProxyBuilder) Build(cfgName string, cfg *dynamic.HTTPClientConfig, tlsC
 	return NewReverseProxy(targetURL, proxyURL, cfg.PassHostHeader, responseHeaderTimeout, pool)
 }
 
-func (r *ProxyBuilder) getPool(cfgName string, config *dynamic.HTTPClientConfig, tlsConfig *tls.Config, targetURL *url.URL, proxyURL *url.URL) *connPool {
+func (r *ProxyBuilder) getPool(cfgName string, config *dynamic.ServersTransport, tlsConfig *tls.Config, targetURL *url.URL, proxyURL *url.URL) *connPool {
 	pool, ok := r.pools[cfgName]
 	if !ok {
 		pool = make(map[string]*connPool)
@@ -92,7 +92,7 @@ func (r *ProxyBuilder) getPool(cfgName string, config *dynamic.HTTPClientConfig,
 	return connPool
 }
 
-func getDialFn(targetURL *url.URL, proxyURL *url.URL, tlsConfig *tls.Config, config *dynamic.HTTPClientConfig) func() (net.Conn, error) {
+func getDialFn(targetURL *url.URL, proxyURL *url.URL, tlsConfig *tls.Config, config *dynamic.ServersTransport) func() (net.Conn, error) {
 	targetAddr := addrFromURL(targetURL)
 
 	if proxyURL == nil {
@@ -222,7 +222,7 @@ func getDialFn(targetURL *url.URL, proxyURL *url.URL, tlsConfig *tls.Config, con
 	}
 }
 
-func getDialer(scheme string, tlsConfig *tls.Config, cfg *dynamic.HTTPClientConfig) dialer {
+func getDialer(scheme string, tlsConfig *tls.Config, cfg *dynamic.ServersTransport) dialer {
 	dialer := &net.Dialer{
 		Timeout:   30 * time.Second,
 		KeepAlive: 30 * time.Second,
