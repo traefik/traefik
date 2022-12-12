@@ -839,7 +839,7 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 		}
 
 		router := dynamic.TCPRouter{
-			Rule:        "HostSNI(`*`)", // Gateway listener hostname not available in TCP
+			Rule:        "HostSNI(`*`)",
 			EntryPoints: []string{ep},
 		}
 
@@ -970,8 +970,16 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 
 		hostnames := matchingHostnames(listener, route.Spec.Hostnames)
 		if len(hostnames) == 0 && listener.Hostname != nil && *listener.Hostname != "" && len(route.Spec.Hostnames) > 0 {
-			// TODO update the corresponding route parent status
-			// https://gateway-api.sigs.k8s.io/v1alpha2/references/spec/#gateway.networking.k8s.io/v1alpha2.TLSRoute
+			for _, parent := range route.Status.Parents {
+				parent.Conditions = append(parent.Conditions, metav1.Condition{
+					Type:               string(v1alpha2.GatewayClassConditionStatusAccepted),
+					Status:             metav1.ConditionFalse,
+					Reason:             string(v1alpha2.ListenerReasonRouteConflict),
+					Message:            fmt.Sprintf("No hostname match between listener: %v and route: %v", listener.Hostname, route.Spec.Hostnames),
+					LastTransitionTime: metav1.Now(),
+				})
+			}
+
 			continue
 		}
 
@@ -1207,7 +1215,7 @@ func hostRule(hostnames []v1alpha2.Hostname) (string, error) {
 }
 
 func hostSNIRule(hostnames []v1alpha2.Hostname) (string, error) {
-	var matchers []string
+	rules := make([]string, 0, len(hostnames))
 	uniqHostnames := map[v1alpha2.Hostname]struct{}{}
 
 	for _, hostname := range hostnames {
@@ -1219,25 +1227,32 @@ func hostSNIRule(hostnames []v1alpha2.Hostname) (string, error) {
 			continue
 		}
 
-		h := string(hostname)
+		host := string(hostname)
+		uniqHostnames[hostname] = struct{}{}
 
-		// TODO support wildcard hostnames with an HostSNI regexp matcher
-		if strings.Contains(h, "*") {
-			return "", fmt.Errorf("wildcard hostname is not supported: %q", h)
+		wildcard := strings.Count(host, "*")
+		if wildcard == 0 {
+			rules = append(rules, fmt.Sprintf("HostSNI(`%s`)", host))
+			continue
 		}
 
-		matchers = append(matchers, fmt.Sprintf("HostSNI(`%s`)", h))
-		uniqHostnames[hostname] = struct{}{}
+		if !strings.HasPrefix(host, "*.") || wildcard > 1 {
+			return "", fmt.Errorf("invalid rule: %q", host)
+		}
+
+		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-zA-Z0-9-]+\.`, 1)
+		rules = append(rules, fmt.Sprintf("HostSNIRegexp(`^%s$`)", host))
 	}
 
-	switch len(matchers) {
-	case 0:
+	if len(hostnames) == 0 || len(rules) == 0 {
 		return "HostSNI(`*`)", nil
-	case 1:
-		return matchers[0], nil
-	default:
-		return fmt.Sprintf("(%s)", strings.Join(matchers, " || ")), nil
 	}
+
+	if len(rules) == 1 {
+		return rules[0], nil
+	}
+
+	return strings.Join(rules, " || "), nil
 }
 
 func extractRule(routeRule v1alpha2.HTTPRouteRule, hostRule string) (string, error) {
