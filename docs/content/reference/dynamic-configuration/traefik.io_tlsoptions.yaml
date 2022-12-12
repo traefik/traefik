@@ -6,9 +6,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
   creationTimestamp: null
-  name: tlsoptions.traefik.containo.us
+  name: tlsoptions.traefik.io
 spec:
-  group: traefik.containo.us
+  group: traefik.io
   names:
     kind: TLSOption
     listKind: TLSOptionList

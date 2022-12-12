@@ -44,9 +44,9 @@ type FakeMiddlewareTCPs struct {
 	ns   string
 }
 
-var middlewaretcpsResource = schema.GroupVersionResource{Group: "traefik.containo.us", Version: "v1alpha1", Resource: "middlewaretcps"}
+var middlewaretcpsResource = schema.GroupVersionResource{Group: "traefik.io", Version: "v1alpha1", Resource: "middlewaretcps"}
 
-var middlewaretcpsKind = schema.GroupVersionKind{Group: "traefik.containo.us", Version: "v1alpha1", Kind: "MiddlewareTCP"}
+var middlewaretcpsKind = schema.GroupVersionKind{Group: "traefik.io", Version: "v1alpha1", Kind: "MiddlewareTCP"}
 
 // Get takes name of the middlewareTCP, and returns the corresponding middlewareTCP object, and an error if there is any.
 func (c *FakeMiddlewareTCPs) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.MiddlewareTCP, err error) {

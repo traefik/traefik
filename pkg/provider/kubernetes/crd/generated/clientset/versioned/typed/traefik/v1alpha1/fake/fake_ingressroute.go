@@ -44,9 +44,9 @@ type FakeIngressRoutes struct {
 	ns   string
 }
 
-var ingressroutesResource = schema.GroupVersionResource{Group: "traefik.containo.us", Version: "v1alpha1", Resource: "ingressroutes"}
+var ingressroutesResource = schema.GroupVersionResource{Group: "traefik.io", Version: "v1alpha1", Resource: "ingressroutes"}
 
-var ingressroutesKind = schema.GroupVersionKind{Group: "traefik.containo.us", Version: "v1alpha1", Kind: "IngressRoute"}
+var ingressroutesKind = schema.GroupVersionKind{Group: "traefik.io", Version: "v1alpha1", Kind: "IngressRoute"}
 
 // Get takes name of the ingressRoute, and returns the corresponding ingressRoute object, and an error if there is any.
 func (c *FakeIngressRoutes) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.IngressRoute, err error) {

@@ -29,9 +29,9 @@ whoami:
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: middlewaretcps.traefik.containo.us
+  name: middlewaretcps.traefik.io
 spec:
-  group: traefik.containo.us
+  group: traefik.io
   version: v1alpha1
   names:
     kind: MiddlewareTCP
@@ -40,7 +40,7 @@ spec:
   scope: Namespaced
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: MiddlewareTCP
 metadata:
   name: foo-ip-allowlist
@@ -51,7 +51,7 @@ spec:
       - 192.168.1.7
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRouteTCP
 metadata:
   name: ingressroute

@@ -46,7 +46,7 @@ type TraefikV1alpha1Interface interface {
 	TraefikServicesGetter
 }
 
-// TraefikV1alpha1Client is used to interact with features provided by the traefik.containo.us group.
+// TraefikV1alpha1Client is used to interact with features provided by the traefik.io group.
 type TraefikV1alpha1Client struct {
 	restClient rest.Interface
 }

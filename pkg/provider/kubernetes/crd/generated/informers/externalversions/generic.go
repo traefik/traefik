@@ -60,7 +60,7 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=traefik.containo.us, Version=v1alpha1
+	// Group=traefik.io, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("ingressroutes"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Traefik().V1alpha1().IngressRoutes().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("ingressroutetcps"):

@@ -7,7 +7,7 @@ import (
 )
 
 // GroupName is the group name for Traefik.
-const GroupName = "traefik.containo.us"
+const GroupName = "traefik.io"
 
 var (
 	// SchemeBuilder collects the scheme builder functions.
