@@ -75,16 +75,15 @@ spec:
                       type: string
                     type: array
                   insecureSkipVerify:
-                    description: InsecureSkipVerify disables TLS certificate verification.
+                    description: InsecureSkipVerify disables SSL certificate verification.
                     type: boolean
                   peerCertURI:
-                    description: MaxIdleConnsPerHost controls the maximum idle (keep-alive)
-                      to keep per-host. PeerCertURI defines the peer cert URI used
-                      to match against SAN URI during the peer certificate verification.
+                    description: PeerCertURI defines the peer cert URI used to match
+                      against SAN URI during the peer certificate verification.
                     type: string
                   rootCAsSecrets:
                     description: RootCAsSecrets defines a list of CA secret used to
-                      validate self-signed certificates.
+                      validate self-signed certificate.
                     items:
                       type: string
                     type: array
