@@ -6,9 +6,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
   creationTimestamp: null
-  name: ingressroutes.traefik.containo.us
+  name: ingressroutes.traefik.io
 spec:
-  group: traefik.containo.us
+  group: traefik.io
   names:
     kind: IngressRoute
     listKind: IngressRouteList
@@ -16,7 +16,7 @@ spec:
     singular: ingressroute
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: IngressRoute is the CRD implementation of a Traefik HTTP Router.
@@ -274,9 +274,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
   creationTimestamp: null
-  name: ingressroutetcps.traefik.containo.us
+  name: ingressroutetcps.traefik.io
 spec:
-  group: traefik.containo.us
+  group: traefik.io
   names:
     kind: IngressRouteTCP
     listKind: IngressRouteTCPList
@@ -284,7 +284,7 @@ spec:
     singular: ingressroutetcp
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: IngressRouteTCP is the CRD implementation of a Traefik TCP Router.
@@ -486,9 +486,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
   creationTimestamp: null
-  name: ingressrouteudps.traefik.containo.us
+  name: ingressrouteudps.traefik.io
 spec:
-  group: traefik.containo.us
+  group: traefik.io
   names:
     kind: IngressRouteUDP
     listKind: IngressRouteUDPList
@@ -496,7 +496,7 @@ spec:
     singular: ingressrouteudp
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: IngressRouteUDP is a CRD implementation of a Traefik UDP Router.
@@ -584,9 +584,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
   creationTimestamp: null
-  name: middlewares.traefik.containo.us
+  name: middlewares.traefik.io
 spec:
-  group: traefik.containo.us
+  group: traefik.io
   names:
     kind: Middleware
     listKind: MiddlewareList
@@ -594,7 +594,7 @@ spec:
     singular: middleware
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: 'Middleware is the CRD implementation of a Traefik Middleware.
@@ -1479,9 +1479,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
   creationTimestamp: null
-  name: middlewaretcps.traefik.containo.us
+  name: middlewaretcps.traefik.io
 spec:
-  group: traefik.containo.us
+  group: traefik.io
   names:
     kind: MiddlewareTCP
     listKind: MiddlewareTCPList
@@ -1489,7 +1489,7 @@ spec:
     singular: middlewaretcp
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: 'MiddlewareTCP is the CRD implementation of a Traefik TCP middleware.
@@ -1551,9 +1551,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
   creationTimestamp: null
-  name: serverstransports.traefik.containo.us
+  name: serverstransports.traefik.io
 spec:
-  group: traefik.containo.us
+  group: traefik.io
   names:
     kind: ServersTransport
     listKind: ServersTransportList
@@ -1561,7 +1561,7 @@ spec:
     singular: serverstransport
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: 'ServersTransport is the CRD implementation of a ServersTransport.
@@ -1692,9 +1692,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
   creationTimestamp: null
-  name: serverstransporttcps.traefik.containo.us
+  name: serverstransporttcps.traefik.io
 spec:
-  group: traefik.containo.us
+  group: traefik.io
   names:
     kind: ServersTransportTCP
     listKind: ServersTransportTCPList
@@ -1702,7 +1702,7 @@ spec:
     singular: serverstransporttcp
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: 'ServersTransportTCP is the CRD implementation of a TCPServersTransport.
@@ -1814,9 +1814,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
   creationTimestamp: null
-  name: tlsoptions.traefik.containo.us
+  name: tlsoptions.traefik.io
 spec:
-  group: traefik.containo.us
+  group: traefik.io
   names:
     kind: TLSOption
     listKind: TLSOptionList
@@ -1824,7 +1824,7 @@ spec:
     singular: tlsoption
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: 'TLSOption is the CRD implementation of a Traefik TLS Option,
@@ -1921,9 +1921,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
   creationTimestamp: null
-  name: tlsstores.traefik.containo.us
+  name: tlsstores.traefik.io
 spec:
-  group: traefik.containo.us
+  group: traefik.io
   names:
     kind: TLSStore
     listKind: TLSStoreList
@@ -1931,7 +1931,7 @@ spec:
     singular: tlsstore
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: 'TLSStore is the CRD implementation of a Traefik TLS Store. For
@@ -2020,9 +2020,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
   creationTimestamp: null
-  name: traefikservices.traefik.containo.us
+  name: traefikservices.traefik.io
 spec:
-  group: traefik.containo.us
+  group: traefik.io
   names:
     kind: TraefikService
     listKind: TraefikServiceList
@@ -2030,7 +2030,7 @@ spec:
     singular: traefikservice
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: 'TraefikService is the CRD implementation of a Traefik Service.

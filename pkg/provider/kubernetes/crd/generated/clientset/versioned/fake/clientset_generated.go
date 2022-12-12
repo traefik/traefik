@@ -28,8 +28,8 @@ package fake
 
 import (
 	clientset "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned"
-	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefik/v1alpha1"
-	faketraefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefik/v1alpha1/fake"
+	traefikv1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefik/v1"
+	faketraefikv1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefik/v1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -84,7 +84,7 @@ func (c *Clientset) Tracker() testing.ObjectTracker {
 
 var _ clientset.Interface = &Clientset{}
 
-// TraefikV1alpha1 retrieves the TraefikV1alpha1Client
-func (c *Clientset) TraefikV1alpha1() traefikv1alpha1.TraefikV1alpha1Interface {
-	return &faketraefikv1alpha1.FakeTraefikV1alpha1{Fake: &c.Fake}
+// TraefikV1 retrieves the TraefikV1Client
+func (c *Clientset) TraefikV1() traefikv1.TraefikV1Interface {
+	return &faketraefikv1.FakeTraefikV1{Fake: &c.Fake}
 }

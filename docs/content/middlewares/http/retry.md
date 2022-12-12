@@ -27,7 +27,7 @@ labels:
 
 ```yaml tab="Kubernetes"
 # Retry 4 times with exponential backoff
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1
 kind: Middleware
 metadata:
   name: test-retry

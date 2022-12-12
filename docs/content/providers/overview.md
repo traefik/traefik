@@ -82,7 +82,7 @@ For the list of the providers names, see the [supported providers](#supported-pr
     ```
 
     ```yaml tab="Kubernetes Ingress Route"
-    apiVersion: traefik.containo.us/v1alpha1
+    apiVersion: traefik.io/v1
     kind: IngressRoute
     metadata:
       name: ingressroutestripprefix
@@ -104,7 +104,7 @@ For the list of the providers names, see the [supported providers](#supported-pr
     ```
 
     ```yaml tab="Kubernetes Ingress"
-    apiVersion: traefik.containo.us/v1alpha1
+    apiVersion: traefik.io/v1
     kind: Middleware
     metadata:
       name: stripprefix

@@ -11,7 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/informers/externalversions"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
+	v1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v2/pkg/version"
 	corev1 "k8s.io/api/core/v1"
@@ -31,17 +31,17 @@ const resyncPeriod = 10 * time.Minute
 // The stores can then be accessed via the Get* functions.
 type Client interface {
 	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
-	GetIngressRoutes() []*v1alpha1.IngressRoute
-	GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP
-	GetIngressRouteUDPs() []*v1alpha1.IngressRouteUDP
-	GetMiddlewares() []*v1alpha1.Middleware
-	GetMiddlewareTCPs() []*v1alpha1.MiddlewareTCP
-	GetTraefikService(namespace, name string) (*v1alpha1.TraefikService, bool, error)
-	GetTraefikServices() []*v1alpha1.TraefikService
-	GetTLSOptions() []*v1alpha1.TLSOption
-	GetServersTransports() []*v1alpha1.ServersTransport
-	GetServersTransportTCPs() []*v1alpha1.ServersTransportTCP
-	GetTLSStores() []*v1alpha1.TLSStore
+	GetIngressRoutes() []*v1.IngressRoute
+	GetIngressRouteTCPs() []*v1.IngressRouteTCP
+	GetIngressRouteUDPs() []*v1.IngressRouteUDP
+	GetMiddlewares() []*v1.Middleware
+	GetMiddlewareTCPs() []*v1.MiddlewareTCP
+	GetTraefikService(namespace, name string) (*v1.TraefikService, bool, error)
+	GetTraefikServices() []*v1.TraefikService
+	GetTLSOptions() []*v1.TLSOption
+	GetServersTransports() []*v1.ServersTransport
+	GetServersTransportTCPs() []*v1.ServersTransportTCP
+	GetTLSStores() []*v1.TLSStore
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
@@ -164,16 +164,16 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 
 	for _, ns := range namespaces {
 		factoryCrd := externalversions.NewSharedInformerFactoryWithOptions(c.csCrd, resyncPeriod, externalversions.WithNamespace(ns), externalversions.WithTweakListOptions(matchesLabelSelector))
-		factoryCrd.Traefik().V1alpha1().IngressRoutes().Informer().AddEventHandler(eventHandler)
-		factoryCrd.Traefik().V1alpha1().Middlewares().Informer().AddEventHandler(eventHandler)
-		factoryCrd.Traefik().V1alpha1().MiddlewareTCPs().Informer().AddEventHandler(eventHandler)
-		factoryCrd.Traefik().V1alpha1().IngressRouteTCPs().Informer().AddEventHandler(eventHandler)
-		factoryCrd.Traefik().V1alpha1().IngressRouteUDPs().Informer().AddEventHandler(eventHandler)
-		factoryCrd.Traefik().V1alpha1().TLSOptions().Informer().AddEventHandler(eventHandler)
-		factoryCrd.Traefik().V1alpha1().ServersTransports().Informer().AddEventHandler(eventHandler)
-		factoryCrd.Traefik().V1alpha1().ServersTransportTCPs().Informer().AddEventHandler(eventHandler)
-		factoryCrd.Traefik().V1alpha1().TLSStores().Informer().AddEventHandler(eventHandler)
-		factoryCrd.Traefik().V1alpha1().TraefikServices().Informer().AddEventHandler(eventHandler)
+		factoryCrd.Traefik().V1().IngressRoutes().Informer().AddEventHandler(eventHandler)
+		factoryCrd.Traefik().V1().Middlewares().Informer().AddEventHandler(eventHandler)
+		factoryCrd.Traefik().V1().MiddlewareTCPs().Informer().AddEventHandler(eventHandler)
+		factoryCrd.Traefik().V1().IngressRouteTCPs().Informer().AddEventHandler(eventHandler)
+		factoryCrd.Traefik().V1().IngressRouteUDPs().Informer().AddEventHandler(eventHandler)
+		factoryCrd.Traefik().V1().TLSOptions().Informer().AddEventHandler(eventHandler)
+		factoryCrd.Traefik().V1().ServersTransports().Informer().AddEventHandler(eventHandler)
+		factoryCrd.Traefik().V1().ServersTransportTCPs().Informer().AddEventHandler(eventHandler)
+		factoryCrd.Traefik().V1().TLSStores().Informer().AddEventHandler(eventHandler)
+		factoryCrd.Traefik().V1().TraefikServices().Informer().AddEventHandler(eventHandler)
 
 		factoryKube := informers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, informers.WithNamespace(ns))
 		factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
@@ -216,11 +216,11 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	return eventCh, nil
 }
 
-func (c *clientWrapper) GetIngressRoutes() []*v1alpha1.IngressRoute {
-	var result []*v1alpha1.IngressRoute
+func (c *clientWrapper) GetIngressRoutes() []*v1.IngressRoute {
+	var result []*v1.IngressRoute
 
 	for ns, factory := range c.factoriesCrd {
-		ings, err := factory.Traefik().V1alpha1().IngressRoutes().Lister().List(labels.Everything())
+		ings, err := factory.Traefik().V1().IngressRoutes().Lister().List(labels.Everything())
 		if err != nil {
 			log.Error().Err(err).Msgf("Failed to list ingress routes in namespace %s", ns)
 		}
@@ -230,11 +230,11 @@ func (c *clientWrapper) GetIngressRoutes() []*v1alpha1.IngressRoute {
 	return result
 }
 
-func (c *clientWrapper) GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP {
-	var result []*v1alpha1.IngressRouteTCP
+func (c *clientWrapper) GetIngressRouteTCPs() []*v1.IngressRouteTCP {
+	var result []*v1.IngressRouteTCP
 
 	for ns, factory := range c.factoriesCrd {
-		ings, err := factory.Traefik().V1alpha1().IngressRouteTCPs().Lister().List(labels.Everything())
+		ings, err := factory.Traefik().V1().IngressRouteTCPs().Lister().List(labels.Everything())
 		if err != nil {
 			log.Error().Err(err).Msgf("Failed to list tcp ingress routes in namespace %s", ns)
 		}
@@ -244,11 +244,11 @@ func (c *clientWrapper) GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP {
 	return result
 }
 
-func (c *clientWrapper) GetIngressRouteUDPs() []*v1alpha1.IngressRouteUDP {
-	var result []*v1alpha1.IngressRouteUDP
+func (c *clientWrapper) GetIngressRouteUDPs() []*v1.IngressRouteUDP {
+	var result []*v1.IngressRouteUDP
 
 	for ns, factory := range c.factoriesCrd {
-		ings, err := factory.Traefik().V1alpha1().IngressRouteUDPs().Lister().List(labels.Everything())
+		ings, err := factory.Traefik().V1().IngressRouteUDPs().Lister().List(labels.Everything())
 		if err != nil {
 			log.Error().Err(err).Msgf("Failed to list udp ingress routes in namespace %s", ns)
 		}
@@ -258,11 +258,11 @@ func (c *clientWrapper) GetIngressRouteUDPs() []*v1alpha1.IngressRouteUDP {
 	return result
 }
 
-func (c *clientWrapper) GetMiddlewares() []*v1alpha1.Middleware {
-	var result []*v1alpha1.Middleware
+func (c *clientWrapper) GetMiddlewares() []*v1.Middleware {
+	var result []*v1.Middleware
 
 	for ns, factory := range c.factoriesCrd {
-		middlewares, err := factory.Traefik().V1alpha1().Middlewares().Lister().List(labels.Everything())
+		middlewares, err := factory.Traefik().V1().Middlewares().Lister().List(labels.Everything())
 		if err != nil {
 			log.Error().Err(err).Msgf("Failed to list middlewares in namespace %s", ns)
 		}
@@ -272,11 +272,11 @@ func (c *clientWrapper) GetMiddlewares() []*v1alpha1.Middleware {
 	return result
 }
 
-func (c *clientWrapper) GetMiddlewareTCPs() []*v1alpha1.MiddlewareTCP {
-	var result []*v1alpha1.MiddlewareTCP
+func (c *clientWrapper) GetMiddlewareTCPs() []*v1.MiddlewareTCP {
+	var result []*v1.MiddlewareTCP
 
 	for ns, factory := range c.factoriesCrd {
-		middlewares, err := factory.Traefik().V1alpha1().MiddlewareTCPs().Lister().List(labels.Everything())
+		middlewares, err := factory.Traefik().V1().MiddlewareTCPs().Lister().List(labels.Everything())
 		if err != nil {
 			log.Error().Err(err).Msgf("Failed to list TCP middlewares in namespace %s", ns)
 		}
@@ -287,22 +287,22 @@ func (c *clientWrapper) GetMiddlewareTCPs() []*v1alpha1.MiddlewareTCP {
 }
 
 // GetTraefikService returns the named service from the given namespace.
-func (c *clientWrapper) GetTraefikService(namespace, name string) (*v1alpha1.TraefikService, bool, error) {
+func (c *clientWrapper) GetTraefikService(namespace, name string) (*v1.TraefikService, bool, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, false, fmt.Errorf("failed to get service %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
 
-	service, err := c.factoriesCrd[c.lookupNamespace(namespace)].Traefik().V1alpha1().TraefikServices().Lister().TraefikServices(namespace).Get(name)
+	service, err := c.factoriesCrd[c.lookupNamespace(namespace)].Traefik().V1().TraefikServices().Lister().TraefikServices(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
 
 	return service, exist, err
 }
 
-func (c *clientWrapper) GetTraefikServices() []*v1alpha1.TraefikService {
-	var result []*v1alpha1.TraefikService
+func (c *clientWrapper) GetTraefikServices() []*v1.TraefikService {
+	var result []*v1.TraefikService
 
 	for ns, factory := range c.factoriesCrd {
-		ings, err := factory.Traefik().V1alpha1().TraefikServices().Lister().List(labels.Everything())
+		ings, err := factory.Traefik().V1().TraefikServices().Lister().List(labels.Everything())
 		if err != nil {
 			log.Error().Err(err).Msgf("Failed to list Traefik services in namespace %s", ns)
 		}
@@ -313,11 +313,11 @@ func (c *clientWrapper) GetTraefikServices() []*v1alpha1.TraefikService {
 }
 
 // GetServersTransports returns all ServersTransport.
-func (c *clientWrapper) GetServersTransports() []*v1alpha1.ServersTransport {
-	var result []*v1alpha1.ServersTransport
+func (c *clientWrapper) GetServersTransports() []*v1.ServersTransport {
+	var result []*v1.ServersTransport
 
 	for ns, factory := range c.factoriesCrd {
-		serversTransports, err := factory.Traefik().V1alpha1().ServersTransports().Lister().List(labels.Everything())
+		serversTransports, err := factory.Traefik().V1().ServersTransports().Lister().List(labels.Everything())
 		if err != nil {
 			log.Error().Err(err).Msgf("Failed to list servers transport in namespace %s", ns)
 		}
@@ -328,11 +328,11 @@ func (c *clientWrapper) GetServersTransports() []*v1alpha1.ServersTransport {
 }
 
 // GetServersTransportTCPs returns all ServersTransportTCP.
-func (c *clientWrapper) GetServersTransportTCPs() []*v1alpha1.ServersTransportTCP {
-	var result []*v1alpha1.ServersTransportTCP
+func (c *clientWrapper) GetServersTransportTCPs() []*v1.ServersTransportTCP {
+	var result []*v1.ServersTransportTCP
 
 	for ns, factory := range c.factoriesCrd {
-		serversTransports, err := factory.Traefik().V1alpha1().ServersTransportTCPs().Lister().List(labels.Everything())
+		serversTransports, err := factory.Traefik().V1().ServersTransportTCPs().Lister().List(labels.Everything())
 		if err != nil {
 			log.Error().
 				Err(err).
@@ -346,11 +346,11 @@ func (c *clientWrapper) GetServersTransportTCPs() []*v1alpha1.ServersTransportTC
 }
 
 // GetTLSOptions returns all TLS options.
-func (c *clientWrapper) GetTLSOptions() []*v1alpha1.TLSOption {
-	var result []*v1alpha1.TLSOption
+func (c *clientWrapper) GetTLSOptions() []*v1.TLSOption {
+	var result []*v1.TLSOption
 
 	for ns, factory := range c.factoriesCrd {
-		options, err := factory.Traefik().V1alpha1().TLSOptions().Lister().List(labels.Everything())
+		options, err := factory.Traefik().V1().TLSOptions().Lister().List(labels.Everything())
 		if err != nil {
 			log.Error().Err(err).Msgf("Failed to list tls options in namespace %s", ns)
 		}
@@ -361,11 +361,11 @@ func (c *clientWrapper) GetTLSOptions() []*v1alpha1.TLSOption {
 }
 
 // GetTLSStores returns all TLS stores.
-func (c *clientWrapper) GetTLSStores() []*v1alpha1.TLSStore {
-	var result []*v1alpha1.TLSStore
+func (c *clientWrapper) GetTLSStores() []*v1.TLSStore {
+	var result []*v1.TLSStore
 
 	for ns, factory := range c.factoriesCrd {
-		stores, err := factory.Traefik().V1alpha1().TLSStores().Lister().List(labels.Everything())
+		stores, err := factory.Traefik().V1().TLSStores().Lister().List(labels.Everything())
 		if err != nil {
 			log.Error().Err(err).Msgf("Failed to list tls stores in namespace %s", ns)
 		}

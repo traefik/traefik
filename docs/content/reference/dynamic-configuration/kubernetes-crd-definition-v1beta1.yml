@@ -1,11 +1,11 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: ingressroutes.traefik.containo.us
+  name: ingressroutes.traefik.io
 
 spec:
-  group: traefik.containo.us
-  version: v1alpha1
+  group: traefik.io
+  version: v1
   names:
     kind: IngressRoute
     plural: ingressroutes
@@ -16,11 +16,11 @@ spec:
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: middlewares.traefik.containo.us
+  name: middlewares.traefik.io
 
 spec:
-  group: traefik.containo.us
-  version: v1alpha1
+  group: traefik.io
+  version: v1
   names:
     kind: Middleware
     plural: middlewares
@@ -31,11 +31,11 @@ spec:
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: middlewaretcps.traefik.containo.us
+  name: middlewaretcps.traefik.io
 
 spec:
-  group: traefik.containo.us
-  version: v1alpha1
+  group: traefik.io
+  version: v1
   names:
     kind: MiddlewareTCP
     plural: middlewaretcps
@@ -46,11 +46,11 @@ spec:
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: ingressroutetcps.traefik.containo.us
+  name: ingressroutetcps.traefik.io
 
 spec:
-  group: traefik.containo.us
-  version: v1alpha1
+  group: traefik.io
+  version: v1
   names:
     kind: IngressRouteTCP
     plural: ingressroutetcps
@@ -61,11 +61,11 @@ spec:
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: ingressrouteudps.traefik.containo.us
+  name: ingressrouteudps.traefik.io
 
 spec:
-  group: traefik.containo.us
-  version: v1alpha1
+  group: traefik.io
+  version: v1
   names:
     kind: IngressRouteUDP
     plural: ingressrouteudps
@@ -76,11 +76,11 @@ spec:
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: tlsoptions.traefik.containo.us
+  name: tlsoptions.traefik.io
 
 spec:
-  group: traefik.containo.us
-  version: v1alpha1
+  group: traefik.io
+  version: v1
   names:
     kind: TLSOption
     plural: tlsoptions
@@ -91,11 +91,11 @@ spec:
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: tlsstores.traefik.containo.us
+  name: tlsstores.traefik.io
 
 spec:
-  group: traefik.containo.us
-  version: v1alpha1
+  group: traefik.io
+  version: v1
   names:
     kind: TLSStore
     plural: tlsstores
@@ -106,11 +106,11 @@ spec:
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: traefikservices.traefik.containo.us
+  name: traefikservices.traefik.io
 
 spec:
-  group: traefik.containo.us
-  version: v1alpha1
+  group: traefik.io
+  version: v1
   names:
     kind: TraefikService
     plural: traefikservices
@@ -121,11 +121,11 @@ spec:
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: serverstransports.traefik.containo.us
+  name: serverstransports.traefik.io
 
 spec:
-  group: traefik.containo.us
-  version: v1alpha1
+  group: traefik.io
+  version: v1
   names:
     kind: ServersTransport
     plural: serverstransports

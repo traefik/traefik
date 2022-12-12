@@ -121,7 +121,7 @@ by defining and applying an IngressRoute CRD (`kubectl apply -f dashboard.yaml`)
 
 ```yaml
 # dashboard.yaml
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1
 kind: IngressRoute
 metadata:
   name: dashboard
