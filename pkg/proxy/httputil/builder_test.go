@@ -23,7 +23,7 @@ func BenchmarkProxy(b *testing.B) {
 	builder := NewProxyBuilder()
 	builder.roundTrippers = map[string]http.RoundTripper{"bench": &staticTransport{res: res}}
 
-	proxy, err := builder.Build("bench", &dynamic.HTTPClientConfig{}, nil, req.URL)
+	proxy, err := builder.Build("bench", &dynamic.ServersTransport{}, nil, req.URL)
 	require.NoError(b, err)
 
 	w := httptest.NewRecorder()
@@ -40,7 +40,7 @@ func TestEscapedPath(t *testing.T) {
 		gotEscapedPath = req.URL.EscapedPath()
 	}))
 
-	p, err := NewProxyBuilder().Build("default", &dynamic.HTTPClientConfig{PassHostHeader: true}, nil, testhelpers.MustParseURL(srv.URL))
+	p, err := NewProxyBuilder().Build("default", &dynamic.ServersTransport{PassHostHeader: true}, nil, testhelpers.MustParseURL(srv.URL))
 	require.NoError(t, err)
 
 	proxy := httptest.NewServer(http.HandlerFunc(p.ServeHTTP))

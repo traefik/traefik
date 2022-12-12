@@ -19,8 +19,7 @@
 ## dynamic configuration ##
 
 [http.serversTransports.default]
-  [http.serversTransports.default.http]
-    enableHTTP2 = true
+  enableHTTP2 = true
 
   [http.serversTransports.default.tls]
     rootCAs = [ """{{ .CertContent }}""" ]

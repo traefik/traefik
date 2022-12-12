@@ -236,19 +236,6 @@ type HealthCheck struct{}
 
 // ServersTransport holds the configuration of the communication between Traefik and the servers.
 type ServersTransport struct {
-	HTTP *HTTPClientConfig `json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" export:"true"`
-	TLS  *TLSClientConfig  `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
-}
-
-func (s *ServersTransport) SetDefaults() {
-	s.HTTP = &HTTPClientConfig{}
-	s.HTTP.SetDefaults()
-}
-
-// +k8s:deepcopy-gen=true
-
-// HTTPClientConfig holds the HTTP configuration to be used between Traefik and the servers.
-type HTTPClientConfig struct {
 	// PassHostHeader defines whether to forward the client Host header to the server.
 	PassHostHeader bool `json:"passHostHeader,omitempty" toml:"passHostHeader,omitempty" yaml:"passHostHeader,omitempty" export:"true"`
 	// MaxIdleConnsPerHost controls the maximum number of idle (keep-alive) connections to keep per-host.
@@ -257,15 +244,15 @@ type HTTPClientConfig struct {
 	// ForwardingTimeouts defines the timeouts for the requests forwarded to the backend servers.
 	ForwardingTimeouts *ForwardingTimeouts `json:"forwardingTimeouts,omitempty" toml:"forwardingTimeouts,omitempty" yaml:"forwardingTimeouts,omitempty" export:"true"`
 	// EnableHTTP2 enables HTTP/2 between Traefik and the backends.
-	EnableHTTP2 bool `json:"enableHTTP2,omitempty" toml:"enableHTTP2,omitempty" yaml:"enableHTTP2,omitempty" export:"true"`
+	EnableHTTP2 bool             `json:"enableHTTP2,omitempty" toml:"enableHTTP2,omitempty" yaml:"enableHTTP2,omitempty" export:"true"`
+	TLS         *TLSClientConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
 }
 
-// SetDefaults sets the default HTTPClientConfig values.
-func (h *HTTPClientConfig) SetDefaults() {
-	h.PassHostHeader = DefaultPassHostHeader
-	h.MaxIdleConnsPerHost = 200
-	h.ForwardingTimeouts = &ForwardingTimeouts{}
-	h.ForwardingTimeouts.SetDefaults()
+func (s *ServersTransport) SetDefaults() {
+	s.PassHostHeader = DefaultPassHostHeader
+	s.MaxIdleConnsPerHost = 200
+	s.ForwardingTimeouts = &ForwardingTimeouts{}
+	s.ForwardingTimeouts.SetDefaults()
 }
 
 // +k8s:deepcopy-gen=true
