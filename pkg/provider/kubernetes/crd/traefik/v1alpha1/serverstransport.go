@@ -25,8 +25,16 @@ type ServersTransport struct {
 
 // ServersTransportSpec defines the desired state of a ServersTransport.
 type ServersTransportSpec struct {
-	TLS  *TLSClientConfig  `json:"tls,omitempty"`
-	HTTP *HTTPClientConfig `json:"http,omitempty"`
+	TLS *TLSClientConfig `json:"tls,omitempty"`
+	// PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
+	// By default, passHostHeader is true.
+	PassHostHeader *bool `json:"passHostHeader,omitempty"`
+	// MaxIdleConnsPerHost controls the maximum idle (keep-alive) to keep per-host.
+	MaxIdleConnsPerHost *int `json:"maxIdleConnsPerHost,omitempty"`
+	// ForwardingTimeouts defines the timeouts for requests forwarded to the backend servers.
+	ForwardingTimeouts *ForwardingTimeouts `json:"forwardingTimeouts,omitempty"`
+	// EnableHTTP2 enables HTTP/2 or connections with backend servers.
+	EnableHTTP2 bool `json:"enableHTTP2,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -45,21 +53,6 @@ type TLSClientConfig struct {
 	PeerCertURI string `json:"peerCertURI,omitempty"`
 	// Spiffe defines the SPIFFE configuration.
 	Spiffe *dynamic.Spiffe `json:"spiffe,omitempty"`
-}
-
-// +k8s:deepcopy-gen=true
-
-// HTTPClientConfig holds the HTTP configuration to be used between Traefik and the servers.
-type HTTPClientConfig struct {
-	// PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
-	// By default, passHostHeader is true.
-	PassHostHeader *bool `json:"passHostHeader,omitempty"`
-	// MaxIdleConnsPerHost controls the maximum idle (keep-alive) to keep per-host.
-	MaxIdleConnsPerHost int `json:"maxIdleConnsPerHost,omitempty"`
-	// ForwardingTimeouts defines the timeouts for requests forwarded to the backend servers.
-	ForwardingTimeouts *ForwardingTimeouts `json:"forwardingTimeouts,omitempty"`
-	// EnableHTTP2 enables HTTP/2 or connections with backend servers.
-	EnableHTTP2 bool `json:"enableHTTP2,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

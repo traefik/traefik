@@ -232,7 +232,7 @@ func TestProxyFromEnvironment(t *testing.T) {
 				RootCAs: certPool,
 			}
 
-			reverseProxy, err := builder.Build("foo", &dynamic.HTTPClientConfig{}, tlsConfig, testhelpers.MustParseURL(backendURL))
+			reverseProxy, err := builder.Build("foo", &dynamic.ServersTransport{}, tlsConfig, testhelpers.MustParseURL(backendURL))
 			require.NoError(t, err)
 
 			reverseProxyServer := httptest.NewServer(reverseProxy)

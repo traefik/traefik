@@ -18,7 +18,7 @@
 
 ## dynamic configuration ##
 
-[http.serversTransports.default.http.forwardingTimeouts]
+[http.serversTransports.default.forwardingTimeouts]
   idleConnTimeout = "{{ .IdleConnTimeout }}"
 
 [http.routers]
