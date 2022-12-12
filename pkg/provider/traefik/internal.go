@@ -79,7 +79,6 @@ func (i *Provider) createConfiguration(ctx context.Context) *dynamic.Configurati
 	i.prometheusConfiguration(cfg)
 	i.entryPointModels(cfg)
 	i.redirection(ctx, cfg)
-	i.serverTransportTCP(cfg)
 
 	i.acme(cfg)
 
@@ -311,24 +310,4 @@ func (i *Provider) prometheusConfiguration(cfg *dynamic.Configuration) {
 	}
 
 	cfg.HTTP.Services["prometheus"] = &dynamic.Service{}
-}
-
-func (i *Provider) serverTransportTCP(cfg *dynamic.Configuration) {
-	if i.staticCfg.TCPServersTransport == nil {
-		return
-	}
-
-	st := &dynamic.TCPServersTransport{
-		DialTimeout:   i.staticCfg.TCPServersTransport.DialTimeout,
-		DialKeepAlive: i.staticCfg.TCPServersTransport.DialKeepAlive,
-	}
-
-	if i.staticCfg.TCPServersTransport.TLS != nil {
-		st.TLS = &dynamic.TLSClientConfig{
-			InsecureSkipVerify: i.staticCfg.TCPServersTransport.TLS.InsecureSkipVerify,
-			RootCAs:            i.staticCfg.TCPServersTransport.TLS.RootCAs,
-		}
-	}
-
-	cfg.TCP.ServersTransports["default"] = st
 }

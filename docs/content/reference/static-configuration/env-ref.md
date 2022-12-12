@@ -993,33 +993,6 @@ Username for authentication.
 `TRAEFIK_SPIFFE_WORKLOADAPIADDR`:  
 Defines the workload API address.
 
-`TRAEFIK_TCPSERVERSTRANSPORT_DIALKEEPALIVE`:  
-Defines the interval between keep-alive probes for an active network connection. If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled (Default: ```15```)
-
-`TRAEFIK_TCPSERVERSTRANSPORT_DIALTIMEOUT`:  
-Defines the amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
-
-`TRAEFIK_TCPSERVERSTRANSPORT_TERMINATIONDELAY`:  
-Defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability. (Default: ```0```)
-
-`TRAEFIK_TCPSERVERSTRANSPORT_TLS`:  
-Defines the TLS configuration. (Default: ```false```)
-
-`TRAEFIK_TCPSERVERSTRANSPORT_TLS_INSECURESKIPVERIFY`:  
-Disables SSL certificate verification. (Default: ```false```)
-
-`TRAEFIK_TCPSERVERSTRANSPORT_TLS_ROOTCAS`:  
-Defines a list of CA secret used to validate self-signed certificate
-
-`TRAEFIK_TCPSERVERSTRANSPORT_TLS_SPIFFE`:  
-Defines the SPIFFE TLS configuration. (Default: ```false```)
-
-`TRAEFIK_TCPSERVERSTRANSPORT_TLS_SPIFFE_IDS`:  
-Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
-
-`TRAEFIK_TCPSERVERSTRANSPORT_TLS_SPIFFE_TRUSTDOMAIN`:  
-Defines the allowed SPIFFE trust domain.
-
 `TRAEFIK_TRACING`:  
 OpenTracing configuration. (Default: ```false```)
 
