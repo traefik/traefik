@@ -7,7 +7,6 @@ import (
 	"hash/fnv"
 	"math/rand"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"reflect"
 	"strings"
@@ -21,27 +20,25 @@ import (
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
 	metricsMiddle "github.com/traefik/traefik/v2/pkg/middlewares/metrics"
+	"github.com/traefik/traefik/v2/pkg/proxy"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/server/cookie"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
 	"github.com/traefik/traefik/v2/pkg/server/service/loadbalancer/failover"
 	"github.com/traefik/traefik/v2/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v2/pkg/server/service/loadbalancer/wrr"
+	"github.com/traefik/traefik/v2/pkg/tls/client"
 )
 
 const defaultMaxBodySize int64 = -1
 
-// RoundTripperGetter is a roundtripper getter interface.
-type RoundTripperGetter interface {
-	Get(name string) (http.RoundTripper, error)
-}
-
 // Manager The service manager.
 type Manager struct {
-	routinePool         *safe.Pool
-	metricsRegistry     metrics.Registry
-	bufferPool          httputil.BufferPool
-	roundTripperManager RoundTripperGetter
+	routinePool     *safe.Pool
+	metricsRegistry metrics.Registry
+
+	proxyBuilder           *proxy.Builder
+	tlsClientConfigManager *client.TLSConfigManager
 
 	services       map[string]http.Handler
 	configs        map[string]*runtime.ServiceInfo
@@ -50,16 +47,16 @@ type Manager struct {
 }
 
 // NewManager creates a new Manager.
-func NewManager(configs map[string]*runtime.ServiceInfo, metricsRegistry metrics.Registry, routinePool *safe.Pool, roundTripperManager RoundTripperGetter) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, metricsRegistry metrics.Registry, routinePool *safe.Pool, proxyBuilder *proxy.Builder, tlsClientConfigManager *client.TLSConfigManager) *Manager {
 	return &Manager{
-		routinePool:         routinePool,
-		metricsRegistry:     metricsRegistry,
-		bufferPool:          newBufferPool(),
-		roundTripperManager: roundTripperManager,
-		services:            make(map[string]http.Handler),
-		configs:             configs,
-		healthCheckers:      make(map[string]*healthcheck.ServiceHealthChecker),
-		rand:                rand.New(rand.NewSource(time.Now().UnixNano())),
+		routinePool:            routinePool,
+		metricsRegistry:        metricsRegistry,
+		services:               make(map[string]http.Handler),
+		configs:                configs,
+		healthCheckers:         make(map[string]*healthcheck.ServiceHealthChecker),
+		rand:                   rand.New(rand.NewSource(time.Now().UnixNano())),
+		proxyBuilder:           proxyBuilder,
+		tlsClientConfigManager: tlsClientConfigManager,
 	}
 }
 
@@ -255,29 +252,12 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	logger := log.Ctx(ctx)
 	logger.Debug().Msg("Creating load-balancer")
 
-	// TODO: should we keep this config value as Go is now handling stream response correctly?
-	flushInterval := dynamic.DefaultFlushInterval
-	if service.ResponseForwarding != nil {
-		flushInterval = service.ResponseForwarding.FlushInterval
-	}
-
 	if len(service.ServersTransport) > 0 {
 		service.ServersTransport = provider.GetQualifiedName(ctx, service.ServersTransport)
 	}
 
 	if service.Sticky != nil && service.Sticky.Cookie != nil {
 		service.Sticky.Cookie.Name = cookie.GetName(service.Sticky.Cookie.Name, serviceName)
-	}
-
-	// We make sure that the PassHostHeader value is defined to avoid panics.
-	passHostHeader := dynamic.DefaultPassHostHeader
-	if service.PassHostHeader != nil {
-		passHostHeader = *service.PassHostHeader
-	}
-
-	roundTripper, err := m.roundTripperManager.Get(service.ServersTransport)
-	if err != nil {
-		return nil, err
 	}
 
 	lb := wrr.New(service.Sticky, service.HealthCheck != nil)
@@ -294,10 +274,15 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 			return nil, fmt.Errorf("error parsing server URL %s: %w", server.URL, err)
 		}
 
-		logger.Debug().Str(logs.ServerName, proxyName).Stringer("target", target).
+		logger.Debug().
+			Str(logs.ServerName, proxyName).
+			Stringer("target", target).
 			Msg("Creating server")
 
-		proxy := buildSingleHostProxy(target, passHostHeader, time.Duration(flushInterval), roundTripper, m.bufferPool)
+		proxy, err := m.proxyBuilder.Build(service.ServersTransport, target)
+		if err != nil {
+			return nil, err
+		}
 
 		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
 		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
@@ -316,13 +301,18 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	}
 
 	if service.HealthCheck != nil {
+		tlsConfig, err := m.tlsClientConfigManager.GetTLSConfig(service.ServersTransport)
+		if err != nil {
+			return nil, err
+		}
+
 		m.healthCheckers[serviceName] = healthcheck.NewServiceHealthChecker(
 			ctx,
 			m.metricsRegistry,
 			service.HealthCheck,
 			lb,
 			info,
-			roundTripper,
+			tlsConfig,
 			healthCheckTargets,
 		)
 	}
