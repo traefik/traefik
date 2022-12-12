@@ -293,7 +293,7 @@ func TestWebSocketRequestWithHeadersInResponseWriter(t *testing.T) {
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
-	p, err := NewProxyBuilder().Build("default", &dynamic.HTTPClientConfig{PassHostHeader: true}, nil, testhelpers.MustParseURL(srv.URL))
+	p, err := NewProxyBuilder().Build("default", &dynamic.ServersTransport{PassHostHeader: true}, nil, testhelpers.MustParseURL(srv.URL))
 	require.NoError(t, err)
 
 	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -344,7 +344,7 @@ func TestWebSocketUpgradeFailed(t *testing.T) {
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
-	p, err := NewProxyBuilder().Build("default", &dynamic.HTTPClientConfig{PassHostHeader: true}, nil, testhelpers.MustParseURL(srv.URL))
+	p, err := NewProxyBuilder().Build("default", &dynamic.ServersTransport{PassHostHeader: true}, nil, testhelpers.MustParseURL(srv.URL))
 	require.NoError(t, err)
 
 	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -576,7 +576,7 @@ func createProxyWithForwarder(t *testing.T, uri string, transport http.RoundTrip
 	builder := NewProxyBuilder()
 	builder.roundTrippers = map[string]http.RoundTripper{"fwd": transport}
 
-	p, err := builder.Build("fwd", &dynamic.HTTPClientConfig{PassHostHeader: true}, nil, u)
+	p, err := builder.Build("fwd", &dynamic.ServersTransport{PassHostHeader: true}, nil, u)
 	require.NoError(t, err)
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

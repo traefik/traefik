@@ -142,15 +142,13 @@ func init() {
 						},
 					},
 				},
-				HTTP: &dynamic.HTTPClientConfig{
-					MaxIdleConnsPerHost: 42,
-					ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-						DialTimeout:           42,
-						ResponseHeaderTimeout: 42,
-						IdleConnTimeout:       42,
-						ReadIdleTimeout:       42,
-						PingTimeout:           42,
-					},
+				MaxIdleConnsPerHost: 42,
+				ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+					DialTimeout:           42,
+					ResponseHeaderTimeout: 42,
+					IdleConnTimeout:       42,
+					ReadIdleTimeout:       42,
+					PingTimeout:           42,
 				},
 			},
 		},
