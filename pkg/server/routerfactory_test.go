@@ -54,7 +54,7 @@ func TestReuseService(t *testing.T) {
 	tlsClientConfigManager := client.NewTLSConfigManager(nil)
 	proxyBuilder := proxy.NewBuilder(tlsClientConfigManager)
 
-	configs := map[string]*dynamic.ServersTransport{"default": {HTTP: &dynamic.HTTPClientConfig{}}}
+	configs := map[string]*dynamic.ServersTransport{"default": {}}
 	tlsClientConfigManager.Update(configs)
 	proxyBuilder.Update(configs)
 
@@ -197,7 +197,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			tlsClientConfigManager := client.NewTLSConfigManager(nil)
 			proxyBuilder := proxy.NewBuilder(tlsClientConfigManager)
 
-			configs := map[string]*dynamic.ServersTransport{"default": {HTTP: &dynamic.HTTPClientConfig{}}}
+			configs := map[string]*dynamic.ServersTransport{"default": {}}
 			tlsClientConfigManager.Update(configs)
 			proxyBuilder.Update(configs)
 
@@ -245,7 +245,7 @@ func TestInternalServices(t *testing.T) {
 	tlsClientConfigManager := client.NewTLSConfigManager(nil)
 	proxyBuilder := proxy.NewBuilder(tlsClientConfigManager)
 
-	configs := map[string]*dynamic.ServersTransport{"default": {HTTP: &dynamic.HTTPClientConfig{}}}
+	configs := map[string]*dynamic.ServersTransport{"default": {}}
 	tlsClientConfigManager.Update(configs)
 	proxyBuilder.Update(configs)
 
