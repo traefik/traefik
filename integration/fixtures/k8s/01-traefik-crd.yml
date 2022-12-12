@@ -89,6 +89,32 @@ spec:
                         description: Service defines an upstream HTTP service to proxy
                           traffic to.
                         properties:
+                          externalServiceHealthCheck:
+                            description: Healthcheck docs TODO
+                            properties:
+                              followRedirects:
+                                type: boolean
+                              headers:
+                                additionalProperties:
+                                  type: string
+                                type: object
+                              hostname:
+                                type: string
+                              interval:
+                                description: FIXME change string to ptypes.Duration
+                                type: string
+                              path:
+                                type: string
+                              port:
+                                type: integer
+                              scheme:
+                                type: string
+                              timeout:
+                                description: FIXME change string to ptypes.Duration
+                                type: string
+                            required:
+                            - followRedirects
+                            type: object
                           kind:
                             description: Kind defines the kind of the Service.
                             enum:
@@ -803,6 +829,32 @@ spec:
                     description: 'Service defines the reference to a Kubernetes Service
                       that will serve the error page. More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/errorpages/#service'
                     properties:
+                      externalServiceHealthCheck:
+                        description: Healthcheck docs TODO
+                        properties:
+                          followRedirects:
+                            type: boolean
+                          headers:
+                            additionalProperties:
+                              type: string
+                            type: object
+                          hostname:
+                            type: string
+                          interval:
+                            description: FIXME change string to ptypes.Duration
+                            type: string
+                          path:
+                            type: string
+                          port:
+                            type: integer
+                          scheme:
+                            type: string
+                          timeout:
+                            description: FIXME change string to ptypes.Duration
+                            type: string
+                        required:
+                        - followRedirects
+                        type: object
                       kind:
                         description: Kind defines the kind of the Service.
                         enum:
@@ -1932,6 +1984,32 @@ spec:
               mirroring:
                 description: Mirroring defines the Mirroring service configuration.
                 properties:
+                  externalServiceHealthCheck:
+                    description: Healthcheck docs TODO
+                    properties:
+                      followRedirects:
+                        type: boolean
+                      headers:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      hostname:
+                        type: string
+                      interval:
+                        description: FIXME change string to ptypes.Duration
+                        type: string
+                      path:
+                        type: string
+                      port:
+                        type: integer
+                      scheme:
+                        type: string
+                      timeout:
+                        description: FIXME change string to ptypes.Duration
+                        type: string
+                    required:
+                    - followRedirects
+                    type: object
                   kind:
                     description: Kind defines the kind of the Service.
                     enum:
@@ -1951,6 +2029,32 @@ spec:
                     items:
                       description: MirrorService holds the mirror configuration.
                       properties:
+                        externalServiceHealthCheck:
+                          description: Healthcheck docs TODO
+                          properties:
+                            followRedirects:
+                              type: boolean
+                            headers:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            hostname:
+                              type: string
+                            interval:
+                              description: FIXME change string to ptypes.Duration
+                              type: string
+                            path:
+                              type: string
+                            port:
+                              type: integer
+                            scheme:
+                              type: string
+                            timeout:
+                              description: FIXME change string to ptypes.Duration
+                              type: string
+                          required:
+                          - followRedirects
+                          type: object
                         kind:
                           description: Kind defines the kind of the Service.
                           enum:
@@ -2139,6 +2243,32 @@ spec:
                       description: Service defines an upstream HTTP service to proxy
                         traffic to.
                       properties:
+                        externalServiceHealthCheck:
+                          description: Healthcheck docs TODO
+                          properties:
+                            followRedirects:
+                              type: boolean
+                            headers:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            hostname:
+                              type: string
+                            interval:
+                              description: FIXME change string to ptypes.Duration
+                              type: string
+                            path:
+                              type: string
+                            port:
+                              type: integer
+                            scheme:
+                              type: string
+                            timeout:
+                              description: FIXME change string to ptypes.Duration
+                              type: string
+                          required:
+                          - followRedirects
+                          type: object
                         kind:
                           description: Kind defines the kind of the Service.
                           enum:

@@ -119,6 +119,9 @@ type LoadBalancerSpec struct {
 	// Weight defines the weight and should only be specified when Name references a TraefikService object
 	// (and to be precise, one that embeds a Weighted Round Robin).
 	Weight *int `json:"weight,omitempty"`
+
+	// Healthcheck docs TODO
+	HealthCheck *dynamic.ServerHealthCheck `json:"externalServiceHealthCheck,omitempty"`
 }
 
 type ResponseForwarding struct {
