@@ -204,20 +204,17 @@ func getDialFn(targetURL *url.URL, proxyURL *url.URL, tlsConfig *tls.Config, con
 				return nil, errors.New(statusText)
 			}
 
-			if targetURL.Scheme == schemeHTTPS {
-				c := &tls.Config{}
-				if tlsConfig != nil {
-					c = tlsConfig.Clone()
-				}
-
-				if c.ServerName == "" {
-					c.ServerName = targetURL.Hostname()
-				}
-
-				return tls.Client(conn, c), nil
+			c := &tls.Config{}
+			if tlsConfig != nil {
+				c = tlsConfig.Clone()
 			}
 
-			return conn, nil
+			if c.ServerName == "" {
+				c.ServerName = targetURL.Hostname()
+			}
+
+			return tls.Client(conn, c), nil
+
 		}
 	}
 
