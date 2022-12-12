@@ -990,62 +990,8 @@ Root key used for KV store. (Default: ```traefik```)
 `--providers.zookeeper.username`:  
 Username for authentication.
 
-`--serverstransport.forwardingtimeouts.dialtimeout`:  
-The amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
-
-`--serverstransport.forwardingtimeouts.idleconntimeout`:  
-The maximum period for which an idle HTTP keep-alive connection will remain open before closing itself (Default: ```90```)
-
-`--serverstransport.forwardingtimeouts.responseheadertimeout`:  
-The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists. (Default: ```0```)
-
-`--serverstransport.insecureskipverify`:  
-Disable SSL certificate verification. (Default: ```false```)
-
-`--serverstransport.maxidleconnsperhost`:  
-If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, DefaultMaxIdleConnsPerHost is used (Default: ```200```)
-
-`--serverstransport.rootcas`:  
-Add cert file for self-signed certificate.
-
-`--serverstransport.spiffe`:  
-Defines the SPIFFE configuration. (Default: ```false```)
-
-`--serverstransport.spiffe.ids`:  
-Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
-
-`--serverstransport.spiffe.trustdomain`:  
-Defines the allowed SPIFFE trust domain.
-
 `--spiffe.workloadapiaddr`:  
 Defines the workload API address.
-
-`--tcpserverstransport.dialkeepalive`:  
-Defines the interval between keep-alive probes for an active network connection. If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled (Default: ```15```)
-
-`--tcpserverstransport.dialtimeout`:  
-Defines the amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
-
-`--tcpserverstransport.terminationdelay`:  
-Defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability. (Default: ```0```)
-
-`--tcpserverstransport.tls`:  
-Defines the TLS configuration. (Default: ```false```)
-
-`--tcpserverstransport.tls.insecureskipverify`:  
-Disables SSL certificate verification. (Default: ```false```)
-
-`--tcpserverstransport.tls.rootcas`:  
-Defines a list of CA secret used to validate self-signed certificate
-
-`--tcpserverstransport.tls.spiffe`:  
-Defines the SPIFFE TLS configuration. (Default: ```false```)
-
-`--tcpserverstransport.tls.spiffe.ids`:  
-Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
-
-`--tcpserverstransport.tls.spiffe.trustdomain`:  
-Defines the allowed SPIFFE trust domain.
 
 `--tracing`:  
 OpenTracing configuration. (Default: ```false```)

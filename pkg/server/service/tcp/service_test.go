@@ -40,7 +40,7 @@ func TestManager_BuildTCP(t *testing.T) {
 		{
 			desc:        "no such host, server is skipped, error is logged",
 			serviceName: "test",
-			stConfigs:   map[string]*dynamic.TCPServersTransport{"default@internal": {}},
+			stConfigs:   map[string]*dynamic.TCPServersTransport{"default": {}},
 			configs: map[string]*runtime.TCPServiceInfo{
 				"test": {
 					TCPService: &dynamic.TCPService{
@@ -105,7 +105,7 @@ func TestManager_BuildTCP(t *testing.T) {
 		{
 			desc:        "Server with correct host:port as address",
 			serviceName: "serviceName",
-			stConfigs:   map[string]*dynamic.TCPServersTransport{"default@internal": {}},
+			stConfigs:   map[string]*dynamic.TCPServersTransport{"default": {}},
 			configs: map[string]*runtime.TCPServiceInfo{
 				"serviceName@provider-1": {
 					TCPService: &dynamic.TCPService{
@@ -124,7 +124,7 @@ func TestManager_BuildTCP(t *testing.T) {
 		{
 			desc:        "Server with correct ip:port as address",
 			serviceName: "serviceName",
-			stConfigs:   map[string]*dynamic.TCPServersTransport{"default@internal": {}},
+			stConfigs:   map[string]*dynamic.TCPServersTransport{"default": {}},
 			configs: map[string]*runtime.TCPServiceInfo{
 				"serviceName@provider-1": {
 					TCPService: &dynamic.TCPService{
