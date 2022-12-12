@@ -29,6 +29,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/nomad"
 	"github.com/traefik/traefik/v2/pkg/provider/rancher"
 	"github.com/traefik/traefik/v2/pkg/provider/rest"
+	"github.com/traefik/traefik/v2/pkg/tls"
 	"github.com/traefik/traefik/v2/pkg/tracing/datadog"
 	"github.com/traefik/traefik/v2/pkg/tracing/elastic"
 	"github.com/traefik/traefik/v2/pkg/tracing/haystack"

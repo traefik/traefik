@@ -46,7 +46,6 @@ type ServiceIng struct {
 	Sticky           *dynamic.Sticky `json:"sticky,omitempty" label:"allowEmpty"`
 }
 
-
 func parseRouterConfig(annotations map[string]string) (*RouterConfig, error) {
 	labels := convertAnnotations(annotations)
 	if len(labels) == 0 {

@@ -214,7 +214,6 @@ func getDialFn(targetURL *url.URL, proxyURL *url.URL, tlsConfig *tls.Config, con
 			}
 
 			return tls.Client(conn, c), nil
-
 		}
 	}
 
