@@ -11,9 +11,7 @@ import (
 // +kubebuilder:storageversion
 
 // ServersTransportTCP is the CRD implementation of a TCPServersTransport.
-// If no tcpServersTransport is specified, a default one named default@internal will be used.
-// The default@internal tcpServersTransport can be configured in the static configuration.
-// More info: https://doc.traefik.io/traefik/v2.9/routing/services/#serverstransport_3
+// If no tcpServersTransport is specified, a default one named default will be used.
 type ServersTransportTCP struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.

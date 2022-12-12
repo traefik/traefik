@@ -1806,9 +1806,15 @@ If the ServersTransport CRD is defined in another provider the cross-provider fo
 
 `ServersTransportTCP` is the CRD implementation of a [ServersTransportTCP](../services/index.md#serverstransport_2).
 
-!!! important "Default serversTransportTCP"
-If no `serversTransportTCP` is specified, the `default@internal` will be used.
-The `default@internal` serversTransportTCP is created from the [static configuration](../overview.md#tcp-servers-transports).
+!!! important "Default ServersTransportTCP"
+
+    When using the ServersTransportTCP resource in Kubernetes, 
+    one might setup a default set of options that should apply to communications between Traefik and the servers.  
+    To achieve that, you will have to create a ServersTransportTCP resource with the name `default`.
+    There may exist only one ServersTransportTCP with the name `default` (across all namespaces) - otherwise they will be dropped.  
+    To explicitly use a different ServersTransportTCP (and using the Kubernetes Service resources)
+    you will have to add an annotation to the Kubernetes Service in the following form:
+    `traefik.ingress.kubernetes.io/service.serverstransporttcp: <resource-namespace>-<resource-name>@kubernetescrd`
 
 !!! info "ServersTransportTCP Attributes"
 

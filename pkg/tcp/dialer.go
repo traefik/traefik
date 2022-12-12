@@ -77,7 +77,7 @@ func (d *DialerManager) Update(configs map[string]*dynamic.TCPServersTransport) 
 // Get gets a dialer by name.
 func (d *DialerManager) Get(name string, tls bool) (Dialer, error) {
 	if len(name) == 0 {
-		name = "default@internal"
+		name = "default"
 	}
 
 	d.rtLock.RLock()
