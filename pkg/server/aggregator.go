@@ -39,6 +39,7 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 	var defaultTLSOptionProviders []string
 	var defaultTLSStoreProviders []string
 	var defaultServersTransportProviders []string
+	var defaultServersTransportTCPProviders []string
 	for pvd, configuration := range configurations {
 		if configuration.HTTP != nil {
 			for routerName, router := range configuration.HTTP.Routers {
@@ -88,8 +89,14 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 			for serviceName, service := range configuration.TCP.Services {
 				conf.TCP.Services[provider.MakeQualifiedName(pvd, serviceName)] = service
 			}
+
 			for serversTransportName, serversTransport := range configuration.TCP.ServersTransports {
-				conf.TCP.ServersTransports[provider.MakeQualifiedName(pvd, serversTransportName)] = serversTransport
+				if serversTransportName != "default" {
+					serversTransportName = provider.MakeQualifiedName(pvd, serversTransportName)
+				} else {
+					defaultServersTransportTCPProviders = append(defaultServersTransportTCPProviders, pvd)
+				}
+				conf.TCP.ServersTransports[serversTransportName] = serversTransport
 			}
 		}
 
@@ -157,8 +164,19 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 	} else if len(defaultServersTransportProviders) > 1 {
 		log.Error().
 			Strs("providers", defaultServersTransportProviders).
-			Msg("Default ServersTransport defined in multiple provider")
+			Msg("Default HTTP ServersTransport defined in multiple provider")
 		delete(conf.HTTP.ServersTransports, "default")
+	}
+
+	if len(defaultServersTransportTCPProviders) == 0 {
+		d := &dynamic.TCPServersTransport{}
+		d.SetDefaults()
+		conf.TCP.ServersTransports["default"] = d
+	} else if len(defaultServersTransportTCPProviders) > 1 {
+		log.Error().
+			Strs("providers", defaultServersTransportTCPProviders).
+			Msg("Default TCP ServersTransport defined in multiple provider")
+		delete(conf.TCP.ServersTransports, "default")
 	}
 
 	return conf

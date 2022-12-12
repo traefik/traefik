@@ -313,7 +313,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 				TCPRouters:  test.tcpRouterConfig,
 			}
 			dialerManager := tcp2.NewDialerManager(nil)
-			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
+			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default": {}})
 			serviceManager := tcp.NewManager(conf, dialerManager)
 			tlsManager := traefiktls.NewManager()
 			tlsManager.UpdateConfigs(
