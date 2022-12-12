@@ -47,7 +47,6 @@ type ServiceIng struct {
 	NativeLB         bool            `json:"nativeLB,omitempty"`
 }
 
-
 func parseRouterConfig(annotations map[string]string) (*RouterConfig, error) {
 	labels := convertAnnotations(annotations)
 	if len(labels) == 0 {

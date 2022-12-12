@@ -37,23 +37,6 @@ type ServersTransportTCPSpec struct {
 	TLS *TLSClientConfig `description:"Defines the TLS configuration." json:"tls,omitempty"`
 }
 
-// TLSClientConfig defines the desired state of a TLSClientConfig.
-type TLSClientConfig struct {
-	// ServerName defines the server name used to contact the server.
-	ServerName string `json:"serverName,omitempty"`
-	// InsecureSkipVerify disables TLS certificate verification.
-	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
-	// RootCAsSecrets defines a list of CA secret used to validate self-signed certificates.
-	RootCAsSecrets []string `json:"rootCAsSecrets,omitempty"`
-	// CertificatesSecrets defines a list of secret storing client certificates for mTLS.
-	CertificatesSecrets []string `json:"certificatesSecrets,omitempty"`
-	// MaxIdleConnsPerHost controls the maximum idle (keep-alive) to keep per-host.
-	// PeerCertURI defines the peer cert URI used to match against SAN URI during the peer certificate verification.
-	PeerCertURI string `json:"peerCertURI,omitempty"`
-	// Spiffe defines the SPIFFE configuration.
-	Spiffe *dynamic.Spiffe `json:"spiffe,omitempty"`
-}
-
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // ServersTransportTCPList is a collection of ServersTransportTCP resources.
