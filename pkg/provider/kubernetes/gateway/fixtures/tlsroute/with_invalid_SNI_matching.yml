@@ -39,7 +39,7 @@ spec:
       kind: Gateway
       group: gateway.networking.k8s.io
   hostnames:
-    - "*.foo.bar"
+    - "*.foo.*.bar"
   rules:
     - backendRefs:
         - name: whoamitcp
