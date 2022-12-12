@@ -163,7 +163,7 @@ func Test_Routing(t *testing.T) {
 	}
 
 	dialerManager := tcp2.NewDialerManager(nil)
-	dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
+	dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default": {}})
 	serviceManager := tcp.NewManager(conf, dialerManager)
 
 	// Creates the tlsManager and defines the TLS 1.0 and 1.2 TLSOptions.

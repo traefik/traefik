@@ -563,15 +563,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		ProvidersThrottleDuration: ptypes.Duration(111 * time.Second),
 	}
 
-	config.TCPServersTransport = &static.TCPServersTransport{
-		DialTimeout:   ptypes.Duration(111 * time.Second),
-		DialKeepAlive: ptypes.Duration(111 * time.Second),
-		TLS: &static.TLSClientConfig{
-			InsecureSkipVerify: true,
-			RootCAs:            []traefiktls.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
-		},
-	}
-
 	config.Providers.File = &file.Provider{
 		Directory:                 "file Directory",
 		Watch:                     true,

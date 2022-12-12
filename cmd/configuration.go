@@ -25,10 +25,6 @@ func NewTraefikConfiguration() *TraefikCmdConfiguration {
 			Providers: &static.Providers{
 				ProvidersThrottleDuration: ptypes.Duration(2 * time.Second),
 			},
-			TCPServersTransport: &static.TCPServersTransport{
-				DialTimeout:   ptypes.Duration(30 * time.Second),
-				DialKeepAlive: ptypes.Duration(15 * time.Second),
-			},
 		},
 		ConfigFile: "",
 	}
