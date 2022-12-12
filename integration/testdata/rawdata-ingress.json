@@ -120,11 +120,7 @@
 					{
 						"url": "XXXX"
 					}
-				],
-				"passHostHeader": true,
-				"responseForwarding": {
-					"flushInterval": "100ms"
-				}
+				]
 			},
 			"status": "enabled",
 			"usedBy": [
@@ -145,11 +141,7 @@
 					{
 						"url": "http://10.42.0.8:80"
 					}
-				],
-				"passHostHeader": true,
-				"responseForwarding": {
-					"flushInterval": "100ms"
-				}
+				]
 			},
 			"status": "enabled",
 			"usedBy": [

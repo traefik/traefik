@@ -311,68 +311,88 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		}
 	}
 
+	var nsDefault []string
+
 	for _, serversTransport := range client.GetServersTransports() {
 		logger := log.Ctx(ctx).With().Str(logs.ServersTransportName, serversTransport.Name).Logger()
 
-		var rootCAs []tls.FileOrContent
-		for _, secret := range serversTransport.Spec.RootCAsSecrets {
-			caSecret, err := loadCASecret(serversTransport.Namespace, secret, client)
-			if err != nil {
-				logger.Error().Err(err).Msgf("Error while loading rootCAs %s", secret)
-				continue
+		st := &dynamic.ServersTransport{}
+		st.SetDefaults()
+
+		if serversTransport.Spec.TLS != nil {
+			st.TLS = &dynamic.TLSClientConfig{
+				ServerName:         serversTransport.Spec.TLS.ServerName,
+				InsecureSkipVerify: serversTransport.Spec.TLS.InsecureSkipVerify,
+				PeerCertURI:        serversTransport.Spec.TLS.PeerCertURI,
+				Spiffe:             serversTransport.Spec.TLS.Spiffe,
 			}
 
-			rootCAs = append(rootCAs, tls.FileOrContent(caSecret))
-		}
+			for _, secret := range serversTransport.Spec.TLS.RootCAsSecrets {
+				caSecret, err := loadCASecret(serversTransport.Namespace, secret, client)
+				if err != nil {
+					logger.Error().Err(err).
+						Str("secret", secret).
+						Msgf("Error while loading rootCAs")
+					continue
+				}
 
-		var certs tls.Certificates
-		for _, secret := range serversTransport.Spec.CertificatesSecrets {
-			tlsSecret, tlsKey, err := loadAuthTLSSecret(serversTransport.Namespace, secret, client)
-			if err != nil {
-				logger.Error().Err(err).Msgf("Error while loading certificates %s", secret)
-				continue
+				st.TLS.RootCAs = append(st.TLS.RootCAs, tls.FileOrContent(caSecret))
 			}
 
-			certs = append(certs, tls.Certificate{
-				CertFile: tls.FileOrContent(tlsSecret),
-				KeyFile:  tls.FileOrContent(tlsKey),
-			})
+			for _, secret := range serversTransport.Spec.TLS.CertificatesSecrets {
+				tlsSecret, tlsKey, err := loadAuthTLSSecret(serversTransport.Namespace, secret, client)
+				if err != nil {
+					logger.Error().Err(err).
+						Str("secret", secret).
+						Msgf("Error while loading certificates")
+					continue
+				}
+
+				st.TLS.Certificates = append(st.TLS.Certificates, tls.Certificate{
+					CertFile: tls.FileOrContent(tlsSecret),
+					KeyFile:  tls.FileOrContent(tlsKey),
+				})
+			}
 		}
 
-		forwardingTimeout := &dynamic.ForwardingTimeouts{}
-		forwardingTimeout.SetDefaults()
+		st.EnableHTTP2 = serversTransport.Spec.EnableHTTP2
+		st.MaxIdleConnsPerHost = serversTransport.Spec.MaxIdleConnsPerHost
+
+		if serversTransport.Spec.PassHostHeader != nil {
+			st.PassHostHeader = *serversTransport.Spec.PassHostHeader
+		}
 
 		if serversTransport.Spec.ForwardingTimeouts != nil {
 			if serversTransport.Spec.ForwardingTimeouts.DialTimeout != nil {
-				err := forwardingTimeout.DialTimeout.Set(serversTransport.Spec.ForwardingTimeouts.DialTimeout.String())
+				err := st.ForwardingTimeouts.DialTimeout.Set(serversTransport.Spec.ForwardingTimeouts.DialTimeout.String())
 				if err != nil {
 					logger.Error().Err(err).Msg("Error while reading DialTimeout")
 				}
 			}
 
 			if serversTransport.Spec.ForwardingTimeouts.ResponseHeaderTimeout != nil {
-				err := forwardingTimeout.ResponseHeaderTimeout.Set(serversTransport.Spec.ForwardingTimeouts.ResponseHeaderTimeout.String())
+				err := st.ForwardingTimeouts.ResponseHeaderTimeout.Set(serversTransport.Spec.ForwardingTimeouts.ResponseHeaderTimeout.String())
 				if err != nil {
 					logger.Error().Err(err).Msg("Error while reading ResponseHeaderTimeout")
 				}
 			}
 
 			if serversTransport.Spec.ForwardingTimeouts.IdleConnTimeout != nil {
-				err := forwardingTimeout.IdleConnTimeout.Set(serversTransport.Spec.ForwardingTimeouts.IdleConnTimeout.String())
+				err := st.ForwardingTimeouts.IdleConnTimeout.Set(serversTransport.Spec.ForwardingTimeouts.IdleConnTimeout.String())
 				if err != nil {
 					logger.Error().Err(err).Msg("Error while reading IdleConnTimeout")
 				}
 			}
 
 			if serversTransport.Spec.ForwardingTimeouts.ReadIdleTimeout != nil {
-				err := forwardingTimeout.ReadIdleTimeout.Set(serversTransport.Spec.ForwardingTimeouts.ReadIdleTimeout.String())
+				err := st.ForwardingTimeouts.ReadIdleTimeout.Set(serversTransport.Spec.ForwardingTimeouts.ReadIdleTimeout.String())
 				if err != nil {
 					logger.Error().Err(err).Msg("Error while reading ReadIdleTimeout")
 				}
 			}
 
 			if serversTransport.Spec.ForwardingTimeouts.PingTimeout != nil {
-				err := forwardingTimeout.PingTimeout.Set(serversTransport.Spec.ForwardingTimeouts.PingTimeout.String())
+				err := st.ForwardingTimeouts.PingTimeout.Set(serversTransport.Spec.ForwardingTimeouts.PingTimeout.String())
 				if err != nil {
 					logger.Error().Err(err).Msg("Error while reading PingTimeout")
 				}
@@ -380,17 +400,19 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		}
 
 		id := provider.Normalize(makeID(serversTransport.Namespace, serversTransport.Name))
-		conf.HTTP.ServersTransports[id] = &dynamic.ServersTransport{
-			ServerName:          serversTransport.Spec.ServerName,
-			InsecureSkipVerify:  serversTransport.Spec.InsecureSkipVerify,
-			RootCAs:             rootCAs,
-			Certificates:        certs,
-			DisableHTTP2:        serversTransport.Spec.DisableHTTP2,
-			MaxIdleConnsPerHost: serversTransport.Spec.MaxIdleConnsPerHost,
-			ForwardingTimeouts:  forwardingTimeout,
-			PeerCertURI:         serversTransport.Spec.PeerCertURI,
-			Spiffe:              serversTransport.Spec.Spiffe,
+		if serversTransport.Name == "default" {
+			id = serversTransport.Name
+			nsDefault = append(nsDefault, serversTransport.Namespace)
 		}
+
+		conf.HTTP.ServersTransports[id] = st
+	}
+
+	if len(nsDefault) > 1 {
+		delete(conf.HTTP.ServersTransports, "default")
+		log.Ctx(ctx).Error().
+			Strs("namespaces", nsDefault).
+			Msgf("Default serversTransport defined in multiple namespaces")
 	}
 
 	for _, serversTransportTCP := range client.GetServersTransportTCPs() {
