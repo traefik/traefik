@@ -19,11 +19,13 @@ func Test_mergeConfiguration(t *testing.T) {
 			desc:  "Nil returns an empty configuration",
 			given: nil,
 			expected: &dynamic.HTTPConfiguration{
-				Routers:           make(map[string]*dynamic.Router),
-				Middlewares:       make(map[string]*dynamic.Middleware),
-				Services:          make(map[string]*dynamic.Service),
-				Models:            make(map[string]*dynamic.Model),
-				ServersTransports: make(map[string]*dynamic.ServersTransport),
+				Routers:     make(map[string]*dynamic.Router),
+				Middlewares: make(map[string]*dynamic.Middleware),
+				Services:    make(map[string]*dynamic.Service),
+				Models:      make(map[string]*dynamic.Model),
+				ServersTransports: map[string]*dynamic.ServersTransport{
+					"default": defaultServersTransport(),
+				},
 			},
 		},
 		{
@@ -55,8 +57,10 @@ func Test_mergeConfiguration(t *testing.T) {
 				Services: map[string]*dynamic.Service{
 					"service-1@provider-1": {},
 				},
-				Models:            make(map[string]*dynamic.Model),
-				ServersTransports: make(map[string]*dynamic.ServersTransport),
+				Models: make(map[string]*dynamic.Model),
+				ServersTransports: map[string]*dynamic.ServersTransport{
+					"default": defaultServersTransport(),
+				},
 			},
 		},
 		{
@@ -106,8 +110,10 @@ func Test_mergeConfiguration(t *testing.T) {
 					"service-1@provider-1": {},
 					"service-1@provider-2": {},
 				},
-				Models:            make(map[string]*dynamic.Model),
-				ServersTransports: make(map[string]*dynamic.ServersTransport),
+				Models: make(map[string]*dynamic.Model),
+				ServersTransports: map[string]*dynamic.ServersTransport{
+					"default": defaultServersTransport(),
+				},
 			},
 		},
 	}
@@ -463,6 +469,7 @@ func Test_mergeConfiguration_defaultTCPEntryPoint(t *testing.T) {
 		},
 	}
 
+	defaultServersTransport()
 	expected := &dynamic.TCPConfiguration{
 		Routers: map[string]*dynamic.TCPRouter{
 			"router-1@provider-1": {
@@ -473,7 +480,7 @@ func Test_mergeConfiguration_defaultTCPEntryPoint(t *testing.T) {
 		Services: map[string]*dynamic.TCPService{
 			"service-1@provider-1": {},
 		},
-		ServersTransports: make(map[string]*dynamic.TCPServersTransport),
+		ServersTransports: map[string]*dynamic.TCPServersTransport{"default": defaultServersTransportTCP()},
 	}
 
 	actual := mergeConfiguration(given, []string{"defaultEP"})
@@ -672,4 +679,16 @@ func Test_applyModel(t *testing.T) {
 			assert.Equal(t, test.expected, actual)
 		})
 	}
+}
+
+func defaultServersTransport() *dynamic.ServersTransport {
+	d := &dynamic.ServersTransport{}
+	d.SetDefaults()
+	return d
+}
+
+func defaultServersTransportTCP() *dynamic.TCPServersTransport {
+	d := &dynamic.TCPServersTransport{}
+	d.SetDefaults()
+	return d
 }
