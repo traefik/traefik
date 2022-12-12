@@ -328,13 +328,6 @@ func (i *Provider) serverTransportTCP(cfg *dynamic.Configuration) {
 			InsecureSkipVerify: i.staticCfg.TCPServersTransport.TLS.InsecureSkipVerify,
 			RootCAs:            i.staticCfg.TCPServersTransport.TLS.RootCAs,
 		}
-
-		if i.staticCfg.TCPServersTransport.TLS.Spiffe != nil {
-			st.TLS.Spiffe = &dynamic.Spiffe{
-				IDs:         i.staticCfg.ServersTransport.Spiffe.IDs,
-				TrustDomain: i.staticCfg.ServersTransport.Spiffe.TrustDomain,
-			}
-		}
 	}
 
 	cfg.TCP.ServersTransports["default"] = st
