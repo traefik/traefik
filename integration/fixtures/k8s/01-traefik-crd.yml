@@ -1569,67 +1569,62 @@ spec:
           spec:
             description: ServersTransportSpec defines the desired state of a ServersTransport.
             properties:
-              http:
-                description: HTTPClientConfig holds the HTTP configuration to be used
-                  between Traefik and the servers.
+              enableHTTP2:
+                description: EnableHTTP2 enables HTTP/2 or connections with backend
+                  servers.
+                type: boolean
+              forwardingTimeouts:
+                description: ForwardingTimeouts defines the timeouts for requests
+                  forwarded to the backend servers.
                 properties:
-                  enableHTTP2:
-                    description: EnableHTTP2 enables HTTP/2 or connections with backend
-                      servers.
-                    type: boolean
-                  forwardingTimeouts:
-                    description: ForwardingTimeouts defines the timeouts for requests
-                      forwarded to the backend servers.
-                    properties:
-                      dialTimeout:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        description: DialTimeout is the amount of time to wait until
-                          a connection to a backend server can be established.
-                        x-kubernetes-int-or-string: true
-                      idleConnTimeout:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        description: IdleConnTimeout is the maximum period for which
-                          an idle HTTP keep-alive connection will remain open before
-                          closing itself.
-                        x-kubernetes-int-or-string: true
-                      pingTimeout:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        description: PingTimeout is the timeout after which the HTTP/2
-                          connection will be closed if a response to ping is not received.
-                        x-kubernetes-int-or-string: true
-                      readIdleTimeout:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        description: ReadIdleTimeout is the timeout after which a
-                          health check using ping frame will be carried out if no
-                          frame is received on the HTTP/2 connection.
-                        x-kubernetes-int-or-string: true
-                      responseHeaderTimeout:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        description: ResponseHeaderTimeout is the amount of time to
-                          wait for a server's response headers after fully writing
-                          the request (including its body, if any).
-                        x-kubernetes-int-or-string: true
-                    type: object
-                  maxIdleConnsPerHost:
-                    description: MaxIdleConnsPerHost controls the maximum idle (keep-alive)
-                      to keep per-host.
-                    type: integer
-                  passHostHeader:
-                    description: PassHostHeader defines whether the client Host header
-                      is forwarded to the upstream Kubernetes Service. By default,
-                      passHostHeader is true.
-                    type: boolean
+                  dialTimeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: DialTimeout is the amount of time to wait until a
+                      connection to a backend server can be established.
+                    x-kubernetes-int-or-string: true
+                  idleConnTimeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: IdleConnTimeout is the maximum period for which an
+                      idle HTTP keep-alive connection will remain open before closing
+                      itself.
+                    x-kubernetes-int-or-string: true
+                  pingTimeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: PingTimeout is the timeout after which the HTTP/2
+                      connection will be closed if a response to ping is not received.
+                    x-kubernetes-int-or-string: true
+                  readIdleTimeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: ReadIdleTimeout is the timeout after which a health
+                      check using ping frame will be carried out if no frame is received
+                      on the HTTP/2 connection.
+                    x-kubernetes-int-or-string: true
+                  responseHeaderTimeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: ResponseHeaderTimeout is the amount of time to wait
+                      for a server's response headers after fully writing the request
+                      (including its body, if any).
+                    x-kubernetes-int-or-string: true
                 type: object
+              maxIdleConnsPerHost:
+                description: MaxIdleConnsPerHost controls the maximum idle (keep-alive)
+                  to keep per-host.
+                type: integer
+              passHostHeader:
+                description: PassHostHeader defines whether the client Host header
+                  is forwarded to the upstream Kubernetes Service. By default, passHostHeader
+                  is true.
+                type: boolean
               tls:
                 description: TLSClientConfig holds the TLS configuration to be used
                   between Traefik and the servers.

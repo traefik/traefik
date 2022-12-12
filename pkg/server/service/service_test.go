@@ -76,7 +76,7 @@ func TestGetLoadBalancer(t *testing.T) {
 }
 
 func TestGetLoadBalancerServiceHandler(t *testing.T) {
-	configs := map[string]*dynamic.ServersTransport{"default": {HTTP: &dynamic.HTTPClientConfig{}}}
+	configs := map[string]*dynamic.ServersTransport{"default": {}}
 
 	tlsClientConfigManager := client.NewTLSConfigManager(nil)
 	tlsClientConfigManager.Update(configs)

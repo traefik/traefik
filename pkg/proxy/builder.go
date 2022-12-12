@@ -77,9 +77,9 @@ func (b *Builder) Build(configName string, targetURL *url.URL) (http.Handler, er
 		return nil, err
 	}
 
-	if config.HTTP != nil && config.HTTP.EnableHTTP2 && targetURL.Scheme == "https" || targetURL.Scheme == "h2c" {
-		return b.httputilBuilder.Build(configName, config.HTTP, tlsConfig, targetURL)
+	if config.EnableHTTP2 && targetURL.Scheme == "https" || targetURL.Scheme == "h2c" {
+		return b.httputilBuilder.Build(configName, config, tlsConfig, targetURL)
 	}
 
-	return b.fasthttpBuilder.Build(configName, config.HTTP, tlsConfig, targetURL)
+	return b.fasthttpBuilder.Build(configName, config, tlsConfig, targetURL)
 }
