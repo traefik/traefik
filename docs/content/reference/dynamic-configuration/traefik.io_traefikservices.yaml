@@ -16,7 +16,7 @@ spec:
     singular: traefikservice
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: 'TraefikService is the CRD implementation of a Traefik Service.

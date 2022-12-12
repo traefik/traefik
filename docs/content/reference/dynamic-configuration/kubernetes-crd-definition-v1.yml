@@ -16,7 +16,7 @@ spec:
     singular: ingressroute
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: IngressRoute is the CRD implementation of a Traefik HTTP Router.
@@ -284,7 +284,7 @@ spec:
     singular: ingressroutetcp
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: IngressRouteTCP is the CRD implementation of a Traefik TCP Router.
@@ -496,7 +496,7 @@ spec:
     singular: ingressrouteudp
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: IngressRouteUDP is a CRD implementation of a Traefik UDP Router.
@@ -594,7 +594,7 @@ spec:
     singular: middleware
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: 'Middleware is the CRD implementation of a Traefik Middleware.
@@ -1489,7 +1489,7 @@ spec:
     singular: middlewaretcp
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: 'MiddlewareTCP is the CRD implementation of a Traefik TCP middleware.
@@ -1561,7 +1561,7 @@ spec:
     singular: serverstransport
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: 'ServersTransport is the CRD implementation of a ServersTransport.
@@ -1702,7 +1702,7 @@ spec:
     singular: serverstransporttcp
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: 'ServersTransportTCP is the CRD implementation of a TCPServersTransport.
@@ -1824,7 +1824,7 @@ spec:
     singular: tlsoption
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: 'TLSOption is the CRD implementation of a Traefik TLS Option,
@@ -1931,7 +1931,7 @@ spec:
     singular: tlsstore
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: 'TLSStore is the CRD implementation of a Traefik TLS Store. For
@@ -2030,7 +2030,7 @@ spec:
     singular: traefikservice
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: 'TraefikService is the CRD implementation of a Traefik Service.

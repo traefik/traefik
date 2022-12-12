@@ -29,7 +29,7 @@ package versioned
 import (
 	"fmt"
 
-	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefik/v1alpha1"
+	traefikv1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefik/v1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -37,19 +37,19 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	TraefikV1alpha1() traefikv1alpha1.TraefikV1alpha1Interface
+	TraefikV1() traefikv1.TraefikV1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	traefikV1alpha1 *traefikv1alpha1.TraefikV1alpha1Client
+	traefikV1 *traefikv1.TraefikV1Client
 }
 
-// TraefikV1alpha1 retrieves the TraefikV1alpha1Client
-func (c *Clientset) TraefikV1alpha1() traefikv1alpha1.TraefikV1alpha1Interface {
-	return c.traefikV1alpha1
+// TraefikV1 retrieves the TraefikV1Client
+func (c *Clientset) TraefikV1() traefikv1.TraefikV1Interface {
+	return c.traefikV1
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -73,7 +73,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
-	cs.traefikV1alpha1, err = traefikv1alpha1.NewForConfig(&configShallowCopy)
+	cs.traefikV1, err = traefikv1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
-	cs.traefikV1alpha1 = traefikv1alpha1.NewForConfigOrDie(c)
+	cs.traefikV1 = traefikv1.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -98,7 +98,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.traefikV1alpha1 = traefikv1alpha1.New(c)
+	cs.traefikV1 = traefikv1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

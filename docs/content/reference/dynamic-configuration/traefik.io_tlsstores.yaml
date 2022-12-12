@@ -16,7 +16,7 @@ spec:
     singular: tlsstore
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: 'TLSStore is the CRD implementation of a Traefik TLS Store. For

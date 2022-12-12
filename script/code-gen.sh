@@ -18,7 +18,7 @@ docker build --build-arg KUBE_VERSION=v0.20.2 \
              "."
 
 echo "Generating Traefik clientSet code ..."
-cmd="/go/src/k8s.io/code-generator/generate-groups.sh all ${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd/generated ${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd traefik:v1alpha1 --go-header-file=/go/src/${PROJECT_MODULE}/script/boilerplate.go.tmpl"
+cmd="/go/src/k8s.io/code-generator/generate-groups.sh all ${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd/generated ${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd traefik:v1 --go-header-file=/go/src/${PROJECT_MODULE}/script/boilerplate.go.tmpl"
 docker run --rm \
            -v "${CURRENT_DIR}:/go/src/${PROJECT_MODULE}" \
            -w "/go/src/${PROJECT_MODULE}" \
@@ -32,7 +32,7 @@ docker run --rm \
            "${IMAGE_NAME}" ${cmd}
 
 echo "Generating the CRD definitions for the documentation ..."
-cmd="controller-gen crd:crdVersions=v1 paths=./pkg/provider/kubernetes/crd/traefik/v1alpha1/... output:dir=./docs/content/reference/dynamic-configuration/"
+cmd="controller-gen crd:crdVersions=v1 paths=./pkg/provider/kubernetes/crd/traefik/v1/... output:dir=./docs/content/reference/dynamic-configuration/"
 docker run --rm \
            -v "${CURRENT_DIR}:/go/src/${PROJECT_MODULE}" \
            -w "/go/src/${PROJECT_MODULE}" \
