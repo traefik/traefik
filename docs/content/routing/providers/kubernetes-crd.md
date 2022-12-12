@@ -1618,7 +1618,7 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
     default on [`IngressRoute`](#kind-ingressroute) and
     [`IngressRouteTCP`](#kind-ingressroutetcp) objects.
     This means that you cannot have two stores that are named default in different Kubernetes namespaces.
-    For the time being, please only configure one TLSStore named default in Traefik namespace.
+    For the time being, please only configure one TLSStore named default in Traefik's namespace.
 
 !!! info "TLSStore Attributes"
     ```yaml tab="TLSStore"
