@@ -1215,8 +1215,9 @@ func hostRule(hostnames []v1alpha2.Hostname) (string, error) {
 }
 
 func hostSNIRule(hostnames []v1alpha2.Hostname) (string, error) {
-	matchers := map[string][]string{}
+	rules := make([]string, 0, len(hostnames))
 	uniqHostnames := map[v1alpha2.Hostname]struct{}{}
+
 	for _, hostname := range hostnames {
 		if len(hostname) == 0 {
 			continue
@@ -1226,38 +1227,30 @@ func hostSNIRule(hostnames []v1alpha2.Hostname) (string, error) {
 			continue
 		}
 
-		h := string(hostname)
+		host := string(hostname)
+		uniqHostnames[hostname] = struct{}{}
 
-		wildcard := strings.Count(h, "*")
-		switch wildcard {
-		case 0:
-			matchers["HostSNI("] = append(matchers["HostSNI("], "`"+h+"`")
-		case 1:
-			if strings.HasPrefix(h, "*.") {
-				matchers["HostSNIRegexp("] = append(matchers["HostSNIRegexp("], "`"+strings.Replace(h, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1)+"`")
-				break
-			}
-			fallthrough
-		default:
-			return "", fmt.Errorf("invalid rule: %q", h)
+		wildcard := strings.Count(host, "*")
+		if wildcard == 0 {
+			rules = append(rules, fmt.Sprintf("HostSNI(`%s`)", host))
+			continue
 		}
 
-		uniqHostnames[hostname] = struct{}{}
+		if !strings.HasPrefix(host, "*.") || wildcard > 1 {
+			return "", fmt.Errorf("invalid rule: %q", host)
+		}
+
+		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-zA-Z0-9-]+\.`, 1)
+		rules = append(rules, fmt.Sprintf("HostSNIRegexp(`^%s$`)", host))
 	}
 
-	if len(hostnames) == 0 || len(matchers) == 0 {
+	if len(hostnames) == 0 || len(rules) == 0 {
 		return "HostSNI(`*`)", nil
 	}
 
-	var rules []string
-	for k, v := range matchers {
-		for _, h := range v {
-			rules = append(rules, k+h+")")
-		}
+	if len(rules) == 1 {
+		return rules[0], nil
 	}
-
-	// Sort the rules so we can write predictable unit tests and be consistent with log output
-	sort.Strings(rules)
 
 	return strings.Join(rules, " || "), nil
 }
