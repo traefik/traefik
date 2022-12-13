@@ -23,7 +23,6 @@ import (
 	"go.opentelemetry.io/otel/metric/unit"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/aggregation"
-	"go.opentelemetry.io/otel/sdk/metric/view"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
 )
@@ -144,23 +143,16 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OpenTeleme
 		sdkmetric.WithInterval(time.Duration(config.PushInterval)),
 	}
 
-	// View to customize histogram buckets and rename a single histogram instrument.
-	customBucketsView, err := view.New(
-		// Match* to match instruments
-		view.MatchInstrumentName("traefik_*_request_duration_seconds"),
-
-		view.WithSetAggregation(aggregation.ExplicitBucketHistogram{
-			Boundaries: config.ExplicitBoundaries,
-		}),
+	meterProvider := sdkmetric.NewMeterProvider(
+		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter, opts...)),
+		// View to customize histogram buckets and rename a single histogram instrument.
+		sdkmetric.WithView(sdkmetric.NewView(
+			sdkmetric.Instrument{Name: "traefik_*_request_duration_seconds"},
+			sdkmetric.Stream{Aggregation: aggregation.ExplicitBucketHistogram{
+				Boundaries: config.ExplicitBoundaries,
+			}},
+		)),
 	)
-	if err != nil {
-		return nil, fmt.Errorf("creating histogram view: %w", err)
-	}
-
-	meterProvider := sdkmetric.NewMeterProvider(sdkmetric.WithReader(
-		sdkmetric.NewPeriodicReader(exporter, opts...),
-		customBucketsView,
-	))
 
 	global.SetMeterProvider(meterProvider)
 
