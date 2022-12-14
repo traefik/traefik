@@ -30,7 +30,7 @@
           </q-tabs>
           <div class="right-menu">
             <q-tabs>
-              <q-btn type="a" href="https://hub.traefik.io/" target="_blank" flat no-caps label="Go to Hub Dashboard →" class="btn-menu btn-hub" />
+              <q-btn v-if="hub" type="a" href="https://hub.traefik.io/" target="_blank" flat no-caps label="Go to Hub Dashboard →" class="btn-menu btn-hub" />
               <q-btn @click="$q.dark.toggle()" stretch flat no-caps icon="invert_colors" :label="`${$q.dark.isActive ? 'Light' : 'Dark'} theme`" class="btn-menu" />
               <q-btn stretch flat icon="eva-question-mark-circle-outline">
                 <q-menu anchor="bottom left" auto-close>
@@ -64,12 +64,16 @@ import { mapActions, mapGetters } from 'vuex'
 export default {
   name: 'NavBar',
   computed: {
-    ...mapGetters('core', { coreVersion: 'version' }),
+    ...mapGetters('core', { coreVersion: 'version', overviewAll: 'allOverview' }),
     version () {
       if (!this.coreVersion.Version) return null
       return /^(v?\d+\.\d+)/.test(this.coreVersion.Version)
         ? this.coreVersion.Version
         : this.coreVersion.Version.substring(0, 7)
+    },
+    hub () {
+      if (!this.overviewAll.items) return false
+      return !!this.overviewAll.items.features.hub
     },
     parsedVersion () {
       if (!this.version) {
