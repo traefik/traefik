@@ -1672,19 +1672,17 @@ func loadMiddlewares(listener v1alpha2.Listener, prefix string, filters []v1alph
 
 	// The spec allows for an empty string in which case we should use the
 	// scheme of the request which in this case is the listener scheme.
-	var scheme string
+	var listenerScheme string
 	switch listener.Protocol {
 	case v1alpha2.HTTPProtocolType:
-		scheme = "http"
+		listenerScheme = "http"
 	case v1alpha2.HTTPSProtocolType:
-		scheme = "https"
+		listenerScheme = "https"
 	default:
 		return nil, fmt.Errorf("invalid listener protocol %s", listener.Protocol)
 	}
 
 	for i, filter := range filters {
-		middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
-
 		if filter.Type != v1alpha2.HTTPRouteFilterRequestRedirect {
 			// As per the spec:
 			// https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional
@@ -1694,49 +1692,55 @@ func loadMiddlewares(listener v1alpha2.Listener, prefix string, filters []v1alph
 			return nil, fmt.Errorf("unsupported filter %s", filter.Type)
 		}
 
-		filter := filter.RequestRedirect
-
-		// Override the default scheme if a value was provided.
-		filterScheme := scheme
-		if filter.Scheme != nil {
-			filterScheme = *filter.Scheme
+		middleware, err := createRedirectSchemeMiddleware(listenerScheme, filter.RequestRedirect)
+		if err != nil {
+			return nil, err
 		}
 
-		if filterScheme != "http" && filterScheme != "https" {
-			return nil, fmt.Errorf("invalid scheme %s", filterScheme)
-		}
-
-		port := "${port}"
-		if filter.Port != nil {
-			port = fmt.Sprintf(":%d", *filter.Port)
-		}
-
-		hostname := "${hostname}"
-		if filter.Hostname != nil && *filter.Hostname != "" {
-			hostname = string(*filter.Hostname)
-		}
-
-		statusCode := http.StatusFound
-		if filter.StatusCode != nil {
-			statusCode = *filter.StatusCode
-		}
-
-		// The redirect scheme middleware currently does not support changing
-		// the status code. It can only be a 301 or a 302 status code.
-		if statusCode != http.StatusMovedPermanently && statusCode != http.StatusFound {
-			return nil, fmt.Errorf("invalid status code %d", statusCode)
-		}
-
-		middlewares[middlewareName] = &dynamic.Middleware{
-			RedirectRegex: &dynamic.RedirectRegex{
-				Regex:       `^[a-z]+:\/\/(?P<userInfo>.+@)?(?P<hostname>\[[\w:\.]+\]|[\w\._-]+)(?P<port>:\d+)?\/(?P<path>.*)`,
-				Replacement: fmt.Sprintf("%s://${userinfo}%s%s/${path}", filterScheme, hostname, port),
-				Permanent:   statusCode == http.StatusMovedPermanently,
-			},
-		}
+		middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
+		middlewares[middlewareName] = middleware
 	}
 
 	return middlewares, nil
+}
+
+func createRedirectSchemeMiddleware(scheme string, filter *v1alpha2.HTTPRequestRedirectFilter) (*dynamic.Middleware, error) {
+	// Use the HTTPRequestRedirectFilter scheme if defined.
+	filterScheme := scheme
+	if filter.Scheme != nil {
+		filterScheme = *filter.Scheme
+	}
+
+	if filterScheme != "http" && filterScheme != "https" {
+		return nil, fmt.Errorf("invalid scheme %s", filterScheme)
+	}
+
+	statusCode := http.StatusFound
+	if filter.StatusCode != nil {
+		statusCode = *filter.StatusCode
+	}
+
+	if statusCode != http.StatusMovedPermanently && statusCode != http.StatusFound {
+		return nil, fmt.Errorf("invalid status code %d", statusCode)
+	}
+
+	port := "${port}"
+	if filter.Port != nil {
+		port = fmt.Sprintf(":%d", *filter.Port)
+	}
+
+	hostname := "${hostname}"
+	if filter.Hostname != nil && *filter.Hostname != "" {
+		hostname = string(*filter.Hostname)
+	}
+
+	return &dynamic.Middleware{
+		RedirectRegex: &dynamic.RedirectRegex{
+			Regex:       `^[a-z]+:\/\/(?P<userInfo>.+@)?(?P<hostname>\[[\w:\.]+\]|[\w\._-]+)(?P<port>:\d+)?\/(?P<path>.*)`,
+			Replacement: fmt.Sprintf("%s://${userinfo}%s%s/${path}", filterScheme, hostname, port),
+			Permanent:   statusCode == http.StatusMovedPermanently,
+		},
+	}, nil
 }
 
 func getProtocol(portSpec corev1.ServicePort) string {
