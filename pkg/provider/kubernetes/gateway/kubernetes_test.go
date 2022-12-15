@@ -1577,6 +1577,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1640,6 +1643,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
