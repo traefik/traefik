@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"regexp"
 	"sort"
@@ -748,6 +749,26 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha
 
 				// TODO update the RouteStatus condition / deduplicate conditions on listener
 				continue
+			}
+
+			middlewares, err := loadMiddlewares(listener, routerKey, routeRule.Filters)
+			if err != nil {
+				// update "ResolvedRefs" status true with "InvalidFilters" reason
+				conditions = append(conditions, metav1.Condition{
+					Type:               string(v1alpha2.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					LastTransitionTime: metav1.Now(),
+					Reason:             "InvalidFilters", // TODO check the spec if a proper reason is introduced at some point
+					Message:            fmt.Sprintf("Cannot load HTTPRoute filter %s/%s: %v", route.Namespace, route.Name, err),
+				})
+
+				// TODO update the RouteStatus condition / deduplicate conditions on listener
+				continue
+			}
+
+			for middlewareName, middleware := range middlewares {
+				conf.HTTP.Middlewares[middlewareName] = middleware
+				router.Middlewares = append(router.Middlewares, middlewareName)
 			}
 
 			if len(routeRule.BackendRefs) == 0 {
@@ -1644,6 +1665,82 @@ func loadTCPServices(client Client, namespace string, backendRefs []v1alpha2.Bac
 	}
 
 	return wrrSvc, services, nil
+}
+
+func loadMiddlewares(listener v1alpha2.Listener, prefix string, filters []v1alpha2.HTTPRouteFilter) (map[string]*dynamic.Middleware, error) {
+	middlewares := make(map[string]*dynamic.Middleware)
+
+	// The spec allows for an empty string in which case we should use the
+	// scheme of the request which in this case is the listener scheme.
+	var listenerScheme string
+	switch listener.Protocol {
+	case v1alpha2.HTTPProtocolType:
+		listenerScheme = "http"
+	case v1alpha2.HTTPSProtocolType:
+		listenerScheme = "https"
+	default:
+		return nil, fmt.Errorf("invalid listener protocol %s", listener.Protocol)
+	}
+
+	for i, filter := range filters {
+		if filter.Type != v1alpha2.HTTPRouteFilterRequestRedirect {
+			// As per the spec:
+			// https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional
+			// In all cases where incompatible or unsupported filters are
+			// specified, implementations MUST add a warning condition to
+			// status.
+			return nil, fmt.Errorf("unsupported filter %s", filter.Type)
+		}
+
+		middleware, err := createRedirectSchemeMiddleware(listenerScheme, filter.RequestRedirect)
+		if err != nil {
+			return nil, err
+		}
+
+		middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
+		middlewares[middlewareName] = middleware
+	}
+
+	return middlewares, nil
+}
+
+func createRedirectSchemeMiddleware(scheme string, filter *v1alpha2.HTTPRequestRedirectFilter) (*dynamic.Middleware, error) {
+	// Use the HTTPRequestRedirectFilter scheme if defined.
+	filterScheme := scheme
+	if filter.Scheme != nil {
+		filterScheme = *filter.Scheme
+	}
+
+	if filterScheme != "http" && filterScheme != "https" {
+		return nil, fmt.Errorf("invalid scheme %s", filterScheme)
+	}
+
+	statusCode := http.StatusFound
+	if filter.StatusCode != nil {
+		statusCode = *filter.StatusCode
+	}
+
+	if statusCode != http.StatusMovedPermanently && statusCode != http.StatusFound {
+		return nil, fmt.Errorf("invalid status code %d", statusCode)
+	}
+
+	port := "${port}"
+	if filter.Port != nil {
+		port = fmt.Sprintf(":%d", *filter.Port)
+	}
+
+	hostname := "${hostname}"
+	if filter.Hostname != nil && *filter.Hostname != "" {
+		hostname = string(*filter.Hostname)
+	}
+
+	return &dynamic.Middleware{
+		RedirectRegex: &dynamic.RedirectRegex{
+			Regex:       `^[a-z]+:\/\/(?P<userInfo>.+@)?(?P<hostname>\[[\w:\.]+\]|[\w\._-]+)(?P<port>:\d+)?\/(?P<path>.*)`,
+			Replacement: fmt.Sprintf("%s://${userinfo}%s%s/${path}", filterScheme, hostname, port),
+			Permanent:   statusCode == http.StatusMovedPermanently,
+		},
+	}, nil
 }
 
 func getProtocol(portSpec corev1.ServicePort) string {
