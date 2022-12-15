@@ -1614,7 +1614,7 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
 !!! important "Default TLS Store"
 
     Traefik currently only uses the [TLS Store named "default"](../../https/tls.md#certificates-stores).
-    This _default_ `TLSStore` should be in a namespace discoverable by Traefik. It is used by default on [`IngressRoute`](#kind-ingressroute) and [`IngressRouteTCP`](#kind-ingressroutetcp) objects.
+    This _default_ `TLSStore` should be in a namespace discoverable by Traefik. Since it is used by default on [`IngressRoute`](#kind-ingressroute) and [`IngressRouteTCP`](#kind-ingressroutetcp) objects, there never is a need to actually reference it.
     This means that you cannot have two stores that are named default in different Kubernetes namespaces.
     As a consequence, with respect to TLS stores, the only change that makes sense (and only if needed) is to configure the default TLSStore.
 
