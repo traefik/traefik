@@ -266,13 +266,13 @@ func (s *ConsulCatalogSuite) TestSimpleConfigurationWithWatch(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	req.Host = "whoami.consul.localhost"
 
-	err = try.Request(req, 3*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContainsOr("Hostname: whoami1"))
+	err = try.Request(req, 2*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContainsOr("Hostname: whoami1"))
 	c.Assert(err, checker.IsNil)
 
 	err = s.deregisterService("whoami1", false)
 	c.Assert(err, checker.IsNil)
 
-	err = try.Request(req, 3*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	err = try.Request(req, 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 
 	whoamiIP := s.getComposeServiceIP(c, "whoami1")
@@ -287,7 +287,7 @@ func (s *ConsulCatalogSuite) TestSimpleConfigurationWithWatch(c *check.C) {
 	err = s.registerService(reg, false)
 	c.Assert(err, checker.IsNil)
 
-	err = try.Request(req, 3*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContainsOr("Hostname: whoami1"))
+	err = try.Request(req, 2*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContainsOr("Hostname: whoami1"))
 	c.Assert(err, checker.IsNil)
 
 	reg.Check = &api.AgentServiceCheck{
@@ -301,7 +301,7 @@ func (s *ConsulCatalogSuite) TestSimpleConfigurationWithWatch(c *check.C) {
 	err = s.registerService(reg, false)
 	c.Assert(err, checker.IsNil)
 
-	err = try.Request(req, 3*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	err = try.Request(req, 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 
 	err = s.deregisterService("whoami1", false)
@@ -743,10 +743,10 @@ func (s *ConsulCatalogSuite) TestConsulConnect(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	err = try.GetRequest("http://127.0.0.1:8000/", 11*time.Second, try.StatusCodeIs(http.StatusOK))
+	err = try.GetRequest("http://127.0.0.1:8000/", 10*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8000/whoami", 11*time.Second, try.StatusCodeIs(http.StatusOK))
+	err = try.GetRequest("http://127.0.0.1:8000/whoami", 10*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
 	err = s.deregisterService("uuid-api1", false)

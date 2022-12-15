@@ -612,7 +612,7 @@ func (s *HealthCheckSuite) TestPropagateReload(c *check.C) {
 	err = fr1.Close()
 	c.Assert(err, checker.IsNil)
 
-	try.Sleep(2 * time.Second)
+	try.Sleep(1 * time.Second)
 
 	// Check the failed service (whoami2) is not getting requests
 	wantIPs := []string{s.whoami1IP, s.whoami1IP, s.whoami1IP, s.whoami1IP}
