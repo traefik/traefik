@@ -13,32 +13,6 @@ import (
 	"github.com/vulcand/predicate"
 )
 
-// ParseHostSNI extracts the HostSNIs declared in a rule.
-// This is a first naive implementation used in TCP routing.
-func ParseHostSNI(rule string) ([]string, error) {
-	var matchers []string
-	for matcher := range tcpFuncs {
-		matchers = append(matchers, matcher)
-	}
-
-	parser, err := rules.NewParser(matchers)
-	if err != nil {
-		return nil, err
-	}
-
-	parse, err := parser.Parse(rule)
-	if err != nil {
-		return nil, err
-	}
-
-	buildTree, ok := parse.(rules.TreeBuilder)
-	if !ok {
-		return nil, fmt.Errorf("error while parsing rule %s", rule)
-	}
-
-	return buildTree().ParseMatchers([]string{"HostSNI"}), nil
-}
-
 // ConnData contains TCP connection metadata.
 type ConnData struct {
 	serverName string
@@ -67,7 +41,7 @@ func NewConnData(serverName string, conn tcp.WriteCloser, alpnProtos []string) (
 
 // Muxer defines a muxer that handles TCP routing with rules.
 type Muxer struct {
-	routes []*route
+	routes routes
 	parser predicate.Parser
 }
 
@@ -114,9 +88,9 @@ func (m *Muxer) AddRoute(rule string, priority int, handler tcp.Handler) error {
 	ruleTree := buildTree()
 
 	var matchers matchersTree
-	err = addRule(&matchers, ruleTree)
+	err = matchers.addRule(ruleTree)
 	if err != nil {
-		return err
+		return fmt.Errorf("error while adding rule %s: %w", rule, err)
 	}
 
 	var catchAll bool
@@ -144,41 +118,7 @@ func (m *Muxer) AddRoute(rule string, priority int, handler tcp.Handler) error {
 	}
 	m.routes = append(m.routes, newRoute)
 
-	sort.Sort(routes(m.routes))
-
-	return nil
-}
-
-func addRule(tree *matchersTree, rule *rules.Tree) error {
-	switch rule.Matcher {
-	case "and", "or":
-		tree.operator = rule.Matcher
-		tree.left = &matchersTree{}
-		err := addRule(tree.left, rule.RuleLeft)
-		if err != nil {
-			return err
-		}
-
-		tree.right = &matchersTree{}
-		return addRule(tree.right, rule.RuleRight)
-	default:
-		err := rules.CheckRule(rule)
-		if err != nil {
-			return err
-		}
-
-		err = tcpFuncs[rule.Matcher](tree, rule.Value...)
-		if err != nil {
-			return err
-		}
-
-		if rule.Not {
-			matcherFunc := tree.matcher
-			tree.matcher = func(meta ConnData) bool {
-				return !matcherFunc(meta)
-			}
-		}
-	}
+	sort.Sort(m.routes)
 
 	return nil
 }
@@ -186,6 +126,32 @@ func addRule(tree *matchersTree, rule *rules.Tree) error {
 // HasRoutes returns whether the muxer has routes.
 func (m *Muxer) HasRoutes() bool {
 	return len(m.routes) > 0
+}
+
+// ParseHostSNI extracts the HostSNIs declared in a rule.
+// This is a first naive implementation used in TCP routing.
+func ParseHostSNI(rule string) ([]string, error) {
+	var matchers []string
+	for matcher := range tcpFuncs {
+		matchers = append(matchers, matcher)
+	}
+
+	parser, err := rules.NewParser(matchers)
+	if err != nil {
+		return nil, err
+	}
+
+	parse, err := parser.Parse(rule)
+	if err != nil {
+		return nil, err
+	}
+
+	buildTree, ok := parse.(rules.TreeBuilder)
+	if !ok {
+		return nil, fmt.Errorf("error while parsing rule %s", rule)
+	}
+
+	return buildTree().ParseMatchers([]string{"HostSNI"}), nil
 }
 
 // routes implements sort.Interface.
@@ -215,14 +181,12 @@ type route struct {
 	priority int
 }
 
-// matcher is a matcher func used to match connection properties.
-type matcher func(meta ConnData) bool
-
 // matchersTree represents the matchers tree structure.
 type matchersTree struct {
+	// matcher is a matcher func used to match connection properties.
 	// If matcher is not nil, it means that this matcherTree is a leaf of the tree.
 	// It is therefore mutually exclusive with left and right.
-	matcher matcher
+	matcher func(ConnData) bool
 	// operator to combine the evaluation of left and right leaves.
 	operator string
 	// Mutually exclusive with matcher.
@@ -251,4 +215,38 @@ func (m *matchersTree) match(meta ConnData) bool {
 		log.Warn().Str("operator", m.operator).Msg("Invalid rule operator")
 		return false
 	}
+}
+
+func (m *matchersTree) addRule(rule *rules.Tree) error {
+	switch rule.Matcher {
+	case "and", "or":
+		m.operator = rule.Matcher
+		m.left = &matchersTree{}
+		err := m.left.addRule(rule.RuleLeft)
+		if err != nil {
+			return err
+		}
+
+		m.right = &matchersTree{}
+		return m.right.addRule(rule.RuleRight)
+	default:
+		err := rules.CheckRule(rule)
+		if err != nil {
+			return err
+		}
+
+		err = tcpFuncs[rule.Matcher](m, rule.Value...)
+		if err != nil {
+			return err
+		}
+
+		if rule.Not {
+			matcherFunc := m.matcher
+			m.matcher = func(meta ConnData) bool {
+				return !matcherFunc(meta)
+			}
+		}
+	}
+
+	return nil
 }

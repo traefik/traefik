@@ -134,8 +134,6 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		}
 	}
 
-	muxer.SortRoutes()
-
 	chain := alice.New()
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
 		return recovery.New(ctx, next)
