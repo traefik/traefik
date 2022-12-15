@@ -72,7 +72,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 			headers: map[string]string{
 				"X-Forwarded-Proto": "bar",
 			},
-			expectedURL:    "https://bar://foo",
+			expectedURL:    "https://foo",
 			expectedStatus: http.StatusFound,
 		},
 		{
