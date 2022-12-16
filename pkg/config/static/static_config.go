@@ -27,7 +27,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/kv/zk"
 	"github.com/traefik/traefik/v2/pkg/provider/marathon"
 	"github.com/traefik/traefik/v2/pkg/provider/nomad"
-	"github.com/traefik/traefik/v2/pkg/provider/rancher"
 	"github.com/traefik/traefik/v2/pkg/provider/rest"
 	"github.com/traefik/traefik/v2/pkg/tls"
 	"github.com/traefik/traefik/v2/pkg/tracing/datadog"
@@ -219,7 +218,6 @@ type Providers struct {
 	KubernetesCRD     *crd.Provider                  `description:"Enable Kubernetes backend with default settings." json:"kubernetesCRD,omitempty" toml:"kubernetesCRD,omitempty" yaml:"kubernetesCRD,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	KubernetesGateway *gateway.Provider              `description:"Enable Kubernetes gateway api provider with default settings." json:"kubernetesGateway,omitempty" toml:"kubernetesGateway,omitempty" yaml:"kubernetesGateway,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	Rest              *rest.Provider                 `description:"Enable Rest backend with default settings." json:"rest,omitempty" toml:"rest,omitempty" yaml:"rest,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	Rancher           *rancher.Provider              `description:"Enable Rancher backend with default settings." json:"rancher,omitempty" toml:"rancher,omitempty" yaml:"rancher,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	ConsulCatalog     *consulcatalog.ProviderBuilder `description:"Enable ConsulCatalog backend with default settings." json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Nomad             *nomad.ProviderBuilder         `description:"Enable Nomad backend with default settings." json:"nomad,omitempty" toml:"nomad,omitempty" yaml:"nomad,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Ecs               *ecs.Provider                  `description:"Enable AWS ECS backend with default settings." json:"ecs,omitempty" toml:"ecs,omitempty" yaml:"ecs,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -275,12 +273,6 @@ func (c *Configuration) SetEffectiveConfiguration() {
 
 		if c.Providers.Docker.HTTPClientTimeout < 0 {
 			c.Providers.Docker.HTTPClientTimeout = 0
-		}
-	}
-
-	if c.Providers.Rancher != nil {
-		if c.Providers.Rancher.RefreshSeconds <= 0 {
-			c.Providers.Rancher.RefreshSeconds = 15
 		}
 	}
 

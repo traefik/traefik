@@ -100,10 +100,6 @@ func NewProviderAggregator(conf static.Providers) ProviderAggregator {
 		p.quietAddProvider(conf.KubernetesGateway)
 	}
 
-	if conf.Rancher != nil {
-		p.quietAddProvider(conf.Rancher)
-	}
-
 	if conf.Ecs != nil {
 		p.quietAddProvider(conf.Ecs)
 	}

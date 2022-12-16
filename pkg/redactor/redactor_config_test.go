@@ -29,7 +29,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/kv/redis"
 	"github.com/traefik/traefik/v2/pkg/provider/kv/zk"
 	"github.com/traefik/traefik/v2/pkg/provider/marathon"
-	"github.com/traefik/traefik/v2/pkg/provider/rancher"
 	"github.com/traefik/traefik/v2/pkg/provider/rest"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"github.com/traefik/traefik/v2/pkg/tracing/datadog"
@@ -673,17 +672,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 
 	config.Providers.Rest = &rest.Provider{
 		Insecure: true,
-	}
-
-	config.Providers.Rancher = &rancher.Provider{
-		Constraints:               `Label("foo", "bar")`,
-		Watch:                     true,
-		DefaultRule:               "PathPrefix(`/`)",
-		ExposedByDefault:          true,
-		EnableServiceHealthFilter: true,
-		RefreshSeconds:            42,
-		IntervalPoll:              true,
-		Prefix:                    "MyPrefix",
 	}
 
 	config.Providers.ConsulCatalog = &consulcatalog.ProviderBuilder{

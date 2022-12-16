@@ -44,14 +44,6 @@ labels: {
 }
 ```
 
-```yaml tab="Rancher"
-## Dynamic configuration
-labels:
-  - traefik.http.routers.blog.rule=(Host(`example.com`) && Path(`/blog`)) || Host(`blog.example.org`)
-  - traefik.http.routers.blog.tls=true
-  - traefik.http.routers.blog.tls.certresolver=myresolver
-```
-
 ```yaml tab="File (YAML)"
 ## Dynamic configuration
 http:

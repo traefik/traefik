@@ -58,13 +58,6 @@ labels:
 }
 ```
 
-```yaml tab="Rancher"
-# Redirect to https
-labels:
-  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
-  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
-```
-
 ```yaml tab="File (YAML)"
 # Redirect to https
 http:
@@ -122,13 +115,6 @@ labels:
 }
 ```
 
-```yaml tab="Rancher"
-# Redirect to https
-labels:
-  # ...
-  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
-```
-
 ```yaml tab="File (YAML)"
 # Redirect to https
 http:
@@ -178,12 +164,6 @@ labels:
 "labels": {
   "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme": "https"
 }
-```
-
-```yaml tab="Rancher"
-# Redirect to https
-labels:
-  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
 ```
 
 ```yaml tab="File (YAML)"
@@ -237,13 +217,6 @@ labels:
 
   "traefik.http.middlewares.test-redirectscheme.redirectscheme.port": "443"
 }
-```
-
-```yaml tab="Rancher"
-# Redirect to https
-labels:
-  # ...
-  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.port=443"
 ```
 
 ```yaml tab="File (YAML)"
