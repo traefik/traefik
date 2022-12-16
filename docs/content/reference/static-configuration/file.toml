@@ -154,15 +154,6 @@
     throttleDuration = "42s"
   [providers.rest]
     insecure = true
-  [providers.rancher]
-    constraints = "foobar"
-    watch = true
-    defaultRule = "foobar"
-    exposedByDefault = true
-    enableServiceHealthFilter = true
-    refreshSeconds = 42
-    intervalPoll = true
-    prefix = "foobar"
   [providers.consulCatalog]
     constraints = "foobar"
     prefix = "foobar"

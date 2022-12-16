@@ -60,15 +60,6 @@ spec:
 }
 ```
 
-```yaml tab="Rancher"
-# Dynamic Configuration
-labels:
-  - "traefik.http.routers.api.rule=Host(`traefik.example.com`)"
-  - "traefik.http.routers.api.service=api@internal"
-  - "traefik.http.routers.api.middlewares=auth"
-  - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
-```
-
 ```yaml tab="File (YAML)"
 # Dynamic Configuration
 http:

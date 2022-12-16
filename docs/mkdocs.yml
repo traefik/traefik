@@ -82,7 +82,6 @@ nav:
       - 'Nomad': 'providers/nomad.md'
       - 'ECS': 'providers/ecs.md'
       - 'Marathon': 'providers/marathon.md'
-      - 'Rancher': 'providers/rancher.md'
       - 'File': 'providers/file.md'
       - 'Consul': 'providers/consul.md'
       - 'Etcd': 'providers/etcd.md'
@@ -103,7 +102,6 @@ nav:
           - 'Nomad': 'routing/providers/nomad.md'
           - 'ECS': 'routing/providers/ecs.md'
           - 'Marathon': 'routing/providers/marathon.md'
-          - 'Rancher': 'routing/providers/rancher.md'
           - 'KV': 'routing/providers/kv.md'
   - 'HTTPS & TLS':
       - 'Overview': 'https/overview.md'
@@ -209,7 +207,6 @@ nav:
         - 'ECS': 'reference/dynamic-configuration/ecs.md'
         - 'KV': 'reference/dynamic-configuration/kv.md'
         - 'Marathon': 'reference/dynamic-configuration/marathon.md'
-        - 'Rancher': 'reference/dynamic-configuration/rancher.md'
   - 'Deprecation Notices':
       - 'Releases': 'deprecation/releases.md'
       - 'Features': 'deprecation/features.md'
