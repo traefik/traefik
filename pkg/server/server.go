@@ -111,7 +111,6 @@ func (s *Server) Close() {
 func stopMetricsClients() {
 	metrics.StopDatadog()
 	metrics.StopStatsd()
-	metrics.StopInfluxDB()
 	metrics.StopInfluxDB2()
 	metrics.StopOpenTelemetry()
 }
