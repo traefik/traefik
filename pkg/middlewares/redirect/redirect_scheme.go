@@ -86,9 +86,9 @@ func (r *redirectScheme) clientRequestURL(req *http.Request) string {
 		// Given that we're in a middleware that is only used in the context of HTTP(s) requests,
 		// the only possible valid schemes are one of "http" or "https", so we convert back to them.
 		switch {
-		case strings.EqualFold(xProto, "ws"), strings.EqualFold(xProto, schemeHTTP):
+		case strings.EqualFold(xProto, schemeHTTP), strings.EqualFold(xProto, "ws"):
 			scheme = schemeHTTP
-		case strings.EqualFold(xProto, "wss"), strings.EqualFold(xProto, schemeHTTPS):
+		case strings.EqualFold(xProto, schemeHTTPS), strings.EqualFold(xProto, "wss"):
 			scheme = schemeHTTPS
 		default:
 			log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeSchemeName)).Debugf("invalid X-Forwarded-Proto: %s", xProto)
