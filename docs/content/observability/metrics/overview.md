@@ -1,6 +1,6 @@
 ---
 title: "Traefik Metrics Overview"
-description: "Traefik Proxy supports these metrics backend systems: Datadog, InfluxDB, Prometheus, and StatsD. Read the full documentation to get started."
+description: "Traefik Proxy supports these metrics backend systems: Datadog, InfluxDB 2.X, Prometheus, and StatsD. Read the full documentation to get started."
 ---
 
 # Metrics
@@ -8,7 +8,6 @@ description: "Traefik Proxy supports these metrics backend systems: Datadog, Inf
 Traefik supports these metrics backends:
 
 - [Datadog](./datadog.md)
-- [InfluxDB](./influxdb.md)
 - [InfluxDB2](./influxdb2.md)
 - [Prometheus](./prometheus.md)
 - [StatsD](./statsd.md)
@@ -35,7 +34,7 @@ config.reload.lastSuccessTimestamp
 tls.certs.notAfterTimestamp
 ```
 
-```influxdb tab="InfluxDB / InfluxDB2"
+```influxdb tab="InfluxDB2"
 traefik.config.reload.total
 traefik.config.reload.lastSuccessTimestamp
 traefik.tls.certs.notAfterTimestamp
@@ -77,7 +76,7 @@ entrypoint.requests.bytes.total
 entrypoint.responses.bytes.total
 ```
 
-```influxdb tab="InfluxDB / InfluxDB2"
+```influxdb tab="InfluxDB2"
 traefik.entrypoint.requests.total
 traefik.entrypoint.requests.tls.total
 traefik.entrypoint.request.duration
@@ -125,7 +124,7 @@ router.requests.bytes.total
 router.responses.bytes.total
 ```
 
-```influxdb tab="InfluxDB / InfluxDB2"
+```influxdb tab="InfluxDB2"
 traefik.router.requests.total
 traefik.router.requests.tls.total
 traefik.router.request.duration
@@ -179,7 +178,7 @@ service.requests.bytes.total
 service.responses.bytes.total
 ```
 
-```influxdb tab="InfluxDB / InfluxDB2"
+```influxdb tab="InfluxDB2"
 traefik.service.requests.total
 traefik.service.requests.tls.total
 traefik.service.request.duration

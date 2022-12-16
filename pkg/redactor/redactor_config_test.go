@@ -823,17 +823,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 			AddServicesLabels:    true,
 			Prefix:               "MyPrefix",
 		},
-		InfluxDB: &types.InfluxDB{
-			Address:              "localhost:8183",
-			Protocol:             "http",
-			PushInterval:         42,
-			Database:             "myDB",
-			RetentionPolicy:      "12",
-			Username:             "a",
-			Password:             "aaaa",
-			AddEntryPointsLabels: true,
-			AddServicesLabels:    true,
-		},
 	}
 
 	config.Ping = &ping.Handler{
