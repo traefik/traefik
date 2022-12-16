@@ -288,9 +288,6 @@ Prefix to use for metrics collection. (Default: ```traefik```)
 `TRAEFIK_METRICS_DATADOG_PUSHINTERVAL`:  
 Datadog push interval. (Default: ```10```)
 
-`TRAEFIK_METRICS_INFLUXDB`:  
-InfluxDB metrics exporter type. (Default: ```false```)
-
 `TRAEFIK_METRICS_INFLUXDB2`:  
 InfluxDB v2 metrics exporter type. (Default: ```false```)
 
@@ -320,39 +317,6 @@ InfluxDB v2 push interval. (Default: ```10```)
 
 `TRAEFIK_METRICS_INFLUXDB2_TOKEN`:  
 InfluxDB v2 access token.
-
-`TRAEFIK_METRICS_INFLUXDB_ADDENTRYPOINTSLABELS`:  
-Enable metrics on entry points. (Default: ```true```)
-
-`TRAEFIK_METRICS_INFLUXDB_ADDITIONALLABELS_<NAME>`:  
-Additional labels (influxdb tags) on all metrics
-
-`TRAEFIK_METRICS_INFLUXDB_ADDRESS`:  
-InfluxDB address. (Default: ```localhost:8089```)
-
-`TRAEFIK_METRICS_INFLUXDB_ADDROUTERSLABELS`:  
-Enable metrics on routers. (Default: ```false```)
-
-`TRAEFIK_METRICS_INFLUXDB_ADDSERVICESLABELS`:  
-Enable metrics on services. (Default: ```true```)
-
-`TRAEFIK_METRICS_INFLUXDB_DATABASE`:  
-InfluxDB database used when protocol is http.
-
-`TRAEFIK_METRICS_INFLUXDB_PASSWORD`:  
-InfluxDB password (only with http).
-
-`TRAEFIK_METRICS_INFLUXDB_PROTOCOL`:  
-InfluxDB address protocol (udp or http). (Default: ```udp```)
-
-`TRAEFIK_METRICS_INFLUXDB_PUSHINTERVAL`:  
-InfluxDB push interval. (Default: ```10```)
-
-`TRAEFIK_METRICS_INFLUXDB_RETENTIONPOLICY`:  
-InfluxDB retention policy used when protocol is http.
-
-`TRAEFIK_METRICS_INFLUXDB_USERNAME`:  
-InfluxDB username (only with http).
 
 `TRAEFIK_METRICS_OPENTELEMETRY`:  
 OpenTelemetry metrics exporter type. (Default: ```false```)

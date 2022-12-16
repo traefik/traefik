@@ -284,17 +284,6 @@
       "addEntryPointsLabels": true,
       "addServicesLabels": true,
       "prefix": "MyPrefix"
-    },
-    "influxDB": {
-      "address": "xxxx",
-      "protocol": "xxxx",
-      "pushInterval": "42ns",
-      "database": "myDB",
-      "retentionPolicy": "12",
-      "username": "xxxx",
-      "password": "xxxx",
-      "addEntryPointsLabels": true,
-      "addServicesLabels": true
     }
   },
   "ping": {
