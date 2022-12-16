@@ -167,15 +167,6 @@ providers:
     throttleDuration: 42s
   rest:
     insecure: true
-  rancher:
-    constraints: foobar
-    watch: true
-    defaultRule: foobar
-    exposedByDefault: true
-    enableServiceHealthFilter: true
-    refreshSeconds: 42
-    intervalPoll: true
-    prefix: foobar
   consulCatalog:
     constraints: foobar
     prefix: foobar

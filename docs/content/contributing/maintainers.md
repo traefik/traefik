@@ -107,7 +107,6 @@ The `status/*` labels represent the desired state in the workflow.
 * `area/provider/kv`: KV related.
 * `area/provider/marathon`: Marathon related.
 * `area/provider/mesos`: Mesos related.
-* `area/provider/rancher`: Rancher related.
 * `area/provider/servicefabric`: Azure service fabric related.
 * `area/provider/zk`: Zoo Keeper related.
 * `area/rules`: Rules related.
