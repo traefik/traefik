@@ -58,7 +58,7 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 - Circuit breakers, retry
 - See the magic through its clean web UI
 - Websocket, HTTP/2, gRPC ready
-- Provides metrics (Rest, Prometheus, Datadog, Statsd, InfluxDB)
+- Provides metrics (Rest, Prometheus, Datadog, Statsd, InfluxDB 2.X)
 - Keeps access logs (JSON, CLF)
 - Fast
 - Exposes a Rest API
