@@ -124,14 +124,6 @@
   [metrics.statsD]
     address = "foobar"
     pushInterval = "10s"
-  [metrics.influxDB]
-    address = "foobar"
-    protocol = "foobar"
-    pushInterval = "10s"
-    database = "foobar"
-    retentionPolicy = "foobar"
-    username = "foobar"
-    password = "foobar"
 
 [ping]
   entryPoint = "foobar"

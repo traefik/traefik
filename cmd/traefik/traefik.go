@@ -523,16 +523,6 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 			Msg("Configured StatsD metrics")
 	}
 
-	if metricsConfig.InfluxDB != nil {
-		logger := log.With().Str(logs.MetricsProviderName, "influxdb").Logger()
-
-		registries = append(registries, metrics.RegisterInfluxDB(logger.WithContext(context.Background()), metricsConfig.InfluxDB))
-		logger.Debug().
-			Str("address", metricsConfig.InfluxDB.Address).
-			Str("pushInterval", metricsConfig.InfluxDB.PushInterval.String()).
-			Msg("Configured InfluxDB metrics")
-	}
-
 	if metricsConfig.InfluxDB2 != nil {
 		logger := log.With().Str(logs.MetricsProviderName, "influxdb2").Logger()
 
