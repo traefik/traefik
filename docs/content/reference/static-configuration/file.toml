@@ -300,20 +300,6 @@
     addRoutersLabels = true
     addServicesLabels = true
     prefix = "foobar"
-  [metrics.influxDB]
-    address = "foobar"
-    protocol = "foobar"
-    pushInterval = "42s"
-    database = "foobar"
-    retentionPolicy = "foobar"
-    username = "foobar"
-    password = "foobar"
-    addEntryPointsLabels = true
-    addRoutersLabels = true
-    addServicesLabels = true
-    [metrics.influxDB.additionalLabels]
-      name0 = "foobar"
-      name1 = "foobar"
   [metrics.influxDB2]
     address = "foobar"
     token = "foobar"

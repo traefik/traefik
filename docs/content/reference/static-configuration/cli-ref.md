@@ -288,42 +288,6 @@ Prefix to use for metrics collection. (Default: ```traefik```)
 `--metrics.datadog.pushinterval`:  
 Datadog push interval. (Default: ```10```)
 
-`--metrics.influxdb`:  
-InfluxDB metrics exporter type. (Default: ```false```)
-
-`--metrics.influxdb.addentrypointslabels`:  
-Enable metrics on entry points. (Default: ```true```)
-
-`--metrics.influxdb.additionallabels.<name>`:  
-Additional labels (influxdb tags) on all metrics
-
-`--metrics.influxdb.address`:  
-InfluxDB address. (Default: ```localhost:8089```)
-
-`--metrics.influxdb.addrouterslabels`:  
-Enable metrics on routers. (Default: ```false```)
-
-`--metrics.influxdb.addserviceslabels`:  
-Enable metrics on services. (Default: ```true```)
-
-`--metrics.influxdb.database`:  
-InfluxDB database used when protocol is http.
-
-`--metrics.influxdb.password`:  
-InfluxDB password (only with http).
-
-`--metrics.influxdb.protocol`:  
-InfluxDB address protocol (udp or http). (Default: ```udp```)
-
-`--metrics.influxdb.pushinterval`:  
-InfluxDB push interval. (Default: ```10```)
-
-`--metrics.influxdb.retentionpolicy`:  
-InfluxDB retention policy used when protocol is http.
-
-`--metrics.influxdb.username`:  
-InfluxDB username (only with http).
-
 `--metrics.influxdb2`:  
 InfluxDB v2 metrics exporter type. (Default: ```false```)
 
