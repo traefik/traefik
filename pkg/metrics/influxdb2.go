@@ -23,6 +23,38 @@ var (
 	influxDB2Client influxdb2.Client
 )
 
+const (
+	influxDBConfigReloadsName           = "traefik.config.reload.total"
+	influxDBConfigReloadsFailureName    = influxDBConfigReloadsName + ".failure"
+	influxDBLastConfigReloadSuccessName = "traefik.config.reload.lastSuccessTimestamp"
+	influxDBLastConfigReloadFailureName = "traefik.config.reload.lastFailureTimestamp"
+
+	influxDBTLSCertsNotAfterTimestampName = "traefik.tls.certs.notAfterTimestamp"
+
+	influxDBEntryPointReqsName        = "traefik.entrypoint.requests.total"
+	influxDBEntryPointReqsTLSName     = "traefik.entrypoint.requests.tls.total"
+	influxDBEntryPointReqDurationName = "traefik.entrypoint.request.duration"
+	influxDBEntryPointOpenConnsName   = "traefik.entrypoint.connections.open"
+	influxDBEntryPointReqsBytesName   = "traefik.entrypoint.requests.bytes.total"
+	influxDBEntryPointRespsBytesName  = "traefik.entrypoint.responses.bytes.total"
+
+	influxDBRouterReqsName         = "traefik.router.requests.total"
+	influxDBRouterReqsTLSName      = "traefik.router.requests.tls.total"
+	influxDBRouterReqsDurationName = "traefik.router.request.duration"
+	influxDBORouterOpenConnsName   = "traefik.router.connections.open"
+	influxDBRouterReqsBytesName    = "traefik.router.requests.bytes.total"
+	influxDBRouterRespsBytesName   = "traefik.router.responses.bytes.total"
+
+	influxDBServiceReqsName         = "traefik.service.requests.total"
+	influxDBServiceReqsTLSName      = "traefik.service.requests.tls.total"
+	influxDBServiceReqsDurationName = "traefik.service.request.duration"
+	influxDBServiceRetriesTotalName = "traefik.service.retries.total"
+	influxDBServiceOpenConnsName    = "traefik.service.connections.open"
+	influxDBServiceServerUpName     = "traefik.service.server.up"
+	influxDBServiceReqsBytesName    = "traefik.service.requests.bytes.total"
+	influxDBServiceRespsBytesName   = "traefik.service.responses.bytes.total"
+)
+
 // RegisterInfluxDB2 creates metrics exporter for InfluxDB2.
 func RegisterInfluxDB2(ctx context.Context, config *types.InfluxDB2) Registry {
 	logger := log.Ctx(ctx)
