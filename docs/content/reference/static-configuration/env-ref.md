@@ -912,33 +912,6 @@ Plugins configuration.
 `TRAEFIK_PROVIDERS_PROVIDERSTHROTTLEDURATION`:  
 Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time. (Default: ```2```)
 
-`TRAEFIK_PROVIDERS_RANCHER`:  
-Enable Rancher backend with default settings. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_RANCHER_CONSTRAINTS`:  
-Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
-
-`TRAEFIK_PROVIDERS_RANCHER_DEFAULTRULE`:  
-Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
-
-`TRAEFIK_PROVIDERS_RANCHER_ENABLESERVICEHEALTHFILTER`:  
-Filter services with unhealthy states and inactive states. (Default: ```true```)
-
-`TRAEFIK_PROVIDERS_RANCHER_EXPOSEDBYDEFAULT`:  
-Expose containers by default. (Default: ```true```)
-
-`TRAEFIK_PROVIDERS_RANCHER_INTERVALPOLL`:  
-Poll the Rancher metadata service every 'rancher.refreshseconds' (less accurate). (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_RANCHER_PREFIX`:  
-Prefix used for accessing the Rancher metadata service. (Default: ```latest```)
-
-`TRAEFIK_PROVIDERS_RANCHER_REFRESHSECONDS`:  
-Defines the polling interval in seconds. (Default: ```15```)
-
-`TRAEFIK_PROVIDERS_RANCHER_WATCH`:  
-Watch provider. (Default: ```true```)
-
 `TRAEFIK_PROVIDERS_REDIS`:  
 Enable Redis backend with default settings. (Default: ```false```)
 

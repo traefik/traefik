@@ -48,13 +48,6 @@ spec:
 }
 ```
 
-```yaml tab="Rancher"
-# Replace path with regex
-labels:
-  - "traefik.http.middlewares.test-replacepathregex.replacepathregex.regex=^/foo/(.*)"
-  - "traefik.http.middlewares.test-replacepathregex.replacepathregex.replacement=/bar/$1"
-```
-
 ```yaml tab="File (YAML)"
 # Replace path with regex
 http:

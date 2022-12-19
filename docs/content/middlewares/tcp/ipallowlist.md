@@ -41,12 +41,6 @@ spec:
 }
 ```
 
-```yaml tab="Rancher"
-# Accepts request from defined IP
-labels:
-  - "traefik.tcp.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
-```
-
 ```toml tab="File (TOML)"
 # Accepts request from defined IP
 [tcp.middlewares]
