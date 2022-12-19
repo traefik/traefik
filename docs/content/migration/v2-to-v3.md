@@ -29,7 +29,7 @@ In v3, the reported status code for gRPC requests is now the value of the `Grpc-
 - The `tls.caOptional` option has been removed from the ForwardAuth middleware, as well as from the HTTP, Consul, Etcd, Redis, ZooKeeper, Consul Catalog, and Docker providers.
 - `sslRedirect`, `sslTemporaryRedirect`, `sslHost`, `sslForceHost` and `featurePolicy` options of the Headers middleware have been removed.
 - The `forceSlash` option of the StripPrefix middleware has been removed.
-- the `preferServerCipherSuites` option has been removed.
+- The `preferServerCipherSuites` option has been removed.
 
 ## Matchers
 
@@ -76,3 +76,7 @@ As such, Rancher 2.x users should utilize the [Kubernetes CRD provider](../provi
 ## Marathon provider
 
 In v3, the Marathon provider has been removed.
+
+## InfluxDB v1
+
+In v3, the InfluxDB v1 metrics provider has been removed because InfluxDB v1.x maintenance [ended in 2021](https://www.influxdata.com/blog/influxdb-oss-and-enterprise-roadmap-update-from-influxdays-emea/).
