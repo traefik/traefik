@@ -115,6 +115,22 @@ PtvuNc5EImfSkuPBYLBslNxtjbBvAYgacEdY+gRhn2TeIUApnND58lCWsKbNHLFZ
 ajIPbTY+Fe9OTOFTN48ujXNn
 -----END PRIVATE KEY-----`)
 
+func TestConflictingConfig(t *testing.T) {
+	dynamicConf := map[string]*dynamic.TCPServersTransport{
+		"test": {
+			TLS: &dynamic.TLSClientConfig{
+				ServerName: "foobar",
+				Spiffe:     &dynamic.Spiffe{},
+			},
+		},
+	}
+
+	tlsManager := NewTLSConfigManager[*dynamic.TCPServersTransport](nil)
+	tlsManager.Update(dynamicConf)
+	_, err := tlsManager.GetTLSConfig("test")
+	require.Error(t, err)
+}
+
 func TestMTLS(t *testing.T) {
 	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
@@ -136,7 +152,7 @@ func TestMTLS(t *testing.T) {
 	}
 	srv.StartTLS()
 
-	tlsClientConfigManager := NewTLSConfigManager(nil)
+	tlsClientConfigManager := NewTLSConfigManager[*dynamic.ServersTransport](nil)
 
 	dynamicConf := map[string]*dynamic.ServersTransport{
 		"test": {
@@ -276,7 +292,7 @@ func TestSpiffeMTLS(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			tlsClientConfigManager := NewTLSConfigManager(test.clientSource)
+			tlsClientConfigManager := NewTLSConfigManager[*dynamic.ServersTransport](test.clientSource)
 
 			dynamicConf := map[string]*dynamic.ServersTransport{
 				"test": {
