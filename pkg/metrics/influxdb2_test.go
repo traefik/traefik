@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strconv"
 	"testing"
 	"time"
@@ -154,4 +155,15 @@ func TestInfluxDB2(t *testing.T) {
 	msgServiceOpenConns := <-c
 
 	assertMessage(t, *msgServiceOpenConns, expectedServiceOpenConns)
+}
+
+func assertMessage(t *testing.T, msg string, patterns []string) {
+	t.Helper()
+	for _, pattern := range patterns {
+		re := regexp.MustCompile(pattern)
+		match := re.FindStringSubmatch(msg)
+		if len(match) != 2 {
+			t.Errorf("Got %q %v, want %q", msg, match, pattern)
+		}
+	}
 }
