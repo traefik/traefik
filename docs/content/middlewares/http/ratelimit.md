@@ -40,13 +40,6 @@ spec:
 - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=50"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ratelimit.ratelimit.average": "100",
-  "traefik.http.middlewares.test-ratelimit.ratelimit.burst": "50"
-}
-```
-
 ```yaml tab="File (YAML)"
 # Here, an average of 100 requests per second is allowed.
 # In addition, a burst of 50 requests is allowed.
@@ -100,12 +93,6 @@ spec:
 - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ratelimit.ratelimit.average": "100",
-}
-```
-
 ```yaml tab="File (YAML)"
 # 100 reqs/s
 http:
@@ -157,13 +144,6 @@ spec:
 - "traefik.http.middlewares.test-ratelimit.ratelimit.period=1m"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ratelimit.ratelimit.average": "6",
-  "traefik.http.middlewares.test-ratelimit.ratelimit.period": "1m",
-}
-```
-
 ```yaml tab="File (YAML)"
 # 6 reqs/minute
 http:
@@ -205,12 +185,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=100"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ratelimit.ratelimit.burst": "100",
-}
 ```
 
 ```yaml tab="File (YAML)"
@@ -273,12 +247,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth=2"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth": "2"
-}
 ```
 
 ```yaml tab="File (YAML)"
@@ -364,12 +332,6 @@ spec:
 - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
-}
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -413,12 +375,6 @@ spec:
 - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername": "username"
-}
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -457,12 +413,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost": "true"
-}
 ```
 
 ```yaml tab="File (YAML)"

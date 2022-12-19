@@ -37,12 +37,6 @@ spec:
 - "traefik.http.middlewares.test-grpcweb.grpcWeb.allowOrigins=*"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-grpcweb.grpcweb.alloworigins": "*"
-}
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:

@@ -36,12 +36,6 @@ spec:
 - "traefik.http.middlewares.add-foo.addprefix.prefix=/foo"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.add-foo.addprefix.prefix": "/foo"
-}
-```
-
 ```yaml tab="File (YAML)"
 # Prefixing with /foo
 http:

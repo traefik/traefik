@@ -141,7 +141,6 @@ Below is the list of the currently supported providers in Traefik.
 | [Consul Catalog](./consul-catalog.md)             | Orchestrator | Label                | `consulcatalog`     |
 | [Nomad](./nomad.md)                               | Orchestrator | Label                | `nomad`             |
 | [ECS](./ecs.md)                                   | Orchestrator | Label                | `ecs`               |
-| [Marathon](./marathon.md)                         | Orchestrator | Label                | `marathon`          |
 | [File](./file.md)                                 | Manual       | YAML/TOML format     | `file`              |
 | [Consul](./consul.md)                             | KV           | KV                   | `consul`            |
 | [Etcd](./etcd.md)                                 | KV           | KV                   | `etcd`              |
@@ -215,7 +214,6 @@ List of providers that support these features:
 - [ECS](./ecs.md#exposedbydefault)
 - [Consul Catalog](./consul-catalog.md#exposedbydefault)
 - [Nomad](./nomad.md#exposedbydefault)
-- [Marathon](./marathon.md#exposedbydefault)
 
 ### Constraints
 
@@ -225,7 +223,6 @@ List of providers that support constraints:
 - [ECS](./ecs.md#constraints)
 - [Consul Catalog](./consul-catalog.md#constraints)
 - [Nomad](./nomad.md#constraints)
-- [Marathon](./marathon.md#constraints)
 - [Kubernetes CRD](./kubernetes-crd.md#labelselector)
 - [Kubernetes Ingress](./kubernetes-ingress.md#labelselector)
 - [Kubernetes Gateway](./kubernetes-gateway.md#labelselector)
