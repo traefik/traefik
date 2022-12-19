@@ -75,7 +75,7 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 	srv.StartTLS()
 	t.Cleanup(srv.Close)
 
-	tlsClientConfigGetter := client.NewTLSConfigManager(nil)
+	tlsClientConfigGetter := client.NewTLSConfigManager[*dynamic.ServersTransport](nil)
 	proxyBuilder := NewBuilder(tlsClientConfigGetter)
 
 	dynamicConf := map[string]*dynamic.ServersTransport{
@@ -175,7 +175,7 @@ func TestDisableHTTP2(t *testing.T) {
 			srv.StartTLS()
 			t.Cleanup(srv.Close)
 
-			tlsClientConfigGetter := client.NewTLSConfigManager(nil)
+			tlsClientConfigGetter := client.NewTLSConfigManager[*dynamic.ServersTransport](nil)
 			proxyBuilder := NewBuilder(tlsClientConfigGetter)
 
 			dynamicConf := map[string]*dynamic.ServersTransport{

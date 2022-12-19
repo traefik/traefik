@@ -22,25 +22,29 @@ type SpiffeX509Source interface {
 	x509bundle.Source
 }
 
+type ServersTransport interface {
+	*dynamic.ServersTransport | *dynamic.TCPServersTransport
+}
+
 // TLSConfigManager is the manager of TLS client configuration.
 // The TLS client configuration is used when Traefik is forwarding requests to the backends.
-type TLSConfigManager struct {
+type TLSConfigManager[T ServersTransport] struct {
 	spiffeX509Source SpiffeX509Source
 
 	configsLock sync.RWMutex
-	configs     map[string]*dynamic.ServersTransport
+	configs     map[string]T
 }
 
 // NewTLSConfigManager returns a new TLSConfigManager.
-func NewTLSConfigManager(spiffeX509Source SpiffeX509Source) *TLSConfigManager {
-	return &TLSConfigManager{
-		configs:          make(map[string]*dynamic.ServersTransport),
+func NewTLSConfigManager[T ServersTransport](spiffeX509Source SpiffeX509Source) *TLSConfigManager[T] {
+	return &TLSConfigManager[T]{
+		configs:          make(map[string]T),
 		spiffeX509Source: spiffeX509Source,
 	}
 }
 
 // Update is the handler called when the dynamic configuration is updated.
-func (t *TLSConfigManager) Update(configs map[string]*dynamic.ServersTransport) {
+func (t *TLSConfigManager[T]) Update(configs map[string]T) {
 	t.configsLock.Lock()
 	defer t.configsLock.Unlock()
 
@@ -49,7 +53,7 @@ func (t *TLSConfigManager) Update(configs map[string]*dynamic.ServersTransport) 
 
 // GetTLSConfig returns the client TLS configuration corresponding to the given ServersTransport name.
 // When name is empty, it defaults to "default".
-func (t *TLSConfigManager) GetTLSConfig(name string) (*tls.Config, error) {
+func (t *TLSConfigManager[T]) GetTLSConfig(name string) (*tls.Config, error) {
 	if len(name) == 0 {
 		name = "default"
 	}
@@ -58,14 +62,19 @@ func (t *TLSConfigManager) GetTLSConfig(name string) (*tls.Config, error) {
 	defer t.configsLock.RUnlock()
 
 	if config, ok := t.configs[name]; ok {
-		return t.createTLSConfig(config.TLS)
+		switch v := any(config).(type) {
+		case *dynamic.ServersTransport:
+			return t.createTLSConfig(v.TLS)
+		case *dynamic.TCPServersTransport:
+			return t.createTLSConfig(v.TLS)
+		}
 	}
 
 	return nil, fmt.Errorf("unable to find client TLS configuration: %s", name)
 }
 
 // createTLSConfig returns a new tls.Config corresponding to the given TLSClientConfig.
-func (t *TLSConfigManager) createTLSConfig(cfg *dynamic.TLSClientConfig) (*tls.Config, error) {
+func (t *TLSConfigManager[T]) createTLSConfig(cfg *dynamic.TLSClientConfig) (*tls.Config, error) {
 	if cfg == nil {
 		return nil, nil
 	}
