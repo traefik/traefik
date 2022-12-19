@@ -261,9 +261,14 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		log.Info().Msg("Successfully obtained SPIFFE SVID.")
 	}
 
-	dialerManager := tcp.NewDialerManager(spiffeX509Source)
-	tlsClientConfigManager := client.NewTLSConfigManager(spiffeX509Source)
+	// TCP Manager
+	tcpTlsClientConfigManager := client.NewTLSConfigManager[*dynamic.TCPServersTransport](spiffeX509Source)
+	dialerManager := tcp.NewDialerManager(tcpTlsClientConfigManager)
+
+	// HTTP Manager
+	tlsClientConfigManager := client.NewTLSConfigManager[*dynamic.ServersTransport](spiffeX509Source)
 	proxyBuilder := proxy.NewBuilder(tlsClientConfigManager)
+
 	acmeHTTPHandler := getHTTPChallengeHandler(acmeProviders, httpChallengeProvider)
 	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, proxyBuilder, tlsClientConfigManager, acmeHTTPHandler)
 
@@ -304,6 +309,8 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	// Server Transports
 	watcher.AddListener(func(conf dynamic.Configuration) {
 		tlsClientConfigManager.Update(conf.HTTP.ServersTransports)
+		tcpTlsClientConfigManager.Update(conf.TCP.ServersTransports)
+
 		proxyBuilder.Update(conf.HTTP.ServersTransports)
 		dialerManager.Update(conf.TCP.ServersTransports)
 	})

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"crypto/tls"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -11,15 +12,18 @@ import (
 	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/proxy"
 	"github.com/traefik/traefik/v3/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/tls/client"
 )
+
+type TLSConfigManager interface {
+	GetTLSConfig(name string) (*tls.Config, error)
+}
 
 // ManagerFactory a factory of service manager.
 type ManagerFactory struct {
 	metricsRegistry metrics.Registry
 
 	proxyBuilder           *proxy.Builder
-	tlsClientConfigManager *client.TLSConfigManager
+	tlsClientConfigManager TLSConfigManager
 
 	api              func(configuration *runtime.Configuration) http.Handler
 	restHandler      http.Handler
@@ -32,7 +36,7 @@ type ManagerFactory struct {
 }
 
 // NewManagerFactory creates a new ManagerFactory.
-func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *safe.Pool, metricsRegistry metrics.Registry, proxyBuilder *proxy.Builder, tlsClientConfigManager *client.TLSConfigManager, acmeHTTPHandler http.Handler) *ManagerFactory {
+func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *safe.Pool, metricsRegistry metrics.Registry, proxyBuilder *proxy.Builder, tlsClientConfigManager TLSConfigManager, acmeHTTPHandler http.Handler) *ManagerFactory {
 	factory := &ManagerFactory{
 		metricsRegistry:        metricsRegistry,
 		routinesPool:           routinesPool,

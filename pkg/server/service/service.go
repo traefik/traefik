@@ -28,7 +28,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/failover"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/wrr"
-	"github.com/traefik/traefik/v2/pkg/tls/client"
 )
 
 const defaultMaxBodySize int64 = -1
@@ -39,7 +38,7 @@ type Manager struct {
 	metricsRegistry metrics.Registry
 
 	proxyBuilder           *proxy.Builder
-	tlsClientConfigManager *client.TLSConfigManager
+	tlsClientConfigManager TLSConfigManager
 
 	services       map[string]http.Handler
 	configs        map[string]*runtime.ServiceInfo
@@ -48,7 +47,7 @@ type Manager struct {
 }
 
 // NewManager creates a new Manager.
-func NewManager(configs map[string]*runtime.ServiceInfo, metricsRegistry metrics.Registry, routinePool *safe.Pool, proxyBuilder *proxy.Builder, tlsClientConfigManager *client.TLSConfigManager) *Manager {
+func NewManager(configs map[string]*runtime.ServiceInfo, metricsRegistry metrics.Registry, routinePool *safe.Pool, proxyBuilder *proxy.Builder, tlsClientConfigManager TLSConfigManager) *Manager {
 	return &Manager{
 		routinePool:            routinePool,
 		metricsRegistry:        metricsRegistry,

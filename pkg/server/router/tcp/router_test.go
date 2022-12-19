@@ -22,6 +22,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/service/tcp"
 	tcp2 "github.com/traefik/traefik/v3/pkg/tcp"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v2/pkg/tls/client"
 )
 
 type applyRouter func(conf *runtime.Configuration)
@@ -162,8 +163,12 @@ func Test_Routing(t *testing.T) {
 		},
 	}
 
-	dialerManager := tcp2.NewDialerManager(nil)
-	dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default": {}})
+	configs := map[string]*dynamic.TCPServersTransport{"default": {}}
+	tlsClientManager := client.NewTLSConfigManager[*dynamic.TCPServersTransport](nil)
+	tlsClientManager.Update(configs)
+
+	dialerManager := tcp2.NewDialerManager(tlsClientManager)
+	dialerManager.Update(configs)
 	serviceManager := tcp.NewManager(conf, dialerManager)
 
 	// Creates the tlsManager and defines the TLS 1.0 and 1.2 TLSOptions.
