@@ -1717,7 +1717,6 @@ func loadMiddlewares(listener v1alpha2.Listener, prefix string, filters []v1alph
 			return nil, fmt.Errorf("unsupported filter %s", filter.Type)
 		}
 
-
 		middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
 		middlewares[middlewareName] = middleware
 	}
