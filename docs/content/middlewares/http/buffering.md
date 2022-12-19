@@ -40,12 +40,6 @@ spec:
 - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes": "2000000"
-}
-```
-
 ```yaml tab="Rancher"
 # Sets the maximum request body to 2MB
 labels:
@@ -97,12 +91,6 @@ spec:
 - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes": "2000000"
-}
-```
-
 ```yaml tab="Rancher"
 labels:
   - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
@@ -145,12 +133,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.limit.buffering.memRequestBodyBytes=2000000"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.limit.buffering.memRequestBodyBytes": "2000000"
-}
 ```
 
 ```yaml tab="Rancher"
@@ -199,12 +181,6 @@ spec:
 - "traefik.http.middlewares.limit.buffering.maxResponseBodyBytes=2000000"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.limit.buffering.maxResponseBodyBytes": "2000000"
-}
-```
-
 ```yaml tab="Rancher"
 labels:
   - "traefik.http.middlewares.limit.buffering.maxResponseBodyBytes=2000000"
@@ -247,12 +223,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.limit.buffering.memResponseBodyBytes=2000000"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.limit.buffering.memResponseBodyBytes": "2000000"
-}
 ```
 
 ```yaml tab="Rancher"
@@ -299,12 +269,6 @@ You can have the Buffering middleware replay the request using `retryExpression`
 
     ```yaml tab="Consul Catalog"
     - "traefik.http.middlewares.limit.buffering.retryExpression=IsNetworkError() && Attempts() < 2"
-    ```
-
-    ```json tab="Marathon"
-    "labels": {
-      "traefik.http.middlewares.limit.buffering.retryExpression": "IsNetworkError() && Attempts() < 2"
-    }
     ```
 
     ```yaml tab="Rancher"

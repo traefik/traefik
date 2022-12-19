@@ -28,7 +28,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/kv/etcd"
 	"github.com/traefik/traefik/v2/pkg/provider/kv/redis"
 	"github.com/traefik/traefik/v2/pkg/provider/kv/zk"
-	"github.com/traefik/traefik/v2/pkg/provider/marathon"
 	"github.com/traefik/traefik/v2/pkg/provider/rancher"
 	"github.com/traefik/traefik/v2/pkg/provider/rest"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
@@ -609,32 +608,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Network:                 "MyNetwork",
 		SwarmModeRefreshSeconds: 42,
 		HTTPClientTimeout:       42,
-	}
-
-	config.Providers.Marathon = &marathon.Provider{
-		Constraints:      `Label("foo", "bar")`,
-		Trace:            true,
-		Watch:            true,
-		Endpoint:         "foobar",
-		DefaultRule:      "PathPrefix(`/`)",
-		ExposedByDefault: true,
-		DCOSToken:        "foobar",
-		TLS: &types.ClientTLS{
-			CA:                 "myCa",
-			Cert:               "mycert.pem",
-			Key:                "mycert.key",
-			InsecureSkipVerify: true,
-		},
-		DialerTimeout:         42,
-		ResponseHeaderTimeout: 42,
-		TLSHandshakeTimeout:   42,
-		KeepAlive:             42,
-		ForceTaskHostname:     true,
-		Basic: &marathon.Basic{
-			HTTPBasicAuthUser: "user",
-			HTTPBasicPassword: "password",
-		},
-		RespectReadinessChecks: true,
 	}
 
 	config.Providers.KubernetesIngress = &ingress.Provider{
