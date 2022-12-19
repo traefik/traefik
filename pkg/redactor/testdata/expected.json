@@ -76,7 +76,6 @@
   "Mesos": null,
   "Eureka": null,
   "ECS": null,
-  "Rancher": null,
   "DynamoDB": null,
   "ConfigFile": "/etc/traefik/traefik.toml"
 }

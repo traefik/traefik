@@ -47,12 +47,6 @@ spec:
 }
 ```
 
-```yaml tab="Rancher"
-# Declaring the user list
-labels:
-  - "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
-```
-
 ```yaml tab="File (YAML)"
 # Declaring the user list
 http:
@@ -163,12 +157,6 @@ data:
 }
 ```
 
-```yaml tab="Rancher"
-# Declaring the user list
-labels:
-  - "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
-```
-
 ```yaml tab="File (YAML)"
 # Declaring the user list
 http:
@@ -238,11 +226,6 @@ data:
 }
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-auth.basicauth.usersfile=/path/to/my/usersfile"
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -291,11 +274,6 @@ spec:
 "labels": {
   "traefik.http.middlewares.test-auth.basicauth.realm": "MyRealm"
 }
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-auth.basicauth.realm=MyRealm"
 ```
 
 ```yaml tab="File (YAML)"
@@ -384,11 +362,6 @@ spec:
 "labels": {
   "traefik.http.middlewares.test-auth.basicauth.removeheader": "true"
 }
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-auth.basicauth.removeheader=true"
 ```
 
 ```yaml tab="File (YAML)"

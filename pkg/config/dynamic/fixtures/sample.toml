@@ -96,15 +96,6 @@
     ingressClass = "foobar"
   [providers.rest]
     entryPoint = "foobar"
-  [providers.rancher]
-    constraints = "foobar"
-    watch = true
-    defaultRule = "foobar"
-    exposedByDefault = true
-    enableServiceHealthFilter = true
-    refreshSeconds = 42
-    intervalPoll = true
-    prefix = "foobar"
 
 [api]
   entryPoint = "foobar"

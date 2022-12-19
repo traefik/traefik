@@ -19,7 +19,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/ingress"
 	"github.com/traefik/traefik/v2/pkg/provider/marathon"
-	"github.com/traefik/traefik/v2/pkg/provider/rancher"
 	"github.com/traefik/traefik/v2/pkg/provider/rest"
 	"github.com/traefik/traefik/v2/pkg/tracing/jaeger"
 	"github.com/traefik/traefik/v2/pkg/types"
@@ -242,7 +241,6 @@ func TestHandler_Overview(t *testing.T) {
 					KubernetesIngress: &ingress.Provider{},
 					KubernetesCRD:     &crd.Provider{},
 					Rest:              &rest.Provider{},
-					Rancher:           &rancher.Provider{},
 					Plugin: map[string]static.PluginConf{
 						"test": map[string]interface{}{},
 					},

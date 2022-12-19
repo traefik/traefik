@@ -46,12 +46,6 @@ spec:
 }
 ```
 
-```yaml tab="Rancher"
-# Strip prefix /foobar and /fiibar
-labels:
-  - "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
-```
-
 ```yaml tab="File (YAML)"
 # Strip prefix /foobar and /fiibar
 http:

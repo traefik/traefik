@@ -180,16 +180,6 @@
     "rest": {
       "insecure": true
     },
-    "rancher": {
-      "constraints": "Label(\"foo\", \"bar\")",
-      "watch": true,
-      "defaultRule": "xxxx",
-      "exposedByDefault": true,
-      "enableServiceHealthFilter": true,
-      "refreshSeconds": 42,
-      "intervalPoll": true,
-      "prefix": "xxxx"
-    },
     "consulCatalog": {
       "constraints": "Label(\"foo\", \"bar\")",
       "endpoint": {

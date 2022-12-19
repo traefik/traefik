@@ -43,11 +43,6 @@ spec:
 }
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-grpcweb.grpcweb.alloworigins=*"
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:

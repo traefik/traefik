@@ -40,12 +40,6 @@ spec:
 }
 ```
 
-```yaml tab="Rancher"
-# Limiting to 10 simultaneous connections
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
-```
-
 ```yaml tab="File (YAML)"
 # Limiting to 10 simultaneous connections
 http:
@@ -93,12 +87,6 @@ spec:
 "labels": {
   "traefik.http.middlewares.test-inflightreq.inflightreq.amount": "10"
 }
-```
-
-```yaml tab="Rancher"
-# Limiting to 10 simultaneous connections
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
 
 ```yaml tab="File (YAML)"
@@ -171,11 +159,6 @@ spec:
 }
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -238,11 +221,6 @@ spec:
 }
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -292,11 +270,6 @@ spec:
 }
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -341,11 +314,6 @@ spec:
 "labels": {
   "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost": "true"
 }
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
 ```
 
 ```yaml tab="File (YAML)"

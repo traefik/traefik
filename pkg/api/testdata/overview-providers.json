@@ -29,7 +29,6 @@
 		"KubernetesIngress",
 		"KubernetesCRD",
 		"Rest",
-		"Rancher",
 		"plugin-test"
 	],
 	"tcp": {

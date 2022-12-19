@@ -65,3 +65,10 @@ When using the KubernetesCRD provider, it is therefore necessary to update [RBAC
 
 The TCP LoadBalancer `terminationDelay` option has been removed.
 This option can now be configured directly on the `TCPServersTransport` level, please take a look at this [documentation](../routing/services/index.md#terminationdelay)
+
+## Rancher v1
+
+In v3, the rancher v1 provider has been removed because Rancher v1 is [no longer actively maintaned](https://rancher.com/docs/os/v1.x/en/support/) and v2 is supported as a standard Kubernetes provider.
+
+Rancher 2.x requires Kubernetes and does not have a metadata endpoint of its own for Traefik to query.
+As such, Rancher 2.x users should utilize the [Kubernetes CRD provider](../providers/kubernetes-crd.md) directly.

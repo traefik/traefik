@@ -51,12 +51,6 @@ spec:
 }
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-  - "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header=value"
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -117,13 +111,6 @@ spec:
 }
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header="
-  - "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header="
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -180,11 +167,6 @@ spec:
 }
 ```
 
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.testheader.headers.framedeny=true"
-  - "traefik.http.middlewares.testheader.headers.browserxssfilter=true"
-```
 
 ```yaml tab="File (YAML)"
 http:
@@ -249,14 +231,6 @@ spec:
   "traefik.http.middlewares.testheader.headers.accesscontrolmaxage": "100",
   "traefik.http.middlewares.testheader.headers.addvaryheader": "true"
 }
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
-  - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
 ```
 
 ```yaml tab="File (YAML)"
