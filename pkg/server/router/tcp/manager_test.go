@@ -15,6 +15,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/server/service/tcp"
 	tcp2 "github.com/traefik/traefik/v2/pkg/tcp"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v2/pkg/tls/client"
 )
 
 func TestRuntimeConfiguration(t *testing.T) {
@@ -312,8 +313,13 @@ func TestRuntimeConfiguration(t *testing.T) {
 				TCPServices: test.tcpServiceConfig,
 				TCPRouters:  test.tcpRouterConfig,
 			}
-			dialerManager := tcp2.NewDialerManager(nil)
-			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default": {}})
+
+			configs := map[string]*dynamic.TCPServersTransport{"default": {}}
+
+			manager := client.NewTLSConfigManager[*dynamic.TCPServersTransport](nil)
+			manager.Update(configs)
+			dialerManager := tcp2.NewDialerManager(manager)
+			dialerManager.Update(configs)
 			serviceManager := tcp.NewManager(conf, dialerManager)
 			tlsManager := traefiktls.NewManager()
 			tlsManager.UpdateConfigs(
@@ -625,7 +631,8 @@ func TestDomainFronting(t *testing.T) {
 				Routers: test.routers,
 			}
 
-			serviceManager := tcp.NewManager(conf, tcp2.NewDialerManager(nil))
+			manager := client.NewTLSConfigManager[*dynamic.TCPServersTransport](nil)
+			serviceManager := tcp.NewManager(conf, tcp2.NewDialerManager(manager))
 
 			tlsManager := traefiktls.NewManager()
 			tlsManager.UpdateConfigs(context.Background(), map[string]traefiktls.Store{}, test.tlsOptions, []*traefiktls.CertAndStores{})

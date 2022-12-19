@@ -51,7 +51,7 @@ func TestReuseService(t *testing.T) {
 		),
 	)
 
-	tlsClientConfigManager := client.NewTLSConfigManager(nil)
+	tlsClientConfigManager := client.NewTLSConfigManager[*dynamic.ServersTransport](nil)
 	proxyBuilder := proxy.NewBuilder(tlsClientConfigManager)
 
 	configs := map[string]*dynamic.ServersTransport{"default": {}}
@@ -61,8 +61,12 @@ func TestReuseService(t *testing.T) {
 	managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry(), proxyBuilder, tlsClientConfigManager, nil)
 	tlsManager := tls.NewManager()
 
-	dialerManager := tcp.NewDialerManager(nil)
-	dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default": {}})
+	configsTransport := map[string]*dynamic.TCPServersTransport{"default": {}}
+	tlsClientManager := client.NewTLSConfigManager[*dynamic.TCPServersTransport](nil)
+	tlsClientManager.Update(configsTransport)
+
+	dialerManager := tcp.NewDialerManager(tlsClientManager)
+	dialerManager.Update(configsTransport)
 	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(nil, nil, nil), nil, metrics.NewVoidRegistry(), dialerManager)
 
 	entryPointsHandlers, _ := factory.CreateRouters(runtime.NewConfig(dynamic.Configuration{HTTP: dynamicConfigs}))
@@ -194,7 +198,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 				},
 			}
 
-			tlsClientConfigManager := client.NewTLSConfigManager(nil)
+			tlsClientConfigManager := client.NewTLSConfigManager[*dynamic.ServersTransport](nil)
 			proxyBuilder := proxy.NewBuilder(tlsClientConfigManager)
 
 			configs := map[string]*dynamic.ServersTransport{"default": {}}
@@ -204,7 +208,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			managerFactory := service.NewManagerFactory(staticConfig, nil, metrics.NewVoidRegistry(), proxyBuilder, tlsClientConfigManager, nil)
 			tlsManager := tls.NewManager()
 
-			dialerManager := tcp.NewDialerManager(nil)
+			dialerManager := tcp.NewDialerManager(tlsClientConfigManager)
 			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default": {}})
 			factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(nil, nil, nil), nil, metrics.NewVoidRegistry(), dialerManager)
 
@@ -242,7 +246,7 @@ func TestInternalServices(t *testing.T) {
 		),
 	)
 
-	tlsClientConfigManager := client.NewTLSConfigManager(nil)
+	tlsClientConfigManager := client.NewTLSConfigManager[*dynamic.ServersTransport](nil)
 	proxyBuilder := proxy.NewBuilder(tlsClientConfigManager)
 
 	configs := map[string]*dynamic.ServersTransport{"default": {}}
@@ -254,8 +258,12 @@ func TestInternalServices(t *testing.T) {
 
 	voidRegistry := metrics.NewVoidRegistry()
 
-	dialerManager := tcp.NewDialerManager(nil)
-	dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default": {}})
+	configsServersTransports := map[string]*dynamic.TCPServersTransport{"default": {}}
+	tlsClientManager := client.NewTLSConfigManager[*dynamic.TCPServersTransport](nil)
+	tlsClientManager.Update(configsServersTransports)
+
+	dialerManager := tcp.NewDialerManager(tlsClientConfigManager)
+	dialerManager.Update(configsServersTransports)
 	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, middleware.NewChainBuilder(voidRegistry, nil, nil), nil, voidRegistry, dialerManager)
 
 	entryPointsHandlers, _ := factory.CreateRouters(runtime.NewConfig(dynamic.Configuration{HTTP: dynamicConfigs}))
