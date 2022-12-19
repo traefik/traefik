@@ -35,12 +35,6 @@ spec:
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange": "127.0.0.1/32,192.168.1.7"
-}
-```
-
 ```yaml tab="Rancher"
 # Accepts request from defined IP
 labels:
@@ -120,13 +114,6 @@ spec:
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.depth=2"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange": "127.0.0.1/32, 192.168.1.7",
-  "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.depth": "2"
-}
-```
-
 ```yaml tab="Rancher"
 # Allowlisting Based on `X-Forwarded-For` with `depth=2`
 labels:
@@ -195,12 +182,6 @@ spec:
 ```yaml tab="Consul Catalog"
 # Exclude from `X-Forwarded-For`
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
-}
 ```
 
 ```yaml tab="Rancher"

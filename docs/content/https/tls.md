@@ -219,14 +219,6 @@ labels:
   - "traefik.tls.stores.default.defaultgeneratedcert.domain.sans=foo.example.org, bar.example.org"
 ```
 
-```json tab="Marathon"
-labels: {
-  "traefik.tls.stores.default.defaultgeneratedcert.resolver": "myresolver",
-  "traefik.tls.stores.default.defaultgeneratedcert.domain.main": "example.org",
-  "traefik.tls.stores.default.defaultgeneratedcert.domain.sans": "foo.example.org, bar.example.org",
-}
-```
-
 ## TLS Options
 
 The TLS options allow one to configure some parameters of the TLS connection.
