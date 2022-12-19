@@ -12,7 +12,7 @@ type constraintLabelFunc func(map[string]string) bool
 // MatchLabels reports whether the expression matches with the given labels.
 // The expression must match any logical boolean combination of:
 // - `Label(labelName, labelValue)`
-// - `LabelRegex(labelName, regexValue)`
+// - `LabelRegex(labelName, regexValue)`.
 func MatchLabels(labels map[string]string, expr string) (bool, error) {
 	if expr == "" {
 		return true, nil
