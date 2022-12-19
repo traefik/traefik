@@ -72,7 +72,6 @@
   "Boltdb": null,
   "KubernetesIngress": null,
   "KubernetesCRD": null,
-  "Mesos": null,
   "Eureka": null,
   "ECS": null,
   "DynamoDB": null,
