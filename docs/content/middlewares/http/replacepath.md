@@ -38,12 +38,6 @@ spec:
 - "traefik.http.middlewares.test-replacepath.replacepath.path=/foo"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-replacepath.replacepath.path": "/foo"
-}
-```
-
 ```yaml tab="Rancher"
 # Replace the path with /foo
 labels:

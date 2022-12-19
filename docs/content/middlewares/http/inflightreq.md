@@ -34,12 +34,6 @@ spec:
 - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.amount": "10"
-}
-```
-
 ```yaml tab="Rancher"
 # Limiting to 10 simultaneous connections
 labels:
@@ -87,12 +81,6 @@ spec:
 ```yaml tab="Consul Catalog"
 # Limiting to 10 simultaneous connections
 - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.amount": "10"
-}
 ```
 
 ```yaml tab="Rancher"
@@ -165,12 +153,6 @@ spec:
 - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth": "2"
-}
-```
-
 ```yaml tab="Rancher"
 labels:
   - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
@@ -232,12 +214,6 @@ spec:
 - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
-}
-```
-
 ```yaml tab="Rancher"
 labels:
   - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
@@ -286,12 +262,6 @@ spec:
 - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername": "username"
-}
-```
-
 ```yaml tab="Rancher"
 labels:
   - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
@@ -335,12 +305,6 @@ spec:
 
 ```yaml tab="Cosul Catalog"
 - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost": "true"
-}
 ```
 
 ```yaml tab="Rancher"

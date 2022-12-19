@@ -120,13 +120,6 @@ A certificate resolver requests certificates for a set of domain names inferred 
         certResolver: myresolver
     ```
 
-    ```json tab="Marathon"
-    labels: {
-      "traefik.http.routers.blog.rule": "Host(`monitoring.yak-bebop.ts.net`) && Path(`/metrics`)",
-      "traefik.http.routers.blog.tls.certresolver": "myresolver",
-    }
-    ```
-
     ```yaml tab="Rancher"
     ## Dynamic configuration
     labels:
@@ -190,14 +183,6 @@ A certificate resolver requests certificates for a set of domain names inferred 
         certResolver: myresolver
         domains:
           - main: monitoring.yak-bebop.ts.net
-    ```
-
-    ```json tab="Marathon"
-    labels: {
-      "traefik.http.routers.blog.rule": "Path(`/metrics`)",
-      "traefik.http.routers.blog.tls.certresolver": "myresolver",
-      "traefik.http.routers.blog.tls.domains[0].main": "monitoring.yak-bebop.ts.net",
-    }
     ```
 
     ```yaml tab="Rancher"

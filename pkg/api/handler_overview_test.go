@@ -18,7 +18,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/provider/hub"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/ingress"
-	"github.com/traefik/traefik/v2/pkg/provider/marathon"
 	"github.com/traefik/traefik/v2/pkg/provider/rancher"
 	"github.com/traefik/traefik/v2/pkg/provider/rest"
 	"github.com/traefik/traefik/v2/pkg/tracing/jaeger"
@@ -238,7 +237,6 @@ func TestHandler_Overview(t *testing.T) {
 				Providers: &static.Providers{
 					Docker:            &docker.Provider{},
 					File:              &file.Provider{},
-					Marathon:          &marathon.Provider{},
 					KubernetesIngress: &ingress.Provider{},
 					KubernetesCRD:     &crd.Provider{},
 					Rest:              &rest.Provider{},
