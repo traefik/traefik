@@ -1700,7 +1700,15 @@ func loadMiddlewares(listener v1alpha2.Listener, prefix string, filters []v1alph
 	}
 
 	for i, filter := range filters {
-		if filter.Type != v1alpha2.HTTPRouteFilterRequestRedirect {
+		var middleware *dynamic.Middleware
+		switch filter.Type {
+		case v1alpha2.HTTPRouteFilterRequestRedirect:
+			var err error
+			middleware, err = createRedirectRegexMiddleware(listenerScheme, filter.RequestRedirect)
+			if err != nil {
+				return nil, fmt.Errorf("creating RedirectRegex middleware: %w", err)
+			}
+		default:
 			// As per the spec:
 			// https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional
 			// In all cases where incompatible or unsupported filters are
@@ -1709,10 +1717,6 @@ func loadMiddlewares(listener v1alpha2.Listener, prefix string, filters []v1alph
 			return nil, fmt.Errorf("unsupported filter %s", filter.Type)
 		}
 
-		middleware, err := createRedirectSchemeMiddleware(listenerScheme, filter.RequestRedirect)
-		if err != nil {
-			return nil, err
-		}
 
 		middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
 		middlewares[middlewareName] = middleware
@@ -1721,7 +1725,7 @@ func loadMiddlewares(listener v1alpha2.Listener, prefix string, filters []v1alph
 	return middlewares, nil
 }
 
-func createRedirectSchemeMiddleware(scheme string, filter *v1alpha2.HTTPRequestRedirectFilter) (*dynamic.Middleware, error) {
+func createRedirectRegexMiddleware(scheme string, filter *v1alpha2.HTTPRequestRedirectFilter) (*dynamic.Middleware, error) {
 	// Use the HTTPRequestRedirectFilter scheme if defined.
 	filterScheme := scheme
 	if filter.Scheme != nil {
