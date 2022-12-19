@@ -40,12 +40,6 @@ spec:
 - "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes": "/foobar,/fiibar"
-}
-```
-
 ```yaml tab="File (YAML)"
 # Strip prefix /foobar and /fiibar
 http:

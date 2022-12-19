@@ -105,28 +105,6 @@ providers:
     watch: true
     filename: foobar
     debugLogGeneratedTemplate: true
-  marathon:
-    constraints: foobar
-    trace: true
-    watch: true
-    endpoint: foobar
-    defaultRule: foobar
-    exposedByDefault: true
-    dcosToken: foobar
-    tls:
-      ca: foobar
-      cert: foobar
-      key: foobar
-      insecureSkipVerify: true
-    dialerTimeout: 42s
-    responseHeaderTimeout: 42s
-    tlsHandshakeTimeout: 42s
-    keepAlive: 42s
-    forceTaskHostname: true
-    basic:
-      httpBasicAuthUser: foobar
-      httpBasicPassword: foobar
-    respectReadinessChecks: true
   kubernetesIngress:
     endpoint: foobar
     token: foobar

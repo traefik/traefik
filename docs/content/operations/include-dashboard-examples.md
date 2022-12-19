@@ -51,15 +51,6 @@ spec:
 - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.routers.dashboard.rule": "Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))",
-  "traefik.http.routers.dashboard.service": "api@internal",
-  "traefik.http.routers.dashboard.middlewares": "auth",
-  "traefik.http.middlewares.auth.basicauth.users": "test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
-}
-```
-
 ```yaml tab="File (YAML)"
 # Dynamic Configuration
 http:

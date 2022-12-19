@@ -112,31 +112,6 @@
       "filename": "file Filename",
       "debugLogGeneratedTemplate": true
     },
-    "marathon": {
-      "constraints": "Label(\"foo\", \"bar\")",
-      "trace": true,
-      "watch": true,
-      "endpoint": "xxxx",
-      "defaultRule": "xxxx",
-      "exposedByDefault": true,
-      "dcosToken": "xxxx",
-      "tls": {
-        "ca": "xxxx",
-        "cert": "xxxx",
-        "key": "xxxx",
-        "insecureSkipVerify": true
-      },
-      "dialerTimeout": "42ns",
-      "responseHeaderTimeout": "42ns",
-      "tlsHandshakeTimeout": "42ns",
-      "keepAlive": "42ns",
-      "forceTaskHostname": true,
-      "basic": {
-        "httpBasicAuthUser": "xxxx",
-        "httpBasicPassword": "xxxx"
-      },
-      "respectReadinessChecks": true
-    },
     "kubernetesIngress": {
       "endpoint": "xxxx",
       "token": "xxxx",

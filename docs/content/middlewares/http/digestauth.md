@@ -36,12 +36,6 @@ spec:
 - "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.digestauth.users": "test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
-}
-```
-
 ```yaml tab="File (YAML)"
 # Declaring the user list
 http:
@@ -108,12 +102,6 @@ data:
 - "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.digestauth.users": "test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
-}
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -175,12 +163,6 @@ data:
 - "traefik.http.middlewares.test-auth.digestauth.usersfile=/path/to/my/usersfile"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.digestauth.usersfile": "/path/to/my/usersfile"
-}
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -225,12 +207,6 @@ spec:
 - "traefik.http.middlewares.test-auth.digestauth.realm=MyRealm"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.digestauth.realm": "MyRealm"
-}
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -269,12 +245,6 @@ spec:
 - "traefik.http.middlewares.my-auth.digestauth.headerField=X-WebAuth-User"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.my-auth.digestauth.headerField": "X-WebAuth-User"
-}
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -311,12 +281,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-auth.digestauth.removeheader=true"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.digestauth.removeheader": "true"
-}
 ```
 
 ```yaml tab="File (YAML)"

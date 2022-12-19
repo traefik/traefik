@@ -27,12 +27,6 @@ spec:
 - "traefik.tcp.middlewares.test-inflightconn.inflightconn.amount=10"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.tcp.middlewares.test-inflightconn.inflightconn.amount": "10"
-}
-```
-
 ```yaml tab="File (YAML)"
 # Limiting to 10 simultaneous connections.
 tcp:
