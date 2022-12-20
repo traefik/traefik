@@ -1,10 +1,16 @@
 package api
 
 import (
+	"net/url"
 	"sort"
 )
 
-const ascendantSorting = "asc"
+const (
+	sortByParam       = "sortBy"
+	directionParam    = "direction"
+	ascendantSorting  = "asc"
+	descendantSorting = "desc"
+)
 
 type orderedRouter interface {
 	name() string
@@ -16,7 +22,14 @@ type orderedRouter interface {
 	entryPointsCount() int
 }
 
-func sortRouters[T orderedRouter](sortBy string, direction string, routers []T) {
+func sortRouters[T orderedRouter](values url.Values, routers []T) {
+	sortBy := values.Get(sortByParam)
+
+	direction := values.Get(directionParam)
+	if direction == "" {
+		direction = ascendantSorting
+	}
+
 	switch sortBy {
 	case "name":
 		sortByName(direction, routers)
@@ -138,7 +151,14 @@ type orderedService interface {
 	status() string
 }
 
-func sortServices[T orderedService](sortBy string, direction string, services []T) {
+func sortServices[T orderedService](values url.Values, services []T) {
+	sortBy := values.Get(sortByParam)
+
+	direction := values.Get(directionParam)
+	if direction == "" {
+		direction = ascendantSorting
+	}
+
 	switch sortBy {
 	case "name":
 		sortByName(direction, services)
@@ -227,7 +247,14 @@ type orderedMiddleware interface {
 	status() string
 }
 
-func sortMiddlewares[T orderedMiddleware](sortBy string, direction string, middlewares []T) {
+func sortMiddlewares[T orderedMiddleware](values url.Values, middlewares []T) {
+	sortBy := values.Get(sortByParam)
+
+	direction := values.Get(directionParam)
+	if direction == "" {
+		direction = ascendantSorting
+	}
+
 	switch sortBy {
 	case "name":
 		sortByName(direction, middlewares)

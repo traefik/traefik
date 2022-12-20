@@ -69,14 +69,7 @@ func (h Handler) getTCPRouters(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	queryValues := request.URL.Query()
-	direction := ascendantSorting
-	if queryValues.Has("direction") {
-		direction = queryValues.Get("direction")
-	}
-	sortBy := queryValues.Get("sortBy")
-
-	sortRouters(sortBy, direction, results)
+	sortRouters(request.URL.Query(), results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -126,14 +119,7 @@ func (h Handler) getTCPServices(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	queryValues := request.URL.Query()
-	direction := ascendantSorting
-	if queryValues.Has("direction") {
-		direction = queryValues.Get("direction")
-	}
-	sortBy := queryValues.Get("sortBy")
-
-	sortServices(sortBy, direction, results)
+	sortServices(request.URL.Query(), results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -183,14 +169,7 @@ func (h Handler) getTCPMiddlewares(rw http.ResponseWriter, request *http.Request
 		}
 	}
 
-	queryValues := request.URL.Query()
-	direction := ascendantSorting
-	if queryValues.Has("direction") {
-		direction = queryValues.Get("direction")
-	}
-	sortBy := queryValues.Get("sortBy")
-
-	sortMiddlewares(sortBy, direction, results)
+	sortMiddlewares(request.URL.Query(), results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
