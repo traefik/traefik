@@ -106,7 +106,7 @@ const allColumns = [
     fieldToProps: () => ({ class: 'app-chip app-chip-accent', dense: true }),
     content: row => {
       return (row.priority !== undefined ? {
-        short: Number.parseFloat(row.priority).toExponential(2),
+        short: String(row.priority).length > 10 ? String(row.priority).substring(0, 10) + '...' : row.priority,
         long: row.priority
       } : {
         short: '',
