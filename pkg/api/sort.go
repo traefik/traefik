@@ -108,8 +108,8 @@ func (r udpRouterRepresentation) provider() string {
 	return r.Provider
 }
 
-// noop
 func (r udpRouterRepresentation) priority() int {
+	// noop
 	return 0
 }
 
@@ -117,8 +117,8 @@ func (r udpRouterRepresentation) status() string {
 	return r.Status
 }
 
-// noop
 func (r udpRouterRepresentation) rule() string {
+	// noop
 	return ""
 }
 
