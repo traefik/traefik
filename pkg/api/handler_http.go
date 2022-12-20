@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -77,9 +76,8 @@ func (h Handler) getRouters(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
+	queryValues := request.URL.Query()
+	sortRouters(queryValues, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -129,9 +127,7 @@ func (h Handler) getServices(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
+	sortServices(request.URL.Query(), results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -181,9 +177,7 @@ func (h Handler) getMiddlewares(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
+	sortMiddlewares(request.URL.Query(), results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
