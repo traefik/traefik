@@ -76,8 +76,12 @@ func (h Handler) getRouters(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sortBy := request.URL.Query().Get("sortBy")
-	direction := request.URL.Query().Get("direction")
+	queryValues := request.URL.Query()
+	direction := ascendantSorting
+	if queryValues.Has("direction") {
+		direction = queryValues.Get("direction")
+	}
+	sortBy := queryValues.Get("sortBy")
 
 	sortRouters(sortBy, direction, results)
 
@@ -129,8 +133,12 @@ func (h Handler) getServices(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sortBy := request.URL.Query().Get("sortBy")
-	direction := request.URL.Query().Get("direction")
+	queryValues := request.URL.Query()
+	direction := ascendantSorting
+	if queryValues.Has("direction") {
+		direction = queryValues.Get("direction")
+	}
+	sortBy := queryValues.Get("sortBy")
 
 	sortServices(sortBy, direction, results)
 
@@ -182,8 +190,12 @@ func (h Handler) getMiddlewares(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sortBy := request.URL.Query().Get("sortBy")
-	direction := request.URL.Query().Get("direction")
+	queryValues := request.URL.Query()
+	direction := ascendantSorting
+	if queryValues.Has("direction") {
+		direction = queryValues.Get("direction")
+	}
+	sortBy := queryValues.Get("sortBy")
 
 	sortMiddlewares(sortBy, direction, results)
 
