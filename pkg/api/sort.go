@@ -40,7 +40,7 @@ func sortRouters[T orderedRouter](sortBy string, direction string, routers []T) 
 		sortByEntryPoints(direction, routers)
 
 	default:
-		sortByName(ascendantSorting, routers)
+		sortByName(direction, routers)
 	}
 }
 
@@ -108,6 +108,7 @@ func (r udpRouterRepresentation) provider() string {
 	return r.Provider
 }
 
+// noop
 func (r udpRouterRepresentation) priority() int {
 	return 0
 }
@@ -116,6 +117,7 @@ func (r udpRouterRepresentation) status() string {
 	return r.Status
 }
 
+// noop
 func (r udpRouterRepresentation) rule() string {
 	return ""
 }
