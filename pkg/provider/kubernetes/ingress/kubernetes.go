@@ -48,6 +48,7 @@ type Provider struct {
 	ThrottleDuration          ptypes.Duration  `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	AllowEmptyServices        bool             `description:"Allow creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	AllowExternalNameServices bool             `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
+	DisableIngressClassLookup bool             `description:"Disables the lookup of IngressClasses." json:"disableIngressClassLookup,omitempty" toml:"disableIngressClassLookup,omitempty" yaml:"disableIngressClassLookup,omitempty" export:"true"`
 	lastConfiguration         safe.Safe
 }
 
@@ -91,6 +92,7 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	}
 
 	cl.ingressLabelSelector = p.LabelSelector
+	cl.disableIngressClassInformer = p.DisableIngressClassLookup
 	return cl, nil
 }
 
@@ -195,7 +197,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 	var ingressClasses []*networkingv1.IngressClass
 
-	if supportsIngressClass(serverVersion) {
+	if !p.DisableIngressClassLookup && supportsIngressClass(serverVersion) {
 		ics, err := client.GetIngressClasses()
 		if err != nil {
 			log.Ctx(ctx).Warn().Err(err).Msg("Failed to list ingress classes")
