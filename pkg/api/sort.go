@@ -1,719 +1,463 @@
 package api
 
 import (
-	"net/url"
 	"sort"
 )
 
-func sortHTTPMiddlewares(query url.Values, results []middlewareRepresentation) []middlewareRepresentation {
-	sortBy := query.Get("sortBy")
-	direction := query.Get("direction")
+const ascendantSorting = "asc"
 
-	if len(query) == 0 || sortBy == "" {
-		sort.Slice(results, func(i, j int) bool {
-			return results[i].Name < results[j].Name
-		})
-	}
-
-	switch sortBy {
-	case "name":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return results[i].Name < results[j].Name
-			}
-
-			// Descending
-			return results[i].Name > results[j].Name
-		})
-
-	case "type":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return results[i].Type < results[j].Type
-			}
-
-			// Descending
-			return results[i].Type > results[j].Type
-		})
-
-	case "provider":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if results[i].Provider == results[j].Provider {
-					return results[i].Name < results[j].Name
-				}
-				return results[i].Provider < results[j].Provider
-			}
-
-			// Descending
-			if results[i].Provider == results[j].Provider {
-				return results[i].Name > results[j].Name
-			}
-			return results[i].Provider > results[j].Provider
-		})
-
-	case "status":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if results[i].Status == results[j].Status {
-					return results[i].Name < results[j].Name
-				}
-				return results[i].Status < results[j].Status
-			}
-
-			// Descending
-			if results[i].Status == results[j].Status {
-				return results[i].Name > results[j].Name
-			}
-			return results[i].Status > results[j].Status
-		})
-
-	}
-
-	return results
+type orderedRouter interface {
+	name() string
+	provider() string
+	priority() int
+	status() string
+	rule() string
+	service() string
+	entryPointsCount() int
 }
 
-func sortHTTPServices(query url.Values, results []serviceRepresentation) []serviceRepresentation {
-	sortBy := query.Get("sortBy")
-	direction := query.Get("direction")
-
-	if len(query) == 0 || sortBy == "" {
-		sort.Slice(results, func(i, j int) bool {
-			return results[i].Name < results[j].Name
-		})
-	}
-
+func sortRouters[T orderedRouter](sortBy string, direction string, routers []T) {
 	switch sortBy {
 	case "name":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return results[i].Name < results[j].Name
-			}
-
-			// Descending
-			return results[i].Name > results[j].Name
-		})
-
-	case "type":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return results[i].Type < results[j].Type
-			}
-
-			// Descending
-			return results[i].Type > results[j].Type
-		})
-
-	case "servers":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return len(results[i].ServerStatus) < len(results[j].ServerStatus)
-			}
-
-			// Descending
-			return len(results[i].ServerStatus) > len(results[j].ServerStatus)
-		})
+		sortByName(direction, routers)
 
 	case "provider":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if results[i].Provider == results[j].Provider {
-					return results[i].Name < results[j].Name
-				}
-				return results[i].Provider < results[j].Provider
-			}
-
-			// Descending
-			if results[i].Provider == results[j].Provider {
-				return results[i].Name > results[j].Name
-			}
-			return results[i].Provider > results[j].Provider
-		})
-
-	case "status":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if results[i].Status == results[j].Status {
-					return results[i].Name < results[j].Name
-				}
-				return results[i].Status < results[j].Status
-			}
-
-			// Descending
-			if results[i].Status == results[j].Status {
-				return results[i].Name > results[j].Name
-			}
-			return results[i].Status > results[j].Status
-		})
-
-	}
-
-	return results
-}
-
-func sortHTTPRouters(query url.Values, results []routerRepresentation) []routerRepresentation {
-	sortBy := query.Get("sortBy")
-	direction := query.Get("direction")
-
-	if len(query) == 0 || sortBy == "" {
-		sort.Slice(results, func(i, j int) bool {
-			return results[i].Name < results[j].Name
-		})
-	}
-
-	switch sortBy {
-	case "name":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return results[i].Name < results[j].Name
-			}
-
-			// Descending
-			return results[i].Name > results[j].Name
-		})
-
-	case "provider":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if results[i].Provider == results[j].Provider {
-					return results[i].Name < results[j].Name
-				}
-				return results[i].Provider < results[j].Provider
-			}
-
-			// Descending
-			if results[i].Provider == results[j].Provider {
-				return results[i].Name > results[j].Name
-			}
-			return results[i].Provider > results[j].Provider
-		})
+		sortByProvider(direction, routers)
 
 	case "priority":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return results[i].Priority < results[j].Priority
-			}
-
-			// Descending
-			return results[i].Priority > results[j].Priority
-		})
+		sortByPriority(direction, routers)
 
 	case "status":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if results[i].Status == results[j].Status {
-					return results[i].Name < results[j].Name
-				}
-				return results[i].Status < results[j].Status
-			}
-
-			// Descending
-			if results[i].Status == results[j].Status {
-				return results[i].Name > results[j].Name
-			}
-			return results[i].Status > results[j].Status
-		})
+		sortByStatus(direction, routers)
 
 	case "rule":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if results[i].Rule == results[j].Rule {
-					return results[i].Name < results[j].Name
-				}
-				return results[i].Rule < results[j].Rule
-			}
-
-			// Descending
-			if results[i].Rule == results[j].Rule {
-				return results[i].Name > results[j].Name
-			}
-			return results[i].Rule > results[j].Rule
-		})
+		sortByRule(direction, routers)
 
 	case "service":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return results[i].Service < results[j].Service
-			}
-
-			// Descending
-			return results[i].Service > results[j].Service
-		})
+		sortByService(direction, routers)
 
 	case "entryPoints":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if len(results[i].EntryPoints) == len(results[j].EntryPoints) {
-					return results[i].Name[0] < results[j].Name[0]
-				}
-				return len(results[i].EntryPoints) < len(results[j].EntryPoints)
-			}
+		sortByEntryPoints(direction, routers)
 
-			// Descending
-			if len(results[i].EntryPoints) == len(results[j].EntryPoints) {
-				return results[i].Name[0] > results[j].Name[0]
-			}
-			return len(results[i].EntryPoints) > len(results[j].EntryPoints)
-		})
+	default:
+		sortByName(ascendantSorting, routers)
 	}
-
-	return results
 }
 
-func sortTCPMiddlewares(query url.Values, results []tcpMiddlewareRepresentation) []tcpMiddlewareRepresentation {
-	sortBy := query.Get("sortBy")
-	direction := query.Get("direction")
-
-	if len(query) == 0 || sortBy == "" {
-		sort.Slice(results, func(i, j int) bool {
-			return results[i].Name < results[j].Name
-		})
-	}
-
-	switch sortBy {
-	case "name":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return results[i].Name < results[j].Name
-			}
-
-			// Descending
-			return results[i].Name > results[j].Name
-		})
-
-	case "type":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return results[i].Type < results[j].Type
-			}
-
-			// Descending
-			return results[i].Type > results[j].Type
-		})
-
-	case "provider":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if results[i].Provider == results[j].Provider {
-					return results[i].Name < results[j].Name
-				}
-				return results[i].Provider < results[j].Provider
-			}
-
-			// Descending
-			if results[i].Provider == results[j].Provider {
-				return results[i].Name > results[j].Name
-			}
-			return results[i].Provider > results[j].Provider
-		})
-
-	case "status":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if results[i].Status == results[j].Status {
-					return results[i].Name < results[j].Name
-				}
-				return results[i].Status < results[j].Status
-			}
-
-			// Descending
-			if results[i].Status == results[j].Status {
-				return results[i].Name > results[j].Name
-			}
-			return results[i].Status > results[j].Status
-		})
-
-	}
-
-	return results
+func (r routerRepresentation) name() string {
+	return r.Name
 }
 
-func sortTCPServices(query url.Values, results []tcpServiceRepresentation) []tcpServiceRepresentation {
-	sortBy := query.Get("sortBy")
-	direction := query.Get("direction")
+func (r routerRepresentation) provider() string {
+	return r.Provider
+}
 
-	if len(query) == 0 || sortBy == "" {
-		sort.Slice(results, func(i, j int) bool {
-			return results[i].Name < results[j].Name
-		})
-	}
+func (r routerRepresentation) priority() int {
+	return r.Priority
+}
 
+func (r routerRepresentation) status() string {
+	return r.Status
+}
+
+func (r routerRepresentation) rule() string {
+	return r.Rule
+}
+
+func (r routerRepresentation) service() string {
+	return r.Service
+}
+
+func (r routerRepresentation) entryPointsCount() int {
+	return len(r.EntryPoints)
+}
+
+func (r tcpRouterRepresentation) name() string {
+	return r.Name
+}
+
+func (r tcpRouterRepresentation) provider() string {
+	return r.Provider
+}
+
+func (r tcpRouterRepresentation) priority() int {
+	return r.Priority
+}
+
+func (r tcpRouterRepresentation) status() string {
+	return r.Status
+}
+
+func (r tcpRouterRepresentation) rule() string {
+	return r.Rule
+}
+
+func (r tcpRouterRepresentation) service() string {
+	return r.Service
+}
+
+func (r tcpRouterRepresentation) entryPointsCount() int {
+	return len(r.EntryPoints)
+}
+
+func (r udpRouterRepresentation) name() string {
+	return r.Name
+}
+
+func (r udpRouterRepresentation) provider() string {
+	return r.Provider
+}
+
+func (r udpRouterRepresentation) priority() int {
+	return 0
+}
+
+func (r udpRouterRepresentation) status() string {
+	return r.Status
+}
+
+func (r udpRouterRepresentation) rule() string {
+	return ""
+}
+
+func (r udpRouterRepresentation) service() string {
+	return r.Service
+}
+
+func (r udpRouterRepresentation) entryPointsCount() int {
+	return len(r.EntryPoints)
+}
+
+type orderedService interface {
+	name() string
+	resourceType() string
+	serversCount() int
+	provider() string
+	status() string
+}
+
+func sortServices[T orderedService](sortBy string, direction string, services []T) {
 	switch sortBy {
 	case "name":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return results[i].Name < results[j].Name
-			}
-
-			// Descending
-			return results[i].Name > results[j].Name
-		})
+		sortByName(direction, services)
 
 	case "type":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return results[i].Type < results[j].Type
-			}
-
-			// Descending
-			return results[i].Type > results[j].Type
-		})
+		sortByType(direction, services)
 
 	case "servers":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return len(results[i].LoadBalancer.Servers) < len(results[j].LoadBalancer.Servers)
-			}
-
-			// Descending
-			return len(results[i].LoadBalancer.Servers) > len(results[j].LoadBalancer.Servers)
-		})
+		sortByServers(direction, services)
 
 	case "provider":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if results[i].Provider == results[j].Provider {
-					return results[i].Name < results[j].Name
-				}
-				return results[i].Provider < results[j].Provider
-			}
-
-			// Descending
-			if results[i].Provider == results[j].Provider {
-				return results[i].Name > results[j].Name
-			}
-			return results[i].Provider > results[j].Provider
-		})
+		sortByProvider(direction, services)
 
 	case "status":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if results[i].Status == results[j].Status {
-					return results[i].Name < results[j].Name
-				}
-				return results[i].Status < results[j].Status
-			}
+		sortByStatus(direction, services)
 
-			// Descending
-			if results[i].Status == results[j].Status {
-				return results[i].Name > results[j].Name
-			}
-			return results[i].Status > results[j].Status
-		})
-
+	default:
+		sortByName(direction, services)
 	}
-
-	return results
 }
 
-func sortTCPRouters(query url.Values, results []tcpRouterRepresentation) []tcpRouterRepresentation {
-	sortBy := query.Get("sortBy")
-	direction := query.Get("direction")
-
-	if len(query) == 0 || sortBy == "" {
-		sort.Slice(results, func(i, j int) bool {
-			return results[i].Name < results[j].Name
-		})
-	}
-
-	switch sortBy {
-	case "name":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return results[i].Name < results[j].Name
-			}
-
-			// Descending
-			return results[i].Name > results[j].Name
-		})
-
-	case "provider":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if results[i].Provider == results[j].Provider {
-					return results[i].Name < results[j].Name
-				}
-				return results[i].Provider < results[j].Provider
-			}
-
-			// Descending
-			if results[i].Provider == results[j].Provider {
-				return results[i].Name > results[j].Name
-			}
-			return results[i].Provider > results[j].Provider
-		})
-
-	case "priority":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return results[i].Priority < results[j].Priority
-			}
-
-			// Descending
-			return results[i].Priority > results[j].Priority
-		})
-
-	case "status":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if results[i].Status == results[j].Status {
-					return results[i].Name < results[j].Name
-				}
-				return results[i].Status < results[j].Status
-			}
-
-			// Descending
-			if results[i].Status == results[j].Status {
-				return results[i].Name > results[j].Name
-			}
-			return results[i].Status > results[j].Status
-		})
-
-	case "rule":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if results[i].Rule == results[j].Rule {
-					return results[i].Name < results[j].Name
-				}
-				return results[i].Rule < results[j].Rule
-			}
-
-			// Descending
-			if results[i].Rule == results[j].Rule {
-				return results[i].Name > results[j].Name
-			}
-			return results[i].Rule > results[j].Rule
-		})
-
-	case "service":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return results[i].Service < results[j].Service
-			}
-
-			// Descending
-			return results[i].Service > results[j].Service
-		})
-
-	case "entryPoints":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if len(results[i].EntryPoints) == len(results[j].EntryPoints) {
-					return results[i].Name[0] < results[j].Name[0]
-				}
-				return len(results[i].EntryPoints) < len(results[j].EntryPoints)
-			}
-
-			// Descending
-			if len(results[i].EntryPoints) == len(results[j].EntryPoints) {
-				return results[i].Name[0] > results[j].Name[0]
-			}
-			return len(results[i].EntryPoints) > len(results[j].EntryPoints)
-		})
-	}
-
-	return results
+func (s serviceRepresentation) name() string {
+	return s.Name
 }
 
-func sortUDPServices(query url.Values, results []udpServiceRepresentation) []udpServiceRepresentation {
-	sortBy := query.Get("sortBy")
-	direction := query.Get("direction")
+func (s serviceRepresentation) resourceType() string {
+	return s.Type
+}
 
-	if len(query) == 0 || sortBy == "" {
-		sort.Slice(results, func(i, j int) bool {
-			return results[i].Name < results[j].Name
-		})
-	}
+func (s serviceRepresentation) serversCount() int {
+	return len(s.LoadBalancer.Servers)
+}
 
+func (s serviceRepresentation) provider() string {
+	return s.Provider
+}
+
+func (s serviceRepresentation) status() string {
+	return s.Status
+}
+
+func (s tcpServiceRepresentation) name() string {
+	return s.Name
+}
+
+func (s tcpServiceRepresentation) resourceType() string {
+	return s.Type
+}
+
+func (s tcpServiceRepresentation) serversCount() int {
+	return len(s.LoadBalancer.Servers)
+}
+
+func (s tcpServiceRepresentation) provider() string {
+	return s.Provider
+}
+
+func (s tcpServiceRepresentation) status() string {
+	return s.Status
+}
+
+func (s udpServiceRepresentation) name() string {
+	return s.Name
+}
+
+func (s udpServiceRepresentation) resourceType() string {
+	return s.Type
+}
+
+func (s udpServiceRepresentation) serversCount() int {
+	return len(s.LoadBalancer.Servers)
+}
+
+func (s udpServiceRepresentation) provider() string {
+	return s.Provider
+}
+
+func (s udpServiceRepresentation) status() string {
+	return s.Status
+}
+
+type orderedMiddleware interface {
+	name() string
+	resourceType() string
+	provider() string
+	status() string
+}
+
+func sortMiddlewares[T orderedMiddleware](sortBy string, direction string, middlewares []T) {
 	switch sortBy {
 	case "name":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return results[i].Name < results[j].Name
-			}
-
-			// Descending
-			return results[i].Name > results[j].Name
-		})
+		sortByName(direction, middlewares)
 
 	case "type":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return results[i].Type < results[j].Type
-			}
-
-			// Descending
-			return results[i].Type > results[j].Type
-		})
-
-	case "servers":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return len(results[i].LoadBalancer.Servers) < len(results[j].LoadBalancer.Servers)
-			}
-
-			// Descending
-			return len(results[i].LoadBalancer.Servers) > len(results[j].LoadBalancer.Servers)
-		})
+		sortByType(direction, middlewares)
 
 	case "provider":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if results[i].Provider == results[j].Provider {
-					return results[i].Name < results[j].Name
-				}
-				return results[i].Provider < results[j].Provider
-			}
-
-			// Descending
-			if results[i].Provider == results[j].Provider {
-				return results[i].Name > results[j].Name
-			}
-			return results[i].Provider > results[j].Provider
-		})
+		sortByProvider(direction, middlewares)
 
 	case "status":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if results[i].Status == results[j].Status {
-					return results[i].Name < results[j].Name
-				}
-				return results[i].Status < results[j].Status
-			}
+		sortByStatus(direction, middlewares)
 
-			// Descending
-			if results[i].Status == results[j].Status {
-				return results[i].Name > results[j].Name
-			}
-			return results[i].Status > results[j].Status
-		})
-
+	default:
+		sortByName(direction, middlewares)
 	}
-
-	return results
 }
 
-func sortUDPRouters(query url.Values, results []udpRouterRepresentation) []udpRouterRepresentation {
-	sortBy := query.Get("sortBy")
-	direction := query.Get("direction")
+func (m middlewareRepresentation) name() string {
+	return m.Name
+}
 
-	if len(query) == 0 || sortBy == "" {
-		sort.Slice(results, func(i, j int) bool {
-			return results[i].Name < results[j].Name
-		})
-	}
+func (m middlewareRepresentation) resourceType() string {
+	return m.Type
+}
 
-	switch sortBy {
-	case "name":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return results[i].Name < results[j].Name
+func (m middlewareRepresentation) provider() string {
+	return m.Provider
+}
+
+func (m middlewareRepresentation) status() string {
+	return m.Status
+}
+
+func (m tcpMiddlewareRepresentation) name() string {
+	return m.Name
+}
+
+func (m tcpMiddlewareRepresentation) resourceType() string {
+	return m.Type
+}
+
+func (m tcpMiddlewareRepresentation) provider() string {
+	return m.Provider
+}
+
+func (m tcpMiddlewareRepresentation) status() string {
+	return m.Status
+}
+
+type orderedByName interface {
+	name() string
+}
+
+func sortByName[T orderedByName](direction string, results []T) {
+	sort.Slice(results, func(i, j int) bool {
+		// Ascending
+		if direction == ascendantSorting {
+			return results[i].name() < results[j].name()
+		}
+
+		// Descending
+		return results[i].name() > results[j].name()
+	})
+}
+
+type orderedByPriority interface {
+	priority() int
+}
+
+func sortByPriority[T orderedByPriority](direction string, results []T) {
+	sort.Slice(results, func(i, j int) bool {
+		// Ascending
+		if direction == ascendantSorting {
+			return results[i].priority() < results[j].priority()
+		}
+
+		// Descending
+		return results[i].priority() > results[j].priority()
+	})
+}
+
+type orderedByType interface {
+	resourceType() string
+}
+
+func sortByType[T orderedByType](direction string, results []T) {
+	sort.Slice(results, func(i, j int) bool {
+		// Ascending
+		if direction == ascendantSorting {
+			return results[i].resourceType() < results[j].resourceType()
+		}
+
+		// Descending
+		return results[i].resourceType() > results[j].resourceType()
+	})
+}
+
+type orderedByServers interface {
+	name() string
+	serversCount() int
+}
+
+func sortByServers[T orderedByServers](direction string, results []T) {
+	sort.Slice(results, func(i, j int) bool {
+		// Ascending
+		if direction == ascendantSorting {
+			if results[i].serversCount() == results[j].serversCount() {
+				return results[i].name() < results[j].name()
 			}
+			return results[i].serversCount() < results[j].serversCount()
+		}
 
-			// Descending
-			return results[i].Name > results[j].Name
-		})
+		// Descending
+		if results[i].serversCount() == results[j].serversCount() {
+			return results[i].name() > results[j].name()
+		}
+		return results[i].serversCount() > results[j].serversCount()
+	})
+}
 
-	case "provider":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if results[i].Provider == results[j].Provider {
-					return results[i].Name < results[j].Name
-				}
-				return results[i].Provider < results[j].Provider
+type orderedByStatus interface {
+	name() string
+	status() string
+}
+
+func sortByStatus[T orderedByStatus](direction string, results []T) {
+	sort.Slice(results, func(i, j int) bool {
+		// Ascending
+		if direction == ascendantSorting {
+			if results[i].status() == results[j].status() {
+				return results[i].name() < results[j].name()
 			}
+			return results[i].status() < results[j].status()
+		}
 
-			// Descending
-			if results[i].Provider == results[j].Provider {
-				return results[i].Name > results[j].Name
+		// Descending
+		if results[i].status() == results[j].status() {
+			return results[i].name() > results[j].name()
+		}
+		return results[i].status() > results[j].status()
+	})
+}
+
+type orderedByProvider interface {
+	provider() string
+	name() string
+}
+
+func sortByProvider[T orderedByProvider](direction string, results []T) {
+	sort.Slice(results, func(i, j int) bool {
+		// Ascending
+		if direction == ascendantSorting {
+			if results[i].provider() == results[j].provider() {
+				return results[i].name() < results[j].name()
 			}
-			return results[i].Provider > results[j].Provider
-		})
+			return results[i].provider() < results[j].provider()
+		}
 
-	case "status":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if results[i].Status == results[j].Status {
-					return results[i].Name < results[j].Name
-				}
-				return results[i].Status < results[j].Status
+		// Descending
+		if results[i].provider() == results[j].provider() {
+			return results[i].name() > results[j].name()
+		}
+		return results[i].provider() > results[j].provider()
+	})
+}
+
+type orderedByRule interface {
+	rule() string
+	name() string
+}
+
+func sortByRule[T orderedByRule](direction string, results []T) {
+	sort.Slice(results, func(i, j int) bool {
+		// Ascending
+		if direction == ascendantSorting {
+			if results[i].rule() == results[j].rule() {
+				return results[i].name() < results[j].name()
 			}
+			return results[i].rule() < results[j].rule()
+		}
 
-			// Descending
-			if results[i].Status == results[j].Status {
-				return results[i].Name > results[j].Name
+		// Descending
+		if results[i].rule() == results[j].rule() {
+			return results[i].name() > results[j].name()
+		}
+		return results[i].rule() > results[j].rule()
+	})
+}
+
+type orderedByService interface {
+	service() string
+	name() string
+}
+
+func sortByService[T orderedByService](direction string, results []T) {
+	sort.Slice(results, func(i, j int) bool {
+		// Ascending
+		if direction == ascendantSorting {
+			if results[i].service() == results[j].service() {
+				return results[i].name() < results[j].name()
 			}
-			return results[i].Status > results[j].Status
-		})
+			return results[i].service() < results[j].service()
+		}
 
-	case "service":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				return results[i].Service < results[j].Service
+		// Descending
+		if results[i].service() == results[j].service() {
+			return results[i].name() > results[j].name()
+		}
+		return results[i].service() > results[j].service()
+	})
+}
+
+type orderedByEntryPoints interface {
+	entryPointsCount() int
+	name() string
+}
+
+func sortByEntryPoints[T orderedByEntryPoints](direction string, results []T) {
+	sort.Slice(results, func(i, j int) bool {
+		// Ascending
+		if direction == ascendantSorting {
+			if results[i].entryPointsCount() == results[j].entryPointsCount() {
+				return results[i].name() < results[j].name()
 			}
+			return results[i].entryPointsCount() < results[j].entryPointsCount()
+		}
 
-			// Descending
-			return results[i].Service > results[j].Service
-		})
-
-	case "entryPoints":
-		sort.Slice(results, func(i, j int) bool {
-			// Ascending
-			if direction == "asc" {
-				if len(results[i].EntryPoints) == len(results[j].EntryPoints) {
-					return results[i].Name[0] < results[j].Name[0]
-				}
-				return len(results[i].EntryPoints) < len(results[j].EntryPoints)
-			}
-
-			// Descending
-			if len(results[i].EntryPoints) == len(results[j].EntryPoints) {
-				return results[i].Name[0] > results[j].Name[0]
-			}
-			return len(results[i].EntryPoints) > len(results[j].EntryPoints)
-		})
-	}
-
-	return results
+		// Descending
+		if results[i].entryPointsCount() == results[j].entryPointsCount() {
+			return results[i].name() > results[j].name()
+		}
+		return results[i].entryPointsCount() > results[j].entryPointsCount()
+	})
 }
