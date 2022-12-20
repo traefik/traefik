@@ -322,6 +322,7 @@ func sortByName[T orderedByName](direction string, results []T) {
 }
 
 type orderedByPriority interface {
+	name() string
 	priority() int
 }
 
@@ -329,15 +330,22 @@ func sortByPriority[T orderedByPriority](direction string, results []T) {
 	sort.Slice(results, func(i, j int) bool {
 		// Ascending
 		if direction == ascendantSorting {
+			if results[i].priority() == results[j].priority() {
+				return results[i].name() < results[j].name()
+			}
 			return results[i].priority() < results[j].priority()
 		}
 
 		// Descending
+		if results[i].priority() == results[j].priority() {
+			return results[i].name() > results[j].name()
+		}
 		return results[i].priority() > results[j].priority()
 	})
 }
 
 type orderedByType interface {
+	name() string
 	resourceType() string
 }
 
@@ -345,10 +353,16 @@ func sortByType[T orderedByType](direction string, results []T) {
 	sort.Slice(results, func(i, j int) bool {
 		// Ascending
 		if direction == ascendantSorting {
+			if results[i].resourceType() == results[j].resourceType() {
+				return results[i].name() < results[j].name()
+			}
 			return results[i].resourceType() < results[j].resourceType()
 		}
 
 		// Descending
+		if results[i].resourceType() == results[j].resourceType() {
+			return results[i].name() > results[j].name()
+		}
 		return results[i].resourceType() > results[j].resourceType()
 	})
 }
