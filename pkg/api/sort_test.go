@@ -80,17 +80,37 @@ func TestSortByType(t *testing.T) {
 			elements: []orderedByType{
 				middlewareRepresentation{
 					Type: "b",
+					Name: "b",
+				},
+				middlewareRepresentation{
+					Type: "b",
+					Name: "a",
 				},
 				middlewareRepresentation{
 					Type: "a",
+					Name: "b",
+				},
+				middlewareRepresentation{
+					Type: "a",
+					Name: "a",
 				},
 			},
 			expected: []orderedByType{
 				middlewareRepresentation{
 					Type: "a",
+					Name: "a",
+				},
+				middlewareRepresentation{
+					Type: "a",
+					Name: "b",
 				},
 				middlewareRepresentation{
 					Type: "b",
+					Name: "a",
+				},
+				middlewareRepresentation{
+					Type: "b",
+					Name: "b",
 				},
 			},
 		},
@@ -100,17 +120,37 @@ func TestSortByType(t *testing.T) {
 			elements: []orderedByType{
 				middlewareRepresentation{
 					Type: "a",
+					Name: "a",
+				},
+				middlewareRepresentation{
+					Type: "a",
+					Name: "b",
 				},
 				middlewareRepresentation{
 					Type: "b",
+					Name: "a",
+				},
+				middlewareRepresentation{
+					Type: "b",
+					Name: "b",
 				},
 			},
 			expected: []orderedByType{
 				middlewareRepresentation{
 					Type: "b",
+					Name: "b",
+				},
+				middlewareRepresentation{
+					Type: "b",
+					Name: "a",
 				},
 				middlewareRepresentation{
 					Type: "a",
+					Name: "b",
+				},
+				middlewareRepresentation{
+					Type: "a",
+					Name: "a",
 				},
 			},
 		},
@@ -143,6 +183,15 @@ func TestSortByPriority(t *testing.T) {
 							Priority: 2,
 						},
 					},
+					Name: "b",
+				},
+				routerRepresentation{
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Priority: 2,
+						},
+					},
+					Name: "a",
 				},
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
@@ -150,6 +199,15 @@ func TestSortByPriority(t *testing.T) {
 							Priority: 1,
 						},
 					},
+					Name: "b",
+				},
+				routerRepresentation{
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Priority: 1,
+						},
+					},
+					Name: "a",
 				},
 			},
 			expected: []orderedByPriority{
@@ -159,6 +217,15 @@ func TestSortByPriority(t *testing.T) {
 							Priority: 1,
 						},
 					},
+					Name: "a",
+				},
+				routerRepresentation{
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Priority: 1,
+						},
+					},
+					Name: "b",
 				},
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
@@ -166,6 +233,15 @@ func TestSortByPriority(t *testing.T) {
 							Priority: 2,
 						},
 					},
+					Name: "a",
+				},
+				routerRepresentation{
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Priority: 2,
+						},
+					},
+					Name: "b",
 				},
 			},
 		},
@@ -179,6 +255,15 @@ func TestSortByPriority(t *testing.T) {
 							Priority: 1,
 						},
 					},
+					Name: "a",
+				},
+				routerRepresentation{
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Priority: 1,
+						},
+					},
+					Name: "b",
 				},
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
@@ -186,6 +271,15 @@ func TestSortByPriority(t *testing.T) {
 							Priority: 2,
 						},
 					},
+					Name: "a",
+				},
+				routerRepresentation{
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Priority: 2,
+						},
+					},
+					Name: "b",
 				},
 			},
 			expected: []orderedByPriority{
@@ -195,6 +289,15 @@ func TestSortByPriority(t *testing.T) {
 							Priority: 2,
 						},
 					},
+					Name: "b",
+				},
+				routerRepresentation{
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Priority: 2,
+						},
+					},
+					Name: "a",
 				},
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
@@ -202,6 +305,15 @@ func TestSortByPriority(t *testing.T) {
 							Priority: 1,
 						},
 					},
+					Name: "b",
+				},
+				routerRepresentation{
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Priority: 1,
+						},
+					},
+					Name: "a",
 				},
 			},
 		},
