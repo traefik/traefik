@@ -6,8 +6,11 @@ import (
 )
 
 const (
-	sortByParam       = "sortBy"
-	directionParam    = "direction"
+	sortByParam    = "sortBy"
+	directionParam = "direction"
+)
+
+const (
 	ascendantSorting  = "asc"
 	descendantSorting = "desc"
 )
