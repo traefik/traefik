@@ -69,7 +69,10 @@ func (h Handler) getTCPRouters(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sortTCPRouters(request.URL.Query(), results)
+	sortBy := request.URL.Query().Get("sortBy")
+	direction := request.URL.Query().Get("direction")
+
+	sortRouters(sortBy, direction, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -119,7 +122,10 @@ func (h Handler) getTCPServices(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sortTCPServices(request.URL.Query(), results)
+	sortBy := request.URL.Query().Get("sortBy")
+	direction := request.URL.Query().Get("direction")
+
+	sortServices(sortBy, direction, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -169,7 +175,10 @@ func (h Handler) getTCPMiddlewares(rw http.ResponseWriter, request *http.Request
 		}
 	}
 
-	sortTCPMiddlewares(request.URL.Query(), results)
+	sortBy := request.URL.Query().Get("sortBy")
+	direction := request.URL.Query().Get("direction")
+
+	sortMiddlewares(sortBy, direction, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 

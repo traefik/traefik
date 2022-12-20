@@ -76,7 +76,10 @@ func (h Handler) getRouters(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sortHTTPRouters(request.URL.Query(), results)
+	sortBy := request.URL.Query().Get("sortBy")
+	direction := request.URL.Query().Get("direction")
+
+	sortRouters(sortBy, direction, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -126,7 +129,10 @@ func (h Handler) getServices(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sortHTTPServices(request.URL.Query(), results)
+	sortBy := request.URL.Query().Get("sortBy")
+	direction := request.URL.Query().Get("direction")
+
+	sortServices(sortBy, direction, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -176,7 +182,10 @@ func (h Handler) getMiddlewares(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sortHTTPMiddlewares(request.URL.Query(), results)
+	sortBy := request.URL.Query().Get("sortBy")
+	direction := request.URL.Query().Get("direction")
+
+	sortMiddlewares(sortBy, direction, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 

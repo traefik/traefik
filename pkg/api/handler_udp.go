@@ -53,7 +53,10 @@ func (h Handler) getUDPRouters(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sortUDPRouters(request.URL.Query(), results)
+	sortBy := request.URL.Query().Get("sortBy")
+	direction := request.URL.Query().Get("direction")
+
+	sortRouters(sortBy, direction, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -103,7 +106,10 @@ func (h Handler) getUDPServices(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sortUDPServices(request.URL.Query(), results)
+	sortBy := request.URL.Query().Get("sortBy")
+	direction := request.URL.Query().Get("direction")
+
+	sortServices(sortBy, direction, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
