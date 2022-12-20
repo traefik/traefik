@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -54,9 +53,10 @@ func (h Handler) getUDPRouters(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
+	sortBy := request.URL.Query().Get("sortBy")
+	direction := request.URL.Query().Get("direction")
+
+	sortRouters(sortBy, direction, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -106,9 +106,10 @@ func (h Handler) getUDPServices(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
+	sortBy := request.URL.Query().Get("sortBy")
+	direction := request.URL.Query().Get("direction")
+
+	sortServices(sortBy, direction, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 

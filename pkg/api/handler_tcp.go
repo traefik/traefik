@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -70,9 +69,10 @@ func (h Handler) getTCPRouters(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
+	sortBy := request.URL.Query().Get("sortBy")
+	direction := request.URL.Query().Get("direction")
+
+	sortRouters(sortBy, direction, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -122,9 +122,10 @@ func (h Handler) getTCPServices(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
+	sortBy := request.URL.Query().Get("sortBy")
+	direction := request.URL.Query().Get("direction")
+
+	sortServices(sortBy, direction, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -174,9 +175,10 @@ func (h Handler) getTCPMiddlewares(rw http.ResponseWriter, request *http.Request
 		}
 	}
 
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
+	sortBy := request.URL.Query().Get("sortBy")
+	direction := request.URL.Query().Get("direction")
+
+	sortMiddlewares(sortBy, direction, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
