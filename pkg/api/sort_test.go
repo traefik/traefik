@@ -17,7 +17,7 @@ func TestSortByName(t *testing.T) {
 	}{
 		{
 			desc:      "Ascending",
-			direction: "asc",
+			direction: ascendantSorting,
 			elements: []orderedByName{
 				routerRepresentation{
 					Name: "b",
@@ -37,7 +37,7 @@ func TestSortByName(t *testing.T) {
 		},
 		{
 			desc:      "Descending",
-			direction: "desc",
+			direction: descendantSorting,
 			elements: []orderedByName{
 				routerRepresentation{
 					Name: "a",
@@ -76,7 +76,7 @@ func TestSortByType(t *testing.T) {
 	}{
 		{
 			desc:      "Ascending",
-			direction: "asc",
+			direction: ascendantSorting,
 			elements: []orderedByType{
 				middlewareRepresentation{
 					Type: "b",
@@ -96,7 +96,7 @@ func TestSortByType(t *testing.T) {
 		},
 		{
 			desc:      "Descending",
-			direction: "desc",
+			direction: descendantSorting,
 			elements: []orderedByType{
 				middlewareRepresentation{
 					Type: "a",
@@ -135,7 +135,7 @@ func TestSortByPriority(t *testing.T) {
 	}{
 		{
 			desc:      "Ascending",
-			direction: "asc",
+			direction: ascendantSorting,
 			elements: []orderedByPriority{
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
@@ -171,7 +171,7 @@ func TestSortByPriority(t *testing.T) {
 		},
 		{
 			desc:      "Descending",
-			direction: "desc",
+			direction: descendantSorting,
 			elements: []orderedByPriority{
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
@@ -226,7 +226,7 @@ func TestSortByStatus(t *testing.T) {
 	}{
 		{
 			desc:      "Ascending",
-			direction: "asc",
+			direction: ascendantSorting,
 			elements: []orderedByStatus{
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
@@ -282,7 +282,7 @@ func TestSortByStatus(t *testing.T) {
 		},
 		{
 			desc:      "Descending",
-			direction: "desc",
+			direction: descendantSorting,
 			elements: []orderedByStatus{
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
@@ -357,7 +357,7 @@ func TestSortByRule(t *testing.T) {
 	}{
 		{
 			desc:      "Ascending",
-			direction: "asc",
+			direction: ascendantSorting,
 			elements: []orderedByRule{
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
@@ -429,7 +429,7 @@ func TestSortByRule(t *testing.T) {
 		},
 		{
 			desc:      "Descending",
-			direction: "desc",
+			direction: descendantSorting,
 			elements: []orderedByRule{
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
@@ -520,7 +520,7 @@ func TestSortByProvider(t *testing.T) {
 	}{
 		{
 			desc:      "Ascending",
-			direction: "asc",
+			direction: ascendantSorting,
 			elements: []orderedByProvider{
 				routerRepresentation{
 					Provider: "b",
@@ -560,7 +560,7 @@ func TestSortByProvider(t *testing.T) {
 		},
 		{
 			desc:      "Descending",
-			direction: "desc",
+			direction: descendantSorting,
 			elements: []orderedByProvider{
 				routerRepresentation{
 					Provider: "a",
@@ -619,7 +619,7 @@ func TestSortByServers(t *testing.T) {
 	}{
 		{
 			desc:      "Ascending",
-			direction: "asc",
+			direction: ascendantSorting,
 			elements: []orderedByServers{
 				tcpServiceRepresentation{
 					TCPServiceInfo: &runtime.TCPServiceInfo{
@@ -727,7 +727,7 @@ func TestSortByServers(t *testing.T) {
 		},
 		{
 			desc:      "Descending",
-			direction: "desc",
+			direction: descendantSorting,
 			elements: []orderedByServers{
 				tcpServiceRepresentation{
 					TCPServiceInfo: &runtime.TCPServiceInfo{
@@ -854,7 +854,7 @@ func TestSortByEntryPoints(t *testing.T) {
 	}{
 		{
 			desc:      "Ascending",
-			direction: "asc",
+			direction: ascendantSorting,
 			elements: []orderedByEntryPoints{
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
@@ -926,7 +926,7 @@ func TestSortByEntryPoints(t *testing.T) {
 		},
 		{
 			desc:      "Descending",
-			direction: "desc",
+			direction: descendantSorting,
 			elements: []orderedByEntryPoints{
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
@@ -1017,7 +1017,7 @@ func TestSortByService(t *testing.T) {
 	}{
 		{
 			desc:      "Ascending",
-			direction: "asc",
+			direction: ascendantSorting,
 			elements: []orderedByService{
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
@@ -1089,7 +1089,7 @@ func TestSortByService(t *testing.T) {
 		},
 		{
 			desc:      "Descending",
-			direction: "desc",
+			direction: descendantSorting,
 			elements: []orderedByService{
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
