@@ -192,6 +192,13 @@ func (s serviceRepresentation) resourceType() string {
 }
 
 func (s serviceRepresentation) serversCount() int {
+	// TODO: maybe disable that data point altogether,
+	// if we can't/won't compute a fully correct (recursive) result.
+	// Or "redefine" it as only the top-level count?
+	// Note: The current algo is equivalent to the webui one.
+	if s.LoadBalancer == nil {
+		return 0
+	}
 	return len(s.LoadBalancer.Servers)
 }
 
@@ -212,6 +219,13 @@ func (s tcpServiceRepresentation) resourceType() string {
 }
 
 func (s tcpServiceRepresentation) serversCount() int {
+	// TODO: maybe disable that data point altogether,
+	// if we can't/won't compute a fully correct (recursive) result.
+	// Or "redefine" it as only the top-level count?
+	// Note: The current algo is equivalent to the webui one.
+	if s.LoadBalancer == nil {
+		return 0
+	}
 	return len(s.LoadBalancer.Servers)
 }
 
@@ -232,6 +246,13 @@ func (s udpServiceRepresentation) resourceType() string {
 }
 
 func (s udpServiceRepresentation) serversCount() int {
+	// TODO: maybe disable that data point altogether,
+	// if we can't/won't compute a fully correct (recursive) result.
+	// Or "redefine" it as only the top-level count?
+	// Note: The current algo is equivalent to the webui one.
+	if s.LoadBalancer == nil {
+		return 0
+	}
 	return len(s.LoadBalancer.Servers)
 }
 
