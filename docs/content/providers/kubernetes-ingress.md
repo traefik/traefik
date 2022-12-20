@@ -354,6 +354,7 @@ By doing so, it alleviates the requirement of giving Traefik the rights to look 
 Furthermore, when this option is set to `true`,
 Traefik is not able to handle Ingresses with IngressClass references,
 therefore such Ingresses will be ignored.
+Please note that annotations are not affected by this option.
 
 ```yaml tab="File (YAML)"
 providers:
