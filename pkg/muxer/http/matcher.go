@@ -180,7 +180,7 @@ func pathPrefix(tree *matchersTree, paths ...string) error {
 }
 
 func header(tree *matchersTree, headers ...string) error {
-	key, value := headers[0], headers[1]
+	key, value := http.CanonicalHeaderKey(headers[0]), headers[1]
 
 	tree.matcher = func(req *http.Request) bool {
 		for _, headerValue := range req.Header[key] {
@@ -196,7 +196,7 @@ func header(tree *matchersTree, headers ...string) error {
 }
 
 func headerRegexp(tree *matchersTree, headers ...string) error {
-	key, value := headers[0], headers[1]
+	key, value := http.CanonicalHeaderKey(headers[0]), headers[1]
 
 	re, err := regexp.Compile(value)
 	if err != nil {

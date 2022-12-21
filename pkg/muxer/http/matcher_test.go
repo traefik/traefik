@@ -669,6 +669,17 @@ func TestHeaderMatcher(t *testing.T) {
 				{"X-Forwarded-Host": []string{"example.com"}}:    http.StatusNotFound,
 			},
 		},
+		{
+			desc: "valid Header matcher (non-canonical form)",
+			rule: "Header(`x-forwarded-proto`, `https`)",
+			expected: map[*http.Header]int{
+				{"X-Forwarded-Proto": []string{"https"}}:         http.StatusOK,
+				{"x-forwarded-proto": []string{"https"}}:         http.StatusNotFound,
+				{"X-Forwarded-Proto": []string{"http", "https"}}: http.StatusOK,
+				{"X-Forwarded-Proto": []string{"https", "http"}}: http.StatusOK,
+				{"X-Forwarded-Host": []string{"example.com"}}:    http.StatusNotFound,
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -742,6 +753,18 @@ func TestHeaderRegexpMatcher(t *testing.T) {
 		{
 			desc: "valid HeaderRegexp matcher",
 			rule: "HeaderRegexp(`X-Forwarded-Proto`, `^https?$`)",
+			expected: map[*http.Header]int{
+				{"X-Forwarded-Proto": []string{"http"}}:        http.StatusOK,
+				{"x-forwarded-proto": []string{"http"}}:        http.StatusNotFound,
+				{"X-Forwarded-Proto": []string{"https"}}:       http.StatusOK,
+				{"X-Forwarded-Proto": []string{"HTTPS"}}:       http.StatusNotFound,
+				{"X-Forwarded-Proto": []string{"ws", "https"}}: http.StatusOK,
+				{"X-Forwarded-Host": []string{"example.com"}}:  http.StatusNotFound,
+			},
+		},
+		{
+			desc: "valid HeaderRegexp matcher (non-canonical form)",
+			rule: "HeaderRegexp(`x-forwarded-proto`, `^https?$`)",
 			expected: map[*http.Header]int{
 				{"X-Forwarded-Proto": []string{"http"}}:        http.StatusOK,
 				{"x-forwarded-proto": []string{"http"}}:        http.StatusNotFound,
