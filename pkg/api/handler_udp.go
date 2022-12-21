@@ -45,7 +45,8 @@ func newUDPServiceRepresentation(name string, si *runtime.UDPServiceInfo) udpSer
 func (h Handler) getUDPRouters(rw http.ResponseWriter, request *http.Request) {
 	results := make([]udpRouterRepresentation, 0, len(h.runtimeConfiguration.UDPRouters))
 
-	criterion := newSearchCriterion(request.URL.Query())
+	query := request.URL.Query()
+	criterion := newSearchCriterion(query)
 
 	for name, rt := range h.runtimeConfiguration.UDPRouters {
 		if keepUDPRouter(name, rt, criterion) {
@@ -53,7 +54,7 @@ func (h Handler) getUDPRouters(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sortRouters(request.URL.Query(), results)
+	sortRouters(query, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -95,7 +96,8 @@ func (h Handler) getUDPRouter(rw http.ResponseWriter, request *http.Request) {
 func (h Handler) getUDPServices(rw http.ResponseWriter, request *http.Request) {
 	results := make([]udpServiceRepresentation, 0, len(h.runtimeConfiguration.UDPServices))
 
-	criterion := newSearchCriterion(request.URL.Query())
+	query := request.URL.Query()
+	criterion := newSearchCriterion(query)
 
 	for name, si := range h.runtimeConfiguration.UDPServices {
 		if keepUDPService(name, si, criterion) {
@@ -103,7 +105,7 @@ func (h Handler) getUDPServices(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sortServices(request.URL.Query(), results)
+	sortServices(query, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 

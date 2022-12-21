@@ -61,7 +61,8 @@ func newTCPMiddlewareRepresentation(name string, mi *runtime.TCPMiddlewareInfo) 
 func (h Handler) getTCPRouters(rw http.ResponseWriter, request *http.Request) {
 	results := make([]tcpRouterRepresentation, 0, len(h.runtimeConfiguration.TCPRouters))
 
-	criterion := newSearchCriterion(request.URL.Query())
+	query := request.URL.Query()
+	criterion := newSearchCriterion(query)
 
 	for name, rt := range h.runtimeConfiguration.TCPRouters {
 		if keepTCPRouter(name, rt, criterion) {
@@ -69,7 +70,7 @@ func (h Handler) getTCPRouters(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sortRouters(request.URL.Query(), results)
+	sortRouters(query, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -111,7 +112,8 @@ func (h Handler) getTCPRouter(rw http.ResponseWriter, request *http.Request) {
 func (h Handler) getTCPServices(rw http.ResponseWriter, request *http.Request) {
 	results := make([]tcpServiceRepresentation, 0, len(h.runtimeConfiguration.TCPServices))
 
-	criterion := newSearchCriterion(request.URL.Query())
+	query := request.URL.Query()
+	criterion := newSearchCriterion(query)
 
 	for name, si := range h.runtimeConfiguration.TCPServices {
 		if keepTCPService(name, si, criterion) {
@@ -119,7 +121,7 @@ func (h Handler) getTCPServices(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sortServices(request.URL.Query(), results)
+	sortServices(query, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -161,7 +163,8 @@ func (h Handler) getTCPService(rw http.ResponseWriter, request *http.Request) {
 func (h Handler) getTCPMiddlewares(rw http.ResponseWriter, request *http.Request) {
 	results := make([]tcpMiddlewareRepresentation, 0, len(h.runtimeConfiguration.Middlewares))
 
-	criterion := newSearchCriterion(request.URL.Query())
+	query := request.URL.Query()
+	criterion := newSearchCriterion(query)
 
 	for name, mi := range h.runtimeConfiguration.TCPMiddlewares {
 		if keepTCPMiddleware(name, mi, criterion) {
@@ -169,7 +172,7 @@ func (h Handler) getTCPMiddlewares(rw http.ResponseWriter, request *http.Request
 		}
 	}
 
-	sortMiddlewares(request.URL.Query(), results)
+	sortMiddlewares(query, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
