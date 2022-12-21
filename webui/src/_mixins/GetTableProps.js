@@ -105,13 +105,10 @@ const allColumns = [
     component: QChip,
     fieldToProps: () => ({ class: 'app-chip app-chip-accent', dense: true }),
     content: row => {
-      return (row.priority !== undefined ? {
-        short: String(row.priority).length > 10 ? String(row.priority).substring(0, 10) + '...' : row.priority,
-        long: row.priority
-      } : {
-        short: '',
-        long: ''
-      })
+      return {
+        short: String(row.effectivePriority).length > 10 ? String(row.effectivePriority).substring(0, 10) + '...' : row.effectivePriority,
+        long: row.effectivePriority
+      }
     }
   }
 ]
