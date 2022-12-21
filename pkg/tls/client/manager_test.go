@@ -1,15 +1,14 @@
-package tcp
+package client
 
 import (
-	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"io"
 	"math/big"
-	"net"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
 	"time"
@@ -117,8 +116,6 @@ ajIPbTY+Fe9OTOFTN48ujXNn
 -----END PRIVATE KEY-----`)
 
 func TestConflictingConfig(t *testing.T) {
-	dialerManager := NewDialerManager(nil)
-
 	dynamicConf := map[string]*dynamic.TCPServersTransport{
 		"test": {
 			TLS: &dynamic.TLSClientConfig{
@@ -128,189 +125,40 @@ func TestConflictingConfig(t *testing.T) {
 		},
 	}
 
-	dialerManager.Update(dynamicConf)
-
-	_, err := dialerManager.Get("test", false)
+	tlsManager := NewTLSConfigManager[*dynamic.TCPServersTransport](nil)
+	tlsManager.Update(dynamicConf)
+	_, err := tlsManager.GetTLSConfig("test")
 	require.Error(t, err)
 }
 
-func TestNoTLS(t *testing.T) {
-	backendListener, err := net.Listen("tcp", ":0")
-	require.NoError(t, err)
-	defer backendListener.Close()
-
-	go fakeRedis(t, backendListener)
-
-	_, port, err := net.SplitHostPort(backendListener.Addr().String())
-	require.NoError(t, err)
-
-	dialerManager := NewDialerManager(nil)
-
-	dynamicConf := map[string]*dynamic.TCPServersTransport{
-		"test": {
-			TLS: &dynamic.TLSClientConfig{},
-		},
-	}
-
-	dialerManager.Update(dynamicConf)
-
-	dialer, err := dialerManager.Get("test", false)
-	require.NoError(t, err)
-
-	conn, err := dialer.Dial("tcp", ":"+port)
-	require.NoError(t, err)
-
-	_, err = conn.Write([]byte("ping\n"))
-	require.NoError(t, err)
-
-	buf := make([]byte, 64)
-	n, err := conn.Read(buf)
-	require.NoError(t, err)
-
-	assert.Equal(t, 4, n)
-	assert.Equal(t, "PONG", string(buf[:4]))
-
-	err = conn.Close()
-	require.NoError(t, err)
-}
-
-func TestTLS(t *testing.T) {
-	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
-	require.NoError(t, err)
-
-	backendListener, err := net.Listen("tcp", ":0")
-	require.NoError(t, err)
-	defer backendListener.Close()
-
-	tlsListener := tls.NewListener(backendListener, &tls.Config{Certificates: []tls.Certificate{cert}})
-	defer tlsListener.Close()
-
-	go fakeRedis(t, tlsListener)
-
-	_, port, err := net.SplitHostPort(tlsListener.Addr().String())
-	require.NoError(t, err)
-
-	dialerManager := NewDialerManager(nil)
-
-	dynamicConf := map[string]*dynamic.TCPServersTransport{
-		"test": {
-			TLS: &dynamic.TLSClientConfig{
-				ServerName: "example.com",
-				RootCAs:    []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
-			},
-		},
-	}
-
-	dialerManager.Update(dynamicConf)
-
-	dialer, err := dialerManager.Get("test", true)
-	require.NoError(t, err)
-
-	conn, err := dialer.Dial("tcp", ":"+port)
-	require.NoError(t, err)
-
-	_, err = conn.Write([]byte("ping\n"))
-	require.NoError(t, err)
-
-	err = conn.(*tls.Conn).CloseWrite()
-	require.NoError(t, err)
-
-	var buf []byte
-	buffer := bytes.NewBuffer(buf)
-	n, err := io.Copy(buffer, conn)
-	require.NoError(t, err)
-
-	assert.Equal(t, int64(4), n)
-	assert.Equal(t, "PONG", buffer.String())
-}
-
-func TestTLSWithInsecureSkipVerify(t *testing.T) {
-	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
-	require.NoError(t, err)
-
-	backendListener, err := net.Listen("tcp", ":0")
-	require.NoError(t, err)
-	defer backendListener.Close()
-
-	tlsListener := tls.NewListener(backendListener, &tls.Config{Certificates: []tls.Certificate{cert}})
-	defer tlsListener.Close()
-
-	go fakeRedis(t, tlsListener)
-
-	_, port, err := net.SplitHostPort(tlsListener.Addr().String())
-	require.NoError(t, err)
-
-	dialerManager := NewDialerManager(nil)
-
-	dynamicConf := map[string]*dynamic.TCPServersTransport{
-		"test": {
-			TLS: &dynamic.TLSClientConfig{
-				ServerName:         "bad-domain.com",
-				RootCAs:            []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
-				InsecureSkipVerify: true,
-			},
-		},
-	}
-
-	dialerManager.Update(dynamicConf)
-
-	dialer, err := dialerManager.Get("test", true)
-	require.NoError(t, err)
-
-	conn, err := dialer.Dial("tcp", ":"+port)
-	require.NoError(t, err)
-
-	_, err = conn.Write([]byte("ping\n"))
-	require.NoError(t, err)
-
-	err = conn.(*tls.Conn).CloseWrite()
-	require.NoError(t, err)
-
-	var buf []byte
-	buffer := bytes.NewBuffer(buf)
-	n, err := io.Copy(buffer, conn)
-	require.NoError(t, err)
-
-	assert.Equal(t, int64(4), n)
-	assert.Equal(t, "PONG", buffer.String())
-}
-
 func TestMTLS(t *testing.T) {
+	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+
 	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
 	require.NoError(t, err)
 
 	clientPool := x509.NewCertPool()
 	clientPool.AppendCertsFromPEM(mTLSCert)
 
-	backendListener, err := net.Listen("tcp", ":0")
-	require.NoError(t, err)
-	defer backendListener.Close()
-
-	tlsListener := tls.NewListener(backendListener, &tls.Config{
+	srv.TLS = &tls.Config{
 		// For TLS
 		Certificates: []tls.Certificate{cert},
 
 		// For mTLS
 		ClientAuth: tls.RequireAndVerifyClientCert,
 		ClientCAs:  clientPool,
-	})
-	defer tlsListener.Close()
+	}
+	srv.StartTLS()
 
-	go fakeRedis(t, tlsListener)
+	tlsClientConfigManager := NewTLSConfigManager[*dynamic.ServersTransport](nil)
 
-	_, port, err := net.SplitHostPort(tlsListener.Addr().String())
-	require.NoError(t, err)
-
-	dialerManager := NewDialerManager(nil)
-
-	dynamicConf := map[string]*dynamic.TCPServersTransport{
+	dynamicConf := map[string]*dynamic.ServersTransport{
 		"test": {
 			TLS: &dynamic.TLSClientConfig{
 				ServerName: "example.com",
-				// For TLS
-				RootCAs: []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
-
-				// For mTLS
+				RootCAs:    []traefiktls.FileOrContent{traefiktls.FileOrContent(LocalhostCert)},
 				Certificates: traefiktls.Certificates{
 					traefiktls.Certificate{
 						CertFile: traefiktls.FileOrContent(mTLSCert),
@@ -321,39 +169,34 @@ func TestMTLS(t *testing.T) {
 		},
 	}
 
-	dialerManager.Update(dynamicConf)
+	tlsClientConfigManager.Update(dynamicConf)
 
-	dialer, err := dialerManager.Get("test", true)
+	tr := http.DefaultTransport.(*http.Transport).Clone()
+	tr.TLSClientConfig, err = tlsClientConfigManager.GetTLSConfig("test")
 	require.NoError(t, err)
 
-	conn, err := dialer.Dial("tcp", ":"+port)
+	client := http.Client{Transport: tr}
+
+	resp, err := client.Get(srv.URL)
 	require.NoError(t, err)
 
-	_, err = conn.Write([]byte("ping\n"))
-	require.NoError(t, err)
-
-	err = conn.(*tls.Conn).CloseWrite()
-	require.NoError(t, err)
-
-	var buf []byte
-	buffer := bytes.NewBuffer(buf)
-	n, err := io.Copy(buffer, conn)
-	require.NoError(t, err)
-
-	assert.Equal(t, int64(4), n)
-	assert.Equal(t, "PONG", buffer.String())
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
 func TestSpiffeMTLS(t *testing.T) {
-	backendListener, err := net.Listen("tcp", ":0")
-	require.NoError(t, err)
-	defer backendListener.Close()
+	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
 
 	trustDomain := spiffeid.RequireTrustDomainFromString("spiffe://traefik.test")
 
-	pki := newFakeSpiffePKI(t, trustDomain)
+	pki, err := newFakeSpiffePKI(trustDomain)
+	require.NoError(t, err)
 
-	serverSVID := pki.genSVID(t, spiffeid.RequireFromPath(trustDomain, "/server"))
+	clientSVID, err := pki.genSVID(spiffeid.RequireFromPath(trustDomain, "/client"))
+	require.NoError(t, err)
+
+	serverSVID, err := pki.genSVID(spiffeid.RequireFromPath(trustDomain, "/server"))
 	require.NoError(t, err)
 
 	serverSource := fakeSpiffeSource{
@@ -371,18 +214,13 @@ func TestSpiffeMTLS(t *testing.T) {
 	// and use another initialization method that forces serving the server SPIFFE certificate.
 	serverCert, err := tlsconfig.GetCertificate(&serverSource)(nil)
 	require.NoError(t, err)
-
-	tlsListener := tls.NewListener(backendListener, tlsconfig.MTLSWebServerConfig(
+	srv.TLS = tlsconfig.MTLSWebServerConfig(
 		serverCert,
 		&serverSource,
 		tlsconfig.AuthorizeAny(),
-	))
-	defer tlsListener.Close()
-
-	_, port, err := net.SplitHostPort(tlsListener.Addr().String())
-	require.NoError(t, err)
-
-	clientSVID := pki.genSVID(t, spiffeid.RequireFromPath(trustDomain, "/client"))
+	)
+	srv.StartTLS()
+	defer srv.Close()
 
 	clientSource := fakeSpiffeSource{
 		svid:   clientSVID,
@@ -390,22 +228,26 @@ func TestSpiffeMTLS(t *testing.T) {
 	}
 
 	testCases := []struct {
-		desc         string
-		config       dynamic.Spiffe
-		clientSource SpiffeX509Source
-		wantError    bool
+		desc           string
+		config         dynamic.Spiffe
+		clientSource   SpiffeX509Source
+		wantStatusCode int
+		wantBuildErr   bool
+		wantErr        bool
 	}{
 		{
-			desc:         "supports SPIFFE mTLS",
-			config:       dynamic.Spiffe{},
-			clientSource: &clientSource,
+			desc:           "supports SPIFFE mTLS",
+			config:         dynamic.Spiffe{},
+			clientSource:   &clientSource,
+			wantStatusCode: http.StatusOK,
 		},
 		{
 			desc: "allows expected server SPIFFE ID",
 			config: dynamic.Spiffe{
 				IDs: []string{"spiffe://traefik.test/server"},
 			},
-			clientSource: &clientSource,
+			clientSource:   &clientSource,
+			wantStatusCode: http.StatusOK,
 		},
 		{
 			desc: "blocks unexpected server SPIFFE ID",
@@ -413,14 +255,15 @@ func TestSpiffeMTLS(t *testing.T) {
 				IDs: []string{"spiffe://traefik.test/not-server"},
 			},
 			clientSource: &clientSource,
-			wantError:    true,
+			wantErr:      true,
 		},
 		{
 			desc: "allows expected server trust domain",
 			config: dynamic.Spiffe{
 				TrustDomain: "spiffe://traefik.test",
 			},
-			clientSource: &clientSource,
+			clientSource:   &clientSource,
+			wantStatusCode: http.StatusOK,
 		},
 		{
 			desc: "denies unexpected server trust domain",
@@ -428,7 +271,7 @@ func TestSpiffeMTLS(t *testing.T) {
 				TrustDomain: "spiffe://not-traefik.test",
 			},
 			clientSource: &clientSource,
-			wantError:    true,
+			wantErr:      true,
 		},
 		{
 			desc: "spiffe IDs allowlist takes precedence",
@@ -437,17 +280,21 @@ func TestSpiffeMTLS(t *testing.T) {
 				TrustDomain: "spiffe://not-traefik.test",
 			},
 			clientSource: &clientSource,
-			wantError:    true,
+			wantErr:      true,
+		},
+		{
+			desc:         "raises an error when spiffe is enabled on the transport but no workloadapi address is given",
+			config:       dynamic.Spiffe{},
+			clientSource: nil,
+			wantBuildErr: true,
 		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			go fakeRedis(t, tlsListener)
+			tlsClientConfigManager := NewTLSConfigManager[*dynamic.ServersTransport](test.clientSource)
 
-			dialerManager := NewDialerManager(test.clientSource)
-
-			dynamicConf := map[string]*dynamic.TCPServersTransport{
+			dynamicConf := map[string]*dynamic.ServersTransport{
 				"test": {
 					TLS: &dynamic.TLSClientConfig{
 						Spiffe: &test.config,
@@ -455,33 +302,26 @@ func TestSpiffeMTLS(t *testing.T) {
 				},
 			}
 
-			dialerManager.Update(dynamicConf)
+			tlsClientConfigManager.Update(dynamicConf)
 
-			dialer, err := dialerManager.Get("test", true)
+			tr := http.DefaultTransport.(*http.Transport).Clone()
+			tr.TLSClientConfig, err = tlsClientConfigManager.GetTLSConfig("test")
+			if test.wantBuildErr {
+				require.Error(t, err)
+				return
+			}
 			require.NoError(t, err)
 
-			conn, err := dialer.Dial("tcp", ":"+port)
+			client := http.Client{Transport: tr}
 
-			if test.wantError {
+			resp, err := client.Get(srv.URL)
+			if test.wantErr {
 				require.Error(t, err)
 				return
 			}
 
 			require.NoError(t, err)
-
-			_, err = conn.Write([]byte("ping\n"))
-			require.NoError(t, err)
-
-			err = conn.(*tls.Conn).CloseWrite()
-			require.NoError(t, err)
-
-			var buf []byte
-			buffer := bytes.NewBuffer(buf)
-			n, err := io.Copy(buffer, conn)
-			require.NoError(t, err)
-
-			assert.Equal(t, int64(4), n)
-			assert.Equal(t, "PONG", buffer.String())
+			assert.Equal(t, test.wantStatusCode, resp.StatusCode)
 		})
 	}
 }
@@ -493,11 +333,11 @@ type fakeSpiffePKI struct {
 	bundle *x509bundle.Bundle
 }
 
-func newFakeSpiffePKI(t *testing.T, trustDomain spiffeid.TrustDomain) fakeSpiffePKI {
-	t.Helper()
-
+func newFakeSpiffePKI(trustDomain spiffeid.TrustDomain) (fakeSpiffePKI, error) {
 	caPrivateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	require.NoError(t, err)
+	if err != nil {
+		return fakeSpiffePKI{}, err
+	}
 
 	caTemplate := x509.Certificate{
 		SerialNumber: big.NewInt(2000),
@@ -514,6 +354,9 @@ func newFakeSpiffePKI(t *testing.T, trustDomain spiffeid.TrustDomain) fakeSpiffe
 		IsCA:                  true,
 		PublicKey:             caPrivateKey.Public(),
 	}
+	if err != nil {
+		return fakeSpiffePKI{}, err
+	}
 
 	caCertDER, err := x509.CreateCertificate(
 		rand.Reader,
@@ -522,25 +365,29 @@ func newFakeSpiffePKI(t *testing.T, trustDomain spiffeid.TrustDomain) fakeSpiffe
 		caPrivateKey.Public(),
 		caPrivateKey,
 	)
-	require.NoError(t, err)
+	if err != nil {
+		return fakeSpiffePKI{}, err
+	}
 
 	bundle, err := x509bundle.ParseRaw(
 		trustDomain,
 		caCertDER,
 	)
-	require.NoError(t, err)
+	if err != nil {
+		return fakeSpiffePKI{}, err
+	}
 
 	return fakeSpiffePKI{
 		bundle:       bundle,
 		caPrivateKey: caPrivateKey,
-	}
+	}, nil
 }
 
-func (f *fakeSpiffePKI) genSVID(t *testing.T, id spiffeid.ID) *x509svid.SVID {
-	t.Helper()
-
+func (f *fakeSpiffePKI) genSVID(id spiffeid.ID) (*x509svid.SVID, error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	require.NoError(t, err)
+	if err != nil {
+		return nil, err
+	}
 
 	template := x509.Certificate{
 		SerialNumber: big.NewInt(200001),
@@ -557,7 +404,6 @@ func (f *fakeSpiffePKI) genSVID(t *testing.T, id spiffeid.ID) *x509svid.SVID {
 		},
 		BasicConstraintsValid: true,
 		PublicKey:             privateKey.PublicKey,
-		IPAddresses:           []net.IP{net.ParseIP("127.0.0.1")},
 	}
 
 	certDER, err := x509.CreateCertificate(
@@ -567,24 +413,25 @@ func (f *fakeSpiffePKI) genSVID(t *testing.T, id spiffeid.ID) *x509svid.SVID {
 		privateKey.Public(),
 		f.caPrivateKey,
 	)
-	require.NoError(t, err)
+	if err != nil {
+		return nil, err
+	}
 
 	keyPKCS8, err := x509.MarshalPKCS8PrivateKey(privateKey)
-	require.NoError(t, err)
+	if err != nil {
+		return nil, err
+	}
 
-	svid, err := x509svid.ParseRaw(certDER, keyPKCS8)
-	require.NoError(t, err)
-
-	return svid
+	return x509svid.ParseRaw(certDER, keyPKCS8)
 }
 
-// fakeSpiffeSource allows retrieving staticly an SVID and its associated bundle.
+// fakeSpiffeSource allows retrieving statically an SVID and its associated bundle.
 type fakeSpiffeSource struct {
 	bundle *x509bundle.Bundle
 	svid   *x509svid.SVID
 }
 
-func (s *fakeSpiffeSource) GetX509BundleForTrustDomain(trustDomain spiffeid.TrustDomain) (*x509bundle.Bundle, error) {
+func (s *fakeSpiffeSource) GetX509BundleForTrustDomain(_ spiffeid.TrustDomain) (*x509bundle.Bundle, error) {
 	return s.bundle, nil
 }
 
