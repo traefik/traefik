@@ -91,8 +91,6 @@ func Test(t *testing.T) {
 	}
 	check.Suite(&KeepAliveSuite{})
 	check.Suite(&LogRotationSuite{})
-	check.Suite(&MarathonSuite{})
-	check.Suite(&MarathonSuite15{})
 	if !useVPN {
 		check.Suite(&ProxyProtocolSuite{})
 	}

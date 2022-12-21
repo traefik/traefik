@@ -80,10 +80,6 @@ func NewProviderAggregator(conf static.Providers) ProviderAggregator {
 		p.quietAddProvider(conf.Docker)
 	}
 
-	if conf.Marathon != nil {
-		p.quietAddProvider(conf.Marathon)
-	}
-
 	if conf.Rest != nil {
 		p.quietAddProvider(conf.Rest)
 	}
@@ -98,10 +94,6 @@ func NewProviderAggregator(conf static.Providers) ProviderAggregator {
 
 	if conf.KubernetesGateway != nil {
 		p.quietAddProvider(conf.KubernetesGateway)
-	}
-
-	if conf.Rancher != nil {
-		p.quietAddProvider(conf.Rancher)
 	}
 
 	if conf.Ecs != nil {
