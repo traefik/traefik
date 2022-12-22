@@ -123,8 +123,7 @@ type route struct {
 	matchers matchersTree
 	// handler responsible for handling the route.
 	handler http.Handler
-	// priority is used to disambiguate between two (or more) rules that would
-	// all match for a given request.
+	// priority is used to disambiguate between two (or more) rules that would all match for a given request.
 	// Computed from the matching rule length, if not user-set.
 	priority int
 }
