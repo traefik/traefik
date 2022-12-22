@@ -59,9 +59,7 @@ func clientIP(tree *matchersTree, clientIP ...string) error {
 }
 
 func method(tree *matchersTree, methods ...string) error {
-	method := methods[0]
-
-	method = strings.ToUpper(method)
+	method := strings.ToUpper(methods[0])
 
 	tree.matcher = func(req *http.Request) bool {
 		return method == req.Method
