@@ -40,18 +40,6 @@ spec:
 - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes": "2000000"
-}
-```
-
-```yaml tab="Rancher"
-# Sets the maximum request body to 2MB
-labels:
-  - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
-```
-
 ```yaml tab="File (YAML)"
 # Sets the maximum request body to 2MB
 http:
@@ -97,17 +85,6 @@ spec:
 - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes": "2000000"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -145,17 +122,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.limit.buffering.memRequestBodyBytes=2000000"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.limit.buffering.memRequestBodyBytes": "2000000"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.limit.buffering.memRequestBodyBytes=2000000"
 ```
 
 ```yaml tab="File (YAML)"
@@ -199,17 +165,6 @@ spec:
 - "traefik.http.middlewares.limit.buffering.maxResponseBodyBytes=2000000"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.limit.buffering.maxResponseBodyBytes": "2000000"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.limit.buffering.maxResponseBodyBytes=2000000"
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -247,17 +202,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.limit.buffering.memResponseBodyBytes=2000000"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.limit.buffering.memResponseBodyBytes": "2000000"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.limit.buffering.memResponseBodyBytes=2000000"
 ```
 
 ```yaml tab="File (YAML)"
@@ -299,17 +243,6 @@ You can have the Buffering middleware replay the request using `retryExpression`
 
     ```yaml tab="Consul Catalog"
     - "traefik.http.middlewares.limit.buffering.retryExpression=IsNetworkError() && Attempts() < 2"
-    ```
-
-    ```json tab="Marathon"
-    "labels": {
-      "traefik.http.middlewares.limit.buffering.retryExpression": "IsNetworkError() && Attempts() < 2"
-    }
-    ```
-
-    ```yaml tab="Rancher"
-    labels:
-      - "traefik.http.middlewares.limit.buffering.retryExpression=IsNetworkError() && Attempts() < 2"
     ```
 
     ```yaml tab="File (YAML)"

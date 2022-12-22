@@ -11,7 +11,7 @@
 [![Twitter](https://img.shields.io/twitter/follow/traefik.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefik)
 
 Traefik (pronounced _traffic_) is a modern HTTP reverse proxy and load balancer that makes deploying microservices easy.
-Traefik integrates with your existing infrastructure components ([Docker](https://www.docker.com/), [Swarm mode](https://docs.docker.com/engine/swarm/), [Kubernetes](https://kubernetes.io), [Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Rancher](https://rancher.com), [Amazon ECS](https://aws.amazon.com/ecs), ...) and configures itself automatically and dynamically.
+Traefik integrates with your existing infrastructure components ([Docker](https://www.docker.com/), [Swarm mode](https://docs.docker.com/engine/swarm/), [Kubernetes](https://kubernetes.io), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Rancher v2](https://rancher.com), [Amazon ECS](https://aws.amazon.com/ecs), ...) and configures itself automatically and dynamically.
 Pointing Traefik at your orchestrator should be the _only_ configuration step you need.
 
 ---
@@ -58,7 +58,7 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 - Circuit breakers, retry
 - See the magic through its clean web UI
 - Websocket, HTTP/2, gRPC ready
-- Provides metrics (Rest, Prometheus, Datadog, Statsd, InfluxDB)
+- Provides metrics (Rest, Prometheus, Datadog, Statsd, InfluxDB 2.X)
 - Keeps access logs (JSON, CLF)
 - Fast
 - Exposes a Rest API
@@ -68,8 +68,6 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 
 - [Docker](https://doc.traefik.io/traefik/providers/docker/) / [Swarm mode](https://doc.traefik.io/traefik/providers/docker/)
 - [Kubernetes](https://doc.traefik.io/traefik/providers/kubernetes-crd/)
-- [Marathon](https://doc.traefik.io/traefik/providers/marathon/)
-- [Rancher](https://doc.traefik.io/traefik/providers/rancher/) (Metadata)
 - [File](https://doc.traefik.io/traefik/providers/file/)
 
 ## Quickstart
