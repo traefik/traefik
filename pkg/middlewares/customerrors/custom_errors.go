@@ -233,6 +233,10 @@ func (cc *codeCatcher) Flush() {
 	// Otherwise, cc.code is actually a 200 here.
 	cc.WriteHeader(cc.code)
 
+	if cc.caughtFilteredCode {
+		return
+	}
+
 	if flusher, ok := cc.responseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
