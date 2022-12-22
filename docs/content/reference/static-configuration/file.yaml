@@ -117,6 +117,7 @@ providers:
     throttleDuration: 42s
     allowEmptyServices: true
     allowExternalNameServices: true
+    disableIngressClassLookup: true
     ingressEndpoint:
       ip: foobar
       hostname: foobar
