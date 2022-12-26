@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/types"
 	"github.com/traefik/traefik/v2/pkg/version"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
@@ -23,6 +24,8 @@ import (
 	"go.opentelemetry.io/otel/metric/unit"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/aggregation"
+	"go.opentelemetry.io/otel/sdk/resource"
+	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
 )
@@ -139,11 +142,21 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OpenTeleme
 		return nil, fmt.Errorf("creating exporter: %w", err)
 	}
 
+	res := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceNameKey.String("traefik"),
+		semconv.ServiceVersionKey.String(version.Version),
+		semconv.TelemetrySDKNameKey.String("opentelemetry"),
+		semconv.TelemetrySDKLanguageKey.String("go"),
+		semconv.TelemetrySDKVersionKey.String(otel.Version()),
+	)
+
 	opts := []sdkmetric.PeriodicReaderOption{
 		sdkmetric.WithInterval(time.Duration(config.PushInterval)),
 	}
 
 	meterProvider := sdkmetric.NewMeterProvider(
+		sdkmetric.WithResource(res),
 		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter, opts...)),
 		// View to customize histogram buckets and rename a single histogram instrument.
 		sdkmetric.WithView(sdkmetric.NewView(
