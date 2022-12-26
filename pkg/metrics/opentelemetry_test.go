@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v2/pkg/version"
 	"go.opentelemetry.io/collector/pdata/pmetric/pmetricotlp"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -329,6 +330,14 @@ func TestOpenTelemetry(t *testing.T) {
 	if !registry.IsEpEnabled() || !registry.IsRouterEnabled() || !registry.IsSvcEnabled() {
 		t.Fatalf("registry should return true for IsEnabled(), IsRouterEnabled() and IsSvcEnabled()")
 	}
+
+	expectedMisc := []string{
+		`({"key":"service.name","value":{"stringValue":"traefik"}})`,
+		`({"key":"service.version","value":{"stringValue":"` + version.Version + `"}})`,
+	}
+	msgMisc := <-c
+
+	assertMessage(t, *msgMisc, expectedMisc)
 
 	// TODO: the len of startUnixNano is no supposed to be 20, it should be 19
 	expectedServer := []string{
