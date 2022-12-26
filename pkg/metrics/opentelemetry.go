@@ -23,6 +23,8 @@ import (
 	"go.opentelemetry.io/otel/metric/unit"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/aggregation"
+	"go.opentelemetry.io/otel/sdk/resource"
+	semconv "go.opentelemetry.io/otel/semconv/v1.11.0"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
 )
@@ -139,11 +141,18 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OpenTeleme
 		return nil, fmt.Errorf("creating exporter: %w", err)
 	}
 
+	res := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceNameKey.String("traefik"),
+		semconv.ServiceVersionKey.String(version.Version),
+	)
+
 	opts := []sdkmetric.PeriodicReaderOption{
 		sdkmetric.WithInterval(time.Duration(config.PushInterval)),
 	}
 
 	meterProvider := sdkmetric.NewMeterProvider(
+		sdkmetric.WithResource(res),
 		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter, opts...)),
 		// View to customize histogram buckets and rename a single histogram instrument.
 		sdkmetric.WithView(sdkmetric.NewView(
