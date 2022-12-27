@@ -4,7 +4,6 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -309,8 +308,7 @@ func TestOpenTelemetry(t *testing.T) {
 		bodyStr := string(marshalledReq)
 		c <- &bodyStr
 
-		_, err = fmt.Fprintln(w, "ok")
-		require.NoError(t, err)
+		w.WriteHeader(http.StatusOK)
 	}))
 	defer ts.Close()
 
@@ -331,21 +329,21 @@ func TestOpenTelemetry(t *testing.T) {
 		t.Fatalf("registry should return true for IsEnabled(), IsRouterEnabled() and IsSvcEnabled()")
 	}
 
-	expectedMisc := []string{
+	expected := []string{
 		`({"key":"service.name","value":{"stringValue":"traefik"}})`,
 		`({"key":"service.version","value":{"stringValue":"` + version.Version + `"}})`,
 	}
 	msgMisc := <-c
 
-	assertMessage(t, *msgMisc, expectedMisc)
+	assertMessage(t, *msgMisc, expected)
 
 	// TODO: the len of startUnixNano is no supposed to be 20, it should be 19
-	expectedServer := []string{
+	expected = append(expected,
 		`({"name":"traefik_config_reloads_total","description":"Config reloads","unit":"1","sum":{"dataPoints":\[{"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
 		`({"name":"traefik_config_reloads_failure_total","description":"Config reload failures","unit":"1","sum":{"dataPoints":\[{"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
 		`({"name":"traefik_config_last_reload_success","description":"Last config reload success","unit":"ms","gauge":{"dataPoints":\[{"startTimeUnixNano":"[\d]{20}","timeUnixNano":"[\d]{19}","asDouble":1}\]}})`,
 		`({"name":"traefik_config_last_reload_failure","description":"Last config reload failure","unit":"ms","gauge":{"dataPoints":\[{"startTimeUnixNano":"[\d]{20}","timeUnixNano":"[\d]{19}","asDouble":1}\]}})`,
-	}
+	)
 
 	registry.ConfigReloadsCounter().Add(1)
 	registry.ConfigReloadsFailureCounter().Add(1)
@@ -353,23 +351,23 @@ func TestOpenTelemetry(t *testing.T) {
 	registry.LastConfigReloadFailureGauge().Set(1)
 	msgServer := <-c
 
-	assertMessage(t, *msgServer, expectedServer)
+	assertMessage(t, *msgServer, expected)
 
-	expectedTLS := []string{
+	expected = append(expected,
 		`({"name":"traefik_tls_certs_not_after","description":"Certificate expiration timestamp","unit":"ms","gauge":{"dataPoints":\[{"attributes":\[{"key":"key","value":{"stringValue":"value"}}\],"startTimeUnixNano":"[\d]{20}","timeUnixNano":"[\d]{19}","asDouble":1}\]}})`,
-	}
+	)
 
 	registry.TLSCertsNotAfterTimestampGauge().With("key", "value").Set(1)
 	msgTLS := <-c
 
-	assertMessage(t, *msgTLS, expectedTLS)
+	assertMessage(t, *msgTLS, expected)
 
-	expectedEntrypoint := []string{
+	expected = append(expected,
 		`({"name":"traefik_entrypoint_requests_total","description":"How many HTTP requests processed on an entrypoint, partitioned by status code, protocol, and method.","unit":"1","sum":{"dataPoints":\[{"attributes":\[{"key":"code","value":{"stringValue":"200"}},{"key":"entrypoint","value":{"stringValue":"test1"}},{"key":"method","value":{"stringValue":"GET"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
 		`({"name":"traefik_entrypoint_requests_tls_total","description":"How many HTTP requests with TLS processed on an entrypoint, partitioned by TLS Version and TLS cipher Used.","unit":"1","sum":{"dataPoints":\[{"attributes":\[{"key":"entrypoint","value":{"stringValue":"test2"}},{"key":"tls_cipher","value":{"stringValue":"bar"}},{"key":"tls_version","value":{"stringValue":"foo"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
 		`({"name":"traefik_entrypoint_request_duration_seconds","description":"How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.","unit":"ms","histogram":{"dataPoints":\[{"attributes":\[{"key":"entrypoint","value":{"stringValue":"test3"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","count":"1","sum":10000,"bucketCounts":\["0","0","0","0","0","0","0","0","0","0","0","1"\],"explicitBounds":\[0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2.5,5,10\],"min":10000,"max":10000}\],"aggregationTemporality":2}})`,
 		`({"name":"traefik_entrypoint_open_connections","description":"How many open connections exist on an entrypoint, partitioned by method and protocol.","unit":"1","gauge":{"dataPoints":\[{"attributes":\[{"key":"entrypoint","value":{"stringValue":"test4"}}\],"startTimeUnixNano":"[\d]{20}","timeUnixNano":"[\d]{19}","asDouble":1}\]}})`,
-	}
+	)
 
 	registry.EntryPointReqsCounter().With("entrypoint", "test1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	registry.EntryPointReqsTLSCounter().With("entrypoint", "test2", "tls_version", "foo", "tls_cipher", "bar").Add(1)
@@ -377,14 +375,14 @@ func TestOpenTelemetry(t *testing.T) {
 	registry.EntryPointOpenConnsGauge().With("entrypoint", "test4").Set(1)
 	msgEntrypoint := <-c
 
-	assertMessage(t, *msgEntrypoint, expectedEntrypoint)
+	assertMessage(t, *msgEntrypoint, expected)
 
-	expectedRouter := []string{
+	expected = append(expected,
 		`({"name":"traefik_router_requests_total","description":"How many HTTP requests are processed on a router, partitioned by service, status code, protocol, and method.","unit":"1","sum":{"dataPoints":\[{"attributes":\[{"key":"code","value":{"stringValue":"(?:200|404)"}},{"key":"method","value":{"stringValue":"GET"}},{"key":"router","value":{"stringValue":"RouterReqsCounter"}},{"key":"service","value":{"stringValue":"test"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1},{"attributes":\[{"key":"code","value":{"stringValue":"(?:200|404)"}},{"key":"method","value":{"stringValue":"GET"}},{"key":"router","value":{"stringValue":"RouterReqsCounter"}},{"key":"service","value":{"stringValue":"test"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
 		`({"name":"traefik_router_requests_tls_total","description":"How many HTTP requests with TLS are processed on a router, partitioned by service, TLS Version, and TLS cipher Used.","unit":"1","sum":{"dataPoints":\[{"attributes":\[{"key":"router","value":{"stringValue":"demo"}},{"key":"service","value":{"stringValue":"test"}},{"key":"tls_cipher","value":{"stringValue":"bar"}},{"key":"tls_version","value":{"stringValue":"foo"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
 		`({"name":"traefik_router_request_duration_seconds","description":"How long it took to process the request on a router, partitioned by service, status code, protocol, and method.","unit":"ms","histogram":{"dataPoints":\[{"attributes":\[{"key":"code","value":{"stringValue":"200"}},{"key":"router","value":{"stringValue":"demo"}},{"key":"service","value":{"stringValue":"test"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","count":"1","sum":10000,"bucketCounts":\["0","0","0","0","0","0","0","0","0","0","0","1"\],"explicitBounds":\[0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2.5,5,10\],"min":10000,"max":10000}\],"aggregationTemporality":2}})`,
 		`({"name":"traefik_router_open_connections","description":"How many open connections exist on a router, partitioned by service, method, and protocol.","unit":"1","gauge":{"dataPoints":\[{"attributes":\[{"key":"router","value":{"stringValue":"demo"}},{"key":"service","value":{"stringValue":"test"}}\],"startTimeUnixNano":"[\d]{20}","timeUnixNano":"[\d]{19}","asDouble":1}\]}})`,
-	}
+	)
 
 	registry.RouterReqsCounter().With("router", "RouterReqsCounter", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 	registry.RouterReqsCounter().With("router", "RouterReqsCounter", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
@@ -393,14 +391,14 @@ func TestOpenTelemetry(t *testing.T) {
 	registry.RouterOpenConnsGauge().With("router", "demo", "service", "test").Set(1)
 	msgRouter := <-c
 
-	assertMessage(t, *msgRouter, expectedRouter)
+	assertMessage(t, *msgRouter, expected)
 
-	expectedService := []string{
+	expected = append(expected,
 		`({"name":"traefik_service_requests_total","description":"How many HTTP requests processed on a service, partitioned by status code, protocol, and method.","unit":"1","sum":{"dataPoints":\[{"attributes":\[{"key":"code","value":{"stringValue":"(?:200|404)"}},{"key":"method","value":{"stringValue":"GET"}},{"key":"service","value":{"stringValue":"ServiceReqsCounter"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1},{"attributes":\[{"key":"code","value":{"stringValue":"(?:200|404)"}},{"key":"method","value":{"stringValue":"GET"}},{"key":"service","value":{"stringValue":"ServiceReqsCounter"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
 		`({"name":"traefik_service_requests_tls_total","description":"How many HTTP requests with TLS processed on a service, partitioned by TLS version and TLS cipher.","unit":"1","sum":{"dataPoints":\[{"attributes":\[{"key":"service","value":{"stringValue":"test"}},{"key":"tls_cipher","value":{"stringValue":"bar"}},{"key":"tls_version","value":{"stringValue":"foo"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
 		`({"name":"traefik_service_request_duration_seconds","description":"How long it took to process the request on a service, partitioned by status code, protocol, and method.","unit":"ms","histogram":{"dataPoints":\[{"attributes":\[{"key":"code","value":{"stringValue":"200"}},{"key":"service","value":{"stringValue":"test"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","count":"1","sum":10000,"bucketCounts":\["0","0","0","0","0","0","0","0","0","0","0","1"\],"explicitBounds":\[0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2.5,5,10\],"min":10000,"max":10000}\],"aggregationTemporality":2}})`,
 		`({"name":"traefik_service_server_up","description":"service server is up, described by gauge value of 0 or 1.","unit":"1","gauge":{"dataPoints":\[{"attributes":\[{"key":"service","value":{"stringValue":"test"}},{"key":"url","value":{"stringValue":"http://127.0.0.1"}}\],"startTimeUnixNano":"[\d]{20}","timeUnixNano":"[\d]{19}","asDouble":1}\]}})`,
-	}
+	)
 
 	registry.ServiceReqsCounter().With("service", "ServiceReqsCounter", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	registry.ServiceReqsCounter().With("service", "ServiceReqsCounter", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
@@ -409,24 +407,24 @@ func TestOpenTelemetry(t *testing.T) {
 	registry.ServiceServerUpGauge().With("service", "test", "url", "http://127.0.0.1").Set(1)
 	msgService := <-c
 
-	assertMessage(t, *msgService, expectedService)
+	assertMessage(t, *msgService, expected)
 
-	expectedServiceRetries := []string{
+	expected = append(expected,
 		`({"attributes":\[{"key":"service","value":{"stringValue":"foobar"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1})`,
 		`({"attributes":\[{"key":"service","value":{"stringValue":"test"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":2})`,
-	}
+	)
 
 	registry.ServiceRetriesCounter().With("service", "test").Add(1)
 	registry.ServiceRetriesCounter().With("service", "test").Add(1)
 	registry.ServiceRetriesCounter().With("service", "foobar").Add(1)
 	msgServiceRetries := <-c
 
-	assertMessage(t, *msgServiceRetries, expectedServiceRetries)
+	assertMessage(t, *msgServiceRetries, expected)
 
-	expectedServiceOpenConns := []string{
+	expected = append(expected,
 		`({"attributes":\[{"key":"service","value":{"stringValue":"test"}}\],"startTimeUnixNano":"[\d]{20}","timeUnixNano":"[\d]{19}","asDouble":3})`,
 		`({"attributes":\[{"key":"service","value":{"stringValue":"foobar"}}\],"startTimeUnixNano":"[\d]{20}","timeUnixNano":"[\d]{19}","asDouble":1})`,
-	}
+	)
 
 	registry.ServiceOpenConnsGauge().With("service", "test").Set(1)
 	registry.ServiceOpenConnsGauge().With("service", "test").Add(1)
@@ -434,8 +432,12 @@ func TestOpenTelemetry(t *testing.T) {
 	registry.ServiceOpenConnsGauge().With("service", "foobar").Add(1)
 	msgServiceOpenConns := <-c
 
-	assertMessage(t, *msgServiceOpenConns, expectedServiceOpenConns)
+	assertMessage(t, *msgServiceOpenConns, expected)
 
+	// We cannot rely on the previous expected pattern,
+	// because this pattern was for matching only one dataPoint in the histogram,
+	// and as soon as the EntryPointReqDurationHistogram.Observe is called,
+	// it adds a new dataPoint to the histogram.
 	expectedEntryPointReqDuration := []string{
 		`({"attributes":\[{"key":"entrypoint","value":{"stringValue":"myEntrypoint"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","count":"2","sum":30000,"bucketCounts":\["0","0","0","0","0","0","0","0","0","0","0","2"\],"explicitBounds":\[0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2.5,5,10\],"min":10000,"max":20000})`,
 	}
