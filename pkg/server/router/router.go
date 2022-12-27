@@ -126,7 +126,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			continue
 		}
 
-		err = muxer.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
+		err = muxer.AddRoute(routerConfig.Rule, routerConfig.EffectivePriority, handler)
 		if err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error().Err(err).Send()
