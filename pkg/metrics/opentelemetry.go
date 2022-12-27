@@ -12,7 +12,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/types"
 	"github.com/traefik/traefik/v2/pkg/version"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
@@ -142,14 +141,15 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OpenTeleme
 		return nil, fmt.Errorf("creating exporter: %w", err)
 	}
 
-	res := resource.NewWithAttributes(
-		semconv.SchemaURL,
-		semconv.ServiceNameKey.String("traefik"),
-		semconv.ServiceVersionKey.String(version.Version),
-		semconv.TelemetrySDKNameKey.String("opentelemetry"),
-		semconv.TelemetrySDKLanguageKey.String("go"),
-		semconv.TelemetrySDKVersionKey.String(otel.Version()),
+	res, err := resource.New(ctx,
+		resource.WithAttributes(semconv.ServiceNameKey.String("traefik")),
+		resource.WithAttributes(semconv.ServiceVersionKey.String(version.Version)),
+		resource.WithFromEnv(),
+		resource.WithTelemetrySDK(),
 	)
+	if err != nil {
+		return nil, fmt.Errorf("building resource: %w", err)
+	}
 
 	opts := []sdkmetric.PeriodicReaderOption{
 		sdkmetric.WithInterval(time.Duration(config.PushInterval)),
