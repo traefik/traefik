@@ -179,33 +179,25 @@ func TestSortByPriority(t *testing.T) {
 			elements: []orderedByPriority{
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Priority: 2,
-						},
+						EffectivePriority: 2,
 					},
 					Name: "b",
 				},
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Priority: 2,
-						},
+						EffectivePriority: 2,
 					},
 					Name: "a",
 				},
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Priority: 1,
-						},
+						EffectivePriority: 1,
 					},
 					Name: "b",
 				},
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Priority: 1,
-						},
+						EffectivePriority: 1,
 					},
 					Name: "a",
 				},
@@ -213,33 +205,25 @@ func TestSortByPriority(t *testing.T) {
 			expected: []orderedByPriority{
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Priority: 1,
-						},
+						EffectivePriority: 1,
 					},
 					Name: "a",
 				},
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Priority: 1,
-						},
+						EffectivePriority: 1,
 					},
 					Name: "b",
 				},
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Priority: 2,
-						},
+						EffectivePriority: 2,
 					},
 					Name: "a",
 				},
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Priority: 2,
-						},
+						EffectivePriority: 2,
 					},
 					Name: "b",
 				},
@@ -251,33 +235,25 @@ func TestSortByPriority(t *testing.T) {
 			elements: []orderedByPriority{
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Priority: 1,
-						},
+						EffectivePriority: 1,
 					},
 					Name: "a",
 				},
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Priority: 1,
-						},
+						EffectivePriority: 1,
 					},
 					Name: "b",
 				},
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Priority: 2,
-						},
+						EffectivePriority: 2,
 					},
 					Name: "a",
 				},
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Priority: 2,
-						},
+						EffectivePriority: 2,
 					},
 					Name: "b",
 				},
@@ -285,33 +261,25 @@ func TestSortByPriority(t *testing.T) {
 			expected: []orderedByPriority{
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Priority: 2,
-						},
+						EffectivePriority: 2,
 					},
 					Name: "b",
 				},
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Priority: 2,
-						},
+						EffectivePriority: 2,
 					},
 					Name: "a",
 				},
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Priority: 1,
-						},
+						EffectivePriority: 1,
 					},
 					Name: "b",
 				},
 				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Priority: 1,
-						},
+						EffectivePriority: 1,
 					},
 					Name: "a",
 				},
