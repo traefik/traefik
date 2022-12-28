@@ -306,19 +306,29 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 
 		if routerConfig.TLS == nil {
 			logger.Debug().Msgf("Adding route for %q", routerConfig.Rule)
-			if err := router.AddRoute(routerConfig.Rule, routerConfig.Priority, handler); err != nil {
+
+			ep, err := router.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
+			if err != nil {
 				routerConfig.AddError(err, true)
 				logger.Error().Err(err).Send()
 			}
+
+			routerConfig.EffectivePriority = ep
+
 			continue
 		}
 
 		if routerConfig.TLS.Passthrough {
 			logger.Debug().Msgf("Adding Passthrough route for %q", routerConfig.Rule)
-			if err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.Priority, handler); err != nil {
+
+			ep, err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
+			if err != nil {
 				routerConfig.AddError(err, true)
 				logger.Error().Err(err).Send()
 			}
+
+			routerConfig.EffectivePriority = ep
+
 			continue
 		}
 
@@ -349,11 +359,14 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 
 			logger.Debug().Msgf("Adding special TLS closing route for %q because broken TLS options %s", routerConfig.Rule, tlsOptionsName)
 
-			err = router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.Priority, &brokenTLSRouter{})
+			ep, err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.Priority, &brokenTLSRouter{})
 			if err != nil {
 				routerConfig.AddError(err, true)
 				logger.Error().Err(err).Send()
 			}
+
+			routerConfig.EffectivePriority = ep
+
 			continue
 		}
 
@@ -383,11 +396,14 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 
 		logger.Debug().Msgf("Adding TLS route for %q", routerConfig.Rule)
 
-		err = router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
+		ep, err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
 		if err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error().Err(err).Send()
+			continue
 		}
+
+		routerConfig.EffectivePriority = ep
 	}
 }
 
