@@ -46,26 +46,29 @@ func (m *Muxer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	http.NotFoundHandler().ServeHTTP(rw, req)
 }
 
+// GetRulePriority computes the priority for a given rule.
+// The priority is calculated using the length of rule.
+// There is a special case where the HostSNI(`*`) has a priority of -1.
+func GetRulePriority(rule string) int {
+	return len(rule)
+}
+
 // AddRoute add a new route to the router.
-func (m *Muxer) AddRoute(rule string, priority int, handler http.Handler) (int, error) {
+func (m *Muxer) AddRoute(rule string, priority int, handler http.Handler) error {
 	parse, err := m.parser.Parse(rule)
 	if err != nil {
-		return 0, fmt.Errorf("error while parsing rule %s: %w", rule, err)
+		return fmt.Errorf("error while parsing rule %s: %w", rule, err)
 	}
 
 	buildTree, ok := parse.(rules.TreeBuilder)
 	if !ok {
-		return 0, fmt.Errorf("error while parsing rule %s", rule)
+		return fmt.Errorf("error while parsing rule %s", rule)
 	}
 
 	var matchers matchersTree
 	err = matchers.addRule(buildTree())
 	if err != nil {
-		return 0, fmt.Errorf("error while adding rule %s: %w", rule, err)
-	}
-
-	if priority == 0 {
-		priority = len(rule)
+		return fmt.Errorf("error while adding rule %s: %w", rule, err)
 	}
 
 	m.routes = append(m.routes, &route{
@@ -76,7 +79,7 @@ func (m *Muxer) AddRoute(rule string, priority int, handler http.Handler) (int, 
 
 	sort.Sort(m.routes)
 
-	return priority, nil
+	return nil
 }
 
 // ParseDomains extract domains from rule.
