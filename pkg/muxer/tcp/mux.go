@@ -74,15 +74,15 @@ func (m Muxer) Match(meta ConnData) (tcp.Handler, bool) {
 
 // AddRoute adds a new route, associated to the given handler, at the given
 // priority, to the muxer.
-func (m *Muxer) AddRoute(rule string, priority int, handler tcp.Handler) error {
+func (m *Muxer) AddRoute(rule string, priority int, handler tcp.Handler) (int, error) {
 	parse, err := m.parser.Parse(rule)
 	if err != nil {
-		return fmt.Errorf("error while parsing rule %s: %w", rule, err)
+		return 0, fmt.Errorf("error while parsing rule %s: %w", rule, err)
 	}
 
 	buildTree, ok := parse.(rules.TreeBuilder)
 	if !ok {
-		return fmt.Errorf("error while parsing rule %s", rule)
+		return 0, fmt.Errorf("error while parsing rule %s", rule)
 	}
 
 	ruleTree := buildTree()
@@ -90,7 +90,7 @@ func (m *Muxer) AddRoute(rule string, priority int, handler tcp.Handler) error {
 	var matchers matchersTree
 	err = matchers.addRule(ruleTree)
 	if err != nil {
-		return fmt.Errorf("error while adding rule %s: %w", rule, err)
+		return 0, fmt.Errorf("error while adding rule %s: %w", rule, err)
 	}
 
 	var catchAll bool
@@ -120,7 +120,7 @@ func (m *Muxer) AddRoute(rule string, priority int, handler tcp.Handler) error {
 
 	sort.Sort(m.routes)
 
-	return nil
+	return priority, nil
 }
 
 // HasRoutes returns whether the muxer has routes.

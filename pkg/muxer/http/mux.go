@@ -47,21 +47,21 @@ func (m *Muxer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 // AddRoute add a new route to the router.
-func (m *Muxer) AddRoute(rule string, priority int, handler http.Handler) error {
+func (m *Muxer) AddRoute(rule string, priority int, handler http.Handler) (int, error) {
 	parse, err := m.parser.Parse(rule)
 	if err != nil {
-		return fmt.Errorf("error while parsing rule %s: %w", rule, err)
+		return 0, fmt.Errorf("error while parsing rule %s: %w", rule, err)
 	}
 
 	buildTree, ok := parse.(rules.TreeBuilder)
 	if !ok {
-		return fmt.Errorf("error while parsing rule %s", rule)
+		return 0, fmt.Errorf("error while parsing rule %s", rule)
 	}
 
 	var matchers matchersTree
 	err = matchers.addRule(buildTree())
 	if err != nil {
-		return fmt.Errorf("error while adding rule %s: %w", rule, err)
+		return 0, fmt.Errorf("error while adding rule %s: %w", rule, err)
 	}
 
 	if priority == 0 {
@@ -76,7 +76,7 @@ func (m *Muxer) AddRoute(rule string, priority int, handler http.Handler) error 
 
 	sort.Sort(m.routes)
 
-	return nil
+	return priority, nil
 }
 
 // ParseDomains extract domains from rule.
