@@ -217,7 +217,7 @@ func TestMuxer(t *testing.T) {
 			require.NoError(t, err)
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			_, err = muxer.AddRoute(test.rule, 0, handler)
+			err = muxer.AddRoute(test.rule, 0, handler)
 			if test.expectedError {
 				require.Error(t, err)
 				return
@@ -376,7 +376,11 @@ func Test_addRoutePriority(t *testing.T) {
 					w.Header().Set("X-From", route.xFrom)
 				})
 
-				_, err := muxer.AddRoute(route.rule, route.priority, handler)
+				if route.priority == 0 {
+					route.priority = GetRulePriority(route.rule)
+				}
+
+				err := muxer.AddRoute(route.rule, route.priority, handler)
 				require.NoError(t, err, route.rule)
 			}
 
@@ -501,7 +505,7 @@ func TestEmptyHost(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			_, err = muxer.AddRoute(test.rule, 0, handler)
+			err = muxer.AddRoute(test.rule, 0, handler)
 			require.NoError(t, err)
 
 			// RequestDecorator is necessary for the host rule

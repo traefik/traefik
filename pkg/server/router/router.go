@@ -119,6 +119,12 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		logger := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
 		ctxRouter := logger.WithContext(provider.AddInContext(ctx, routerName))
 
+		priority := routerConfig.Priority
+		if routerConfig.Priority == 0 {
+			priority = httpmuxer.GetRulePriority(routerConfig.Rule)
+		}
+		routerConfig.EffectivePriority = priority // To be available in the API.
+
 		handler, err := m.buildRouterHandler(ctxRouter, routerName, routerConfig)
 		if err != nil {
 			routerConfig.AddError(err, true)
@@ -126,14 +132,11 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			continue
 		}
 
-		ep, err := muxer.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
-		if err != nil {
+		if err = muxer.AddRoute(routerConfig.Rule, priority, handler); err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error().Err(err).Send()
 			continue
 		}
-
-		routerConfig.EffectivePriority = ep
 	}
 
 	chain := alice.New()
