@@ -233,8 +233,11 @@ func (cc *codeCatcher) Flush() {
 	// Otherwise, cc.code is actually a 200 here.
 	cc.WriteHeader(cc.code)
 
-	// Prevent superfluous WriteHeader
-	// (e.g., request with a `Transfert-Encoding: chunked` header).
+	// We don't care about the contents of the response,
+	// since we want to serve the ones from the error page,
+	// so we just don't flush.
+	// (e.g., To prevent superfluous WriteHeader on request with a
+	// `Transfert-Encoding: chunked` header).
 	if cc.caughtFilteredCode {
 		return
 	}
