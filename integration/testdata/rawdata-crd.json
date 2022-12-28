@@ -21,6 +21,7 @@
 			"tls": {
 				"options": "default-mytlsoption"
 			},
+			"effectivePriority": 12,
 			"status": "enabled",
 			"using": [
 				"web"

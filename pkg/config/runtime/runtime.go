@@ -47,7 +47,11 @@ func NewConfig(conf dynamic.Configuration) *Configuration {
 		if len(routers) > 0 {
 			runtimeConfig.Routers = make(map[string]*RouterInfo, len(routers))
 			for k, v := range routers {
-				runtimeConfig.Routers[k] = &RouterInfo{Router: v, Status: StatusEnabled}
+				priority := v.Priority
+				if v.Priority == 0 {
+					priority = len(v.Rule)
+				}
+				runtimeConfig.Routers[k] = &RouterInfo{Router: v, EffectivePriority: priority, Status: StatusEnabled}
 			}
 		}
 
@@ -72,7 +76,11 @@ func NewConfig(conf dynamic.Configuration) *Configuration {
 		if len(conf.TCP.Routers) > 0 {
 			runtimeConfig.TCPRouters = make(map[string]*TCPRouterInfo, len(conf.TCP.Routers))
 			for k, v := range conf.TCP.Routers {
-				runtimeConfig.TCPRouters[k] = &TCPRouterInfo{TCPRouter: v, Status: StatusEnabled}
+				priority := v.Priority
+				if v.Priority == 0 {
+					priority = len(v.Rule)
+				}
+				runtimeConfig.TCPRouters[k] = &TCPRouterInfo{TCPRouter: v, EffectivePriority: priority, Status: StatusEnabled}
 			}
 		}
 
