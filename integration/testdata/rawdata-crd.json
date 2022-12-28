@@ -6,6 +6,7 @@
 			],
 			"service": "api@internal",
 			"rule": "PathPrefix(`/api`)",
+			"effectivePriority": 18,
 			"status": "enabled",
 			"using": [
 				"web"
@@ -36,6 +37,7 @@
 			],
 			"service": "default-test2-route-23c7f4c450289ee29016",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/tobestripped`)",
+			"effectivePriority": 46,
 			"status": "enabled",
 			"using": [
 				"web"
@@ -47,6 +49,7 @@
 			],
 			"service": "default-wrr1",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/wrr1`)",
+			"effectivePriority": 38,
 			"status": "enabled",
 			"using": [
 				"web"
@@ -58,6 +61,7 @@
 			],
 			"service": "default-testst-route-60ad45fcb5fc1f5f3629",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/serverstransport`)",
+			"effectivePriority": 50,
 			"status": "enabled",
 			"using": [
 				"web"
@@ -69,6 +73,7 @@
 			],
 			"service": "other-ns-wrr3",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/c`)",
+			"effectivePriority": 35,
 			"error": [
 				"the service \"other-ns-wrr3@kubernetescrd\" does not exist"
 			],
@@ -266,6 +271,7 @@
 				"passthrough": false,
 				"options": "default-mytlsoption"
 			},
+			"effectivePriority": 12,
 			"status": "enabled",
 			"using": [
 				"footcp"
