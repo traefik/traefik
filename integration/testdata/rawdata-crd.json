@@ -271,7 +271,7 @@
 				"passthrough": false,
 				"options": "default-mytlsoption"
 			},
-			"effectivePriority": 12,
+			"effectivePriority": -1,
 			"status": "enabled",
 			"using": [
 				"footcp"
