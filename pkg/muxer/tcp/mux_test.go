@@ -267,7 +267,7 @@ func Test_addTCPRoute(t *testing.T) {
 			router, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = router.AddRoute(test.rule, 0, handler)
+			_, err = router.AddRoute(test.rule, 0, handler)
 			if test.routeErr {
 				require.Error(t, err)
 				return
@@ -427,7 +427,7 @@ func Test_Priority(t *testing.T) {
 			matchedRule := ""
 			for rule, priority := range test.rules {
 				rule := rule
-				err := muxer.AddRoute(rule, priority, tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+				_, err := muxer.AddRoute(rule, priority, tcp.HandlerFunc(func(conn tcp.WriteCloser) {
 					matchedRule = rule
 				}))
 				require.NoError(t, err)
