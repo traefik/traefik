@@ -126,12 +126,14 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			continue
 		}
 
-		err = muxer.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
+		ep, err := muxer.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
 		if err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error().Err(err).Send()
 			continue
 		}
+
+		routerConfig.EffectivePriority = ep
 	}
 
 	chain := alice.New()
