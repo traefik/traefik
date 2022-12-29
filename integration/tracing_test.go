@@ -41,9 +41,44 @@ func (s *TracingSuite) startZipkin(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
+func (s *TracingSuite) TestZipkinNoInternals(c *check.C) {
+	s.startZipkin(c)
+	defer s.composeStop(c, "zipkin")
+
+	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
+		WhoamiIP:   s.whoamiIP,
+		WhoamiPort: s.whoamiPort,
+		IP:         s.tracerIP,
+	})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/ratelimit", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/ping", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+	err = try.GetRequest("http://127.0.0.1:8080/ping", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://"+s.tracerIP+":9411/api/v2/spans?serviceName=tracing", 20*time.Second, try.BodyNotContains("forward ping@internal/ping@internal",
+		"forward ping@internal/customping@file", "forward api@internal/api@internal"))
+	c.Assert(err, checker.IsNil)
+}
+
 func (s *TracingSuite) TestZipkinRateLimit(c *check.C) {
 	s.startZipkin(c)
-	// defer s.composeStop(c, "zipkin")
+	defer s.composeStop(c, "zipkin")
 
 	file := s.adaptFile(c, "fixtures/tracing/simple-zipkin.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
