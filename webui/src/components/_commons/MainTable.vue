@@ -10,7 +10,8 @@
               v-bind:key="column.name"
               @click="onSortClick(column.name)">
               {{ column.label }}
-              <i v-if="currentSort === column.name" class="material-icons">{{currentSortDir === 'asc' ? 'arrow_drop_up' : 'arrow_drop_down'}}</i>
+              <i v-if="currentSort === column.name" class="material-icons">{{currentSortDir === 'asc' ? 'arrow_drop_down' : 'arrow_drop_up'}}</i>
+              <i v-else style="opacity: 0" class="material-icons">{{currentSortDir === 'asc' ? 'arrow_drop_down' : 'arrow_drop_up'}}</i>
             </th>
           </tr>
         </thead>
@@ -86,8 +87,8 @@ export default {
   },
   data () {
     return {
-      currentSort: '',
-      currentSortDir: ''
+      currentSort: 'name',
+      currentSortDir: 'asc'
     }
   },
   methods: {
