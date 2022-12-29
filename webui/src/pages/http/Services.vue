@@ -53,8 +53,8 @@ export default {
     return {
       filter: '',
       status: '',
-      sortBy: '',
-      sortDir: ''
+      sortBy: 'name',
+      sortDir: 'asc'
     }
   },
   computed: {
