@@ -15,6 +15,8 @@
               :onLoadMore="handleLoadMore"
               :endReached="allMiddlewares.endReached"
               :loading="allMiddlewares.loading"
+              :currentSort.sync="sortBy"
+              :currentSortDir.sync="sortDir"
             />
           </div>
         </div>
@@ -50,7 +52,9 @@ export default {
   data () {
     return {
       filter: '',
-      status: ''
+      status: '',
+      sortBy: 'name',
+      sortDir: 'asc'
     }
   },
   computed: {
@@ -62,6 +66,8 @@ export default {
       return this.getAllMiddlewares({
         query: this.filter,
         status: this.status,
+        sortBy: this.sortBy,
+        direction: this.sortDir,
         ...params
       })
     },
@@ -81,6 +87,12 @@ export default {
       this.refreshAll()
     },
     'filter' () {
+      this.refreshAll()
+    },
+    'sortBy' () {
+      this.refreshAll()
+    },
+    'sortDir' () {
       this.refreshAll()
     }
   },
