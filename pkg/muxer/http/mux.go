@@ -48,7 +48,6 @@ func (m *Muxer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 // GetRulePriority computes the priority for a given rule.
 // The priority is calculated using the length of rule.
-// There is a special case where the HostSNI(`*`) has a priority of -1.
 func GetRulePriority(rule string) int {
 	return len(rule)
 }
