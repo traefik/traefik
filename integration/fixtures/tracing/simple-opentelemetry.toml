@@ -9,6 +9,8 @@
 [api]
   insecure = true
 
+[ping]
+
 [entryPoints]
   [entryPoints.web]
     address = ":8000"
@@ -47,6 +49,10 @@
     Service = "service3"
     Middlewares = ["retry", "basic-auth"]
     Rule = "Path(`/auth`)"
+  [http.routers.customPing]
+    entryPoints = ["web"]
+    rule = "PathPrefix(`/ping`)"
+    service = "ping@internal"
 
 [http.middlewares]
   [http.middlewares.retry.retry]

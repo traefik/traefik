@@ -302,18 +302,21 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 
 		proxy := buildSingleHostProxy(target, passHostHeader, time.Duration(flushInterval), roundTripper, m.bufferPool)
 
-		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
-		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
-		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, accesslog.AddServiceFields)
+		// Prevents from enabling observability for internal resources.
+		if !provider.IsInternal(ctx) && !strings.HasSuffix(provider.GetQualifiedName(ctx, serviceName), "@internal") {
+			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
+			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
+			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, accesslog.AddServiceFields)
 
-		if m.metricsRegistry != nil && m.metricsRegistry.IsSvcEnabled() {
-			metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.metricsRegistry, serviceName)
+			if m.metricsRegistry != nil && m.metricsRegistry.IsSvcEnabled() {
+				metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.metricsRegistry, serviceName)
 
-			proxy, err = alice.New().
-				Append(tracingMiddle.WrapMiddleware(ctx, metricsHandler)).
-				Then(proxy)
-			if err != nil {
-				return nil, fmt.Errorf("error wrapping metrics handler: %w", err)
+				proxy, err = alice.New().
+					Append(tracingMiddle.WrapMiddleware(ctx, metricsHandler)).
+					Then(proxy)
+				if err != nil {
+					return nil, fmt.Errorf("error wrapping metrics handler: %w", err)
+				}
 			}
 		}
 
