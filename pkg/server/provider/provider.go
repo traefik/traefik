@@ -43,3 +43,12 @@ func GetQualifiedName(ctx context.Context, elementName string) string {
 func MakeQualifiedName(providerName, elementName string) string {
 	return elementName + "@" + providerName
 }
+
+// IsInternal returns whether the context has the key for the internal provider.
+func IsInternal(ctx context.Context) bool {
+	if providerName, ok := ctx.Value(key).(string); ok {
+		return providerName == "internal"
+	}
+
+	return false
+}
