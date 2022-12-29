@@ -51,6 +51,11 @@ func (g Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// allow iframes from our domains only
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-src
 	w.Header().Set("Content-Security-Policy", "frame-src 'self' https://traefik.io https://*.traefik.io;")
+
+	// The content type must be guessed by the file server.
+	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
+	w.Header().Del("Content-Type")
+
 	http.FileServer(http.FS(assets)).ServeHTTP(w, r)
 }
 
