@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
@@ -72,48 +73,43 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 		logger := log.Ctx(rootCtx).With().Str(logs.EntryPointName, entryPointName).Logger()
 		ctx := logger.WithContext(rootCtx)
 
-		handler, err := m.buildEntryPointHandler(ctx, routers)
+		handler, err := m.buildEntryPointHandler(ctx, entryPointName, routers)
 		if err != nil {
 			logger.Error().Err(err).Send()
 			continue
 		}
 
-		handlerWithAccessLog, err := alice.New(func(next http.Handler) (http.Handler, error) {
-			return accesslog.NewFieldHandler(next, logs.EntryPointName, entryPointName, accesslog.AddOriginFields), nil
-		}).Then(handler)
-		if err != nil {
-			logger.Error().Err(err).Send()
-			entryPointHandlers[entryPointName] = handler
-		} else {
-			entryPointHandlers[entryPointName] = handlerWithAccessLog
-		}
+		entryPointHandlers[entryPointName] = handler
 	}
 
 	for _, entryPointName := range entryPoints {
-		logger := log.Ctx(rootCtx).With().Str(logs.EntryPointName, entryPointName).Logger()
-		ctx := logger.WithContext(rootCtx)
-
 		handler, ok := entryPointHandlers[entryPointName]
 		if !ok || handler == nil {
 			handler = BuildDefaultHTTPRouter()
 		}
 
-		handlerWithMiddlewares, err := m.chainBuilder.Build(ctx, entryPointName).Then(handler)
-		if err != nil {
-			logger.Error().Err(err).Send()
-			continue
-		}
-		entryPointHandlers[entryPointName] = handlerWithMiddlewares
+		entryPointHandlers[entryPointName] = handler
 	}
 
 	return entryPointHandlers
 }
 
-func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.RouterInfo) (http.Handler, error) {
+func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.RouterInfo) (http.Handler, error) {
+	observabilityChain := m.chainBuilder.Build(ctx, entryPointName)
+
 	muxer, err := httpmuxer.NewMuxer()
 	if err != nil {
 		return nil, err
 	}
+
+	defaultHandler, err := observabilityChain.Append(func(next http.Handler) (http.Handler, error) {
+		return accesslog.NewFieldHandler(next, logs.EntryPointName, entryPointName, accesslog.AddOriginFields), nil
+	}).Then(http.NotFoundHandler())
+	if err != nil {
+		return nil, err
+	}
+
+	muxer.SetDefaultHandler(defaultHandler)
 
 	for routerName, routerConfig := range configs {
 		logger := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
@@ -128,6 +124,18 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			routerConfig.AddError(err, true)
 			logger.Error().Err(err).Send()
 			continue
+		}
+
+		// Prevents from enabling observability for internal resources.
+		if !provider.IsInternal(ctxRouter) && !strings.HasSuffix(provider.GetQualifiedName(ctx, routerConfig.Service), "@internal") {
+			handler, err = observabilityChain.Append(func(next http.Handler) (http.Handler, error) {
+				return accesslog.NewFieldHandler(next, logs.EntryPointName, entryPointName, accesslog.AddOriginFields), nil
+			}).Then(handler)
+			if err != nil {
+				routerConfig.AddError(err, true)
+				logger.Error().Err(err).Send()
+				continue
+			}
 		}
 
 		if err = muxer.AddRoute(routerConfig.Rule, routerConfig.Priority, handler); err != nil {
@@ -166,6 +174,12 @@ func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, rou
 		return nil, err
 	}
 
+	// Prevents from enabling observability for internal resources.
+	if provider.IsInternal(ctx) || strings.HasSuffix(provider.GetQualifiedName(ctx, routerConfig.Service), "@internal") {
+		m.routerHandlers[routerName] = handler
+		return m.routerHandlers[routerName], nil
+	}
+
 	handlerWithAccessLog, err := alice.New(func(next http.Handler) (http.Handler, error) {
 		return accesslog.NewFieldHandler(next, accesslog.RouterName, routerName, nil), nil
 	}).Then(handler)
@@ -197,11 +211,16 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 
 	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
 
+	chain := alice.New()
+
+	// Prevents from enabling observability for internal resources.
+	if provider.IsInternal(ctx) || strings.HasSuffix(provider.GetQualifiedName(ctx, router.Service), "@internal") {
+		return chain.Extend(*mHandler).Then(sHandler)
+	}
+
 	tHandler := func(next http.Handler) (http.Handler, error) {
 		return tracing.NewForwarder(ctx, routerName, router.Service, next), nil
 	}
-
-	chain := alice.New()
 
 	if m.metricsRegistry != nil && m.metricsRegistry.IsRouterEnabled() {
 		chain = chain.Append(metricsMiddle.WrapRouterHandler(ctx, m.metricsRegistry, routerName, provider.GetQualifiedName(ctx, router.Service)))
