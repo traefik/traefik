@@ -86,7 +86,7 @@ export default {
       routersFilter: '',
       routersStatus: '',
       routersPagination: {
-        sortBy: '',
+        sortBy: 'name',
         descending: true,
         page: 1,
         rowsPerPage: 1000,
