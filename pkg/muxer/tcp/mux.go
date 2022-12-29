@@ -13,12 +13,6 @@ import (
 	"github.com/vulcand/predicate"
 )
 
-var catchAllParser predicate.Parser
-
-func init() {
-	catchAllParser, _ = rules.NewParser([]string{"HostSNI"})
-}
-
 // ConnData contains TCP connection metadata.
 type ConnData struct {
 	serverName string
@@ -82,6 +76,11 @@ func (m Muxer) Match(meta ConnData) (tcp.Handler, bool) {
 // The priority is calculated using the length of rule.
 // There is a special case where the HostSNI(`*`) has a priority of -1.
 func GetRulePriority(rule string) int {
+	catchAllParser, err := rules.NewParser([]string{"HostSNI"})
+	if err != nil {
+		return len(rule)
+	}
+
 	parse, err := catchAllParser.Parse(rule)
 	if err != nil {
 		return len(rule)
