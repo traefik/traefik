@@ -67,6 +67,8 @@ export default {
         status: this.status,
         sortBy: this.sortBy,
         direction: this.sortDir,
+        serviceName: '',
+        middlewareName: '',
         ...params
       })
     },
