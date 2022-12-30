@@ -8,7 +8,7 @@
               v-for="column in columns"
               v-bind:class="getColumn(column.name).sortable ? `text-${column.align} cursor-pointer`: `text-${column.align}`"
               v-bind:key="column.name"
-              @click="onSortClick(column.name)">
+              @click="getColumn(column.name).sortable ? onSortClick(column.name) : null">
               {{ column.label }}
               <i v-if="currentSort === column.name" class="material-icons">{{currentSortDir === 'asc' ? 'arrow_drop_down' : 'arrow_drop_up'}}</i>
               <i v-else style="opacity: 0" class="material-icons">{{currentSortDir === 'asc' ? 'arrow_drop_down' : 'arrow_drop_up'}}</i>
