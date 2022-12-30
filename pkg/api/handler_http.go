@@ -223,7 +223,10 @@ func keepRouter(name string, item *runtime.RouterInfo, criterion *searchCriterio
 		return true
 	}
 
-	return criterion.withStatus(item.Status) && criterion.searchIn(item.Rule, name)
+	return criterion.withStatus(item.Status) &&
+		criterion.searchIn(item.Rule, name) &&
+		criterion.filterService(item.Service) &&
+		criterion.filterMiddleware(item.Middlewares)
 }
 
 func keepService(name string, item *runtime.ServiceInfo, criterion *searchCriterion) bool {

@@ -64,6 +64,8 @@ export default {
     ...mapActions('http', { getAllRouters: 'getAllRouters' }),
     getAllRoutersWithParams (params) {
       return this.getAllRouters({
+        serviceName: '',
+        middlewareName: '',
         query: this.filter,
         status: this.status,
         sortBy: this.sortBy,
