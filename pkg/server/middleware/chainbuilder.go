@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/containous/alice"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v2/pkg/middlewares/capture"
@@ -56,7 +56,7 @@ func (c *ChainBuilder) Build(ctx context.Context, entryPointName string) alice.C
 func (c *ChainBuilder) Close() {
 	if c.accessLoggerMiddleware != nil {
 		if err := c.accessLoggerMiddleware.Close(); err != nil {
-			log.WithoutContext().Errorf("Could not close the access log file: %s", err)
+			log.Error().Err(err).Msg("Could not close the access log file")
 		}
 	}
 

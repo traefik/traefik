@@ -8,8 +8,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
 	"github.com/traefik/traefik/v2/pkg/tls"
@@ -24,7 +25,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 	}
 
 	for _, ingressRouteTCP := range client.GetIngressRouteTCPs() {
-		logger := log.FromContext(log.With(ctx, log.Str("ingress", ingressRouteTCP.Name), log.Str("namespace", ingressRouteTCP.Namespace)))
+		logger := log.Ctx(ctx).With().Str("ingress", ingressRouteTCP.Name).Str("namespace", ingressRouteTCP.Namespace).Logger()
 
 		if !shouldProcessIngress(p.IngressClass, ingressRouteTCP.Annotations[annotationKubernetesIngressClass]) {
 			continue
@@ -33,7 +34,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 		if ingressRouteTCP.Spec.TLS != nil && !ingressRouteTCP.Spec.TLS.Passthrough {
 			err := getTLSTCP(ctx, ingressRouteTCP, client, tlsConfigs)
 			if err != nil {
-				logger.Errorf("Error configuring TLS: %v", err)
+				logger.Error().Err(err).Msg("Error configuring TLS")
 			}
 		}
 
@@ -44,19 +45,19 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 
 		for _, route := range ingressRouteTCP.Spec.Routes {
 			if len(route.Match) == 0 {
-				logger.Errorf("Empty match rule")
+				logger.Error().Msg("Empty match rule")
 				continue
 			}
 
 			key, err := makeServiceKey(route.Match, ingressName)
 			if err != nil {
-				logger.Error(err)
+				logger.Error().Err(err).Send()
 				continue
 			}
 
 			mds, err := p.makeMiddlewareTCPKeys(ctx, ingressRouteTCP.Namespace, route.Middlewares)
 			if err != nil {
-				logger.Errorf("Failed to create middleware keys: %v", err)
+				logger.Error().Err(err).Msg("Failed to create middleware keys")
 				continue
 			}
 
@@ -65,10 +66,11 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 			for _, service := range route.Services {
 				balancerServerTCP, err := p.createLoadBalancerServerTCP(client, ingressRouteTCP.Namespace, service)
 				if err != nil {
-					logger.
-						WithField("serviceName", service.Name).
-						WithField("servicePort", service.Port).
-						Errorf("Cannot create service: %v", err)
+					logger.Error().
+						Str("serviceName", service.Name).
+						Stringer("servicePort", &service.Port).
+						Err(err).
+						Msg("Cannot create service")
 					continue
 				}
 
@@ -119,13 +121,13 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 						}
 						tlsOptionsName = makeID(ns, tlsOptionsName)
 					} else if len(ns) > 0 {
-						logger.
-							WithField("TLSOption", ingressRouteTCP.Spec.TLS.Options.Name).
-							Warnf("Namespace %q is ignored in cross-provider context", ns)
+						logger.Warn().
+							Str("TLSOption", ingressRouteTCP.Spec.TLS.Options.Name).
+							Msgf("Namespace %q is ignored in cross-provider context", ns)
 					}
 
 					if !isNamespaceAllowed(p.AllowCrossNamespace, ingressRouteTCP.Namespace, ns) {
-						logger.Errorf("TLSOption %s/%s is not in the IngressRouteTCP namespace %s",
+						logger.Error().Msgf("TLSOption %s/%s is not in the IngressRouteTCP namespace %s",
 							ns, ingressRouteTCP.Spec.TLS.Options.Name, ingressRouteTCP.Namespace)
 						continue
 					}
@@ -147,9 +149,9 @@ func (p *Provider) makeMiddlewareTCPKeys(ctx context.Context, ingRouteTCPNamespa
 	for _, mi := range middlewares {
 		if strings.Contains(mi.Name, providerNamespaceSeparator) {
 			if len(mi.Namespace) > 0 {
-				log.FromContext(ctx).
-					WithField(log.MiddlewareName, mi.Name).
-					Warnf("namespace %q is ignored in cross-provider context", mi.Namespace)
+				log.Ctx(ctx).Warn().
+					Str(logs.MiddlewareName, mi.Name).
+					Msgf("Namespace %q is ignored in cross-provider context", mi.Namespace)
 			}
 			mds = append(mds, mi.Name)
 			continue
@@ -275,7 +277,7 @@ func getTLSTCP(ctx context.Context, ingressRoute *v1alpha1.IngressRouteTCP, k8sC
 		return nil
 	}
 	if ingressRoute.Spec.TLS.SecretName == "" {
-		log.FromContext(ctx).Debugf("No secret name provided")
+		log.Ctx(ctx).Debug().Msg("No secret name provided")
 		return nil
 	}
 

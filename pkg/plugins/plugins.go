@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 )
 
 const localGoPath = "./plugins-local/"
@@ -27,7 +27,7 @@ func SetupRemotePlugins(client *Client, plugins map[string]Descriptor) error {
 	ctx := context.Background()
 
 	for pAlias, desc := range plugins {
-		log.FromContext(ctx).Debugf("loading of plugin: %s: %s@%s", pAlias, desc.ModuleName, desc.Version)
+		log.Ctx(ctx).Debug().Msgf("Loading of plugin: %s: %s@%s", pAlias, desc.ModuleName, desc.Version)
 
 		hash, err := client.Download(ctx, desc.ModuleName, desc.Version)
 		if err != nil {

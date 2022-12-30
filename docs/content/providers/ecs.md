@@ -234,6 +234,30 @@ providers:
 # ...
 ```
 
+### `healthyTasksOnly`
+
+_Optional, Default=false_
+
+Determines whether Traefik discovers only healthy tasks (`HEALTHY` healthStatus).
+
+```yaml tab="File (YAML)"
+providers:
+  ecs:
+    healthyTasksOnly: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.ecs]
+  healthyTasksOnly = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.ecs.healthyTasksOnly=true
+# ...
+```
+
 ### `defaultRule`
 
 _Optional, Default=```Host(`{{ normalize .Name }}`)```_

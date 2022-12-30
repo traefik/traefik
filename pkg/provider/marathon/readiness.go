@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/gambol99/go-marathon"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -98,7 +98,7 @@ func (rc *readinessChecker) Do(task marathon.Task, app marathon.Application) boo
 		// An unparseable start time should never occur; if it does, we assume the
 		// problem should be surfaced as quickly as possible, which is easiest if
 		// we shun the task from rotation.
-		log.Warnf("Failed to parse start-time %s of task %s from application %s: %s (assuming unready)", task.StartedAt, task.ID, app.ID, err)
+		log.Warn().Err(err).Msgf("Failed to parse start-time %s of task %s from application %s (assuming unready)", task.StartedAt, task.ID, app.ID)
 		return false
 	}
 
@@ -117,6 +117,6 @@ func (rc *readinessChecker) Do(task marathon.Task, app marathon.Application) boo
 
 func (rc *readinessChecker) tracef(format string, args ...interface{}) {
 	if rc.traceLogging {
-		log.Debugf(readinessLogHeader+format, args...)
+		log.Debug().Msgf(readinessLogHeader+format, args...)
 	}
 }

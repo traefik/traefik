@@ -5,7 +5,8 @@ import (
 	"net/url"
 
 	"github.com/opentracing/opentracing-go"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/version"
 	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmot"
@@ -59,13 +60,15 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 		return nil, nil, err
 	}
 
-	tracer.SetLogger(log.WithoutContext())
+	logger := log.With().Str(logs.TracingProviderName, Name).Logger()
+	tracer.SetLogger(logs.NewElasticLogger(logger))
+
 	otTracer := apmot.New(apmot.WithTracer(tracer))
 
 	// Without this, child spans are getting the NOOP tracer
 	opentracing.SetGlobalTracer(otTracer)
 
-	log.WithoutContext().Debug("Elastic tracer configured")
+	log.Debug().Msg("Elastic tracer configured")
 
 	return otTracer, nil, nil
 }

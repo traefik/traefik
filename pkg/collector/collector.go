@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/mitchellh/hashstructure"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/redactor"
 	"github.com/traefik/traefik/v2/pkg/version"
 )
@@ -49,7 +49,7 @@ func createBody(staticConfiguration *static.Configuration) (*bytes.Buffer, error
 		return nil, err
 	}
 
-	log.WithoutContext().Infof("Anonymous stats sent to %s: %s", collectorURL, anonConfig)
+	log.Debug().Msgf("Anonymous stats sent to %s: %s", collectorURL, anonConfig)
 
 	hashConf, err := hashstructure.Hash(staticConfiguration, nil)
 	if err != nil {

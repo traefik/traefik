@@ -16,9 +16,10 @@ import (
 	"time"
 
 	"github.com/containous/alice"
+	"github.com/rs/zerolog/log"
 	"github.com/sirupsen/logrus"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/middlewares/capture"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"github.com/traefik/traefik/v2/pkg/types"
@@ -94,7 +95,7 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 	case JSONFormat:
 		formatter = new(logrus.JSONFormatter)
 	default:
-		log.WithoutContext().Errorf("unsupported access log format: %q, defaulting to common format instead.", config.Format)
+		log.Error().Msgf("Unsupported access log format: %q, defaulting to common format instead.", config.Format)
 		formatter = new(CommonLogFormatter)
 	}
 
@@ -125,7 +126,7 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 
 	if config.Filters != nil {
 		if httpCodeRanges, err := types.NewHTTPCodeRanges(config.Filters.StatusCodes); err != nil {
-			log.WithoutContext().Errorf("Failed to create new HTTP code ranges: %s", err)
+			log.Error().Err(err).Msg("Failed to create new HTTP code ranges")
 		} else {
 			logHandler.httpCodeRanges = httpCodeRanges
 		}
@@ -218,6 +219,9 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		core[RequestScheme] = "https"
 		core[TLSVersion] = traefiktls.GetVersion(req.TLS)
 		core[TLSCipher] = traefiktls.GetCipherName(req.TLS)
+		if len(req.TLS.PeerCertificates) > 0 && req.TLS.PeerCertificates[0] != nil {
+			core[TLSClientSubject] = req.TLS.PeerCertificates[0].Subject.String()
+		}
 	}
 
 	core[ClientAddr] = req.RemoteAddr
@@ -230,9 +234,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 	ctx := req.Context()
 	capt, err := capture.FromContext(ctx)
 	if err != nil {
-		log.FromContext(log.With(ctx, log.Str(log.MiddlewareType, "AccessLogs"))).
-			WithError(err).
-			Errorf("Could not get Capture")
+		log.Ctx(ctx).Error().Err(err).Str(logs.MiddlewareType, "AccessLogs").Msg("Could not get Capture")
 		return
 	}
 

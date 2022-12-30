@@ -15,9 +15,9 @@ import (
 
 	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/integration/try"
 	"github.com/traefik/traefik/v2/pkg/api"
-	"github.com/traefik/traefik/v2/pkg/log"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -57,7 +57,7 @@ func (s *K8sSuite) TearDownSuite(c *check.C) {
 
 	for _, filename := range generatedFiles {
 		if err := os.Remove(filename); err != nil {
-			log.WithoutContext().Warning(err)
+			log.Warn().Err(err).Send()
 		}
 	}
 }

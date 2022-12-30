@@ -82,8 +82,8 @@ func init() {
 						Scheme:          "foo",
 						Path:            "foo",
 						Port:            42,
-						Interval:        "foo",
-						Timeout:         "foo",
+						Interval:        ptypes.Duration(111 * time.Second),
+						Timeout:         ptypes.Duration(111 * time.Second),
 						Hostname:        "foo",
 						FollowRedirects: boolPtr(true),
 						Headers: map[string]string{
@@ -92,7 +92,7 @@ func init() {
 					},
 					PassHostHeader: boolPtr(true),
 					ResponseForwarding: &dynamic.ResponseForwarding{
-						FlushInterval: "foo",
+						FlushInterval: ptypes.Duration(111 * time.Second),
 					},
 					ServersTransport: "foo",
 					Servers: []dynamic.Server{
@@ -175,8 +175,7 @@ func init() {
 					Prefix: "foo",
 				},
 				StripPrefix: &dynamic.StripPrefix{
-					Prefixes:   []string{"foo"},
-					ForceSlash: true,
+					Prefixes: []string{"foo"},
 				},
 				StripPrefixRegex: &dynamic.StripPrefixRegex{
 					Regex: []string{"foo"},
@@ -191,7 +190,7 @@ func init() {
 				Chain: &dynamic.Chain{
 					Middlewares: []string{"foo"},
 				},
-				IPWhiteList: &dynamic.IPWhiteList{
+				IPAllowList: &dynamic.IPAllowList{
 					SourceRange: []string{"foo"},
 					IPStrategy: &dynamic.IPStrategy{
 						Depth:       42,
@@ -211,11 +210,7 @@ func init() {
 					AddVaryHeader:                     true,
 					AllowedHosts:                      []string{"foo"},
 					HostsProxyHeaders:                 []string{"foo"},
-					SSLRedirect:                       true,
-					SSLTemporaryRedirect:              true,
-					SSLHost:                           "foo",
 					SSLProxyHeaders:                   map[string]string{"foo": "bar"},
-					SSLForceHost:                      true,
 					STSSeconds:                        42,
 					STSIncludeSubdomains:              true,
 					STSPreload:                        true,
@@ -228,7 +223,6 @@ func init() {
 					ContentSecurityPolicy:             "foo",
 					PublicKey:                         "foo",
 					ReferrerPolicy:                    "foo",
-					FeaturePolicy:                     "foo",
 					PermissionsPolicy:                 "foo",
 					IsDevelopment:                     true,
 				},
@@ -278,7 +272,6 @@ func init() {
 					Address: "127.0.0.1",
 					TLS: &types.ClientTLS{
 						CA:                 "ca.pem",
-						CAOptional:         true,
 						Cert:               "cert.pem",
 						Key:                "cert.pem",
 						InsecureSkipVerify: true,
@@ -344,9 +337,7 @@ func init() {
 					Attempts:        42,
 					InitialInterval: 42,
 				},
-				ContentType: &dynamic.ContentType{
-					AutoDetect: true,
-				},
+				ContentType: &dynamic.ContentType{},
 				Plugin: map[string]dynamic.PluginConf{
 					"foo": {
 						"answer": struct{ Answer int }{
@@ -592,7 +583,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		DefaultRule: "PathPrefix(`/`)",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
-			CAOptional:         true,
 			Cert:               "mycert.pem",
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
@@ -615,7 +605,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		DCOSToken:        "foobar",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
-			CAOptional:         true,
 			Cert:               "mycert.pem",
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
@@ -691,7 +680,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 				Token:      "MyToken",
 				TLS: &types.ClientTLS{
 					CA:                 "myCa",
-					CAOptional:         true,
 					Cert:               "mycert.pem",
 					Key:                "mycert.key",
 					InsecureSkipVerify: true,
@@ -710,7 +698,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 			ExposedByDefault:  true,
 			DefaultRule:       "PathPrefix(`/`)",
 		},
-		Namespace:  "ns",
 		Namespaces: []string{"ns1", "ns2"},
 	}
 
@@ -735,12 +722,10 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Token: "secret",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
-			CAOptional:         true,
 			Cert:               "mycert.pem",
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
 		},
-		Namespace:  "ns",
 		Namespaces: []string{"ns1", "ns2"},
 	}
 
@@ -753,7 +738,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Password: "password",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
-			CAOptional:         true,
 			Cert:               "mycert.pem",
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
@@ -778,7 +762,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Password: "password",
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
-			CAOptional:         true,
 			Cert:               "mycert.pem",
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
@@ -791,7 +774,6 @@ func TestDo_staticConfiguration(t *testing.T) {
 		PollTimeout:  42,
 		TLS: &types.ClientTLS{
 			CA:                 "myCa",
-			CAOptional:         true,
 			Cert:               "mycert.pem",
 			Key:                "mycert.key",
 			InsecureSkipVerify: true,
@@ -845,9 +827,13 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.Log = &types.TraefikLog{
-		Level:    "Level",
-		FilePath: "/foo/path",
-		Format:   "json",
+		Level:      "Level",
+		Format:     "json",
+		FilePath:   "/foo/path",
+		MaxSize:    5,
+		MaxAge:     3,
+		MaxBackups: 4,
+		Compress:   true,
 	}
 
 	config.AccessLog = &types.AccessLog{
@@ -899,7 +885,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 		},
 		Datadog: &datadog.Config{
 			LocalAgentHostPort:         "foobar",
-			GlobalTag:                  "foobar",
+			GlobalTags:                 map[string]string{"foobar": "foobar"},
 			Debug:                      true,
 			PrioritySampling:           true,
 			TraceIDHeaderName:          "foobar",

@@ -5,7 +5,8 @@ import (
 	"io"
 
 	"github.com/opentracing/opentracing-go"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	jaegercli "github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-client-go/zipkin"
@@ -88,8 +89,10 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 
 	jMetricsFactory := jaegermet.NullFactory
 
+	logger := log.With().Str(logs.TracingProviderName, Name).Logger()
+
 	opts := []jaegercfg.Option{
-		jaegercfg.Logger(newJaegerLogger()),
+		jaegercfg.Logger(logs.NewJaegerLogger(logger)),
 		jaegercfg.Metrics(jMetricsFactory),
 		jaegercfg.Gen128Bit(c.Gen128Bit),
 	}
@@ -112,10 +115,10 @@ func (c *Config) Setup(componentName string) (opentracing.Tracer, io.Closer, err
 		opts...,
 	)
 	if err != nil {
-		log.WithoutContext().Warnf("Could not initialize jaeger tracer: %v", err)
+		logger.Warn().Err(err).Msg("Could not initialize jaeger tracer")
 		return nil, nil, err
 	}
-	log.WithoutContext().Debug("Jaeger tracer configured")
+	logger.Debug().Msg("Jaeger tracer configured")
 
 	return opentracing.GlobalTracer(), closer, nil
 }

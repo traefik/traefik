@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"reflect"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 type schemeOverview struct {
@@ -62,7 +62,7 @@ func (h Handler) getOverview(rw http.ResponseWriter, request *http.Request) {
 
 	err := json.NewEncoder(rw).Encode(result)
 	if err != nil {
-		log.FromContext(request.Context()).Error(err)
+		log.Ctx(request.Context()).Error().Err(err).Send()
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }

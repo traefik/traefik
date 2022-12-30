@@ -11,8 +11,8 @@ import (
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
@@ -90,14 +90,14 @@ func RegisterPrometheus(ctx context.Context, config *types.Prometheus) Registry 
 	if err := promRegistry.Register(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{})); err != nil {
 		var arErr stdprometheus.AlreadyRegisteredError
 		if !errors.As(err, &arErr) {
-			log.FromContext(ctx).Warn("ProcessCollector is already registered")
+			log.Ctx(ctx).Warn().Msg("ProcessCollector is already registered")
 		}
 	}
 
 	if err := promRegistry.Register(collectors.NewGoCollector()); err != nil {
 		var arErr stdprometheus.AlreadyRegisteredError
 		if !errors.As(err, &arErr) {
-			log.FromContext(ctx).Warn("GoCollector is already registered")
+			log.Ctx(ctx).Warn().Msg("GoCollector is already registered")
 		}
 	}
 
@@ -306,15 +306,15 @@ func registerPromState(ctx context.Context) bool {
 		return true
 	}
 
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	var arErr stdprometheus.AlreadyRegisteredError
 	if errors.As(err, &arErr) {
-		logger.Debug("Prometheus collector already registered.")
+		logger.Debug().Msg("Prometheus collector already registered.")
 		return true
 	}
 
-	logger.Errorf("Unable to register Traefik to Prometheus: %v", err)
+	logger.Error().Err(err).Msg("Unable to register Traefik to Prometheus")
 	return false
 }
 

@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/file"
 	"github.com/traefik/traefik/v2/pkg/provider/traefik"
@@ -115,7 +115,9 @@ func NewProviderAggregator(conf static.Providers) ProviderAggregator {
 	}
 
 	if conf.Nomad != nil {
-		p.quietAddProvider(conf.Nomad)
+		for _, pvd := range conf.Nomad.BuildProviders() {
+			p.quietAddProvider(pvd)
+		}
 	}
 
 	if conf.Consul != nil {
@@ -146,7 +148,7 @@ func NewProviderAggregator(conf static.Providers) ProviderAggregator {
 func (p *ProviderAggregator) quietAddProvider(provider provider.Provider) {
 	err := p.AddProvider(provider)
 	if err != nil {
-		log.WithoutContext().Errorf("Error while initializing provider %T: %v", provider, err)
+		log.Error().Err(err).Msgf("Error while initializing provider %T", provider)
 	}
 }
 
@@ -199,14 +201,14 @@ func (p ProviderAggregator) Provide(configurationChan chan<- dynamic.Message, po
 func (p ProviderAggregator) launchProvider(configurationChan chan<- dynamic.Message, pool *safe.Pool, prd provider.Provider) {
 	jsonConf, err := redactor.RemoveCredentials(prd)
 	if err != nil {
-		log.WithoutContext().Debugf("Cannot marshal the provider configuration %T: %v", prd, err)
+		log.Debug().Err(err).Msgf("Cannot marshal the provider configuration %T", prd)
 	}
 
-	log.WithoutContext().Infof("Starting provider %T", prd)
-	log.WithoutContext().Debugf("%T provider configuration: %s", prd, jsonConf)
+	log.Info().Msgf("Starting provider %T", prd)
+	log.Debug().RawJSON("config", []byte(jsonConf)).Msgf("%T provider configuration", prd)
 
 	if err := maybeThrottledProvide(prd, p.providersThrottleDuration)(configurationChan, pool); err != nil {
-		log.WithoutContext().Errorf("Cannot start the provider %T: %v", prd, err)
+		log.Error().Err(err).Msgf("Cannot start the provider %T", prd)
 		return
 	}
 }

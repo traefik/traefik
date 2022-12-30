@@ -10,9 +10,10 @@ import (
 	"strings"
 
 	"github.com/hashicorp/consul/api"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/label"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/constraints"
 )
@@ -22,17 +23,17 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 
 	for _, item := range items {
 		svcName := provider.Normalize(item.Node + "-" + item.Name + "-" + item.ID)
-		ctxSvc := log.With(ctx, log.Str(log.ServiceName, svcName))
+
+		logger := log.Ctx(ctx).With().Str(logs.ServiceName, svcName).Logger()
+		ctxSvc := logger.WithContext(ctx)
 
 		if !p.keepContainer(ctxSvc, item) {
 			continue
 		}
 
-		logger := log.FromContext(ctxSvc)
-
 		confFromLabel, err := label.DecodeConfiguration(item.Labels)
 		if err != nil {
-			logger.Error(err)
+			logger.Error().Err(err).Send()
 			continue
 		}
 
@@ -41,7 +42,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 			tcpOrUDP = true
 
 			if err := p.buildTCPServiceConfiguration(item, confFromLabel.TCP); err != nil {
-				logger.Error(err)
+				logger.Error().Err(err).Send()
 				continue
 			}
 
@@ -52,7 +53,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 			tcpOrUDP = true
 
 			if err := p.buildUDPServiceConfiguration(item, confFromLabel.UDP); err != nil {
-				logger.Error(err)
+				logger.Error().Err(err).Send()
 				continue
 			}
 			provider.BuildUDPRouterConfiguration(ctxSvc, confFromLabel.UDP)
@@ -77,7 +78,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 		}
 
 		if err = p.buildServiceConfiguration(item, confFromLabel.HTTP); err != nil {
-			logger.Error(err)
+			logger.Error().Err(err).Send()
 			continue
 		}
 
@@ -98,30 +99,30 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 }
 
 func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	if !item.ExtraConf.Enable {
-		logger.Debug("Filtering disabled item")
+		logger.Debug().Msg("Filtering disabled item")
 		return false
 	}
 
 	if !p.ConnectAware && item.ExtraConf.ConsulCatalog.Connect {
-		logger.Debugf("Filtering out Connect aware item, Connect support is not enabled")
+		logger.Debug().Msg("Filtering out Connect aware item, Connect support is not enabled")
 		return false
 	}
 
 	matches, err := constraints.MatchTags(item.Tags, p.Constraints)
 	if err != nil {
-		logger.Errorf("Error matching constraint expressions: %v", err)
+		logger.Error().Err(err).Msg("Error matching constraint expressions")
 		return false
 	}
 	if !matches {
-		logger.Debugf("Container pruned by constraint expressions: %q", p.Constraints)
+		logger.Debug().Msgf("Container pruned by constraint expressions: %q", p.Constraints)
 		return false
 	}
 
 	if item.Status != api.HealthPassing && item.Status != api.HealthWarning {
-		logger.Debug("Filtering unhealthy or starting item")
+		logger.Debug().Msg("Filtering unhealthy or starting item")
 		return false
 	}
 

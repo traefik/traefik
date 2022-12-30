@@ -7,8 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/udp"
 )
 
@@ -40,7 +41,7 @@ func NewUDPEntryPoints(cfg static.EntryPoints) (UDPEntryPoints, error) {
 // Start commences the listening for all the entry points.
 func (eps UDPEntryPoints) Start() {
 	for entryPointName, ep := range eps {
-		ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
+		ctx := log.With().Str(logs.EntryPointName, entryPointName).Logger().WithContext(context.Background())
 		go ep.Start(ctx)
 	}
 }
@@ -55,10 +56,10 @@ func (eps UDPEntryPoints) Stop() {
 		go func(entryPointName string, entryPoint *UDPEntryPoint) {
 			defer wg.Done()
 
-			ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
-			entryPoint.Shutdown(ctx)
+			logger := log.With().Str(logs.EntryPointName, entryPointName).Logger()
+			entryPoint.Shutdown(logger.WithContext(context.Background()))
 
-			log.FromContext(ctx).Debugf("Entry point %s closed", entryPointName)
+			logger.Debug().Msg("Entry point closed")
 		}(epn, ep)
 	}
 
@@ -72,7 +73,8 @@ func (eps UDPEntryPoints) Switch(handlers map[string]udp.Handler) {
 			ep.Switch(handler)
 			continue
 		}
-		log.WithoutContext().Errorf("EntryPoint %q does not exist", epName)
+
+		log.Error().Str(logs.EntryPointName, epName).Msg("EntryPoint does not exist")
 	}
 }
 
@@ -100,7 +102,7 @@ func NewUDPEntryPoint(cfg *static.EntryPoint) (*UDPEntryPoint, error) {
 
 // Start commences the listening for ep.
 func (ep *UDPEntryPoint) Start(ctx context.Context) {
-	log.FromContext(ctx).Debug("Start UDP Server")
+	log.Ctx(ctx).Debug().Msg("Start UDP Server")
 	for {
 		conn, err := ep.listener.Accept()
 		if err != nil {
@@ -116,17 +118,17 @@ func (ep *UDPEntryPoint) Start(ctx context.Context) {
 // releases associated resources, but only after it has waited for a graceTimeout,
 // if any was configured.
 func (ep *UDPEntryPoint) Shutdown(ctx context.Context) {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	reqAcceptGraceTimeOut := time.Duration(ep.transportConfiguration.LifeCycle.RequestAcceptGraceTimeout)
 	if reqAcceptGraceTimeOut > 0 {
-		logger.Infof("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
+		logger.Info().Msgf("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
 		time.Sleep(reqAcceptGraceTimeOut)
 	}
 
 	graceTimeOut := time.Duration(ep.transportConfiguration.LifeCycle.GraceTimeOut)
 	if err := ep.listener.Shutdown(graceTimeOut); err != nil {
-		logger.Error(err)
+		logger.Error().Err(err).Send()
 	}
 }
 

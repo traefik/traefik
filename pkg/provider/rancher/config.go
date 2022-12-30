@@ -7,9 +7,9 @@ import (
 	"net"
 	"strings"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/label"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/constraints"
 )
@@ -18,17 +18,16 @@ func (p *Provider) buildConfiguration(ctx context.Context, services []rancherDat
 	configurations := make(map[string]*dynamic.Configuration)
 
 	for _, service := range services {
-		ctxService := log.With(ctx, log.Str("service", service.Name))
+		logger := log.Ctx(ctx).With().Str("service", service.Name).Logger()
+		ctxService := logger.WithContext(ctx)
 
 		if !p.keepService(ctx, service) {
 			continue
 		}
 
-		logger := log.FromContext(ctxService)
-
 		confFromLabel, err := label.DecodeConfiguration(service.Labels)
 		if err != nil {
-			logger.Error(err)
+			logger.Error().Err(err).Send()
 			continue
 		}
 
@@ -38,7 +37,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, services []rancherDat
 
 			err := p.buildTCPServiceConfiguration(ctxService, service, confFromLabel.TCP)
 			if err != nil {
-				logger.Error(err)
+				logger.Error().Err(err).Send()
 				continue
 			}
 			provider.BuildTCPRouterConfiguration(ctxService, confFromLabel.TCP)
@@ -49,7 +48,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, services []rancherDat
 
 			err := p.buildUDPServiceConfiguration(ctxService, service, confFromLabel.UDP)
 			if err != nil {
-				logger.Error(err)
+				logger.Error().Err(err).Send()
 				continue
 			}
 			provider.BuildUDPRouterConfiguration(ctxService, confFromLabel.UDP)
@@ -64,7 +63,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, services []rancherDat
 
 		err = p.buildServiceConfiguration(ctx, service, confFromLabel.HTTP)
 		if err != nil {
-			logger.Error(err)
+			logger.Error().Err(err).Send()
 			continue
 		}
 
@@ -151,30 +150,30 @@ func (p *Provider) buildServiceConfiguration(ctx context.Context, service ranche
 }
 
 func (p *Provider) keepService(ctx context.Context, service rancherData) bool {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	if !service.ExtraConf.Enable {
-		logger.Debug("Filtering disabled service.")
+		logger.Debug().Msg("Filtering disabled service")
 		return false
 	}
 
 	matches, err := constraints.MatchLabels(service.Labels, p.Constraints)
 	if err != nil {
-		logger.Errorf("Error matching constraint expression: %v", err)
+		logger.Error().Err(err).Msg("Error matching constraint expression")
 		return false
 	}
 	if !matches {
-		logger.Debugf("Service pruned by constraint expression: %q", p.Constraints)
+		logger.Debug().Msgf("Service pruned by constraint expression: %q", p.Constraints)
 		return false
 	}
 
 	if p.EnableServiceHealthFilter {
 		if service.Health != "" && service.Health != healthy && service.Health != updatingHealthy {
-			logger.Debugf("Filtering service %s with healthState of %s \n", service.Name, service.Health)
+			logger.Debug().Msgf("Filtering service %s with healthState of %s", service.Name, service.Health)
 			return false
 		}
 		if service.State != "" && service.State != active && service.State != updatingActive && service.State != upgraded && service.State != upgrading {
-			logger.Debugf("Filtering service %s with state of %s \n", service.Name, service.State)
+			logger.Debug().Msgf("Filtering service %s with state of %s", service.Name, service.State)
 			return false
 		}
 	}
@@ -183,7 +182,7 @@ func (p *Provider) keepService(ctx context.Context, service rancherData) bool {
 }
 
 func (p *Provider) addServerTCP(ctx context.Context, service rancherData, loadBalancer *dynamic.TCPServersLoadBalancer) error {
-	log.FromContext(ctx).Debugf("Trying to add servers for service  %s \n", service.Name)
+	log.Ctx(ctx).Debug().Msgf("Trying to add servers for service %s", service.Name)
 
 	if loadBalancer == nil {
 		return errors.New("load-balancer is not defined")
@@ -217,7 +216,7 @@ func (p *Provider) addServerTCP(ctx context.Context, service rancherData, loadBa
 }
 
 func (p *Provider) addServerUDP(ctx context.Context, service rancherData, loadBalancer *dynamic.UDPServersLoadBalancer) error {
-	log.FromContext(ctx).Debugf("Trying to add servers for service  %s \n", service.Name)
+	log.Ctx(ctx).Debug().Msgf("Trying to add servers for service %s", service.Name)
 
 	if loadBalancer == nil {
 		return errors.New("load-balancer is not defined")
@@ -251,7 +250,7 @@ func (p *Provider) addServerUDP(ctx context.Context, service rancherData, loadBa
 }
 
 func (p *Provider) addServers(ctx context.Context, service rancherData, loadBalancer *dynamic.ServersLoadBalancer) error {
-	log.FromContext(ctx).Debugf("Trying to add servers for service  %s \n", service.Name)
+	log.Ctx(ctx).Debug().Msgf("Trying to add servers for service %s", service.Name)
 
 	if loadBalancer == nil {
 		return errors.New("load-balancer is not defined")

@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/tls"
 )
 
@@ -93,7 +93,7 @@ func (h Handler) getRouters(rw http.ResponseWriter, request *http.Request) {
 
 	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
 	if err != nil {
-		log.FromContext(request.Context()).Error(err)
+		log.Ctx(request.Context()).Error().Err(err).Send()
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -113,7 +113,7 @@ func (h Handler) getRouter(rw http.ResponseWriter, request *http.Request) {
 
 	err := json.NewEncoder(rw).Encode(result)
 	if err != nil {
-		log.FromContext(request.Context()).Error(err)
+		log.Ctx(request.Context()).Error().Err(err).Send()
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -145,7 +145,7 @@ func (h Handler) getServices(rw http.ResponseWriter, request *http.Request) {
 
 	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
 	if err != nil {
-		log.FromContext(request.Context()).Error(err)
+		log.Ctx(request.Context()).Error().Err(err).Send()
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -165,7 +165,7 @@ func (h Handler) getService(rw http.ResponseWriter, request *http.Request) {
 
 	err := json.NewEncoder(rw).Encode(result)
 	if err != nil {
-		log.FromContext(request.Context()).Error(err)
+		log.Ctx(request.Context()).Error().Err(err).Send()
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -197,7 +197,7 @@ func (h Handler) getMiddlewares(rw http.ResponseWriter, request *http.Request) {
 
 	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
 	if err != nil {
-		log.FromContext(request.Context()).Error(err)
+		log.Ctx(request.Context()).Error().Err(err).Send()
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -217,7 +217,7 @@ func (h Handler) getMiddleware(rw http.ResponseWriter, request *http.Request) {
 
 	err := json.NewEncoder(rw).Encode(result)
 	if err != nil {
-		log.FromContext(request.Context()).Error(err)
+		log.Ctx(request.Context()).Error().Err(err).Send()
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }

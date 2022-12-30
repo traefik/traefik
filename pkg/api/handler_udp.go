@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 type udpRouterRepresentation struct {
@@ -70,7 +70,7 @@ func (h Handler) getUDPRouters(rw http.ResponseWriter, request *http.Request) {
 
 	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
 	if err != nil {
-		log.FromContext(request.Context()).Error(err)
+		log.Ctx(request.Context()).Error().Err(err).Send()
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -90,7 +90,7 @@ func (h Handler) getUDPRouter(rw http.ResponseWriter, request *http.Request) {
 
 	err := json.NewEncoder(rw).Encode(result)
 	if err != nil {
-		log.FromContext(request.Context()).Error(err)
+		log.Ctx(request.Context()).Error().Err(err).Send()
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -122,7 +122,7 @@ func (h Handler) getUDPServices(rw http.ResponseWriter, request *http.Request) {
 
 	err = json.NewEncoder(rw).Encode(results[pageInfo.startIndex:pageInfo.endIndex])
 	if err != nil {
-		log.FromContext(request.Context()).Error(err)
+		log.Ctx(request.Context()).Error().Err(err).Send()
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -142,7 +142,7 @@ func (h Handler) getUDPService(rw http.ResponseWriter, request *http.Request) {
 
 	err := json.NewEncoder(rw).Encode(result)
 	if err != nil {
-		log.FromContext(request.Context()).Error(err)
+		log.Ctx(request.Context()).Error().Err(err).Send()
 		writeError(rw, err.Error(), http.StatusInternalServerError)
 	}
 }

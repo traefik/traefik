@@ -11,11 +11,12 @@ import (
 	"time"
 
 	"github.com/go-check/check"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/integration/helloworld"
 	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var (
@@ -51,7 +52,7 @@ func (s *myserver) StreamExample(in *helloworld.StreamExampleRequest, server hel
 	}
 
 	if err := server.Send(&helloworld.StreamExampleReply{Data: string(data)}); err != nil {
-		log.WithoutContext().Error(err)
+		log.Error().Err(err).Send()
 	}
 
 	<-s.stopStreamExample
@@ -94,7 +95,7 @@ func getHelloClientGRPC() (helloworld.GreeterClient, func() error, error) {
 }
 
 func getHelloClientGRPCh2c() (helloworld.GreeterClient, func() error, error) {
-	conn, err := grpc.Dial("127.0.0.1:8081", grpc.WithInsecure())
+	conn, err := grpc.Dial("127.0.0.1:8081", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, func() error { return nil }, err
 	}

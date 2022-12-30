@@ -4,7 +4,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 )
 
 // Proxy is a reverse-proxy implementation of the Handler interface.
@@ -20,14 +20,14 @@ func NewProxy(address string) (*Proxy, error) {
 
 // ServeUDP implements the Handler interface.
 func (p *Proxy) ServeUDP(conn *Conn) {
-	log.WithoutContext().Debugf("Handling connection from %s to %s", conn.rAddr, p.target)
+	log.Debug().Msgf("Handling connection from %s to %s", conn.rAddr, p.target)
 
 	// needed because of e.g. server.trackedConnection
 	defer conn.Close()
 
 	connBackend, err := net.Dial("udp", p.target)
 	if err != nil {
-		log.WithoutContext().Errorf("Error while connecting to backend: %v", err)
+		log.Error().Err(err).Msg("Error while connecting to backend")
 		return
 	}
 
@@ -40,7 +40,7 @@ func (p *Proxy) ServeUDP(conn *Conn) {
 
 	err = <-errChan
 	if err != nil {
-		log.WithoutContext().Errorf("Error while serving UDP: %v", err)
+		log.Error().Err(err).Msg("Error while serving UDP")
 	}
 
 	<-errChan
@@ -55,6 +55,6 @@ func connCopy(dst io.WriteCloser, src io.Reader, errCh chan error) {
 	errCh <- err
 
 	if err := dst.Close(); err != nil {
-		log.WithoutContext().Debugf("Error while terminating connection: %v", err)
+		log.Debug().Err(err).Msg("Error while terminating connection")
 	}
 }

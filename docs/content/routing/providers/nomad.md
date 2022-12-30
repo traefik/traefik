@@ -185,6 +185,14 @@ you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.pass
     traefik.http.services.myservice.loadbalancer.healthcheck.path=/foo
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.status`"
+
+    See [health check](../services/index.md#health-check) for more information.
+
+    ```yaml
+    traefik.http.services.myservice.loadbalancer.healthcheck.status=42
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.port`"
 
     See [health check](../services/index.md#health-check) for more information.

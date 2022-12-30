@@ -10,13 +10,14 @@ import (
 	"unicode"
 
 	"github.com/Masterminds/sprig/v3"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 )
 
 // Merge Merges multiple configurations.
 func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration) *dynamic.Configuration {
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(ctx)
 
 	configuration := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
@@ -136,56 +137,56 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 	}
 
 	for serviceName := range servicesToDelete {
-		logger.WithField(log.ServiceName, serviceName).
-			Errorf("Service defined multiple times with different configurations in %v", services[serviceName])
+		logger.Error().Str(logs.ServiceName, serviceName).
+			Msgf("Service defined multiple times with different configurations in %v", services[serviceName])
 		delete(configuration.HTTP.Services, serviceName)
 	}
 
 	for routerName := range routersToDelete {
-		logger.WithField(log.RouterName, routerName).
-			Errorf("Router defined multiple times with different configurations in %v", routers[routerName])
+		logger.Error().Str(logs.RouterName, routerName).
+			Msgf("Router defined multiple times with different configurations in %v", routers[routerName])
 		delete(configuration.HTTP.Routers, routerName)
 	}
 
 	for transportName := range transportsToDelete {
-		logger.WithField(log.ServersTransportName, transportName).
-			Errorf("ServersTransport defined multiple times with different configurations in %v", transports[transportName])
+		logger.Error().Str(logs.ServersTransportName, transportName).
+			Msgf("ServersTransport defined multiple times with different configurations in %v", transports[transportName])
 		delete(configuration.HTTP.ServersTransports, transportName)
 	}
 
 	for serviceName := range servicesTCPToDelete {
-		logger.WithField(log.ServiceName, serviceName).
-			Errorf("Service TCP defined multiple times with different configurations in %v", servicesTCP[serviceName])
+		logger.Error().Str(logs.ServiceName, serviceName).
+			Msgf("Service TCP defined multiple times with different configurations in %v", servicesTCP[serviceName])
 		delete(configuration.TCP.Services, serviceName)
 	}
 
 	for routerName := range routersTCPToDelete {
-		logger.WithField(log.RouterName, routerName).
-			Errorf("Router TCP defined multiple times with different configurations in %v", routersTCP[routerName])
+		logger.Error().Str(logs.RouterName, routerName).
+			Msgf("Router TCP defined multiple times with different configurations in %v", routersTCP[routerName])
 		delete(configuration.TCP.Routers, routerName)
 	}
 
 	for serviceName := range servicesUDPToDelete {
-		logger.WithField(log.ServiceName, serviceName).
-			Errorf("UDP service defined multiple times with different configurations in %v", servicesUDP[serviceName])
+		logger.Error().Str(logs.ServiceName, serviceName).
+			Msgf("UDP service defined multiple times with different configurations in %v", servicesUDP[serviceName])
 		delete(configuration.UDP.Services, serviceName)
 	}
 
 	for routerName := range routersUDPToDelete {
-		logger.WithField(log.RouterName, routerName).
-			Errorf("UDP router defined multiple times with different configurations in %v", routersUDP[routerName])
+		logger.Error().Str(logs.RouterName, routerName).
+			Msgf("UDP router defined multiple times with different configurations in %v", routersUDP[routerName])
 		delete(configuration.UDP.Routers, routerName)
 	}
 
 	for middlewareName := range middlewaresToDelete {
-		logger.WithField(log.MiddlewareName, middlewareName).
-			Errorf("Middleware defined multiple times with different configurations in %v", middlewares[middlewareName])
+		logger.Error().Str(logs.MiddlewareName, middlewareName).
+			Msgf("Middleware defined multiple times with different configurations in %v", middlewares[middlewareName])
 		delete(configuration.HTTP.Middlewares, middlewareName)
 	}
 
 	for middlewareName := range middlewaresTCPToDelete {
-		logger.WithField(log.MiddlewareName, middlewareName).
-			Errorf("TCP Middleware defined multiple times with different configurations in %v", middlewaresTCP[middlewareName])
+		logger.Error().Str(logs.MiddlewareName, middlewareName).
+			Msgf("TCP Middleware defined multiple times with different configurations in %v", middlewaresTCP[middlewareName])
 		delete(configuration.TCP.Middlewares, middlewareName)
 	}
 
@@ -342,18 +343,19 @@ func MakeDefaultRuleTemplate(defaultRule string, funcMap template.FuncMap) (*tem
 // BuildTCPRouterConfiguration Builds a router configuration.
 func BuildTCPRouterConfiguration(ctx context.Context, configuration *dynamic.TCPConfiguration) {
 	for routerName, router := range configuration.Routers {
-		loggerRouter := log.FromContext(ctx).WithField(log.RouterName, routerName)
+		loggerRouter := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
+
 		if len(router.Rule) == 0 {
 			delete(configuration.Routers, routerName)
-			loggerRouter.Errorf("Empty rule")
+			loggerRouter.Error().Msg("Empty rule")
 			continue
 		}
 
 		if len(router.Service) == 0 {
 			if len(configuration.Services) > 1 {
 				delete(configuration.Routers, routerName)
-				loggerRouter.
-					Error("Could not define the service name for the router: too many services")
+				loggerRouter.Error().
+					Msg("Could not define the service name for the router: too many services")
 				continue
 			}
 
@@ -367,7 +369,8 @@ func BuildTCPRouterConfiguration(ctx context.Context, configuration *dynamic.TCP
 // BuildUDPRouterConfiguration Builds a router configuration.
 func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDPConfiguration) {
 	for routerName, router := range configuration.Routers {
-		loggerRouter := log.FromContext(ctx).WithField(log.RouterName, routerName)
+		loggerRouter := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
+
 		if len(router.Service) > 0 {
 			continue
 		}
@@ -375,7 +378,7 @@ func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDP
 		if len(configuration.Services) > 1 {
 			delete(configuration.Routers, routerName)
 			loggerRouter.
-				Error("Could not define the service name for the router: too many services")
+				Error().Msg("Could not define the service name for the router: too many services")
 			continue
 		}
 
@@ -390,7 +393,7 @@ func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDP
 func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPConfiguration, defaultRouterName string, defaultRuleTpl *template.Template, model interface{}) {
 	if len(configuration.Routers) == 0 {
 		if len(configuration.Services) > 1 {
-			log.FromContext(ctx).Info("Could not create a router for the container: too many services")
+			log.Ctx(ctx).Info().Msg("Could not create a router for the container: too many services")
 		} else {
 			configuration.Routers = make(map[string]*dynamic.Router)
 			configuration.Routers[defaultRouterName] = &dynamic.Router{}
@@ -398,18 +401,19 @@ func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPCo
 	}
 
 	for routerName, router := range configuration.Routers {
-		loggerRouter := log.FromContext(ctx).WithField(log.RouterName, routerName)
+		loggerRouter := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
+
 		if len(router.Rule) == 0 {
 			writer := &bytes.Buffer{}
 			if err := defaultRuleTpl.Execute(writer, model); err != nil {
-				loggerRouter.Errorf("Error while parsing default rule: %v", err)
+				loggerRouter.Error().Err(err).Msg("Error while parsing default rule")
 				delete(configuration.Routers, routerName)
 				continue
 			}
 
 			router.Rule = writer.String()
 			if len(router.Rule) == 0 {
-				loggerRouter.Error("Undefined rule")
+				loggerRouter.Error().Msg("Undefined rule")
 				delete(configuration.Routers, routerName)
 				continue
 			}
@@ -418,8 +422,8 @@ func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPCo
 		if len(router.Service) == 0 {
 			if len(configuration.Services) > 1 {
 				delete(configuration.Routers, routerName)
-				loggerRouter.
-					Error("Could not define the service name for the router: too many services")
+				loggerRouter.Error().
+					Msg("Could not define the service name for the router: too many services")
 				continue
 			}
 

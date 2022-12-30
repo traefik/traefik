@@ -1,4 +1,4 @@
-package tcpinflightconn
+package inflightconn
 
 import (
 	"context"

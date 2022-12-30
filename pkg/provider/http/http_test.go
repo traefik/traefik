@@ -69,35 +69,53 @@ func TestProvider_SetDefaults(t *testing.T) {
 
 func TestProvider_fetchConfigurationData(t *testing.T) {
 	tests := []struct {
-		desc    string
-		handler func(rw http.ResponseWriter, req *http.Request)
-		expData []byte
-		expErr  bool
+		desc       string
+		statusCode int
+		headers    map[string]string
+		expData    []byte
+		expErr     require.ErrorAssertionFunc
 	}{
 		{
-			desc:    "should return the fetched configuration data",
-			expData: []byte("{}"),
-			handler: func(rw http.ResponseWriter, req *http.Request) {
-				rw.WriteHeader(http.StatusOK)
-				_, _ = fmt.Fprintf(rw, "{}")
-			},
+			desc:       "should return the fetched configuration data",
+			statusCode: http.StatusOK,
+			expData:    []byte("{}"),
+			expErr:     require.NoError,
 		},
 		{
-			desc:   "should return an error if endpoint does not return an OK status code",
-			expErr: true,
-			handler: func(rw http.ResponseWriter, req *http.Request) {
-				rw.WriteHeader(http.StatusNoContent)
+			desc:       "should send configured headers",
+			statusCode: http.StatusOK,
+			headers: map[string]string{
+				"Foo": "bar",
+				"Bar": "baz",
 			},
+			expData: []byte("{}"),
+			expErr:  require.NoError,
+		},
+		{
+			desc:       "should return an error if endpoint does not return an OK status code",
+			statusCode: http.StatusInternalServerError,
+			expErr:     require.Error,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(test.handler))
-			defer server.Close()
+			handlerCalled := false
+			srv := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				handlerCalled = true
+
+				for k, v := range test.headers {
+					assert.Equal(t, v, req.Header.Get(k))
+				}
+
+				rw.WriteHeader(test.statusCode)
+				_, _ = rw.Write([]byte("{}"))
+			}))
+			defer srv.Close()
 
 			provider := Provider{
-				Endpoint:     server.URL,
+				Endpoint:     srv.URL,
+				Headers:      test.headers,
 				PollInterval: ptypes.Duration(1 * time.Second),
 				PollTimeout:  ptypes.Duration(1 * time.Second),
 			}
@@ -106,12 +124,9 @@ func TestProvider_fetchConfigurationData(t *testing.T) {
 			require.NoError(t, err)
 
 			configData, err := provider.fetchConfigurationData()
-			if test.expErr {
-				require.Error(t, err)
-				return
-			}
+			test.expErr(t, err)
 
-			require.NoError(t, err)
+			assert.True(t, handlerCalled)
 			assert.Equal(t, test.expData, configData)
 		})
 	}
@@ -131,7 +146,7 @@ func TestProvider_decodeConfiguration(t *testing.T) {
 		},
 		{
 			desc:       "should return the decoded dynamic configuration",
-			configData: []byte("{\"tcp\":{\"routers\":{\"foo\":{}}}}"),
+			configData: []byte(`{"tcp":{"routers":{"foo":{}}}}`),
 			expConfig: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:           make(map[string]*dynamic.Router),

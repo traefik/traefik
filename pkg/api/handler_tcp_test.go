@@ -512,25 +512,25 @@ func TestHandler_TCP(t *testing.T) {
 			path: "/api/tcp/middlewares",
 			conf: runtime.Configuration{
 				TCPMiddlewares: map[string]*runtime.TCPMiddlewareInfo{
-					"ipwhitelist1@myprovider": {
+					"ipallowlist1@myprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 						UsedBy: []string{"bar@myprovider", "test@myprovider"},
 					},
-					"ipwhitelist2@myprovider": {
+					"ipallowlist2@myprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.2/32"},
 							},
 						},
 						UsedBy: []string{"test@myprovider"},
 					},
-					"ipwhitelist1@anotherprovider": {
+					"ipallowlist1@anotherprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
@@ -549,27 +549,27 @@ func TestHandler_TCP(t *testing.T) {
 			path: "/api/tcp/middlewares?status=enabled",
 			conf: runtime.Configuration{
 				TCPMiddlewares: map[string]*runtime.TCPMiddlewareInfo{
-					"ipwhitelist@myprovider": {
+					"ipallowlist@myprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 						UsedBy: []string{"bar@myprovider", "test@myprovider"},
 						Status: runtime.StatusEnabled,
 					},
-					"ipwhitelist2@myprovider": {
+					"ipallowlist2@myprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.2/32"},
 							},
 						},
 						UsedBy: []string{"test@myprovider"},
 						Status: runtime.StatusDisabled,
 					},
-					"ipwhitelist@anotherprovider": {
+					"ipallowlist@anotherprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
@@ -586,30 +586,30 @@ func TestHandler_TCP(t *testing.T) {
 		},
 		{
 			desc: "middlewares filtered by search",
-			path: "/api/tcp/middlewares?search=ipwhitelist",
+			path: "/api/tcp/middlewares?search=ipallowlist",
 			conf: runtime.Configuration{
 				TCPMiddlewares: map[string]*runtime.TCPMiddlewareInfo{
 					"bad@myprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 						UsedBy: []string{"bar@myprovider", "test@myprovider"},
 						Status: runtime.StatusEnabled,
 					},
-					"ipwhitelist@myprovider": {
+					"ipallowlist@myprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 						UsedBy: []string{"test@myprovider"},
 						Status: runtime.StatusDisabled,
 					},
-					"ipwhitelist@anotherprovider": {
+					"ipallowlist@anotherprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
@@ -629,25 +629,25 @@ func TestHandler_TCP(t *testing.T) {
 			path: "/api/tcp/middlewares?page=2&per_page=1",
 			conf: runtime.Configuration{
 				TCPMiddlewares: map[string]*runtime.TCPMiddlewareInfo{
-					"ipwhitelist@myprovider": {
+					"ipallowlist@myprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 						UsedBy: []string{"bar@myprovider", "test@myprovider"},
 					},
-					"ipwhitelist2@myprovider": {
+					"ipallowlist2@myprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.2/32"},
 							},
 						},
 						UsedBy: []string{"test@myprovider"},
 					},
-					"ipwhitelist@anotherprovider": {
+					"ipallowlist@anotherprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
@@ -663,28 +663,28 @@ func TestHandler_TCP(t *testing.T) {
 		},
 		{
 			desc: "one middleware by id",
-			path: "/api/tcp/middlewares/ipwhitelist@myprovider",
+			path: "/api/tcp/middlewares/ipallowlist@myprovider",
 			conf: runtime.Configuration{
 				TCPMiddlewares: map[string]*runtime.TCPMiddlewareInfo{
-					"ipwhitelist@myprovider": {
+					"ipallowlist@myprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
 						UsedBy: []string{"bar@myprovider", "test@myprovider"},
 					},
-					"ipwhitelist2@myprovider": {
+					"ipallowlist2@myprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.2/32"},
 							},
 						},
 						UsedBy: []string{"test@myprovider"},
 					},
-					"ipwhitelist@anotherprovider": {
+					"ipallowlist@anotherprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},
@@ -694,7 +694,7 @@ func TestHandler_TCP(t *testing.T) {
 			},
 			expected: expected{
 				statusCode: http.StatusOK,
-				jsonFile:   "testdata/tcpmiddleware-ipwhitelist.json",
+				jsonFile:   "testdata/tcpmiddleware-ipallowlist.json",
 			},
 		},
 		{
@@ -702,9 +702,9 @@ func TestHandler_TCP(t *testing.T) {
 			path: "/api/tcp/middlewares/foo@myprovider",
 			conf: runtime.Configuration{
 				TCPMiddlewares: map[string]*runtime.TCPMiddlewareInfo{
-					"ipwhitelist@myprovider": {
+					"ipallowlist@myprovider": {
 						TCPMiddleware: &dynamic.TCPMiddleware{
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"127.0.0.1/32"},
 							},
 						},

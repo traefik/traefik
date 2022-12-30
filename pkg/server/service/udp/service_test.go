@@ -23,7 +23,7 @@ func TestManager_BuildUDP(t *testing.T) {
 			desc:          "without configuration",
 			serviceName:   "test",
 			configs:       nil,
-			expectedError: `the udp service "test" does not exist`,
+			expectedError: `the UDP service "test" does not exist`,
 		},
 		{
 			desc:        "missing lb configuration",
@@ -33,7 +33,7 @@ func TestManager_BuildUDP(t *testing.T) {
 					UDPService: &dynamic.UDPService{},
 				},
 			},
-			expectedError: `the udp service "test" does not have any type defined`,
+			expectedError: `the UDP service "test" does not have any type defined`,
 		},
 		{
 			desc:        "no such host, server is skipped, error is logged",

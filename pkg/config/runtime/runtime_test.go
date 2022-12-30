@@ -2,9 +2,11 @@ package runtime_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 )
@@ -49,7 +51,7 @@ func TestPopulateUsedBy(t *testing.T) {
 									{URL: "http://127.0.0.1:8086"},
 								},
 								HealthCheck: &dynamic.ServerHealthCheck{
-									Interval: "500ms",
+									Interval: ptypes.Duration(500 * time.Millisecond),
 									Path:     "/health",
 								},
 							},
@@ -159,7 +161,7 @@ func TestPopulateUsedBy(t *testing.T) {
 									},
 								},
 								HealthCheck: &dynamic.ServerHealthCheck{
-									Interval: "500ms",
+									Interval: ptypes.Duration(500 * time.Millisecond),
 									Path:     "/health",
 								},
 							},
@@ -177,7 +179,7 @@ func TestPopulateUsedBy(t *testing.T) {
 									},
 								},
 								HealthCheck: &dynamic.ServerHealthCheck{
-									Interval: "500ms",
+									Interval: ptypes.Duration(500 * time.Millisecond),
 									Path:     "/health",
 								},
 							},

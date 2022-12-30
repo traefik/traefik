@@ -88,7 +88,10 @@
 						"url": "http://10.42.0.5:80"
 					}
 				],
-				"passHostHeader": true
+				"passHostHeader": true,
+				"responseForwarding": {
+					"flushInterval": "100ms"
+				}
 			},
 			"status": "enabled",
 			"usedBy": [

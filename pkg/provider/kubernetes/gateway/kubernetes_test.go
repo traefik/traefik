@@ -3,9 +3,11 @@ package gateway
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/tls"
@@ -552,6 +554,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -642,6 +647,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -698,6 +706,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -733,15 +744,15 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-http-app-1-my-gateway-web-75dd1ad561e42725558a": {
+						"default-http-app-1-my-gateway-web-66e726cd8903b49727ae": {
 							EntryPoints: []string{"web"},
-							Service:     "default-http-app-1-my-gateway-web-75dd1ad561e42725558a-wrr",
-							Rule:        "Host(`foo.com`, `bar.com`) && PathPrefix(`/`)",
+							Service:     "default-http-app-1-my-gateway-web-66e726cd8903b49727ae-wrr",
+							Rule:        "(Host(`foo.com`) || Host(`bar.com`)) && PathPrefix(`/`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-http-app-1-my-gateway-web-75dd1ad561e42725558a-wrr": {
+						"default-http-app-1-my-gateway-web-66e726cd8903b49727ae-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
@@ -762,6 +773,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -788,15 +802,15 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-http-app-1-my-gateway-web-2dbd7883f5537db39bca": {
+						"default-http-app-1-my-gateway-web-3b78e2feb3295ddd87f0": {
 							EntryPoints: []string{"web"},
-							Service:     "default-http-app-1-my-gateway-web-2dbd7883f5537db39bca-wrr",
-							Rule:        "(Host(`foo.com`) || HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.bar.com`)) && PathPrefix(`/`)",
+							Service:     "default-http-app-1-my-gateway-web-3b78e2feb3295ddd87f0-wrr",
+							Rule:        "(Host(`foo.com`) || HostRegexp(`^[a-zA-Z0-9-]+\\.bar\\.com$`)) && PathPrefix(`/`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-http-app-1-my-gateway-web-2dbd7883f5537db39bca-wrr": {
+						"default-http-app-1-my-gateway-web-3b78e2feb3295ddd87f0-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
@@ -817,6 +831,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -843,15 +860,15 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
-						"default-http-app-1-my-gateway-web-eb1490f180299bf5ed29": {
+						"default-http-app-1-my-gateway-web-b0521a61fb43068694b4": {
 							EntryPoints: []string{"web"},
-							Service:     "default-http-app-1-my-gateway-web-eb1490f180299bf5ed29-wrr",
-							Rule:        "(Host(`foo.com`) || HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.foo.com`)) && PathPrefix(`/`)",
+							Service:     "default-http-app-1-my-gateway-web-b0521a61fb43068694b4-wrr",
+							Rule:        "(Host(`foo.com`) || HostRegexp(`^[a-zA-Z0-9-]+\\.foo\\.com$`)) && PathPrefix(`/`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-http-app-1-my-gateway-web-eb1490f180299bf5ed29-wrr": {
+						"default-http-app-1-my-gateway-web-b0521a61fb43068694b4-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{
 								Services: []dynamic.WRRService{
 									{
@@ -872,6 +889,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -942,6 +962,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 						"default-whoami2-8080": {
@@ -955,6 +978,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1014,6 +1040,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 						"default-whoami2-8080": {
@@ -1027,6 +1056,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1103,6 +1135,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1188,6 +1223,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1267,6 +1305,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1322,6 +1363,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1392,6 +1436,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 						"bar-whoami-bar-80": {
@@ -1405,6 +1452,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1460,6 +1510,9 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -2958,10 +3011,10 @@ func TestLoadTLSRoutes(t *testing.T) {
 				},
 				TCP: &dynamic.TCPConfiguration{
 					Routers: map[string]*dynamic.TCPRouter{
-						"default-tls-app-1-my-gateway-tls-339184c3296a9c2c39fa": {
+						"default-tls-app-1-my-gateway-tls-dfc5c7506ac1b172c8b7": {
 							EntryPoints: []string{"tls"},
-							Service:     "default-tls-app-1-my-gateway-tls-339184c3296a9c2c39fa-wrr-0",
-							Rule:        "HostSNI(`foo.example.com`,`bar.example.com`)",
+							Service:     "default-tls-app-1-my-gateway-tls-dfc5c7506ac1b172c8b7-wrr-0",
+							Rule:        "(HostSNI(`foo.example.com`) || HostSNI(`bar.example.com`))",
 							TLS: &dynamic.RouterTCPTLSConfig{
 								Passthrough: true,
 							},
@@ -2969,7 +3022,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{},
 					Services: map[string]*dynamic.TCPService{
-						"default-tls-app-1-my-gateway-tls-339184c3296a9c2c39fa-wrr-0": {
+						"default-tls-app-1-my-gateway-tls-dfc5c7506ac1b172c8b7-wrr-0": {
 							Weighted: &dynamic.TCPWeightedRoundRobin{
 								Services: []dynamic.TCPWRRService{
 									{
@@ -3548,6 +3601,9 @@ func TestLoadMixedRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -3722,6 +3778,9 @@ func TestLoadMixedRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -3923,6 +3982,9 @@ func TestLoadMixedRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 						"bar-whoami-bar-80": {
@@ -3936,6 +3998,9 @@ func TestLoadMixedRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 						"bar-http-app-bar-my-gateway-web-a431b128267aabc954fd-wrr": {
@@ -4083,6 +4148,9 @@ func TestLoadMixedRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 						"bar-http-app-bar-my-gateway-web-a431b128267aabc954fd-wrr": {
@@ -4231,6 +4299,9 @@ func TestLoadMixedRoutes(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer.Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -4291,7 +4362,7 @@ func Test_hostRule(t *testing.T) {
 				"Bar",
 				"Bir",
 			},
-			expectedRule: "Host(`Foo`, `Bar`, `Bir`)",
+			expectedRule: "(Host(`Foo`) || Host(`Bar`) || Host(`Bir`))",
 		},
 		{
 			desc: "Multiple Hosts with empty one",
@@ -4318,14 +4389,14 @@ func Test_hostRule(t *testing.T) {
 				"bar.foo",
 				"foo.foo",
 			},
-			expectedRule: "(Host(`bar.foo`, `foo.foo`) || HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.bar.foo`))",
+			expectedRule: "(HostRegexp(`^[a-zA-Z0-9-]+\\.bar\\.foo$`) || Host(`bar.foo`) || Host(`foo.foo`))",
 		},
 		{
 			desc: "Host with wildcard",
 			hostnames: []v1alpha2.Hostname{
 				"*.bar.foo",
 			},
-			expectedRule: "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.bar.foo`)",
+			expectedRule: "HostRegexp(`^[a-zA-Z0-9-]+\\.bar\\.foo$`)",
 		},
 		{
 			desc: "Alone wildcard",
@@ -4637,7 +4708,7 @@ func Test_hostSNIRule(t *testing.T) {
 		{
 			desc:         "Some empty hostnames",
 			hostnames:    []v1alpha2.Hostname{"foo", "", "bar"},
-			expectedRule: "HostSNI(`foo`,`bar`)",
+			expectedRule: "(HostSNI(`foo`) || HostSNI(`bar`))",
 		},
 		{
 			desc:         "Valid hostname",
@@ -4647,12 +4718,12 @@ func Test_hostSNIRule(t *testing.T) {
 		{
 			desc:         "Multiple valid hostnames",
 			hostnames:    []v1alpha2.Hostname{"foo", "bar"},
-			expectedRule: "HostSNI(`foo`,`bar`)",
+			expectedRule: "(HostSNI(`foo`) || HostSNI(`bar`))",
 		},
 		{
 			desc:         "Multiple overlapping hostnames",
 			hostnames:    []v1alpha2.Hostname{"foo", "bar", "foo", "baz"},
-			expectedRule: "HostSNI(`foo`,`bar`,`baz`)",
+			expectedRule: "(HostSNI(`foo`) || HostSNI(`bar`) || HostSNI(`baz`))",
 		},
 	}
 

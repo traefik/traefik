@@ -476,13 +476,13 @@ func (s *SimpleSuite) TestMultipleProviderSameBackendName(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
-	s.createComposeProject(c, "whitelist")
+func (s *SimpleSuite) TestIPStrategyAllowlist(c *check.C) {
+	s.createComposeProject(c, "allowlist")
 
 	s.composeUp(c)
 	defer s.composeDown(c)
 
-	cmd, output := s.traefikCmd(withConfigFile("fixtures/simple_whitelist.toml"))
+	cmd, output := s.traefikCmd(withConfigFile("fixtures/simple_allowlist.toml"))
 	defer output(c)
 
 	err := cmd.Start()
@@ -492,7 +492,7 @@ func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("override"))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("override.remoteaddr.whitelist.docker.local"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("override.remoteaddr.allowlist.docker.local"))
 	c.Assert(err, checker.IsNil)
 
 	testCases := []struct {
@@ -504,31 +504,31 @@ func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
 		{
 			desc:               "override remote addr reject",
 			xForwardedFor:      "8.8.8.8,8.8.8.8",
-			host:               "override.remoteaddr.whitelist.docker.local",
+			host:               "override.remoteaddr.allowlist.docker.local",
 			expectedStatusCode: 403,
 		},
 		{
 			desc:               "override depth accept",
 			xForwardedFor:      "8.8.8.8,10.0.0.1,127.0.0.1",
-			host:               "override.depth.whitelist.docker.local",
+			host:               "override.depth.allowlist.docker.local",
 			expectedStatusCode: 200,
 		},
 		{
 			desc:               "override depth reject",
 			xForwardedFor:      "10.0.0.1,8.8.8.8,127.0.0.1",
-			host:               "override.depth.whitelist.docker.local",
+			host:               "override.depth.allowlist.docker.local",
 			expectedStatusCode: 403,
 		},
 		{
 			desc:               "override excludedIPs reject",
 			xForwardedFor:      "10.0.0.3,10.0.0.1,10.0.0.2",
-			host:               "override.excludedips.whitelist.docker.local",
+			host:               "override.excludedips.allowlist.docker.local",
 			expectedStatusCode: 403,
 		},
 		{
 			desc:               "override excludedIPs accept",
 			xForwardedFor:      "8.8.8.8,10.0.0.1,10.0.0.2",
-			host:               "override.excludedips.whitelist.docker.local",
+			host:               "override.excludedips.allowlist.docker.local",
 			expectedStatusCode: 200,
 		},
 	}
@@ -547,12 +547,12 @@ func (s *SimpleSuite) TestIPStrategyWhitelist(c *check.C) {
 }
 
 func (s *SimpleSuite) TestXForwardedHeaders(c *check.C) {
-	s.createComposeProject(c, "whitelist")
+	s.createComposeProject(c, "allowlist")
 
 	s.composeUp(c)
 	defer s.composeDown(c)
 
-	cmd, output := s.traefikCmd(withConfigFile("fixtures/simple_whitelist.toml"))
+	cmd, output := s.traefikCmd(withConfigFile("fixtures/simple_allowlist.toml"))
 	defer output(c)
 
 	err := cmd.Start()
@@ -560,13 +560,13 @@ func (s *SimpleSuite) TestXForwardedHeaders(c *check.C) {
 	defer s.killCmd(cmd)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second,
-		try.BodyContains("override.remoteaddr.whitelist.docker.local"))
+		try.BodyContains("override.remoteaddr.allowlist.docker.local"))
 	c.Assert(err, checker.IsNil)
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
 	c.Assert(err, checker.IsNil)
 
-	req.Host = "override.depth.whitelist.docker.local"
+	req.Host = "override.depth.allowlist.docker.local"
 	req.Header.Set("X-Forwarded-For", "8.8.8.8,10.0.0.1,127.0.0.1")
 
 	err = try.Request(req, 1*time.Second,
@@ -794,7 +794,7 @@ func (s *SimpleSuite) TestUDPServiceConfigErrors(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer s.killCmd(cmd)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/udp/services", 1000*time.Millisecond, try.BodyContains(`["the udp service \"service1@file\" does not have any type defined"]`))
+	err = try.GetRequest("http://127.0.0.1:8080/api/udp/services", 1000*time.Millisecond, try.BodyContains(`["the UDP service \"service1@file\" does not have any type defined"]`))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/udp/services/service1@file", 1000*time.Millisecond, try.BodyContains(`"status":"disabled"`))
@@ -1167,9 +1167,10 @@ func (s *SimpleSuite) TestSecureAPI(c *check.C) {
 func (s *SimpleSuite) TestContentTypeDisableAutoDetect(c *check.C) {
 	srv1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header()["Content-Type"] = nil
-		switch req.URL.Path[:4] {
+		path := strings.TrimPrefix(req.URL.Path, "/autodetect")
+		switch path[:4] {
 		case "/css":
-			if !strings.Contains(req.URL.Path, "noct") {
+			if strings.Contains(req.URL.Path, "/ct") {
 				rw.Header().Set("Content-Type", "text/css")
 			}
 
@@ -1178,7 +1179,7 @@ func (s *SimpleSuite) TestContentTypeDisableAutoDetect(c *check.C) {
 			_, err := rw.Write([]byte(".testcss { }"))
 			c.Assert(err, checker.IsNil)
 		case "/pdf":
-			if !strings.Contains(req.URL.Path, "noct") {
+			if strings.Contains(req.URL.Path, "/ct") {
 				rw.Header().Set("Content-Type", "application/pdf")
 			}
 
@@ -1212,37 +1213,13 @@ func (s *SimpleSuite) TestContentTypeDisableAutoDetect(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8000/css/ct/nomiddleware", time.Second, try.HasHeaderValue("Content-Type", "text/css", false))
+	err = try.GetRequest("http://127.0.0.1:8000/css/ct", time.Second, try.HasHeaderValue("Content-Type", "text/css", false))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8000/pdf/ct/nomiddleware", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
+	err = try.GetRequest("http://127.0.0.1:8000/pdf/ct", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8000/css/ct/middlewareauto", time.Second, try.HasHeaderValue("Content-Type", "text/css", false))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/pdf/ct/nomiddlewareauto", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/css/ct/middlewarenoauto", time.Second, try.HasHeaderValue("Content-Type", "text/css", false))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/pdf/ct/nomiddlewarenoauto", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/css/noct/nomiddleware", time.Second, try.HasHeaderValue("Content-Type", "text/plain; charset=utf-8", false))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/pdf/noct/nomiddleware", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/css/noct/middlewareauto", time.Second, try.HasHeaderValue("Content-Type", "text/plain; charset=utf-8", false))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/pdf/noct/nomiddlewareauto", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
-	c.Assert(err, checker.IsNil)
-
-	err = try.GetRequest("http://127.0.0.1:8000/css/noct/middlewarenoauto", time.Second, func(res *http.Response) error {
+	err = try.GetRequest("http://127.0.0.1:8000/css/noct", time.Second, func(res *http.Response) error {
 		if ct, ok := res.Header["Content-Type"]; ok {
 			return fmt.Errorf("should have no content type and %s is present", ct)
 		}
@@ -1250,12 +1227,24 @@ func (s *SimpleSuite) TestContentTypeDisableAutoDetect(c *check.C) {
 	})
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8000/pdf/noct/middlewarenoauto", time.Second, func(res *http.Response) error {
+	err = try.GetRequest("http://127.0.0.1:8000/pdf/noct", time.Second, func(res *http.Response) error {
 		if ct, ok := res.Header["Content-Type"]; ok {
 			return fmt.Errorf("should have no content type and %s is present", ct)
 		}
 		return nil
 	})
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/autodetect/css/ct", time.Second, try.HasHeaderValue("Content-Type", "text/css", false))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/autodetect/pdf/ct", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/autodetect/css/noct", time.Second, try.HasHeaderValue("Content-Type", "text/plain; charset=utf-8", false))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/autodetect/pdf/noct", time.Second, try.HasHeaderValue("Content-Type", "application/pdf", false))
 	c.Assert(err, checker.IsNil)
 }
 
@@ -1338,7 +1327,7 @@ func (s *SimpleSuite) TestMuxer(c *check.C) {
 			expected: http.StatusOK,
 		},
 		{
-			desc:     "!Query with semicolon, no match",
+			desc:     "!Query with semicolon and empty query param value, no match",
 			request:  "GET /?foo=; HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
 			target:   "127.0.0.1:8002",
 			expected: http.StatusNotFound,
@@ -1368,9 +1357,7 @@ func (s *SimpleSuite) TestMuxer(c *check.C) {
 		resp, err := http.ReadResponse(bufio.NewReader(conn), nil)
 		c.Assert(err, checker.IsNil)
 
-		if resp.StatusCode != test.expected {
-			c.Errorf("%s failed with %d instead of %d", test.desc, resp.StatusCode, test.expected)
-		}
+		c.Assert(resp.StatusCode, checker.Equals, test.expected, check.Commentf(test.desc))
 
 		if test.body != "" {
 			body, err := io.ReadAll(resp.Body)

@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 )
 
 type contextKey int
@@ -17,7 +17,7 @@ const (
 func AddInContext(ctx context.Context, elementName string) context.Context {
 	parts := strings.Split(elementName, "@")
 	if len(parts) == 1 {
-		log.FromContext(ctx).Debugf("Could not find a provider for %s.", elementName)
+		log.Ctx(ctx).Debug().Msgf("Could not find a provider for %s", elementName)
 		return ctx
 	}
 

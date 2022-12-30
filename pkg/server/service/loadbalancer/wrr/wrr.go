@@ -4,12 +4,11 @@ import (
 	"container/heap"
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"sync"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 type namedHandler struct {
@@ -39,7 +38,7 @@ type Balancer struct {
 	curDeadline float64
 	// status is a record of which child services of the Balancer are healthy, keyed
 	// by name of child service. A service is initially added to the map when it is
-	// created via AddService, and it is later removed or added to the map as needed,
+	// created via Add, and it is later removed or added to the map as needed,
 	// through the SetStatus method.
 	status map[string]struct{}
 	// updaters is the list of hooks that are run (to update the Balancer
@@ -48,10 +47,10 @@ type Balancer struct {
 }
 
 // New creates a new load balancer.
-func New(sticky *dynamic.Sticky, hc *dynamic.HealthCheck) *Balancer {
+func New(sticky *dynamic.Sticky, wantHealthCheck bool) *Balancer {
 	balancer := &Balancer{
 		status:           make(map[string]struct{}),
-		wantsHealthCheck: hc != nil,
+		wantsHealthCheck: wantHealthCheck,
 	}
 	if sticky != nil && sticky.Cookie != nil {
 		balancer.stickyCookie = &stickyCookie{
@@ -106,7 +105,9 @@ func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 	if up {
 		status = "UP"
 	}
-	log.FromContext(ctx).Debugf("Setting status of %s to %v", childName, status)
+
+	log.Ctx(ctx).Debug().Msgf("Setting status of %s to %v", childName, status)
+
 	if up {
 		b.status[childName] = struct{}{}
 	} else {
@@ -122,12 +123,12 @@ func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 	// No Status Change
 	if upBefore == upAfter {
 		// We're still with the same status, no need to propagate
-		log.FromContext(ctx).Debugf("Still %s, no need to propagate", status)
+		log.Ctx(ctx).Debug().Msgf("Still %s, no need to propagate", status)
 		return
 	}
 
 	// Status Change
-	log.FromContext(ctx).Debugf("Propagating new %s status", status)
+	log.Ctx(ctx).Debug().Msgf("Propagating new %s status", status)
 	for _, fn := range b.updaters {
 		fn(upAfter)
 	}
@@ -150,10 +151,7 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
-	if len(b.handlers) == 0 {
-		return nil, fmt.Errorf("no servers in the pool")
-	}
-	if len(b.status) == 0 {
+	if len(b.handlers) == 0 || len(b.status) == 0 {
 		return nil, errNoAvailableServer
 	}
 
@@ -172,7 +170,7 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 		}
 	}
 
-	log.WithoutContext().Debugf("Service selected by WRR: %s", handler.name)
+	log.Debug().Msgf("Service selected by WRR: %s", handler.name)
 	return handler, nil
 }
 
@@ -181,7 +179,7 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		cookie, err := req.Cookie(b.stickyCookie.name)
 
 		if err != nil && !errors.Is(err, http.ErrNoCookie) {
-			log.WithoutContext().Warnf("Error while reading cookie: %v", err)
+			log.Warn().Err(err).Msg("Error while reading cookie")
 		}
 
 		if err == nil && cookie != nil {
@@ -223,9 +221,9 @@ func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	server.ServeHTTP(w, req)
 }
 
-// AddService adds a handler.
+// Add adds a handler.
 // A handler with a non-positive weight is ignored.
-func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
+func (b *Balancer) Add(name string, handler http.Handler, weight *int) {
 	w := 1
 	if weight != nil {
 		w = *weight

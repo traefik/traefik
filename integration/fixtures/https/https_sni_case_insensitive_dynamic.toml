@@ -4,6 +4,7 @@
 
 [log]
   level = "DEBUG"
+  noColor = true
 
 [entryPoints]
   [entryPoints.websecure]
@@ -19,12 +20,12 @@
 
 [http.routers]
   [http.routers.router1]
-    rule = "HostRegexp(`{subdomain:[a-z1-9-]+}.snitest.com`)"
+    rule = "HostRegexp(`[a-z1-9-]+\\.snitest\\.com`)"
     service = "service1"
     [http.routers.router1.tls]
 
   [http.routers.router2]
-    rule = "HostRegexp(`{subdomain:[a-z1-9-]+}.www.snitest.com`)"
+    rule = "HostRegexp(`[a-z1-9-]+\\.www\\.snitest\\.com`)"
     service = "service1"
     [http.routers.router2.tls]
 

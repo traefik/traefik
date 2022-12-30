@@ -7,7 +7,8 @@ import (
 
 	"github.com/ExpediaDotCom/haystack-client-go"
 	"github.com/opentracing/opentracing-go"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 )
 
 // Name sets the name of this tracer.
@@ -48,6 +49,8 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 		port = c.LocalAgentPort
 	}
 
+	logger := log.With().Str(logs.TracingProviderName, Name).Logger()
+
 	tracer, closer := haystack.NewTracer(serviceName, haystack.NewAgentDispatcher(host, port, 3*time.Second, 1000),
 		haystack.TracerOptionsFactory.Tag(tag[0], value),
 		haystack.TracerOptionsFactory.Propagator(opentracing.HTTPHeaders,
@@ -57,13 +60,13 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 				SpanIDKEYName:        c.SpanIDHeaderName,
 				BaggagePrefixKEYName: c.BaggagePrefixHeaderName,
 			}, haystack.DefaultCodex{})),
-		haystack.TracerOptionsFactory.Logger(&haystackLogger{logger: log.WithoutContext()}),
+		haystack.TracerOptionsFactory.Logger(logs.NewHaystackLogger(logger)),
 	)
 
 	// Without this, child spans are getting the NOOP tracer
 	opentracing.SetGlobalTracer(tracer)
 
-	log.WithoutContext().Debug("haystack tracer configured")
+	log.Debug().Msg("haystack tracer configured")
 
 	return tracer, closer, nil
 }

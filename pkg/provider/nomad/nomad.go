@@ -2,6 +2,7 @@ package nomad
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"text/template"
@@ -9,10 +10,11 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/hashicorp/nomad/api"
+	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/job"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/provider/constraints"
 	"github.com/traefik/traefik/v2/pkg/safe"
@@ -46,17 +48,60 @@ type item struct {
 	ExtraConf configuration // global options
 }
 
-// Provider holds configurations of the provider.
-type Provider struct {
+// ProviderBuilder is responsible for constructing namespaced instances of the Nomad provider.
+type ProviderBuilder struct {
+	Configuration `yaml:",inline" export:"true"`
+
+	Namespaces []string `description:"Sets the Nomad namespaces used to discover services." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty"`
+}
+
+// BuildProviders builds Nomad provider instances for the given namespaces configuration.
+func (p *ProviderBuilder) BuildProviders() []*Provider {
+	if len(p.Namespaces) == 0 {
+		return []*Provider{{
+			Configuration: p.Configuration,
+			name:          providerName,
+		}}
+	}
+
+	var providers []*Provider
+	for _, namespace := range p.Namespaces {
+		providers = append(providers, &Provider{
+			Configuration: p.Configuration,
+			name:          providerName + "-" + namespace,
+			namespace:     namespace,
+		})
+	}
+
+	return providers
+}
+
+// Configuration represents the Nomad provider configuration.
+type Configuration struct {
 	DefaultRule      string          `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 	Constraints      string          `description:"Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
 	Endpoint         *EndpointConfig `description:"Nomad endpoint settings" json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
 	Prefix           string          `description:"Prefix for nomad service tags." json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
 	Stale            bool            `description:"Use stale consistency for catalog reads." json:"stale,omitempty" toml:"stale,omitempty" yaml:"stale,omitempty" export:"true"`
-	Namespace        string          `description:"Sets the Nomad namespace used to discover services." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty" export:"true"`
 	ExposedByDefault bool            `description:"Expose Nomad services by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
 	RefreshInterval  ptypes.Duration `description:"Interval for polling Nomad API." json:"refreshInterval,omitempty" toml:"refreshInterval,omitempty" yaml:"refreshInterval,omitempty" export:"true"`
+}
 
+// SetDefaults sets the default values for the Nomad Traefik Provider Configuration.
+func (c *Configuration) SetDefaults() {
+	c.Endpoint = &EndpointConfig{}
+	c.Prefix = defaultPrefix
+	c.ExposedByDefault = true
+	c.RefreshInterval = ptypes.Duration(15 * time.Second)
+	c.DefaultRule = defaultTemplateRule
+}
+
+// Provider holds configuration along with the namespace it will discover services in.
+type Provider struct {
+	Configuration
+
+	name           string
+	namespace      string
 	client         *api.Client        // client for Nomad API
 	defaultRuleTpl *template.Template // default routing rule
 }
@@ -72,22 +117,23 @@ type EndpointConfig struct {
 	EndpointWaitTime ptypes.Duration  `description:"WaitTime limits how long a Watch will block. If not provided, the agent default values will be used" json:"endpointWaitTime,omitempty" toml:"endpointWaitTime,omitempty" yaml:"endpointWaitTime,omitempty" export:"true"`
 }
 
-// SetDefaults sets the default values for the Nomad Traefik Provider.
-func (p *Provider) SetDefaults() {
-	p.Endpoint = &EndpointConfig{}
-	p.Prefix = defaultPrefix
-	p.ExposedByDefault = true
-	p.RefreshInterval = ptypes.Duration(15 * time.Second)
-	p.DefaultRule = defaultTemplateRule
-}
-
 // Init the Nomad Traefik Provider.
 func (p *Provider) Init() error {
+	if p.namespace == api.AllNamespacesNamespace {
+		return errors.New("wildcard namespace not supported")
+	}
+
 	defaultRuleTpl, err := provider.MakeDefaultRuleTemplate(p.DefaultRule, nil)
 	if err != nil {
 		return fmt.Errorf("error while parsing default rule: %w", err)
 	}
 	p.defaultRuleTpl = defaultRuleTpl
+
+	// In case they didn't initialize Provider with BuildProviders
+	if p.name == "" {
+		p.name = providerName
+	}
+
 	return nil
 }
 
@@ -95,14 +141,14 @@ func (p *Provider) Init() error {
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	var err error
-	p.client, err = createClient(p.Namespace, p.Endpoint)
+	p.client, err = createClient(p.namespace, p.Endpoint)
 	if err != nil {
 		return fmt.Errorf("failed to create nomad API client: %w", err)
 	}
 
 	pool.GoCtx(func(routineCtx context.Context) {
-		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, providerName))
-		logger := log.FromContext(ctxLog)
+		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, p.name).Logger()
+		ctxLog := logger.WithContext(routineCtx)
 
 		operation := func() error {
 			ctx, cancel := context.WithCancel(ctxLog)
@@ -133,7 +179,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 
 		failure := func(err error, d time.Duration) {
-			logger.Errorf("Provider connection error %+v, retrying in %s", err, d)
+			logger.Error().Err(err).Msgf("Provider connection error, retrying in %s", d)
 		}
 
 		if retryErr := backoff.RetryNotify(
@@ -141,7 +187,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxLog),
 			failure,
 		); retryErr != nil {
-			logger.Errorf("Cannot connect to Nomad server %+v", retryErr)
+			logger.Error().Err(retryErr).Msg("Cannot connect to Nomad server")
 		}
 	})
 
@@ -154,7 +200,7 @@ func (p *Provider) loadConfiguration(ctx context.Context, configurationC chan<- 
 		return err
 	}
 	configurationC <- dynamic.Message{
-		ProviderName:  providerName,
+		ProviderName:  p.name,
 		Configuration: p.buildConfig(ctx, items),
 	}
 
@@ -220,22 +266,22 @@ func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
 
 	for _, stub := range stubs {
 		for _, service := range stub.Services {
-			logger := log.FromContext(log.With(ctx, log.Str("serviceName", service.ServiceName)))
+			logger := log.Ctx(ctx).With().Str("serviceName", service.ServiceName).Logger()
 
 			extraConf := p.getExtraConf(service.Tags)
 			if !extraConf.Enable {
-				logger.Debug("Filter Nomad service that is not enabled")
+				logger.Debug().Msg("Filter Nomad service that is not enabled")
 				continue
 			}
 
 			matches, err := constraints.MatchTags(service.Tags, p.Constraints)
 			if err != nil {
-				logger.Errorf("Error matching constraint expressions: %v", err)
+				logger.Error().Err(err).Msg("Error matching constraint expressions")
 				continue
 			}
 
 			if !matches {
-				logger.Debugf("Filter Nomad service not matching constraints: %q", p.Constraints)
+				logger.Debug().Msgf("Filter Nomad service not matching constraints: %q", p.Constraints)
 				continue
 			}
 

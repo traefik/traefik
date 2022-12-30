@@ -6,7 +6,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 )
 
 type responseModifier struct {
@@ -23,17 +23,12 @@ type responseModifier struct {
 
 // modifier can be nil.
 func newResponseModifier(w http.ResponseWriter, r *http.Request, modifier func(*http.Response) error) http.ResponseWriter {
-	rm := &responseModifier{
+	return &responseModifier{
 		req:      r,
 		rw:       w,
 		modifier: modifier,
 		code:     http.StatusOK,
 	}
-
-	if _, ok := w.(http.CloseNotifier); ok {
-		return responseModifierWithCloseNotify{responseModifier: rm}
-	}
-	return rm
 }
 
 func (r *responseModifier) WriteHeader(code int) {
@@ -60,7 +55,7 @@ func (r *responseModifier) WriteHeader(code int) {
 		// we are propagating when we are called in Write, but we're logging anyway,
 		// because we could be called from another place which does not take care of
 		// checking w.modifierErr.
-		log.WithoutContext().Errorf("Error when applying response modifier: %v", err)
+		log.Error().Err(err).Msg("Error when applying response modifier")
 		r.rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -96,13 +91,4 @@ func (r *responseModifier) Flush() {
 	if flusher, ok := r.rw.(http.Flusher); ok {
 		flusher.Flush()
 	}
-}
-
-type responseModifierWithCloseNotify struct {
-	*responseModifier
-}
-
-// CloseNotify implements http.CloseNotifier.
-func (r *responseModifierWithCloseNotify) CloseNotify() <-chan bool {
-	return r.responseModifier.rw.(http.CloseNotifier).CloseNotify()
 }

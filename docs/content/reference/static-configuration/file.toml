@@ -14,6 +14,7 @@
 [entryPoints]
   [entryPoints.EntryPoint0]
     address = "foobar"
+    asDefault = true
     [entryPoints.EntryPoint0.transport]
       [entryPoints.EntryPoint0.transport.lifeCycle]
         requestAcceptGraceTimeout = "42s"
@@ -70,7 +71,6 @@
     allowEmptyServices = true
     [providers.docker.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -95,7 +95,6 @@
     respectReadinessChecks = true
     [providers.marathon.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -158,7 +157,6 @@
     connectByDefault = true
     serviceName = "foobar"
     watch = true
-    namespace = "foobar"
     namespaces = ["foobar", "foobar"]
     [providers.consulCatalog.endpoint]
       address = "foobar"
@@ -168,7 +166,6 @@
       endpointWaitTime = "42s"
       [providers.consulCatalog.endpoint.tls]
         ca = "foobar"
-        caOptional = true
         cert = "foobar"
         key = "foobar"
         insecureSkipVerify = true
@@ -180,7 +177,7 @@
     constraints = "foobar"
     prefix = "foobar"
     stale = true
-    namespace = "foobar"
+    namespaces = ["foobar", "foobar"]
     exposedByDefault = true
     refreshInterval = "42s"
     [providers.nomad.endpoint]
@@ -190,7 +187,6 @@
       endpointWaitTime = "42s"
       [providers.nomad.endpoint.tls]
         ca = "foobar"
-        caOptional = true
         cert = "foobar"
         key = "foobar"
         insecureSkipVerify = true
@@ -205,15 +201,14 @@
     accessKeyID = "foobar"
     secretAccessKey = "foobar"
     ecsAnywhere = true
+    healthyTasksOnly = true
   [providers.consul]
     rootKey = "foobar"
     endpoints = ["foobar", "foobar"]
     token = "foobar"
-    namespace = "foobar"
     namespaces = ["foobar", "foobar"]
     [providers.consul.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -224,7 +219,6 @@
     password = "foobar"
     [providers.etcd.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -241,7 +235,6 @@
     db = 42
     [providers.redis.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -249,9 +242,11 @@
     endpoint = "foobar"
     pollInterval = "42s"
     pollTimeout = "42s"
+    [providers.http.headers]
+      name0 = "foobar"
+      name1 = "foobar"
     [providers.http.tls]
       ca = "foobar"
-      caOptional = true
       cert = "foobar"
       key = "foobar"
       insecureSkipVerify = true
@@ -312,6 +307,25 @@
     [metrics.influxDB2.additionalLabels]
       name0 = "foobar"
       name1 = "foobar"
+  [metrics.openTelemetry]
+    address = "foobar"
+    addEntryPointsLabels = true
+    addRoutersLabels = true
+    addServicesLabels = true
+    pushInterval = "42s"
+    path = "foobar"
+    explicitBoundaries =  [42.0, 42.0]
+    insecure = true
+    [metrics.openTelemetry.headers]
+      name0 = "foobar"
+      name1 = "foobar"
+    [metrics.openTelemetry.tls]
+      ca = "foobar"
+      caOptional = true
+      cert = "foobar"
+      insecureSkipVerify = true
+      key = "foobar"
+    [metrics.openTelemetry.grpc]
 
 [ping]
   entryPoint = "foobar"
@@ -320,8 +334,13 @@
 
 [log]
   level = "foobar"
-  filePath = "foobar"
   format = "foobar"
+  noColor = true
+  filePath = "foobar"
+  maxSize = 42
+  maxBackups = 42
+  maxAge = 42
+  compress = true
 
 [accessLog]
   filePath = "foobar"
@@ -365,7 +384,6 @@
     sampleRate = 42.0
   [tracing.datadog]
     localAgentHostPort = "foobar"
-    globalTag = "foobar"
     [tracing.datadog.globalTags]
       tag1 = "foobar"
       tag2 = "foobar"
@@ -392,6 +410,20 @@
     serverURL = "foobar"
     secretToken = "foobar"
     serviceEnvironment = "foobar"
+  [tracing.openTelemetry]
+    address = "foobar"
+    insecure = true
+    path = "foobar"
+    [tracing.openTelemetry.headers]
+      name0 = "foobar"
+      name1 = "foobar"
+    [tracing.openTelemetry.tls]
+      ca = "foobar"
+      caOptional = true
+      cert = "foobar"
+      key = "foobar"
+      insecureSkipVerify = true
+    [tracing.openTelemetry.grpc]
 
 [hostResolver]
   cnameFlattening = true
@@ -418,25 +450,7 @@
       [certificatesResolvers.CertificateResolver0.acme.httpChallenge]
         entryPoint = "foobar"
       [certificatesResolvers.CertificateResolver0.acme.tlsChallenge]
-  [certificatesResolvers.CertificateResolver1]
-    [certificatesResolvers.CertificateResolver1.acme]
-      email = "foobar"
-      caServer = "foobar"
-      preferredChain = "foobar"
-      storage = "foobar"
-      keyType = "foobar"
-      certificatesDuration = 42
-      [certificatesResolvers.CertificateResolver1.acme.eab]
-        kid = "foobar"
-        hmacEncoded = "foobar"
-      [certificatesResolvers.CertificateResolver1.acme.dnsChallenge]
-        provider = "foobar"
-        delayBeforeCheck = "42s"
-        resolvers = ["foobar", "foobar"]
-        disablePropagationCheck = true
-      [certificatesResolvers.CertificateResolver1.acme.httpChallenge]
-        entryPoint = "foobar"
-      [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]
+  [certificatesResolvers.CertificateResolver1.tailscale]
 
 [hub]
   [hub.tls]
@@ -447,7 +461,6 @@
 
 [experimental]
   kubernetesGateway = true
-  http3 = true
   hub = true
   [experimental.plugins]
     [experimental.plugins.Descriptor0]

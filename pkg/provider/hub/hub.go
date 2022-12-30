@@ -8,8 +8,9 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/provider"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	ttls "github.com/traefik/traefik/v2/pkg/tls"
@@ -67,7 +68,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, _ *safe.Poo
 	// if/when Provide lifecycle differs with Traefik lifecycle.
 	go func() {
 		if err = p.server.Serve(listener); err != nil {
-			log.WithoutContext().WithField(log.ProviderName, "hub").Errorf("Unexpected error while running server: %v", err)
+			log.Error().Str(logs.ProviderName, "hub").Err(err).Msg("Unexpected error while running server")
 			return
 		}
 	}()
@@ -100,7 +101,7 @@ func patchDynamicConfiguration(cfg *dynamic.Configuration, ep string, port int, 
 	cfg.HTTP.Routers["traefik-hub-agent-service"] = &dynamic.Router{
 		EntryPoints: []string{ep},
 		Service:     "traefik-hub-agent-service",
-		Rule:        "Host(`proxy.traefik`) && PathPrefix(`/config`, `/discover-ip`, `/state`)",
+		Rule:        "Host(`proxy.traefik`) && (PathPrefix(`/config`) || PathPrefix(`/discover-ip`) || PathPrefix(`/state`))",
 	}
 
 	cfg.HTTP.Services["traefik-hub-agent-service"] = &dynamic.Service{

@@ -7,7 +7,6 @@ import (
 	"github.com/containous/alice"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/tracing"
 )
@@ -18,7 +17,7 @@ const (
 
 // NewEntryPoint creates a new middleware that the incoming request.
 func NewEntryPoint(ctx context.Context, t *tracing.Tracing, entryPointName string, next http.Handler) http.Handler {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, "tracing", entryPointTypeName)).Debug("Creating middleware")
+	middlewares.GetLogger(ctx, "tracing", entryPointTypeName).Debug().Msg("Creating middleware")
 
 	return &entryPointMiddleware{
 		entryPoint: entryPointName,
@@ -36,8 +35,8 @@ type entryPointMiddleware struct {
 func (e *entryPointMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	spanCtx, err := e.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 	if err != nil {
-		log.FromContext(middlewares.GetLoggerCtx(req.Context(), "tracing", entryPointTypeName)).
-			Debugf("Failed to extract the context: %v", err)
+		middlewares.GetLogger(req.Context(), "tracing", entryPointTypeName).
+			Debug().Err(err).Msg("Failed to extract the context")
 	}
 
 	span, req, finish := e.StartSpanf(req, ext.SpanKindRPCServerEnum, "EntryPoint", []string{e.entryPoint, req.Host}, " ", ext.RPCServerOption(spanCtx))
@@ -48,7 +47,7 @@ func (e *entryPointMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Reque
 
 	req = req.WithContext(tracing.WithTracing(req.Context(), e.Tracing))
 
-	recorder := newStatusCodeRecoder(rw, http.StatusOK)
+	recorder := newStatusCodeRecorder(rw, http.StatusOK)
 	e.next.ServeHTTP(recorder, req)
 
 	tracing.LogResponseCode(span, recorder.Status())

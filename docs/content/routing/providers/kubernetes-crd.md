@@ -48,7 +48,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v2.9
+              image: traefik:v3.0
               args:
                 - --log.level=DEBUG
                 - --api
@@ -1287,9 +1287,9 @@ Register the `MiddlewareTCP` [kind](../../reference/dynamic-configuration/kubern
     apiVersion: traefik.containo.us/v1alpha1
     kind: MiddlewareTCP
     metadata:
-      name: ipwhitelist
+      name: ipallowlist
     spec:
-      ipWhiteList:
+      ipAllowList:
         sourceRange:
           - 127.0.0.1/32
           - 192.168.1.7
@@ -1305,13 +1305,13 @@ Register the `MiddlewareTCP` [kind](../../reference/dynamic-configuration/kubern
       entryPoints:
         - web
       routes:
-      - match: Host(`example.com`) && PathPrefix(`/whitelist`)
+      - match: Host(`example.com`) && PathPrefix(`/allowlist`)
         kind: Rule
         services:
         - name: whoami
           port: 80
         middlewares:
-        - name: ipwhitelist
+        - name: ipallowlist
           namespace: foo
     ```
 

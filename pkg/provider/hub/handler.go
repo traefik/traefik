@@ -9,8 +9,8 @@ import (
 	"net/url"
 	"sync/atomic"
 
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 type handler struct {
@@ -59,7 +59,7 @@ func (h *handler) handleConfig(rw http.ResponseWriter, req *http.Request) {
 	payload := &configRequest{Configuration: emptyDynamicConfiguration()}
 	if err := json.NewDecoder(req.Body).Decode(payload); err != nil {
 		err = fmt.Errorf("decoding config request: %w", err)
-		log.WithoutContext().Errorf("Handling config: %v", err)
+		log.Error().Err(err).Msg("Handling config")
 		http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -88,14 +88,14 @@ func (h *handler) handleDiscoverIP(rw http.ResponseWriter, req *http.Request) {
 
 	if err := h.doDiscoveryReq(req.Context(), xff, port, nonce); err != nil {
 		err = fmt.Errorf("doing discovery request: %w", err)
-		log.WithoutContext().Errorf("Handling IP discovery: %v", err)
+		log.Error().Err(err).Msg("Handling IP discovery")
 		http.Error(rw, http.StatusText(http.StatusBadGateway), http.StatusBadGateway)
 		return
 	}
 
 	if err := json.NewEncoder(rw).Encode(xff); err != nil {
 		err = fmt.Errorf("encoding discover ip response: %w", err)
-		log.WithoutContext().Errorf("Handling IP discovery: %v", err)
+		log.Error().Err(err).Msg("Handling IP discovery")
 		http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -136,7 +136,7 @@ func (h *handler) handleState(rw http.ResponseWriter, req *http.Request) {
 	}
 	if err := json.NewEncoder(rw).Encode(resp); err != nil {
 		err = fmt.Errorf("encoding last config received response: %w", err)
-		log.WithoutContext().Errorf("Handling state: %v", err)
+		log.Error().Err(err).Msg("Handling state")
 		http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}

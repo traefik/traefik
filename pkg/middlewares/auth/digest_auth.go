@@ -10,7 +10,6 @@ import (
 	goauth "github.com/abbot/go-http-auth"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/middlewares"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v2/pkg/tracing"
@@ -31,7 +30,8 @@ type digestAuth struct {
 
 // NewDigest creates a digest auth middleware.
 func NewDigest(ctx context.Context, next http.Handler, authConfig dynamic.DigestAuth, name string) (http.Handler, error) {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, name, digestTypeName)).Debug("Creating middleware")
+	middlewares.GetLogger(ctx, name, digestTypeName).Debug().Msg("Creating middleware")
+
 	users, err := getUsers(authConfig.UsersFile, authConfig.Users, digestUserParser)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (d *digestAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
 }
 
 func (d *digestAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), d.name, digestTypeName))
+	logger := middlewares.GetLogger(req.Context(), d.name, digestTypeName)
 
 	username, authinfo := d.auth.CheckAuth(req)
 	if username == "" {
@@ -77,19 +77,19 @@ func (d *digestAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		if authinfo != nil && *authinfo == "stale" {
-			logger.Debug("Digest authentication failed, possibly because out of order requests")
+			logger.Debug().Msg("Digest authentication failed, possibly because out of order requests")
 			tracing.SetErrorWithEvent(req, "Digest authentication failed, possibly because out of order requests")
 			d.auth.RequireAuthStale(rw, req)
 			return
 		}
 
-		logger.Debug("Digest authentication failed")
+		logger.Debug().Msg("Digest authentication failed")
 		tracing.SetErrorWithEvent(req, "Digest authentication failed")
 		d.auth.RequireAuth(rw, req)
 		return
 	}
 
-	logger.Debug("Digest authentication succeeded")
+	logger.Debug().Msg("Digest authentication succeeded")
 	req.URL.User = url.User(username)
 
 	logData := accesslog.GetLogData(req)
@@ -102,7 +102,7 @@ func (d *digestAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if d.removeHeader {
-		logger.Debug("Removing the Authorization header")
+		logger.Debug().Msg("Removing the Authorization header")
 		req.Header.Del(authorizationHeader)
 	}
 	d.next.ServeHTTP(rw, req)

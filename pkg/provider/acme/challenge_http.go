@@ -13,7 +13,8 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/go-acme/lego/v4/challenge/http01"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/safe"
 )
 
@@ -70,12 +71,11 @@ func (c *ChallengeHTTP) Timeout() (timeout, interval time.Duration) {
 }
 
 func (c *ChallengeHTTP) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	ctx := log.With(req.Context(), log.Str(log.ProviderName, "acme"))
-	logger := log.FromContext(ctx)
+	logger := log.Ctx(req.Context()).With().Str(logs.ProviderName, "acme").Logger()
 
 	token, err := getPathParam(req.URL)
 	if err != nil {
-		logger.Errorf("Unable to get token: %v.", err)
+		logger.Error().Err(err).Msg("Unable to get token")
 		rw.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -83,16 +83,16 @@ func (c *ChallengeHTTP) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if token != "" {
 		domain, _, err := net.SplitHostPort(req.Host)
 		if err != nil {
-			logger.Debugf("Unable to split host and port: %v. Fallback to request host.", err)
+			logger.Debug().Err(err).Msg("Unable to split host and port. Fallback to request host.")
 			domain = req.Host
 		}
 
-		tokenValue := c.getTokenValue(ctx, token, domain)
+		tokenValue := c.getTokenValue(logger.WithContext(req.Context()), token, domain)
 		if len(tokenValue) > 0 {
 			rw.WriteHeader(http.StatusOK)
 			_, err = rw.Write(tokenValue)
 			if err != nil {
-				logger.Errorf("Unable to write token: %v", err)
+				logger.Error().Err(err).Msg("Unable to write token")
 			}
 			return
 		}
@@ -102,8 +102,8 @@ func (c *ChallengeHTTP) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (c *ChallengeHTTP) getTokenValue(ctx context.Context, token, domain string) []byte {
-	logger := log.FromContext(ctx)
-	logger.Debugf("Retrieving the ACME challenge for %s (token %q)...", domain, token)
+	logger := log.Ctx(ctx)
+	logger.Debug().Msgf("Retrieving the ACME challenge for %s (token %q)...", domain, token)
 
 	var result []byte
 
@@ -125,14 +125,14 @@ func (c *ChallengeHTTP) getTokenValue(ctx context.Context, token, domain string)
 	}
 
 	notify := func(err error, time time.Duration) {
-		logger.Errorf("Error getting challenge for token retrying in %s", time)
+		logger.Error().Msgf("Error getting challenge for token retrying in %s", time)
 	}
 
 	ebo := backoff.NewExponentialBackOff()
 	ebo.MaxElapsedTime = 60 * time.Second
 	err := backoff.RetryNotify(safe.OperationWithRecover(operation), ebo, notify)
 	if err != nil {
-		logger.Errorf("Cannot retrieve the ACME challenge for %s (token %q): %v", domain, token, err)
+		logger.Error().Err(err).Msgf("Cannot retrieve the ACME challenge for %s (token %q)", domain, token)
 		return []byte{}
 	}
 

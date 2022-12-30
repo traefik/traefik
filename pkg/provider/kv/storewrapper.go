@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/kvtools/valkeyrie/store"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 )
 
 type storeWrapper struct {
@@ -12,7 +12,7 @@ type storeWrapper struct {
 }
 
 func (s *storeWrapper) Put(ctx context.Context, key string, value []byte, options *store.WriteOptions) error {
-	log.WithoutContext().Debugf("Put: %s", key, string(value))
+	log.Debug().Msgf("Put: %s %s", key, string(value))
 
 	if s.Store == nil {
 		return nil
@@ -21,7 +21,7 @@ func (s *storeWrapper) Put(ctx context.Context, key string, value []byte, option
 }
 
 func (s *storeWrapper) Get(ctx context.Context, key string, options *store.ReadOptions) (*store.KVPair, error) {
-	log.WithoutContext().Debugf("Get: %s", key)
+	log.Debug().Msgf("Get: %s", key)
 
 	if s.Store == nil {
 		return nil, nil
@@ -30,7 +30,7 @@ func (s *storeWrapper) Get(ctx context.Context, key string, options *store.ReadO
 }
 
 func (s *storeWrapper) Delete(ctx context.Context, key string) error {
-	log.WithoutContext().Debugf("Delete: %s", key)
+	log.Debug().Msgf("Delete: %s", key)
 
 	if s.Store == nil {
 		return nil
@@ -39,7 +39,7 @@ func (s *storeWrapper) Delete(ctx context.Context, key string) error {
 }
 
 func (s *storeWrapper) Exists(ctx context.Context, key string, options *store.ReadOptions) (bool, error) {
-	log.WithoutContext().Debugf("Exists: %s", key)
+	log.Debug().Msgf("Exists: %s", key)
 
 	if s.Store == nil {
 		return true, nil
@@ -48,7 +48,7 @@ func (s *storeWrapper) Exists(ctx context.Context, key string, options *store.Re
 }
 
 func (s *storeWrapper) Watch(ctx context.Context, key string, options *store.ReadOptions) (<-chan *store.KVPair, error) {
-	log.WithoutContext().Debugf("Watch: %s", key)
+	log.Debug().Msgf("Watch: %s", key)
 
 	if s.Store == nil {
 		return nil, nil
@@ -57,7 +57,7 @@ func (s *storeWrapper) Watch(ctx context.Context, key string, options *store.Rea
 }
 
 func (s *storeWrapper) WatchTree(ctx context.Context, directory string, options *store.ReadOptions) (<-chan []*store.KVPair, error) {
-	log.WithoutContext().Debugf("WatchTree: %s", directory)
+	log.Debug().Msgf("WatchTree: %s", directory)
 
 	if s.Store == nil {
 		return nil, nil
@@ -66,7 +66,7 @@ func (s *storeWrapper) WatchTree(ctx context.Context, directory string, options 
 }
 
 func (s *storeWrapper) NewLock(ctx context.Context, key string, options *store.LockOptions) (store.Locker, error) {
-	log.WithoutContext().Debugf("NewLock: %s", key)
+	log.Debug().Msgf("NewLock: %s", key)
 
 	if s.Store == nil {
 		return nil, nil
@@ -75,7 +75,7 @@ func (s *storeWrapper) NewLock(ctx context.Context, key string, options *store.L
 }
 
 func (s *storeWrapper) List(ctx context.Context, directory string, options *store.ReadOptions) ([]*store.KVPair, error) {
-	log.WithoutContext().Debugf("List: %s", directory)
+	log.Debug().Msgf("List: %s", directory)
 
 	if s.Store == nil {
 		return nil, nil
@@ -84,7 +84,7 @@ func (s *storeWrapper) List(ctx context.Context, directory string, options *stor
 }
 
 func (s *storeWrapper) DeleteTree(ctx context.Context, directory string) error {
-	log.WithoutContext().Debugf("DeleteTree: %s", directory)
+	log.Debug().Msgf("DeleteTree: %s", directory)
 
 	if s.Store == nil {
 		return nil
@@ -93,7 +93,7 @@ func (s *storeWrapper) DeleteTree(ctx context.Context, directory string) error {
 }
 
 func (s *storeWrapper) AtomicPut(ctx context.Context, key string, value []byte, previous *store.KVPair, options *store.WriteOptions) (bool, *store.KVPair, error) {
-	log.WithoutContext().Debugf("AtomicPut: %s", key, string(value), previous)
+	log.Debug().Msgf("AtomicPut: %s %s %v", key, string(value), previous)
 
 	if s.Store == nil {
 		return true, nil, nil
@@ -102,7 +102,7 @@ func (s *storeWrapper) AtomicPut(ctx context.Context, key string, value []byte, 
 }
 
 func (s *storeWrapper) AtomicDelete(ctx context.Context, key string, previous *store.KVPair) (bool, error) {
-	log.WithoutContext().Debugf("AtomicDelete: %s", key, previous)
+	log.Debug().Msgf("AtomicDelete: %s %v", key, previous)
 
 	if s.Store == nil {
 		return true, nil
@@ -111,7 +111,7 @@ func (s *storeWrapper) AtomicDelete(ctx context.Context, key string, previous *s
 }
 
 func (s *storeWrapper) Close() error {
-	log.WithoutContext().Debugf("Close")
+	log.Debug().Msg("Close")
 
 	if s.Store == nil {
 		return nil

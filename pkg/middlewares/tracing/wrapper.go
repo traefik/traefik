@@ -6,7 +6,8 @@ import (
 
 	"github.com/containous/alice"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/tracing"
 )
 
@@ -28,7 +29,7 @@ func Wrap(ctx context.Context, constructor alice.Constructor) alice.Constructor 
 
 		if traceableHandler, ok := handler.(Traceable); ok {
 			name, spanKind := traceableHandler.GetTracingInformation()
-			log.FromContext(ctx).WithField(log.MiddlewareName, name).Debug("Adding tracing to middleware")
+			log.Ctx(ctx).Debug().Str(logs.MiddlewareName, name).Msg("Adding tracing to middleware")
 			return NewWrapper(handler, name, spanKind), nil
 		}
 		return handler, nil

@@ -9,7 +9,7 @@ import (
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 )
 
 type contextKey int
@@ -99,7 +99,7 @@ func (t *Tracing) Close() {
 	if t.closer != nil {
 		err := t.closer.Close()
 		if err != nil {
-			log.WithoutContext().Warn(err)
+			log.Warn().Err(err).Send()
 		}
 	}
 }
@@ -136,7 +136,7 @@ func InjectRequestHeaders(r *http.Request) {
 			opentracing.HTTPHeaders,
 			opentracing.HTTPHeadersCarrier(r.Header))
 		if err != nil {
-			log.FromContext(r.Context()).Error(err)
+			log.Ctx(r.Context()).Error().Err(err).Send()
 		}
 	}
 }

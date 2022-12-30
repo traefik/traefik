@@ -3,7 +3,8 @@ package static
 import (
 	"errors"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 	"github.com/traefik/traefik/v2/pkg/provider/hub"
 )
 
@@ -18,7 +19,9 @@ func (c *Configuration) initHubProvider() error {
 		ep.SetDefaults()
 		ep.Address = ":9901"
 		c.EntryPoints[hub.TunnelEntrypoint] = &ep
-		log.WithoutContext().Infof("The entryPoint %q is created on port 9901 to allow exposition of services.", hub.TunnelEntrypoint)
+
+		log.Info().Str(logs.EntryPointName, hub.TunnelEntrypoint).
+			Msg("The entryPoint is created on port 9901 to allow exposition of services.")
 	}
 
 	if c.Hub.TLS == nil {
@@ -34,7 +37,7 @@ func (c *Configuration) initHubProvider() error {
 	}
 
 	if c.Hub.TLS.Insecure {
-		log.WithoutContext().Warn("Hub is in `insecure` mode. Do not run in production with this setup.")
+		log.Warn().Msg("Hub is in `insecure` mode. Do not run in production with this setup.")
 	}
 
 	if _, ok := c.EntryPoints[hub.APIEntrypoint]; !ok {
@@ -42,7 +45,9 @@ func (c *Configuration) initHubProvider() error {
 		ep.SetDefaults()
 		ep.Address = ":9900"
 		c.EntryPoints[hub.APIEntrypoint] = &ep
-		log.WithoutContext().Infof("The entryPoint %q is created on port 9900 to allow Traefik to communicate with the Hub Agent for Traefik.", hub.APIEntrypoint)
+
+		log.Info().Str(logs.EntryPointName, hub.APIEntrypoint).
+			Msg("The entryPoint is created on port 9900 to allow Traefik to communicate with the Hub Agent for Traefik.")
 	}
 
 	c.EntryPoints[hub.APIEntrypoint].HTTP.TLS = &TLSConfig{

@@ -99,11 +99,17 @@ Storage to use. (Default: ```acme.json```)
 `--certificatesresolvers.<name>.acme.tlschallenge`:  
 Activate TLS-ALPN-01 Challenge. (Default: ```true```)
 
+`--certificatesresolvers.<name>.tailscale`:  
+Enables Tailscale certificate resolution. (Default: ```true```)
+
 `--entrypoints.<name>`:  
 Entry points definition. (Default: ```false```)
 
 `--entrypoints.<name>.address`:  
 Entry point address.
+
+`--entrypoints.<name>.asdefault`:  
+Adds this EntryPoint to the list of default EntryPoints to be used on routers that don't have any Entrypoint defined. (Default: ```false```)
 
 `--entrypoints.<name>.forwardedheaders.insecure`:  
 Trust all forwarded headers. (Default: ```false```)
@@ -183,9 +189,6 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 `--entrypoints.<name>.udp.timeout`:  
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 
-`--experimental.http3`:  
-Enable HTTP3. (Default: ```false```)
-
 `--experimental.hub`:  
 Enable the Traefik Hub provider. (Default: ```false```)
 
@@ -240,6 +243,9 @@ The TLS key for Traefik Proxy as a TLS client.
 `--log`:  
 Traefik log settings. (Default: ```false```)
 
+`--log.compress`:  
+Determines if the rotated log files should be compressed using gzip. (Default: ```false```)
+
 `--log.filepath`:  
 Traefik log file path. Stdout is used when omitted or empty.
 
@@ -248,6 +254,18 @@ Traefik log format: json | common (Default: ```common```)
 
 `--log.level`:  
 Log level set to traefik logs. (Default: ```ERROR```)
+
+`--log.maxage`:  
+Maximum number of days to retain old log files based on the timestamp encoded in their filename. (Default: ```0```)
+
+`--log.maxbackups`:  
+Maximum number of old log files to retain. (Default: ```0```)
+
+`--log.maxsize`:  
+Maximum size in megabytes of the log file before it gets rotated. (Default: ```0```)
+
+`--log.nocolor`:  
+When using the 'common' format, disables the colorized output. (Default: ```false```)
 
 `--metrics.datadog`:  
 Datadog metrics exporter type. (Default: ```false```)
@@ -336,6 +354,51 @@ InfluxDB v2 push interval. (Default: ```10```)
 `--metrics.influxdb2.token`:  
 InfluxDB v2 access token.
 
+`--metrics.opentelemetry`:  
+OpenTelemetry metrics exporter type. (Default: ```false```)
+
+`--metrics.opentelemetry.addentrypointslabels`:  
+Enable metrics on entry points. (Default: ```true```)
+
+`--metrics.opentelemetry.address`:  
+Address (host:port) of the collector endpoint. (Default: ```localhost:4318```)
+
+`--metrics.opentelemetry.addrouterslabels`:  
+Enable metrics on routers. (Default: ```false```)
+
+`--metrics.opentelemetry.addserviceslabels`:  
+Enable metrics on services. (Default: ```true```)
+
+`--metrics.opentelemetry.explicitboundaries`:  
+Boundaries for latency metrics. (Default: ```0.005000, 0.010000, 0.025000, 0.050000, 0.100000, 0.250000, 0.500000, 1.000000, 2.500000, 5.000000, 10.000000```)
+
+`--metrics.opentelemetry.grpc`:  
+gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
+
+`--metrics.opentelemetry.headers.<name>`:  
+Headers sent with payload.
+
+`--metrics.opentelemetry.insecure`:  
+Disables client transport security for the exporter. (Default: ```false```)
+
+`--metrics.opentelemetry.path`:  
+Set the URL path of the collector endpoint.
+
+`--metrics.opentelemetry.pushinterval`:  
+Period between calls to collect a checkpoint. (Default: ```10```)
+
+`--metrics.opentelemetry.tls.ca`:  
+TLS CA
+
+`--metrics.opentelemetry.tls.cert`:  
+TLS cert
+
+`--metrics.opentelemetry.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--metrics.opentelemetry.tls.key`:  
+TLS key
+
 `--metrics.prometheus`:  
 Prometheus metrics exporter type. (Default: ```false```)
 
@@ -396,9 +459,6 @@ Enable Consul backend with default settings. (Default: ```false```)
 `--providers.consul.endpoints`:  
 KV store endpoints. (Default: ```127.0.0.1:8500```)
 
-`--providers.consul.namespace`:  
-Sets the namespace used to discover the configuration (Consul Enterprise only).
-
 `--providers.consul.namespaces`:  
 Sets the namespaces used to discover the configuration (Consul Enterprise only).
 
@@ -407,9 +467,6 @@ Root key used for KV store. (Default: ```traefik```)
 
 `--providers.consul.tls.ca`:  
 TLS CA
-
-`--providers.consul.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
 
 `--providers.consul.tls.cert`:  
 TLS cert
@@ -462,9 +519,6 @@ The URI scheme for the Consul server
 `--providers.consulcatalog.endpoint.tls.ca`:  
 TLS CA
 
-`--providers.consulcatalog.endpoint.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
-
 `--providers.consulcatalog.endpoint.tls.cert`:  
 TLS cert
 
@@ -479,9 +533,6 @@ Token is used to provide a per-request ACL token which overrides the agent's def
 
 `--providers.consulcatalog.exposedbydefault`:  
 Expose containers by default. (Default: ```true```)
-
-`--providers.consulcatalog.namespace`:  
-Sets the namespace used to discover services (Consul Enterprise only).
 
 `--providers.consulcatalog.namespaces`:  
 Sets the namespaces used to discover services (Consul Enterprise only).
@@ -537,9 +588,6 @@ Polling interval for swarm mode. (Default: ```15```)
 `--providers.docker.tls.ca`:  
 TLS CA
 
-`--providers.docker.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
-
 `--providers.docker.tls.cert`:  
 TLS cert
 
@@ -559,13 +607,13 @@ Watch Docker events. (Default: ```true```)
 Enable AWS ECS backend with default settings. (Default: ```false```)
 
 `--providers.ecs.accesskeyid`:  
-The AWS credentials access key to use for making requests
+AWS credentials access key ID to use for making requests.
 
 `--providers.ecs.autodiscoverclusters`:  
-Auto discover cluster (Default: ```false```)
+Auto discover cluster. (Default: ```false```)
 
 `--providers.ecs.clusters`:  
-ECS Clusters name (Default: ```default```)
+ECS Cluster names. (Default: ```default```)
 
 `--providers.ecs.constraints`:  
 Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
@@ -574,19 +622,22 @@ Constraints is an expression that Traefik matches against the container's labels
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
 `--providers.ecs.ecsanywhere`:  
-Enable ECS Anywhere support (Default: ```false```)
+Enable ECS Anywhere support. (Default: ```false```)
 
 `--providers.ecs.exposedbydefault`:  
-Expose services by default (Default: ```true```)
+Expose services by default. (Default: ```true```)
+
+`--providers.ecs.healthytasksonly`:  
+Determines whether to discover only healthy tasks. (Default: ```false```)
 
 `--providers.ecs.refreshseconds`:  
-Polling interval (in seconds) (Default: ```15```)
+Polling interval (in seconds). (Default: ```15```)
 
 `--providers.ecs.region`:  
-The AWS region to use for requests
+AWS region to use for requests.
 
 `--providers.ecs.secretaccesskey`:  
-The AWS credentials access key to use for making requests
+AWS credentials access key to use for making requests.
 
 `--providers.etcd`:  
 Enable Etcd backend with default settings. (Default: ```false```)
@@ -602,9 +653,6 @@ Root key used for KV store. (Default: ```traefik```)
 
 `--providers.etcd.tls.ca`:  
 TLS CA
-
-`--providers.etcd.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
 
 `--providers.etcd.tls.cert`:  
 TLS cert
@@ -636,6 +684,9 @@ Enable HTTP backend with default settings. (Default: ```false```)
 `--providers.http.endpoint`:  
 Load configuration from this endpoint.
 
+`--providers.http.headers.<name>`:  
+Define custom headers to be sent to the endpoint.
+
 `--providers.http.pollinterval`:  
 Polling interval for endpoint. (Default: ```5```)
 
@@ -644,9 +695,6 @@ Polling timeout for endpoint. (Default: ```5```)
 
 `--providers.http.tls.ca`:  
 TLS CA
-
-`--providers.http.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
 
 `--providers.http.tls.cert`:  
 TLS cert
@@ -792,9 +840,6 @@ Set a response header timeout for Marathon. (Default: ```60```)
 `--providers.marathon.tls.ca`:  
 TLS CA
 
-`--providers.marathon.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
-
 `--providers.marathon.tls.cert`:  
 TLS cert
 
@@ -834,9 +879,6 @@ Nomad region to use. If not provided, the local agent region is used.
 `--providers.nomad.endpoint.tls.ca`:  
 TLS CA
 
-`--providers.nomad.endpoint.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
-
 `--providers.nomad.endpoint.tls.cert`:  
 TLS cert
 
@@ -852,8 +894,8 @@ Token is used to provide a per-request ACL token.
 `--providers.nomad.exposedbydefault`:  
 Expose Nomad services by default. (Default: ```true```)
 
-`--providers.nomad.namespace`:  
-Sets the Nomad namespace used to discover services.
+`--providers.nomad.namespaces`:  
+Sets the Nomad namespaces used to discover services.
 
 `--providers.nomad.prefix`:  
 Prefix for nomad service tags. (Default: ```traefik```)
@@ -915,9 +957,6 @@ Root key used for KV store. (Default: ```traefik```)
 `--providers.redis.tls.ca`:  
 TLS CA
 
-`--providers.redis.tls.caoptional`:  
-TLS CA.Optional (Default: ```false```)
-
 `--providers.redis.tls.cert`:  
 TLS cert
 
@@ -969,6 +1008,18 @@ If non-zero, controls the maximum idle (keep-alive) to keep per-host. If zero, D
 `--serverstransport.rootcas`:  
 Add cert file for self-signed certificate.
 
+`--serverstransport.spiffe`:  
+Defines the SPIFFE configuration. (Default: ```false```)
+
+`--serverstransport.spiffe.ids`:  
+Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
+
+`--serverstransport.spiffe.trustdomain`:  
+Defines the allowed SPIFFE trust domain.
+
+`--spiffe.workloadapiaddr`:  
+Defines the workload API address.
+
 `--tracing`:  
 OpenTracing configuration. (Default: ```false```)
 
@@ -980,9 +1031,6 @@ Sets the header name prefix used to store baggage items in a map.
 
 `--tracing.datadog.debug`:  
 Enables Datadog debug. (Default: ```false```)
-
-`--tracing.datadog.globaltag`:  
-Sets a key:value tag on all spans.
 
 `--tracing.datadog.globaltags.<name>`:  
 Sets a list of key:value tags on all spans.
@@ -1088,6 +1136,36 @@ Sets the sampling type. (Default: ```const```)
 
 `--tracing.jaeger.tracecontextheadername`:  
 Sets the header name used to store the trace ID. (Default: ```uber-trace-id```)
+
+`--tracing.opentelemetry`:  
+Settings for OpenTelemetry. (Default: ```false```)
+
+`--tracing.opentelemetry.address`:  
+Sets the address (host:port) of the collector endpoint. (Default: ```localhost:4318```)
+
+`--tracing.opentelemetry.grpc`:  
+gRPC specific configuration for the OpenTelemetry collector. (Default: ```true```)
+
+`--tracing.opentelemetry.headers.<name>`:  
+Defines additional headers to be sent with the payloads.
+
+`--tracing.opentelemetry.insecure`:  
+Disables client transport security for the exporter. (Default: ```false```)
+
+`--tracing.opentelemetry.path`:  
+Sets the URL path of the collector endpoint.
+
+`--tracing.opentelemetry.tls.ca`:  
+TLS CA
+
+`--tracing.opentelemetry.tls.cert`:  
+TLS cert
+
+`--tracing.opentelemetry.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--tracing.opentelemetry.tls.key`:  
+TLS key
 
 `--tracing.servicename`:  
 Set the name for this service. (Default: ```traefik```)

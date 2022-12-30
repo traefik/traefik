@@ -148,7 +148,7 @@ spec:
         - name: whoamitcp
           port: 8080
       middlewares:
-        - name: ipwhitelist
+        - name: ipallowlist
   tls:
     secretName: foosecret
     passthrough: false
@@ -193,7 +193,6 @@ spec:
       - foobar
     clientAuthType: RequireAndVerifyClientCert
   sniStrict: true
-  preferServerCipherSuites: true
   alpnProtocols:
     - foobar
     - foobar

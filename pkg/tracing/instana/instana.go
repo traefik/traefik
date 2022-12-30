@@ -5,7 +5,8 @@ import (
 
 	instana "github.com/instana/go-sensor"
 	"github.com/opentracing/opentracing-go"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v2/pkg/logs"
 )
 
 // Name sets the name of this tracer.
@@ -40,6 +41,9 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 		logLevel = instana.Debug
 	}
 
+	logger := log.With().Str(logs.TracingProviderName, Name).Logger()
+	instana.SetLogger(logs.NewInstanaLogger(logger))
+
 	tracer := instana.NewTracerWithOptions(&instana.Options{
 		Service:           serviceName,
 		LogLevel:          logLevel,
@@ -51,7 +55,7 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 	// Without this, child spans are getting the NOOP tracer
 	opentracing.SetGlobalTracer(tracer)
 
-	log.WithoutContext().Debug("Instana tracer configured")
+	logger.Debug().Msg("Instana tracer configured")
 
 	return tracer, nil, nil
 }
