@@ -173,6 +173,40 @@ func TestHandler_UDP(t *testing.T) {
 			},
 		},
 		{
+			desc: "UDP routers filtered by service",
+			path: "/api/udp/routers?serviceName=foo-service@myprovider",
+			conf: runtime.Configuration{
+				UDPRouters: map[string]*runtime.UDPRouterInfo{
+					"test@myprovider": {
+						UDPRouter: &dynamic.UDPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+						},
+						Status: runtime.StatusEnabled,
+					},
+					"bar@myprovider": {
+						UDPRouter: &dynamic.UDPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service",
+						},
+						Status: runtime.StatusWarning,
+					},
+					"foo@myprovider": {
+						UDPRouter: &dynamic.UDPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "bar-service@myprovider",
+						},
+						Status: runtime.StatusDisabled,
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/udprouters-filtered-serviceName.json",
+			},
+		},
+		{
 			desc: "one UDP router by id",
 			path: "/api/udp/routers/bar@myprovider",
 			conf: runtime.Configuration{

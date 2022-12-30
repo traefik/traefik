@@ -376,6 +376,10 @@ func Test_addRoutePriority(t *testing.T) {
 					w.Header().Set("X-From", route.xFrom)
 				})
 
+				if route.priority == 0 {
+					route.priority = GetRulePriority(route.rule)
+				}
+
 				err := muxer.AddRoute(route.rule, route.priority, handler)
 				require.NoError(t, err, route.rule)
 			}

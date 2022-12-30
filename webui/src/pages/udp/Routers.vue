@@ -14,6 +14,8 @@
               :onLoadMore="handleLoadMore"
               :endReached="allRouters.endReached"
               :loading="allRouters.loading"
+              :currentSort.sync="sortBy"
+              :currentSortDir.sync="sortDir"
             />
           </div>
         </div>
@@ -49,7 +51,9 @@ export default {
   data () {
     return {
       filter: '',
-      status: ''
+      status: '',
+      sortBy: 'name',
+      sortDir: 'asc'
     }
   },
   computed: {
@@ -61,6 +65,10 @@ export default {
       return this.getAllRouters({
         query: this.filter,
         status: this.status,
+        sortBy: this.sortBy,
+        direction: this.sortDir,
+        serviceName: '',
+        middlewareName: '',
         ...params
       })
     },
@@ -80,6 +88,12 @@ export default {
       this.refreshAll()
     },
     'filter' () {
+      this.refreshAll()
+    },
+    'sortBy' () {
+      this.refreshAll()
+    },
+    'sortDir' () {
       this.refreshAll()
     }
   },

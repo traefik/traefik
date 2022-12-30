@@ -6,6 +6,7 @@
 			],
 			"service": "api@internal",
 			"rule": "PathPrefix(`/api`)",
+			"effectivePriority": 18,
 			"status": "enabled",
 			"using": [
 				"web"
@@ -21,6 +22,7 @@
 			"tls": {
 				"options": "default-mytlsoption"
 			},
+			"effectivePriority": 12,
 			"status": "enabled",
 			"using": [
 				"web"
