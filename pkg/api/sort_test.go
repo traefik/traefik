@@ -1,24 +1,27 @@
 package api
 
 import (
+	"fmt"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
 )
 
-func TestSortByName(t *testing.T) {
+func TestSortRouters(t *testing.T) {
 	testCases := []struct {
-		desc      string
 		direction string
-		elements  []orderedByName
-		expected  []orderedByName
+		sortBy    string
+		elements  []orderedRouter
+		expected  []orderedRouter
 	}{
 		{
-			desc:      "Ascending",
 			direction: ascendantSorting,
-			elements: []orderedByName{
+			sortBy:    "name",
+			elements: []orderedRouter{
 				routerRepresentation{
 					Name: "b",
 				},
@@ -26,7 +29,7 @@ func TestSortByName(t *testing.T) {
 					Name: "a",
 				},
 			},
-			expected: []orderedByName{
+			expected: []orderedRouter{
 				routerRepresentation{
 					Name: "a",
 				},
@@ -36,9 +39,9 @@ func TestSortByName(t *testing.T) {
 			},
 		},
 		{
-			desc:      "Descending",
 			direction: descendantSorting,
-			elements: []orderedByName{
+			sortBy:    "name",
+			elements: []orderedRouter{
 				routerRepresentation{
 					Name: "a",
 				},
@@ -46,7 +49,7 @@ func TestSortByName(t *testing.T) {
 					Name: "b",
 				},
 			},
-			expected: []orderedByName{
+			expected: []orderedRouter{
 				routerRepresentation{
 					Name: "b",
 				},
@@ -55,1197 +58,1599 @@ func TestSortByName(t *testing.T) {
 				},
 			},
 		},
-	}
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			sortByName(test.direction, test.elements)
-			assert.Equal(t, test.expected, test.elements)
-		})
-	}
-}
-
-func TestSortByType(t *testing.T) {
-	testCases := []struct {
-		desc      string
-		direction string
-		elements  []orderedByType
-		expected  []orderedByType
-	}{
 		{
-			desc:      "Ascending",
 			direction: ascendantSorting,
-			elements: []orderedByType{
-				middlewareRepresentation{
-					Type: "b",
-					Name: "b",
+			sortBy:    "provider",
+			elements: []orderedRouter{
+				routerRepresentation{
+					Name:     "b",
+					Provider: "b",
 				},
-				middlewareRepresentation{
-					Type: "b",
-					Name: "a",
+				routerRepresentation{
+					Name:     "b",
+					Provider: "a",
 				},
-				middlewareRepresentation{
-					Type: "a",
-					Name: "b",
+				routerRepresentation{
+					Name:     "a",
+					Provider: "b",
 				},
-				middlewareRepresentation{
-					Type: "a",
-					Name: "a",
+				routerRepresentation{
+					Name:     "a",
+					Provider: "a",
 				},
 			},
-			expected: []orderedByType{
-				middlewareRepresentation{
-					Type: "a",
-					Name: "a",
+			expected: []orderedRouter{
+				routerRepresentation{
+					Name:     "a",
+					Provider: "a",
 				},
-				middlewareRepresentation{
-					Type: "a",
-					Name: "b",
+				routerRepresentation{
+					Name:     "b",
+					Provider: "a",
 				},
-				middlewareRepresentation{
-					Type: "b",
-					Name: "a",
+				routerRepresentation{
+					Name:     "a",
+					Provider: "b",
 				},
-				middlewareRepresentation{
-					Type: "b",
-					Name: "b",
+				routerRepresentation{
+					Name:     "b",
+					Provider: "b",
 				},
 			},
 		},
 		{
-			desc:      "Descending",
 			direction: descendantSorting,
-			elements: []orderedByType{
-				middlewareRepresentation{
-					Type: "a",
-					Name: "a",
+			sortBy:    "provider",
+			elements: []orderedRouter{
+				routerRepresentation{
+					Name:     "a",
+					Provider: "a",
 				},
-				middlewareRepresentation{
-					Type: "a",
-					Name: "b",
+				routerRepresentation{
+					Name:     "a",
+					Provider: "b",
 				},
-				middlewareRepresentation{
-					Type: "b",
-					Name: "a",
+				routerRepresentation{
+					Name:     "b",
+					Provider: "a",
 				},
-				middlewareRepresentation{
-					Type: "b",
-					Name: "b",
+				routerRepresentation{
+					Name:     "b",
+					Provider: "b",
 				},
 			},
-			expected: []orderedByType{
-				middlewareRepresentation{
-					Type: "b",
-					Name: "b",
+			expected: []orderedRouter{
+				routerRepresentation{
+					Name:     "b",
+					Provider: "b",
 				},
-				middlewareRepresentation{
-					Type: "b",
-					Name: "a",
+				routerRepresentation{
+					Name:     "a",
+					Provider: "b",
 				},
-				middlewareRepresentation{
-					Type: "a",
-					Name: "b",
+				routerRepresentation{
+					Name:     "b",
+					Provider: "a",
 				},
-				middlewareRepresentation{
-					Type: "a",
-					Name: "a",
+				routerRepresentation{
+					Name:     "a",
+					Provider: "a",
 				},
 			},
 		},
-	}
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			sortByType(test.direction, test.elements)
-			assert.Equal(t, test.expected, test.elements)
-		})
-	}
-}
-
-func TestSortByPriority(t *testing.T) {
-	testCases := []struct {
-		desc      string
-		direction string
-		elements  []orderedByPriority
-		expected  []orderedByPriority
-	}{
 		{
-			desc:      "Ascending",
 			direction: ascendantSorting,
-			elements: []orderedByPriority{
+			sortBy:    "priority",
+			elements: []orderedRouter{
 				routerRepresentation{
+					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
 						EffectivePriority: 2,
 					},
-					Name: "b",
 				},
 				routerRepresentation{
+					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
 						EffectivePriority: 2,
 					},
-					Name: "a",
 				},
 				routerRepresentation{
+					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
 						EffectivePriority: 1,
 					},
+				},
+				routerRepresentation{
 					Name: "b",
-				},
-				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
 						EffectivePriority: 1,
 					},
-					Name: "a",
 				},
 			},
-			expected: []orderedByPriority{
+			expected: []orderedRouter{
 				routerRepresentation{
+					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
 						EffectivePriority: 1,
 					},
-					Name: "a",
 				},
 				routerRepresentation{
+					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
 						EffectivePriority: 1,
 					},
-					Name: "b",
 				},
 				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						EffectivePriority: 2,
-					},
 					Name: "a",
-				},
-				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
 						EffectivePriority: 2,
 					},
+				},
+				routerRepresentation{
 					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						EffectivePriority: 2,
+					},
 				},
 			},
 		},
 		{
-			desc:      "Descending",
 			direction: descendantSorting,
-			elements: []orderedByPriority{
+			sortBy:    "priority",
+			elements: []orderedRouter{
 				routerRepresentation{
+					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
 						EffectivePriority: 1,
 					},
-					Name: "a",
 				},
 				routerRepresentation{
+					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
 						EffectivePriority: 1,
 					},
-					Name: "b",
 				},
 				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						EffectivePriority: 2,
-					},
 					Name: "a",
-				},
-				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
 						EffectivePriority: 2,
 					},
+				},
+				routerRepresentation{
 					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						EffectivePriority: 2,
+					},
 				},
 			},
-			expected: []orderedByPriority{
+			expected: []orderedRouter{
 				routerRepresentation{
+					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
 						EffectivePriority: 2,
 					},
-					Name: "b",
 				},
 				routerRepresentation{
+					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
 						EffectivePriority: 2,
 					},
-					Name: "a",
 				},
 				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						EffectivePriority: 1,
-					},
 					Name: "b",
-				},
-				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
 						EffectivePriority: 1,
 					},
+				},
+				routerRepresentation{
 					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						EffectivePriority: 1,
+					},
 				},
 			},
 		},
-	}
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			sortByPriority(test.direction, test.elements)
-			assert.Equal(t, test.expected, test.elements)
-		})
-	}
-}
-
-func TestSortByStatus(t *testing.T) {
-	testCases := []struct {
-		desc      string
-		direction string
-		elements  []orderedByStatus
-		expected  []orderedByStatus
-	}{
 		{
-			desc:      "Ascending",
 			direction: ascendantSorting,
-			elements: []orderedByStatus{
+			sortBy:    "status",
+			elements: []orderedRouter{
 				routerRepresentation{
+					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
 						Status: "b",
 					},
-					Name: "b",
 				},
 				routerRepresentation{
+					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
 						Status: "b",
 					},
-					Name: "a",
 				},
 				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Status: "a",
-					},
 					Name: "b",
-				},
-				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
 						Status: "a",
 					},
+				},
+				routerRepresentation{
 					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Status: "a",
+					},
 				},
 			},
-			expected: []orderedByStatus{
+			expected: []orderedRouter{
 				routerRepresentation{
+					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
 						Status: "a",
 					},
-					Name: "a",
 				},
 				routerRepresentation{
+					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
 						Status: "a",
 					},
-					Name: "b",
 				},
 				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Status: "b",
-					},
 					Name: "a",
-				},
-				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
 						Status: "b",
 					},
+				},
+				routerRepresentation{
 					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Status: "b",
+					},
 				},
 			},
 		},
 		{
-			desc:      "Descending",
 			direction: descendantSorting,
-			elements: []orderedByStatus{
+			sortBy:    "status",
+			elements: []orderedRouter{
 				routerRepresentation{
+					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
 						Status: "a",
 					},
-					Name: "a",
 				},
 				routerRepresentation{
+					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
 						Status: "a",
 					},
-					Name: "b",
 				},
 				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Status: "b",
-					},
 					Name: "a",
-				},
-				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
 						Status: "b",
 					},
+				},
+				routerRepresentation{
 					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Status: "b",
+					},
 				},
 			},
-			expected: []orderedByStatus{
+			expected: []orderedRouter{
 				routerRepresentation{
+					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
 						Status: "b",
 					},
-					Name: "b",
 				},
 				routerRepresentation{
+					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
 						Status: "b",
 					},
-					Name: "a",
 				},
 				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Status: "a",
-					},
 					Name: "b",
-				},
-				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
 						Status: "a",
 					},
+				},
+				routerRepresentation{
 					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Status: "a",
+					},
 				},
 			},
 		},
-	}
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			sortByStatus(test.direction, test.elements)
-			assert.Equal(t, test.expected, test.elements)
-		})
-	}
-}
-
-func TestSortByRule(t *testing.T) {
-	testCases := []struct {
-		desc      string
-		direction string
-		elements  []orderedByRule
-		expected  []orderedByRule
-	}{
 		{
-			desc:      "Ascending",
 			direction: ascendantSorting,
-			elements: []orderedByRule{
+			sortBy:    "rule",
+			elements: []orderedRouter{
 				routerRepresentation{
+					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
 						Router: &dynamic.Router{
 							Rule: "b",
 						},
 					},
-					Name: "b",
 				},
 				routerRepresentation{
+					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
 						Router: &dynamic.Router{
 							Rule: "b",
 						},
 					},
-					Name: "a",
 				},
 				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Rule: "a",
-						},
-					},
 					Name: "b",
-				},
-				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
 						Router: &dynamic.Router{
 							Rule: "a",
 						},
 					},
+				},
+				routerRepresentation{
 					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Rule: "a",
+						},
+					},
 				},
 			},
-			expected: []orderedByRule{
+			expected: []orderedRouter{
 				routerRepresentation{
+					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
 						Router: &dynamic.Router{
 							Rule: "a",
 						},
 					},
-					Name: "a",
 				},
 				routerRepresentation{
+					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
 						Router: &dynamic.Router{
 							Rule: "a",
 						},
 					},
-					Name: "b",
 				},
 				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Rule: "b",
-						},
-					},
 					Name: "a",
-				},
-				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
 						Router: &dynamic.Router{
 							Rule: "b",
 						},
 					},
+				},
+				routerRepresentation{
 					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Rule: "b",
+						},
+					},
 				},
 			},
 		},
 		{
-			desc:      "Descending",
 			direction: descendantSorting,
-			elements: []orderedByRule{
+			sortBy:    "rule",
+			elements: []orderedRouter{
 				routerRepresentation{
+					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
 						Router: &dynamic.Router{
 							Rule: "a",
 						},
 					},
-					Name: "a",
 				},
 				routerRepresentation{
+					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
 						Router: &dynamic.Router{
 							Rule: "a",
 						},
 					},
-					Name: "b",
 				},
 				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Rule: "b",
-						},
-					},
 					Name: "a",
-				},
-				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
 						Router: &dynamic.Router{
 							Rule: "b",
 						},
 					},
+				},
+				routerRepresentation{
 					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Rule: "b",
+						},
+					},
 				},
 			},
-			expected: []orderedByRule{
+			expected: []orderedRouter{
 				routerRepresentation{
+					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
 						Router: &dynamic.Router{
 							Rule: "b",
 						},
 					},
-					Name: "b",
 				},
 				routerRepresentation{
+					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
 						Router: &dynamic.Router{
 							Rule: "b",
 						},
 					},
-					Name: "a",
 				},
 				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Rule: "a",
-						},
-					},
 					Name: "b",
-				},
-				routerRepresentation{
 					RouterInfo: &runtime.RouterInfo{
 						Router: &dynamic.Router{
 							Rule: "a",
 						},
 					},
+				},
+				routerRepresentation{
 					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Rule: "a",
+						},
+					},
+				},
+			},
+		},
+		{
+			direction: ascendantSorting,
+			sortBy:    "service",
+			elements: []orderedRouter{
+				routerRepresentation{
+					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Service: "b",
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Service: "b",
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Service: "a",
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Service: "a",
+						},
+					},
+				},
+			},
+			expected: []orderedRouter{
+				routerRepresentation{
+					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Service: "a",
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Service: "a",
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Service: "b",
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Service: "b",
+						},
+					},
+				},
+			},
+		},
+		{
+			direction: descendantSorting,
+			sortBy:    "service",
+			elements: []orderedRouter{
+				routerRepresentation{
+					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Service: "a",
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Service: "a",
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Service: "b",
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Service: "b",
+						},
+					},
+				},
+			},
+			expected: []orderedRouter{
+				routerRepresentation{
+					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Service: "b",
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Service: "b",
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Service: "a",
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							Service: "a",
+						},
+					},
+				},
+			},
+		},
+		{
+			direction: ascendantSorting,
+			sortBy:    "entryPoints",
+			elements: []orderedRouter{
+				routerRepresentation{
+					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							EntryPoints: []string{"a", "b"},
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							EntryPoints: []string{"a", "b"},
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							EntryPoints: []string{"a"},
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							EntryPoints: []string{"a"},
+						},
+					},
+				},
+			},
+			expected: []orderedRouter{
+				routerRepresentation{
+					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							EntryPoints: []string{"a"},
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							EntryPoints: []string{"a"},
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							EntryPoints: []string{"a", "b"},
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							EntryPoints: []string{"a", "b"},
+						},
+					},
+				},
+			},
+		},
+		{
+			direction: descendantSorting,
+			sortBy:    "entryPoints",
+			elements: []orderedRouter{
+				routerRepresentation{
+					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							EntryPoints: []string{"a"},
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							EntryPoints: []string{"a"},
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							EntryPoints: []string{"a", "b"},
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							EntryPoints: []string{"a", "b"},
+						},
+					},
+				},
+			},
+			expected: []orderedRouter{
+				routerRepresentation{
+					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							EntryPoints: []string{"a", "b"},
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							EntryPoints: []string{"a", "b"},
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "b",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							EntryPoints: []string{"a"},
+						},
+					},
+				},
+				routerRepresentation{
+					Name: "a",
+					RouterInfo: &runtime.RouterInfo{
+						Router: &dynamic.Router{
+							EntryPoints: []string{"a"},
+						},
+					},
 				},
 			},
 		},
 	}
 	for _, test := range testCases {
 		test := test
-		t.Run(test.desc, func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s-%s", test.direction, test.sortBy), func(t *testing.T) {
 			t.Parallel()
 
-			sortByRule(test.direction, test.elements)
+			u, err := url.Parse(fmt.Sprintf("/?direction=%s&sortBy=%s", test.direction, test.sortBy))
+			require.NoError(t, err)
+
+			sortRouters(u.Query(), test.elements)
+
 			assert.Equal(t, test.expected, test.elements)
 		})
 	}
 }
 
-func TestSortByProvider(t *testing.T) {
+func TestSortServices(t *testing.T) {
 	testCases := []struct {
-		desc      string
 		direction string
-		elements  []orderedByProvider
-		expected  []orderedByProvider
+		sortBy    string
+		elements  []orderedService
+		expected  []orderedService
 	}{
 		{
-			desc:      "Ascending",
 			direction: ascendantSorting,
-			elements: []orderedByProvider{
-				routerRepresentation{
-					Provider: "b",
-					Name:     "b",
+			sortBy:    "name",
+			elements: []orderedService{
+				serviceRepresentation{
+					Name: "b",
 				},
-				routerRepresentation{
-					Provider: "b",
-					Name:     "a",
-				},
-				routerRepresentation{
-					Provider: "a",
-					Name:     "b",
-				},
-				routerRepresentation{
-					Provider: "a",
-					Name:     "a",
+				serviceRepresentation{
+					Name: "a",
 				},
 			},
-			expected: []orderedByProvider{
-				routerRepresentation{
-					Provider: "a",
-					Name:     "a",
+			expected: []orderedService{
+				serviceRepresentation{
+					Name: "a",
 				},
-				routerRepresentation{
-					Provider: "a",
-					Name:     "b",
-				},
-				routerRepresentation{
-					Provider: "b",
-					Name:     "a",
-				},
-				routerRepresentation{
-					Provider: "b",
-					Name:     "b",
+				serviceRepresentation{
+					Name: "b",
 				},
 			},
 		},
 		{
-			desc:      "Descending",
 			direction: descendantSorting,
-			elements: []orderedByProvider{
-				routerRepresentation{
-					Provider: "a",
-					Name:     "a",
+			sortBy:    "name",
+			elements: []orderedService{
+				serviceRepresentation{
+					Name: "a",
 				},
-				routerRepresentation{
-					Provider: "a",
-					Name:     "b",
-				},
-				routerRepresentation{
-					Provider: "b",
-					Name:     "a",
-				},
-				routerRepresentation{
-					Provider: "b",
-					Name:     "b",
+				serviceRepresentation{
+					Name: "b",
 				},
 			},
-			expected: []orderedByProvider{
-				routerRepresentation{
-					Provider: "b",
+			expected: []orderedService{
+				serviceRepresentation{
+					Name: "b",
+				},
+				serviceRepresentation{
+					Name: "a",
+				},
+			},
+		},
+		{
+			direction: ascendantSorting,
+			sortBy:    "type",
+			elements: []orderedService{
+				serviceRepresentation{
+					Name: "b",
+					Type: "b",
+				},
+				serviceRepresentation{
+					Name: "a",
+					Type: "b",
+				},
+				serviceRepresentation{
+					Name: "b",
+					Type: "a",
+				},
+				serviceRepresentation{
+					Name: "a",
+					Type: "a",
+				},
+			},
+			expected: []orderedService{
+				serviceRepresentation{
+					Name: "a",
+					Type: "a",
+				},
+				serviceRepresentation{
+					Name: "b",
+					Type: "a",
+				},
+				serviceRepresentation{
+					Name: "a",
+					Type: "b",
+				},
+				serviceRepresentation{
+					Name: "b",
+					Type: "b",
+				},
+			},
+		},
+		{
+			direction: descendantSorting,
+			sortBy:    "type",
+			elements: []orderedService{
+				serviceRepresentation{
+					Name: "a",
+					Type: "a",
+				},
+				serviceRepresentation{
+					Name: "b",
+					Type: "a",
+				},
+				serviceRepresentation{
+					Name: "a",
+					Type: "b",
+				},
+				serviceRepresentation{
+					Name: "b",
+					Type: "b",
+				},
+			},
+			expected: []orderedService{
+				serviceRepresentation{
+					Name: "b",
+					Type: "b",
+				},
+				serviceRepresentation{
+					Name: "a",
+					Type: "b",
+				},
+				serviceRepresentation{
+					Name: "b",
+					Type: "a",
+				},
+				serviceRepresentation{
+					Name: "a",
+					Type: "a",
+				},
+			},
+		},
+		{
+			direction: ascendantSorting,
+			sortBy:    "servers",
+			elements: []orderedService{
+				serviceRepresentation{
+					Name: "b",
+					ServiceInfo: &runtime.ServiceInfo{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: make([]dynamic.Server, 2),
+							},
+						},
+					},
+				},
+				serviceRepresentation{
+					Name: "a",
+					ServiceInfo: &runtime.ServiceInfo{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: make([]dynamic.Server, 2),
+							},
+						},
+					},
+				},
+				serviceRepresentation{
+					Name: "b",
+					ServiceInfo: &runtime.ServiceInfo{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: make([]dynamic.Server, 1),
+							},
+						},
+					},
+				},
+				serviceRepresentation{
+					Name: "a",
+					ServiceInfo: &runtime.ServiceInfo{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: make([]dynamic.Server, 1),
+							},
+						},
+					},
+				},
+			},
+			expected: []orderedService{
+				serviceRepresentation{
+					Name: "a",
+					ServiceInfo: &runtime.ServiceInfo{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: make([]dynamic.Server, 1),
+							},
+						},
+					},
+				},
+				serviceRepresentation{
+					Name: "b",
+					ServiceInfo: &runtime.ServiceInfo{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: make([]dynamic.Server, 1),
+							},
+						},
+					},
+				},
+				serviceRepresentation{
+					Name: "a",
+					ServiceInfo: &runtime.ServiceInfo{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: make([]dynamic.Server, 2),
+							},
+						},
+					},
+				},
+				serviceRepresentation{
+					Name: "b",
+					ServiceInfo: &runtime.ServiceInfo{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: make([]dynamic.Server, 2),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			direction: descendantSorting,
+			sortBy:    "servers",
+			elements: []orderedService{
+				serviceRepresentation{
+					Name: "a",
+					ServiceInfo: &runtime.ServiceInfo{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: make([]dynamic.Server, 1),
+							},
+						},
+					},
+				},
+				serviceRepresentation{
+					Name: "b",
+					ServiceInfo: &runtime.ServiceInfo{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: make([]dynamic.Server, 1),
+							},
+						},
+					},
+				},
+				serviceRepresentation{
+					Name: "a",
+					ServiceInfo: &runtime.ServiceInfo{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: make([]dynamic.Server, 2),
+							},
+						},
+					},
+				},
+				serviceRepresentation{
+					Name: "b",
+					ServiceInfo: &runtime.ServiceInfo{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: make([]dynamic.Server, 2),
+							},
+						},
+					},
+				},
+			},
+			expected: []orderedService{
+				serviceRepresentation{
+					Name: "b",
+					ServiceInfo: &runtime.ServiceInfo{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: make([]dynamic.Server, 2),
+							},
+						},
+					},
+				},
+				serviceRepresentation{
+					Name: "a",
+					ServiceInfo: &runtime.ServiceInfo{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: make([]dynamic.Server, 2),
+							},
+						},
+					},
+				},
+				serviceRepresentation{
+					Name: "b",
+					ServiceInfo: &runtime.ServiceInfo{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: make([]dynamic.Server, 1),
+							},
+						},
+					},
+				},
+				serviceRepresentation{
+					Name: "a",
+					ServiceInfo: &runtime.ServiceInfo{
+						Service: &dynamic.Service{
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: make([]dynamic.Server, 1),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			direction: ascendantSorting,
+			sortBy:    "provider",
+			elements: []orderedService{
+				serviceRepresentation{
 					Name:     "b",
-				},
-				routerRepresentation{
 					Provider: "b",
-					Name:     "a",
 				},
-				routerRepresentation{
-					Provider: "a",
+				serviceRepresentation{
 					Name:     "b",
-				},
-				routerRepresentation{
 					Provider: "a",
+				},
+				serviceRepresentation{
 					Name:     "a",
+					Provider: "b",
+				},
+				serviceRepresentation{
+					Name:     "a",
+					Provider: "a",
+				},
+			},
+			expected: []orderedService{
+				serviceRepresentation{
+					Name:     "a",
+					Provider: "a",
+				},
+				serviceRepresentation{
+					Name:     "b",
+					Provider: "a",
+				},
+				serviceRepresentation{
+					Name:     "a",
+					Provider: "b",
+				},
+				serviceRepresentation{
+					Name:     "b",
+					Provider: "b",
+				},
+			},
+		},
+		{
+			direction: descendantSorting,
+			sortBy:    "provider",
+			elements: []orderedService{
+				serviceRepresentation{
+					Name:     "a",
+					Provider: "a",
+				},
+				serviceRepresentation{
+					Name:     "a",
+					Provider: "b",
+				},
+				serviceRepresentation{
+					Name:     "b",
+					Provider: "a",
+				},
+				serviceRepresentation{
+					Name:     "b",
+					Provider: "b",
+				},
+			},
+			expected: []orderedService{
+				serviceRepresentation{
+					Name:     "b",
+					Provider: "b",
+				},
+				serviceRepresentation{
+					Name:     "a",
+					Provider: "b",
+				},
+				serviceRepresentation{
+					Name:     "b",
+					Provider: "a",
+				},
+				serviceRepresentation{
+					Name:     "a",
+					Provider: "a",
+				},
+			},
+		},
+		{
+			direction: ascendantSorting,
+			sortBy:    "status",
+			elements: []orderedService{
+				serviceRepresentation{
+					Name: "b",
+					ServiceInfo: &runtime.ServiceInfo{
+						Status: "b",
+					},
+				},
+				serviceRepresentation{
+					Name: "a",
+					ServiceInfo: &runtime.ServiceInfo{
+						Status: "b",
+					},
+				},
+				serviceRepresentation{
+					Name: "b",
+					ServiceInfo: &runtime.ServiceInfo{
+						Status: "a",
+					},
+				},
+				serviceRepresentation{
+					Name: "a",
+					ServiceInfo: &runtime.ServiceInfo{
+						Status: "a",
+					},
+				},
+			},
+			expected: []orderedService{
+				serviceRepresentation{
+					Name: "a",
+					ServiceInfo: &runtime.ServiceInfo{
+						Status: "a",
+					},
+				},
+				serviceRepresentation{
+					Name: "b",
+					ServiceInfo: &runtime.ServiceInfo{
+						Status: "a",
+					},
+				},
+				serviceRepresentation{
+					Name: "a",
+					ServiceInfo: &runtime.ServiceInfo{
+						Status: "b",
+					},
+				},
+				serviceRepresentation{
+					Name: "b",
+					ServiceInfo: &runtime.ServiceInfo{
+						Status: "b",
+					},
+				},
+			},
+		},
+		{
+			direction: descendantSorting,
+			sortBy:    "status",
+			elements: []orderedService{
+				serviceRepresentation{
+					Name: "a",
+					ServiceInfo: &runtime.ServiceInfo{
+						Status: "a",
+					},
+				},
+				serviceRepresentation{
+					Name: "b",
+					ServiceInfo: &runtime.ServiceInfo{
+						Status: "a",
+					},
+				},
+				serviceRepresentation{
+					Name: "a",
+					ServiceInfo: &runtime.ServiceInfo{
+						Status: "b",
+					},
+				},
+				serviceRepresentation{
+					Name: "b",
+					ServiceInfo: &runtime.ServiceInfo{
+						Status: "b",
+					},
+				},
+			},
+			expected: []orderedService{
+				serviceRepresentation{
+					Name: "b",
+					ServiceInfo: &runtime.ServiceInfo{
+						Status: "b",
+					},
+				},
+				serviceRepresentation{
+					Name: "a",
+					ServiceInfo: &runtime.ServiceInfo{
+						Status: "b",
+					},
+				},
+				serviceRepresentation{
+					Name: "b",
+					ServiceInfo: &runtime.ServiceInfo{
+						Status: "a",
+					},
+				},
+				serviceRepresentation{
+					Name: "a",
+					ServiceInfo: &runtime.ServiceInfo{
+						Status: "a",
+					},
 				},
 			},
 		},
 	}
 	for _, test := range testCases {
 		test := test
-		t.Run(test.desc, func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s-%s", test.direction, test.sortBy), func(t *testing.T) {
 			t.Parallel()
 
-			sortByProvider(test.direction, test.elements)
+			u, err := url.Parse(fmt.Sprintf("/?direction=%s&sortBy=%s", test.direction, test.sortBy))
+			require.NoError(t, err)
+
+			sortServices(u.Query(), test.elements)
+
 			assert.Equal(t, test.expected, test.elements)
 		})
 	}
 }
 
-func TestSortByServers(t *testing.T) {
+func TestSortMiddlewares(t *testing.T) {
 	testCases := []struct {
-		desc      string
 		direction string
-		elements  []orderedByServers
-		expected  []orderedByServers
+		sortBy    string
+		elements  []orderedMiddleware
+		expected  []orderedMiddleware
 	}{
 		{
-			desc:      "Ascending",
 			direction: ascendantSorting,
-			elements: []orderedByServers{
-				tcpServiceRepresentation{
-					TCPServiceInfo: &runtime.TCPServiceInfo{
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{},
-									{},
-								},
-							},
-						},
-					},
+			sortBy:    "name",
+			elements: []orderedMiddleware{
+				middlewareRepresentation{
 					Name: "b",
 				},
-				tcpServiceRepresentation{
-					TCPServiceInfo: &runtime.TCPServiceInfo{
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{},
-									{},
-								},
-							},
-						},
-					},
-					Name: "a",
-				},
-				tcpServiceRepresentation{
-					TCPServiceInfo: &runtime.TCPServiceInfo{
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{},
-								},
-							},
-						},
-					},
-					Name: "b",
-				},
-				tcpServiceRepresentation{
-					TCPServiceInfo: &runtime.TCPServiceInfo{
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{},
-								},
-							},
-						},
-					},
+				middlewareRepresentation{
 					Name: "a",
 				},
 			},
-			expected: []orderedByServers{
-				tcpServiceRepresentation{
-					TCPServiceInfo: &runtime.TCPServiceInfo{
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{},
-								},
-							},
-						},
-					},
+			expected: []orderedMiddleware{
+				middlewareRepresentation{
 					Name: "a",
 				},
-				tcpServiceRepresentation{
-					TCPServiceInfo: &runtime.TCPServiceInfo{
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{},
-								},
-							},
-						},
-					},
-					Name: "b",
-				},
-				tcpServiceRepresentation{
-					TCPServiceInfo: &runtime.TCPServiceInfo{
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{},
-									{},
-								},
-							},
-						},
-					},
-					Name: "a",
-				},
-				tcpServiceRepresentation{
-					TCPServiceInfo: &runtime.TCPServiceInfo{
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{},
-									{},
-								},
-							},
-						},
-					},
+				middlewareRepresentation{
 					Name: "b",
 				},
 			},
 		},
 		{
-			desc:      "Descending",
 			direction: descendantSorting,
-			elements: []orderedByServers{
-				tcpServiceRepresentation{
-					TCPServiceInfo: &runtime.TCPServiceInfo{
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{},
-								},
-							},
-						},
-					},
+			sortBy:    "name",
+			elements: []orderedMiddleware{
+				middlewareRepresentation{
 					Name: "a",
 				},
-				tcpServiceRepresentation{
-					TCPServiceInfo: &runtime.TCPServiceInfo{
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{},
-								},
-							},
-						},
-					},
-					Name: "b",
-				},
-				tcpServiceRepresentation{
-					TCPServiceInfo: &runtime.TCPServiceInfo{
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{},
-									{},
-								},
-							},
-						},
-					},
-					Name: "a",
-				},
-				tcpServiceRepresentation{
-					TCPServiceInfo: &runtime.TCPServiceInfo{
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{},
-									{},
-								},
-							},
-						},
-					},
+				middlewareRepresentation{
 					Name: "b",
 				},
 			},
-			expected: []orderedByServers{
-				tcpServiceRepresentation{
-					TCPServiceInfo: &runtime.TCPServiceInfo{
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{},
-									{},
-								},
-							},
-						},
-					},
+			expected: []orderedMiddleware{
+				middlewareRepresentation{
 					Name: "b",
 				},
-				tcpServiceRepresentation{
-					TCPServiceInfo: &runtime.TCPServiceInfo{
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{},
-									{},
-								},
-							},
-						},
-					},
+				middlewareRepresentation{
 					Name: "a",
 				},
-				tcpServiceRepresentation{
-					TCPServiceInfo: &runtime.TCPServiceInfo{
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{},
-								},
-							},
-						},
-					},
+			},
+		},
+		{
+			direction: ascendantSorting,
+			sortBy:    "type",
+			elements: []orderedMiddleware{
+				middlewareRepresentation{
 					Name: "b",
+					Type: "b",
 				},
-				tcpServiceRepresentation{
-					TCPServiceInfo: &runtime.TCPServiceInfo{
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{},
-								},
-							},
-						},
-					},
+				middlewareRepresentation{
 					Name: "a",
+					Type: "b",
+				},
+				middlewareRepresentation{
+					Name: "b",
+					Type: "a",
+				},
+				middlewareRepresentation{
+					Name: "a",
+					Type: "a",
+				},
+			},
+			expected: []orderedMiddleware{
+				middlewareRepresentation{
+					Name: "a",
+					Type: "a",
+				},
+				middlewareRepresentation{
+					Name: "b",
+					Type: "a",
+				},
+				middlewareRepresentation{
+					Name: "a",
+					Type: "b",
+				},
+				middlewareRepresentation{
+					Name: "b",
+					Type: "b",
+				},
+			},
+		},
+		{
+			direction: descendantSorting,
+			sortBy:    "type",
+			elements: []orderedMiddleware{
+				middlewareRepresentation{
+					Name: "a",
+					Type: "a",
+				},
+				middlewareRepresentation{
+					Name: "b",
+					Type: "a",
+				},
+				middlewareRepresentation{
+					Name: "a",
+					Type: "b",
+				},
+				middlewareRepresentation{
+					Name: "b",
+					Type: "b",
+				},
+			},
+			expected: []orderedMiddleware{
+				middlewareRepresentation{
+					Name: "b",
+					Type: "b",
+				},
+				middlewareRepresentation{
+					Name: "a",
+					Type: "b",
+				},
+				middlewareRepresentation{
+					Name: "b",
+					Type: "a",
+				},
+				middlewareRepresentation{
+					Name: "a",
+					Type: "a",
+				},
+			},
+		},
+		{
+			direction: ascendantSorting,
+			sortBy:    "provider",
+			elements: []orderedMiddleware{
+				middlewareRepresentation{
+					Name:     "b",
+					Provider: "b",
+				},
+				middlewareRepresentation{
+					Name:     "b",
+					Provider: "a",
+				},
+				middlewareRepresentation{
+					Name:     "a",
+					Provider: "b",
+				},
+				middlewareRepresentation{
+					Name:     "a",
+					Provider: "a",
+				},
+			},
+			expected: []orderedMiddleware{
+				middlewareRepresentation{
+					Name:     "a",
+					Provider: "a",
+				},
+				middlewareRepresentation{
+					Name:     "b",
+					Provider: "a",
+				},
+				middlewareRepresentation{
+					Name:     "a",
+					Provider: "b",
+				},
+				middlewareRepresentation{
+					Name:     "b",
+					Provider: "b",
+				},
+			},
+		},
+		{
+			direction: descendantSorting,
+			sortBy:    "provider",
+			elements: []orderedMiddleware{
+				middlewareRepresentation{
+					Name:     "a",
+					Provider: "a",
+				},
+				middlewareRepresentation{
+					Name:     "a",
+					Provider: "b",
+				},
+				middlewareRepresentation{
+					Name:     "b",
+					Provider: "a",
+				},
+				middlewareRepresentation{
+					Name:     "b",
+					Provider: "b",
+				},
+			},
+			expected: []orderedMiddleware{
+				middlewareRepresentation{
+					Name:     "b",
+					Provider: "b",
+				},
+				middlewareRepresentation{
+					Name:     "a",
+					Provider: "b",
+				},
+				middlewareRepresentation{
+					Name:     "b",
+					Provider: "a",
+				},
+				middlewareRepresentation{
+					Name:     "a",
+					Provider: "a",
+				},
+			},
+		},
+		{
+			direction: ascendantSorting,
+			sortBy:    "status",
+			elements: []orderedMiddleware{
+				middlewareRepresentation{
+					Name: "b",
+					MiddlewareInfo: &runtime.MiddlewareInfo{
+						Status: "b",
+					},
+				},
+				middlewareRepresentation{
+					Name: "a",
+					MiddlewareInfo: &runtime.MiddlewareInfo{
+						Status: "b",
+					},
+				},
+				middlewareRepresentation{
+					Name: "b",
+					MiddlewareInfo: &runtime.MiddlewareInfo{
+						Status: "a",
+					},
+				},
+				middlewareRepresentation{
+					Name: "a",
+					MiddlewareInfo: &runtime.MiddlewareInfo{
+						Status: "a",
+					},
+				},
+			},
+			expected: []orderedMiddleware{
+				middlewareRepresentation{
+					Name: "a",
+					MiddlewareInfo: &runtime.MiddlewareInfo{
+						Status: "a",
+					},
+				},
+				middlewareRepresentation{
+					Name: "b",
+					MiddlewareInfo: &runtime.MiddlewareInfo{
+						Status: "a",
+					},
+				},
+				middlewareRepresentation{
+					Name: "a",
+					MiddlewareInfo: &runtime.MiddlewareInfo{
+						Status: "b",
+					},
+				},
+				middlewareRepresentation{
+					Name: "b",
+					MiddlewareInfo: &runtime.MiddlewareInfo{
+						Status: "b",
+					},
+				},
+			},
+		},
+		{
+			direction: descendantSorting,
+			sortBy:    "status",
+			elements: []orderedMiddleware{
+				middlewareRepresentation{
+					Name: "a",
+					MiddlewareInfo: &runtime.MiddlewareInfo{
+						Status: "a",
+					},
+				},
+				middlewareRepresentation{
+					Name: "b",
+					MiddlewareInfo: &runtime.MiddlewareInfo{
+						Status: "a",
+					},
+				},
+				middlewareRepresentation{
+					Name: "a",
+					MiddlewareInfo: &runtime.MiddlewareInfo{
+						Status: "b",
+					},
+				},
+				middlewareRepresentation{
+					Name: "b",
+					MiddlewareInfo: &runtime.MiddlewareInfo{
+						Status: "b",
+					},
+				},
+			},
+			expected: []orderedMiddleware{
+				middlewareRepresentation{
+					Name: "b",
+					MiddlewareInfo: &runtime.MiddlewareInfo{
+						Status: "b",
+					},
+				},
+				middlewareRepresentation{
+					Name: "a",
+					MiddlewareInfo: &runtime.MiddlewareInfo{
+						Status: "b",
+					},
+				},
+				middlewareRepresentation{
+					Name: "b",
+					MiddlewareInfo: &runtime.MiddlewareInfo{
+						Status: "a",
+					},
+				},
+				middlewareRepresentation{
+					Name: "a",
+					MiddlewareInfo: &runtime.MiddlewareInfo{
+						Status: "a",
+					},
 				},
 			},
 		},
 	}
 	for _, test := range testCases {
 		test := test
-		t.Run(test.desc, func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s-%s", test.direction, test.sortBy), func(t *testing.T) {
 			t.Parallel()
 
-			sortByServers(test.direction, test.elements)
-			assert.Equal(t, test.expected, test.elements)
-		})
-	}
-}
+			u, err := url.Parse(fmt.Sprintf("/?direction=%s&sortBy=%s", test.direction, test.sortBy))
+			require.NoError(t, err)
 
-func TestSortByEntryPoints(t *testing.T) {
-	testCases := []struct {
-		desc      string
-		direction string
-		elements  []orderedByEntryPoints
-		expected  []orderedByEntryPoints
-	}{
-		{
-			desc:      "Ascending",
-			direction: ascendantSorting,
-			elements: []orderedByEntryPoints{
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							EntryPoints: []string{"a", "b"},
-						},
-					},
-					Name: "b",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							EntryPoints: []string{"a", "b"},
-						},
-					},
-					Name: "a",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							EntryPoints: []string{"a"},
-						},
-					},
-					Name: "b",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							EntryPoints: []string{"a"},
-						},
-					},
-					Name: "a",
-				},
-			},
-			expected: []orderedByEntryPoints{
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							EntryPoints: []string{"a"},
-						},
-					},
-					Name: "a",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							EntryPoints: []string{"a"},
-						},
-					},
-					Name: "b",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							EntryPoints: []string{"a", "b"},
-						},
-					},
-					Name: "a",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							EntryPoints: []string{"a", "b"},
-						},
-					},
-					Name: "b",
-				},
-			},
-		},
-		{
-			desc:      "Descending",
-			direction: descendantSorting,
-			elements: []orderedByEntryPoints{
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							EntryPoints: []string{"a"},
-						},
-					},
-					Name: "a",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							EntryPoints: []string{"a"},
-						},
-					},
-					Name: "b",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							EntryPoints: []string{"a", "b"},
-						},
-					},
-					Name: "a",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							EntryPoints: []string{"a", "b"},
-						},
-					},
-					Name: "b",
-				},
-			},
-			expected: []orderedByEntryPoints{
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							EntryPoints: []string{"a", "b"},
-						},
-					},
-					Name: "b",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							EntryPoints: []string{"a", "b"},
-						},
-					},
-					Name: "a",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							EntryPoints: []string{"a"},
-						},
-					},
-					Name: "b",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							EntryPoints: []string{"a"},
-						},
-					},
-					Name: "a",
-				},
-			},
-		},
-	}
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
+			sortMiddlewares(u.Query(), test.elements)
 
-			sortByEntryPoints(test.direction, test.elements)
-			assert.Equal(t, test.expected, test.elements)
-		})
-	}
-}
-
-func TestSortByService(t *testing.T) {
-	testCases := []struct {
-		desc      string
-		direction string
-		elements  []orderedByService
-		expected  []orderedByService
-	}{
-		{
-			desc:      "Ascending",
-			direction: ascendantSorting,
-			elements: []orderedByService{
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Service: "b",
-						},
-					},
-					Name: "b",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Service: "b",
-						},
-					},
-					Name: "a",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Service: "a",
-						},
-					},
-					Name: "b",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Service: "a",
-						},
-					},
-					Name: "a",
-				},
-			},
-			expected: []orderedByService{
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Service: "a",
-						},
-					},
-					Name: "a",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Service: "a",
-						},
-					},
-					Name: "b",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Service: "b",
-						},
-					},
-					Name: "a",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Service: "b",
-						},
-					},
-					Name: "b",
-				},
-			},
-		},
-		{
-			desc:      "Descending",
-			direction: descendantSorting,
-			elements: []orderedByService{
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Service: "a",
-						},
-					},
-					Name: "a",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Service: "a",
-						},
-					},
-					Name: "b",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Service: "b",
-						},
-					},
-					Name: "a",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Service: "b",
-						},
-					},
-					Name: "b",
-				},
-			},
-			expected: []orderedByService{
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Service: "b",
-						},
-					},
-					Name: "b",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Service: "b",
-						},
-					},
-					Name: "a",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Service: "a",
-						},
-					},
-					Name: "b",
-				},
-				routerRepresentation{
-					RouterInfo: &runtime.RouterInfo{
-						Router: &dynamic.Router{
-							Service: "a",
-						},
-					},
-					Name: "a",
-				},
-			},
-		},
-	}
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			sortByService(test.direction, test.elements)
 			assert.Equal(t, test.expected, test.elements)
 		})
 	}
