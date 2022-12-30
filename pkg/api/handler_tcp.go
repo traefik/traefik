@@ -216,7 +216,10 @@ func keepTCPRouter(name string, item *runtime.TCPRouterInfo, criterion *searchCr
 		return true
 	}
 
-	return criterion.withStatus(item.Status) && criterion.searchIn(item.Rule, name)
+	return criterion.withStatus(item.Status) &&
+		criterion.searchIn(item.Rule, name) &&
+		criterion.filterService(item.Service) &&
+		criterion.filterMiddleware(item.Middlewares)
 }
 
 func keepTCPService(name string, item *runtime.TCPServiceInfo, criterion *searchCriterion) bool {

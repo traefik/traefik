@@ -4,7 +4,7 @@ import { getTotal } from './utils'
 const apiBase = '/http'
 
 function getAllRouters (params) {
-  return APP.api.get(`${apiBase}/routers?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}&sortBy=${params.sortBy}&direction=${params.direction}`)
+  return APP.api.get(`${apiBase}/routers?search=${params.query}&status=${params.status}&per_page=${params.limit}&page=${params.page}&sortBy=${params.sortBy}&direction=${params.direction}&serviceName=${params.serviceName}&middlewareName=${params.middlewareName}`)
     .then(response => {
       const { data = [], headers } = response
       const total = getTotal(headers, params)

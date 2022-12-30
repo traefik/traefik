@@ -149,7 +149,9 @@ func keepUDPRouter(name string, item *runtime.UDPRouterInfo, criterion *searchCr
 		return true
 	}
 
-	return criterion.withStatus(item.Status) && criterion.searchIn(name)
+	return criterion.withStatus(item.Status) &&
+		criterion.searchIn(name) &&
+		criterion.filterService(item.Service)
 }
 
 func keepUDPService(name string, item *runtime.UDPServiceInfo, criterion *searchCriterion) bool {
