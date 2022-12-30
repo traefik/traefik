@@ -11,7 +11,7 @@ Automatic HTTPS
 You can configure Traefik to use an ACME provider (like Let's Encrypt) for automatic certificate generation.
 
 !!! warning "Let's Encrypt and Rate Limiting"
-    Note that Let's Encrypt API has [rate limiting](https://letsencrypt.org/docs/rate-limits).
+    Note that Let's Encrypt API has [rate limiting](https://letsencrypt.org/docs/rate-limits). These last up to __one week__, and can not be overrided.
 
     Use Let's Encrypt staging server with the [`caServer`](#caserver) configuration option
     when experimenting to avoid hitting this limit too fast.
@@ -544,6 +544,8 @@ certificatesResolvers:
 ```
 
 ACME certificates are stored in a JSON file that needs to have a `600` file mode.
+
+If you are using Traefik in a container make sure this file is preserved across restarts. If traefik requests new certificates each time it starts up, a crash-looping container can quickly reach Let's Encrypt's ratelimits. You may be left without valid certificates for a week.
 
 In Docker you can mount either the JSON file, or the folder containing it:
 
