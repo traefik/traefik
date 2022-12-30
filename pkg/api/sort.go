@@ -1,8 +1,11 @@
 package api
 
 import (
+	"fmt"
 	"net/url"
 	"sort"
+
+	"golang.org/x/exp/constraints"
 )
 
 const (
@@ -15,8 +18,13 @@ const (
 	descendantSorting = "desc"
 )
 
-type orderedRouter interface {
+type orderedWithName interface {
 	name() string
+}
+
+type orderedRouter interface {
+	orderedWithName
+
 	provider() string
 	priority() int
 	status() string
@@ -33,27 +41,29 @@ func sortRouters[T orderedRouter](values url.Values, routers []T) {
 		direction = ascendantSorting
 	}
 
+	fmt.Println("sort", sortBy, direction)
+
 	switch sortBy {
 	case "name":
 		sortByName(direction, routers)
 
 	case "provider":
-		sortByProvider(direction, routers)
+		sortMeta(direction, routers, func(i int) string { return routers[i].provider() })
 
 	case "priority":
-		sortByPriority(direction, routers)
+		sortMeta(direction, routers, func(i int) int { return routers[i].priority() })
 
 	case "status":
-		sortByStatus(direction, routers)
+		sortMeta(direction, routers, func(i int) string { return routers[i].status() })
 
 	case "rule":
-		sortByRule(direction, routers)
+		sortMeta(direction, routers, func(i int) string { return routers[i].rule() })
 
 	case "service":
-		sortByService(direction, routers)
+		sortMeta(direction, routers, func(i int) string { return routers[i].service() })
 
 	case "entryPoints":
-		sortByEntryPoints(direction, routers)
+		sortMeta(direction, routers, func(i int) int { return routers[i].entryPointsCount() })
 
 	default:
 		sortByName(direction, routers)
@@ -147,7 +157,8 @@ func (r udpRouterRepresentation) entryPointsCount() int {
 }
 
 type orderedService interface {
-	name() string
+	orderedWithName
+
 	resourceType() string
 	serversCount() int
 	provider() string
@@ -167,16 +178,16 @@ func sortServices[T orderedService](values url.Values, services []T) {
 		sortByName(direction, services)
 
 	case "type":
-		sortByType(direction, services)
+		sortMeta(direction, services, func(i int) string { return services[i].resourceType() })
 
 	case "servers":
-		sortByServers(direction, services)
+		sortMeta(direction, services, func(i int) int { return services[i].serversCount() })
 
 	case "provider":
-		sortByProvider(direction, services)
+		sortMeta(direction, services, func(i int) string { return services[i].provider() })
 
 	case "status":
-		sortByStatus(direction, services)
+		sortMeta(direction, services, func(i int) string { return services[i].status() })
 
 	default:
 		sortByName(direction, services)
@@ -199,6 +210,7 @@ func (s serviceRepresentation) serversCount() int {
 	if s.LoadBalancer == nil {
 		return 0
 	}
+
 	return len(s.LoadBalancer.Servers)
 }
 
@@ -226,6 +238,7 @@ func (s tcpServiceRepresentation) serversCount() int {
 	if s.LoadBalancer == nil {
 		return 0
 	}
+
 	return len(s.LoadBalancer.Servers)
 }
 
@@ -253,6 +266,7 @@ func (s udpServiceRepresentation) serversCount() int {
 	if s.LoadBalancer == nil {
 		return 0
 	}
+
 	return len(s.LoadBalancer.Servers)
 }
 
@@ -265,7 +279,8 @@ func (s udpServiceRepresentation) status() string {
 }
 
 type orderedMiddleware interface {
-	name() string
+	orderedWithName
+
 	resourceType() string
 	provider() string
 	status() string
@@ -284,13 +299,13 @@ func sortMiddlewares[T orderedMiddleware](values url.Values, middlewares []T) {
 		sortByName(direction, middlewares)
 
 	case "type":
-		sortByType(direction, middlewares)
+		sortMeta(direction, middlewares, func(i int) string { return middlewares[i].resourceType() })
 
 	case "provider":
-		sortByProvider(direction, middlewares)
+		sortMeta(direction, middlewares, func(i int) string { return middlewares[i].provider() })
 
 	case "status":
-		sortByStatus(direction, middlewares)
+		sortMeta(direction, middlewares, func(i int) string { return middlewares[i].status() })
 
 	default:
 		sortByName(direction, middlewares)
@@ -330,201 +345,44 @@ func (m tcpMiddlewareRepresentation) status() string {
 }
 
 type orderedByName interface {
-	name() string
+	orderedWithName
 }
 
 func sortByName[T orderedByName](direction string, results []T) {
-	sort.Slice(results, func(i, j int) bool {
-		// Ascending
-		if direction == ascendantSorting {
+	// Ascending
+	if direction == ascendantSorting {
+		sort.Slice(results, func(i, j int) bool {
 			return results[i].name() < results[j].name()
-		}
+		})
 
-		// Descending
+		return
+	}
+
+	// Descending
+	sort.Slice(results, func(i, j int) bool {
 		return results[i].name() > results[j].name()
 	})
 }
 
-type orderedByPriority interface {
-	name() string
-	priority() int
-}
-
-func sortByPriority[T orderedByPriority](direction string, results []T) {
-	sort.Slice(results, func(i, j int) bool {
-		// Ascending
-		if direction == ascendantSorting {
-			if results[i].priority() == results[j].priority() {
+func sortMeta[T orderedWithName, U constraints.Ordered](direction string, results []T, fn func(int) U) {
+	// Ascending
+	if direction == ascendantSorting {
+		sort.Slice(results, func(i, j int) bool {
+			if fn(i) == fn(j) {
 				return results[i].name() < results[j].name()
 			}
-			return results[i].priority() < results[j].priority()
-		}
 
-		// Descending
-		if results[i].priority() == results[j].priority() {
-			return results[i].name() > results[j].name()
-		}
-		return results[i].priority() > results[j].priority()
-	})
-}
+			return fn(i) < fn(j)
+		})
 
-type orderedByType interface {
-	name() string
-	resourceType() string
-}
+		return
+	}
 
-func sortByType[T orderedByType](direction string, results []T) {
+	// Descending
 	sort.Slice(results, func(i, j int) bool {
-		// Ascending
-		if direction == ascendantSorting {
-			if results[i].resourceType() == results[j].resourceType() {
-				return results[i].name() < results[j].name()
-			}
-			return results[i].resourceType() < results[j].resourceType()
-		}
-
-		// Descending
-		if results[i].resourceType() == results[j].resourceType() {
+		if fn(i) == fn(j) {
 			return results[i].name() > results[j].name()
 		}
-		return results[i].resourceType() > results[j].resourceType()
-	})
-}
-
-type orderedByServers interface {
-	name() string
-	serversCount() int
-}
-
-func sortByServers[T orderedByServers](direction string, results []T) {
-	sort.Slice(results, func(i, j int) bool {
-		// Ascending
-		if direction == ascendantSorting {
-			if results[i].serversCount() == results[j].serversCount() {
-				return results[i].name() < results[j].name()
-			}
-			return results[i].serversCount() < results[j].serversCount()
-		}
-
-		// Descending
-		if results[i].serversCount() == results[j].serversCount() {
-			return results[i].name() > results[j].name()
-		}
-		return results[i].serversCount() > results[j].serversCount()
-	})
-}
-
-type orderedByStatus interface {
-	name() string
-	status() string
-}
-
-func sortByStatus[T orderedByStatus](direction string, results []T) {
-	sort.Slice(results, func(i, j int) bool {
-		// Ascending
-		if direction == ascendantSorting {
-			if results[i].status() == results[j].status() {
-				return results[i].name() < results[j].name()
-			}
-			return results[i].status() < results[j].status()
-		}
-
-		// Descending
-		if results[i].status() == results[j].status() {
-			return results[i].name() > results[j].name()
-		}
-		return results[i].status() > results[j].status()
-	})
-}
-
-type orderedByProvider interface {
-	provider() string
-	name() string
-}
-
-func sortByProvider[T orderedByProvider](direction string, results []T) {
-	sort.Slice(results, func(i, j int) bool {
-		// Ascending
-		if direction == ascendantSorting {
-			if results[i].provider() == results[j].provider() {
-				return results[i].name() < results[j].name()
-			}
-			return results[i].provider() < results[j].provider()
-		}
-
-		// Descending
-		if results[i].provider() == results[j].provider() {
-			return results[i].name() > results[j].name()
-		}
-		return results[i].provider() > results[j].provider()
-	})
-}
-
-type orderedByRule interface {
-	rule() string
-	name() string
-}
-
-func sortByRule[T orderedByRule](direction string, results []T) {
-	sort.Slice(results, func(i, j int) bool {
-		// Ascending
-		if direction == ascendantSorting {
-			if results[i].rule() == results[j].rule() {
-				return results[i].name() < results[j].name()
-			}
-			return results[i].rule() < results[j].rule()
-		}
-
-		// Descending
-		if results[i].rule() == results[j].rule() {
-			return results[i].name() > results[j].name()
-		}
-		return results[i].rule() > results[j].rule()
-	})
-}
-
-type orderedByService interface {
-	service() string
-	name() string
-}
-
-func sortByService[T orderedByService](direction string, results []T) {
-	sort.Slice(results, func(i, j int) bool {
-		// Ascending
-		if direction == ascendantSorting {
-			if results[i].service() == results[j].service() {
-				return results[i].name() < results[j].name()
-			}
-			return results[i].service() < results[j].service()
-		}
-
-		// Descending
-		if results[i].service() == results[j].service() {
-			return results[i].name() > results[j].name()
-		}
-		return results[i].service() > results[j].service()
-	})
-}
-
-type orderedByEntryPoints interface {
-	entryPointsCount() int
-	name() string
-}
-
-func sortByEntryPoints[T orderedByEntryPoints](direction string, results []T) {
-	sort.Slice(results, func(i, j int) bool {
-		// Ascending
-		if direction == ascendantSorting {
-			if results[i].entryPointsCount() == results[j].entryPointsCount() {
-				return results[i].name() < results[j].name()
-			}
-			return results[i].entryPointsCount() < results[j].entryPointsCount()
-		}
-
-		// Descending
-		if results[i].entryPointsCount() == results[j].entryPointsCount() {
-			return results[i].name() > results[j].name()
-		}
-		return results[i].entryPointsCount() > results[j].entryPointsCount()
+		return fn(i) > fn(j)
 	})
 }
