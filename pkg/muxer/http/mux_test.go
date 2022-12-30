@@ -521,3 +521,26 @@ func TestEmptyHost(t *testing.T) {
 		})
 	}
 }
+
+func TestGetRulePriority(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rule     string
+		expected int
+	}{
+		{
+			desc:     "simple rule",
+			rule:     "Host(`example.org`)",
+			expected: 19,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, GetRulePriority(test.rule))
+		})
+	}
+}
