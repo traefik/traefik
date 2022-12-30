@@ -72,6 +72,38 @@ func (m Muxer) Match(meta ConnData) (tcp.Handler, bool) {
 	return nil, false
 }
 
+// GetRulePriority computes the priority for a given rule.
+// The priority is calculated using the length of rule.
+// There is a special case where the HostSNI(`*`) has a priority of -1.
+func GetRulePriority(rule string) int {
+	catchAllParser, err := rules.NewParser([]string{"HostSNI"})
+	if err != nil {
+		return len(rule)
+	}
+
+	parse, err := catchAllParser.Parse(rule)
+	if err != nil {
+		return len(rule)
+	}
+
+	buildTree, ok := parse.(rules.TreeBuilder)
+	if !ok {
+		return len(rule)
+	}
+
+	ruleTree := buildTree()
+
+	// Special case for when the catchAll fallback is present.
+	// When no user-defined priority is found, the lowest computable priority minus one is used,
+	// in order to make the fallback the last to be evaluated.
+	if ruleTree.RuleLeft == nil && ruleTree.RuleRight == nil && len(ruleTree.Value) == 1 &&
+		ruleTree.Value[0] == "*" && strings.EqualFold(ruleTree.Matcher, "HostSNI") {
+		return -1
+	}
+
+	return len(rule)
+}
+
 // AddRoute adds a new route, associated to the given handler, at the given
 // priority, to the muxer.
 func (m *Muxer) AddRoute(rule string, priority int, handler tcp.Handler) error {
@@ -96,18 +128,6 @@ func (m *Muxer) AddRoute(rule string, priority int, handler tcp.Handler) error {
 	var catchAll bool
 	if ruleTree.RuleLeft == nil && ruleTree.RuleRight == nil && len(ruleTree.Value) == 1 {
 		catchAll = ruleTree.Value[0] == "*" && strings.EqualFold(ruleTree.Matcher, "HostSNI")
-	}
-
-	// Special case for when the catchAll fallback is present.
-	// When no user-defined priority is found, the lowest computable priority minus one is used,
-	// in order to make the fallback the last to be evaluated.
-	if priority == 0 && catchAll {
-		priority = -1
-	}
-
-	// Default value, which means the user has not set it, so we'll compute it.
-	if priority == 0 {
-		priority = len(rule)
 	}
 
 	newRoute := &route{
