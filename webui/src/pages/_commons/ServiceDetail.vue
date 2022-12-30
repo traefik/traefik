@@ -165,7 +165,7 @@ export default {
       routersFilter: '',
       routersStatus: '',
       routersPagination: {
-        sortBy: 'name',
+        sortBy: '',
         descending: true,
         page: 1,
         rowsPerPage: 1000,
