@@ -81,13 +81,9 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 		period = time.Second
 	}
 
-	// if config.Average == 0, in that case,
-	// the value of maxDelay does not matter since the reservation will (buggily) give us a delay of 0 anyway.
 	var maxDelay time.Duration
-	var rtl float64
-
-	// rate.Inf for no rate limiting if config.Average == 0
-	rtl = float64(rate.Inf)
+	// Initialized at rate.Inf to enforce no rate limiting when config.Average == 0
+	var rtl = float64(rate.Inf)
 
 	if config.Average > 0 {
 		rtl = float64(config.Average*int64(time.Second)) / float64(period)
@@ -159,10 +155,6 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// time/rate is bugged, since a rate.Limiter with a 0 Limit not only allows a Reservation to take place,
-	// but also gives a 0 delay below (because of a division by zero, followed by a multiplication that flips into the negatives),
-	// regardless of the current load.
-	// However, for now we take advantage of this behavior to provide the no-limit ratelimiter when config.Average is 0.
 	res := bucket.Reserve()
 	if !res.OK() {
 		http.Error(rw, "No bursty traffic allowed", http.StatusTooManyRequests)
