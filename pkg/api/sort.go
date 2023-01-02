@@ -79,7 +79,7 @@ func (r routerRepresentation) provider() string {
 }
 
 func (r routerRepresentation) priority() int {
-	return r.EffectivePriority
+	return r.Priority
 }
 
 func (r routerRepresentation) status() string {
@@ -107,7 +107,7 @@ func (r tcpRouterRepresentation) provider() string {
 }
 
 func (r tcpRouterRepresentation) priority() int {
-	return r.EffectivePriority
+	return r.Priority
 }
 
 func (r tcpRouterRepresentation) status() string {

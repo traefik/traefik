@@ -46,10 +46,8 @@ func (c *Configuration) GetTCPRoutersByEntryPoints(ctx context.Context, entryPoi
 
 // TCPRouterInfo holds information about a currently running TCP router.
 type TCPRouterInfo struct {
-	*dynamic.TCPRouter // dynamic configuration
-	// EffectivePriority is the user set priority if defined, or the rule's computed priority otherwise.
-	EffectivePriority int      `json:"effectivePriority,omitempty"`
-	Err               []string `json:"error,omitempty"` // initialization error
+	*dynamic.TCPRouter          // dynamic configuration
+	Err                []string `json:"error,omitempty"` // initialization error
 	// Status reports whether the router is disabled, in a warning state, or all good (enabled).
 	// If not in "enabled" state, the reason for it should be in the list of Err.
 	// It is the caller's responsibility to set the initial status.
