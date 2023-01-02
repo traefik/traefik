@@ -11,6 +11,7 @@ const allColumns = [
     required: true,
     label: 'Status',
     align: 'left',
+    sortable: true,
     fieldToProps: row => ({
       state: row.status === 'enabled' ? 'positive' : 'negative'
     }),
@@ -20,6 +21,7 @@ const allColumns = [
     name: 'tls',
     align: 'left',
     label: 'TLS',
+    sortable: false,
     fieldToProps: row => ({ isTLS: row.tls }),
     component: TLSState
   },
@@ -27,6 +29,7 @@ const allColumns = [
     name: 'rule',
     align: 'left',
     label: 'Rule',
+    sortable: true,
     component: QChip,
     fieldToProps: () => ({ class: 'app-chip app-chip-rule', dense: true }),
     content: row => row.rule
@@ -35,6 +38,7 @@ const allColumns = [
     name: 'entryPoints',
     align: 'left',
     label: 'Entrypoints',
+    sortable: true,
     component: Chips,
     fieldToProps: row => ({
       classNames: 'app-chip app-chip-entry-points',
@@ -46,6 +50,7 @@ const allColumns = [
     name: 'name',
     align: 'left',
     label: 'Name',
+    sortable: true,
     component: QChip,
     fieldToProps: () => ({ class: 'app-chip app-chip-name', dense: true }),
     content: row => row.name
@@ -54,6 +59,7 @@ const allColumns = [
     name: 'type',
     align: 'left',
     label: 'Type',
+    sortable: true,
     component: QChip,
     fieldToProps: () => ({
       class: 'app-chip app-chip-entry-points',
@@ -65,6 +71,7 @@ const allColumns = [
     name: 'servers',
     align: 'right',
     label: 'Servers',
+    sortable: true,
     fieldToProps: () => ({ class: 'servers-label' }),
     content: function (value) {
       if (value.loadBalancer && value.loadBalancer.servers) {
@@ -78,6 +85,7 @@ const allColumns = [
     align: 'left',
     label: 'Service',
     component: QChip,
+    sortable: true,
     fieldToProps: () => ({ class: 'app-chip app-chip-service', dense: true }),
     content: row => row.service
   },
@@ -85,8 +93,23 @@ const allColumns = [
     name: 'provider',
     align: 'center',
     label: 'Provider',
+    sortable: true,
     fieldToProps: row => ({ name: row.provider }),
     component: ProviderIcon
+  },
+  {
+    name: 'priority',
+    align: 'left',
+    label: 'Priority',
+    sortable: true,
+    component: QChip,
+    fieldToProps: () => ({ class: 'app-chip app-chip-accent', dense: true }),
+    content: row => {
+      return {
+        short: String(row.priority).length > 10 ? String(row.priority).substring(0, 10) + '...' : row.priority,
+        long: row.priority
+      }
+    }
   }
 ]
 
@@ -98,7 +121,8 @@ const columnsByResource = {
     'name',
     'service',
     'tls',
-    'provider'
+    'provider',
+    'priority'
   ],
   udpRouters: ['status', 'entryPoints', 'name', 'service', 'provider'],
   services: ['status', 'name', 'type', 'servers', 'provider'],
