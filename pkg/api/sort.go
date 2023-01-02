@@ -48,22 +48,22 @@ func sortRouters[T orderedRouter](values url.Values, routers []T) {
 		sortByName(direction, routers)
 
 	case "provider":
-		sortMeta(direction, routers, func(i int) string { return routers[i].provider() })
+		sortByFunc(direction, routers, func(i int) string { return routers[i].provider() })
 
 	case "priority":
-		sortMeta(direction, routers, func(i int) int { return routers[i].priority() })
+		sortByFunc(direction, routers, func(i int) int { return routers[i].priority() })
 
 	case "status":
-		sortMeta(direction, routers, func(i int) string { return routers[i].status() })
+		sortByFunc(direction, routers, func(i int) string { return routers[i].status() })
 
 	case "rule":
-		sortMeta(direction, routers, func(i int) string { return routers[i].rule() })
+		sortByFunc(direction, routers, func(i int) string { return routers[i].rule() })
 
 	case "service":
-		sortMeta(direction, routers, func(i int) string { return routers[i].service() })
+		sortByFunc(direction, routers, func(i int) string { return routers[i].service() })
 
 	case "entryPoints":
-		sortMeta(direction, routers, func(i int) int { return routers[i].entryPointsCount() })
+		sortByFunc(direction, routers, func(i int) int { return routers[i].entryPointsCount() })
 
 	default:
 		sortByName(direction, routers)
@@ -178,16 +178,16 @@ func sortServices[T orderedService](values url.Values, services []T) {
 		sortByName(direction, services)
 
 	case "type":
-		sortMeta(direction, services, func(i int) string { return services[i].resourceType() })
+		sortByFunc(direction, services, func(i int) string { return services[i].resourceType() })
 
 	case "servers":
-		sortMeta(direction, services, func(i int) int { return services[i].serversCount() })
+		sortByFunc(direction, services, func(i int) int { return services[i].serversCount() })
 
 	case "provider":
-		sortMeta(direction, services, func(i int) string { return services[i].provider() })
+		sortByFunc(direction, services, func(i int) string { return services[i].provider() })
 
 	case "status":
-		sortMeta(direction, services, func(i int) string { return services[i].status() })
+		sortByFunc(direction, services, func(i int) string { return services[i].status() })
 
 	default:
 		sortByName(direction, services)
@@ -299,13 +299,13 @@ func sortMiddlewares[T orderedMiddleware](values url.Values, middlewares []T) {
 		sortByName(direction, middlewares)
 
 	case "type":
-		sortMeta(direction, middlewares, func(i int) string { return middlewares[i].resourceType() })
+		sortByFunc(direction, middlewares, func(i int) string { return middlewares[i].resourceType() })
 
 	case "provider":
-		sortMeta(direction, middlewares, func(i int) string { return middlewares[i].provider() })
+		sortByFunc(direction, middlewares, func(i int) string { return middlewares[i].provider() })
 
 	case "status":
-		sortMeta(direction, middlewares, func(i int) string { return middlewares[i].status() })
+		sortByFunc(direction, middlewares, func(i int) string { return middlewares[i].status() })
 
 	default:
 		sortByName(direction, middlewares)
@@ -364,7 +364,7 @@ func sortByName[T orderedByName](direction string, results []T) {
 	})
 }
 
-func sortMeta[T orderedWithName, U constraints.Ordered](direction string, results []T, fn func(int) U) {
+func sortByFunc[T orderedWithName, U constraints.Ordered](direction string, results []T, fn func(int) U) {
 	// Ascending
 	if direction == ascendantSorting {
 		sort.Slice(results, func(i, j int) bool {
@@ -383,6 +383,7 @@ func sortMeta[T orderedWithName, U constraints.Ordered](direction string, result
 		if fn(i) == fn(j) {
 			return results[i].name() > results[j].name()
 		}
+
 		return fn(i) > fn(j)
 	})
 }
