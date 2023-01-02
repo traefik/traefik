@@ -264,11 +264,9 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		logger := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
 		ctxRouter := logger.WithContext(provider.AddInContext(ctx, routerName))
 
-		priority := routerConfig.Priority
 		if routerConfig.Priority == 0 {
-			priority = tcpmuxer.GetRulePriority(routerConfig.Rule)
+			routerConfig.Priority = tcpmuxer.GetRulePriority(routerConfig.Rule)
 		}
-		routerConfig.EffectivePriority = priority // To be available in the API.
 
 		if routerConfig.Service == "" {
 			err := errors.New("the service is missing on the router")
@@ -313,7 +311,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		if routerConfig.TLS == nil {
 			logger.Debug().Msgf("Adding route for %q", routerConfig.Rule)
 
-			if err := router.AddRoute(routerConfig.Rule, priority, handler); err != nil {
+			if err := router.AddRoute(routerConfig.Rule, routerConfig.Priority, handler); err != nil {
 				routerConfig.AddError(err, true)
 				logger.Error().Err(err).Send()
 			}
@@ -323,7 +321,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		if routerConfig.TLS.Passthrough {
 			logger.Debug().Msgf("Adding Passthrough route for %q", routerConfig.Rule)
 
-			if err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, priority, handler); err != nil {
+			if err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.Priority, handler); err != nil {
 				routerConfig.AddError(err, true)
 				logger.Error().Err(err).Send()
 			}
@@ -357,7 +355,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 
 			logger.Debug().Msgf("Adding special TLS closing route for %q because broken TLS options %s", routerConfig.Rule, tlsOptionsName)
 
-			if err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, priority, &brokenTLSRouter{}); err != nil {
+			if err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.Priority, &brokenTLSRouter{}); err != nil {
 				routerConfig.AddError(err, true)
 				logger.Error().Err(err).Send()
 			}
@@ -391,7 +389,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 
 		logger.Debug().Msgf("Adding TLS route for %q", routerConfig.Rule)
 
-		if err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, priority, handler); err != nil {
+		if err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.Priority, handler); err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error().Err(err).Send()
 			continue

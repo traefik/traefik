@@ -71,8 +71,6 @@ func unique(src []string) []string {
 // RouterInfo holds information about a currently running HTTP router.
 type RouterInfo struct {
 	*dynamic.Router // dynamic configuration
-	// EffectivePriority is the user set priority if defined, or the rule's computed priority otherwise.
-	EffectivePriority int `json:"effectivePriority,omitempty"`
 	// Err contains all the errors that occurred during router's creation.
 	Err []string `json:"error,omitempty"`
 	// Status reports whether the router is disabled, in a warning state, or all good (enabled).

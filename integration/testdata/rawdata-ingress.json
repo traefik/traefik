@@ -7,7 +7,6 @@
 			"service": "api@internal",
 			"rule": "PathPrefix(`/api`)",
 			"priority": 2147483646,
-			"effectivePriority": 2147483646,
 			"status": "enabled",
 			"using": [
 				"traefik"
@@ -24,7 +23,6 @@
 			"service": "dashboard@internal",
 			"rule": "PathPrefix(`/`)",
 			"priority": 2147483645,
-			"effectivePriority": 2147483645,
 			"status": "enabled",
 			"using": [
 				"traefik"
@@ -36,7 +34,7 @@
 			],
 			"service": "default-whoami-http",
 			"rule": "Host(`whoami.test.https`) \u0026\u0026 PathPrefix(`/whoami`)",
-			"effectivePriority": 50,
+			"priority": 50,
 			"status": "enabled",
 			"using": [
 				"web"
@@ -48,7 +46,7 @@
 			],
 			"service": "default-whoami-http",
 			"rule": "Host(`whoami.test`) \u0026\u0026 PathPrefix(`/whoami`)",
-			"effectivePriority": 44,
+			"priority": 44,
 			"status": "enabled",
 			"using": [
 				"web"
@@ -60,7 +58,7 @@
 			],
 			"service": "default-whoami-80",
 			"rule": "Host(`whoami.test.drop`) \u0026\u0026 PathPrefix(`/drop`)",
-			"effectivePriority": 47,
+			"priority": 47,
 			"status": "enabled",
 			"using": [
 				"web"
@@ -72,7 +70,7 @@
 			],
 			"service": "default-whoami-80",
 			"rule": "Host(`whoami.test.keep`) \u0026\u0026 PathPrefix(`/keep`)",
-			"effectivePriority": 47,
+			"priority": 47,
 			"status": "enabled",
 			"using": [
 				"web"

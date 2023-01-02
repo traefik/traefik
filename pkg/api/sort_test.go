@@ -145,25 +145,33 @@ func TestSortRouters(t *testing.T) {
 				routerRepresentation{
 					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
-						EffectivePriority: 2,
+						Router: &dynamic.Router{
+							Priority: 2,
+						},
 					},
 				},
 				routerRepresentation{
 					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
-						EffectivePriority: 2,
+						Router: &dynamic.Router{
+							Priority: 2,
+						},
 					},
 				},
 				routerRepresentation{
 					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
-						EffectivePriority: 1,
+						Router: &dynamic.Router{
+							Priority: 1,
+						},
 					},
 				},
 				routerRepresentation{
 					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
-						EffectivePriority: 1,
+						Router: &dynamic.Router{
+							Priority: 1,
+						},
 					},
 				},
 			},
@@ -171,25 +179,33 @@ func TestSortRouters(t *testing.T) {
 				routerRepresentation{
 					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
-						EffectivePriority: 1,
+						Router: &dynamic.Router{
+							Priority: 1,
+						},
 					},
 				},
 				routerRepresentation{
 					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
-						EffectivePriority: 1,
+						Router: &dynamic.Router{
+							Priority: 1,
+						},
 					},
 				},
 				routerRepresentation{
 					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
-						EffectivePriority: 2,
+						Router: &dynamic.Router{
+							Priority: 2,
+						},
 					},
 				},
 				routerRepresentation{
 					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
-						EffectivePriority: 2,
+						Router: &dynamic.Router{
+							Priority: 2,
+						},
 					},
 				},
 			},
@@ -201,25 +217,33 @@ func TestSortRouters(t *testing.T) {
 				routerRepresentation{
 					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
-						EffectivePriority: 1,
+						Router: &dynamic.Router{
+							Priority: 1,
+						},
 					},
 				},
 				routerRepresentation{
 					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
-						EffectivePriority: 1,
+						Router: &dynamic.Router{
+							Priority: 1,
+						},
 					},
 				},
 				routerRepresentation{
 					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
-						EffectivePriority: 2,
+						Router: &dynamic.Router{
+							Priority: 2,
+						},
 					},
 				},
 				routerRepresentation{
 					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
-						EffectivePriority: 2,
+						Router: &dynamic.Router{
+							Priority: 2,
+						},
 					},
 				},
 			},
@@ -227,25 +251,33 @@ func TestSortRouters(t *testing.T) {
 				routerRepresentation{
 					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
-						EffectivePriority: 2,
+						Router: &dynamic.Router{
+							Priority: 2,
+						},
 					},
 				},
 				routerRepresentation{
 					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
-						EffectivePriority: 2,
+						Router: &dynamic.Router{
+							Priority: 2,
+						},
 					},
 				},
 				routerRepresentation{
 					Name: "b",
 					RouterInfo: &runtime.RouterInfo{
-						EffectivePriority: 1,
+						Router: &dynamic.Router{
+							Priority: 1,
+						},
 					},
 				},
 				routerRepresentation{
 					Name: "a",
 					RouterInfo: &runtime.RouterInfo{
-						EffectivePriority: 1,
+						Router: &dynamic.Router{
+							Priority: 1,
+						},
 					},
 				},
 			},
