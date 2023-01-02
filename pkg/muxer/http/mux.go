@@ -12,8 +12,9 @@ import (
 
 // Muxer handles routing with rules.
 type Muxer struct {
-	routes routes
-	parser predicate.Parser
+	routes         routes
+	parser         predicate.Parser
+	defaultHandler http.Handler
 }
 
 // NewMuxer returns a new muxer instance.
@@ -29,7 +30,8 @@ func NewMuxer() (*Muxer, error) {
 	}
 
 	return &Muxer{
-		parser: parser,
+		parser:         parser,
+		defaultHandler: http.NotFoundHandler(),
 	}, nil
 }
 
@@ -43,7 +45,12 @@ func (m *Muxer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	http.NotFoundHandler().ServeHTTP(rw, req)
+	m.defaultHandler.ServeHTTP(rw, req)
+}
+
+// SetDefaultHandler sets the muxer default handler.
+func (m *Muxer) SetDefaultHandler(handler http.Handler) {
+	m.defaultHandler = handler
 }
 
 // AddRoute add a new route to the router.
