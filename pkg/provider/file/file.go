@@ -47,11 +47,6 @@ func (p *Provider) Init() error {
 // Provide allows the file provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	configuration, err := p.BuildConfiguration()
-	if err != nil {
-		return err
-	}
-
 	if p.Watch {
 		var watchItem string
 
@@ -67,6 +62,19 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		if err := p.addWatcher(pool, watchItem, configurationChan, p.watcherCallback); err != nil {
 			return err
 		}
+	}
+
+	configuration, err := p.BuildConfiguration()
+	if err != nil {
+		if p.Watch {
+			log.Debug().
+				Str(logs.ProviderName, providerName).
+				Err(err).
+				Msg("Error while building configuration (for the first time)")
+
+			return nil
+		}
+		return err
 	}
 
 	sendConfigToChannel(configurationChan, configuration)
