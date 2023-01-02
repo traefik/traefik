@@ -106,8 +106,8 @@ const allColumns = [
     fieldToProps: () => ({ class: 'app-chip app-chip-accent', dense: true }),
     content: row => {
       return {
-        short: String(row.effectivePriority).length > 10 ? String(row.effectivePriority).substring(0, 10) + '...' : row.effectivePriority,
-        long: row.effectivePriority
+        short: String(row.priority).length > 10 ? String(row.priority).substring(0, 10) + '...' : row.priority,
+        long: row.priority
       }
     }
   }
