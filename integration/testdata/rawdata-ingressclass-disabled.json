@@ -7,7 +7,6 @@
 			"service": "api@internal",
 			"rule": "PathPrefix(`/api`)",
 			"priority": 2147483646,
-			"effectivePriority": 2147483646,
 			"status": "enabled",
 			"using": [
 				"traefik"
@@ -24,7 +23,6 @@
 			"service": "dashboard@internal",
 			"rule": "PathPrefix(`/`)",
 			"priority": 2147483645,
-			"effectivePriority": 2147483645,
 			"status": "enabled",
 			"using": [
 				"traefik"
