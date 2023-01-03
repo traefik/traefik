@@ -45,7 +45,7 @@ func (s *LogRotationSuite) TearDownSuite(c *check.C) {
 
 func (s *LogRotationSuite) TestAccessLogRotation(c *check.C) {
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 	defer display(c)
 	defer displayTraefikLogFile(c, traefikTestLogFile)
 
