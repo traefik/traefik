@@ -34,6 +34,7 @@
 			],
 			"service": "default-whoami-http",
 			"rule": "Host(`whoami.test`) \u0026\u0026 PathPrefix(`/whoami`)",
+			"priority": 44,
 			"status": "enabled",
 			"using": [
 				"web"
