@@ -79,9 +79,11 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 		period = time.Second
 	}
 
-	var maxDelay time.Duration
 	// Initialized at rate.Inf to enforce no rate limiting when config.Average == 0
 	rtl := float64(rate.Inf)
+	// No need to set any particular value for maxDelay as the reservation's delay
+	// will be <= 0 in the Inf case (i.e. the average == 0 case).
+	var maxDelay time.Duration
 
 	if config.Average > 0 {
 		rtl = float64(config.Average*int64(time.Second)) / float64(period)
