@@ -34,6 +34,7 @@
 			],
 			"service": "default-whoami-80",
 			"rule": "Host(`whoami.test.keep`) \u0026\u0026 PathPrefix(`/keep`)",
+			"priority": 47,
 			"status": "enabled",
 			"using": [
 				"web"

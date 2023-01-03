@@ -34,6 +34,7 @@
 			],
 			"service": "default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06-wrr",
 			"rule": "Host(`foo.com`) \u0026\u0026 Path(`/bar`)",
+			"priority": 31,
 			"status": "enabled",
 			"using": [
 				"web"
@@ -46,6 +47,7 @@
 			"service": "default-http-app-1-my-https-gateway-websecure-1c0cf64bde37d9d0df06-wrr",
 			"rule": "Host(`foo.com`) \u0026\u0026 Path(`/bar`)",
 			"tls": {},
+			"priority": 31,
 			"status": "enabled",
 			"using": [
 				"websecure"
@@ -150,6 +152,7 @@
 			],
 			"service": "default-tcp-app-1-my-tcp-gateway-footcp-e3b0c44298fc1c149afb-wrr-0",
 			"rule": "HostSNI(`*`)",
+			"priority": -1,
 			"status": "enabled",
 			"using": [
 				"footcp"
@@ -164,6 +167,7 @@
 			"tls": {
 				"passthrough": false
 			},
+			"priority": -1,
 			"status": "enabled",
 			"using": [
 				"footlsterminate"
@@ -178,6 +182,7 @@
 			"tls": {
 				"passthrough": true
 			},
+			"priority": 18,
 			"status": "enabled",
 			"using": [
 				"footlspassthrough"
