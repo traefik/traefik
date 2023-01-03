@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/url"
 	"sort"
 
@@ -40,8 +39,6 @@ func sortRouters[T orderedRouter](values url.Values, routers []T) {
 	if direction == "" {
 		direction = ascendantSorting
 	}
-
-	fmt.Println("sort", sortBy, direction)
 
 	switch sortBy {
 	case "name":
