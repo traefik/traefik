@@ -11,7 +11,7 @@ Automatic HTTPS
 You can configure Traefik to use an ACME provider (like Let's Encrypt) for automatic certificate generation.
 
 !!! warning "Let's Encrypt and Rate Limiting"
-    Note that Let's Encrypt API has [rate limiting](https://letsencrypt.org/docs/rate-limits).
+    Note that Let's Encrypt API has [rate limiting](https://letsencrypt.org/docs/rate-limits). These last up to __one week__, and can not be overrided.
 
     Use Let's Encrypt staging server with the [`caServer`](#caserver) configuration option
     when experimenting to avoid hitting this limit too fast.
