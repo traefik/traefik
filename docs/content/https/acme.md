@@ -545,8 +545,6 @@ certificatesResolvers:
 
 ACME certificates are stored in a JSON file that needs to have a `600` file mode.
 
-If you are using Traefik in a container make sure this file is preserved across restarts. If traefik requests new certificates each time it starts up, a crash-looping container can quickly reach Let's Encrypt's ratelimits. You may be left without valid certificates for a week.
-
 In Docker you can mount either the JSON file, or the folder containing it:
 
 ```bash
