@@ -19,6 +19,7 @@ func TestHandler(t *testing.T) {
 		errorPage           *dynamic.ErrorPage
 		backendCode         int
 		backendErrorHandler http.HandlerFunc
+		backendMethod       string
 		validate            func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
@@ -151,6 +152,56 @@ func TestHandler(t *testing.T) {
 				assert.Contains(t, recorder.Body.String(), "My 503 page.")
 			},
 		},
+		{
+			desc:        "preserve status code",
+			errorPage:   &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"503"}, PreserveStatusCode: true},
+			backendCode: http.StatusServiceUnavailable,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNoContent)
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, http.StatusNoContent, recorder.Code, "HTTP status")
+			},
+		},
+		{
+			desc:        "does not preserve status code",
+			errorPage:   &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"503"}, PreserveStatusCode: false},
+			backendCode: http.StatusServiceUnavailable,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNoContent)
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, http.StatusServiceUnavailable, recorder.Code, "HTTP status")
+			},
+		},
+		{
+			desc:          "preserve method",
+			errorPage:     &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"503"}, PreserveMethod: true},
+			backendCode:   http.StatusServiceUnavailable,
+			backendMethod: http.MethodOptions,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, _ = fmt.Fprintln(w, r.Method)
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Contains(t, recorder.Body.String(), http.MethodOptions)
+			},
+		},
+		{
+			desc:          "does not preserve method",
+			errorPage:     &dynamic.ErrorPage{Service: "error", Query: "/test", Status: []string{"503"}, PreserveMethod: false},
+			backendCode:   http.StatusServiceUnavailable,
+			backendMethod: http.MethodOptions,
+			backendErrorHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, _ = fmt.Fprintln(w, r.Method)
+			}),
+			validate: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Contains(t, recorder.Body.String(), http.MethodGet)
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -171,7 +222,13 @@ func TestHandler(t *testing.T) {
 			errorPageHandler, err := New(context.Background(), handler, *test.errorPage, serviceBuilderMock, "test")
 			require.NoError(t, err)
 
-			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost/test?foo=bar&baz=buz", nil)
+			var method string
+			if test.backendMethod == "" {
+				method = http.MethodGet
+			} else {
+				method = test.backendMethod
+			}
+			req := testhelpers.MustNewRequest(method, "http://localhost/test?foo=bar&baz=buz", nil)
 
 			recorder := httptest.NewRecorder()
 			errorPageHandler.ServeHTTP(recorder, req)
