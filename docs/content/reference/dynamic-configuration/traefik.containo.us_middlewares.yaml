@@ -326,6 +326,12 @@ spec:
                     items:
                       type: string
                     type: array
+                  preserveStatusCode:
+                    description: Preserve status code returned from the service serving the error page
+                    type: boolean
+                  preserveMethod:
+                    description: Use the same method when querying the service serving the error page
+                    type: boolean
                 type: object
               forwardAuth:
                 description: 'ForwardAuth holds the forward auth middleware configuration.
