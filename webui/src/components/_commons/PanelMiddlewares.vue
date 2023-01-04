@@ -267,6 +267,32 @@
               </div>
             </div>
           </q-card-section>
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [errors] - preserveStatusCode -->
+          <q-card-section v-if="middleware.errors">
+            <div class="row items-start no-wrap">
+              <div class="col">
+                <div class="text-subtitle2">Preserve status code</div>
+                <q-chip
+                  dense
+                  class="app-chip app-chip-green">
+                  {{ exData(middleware).preserveStatusCode }}
+                </q-chip>
+              </div>
+            </div>
+          </q-card-section>
+          <!-- EXTRA FIELDS FROM MIDDLEWARES - [errors] - preserveMethod -->
+          <q-card-section v-if="middleware.errors">
+            <div class="row items-start no-wrap">
+              <div class="col">
+                <div class="text-subtitle2">Preserve method</div>
+                <q-chip
+                  dense
+                  class="app-chip app-chip-green">
+                  {{ exData(middleware).preserveMethod }}
+                </q-chip>
+              </div>
+            </div>
+          </q-card-section>
 
           <!-- EXTRA FIELDS FROM MIDDLEWARES - [forwardAuth] - address -->
           <q-card-section v-if="middleware.forwardAuth">
