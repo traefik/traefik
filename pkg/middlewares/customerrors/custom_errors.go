@@ -32,11 +32,13 @@ type serviceBuilder interface {
 
 // customErrors is a middleware that provides the custom error pages..
 type customErrors struct {
-	name           string
-	next           http.Handler
-	backendHandler http.Handler
-	httpCodeRanges types.HTTPCodeRanges
-	backendQuery   string
+	name               string
+	next               http.Handler
+	backendHandler     http.Handler
+	httpCodeRanges     types.HTTPCodeRanges
+	backendQuery       string
+	preserveStatusCode bool
+	preserveMethod     bool
 }
 
 // New creates a new custom error pages middleware.
@@ -54,11 +56,13 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 	}
 
 	return &customErrors{
-		name:           name,
-		next:           next,
-		backendHandler: backend,
-		httpCodeRanges: httpCodeRanges,
-		backendQuery:   config.Query,
+		name:               name,
+		next:               next,
+		backendHandler:     backend,
+		httpCodeRanges:     httpCodeRanges,
+		backendQuery:       config.Query,
+		preserveStatusCode: config.PreserveStatusCode,
+		preserveMethod:     config.PreserveMethod,
 	}, nil
 }
 
@@ -93,7 +97,13 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		query = strings.ReplaceAll(query, "{url}", url.QueryEscape(req.URL.String()))
 	}
 
-	pageReq, err := newRequest("http://" + req.Host + query)
+	var method string
+	if c.preserveMethod {
+		method = req.Method
+	} else {
+		method = http.MethodGet
+	}
+	pageReq, err := newRequest("http://"+req.Host+query, method)
 	if err != nil {
 		logger.Error().Err(err).Send()
 		http.Error(rw, http.StatusText(code), code)
@@ -102,17 +112,24 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	utils.CopyHeaders(pageReq.Header, req.Header)
 
-	c.backendHandler.ServeHTTP(newCodeModifier(rw, code),
-		pageReq.WithContext(req.Context()))
+	var responseWriter http.ResponseWriter
+
+	if c.preserveStatusCode {
+		responseWriter = rw
+	} else {
+		responseWriter = newCodeModifier(rw, code)
+	}
+
+	c.backendHandler.ServeHTTP(responseWriter, pageReq.WithContext(req.Context()))
 }
 
-func newRequest(baseURL string) (*http.Request, error) {
+func newRequest(baseURL string, method string) (*http.Request, error) {
 	u, err := url.Parse(baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("error pages: error when parse URL: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	req, err := http.NewRequest(method, u.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("error pages: error when create query: %w", err)
 	}
