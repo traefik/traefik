@@ -135,3 +135,19 @@ The table below lists all the available variables and their associated values.
 |------------|--------------------------------------------------------------------|
 | `{status}` | The response status code.                                          |
 | `{url}`    | The [escaped](https://pkg.go.dev/net/url#QueryEscape) request URL. |
+
+
+### `preserveStatusCode`
+
+Determines whether HTTP status code returned by the error service should be respected.
+By default, code of the error (from `status` range) is used.
+
+!!! warning
+
+    Using this argument can change semantics of the response (e.g. mask an error under success error code)
+
+### `preserveMethod`
+
+Determines whether error service should be queried using the same HTTP method as the original
+request that caused the error.
+When set to `false` (default), `GET` method is always used.
