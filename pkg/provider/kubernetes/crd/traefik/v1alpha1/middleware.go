@@ -72,6 +72,10 @@ type ErrorPage struct {
 	// Query defines the URL for the error page (hosted by service).
 	// The {status} variable can be used in order to insert the status code in the URL.
 	Query string `json:"query,omitempty"`
+	// Preserve status code returned from the service serving the error page
+	PreserveStatusCode bool `json:"preserveStatusCode,omitempty" toml:"preserveStatusCode,omitempty" yaml:"preserveStatusCode,omitempty" export:"true"`
+	// Use the same method when querying the service serving the error page
+	PreserveMethod bool `json:"preserveMethod,omitempty" toml:"preserveMethod,omitempty" yaml:"preserveMethod,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
