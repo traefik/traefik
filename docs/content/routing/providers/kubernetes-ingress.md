@@ -235,8 +235,9 @@ which in turn will create the resulting routers, services, handlers, etc.
     See [middlewares](../routers/index.md#middlewares) and [middlewares overview](../../middlewares/overview.md) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/router.middlewares: auth@file,default-prefix@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: auth@file,namespace-prefix@kubernetescrd
     ```
+    - **for custom defined middlewares, just append them with `namespaceName-middlewareName@kubernetescrd`
 
 ??? info "`traefik.ingress.kubernetes.io/router.priority`"
 
