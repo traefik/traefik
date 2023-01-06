@@ -16,6 +16,12 @@ If they do, the router might transform the request using pieces of [middleware](
 
 ![Architecture](../assets/img/architecture-overview.png)
 
+!!! info
+
+    It is not possible to route requests directly to [Kubernetes services](https://kubernetes.io/docs/concepts/services-networking/service/ "Link to Kubernetes service docs").
+
+    Please check the [communication between Traefik and Pods](https://community.traefik.io/t/communication-between-traefik-and-pods/17005 "Link to thread in the forum") thread in the community forum for more information.
+
 ## Clear Responsibilities
 
 - [_Providers_](../providers/overview.md) discover the services that live on your infrastructure (their IP, health, ...)
