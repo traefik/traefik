@@ -217,6 +217,14 @@ spec:
                   This middleware returns a custom page in lieu of the default, according
                   to configured ranges of HTTP Status codes. More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/errorpages/'
                 properties:
+                  preserveMethod:
+                    description: Use the same method when querying the service serving
+                      the error page
+                    type: boolean
+                  preserveStatusCode:
+                    description: Preserve status code returned from the service serving
+                      the error page
+                    type: boolean
                   query:
                     description: Query defines the URL for the error page (hosted
                       by service). The {status} variable can be used in order to insert
