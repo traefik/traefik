@@ -444,6 +444,39 @@ func Test_Priority(t *testing.T) {
 	}
 }
 
+func TestGetRulePriority(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rule     string
+		expected int
+	}{
+		{
+			desc:     "simple rule",
+			rule:     "HostSNI(`example.org`)",
+			expected: 22,
+		},
+		{
+			desc:     "HostSNI(`*`) rule",
+			rule:     "HostSNI(`*`)",
+			expected: -1,
+		},
+		{
+			desc:     "strange HostSNI(`*`) rule",
+			rule:     "   HostSNI ( `*` )       ",
+			expected: -1,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, GetRulePriority(test.rule))
+		})
+	}
+}
+
 type fakeConn struct {
 	call       map[string]int
 	remoteAddr net.Addr
