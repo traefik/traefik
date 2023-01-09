@@ -303,7 +303,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		proxy := buildSingleHostProxy(target, passHostHeader, time.Duration(flushInterval), roundTripper, m.bufferPool)
 
 		// Prevents from enabling observability for internal resources.
-		if !provider.IsInternal(ctx) && !strings.HasSuffix(provider.GetQualifiedName(ctx, serviceName), "@internal") {
+		if !strings.HasSuffix(provider.GetQualifiedName(ctx, serviceName), "@internal") {
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, accesslog.AddServiceFields)
