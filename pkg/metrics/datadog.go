@@ -18,10 +18,12 @@ var (
 
 // Metric names consistent with https://github.com/DataDog/integrations-extras/pull/64
 const (
-	ddConfigReloadsName             = "config.reload.total"
-	ddConfigReloadsFailureTagName   = "failure"
-	ddLastConfigReloadSuccessName   = "config.reload.lastSuccessTimestamp"
-	ddLastConfigReloadFailureName   = "config.reload.lastFailureTimestamp"
+	ddConfigReloadsName           = "config.reload.total"
+	ddConfigReloadsFailureTagName = "failure"
+	ddLastConfigReloadSuccessName = "config.reload.lastSuccessTimestamp"
+	ddLastConfigReloadFailureName = "config.reload.lastFailureTimestamp"
+	ddOpenConnsName               = "open.connections"
+
 	ddTLSCertsNotAfterTimestampName = "tls.certs.notAfterTimestamp"
 
 	ddEntryPointReqsName        = "entrypoint.request.total"
@@ -64,6 +66,7 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 		configReloadsFailureCounter:    datadogClient.NewCounter(ddConfigReloadsName, 1.0).With(ddConfigReloadsFailureTagName, "true"),
 		lastConfigReloadSuccessGauge:   datadogClient.NewGauge(ddLastConfigReloadSuccessName),
 		lastConfigReloadFailureGauge:   datadogClient.NewGauge(ddLastConfigReloadFailureName),
+		openConnectionsGauge:           datadogClient.NewGauge(ddOpenConnsName),
 		tlsCertsNotAfterTimestampGauge: datadogClient.NewGauge(ddTLSCertsNotAfterTimestampName),
 	}
 

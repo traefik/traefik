@@ -343,12 +343,14 @@ func TestOpenTelemetry(t *testing.T) {
 		`({"name":"traefik_config_reloads_failure_total","description":"Config reload failures","unit":"1","sum":{"dataPoints":\[{"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
 		`({"name":"traefik_config_last_reload_success","description":"Last config reload success","unit":"ms","gauge":{"dataPoints":\[{"startTimeUnixNano":"[\d]{20}","timeUnixNano":"[\d]{19}","asDouble":1}\]}})`,
 		`({"name":"traefik_config_last_reload_failure","description":"Last config reload failure","unit":"ms","gauge":{"dataPoints":\[{"startTimeUnixNano":"[\d]{20}","timeUnixNano":"[\d]{19}","asDouble":1}\]}})`,
+		`({"name":"traefik_open_connections","description":"How many open connections exist, by entryPoint and protocol","unit":"1","gauge":{"dataPoints":\[{"attributes":\[{"key":"entrypoint","value":{"stringValue":"test"}},{"key":"protocol","value":{"stringValue":"TCP"}}\],"startTimeUnixNano":"[\d]{20}","timeUnixNano":"[\d]{19}","asDouble":1}\]}})`,
 	)
 
 	registry.ConfigReloadsCounter().Add(1)
 	registry.ConfigReloadsFailureCounter().Add(1)
 	registry.LastConfigReloadSuccessGauge().Set(1)
 	registry.LastConfigReloadFailureGauge().Set(1)
+	registry.OpenConnectionsGauge().With("entrypoint", "test", "protocol", "TCP").Set(1)
 	msgServer := <-c
 
 	assertMessage(t, *msgServer, expected)

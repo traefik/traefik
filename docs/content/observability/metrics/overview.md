@@ -16,27 +16,31 @@ Traefik Proxy hosts an official Grafana dashboard for both [on-premises](https:/
 
 ## Global Metrics
 
-| Metric                                      | Type    | Description                                             |
-|---------------------------------------------|---------|---------------------------------------------------------|
-| Config reload total                         | Count   | The total count of configuration reloads.               |
-| Config reload last success                  | Gauge   | The timestamp of the last configuration reload success. |
-| TLS certificates not after                  | Gauge   | The expiration date of certificates.                    |
+| Metric                     | Type  | [Labels](#labels)        | Description                                                        |
+|----------------------------|-------|--------------------------|--------------------------------------------------------------------|
+| Config reload total        | Count |                          | The total count of configuration reloads.                          |
+| Config reload last success | Gauge |                          | The timestamp of the last configuration reload success.            |
+| Open connections           | Gauge | `entrypoint`, `protocol` | The current count of open connections, by entrypoint and protocol. |
+| TLS certificates not after | Gauge |                          | The expiration date of certificates.                               |
 
 ```prom tab="Prometheus"
 traefik_config_reloads_total
 traefik_config_last_reload_success
+traefik_open_connections
 traefik_tls_certs_not_after
 ```
 
 ```dd tab="Datadog"
 config.reload.total
 config.reload.lastSuccessTimestamp
+open.connections
 tls.certs.notAfterTimestamp
 ```
 
 ```influxdb tab="InfluxDB2"
 traefik.config.reload.total
 traefik.config.reload.lastSuccessTimestamp
+traefik.open.connections
 traefik.tls.certs.notAfterTimestamp
 ```
 
@@ -44,16 +48,29 @@ traefik.tls.certs.notAfterTimestamp
 # Default prefix: "traefik"
 {prefix}.config.reload.total
 {prefix}.config.reload.lastSuccessTimestamp
+{prefix}.open.connections
 {prefix}.tls.certs.notAfterTimestamp
 ```
 
 ```opentelemetry tab="OpenTelemetry"
 traefik_config_reloads_total
 traefik_config_last_reload_success
+traefik_open_connections
 traefik_tls_certs_not_after
 ```
 
-## EntryPoint Metrics
+### Labels
+
+Here is a comprehensive list of labels that are provided by the global metrics:
+
+| Label         | Description                            | example              |
+|---------------|----------------------------------------|----------------------|
+| `entrypoint`  | Entrypoint that handled the connection | "example_entrypoint" |
+| `protocol`    | Connection protocol                    | "TCP"                |
+
+## HTTP Metrics
+
+### EntryPoint Metrics
 
 | Metric                | Type      | [Labels](#labels)                          | Description                                                         |
 |-----------------------|-----------|--------------------------------------------|---------------------------------------------------------------------|
@@ -105,7 +122,7 @@ traefik_entrypoint_requests_bytes_total
 traefik_entrypoint_responses_bytes_total
 ```
 
-## Router Metrics
+### Router Metrics
 
 | Metric                | Type      | [Labels](#labels)                                 | Description                                                    |
 |-----------------------|-----------|---------------------------------------------------|----------------------------------------------------------------|
@@ -157,7 +174,7 @@ traefik_router_requests_bytes_total
 traefik_router_responses_bytes_total
 ```
 
-## Service Metrics
+### Service Metrics
 
 | Metric                | Type      | Labels                                  | Description                                                 |
 |-----------------------|-----------|-----------------------------------------|-------------------------------------------------------------|
@@ -221,7 +238,7 @@ traefik_service_requests_bytes_total
 traefik_service_responses_bytes_total
 ```
 
-## Labels
+### Labels
 
 Here is a comprehensive list of labels that are provided by the metrics:
 

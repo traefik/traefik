@@ -26,10 +26,11 @@ const (
 	configReloadsFailuresTotalName = metricConfigPrefix + "reloads_failure_total"
 	configLastReloadSuccessName    = metricConfigPrefix + "last_reload_success"
 	configLastReloadFailureName    = metricConfigPrefix + "last_reload_failure"
+	openConnectionsName            = MetricNamePrefix + "open_connections"
 
 	// TLS.
-	metricsTLSPrefix          = MetricNamePrefix + "tls_"
-	tlsCertsNotAfterTimestamp = metricsTLSPrefix + "certs_not_after"
+	metricsTLSPrefix              = MetricNamePrefix + "tls_"
+	tlsCertsNotAfterTimestampName = metricsTLSPrefix + "certs_not_after"
 
 	// entry point.
 	metricEntryPointPrefix        = MetricNamePrefix + "entrypoint_"
@@ -128,9 +129,13 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		Help: "Last config reload failure",
 	}, []string{})
 	tlsCertsNotAfterTimestamp := newGaugeFrom(stdprometheus.GaugeOpts{
-		Name: tlsCertsNotAfterTimestamp,
+		Name: tlsCertsNotAfterTimestampName,
 		Help: "Certificate expiration timestamp",
 	}, []string{"cn", "serial", "sans"})
+	openConnections := newGaugeFrom(stdprometheus.GaugeOpts{
+		Name: openConnectionsName,
+		Help: "How many open connections exist, by entryPoint and protocol",
+	}, []string{"entrypoint", "protocol"})
 
 	promState.vectors = []vector{
 		configReloads.cv,
@@ -138,6 +143,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		lastConfigReloadSuccess.gv,
 		lastConfigReloadFailure.gv,
 		tlsCertsNotAfterTimestamp.gv,
+		openConnections.gv,
 	}
 
 	reg := &standardRegistry{
@@ -149,6 +155,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		lastConfigReloadSuccessGauge:   lastConfigReloadSuccess,
 		lastConfigReloadFailureGauge:   lastConfigReloadFailure,
 		tlsCertsNotAfterTimestampGauge: tlsCertsNotAfterTimestamp,
+		openConnectionsGauge:           openConnections,
 	}
 
 	if config.AddEntryPointsLabels {

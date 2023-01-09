@@ -28,6 +28,7 @@ const (
 	influxDBConfigReloadsFailureName    = influxDBConfigReloadsName + ".failure"
 	influxDBLastConfigReloadSuccessName = "traefik.config.reload.lastSuccessTimestamp"
 	influxDBLastConfigReloadFailureName = "traefik.config.reload.lastFailureTimestamp"
+	influxDBOpenConnsName               = "traefik.open.connections"
 
 	influxDBTLSCertsNotAfterTimestampName = "traefik.tls.certs.notAfterTimestamp"
 
@@ -84,6 +85,7 @@ func RegisterInfluxDB2(ctx context.Context, config *types.InfluxDB2) Registry {
 		configReloadsFailureCounter:    influxDB2Store.NewCounter(influxDBConfigReloadsFailureName),
 		lastConfigReloadSuccessGauge:   influxDB2Store.NewGauge(influxDBLastConfigReloadSuccessName),
 		lastConfigReloadFailureGauge:   influxDB2Store.NewGauge(influxDBLastConfigReloadFailureName),
+		openConnectionsGauge:           influxDB2Store.NewGauge(influxDBOpenConnsName),
 		tlsCertsNotAfterTimestampGauge: influxDB2Store.NewGauge(influxDBTLSCertsNotAfterTimestampName),
 	}
 

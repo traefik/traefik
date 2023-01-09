@@ -48,7 +48,7 @@ func testDatadogRegistry(t *testing.T, metricsPrefix string, datadogRegistry Reg
 		metricsPrefix + ".config.reload.total:1.000000|c|#failure:true\n",
 		metricsPrefix + ".config.reload.lastSuccessTimestamp:1.000000|g\n",
 		metricsPrefix + ".config.reload.lastFailureTimestamp:1.000000|g\n",
-
+		metricsPrefix + ".open.connections:1.000000|g|#entrypoint:test,protocol:TCP\n",
 		metricsPrefix + ".tls.certs.notAfterTimestamp:1.000000|g|#key:value\n",
 
 		metricsPrefix + ".entrypoint.request.total:1.000000|c|#entrypoint:test\n",
@@ -80,7 +80,7 @@ func testDatadogRegistry(t *testing.T, metricsPrefix string, datadogRegistry Reg
 		datadogRegistry.ConfigReloadsFailureCounter().Add(1)
 		datadogRegistry.LastConfigReloadSuccessGauge().Add(1)
 		datadogRegistry.LastConfigReloadFailureGauge().Add(1)
-
+		datadogRegistry.OpenConnectionsGauge().With("entrypoint", "test", "protocol", "TCP").Add(1)
 		datadogRegistry.TLSCertsNotAfterTimestampGauge().With("key", "value").Set(1)
 
 		datadogRegistry.EntryPointReqsCounter().With("entrypoint", "test").Add(1)

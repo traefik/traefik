@@ -103,6 +103,10 @@ func TestPrometheus(t *testing.T) {
 	prometheusRegistry.ConfigReloadsFailureCounter().Add(1)
 	prometheusRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
 	prometheusRegistry.LastConfigReloadFailureGauge().Set(float64(time.Now().Unix()))
+	prometheusRegistry.
+		OpenConnectionsGauge().
+		With("entrypoint", "test", "protocol", "TCP").
+		Set(1)
 
 	prometheusRegistry.
 		TLSCertsNotAfterTimestampGauge().
@@ -202,13 +206,21 @@ func TestPrometheus(t *testing.T) {
 			assert: buildTimestampAssert(t, configLastReloadFailureName),
 		},
 		{
-			name: tlsCertsNotAfterTimestamp,
+			name: openConnectionsName,
+			labels: map[string]string{
+				"protocol":   "TCP",
+				"entrypoint": "test",
+			},
+			assert: buildGaugeAssert(t, openConnectionsName, 1),
+		},
+		{
+			name: tlsCertsNotAfterTimestampName,
 			labels: map[string]string{
 				"cn":     "value",
 				"serial": "value",
 				"sans":   "value",
 			},
-			assert: buildTimestampAssert(t, tlsCertsNotAfterTimestamp),
+			assert: buildTimestampAssert(t, tlsCertsNotAfterTimestampName),
 		},
 		{
 			name: entryPointReqsTotalName,

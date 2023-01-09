@@ -25,6 +25,7 @@ type Registry interface {
 	ConfigReloadsFailureCounter() metrics.Counter
 	LastConfigReloadSuccessGauge() metrics.Gauge
 	LastConfigReloadFailureGauge() metrics.Gauge
+	OpenConnectionsGauge() metrics.Gauge
 
 	// TLS
 
@@ -71,6 +72,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var configReloadsFailureCounter []metrics.Counter
 	var lastConfigReloadSuccessGauge []metrics.Gauge
 	var lastConfigReloadFailureGauge []metrics.Gauge
+	var openConnectionsGauge []metrics.Gauge
 	var tlsCertsNotAfterTimestampGauge []metrics.Gauge
 	var entryPointReqsCounter []metrics.Counter
 	var entryPointReqsTLSCounter []metrics.Counter
@@ -102,6 +104,9 @@ func NewMultiRegistry(registries []Registry) Registry {
 		}
 		if r.LastConfigReloadFailureGauge() != nil {
 			lastConfigReloadFailureGauge = append(lastConfigReloadFailureGauge, r.LastConfigReloadFailureGauge())
+		}
+		if r.OpenConnectionsGauge() != nil {
+			openConnectionsGauge = append(openConnectionsGauge, r.OpenConnectionsGauge())
 		}
 		if r.TLSCertsNotAfterTimestampGauge() != nil {
 			tlsCertsNotAfterTimestampGauge = append(tlsCertsNotAfterTimestampGauge, r.TLSCertsNotAfterTimestampGauge())
@@ -167,6 +172,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 		configReloadsFailureCounter:    multi.NewCounter(configReloadsFailureCounter...),
 		lastConfigReloadSuccessGauge:   multi.NewGauge(lastConfigReloadSuccessGauge...),
 		lastConfigReloadFailureGauge:   multi.NewGauge(lastConfigReloadFailureGauge...),
+		openConnectionsGauge:           multi.NewGauge(openConnectionsGauge...),
 		tlsCertsNotAfterTimestampGauge: multi.NewGauge(tlsCertsNotAfterTimestampGauge...),
 		entryPointReqsCounter:          multi.NewCounter(entryPointReqsCounter...),
 		entryPointReqsTLSCounter:       multi.NewCounter(entryPointReqsTLSCounter...),
@@ -196,6 +202,7 @@ type standardRegistry struct {
 	configReloadsFailureCounter    metrics.Counter
 	lastConfigReloadSuccessGauge   metrics.Gauge
 	lastConfigReloadFailureGauge   metrics.Gauge
+	openConnectionsGauge           metrics.Gauge
 	tlsCertsNotAfterTimestampGauge metrics.Gauge
 	entryPointReqsCounter          metrics.Counter
 	entryPointReqsTLSCounter       metrics.Counter
@@ -242,6 +249,10 @@ func (r *standardRegistry) LastConfigReloadSuccessGauge() metrics.Gauge {
 
 func (r *standardRegistry) LastConfigReloadFailureGauge() metrics.Gauge {
 	return r.lastConfigReloadFailureGauge
+}
+
+func (r *standardRegistry) OpenConnectionsGauge() metrics.Gauge {
+	return r.openConnectionsGauge
 }
 
 func (r *standardRegistry) TLSCertsNotAfterTimestampGauge() metrics.Gauge {

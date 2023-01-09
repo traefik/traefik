@@ -21,6 +21,7 @@ const (
 	statsdConfigReloadsFailureName    = statsdConfigReloadsName + ".failure"
 	statsdLastConfigReloadSuccessName = "config.reload.lastSuccessTimestamp"
 	statsdLastConfigReloadFailureName = "config.reload.lastFailureTimestamp"
+	statsdOpenConnectionsName         = "open.connections"
 
 	statsdTLSCertsNotAfterTimestampName = "tls.certs.notAfterTimestamp"
 
@@ -64,6 +65,7 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 		lastConfigReloadSuccessGauge:   statsdClient.NewGauge(statsdLastConfigReloadSuccessName),
 		lastConfigReloadFailureGauge:   statsdClient.NewGauge(statsdLastConfigReloadFailureName),
 		tlsCertsNotAfterTimestampGauge: statsdClient.NewGauge(statsdTLSCertsNotAfterTimestampName),
+		openConnectionsGauge:           statsdClient.NewGauge(statsdOpenConnectionsName),
 	}
 
 	if config.AddEntryPointsLabels {
