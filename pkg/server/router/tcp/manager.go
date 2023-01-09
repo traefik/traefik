@@ -264,6 +264,10 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		logger := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
 		ctxRouter := logger.WithContext(provider.AddInContext(ctx, routerName))
 
+		if routerConfig.Priority == 0 {
+			routerConfig.Priority = tcpmuxer.GetRulePriority(routerConfig.Rule)
+		}
+
 		if routerConfig.Service == "" {
 			err := errors.New("the service is missing on the router")
 			routerConfig.AddError(err, true)
@@ -306,6 +310,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 
 		if routerConfig.TLS == nil {
 			logger.Debug().Msgf("Adding route for %q", routerConfig.Rule)
+
 			if err := router.AddRoute(routerConfig.Rule, routerConfig.Priority, handler); err != nil {
 				routerConfig.AddError(err, true)
 				logger.Error().Err(err).Send()
@@ -315,6 +320,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 
 		if routerConfig.TLS.Passthrough {
 			logger.Debug().Msgf("Adding Passthrough route for %q", routerConfig.Rule)
+
 			if err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.Priority, handler); err != nil {
 				routerConfig.AddError(err, true)
 				logger.Error().Err(err).Send()
@@ -349,11 +355,11 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 
 			logger.Debug().Msgf("Adding special TLS closing route for %q because broken TLS options %s", routerConfig.Rule, tlsOptionsName)
 
-			err = router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.Priority, &brokenTLSRouter{})
-			if err != nil {
+			if err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.Priority, &brokenTLSRouter{}); err != nil {
 				routerConfig.AddError(err, true)
 				logger.Error().Err(err).Send()
 			}
+
 			continue
 		}
 
@@ -383,10 +389,10 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 
 		logger.Debug().Msgf("Adding TLS route for %q", routerConfig.Rule)
 
-		err = router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
-		if err != nil {
+		if err := router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.Priority, handler); err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error().Err(err).Send()
+			continue
 		}
 	}
 }
