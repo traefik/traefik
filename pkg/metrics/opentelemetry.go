@@ -69,9 +69,6 @@ func RegisterOpenTelemetry(ctx context.Context, config *types.OpenTelemetry) Reg
 		reg.entryPointReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, entryPointReqDurationName,
 			"How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.",
 			unit.Milliseconds), time.Second)
-		reg.entryPointOpenConnsGauge = newOTLPGaugeFrom(meter, entryPointOpenConnsName,
-			"How many open connections exist on an entrypoint, partitioned by method and protocol.",
-			unit.Dimensionless)
 	}
 
 	if config.AddRoutersLabels {
@@ -82,9 +79,6 @@ func RegisterOpenTelemetry(ctx context.Context, config *types.OpenTelemetry) Reg
 		reg.routerReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, routerReqDurationName,
 			"How long it took to process the request on a router, partitioned by service, status code, protocol, and method.",
 			unit.Milliseconds), time.Second)
-		reg.routerOpenConnsGauge = newOTLPGaugeFrom(meter, routerOpenConnsName,
-			"How many open connections exist on a router, partitioned by service, method, and protocol.",
-			unit.Dimensionless)
 	}
 
 	if config.AddServicesLabels {
@@ -95,9 +89,6 @@ func RegisterOpenTelemetry(ctx context.Context, config *types.OpenTelemetry) Reg
 		reg.serviceReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, serviceReqDurationName,
 			"How long it took to process the request on a service, partitioned by status code, protocol, and method.",
 			unit.Milliseconds), time.Second)
-		reg.serviceOpenConnsGauge = newOTLPGaugeFrom(meter, serviceOpenConnsName,
-			"How many open connections exist on a service, partitioned by method and protocol.",
-			unit.Dimensionless)
 		reg.serviceRetriesCounter = newOTLPCounterFrom(meter, serviceRetriesTotalName,
 			"How many request retries happened on a service.")
 		reg.serviceServerUpGauge = newOTLPGaugeFrom(meter, serviceServerUpName,

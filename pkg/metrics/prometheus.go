@@ -34,7 +34,6 @@ const (
 	entryPointReqsTotalName       = metricEntryPointPrefix + "requests_total"
 	entryPointReqsTLSTotalName    = metricEntryPointPrefix + "requests_tls_total"
 	entryPointReqDurationName     = metricEntryPointPrefix + "request_duration_seconds"
-	entryPointOpenConnsName       = metricEntryPointPrefix + "open_connections"
 	entryPointReqsBytesTotalName  = metricEntryPointPrefix + "requests_bytes_total"
 	entryPointRespsBytesTotalName = metricEntryPointPrefix + "responses_bytes_total"
 
@@ -43,7 +42,6 @@ const (
 	routerReqsTotalName       = metricRouterPrefix + "requests_total"
 	routerReqsTLSTotalName    = metricRouterPrefix + "requests_tls_total"
 	routerReqDurationName     = metricRouterPrefix + "request_duration_seconds"
-	routerOpenConnsName       = metricRouterPrefix + "open_connections"
 	routerReqsBytesTotalName  = metricRouterPrefix + "requests_bytes_total"
 	routerRespsBytesTotalName = metricRouterPrefix + "responses_bytes_total"
 
@@ -52,7 +50,6 @@ const (
 	serviceReqsTotalName       = metricServicePrefix + "requests_total"
 	serviceReqsTLSTotalName    = metricServicePrefix + "requests_tls_total"
 	serviceReqDurationName     = metricServicePrefix + "request_duration_seconds"
-	serviceOpenConnsName       = metricServicePrefix + "open_connections"
 	serviceRetriesTotalName    = metricServicePrefix + "retries_total"
 	serviceServerUpName        = metricServicePrefix + "server_up"
 	serviceReqsBytesTotalName  = metricServicePrefix + "requests_bytes_total"
@@ -154,10 +151,6 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 			Help:    "How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.",
 			Buckets: buckets,
 		}, []string{"code", "method", "protocol", "entrypoint"})
-		entryPointOpenConns := newGaugeFrom(stdprometheus.GaugeOpts{
-			Name: entryPointOpenConnsName,
-			Help: "How many open connections exist on an entrypoint, partitioned by method and protocol.",
-		}, []string{"method", "protocol", "entrypoint"})
 		entryPointReqsBytesTotal := newCounterFrom(stdprometheus.CounterOpts{
 			Name: entryPointReqsBytesTotalName,
 			Help: "The total size of requests in bytes handled by an entrypoint, partitioned by status code, protocol, and method.",
@@ -171,7 +164,6 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 			entryPointReqs.cv,
 			entryPointReqsTLS.cv,
 			entryPointReqDurations.hv,
-			entryPointOpenConns.gv,
 			entryPointReqsBytesTotal.cv,
 			entryPointRespsBytesTotal.cv,
 		)
@@ -179,7 +171,6 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		reg.entryPointReqsCounter = entryPointReqs
 		reg.entryPointReqsTLSCounter = entryPointReqsTLS
 		reg.entryPointReqDurationHistogram, _ = NewHistogramWithScale(entryPointReqDurations, time.Second)
-		reg.entryPointOpenConnsGauge = entryPointOpenConns
 		reg.entryPointReqsBytesCounter = entryPointReqsBytesTotal
 		reg.entryPointRespsBytesCounter = entryPointRespsBytesTotal
 	}
@@ -198,10 +189,6 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 			Help:    "How long it took to process the request on a router, partitioned by service, status code, protocol, and method.",
 			Buckets: buckets,
 		}, []string{"code", "method", "protocol", "router", "service"})
-		routerOpenConns := newGaugeFrom(stdprometheus.GaugeOpts{
-			Name: routerOpenConnsName,
-			Help: "How many open connections exist on a router, partitioned by service, method, and protocol.",
-		}, []string{"method", "protocol", "router", "service"})
 		routerReqsBytesTotal := newCounterFrom(stdprometheus.CounterOpts{
 			Name: routerReqsBytesTotalName,
 			Help: "The total size of requests in bytes handled by a router, partitioned by service, status code, protocol, and method.",
@@ -215,14 +202,12 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 			routerReqs.cv,
 			routerReqsTLS.cv,
 			routerReqDurations.hv,
-			routerOpenConns.gv,
 			routerReqsBytesTotal.cv,
 			routerRespsBytesTotal.cv,
 		)
 		reg.routerReqsCounter = routerReqs
 		reg.routerReqsTLSCounter = routerReqsTLS
 		reg.routerReqDurationHistogram, _ = NewHistogramWithScale(routerReqDurations, time.Second)
-		reg.routerOpenConnsGauge = routerOpenConns
 		reg.routerReqsBytesCounter = routerReqsBytesTotal
 		reg.routerRespsBytesCounter = routerRespsBytesTotal
 	}
@@ -241,10 +226,6 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 			Help:    "How long it took to process the request on a service, partitioned by status code, protocol, and method.",
 			Buckets: buckets,
 		}, []string{"code", "method", "protocol", "service"})
-		serviceOpenConns := newGaugeFrom(stdprometheus.GaugeOpts{
-			Name: serviceOpenConnsName,
-			Help: "How many open connections exist on a service, partitioned by method and protocol.",
-		}, []string{"method", "protocol", "service"})
 		serviceRetries := newCounterFrom(stdprometheus.CounterOpts{
 			Name: serviceRetriesTotalName,
 			Help: "How many request retries happened on a service.",
@@ -266,7 +247,6 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 			serviceReqs.cv,
 			serviceReqsTLS.cv,
 			serviceReqDurations.hv,
-			serviceOpenConns.gv,
 			serviceRetries.cv,
 			serviceServerUp.gv,
 			serviceReqsBytesTotal.cv,
@@ -276,7 +256,6 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		reg.serviceReqsCounter = serviceReqs
 		reg.serviceReqsTLSCounter = serviceReqsTLS
 		reg.serviceReqDurationHistogram, _ = NewHistogramWithScale(serviceReqDurations, time.Second)
-		reg.serviceOpenConnsGauge = serviceOpenConns
 		reg.serviceRetriesCounter = serviceRetries
 		reg.serviceServerUpGauge = serviceServerUp
 		reg.serviceReqsBytesCounter = serviceReqsBytesTotal
