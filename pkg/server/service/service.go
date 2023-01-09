@@ -299,12 +299,15 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 
 		proxy := buildSingleHostProxy(target, passHostHeader, time.Duration(flushInterval), roundTripper, m.bufferPool)
 
-		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
-		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
-		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, nil)
+		// Prevents from enabling observability for internal resources.
+		if !strings.HasSuffix(provider.GetQualifiedName(ctx, serviceName), "@internal") {
+			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
+			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
+			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, nil)
 
-		if m.metricsRegistry != nil && m.metricsRegistry.IsSvcEnabled() {
-			proxy = metricsMiddle.NewServiceMiddleware(ctx, proxy, m.metricsRegistry, serviceName)
+			if m.metricsRegistry != nil && m.metricsRegistry.IsSvcEnabled() {
+				proxy = metricsMiddle.NewServiceMiddleware(ctx, proxy, m.metricsRegistry, serviceName)
+			}
 		}
 
 		lb.Add(proxyName, proxy, nil)
