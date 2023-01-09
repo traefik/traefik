@@ -391,6 +391,9 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		return middleware, nil
 	}
 
+	// The tracing middleware is a NOOP if tracing is not setup on the middleware chain.
+	// Hence, regarding internal resources' observability deactivation,
+	// this would not enable tracing.
 	return tracing.WrapMiddleware(ctx, middleware), nil
 }
 
