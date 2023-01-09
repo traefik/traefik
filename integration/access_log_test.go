@@ -48,7 +48,7 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	ensureWorkingDirectoryIsClean()
 
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 	defer display(c)
 
 	defer func() {
@@ -122,7 +122,7 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend(c *check.C) {
 	}
 
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 	defer display(c)
 
 	err := cmd.Start()
@@ -191,7 +191,7 @@ func (s *AccessLogSuite) TestAccessLogDigestAuthMiddleware(c *check.C) {
 	}
 
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 	defer display(c)
 
 	err := cmd.Start()
@@ -304,7 +304,7 @@ func (s *AccessLogSuite) TestAccessLogFrontendRedirect(c *check.C) {
 	}
 
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 	defer display(c)
 
 	err := cmd.Start()
@@ -355,7 +355,7 @@ func (s *AccessLogSuite) TestAccessLogRateLimit(c *check.C) {
 	}
 
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 	defer display(c)
 
 	err := cmd.Start()
@@ -404,7 +404,7 @@ func (s *AccessLogSuite) TestAccessLogBackendNotFound(c *check.C) {
 	}
 
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 	defer display(c)
 
 	err := cmd.Start()
@@ -449,7 +449,7 @@ func (s *AccessLogSuite) TestAccessLogFrontendAllowlist(c *check.C) {
 	}
 
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 	defer display(c)
 
 	err := cmd.Start()
@@ -494,7 +494,7 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontendSuccess(c *check.C) {
 	}
 
 	// Start Traefik
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 	defer display(c)
 
 	err := cmd.Start()
@@ -523,6 +523,62 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontendSuccess(c *check.C) {
 	c.Assert(count, checker.GreaterOrEqualThan, len(expected))
 
 	// Verify no other Traefik problems
+	checkNoOtherTraefikProblems(c)
+}
+
+func (s *AccessLogSuite) TestAccessLogDisabledForInternals(c *check.C) {
+	ensureWorkingDirectoryIsClean()
+
+	file := s.adaptFile(c, "fixtures/access_log/access_log_ping.toml", struct{}{})
+	defer os.Remove(file)
+
+	// Start Traefik.
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+
+	defer func() {
+		traefikLog, err := os.ReadFile(traefikTestLogFile)
+		c.Assert(err, checker.IsNil)
+		log.Info().Msg(string(traefikLog))
+	}()
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	// waitForTraefik makes at least one call to the rawdata api endpoint,
+	// but the logs for this endpoint are ignored in checkAccessLogOutput.
+	waitForTraefik(c, "customPing")
+
+	checkStatsForLogFile(c)
+
+	// Verify Traefik started OK.
+	checkTraefikStarted(c)
+
+	// Make some requests on the internal ping router.
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/ping", nil)
+	c.Assert(err, checker.IsNil)
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	// Make some requests on the custom ping router.
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/ping", nil)
+	c.Assert(err, checker.IsNil)
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	// Verify access.log output as expected.
+	count := checkAccessLogOutput(c)
+
+	c.Assert(count, checker.Equals, 0)
+
+	// Verify no other Traefik problems.
 	checkNoOtherTraefikProblems(c)
 }
 
