@@ -46,6 +46,7 @@ func testDatadogRegistry(t *testing.T, metricsPrefix string, datadogRegistry Reg
 	expected := []string{
 		metricsPrefix + ".config.reload.total:1.000000|c\n",
 		metricsPrefix + ".config.reload.lastSuccessTimestamp:1.000000|g\n",
+		metricsPrefix + ".open.connections:1.000000|g|#entrypoint:test,protocol:TCP\n",
 
 		metricsPrefix + ".tls.certs.notAfterTimestamp:1.000000|g|#key:value\n",
 
@@ -76,6 +77,7 @@ func testDatadogRegistry(t *testing.T, metricsPrefix string, datadogRegistry Reg
 	udp.ShouldReceiveAll(t, expected, func() {
 		datadogRegistry.ConfigReloadsCounter().Add(1)
 		datadogRegistry.LastConfigReloadSuccessGauge().Add(1)
+		datadogRegistry.OpenConnectionsGauge().With("entrypoint", "test", "protocol", "TCP").Add(1)
 
 		datadogRegistry.TLSCertsNotAfterTimestampGauge().With("key", "value").Set(1)
 

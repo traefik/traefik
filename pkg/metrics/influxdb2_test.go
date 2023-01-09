@@ -48,10 +48,12 @@ func TestInfluxDB2(t *testing.T) {
 	expectedServer := []string{
 		`(traefik\.config\.reload\.total count=1) [\d]{19}`,
 		`(traefik\.config\.reload\.lastSuccessTimestamp value=1) [\d]{19}`,
+		`(traefik\.open\.connections,entrypoint=test,protocol=TCP value=1) [\d]{19}`,
 	}
 
 	influxDB2Registry.ConfigReloadsCounter().Add(1)
 	influxDB2Registry.LastConfigReloadSuccessGauge().Set(1)
+	influxDB2Registry.OpenConnectionsGauge().With("entrypoint", "test", "protocol", "TCP").Set(1)
 	msgServer := <-c
 
 	assertMessage(t, *msgServer, expectedServer)

@@ -26,6 +26,7 @@ var (
 const (
 	influxDBConfigReloadsName           = "traefik.config.reload.total"
 	influxDBLastConfigReloadSuccessName = "traefik.config.reload.lastSuccessTimestamp"
+	influxDBOpenConnsName               = "traefik.open.connections"
 
 	influxDBTLSCertsNotAfterTimestampName = "traefik.tls.certs.notAfterTimestamp"
 
@@ -80,6 +81,7 @@ func RegisterInfluxDB2(ctx context.Context, config *types.InfluxDB2) Registry {
 	registry := &standardRegistry{
 		configReloadsCounter:           influxDB2Store.NewCounter(influxDBConfigReloadsName),
 		lastConfigReloadSuccessGauge:   influxDB2Store.NewGauge(influxDBLastConfigReloadSuccessName),
+		openConnectionsGauge:           influxDB2Store.NewGauge(influxDBOpenConnsName),
 		tlsCertsNotAfterTimestampGauge: influxDB2Store.NewGauge(influxDBTLSCertsNotAfterTimestampName),
 	}
 
