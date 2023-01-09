@@ -77,7 +77,9 @@ func (c *searchCriterion) filterService(name string) bool {
 		return c.ServiceName == name
 	}
 
-	return strings.Split(c.ServiceName, "@")[0] == name
+	before, _, _ := strings.Cut(c.ServiceName, "@")
+
+	return before == name
 }
 
 func (c *searchCriterion) filterMiddleware(mns []string) bool {
