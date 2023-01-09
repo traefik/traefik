@@ -8,11 +8,6 @@ description: "Understand the routing configuration for the Kubernetes Ingress Co
 The Kubernetes Ingress Controller.
 {: .subtitle }
 
-!!! info ""
-
-    It is not possible to route requests directly to [Kubernetes services](https://kubernetes.io/docs/concepts/services-networking/service/ "Link to Kubernetes service docs").
-
-
 ## Routing Configuration
 
 The provider then watches for incoming ingresses events, such as the example below,
