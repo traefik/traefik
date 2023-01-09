@@ -372,6 +372,9 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		return nil, fmt.Errorf("invalid middleware %q configuration: invalid middleware type or middleware does not exist", middlewareName)
 	}
 
+	// The tracing middleware is a NOOP if tracing is not setup on the middleware chain.
+	// Hence, regarding internal resources' observability deactivation,
+	// this would not enable tracing.
 	return tracing.Wrap(ctx, middleware), nil
 }
 
