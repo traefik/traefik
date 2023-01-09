@@ -372,11 +372,6 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		return nil, fmt.Errorf("invalid middleware %q configuration: invalid middleware type or middleware does not exist", middlewareName)
 	}
 
-	// Prevents from enabling observability for internal resources.
-	if provider.IsInternal(ctx) {
-		return middleware, nil
-	}
-
 	return tracing.Wrap(ctx, middleware), nil
 }
 

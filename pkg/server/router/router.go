@@ -123,7 +123,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 		}
 
 		// Prevents from enabling observability for internal resources.
-		if !provider.IsInternal(ctxRouter) && !strings.HasSuffix(provider.GetQualifiedName(ctx, routerConfig.Service), "@internal") {
+		if !strings.HasSuffix(provider.GetQualifiedName(ctx, routerConfig.Service), "@internal") {
 			handler, err = observabilityChain.Append(func(next http.Handler) (http.Handler, error) {
 				return accesslog.NewFieldHandler(next, logs.EntryPointName, entryPointName, accesslog.AddOriginFields), nil
 			}).Then(handler)
@@ -172,7 +172,7 @@ func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, rou
 	}
 
 	// Prevents from enabling observability for internal resources.
-	if provider.IsInternal(ctx) || strings.HasSuffix(provider.GetQualifiedName(ctx, routerConfig.Service), "@internal") {
+	if strings.HasSuffix(provider.GetQualifiedName(ctx, routerConfig.Service), "@internal") {
 		m.routerHandlers[routerName] = handler
 		return m.routerHandlers[routerName], nil
 	}
@@ -211,7 +211,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	chain := alice.New()
 
 	// Prevents from enabling observability for internal resources.
-	if provider.IsInternal(ctx) || strings.HasSuffix(provider.GetQualifiedName(ctx, router.Service), "@internal") {
+	if strings.HasSuffix(provider.GetQualifiedName(ctx, router.Service), "@internal") {
 		return chain.Extend(*mHandler).Then(sHandler)
 	}
 
