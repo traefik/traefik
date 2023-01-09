@@ -2,9 +2,11 @@ package middleware
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
@@ -39,6 +41,9 @@ func (c *ChainBuilder) Build(ctx context.Context, entryPointName string) alice.C
 
 	if c.accessLoggerMiddleware != nil {
 		chain = chain.Append(accesslog.WrapHandler(c.accessLoggerMiddleware))
+		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+			return accesslog.NewFieldHandler(next, logs.EntryPointName, entryPointName, accesslog.AddOriginFields), nil
+		})
 	}
 
 	if c.tracer != nil {

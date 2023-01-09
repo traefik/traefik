@@ -103,9 +103,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 		return nil, err
 	}
 
-	defaultHandler, err := observabilityChain.Append(func(next http.Handler) (http.Handler, error) {
-		return accesslog.NewFieldHandler(next, logs.EntryPointName, entryPointName, accesslog.InitServiceFields), nil
-	}).Then(http.NotFoundHandler())
+	defaultHandler, err := observabilityChain.Then(http.NotFoundHandler())
 	if err != nil {
 		return nil, err
 	}
@@ -129,9 +127,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 
 		// Prevents from enabling observability for internal resources.
 		if !strings.HasSuffix(provider.GetQualifiedName(ctx, routerConfig.Service), "@internal") {
-			handler, err = observabilityChain.Append(func(next http.Handler) (http.Handler, error) {
-				return accesslog.NewFieldHandler(next, logs.EntryPointName, entryPointName, accesslog.InitServiceFields), nil
-			}).Then(handler)
+			handler, err = observabilityChain.Then(handler)
 			if err != nil {
 				routerConfig.AddError(err, true)
 				logger.Error().Err(err).Send()
