@@ -893,9 +893,7 @@ TLS certificates can be managed in Secrets objects.
 
 ### Communication Between Traefik and Pods
 
-!!! info ""
-
-    It is not possible to route requests directly to [Kubernetes services](https://kubernetes.io/docs/concepts/services-networking/service/ "Link to Kubernetes service docs").
+!!! info "It is not possible to route requests directly to [Kubernetes services](https://kubernetes.io/docs/concepts/services-networking/service/ "Link to Kubernetes service docs")"
 
     You can use an `ExternalName` service to forward requests to the Kubernetes service through DNS.
 
@@ -908,7 +906,7 @@ it still checks the service port to see if TLS communication is required.
 There are 3 ways to configure Traefik to use HTTPS to communicate with pods:
 
 1. If the service port defined in the ingress spec is `443` (note that you can still use `targetPort` to use a different port on your pod).
-1. If the service port defined in the ingress spec has a name that starts with HTTPS (such as `https-api`, `https-web` or just `https`).
+1. If the service port defined in the ingress spec has a name that starts with `https` (such as `https-api`, `https-web` or just `https`).
 1. If the service spec includes the annotation `traefik.ingress.kubernetes.io/service.serversscheme: https`.
 
 If either of those configuration options exist, then the backend communication protocol is assumed to be TLS,
