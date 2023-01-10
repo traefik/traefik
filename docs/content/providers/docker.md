@@ -80,7 +80,7 @@ Port detection works as follows:
 - If a container [exposes](https://docs.docker.com/engine/reference/builder/#expose) multiple ports,
   or does not expose any port, then you must manually specify which port Traefik should use for communication
   by using the label `traefik.http.services.<service_name>.loadbalancer.server.port`
-  (Read more on this label in the dedicated section in [routing](../routing/providers/docker.md#port)).
+  (Read more on this label in the dedicated section in [routing](../routing/providers/docker.md#services)).
 
 ### Host networking
 
