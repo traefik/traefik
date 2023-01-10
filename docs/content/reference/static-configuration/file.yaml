@@ -95,9 +95,23 @@ providers:
       insecureSkipVerify: true
     exposedByDefault: true
     useBindPortIP: true
-    swarmMode: true
     network: foobar
-    swarmModeRefreshSeconds: 42s
+    httpClientTimeout: 42s
+    allowEmptyServices: true
+  swarm:
+    constraints: foobar
+    watch: true
+    endpoint: foobar
+    defaultRule: foobar
+    tls:
+      ca: foobar
+      cert: foobar
+      key: foobar
+      insecureSkipVerify: true
+    exposedByDefault: true
+    useBindPortIP: true
+    network: foobar
+    refreshSeconds: 42s
     httpClientTimeout: 42s
     allowEmptyServices: true
   file:
