@@ -597,6 +597,8 @@ func TestDo_staticConfiguration(t *testing.T) {
 			AllowEmptyServices: true,
 			Network:            "MyNetwork",
 			UseBindPortIP:      true,
+			Watch:              true,
+			DefaultRule:        "PathPrefix(`/`)",
 		},
 		ClientConfig: docker.ClientConfig{
 			Endpoint: "MyEndPoint", TLS: &types.ClientTLS{
@@ -607,12 +609,28 @@ func TestDo_staticConfiguration(t *testing.T) {
 			},
 			HTTPClientTimeout: 42,
 		},
+	}
 
-		Watch:       true,
-		DefaultRule: "PathPrefix(`/`)",
-
-		// SwarmMode:               true,
-		// SwarmModeRefreshSeconds: 42,
+	config.Providers.Swarm = &docker.SwarmProvider{
+		Shared: docker.Shared{
+			ExposedByDefault:   true,
+			Constraints:        `Label("foo", "bar")`,
+			AllowEmptyServices: true,
+			Network:            "MyNetwork",
+			UseBindPortIP:      true,
+			Watch:              true,
+			DefaultRule:        "PathPrefix(`/`)",
+		},
+		ClientConfig: docker.ClientConfig{
+			Endpoint: "MyEndPoint", TLS: &types.ClientTLS{
+				CA:                 "myCa",
+				Cert:               "mycert.pem",
+				Key:                "mycert.key",
+				InsecureSkipVerify: true,
+			},
+			HTTPClientTimeout: 42,
+		},
+		RefreshSeconds: 42,
 	}
 
 	config.Providers.KubernetesIngress = &ingress.Provider{
