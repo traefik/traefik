@@ -14,7 +14,7 @@ The BasicAuth middleware restricts access to your services to known users.
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Declaring the user list
 #
 # Note: when used in docker-compose.yml all dollar signs in the hash need to be doubled for escaping.
@@ -88,7 +88,7 @@ The `users` option is an array of authorized users. Each user must be declared u
     Please note that these keys are not hashed or encrypted in any way, and therefore is less secure than other methods.
     You can find more information on the [Kubernetes Basic Authentication Secret Documentation](https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret)
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Declaring the user list
 #
 # Note: when used in docker-compose.yml all dollar signs in the hash need to be doubled for escaping.
@@ -177,7 +177,7 @@ The file content is a list of `name:hashed-password`.
     - If both `users` and `usersFile` are provided, the two are merged. The contents of `usersFile` have precedence over the values in `users`.
     - Because it does not make much sense to refer to a file path on Kubernetes, the `usersFile` field doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-auth.basicauth.usersfile=/path/to/my/usersfile"
 ```
@@ -233,7 +233,7 @@ http:
 
 You can customize the realm for the authentication with the `realm` option. The default value is `traefik`.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-auth.basicauth.realm=MyRealm"
 ```
@@ -270,7 +270,7 @@ http:
 
 You can define a header field to store the authenticated user using the `headerField`option.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.my-auth.basicauth.headerField=X-WebAuth-User"
 ```
@@ -309,7 +309,7 @@ http:
 
 Set the `removeHeader` option to `true` to remove the authorization header before forwarding the request to your service. (Default value is `false`.)
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-auth.basicauth.removeheader=true"
 ```
