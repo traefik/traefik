@@ -12,7 +12,7 @@ IPAllowList accepts / refuses requests based on the client IP.
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Accepts request from defined IP
 labels:
   - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
@@ -83,7 +83,7 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `3`     | `"11.0.0.1"` |
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `5`     | `""`         |
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Allowlisting Based on `X-Forwarded-For` with `depth=2`
 labels:
   - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
@@ -149,7 +149,7 @@ http:
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"15.0.0.1,16.0.0.1"` | `"13.0.0.1"` |
     | `"10.0.0.1,11.0.0.1"`                   | `"10.0.0.1,11.0.0.1"` | `""`         |
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Exclude from `X-Forwarded-For`
 labels:
     - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
