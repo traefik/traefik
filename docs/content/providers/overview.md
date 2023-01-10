@@ -72,7 +72,7 @@ For the list of the providers names, see the [supported providers](#supported-pr
 
     Using the add-foo-prefix middleware from other providers:
 
-    ```yaml tab="Docker"
+    ```yaml tab="Docker & Swarm"
     your-container: #
       image: your-docker-image
 

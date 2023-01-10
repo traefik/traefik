@@ -18,7 +18,7 @@ The Errors middleware returns a custom page in lieu of the default, according to
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Dynamic Custom Error Page for 5XX Status Code
 labels:
   - "traefik.http.middlewares.test-errors.errors.status=500-599"
