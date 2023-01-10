@@ -95,7 +95,7 @@ Traefik retrieves the private IP and port of containers from the Docker API.
 Docker Swarm does not provide any port detection information to Traefik.
 
 Therefore, you **must** specify the port to use for communication by using the label `traefik.http.services.<service_name>.loadbalancer.server.port`
-(Check the reference for this label in the [routing section for Docker](../routing/providers/docker.md#port)).
+(Check the reference for this label in the [routing section for Swarm](../routing/providers/swarm.md#services)).
 
 ### Host networking
 
