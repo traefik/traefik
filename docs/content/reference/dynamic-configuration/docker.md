@@ -8,7 +8,7 @@ description: "Reference dynamic configuration with Docker labels in Traefik Prox
 Dynamic configuration with Docker Labels
 {: .subtitle }
 
-The labels are case insensitive.
+The labels are case-insensitive.
 
 ```yaml
 labels:
