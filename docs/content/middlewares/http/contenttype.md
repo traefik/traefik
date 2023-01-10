@@ -18,7 +18,7 @@ when it is not set by the backend.
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Enable auto-detection
 labels:
   - "traefik.http.middlewares.autodetect.contenttype=true"
