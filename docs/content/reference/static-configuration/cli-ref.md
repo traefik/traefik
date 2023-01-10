@@ -532,7 +532,7 @@ Constraints is an expression that Traefik matches against the container's labels
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
 `--providers.docker.endpoint`:  
-Docker server endpoint. Can be a tcp or a unix socket endpoint. (Default: ```unix:///var/run/docker.sock```)
+Docker server endpoint. Can be a TCP or a Unix socket endpoint. (Default: ```unix:///var/run/docker.sock```)
 
 `--providers.docker.exposedbydefault`:  
 Expose containers by default. (Default: ```true```)
@@ -542,12 +542,6 @@ Client timeout for HTTP connections. (Default: ```0```)
 
 `--providers.docker.network`:  
 Default Docker network used.
-
-`--providers.docker.swarmmode`:  
-Use Docker on Swarm Mode. (Default: ```false```)
-
-`--providers.docker.swarmmoderefreshseconds`:  
-Polling interval for swarm mode. (Default: ```15```)
 
 `--providers.docker.tls.ca`:  
 TLS CA
@@ -854,6 +848,51 @@ Enable Rest backend with default settings. (Default: ```false```)
 
 `--providers.rest.insecure`:  
 Activate REST Provider directly on the entryPoint named traefik. (Default: ```false```)
+
+`--providers.swarm`:  
+Enable Docker Swarm backend with default settings. (Default: ```false```)
+
+`--providers.swarm.allowemptyservices`:  
+Disregards the Docker containers health checks with respect to the creation or removal of the corresponding services. (Default: ```false```)
+
+`--providers.swarm.constraints`:  
+Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
+
+`--providers.swarm.defaultrule`:  
+Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
+
+`--providers.swarm.endpoint`:  
+Docker server endpoint. Can be a TCP or a Unix socket endpoint. (Default: ```unix:///var/run/docker.sock```)
+
+`--providers.swarm.exposedbydefault`:  
+Expose containers by default. (Default: ```true```)
+
+`--providers.swarm.httpclienttimeout`:  
+Client timeout for HTTP connections. (Default: ```0```)
+
+`--providers.swarm.network`:  
+Default Docker network used.
+
+`--providers.swarm.refreshseconds`:  
+Polling interval for swarm mode. (Default: ```15```)
+
+`--providers.swarm.tls.ca`:  
+TLS CA
+
+`--providers.swarm.tls.cert`:  
+TLS cert
+
+`--providers.swarm.tls.insecureskipverify`:  
+TLS insecure skip verify (Default: ```false```)
+
+`--providers.swarm.tls.key`:  
+TLS key
+
+`--providers.swarm.usebindportip`:  
+Use the ip address from the bound port, rather than from the inner network. (Default: ```false```)
+
+`--providers.swarm.watch`:  
+Watch Docker events. (Default: ```true```)
 
 `--providers.zookeeper`:  
 Enable ZooKeeper backend with default settings. (Default: ```false```)

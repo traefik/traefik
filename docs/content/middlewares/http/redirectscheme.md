@@ -25,7 +25,7 @@ The RedirectScheme middleware redirects the request if the request scheme is dif
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Redirect to https
 labels:
   - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
@@ -75,7 +75,7 @@ http:
 
 Set the `permanent` option to `true` to apply a permanent redirection.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Redirect to https
 labels:
   # ...
@@ -123,7 +123,7 @@ http:
 
 The `scheme` option defines the scheme of the new URL.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Redirect to https
 labels:
   - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
@@ -166,7 +166,7 @@ http:
 
 The `port` option defines the port of the new URL.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Redirect to https
 labels:
   # ...
