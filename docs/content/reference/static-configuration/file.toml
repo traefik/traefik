@@ -102,7 +102,7 @@
     refreshSeconds = "42s"
     httpClientTimeout = "42s"
     allowEmptyServices = true
-    [providers.docker.tls]
+    [providers.swarm.tls]
       ca = "foobar"
       cert = "foobar"
       key = "foobar"
