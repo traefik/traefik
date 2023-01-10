@@ -224,7 +224,7 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
     Registers a port.
     Useful when the container exposes multiples ports.
 
-    Mandatory for Docker Swarm (see the section ["Port Detection with Docker Swarm"](../../providers/docker.md#port-detection_1)).
+    Mandatory for Docker Swarm.
     {: #port }
 
     ```yaml
