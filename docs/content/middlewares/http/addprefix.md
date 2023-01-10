@@ -14,7 +14,7 @@ The AddPrefix middleware updates the path of a request before forwarding it.
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Prefixing with /foo
 labels:
   - "traefik.http.middlewares.add-foo.addprefix.prefix=/foo"
