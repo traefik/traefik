@@ -36,7 +36,6 @@ type metricsMiddleware struct {
 	reqsCounter          gokitmetrics.Counter
 	reqsTLSCounter       gokitmetrics.Counter
 	reqDurationHistogram metrics.ScalableHistogram
-	openConnsGauge       gokitmetrics.Gauge
 	reqsBytesCounter     gokitmetrics.Counter
 	respsBytesCounter    gokitmetrics.Counter
 	baseLabels           []string
@@ -51,7 +50,6 @@ func NewEntryPointMiddleware(ctx context.Context, next http.Handler, registry me
 		reqsCounter:          registry.EntryPointReqsCounter(),
 		reqsTLSCounter:       registry.EntryPointReqsTLSCounter(),
 		reqDurationHistogram: registry.EntryPointReqDurationHistogram(),
-		openConnsGauge:       registry.EntryPointOpenConnsGauge(),
 		reqsBytesCounter:     registry.EntryPointReqsBytesCounter(),
 		respsBytesCounter:    registry.EntryPointRespsBytesCounter(),
 		baseLabels:           []string{"entrypoint", entryPointName},
@@ -67,7 +65,6 @@ func NewRouterMiddleware(ctx context.Context, next http.Handler, registry metric
 		reqsCounter:          registry.RouterReqsCounter(),
 		reqsTLSCounter:       registry.RouterReqsTLSCounter(),
 		reqDurationHistogram: registry.RouterReqDurationHistogram(),
-		openConnsGauge:       registry.RouterOpenConnsGauge(),
 		reqsBytesCounter:     registry.RouterReqsBytesCounter(),
 		respsBytesCounter:    registry.RouterRespsBytesCounter(),
 		baseLabels:           []string{"router", routerName, "service", serviceName},
@@ -83,7 +80,6 @@ func NewServiceMiddleware(ctx context.Context, next http.Handler, registry metri
 		reqsCounter:          registry.ServiceReqsCounter(),
 		reqsTLSCounter:       registry.ServiceReqsTLSCounter(),
 		reqDurationHistogram: registry.ServiceReqDurationHistogram(),
-		openConnsGauge:       registry.ServiceOpenConnsGauge(),
 		reqsBytesCounter:     registry.ServiceReqsBytesCounter(),
 		respsBytesCounter:    registry.ServiceRespsBytesCounter(),
 		baseLabels:           []string{"service", serviceName},
@@ -111,10 +107,6 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	labels = append(labels, m.baseLabels...)
 	labels = append(labels, "method", getMethod(req))
 	labels = append(labels, "protocol", proto)
-
-	openConnsGauge := m.openConnsGauge.With(labels...)
-	openConnsGauge.Add(1)
-	defer openConnsGauge.Add(-1)
 
 	// TLS metrics
 	if req.TLS != nil {
