@@ -1,9 +1,9 @@
 ---
-title: "Traefik Docker Documentation"
-description: "Learn how to achieve configuration discovery in Traefik through Docker. Read the technical documentation."
+title: "Traefik Docker Swarm Documentation"
+description: "Learn how to achieve configuration discovery in Traefik through Docker Swarm. Read the technical documentation."
 ---
 
-# Traefik & Docker
+# Traefik & Docker Swarm
 
 A Story of Labels & Containers
 {: .subtitle }
@@ -12,7 +12,7 @@ A Story of Labels & Containers
 
 Attach labels to your containers and let Traefik do the rest!
 
-Traefik works with [Docker (standalone) Engine](https://docs.docker.com/engine/).
+Traefik works with [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
 
 !!! tip "The Quick Start Uses Docker"
 
@@ -20,32 +20,44 @@ Traefik works with [Docker (standalone) Engine](https://docs.docker.com/engine/)
 
 ## Configuration Examples
 
-??? example "Configuring Docker & Deploying / Exposing Services"
+??? example "Configuring Docker Swarm & Deploying / Exposing Services"
 
-    Enabling the docker provider
+    Enabling the Swarm provider
 
     ```yaml tab="File (YAML)"
     providers:
-      docker: {}
+      swarm:
+        # swarm classic (1.12-)
+        # endpoint: "tcp://127.0.0.1:2375"
+        # docker swarm mode (1.12+)
+        endpoint: "tcp://127.0.0.1:2377"
     ```
 
     ```toml tab="File (TOML)"
-    [providers.docker]
+    [providers.swarm]
+      # swarm classic (1.12-)
+      # endpoint = "tcp://127.0.0.1:2375"
+      # docker swarm mode (1.12+)
+      endpoint = "tcp://127.0.0.1:2377"
     ```
 
     ```bash tab="CLI"
-    --providers.docker=true
+    # swarm classic (1.12-)
+    # --providers.swarm.endpoint=tcp://127.0.0.1:2375
+    # docker swarm mode (1.12+)
+    --providers.swarm.endpoint=tcp://127.0.0.1:2377
     ```
 
-    Attaching labels to containers (in your docker compose file)
+    Attach labels to services (not to containers) while in Swarm mode (in your docker compose file)
 
     ```yaml
     version: "3"
     services:
       my-container:
-        # ...
-        labels:
-          - traefik.http.routers.my-container.rule=Host(`example.com`)
+        deploy:
+          labels:
+            - traefik.http.routers.my-container.rule=Host(`example.com`)
+            - traefik.http.services.my-container-service.loadbalancer.server.port=8080
     ```
 
 ## Routing Configuration
@@ -67,26 +79,30 @@ When using Docker Compose, labels are specified by the directive
 
     Please note that any tool like Nomad, Terraform, Ansible, etc.
     that is able to define a Docker container with labels can work
-    with Traefik and the Docker provider.
+    with Traefik and the  Swarm provider.
+
+While in Swarm Mode, Traefik uses labels found on services, not on individual containers.
+
+Therefore, if you use a compose file with Swarm Mode, labels should be defined in the
+[`deploy`](https://docs.docker.com/compose/compose-file/compose-file-v3/#labels-1) part of your service.
+
+This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/compose-file-v3/)).
 
 ### Port Detection
 
 Traefik retrieves the private IP and port of containers from the Docker API.
 
-Port detection works as follows:
+Docker Swarm does not provide any port detection information to Traefik.
 
-- If a container [exposes](https://docs.docker.com/engine/reference/builder/#expose) a single port,
-  then Traefik uses this port for private communication.
-- If a container [exposes](https://docs.docker.com/engine/reference/builder/#expose) multiple ports,
-  or does not expose any port, then you must manually specify which port Traefik should use for communication
-  by using the label `traefik.http.services.<service_name>.loadbalancer.server.port`
-  (Read more on this label in the dedicated section in [routing](../routing/providers/docker.md#port)).
+Therefore, you **must** specify the port to use for communication by using the label `traefik.http.services.<service_name>.loadbalancer.server.port`
+(Check the reference for this label in the [routing section for Docker](../routing/providers/docker.md#port)).
 
 ### Host networking
 
 When exposing containers that are configured with [host networking](https://docs.docker.com/network/host/),
 the IP address of the host is resolved as follows:
 
+<!-- TODO: verify and document the swarm mode case with container.Node.IPAddress coming from the API -->
 - try a lookup of `host.docker.internal`
 - if the lookup was unsuccessful, try a lookup of `host.containers.internal`, ([Podman](https://docs.podman.io/en/latest/) equivalent of `host.docker.internal`)
 - if that lookup was also unsuccessful, fall back to `127.0.0.1`
@@ -130,6 +146,7 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
         - Authorization with the [Docker Authorization Plugin Mechanism](https://web.archive.org/web/20190920092526/https://docs.docker.com/engine/extend/plugins_authorization/)
         - Accounting at networking level, by exposing the socket only inside a Docker private network, only available for Traefik.
         - Accounting at container level, by exposing the socket on a another container than Traefik's.
+          It allows scheduling of Traefik on worker nodes, with only the "socket exposer" container on the manager nodes.
         - Accounting at kernel level, by enforcing kernel calls with mechanisms like [SELinux](https://en.wikipedia.org/wiki/Security-Enhanced_Linux), to only allows an identified set of actions for Traefik's process (or the "socket exposer" process).
         - SSH public key authentication (SSH is supported with Docker > 18.09)
 
@@ -146,13 +163,42 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
         - [Letting Traefik run on Worker Nodes](https://blog.mikesir87.io/2018/07/letting-traefik-run-on-worker-nodes/)
         - [Docker Socket Proxy from Tecnativa](https://github.com/Tecnativa/docker-socket-proxy)
 
-## Provider Configuration
+Since the Swarm API is only exposed on the [manager nodes](https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/#manager-nodes),
+these are the nodes that Traefik should be scheduled on by deploying Traefik with a constraint on the node "role":
+
+```shell tab="With Docker CLI"
+docker service create \
+  --constraint=node.role==manager \
+  #... \
+```
+
+```yml tab="With Docker Compose"
+version: '3'
+
+services:
+  traefik:
+    # ...
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+```
+
+!!! tip "Scheduling Traefik on Worker Nodes"
+
+    Following the guidelines given in the previous section ["Docker API Access"](#docker-api-access),
+    if you expose the Docker API through TCP, then Traefik can be scheduled on any node if the TCP
+    socket is reachable.
+
+    Please consider the security implications by reading the [Security Note](#security-note).
+
+    A good example can be found on [Bret Fisher's repository](https://github.com/BretFisher/dogvscat/blob/master/stack-proxy-global.yml#L124).
 
 ### `endpoint`
 
 _Required, Default="unix:///var/run/docker.sock"_
 
-See section [Docker API Access](#docker-api-access) for more information.
+See section [Docker Swarm API Access](#docker-api-access) for more information.
 
 ??? example "Using the docker.sock"
 
@@ -174,19 +220,19 @@ See section [Docker API Access](#docker-api-access) for more information.
 
     ```yaml tab="File (YAML)"
     providers:
-      docker:
+      swarm:
         endpoint: "unix:///var/run/docker.sock"
          # ...
     ```
 
     ```toml tab="File (TOML)"
-    [providers.docker]
+    [providers.swarm]
       endpoint = "unix:///var/run/docker.sock"
       # ...
     ```
 
     ```bash tab="CLI"
-    --providers.docker.endpoint=unix:///var/run/docker.sock
+    --providers.swarm.endpoint=unix:///var/run/docker.sock
     # ...
     ```
 
@@ -204,29 +250,29 @@ See section [Docker API Access](#docker-api-access) for more information.
     ```
 
     ```toml tab="File (TOML)"
-    [providers.docker]
+    [providers.swarm]
       endpoint = "ssh://traefik@192.168.2.5:2022"
       # ...
     ```
 
     ```bash tab="CLI"
-    --providers.docker.endpoint=ssh://traefik@192.168.2.5:2022
+    --providers.swarm.endpoint=ssh://traefik@192.168.2.5:2022
     # ...
     ```
 
 ```yaml tab="File (YAML)"
 providers:
-  docker:
+  swarm:
     endpoint: "unix:///var/run/docker.sock"
 ```
 
 ```toml tab="File (TOML)"
-[providers.docker]
+[providers.swarm]
   endpoint = "unix:///var/run/docker.sock"
 ```
 
 ```bash tab="CLI"
---providers.docker.endpoint=unix:///var/run/docker.sock
+--providers.swarm.endpoint=unix:///var/run/docker.sock
 ```
 
 ### `useBindPortIP`
@@ -263,19 +309,19 @@ but still uses the `traefik.http.services.<name>.loadbalancer.server.port` that 
 
 ```yaml tab="File (YAML)"
 providers:
-  docker:
+  swarm:
     useBindPortIP: true
     # ...
 ```
 
 ```toml tab="File (TOML)"
-[providers.docker]
+[providers.swarm]
   useBindPortIP = true
   # ...
 ```
 
 ```bash tab="CLI"
---providers.docker.useBindPortIP=true
+--providers.swarm.useBindPortIP=true
 # ...
 ```
 
@@ -290,19 +336,19 @@ For additional information, refer to [Restrict the Scope of Service Discovery](.
 
 ```yaml tab="File (YAML)"
 providers:
-  docker:
+  swarm:
     exposedByDefault: false
     # ...
 ```
 
 ```toml tab="File (TOML)"
-[providers.docker]
+[providers.swarm]
   exposedByDefault = false
   # ...
 ```
 
 ```bash tab="CLI"
---providers.docker.exposedByDefault=false
+--providers.swarm.exposedByDefault=false
 # ...
 ```
 
@@ -316,19 +362,19 @@ This option can be overridden on a per-container basis with the `traefik.docker.
 
 ```yaml tab="File (YAML)"
 providers:
-  docker:
+  swarm:
     network: test
     # ...
 ```
 
 ```toml tab="File (TOML)"
-[providers.docker]
+[providers.swarm]
   network = "test"
   # ...
 ```
 
 ```bash tab="CLI"
---providers.docker.network=test
+--providers.swarm.network=test
 # ...
 ```
 
@@ -345,19 +391,67 @@ and the template has access to all the labels defined on this container.
 
 ```yaml tab="File (YAML)"
 providers:
-  docker:
+  swarm:
     defaultRule: "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
     # ...
 ```
 
 ```toml tab="File (TOML)"
-[providers.docker]
+[providers.swarm]
   defaultRule = "Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
   # ...
 ```
 
 ```bash tab="CLI"
---providers.docker.defaultRule=Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)
+--providers.swarm.defaultRule=Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)
+# ...
+```
+
+### `swarmMode`
+
+_Optional, Default=false_
+
+Enables the Swarm Mode (instead of standalone Docker).
+
+```yaml tab="File (YAML)"
+providers:
+  swarm:
+    swarmMode: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.swarm]
+  swarmMode = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.swarm.swarmMode=true
+# ...
+```
+
+### `swarmModeRefreshSeconds`
+
+_Optional, Default=15_
+
+Defines the polling interval (in seconds) for Swarm Mode.
+
+```yaml tab="File (YAML)"
+providers:
+  swarm:
+    swarmModeRefreshSeconds: 30
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.swarm]
+  swarmModeRefreshSeconds = 30
+  # ...
+```
+
+```bash tab="CLI"
+--providers.swarm.swarmModeRefreshSeconds=30
 # ...
 ```
 
@@ -369,19 +463,19 @@ Defines the client timeout (in seconds) for HTTP connections. If its value is `0
 
 ```yaml tab="File (YAML)"
 providers:
-  docker:
+  swarm:
     httpClientTimeout: 300
     # ...
 ```
 
 ```toml tab="File (TOML)"
-[providers.docker]
+[providers.swarm]
   httpClientTimeout = 300
   # ...
 ```
 
 ```bash tab="CLI"
---providers.docker.httpClientTimeout=300
+--providers.swarm.httpClientTimeout=300
 # ...
 ```
 
@@ -393,19 +487,19 @@ Watch Docker events.
 
 ```yaml tab="File (YAML)"
 providers:
-  docker:
+  swarm:
     watch: false
     # ...
 ```
 
 ```toml tab="File (TOML)"
-[providers.docker]
+[providers.swarm]
   watch = false
   # ...
 ```
 
 ```bash tab="CLI"
---providers.docker.watch=false
+--providers.swarm.watch=false
 # ...
 ```
 
@@ -456,19 +550,19 @@ For additional information, refer to [Restrict the Scope of Service Discovery](.
 
 ```yaml tab="File (YAML)"
 providers:
-  docker:
+  swarm:
     constraints: "Label(`a.label.name`,`foo`)"
     # ...
 ```
 
 ```toml tab="File (TOML)"
-[providers.docker]
+[providers.swarm]
   constraints = "Label(`a.label.name`,`foo`)"
   # ...
 ```
 
 ```bash tab="CLI"
---providers.docker.constraints=Label(`a.label.name`,`foo`)
+--providers.swarm.constraints=Label(`a.label.name`,`foo`)
 # ...
 ```
 
@@ -487,18 +581,18 @@ it defaults to the system bundle.
 
 ```yaml tab="File (YAML)"
 providers:
-  docker:
+  swarm:
     tls:
       ca: path/to/ca.crt
 ```
 
 ```toml tab="File (TOML)"
-[providers.docker.tls]
+[providers.swarm.tls]
   ca = "path/to/ca.crt"
 ```
 
 ```bash tab="CLI"
---providers.docker.tls.ca=path/to/ca.crt
+--providers.swarm.tls.ca=path/to/ca.crt
 ```
 
 #### `cert`
@@ -508,21 +602,21 @@ When using this option, setting the `key` option is required.
 
 ```yaml tab="File (YAML)"
 providers:
-  docker:
+  swarm:
     tls:
       cert: path/to/foo.cert
       key: path/to/foo.key
 ```
 
 ```toml tab="File (TOML)"
-[providers.docker.tls]
+[providers.swarm.tls]
   cert = "path/to/foo.cert"
   key = "path/to/foo.key"
 ```
 
 ```bash tab="CLI"
---providers.docker.tls.cert=path/to/foo.cert
---providers.docker.tls.key=path/to/foo.key
+--providers.swarm.tls.cert=path/to/foo.cert
+--providers.swarm.tls.key=path/to/foo.key
 ```
 
 #### `key`
@@ -534,21 +628,21 @@ When using this option, setting the `cert` option is required.
 
 ```yaml tab="File (YAML)"
 providers:
-  docker:
+  swarm:
     tls:
       cert: path/to/foo.cert
       key: path/to/foo.key
 ```
 
 ```toml tab="File (TOML)"
-[providers.docker.tls]
+[providers.swarm.tls]
   cert = "path/to/foo.cert"
   key = "path/to/foo.key"
 ```
 
 ```bash tab="CLI"
---providers.docker.tls.cert=path/to/foo.cert
---providers.docker.tls.key=path/to/foo.key
+--providers.swarm.tls.cert=path/to/foo.cert
+--providers.swarm.tls.key=path/to/foo.key
 ```
 
 #### `insecureSkipVerify`
@@ -559,18 +653,18 @@ If `insecureSkipVerify` is `true`, the TLS connection to Docker accepts any cert
 
 ```yaml tab="File (YAML)"
 providers:
-  docker:
+  swarm:
     tls:
       insecureSkipVerify: true
 ```
 
 ```toml tab="File (TOML)"
-[providers.docker.tls]
+[providers.swarm.tls]
   insecureSkipVerify = true
 ```
 
 ```bash tab="CLI"
---providers.docker.tls.insecureSkipVerify=true
+--providers.swarm.tls.insecureSkipVerify=true
 ```
 
 ### `allowEmptyServices`
@@ -587,17 +681,17 @@ in the above cases.
 
 ```yaml tab="File (YAML)"
 providers:
-  docker:
+  swarm:
     allowEmptyServices: true
 ```
 
 ```toml tab="File (TOML)"
-[providers.docker]
+[providers.swarm]
   allowEmptyServices = true
 ```
 
 ```bash tab="CLI"
---providers.docker.allowEmptyServices=true
+--providers.swarm.allowEmptyServices=true
 ```
 
 {!traefik-for-business-applications.md!}
