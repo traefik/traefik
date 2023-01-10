@@ -30,7 +30,7 @@ To assess if your system is healthy, the circuit breaker constantly monitors the
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Latency Check
 labels:
   - "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
