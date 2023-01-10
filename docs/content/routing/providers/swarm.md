@@ -3,12 +3,12 @@ title: "Traefik Docker Swarm Routing Documentation"
 description: "This guide will teach you how to attach labels to your containers, to route traffic and load balance with Traefik and Docker."
 ---
 
-# Traefik & Docker
+# Traefik & Docker Swarm
 
 A Story of Labels & Containers
 {: .subtitle }
 
-![Docker](../../assets/img/providers/docker.png)
+![Swarm](../../assets/img/providers/docker.png)
 
 Attach labels to your containers and let Traefik do the rest!
 
@@ -224,7 +224,7 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
     Registers a port.
     Useful when the container exposes multiples ports.
 
-    Mandatory for Docker Swarm (see the section ["Port Detection with Docker Swarm"](../../providers/docker.md#port-detection_1)).
+    Mandatory for Docker Swarm (see the section ["Port Detection with Docker Swarm"](../../providers/docker.md#port-detection)).
     {: #port }
 
     ```yaml
