@@ -16,7 +16,7 @@ The ReplaceRegex replaces the path of a URL using regex matching and replacement
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Replace path with regex
 labels:
   - "traefik.http.middlewares.test-replacepathregex.replacepathregex.regex=^/foo/(.*)"
