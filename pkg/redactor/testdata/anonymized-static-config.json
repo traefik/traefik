@@ -89,22 +89,21 @@
   "providers": {
     "providersThrottleDuration": "1m51s",
     "docker": {
+      "exposedByDefault": true,
       "constraints": "Label(\"foo\", \"bar\")",
-      "watch": true,
+      "allowEmptyServices": true,
+      "network": "MyNetwork",
+      "useBindPortIP": true,
       "endpoint": "xxxx",
-      "defaultRule": "xxxx",
       "tls": {
         "ca": "xxxx",
         "cert": "xxxx",
         "key": "xxxx",
         "insecureSkipVerify": true
       },
-      "exposedByDefault": true,
-      "useBindPortIP": true,
-      "swarmMode": true,
-      "network": "MyNetwork",
-      "swarmModeRefreshSeconds": "42ns",
-      "httpClientTimeout": "42ns"
+      "httpClientTimeout": "42ns",
+      "watch": true,
+      "defaultRule": "xxxx"
     },
     "file": {
       "directory": "file Directory",
