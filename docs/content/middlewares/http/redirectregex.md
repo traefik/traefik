@@ -43,21 +43,6 @@ spec:
 - "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$${1}"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-redirectregex.redirectregex.regex": "^http://localhost/(.*)",
-  "traefik.http.middlewares.test-redirectregex.redirectregex.replacement": "http://mydomain/${1}"
-}
-```
-
-```yaml tab="Rancher"
-# Redirect with domain replacement
-# Note: all dollar signs need to be doubled for escaping.
-labels:
-  - "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
-  - "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$${1}"
-```
-
 ```yaml tab="File (YAML)"
 # Redirect with domain replacement
 http:

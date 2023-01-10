@@ -36,18 +36,6 @@ spec:
 - "traefik.http.middlewares.test-compress.compress=true"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-compress.compress": "true"
-}
-```
-
-```yaml tab="Rancher"
-# Enable compression
-labels:
-  - "traefik.http.middlewares.test-compress.compress=true"
-```
-
 ```yaml tab="File (YAML)"
 # Enable compression
 http:
@@ -114,17 +102,6 @@ spec:
 - "traefik.http.middlewares.test-compress.compress.excludedcontenttypes=text/event-stream"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-compress.compress.excludedcontenttypes": "text/event-stream"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-compress.compress.excludedcontenttypes=text/event-stream"
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -165,17 +142,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-compress.compress.minresponsebodybytes=1200"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-compress.compress.minresponsebodybytes": 1200
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-compress.compress.minresponsebodybytes=1200"
 ```
 
 ```yaml tab="File (YAML)"

@@ -41,6 +41,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/server"
 	"github.com/traefik/traefik/v2/pkg/server/middleware"
 	"github.com/traefik/traefik/v2/pkg/server/service"
+	"github.com/traefik/traefik/v2/pkg/tcp"
 	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
 	"github.com/traefik/traefik/v2/pkg/tracing"
 	"github.com/traefik/traefik/v2/pkg/tracing/jaeger"
@@ -269,6 +270,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	}
 
 	roundTripperManager := service.NewRoundTripperManager(spiffeX509Source)
+	dialerManager := tcp.NewDialerManager(spiffeX509Source)
 	acmeHTTPHandler := getHTTPChallengeHandler(acmeProviders, httpChallengeProvider)
 	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, roundTripperManager, acmeHTTPHandler)
 
@@ -278,7 +280,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	tracer := setupTracing(staticConfiguration.Tracing)
 
 	chainBuilder := middleware.NewChainBuilder(metricsRegistry, accessLog, tracer)
-	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder, metricsRegistry)
+	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder, metricsRegistry, dialerManager)
 
 	// Watcher
 
@@ -309,6 +311,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	// Server Transports
 	watcher.AddListener(func(conf dynamic.Configuration) {
 		roundTripperManager.Update(conf.HTTP.ServersTransports)
+		dialerManager.Update(conf.TCP.ServersTransports)
 	})
 
 	// Switch router
@@ -518,16 +521,6 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 			Str("address", metricsConfig.StatsD.Address).
 			Str("pushInterval", metricsConfig.StatsD.PushInterval.String()).
 			Msg("Configured StatsD metrics")
-	}
-
-	if metricsConfig.InfluxDB != nil {
-		logger := log.With().Str(logs.MetricsProviderName, "influxdb").Logger()
-
-		registries = append(registries, metrics.RegisterInfluxDB(logger.WithContext(context.Background()), metricsConfig.InfluxDB))
-		logger.Debug().
-			Str("address", metricsConfig.InfluxDB.Address).
-			Str("pushInterval", metricsConfig.InfluxDB.PushInterval.String()).
-			Msg("Configured InfluxDB metrics")
 	}
 
 	if metricsConfig.InfluxDB2 != nil {

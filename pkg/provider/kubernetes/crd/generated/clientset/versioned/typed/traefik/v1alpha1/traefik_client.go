@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2020 Containous SAS; 2020-2022 Traefik Labs
+Copyright (c) 2016-2020 Containous SAS; 2020-2023 Traefik Labs
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -40,6 +40,7 @@ type TraefikV1alpha1Interface interface {
 	MiddlewaresGetter
 	MiddlewareTCPsGetter
 	ServersTransportsGetter
+	ServersTransportTCPsGetter
 	TLSOptionsGetter
 	TLSStoresGetter
 	TraefikServicesGetter
@@ -72,6 +73,10 @@ func (c *TraefikV1alpha1Client) MiddlewareTCPs(namespace string) MiddlewareTCPIn
 
 func (c *TraefikV1alpha1Client) ServersTransports(namespace string) ServersTransportInterface {
 	return newServersTransports(c, namespace)
+}
+
+func (c *TraefikV1alpha1Client) ServersTransportTCPs(namespace string) ServersTransportTCPInterface {
+	return newServersTransportTCPs(c, namespace)
 }
 
 func (c *TraefikV1alpha1Client) TLSOptions(namespace string) TLSOptionInterface {
