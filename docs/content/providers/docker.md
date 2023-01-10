@@ -152,7 +152,7 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
 
 _Required, Default="unix:///var/run/docker.sock"_
 
-See section [Docker API Access](#docker-api-access) for more information.
+See the [Docker API Access](#docker-api-access) section for more information.
 
 ??? example "Using the docker.sock"
 
