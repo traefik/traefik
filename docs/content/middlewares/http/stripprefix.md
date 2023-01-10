@@ -16,7 +16,7 @@ Remove the specified prefixes from the URL path.
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Strip prefix /foobar and /fiibar
 labels:
   - "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
