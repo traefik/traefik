@@ -80,3 +80,10 @@ In v3, the Marathon provider has been removed.
 ## InfluxDB v1
 
 In v3, the InfluxDB v1 metrics provider has been removed because InfluxDB v1.x maintenance [ended in 2021](https://www.influxdata.com/blog/influxdb-oss-and-enterprise-roadmap-update-from-influxdays-emea/).
+
+## Docker & Docker Swarm
+
+In v3, the provider Docker has been split into 2 providers:
+
+- Docker provider (without Swarm support)
+- Swarm provider  (Swarm support only)

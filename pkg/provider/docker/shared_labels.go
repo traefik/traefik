@@ -23,7 +23,7 @@ type specificConfiguration struct {
 	LBSwarm bool
 }
 
-func (p *Provider) getConfiguration(container dockerData) (configuration, error) {
+func (p *Shared) extractLabels(container dockerData) (configuration, error) {
 	conf := configuration{
 		Enable: p.ExposedByDefault,
 		Docker: specificConfiguration{
