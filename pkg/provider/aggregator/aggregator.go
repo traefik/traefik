@@ -80,6 +80,10 @@ func NewProviderAggregator(conf static.Providers) ProviderAggregator {
 		p.quietAddProvider(conf.Docker)
 	}
 
+	if conf.Swarm != nil {
+		p.quietAddProvider(conf.Swarm)
+	}
+
 	if conf.Rest != nil {
 		p.quietAddProvider(conf.Rest)
 	}
