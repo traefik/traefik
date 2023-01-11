@@ -83,51 +83,6 @@ Attach labels to your containers and let Traefik do the rest!
           - traefik.http.services.admin-service.loadbalancer.server.port=9000
     ```
 
-??? example "Configuring Docker Swarm & Deploying / Exposing Services"
-
-    Enabling the Docker Swarm provider
-
-    ```yaml tab="File (YAML)"
-    providers:
-      swarm:
-        # swarm classic (1.12-)
-        # endpoint: "tcp://127.0.0.1:2375"
-        # docker swarm mode (1.12+)
-        endpoint: "tcp://127.0.0.1:2377"
-    ```
-
-    ```toml tab="File (TOML)"
-    [providers.swarm]
-      # swarm classic (1.12-)
-      # endpoint = "tcp://127.0.0.1:2375"
-      # docker swarm mode (1.12+)
-      endpoint = "tcp://127.0.0.1:2377"
-    ```
-
-    ```bash tab="CLI"
-    # swarm classic (1.12-)
-    # --providers.swarm.endpoint=tcp://127.0.0.1:2375
-    # docker swarm mode (1.12+)
-    --providers.swarm.endpoint=tcp://127.0.0.1:2377
-    ```
-
-    Attach labels to services (not to containers) while in Swarm mode (in your docker compose file)
-
-    ```yaml
-    version: "3"
-    services:
-      my-container:
-        deploy:
-          labels:
-            - traefik.http.routers.my-container.rule=Host(`example.com`)
-            - traefik.http.services.my-container-service.loadbalancer.server.port=8080
-    ```
-
-    !!! important "Labels in Docker Swarm Mode"
-        While in Swarm Mode, Traefik uses labels found on services, not on individual containers.
-        Therefore, if you use a compose file with Swarm Mode, labels should be defined in the `deploy` part of your service.
-        This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/compose-file-v3/#labels-1)).
-
 ## Routing Configuration
 
 !!! info "Labels"
