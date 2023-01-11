@@ -12,7 +12,7 @@ A Story of Labels & Containers
 
 Attach labels to your containers and let Traefik do the rest!
 
-Traefik works with [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
+This provider works with [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
 
 !!! tip "The Quick Start Uses Docker"
 
