@@ -9,25 +9,9 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/swarm"
-	dockerclient "github.com/docker/docker/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-type fakeTasksClient struct {
-	dockerclient.APIClient
-	tasks     []swarm.Task
-	container dockertypes.ContainerJSON
-	err       error
-}
-
-func (c *fakeTasksClient) TaskList(ctx context.Context, options dockertypes.TaskListOptions) ([]swarm.Task, error) {
-	return c.tasks, c.err
-}
-
-func (c *fakeTasksClient) ContainerInspect(ctx context.Context, container string) (dockertypes.ContainerJSON, error) {
-	return c.container, c.err
-}
 
 func TestListTasks(t *testing.T) {
 	testCases := []struct {
@@ -83,7 +67,7 @@ func TestListTasks(t *testing.T) {
 		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
 			t.Parallel()
 
-			p := Provider{}
+			p := SwarmProvider{}
 			dockerData, err := p.parseService(context.Background(), test.service, test.networks)
 			require.NoError(t, err)
 
@@ -103,32 +87,7 @@ func TestListTasks(t *testing.T) {
 	}
 }
 
-type fakeServicesClient struct {
-	dockerclient.APIClient
-	dockerVersion string
-	networks      []dockertypes.NetworkResource
-	services      []swarm.Service
-	tasks         []swarm.Task
-	err           error
-}
-
-func (c *fakeServicesClient) ServiceList(ctx context.Context, options dockertypes.ServiceListOptions) ([]swarm.Service, error) {
-	return c.services, c.err
-}
-
-func (c *fakeServicesClient) ServerVersion(ctx context.Context) (dockertypes.Version, error) {
-	return dockertypes.Version{APIVersion: c.dockerVersion}, c.err
-}
-
-func (c *fakeServicesClient) NetworkList(ctx context.Context, options dockertypes.NetworkListOptions) ([]dockertypes.NetworkResource, error) {
-	return c.networks, c.err
-}
-
-func (c *fakeServicesClient) TaskList(ctx context.Context, options dockertypes.TaskListOptions) ([]swarm.Task, error) {
-	return c.tasks, c.err
-}
-
-func TestListServices(t *testing.T) {
+func TestSwarmProvider_listServices(t *testing.T) {
 	testCases := []struct {
 		desc             string
 		services         []swarm.Service
@@ -277,7 +236,7 @@ func TestListServices(t *testing.T) {
 
 			dockerClient := &fakeServicesClient{services: test.services, tasks: test.tasks, dockerVersion: test.dockerVersion, networks: test.networks}
 
-			p := Provider{}
+			p := SwarmProvider{}
 
 			serviceDockerData, err := p.listServices(context.Background(), dockerClient)
 			assert.NoError(t, err)
@@ -293,7 +252,7 @@ func TestListServices(t *testing.T) {
 	}
 }
 
-func TestSwarmTaskParsing(t *testing.T) {
+func TestSwarmProvider_parseService_task(t *testing.T) {
 	testCases := []struct {
 		service     swarm.Service
 		tasks       []swarm.Task
@@ -396,7 +355,7 @@ func TestSwarmTaskParsing(t *testing.T) {
 		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
 			t.Parallel()
 
-			p := Provider{}
+			p := SwarmProvider{}
 
 			dData, err := p.parseService(context.Background(), test.service, test.networks)
 			require.NoError(t, err)

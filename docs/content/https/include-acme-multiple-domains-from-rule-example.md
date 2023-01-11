@@ -1,5 +1,5 @@
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 ## Dynamic configuration
 labels:
   - traefik.http.routers.blog.rule=(Host(`example.com`) && Path(`/blog`)) || Host(`blog.example.org`)
