@@ -12,7 +12,7 @@ A Story of Labels & Containers
 
 Attach labels to your containers and let Traefik do the rest!
 
-Traefik works with [Docker (standalone) Engine](https://docs.docker.com/engine/).
+This provider works with [Docker (standalone) Engine](https://docs.docker.com/engine/).
 
 !!! tip "The Quick Start Uses Docker"
 
