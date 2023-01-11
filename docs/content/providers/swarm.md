@@ -198,7 +198,7 @@ services:
 
 _Required, Default="unix:///var/run/docker.sock"_
 
-See section [Docker Swarm API Access](#docker-api-access) for more information.
+See the [Docker Swarm API Access](#docker-api-access) section for more information.
 
 ??? example "Using the docker.sock"
 
