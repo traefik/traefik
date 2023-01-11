@@ -315,6 +315,11 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 
 				var mach *machine
 				if len(task.Attachments) != 0 {
+					if len(container.NetworkInterfaces) == 0 {
+						logger.Errorf("Skip container %s: no network interfaces", aws.StringValue(container.Name))
+						continue
+					}
+
 					var ports []portMapping
 					for _, mapping := range containerDefinition.PortMappings {
 						if mapping != nil {
@@ -378,7 +383,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 
 				extraConf, err := p.getConfiguration(instance)
 				if err != nil {
-					log.FromContext(ctx).Errorf("Skip container %s: %w", getServiceName(instance), err)
+					logger.Errorf("Skip container %s: %w", getServiceName(instance), err)
 					continue
 				}
 				instance.ExtraConf = extraConf
