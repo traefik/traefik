@@ -16,7 +16,7 @@ The RedirectRegex redirects a request using regex matching and replacement.
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Redirect with domain replacement
 # Note: all dollar signs need to be doubled for escaping.
 labels:

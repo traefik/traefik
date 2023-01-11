@@ -17,7 +17,7 @@ The GrpcWeb middleware converts gRPC Web requests to HTTP/2 gRPC requests before
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-grpcweb.grpcweb.allowOrigins=*"
 ```

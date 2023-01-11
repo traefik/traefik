@@ -16,7 +16,7 @@ Otherwise, the response from the authentication server is returned.
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Forward authentication to example.com
 labels:
   - "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
@@ -72,7 +72,7 @@ The following request properties are provided to the forward-auth target endpoin
 
 The `address` option defines the authentication server address.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
 ```
@@ -109,7 +109,7 @@ http:
 
 Set the `trustForwardHeader` option to `true` to trust all `X-Forwarded-*` headers.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-auth.forwardauth.trustForwardHeader=true"
 ```
@@ -150,7 +150,7 @@ http:
 The `authResponseHeaders` option is the list of headers to copy from the authentication server response and set on
 forwarded request, replacing any existing conflicting headers.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-auth.forwardauth.authResponseHeaders=X-Auth-User, X-Secret"
 ```
@@ -197,7 +197,7 @@ set on forwarded request, after stripping all headers that match the regex.
 It allows partial matching of the regular expression against the header key.
 The start of string (`^`) and end of string (`$`) anchors should be used to ensure a full match against the header key.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-auth.forwardauth.authResponseHeadersRegex=^X-"
 ```
@@ -245,7 +245,7 @@ The `authRequestHeaders` option is the list of the headers to copy from the requ
 It allows filtering headers that should not be passed to the authentication server.
 If not set or empty then all request headers are passed.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-auth.forwardauth.authRequestHeaders=Accept,X-CustomHeader"
 ```
@@ -298,7 +298,7 @@ _Optional_
 `ca` is the path to the certificate authority used for the secured connection to the authentication server,
 it defaults to the system bundle.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-auth.forwardauth.tls.ca=path/to/local.crt"
 ```
@@ -355,7 +355,7 @@ _Optional_
 `cert` is the path to the public certificate used for the secure connection to the authentication server.
 When using this option, setting the `key` option is required.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
   - "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
@@ -420,7 +420,7 @@ _Optional_
 `key` is the path to the private key used for the secure connection to the authentication server.
 When using this option, setting the `cert` option is required.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
   - "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
@@ -484,7 +484,7 @@ _Optional, Default=false_
 
 If `insecureSkipVerify` is `true`, the TLS connection to the authentication server accepts any certificate presented by the server regardless of the hostnames it covers.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-auth.forwardauth.tls.insecureSkipVerify=true"
 ```
