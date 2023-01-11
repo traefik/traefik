@@ -100,9 +100,7 @@ func TestPrometheus(t *testing.T) {
 	}
 
 	prometheusRegistry.ConfigReloadsCounter().Add(1)
-	prometheusRegistry.ConfigReloadsFailureCounter().Add(1)
 	prometheusRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
-	prometheusRegistry.LastConfigReloadFailureGauge().Set(float64(time.Now().Unix()))
 
 	prometheusRegistry.
 		TLSCertsNotAfterTimestampGauge().
@@ -202,16 +200,8 @@ func TestPrometheus(t *testing.T) {
 			assert: buildCounterAssert(t, configReloadsTotalName, 1),
 		},
 		{
-			name:   configReloadsFailuresTotalName,
-			assert: buildCounterAssert(t, configReloadsFailuresTotalName, 1),
-		},
-		{
 			name:   configLastReloadSuccessName,
 			assert: buildTimestampAssert(t, configLastReloadSuccessName),
-		},
-		{
-			name:   configLastReloadFailureName,
-			assert: buildTimestampAssert(t, configLastReloadFailureName),
 		},
 		{
 			name: tlsCertsNotAfterTimestamp,
