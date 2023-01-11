@@ -87,7 +87,7 @@ A certificate resolver requests certificates for a set of domain names inferred 
 
 !!! example "Domain from Router's Rule Example"
 
-    ```yaml tab="Docker"
+    ```yaml tab="Docker & Swarm"
     ## Dynamic configuration
     labels:
       - traefik.http.routers.blog.rule=Host(`monitoring.yak-bebop.ts.net`) && Path(`/metrics`)
@@ -141,7 +141,7 @@ A certificate resolver requests certificates for a set of domain names inferred 
 
 !!! example "Domain from Router's tls.domain Example"
 
-    ```yaml tab="Docker"
+    ```yaml tab="Docker & Swarm"
     ## Dynamic configuration
     labels:
       - traefik.http.routers.blog.rule=Path(`/metrics`)

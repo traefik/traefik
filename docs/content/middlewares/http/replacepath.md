@@ -16,7 +16,7 @@ Replace the path of the request URL.
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Replace the path with /foo
 labels:
   - "traefik.http.middlewares.test-replacepath.replacepath.path=/foo"
