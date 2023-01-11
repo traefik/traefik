@@ -85,33 +85,30 @@ Attach labels to your containers and let Traefik do the rest!
 
 ??? example "Configuring Docker Swarm & Deploying / Exposing Services"
 
-    Enabling the docker provider (Swarm Mode)
+    Enabling the Docker Swarm provider
 
     ```yaml tab="File (YAML)"
     providers:
-      docker:
+      swarm:
         # swarm classic (1.12-)
         # endpoint: "tcp://127.0.0.1:2375"
         # docker swarm mode (1.12+)
         endpoint: "tcp://127.0.0.1:2377"
-        swarmMode: true
     ```
 
     ```toml tab="File (TOML)"
-    [providers.docker]
+    [providers.swarm]
       # swarm classic (1.12-)
       # endpoint = "tcp://127.0.0.1:2375"
       # docker swarm mode (1.12+)
       endpoint = "tcp://127.0.0.1:2377"
-      swarmMode = true
     ```
 
     ```bash tab="CLI"
     # swarm classic (1.12-)
-    # --providers.docker.endpoint=tcp://127.0.0.1:2375
+    # --providers.swarm.endpoint=tcp://127.0.0.1:2375
     # docker swarm mode (1.12+)
-    --providers.docker.endpoint=tcp://127.0.0.1:2377
-    --providers.docker.swarmMode=true
+    --providers.swarm.endpoint=tcp://127.0.0.1:2377
     ```
 
     Attach labels to services (not to containers) while in Swarm mode (in your docker compose file)
