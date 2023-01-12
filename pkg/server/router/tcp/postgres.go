@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
+	"io"
+	"net"
 	"sync"
 
 	"github.com/rs/zerolog/log"
@@ -25,7 +27,10 @@ func isPostgres(br *bufio.Reader) (bool, error) {
 	for i := 1; i < len(PostgresStartTLSMsg)+1; i++ {
 		peeked, err := br.Peek(i)
 		if err != nil {
-			log.Error().Err(err).Msg("Error while Peeking first bytes")
+			var opErr *net.OpError
+			if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || opErr.Timeout()) {
+				log.Error().Err(err).Msg("Error while Peeking first byte")
+			}
 			return false, err
 		}
 
