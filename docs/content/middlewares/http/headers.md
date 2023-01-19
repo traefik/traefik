@@ -16,14 +16,82 @@ A set of forwarded headers are automatically added by default. See the [FAQ](../
 
 ## Configuration Examples
 
-### Adding Headers to the Request and the Response
+### Modify Headers to the Request and the Response
 
 The following example adds the `X-Script-Name` header to the proxied request and the `X-Custom-Response-Header` header to the response
 
 ```yaml tab="Docker"
 labels:
-  - "traefik.http.middlewares.testHeader.headers.customrequestheaders.X-Script-Name=test"
-  - "traefik.http.middlewares.testHeader.headers.customresponseheaders.X-Custom-Response-Header=value"
+  - "traefik.http.middlewares.testHeader.headers.requestheaders.append.X-Script-Name=test"
+  - "traefik.http.middlewares.testHeader.headers.responseheaders.append.X-Custom-Response-Header=value"
+```
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-header
+spec:
+  headers:
+    requestHeaders:
+      append:
+        X-Script-Name: "test"
+    responseHeaders:
+      append:
+        X-Custom-Response-Header: "value"
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.testheader.headers.requestheaders.append.X-Script-Name=test"
+- "traefik.http.middlewares.testheader.headers.responseheaders.append.X-Custom-Response-Header=value"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.testheader.headers.requestheaders.append.X-Script-Name": "test",
+  "traefik.http.middlewares.testheader.headers.responseheaders.append.X-Custom-Response-Header": "value"
+}
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.testheader.headers.requestheaders.append.X-Script-Name=test"
+  - "traefik.http.middlewares.testheader.headers.responseheaders.append.X-Custom-Response-Header=value"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    testHeader:
+      headers:
+        requestHeaders:
+          append:
+            X-Script-Name: "test"
+        responseHeaders:
+          append:
+            X-Custom-Response-Header: "value"
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.testHeader.headers]
+    [http.middlewares.testHeader.headers.requestHeaders]
+      [http.middlewares.testHeader.headers.requestHeaders.append]
+          X-Script-Name = "test"
+    [http.middlewares.testHeader.headers.responseHeaders]
+      [http.middlewares.testHeader.headers.responseHeaders.append]
+          X-Custom-Response-Header = "value"
+```
+
+### Adding and Removing Headers
+
+In the following example, requests are proxied with an extra `X-Script-Name` header while their `X-Custom-Request-Header` header gets stripped,
+and responses are stripped of their `X-Custom-Response-Header` header.
+
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.testheader.headers.requestheaders.append.X-Script-Name=test"
+  - "traefik.http.middlewares.testheader.headers.requestheaders.delete.X-Custom-Request-Header="
+  - "traefik.http.middlewares.testheader.headers.responseheaders.delete.X-Custom-Response-Header="
 ```
 
 ```yaml tab="Kubernetes"
@@ -33,28 +101,35 @@ metadata:
   name: test-header
 spec:
   headers:
-    customRequestHeaders:
-      X-Script-Name: "test"
-    customResponseHeaders:
-      X-Custom-Response-Header: "value"
+    requestHeaders:
+      append:
+        X-Script-Name: "test" # Adds
+      delete:
+        - X-Custom-Request-Header # Removes
+    responseHeaders:
+      delete:
+        - X-Custom-Response-Header # Removes
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-- "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header=value"
+- "traefik.http.middlewares.testheader.headers.requestheaders.append.X-Script-Name=test"
+- "traefik.http.middlewares.testheader.headers.requestheaders.delete.X-Custom-Request-Header="
+- "traefik.http.middlewares.testheader.headers.responseheaders.delete.X-Custom-Response-Header="
 ```
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name": "test",
-  "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header": "value"
+  "traefik.http.middlewares.testheader.headers.requestheaders.append.X-Script-Name": "test",
+  "traefik.http.middlewares.testheader.headers.requestheaders.append.X-Custom-Request-Header": "",
+  "traefik.http.middlewares.testheader.headers.responseheaders.delete.X-Custom-Response-Header": "",
 }
 ```
 
 ```yaml tab="Rancher"
 labels:
-  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-  - "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header=value"
+  - "traefik.http.middlewares.testheader.headers.requestheaders.append.X-Script-Name=test"
+  - "traefik.http.middlewares.testheader.headers.requestheaders.delete.X-Custom-Request-Header="
+  - "traefik.http.middlewares.testheader.headers.responseheaders.delete.X-Custom-Response-Header="
 ```
 
 ```yaml tab="File (YAML)"
@@ -62,22 +137,33 @@ http:
   middlewares:
     testHeader:
       headers:
-        customRequestHeaders:
-          X-Script-Name: "test"
-        customResponseHeaders:
-          X-Custom-Response-Header: "value"
+        requestHeaders:
+          append:
+            X-Script-Name: "test" # Adds
+          delete:
+            - X-Custom-Request-Header # Removes
+        responseHeaders:
+          delete:
+            - X-Custom-Response-Header # Removes
 ```
 
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.testHeader.headers]
-    [http.middlewares.testHeader.headers.customRequestHeaders]
-        X-Script-Name = "test"
-    [http.middlewares.testHeader.headers.customResponseHeaders]
-        X-Custom-Response-Header = "value"
+    [http.middlewares.testHeader.headers.requestHeaders]
+      [http.middlewares.testHeader.headers.requestHeaders.append]
+          X-Script-Name = "test" # Adds
+      delete = [
+        "X-Custom-Request-Header" # Removes
+      ]
+          
+    [http.middlewares.testHeader.headers.responseHeaders]
+      delete = [
+        "X-Custom-Response-Header" # Removes
+      ]
 ```
 
-### Adding and Removing Headers
+### [Deprecated] Adding and Removing Headers
 
 In the following example, requests are proxied with an extra `X-Script-Name` header while their `X-Custom-Request-Header` header gets stripped,
 and responses are stripped of their `X-Custom-Response-Header` header.
@@ -144,6 +230,67 @@ http:
         X-Custom-Request-Header = "" # Removes
     [http.middlewares.testHeader.headers.customResponseHeaders]
         X-Custom-Response-Header = "" # Removes
+```
+
+### [Deprecated] Adding Headers to the Request and the Response
+
+The following example adds the `X-Script-Name` header to the proxied request and the `X-Custom-Response-Header` header to the response
+
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.testHeader.headers.customrequestheaders.X-Script-Name=test"
+  - "traefik.http.middlewares.testHeader.headers.customresponseheaders.X-Custom-Response-Header=value"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: test-header
+spec:
+  headers:
+    customRequestHeaders:
+      X-Script-Name: "test"
+    customResponseHeaders:
+      X-Custom-Response-Header: "value"
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
+- "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header=value"
+```
+
+```json tab="Marathon"
+"labels": {
+  "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name": "test",
+  "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header": "value"
+}
+```
+
+```yaml tab="Rancher"
+labels:
+  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
+  - "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header=value"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    testHeader:
+      headers:
+        customRequestHeaders:
+          X-Script-Name: "test"
+        customResponseHeaders:
+          X-Custom-Response-Header: "value"
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.testHeader.headers]
+    [http.middlewares.testHeader.headers.customRequestHeaders]
+        X-Script-Name = "test"
+    [http.middlewares.testHeader.headers.customResponseHeaders]
+        X-Custom-Response-Header = "value"
 ```
 
 ### Using Security Headers
