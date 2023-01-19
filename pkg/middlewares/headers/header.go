@@ -14,11 +14,13 @@ import (
 // A single headerOptions struct can be provided to configure which features should be enabled,
 // and the ability to override a few of the default values.
 type Header struct {
-	next               http.Handler
-	hasCustomHeaders   bool
-	hasCorsHeaders     bool
-	headers            *dynamic.Headers
-	allowOriginRegexes []*regexp.Regexp
+	next                     http.Handler
+	hasCustomHeaders         bool
+	hasModifyRequestHeaders  bool
+	hasModifyResponseHeaders bool
+	hasCorsHeaders           bool
+	headers                  *dynamic.Headers
+	allowOriginRegexes       []*regexp.Regexp
 }
 
 // NewHeader constructs a new header instance from supplied frontend header struct.
@@ -36,11 +38,13 @@ func NewHeader(next http.Handler, cfg dynamic.Headers) (*Header, error) {
 	}
 
 	return &Header{
-		next:               next,
-		headers:            &cfg,
-		hasCustomHeaders:   hasCustomHeaders,
-		hasCorsHeaders:     hasCorsHeaders,
-		allowOriginRegexes: regexes,
+		next:                     next,
+		headers:                  &cfg,
+		hasCustomHeaders:         hasCustomHeaders,
+		hasModifyRequestHeaders:  cfg.RequestHeaders.IsDefined(),
+		hasModifyResponseHeaders: cfg.ResponseHeaders.IsDefined(),
+		hasCorsHeaders:           hasCorsHeaders,
+		allowOriginRegexes:       regexes,
 	}, nil
 }
 
@@ -50,17 +54,24 @@ func (s *Header) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if s.hasCustomHeaders {
+	if s.hasModifyRequestHeaders {
+		s.modifyRequestHeaders(req)
+	} else if s.hasCustomHeaders {
 		s.modifyCustomRequestHeaders(req)
 	}
 
 	// If there is a next, call it.
 	if s.next != nil {
-		s.next.ServeHTTP(newResponseModifier(rw, req, s.PostRequestModifyResponseHeaders), req)
+		if s.hasModifyResponseHeaders {
+			s.next.ServeHTTP(newResponseModifier(rw, req, s.modifyResponseHeaders), req)
+		} else {
+			s.next.ServeHTTP(newResponseModifier(rw, req, s.PostRequestModifyResponseHeaders), req)
+		}
 	}
 }
 
 // modifyCustomRequestHeaders sets or deletes custom request headers.
+// Deprecated: Please use modifyRequestHeaders instead
 func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
 	// Loop through Custom request headers
 	for header, value := range s.headers.CustomRequestHeaders {
@@ -77,9 +88,39 @@ func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
 	}
 }
 
+// modifyRequestHeaders modify request headers.
+func (s *Header) modifyRequestHeaders(req *http.Request) {
+	rh := s.headers.RequestHeaders
+	if !rh.IsDefined() {
+		return
+	}
+
+	for key, value := range rh.Append {
+		if strings.EqualFold(key, "Host") {
+			req.Host = value
+		} else {
+			req.Header.Add(key, value)
+		}
+
+	}
+
+	for key, value := range rh.Set {
+		if strings.EqualFold(key, "Host") {
+			req.Host = value
+		} else {
+			req.Header.Set(key, value)
+		}
+	}
+
+	for _, key := range rh.Delete {
+		req.Header.Del(key)
+	}
+}
+
 // PostRequestModifyResponseHeaders set or delete response headers.
 // This method is called AFTER the response is generated from the backend
 // and can merge/override headers from the backend response.
+// Deprecated: Please use modifyResponseHeaders instead
 func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 	// Loop through Custom response headers
 	for header, value := range s.headers.CustomResponseHeaders {
@@ -99,6 +140,32 @@ func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 		}
 	}
 
+	return s.postCORSHeaders(res)
+}
+
+// modifyResponseHeaders modify response headers.
+func (s *Header) modifyResponseHeaders(res *http.Response) error {
+	rh := s.headers.ResponseHeaders
+	if !rh.IsDefined() {
+		return nil
+	}
+
+	for key, value := range rh.Append {
+		res.Header.Add(key, value)
+	}
+
+	for key, value := range rh.Set {
+		res.Header.Set(key, value)
+	}
+
+	for _, key := range rh.Delete {
+		res.Header.Del(key)
+	}
+
+	return s.postCORSHeaders(res)
+}
+
+func (s *Header) postCORSHeaders(res *http.Response) error {
 	if s.headers.AccessControlAllowCredentials {
 		res.Header.Set("Access-Control-Allow-Credentials", "true")
 	}

@@ -229,6 +229,11 @@ type ForwardAuth struct {
 // This middleware manages the requests and responses headers.
 // More info: https://doc.traefik.io/traefik/v3.0/middlewares/http/headers/#customrequestheaders
 type Headers struct {
+	// RequestHeader defines header rules to modify the request
+	RequestHeaders ModifyHeader `json:"requestHeaders,omitempty" toml:"requestHeaders,omitempty" yaml:"requestHeaders,omitempty" export:"true"`
+	// ResponseHeader defines header rules to modify the request
+	ResponseHeaders ModifyHeader `json:"responseHeaders,omitempty" toml:"responseHeaders,omitempty" yaml:"responseHeaders,omitempty" export:"true"`
+
 	// CustomRequestHeaders defines the header names and values to apply to the request.
 	CustomRequestHeaders map[string]string `json:"customRequestHeaders,omitempty" toml:"customRequestHeaders,omitempty" yaml:"customRequestHeaders,omitempty" export:"true"`
 	// CustomResponseHeaders defines the header names and values to apply to the response.
@@ -299,6 +304,10 @@ type Headers struct {
 func (h *Headers) HasCustomHeadersDefined() bool {
 	return h != nil && (len(h.CustomResponseHeaders) != 0 ||
 		len(h.CustomRequestHeaders) != 0)
+}
+
+func (h *Headers) HasModifyHeadersDefined() bool {
+	return h != nil && (h.RequestHeaders.IsDefined() || h.ResponseHeaders.IsDefined())
 }
 
 // HasCorsHeadersDefined checks to see if any of the cors header elements have been set.

@@ -62,8 +62,12 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware8.headers.customframeoptionsvalue":                     "foobar",
 		"traefik.http.middlewares.Middleware8.headers.customrequestheaders.name0":                  "foobar",
 		"traefik.http.middlewares.Middleware8.headers.customrequestheaders.name1":                  "foobar",
+		"traefik.http.middlewares.Middleware8.headers.requestHeaders.append.name0":                 "foobar",
+		"traefik.http.middlewares.Middleware8.headers.requestHeaders.append.name1":                 "foobar",
 		"traefik.http.middlewares.Middleware8.headers.customresponseheaders.name0":                 "foobar",
 		"traefik.http.middlewares.Middleware8.headers.customresponseheaders.name1":                 "foobar",
+		"traefik.http.middlewares.Middleware8.headers.responseHeaders.append.name0":                "foobar",
+		"traefik.http.middlewares.Middleware8.headers.responseHeaders.append.name1":                "foobar",
 		"traefik.http.middlewares.Middleware8.headers.forcestsheader":                              "true",
 		"traefik.http.middlewares.Middleware8.headers.framedeny":                                   "true",
 		"traefik.http.middlewares.Middleware8.headers.hostsproxyheaders":                           "foobar, fiibar",
@@ -547,6 +551,22 @@ func TestDecodeConfiguration(t *testing.T) {
 						CustomResponseHeaders: map[string]string{
 							"name0": "foobar",
 							"name1": "foobar",
+						},
+						RequestHeaders: dynamic.ModifyHeader{
+							Append: map[string]string{
+								"name0": "foobar",
+								"name1": "foobar",
+							},
+							Set:    nil,
+							Delete: nil,
+						},
+						ResponseHeaders: dynamic.ModifyHeader{
+							Append: map[string]string{
+								"name0": "foobar",
+								"name1": "foobar",
+							},
+							Set:    nil,
+							Delete: nil,
 						},
 						AccessControlAllowCredentials: true,
 						AccessControlAllowHeaders: []string{
@@ -1045,6 +1065,14 @@ func TestEncodeConfiguration(t *testing.T) {
 							"name0": "foobar",
 							"name1": "foobar",
 						},
+						RequestHeaders: dynamic.ModifyHeader{Append: map[string]string{
+							"name0": "foobar",
+							"name1": "foobar",
+						}},
+						ResponseHeaders: dynamic.ModifyHeader{Append: map[string]string{
+							"name0": "foobar",
+							"name1": "foobar",
+						}},
 						AccessControlAllowCredentials: true,
 						AccessControlAllowHeaders: []string{
 							"X-foobar",
@@ -1231,8 +1259,12 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomFrameOptionsValue":                     "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomRequestHeaders.name0":                  "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomRequestHeaders.name1":                  "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.RequestHeaders.Append.name0":                 "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.RequestHeaders.Append.name1":                 "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomResponseHeaders.name0":                 "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.CustomResponseHeaders.name1":                 "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.ResponseHeaders.Append.name0":                "foobar",
+		"traefik.HTTP.Middlewares.Middleware8.Headers.ResponseHeaders.Append.name1":                "foobar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.ForceSTSHeader":                              "true",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.FrameDeny":                                   "true",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.HostsProxyHeaders":                           "foobar, fiibar",

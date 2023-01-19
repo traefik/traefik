@@ -30,6 +30,7 @@ func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name strin
 
 	hasSecureHeaders := cfg.HasSecureHeadersDefined()
 	hasCustomHeaders := cfg.HasCustomHeadersDefined()
+	hasModifyHeaders := cfg.HasModifyHeadersDefined()
 	hasCorsHeaders := cfg.HasCorsHeadersDefined()
 
 	if !hasSecureHeaders && !hasCustomHeaders && !hasCorsHeaders {
@@ -45,8 +46,8 @@ func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name strin
 		nextHandler = handler
 	}
 
-	if hasCustomHeaders || hasCorsHeaders {
-		logger.Debug().Msgf("Setting up customHeaders/Cors from %v", cfg)
+	if hasModifyHeaders || hasCustomHeaders || hasCorsHeaders {
+		logger.Debug().Msgf("Setting up Headers/Cors from %v", cfg)
 		h, err := NewHeader(nextHandler, cfg)
 		if err != nil {
 			return nil, err

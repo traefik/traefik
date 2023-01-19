@@ -69,6 +69,71 @@ func TestNewHeader_customRequestHeader(t *testing.T) {
 	}
 }
 
+func TestNewHeader_requestHeader(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		cfg      dynamic.Headers
+		expected http.Header
+	}{
+		{
+			desc: "adds a header",
+			cfg: dynamic.Headers{
+				RequestHeaders: dynamic.ModifyHeader{
+					Append: map[string]string{
+						"X-Custom-Request-Header": "test_request",
+					},
+				},
+			},
+			expected: http.Header{"Foo": []string{"bar"}, "X-Custom-Request-Header": []string{"test_request"}},
+		},
+		{
+			desc: "delete a header",
+			cfg: dynamic.Headers{
+				RequestHeaders: dynamic.ModifyHeader{
+					Delete: []string{
+						"X-Custom-Request-Header",
+						"Foo",
+					},
+				},
+			},
+			expected: http.Header{},
+		},
+		{
+			desc: "override a header",
+			cfg: dynamic.Headers{
+				RequestHeaders: dynamic.ModifyHeader{
+					Set: map[string]string{
+						"Foo": "test",
+					},
+				},
+			},
+			expected: http.Header{"Foo": []string{"test"}},
+		},
+	}
+
+	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			mid, err := NewHeader(emptyHandler, test.cfg)
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "/foo", nil)
+			req.Header.Set("Foo", "bar")
+
+			rw := httptest.NewRecorder()
+
+			mid.ServeHTTP(rw, req)
+
+			assert.Equal(t, http.StatusOK, rw.Code)
+			assert.Equal(t, test.expected, req.Header)
+		})
+	}
+}
+
 func TestNewHeader_customRequestHeader_Host(t *testing.T) {
 	testCases := []struct {
 		desc            string
@@ -537,6 +602,78 @@ func TestNewHeader_customResponseHeaders(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			mid, err := NewHeader(emptyHandler, dynamic.Headers{CustomResponseHeaders: test.config})
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "/foo", nil)
+
+			rw := httptest.NewRecorder()
+
+			mid.ServeHTTP(rw, req)
+
+			assert.Equal(t, test.expected, rw.Result().Header)
+		})
+	}
+}
+
+func TestNewHeader_responseHeaders(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		config   dynamic.ModifyHeader
+		expected http.Header
+	}{
+		{
+			desc: "Test Simple Response",
+			config: dynamic.ModifyHeader{
+				Append: map[string]string{
+					"Testing":  "foo",
+					"Testing2": "bar",
+				},
+			},
+			expected: map[string][]string{
+				"Foo":      {"bar"},
+				"Testing":  {"foo"},
+				"Testing2": {"bar"},
+			},
+		},
+		{
+			desc: "empty Custom Header",
+			config: dynamic.ModifyHeader{
+				Set: map[string]string{
+					"Testing": "foo",
+				},
+				Delete: []string{
+					"Testing2",
+				},
+			},
+			expected: map[string][]string{
+				"Foo":     {"bar"},
+				"Testing": {"foo"},
+			},
+		},
+		{
+			desc: "Deleting Custom Header",
+			config: dynamic.ModifyHeader{
+				Set: map[string]string{
+					"Testing": "foo",
+				},
+				Delete: []string{
+					"Foo",
+				},
+			},
+			expected: map[string][]string{
+				"Testing": {"foo"},
+			},
+		},
+	}
+
+	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Foo", "bar")
+		w.WriteHeader(http.StatusOK)
+	})
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			mid, err := NewHeader(emptyHandler, dynamic.Headers{ResponseHeaders: test.config})
 			require.NoError(t, err)
 
 			req := httptest.NewRequest(http.MethodGet, "/foo", nil)
