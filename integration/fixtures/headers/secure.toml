@@ -34,7 +34,7 @@
     service = "api@internal"
 
 [http.middlewares]
-  [http.middlewares.secure.headers]
+  [http.middlewares.secure.headers.securityHeaders]
     permissionsPolicy = "microphone=(),"
 
 [http.services]
