@@ -27,14 +27,14 @@
     service = "service1"
 
 [http.middlewares]
-  [http.middlewares.cors.headers]
+  [http.middlewares.cors.headers.securityHeaders]
     accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
     accessControlAllowOriginList = ["https://foo.bar.org"]
     accessControlMaxAge = 100
     addVaryHeader = true
 
-  [http.middlewares.nocors.Headers]
-    [http.middlewares.nocors.Headers.CustomResponseHeaders]
+  [http.middlewares.nocors.Headers.ResponseHeaders]
+    [http.middlewares.nocors.Headers.ResponseHeaders.Append]
       X-Custom-Response-Header = "True"
 
 [http.services]
