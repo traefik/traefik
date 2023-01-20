@@ -28,5 +28,5 @@
         url = "{{.Server}}"
 
 [http.middlewares]
-  [http.middlewares.customheader.headers.customRequestHeaders]
+  [http.middlewares.customheader.headers.RequestHeaders.Append]
     X-Custom="CustomValue"
