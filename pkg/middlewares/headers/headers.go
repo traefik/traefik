@@ -28,12 +28,13 @@ func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name strin
 	logger := middlewares.GetLogger(ctx, name, typeName)
 	logger.Debug().Msg("Creating middleware")
 
-	hasSecureHeaders := cfg.HasSecureHeadersDefined()
-	hasCustomHeaders := cfg.HasCustomHeadersDefined()
-	hasModifyHeaders := cfg.HasModifyHeadersDefined()
-	hasCorsHeaders := cfg.HasCorsHeadersDefined()
+	secureHeaders := cfg.SecurityHeaders
 
-	if !hasSecureHeaders && !hasCustomHeaders && !hasCorsHeaders {
+	hasSecureHeaders := secureHeaders.HasSecureHeadersDefined()
+	hasModifyHeaders := cfg.HasModifyHeadersDefined()
+	hasCorsHeaders := secureHeaders.HasCorsHeadersDefined()
+
+	if !hasSecureHeaders && !hasModifyHeaders && !hasCorsHeaders {
 		return nil, errors.New("headers configuration not valid")
 	}
 
@@ -46,7 +47,7 @@ func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name strin
 		nextHandler = handler
 	}
 
-	if hasModifyHeaders || hasCustomHeaders || hasCorsHeaders {
+	if hasModifyHeaders || hasCorsHeaders {
 		logger.Debug().Msgf("Setting up Headers/Cors from %v", cfg)
 		h, err := NewHeader(nextHandler, cfg)
 		if err != nil {

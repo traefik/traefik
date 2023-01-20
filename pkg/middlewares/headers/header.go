@@ -15,7 +15,6 @@ import (
 // and the ability to override a few of the default values.
 type Header struct {
 	next                     http.Handler
-	hasCustomHeaders         bool
 	hasModifyRequestHeaders  bool
 	hasModifyResponseHeaders bool
 	hasCorsHeaders           bool
@@ -25,11 +24,12 @@ type Header struct {
 
 // NewHeader constructs a new header instance from supplied frontend header struct.
 func NewHeader(next http.Handler, cfg dynamic.Headers) (*Header, error) {
-	hasCustomHeaders := cfg.HasCustomHeadersDefined()
-	hasCorsHeaders := cfg.HasCorsHeadersDefined()
 
-	regexes := make([]*regexp.Regexp, len(cfg.AccessControlAllowOriginListRegex))
-	for i, str := range cfg.AccessControlAllowOriginListRegex {
+	securityHeaders := cfg.SecurityHeaders
+	hasCorsHeaders := securityHeaders.HasCorsHeadersDefined()
+
+	regexes := make([]*regexp.Regexp, len(securityHeaders.AccessControlAllowOriginListRegex))
+	for i, str := range securityHeaders.AccessControlAllowOriginListRegex {
 		reg, err := regexp.Compile(str)
 		if err != nil {
 			return nil, fmt.Errorf("error occurred during origin parsing: %w", err)
@@ -40,7 +40,6 @@ func NewHeader(next http.Handler, cfg dynamic.Headers) (*Header, error) {
 	return &Header{
 		next:                     next,
 		headers:                  &cfg,
-		hasCustomHeaders:         hasCustomHeaders,
 		hasModifyRequestHeaders:  cfg.RequestHeaders.IsDefined(),
 		hasModifyResponseHeaders: cfg.ResponseHeaders.IsDefined(),
 		hasCorsHeaders:           hasCorsHeaders,
@@ -56,35 +55,11 @@ func (s *Header) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if s.hasModifyRequestHeaders {
 		s.modifyRequestHeaders(req)
-	} else if s.hasCustomHeaders {
-		s.modifyCustomRequestHeaders(req)
 	}
 
 	// If there is a next, call it.
 	if s.next != nil {
-		if s.hasModifyResponseHeaders {
-			s.next.ServeHTTP(newResponseModifier(rw, req, s.modifyResponseHeaders), req)
-		} else {
-			s.next.ServeHTTP(newResponseModifier(rw, req, s.PostRequestModifyResponseHeaders), req)
-		}
-	}
-}
-
-// modifyCustomRequestHeaders sets or deletes custom request headers.
-// Deprecated: Please use modifyRequestHeaders instead
-func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
-	// Loop through Custom request headers
-	for header, value := range s.headers.CustomRequestHeaders {
-		switch {
-		case value == "":
-			req.Header.Del(header)
-
-		case strings.EqualFold(header, "Host"):
-			req.Host = value
-
-		default:
-			req.Header.Set(header, value)
-		}
+		s.next.ServeHTTP(newResponseModifier(rw, req, s.modifyResponseHeaders), req)
 	}
 }
 
@@ -117,38 +92,11 @@ func (s *Header) modifyRequestHeaders(req *http.Request) {
 	}
 }
 
-// PostRequestModifyResponseHeaders set or delete response headers.
+// modifyResponseHeaders modify response headers.
 // This method is called AFTER the response is generated from the backend
 // and can merge/override headers from the backend response.
-// Deprecated: Please use modifyResponseHeaders instead
-func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
-	// Loop through Custom response headers
-	for header, value := range s.headers.CustomResponseHeaders {
-		if value == "" {
-			res.Header.Del(header)
-		} else {
-			res.Header.Set(header, value)
-		}
-	}
-
-	if res != nil && res.Request != nil {
-		originHeader := res.Request.Header.Get("Origin")
-		allowed, match := s.isOriginAllowed(originHeader)
-
-		if allowed {
-			res.Header.Set("Access-Control-Allow-Origin", match)
-		}
-	}
-
-	return s.postCORSHeaders(res)
-}
-
-// modifyResponseHeaders modify response headers.
 func (s *Header) modifyResponseHeaders(res *http.Response) error {
 	rh := s.headers.ResponseHeaders
-	if !rh.IsDefined() {
-		return nil
-	}
 
 	for key, value := range rh.Append {
 		res.Header.Add(key, value)
@@ -162,20 +110,27 @@ func (s *Header) modifyResponseHeaders(res *http.Response) error {
 		res.Header.Del(key)
 	}
 
-	return s.postCORSHeaders(res)
-}
+	if res != nil && res.Request != nil {
+		originHeader := res.Request.Header.Get("Origin")
+		allowed, match := s.isOriginAllowed(originHeader)
 
-func (s *Header) postCORSHeaders(res *http.Response) error {
-	if s.headers.AccessControlAllowCredentials {
+		if allowed {
+			res.Header.Set("Access-Control-Allow-Origin", match)
+		}
+	}
+
+	securityHeaders := s.headers.SecurityHeaders
+
+	if securityHeaders.AccessControlAllowCredentials {
 		res.Header.Set("Access-Control-Allow-Credentials", "true")
 	}
 
-	if len(s.headers.AccessControlExposeHeaders) > 0 {
-		exposeHeaders := strings.Join(s.headers.AccessControlExposeHeaders, ",")
+	if len(securityHeaders.AccessControlExposeHeaders) > 0 {
+		exposeHeaders := strings.Join(securityHeaders.AccessControlExposeHeaders, ",")
 		res.Header.Set("Access-Control-Expose-Headers", exposeHeaders)
 	}
 
-	if !s.headers.AddVaryHeader {
+	if !securityHeaders.AddVaryHeader {
 		return nil
 	}
 
@@ -208,16 +163,16 @@ func (s *Header) processCorsHeaders(rw http.ResponseWriter, req *http.Request) b
 		// If the request is an OPTIONS request with an Access-Control-Request-Method header,
 		// and Origin headers, then it is a CORS preflight request,
 		// and we need to build a custom response: https://www.w3.org/TR/cors/#preflight-request
-		if s.headers.AccessControlAllowCredentials {
+		if s.headers.SecurityHeaders.AccessControlAllowCredentials {
 			rw.Header().Set("Access-Control-Allow-Credentials", "true")
 		}
 
-		allowHeaders := strings.Join(s.headers.AccessControlAllowHeaders, ",")
+		allowHeaders := strings.Join(s.headers.SecurityHeaders.AccessControlAllowHeaders, ",")
 		if allowHeaders != "" {
 			rw.Header().Set("Access-Control-Allow-Headers", allowHeaders)
 		}
 
-		allowMethods := strings.Join(s.headers.AccessControlAllowMethods, ",")
+		allowMethods := strings.Join(s.headers.SecurityHeaders.AccessControlAllowMethods, ",")
 		if allowMethods != "" {
 			rw.Header().Set("Access-Control-Allow-Methods", allowMethods)
 		}
@@ -227,7 +182,7 @@ func (s *Header) processCorsHeaders(rw http.ResponseWriter, req *http.Request) b
 			rw.Header().Set("Access-Control-Allow-Origin", match)
 		}
 
-		rw.Header().Set("Access-Control-Max-Age", strconv.Itoa(int(s.headers.AccessControlMaxAge)))
+		rw.Header().Set("Access-Control-Max-Age", strconv.Itoa(int(s.headers.SecurityHeaders.AccessControlMaxAge)))
 		return true
 	}
 
@@ -235,7 +190,7 @@ func (s *Header) processCorsHeaders(rw http.ResponseWriter, req *http.Request) b
 }
 
 func (s *Header) isOriginAllowed(origin string) (bool, string) {
-	for _, item := range s.headers.AccessControlAllowOriginList {
+	for _, item := range s.headers.SecurityHeaders.AccessControlAllowOriginList {
 		if item == "*" || item == origin {
 			return true, item
 		}

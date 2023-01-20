@@ -49,7 +49,9 @@ func TestNew_allowedHosts(t *testing.T) {
 	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 
 	cfg := dynamic.Headers{
-		AllowedHosts: []string{"foo.com", "bar.com"},
+		SecurityHeaders: dynamic.SecurityHeader{
+			AllowedHosts: []string{"foo.com", "bar.com"},
+		},
 	}
 
 	mid, err := New(context.Background(), emptyHandler, cfg, "foo")
@@ -76,11 +78,15 @@ func TestNew_customHeaders(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 
 	cfg := dynamic.Headers{
-		CustomRequestHeaders: map[string]string{
-			"X-Custom-Request-Header": "test_request",
+		RequestHeaders: dynamic.ModifyHeader{
+			Append: map[string]string{
+				"X-Custom-Request-Header": "test_request",
+			},
 		},
-		CustomResponseHeaders: map[string]string{
-			"X-Custom-Response-Header": "test_response",
+		ResponseHeaders: dynamic.ModifyHeader{
+			Append: map[string]string{
+				"X-Custom-Response-Header": "test_response",
+			},
 		},
 	}
 
