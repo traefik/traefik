@@ -163,136 +163,6 @@ http:
       ]
 ```
 
-### [Deprecated] Adding and Removing Headers
-
-In the following example, requests are proxied with an extra `X-Script-Name` header while their `X-Custom-Request-Header` header gets stripped,
-and responses are stripped of their `X-Custom-Response-Header` header.
-
-```yaml tab="Docker"
-labels:
-  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header="
-  - "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header="
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
-kind: Middleware
-metadata:
-  name: test-header
-spec:
-  headers:
-    customRequestHeaders:
-      X-Script-Name: "test" # Adds
-      X-Custom-Request-Header: "" # Removes
-    customResponseHeaders:
-      X-Custom-Response-Header: "" # Removes
-```
-
-```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-- "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header="
-- "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header="
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name": "test",
-  "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header": "",
-  "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header": "",
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header="
-  - "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header="
-```
-
-```yaml tab="File (YAML)"
-http:
-  middlewares:
-    testHeader:
-      headers:
-        customRequestHeaders:
-          X-Script-Name: "test" # Adds
-          X-Custom-Request-Header: "" # Removes
-        customResponseHeaders:
-          X-Custom-Response-Header: "" # Removes
-```
-
-```toml tab="File (TOML)"
-[http.middlewares]
-  [http.middlewares.testHeader.headers]
-    [http.middlewares.testHeader.headers.customRequestHeaders]
-        X-Script-Name = "test" # Adds
-        X-Custom-Request-Header = "" # Removes
-    [http.middlewares.testHeader.headers.customResponseHeaders]
-        X-Custom-Response-Header = "" # Removes
-```
-
-### [Deprecated] Adding Headers to the Request and the Response
-
-The following example adds the `X-Script-Name` header to the proxied request and the `X-Custom-Response-Header` header to the response
-
-```yaml tab="Docker"
-labels:
-  - "traefik.http.middlewares.testHeader.headers.customrequestheaders.X-Script-Name=test"
-  - "traefik.http.middlewares.testHeader.headers.customresponseheaders.X-Custom-Response-Header=value"
-```
-
-```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
-kind: Middleware
-metadata:
-  name: test-header
-spec:
-  headers:
-    customRequestHeaders:
-      X-Script-Name: "test"
-    customResponseHeaders:
-      X-Custom-Response-Header: "value"
-```
-
-```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-- "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header=value"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name": "test",
-  "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header": "value"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-  - "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header=value"
-```
-
-```yaml tab="File (YAML)"
-http:
-  middlewares:
-    testHeader:
-      headers:
-        customRequestHeaders:
-          X-Script-Name: "test"
-        customResponseHeaders:
-          X-Custom-Response-Header: "value"
-```
-
-```toml tab="File (TOML)"
-[http.middlewares]
-  [http.middlewares.testHeader.headers]
-    [http.middlewares.testHeader.headers.customRequestHeaders]
-        X-Script-Name = "test"
-    [http.middlewares.testHeader.headers.customResponseHeaders]
-        X-Custom-Response-Header = "value"
-```
-
 ### Using Security Headers
 
 Security-related headers (HSTS headers, Browser XSS filter, etc) can be managed similarly to custom headers as shown above.
@@ -300,8 +170,8 @@ This functionality makes it possible to easily use security features by adding h
 
 ```yaml tab="Docker"
 labels:
-  - "traefik.http.middlewares.testHeader.headers.framedeny=true"
-  - "traefik.http.middlewares.testHeader.headers.browserxssfilter=true"
+  - "traefik.http.middlewares.testHeader.headers.securityheaders.framedeny=true"
+  - "traefik.http.middlewares.testHeader.headers.securityheaders.browserxssfilter=true"
 ```
 
 ```yaml tab="Kubernetes"
@@ -311,26 +181,27 @@ metadata:
   name: test-header
 spec:
   headers:
-    frameDeny: true
-    browserXssFilter: true
+    securityHeaders:
+      frameDeny: true
+      browserXssFilter: true
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.testheader.headers.framedeny=true"
-- "traefik.http.middlewares.testheader.headers.browserxssfilter=true"
+- "traefik.http.middlewares.testheader.headers.securityheaders.framedeny=true"
+- "traefik.http.middlewares.testheader.headers.securityheaders.browserxssfilter=true"
 ```
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.testheader.headers.framedeny": "true",
-  "traefik.http.middlewares.testheader.headers.browserxssfilter": "true"
+  "traefik.http.middlewares.testheader.headers.securityheaders.framedeny": "true",
+  "traefik.http.middlewares.testheader.headers.securityheaders.browserxssfilter": "true"
 }
 ```
 
 ```yaml tab="Rancher"
 labels:
-  - "traefik.http.middlewares.testheader.headers.framedeny=true"
-  - "traefik.http.middlewares.testheader.headers.browserxssfilter=true"
+  - "traefik.http.middlewares.testheader.headers.securityheaders.framedeny=true"
+  - "traefik.http.middlewares.testheader.headers.securityheaders.browserxssfilter=true"
 ```
 
 ```yaml tab="File (YAML)"
@@ -338,15 +209,17 @@ http:
   middlewares:
     testHeader:
       headers:
-        frameDeny: true
-        browserXssFilter: true
+        securityHeaders:
+          frameDeny: true
+          browserXssFilter: true
 ```
 
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.testHeader.headers]
-    frameDeny = true
-    browserXssFilter = true
+    [http.middlewares.testHeader.headers.securityHeaders]
+      frameDeny = true
+      browserXssFilter = true
 ```
 
 ### CORS Headers
@@ -358,10 +231,10 @@ instead the response will be generated and sent back to the client directly.
 
 ```yaml tab="Docker"
 labels:
-  - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
-  - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
+  - "traefik.http.middlewares.testheader.headers.securityheaders.accesscontrolallowmethods=GET,OPTIONS,PUT"
+  - "traefik.http.middlewares.testheader.headers.securityheaders.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
+  - "traefik.http.middlewares.testheader.headers.securityheaders.accesscontrolmaxage=100"
+  - "traefik.http.middlewares.testheader.headers.securityheaders.addvaryheader=true"
 ```
 
 ```yaml tab="Kubernetes"
@@ -371,39 +244,40 @@ metadata:
   name: test-header
 spec:
   headers:
-    accessControlAllowMethods:
-      - "GET"
-      - "OPTIONS"
-      - "PUT"
-    accessControlAllowOriginList:
-      - "https://foo.bar.org"
-      - "https://example.org"
-    accessControlMaxAge: 100
-    addVaryHeader: true
+    securityHeaders:
+      accessControlAllowMethods:
+        - "GET"
+        - "OPTIONS"
+        - "PUT"
+      accessControlAllowOriginList:
+        - "https://foo.bar.org"
+        - "https://example.org"
+      accessControlMaxAge: 100
+      addVaryHeader: true
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-- "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
-- "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
-- "traefik.http.middlewares.testheader.headers.addvaryheader=true"
+- "traefik.http.middlewares.testheader.headers.securityheaders.accesscontrolallowmethods=GET,OPTIONS,PUT"
+- "traefik.http.middlewares.testheader.headers.securityheaders.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
+- "traefik.http.middlewares.testheader.headers.securityheaders.accesscontrolmaxage=100"
+- "traefik.http.middlewares.testheader.headers.securityheaders.addvaryheader=true"
 ```
 
 ```json tab="Marathon"
 "labels": {
-  "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods": "GET,OPTIONS,PUT",
-  "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist": "https://foo.bar.org,https://example.org",
-  "traefik.http.middlewares.testheader.headers.accesscontrolmaxage": "100",
-  "traefik.http.middlewares.testheader.headers.addvaryheader": "true"
+  "traefik.http.middlewares.testheader.headers.securityheaders.accesscontrolallowmethods": "GET,OPTIONS,PUT",
+  "traefik.http.middlewares.testheader.headers.securityheaders.accesscontrolalloworiginlist": "https://foo.bar.org,https://example.org",
+  "traefik.http.middlewares.testheader.headers.securityheaders.accesscontrolmaxage": "100",
+  "traefik.http.middlewares.testheader.headers.securityheaders.addvaryheader": "true"
 }
 ```
 
 ```yaml tab="Rancher"
 labels:
-  - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
-  - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
+  - "traefik.http.middlewares.testheader.headers.securityheaders.accesscontrolallowmethods=GET,OPTIONS,PUT"
+  - "traefik.http.middlewares.testheader.headers.securityheaders.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
+  - "traefik.http.middlewares.testheader.headers.securityheaders.accesscontrolmaxage=100"
+  - "traefik.http.middlewares.testheader.headers。securityheaders.addvaryheader=true"
 ```
 
 ```yaml tab="File (YAML)"
@@ -411,24 +285,26 @@ http:
   middlewares:
     testHeader:
       headers:
-        accessControlAllowMethods:
-          - GET
-          - OPTIONS
-          - PUT
-        accessControlAllowOriginList:
-          - https://foo.bar.org
-          - https://example.org
-        accessControlMaxAge: 100
-        addVaryHeader: true
+        securityHeaders:
+          accessControlAllowMethods:
+            - GET
+            - OPTIONS
+            - PUT
+          accessControlAllowOriginList:
+            - https://foo.bar.org
+            - https://example.org
+          accessControlMaxAge: 100
+          addVaryHeader: true
 ```
 
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.testHeader.headers]
-    accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
-    accessControlAllowOriginList = ["https://foo.bar.org","https://example.org"]
-    accessControlMaxAge = 100
-    addVaryHeader = true
+    [http.middlewares.testHeader.headers.securityHeaders]
+      accessControlAllowMethods = ["GET", "OPTIONS", "PUT"]
+      accessControlAllowOriginList = ["https://foo.bar.org","https://example.org"]
+      accessControlMaxAge = 100
+      addVaryHeader = true
 ```
 
 ## Configuration Options
