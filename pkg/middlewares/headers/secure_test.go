@@ -20,45 +20,57 @@ func Test_newSecure_modifyResponse(t *testing.T) {
 		{
 			desc: "PermissionsPolicy",
 			cfg: dynamic.Headers{
-				PermissionsPolicy: "microphone=(),",
+				SecurityHeaders: dynamic.SecurityHeader{
+					PermissionsPolicy: "microphone=(),",
+				},
 			},
 			expected: http.Header{"Permissions-Policy": []string{"microphone=(),"}},
 		},
 		{
 			desc: "STSSeconds",
 			cfg: dynamic.Headers{
-				STSSeconds:     1,
-				ForceSTSHeader: true,
+				SecurityHeaders: dynamic.SecurityHeader{
+					STSSeconds:     1,
+					ForceSTSHeader: true,
+				},
 			},
 			expected: http.Header{"Strict-Transport-Security": []string{"max-age=1"}},
 		},
 		{
 			desc: "STSSeconds and STSPreload",
 			cfg: dynamic.Headers{
-				STSSeconds:     1,
-				ForceSTSHeader: true,
-				STSPreload:     true,
+				SecurityHeaders: dynamic.SecurityHeader{
+					STSSeconds:     1,
+					ForceSTSHeader: true,
+					STSPreload:     true,
+				},
 			},
 			expected: http.Header{"Strict-Transport-Security": []string{"max-age=1; preload"}},
 		},
 		{
 			desc: "CustomFrameOptionsValue",
 			cfg: dynamic.Headers{
-				CustomFrameOptionsValue: "foo",
+				SecurityHeaders: dynamic.SecurityHeader{
+					CustomFrameOptionsValue: "foo",
+				},
 			},
 			expected: http.Header{"X-Frame-Options": []string{"foo"}},
 		},
 		{
 			desc: "FrameDeny",
 			cfg: dynamic.Headers{
-				FrameDeny: true,
+				SecurityHeaders: dynamic.SecurityHeader{
+					FrameDeny: true,
+				},
 			},
 			expected: http.Header{"X-Frame-Options": []string{"DENY"}},
 		},
 		{
 			desc: "ContentTypeNosniff",
 			cfg: dynamic.Headers{
-				ContentTypeNosniff: true,
+				SecurityHeaders: dynamic.SecurityHeader{
+					ContentTypeNosniff: true,
+				},
 			},
 			expected: http.Header{"X-Content-Type-Options": []string{"nosniff"}},
 		},

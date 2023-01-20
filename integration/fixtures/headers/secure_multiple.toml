@@ -23,9 +23,9 @@
 
 
 [http.middlewares]
-  [http.middlewares.foo.headers]
+  [http.middlewares.foo.headers.securityHeaders]
     frameDeny = true
-  [http.middlewares.bar.headers]
+  [http.middlewares.bar.headers.securityHeaders]
     contentTypeNosniff = true
 
 [http.services]

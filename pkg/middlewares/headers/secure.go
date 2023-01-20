@@ -14,7 +14,8 @@ type secureHeader struct {
 }
 
 // newSecure constructs a new secure instance with supplied options.
-func newSecure(next http.Handler, cfg dynamic.Headers, contextKey string) *secureHeader {
+func newSecure(next http.Handler, headers dynamic.Headers, contextKey string) *secureHeader {
+	cfg := headers.SecurityHeaders
 	opt := secure.Options{
 		BrowserXssFilter:        cfg.BrowserXSSFilter,
 		ContentTypeNosniff:      cfg.ContentTypeNosniff,
@@ -39,7 +40,7 @@ func newSecure(next http.Handler, cfg dynamic.Headers, contextKey string) *secur
 	return &secureHeader{
 		next:   next,
 		secure: secure.New(opt),
-		cfg:    cfg,
+		cfg:    headers,
 	}
 }
 

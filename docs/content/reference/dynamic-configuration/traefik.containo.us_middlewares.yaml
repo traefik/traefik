@@ -395,144 +395,173 @@ spec:
                   This middleware manages the requests and responses headers. More
                   info: https://doc.traefik.io/traefik/v3.0/middlewares/http/headers/#customrequestheaders'
                 properties:
-                  accessControlAllowCredentials:
-                    description: AccessControlAllowCredentials defines whether the
-                      request can include user credentials.
-                    type: boolean
-                  accessControlAllowHeaders:
-                    description: AccessControlAllowHeaders defines the Access-Control-Request-Headers
-                      values sent in preflight response.
-                    items:
-                      type: string
-                    type: array
-                  accessControlAllowMethods:
-                    description: AccessControlAllowMethods defines the Access-Control-Request-Method
-                      values sent in preflight response.
-                    items:
-                      type: string
-                    type: array
-                  accessControlAllowOriginList:
-                    description: AccessControlAllowOriginList is a list of allowable
-                      origins. Can also be a wildcard origin "*".
-                    items:
-                      type: string
-                    type: array
-                  accessControlAllowOriginListRegex:
-                    description: AccessControlAllowOriginListRegex is a list of allowable
-                      origins written following the Regular Expression syntax (https://golang.org/pkg/regexp/).
-                    items:
-                      type: string
-                    type: array
-                  accessControlExposeHeaders:
-                    description: AccessControlExposeHeaders defines the Access-Control-Expose-Headers
-                      values sent in preflight response.
-                    items:
-                      type: string
-                    type: array
-                  accessControlMaxAge:
-                    description: AccessControlMaxAge defines the time that a preflight
-                      request may be cached.
-                    format: int64
-                    type: integer
-                  addVaryHeader:
-                    description: AddVaryHeader defines whether the Vary header is
-                      automatically added/updated when the AccessControlAllowOriginList
-                      is set.
-                    type: boolean
-                  allowedHosts:
-                    description: AllowedHosts defines the fully qualified list of
-                      allowed domain names.
-                    items:
-                      type: string
-                    type: array
-                  browserXssFilter:
-                    description: BrowserXSSFilter defines whether to add the X-XSS-Protection
-                      header with the value 1; mode=block.
-                    type: boolean
-                  contentSecurityPolicy:
-                    description: ContentSecurityPolicy defines the Content-Security-Policy
-                      header value.
-                    type: string
-                  contentTypeNosniff:
-                    description: ContentTypeNosniff defines whether to add the X-Content-Type-Options
-                      header with the nosniff value.
-                    type: boolean
-                  customBrowserXSSValue:
-                    description: CustomBrowserXSSValue defines the X-XSS-Protection
-                      header value. This overrides the BrowserXssFilter option.
-                    type: string
-                  customFrameOptionsValue:
-                    description: CustomFrameOptionsValue defines the X-Frame-Options
-                      header value. This overrides the FrameDeny option.
-                    type: string
-                  customRequestHeaders:
-                    additionalProperties:
-                      type: string
-                    description: CustomRequestHeaders defines the header names and
-                      values to apply to the request.
+                  requestHeaders:
+                    description: RequestHeader defines header rules to modify the
+                      request
+                    properties:
+                      append:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      delete:
+                        items:
+                          type: string
+                        type: array
+                      set:
+                        additionalProperties:
+                          type: string
+                        type: object
                     type: object
-                  customResponseHeaders:
-                    additionalProperties:
-                      type: string
-                    description: CustomResponseHeaders defines the header names and
-                      values to apply to the response.
+                  responseHeaders:
+                    description: ResponseHeader defines header rules to modify the
+                      request
+                    properties:
+                      append:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      delete:
+                        items:
+                          type: string
+                        type: array
+                      set:
+                        additionalProperties:
+                          type: string
+                        type: object
                     type: object
-                  forceSTSHeader:
-                    description: ForceSTSHeader defines whether to add the STS header
-                      even when the connection is HTTP.
-                    type: boolean
-                  frameDeny:
-                    description: FrameDeny defines whether to add the X-Frame-Options
-                      header with the DENY value.
-                    type: boolean
-                  hostsProxyHeaders:
-                    description: HostsProxyHeaders defines the header keys that may
-                      hold a proxied hostname value for the request.
-                    items:
-                      type: string
-                    type: array
-                  isDevelopment:
-                    description: IsDevelopment defines whether to mitigate the unwanted
-                      effects of the AllowedHosts, SSL, and STS options when developing.
-                      Usually testing takes place using HTTP, not HTTPS, and on localhost,
-                      not your production domain. If you would like your development
-                      environment to mimic production with complete Host blocking,
-                      SSL redirects, and STS headers, leave this as false.
-                    type: boolean
-                  permissionsPolicy:
-                    description: PermissionsPolicy defines the Permissions-Policy
-                      header value. This allows sites to control browser features.
-                    type: string
-                  publicKey:
-                    description: PublicKey is the public key that implements HPKP
-                      to prevent MITM attacks with forged certificates.
-                    type: string
-                  referrerPolicy:
-                    description: ReferrerPolicy defines the Referrer-Policy header
-                      value. This allows sites to control whether browsers forward
-                      the Referer header to other sites.
-                    type: string
-                  sslProxyHeaders:
-                    additionalProperties:
-                      type: string
-                    description: 'SSLProxyHeaders defines the header keys with associated
-                      values that would indicate a valid HTTPS request. It can be
-                      useful when using other proxies (example: "X-Forwarded-Proto":
-                      "https").'
+                  securityHeader:
+                    description: SecurityHeader defines security rules to modify the
+                      request
+                    properties:
+                      accessControlAllowCredentials:
+                        description: AccessControlAllowCredentials defines whether
+                          the request can include user credentials.
+                        type: boolean
+                      accessControlAllowHeaders:
+                        description: AccessControlAllowHeaders defines the Access-Control-Request-Headers
+                          values sent in preflight response.
+                        items:
+                          type: string
+                        type: array
+                      accessControlAllowMethods:
+                        description: AccessControlAllowMethods defines the Access-Control-Request-Method
+                          values sent in preflight response.
+                        items:
+                          type: string
+                        type: array
+                      accessControlAllowOriginList:
+                        description: AccessControlAllowOriginList is a list of allowable
+                          origins. Can also be a wildcard origin "*".
+                        items:
+                          type: string
+                        type: array
+                      accessControlAllowOriginListRegex:
+                        description: AccessControlAllowOriginListRegex is a list of
+                          allowable origins written following the Regular Expression
+                          syntax (https://golang.org/pkg/regexp/).
+                        items:
+                          type: string
+                        type: array
+                      accessControlExposeHeaders:
+                        description: AccessControlExposeHeaders defines the Access-Control-Expose-Headers
+                          values sent in preflight response.
+                        items:
+                          type: string
+                        type: array
+                      accessControlMaxAge:
+                        description: AccessControlMaxAge defines the time that a preflight
+                          request may be cached.
+                        format: int64
+                        type: integer
+                      addVaryHeader:
+                        description: AddVaryHeader defines whether the Vary header
+                          is automatically added/updated when the AccessControlAllowOriginList
+                          is set.
+                        type: boolean
+                      allowedHosts:
+                        description: AllowedHosts defines the fully qualified list
+                          of allowed domain names.
+                        items:
+                          type: string
+                        type: array
+                      browserXssFilter:
+                        description: BrowserXSSFilter defines whether to add the X-XSS-Protection
+                          header with the value 1; mode=block.
+                        type: boolean
+                      contentSecurityPolicy:
+                        description: ContentSecurityPolicy defines the Content-Security-Policy
+                          header value.
+                        type: string
+                      contentTypeNosniff:
+                        description: ContentTypeNosniff defines whether to add the
+                          X-Content-Type-Options header with the nosniff value.
+                        type: boolean
+                      customBrowserXSSValue:
+                        description: CustomBrowserXSSValue defines the X-XSS-Protection
+                          header value. This overrides the BrowserXssFilter option.
+                        type: string
+                      customFrameOptionsValue:
+                        description: CustomFrameOptionsValue defines the X-Frame-Options
+                          header value. This overrides the FrameDeny option.
+                        type: string
+                      forceSTSHeader:
+                        description: ForceSTSHeader defines whether to add the STS
+                          header even when the connection is HTTP.
+                        type: boolean
+                      frameDeny:
+                        description: FrameDeny defines whether to add the X-Frame-Options
+                          header with the DENY value.
+                        type: boolean
+                      hostsProxyHeaders:
+                        description: HostsProxyHeaders defines the header keys that
+                          may hold a proxied hostname value for the request.
+                        items:
+                          type: string
+                        type: array
+                      isDevelopment:
+                        description: IsDevelopment defines whether to mitigate the
+                          unwanted effects of the AllowedHosts, SSL, and STS options
+                          when developing. Usually testing takes place using HTTP,
+                          not HTTPS, and on localhost, not your production domain.
+                          If you would like your development environment to mimic
+                          production with complete Host blocking, SSL redirects, and
+                          STS headers, leave this as false.
+                        type: boolean
+                      permissionsPolicy:
+                        description: PermissionsPolicy defines the Permissions-Policy
+                          header value. This allows sites to control browser features.
+                        type: string
+                      publicKey:
+                        description: PublicKey is the public key that implements HPKP
+                          to prevent MITM attacks with forged certificates.
+                        type: string
+                      referrerPolicy:
+                        description: ReferrerPolicy defines the Referrer-Policy header
+                          value. This allows sites to control whether browsers forward
+                          the Referer header to other sites.
+                        type: string
+                      sslProxyHeaders:
+                        additionalProperties:
+                          type: string
+                        description: 'SSLProxyHeaders defines the header keys with
+                          associated values that would indicate a valid HTTPS request.
+                          It can be useful when using other proxies (example: "X-Forwarded-Proto":
+                          "https").'
+                        type: object
+                      stsIncludeSubdomains:
+                        description: STSIncludeSubdomains defines whether the includeSubDomains
+                          directive is appended to the Strict-Transport-Security header.
+                        type: boolean
+                      stsPreload:
+                        description: STSPreload defines whether the preload flag is
+                          appended to the Strict-Transport-Security header.
+                        type: boolean
+                      stsSeconds:
+                        description: STSSeconds defines the max-age of the Strict-Transport-Security
+                          header. If set to 0, the header is not set.
+                        format: int64
+                        type: integer
                     type: object
-                  stsIncludeSubdomains:
-                    description: STSIncludeSubdomains defines whether the includeSubDomains
-                      directive is appended to the Strict-Transport-Security header.
-                    type: boolean
-                  stsPreload:
-                    description: STSPreload defines whether the preload flag is appended
-                      to the Strict-Transport-Security header.
-                    type: boolean
-                  stsSeconds:
-                    description: STSSeconds defines the max-age of the Strict-Transport-Security
-                      header. If set to 0, the header is not set.
-                    format: int64
-                    type: integer
                 type: object
               inFlightReq:
                 description: 'InFlightReq holds the in-flight request middleware configuration.
