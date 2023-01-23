@@ -16,9 +16,6 @@ theme:
   include_sidebar: true
   favicon: img/traefik.icon.png
   logo: img/traefik.logo.png
-  palette:
-    primary: 'blue'
-    accent: 'light blue'
   feature:
     tabs: false
   palette:
