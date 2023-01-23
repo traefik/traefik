@@ -25,9 +25,6 @@ google_analytics:
 # Options
 extra:
   logo: img/traefik.logo.png
-  palette:
-    primary: 'blue'
-    accent: 'light blue'
   feature:
     tabs: false
   palette:
