@@ -26,7 +26,7 @@ require (
 	github.com/google/go-github/v28 v28.1.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/hashicorp/consul v1.10.4
+	github.com/hashicorp/consul v1.10.12
 	github.com/hashicorp/consul/api v1.14.0
 	github.com/hashicorp/go-hclog v1.2.0
 	github.com/hashicorp/go-multierror v1.1.1
@@ -202,7 +202,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/memberlist v0.3.1 // indirect
-	github.com/hashicorp/raft v1.3.2 // indirect
+	github.com/hashicorp/raft v1.3.6 // indirect
 	github.com/hashicorp/raft-autopilot v0.1.5 // indirect
 	github.com/hashicorp/serf v0.9.7 // indirect
 	github.com/hashicorp/yamux v0.0.0-20210826001029-26ff87cf9493 // indirect
