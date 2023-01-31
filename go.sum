@@ -1556,8 +1556,8 @@ github.com/quic-go/qtls-go1-19 v0.2.0 h1:Cvn2WdhyViFUHoOqK52i51k4nDX8EwIh5VJiVM4
 github.com/quic-go/qtls-go1-19 v0.2.0/go.mod h1:ySOI96ew8lnoKPtSqx2BlI5wCpUVPT05RMAlajtnyOI=
 github.com/quic-go/qtls-go1-20 v0.1.0-rc.1 h1:c6vlM0jdCR8mzSoMMC4AdJOC6eLIOy+bFjvJDRmuJLE=
 github.com/quic-go/qtls-go1-20 v0.1.0-rc.1/go.mod h1:JKtK6mjbAVcUTN/9jZpvLbGxvdWIKS8uT7EiStoU1SM=
-github.com/quic-go/quic-go v0.31.2-0.20230126205806-3f9d8feab2de h1:Zc8B8dKMSVpKrqo5bVrOwVkoNeoeKmAas4geZ3f4jhg=
-github.com/quic-go/quic-go v0.31.2-0.20230126205806-3f9d8feab2de/go.mod h1:hxFKrdETREINAl6MaAghmq0tj6nWPx7PbYWFNkCFyPc=
+github.com/quic-go/quic-go v0.31.2-0.20230128084952-89769f409f63 h1:WGiweFiDFZN/Gvh7vDvCA9t5ITRDVPlPiNBElcccEzg=
+github.com/quic-go/quic-go v0.31.2-0.20230128084952-89769f409f63/go.mod h1:hxFKrdETREINAl6MaAghmq0tj6nWPx7PbYWFNkCFyPc=
 github.com/rancher/go-rancher-metadata v0.0.0-20200311180630-7f4c936a06ac h1:wBGhHdXKICZmvAPWS8gQoMyOWDH7QAi9bU4Z1nDWnFU=
 github.com/rancher/go-rancher-metadata v0.0.0-20200311180630-7f4c936a06ac/go.mod h1:67sLWL17mVlO1HFROaTBmU71NB4R8UNCesFHhg0f6LQ=
 github.com/rboyer/safeio v0.2.1/go.mod h1:Cq/cEPK+YXFn622lsQ0K4KsPZSPtaptHHEldsy7Fmig=
