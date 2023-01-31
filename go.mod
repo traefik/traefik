@@ -54,7 +54,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v1.12.2-0.20220704083116-e8f91604d835
 	github.com/prometheus/client_model v0.2.0
-	github.com/quic-go/quic-go v0.31.2-0.20230126205806-3f9d8feab2de
+	github.com/quic-go/quic-go v0.31.2-0.20230128084952-89769f409f63
 	github.com/rancher/go-rancher-metadata v0.0.0-20200311180630-7f4c936a06ac
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
