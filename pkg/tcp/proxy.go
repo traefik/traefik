@@ -48,14 +48,14 @@ func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dyn
 
 // ServeTCP forwards the connection to a service.
 func (p *Proxy) ServeTCP(conn WriteCloser) {
-	log.WithoutContext().Debugf("Handling connection from %s to %s", conn.RemoteAddr(), p.address)
+	log.WithoutContext().Debugf("Handling TCP connection from %s to %s", conn.RemoteAddr(), p.address)
 
 	// needed because of e.g. server.trackedConnection
 	defer conn.Close()
 
 	connBackend, err := p.dialBackend()
 	if err != nil {
-		log.WithoutContext().Errorf("Error while connecting to backend: %v", err)
+		log.WithoutContext().Errorf("Error while dialing backend: %v", err)
 		return
 	}
 
@@ -66,7 +66,7 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	if p.proxyProtocol != nil && p.proxyProtocol.Version > 0 && p.proxyProtocol.Version < 3 {
 		header := proxyproto.HeaderProxyFromAddrs(byte(p.proxyProtocol.Version), conn.RemoteAddr(), conn.LocalAddr())
 		if _, err := header.WriteTo(connBackend); err != nil {
-			log.WithoutContext().Errorf("Error while writing proxy protocol headers to backend connection: %v", err)
+			log.WithoutContext().Errorf("Error while writing TCP proxy protocol headers to backend connection: %v", err)
 			return
 		}
 	}
@@ -80,9 +80,9 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 		// This allows to not report an RST packet sent by the peer as an error,
 		// as it is an abrupt but possible end for the TCP session
 		if isReadConnResetError(err) {
-			log.WithoutContext().Debugf("Error during connection: %v", err)
+			log.WithoutContext().Debugf("Error while handling TCP connection: %v", err)
 		} else {
-			log.WithoutContext().Errorf("Error during connection: %v", err)
+			log.WithoutContext().Errorf("Error while handling TCP connection: %v", err)
 		}
 	}
 
@@ -119,7 +119,7 @@ func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 		// In that case, logging the error is superfluous,
 		// as in the first place we should not have needed to call CloseWrite.
 		if !isSocketNotConnectedError(errClose) {
-			log.WithoutContext().Debugf("Error while terminating connection: %v", errClose)
+			log.WithoutContext().Debugf("Error while terminating TCP connection: %v", errClose)
 		}
 
 		return
@@ -128,7 +128,7 @@ func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 	if p.terminationDelay >= 0 {
 		err := dst.SetReadDeadline(time.Now().Add(p.terminationDelay))
 		if err != nil {
-			log.WithoutContext().Debugf("Error while setting deadline: %v", err)
+			log.WithoutContext().Debugf("Error while setting TCP connection deadline: %v", err)
 		}
 	}
 }
