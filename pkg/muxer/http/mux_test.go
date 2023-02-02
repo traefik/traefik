@@ -64,6 +64,20 @@ func Test_addRoute(t *testing.T) {
 			},
 		},
 		{
+			desc: "Host IPv4",
+			rule: "Host(`127.0.0.1`)",
+			expected: map[string]int{
+				"http://127.0.0.1/foo": http.StatusOK,
+			},
+		},
+		{
+			desc: "Host IPv6",
+			rule: "Host(`10::10`)",
+			expected: map[string]int{
+				"http://10::10/foo": http.StatusOK,
+			},
+		},
+		{
 			desc:          "Non-ASCII Host",
 			rule:          "Host(`locàlhost`)",
 			expectedError: true,
