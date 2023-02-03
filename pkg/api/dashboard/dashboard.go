@@ -6,7 +6,7 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
-	"github.com/traefik/traefik/v2/webui"
+	"github.com/traefik/traefik/v3/webui"
 )
 
 // Handler expose dashboard routes.

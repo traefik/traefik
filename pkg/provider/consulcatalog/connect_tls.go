@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/consul/agent/connect"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
 // connectCert holds our certificates as a client of the Consul Connect protocol.

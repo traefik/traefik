@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/traefik/traefik/v2/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
 )
 
 const (

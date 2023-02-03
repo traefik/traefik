@@ -9,8 +9,8 @@ import (
 	"sync"
 
 	"github.com/rs/zerolog/log"
-	tcpmuxer "github.com/traefik/traefik/v2/pkg/muxer/tcp"
-	"github.com/traefik/traefik/v2/pkg/tcp"
+	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
+	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
 var (
