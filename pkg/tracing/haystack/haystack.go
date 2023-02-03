@@ -8,7 +8,7 @@ import (
 	"github.com/ExpediaDotCom/haystack-client-go"
 	"github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/logs"
 )
 
 // Name sets the name of this tracer.

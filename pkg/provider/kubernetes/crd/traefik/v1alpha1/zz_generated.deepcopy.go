@@ -30,9 +30,9 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	dynamic "github.com/traefik/traefik/v2/pkg/config/dynamic"
-	tls "github.com/traefik/traefik/v2/pkg/tls"
-	types "github.com/traefik/traefik/v2/pkg/types"
+	dynamic "github.com/traefik/traefik/v3/pkg/config/dynamic"
+	tls "github.com/traefik/traefik/v3/pkg/tls"
+	types "github.com/traefik/traefik/v3/pkg/types"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	intstr "k8s.io/apimachinery/pkg/util/intstr"
