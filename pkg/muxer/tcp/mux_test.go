@@ -740,7 +740,7 @@ func Test_HostSNI(t *testing.T) {
 		},
 		{
 			desc:       "Matching hosts",
-			ruleHosts:  []string{"foobar"},
+			ruleHosts:  []string{"foobar", "foo-bar.baz"},
 			serverName: "foobar",
 		},
 		{
