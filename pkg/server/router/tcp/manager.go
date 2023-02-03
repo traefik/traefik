@@ -8,15 +8,15 @@ import (
 	"net/http"
 
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/middlewares/snicheck"
-	httpmuxer "github.com/traefik/traefik/v2/pkg/muxer/http"
-	tcpmuxer "github.com/traefik/traefik/v2/pkg/muxer/tcp"
-	"github.com/traefik/traefik/v2/pkg/server/provider"
-	tcpservice "github.com/traefik/traefik/v2/pkg/server/service/tcp"
-	"github.com/traefik/traefik/v2/pkg/tcp"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/middlewares/snicheck"
+	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
+	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
+	"github.com/traefik/traefik/v3/pkg/server/provider"
+	tcpservice "github.com/traefik/traefik/v3/pkg/server/service/tcp"
+	"github.com/traefik/traefik/v3/pkg/tcp"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
 type middlewareBuilder interface {

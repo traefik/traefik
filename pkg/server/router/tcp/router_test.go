@@ -16,12 +16,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	tcpmiddleware "github.com/traefik/traefik/v2/pkg/server/middleware/tcp"
-	"github.com/traefik/traefik/v2/pkg/server/service/tcp"
-	tcp2 "github.com/traefik/traefik/v2/pkg/tcp"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	tcpmiddleware "github.com/traefik/traefik/v3/pkg/server/middleware/tcp"
+	"github.com/traefik/traefik/v3/pkg/server/service/tcp"
+	tcp2 "github.com/traefik/traefik/v3/pkg/tcp"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
 type applyRouter func(conf *runtime.Configuration)

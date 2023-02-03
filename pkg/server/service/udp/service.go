@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/server/provider"
-	"github.com/traefik/traefik/v2/pkg/udp"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/server/provider"
+	"github.com/traefik/traefik/v3/pkg/udp"
 )
 
 // Manager handles UDP services creation.

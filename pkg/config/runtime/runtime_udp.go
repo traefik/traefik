@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/logs"
 )
 
 // GetUDPRoutersByEntryPoints returns all the UDP routers by entry points name and routers name.

@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/hashicorp/go-version"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
