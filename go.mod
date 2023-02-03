@@ -1,4 +1,4 @@
-module github.com/traefik/traefik/v2
+module github.com/traefik/traefik/v3
 
 go 1.19
 

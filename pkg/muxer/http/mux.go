@@ -6,7 +6,7 @@ import (
 	"sort"
 
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/rules"
+	"github.com/traefik/traefik/v3/pkg/rules"
 	"github.com/vulcand/predicate"
 )
 

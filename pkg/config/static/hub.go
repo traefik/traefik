@@ -4,8 +4,8 @@ import (
 	"errors"
 
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/provider/hub"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/provider/hub"
 )
 
 func (c *Configuration) initHubProvider() error {

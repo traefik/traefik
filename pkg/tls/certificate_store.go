@@ -10,7 +10,7 @@ import (
 
 	"github.com/patrickmn/go-cache"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
 // CertificateStore store for dynamic certificates.
