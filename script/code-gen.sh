@@ -4,7 +4,7 @@
 set -e -o pipefail
 
 PROJECT_MODULE="github.com/traefik/traefik"
-MODULE_VERSION="v2"
+MODULE_VERSION="v3"
 IMAGE_NAME="kubernetes-codegen:latest"
 CURRENT_DIR="$(pwd)"
 
