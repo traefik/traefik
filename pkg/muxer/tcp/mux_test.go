@@ -740,13 +740,23 @@ func Test_HostSNI(t *testing.T) {
 		},
 		{
 			desc:       "Matching hosts",
-			ruleHosts:  []string{"foobar"},
+			ruleHosts:  []string{"foobar", "foo-bar.baz"},
 			serverName: "foobar",
 		},
 		{
 			desc:       "Matching hosts with subdomains",
 			ruleHosts:  []string{"foo.bar"},
 			serverName: "foo.bar",
+		},
+		{
+			desc:       "Matching IPv4",
+			ruleHosts:  []string{"127.0.0.1"},
+			serverName: "127.0.0.1",
+		},
+		{
+			desc:       "Matching IPv6",
+			ruleHosts:  []string{"10::10"},
+			serverName: "10::10",
 		},
 	}
 
