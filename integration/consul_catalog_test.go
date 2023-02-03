@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-check/check"
 	"github.com/hashicorp/consul/api"
-	"github.com/traefik/traefik/v2/integration/try"
+	"github.com/traefik/traefik/v3/integration/try"
 	checker "github.com/vdemeester/shakers"
 )
 

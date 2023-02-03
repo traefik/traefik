@@ -11,9 +11,9 @@ import (
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/redactor"
-	"github.com/traefik/traefik/v2/pkg/version"
+	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/redactor"
+	"github.com/traefik/traefik/v3/pkg/version"
 )
 
 // collectorURL URL where the stats are sent.

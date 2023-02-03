@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
 // SNICheck is an HTTP handler that checks whether the TLS configuration for the server name is the same as for the host header.
