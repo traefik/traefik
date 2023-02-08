@@ -187,7 +187,11 @@ one easy way to check if the dynamic configuration is well-formed is to validate
 If you're trying to renew wildcard certificates, with DNS challenge,
 and you're getting errors such as:
 
-<pre class="highlight"><code class="language-text" style="white-space : pre-wrap !important;">time="2023-01-28T17:13:58+01:00" level=error msg="Error renewing certificate from LE: {subdomain.domain.name [*.subdomain.domain.name]}" providerName=letsencrypt.acme error="error: one or more domains had a problem:\n[*.subdomain.domain.name] [*.subdomain.domain.name] acme: error presenting token: gandiv5: unexpected authZone domain.name. for fqdn domain.name.\n[subdomain.domain.name] [subdomain.domain.name] acme: error presenting token: gandiv5: unexpected authZone domain.name. for fqdn domain.name.\n" ACME CA="https://acme-v02.api.letsencrypt.org/directory"</code></pre>
+```txt
+msg="Error renewing certificate from LE: {example.com [*.example.com]}"
+providerName=letsencrypt.acme error="error: one or more domains had a problem:
+[example.com] acme: error presenting token: gandiv5: unexpected authZone example.com. for fqdn example.com."
+```
 
 then it could be due to `CNAME` support.
 
