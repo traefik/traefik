@@ -286,7 +286,7 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
 !!! warning "`CNAME` support"
 
     `CNAME` are supported (and sometimes even [encouraged](https://letsencrypt.org/2019/10/09/onboarding-your-customers-with-lets-encrypt-and-acme.html#the-advantages-of-a-cname)),
-    but there's a few cases where they can be [problematic](../../getting-started/faq/#why-does-lets-encrypt-wildcard-certificate-renewalgeneration-with-dns-challenge-fail).
+    but there are a few cases where they can be [problematic](../../getting-started/faq/#why-does-lets-encrypt-wildcard-certificate-renewalgeneration-with-dns-challenge-fail).
 
     If needed, `CNAME` support can be disabled with the following environment variable:
 
