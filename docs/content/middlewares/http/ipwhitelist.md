@@ -75,7 +75,10 @@ The `sourceRange` option sets the allowed IPs (or ranges of allowed IPs by using
 
 ### `ipStrategy`
 
-The `ipStrategy` option defines two parameters that set how Traefik determines the client IP: `depth`, and `excludedIPs`.
+The `ipStrategy` option defines two parameters that set how Traefik determines the client IP: `depth`, and `excludedIPs`.  
+If no strategy is set, the default behavior is to match `sourceRange` against the Remote address found in the request.
+
+!!! important "As a middleware, whitelisting happens before the actual proxying to the backend takes place. In addition, the previous network hop only gets appended to `X-Forwarded-For` during the last stages of proxying, i.e. after it has already passed through whitelisting. Therefore, during whitelisting, as the previous network hop is not yet present in `X-Forwarded-For`, it cannot be matched against `sourceRange`."
 
 #### `ipStrategy.depth`
 
