@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/abbot/go-http-auth v0.0.0-00010101000000-000000000000
 	github.com/aws/aws-sdk-go v1.44.47
-	github.com/cenkalti/backoff/v4 v4.1.3
+	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/compose-spec/compose-go v1.0.3
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
@@ -19,7 +19,7 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/fatih/structs v1.1.0
 	github.com/gambol99/go-marathon v0.0.0-20180614232016-99a156b96fb2
-	github.com/go-acme/lego/v4 v4.9.1
+	github.com/go-acme/lego/v4 v4.10.0
 	github.com/go-check/check v0.0.0-00010101000000-000000000000
 	github.com/go-kit/kit v0.10.1-0.20200915143503-439c4d2ed3ea
 	github.com/golang/protobuf v1.5.2
@@ -71,9 +71,9 @@ require (
 	go.elastic.co/apm v1.13.1
 	go.elastic.co/apm/module/apmot v1.13.1
 	golang.org/x/mod v0.6.0
-	golang.org/x/net v0.4.0
-	golang.org/x/text v0.5.0
-	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65
+	golang.org/x/net v0.5.0
+	golang.org/x/text v0.6.0
+	golang.org/x/time v0.3.0
 	golang.org/x/tools v0.2.0
 	google.golang.org/grpc v1.41.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.43.1
@@ -162,6 +162,7 @@ require (
 	github.com/fvbommel/sortorder v1.0.1 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-errors/errors v1.0.1 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/go-logr/logr v0.4.0 // indirect
 	github.com/go-redis/redis/v8 v8.11.5 // indirect
@@ -234,7 +235,7 @@ require (
 	github.com/mailgun/timetools v0.0.0-20141028012446-7e6055773c51 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
-	github.com/mattn/go-isatty v0.0.16 // indirect
+	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mattn/go-shellwords v1.0.12 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
@@ -300,6 +301,7 @@ require (
 	github.com/tonistiigi/units v0.0.0-20180711220420-6950e57a87ea // indirect
 	github.com/transip/gotransip/v6 v6.17.0 // indirect
 	github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926 // indirect
+	github.com/ultradns/ultradns-go-sdk v1.4.0-20221107152238-f3f1d1d // indirect
 	github.com/vinyldns/go-vinyldns v0.9.16 // indirect
 	github.com/vultr/govultr/v2 v2.17.2 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
@@ -319,13 +321,13 @@ require (
 	go.uber.org/zap v1.18.1 // indirect
 	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20220617031537-928513b29760 // indirect
-	golang.org/x/crypto v0.4.0 // indirect
+	golang.org/x/crypto v0.5.0 // indirect
 	golang.org/x/exp v0.0.0-20221205204356-47842c84f3db // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
-	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1 // indirect
+	golang.org/x/oauth2 v0.4.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
-	golang.org/x/term v0.3.0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
+	golang.org/x/term v0.4.0 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/api v0.44.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -334,7 +336,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/ns1/ns1-go.v2 v2.6.5 // indirect
-	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect
 	inet.af/netaddr v0.0.0-20220617031823-097006376321 // indirect
