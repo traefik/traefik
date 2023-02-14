@@ -413,6 +413,7 @@ tracing:
     sampleRate: 42
   datadog:
     localAgentHostPort: foobar
+    localAgentSocket: foobar
     globalTags:
       tag1: foobar
       tag2: foobar

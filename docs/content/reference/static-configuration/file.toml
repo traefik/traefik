@@ -384,6 +384,7 @@
     sampleRate = 42.0
   [tracing.datadog]
     localAgentHostPort = "foobar"
+    localAgentSocket = "foobar"
     [tracing.datadog.globalTags]
       tag1 = "foobar"
       tag2 = "foobar"

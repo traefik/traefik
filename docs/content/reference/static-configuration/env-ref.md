@@ -1038,6 +1038,9 @@ Sets a list of key:value tags on all spans.
 `TRAEFIK_TRACING_DATADOG_LOCALAGENTHOSTPORT`:  
 Sets the Datadog Agent host:port. (Default: ```localhost:8126```)
 
+`TRAEFIK_TRACING_DATADOG_LOCALAGENTSOCKET`:  
+Sets the Socket for the Datadog Agent.
+
 `TRAEFIK_TRACING_DATADOG_PARENTIDHEADERNAME`:  
 Sets the header name used to store the parent ID.
 
