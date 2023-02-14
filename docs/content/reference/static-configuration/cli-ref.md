@@ -1038,6 +1038,9 @@ Sets a list of key:value tags on all spans.
 `--tracing.datadog.localagenthostport`:  
 Sets the Datadog Agent host:port. (Default: ```localhost:8126```)
 
+`--tracing.datadog.localagentsocket`:  
+Sets the Socket for the Datadog Agent.
+
 `--tracing.datadog.parentidheadername`:  
 Sets the header name used to store the parent ID.
 
