@@ -315,7 +315,7 @@ func alpn(tree *matchersTree, protos ...string) error {
 	return nil
 }
 
-var almostFQDN = regexp.MustCompile(`^[[:alnum:]\.-]+$`)
+var hostOrIP = regexp.MustCompile(`^[[:alnum:]\.\-\:]+$`)
 
 // hostSNI checks if the SNI Host of the connection match the matcher host.
 func hostSNI(tree *matchersTree, hosts ...string) error {
@@ -329,8 +329,8 @@ func hostSNI(tree *matchersTree, hosts ...string) error {
 			continue
 		}
 
-		if !almostFQDN.MatchString(host) {
-			return fmt.Errorf("invalid value for \"HostSNI\" matcher, %q is not a valid hostname", host)
+		if !hostOrIP.MatchString(host) {
+			return fmt.Errorf("invalid value for \"HostSNI\" matcher, %q is not a valid hostname or IP", host)
 		}
 
 		hosts[i] = strings.ToLower(host)
