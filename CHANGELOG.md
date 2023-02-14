@@ -1,3 +1,29 @@
+## [v2.9.7](https://github.com/traefik/traefik/tree/v2.9.7) (2023-02-14)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.6...v2.9.7)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.10.0 ([#9705](https://github.com/traefik/traefik/pull/9705) by [ldez](https://github.com/ldez))
+- **[ecs]** Prevent panicking when a container has no network interfaces ([#9661](https://github.com/traefik/traefik/pull/9661) by [rtribotte](https://github.com/rtribotte))
+- **[file]** Make file provider more resilient wrt first configuration ([#9595](https://github.com/traefik/traefik/pull/9595) by [mpl](https://github.com/mpl))
+- **[logs]** Differentiate UDP stream and TCP connection in logs ([#9687](https://github.com/traefik/traefik/pull/9687) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Prevent from no rate limiting when average is zero ([#9621](https://github.com/traefik/traefik/pull/9621) by [witalisoft](https://github.com/witalisoft))
+- **[middleware]** Prevents superfluous WriteHeader call in the error middleware ([#9620](https://github.com/traefik/traefik/pull/9620) by [tomMoulard](https://github.com/tomMoulard))
+- **[middleware]** Sanitize X-Forwarded-Proto header in RedirectScheme middleware ([#9598](https://github.com/traefik/traefik/pull/9598) by [ldez](https://github.com/ldez))
+- **[plugins]** Update paerser to v0.2.0 ([#9671](https://github.com/traefik/traefik/pull/9671) by [ldez](https://github.com/ldez))
+- **[plugins]** Update Yaegi to v0.15.0 ([#9700](https://github.com/traefik/traefik/pull/9700) by [ldez](https://github.com/ldez))
+- **[tls,http3]** Bump quic-go to 89769f409f ([#9685](https://github.com/traefik/traefik/pull/9685) by [mpl](https://github.com/mpl))
+- **[tls,tcp]** Adds the support for IPv6 in the TCP HostSNI matcher ([#9692](https://github.com/traefik/traefik/pull/9692) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- **[acme]** Add CNAME support and gotchas ([#9698](https://github.com/traefik/traefik/pull/9698) by [mpl](https://github.com/mpl))
+- **[acme]** Further Let&#39;s Encrypt ratelimit warnings ([#9627](https://github.com/traefik/traefik/pull/9627) by [hcooper](https://github.com/hcooper))
+- **[k8s]** Add info admonition about routing to k8 services ([#9645](https://github.com/traefik/traefik/pull/9645) by [svx](https://github.com/svx))
+- **[k8s]** Improve TLSStore CRD documentation ([#9579](https://github.com/traefik/traefik/pull/9579) by [mloiseleur](https://github.com/mloiseleur))
+- **[middleware]** doc: add note about remoteaddr strategy ([#9701](https://github.com/traefik/traefik/pull/9701) by [mpl](https://github.com/mpl))
+- Update copyright to match new standard ([#9651](https://github.com/traefik/traefik/pull/9651) by [paulocfjunior](https://github.com/paulocfjunior))
+- Update copyright for 2023 ([#9631](https://github.com/traefik/traefik/pull/9631) by [kevinpollet](https://github.com/kevinpollet))
+- Update submitting pull requests to include language about drafts ([#9609](https://github.com/traefik/traefik/pull/9609) by [tfny](https://github.com/tfny))
+
 ## [v2.9.6](https://github.com/traefik/traefik/tree/v2.9.6) (2022-12-07)
 [All Commits](https://github.com/traefik/traefik/compare/v2.9.5...v2.9.6)
 
