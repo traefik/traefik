@@ -38,14 +38,14 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	log.Debug().
 		Str("address", p.address).
 		Str("remoteAddr", conn.RemoteAddr().String()).
-		Msg("Handling connection")
+		Msg("Handling TCP connection")
 
 	// needed because of e.g. server.trackedConnection
 	defer conn.Close()
 
 	connBackend, err := p.dialBackend()
 	if err != nil {
-		log.Error().Err(err).Msg("Error while connecting to backend")
+		log.Error().Err(err).Msg("Error while dialing backend")
 		return
 	}
 
@@ -56,7 +56,7 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	if p.proxyProtocol != nil && p.proxyProtocol.Version > 0 && p.proxyProtocol.Version < 3 {
 		header := proxyproto.HeaderProxyFromAddrs(byte(p.proxyProtocol.Version), conn.RemoteAddr(), conn.LocalAddr())
 		if _, err := header.WriteTo(connBackend); err != nil {
-			log.Error().Err(err).Msg("Error while writing proxy protocol headers to backend connection")
+			log.Error().Err(err).Msg("Error while writing TCP proxy protocol headers to backend connection")
 			return
 		}
 	}
@@ -70,9 +70,9 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 		// This allows to not report an RST packet sent by the peer as an error,
 		// as it is an abrupt but possible end for the TCP session
 		if isReadConnResetError(err) {
-			log.Debug().Err(err).Msg("Error during connection")
+			log.Debug().Err(err).Msg("Error while handling TCP connection")
 		} else {
-			log.Error().Err(err).Msg("Error during connection")
+			log.Error().Err(err).Msg("Error while handling TCP connection")
 		}
 	}
 
@@ -101,7 +101,7 @@ func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 		// In that case, logging the error is superfluous,
 		// as in the first place we should not have needed to call CloseWrite.
 		if !isSocketNotConnectedError(errClose) {
-			log.Debug().Err(errClose).Msg("Error while terminating connection")
+			log.Debug().Err(errClose).Msg("Error while terminating TCP connection")
 		}
 
 		return
@@ -110,7 +110,7 @@ func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 	if p.dialer.TerminationDelay() >= 0 {
 		err := dst.SetReadDeadline(time.Now().Add(p.dialer.TerminationDelay()))
 		if err != nil {
-			log.Debug().Err(err).Msg("Error while setting deadline")
+			log.Debug().Err(err).Msg("Error while setting TCP connection deadline")
 		}
 	}
 }
