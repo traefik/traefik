@@ -1,3 +1,9 @@
+## [v2.9.8](https://github.com/traefik/traefik/tree/v2.9.8) (2023-02-15)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.7...v2.9.8)
+
+**Bug fixes:**
+- **[server]** Update golang.org/x/net to v0.7.0 ([#9716](https://github.com/traefik/traefik/pull/9716) by [ldez](https://github.com/ldez))
+
 ## [v2.9.7](https://github.com/traefik/traefik/tree/v2.9.7) (2023-02-14)
 [All Commits](https://github.com/traefik/traefik/compare/v2.9.6...v2.9.7)
 
