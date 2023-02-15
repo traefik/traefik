@@ -3,11 +3,12 @@ package http
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
+	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 )
 
 func TestClientIPMatcher(t *testing.T) {
@@ -121,16 +122,18 @@ func TestMethodMatcher(t *testing.T) {
 			desc: "valid Method matcher",
 			rule: "Method(`GET`)",
 			expected: map[string]int{
-				http.MethodGet:  http.StatusOK,
-				http.MethodPost: http.StatusMethodNotAllowed,
+				http.MethodGet:                  http.StatusOK,
+				http.MethodPost:                 http.StatusNotFound,
+				strings.ToLower(http.MethodGet): http.StatusNotFound,
 			},
 		},
 		{
 			desc: "valid Method matcher (lower case)",
 			rule: "Method(`get`)",
 			expected: map[string]int{
-				http.MethodGet:  http.StatusOK,
-				http.MethodPost: http.StatusMethodNotAllowed,
+				http.MethodGet:                  http.StatusOK,
+				http.MethodPost:                 http.StatusNotFound,
+				strings.ToLower(http.MethodGet): http.StatusNotFound,
 			},
 		},
 	}
@@ -200,6 +203,7 @@ func TestHostMatcher(t *testing.T) {
 				"https://example.com":      http.StatusOK,
 				"https://example.com:8080": http.StatusOK,
 				"https://example.com/path": http.StatusOK,
+				"https://EXAMPLE.COM/path": http.StatusOK,
 				"https://example.org":      http.StatusNotFound,
 				"https://example.org/path": http.StatusNotFound,
 			},
@@ -665,6 +669,17 @@ func TestHeaderMatcher(t *testing.T) {
 				{"X-Forwarded-Host": []string{"example.com"}}:    http.StatusNotFound,
 			},
 		},
+		{
+			desc: "valid Header matcher (non-canonical form)",
+			rule: "Header(`x-forwarded-proto`, `https`)",
+			expected: map[*http.Header]int{
+				{"X-Forwarded-Proto": []string{"https"}}:         http.StatusOK,
+				{"x-forwarded-proto": []string{"https"}}:         http.StatusNotFound,
+				{"X-Forwarded-Proto": []string{"http", "https"}}: http.StatusOK,
+				{"X-Forwarded-Proto": []string{"https", "http"}}: http.StatusOK,
+				{"X-Forwarded-Host": []string{"example.com"}}:    http.StatusNotFound,
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -738,6 +753,18 @@ func TestHeaderRegexpMatcher(t *testing.T) {
 		{
 			desc: "valid HeaderRegexp matcher",
 			rule: "HeaderRegexp(`X-Forwarded-Proto`, `^https?$`)",
+			expected: map[*http.Header]int{
+				{"X-Forwarded-Proto": []string{"http"}}:        http.StatusOK,
+				{"x-forwarded-proto": []string{"http"}}:        http.StatusNotFound,
+				{"X-Forwarded-Proto": []string{"https"}}:       http.StatusOK,
+				{"X-Forwarded-Proto": []string{"HTTPS"}}:       http.StatusNotFound,
+				{"X-Forwarded-Proto": []string{"ws", "https"}}: http.StatusOK,
+				{"X-Forwarded-Host": []string{"example.com"}}:  http.StatusNotFound,
+			},
+		},
+		{
+			desc: "valid HeaderRegexp matcher (non-canonical form)",
+			rule: "HeaderRegexp(`x-forwarded-proto`, `^https?$`)",
 			expected: map[*http.Header]int{
 				{"X-Forwarded-Proto": []string{"http"}}:        http.StatusOK,
 				{"x-forwarded-proto": []string{"http"}}:        http.StatusNotFound,

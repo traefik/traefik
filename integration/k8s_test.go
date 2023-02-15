@@ -16,8 +16,8 @@ import (
 	"github.com/go-check/check"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/api"
+	"github.com/traefik/traefik/v3/integration/try"
+	"github.com/traefik/traefik/v3/pkg/api"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -126,6 +126,17 @@ func (s *K8sSuite) TestIngressclass(c *check.C) {
 	defer s.killCmd(cmd)
 
 	testConfiguration(c, "testdata/rawdata-ingressclass.json", "8080")
+}
+
+func (s *K8sSuite) TestDisableIngressclassLookup(c *check.C) {
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/k8s_ingressclass_disabled.toml"))
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	testConfiguration(c, "testdata/rawdata-ingressclass-disabled.json", "8080")
 }
 
 func testConfiguration(c *check.C, path, apiPort string) {

@@ -12,9 +12,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/testhelpers"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/vulcand/oxy/v2/utils"
+	"golang.org/x/time/rate"
 )
 
 func TestNewRateLimiter(t *testing.T) {
@@ -25,7 +26,16 @@ func TestNewRateLimiter(t *testing.T) {
 		expectedSourceIP string
 		requestHeader    string
 		expectedError    string
+		expectedRTL      rate.Limit
 	}{
+		{
+			desc: "no ratelimit on Average == 0",
+			config: dynamic.RateLimit{
+				Average: 0,
+				Burst:   10,
+			},
+			expectedRTL: rate.Inf,
+		},
 		{
 			desc: "maxDelay computation",
 			config: dynamic.RateLimit{
@@ -119,6 +129,9 @@ func TestNewRateLimiter(t *testing.T) {
 				hd, _, err := extractor(&req)
 				assert.NoError(t, err)
 				assert.Equal(t, test.requestHeader, hd)
+			}
+			if test.expectedRTL != 0 {
+				assert.Equal(t, test.expectedRTL, rtl.rate)
 			}
 		})
 	}

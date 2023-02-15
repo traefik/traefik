@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/traefik/traefik/v2/pkg/provider/hub"
+	"github.com/traefik/traefik/v3/pkg/provider/hub"
 )
 
 func TestHasEntrypoint(t *testing.T) {

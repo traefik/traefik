@@ -4,19 +4,20 @@ import (
 	"context"
 
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/metrics"
-	"github.com/traefik/traefik/v2/pkg/server/middleware"
-	tcpmiddleware "github.com/traefik/traefik/v2/pkg/server/middleware/tcp"
-	"github.com/traefik/traefik/v2/pkg/server/router"
-	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
-	udprouter "github.com/traefik/traefik/v2/pkg/server/router/udp"
-	"github.com/traefik/traefik/v2/pkg/server/service"
-	"github.com/traefik/traefik/v2/pkg/server/service/tcp"
-	"github.com/traefik/traefik/v2/pkg/server/service/udp"
-	"github.com/traefik/traefik/v2/pkg/tls"
-	udptypes "github.com/traefik/traefik/v2/pkg/udp"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/metrics"
+	"github.com/traefik/traefik/v3/pkg/server/middleware"
+	tcpmiddleware "github.com/traefik/traefik/v3/pkg/server/middleware/tcp"
+	"github.com/traefik/traefik/v3/pkg/server/router"
+	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
+	udprouter "github.com/traefik/traefik/v3/pkg/server/router/udp"
+	"github.com/traefik/traefik/v3/pkg/server/service"
+	tcpsvc "github.com/traefik/traefik/v3/pkg/server/service/tcp"
+	udpsvc "github.com/traefik/traefik/v3/pkg/server/service/udp"
+	"github.com/traefik/traefik/v3/pkg/tcp"
+	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/udp"
 )
 
 // RouterFactory the factory of TCP/UDP routers.
@@ -32,12 +33,14 @@ type RouterFactory struct {
 	chainBuilder *middleware.ChainBuilder
 	tlsManager   *tls.Manager
 
+	dialerManager *tcp.DialerManager
+
 	cancelPrevState func()
 }
 
 // NewRouterFactory creates a new RouterFactory.
 func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *service.ManagerFactory, tlsManager *tls.Manager,
-	chainBuilder *middleware.ChainBuilder, pluginBuilder middleware.PluginsBuilder, metricsRegistry metrics.Registry,
+	chainBuilder *middleware.ChainBuilder, pluginBuilder middleware.PluginsBuilder, metricsRegistry metrics.Registry, dialerManager *tcp.DialerManager,
 ) *RouterFactory {
 	var entryPointsTCP, entryPointsUDP []string
 	for name, cfg := range staticConfiguration.EntryPoints {
@@ -62,11 +65,12 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 		tlsManager:      tlsManager,
 		chainBuilder:    chainBuilder,
 		pluginBuilder:   pluginBuilder,
+		dialerManager:   dialerManager,
 	}
 }
 
 // CreateRouters creates new TCPRouters and UDPRouters.
-func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string]*tcprouter.Router, map[string]udptypes.Handler) {
+func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string]*tcprouter.Router, map[string]udp.Handler) {
 	if f.cancelPrevState != nil {
 		f.cancelPrevState()
 	}
@@ -87,7 +91,7 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 	serviceManager.LaunchHealthCheck(ctx)
 
 	// TCP
-	svcTCPManager := tcp.NewManager(rtConf)
+	svcTCPManager := tcpsvc.NewManager(rtConf, f.dialerManager)
 
 	middlewaresTCPBuilder := tcpmiddleware.NewBuilder(rtConf.TCPMiddlewares)
 
@@ -95,7 +99,7 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 	routersTCP := rtTCPManager.BuildHandlers(ctx, f.entryPointsTCP)
 
 	// UDP
-	svcUDPManager := udp.NewManager(rtConf)
+	svcUDPManager := udpsvc.NewManager(rtConf)
 	rtUDPManager := udprouter.NewManager(rtConf, svcUDPManager)
 	routersUDP := rtUDPManager.BuildHandlers(ctx, f.entryPointsUDP)
 

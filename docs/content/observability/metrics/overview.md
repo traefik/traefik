@@ -1,6 +1,6 @@
 ---
 title: "Traefik Metrics Overview"
-description: "Traefik Proxy supports these metrics backend systems: Datadog, InfluxDB, Prometheus, and StatsD. Read the full documentation to get started."
+description: "Traefik Proxy supports these metrics backend systems: Datadog, InfluxDB 2.X, Prometheus, and StatsD. Read the full documentation to get started."
 ---
 
 # Metrics
@@ -8,7 +8,6 @@ description: "Traefik Proxy supports these metrics backend systems: Datadog, Inf
 Traefik supports these metrics backends:
 
 - [Datadog](./datadog.md)
-- [InfluxDB](./influxdb.md)
 - [InfluxDB2](./influxdb2.md)
 - [Prometheus](./prometheus.md)
 - [StatsD](./statsd.md)
@@ -35,7 +34,7 @@ config.reload.lastSuccessTimestamp
 tls.certs.notAfterTimestamp
 ```
 
-```influxdb tab="InfluxDB / InfluxDB2"
+```influxdb tab="InfluxDB2"
 traefik.config.reload.total
 traefik.config.reload.lastSuccessTimestamp
 traefik.tls.certs.notAfterTimestamp
@@ -46,6 +45,12 @@ traefik.tls.certs.notAfterTimestamp
 {prefix}.config.reload.total
 {prefix}.config.reload.lastSuccessTimestamp
 {prefix}.tls.certs.notAfterTimestamp
+```
+
+```opentelemetry tab="OpenTelemetry"
+traefik_config_reloads_total
+traefik_config_last_reload_success
+traefik_tls_certs_not_after
 ```
 
 ## EntryPoint Metrics
@@ -77,7 +82,7 @@ entrypoint.requests.bytes.total
 entrypoint.responses.bytes.total
 ```
 
-```influxdb tab="InfluxDB / InfluxDB2"
+```influxdb tab="InfluxDB2"
 traefik.entrypoint.requests.total
 traefik.entrypoint.requests.tls.total
 traefik.entrypoint.request.duration
@@ -94,6 +99,15 @@ traefik.entrypoint.responses.bytes.total
 {prefix}.entrypoint.connections.open
 {prefix}.entrypoint.requests.bytes.total
 {prefix}.entrypoint.responses.bytes.total
+```
+
+```opentelemetry tab="OpenTelemetry"
+traefik_entrypoint_requests_total
+traefik_entrypoint_requests_tls_total
+traefik_entrypoint_request_duration_seconds
+traefik_entrypoint_open_connections
+traefik_entrypoint_requests_bytes_total
+traefik_entrypoint_responses_bytes_total
 ```
 
 ## Router Metrics
@@ -125,7 +139,7 @@ router.requests.bytes.total
 router.responses.bytes.total
 ```
 
-```influxdb tab="InfluxDB / InfluxDB2"
+```influxdb tab="InfluxDB2"
 traefik.router.requests.total
 traefik.router.requests.tls.total
 traefik.router.request.duration
@@ -142,6 +156,15 @@ traefik.router.responses.bytes.total
 {prefix}.router.connections.open
 {prefix}.router.requests.bytes.total
 {prefix}.router.responses.bytes.total
+```
+
+```opentelemetry tab="OpenTelemetry"
+traefik_router_requests_total
+traefik_router_requests_tls_total
+traefik_router_request_duration_seconds
+traefik_router_open_connections
+traefik_router_requests_bytes_total
+traefik_router_responses_bytes_total
 ```
 
 ## Service Metrics
@@ -179,7 +202,7 @@ service.requests.bytes.total
 service.responses.bytes.total
 ```
 
-```influxdb tab="InfluxDB / InfluxDB2"
+```influxdb tab="InfluxDB2"
 traefik.service.requests.total
 traefik.service.requests.tls.total
 traefik.service.request.duration
@@ -200,6 +223,17 @@ traefik.service.responses.bytes.total
 {prefix}.service.server.up
 {prefix}.service.requests.bytes.total
 {prefix}.service.responses.bytes.total
+```
+
+```opentelemetry tab="OpenTelemetry"
+traefik_service_requests_total
+traefik_service_requests_tls_total
+traefik_service_request_duration_seconds
+traefik_service_open_connections
+traefik_service_retries_total
+traefik_service_server_up
+traefik_service_requests_bytes_total
+traefik_service_responses_bytes_total
 ```
 
 ## Labels

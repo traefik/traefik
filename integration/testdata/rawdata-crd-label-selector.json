@@ -6,6 +6,7 @@
 			],
 			"service": "api@internal",
 			"rule": "PathPrefix(`/api`)",
+			"priority": 18,
 			"status": "enabled",
 			"using": [
 				"web"

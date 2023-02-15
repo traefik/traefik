@@ -10,8 +10,8 @@ import (
 
 	"github.com/go-kit/kit/metrics"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/types"
-	"github.com/traefik/traefik/v2/pkg/version"
+	"github.com/traefik/traefik/v3/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/version"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
@@ -23,7 +23,8 @@ import (
 	"go.opentelemetry.io/otel/metric/unit"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/aggregation"
-	"go.opentelemetry.io/otel/sdk/metric/view"
+	"go.opentelemetry.io/otel/sdk/resource"
+	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
 )
@@ -140,27 +141,31 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OpenTeleme
 		return nil, fmt.Errorf("creating exporter: %w", err)
 	}
 
+	res, err := resource.New(ctx,
+		resource.WithAttributes(semconv.ServiceNameKey.String("traefik")),
+		resource.WithAttributes(semconv.ServiceVersionKey.String(version.Version)),
+		resource.WithFromEnv(),
+		resource.WithTelemetrySDK(),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("building resource: %w", err)
+	}
+
 	opts := []sdkmetric.PeriodicReaderOption{
 		sdkmetric.WithInterval(time.Duration(config.PushInterval)),
 	}
 
-	// View to customize histogram buckets and rename a single histogram instrument.
-	customBucketsView, err := view.New(
-		// Match* to match instruments
-		view.MatchInstrumentName("traefik_*_request_duration_seconds"),
-
-		view.WithSetAggregation(aggregation.ExplicitBucketHistogram{
-			Boundaries: config.ExplicitBoundaries,
-		}),
+	meterProvider := sdkmetric.NewMeterProvider(
+		sdkmetric.WithResource(res),
+		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter, opts...)),
+		// View to customize histogram buckets and rename a single histogram instrument.
+		sdkmetric.WithView(sdkmetric.NewView(
+			sdkmetric.Instrument{Name: "traefik_*_request_duration_seconds"},
+			sdkmetric.Stream{Aggregation: aggregation.ExplicitBucketHistogram{
+				Boundaries: config.ExplicitBoundaries,
+			}},
+		)),
 	)
-	if err != nil {
-		return nil, fmt.Errorf("creating histogram view: %w", err)
-	}
-
-	meterProvider := sdkmetric.NewMeterProvider(sdkmetric.WithReader(
-		sdkmetric.NewPeriodicReader(exporter, opts...),
-		customBucketsView,
-	))
 
 	global.SetMeterProvider(meterProvider)
 
