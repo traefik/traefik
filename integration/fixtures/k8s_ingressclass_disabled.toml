@@ -1,0 +1,18 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[api]
+  insecure = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[providers.kubernetesIngress]
+  ingressClass = "traefik-keep"
+  disableIngressClassLookup = true

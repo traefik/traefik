@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-const rootPkg = "github.com/traefik/traefik/v2/pkg/config/dynamic"
+const rootPkg = "github.com/traefik/traefik/v3/pkg/config/dynamic"
 
 const (
 	destModuleName = "github.com/traefik/genconf"
@@ -57,8 +57,8 @@ func run(dest string) error {
 	}
 
 	centrifuge.IncludedImports = []string{
-		"github.com/traefik/traefik/v2/pkg/tls",
-		"github.com/traefik/traefik/v2/pkg/types",
+		"github.com/traefik/traefik/v3/pkg/tls",
+		"github.com/traefik/traefik/v3/pkg/types",
 	}
 
 	centrifuge.ExcludedTypes = []string{
@@ -71,8 +71,8 @@ func run(dest string) error {
 	}
 
 	centrifuge.ExcludedFiles = []string{
-		"github.com/traefik/traefik/v2/pkg/types/logs.go",
-		"github.com/traefik/traefik/v2/pkg/types/metrics.go",
+		"github.com/traefik/traefik/v3/pkg/types/logs.go",
+		"github.com/traefik/traefik/v3/pkg/types/metrics.go",
 	}
 
 	centrifuge.TypeCleaner = cleanType
@@ -87,11 +87,11 @@ func run(dest string) error {
 }
 
 func cleanType(typ types.Type, base string) string {
-	if typ.String() == "github.com/traefik/traefik/v2/pkg/tls.FileOrContent" {
+	if typ.String() == "github.com/traefik/traefik/v3/pkg/tls.FileOrContent" {
 		return "string"
 	}
 
-	if typ.String() == "[]github.com/traefik/traefik/v2/pkg/tls.FileOrContent" {
+	if typ.String() == "[]github.com/traefik/traefik/v3/pkg/tls.FileOrContent" {
 		return "[]string"
 	}
 
@@ -103,8 +103,8 @@ func cleanType(typ types.Type, base string) string {
 		return strings.ReplaceAll(typ.String(), base+".", "")
 	}
 
-	if strings.Contains(typ.String(), "github.com/traefik/traefik/v2/pkg/") {
-		return strings.ReplaceAll(typ.String(), "github.com/traefik/traefik/v2/pkg/", "")
+	if strings.Contains(typ.String(), "github.com/traefik/traefik/v3/pkg/") {
+		return strings.ReplaceAll(typ.String(), "github.com/traefik/traefik/v3/pkg/", "")
 	}
 
 	return typ.String()
@@ -114,9 +114,9 @@ func cleanPackage(src string) string {
 	switch src {
 	case "github.com/traefik/paerser/types":
 		return ""
-	case "github.com/traefik/traefik/v2/pkg/tls":
+	case "github.com/traefik/traefik/v3/pkg/tls":
 		return path.Join(destModuleName, destPkg, "tls")
-	case "github.com/traefik/traefik/v2/pkg/types":
+	case "github.com/traefik/traefik/v3/pkg/types":
 		return path.Join(destModuleName, destPkg, "types")
 	default:
 		return src

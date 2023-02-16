@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/kvtools/consul"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/provider/kv"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/provider/kv"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // providerName is the Consul provider name.

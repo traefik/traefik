@@ -19,14 +19,14 @@ import (
 	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/job"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/tls"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/job"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefik/v1alpha1"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -391,6 +391,80 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			PeerCertURI:         serversTransport.Spec.PeerCertURI,
 			Spiffe:              serversTransport.Spec.Spiffe,
 		}
+	}
+
+	for _, serversTransportTCP := range client.GetServersTransportTCPs() {
+		logger := log.Ctx(ctx).With().Str(logs.ServersTransportName, serversTransportTCP.Name).Logger()
+
+		var tcpServerTransport dynamic.TCPServersTransport
+		tcpServerTransport.SetDefaults()
+
+		if serversTransportTCP.Spec.DialTimeout != nil {
+			err := tcpServerTransport.DialTimeout.Set(serversTransportTCP.Spec.DialTimeout.String())
+			if err != nil {
+				logger.Error().Err(err).Msg("Error while reading DialTimeout")
+			}
+		}
+
+		if serversTransportTCP.Spec.DialKeepAlive != nil {
+			err := tcpServerTransport.DialKeepAlive.Set(serversTransportTCP.Spec.DialKeepAlive.String())
+			if err != nil {
+				logger.Error().Err(err).Msg("Error while reading DialKeepAlive")
+			}
+		}
+
+		if serversTransportTCP.Spec.TerminationDelay != nil {
+			err := tcpServerTransport.TerminationDelay.Set(serversTransportTCP.Spec.TerminationDelay.String())
+			if err != nil {
+				logger.Error().Err(err).Msg("Error while reading TerminationDelay")
+			}
+		}
+
+		if serversTransportTCP.Spec.TLS != nil {
+			var rootCAs []tls.FileOrContent
+			for _, secret := range serversTransportTCP.Spec.TLS.RootCAsSecrets {
+				caSecret, err := loadCASecret(serversTransportTCP.Namespace, secret, client)
+				if err != nil {
+					logger.Error().
+						Err(err).
+						Str("rootCAs", secret).
+						Msg("Error while loading rootCAs")
+					continue
+				}
+
+				rootCAs = append(rootCAs, tls.FileOrContent(caSecret))
+			}
+
+			var certs tls.Certificates
+			for _, secret := range serversTransportTCP.Spec.TLS.CertificatesSecrets {
+				tlsCert, tlsKey, err := loadAuthTLSSecret(serversTransportTCP.Namespace, secret, client)
+				if err != nil {
+					logger.Error().
+						Err(err).
+						Str("certificates", secret).
+						Msg("Error while loading certificates")
+					continue
+				}
+
+				certs = append(certs, tls.Certificate{
+					CertFile: tls.FileOrContent(tlsCert),
+					KeyFile:  tls.FileOrContent(tlsKey),
+				})
+			}
+
+			tcpServerTransport.TLS = &dynamic.TLSClientConfig{
+				ServerName:         serversTransportTCP.Spec.TLS.ServerName,
+				InsecureSkipVerify: serversTransportTCP.Spec.TLS.InsecureSkipVerify,
+				RootCAs:            rootCAs,
+				Certificates:       certs,
+				PeerCertURI:        serversTransportTCP.Spec.TLS.PeerCertURI,
+			}
+
+			tcpServerTransport.TLS.Spiffe = serversTransportTCP.Spec.TLS.Spiffe
+		}
+
+		id := provider.Normalize(makeID(serversTransportTCP.Namespace, serversTransportTCP.Name))
+		conf.TCP.ServersTransports[id] = &tcpServerTransport
 	}
 
 	return conf

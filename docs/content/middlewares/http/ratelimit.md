@@ -40,21 +40,6 @@ spec:
 - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=50"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ratelimit.ratelimit.average": "100",
-  "traefik.http.middlewares.test-ratelimit.ratelimit.burst": "50"
-}
-```
-
-```yaml tab="Rancher"
-# Here, an average of 100 requests per second is allowed.
-# In addition, a burst of 50 requests is allowed.
-labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=50"
-```
-
 ```yaml tab="File (YAML)"
 # Here, an average of 100 requests per second is allowed.
 # In addition, a burst of 50 requests is allowed.
@@ -108,17 +93,6 @@ spec:
 - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ratelimit.ratelimit.average": "100",
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
-```
-
 ```yaml tab="File (YAML)"
 # 100 reqs/s
 http:
@@ -170,20 +144,6 @@ spec:
 - "traefik.http.middlewares.test-ratelimit.ratelimit.period=1m"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ratelimit.ratelimit.average": "6",
-  "traefik.http.middlewares.test-ratelimit.ratelimit.period": "1m",
-}
-```
-
-```yaml tab="Rancher"
-# 6 reqs/minute
-labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=6"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.period=1m"
-```
-
 ```yaml tab="File (YAML)"
 # 6 reqs/minute
 http:
@@ -227,17 +187,6 @@ spec:
 - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=100"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ratelimit.ratelimit.burst": "100",
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=100"
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -261,6 +210,8 @@ If none are set, the default is to use the request's remote address field (as an
 #### `sourceCriterion.ipStrategy`
 
 The `ipStrategy` option defines two parameters that configures how Traefik determines the client IP: `depth`, and `excludedIPs`.
+
+!!! important "As a middleware, rate-limiting happens before the actual proxying to the backend takes place. In addition, the previous network hop only gets appended to `X-Forwarded-For` during the last stages of proxying, i.e. after it has already passed through rate-limiting. Therefore, during rate-limiting, as the previous network hop is not yet present in `X-Forwarded-For`, it cannot be found and/or relied upon."
 
 ##### `ipStrategy.depth`
 
@@ -298,17 +249,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth=2"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth": "2"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth=2"
 ```
 
 ```yaml tab="File (YAML)"
@@ -394,17 +334,6 @@ spec:
 - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -448,17 +377,6 @@ spec:
 - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername": "username"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -497,17 +415,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost": "true"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
 ```
 
 ```yaml tab="File (YAML)"

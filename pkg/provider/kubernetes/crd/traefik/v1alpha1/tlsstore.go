@@ -1,7 +1,7 @@
 package v1alpha1
 
 import (
-	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/tls"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

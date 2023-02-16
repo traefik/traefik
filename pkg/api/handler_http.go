@@ -4,14 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
 type routerRepresentation struct {
@@ -69,7 +68,8 @@ func newMiddlewareRepresentation(name string, mi *runtime.MiddlewareInfo) middle
 func (h Handler) getRouters(rw http.ResponseWriter, request *http.Request) {
 	results := make([]routerRepresentation, 0, len(h.runtimeConfiguration.Routers))
 
-	criterion := newSearchCriterion(request.URL.Query())
+	query := request.URL.Query()
+	criterion := newSearchCriterion(query)
 
 	for name, rt := range h.runtimeConfiguration.Routers {
 		if keepRouter(name, rt, criterion) {
@@ -77,9 +77,7 @@ func (h Handler) getRouters(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
+	sortRouters(query, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -121,7 +119,8 @@ func (h Handler) getRouter(rw http.ResponseWriter, request *http.Request) {
 func (h Handler) getServices(rw http.ResponseWriter, request *http.Request) {
 	results := make([]serviceRepresentation, 0, len(h.runtimeConfiguration.Services))
 
-	criterion := newSearchCriterion(request.URL.Query())
+	query := request.URL.Query()
+	criterion := newSearchCriterion(query)
 
 	for name, si := range h.runtimeConfiguration.Services {
 		if keepService(name, si, criterion) {
@@ -129,9 +128,7 @@ func (h Handler) getServices(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
+	sortServices(query, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -173,7 +170,8 @@ func (h Handler) getService(rw http.ResponseWriter, request *http.Request) {
 func (h Handler) getMiddlewares(rw http.ResponseWriter, request *http.Request) {
 	results := make([]middlewareRepresentation, 0, len(h.runtimeConfiguration.Middlewares))
 
-	criterion := newSearchCriterion(request.URL.Query())
+	query := request.URL.Query()
+	criterion := newSearchCriterion(query)
 
 	for name, mi := range h.runtimeConfiguration.Middlewares {
 		if keepMiddleware(name, mi, criterion) {
@@ -181,9 +179,7 @@ func (h Handler) getMiddlewares(rw http.ResponseWriter, request *http.Request) {
 		}
 	}
 
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Name < results[j].Name
-	})
+	sortMiddlewares(query, results)
 
 	rw.Header().Set("Content-Type", "application/json")
 
@@ -227,7 +223,10 @@ func keepRouter(name string, item *runtime.RouterInfo, criterion *searchCriterio
 		return true
 	}
 
-	return criterion.withStatus(item.Status) && criterion.searchIn(item.Rule, name)
+	return criterion.withStatus(item.Status) &&
+		criterion.searchIn(item.Rule, name) &&
+		criterion.filterService(item.Service) &&
+		criterion.filterMiddleware(item.Middlewares)
 }
 
 func keepService(name string, item *runtime.ServiceInfo, criterion *searchCriterion) bool {

@@ -19,11 +19,11 @@ import (
 	"github.com/patrickmn/go-cache"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/job"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/job"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
 // Provider holds configurations of the provider.
@@ -320,6 +320,11 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 
 				var mach *machine
 				if len(task.Attachments) != 0 {
+					if len(container.NetworkInterfaces) == 0 {
+						logger.Error().Msgf("Skip container %s: no network interfaces", aws.StringValue(container.Name))
+						continue
+					}
+
 					var ports []portMapping
 					for _, mapping := range containerDefinition.PortMappings {
 						if mapping != nil {

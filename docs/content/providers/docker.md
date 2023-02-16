@@ -95,7 +95,7 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
 ## Routing Configuration
 
 When using Docker as a [provider](./overview.md),
-Traefik uses [container labels](https://docs.docker.com/engine/reference/commandline/run/#set-metadata-on-container--l---label---label-file) to retrieve its routing configuration.
+Traefik uses [container labels](https://docs.docker.com/engine/reference/commandline/run/#label) to retrieve its routing configuration.
 
 See the list of labels in the dedicated [routing](../routing/providers/docker.md) section.
 

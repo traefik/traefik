@@ -7,14 +7,13 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/ip"
-	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
+	"github.com/traefik/traefik/v3/pkg/ip"
+	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 	"golang.org/x/exp/slices"
 )
 
-var httpFuncs = map[string]func(*mux.Route, ...string) error{
+var httpFuncs = map[string]func(*matchersTree, ...string) error{
 	"ClientIP":     expectNParameters(clientIP, 1),
 	"Method":       expectNParameters(method, 1),
 	"Host":         expectNParameters(host, 1),
@@ -28,17 +27,17 @@ var httpFuncs = map[string]func(*mux.Route, ...string) error{
 	"QueryRegexp":  expectNParameters(queryRegexp, 1, 2),
 }
 
-func expectNParameters(fn func(*mux.Route, ...string) error, n ...int) func(*mux.Route, ...string) error {
-	return func(route *mux.Route, s ...string) error {
+func expectNParameters(fn func(*matchersTree, ...string) error, n ...int) func(*matchersTree, ...string) error {
+	return func(tree *matchersTree, s ...string) error {
 		if !slices.Contains(n, len(s)) {
 			return fmt.Errorf("unexpected number of parameters; got %d, expected one of %v", len(s), n)
 		}
 
-		return fn(route, s...)
+		return fn(tree, s...)
 	}
 }
 
-func clientIP(route *mux.Route, clientIP ...string) error {
+func clientIP(tree *matchersTree, clientIP ...string) error {
 	checker, err := ip.NewChecker(clientIP)
 	if err != nil {
 		return fmt.Errorf("initializing IP checker for ClientIP matcher: %w", err)
@@ -46,7 +45,7 @@ func clientIP(route *mux.Route, clientIP ...string) error {
 
 	strategy := ip.RemoteAddrStrategy{}
 
-	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
+	tree.matcher = func(req *http.Request) bool {
 		ok, err := checker.Contains(strategy.GetIP(req))
 		if err != nil {
 			log.Ctx(req.Context()).Warn().Err(err).Msg("ClientIP matcher: could not match remote address")
@@ -54,16 +53,22 @@ func clientIP(route *mux.Route, clientIP ...string) error {
 		}
 
 		return ok
-	})
+	}
 
 	return nil
 }
 
-func method(route *mux.Route, methods ...string) error {
-	return route.Methods(methods...).GetError()
+func method(tree *matchersTree, methods ...string) error {
+	method := strings.ToUpper(methods[0])
+
+	tree.matcher = func(req *http.Request) bool {
+		return method == req.Method
+	}
+
+	return nil
 }
 
-func host(route *mux.Route, hosts ...string) error {
+func host(tree *matchersTree, hosts ...string) error {
 	host := hosts[0]
 
 	if !IsASCII(host) {
@@ -72,7 +77,7 @@ func host(route *mux.Route, hosts ...string) error {
 
 	host = strings.ToLower(host)
 
-	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
+	tree.matcher = func(req *http.Request) bool {
 		reqHost := requestdecorator.GetCanonizedHost(req.Context())
 		if len(reqHost) == 0 {
 			return false
@@ -104,12 +109,12 @@ func host(route *mux.Route, hosts ...string) error {
 		}
 
 		return false
-	})
+	}
 
 	return nil
 }
 
-func hostRegexp(route *mux.Route, hosts ...string) error {
+func hostRegexp(tree *matchersTree, hosts ...string) error {
 	host := hosts[0]
 
 	if !IsASCII(host) {
@@ -121,29 +126,29 @@ func hostRegexp(route *mux.Route, hosts ...string) error {
 		return fmt.Errorf("compiling HostRegexp matcher: %w", err)
 	}
 
-	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
+	tree.matcher = func(req *http.Request) bool {
 		return re.MatchString(requestdecorator.GetCanonizedHost(req.Context())) ||
 			re.MatchString(requestdecorator.GetCNAMEFlatten(req.Context()))
-	})
+	}
 
 	return nil
 }
 
-func path(route *mux.Route, paths ...string) error {
+func path(tree *matchersTree, paths ...string) error {
 	path := paths[0]
 
 	if !strings.HasPrefix(path, "/") {
 		return fmt.Errorf("path %q does not start with a '/'", path)
 	}
 
-	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
+	tree.matcher = func(req *http.Request) bool {
 		return req.URL.Path == path
-	})
+	}
 
 	return nil
 }
 
-func pathRegexp(route *mux.Route, paths ...string) error {
+func pathRegexp(tree *matchersTree, paths ...string) error {
 	path := paths[0]
 
 	re, err := regexp.Compile(path)
@@ -151,36 +156,65 @@ func pathRegexp(route *mux.Route, paths ...string) error {
 		return fmt.Errorf("compiling PathPrefix matcher: %w", err)
 	}
 
-	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
+	tree.matcher = func(req *http.Request) bool {
 		return re.MatchString(req.URL.Path)
-	})
+	}
 
 	return nil
 }
 
-func pathPrefix(route *mux.Route, paths ...string) error {
+func pathPrefix(tree *matchersTree, paths ...string) error {
 	path := paths[0]
 
 	if !strings.HasPrefix(path, "/") {
 		return fmt.Errorf("path %q does not start with a '/'", path)
 	}
 
-	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
+	tree.matcher = func(req *http.Request) bool {
 		return strings.HasPrefix(req.URL.Path, path)
-	})
+	}
 
 	return nil
 }
 
-func header(route *mux.Route, headers ...string) error {
-	return route.Headers(headers...).GetError()
+func header(tree *matchersTree, headers ...string) error {
+	key, value := http.CanonicalHeaderKey(headers[0]), headers[1]
+
+	tree.matcher = func(req *http.Request) bool {
+		for _, headerValue := range req.Header[key] {
+			if headerValue == value {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	return nil
 }
 
-func headerRegexp(route *mux.Route, headers ...string) error {
-	return route.HeadersRegexp(headers...).GetError()
+func headerRegexp(tree *matchersTree, headers ...string) error {
+	key, value := http.CanonicalHeaderKey(headers[0]), headers[1]
+
+	re, err := regexp.Compile(value)
+	if err != nil {
+		return fmt.Errorf("compiling HeaderRegexp matcher: %w", err)
+	}
+
+	tree.matcher = func(req *http.Request) bool {
+		for _, headerValue := range req.Header[key] {
+			if re.MatchString(headerValue) {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	return nil
 }
 
-func query(route *mux.Route, queries ...string) error {
+func query(tree *matchersTree, queries ...string) error {
 	key := queries[0]
 
 	var value string
@@ -188,21 +222,21 @@ func query(route *mux.Route, queries ...string) error {
 		value = queries[1]
 	}
 
-	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
+	tree.matcher = func(req *http.Request) bool {
 		values, ok := req.URL.Query()[key]
 		if !ok {
 			return false
 		}
 
 		return slices.Contains(values, value)
-	})
+	}
 
 	return nil
 }
 
-func queryRegexp(route *mux.Route, queries ...string) error {
+func queryRegexp(tree *matchersTree, queries ...string) error {
 	if len(queries) == 1 {
-		return query(route, queries...)
+		return query(tree, queries...)
 	}
 
 	key, value := queries[0], queries[1]
@@ -212,7 +246,7 @@ func queryRegexp(route *mux.Route, queries ...string) error {
 		return fmt.Errorf("compiling QueryRegexp matcher: %w", err)
 	}
 
-	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
+	tree.matcher = func(req *http.Request) bool {
 		values, ok := req.URL.Query()[key]
 		if !ok {
 			return false
@@ -223,7 +257,7 @@ func queryRegexp(route *mux.Route, queries ...string) error {
 		})
 
 		return idx >= 0
-	})
+	}
 
 	return nil
 }

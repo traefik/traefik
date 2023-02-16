@@ -13,11 +13,11 @@ import (
 	"github.com/Masterminds/sprig/v3"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/paerser/file"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/tls"
 	"gopkg.in/fsnotify.v1"
 )
 
@@ -47,11 +47,6 @@ func (p *Provider) Init() error {
 // Provide allows the file provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	configuration, err := p.BuildConfiguration()
-	if err != nil {
-		return err
-	}
-
 	if p.Watch {
 		var watchItem string
 
@@ -67,6 +62,19 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		if err := p.addWatcher(pool, watchItem, configurationChan, p.watcherCallback); err != nil {
 			return err
 		}
+	}
+
+	configuration, err := p.BuildConfiguration()
+	if err != nil {
+		if p.Watch {
+			log.Debug().
+				Str(logs.ProviderName, providerName).
+				Err(err).
+				Msg("Error while building configuration (for the first time)")
+
+			return nil
+		}
+		return err
 	}
 
 	sendConfigToChannel(configurationChan, configuration)
@@ -215,7 +223,7 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 		}
 	}
 
-	// ServersTransport
+	// HTTP ServersTransport
 	if configuration.HTTP != nil && len(configuration.HTTP.ServersTransports) > 0 {
 		for name, st := range configuration.HTTP.ServersTransports {
 			var certificates []tls.Certificate
@@ -251,6 +259,48 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 			}
 
 			st.RootCAs = rootCAs
+		}
+	}
+
+	// TCP ServersTransport
+	if configuration.TCP != nil && len(configuration.TCP.ServersTransports) > 0 {
+		for name, st := range configuration.TCP.ServersTransports {
+			var certificates []tls.Certificate
+			if st.TLS == nil {
+				continue
+			}
+			for _, cert := range st.TLS.Certificates {
+				content, err := cert.CertFile.Read()
+				if err != nil {
+					log.Ctx(ctx).Error().Err(err).Send()
+					continue
+				}
+				cert.CertFile = tls.FileOrContent(content)
+
+				content, err = cert.KeyFile.Read()
+				if err != nil {
+					log.Ctx(ctx).Error().Err(err).Send()
+					continue
+				}
+				cert.KeyFile = tls.FileOrContent(content)
+
+				certificates = append(certificates, cert)
+			}
+
+			configuration.TCP.ServersTransports[name].TLS.Certificates = certificates
+
+			var rootCAs []tls.FileOrContent
+			for _, rootCA := range st.TLS.RootCAs {
+				content, err := rootCA.Read()
+				if err != nil {
+					log.Ctx(ctx).Error().Err(err).Send()
+					continue
+				}
+
+				rootCAs = append(rootCAs, tls.FileOrContent(content))
+			}
+
+			st.TLS.RootCAs = rootCAs
 		}
 	}
 
@@ -295,9 +345,10 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 				ServersTransports: make(map[string]*dynamic.ServersTransport),
 			},
 			TCP: &dynamic.TCPConfiguration{
-				Routers:     make(map[string]*dynamic.TCPRouter),
-				Services:    make(map[string]*dynamic.TCPService),
-				Middlewares: make(map[string]*dynamic.TCPMiddleware),
+				Routers:           make(map[string]*dynamic.TCPRouter),
+				Services:          make(map[string]*dynamic.TCPService),
+				Middlewares:       make(map[string]*dynamic.TCPMiddleware),
+				ServersTransports: make(map[string]*dynamic.TCPServersTransport),
 			},
 			TLS: &dynamic.TLSConfiguration{
 				Stores:  make(map[string]tls.Store),
@@ -389,6 +440,14 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 				logger.Warn().Str(logs.ServiceName, name).Msg("TCP service already configured, skipping")
 			} else {
 				configuration.TCP.Services[name] = conf
+			}
+		}
+
+		for name, conf := range c.TCP.ServersTransports {
+			if _, exists := configuration.TCP.ServersTransports[name]; exists {
+				logger.Warn().Str(logs.ServersTransportName, name).Msg("TCP servers transport already configured, skipping")
+			} else {
+				configuration.TCP.ServersTransports[name] = conf
 			}
 		}
 
@@ -506,9 +565,10 @@ func (p *Provider) decodeConfiguration(filePath, content string) (*dynamic.Confi
 			ServersTransports: make(map[string]*dynamic.ServersTransport),
 		},
 		TCP: &dynamic.TCPConfiguration{
-			Routers:     make(map[string]*dynamic.TCPRouter),
-			Services:    make(map[string]*dynamic.TCPService),
-			Middlewares: make(map[string]*dynamic.TCPMiddleware),
+			Routers:           make(map[string]*dynamic.TCPRouter),
+			Services:          make(map[string]*dynamic.TCPService),
+			Middlewares:       make(map[string]*dynamic.TCPMiddleware),
+			ServersTransports: make(map[string]*dynamic.TCPServersTransport),
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Stores:  make(map[string]tls.Store),

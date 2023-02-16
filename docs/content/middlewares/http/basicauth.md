@@ -41,18 +41,6 @@ spec:
 - "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.basicauth.users": "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
-}
-```
-
-```yaml tab="Rancher"
-# Declaring the user list
-labels:
-  - "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
-```
-
 ```yaml tab="File (YAML)"
 # Declaring the user list
 http:
@@ -157,18 +145,6 @@ data:
 - "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.basicauth.users": "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
-}
-```
-
-```yaml tab="Rancher"
-# Declaring the user list
-labels:
-  - "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
-```
-
 ```yaml tab="File (YAML)"
 # Declaring the user list
 http:
@@ -232,17 +208,6 @@ data:
 - "traefik.http.middlewares.test-auth.basicauth.usersfile=/path/to/my/usersfile"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.basicauth.usersfile": "/path/to/my/usersfile"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-auth.basicauth.usersfile=/path/to/my/usersfile"
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -287,17 +252,6 @@ spec:
 - "traefik.http.middlewares.test-auth.basicauth.realm=MyRealm"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.basicauth.realm": "MyRealm"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-auth.basicauth.realm=MyRealm"
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -336,12 +290,6 @@ spec:
 - "traefik.http.middlewares.my-auth.basicauth.headerField=X-WebAuth-User"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.my-auth.basicauth.headerField": "X-WebAuth-User"
-}
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -378,17 +326,6 @@ spec:
 
 ```json tab="Consul Catalog"
 - "traefik.http.middlewares.test-auth.basicauth.removeheader=true"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.basicauth.removeheader": "true"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-auth.basicauth.removeheader=true"
 ```
 
 ```yaml tab="File (YAML)"

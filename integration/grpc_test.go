@@ -12,8 +12,8 @@ import (
 
 	"github.com/go-check/check"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/integration/helloworld"
-	"github.com/traefik/traefik/v2/integration/try"
+	"github.com/traefik/traefik/v3/integration/helloworld"
+	"github.com/traefik/traefik/v3/integration/try"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"

@@ -39,18 +39,6 @@ spec:
 - "traefik.http.middlewares.autodetect.contenttype=true"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.autodetect.contenttype": "true"
-}
-```
-
-```yaml tab="Rancher"
-# Enable auto-detection
-labels:
-  - "traefik.http.middlewares.autodetect.contenttype=true"
-```
-
 ```yaml tab="File (YAML)"
 # Enable auto-detection
 http:

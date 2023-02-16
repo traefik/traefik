@@ -9,11 +9,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	tcpmiddleware "github.com/traefik/traefik/v2/pkg/server/middleware/tcp"
-	"github.com/traefik/traefik/v2/pkg/server/service/tcp"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	tcpmiddleware "github.com/traefik/traefik/v3/pkg/server/middleware/tcp"
+	"github.com/traefik/traefik/v3/pkg/server/service/tcp"
+	tcp2 "github.com/traefik/traefik/v3/pkg/tcp"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
 func TestRuntimeConfiguration(t *testing.T) {
@@ -311,7 +312,9 @@ func TestRuntimeConfiguration(t *testing.T) {
 				TCPServices: test.tcpServiceConfig,
 				TCPRouters:  test.tcpRouterConfig,
 			}
-			serviceManager := tcp.NewManager(conf)
+			dialerManager := tcp2.NewDialerManager(nil)
+			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
+			serviceManager := tcp.NewManager(conf, dialerManager)
 			tlsManager := traefiktls.NewManager()
 			tlsManager.UpdateConfigs(
 				context.Background(),
@@ -622,7 +625,7 @@ func TestDomainFronting(t *testing.T) {
 				Routers: test.routers,
 			}
 
-			serviceManager := tcp.NewManager(conf)
+			serviceManager := tcp.NewManager(conf, tcp2.NewDialerManager(nil))
 
 			tlsManager := traefiktls.NewManager()
 			tlsManager.UpdateConfigs(context.Background(), map[string]traefiktls.Store{}, test.tlsOptions, []*traefiktls.CertAndStores{})
