@@ -45,6 +45,7 @@ type ServiceIng struct {
 	ServersTransport string          `json:"serversTransport,omitempty"`
 	PassHostHeader   *bool           `json:"passHostHeader"`
 	Sticky           *dynamic.Sticky `json:"sticky,omitempty" label:"allowEmpty"`
+	NativeLB         bool            `json:"nativeLB,omitempty"`
 }
 
 // SetDefaults sets the default values.
