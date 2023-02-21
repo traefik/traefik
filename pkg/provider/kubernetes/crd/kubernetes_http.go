@@ -368,6 +368,20 @@ func (c configBuilder) loadServers(parentNamespace string, svc v1alpha1.LoadBala
 		return nil, err
 	}
 
+	if svc.NativeLB {
+		address, err := getNativeServiceAddress(*service, *svcPort)
+		if err != nil {
+			return nil, fmt.Errorf("native Kubernetes Service load-balancing: %w", err)
+		}
+
+		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
+		if err != nil {
+			return nil, err
+		}
+
+		return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", protocol, address)}}, nil
+	}
+
 	var servers []dynamic.Server
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		if !c.allowExternalNameServices {
