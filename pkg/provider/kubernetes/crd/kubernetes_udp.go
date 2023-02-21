@@ -121,6 +121,15 @@ func (p *Provider) loadUDPServers(client Client, namespace string, svc v1alpha1.
 		return nil, err
 	}
 
+	if svc.NativeLB {
+		address, err := getNativeServiceAddress(*service, *svcPort)
+		if err != nil {
+			return nil, fmt.Errorf("native Kubernetes Service load-balancing: %w", err)
+		}
+
+		return []dynamic.UDPServer{{Address: address}}, nil
+	}
+
 	var servers []dynamic.UDPServer
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		servers = append(servers, dynamic.UDPServer{

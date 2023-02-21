@@ -299,6 +299,16 @@ which in turn will create the resulting routers, services, handlers, etc.
 
 #### On Service
 
+??? info "`traefik.ingress.kubernetes.io/service.nativelb`"
+
+    Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
+    The Kubernetes Service itself does load-balance to the pods.
+    By default, NativeLB is false.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/service.nativelb: "true"
+    ```
+
 ??? info "`traefik.ingress.kubernetes.io/service.serversscheme`"
 
     Overrides the default scheme.
