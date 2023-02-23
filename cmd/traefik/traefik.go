@@ -278,7 +278,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		tlsManager.UpdateConfigs(ctx, conf.TLS.Stores, conf.TLS.Options, conf.TLS.Certificates)
 
 		gauge := metricsRegistry.TLSCertsNotAfterTimestampGauge()
-		for _, certificate := range tlsManager.GetCertificates() {
+		for _, certificate := range tlsManager.GetServerCertificates() {
 			appendCertMetric(gauge, certificate)
 		}
 	})
