@@ -104,6 +104,13 @@ spec:
                             description: Namespace defines the namespace of the referenced
                               Kubernetes Service or TraefikService.
                             type: string
+                          nativeLB:
+                            description: NativeLB controls, when creating the load-balancer,
+                              whether the LB's children are directly the pods IPs
+                              or if the only child is the Kubernetes Service clusterIP.
+                              The Kubernetes Service itself does load-balance to the
+                              pods. By default, NativeLB is false.
+                            type: boolean
                           passHostHeader:
                             description: PassHostHeader defines whether the client
                               Host header is forwarded to the upstream Kubernetes
@@ -357,6 +364,13 @@ spec:
                             description: Namespace defines the namespace of the referenced
                               Kubernetes Service.
                             type: string
+                          nativeLB:
+                            description: NativeLB controls, when creating the load-balancer,
+                              whether the LB's children are directly the pods IPs
+                              or if the only child is the Kubernetes Service clusterIP.
+                              The Kubernetes Service itself does load-balance to the
+                              pods. By default, NativeLB is false.
+                            type: boolean
                           port:
                             anyOf:
                             - type: integer
@@ -542,6 +556,13 @@ spec:
                             description: Namespace defines the namespace of the referenced
                               Kubernetes Service.
                             type: string
+                          nativeLB:
+                            description: NativeLB controls, when creating the load-balancer,
+                              whether the LB's children are directly the pods IPs
+                              or if the only child is the Kubernetes Service clusterIP.
+                              The Kubernetes Service itself does load-balance to the
+                              pods. By default, NativeLB is false.
+                            type: boolean
                           port:
                             anyOf:
                             - type: integer
@@ -818,6 +839,13 @@ spec:
                         description: Namespace defines the namespace of the referenced
                           Kubernetes Service or TraefikService.
                         type: string
+                      nativeLB:
+                        description: NativeLB controls, when creating the load-balancer,
+                          whether the LB's children are directly the pods IPs or if
+                          the only child is the Kubernetes Service clusterIP. The
+                          Kubernetes Service itself does load-balance to the pods.
+                          By default, NativeLB is false.
+                        type: boolean
                       passHostHeader:
                         description: PassHostHeader defines whether the client Host
                           header is forwarded to the upstream Kubernetes Service.
@@ -1966,6 +1994,13 @@ spec:
                           description: Namespace defines the namespace of the referenced
                             Kubernetes Service or TraefikService.
                           type: string
+                        nativeLB:
+                          description: NativeLB controls, when creating the load-balancer,
+                            whether the LB's children are directly the pods IPs or
+                            if the only child is the Kubernetes Service clusterIP.
+                            The Kubernetes Service itself does load-balance to the
+                            pods. By default, NativeLB is false.
+                          type: boolean
                         passHostHeader:
                           description: PassHostHeader defines whether the client Host
                             header is forwarded to the upstream Kubernetes Service.
@@ -2057,6 +2092,13 @@ spec:
                     description: Namespace defines the namespace of the referenced
                       Kubernetes Service or TraefikService.
                     type: string
+                  nativeLB:
+                    description: NativeLB controls, when creating the load-balancer,
+                      whether the LB's children are directly the pods IPs or if the
+                      only child is the Kubernetes Service clusterIP. The Kubernetes
+                      Service itself does load-balance to the pods. By default, NativeLB
+                      is false.
+                    type: boolean
                   passHostHeader:
                     description: PassHostHeader defines whether the client Host header
                       is forwarded to the upstream Kubernetes Service. By default,
@@ -2154,6 +2196,13 @@ spec:
                           description: Namespace defines the namespace of the referenced
                             Kubernetes Service or TraefikService.
                           type: string
+                        nativeLB:
+                          description: NativeLB controls, when creating the load-balancer,
+                            whether the LB's children are directly the pods IPs or
+                            if the only child is the Kubernetes Service clusterIP.
+                            The Kubernetes Service itself does load-balance to the
+                            pods. By default, NativeLB is false.
+                          type: boolean
                         passHostHeader:
                           description: PassHostHeader defines whether the client Host
                             header is forwarded to the upstream Kubernetes Service.
