@@ -223,22 +223,41 @@ func (m *Manager) Get(storeName, configName string) (*tls.Config, error) {
 	return tlsConfig, err
 }
 
-// GetCertificates returns all stored certificates.
-func (m *Manager) GetCertificates() []*x509.Certificate {
+// GetServerCertificates returns all certificates from the default store,
+// as well as the user-defined default certificate (if it exists).
+func (m *Manager) GetServerCertificates() []*x509.Certificate {
 	var certificates []*x509.Certificate
 
-	// We iterate over all the certificates.
-	for _, store := range m.stores {
-		if store.DynamicCerts != nil && store.DynamicCerts.Get() != nil {
-			for _, cert := range store.DynamicCerts.Get().(map[string]*tls.Certificate) {
-				x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
-				if err != nil {
-					continue
-				}
+	// The default store is the only relevant, because it is the only one configurable.
+	defaultStore, ok := m.stores[DefaultTLSStoreName]
+	if !ok || defaultStore == nil {
+		return certificates
+	}
 
-				certificates = append(certificates, x509Cert)
+	// We iterate over all the certificates.
+	if defaultStore.DynamicCerts != nil && defaultStore.DynamicCerts.Get() != nil {
+		for _, cert := range defaultStore.DynamicCerts.Get().(map[string]*tls.Certificate) {
+			x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
+			if err != nil {
+				continue
 			}
+
+			certificates = append(certificates, x509Cert)
 		}
+	}
+
+	if defaultStore.DefaultCertificate != nil {
+		x509Cert, err := x509.ParseCertificate(defaultStore.DefaultCertificate.Certificate[0])
+		if err != nil {
+			return certificates
+		}
+
+		// Excluding the generated Traefik default certificate.
+		if x509Cert.Subject.CommonName == generate.DefaultDomain {
+			return certificates
+		}
+
+		certificates = append(certificates, x509Cert)
 	}
 
 	return certificates
