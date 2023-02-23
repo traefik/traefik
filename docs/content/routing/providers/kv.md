@@ -398,7 +398,7 @@ You can declare TCP Routers and/or Services using KV.
 
 #### TCP Services
 
-??? info "`traefik/tcp/services/<service_name>/loadbalancer/servers/<n>/url`"
+??? info "`traefik/tcp/services/<service_name>/loadbalancer/servers/<n>/address`"
 
     See [servers](../services/index.md#servers) for more information.
 
