@@ -343,6 +343,8 @@ type IPStrategy struct {
 	Depth int `json:"depth,omitempty" toml:"depth,omitempty" yaml:"depth,omitempty" export:"true"`
 	// ExcludedIPs configures Traefik to scan the X-Forwarded-For header and select the first IP not in the list.
 	ExcludedIPs []string `json:"excludedIPs,omitempty" toml:"excludedIPs,omitempty" yaml:"excludedIPs,omitempty"`
+	// IPv6Subnet configures Traefik to consider all IPv6 addresses from the defined subnet as originating from the same IP. Applies to RemoteAddrStrategy and DepthStrategy.
+	IPv6Subnet int `json:"ipv6Subnet,omitempty" toml:"ipv6Subnet,omitempty" yaml:"ipv6Subnet,omitempty"`
 	// TODO(mpl): I think we should make RemoteAddr an explicit field. For one thing, it would yield better documentation.
 }
 
@@ -357,7 +359,8 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 
 	if s.Depth > 0 {
 		return &ip.DepthStrategy{
-			Depth: s.Depth,
+			Depth:      s.Depth,
+			IPv6Subnet: s.IPv6Subnet,
 		}, nil
 	}
 
@@ -371,7 +374,9 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 		}, nil
 	}
 
-	return &ip.RemoteAddrStrategy{}, nil
+	return &ip.RemoteAddrStrategy{
+		IPv6Subnet: s.IPv6Subnet,
+	}, nil
 }
 
 // +k8s:deepcopy-gen=true
