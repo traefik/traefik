@@ -173,6 +173,50 @@ func TestShouldCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 	assert.Equal(t, got, fakeBody)
 }
 
+func TestShouldNotCompressWhenIdentityAcceptEncodingHeader(t *testing.T) {
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+	req.Header.Set(acceptEncodingHeader, "identity")
+
+	fakeBody := generateBytes(gzhttp.DefaultMinSize)
+	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		_, err := rw.Write(fakeBody)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+	})
+	handler, err := New(context.Background(), next, dynamic.Compress{}, "testing")
+	require.NoError(t, err)
+
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req)
+
+	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
+	assert.Empty(t, rw.Header().Get(varyHeader))
+	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+}
+
+func TestShouldNotCompressWhenEmptyAcceptEncodingHeader(t *testing.T) {
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+	req.Header.Set(acceptEncodingHeader, "")
+
+	fakeBody := generateBytes(gzhttp.DefaultMinSize)
+	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		_, err := rw.Write(fakeBody)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+	})
+	handler, err := New(context.Background(), next, dynamic.Compress{}, "testing")
+	require.NoError(t, err)
+
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req)
+
+	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
+	assert.Empty(t, rw.Header().Get(varyHeader))
+	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+}
+
 func TestShouldNotCompressHeadRequest(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodHead, "http://localhost", nil)
 	req.Header.Add(acceptEncodingHeader, gzipValue)
