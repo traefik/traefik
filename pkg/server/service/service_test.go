@@ -89,34 +89,34 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 	server1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-From", "first")
 	}))
-	defer server1.Close()
+	t.Cleanup(server1.Close)
 
 	server2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-From", "second")
 	}))
-	defer server2.Close()
+	t.Cleanup(server2.Close)
 
 	serverPassHost := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-From", "passhost")
 		assert.Equal(t, "callme", r.Host)
 	}))
-	defer serverPassHost.Close()
+	t.Cleanup(serverPassHost.Close)
 
 	serverPassHostFalse := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-From", "passhostfalse")
 		assert.NotEqual(t, "callme", r.Host)
 	}))
-	defer serverPassHostFalse.Close()
+	t.Cleanup(serverPassHostFalse.Close)
 
 	hasNoUserAgent := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "", r.Header.Get("User-Agent"))
+		assert.Empty(t, r.Header.Get("User-Agent"))
 	}))
-	defer hasNoUserAgent.Close()
+	t.Cleanup(hasNoUserAgent.Close)
 
 	hasUserAgent := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "foobar", r.Header.Get("User-Agent"))
 	}))
-	defer hasUserAgent.Close()
+	t.Cleanup(hasUserAgent.Close)
 
 	type ExpectedResult struct {
 		StatusCode     int
