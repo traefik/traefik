@@ -89,24 +89,34 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 	server1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-From", "first")
 	}))
-	defer server1.Close()
+	t.Cleanup(server1.Close)
 
 	server2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-From", "second")
 	}))
-	defer server2.Close()
+	t.Cleanup(server2.Close)
 
 	serverPassHost := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-From", "passhost")
 		assert.Equal(t, "callme", r.Host)
 	}))
-	defer serverPassHost.Close()
+	t.Cleanup(serverPassHost.Close)
 
 	serverPassHostFalse := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-From", "passhostfalse")
 		assert.NotEqual(t, "callme", r.Host)
 	}))
-	defer serverPassHostFalse.Close()
+	t.Cleanup(serverPassHostFalse.Close)
+
+	hasNoUserAgent := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Empty(t, r.Header.Get("User-Agent"))
+	}))
+	t.Cleanup(hasNoUserAgent.Close)
+
+	hasUserAgent := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "foobar", r.Header.Get("User-Agent"))
+	}))
+	t.Cleanup(hasUserAgent.Close)
 
 	type ExpectedResult struct {
 		StatusCode     int
@@ -122,6 +132,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 		service          *dynamic.ServersLoadBalancer
 		responseModifier func(*http.Response) error
 		cookieRawValue   string
+		userAgent        string
 
 		expected []ExpectedResult
 	}{
@@ -286,6 +297,39 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc:        "No user-agent",
+			serviceName: "test",
+			service: &dynamic.ServersLoadBalancer{
+				Servers: []dynamic.Server{
+					{
+						URL: hasNoUserAgent.URL,
+					},
+				},
+			},
+			expected: []ExpectedResult{
+				{
+					StatusCode: http.StatusOK,
+				},
+			},
+		},
+		{
+			desc:        "Custom user-agent",
+			serviceName: "test",
+			userAgent:   "foobar",
+			service: &dynamic.ServersLoadBalancer{
+				Servers: []dynamic.Server{
+					{
+						URL: hasUserAgent.URL,
+					},
+				},
+			},
+			expected: []ExpectedResult{
+				{
+					StatusCode: http.StatusOK,
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -297,6 +341,12 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			assert.NotNil(t, handler)
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://callme", nil)
+			assert.Equal(t, "", req.Header.Get("User-Agent"))
+
+			if test.userAgent != "" {
+				req.Header.Set("User-Agent", test.userAgent)
+			}
+
 			if test.cookieRawValue != "" {
 				req.Header.Set("Cookie", test.cookieRawValue)
 			}
