@@ -1,0 +1,15 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: testing
+  annotations:
+    traefik.ingress.kubernetes.io/service.nativelb: "true"
+
+spec:
+  ports:
+  - port: 8080
+  clusterIP: 10.0.0.1
+  type: ClusterIP
+  externalName: traefik.wtf
+

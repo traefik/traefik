@@ -538,6 +538,21 @@ func (p *Provider) loadService(client Client, namespace string, backend networki
 		if svcConfig.Service.ServersTransport != "" {
 			svc.LoadBalancer.ServersTransport = svcConfig.Service.ServersTransport
 		}
+
+		if svcConfig.Service.NativeLB {
+			address, err := getNativeServiceAddress(*service, portSpec)
+			if err != nil {
+				return nil, fmt.Errorf("native Kubernetes Service load-balancing: %w", err)
+			}
+
+			protocol := getProtocol(portSpec, portSpec.Name, svcConfig)
+
+			svc.LoadBalancer.Servers = []dynamic.Server{
+				{URL: fmt.Sprintf("%s://%s", protocol, address)},
+			}
+
+			return svc, nil
+		}
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
@@ -585,6 +600,18 @@ func (p *Provider) loadService(client Client, namespace string, backend networki
 	}
 
 	return svc, nil
+}
+
+func getNativeServiceAddress(service corev1.Service, svcPort corev1.ServicePort) (string, error) {
+	if service.Spec.ClusterIP == "None" {
+		return "", fmt.Errorf("no clusterIP on headless service: %s/%s", service.Namespace, service.Name)
+	}
+
+	if service.Spec.ClusterIP == "" {
+		return "", fmt.Errorf("no clusterIP found for service: %s/%s", service.Namespace, service.Name)
+	}
+
+	return net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(svcPort.Port))), nil
 }
 
 func getProtocol(portSpec corev1.ServicePort, portName string, svcConfig *ServiceConfig) string {
