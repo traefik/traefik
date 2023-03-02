@@ -10,8 +10,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -422,6 +424,18 @@ func getServicePort(svc *corev1.Service, port intstr.IntOrString) (*corev1.Servi
 	}
 
 	return &corev1.ServicePort{Port: port.IntVal}, nil
+}
+
+func getNativeServiceAddress(service corev1.Service, svcPort corev1.ServicePort) (string, error) {
+	if service.Spec.ClusterIP == "None" {
+		return "", fmt.Errorf("no clusterIP on headless service: %s/%s", service.Namespace, service.Name)
+	}
+
+	if service.Spec.ClusterIP == "" {
+		return "", fmt.Errorf("no clusterIP found for service: %s/%s", service.Namespace, service.Name)
+	}
+
+	return net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(svcPort.Port))), nil
 }
 
 func createPluginMiddleware(k8sClient Client, ns string, plugins map[string]apiextensionv1.JSON) (map[string]dynamic.PluginConf, error) {

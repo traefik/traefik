@@ -115,10 +115,14 @@ type LoadBalancerSpec struct {
 	// It allows to configure the transport between Traefik and your servers.
 	// Can only be used on a Kubernetes Service.
 	ServersTransport string `json:"serversTransport,omitempty"`
-
 	// Weight defines the weight and should only be specified when Name references a TraefikService object
 	// (and to be precise, one that embeds a Weighted Round Robin).
 	Weight *int `json:"weight,omitempty"`
+	// NativeLB controls, when creating the load-balancer,
+	// whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
+	// The Kubernetes Service itself does load-balance to the pods.
+	// By default, NativeLB is false.
+	NativeLB bool `json:"nativeLB,omitempty"`
 }
 
 // Service defines an upstream HTTP service to proxy traffic to.

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -1790,8 +1791,87 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 	}
 }
 
+func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		ingressClass  string
+		serverVersion string
+		expected      *dynamic.Configuration
+	}{
+		{
+			desc: "Ingress with native service lb",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-traefik-tchouk-bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "testing-service1-8080",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-8080": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.0.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var paths []string
+			_, err := os.Stat(generateTestFilename("_ingress", test.desc))
+			if err == nil {
+				paths = append(paths, generateTestFilename("_ingress", test.desc))
+			}
+			_, err = os.Stat(generateTestFilename("_endpoint", test.desc))
+			if err == nil {
+				paths = append(paths, generateTestFilename("_endpoint", test.desc))
+			}
+			_, err = os.Stat(generateTestFilename("_service", test.desc))
+			if err == nil {
+				paths = append(paths, generateTestFilename("_service", test.desc))
+			}
+			_, err = os.Stat(generateTestFilename("_secret", test.desc))
+			if err == nil {
+				paths = append(paths, generateTestFilename("_secret", test.desc))
+			}
+			_, err = os.Stat(generateTestFilename("_ingressclass", test.desc))
+			if err == nil {
+				paths = append(paths, generateTestFilename("_ingressclass", test.desc))
+			}
+
+			serverVersion := test.serverVersion
+			if serverVersion == "" {
+				serverVersion = "v1.17"
+			}
+
+			clientMock := newClientMock(serverVersion, paths...)
+
+			p := Provider{IngressClass: test.ingressClass}
+			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+
+			assert.Equal(t, test.expected, conf)
+		})
+	}
+}
+
 func generateTestFilename(suffix, desc string) string {
-	return "./fixtures/" + strings.ReplaceAll(desc, " ", "-") + suffix + ".yml"
+	return filepath.Join("fixtures", strings.ReplaceAll(desc, " ", "-")+suffix+".yml")
 }
 
 func TestGetCertificates(t *testing.T) {
