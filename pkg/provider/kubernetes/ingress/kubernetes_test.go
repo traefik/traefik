@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -1798,7 +1799,7 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 		expected      *dynamic.Configuration
 	}{
 		{
-			desc: "Ingress with native Service LB",
+			desc: "Ingress with native service lb",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1870,7 +1871,7 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 }
 
 func generateTestFilename(suffix, desc string) string {
-	return "./fixtures/" + strings.ReplaceAll(desc, " ", "-") + suffix + ".yml"
+	return filepath.Join("fixtures", strings.ReplaceAll(desc, " ", "-")+suffix+".yml")
 }
 
 func TestGetCertificates(t *testing.T) {
