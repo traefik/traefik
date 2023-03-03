@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"text/template"
 	"time"
@@ -89,7 +90,18 @@ type Configuration struct {
 
 // SetDefaults sets the default values for the Nomad Traefik Provider Configuration.
 func (c *Configuration) SetDefaults() {
-	c.Endpoint = &EndpointConfig{}
+	c.Endpoint = &EndpointConfig{
+		Address: "http://127.0.0.1:4646",
+	}
+	if v := os.Getenv("NOMAD_ADDR"); v != "" {
+		c.Endpoint.Address = v
+	}
+	if v := os.Getenv("NOMAD_REGION"); v != "" {
+		c.Endpoint.Region = v
+	}
+	if v := os.Getenv("NOMAD_TOKEN"); v != "" {
+		c.Endpoint.Token = v
+	}
 	c.Prefix = defaultPrefix
 	c.ExposedByDefault = true
 	c.RefreshInterval = ptypes.Duration(15 * time.Second)
@@ -107,9 +119,9 @@ type Provider struct {
 }
 
 type EndpointConfig struct {
-	// Address is the Nomad endpoint address, if empty it defaults to NOMAD_ADDR or "http://localhost:4646".
+	// Address is the Nomad endpoint address, if empty it defaults to NOMAD_ADDR or "http://127.0.0.1:4646".
 	Address string `description:"The address of the Nomad server, including scheme and port." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
-	// Region is the Nomad region, if empty it defaults to NOMAD_REGION or "global".
+	// Region is the Nomad region, if empty it defaults to NOMAD_REGION.
 	Region string `description:"Nomad region to use. If not provided, the local agent region is used." json:"region,omitempty" toml:"region,omitempty" yaml:"region,omitempty"`
 	// Token is the ACL token to connect with Nomad, if empty it defaults to NOMAD_TOKEN.
 	Token            string           `description:"Token is used to provide a per-request ACL token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
