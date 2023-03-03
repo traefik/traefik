@@ -61,7 +61,7 @@ func TestTranslateNotFoundError(t *testing.T) {
 func TestIsLoadBalancerIngressEquals(t *testing.T) {
 	testCases := []struct {
 		desc          string
-		aSlice        []corev1.LoadBalancerIngress
+		aSlice        []networkingv1.IngressLoadBalancerIngress
 		bSlice        []corev1.LoadBalancerIngress
 		expectedEqual bool
 	}{
@@ -78,7 +78,7 @@ func TestIsLoadBalancerIngressEquals(t *testing.T) {
 		},
 		{
 			desc: "same ordered content",
-			aSlice: []corev1.LoadBalancerIngress{
+			aSlice: []networkingv1.IngressLoadBalancerIngress{
 				{IP: "192.168.1.1", Hostname: "traefik"},
 			},
 			bSlice: []corev1.LoadBalancerIngress{
@@ -88,7 +88,7 @@ func TestIsLoadBalancerIngressEquals(t *testing.T) {
 		},
 		{
 			desc: "same unordered content",
-			aSlice: []corev1.LoadBalancerIngress{
+			aSlice: []networkingv1.IngressLoadBalancerIngress{
 				{IP: "192.168.1.1", Hostname: "traefik"},
 				{IP: "192.168.1.2", Hostname: "traefik2"},
 			},
@@ -100,7 +100,7 @@ func TestIsLoadBalancerIngressEquals(t *testing.T) {
 		},
 		{
 			desc: "different ordered content",
-			aSlice: []corev1.LoadBalancerIngress{
+			aSlice: []networkingv1.IngressLoadBalancerIngress{
 				{IP: "192.168.1.1", Hostname: "traefik"},
 				{IP: "192.168.1.2", Hostname: "traefik2"},
 			},
@@ -112,7 +112,7 @@ func TestIsLoadBalancerIngressEquals(t *testing.T) {
 		},
 		{
 			desc: "different unordered content",
-			aSlice: []corev1.LoadBalancerIngress{
+			aSlice: []networkingv1.IngressLoadBalancerIngress{
 				{IP: "192.168.1.1", Hostname: "traefik"},
 				{IP: "192.168.1.2", Hostname: "traefik2"},
 			},
@@ -129,7 +129,7 @@ func TestIsLoadBalancerIngressEquals(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			gotEqual := isLoadBalancerIngressEquals(test.aSlice, test.bSlice)
+			gotEqual := isLoadBalancerIngressV1EqualsCoreV1(test.aSlice, test.bSlice)
 			assert.Equal(t, test.expectedEqual, gotEqual)
 		})
 	}

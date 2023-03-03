@@ -1,0 +1,14 @@
+apiVersion: traefik.containo.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: mytlsoption-containous
+  namespace: default
+  labels:
+    app: traefik
+
+spec:
+  minVersion: VersionTLS12
+  sniStrict: true
+  cipherSuites:
+    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    - TLS_RSA_WITH_AES_256_GCM_SHA384
