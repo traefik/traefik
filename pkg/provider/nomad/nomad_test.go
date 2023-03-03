@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/hashicorp/nomad/api"
 	"github.com/stretchr/testify/require"
 )
 
@@ -73,6 +74,31 @@ func Test_globalConfig(t *testing.T) {
 			result := p.getExtraConf(test.Tags)
 			require.Equal(t, test.exp, result)
 		})
+	}
+}
+
+func Test_defaultConfig(t *testing.T) {
+	for _, test := range []struct {
+		NomadAddr   string
+		NomadRegion string
+		NomadToken  string
+	}{
+		{},
+		{
+			NomadAddr:   "https://nomad.example.com",
+			NomadRegion: "us-west",
+			NomadToken:  "almighty_token",
+		},
+	} {
+		t.Setenv("NOMAD_ADDR", test.NomadAddr)
+		t.Setenv("NOMAD_REGION", test.NomadRegion)
+		t.Setenv("NOMAD_TOKEN", test.NomadToken)
+		c := &Configuration{}
+		c.SetDefaults()
+		defConfig := api.DefaultConfig()
+		require.Equal(t, defConfig.Address, c.Endpoint.Address)
+		require.Equal(t, defConfig.Region, c.Endpoint.Region)
+		require.Equal(t, defConfig.SecretID, c.Endpoint.Token)
 	}
 }
 
