@@ -76,6 +76,26 @@ func Test_globalConfig(t *testing.T) {
 	}
 }
 
+func Test_defaultConfig(t *testing.T) {
+	t.Setenv("NOMAD_ADDR", "")
+	t.Setenv("NOMAD_REGION", "")
+	t.Setenv("NOMAD_TOKEN", "")
+	c := &Configuration{}
+	c.SetDefaults()
+	require.Equal(t, "http://127.0.0.1:4646", c.Endpoint.Address)
+	require.Empty(t, c.Endpoint.Region)
+	require.Empty(t, c.Endpoint.Token)
+
+	t.Setenv("NOMAD_ADDR", "https://nomad.example.com")
+	t.Setenv("NOMAD_REGION", "us-west")
+	t.Setenv("NOMAD_TOKEN", "almighty_token")
+	c = &Configuration{}
+	c.SetDefaults()
+	require.Equal(t, "https://nomad.example.com", c.Endpoint.Address)
+	require.Equal(t, "us-west", c.Endpoint.Region)
+	require.Equal(t, "almighty_token", c.Endpoint.Token)
+}
+
 func Test_getNomadServiceData(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
