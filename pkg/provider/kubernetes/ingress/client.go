@@ -171,20 +171,20 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		factoryIngress := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns), informers.WithTweakListOptions(matchesLabelSelector))
 
 		if supportsNetworkingV1Ingress(serverVersion) {
-			factoryIngress.Networking().V1().Ingresses().Informer().AddEventHandler(eventHandler)
+			_, _ = factoryIngress.Networking().V1().Ingresses().Informer().AddEventHandler(eventHandler)
 		} else {
-			factoryIngress.Networking().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
+			_, _ = factoryIngress.Networking().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
 		}
 
 		c.factoriesIngress[ns] = factoryIngress
 
 		factoryKube := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns))
-		factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
-		factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
+		_, _ = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
+		_, _ = factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
 		c.factoriesKube[ns] = factoryKube
 
 		factorySecret := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns), informers.WithTweakListOptions(notOwnedByHelm))
-		factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
+		_, _ = factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 		c.factoriesSecret[ns] = factorySecret
 	}
 
@@ -218,9 +218,9 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		c.clusterFactory = informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod)
 
 		if supportsNetworkingV1Ingress(serverVersion) {
-			c.clusterFactory.Networking().V1().IngressClasses().Informer().AddEventHandler(eventHandler)
+			_, _ = c.clusterFactory.Networking().V1().IngressClasses().Informer().AddEventHandler(eventHandler)
 		} else {
-			c.clusterFactory.Networking().V1beta1().IngressClasses().Informer().AddEventHandler(eventHandler)
+			_, _ = c.clusterFactory.Networking().V1beta1().IngressClasses().Informer().AddEventHandler(eventHandler)
 		}
 
 		c.clusterFactory.Start(stopCh)
@@ -368,13 +368,33 @@ func (c *clientWrapper) UpdateIngressStatus(src *networkingv1.Ingress, ingStatus
 
 	logger := log.WithoutContext().WithField("namespace", ing.Namespace).WithField("ingress", ing.Name)
 
-	if isLoadBalancerIngressEquals(ing.Status.LoadBalancer.Ingress, ingStatus) {
+	if isLoadBalancerIngressV1EqualsCoreV1(ing.Status.LoadBalancer.Ingress, ingStatus) {
 		logger.Debug("Skipping ingress status update")
 		return nil
 	}
 
+	var nv1Ingress []networkingv1.IngressLoadBalancerIngress
+	for _, status := range ingStatus {
+		var ports []networkingv1.IngressPortStatus
+		for _, port := range status.Ports {
+			ports = append(ports, networkingv1.IngressPortStatus{
+				Port:     port.Port,
+				Protocol: port.Protocol,
+				Error:    port.Error,
+			})
+		}
+
+		nv1Ingress = append(nv1Ingress, networkingv1.IngressLoadBalancerIngress{
+			IP:       status.IP,
+			Hostname: status.Hostname,
+			Ports:    ports,
+		})
+	}
+
+	nv1IngStatus := networkingv1.IngressLoadBalancerStatus{Ingress: nv1Ingress}
+
 	ingCopy := ing.DeepCopy()
-	ingCopy.Status = networkingv1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: ingStatus}}
+	ingCopy.Status = networkingv1.IngressStatus{LoadBalancer: nv1IngStatus}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
@@ -396,13 +416,33 @@ func (c *clientWrapper) updateIngressStatusOld(src *networkingv1.Ingress, ingSta
 
 	logger := log.WithoutContext().WithField("namespace", ing.Namespace).WithField("ingress", ing.Name)
 
-	if isLoadBalancerIngressEquals(ing.Status.LoadBalancer.Ingress, ingStatus) {
+	if isLoadBalancerIngressV1beta1EqualsCoreV1(ing.Status.LoadBalancer.Ingress, ingStatus) {
 		logger.Debug("Skipping ingress status update")
 		return nil
 	}
 
+	var nv1beta1Ingress []networkingv1beta1.IngressLoadBalancerIngress
+	for _, status := range ingStatus {
+		var ports []networkingv1beta1.IngressPortStatus
+		for _, port := range status.Ports {
+			ports = append(ports, networkingv1beta1.IngressPortStatus{
+				Port:     port.Port,
+				Protocol: port.Protocol,
+				Error:    port.Error,
+			})
+		}
+
+		nv1beta1Ingress = append(nv1beta1Ingress, networkingv1beta1.IngressLoadBalancerIngress{
+			IP:       status.IP,
+			Hostname: status.Hostname,
+			Ports:    ports,
+		})
+	}
+
+	nv1beta1IngStatus := networkingv1beta1.IngressLoadBalancerStatus{Ingress: nv1beta1Ingress}
+
 	ingCopy := ing.DeepCopy()
-	ingCopy.Status = networkingv1beta1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: ingStatus}}
+	ingCopy.Status = networkingv1beta1.IngressStatus{LoadBalancer: nv1beta1IngStatus}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
@@ -415,8 +455,28 @@ func (c *clientWrapper) updateIngressStatusOld(src *networkingv1.Ingress, ingSta
 	return nil
 }
 
-// isLoadBalancerIngressEquals returns true if the given slices are equal, false otherwise.
-func isLoadBalancerIngressEquals(aSlice, bSlice []corev1.LoadBalancerIngress) bool {
+// isLoadBalancerIngressV1beta1EqualsCoreV1 returns true if the given slices are equal, false otherwise.
+func isLoadBalancerIngressV1beta1EqualsCoreV1(aSlice []networkingv1beta1.IngressLoadBalancerIngress, bSlice []corev1.LoadBalancerIngress) bool {
+	if len(aSlice) != len(bSlice) {
+		return false
+	}
+
+	aMap := make(map[string]struct{})
+	for _, aIngress := range aSlice {
+		aMap[aIngress.Hostname+aIngress.IP] = struct{}{}
+	}
+
+	for _, bIngress := range bSlice {
+		if _, exists := aMap[bIngress.Hostname+bIngress.IP]; !exists {
+			return false
+		}
+	}
+
+	return true
+}
+
+// isLoadBalancerIngressV1EqualsCoreV1 returns true if the given slices are equal, false otherwise.
+func isLoadBalancerIngressV1EqualsCoreV1(aSlice []networkingv1.IngressLoadBalancerIngress, bSlice []corev1.LoadBalancerIngress) bool {
 	if len(aSlice) != len(bSlice) {
 		return false
 	}
