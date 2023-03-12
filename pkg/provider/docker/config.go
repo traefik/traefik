@@ -74,11 +74,13 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 		serviceName := getServiceName(container)
 
 		model := struct {
-			Name   string
-			Labels map[string]string
+			Name          string
+			ContainerName string
+			Labels        map[string]string
 		}{
-			Name:   serviceName,
-			Labels: container.Labels,
+			Name:          serviceName,
+			ContainerName: provider.Normalize(container.ServiceName),
+			Labels:        container.Labels,
 		}
 
 		provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, serviceName, p.defaultRuleTpl, model)
