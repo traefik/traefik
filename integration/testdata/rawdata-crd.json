@@ -31,7 +31,7 @@
 				"web"
 			],
 			"middlewares": [
-				"default-stripprefix-containous"
+				"default-stripprefix-containous@kubernetescrd"
 			],
 			"service": "default-test-route-containous-1bc3efa892379bb93c6e",
 			"rule": "Host(`bar.com`) \u0026\u0026 PathPrefix(`/foo`)",
@@ -39,10 +39,7 @@
 			"tls": {
 				"options": "default-mytlsoption-containous"
 			},
-			"error": [
-				"building router handler: unknown TLS options: default-mytlsoption-containous@kubernetescrd"
-			],
-			"status": "disabled",
+			"status": "enabled",
 			"using": [
 				"web"
 			]
@@ -195,7 +192,11 @@
 			"status": "enabled",
 			"usedBy": [
 				"default-test-route-containous-1bc3efa892379bb93c6e@kubernetescrd"
-			]
+			],
+			"serverStatus": {
+				"http://10.42.0.4:80": "UP",
+				"http://10.42.0.6:80": "UP"
+			}
 		},
 		"default-test2-route-23c7f4c450289ee29016@kubernetescrd": {
 			"loadBalancer": {
@@ -317,10 +318,7 @@
 				"passthrough": false,
 				"options": "default-mytlsoption-containous"
 			},
-			"error": [
-				"unknown TLS options: default-mytlsoption-containous@kubernetescrd"
-			],
-			"status": "disabled",
+			"status": "enabled",
 			"using": [
 				"footcp"
 			]
@@ -346,7 +344,7 @@
 						"address": "10.42.0.2:8080"
 					},
 					{
-						"address": "10.42.0.7:8080"
+						"address": "10.42.0.3:8080"
 					}
 				]
 			},
@@ -372,6 +370,7 @@
 		},
 		"default-test3.route-containous-673acf455cb2dab0b43a-externalname-svc-9090@kubernetescrd": {
 			"loadBalancer": {
+				"terminationDelay": 100,
 				"servers": [
 					{
 						"address": "domain.com:9090"
@@ -382,12 +381,13 @@
 		},
 		"default-test3.route-containous-673acf455cb2dab0b43a-whoamitcp-8080@kubernetescrd": {
 			"loadBalancer": {
+				"terminationDelay": 100,
 				"servers": [
 					{
 						"address": "10.42.0.2:8080"
 					},
 					{
-						"address": "10.42.0.7:8080"
+						"address": "10.42.0.3:8080"
 					}
 				]
 			},
@@ -449,10 +449,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"address": "10.42.0.3:8090"
+						"address": "10.42.0.5:8090"
 					},
 					{
-						"address": "10.42.0.5:8090"
+						"address": "10.42.0.7:8090"
 					}
 				]
 			},
@@ -490,10 +490,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"address": "10.42.0.3:8090"
+						"address": "10.42.0.5:8090"
 					},
 					{
-						"address": "10.42.0.5:8090"
+						"address": "10.42.0.7:8090"
 					}
 				]
 			},
