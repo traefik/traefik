@@ -55,8 +55,39 @@ kind: Middleware
 metadata:
   name: stripprefix-containous
   namespace: default
+  labels:
+    app: traefik
 
 spec:
   stripPrefix:
     prefixes:
       - /tobestripped
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSOption
+metadata:
+  name: mytlsoption-containous
+  namespace: default
+  labels:
+    app: traefik
+
+spec:
+  minVersion: VersionTLS12
+  sniStrict: true
+  cipherSuites:
+    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    - TLS_RSA_WITH_AES_256_GCM_SHA384
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: TLSStore
+metadata:
+  name: mytlsstore-containous
+  namespace: default
+  labels:
+    app: traefik
+
+spec:
+  defaultCertificate:
+    secretName: tls-cert
