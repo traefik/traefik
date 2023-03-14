@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type responseModifier struct {
+type ResponseModifier struct {
 	req *http.Request
 	rw  http.ResponseWriter
 
@@ -29,9 +29,14 @@ func newResponseModifier(w http.ResponseWriter, r *http.Request, modifier func(*
 		modifier: modifier,
 		code:     http.StatusOK,
 	}
+
+	if _, ok := w.(http.CloseNotifier); ok {
+		return responseModifierWithCloseNotify{ResponseModifier: rm}
+	}
+	return rm
 }
 
-func (r *responseModifier) WriteHeader(code int) {
+func (r *ResponseModifier) WriteHeader(code int) {
 	if r.headersSent {
 		return
 	}
@@ -64,11 +69,11 @@ func (r *responseModifier) WriteHeader(code int) {
 	r.rw.WriteHeader(code)
 }
 
-func (r *responseModifier) Header() http.Header {
+func (r *ResponseModifier) Header() http.Header {
 	return r.rw.Header()
 }
 
-func (r *responseModifier) Write(b []byte) (int, error) {
+func (r *ResponseModifier) Write(b []byte) (int, error) {
 	r.WriteHeader(r.code)
 	if r.modifierErr != nil {
 		return 0, r.modifierErr
@@ -78,7 +83,7 @@ func (r *responseModifier) Write(b []byte) (int, error) {
 }
 
 // Hijack hijacks the connection.
-func (r *responseModifier) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+func (r *ResponseModifier) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if h, ok := r.rw.(http.Hijacker); ok {
 		return h.Hijack()
 	}
@@ -87,8 +92,17 @@ func (r *responseModifier) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 }
 
 // Flush sends any buffered data to the client.
-func (r *responseModifier) Flush() {
+func (r *ResponseModifier) Flush() {
 	if flusher, ok := r.rw.(http.Flusher); ok {
 		flusher.Flush()
 	}
+}
+
+type responseModifierWithCloseNotify struct {
+	*ResponseModifier
+}
+
+// CloseNotify implements http.CloseNotifier.
+func (r *responseModifierWithCloseNotify) CloseNotify() <-chan bool {
+	return r.ResponseModifier.rw.(http.CloseNotifier).CloseNotify()
 }

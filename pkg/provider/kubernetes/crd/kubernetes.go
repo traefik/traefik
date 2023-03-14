@@ -616,6 +616,7 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *v1alp
 		AuthResponseHeaders:      auth.AuthResponseHeaders,
 		AuthResponseHeadersRegex: auth.AuthResponseHeadersRegex,
 		AuthRequestHeaders:       auth.AuthRequestHeaders,
+		AddAuthCookiesToResponse: auth.AddAuthCookiesToResponse,
 	}
 
 	if auth.TLS == nil {
