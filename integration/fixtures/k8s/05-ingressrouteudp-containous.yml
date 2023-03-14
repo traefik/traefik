@@ -1,0 +1,16 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: test3.route-containous
+  namespace: default
+
+spec:
+  entryPoints:
+    - fooudp
+  routes:
+  - services:
+    - name: whoamiudp
+      namespace: default
+      port: 8090
+    - name: externalname-svc
+      port: 9090
