@@ -10,6 +10,8 @@ To Control the Number of Requests Going to a Service
 
 The RateLimit middleware ensures that services will receive a _fair_ amount of requests, and allows one to define what fair is.
 
+It is based on a [token bucket](https://en.wikipedia.org/wiki/Token_bucket) implementation. In this analogy, the [average](#average) parameter (defined below) is the rate at which the bucket refills, and the [burst](#burst) is the size (volume) of the bucket.
+
 ## Configuration Example
 
 ```yaml tab="Docker"
