@@ -165,3 +165,66 @@ metrics:
 ```bash tab="CLI"
 --metrics.prometheus.manualrouting=true
 ```
+
+#### `headerLabels`
+
+_Optional_
+
+Defines the extra labels for the `requests_total` metrics, and for each of them, the request header containing the value for this label.
+Please note that if the header is not present in the request it will be added nonetheless with an empty value.
+In addition, the label should be a valid label name for Prometheus metrics, 
+otherwise, the Prometheus metrics provider will fail to serve any Traefik-related metric.
+
+```yaml tab="File (YAML)"
+metrics:
+  prometheus:
+    headerLabels:
+      label: headerKey
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.prometheus]
+    [metrics.prometheus.headerLabels]
+      label = "headerKey"
+```
+
+```bash tab="CLI"
+--metrics.prometheus.headerlabels.label=headerKey
+```
+
+##### Example
+
+Here is an example of the entryPoint `requests_total` metric with an additional "useragent" label.
+
+When configuring the label in Static Configuration:
+
+```yaml tab="File (YAML)"
+metrics:
+  prometheus:
+    headerLabels:
+      useragent: User-Agent
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.prometheus]
+    [metrics.prometheus.headerLabels]
+      useragent = "User-Agent"
+```
+
+```bash tab="CLI"
+--metrics.prometheus.headerlabels.useragent=User-Agent
+```
+
+And performing a request with a custom User-Agent:
+
+```bash
+curl -H "User-Agent: foobar" http://localhost
+```
+
+The following metric is produced :
+
+```bash
+traefik_entrypoint_requests_total{code="200",entrypoint="web",method="GET",protocol="http",useragent="foobar"} 1
+```

@@ -354,6 +354,9 @@ Buckets for latency metrics. (Default: ```0.100000, 0.300000, 1.200000, 5.000000
 `--metrics.prometheus.entrypoint`:  
 EntryPoint (Default: ```traefik```)
 
+`--metrics.prometheus.headerlabels.<name>`:  
+Defines the extra labels for the requests_total metrics, and for each of them, the request header containing the value for this label.
+
 `--metrics.prometheus.manualrouting`:  
 Manual routing (Default: ```false```)
 
