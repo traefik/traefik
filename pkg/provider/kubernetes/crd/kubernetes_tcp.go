@@ -226,6 +226,15 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc v1alpha1.
 		return nil, err
 	}
 
+	if svc.NativeLB {
+		address, err := getNativeServiceAddress(*service, *svcPort)
+		if err != nil {
+			return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
+		}
+
+		return []dynamic.TCPServer{{Address: address}}, nil
+	}
+
 	var servers []dynamic.TCPServer
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		servers = append(servers, dynamic.TCPServer{
