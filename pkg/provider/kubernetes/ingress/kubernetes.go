@@ -542,7 +542,7 @@ func (p *Provider) loadService(client Client, namespace string, backend networki
 		if svcConfig.Service.NativeLB {
 			address, err := getNativeServiceAddress(*service, portSpec)
 			if err != nil {
-				return nil, fmt.Errorf("native Kubernetes Service load-balancing: %w", err)
+				return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
 			}
 
 			protocol := getProtocol(portSpec, portSpec.Name, svcConfig)
