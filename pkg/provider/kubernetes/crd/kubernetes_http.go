@@ -371,7 +371,7 @@ func (c configBuilder) loadServers(parentNamespace string, svc v1alpha1.LoadBala
 	if svc.NativeLB {
 		address, err := getNativeServiceAddress(*service, *svcPort)
 		if err != nil {
-			return nil, fmt.Errorf("native Kubernetes Service load-balancing: %w", err)
+			return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
 		}
 
 		protocol, err := parseServiceProtocol(svc.Scheme, svcPort.Name, svcPort.Port)
