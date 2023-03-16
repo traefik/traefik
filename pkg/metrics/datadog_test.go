@@ -86,23 +86,23 @@ func testDatadogRegistry(t *testing.T, metricsPrefix string, datadogRegistry Reg
 
 		datadogRegistry.TLSCertsNotAfterTimestampGauge().With("key", "value").Set(1)
 
-		datadogRegistry.EntryPointReqsCounter().With("entrypoint", "test").Add(1)
+		datadogRegistry.EntryPointReqsCounter().With(nil, "entrypoint", "test").Add(1)
 		datadogRegistry.EntryPointReqsTLSCounter().With("entrypoint", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
 		datadogRegistry.EntryPointReqDurationHistogram().With("entrypoint", "test").Observe(10000)
 		datadogRegistry.EntryPointOpenConnsGauge().With("entrypoint", "test").Set(1)
 		datadogRegistry.EntryPointReqsBytesCounter().With("entrypoint", "test").Add(1)
 		datadogRegistry.EntryPointRespsBytesCounter().With("entrypoint", "test").Add(1)
 
-		datadogRegistry.RouterReqsCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
-		datadogRegistry.RouterReqsCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
+		datadogRegistry.RouterReqsCounter().With(nil, "router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+		datadogRegistry.RouterReqsCounter().With(nil, "router", "demo", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 		datadogRegistry.RouterReqsTLSCounter().With("router", "demo", "service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
 		datadogRegistry.RouterReqDurationHistogram().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 		datadogRegistry.RouterOpenConnsGauge().With("router", "demo", "service", "test").Set(1)
 		datadogRegistry.RouterReqsBytesCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 		datadogRegistry.RouterRespsBytesCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 
-		datadogRegistry.ServiceReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
-		datadogRegistry.ServiceReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
+		datadogRegistry.ServiceReqsCounter().With(nil, "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+		datadogRegistry.ServiceReqsCounter().With(nil, "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 		datadogRegistry.ServiceReqsTLSCounter().With("service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
 		datadogRegistry.ServiceReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 		datadogRegistry.ServiceOpenConnsGauge().With("service", "test").Set(1)

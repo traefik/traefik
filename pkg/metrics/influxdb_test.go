@@ -74,7 +74,7 @@ func TestInfluxDB(t *testing.T) {
 	}
 
 	msgEntrypoint := udp.ReceiveString(t, func() {
-		influxDBRegistry.EntryPointReqsCounter().With("entrypoint", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+		influxDBRegistry.EntryPointReqsCounter().With(nil, "entrypoint", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 		influxDBRegistry.EntryPointReqsTLSCounter().With("entrypoint", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
 		influxDBRegistry.EntryPointReqDurationHistogram().With("entrypoint", "test").Observe(10000)
 		influxDBRegistry.EntryPointOpenConnsGauge().With("entrypoint", "test").Set(1)
@@ -95,8 +95,8 @@ func TestInfluxDB(t *testing.T) {
 	}
 
 	msgRouter := udp.ReceiveString(t, func() {
-		influxDBRegistry.RouterReqsCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
-		influxDBRegistry.RouterReqsCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+		influxDBRegistry.RouterReqsCounter().With(nil, "router", "demo", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
+		influxDBRegistry.RouterReqsCounter().With(nil, "router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 		influxDBRegistry.RouterReqsTLSCounter().With("router", "demo", "service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
 		influxDBRegistry.RouterReqDurationHistogram().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 		influxDBRegistry.RouterOpenConnsGauge().With("router", "demo", "service", "test").Set(1)
@@ -119,8 +119,8 @@ func TestInfluxDB(t *testing.T) {
 	}
 
 	msgService := udp.ReceiveString(t, func() {
-		influxDBRegistry.ServiceReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
-		influxDBRegistry.ServiceReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
+		influxDBRegistry.ServiceReqsCounter().With(nil, "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+		influxDBRegistry.ServiceReqsCounter().With(nil, "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 		influxDBRegistry.ServiceReqsTLSCounter().With("service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
 		influxDBRegistry.ServiceReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 		influxDBRegistry.ServiceOpenConnsGauge().With("service", "test").Set(1)
@@ -197,7 +197,7 @@ func TestInfluxDBHTTP(t *testing.T) {
 		`(traefik\.entrypoint\.responses\.bytes\.total,code=200,entrypoint=test,method=GET count=1) [\d]{19}`,
 	}
 
-	influxDBRegistry.EntryPointReqsCounter().With("entrypoint", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+	influxDBRegistry.EntryPointReqsCounter().With(nil, "entrypoint", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	influxDBRegistry.EntryPointReqsTLSCounter().With("entrypoint", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
 	influxDBRegistry.EntryPointReqDurationHistogram().With("entrypoint", "test").Observe(10000)
 	influxDBRegistry.EntryPointOpenConnsGauge().With("entrypoint", "test").Set(1)
@@ -217,8 +217,8 @@ func TestInfluxDBHTTP(t *testing.T) {
 		`(traefik\.router\.responses\.bytes\.total,code=200,method=GET,router=demo,service=test count=1) [\d]{19}`,
 	}
 
-	influxDBRegistry.RouterReqsCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
-	influxDBRegistry.RouterReqsCounter().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+	influxDBRegistry.RouterReqsCounter().With(nil, "router", "demo", "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
+	influxDBRegistry.RouterReqsCounter().With(nil, "router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	influxDBRegistry.RouterReqsTLSCounter().With("router", "demo", "service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
 	influxDBRegistry.RouterReqDurationHistogram().With("router", "demo", "service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 	influxDBRegistry.RouterOpenConnsGauge().With("router", "demo", "service", "test").Set(1)
@@ -240,8 +240,8 @@ func TestInfluxDBHTTP(t *testing.T) {
 		`(traefik\.service\.responses\.bytes\.total,code=200,method=GET,service=test count=1) [\d]{19}`,
 	}
 
-	influxDBRegistry.ServiceReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
-	influxDBRegistry.ServiceReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
+	influxDBRegistry.ServiceReqsCounter().With(nil, "service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+	influxDBRegistry.ServiceReqsCounter().With(nil, "service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
 	influxDBRegistry.ServiceReqsTLSCounter().With("service", "test", "tls_version", "foo", "tls_cipher", "bar").Add(1)
 	influxDBRegistry.ServiceReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 	influxDBRegistry.ServiceOpenConnsGauge().With("service", "test").Set(1)
