@@ -7,8 +7,8 @@ This page is maintained and updated periodically to reflect our roadmap and any 
 | [Pilot](#pilot)                                                                                     | 2.7        | 2.8            | 2.9     |
 | [Consul Enterprise Namespace](#consul-enterprise-namespace)                                         | 2.8        | N/A            | 3.0     |
 | [TLS 1.0 and 1.1 Support](#tls-10-and-11)                                                           | N/A        | 2.8            | N/A     |
-| [Kubernetes CRDs API Group "traefik.containo.us"](#kubernetes-crds-api-group-traefikcontainous)     | 2.10       | N/A            | 3.0     |
-| [Kubernetes CRDs API Version "traefik.io/v1alpha1"](#kubernetes-crds-api-version-traefikiov1alpha1) | N/A        | N/A            | 3.0     |
+| [Kubernetes CRDs API Group `traefik.containo.us`](#kubernetes-crds-api-group-traefikcontainous)     | 2.10       | N/A            | 3.0     |
+| [Kubernetes CRDs API Version `traefik.io/v1alpha1`](#kubernetes-crds-api-version-traefikiov1alpha1) | N/A        | N/A            | 3.0     |
 
 ## Impact
 
@@ -29,10 +29,10 @@ please use the `namespaces` options instead.
 
 Starting on 2.8 the default TLS options will use the minimum version of TLS 1.2. Of course, it can still be overridden with custom configuration.  
 
-### Kubernetes CRDs API Group "traefik.containo.us"
+### Kubernetes CRDs API Group `traefik.containo.us`
 
-In v2.10, the Kubernetes CRDs API Group "traefik.containo.us" is deprecated, and its support will end starting with Traefik v3. Please use the API Group "traefik.io" instead.
+In v2.10, the Kubernetes CRDs API Group `traefik.containo.us` is deprecated, and its support will end starting with Traefik v3. Please use the API Group `traefik.io` instead.
 
-### Kubernetes CRDs API Version "traefik.io/v1alpha1"
+### Kubernetes CRDs API Version `traefik.io/v1alpha1`
 
 The newly introduced Kubernetes CRD API Version `traefik.io/v1alpha1` will subsequently be removed in Traefik v3. The following version will be `traefik.io/v1`.
