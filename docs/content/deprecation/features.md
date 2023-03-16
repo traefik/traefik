@@ -35,4 +35,4 @@ In v2.10, the Kubernetes CRDs API Group "traefik.containo.us" is deprecated, and
 
 ### Kubernetes CRDs API Version "traefik.io/v1alpha1"
 
-In v2.10, the Kubernetes CRDs API Version "traefik.io/v1alpha1" will not be supported in Traefik v3 itself.
+The newly introduced Kubernetes CRD API Version `traefik.io/v1alpha1` will subsequently be removed in Traefik v3. The following version will be `traefik.io/v1`.
