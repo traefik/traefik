@@ -8,7 +8,7 @@ This page is maintained and updated periodically to reflect our roadmap and any 
 | [Consul Enterprise Namespace](#consul-enterprise-namespace)                                         | 2.8        | N/A            | 3.0     |
 | [TLS 1.0 and 1.1 Support](#tls-10-and-11)                                                           | N/A        | 2.8            | N/A     |
 | [Kubernetes CRDs API Group "traefik.containo.us"](#kubernetes-crds-api-group-traefikcontainous)     | 2.10       | N/A            | 3.0     |
-| [Kubernetes CRDs API Version "traefik.io/v1alpha1"](#kubernetes-crds-api-version-traefikiov1alpha1) | 2.10       | 3.0            | N/A     |
+| [Kubernetes CRDs API Version "traefik.io/v1alpha1"](#kubernetes-crds-api-version-traefikiov1alpha1) | N/A        | N/A            | 3.0     |
 
 ## Impact
 
