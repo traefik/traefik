@@ -397,6 +397,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	return conf
 }
 
+// getServicePort always returns a valid port, an error otherwise.
 func getServicePort(svc *corev1.Service, port intstr.IntOrString) (*corev1.ServicePort, error) {
 	if svc == nil {
 		return nil, errors.New("service is not defined")
