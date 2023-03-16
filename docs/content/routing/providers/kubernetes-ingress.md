@@ -299,6 +299,17 @@ which in turn will create the resulting routers, services, handlers, etc.
 
 #### On Service
 
+??? info "`traefik.ingress.kubernetes.io/service.nativelb`"
+
+    Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
+    The Kubernetes Service itself does load-balance to the pods.
+    Please note that the connection reuse with services (connection pool) can avoid to load-balance requests to pods.
+    By default, NativeLB is false.
+
+    ```yaml
+    traefik.ingress.kubernetes.io/service.nativelb: "true"
+    ```
+
 ??? info "`traefik.ingress.kubernetes.io/service.serversscheme`"
 
     Overrides the default scheme.
@@ -888,11 +899,15 @@ TLS certificates can be managed in Secrets objects.
 
 ### Communication Between Traefik and Pods
 
-!!! info "It is not possible to route requests directly to [Kubernetes services](https://kubernetes.io/docs/concepts/services-networking/service/ "Link to Kubernetes service docs")"
+!!! info "Routing directly to [Kubernetes services](https://kubernetes.io/docs/concepts/services-networking/service/ "Link to Kubernetes service docs")"
 
-    You can use an `ExternalName` service to forward requests to the Kubernetes service through DNS.
+    To route directly to the Kubernetes service,
+    one can use the `traefik.ingress.kubernetes.io/service.nativelb` annotation on the Kubernetes service.
+    It controls, when creating the load-balancer,
+    whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
 
-    For doing so, you have to [allow external name services](https://doc.traefik.io/traefik/providers/kubernetes-ingress/#allowexternalnameservices "Link to docs about allowing external name services").
+    One alternative is to use an `ExternalName` service to forward requests to the Kubernetes service through DNS.
+    To do so, one must [allow external name services](https://doc.traefik.io/traefik/providers/kubernetes-ingress/#allowexternalnameservices "Link to docs about allowing external name services").
 
 Traefik automatically requests endpoint information based on the service provided in the ingress spec.
 Although Traefik will connect directly to the endpoints (pods),
