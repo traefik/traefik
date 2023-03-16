@@ -645,6 +645,7 @@ More information in the dedicated server [load balancing](../services/index.md#l
 
     To avoid creating the server load-balancer with the pods IPs and use Kubernetes Service clusterIP directly,
     one should set the service `NativeLB` option to true.
+    Please note that the connection reuse with services (connection pool) can avoid to load-balance requests to pods.
     By default, `NativeLB` is false.
 
     ??? example "Example"
