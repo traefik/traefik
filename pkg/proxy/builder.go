@@ -9,9 +9,9 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/proxy/fasthttp"
-	"github.com/traefik/traefik/v2/pkg/proxy/httputil"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/proxy/fasthttp"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 )
 
 type TLSConfigManager interface {

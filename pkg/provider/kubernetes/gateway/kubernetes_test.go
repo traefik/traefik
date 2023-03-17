@@ -1477,10 +1477,6 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.12:80",
 									},
 								},
-								PassHostHeader: pointer.Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
 							},
 						},
 					},
@@ -1545,10 +1541,6 @@ func TestLoadHTTPRoutes(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								PassHostHeader: pointer.Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
 							},
 						},
 					},
@@ -1611,10 +1603,6 @@ func TestLoadHTTPRoutes(t *testing.T) {
 									{
 										URL: "http://10.10.0.2:80",
 									},
-								},
-								PassHostHeader: pointer.Bool(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
 								},
 							},
 						},
