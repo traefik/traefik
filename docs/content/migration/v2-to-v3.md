@@ -68,6 +68,24 @@ When using the KubernetesCRD provider, it is therefore necessary to update [RBAC
 The TCP LoadBalancer `terminationDelay` option has been removed.
 This option can now be configured directly on the `TCPServersTransport` level, please take a look at this [documentation](../routing/services/index.md#terminationdelay)
 
+## PassHostHeader
+
+In v3, the `PassHostHeader` config option has been moved to the [ServersTransport](../routing/services/index.md#passhostheader) resource.
+
+## ResponseForwarding.flushInterval
+
+In v3, the `ResponseForwarding.flushInterval` config option has been removed as chunked responses are now handled automatically.
+
+## HTTP/2
+
+In v3, HTTP/2 is disabled by default between Traefik and the backends unless it is enabled in the configured [ServersTransport](../routing/services/index.md#enablehttp2) 
+or the backend URL uses the `h2c` scheme.
+
+## ServersTransport
+
+In v3, the `default` [ServersTransport](../routing/services/index.md) should now be configured in the dynamic configuration.
+The ServersTransport resource now contains the [tls](../routing/services/index.md#tls) and [http](../routing/services/index.md#http) top level config options.  
+
 ## Rancher v1
 
 In v3, the rancher v1 provider has been removed because Rancher v1 is [no longer actively maintaned](https://rancher.com/docs/os/v1.x/en/support/) and v2 is supported as a standard Kubernetes provider.
