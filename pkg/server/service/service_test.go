@@ -405,7 +405,7 @@ func Test1xxResponses(t *testing.T) {
 		h.Add("Link", "</foo.js>; rel=preload; as=script")
 		w.WriteHeader(http.StatusProcessing)
 
-		w.Write([]byte("Hello"))
+		_, _ = w.Write([]byte("Hello"))
 	}))
 	t.Cleanup(backend.Close)
 
@@ -417,9 +417,10 @@ func Test1xxResponses(t *testing.T) {
 		},
 	}
 	handler, err := sm.getLoadBalancerServiceHandler(context.Background(), "foobar", config)
+	assert.Nil(t, err)
 
 	frontend := httptest.NewServer(handler)
-	defer frontend.Close()
+	t.Cleanup(frontend.Close)
 	frontendClient := frontend.Client()
 
 	checkLinkHeaders := func(t *testing.T, expected, got []string) {
@@ -459,12 +460,10 @@ func Test1xxResponses(t *testing.T) {
 			return nil
 		},
 	}
-	req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(context.Background(), trace), "GET", frontend.URL, nil)
+	req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(context.Background(), trace), http.MethodGet, frontend.URL, nil)
 
 	res, err := frontendClient.Do(req)
-	if err != nil {
-		t.Fatalf("Get: %v", err)
-	}
+	assert.Nil(t, err)
 
 	defer res.Body.Close()
 
