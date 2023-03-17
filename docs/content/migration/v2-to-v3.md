@@ -78,7 +78,7 @@ In v3, the `ResponseForwarding.flushInterval` config option has been removed as 
 
 ## HTTP/2
 
-In v3, HTTP/2 is disabled by default between Traefik and the backends unless it is enabled in the configured [ServersTransport](../routing/services/index.md#passhostheader) 
+In v3, HTTP/2 is disabled by default between Traefik and the backends unless it is enabled in the configured [ServersTransport](../routing/services/index.md#enablehttp2) 
 or the backend URL uses the `h2c` scheme.
 
 ## ServersTransport
