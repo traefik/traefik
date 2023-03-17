@@ -19,10 +19,9 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: 'ServersTransportTCP is the CRD implementation of a TCPServersTransport.
-          If no tcpServersTransport is specified, a default one named default@internal
-          will be used. The default@internal tcpServersTransport can be configured
-          in the static configuration. More info: https://doc.traefik.io/traefik/v2.9/routing/services/#serverstransport_3'
+        description: ServersTransportTCP is the CRD implementation of a TCPServersTransport.
+          If no tcpServersTransport is specified, a default one named default will
+          be used.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -75,16 +74,15 @@ spec:
                       type: string
                     type: array
                   insecureSkipVerify:
-                    description: InsecureSkipVerify disables TLS certificate verification.
+                    description: InsecureSkipVerify disables SSL certificate verification.
                     type: boolean
                   peerCertURI:
-                    description: MaxIdleConnsPerHost controls the maximum idle (keep-alive)
-                      to keep per-host. PeerCertURI defines the peer cert URI used
-                      to match against SAN URI during the peer certificate verification.
+                    description: PeerCertURI defines the peer cert URI used to match
+                      against SAN URI during the peer certificate verification.
                     type: string
                   rootCAsSecrets:
                     description: RootCAsSecrets defines a list of CA secret used to
-                      validate self-signed certificates.
+                      validate self-signed certificate.
                     items:
                       type: string
                     type: array

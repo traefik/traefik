@@ -29,7 +29,6 @@
 
 [http.services]
   [http.services.service1.loadBalancer]
-    passHostHeader = true
     [[http.services.service1.loadBalancer.servers]]
       url = "http://{{.Server1}}:8989474"
 
