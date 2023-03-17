@@ -645,7 +645,7 @@ More information in the dedicated server [load balancing](../services/index.md#l
 
     To avoid creating the server load-balancer with the pods IPs and use Kubernetes Service clusterIP directly,
     one should set the service `NativeLB` option to true.
-    Please note that the connection reuse with services (connection pool) can avoid to load-balance requests to pods.
+    Please note that, by default, Traefik reuses the established connections to the backends for performance purposes. This can prevent the requests load balancing between the replicas from behaving as one would expect when the option is set.
     By default, `NativeLB` is false.
 
     ??? example "Example"
