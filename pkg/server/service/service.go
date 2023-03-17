@@ -21,7 +21,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
-	"github.com/traefik/traefik/v2/pkg/proxy"
+	"github.com/traefik/traefik/v3/pkg/proxy"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/cookie"
 	"github.com/traefik/traefik/v3/pkg/server/provider"

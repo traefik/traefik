@@ -22,7 +22,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/service/tcp"
 	tcp2 "github.com/traefik/traefik/v3/pkg/tcp"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v2/pkg/tls/client"
+	"github.com/traefik/traefik/v3/pkg/tls/client"
 )
 
 type applyRouter func(conf *runtime.Configuration)

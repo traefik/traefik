@@ -14,10 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/proxy"
+	"github.com/traefik/traefik/v3/pkg/proxy"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
-	"github.com/traefik/traefik/v2/pkg/tls/client"
+	"github.com/traefik/traefik/v3/pkg/tls/client"
 )
 
 func TestGetLoadBalancer(t *testing.T) {
