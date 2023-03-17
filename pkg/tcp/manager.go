@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/dialer"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/dialer"
 	"golang.org/x/net/proxy"
 )
 

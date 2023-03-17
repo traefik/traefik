@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	proxyhttputil "github.com/traefik/traefik/v2/pkg/proxy/httputil"
+	proxyhttputil "github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/valyala/fasthttp"
 	"golang.org/x/net/http/httpguts"
 )

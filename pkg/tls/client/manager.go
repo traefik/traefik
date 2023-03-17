@@ -12,8 +12,8 @@ import (
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
 	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
 // SpiffeX509Source allows to retrieve a x509 SVID and bundle.
