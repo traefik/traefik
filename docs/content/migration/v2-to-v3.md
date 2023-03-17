@@ -83,7 +83,7 @@ or the backend URL uses the `h2c` scheme.
 
 ## ServersTransport
 
-In v3, the `default` [ServersTransport](../routing/services/index.md) should now be configured in the dynamic configuration.
+In v3, the `default` [ServersTransport](../routing/services/index.md#serverstransport_1) should now be configured in the dynamic configuration.
 The ServersTransport resource now contains the [tls](../routing/services/index.md#tls) and [http](../routing/services/index.md#http) top level config options.  
 
 ## Rancher v1
