@@ -823,7 +823,7 @@ Constraints is an expression that Traefik matches against the Nomad service's ta
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
 `--providers.nomad.endpoint.address`:  
-The address of the Nomad server, including scheme and port.
+The address of the Nomad server, including scheme and port. (Default: ```http://127.0.0.1:4646```)
 
 `--providers.nomad.endpoint.endpointwaittime`:  
 WaitTime limits how long a Watch will block. If not provided, the agent default values will be used (Default: ```0```)
