@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/hashicorp/nomad/api"
 	"github.com/stretchr/testify/require"
 )
 
@@ -68,6 +69,35 @@ func Test_globalConfig(t *testing.T) {
 			result := p.getExtraConf(test.Tags)
 			require.Equal(t, test.exp, result)
 		})
+	}
+}
+
+func Test_defaultConfig(t *testing.T) {
+	for _, testEnv := range []map[string]string{
+		{},
+		{
+			"NOMAD_ADDR":        "https://nomad.example.com",
+			"NOMAD_REGION":      "us-west",
+			"NOMAD_TOKEN":       "almighty_token",
+			"NOMAD_CACERT":      "/etc/ssl/private/nomad-agent-ca.pem",
+			"NOMAD_CLIENT_CERT": "/etc/ssl/private/global-client-nomad.pem",
+			"NOMAD_CLIENT_KEY":  "/etc/ssl/private/global-client-nomad-key.pem",
+			"NOMAD_SKIP_VERIFY": "true",
+		},
+	} {
+		for k, v := range testEnv {
+			t.Setenv(k, v)
+		}
+		p := &Provider{}
+		p.SetDefaults()
+		defConfig := api.DefaultConfig()
+		require.Equal(t, defConfig.Address, p.Endpoint.Address)
+		require.Equal(t, defConfig.Region, p.Endpoint.Region)
+		require.Equal(t, defConfig.SecretID, p.Endpoint.Token)
+		require.Equal(t, defConfig.TLSConfig.CACert, p.Endpoint.TLS.CA)
+		require.Equal(t, defConfig.TLSConfig.ClientCert, p.Endpoint.TLS.Cert)
+		require.Equal(t, defConfig.TLSConfig.ClientKey, p.Endpoint.TLS.Key)
+		require.Equal(t, defConfig.TLSConfig.Insecure, p.Endpoint.TLS.InsecureSkipVerify)
 	}
 }
 
