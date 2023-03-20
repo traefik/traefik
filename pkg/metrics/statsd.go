@@ -18,9 +18,7 @@ var (
 
 const (
 	statsdConfigReloadsName           = "config.reload.total"
-	statsdConfigReloadsFailureName    = statsdConfigReloadsName + ".failure"
 	statsdLastConfigReloadSuccessName = "config.reload.lastSuccessTimestamp"
-	statsdLastConfigReloadFailureName = "config.reload.lastFailureTimestamp"
 
 	statsdTLSCertsNotAfterTimestampName = "tls.certs.notAfterTimestamp"
 
@@ -63,9 +61,7 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 
 	registry := &standardRegistry{
 		configReloadsCounter:           statsdClient.NewCounter(statsdConfigReloadsName, 1.0),
-		configReloadsFailureCounter:    statsdClient.NewCounter(statsdConfigReloadsFailureName, 1.0),
 		lastConfigReloadSuccessGauge:   statsdClient.NewGauge(statsdLastConfigReloadSuccessName),
-		lastConfigReloadFailureGauge:   statsdClient.NewGauge(statsdLastConfigReloadFailureName),
 		tlsCertsNotAfterTimestampGauge: statsdClient.NewGauge(statsdTLSCertsNotAfterTimestampName),
 	}
 

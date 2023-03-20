@@ -340,15 +340,11 @@ func TestOpenTelemetry(t *testing.T) {
 	// TODO: the len of startUnixNano is no supposed to be 20, it should be 19
 	expected = append(expected,
 		`({"name":"traefik_config_reloads_total","description":"Config reloads","unit":"1","sum":{"dataPoints":\[{"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
-		`({"name":"traefik_config_reloads_failure_total","description":"Config reload failures","unit":"1","sum":{"dataPoints":\[{"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\],"aggregationTemporality":2,"isMonotonic":true}})`,
 		`({"name":"traefik_config_last_reload_success","description":"Last config reload success","unit":"ms","gauge":{"dataPoints":\[{"startTimeUnixNano":"[\d]{20}","timeUnixNano":"[\d]{19}","asDouble":1}\]}})`,
-		`({"name":"traefik_config_last_reload_failure","description":"Last config reload failure","unit":"ms","gauge":{"dataPoints":\[{"startTimeUnixNano":"[\d]{20}","timeUnixNano":"[\d]{19}","asDouble":1}\]}})`,
 	)
 
 	registry.ConfigReloadsCounter().Add(1)
-	registry.ConfigReloadsFailureCounter().Add(1)
 	registry.LastConfigReloadSuccessGauge().Set(1)
-	registry.LastConfigReloadFailureGauge().Set(1)
 	msgServer := <-c
 
 	assertMessage(t, *msgServer, expected)
