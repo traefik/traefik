@@ -390,6 +390,7 @@
     },
     "datadog": {
       "localAgentHostPort": "xxxx",
+      "localAgentSocket": "xxxx",
       "globalTag": "foobar",
       "debug": true,
       "prioritySampling": true,
