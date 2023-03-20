@@ -33,6 +33,11 @@ type ServiceUDP struct {
 	Port intstr.IntOrString `json:"port"`
 	// Weight defines the weight used when balancing requests between multiple Kubernetes Service.
 	Weight *int `json:"weight,omitempty"`
+	// NativeLB controls, when creating the load-balancer,
+	// whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
+	// The Kubernetes Service itself does load-balance to the pods.
+	// By default, NativeLB is false.
+	NativeLB bool `json:"nativeLB,omitempty"`
 }
 
 // +genclient
