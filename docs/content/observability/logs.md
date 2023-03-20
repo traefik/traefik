@@ -64,7 +64,9 @@ log:
 
 #### `level`
 
-By default, the `level` is set to `ERROR`. Alternative logging levels are `DEBUG`, `PANIC`, `FATAL`, `ERROR`, `WARN`, and `INFO`.
+By default, the `level` is set to `ERROR`.
+
+Alternative logging levels are `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`, and `PANIC`.
 
 ```yaml tab="File (YAML)"
 log:
