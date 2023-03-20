@@ -3,7 +3,7 @@ package headers
 import (
 	"net/http"
 
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/unrolled/secure"
 )
 

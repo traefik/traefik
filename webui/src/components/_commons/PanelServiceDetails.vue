@@ -55,19 +55,6 @@
         </div>
       </q-card-section>
 
-      <q-card-section v-if="data.loadBalancer && data.loadBalancer.terminationDelay">
-        <div class="row items-start no-wrap">
-          <div class="col">
-            <div class="text-subtitle2">Termination Delay</div>
-            <q-chip
-              dense
-              class="app-chip app-chip-name">
-              {{ data.loadBalancer.terminationDelay }} ms
-            </q-chip>
-          </div>
-        </div>
-      </q-card-section>
-
       <q-card-section v-if="data.loadBalancer && data.loadBalancer.proxyProtocol">
         <div class="row items-start no-wrap">
           <div class="col">

@@ -6,9 +6,9 @@ import (
 
 	"github.com/go-kit/kit/metrics/statsd"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 var (
@@ -18,9 +18,7 @@ var (
 
 const (
 	statsdConfigReloadsName           = "config.reload.total"
-	statsdConfigReloadsFailureName    = statsdConfigReloadsName + ".failure"
 	statsdLastConfigReloadSuccessName = "config.reload.lastSuccessTimestamp"
-	statsdLastConfigReloadFailureName = "config.reload.lastFailureTimestamp"
 
 	statsdTLSCertsNotAfterTimestampName = "tls.certs.notAfterTimestamp"
 
@@ -63,9 +61,7 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 
 	registry := &standardRegistry{
 		configReloadsCounter:           statsdClient.NewCounter(statsdConfigReloadsName, 1.0),
-		configReloadsFailureCounter:    statsdClient.NewCounter(statsdConfigReloadsFailureName, 1.0),
 		lastConfigReloadSuccessGauge:   statsdClient.NewGauge(statsdLastConfigReloadSuccessName),
-		lastConfigReloadFailureGauge:   statsdClient.NewGauge(statsdLastConfigReloadFailureName),
 		tlsCertsNotAfterTimestampGauge: statsdClient.NewGauge(statsdTLSCertsNotAfterTimestampName),
 	}
 

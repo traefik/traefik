@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/go-check/check"
-	"github.com/traefik/traefik/v2/integration/try"
+	"github.com/traefik/traefik/v3/integration/try"
 	checker "github.com/vdemeester/shakers"
 )
 

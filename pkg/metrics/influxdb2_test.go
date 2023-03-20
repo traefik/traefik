@@ -6,13 +6,14 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strconv"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func TestInfluxDB2(t *testing.T) {
@@ -46,15 +47,11 @@ func TestInfluxDB2(t *testing.T) {
 
 	expectedServer := []string{
 		`(traefik\.config\.reload\.total count=1) [\d]{19}`,
-		`(traefik\.config\.reload\.total\.failure count=1) [\d]{19}`,
 		`(traefik\.config\.reload\.lastSuccessTimestamp value=1) [\d]{19}`,
-		`(traefik\.config\.reload\.lastFailureTimestamp value=1) [\d]{19}`,
 	}
 
 	influxDB2Registry.ConfigReloadsCounter().Add(1)
-	influxDB2Registry.ConfigReloadsFailureCounter().Add(1)
 	influxDB2Registry.LastConfigReloadSuccessGauge().Set(1)
-	influxDB2Registry.LastConfigReloadFailureGauge().Set(1)
 	msgServer := <-c
 
 	assertMessage(t, *msgServer, expectedServer)
@@ -154,4 +151,15 @@ func TestInfluxDB2(t *testing.T) {
 	msgServiceOpenConns := <-c
 
 	assertMessage(t, *msgServiceOpenConns, expectedServiceOpenConns)
+}
+
+func assertMessage(t *testing.T, msg string, patterns []string) {
+	t.Helper()
+	for _, pattern := range patterns {
+		re := regexp.MustCompile(pattern)
+		match := re.FindStringSubmatch(msg)
+		if len(match) != 2 {
+			t.Errorf("Got %q %v, want %q", msg, match, pattern)
+		}
+	}
 }

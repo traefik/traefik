@@ -3,10 +3,10 @@ package server
 import (
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/server/provider"
-	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/server/provider"
+	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
 func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoints []string) dynamic.Configuration {
@@ -21,9 +21,10 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 			ServersTransports: make(map[string]*dynamic.ServersTransport),
 		},
 		TCP: &dynamic.TCPConfiguration{
-			Routers:     make(map[string]*dynamic.TCPRouter),
-			Services:    make(map[string]*dynamic.TCPService),
-			Middlewares: make(map[string]*dynamic.TCPMiddleware),
+			Routers:           make(map[string]*dynamic.TCPRouter),
+			Services:          make(map[string]*dynamic.TCPService),
+			Middlewares:       make(map[string]*dynamic.TCPMiddleware),
+			ServersTransports: make(map[string]*dynamic.TCPServersTransport),
 		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  make(map[string]*dynamic.UDPRouter),
@@ -79,6 +80,9 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 			}
 			for serviceName, service := range configuration.TCP.Services {
 				conf.TCP.Services[provider.MakeQualifiedName(pvd, serviceName)] = service
+			}
+			for serversTransportName, serversTransport := range configuration.TCP.ServersTransports {
+				conf.TCP.ServersTransports[provider.MakeQualifiedName(pvd, serversTransportName)] = serversTransport
 			}
 		}
 

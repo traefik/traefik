@@ -56,6 +56,7 @@ Merging a PR requires the following steps to be completed before it is merged au
     * Do not open the PR from an organization repository.
     * Keep "allows edit from maintainer" checked.
     * Use semantic line breaks for documentation.
+    * Ensure your PR is not a draft. We do not review drafts, but do answer questions and confer with developers on them as needed.
 * Pass the validation check.
 * Pass all tests.
 * Receive 3 approving reviews maintainers.

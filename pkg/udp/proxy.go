@@ -20,14 +20,14 @@ func NewProxy(address string) (*Proxy, error) {
 
 // ServeUDP implements the Handler interface.
 func (p *Proxy) ServeUDP(conn *Conn) {
-	log.Debug().Msgf("Handling connection from %s to %s", conn.rAddr, p.target)
+	log.Debug().Msgf("Handling UDP stream from %s to %s", conn.rAddr, p.target)
 
 	// needed because of e.g. server.trackedConnection
 	defer conn.Close()
 
 	connBackend, err := net.Dial("udp", p.target)
 	if err != nil {
-		log.Error().Err(err).Msg("Error while connecting to backend")
+		log.Error().Err(err).Msg("Error while dialing backend")
 		return
 	}
 
@@ -40,7 +40,7 @@ func (p *Proxy) ServeUDP(conn *Conn) {
 
 	err = <-errChan
 	if err != nil {
-		log.Error().Err(err).Msg("Error while serving UDP")
+		log.Error().Err(err).Msg("Error while handling UDP stream")
 	}
 
 	<-errChan
@@ -55,6 +55,6 @@ func connCopy(dst io.WriteCloser, src io.Reader, errCh chan error) {
 	errCh <- err
 
 	if err := dst.Close(); err != nil {
-		log.Debug().Err(err).Msg("Error while terminating connection")
+		log.Debug().Err(err).Msg("Error while terminating UDP stream")
 	}
 }

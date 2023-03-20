@@ -11,9 +11,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	th "github.com/traefik/traefik/v2/pkg/testhelpers"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	th "github.com/traefik/traefik/v3/pkg/testhelpers"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func TestRegisterPromState(t *testing.T) {
@@ -100,9 +100,7 @@ func TestPrometheus(t *testing.T) {
 	}
 
 	prometheusRegistry.ConfigReloadsCounter().Add(1)
-	prometheusRegistry.ConfigReloadsFailureCounter().Add(1)
 	prometheusRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
-	prometheusRegistry.LastConfigReloadFailureGauge().Set(float64(time.Now().Unix()))
 
 	prometheusRegistry.
 		TLSCertsNotAfterTimestampGauge().
@@ -202,16 +200,8 @@ func TestPrometheus(t *testing.T) {
 			assert: buildCounterAssert(t, configReloadsTotalName, 1),
 		},
 		{
-			name:   configReloadsFailuresTotalName,
-			assert: buildCounterAssert(t, configReloadsFailuresTotalName, 1),
-		},
-		{
 			name:   configLastReloadSuccessName,
 			assert: buildTimestampAssert(t, configLastReloadSuccessName),
-		},
-		{
-			name:   configLastReloadFailureName,
-			assert: buildTimestampAssert(t, configLastReloadFailureName),
 		},
 		{
 			name: tlsCertsNotAfterTimestamp,

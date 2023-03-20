@@ -9,7 +9,7 @@ import (
 
 	"github.com/stvp/go-udp-testing"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func TestDatadog(t *testing.T) {
@@ -45,9 +45,7 @@ func testDatadogRegistry(t *testing.T, metricsPrefix string, datadogRegistry Reg
 
 	expected := []string{
 		metricsPrefix + ".config.reload.total:1.000000|c\n",
-		metricsPrefix + ".config.reload.total:1.000000|c|#failure:true\n",
 		metricsPrefix + ".config.reload.lastSuccessTimestamp:1.000000|g\n",
-		metricsPrefix + ".config.reload.lastFailureTimestamp:1.000000|g\n",
 
 		metricsPrefix + ".tls.certs.notAfterTimestamp:1.000000|g|#key:value\n",
 
@@ -80,9 +78,7 @@ func testDatadogRegistry(t *testing.T, metricsPrefix string, datadogRegistry Reg
 
 	udp.ShouldReceiveAll(t, expected, func() {
 		datadogRegistry.ConfigReloadsCounter().Add(1)
-		datadogRegistry.ConfigReloadsFailureCounter().Add(1)
 		datadogRegistry.LastConfigReloadSuccessGauge().Add(1)
-		datadogRegistry.LastConfigReloadFailureGauge().Add(1)
 
 		datadogRegistry.TLSCertsNotAfterTimestampGauge().With("key", "value").Set(1)
 

@@ -9,7 +9,7 @@ import (
 
 	"github.com/stvp/go-udp-testing"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func TestStatsD(t *testing.T) {
@@ -49,9 +49,7 @@ func testRegistry(t *testing.T, metricsPrefix string, registry Registry) {
 
 	expected := []string{
 		metricsPrefix + ".config.reload.total:1.000000|c\n",
-		metricsPrefix + ".config.reload.total.failure:1.000000|c\n",
 		metricsPrefix + ".config.reload.lastSuccessTimestamp:1.000000|g\n",
-		metricsPrefix + ".config.reload.lastFailureTimestamp:1.000000|g\n",
 
 		metricsPrefix + ".tls.certs.notAfterTimestamp:1.000000|g\n",
 
@@ -81,9 +79,7 @@ func testRegistry(t *testing.T, metricsPrefix string, registry Registry) {
 
 	udp.ShouldReceiveAll(t, expected, func() {
 		registry.ConfigReloadsCounter().Add(1)
-		registry.ConfigReloadsFailureCounter().Add(1)
 		registry.LastConfigReloadSuccessGauge().Set(1)
-		registry.LastConfigReloadFailureGauge().Set(1)
 
 		registry.TLSCertsNotAfterTimestampGauge().With("key", "value").Set(1)
 

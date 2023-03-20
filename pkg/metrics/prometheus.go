@@ -12,8 +12,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 const (
@@ -21,11 +21,9 @@ const (
 	MetricNamePrefix = "traefik_"
 
 	// server meta information.
-	metricConfigPrefix             = MetricNamePrefix + "config_"
-	configReloadsTotalName         = metricConfigPrefix + "reloads_total"
-	configReloadsFailuresTotalName = metricConfigPrefix + "reloads_failure_total"
-	configLastReloadSuccessName    = metricConfigPrefix + "last_reload_success"
-	configLastReloadFailureName    = metricConfigPrefix + "last_reload_failure"
+	metricConfigPrefix          = MetricNamePrefix + "config_"
+	configReloadsTotalName      = metricConfigPrefix + "reloads_total"
+	configLastReloadSuccessName = metricConfigPrefix + "last_reload_success"
 
 	// TLS.
 	metricsTLSPrefix          = MetricNamePrefix + "tls_"
@@ -118,17 +116,9 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		Name: configReloadsTotalName,
 		Help: "Config reloads",
 	}, []string{})
-	configReloadsFailures := newCounterFrom(stdprometheus.CounterOpts{
-		Name: configReloadsFailuresTotalName,
-		Help: "Config failure reloads",
-	}, []string{})
 	lastConfigReloadSuccess := newGaugeFrom(stdprometheus.GaugeOpts{
 		Name: configLastReloadSuccessName,
 		Help: "Last config reload success",
-	}, []string{})
-	lastConfigReloadFailure := newGaugeFrom(stdprometheus.GaugeOpts{
-		Name: configLastReloadFailureName,
-		Help: "Last config reload failure",
 	}, []string{})
 	tlsCertsNotAfterTimestamp := newGaugeFrom(stdprometheus.GaugeOpts{
 		Name: tlsCertsNotAfterTimestamp,
@@ -137,9 +127,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 
 	promState.vectors = []vector{
 		configReloads.cv,
-		configReloadsFailures.cv,
 		lastConfigReloadSuccess.gv,
-		lastConfigReloadFailure.gv,
 		tlsCertsNotAfterTimestamp.gv,
 	}
 
@@ -148,9 +136,7 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 		routerEnabled:                  config.AddRoutersLabels,
 		svcEnabled:                     config.AddServicesLabels,
 		configReloadsCounter:           configReloads,
-		configReloadsFailureCounter:    configReloadsFailures,
 		lastConfigReloadSuccessGauge:   lastConfigReloadSuccess,
-		lastConfigReloadFailureGauge:   lastConfigReloadFailure,
 		tlsCertsNotAfterTimestampGauge: tlsCertsNotAfterTimestamp,
 	}
 

@@ -1,0 +1,36 @@
+[
+	{
+		"entryPoints": [
+			"web"
+		],
+		"middlewares": [
+			"auth",
+			"inflightconn@myprovider"
+		],
+		"name": "bar@myprovider",
+		"provider": "myprovider",
+		"rule": "Host(`foo.bar`)",
+		"service": "foo-service",
+		"status": "warning",
+		"using": [
+			"web"
+		]
+	},
+		{
+		"entryPoints": [
+			"web"
+		],
+		"middlewares": [
+			"inflightconn@myprovider",
+			"auth"
+		],
+		"name": "foo@myprovider",
+		"provider": "myprovider",
+		"rule": "Host(`foo.bar`)",
+		"service": "bar-service@myprovider",
+		"status": "disabled",
+		"using": [
+			"web"
+		]
+	}
+]

@@ -11,11 +11,11 @@ import (
 
 	"github.com/hashicorp/consul/api"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/config/label"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/provider/constraints"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/label"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/provider/constraints"
 )
 
 func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, certInfo *connectCert) *dynamic.Configuration {
@@ -40,6 +40,17 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 		var tcpOrUDP bool
 		if len(confFromLabel.TCP.Routers) > 0 || len(confFromLabel.TCP.Services) > 0 {
 			tcpOrUDP = true
+
+			if item.ExtraConf.ConsulCatalog.Connect {
+				if confFromLabel.TCP.ServersTransports == nil {
+					confFromLabel.TCP.ServersTransports = make(map[string]*dynamic.TCPServersTransport)
+				}
+
+				serversTransportKey := itemServersTransportKey(item)
+				if confFromLabel.TCP.ServersTransports[serversTransportKey] == nil {
+					confFromLabel.TCP.ServersTransports[serversTransportKey] = certInfo.tcpServersTransport(item)
+				}
+			}
 
 			if err := p.buildTCPServiceConfiguration(item, confFromLabel.TCP); err != nil {
 				logger.Error().Err(err).Send()
@@ -131,13 +142,10 @@ func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
 
 func (p *Provider) buildTCPServiceConfiguration(item itemData, configuration *dynamic.TCPConfiguration) error {
 	if len(configuration.Services) == 0 {
-		configuration.Services = make(map[string]*dynamic.TCPService)
-
-		lb := &dynamic.TCPServersLoadBalancer{}
-		lb.SetDefaults()
-
-		configuration.Services[getName(item)] = &dynamic.TCPService{
-			LoadBalancer: lb,
+		configuration.Services = map[string]*dynamic.TCPService{
+			getName(item): {
+				LoadBalancer: new(dynamic.TCPServersLoadBalancer),
+			},
 		}
 	}
 
@@ -213,6 +221,14 @@ func (p *Provider) addServerTCP(item itemData, loadBalancer *dynamic.TCPServersL
 
 	if port == "" {
 		return errors.New("port is missing")
+	}
+
+	if item.Address == "" {
+		return errors.New("address is missing")
+	}
+
+	if item.ExtraConf.ConsulCatalog.Connect {
+		loadBalancer.ServersTransport = itemServersTransportKey(item)
 	}
 
 	loadBalancer.Servers[0].Address = net.JoinHostPort(item.Address, port)

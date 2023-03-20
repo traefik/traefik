@@ -557,8 +557,7 @@ which is basically where the request will be passed along to.
 
 In general, a service assigned to a router should have been defined,
 but there are exceptions for label-based providers.
-See the specific [docker](../providers/docker.md#service-definition), [rancher](../providers/rancher.md#service-definition),
-or [marathon](../providers/marathon.md#service-definition) documentation.
+See the specific [docker](../providers/docker.md#service-definition) documentation.
 
 !!! warning "The character `@` is not authorized in the service name."
 

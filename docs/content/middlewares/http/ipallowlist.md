@@ -35,18 +35,6 @@ spec:
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange": "127.0.0.1/32,192.168.1.7"
-}
-```
-
-```yaml tab="Rancher"
-# Accepts request from defined IP
-labels:
-  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
-```
-
 ```yaml tab="File (YAML)"
 # Accepts request from defined IP
 http:
@@ -73,7 +61,10 @@ The `sourceRange` option sets the allowed IPs (or ranges of allowed IPs by using
 
 ### `ipStrategy`
 
-The `ipStrategy` option defines two parameters that set how Traefik determines the client IP: `depth`, and `excludedIPs`.
+The `ipStrategy` option defines two parameters that set how Traefik determines the client IP: `depth`, and `excludedIPs`.  
+If no strategy is set, the default behavior is to match `sourceRange` against the Remote address found in the request.
+
+!!! important "As a middleware, whitelisting happens before the actual proxying to the backend takes place. In addition, the previous network hop only gets appended to `X-Forwarded-For` during the last stages of proxying, i.e. after it has already passed through whitelisting. Therefore, during whitelisting, as the previous network hop is not yet present in `X-Forwarded-For`, it cannot be matched against `sourceRange`."
 
 #### `ipStrategy.depth`
 
@@ -118,20 +109,6 @@ spec:
 # Allowlisting Based on `X-Forwarded-For` with `depth=2`
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.depth=2"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange": "127.0.0.1/32, 192.168.1.7",
-  "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.depth": "2"
-}
-```
-
-```yaml tab="Rancher"
-# Allowlisting Based on `X-Forwarded-For` with `depth=2`
-labels:
-  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
-  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.depth=2"
 ```
 
 ```yaml tab="File (YAML)"
@@ -195,18 +172,6 @@ spec:
 ```yaml tab="Consul Catalog"
 # Exclude from `X-Forwarded-For`
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
-}
-```
-
-```yaml tab="Rancher"
-# Exclude from `X-Forwarded-For`
-labels:
-  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="File (YAML)"
