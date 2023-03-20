@@ -298,6 +298,9 @@ metrics:
     addServicesLabels: true
     entryPoint: foobar
     manualRouting: true
+    headerLabels:
+      label1: foobar
+      label2: foobar
   datadog:
     address: foobar
     pushInterval: 42s

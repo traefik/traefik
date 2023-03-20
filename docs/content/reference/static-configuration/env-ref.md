@@ -354,6 +354,9 @@ Buckets for latency metrics. (Default: ```0.100000, 0.300000, 1.200000, 5.000000
 `TRAEFIK_METRICS_PROMETHEUS_ENTRYPOINT`:  
 EntryPoint (Default: ```traefik```)
 
+`TRAEFIK_METRICS_PROMETHEUS_HEADERLABELS_<NAME>`:  
+Defines the extra labels for the requests_total metrics, and for each of them, the request header containing the value for this label.
+
 `TRAEFIK_METRICS_PROMETHEUS_MANUALROUTING`:  
 Manual routing (Default: ```false```)
 
