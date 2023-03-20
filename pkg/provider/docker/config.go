@@ -79,7 +79,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 			Labels        map[string]string
 		}{
 			Name:          serviceName,
-			ContainerName: provider.Normalize(container.ServiceName),
+			ContainerName: strings.TrimPrefix(container.Name, "/"),
 			Labels:        container.Labels,
 		}
 
