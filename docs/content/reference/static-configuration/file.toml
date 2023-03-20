@@ -272,6 +272,9 @@
     addServicesLabels = true
     entryPoint = "foobar"
     manualRouting = true
+    [metrics.prometheus.headerLabels]
+      label1 = "foobar"
+      label2 = "foobar"
   [metrics.datadog]
     address = "foobar"
     pushInterval = "42s"
