@@ -193,9 +193,14 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	tsProviders := initTailscaleProviders(staticConfiguration, &providerAggregator)
 
+	// Metrics
+
+	metricRegistries := registerMetricClients(staticConfiguration.Metrics)
+	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
+
 	// Entrypoints
 
-	serverEntryPointsTCP, err := server.NewTCPEntryPoints(staticConfiguration.EntryPoints, staticConfiguration.HostResolver)
+	serverEntryPointsTCP, err := server.NewTCPEntryPoints(staticConfiguration.EntryPoints, staticConfiguration.HostResolver, metricsRegistry)
 	if err != nil {
 		return nil, err
 	}
@@ -242,11 +247,6 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 			staticConfiguration.API = &static.API{}
 		}
 	}
-
-	// Metrics
-
-	metricRegistries := registerMetricClients(staticConfiguration.Metrics)
-	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
 
 	// Service manager factory
 

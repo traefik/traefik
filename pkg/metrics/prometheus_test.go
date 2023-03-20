@@ -101,6 +101,10 @@ func TestPrometheus(t *testing.T) {
 
 	prometheusRegistry.ConfigReloadsCounter().Add(1)
 	prometheusRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
+	prometheusRegistry.
+		OpenConnectionsGauge().
+		With("entrypoint", "test", "protocol", "TCP").
+		Set(1)
 
 	prometheusRegistry.
 		TLSCertsNotAfterTimestampGauge().
@@ -115,10 +119,6 @@ func TestPrometheus(t *testing.T) {
 		EntryPointReqDurationHistogram().
 		With("code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "http").
 		Observe(1)
-	prometheusRegistry.
-		EntryPointOpenConnsGauge().
-		With("method", http.MethodGet, "protocol", "http", "entrypoint", "http").
-		Set(1)
 	prometheusRegistry.
 		EntryPointRespsBytesCounter().
 		With("code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "http").
@@ -141,10 +141,6 @@ func TestPrometheus(t *testing.T) {
 		With("router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Observe(10000)
 	prometheusRegistry.
-		RouterOpenConnsGauge().
-		With("router", "demo", "service", "service1", "method", http.MethodGet, "protocol", "http").
-		Set(1)
-	prometheusRegistry.
 		RouterRespsBytesCounter().
 		With("router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
@@ -165,10 +161,6 @@ func TestPrometheus(t *testing.T) {
 		ServiceReqDurationHistogram().
 		With("service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Observe(10000)
-	prometheusRegistry.
-		ServiceOpenConnsGauge().
-		With("service", "service1", "method", http.MethodGet, "protocol", "http").
-		Set(1)
 	prometheusRegistry.
 		ServiceRetriesCounter().
 		With("service", "service1").
@@ -204,13 +196,21 @@ func TestPrometheus(t *testing.T) {
 			assert: buildTimestampAssert(t, configLastReloadSuccessName),
 		},
 		{
-			name: tlsCertsNotAfterTimestamp,
+			name: openConnectionsName,
+			labels: map[string]string{
+				"protocol":   "TCP",
+				"entrypoint": "test",
+			},
+			assert: buildGaugeAssert(t, openConnectionsName, 1),
+		},
+		{
+			name: tlsCertsNotAfterTimestampName,
 			labels: map[string]string{
 				"cn":     "value",
 				"serial": "value",
 				"sans":   "value",
 			},
-			assert: buildTimestampAssert(t, tlsCertsNotAfterTimestamp),
+			assert: buildTimestampAssert(t, tlsCertsNotAfterTimestampName),
 		},
 		{
 			name: entryPointReqsTotalName,
@@ -231,15 +231,6 @@ func TestPrometheus(t *testing.T) {
 				"entrypoint": "http",
 			},
 			assert: buildHistogramAssert(t, entryPointReqDurationName, 1),
-		},
-		{
-			name: entryPointOpenConnsName,
-			labels: map[string]string{
-				"method":     http.MethodGet,
-				"protocol":   "http",
-				"entrypoint": "http",
-			},
-			assert: buildGaugeAssert(t, entryPointOpenConnsName, 1),
 		},
 		{
 			name: entryPointReqsBytesTotalName,
@@ -294,16 +285,6 @@ func TestPrometheus(t *testing.T) {
 			assert: buildHistogramAssert(t, routerReqDurationName, 1),
 		},
 		{
-			name: routerOpenConnsName,
-			labels: map[string]string{
-				"method":   http.MethodGet,
-				"protocol": "http",
-				"service":  "service1",
-				"router":   "demo",
-			},
-			assert: buildGaugeAssert(t, routerOpenConnsName, 1),
-		},
-		{
 			name: routerReqsBytesTotalName,
 			labels: map[string]string{
 				"code":     "200",
@@ -353,15 +334,6 @@ func TestPrometheus(t *testing.T) {
 				"service":  "service1",
 			},
 			assert: buildHistogramAssert(t, serviceReqDurationName, 1),
-		},
-		{
-			name: serviceOpenConnsName,
-			labels: map[string]string{
-				"method":   http.MethodGet,
-				"protocol": "http",
-				"service":  "service1",
-			},
-			assert: buildGaugeAssert(t, serviceOpenConnsName, 1),
 		},
 		{
 			name: serviceRetriesTotalName,
