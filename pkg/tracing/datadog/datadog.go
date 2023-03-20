@@ -18,6 +18,7 @@ const Name = "datadog"
 // Config provides configuration settings for a datadog tracer.
 type Config struct {
 	LocalAgentHostPort string `description:"Sets the Datadog Agent host:port." json:"localAgentHostPort,omitempty" toml:"localAgentHostPort,omitempty" yaml:"localAgentHostPort,omitempty"`
+	LocalAgentSocket   string `description:"Sets the socket for the Datadog Agent." json:"localAgentSocket,omitempty" toml:"localAgentSocket,omitempty" yaml:"localAgentSocket,omitempty"`
 	// Deprecated: use GlobalTags instead.
 	GlobalTag                  string            `description:"Sets a key:value tag on all spans." json:"globalTag,omitempty" toml:"globalTag,omitempty" yaml:"globalTag,omitempty" export:"true"`
 	GlobalTags                 map[string]string `description:"Sets a list of key:value tags on all spans." json:"globalTags,omitempty" toml:"globalTags,omitempty" yaml:"globalTags,omitempty" export:"true"`
@@ -47,7 +48,6 @@ func (c *Config) SetDefaults() {
 // Setup sets up the tracer.
 func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
 	opts := []datadog.StartOption{
-		datadog.WithAgentAddr(c.LocalAgentHostPort),
 		datadog.WithServiceName(serviceName),
 		datadog.WithDebugMode(c.Debug),
 		datadog.WithPropagator(datadog.NewPropagator(&datadog.PropagatorConfig{
@@ -56,6 +56,12 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 			PriorityHeader: c.SamplingPriorityHeaderName,
 			BaggagePrefix:  c.BagagePrefixHeaderName,
 		})),
+	}
+
+	if c.LocalAgentSocket != "" {
+		opts = append(opts, datadog.WithUDS(c.LocalAgentSocket))
+	} else {
+		opts = append(opts, datadog.WithAgentAddr(c.LocalAgentHostPort))
 	}
 
 	for k, v := range c.GlobalTags {
