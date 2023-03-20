@@ -452,7 +452,6 @@
 [experimental]
   kubernetesGateway = true
   http3 = true
-  hub = true
   [experimental.plugins]
     [experimental.plugins.Descriptor0]
       moduleName = "foobar"
