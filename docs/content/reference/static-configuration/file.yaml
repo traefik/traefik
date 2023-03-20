@@ -472,7 +472,6 @@ hub:
 experimental:
   kubernetesGateway: true
   http3: true
-  hub: true
   plugins:
     Descriptor0:
       moduleName: foobar

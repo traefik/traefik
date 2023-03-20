@@ -229,7 +229,7 @@ func (c *Configuration) SetEffectiveConfiguration() {
 			c.Hub = nil
 			log.WithoutContext().Errorf("Unable to activate the Hub provider: %v", err)
 		} else {
-			log.WithoutContext().Debugf("Experimental Hub provider has been activated.")
+			log.WithoutContext().Debugf("Hub provider has been activated.")
 		}
 	}
 
