@@ -22,9 +22,7 @@ type Registry interface {
 	// server metrics
 
 	ConfigReloadsCounter() metrics.Counter
-	ConfigReloadsFailureCounter() metrics.Counter
 	LastConfigReloadSuccessGauge() metrics.Gauge
-	LastConfigReloadFailureGauge() metrics.Gauge
 
 	// TLS
 
@@ -71,9 +69,7 @@ func NewVoidRegistry() Registry {
 // This allows for feature disparity between the different metric implementations.
 func NewMultiRegistry(registries []Registry) Registry {
 	var configReloadsCounter []metrics.Counter
-	var configReloadsFailureCounter []metrics.Counter
 	var lastConfigReloadSuccessGauge []metrics.Gauge
-	var lastConfigReloadFailureGauge []metrics.Gauge
 	var tlsCertsNotAfterTimestampGauge []metrics.Gauge
 	var entryPointReqsCounter []metrics.Counter
 	var entryPointReqsTLSCounter []metrics.Counter
@@ -100,14 +96,8 @@ func NewMultiRegistry(registries []Registry) Registry {
 		if r.ConfigReloadsCounter() != nil {
 			configReloadsCounter = append(configReloadsCounter, r.ConfigReloadsCounter())
 		}
-		if r.ConfigReloadsFailureCounter() != nil {
-			configReloadsFailureCounter = append(configReloadsFailureCounter, r.ConfigReloadsFailureCounter())
-		}
 		if r.LastConfigReloadSuccessGauge() != nil {
 			lastConfigReloadSuccessGauge = append(lastConfigReloadSuccessGauge, r.LastConfigReloadSuccessGauge())
-		}
-		if r.LastConfigReloadFailureGauge() != nil {
-			lastConfigReloadFailureGauge = append(lastConfigReloadFailureGauge, r.LastConfigReloadFailureGauge())
 		}
 		if r.TLSCertsNotAfterTimestampGauge() != nil {
 			tlsCertsNotAfterTimestampGauge = append(tlsCertsNotAfterTimestampGauge, r.TLSCertsNotAfterTimestampGauge())
@@ -179,9 +169,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 		svcEnabled:                     len(serviceReqsCounter) > 0 || len(serviceReqDurationHistogram) > 0 || len(serviceOpenConnsGauge) > 0 || len(serviceRetriesCounter) > 0 || len(serviceServerUpGauge) > 0,
 		routerEnabled:                  len(routerReqsCounter) > 0 || len(routerReqDurationHistogram) > 0 || len(routerOpenConnsGauge) > 0,
 		configReloadsCounter:           multi.NewCounter(configReloadsCounter...),
-		configReloadsFailureCounter:    multi.NewCounter(configReloadsFailureCounter...),
 		lastConfigReloadSuccessGauge:   multi.NewGauge(lastConfigReloadSuccessGauge...),
-		lastConfigReloadFailureGauge:   multi.NewGauge(lastConfigReloadFailureGauge...),
 		tlsCertsNotAfterTimestampGauge: multi.NewGauge(tlsCertsNotAfterTimestampGauge...),
 		entryPointReqsCounter:          multi.NewCounter(entryPointReqsCounter...),
 		entryPointReqsTLSCounter:       multi.NewCounter(entryPointReqsTLSCounter...),
@@ -211,9 +199,7 @@ type standardRegistry struct {
 	routerEnabled                  bool
 	svcEnabled                     bool
 	configReloadsCounter           metrics.Counter
-	configReloadsFailureCounter    metrics.Counter
 	lastConfigReloadSuccessGauge   metrics.Gauge
-	lastConfigReloadFailureGauge   metrics.Gauge
 	tlsCertsNotAfterTimestampGauge metrics.Gauge
 	entryPointReqsCounter          metrics.Counter
 	entryPointReqsTLSCounter       metrics.Counter
@@ -253,16 +239,8 @@ func (r *standardRegistry) ConfigReloadsCounter() metrics.Counter {
 	return r.configReloadsCounter
 }
 
-func (r *standardRegistry) ConfigReloadsFailureCounter() metrics.Counter {
-	return r.configReloadsFailureCounter
-}
-
 func (r *standardRegistry) LastConfigReloadSuccessGauge() metrics.Gauge {
 	return r.lastConfigReloadSuccessGauge
-}
-
-func (r *standardRegistry) LastConfigReloadFailureGauge() metrics.Gauge {
-	return r.lastConfigReloadFailureGauge
 }
 
 func (r *standardRegistry) TLSCertsNotAfterTimestampGauge() metrics.Gauge {
