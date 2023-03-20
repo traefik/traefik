@@ -171,6 +171,7 @@
     samplingType = "foobar"
     samplingParam = 42.0
     localAgentHostPort = "foobar"
+    localAgentSocket = "foobar"
     gen128Bit = true
     propagation = "foobar"
     traceContextHeaderName = "foobar"
@@ -182,6 +183,7 @@
     sampleRate = 42.0
   [tracing.datadog]
     localAgentHostPort = "foobar"
+    localAgentSocket = "foobar"
     globalTag = "foobar"
     debug = true
     prioritySampling = true
