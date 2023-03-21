@@ -14,9 +14,9 @@ import (
 	"github.com/docker/go-connections/sockets"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/types"
-	"github.com/traefik/traefik/v2/pkg/version"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/version"
 )
 
 // DefaultTemplateRule The default template for the default rule.
