@@ -9,9 +9,8 @@ import (
 )
 
 func (c *Configuration) initHubProvider() error {
-	// Hub provider is an experimental feature. It requires the experimental flag to be enabled before continuing.
-	if c.Experimental == nil || !c.Experimental.Hub {
-		return errors.New("the experimental flag for Hub is not set")
+	if c.Experimental != nil && c.Experimental.Hub {
+		log.Warn().Msg("Experimental flag for Traefik Hub is deprecated, because Traefik Hub is now GA.")
 	}
 
 	if _, ok := c.EntryPoints[hub.TunnelEntrypoint]; !ok {

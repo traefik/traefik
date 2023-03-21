@@ -3,8 +3,8 @@ package buffering
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"math"
-	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,7 +16,7 @@ import (
 
 func TestBuffering(t *testing.T) {
 	payload := make([]byte, math.MaxInt8)
-	rand.Read(payload)
+	_, _ = rand.Read(payload)
 
 	testCases := []struct {
 		desc         string
