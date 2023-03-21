@@ -12,7 +12,7 @@ IPAllowList accepts / refuses connections based on the client IP.
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Accepts connections from defined IP
 labels:
   - "traefik.tcp.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
