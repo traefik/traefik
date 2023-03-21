@@ -381,6 +381,9 @@ Buckets for latency metrics. (Default: ```0.100000, 0.300000, 1.200000, 5.000000
 `TRAEFIK_METRICS_PROMETHEUS_ENTRYPOINT`:  
 EntryPoint (Default: ```traefik```)
 
+`TRAEFIK_METRICS_PROMETHEUS_HEADERLABELS_<NAME>`:  
+Defines the extra labels for the requests_total metrics, and for each of them, the request header containing the value for this label.
+
 `TRAEFIK_METRICS_PROMETHEUS_MANUALROUTING`:  
 Manual routing (Default: ```false```)
 
@@ -775,7 +778,7 @@ Constraints is an expression that Traefik matches against the Nomad service's ta
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
 `TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_ADDRESS`:  
-The address of the Nomad server, including scheme and port.
+The address of the Nomad server, including scheme and port. (Default: ```http://127.0.0.1:4646```)
 
 `TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_ENDPOINTWAITTIME`:  
 WaitTime limits how long a Watch will block. If not provided, the agent default values will be used (Default: ```0```)
@@ -944,6 +947,9 @@ Sets a list of key:value tags on all spans.
 
 `TRAEFIK_TRACING_DATADOG_LOCALAGENTHOSTPORT`:  
 Sets the Datadog Agent host:port. (Default: ```localhost:8126```)
+
+`TRAEFIK_TRACING_DATADOG_LOCALAGENTSOCKET`:  
+Sets the socket for the Datadog Agent.
 
 `TRAEFIK_TRACING_DATADOG_PARENTIDHEADERNAME`:  
 Sets the header name used to store the parent ID.

@@ -31,7 +31,7 @@ type Registry interface {
 
 	// entry point metrics
 
-	EntryPointReqsCounter() metrics.Counter
+	EntryPointReqsCounter() CounterWithHeaders
 	EntryPointReqsTLSCounter() metrics.Counter
 	EntryPointReqDurationHistogram() ScalableHistogram
 	EntryPointReqsBytesCounter() metrics.Counter
@@ -39,7 +39,7 @@ type Registry interface {
 
 	// router metrics
 
-	RouterReqsCounter() metrics.Counter
+	RouterReqsCounter() CounterWithHeaders
 	RouterReqsTLSCounter() metrics.Counter
 	RouterReqDurationHistogram() ScalableHistogram
 	RouterReqsBytesCounter() metrics.Counter
@@ -47,7 +47,7 @@ type Registry interface {
 
 	// service metrics
 
-	ServiceReqsCounter() metrics.Counter
+	ServiceReqsCounter() CounterWithHeaders
 	ServiceReqsTLSCounter() metrics.Counter
 	ServiceReqDurationHistogram() ScalableHistogram
 	ServiceRetriesCounter() metrics.Counter
@@ -70,17 +70,17 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var lastConfigReloadSuccessGauge []metrics.Gauge
 	var openConnectionsGauge []metrics.Gauge
 	var tlsCertsNotAfterTimestampGauge []metrics.Gauge
-	var entryPointReqsCounter []metrics.Counter
+	var entryPointReqsCounter []CounterWithHeaders
 	var entryPointReqsTLSCounter []metrics.Counter
 	var entryPointReqDurationHistogram []ScalableHistogram
 	var entryPointReqsBytesCounter []metrics.Counter
 	var entryPointRespsBytesCounter []metrics.Counter
-	var routerReqsCounter []metrics.Counter
+	var routerReqsCounter []CounterWithHeaders
 	var routerReqsTLSCounter []metrics.Counter
 	var routerReqDurationHistogram []ScalableHistogram
 	var routerReqsBytesCounter []metrics.Counter
 	var routerRespsBytesCounter []metrics.Counter
-	var serviceReqsCounter []metrics.Counter
+	var serviceReqsCounter []CounterWithHeaders
 	var serviceReqsTLSCounter []metrics.Counter
 	var serviceReqDurationHistogram []ScalableHistogram
 	var serviceRetriesCounter []metrics.Counter
@@ -162,17 +162,17 @@ func NewMultiRegistry(registries []Registry) Registry {
 		lastConfigReloadSuccessGauge:   multi.NewGauge(lastConfigReloadSuccessGauge...),
 		openConnectionsGauge:           multi.NewGauge(openConnectionsGauge...),
 		tlsCertsNotAfterTimestampGauge: multi.NewGauge(tlsCertsNotAfterTimestampGauge...),
-		entryPointReqsCounter:          multi.NewCounter(entryPointReqsCounter...),
+		entryPointReqsCounter:          NewMultiCounterWithHeaders(entryPointReqsCounter...),
 		entryPointReqsTLSCounter:       multi.NewCounter(entryPointReqsTLSCounter...),
 		entryPointReqDurationHistogram: MultiHistogram(entryPointReqDurationHistogram),
 		entryPointReqsBytesCounter:     multi.NewCounter(entryPointReqsBytesCounter...),
 		entryPointRespsBytesCounter:    multi.NewCounter(entryPointRespsBytesCounter...),
-		routerReqsCounter:              multi.NewCounter(routerReqsCounter...),
+		routerReqsCounter:              NewMultiCounterWithHeaders(routerReqsCounter...),
 		routerReqsTLSCounter:           multi.NewCounter(routerReqsTLSCounter...),
 		routerReqDurationHistogram:     MultiHistogram(routerReqDurationHistogram),
 		routerReqsBytesCounter:         multi.NewCounter(routerReqsBytesCounter...),
 		routerRespsBytesCounter:        multi.NewCounter(routerRespsBytesCounter...),
-		serviceReqsCounter:             multi.NewCounter(serviceReqsCounter...),
+		serviceReqsCounter:             NewMultiCounterWithHeaders(serviceReqsCounter...),
 		serviceReqsTLSCounter:          multi.NewCounter(serviceReqsTLSCounter...),
 		serviceReqDurationHistogram:    MultiHistogram(serviceReqDurationHistogram),
 		serviceRetriesCounter:          multi.NewCounter(serviceRetriesCounter...),
@@ -190,17 +190,17 @@ type standardRegistry struct {
 	lastConfigReloadSuccessGauge   metrics.Gauge
 	openConnectionsGauge           metrics.Gauge
 	tlsCertsNotAfterTimestampGauge metrics.Gauge
-	entryPointReqsCounter          metrics.Counter
+	entryPointReqsCounter          CounterWithHeaders
 	entryPointReqsTLSCounter       metrics.Counter
 	entryPointReqDurationHistogram ScalableHistogram
 	entryPointReqsBytesCounter     metrics.Counter
 	entryPointRespsBytesCounter    metrics.Counter
-	routerReqsCounter              metrics.Counter
+	routerReqsCounter              CounterWithHeaders
 	routerReqsTLSCounter           metrics.Counter
 	routerReqDurationHistogram     ScalableHistogram
 	routerReqsBytesCounter         metrics.Counter
 	routerRespsBytesCounter        metrics.Counter
-	serviceReqsCounter             metrics.Counter
+	serviceReqsCounter             CounterWithHeaders
 	serviceReqsTLSCounter          metrics.Counter
 	serviceReqDurationHistogram    ScalableHistogram
 	serviceRetriesCounter          metrics.Counter
@@ -237,7 +237,7 @@ func (r *standardRegistry) TLSCertsNotAfterTimestampGauge() metrics.Gauge {
 	return r.tlsCertsNotAfterTimestampGauge
 }
 
-func (r *standardRegistry) EntryPointReqsCounter() metrics.Counter {
+func (r *standardRegistry) EntryPointReqsCounter() CounterWithHeaders {
 	return r.entryPointReqsCounter
 }
 
@@ -257,7 +257,7 @@ func (r *standardRegistry) EntryPointRespsBytesCounter() metrics.Counter {
 	return r.entryPointRespsBytesCounter
 }
 
-func (r *standardRegistry) RouterReqsCounter() metrics.Counter {
+func (r *standardRegistry) RouterReqsCounter() CounterWithHeaders {
 	return r.routerReqsCounter
 }
 
@@ -277,7 +277,7 @@ func (r *standardRegistry) RouterRespsBytesCounter() metrics.Counter {
 	return r.routerRespsBytesCounter
 }
 
-func (r *standardRegistry) ServiceReqsCounter() metrics.Counter {
+func (r *standardRegistry) ServiceReqsCounter() CounterWithHeaders {
 	return r.serviceReqsCounter
 }
 
