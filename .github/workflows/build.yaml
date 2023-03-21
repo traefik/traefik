@@ -6,7 +6,7 @@ on:
       - '*'
 
 env:
-  GO_VERSION: 1.19
+  GO_VERSION: '1.20'
   CGO_ENABLED: 0
   IN_DOCKER: ""
 
