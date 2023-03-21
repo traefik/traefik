@@ -89,7 +89,18 @@ type Configuration struct {
 
 // SetDefaults sets the default values for the Nomad Traefik Provider Configuration.
 func (c *Configuration) SetDefaults() {
-	c.Endpoint = &EndpointConfig{}
+	defConfig := api.DefaultConfig()
+	c.Endpoint = &EndpointConfig{
+		Address: defConfig.Address,
+		Region:  defConfig.Region,
+		Token:   defConfig.SecretID,
+		TLS: &types.ClientTLS{
+			CA:                 defConfig.TLSConfig.CACert,
+			Cert:               defConfig.TLSConfig.ClientCert,
+			Key:                defConfig.TLSConfig.ClientKey,
+			InsecureSkipVerify: defConfig.TLSConfig.Insecure,
+		},
+	}
 	c.Prefix = defaultPrefix
 	c.ExposedByDefault = true
 	c.RefreshInterval = ptypes.Duration(15 * time.Second)
@@ -107,9 +118,9 @@ type Provider struct {
 }
 
 type EndpointConfig struct {
-	// Address is the Nomad endpoint address, if empty it defaults to NOMAD_ADDR or "http://localhost:4646".
+	// Address is the Nomad endpoint address, if empty it defaults to NOMAD_ADDR or "http://127.0.0.1:4646".
 	Address string `description:"The address of the Nomad server, including scheme and port." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
-	// Region is the Nomad region, if empty it defaults to NOMAD_REGION or "global".
+	// Region is the Nomad region, if empty it defaults to NOMAD_REGION.
 	Region string `description:"Nomad region to use. If not provided, the local agent region is used." json:"region,omitempty" toml:"region,omitempty" yaml:"region,omitempty"`
 	// Token is the ACL token to connect with Nomad, if empty it defaults to NOMAD_TOKEN.
 	Token            string           `description:"Token is used to provide a per-request ACL token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
@@ -208,24 +219,19 @@ func (p *Provider) loadConfiguration(ctx context.Context, configurationC chan<- 
 }
 
 func createClient(namespace string, endpoint *EndpointConfig) (*api.Client, error) {
-	config := api.Config{
+	return api.NewClient(&api.Config{
 		Address:   endpoint.Address,
 		Namespace: namespace,
 		Region:    endpoint.Region,
 		SecretID:  endpoint.Token,
 		WaitTime:  time.Duration(endpoint.EndpointWaitTime),
-	}
-
-	if endpoint.TLS != nil {
-		config.TLSConfig = &api.TLSConfig{
+		TLSConfig: &api.TLSConfig{
 			CACert:     endpoint.TLS.CA,
 			ClientCert: endpoint.TLS.Cert,
 			ClientKey:  endpoint.TLS.Key,
 			Insecure:   endpoint.TLS.InsecureSkipVerify,
-		}
-	}
-
-	return api.NewClient(&config)
+		},
+	})
 }
 
 // configuration contains information from the service's tags that are globals

@@ -83,7 +83,7 @@ data:
   tls.key: VEVTVEtFWTM=
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: ServersTransport
 metadata:
   name: test
@@ -119,7 +119,7 @@ spec:
     trustDomain: spiffe://lol
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: ServersTransport
 metadata:
   name: test
@@ -129,7 +129,7 @@ spec:
   serverName: "test"
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: test.route

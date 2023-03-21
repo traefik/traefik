@@ -1,0 +1,22 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: test3.route-containous
+  namespace: default
+
+spec:
+  entryPoints:
+    - footcp
+  routes:
+  - match: HostSNI(`*`)
+    services:
+    - name: whoamitcp
+      namespace: default
+      port: 8080
+    - name: externalname-svc
+      port: 9090
+  tls:
+    options:
+      name: mytlsoption-containous
+    store:
+      name: mytlsstore-containous
