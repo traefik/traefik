@@ -110,7 +110,7 @@ Then any router can refer to an instance of the wanted middleware.
     ```yaml tab="K8s IngressRoute"
     # The definitions below require the definitions for the Middleware and IngressRoute kinds.
     # https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions
-    apiVersion: traefik.containo.us/v1alpha1
+    apiVersion: traefik.io/v1alpha1
     kind: Middleware
     metadata:
       name: basicauth
@@ -123,7 +123,7 @@ Then any router can refer to an instance of the wanted middleware.
           - test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0
 
     ---
-    apiVersion: traefik.containo.us/v1alpha1
+    apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
@@ -281,7 +281,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
     ```yaml tab="K8s IngressRoute"
     # The definitions below require the definitions for the TLSOption and IngressRoute kinds.
     # https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions
-    apiVersion: traefik.containo.us/v1alpha1
+    apiVersion: traefik.io/v1alpha1
     kind: TLSOption
     metadata:
       name: mytlsoption
@@ -297,7 +297,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
 	    - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
 
     ---
-    apiVersion: traefik.containo.us/v1alpha1
+    apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
@@ -443,7 +443,7 @@ To apply a redirection:
     ```
 
     ```yaml tab="K8s IngressRoute"
-    apiVersion: traefik.containo.us/v1alpha1
+    apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: http-redirect-ingressroute
@@ -461,7 +461,7 @@ To apply a redirection:
             - name: https-redirect
 
     ---
-    apiVersion: traefik.containo.us/v1alpha1
+    apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: https-ingressroute
@@ -478,7 +478,7 @@ To apply a redirection:
       tls: {}
 
     ---
-    apiVersion: traefik.containo.us/v1alpha1
+    apiVersion: traefik.io/v1alpha1
     kind: Middleware
     metadata:
       name: https-redirect
@@ -597,7 +597,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
 
     ```yaml tab="Kubernetes IngressRoute"
     ---
-    apiVersion: traefik.containo.us/v1alpha1
+    apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: http-redirect-ingressroute
@@ -614,7 +614,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
           middlewares:
             - name: admin-stripprefix
     ---
-    apiVersion: traefik.containo.us/v1alpha1
+    apiVersion: traefik.io/v1alpha1
     kind: Middleware
     metadata:
       name: admin-stripprefix
