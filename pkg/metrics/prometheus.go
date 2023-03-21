@@ -145,10 +145,10 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 	}
 
 	if config.AddEntryPointsLabels {
-		entryPointReqs := newCounterFrom(stdprometheus.CounterOpts{
+		entryPointReqs := newCounterWithHeadersFrom(stdprometheus.CounterOpts{
 			Name: entryPointReqsTotalName,
 			Help: "How many HTTP requests processed on an entrypoint, partitioned by status code, protocol, and method.",
-		}, []string{"code", "method", "protocol", "entrypoint"})
+		}, config.HeaderLabels, []string{"code", "method", "protocol", "entrypoint"})
 		entryPointReqsTLS := newCounterFrom(stdprometheus.CounterOpts{
 			Name: entryPointReqsTLSTotalName,
 			Help: "How many HTTP requests with TLS processed on an entrypoint, partitioned by TLS Version and TLS cipher Used.",
@@ -183,10 +183,10 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 	}
 
 	if config.AddRoutersLabels {
-		routerReqs := newCounterFrom(stdprometheus.CounterOpts{
+		routerReqs := newCounterWithHeadersFrom(stdprometheus.CounterOpts{
 			Name: routerReqsTotalName,
 			Help: "How many HTTP requests are processed on a router, partitioned by service, status code, protocol, and method.",
-		}, []string{"code", "method", "protocol", "router", "service"})
+		}, config.HeaderLabels, []string{"code", "method", "protocol", "router", "service"})
 		routerReqsTLS := newCounterFrom(stdprometheus.CounterOpts{
 			Name: routerReqsTLSTotalName,
 			Help: "How many HTTP requests with TLS are processed on a router, partitioned by service, TLS Version, and TLS cipher Used.",
@@ -220,10 +220,10 @@ func initStandardRegistry(config *types.Prometheus) Registry {
 	}
 
 	if config.AddServicesLabels {
-		serviceReqs := newCounterFrom(stdprometheus.CounterOpts{
+		serviceReqs := newCounterWithHeadersFrom(stdprometheus.CounterOpts{
 			Name: serviceReqsTotalName,
 			Help: "How many HTTP requests processed on a service, partitioned by status code, protocol, and method.",
-		}, []string{"code", "method", "protocol", "service"})
+		}, config.HeaderLabels, []string{"code", "method", "protocol", "service"})
 		serviceReqsTLS := newCounterFrom(stdprometheus.CounterOpts{
 			Name: serviceReqsTLSTotalName,
 			Help: "How many HTTP requests with TLS processed on a service, partitioned by TLS version and TLS cipher.",
@@ -478,6 +478,55 @@ func (d *dynamicConfig) hasServerURL(serviceName, serverURL string) bool {
 		return ok
 	}
 	return false
+}
+
+func newCounterWithHeadersFrom(opts stdprometheus.CounterOpts, headers map[string]string, labelNames []string) *counterWithHeaders {
+	var headerLabels []string
+	for k := range headers {
+		headerLabels = append(headerLabels, k)
+	}
+
+	cv := stdprometheus.NewCounterVec(opts, append(labelNames, headerLabels...))
+	c := &counterWithHeaders{
+		name:    opts.Name,
+		headers: headers,
+		cv:      cv,
+	}
+	if len(labelNames) == 0 && len(headerLabels) == 0 {
+		c.collector = cv.WithLabelValues()
+		c.Add(0)
+	}
+	return c
+}
+
+type counterWithHeaders struct {
+	name             string
+	cv               *stdprometheus.CounterVec
+	labelNamesValues labelNamesValues
+	headers          map[string]string
+	collector        stdprometheus.Counter
+}
+
+func (c *counterWithHeaders) With(headers http.Header, labelValues ...string) CounterWithHeaders {
+	for headerLabel, headerKey := range c.headers {
+		labelValues = append(labelValues, headerLabel, headers.Get(headerKey))
+	}
+	lnv := c.labelNamesValues.With(labelValues...)
+	return &counterWithHeaders{
+		name:             c.name,
+		headers:          c.headers,
+		cv:               c.cv,
+		labelNamesValues: lnv,
+		collector:        c.cv.With(lnv.ToLabels()),
+	}
+}
+
+func (c *counterWithHeaders) Add(delta float64) {
+	c.collector.Add(delta)
+}
+
+func (c *counterWithHeaders) Describe(ch chan<- *stdprometheus.Desc) {
+	c.cv.Describe(ch)
 }
 
 func newCounterFrom(opts stdprometheus.CounterOpts, labelNames []string) *counter {
