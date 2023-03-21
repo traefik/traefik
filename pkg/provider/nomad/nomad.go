@@ -81,7 +81,7 @@ func (p *Provider) SetDefaults() {
 		Token:   defConfig.SecretID,
 	}
 
-	if defConfig.TLSConfig != nil && (defConfig.TLSConfig.CACert != "" || defConfig.TLSConfig.ClientCert != "" || defConfig.TLSConfig.ClientKey != "") {
+	if defConfig.TLSConfig != nil && (defConfig.TLSConfig.Insecure || defConfig.TLSConfig.CACert != "" || defConfig.TLSConfig.ClientCert != "" || defConfig.TLSConfig.ClientKey != "") {
 		p.Endpoint.TLS = &types.ClientTLS{
 			CA:                 defConfig.TLSConfig.CACert,
 			Cert:               defConfig.TLSConfig.ClientCert,
