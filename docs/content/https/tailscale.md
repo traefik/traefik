@@ -103,7 +103,7 @@ A certificate resolver requests certificates for a set of domain names inferred 
     ```
 
     ```yaml tab="Kubernetes"
-    apiVersion: traefik.containo.us/v1alpha1
+    apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: blogtls
@@ -159,7 +159,7 @@ A certificate resolver requests certificates for a set of domain names inferred 
     ```
 
     ```yaml tab="Kubernetes"
-    apiVersion: traefik.containo.us/v1alpha1
+    apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: blogtls
