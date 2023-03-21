@@ -171,7 +171,6 @@
     samplingType = "foobar"
     samplingParam = 42.0
     localAgentHostPort = "foobar"
-    localAgentSocket = "foobar"
     gen128Bit = true
     propagation = "foobar"
     traceContextHeaderName = "foobar"
