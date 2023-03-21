@@ -41,7 +41,7 @@ jobs:
       - name: Build documentation
         run: $HOME/bin/structor -o traefik -r traefik --dockerfile-url="https://raw.githubusercontent.com/traefik/traefik/v1.7/docs.Dockerfile" --menu.js-url="https://raw.githubusercontent.com/traefik/structor/master/traefik-menu.js.gotmpl" --rqts-url="https://raw.githubusercontent.com/traefik/structor/master/requirements-override.txt" --force-edit-url --exp-branch=master --debug
         env:
-          STRUCTOR_LATEST_TAG: ${{ secrets.STRUCTOR_LATEST_TAG }}
+          STRUCTOR_LATEST_TAG: ${{ vars.STRUCTOR_LATEST_TAG }}
 
       - name: Apply seo
         run: $HOME/bin/seo -path=./site -product=traefik

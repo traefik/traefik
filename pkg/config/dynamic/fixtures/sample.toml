@@ -141,6 +141,7 @@
     sampleRate = 42.0
   [tracing.datadog]
     localAgentHostPort = "foobar"
+    localAgentSocket = "foobar"
     debug = true
     prioritySampling = true
     traceIDHeaderName = "foobar"
