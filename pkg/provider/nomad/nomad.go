@@ -101,13 +101,17 @@ func (c *Configuration) SetDefaults() {
 		Address: defConfig.Address,
 		Region:  defConfig.Region,
 		Token:   defConfig.SecretID,
-		TLS: &types.ClientTLS{
+	}
+
+	if defConfig.TLSConfig != nil && (defConfig.TLSConfig.Insecure || defConfig.TLSConfig.CACert != "" || defConfig.TLSConfig.ClientCert != "" || defConfig.TLSConfig.ClientKey != "") {
+		c.Endpoint.TLS = &types.ClientTLS{
 			CA:                 defConfig.TLSConfig.CACert,
 			Cert:               defConfig.TLSConfig.ClientCert,
 			Key:                defConfig.TLSConfig.ClientKey,
 			InsecureSkipVerify: defConfig.TLSConfig.Insecure,
-		},
+		}
 	}
+
 	c.Prefix = defaultPrefix
 	c.ExposedByDefault = true
 	c.RefreshInterval = ptypes.Duration(15 * time.Second)
@@ -231,19 +235,24 @@ func (p *Provider) loadConfiguration(ctx context.Context, configurationC chan<- 
 }
 
 func createClient(namespace string, endpoint *EndpointConfig) (*api.Client, error) {
-	return api.NewClient(&api.Config{
+	config := api.Config{
 		Address:   endpoint.Address,
 		Namespace: namespace,
 		Region:    endpoint.Region,
 		SecretID:  endpoint.Token,
 		WaitTime:  time.Duration(endpoint.EndpointWaitTime),
-		TLSConfig: &api.TLSConfig{
+	}
+
+	if endpoint.TLS != nil {
+		config.TLSConfig = &api.TLSConfig{
 			CACert:     endpoint.TLS.CA,
 			ClientCert: endpoint.TLS.Cert,
 			ClientKey:  endpoint.TLS.Key,
 			Insecure:   endpoint.TLS.InsecureSkipVerify,
-		},
-	})
+		}
+	}
+
+	return api.NewClient(&config)
 }
 
 // configuration contains information from the service's tags that are globals
