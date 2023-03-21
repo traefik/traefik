@@ -66,7 +66,12 @@ func Test_globalConfig(t *testing.T) {
 
 	for _, test := range cases {
 		t.Run(test.Name, func(t *testing.T) {
-			p := Provider{ExposedByDefault: test.ExposedByDefault, Prefix: test.Prefix}
+			p := Provider{
+				Configuration: Configuration{
+					ExposedByDefault: test.ExposedByDefault,
+					Prefix:           test.Prefix,
+				},
+			}
 			result := p.getExtraConf(test.Tags)
 			require.Equal(t, test.exp, result)
 		})
@@ -148,7 +153,7 @@ func Test_getNomadServiceData(t *testing.T) {
 	require.NoError(t, err)
 
 	// fudge client, avoid starting up via Provide
-	p.client, err = createClient(p.Namespace, p.Endpoint)
+	p.client, err = createClient(p.namespace, p.Endpoint)
 	require.NoError(t, err)
 
 	// make the query for services

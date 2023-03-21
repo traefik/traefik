@@ -195,6 +195,9 @@ providers:
     prefix: foobar
     stale: true
     namespace: foobar
+    namespaces:
+      - foobar
+      - foobar
     exposedByDefault: true
     refreshInterval: 42s
     endpoint:
