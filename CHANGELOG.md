@@ -1,3 +1,19 @@
+## [v2.9.9](https://github.com/traefik/traefik/tree/v2.9.9) (2023-03-21)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.8...v2.9.9)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.10.2 ([#9749](https://github.com/traefik/traefik/pull/9749) by [ldez](https://github.com/ldez))
+- **[http3]** Update quic-go to v0.33.0 ([#9737](https://github.com/traefik/traefik/pull/9737) by [ldez](https://github.com/ldez))
+- **[metrics]** Include user-defined default cert for traefik_tls_certs_not_after metric ([#9742](https://github.com/traefik/traefik/pull/9742) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Update vulcand/oxy to a0e9f7ff1040 ([#9750](https://github.com/traefik/traefik/pull/9750) by [ldez](https://github.com/ldez))
+- **[nomad]** Fix default configuration settings for Nomad Provider ([#9758](https://github.com/traefik/traefik/pull/9758) by [aofei](https://github.com/aofei))
+- **[nomad]** Fix Nomad client TLS defaults ([#9795](https://github.com/traefik/traefik/pull/9795) by [rtribotte](https://github.com/rtribotte))
+- **[server]** Remove User-Agent header removal from ReverseProxy director func ([#9752](https://github.com/traefik/traefik/pull/9752) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- **[middleware]** Clarify ratelimit middleware ([#9777](https://github.com/traefik/traefik/pull/9777) by [mpl](https://github.com/mpl))
+- **[tcp]** Correcting variable name &#39;server address&#39; in TCP Router ([#9743](https://github.com/traefik/traefik/pull/9743) by [ralphg6](https://github.com/ralphg6))
+
 ## [v2.9.8](https://github.com/traefik/traefik/tree/v2.9.8) (2023-02-15)
 [All Commits](https://github.com/traefik/traefik/compare/v2.9.7...v2.9.8)
 
