@@ -29,7 +29,7 @@ docker run --rm \
            --go-header-file=/go/src/${PROJECT_MODULE}/script/boilerplate.go.tmpl
 
 echo "Generating DeepCopy code ..."
-cmd=""
+
 docker run --rm \
            -v "${CURRENT_DIR}:/go/src/${PROJECT_MODULE}" \
            -w "/go/src/${PROJECT_MODULE}" \
