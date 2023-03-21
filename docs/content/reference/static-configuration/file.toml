@@ -256,6 +256,9 @@
     addServicesLabels = true
     entryPoint = "foobar"
     manualRouting = true
+    [metrics.prometheus.headerLabels]
+      label1 = "foobar"
+      label2 = "foobar"
   [metrics.datadog]
     address = "foobar"
     pushInterval = "42s"
@@ -359,6 +362,7 @@
     sampleRate = 42.0
   [tracing.datadog]
     localAgentHostPort = "foobar"
+    localAgentSocket = "foobar"
     [tracing.datadog.globalTags]
       tag1 = "foobar"
       tag2 = "foobar"
@@ -436,7 +440,7 @@
 
 [experimental]
   kubernetesGateway = true
-  hub = true
+  http3 = true
   [experimental.plugins]
     [experimental.plugins.Descriptor0]
       moduleName = "foobar"

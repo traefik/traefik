@@ -20,7 +20,7 @@ spec:
     task: whoami
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: test6.route
@@ -65,7 +65,7 @@ spec:
     - name: test-errorpage
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TraefikService
 metadata:
   name: wrr2
@@ -78,7 +78,7 @@ spec:
         port: 80
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TraefikService
 metadata:
   name: wrr3
@@ -92,7 +92,7 @@ spec:
         port: 80
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: stripprefix2
@@ -104,7 +104,7 @@ spec:
       - /tobestripped
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-errorpage

@@ -215,7 +215,7 @@ func matchesConfig(wantConfig string, buf *bytes.Buffer) try.ResponseCondition {
 		// The pods IPs are dynamic, so we cannot predict them,
 		// which is why we have to ignore them in the comparison.
 		rxURL := regexp.MustCompile(`"(url|address)":\s+(".*")`)
-		sanitizedExpected := rxURL.ReplaceAll(expected, []byte(`"$1": "XXXX"`))
+		sanitizedExpected := rxURL.ReplaceAll(bytes.TrimSpace(expected), []byte(`"$1": "XXXX"`))
 		sanitizedGot := rxURL.ReplaceAll(got, []byte(`"$1": "XXXX"`))
 
 		rxServerStatus := regexp.MustCompile(`"http://.*?":\s+(".*")`)
