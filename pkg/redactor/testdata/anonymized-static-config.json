@@ -351,6 +351,7 @@
     },
     "datadog": {
       "localAgentHostPort": "xxxx",
+      "localAgentSocket": "xxxx",
       "globalTags": {
         "foobar": "foobar"
       },

@@ -39,7 +39,7 @@ spec:
   rules:
     - backendRefs:
         - weight: 1
-          group: traefik.containo.us
+          group: traefik.io
           kind: TraefikService
           name: service@file
           port: 9000

@@ -285,6 +285,9 @@ metrics:
     addServicesLabels: true
     entryPoint: foobar
     manualRouting: true
+    headerLabels:
+      label1: foobar
+      label2: foobar
   datadog:
     address: foobar
     pushInterval: 42s
@@ -389,6 +392,7 @@ tracing:
     sampleRate: 42
   datadog:
     localAgentHostPort: foobar
+    localAgentSocket: foobar
     globalTags:
       tag1: foobar
       tag2: foobar
@@ -465,7 +469,7 @@ hub:
     key: foobar
 experimental:
   kubernetesGateway: true
-  hub: true
+  http3: true
   plugins:
     Descriptor0:
       moduleName: foobar
