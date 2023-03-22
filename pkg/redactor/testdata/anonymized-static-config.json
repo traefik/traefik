@@ -17,6 +17,18 @@
       "idleConnTimeout": "1m51s"
     }
   },
+  "tcpServersTransport": {
+    "dialKeepAlive": "1m51s",
+    "dialTimeout": "1m51s",
+    "tls": {
+      "insecureSkipVerify": true,
+      "rootCAs": [
+        "xxxx",
+        "xxxx",
+        "xxxx"
+      ]
+    }
+  },
   "entryPoints": {
     "foobar": {
       "address": "xxxx",
@@ -100,31 +112,6 @@
       "filename": "file Filename",
       "debugLogGeneratedTemplate": true
     },
-    "marathon": {
-      "constraints": "Label(\"foo\", \"bar\")",
-      "trace": true,
-      "watch": true,
-      "endpoint": "xxxx",
-      "defaultRule": "xxxx",
-      "exposedByDefault": true,
-      "dcosToken": "xxxx",
-      "tls": {
-        "ca": "xxxx",
-        "cert": "xxxx",
-        "key": "xxxx",
-        "insecureSkipVerify": true
-      },
-      "dialerTimeout": "42ns",
-      "responseHeaderTimeout": "42ns",
-      "tlsHandshakeTimeout": "42ns",
-      "keepAlive": "42ns",
-      "forceTaskHostname": true,
-      "basic": {
-        "httpBasicAuthUser": "xxxx",
-        "httpBasicPassword": "xxxx"
-      },
-      "respectReadinessChecks": true
-    },
     "kubernetesIngress": {
       "endpoint": "xxxx",
       "token": "xxxx",
@@ -167,16 +154,6 @@
     },
     "rest": {
       "insecure": true
-    },
-    "rancher": {
-      "constraints": "Label(\"foo\", \"bar\")",
-      "watch": true,
-      "defaultRule": "xxxx",
-      "exposedByDefault": true,
-      "enableServiceHealthFilter": true,
-      "refreshSeconds": 42,
-      "intervalPoll": true,
-      "prefix": "xxxx"
     },
     "consulCatalog": {
       "constraints": "Label(\"foo\", \"bar\")",
@@ -307,17 +284,6 @@
       "addEntryPointsLabels": true,
       "addServicesLabels": true,
       "prefix": "MyPrefix"
-    },
-    "influxDB": {
-      "address": "xxxx",
-      "protocol": "xxxx",
-      "pushInterval": "42ns",
-      "database": "myDB",
-      "retentionPolicy": "12",
-      "username": "xxxx",
-      "password": "xxxx",
-      "addEntryPointsLabels": true,
-      "addServicesLabels": true
     }
   },
   "ping": {
@@ -385,6 +351,7 @@
     },
     "datadog": {
       "localAgentHostPort": "xxxx",
+      "localAgentSocket": "xxxx",
       "globalTags": {
         "foobar": "foobar"
       },

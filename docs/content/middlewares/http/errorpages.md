@@ -27,7 +27,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-errors
@@ -46,22 +46,6 @@ spec:
 - "traefik.http.middlewares.test-errors.errors.status=500-599"
 - "traefik.http.middlewares.test-errors.errors.service=serviceError"
 - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-errors.errors.status": "500-599",
-  "traefik.http.middlewares.test-errors.errors.service": "serviceError",
-  "traefik.http.middlewares.test-errors.errors.query": "/{status}.html"
-}
-```
-
-```yaml tab="Rancher"
-# Dynamic Custom Error Page for 5XX Status Code
-labels:
-  - "traefik.http.middlewares.test-errors.errors.status=500-599"
-  - "traefik.http.middlewares.test-errors.errors.service=serviceError"
-  - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
 ```
 
 ```yaml tab="File (YAML)"

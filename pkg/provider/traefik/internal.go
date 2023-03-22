@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
 const defaultInternalEntryPointName = "traefik"
@@ -63,8 +63,9 @@ func (i *Provider) createConfiguration(ctx context.Context) *dynamic.Configurati
 			ServersTransports: make(map[string]*dynamic.ServersTransport),
 		},
 		TCP: &dynamic.TCPConfiguration{
-			Routers:  make(map[string]*dynamic.TCPRouter),
-			Services: make(map[string]*dynamic.TCPService),
+			Routers:           make(map[string]*dynamic.TCPRouter),
+			Services:          make(map[string]*dynamic.TCPService),
+			ServersTransports: make(map[string]*dynamic.TCPServersTransport),
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Stores:  make(map[string]tls.Store),
@@ -79,6 +80,7 @@ func (i *Provider) createConfiguration(ctx context.Context) *dynamic.Configurati
 	i.entryPointModels(cfg)
 	i.redirection(ctx, cfg)
 	i.serverTransport(cfg)
+	i.serverTransportTCP(cfg)
 
 	i.acme(cfg)
 
@@ -339,4 +341,31 @@ func (i *Provider) serverTransport(cfg *dynamic.Configuration) {
 	}
 
 	cfg.HTTP.ServersTransports["default"] = st
+}
+
+func (i *Provider) serverTransportTCP(cfg *dynamic.Configuration) {
+	if i.staticCfg.TCPServersTransport == nil {
+		return
+	}
+
+	st := &dynamic.TCPServersTransport{
+		DialTimeout:   i.staticCfg.TCPServersTransport.DialTimeout,
+		DialKeepAlive: i.staticCfg.TCPServersTransport.DialKeepAlive,
+	}
+
+	if i.staticCfg.TCPServersTransport.TLS != nil {
+		st.TLS = &dynamic.TLSClientConfig{
+			InsecureSkipVerify: i.staticCfg.TCPServersTransport.TLS.InsecureSkipVerify,
+			RootCAs:            i.staticCfg.TCPServersTransport.TLS.RootCAs,
+		}
+
+		if i.staticCfg.TCPServersTransport.TLS.Spiffe != nil {
+			st.TLS.Spiffe = &dynamic.Spiffe{
+				IDs:         i.staticCfg.ServersTransport.Spiffe.IDs,
+				TrustDomain: i.staticCfg.ServersTransport.Spiffe.TrustDomain,
+			}
+		}
+	}
+
+	cfg.TCP.ServersTransports["default"] = st
 }

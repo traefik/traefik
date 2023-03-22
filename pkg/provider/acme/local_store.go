@@ -7,8 +7,8 @@ import (
 	"sync"
 
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
 var _ Store = (*LocalStore)(nil)

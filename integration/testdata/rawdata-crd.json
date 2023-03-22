@@ -6,6 +6,7 @@
 			],
 			"service": "api@internal",
 			"rule": "PathPrefix(`/api`)",
+			"priority": 18,
 			"status": "enabled",
 			"using": [
 				"web"
@@ -35,6 +36,7 @@
 			],
 			"service": "default-test2-route-23c7f4c450289ee29016",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/tobestripped`)",
+			"priority": 46,
 			"status": "enabled",
 			"using": [
 				"web"
@@ -46,6 +48,7 @@
 			],
 			"service": "default-wrr1",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/wrr1`)",
+			"priority": 38,
 			"status": "enabled",
 			"using": [
 				"web"
@@ -57,6 +60,7 @@
 			],
 			"service": "default-testst-route-60ad45fcb5fc1f5f3629",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/serverstransport`)",
+			"priority": 50,
 			"status": "enabled",
 			"using": [
 				"web"
@@ -68,6 +72,7 @@
 			],
 			"service": "other-ns-wrr3",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/c`)",
+			"priority": 35,
 			"error": [
 				"the service \"other-ns-wrr3@kubernetescrd\" does not exist"
 			],
@@ -131,7 +136,7 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.6:80"
+						"url": "http://10.42.0.3:80"
 					},
 					{
 						"url": "http://10.42.0.7:80"
@@ -147,7 +152,7 @@
 				"default-test-route-6b204d94623b3df4370c@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.6:80": "UP",
+				"http://10.42.0.3:80": "UP",
 				"http://10.42.0.7:80": "UP"
 			}
 		},
@@ -155,7 +160,7 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.6:80"
+						"url": "http://10.42.0.3:80"
 					},
 					{
 						"url": "http://10.42.0.7:80"
@@ -171,7 +176,7 @@
 				"default-test2-route-23c7f4c450289ee29016@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.6:80": "UP",
+				"http://10.42.0.3:80": "UP",
 				"http://10.42.0.7:80": "UP"
 			}
 		},
@@ -179,7 +184,7 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.6:80"
+						"url": "http://10.42.0.3:80"
 					},
 					{
 						"url": "http://10.42.0.7:80"
@@ -196,7 +201,7 @@
 				"default-testst-route-60ad45fcb5fc1f5f3629@kubernetescrd"
 			],
 			"serverStatus": {
-				"http://10.42.0.6:80": "UP",
+				"http://10.42.0.3:80": "UP",
 				"http://10.42.0.7:80": "UP"
 			}
 		},
@@ -204,7 +209,7 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.6:80"
+						"url": "http://10.42.0.3:80"
 					},
 					{
 						"url": "http://10.42.0.7:80"
@@ -217,7 +222,7 @@
 			},
 			"status": "enabled",
 			"serverStatus": {
-				"http://10.42.0.6:80": "UP",
+				"http://10.42.0.3:80": "UP",
 				"http://10.42.0.7:80": "UP"
 			}
 		},
@@ -261,6 +266,7 @@
 			],
 			"service": "default-test3.route-673acf455cb2dab0b43a",
 			"rule": "HostSNI(`*`)",
+			"priority": -1,
 			"tls": {
 				"passthrough": false,
 				"options": "default-mytlsoption"
@@ -274,7 +280,6 @@
 	"tcpServices": {
 		"default-test3.route-673acf455cb2dab0b43a-externalname-svc-9090@kubernetescrd": {
 			"loadBalancer": {
-				"terminationDelay": 100,
 				"servers": [
 					{
 						"address": "domain.com:9090"
@@ -285,13 +290,12 @@
 		},
 		"default-test3.route-673acf455cb2dab0b43a-whoamitcp-8080@kubernetescrd": {
 			"loadBalancer": {
-				"terminationDelay": 100,
 				"servers": [
 					{
-						"address": "10.42.0.10:8080"
+						"address": "10.42.0.2:8080"
 					},
 					{
-						"address": "10.42.0.8:8080"
+						"address": "10.42.0.4:8080"
 					}
 				]
 			},
@@ -343,10 +347,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"address": "10.42.0.4:8090"
+						"address": "10.42.0.5:8090"
 					},
 					{
-						"address": "10.42.0.9:8090"
+						"address": "10.42.0.6:8090"
 					}
 				]
 			},

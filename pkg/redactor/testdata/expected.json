@@ -65,7 +65,6 @@
   "Docker": null,
   "File": null,
   "Web": null,
-  "Marathon": null,
   "Consul": null,
   "ConsulCatalog": null,
   "Etcd": null,
@@ -73,10 +72,8 @@
   "Boltdb": null,
   "KubernetesIngress": null,
   "KubernetesCRD": null,
-  "Mesos": null,
   "Eureka": null,
   "ECS": null,
-  "Rancher": null,
   "DynamoDB": null,
   "ConfigFile": "/etc/traefik/traefik.toml"
 }

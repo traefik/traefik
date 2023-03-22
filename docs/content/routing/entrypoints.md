@@ -320,7 +320,7 @@ this entryPoint is the same as the one used for TLS traffic.
 ```yaml tab="File (YAML)"
 entryPoints:
   name:
-  http3: {}
+    http3: {}
 ```
 
 ```toml tab="File (TOML)"

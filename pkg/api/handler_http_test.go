@@ -13,9 +13,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/config/static"
 )
 
 func Bool(v bool) *bool { return &v }
@@ -200,6 +200,84 @@ func TestHandler_HTTP(t *testing.T) {
 				statusCode: http.StatusOK,
 				nextPage:   "1",
 				jsonFile:   "testdata/routers-filtered-search.json",
+			},
+		},
+		{
+			desc: "routers filtered by service",
+			path: "/api/http/routers?serviceName=fii-service@myprovider",
+			conf: runtime.Configuration{
+				Routers: map[string]*runtime.RouterInfo{
+					"test@myprovider": {
+						Router: &dynamic.Router{
+							EntryPoints: []string{"web"},
+							Service:     "fii-service@myprovider",
+							Rule:        "Host(`fii.bar.other`)",
+							Middlewares: []string{"addPrefixTest", "auth"},
+						},
+						Status: runtime.StatusEnabled,
+					},
+					"foo@otherprovider": {
+						Router: &dynamic.Router{
+							EntryPoints: []string{"web"},
+							Service:     "fii-service",
+							Rule:        "Host(`fii.foo.other`)",
+						},
+						Status: runtime.StatusEnabled,
+					},
+					"bar@myprovider": {
+						Router: &dynamic.Router{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.bar`)",
+							Middlewares: []string{"auth", "addPrefixTest@anotherprovider"},
+						},
+						Status: runtime.StatusDisabled,
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/routers-filtered-serviceName.json",
+			},
+		},
+		{
+			desc: "routers filtered by middleware",
+			path: "/api/http/routers?middlewareName=auth",
+			conf: runtime.Configuration{
+				Routers: map[string]*runtime.RouterInfo{
+					"test@myprovider": {
+						Router: &dynamic.Router{
+							EntryPoints: []string{"web"},
+							Service:     "fii-service@myprovider",
+							Rule:        "Host(`fii.bar.other`)",
+							Middlewares: []string{"addPrefixTest", "auth"},
+						},
+						Status: runtime.StatusEnabled,
+					},
+					"foo@otherprovider": {
+						Router: &dynamic.Router{
+							EntryPoints: []string{"web"},
+							Service:     "fii-service",
+							Rule:        "Host(`fii.foo.other`)",
+						},
+						Status: runtime.StatusEnabled,
+					},
+					"bar@myprovider": {
+						Router: &dynamic.Router{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.bar`)",
+							Middlewares: []string{"auth", "addPrefixTest@anotherprovider"},
+						},
+						Status: runtime.StatusDisabled,
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/routers-filtered-middlewareName.json",
 			},
 		},
 		{

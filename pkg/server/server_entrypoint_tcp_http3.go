@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/lucas-clemente/quic-go/http3"
+	"github.com/quic-go/quic-go/http3"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/static"
-	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
+	"github.com/traefik/traefik/v3/pkg/config/static"
+	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 )
 
 type http3server struct {

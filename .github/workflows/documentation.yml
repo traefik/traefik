@@ -7,7 +7,7 @@ on:
       - v*
 
 env:
-  STRUCTOR_VERSION: v1.11.2
+  STRUCTOR_VERSION: v1.13.1
   MIXTUS_VERSION: v0.4.1
 
 jobs:
@@ -41,12 +41,12 @@ jobs:
       - name: Build documentation
         run: $HOME/bin/structor -o traefik -r traefik --dockerfile-url="https://raw.githubusercontent.com/traefik/traefik/v1.7/docs.Dockerfile" --menu.js-url="https://raw.githubusercontent.com/traefik/structor/master/traefik-menu.js.gotmpl" --rqts-url="https://raw.githubusercontent.com/traefik/structor/master/requirements-override.txt" --force-edit-url --exp-branch=master --debug
         env:
-          STRUCTOR_LATEST_TAG: ${{ secrets.STRUCTOR_LATEST_TAG }}
+          STRUCTOR_LATEST_TAG: ${{ vars.STRUCTOR_LATEST_TAG }}
 
       - name: Apply seo
         run: $HOME/bin/seo -path=./site -product=traefik
 
       - name: Publish documentation
-        run: $HOME/bin/mixtus --dst-doc-path="./traefik" --dst-owner=traefik --dst-repo-name=doc --git-user-email="30906710+traefiker@users.noreply.github.com" --git-user-name=traefiker --src-doc-path="./site" --src-owner=containous --src-repo-name=traefik
+        run: $HOME/bin/mixtus --dst-doc-path="./traefik" --dst-owner=traefik --dst-repo-name=doc --git-user-email="30906710+traefiker@users.noreply.github.com" --git-user-name=traefiker --src-doc-path="./site" --src-owner=traefik --src-repo-name=traefik
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN_REPO }}

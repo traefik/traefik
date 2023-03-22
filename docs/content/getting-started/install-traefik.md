@@ -16,8 +16,8 @@ You can install Traefik with the following flavors:
 
 Choose one of the [official Docker images](https://hub.docker.com/_/traefik) and run it with one sample configuration file:
 
-* [YAML](https://raw.githubusercontent.com/traefik/traefik/v2.9/traefik.sample.yml)
-* [TOML](https://raw.githubusercontent.com/traefik/traefik/v2.9/traefik.sample.toml)
+* [YAML](https://raw.githubusercontent.com/traefik/traefik/v3.0/traefik.sample.yml)
+* [TOML](https://raw.githubusercontent.com/traefik/traefik/v3.0/traefik.sample.toml)
 
 ```bash
 docker run -d -p 8080:8080 -p 80:80 \
@@ -121,7 +121,7 @@ by defining and applying an IngressRoute CRD (`kubectl apply -f dashboard.yaml`)
 
 ```yaml
 # dashboard.yaml
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: dashboard

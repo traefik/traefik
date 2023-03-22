@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/config/static"
-	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
-	"github.com/traefik/traefik/v2/pkg/tcp"
+	"github.com/traefik/traefik/v3/pkg/config/static"
+	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
+	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
 func TestShutdownHijacked(t *testing.T) {
@@ -79,7 +79,7 @@ func testShutdown(t *testing.T, router *tcprouter.Router) {
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
 		HTTP2:            &static.HTTP2Config{},
-	}, nil)
+	}, nil, nil)
 	require.NoError(t, err)
 
 	conn, err := startEntrypoint(entryPoint, router)
@@ -164,7 +164,7 @@ func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
 		HTTP2:            &static.HTTP2Config{},
-	}, nil)
+	}, nil, nil)
 	require.NoError(t, err)
 
 	router := &tcprouter.Router{}
@@ -201,7 +201,7 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
 		HTTP2:            &static.HTTP2Config{},
-	}, nil)
+	}, nil, nil)
 	require.NoError(t, err)
 
 	router := &tcprouter.Router{}

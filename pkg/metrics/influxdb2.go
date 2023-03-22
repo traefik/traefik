@@ -12,15 +12,43 @@ import (
 	influxdb2log "github.com/influxdata/influxdb-client-go/v2/log"
 	influxdb "github.com/influxdata/influxdb1-client/v2"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 var (
 	influxDB2Ticker *time.Ticker
 	influxDB2Store  *influx.Influx
 	influxDB2Client influxdb2.Client
+)
+
+const (
+	influxDBConfigReloadsName           = "traefik.config.reload.total"
+	influxDBLastConfigReloadSuccessName = "traefik.config.reload.lastSuccessTimestamp"
+	influxDBOpenConnsName               = "traefik.open.connections"
+
+	influxDBTLSCertsNotAfterTimestampName = "traefik.tls.certs.notAfterTimestamp"
+
+	influxDBEntryPointReqsName        = "traefik.entrypoint.requests.total"
+	influxDBEntryPointReqsTLSName     = "traefik.entrypoint.requests.tls.total"
+	influxDBEntryPointReqDurationName = "traefik.entrypoint.request.duration"
+	influxDBEntryPointReqsBytesName   = "traefik.entrypoint.requests.bytes.total"
+	influxDBEntryPointRespsBytesName  = "traefik.entrypoint.responses.bytes.total"
+
+	influxDBRouterReqsName         = "traefik.router.requests.total"
+	influxDBRouterReqsTLSName      = "traefik.router.requests.tls.total"
+	influxDBRouterReqsDurationName = "traefik.router.request.duration"
+	influxDBRouterReqsBytesName    = "traefik.router.requests.bytes.total"
+	influxDBRouterRespsBytesName   = "traefik.router.responses.bytes.total"
+
+	influxDBServiceReqsName         = "traefik.service.requests.total"
+	influxDBServiceReqsTLSName      = "traefik.service.requests.tls.total"
+	influxDBServiceReqsDurationName = "traefik.service.request.duration"
+	influxDBServiceRetriesTotalName = "traefik.service.retries.total"
+	influxDBServiceServerUpName     = "traefik.service.server.up"
+	influxDBServiceReqsBytesName    = "traefik.service.requests.bytes.total"
+	influxDBServiceRespsBytesName   = "traefik.service.responses.bytes.total"
 )
 
 // RegisterInfluxDB2 creates metrics exporter for InfluxDB2.
@@ -52,39 +80,35 @@ func RegisterInfluxDB2(ctx context.Context, config *types.InfluxDB2) Registry {
 
 	registry := &standardRegistry{
 		configReloadsCounter:           influxDB2Store.NewCounter(influxDBConfigReloadsName),
-		configReloadsFailureCounter:    influxDB2Store.NewCounter(influxDBConfigReloadsFailureName),
 		lastConfigReloadSuccessGauge:   influxDB2Store.NewGauge(influxDBLastConfigReloadSuccessName),
-		lastConfigReloadFailureGauge:   influxDB2Store.NewGauge(influxDBLastConfigReloadFailureName),
+		openConnectionsGauge:           influxDB2Store.NewGauge(influxDBOpenConnsName),
 		tlsCertsNotAfterTimestampGauge: influxDB2Store.NewGauge(influxDBTLSCertsNotAfterTimestampName),
 	}
 
 	if config.AddEntryPointsLabels {
 		registry.epEnabled = config.AddEntryPointsLabels
-		registry.entryPointReqsCounter = influxDB2Store.NewCounter(influxDBEntryPointReqsName)
+		registry.entryPointReqsCounter = NewCounterWithNoopHeaders(influxDB2Store.NewCounter(influxDBEntryPointReqsName))
 		registry.entryPointReqsTLSCounter = influxDB2Store.NewCounter(influxDBEntryPointReqsTLSName)
 		registry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(influxDB2Store.NewHistogram(influxDBEntryPointReqDurationName), time.Second)
-		registry.entryPointOpenConnsGauge = influxDB2Store.NewGauge(influxDBEntryPointOpenConnsName)
 		registry.entryPointReqsBytesCounter = influxDB2Store.NewCounter(influxDBEntryPointReqsBytesName)
 		registry.entryPointRespsBytesCounter = influxDB2Store.NewCounter(influxDBEntryPointRespsBytesName)
 	}
 
 	if config.AddRoutersLabels {
 		registry.routerEnabled = config.AddRoutersLabels
-		registry.routerReqsCounter = influxDB2Store.NewCounter(influxDBRouterReqsName)
+		registry.routerReqsCounter = NewCounterWithNoopHeaders(influxDB2Store.NewCounter(influxDBRouterReqsName))
 		registry.routerReqsTLSCounter = influxDB2Store.NewCounter(influxDBRouterReqsTLSName)
 		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(influxDB2Store.NewHistogram(influxDBRouterReqsDurationName), time.Second)
-		registry.routerOpenConnsGauge = influxDB2Store.NewGauge(influxDBORouterOpenConnsName)
 		registry.routerReqsBytesCounter = influxDB2Store.NewCounter(influxDBRouterReqsBytesName)
 		registry.routerRespsBytesCounter = influxDB2Store.NewCounter(influxDBRouterRespsBytesName)
 	}
 
 	if config.AddServicesLabels {
 		registry.svcEnabled = config.AddServicesLabels
-		registry.serviceReqsCounter = influxDB2Store.NewCounter(influxDBServiceReqsName)
+		registry.serviceReqsCounter = NewCounterWithNoopHeaders(influxDB2Store.NewCounter(influxDBServiceReqsName))
 		registry.serviceReqsTLSCounter = influxDB2Store.NewCounter(influxDBServiceReqsTLSName)
 		registry.serviceReqDurationHistogram, _ = NewHistogramWithScale(influxDB2Store.NewHistogram(influxDBServiceReqsDurationName), time.Second)
 		registry.serviceRetriesCounter = influxDB2Store.NewCounter(influxDBServiceRetriesTotalName)
-		registry.serviceOpenConnsGauge = influxDB2Store.NewGauge(influxDBServiceOpenConnsName)
 		registry.serviceServerUpGauge = influxDB2Store.NewGauge(influxDBServiceServerUpName)
 		registry.serviceReqsBytesCounter = influxDB2Store.NewCounter(influxDBServiceReqsBytesName)
 		registry.serviceRespsBytesCounter = influxDB2Store.NewCounter(influxDBServiceRespsBytesName)

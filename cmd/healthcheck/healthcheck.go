@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/traefik/paerser/cli"
-	"github.com/traefik/traefik/v2/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/config/static"
 )
 
 // NewCmd builds a new HealthCheck command.

@@ -15,21 +15,23 @@ import (
 	"time"
 
 	"github.com/containous/alice"
+	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/pires/go-proxyproto"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/ip"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/traefik/traefik/v2/pkg/middlewares/contenttype"
-	"github.com/traefik/traefik/v2/pkg/middlewares/forwardedheaders"
-	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/server/router"
-	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
-	"github.com/traefik/traefik/v2/pkg/tcp"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/ip"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/metrics"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/contenttype"
+	"github.com/traefik/traefik/v3/pkg/middlewares/forwardedheaders"
+	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/server/router"
+	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
+	"github.com/traefik/traefik/v3/pkg/tcp"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -67,7 +69,7 @@ func (h *httpForwarder) Accept() (net.Conn, error) {
 type TCPEntryPoints map[string]*TCPEntryPoint
 
 // NewTCPEntryPoints creates a new TCPEntryPoints.
-func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig *types.HostResolverConfig) (TCPEntryPoints, error) {
+func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig *types.HostResolverConfig, metricsRegistry metrics.Registry) (TCPEntryPoints, error) {
 	serverEntryPointsTCP := make(TCPEntryPoints)
 	for entryPointName, config := range entryPointsConfig {
 		protocol, err := config.GetProtocol()
@@ -81,7 +83,11 @@ func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig 
 
 		ctx := log.With().Str(logs.EntryPointName, entryPointName).Logger().WithContext(context.Background())
 
-		serverEntryPointsTCP[entryPointName], err = NewTCPEntryPoint(ctx, config, hostResolverConfig)
+		openConnectionsGauge := metricsRegistry.
+			OpenConnectionsGauge().
+			With("entrypoint", entryPointName, "protocol", "TCP")
+
+		serverEntryPointsTCP[entryPointName], err = NewTCPEntryPoint(ctx, config, hostResolverConfig, openConnectionsGauge)
 		if err != nil {
 			return nil, fmt.Errorf("error while building entryPoint %s: %w", entryPointName, err)
 		}
@@ -137,8 +143,8 @@ type TCPEntryPoint struct {
 }
 
 // NewTCPEntryPoint creates a new TCPEntryPoint.
-func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hostResolverConfig *types.HostResolverConfig) (*TCPEntryPoint, error) {
-	tracker := newConnectionTracker()
+func NewTCPEntryPoint(ctx context.Context, configuration *static.EntryPoint, hostResolverConfig *types.HostResolverConfig, openConnectionsGauge gokitmetrics.Gauge) (*TCPEntryPoint, error) {
+	tracker := newConnectionTracker(openConnectionsGauge)
 
 	listener, err := buildListener(ctx, configuration)
 	if err != nil {
@@ -440,34 +446,45 @@ func buildListener(ctx context.Context, entryPoint *static.EntryPoint) (net.List
 	return listener, nil
 }
 
-func newConnectionTracker() *connectionTracker {
+func newConnectionTracker(openConnectionsGauge gokitmetrics.Gauge) *connectionTracker {
 	return &connectionTracker{
-		conns: make(map[net.Conn]struct{}),
+		conns:                make(map[net.Conn]struct{}),
+		openConnectionsGauge: openConnectionsGauge,
 	}
 }
 
 type connectionTracker struct {
-	conns map[net.Conn]struct{}
-	lock  sync.RWMutex
+	connsMu sync.RWMutex
+	conns   map[net.Conn]struct{}
+
+	openConnectionsGauge gokitmetrics.Gauge
 }
 
 // AddConnection add a connection in the tracked connections list.
 func (c *connectionTracker) AddConnection(conn net.Conn) {
-	c.lock.Lock()
-	defer c.lock.Unlock()
+	c.connsMu.Lock()
 	c.conns[conn] = struct{}{}
+	c.connsMu.Unlock()
+
+	if c.openConnectionsGauge != nil {
+		c.openConnectionsGauge.Add(1)
+	}
 }
 
 // RemoveConnection remove a connection from the tracked connections list.
 func (c *connectionTracker) RemoveConnection(conn net.Conn) {
-	c.lock.Lock()
-	defer c.lock.Unlock()
+	c.connsMu.Lock()
 	delete(c.conns, conn)
+	c.connsMu.Unlock()
+
+	if c.openConnectionsGauge != nil {
+		c.openConnectionsGauge.Add(-1)
+	}
 }
 
 func (c *connectionTracker) isEmpty() bool {
-	c.lock.RLock()
-	defer c.lock.RUnlock()
+	c.connsMu.RLock()
+	defer c.connsMu.RUnlock()
 	return len(c.conns) == 0
 }
 
@@ -489,8 +506,8 @@ func (c *connectionTracker) Shutdown(ctx context.Context) error {
 
 // Close close all the connections in the tracked connections list.
 func (c *connectionTracker) Close() {
-	c.lock.Lock()
-	defer c.lock.Unlock()
+	c.connsMu.Lock()
+	defer c.connsMu.Unlock()
 	for conn := range c.conns {
 		if err := conn.Close(); err != nil {
 			log.Error().Err(err).Msg("Error while closing connection")

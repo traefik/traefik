@@ -12,10 +12,10 @@ import (
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	tracingMiddleware "github.com/traefik/traefik/v2/pkg/middlewares/tracing"
-	"github.com/traefik/traefik/v2/pkg/testhelpers"
-	"github.com/traefik/traefik/v2/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	tracingMiddleware "github.com/traefik/traefik/v3/pkg/middlewares/tracing"
+	"github.com/traefik/traefik/v3/pkg/testhelpers"
+	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/vulcand/oxy/v2/forward"
 )
 

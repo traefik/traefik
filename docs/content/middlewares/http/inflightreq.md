@@ -20,7 +20,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-inflightreq
@@ -32,18 +32,6 @@ spec:
 ```yaml tab="Consul Catalog"
 # Limiting to 10 simultaneous connections
 - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.amount": "10"
-}
-```
-
-```yaml tab="Rancher"
-# Limiting to 10 simultaneous connections
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
 
 ```yaml tab="File (YAML)"
@@ -75,7 +63,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-inflightreq
@@ -87,18 +75,6 @@ spec:
 ```yaml tab="Consul Catalog"
 # Limiting to 10 simultaneous connections
 - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.amount": "10"
-}
-```
-
-```yaml tab="Rancher"
-# Limiting to 10 simultaneous connections
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
 
 ```yaml tab="File (YAML)"
@@ -127,6 +103,8 @@ If none are set, the default is to use the `requestHost`.
 
 The `ipStrategy` option defines two parameters that configures how Traefik determines the client IP: `depth`, and `excludedIPs`.
 
+!!! important "As a middleware, InFlightReq happens before the actual proxying to the backend takes place. In addition, the previous network hop only gets appended to `X-Forwarded-For` during the last stages of proxying, i.e. after it has already passed through the middleware. Therefore, during InFlightReq, as the previous network hop is not yet present in `X-Forwarded-For`, it cannot be used and/or relied upon."
+
 ##### `ipStrategy.depth`
 
 The `depth` option tells Traefik to use the `X-Forwarded-For` header and select the IP located at the `depth` position (starting from the right).
@@ -150,7 +128,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-inflightreq
@@ -163,17 +141,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth": "2"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
 ```
 
 ```yaml tab="File (YAML)"
@@ -215,7 +182,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-inflightreq
@@ -230,17 +197,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="File (YAML)"
@@ -272,7 +228,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-inflightreq
@@ -284,17 +240,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername": "username"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
 ```
 
 ```yaml tab="File (YAML)"
@@ -323,7 +268,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-inflightreq
@@ -335,17 +280,6 @@ spec:
 
 ```yaml tab="Cosul Catalog"
 - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost": "true"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
 ```
 
 ```yaml tab="File (YAML)"

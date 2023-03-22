@@ -9,23 +9,25 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/server/provider"
-	"github.com/traefik/traefik/v2/pkg/tcp"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/server/provider"
+	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
 // Manager is the TCPHandlers factory.
 type Manager struct {
-	configs map[string]*runtime.TCPServiceInfo
-	rand    *rand.Rand // For the initial shuffling of load-balancers.
+	dialerManager *tcp.DialerManager
+	configs       map[string]*runtime.TCPServiceInfo
+	rand          *rand.Rand // For the initial shuffling of load-balancers.
 }
 
 // NewManager creates a new manager.
-func NewManager(conf *runtime.Configuration) *Manager {
+func NewManager(conf *runtime.Configuration, dialerManager *tcp.DialerManager) *Manager {
 	return &Manager{
-		configs: conf.TCPServices,
-		rand:    rand.New(rand.NewSource(time.Now().UnixNano())),
+		dialerManager: dialerManager,
+		configs:       conf.TCPServices,
+		rand:          rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
 
@@ -51,11 +53,9 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 	case conf.LoadBalancer != nil:
 		loadBalancer := tcp.NewWRRLoadBalancer()
 
-		if conf.LoadBalancer.TerminationDelay == nil {
-			defaultTerminationDelay := 100
-			conf.LoadBalancer.TerminationDelay = &defaultTerminationDelay
+		if len(conf.LoadBalancer.ServersTransport) > 0 {
+			conf.LoadBalancer.ServersTransport = provider.GetQualifiedName(ctx, conf.LoadBalancer.ServersTransport)
 		}
-		duration := time.Duration(*conf.LoadBalancer.TerminationDelay) * time.Millisecond
 
 		for index, server := range shuffle(conf.LoadBalancer.Servers, m.rand) {
 			srvLogger := logger.With().
@@ -67,7 +67,12 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 				continue
 			}
 
-			handler, err := tcp.NewProxy(server.Address, duration, conf.LoadBalancer.ProxyProtocol)
+			dialer, err := m.dialerManager.Get(conf.LoadBalancer.ServersTransport, server.TLS)
+			if err != nil {
+				return nil, err
+			}
+
+			handler, err := tcp.NewProxy(server.Address, conf.LoadBalancer.ProxyProtocol, dialer)
 			if err != nil {
 				srvLogger.Error().Err(err).Msg("Failed to create server")
 				continue

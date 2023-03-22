@@ -59,7 +59,7 @@ spec:
     task: whoami5
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TraefikService
 metadata:
   name: wrr2
@@ -73,7 +73,7 @@ spec:
         port: 8080
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TraefikService
 metadata:
   name: wrr1
@@ -87,7 +87,7 @@ spec:
         port: 8080
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TraefikService
 metadata:
   name: mirror1
@@ -103,7 +103,7 @@ spec:
         percent: 30
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: test.route

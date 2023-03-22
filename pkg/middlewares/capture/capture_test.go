@@ -58,7 +58,7 @@ func TestCapture(t *testing.T) {
 // $ go test -bench=. ./pkg/middlewares/capture/
 // goos: linux
 // goarch: amd64
-// pkg: github.com/traefik/traefik/v2/pkg/middlewares/capture
+// pkg: github.com/traefik/traefik/v3/pkg/middlewares/capture
 // cpu: Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz
 // BenchmarkCapture/2k-12				280507	 4015 ns/op	 510.03 MB/s	  5072 B/op	14 allocs/op
 // BenchmarkCapture/20k-12				135726	 8301 ns/op	2467.26 MB/s	 41936 B/op	14 allocs/op

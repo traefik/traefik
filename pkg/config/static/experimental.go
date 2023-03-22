@@ -1,6 +1,6 @@
 package static
 
-import "github.com/traefik/traefik/v2/pkg/plugins"
+import "github.com/traefik/traefik/v3/pkg/plugins"
 
 // Experimental experimental Traefik features.
 type Experimental struct {
@@ -8,5 +8,4 @@ type Experimental struct {
 	LocalPlugins map[string]plugins.LocalDescriptor `description:"Local plugins configuration." json:"localPlugins,omitempty" toml:"localPlugins,omitempty" yaml:"localPlugins,omitempty" export:"true"`
 
 	KubernetesGateway bool `description:"Allow the Kubernetes gateway api provider usage." json:"kubernetesGateway,omitempty" toml:"kubernetesGateway,omitempty" yaml:"kubernetesGateway,omitempty" export:"true"`
-	Hub               bool `description:"Enable the Traefik Hub provider." json:"hub,omitempty" toml:"hub,omitempty" yaml:"hub,omitempty" export:"true"`
 }

@@ -10,8 +10,8 @@ import (
 
 	"github.com/go-kit/kit/metrics"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/types"
-	"github.com/traefik/traefik/v2/pkg/version"
+	"github.com/traefik/traefik/v3/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/version"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
@@ -23,7 +23,8 @@ import (
 	"go.opentelemetry.io/otel/metric/unit"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/aggregation"
-	"go.opentelemetry.io/otel/sdk/metric/view"
+	"go.opentelemetry.io/otel/sdk/resource"
+	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
 )
@@ -56,49 +57,39 @@ func RegisterOpenTelemetry(ctx context.Context, config *types.OpenTelemetry) Reg
 		routerEnabled:                  config.AddRoutersLabels,
 		svcEnabled:                     config.AddServicesLabels,
 		configReloadsCounter:           newOTLPCounterFrom(meter, configReloadsTotalName, "Config reloads"),
-		configReloadsFailureCounter:    newOTLPCounterFrom(meter, configReloadsFailuresTotalName, "Config reload failures"),
 		lastConfigReloadSuccessGauge:   newOTLPGaugeFrom(meter, configLastReloadSuccessName, "Last config reload success", unit.Milliseconds),
-		lastConfigReloadFailureGauge:   newOTLPGaugeFrom(meter, configLastReloadFailureName, "Last config reload failure", unit.Milliseconds),
-		tlsCertsNotAfterTimestampGauge: newOTLPGaugeFrom(meter, tlsCertsNotAfterTimestamp, "Certificate expiration timestamp", unit.Milliseconds),
+		openConnectionsGauge:           newOTLPGaugeFrom(meter, openConnectionsName, "How many open connections exist, by entryPoint and protocol", unit.Dimensionless),
+		tlsCertsNotAfterTimestampGauge: newOTLPGaugeFrom(meter, tlsCertsNotAfterTimestampName, "Certificate expiration timestamp", unit.Milliseconds),
 	}
 
 	if config.AddEntryPointsLabels {
-		reg.entryPointReqsCounter = newOTLPCounterFrom(meter, entryPointReqsTotalName,
-			"How many HTTP requests processed on an entrypoint, partitioned by status code, protocol, and method.")
+		reg.entryPointReqsCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, entryPointReqsTotalName,
+			"How many HTTP requests processed on an entrypoint, partitioned by status code, protocol, and method."))
 		reg.entryPointReqsTLSCounter = newOTLPCounterFrom(meter, entryPointReqsTLSTotalName,
 			"How many HTTP requests with TLS processed on an entrypoint, partitioned by TLS Version and TLS cipher Used.")
 		reg.entryPointReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, entryPointReqDurationName,
 			"How long it took to process the request on an entrypoint, partitioned by status code, protocol, and method.",
 			unit.Milliseconds), time.Second)
-		reg.entryPointOpenConnsGauge = newOTLPGaugeFrom(meter, entryPointOpenConnsName,
-			"How many open connections exist on an entrypoint, partitioned by method and protocol.",
-			unit.Dimensionless)
 	}
 
 	if config.AddRoutersLabels {
-		reg.routerReqsCounter = newOTLPCounterFrom(meter, routerReqsTotalName,
-			"How many HTTP requests are processed on a router, partitioned by service, status code, protocol, and method.")
+		reg.routerReqsCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, routerReqsTotalName,
+			"How many HTTP requests are processed on a router, partitioned by service, status code, protocol, and method."))
 		reg.routerReqsTLSCounter = newOTLPCounterFrom(meter, routerReqsTLSTotalName,
 			"How many HTTP requests with TLS are processed on a router, partitioned by service, TLS Version, and TLS cipher Used.")
 		reg.routerReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, routerReqDurationName,
 			"How long it took to process the request on a router, partitioned by service, status code, protocol, and method.",
 			unit.Milliseconds), time.Second)
-		reg.routerOpenConnsGauge = newOTLPGaugeFrom(meter, routerOpenConnsName,
-			"How many open connections exist on a router, partitioned by service, method, and protocol.",
-			unit.Dimensionless)
 	}
 
 	if config.AddServicesLabels {
-		reg.serviceReqsCounter = newOTLPCounterFrom(meter, serviceReqsTotalName,
-			"How many HTTP requests processed on a service, partitioned by status code, protocol, and method.")
+		reg.serviceReqsCounter = NewCounterWithNoopHeaders(newOTLPCounterFrom(meter, serviceReqsTotalName,
+			"How many HTTP requests processed on a service, partitioned by status code, protocol, and method."))
 		reg.serviceReqsTLSCounter = newOTLPCounterFrom(meter, serviceReqsTLSTotalName,
 			"How many HTTP requests with TLS processed on a service, partitioned by TLS version and TLS cipher.")
 		reg.serviceReqDurationHistogram, _ = NewHistogramWithScale(newOTLPHistogramFrom(meter, serviceReqDurationName,
 			"How long it took to process the request on a service, partitioned by status code, protocol, and method.",
 			unit.Milliseconds), time.Second)
-		reg.serviceOpenConnsGauge = newOTLPGaugeFrom(meter, serviceOpenConnsName,
-			"How many open connections exist on a service, partitioned by method and protocol.",
-			unit.Dimensionless)
 		reg.serviceRetriesCounter = newOTLPCounterFrom(meter, serviceRetriesTotalName,
 			"How many request retries happened on a service.")
 		reg.serviceServerUpGauge = newOTLPGaugeFrom(meter, serviceServerUpName,
@@ -140,27 +131,31 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OpenTeleme
 		return nil, fmt.Errorf("creating exporter: %w", err)
 	}
 
+	res, err := resource.New(ctx,
+		resource.WithAttributes(semconv.ServiceNameKey.String("traefik")),
+		resource.WithAttributes(semconv.ServiceVersionKey.String(version.Version)),
+		resource.WithFromEnv(),
+		resource.WithTelemetrySDK(),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("building resource: %w", err)
+	}
+
 	opts := []sdkmetric.PeriodicReaderOption{
 		sdkmetric.WithInterval(time.Duration(config.PushInterval)),
 	}
 
-	// View to customize histogram buckets and rename a single histogram instrument.
-	customBucketsView, err := view.New(
-		// Match* to match instruments
-		view.MatchInstrumentName("traefik_*_request_duration_seconds"),
-
-		view.WithSetAggregation(aggregation.ExplicitBucketHistogram{
-			Boundaries: config.ExplicitBoundaries,
-		}),
+	meterProvider := sdkmetric.NewMeterProvider(
+		sdkmetric.WithResource(res),
+		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter, opts...)),
+		// View to customize histogram buckets and rename a single histogram instrument.
+		sdkmetric.WithView(sdkmetric.NewView(
+			sdkmetric.Instrument{Name: "traefik_*_request_duration_seconds"},
+			sdkmetric.Stream{Aggregation: aggregation.ExplicitBucketHistogram{
+				Boundaries: config.ExplicitBoundaries,
+			}},
+		)),
 	)
-	if err != nil {
-		return nil, fmt.Errorf("creating histogram view: %w", err)
-	}
-
-	meterProvider := sdkmetric.NewMeterProvider(sdkmetric.WithReader(
-		sdkmetric.NewPeriodicReader(exporter, opts...),
-		customBucketsView,
-	))
 
 	global.SetMeterProvider(meterProvider)
 

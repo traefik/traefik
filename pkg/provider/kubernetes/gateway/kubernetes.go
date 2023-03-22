@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"regexp"
 	"sort"
@@ -18,13 +19,13 @@ import (
 	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/job"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/job"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -183,18 +184,21 @@ func (p *Provider) loadConfigurationFromGateway(ctx context.Context, client Clie
 	if err != nil {
 		logger.Error().Err(err).Msg("Cannot find GatewayClasses")
 		return &dynamic.Configuration{
+			HTTP: &dynamic.HTTPConfiguration{
+				Routers:           map[string]*dynamic.Router{},
+				Middlewares:       map[string]*dynamic.Middleware{},
+				Services:          map[string]*dynamic.Service{},
+				ServersTransports: map[string]*dynamic.ServersTransport{},
+			},
+			TCP: &dynamic.TCPConfiguration{
+				Routers:           map[string]*dynamic.TCPRouter{},
+				Middlewares:       map[string]*dynamic.TCPMiddleware{},
+				Services:          map[string]*dynamic.TCPService{},
+				ServersTransports: map[string]*dynamic.TCPServersTransport{},
+			},
 			UDP: &dynamic.UDPConfiguration{
 				Routers:  map[string]*dynamic.UDPRouter{},
 				Services: map[string]*dynamic.UDPService{},
-			},
-			TCP: &dynamic.TCPConfiguration{
-				Routers:  map[string]*dynamic.TCPRouter{},
-				Services: map[string]*dynamic.TCPService{},
-			},
-			HTTP: &dynamic.HTTPConfiguration{
-				Routers:     map[string]*dynamic.Router{},
-				Middlewares: map[string]*dynamic.Middleware{},
-				Services:    map[string]*dynamic.Service{},
 			},
 			TLS: &dynamic.TLSConfiguration{},
 		}
@@ -270,18 +274,21 @@ func (p *Provider) loadConfigurationFromGateway(ctx context.Context, client Clie
 
 func (p *Provider) createGatewayConf(ctx context.Context, client Client, gateway *v1alpha2.Gateway) (*dynamic.Configuration, error) {
 	conf := &dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers:           map[string]*dynamic.Router{},
+			Middlewares:       map[string]*dynamic.Middleware{},
+			Services:          map[string]*dynamic.Service{},
+			ServersTransports: map[string]*dynamic.ServersTransport{},
+		},
+		TCP: &dynamic.TCPConfiguration{
+			Routers:           map[string]*dynamic.TCPRouter{},
+			Middlewares:       map[string]*dynamic.TCPMiddleware{},
+			Services:          map[string]*dynamic.TCPService{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{},
+		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  map[string]*dynamic.UDPRouter{},
 			Services: map[string]*dynamic.UDPService{},
-		},
-		TCP: &dynamic.TCPConfiguration{
-			Routers:  map[string]*dynamic.TCPRouter{},
-			Services: map[string]*dynamic.TCPService{},
-		},
-		HTTP: &dynamic.HTTPConfiguration{
-			Routers:     map[string]*dynamic.Router{},
-			Middlewares: map[string]*dynamic.Middleware{},
-			Services:    map[string]*dynamic.Service{},
 		},
 		TLS: &dynamic.TLSConfiguration{},
 	}
@@ -750,6 +757,26 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener v1alpha
 				continue
 			}
 
+			middlewares, err := loadMiddlewares(listener, routerKey, routeRule.Filters)
+			if err != nil {
+				// update "ResolvedRefs" status true with "InvalidFilters" reason
+				conditions = append(conditions, metav1.Condition{
+					Type:               string(v1alpha2.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					LastTransitionTime: metav1.Now(),
+					Reason:             "InvalidFilters", // TODO check the spec if a proper reason is introduced at some point
+					Message:            fmt.Sprintf("Cannot load HTTPRoute filter %s/%s: %v", route.Namespace, route.Name, err),
+				})
+
+				// TODO update the RouteStatus condition / deduplicate conditions on listener
+				continue
+			}
+
+			for middlewareName, middleware := range middlewares {
+				conf.HTTP.Middlewares[middlewareName] = middleware
+				router.Middlewares = append(router.Middlewares, middlewareName)
+			}
+
 			if len(routeRule.BackendRefs) == 0 {
 				continue
 			}
@@ -833,7 +860,7 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 		}
 
 		router := dynamic.TCPRouter{
-			Rule:        "HostSNI(`*`)", // Gateway listener hostname not available in TCP
+			Rule:        "HostSNI(`*`)",
 			EntryPoints: []string{ep},
 		}
 
@@ -964,8 +991,16 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener v1alpha2.
 
 		hostnames := matchingHostnames(listener, route.Spec.Hostnames)
 		if len(hostnames) == 0 && listener.Hostname != nil && *listener.Hostname != "" && len(route.Spec.Hostnames) > 0 {
-			// TODO update the corresponding route parent status
-			// https://gateway-api.sigs.k8s.io/v1alpha2/references/spec/#gateway.networking.k8s.io/v1alpha2.TLSRoute
+			for _, parent := range route.Status.Parents {
+				parent.Conditions = append(parent.Conditions, metav1.Condition{
+					Type:               string(v1alpha2.GatewayClassConditionStatusAccepted),
+					Status:             metav1.ConditionFalse,
+					Reason:             string(v1alpha2.ListenerReasonRouteConflict),
+					Message:            fmt.Sprintf("No hostname match between listener: %v and route: %v", listener.Hostname, route.Spec.Hostnames),
+					LastTransitionTime: metav1.Now(),
+				})
+			}
+
 			continue
 		}
 
@@ -1201,7 +1236,7 @@ func hostRule(hostnames []v1alpha2.Hostname) (string, error) {
 }
 
 func hostSNIRule(hostnames []v1alpha2.Hostname) (string, error) {
-	var matchers []string
+	rules := make([]string, 0, len(hostnames))
 	uniqHostnames := map[v1alpha2.Hostname]struct{}{}
 
 	for _, hostname := range hostnames {
@@ -1213,25 +1248,28 @@ func hostSNIRule(hostnames []v1alpha2.Hostname) (string, error) {
 			continue
 		}
 
-		h := string(hostname)
+		host := string(hostname)
+		uniqHostnames[hostname] = struct{}{}
 
-		// TODO support wildcard hostnames with an HostSNI regexp matcher
-		if strings.Contains(h, "*") {
-			return "", fmt.Errorf("wildcard hostname is not supported: %q", h)
+		wildcard := strings.Count(host, "*")
+		if wildcard == 0 {
+			rules = append(rules, fmt.Sprintf("HostSNI(`%s`)", host))
+			continue
 		}
 
-		matchers = append(matchers, fmt.Sprintf("HostSNI(`%s`)", h))
-		uniqHostnames[hostname] = struct{}{}
+		if !strings.HasPrefix(host, "*.") || wildcard > 1 {
+			return "", fmt.Errorf("invalid rule: %q", host)
+		}
+
+		host = strings.Replace(regexp.QuoteMeta(host), `\*\.`, `[a-zA-Z0-9-]+\.`, 1)
+		rules = append(rules, fmt.Sprintf("HostSNIRegexp(`^%s$`)", host))
 	}
 
-	switch len(matchers) {
-	case 0:
+	if len(hostnames) == 0 || len(rules) == 0 {
 		return "HostSNI(`*`)", nil
-	case 1:
-		return matchers[0], nil
-	default:
-		return fmt.Sprintf("(%s)", strings.Join(matchers, " || ")), nil
 	}
+
+	return strings.Join(rules, " || "), nil
 }
 
 func extractRule(routeRule v1alpha2.HTTPRouteRule, hostRule string) (string, error) {
@@ -1426,7 +1464,7 @@ func loadServices(client Client, namespace string, backendRefs []v1alpha2.HTTPBa
 
 		weight := int(pointer.Int32Deref(backendRef.Weight, 1))
 
-		if *backendRef.Group == traefikv1alpha1.GroupName && *backendRef.Kind == kindTraefikService {
+		if isTraefikService(backendRef.BackendRef) {
 			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: string(backendRef.Name), Weight: &weight})
 			continue
 		}
@@ -1549,7 +1587,7 @@ func loadTCPServices(client Client, namespace string, backendRefs []v1alpha2.Bac
 
 		weight := int(pointer.Int32Deref(backendRef.Weight, 1))
 
-		if *backendRef.Group == traefikv1alpha1.GroupName && *backendRef.Kind == kindTraefikService {
+		if isTraefikService(backendRef) {
 			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.TCPWRRService{Name: string(backendRef.Name), Weight: &weight})
 			continue
 		}
@@ -1646,6 +1684,85 @@ func loadTCPServices(client Client, namespace string, backendRefs []v1alpha2.Bac
 	return wrrSvc, services, nil
 }
 
+func loadMiddlewares(listener v1alpha2.Listener, prefix string, filters []v1alpha2.HTTPRouteFilter) (map[string]*dynamic.Middleware, error) {
+	middlewares := make(map[string]*dynamic.Middleware)
+
+	// The spec allows for an empty string in which case we should use the
+	// scheme of the request which in this case is the listener scheme.
+	var listenerScheme string
+	switch listener.Protocol {
+	case v1alpha2.HTTPProtocolType:
+		listenerScheme = "http"
+	case v1alpha2.HTTPSProtocolType:
+		listenerScheme = "https"
+	default:
+		return nil, fmt.Errorf("invalid listener protocol %s", listener.Protocol)
+	}
+
+	for i, filter := range filters {
+		var middleware *dynamic.Middleware
+		switch filter.Type {
+		case v1alpha2.HTTPRouteFilterRequestRedirect:
+			var err error
+			middleware, err = createRedirectRegexMiddleware(listenerScheme, filter.RequestRedirect)
+			if err != nil {
+				return nil, fmt.Errorf("creating RedirectRegex middleware: %w", err)
+			}
+		default:
+			// As per the spec:
+			// https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional
+			// In all cases where incompatible or unsupported filters are
+			// specified, implementations MUST add a warning condition to
+			// status.
+			return nil, fmt.Errorf("unsupported filter %s", filter.Type)
+		}
+
+		middlewareName := provider.Normalize(fmt.Sprintf("%s-%s-%d", prefix, strings.ToLower(string(filter.Type)), i))
+		middlewares[middlewareName] = middleware
+	}
+
+	return middlewares, nil
+}
+
+func createRedirectRegexMiddleware(scheme string, filter *v1alpha2.HTTPRequestRedirectFilter) (*dynamic.Middleware, error) {
+	// Use the HTTPRequestRedirectFilter scheme if defined.
+	filterScheme := scheme
+	if filter.Scheme != nil {
+		filterScheme = *filter.Scheme
+	}
+
+	if filterScheme != "http" && filterScheme != "https" {
+		return nil, fmt.Errorf("invalid scheme %s", filterScheme)
+	}
+
+	statusCode := http.StatusFound
+	if filter.StatusCode != nil {
+		statusCode = *filter.StatusCode
+	}
+
+	if statusCode != http.StatusMovedPermanently && statusCode != http.StatusFound {
+		return nil, fmt.Errorf("invalid status code %d", statusCode)
+	}
+
+	port := "${port}"
+	if filter.Port != nil {
+		port = fmt.Sprintf(":%d", *filter.Port)
+	}
+
+	hostname := "${hostname}"
+	if filter.Hostname != nil && *filter.Hostname != "" {
+		hostname = string(*filter.Hostname)
+	}
+
+	return &dynamic.Middleware{
+		RedirectRegex: &dynamic.RedirectRegex{
+			Regex:       `^[a-z]+:\/\/(?P<userInfo>.+@)?(?P<hostname>\[[\w:\.]+\]|[\w\._-]+)(?P<port>:\d+)?\/(?P<path>.*)`,
+			Replacement: fmt.Sprintf("%s://${userinfo}%s%s/${path}", filterScheme, hostname, port),
+			Permanent:   statusCode == http.StatusMovedPermanently,
+		},
+	}, nil
+}
+
 func getProtocol(portSpec corev1.ServicePort) string {
 	protocol := "http"
 	if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, "https") {
@@ -1685,14 +1802,16 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	return eventsChanBuffered
 }
 
-func isInternalService(ref v1alpha2.BackendRef) bool {
+func isTraefikService(ref v1alpha2.BackendRef) bool {
 	if ref.Kind == nil || ref.Group == nil {
 		return false
 	}
 
-	return *ref.Kind == kindTraefikService &&
-		*ref.Group == traefikv1alpha1.GroupName &&
-		strings.HasSuffix(string(ref.Name), "@internal")
+	return *ref.Group == traefikv1alpha1.GroupName && *ref.Kind == kindTraefikService
+}
+
+func isInternalService(ref v1alpha2.BackendRef) bool {
+	return isTraefikService(ref) && strings.HasSuffix(string(ref.Name), "@internal")
 }
 
 // makeListenerKey joins protocol, hostname, and port of a listener into a string key.

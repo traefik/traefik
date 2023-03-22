@@ -15,7 +15,7 @@ import (
 	"github.com/traefik/paerser/flag"
 	"github.com/traefik/paerser/generator"
 	"github.com/traefik/paerser/parser"
-	"github.com/traefik/traefik/v2/cmd"
+	"github.com/traefik/traefik/v3/cmd"
 )
 
 func main() {

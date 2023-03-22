@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
-	"github.com/traefik/traefik/v2/pkg/testhelpers"
+	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
 func TestMuxer(t *testing.T) {
@@ -35,6 +35,20 @@ func TestMuxer(t *testing.T) {
 			desc:          "Rule without quote",
 			rule:          "Host(example.com)",
 			expectedError: true,
+		},
+		{
+			desc: "Host IPv4",
+			rule: "Host(`127.0.0.1`)",
+			expected: map[string]int{
+				"http://127.0.0.1/foo": http.StatusOK,
+			},
+		},
+		{
+			desc: "Host IPv6",
+			rule: "Host(`10::10`)",
+			expected: map[string]int{
+				"http://10::10/foo": http.StatusOK,
+			},
 		},
 		{
 			desc: "Host and PathPrefix",
@@ -376,11 +390,13 @@ func Test_addRoutePriority(t *testing.T) {
 					w.Header().Set("X-From", route.xFrom)
 				})
 
+				if route.priority == 0 {
+					route.priority = GetRulePriority(route.rule)
+				}
+
 				err := muxer.AddRoute(route.rule, route.priority, handler)
 				require.NoError(t, err, route.rule)
 			}
-
-			muxer.SortRoutes()
 
 			w := httptest.NewRecorder()
 			req := testhelpers.MustNewRequest(http.MethodGet, test.path, http.NoBody)
@@ -516,6 +532,29 @@ func TestEmptyHost(t *testing.T) {
 
 			reqHost.ServeHTTP(w, req, muxer.ServeHTTP)
 			assert.Equal(t, test.expected, w.Code)
+		})
+	}
+}
+
+func TestGetRulePriority(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rule     string
+		expected int
+	}{
+		{
+			desc:     "simple rule",
+			rule:     "Host(`example.org`)",
+			expected: 19,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, GetRulePriority(test.rule))
 		})
 	}
 }

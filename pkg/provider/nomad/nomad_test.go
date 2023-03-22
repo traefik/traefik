@@ -7,7 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func Test_globalConfig(t *testing.T) {
@@ -72,6 +74,60 @@ func Test_globalConfig(t *testing.T) {
 			}
 			result := p.getExtraConf(test.Tags)
 			require.Equal(t, test.exp, result)
+		})
+	}
+}
+
+func TestProvider_SetDefaults_Endpoint(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		envs     map[string]string
+		expected *EndpointConfig
+	}{
+		{
+			desc: "without env vars",
+			envs: map[string]string{},
+			expected: &EndpointConfig{
+				Address: "http://127.0.0.1:4646",
+			},
+		},
+		{
+			desc: "with env vars",
+			envs: map[string]string{
+				"NOMAD_ADDR":        "https://nomad.example.com",
+				"NOMAD_REGION":      "us-west",
+				"NOMAD_TOKEN":       "almighty_token",
+				"NOMAD_CACERT":      "/etc/ssl/private/nomad-agent-ca.pem",
+				"NOMAD_CLIENT_CERT": "/etc/ssl/private/global-client-nomad.pem",
+				"NOMAD_CLIENT_KEY":  "/etc/ssl/private/global-client-nomad-key.pem",
+				"NOMAD_SKIP_VERIFY": "true",
+			},
+			expected: &EndpointConfig{
+				Address: "https://nomad.example.com",
+				Region:  "us-west",
+				Token:   "almighty_token",
+				TLS: &types.ClientTLS{
+					CA:                 "/etc/ssl/private/nomad-agent-ca.pem",
+					Cert:               "/etc/ssl/private/global-client-nomad.pem",
+					Key:                "/etc/ssl/private/global-client-nomad-key.pem",
+					InsecureSkipVerify: true,
+				},
+				EndpointWaitTime: 0,
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			for k, v := range test.envs {
+				t.Setenv(k, v)
+			}
+
+			p := &Provider{}
+			p.SetDefaults()
+
+			assert.Equal(t, test.expected, p.Endpoint)
 		})
 	}
 }
