@@ -2,11 +2,11 @@
 PLEASE READ THIS MESSAGE.
 
 Documentation fixes or enhancements:
-- for Traefik v2: use branch v2.9
+- for Traefik v2: use branch v2.10
 - for Traefik v3: use branch master
 
 Bug fixes:
-- for Traefik v2: use branch v2.9
+- for Traefik v2: use branch v2.10
 - for Traefik v3: use branch master
 
 Enhancements:
