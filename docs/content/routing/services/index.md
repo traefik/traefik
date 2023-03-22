@@ -519,7 +519,6 @@ spec:
       serverName: "test"
 ```
 
-##### `insecureSkipVerify`
 #### `certificates`
 
 _Optional_
