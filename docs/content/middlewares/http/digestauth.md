@@ -14,7 +14,7 @@ The DigestAuth middleware restricts access to your services to known users.
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Declaring the user list
 labels:
   - "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
@@ -72,7 +72,7 @@ The `users` option is an array of authorized users. Each user will be declared u
     - If both `users` and `usersFile` are provided, the two are merged. The contents of `usersFile` have precedence over the values in `users`.
     - For security reasons, the field `users` doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
 ```
@@ -132,7 +132,7 @@ The file content is a list of `name:realm:encoded-password`.
     - If both `users` and `usersFile` are provided, the two are merged. The contents of `usersFile` have precedence over the values in `users`.
     - Because it does not make much sense to refer to a file path on Kubernetes, the `usersFile` field doesn't exist for Kubernetes IngressRoute, and one should use the `secret` field instead.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-auth.digestauth.usersfile=/path/to/my/usersfile"
 ```
@@ -188,7 +188,7 @@ http:
 
 You can customize the realm for the authentication with the `realm` option. The default value is `traefik`.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-auth.digestauth.realm=MyRealm"
 ```
@@ -225,7 +225,7 @@ http:
 
 You can customize the header field for the authenticated user using the `headerField`option.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.my-auth.digestauth.headerField=X-WebAuth-User"
 ```
@@ -264,7 +264,7 @@ http:
 
 Set the `removeHeader` option to `true` to remove the authorization header before forwarding the request to your service. (Default value is `false`.)
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-auth.digestauth.removeheader=true"
 ```

@@ -532,7 +532,7 @@ Constraints is an expression that Traefik matches against the container's labels
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
 `TRAEFIK_PROVIDERS_DOCKER_ENDPOINT`:  
-Docker server endpoint. Can be a tcp or a unix socket endpoint. (Default: ```unix:///var/run/docker.sock```)
+Docker server endpoint. Can be a TCP or a Unix socket endpoint. (Default: ```unix:///var/run/docker.sock```)
 
 `TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT`:  
 Expose containers by default. (Default: ```true```)
@@ -542,12 +542,6 @@ Client timeout for HTTP connections. (Default: ```0```)
 
 `TRAEFIK_PROVIDERS_DOCKER_NETWORK`:  
 Default Docker network used.
-
-`TRAEFIK_PROVIDERS_DOCKER_SWARMMODE`:  
-Use Docker on Swarm Mode. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_DOCKER_SWARMMODEREFRESHSECONDS`:  
-Polling interval for swarm mode. (Default: ```15```)
 
 `TRAEFIK_PROVIDERS_DOCKER_TLS_CA`:  
 TLS CA
@@ -854,6 +848,51 @@ Enable Rest backend with default settings. (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_REST_INSECURE`:  
 Activate REST Provider directly on the entryPoint named traefik. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_SWARM`:  
+Enable Docker Swarm backend with default settings. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_SWARM_ALLOWEMPTYSERVICES`:  
+Disregards the Docker containers health checks with respect to the creation or removal of the corresponding services. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_SWARM_CONSTRAINTS`:  
+Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
+
+`TRAEFIK_PROVIDERS_SWARM_DEFAULTRULE`:  
+Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
+
+`TRAEFIK_PROVIDERS_SWARM_ENDPOINT`:  
+Docker server endpoint. Can be a TCP or a Unix socket endpoint. (Default: ```unix:///var/run/docker.sock```)
+
+`TRAEFIK_PROVIDERS_SWARM_EXPOSEDBYDEFAULT`:  
+Expose containers by default. (Default: ```true```)
+
+`TRAEFIK_PROVIDERS_SWARM_HTTPCLIENTTIMEOUT`:  
+Client timeout for HTTP connections. (Default: ```0```)
+
+`TRAEFIK_PROVIDERS_SWARM_NETWORK`:  
+Default Docker network used.
+
+`TRAEFIK_PROVIDERS_SWARM_REFRESHSECONDS`:  
+Polling interval for swarm mode. (Default: ```15```)
+
+`TRAEFIK_PROVIDERS_SWARM_TLS_CA`:  
+TLS CA
+
+`TRAEFIK_PROVIDERS_SWARM_TLS_CERT`:  
+TLS cert
+
+`TRAEFIK_PROVIDERS_SWARM_TLS_INSECURESKIPVERIFY`:  
+TLS insecure skip verify (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_SWARM_TLS_KEY`:  
+TLS key
+
+`TRAEFIK_PROVIDERS_SWARM_USEBINDPORTIP`:  
+Use the ip address from the bound port, rather than from the inner network. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_SWARM_WATCH`:  
+Watch Docker events. (Default: ```true```)
 
 `TRAEFIK_PROVIDERS_ZOOKEEPER`:  
 Enable ZooKeeper backend with default settings. (Default: ```false```)

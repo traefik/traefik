@@ -39,7 +39,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
-var updateExpected = flag.Bool("update_expected", true, "Update expected files in fixtures")
+var updateExpected = flag.Bool("update_expected", false, "Update expected files in fixtures")
 
 var fullDynConf *dynamic.Configuration
 
@@ -591,22 +591,46 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.Providers.Docker = &docker.Provider{
-		Constraints: `Label("foo", "bar")`,
-		Watch:       true,
-		Endpoint:    "MyEndPoint",
-		DefaultRule: "PathPrefix(`/`)",
-		TLS: &types.ClientTLS{
-			CA:                 "myCa",
-			Cert:               "mycert.pem",
-			Key:                "mycert.key",
-			InsecureSkipVerify: true,
+		Shared: docker.Shared{
+			ExposedByDefault:   true,
+			Constraints:        `Label("foo", "bar")`,
+			AllowEmptyServices: true,
+			Network:            "MyNetwork",
+			UseBindPortIP:      true,
+			Watch:              true,
+			DefaultRule:        "PathPrefix(`/`)",
 		},
-		ExposedByDefault:        true,
-		UseBindPortIP:           true,
-		SwarmMode:               true,
-		Network:                 "MyNetwork",
-		SwarmModeRefreshSeconds: 42,
-		HTTPClientTimeout:       42,
+		ClientConfig: docker.ClientConfig{
+			Endpoint: "MyEndPoint", TLS: &types.ClientTLS{
+				CA:                 "myCa",
+				Cert:               "mycert.pem",
+				Key:                "mycert.key",
+				InsecureSkipVerify: true,
+			},
+			HTTPClientTimeout: 42,
+		},
+	}
+
+	config.Providers.Swarm = &docker.SwarmProvider{
+		Shared: docker.Shared{
+			ExposedByDefault:   true,
+			Constraints:        `Label("foo", "bar")`,
+			AllowEmptyServices: true,
+			Network:            "MyNetwork",
+			UseBindPortIP:      true,
+			Watch:              true,
+			DefaultRule:        "PathPrefix(`/`)",
+		},
+		ClientConfig: docker.ClientConfig{
+			Endpoint: "MyEndPoint", TLS: &types.ClientTLS{
+				CA:                 "myCa",
+				Cert:               "mycert.pem",
+				Key:                "mycert.key",
+				InsecureSkipVerify: true,
+			},
+			HTTPClientTimeout: 42,
+		},
+		RefreshSeconds: 42,
 	}
 
 	config.Providers.KubernetesIngress = &ingress.Provider{
