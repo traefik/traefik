@@ -41,7 +41,7 @@ Start your `reverse-proxy` with the following command:
 docker-compose up -d reverse-proxy
 ```
 
-You can open a browser and go to [http://localhost:8080/api/rawdata](http://localhost:8080/api/rawdata "Link to the rawdata API endpoint on localhost") to see Traefik's API rawdata (we'll go back there once we have launched a service in step 2).
+You can open a browser and go to `http://localhost:8080/api/rawdata` to see Traefik's API rawdata (we'll go back there once we have launched a service in step 2).
 
 ## Traefik Detects New Services and Creates the Route for You
 
@@ -71,7 +71,7 @@ Start the `whoami` service with the following command:
 docker-compose up -d whoami
 ```
 
-Browse [http://localhost:8080/api/rawdata](http://localhost:8080/api/rawdata "Link to the rawdata API endpoint on localhost") and see that Traefik has automatically detected the new container and updated its own configuration.
+Browse `http://localhost:8080/api/rawdata` and see that Traefik has automatically detected the new container and updated its own configuration.
 
 When Traefik detects new services, it creates the corresponding routes, so you can call them ... _let's see!_  (Here, we're using curl)
 
@@ -95,7 +95,7 @@ Run more instances of your `whoami` service with the following command:
 docker-compose up -d --scale whoami=2
 ```
 
-Browse to [http://localhost:8080/api/rawdata](http://localhost:8080/api/rawdata "Link to the rawdata API endpoint on localhost") and see that Traefik has automatically detected the new instance of the container.
+Browse to `http://localhost:8080/api/rawdata` and see that Traefik has automatically detected the new instance of the container.
 
 Finally, see that Traefik load-balances between the two instances of your service by running the following command twice:
 
