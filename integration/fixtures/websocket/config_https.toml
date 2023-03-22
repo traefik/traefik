@@ -6,9 +6,6 @@
   level = "DEBUG"
   noColor = true
 
-[serversTransport]
-  insecureSkipVerify=true
-
 [entryPoints]
   [entryPoints.wss]
     address = ":8000"
@@ -21,6 +18,9 @@
 
 ## dynamic configuration ##
 
+[http.serversTransports.default.tls]
+  insecureSkipVerify = true
+
 [http.routers]
   [http.routers.router1]
     service = "service1"
@@ -30,7 +30,6 @@
 [http.services]
   [http.services.service1]
     [http.services.service1.loadBalancer]
-      passHostHeader = true
       [[http.services.service1.loadBalancer.servers]]
         url = "{{ .WebsocketServer }}"
 

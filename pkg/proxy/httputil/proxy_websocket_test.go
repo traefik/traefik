@@ -1,4 +1,4 @@
-package service
+package httputil
 
 import (
 	"bufio"
@@ -8,13 +8,14 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 	"time"
 
 	gorillawebsocket "github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"golang.org/x/net/websocket"
 )
 
@@ -27,6 +28,7 @@ func TestWebSocketTCPClose(t *testing.T) {
 			return
 		}
 		defer c.Close()
+
 		for {
 			_, _, err := c.ReadMessage()
 			if err != nil {
@@ -51,7 +53,7 @@ func TestWebSocketTCPClose(t *testing.T) {
 	serverErr := <-errChan
 
 	var wsErr *gorillawebsocket.CloseError
-	require.True(t, errors.As(serverErr, &wsErr))
+	require.ErrorAs(t, serverErr, &wsErr)
 	assert.Equal(t, 1006, wsErr.Code)
 }
 
@@ -71,6 +73,7 @@ func TestWebSocketPingPong(t *testing.T) {
 		ws.SetPingHandler(func(appData string) error {
 			err = ws.WriteMessage(gorillawebsocket.PongMessage, []byte(appData+"Pong"))
 			require.NoError(t, err)
+
 			return nil
 		})
 
@@ -97,6 +100,7 @@ func TestWebSocketPingPong(t *testing.T) {
 		if data == "PingPong" {
 			return goodErr
 		}
+
 		return badErr
 	})
 
@@ -104,7 +108,6 @@ func TestWebSocketPingPong(t *testing.T) {
 	require.NoError(t, err)
 
 	_, _, err = conn.ReadMessage()
-
 	if !errors.Is(err, goodErr) {
 		require.NoError(t, err)
 	}
@@ -114,12 +117,10 @@ func TestWebSocketEcho(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.Handle("/ws", websocket.Handler(func(conn *websocket.Conn) {
 		msg := make([]byte, 4)
-		_, err := conn.Read(msg)
+		n, err := conn.Read(msg)
 		require.NoError(t, err)
 
-		fmt.Println(string(msg))
-
-		_, err = conn.Write(msg)
+		_, err = conn.Write(msg[:n])
 		require.NoError(t, err)
 
 		err = conn.Close()
@@ -142,7 +143,10 @@ func TestWebSocketEcho(t *testing.T) {
 	err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
 	require.NoError(t, err)
 
-	fmt.Println(conn.ReadMessage())
+	_, msg, err := conn.ReadMessage()
+	require.NoError(t, err)
+
+	assert.Equal(t, "OK", string(msg))
 
 	err = conn.Close()
 	require.NoError(t, err)
@@ -178,11 +182,10 @@ func TestWebSocketPassHost(t *testing.T) {
 				}
 
 				msg := make([]byte, 4)
-				_, err := conn.Read(msg)
+				n, err := conn.Read(msg)
 				require.NoError(t, err)
 
-				fmt.Println(string(msg))
-				_, err = conn.Write(msg)
+				_, err = conn.Write(msg[:n])
 				require.NoError(t, err)
 
 				err = conn.Close()
@@ -207,7 +210,10 @@ func TestWebSocketPassHost(t *testing.T) {
 			err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
 			require.NoError(t, err)
 
-			fmt.Println(conn.ReadMessage())
+			_, msg, err := conn.ReadMessage()
+			require.NoError(t, err)
+
+			assert.Equal(t, "OK", string(msg))
 
 			err = conn.Close()
 			require.NoError(t, err)
@@ -216,27 +222,8 @@ func TestWebSocketPassHost(t *testing.T) {
 }
 
 func TestWebSocketServerWithoutCheckOrigin(t *testing.T) {
-	upgrader := gorillawebsocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
-		return true
-	}}
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			return
-		}
-		defer c.Close()
-		for {
-			mt, message, err := c.ReadMessage()
-			if err != nil {
-				break
-			}
-			err = c.WriteMessage(mt, message)
-			if err != nil {
-				break
-			}
-		}
-	}))
-	defer srv.Close()
+	upgrader := gorillawebsocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }}
+	srv := createServer(t, upgrader, func(*http.Request) {})
 
 	proxy := createProxyWithForwarder(t, srv.URL, http.DefaultTransport)
 	defer proxy.Close()
@@ -254,25 +241,7 @@ func TestWebSocketServerWithoutCheckOrigin(t *testing.T) {
 }
 
 func TestWebSocketRequestWithOrigin(t *testing.T) {
-	upgrader := gorillawebsocket.Upgrader{}
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			return
-		}
-		defer c.Close()
-		for {
-			mt, message, err := c.ReadMessage()
-			if err != nil {
-				break
-			}
-			err = c.WriteMessage(mt, message)
-			if err != nil {
-				break
-			}
-		}
-	}))
-	defer srv.Close()
+	srv := createServer(t, gorillawebsocket.Upgrader{}, func(*http.Request) {})
 
 	proxy := createProxyWithForwarder(t, srv.URL, http.DefaultTransport)
 	defer proxy.Close()
@@ -297,26 +266,9 @@ func TestWebSocketRequestWithOrigin(t *testing.T) {
 }
 
 func TestWebSocketRequestWithQueryParams(t *testing.T) {
-	upgrader := gorillawebsocket.Upgrader{}
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		conn, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			return
-		}
-		defer conn.Close()
+	srv := createServer(t, gorillawebsocket.Upgrader{}, func(r *http.Request) {
 		assert.Equal(t, "test", r.URL.Query().Get("query"))
-		for {
-			mt, message, err := conn.ReadMessage()
-			if err != nil {
-				break
-			}
-			err = conn.WriteMessage(mt, message)
-			if err != nil {
-				break
-			}
-		}
-	}))
-	defer srv.Close()
+	})
 
 	proxy := createProxyWithForwarder(t, srv.URL, http.DefaultTransport)
 	defer proxy.Close()
@@ -341,11 +293,13 @@ func TestWebSocketRequestWithHeadersInResponseWriter(t *testing.T) {
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
-	f := buildSingleHostProxy(parseURI(t, srv.URL), true, 0, http.DefaultTransport, nil)
+	p, err := NewProxyBuilder().Build("default", &dynamic.ServersTransport{PassHostHeader: true}, nil, testhelpers.MustParseURL(srv.URL))
+	require.NoError(t, err)
+
 	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		req.URL = parseURI(t, srv.URL)
+		req.URL = testhelpers.MustParseURL(srv.URL)
 		w.Header().Set("HEADER-KEY", "HEADER-VALUE")
-		f.ServeHTTP(w, req)
+		p.ServeHTTP(w, req)
 	}))
 	defer proxy.Close()
 
@@ -363,26 +317,9 @@ func TestWebSocketRequestWithHeadersInResponseWriter(t *testing.T) {
 }
 
 func TestWebSocketRequestWithEncodedChar(t *testing.T) {
-	upgrader := gorillawebsocket.Upgrader{}
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		conn, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			return
-		}
-		defer conn.Close()
+	srv := createServer(t, gorillawebsocket.Upgrader{}, func(r *http.Request) {
 		assert.Equal(t, "/%3A%2F%2F", r.URL.EscapedPath())
-		for {
-			mt, message, err := conn.ReadMessage()
-			if err != nil {
-				break
-			}
-			err = conn.WriteMessage(mt, message)
-			if err != nil {
-				break
-			}
-		}
-	}))
-	defer srv.Close()
+	})
 
 	proxy := createProxyWithForwarder(t, srv.URL, http.DefaultTransport)
 	defer proxy.Close()
@@ -407,15 +344,17 @@ func TestWebSocketUpgradeFailed(t *testing.T) {
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
-	f := buildSingleHostProxy(parseURI(t, srv.URL), true, 0, http.DefaultTransport, nil)
+	p, err := NewProxyBuilder().Build("default", &dynamic.ServersTransport{PassHostHeader: true}, nil, testhelpers.MustParseURL(srv.URL))
+	require.NoError(t, err)
+
 	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		path := req.URL.Path // keep the original path
 
 		if path == "/ws" {
 			// Set new backend URL
-			req.URL = parseURI(t, srv.URL)
+			req.URL = testhelpers.MustParseURL(srv.URL)
 			req.URL.Path = path
-			f.ServeHTTP(w, req)
+			p.ServeHTTP(w, req)
 		} else {
 			w.WriteHeader(http.StatusOK)
 		}
@@ -629,27 +568,59 @@ func (w *websocketRequest) open() (*websocket.Conn, net.Conn, error) {
 	return conn, client, err
 }
 
-func parseURI(t *testing.T, uri string) *url.URL {
-	t.Helper()
-
-	out, err := url.ParseRequestURI(uri)
-	require.NoError(t, err)
-	return out
-}
-
 func createProxyWithForwarder(t *testing.T, uri string, transport http.RoundTripper) *httptest.Server {
 	t.Helper()
 
-	u := parseURI(t, uri)
-	proxy := buildSingleHostProxy(u, true, 0, transport, nil)
+	u := testhelpers.MustParseURL(uri)
+
+	builder := NewProxyBuilder()
+	builder.roundTrippers = map[string]http.RoundTripper{"fwd": transport}
+
+	p, err := builder.Build("fwd", &dynamic.ServersTransport{PassHostHeader: true}, nil, u)
+	require.NoError(t, err)
+
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		path := req.URL.Path // keep the original path
+		// keep the original path
+		path := req.URL.Path
+
 		// Set new backend URL
 		req.URL = u
 		req.URL.Path = path
 
-		proxy.ServeHTTP(w, req)
+		p.ServeHTTP(w, req)
 	}))
 	t.Cleanup(srv.Close)
+
+	return srv
+}
+
+func createServer(t *testing.T, upgrader gorillawebsocket.Upgrader, check func(*http.Request)) *httptest.Server {
+	t.Helper()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			t.Logf("Error during upgrade: %v", err)
+			return
+		}
+		defer conn.Close()
+
+		check(r)
+		for {
+			mt, message, err := conn.ReadMessage()
+			if err != nil {
+				t.Logf("Error during read: %v", err)
+				break
+			}
+
+			err = conn.WriteMessage(mt, message)
+			if err != nil {
+				t.Logf("Error during write: %v", err)
+				break
+			}
+		}
+	}))
+	t.Cleanup(srv.Close)
+
 	return srv
 }
