@@ -321,11 +321,14 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 
 // This test is an adapted version of net/http/httputil.Test1xxResponses test.
 func Test1xxResponses(t *testing.T) {
-	sm := NewManager(nil, nil, nil, &RoundTripperManager{
-		roundTrippers: map[string]http.RoundTripper{
-			"default@internal": http.DefaultTransport,
-		},
-	})
+	tlsClientConfigManager := client.NewTLSConfigManager[*dynamic.ServersTransport](nil)
+	proxyBuilder := proxy.NewBuilder(tlsClientConfigManager)
+
+	configs := map[string]*dynamic.ServersTransport{"default": {}}
+	tlsClientConfigManager.Update(configs)
+	proxyBuilder.Update(configs)
+	
+	sm := NewManager(nil, nil, nil, proxyBuilder, nil)
 
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()

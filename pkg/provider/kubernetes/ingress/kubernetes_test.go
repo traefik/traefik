@@ -1851,8 +1851,6 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"testing-service1-8080": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
-								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
-								PassHostHeader:     Bool(true),
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.0.0.1:8080",
