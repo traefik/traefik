@@ -6,9 +6,9 @@ import (
 
 	"github.com/go-kit/kit/metrics/statsd"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 var (
@@ -18,23 +18,20 @@ var (
 
 const (
 	statsdConfigReloadsName           = "config.reload.total"
-	statsdConfigReloadsFailureName    = statsdConfigReloadsName + ".failure"
 	statsdLastConfigReloadSuccessName = "config.reload.lastSuccessTimestamp"
-	statsdLastConfigReloadFailureName = "config.reload.lastFailureTimestamp"
+	statsdOpenConnectionsName         = "open.connections"
 
 	statsdTLSCertsNotAfterTimestampName = "tls.certs.notAfterTimestamp"
 
 	statsdEntryPointReqsName        = "entrypoint.request.total"
 	statsdEntryPointReqsTLSName     = "entrypoint.request.tls.total"
 	statsdEntryPointReqDurationName = "entrypoint.request.duration"
-	statsdEntryPointOpenConnsName   = "entrypoint.connections.open"
 	statsdEntryPointReqsBytesName   = "entrypoint.requests.bytes.total"
 	statsdEntryPointRespsBytesName  = "entrypoint.responses.bytes.total"
 
 	statsdRouterReqsName         = "router.request.total"
 	statsdRouterReqsTLSName      = "router.request.tls.total"
 	statsdRouterReqsDurationName = "router.request.duration"
-	statsdRouterOpenConnsName    = "router.connections.open"
 	statsdRouterReqsBytesName    = "router.requests.bytes.total"
 	statsdRouterRespsBytesName   = "router.responses.bytes.total"
 
@@ -43,7 +40,6 @@ const (
 	statsdServiceReqsDurationName = "service.request.duration"
 	statsdServiceRetriesTotalName = "service.retries.total"
 	statsdServiceServerUpName     = "service.server.up"
-	statsdServiceOpenConnsName    = "service.connections.open"
 	statsdServiceReqsBytesName    = "service.requests.bytes.total"
 	statsdServiceRespsBytesName   = "service.responses.bytes.total"
 )
@@ -63,39 +59,35 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 
 	registry := &standardRegistry{
 		configReloadsCounter:           statsdClient.NewCounter(statsdConfigReloadsName, 1.0),
-		configReloadsFailureCounter:    statsdClient.NewCounter(statsdConfigReloadsFailureName, 1.0),
 		lastConfigReloadSuccessGauge:   statsdClient.NewGauge(statsdLastConfigReloadSuccessName),
-		lastConfigReloadFailureGauge:   statsdClient.NewGauge(statsdLastConfigReloadFailureName),
 		tlsCertsNotAfterTimestampGauge: statsdClient.NewGauge(statsdTLSCertsNotAfterTimestampName),
+		openConnectionsGauge:           statsdClient.NewGauge(statsdOpenConnectionsName),
 	}
 
 	if config.AddEntryPointsLabels {
 		registry.epEnabled = config.AddEntryPointsLabels
-		registry.entryPointReqsCounter = statsdClient.NewCounter(statsdEntryPointReqsName, 1.0)
+		registry.entryPointReqsCounter = NewCounterWithNoopHeaders(statsdClient.NewCounter(statsdEntryPointReqsName, 1.0))
 		registry.entryPointReqsTLSCounter = statsdClient.NewCounter(statsdEntryPointReqsTLSName, 1.0)
 		registry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(statsdClient.NewTiming(statsdEntryPointReqDurationName, 1.0), time.Millisecond)
-		registry.entryPointOpenConnsGauge = statsdClient.NewGauge(statsdEntryPointOpenConnsName)
 		registry.entryPointReqsBytesCounter = statsdClient.NewCounter(statsdEntryPointReqsBytesName, 1.0)
 		registry.entryPointRespsBytesCounter = statsdClient.NewCounter(statsdEntryPointRespsBytesName, 1.0)
 	}
 
 	if config.AddRoutersLabels {
 		registry.routerEnabled = config.AddRoutersLabels
-		registry.routerReqsCounter = statsdClient.NewCounter(statsdRouterReqsName, 1.0)
+		registry.routerReqsCounter = NewCounterWithNoopHeaders(statsdClient.NewCounter(statsdRouterReqsName, 1.0))
 		registry.routerReqsTLSCounter = statsdClient.NewCounter(statsdRouterReqsTLSName, 1.0)
 		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(statsdClient.NewTiming(statsdRouterReqsDurationName, 1.0), time.Millisecond)
-		registry.routerOpenConnsGauge = statsdClient.NewGauge(statsdRouterOpenConnsName)
 		registry.routerReqsBytesCounter = statsdClient.NewCounter(statsdRouterReqsBytesName, 1.0)
 		registry.routerRespsBytesCounter = statsdClient.NewCounter(statsdRouterRespsBytesName, 1.0)
 	}
 
 	if config.AddServicesLabels {
 		registry.svcEnabled = config.AddServicesLabels
-		registry.serviceReqsCounter = statsdClient.NewCounter(statsdServiceReqsName, 1.0)
+		registry.serviceReqsCounter = NewCounterWithNoopHeaders(statsdClient.NewCounter(statsdServiceReqsName, 1.0))
 		registry.serviceReqsTLSCounter = statsdClient.NewCounter(statsdServiceReqsTLSName, 1.0)
 		registry.serviceReqDurationHistogram, _ = NewHistogramWithScale(statsdClient.NewTiming(statsdServiceReqsDurationName, 1.0), time.Millisecond)
 		registry.serviceRetriesCounter = statsdClient.NewCounter(statsdServiceRetriesTotalName, 1.0)
-		registry.serviceOpenConnsGauge = statsdClient.NewGauge(statsdServiceOpenConnsName)
 		registry.serviceServerUpGauge = statsdClient.NewGauge(statsdServiceServerUpName)
 		registry.serviceReqsBytesCounter = statsdClient.NewCounter(statsdServiceReqsBytesName, 1.0)
 		registry.serviceRespsBytesCounter = statsdClient.NewCounter(statsdServiceRespsBytesName, 1.0)

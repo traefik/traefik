@@ -27,7 +27,7 @@ theme:
     prev: 'Previous'
     next: 'Next'
 
-copyright: "Copyright &copy; 2016-2020 Containous; 2020-2022 Traefik Labs"
+copyright: 'Traefik Labs • Copyright &copy; 2016-2023'
 
 extra_javascript:
   - assets/js/hljs/highlight.pack.js # Download from https://highlightjs.org/download/ and enable YAML, TOML and Dockerfile
@@ -81,8 +81,6 @@ nav:
       - 'Consul Catalog': 'providers/consul-catalog.md'
       - 'Nomad': 'providers/nomad.md'
       - 'ECS': 'providers/ecs.md'
-      - 'Marathon': 'providers/marathon.md'
-      - 'Rancher': 'providers/rancher.md'
       - 'File': 'providers/file.md'
       - 'Consul': 'providers/consul.md'
       - 'Etcd': 'providers/etcd.md'
@@ -102,8 +100,6 @@ nav:
           - 'Consul Catalog': 'routing/providers/consul-catalog.md'
           - 'Nomad': 'routing/providers/nomad.md'
           - 'ECS': 'routing/providers/ecs.md'
-          - 'Marathon': 'routing/providers/marathon.md'
-          - 'Rancher': 'routing/providers/rancher.md'
           - 'KV': 'routing/providers/kv.md'
   - 'HTTPS & TLS':
       - 'Overview': 'https/overview.md'
@@ -155,7 +151,6 @@ nav:
       - 'Metrics':
           - 'Overview': 'observability/metrics/overview.md'
           - 'Datadog': 'observability/metrics/datadog.md'
-          - 'InfluxDB': 'observability/metrics/influxdb.md'
           - 'InfluxDB2': 'observability/metrics/influxdb2.md'
           - 'OpenTelemetry': 'observability/metrics/opentelemetry.md'
           - 'Prometheus': 'observability/metrics/prometheus.md'
@@ -172,7 +167,6 @@ nav:
   - 'User Guides':
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
       - 'gRPC Examples': 'user-guides/grpc.md'
-      - 'Marathon': 'user-guides/marathon.md'
       - 'Docker':
         - 'Basic Example': 'user-guides/docker-compose/basic-example/index.md'
         - 'HTTPS with Let''s Encrypt':
@@ -208,8 +202,6 @@ nav:
         - 'Nomad': "reference/dynamic-configuration/nomad.md"
         - 'ECS': 'reference/dynamic-configuration/ecs.md'
         - 'KV': 'reference/dynamic-configuration/kv.md'
-        - 'Marathon': 'reference/dynamic-configuration/marathon.md'
-        - 'Rancher': 'reference/dynamic-configuration/rancher.md'
   - 'Deprecation Notices':
       - 'Releases': 'deprecation/releases.md'
       - 'Features': 'deprecation/features.md'

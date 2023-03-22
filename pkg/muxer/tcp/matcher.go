@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/ip"
+	"github.com/traefik/traefik/v3/pkg/ip"
 )
 
 var tcpFuncs = map[string]func(*matchersTree, ...string) error{
@@ -67,7 +67,7 @@ func clientIP(tree *matchersTree, clientIP ...string) error {
 	return nil
 }
 
-var almostFQDN = regexp.MustCompile(`^[[:alnum:]\.-]+$`)
+var hostOrIP = regexp.MustCompile(`^[[:alnum:]\.\-\:]+$`)
 
 // hostSNI checks if the SNI Host of the connection match the matcher host.
 func hostSNI(tree *matchersTree, hosts ...string) error {
@@ -80,7 +80,7 @@ func hostSNI(tree *matchersTree, hosts ...string) error {
 		return nil
 	}
 
-	if !almostFQDN.MatchString(host) {
+	if !hostOrIP.MatchString(host) {
 		return fmt.Errorf("invalid value for HostSNI matcher, %q is not a valid hostname", host)
 	}
 

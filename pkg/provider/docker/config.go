@@ -10,11 +10,11 @@ import (
 	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/go-connections/nat"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/config/label"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/provider/constraints"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/label"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/provider/constraints"
 )
 
 func (p *Provider) buildConfiguration(ctx context.Context, containersInspected []dockerData) *dynamic.Configuration {
@@ -75,11 +75,13 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 		serviceName := getServiceName(container)
 
 		model := struct {
-			Name   string
-			Labels map[string]string
+			Name          string
+			ContainerName string
+			Labels        map[string]string
 		}{
-			Name:   serviceName,
-			Labels: container.Labels,
+			Name:          serviceName,
+			ContainerName: strings.TrimPrefix(container.Name, "/"),
+			Labels:        container.Labels,
 		}
 
 		provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, serviceName, p.defaultRuleTpl, model)
@@ -94,11 +96,10 @@ func (p *Provider) buildTCPServiceConfiguration(ctx context.Context, container d
 	serviceName := getServiceName(container)
 
 	if len(configuration.Services) == 0 {
-		configuration.Services = make(map[string]*dynamic.TCPService)
-		lb := &dynamic.TCPServersLoadBalancer{}
-		lb.SetDefaults()
-		configuration.Services[serviceName] = &dynamic.TCPService{
-			LoadBalancer: lb,
+		configuration.Services = map[string]*dynamic.TCPService{
+			serviceName: {
+				LoadBalancer: new(dynamic.TCPServersLoadBalancer),
+			},
 		}
 	}
 

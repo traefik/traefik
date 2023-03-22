@@ -134,7 +134,7 @@ tls:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TLSStore
 metadata:
   name: default
@@ -195,7 +195,7 @@ tls:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TLSStore
 metadata:
   name: default
@@ -217,14 +217,6 @@ labels:
   - "traefik.tls.stores.default.defaultgeneratedcert.resolver=myresolver"
   - "traefik.tls.stores.default.defaultgeneratedcert.domain.main=example.org"
   - "traefik.tls.stores.default.defaultgeneratedcert.domain.sans=foo.example.org, bar.example.org"
-```
-
-```json tab="Marathon"
-labels: {
-  "traefik.tls.stores.default.defaultgeneratedcert.resolver": "myresolver",
-  "traefik.tls.stores.default.defaultgeneratedcert.domain.main": "example.org",
-  "traefik.tls.stores.default.defaultgeneratedcert.domain.sans": "foo.example.org, bar.example.org",
-}
 ```
 
 ## TLS Options
@@ -277,7 +269,7 @@ tls:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TLSOption
 metadata:
   name: default
@@ -287,7 +279,7 @@ spec:
   minVersion: VersionTLS12
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TLSOption
 metadata:
   name: mintls13
@@ -328,7 +320,7 @@ tls:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TLSOption
 metadata:
   name: default
@@ -338,7 +330,7 @@ spec:
   maxVersion: VersionTLS13
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TLSOption
 metadata:
   name: maxtls12
@@ -373,7 +365,7 @@ tls:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TLSOption
 metadata:
   name: default
@@ -418,7 +410,7 @@ tls:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TLSOption
 metadata:
   name: default
@@ -454,7 +446,7 @@ tls:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TLSOption
 metadata:
   name: default
@@ -493,7 +485,7 @@ tls:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TLSOption
 metadata:
   name: default
@@ -545,7 +537,7 @@ tls:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TLSOption
 metadata:
   name: default

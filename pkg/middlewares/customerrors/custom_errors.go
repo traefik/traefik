@@ -11,10 +11,10 @@ import (
 	"strings"
 
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/traefik/traefik/v2/pkg/tracing"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/vulcand/oxy/v2/utils"
 )
 
@@ -208,6 +208,15 @@ func (cc *codeCatcher) Flush() {
 	// If WriteHeader was already called from the caller, this is a NOOP.
 	// Otherwise, cc.code is actually a 200 here.
 	cc.WriteHeader(cc.code)
+
+	// We don't care about the contents of the response,
+	// since we want to serve the ones from the error page,
+	// so we just don't flush.
+	// (e.g., To prevent superfluous WriteHeader on request with a
+	// `Transfert-Encoding: chunked` header).
+	if cc.caughtFilteredCode {
+		return
+	}
 
 	if flusher, ok := cc.responseWriter.(http.Flusher); ok {
 		flusher.Flush()

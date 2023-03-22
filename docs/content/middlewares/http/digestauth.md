@@ -22,7 +22,7 @@ labels:
 
 ```yaml tab="Kubernetes"
 # Declaring the user list
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -34,18 +34,6 @@ spec:
 ```yaml tab="Consul Catalog"
 # Declaring the user list
 - "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.digestauth.users": "test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
-}
-```
-
-```yaml tab="Rancher"
-# Declaring the user list
-labels:
-  - "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
 ```
 
 ```yaml tab="File (YAML)"
@@ -90,7 +78,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -112,17 +100,6 @@ data:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.digestauth.users": "test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
 ```
 
 ```yaml tab="File (YAML)"
@@ -161,7 +138,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -184,17 +161,6 @@ data:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-auth.digestauth.usersfile=/path/to/my/usersfile"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.digestauth.usersfile": "/path/to/my/usersfile"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-auth.digestauth.usersfile=/path/to/my/usersfile"
 ```
 
 ```yaml tab="File (YAML)"
@@ -228,7 +194,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -239,17 +205,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-auth.digestauth.realm=MyRealm"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.digestauth.realm": "MyRealm"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-auth.digestauth.realm=MyRealm"
 ```
 
 ```yaml tab="File (YAML)"
@@ -276,7 +231,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: my-auth
@@ -288,17 +243,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.my-auth.digestauth.headerField=X-WebAuth-User"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.my-auth.digestauth.headerField": "X-WebAuth-User"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.my-auth.digestauth.headerField=X-WebAuth-User"
 ```
 
 ```yaml tab="File (YAML)"
@@ -326,7 +270,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -337,17 +281,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-auth.digestauth.removeheader=true"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-auth.digestauth.removeheader": "true"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-auth.digestauth.removeheader=true"
 ```
 
 ```yaml tab="File (YAML)"

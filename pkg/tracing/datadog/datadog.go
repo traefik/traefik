@@ -7,7 +7,7 @@ import (
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/logs"
 	ddtracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/opentracer"
 	datadog "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
@@ -18,6 +18,7 @@ const Name = "datadog"
 // Config provides configuration settings for a datadog tracer.
 type Config struct {
 	LocalAgentHostPort         string            `description:"Sets the Datadog Agent host:port." json:"localAgentHostPort,omitempty" toml:"localAgentHostPort,omitempty" yaml:"localAgentHostPort,omitempty"`
+	LocalAgentSocket           string            `description:"Sets the socket for the Datadog Agent." json:"localAgentSocket,omitempty" toml:"localAgentSocket,omitempty" yaml:"localAgentSocket,omitempty"`
 	GlobalTags                 map[string]string `description:"Sets a list of key:value tags on all spans." json:"globalTags,omitempty" toml:"globalTags,omitempty" yaml:"globalTags,omitempty" export:"true"`
 	Debug                      bool              `description:"Enables Datadog debug." json:"debug,omitempty" toml:"debug,omitempty" yaml:"debug,omitempty" export:"true"`
 	PrioritySampling           bool              `description:"Enables priority sampling. When using distributed tracing, this option must be enabled in order to get all the parts of a distributed trace sampled." json:"prioritySampling,omitempty" toml:"prioritySampling,omitempty" yaml:"prioritySampling,omitempty" export:"true"`
@@ -47,7 +48,6 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 	logger := log.With().Str(logs.TracingProviderName, Name).Logger()
 
 	opts := []datadog.StartOption{
-		datadog.WithAgentAddr(c.LocalAgentHostPort),
 		datadog.WithServiceName(serviceName),
 		datadog.WithDebugMode(c.Debug),
 		datadog.WithPropagator(datadog.NewPropagator(&datadog.PropagatorConfig{
@@ -57,6 +57,12 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 			BaggagePrefix:  c.BagagePrefixHeaderName,
 		})),
 		datadog.WithLogger(logs.NewDatadogLogger(logger)),
+	}
+
+	if c.LocalAgentSocket != "" {
+		opts = append(opts, datadog.WithUDS(c.LocalAgentSocket))
+	} else {
+		opts = append(opts, datadog.WithAgentAddr(c.LocalAgentHostPort))
 	}
 
 	for k, v := range c.GlobalTags {

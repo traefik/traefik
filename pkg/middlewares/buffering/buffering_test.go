@@ -3,20 +3,20 @@ package buffering
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"math"
-	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
 func TestBuffering(t *testing.T) {
 	payload := make([]byte, math.MaxInt8)
-	rand.Read(payload)
+	_, _ = rand.Read(payload)
 
 	testCases := []struct {
 		desc         string

@@ -6,11 +6,11 @@ import (
 	"sort"
 
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/server/provider"
-	udpservice "github.com/traefik/traefik/v2/pkg/server/service/udp"
-	"github.com/traefik/traefik/v2/pkg/udp"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/server/provider"
+	udpservice "github.com/traefik/traefik/v3/pkg/server/service/udp"
+	"github.com/traefik/traefik/v3/pkg/udp"
 )
 
 // NewManager Creates a new Manager.

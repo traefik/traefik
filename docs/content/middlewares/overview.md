@@ -37,7 +37,7 @@ whoami:
 
 ```yaml tab="Kubernetes IngressRoute"
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: stripprefix
@@ -47,7 +47,7 @@ spec:
       - /stripit
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: ingressroute
@@ -64,22 +64,6 @@ spec:
 - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
 # Apply the middleware named `foo-add-prefix` to the router named `router1`
 - "traefik.http.routers.router1.middlewares=foo-add-prefix@consulcatalog"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.foo-add-prefix.addprefix.prefix": "/foo",
-  "traefik.http.routers.router1.middlewares": "foo-add-prefix@marathon"
-}
-```
-
-```yaml tab="Rancher"
-# As a Rancher Label
-labels:
-  # Create a middleware named `foo-add-prefix`
-  - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
-  # Apply the middleware named `foo-add-prefix` to the router named `router1`
-  - "traefik.http.routers.router1.middlewares=foo-add-prefix@rancher"
 ```
 
 ```yaml tab="File (YAML)"

@@ -392,13 +392,33 @@
       },
       "foo": {
         "loadBalancer": {
-          "terminationDelay": 42,
           "proxyProtocol": {
             "version": 42
           },
           "servers": [
             {
               "address": "127.0.0.1:8080"
+            }
+          ],
+          "serversTransport": "foo"
+        }
+      }
+    },
+    "serversTransports": {
+      "foo": {
+        "dialKeepAlive": "42ns",
+        "dialTimeout": "42ns",
+        "terminationDelay": "42ns",
+        "tls": {
+          "serverName": "foo",
+          "insecureSkipVerify": true,
+          "rootCAs": [
+            "rootca.pem"
+          ],
+          "certificates": [
+            {
+              "certFile": "cert.pem",
+              "keyFile": "xxxx"
             }
           ]
         }

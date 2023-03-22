@@ -32,7 +32,7 @@ rules:
     verbs:
       - update
   - apiGroups:
-      - traefik.containo.us
+      - traefik.io
     resources:
       - middlewares
       - middlewaretcps
@@ -43,6 +43,7 @@ rules:
       - tlsoptions
       - tlsstores
       - serverstransports
+      - serverstransporttcps
     verbs:
       - get
       - list

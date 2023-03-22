@@ -31,7 +31,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/sirupsen/logrus"
-	"github.com/traefik/traefik/v2/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/logs"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -91,8 +91,6 @@ func Test(t *testing.T) {
 	}
 	check.Suite(&KeepAliveSuite{})
 	check.Suite(&LogRotationSuite{})
-	check.Suite(&MarathonSuite{})
-	check.Suite(&MarathonSuite15{})
 	if !useVPN {
 		check.Suite(&ProxyProtocolSuite{})
 	}

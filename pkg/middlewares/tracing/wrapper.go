@@ -7,8 +7,8 @@ import (
 	"github.com/containous/alice"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/tracing"
 )
 
 // Traceable embeds tracing information.

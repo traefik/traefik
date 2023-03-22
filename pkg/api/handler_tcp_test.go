@@ -11,9 +11,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/config/static"
 )
 
 func TestHandler_TCP(t *testing.T) {
@@ -191,6 +191,89 @@ func TestHandler_TCP(t *testing.T) {
 				statusCode: http.StatusOK,
 				nextPage:   "1",
 				jsonFile:   "testdata/tcprouters-filtered-search.json",
+			},
+		},
+		{
+			desc: "TCP routers filtered by service",
+			path: "/api/tcp/routers?serviceName=foo-service@myprovider",
+			conf: runtime.Configuration{
+				TCPRouters: map[string]*runtime.TCPRouterInfo{
+					"test@myprovider": {
+						TCPRouter: &dynamic.TCPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.bar.other`)",
+							TLS: &dynamic.RouterTCPTLSConfig{
+								Passthrough: false,
+							},
+						},
+						Status: runtime.StatusEnabled,
+					},
+					"bar@myprovider": {
+						TCPRouter: &dynamic.TCPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service",
+							Rule:        "Host(`foo.bar`)",
+						},
+						Status: runtime.StatusWarning,
+					},
+					"foo@myprovider": {
+						TCPRouter: &dynamic.TCPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "bar-service@myprovider",
+							Rule:        "Host(`foo.bar`)",
+						},
+						Status: runtime.StatusDisabled,
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/tcprouters-filtered-serviceName.json",
+			},
+		},
+		{
+			desc: "TCP routers filtered by middleware",
+			path: "/api/tcp/routers?middlewareName=auth",
+			conf: runtime.Configuration{
+				TCPRouters: map[string]*runtime.TCPRouterInfo{
+					"test@myprovider": {
+						TCPRouter: &dynamic.TCPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.bar.other`)",
+							Middlewares: []string{"inflightconn@myprovider"},
+							TLS: &dynamic.RouterTCPTLSConfig{
+								Passthrough: false,
+							},
+						},
+						Status: runtime.StatusEnabled,
+					},
+					"bar@myprovider": {
+						TCPRouter: &dynamic.TCPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service",
+							Rule:        "Host(`foo.bar`)",
+							Middlewares: []string{"auth", "inflightconn@myprovider"},
+						},
+						Status: runtime.StatusWarning,
+					},
+					"foo@myprovider": {
+						TCPRouter: &dynamic.TCPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "bar-service@myprovider",
+							Rule:        "Host(`foo.bar`)",
+							Middlewares: []string{"inflightconn@myprovider", "auth"},
+						},
+						Status: runtime.StatusDisabled,
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/tcprouters-filtered-middlewareName.json",
 			},
 		},
 		{

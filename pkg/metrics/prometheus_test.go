@@ -11,9 +11,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	th "github.com/traefik/traefik/v2/pkg/testhelpers"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	th "github.com/traefik/traefik/v3/pkg/testhelpers"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func TestRegisterPromState(t *testing.T) {
@@ -92,7 +92,12 @@ func TestPrometheus(t *testing.T) {
 	promRegistry = prometheus.NewRegistry()
 	t.Cleanup(promState.reset)
 
-	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{AddEntryPointsLabels: true, AddRoutersLabels: true, AddServicesLabels: true})
+	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{
+		AddEntryPointsLabels: true,
+		AddRoutersLabels:     true,
+		AddServicesLabels:    true,
+		HeaderLabels:         map[string]string{"useragent": "User-Agent"},
+	})
 	defer promRegistry.Unregister(promState)
 
 	if !prometheusRegistry.IsEpEnabled() || !prometheusRegistry.IsRouterEnabled() || !prometheusRegistry.IsSvcEnabled() {
@@ -100,9 +105,11 @@ func TestPrometheus(t *testing.T) {
 	}
 
 	prometheusRegistry.ConfigReloadsCounter().Add(1)
-	prometheusRegistry.ConfigReloadsFailureCounter().Add(1)
 	prometheusRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
-	prometheusRegistry.LastConfigReloadFailureGauge().Set(float64(time.Now().Unix()))
+	prometheusRegistry.
+		OpenConnectionsGauge().
+		With("entrypoint", "test", "protocol", "TCP").
+		Set(1)
 
 	prometheusRegistry.
 		TLSCertsNotAfterTimestampGauge().
@@ -111,16 +118,12 @@ func TestPrometheus(t *testing.T) {
 
 	prometheusRegistry.
 		EntryPointReqsCounter().
-		With("code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "http").
+		With(map[string][]string{"User-Agent": {"foobar"}}, "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "http").
 		Add(1)
 	prometheusRegistry.
 		EntryPointReqDurationHistogram().
 		With("code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "http").
 		Observe(1)
-	prometheusRegistry.
-		EntryPointOpenConnsGauge().
-		With("method", http.MethodGet, "protocol", "http", "entrypoint", "http").
-		Set(1)
 	prometheusRegistry.
 		EntryPointRespsBytesCounter().
 		With("code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http", "entrypoint", "http").
@@ -132,7 +135,7 @@ func TestPrometheus(t *testing.T) {
 
 	prometheusRegistry.
 		RouterReqsCounter().
-		With("router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		With(nil, "router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
 		RouterReqsTLSCounter().
@@ -142,10 +145,6 @@ func TestPrometheus(t *testing.T) {
 		RouterReqDurationHistogram().
 		With("router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Observe(10000)
-	prometheusRegistry.
-		RouterOpenConnsGauge().
-		With("router", "demo", "service", "service1", "method", http.MethodGet, "protocol", "http").
-		Set(1)
 	prometheusRegistry.
 		RouterRespsBytesCounter().
 		With("router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
@@ -157,7 +156,7 @@ func TestPrometheus(t *testing.T) {
 
 	prometheusRegistry.
 		ServiceReqsCounter().
-		With("service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		With(map[string][]string{"User-Agent": {"foobar"}}, "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
 		ServiceReqsTLSCounter().
@@ -167,10 +166,6 @@ func TestPrometheus(t *testing.T) {
 		ServiceReqDurationHistogram().
 		With("service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Observe(10000)
-	prometheusRegistry.
-		ServiceOpenConnsGauge().
-		With("service", "service1", "method", http.MethodGet, "protocol", "http").
-		Set(1)
 	prometheusRegistry.
 		ServiceRetriesCounter().
 		With("service", "service1").
@@ -202,25 +197,25 @@ func TestPrometheus(t *testing.T) {
 			assert: buildCounterAssert(t, configReloadsTotalName, 1),
 		},
 		{
-			name:   configReloadsFailuresTotalName,
-			assert: buildCounterAssert(t, configReloadsFailuresTotalName, 1),
-		},
-		{
 			name:   configLastReloadSuccessName,
 			assert: buildTimestampAssert(t, configLastReloadSuccessName),
 		},
 		{
-			name:   configLastReloadFailureName,
-			assert: buildTimestampAssert(t, configLastReloadFailureName),
+			name: openConnectionsName,
+			labels: map[string]string{
+				"protocol":   "TCP",
+				"entrypoint": "test",
+			},
+			assert: buildGaugeAssert(t, openConnectionsName, 1),
 		},
 		{
-			name: tlsCertsNotAfterTimestamp,
+			name: tlsCertsNotAfterTimestampName,
 			labels: map[string]string{
 				"cn":     "value",
 				"serial": "value",
 				"sans":   "value",
 			},
-			assert: buildTimestampAssert(t, tlsCertsNotAfterTimestamp),
+			assert: buildTimestampAssert(t, tlsCertsNotAfterTimestampName),
 		},
 		{
 			name: entryPointReqsTotalName,
@@ -229,6 +224,7 @@ func TestPrometheus(t *testing.T) {
 				"method":     http.MethodGet,
 				"protocol":   "http",
 				"entrypoint": "http",
+				"useragent":  "foobar",
 			},
 			assert: buildCounterAssert(t, entryPointReqsTotalName, 1),
 		},
@@ -241,15 +237,6 @@ func TestPrometheus(t *testing.T) {
 				"entrypoint": "http",
 			},
 			assert: buildHistogramAssert(t, entryPointReqDurationName, 1),
-		},
-		{
-			name: entryPointOpenConnsName,
-			labels: map[string]string{
-				"method":     http.MethodGet,
-				"protocol":   "http",
-				"entrypoint": "http",
-			},
-			assert: buildGaugeAssert(t, entryPointOpenConnsName, 1),
 		},
 		{
 			name: entryPointReqsBytesTotalName,
@@ -274,11 +261,12 @@ func TestPrometheus(t *testing.T) {
 		{
 			name: routerReqsTotalName,
 			labels: map[string]string{
-				"code":     "200",
-				"method":   http.MethodGet,
-				"protocol": "http",
-				"service":  "service1",
-				"router":   "demo",
+				"code":      "200",
+				"method":    http.MethodGet,
+				"protocol":  "http",
+				"service":   "service1",
+				"router":    "demo",
+				"useragent": "",
 			},
 			assert: buildCounterAssert(t, routerReqsTotalName, 1),
 		},
@@ -302,16 +290,6 @@ func TestPrometheus(t *testing.T) {
 				"router":   "demo",
 			},
 			assert: buildHistogramAssert(t, routerReqDurationName, 1),
-		},
-		{
-			name: routerOpenConnsName,
-			labels: map[string]string{
-				"method":   http.MethodGet,
-				"protocol": "http",
-				"service":  "service1",
-				"router":   "demo",
-			},
-			assert: buildGaugeAssert(t, routerOpenConnsName, 1),
 		},
 		{
 			name: routerReqsBytesTotalName,
@@ -338,10 +316,11 @@ func TestPrometheus(t *testing.T) {
 		{
 			name: serviceReqsTotalName,
 			labels: map[string]string{
-				"code":     "200",
-				"method":   http.MethodGet,
-				"protocol": "http",
-				"service":  "service1",
+				"code":      "200",
+				"method":    http.MethodGet,
+				"protocol":  "http",
+				"service":   "service1",
+				"useragent": "foobar",
 			},
 			assert: buildCounterAssert(t, serviceReqsTotalName, 1),
 		},
@@ -363,15 +342,6 @@ func TestPrometheus(t *testing.T) {
 				"service":  "service1",
 			},
 			assert: buildHistogramAssert(t, serviceReqDurationName, 1),
-		},
-		{
-			name: serviceOpenConnsName,
-			labels: map[string]string{
-				"method":   http.MethodGet,
-				"protocol": "http",
-				"service":  "service1",
-			},
-			assert: buildGaugeAssert(t, serviceOpenConnsName, 1),
 		},
 		{
 			name: serviceRetriesTotalName,
@@ -476,15 +446,15 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 	// should be removed after that scrape.
 	prometheusRegistry.
 		EntryPointReqsCounter().
-		With("entrypoint", "entrypoint2", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		With(nil, "entrypoint", "entrypoint2", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
 		RouterReqsCounter().
-		With("router", "router2", "service", "bar@providerName", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		With(nil, "router", "router2", "service", "bar@providerName", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
 		ServiceReqsCounter().
-		With("service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		With(nil, "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
 		ServiceServerUpGauge().
@@ -502,15 +472,15 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 	// here the counter examples.
 	prometheusRegistry.
 		EntryPointReqsCounter().
-		With("entrypoint", "entrypoint1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		With(nil, "entrypoint", "entrypoint1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
 		RouterReqsCounter().
-		With("router", "foo@providerName", "service", "bar", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		With(nil, "router", "foo@providerName", "service", "bar", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
 		ServiceReqsCounter().
-		With("service", "bar@providerName", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
+		With(nil, "service", "bar@providerName", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
 	prometheusRegistry.
 		ServiceServerUpGauge().
@@ -588,7 +558,7 @@ func TestPrometheusRemovedMetricsReset(t *testing.T) {
 	}
 	prometheusRegistry.
 		ServiceReqsCounter().
-		With(labelNamesValues...).
+		With(nil, labelNamesValues...).
 		Add(3)
 
 	delayForTrackingCompletion()
@@ -602,7 +572,7 @@ func TestPrometheusRemovedMetricsReset(t *testing.T) {
 
 	prometheusRegistry.
 		ServiceReqsCounter().
-		With(labelNamesValues...).
+		With(nil, labelNamesValues...).
 		Add(1)
 
 	delayForTrackingCompletion()

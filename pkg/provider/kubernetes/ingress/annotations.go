@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/config/label"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/label"
 )
 
 const (
@@ -45,6 +45,7 @@ type ServiceIng struct {
 	ServersTransport string          `json:"serversTransport,omitempty"`
 	PassHostHeader   *bool           `json:"passHostHeader"`
 	Sticky           *dynamic.Sticky `json:"sticky,omitempty" label:"allowEmpty"`
+	NativeLB         bool            `json:"nativeLB,omitempty"`
 }
 
 // SetDefaults sets the default values.

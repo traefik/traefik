@@ -8,17 +8,17 @@ import (
 
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/metrics"
-	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
-	metricsMiddle "github.com/traefik/traefik/v2/pkg/middlewares/metrics"
-	"github.com/traefik/traefik/v2/pkg/middlewares/recovery"
-	"github.com/traefik/traefik/v2/pkg/middlewares/tracing"
-	httpmuxer "github.com/traefik/traefik/v2/pkg/muxer/http"
-	"github.com/traefik/traefik/v2/pkg/server/middleware"
-	"github.com/traefik/traefik/v2/pkg/server/provider"
-	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/metrics"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
+	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
+	"github.com/traefik/traefik/v3/pkg/middlewares/recovery"
+	"github.com/traefik/traefik/v3/pkg/middlewares/tracing"
+	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
+	"github.com/traefik/traefik/v3/pkg/server/middleware"
+	"github.com/traefik/traefik/v3/pkg/server/provider"
+	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
 type middlewareBuilder interface {
@@ -119,6 +119,10 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		logger := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
 		ctxRouter := logger.WithContext(provider.AddInContext(ctx, routerName))
 
+		if routerConfig.Priority == 0 {
+			routerConfig.Priority = httpmuxer.GetRulePriority(routerConfig.Rule)
+		}
+
 		handler, err := m.buildRouterHandler(ctxRouter, routerName, routerConfig)
 		if err != nil {
 			routerConfig.AddError(err, true)
@@ -126,15 +130,12 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			continue
 		}
 
-		err = muxer.AddRoute(routerConfig.Rule, routerConfig.Priority, handler)
-		if err != nil {
+		if err = muxer.AddRoute(routerConfig.Rule, routerConfig.Priority, handler); err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error().Err(err).Send()
 			continue
 		}
 	}
-
-	muxer.SortRoutes()
 
 	chain := alice.New()
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {

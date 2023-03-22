@@ -23,7 +23,7 @@ labels:
 
 ```yaml tab="Kubernetes"
 # Enable compression
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-compress
@@ -34,18 +34,6 @@ spec:
 ```yaml tab="Consul Catalog"
 # Enable compression
 - "traefik.http.middlewares.test-compress.compress=true"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-compress.compress": "true"
-}
-```
-
-```yaml tab="Rancher"
-# Enable compression
-labels:
-  - "traefik.http.middlewares.test-compress.compress=true"
 ```
 
 ```yaml tab="File (YAML)"
@@ -100,7 +88,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-compress
@@ -112,17 +100,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-compress.compress.excludedcontenttypes=text/event-stream"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-compress.compress.excludedcontenttypes": "text/event-stream"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-compress.compress.excludedcontenttypes=text/event-stream"
 ```
 
 ```yaml tab="File (YAML)"
@@ -154,7 +131,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-compress
@@ -165,17 +142,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-compress.compress.minresponsebodybytes=1200"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-compress.compress.minresponsebodybytes": 1200
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-compress.compress.minresponsebodybytes=1200"
 ```
 
 ```yaml tab="File (YAML)"

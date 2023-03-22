@@ -11,11 +11,11 @@ import (
 	"github.com/containous/alice"
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/metrics"
-	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/traefik/traefik/v2/pkg/middlewares/capture"
-	"github.com/traefik/traefik/v2/pkg/middlewares/retry"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/metrics"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
+	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"google.golang.org/grpc/codes"
 )
 
@@ -33,10 +33,9 @@ const (
 
 type metricsMiddleware struct {
 	next                 http.Handler
-	reqsCounter          gokitmetrics.Counter
+	reqsCounter          metrics.CounterWithHeaders
 	reqsTLSCounter       gokitmetrics.Counter
 	reqDurationHistogram metrics.ScalableHistogram
-	openConnsGauge       gokitmetrics.Gauge
 	reqsBytesCounter     gokitmetrics.Counter
 	respsBytesCounter    gokitmetrics.Counter
 	baseLabels           []string
@@ -51,7 +50,6 @@ func NewEntryPointMiddleware(ctx context.Context, next http.Handler, registry me
 		reqsCounter:          registry.EntryPointReqsCounter(),
 		reqsTLSCounter:       registry.EntryPointReqsTLSCounter(),
 		reqDurationHistogram: registry.EntryPointReqDurationHistogram(),
-		openConnsGauge:       registry.EntryPointOpenConnsGauge(),
 		reqsBytesCounter:     registry.EntryPointReqsBytesCounter(),
 		respsBytesCounter:    registry.EntryPointRespsBytesCounter(),
 		baseLabels:           []string{"entrypoint", entryPointName},
@@ -67,7 +65,6 @@ func NewRouterMiddleware(ctx context.Context, next http.Handler, registry metric
 		reqsCounter:          registry.RouterReqsCounter(),
 		reqsTLSCounter:       registry.RouterReqsTLSCounter(),
 		reqDurationHistogram: registry.RouterReqDurationHistogram(),
-		openConnsGauge:       registry.RouterOpenConnsGauge(),
 		reqsBytesCounter:     registry.RouterReqsBytesCounter(),
 		respsBytesCounter:    registry.RouterRespsBytesCounter(),
 		baseLabels:           []string{"router", routerName, "service", serviceName},
@@ -83,7 +80,6 @@ func NewServiceMiddleware(ctx context.Context, next http.Handler, registry metri
 		reqsCounter:          registry.ServiceReqsCounter(),
 		reqsTLSCounter:       registry.ServiceReqsTLSCounter(),
 		reqDurationHistogram: registry.ServiceReqDurationHistogram(),
-		openConnsGauge:       registry.ServiceOpenConnsGauge(),
 		reqsBytesCounter:     registry.ServiceReqsBytesCounter(),
 		respsBytesCounter:    registry.ServiceRespsBytesCounter(),
 		baseLabels:           []string{"service", serviceName},
@@ -111,10 +107,6 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	labels = append(labels, m.baseLabels...)
 	labels = append(labels, "method", getMethod(req))
 	labels = append(labels, "protocol", proto)
-
-	openConnsGauge := m.openConnsGauge.With(labels...)
-	openConnsGauge.Add(1)
-	defer openConnsGauge.Add(-1)
 
 	// TLS metrics
 	if req.TLS != nil {
@@ -153,7 +145,7 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	labels = append(labels, "code", strconv.Itoa(code))
 	m.reqDurationHistogram.With(labels...).ObserveFromStart(start)
-	m.reqsCounter.With(labels...).Add(1)
+	m.reqsCounter.With(req.Header, labels...).Add(1)
 	m.respsBytesCounter.With(labels...).Add(float64(capt.ResponseSize()))
 	m.reqsBytesCounter.With(labels...).Add(float64(capt.RequestSize()))
 }
