@@ -295,31 +295,63 @@ func (p *ReverseProxy) roundTrip(rw http.ResponseWriter, req *http.Request, outR
 
 	res.Header.SetNoDefaultContentType(true)
 
-	var timer *time.Timer
-	errTimeout := atomic.Pointer[timeoutError]{}
-	if p.responseHeaderTimeout > 0 {
-		timer = time.AfterFunc(p.responseHeaderTimeout, func() {
-			errTimeout.Store(&timeoutError{errors.New("timeout awaiting response headers")})
-			co.Close()
-		})
-	}
-
-	res.Header.SetNoDefaultContentType(true)
-	if err := res.Header.Read(br); err != nil {
+	for {
+		var timer *time.Timer
+		errTimeout := atomic.Pointer[timeoutError]{}
 		if p.responseHeaderTimeout > 0 {
-			if errT := errTimeout.Load(); errT != nil {
-				return errT
-			}
+			timer = time.AfterFunc(p.responseHeaderTimeout, func() {
+				errTimeout.Store(&timeoutError{errors.New("timeout awaiting response headers")})
+				co.Close()
+			})
 		}
-		co.Close()
-		return err
-	}
 
-	if timer != nil {
-		timer.Stop()
-	}
+		res.Header.SetNoDefaultContentType(true)
+		if err := res.Header.Read(br); err != nil {
+			if p.responseHeaderTimeout > 0 {
+				if errT := errTimeout.Load(); errT != nil {
+					return errT
+				}
+			}
+			co.Close()
+			return err
+		}
 
-	fixPragmaCacheControl(&res.Header)
+		if timer != nil {
+			timer.Stop()
+		}
+
+		fixPragmaCacheControl(&res.Header)
+
+		resCode := res.StatusCode()
+		is1xx := 100 <= resCode && resCode <= 199
+		// treat 101 as a terminal status, see issue 26161
+		is1xxNonTerminal := is1xx && resCode != http.StatusSwitchingProtocols
+		if is1xxNonTerminal {
+			removeConnectionHeaders(&res.Header)
+			h := rw.Header()
+
+			for _, header := range hopHeaders {
+				res.Header.Del(header)
+			}
+
+			res.Header.VisitAll(func(key, value []byte) {
+				rw.Header().Add(string(key), string(value))
+			})
+
+			rw.WriteHeader(res.StatusCode())
+			// Clear headers, it's not automatically done by ResponseWriter.WriteHeader() for 1xx responses
+			for k := range h {
+				delete(h, k)
+			}
+
+			res.Reset()
+			res.Header.Reset()
+			res.Header.SetNoDefaultContentType(true)
+
+			continue
+		}
+		break
+	}
 
 	announcedTrailers := res.Header.Peek("Trailer")
 

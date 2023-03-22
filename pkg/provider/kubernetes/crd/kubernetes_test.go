@@ -6599,13 +6599,11 @@ func TestNativeLB(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"default-test-route-6f97418635c7e18853da": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
-								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.0.1:80",
 									},
 								},
-								PassHostHeader: Bool(true),
 							},
 						},
 					},
