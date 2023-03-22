@@ -104,7 +104,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	logger := log.With().Str(logs.ProviderName, providerName).Logger()
 	ctxLog := logger.WithContext(context.Background())
 
-	logger.Warn().Msg("CRDs API Group \"traefik.containo.us\" is deprecated, and its support will end starting with Traefik v3. Please use the API Group \"traefik.io\" instead.")
 	logger.Warn().Msg("CRDs API Version \"traefik.io/v1alpha1\" will not be supported in Traefik v3 itself. However, an automatic migration path to the next version will be available.")
 
 	k8sClient, err := p.newK8sClient(ctxLog)
