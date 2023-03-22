@@ -366,8 +366,8 @@ func (p Provider) getIPAddress(ctx context.Context, container dockerData) string
 		return p.getIPAddress(ctx, containerParsed)
 	}
 
-	logger.Debugf("Defaulting to first available network for container %q.", container.Name)
 	for _, network := range container.NetworkSettings.Networks {
+		logger.Warnf("Defaulting to first available network (%q) for container %q.", network, container.Name)
 		return network.Addr
 	}
 
