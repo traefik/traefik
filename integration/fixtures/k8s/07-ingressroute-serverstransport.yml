@@ -24,5 +24,6 @@ metadata:
   namespace: default
 
 spec:
-  serverName: "test"
-  insecureSkipVerify: true
+  tls:
+    serverName: "test"
+    insecureSkipVerify: true
