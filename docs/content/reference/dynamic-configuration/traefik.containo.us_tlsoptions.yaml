@@ -21,7 +21,7 @@ spec:
       openAPIV3Schema:
         description: 'TLSOption is the CRD implementation of a Traefik TLS Option,
           allowing to configure some parameters of the TLS connection. More info:
-          https://doc.traefik.io/traefik/v2.9/https/tls/#tls-options'
+          https://doc.traefik.io/traefik/v2.10/https/tls/#tls-options'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -41,13 +41,13 @@ spec:
               alpnProtocols:
                 description: 'ALPNProtocols defines the list of supported application
                   level protocols for the TLS handshake, in order of preference. More
-                  info: https://doc.traefik.io/traefik/v2.9/https/tls/#alpn-protocols'
+                  info: https://doc.traefik.io/traefik/v2.10/https/tls/#alpn-protocols'
                 items:
                   type: string
                 type: array
               cipherSuites:
                 description: 'CipherSuites defines the list of supported cipher suites
-                  for TLS versions up to TLS 1.2. More info: https://doc.traefik.io/traefik/v2.9/https/tls/#cipher-suites'
+                  for TLS versions up to TLS 1.2. More info: https://doc.traefik.io/traefik/v2.10/https/tls/#cipher-suites'
                 items:
                   type: string
                 type: array
@@ -74,7 +74,7 @@ spec:
                 type: object
               curvePreferences:
                 description: 'CurvePreferences defines the preferred elliptic curves
-                  in a specific order. More info: https://doc.traefik.io/traefik/v2.9/https/tls/#curve-preferences'
+                  in a specific order. More info: https://doc.traefik.io/traefik/v2.10/https/tls/#curve-preferences'
                 items:
                   type: string
                 type: array

@@ -20,7 +20,7 @@ spec:
     schema:
       openAPIV3Schema:
         description: 'MiddlewareTCP is the CRD implementation of a Traefik TCP middleware.
-          More info: https://doc.traefik.io/traefik/v2.9/middlewares/overview/'
+          More info: https://doc.traefik.io/traefik/v2.10/middlewares/overview/'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
