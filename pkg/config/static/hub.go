@@ -9,10 +9,6 @@ import (
 )
 
 func (c *Configuration) initHubProvider() error {
-	if c.Experimental != nil && c.Experimental.Hub {
-		log.Warn().Msg("Experimental flag for Traefik Hub is deprecated, because Traefik Hub is now GA.")
-	}
-
 	if _, ok := c.EntryPoints[hub.TunnelEntrypoint]; !ok {
 		var ep EntryPoint
 		ep.SetDefaults()
