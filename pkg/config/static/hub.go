@@ -4,16 +4,11 @@ import (
 	"errors"
 
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/provider/hub"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/provider/hub"
 )
 
 func (c *Configuration) initHubProvider() error {
-	// Hub provider is an experimental feature. It requires the experimental flag to be enabled before continuing.
-	if c.Experimental == nil || !c.Experimental.Hub {
-		return errors.New("the experimental flag for Hub is not set")
-	}
-
 	if _, ok := c.EntryPoints[hub.TunnelEntrypoint]; !ok {
 		var ep EntryPoint
 		ep.SetDefaults()

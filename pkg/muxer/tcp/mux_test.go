@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/tcp"
+	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
 func Test_addTCPRoute(t *testing.T) {
@@ -250,6 +250,16 @@ func Test_addTCPRoute(t *testing.T) {
 			serverName: "example.com",
 			matchErr:   true,
 		},
+		{
+			desc:       "Matching IPv4",
+			rule:       "HostSNI(`127.0.0.1`)",
+			serverName: "127.0.0.1",
+		},
+		{
+			desc:       "Matching IPv6",
+			rule:       "HostSNI(`10::10`)",
+			serverName: "10::10",
+		},
 	}
 
 	for _, test := range testCases {
@@ -331,6 +341,16 @@ func TestParseHostSNI(t *testing.T) {
 			desc:       "HostSNI rule lower",
 			expression: "hostsni(`example.com`)",
 			domain:     []string{"example.com"},
+		},
+		{
+			desc:       "HostSNI IPv4",
+			expression: "HostSNI(`127.0.0.1`)",
+			domain:     []string{"127.0.0.1"},
+		},
+		{
+			desc:       "HostSNI IPv6",
+			expression: "HostSNI(`10::10`)",
+			domain:     []string{"10::10"},
 		},
 		{
 			desc:       "No hostSNI rule",
@@ -440,6 +460,39 @@ func Test_Priority(t *testing.T) {
 
 			handler.ServeTCP(nil)
 			assert.Equal(t, test.expectedRule, matchedRule)
+		})
+	}
+}
+
+func TestGetRulePriority(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rule     string
+		expected int
+	}{
+		{
+			desc:     "simple rule",
+			rule:     "HostSNI(`example.org`)",
+			expected: 22,
+		},
+		{
+			desc:     "HostSNI(`*`) rule",
+			rule:     "HostSNI(`*`)",
+			expected: -1,
+		},
+		{
+			desc:     "strange HostSNI(`*`) rule",
+			rule:     "   HostSNI ( `*` )       ",
+			expected: -1,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, GetRulePriority(test.rule))
 		})
 	}
 }

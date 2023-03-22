@@ -344,6 +344,35 @@ providers:
 --providers.kubernetesingress.ingressclass=traefik-internal
 ```
 
+### `disableIngressClassLookup`
+
+_Optional, Default: false_
+
+If the parameter is set to `true`,
+Traefik will not discover IngressClasses in the cluster.
+By doing so, it alleviates the requirement of giving Traefik the rights to look IngressClasses up.
+Furthermore, when this option is set to `true`,
+Traefik is not able to handle Ingresses with IngressClass references,
+therefore such Ingresses will be ignored.
+Please note that annotations are not affected by this option.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    disableIngressClassLookup: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  disableIngressClassLookup = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.disableingressclasslookup=true
+```
+
 ### `ingressEndpoint`
 
 #### `hostname`
@@ -502,6 +531,6 @@ providers:
 ### Further
 
 To learn more about the various aspects of the Ingress specification that Traefik supports,
-many examples of Ingresses definitions are located in the test [examples](https://github.com/traefik/traefik/tree/v2.9/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
+many examples of Ingresses definitions are located in the test [examples](https://github.com/traefik/traefik/tree/v3.0/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
 
 {!traefik-for-business-applications.md!}

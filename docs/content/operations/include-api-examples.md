@@ -20,7 +20,7 @@ deploy:
 ```
 
 ```yaml tab="Kubernetes CRD"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: traefik-dashboard
@@ -34,7 +34,7 @@ spec:
     middlewares:
       - name: auth
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: auth
@@ -49,24 +49,6 @@ spec:
 - "traefik.http.routers.api.service=api@internal"
 - "traefik.http.routers.api.middlewares=auth"
 - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.routers.api.rule": "Host(`traefik.example.com`)",
-  "traefik.http.routers.api.service": "api@internal",
-  "traefik.http.routers.api.middlewares": "auth",
-  "traefik.http.middlewares.auth.basicauth.users": "test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
-}
-```
-
-```yaml tab="Rancher"
-# Dynamic Configuration
-labels:
-  - "traefik.http.routers.api.rule=Host(`traefik.example.com`)"
-  - "traefik.http.routers.api.service=api@internal"
-  - "traefik.http.routers.api.middlewares=auth"
-  - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ```yaml tab="File (YAML)"

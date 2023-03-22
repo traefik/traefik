@@ -2,7 +2,7 @@
 
 ## Overview
 
-Once the Traefik Hub Experimental feature is enabled in Traefik,
+Once the Traefik Hub feature is enabled in Traefik,
 Traefik and its local agent communicate together.
 
 This agent can:
@@ -27,7 +27,6 @@ This agent can:
 
     * Traefik Hub is compatible with Traefik Proxy 2.7 or later.
     * The Traefik Hub Agent must be installed to connect to the Traefik Hub platform.
-    * Activate this feature in the experimental section of the static configuration.
 
 !!! information "Configuration Discovery"
 
@@ -38,9 +37,6 @@ This agent can:
 !!! example "Minimal Static Configuration to Activate Traefik Hub for Docker"
 
     ```yaml tab="File (YAML)"
-    experimental:
-      hub: true
-
     hub:
       tls:
         insecure: true
@@ -51,9 +47,6 @@ This agent can:
     ```
 
     ```toml tab="File (TOML)"
-    [experimental]
-      hub = true
-
     [hub]
       [hub.tls]
         insecure = true
@@ -64,7 +57,6 @@ This agent can:
     ```
 
     ```bash tab="CLI"
-    --experimental.hub
     --hub.tls.insecure
     --metrics.prometheus.addrouterslabels
     ```
@@ -72,9 +64,6 @@ This agent can:
 !!! example "Minimal Static Configuration to Activate Traefik Hub for Kubernetes"
 
     ```yaml tab="File (YAML)"
-    experimental:
-      hub: true
-
     hub: {}
 
     metrics:
@@ -83,9 +72,6 @@ This agent can:
     ```
 
     ```toml tab="File (TOML)"
-    [experimental]
-      hub = true
-
     [hub]
 
     [metrics]
@@ -94,7 +80,6 @@ This agent can:
     ```
 
     ```bash tab="CLI"
-    --experimental.hub
     --hub
     --metrics.prometheus.addrouterslabels
     ```

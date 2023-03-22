@@ -1,4 +1,4 @@
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TraefikService
 metadata:
   name: wrr2
@@ -17,7 +17,7 @@ spec:
         port: 80
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TraefikService
 metadata:
   name: wrr1
@@ -34,7 +34,7 @@ spec:
         port: 80
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TraefikService
 metadata:
   name: mirror1
@@ -53,7 +53,7 @@ spec:
         percent: 20
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TraefikService
 metadata:
   name: mirror2
@@ -73,7 +73,7 @@ spec:
         port: 80
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: ingressroute
@@ -133,7 +133,7 @@ spec:
       namespace: default
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRouteTCP
 metadata:
   name: ingressroutetcp.crd
@@ -147,6 +147,7 @@ spec:
       services:
         - name: whoamitcp
           port: 8080
+          serversTransport: mytransporttcp
       middlewares:
         - name: ipallowlist
   tls:
@@ -157,7 +158,7 @@ spec:
       namespace: default
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRouteUDP
 metadata:
   name: ingressrouteudp.crd
@@ -172,7 +173,7 @@ spec:
           port: 8080
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TLSOption
 metadata:
   name: tlsoption
@@ -198,7 +199,7 @@ spec:
     - foobar
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: ServersTransport
 metadata:
   name: mytransport
@@ -213,9 +214,30 @@ spec:
   certificatesSecrets:
     - foobar
     - foobar
+  peerCertURI: foobar
   maxIdleConnsPerHost: 1
   forwardingTimeouts:
     dialTimeout: 42s
     responseHeaderTimeout: 42s
     idleConnTimeout: 42s
   disableHTTP2: true
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: mytransporttcp
+  namespace: default
+
+spec:
+  serverName: foobar
+  insecureSkipVerify: true
+  rootCAsSecrets:
+    - foobar
+    - foobar
+  certificatesSecrets:
+    - foobar
+    - foobar
+  peerCertURI: foobar
+  dialTimeout: 42s
+  dialKeepAlive: 42s

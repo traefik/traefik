@@ -377,15 +377,17 @@
   [tcp.services]
     [tcp.services.TCPService01]
       [tcp.services.TCPService01.loadBalancer]
-        terminationDelay = 42
+        serversTransport = "foobar"
         [tcp.services.TCPService01.loadBalancer.proxyProtocol]
           version = 42
 
         [[tcp.services.TCPService01.loadBalancer.servers]]
           address = "foobar"
+          tls = true
 
         [[tcp.services.TCPService01.loadBalancer.servers]]
           address = "foobar"
+          tls = true
     [tcp.services.TCPService02]
       [tcp.services.TCPService02.weighted]
 
@@ -396,6 +398,7 @@
         [[tcp.services.TCPService02.weighted.services]]
           name = "foobar"
           weight = 42
+
   [tcp.middlewares]
     [tcp.middlewares.TCPMiddleware00]
       [tcp.middlewares.TCPMiddleware00.ipAllowList]
@@ -403,6 +406,53 @@
     [tcp.middlewares.TCPMiddleware01]
       [tcp.middlewares.TCPMiddleware01.inFlightConn]
         amount = 42
+
+  [tcp.serversTransports]
+    [tcp.serversTransports.TCPServersTransport0]
+      dialTimeout = "42s"
+      dialKeepAlive = "42s"
+      terminationDelay = "42s"
+
+      [tcp.serversTransports.TCPServersTransport0.tls]
+        serverName = "foobar"
+        insecureSkipVerify = true
+        rootCAs = ["foobar", "foobar"]
+        peerCertURI = "foobar"
+
+        [[tcp.serversTransports.TCPServersTransport0.tls.certificates]]
+          certFile = "foobar"
+          keyFile = "foobar"
+
+        [[tcp.serversTransports.TCPServersTransport0.tls.certificates]]
+          certFile = "foobar"
+          keyFile = "foobar"
+
+      [tcp.serversTransports.TCPServersTransport0.spiffe]
+        ids = ["foobar", "foobar"]
+        trustDomain = "foobar"
+
+    [tcp.serversTransports.TCPServersTransport1]
+      dialTimeout = "42s"
+      dialKeepAlive = "42s"
+      terminationDelay = "42s"
+
+      [tcp.serversTransports.TCPServersTransport1.tls]
+        serverName = "foobar"
+        insecureSkipVerify = true
+        rootCAs = ["foobar", "foobar"]
+        peerCertURI = "foobar"
+
+        [[tcp.serversTransports.TCPServersTransport1.tls.certificates]]
+          certFile = "foobar"
+          keyFile = "foobar"
+
+        [[tcp.serversTransports.TCPServersTransport1.tls.certificates]]
+          certFile = "foobar"
+          keyFile = "foobar"
+
+      [tcp.serversTransports.TCPServersTransport1.spiffe]
+        ids = ["foobar", "foobar"]
+        trustDomain = "foobar"
 
 [udp]
   [udp.routers]

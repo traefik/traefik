@@ -9,35 +9,33 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/ping"
-	acmeprovider "github.com/traefik/traefik/v2/pkg/provider/acme"
-	"github.com/traefik/traefik/v2/pkg/provider/consulcatalog"
-	"github.com/traefik/traefik/v2/pkg/provider/docker"
-	"github.com/traefik/traefik/v2/pkg/provider/ecs"
-	"github.com/traefik/traefik/v2/pkg/provider/file"
-	"github.com/traefik/traefik/v2/pkg/provider/http"
-	"github.com/traefik/traefik/v2/pkg/provider/hub"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/gateway"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/ingress"
-	"github.com/traefik/traefik/v2/pkg/provider/kv/consul"
-	"github.com/traefik/traefik/v2/pkg/provider/kv/etcd"
-	"github.com/traefik/traefik/v2/pkg/provider/kv/redis"
-	"github.com/traefik/traefik/v2/pkg/provider/kv/zk"
-	"github.com/traefik/traefik/v2/pkg/provider/marathon"
-	"github.com/traefik/traefik/v2/pkg/provider/nomad"
-	"github.com/traefik/traefik/v2/pkg/provider/rancher"
-	"github.com/traefik/traefik/v2/pkg/provider/rest"
-	"github.com/traefik/traefik/v2/pkg/tls"
-	"github.com/traefik/traefik/v2/pkg/tracing/datadog"
-	"github.com/traefik/traefik/v2/pkg/tracing/elastic"
-	"github.com/traefik/traefik/v2/pkg/tracing/haystack"
-	"github.com/traefik/traefik/v2/pkg/tracing/instana"
-	"github.com/traefik/traefik/v2/pkg/tracing/jaeger"
-	"github.com/traefik/traefik/v2/pkg/tracing/opentelemetry"
-	"github.com/traefik/traefik/v2/pkg/tracing/zipkin"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/ping"
+	acmeprovider "github.com/traefik/traefik/v3/pkg/provider/acme"
+	"github.com/traefik/traefik/v3/pkg/provider/consulcatalog"
+	"github.com/traefik/traefik/v3/pkg/provider/docker"
+	"github.com/traefik/traefik/v3/pkg/provider/ecs"
+	"github.com/traefik/traefik/v3/pkg/provider/file"
+	"github.com/traefik/traefik/v3/pkg/provider/http"
+	"github.com/traefik/traefik/v3/pkg/provider/hub"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress"
+	"github.com/traefik/traefik/v3/pkg/provider/kv/consul"
+	"github.com/traefik/traefik/v3/pkg/provider/kv/etcd"
+	"github.com/traefik/traefik/v3/pkg/provider/kv/redis"
+	"github.com/traefik/traefik/v3/pkg/provider/kv/zk"
+	"github.com/traefik/traefik/v3/pkg/provider/nomad"
+	"github.com/traefik/traefik/v3/pkg/provider/rest"
+	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/tracing/datadog"
+	"github.com/traefik/traefik/v3/pkg/tracing/elastic"
+	"github.com/traefik/traefik/v3/pkg/tracing/haystack"
+	"github.com/traefik/traefik/v3/pkg/tracing/instana"
+	"github.com/traefik/traefik/v3/pkg/tracing/jaeger"
+	"github.com/traefik/traefik/v3/pkg/tracing/opentelemetry"
+	"github.com/traefik/traefik/v3/pkg/tracing/zipkin"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 const (
@@ -63,9 +61,10 @@ const (
 type Configuration struct {
 	Global *Global `description:"Global configuration options" json:"global,omitempty" toml:"global,omitempty" yaml:"global,omitempty" export:"true"`
 
-	ServersTransport *ServersTransport `description:"Servers default transport." json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
-	EntryPoints      EntryPoints       `description:"Entry points definition." json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty" export:"true"`
-	Providers        *Providers        `description:"Providers configuration." json:"providers,omitempty" toml:"providers,omitempty" yaml:"providers,omitempty" export:"true"`
+	ServersTransport    *ServersTransport    `description:"Servers default transport." json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
+	TCPServersTransport *TCPServersTransport `description:"TCP servers default transport." json:"tcpServersTransport,omitempty" toml:"tcpServersTransport,omitempty" yaml:"tcpServersTransport,omitempty" export:"true"`
+	EntryPoints         EntryPoints          `description:"Entry points definition." json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty" export:"true"`
+	Providers           *Providers           `description:"Providers configuration." json:"providers,omitempty" toml:"providers,omitempty" yaml:"providers,omitempty" export:"true"`
 
 	API     *API           `description:"Enable api/dashboard." json:"api,omitempty" toml:"api,omitempty" yaml:"api,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Metrics *types.Metrics `description:"Enable a metrics exporter." json:"metrics,omitempty" toml:"metrics,omitempty" yaml:"metrics,omitempty" export:"true"`
@@ -116,6 +115,26 @@ type ServersTransport struct {
 type Spiffe struct {
 	IDs         []string `description:"Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain)." json:"ids,omitempty" toml:"ids,omitempty" yaml:"ids,omitempty"`
 	TrustDomain string   `description:"Defines the allowed SPIFFE trust domain." json:"trustDomain,omitempty" yaml:"trustDomain,omitempty" toml:"trustDomain,omitempty"`
+}
+
+// TCPServersTransport options to configure communication between Traefik and the servers.
+type TCPServersTransport struct {
+	DialKeepAlive ptypes.Duration `description:"Defines the interval between keep-alive probes for an active network connection. If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled" json:"dialKeepAlive,omitempty" toml:"dialKeepAlive,omitempty" yaml:"dialKeepAlive,omitempty" export:"true"`
+	DialTimeout   ptypes.Duration `description:"Defines the amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists." json:"dialTimeout,omitempty" toml:"dialTimeout,omitempty" yaml:"dialTimeout,omitempty" export:"true"`
+	// TerminationDelay, corresponds to the deadline that the proxy sets, after one
+	// of its connected peers indicates it has closed the writing capability of its
+	// connection, to close the reading capability as well, hence fully terminating the
+	// connection. It is a duration in milliseconds, defaulting to 100. A negative value
+	// means an infinite deadline (i.e. the reading capability is never closed).
+	TerminationDelay ptypes.Duration  `description:"Defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability." json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty" export:"true"`
+	TLS              *TLSClientConfig `description:"Defines the TLS configuration." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+}
+
+// TLSClientConfig options to configure TLS communication between Traefik and the servers.
+type TLSClientConfig struct {
+	InsecureSkipVerify bool                `description:"Disables SSL certificate verification." json:"insecureSkipVerify,omitempty" toml:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" export:"true"`
+	RootCAs            []tls.FileOrContent `description:"Defines a list of CA secret used to validate self-signed certificate" json:"rootCAs,omitempty" toml:"rootCAs,omitempty" yaml:"rootCAs,omitempty"`
+	Spiffe             *Spiffe             `description:"Defines the SPIFFE TLS configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // API holds the API configuration.
@@ -193,12 +212,10 @@ type Providers struct {
 
 	Docker            *docker.Provider               `description:"Enable Docker backend with default settings." json:"docker,omitempty" toml:"docker,omitempty" yaml:"docker,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	File              *file.Provider                 `description:"Enable File backend with default settings." json:"file,omitempty" toml:"file,omitempty" yaml:"file,omitempty" export:"true"`
-	Marathon          *marathon.Provider             `description:"Enable Marathon backend with default settings." json:"marathon,omitempty" toml:"marathon,omitempty" yaml:"marathon,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	KubernetesIngress *ingress.Provider              `description:"Enable Kubernetes backend with default settings." json:"kubernetesIngress,omitempty" toml:"kubernetesIngress,omitempty" yaml:"kubernetesIngress,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	KubernetesCRD     *crd.Provider                  `description:"Enable Kubernetes backend with default settings." json:"kubernetesCRD,omitempty" toml:"kubernetesCRD,omitempty" yaml:"kubernetesCRD,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	KubernetesGateway *gateway.Provider              `description:"Enable Kubernetes gateway api provider with default settings." json:"kubernetesGateway,omitempty" toml:"kubernetesGateway,omitempty" yaml:"kubernetesGateway,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	Rest              *rest.Provider                 `description:"Enable Rest backend with default settings." json:"rest,omitempty" toml:"rest,omitempty" yaml:"rest,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	Rancher           *rancher.Provider              `description:"Enable Rancher backend with default settings." json:"rancher,omitempty" toml:"rancher,omitempty" yaml:"rancher,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
 	ConsulCatalog     *consulcatalog.ProviderBuilder `description:"Enable ConsulCatalog backend with default settings." json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Nomad             *nomad.ProviderBuilder         `description:"Enable Nomad backend with default settings." json:"nomad,omitempty" toml:"nomad,omitempty" yaml:"nomad,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Ecs               *ecs.Provider                  `description:"Enable AWS ECS backend with default settings." json:"ecs,omitempty" toml:"ecs,omitempty" yaml:"ecs,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -243,7 +260,7 @@ func (c *Configuration) SetEffectiveConfiguration() {
 			c.Hub = nil
 			log.Error().Err(err).Msg("Unable to activate the Hub provider")
 		} else {
-			log.Debug().Msg("Experimental Hub provider has been activated")
+			log.Debug().Msg("Hub provider has been activated")
 		}
 	}
 
@@ -254,12 +271,6 @@ func (c *Configuration) SetEffectiveConfiguration() {
 
 		if c.Providers.Docker.HTTPClientTimeout < 0 {
 			c.Providers.Docker.HTTPClientTimeout = 0
-		}
-	}
-
-	if c.Providers.Rancher != nil {
-		if c.Providers.Rancher.RefreshSeconds <= 0 {
-			c.Providers.Rancher.RefreshSeconds = 15
 		}
 	}
 

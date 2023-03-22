@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 )
@@ -30,15 +30,16 @@ type clientMock struct {
 	apiSecretError    error
 	apiEndpointsError error
 
-	ingressRoutes    []*v1alpha1.IngressRoute
-	ingressRouteTCPs []*v1alpha1.IngressRouteTCP
-	ingressRouteUDPs []*v1alpha1.IngressRouteUDP
-	middlewares      []*v1alpha1.Middleware
-	middlewareTCPs   []*v1alpha1.MiddlewareTCP
-	tlsOptions       []*v1alpha1.TLSOption
-	tlsStores        []*v1alpha1.TLSStore
-	traefikServices  []*v1alpha1.TraefikService
-	serversTransport []*v1alpha1.ServersTransport
+	ingressRoutes        []*v1alpha1.IngressRoute
+	ingressRouteTCPs     []*v1alpha1.IngressRouteTCP
+	ingressRouteUDPs     []*v1alpha1.IngressRouteUDP
+	middlewares          []*v1alpha1.Middleware
+	middlewareTCPs       []*v1alpha1.MiddlewareTCP
+	tlsOptions           []*v1alpha1.TLSOption
+	tlsStores            []*v1alpha1.TLSStore
+	traefikServices      []*v1alpha1.TraefikService
+	serversTransports    []*v1alpha1.ServersTransport
+	serversTransportTCPs []*v1alpha1.ServersTransportTCP
 
 	watchChan chan interface{}
 }
@@ -74,7 +75,9 @@ func newClientMock(paths ...string) clientMock {
 			case *v1alpha1.TLSOption:
 				c.tlsOptions = append(c.tlsOptions, o)
 			case *v1alpha1.ServersTransport:
-				c.serversTransport = append(c.serversTransport, o)
+				c.serversTransports = append(c.serversTransports, o)
+			case *v1alpha1.ServersTransportTCP:
+				c.serversTransportTCPs = append(c.serversTransportTCPs, o)
 			case *v1alpha1.TLSStore:
 				c.tlsStores = append(c.tlsStores, o)
 			case *corev1.Secret:
@@ -131,7 +134,11 @@ func (c clientMock) GetTLSStores() []*v1alpha1.TLSStore {
 }
 
 func (c clientMock) GetServersTransports() []*v1alpha1.ServersTransport {
-	return c.serversTransport
+	return c.serversTransports
+}
+
+func (c clientMock) GetServersTransportTCPs() []*v1alpha1.ServersTransportTCP {
+	return c.serversTransportTCPs
 }
 
 func (c clientMock) GetTLSOption(namespace, name string) (*v1alpha1.TLSOption, bool, error) {

@@ -95,7 +95,7 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
 ## Routing Configuration
 
 When using Docker as a [provider](./overview.md),
-Traefik uses [container labels](https://docs.docker.com/engine/reference/commandline/run/#set-metadata-on-container--l---label---label-file) to retrieve its routing configuration.
+Traefik uses [container labels](https://docs.docker.com/engine/reference/commandline/run/#label) to retrieve its routing configuration.
 
 See the list of labels in the dedicated [routing](../routing/providers/docker.md) section.
 
@@ -440,10 +440,11 @@ _Optional, Default=```Host(`{{ normalize .Name }}`)```_
 
 The `defaultRule` option defines what routing rule to apply to a container if no rule is defined by a label.
 
-It must be a valid [Go template](https://pkg.go.dev/text/template/), and can use
-[sprig template functions](https://masterminds.github.io/sprig/).
-The container service name can be accessed with the `Name` identifier,
-and the template has access to all the labels defined on this container.
+It must be a valid [Go template](https://pkg.go.dev/text/template/),
+and can use [sprig template functions](https://masterminds.github.io/sprig/).
+The container name can be accessed with the `ContainerName` identifier.
+The service name can be accessed with the `Name` identifier.
+The template has access to all the labels defined on this container with the `Labels` identifier.
 
 ```yaml tab="File (YAML)"
 providers:

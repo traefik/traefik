@@ -11,7 +11,11 @@ Automatic HTTPS
 You can configure Traefik to use an ACME provider (like Let's Encrypt) for automatic certificate generation.
 
 !!! warning "Let's Encrypt and Rate Limiting"
-    Note that Let's Encrypt API has [rate limiting](https://letsencrypt.org/docs/rate-limits).
+    Note that Let's Encrypt API has [rate limiting](https://letsencrypt.org/docs/rate-limits). These last up to __one week__, and can not be overridden.
+    
+    When running Traefik in a container this file should be persisted across restarts. 
+    If Traefik requests new certificates each time it starts up, a crash-looping container can quickly reach Let's Encrypt's ratelimits.
+    To configure where certificates are stored, please take a look at the [storage](#storage) configuration.
 
     Use Let's Encrypt staging server with the [`caServer`](#caserver) configuration option
     when experimenting to avoid hitting this limit too fast.
@@ -279,8 +283,19 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
     # ...
     ```
 
-    !!! important
-        A `provider` is mandatory.
+!!! warning "`CNAME` support"
+
+    `CNAME` are supported (and sometimes even [encouraged](https://letsencrypt.org/2019/10/09/onboarding-your-customers-with-lets-encrypt-and-acme.html#the-advantages-of-a-cname)),
+    but there are a few cases where they can be [problematic](../../getting-started/faq/#why-does-lets-encrypt-wildcard-certificate-renewalgeneration-with-dns-challenge-fail).
+
+    If needed, `CNAME` support can be disabled with the following environment variable:
+
+    ```bash
+    LEGO_DISABLE_CNAME_SUPPORT=true
+    ```
+
+!!! important
+    A `provider` is mandatory.
 
 #### `providers`
 
@@ -315,6 +330,7 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [deSEC](https://desec.io)                                                                          | `desec`            | `DESEC_TOKEN`                                                                                                                               | [Additional configuration](https://go-acme.github.io/lego/dns/desec)            |
 | [DigitalOcean](https://www.digitalocean.com)                                                       | `digitalocean`     | `DO_AUTH_TOKEN`                                                                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/digitalocean)     |
 | [DNS Made Easy](https://dnsmadeeasy.com)                                                           | `dnsmadeeasy`      | `DNSMADEEASY_API_KEY`, `DNSMADEEASY_API_SECRET`, `DNSMADEEASY_SANDBOX`                                                                      | [Additional configuration](https://go-acme.github.io/lego/dns/dnsmadeeasy)      |
+| [dnsHome.de](https://www.dnshome.de)                                                               | `dnsHomede`        | `DNSHOMEDE_CREDENTIALS`                                                                                                                     | [Additional configuration](https://go-acme.github.io/lego/dns/dnshomede)        |
 | [DNSimple](https://dnsimple.com)                                                                   | `dnsimple`         | `DNSIMPLE_OAUTH_TOKEN`, `DNSIMPLE_BASE_URL`                                                                                                 | [Additional configuration](https://go-acme.github.io/lego/dns/dnsimple)         |
 | [DNSPod](https://www.dnspod.com/)                                                                  | `dnspod`           | `DNSPOD_API_KEY`                                                                                                                            | [Additional configuration](https://go-acme.github.io/lego/dns/dnspod)           |
 | [Domain Offensive (do.de)](https://www.do.de/)                                                     | `dode`             | `DODE_TOKEN`                                                                                                                                | [Additional configuration](https://go-acme.github.io/lego/dns/dode)             |
@@ -350,6 +366,7 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [ionos](https://ionos.com/)                                                                        | `ionos`            | `IONOS_API_KEY`                                                                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/ionos)            |
 | [iwantmyname](https://iwantmyname.com)                                                             | `iwantmyname`      | `IWANTMYNAME_USERNAME` , `IWANTMYNAME_PASSWORD`                                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/iwantmyname)      |
 | [Joker.com](https://joker.com)                                                                     | `joker`            | `JOKER_API_MODE` with `JOKER_API_KEY` or `JOKER_USERNAME`, `JOKER_PASSWORD`                                                                 | [Additional configuration](https://go-acme.github.io/lego/dns/joker)            |
+| [Liara](https://liara.ir)                                                                          | `liara`            | `LIARA_API_KEY`                                                                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/liara)            |
 | [Lightsail](https://aws.amazon.com/lightsail/)                                                     | `lightsail`        | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `DNS_ZONE`                                                                                    | [Additional configuration](https://go-acme.github.io/lego/dns/lightsail)        |
 | [Linode v4](https://www.linode.com)                                                                | `linode`           | `LINODE_TOKEN`                                                                                                                              | [Additional configuration](https://go-acme.github.io/lego/dns/linode)           |
 | [Liquid Web](https://www.liquidweb.com/)                                                           | `liquidweb`        | `LIQUID_WEB_PASSWORD`, `LIQUID_WEB_USERNAME`, `LIQUID_WEB_ZONE`                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/liquidweb)        |
@@ -388,6 +405,7 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [Tencent Cloud DNS](https://cloud.tencent.com/product/cns)                                         | `tencentcloud`     | `TENCENTCLOUD_SECRET_ID`, `TENCENTCLOUD_SECRET_KEY`                                                                                         | [Additional configuration](https://go-acme.github.io/lego/dns/tencentcloud)     |
 | [TransIP](https://www.transip.nl/)                                                                 | `transip`          | `TRANSIP_ACCOUNT_NAME`, `TRANSIP_PRIVATE_KEY_PATH`                                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/transip)          |
 | [UKFast SafeDNS](https://www.ans.co.uk/cloud-and-infrastructure/dedicated-servers/dns-management/) | `safedns`          | `SAFEDNS_AUTH_TOKEN`                                                                                                                        | [Additional configuration](https://go-acme.github.io/lego/dns/safedns)          |
+| [Ultradns](https://neustarsecurityservices.com/dns-services)                                       | `ultradns`         | `ULTRADNS_USERNAME`, `ULTRADNS_PASSWORD`                                                                                                    | [Additional configuration](https://go-acme.github.io/lego/dns/ultradns)         |
 | [Variomedia](https://www.variomedia.de/)                                                           | `variomedia`       | `VARIOMEDIA_API_TOKEN`                                                                                                                      | [Additional configuration](https://go-acme.github.io/lego/dns/variomedia)       |
 | [VegaDNS](https://github.com/shupp/VegaDNS-API)                                                    | `vegadns`          | `SECRET_VEGADNS_KEY`, `SECRET_VEGADNS_SECRET`, `VEGADNS_URL`                                                                                | [Additional configuration](https://go-acme.github.io/lego/dns/vegadns)          |
 | [Vercel](https://vercel.com)                                                                       | `vercel`           | `VERCEL_API_TOKEN`                                                                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/vercel)           |
@@ -396,6 +414,7 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [VK Cloud](https://mcs.mail.ru/)                                                                   | `vkcloud`          | `VK_CLOUD_PASSWORD`, `VK_CLOUD_PROJECT_ID`, `VK_CLOUD_USERNAME`                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/vkcloud)          |
 | [Vscale](https://vscale.io/)                                                                       | `vscale`           | `VSCALE_API_TOKEN`                                                                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/vscale)           |
 | [VULTR](https://www.vultr.com)                                                                     | `vultr`            | `VULTR_API_KEY`                                                                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/vultr)            |
+| [Websupport](https://websupport.sk)                                                                | `websupport`       | `WEBSUPPORT_API_KEY`, `WEBSUPPORT_SECRET`                                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/websupport)       |
 | [WEDOS](https://www.wedos.com)                                                                     | `wedos`            | `WEDOS_USERNAME`, `WEDOS_WAPI_PASSWORD`                                                                                                     | [Additional configuration](https://go-acme.github.io/lego/dns/wedos)            |
 | [Yandex Cloud](https://cloud.yandex.com/en/)                                                       | `yandexcloud`      | `YANDEX_CLOUD_FOLDER_ID`, `YANDEX_CLOUD_IAM_TOKEN`                                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/yandexcloud)      |
 | [Yandex](https://yandex.com)                                                                       | `yandex`           | `YANDEX_PDD_TOKEN`                                                                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/yandex)           |

@@ -1,3 +1,69 @@
+## [v2.10.0-rc1](https://github.com/traefik/traefik/tree/v2.10.0-rc1) (2023-03-22)
+[All Commits](https://github.com/traefik/traefik/compare/b3f162a8a61d89beaa9edc8adc12cc4cb3e1de0f...v2.10.0-rc1)
+
+**Enhancements:**
+- **[docker]** Expose ContainerName in Docker provider ([#9770](https://github.com/traefik/traefik/pull/9770) by [quinot](https://github.com/quinot))
+- **[hub]** hub: get out of experimental. ([#9792](https://github.com/traefik/traefik/pull/9792) by [mpl](https://github.com/mpl))
+- **[k8s/crd]** Introduce traefik.io API Group CRDs ([#9765](https://github.com/traefik/traefik/pull/9765) by [rtribotte](https://github.com/rtribotte))
+- **[k8s/ingress,k8s/crd,k8s]** Native Kubernetes service load-balancing ([#9740](https://github.com/traefik/traefik/pull/9740) by [rtribotte](https://github.com/rtribotte))
+- **[middleware,metrics]** Add prometheus metric requests_total with headers ([#9783](https://github.com/traefik/traefik/pull/9783) by [rtribotte](https://github.com/rtribotte))
+- **[nomad]** Support multiple namespaces in the Nomad Provider ([#9794](https://github.com/traefik/traefik/pull/9794) by [rtribotte](https://github.com/rtribotte))
+- **[tracing]** Add support to send DataDog traces via Unix Socket ([#9714](https://github.com/traefik/traefik/pull/9714) by [der-eismann](https://github.com/der-eismann))
+
+**Documentation:**
+- docs: update order of log levels ([#9791](https://github.com/traefik/traefik/pull/9791) by [svx](https://github.com/svx))
+
+**Misc:**
+- Merge current v2.9 into v2.10 ([#9798](https://github.com/traefik/traefik/pull/9798) by [ldez](https://github.com/ldez))
+
+## [v2.9.9](https://github.com/traefik/traefik/tree/v2.9.9) (2023-03-21)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.8...v2.9.9)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.10.2 ([#9749](https://github.com/traefik/traefik/pull/9749) by [ldez](https://github.com/ldez))
+- **[http3]** Update quic-go to v0.33.0 ([#9737](https://github.com/traefik/traefik/pull/9737) by [ldez](https://github.com/ldez))
+- **[metrics]** Include user-defined default cert for traefik_tls_certs_not_after metric ([#9742](https://github.com/traefik/traefik/pull/9742) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Update vulcand/oxy to a0e9f7ff1040 ([#9750](https://github.com/traefik/traefik/pull/9750) by [ldez](https://github.com/ldez))
+- **[nomad]** Fix default configuration settings for Nomad Provider ([#9758](https://github.com/traefik/traefik/pull/9758) by [aofei](https://github.com/aofei))
+- **[nomad]** Fix Nomad client TLS defaults ([#9795](https://github.com/traefik/traefik/pull/9795) by [rtribotte](https://github.com/rtribotte))
+- **[server]** Remove User-Agent header removal from ReverseProxy director func ([#9752](https://github.com/traefik/traefik/pull/9752) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- **[middleware]** Clarify ratelimit middleware ([#9777](https://github.com/traefik/traefik/pull/9777) by [mpl](https://github.com/mpl))
+- **[tcp]** Correcting variable name &#39;server address&#39; in TCP Router ([#9743](https://github.com/traefik/traefik/pull/9743) by [ralphg6](https://github.com/ralphg6))
+
+## [v2.9.8](https://github.com/traefik/traefik/tree/v2.9.8) (2023-02-15)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.7...v2.9.8)
+
+**Bug fixes:**
+- **[server]** Update golang.org/x/net to v0.7.0 ([#9716](https://github.com/traefik/traefik/pull/9716) by [ldez](https://github.com/ldez))
+
+## [v2.9.7](https://github.com/traefik/traefik/tree/v2.9.7) (2023-02-14)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.6...v2.9.7)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.10.0 ([#9705](https://github.com/traefik/traefik/pull/9705) by [ldez](https://github.com/ldez))
+- **[ecs]** Prevent panicking when a container has no network interfaces ([#9661](https://github.com/traefik/traefik/pull/9661) by [rtribotte](https://github.com/rtribotte))
+- **[file]** Make file provider more resilient wrt first configuration ([#9595](https://github.com/traefik/traefik/pull/9595) by [mpl](https://github.com/mpl))
+- **[logs]** Differentiate UDP stream and TCP connection in logs ([#9687](https://github.com/traefik/traefik/pull/9687) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Prevent from no rate limiting when average is zero ([#9621](https://github.com/traefik/traefik/pull/9621) by [witalisoft](https://github.com/witalisoft))
+- **[middleware]** Prevents superfluous WriteHeader call in the error middleware ([#9620](https://github.com/traefik/traefik/pull/9620) by [tomMoulard](https://github.com/tomMoulard))
+- **[middleware]** Sanitize X-Forwarded-Proto header in RedirectScheme middleware ([#9598](https://github.com/traefik/traefik/pull/9598) by [ldez](https://github.com/ldez))
+- **[plugins]** Update paerser to v0.2.0 ([#9671](https://github.com/traefik/traefik/pull/9671) by [ldez](https://github.com/ldez))
+- **[plugins]** Update Yaegi to v0.15.0 ([#9700](https://github.com/traefik/traefik/pull/9700) by [ldez](https://github.com/ldez))
+- **[tls,http3]** Bump quic-go to 89769f409f ([#9685](https://github.com/traefik/traefik/pull/9685) by [mpl](https://github.com/mpl))
+- **[tls,tcp]** Adds the support for IPv6 in the TCP HostSNI matcher ([#9692](https://github.com/traefik/traefik/pull/9692) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- **[acme]** Add CNAME support and gotchas ([#9698](https://github.com/traefik/traefik/pull/9698) by [mpl](https://github.com/mpl))
+- **[acme]** Further Let&#39;s Encrypt ratelimit warnings ([#9627](https://github.com/traefik/traefik/pull/9627) by [hcooper](https://github.com/hcooper))
+- **[k8s]** Add info admonition about routing to k8 services ([#9645](https://github.com/traefik/traefik/pull/9645) by [svx](https://github.com/svx))
+- **[k8s]** Improve TLSStore CRD documentation ([#9579](https://github.com/traefik/traefik/pull/9579) by [mloiseleur](https://github.com/mloiseleur))
+- **[middleware]** doc: add note about remoteaddr strategy ([#9701](https://github.com/traefik/traefik/pull/9701) by [mpl](https://github.com/mpl))
+- Update copyright to match new standard ([#9651](https://github.com/traefik/traefik/pull/9651) by [paulocfjunior](https://github.com/paulocfjunior))
+- Update copyright for 2023 ([#9631](https://github.com/traefik/traefik/pull/9631) by [kevinpollet](https://github.com/kevinpollet))
+- Update submitting pull requests to include language about drafts ([#9609](https://github.com/traefik/traefik/pull/9609) by [tfny](https://github.com/tfny))
+
 ## [v3.0.0-beta2](https://github.com/traefik/traefik/tree/v3.0.0-beta2) (2022-12-07)
 [All Commits](https://github.com/traefik/traefik/compare/v3.0.0-beta1...v3.0.0-beta2)
 
@@ -142,13 +208,7 @@ Release canceled.
 - **[acme]** Fix ACME panic ([#9365](https://github.com/traefik/traefik/pull/9365) by [ldez](https://github.com/ldez))
 
 **Documentation:**
-- Prepare release v2.9.0 ([#9409](https://github.com/traefik/traefik/pull/9409) by [tomMoulard](https://github.com/tomMoulard))
 - **[metrics]** Rework metrics overview page ([#9366](https://github.com/traefik/traefik/pull/9366) by [ddtmachado](https://github.com/ddtmachado))
-- Prepare release v2.9.0-rc5 ([#9402](https://github.com/traefik/traefik/pull/9402) by [ldez](https://github.com/ldez))
-- Prepare release v2.9.0-rc4 ([#9372](https://github.com/traefik/traefik/pull/9372) by [kevinpollet](https://github.com/kevinpollet))
-- Prepare release v2.9.0-rc3 ([#9344](https://github.com/traefik/traefik/pull/9344) by [kevinpollet](https://github.com/kevinpollet))
-- Prepare release v2.9.0-rc2 ([6c2c561](https://github.com/traefik/traefik/commit/6c2c561d8f935d76ccd07d28e1455c7768adc153) by [ldez](https://github.com/ldez))
-- Prepare release v2.9.0-rc1 ([#9334](https://github.com/traefik/traefik/pull/9334) by [rtribotte](https://github.com/rtribotte))
 
 **Misc:**
 - Merge current v2.8 into v2.9 ([#9400](https://github.com/traefik/traefik/pull/9400) by [ldez](https://github.com/ldez))

@@ -39,13 +39,13 @@ The Kubernetes Gateway API, The Experimental Way. {: .subtitle }
 
 You can find an excerpt of the supported Kubernetes Gateway API resources in the table below:
 
-| Kind                               | Purpose                                                                   | Concept Behind                                                                       |
-|------------------------------------|---------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
-| [GatewayClass](#kind-gatewayclass) | Defines a set of Gateways that share a common configuration and behaviour | [GatewayClass](https://gateway-api.sigs.k8s.io/v1alpha2/api-types/gatewayclass)      |
-| [Gateway](#kind-gateway)           | Describes how traffic can be translated to Services within the cluster    | [Gateway](https://gateway-api.sigs.k8s.io/v1alpha2/api-types/gateway)                |
-| [HTTPRoute](#kind-httproute)       | HTTP rules for mapping requests from a Gateway to Kubernetes Services     | [Route](https://gateway-api.sigs.k8s.io/v1alpha2/api-types/httproute)                |
-| [TCPRoute](#kind-tcproute)         | Allows mapping TCP requests from a Gateway to Kubernetes Services         | [Route](https://gateway-api.sigs.k8s.io/v1alpha2/guides/tcp/)|
-| [TLSRoute](#kind-tlsroute)         | Allows mapping TLS requests from a Gateway to Kubernetes Services         | [Route](https://gateway-api.sigs.k8s.io/v1alpha2/guides/tls/)|
+| Kind                               | Purpose                                                                   | Concept Behind                                                                  |
+|------------------------------------|---------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| [GatewayClass](#kind-gatewayclass) | Defines a set of Gateways that share a common configuration and behaviour | [GatewayClass](https://gateway-api.sigs.k8s.io/v1alpha2/api-types/gatewayclass) |
+| [Gateway](#kind-gateway)           | Describes how traffic can be translated to Services within the cluster    | [Gateway](https://gateway-api.sigs.k8s.io/v1alpha2/api-types/gateway)           |
+| [HTTPRoute](#kind-httproute)       | HTTP rules for mapping requests from a Gateway to Kubernetes Services     | [Route](https://gateway-api.sigs.k8s.io/v1alpha2/api-types/httproute)           |
+| [TCPRoute](#kind-tcproute)         | Allows mapping TCP requests from a Gateway to Kubernetes Services         | [Route](https://gateway-api.sigs.k8s.io/v1alpha2/guides/tcp/)                   |
+| [TLSRoute](#kind-tlsroute)         | Allows mapping TLS requests from a Gateway to Kubernetes Services         | [Route](https://gateway-api.sigs.k8s.io/v1alpha2/guides/tls/)                   |
 
 ### Kind: `GatewayClass`
 
@@ -238,7 +238,7 @@ Kubernetes cluster before creating `HTTPRoute` objects.
               weight: 1                         # [16]
               port: 8080                        # [17]
             - name: api@internal
-              group: traefik.containo.us        # [18]
+              group: traefik.io                 # [18]
               kind: TraefikService              # [19]
     ```
 
@@ -261,7 +261,7 @@ Kubernetes cluster before creating `HTTPRoute` objects.
 | [15] | `name`        | The name of the referent service.                                                                                                                                           |
 | [16] | `weight`      | The proportion of traffic forwarded to a targetRef, computed as weight/(sum of all weights in targetRefs).                                                                  |
 | [17] | `port`        | The port of the referent service.                                                                                                                                           |
-| [18] | `group`       | Group is the group of the referent. Only `traefik.containo.us` and `gateway.networking.k8s.io` values are supported.                                                        |
+| [18] | `group`       | Group is the group of the referent. Only `traefik.io` and `gateway.networking.k8s.io` values are supported.                                                                 |
 | [19] | `kind`        | Kind is kind of the referent. Only `TraefikService` and `Service` values are supported.                                                                                     |
 
 ### Kind: `TCPRoute`
@@ -290,23 +290,23 @@ Kubernetes cluster before creating `TCPRoute` objects.
               weight: 1                         # [8]
               port: 8080                        # [9]
             - name: api@internal
-              group: traefik.containo.us        # [10]
+              group: traefik.io                 # [10]
               kind: TraefikService              # [11]
     ```
 
-| Ref  | Attribute     | Description                                                                                                          |
-|------|---------------|----------------------------------------------------------------------------------------------------------------------|
-| [1]  | `parentRefs`  | References the resources (usually Gateways) that a Route wants to be attached to.                                    |
-| [2]  | `name`        | Name of the referent.                                                                                                |
-| [3]  | `namespace`   | Namespace of the referent. When unspecified (or empty string), this refers to the local namespace of the Route.      |
-| [4]  | `sectionName` | Name of a section within the target resource (the Listener name).                                                    |
-| [5]  | `rules`       | Rules are a list of TCP matchers and actions.                                                                        |
-| [6]  | `backendRefs` | Defines the backend(s) where matching requests should be sent.                                                       |
-| [7]  | `name`        | The name of the referent service.                                                                                    |
-| [8]  | `weight`      | The proportion of traffic forwarded to a targetRef, computed as weight/(sum of all weights in targetRefs).           |
-| [9]  | `port`        | The port of the referent service.                                                                                    |
-| [10] | `group`       | Group is the group of the referent. Only `traefik.containo.us` and `gateway.networking.k8s.io` values are supported. |
-| [11] | `kind`        | Kind is kind of the referent. Only `TraefikService` and `Service` values are supported.                              |
+| Ref  | Attribute     | Description                                                                                                     |
+|------|---------------|-----------------------------------------------------------------------------------------------------------------|
+| [1]  | `parentRefs`  | References the resources (usually Gateways) that a Route wants to be attached to.                               |
+| [2]  | `name`        | Name of the referent.                                                                                           |
+| [3]  | `namespace`   | Namespace of the referent. When unspecified (or empty string), this refers to the local namespace of the Route. |
+| [4]  | `sectionName` | Name of a section within the target resource (the Listener name).                                               |
+| [5]  | `rules`       | Rules are a list of TCP matchers and actions.                                                                   |
+| [6]  | `backendRefs` | Defines the backend(s) where matching requests should be sent.                                                  |
+| [7]  | `name`        | The name of the referent service.                                                                               |
+| [8]  | `weight`      | The proportion of traffic forwarded to a targetRef, computed as weight/(sum of all weights in targetRefs).      |
+| [9]  | `port`        | The port of the referent service.                                                                               |
+| [10] | `group`       | Group is the group of the referent. Only `traefik.io` and `gateway.networking.k8s.io` values are supported.     |
+| [11] | `kind`        | Kind is kind of the referent. Only `TraefikService` and `Service` values are supported.                         |
 
 ### Kind: `TLSRoute`
 
@@ -336,21 +336,21 @@ Kubernetes cluster before creating `TLSRoute` objects.
               weight: 1                         # [9]
               port: 8080                        # [10]
             - name: api@internal
-              group: traefik.containo.us        # [11]
+              group: traefik.io                 # [11]
               kind: TraefikService              # [12]
     ```
 
-| Ref  | Attribute     | Description                                                                                                          |
-|------|---------------|----------------------------------------------------------------------------------------------------------------------|
-| [1]  | `parentRefs`  | References the resources (usually Gateways) that a Route wants to be attached to.                                    |
-| [2]  | `name`        | Name of the referent.                                                                                                |
-| [3]  | `namespace`   | Namespace of the referent. When unspecified (or empty string), this refers to the local namespace of the Route.      |
-| [4]  | `sectionName` | Name of a section within the target resource (the Listener name).                                                    |
-| [5]  | `hostnames`   | Defines a set of SNI names that should match against the SNI attribute of TLS ClientHello message in TLS handshake.  |
-| [6]  | `rules`       | Rules are a list of TCP matchers and actions.                                                                        |
-| [7]  | `backendRefs` | Defines the backend(s) where matching requests should be sent.                                                       |
-| [8]  | `name`        | The name of the referent service.                                                                                    |
-| [9]  | `weight`      | The proportion of traffic forwarded to a targetRef, computed as weight/(sum of all weights in targetRefs).           |
-| [10] | `port`        | The port of the referent service.                                                                                    |
-| [11] | `group`       | Group is the group of the referent. Only `traefik.containo.us` and `gateway.networking.k8s.io` values are supported. |
-| [12] | `kind`        | Kind is kind of the referent. Only `TraefikService` and `Service` values are supported.                              |
+| Ref  | Attribute     | Description                                                                                                         |
+|------|---------------|---------------------------------------------------------------------------------------------------------------------|
+| [1]  | `parentRefs`  | References the resources (usually Gateways) that a Route wants to be attached to.                                   |
+| [2]  | `name`        | Name of the referent.                                                                                               |
+| [3]  | `namespace`   | Namespace of the referent. When unspecified (or empty string), this refers to the local namespace of the Route.     |
+| [4]  | `sectionName` | Name of a section within the target resource (the Listener name).                                                   |
+| [5]  | `hostnames`   | Defines a set of SNI names that should match against the SNI attribute of TLS ClientHello message in TLS handshake. |
+| [6]  | `rules`       | Rules are a list of TCP matchers and actions.                                                                       |
+| [7]  | `backendRefs` | Defines the backend(s) where matching requests should be sent.                                                      |
+| [8]  | `name`        | The name of the referent service.                                                                                   |
+| [9]  | `weight`      | The proportion of traffic forwarded to a targetRef, computed as weight/(sum of all weights in targetRefs).          |
+| [10] | `port`        | The port of the referent service.                                                                                   |
+| [11] | `group`       | Group is the group of the referent. Only `traefik.io` and `gateway.networking.k8s.io` values are supported.         |
+| [12] | `kind`        | Kind is kind of the referent. Only `TraefikService` and `Service` values are supported.                             |

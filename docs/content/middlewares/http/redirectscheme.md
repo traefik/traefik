@@ -34,7 +34,7 @@ labels:
 
 ```yaml tab="Kubernetes"
 # Redirect to https
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-redirectscheme
@@ -45,20 +45,6 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-# Redirect to https
-labels:
-  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
-  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme": "https"
-  "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent": "true"
-}
-```
-
-```yaml tab="Rancher"
 # Redirect to https
 labels:
   - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
@@ -98,7 +84,7 @@ labels:
 
 ```yaml tab="Kubernetes"
 # Redirect to https
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-redirectscheme
@@ -109,20 +95,6 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-# Redirect to https
-labels:
-  # ...
-  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
-```
-
-```json tab="Marathon"
-"labels": {
-
-  "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent": "true"
-}
-```
-
-```yaml tab="Rancher"
 # Redirect to https
 labels:
   # ...
@@ -159,7 +131,7 @@ labels:
 
 ```yaml tab="Kubernetes"
 # Redirect to https
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-redirectscheme
@@ -169,18 +141,6 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-# Redirect to https
-labels:
-  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme": "https"
-}
-```
-
-```yaml tab="Rancher"
 # Redirect to https
 labels:
   - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
@@ -215,7 +175,7 @@ labels:
 
 ```yaml tab="Kubernetes"
 # Redirect to https
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-redirectscheme
@@ -226,20 +186,6 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-# Redirect to https
-labels:
-  # ...
-  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.port=443"
-```
-
-```json tab="Marathon"
-"labels": {
-
-  "traefik.http.middlewares.test-redirectscheme.redirectscheme.port": "443"
-}
-```
-
-```yaml tab="Rancher"
 # Redirect to https
 labels:
   # ...

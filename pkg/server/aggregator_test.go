@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/stretchr/testify/assert"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
 func Test_mergeConfiguration(t *testing.T) {
@@ -473,6 +473,7 @@ func Test_mergeConfiguration_defaultTCPEntryPoint(t *testing.T) {
 		Services: map[string]*dynamic.TCPService{
 			"service-1@provider-1": {},
 		},
+		ServersTransports: make(map[string]*dynamic.TCPServersTransport),
 	}
 
 	actual := mergeConfiguration(given, []string{"defaultEP"})

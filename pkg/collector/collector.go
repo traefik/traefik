@@ -11,15 +11,17 @@ import (
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/redactor"
-	"github.com/traefik/traefik/v2/pkg/version"
+	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/redactor"
+	"github.com/traefik/traefik/v3/pkg/version"
 )
 
 // collectorURL URL where the stats are sent.
 const collectorURL = "https://collect.traefik.io/9vxmmkcdmalbdi635d4jgc5p5rx0h7h8"
 
 // Collected data.
+//
+//nolint:musttag // cannot be changed for historical reasons.
 type data struct {
 	Version       string
 	Codename      string

@@ -11,11 +11,11 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/config/label"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/provider/constraints"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/label"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/provider/constraints"
 )
 
 func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Configuration {
@@ -89,13 +89,10 @@ func (p *Provider) buildConfig(ctx context.Context, items []item) *dynamic.Confi
 
 func (p *Provider) buildTCPConfig(i item, configuration *dynamic.TCPConfiguration) error {
 	if len(configuration.Services) == 0 {
-		configuration.Services = make(map[string]*dynamic.TCPService)
-
-		lb := new(dynamic.TCPServersLoadBalancer)
-		lb.SetDefaults()
-
-		configuration.Services[getName(i)] = &dynamic.TCPService{
-			LoadBalancer: lb,
+		configuration.Services = map[string]*dynamic.TCPService{
+			getName(i): {
+				LoadBalancer: new(dynamic.TCPServersLoadBalancer),
+			},
 		}
 	}
 

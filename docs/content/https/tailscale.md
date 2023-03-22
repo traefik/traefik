@@ -103,7 +103,7 @@ A certificate resolver requests certificates for a set of domain names inferred 
     ```
 
     ```yaml tab="Kubernetes"
-    apiVersion: traefik.containo.us/v1alpha1
+    apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: blogtls
@@ -118,20 +118,6 @@ A certificate resolver requests certificates for a set of domain names inferred 
               port: 8080
       tls:
         certResolver: myresolver
-    ```
-
-    ```json tab="Marathon"
-    labels: {
-      "traefik.http.routers.blog.rule": "Host(`monitoring.yak-bebop.ts.net`) && Path(`/metrics`)",
-      "traefik.http.routers.blog.tls.certresolver": "myresolver",
-    }
-    ```
-
-    ```yaml tab="Rancher"
-    ## Dynamic configuration
-    labels:
-      - traefik.http.routers.blog.rule=Host(`monitoring.yak-bebop.ts.net`) && Path(`/metrics`)
-      - traefik.http.routers.blog.tls.certresolver=myresolver
     ```
 
     ```yaml tab="File (YAML)"
@@ -173,7 +159,7 @@ A certificate resolver requests certificates for a set of domain names inferred 
     ```
 
     ```yaml tab="Kubernetes"
-    apiVersion: traefik.containo.us/v1alpha1
+    apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: blogtls
@@ -190,22 +176,6 @@ A certificate resolver requests certificates for a set of domain names inferred 
         certResolver: myresolver
         domains:
           - main: monitoring.yak-bebop.ts.net
-    ```
-
-    ```json tab="Marathon"
-    labels: {
-      "traefik.http.routers.blog.rule": "Path(`/metrics`)",
-      "traefik.http.routers.blog.tls.certresolver": "myresolver",
-      "traefik.http.routers.blog.tls.domains[0].main": "monitoring.yak-bebop.ts.net",
-    }
-    ```
-
-    ```yaml tab="Rancher"
-    ## Dynamic configuration
-    labels:
-      - traefik.http.routers.blog.rule=Path(`/metrics`)
-      - traefik.http.routers.blog.tls.certresolver=myresolver
-      - traefik.http.routers.blog.tls.domains[0].main=monitoring.yak-bebop.ts.net
     ```
 
     ```yaml tab="File (YAML)"

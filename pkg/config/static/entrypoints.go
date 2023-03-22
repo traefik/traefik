@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // EntryPoint holds the entry point configuration.

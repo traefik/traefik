@@ -21,31 +21,32 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
 	"github.com/traefik/paerser/cli"
-	"github.com/traefik/traefik/v2/cmd"
-	"github.com/traefik/traefik/v2/cmd/healthcheck"
-	cmdVersion "github.com/traefik/traefik/v2/cmd/version"
-	tcli "github.com/traefik/traefik/v2/pkg/cli"
-	"github.com/traefik/traefik/v2/pkg/collector"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/metrics"
-	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
-	"github.com/traefik/traefik/v2/pkg/provider/acme"
-	"github.com/traefik/traefik/v2/pkg/provider/aggregator"
-	"github.com/traefik/traefik/v2/pkg/provider/hub"
-	"github.com/traefik/traefik/v2/pkg/provider/tailscale"
-	"github.com/traefik/traefik/v2/pkg/provider/traefik"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/server"
-	"github.com/traefik/traefik/v2/pkg/server/middleware"
-	"github.com/traefik/traefik/v2/pkg/server/service"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
-	"github.com/traefik/traefik/v2/pkg/tracing"
-	"github.com/traefik/traefik/v2/pkg/tracing/jaeger"
-	"github.com/traefik/traefik/v2/pkg/types"
-	"github.com/traefik/traefik/v2/pkg/version"
+	"github.com/traefik/traefik/v3/cmd"
+	"github.com/traefik/traefik/v3/cmd/healthcheck"
+	cmdVersion "github.com/traefik/traefik/v3/cmd/version"
+	tcli "github.com/traefik/traefik/v3/pkg/cli"
+	"github.com/traefik/traefik/v3/pkg/collector"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/metrics"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
+	"github.com/traefik/traefik/v3/pkg/provider/acme"
+	"github.com/traefik/traefik/v3/pkg/provider/aggregator"
+	"github.com/traefik/traefik/v3/pkg/provider/hub"
+	"github.com/traefik/traefik/v3/pkg/provider/tailscale"
+	"github.com/traefik/traefik/v3/pkg/provider/traefik"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/server"
+	"github.com/traefik/traefik/v3/pkg/server/middleware"
+	"github.com/traefik/traefik/v3/pkg/server/service"
+	"github.com/traefik/traefik/v3/pkg/tcp"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/tracing/jaeger"
+	"github.com/traefik/traefik/v3/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/version"
 )
 
 func main() {
@@ -192,9 +193,14 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	tsProviders := initTailscaleProviders(staticConfiguration, &providerAggregator)
 
+	// Metrics
+
+	metricRegistries := registerMetricClients(staticConfiguration.Metrics)
+	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
+
 	// Entrypoints
 
-	serverEntryPointsTCP, err := server.NewTCPEntryPoints(staticConfiguration.EntryPoints, staticConfiguration.HostResolver)
+	serverEntryPointsTCP, err := server.NewTCPEntryPoints(staticConfiguration.EntryPoints, staticConfiguration.HostResolver, metricsRegistry)
 	if err != nil {
 		return nil, err
 	}
@@ -242,11 +248,6 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		}
 	}
 
-	// Metrics
-
-	metricRegistries := registerMetricClients(staticConfiguration.Metrics)
-	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
-
 	// Service manager factory
 
 	var spiffeX509Source *workloadapi.X509Source
@@ -269,6 +270,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	}
 
 	roundTripperManager := service.NewRoundTripperManager(spiffeX509Source)
+	dialerManager := tcp.NewDialerManager(spiffeX509Source)
 	acmeHTTPHandler := getHTTPChallengeHandler(acmeProviders, httpChallengeProvider)
 	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, roundTripperManager, acmeHTTPHandler)
 
@@ -278,7 +280,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	tracer := setupTracing(staticConfiguration.Tracing)
 
 	chainBuilder := middleware.NewChainBuilder(metricsRegistry, accessLog, tracer)
-	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder, metricsRegistry)
+	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, chainBuilder, pluginBuilder, metricsRegistry, dialerManager)
 
 	// Watcher
 
@@ -295,7 +297,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		tlsManager.UpdateConfigs(ctx, conf.TLS.Stores, conf.TLS.Options, conf.TLS.Certificates)
 
 		gauge := metricsRegistry.TLSCertsNotAfterTimestampGauge()
-		for _, certificate := range tlsManager.GetCertificates() {
+		for _, certificate := range tlsManager.GetServerCertificates() {
 			appendCertMetric(gauge, certificate)
 		}
 	})
@@ -309,6 +311,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 	// Server Transports
 	watcher.AddListener(func(conf dynamic.Configuration) {
 		roundTripperManager.Update(conf.HTTP.ServersTransports)
+		dialerManager.Update(conf.TCP.ServersTransports)
 	})
 
 	// Switch router
@@ -518,16 +521,6 @@ func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
 			Str("address", metricsConfig.StatsD.Address).
 			Str("pushInterval", metricsConfig.StatsD.PushInterval.String()).
 			Msg("Configured StatsD metrics")
-	}
-
-	if metricsConfig.InfluxDB != nil {
-		logger := log.With().Str(logs.MetricsProviderName, "influxdb").Logger()
-
-		registries = append(registries, metrics.RegisterInfluxDB(logger.WithContext(context.Background()), metricsConfig.InfluxDB))
-		logger.Debug().
-			Str("address", metricsConfig.InfluxDB.Address).
-			Str("pushInterval", metricsConfig.InfluxDB.PushInterval.String()).
-			Msg("Configured InfluxDB metrics")
 	}
 
 	if metricsConfig.InfluxDB2 != nil {

@@ -31,7 +31,7 @@
   [http.services.service1.loadBalancer]
     passHostHeader = true
     [[http.services.service1.loadBalancer.servers]]
-      url = "http://{{.Server1}}:80"
+      url = "{{.Server1}}"
 
   [http.services.error.loadBalancer]
     [[http.services.error.loadBalancer.servers]]

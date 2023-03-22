@@ -74,7 +74,7 @@ spec:
             value: /foo
 
       backendRefs:
-        - group: traefik.containo.us
+        - group: traefik.io
           kind: TraefikService
           name: myservice@file
           weight: 1
