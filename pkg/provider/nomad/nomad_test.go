@@ -89,7 +89,6 @@ func TestProvider_SetDefaults_Endpoint(t *testing.T) {
 			envs: map[string]string{},
 			expected: &EndpointConfig{
 				Address: "http://127.0.0.1:4646",
-				TLS:     &types.ClientTLS{},
 			},
 		},
 		{

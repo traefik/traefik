@@ -807,6 +807,9 @@ Expose Nomad services by default. (Default: ```true```)
 `TRAEFIK_PROVIDERS_NOMAD_NAMESPACES`:  
 Sets the Nomad namespaces used to discover services.
 
+`TRAEFIK_PROVIDERS_NOMAD_NAMESPACES`:  
+Sets the Nomad namespaces used to discover services.
+
 `TRAEFIK_PROVIDERS_NOMAD_PREFIX`:  
 Prefix for nomad service tags. (Default: ```traefik```)
 
