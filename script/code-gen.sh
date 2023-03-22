@@ -25,7 +25,7 @@ docker run --rm \
            /go/src/k8s.io/code-generator/generate-groups.sh all \
            ${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd/generated \
            ${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd \
-           "traefikcontainous:v1alpha1 traefikio:v1alpha1" \
+           "traefikio:v1alpha1" \
            --go-header-file=/go/src/${PROJECT_MODULE}/script/boilerplate.go.tmpl
 
 echo "Generating DeepCopy code ..."
@@ -47,12 +47,11 @@ docker run --rm \
            -w "/go/src/${PROJECT_MODULE}" \
            "${IMAGE_NAME}" \
            controller-gen crd:crdVersions=v1 \
-           paths={./pkg/provider/kubernetes/crd/traefikio/v1alpha1/...,./pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1/...} \
+           paths={./pkg/provider/kubernetes/crd/traefikio/v1alpha1/...} \
            output:dir=./docs/content/reference/dynamic-configuration/
 
 echo "Concatenate the CRD definitions for publication and integration tests ..."
 cat "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/traefik.io_*.yaml > "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
-cat "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/traefik.containo.us_*.yaml >> "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
 cp -f "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml "${CURRENT_DIR}"/integration/fixtures/k8s/01-traefik-crd.yml
 
 cp -r "${CURRENT_DIR}/${MODULE_VERSION}"/* "${CURRENT_DIR}"

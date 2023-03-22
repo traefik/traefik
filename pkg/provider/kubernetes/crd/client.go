@@ -175,8 +175,6 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		factoryCrd.Traefik().V1alpha1().TLSStores().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().TraefikServices().Informer().AddEventHandler(eventHandler)
 
-		addContainousInformers(factoryCrd, eventHandler)
-
 		factoryKube := informers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, informers.WithNamespace(ns))
 		factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
@@ -229,7 +227,7 @@ func (c *clientWrapper) GetIngressRoutes() []*v1alpha1.IngressRoute {
 		result = append(result, ings...)
 	}
 
-	return c.appendContainousIngressRoutes(result)
+	return result
 }
 
 func (c *clientWrapper) GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP {
@@ -243,7 +241,7 @@ func (c *clientWrapper) GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP {
 		result = append(result, ings...)
 	}
 
-	return c.appendContainousIngressRouteTCPs(result)
+	return result
 }
 
 func (c *clientWrapper) GetIngressRouteUDPs() []*v1alpha1.IngressRouteUDP {
@@ -257,7 +255,7 @@ func (c *clientWrapper) GetIngressRouteUDPs() []*v1alpha1.IngressRouteUDP {
 		result = append(result, ings...)
 	}
 
-	return c.appendContainousIngressRouteUDPs(result)
+	return result
 }
 
 func (c *clientWrapper) GetMiddlewares() []*v1alpha1.Middleware {
@@ -271,7 +269,7 @@ func (c *clientWrapper) GetMiddlewares() []*v1alpha1.Middleware {
 		result = append(result, middlewares...)
 	}
 
-	return c.appendContainousMiddlewares(result)
+	return result
 }
 
 func (c *clientWrapper) GetMiddlewareTCPs() []*v1alpha1.MiddlewareTCP {
@@ -285,7 +283,7 @@ func (c *clientWrapper) GetMiddlewareTCPs() []*v1alpha1.MiddlewareTCP {
 		result = append(result, middlewares...)
 	}
 
-	return c.appendContainousMiddlewareTCPs(result)
+	return result
 }
 
 // GetTraefikService returns the named service from the given namespace.
@@ -296,10 +294,6 @@ func (c *clientWrapper) GetTraefikService(namespace, name string) (*v1alpha1.Tra
 
 	service, err := c.factoriesCrd[c.lookupNamespace(namespace)].Traefik().V1alpha1().TraefikServices().Lister().TraefikServices(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
-
-	if !exist {
-		return c.getContainousTraefikService(namespace, name)
-	}
 
 	return service, exist, err
 }
@@ -315,7 +309,7 @@ func (c *clientWrapper) GetTraefikServices() []*v1alpha1.TraefikService {
 		result = append(result, traefikServices...)
 	}
 
-	return c.appendContainousTraefikServices(result)
+	return result
 }
 
 // GetServersTransports returns all ServersTransport.
@@ -330,7 +324,7 @@ func (c *clientWrapper) GetServersTransports() []*v1alpha1.ServersTransport {
 		result = append(result, serversTransports...)
 	}
 
-	return c.appendContainousServersTransport(result)
+	return result
 }
 
 // GetServersTransportTCPs returns all ServersTransportTCP.
@@ -345,7 +339,7 @@ func (c *clientWrapper) GetServersTransportTCPs() []*v1alpha1.ServersTransportTC
 		result = append(result, serversTransports...)
 	}
 
-	return c.appendContainousServersTransportTCP(result)
+	return result
 }
 
 // GetTLSOptions returns all TLS options.
@@ -360,7 +354,7 @@ func (c *clientWrapper) GetTLSOptions() []*v1alpha1.TLSOption {
 		result = append(result, options...)
 	}
 
-	return c.appendContainousTLSOptions(result)
+	return result
 }
 
 // GetTLSStores returns all TLS stores.
@@ -375,7 +369,7 @@ func (c *clientWrapper) GetTLSStores() []*v1alpha1.TLSStore {
 		result = append(result, stores...)
 	}
 
-	return c.appendContainousTLSStores(result)
+	return result
 }
 
 // GetService returns the named service from the given namespace.
