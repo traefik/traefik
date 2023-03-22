@@ -10,52 +10,42 @@ import (
 
 	"github.com/pires/go-proxyproto"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
 // Proxy forwards a TCP request to a TCP service.
 type Proxy struct {
-	address          string
-	tcpAddr          *net.TCPAddr
-	terminationDelay time.Duration
-	proxyProtocol    *dynamic.ProxyProtocol
+	address       string
+	proxyProtocol *dynamic.ProxyProtocol
+	dialer        Dialer
 }
 
 // NewProxy creates a new Proxy.
-func NewProxy(address string, terminationDelay time.Duration, proxyProtocol *dynamic.ProxyProtocol) (*Proxy, error) {
+func NewProxy(address string, proxyProtocol *dynamic.ProxyProtocol, dialer Dialer) (*Proxy, error) {
 	if proxyProtocol != nil && (proxyProtocol.Version < 1 || proxyProtocol.Version > 2) {
 		return nil, fmt.Errorf("unknown proxyProtocol version: %d", proxyProtocol.Version)
 	}
 
-	// Creates the tcpAddr only for IP based addresses,
-	// because there is no need to resolve the name on every new connection,
-	// and building it should happen once.
-	var tcpAddr *net.TCPAddr
-	if host, _, err := net.SplitHostPort(address); err == nil && net.ParseIP(host) != nil {
-		tcpAddr, err = net.ResolveTCPAddr("tcp", address)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return &Proxy{
-		address:          address,
-		tcpAddr:          tcpAddr,
-		terminationDelay: terminationDelay,
-		proxyProtocol:    proxyProtocol,
+		address:       address,
+		proxyProtocol: proxyProtocol,
+		dialer:        dialer,
 	}, nil
 }
 
 // ServeTCP forwards the connection to a service.
 func (p *Proxy) ServeTCP(conn WriteCloser) {
-	log.Debug().Msgf("Handling connection from %s to %s", conn.RemoteAddr(), p.address)
+	log.Debug().
+		Str("address", p.address).
+		Str("remoteAddr", conn.RemoteAddr().String()).
+		Msg("Handling TCP connection")
 
 	// needed because of e.g. server.trackedConnection
 	defer conn.Close()
 
 	connBackend, err := p.dialBackend()
 	if err != nil {
-		log.Error().Err(err).Msg("Error while connecting to backend")
+		log.Error().Err(err).Msg("Error while dialing backend")
 		return
 	}
 
@@ -66,7 +56,7 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	if p.proxyProtocol != nil && p.proxyProtocol.Version > 0 && p.proxyProtocol.Version < 3 {
 		header := proxyproto.HeaderProxyFromAddrs(byte(p.proxyProtocol.Version), conn.RemoteAddr(), conn.LocalAddr())
 		if _, err := header.WriteTo(connBackend); err != nil {
-			log.Error().Err(err).Msg("Error while writing proxy protocol headers to backend connection")
+			log.Error().Err(err).Msg("Error while writing TCP proxy protocol headers to backend connection")
 			return
 		}
 	}
@@ -80,30 +70,22 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 		// This allows to not report an RST packet sent by the peer as an error,
 		// as it is an abrupt but possible end for the TCP session
 		if isReadConnResetError(err) {
-			log.Debug().Err(err).Msg("Error during connection")
+			log.Debug().Err(err).Msg("Error while handling TCP connection")
 		} else {
-			log.Error().Err(err).Msg("Error during connection")
+			log.Error().Err(err).Msg("Error while handling TCP connection")
 		}
 	}
 
 	<-errChan
 }
 
-func (p Proxy) dialBackend() (*net.TCPConn, error) {
-	// Dial using directly the TCPAddr for IP based addresses.
-	if p.tcpAddr != nil {
-		return net.DialTCP("tcp", nil, p.tcpAddr)
-	}
-
-	log.Debug().Msgf("Dial with lookup to address %s", p.address)
-
-	// Dial with DNS lookup for host based addresses.
-	conn, err := net.Dial("tcp", p.address)
+func (p Proxy) dialBackend() (WriteCloser, error) {
+	conn, err := p.dialer.Dial("tcp", p.address)
 	if err != nil {
 		return nil, err
 	}
 
-	return conn.(*net.TCPConn), nil
+	return conn.(WriteCloser), nil
 }
 
 func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
@@ -119,16 +101,16 @@ func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 		// In that case, logging the error is superfluous,
 		// as in the first place we should not have needed to call CloseWrite.
 		if !isSocketNotConnectedError(errClose) {
-			log.Debug().Err(errClose).Msg("Error while terminating connection")
+			log.Debug().Err(errClose).Msg("Error while terminating TCP connection")
 		}
 
 		return
 	}
 
-	if p.terminationDelay >= 0 {
-		err := dst.SetReadDeadline(time.Now().Add(p.terminationDelay))
+	if p.dialer.TerminationDelay() >= 0 {
+		err := dst.SetReadDeadline(time.Now().Add(p.dialer.TerminationDelay()))
 		if err != nil {
-			log.Debug().Err(err).Msg("Error while setting deadline")
+			log.Debug().Err(err).Msg("Error while setting TCP connection deadline")
 		}
 	}
 }

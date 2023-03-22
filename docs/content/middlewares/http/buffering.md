@@ -26,7 +26,7 @@ labels:
 
 ```yaml tab="Kubernetes"
 # Sets the maximum request body to 2MB
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: limit
@@ -38,18 +38,6 @@ spec:
 ```yaml tab="Consul Catalog"
 # Sets the maximum request body to 2MB
 - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes": "2000000"
-}
-```
-
-```yaml tab="Rancher"
-# Sets the maximum request body to 2MB
-labels:
-  - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
 ```
 
 ```yaml tab="File (YAML)"
@@ -84,7 +72,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: limit
@@ -95,17 +83,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes": "2000000"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
 ```
 
 ```yaml tab="File (YAML)"
@@ -134,7 +111,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: limit
@@ -145,17 +122,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.limit.buffering.memRequestBodyBytes=2000000"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.limit.buffering.memRequestBodyBytes": "2000000"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.limit.buffering.memRequestBodyBytes=2000000"
 ```
 
 ```yaml tab="File (YAML)"
@@ -186,7 +152,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: limit
@@ -197,17 +163,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.limit.buffering.maxResponseBodyBytes=2000000"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.limit.buffering.maxResponseBodyBytes": "2000000"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.limit.buffering.maxResponseBodyBytes=2000000"
 ```
 
 ```yaml tab="File (YAML)"
@@ -236,7 +191,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: limit
@@ -247,17 +202,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.limit.buffering.memResponseBodyBytes=2000000"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.limit.buffering.memResponseBodyBytes": "2000000"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.limit.buffering.memResponseBodyBytes=2000000"
 ```
 
 ```yaml tab="File (YAML)"
@@ -288,7 +232,7 @@ You can have the Buffering middleware replay the request using `retryExpression`
     ```
 
     ```yaml tab="Kubernetes"
-    apiVersion: traefik.containo.us/v1alpha1
+    apiVersion: traefik.io/v1alpha1
     kind: Middleware
     metadata:
       name: limit
@@ -299,17 +243,6 @@ You can have the Buffering middleware replay the request using `retryExpression`
 
     ```yaml tab="Consul Catalog"
     - "traefik.http.middlewares.limit.buffering.retryExpression=IsNetworkError() && Attempts() < 2"
-    ```
-
-    ```json tab="Marathon"
-    "labels": {
-      "traefik.http.middlewares.limit.buffering.retryExpression": "IsNetworkError() && Attempts() < 2"
-    }
-    ```
-
-    ```yaml tab="Rancher"
-    labels:
-      - "traefik.http.middlewares.limit.buffering.retryExpression=IsNetworkError() && Attempts() < 2"
     ```
 
     ```yaml tab="File (YAML)"

@@ -6,12 +6,13 @@ import (
 	"crypto/tls"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/static"
-	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/config/static"
+	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
 // LocalhostCert is a PEM-encoded TLS cert with SAN IPs
@@ -92,7 +93,7 @@ func TestHTTP3AdvertisedPort(t *testing.T) {
 		HTTP3: &static.HTTP3Config{
 			AdvertisedPort: 8080,
 		},
-	}, nil)
+	}, nil, nil)
 	require.NoError(t, err)
 
 	router, err := tcprouter.NewRouter()
@@ -112,6 +113,9 @@ func TestHTTP3AdvertisedPort(t *testing.T) {
 		InsecureSkipVerify: true,
 	})
 	require.NoError(t, err)
+
+	// We are racing with the http3Server readiness happening in the goroutine starting the entrypoint
+	time.Sleep(time.Second)
 
 	request, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:8090", nil)
 	require.NoError(t, err)

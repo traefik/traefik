@@ -34,6 +34,7 @@
 			],
 			"service": "default-http-app-1-my-gateway-web-1c0cf64bde37d9d0df06-wrr",
 			"rule": "Host(`foo.com`) \u0026\u0026 Path(`/bar`)",
+			"priority": 31,
 			"status": "enabled",
 			"using": [
 				"web"
@@ -45,6 +46,7 @@
 			],
 			"service": "default-http-app-1-my-https-gateway-websecure-1c0cf64bde37d9d0df06-wrr",
 			"rule": "Host(`foo.com`) \u0026\u0026 Path(`/bar`)",
+			"priority": 31,
 			"tls": {},
 			"status": "enabled",
 			"using": [
@@ -122,10 +124,10 @@
 			"loadBalancer": {
 				"servers": [
 					{
-						"url": "http://10.42.0.6:80"
+						"url": "http://10.42.0.3:80"
 					},
 					{
-						"url": "http://10.42.0.7:80"
+						"url": "http://10.42.0.4:80"
 					}
 				],
 				"passHostHeader": true,
@@ -135,8 +137,8 @@
 			},
 			"status": "enabled",
 			"serverStatus": {
-				"http://10.42.0.6:80": "UP",
-				"http://10.42.0.7:80": "UP"
+				"http://10.42.0.3:80": "UP",
+				"http://10.42.0.4:80": "UP"
 			}
 		},
 		"noop@internal": {
@@ -150,6 +152,7 @@
 			],
 			"service": "default-tcp-app-1-my-tcp-gateway-footcp-e3b0c44298fc1c149afb-wrr-0",
 			"rule": "HostSNI(`*`)",
+			"priority": -1,
 			"status": "enabled",
 			"using": [
 				"footcp"
@@ -161,6 +164,7 @@
 			],
 			"service": "default-tcp-app-1-my-tls-gateway-footlsterminate-e3b0c44298fc1c149afb-wrr-0",
 			"rule": "HostSNI(`*`)",
+			"priority": -1,
 			"tls": {
 				"passthrough": false
 			},
@@ -175,6 +179,7 @@
 			],
 			"service": "default-tls-app-1-my-tls-gateway-footlspassthrough-2279fe75c5156dc5eb26-wrr-0",
 			"rule": "HostSNI(`foo.bar`)",
+			"priority": 18,
 			"tls": {
 				"passthrough": true
 			},
@@ -229,13 +234,12 @@
 		},
 		"default-whoamitcp-8080@kubernetesgateway": {
 			"loadBalancer": {
-				"terminationDelay": 100,
 				"servers": [
 					{
 						"address": "10.42.0.2:8080"
 					},
 					{
-						"address": "10.42.0.4:8080"
+						"address": "10.42.0.6:8080"
 					}
 				]
 			},

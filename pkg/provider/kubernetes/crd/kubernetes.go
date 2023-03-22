@@ -10,8 +10,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -19,14 +21,14 @@ import (
 	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/job"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/tls"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/job"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -101,6 +103,8 @@ func (p *Provider) Init() error {
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	logger := log.With().Str(logs.ProviderName, providerName).Logger()
 	ctxLog := logger.WithContext(context.Background())
+
+	logger.Warn().Msg("CRDs API Version \"traefik.io/v1alpha1\" will not be supported in Traefik v3 itself. However, an automatic migration path to the next version will be available.")
 
 	k8sClient, err := p.newK8sClient(ctxLog)
 	if err != nil {
@@ -393,9 +397,84 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		}
 	}
 
+	for _, serversTransportTCP := range client.GetServersTransportTCPs() {
+		logger := log.Ctx(ctx).With().Str(logs.ServersTransportName, serversTransportTCP.Name).Logger()
+
+		var tcpServerTransport dynamic.TCPServersTransport
+		tcpServerTransport.SetDefaults()
+
+		if serversTransportTCP.Spec.DialTimeout != nil {
+			err := tcpServerTransport.DialTimeout.Set(serversTransportTCP.Spec.DialTimeout.String())
+			if err != nil {
+				logger.Error().Err(err).Msg("Error while reading DialTimeout")
+			}
+		}
+
+		if serversTransportTCP.Spec.DialKeepAlive != nil {
+			err := tcpServerTransport.DialKeepAlive.Set(serversTransportTCP.Spec.DialKeepAlive.String())
+			if err != nil {
+				logger.Error().Err(err).Msg("Error while reading DialKeepAlive")
+			}
+		}
+
+		if serversTransportTCP.Spec.TerminationDelay != nil {
+			err := tcpServerTransport.TerminationDelay.Set(serversTransportTCP.Spec.TerminationDelay.String())
+			if err != nil {
+				logger.Error().Err(err).Msg("Error while reading TerminationDelay")
+			}
+		}
+
+		if serversTransportTCP.Spec.TLS != nil {
+			var rootCAs []tls.FileOrContent
+			for _, secret := range serversTransportTCP.Spec.TLS.RootCAsSecrets {
+				caSecret, err := loadCASecret(serversTransportTCP.Namespace, secret, client)
+				if err != nil {
+					logger.Error().
+						Err(err).
+						Str("rootCAs", secret).
+						Msg("Error while loading rootCAs")
+					continue
+				}
+
+				rootCAs = append(rootCAs, tls.FileOrContent(caSecret))
+			}
+
+			var certs tls.Certificates
+			for _, secret := range serversTransportTCP.Spec.TLS.CertificatesSecrets {
+				tlsCert, tlsKey, err := loadAuthTLSSecret(serversTransportTCP.Namespace, secret, client)
+				if err != nil {
+					logger.Error().
+						Err(err).
+						Str("certificates", secret).
+						Msg("Error while loading certificates")
+					continue
+				}
+
+				certs = append(certs, tls.Certificate{
+					CertFile: tls.FileOrContent(tlsCert),
+					KeyFile:  tls.FileOrContent(tlsKey),
+				})
+			}
+
+			tcpServerTransport.TLS = &dynamic.TLSClientConfig{
+				ServerName:         serversTransportTCP.Spec.TLS.ServerName,
+				InsecureSkipVerify: serversTransportTCP.Spec.TLS.InsecureSkipVerify,
+				RootCAs:            rootCAs,
+				Certificates:       certs,
+				PeerCertURI:        serversTransportTCP.Spec.TLS.PeerCertURI,
+			}
+
+			tcpServerTransport.TLS.Spiffe = serversTransportTCP.Spec.TLS.Spiffe
+		}
+
+		id := provider.Normalize(makeID(serversTransportTCP.Namespace, serversTransportTCP.Name))
+		conf.TCP.ServersTransports[id] = &tcpServerTransport
+	}
+
 	return conf
 }
 
+// getServicePort always returns a valid port, an error otherwise.
 func getServicePort(svc *corev1.Service, port intstr.IntOrString) (*corev1.ServicePort, error) {
 	if svc == nil {
 		return nil, errors.New("service is not defined")
@@ -426,6 +505,18 @@ func getServicePort(svc *corev1.Service, port intstr.IntOrString) (*corev1.Servi
 	}
 
 	return &corev1.ServicePort{Port: port.IntVal}, nil
+}
+
+func getNativeServiceAddress(service corev1.Service, svcPort corev1.ServicePort) (string, error) {
+	if service.Spec.ClusterIP == "None" {
+		return "", fmt.Errorf("no clusterIP on headless service: %s/%s", service.Namespace, service.Name)
+	}
+
+	if service.Spec.ClusterIP == "" {
+		return "", fmt.Errorf("no clusterIP found for service: %s/%s", service.Namespace, service.Name)
+	}
+
+	return net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(svcPort.Port))), nil
 }
 
 func createPluginMiddleware(k8sClient Client, ns string, plugins map[string]apiextensionv1.JSON) (map[string]dynamic.PluginConf, error) {

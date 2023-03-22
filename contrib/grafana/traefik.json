@@ -15,7 +15,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "9.2.2"
+      "version": "9.3.1"
     },
     {
       "type": "panel",
@@ -64,8 +64,10 @@
       }
     ]
   },
-  "editable": true,
+  "description": "Official dashboard for Standalone Traefik",
+  "editable": false,
   "fiscalYearStartMonth": 0,
+  "gnetId": 17346,
   "graphTooltip": 0,
   "id": null,
   "links": [],
@@ -133,7 +135,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "9.2.2",
+      "pluginVersion": "9.3.1",
       "targets": [
         {
           "datasource": {
@@ -470,7 +472,7 @@
               }
             ]
           },
-          "unit": "ms"
+          "unit": "s"
         },
         "overrides": []
       },
@@ -669,8 +671,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   }
                 ]
               },
@@ -764,8 +765,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   }
                 ]
               },
@@ -873,8 +873,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -887,10 +886,10 @@
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 12,
+            "h": 12,
+            "w": 8,
             "x": 0,
-            "y": 27
+            "y": 19
           },
           "id": 17,
           "options": {
@@ -900,7 +899,7 @@
                 "max"
               ],
               "displayMode": "table",
-              "placement": "right",
+              "placement": "bottom",
               "showLegend": true,
               "sortBy": "Mean",
               "sortDesc": true
@@ -973,8 +972,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -987,10 +985,10 @@
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 27
+            "h": 12,
+            "w": 8,
+            "x": 8,
+            "y": 19
           },
           "id": 18,
           "options": {
@@ -1000,7 +998,7 @@
                 "max"
               ],
               "displayMode": "table",
-              "placement": "right",
+              "placement": "bottom",
               "showLegend": true,
               "sortBy": "Mean",
               "sortDesc": true
@@ -1073,8 +1071,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1087,10 +1084,10 @@
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 35
+            "h": 12,
+            "w": 8,
+            "x": 16,
+            "y": 19
           },
           "id": 19,
           "options": {
@@ -1100,7 +1097,7 @@
                 "max"
               ],
               "displayMode": "table",
-              "placement": "right",
+              "placement": "bottom",
               "showLegend": true,
               "sortBy": "Mean",
               "sortDesc": true
@@ -1173,8 +1170,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1189,8 +1185,8 @@
           "gridPos": {
             "h": 8,
             "w": 12,
-            "x": 12,
-            "y": 35
+            "x": 0,
+            "y": 31
           },
           "id": 20,
           "options": {
@@ -1240,6 +1236,7 @@
               "custom": {
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
+                "axisGridShow": true,
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
@@ -1272,8 +1269,105 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "binBps"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 31
+          },
+          "id": 24,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true,
+              "sortBy": "Mean",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "editorMode": "code",
+              "expr": "topk(15,\n    label_replace(\n        sum by (service,method) \n          (rate(traefik_service_responses_bytes_total{service=~\"$service.*\",protocol=\"http\"}[1m])) > 0,\n        \"service\", \"$1\", \"service\", \"([^-]+-[^-]+).*\")\n)",
+              "legendFormat": "{{method}} on {{service}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Responses Size",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "description": "",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1289,7 +1383,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 43
+            "y": 39
           },
           "id": 2,
           "options": {
@@ -1371,8 +1465,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1388,7 +1481,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 43
+            "y": 39
           },
           "id": 21,
           "options": {
@@ -1444,7 +1537,8 @@
         "hide": 0,
         "includeAll": false,
         "multi": false,
-        "name": "datasource",
+        "name": "DS_PROMETHEUS",
+        "label": "datasource",
         "options": [],
         "query": "prometheus",
         "refresh": 1,
@@ -1491,7 +1585,7 @@
           "refId": "StandardVariableQuery"
         },
         "refresh": 2,
-        "regex": "/([^-]+-[^-]+).*/",
+        "regex": "",
         "skipUrlSync": false,
         "sort": 1,
         "type": "query"
@@ -1505,7 +1599,7 @@
   "timepicker": {},
   "timezone": "",
   "title": "Traefik Official Standalone Dashboard",
-  "uid": "n5bu_kv4k",
-  "version": 3,
+  "uid": "n5bu_kv45",
+  "version": 6,
   "weekStart": ""
 }

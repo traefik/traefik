@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func Test_parseRouterConfig(t *testing.T) {
@@ -106,6 +106,7 @@ func Test_parseServiceConfig(t *testing.T) {
 				"traefik.ingress.kubernetes.io/service.serversscheme":          "protocol",
 				"traefik.ingress.kubernetes.io/service.serverstransport":       "foobar@file",
 				"traefik.ingress.kubernetes.io/service.passhostheader":         "true",
+				"traefik.ingress.kubernetes.io/service.nativelb":               "true",
 				"traefik.ingress.kubernetes.io/service.sticky.cookie":          "true",
 				"traefik.ingress.kubernetes.io/service.sticky.cookie.httponly": "true",
 				"traefik.ingress.kubernetes.io/service.sticky.cookie.name":     "foobar",
@@ -125,6 +126,7 @@ func Test_parseServiceConfig(t *testing.T) {
 					ServersScheme:    "protocol",
 					ServersTransport: "foobar@file",
 					PassHostHeader:   Bool(true),
+					NativeLB:         true,
 				},
 			},
 		},

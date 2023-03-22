@@ -6,10 +6,29 @@
   insecureSkipVerify = true
   rootCAs = ["foobar", "foobar"]
   maxIdleConnsPerHost = 42
+
   [serversTransport.forwardingTimeouts]
     dialTimeout = "42s"
     responseHeaderTimeout = "42s"
     idleConnTimeout = "42s"
+    readIdleTimeout = "42s"
+    pingTimeout = "42s"
+
+  [serversTransport.spiffe]
+    ids = ["foobar", "foobar"]
+    trustDomain = "foobar"
+
+[tcpServersTransport]
+  dialTimeout = "42s"
+  dialKeepAlive = "42s"
+
+  [tcpServersTransport.tls]
+    insecureSkipVerify = true
+    rootCAs = ["foobar", "foobar"]
+
+    [tcpServersTransport.tls.spiffe]
+      ids = ["foobar", "foobar"]
+      trustDomain = "foobar"
 
 [entryPoints]
   [entryPoints.EntryPoint0]
@@ -79,28 +98,6 @@
     watch = true
     filename = "foobar"
     debugLogGeneratedTemplate = true
-  [providers.marathon]
-    constraints = "foobar"
-    trace = true
-    watch = true
-    endpoint = "foobar"
-    defaultRule = "foobar"
-    exposedByDefault = true
-    dcosToken = "foobar"
-    dialerTimeout = "42s"
-    responseHeaderTimeout = "42s"
-    tlsHandshakeTimeout = "42s"
-    keepAlive = "42s"
-    forceTaskHostname = true
-    respectReadinessChecks = true
-    [providers.marathon.tls]
-      ca = "foobar"
-      cert = "foobar"
-      key = "foobar"
-      insecureSkipVerify = true
-    [providers.marathon.basic]
-      httpBasicAuthUser = "foobar"
-      httpBasicPassword = "foobar"
   [providers.kubernetesIngress]
     endpoint = "foobar"
     token = "foobar"
@@ -111,6 +108,7 @@
     throttleDuration = "42s"
     allowEmptyServices = true
     allowExternalNameServices = true
+    disableIngressClassLookup = true
     [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
       hostname = "foobar"
@@ -135,15 +133,6 @@
     throttleDuration = "42s"
   [providers.rest]
     insecure = true
-  [providers.rancher]
-    constraints = "foobar"
-    watch = true
-    defaultRule = "foobar"
-    exposedByDefault = true
-    enableServiceHealthFilter = true
-    refreshSeconds = 42
-    intervalPoll = true
-    prefix = "foobar"
   [providers.consulCatalog]
     constraints = "foobar"
     prefix = "foobar"
@@ -267,6 +256,9 @@
     addServicesLabels = true
     entryPoint = "foobar"
     manualRouting = true
+    [metrics.prometheus.headerLabels]
+      label1 = "foobar"
+      label2 = "foobar"
   [metrics.datadog]
     address = "foobar"
     pushInterval = "42s"
@@ -281,20 +273,6 @@
     addRoutersLabels = true
     addServicesLabels = true
     prefix = "foobar"
-  [metrics.influxDB]
-    address = "foobar"
-    protocol = "foobar"
-    pushInterval = "42s"
-    database = "foobar"
-    retentionPolicy = "foobar"
-    username = "foobar"
-    password = "foobar"
-    addEntryPointsLabels = true
-    addRoutersLabels = true
-    addServicesLabels = true
-    [metrics.influxDB.additionalLabels]
-      name0 = "foobar"
-      name1 = "foobar"
   [metrics.influxDB2]
     address = "foobar"
     token = "foobar"
@@ -384,6 +362,7 @@
     sampleRate = 42.0
   [tracing.datadog]
     localAgentHostPort = "foobar"
+    localAgentSocket = "foobar"
     [tracing.datadog.globalTags]
       tag1 = "foobar"
       tag2 = "foobar"
@@ -461,7 +440,7 @@
 
 [experimental]
   kubernetesGateway = true
-  hub = true
+  http3 = true
   [experimental.plugins]
     [experimental.plugins.Descriptor0]
       moduleName = "foobar"

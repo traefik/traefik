@@ -9,7 +9,7 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/tracing"
 )
 
 func TestNewForwarder(t *testing.T) {

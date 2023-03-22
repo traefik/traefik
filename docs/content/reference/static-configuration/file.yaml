@@ -1,7 +1,7 @@
 global:
   checkNewVersion: true
   sendAnonymousUsage: true
-serversTransport:
+serversTransports:
   insecureSkipVerify: true
   rootCAs:
     - foobar
@@ -11,6 +11,26 @@ serversTransport:
     dialTimeout: 42s
     responseHeaderTimeout: 42s
     idleConnTimeout: 42s
+    readIdleTimeout: 42s
+    pingTimeout: 42s
+  spiffe:
+    ids:
+      - foobar
+      - foobar
+    trustDomain: foobar
+tcpServersTransport:
+  dialTimeout: 42s
+  dialKeepAlive: 42s
+  tls:
+    insecureSkipVerify: true
+    rootCAs:
+      - foobar
+      - foobar
+    spiffe:
+      ids:
+        - foobar
+        - foobar
+      trustDomain: foobar
 entryPoints:
   EntryPoint0:
     address: foobar
@@ -85,28 +105,6 @@ providers:
     watch: true
     filename: foobar
     debugLogGeneratedTemplate: true
-  marathon:
-    constraints: foobar
-    trace: true
-    watch: true
-    endpoint: foobar
-    defaultRule: foobar
-    exposedByDefault: true
-    dcosToken: foobar
-    tls:
-      ca: foobar
-      cert: foobar
-      key: foobar
-      insecureSkipVerify: true
-    dialerTimeout: 42s
-    responseHeaderTimeout: 42s
-    tlsHandshakeTimeout: 42s
-    keepAlive: 42s
-    forceTaskHostname: true
-    basic:
-      httpBasicAuthUser: foobar
-      httpBasicPassword: foobar
-    respectReadinessChecks: true
   kubernetesIngress:
     endpoint: foobar
     token: foobar
@@ -119,6 +117,7 @@ providers:
     throttleDuration: 42s
     allowEmptyServices: true
     allowExternalNameServices: true
+    disableIngressClassLookup: true
     ingressEndpoint:
       ip: foobar
       hostname: foobar
@@ -147,15 +146,6 @@ providers:
     throttleDuration: 42s
   rest:
     insecure: true
-  rancher:
-    constraints: foobar
-    watch: true
-    defaultRule: foobar
-    exposedByDefault: true
-    enableServiceHealthFilter: true
-    refreshSeconds: 42
-    intervalPoll: true
-    prefix: foobar
   consulCatalog:
     constraints: foobar
     prefix: foobar
@@ -295,6 +285,9 @@ metrics:
     addServicesLabels: true
     entryPoint: foobar
     manualRouting: true
+    headerLabels:
+      label1: foobar
+      label2: foobar
   datadog:
     address: foobar
     pushInterval: 42s
@@ -309,20 +302,6 @@ metrics:
     addRoutersLabels: true
     addServicesLabels: true
     prefix: foobar
-  influxDB:
-    address: foobar
-    protocol: foobar
-    pushInterval: 42s
-    database: foobar
-    retentionPolicy: foobar
-    username: foobar
-    password: foobar
-    addEntryPointsLabels: true
-    addRoutersLabels: true
-    addServicesLabels: true
-    additionalLabels:
-      name0: foobar
-      name1: foobar
   influxDB2:
     address: foobar
     token: foobar
@@ -413,6 +392,7 @@ tracing:
     sampleRate: 42
   datadog:
     localAgentHostPort: foobar
+    localAgentSocket: foobar
     globalTags:
       tag1: foobar
       tag2: foobar
@@ -489,7 +469,7 @@ hub:
     key: foobar
 experimental:
   kubernetesGateway: true
-  hub: true
+  http3: true
   plugins:
     Descriptor0:
       moduleName: foobar

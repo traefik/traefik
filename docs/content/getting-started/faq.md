@@ -181,3 +181,23 @@ and the message should help in figuring out the mistake(s) in the configuration,
 
 When using the file provider,
 one easy way to check if the dynamic configuration is well-formed is to validate it with the [JSON Schema of the dynamic configuration](https://json.schemastore.org/traefik-v2-file-provider.json).
+
+## Why does Let's Encrypt wildcard certificate renewal/generation with DNS challenge fail?
+
+If you're trying to renew wildcard certificates, with DNS challenge,
+and you're getting errors such as:
+
+```txt
+msg="Error renewing certificate from LE: {example.com [*.example.com]}"
+providerName=letsencrypt.acme error="error: one or more domains had a problem:
+[example.com] acme: error presenting token: gandiv5: unexpected authZone example.com. for fqdn example.com."
+```
+
+then it could be due to `CNAME` support.
+
+In which case, you should make sure your infrastructure is properly set up for a
+`DNS` challenge that does not rely on `CNAME`, and you should try disabling `CNAME` support with:
+
+```bash
+LEGO_DISABLE_CNAME_SUPPORT=true
+```

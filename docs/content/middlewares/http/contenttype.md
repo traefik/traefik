@@ -26,7 +26,7 @@ labels:
 
 ```yaml tab="Kubernetes"
 # Enable auto-detection
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: autodetect
@@ -37,18 +37,6 @@ spec:
 ```yaml tab="Consul Catalog"
 # Enable auto-detection
 - "traefik.http.middlewares.autodetect.contenttype=true"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.autodetect.contenttype": "true"
-}
-```
-
-```yaml tab="Rancher"
-# Enable auto-detection
-labels:
-  - "traefik.http.middlewares.autodetect.contenttype=true"
 ```
 
 ```yaml tab="File (YAML)"

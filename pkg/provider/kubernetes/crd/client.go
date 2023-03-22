@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/informers/externalversions"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
-	"github.com/traefik/traefik/v2/pkg/version"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
+	"github.com/traefik/traefik/v3/pkg/version"
 	corev1 "k8s.io/api/core/v1"
 	kubeerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,6 +40,7 @@ type Client interface {
 	GetTraefikServices() []*v1alpha1.TraefikService
 	GetTLSOptions() []*v1alpha1.TLSOption
 	GetServersTransports() []*v1alpha1.ServersTransport
+	GetServersTransportTCPs() []*v1alpha1.ServersTransportTCP
 	GetTLSStores() []*v1alpha1.TLSStore
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
@@ -170,6 +171,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		factoryCrd.Traefik().V1alpha1().IngressRouteUDPs().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().TLSOptions().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().ServersTransports().Informer().AddEventHandler(eventHandler)
+		factoryCrd.Traefik().V1alpha1().ServersTransportTCPs().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().TLSStores().Informer().AddEventHandler(eventHandler)
 		factoryCrd.Traefik().V1alpha1().TraefikServices().Informer().AddEventHandler(eventHandler)
 
@@ -300,11 +302,11 @@ func (c *clientWrapper) GetTraefikServices() []*v1alpha1.TraefikService {
 	var result []*v1alpha1.TraefikService
 
 	for ns, factory := range c.factoriesCrd {
-		ings, err := factory.Traefik().V1alpha1().TraefikServices().Lister().List(labels.Everything())
+		traefikServices, err := factory.Traefik().V1alpha1().TraefikServices().Lister().List(labels.Everything())
 		if err != nil {
 			log.Error().Err(err).Msgf("Failed to list Traefik services in namespace %s", ns)
 		}
-		result = append(result, ings...)
+		result = append(result, traefikServices...)
 	}
 
 	return result
@@ -317,7 +319,22 @@ func (c *clientWrapper) GetServersTransports() []*v1alpha1.ServersTransport {
 	for ns, factory := range c.factoriesCrd {
 		serversTransports, err := factory.Traefik().V1alpha1().ServersTransports().Lister().List(labels.Everything())
 		if err != nil {
-			log.Error().Err(err).Msgf("Failed to list servers transport in namespace %s", ns)
+			log.Error().Err(err).Str("namespace", ns).Msg("Failed to list servers transport in namespace")
+		}
+		result = append(result, serversTransports...)
+	}
+
+	return result
+}
+
+// GetServersTransportTCPs returns all ServersTransportTCP.
+func (c *clientWrapper) GetServersTransportTCPs() []*v1alpha1.ServersTransportTCP {
+	var result []*v1alpha1.ServersTransportTCP
+
+	for ns, factory := range c.factoriesCrd {
+		serversTransports, err := factory.Traefik().V1alpha1().ServersTransportTCPs().Lister().List(labels.Everything())
+		if err != nil {
+			log.Error().Err(err).Str("namespace", ns).Msg("Failed to list servers transport TCP in namespace")
 		}
 		result = append(result, serversTransports...)
 	}
@@ -401,15 +418,6 @@ func (c *clientWrapper) lookupNamespace(ns string) string {
 	return ns
 }
 
-// translateNotFoundError will translate a "not found" error to a boolean return
-// value which indicates if the resource exists and a nil error.
-func translateNotFoundError(err error) (bool, error) {
-	if kubeerror.IsNotFound(err) {
-		return false, nil
-	}
-	return err == nil, err
-}
-
 // isWatchedNamespace checks to ensure that the namespace is being watched before we request
 // it to ensure we don't panic by requesting an out-of-watch object.
 func (c *clientWrapper) isWatchedNamespace(ns string) bool {
@@ -422,4 +430,13 @@ func (c *clientWrapper) isWatchedNamespace(ns string) bool {
 		}
 	}
 	return false
+}
+
+// translateNotFoundError will translate a "not found" error to a boolean return
+// value which indicates if the resource exists and a nil error.
+func translateNotFoundError(err error) (bool, error) {
+	if kubeerror.IsNotFound(err) {
+		return false, nil
+	}
+	return err == nil, err
 }

@@ -252,3 +252,17 @@ apiVersion: v1
 metadata:
   name: whoami-without-endpoints-subsets
   namespace: default
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: native-svc
+  namespace: default
+
+spec:
+  ports:
+    - name: web
+      port: 80
+  type: ClusterIP
+  clusterIP: 10.10.0.1

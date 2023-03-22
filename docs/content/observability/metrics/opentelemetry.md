@@ -208,7 +208,7 @@ metrics:
 
 #### `path`
 
-_Required, Default="/v1/traces"_
+_Required, Default="/v1/metrics"_
 
 Allows to override the default URL path used for sending metrics.
 This option has no effect when using gRPC transport.
@@ -216,17 +216,17 @@ This option has no effect when using gRPC transport.
 ```yaml tab="File (YAML)"
 metrics:
   openTelemetry:
-    path: /foo/v1/traces
+    path: /foo/v1/metrics
 ```
 
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.openTelemetry]
-    path = "/foo/v1/traces"
+    path = "/foo/v1/metrics"
 ```
 
 ```bash tab="CLI"
---metrics.openTelemetry.path=/foo/v1/traces
+--metrics.openTelemetry.path=/foo/v1/metrics
 ```
 
 #### `tls`

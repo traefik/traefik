@@ -1,4 +1,4 @@
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: TLSOption
 metadata:
   name: foo
@@ -8,7 +8,7 @@ spec:
   minVersion: VersionTLS12
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: test.route

@@ -189,9 +189,6 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 `TRAEFIK_ENTRYPOINTS_<NAME>_UDP_TIMEOUT`:  
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 
-`TRAEFIK_EXPERIMENTAL_HUB`:  
-Enable the Traefik Hub provider. (Default: ```false```)
-
 `TRAEFIK_EXPERIMENTAL_KUBERNETESGATEWAY`:  
 Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 
@@ -288,9 +285,6 @@ Prefix to use for metrics collection. (Default: ```traefik```)
 `TRAEFIK_METRICS_DATADOG_PUSHINTERVAL`:  
 Datadog push interval. (Default: ```10```)
 
-`TRAEFIK_METRICS_INFLUXDB`:  
-InfluxDB metrics exporter type. (Default: ```false```)
-
 `TRAEFIK_METRICS_INFLUXDB2`:  
 InfluxDB v2 metrics exporter type. (Default: ```false```)
 
@@ -320,39 +314,6 @@ InfluxDB v2 push interval. (Default: ```10```)
 
 `TRAEFIK_METRICS_INFLUXDB2_TOKEN`:  
 InfluxDB v2 access token.
-
-`TRAEFIK_METRICS_INFLUXDB_ADDENTRYPOINTSLABELS`:  
-Enable metrics on entry points. (Default: ```true```)
-
-`TRAEFIK_METRICS_INFLUXDB_ADDITIONALLABELS_<NAME>`:  
-Additional labels (influxdb tags) on all metrics
-
-`TRAEFIK_METRICS_INFLUXDB_ADDRESS`:  
-InfluxDB address. (Default: ```localhost:8089```)
-
-`TRAEFIK_METRICS_INFLUXDB_ADDROUTERSLABELS`:  
-Enable metrics on routers. (Default: ```false```)
-
-`TRAEFIK_METRICS_INFLUXDB_ADDSERVICESLABELS`:  
-Enable metrics on services. (Default: ```true```)
-
-`TRAEFIK_METRICS_INFLUXDB_DATABASE`:  
-InfluxDB database used when protocol is http.
-
-`TRAEFIK_METRICS_INFLUXDB_PASSWORD`:  
-InfluxDB password (only with http).
-
-`TRAEFIK_METRICS_INFLUXDB_PROTOCOL`:  
-InfluxDB address protocol (udp or http). (Default: ```udp```)
-
-`TRAEFIK_METRICS_INFLUXDB_PUSHINTERVAL`:  
-InfluxDB push interval. (Default: ```10```)
-
-`TRAEFIK_METRICS_INFLUXDB_RETENTIONPOLICY`:  
-InfluxDB retention policy used when protocol is http.
-
-`TRAEFIK_METRICS_INFLUXDB_USERNAME`:  
-InfluxDB username (only with http).
 
 `TRAEFIK_METRICS_OPENTELEMETRY`:  
 OpenTelemetry metrics exporter type. (Default: ```false```)
@@ -416,6 +377,9 @@ Buckets for latency metrics. (Default: ```0.100000, 0.300000, 1.200000, 5.000000
 
 `TRAEFIK_METRICS_PROMETHEUS_ENTRYPOINT`:  
 EntryPoint (Default: ```traefik```)
+
+`TRAEFIK_METRICS_PROMETHEUS_HEADERLABELS_<NAME>`:  
+Defines the extra labels for the requests_total metrics, and for each of them, the request header containing the value for this label.
 
 `TRAEFIK_METRICS_PROMETHEUS_MANUALROUTING`:  
 Manual routing (Default: ```false```)
@@ -771,6 +735,9 @@ Allow ExternalName services. (Default: ```false```)
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_CERTAUTHFILEPATH`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_DISABLEINGRESSCLASSLOOKUP`:  
+Disables the lookup of IngressClasses. (Default: ```false```)
+
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_ENDPOINT`:  
 Kubernetes server endpoint (required for external cluster client).
 
@@ -798,66 +765,6 @@ Ingress refresh throttle duration (Default: ```0```)
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_TOKEN`:  
 Kubernetes bearer token (not needed for in-cluster client).
 
-`TRAEFIK_PROVIDERS_MARATHON`:  
-Enable Marathon backend with default settings. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_MARATHON_BASIC_HTTPBASICAUTHUSER`:  
-Basic authentication User.
-
-`TRAEFIK_PROVIDERS_MARATHON_BASIC_HTTPBASICPASSWORD`:  
-Basic authentication Password.
-
-`TRAEFIK_PROVIDERS_MARATHON_CONSTRAINTS`:  
-Constraints is an expression that Traefik matches against the application's labels to determine whether to create any route for that application.
-
-`TRAEFIK_PROVIDERS_MARATHON_DCOSTOKEN`:  
-DCOSToken for DCOS environment, This will override the Authorization header.
-
-`TRAEFIK_PROVIDERS_MARATHON_DEFAULTRULE`:  
-Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
-
-`TRAEFIK_PROVIDERS_MARATHON_DIALERTIMEOUT`:  
-Set a dialer timeout for Marathon. (Default: ```5```)
-
-`TRAEFIK_PROVIDERS_MARATHON_ENDPOINT`:  
-Marathon server endpoint. You can also specify multiple endpoint for Marathon. (Default: ```http://127.0.0.1:8080```)
-
-`TRAEFIK_PROVIDERS_MARATHON_EXPOSEDBYDEFAULT`:  
-Expose Marathon apps by default. (Default: ```true```)
-
-`TRAEFIK_PROVIDERS_MARATHON_FORCETASKHOSTNAME`:  
-Force to use the task's hostname. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_MARATHON_KEEPALIVE`:  
-Set a TCP Keep Alive time. (Default: ```10```)
-
-`TRAEFIK_PROVIDERS_MARATHON_RESPECTREADINESSCHECKS`:  
-Filter out tasks with non-successful readiness checks during deployments. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_MARATHON_RESPONSEHEADERTIMEOUT`:  
-Set a response header timeout for Marathon. (Default: ```60```)
-
-`TRAEFIK_PROVIDERS_MARATHON_TLSHANDSHAKETIMEOUT`:  
-Set a TLS handshake timeout for Marathon. (Default: ```5```)
-
-`TRAEFIK_PROVIDERS_MARATHON_TLS_CA`:  
-TLS CA
-
-`TRAEFIK_PROVIDERS_MARATHON_TLS_CERT`:  
-TLS cert
-
-`TRAEFIK_PROVIDERS_MARATHON_TLS_INSECURESKIPVERIFY`:  
-TLS insecure skip verify (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_MARATHON_TLS_KEY`:  
-TLS key
-
-`TRAEFIK_PROVIDERS_MARATHON_TRACE`:  
-Display additional provider logs. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_MARATHON_WATCH`:  
-Watch provider. (Default: ```true```)
-
 `TRAEFIK_PROVIDERS_NOMAD`:  
 Enable Nomad backend with default settings. (Default: ```false```)
 
@@ -868,7 +775,7 @@ Constraints is an expression that Traefik matches against the Nomad service's ta
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
 `TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_ADDRESS`:  
-The address of the Nomad server, including scheme and port.
+The address of the Nomad server, including scheme and port. (Default: ```http://127.0.0.1:4646```)
 
 `TRAEFIK_PROVIDERS_NOMAD_ENDPOINT_ENDPOINTWAITTIME`:  
 WaitTime limits how long a Watch will block. If not provided, the agent default values will be used (Default: ```0```)
@@ -911,33 +818,6 @@ Plugins configuration.
 
 `TRAEFIK_PROVIDERS_PROVIDERSTHROTTLEDURATION`:  
 Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time. (Default: ```2```)
-
-`TRAEFIK_PROVIDERS_RANCHER`:  
-Enable Rancher backend with default settings. (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_RANCHER_CONSTRAINTS`:  
-Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
-
-`TRAEFIK_PROVIDERS_RANCHER_DEFAULTRULE`:  
-Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
-
-`TRAEFIK_PROVIDERS_RANCHER_ENABLESERVICEHEALTHFILTER`:  
-Filter services with unhealthy states and inactive states. (Default: ```true```)
-
-`TRAEFIK_PROVIDERS_RANCHER_EXPOSEDBYDEFAULT`:  
-Expose containers by default. (Default: ```true```)
-
-`TRAEFIK_PROVIDERS_RANCHER_INTERVALPOLL`:  
-Poll the Rancher metadata service every 'rancher.refreshseconds' (less accurate). (Default: ```false```)
-
-`TRAEFIK_PROVIDERS_RANCHER_PREFIX`:  
-Prefix used for accessing the Rancher metadata service. (Default: ```latest```)
-
-`TRAEFIK_PROVIDERS_RANCHER_REFRESHSECONDS`:  
-Defines the polling interval in seconds. (Default: ```15```)
-
-`TRAEFIK_PROVIDERS_RANCHER_WATCH`:  
-Watch provider. (Default: ```true```)
 
 `TRAEFIK_PROVIDERS_REDIS`:  
 Enable Redis backend with default settings. (Default: ```false```)
@@ -1020,6 +900,33 @@ Defines the allowed SPIFFE trust domain.
 `TRAEFIK_SPIFFE_WORKLOADAPIADDR`:  
 Defines the workload API address.
 
+`TRAEFIK_TCPSERVERSTRANSPORT_DIALKEEPALIVE`:  
+Defines the interval between keep-alive probes for an active network connection. If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled (Default: ```15```)
+
+`TRAEFIK_TCPSERVERSTRANSPORT_DIALTIMEOUT`:  
+Defines the amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
+
+`TRAEFIK_TCPSERVERSTRANSPORT_TERMINATIONDELAY`:  
+Defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability. (Default: ```0```)
+
+`TRAEFIK_TCPSERVERSTRANSPORT_TLS`:  
+Defines the TLS configuration. (Default: ```false```)
+
+`TRAEFIK_TCPSERVERSTRANSPORT_TLS_INSECURESKIPVERIFY`:  
+Disables SSL certificate verification. (Default: ```false```)
+
+`TRAEFIK_TCPSERVERSTRANSPORT_TLS_ROOTCAS`:  
+Defines a list of CA secret used to validate self-signed certificate
+
+`TRAEFIK_TCPSERVERSTRANSPORT_TLS_SPIFFE`:  
+Defines the SPIFFE TLS configuration. (Default: ```false```)
+
+`TRAEFIK_TCPSERVERSTRANSPORT_TLS_SPIFFE_IDS`:  
+Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
+
+`TRAEFIK_TCPSERVERSTRANSPORT_TLS_SPIFFE_TRUSTDOMAIN`:  
+Defines the allowed SPIFFE trust domain.
+
 `TRAEFIK_TRACING`:  
 OpenTracing configuration. (Default: ```false```)
 
@@ -1037,6 +944,9 @@ Sets a list of key:value tags on all spans.
 
 `TRAEFIK_TRACING_DATADOG_LOCALAGENTHOSTPORT`:  
 Sets the Datadog Agent host:port. (Default: ```localhost:8126```)
+
+`TRAEFIK_TRACING_DATADOG_LOCALAGENTSOCKET`:  
+Sets the socket for the Datadog Agent.
 
 `TRAEFIK_TRACING_DATADOG_PARENTIDHEADERNAME`:  
 Sets the header name used to store the parent ID.

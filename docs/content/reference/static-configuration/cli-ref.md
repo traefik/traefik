@@ -189,9 +189,6 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 `--entrypoints.<name>.udp.timeout`:  
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 
-`--experimental.hub`:  
-Enable the Traefik Hub provider. (Default: ```false```)
-
 `--experimental.kubernetesgateway`:  
 Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 
@@ -288,42 +285,6 @@ Prefix to use for metrics collection. (Default: ```traefik```)
 `--metrics.datadog.pushinterval`:  
 Datadog push interval. (Default: ```10```)
 
-`--metrics.influxdb`:  
-InfluxDB metrics exporter type. (Default: ```false```)
-
-`--metrics.influxdb.addentrypointslabels`:  
-Enable metrics on entry points. (Default: ```true```)
-
-`--metrics.influxdb.additionallabels.<name>`:  
-Additional labels (influxdb tags) on all metrics
-
-`--metrics.influxdb.address`:  
-InfluxDB address. (Default: ```localhost:8089```)
-
-`--metrics.influxdb.addrouterslabels`:  
-Enable metrics on routers. (Default: ```false```)
-
-`--metrics.influxdb.addserviceslabels`:  
-Enable metrics on services. (Default: ```true```)
-
-`--metrics.influxdb.database`:  
-InfluxDB database used when protocol is http.
-
-`--metrics.influxdb.password`:  
-InfluxDB password (only with http).
-
-`--metrics.influxdb.protocol`:  
-InfluxDB address protocol (udp or http). (Default: ```udp```)
-
-`--metrics.influxdb.pushinterval`:  
-InfluxDB push interval. (Default: ```10```)
-
-`--metrics.influxdb.retentionpolicy`:  
-InfluxDB retention policy used when protocol is http.
-
-`--metrics.influxdb.username`:  
-InfluxDB username (only with http).
-
 `--metrics.influxdb2`:  
 InfluxDB v2 metrics exporter type. (Default: ```false```)
 
@@ -416,6 +377,9 @@ Buckets for latency metrics. (Default: ```0.100000, 0.300000, 1.200000, 5.000000
 
 `--metrics.prometheus.entrypoint`:  
 EntryPoint (Default: ```traefik```)
+
+`--metrics.prometheus.headerlabels.<name>`:  
+Defines the extra labels for the requests_total metrics, and for each of them, the request header containing the value for this label.
 
 `--metrics.prometheus.manualrouting`:  
 Manual routing (Default: ```false```)
@@ -771,6 +735,9 @@ Allow ExternalName services. (Default: ```false```)
 `--providers.kubernetesingress.certauthfilepath`:  
 Kubernetes certificate authority file path (not needed for in-cluster client).
 
+`--providers.kubernetesingress.disableingressclasslookup`:  
+Disables the lookup of IngressClasses. (Default: ```false```)
+
 `--providers.kubernetesingress.endpoint`:  
 Kubernetes server endpoint (required for external cluster client).
 
@@ -798,66 +765,6 @@ Ingress refresh throttle duration (Default: ```0```)
 `--providers.kubernetesingress.token`:  
 Kubernetes bearer token (not needed for in-cluster client).
 
-`--providers.marathon`:  
-Enable Marathon backend with default settings. (Default: ```false```)
-
-`--providers.marathon.basic.httpbasicauthuser`:  
-Basic authentication User.
-
-`--providers.marathon.basic.httpbasicpassword`:  
-Basic authentication Password.
-
-`--providers.marathon.constraints`:  
-Constraints is an expression that Traefik matches against the application's labels to determine whether to create any route for that application.
-
-`--providers.marathon.dcostoken`:  
-DCOSToken for DCOS environment, This will override the Authorization header.
-
-`--providers.marathon.defaultrule`:  
-Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
-
-`--providers.marathon.dialertimeout`:  
-Set a dialer timeout for Marathon. (Default: ```5```)
-
-`--providers.marathon.endpoint`:  
-Marathon server endpoint. You can also specify multiple endpoint for Marathon. (Default: ```http://127.0.0.1:8080```)
-
-`--providers.marathon.exposedbydefault`:  
-Expose Marathon apps by default. (Default: ```true```)
-
-`--providers.marathon.forcetaskhostname`:  
-Force to use the task's hostname. (Default: ```false```)
-
-`--providers.marathon.keepalive`:  
-Set a TCP Keep Alive time. (Default: ```10```)
-
-`--providers.marathon.respectreadinesschecks`:  
-Filter out tasks with non-successful readiness checks during deployments. (Default: ```false```)
-
-`--providers.marathon.responseheadertimeout`:  
-Set a response header timeout for Marathon. (Default: ```60```)
-
-`--providers.marathon.tls.ca`:  
-TLS CA
-
-`--providers.marathon.tls.cert`:  
-TLS cert
-
-`--providers.marathon.tls.insecureskipverify`:  
-TLS insecure skip verify (Default: ```false```)
-
-`--providers.marathon.tls.key`:  
-TLS key
-
-`--providers.marathon.tlshandshaketimeout`:  
-Set a TLS handshake timeout for Marathon. (Default: ```5```)
-
-`--providers.marathon.trace`:  
-Display additional provider logs. (Default: ```false```)
-
-`--providers.marathon.watch`:  
-Watch provider. (Default: ```true```)
-
 `--providers.nomad`:  
 Enable Nomad backend with default settings. (Default: ```false```)
 
@@ -868,7 +775,7 @@ Constraints is an expression that Traefik matches against the Nomad service's ta
 Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
 
 `--providers.nomad.endpoint.address`:  
-The address of the Nomad server, including scheme and port.
+The address of the Nomad server, including scheme and port. (Default: ```http://127.0.0.1:4646```)
 
 `--providers.nomad.endpoint.endpointwaittime`:  
 WaitTime limits how long a Watch will block. If not provided, the agent default values will be used (Default: ```0```)
@@ -911,33 +818,6 @@ Plugins configuration.
 
 `--providers.providersthrottleduration`:  
 Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time. (Default: ```2```)
-
-`--providers.rancher`:  
-Enable Rancher backend with default settings. (Default: ```false```)
-
-`--providers.rancher.constraints`:  
-Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container.
-
-`--providers.rancher.defaultrule`:  
-Default rule. (Default: ```Host(`{{ normalize .Name }}`)```)
-
-`--providers.rancher.enableservicehealthfilter`:  
-Filter services with unhealthy states and inactive states. (Default: ```true```)
-
-`--providers.rancher.exposedbydefault`:  
-Expose containers by default. (Default: ```true```)
-
-`--providers.rancher.intervalpoll`:  
-Poll the Rancher metadata service every 'rancher.refreshseconds' (less accurate). (Default: ```false```)
-
-`--providers.rancher.prefix`:  
-Prefix used for accessing the Rancher metadata service. (Default: ```latest```)
-
-`--providers.rancher.refreshseconds`:  
-Defines the polling interval in seconds. (Default: ```15```)
-
-`--providers.rancher.watch`:  
-Watch provider. (Default: ```true```)
 
 `--providers.redis`:  
 Enable Redis backend with default settings. (Default: ```false```)
@@ -1020,6 +900,33 @@ Defines the allowed SPIFFE trust domain.
 `--spiffe.workloadapiaddr`:  
 Defines the workload API address.
 
+`--tcpserverstransport.dialkeepalive`:  
+Defines the interval between keep-alive probes for an active network connection. If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled (Default: ```15```)
+
+`--tcpserverstransport.dialtimeout`:  
+Defines the amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists. (Default: ```30```)
+
+`--tcpserverstransport.terminationdelay`:  
+Defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability. (Default: ```0```)
+
+`--tcpserverstransport.tls`:  
+Defines the TLS configuration. (Default: ```false```)
+
+`--tcpserverstransport.tls.insecureskipverify`:  
+Disables SSL certificate verification. (Default: ```false```)
+
+`--tcpserverstransport.tls.rootcas`:  
+Defines a list of CA secret used to validate self-signed certificate
+
+`--tcpserverstransport.tls.spiffe`:  
+Defines the SPIFFE TLS configuration. (Default: ```false```)
+
+`--tcpserverstransport.tls.spiffe.ids`:  
+Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
+
+`--tcpserverstransport.tls.spiffe.trustdomain`:  
+Defines the allowed SPIFFE trust domain.
+
 `--tracing`:  
 OpenTracing configuration. (Default: ```false```)
 
@@ -1037,6 +944,9 @@ Sets a list of key:value tags on all spans.
 
 `--tracing.datadog.localagenthostport`:  
 Sets the Datadog Agent host:port. (Default: ```localhost:8126```)
+
+`--tracing.datadog.localagentsocket`:  
+Sets the socket for the Datadog Agent.
 
 `--tracing.datadog.parentidheadername`:  
 Sets the header name used to store the parent ID.

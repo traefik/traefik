@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/tcp"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
 func TestInFlightConn_ServeTCP(t *testing.T) {

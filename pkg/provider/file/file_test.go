@@ -11,8 +11,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
 type ProvideTestCase struct {
@@ -54,6 +54,13 @@ func TestTLSCertificateContent(t *testing.T) {
   [[http.serversTransports.default.certificates]]
     certFile = "` + fileTLS.Name() + `"
     keyFile = "` + fileTLSKey.Name() + `"
+
+[tcp.serversTransports.default]
+  [tcp.serversTransports.default.tls]
+    rootCAs = ["` + fileTLS.Name() + `"]
+  	[[tcp.serversTransports.default.tls.certificates]]
+      certFile = "` + fileTLS.Name() + `"
+      keyFile = "` + fileTLSKey.Name() + `"
 `
 
 	_, err = fileConfig.Write([]byte(content))
@@ -74,6 +81,10 @@ func TestTLSCertificateContent(t *testing.T) {
 	require.Equal(t, "CONTENT", configuration.HTTP.ServersTransports["default"].Certificates[0].CertFile.String())
 	require.Equal(t, "CONTENTKEY", configuration.HTTP.ServersTransports["default"].Certificates[0].KeyFile.String())
 	require.Equal(t, "CONTENT", configuration.HTTP.ServersTransports["default"].RootCAs[0].String())
+
+	require.Equal(t, "CONTENT", configuration.TCP.ServersTransports["default"].TLS.Certificates[0].CertFile.String())
+	require.Equal(t, "CONTENTKEY", configuration.TCP.ServersTransports["default"].TLS.Certificates[0].KeyFile.String())
+	require.Equal(t, "CONTENT", configuration.TCP.ServersTransports["default"].TLS.RootCAs[0].String())
 }
 
 func TestErrorWhenEmptyConfig(t *testing.T) {

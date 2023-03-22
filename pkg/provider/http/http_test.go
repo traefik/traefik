@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
 func TestProvider_Init(t *testing.T) {
@@ -158,7 +158,8 @@ func TestProvider_decodeConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.TCPRouter{
 						"foo": {},
 					},
-					Services: make(map[string]*dynamic.TCPService),
+					Services:          make(map[string]*dynamic.TCPService),
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{
 					Stores:  make(map[string]tls.Store),
@@ -214,8 +215,9 @@ func TestProvider_Provide(t *testing.T) {
 			ServersTransports: make(map[string]*dynamic.ServersTransport),
 		},
 		TCP: &dynamic.TCPConfiguration{
-			Routers:  make(map[string]*dynamic.TCPRouter),
-			Services: make(map[string]*dynamic.TCPService),
+			Routers:           make(map[string]*dynamic.TCPRouter),
+			Services:          make(map[string]*dynamic.TCPService),
+			ServersTransports: map[string]*dynamic.TCPServersTransport{},
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Stores:  make(map[string]tls.Store),

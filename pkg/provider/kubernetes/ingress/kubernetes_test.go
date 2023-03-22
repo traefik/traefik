@@ -5,16 +5,17 @@ import (
 	"errors"
 	"math"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/tls"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,11 +27,12 @@ func Bool(v bool) *bool { return &v }
 
 func TestLoadConfigurationFromIngresses(t *testing.T) {
 	testCases := []struct {
-		desc               string
-		ingressClass       string
-		serverVersion      string
-		expected           *dynamic.Configuration
-		allowEmptyServices bool
+		desc                      string
+		ingressClass              string
+		serverVersion             string
+		expected                  *dynamic.Configuration
+		allowEmptyServices        bool
+		disableIngressClassLookup bool
 	}{
 		{
 			desc: "Empty ingresses",
@@ -1393,6 +1395,40 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
+			// Duplicate test case with the same fixture as the one above, but with the disableIngressClassLookup option to true.
+			// Showing that disabling the ingressClass discovery still allow the discovery of ingresses with ingress annotation.
+			desc:                      "v18 Ingress with ingress annotation",
+			serverVersion:             "v1.18",
+			disableIngressClassLookup: true,
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-bar": {
+							Rule:    "PathPrefix(`/bar`)",
+							Service: "testing-service1-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc:          "v18 Ingress with ingressClasses filter",
 			serverVersion: "v1.18",
 			ingressClass:  "traefik-lb2",
@@ -1421,6 +1457,22 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							},
 						},
 					},
+				},
+			},
+		},
+		{
+			// Duplicate test case with the same fixture as the one above, but with the disableIngressClassLookup option to true.
+			// Showing that disabling the ingressClass discovery avoid discovering Ingresses with an IngressClass.
+			desc:                      "v18 Ingress with ingressClasses filter",
+			serverVersion:             "v1.18",
+			ingressClass:              "traefik-lb2",
+			disableIngressClassLookup: true,
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers:     map[string]*dynamic.Router{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
@@ -1611,6 +1663,39 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
+			// Duplicate test case with the same fixture as the one above, but with the disableIngressClassLookup option to true.
+			// Showing that disabling the ingressClass discovery still allow the discovery of ingresses with ingress annotation.
+			desc:          "v19 Ingress with ingress annotation",
+			serverVersion: "v1.19",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-bar": {
+							Rule:    "PathPrefix(`/bar`)",
+							Service: "testing-service1-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: Bool(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc:          "v19 Ingress with ingressClass",
 			serverVersion: "v1.19",
 			expected: &dynamic.Configuration{
@@ -1638,6 +1723,21 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							},
 						},
 					},
+				},
+			},
+		},
+		{
+			// Duplicate test case with the same fixture as the one above, but with the disableIngressClassLookup option to true.
+			// Showing that disabling the ingressClass discovery avoid discovering Ingresses with an IngressClass.
+			desc:                      "v19 Ingress with ingressClass",
+			disableIngressClassLookup: true,
+			serverVersion:             "v1.19",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers:     map[string]*dynamic.Router{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
@@ -1783,7 +1883,11 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			}
 
 			clientMock := newClientMock(serverVersion, paths...)
-			p := Provider{IngressClass: test.ingressClass, AllowEmptyServices: test.allowEmptyServices}
+			p := Provider{
+				IngressClass:              test.ingressClass,
+				AllowEmptyServices:        test.allowEmptyServices,
+				DisableIngressClassLookup: test.disableIngressClassLookup,
+			}
 			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
@@ -1948,8 +2052,88 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 	}
 }
 
+func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		ingressClass  string
+		serverVersion string
+		expected      *dynamic.Configuration
+	}{
+		{
+			desc: "Ingress with native service lb",
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-traefik-tchouk-bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "testing-service1-8080",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-8080": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
+								PassHostHeader:     Bool(true),
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.0.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var paths []string
+			_, err := os.Stat(generateTestFilename("_ingress", test.desc))
+			if err == nil {
+				paths = append(paths, generateTestFilename("_ingress", test.desc))
+			}
+			_, err = os.Stat(generateTestFilename("_endpoint", test.desc))
+			if err == nil {
+				paths = append(paths, generateTestFilename("_endpoint", test.desc))
+			}
+			_, err = os.Stat(generateTestFilename("_service", test.desc))
+			if err == nil {
+				paths = append(paths, generateTestFilename("_service", test.desc))
+			}
+			_, err = os.Stat(generateTestFilename("_secret", test.desc))
+			if err == nil {
+				paths = append(paths, generateTestFilename("_secret", test.desc))
+			}
+			_, err = os.Stat(generateTestFilename("_ingressclass", test.desc))
+			if err == nil {
+				paths = append(paths, generateTestFilename("_ingressclass", test.desc))
+			}
+
+			serverVersion := test.serverVersion
+			if serverVersion == "" {
+				serverVersion = "v1.17"
+			}
+
+			clientMock := newClientMock(serverVersion, paths...)
+
+			p := Provider{IngressClass: test.ingressClass}
+			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+
+			assert.Equal(t, test.expected, conf)
+		})
+	}
+}
+
 func generateTestFilename(suffix, desc string) string {
-	return "./fixtures/" + strings.ReplaceAll(desc, " ", "-") + suffix + ".yml"
+	return filepath.Join("fixtures", strings.ReplaceAll(desc, " ", "-")+suffix+".yml")
 }
 
 func TestGetCertificates(t *testing.T) {

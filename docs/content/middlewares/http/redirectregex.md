@@ -26,7 +26,7 @@ labels:
 
 ```yaml tab="Kubernetes"
 # Redirect with domain replacement
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-redirectregex
@@ -41,21 +41,6 @@ spec:
 # Note: all dollar signs need to be doubled for escaping.
 - "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
 - "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$${1}"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-redirectregex.redirectregex.regex": "^http://localhost/(.*)",
-  "traefik.http.middlewares.test-redirectregex.redirectregex.replacement": "http://mydomain/${1}"
-}
-```
-
-```yaml tab="Rancher"
-# Redirect with domain replacement
-# Note: all dollar signs need to be doubled for escaping.
-labels:
-  - "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
-  - "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$${1}"
 ```
 
 ```yaml tab="File (YAML)"

@@ -18,12 +18,12 @@ import (
 	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/job"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/job"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -48,6 +48,7 @@ type Provider struct {
 	ThrottleDuration          ptypes.Duration  `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	AllowEmptyServices        bool             `description:"Allow creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	AllowExternalNameServices bool             `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
+	DisableIngressClassLookup bool             `description:"Disables the lookup of IngressClasses." json:"disableIngressClassLookup,omitempty" toml:"disableIngressClassLookup,omitempty" yaml:"disableIngressClassLookup,omitempty" export:"true"`
 	lastConfiguration         safe.Safe
 }
 
@@ -91,6 +92,7 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	}
 
 	cl.ingressLabelSelector = p.LabelSelector
+	cl.disableIngressClassInformer = p.DisableIngressClassLookup
 	return cl, nil
 }
 
@@ -195,7 +197,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 	var ingressClasses []*networkingv1.IngressClass
 
-	if supportsIngressClass(serverVersion) {
+	if !p.DisableIngressClassLookup && supportsIngressClass(serverVersion) {
 		ics, err := client.GetIngressClasses()
 		if err != nil {
 			log.Ctx(ctx).Warn().Err(err).Msg("Failed to list ingress classes")
@@ -543,6 +545,21 @@ func (p *Provider) loadService(client Client, namespace string, backend networki
 		if svcConfig.Service.ServersTransport != "" {
 			svc.LoadBalancer.ServersTransport = svcConfig.Service.ServersTransport
 		}
+
+		if svcConfig.Service.NativeLB {
+			address, err := getNativeServiceAddress(*service, portSpec)
+			if err != nil {
+				return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
+			}
+
+			protocol := getProtocol(portSpec, portSpec.Name, svcConfig)
+
+			svc.LoadBalancer.Servers = []dynamic.Server{
+				{URL: fmt.Sprintf("%s://%s", protocol, address)},
+			}
+
+			return svc, nil
+		}
 	}
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
@@ -590,6 +607,18 @@ func (p *Provider) loadService(client Client, namespace string, backend networki
 	}
 
 	return svc, nil
+}
+
+func getNativeServiceAddress(service corev1.Service, svcPort corev1.ServicePort) (string, error) {
+	if service.Spec.ClusterIP == "None" {
+		return "", fmt.Errorf("no clusterIP on headless service: %s/%s", service.Namespace, service.Name)
+	}
+
+	if service.Spec.ClusterIP == "" {
+		return "", fmt.Errorf("no clusterIP found for service: %s/%s", service.Namespace, service.Name)
+	}
+
+	return net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(svcPort.Port))), nil
 }
 
 func getProtocol(portSpec corev1.ServicePort, portName string, svcConfig *ServiceConfig) string {

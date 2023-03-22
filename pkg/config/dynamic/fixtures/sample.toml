@@ -54,28 +54,6 @@
     watch = true
     filename = "foobar"
     debugLogGeneratedTemplate = true
-  [providers.marathon]
-    constraints = "foobar"
-    trace = true
-    watch = true
-    endpoint = "foobar"
-    defaultRule = "foobar"
-    exposedByDefault = true
-    dcosToken = "foobar"
-    dialerTimeout = 42
-    responseHeaderTimeout = 42
-    tlsHandshakeTimeout = 42
-    keepAlive = 42
-    forceTaskHostname = true
-    respectReadinessChecks = true
-    [providers.marathon.tls]
-      ca = "foobar"
-      cert = "foobar"
-      key = "foobar"
-      insecureSkipVerify = true
-    [providers.marathon.basic]
-      httpBasicAuthUser = "foobar"
-      httpBasicPassword = "foobar"
   [providers.kubernetesIngress]
     endpoint = "foobar"
     token = "foobar"
@@ -96,15 +74,6 @@
     ingressClass = "foobar"
   [providers.rest]
     entryPoint = "foobar"
-  [providers.rancher]
-    constraints = "foobar"
-    watch = true
-    defaultRule = "foobar"
-    exposedByDefault = true
-    enableServiceHealthFilter = true
-    refreshSeconds = 42
-    intervalPoll = true
-    prefix = "foobar"
 
 [api]
   entryPoint = "foobar"
@@ -124,14 +93,6 @@
   [metrics.statsD]
     address = "foobar"
     pushInterval = "10s"
-  [metrics.influxDB]
-    address = "foobar"
-    protocol = "foobar"
-    pushInterval = "10s"
-    database = "foobar"
-    retentionPolicy = "foobar"
-    username = "foobar"
-    password = "foobar"
 
 [ping]
   entryPoint = "foobar"
@@ -180,6 +141,7 @@
     sampleRate = 42.0
   [tracing.datadog]
     localAgentHostPort = "foobar"
+    localAgentSocket = "foobar"
     debug = true
     prioritySampling = true
     traceIDHeaderName = "foobar"

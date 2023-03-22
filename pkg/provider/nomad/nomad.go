@@ -12,13 +12,13 @@ import (
 	"github.com/hashicorp/nomad/api"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/job"
-	"github.com/traefik/traefik/v2/pkg/logs"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/provider/constraints"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/job"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/provider/constraints"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 const (
@@ -46,6 +46,13 @@ type item struct {
 	Tags       []string // service tags
 
 	ExtraConf configuration // global options
+}
+
+// configuration contains information from the service's tags that are globals
+// (not specific to the dynamic configuration).
+type configuration struct {
+	Enable bool // <prefix>.enable is the corresponding label.
+	Canary bool // <prefix>.nomad.canary is the corresponding label.
 }
 
 // ProviderBuilder is responsible for constructing namespaced instances of the Nomad provider.
@@ -89,11 +96,37 @@ type Configuration struct {
 
 // SetDefaults sets the default values for the Nomad Traefik Provider Configuration.
 func (c *Configuration) SetDefaults() {
-	c.Endpoint = &EndpointConfig{}
+	defConfig := api.DefaultConfig()
+	c.Endpoint = &EndpointConfig{
+		Address: defConfig.Address,
+		Region:  defConfig.Region,
+		Token:   defConfig.SecretID,
+	}
+
+	if defConfig.TLSConfig != nil && (defConfig.TLSConfig.Insecure || defConfig.TLSConfig.CACert != "" || defConfig.TLSConfig.ClientCert != "" || defConfig.TLSConfig.ClientKey != "") {
+		c.Endpoint.TLS = &types.ClientTLS{
+			CA:                 defConfig.TLSConfig.CACert,
+			Cert:               defConfig.TLSConfig.ClientCert,
+			Key:                defConfig.TLSConfig.ClientKey,
+			InsecureSkipVerify: defConfig.TLSConfig.Insecure,
+		}
+	}
+
 	c.Prefix = defaultPrefix
 	c.ExposedByDefault = true
 	c.RefreshInterval = ptypes.Duration(15 * time.Second)
 	c.DefaultRule = defaultTemplateRule
+}
+
+type EndpointConfig struct {
+	// Address is the Nomad endpoint address, if empty it defaults to NOMAD_ADDR or "http://127.0.0.1:4646".
+	Address string `description:"The address of the Nomad server, including scheme and port." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
+	// Region is the Nomad region, if empty it defaults to NOMAD_REGION.
+	Region string `description:"Nomad region to use. If not provided, the local agent region is used." json:"region,omitempty" toml:"region,omitempty" yaml:"region,omitempty"`
+	// Token is the ACL token to connect with Nomad, if empty it defaults to NOMAD_TOKEN.
+	Token            string           `description:"Token is used to provide a per-request ACL token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
+	TLS              *types.ClientTLS `description:"Configure TLS." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	EndpointWaitTime ptypes.Duration  `description:"WaitTime limits how long a Watch will block. If not provided, the agent default values will be used" json:"endpointWaitTime,omitempty" toml:"endpointWaitTime,omitempty" yaml:"endpointWaitTime,omitempty" export:"true"`
 }
 
 // Provider holds configuration along with the namespace it will discover services in.
@@ -106,15 +139,9 @@ type Provider struct {
 	defaultRuleTpl *template.Template // default routing rule
 }
 
-type EndpointConfig struct {
-	// Address is the Nomad endpoint address, if empty it defaults to NOMAD_ADDR or "http://localhost:4646".
-	Address string `description:"The address of the Nomad server, including scheme and port." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
-	// Region is the Nomad region, if empty it defaults to NOMAD_REGION or "global".
-	Region string `description:"Nomad region to use. If not provided, the local agent region is used." json:"region,omitempty" toml:"region,omitempty" yaml:"region,omitempty"`
-	// Token is the ACL token to connect with Nomad, if empty it defaults to NOMAD_TOKEN.
-	Token            string           `description:"Token is used to provide a per-request ACL token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
-	TLS              *types.ClientTLS `description:"Configure TLS." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
-	EndpointWaitTime ptypes.Duration  `description:"WaitTime limits how long a Watch will block. If not provided, the agent default values will be used" json:"endpointWaitTime,omitempty" toml:"endpointWaitTime,omitempty" yaml:"endpointWaitTime,omitempty" export:"true"`
+// SetDefaults sets the default values for the Nomad Traefik Provider.
+func (p *Provider) SetDefaults() {
+	p.Configuration.SetDefaults()
 }
 
 // Init the Nomad Traefik Provider.
@@ -207,51 +234,6 @@ func (p *Provider) loadConfiguration(ctx context.Context, configurationC chan<- 
 	return nil
 }
 
-func createClient(namespace string, endpoint *EndpointConfig) (*api.Client, error) {
-	config := api.Config{
-		Address:   endpoint.Address,
-		Namespace: namespace,
-		Region:    endpoint.Region,
-		SecretID:  endpoint.Token,
-		WaitTime:  time.Duration(endpoint.EndpointWaitTime),
-	}
-
-	if endpoint.TLS != nil {
-		config.TLSConfig = &api.TLSConfig{
-			CACert:     endpoint.TLS.CA,
-			ClientCert: endpoint.TLS.Cert,
-			ClientKey:  endpoint.TLS.Key,
-			Insecure:   endpoint.TLS.InsecureSkipVerify,
-		}
-	}
-
-	return api.NewClient(&config)
-}
-
-// configuration contains information from the service's tags that are globals
-// (not specific to the dynamic configuration).
-type configuration struct {
-	Enable bool // <prefix>.enable is the corresponding label.
-	Canary bool // <prefix>.nomad.canary is the corresponding label.
-}
-
-// getExtraConf returns a configuration with settings which are not part of the dynamic configuration (e.g. "<prefix>.enable").
-func (p *Provider) getExtraConf(tags []string) configuration {
-	labels := tagsToLabels(tags, p.Prefix)
-
-	enabled := p.ExposedByDefault
-	if v, exists := labels["traefik.enable"]; exists {
-		enabled = strings.EqualFold(v, "true")
-	}
-
-	var canary bool
-	if v, exists := labels["traefik.nomad.canary"]; exists {
-		canary = strings.EqualFold(v, "true")
-	}
-
-	return configuration{Enable: enabled, Canary: canary}
-}
-
 func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
 	// first, get list of service stubs
 	opts := &api.QueryOptions{AllowStale: p.Stale}
@@ -309,6 +291,23 @@ func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
 	return items, nil
 }
 
+// getExtraConf returns a configuration with settings which are not part of the dynamic configuration (e.g. "<prefix>.enable").
+func (p *Provider) getExtraConf(tags []string) configuration {
+	labels := tagsToLabels(tags, p.Prefix)
+
+	enabled := p.ExposedByDefault
+	if v, exists := labels["traefik.enable"]; exists {
+		enabled = strings.EqualFold(v, "true")
+	}
+
+	var canary bool
+	if v, exists := labels["traefik.nomad.canary"]; exists {
+		canary = strings.EqualFold(v, "true")
+	}
+
+	return configuration{Enable: enabled, Canary: canary}
+}
+
 // fetchService queries Nomad API for services matching name,
 // that also have the  <prefix>.enable=true set in its tags.
 func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.ServiceRegistration, error) {
@@ -328,4 +327,25 @@ func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.Servic
 		return nil, fmt.Errorf("failed to fetch services: %w", err)
 	}
 	return services, nil
+}
+
+func createClient(namespace string, endpoint *EndpointConfig) (*api.Client, error) {
+	config := api.Config{
+		Address:   endpoint.Address,
+		Namespace: namespace,
+		Region:    endpoint.Region,
+		SecretID:  endpoint.Token,
+		WaitTime:  time.Duration(endpoint.EndpointWaitTime),
+	}
+
+	if endpoint.TLS != nil {
+		config.TLSConfig = &api.TLSConfig{
+			CACert:     endpoint.TLS.CA,
+			ClientCert: endpoint.TLS.Cert,
+			ClientKey:  endpoint.TLS.Key,
+			Insecure:   endpoint.TLS.InsecureSkipVerify,
+		}
+	}
+
+	return api.NewClient(&config)
 }
