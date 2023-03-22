@@ -82,3 +82,8 @@ In v3, the Marathon provider has been removed.
 ## InfluxDB v1
 
 In v3, the InfluxDB v1 metrics provider has been removed because InfluxDB v1.x maintenance [ended in 2021](https://www.influxdata.com/blog/influxdb-oss-and-enterprise-roadmap-update-from-influxdays-emea/).
+
+### Kubernetes CRDs API Group `traefik.containo.us`
+
+In v3 the Kubernetes CRDs API Group `traefik.containo.us` has been removed. 
+Please use the API Group `traefik.io` instead.
