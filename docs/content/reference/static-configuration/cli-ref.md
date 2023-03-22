@@ -189,9 +189,6 @@ WriteTimeout is the maximum duration before timing out writes of the response. I
 `--entrypoints.<name>.udp.timeout`:  
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 
-`--experimental.hub`:  
-Enable the Traefik Hub provider. (Default: ```false```)
-
 `--experimental.kubernetesgateway`:  
 Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 
