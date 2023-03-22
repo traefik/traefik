@@ -442,6 +442,36 @@ For additional information, refer to [Restrict the Scope of Service Discovery](.
 
 ### `namespaces`
 
+??? warning "Deprecated in favor of the [`namespaces`](#namespaces) option."
+
+    _Optional, Default=""_
+
+    The `namespace` option defines the namespace in which the Nomad services will be discovered.
+    
+    !!! warning
+    
+        One should only define either the `namespaces` option or the `namespace` option.
+
+    ```yaml tab="File (YAML)"
+    providers:
+      nomad:
+        namespace: "production"
+        # ...
+    ```
+
+    ```toml tab="File (TOML)"
+    [providers.nomad]
+      namespace = "production"
+      # ...
+    ```
+
+    ```bash tab="CLI"
+    --providers.nomad.namespace=production
+    # ...
+    ```
+
+### `namespaces`
+
 _Optional, Default=""_
 
 The `namespaces` option defines the namespaces in which the nomad services will be discovered.

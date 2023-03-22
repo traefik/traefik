@@ -1,3 +1,37 @@
+## [v2.10.0-rc1](https://github.com/traefik/traefik/tree/v2.10.0-rc1) (2023-03-22)
+[All Commits](https://github.com/traefik/traefik/compare/b3f162a8a61d89beaa9edc8adc12cc4cb3e1de0f...v2.10.0-rc1)
+
+**Enhancements:**
+- **[docker]** Expose ContainerName in Docker provider ([#9770](https://github.com/traefik/traefik/pull/9770) by [quinot](https://github.com/quinot))
+- **[hub]** hub: get out of experimental. ([#9792](https://github.com/traefik/traefik/pull/9792) by [mpl](https://github.com/mpl))
+- **[k8s/crd]** Introduce traefik.io API Group CRDs ([#9765](https://github.com/traefik/traefik/pull/9765) by [rtribotte](https://github.com/rtribotte))
+- **[k8s/ingress,k8s/crd,k8s]** Native Kubernetes service load-balancing ([#9740](https://github.com/traefik/traefik/pull/9740) by [rtribotte](https://github.com/rtribotte))
+- **[middleware,metrics]** Add prometheus metric requests_total with headers ([#9783](https://github.com/traefik/traefik/pull/9783) by [rtribotte](https://github.com/rtribotte))
+- **[nomad]** Support multiple namespaces in the Nomad Provider ([#9794](https://github.com/traefik/traefik/pull/9794) by [rtribotte](https://github.com/rtribotte))
+- **[tracing]** Add support to send DataDog traces via Unix Socket ([#9714](https://github.com/traefik/traefik/pull/9714) by [der-eismann](https://github.com/der-eismann))
+
+**Documentation:**
+- docs: update order of log levels ([#9791](https://github.com/traefik/traefik/pull/9791) by [svx](https://github.com/svx))
+
+**Misc:**
+- Merge current v2.9 into v2.10 ([#9798](https://github.com/traefik/traefik/pull/9798) by [ldez](https://github.com/ldez))
+
+## [v2.9.9](https://github.com/traefik/traefik/tree/v2.9.9) (2023-03-21)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.8...v2.9.9)
+
+**Bug fixes:**
+- **[acme]** Update go-acme/lego to v4.10.2 ([#9749](https://github.com/traefik/traefik/pull/9749) by [ldez](https://github.com/ldez))
+- **[http3]** Update quic-go to v0.33.0 ([#9737](https://github.com/traefik/traefik/pull/9737) by [ldez](https://github.com/ldez))
+- **[metrics]** Include user-defined default cert for traefik_tls_certs_not_after metric ([#9742](https://github.com/traefik/traefik/pull/9742) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Update vulcand/oxy to a0e9f7ff1040 ([#9750](https://github.com/traefik/traefik/pull/9750) by [ldez](https://github.com/ldez))
+- **[nomad]** Fix default configuration settings for Nomad Provider ([#9758](https://github.com/traefik/traefik/pull/9758) by [aofei](https://github.com/aofei))
+- **[nomad]** Fix Nomad client TLS defaults ([#9795](https://github.com/traefik/traefik/pull/9795) by [rtribotte](https://github.com/rtribotte))
+- **[server]** Remove User-Agent header removal from ReverseProxy director func ([#9752](https://github.com/traefik/traefik/pull/9752) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- **[middleware]** Clarify ratelimit middleware ([#9777](https://github.com/traefik/traefik/pull/9777) by [mpl](https://github.com/mpl))
+- **[tcp]** Correcting variable name &#39;server address&#39; in TCP Router ([#9743](https://github.com/traefik/traefik/pull/9743) by [ralphg6](https://github.com/ralphg6))
+
 ## [v2.9.8](https://github.com/traefik/traefik/tree/v2.9.8) (2023-02-15)
 [All Commits](https://github.com/traefik/traefik/compare/v2.9.7...v2.9.8)
 
@@ -174,13 +208,7 @@ Release canceled.
 - **[acme]** Fix ACME panic ([#9365](https://github.com/traefik/traefik/pull/9365) by [ldez](https://github.com/ldez))
 
 **Documentation:**
-- Prepare release v2.9.0 ([#9409](https://github.com/traefik/traefik/pull/9409) by [tomMoulard](https://github.com/tomMoulard))
 - **[metrics]** Rework metrics overview page ([#9366](https://github.com/traefik/traefik/pull/9366) by [ddtmachado](https://github.com/ddtmachado))
-- Prepare release v2.9.0-rc5 ([#9402](https://github.com/traefik/traefik/pull/9402) by [ldez](https://github.com/ldez))
-- Prepare release v2.9.0-rc4 ([#9372](https://github.com/traefik/traefik/pull/9372) by [kevinpollet](https://github.com/kevinpollet))
-- Prepare release v2.9.0-rc3 ([#9344](https://github.com/traefik/traefik/pull/9344) by [kevinpollet](https://github.com/kevinpollet))
-- Prepare release v2.9.0-rc2 ([6c2c561](https://github.com/traefik/traefik/commit/6c2c561d8f935d76ccd07d28e1455c7768adc153) by [ldez](https://github.com/ldez))
-- Prepare release v2.9.0-rc1 ([#9334](https://github.com/traefik/traefik/pull/9334) by [rtribotte](https://github.com/rtribotte))
 
 **Misc:**
 - Merge current v2.8 into v2.9 ([#9400](https://github.com/traefik/traefik/pull/9400) by [ldez](https://github.com/ldez))
