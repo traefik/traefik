@@ -37,12 +37,14 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/hub"
 	"github.com/traefik/traefik/v3/pkg/provider/tailscale"
 	"github.com/traefik/traefik/v3/pkg/provider/traefik"
+	"github.com/traefik/traefik/v3/pkg/proxy"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/tls/client"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/tracing/jaeger"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -269,10 +271,16 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		log.Info().Msg("Successfully obtained SPIFFE SVID.")
 	}
 
-	roundTripperManager := service.NewRoundTripperManager(spiffeX509Source)
-	dialerManager := tcp.NewDialerManager(spiffeX509Source)
+	// TCP Manager
+	tcpTlsClientConfigManager := client.NewTLSConfigManager[*dynamic.TCPServersTransport](spiffeX509Source)
+	dialerManager := tcp.NewDialerManager(tcpTlsClientConfigManager)
+
+	// HTTP Manager
+	tlsClientConfigManager := client.NewTLSConfigManager[*dynamic.ServersTransport](spiffeX509Source)
+	proxyBuilder := proxy.NewBuilder(tlsClientConfigManager)
+
 	acmeHTTPHandler := getHTTPChallengeHandler(acmeProviders, httpChallengeProvider)
-	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, roundTripperManager, acmeHTTPHandler)
+	managerFactory := service.NewManagerFactory(*staticConfiguration, routinesPool, metricsRegistry, proxyBuilder, tlsClientConfigManager, acmeHTTPHandler)
 
 	// Router factory
 
@@ -310,7 +318,10 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	// Server Transports
 	watcher.AddListener(func(conf dynamic.Configuration) {
-		roundTripperManager.Update(conf.HTTP.ServersTransports)
+		tlsClientConfigManager.Update(conf.HTTP.ServersTransports)
+		tcpTlsClientConfigManager.Update(conf.TCP.ServersTransports)
+
+		proxyBuilder.Update(conf.HTTP.ServersTransports)
 		dialerManager.Update(conf.TCP.ServersTransports)
 	})
 
