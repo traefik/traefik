@@ -172,27 +172,54 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	c.factoryNamespace = informers.NewSharedInformerFactory(c.csKube, resyncPeriod)
-	c.factoryNamespace.Core().V1().Namespaces().Informer().AddEventHandler(eventHandler)
+	_, err := c.factoryNamespace.Core().V1().Namespaces().Informer().AddEventHandler(eventHandler)
+	if err != nil {
+		return nil, err
+	}
 
 	c.factoryGatewayClass = externalversions.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, externalversions.WithTweakListOptions(labelSelectorOptions))
-	c.factoryGatewayClass.Gateway().V1alpha2().GatewayClasses().Informer().AddEventHandler(eventHandler)
+	_, err = c.factoryGatewayClass.Gateway().V1alpha2().GatewayClasses().Informer().AddEventHandler(eventHandler)
+	if err != nil {
+		return nil, err
+	}
 
 	// TODO manage Reference Policy
 	// https://gateway-api.sigs.k8s.io/v1alpha2/references/spec/#gateway.networking.k8s.io/v1alpha2.ReferencePolicy
 
 	for _, ns := range namespaces {
 		factoryGateway := externalversions.NewSharedInformerFactoryWithOptions(c.csGateway, resyncPeriod, externalversions.WithNamespace(ns))
-		factoryGateway.Gateway().V1alpha2().Gateways().Informer().AddEventHandler(eventHandler)
-		factoryGateway.Gateway().V1alpha2().HTTPRoutes().Informer().AddEventHandler(eventHandler)
-		factoryGateway.Gateway().V1alpha2().TCPRoutes().Informer().AddEventHandler(eventHandler)
-		factoryGateway.Gateway().V1alpha2().TLSRoutes().Informer().AddEventHandler(eventHandler)
+		_, err = factoryGateway.Gateway().V1alpha2().Gateways().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+		_, err = factoryGateway.Gateway().V1alpha2().HTTPRoutes().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+		_, err = factoryGateway.Gateway().V1alpha2().TCPRoutes().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+		_, err = factoryGateway.Gateway().V1alpha2().TLSRoutes().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
 
 		factoryKube := informers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, informers.WithNamespace(ns))
-		factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
-		factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
+		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+		_, err = factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
 
 		factorySecret := informers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, informers.WithNamespace(ns), informers.WithTweakListOptions(notOwnedByHelm))
-		factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
+		_, err = factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
 
 		c.factoriesGateway[ns] = factoryGateway
 		c.factoriesKube[ns] = factoryKube
