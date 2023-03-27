@@ -31,10 +31,6 @@ const (
 	defaultTimeout = 5 * time.Second
 )
 
-type marshaler interface {
-	Marshal() ([]byte, error)
-}
-
 // Client is a client for the Provider master.
 // WatchAll starts the watch of the Provider resources and updates the stores.
 // The stores can then be accessed via the Get* functions.
@@ -45,7 +41,7 @@ type Client interface {
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
-	UpdateIngressStatus(ing *networkingv1.Ingress, ingStatus []corev1.LoadBalancerIngress) error
+	UpdateIngressStatus(ing *networkingv1.Ingress, ingStatus []networkingv1.IngressLoadBalancerIngress) error
 	GetServerVersion() *version.Version
 }
 
@@ -262,7 +258,7 @@ func (c *clientWrapper) GetIngresses() []*networkingv1.Ingress {
 		}
 
 		for _, ing := range list {
-			n, err := toNetworkingV1(ing)
+			n, err := convert[networkingv1.Ingress](ing)
 			if err != nil {
 				log.WithoutContext().Errorf("Failed to convert ingress %s from networking/v1beta1 to networking/v1: %v", ns, err)
 				continue
@@ -274,36 +270,6 @@ func (c *clientWrapper) GetIngresses() []*networkingv1.Ingress {
 		}
 	}
 	return results
-}
-
-func toNetworkingV1(ing marshaler) (*networkingv1.Ingress, error) {
-	data, err := ing.Marshal()
-	if err != nil {
-		return nil, err
-	}
-
-	ni := &networkingv1.Ingress{}
-	err = ni.Unmarshal(data)
-	if err != nil {
-		return nil, err
-	}
-
-	return ni, nil
-}
-
-func toNetworkingV1IngressClass(ing marshaler) (*networkingv1.IngressClass, error) {
-	data, err := ing.Marshal()
-	if err != nil {
-		return nil, err
-	}
-
-	ni := &networkingv1.IngressClass{}
-	err = ni.Unmarshal(data)
-	if err != nil {
-		return nil, err
-	}
-
-	return ni, nil
 }
 
 func addServiceFromV1Beta1(ing *networkingv1.Ingress, old networkingv1beta1.Ingress) {
@@ -352,7 +318,7 @@ func addServiceFromV1Beta1(ing *networkingv1.Ingress, old networkingv1beta1.Ingr
 }
 
 // UpdateIngressStatus updates an Ingress with a provided status.
-func (c *clientWrapper) UpdateIngressStatus(src *networkingv1.Ingress, ingStatus []corev1.LoadBalancerIngress) error {
+func (c *clientWrapper) UpdateIngressStatus(src *networkingv1.Ingress, ingStatus []networkingv1.IngressLoadBalancerIngress) error {
 	if !c.isWatchedNamespace(src.Namespace) {
 		return fmt.Errorf("failed to get ingress %s/%s: namespace is not within watched namespaces", src.Namespace, src.Name)
 	}
@@ -374,7 +340,7 @@ func (c *clientWrapper) UpdateIngressStatus(src *networkingv1.Ingress, ingStatus
 	}
 
 	ingCopy := ing.DeepCopy()
-	ingCopy.Status = networkingv1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: ingStatus}}
+	ingCopy.Status = networkingv1.IngressStatus{LoadBalancer: networkingv1.IngressLoadBalancerStatus{Ingress: ingStatus}}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
@@ -388,7 +354,7 @@ func (c *clientWrapper) UpdateIngressStatus(src *networkingv1.Ingress, ingStatus
 	return nil
 }
 
-func (c *clientWrapper) updateIngressStatusOld(src *networkingv1.Ingress, ingStatus []corev1.LoadBalancerIngress) error {
+func (c *clientWrapper) updateIngressStatusOld(src *networkingv1.Ingress, ingStatus []networkingv1.IngressLoadBalancerIngress) error {
 	ing, err := c.factoriesIngress[c.lookupNamespace(src.Namespace)].Networking().V1beta1().Ingresses().Lister().Ingresses(src.Namespace).Get(src.Name)
 	if err != nil {
 		return fmt.Errorf("failed to get ingress %s/%s: %w", src.Namespace, src.Name, err)
@@ -396,13 +362,23 @@ func (c *clientWrapper) updateIngressStatusOld(src *networkingv1.Ingress, ingSta
 
 	logger := log.WithoutContext().WithField("namespace", ing.Namespace).WithField("ingress", ing.Name)
 
-	if isLoadBalancerIngressEquals(ing.Status.LoadBalancer.Ingress, ingStatus) {
+	ingresses, err := convertSlice[networkingv1.IngressLoadBalancerIngress](ing.Status.LoadBalancer.Ingress)
+	if err != nil {
+		return err
+	}
+
+	if isLoadBalancerIngressEquals(ingresses, ingStatus) {
 		logger.Debug("Skipping ingress status update")
 		return nil
 	}
 
+	ingressesBeta1, err := convertSlice[networkingv1beta1.IngressLoadBalancerIngress](ingStatus)
+	if err != nil {
+		return err
+	}
+
 	ingCopy := ing.DeepCopy()
-	ingCopy.Status = networkingv1beta1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: ingStatus}}
+	ingCopy.Status = networkingv1beta1.IngressStatus{LoadBalancer: networkingv1beta1.IngressLoadBalancerStatus{Ingress: ingressesBeta1}}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
@@ -416,7 +392,7 @@ func (c *clientWrapper) updateIngressStatusOld(src *networkingv1.Ingress, ingSta
 }
 
 // isLoadBalancerIngressEquals returns true if the given slices are equal, false otherwise.
-func isLoadBalancerIngressEquals(aSlice, bSlice []corev1.LoadBalancerIngress) bool {
+func isLoadBalancerIngressEquals(aSlice, bSlice []networkingv1.IngressLoadBalancerIngress) bool {
 	if len(aSlice) != len(bSlice) {
 		return false
 	}
@@ -482,7 +458,7 @@ func (c *clientWrapper) GetIngressClasses() ([]*networkingv1.IngressClass, error
 
 		for _, ic := range ingressClasses {
 			if ic.Spec.Controller == traefikDefaultIngressClassController {
-				icN, err := toNetworkingV1IngressClass(ic)
+				icN, err := convert[networkingv1.IngressClass](ic)
 				if err != nil {
 					log.WithoutContext().Errorf("Failed to convert ingress class %s from networking/v1beta1 to networking/v1: %v", ic.Name, err)
 					continue
