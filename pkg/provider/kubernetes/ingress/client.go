@@ -167,20 +167,35 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		factoryIngress := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns), informers.WithTweakListOptions(matchesLabelSelector))
 
 		if supportsNetworkingV1Ingress(serverVersion) {
-			factoryIngress.Networking().V1().Ingresses().Informer().AddEventHandler(eventHandler)
+			_, err = factoryIngress.Networking().V1().Ingresses().Informer().AddEventHandler(eventHandler)
+			if err != nil {
+				return nil, err
+			}
 		} else {
-			factoryIngress.Networking().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
+			_, err = factoryIngress.Networking().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		c.factoriesIngress[ns] = factoryIngress
 
 		factoryKube := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns))
-		factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
-		factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
+		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+		_, err = factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
 		c.factoriesKube[ns] = factoryKube
 
 		factorySecret := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns), informers.WithTweakListOptions(notOwnedByHelm))
-		factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
+		_, err = factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
 		c.factoriesSecret[ns] = factorySecret
 	}
 
@@ -214,9 +229,15 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		c.clusterFactory = informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod)
 
 		if supportsNetworkingV1Ingress(serverVersion) {
-			c.clusterFactory.Networking().V1().IngressClasses().Informer().AddEventHandler(eventHandler)
+			_, err = c.clusterFactory.Networking().V1().IngressClasses().Informer().AddEventHandler(eventHandler)
+			if err != nil {
+				return nil, err
+			}
 		} else {
-			c.clusterFactory.Networking().V1beta1().IngressClasses().Informer().AddEventHandler(eventHandler)
+			_, err = c.clusterFactory.Networking().V1beta1().IngressClasses().Informer().AddEventHandler(eventHandler)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		c.clusterFactory.Start(stopCh)

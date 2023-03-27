@@ -21,7 +21,7 @@ type LoadBalancerIngress interface {
 }
 
 // convertSlice converts slice of LoadBalancerIngress to slice of LoadBalancerIngress.
-// O (Bar), I (Foo) => []Bar
+// O (Bar), I (Foo) => []Bar.
 func convertSlice[O LoadBalancerIngress, I LoadBalancerIngress](loadBalancerIngresses []I) ([]O, error) {
 	var results []O
 
