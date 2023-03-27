@@ -320,16 +320,52 @@ func (c *clientWrapper) getContainousTraefikService(namespace, name string) (*v1
 	return toVersion.(*v1alpha1.TraefikService), exist, err
 }
 
-func addContainousInformers(factoryCrd externalversions.SharedInformerFactory, eventHandler *k8s.ResourceEventHandler) {
-	factoryCrd.TraefikContainous().V1alpha1().IngressRoutes().Informer().AddEventHandler(eventHandler)
-	factoryCrd.TraefikContainous().V1alpha1().Middlewares().Informer().AddEventHandler(eventHandler)
-	factoryCrd.TraefikContainous().V1alpha1().MiddlewareTCPs().Informer().AddEventHandler(eventHandler)
-	factoryCrd.TraefikContainous().V1alpha1().IngressRouteTCPs().Informer().AddEventHandler(eventHandler)
-	factoryCrd.TraefikContainous().V1alpha1().IngressRouteUDPs().Informer().AddEventHandler(eventHandler)
-	factoryCrd.TraefikContainous().V1alpha1().TLSOptions().Informer().AddEventHandler(eventHandler)
-	factoryCrd.TraefikContainous().V1alpha1().ServersTransports().Informer().AddEventHandler(eventHandler)
-	factoryCrd.TraefikContainous().V1alpha1().TLSStores().Informer().AddEventHandler(eventHandler)
-	factoryCrd.TraefikContainous().V1alpha1().TraefikServices().Informer().AddEventHandler(eventHandler)
+func addContainousInformers(factoryCrd externalversions.SharedInformerFactory, eventHandler *k8s.ResourceEventHandler) error {
+	_, err := factoryCrd.TraefikContainous().V1alpha1().IngressRoutes().Informer().AddEventHandler(eventHandler)
+	if err != nil {
+		return err
+	}
+
+	_, err = factoryCrd.TraefikContainous().V1alpha1().Middlewares().Informer().AddEventHandler(eventHandler)
+	if err != nil {
+		return err
+	}
+
+	_, err = factoryCrd.TraefikContainous().V1alpha1().MiddlewareTCPs().Informer().AddEventHandler(eventHandler)
+	if err != nil {
+		return err
+	}
+
+	_, err = factoryCrd.TraefikContainous().V1alpha1().IngressRouteTCPs().Informer().AddEventHandler(eventHandler)
+	if err != nil {
+		return err
+	}
+	_, err = factoryCrd.TraefikContainous().V1alpha1().IngressRouteUDPs().Informer().AddEventHandler(eventHandler)
+	if err != nil {
+		return err
+	}
+
+	_, err = factoryCrd.TraefikContainous().V1alpha1().TLSOptions().Informer().AddEventHandler(eventHandler)
+	if err != nil {
+		return err
+	}
+
+	_, err = factoryCrd.TraefikContainous().V1alpha1().ServersTransports().Informer().AddEventHandler(eventHandler)
+	if err != nil {
+		return err
+	}
+
+	_, err = factoryCrd.TraefikContainous().V1alpha1().TLSStores().Informer().AddEventHandler(eventHandler)
+	if err != nil {
+		return err
+	}
+
+	_, err = factoryCrd.TraefikContainous().V1alpha1().TraefikServices().Informer().AddEventHandler(eventHandler)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func objectKey(meta metav1.ObjectMeta) string {
