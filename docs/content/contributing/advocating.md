@@ -9,7 +9,7 @@ Spread the Love & Tell Us about It
 {: .subtitle }
 
 Traefik Proxy was started by the community for the community.
-You can contribute to the Traefik community in three main ways: 
+You can contribute to the Traefik community in three main ways:
 
 **Spread the word!** Guides, videos, blog posts, how-to articles, and showing off your network design all help spread the word about Traefik Proxy
 and teach others in the community how to best implement it.
@@ -28,4 +28,4 @@ Luckily, as an open source community, our users can help by [building awesome fe
 We are a big community, so we do need to prioritize a bit.
 That is why we use the tag `contributor/wanted` to let you know which pull requests will make it to the front of the queue for design support and review.
 Feel free to grab one of these and run with it.
-Top contributors get unique swag to celebrate. 
+Top contributors get unique swag to celebrate.

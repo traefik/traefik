@@ -12,7 +12,7 @@ You can subscribe sending a mail to security+subscribe@traefik.io or on [the onl
 
 ## CVE
 
-Reported vulnerabilities can be found on 
+Reported vulnerabilities can be found on
 [cve.mitre.org](https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=traefik).
 
 ## Report a Vulnerability
