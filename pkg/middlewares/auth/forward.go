@@ -7,18 +7,19 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/textproto"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/traefik/traefik/v2/pkg/middlewares/connectionheader"
-	"github.com/traefik/traefik/v2/pkg/tracing"
-	"github.com/vulcand/oxy/forward"
-	"github.com/vulcand/oxy/utils"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/connectionheader"
+	"github.com/traefik/traefik/v3/pkg/middlewares/headers"
+	"github.com/traefik/traefik/v3/pkg/tracing"
+	"github.com/vulcand/oxy/v2/forward"
+	"github.com/vulcand/oxy/v2/utils"
 )
 
 const (
