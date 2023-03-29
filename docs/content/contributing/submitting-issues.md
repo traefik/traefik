@@ -12,7 +12,7 @@ Issues are perfect for requesting a feature/enhancement or reporting a suspected
 We use the [GitHub issue tracker](https://github.com/traefik/traefik/issues) to keep track of issues in Traefik.
 
 The process of sorting and checking the issues is a daunting task, and requires a lot of work (more than an hour a day ... just for sorting).
-To help us (and other community members) quickly and effortless understand what you need,
+To help us (and other community members) quickly and effortlessly understand what you need,
 be sure to follow the guidelines below.
 
 !!! important "Getting Help Vs Reporting an Issue"
@@ -60,4 +60,4 @@ Help your readers focus on what matters and help them understand the structure o
 
 ## International English
 
-Every maintainer / Traefik user is not a native English speaker, if you sometimes feel that some messages sound rude, remember that it probably is a language barrier problem from someone willing to help you.
+Every maintainer / Traefik user is not a native English speaker, so if you sometimes feel that some messages sound rude, remember that it probably is a language barrier problem from someone willing to help you.
