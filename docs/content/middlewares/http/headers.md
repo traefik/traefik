@@ -212,6 +212,7 @@ instead the response will be generated and sent back to the client directly.
 ```yaml tab="Docker"
 labels:
   - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
+  - "traefik.http.middlewares.testheader.headers.accesscontrolallowheaders=*"
   - "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
   - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
   - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
@@ -228,6 +229,7 @@ spec:
       - "GET"
       - "OPTIONS"
       - "PUT"
+    accessControlAllowHeaders: "*"
     accessControlAllowOriginList:
       - "https://foo.bar.org"
       - "https://example.org"
@@ -237,6 +239,7 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
+- "traefik.http.middlewares.testheader.headers.accesscontrolallowheaders=*"
 - "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
 - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
 - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
@@ -268,6 +271,7 @@ http:
           - GET
           - OPTIONS
           - PUT
+        accessControlAllowHeaders: "*"
         accessControlAllowOriginList:
           - https://foo.bar.org
           - https://example.org
@@ -279,6 +283,7 @@ http:
 [http.middlewares]
   [http.middlewares.testHeader.headers]
     accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
+    accessControlAllowHeaders= "*"
     accessControlAllowOriginList = ["https://foo.bar.org","https://example.org"]
     accessControlMaxAge = 100
     addVaryHeader = true
