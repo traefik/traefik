@@ -77,7 +77,7 @@ func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 
 	if config.AddEntryPointsLabels {
 		registry.epEnabled = config.AddEntryPointsLabels
-		registry.entryPointReqsCounter = influxDBClient.NewCounter(influxDBEntryPointReqsName)
+		registry.entryPointReqsCounter = NewCounterWithNoopHeaders(influxDBClient.NewCounter(influxDBEntryPointReqsName))
 		registry.entryPointReqsTLSCounter = influxDBClient.NewCounter(influxDBEntryPointReqsTLSName)
 		registry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(influxDBClient.NewHistogram(influxDBEntryPointReqDurationName), time.Second)
 		registry.entryPointOpenConnsGauge = influxDBClient.NewGauge(influxDBEntryPointOpenConnsName)
@@ -87,7 +87,7 @@ func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 
 	if config.AddRoutersLabels {
 		registry.routerEnabled = config.AddRoutersLabels
-		registry.routerReqsCounter = influxDBClient.NewCounter(influxDBRouterReqsName)
+		registry.routerReqsCounter = NewCounterWithNoopHeaders(influxDBClient.NewCounter(influxDBRouterReqsName))
 		registry.routerReqsTLSCounter = influxDBClient.NewCounter(influxDBRouterReqsTLSName)
 		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(influxDBClient.NewHistogram(influxDBRouterReqsDurationName), time.Second)
 		registry.routerOpenConnsGauge = influxDBClient.NewGauge(influxDBORouterOpenConnsName)
@@ -97,7 +97,7 @@ func RegisterInfluxDB(ctx context.Context, config *types.InfluxDB) Registry {
 
 	if config.AddServicesLabels {
 		registry.svcEnabled = config.AddServicesLabels
-		registry.serviceReqsCounter = influxDBClient.NewCounter(influxDBServiceReqsName)
+		registry.serviceReqsCounter = NewCounterWithNoopHeaders(influxDBClient.NewCounter(influxDBServiceReqsName))
 		registry.serviceReqsTLSCounter = influxDBClient.NewCounter(influxDBServiceReqsTLSName)
 		registry.serviceReqDurationHistogram, _ = NewHistogramWithScale(influxDBClient.NewHistogram(influxDBServiceReqsDurationName), time.Second)
 		registry.serviceRetriesCounter = influxDBClient.NewCounter(influxDBServiceRetriesTotalName)

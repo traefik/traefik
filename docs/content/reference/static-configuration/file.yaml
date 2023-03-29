@@ -195,6 +195,9 @@ providers:
     prefix: foobar
     stale: true
     namespace: foobar
+    namespaces:
+      - foobar
+      - foobar
     exposedByDefault: true
     refreshInterval: 42s
     endpoint:
@@ -298,6 +301,9 @@ metrics:
     addServicesLabels: true
     entryPoint: foobar
     manualRouting: true
+    headerLabels:
+      label1: foobar
+      label2: foobar
   datadog:
     address: foobar
     pushInterval: 42s
@@ -389,6 +395,7 @@ tracing:
     sampleRate: 42
   datadog:
     localAgentHostPort: foobar
+    localAgentSocket: foobar
     globalTag: foobar
     globalTags:
       tag1: foobar
@@ -472,7 +479,6 @@ hub:
 experimental:
   kubernetesGateway: true
   http3: true
-  hub: true
   plugins:
     Descriptor0:
       moduleName: foobar

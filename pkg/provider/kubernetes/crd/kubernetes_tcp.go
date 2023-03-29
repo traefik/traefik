@@ -11,7 +11,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
+	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -224,6 +224,15 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc v1alpha1.
 	svcPort, err := getServicePort(service, svc.Port)
 	if err != nil {
 		return nil, err
+	}
+
+	if svc.NativeLB {
+		address, err := getNativeServiceAddress(*service, *svcPort)
+		if err != nil {
+			return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
+		}
+
+		return []dynamic.TCPServer{{Address: address}}, nil
 	}
 
 	var servers []dynamic.TCPServer

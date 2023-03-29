@@ -21,7 +21,7 @@ spec:
       openAPIV3Schema:
         description: 'TraefikService is the CRD implementation of a Traefik Service.
           TraefikService object allows to: - Apply weight to Services on load-balancing
-          - Mirror traffic on services More info: https://doc.traefik.io/traefik/v2.9/routing/providers/kubernetes-crd/#kind-traefikservice'
+          - Mirror traffic on services More info: https://doc.traefik.io/traefik/v2.10/routing/providers/kubernetes-crd/#kind-traefikservice'
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -75,6 +75,13 @@ spec:
                           description: Namespace defines the namespace of the referenced
                             Kubernetes Service or TraefikService.
                           type: string
+                        nativeLB:
+                          description: NativeLB controls, when creating the load-balancer,
+                            whether the LB's children are directly the pods IPs or
+                            if the only child is the Kubernetes Service clusterIP.
+                            The Kubernetes Service itself does load-balance to the
+                            pods. By default, NativeLB is false.
+                          type: boolean
                         passHostHeader:
                           description: PassHostHeader defines whether the client Host
                             header is forwarded to the upstream Kubernetes Service.
@@ -120,7 +127,7 @@ spec:
                           type: string
                         sticky:
                           description: 'Sticky defines the sticky sessions configuration.
-                            More info: https://doc.traefik.io/traefik/v2.9/routing/services/#sticky-sessions'
+                            More info: https://doc.traefik.io/traefik/v2.10/routing/services/#sticky-sessions'
                           properties:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
@@ -166,6 +173,13 @@ spec:
                     description: Namespace defines the namespace of the referenced
                       Kubernetes Service or TraefikService.
                     type: string
+                  nativeLB:
+                    description: NativeLB controls, when creating the load-balancer,
+                      whether the LB's children are directly the pods IPs or if the
+                      only child is the Kubernetes Service clusterIP. The Kubernetes
+                      Service itself does load-balance to the pods. By default, NativeLB
+                      is false.
+                    type: boolean
                   passHostHeader:
                     description: PassHostHeader defines whether the client Host header
                       is forwarded to the upstream Kubernetes Service. By default,
@@ -204,7 +218,7 @@ spec:
                     type: string
                   sticky:
                     description: 'Sticky defines the sticky sessions configuration.
-                      More info: https://doc.traefik.io/traefik/v2.9/routing/services/#sticky-sessions'
+                      More info: https://doc.traefik.io/traefik/v2.10/routing/services/#sticky-sessions'
                     properties:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.
@@ -263,6 +277,13 @@ spec:
                           description: Namespace defines the namespace of the referenced
                             Kubernetes Service or TraefikService.
                           type: string
+                        nativeLB:
+                          description: NativeLB controls, when creating the load-balancer,
+                            whether the LB's children are directly the pods IPs or
+                            if the only child is the Kubernetes Service clusterIP.
+                            The Kubernetes Service itself does load-balance to the
+                            pods. By default, NativeLB is false.
+                          type: boolean
                         passHostHeader:
                           description: PassHostHeader defines whether the client Host
                             header is forwarded to the upstream Kubernetes Service.
@@ -304,7 +325,7 @@ spec:
                           type: string
                         sticky:
                           description: 'Sticky defines the sticky sessions configuration.
-                            More info: https://doc.traefik.io/traefik/v2.9/routing/services/#sticky-sessions'
+                            More info: https://doc.traefik.io/traefik/v2.10/routing/services/#sticky-sessions'
                           properties:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
@@ -343,7 +364,7 @@ spec:
                     type: array
                   sticky:
                     description: 'Sticky defines whether sticky sessions are enabled.
-                      More info: https://doc.traefik.io/traefik/v2.9/routing/providers/kubernetes-crd/#stickiness-and-load-balancing'
+                      More info: https://doc.traefik.io/traefik/v2.10/routing/providers/kubernetes-crd/#stickiness-and-load-balancing'
                     properties:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.

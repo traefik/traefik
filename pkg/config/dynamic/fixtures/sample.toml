@@ -182,6 +182,7 @@
     sampleRate = 42.0
   [tracing.datadog]
     localAgentHostPort = "foobar"
+    localAgentSocket = "foobar"
     globalTag = "foobar"
     debug = true
     prioritySampling = true

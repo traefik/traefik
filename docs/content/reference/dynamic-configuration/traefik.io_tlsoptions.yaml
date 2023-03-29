@@ -1,0 +1,113 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.2
+  creationTimestamp: null
+  name: tlsoptions.traefik.io
+spec:
+  group: traefik.io
+  names:
+    kind: TLSOption
+    listKind: TLSOptionList
+    plural: tlsoptions
+    singular: tlsoption
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: 'TLSOption is the CRD implementation of a Traefik TLS Option,
+          allowing to configure some parameters of the TLS connection. More info:
+          https://doc.traefik.io/traefik/v2.10/https/tls/#tls-options'
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: TLSOptionSpec defines the desired state of a TLSOption.
+            properties:
+              alpnProtocols:
+                description: 'ALPNProtocols defines the list of supported application
+                  level protocols for the TLS handshake, in order of preference. More
+                  info: https://doc.traefik.io/traefik/v2.10/https/tls/#alpn-protocols'
+                items:
+                  type: string
+                type: array
+              cipherSuites:
+                description: 'CipherSuites defines the list of supported cipher suites
+                  for TLS versions up to TLS 1.2. More info: https://doc.traefik.io/traefik/v2.10/https/tls/#cipher-suites'
+                items:
+                  type: string
+                type: array
+              clientAuth:
+                description: ClientAuth defines the server's policy for TLS Client
+                  Authentication.
+                properties:
+                  clientAuthType:
+                    description: ClientAuthType defines the client authentication
+                      type to apply.
+                    enum:
+                    - NoClientCert
+                    - RequestClientCert
+                    - RequireAnyClientCert
+                    - VerifyClientCertIfGiven
+                    - RequireAndVerifyClientCert
+                    type: string
+                  secretNames:
+                    description: SecretNames defines the names of the referenced Kubernetes
+                      Secret storing certificate details.
+                    items:
+                      type: string
+                    type: array
+                type: object
+              curvePreferences:
+                description: 'CurvePreferences defines the preferred elliptic curves
+                  in a specific order. More info: https://doc.traefik.io/traefik/v2.10/https/tls/#curve-preferences'
+                items:
+                  type: string
+                type: array
+              maxVersion:
+                description: 'MaxVersion defines the maximum TLS version that Traefik
+                  will accept. Possible values: VersionTLS10, VersionTLS11, VersionTLS12,
+                  VersionTLS13. Default: None.'
+                type: string
+              minVersion:
+                description: 'MinVersion defines the minimum TLS version that Traefik
+                  will accept. Possible values: VersionTLS10, VersionTLS11, VersionTLS12,
+                  VersionTLS13. Default: VersionTLS10.'
+                type: string
+              preferServerCipherSuites:
+                description: 'PreferServerCipherSuites defines whether the server
+                  chooses a cipher suite among his own instead of among the client''s.
+                  It is enabled automatically when minVersion or maxVersion is set.
+                  Deprecated: https://github.com/golang/go/issues/45430'
+                type: boolean
+              sniStrict:
+                description: SniStrict defines whether Traefik allows connections
+                  from clients connections that do not specify a server_name extension.
+                type: boolean
+            type: object
+        required:
+        - metadata
+        - spec
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

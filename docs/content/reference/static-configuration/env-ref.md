@@ -354,6 +354,9 @@ Buckets for latency metrics. (Default: ```0.100000, 0.300000, 1.200000, 5.000000
 `TRAEFIK_METRICS_PROMETHEUS_ENTRYPOINT`:  
 EntryPoint (Default: ```traefik```)
 
+`TRAEFIK_METRICS_PROMETHEUS_HEADERLABELS_<NAME>`:  
+Defines the extra labels for the requests_total metrics, and for each of them, the request header containing the value for this label.
+
 `TRAEFIK_METRICS_PROMETHEUS_MANUALROUTING`:  
 Manual routing (Default: ```false```)
 
@@ -855,6 +858,9 @@ Expose Nomad services by default. (Default: ```true```)
 `TRAEFIK_PROVIDERS_NOMAD_NAMESPACE`:  
 Sets the Nomad namespace used to discover services.
 
+`TRAEFIK_PROVIDERS_NOMAD_NAMESPACES`:  
+Sets the Nomad namespaces used to discover services.
+
 `TRAEFIK_PROVIDERS_NOMAD_PREFIX`:  
 Prefix for nomad service tags. (Default: ```traefik```)
 
@@ -989,6 +995,9 @@ Sets a list of key:value tags on all spans.
 
 `TRAEFIK_TRACING_DATADOG_LOCALAGENTHOSTPORT`:  
 Sets the Datadog Agent host:port. (Default: ```localhost:8126```)
+
+`TRAEFIK_TRACING_DATADOG_LOCALAGENTSOCKET`:  
+Sets the socket for the Datadog Agent.
 
 `TRAEFIK_TRACING_DATADOG_PARENTIDHEADERNAME`:  
 Sets the header name used to store the parent ID.

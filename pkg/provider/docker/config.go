@@ -74,11 +74,13 @@ func (p *Provider) buildConfiguration(ctx context.Context, containersInspected [
 		serviceName := getServiceName(container)
 
 		model := struct {
-			Name   string
-			Labels map[string]string
+			Name          string
+			ContainerName string
+			Labels        map[string]string
 		}{
-			Name:   serviceName,
-			Labels: container.Labels,
+			Name:          serviceName,
+			ContainerName: strings.TrimPrefix(container.Name, "/"),
+			Labels:        container.Labels,
 		}
 
 		provider.BuildRouterConfiguration(ctx, confFromLabel.HTTP, serviceName, p.defaultRuleTpl, model)
@@ -308,6 +310,7 @@ func (p *Provider) getIPPort(ctx context.Context, container dockerData, serverPo
 func (p Provider) getIPAddress(ctx context.Context, container dockerData) string {
 	logger := log.FromContext(ctx)
 
+	netNotFound := false
 	if container.ExtraConf.Docker.Network != "" {
 		settings := container.NetworkSettings
 		if settings.Networks != nil {
@@ -316,7 +319,8 @@ func (p Provider) getIPAddress(ctx context.Context, container dockerData) string
 				return network.Addr
 			}
 
-			logger.Warnf("Could not find network named '%s' for container '%s'! Maybe you're missing the project's prefix in the label? Defaulting to first available network.", container.ExtraConf.Docker.Network, container.Name)
+			netNotFound = true
+			logger.Debugf("Could not find network named %q for container %q. Maybe you're missing the project's prefix in the label?", container.ExtraConf.Docker.Network, container.Name)
 		}
 	}
 
@@ -365,6 +369,9 @@ func (p Provider) getIPAddress(ctx context.Context, container dockerData) string
 	}
 
 	for _, network := range container.NetworkSettings.Networks {
+		if netNotFound {
+			logger.Warnf("Defaulting to first available network (%q) for container %q.", network, container.Name)
+		}
 		return network.Addr
 	}
 

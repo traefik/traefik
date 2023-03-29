@@ -29,7 +29,8 @@ package versioned
 import (
 	"fmt"
 
-	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefik/v1alpha1"
+	traefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikcontainous/v1alpha1"
+	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -37,6 +38,7 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
+	TraefikContainousV1alpha1() traefikcontainousv1alpha1.TraefikContainousV1alpha1Interface
 	TraefikV1alpha1() traefikv1alpha1.TraefikV1alpha1Interface
 }
 
@@ -44,7 +46,13 @@ type Interface interface {
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	traefikV1alpha1 *traefikv1alpha1.TraefikV1alpha1Client
+	traefikContainousV1alpha1 *traefikcontainousv1alpha1.TraefikContainousV1alpha1Client
+	traefikV1alpha1           *traefikv1alpha1.TraefikV1alpha1Client
+}
+
+// TraefikContainousV1alpha1 retrieves the TraefikContainousV1alpha1Client
+func (c *Clientset) TraefikContainousV1alpha1() traefikcontainousv1alpha1.TraefikContainousV1alpha1Interface {
+	return c.traefikContainousV1alpha1
 }
 
 // TraefikV1alpha1 retrieves the TraefikV1alpha1Client
@@ -73,6 +81,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
+	cs.traefikContainousV1alpha1, err = traefikcontainousv1alpha1.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 	cs.traefikV1alpha1, err = traefikv1alpha1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
@@ -89,6 +101,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
+	cs.traefikContainousV1alpha1 = traefikcontainousv1alpha1.NewForConfigOrDie(c)
 	cs.traefikV1alpha1 = traefikv1alpha1.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
@@ -98,6 +111,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
+	cs.traefikContainousV1alpha1 = traefikcontainousv1alpha1.New(c)
 	cs.traefikV1alpha1 = traefikv1alpha1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)

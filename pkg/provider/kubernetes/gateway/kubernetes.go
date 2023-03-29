@@ -20,7 +20,8 @@ import (
 	"github.com/traefik/traefik/v2/pkg/job"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
-	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefik/v1alpha1"
+	containousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
+	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
@@ -1434,7 +1435,7 @@ func loadServices(client Client, namespace string, backendRefs []v1alpha2.HTTPBa
 
 		weight := int(pointer.Int32Deref(backendRef.Weight, 1))
 
-		if *backendRef.Group == traefikv1alpha1.GroupName && *backendRef.Kind == kindTraefikService {
+		if isTraefikService(backendRef.BackendRef) {
 			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: string(backendRef.Name), Weight: &weight})
 			continue
 		}
@@ -1558,7 +1559,7 @@ func loadTCPServices(client Client, namespace string, backendRefs []v1alpha2.Bac
 
 		weight := int(pointer.Int32Deref(backendRef.Weight, 1))
 
-		if *backendRef.Group == traefikv1alpha1.GroupName && *backendRef.Kind == kindTraefikService {
+		if isTraefikService(backendRef) {
 			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.TCPWRRService{Name: string(backendRef.Name), Weight: &weight})
 			continue
 		}
@@ -1694,14 +1695,16 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	return eventsChanBuffered
 }
 
-func isInternalService(ref v1alpha2.BackendRef) bool {
+func isTraefikService(ref v1alpha2.BackendRef) bool {
 	if ref.Kind == nil || ref.Group == nil {
 		return false
 	}
 
-	return *ref.Kind == kindTraefikService &&
-		*ref.Group == traefikv1alpha1.GroupName &&
-		strings.HasSuffix(string(ref.Name), "@internal")
+	return (*ref.Group == containousv1alpha1.GroupName || *ref.Group == traefikv1alpha1.GroupName) && *ref.Kind == kindTraefikService
+}
+
+func isInternalService(ref v1alpha2.BackendRef) bool {
+	return isTraefikService(ref) && strings.HasSuffix(string(ref.Name), "@internal")
 }
 
 // makeListenerKey joins protocol, hostname, and port of a listener into a string key.

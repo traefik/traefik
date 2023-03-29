@@ -39,7 +39,7 @@ spec:
               entryPoints:
                 description: 'EntryPoints defines the list of entry point names to
                   bind to. Entry points have to be configured in the static configuration.
-                  More info: https://doc.traefik.io/traefik/v2.9/routing/entrypoints/
+                  More info: https://doc.traefik.io/traefik/v2.10/routing/entrypoints/
                   Default: all.'
                 items:
                   type: string
@@ -50,7 +50,7 @@ spec:
                   description: RouteTCP holds the TCP route configuration.
                   properties:
                     match:
-                      description: 'Match defines the router''s rule. More info: https://doc.traefik.io/traefik/v2.9/routing/routers/#rule_1'
+                      description: 'Match defines the router''s rule. More info: https://doc.traefik.io/traefik/v2.10/routing/routers/#rule_1'
                       type: string
                     middlewares:
                       description: Middlewares defines the list of references to MiddlewareTCP
@@ -73,7 +73,7 @@ spec:
                       type: array
                     priority:
                       description: 'Priority defines the router''s priority. More
-                        info: https://doc.traefik.io/traefik/v2.9/routing/routers/#priority_1'
+                        info: https://doc.traefik.io/traefik/v2.10/routing/routers/#priority_1'
                       type: integer
                     services:
                       description: Services defines the list of TCP services.
@@ -89,6 +89,13 @@ spec:
                             description: Namespace defines the namespace of the referenced
                               Kubernetes Service.
                             type: string
+                          nativeLB:
+                            description: NativeLB controls, when creating the load-balancer,
+                              whether the LB's children are directly the pods IPs
+                              or if the only child is the Kubernetes Service clusterIP.
+                              The Kubernetes Service itself does load-balance to the
+                              pods. By default, NativeLB is false.
+                            type: boolean
                           port:
                             anyOf:
                             - type: integer
@@ -98,7 +105,7 @@ spec:
                             x-kubernetes-int-or-string: true
                           proxyProtocol:
                             description: 'ProxyProtocol defines the PROXY protocol
-                              configuration. More info: https://doc.traefik.io/traefik/v2.9/routing/services/#proxy-protocol'
+                              configuration. More info: https://doc.traefik.io/traefik/v2.10/routing/services/#proxy-protocol'
                             properties:
                               version:
                                 description: Version defines the PROXY Protocol version
@@ -129,16 +136,16 @@ spec:
                 type: array
               tls:
                 description: 'TLS defines the TLS configuration on a layer 4 / TCP
-                  Route. More info: https://doc.traefik.io/traefik/v2.9/routing/routers/#tls_1'
+                  Route. More info: https://doc.traefik.io/traefik/v2.10/routing/routers/#tls_1'
                 properties:
                   certResolver:
                     description: 'CertResolver defines the name of the certificate
                       resolver to use. Cert resolvers have to be configured in the
-                      static configuration. More info: https://doc.traefik.io/traefik/v2.9/https/acme/#certificate-resolvers'
+                      static configuration. More info: https://doc.traefik.io/traefik/v2.10/https/acme/#certificate-resolvers'
                     type: string
                   domains:
                     description: 'Domains defines the list of domains that will be
-                      used to issue certificates. More info: https://doc.traefik.io/traefik/v2.9/routing/routers/#domains'
+                      used to issue certificates. More info: https://doc.traefik.io/traefik/v2.10/routing/routers/#domains'
                     items:
                       description: Domain holds a domain name with SANs.
                       properties:
@@ -156,7 +163,7 @@ spec:
                   options:
                     description: 'Options defines the reference to a TLSOption, that
                       specifies the parameters of the TLS connection. If not defined,
-                      the `default` TLSOption is used. More info: https://doc.traefik.io/traefik/v2.9/https/tls/#tls-options'
+                      the `default` TLSOption is used. More info: https://doc.traefik.io/traefik/v2.10/https/tls/#tls-options'
                     properties:
                       name:
                         description: Name defines the name of the referenced Traefik

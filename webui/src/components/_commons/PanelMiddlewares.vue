@@ -1157,6 +1157,9 @@ export default {
       if (name.startsWith('consulcatalog-')) {
         return `statics/providers/consulcatalog.svg`
       }
+      if (name.startsWith('nomad-')) {
+        return `statics/providers/nomad.svg`
+      }
 
       return `statics/providers/${name}.svg`
     }

@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"bytes"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -37,12 +38,12 @@ func TestNewMultiRegistry(t *testing.T) {
 	registries := []Registry{newCollectingRetryMetrics(), newCollectingRetryMetrics()}
 	registry := NewMultiRegistry(registries)
 
-	registry.ServiceReqsCounter().With("key", "requests").Add(1)
+	registry.ServiceReqsCounter().With(nil, "key", "requests").Add(1)
 	registry.ServiceReqDurationHistogram().With("key", "durations").Observe(float64(2))
 	registry.ServiceRetriesCounter().With("key", "retries").Add(3)
 
 	for _, collectingRegistry := range registries {
-		cReqsCounter := collectingRegistry.ServiceReqsCounter().(*counterMock)
+		cReqsCounter := collectingRegistry.ServiceReqsCounter().(*counterWithHeadersMock)
 		cReqDurationHistogram := collectingRegistry.ServiceReqDurationHistogram().(*histogramMock)
 		cRetriesCounter := collectingRegistry.ServiceRetriesCounter().(*counterMock)
 
@@ -67,7 +68,7 @@ func TestNewMultiRegistry(t *testing.T) {
 
 func newCollectingRetryMetrics() Registry {
 	return &standardRegistry{
-		serviceReqsCounter:          &counterMock{},
+		serviceReqsCounter:          &counterWithHeadersMock{},
 		serviceReqDurationHistogram: &histogramMock{},
 		serviceRetriesCounter:       &counterMock{},
 	}
@@ -84,6 +85,20 @@ func (c *counterMock) With(labelValues ...string) metrics.Counter {
 }
 
 func (c *counterMock) Add(delta float64) {
+	c.counterValue += delta
+}
+
+type counterWithHeadersMock struct {
+	counterValue    float64
+	lastLabelValues []string
+}
+
+func (c *counterWithHeadersMock) With(_ http.Header, labelValues ...string) CounterWithHeaders {
+	c.lastLabelValues = labelValues
+	return c
+}
+
+func (c *counterWithHeadersMock) Add(delta float64) {
 	c.counterValue += delta
 }
 

@@ -11,7 +11,7 @@ Note: the document is a work in progress.
 
 Welcome to the Traefik Community.
 This document describes how to be part of the core team
-as well as various responsibilities
+together with various responsibilities
 and guidelines for Traefik maintainers.
 We are strongly promoting a philosophy of openness and sharing,
 and firmly standing against the elitist closed approach.
@@ -20,7 +20,7 @@ and wants to be part of that journey!
 
 ## Onboarding Process
 
-If you consider joining our community please drop us a line using Twitter or leave a note in the issue.
+If you consider joining our community, please drop us a line using Twitter or leave a note in the issue.
 We will schedule a quick call to meet you and learn more about your motivation.
 During the call, the team will discuss the process of becoming a maintainer.
 We will be happy to answer any questions and explain all your doubts.
@@ -53,7 +53,7 @@ but we can suggest you start with activities such as:
       Each of the issues that are labeled as bug/possible bug/confirmed requires a reproducible use case. 
       You can help in creating a reproducible use case if it has not been added to the issue
       or use the sample code provided by the reporter.
-      Typically, a simple docker compose should be enough to reproduce the issue.
+      Typically, a simple Docker Compose should be enough to reproduce the issue.
 - Code contribution.
 - Documentation contribution.
     - Technical documentation is one of the most important components of the product.
@@ -61,7 +61,7 @@ but we can suggest you start with activities such as:
       using the official documentation,
       is a game changer.
 - You will be listed on our Maintainers GitHub page
-  as well as on our website in the section [maintainers](maintainers.md).
+  and on our website in the section [maintainers](maintainers.md).
 - We will be promoting you on social channels (mostly on Twitter).
 
 ## Governance
@@ -71,7 +71,7 @@ but we can suggest you start with activities such as:
 ## Communicating
 
 - All of our maintainers are added to Slack #traefik-maintainers channel that belongs to Traefik labs workspace.
-  Having the team in one place helps us to communicate effectively. 
+  Having the team in one place helps us to communicate effectively.
   You can reach Traefik core developers directly,
   which offers the possibility to discuss issues, pull requests, enhancements more efficiently
   and get the feedback almost immediately.
@@ -112,9 +112,9 @@ maintainers' activity and involvement will be reviewed on a regular basis.
 
 - Be able to put yourself in users’ shoes.
 - Be open-minded and respectful with other maintainers and other community members.
-- Keep the communication public - 
+- Keep the communication public -
   if anyone tries to communicate with you directly,
-  ask him politely to move the conversation to a public communication channel.
+  ask politely to move the conversation to a public communication channel.
 - Stay away from defensive comments.
 - Please try to express your thoughts clearly enough
   and note that some of us are not native English speakers.
@@ -122,7 +122,7 @@ maintainers' activity and involvement will be reviewed on a regular basis.
   none of us is able to predict your thoughts.
 - There are a lot of use cases of using Traefik
   and even more issues that are difficult to reproduce.
-  If the issue can’t be replicated due to a lack of reproducible case (a simple docker compose should be enough) - 
+  If the issue can’t be replicated due to a lack of reproducible case (a simple Docker Compose should be enough) -
   set your time limits while working on the issue
   and express clearly that you were not able to replicate it.
   You can come back later to that case.

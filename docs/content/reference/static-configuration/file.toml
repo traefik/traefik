@@ -181,6 +181,7 @@
     prefix = "foobar"
     stale = true
     namespace = "foobar"
+    namespaces = ["foobar", "foobar"]
     exposedByDefault = true
     refreshInterval = "42s"
     [providers.nomad.endpoint]
@@ -272,6 +273,9 @@
     addServicesLabels = true
     entryPoint = "foobar"
     manualRouting = true
+    [metrics.prometheus.headerLabels]
+      label1 = "foobar"
+      label2 = "foobar"
   [metrics.datadog]
     address = "foobar"
     pushInterval = "42s"
@@ -365,6 +369,7 @@
     sampleRate = 42.0
   [tracing.datadog]
     localAgentHostPort = "foobar"
+    localAgentSocket = "foobar"
     globalTag = "foobar"
     [tracing.datadog.globalTags]
       tag1 = "foobar"
@@ -448,7 +453,6 @@
 [experimental]
   kubernetesGateway = true
   http3 = true
-  hub = true
   [experimental.plugins]
     [experimental.plugins.Descriptor0]
       moduleName = "foobar"

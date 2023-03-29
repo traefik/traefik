@@ -39,7 +39,7 @@ spec:
               entryPoints:
                 description: 'EntryPoints defines the list of entry point names to
                   bind to. Entry points have to be configured in the static configuration.
-                  More info: https://doc.traefik.io/traefik/v2.9/routing/entrypoints/
+                  More info: https://doc.traefik.io/traefik/v2.10/routing/entrypoints/
                   Default: all.'
                 items:
                   type: string
@@ -63,6 +63,13 @@ spec:
                             description: Namespace defines the namespace of the referenced
                               Kubernetes Service.
                             type: string
+                          nativeLB:
+                            description: NativeLB controls, when creating the load-balancer,
+                              whether the LB's children are directly the pods IPs
+                              or if the only child is the Kubernetes Service clusterIP.
+                              The Kubernetes Service itself does load-balance to the
+                              pods. By default, NativeLB is false.
+                            type: boolean
                           port:
                             anyOf:
                             - type: integer

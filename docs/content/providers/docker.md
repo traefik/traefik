@@ -265,7 +265,7 @@ See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API A
 
     services:
       traefik:
-         image: traefik:v2.9 # The official v2 Traefik docker image
+         image: traefik:v2.10 # The official v2 Traefik docker image
          ports:
            - "80:80"
          volumes:
@@ -440,10 +440,11 @@ _Optional, Default=```Host(`{{ normalize .Name }}`)```_
 
 The `defaultRule` option defines what routing rule to apply to a container if no rule is defined by a label.
 
-It must be a valid [Go template](https://pkg.go.dev/text/template/), and can use
-[sprig template functions](https://masterminds.github.io/sprig/).
-The container service name can be accessed with the `Name` identifier,
-and the template has access to all the labels defined on this container.
+It must be a valid [Go template](https://pkg.go.dev/text/template/),
+and can use [sprig template functions](https://masterminds.github.io/sprig/).
+The container name can be accessed with the `ContainerName` identifier.
+The service name can be accessed with the `Name` identifier.
+The template has access to all the labels defined on this container with the `Labels` identifier.
 
 ```yaml tab="File (YAML)"
 providers:
