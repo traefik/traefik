@@ -46,7 +46,7 @@ You no longer need to create and synchronize configuration files cluttered with 
 !!! info "Many different rules"
 
     In the example above, we used the request [path rule](../routing/routers/index.md#rule "Link to docs about routing rules") to determine which service was in charge.
-    Certainly you can use many other different [rules](../routing/routers/index.md#rule "Link to docs about routing rules").
+    Certainly, you can use many other different [rules](../routing/routers/index.md#rule "Link to docs about routing rules").
 
 !!! info "Updating the requests"
 
