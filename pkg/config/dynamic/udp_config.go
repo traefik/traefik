@@ -78,5 +78,5 @@ func (l *UDPServersLoadBalancer) Mergeable(loadBalancer *UDPServersLoadBalancer)
 // UDPServer defines a UDP server configuration.
 type UDPServer struct {
 	Address string `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty" label:"-"`
-	Port    string `toml:"-" json:"-" yaml:"-" file:"-"`
+	Port    string `json:"-" toml:"-" yaml:"-" file:"-"`
 }

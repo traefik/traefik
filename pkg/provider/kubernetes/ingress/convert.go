@@ -4,8 +4,8 @@ import (
 	"errors"
 
 	corev1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
-	networkingv1beta1 "k8s.io/api/networking/v1beta1"
+	netv1 "k8s.io/api/networking/v1"
+	netv1beta1 "k8s.io/api/networking/v1beta1"
 )
 
 type marshaler interface {
@@ -17,7 +17,7 @@ type unmarshaler interface {
 }
 
 type LoadBalancerIngress interface {
-	corev1.LoadBalancerIngress | networkingv1beta1.IngressLoadBalancerIngress | networkingv1.IngressLoadBalancerIngress
+	corev1.LoadBalancerIngress | netv1beta1.IngressLoadBalancerIngress | netv1.IngressLoadBalancerIngress
 }
 
 // convertSlice converts slice of LoadBalancerIngress to slice of LoadBalancerIngress.

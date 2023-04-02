@@ -199,8 +199,8 @@ type ResponseForwarding struct {
 // Server holds the server configuration.
 type Server struct {
 	URL    string `json:"url,omitempty" toml:"url,omitempty" yaml:"url,omitempty" label:"-"`
-	Scheme string `toml:"-" json:"-" yaml:"-" file:"-"`
-	Port   string `toml:"-" json:"-" yaml:"-" file:"-"`
+	Scheme string `json:"-" toml:"-" yaml:"-" file:"-"`
+	Port   string `json:"-" toml:"-" yaml:"-" file:"-"`
 }
 
 // SetDefaults Default values for a Server.
