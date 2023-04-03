@@ -108,7 +108,7 @@ func (l *TCPServersLoadBalancer) Mergeable(loadBalancer *TCPServersLoadBalancer)
 // TCPServer holds a TCP Server configuration.
 type TCPServer struct {
 	Address string `json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty" label:"-"`
-	Port    string `toml:"-" json:"-" yaml:"-"`
+	Port    string `json:"-" toml:"-" yaml:"-"`
 }
 
 // +k8s:deepcopy-gen=true

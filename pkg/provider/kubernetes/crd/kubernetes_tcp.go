@@ -11,7 +11,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/log"
 	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v2/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -141,7 +141,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 	return conf
 }
 
-func (p *Provider) makeMiddlewareTCPKeys(ctx context.Context, ingRouteTCPNamespace string, middlewares []v1alpha1.ObjectReference) ([]string, error) {
+func (p *Provider) makeMiddlewareTCPKeys(ctx context.Context, ingRouteTCPNamespace string, middlewares []traefikv1alpha1.ObjectReference) ([]string, error) {
 	var mds []string
 
 	for _, mi := range middlewares {
@@ -170,7 +170,7 @@ func (p *Provider) makeMiddlewareTCPKeys(ctx context.Context, ingRouteTCPNamespa
 	return mds, nil
 }
 
-func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace string, service v1alpha1.ServiceTCP) (*dynamic.TCPService, error) {
+func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace string, service traefikv1alpha1.ServiceTCP) (*dynamic.TCPService, error) {
 	ns := parentNamespace
 	if len(service.Namespace) > 0 {
 		if !isNamespaceAllowed(p.AllowCrossNamespace, parentNamespace, service.Namespace) {
@@ -207,7 +207,7 @@ func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace st
 	return tcpService, nil
 }
 
-func (p *Provider) loadTCPServers(client Client, namespace string, svc v1alpha1.ServiceTCP) ([]dynamic.TCPServer, error) {
+func (p *Provider) loadTCPServers(client Client, namespace string, svc traefikv1alpha1.ServiceTCP) ([]dynamic.TCPServer, error) {
 	service, exists, err := client.GetService(namespace, svc.Name)
 	if err != nil {
 		return nil, err
@@ -279,7 +279,7 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc v1alpha1.
 }
 
 // getTLSTCP mutates tlsConfigs.
-func getTLSTCP(ctx context.Context, ingressRoute *v1alpha1.IngressRouteTCP, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
+func getTLSTCP(ctx context.Context, ingressRoute *traefikv1alpha1.IngressRouteTCP, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
 	if ingressRoute.Spec.TLS == nil {
 		return nil
 	}

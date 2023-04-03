@@ -4,15 +4,15 @@ import (
 	"fmt"
 
 	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/informers/externalversions"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	traefikscheme "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
+	traefikinformers "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/informers/externalversions"
+	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-func (c *clientWrapper) appendContainousIngressRoutes(result []*v1alpha1.IngressRoute) []*v1alpha1.IngressRoute {
+func (c *clientWrapper) appendContainousIngressRoutes(result []*traefikv1alpha1.IngressRoute) []*traefikv1alpha1.IngressRoute {
 	listed := map[string]struct{}{}
 	for _, obj := range result {
 		listed[objectKey(obj.ObjectMeta)] = struct{}{}
@@ -31,20 +31,20 @@ func (c *clientWrapper) appendContainousIngressRoutes(result []*v1alpha1.Ingress
 				continue
 			}
 
-			toVersion, err := scheme.Scheme.ConvertToVersion(ing, GroupVersioner)
+			toVersion, err := traefikscheme.Scheme.ConvertToVersion(ing, GroupVersioner)
 			if err != nil {
 				log.Errorf("Failed to convert ingress route in namespace %s: %v", ns, err)
 				continue
 			}
 
-			result = append(result, toVersion.(*v1alpha1.IngressRoute))
+			result = append(result, toVersion.(*traefikv1alpha1.IngressRoute))
 		}
 	}
 
 	return result
 }
 
-func (c *clientWrapper) appendContainousIngressRouteTCPs(result []*v1alpha1.IngressRouteTCP) []*v1alpha1.IngressRouteTCP {
+func (c *clientWrapper) appendContainousIngressRouteTCPs(result []*traefikv1alpha1.IngressRouteTCP) []*traefikv1alpha1.IngressRouteTCP {
 	listed := map[string]struct{}{}
 	for _, obj := range result {
 		listed[objectKey(obj.ObjectMeta)] = struct{}{}
@@ -63,20 +63,20 @@ func (c *clientWrapper) appendContainousIngressRouteTCPs(result []*v1alpha1.Ingr
 				continue
 			}
 
-			toVersion, err := scheme.Scheme.ConvertToVersion(ing, GroupVersioner)
+			toVersion, err := traefikscheme.Scheme.ConvertToVersion(ing, GroupVersioner)
 			if err != nil {
 				log.Errorf("Failed to convert tcp ingress route in namespace %s: %v", ns, err)
 				continue
 			}
 
-			result = append(result, toVersion.(*v1alpha1.IngressRouteTCP))
+			result = append(result, toVersion.(*traefikv1alpha1.IngressRouteTCP))
 		}
 	}
 
 	return result
 }
 
-func (c *clientWrapper) appendContainousIngressRouteUDPs(result []*v1alpha1.IngressRouteUDP) []*v1alpha1.IngressRouteUDP {
+func (c *clientWrapper) appendContainousIngressRouteUDPs(result []*traefikv1alpha1.IngressRouteUDP) []*traefikv1alpha1.IngressRouteUDP {
 	listed := map[string]struct{}{}
 	for _, obj := range result {
 		listed[objectKey(obj.ObjectMeta)] = struct{}{}
@@ -95,20 +95,20 @@ func (c *clientWrapper) appendContainousIngressRouteUDPs(result []*v1alpha1.Ingr
 				continue
 			}
 
-			toVersion, err := scheme.Scheme.ConvertToVersion(ing, GroupVersioner)
+			toVersion, err := traefikscheme.Scheme.ConvertToVersion(ing, GroupVersioner)
 			if err != nil {
 				log.Errorf("Failed to convert udp ingress route in namespace %s: %v", ns, err)
 				continue
 			}
 
-			result = append(result, toVersion.(*v1alpha1.IngressRouteUDP))
+			result = append(result, toVersion.(*traefikv1alpha1.IngressRouteUDP))
 		}
 	}
 
 	return result
 }
 
-func (c *clientWrapper) appendContainousMiddlewares(result []*v1alpha1.Middleware) []*v1alpha1.Middleware {
+func (c *clientWrapper) appendContainousMiddlewares(result []*traefikv1alpha1.Middleware) []*traefikv1alpha1.Middleware {
 	listed := map[string]struct{}{}
 	for _, obj := range result {
 		listed[objectKey(obj.ObjectMeta)] = struct{}{}
@@ -127,20 +127,20 @@ func (c *clientWrapper) appendContainousMiddlewares(result []*v1alpha1.Middlewar
 				continue
 			}
 
-			toVersion, err := scheme.Scheme.ConvertToVersion(middleware, GroupVersioner)
+			toVersion, err := traefikscheme.Scheme.ConvertToVersion(middleware, GroupVersioner)
 			if err != nil {
 				log.Errorf("Failed to convert middleware in namespace %s: %v", ns, err)
 				continue
 			}
 
-			result = append(result, toVersion.(*v1alpha1.Middleware))
+			result = append(result, toVersion.(*traefikv1alpha1.Middleware))
 		}
 	}
 
 	return result
 }
 
-func (c *clientWrapper) appendContainousMiddlewareTCPs(result []*v1alpha1.MiddlewareTCP) []*v1alpha1.MiddlewareTCP {
+func (c *clientWrapper) appendContainousMiddlewareTCPs(result []*traefikv1alpha1.MiddlewareTCP) []*traefikv1alpha1.MiddlewareTCP {
 	listed := map[string]struct{}{}
 	for _, obj := range result {
 		listed[objectKey(obj.ObjectMeta)] = struct{}{}
@@ -159,20 +159,20 @@ func (c *clientWrapper) appendContainousMiddlewareTCPs(result []*v1alpha1.Middle
 				continue
 			}
 
-			toVersion, err := scheme.Scheme.ConvertToVersion(middleware, GroupVersioner)
+			toVersion, err := traefikscheme.Scheme.ConvertToVersion(middleware, GroupVersioner)
 			if err != nil {
 				log.Errorf("Failed to convert tcp middleware in namespace %s: %v", ns, err)
 				continue
 			}
 
-			result = append(result, toVersion.(*v1alpha1.MiddlewareTCP))
+			result = append(result, toVersion.(*traefikv1alpha1.MiddlewareTCP))
 		}
 	}
 
 	return result
 }
 
-func (c *clientWrapper) appendContainousTraefikServices(result []*v1alpha1.TraefikService) []*v1alpha1.TraefikService {
+func (c *clientWrapper) appendContainousTraefikServices(result []*traefikv1alpha1.TraefikService) []*traefikv1alpha1.TraefikService {
 	listed := map[string]struct{}{}
 	for _, obj := range result {
 		listed[objectKey(obj.ObjectMeta)] = struct{}{}
@@ -191,20 +191,20 @@ func (c *clientWrapper) appendContainousTraefikServices(result []*v1alpha1.Traef
 				continue
 			}
 
-			toVersion, err := scheme.Scheme.ConvertToVersion(traefikService, GroupVersioner)
+			toVersion, err := traefikscheme.Scheme.ConvertToVersion(traefikService, GroupVersioner)
 			if err != nil {
 				log.Errorf("Failed to convert Traefik service in namespace %s: %v", ns, err)
 				continue
 			}
 
-			result = append(result, toVersion.(*v1alpha1.TraefikService))
+			result = append(result, toVersion.(*traefikv1alpha1.TraefikService))
 		}
 	}
 
 	return result
 }
 
-func (c *clientWrapper) appendContainousServersTransport(result []*v1alpha1.ServersTransport) []*v1alpha1.ServersTransport {
+func (c *clientWrapper) appendContainousServersTransport(result []*traefikv1alpha1.ServersTransport) []*traefikv1alpha1.ServersTransport {
 	listed := map[string]struct{}{}
 	for _, obj := range result {
 		listed[objectKey(obj.ObjectMeta)] = struct{}{}
@@ -223,20 +223,20 @@ func (c *clientWrapper) appendContainousServersTransport(result []*v1alpha1.Serv
 				continue
 			}
 
-			toVersion, err := scheme.Scheme.ConvertToVersion(serversTransport, GroupVersioner)
+			toVersion, err := traefikscheme.Scheme.ConvertToVersion(serversTransport, GroupVersioner)
 			if err != nil {
 				log.Errorf("Failed to convert servers transport in namespace %s: %v", ns, err)
 				continue
 			}
 
-			result = append(result, toVersion.(*v1alpha1.ServersTransport))
+			result = append(result, toVersion.(*traefikv1alpha1.ServersTransport))
 		}
 	}
 
 	return result
 }
 
-func (c *clientWrapper) appendContainousTLSOptions(result []*v1alpha1.TLSOption) []*v1alpha1.TLSOption {
+func (c *clientWrapper) appendContainousTLSOptions(result []*traefikv1alpha1.TLSOption) []*traefikv1alpha1.TLSOption {
 	listed := map[string]struct{}{}
 	for _, obj := range result {
 		listed[objectKey(obj.ObjectMeta)] = struct{}{}
@@ -255,20 +255,20 @@ func (c *clientWrapper) appendContainousTLSOptions(result []*v1alpha1.TLSOption)
 				continue
 			}
 
-			toVersion, err := scheme.Scheme.ConvertToVersion(option, GroupVersioner)
+			toVersion, err := traefikscheme.Scheme.ConvertToVersion(option, GroupVersioner)
 			if err != nil {
 				log.Errorf("Failed to convert tls option in namespace %s: %v", ns, err)
 				continue
 			}
 
-			result = append(result, toVersion.(*v1alpha1.TLSOption))
+			result = append(result, toVersion.(*traefikv1alpha1.TLSOption))
 		}
 	}
 
 	return result
 }
 
-func (c *clientWrapper) appendContainousTLSStores(result []*v1alpha1.TLSStore) []*v1alpha1.TLSStore {
+func (c *clientWrapper) appendContainousTLSStores(result []*traefikv1alpha1.TLSStore) []*traefikv1alpha1.TLSStore {
 	listed := map[string]struct{}{}
 	for _, obj := range result {
 		listed[objectKey(obj.ObjectMeta)] = struct{}{}
@@ -287,20 +287,20 @@ func (c *clientWrapper) appendContainousTLSStores(result []*v1alpha1.TLSStore) [
 				continue
 			}
 
-			toVersion, err := scheme.Scheme.ConvertToVersion(store, GroupVersioner)
+			toVersion, err := traefikscheme.Scheme.ConvertToVersion(store, GroupVersioner)
 			if err != nil {
 				log.Errorf("Failed to convert tls store in namespace %s: %v", ns, err)
 				continue
 			}
 
-			result = append(result, toVersion.(*v1alpha1.TLSStore))
+			result = append(result, toVersion.(*traefikv1alpha1.TLSStore))
 		}
 	}
 
 	return result
 }
 
-func (c *clientWrapper) getContainousTraefikService(namespace, name string) (*v1alpha1.TraefikService, bool, error) {
+func (c *clientWrapper) getContainousTraefikService(namespace, name string) (*traefikv1alpha1.TraefikService, bool, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, false, fmt.Errorf("failed to get service %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
@@ -312,15 +312,15 @@ func (c *clientWrapper) getContainousTraefikService(namespace, name string) (*v1
 		return nil, false, err
 	}
 
-	toVersion, err := scheme.Scheme.ConvertToVersion(service, GroupVersioner)
+	toVersion, err := traefikscheme.Scheme.ConvertToVersion(service, GroupVersioner)
 	if err != nil {
 		log.Errorf("Failed to convert Traefik service in namespace %s: %v", namespace, err)
 	}
 
-	return toVersion.(*v1alpha1.TraefikService), exist, err
+	return toVersion.(*traefikv1alpha1.TraefikService), exist, err
 }
 
-func addContainousInformers(factoryCrd externalversions.SharedInformerFactory, eventHandler *k8s.ResourceEventHandler) error {
+func addContainousInformers(factoryCrd traefikinformers.SharedInformerFactory, eventHandler *k8s.ResourceEventHandler) error {
 	_, err := factoryCrd.TraefikContainous().V1alpha1().IngressRoutes().Informer().AddEventHandler(eventHandler)
 	if err != nil {
 		return err
