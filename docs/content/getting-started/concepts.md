@@ -19,7 +19,7 @@ The main features include dynamic configuration, automatic service discovery, an
 
 2. [Routers](../routing/routers/index.md "Link to docs about routers"): A router is in charge of connecting incoming requests to the services that can handle them.
 
-3. [Middlewares](https://doc.traefik.io/traefik/middlewares/overview/ "Link to docs about middlewares"): Attached to the routers, middlewares can modify the requests or responses before they are sent to your service
+3. [Middlewares](../middlewares/overview.md "Link to docs about middlewares"): Attached to the routers, middlewares can modify the requests or responses before they are sent to your service
 
 4. [Services](https://doc.traefik.io/traefik/routing/services/ "Link to docs about services"): Services are responsible for configuring how to reach the actual services that will eventually handle the incoming requests.
 
