@@ -15,7 +15,7 @@ Traefik is based on the concept of EntryPoints, Routers, Middelwares and Service
 
 The main features include dynamic configuration, automatic service discovery, and support for multiple backends and protocols.
 
-1. [EntryPoints](https://doc.traefik.io/traefik/routing/entrypoints/ "Link to docs about EntryPoints"): EntryPoints are the network entry points into Traefik. They define the port which will receive the packets, and whether to listen for TCP or UDP.
+1. [EntryPoints](../routing/entrypoints.md "Link to docs about EntryPoints"): EntryPoints are the network entry points into Traefik. They define the port which will receive the packets, and whether to listen for TCP or UDP.
 
 2. [Routers](https://doc.traefik.io/traefik/routing/routers/ "Link to docs about routers"): A router is in charge of connecting incoming requests to the services that can handle them.
 
