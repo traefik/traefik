@@ -17,7 +17,7 @@ The main features include dynamic configuration, automatic service discovery, an
 
 1. [EntryPoints](../routing/entrypoints.md "Link to docs about EntryPoints"): EntryPoints are the network entry points into Traefik. They define the port which will receive the packets, and whether to listen for TCP or UDP.
 
-2. [Routers](https://doc.traefik.io/traefik/routing/routers/ "Link to docs about routers"): A router is in charge of connecting incoming requests to the services that can handle them.
+2. [Routers](../routing/routers/index.md "Link to docs about routers"): A router is in charge of connecting incoming requests to the services that can handle them.
 
 3. [Middlewares](https://doc.traefik.io/traefik/middlewares/overview/ "Link to docs about middlewares"): Attached to the routers, middlewares can modify the requests or responses before they are sent to your service
 
