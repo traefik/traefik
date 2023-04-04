@@ -21,7 +21,7 @@ The main features include dynamic configuration, automatic service discovery, an
 
 3. [Middlewares](../middlewares/overview.md "Link to docs about middlewares"): Attached to the routers, middlewares can modify the requests or responses before they are sent to your service
 
-4. [Services](https://doc.traefik.io/traefik/routing/services/ "Link to docs about services"): Services are responsible for configuring how to reach the actual services that will eventually handle the incoming requests.
+4. [Services](../routing/services/index.md "Link to docs about services"): Services are responsible for configuring how to reach the actual services that will eventually handle the incoming requests.
 
 ## Edge Router
 
