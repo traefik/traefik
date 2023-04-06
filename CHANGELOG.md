@@ -1,3 +1,6 @@
+## [v2.9.10](https://github.com/traefik/traefik/tree/v2.9.10) (2023-04-06)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.9...v2.9.10)
+
 ## [v2.10.0-rc1](https://github.com/traefik/traefik/tree/v2.10.0-rc1) (2023-03-22)
 [All Commits](https://github.com/traefik/traefik/compare/b3f162a8a61d89beaa9edc8adc12cc4cb3e1de0f...v2.10.0-rc1)
 
