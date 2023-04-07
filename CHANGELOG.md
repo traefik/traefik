@@ -1,3 +1,21 @@
+## [v2.10.0-rc2](https://github.com/traefik/traefik/tree/v2.10.0-rc2) (2023-04-07)
+[All Commits](https://github.com/traefik/traefik/compare/v2.10.0-rc1...v2.10.0-rc2)
+
+**Enhancements:**
+- **[webui]** Display period setting of the RateLimit middleware in the webui ([#9822](https://github.com/traefik/traefik/pull/9822) by [smatyas](https://github.com/smatyas))
+
+**Bug fixes:**
+- **[docker]** Only warn about missing docker network when network_mode is not host or container ([#9799](https://github.com/traefik/traefik/pull/9799) by [sentriz](https://github.com/sentriz))
+- **[k8s/ingress,k8s]** chore: bump k8s.io/client-go from v0.22.1 to v0.26.3 ([#9808](https://github.com/traefik/traefik/pull/9808) by [ldez](https://github.com/ldez))
+- **[plugins]** Update Yaegi to v0.15.1 ([#9815](https://github.com/traefik/traefik/pull/9815) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[docker]** Update wording - add link descriptions ([#9816](https://github.com/traefik/traefik/pull/9816) by [svx](https://github.com/svx))
+- **[middleware]** Add accessControlAllowHeaders example ([#9810](https://github.com/traefik/traefik/pull/9810) by [yingshaoxo](https://github.com/yingshaoxo))
+- Update Call To Actions ([#9824](https://github.com/traefik/traefik/pull/9824) by [svx](https://github.com/svx))
+- Improve concepts page ([#9813](https://github.com/traefik/traefik/pull/9813) by [svx](https://github.com/svx))
+- Update wording ([#9811](https://github.com/traefik/traefik/pull/9811) by [svx](https://github.com/svx))
+
 ## [v2.9.10](https://github.com/traefik/traefik/tree/v2.9.10) (2023-04-06)
 [All Commits](https://github.com/traefik/traefik/compare/v2.9.9...v2.9.10)
 
