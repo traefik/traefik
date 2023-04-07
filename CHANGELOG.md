@@ -10,11 +10,11 @@
 - **[plugins]** Update Yaegi to v0.15.1 ([#9815](https://github.com/traefik/traefik/pull/9815) by [ldez](https://github.com/ldez))
 
 **Documentation:**
-- **[docker]** docs: update wording - add link descriptions ([#9816](https://github.com/traefik/traefik/pull/9816) by [svx](https://github.com/svx))
+- **[docker]** Update wording - add link descriptions ([#9816](https://github.com/traefik/traefik/pull/9816) by [svx](https://github.com/svx))
 - **[middleware]** Add accessControlAllowHeaders example ([#9810](https://github.com/traefik/traefik/pull/9810) by [yingshaoxo](https://github.com/yingshaoxo))
 - Update Call To Actions ([#9824](https://github.com/traefik/traefik/pull/9824) by [svx](https://github.com/svx))
 - Improve concepts page ([#9813](https://github.com/traefik/traefik/pull/9813) by [svx](https://github.com/svx))
-- docs: update wording ([#9811](https://github.com/traefik/traefik/pull/9811) by [svx](https://github.com/svx))
+- Update wording ([#9811](https://github.com/traefik/traefik/pull/9811) by [svx](https://github.com/svx))
 
 ## [v2.9.10](https://github.com/traefik/traefik/tree/v2.9.10) (2023-04-06)
 [All Commits](https://github.com/traefik/traefik/compare/v2.9.9...v2.9.10)
