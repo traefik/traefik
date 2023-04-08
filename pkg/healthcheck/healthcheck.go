@@ -69,11 +69,6 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 		timeout = time.Duration(dynamic.DefaultHealthCheckTimeout)
 	}
 
-	if timeout >= interval {
-		logger.Warn().Msgf("Health check timeout should be lower than the health check interval. Interval set to timeout + 1 second (%s).", interval)
-		interval = timeout + time.Second
-	}
-
 	client := &http.Client{
 		Transport: transport,
 	}
