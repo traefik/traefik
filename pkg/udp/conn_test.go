@@ -17,7 +17,7 @@ func TestConsecutiveWrites(t *testing.T) {
 	addr, err := net.ResolveUDPAddr("udp", ":0")
 	require.NoError(t, err)
 
-	ln, err := Listen("udp", addr, 3*time.Second)
+	ln, err := Listen(net.ListenConfig{}, "udp", addr, 3*time.Second)
 	require.NoError(t, err)
 	defer func() {
 		err := ln.Close()
@@ -79,7 +79,7 @@ func TestListenNotBlocking(t *testing.T) {
 
 	require.NoError(t, err)
 
-	ln, err := Listen("udp", addr, 3*time.Second)
+	ln, err := Listen(net.ListenConfig{}, "udp", addr, 3*time.Second)
 	require.NoError(t, err)
 	defer func() {
 		err := ln.Close()
@@ -168,7 +168,7 @@ func TestListenWithZeroTimeout(t *testing.T) {
 	addr, err := net.ResolveUDPAddr("udp", ":0")
 	require.NoError(t, err)
 
-	_, err = Listen("udp", addr, 0)
+	_, err = Listen(net.ListenConfig{}, "udp", addr, 0)
 	assert.Error(t, err)
 }
 
@@ -186,7 +186,7 @@ func testTimeout(t *testing.T, withRead bool) {
 	addr, err := net.ResolveUDPAddr("udp", ":0")
 	require.NoError(t, err)
 
-	ln, err := Listen("udp", addr, 3*time.Second)
+	ln, err := Listen(net.ListenConfig{}, "udp", addr, 3*time.Second)
 	require.NoError(t, err)
 	defer func() {
 		err := ln.Close()
@@ -230,7 +230,7 @@ func TestShutdown(t *testing.T) {
 	addr, err := net.ResolveUDPAddr("udp", ":0")
 	require.NoError(t, err)
 
-	l, err := Listen("udp", addr, 3*time.Second)
+	l, err := Listen(net.ListenConfig{}, "udp", addr, 3*time.Second)
 	require.NoError(t, err)
 
 	go func() {
@@ -334,7 +334,7 @@ func TestReadLoopMaxDataSize(t *testing.T) {
 	addr, err := net.ResolveUDPAddr("udp", ":0")
 	require.NoError(t, err)
 
-	l, err := Listen("udp", addr, 3*time.Second)
+	l, err := Listen(net.ListenConfig{}, "udp", addr, 3*time.Second)
 	require.NoError(t, err)
 
 	defer func() {
