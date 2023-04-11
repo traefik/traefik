@@ -430,7 +430,8 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 }
 
 func buildListener(ctx context.Context, entryPoint *static.EntryPoint) (net.Listener, error) {
-	listener, err := net.Listen("tcp", entryPoint.GetAddress())
+	listenConfig := entryPoint.GetListenConfig()
+	listener, err := listenConfig.Listen(ctx, "tcp", entryPoint.GetAddress())
 	if err != nil {
 		return nil, fmt.Errorf("error opening listener: %w", err)
 	}
