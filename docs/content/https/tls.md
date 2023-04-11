@@ -511,13 +511,13 @@ Traefik supports mutual authentication, through the `clientAuth` section.
 
 For authentication policies that require verification of the client certificate, the certificate authority for the certificates should be set in `clientAuth.caFiles`.
 
-In Kubernetes environment, CA certificate should be set in `clientAuth.secretNames`. The CA certificate is extracted from key `tls.ca` or `ca.crt` of the `Secret`.
+In Kubernetes environment, CA certificate can be set in `clientAuth.secretNames`. See [TLSOption resource](../../routing/providers/kubernetes-crd#kind-tlsoption) for more details.
 
 The `clientAuth.clientAuthType` option governs the behaviour as follows:
 
 - `NoClientCert`: disregards any client certificate.
 - `RequestClientCert`: asks for a certificate but proceeds anyway if none is provided.
-- `RequireAnyClientCert`: requires a certificate but does not verify if it is signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`
+- `RequireAnyClientCert`: requires a certificate but does not verify if it is signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`.
 - `VerifyClientCertIfGiven`: if a certificate is provided, verifies if it is signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. Otherwise proceeds without any certificate.
 - `RequireAndVerifyClientCert`: requires a certificate, which must be signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`.
 
