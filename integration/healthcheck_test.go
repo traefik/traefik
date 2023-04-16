@@ -627,3 +627,19 @@ func (s *HealthCheckSuite) TestPropagateReload(c *check.C) {
 		c.Assert(string(body), checker.Contains, want)
 	}
 }
+
+func (s *HealthCheckSuite) TestConfigurationInit(c *check.C) {
+	file := s.adaptFile(c, "fixtures/healthcheck/configuration_init.toml", struct {
+		Server1 string
+	}{s.whoami1IP})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer s.killCmd(cmd)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyNotContains(`"interval":"-1s"`, `"timeout":"-1s"`))
+	c.Assert(err, checker.IsNil)
+}

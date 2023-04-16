@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	ptypes "github.com/traefik/paerser/types"
 	"net"
 	"net/http"
 	"net/url"
@@ -83,6 +84,9 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 			return http.ErrUseLastResponse
 		}
 	}
+
+	config.Interval = ptypes.Duration(interval)
+	config.Timeout = ptypes.Duration(timeout)
 
 	return &ServiceHealthChecker{
 		balancer: service,
