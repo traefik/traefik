@@ -403,6 +403,65 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 	}
 }
 
+func TestServiceHealthChecker_config(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		interval    time.Duration
+		timeout     time.Duration
+		expInterval time.Duration
+		expTimeout  time.Duration
+	}{
+		{
+			desc:        "valid",
+			interval:    30 * time.Second,
+			timeout:     5 * time.Second,
+			expInterval: 30 * time.Second,
+			expTimeout:  5 * time.Second,
+		},
+		{
+			desc:        "interval smaller than timeout",
+			interval:    3 * time.Second,
+			timeout:     5 * time.Second,
+			expInterval: 6 * time.Second,
+			expTimeout:  5 * time.Second,
+		},
+		{
+			desc:        "interval and timeout smaller zero",
+			interval:    -1 * time.Second,
+			timeout:     -1 * time.Second,
+			expInterval: 30 * time.Second,
+			expTimeout:  5 * time.Second,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			ctx, cancel := context.WithCancel(context.Background())
+			t.Cleanup(cancel)
+
+			targetURL, _ := newHTTPServer(http.StatusOK).Start(t, cancel)
+
+			lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
+
+			config := &dynamic.ServerHealthCheck{
+				Path:     "/path",
+				Interval: ptypes.Duration(test.interval),
+				Timeout:  ptypes.Duration(test.timeout),
+			}
+
+			gauge := &testhelpers.CollectingGauge{}
+			serviceInfo := &runtime.ServiceInfo{}
+
+			hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, map[string]*url.URL{"test": targetURL})
+
+			assert.Equal(t, test.expInterval, hc.interval)
+			assert.Equal(t, test.expTimeout, hc.timeout)
+		})
+	}
+}
+
 func Bool(b bool) *bool {
 	return &b
 }
