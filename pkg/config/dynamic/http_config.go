@@ -220,8 +220,8 @@ func (r *ResponseForwarding) SetDefaults() {
 // Server holds the server configuration.
 type Server struct {
 	URL    string `json:"url,omitempty" toml:"url,omitempty" yaml:"url,omitempty" label:"-"`
-	Scheme string `toml:"-" json:"-" yaml:"-" file:"-"`
-	Port   string `toml:"-" json:"-" yaml:"-" file:"-"`
+	Scheme string `json:"-" toml:"-" yaml:"-" file:"-"`
+	Port   string `json:"-" toml:"-" yaml:"-" file:"-"`
 }
 
 // SetDefaults Default values for a Server.
@@ -282,7 +282,7 @@ type Spiffe struct {
 	// IDs defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
 	IDs []string `description:"Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain)." json:"ids,omitempty" toml:"ids,omitempty" yaml:"ids,omitempty"`
 	// TrustDomain defines the allowed SPIFFE trust domain.
-	TrustDomain string `description:"Defines the allowed SPIFFE trust domain." json:"trustDomain,omitempty" yaml:"trustDomain,omitempty" toml:"trustDomain,omitempty"`
+	TrustDomain string `description:"Defines the allowed SPIFFE trust domain." json:"trustDomain,omitempty" toml:"trustDomain,omitempty" yaml:"trustDomain,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

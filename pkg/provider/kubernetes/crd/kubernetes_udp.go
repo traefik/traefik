@@ -9,7 +9,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -78,7 +78,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 	return conf
 }
 
-func (p *Provider) createLoadBalancerServerUDP(client Client, parentNamespace string, service v1alpha1.ServiceUDP) (*dynamic.UDPService, error) {
+func (p *Provider) createLoadBalancerServerUDP(client Client, parentNamespace string, service traefikv1alpha1.ServiceUDP) (*dynamic.UDPService, error) {
 	ns := parentNamespace
 	if len(service.Namespace) > 0 {
 		if !isNamespaceAllowed(p.AllowCrossNamespace, parentNamespace, service.Namespace) {
@@ -102,7 +102,7 @@ func (p *Provider) createLoadBalancerServerUDP(client Client, parentNamespace st
 	return udpService, nil
 }
 
-func (p *Provider) loadUDPServers(client Client, namespace string, svc v1alpha1.ServiceUDP) ([]dynamic.UDPServer, error) {
+func (p *Provider) loadUDPServers(client Client, namespace string, svc traefikv1alpha1.ServiceUDP) ([]dynamic.UDPServer, error) {
 	service, exists, err := client.GetService(namespace, svc.Name)
 	if err != nil {
 		return nil, err

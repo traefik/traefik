@@ -33,7 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
-	fakediscovery "k8s.io/client-go/discovery/fake"
+	discoveryfake "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/testing"
 )
 
@@ -50,7 +50,7 @@ func NewSimpleClientset(objects ...runtime.Object) *Clientset {
 	}
 
 	cs := &Clientset{tracker: o}
-	cs.discovery = &fakediscovery.FakeDiscovery{Fake: &cs.Fake}
+	cs.discovery = &discoveryfake.FakeDiscovery{Fake: &cs.Fake}
 	cs.AddReactor("*", "*", testing.ObjectReaction(o))
 	cs.AddWatchReactor("*", func(action testing.Action) (handled bool, ret watch.Interface, err error) {
 		gvr := action.GetResource()
@@ -70,7 +70,7 @@ func NewSimpleClientset(objects ...runtime.Object) *Clientset {
 // you want to test easier.
 type Clientset struct {
 	testing.Fake
-	discovery *fakediscovery.FakeDiscovery
+	discovery *discoveryfake.FakeDiscovery
 	tracker   testing.ObjectTracker
 }
 
