@@ -1,6 +1,10 @@
 package dynamic
 
-import "k8s.io/apimachinery/pkg/runtime"
+import (
+	"encoding/json"
+	"fmt"
+	"reflect"
+)
 
 // +k8s:deepcopy-gen=false
 
@@ -12,7 +16,7 @@ func (in *PluginConf) DeepCopyInto(out *PluginConf) {
 	if in == nil {
 		*out = nil
 	} else {
-		*out = runtime.DeepCopyJSON(*in)
+		*out = deepCopyJSON(*in)
 	}
 }
 
@@ -24,4 +28,49 @@ func (in *PluginConf) DeepCopy() *PluginConf {
 	out := new(PluginConf)
 	in.DeepCopyInto(out)
 	return out
+}
+
+func deepCopyJSON(x map[string]interface{}) map[string]interface{} {
+	return deepCopyJSONValue(x).(map[string]interface{})
+}
+
+func deepCopyJSONValue(x interface{}) interface{} {
+	switch x := x.(type) {
+	case map[string]interface{}:
+		if x == nil {
+			// Typed nil - an interface{} that contains a type map[string]interface{} with a value of nil
+			return x
+		}
+		clone := make(map[string]interface{}, len(x))
+		for k, v := range x {
+			clone[k] = deepCopyJSONValue(v)
+		}
+		return clone
+	case []interface{}:
+		if x == nil {
+			// Typed nil - an interface{} that contains a type []interface{} with a value of nil
+			return x
+		}
+		clone := make([]interface{}, len(x))
+		for i, v := range x {
+			clone[i] = deepCopyJSONValue(v)
+		}
+		return clone
+	case string, int64, bool, float64, nil, json.Number:
+		return x
+	default:
+		v := reflect.ValueOf(x)
+
+		if v.NumMethod() == 0 {
+			panic(fmt.Errorf("cannot deep copy %T", x))
+		}
+
+		method := v.MethodByName("DeepCopy")
+		if method.Kind() == reflect.Invalid {
+			panic(fmt.Errorf("cannot deep copy %T", x))
+		}
+
+		call := method.Call(nil)
+		return call[0].Interface()
+	}
 }
