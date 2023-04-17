@@ -51,7 +51,7 @@ func newClientMock(serverVersion string, paths ...string) clientMock {
 			case *corev1.Endpoints:
 				c.endpoints = append(c.endpoints, o)
 			case *netv1beta1.Ingress:
-				ing, err := toNetworkingV1(o)
+				ing, err := convert[netv1.Ingress](o)
 				if err != nil {
 					panic(err)
 				}
@@ -60,7 +60,7 @@ func newClientMock(serverVersion string, paths ...string) clientMock {
 			case *netv1.Ingress:
 				c.ingresses = append(c.ingresses, o)
 			case *netv1beta1.IngressClass:
-				ic, err := toNetworkingV1IngressClass(o)
+				ic, err := convert[netv1.IngressClass](o)
 				if err != nil {
 					panic(err)
 				}
@@ -132,6 +132,6 @@ func (c clientMock) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-cha
 	return c.watchChan, nil
 }
 
-func (c clientMock) UpdateIngressStatus(_ *netv1.Ingress, _ []corev1.LoadBalancerIngress) error {
+func (c clientMock) UpdateIngressStatus(_ *netv1.Ingress, _ []netv1.IngressLoadBalancerIngress) error {
 	return c.apiIngressStatusError
 }

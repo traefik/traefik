@@ -31,10 +31,6 @@ const (
 	defaultTimeout = 5 * time.Second
 )
 
-type marshaler interface {
-	Marshal() ([]byte, error)
-}
-
 // Client is a client for the Provider master.
 // WatchAll starts the watch of the Provider resources and updates the stores.
 // The stores can then be accessed via the Get* functions.
@@ -45,7 +41,7 @@ type Client interface {
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
-	UpdateIngressStatus(ing *netv1.Ingress, ingStatus []corev1.LoadBalancerIngress) error
+	UpdateIngressStatus(ing *netv1.Ingress, ingStatus []netv1.IngressLoadBalancerIngress) error
 	GetServerVersion() *version.Version
 }
 
@@ -172,20 +168,35 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		factoryIngress := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(matchesLabelSelector))
 
 		if supportsNetworkingV1Ingress(serverVersion) {
-			factoryIngress.Networking().V1().Ingresses().Informer().AddEventHandler(eventHandler)
+			_, err = factoryIngress.Networking().V1().Ingresses().Informer().AddEventHandler(eventHandler)
+			if err != nil {
+				return nil, err
+			}
 		} else {
-			factoryIngress.Networking().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
+			_, err = factoryIngress.Networking().V1beta1().Ingresses().Informer().AddEventHandler(eventHandler)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		c.factoriesIngress[ns] = factoryIngress
 
 		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns))
-		factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
-		factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
+		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+		_, err = factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
 		c.factoriesKube[ns] = factoryKube
 
 		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm))
-		factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
+		_, err = factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
 		c.factoriesSecret[ns] = factorySecret
 	}
 
@@ -219,9 +230,15 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		c.clusterFactory = kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod)
 
 		if supportsNetworkingV1Ingress(serverVersion) {
-			c.clusterFactory.Networking().V1().IngressClasses().Informer().AddEventHandler(eventHandler)
+			_, err = c.clusterFactory.Networking().V1().IngressClasses().Informer().AddEventHandler(eventHandler)
+			if err != nil {
+				return nil, err
+			}
 		} else {
-			c.clusterFactory.Networking().V1beta1().IngressClasses().Informer().AddEventHandler(eventHandler)
+			_, err = c.clusterFactory.Networking().V1beta1().IngressClasses().Informer().AddEventHandler(eventHandler)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		c.clusterFactory.Start(stopCh)
@@ -263,7 +280,7 @@ func (c *clientWrapper) GetIngresses() []*netv1.Ingress {
 		}
 
 		for _, ing := range list {
-			n, err := toNetworkingV1(ing)
+			n, err := convert[netv1.Ingress](ing)
 			if err != nil {
 				log.Error().Err(err).Msgf("Failed to convert ingress %s from networking/v1beta1 to networking/v1", ns)
 				continue
@@ -275,36 +292,6 @@ func (c *clientWrapper) GetIngresses() []*netv1.Ingress {
 		}
 	}
 	return results
-}
-
-func toNetworkingV1(ing marshaler) (*netv1.Ingress, error) {
-	data, err := ing.Marshal()
-	if err != nil {
-		return nil, err
-	}
-
-	ni := &netv1.Ingress{}
-	err = ni.Unmarshal(data)
-	if err != nil {
-		return nil, err
-	}
-
-	return ni, nil
-}
-
-func toNetworkingV1IngressClass(ing marshaler) (*netv1.IngressClass, error) {
-	data, err := ing.Marshal()
-	if err != nil {
-		return nil, err
-	}
-
-	ni := &netv1.IngressClass{}
-	err = ni.Unmarshal(data)
-	if err != nil {
-		return nil, err
-	}
-
-	return ni, nil
 }
 
 func addServiceFromV1Beta1(ing *netv1.Ingress, old netv1beta1.Ingress) {
@@ -353,7 +340,7 @@ func addServiceFromV1Beta1(ing *netv1.Ingress, old netv1beta1.Ingress) {
 }
 
 // UpdateIngressStatus updates an Ingress with a provided status.
-func (c *clientWrapper) UpdateIngressStatus(src *netv1.Ingress, ingStatus []corev1.LoadBalancerIngress) error {
+func (c *clientWrapper) UpdateIngressStatus(src *netv1.Ingress, ingStatus []netv1.IngressLoadBalancerIngress) error {
 	if !c.isWatchedNamespace(src.Namespace) {
 		return fmt.Errorf("failed to get ingress %s/%s: namespace is not within watched namespaces", src.Namespace, src.Name)
 	}
@@ -375,7 +362,7 @@ func (c *clientWrapper) UpdateIngressStatus(src *netv1.Ingress, ingStatus []core
 	}
 
 	ingCopy := ing.DeepCopy()
-	ingCopy.Status = netv1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: ingStatus}}
+	ingCopy.Status = netv1.IngressStatus{LoadBalancer: netv1.IngressLoadBalancerStatus{Ingress: ingStatus}}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
@@ -389,7 +376,7 @@ func (c *clientWrapper) UpdateIngressStatus(src *netv1.Ingress, ingStatus []core
 	return nil
 }
 
-func (c *clientWrapper) updateIngressStatusOld(src *netv1.Ingress, ingStatus []corev1.LoadBalancerIngress) error {
+func (c *clientWrapper) updateIngressStatusOld(src *netv1.Ingress, ingStatus []netv1.IngressLoadBalancerIngress) error {
 	ing, err := c.factoriesIngress[c.lookupNamespace(src.Namespace)].Networking().V1beta1().Ingresses().Lister().Ingresses(src.Namespace).Get(src.Name)
 	if err != nil {
 		return fmt.Errorf("failed to get ingress %s/%s: %w", src.Namespace, src.Name, err)
@@ -397,13 +384,23 @@ func (c *clientWrapper) updateIngressStatusOld(src *netv1.Ingress, ingStatus []c
 
 	logger := log.With().Str("namespace", ing.Namespace).Str("ingress", ing.Name).Logger()
 
-	if isLoadBalancerIngressEquals(ing.Status.LoadBalancer.Ingress, ingStatus) {
+	ingresses, err := convertSlice[netv1.IngressLoadBalancerIngress](ing.Status.LoadBalancer.Ingress)
+	if err != nil {
+		return err
+	}
+
+	if isLoadBalancerIngressEquals(ingresses, ingStatus) {
 		logger.Debug().Msg("Skipping ingress status update")
 		return nil
 	}
 
+	ingressesBeta1, err := convertSlice[netv1beta1.IngressLoadBalancerIngress](ingStatus)
+	if err != nil {
+		return err
+	}
+
 	ingCopy := ing.DeepCopy()
-	ingCopy.Status = netv1beta1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: ingStatus}}
+	ingCopy.Status = netv1beta1.IngressStatus{LoadBalancer: netv1beta1.IngressLoadBalancerStatus{Ingress: ingressesBeta1}}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
@@ -417,7 +414,7 @@ func (c *clientWrapper) updateIngressStatusOld(src *netv1.Ingress, ingStatus []c
 }
 
 // isLoadBalancerIngressEquals returns true if the given slices are equal, false otherwise.
-func isLoadBalancerIngressEquals(aSlice, bSlice []corev1.LoadBalancerIngress) bool {
+func isLoadBalancerIngressEquals(aSlice, bSlice []netv1.IngressLoadBalancerIngress) bool {
 	if len(aSlice) != len(bSlice) {
 		return false
 	}
@@ -483,7 +480,7 @@ func (c *clientWrapper) GetIngressClasses() ([]*netv1.IngressClass, error) {
 
 		for _, ic := range ingressClasses {
 			if ic.Spec.Controller == traefikDefaultIngressClassController {
-				icN, err := toNetworkingV1IngressClass(ic)
+				icN, err := convert[netv1.IngressClass](ic)
 				if err != nil {
 					log.Error().Err(err).Msgf("Failed to convert ingress class %s from networking/v1beta1 to networking/v1", ic.Name)
 					continue

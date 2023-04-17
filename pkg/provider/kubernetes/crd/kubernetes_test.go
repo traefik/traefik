@@ -6964,7 +6964,6 @@ func TestNativeLB(t *testing.T) {
 
 func TestCreateBasicAuthCredentials(t *testing.T) {
 	var k8sObjects []runtime.Object
-	var crdObjects []runtime.Object
 	yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/basic_auth_secrets.yml"))
 	if err != nil {
 		panic(err)
@@ -6980,7 +6979,7 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 	}
 
 	kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
-	crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+	crdClient := traefikcrdfake.NewSimpleClientset()
 
 	client := newClientImpl(kubeClient, crdClient)
 
@@ -6989,7 +6988,7 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 	eventCh, err := client.WatchAll([]string{"default"}, stopCh)
 	require.NoError(t, err)
 
-	if len(k8sObjects) != 0 || len(crdObjects) != 0 {
+	if len(k8sObjects) != 0 {
 		// just wait for the first event
 		<-eventCh
 	}
