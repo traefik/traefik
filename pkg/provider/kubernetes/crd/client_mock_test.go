@@ -5,17 +5,17 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/kubernetes/scheme"
+	kscheme "k8s.io/client-go/kubernetes/scheme"
 )
 
 var _ Client = (*clientMock)(nil)
 
 func init() {
 	// required by k8s.MustParseYaml
-	err := v1alpha1.AddToScheme(scheme.Scheme)
+	err := traefikv1alpha1.AddToScheme(kscheme.Scheme)
 	if err != nil {
 		panic(err)
 	}
@@ -30,16 +30,16 @@ type clientMock struct {
 	apiSecretError    error
 	apiEndpointsError error
 
-	ingressRoutes        []*v1alpha1.IngressRoute
-	ingressRouteTCPs     []*v1alpha1.IngressRouteTCP
-	ingressRouteUDPs     []*v1alpha1.IngressRouteUDP
-	middlewares          []*v1alpha1.Middleware
-	middlewareTCPs       []*v1alpha1.MiddlewareTCP
-	tlsOptions           []*v1alpha1.TLSOption
-	tlsStores            []*v1alpha1.TLSStore
-	traefikServices      []*v1alpha1.TraefikService
-	serversTransports    []*v1alpha1.ServersTransport
-	serversTransportTCPs []*v1alpha1.ServersTransportTCP
+	ingressRoutes        []*traefikv1alpha1.IngressRoute
+	ingressRouteTCPs     []*traefikv1alpha1.IngressRouteTCP
+	ingressRouteUDPs     []*traefikv1alpha1.IngressRouteUDP
+	middlewares          []*traefikv1alpha1.Middleware
+	middlewareTCPs       []*traefikv1alpha1.MiddlewareTCP
+	tlsOptions           []*traefikv1alpha1.TLSOption
+	tlsStores            []*traefikv1alpha1.TLSStore
+	traefikServices      []*traefikv1alpha1.TraefikService
+	serversTransports    []*traefikv1alpha1.ServersTransport
+	serversTransportTCPs []*traefikv1alpha1.ServersTransportTCP
 
 	watchChan chan interface{}
 }
@@ -60,25 +60,25 @@ func newClientMock(paths ...string) clientMock {
 				c.services = append(c.services, o)
 			case *corev1.Endpoints:
 				c.endpoints = append(c.endpoints, o)
-			case *v1alpha1.IngressRoute:
+			case *traefikv1alpha1.IngressRoute:
 				c.ingressRoutes = append(c.ingressRoutes, o)
-			case *v1alpha1.IngressRouteTCP:
+			case *traefikv1alpha1.IngressRouteTCP:
 				c.ingressRouteTCPs = append(c.ingressRouteTCPs, o)
-			case *v1alpha1.IngressRouteUDP:
+			case *traefikv1alpha1.IngressRouteUDP:
 				c.ingressRouteUDPs = append(c.ingressRouteUDPs, o)
-			case *v1alpha1.Middleware:
+			case *traefikv1alpha1.Middleware:
 				c.middlewares = append(c.middlewares, o)
-			case *v1alpha1.MiddlewareTCP:
+			case *traefikv1alpha1.MiddlewareTCP:
 				c.middlewareTCPs = append(c.middlewareTCPs, o)
-			case *v1alpha1.TraefikService:
+			case *traefikv1alpha1.TraefikService:
 				c.traefikServices = append(c.traefikServices, o)
-			case *v1alpha1.TLSOption:
+			case *traefikv1alpha1.TLSOption:
 				c.tlsOptions = append(c.tlsOptions, o)
-			case *v1alpha1.ServersTransport:
+			case *traefikv1alpha1.ServersTransport:
 				c.serversTransports = append(c.serversTransports, o)
-			case *v1alpha1.ServersTransportTCP:
+			case *traefikv1alpha1.ServersTransportTCP:
 				c.serversTransportTCPs = append(c.serversTransportTCPs, o)
-			case *v1alpha1.TLSStore:
+			case *traefikv1alpha1.TLSStore:
 				c.tlsStores = append(c.tlsStores, o)
 			case *corev1.Secret:
 				c.secrets = append(c.secrets, o)
@@ -91,27 +91,27 @@ func newClientMock(paths ...string) clientMock {
 	return c
 }
 
-func (c clientMock) GetIngressRoutes() []*v1alpha1.IngressRoute {
+func (c clientMock) GetIngressRoutes() []*traefikv1alpha1.IngressRoute {
 	return c.ingressRoutes
 }
 
-func (c clientMock) GetIngressRouteTCPs() []*v1alpha1.IngressRouteTCP {
+func (c clientMock) GetIngressRouteTCPs() []*traefikv1alpha1.IngressRouteTCP {
 	return c.ingressRouteTCPs
 }
 
-func (c clientMock) GetIngressRouteUDPs() []*v1alpha1.IngressRouteUDP {
+func (c clientMock) GetIngressRouteUDPs() []*traefikv1alpha1.IngressRouteUDP {
 	return c.ingressRouteUDPs
 }
 
-func (c clientMock) GetMiddlewares() []*v1alpha1.Middleware {
+func (c clientMock) GetMiddlewares() []*traefikv1alpha1.Middleware {
 	return c.middlewares
 }
 
-func (c clientMock) GetMiddlewareTCPs() []*v1alpha1.MiddlewareTCP {
+func (c clientMock) GetMiddlewareTCPs() []*traefikv1alpha1.MiddlewareTCP {
 	return c.middlewareTCPs
 }
 
-func (c clientMock) GetTraefikService(namespace, name string) (*v1alpha1.TraefikService, bool, error) {
+func (c clientMock) GetTraefikService(namespace, name string) (*traefikv1alpha1.TraefikService, bool, error) {
 	for _, svc := range c.traefikServices {
 		if svc.Namespace == namespace && svc.Name == name {
 			return svc, true, nil
@@ -121,27 +121,27 @@ func (c clientMock) GetTraefikService(namespace, name string) (*v1alpha1.Traefik
 	return nil, false, nil
 }
 
-func (c clientMock) GetTraefikServices() []*v1alpha1.TraefikService {
+func (c clientMock) GetTraefikServices() []*traefikv1alpha1.TraefikService {
 	return c.traefikServices
 }
 
-func (c clientMock) GetTLSOptions() []*v1alpha1.TLSOption {
+func (c clientMock) GetTLSOptions() []*traefikv1alpha1.TLSOption {
 	return c.tlsOptions
 }
 
-func (c clientMock) GetTLSStores() []*v1alpha1.TLSStore {
+func (c clientMock) GetTLSStores() []*traefikv1alpha1.TLSStore {
 	return c.tlsStores
 }
 
-func (c clientMock) GetServersTransports() []*v1alpha1.ServersTransport {
+func (c clientMock) GetServersTransports() []*traefikv1alpha1.ServersTransport {
 	return c.serversTransports
 }
 
-func (c clientMock) GetServersTransportTCPs() []*v1alpha1.ServersTransportTCP {
+func (c clientMock) GetServersTransportTCPs() []*traefikv1alpha1.ServersTransportTCP {
 	return c.serversTransportTCPs
 }
 
-func (c clientMock) GetTLSOption(namespace, name string) (*v1alpha1.TLSOption, bool, error) {
+func (c clientMock) GetTLSOption(namespace, name string) (*traefikv1alpha1.TLSOption, bool, error) {
 	for _, option := range c.tlsOptions {
 		if option.Namespace == namespace && option.Name == name {
 			return option, true, nil

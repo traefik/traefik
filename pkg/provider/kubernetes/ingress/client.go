@@ -14,14 +14,14 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	traefikversion "github.com/traefik/traefik/v3/pkg/version"
 	corev1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
-	networkingv1beta1 "k8s.io/api/networking/v1beta1"
-	kubeerror "k8s.io/apimachinery/pkg/api/errors"
+	netv1 "k8s.io/api/networking/v1"
+	netv1beta1 "k8s.io/api/networking/v1beta1"
+	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/client-go/informers"
-	"k8s.io/client-go/kubernetes"
+	kinformers "k8s.io/client-go/informers"
+	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -40,21 +40,21 @@ type marshaler interface {
 // The stores can then be accessed via the Get* functions.
 type Client interface {
 	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
-	GetIngresses() []*networkingv1.Ingress
-	GetIngressClasses() ([]*networkingv1.IngressClass, error)
+	GetIngresses() []*netv1.Ingress
+	GetIngressClasses() ([]*netv1.IngressClass, error)
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
-	UpdateIngressStatus(ing *networkingv1.Ingress, ingStatus []corev1.LoadBalancerIngress) error
+	UpdateIngressStatus(ing *netv1.Ingress, ingStatus []corev1.LoadBalancerIngress) error
 	GetServerVersion() *version.Version
 }
 
 type clientWrapper struct {
-	clientset                   kubernetes.Interface
-	factoriesKube               map[string]informers.SharedInformerFactory
-	factoriesSecret             map[string]informers.SharedInformerFactory
-	factoriesIngress            map[string]informers.SharedInformerFactory
-	clusterFactory              informers.SharedInformerFactory
+	clientset                   kclientset.Interface
+	factoriesKube               map[string]kinformers.SharedInformerFactory
+	factoriesSecret             map[string]kinformers.SharedInformerFactory
+	factoriesIngress            map[string]kinformers.SharedInformerFactory
+	clusterFactory              kinformers.SharedInformerFactory
 	ingressLabelSelector        string
 	isNamespaceAll              bool
 	disableIngressClassInformer bool
@@ -118,7 +118,7 @@ func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
 		runtime.GOARCH,
 	)
 
-	clientset, err := kubernetes.NewForConfig(c)
+	clientset, err := kclientset.NewForConfig(c)
 	if err != nil {
 		return nil, err
 	}
@@ -126,12 +126,12 @@ func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
 	return newClientImpl(clientset), nil
 }
 
-func newClientImpl(clientset kubernetes.Interface) *clientWrapper {
+func newClientImpl(clientset kclientset.Interface) *clientWrapper {
 	return &clientWrapper{
 		clientset:        clientset,
-		factoriesSecret:  make(map[string]informers.SharedInformerFactory),
-		factoriesIngress: make(map[string]informers.SharedInformerFactory),
-		factoriesKube:    make(map[string]informers.SharedInformerFactory),
+		factoriesSecret:  make(map[string]kinformers.SharedInformerFactory),
+		factoriesIngress: make(map[string]kinformers.SharedInformerFactory),
+		factoriesKube:    make(map[string]kinformers.SharedInformerFactory),
 	}
 }
 
@@ -169,7 +169,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	for _, ns := range namespaces {
-		factoryIngress := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns), informers.WithTweakListOptions(matchesLabelSelector))
+		factoryIngress := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(matchesLabelSelector))
 
 		if supportsNetworkingV1Ingress(serverVersion) {
 			factoryIngress.Networking().V1().Ingresses().Informer().AddEventHandler(eventHandler)
@@ -179,12 +179,12 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 
 		c.factoriesIngress[ns] = factoryIngress
 
-		factoryKube := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns))
+		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns))
 		factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
 		c.factoriesKube[ns] = factoryKube
 
-		factorySecret := informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, informers.WithNamespace(ns), informers.WithTweakListOptions(notOwnedByHelm))
+		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm))
 		factorySecret.Core().V1().Secrets().Informer().AddEventHandler(eventHandler)
 		c.factoriesSecret[ns] = factorySecret
 	}
@@ -216,7 +216,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 
 	if !c.disableIngressClassInformer && supportsIngressClass(serverVersion) {
-		c.clusterFactory = informers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod)
+		c.clusterFactory = kinformers.NewSharedInformerFactoryWithOptions(c.clientset, resyncPeriod)
 
 		if supportsNetworkingV1Ingress(serverVersion) {
 			c.clusterFactory.Networking().V1().IngressClasses().Informer().AddEventHandler(eventHandler)
@@ -237,8 +237,8 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 }
 
 // GetIngresses returns all Ingresses for observed namespaces in the cluster.
-func (c *clientWrapper) GetIngresses() []*networkingv1.Ingress {
-	var results []*networkingv1.Ingress
+func (c *clientWrapper) GetIngresses() []*netv1.Ingress {
+	var results []*netv1.Ingress
 
 	isNetworkingV1Supported := supportsNetworkingV1Ingress(c.serverVersion)
 
@@ -277,13 +277,13 @@ func (c *clientWrapper) GetIngresses() []*networkingv1.Ingress {
 	return results
 }
 
-func toNetworkingV1(ing marshaler) (*networkingv1.Ingress, error) {
+func toNetworkingV1(ing marshaler) (*netv1.Ingress, error) {
 	data, err := ing.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	ni := &networkingv1.Ingress{}
+	ni := &netv1.Ingress{}
 	err = ni.Unmarshal(data)
 	if err != nil {
 		return nil, err
@@ -292,13 +292,13 @@ func toNetworkingV1(ing marshaler) (*networkingv1.Ingress, error) {
 	return ni, nil
 }
 
-func toNetworkingV1IngressClass(ing marshaler) (*networkingv1.IngressClass, error) {
+func toNetworkingV1IngressClass(ing marshaler) (*netv1.IngressClass, error) {
 	data, err := ing.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	ni := &networkingv1.IngressClass{}
+	ni := &netv1.IngressClass{}
 	err = ni.Unmarshal(data)
 	if err != nil {
 		return nil, err
@@ -307,9 +307,9 @@ func toNetworkingV1IngressClass(ing marshaler) (*networkingv1.IngressClass, erro
 	return ni, nil
 }
 
-func addServiceFromV1Beta1(ing *networkingv1.Ingress, old networkingv1beta1.Ingress) {
+func addServiceFromV1Beta1(ing *netv1.Ingress, old netv1beta1.Ingress) {
 	if old.Spec.Backend != nil {
-		port := networkingv1.ServiceBackendPort{}
+		port := netv1.ServiceBackendPort{}
 		if old.Spec.Backend.ServicePort.Type == intstr.Int {
 			port.Number = old.Spec.Backend.ServicePort.IntVal
 		} else {
@@ -317,8 +317,8 @@ func addServiceFromV1Beta1(ing *networkingv1.Ingress, old networkingv1beta1.Ingr
 		}
 
 		if old.Spec.Backend.ServiceName != "" {
-			ing.Spec.DefaultBackend = &networkingv1.IngressBackend{
-				Service: &networkingv1.IngressServiceBackend{
+			ing.Spec.DefaultBackend = &netv1.IngressBackend{
+				Service: &netv1.IngressServiceBackend{
 					Name: old.Spec.Backend.ServiceName,
 					Port: port,
 				},
@@ -334,14 +334,14 @@ func addServiceFromV1Beta1(ing *networkingv1.Ingress, old networkingv1beta1.Ingr
 			if path.Backend.Service == nil {
 				oldBackend := old.Spec.Rules[rc].HTTP.Paths[pc].Backend
 
-				port := networkingv1.ServiceBackendPort{}
+				port := netv1.ServiceBackendPort{}
 				if oldBackend.ServicePort.Type == intstr.Int {
 					port.Number = oldBackend.ServicePort.IntVal
 				} else {
 					port.Name = oldBackend.ServicePort.StrVal
 				}
 
-				svc := networkingv1.IngressServiceBackend{
+				svc := netv1.IngressServiceBackend{
 					Name: oldBackend.ServiceName,
 					Port: port,
 				}
@@ -353,7 +353,7 @@ func addServiceFromV1Beta1(ing *networkingv1.Ingress, old networkingv1beta1.Ingr
 }
 
 // UpdateIngressStatus updates an Ingress with a provided status.
-func (c *clientWrapper) UpdateIngressStatus(src *networkingv1.Ingress, ingStatus []corev1.LoadBalancerIngress) error {
+func (c *clientWrapper) UpdateIngressStatus(src *netv1.Ingress, ingStatus []corev1.LoadBalancerIngress) error {
 	if !c.isWatchedNamespace(src.Namespace) {
 		return fmt.Errorf("failed to get ingress %s/%s: namespace is not within watched namespaces", src.Namespace, src.Name)
 	}
@@ -375,7 +375,7 @@ func (c *clientWrapper) UpdateIngressStatus(src *networkingv1.Ingress, ingStatus
 	}
 
 	ingCopy := ing.DeepCopy()
-	ingCopy.Status = networkingv1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: ingStatus}}
+	ingCopy.Status = netv1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: ingStatus}}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
@@ -389,7 +389,7 @@ func (c *clientWrapper) UpdateIngressStatus(src *networkingv1.Ingress, ingStatus
 	return nil
 }
 
-func (c *clientWrapper) updateIngressStatusOld(src *networkingv1.Ingress, ingStatus []corev1.LoadBalancerIngress) error {
+func (c *clientWrapper) updateIngressStatusOld(src *netv1.Ingress, ingStatus []corev1.LoadBalancerIngress) error {
 	ing, err := c.factoriesIngress[c.lookupNamespace(src.Namespace)].Networking().V1beta1().Ingresses().Lister().Ingresses(src.Namespace).Get(src.Name)
 	if err != nil {
 		return fmt.Errorf("failed to get ingress %s/%s: %w", src.Namespace, src.Name, err)
@@ -403,7 +403,7 @@ func (c *clientWrapper) updateIngressStatusOld(src *networkingv1.Ingress, ingSta
 	}
 
 	ingCopy := ing.DeepCopy()
-	ingCopy.Status = networkingv1beta1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: ingStatus}}
+	ingCopy.Status = netv1beta1.IngressStatus{LoadBalancer: corev1.LoadBalancerStatus{Ingress: ingStatus}}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
@@ -469,12 +469,12 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 	return secret, exist, err
 }
 
-func (c *clientWrapper) GetIngressClasses() ([]*networkingv1.IngressClass, error) {
+func (c *clientWrapper) GetIngressClasses() ([]*netv1.IngressClass, error) {
 	if c.clusterFactory == nil {
 		return nil, errors.New("cluster factory not loaded")
 	}
 
-	var ics []*networkingv1.IngressClass
+	var ics []*netv1.IngressClass
 	if !supportsNetworkingV1Ingress(c.serverVersion) {
 		ingressClasses, err := c.clusterFactory.Networking().V1beta1().IngressClasses().Lister().List(labels.Everything())
 		if err != nil {
@@ -530,7 +530,7 @@ func (c *clientWrapper) GetServerVersion() *version.Version {
 // translateNotFoundError will translate a "not found" error to a boolean return
 // value which indicates if the resource exists and a nil error.
 func translateNotFoundError(err error) (bool, error) {
-	if kubeerror.IsNotFound(err) {
+	if kerror.IsNotFound(err) {
 		return false, nil
 	}
 	return err == nil, err
@@ -559,8 +559,8 @@ func supportsIngressClass(serverVersion *version.Version) bool {
 }
 
 // filterIngressClassByName return a slice containing ingressclasses with the correct name.
-func filterIngressClassByName(ingressClassName string, ics []*networkingv1.IngressClass) []*networkingv1.IngressClass {
-	var ingressClasses []*networkingv1.IngressClass
+func filterIngressClassByName(ingressClassName string, ics []*netv1.IngressClass) []*netv1.IngressClass {
+	var ingressClasses []*netv1.IngressClass
 
 	for _, ic := range ics {
 		if ic.Name == ingressClassName {
