@@ -17,7 +17,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
+	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -2160,7 +2160,7 @@ func TestGetCertificates(t *testing.T) {
 
 	testCases := []struct {
 		desc      string
-		ingress   *networkingv1.Ingress
+		ingress   *netv1.Ingress
 		client    Client
 		result    map[string]*tls.CertAndStores
 		errResult string

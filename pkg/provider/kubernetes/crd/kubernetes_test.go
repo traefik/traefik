@@ -14,8 +14,8 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
-	crdfake "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	traefikcrdfake "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
+	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -6400,25 +6400,25 @@ func TestCrossNamespace(t *testing.T) {
 					switch o := obj.(type) {
 					case *corev1.Service, *corev1.Endpoints, *corev1.Secret:
 						k8sObjects = append(k8sObjects, o)
-					case *v1alpha1.IngressRoute:
+					case *traefikv1alpha1.IngressRoute:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.IngressRouteTCP:
+					case *traefikv1alpha1.IngressRouteTCP:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.IngressRouteUDP:
+					case *traefikv1alpha1.IngressRouteUDP:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.Middleware:
+					case *traefikv1alpha1.Middleware:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.MiddlewareTCP:
+					case *traefikv1alpha1.MiddlewareTCP:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.TraefikService:
+					case *traefikv1alpha1.TraefikService:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.TLSOption:
+					case *traefikv1alpha1.TLSOption:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.TLSStore:
+					case *traefikv1alpha1.TLSStore:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.ServersTransport:
+					case *traefikv1alpha1.ServersTransport:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.ServersTransportTCP:
+					case *traefikv1alpha1.ServersTransportTCP:
 						crdObjects = append(crdObjects, o)
 					default:
 					}
@@ -6426,7 +6426,7 @@ func TestCrossNamespace(t *testing.T) {
 			}
 
 			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
-			crdClient := crdfake.NewSimpleClientset(crdObjects...)
+			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
 
@@ -6707,19 +6707,19 @@ func TestExternalNameService(t *testing.T) {
 					switch o := obj.(type) {
 					case *corev1.Service, *corev1.Endpoints, *corev1.Secret:
 						k8sObjects = append(k8sObjects, o)
-					case *v1alpha1.IngressRoute:
+					case *traefikv1alpha1.IngressRoute:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.IngressRouteTCP:
+					case *traefikv1alpha1.IngressRouteTCP:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.IngressRouteUDP:
+					case *traefikv1alpha1.IngressRouteUDP:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.Middleware:
+					case *traefikv1alpha1.Middleware:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.TraefikService:
+					case *traefikv1alpha1.TraefikService:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.TLSOption:
+					case *traefikv1alpha1.TLSOption:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.TLSStore:
+					case *traefikv1alpha1.TLSStore:
 						crdObjects = append(crdObjects, o)
 					default:
 					}
@@ -6727,7 +6727,7 @@ func TestExternalNameService(t *testing.T) {
 			}
 
 			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
-			crdClient := crdfake.NewSimpleClientset(crdObjects...)
+			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
 
@@ -6920,19 +6920,19 @@ func TestNativeLB(t *testing.T) {
 					switch o := obj.(type) {
 					case *corev1.Service, *corev1.Endpoints, *corev1.Secret:
 						k8sObjects = append(k8sObjects, o)
-					case *v1alpha1.IngressRoute:
+					case *traefikv1alpha1.IngressRoute:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.IngressRouteTCP:
+					case *traefikv1alpha1.IngressRouteTCP:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.IngressRouteUDP:
+					case *traefikv1alpha1.IngressRouteUDP:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.Middleware:
+					case *traefikv1alpha1.Middleware:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.TraefikService:
+					case *traefikv1alpha1.TraefikService:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.TLSOption:
+					case *traefikv1alpha1.TLSOption:
 						crdObjects = append(crdObjects, o)
-					case *v1alpha1.TLSStore:
+					case *traefikv1alpha1.TLSStore:
 						crdObjects = append(crdObjects, o)
 					default:
 					}
@@ -6940,7 +6940,7 @@ func TestNativeLB(t *testing.T) {
 			}
 
 			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
-			crdClient := crdfake.NewSimpleClientset(crdObjects...)
+			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
 
@@ -6964,7 +6964,6 @@ func TestNativeLB(t *testing.T) {
 
 func TestCreateBasicAuthCredentials(t *testing.T) {
 	var k8sObjects []runtime.Object
-	var crdObjects []runtime.Object
 	yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/basic_auth_secrets.yml"))
 	if err != nil {
 		panic(err)
@@ -6980,7 +6979,7 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 	}
 
 	kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
-	crdClient := crdfake.NewSimpleClientset(crdObjects...)
+	crdClient := traefikcrdfake.NewSimpleClientset()
 
 	client := newClientImpl(kubeClient, crdClient)
 
@@ -6989,13 +6988,13 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 	eventCh, err := client.WatchAll([]string{"default"}, stopCh)
 	require.NoError(t, err)
 
-	if k8sObjects != nil || crdObjects != nil {
+	if len(k8sObjects) != 0 {
 		// just wait for the first event
 		<-eventCh
 	}
 
 	// Testing for username/password components in basic-auth secret
-	basicAuth, secretErr := createBasicAuthMiddleware(client, "default", &v1alpha1.BasicAuth{Secret: "basic-auth-secret"})
+	basicAuth, secretErr := createBasicAuthMiddleware(client, "default", &traefikv1alpha1.BasicAuth{Secret: "basic-auth-secret"})
 	require.NoError(t, secretErr)
 	require.Len(t, basicAuth.Users, 1)
 
@@ -7010,7 +7009,7 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 	assert.True(t, auth.CheckSecret("password", hashedPassword))
 
 	// Testing for username/password components in htpasswd secret
-	basicAuth, secretErr = createBasicAuthMiddleware(client, "default", &v1alpha1.BasicAuth{Secret: "auth-secret"})
+	basicAuth, secretErr = createBasicAuthMiddleware(client, "default", &traefikv1alpha1.BasicAuth{Secret: "auth-secret"})
 	require.NoError(t, secretErr)
 	require.Len(t, basicAuth.Users, 2)
 

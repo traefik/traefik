@@ -467,9 +467,6 @@ func newFakeSpiffePKI(trustDomain spiffeid.TrustDomain) (fakeSpiffePKI, error) {
 		IsCA:                  true,
 		PublicKey:             caPrivateKey.Public(),
 	}
-	if err != nil {
-		return fakeSpiffePKI{}, err
-	}
 
 	caCertDER, err := x509.CreateCertificate(
 		rand.Reader,

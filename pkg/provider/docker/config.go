@@ -310,6 +310,7 @@ func (p *Provider) getIPPort(ctx context.Context, container dockerData, serverPo
 func (p Provider) getIPAddress(ctx context.Context, container dockerData) string {
 	logger := log.Ctx(ctx)
 
+	netNotFound := false
 	if container.ExtraConf.Docker.Network != "" {
 		settings := container.NetworkSettings
 		if settings.Networks != nil {
@@ -318,7 +319,8 @@ func (p Provider) getIPAddress(ctx context.Context, container dockerData) string
 				return network.Addr
 			}
 
-			logger.Warn().Msgf("Could not find network named '%s' for container '%s'! Maybe you're missing the project's prefix in the label? Defaulting to first available network.", container.ExtraConf.Docker.Network, container.Name)
+			netNotFound = true
+			logger.Warn().Msgf("Could not find network named %q for container %q. Maybe you're missing the project's prefix in the label?", container.ExtraConf.Docker.Network, container.Name)
 		}
 	}
 
@@ -367,6 +369,9 @@ func (p Provider) getIPAddress(ctx context.Context, container dockerData) string
 	}
 
 	for _, network := range container.NetworkSettings.Networks {
+		if netNotFound {
+			logger.Warn().Msgf("Defaulting to first available network (%q) for container %q.", network, container.Name)
+		}
 		return network.Addr
 	}
 
