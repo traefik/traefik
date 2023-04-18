@@ -1798,8 +1798,8 @@ github.com/vmihailenco/msgpack v3.3.3+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6Ac
 github.com/vmihailenco/msgpack/v4 v4.3.12/go.mod h1:gborTTJjAo/GWTqqRjrLCn9pgNN+NXzzngzBKDPIqw4=
 github.com/vmihailenco/tagparser v0.1.1/go.mod h1:OeAg3pn3UbLjkWt+rN9oFYB6u/cQgqMEUPoW2WPyhdI=
 github.com/vmware/govmomi v0.18.0/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59bHWk6aFU=
-github.com/vulcand/oxy/v2 v2.0.0-20230227135449-a0e9f7ff1040 h1:L+nLher4530BUkyOpxxBsl2SLbrD4fSlDH5rGZ8DRBM=
-github.com/vulcand/oxy/v2 v2.0.0-20230227135449-a0e9f7ff1040/go.mod h1:A2voDnpONyqdplUDK0lt5y4XHLiBXPBw7iQES8+ZWRw=
+github.com/vulcand/oxy/v2 v2.0.0-20230417082832-03de175b3822 h1:DXLWOIMPcQV+bxCFhBYSY5AIGP4DGvXH6qkwsg82YYY=
+github.com/vulcand/oxy/v2 v2.0.0-20230417082832-03de175b3822/go.mod h1:A2voDnpONyqdplUDK0lt5y4XHLiBXPBw7iQES8+ZWRw=
 github.com/vulcand/predicate v1.2.0 h1:uFsW1gcnnR7R+QTID+FVcs0sSYlIGntoGOTb3rQJt50=
 github.com/vulcand/predicate v1.2.0/go.mod h1:VipoNYXny6c8N381zGUWkjuuNHiRbeAZhE7Qm9c+2GA=
 github.com/vultr/govultr/v2 v2.17.2 h1:gej/rwr91Puc/tgh+j33p/BLR16UrIPnSr+AIwYWZQs=
