@@ -30,7 +30,13 @@
           </q-tabs>
           <div class="right-menu">
             <q-tabs>
-              <q-btn type="a" href="https://hub.traefik.io/" target="_blank" flat no-caps label="Go to Hub Dashboard →" class="btn-menu btn-hub" />
+              <div class="tooltip" :class="{ 'is-dark-mode': $q.dark.isActive }">
+                <q-btn type="a" href="https://traefik.io/try-hub-now" target="_blank" flat no-caps label="Try Traefik Hub →" class="btn-menu btn-hub" />
+                <div class="content">
+                  <p>Extend your capabilities to API Management</p>
+                  <img alt="" v-bind:src="getHubLogoSrc($q.dark.isActive)" width="100px" />
+                </div>
+              </div>
               <q-btn @click="$q.dark.toggle()" stretch flat no-caps icon="invert_colors" :label="`${$q.dark.isActive ? 'Light' : 'Dark'} theme`" class="btn-menu" />
               <q-btn stretch flat icon="eva-question-mark-circle-outline">
                 <q-menu anchor="bottom left" auto-close>
@@ -86,7 +92,12 @@ export default {
     }
   },
   methods: {
-    ...mapActions('core', { getVersion: 'getVersion' })
+    ...mapActions('core', { getVersion: 'getVersion' }),
+    getHubLogoSrc (isDarkMode) {
+      return isDarkMode
+        ? 'statics/hub-logo-horizontal-dark.png'
+        : 'statics/hub-logo-horizontal-clear.png'
+    }
   },
   created () {
     this.getVersion()
@@ -154,8 +165,8 @@ export default {
   }
 
   .btn-hub {
-    color: #0e204c;
-    background: #deea48;
+    color: #dedede;
+    background: #5f6572;
   }
 
   .q-item {
@@ -166,4 +177,70 @@ export default {
     font-weight: 700;
     align-items: flex-start;
   }
+
+  .tooltip {
+    display: inline-block;
+
+    .content {
+      display: flex;
+      align-items: center;
+      visibility: hidden;
+      font-size: 16px;
+      padding: 20px;
+      border-radius: 16px;
+      background-color: #fff;
+      box-shadow: 0 0 6px rgba(0,0,0,0.16), 0 0 6px rgba(0,0,0,0.23);
+
+      /* Position the tooltip text */
+      position: absolute;
+      z-index: 1;
+      top: 90%;
+      left: -5%;
+
+      /* Fade in tooltip */
+      opacity: 0;
+      transition: opacity 0.3s;
+
+      &::after {
+        content: "";
+        position: absolute;
+        top: -10px;
+        left: 22%;
+        border-left: 7px solid transparent;
+        border-right: 7px solid transparent;
+        border-bottom: 10px solid #fff;
+      }
+
+      p {
+        align-self: baseline;
+        color: var(--q-color-primary);
+        font-weight: bold;
+        margin: 0 20px 0 0;
+        max-width: 180px;
+      }
+
+      img {
+        margin: 0 20px;
+      }
+    }
+
+    &.is-dark-mode .content {
+      background-color: #262626;
+      box-shadow: 0 0 6px rgba(10,18,36,0.16), 0 0 6px rgba(10,18,36,0.23);
+
+      &::after {
+        border-bottom: 10px solid #262626;
+      }
+
+      p {
+        color: #fff;
+      }
+    }
+
+    &:hover .content {
+      visibility: visible;
+      opacity: 1;
+    }
+  }
+
 </style>

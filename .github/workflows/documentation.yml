@@ -7,7 +7,7 @@ on:
       - v*
 
 env:
-  STRUCTOR_VERSION: v1.13.1
+  STRUCTOR_VERSION: v1.13.2
   MIXTUS_VERSION: v0.4.1
 
 jobs:
