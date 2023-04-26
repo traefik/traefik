@@ -186,7 +186,7 @@ This means that along with configurations applied, it is possible that the TLS c
 
 ### Serving TLS Certificates
 
-For each incoming connection, Traefik is serving the "best" matching TLS certificate for the provided servername.
+For each incoming connection, Traefik is serving the "best" matching TLS certificate for the provided server name.
 
 The TLS certificate selection process narrows down the list of TLS certificates matching the servername,
 and then selects the last TLS certificate in this list after having ordered it by the identifier alphabetically.
