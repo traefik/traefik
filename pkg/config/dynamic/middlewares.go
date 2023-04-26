@@ -382,7 +382,7 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 type IPAllowList struct {
 	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation).
 	SourceRange []string    `json:"sourceRange,omitempty" toml:"sourceRange,omitempty" yaml:"sourceRange,omitempty"`
-	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty"  label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	IPStrategy  *IPStrategy `json:"ipStrategy,omitempty" toml:"ipStrategy,omitempty" yaml:"ipStrategy,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

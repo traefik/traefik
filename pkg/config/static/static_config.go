@@ -114,7 +114,7 @@ type ServersTransport struct {
 // Spiffe holds the SPIFFE configuration.
 type Spiffe struct {
 	IDs         []string `description:"Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain)." json:"ids,omitempty" toml:"ids,omitempty" yaml:"ids,omitempty"`
-	TrustDomain string   `description:"Defines the allowed SPIFFE trust domain." json:"trustDomain,omitempty" yaml:"trustDomain,omitempty" toml:"trustDomain,omitempty"`
+	TrustDomain string   `description:"Defines the allowed SPIFFE trust domain." json:"trustDomain,omitempty" toml:"trustDomain,omitempty" yaml:"trustDomain,omitempty"`
 }
 
 // TCPServersTransport options to configure communication between Traefik and the servers.
@@ -191,13 +191,13 @@ func (a *LifeCycle) SetDefaults() {
 type Tracing struct {
 	ServiceName   string                `description:"Set the name for this service." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
 	SpanNameLimit int                   `description:"Set the maximum character limit for Span names (default 0 = no limit)." json:"spanNameLimit,omitempty" toml:"spanNameLimit,omitempty" yaml:"spanNameLimit,omitempty" export:"true"`
-	Jaeger        *jaeger.Config        `description:"Settings for Jaeger." json:"jaeger,omitempty" toml:"jaeger,omitempty" yaml:"jaeger,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	Zipkin        *zipkin.Config        `description:"Settings for Zipkin." json:"zipkin,omitempty" toml:"zipkin,omitempty" yaml:"zipkin,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	Datadog       *datadog.Config       `description:"Settings for Datadog." json:"datadog,omitempty" toml:"datadog,omitempty" yaml:"datadog,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	Instana       *instana.Config       `description:"Settings for Instana." json:"instana,omitempty" toml:"instana,omitempty" yaml:"instana,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	Haystack      *haystack.Config      `description:"Settings for Haystack." json:"haystack,omitempty" toml:"haystack,omitempty" yaml:"haystack,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	Elastic       *elastic.Config       `description:"Settings for Elastic." json:"elastic,omitempty" toml:"elastic,omitempty" yaml:"elastic,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	OpenTelemetry *opentelemetry.Config `description:"Settings for OpenTelemetry." json:"openTelemetry,omitempty" toml:"openTelemetry,omitempty" yaml:"openTelemetry,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
+	Jaeger        *jaeger.Config        `description:"Settings for Jaeger." json:"jaeger,omitempty" toml:"jaeger,omitempty" yaml:"jaeger,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Zipkin        *zipkin.Config        `description:"Settings for Zipkin." json:"zipkin,omitempty" toml:"zipkin,omitempty" yaml:"zipkin,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Datadog       *datadog.Config       `description:"Settings for Datadog." json:"datadog,omitempty" toml:"datadog,omitempty" yaml:"datadog,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Instana       *instana.Config       `description:"Settings for Instana." json:"instana,omitempty" toml:"instana,omitempty" yaml:"instana,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Haystack      *haystack.Config      `description:"Settings for Haystack." json:"haystack,omitempty" toml:"haystack,omitempty" yaml:"haystack,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Elastic       *elastic.Config       `description:"Settings for Elastic." json:"elastic,omitempty" toml:"elastic,omitempty" yaml:"elastic,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	OpenTelemetry *opentelemetry.Config `description:"Settings for OpenTelemetry." json:"openTelemetry,omitempty" toml:"openTelemetry,omitempty" yaml:"openTelemetry,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -210,12 +210,12 @@ func (t *Tracing) SetDefaults() {
 type Providers struct {
 	ProvidersThrottleDuration ptypes.Duration `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." json:"providersThrottleDuration,omitempty" toml:"providersThrottleDuration,omitempty" yaml:"providersThrottleDuration,omitempty" export:"true"`
 
-	Docker            *docker.Provider               `description:"Enable Docker backend with default settings." json:"docker,omitempty" toml:"docker,omitempty" yaml:"docker,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
+	Docker            *docker.Provider               `description:"Enable Docker backend with default settings." json:"docker,omitempty" toml:"docker,omitempty" yaml:"docker,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	File              *file.Provider                 `description:"Enable File backend with default settings." json:"file,omitempty" toml:"file,omitempty" yaml:"file,omitempty" export:"true"`
-	KubernetesIngress *ingress.Provider              `description:"Enable Kubernetes backend with default settings." json:"kubernetesIngress,omitempty" toml:"kubernetesIngress,omitempty" yaml:"kubernetesIngress,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	KubernetesCRD     *crd.Provider                  `description:"Enable Kubernetes backend with default settings." json:"kubernetesCRD,omitempty" toml:"kubernetesCRD,omitempty" yaml:"kubernetesCRD,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	KubernetesGateway *gateway.Provider              `description:"Enable Kubernetes gateway api provider with default settings." json:"kubernetesGateway,omitempty" toml:"kubernetesGateway,omitempty" yaml:"kubernetesGateway,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
-	Rest              *rest.Provider                 `description:"Enable Rest backend with default settings." json:"rest,omitempty" toml:"rest,omitempty" yaml:"rest,omitempty" export:"true" label:"allowEmpty" file:"allowEmpty"`
+	KubernetesIngress *ingress.Provider              `description:"Enable Kubernetes backend with default settings." json:"kubernetesIngress,omitempty" toml:"kubernetesIngress,omitempty" yaml:"kubernetesIngress,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	KubernetesCRD     *crd.Provider                  `description:"Enable Kubernetes backend with default settings." json:"kubernetesCRD,omitempty" toml:"kubernetesCRD,omitempty" yaml:"kubernetesCRD,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	KubernetesGateway *gateway.Provider              `description:"Enable Kubernetes gateway api provider with default settings." json:"kubernetesGateway,omitempty" toml:"kubernetesGateway,omitempty" yaml:"kubernetesGateway,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Rest              *rest.Provider                 ` description:"Enable Rest backend with default settings." json:"rest,omitempty" toml:"rest,omitempty" yaml:"rest,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	ConsulCatalog     *consulcatalog.ProviderBuilder `description:"Enable ConsulCatalog backend with default settings." json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Nomad             *nomad.ProviderBuilder         `description:"Enable Nomad backend with default settings." json:"nomad,omitempty" toml:"nomad,omitempty" yaml:"nomad,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Ecs               *ecs.Provider                  `description:"Enable AWS ECS backend with default settings." json:"ecs,omitempty" toml:"ecs,omitempty" yaml:"ecs,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`

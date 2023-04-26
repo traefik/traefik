@@ -9,13 +9,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
-	"k8s.io/api/networking/v1beta1"
-	kubeerror "k8s.io/apimachinery/pkg/api/errors"
+	netv1 "k8s.io/api/networking/v1"
+	netv1beta1 "k8s.io/api/networking/v1beta1"
+	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/version"
-	fakediscovery "k8s.io/client-go/discovery/fake"
+	kschema "k8s.io/apimachinery/pkg/runtime/schema"
+	kversion "k8s.io/apimachinery/pkg/version"
+	discoveryfake "k8s.io/client-go/discovery/fake"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 )
 
@@ -28,7 +28,7 @@ func TestTranslateNotFoundError(t *testing.T) {
 	}{
 		{
 			desc:           "kubernetes not found error",
-			err:            kubeerror.NewNotFound(schema.GroupResource{}, "foo"),
+			err:            kerror.NewNotFound(kschema.GroupResource{}, "foo"),
 			expectedExists: false,
 			expectedError:  nil,
 		},
@@ -61,8 +61,8 @@ func TestTranslateNotFoundError(t *testing.T) {
 func TestIsLoadBalancerIngressEquals(t *testing.T) {
 	testCases := []struct {
 		desc          string
-		aSlice        []corev1.LoadBalancerIngress
-		bSlice        []corev1.LoadBalancerIngress
+		aSlice        []netv1.IngressLoadBalancerIngress
+		bSlice        []netv1.IngressLoadBalancerIngress
 		expectedEqual bool
 	}{
 		{
@@ -71,28 +71,28 @@ func TestIsLoadBalancerIngressEquals(t *testing.T) {
 		},
 		{
 			desc: "not the same length",
-			bSlice: []corev1.LoadBalancerIngress{
+			bSlice: []netv1.IngressLoadBalancerIngress{
 				{IP: "192.168.1.1", Hostname: "traefik"},
 			},
 			expectedEqual: false,
 		},
 		{
 			desc: "same ordered content",
-			aSlice: []corev1.LoadBalancerIngress{
+			aSlice: []netv1.IngressLoadBalancerIngress{
 				{IP: "192.168.1.1", Hostname: "traefik"},
 			},
-			bSlice: []corev1.LoadBalancerIngress{
+			bSlice: []netv1.IngressLoadBalancerIngress{
 				{IP: "192.168.1.1", Hostname: "traefik"},
 			},
 			expectedEqual: true,
 		},
 		{
 			desc: "same unordered content",
-			aSlice: []corev1.LoadBalancerIngress{
+			aSlice: []netv1.IngressLoadBalancerIngress{
 				{IP: "192.168.1.1", Hostname: "traefik"},
 				{IP: "192.168.1.2", Hostname: "traefik2"},
 			},
-			bSlice: []corev1.LoadBalancerIngress{
+			bSlice: []netv1.IngressLoadBalancerIngress{
 				{IP: "192.168.1.2", Hostname: "traefik2"},
 				{IP: "192.168.1.1", Hostname: "traefik"},
 			},
@@ -100,11 +100,11 @@ func TestIsLoadBalancerIngressEquals(t *testing.T) {
 		},
 		{
 			desc: "different ordered content",
-			aSlice: []corev1.LoadBalancerIngress{
+			aSlice: []netv1.IngressLoadBalancerIngress{
 				{IP: "192.168.1.1", Hostname: "traefik"},
 				{IP: "192.168.1.2", Hostname: "traefik2"},
 			},
-			bSlice: []corev1.LoadBalancerIngress{
+			bSlice: []netv1.IngressLoadBalancerIngress{
 				{IP: "192.168.1.1", Hostname: "traefik"},
 				{IP: "192.168.1.2", Hostname: "traefik"},
 			},
@@ -112,11 +112,11 @@ func TestIsLoadBalancerIngressEquals(t *testing.T) {
 		},
 		{
 			desc: "different unordered content",
-			aSlice: []corev1.LoadBalancerIngress{
+			aSlice: []netv1.IngressLoadBalancerIngress{
 				{IP: "192.168.1.1", Hostname: "traefik"},
 				{IP: "192.168.1.2", Hostname: "traefik2"},
 			},
-			bSlice: []corev1.LoadBalancerIngress{
+			bSlice: []netv1.IngressLoadBalancerIngress{
 				{IP: "192.168.1.2", Hostname: "traefik3"},
 				{IP: "192.168.1.1", Hostname: "traefik"},
 			},
@@ -154,8 +154,8 @@ func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 
 	kubeClient := kubefake.NewSimpleClientset(helmSecret, secret)
 
-	discovery, _ := kubeClient.Discovery().(*fakediscovery.FakeDiscovery)
-	discovery.FakedServerVersion = &version.Info{
+	discovery, _ := kubeClient.Discovery().(*discoveryfake.FakeDiscovery)
+	discovery.FakedServerVersion = &kversion.Info{
 		GitVersion: "v1.19",
 	}
 
@@ -223,8 +223,8 @@ func TestClientIgnoresEmptyEndpointUpdates(t *testing.T) {
 
 	kubeClient := kubefake.NewSimpleClientset(emptyEndpoint, filledEndpoint)
 
-	discovery, _ := kubeClient.Discovery().(*fakediscovery.FakeDiscovery)
-	discovery.FakedServerVersion = &version.Info{
+	discovery, _ := kubeClient.Discovery().(*discoveryfake.FakeDiscovery)
+	discovery.FakedServerVersion = &kversion.Info{
 		GitVersion: "v1.19",
 	}
 
@@ -291,14 +291,14 @@ func TestClientIgnoresEmptyEndpointUpdates(t *testing.T) {
 }
 
 func TestClientUsesCorrectServerVersion(t *testing.T) {
-	ingressV1Beta := &v1beta1.Ingress{
+	ingressV1Beta := &netv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "ingress-v1beta",
 		},
 	}
 
-	ingressV1 := &networkingv1.Ingress{
+	ingressV1 := &netv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      "ingress-v1",
@@ -307,8 +307,8 @@ func TestClientUsesCorrectServerVersion(t *testing.T) {
 
 	kubeClient := kubefake.NewSimpleClientset(ingressV1Beta, ingressV1)
 
-	discovery, _ := kubeClient.Discovery().(*fakediscovery.FakeDiscovery)
-	discovery.FakedServerVersion = &version.Info{
+	discovery, _ := kubeClient.Discovery().(*discoveryfake.FakeDiscovery)
+	discovery.FakedServerVersion = &kversion.Info{
 		GitVersion: "v1.18.12+foobar",
 	}
 
@@ -321,7 +321,7 @@ func TestClientUsesCorrectServerVersion(t *testing.T) {
 
 	select {
 	case event := <-eventCh:
-		ingress, ok := event.(*v1beta1.Ingress)
+		ingress, ok := event.(*netv1beta1.Ingress)
 		require.True(t, ok)
 
 		assert.Equal(t, "ingress-v1beta", ingress.Name)
@@ -335,7 +335,7 @@ func TestClientUsesCorrectServerVersion(t *testing.T) {
 	case <-time.After(50 * time.Millisecond):
 	}
 
-	discovery.FakedServerVersion = &version.Info{
+	discovery.FakedServerVersion = &kversion.Info{
 		GitVersion: "v1.19",
 	}
 
@@ -344,7 +344,7 @@ func TestClientUsesCorrectServerVersion(t *testing.T) {
 
 	select {
 	case event := <-eventCh:
-		ingress, ok := event.(*networkingv1.Ingress)
+		ingress, ok := event.(*netv1.Ingress)
 		require.True(t, ok)
 
 		assert.Equal(t, "ingress-v1", ingress.Name)

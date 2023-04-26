@@ -25,7 +25,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
+	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -195,7 +195,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 	serverVersion := client.GetServerVersion()
 
-	var ingressClasses []*networkingv1.IngressClass
+	var ingressClasses []*netv1.IngressClass
 
 	if !p.DisableIngressClassLookup && supportsIngressClass(serverVersion) {
 		ics, err := client.GetIngressClasses()
@@ -346,7 +346,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 	return conf
 }
 
-func (p *Provider) updateIngressStatus(ing *networkingv1.Ingress, k8sClient Client) error {
+func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client) error {
 	// Only process if an EndpointIngress has been configured.
 	if p.IngressEndpoint == nil {
 		return nil
@@ -357,7 +357,7 @@ func (p *Provider) updateIngressStatus(ing *networkingv1.Ingress, k8sClient Clie
 			return errors.New("publishedService or ip or hostname must be defined")
 		}
 
-		return k8sClient.UpdateIngressStatus(ing, []corev1.LoadBalancerIngress{{IP: p.IngressEndpoint.IP, Hostname: p.IngressEndpoint.Hostname}})
+		return k8sClient.UpdateIngressStatus(ing, []netv1.IngressLoadBalancerIngress{{IP: p.IngressEndpoint.IP, Hostname: p.IngressEndpoint.Hostname}})
 	}
 
 	serviceInfo := strings.Split(p.IngressEndpoint.PublishedService, "/")
@@ -382,10 +382,15 @@ func (p *Provider) updateIngressStatus(ing *networkingv1.Ingress, k8sClient Clie
 		return fmt.Errorf("missing service: %s", p.IngressEndpoint.PublishedService)
 	}
 
-	return k8sClient.UpdateIngressStatus(ing, service.Status.LoadBalancer.Ingress)
+	ingresses, err := convertSlice[netv1.IngressLoadBalancerIngress](service.Status.LoadBalancer.Ingress)
+	if err != nil {
+		return err
+	}
+
+	return k8sClient.UpdateIngressStatus(ing, ingresses)
 }
 
-func (p *Provider) shouldProcessIngress(ingress *networkingv1.Ingress, ingressClasses []*networkingv1.IngressClass) bool {
+func (p *Provider) shouldProcessIngress(ingress *netv1.Ingress, ingressClasses []*netv1.IngressClass) bool {
 	// configuration through the new kubernetes ingressClass
 	if ingress.Spec.IngressClassName != nil {
 		for _, ic := range ingressClasses {
@@ -410,7 +415,7 @@ func buildHostRule(host string) string {
 	return fmt.Sprintf("Host(`%s`)", host)
 }
 
-func getCertificates(ctx context.Context, ingress *networkingv1.Ingress, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
+func getCertificates(ctx context.Context, ingress *netv1.Ingress, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
 	for _, t := range ingress.Spec.TLS {
 		if t.SecretName == "" {
 			log.Ctx(ctx).Debug().Msg("Skipping TLS sub-section: No secret name provided")
@@ -495,7 +500,7 @@ func getTLSConfig(tlsConfigs map[string]*tls.CertAndStores) []*tls.CertAndStores
 	return configs
 }
 
-func (p *Provider) loadService(client Client, namespace string, backend networkingv1.IngressBackend) (*dynamic.Service, error) {
+func (p *Provider) loadService(client Client, namespace string, backend netv1.IngressBackend) (*dynamic.Service, error) {
 	service, exists, err := client.GetService(namespace, backend.Service.Name)
 	if err != nil {
 		return nil, err
@@ -645,7 +650,7 @@ func makeRouterKeyWithHash(key, rule string) (string, error) {
 	return dupKey, nil
 }
 
-func loadRouter(rule networkingv1.IngressRule, pa networkingv1.HTTPIngressPath, rtConfig *RouterConfig, serviceName string) *dynamic.Router {
+func loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *RouterConfig, serviceName string) *dynamic.Router {
 	var rules []string
 	if len(rule.Host) > 0 {
 		rules = []string{buildHostRule(rule.Host)}
@@ -654,11 +659,11 @@ func loadRouter(rule networkingv1.IngressRule, pa networkingv1.HTTPIngressPath, 
 	if len(pa.Path) > 0 {
 		matcher := defaultPathMatcher
 
-		if pa.PathType == nil || *pa.PathType == "" || *pa.PathType == networkingv1.PathTypeImplementationSpecific {
+		if pa.PathType == nil || *pa.PathType == "" || *pa.PathType == netv1.PathTypeImplementationSpecific {
 			if rtConfig != nil && rtConfig.Router != nil && rtConfig.Router.PathMatcher != "" {
 				matcher = rtConfig.Router.PathMatcher
 			}
-		} else if *pa.PathType == networkingv1.PathTypeExact {
+		} else if *pa.PathType == netv1.PathTypeExact {
 			matcher = "Path"
 		}
 

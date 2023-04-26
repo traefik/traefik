@@ -55,8 +55,8 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pires/go-proxyproto v0.6.1
 	github.com/pmezard/go-difflib v1.0.0
-	github.com/prometheus/client_golang v1.12.2-0.20220704083116-e8f91604d835
-	github.com/prometheus/client_model v0.2.0
+	github.com/prometheus/client_golang v1.14.0
+	github.com/prometheus/client_model v0.3.0
 	github.com/quic-go/quic-go v0.33.0
 	github.com/rs/zerolog v1.28.0
 	github.com/sirupsen/logrus v1.9.0
@@ -65,13 +65,13 @@ require (
 	github.com/stvp/go-udp-testing v0.0.0-20191102171040-06b61409b154
 	github.com/tailscale/tscert v0.0.0-20220316030059-54bbcb9f74e2
 	github.com/traefik/paerser v0.2.0
-	github.com/traefik/yaegi v0.15.0
+	github.com/traefik/yaegi v0.15.1
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	github.com/uber/jaeger-lib v2.2.0+incompatible
 	github.com/unrolled/render v1.0.2
 	github.com/unrolled/secure v1.0.9
 	github.com/vdemeester/shakers v0.1.0
-	github.com/vulcand/oxy/v2 v2.0.0-20230227135449-a0e9f7ff1040
+	github.com/vulcand/oxy/v2 v2.0.0-20230417082832-03de175b3822
 	github.com/vulcand/predicate v1.2.0
 	go.elastic.co/apm v1.13.1
 	go.elastic.co/apm/module/apmot v1.13.1
@@ -97,11 +97,11 @@ require (
 	gopkg.in/DataDog/dd-trace-go.v1 v1.43.1
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/api v0.25.0
-	k8s.io/apiextensions-apiserver v0.25.0
-	k8s.io/apimachinery v0.25.0
-	k8s.io/client-go v0.25.0
-	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed
+	k8s.io/api v0.26.3
+	k8s.io/apiextensions-apiserver v0.26.3
+	k8s.io/apimachinery v0.26.3
+	k8s.io/client-go v0.26.3
+	k8s.io/utils v0.0.0-20230313181309-38a27ef9d749
 	mvdan.cc/xurls/v2 v2.1.0
 	sigs.k8s.io/gateway-api v0.4.0
 )
@@ -131,8 +131,6 @@ require (
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/Microsoft/hcsshim v0.8.24 // indirect
 	github.com/OpenDNS/vegadns2client v0.0.0-20180418235048-a3fa4a771d87 // indirect
-	github.com/PuerkitoBio/purell v1.1.1 // indirect
-	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/Shopify/sarama v1.23.1 // indirect
 	github.com/VividCortex/gohistogram v1.0.0 // indirect
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
@@ -175,11 +173,11 @@ require (
 	github.com/elastic/go-licenser v0.3.1 // indirect
 	github.com/elastic/go-sysinfo v1.1.1 // indirect
 	github.com/elastic/go-windows v1.0.0 // indirect
-	github.com/emicklei/go-restful/v3 v3.8.0 // indirect
+	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
 	github.com/exoscale/egoscale v0.90.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
-	github.com/fsnotify/fsnotify v1.5.4 // indirect
+	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/fvbommel/sortorder v1.0.1 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-errors/errors v1.0.1 // indirect
@@ -188,7 +186,7 @@ require (
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
-	github.com/go-openapi/jsonreference v0.19.5 // indirect
+	github.com/go-openapi/jsonreference v0.20.0 // indirect
 	github.com/go-openapi/swag v0.19.14 // indirect
 	github.com/go-redis/redis/v8 v8.11.5 // indirect
 	github.com/go-resty/resty/v2 v2.1.1-0.20191201195748-d7b97669fe48 // indirect
@@ -236,7 +234,7 @@ require (
 	github.com/huandu/xstrings v1.3.3 // indirect
 	github.com/iij/doapi v0.0.0-20190504054126-0bbf12d6d7df // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 // indirect
 	github.com/infobloxopen/infoblox-go-client v1.1.1 // indirect
 	github.com/jaguilar/vt100 v0.0.0-20150826170717-2703a27b14ea // indirect
@@ -289,7 +287,7 @@ require (
 	github.com/nrdcg/goinwx v0.8.1 // indirect
 	github.com/nrdcg/namesilo v0.2.1 // indirect
 	github.com/nrdcg/porkbun v0.1.1 // indirect
-	github.com/onsi/ginkgo/v2 v2.2.0 // indirect
+	github.com/onsi/ginkgo/v2 v2.4.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/opencontainers/runc v1.1.4 // indirect
@@ -299,8 +297,8 @@ require (
 	github.com/philhofer/fwd v1.1.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pquerna/otp v1.3.0 // indirect
-	github.com/prometheus/common v0.35.0 // indirect
-	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/prometheus/common v0.37.0 // indirect
+	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/quic-go/qpack v0.4.0 // indirect
 	github.com/quic-go/qtls-go1-19 v0.2.1 // indirect
 	github.com/quic-go/qtls-go1-20 v0.1.1 // indirect
@@ -318,7 +316,7 @@ require (
 	github.com/softlayer/softlayer-go v1.0.6 // indirect
 	github.com/softlayer/xmlrpc v0.0.0-20200409220501-5f089df7cb7e // indirect
 	github.com/spf13/cast v1.3.1 // indirect
-	github.com/spf13/cobra v1.4.0 // indirect
+	github.com/spf13/cobra v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.490 // indirect
@@ -340,9 +338,9 @@ require (
 	github.com/zeebo/errs v1.2.2 // indirect
 	go.elastic.co/apm/module/apmhttp v1.13.1 // indirect
 	go.elastic.co/fastjson v1.1.0 // indirect
-	go.etcd.io/etcd/api/v3 v3.5.4 // indirect
-	go.etcd.io/etcd/client/pkg/v3 v3.5.4 // indirect
-	go.etcd.io/etcd/client/v3 v3.5.4 // indirect
+	go.etcd.io/etcd/api/v3 v3.5.5 // indirect
+	go.etcd.io/etcd/client/pkg/v3 v3.5.5 // indirect
+	go.etcd.io/etcd/client/v3 v3.5.5 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.11.2 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric v0.34.0 // indirect
@@ -371,8 +369,8 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	howett.net/plist v0.0.0-20181124034731-591f970eefbb // indirect
 	inet.af/netaddr v0.0.0-20220617031823-097006376321 // indirect
-	k8s.io/klog/v2 v2.70.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20220803162953-67bda5d908f1 // indirect
+	k8s.io/klog/v2 v2.80.1 // indirect
+	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
