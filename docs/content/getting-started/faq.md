@@ -162,7 +162,7 @@ please check out the [forwarded header](../routing/entrypoints.md#forwarded-head
 
 ### Storing TLS Certificates
 
-TLS certificates are either provided directly by the dynamic configuration from providers,
+[TLS](../https/tls.md "Link to Traefik TLS docs") certificates are either provided directly by the [dynamic configuration](./configuration-overview.md#the-dynamic-configuration "Link to dynamic configuration overview") from [providers](../https/acme.md#providers "Link to ACME providers"),
 or by ACME resolvers, which act themselves as providers internally.
 
 For each TLS certificate, Traefik produces an identifier used as a key to store it.
@@ -188,7 +188,7 @@ This means that along with configurations applied, it is possible that the TLS c
 
 For each incoming connection, Traefik is serving the "best" matching TLS certificate for the provided server name.
 
-The TLS certificate selection process narrows down the list of TLS certificates matching the servername,
+The TLS certificate selection process narrows down the list of TLS certificates matching the server name,
 and then selects the last TLS certificate in this list after having ordered it by the identifier alphabetically.
 
 #### Examples:
@@ -203,8 +203,8 @@ and then selects the last TLS certificate in this list after having ordered it b
 While Traefik is serving the best matching TLS certificate for each incoming connection,
 the selection process cost for each incoming connection is avoided thanks to a cache mechanism.
 
-Once a TLS certificate has been selected as the "best" TLS certificate for a servername,
-it is cached for an hour, avoiding then the selection process for further connections.
+Once a TLS certificate has been selected as the "best" TLS certificate for a server name,
+it is cached for an hour, avoiding the selection process for further connections.
 
 Nonetheless, if a new configuration is applied, the cache is reset.
 
