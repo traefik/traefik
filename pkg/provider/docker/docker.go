@@ -509,7 +509,22 @@ func (p *Provider) parseService(ctx context.Context, service swarmtypes.Service,
 	if service.Spec.EndpointSpec != nil {
 		if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeDNSRR {
 			if dData.ExtraConf.Docker.LBSwarm {
-				logger.Warn().Msgf("Ignored %s endpoint-mode not supported, service name: %s. Fallback to Traefik load balancing", swarmtypes.ResolutionModeDNSRR, service.Spec.Annotations.Name)
+				dData.NetworkSettings.Networks = make(map[string]*networkData)
+				for _, net := range service.Spec.TaskTemplate.Networks {
+					networkService := networkMap[net.Target]
+					if networkService != nil {
+						network := &networkData{
+							Name: networkService.Name,
+							ID:   net.Target,
+							Addr: "tasks." + service.Spec.Name,
+						}
+						dData.NetworkSettings.Networks[network.Name] = network
+					} else {
+						logger.Debug().Msgf("Network not found, id: %s", net.Target)
+					}
+				}
+			} else {
+				// Each service task IP will get extracted later on in parseTasks
 			}
 		} else if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeVIP {
 			dData.NetworkSettings.Networks = make(map[string]*networkData)
