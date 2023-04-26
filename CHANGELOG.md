@@ -1,3 +1,60 @@
+## [v2.10.0](https://github.com/traefik/traefik/tree/v2.10.0) (2023-04-24)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.0-rc1...v2.10.0)
+
+**Enhancements:**
+- **[docker]** Expose ContainerName in Docker provider ([#9770](https://github.com/traefik/traefik/pull/9770) by [quinot](https://github.com/quinot))
+- **[hub]** Remove hub configuration out of experimental ([#9792](https://github.com/traefik/traefik/pull/9792) by [mpl](https://github.com/mpl))
+- **[k8s/crd]** Introduce traefik.io API Group CRDs ([#9765](https://github.com/traefik/traefik/pull/9765) by [rtribotte](https://github.com/rtribotte))
+- **[k8s/ingress,k8s/crd,k8s]** Native Kubernetes service load-balancing ([#9740](https://github.com/traefik/traefik/pull/9740) by [rtribotte](https://github.com/rtribotte))
+- **[middleware,metrics]** Add prometheus metric requests_total with headers ([#9783](https://github.com/traefik/traefik/pull/9783) by [rtribotte](https://github.com/rtribotte))
+- **[nomad]** Support multiple namespaces in the Nomad Provider ([#9794](https://github.com/traefik/traefik/pull/9794) by [rtribotte](https://github.com/rtribotte))
+- **[tracing]** Add support to send DataDog traces via Unix Socket ([#9714](https://github.com/traefik/traefik/pull/9714) by [der-eismann](https://github.com/der-eismann))
+- **[webui]** Modify the Hub Button ([#9851](https://github.com/traefik/traefik/pull/9851) by [mdeliatf](https://github.com/mdeliatf))
+- **[webui]** Display period setting of the RateLimit middleware in the webui ([#9822](https://github.com/traefik/traefik/pull/9822) by [smatyas](https://github.com/smatyas))
+
+**Bug fixes:**
+- **[docker]** Only warn about missing docker network when network_mode is not host or container ([#9799](https://github.com/traefik/traefik/pull/9799) by [sentriz](https://github.com/sentriz))
+- **[k8s/ingress,k8s]** Bump k8s.io/client-go from v0.22.1 to v0.26.3 ([#9808](https://github.com/traefik/traefik/pull/9808) by [ldez](https://github.com/ldez))
+- **[plugins]** Improve DeepCopy of PluginConf ([#9846](https://github.com/traefik/traefik/pull/9846) by [ldez](https://github.com/ldez))
+- **[plugins]** Update Yaegi to v0.15.1 ([#9815](https://github.com/traefik/traefik/pull/9815) by [ldez](https://github.com/ldez))
+- **[server]** Update vulcand/oxy to 03de175b3822 ([#9849](https://github.com/traefik/traefik/pull/9849) by [longit644](https://github.com/longit644))
+
+**Documentation:**
+- Prepare release v2.10.0-rc1 ([#9802](https://github.com/traefik/traefik/pull/9802) by [ldez](https://github.com/ldez))
+- Fix order of log levels ([#9791](https://github.com/traefik/traefik/pull/9791) by [svx](https://github.com/svx))
+- **[docker]** Update wording - add link descriptions ([#9816](https://github.com/traefik/traefik/pull/9816) by [svx](https://github.com/svx))
+- **[middleware]** Add accessControlAllowHeaders example ([#9810](https://github.com/traefik/traefik/pull/9810) by [yingshaoxo](https://github.com/yingshaoxo))
+- **[tls]** More details on Kubernetes options for mTLS ([#9835](https://github.com/traefik/traefik/pull/9835) by [mloiseleur](https://github.com/mloiseleur))
+- Prepare release v2.10.0-rc2 ([#9830](https://github.com/traefik/traefik/pull/9830) by [mpl](https://github.com/mpl))
+- Update Call To Actions ([#9824](https://github.com/traefik/traefik/pull/9824) by [svx](https://github.com/svx))
+- Improve concepts page ([#9813](https://github.com/traefik/traefik/pull/9813) by [svx](https://github.com/svx))
+- Update wording ([#9811](https://github.com/traefik/traefik/pull/9811) by [svx](https://github.com/svx))
+
+**Misc:**
+- Merge branch v2.9 into v2.10 ([#9798](https://github.com/traefik/traefik/pull/9798) by [ldez](https://github.com/ldez))
+- Merge branch v2.9 into v2.10 ([#9829](https://github.com/traefik/traefik/pull/9829) by [mpl](https://github.com/mpl))
+
+## [v2.10.0-rc2](https://github.com/traefik/traefik/tree/v2.10.0-rc2) (2023-04-07)
+[All Commits](https://github.com/traefik/traefik/compare/v2.10.0-rc1...v2.10.0-rc2)
+
+**Enhancements:**
+- **[webui]** Display period setting of the RateLimit middleware in the webui ([#9822](https://github.com/traefik/traefik/pull/9822) by [smatyas](https://github.com/smatyas))
+
+**Bug fixes:**
+- **[docker]** Only warn about missing docker network when network_mode is not host or container ([#9799](https://github.com/traefik/traefik/pull/9799) by [sentriz](https://github.com/sentriz))
+- **[k8s/ingress,k8s]** chore: bump k8s.io/client-go from v0.22.1 to v0.26.3 ([#9808](https://github.com/traefik/traefik/pull/9808) by [ldez](https://github.com/ldez))
+- **[plugins]** Update Yaegi to v0.15.1 ([#9815](https://github.com/traefik/traefik/pull/9815) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[docker]** Update wording - add link descriptions ([#9816](https://github.com/traefik/traefik/pull/9816) by [svx](https://github.com/svx))
+- **[middleware]** Add accessControlAllowHeaders example ([#9810](https://github.com/traefik/traefik/pull/9810) by [yingshaoxo](https://github.com/yingshaoxo))
+- Update Call To Actions ([#9824](https://github.com/traefik/traefik/pull/9824) by [svx](https://github.com/svx))
+- Improve concepts page ([#9813](https://github.com/traefik/traefik/pull/9813) by [svx](https://github.com/svx))
+- Update wording ([#9811](https://github.com/traefik/traefik/pull/9811) by [svx](https://github.com/svx))
+
+## [v2.9.10](https://github.com/traefik/traefik/tree/v2.9.10) (2023-04-06)
+[All Commits](https://github.com/traefik/traefik/compare/v2.9.9...v2.9.10)
+
 ## [v2.10.0-rc1](https://github.com/traefik/traefik/tree/v2.10.0-rc1) (2023-03-22)
 [All Commits](https://github.com/traefik/traefik/compare/b3f162a8a61d89beaa9edc8adc12cc4cb3e1de0f...v2.10.0-rc1)
 

@@ -6,9 +6,10 @@ run:
 
 linters-settings:
   govet:
-    check-shadowing: false
-  golint:
-    min-confidence: 0
+    enable-all: true
+    disable:
+      - shadow
+      - fieldalignment
   gocyclo:
     min-complexity: 14
   goconst:
@@ -33,40 +34,112 @@ linters-settings:
     keywords:
       - FIXME
   importas:
-    corev1: k8s.io/api/core/v1
-    networkingv1beta1: k8s.io/api/networking/v1beta1
-    extensionsv1beta1: k8s.io/api/extensions/v1beta1
-    metav1: k8s.io/apimachinery/pkg/apis/meta/v1
-    kubeerror: k8s.io/apimachinery/pkg/api/errors
-    composeapi: github.com/docker/compose/v2/pkg/api
+    no-unaliased: true
+    alias:
+      - alias: composeapi
+        pkg: github.com/docker/compose/v2/pkg/api
+
+      # Standard Kubernetes rewrites:
+      - alias: corev1
+        pkg: "k8s.io/api/core/v1"
+      - alias: netv1
+        pkg: "k8s.io/api/networking/v1"
+      - alias: netv1beta1
+        pkg: "k8s.io/api/networking/v1beta1"
+      - alias: admv1
+        pkg: "k8s.io/api/admission/v1"
+      - alias: admv1beta1
+        pkg: "k8s.io/api/admission/v1beta1"
+      - alias: extv1beta1
+        pkg: "k8s.io/api/extensions/v1beta1"
+      - alias: metav1
+        pkg: "k8s.io/apimachinery/pkg/apis/meta/v1"
+      - alias: ktypes
+        pkg: "k8s.io/apimachinery/pkg/types"
+      - alias: kerror
+        pkg: "k8s.io/apimachinery/pkg/api/errors"
+      - alias: kclientset
+        pkg: "k8s.io/client-go/kubernetes"
+      - alias: kinformers
+        pkg: "k8s.io/client-go/informers"
+      - alias: ktesting
+        pkg: "k8s.io/client-go/testing"
+      - alias: kschema
+        pkg: "k8s.io/apimachinery/pkg/runtime/schema"
+      - alias: kscheme
+        pkg: "k8s.io/client-go/kubernetes/scheme"
+      - alias: kversion
+        pkg: "k8s.io/apimachinery/pkg/version"
+      - alias: kubefake
+        pkg: "k8s.io/client-go/kubernetes/fake"
+      - alias: discoveryfake
+        pkg: "k8s.io/client-go/discovery/fake"
+
+      # Kubernetes Gateway rewrites:
+      - alias: gateclientset
+        pkg: "sigs.k8s.io/gateway-api/pkg/client/clientset/gateway/versioned"
+      - alias: gateinformers
+        pkg: "sigs.k8s.io/gateway-api/pkg/client/informers/gateway/externalversions"
+      - alias: gatev1alpha2
+        pkg: "sigs.k8s.io/gateway-api/apis/v1alpha2"
+
+      # Traefik Kubernetes rewrites:
+      - alias: containousv1alpha1
+        pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
+      - alias: traefikv1alpha1
+        pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+      - alias: traefikclientset
+        pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned"
+      - alias: traefikinformers
+        pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions"
+      - alias: traefikscheme
+        pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
+      - alias: traefikcrdfake
+        pkg: "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
+  tagalign:
+    align: false
+    sort: true
+    order:
+      - description
+      - json
+      - toml
+      - yaml
+      - yml
+      - label
+      - label-slice-as-struct
+      - file
+      - kv
+      - export
   revive:
     rules:
       - name: struct-tag
-  rules:
-    - name: blank-imports
-    - name: context-as-argument
-    - name: context-keys-type
-    - name: dot-imports
-    - name: error-return
-    - name: error-strings
-    - name: error-naming
-    - name: exported
-    - name: if-return
-    - name: increment-decrement
-    - name: var-naming
-    - name: var-declaration
-    - name: package-comments
-    - name: range
-    - name: receiver-naming
-    - name: time-naming
-    - name: unexported-return
-    - name: indent-error-flow
-    - name: errorf
-    - name: empty-block
-    - name: superfluous-else
-    - name: unused-parameter
-    - name: unreachable-code
-    - name: redefines-builtin-id
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+        disabled: true
+      - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      - name: var-declaration
+      - name: package-comments
+        disabled: true
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unused-parameter
+        disabled: true
+      - name: unreachable-code
+      - name: redefines-builtin-id
   gomoddirectives:
     replace-allow-list:
       - github.com/abbot/go-http-auth
@@ -183,3 +256,7 @@ issues:
       text: "Function 'loadConfigurationFromCRD' has too many statements"
       linters:
         - funlen
+    - path: pkg/provider/kubernetes/gateway/client_mock_test.go
+      text: 'unusedwrite: unused write to field'
+      linters:
+        - govet
