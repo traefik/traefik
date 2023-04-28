@@ -206,7 +206,7 @@ the selection process cost for each incoming connection is avoided thanks to a c
 Once a TLS certificate has been selected as the "best" TLS certificate for a server name,
 it is cached for an hour, avoiding the selection process for further connections.
 
-Nonetheless, if a new configuration is applied, the cache is reset.
+Nonetheless, when a new configuration is applied, the cache is reset.
 
 ## What does the "field not found" error mean?
 
