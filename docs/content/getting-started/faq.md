@@ -162,8 +162,8 @@ please check out the [forwarded header](../routing/entrypoints.md#forwarded-head
 
 ### Storing TLS Certificates
 
-[TLS](../https/tls.md "Link to Traefik TLS docs") certificates are either provided directly by the [dynamic configuration](./configuration-overview.md#the-dynamic-configuration "Link to dynamic configuration overview") from [providers](../https/acme.md#providers "Link to ACME providers"),
-or by ACME resolvers, which act themselves as providers internally.
+[TLS](../https/tls.md "Link to Traefik TLS docs") certificates are either provided directly by the [dynamic configuration](./configuration-overview.md#the-dynamic-configuration "Link to dynamic configuration overview") from [providers](../https/tls/#user-defined "Link to the TLS configuration"),
+or by [ACME resolvers](../https/acme.md#providers "Link to ACME resolvers"), which act themselves as providers internally.
 
 For each TLS certificate, Traefik produces an identifier used as a key to store it.
 This identifier is constructed as the alphabetically ordered concatenation of the SANs `DNSNames` and `IPAddresses` of the TLScertificate.
