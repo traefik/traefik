@@ -2,14 +2,13 @@ package gateway
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	kscheme "k8s.io/client-go/kubernetes/scheme"
+	"os"
+	"path/filepath"
 	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
@@ -94,6 +93,19 @@ func (c clientMock) UpdateGatewayStatus(gateway *gatev1alpha2.Gateway, gatewaySt
 	return nil
 }
 
+func (c clientMock) UpdateHTTPRouteStatus(httpRoute *gatev1alpha2.HTTPRoute, httpRouteStatus gatev1alpha2.HTTPRouteStatus) error {
+	for _, r := range c.httpRoutes {
+		if r.Name == httpRoute.Name {
+			if !routeStatusEquals(r.Status.RouteStatus, httpRouteStatus.RouteStatus) {
+				r.Status = httpRouteStatus
+				return nil
+			}
+			return fmt.Errorf("cannot update http route %v", httpRoute.Name)
+		}
+	}
+	return nil
+}
+
 func (c clientMock) UpdateGatewayClassStatus(gatewayClass *gatev1alpha2.GatewayClass, condition metav1.Condition) error {
 	for _, gc := range c.gatewayClasses {
 		if gc.Name == gatewayClass.Name {
@@ -158,6 +170,18 @@ func (c clientMock) GetHTTPRoutes(namespaces []string) ([]*gatev1alpha2.HTTPRout
 		}
 	}
 	return httpRoutes, nil
+}
+
+func (c clientMock) GetHTTPRouteStatuses(namespaces []string) ([]gatev1alpha2.RouteStatus, error) {
+	var statuses []gatev1alpha2.RouteStatus
+	for _, namespace := range namespaces {
+		for _, httpRoute := range c.httpRoutes {
+			if inNamespace(httpRoute.ObjectMeta, namespace) {
+				statuses = append(statuses, httpRoute.Status.RouteStatus)
+			}
+		}
+	}
+	return statuses, nil
 }
 
 func (c clientMock) GetTCPRoutes(namespaces []string) ([]*gatev1alpha2.TCPRoute, error) {

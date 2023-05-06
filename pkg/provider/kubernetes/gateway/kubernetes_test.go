@@ -4552,6 +4552,73 @@ func TestLoadMixedRoutes(t *testing.T) {
 	}
 }
 
+func TestHTTPRouteStatus(t *testing.T) {
+	now := freezeTime()
+	defer unfreezeTime()
+
+	testCases := []struct {
+		desc        string
+		paths       []string
+		expected    []gatev1alpha2.RouteStatus
+		entryPoints map[string]Entrypoint
+	}{
+		{
+			desc:  "Simple HTTPRoute",
+			paths: []string{"services.yml", "httproute/simple.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: []gatev1alpha2.RouteStatus{
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:       groupPtr(gatev1alpha2.GroupName),
+								Kind:        kindPtr(kindGateway),
+								Namespace:   namespacePtr("default"),
+								Name:        "my-gateway",
+								SectionName: sectionNamePtr("http"),
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "True",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "Accepted",
+									Message:            "The route was attached to the Gateway",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			if test.expected == nil {
+				return
+			}
+
+			client := newClientMock(test.paths...)
+
+			p := Provider{EntryPoints: test.entryPoints}
+			p.loadConfigurationFromGateway(context.Background(), client)
+
+			statuses, err := client.GetHTTPRouteStatuses([]string{""})
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expected, statuses)
+		})
+	}
+}
+
 func Test_hostRule(t *testing.T) {
 	testCases := []struct {
 		desc         string
@@ -5568,3 +5635,17 @@ func kindPtr(kind gatev1alpha2.Kind) *gatev1alpha2.Kind {
 func pathMatchTypePtr(p gatev1alpha2.PathMatchType) *gatev1alpha2.PathMatchType { return &p }
 
 func headerMatchTypePtr(h gatev1alpha2.HeaderMatchType) *gatev1alpha2.HeaderMatchType { return &h }
+
+func freezeTime() time.Time {
+	now := time.Now()
+	timeNow = func() time.Time {
+		return now
+	}
+	return now
+}
+
+func unfreezeTime() func() {
+	return func() {
+		timeNow = time.Now
+	}
+}
