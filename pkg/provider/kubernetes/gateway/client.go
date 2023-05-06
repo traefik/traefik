@@ -53,6 +53,7 @@ type Client interface {
 	GetGatewayClasses() ([]*gatev1alpha2.GatewayClass, error)
 	UpdateGatewayStatus(gateway *gatev1alpha2.Gateway, gatewayStatus gatev1alpha2.GatewayStatus) error
 	UpdateGatewayClassStatus(gatewayClass *gatev1alpha2.GatewayClass, condition metav1.Condition) error
+	UpdateHTTPRouteStatus(httpRoute *gatev1alpha2.HTTPRoute, httpRouteStatus gatev1alpha2.HTTPRouteStatus) error
 	GetGateways() []*gatev1alpha2.Gateway
 	GetHTTPRoutes(namespaces []string) ([]*gatev1alpha2.HTTPRoute, error)
 	GetTCPRoutes(namespaces []string) ([]*gatev1alpha2.TCPRoute, error)
@@ -429,6 +430,29 @@ func (c *clientWrapper) UpdateGatewayStatus(gateway *gatev1alpha2.Gateway, gatew
 	return nil
 }
 
+func (c *clientWrapper) UpdateHTTPRouteStatus(httpRoute *gatev1alpha2.HTTPRoute, httpRouteStatus gatev1alpha2.HTTPRouteStatus) error {
+	if !c.isWatchedNamespace(httpRoute.Namespace) {
+		return fmt.Errorf("cannot update HTTPRoute status %s/%s: namespace is not within watched namespaces", httpRoute.Namespace, httpRoute.Name)
+	}
+
+	if routeStatusEquals(httpRoute.Status.RouteStatus, httpRouteStatus.RouteStatus) {
+		return nil
+	}
+
+	r := httpRoute.DeepCopy()
+	r.Status = httpRouteStatus
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := c.csGateway.GatewayV1alpha2().HTTPRoutes(httpRoute.Namespace).UpdateStatus(ctx, r, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to update HTTPRoute %q status: %w", httpRoute.Name, err)
+	}
+
+	return nil
+}
+
 func statusEquals(oldStatus, newStatus gatev1alpha2.GatewayStatus) bool {
 	if len(oldStatus.Listeners) != len(newStatus.Listeners) {
 		return false
@@ -452,6 +476,26 @@ func statusEquals(oldStatus, newStatus gatev1alpha2.GatewayStatus) bool {
 	}
 
 	return listenerMatches == len(oldStatus.Listeners)
+}
+
+func routeStatusEquals(oldStatus, newStatus gatev1alpha2.RouteStatus) bool {
+	if len(oldStatus.Parents) != len(newStatus.Parents) {
+		return false
+	}
+
+	parentMatches := 0
+	for _, newParent := range newStatus.Parents {
+		for _, oldParent := range oldStatus.Parents {
+			if newParent.ParentRef == oldParent.ParentRef {
+				if !conditionsEquals(newParent.Conditions, oldParent.Conditions) {
+					return false
+				}
+				parentMatches++
+			}
+		}
+	}
+
+	return parentMatches == len(oldStatus.Parents)
 }
 
 func conditionsEquals(conditionsA, conditionsB []metav1.Condition) bool {

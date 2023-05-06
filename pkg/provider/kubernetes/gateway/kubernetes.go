@@ -37,12 +37,17 @@ import (
 const (
 	providerName = "kubernetesgateway"
 
+	controllerName = "traefik.io/gateway-controller"
+
 	kindGateway        = "Gateway"
 	kindTraefikService = "TraefikService"
 	kindHTTPRoute      = "HTTPRoute"
 	kindTCPRoute       = "TCPRoute"
 	kindTLSRoute       = "TLSRoute"
 )
+
+// timeNow is a mockable version of time.Now.
+var timeNow = time.Now
 
 // Provider holds configurations of the provider.
 type Provider struct {
@@ -205,7 +210,7 @@ func (p *Provider) loadConfigurationFromGateway(ctx context.Context, client Clie
 	}
 
 	for _, gatewayClass := range gatewayClasses {
-		if gatewayClass.Spec.ControllerName == "traefik.io/gateway-controller" {
+		if gatewayClass.Spec.ControllerName == controllerName {
 			gatewayClassNames[gatewayClass.Name] = struct{}{}
 
 			err := client.UpdateGatewayClassStatus(gatewayClass, metav1.Condition{
@@ -298,11 +303,14 @@ func (p *Provider) createGatewayConf(ctx context.Context, client Client, gateway
 	// GatewayReasonListenersNotValid is used when one or more
 	// Listeners have an invalid or unsupported configuration
 	// and cannot be configured on the Gateway.
-	listenerStatuses := p.fillGatewayConf(ctx, client, gateway, conf, tlsConfigs)
+	listenerStatuses, err := p.fillGatewayConf(ctx, client, gateway, conf, tlsConfigs)
+	if err != nil {
+		return nil, err
+	}
 
 	gatewayStatus, errG := p.makeGatewayStatus(listenerStatuses)
 
-	err := client.UpdateGatewayStatus(gateway, gatewayStatus)
+	err = client.UpdateGatewayStatus(gateway, gatewayStatus)
 	if err != nil {
 		return nil, fmt.Errorf("an error occurred while updating gateway status: %w", err)
 	}
@@ -318,7 +326,7 @@ func (p *Provider) createGatewayConf(ctx context.Context, client Client, gateway
 	return conf, nil
 }
 
-func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *gatev1alpha2.Gateway, conf *dynamic.Configuration, tlsConfigs map[string]*tls.CertAndStores) []gatev1alpha2.ListenerStatus {
+func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *gatev1alpha2.Gateway, conf *dynamic.Configuration, tlsConfigs map[string]*tls.CertAndStores) ([]gatev1alpha2.ListenerStatus, error) {
 	logger := log.Ctx(ctx)
 	listenerStatuses := make([]gatev1alpha2.ListenerStatus, len(gateway.Spec.Listeners))
 	allocatedListeners := make(map[string]struct{})
@@ -501,15 +509,19 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			var (
 				routesAttached int32
 				conditions     []metav1.Condition
+				err            error
 			)
 
 			switch routeKind.Kind {
 			case kindHTTPRoute:
-				routesAttached, conditions = gatewayHTTPRouteToHTTPConf(ctx, ep, listener, gateway, client, conf)
+				routesAttached, conditions, err = gatewayHTTPRouteToHTTPConf(ctx, ep, listener, gateway, client, conf)
 			case kindTCPRoute:
-				routesAttached, conditions = gatewayTCPRouteToTCPConf(ctx, ep, listener, gateway, client, conf)
+				routesAttached, conditions, err = gatewayTCPRouteToTCPConf(ctx, ep, listener, gateway, client, conf)
 			case kindTLSRoute:
-				routesAttached, conditions = gatewayTLSRouteToTCPConf(ctx, ep, listener, gateway, client, conf)
+				routesAttached, conditions, err = gatewayTLSRouteToTCPConf(ctx, ep, listener, gateway, client, conf)
+			}
+			if err != nil {
+				return nil, err
 			}
 
 			numRoutesAttached += routesAttached
@@ -518,7 +530,7 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 		listenerStatuses[i].AttachedRoutes = numRoutesAttached
 	}
 
-	return listenerStatuses
+	return listenerStatuses, nil
 }
 
 func (p *Provider) makeGatewayStatus(listenerStatuses []gatev1alpha2.ListenerStatus) (gatev1alpha2.GatewayStatus, error) {
@@ -668,10 +680,10 @@ func getAllowedRouteKinds(listener gatev1alpha2.Listener, supportedKinds []gatev
 	return routeKinds, conditions
 }
 
-func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) (int32, []metav1.Condition) {
+func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) (int32, []metav1.Condition, error) {
 	if listener.AllowedRoutes == nil {
 		// Should not happen due to validation.
-		return 0, nil
+		return 0, nil, nil
 	}
 
 	namespaces, err := getRouteBindingSelectorNamespace(client, gateway.Namespace, listener.AllowedRoutes.Namespaces)
@@ -683,7 +695,7 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1a
 			LastTransitionTime: metav1.Now(),
 			Reason:             "InvalidRouteNamespacesSelector", // Should never happen as the selector is validated by kubernetes
 			Message:            fmt.Sprintf("Invalid route namespaces selector: %v", err),
-		}}
+		}}, nil
 	}
 
 	routes, err := client.GetHTTPRoutes(namespaces)
@@ -695,12 +707,12 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1a
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1alpha2.ListenerReasonRefNotPermitted),
 			Message:            fmt.Sprintf("Cannot fetch HTTPRoutes: %v", err),
-		}}
+		}}, nil
 	}
 
 	if len(routes) == 0 {
 		log.Ctx(ctx).Debug().Msg("No HTTPRoutes found")
-		return 0, nil
+		return 0, nil, nil
 	}
 
 	numRoutesAttached := int32(0)
@@ -831,16 +843,20 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1a
 
 		if atLeastOneRuleMatched {
 			numRoutesAttached++
+
+			if err := updateHTTPRouteStatus(client, gateway, listener, route); err != nil {
+				return 0, nil, fmt.Errorf("an error occurred while updating http route status: %w", err)
+			}
 		}
 	}
 
-	return numRoutesAttached, conditions
+	return numRoutesAttached, conditions, nil
 }
 
-func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) (int32, []metav1.Condition) {
+func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) (int32, []metav1.Condition, error) {
 	if listener.AllowedRoutes == nil {
 		// Should not happen due to validation.
-		return 0, nil
+		return 0, nil, nil
 	}
 
 	namespaces, err := getRouteBindingSelectorNamespace(client, gateway.Namespace, listener.AllowedRoutes.Namespaces)
@@ -852,7 +868,7 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 			LastTransitionTime: metav1.Now(),
 			Reason:             "InvalidRouteNamespacesSelector", // TODO should never happen as the selector is validated by Kubernetes
 			Message:            fmt.Sprintf("Invalid route namespaces selector: %v", err),
-		}}
+		}}, nil
 	}
 
 	routes, err := client.GetTCPRoutes(namespaces)
@@ -864,12 +880,12 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1alpha2.ListenerReasonRefNotPermitted),
 			Message:            fmt.Sprintf("Cannot fetch TCPRoutes: %v", err),
-		}}
+		}}, nil
 	}
 
 	if len(routes) == 0 {
 		log.Ctx(ctx).Debug().Msg("No TCPRoutes found")
-		return 0, nil
+		return 0, nil, nil
 	}
 
 	numRoutesAttached := int32(0)
@@ -968,13 +984,13 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 		numRoutesAttached++
 	}
 
-	return numRoutesAttached, conditions
+	return numRoutesAttached, conditions, nil
 }
 
-func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) (int32, []metav1.Condition) {
+func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) (int32, []metav1.Condition, error) {
 	if listener.AllowedRoutes == nil {
 		// Should not happen due to validation.
-		return 0, nil
+		return 0, nil, nil
 	}
 
 	namespaces, err := getRouteBindingSelectorNamespace(client, gateway.Namespace, listener.AllowedRoutes.Namespaces)
@@ -986,7 +1002,7 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 			LastTransitionTime: metav1.Now(),
 			Reason:             "InvalidRouteNamespacesSelector", // TODO should never happen as the selector is validated by Kubernetes
 			Message:            fmt.Sprintf("Invalid route namespaces selector: %v", err),
-		}}
+		}}, nil
 	}
 
 	routes, err := client.GetTLSRoutes(namespaces)
@@ -998,12 +1014,12 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1alpha2.ListenerReasonRefNotPermitted),
 			Message:            fmt.Sprintf("Cannot fetch TLSRoutes: %v", err),
-		}}
+		}}, nil
 	}
 
 	if len(routes) == 0 {
 		log.Ctx(ctx).Debug().Msg("No TLSRoutes found")
-		return 0, nil
+		return 0, nil, nil
 	}
 
 	numRoutesAttached := int32(0)
@@ -1127,7 +1143,7 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 		numRoutesAttached++
 	}
 
-	return numRoutesAttached, conditions
+	return numRoutesAttached, conditions, nil
 }
 
 // Because of Kubernetes validation we admit that the given Hostnames are valid.
@@ -1849,4 +1865,76 @@ func makeListenerKey(l gatev1alpha2.Listener) string {
 	}
 
 	return fmt.Sprintf("%s|%s|%d", l.Protocol, hostname, l.Port)
+}
+
+func updateHTTPRouteStatus(client Client, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener, route *gatev1alpha2.HTTPRoute) error {
+	routeStatus := route.Status.DeepCopy()
+
+	// Check if we need to update an existing parent reference
+	for i, parent := range routeStatus.Parents {
+		parentRef := parent.ParentRef
+
+		if parentRef.Group == nil && *parentRef.Group != gatev1alpha2.GroupName {
+			continue
+		}
+		if parentRef.Kind == nil || *parentRef.Kind != kindGateway {
+			continue
+		}
+		if parentRef.SectionName != nil && *parentRef.SectionName != listener.Name {
+			continue
+		}
+
+		namespace := route.Namespace
+		if parentRef.Namespace != nil {
+			namespace = string(*parentRef.Namespace)
+		}
+
+		if namespace == gateway.Namespace && string(parentRef.Name) == gateway.Name {
+			routeStatus.Parents[i].ControllerName = controllerName
+
+			condition := parent.Conditions[len(parent.Conditions)-1]
+			if condition.Type != string(gatev1alpha2.ConditionRouteAccepted) && condition.Status != metav1.ConditionTrue {
+				routeStatus.Parents[i].Conditions = append(routeStatus.Parents[i].Conditions, metav1.Condition{
+					Type:               string(gatev1alpha2.ConditionRouteAccepted),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: route.Generation,
+					LastTransitionTime: metav1.NewTime(timeNow()),
+					Reason:             string(gatev1alpha2.ConditionRouteAccepted),
+					Message:            "The route was attached to the Gateway",
+				})
+			}
+
+			return client.UpdateHTTPRouteStatus(route, *routeStatus)
+		}
+	}
+
+	// Parent reference was not found, so we can just append a new one
+	group := gatev1alpha2.Group(gatev1alpha2.GroupName)
+	kind := gatev1alpha2.Kind(kindGateway)
+	namespace := gatev1alpha2.Namespace(gateway.Namespace)
+
+	return client.UpdateHTTPRouteStatus(route, gatev1alpha2.HTTPRouteStatus{
+		RouteStatus: gatev1alpha2.RouteStatus{
+			Parents: append(route.Status.Parents, gatev1alpha2.RouteParentStatus{
+				ParentRef: gatev1alpha2.ParentRef{
+					Group:       &group,
+					Kind:        &kind,
+					Namespace:   &namespace,
+					Name:        gatev1alpha2.ObjectName(gateway.Name),
+					SectionName: &listener.Name,
+				},
+				ControllerName: controllerName,
+				Conditions: []metav1.Condition{
+					{
+						Type:               string(gatev1alpha2.ConditionRouteAccepted),
+						Status:             metav1.ConditionTrue,
+						ObservedGeneration: route.Generation,
+						LastTransitionTime: metav1.NewTime(timeNow()),
+						Reason:             string(gatev1alpha2.ConditionRouteAccepted),
+						Message:            "The route was attached to the Gateway",
+					},
+				},
+			}),
+		},
+	})
 }
