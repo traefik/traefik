@@ -1870,6 +1870,14 @@ func makeListenerKey(l gatev1alpha2.Listener) string {
 func updateHTTPRouteStatus(client Client, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener, route *gatev1alpha2.HTTPRoute) error {
 	routeStatus := route.Status.DeepCopy()
 
+	// TODO: only set sectionName and Port when there's more than one listener on the gateway
+
+	// TODO: add tests with pre-existing status resources
+
+	// TODO: check that sectionname and ports are updated on existing resources when more than one listener is configured
+
+	// TODO: each route needs its own namespace in tests - cannot assert which route got its status updated
+
 	// Check if we need to update an existing parent reference
 	for i, parent := range routeStatus.Parents {
 		parentRef := parent.ParentRef
