@@ -5219,6 +5219,10 @@ func TestHTTPRouteStatus(t *testing.T) {
 								},
 							},
 						},
+					},
+				},
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
 						{
 							ParentRef: gatev1alpha2.ParentRef{
 								Group:       groupPtr(gatev1alpha2.GroupName),

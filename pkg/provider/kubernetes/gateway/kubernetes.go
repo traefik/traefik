@@ -1921,28 +1921,40 @@ func updateHTTPRouteStatus(client Client, gateway *gatev1alpha2.Gateway, listene
 	kind := gatev1alpha2.Kind(kindGateway)
 	namespace := gatev1alpha2.Namespace(gateway.Namespace)
 
+	parentRef := gatev1alpha2.RouteParentStatus{
+		ParentRef: gatev1alpha2.ParentRef{
+			Group:       &group,
+			Kind:        &kind,
+			Namespace:   &namespace,
+			Name:        gatev1alpha2.ObjectName(gateway.Name),
+			SectionName: &listener.Name,
+		},
+		ControllerName: controllerName,
+		Conditions: []metav1.Condition{
+			{
+				Type:               string(gatev1alpha2.ConditionRouteAccepted),
+				Status:             metav1.ConditionTrue,
+				ObservedGeneration: route.Generation,
+				LastTransitionTime: metav1.NewTime(timeNow()),
+				Reason:             string(gatev1alpha2.ConditionRouteAccepted),
+				Message:            "The route was attached to the Gateway",
+			},
+		},
+	}
+
+	if len(route.Status.Parents) == 0 {
+		return client.UpdateHTTPRouteStatus(route, gatev1alpha2.HTTPRouteStatus{
+			RouteStatus: gatev1alpha2.RouteStatus{
+				Parents: []gatev1alpha2.RouteParentStatus{
+					parentRef,
+				},
+			},
+		})
+	}
+
 	return client.UpdateHTTPRouteStatus(route, gatev1alpha2.HTTPRouteStatus{
 		RouteStatus: gatev1alpha2.RouteStatus{
-			Parents: append(route.Status.Parents, gatev1alpha2.RouteParentStatus{
-				ParentRef: gatev1alpha2.ParentRef{
-					Group:       &group,
-					Kind:        &kind,
-					Namespace:   &namespace,
-					Name:        gatev1alpha2.ObjectName(gateway.Name),
-					SectionName: &listener.Name,
-				},
-				ControllerName: controllerName,
-				Conditions: []metav1.Condition{
-					{
-						Type:               string(gatev1alpha2.ConditionRouteAccepted),
-						Status:             metav1.ConditionTrue,
-						ObservedGeneration: route.Generation,
-						LastTransitionTime: metav1.NewTime(timeNow()),
-						Reason:             string(gatev1alpha2.ConditionRouteAccepted),
-						Message:            "The route was attached to the Gateway",
-					},
-				},
-			}),
+			Parents: append(route.Status.Parents, parentRef),
 		},
 	})
 }

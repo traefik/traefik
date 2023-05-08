@@ -176,9 +176,13 @@ func (c clientMock) GetHTTPRouteStatuses(namespaces []string) ([]gatev1alpha2.Ro
 	var statuses []gatev1alpha2.RouteStatus
 	for _, namespace := range namespaces {
 		for _, httpRoute := range c.httpRoutes {
-			if inNamespace(httpRoute.ObjectMeta, namespace) {
-				statuses = append(statuses, httpRoute.Status.RouteStatus)
+			if !inNamespace(httpRoute.ObjectMeta, namespace) {
+				continue
 			}
+			if len(httpRoute.Status.RouteStatus.Parents) == 0 {
+				continue
+			}
+			statuses = append(statuses, httpRoute.Status.RouteStatus)
 		}
 	}
 	return statuses, nil
