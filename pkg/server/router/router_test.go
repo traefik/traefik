@@ -15,7 +15,6 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
-	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
@@ -319,10 +318,9 @@ func TestRouterManager_Get(t *testing.T) {
 			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-			chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
 			tlsManager := tls.NewManager()
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -426,10 +424,9 @@ func TestAccessLog(t *testing.T) {
 			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-			chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
 			tlsManager := tls.NewManager()
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, &middleware.ObservabilityMgr{}, tlsManager)
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -788,11 +785,10 @@ func TestRuntimeConfiguration(t *testing.T) {
 			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-			chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
 			tlsManager := tls.NewManager()
 			tlsManager.UpdateConfigs(context.Background(), nil, test.tlsOptions, nil)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
 
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints, true)
@@ -866,10 +862,9 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 	serviceManager := service.NewManager(rtConf.Services, nil, nil, roundTripperManager)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-	chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
 	tlsManager := tls.NewManager()
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
 
 	_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
@@ -935,10 +930,9 @@ func BenchmarkRouterServe(b *testing.B) {
 
 	serviceManager := service.NewManager(rtConf.Services, nil, nil, staticRoundTripperGetter{res})
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-	chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
 	tlsManager := tls.NewManager()
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
 
 	handlers := routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
