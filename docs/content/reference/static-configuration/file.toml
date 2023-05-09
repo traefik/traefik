@@ -275,6 +275,9 @@
   debug = true
   disableDashboardAd = true
 
+[observability]
+  addInternals = true
+
 [metrics]
   [metrics.prometheus]
     buckets = [42.0, 42.0]

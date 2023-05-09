@@ -387,7 +387,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 	}
 
 	// Prevents from enabling observability for internal resources.
-	if provider.IsInternal(ctx) {
+	if strings.HasSuffix(provider.GetQualifiedName(ctx, middlewareName), "@internal") {
 		return middleware, nil
 	}
 

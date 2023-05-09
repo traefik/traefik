@@ -10,11 +10,12 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/server/middleware"
 )
 
 // ManagerFactory a factory of service manager.
 type ManagerFactory struct {
-	metricsRegistry metrics.Registry
+	observabilityMgr *middleware.ObservabilityMgr
 
 	roundTripperManager *RoundTripperManager
 
@@ -29,9 +30,9 @@ type ManagerFactory struct {
 }
 
 // NewManagerFactory creates a new ManagerFactory.
-func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *safe.Pool, metricsRegistry metrics.Registry, roundTripperManager *RoundTripperManager, acmeHTTPHandler http.Handler) *ManagerFactory {
+func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *safe.Pool, observabilityMgr *middleware.ObservabilityMgr, roundTripperManager *RoundTripperManager, acmeHTTPHandler http.Handler) *ManagerFactory {
 	factory := &ManagerFactory{
-		metricsRegistry:     metricsRegistry,
+		observabilityMgr:    observabilityMgr,
 		routinesPool:        routinesPool,
 		roundTripperManager: roundTripperManager,
 		acmeHTTPHandler:     acmeHTTPHandler,
@@ -72,7 +73,7 @@ func NewManagerFactory(staticConfiguration static.Configuration, routinesPool *s
 
 // Build creates a service manager.
 func (f *ManagerFactory) Build(configuration *runtime.Configuration) *InternalHandlers {
-	svcManager := NewManager(configuration.Services, f.metricsRegistry, f.routinesPool, f.roundTripperManager)
+	svcManager := NewManager(configuration.Services, f.observabilityMgr, f.routinesPool, f.roundTripperManager)
 
 	var apiHandler http.Handler
 	if f.api != nil {
