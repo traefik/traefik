@@ -408,6 +408,9 @@ Prefix to use for metrics collection. (Default: ```traefik```)
 `--metrics.statsd.pushinterval`:  
 StatsD push interval. (Default: ```10```)
 
+`--observability.addinternals`:  
+Enables observability (Access Logs, Metrics and Tracing) for internal services (ping, dashboard, etc...). (Default: ```false```)
+
 `--ping`:  
 Enable ping. (Default: ```false```)
 

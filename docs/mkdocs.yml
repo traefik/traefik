@@ -149,6 +149,7 @@ nav:
       - 'API': 'operations/api.md'
       - 'Ping': 'operations/ping.md'
   - 'Observability':
+      - 'Overview': 'observability/overview.md'
       - 'Logs': 'observability/logs.md'
       - 'Access Logs': 'observability/access-logs.md'
       - 'Metrics':

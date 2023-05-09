@@ -3,9 +3,11 @@ package middleware
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
@@ -15,25 +17,31 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// ChainBuilder Creates a middleware chain by entry point. It is used for middlewares that are created almost systematically and that need to be created before all others.
-type ChainBuilder struct {
-	metricsRegistry        metrics.Registry
+// ObservabilityMgr is a manager for observability (AccessLogs, Metrics and Tracing) enablement.
+type ObservabilityMgr struct {
+	config                 static.Observability
 	accessLoggerMiddleware *accesslog.Handler
+	metricsRegistry        metrics.Registry
 	tracer                 trace.Tracer
 }
 
-// NewChainBuilder Creates a new ChainBuilder.
-func NewChainBuilder(metricsRegistry metrics.Registry, accessLoggerMiddleware *accesslog.Handler, tracer trace.Tracer) *ChainBuilder {
-	return &ChainBuilder{
+// NewObservabilityMgr creates a new ObservabilityMgr.
+func NewObservabilityMgr(config static.Observability, metricsRegistry metrics.Registry, accessLoggerMiddleware *accesslog.Handler, tracer trace.Tracer) *ObservabilityMgr {
+	return &ObservabilityMgr{
+		config:                 config,
 		metricsRegistry:        metricsRegistry,
 		accessLoggerMiddleware: accessLoggerMiddleware,
 		tracer:                 tracer,
 	}
 }
 
-// Build a middleware chain by entry point.
-func (c *ChainBuilder) Build(ctx context.Context, entryPointName string) alice.Chain {
+// BuildEPChain an observability middleware chain by entry point.
+func (c *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName string) alice.Chain {
 	chain := alice.New()
+
+	if c == nil {
+		return chain
+	}
 
 	if c.accessLoggerMiddleware != nil || c.metricsRegistry != nil && (c.metricsRegistry.IsEpEnabled() || c.metricsRegistry.IsRouterEnabled() || c.metricsRegistry.IsSvcEnabled()) {
 		chain = chain.Append(capture.Wrap)
@@ -42,7 +50,7 @@ func (c *ChainBuilder) Build(ctx context.Context, entryPointName string) alice.C
 	if c.accessLoggerMiddleware != nil {
 		chain = chain.Append(accesslog.WrapHandler(c.accessLoggerMiddleware))
 		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-			return accesslog.NewFieldHandler(next, logs.EntryPointName, entryPointName, accesslog.AddOriginFields), nil
+			return accesslog.NewFieldHandler(next, logs.EntryPointName, entryPointName, accesslog.InitServiceFields), nil
 		})
 	}
 
@@ -58,8 +66,30 @@ func (c *ChainBuilder) Build(ctx context.Context, entryPointName string) alice.C
 	return chain
 }
 
-// Close accessLogger and tracer.
-func (c *ChainBuilder) Close() {
+// ShouldObserve returns whether the observability should be enabled for the given resource.
+func (c *ObservabilityMgr) ShouldObserve(resourceName string) bool {
+	if c == nil {
+		return false
+	}
+
+	return c.config.AddInternals || !strings.HasSuffix(resourceName, "@internal")
+}
+
+// MetricsRegistry is an accessor to the metrics registry.
+func (c *ObservabilityMgr) MetricsRegistry() metrics.Registry {
+	if c == nil {
+		return nil
+	}
+
+	return c.metricsRegistry
+}
+
+// Close closes the accessLogger and tracer.
+func (c *ObservabilityMgr) Close() {
+	if c == nil {
+		return
+	}
+
 	if c.accessLoggerMiddleware != nil {
 		if err := c.accessLoggerMiddleware.Close(); err != nil {
 			log.Error().Err(err).Msg("Could not close the access log file")

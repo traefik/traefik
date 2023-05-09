@@ -5,13 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/logs"
-	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/denyrouterrecursion"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
@@ -36,21 +34,19 @@ type serviceManager interface {
 type Manager struct {
 	routerHandlers     map[string]http.Handler
 	serviceManager     serviceManager
-	metricsRegistry    metrics.Registry
+	observabilityMgr   *middleware.ObservabilityMgr
 	middlewaresBuilder middlewareBuilder
-	chainBuilder       *middleware.ChainBuilder
 	conf               *runtime.Configuration
 	tlsManager         *tls.Manager
 }
 
 // NewManager creates a new Manager.
-func NewManager(conf *runtime.Configuration, serviceManager serviceManager, middlewaresBuilder middlewareBuilder, chainBuilder *middleware.ChainBuilder, metricsRegistry metrics.Registry, tlsManager *tls.Manager) *Manager {
+func NewManager(conf *runtime.Configuration, serviceManager serviceManager, middlewaresBuilder middlewareBuilder, observabilityMgr *middleware.ObservabilityMgr, tlsManager *tls.Manager) *Manager {
 	return &Manager{
 		routerHandlers:     make(map[string]http.Handler),
 		serviceManager:     serviceManager,
-		metricsRegistry:    metricsRegistry,
+		observabilityMgr:   observabilityMgr,
 		middlewaresBuilder: middlewaresBuilder,
-		chainBuilder:       chainBuilder,
 		conf:               conf,
 		tlsManager:         tlsManager,
 	}
@@ -96,7 +92,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 }
 
 func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.RouterInfo) (http.Handler, error) {
-	observabilityChain := m.chainBuilder.Build(ctx, entryPointName)
+	observabilityChain := m.observabilityMgr.BuildEPChain(ctx, entryPointName)
 
 	muxer, err := httpmuxer.NewMuxer()
 	if err != nil {
@@ -126,7 +122,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 		}
 
 		// Prevents from enabling observability for internal resources.
-		if !strings.HasSuffix(provider.GetQualifiedName(ctx, routerConfig.Service), "@internal") {
+		if m.observabilityMgr.ShouldObserve(provider.GetQualifiedName(ctx, routerConfig.Service)) {
 			handler, err = observabilityChain.Then(handler)
 			if err != nil {
 				routerConfig.AddError(err, true)
@@ -172,7 +168,7 @@ func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, rou
 	}
 
 	// Prevents from enabling observability for internal resources.
-	if strings.HasSuffix(provider.GetQualifiedName(ctx, routerConfig.Service), "@internal") {
+	if !m.observabilityMgr.ShouldObserve(provider.GetQualifiedName(ctx, routerConfig.Service)) {
 		m.routerHandlers[routerName] = handler
 		return m.routerHandlers[routerName], nil
 	}
@@ -211,14 +207,14 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	chain := alice.New()
 
 	// Prevents from enabling observability for internal resources.
-	if strings.HasSuffix(provider.GetQualifiedName(ctx, router.Service), "@internal") {
+	if !m.observabilityMgr.ShouldObserve(provider.GetQualifiedName(ctx, router.Service)) {
 		return chain.Extend(*mHandler).Then(sHandler)
 	}
 
 	chain = chain.Append(tracing.WrapRouterHandler(ctx, routerName, router.Rule, provider.GetQualifiedName(ctx, router.Service)))
 
-	if m.metricsRegistry != nil && m.metricsRegistry.IsRouterEnabled() {
-		metricsHandler := metricsMiddle.WrapRouterHandler(ctx, m.metricsRegistry, routerName, provider.GetQualifiedName(ctx, router.Service))
+	if m.observabilityMgr.MetricsRegistry() != nil && m.observabilityMgr.MetricsRegistry().IsRouterEnabled() {
+		metricsHandler := metricsMiddle.WrapRouterHandler(ctx, m.observabilityMgr.MetricsRegistry(), routerName, provider.GetQualifiedName(ctx, router.Service))
 		chain = chain.Append(tracing.WrapMiddleware(ctx, metricsHandler))
 	}
 
