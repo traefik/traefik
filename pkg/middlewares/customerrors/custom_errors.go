@@ -199,8 +199,22 @@ func (cc *codeCatcher) Write(buf []byte) (int, error) {
 	return cc.responseWriter.Write(buf)
 }
 
+// WriteHeader is, in the specific case of 1xx status codes, a direct call to the wrapped ResponseWriter, without marking headers as sent,
+// allowing so further calls.
 func (cc *codeCatcher) WriteHeader(code int) {
 	if cc.headersSent || cc.caughtFilteredCode {
+		return
+	}
+
+	// Handling informational headers.
+	if code >= 100 && code <= 199 {
+		// Multiple informational status codes can be used,
+		// so here the copy is not appending the values to not repeat them.
+		for k, v := range cc.Header() {
+			cc.responseWriter.Header()[k] = v
+		}
+
+		cc.responseWriter.WriteHeader(code)
 		return
 	}
 
@@ -214,7 +228,11 @@ func (cc *codeCatcher) WriteHeader(code int) {
 		}
 	}
 
-	utils.CopyHeaders(cc.responseWriter.Header(), cc.Header())
+	// The copy is not appending the values,
+	// to not repeat them in case any informational status code has been written.
+	for k, v := range cc.Header() {
+		cc.responseWriter.Header()[k] = v
+	}
 	cc.responseWriter.WriteHeader(cc.code)
 	cc.headersSent = true
 }
@@ -305,12 +323,28 @@ func (r *codeModifierWithoutCloseNotify) Write(buf []byte) (int, error) {
 
 // WriteHeader sends the headers, with the enforced code (the code in argument
 // is always ignored), if it hasn't already been done.
-func (r *codeModifierWithoutCloseNotify) WriteHeader(_ int) {
+// WriteHeader is, in the specific case of 1xx status codes, a direct call to the wrapped ResponseWriter, without marking headers as sent,
+// allowing so further calls.
+func (r *codeModifierWithoutCloseNotify) WriteHeader(code int) {
 	if r.headerSent {
 		return
 	}
 
-	utils.CopyHeaders(r.responseWriter.Header(), r.Header())
+	// Handling informational headers.
+	if code >= 100 && code <= 199 {
+		// Multiple informational status codes can be used,
+		// so here the copy is not appending the values to not repeat them.
+		for k, v := range r.headerMap {
+			r.responseWriter.Header()[k] = v
+		}
+
+		r.responseWriter.WriteHeader(code)
+		return
+	}
+
+	for k, v := range r.headerMap {
+		r.responseWriter.Header()[k] = v
+	}
 	r.responseWriter.WriteHeader(r.code)
 	r.headerSent = true
 }
