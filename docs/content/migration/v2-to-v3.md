@@ -415,3 +415,8 @@ Here are two possible transition strategies:
     For legacy stacks that cannot immediately upgrade to the latest vendor agents supporting OTLP ingestion,
     using OpenTelemetry (OTel) collectors with appropriate exporters configuration is a viable solution.
     This allows continued compatibility with the existing infrastructure.
+
+## Internal Resources Observability (AccessLogs, Metrics and Tracing)
+
+In v3, observability for internal routers or services (e.g.: `ping@internal`) is disabled by default.
+To enable it one should use the new `addInternals` option, please take a look at the [observability documentation](../observability/overview.md) for more information.
