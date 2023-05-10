@@ -235,6 +235,7 @@ func TestHandler_Overview(t *testing.T) {
 				API:    &static.API{},
 				Providers: &static.Providers{
 					Docker:            &docker.Provider{},
+					Swarm:             &docker.SwarmProvider{},
 					File:              &file.Provider{},
 					KubernetesIngress: &ingress.Provider{},
 					KubernetesCRD:     &crd.Provider{},

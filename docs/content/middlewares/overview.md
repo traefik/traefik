@@ -23,7 +23,7 @@ Middlewares that use the same protocol can be combined into chains to fit every 
 
 ## Configuration Example
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # As a Docker Label
 whoami:
   #  A container that exposes an API to show its IP address
