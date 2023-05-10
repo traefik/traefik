@@ -17,7 +17,7 @@ It makes reusing the same groups easier.
 
 Below is an example of a Chain containing `AllowList`, `BasicAuth`, and `RedirectScheme`.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.routers.router1.service=service1"
   - "traefik.http.routers.router1.middlewares=secured"

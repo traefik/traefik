@@ -1,67 +1,63 @@
 ---
-title: "Traefik Docker Routing Documentation"
+title: "Traefik Docker Swarm Routing Documentation"
 description: "This guide will teach you how to attach labels to your containers, to route traffic and load balance with Traefik and Docker."
 ---
 
-# Traefik & Docker
+# Traefik & Docker Swarm
 
 A Story of Labels & Containers
 {: .subtitle }
 
-![Docker](../../assets/img/providers/docker.png)
+![Swarm](../../assets/img/providers/docker.png)
 
 Attach labels to your containers and let Traefik do the rest!
 
 ## Configuration Examples
 
-??? example "Configuring Docker & Deploying / Exposing Services"
+??? example "Configuring Docker Swarm & Deploying / Exposing Services"
 
-    Enabling the docker provider
+    Enabling the docker provider (Swarm Mode)
 
     ```yaml tab="File (YAML)"
     providers:
-      docker: {}
+      swarm:
+        # swarm classic (1.12-)
+        # endpoint: "tcp://127.0.0.1:2375"
+        # docker swarm mode (1.12+)
+        endpoint: "tcp://127.0.0.1:2377"
     ```
 
     ```toml tab="File (TOML)"
-    [providers.docker]
+    [providers.swarm]
+      # swarm classic (1.12-)
+      # endpoint = "tcp://127.0.0.1:2375"
+      # docker swarm mode (1.12+)
+      endpoint = "tcp://127.0.0.1:2377"
     ```
 
     ```bash tab="CLI"
-    --providers.docker=true
+    # swarm classic (1.12-)
+    # --providers.swarm.endpoint=tcp://127.0.0.1:2375
+    # docker swarm mode (1.12+)
+    --providers.swarm.endpoint=tcp://127.0.0.1:2377
     ```
 
-    Attaching labels to containers (in your docker compose file)
+    Attach labels to services (not to containers) while in Swarm mode (in your docker compose file)
 
     ```yaml
     version: "3"
     services:
       my-container:
-        # ...
-        labels:
-          - traefik.http.routers.my-container.rule=Host(`example.com`)
+        deploy:
+          labels:
+            - traefik.http.routers.my-container.rule=Host(`example.com`)
+            - traefik.http.services.my-container-service.loadbalancer.server.port=8080
     ```
 
-??? example "Specify a Custom Port for the Container"
-
-    Forward requests for `http://example.com` to `http://<private IP of container>:12345`:
-
-    ```yaml
-    version: "3"
-    services:
-      my-container:
-        # ...
-        labels:
-          - traefik.http.routers.my-container.rule=Host(`example.com`)
-          # Tell Traefik to use the port 12345 to connect to `my-container`
-          - traefik.http.services.my-service.loadbalancer.server.port=12345
-    ```
-
-    !!! important "Traefik Connecting to the Wrong Port: `HTTP/502 Gateway Error`"
-        By default, Traefik uses the first exposed port of a container.
-
-        Setting the label `traefik.http.services.xxx.loadbalancer.server.port`
-        overrides that behavior.
+    !!! important "Labels in Docker Swarm Mode"
+        While in Swarm Mode, Traefik uses labels found on services, not on individual containers.
+        Therefore, if you use a compose file with Swarm Mode, labels should be defined in the `deploy` part of your service.
+        This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/compose-file-v3/#labels-1)).
 
 ??? example "Specifying more than one router and service per container"
 
@@ -74,13 +70,14 @@ Attach labels to your containers and let Traefik do the rest!
     services:
       my-container:
         # ...
-        labels:
-          - traefik.http.routers.www-router.rule=Host(`example-a.com`)
-          - traefik.http.routers.www-router.service=www-service
-          - traefik.http.services.www-service.loadbalancer.server.port=8000
-          - traefik.http.routers.admin-router.rule=Host(`example-b.com`)
-          - traefik.http.routers.admin-router.service=admin-service
-          - traefik.http.services.admin-service.loadbalancer.server.port=9000
+        deploy:
+          labels:
+            - traefik.http.routers.www-router.rule=Host(`example-a.com`)
+            - traefik.http.routers.www-router.service=www-service
+            - traefik.http.services.www-service.loadbalancer.server.port=8000
+            - traefik.http.routers.admin-router.rule=Host(`example-b.com`)
+            - traefik.http.routers.admin-router.service=admin-service
+            - traefik.http.services.admin-service.loadbalancer.server.port=9000
     ```
 
 ## Routing Configuration
@@ -226,6 +223,9 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
 
     Registers a port.
     Useful when the container exposes multiples ports.
+
+    Mandatory for Docker Swarm (see the section ["Port Detection with Docker Swarm"](../../providers/docker.md#port-detection)).
+    {: #port }
 
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.server.port=8080"
@@ -399,14 +399,15 @@ More information about available middlewares in the dedicated [middlewares secti
 ??? example "Declaring and Referencing a Middleware"
 
     ```yaml
-       services:
-         my-container:
-           # ...
-           labels:
-             # Declaring a middleware
-             - traefik.http.middlewares.my-redirect.redirectscheme.scheme=https
-             # Referencing a middleware
-             - traefik.http.routers.my-container.middlewares=my-redirect
+    services:
+      my-container:
+        # ...
+        deploy:
+        labels:
+        # Declaring a middleware
+        - traefik.http.middlewares.my-redirect.redirectscheme.scheme=https
+            # Referencing a middleware
+            - traefik.http.routers.my-container.middlewares=my-redirect
     ```
 
 !!! warning "Conflicts in Declaration"
@@ -420,13 +421,14 @@ You can declare TCP Routers and/or Services using labels.
 ??? example "Declaring TCP Routers and Services"
 
     ```yaml
-       services:
-         my-container:
-           # ...
-           labels:
-             - "traefik.tcp.routers.my-router.rule=HostSNI(`example.com`)"
-             - "traefik.tcp.routers.my-router.tls=true"
-             - "traefik.tcp.services.my-service.loadbalancer.server.port=4123"
+    services:
+      my-container:
+        # ...
+        deploy:
+          labels:
+            - "traefik.tcp.routers.my-router.rule=HostSNI(`example.com`)"
+            - "traefik.tcp.routers.my-router.tls=true"
+            - "traefik.tcp.services.my-service.loadbalancer.server.port=4123"
     ```
 
 !!! warning "TCP and HTTP"
@@ -558,12 +560,13 @@ You can declare UDP Routers and/or Services using labels.
 ??? example "Declaring UDP Routers and Services"
 
     ```yaml
-       services:
-         my-container:
-           # ...
-           labels:
-             - "traefik.udp.routers.my-router.entrypoints=udp"
-             - "traefik.udp.services.my-service.loadbalancer.server.port=4123"
+    services:
+      my-container:
+        # ...
+        deploy:
+          labels:
+            - "traefik.udp.routers.my-router.entrypoints=udp"
+            - "traefik.udp.services.my-service.loadbalancer.server.port=4123"
     ```
 
 !!! warning "UDP and HTTP"
@@ -624,3 +627,14 @@ otherwise it will randomly pick one (depending on how docker is returning them).
 
 !!! warning
     When deploying a stack from a compose file `stack`, the networks defined are prefixed with `stack`.
+
+#### `traefik.docker.lbswarm`
+
+```yaml
+- "traefik.docker.lbswarm=true"
+```
+
+Enables Swarm's inbuilt load balancer (only relevant in Swarm Mode).
+
+If you enable this option, Traefik will use the virtual IP provided by docker swarm instead of the containers IPs.
+Which means that Traefik will not perform any kind of load balancing and will delegate this task to swarm.
