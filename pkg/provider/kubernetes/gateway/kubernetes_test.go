@@ -5775,6 +5775,548 @@ func TestTCPRouteStatus(t *testing.T) {
 	}
 }
 
+func TestTLSRouteStatus(t *testing.T) {
+	now := freezeTime()
+	defer unfreezeTime()
+
+	testCases := []struct {
+		desc        string
+		paths       []string
+		expected    []gatev1alpha2.RouteStatus
+		entryPoints map[string]Entrypoint
+	}{
+		{
+			desc:     "Empty",
+			expected: nil,
+		},
+		{
+			desc:  "Empty because no matching entry point",
+			paths: []string{"services.yml", "tlsroute/simple_TLS_to_TCPRoute.yml"},
+			entryPoints: map[string]Entrypoint{"TCP": {
+				Address: ":8000",
+			}},
+			expected: nil,
+		},
+		{
+			desc:  "Empty because no tls route defined",
+			paths: []string{"services.yml", "tlsroute/without_tlsroute.yml"},
+			entryPoints: map[string]Entrypoint{"TCP": {
+				Address: ":8080",
+			}},
+			expected: nil,
+		},
+		{
+			desc: "Empty caused by missing GatewayClass",
+			entryPoints: map[string]Entrypoint{"TCP": {
+				Address: ":8080",
+			}},
+			paths:    []string{"services.yml", "tlsroute/without_gatewayclass.yml"},
+			expected: nil,
+		},
+		{
+			desc: "Empty caused by unknown GatewayClass controller desc",
+			entryPoints: map[string]Entrypoint{"TCP": {
+				Address: ":8080",
+			}},
+			paths:    []string{"services.yml", "tlsroute/gatewayclass_with_unknown_controller.yml"},
+			expected: nil,
+		},
+		{
+			desc: "Empty caused by multi ports service with wrong TargetPort",
+			entryPoints: map[string]Entrypoint{"TCP": {
+				Address: ":8080",
+			}},
+			paths:    []string{"services.yml", "tlsroute/with_wrong_service_port.yml"},
+			expected: nil,
+		},
+		{
+			desc: "Empty caused by mixed routes with wrong parent ref",
+			entryPoints: map[string]Entrypoint{
+				"tcp": {
+					Address: ":9000",
+				},
+				"tcp-tls": {
+					Address: ":9443",
+				},
+				"http": {
+					Address: ":80",
+				},
+			},
+			paths:    []string{"services.yml", "mixed/with_wrong_routes_selector.yml"},
+			expected: nil,
+		},
+		{
+			desc:  "Empty caused by simple TLSRoute with invalid SNI matching",
+			paths: []string{"services.yml", "tlsroute/with_invalid_SNI_matching.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9001"},
+			},
+			expected: nil,
+		},
+		{
+			desc:  "Simple TLS listener to TCPRoute in Terminate mode",
+			paths: []string{"services.yml", "tlsroute/simple_TLS_to_TCPRoute.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tcp": {Address: ":9000"},
+			},
+			expected: []gatev1alpha2.RouteStatus{
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-tls-gateway",
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "True",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "Accepted",
+									Message:            "The route was attached to the Gateway",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "Simple TLS listener to TCPRoute in Passthrough mode",
+			paths: []string{"services.yml", "tlsroute/simple_TLS_to_TCPRoute_passthrough.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tcp": {Address: ":9000"},
+			},
+			expected: []gatev1alpha2.RouteStatus{
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "True",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "Accepted",
+									Message:            "The route was attached to the Gateway",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "Simple TLS listener to TLSRoute",
+			paths: []string{"services.yml", "tlsroute/simple_TLS_to_TLSRoute.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tcp": {Address: ":9000"},
+			},
+			expected: []gatev1alpha2.RouteStatus{
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-tls-gateway",
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "True",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "Accepted",
+									Message:            "The route was attached to the Gateway",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "Multiple TLSRoute",
+			paths: []string{"services.yml", "tlsroute/with_multiple_routes_kind.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9000"},
+				"tcp": {Address: ":10000"},
+			},
+			expected: []gatev1alpha2.RouteStatus{
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-tls-gateway",
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "True",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "Accepted",
+									Message:            "The route was attached to the Gateway",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "Simple TLSRoute, with backendRef",
+			paths: []string{"services.yml", "tlsroute/simple_cross_provider.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9000"},
+			},
+			expected: []gatev1alpha2.RouteStatus{
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "True",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "Accepted",
+									Message:            "The route was attached to the Gateway",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "Simple TLSRoute, with Passthrough and TLS configuration should raise a warn",
+			paths: []string{"services.yml", "tlsroute/with_passthrough_tls.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9001"},
+			},
+			expected: []gatev1alpha2.RouteStatus{
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "True",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "Accepted",
+									Message:            "The route was attached to the Gateway",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "Simple TLSRoute, with Passthrough",
+			paths: []string{"services.yml", "tlsroute/with_passthrough.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9001"},
+			},
+			expected: []gatev1alpha2.RouteStatus{
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "True",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "Accepted",
+									Message:            "The route was attached to the Gateway",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "Simple TLSRoute, with single SNI matching",
+			paths: []string{"services.yml", "tlsroute/with_SNI_matching.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9001"},
+			},
+			expected: []gatev1alpha2.RouteStatus{
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "True",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "Accepted",
+									Message:            "The route was attached to the Gateway",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "Simple TLSRoute, with multiple SNI matching",
+			paths: []string{"services.yml", "tlsroute/with_multiple_SNI_matching.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9001"},
+			},
+			expected: []gatev1alpha2.RouteStatus{
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "True",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "Accepted",
+									Message:            "The route was attached to the Gateway",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "TLSRoute with Same namespace selector",
+			paths: []string{"services.yml", "tlsroute/with_namespace_same.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9001"},
+			},
+			expected: []gatev1alpha2.RouteStatus{
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "True",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "Accepted",
+									Message:            "The route was attached to the Gateway",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "TLSRoute with All namespace selector",
+			paths: []string{"services.yml", "tlsroute/with_namespace_all.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9001"},
+			},
+			expected: []gatev1alpha2.RouteStatus{
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "True",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "Accepted",
+									Message:            "The route was attached to the Gateway",
+								},
+							},
+						},
+					},
+				},
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "True",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "Accepted",
+									Message:            "The route was attached to the Gateway",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "TLSRoute with namespace selector",
+			paths: []string{"services.yml", "tlsroute/with_namespace_selector.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tls": {Address: ":9001"},
+			},
+			expected: []gatev1alpha2.RouteStatus{
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "True",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "Accepted",
+									Message:            "The route was attached to the Gateway",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "TLSRoute with multiple rules",
+			paths: []string{"services.yml", "tlsroute/with_multiple_rules.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tcp-1": {Address: ":9000"},
+			},
+			expected: []gatev1alpha2.RouteStatus{
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "True",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "Accepted",
+									Message:            "The route was attached to the Gateway",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			if test.expected == nil {
+				return
+			}
+
+			client := newClientMock(test.paths...)
+
+			p := Provider{EntryPoints: test.entryPoints}
+			p.loadConfigurationFromGateway(context.Background(), client)
+
+			statuses, err := client.GetTLSRouteStatuses([]string{""})
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expected, statuses)
+		})
+	}
+}
+
 func Test_hostRule(t *testing.T) {
 	testCases := []struct {
 		desc         string

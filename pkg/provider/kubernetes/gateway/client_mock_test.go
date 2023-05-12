@@ -119,6 +119,19 @@ func (c clientMock) UpdateTCPRouteStatus(tcpRoute *gatev1alpha2.TCPRoute, tcpRou
 	return nil
 }
 
+func (c clientMock) UpdateTLSRouteStatus(tlsRoute *gatev1alpha2.TLSRoute, tlsRouteStatus gatev1alpha2.TLSRouteStatus) error {
+	for _, r := range c.tlsRoutes {
+		if r.Name == tlsRoute.Name {
+			if !routeStatusEquals(r.Status.RouteStatus, tlsRouteStatus.RouteStatus) {
+				r.Status = tlsRouteStatus
+				return nil
+			}
+			return fmt.Errorf("cannot update tls route %v", tlsRoute.Name)
+		}
+	}
+	return nil
+}
+
 func (c clientMock) UpdateGatewayClassStatus(gatewayClass *gatev1alpha2.GatewayClass, condition metav1.Condition) error {
 	for _, gc := range c.gatewayClasses {
 		if gc.Name == gatewayClass.Name {
@@ -201,6 +214,18 @@ func (c clientMock) GetHTTPRouteStatuses(namespaces []string) ([]gatev1alpha2.Ro
 	return statuses, nil
 }
 
+func (c clientMock) GetTCPRoutes(namespaces []string) ([]*gatev1alpha2.TCPRoute, error) {
+	var tcpRoutes []*gatev1alpha2.TCPRoute
+	for _, namespace := range namespaces {
+		for _, tcpRoute := range c.tcpRoutes {
+			if inNamespace(tcpRoute.ObjectMeta, namespace) {
+				tcpRoutes = append(tcpRoutes, tcpRoute)
+			}
+		}
+	}
+	return tcpRoutes, nil
+}
+
 func (c clientMock) GetTCPRouteStatuses(namespaces []string) ([]gatev1alpha2.RouteStatus, error) {
 	var statuses []gatev1alpha2.RouteStatus
 	for _, namespace := range namespaces {
@@ -217,18 +242,6 @@ func (c clientMock) GetTCPRouteStatuses(namespaces []string) ([]gatev1alpha2.Rou
 	return statuses, nil
 }
 
-func (c clientMock) GetTCPRoutes(namespaces []string) ([]*gatev1alpha2.TCPRoute, error) {
-	var tcpRoutes []*gatev1alpha2.TCPRoute
-	for _, namespace := range namespaces {
-		for _, tcpRoute := range c.tcpRoutes {
-			if inNamespace(tcpRoute.ObjectMeta, namespace) {
-				tcpRoutes = append(tcpRoutes, tcpRoute)
-			}
-		}
-	}
-	return tcpRoutes, nil
-}
-
 func (c clientMock) GetTLSRoutes(namespaces []string) ([]*gatev1alpha2.TLSRoute, error) {
 	var tlsRoutes []*gatev1alpha2.TLSRoute
 	for _, namespace := range namespaces {
@@ -239,6 +252,22 @@ func (c clientMock) GetTLSRoutes(namespaces []string) ([]*gatev1alpha2.TLSRoute,
 		}
 	}
 	return tlsRoutes, nil
+}
+
+func (c clientMock) GetTLSRouteStatuses(namespaces []string) ([]gatev1alpha2.RouteStatus, error) {
+	var statuses []gatev1alpha2.RouteStatus
+	for _, namespace := range namespaces {
+		for _, route := range c.tlsRoutes {
+			if !inNamespace(route.ObjectMeta, namespace) {
+				continue
+			}
+			if len(route.Status.RouteStatus.Parents) == 0 {
+				continue
+			}
+			statuses = append(statuses, route.Status.RouteStatus)
+		}
+	}
+	return statuses, nil
 }
 
 func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, error) {
