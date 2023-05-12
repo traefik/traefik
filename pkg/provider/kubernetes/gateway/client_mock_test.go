@@ -106,6 +106,19 @@ func (c clientMock) UpdateHTTPRouteStatus(httpRoute *gatev1alpha2.HTTPRoute, htt
 	return nil
 }
 
+func (c clientMock) UpdateTCPRouteStatus(tcpRoute *gatev1alpha2.TCPRoute, tcpRouteStatus gatev1alpha2.TCPRouteStatus) error {
+	for _, r := range c.tcpRoutes {
+		if r.Name == tcpRoute.Name {
+			if !routeStatusEquals(r.Status.RouteStatus, tcpRouteStatus.RouteStatus) {
+				r.Status = tcpRouteStatus
+				return nil
+			}
+			return fmt.Errorf("cannot update tcp route %v", tcpRoute.Name)
+		}
+	}
+	return nil
+}
+
 func (c clientMock) UpdateGatewayClassStatus(gatewayClass *gatev1alpha2.GatewayClass, condition metav1.Condition) error {
 	for _, gc := range c.gatewayClasses {
 		if gc.Name == gatewayClass.Name {
@@ -183,6 +196,22 @@ func (c clientMock) GetHTTPRouteStatuses(namespaces []string) ([]gatev1alpha2.Ro
 				continue
 			}
 			statuses = append(statuses, httpRoute.Status.RouteStatus)
+		}
+	}
+	return statuses, nil
+}
+
+func (c clientMock) GetTCPRouteStatuses(namespaces []string) ([]gatev1alpha2.RouteStatus, error) {
+	var statuses []gatev1alpha2.RouteStatus
+	for _, namespace := range namespaces {
+		for _, route := range c.tcpRoutes {
+			if !inNamespace(route.ObjectMeta, namespace) {
+				continue
+			}
+			if len(route.Status.RouteStatus.Parents) == 0 {
+				continue
+			}
+			statuses = append(statuses, route.Status.RouteStatus)
 		}
 	}
 	return statuses, nil
