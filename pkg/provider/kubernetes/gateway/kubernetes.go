@@ -1870,19 +1870,19 @@ func makeListenerKey(l gatev1alpha2.Listener) string {
 func updateHTTPRouteStatus(client Client, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener, route *gatev1alpha2.HTTPRoute) error {
 	routeStatus := route.Status.DeepCopy()
 
-	// TODO: only set sectionName and Port when there's more than one listener on the gateway
-
-	// TODO: add tests with pre-existing status resources
-
-	// TODO: check that sectionname and ports are updated on existing resources when more than one listener is configured
-
 	// TODO: each route needs its own namespace in tests - cannot assert which route got its status updated
 
-	// Check if we need to update an existing parent reference
+	var routeParent *gatev1alpha2.RouteParentStatus
+
+	// Check if we need to update an existing route parent
 	for i, parent := range routeStatus.Parents {
+		if parent.ControllerName != controllerName {
+			continue
+		}
+
 		parentRef := parent.ParentRef
 
-		if parentRef.Group == nil && *parentRef.Group != gatev1alpha2.GroupName {
+		if parentRef.Group == nil || *parentRef.Group != gatev1alpha2.GroupName {
 			continue
 		}
 		if parentRef.Kind == nil || *parentRef.Kind != kindGateway {
@@ -1898,63 +1898,49 @@ func updateHTTPRouteStatus(client Client, gateway *gatev1alpha2.Gateway, listene
 		}
 
 		if namespace == gateway.Namespace && string(parentRef.Name) == gateway.Name {
-			routeStatus.Parents[i].ControllerName = controllerName
-
-			condition := parent.Conditions[len(parent.Conditions)-1]
-			if condition.Type != string(gatev1alpha2.ConditionRouteAccepted) && condition.Status != metav1.ConditionTrue {
-				routeStatus.Parents[i].Conditions = append(routeStatus.Parents[i].Conditions, metav1.Condition{
-					Type:               string(gatev1alpha2.ConditionRouteAccepted),
-					Status:             metav1.ConditionTrue,
-					ObservedGeneration: route.Generation,
-					LastTransitionTime: metav1.NewTime(timeNow()),
-					Reason:             string(gatev1alpha2.ConditionRouteAccepted),
-					Message:            "The route was attached to the Gateway",
-				})
-			}
-
-			return client.UpdateHTTPRouteStatus(route, *routeStatus)
+			routeParent = &routeStatus.Parents[i]
 		}
 	}
 
-	// Parent reference was not found, so we can just append a new one
-	group := gatev1alpha2.Group(gatev1alpha2.GroupName)
-	kind := gatev1alpha2.Kind(kindGateway)
-	namespace := gatev1alpha2.Namespace(gateway.Namespace)
+	// No existing parent was found, so let's create one
+	if routeParent == nil {
+		group := gatev1alpha2.Group(gatev1alpha2.GroupName)
+		kind := gatev1alpha2.Kind(kindGateway)
+		namespace := gatev1alpha2.Namespace(gateway.Namespace)
 
-	parentRef := gatev1alpha2.RouteParentStatus{
-		ParentRef: gatev1alpha2.ParentRef{
-			Group:       &group,
-			Kind:        &kind,
-			Namespace:   &namespace,
-			Name:        gatev1alpha2.ObjectName(gateway.Name),
-			SectionName: &listener.Name,
-		},
-		ControllerName: controllerName,
-		Conditions: []metav1.Condition{
-			{
-				Type:               string(gatev1alpha2.ConditionRouteAccepted),
-				Status:             metav1.ConditionTrue,
-				ObservedGeneration: route.Generation,
-				LastTransitionTime: metav1.NewTime(timeNow()),
-				Reason:             string(gatev1alpha2.ConditionRouteAccepted),
-				Message:            "The route was attached to the Gateway",
+		routeStatus.Parents = append(routeStatus.Parents, gatev1alpha2.RouteParentStatus{
+			ParentRef: gatev1alpha2.ParentRef{
+				Group:     &group,
+				Kind:      &kind,
+				Namespace: &namespace,
+				Name:      gatev1alpha2.ObjectName(gateway.Name),
 			},
-		},
+			ControllerName: controllerName,
+		})
+
+		routeParent = &routeStatus.Parents[len(routeStatus.Parents)-1]
 	}
 
-	if len(route.Status.Parents) == 0 {
-		return client.UpdateHTTPRouteStatus(route, gatev1alpha2.HTTPRouteStatus{
-			RouteStatus: gatev1alpha2.RouteStatus{
-				Parents: []gatev1alpha2.RouteParentStatus{
-					parentRef,
-				},
-			},
+	// Don't write duplicate conditions
+	shouldUpdateConditions := true
+	if len(routeParent.Conditions) > 0 {
+		lastCondition := routeParent.Conditions[len(routeParent.Conditions)-1]
+
+		if lastCondition.Type == string(gatev1alpha2.ConditionRouteAccepted) && lastCondition.Status == metav1.ConditionTrue && lastCondition.Reason == string(gatev1alpha2.ConditionRouteAccepted) && lastCondition.Message == "The route was attached to the Gateway" {
+			shouldUpdateConditions = false
+		}
+	}
+
+	if shouldUpdateConditions {
+		routeParent.Conditions = append(routeParent.Conditions, metav1.Condition{
+			Type:               string(gatev1alpha2.ConditionRouteAccepted),
+			Status:             metav1.ConditionTrue,
+			ObservedGeneration: route.Generation,
+			LastTransitionTime: metav1.NewTime(timeNow()),
+			Reason:             string(gatev1alpha2.ConditionRouteAccepted),
+			Message:            "The route was attached to the Gateway",
 		})
 	}
 
-	return client.UpdateHTTPRouteStatus(route, gatev1alpha2.HTTPRouteStatus{
-		RouteStatus: gatev1alpha2.RouteStatus{
-			Parents: append(route.Status.Parents, parentRef),
-		},
-	})
+	return client.UpdateHTTPRouteStatus(route, *routeStatus)
 }

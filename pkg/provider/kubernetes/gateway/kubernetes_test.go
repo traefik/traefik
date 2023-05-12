@@ -4722,11 +4722,10 @@ func TestHTTPRouteStatus(t *testing.T) {
 					Parents: []gatev1alpha2.RouteParentStatus{
 						{
 							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway",
-								SectionName: sectionNamePtr("http"),
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
@@ -4755,11 +4754,10 @@ func TestHTTPRouteStatus(t *testing.T) {
 					Parents: []gatev1alpha2.RouteParentStatus{
 						{
 							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway",
-								SectionName: sectionNamePtr("http"),
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
@@ -4788,11 +4786,10 @@ func TestHTTPRouteStatus(t *testing.T) {
 					Parents: []gatev1alpha2.RouteParentStatus{
 						{
 							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway",
-								SectionName: sectionNamePtr("http"),
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
@@ -4821,11 +4818,10 @@ func TestHTTPRouteStatus(t *testing.T) {
 					Parents: []gatev1alpha2.RouteParentStatus{
 						{
 							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway",
-								SectionName: sectionNamePtr("https"),
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
@@ -4854,11 +4850,10 @@ func TestHTTPRouteStatus(t *testing.T) {
 					Parents: []gatev1alpha2.RouteParentStatus{
 						{
 							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway",
-								SectionName: sectionNamePtr("http"),
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
@@ -4887,11 +4882,10 @@ func TestHTTPRouteStatus(t *testing.T) {
 					Parents: []gatev1alpha2.RouteParentStatus{
 						{
 							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway",
-								SectionName: sectionNamePtr("http"),
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
@@ -4920,11 +4914,10 @@ func TestHTTPRouteStatus(t *testing.T) {
 					Parents: []gatev1alpha2.RouteParentStatus{
 						{
 							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway",
-								SectionName: sectionNamePtr("http"),
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
@@ -4953,11 +4946,10 @@ func TestHTTPRouteStatus(t *testing.T) {
 					Parents: []gatev1alpha2.RouteParentStatus{
 						{
 							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway",
-								SectionName: sectionNamePtr("http"),
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
@@ -4986,11 +4978,10 @@ func TestHTTPRouteStatus(t *testing.T) {
 					Parents: []gatev1alpha2.RouteParentStatus{
 						{
 							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway",
-								SectionName: sectionNamePtr("http"),
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
@@ -5024,11 +5015,10 @@ func TestHTTPRouteStatus(t *testing.T) {
 					Parents: []gatev1alpha2.RouteParentStatus{
 						{
 							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway-https",
-								SectionName: sectionNamePtr("https"),
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway-https",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
@@ -5044,11 +5034,10 @@ func TestHTTPRouteStatus(t *testing.T) {
 						},
 						{
 							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway-http",
-								SectionName: sectionNamePtr("http"),
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway-http",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
@@ -5082,31 +5071,10 @@ func TestHTTPRouteStatus(t *testing.T) {
 					Parents: []gatev1alpha2.RouteParentStatus{
 						{
 							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway",
-								SectionName: sectionNamePtr("https"),
-							},
-							ControllerName: "traefik.io/gateway-controller",
-							Conditions: []metav1.Condition{
-								{
-									Type:               "Accepted",
-									Status:             "True",
-									ObservedGeneration: 0,
-									LastTransitionTime: metav1.NewTime(now),
-									Reason:             "Accepted",
-									Message:            "The route was attached to the Gateway",
-								},
-							},
-						},
-						{
-							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway",
-								SectionName: sectionNamePtr("http"),
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
@@ -5135,11 +5103,10 @@ func TestHTTPRouteStatus(t *testing.T) {
 					Parents: []gatev1alpha2.RouteParentStatus{
 						{
 							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway",
-								SectionName: sectionNamePtr("http"),
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
@@ -5168,11 +5135,10 @@ func TestHTTPRouteStatus(t *testing.T) {
 					Parents: []gatev1alpha2.RouteParentStatus{
 						{
 							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway",
-								SectionName: sectionNamePtr("http"),
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
@@ -5201,11 +5167,10 @@ func TestHTTPRouteStatus(t *testing.T) {
 					Parents: []gatev1alpha2.RouteParentStatus{
 						{
 							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway",
-								SectionName: sectionNamePtr("http"),
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
@@ -5225,11 +5190,10 @@ func TestHTTPRouteStatus(t *testing.T) {
 					Parents: []gatev1alpha2.RouteParentStatus{
 						{
 							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway",
-								SectionName: sectionNamePtr("http"),
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
@@ -5258,11 +5222,10 @@ func TestHTTPRouteStatus(t *testing.T) {
 					Parents: []gatev1alpha2.RouteParentStatus{
 						{
 							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway",
-								SectionName: sectionNamePtr("http"),
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
@@ -5291,11 +5254,10 @@ func TestHTTPRouteStatus(t *testing.T) {
 					Parents: []gatev1alpha2.RouteParentStatus{
 						{
 							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway",
-								SectionName: sectionNamePtr("http"),
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
@@ -5324,11 +5286,60 @@ func TestHTTPRouteStatus(t *testing.T) {
 					Parents: []gatev1alpha2.RouteParentStatus{
 						{
 							ParentRef: gatev1alpha2.ParentRef{
-								Group:       groupPtr(gatev1alpha2.GroupName),
-								Kind:        kindPtr(kindGateway),
-								Namespace:   namespacePtr("default"),
-								Name:        "my-gateway",
-								SectionName: sectionNamePtr("http"),
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "True",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "Accepted",
+									Message:            "The route was attached to the Gateway",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc:  "Simple HTTPRoute with existing HTTPRouteStatus resource",
+			paths: []string{"services.yml", "httproute/with_status_simple.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: []gatev1alpha2.RouteStatus{
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
+							},
+							ControllerName: "unknown.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "True",
+									ObservedGeneration: 0,
+									Reason:             "ListenerReady",
+									Message:            "No error found",
+								},
+							},
+						},
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-gateway",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
