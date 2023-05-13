@@ -1883,185 +1883,21 @@ func makeListenerKey(l gatev1alpha2.Listener) string {
 }
 
 func updateHTTPRouteStatus(client Client, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener, route *gatev1alpha2.HTTPRoute) error {
-	routeStatus := route.Status.DeepCopy()
-
-	// TODO: each route needs its own namespace in tests - cannot assert which route got its status updated
-
-	var routeParent *gatev1alpha2.RouteParentStatus
-
-	// Check if we need to update an existing route parent
-	for i, parent := range routeStatus.Parents {
-		if parent.ControllerName != controllerName {
-			continue
-		}
-
-		parentRef := parent.ParentRef
-
-		if parentRef.Group == nil || *parentRef.Group != gatev1alpha2.GroupName {
-			continue
-		}
-		if parentRef.Kind == nil || *parentRef.Kind != kindGateway {
-			continue
-		}
-		if parentRef.SectionName != nil && *parentRef.SectionName != listener.Name {
-			continue
-		}
-
-		namespace := route.Namespace
-		if parentRef.Namespace != nil {
-			namespace = string(*parentRef.Namespace)
-		}
-
-		if namespace == gateway.Namespace && string(parentRef.Name) == gateway.Name {
-			routeParent = &routeStatus.Parents[i]
-		}
-	}
-
-	// No existing parent was found, so let's create one
-	if routeParent == nil {
-		group := gatev1alpha2.Group(gatev1alpha2.GroupName)
-		kind := gatev1alpha2.Kind(kindGateway)
-		namespace := gatev1alpha2.Namespace(gateway.Namespace)
-
-		// Only set the section name if the route requests it
-		var sectionName *gatev1alpha2.SectionName
-		for _, p := range route.Spec.ParentRefs {
-			if p.SectionName != nil && *p.SectionName == listener.Name {
-				sectionName = p.SectionName
-			}
-		}
-
-		routeStatus.Parents = append(routeStatus.Parents, gatev1alpha2.RouteParentStatus{
-			ParentRef: gatev1alpha2.ParentRef{
-				Group:       &group,
-				Kind:        &kind,
-				Namespace:   &namespace,
-				Name:        gatev1alpha2.ObjectName(gateway.Name),
-				SectionName: sectionName,
-			},
-			ControllerName: controllerName,
-		})
-
-		routeParent = &routeStatus.Parents[len(routeStatus.Parents)-1]
-	}
-
-	// Don't write duplicate conditions
-	shouldUpdateConditions := true
-	if len(routeParent.Conditions) > 0 {
-		lastCondition := routeParent.Conditions[len(routeParent.Conditions)-1]
-
-		if lastCondition.Type == string(gatev1alpha2.ConditionRouteAccepted) && lastCondition.Status == metav1.ConditionTrue && lastCondition.Reason == string(gatev1alpha2.ConditionRouteAccepted) && lastCondition.Message == "The route was attached to the Gateway" {
-			shouldUpdateConditions = false
-		}
-	}
-
-	if shouldUpdateConditions {
-		routeParent.Conditions = append(routeParent.Conditions, metav1.Condition{
-			Type:               string(gatev1alpha2.ConditionRouteAccepted),
-			Status:             metav1.ConditionTrue,
-			ObservedGeneration: route.Generation,
-			LastTransitionTime: metav1.NewTime(timeNow()),
-			Reason:             string(gatev1alpha2.ConditionRouteAccepted),
-			Message:            "The route was attached to the Gateway",
-		})
-	}
-
-	return client.UpdateHTTPRouteStatus(route, *routeStatus)
+	return client.UpdateHTTPRouteStatus(route, makeRouteStatus(&route.Status.RouteStatus, route.Spec.CommonRouteSpec, route.ObjectMeta, gateway, listener))
 }
 
 func updateTCPRouteStatus(client Client, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener, route *gatev1alpha2.TCPRoute) error {
-	routeStatus := route.Status.DeepCopy()
-
-	// TODO: each route needs its own namespace in tests - cannot assert which route got its status updated
-
-	var routeParent *gatev1alpha2.RouteParentStatus
-
-	// Check if we need to update an existing route parent
-	for i, parent := range routeStatus.Parents {
-		if parent.ControllerName != controllerName {
-			continue
-		}
-
-		parentRef := parent.ParentRef
-
-		if parentRef.Group == nil || *parentRef.Group != gatev1alpha2.GroupName {
-			continue
-		}
-		if parentRef.Kind == nil || *parentRef.Kind != kindGateway {
-			continue
-		}
-		if parentRef.SectionName != nil && *parentRef.SectionName != listener.Name {
-			continue
-		}
-
-		namespace := route.Namespace
-		if parentRef.Namespace != nil {
-			namespace = string(*parentRef.Namespace)
-		}
-
-		if namespace == gateway.Namespace && string(parentRef.Name) == gateway.Name {
-			routeParent = &routeStatus.Parents[i]
-		}
-	}
-
-	// No existing parent was found, so let's create one
-	if routeParent == nil {
-		group := gatev1alpha2.Group(gatev1alpha2.GroupName)
-		kind := gatev1alpha2.Kind(kindGateway)
-		namespace := gatev1alpha2.Namespace(gateway.Namespace)
-
-		// Only set the section name if the route requests it
-		var sectionName *gatev1alpha2.SectionName
-		for _, p := range route.Spec.ParentRefs {
-			if p.SectionName != nil && *p.SectionName == listener.Name {
-				sectionName = p.SectionName
-			}
-		}
-
-		routeStatus.Parents = append(routeStatus.Parents, gatev1alpha2.RouteParentStatus{
-			ParentRef: gatev1alpha2.ParentRef{
-				Group:       &group,
-				Kind:        &kind,
-				Namespace:   &namespace,
-				Name:        gatev1alpha2.ObjectName(gateway.Name),
-				SectionName: sectionName,
-			},
-			ControllerName: controllerName,
-		})
-
-		routeParent = &routeStatus.Parents[len(routeStatus.Parents)-1]
-	}
-
-	// Don't write duplicate conditions
-	shouldUpdateConditions := true
-	if len(routeParent.Conditions) > 0 {
-		lastCondition := routeParent.Conditions[len(routeParent.Conditions)-1]
-
-		if lastCondition.Type == string(gatev1alpha2.ConditionRouteAccepted) && lastCondition.Status == metav1.ConditionTrue && lastCondition.Reason == string(gatev1alpha2.ConditionRouteAccepted) && lastCondition.Message == "The route was attached to the Gateway" {
-			shouldUpdateConditions = false
-		}
-	}
-
-	if shouldUpdateConditions {
-		routeParent.Conditions = append(routeParent.Conditions, metav1.Condition{
-			Type:               string(gatev1alpha2.ConditionRouteAccepted),
-			Status:             metav1.ConditionTrue,
-			ObservedGeneration: route.Generation,
-			LastTransitionTime: metav1.NewTime(timeNow()),
-			Reason:             string(gatev1alpha2.ConditionRouteAccepted),
-			Message:            "The route was attached to the Gateway",
-		})
-	}
-
-	return client.UpdateTCPRouteStatus(route, *routeStatus)
+	return client.UpdateTCPRouteStatus(route, makeRouteStatus(&route.Status.RouteStatus, route.Spec.CommonRouteSpec, route.ObjectMeta, gateway, listener))
 }
 
 func updateTLSRouteStatus(client Client, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener, route *gatev1alpha2.TLSRoute) error {
-	routeStatus := route.Status.DeepCopy()
+	return client.UpdateTLSRouteStatus(route, makeRouteStatus(&route.Status.RouteStatus, route.Spec.CommonRouteSpec, route.ObjectMeta, gateway, listener))
+}
 
-	// TODO: each route needs its own namespace in tests - cannot assert which route got its status updated
+func makeRouteStatus(routeStatus *gatev1alpha2.RouteStatus, routeSpec gatev1alpha2.CommonRouteSpec, routeMeta metav1.ObjectMeta, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener) *gatev1alpha2.RouteStatus {
+	routeStatus = routeStatus.DeepCopy()
 
-	var routeParent *gatev1alpha2.RouteParentStatus
+	var routeParentStatus *gatev1alpha2.RouteParentStatus
 
 	// Check if we need to update an existing route parent
 	for i, parent := range routeStatus.Parents {
@@ -2081,25 +1917,25 @@ func updateTLSRouteStatus(client Client, gateway *gatev1alpha2.Gateway, listener
 			continue
 		}
 
-		namespace := route.Namespace
+		namespace := routeMeta.Namespace
 		if parentRef.Namespace != nil {
 			namespace = string(*parentRef.Namespace)
 		}
 
 		if namespace == gateway.Namespace && string(parentRef.Name) == gateway.Name {
-			routeParent = &routeStatus.Parents[i]
+			routeParentStatus = &routeStatus.Parents[i]
 		}
 	}
 
 	// No existing parent was found, so let's create one
-	if routeParent == nil {
+	if routeParentStatus == nil {
 		group := gatev1alpha2.Group(gatev1alpha2.GroupName)
 		kind := gatev1alpha2.Kind(kindGateway)
 		namespace := gatev1alpha2.Namespace(gateway.Namespace)
 
 		// Only set the section name if the route requests it
 		var sectionName *gatev1alpha2.SectionName
-		for _, p := range route.Spec.ParentRefs {
+		for _, p := range routeSpec.ParentRefs {
 			if p.SectionName != nil && *p.SectionName == listener.Name {
 				sectionName = p.SectionName
 			}
@@ -2116,13 +1952,13 @@ func updateTLSRouteStatus(client Client, gateway *gatev1alpha2.Gateway, listener
 			ControllerName: controllerName,
 		})
 
-		routeParent = &routeStatus.Parents[len(routeStatus.Parents)-1]
+		routeParentStatus = &routeStatus.Parents[len(routeStatus.Parents)-1]
 	}
 
 	// Don't write duplicate conditions
 	shouldUpdateConditions := true
-	if len(routeParent.Conditions) > 0 {
-		lastCondition := routeParent.Conditions[len(routeParent.Conditions)-1]
+	if len(routeParentStatus.Conditions) > 0 {
+		lastCondition := routeParentStatus.Conditions[len(routeParentStatus.Conditions)-1]
 
 		if lastCondition.Type == string(gatev1alpha2.ConditionRouteAccepted) && lastCondition.Status == metav1.ConditionTrue && lastCondition.Reason == string(gatev1alpha2.ConditionRouteAccepted) && lastCondition.Message == "The route was attached to the Gateway" {
 			shouldUpdateConditions = false
@@ -2130,15 +1966,15 @@ func updateTLSRouteStatus(client Client, gateway *gatev1alpha2.Gateway, listener
 	}
 
 	if shouldUpdateConditions {
-		routeParent.Conditions = append(routeParent.Conditions, metav1.Condition{
+		routeParentStatus.Conditions = append(routeParentStatus.Conditions, metav1.Condition{
 			Type:               string(gatev1alpha2.ConditionRouteAccepted),
 			Status:             metav1.ConditionTrue,
-			ObservedGeneration: route.Generation,
+			ObservedGeneration: routeMeta.Generation,
 			LastTransitionTime: metav1.NewTime(timeNow()),
 			Reason:             string(gatev1alpha2.ConditionRouteAccepted),
 			Message:            "The route was attached to the Gateway",
 		})
 	}
 
-	return client.UpdateTLSRouteStatus(route, *routeStatus)
+	return routeStatus
 }
