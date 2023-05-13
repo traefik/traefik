@@ -198,22 +198,6 @@ func (c clientMock) GetHTTPRoutes(namespaces []string) ([]*gatev1alpha2.HTTPRout
 	return httpRoutes, nil
 }
 
-func (c clientMock) GetHTTPRouteStatuses(namespaces []string) ([]gatev1alpha2.RouteStatus, error) {
-	var statuses []gatev1alpha2.RouteStatus
-	for _, namespace := range namespaces {
-		for _, httpRoute := range c.httpRoutes {
-			if !inNamespace(httpRoute.ObjectMeta, namespace) {
-				continue
-			}
-			if len(httpRoute.Status.RouteStatus.Parents) == 0 {
-				continue
-			}
-			statuses = append(statuses, httpRoute.Status.RouteStatus)
-		}
-	}
-	return statuses, nil
-}
-
 func (c clientMock) GetTCPRoutes(namespaces []string) ([]*gatev1alpha2.TCPRoute, error) {
 	var tcpRoutes []*gatev1alpha2.TCPRoute
 	for _, namespace := range namespaces {
@@ -224,22 +208,6 @@ func (c clientMock) GetTCPRoutes(namespaces []string) ([]*gatev1alpha2.TCPRoute,
 		}
 	}
 	return tcpRoutes, nil
-}
-
-func (c clientMock) GetTCPRouteStatuses(namespaces []string) ([]gatev1alpha2.RouteStatus, error) {
-	var statuses []gatev1alpha2.RouteStatus
-	for _, namespace := range namespaces {
-		for _, route := range c.tcpRoutes {
-			if !inNamespace(route.ObjectMeta, namespace) {
-				continue
-			}
-			if len(route.Status.RouteStatus.Parents) == 0 {
-				continue
-			}
-			statuses = append(statuses, route.Status.RouteStatus)
-		}
-	}
-	return statuses, nil
 }
 
 func (c clientMock) GetTLSRoutes(namespaces []string) ([]*gatev1alpha2.TLSRoute, error) {
@@ -254,9 +222,29 @@ func (c clientMock) GetTLSRoutes(namespaces []string) ([]*gatev1alpha2.TLSRoute,
 	return tlsRoutes, nil
 }
 
-func (c clientMock) GetTLSRouteStatuses(namespaces []string) ([]gatev1alpha2.RouteStatus, error) {
+func (c clientMock) GetRouteStatuses(namespaces []string) ([]gatev1alpha2.RouteStatus, error) {
 	var statuses []gatev1alpha2.RouteStatus
 	for _, namespace := range namespaces {
+		for _, route := range c.httpRoutes {
+			if !inNamespace(route.ObjectMeta, namespace) {
+				continue
+			}
+			if len(route.Status.RouteStatus.Parents) == 0 {
+				continue
+			}
+			statuses = append(statuses, route.Status.RouteStatus)
+		}
+
+		for _, route := range c.tcpRoutes {
+			if !inNamespace(route.ObjectMeta, namespace) {
+				continue
+			}
+			if len(route.Status.RouteStatus.Parents) == 0 {
+				continue
+			}
+			statuses = append(statuses, route.Status.RouteStatus)
+		}
+
 		for _, route := range c.tlsRoutes {
 			if !inNamespace(route.ObjectMeta, namespace) {
 				continue
@@ -268,22 +256,6 @@ func (c clientMock) GetTLSRouteStatuses(namespaces []string) ([]gatev1alpha2.Rou
 		}
 	}
 	return statuses, nil
-}
-
-func (c clientMock) GetRouteStatuses(namespaces []string) ([]gatev1alpha2.RouteStatus, error) {
-	httpStatuses, err := c.GetHTTPRouteStatuses(namespaces)
-	if err != nil {
-		return nil, err
-	}
-	tcpStatuses, err := c.GetTCPRouteStatuses(namespaces)
-	if err != nil {
-		return nil, err
-	}
-	tlsStatuses, err := c.GetTLSRouteStatuses(namespaces)
-	if err != nil {
-		return nil, err
-	}
-	return append(append(httpStatuses, tcpStatuses...), tlsStatuses...), nil
 }
 
 func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, error) {
