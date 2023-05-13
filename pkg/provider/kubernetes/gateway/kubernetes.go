@@ -1894,7 +1894,7 @@ func updateTLSRouteStatus(client Client, gateway *gatev1alpha2.Gateway, listener
 	return client.UpdateTLSRouteStatus(route, makeRouteStatus(&route.Status.RouteStatus, route.Spec.CommonRouteSpec, route.ObjectMeta, gateway, listener))
 }
 
-func makeRouteStatus(routeStatus *gatev1alpha2.RouteStatus, routeSpec gatev1alpha2.CommonRouteSpec, routeMeta metav1.ObjectMeta, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener) *gatev1alpha2.RouteStatus {
+func makeRouteStatus(routeStatus *gatev1alpha2.RouteStatus, routeSpec gatev1alpha2.CommonRouteSpec, routeMeta metav1.ObjectMeta, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener) gatev1alpha2.RouteStatus {
 	routeStatus = routeStatus.DeepCopy()
 
 	var routeParentStatus *gatev1alpha2.RouteParentStatus
@@ -1976,5 +1976,5 @@ func makeRouteStatus(routeStatus *gatev1alpha2.RouteStatus, routeSpec gatev1alph
 		})
 	}
 
-	return routeStatus
+	return *routeStatus
 }

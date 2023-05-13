@@ -94,12 +94,11 @@ func (c clientMock) UpdateGatewayStatus(gateway *gatev1alpha2.Gateway, gatewaySt
 	return nil
 }
 
-func (c clientMock) UpdateHTTPRouteStatus(route *gatev1alpha2.HTTPRoute, routeStatus *gatev1alpha2.RouteStatus) error {
-	status := *routeStatus
+func (c clientMock) UpdateHTTPRouteStatus(route *gatev1alpha2.HTTPRoute, routeStatus gatev1alpha2.RouteStatus) error {
 	for _, r := range c.httpRoutes {
 		if r.Name == route.Name {
-			if !routeStatusEquals(r.Status.RouteStatus, status) {
-				r.Status.RouteStatus = status
+			if !routeStatusEquals(r.Status.RouteStatus, routeStatus) {
+				r.Status.RouteStatus = routeStatus
 				return nil
 			}
 			return fmt.Errorf("cannot update http route %v", route.Name)
@@ -108,12 +107,11 @@ func (c clientMock) UpdateHTTPRouteStatus(route *gatev1alpha2.HTTPRoute, routeSt
 	return nil
 }
 
-func (c clientMock) UpdateTCPRouteStatus(route *gatev1alpha2.TCPRoute, routeStatus *gatev1alpha2.RouteStatus) error {
-	status := *routeStatus
+func (c clientMock) UpdateTCPRouteStatus(route *gatev1alpha2.TCPRoute, routeStatus gatev1alpha2.RouteStatus) error {
 	for _, r := range c.tcpRoutes {
 		if r.Name == route.Name {
-			if !routeStatusEquals(r.Status.RouteStatus, status) {
-				r.Status.RouteStatus = status
+			if !routeStatusEquals(r.Status.RouteStatus, routeStatus) {
+				r.Status.RouteStatus = routeStatus
 				return nil
 			}
 			return fmt.Errorf("cannot update tcp route %v", route.Name)
@@ -122,12 +120,11 @@ func (c clientMock) UpdateTCPRouteStatus(route *gatev1alpha2.TCPRoute, routeStat
 	return nil
 }
 
-func (c clientMock) UpdateTLSRouteStatus(route *gatev1alpha2.TLSRoute, routeStatus *gatev1alpha2.RouteStatus) error {
-	status := *routeStatus
+func (c clientMock) UpdateTLSRouteStatus(route *gatev1alpha2.TLSRoute, routeStatus gatev1alpha2.RouteStatus) error {
 	for _, r := range c.tlsRoutes {
 		if r.Name == route.Name {
-			if !routeStatusEquals(r.Status.RouteStatus, status) {
-				r.Status.RouteStatus = status
+			if !routeStatusEquals(r.Status.RouteStatus, routeStatus) {
+				r.Status.RouteStatus = routeStatus
 				return nil
 			}
 			return fmt.Errorf("cannot update tls route %v", route.Name)
