@@ -2,13 +2,14 @@ package gateway
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	kscheme "k8s.io/client-go/kubernetes/scheme"
-	"os"
-	"path/filepath"
 	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
