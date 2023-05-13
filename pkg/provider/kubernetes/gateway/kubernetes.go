@@ -842,11 +842,10 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1a
 		}
 
 		if atLeastOneRuleMatched {
-			numRoutesAttached++
-
 			if err := updateHTTPRouteStatus(client, gateway, listener, route); err != nil {
 				return 0, nil, fmt.Errorf("an error occurred while updating http route status: %w", err)
 			}
+			numRoutesAttached++
 		}
 	}
 
@@ -984,11 +983,12 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 		router.Service = routeServiceKey
 		conf.TCP.Routers[routerKey] = &router
 
-		if err := updateTCPRouteStatus(client, gateway, listener, route); err != nil {
-			return 0, nil, fmt.Errorf("an error occurred while updating tcp route status: %w", err)
+		if len(ruleServiceNames) > 0 {
+			if err := updateTCPRouteStatus(client, gateway, listener, route); err != nil {
+				return 0, nil, fmt.Errorf("an error occurred while updating tcp route status: %w", err)
+			}
+			numRoutesAttached++
 		}
-
-		numRoutesAttached++
 	}
 
 	return numRoutesAttached, conditions, nil
@@ -1150,11 +1150,12 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 		router.Service = routeServiceKey
 		conf.TCP.Routers[routerKey] = &router
 
-		if err := updateTLSRouteStatus(client, gateway, listener, route); err != nil {
-			return 0, nil, fmt.Errorf("an error occurred while updating tls route status: %w", err)
+		if len(ruleServiceNames) > 0 {
+			if err := updateTLSRouteStatus(client, gateway, listener, route); err != nil {
+				return 0, nil, fmt.Errorf("an error occurred while updating tls route status: %w", err)
+			}
+			numRoutesAttached++
 		}
-
-		numRoutesAttached++
 	}
 
 	return numRoutesAttached, conditions, nil
