@@ -1903,7 +1903,7 @@ func updateTLSRouteStatus(client Client, gateway *gatev1alpha2.Gateway, listener
 func makeRouteStatus(routeStatus gatev1alpha2.RouteStatus, routeSpec gatev1alpha2.CommonRouteSpec, routeMeta metav1.ObjectMeta, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener) gatev1alpha2.RouteStatus {
 	var routeParentStatus *gatev1alpha2.RouteParentStatus
 
-	// Check if we need to update an existing route parent
+	// Check if we need to update an existing parent reference
 	for i, parent := range routeStatus.Parents {
 		if parent.ControllerName != controllerName {
 			continue
@@ -1931,7 +1931,7 @@ func makeRouteStatus(routeStatus gatev1alpha2.RouteStatus, routeSpec gatev1alpha
 		}
 	}
 
-	// No existing parent was found, so let's create one
+	// No existing parent reference was found - create a new one
 	if routeParentStatus == nil {
 		group := gatev1alpha2.Group(gatev1alpha2.GroupName)
 		kind := gatev1alpha2.Kind(kindGateway)
