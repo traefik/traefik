@@ -504,30 +504,30 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			}
 		}
 
-		numRoutesAttached := int32(0)
+		routesAttached := int32(0)
 		for _, routeKind := range routeKinds {
 			var (
-				routesAttached int32
-				conditions     []metav1.Condition
-				err            error
+				numRoutesAttached int32
+				conditions        []metav1.Condition
+				err               error
 			)
 
 			switch routeKind.Kind {
 			case kindHTTPRoute:
-				routesAttached, conditions, err = gatewayHTTPRouteToHTTPConf(ctx, ep, listener, gateway, client, conf)
+				numRoutesAttached, conditions, err = gatewayHTTPRouteToHTTPConf(ctx, ep, listener, gateway, client, conf)
 			case kindTCPRoute:
-				routesAttached, conditions, err = gatewayTCPRouteToTCPConf(ctx, ep, listener, gateway, client, conf)
+				numRoutesAttached, conditions, err = gatewayTCPRouteToTCPConf(ctx, ep, listener, gateway, client, conf)
 			case kindTLSRoute:
-				routesAttached, conditions, err = gatewayTLSRouteToTCPConf(ctx, ep, listener, gateway, client, conf)
+				numRoutesAttached, conditions, err = gatewayTLSRouteToTCPConf(ctx, ep, listener, gateway, client, conf)
 			}
 			if err != nil {
 				return nil, err
 			}
 
-			numRoutesAttached += routesAttached
+			routesAttached += numRoutesAttached
 			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, conditions...)
 		}
-		listenerStatuses[i].AttachedRoutes = numRoutesAttached
+		listenerStatuses[i].AttachedRoutes = routesAttached
 	}
 
 	return listenerStatuses, nil
