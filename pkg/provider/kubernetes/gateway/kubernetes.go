@@ -1883,20 +1883,24 @@ func makeListenerKey(l gatev1alpha2.Listener) string {
 }
 
 func updateHTTPRouteStatus(client Client, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener, route *gatev1alpha2.HTTPRoute) error {
-	return client.UpdateHTTPRouteStatus(route, makeRouteStatus(&route.Status.RouteStatus, route.Spec.CommonRouteSpec, route.ObjectMeta, gateway, listener))
+	status := route.Status.RouteStatus.DeepCopy()
+	spec := route.Spec.CommonRouteSpec.DeepCopy()
+	return client.UpdateHTTPRouteStatus(route, makeRouteStatus(*status, *spec, route.ObjectMeta, gateway, listener))
 }
 
 func updateTCPRouteStatus(client Client, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener, route *gatev1alpha2.TCPRoute) error {
-	return client.UpdateTCPRouteStatus(route, makeRouteStatus(&route.Status.RouteStatus, route.Spec.CommonRouteSpec, route.ObjectMeta, gateway, listener))
+	status := route.Status.RouteStatus.DeepCopy()
+	spec := route.Spec.CommonRouteSpec.DeepCopy()
+	return client.UpdateTCPRouteStatus(route, makeRouteStatus(*status, *spec, route.ObjectMeta, gateway, listener))
 }
 
 func updateTLSRouteStatus(client Client, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener, route *gatev1alpha2.TLSRoute) error {
-	return client.UpdateTLSRouteStatus(route, makeRouteStatus(&route.Status.RouteStatus, route.Spec.CommonRouteSpec, route.ObjectMeta, gateway, listener))
+	status := route.Status.RouteStatus.DeepCopy()
+	spec := route.Spec.CommonRouteSpec.DeepCopy()
+	return client.UpdateTLSRouteStatus(route, makeRouteStatus(*status, *spec, route.ObjectMeta, gateway, listener))
 }
 
-func makeRouteStatus(routeStatus *gatev1alpha2.RouteStatus, routeSpec gatev1alpha2.CommonRouteSpec, routeMeta metav1.ObjectMeta, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener) gatev1alpha2.RouteStatus {
-	routeStatus = routeStatus.DeepCopy()
-
+func makeRouteStatus(routeStatus gatev1alpha2.RouteStatus, routeSpec gatev1alpha2.CommonRouteSpec, routeMeta metav1.ObjectMeta, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener) gatev1alpha2.RouteStatus {
 	var routeParentStatus *gatev1alpha2.RouteParentStatus
 
 	// Check if we need to update an existing route parent
@@ -1976,5 +1980,5 @@ func makeRouteStatus(routeStatus *gatev1alpha2.RouteStatus, routeSpec gatev1alph
 		})
 	}
 
-	return *routeStatus
+	return routeStatus
 }
