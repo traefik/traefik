@@ -5373,7 +5373,7 @@ func TestHTTPRouteStatus(t *testing.T) {
 			p := Provider{EntryPoints: test.entryPoints}
 			p.loadConfigurationFromGateway(context.Background(), client)
 
-			statuses, err := client.GetHTTPRouteStatuses([]string{""})
+			statuses, err := client.GetRouteStatuses([]string{""})
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected, statuses)
@@ -5767,7 +5767,7 @@ func TestTCPRouteStatus(t *testing.T) {
 			p := Provider{EntryPoints: test.entryPoints}
 			p.loadConfigurationFromGateway(context.Background(), client)
 
-			statuses, err := client.GetTCPRouteStatuses([]string{""})
+			statuses, err := client.GetRouteStatuses([]string{""})
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected, statuses)
@@ -5899,7 +5899,7 @@ func TestTLSRouteStatus(t *testing.T) {
 								Group:     groupPtr(gatev1alpha2.GroupName),
 								Kind:      kindPtr(kindGateway),
 								Namespace: namespacePtr("default"),
-								Name:      "my-gateway",
+								Name:      "my-tls-gateway",
 							},
 							ControllerName: "traefik.io/gateway-controller",
 							Conditions: []metav1.Condition{
@@ -5957,6 +5957,29 @@ func TestTLSRouteStatus(t *testing.T) {
 				"tcp": {Address: ":10000"},
 			},
 			expected: []gatev1alpha2.RouteStatus{
+				{
+					Parents: []gatev1alpha2.RouteParentStatus{
+						{
+							ParentRef: gatev1alpha2.ParentRef{
+								Group:     groupPtr(gatev1alpha2.GroupName),
+								Kind:      kindPtr(kindGateway),
+								Namespace: namespacePtr("default"),
+								Name:      "my-tls-gateway",
+							},
+							ControllerName: "traefik.io/gateway-controller",
+							Conditions: []metav1.Condition{
+								{
+									Type:               "Accepted",
+									Status:             "True",
+									ObservedGeneration: 0,
+									LastTransitionTime: metav1.NewTime(now),
+									Reason:             "Accepted",
+									Message:            "The route was attached to the Gateway",
+								},
+							},
+						},
+					},
+				},
 				{
 					Parents: []gatev1alpha2.RouteParentStatus{
 						{
@@ -6309,7 +6332,7 @@ func TestTLSRouteStatus(t *testing.T) {
 			p := Provider{EntryPoints: test.entryPoints}
 			p.loadConfigurationFromGateway(context.Background(), client)
 
-			statuses, err := client.GetTLSRouteStatuses([]string{""})
+			statuses, err := client.GetRouteStatuses([]string{""})
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected, statuses)

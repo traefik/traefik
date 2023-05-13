@@ -270,6 +270,22 @@ func (c clientMock) GetTLSRouteStatuses(namespaces []string) ([]gatev1alpha2.Rou
 	return statuses, nil
 }
 
+func (c clientMock) GetRouteStatuses(namespaces []string) ([]gatev1alpha2.RouteStatus, error) {
+	httpStatuses, err := c.GetHTTPRouteStatuses(namespaces)
+	if err != nil {
+		return nil, err
+	}
+	tcpStatuses, err := c.GetTCPRouteStatuses(namespaces)
+	if err != nil {
+		return nil, err
+	}
+	tlsStatuses, err := c.GetTLSRouteStatuses(namespaces)
+	if err != nil {
+		return nil, err
+	}
+	return append(append(httpStatuses, tcpStatuses...), tlsStatuses...), nil
+}
+
 func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, error) {
 	if c.apiServiceError != nil {
 		return nil, false, c.apiServiceError
