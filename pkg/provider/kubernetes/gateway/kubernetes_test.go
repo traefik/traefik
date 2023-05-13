@@ -1696,11 +1696,6 @@ func TestLoadHTTPRoutes(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-
-			if test.expected == nil {
-				return
-			}
-
 			p := Provider{EntryPoints: test.entryPoints}
 			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
 			assert.Equal(t, test.expected, conf)
@@ -2446,11 +2441,6 @@ func TestLoadTCPRoutes(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-
-			if test.expected == nil {
-				return
-			}
-
 			p := Provider{EntryPoints: test.entryPoints}
 			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
 			assert.Equal(t, test.expected, conf)
@@ -3560,11 +3550,6 @@ func TestLoadTLSRoutes(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-
-			if test.expected == nil {
-				return
-			}
-
 			p := Provider{EntryPoints: test.entryPoints}
 			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
 			assert.Equal(t, test.expected, conf)
@@ -4540,11 +4525,6 @@ func TestLoadMixedRoutes(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-
-			if test.expected == nil {
-				return
-			}
-
 			p := Provider{EntryPoints: test.entryPoints}
 			conf := p.loadConfigurationFromGateway(context.Background(), newClientMock(test.paths...))
 			assert.Equal(t, test.expected, conf)
@@ -5364,10 +5344,6 @@ func TestHTTPRouteStatus(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			if test.expected == nil {
-				return
-			}
-
 			client := newClientMock(test.paths...)
 
 			p := Provider{EntryPoints: test.entryPoints}
@@ -5757,10 +5733,6 @@ func TestTCPRouteStatus(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-
-			if test.expected == nil {
-				return
-			}
 
 			client := newClientMock(test.paths...)
 
@@ -6322,10 +6294,6 @@ func TestTLSRouteStatus(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-
-			if test.expected == nil {
-				return
-			}
 
 			client := newClientMock(test.paths...)
 
@@ -7040,10 +7008,6 @@ func TestMixedRouteStatus(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-
-			if test.expected == nil {
-				return
-			}
 
 			client := newClientMock(test.paths...)
 
