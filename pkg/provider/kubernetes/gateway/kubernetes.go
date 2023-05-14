@@ -506,20 +506,15 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			var (
 				numRoutesAttached int32
 				conditions        []metav1.Condition
-				err               error
 			)
 
 			switch routeKind.Kind {
 			case kindHTTPRoute:
-				numRoutesAttached, conditions, err = gatewayHTTPRouteToHTTPConf(ctx, ep, listener, gateway, client, conf)
+				numRoutesAttached, conditions = gatewayHTTPRouteToHTTPConf(ctx, ep, listener, gateway, client, conf)
 			case kindTCPRoute:
-				numRoutesAttached, conditions, err = gatewayTCPRouteToTCPConf(ctx, ep, listener, gateway, client, conf)
+				numRoutesAttached, conditions = gatewayTCPRouteToTCPConf(ctx, ep, listener, gateway, client, conf)
 			case kindTLSRoute:
-				numRoutesAttached, conditions, err = gatewayTLSRouteToTCPConf(ctx, ep, listener, gateway, client, conf)
-			}
-			if err != nil {
-				log.Ctx(ctx).Error().Err(err).Send()
-				continue
+				numRoutesAttached, conditions = gatewayTLSRouteToTCPConf(ctx, ep, listener, gateway, client, conf)
 			}
 
 			routesAttached += numRoutesAttached
@@ -678,10 +673,10 @@ func getAllowedRouteKinds(listener gatev1alpha2.Listener, supportedKinds []gatev
 	return routeKinds, conditions
 }
 
-func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) (int32, []metav1.Condition, error) {
+func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) (int32, []metav1.Condition) {
 	if listener.AllowedRoutes == nil {
 		// Should not happen due to validation.
-		return 0, nil, nil
+		return 0, nil
 	}
 
 	namespaces, err := getRouteBindingSelectorNamespace(client, gateway.Namespace, listener.AllowedRoutes.Namespaces)
@@ -693,7 +688,7 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1a
 			LastTransitionTime: metav1.Now(),
 			Reason:             "InvalidRouteNamespacesSelector", // Should never happen as the selector is validated by kubernetes
 			Message:            fmt.Sprintf("Invalid route namespaces selector: %v", err),
-		}}, nil
+		}}
 	}
 
 	routes, err := client.GetHTTPRoutes(namespaces)
@@ -705,12 +700,12 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1a
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1alpha2.ListenerReasonRefNotPermitted),
 			Message:            fmt.Sprintf("Cannot fetch HTTPRoutes: %v", err),
-		}}, nil
+		}}
 	}
 
 	if len(routes) == 0 {
 		log.Ctx(ctx).Debug().Msg("No HTTPRoutes found")
-		return 0, nil, nil
+		return 0, nil
 	}
 
 	numRoutesAttached := int32(0)
@@ -841,19 +836,20 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1a
 
 		if atLeastOneRuleMatched {
 			if err := updateHTTPRouteStatus(ctx, client, gateway, listener, route); err != nil {
-				return 0, nil, err
+				log.Ctx(ctx).Err(err).Send()
+				continue
 			}
 			numRoutesAttached++
 		}
 	}
 
-	return numRoutesAttached, conditions, nil
+	return numRoutesAttached, conditions
 }
 
-func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) (int32, []metav1.Condition, error) {
+func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) (int32, []metav1.Condition) {
 	if listener.AllowedRoutes == nil {
 		// Should not happen due to validation.
-		return 0, nil, nil
+		return 0, nil
 	}
 
 	namespaces, err := getRouteBindingSelectorNamespace(client, gateway.Namespace, listener.AllowedRoutes.Namespaces)
@@ -865,7 +861,7 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 			LastTransitionTime: metav1.Now(),
 			Reason:             "InvalidRouteNamespacesSelector", // TODO should never happen as the selector is validated by Kubernetes
 			Message:            fmt.Sprintf("Invalid route namespaces selector: %v", err),
-		}}, nil
+		}}
 	}
 
 	routes, err := client.GetTCPRoutes(namespaces)
@@ -877,12 +873,12 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1alpha2.ListenerReasonRefNotPermitted),
 			Message:            fmt.Sprintf("Cannot fetch TCPRoutes: %v", err),
-		}}, nil
+		}}
 	}
 
 	if len(routes) == 0 {
 		log.Ctx(ctx).Debug().Msg("No TCPRoutes found")
-		return 0, nil, nil
+		return 0, nil
 	}
 
 	numRoutesAttached := int32(0)
@@ -960,7 +956,8 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 			router.Service = ruleServiceNames[0]
 			conf.TCP.Routers[routerKey] = &router
 			if err := updateTCPRouteStatus(ctx, client, gateway, listener, route); err != nil {
-				return 0, nil, err
+				log.Ctx(ctx).Err(err).Send()
+				continue
 			}
 			numRoutesAttached++
 			continue
@@ -983,19 +980,20 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 
 		if len(ruleServiceNames) > 0 {
 			if err := updateTCPRouteStatus(ctx, client, gateway, listener, route); err != nil {
-				return 0, nil, err
+				log.Ctx(ctx).Err(err).Send()
+				continue
 			}
 			numRoutesAttached++
 		}
 	}
 
-	return numRoutesAttached, conditions, nil
+	return numRoutesAttached, conditions
 }
 
-func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) (int32, []metav1.Condition, error) {
+func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) (int32, []metav1.Condition) {
 	if listener.AllowedRoutes == nil {
 		// Should not happen due to validation.
-		return 0, nil, nil
+		return 0, nil
 	}
 
 	namespaces, err := getRouteBindingSelectorNamespace(client, gateway.Namespace, listener.AllowedRoutes.Namespaces)
@@ -1007,7 +1005,7 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 			LastTransitionTime: metav1.Now(),
 			Reason:             "InvalidRouteNamespacesSelector", // TODO should never happen as the selector is validated by Kubernetes
 			Message:            fmt.Sprintf("Invalid route namespaces selector: %v", err),
-		}}, nil
+		}}
 	}
 
 	routes, err := client.GetTLSRoutes(namespaces)
@@ -1019,12 +1017,12 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1alpha2.ListenerReasonRefNotPermitted),
 			Message:            fmt.Sprintf("Cannot fetch TLSRoutes: %v", err),
-		}}, nil
+		}}
 	}
 
 	if len(routes) == 0 {
 		log.Ctx(ctx).Debug().Msg("No TLSRoutes found")
-		return 0, nil, nil
+		return 0, nil
 	}
 
 	numRoutesAttached := int32(0)
@@ -1127,7 +1125,8 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 			router.Service = ruleServiceNames[0]
 			conf.TCP.Routers[routerKey] = &router
 			if err := updateTLSRouteStatus(ctx, client, gateway, listener, route); err != nil {
-				return 0, nil, err
+				log.Ctx(ctx).Err(err).Send()
+				continue
 			}
 			numRoutesAttached++
 			continue
@@ -1150,13 +1149,14 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 
 		if len(ruleServiceNames) > 0 {
 			if err := updateTLSRouteStatus(ctx, client, gateway, listener, route); err != nil {
-				return 0, nil, err
+				log.Ctx(ctx).Err(err).Send()
+				continue
 			}
 			numRoutesAttached++
 		}
 	}
 
-	return numRoutesAttached, conditions, nil
+	return numRoutesAttached, conditions
 }
 
 // Because of Kubernetes validation we admit that the given Hostnames are valid.
