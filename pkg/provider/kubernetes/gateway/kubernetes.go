@@ -521,7 +521,8 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 				numRoutesAttached, conditions, err = gatewayTLSRouteToTCPConf(ctx, ep, listener, gateway, client, conf)
 			}
 			if err != nil {
-				return nil, err
+				log.Ctx(ctx).Error().Err(err).Send()
+				continue
 			}
 
 			routesAttached += numRoutesAttached
@@ -842,8 +843,8 @@ func gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1a
 		}
 
 		if atLeastOneRuleMatched {
-			if err := updateHTTPRouteStatus(client, gateway, listener, route); err != nil {
-				return 0, nil, fmt.Errorf("an error occurred while updating http route status: %w", err)
+			if err := updateHTTPRouteStatus(ctx, client, gateway, listener, route); err != nil {
+				return 0, nil, err
 			}
 			numRoutesAttached++
 		}
@@ -961,8 +962,8 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 		if len(ruleServiceNames) == 1 {
 			router.Service = ruleServiceNames[0]
 			conf.TCP.Routers[routerKey] = &router
-			if err := updateTCPRouteStatus(client, gateway, listener, route); err != nil {
-				return 0, nil, fmt.Errorf("an error occurred while updating tcp route status: %w", err)
+			if err := updateTCPRouteStatus(ctx, client, gateway, listener, route); err != nil {
+				return 0, nil, err
 			}
 			numRoutesAttached++
 			continue
@@ -984,8 +985,8 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 		conf.TCP.Routers[routerKey] = &router
 
 		if len(ruleServiceNames) > 0 {
-			if err := updateTCPRouteStatus(client, gateway, listener, route); err != nil {
-				return 0, nil, fmt.Errorf("an error occurred while updating tcp route status: %w", err)
+			if err := updateTCPRouteStatus(ctx, client, gateway, listener, route); err != nil {
+				return 0, nil, err
 			}
 			numRoutesAttached++
 		}
@@ -1128,8 +1129,8 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 		if len(ruleServiceNames) == 1 {
 			router.Service = ruleServiceNames[0]
 			conf.TCP.Routers[routerKey] = &router
-			if err := updateTLSRouteStatus(client, gateway, listener, route); err != nil {
-				return 0, nil, fmt.Errorf("an error occurred while updating tls route status: %w", err)
+			if err := updateTLSRouteStatus(ctx, client, gateway, listener, route); err != nil {
+				return 0, nil, err
 			}
 			numRoutesAttached++
 			continue
@@ -1151,8 +1152,8 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 		conf.TCP.Routers[routerKey] = &router
 
 		if len(ruleServiceNames) > 0 {
-			if err := updateTLSRouteStatus(client, gateway, listener, route); err != nil {
-				return 0, nil, fmt.Errorf("an error occurred while updating tls route status: %w", err)
+			if err := updateTLSRouteStatus(ctx, client, gateway, listener, route); err != nil {
+				return 0, nil, err
 			}
 			numRoutesAttached++
 		}
@@ -1882,25 +1883,25 @@ func makeListenerKey(l gatev1alpha2.Listener) string {
 	return fmt.Sprintf("%s|%s|%d", l.Protocol, hostname, l.Port)
 }
 
-func updateHTTPRouteStatus(client Client, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener, route *gatev1alpha2.HTTPRoute) error {
+func updateHTTPRouteStatus(ctx context.Context, client Client, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener, route *gatev1alpha2.HTTPRoute) error {
 	status := route.Status.RouteStatus.DeepCopy()
 	spec := route.Spec.CommonRouteSpec.DeepCopy()
-	return client.UpdateHTTPRouteStatus(route, makeRouteStatus(*status, *spec, route.ObjectMeta, gateway, listener))
+	return client.UpdateHTTPRouteStatus(route, makeRouteStatus(ctx, *status, *spec, route.ObjectMeta, gateway, listener))
 }
 
-func updateTCPRouteStatus(client Client, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener, route *gatev1alpha2.TCPRoute) error {
+func updateTCPRouteStatus(ctx context.Context, client Client, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener, route *gatev1alpha2.TCPRoute) error {
 	status := route.Status.RouteStatus.DeepCopy()
 	spec := route.Spec.CommonRouteSpec.DeepCopy()
-	return client.UpdateTCPRouteStatus(route, makeRouteStatus(*status, *spec, route.ObjectMeta, gateway, listener))
+	return client.UpdateTCPRouteStatus(route, makeRouteStatus(ctx, *status, *spec, route.ObjectMeta, gateway, listener))
 }
 
-func updateTLSRouteStatus(client Client, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener, route *gatev1alpha2.TLSRoute) error {
+func updateTLSRouteStatus(ctx context.Context, client Client, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener, route *gatev1alpha2.TLSRoute) error {
 	status := route.Status.RouteStatus.DeepCopy()
 	spec := route.Spec.CommonRouteSpec.DeepCopy()
-	return client.UpdateTLSRouteStatus(route, makeRouteStatus(*status, *spec, route.ObjectMeta, gateway, listener))
+	return client.UpdateTLSRouteStatus(route, makeRouteStatus(ctx, *status, *spec, route.ObjectMeta, gateway, listener))
 }
 
-func makeRouteStatus(routeStatus gatev1alpha2.RouteStatus, routeSpec gatev1alpha2.CommonRouteSpec, routeMeta metav1.ObjectMeta, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener) gatev1alpha2.RouteStatus {
+func makeRouteStatus(ctx context.Context, routeStatus gatev1alpha2.RouteStatus, routeSpec gatev1alpha2.CommonRouteSpec, routeMeta metav1.ObjectMeta, gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener) gatev1alpha2.RouteStatus {
 	var routeParentStatus *gatev1alpha2.RouteParentStatus
 
 	// Check if we need to update an existing parent reference
@@ -1927,12 +1928,15 @@ func makeRouteStatus(routeStatus gatev1alpha2.RouteStatus, routeSpec gatev1alpha
 		}
 
 		if namespace == gateway.Namespace && string(parentRef.Name) == gateway.Name {
+			log.Ctx(ctx).Debug().Msgf("Found existing parent reference for route %s/%s", routeMeta.Namespace, routeMeta.Name)
 			routeParentStatus = &routeStatus.Parents[i]
 		}
 	}
 
 	// No existing parent reference was found - create a new one
 	if routeParentStatus == nil {
+		log.Ctx(ctx).Debug().Msgf("Adding parent reference for route %s/%s", routeMeta.Namespace, routeMeta.Name)
+
 		group := gatev1alpha2.Group(gatev1alpha2.GroupName)
 		kind := gatev1alpha2.Kind(kindGateway)
 		namespace := gatev1alpha2.Namespace(gateway.Namespace)
@@ -1964,12 +1968,14 @@ func makeRouteStatus(routeStatus gatev1alpha2.RouteStatus, routeSpec gatev1alpha
 	if len(routeParentStatus.Conditions) > 0 {
 		lastCondition := routeParentStatus.Conditions[len(routeParentStatus.Conditions)-1]
 
-		if lastCondition.Type == string(gatev1alpha2.ConditionRouteAccepted) && lastCondition.Status == metav1.ConditionTrue && lastCondition.Reason == string(gatev1alpha2.ConditionRouteAccepted) && lastCondition.Message == "The route was attached to the Gateway" {
+		if lastCondition.Type == string(gatev1alpha2.ConditionRouteAccepted) && lastCondition.Status == metav1.ConditionTrue {
 			shouldUpdateConditions = false
 		}
 	}
 
 	if shouldUpdateConditions {
+		log.Ctx(ctx).Debug().Msgf("Route %s/%s was attached to gateway", routeMeta.Namespace, routeMeta.Name)
+
 		routeParentStatus.Conditions = append(routeParentStatus.Conditions, metav1.Condition{
 			Type:               string(gatev1alpha2.ConditionRouteAccepted),
 			Status:             metav1.ConditionTrue,

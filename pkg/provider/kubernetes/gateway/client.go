@@ -441,6 +441,8 @@ func (c *clientWrapper) UpdateHTTPRouteStatus(route *gatev1alpha2.HTTPRoute, rou
 		return nil
 	}
 
+	log.Debug().Msgf("Updating status resource for HTTPRoute %s/%s", route.Namespace, route.Name)
+
 	r := route.DeepCopy()
 	r.Status.RouteStatus = routeStatus
 
@@ -464,6 +466,8 @@ func (c *clientWrapper) UpdateTCPRouteStatus(route *gatev1alpha2.TCPRoute, route
 		return nil
 	}
 
+	log.Debug().Msgf("Updating status resource for TCPRoute %s/%s", route.Namespace, route.Namespace)
+
 	r := route.DeepCopy()
 	r.Status.RouteStatus = routeStatus
 
@@ -486,6 +490,8 @@ func (c *clientWrapper) UpdateTLSRouteStatus(route *gatev1alpha2.TLSRoute, route
 	if routeStatusEquals(route.Status.RouteStatus, routeStatus) {
 		return nil
 	}
+
+	log.Debug().Msgf("Updating status resource for TLSRoute %s/%s", route.Namespace, route.Name)
 
 	r := route.DeepCopy()
 	r.Status.RouteStatus = routeStatus
